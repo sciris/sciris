@@ -1310,3 +1310,47 @@ I really hate Spyder; that damn program is so brittle and crashes every day I us
 
 I'm moving this notebook and the MindMap for Sciris into the sciris repo.
 
+Ok, I've added stuff to the repo.  So, let's get started with a Twisted solution to hosting the client and Flask server on the same origin.
+
+I'm looking at some of the Optima server code.  In run_server.py is the following line:
+_autoreload.main(_twisted_wsgi.run) 
+I guess the _autoreload.py code has to do with the code reloading even when it's running when you modify a file.
+
+But it's the _twisted_wsgi.py file which is the template I probably want to follow.
+
+Ok, I want to take just a leetle detour here.  I want to get a version of the code up with the webpack-simple template.  This may be a more tractable environment in which to sort out Webpack configuration issues because the configuration file structure is much more simplified there.  So, I'm going into the scatterplotter_p1 directory and doing
+vue init webpack-simple vue_client1b
+I chose all of the defaults to get the following output:
+
+? Project name vue_client1b
+? Project description A Vue.js project
+? Author gchadder3 <gchadder3@gmail.com>
+? Use sass? No
+
+   vue-cli · Generated "vue_client1b".
+
+   To get started:
+
+     cd vue_client1b
+     npm install
+     npm run dev.
+
+----
+
+I added all of these files to the Git repo.  Then I went into the new client directory and did
+npm install
+
+Now when I do
+npm run dev
+the hello world app of the template comes up.
+
+I'm making changes to App.vue, but I also need to do
+npm install axios --save
+to install axios and put it in the package.json.
+
+Ok, I installed axios, but I forgot that I need to set up the proxy.  It looks like the process will be a little different in this template.
+
+I tried adding the proxyTable stuff to the webpack.config.js file, and things barfed when I tried to recompile.  I'm thinking maybe this template doesn't have the proxying stuff nicely set up in the configuration files.
+
+Ok, I got my new code to the stage of having a CORS error.  So this road, too, leads to Twisted.  ;-)
+
