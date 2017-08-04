@@ -1,0 +1,1312 @@
+Issue 1592: Migrate FE to Vue.js 
+
+[7/3/17]
+
+Link to Trello Issue: 
+https://trello.com/c/85jH5z0h/791-issue-1592-migrate-fe-to-vuejs 
+
+Trello Description:
+As Bosco discovered, Vue is like so way totally better than Angular. For the sake of long-term maintainability, we should switch. This is a big job (likely hundreds of hours).
+
+I had a discussion today with Cliff over Skype about what we want to do here.  He envisions me taking 1-2 weeks to get a read on the feasibility of porting from AngularJS (i.e. version 1) to Vue.  If possible, it would be great if I could get some sense of feasibility within a week.  Based on my discussion with Cliff, there are basically 3 options:
+* Switch over to Vue (which is what we're hoping is feasible because of issues with Angular)
+* Stay with the version of Angular we are working at (1.2, I think)
+* Stay with AngularJS (version 1), but upgrade to the latest subversion
+
+An article I'd like to read:
+AngularJS vs Vue.js: A general comparison between two contemporary frameworks
+https://www.agriya.com/blog/2017/03/08/angularjs-vs-vue-js/ 
+
+[7/4/17]
+
+The above article was alright, but mainly a rehash of other stuff I'd read before.
+
+Another article:
+Why Vue 2 beats Angular 2 and React
+https://medium.com/@codingfriend/why-vue-2-beats-angular-2-and-react-cfb709b92c59 
+
+Angular 2 sounds different from Angular 1 and the article above makes it sound like it is very heavy-weight and requires lots of boilerplate code.
+
+I think maybe the best use of my time on this task right now is flat-out study the information on the Vue home page:
+https://vuejs.org/ 
+
+I need to get a feel for how Vue applications are structured and compare this with my understand of Angular and our present web application.
+
+Comments to Cliff:
+When and if we port from Angular to Vue, I wonder if we'll want to keep the intricate use of RequireJS, or whether this will be superfluous.
+I'm starting to read up on Vue today.
+
+Cliff's reply:
+hmm, well it's a big clunky framework that would be great to get rid of if we could, but i'm sure it also adds a lot of useful functionality
+
+Cliff comment:
+btw, when you're reading up on vue, approach it with the mindest of producing a roughly half-page list of bullet points, divided into sections like:
+* advantages (of switching)
+* disadvantages
+* risks/unknowns
+* time estimates
+david is just discovering the world of business, and he's pretty giddy about it, so if you pretend you're writing this document to be read by bill gates in between shareholder meetings, you'll probably be on the right track :slightly_smiling_face: 
+
+My reply:
+ok, good to know.  :slightly_smiling_face:  I was just thinking I probably will want to produce some kind of plan documentation as an output in this task and this suggests something maybe more lightweight than my tendencies would lead me to.  :)
+
+Question for Cliff:
+Oh, here's a good question: Should I be thinking in terms of one person doing this port or multiple people, or is that a part of what we're trying to figure out?
+
+His answer:
+think of it in terms of generic person hours :slightly_smiling_face: it would probably be you and me.
+
+My reply:
+Well, that should be simpler in a lot of ways since that would mean we're not hiring and breaking in new people (which I've not yet had experience doing).
+
+He agrees.
+
+Comment to Cliff:
+The Vue way of defining controllers looks a lot more compact than Angular 1, and like there would be a lot less boilerplate code.
+
+The 2 main sub-pages on the Vue.js site that I need to focus on:
+Guide: https://vuejs.org/v2/guide/ 
+API Documentation: https://vuejs.org/v2/api/ 
+
+I've done a quick browse through all of the material on the above two pages.  It will take awhile to go deep into how things work, but I can tell you, it will take me a heck of a lot less time to develop an understanding of Vue than it has to come to an understanding of Angular!  Vue is a much more compact library than Angular.
+
+[7/10/17]
+
+As of my Skype meeting today, my priority has rapidly swung to this task.  I need to analyze the desirability of doing the port from Angular 1 to Vue.js and have a Google Document with that information by next Monday.  That will be my focus this week, at the exclusion of other tasking except wrapping up the addition of the new registration fields.
+
+A relevant link:
+What is the advantage of Vue.js over Angular or React in terms of performance, ease of use and scalability?
+https://hashnode.com/post/what-is-the-advantage-of-vuejs-over-angular-or-react-in-terms-of-performance-ease-of-use-and-scalability-cit4sbaxi18xj8k53ejiuahiy 
+
+Comment to Cliff:
+I found an interesting link that might be relevant to our situation:
+How to Migrate from AngularJS to Vue (using ngVue):
+https://medium.com/dailyjs/how-to-migrate-from-angularjs-to-vue-4a1e9721bea8 
+It appears that this lets you use Vue components inside an Angular 1 web application, so it may be possible to do incremental porting of the system over to Vue.  I didn't imagine such a thing was possible and figured we'd have to do a one-shot full port, but maybe not!
+
+Another comment to Cliff:
+I will give some thought to what a "cold-turkey" port might look like, too, though.  :-)
+
+More comment to Cliff:
+It occurs to me that we could pursue a port strategy that is a mix of "cold turkey" and ngVue and which might have the advantages of both without adding too much extra pain.  We could do the incremental port using ngVue in an Angular 1 version of the site, but as we are moving over Angular pieces into the ngVue version that's up and running, we could also add these changes to the "cold turkey" shell.  Hopefully, once all of the Angular parts get ported into Vue componets, the "cold turkey" version of the site would also be complete, and then we could throw away the version of the site that still uses Angular 1 and put the new Vue-only site online.
+
+Cliff's reply:
+that sounds like a good plan to me :)
+
+Where I suspect the benefit will be of switching to Vue will be when we need to add new pages to the individuated web sites that are not exactly aligned with what's on the original site.  Or when we add new pages, period.  
+
+If I needed to add a new page to the present website, what would I do?:
+* Add a new button to the top menu, so the user can navigate to that page.  This would involve editing js/modules/ui/menu.html.
+* I'd want to create a new module as a subirectory of js/modules.
+* Within the module, I'd want to add at least a single .html and .js file.  For example, I might pattern what I have after js/modules/costfunction.  There is a cost-function.html file that defines the HTML template for the page, and a costfunction.js file which defines the controllers attached there.
+* I'd need to put in the linkages to this module in js/app.js.
+
+A link to a question I had:
+What's the equivalent of Angular Service in VueJS? (Stack Overflow):
+https://stackoverflow.com/questions/41164672/whats-the-equivalent-of-angular-service-in-vuejs 
+
+This site seems to recommend using axios, which is a "Promise based HTTP client for the browser and node.js".  A link to the npm package is at:
+https://www.npmjs.com/package/axios 
+
+Evan You, one of the main developers of Vue, has the following relevant article (mentioned from the Stack Overflow article):
+Retiring vue-resource:
+https://medium.com/the-vue-point/retiring-vue-resource-871a82880af4 
+
+He recommends Axios.
+
+GitHub link to Axios:
+https://github.com/mzabriskie/axios 
+
+[7/11/17]
+
+Comments to Cliff:
+Thus far, it seems to me that the primary advantages of making the switch to Vue would be:
+* The reduced complexity of the structure of the client code.
+* Possibly, better speed performance of the site.  Angular 1's digest cycle is supposedly quite inefficient, especially if there are a lot of model elements being watched for updates.
+* Angular 1 is basically obsolete, even for the Angular community which is now focused on Angular 2, so the base of developers of people developing in the old architecture will probably erode, whereas Vue is presently up and coming with a growing user base.
+The advantages I can see to sticking with Angular 1 would be:
+* No time required to port.
+* Angular 1 is battle-tested and well-understood.
+* It still has a pretty large community of developers, though I think this is likely to wane as people migrate to Angular 2 (which is supposedly a _very_ different framework) or to other systems like Vue or React, which have better performance.
+I'd like to be able to make some kind of argument about reduced development time with Vue, but it's hard to know if there would really be a significant difference.  From my present perspective, I know where the code is in this Angular site, so adding new pages and really wouldn't be that hard for me, at least when I'm more familiar with the basic front-end visual elements, the HTML, Bootstrap, SASS, etc. apparatus.  We'd probably have a tidier, more elegant, more consistent site if we port to Vue, but I'm imagining the hard part (in terms of dev time) of developing new pages is getting the graphical elements set up right and I don't know if Vue would be easier than Angular there, or about the same.  What are your thoughts about Vue's primary advantages?
+
+Another comment:
+I think it would be great to do the port because we'd be working with a more elegant, better designed framework, probably somewhat easier to maintain (and document) and for other people to learn the structure of.  But how to quantify an actual reduction in dev time could be a little tricky.  I did find some execution peformance benchmarks, though, that show a difference between Angular and Vue, for example:
+http://stefankrause.net/js-frameworks-benchmark4/webdriver-ts/table.html 
+
+This sounds like enough to Cliff to base a PowerPoint on.
+
+Cliff's plan now:
+ok so i'll write an email to david with a recommendation to start doing the port, and to review progress after 3 weeks and decide whether to continue?
+
+My response / question:
+Ok, that sounds good to me.  Should I keep studying Vue right now and nailing down specifics of how to do the port, or shift some of my attention back to the other Trello issues?
+
+His response:
+can probably move to other issues for now
+after the registration page, https is the next most urgent
+
+My response:
+Ok, I'll go ahead and move to the HTTPS issue.  For the registration page, things await the athena migration.
+
+Cliff created a PowerPoint and mailed it out to David, and I downloaded it:
+
+Slide title: Converting from AngularJS -> Vue.js
+
+Advantages
+* Significantly reduced complexity of code, allowing rapid addition of new modules/products
+* Lower barrier for entry to new frontend developers
+* Passionate, growing Vue community (Angular 1.x becoming obsolete)
+* Opportunity to build and release an adaptable scientific webapp framework as a global public good (working title: "Sciris")
+
+Disadvantages
+* Overhead costs (estimated as 1 developer x 6 weeks FTE) as new framework is implemented
+* Angular 1.x still has larger market share, with more community questions & answers
+* Angular is more mature and less likely to require patches/bugfixes
+
+Recommendation
+Begin porting calibration component and evaluate progress after 2 weeks
+
+-----
+
+Comments to Cliff:
+I read the slide you sent out related to Vue, and it looks good.  I suspect that 6 weeks FTE will allow us to get far with the port.  My only concern would be if we end up needing to do a lot of conversion related to HTML and CSS files, but I'd imagine a lot of the apparatus (e.g. using SASS rather than raw CSS) can probably be kept in place during the switch.  The possibility of incremental porting, too, as I mentioned yesterday should ease a lot of the risks of the port.  I do get a sense of a passionate and growing Vue community; lots of people are switching to it from other frameworks based on the articles I've read.  I'm curious what your thoughts are on the "Sciris" framework, what you have in mind, who the users are and how they'd like to use what we come up with.  I like the idea of building a nice reusable framework, so I'll give it some thought too.
+
+[7/12/17]
+
+David sent the following email out:
+George and Cliff,
+
+Many thanks for this information. I have a couple of questions:
+- What are the risks? Would the conversion cover every feature? Could it take longer than 6 weeks to have it completed and essentially bug-free?
+- Why would we want to convert the code now? After a couple of years of development of the front end which has finally been completed and is working, and without demand yet in the near term for other Optima models, why should we invest resources which are not budgeted for?
+
+David
+
+---
+
+Comments to Cliff:
+Hmmm... David doesn't seem too thrilled about porting to Vue.  I guess regarding risks, we could mention that because we can probably do the port incrementally, we don't really have to worry about things being broken with nothing being ported over to Vue.  I'd guess we would be aiming to cover every feature, but I'd hesitate to guarantee that the port would definitely be complete in 6 weeks.
+His second question is a hard one for me.  If there is a plan to generate new websites, it would be nice to be generating the new websites in a better, more usable and up-to-date framework.  But if there is no plan to create those new websites, and it's just a question of porting the present site, it may be a harder case to make, unless we can argue the likelihood of developing those new sites in the near future, so it would be nice to have the old site ported over so we're ready to work with the new (converted) Vue site as a template when the demand is there to build those new sites.
+
+Cliff's email reply to David:
+
+Hi David,
+
+Thanks for your thoughts. Responding to your questions:
+
+What are the risks?
+Vue is a relatively standard framework so there are few risks in the standard sense of the term. The worst-case scenario would be that we come across a feature that cannot be easily ported to Vue, and thus Optima would retain some dependency on Angular. However, this is fairly unlikely.
+
+Would the conversion cover every feature?
+Yes, with the caveat above. Thankfully, there is a package called ngVue that allows incremental conversion from Angular to Vue, which should significantly reduce development time.
+
+Could it take longer than 6 weeks to have it completed and essentially bug-free?
+Yes. There are still a number of unknowns, and 6 weeks is just a preliminary estimate. If we spend a 2 week trial period converting the calibration component of the webapp to Vue, we should have a much better estimate of how long the full conversion will take.
+
+Why would we want to convert the code now?
+In the past, we have waited until deadlines are extremely tight before starting development work. This has led to hundreds of thousands of dollars of worth of code being thrown out because they were written in a rushed and sloppy way. I do not want to be in this position again. Unfortunately, due to the enormous disappointments of both StarterSquad and Bosco, we still do not have a flexible, adaptable framework for building webapps. The purpose of investing in this now is so we can rapidly move forward when we do get deliverables for GUIs. Investing ~4 months of development now into a flexible framework could potentially cut development time for future GUIs by up to 50% (e.g., from 6 months to 3 months). We would also be providing a global public good of having an easy-to-use framework for providing user-accessible scientific models, with potential applications far beyond public health. Thus, I would recommend not proceeding with the conversion only if (a) we will almost certainly not be developing GUIs for any other Optima models, and (b) we are not interested in using our expertise to help other groups with similar needs.
+
+Cliff
+
+----
+
+Question for Cliff:
+When you're thinking of a flexible, adaptable framework for building webapps, are you thinking about something like Shiny in R?:
+https://shiny.rstudio.com/ 
+I've used this in the Coursera Data Science Specialization coursework, and it's pretty cool, though I wonder if the scope of building something like Shiny would be longer than around 4 months.
+
+His reply:
+yeah, something kind of like shiny, although less ambitious and more focused on multiple-users-for-scientific-model scenario
+
+My question:
+re: multiple-users-for-scientific-model scenario, So you're thinking the type of framework where different users can log in and have their own accounts where their own data is stored that they are using with whatever model is embodied in the site?  (As things work with Optima now.)  I don't think Shiny has accounts like that, so that would be a distinct feature of our framework (though I'm not familiar with what Python frameworks are out there for scientific webapps).
+
+Cliff's reply:
+yeah, exactly
+there _are_ no python frameworks, which is why i want to write one :)
+
+My reply:
+Well, hopefully David will give us a chance to get started.  :)
+
+[7/13/17]
+
+David sent the following reply to Cliff's last email:
+
+Thanks again for the responses, Cliff. For now I think we need to hold off on progressing this further to see what need there may be from the WB. I thought the group might be going into broader health areas with an interface but that is not happening now and so we just need to see whether TB, nutrition and malaria might need this and if so when the likely timeframes might be. I expect we would have numerous months lead time at minimum. 
+
+----
+
+So, I'd say we won't be moving forward with that for awhile, unfortunately.  That's a pity.  I wanted to push forward on that because I was interested in working on the framework Cliff has in mind.
+
+[7/17/17]
+
+Cliff hadn't gotten the email from David, so I forwarded that to him.
+
+He sent the following reply to David:
+
+OK, let's discuss this in the next meeting.
+
+----
+
+I will be going ahead with this, but it will have to be in a more piecemeal fashion.  From Cliff's earlier email, I think the first goal would be to do a partial port of the Calibration page.
+
+I'm going to revisit the Vue guide, mainly, at this stage.  As I'm reading this, I will be thinking of how we might want to rework the web app as a whole.
+
+[7/18/17]
+
+Still focused on the Vue guides.  I need to learn how Components work.
+
+[7/19/17]
+
+I browsed through the entirety of the API doc and maybe gleaned a few useful nuggets of understanding from this.  I'm still working on getting the big picture about Vue and its functionality.  When I have this, the next step will be to seriously start thinking about how I want to port the Angular code, or indeed, how I'd want to structure the whole website if it were rewritten from scratch using Vue.
+
+One thing I will say is that I think we will definitely want a hierarchical Vue Components structure in our web application port.  There will be a root Component for the whole Single Page (Application), and children for things like the Menu bar and the content window.
+
+[7/20/17]
+
+I made it through all of the "Essentials" part of the Vue Guide with the exception of the Components section.
+
+[7/21/17]
+
+I made it through the Components part of "Essentials", so at this point I've read through the "Essentials" part of the Vue Guide (at least in first pass) and am ready to move on to the "Advanced" sections.
+
+[7/23/17]
+
+Comments to Cliff:
+I just bought the following book (Vue.js 2 Cookbook):
+https://www.amazon.com/dp/B01N6VAO4P/ref=docs-os-doi_0 
+I've been reading the Vue home page documentation over this week, so between that and this book, I should be in good shape for figuring out how to do the Vue port.
+
+Cliff's replies:
+ok cool
+i'm talking to david tomorrow and hopefully will know better what the direction will be...
+admittedly it isn't looking great for getting support to do the port :(
+
+[7/25/17]
+
+Some good (and surprising) news from Cliff:
+so i don't have time to talk now unfortunately, but i just talked to david, and there's some very good news: there _is_ funding for GUI development, so we can press ahead with Vue :)
+the work is for Optima Nutrition, but i think we can justify doing the Optima HIV conversion
+
+My reply:
+Excellent!  So, I'll go ahead and budget some time for that.
+
+His reply:
+but, i guess i leave it up to you whether you'd rather do the Optima HIV conversion, or start immediately with nutrition
+i'll write an email introducing you to nick
+
+Comment for Cliff:
+Probably it will be good for me to start thinking about what they might need for the Nutrition site and to contrast / compare with what we've got with the HIV site because that will tell us what our "core" framework (Sciris?) should be.
+
+Cliff agrees.
+
+He adds:
+fyi, we'll have ~6 months to do sciris+nutrition. which is not a lot...
+
+A reply:
+re: 6 months, well, that should at least be time to make a strong start at it.
+
+I asked Cliff about the name Sciris, and it is referring to science and Iris, the messenger of the gods (and goddess of the rainbow).
+
+Cliff comment:
+so, sci + iris, communicating scientific messages :)
+
+My reply:
+She's also goddess of the rainbow.  :slightly_smiling_face:  I guess that works.  And the iris is the aperture to the eye, too, so maybe if our software offers a view of the data, that could be another rationale for the name.
+
+His reply:
+yup. btw, Robyn _hated_ it. but she hates everything :)
+
+He then said something that confuses me:
+oh, so another issue is that this group is redoing the NEURON gui (!!!)
+i have a meeting with them in London in a couple weeks to see if any of their stuff is applicable to optima
+geppetto
+
+I asked him:
+Is geppetto the name of the new NEURON interface?
+(Had to look up the name; I don't know the Pinocchio story all that well.)
+
+He says, Yeah.
+
+I'm browsing through the Advanced sections of the Vue guide, but honestly, I'm finding this tough-going.  I think maybe a lot of this functionality I am not likely to need.
+
+[7/26/17]
+
+Question for Cliff:
+About what percentage of my time should I put into Vue vs. other tasking?  Would 50% make sense?
+
+His reply:
+yeah, or even 100% on vue if you want
+
+My reply:
+Ok, maybe I'll move closer to 100%, although I suppose any "Bugs/major issues" outstanding I may want to reserve some time to work through.
+
+Question for Cliff:
+Should I add a Trello card for "Develop Vue.js-based GUI for Optima Nutrition"?  Or is this Trello board specifically for HIV?
+ah, I guess the Trello board is "Optima HIV development".
+guess they would have a different Trello board?
+
+His answer:
+i don't think they have a trello board...am not too sure though
+you can add a 'Create Vue.js prototype' as an optima hiv card
+
+So, I'll do that.
+
+More questions for Cliff:
+Which stack should I put that in?
+Issue 1592: Migrate FE to Vue.js is under Backlog.  Should I put this there too?
+
+Cliff reply:
+ah...well, i guess that's kind of the same issue right?
+so maybe you don't need to make a new card
+
+My reply:
+Ok, I'll keep working from that card (1592).  Maybe I'll add a Comment or edit the Description.
+
+Added comment to Trello card:
+Now that Optima Nutrition is in need of GUI development, it makes sense to begin work on putting together a Vue.js framework (which Cliff has dubbed Sciris [= scientific iris]) to be applied across all Optima GUIs, including for the HIV model.  The idea here is to provide a flexible framework, suitable for open source sharing, for building web applications that manage web sessions for users who log in and run simulations on specific scientific models (in our case HIV, TB, malaria, or Nutrition models).
+
+I just got a new Blue Track mouse and now my mouse-wheel scrolls so much better!  :-)
+
+So...  My focus right now, I think, should be on figuring out:
+1. how I want to structure the Sciris framework
+2. how I want to port Optima HIV to it
+3. how I want to create a Nutrition GUI
+
+For 3., I'll need to find out a lot more about what they need on the Nutrition project.
+
+I'm starting to work with JSFiddle, which is at
+https://jsfiddle.net/ 
+This looks like a useful tool to do some simple exploration in JavaScript, HTML, and CSS.
+
+Question for Cliff:
+I'm wondering: How married are we to SASS (SCSS) vs. plain CSS?  I suppose it would be easier to port what we have if we stick with SASS, but I may have a little more to learn as a front-end developer, learning SASS (but maybe it's worth it; I don't have the sense yet of what SASS adds over plain CSS).
+
+His answer:
+i never quite figured out what the point was of sass; it seems to be very, very similar to css
+but precisely because of that, i think the learning curve is about '1 day' :)
+
+My reply:
+I guess I'll have to investigate more carefully.  I see that using SASS means an extra `gulp` compilation step to make CSS built files, but maybe that's not a big deal.
+
+His reply:
+no, it's a trivial command
+
+Here's an article about this:
+Why Sass?
+https://alistapart.com/article/why-sass 
+
+It looks like regular .css files should be able to work as .scss files also.  SASS is more of a superset of CSS and provides additional macro-like features on top of regular CSS functionality to make CSS stylesheets less repetitive, improving code reuse.
+
+I've added a "Sciris Framework" sub-folder to the Google Drive logbooks directory, as well as to my local directory.  I've mode this notebook for this issue into that.
+
+Comment to Cliff:
+I've made a new directory on Google Drive here
+https://drive.google.com/drive/folders/0BzjygPlu487tdUFSaWxiS3I2WFU 
+for the Sciris framework.  I moved my issue_1592 notebook there, and am making a new FreeMind MindMap specific for this project.  :-)
+
+Another comment:
+When we're a bit further along, I'm thinking we might want to make a new GitHub repo for the framework, I'd assume a sibling for `optimamodel/optima`. 
+I guess I can start a local repo for this, myself.
+
+I went ahead and did this.  The new repo is at
+C:\Users\George\GitRepos\OptimaRepos\sciris
+
+I've got a tool for writing and previewing .md files called MarkdownPad 2 that I should make use of.
+
+Comment to Cliff:
+An idea for the Sciris framework that would be entirely new front-end functionality: Wouldn't it be nice to have a web interface for the capability of setting up, running, and remotely running multiprocessing batches of model simulation runs?
+
+Comment to Cliff:
+I'm thinking over what kinds of objects (in the programming sense) we are interested in having classes / implementations for in our framework.  So far the list includes: User (a user of the web application), WebSession (a session where a User is logged in), Project (a particular exploration a User is doing, including saved data), Graph (a graphical figure, probably implemented using mpld3), Optimizer (instanced by ASD algorithm optimizer), ScirisModel (superclass for models Sciris covers), SimulationRun (a run of a ScirisModel), SimulationBatch (a run of a ScirisModel).
+
+I'm globally installing vue-cli:
+npm install -g vue-cli
+
+Okay, that's done.
+
+Comment to Cliff:
+The Vue.js 2 Cookbook book I bought from Amazon is pretty good not just at providing code examples, but at informing me of what development tools front-end developers use to develop in Vue.
+
+I made a directory for a vue-cli workspace called
+C:\Users\George\Documents\Career\Contract Coding\Optima HIV\VueWorkspace 
+
+I navigated to this and did able
+vue init simple
+and it generated an index.html file off of vue-cli's simple template.
+
+The Vue.js 2 Cookbook book is talking about Webpack and Browserify, so I wonder how this relates to Gulp.  Here is a useful link that begins to answer this:
+Webpack or Browserify & Gulp: Which Is Better?:
+https://www.toptal.com/front-end/webpack-browserify-gulp-which-is-better 
+
+This article looks potentially useful for suggesting with building tools we want to be using for Sciris.
+
+The index.html file produced by
+vue init simple was as follows:
+
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Welcome to Vue</title>
+  <script src="https://unpkg.com/vue"></script>
+</head>
+<body>
+  <div id="app">
+    <img src="https://vuejs.org/images/logo.png" alt="Vue logo">
+    <h1>{{ greeting }}</h1>
+    <ul>
+      <li>
+        To learn more about Vue, visit
+        <a :href="docsURL" target="_blank">
+          {{ humanizeURL(docsURL) }}
+        </a>
+      </li>
+      <li>
+        For live help with simple questions, check out
+        <a :href="gitterURL" target="_blank">
+          the Gitter chat
+        </a>
+      </li>
+      <li>
+        For more complex questions, post to
+        <a :href="forumURL" target="_blank">
+          the forum
+        </a>
+      </li>
+    </ul>
+  </div>
+
+  <script>
+    new Vue({
+      el: '#app',
+      data: {
+        greeting: 'Welcome to your Vue.js app!',
+        docsURL: 'http://vuejs.org/guide/',
+        gitterURL: 'https://gitter.im/vuejs/vue',
+        forumURL: 'http://forum.vuejs.org/'
+      },
+      methods: {
+        humanizeURL: function (url) {
+          return url
+            .replace(/^https?:\/\//, '')
+            .replace(/\/$/, '')
+        }
+      }
+    })
+  </script>
+</body>
+</html>
+
+----
+
+I'm going to delete this and do the next thing the book recommends which is
+vue init webpack-simple
+
+I got the following output (showing some of my (default) inputs):
+
+? Generate project in current directory? Yes
+? Project name vueworkspace
+? Project description A Vue.js project
+? Author gchadder3 <gchadder3@gmail.com>
+? Use sass? No
+
+   vue-cli · Generated "VueWorkspace".
+
+   To get started:
+
+     npm install
+     npm run dev.
+
+This made quite a few files in the directory.  Now I do
+npm install
+
+This creates a node_modules directory which I think has all of the installed Node.js packages.
+
+Now we run with
+npm run dev
+
+That brings up the sample app in Firefox under
+http://localhost:8081 
+Cool!
+
+That command (npm run dev) puts a server up and blocks in the Windows command-line window.  Ctrl-C takes the server down.
+
+[7/27/17]
+
+I went to
+https://addons.mozilla.org/en-US/firefox/addon/vue-js-devtools/ 
+and clicked on Add to Firefox
+So now it's added.
+
+I also went and installed Firebug.
+
+But where is the new Vue functionality?
+
+Ok, found it.  I had to refresh the same Vue page I put up.  It adds another tab to the Developer Tools.  Adding Firebug also modified the format of the display and I'm not sure if I like the stylistic change, but I guess I'll get used to it.
+
+Cliff reply to comments about what I wanted to do with Sciris:
+ok, sounds good
+i guess i would just say that we have roughly until the end of the year to develop sciris _and_ the nutrition gui, so we probably won't have time to make them perfect
+but, i'd hope sciris would be written in such a way that would make future improvements easy (and it'd be open source, of course) 
+
+My reply:
+I guess the key will be to plan out what the core functionality is and make sure that gets implemented first and in a way that is nicely extensible.  I have a feeling that, in addition to working with Vue, we may want to do some refactoring of the Web Session Manager part of the application.  I'd still plan on using the same tools--Twisted, Flask, Postgres, Redis--and probably mostly the same way, patterned after the HIV site, but it seems like that side of things could benefit from some restructuring.
+
+Cliff's made a key point here, I need to take note of:
+We only have basically until the end of the year to do both Sciris and the new Nutrition website.
+
+I made a bunch of vue-cli template projects to look at:
+vue init simple my-simple-template
+vue init webpack-simple my-webpack-simple-template
+vue init webpack my-webpack-template
+
+Ok, for the webpack command, I should include the output:
+? Project name my-webpack-template
+? Project description A Vue.js project
+? Author gchadder3 <gchadder3@gmail.com>
+? Vue build runtime
+? Install vue-router? Yes
+? Use ESLint to lint your code? Yes
+? Pick an ESLint preset Standard
+? Setup unit tests with Karma + Mocha? Yes
+? Setup e2e tests with Nightwatch? Yes
+
+   vue-cli · Generated "my-webpack-template".
+
+   To get started:
+
+     cd my-webpack-template
+     npm install
+     npm run dev
+
+   Documentation can be found at https://vuejs-templates.github.io/webpack 
+
+-----
+
+Here's a link that looks useful for my purposes, since I will need to be learning how to use npm better:
+Getting started in npm:
+https://docs.npmjs.com/getting-started/what-is-npm 
+
+[7/28/17]
+
+Here's a relevant article:
+JavaScript Modules: A Beginner’s Guide:
+https://medium.freecodecamp.org/javascript-modules-a-beginner-s-guide-783f7d7a5fcc 
+
+Ok, note to self: Webpack will do SASS translation as a part of what it does.
+
+Comment to Cliff:
+There's something very Rube Goldbergy about the JavaScript development process compared with Python! All these minimizing, uglifying, bundling, preprocessing, etc. steps run in long chains before you have something that will even run in the browser. But I think I'm beginning to home in on the likely Vue development process we'll want to follow for Sciris.
+
+His reply:
+yep i'd agree with all of that!
+
+Comment to Cliff:
+I have an idea on what I might implement as an initial "simplest use case" for Sciris.  I did this app in Shiny for my Coursera Data Science Specialization course:
+https://gchadder3.shinyapps.io/polyfitter/ 
+Imagine this, basically, but put together more like the HIV site, with user sessions and projects so each user can keep a project for investigating polynomial curve fitting.  :-)  And even though there are solid analytic algorithms for doing the curve fitting, we could also test ASD and its ability to find fits also.
+
+Comment to Cliff:
+I wonder if the Nutrition backend code is organized with the same kinds of classes and structure as the HIV backend, or whether it will be a whole new ballgame.  Is this repo where their backend code is?:
+https://github.com/optimamodel/Nutrition 
+If so, looks a bit different, at first glance.
+
+Ok, I went into the my-webpack-template-built directory and did
+npm run build
+It made a directory called dist (distribution) which contains the files for the built site.
+
+Cliff's replies:
+yes, it's _completely_ unrelated. it's going to have to be very substantially rewritten to support a frontend. thankfully, it can change to match the FE architecture, rather than vice versa.
+for the shiny thing...hmm, i feel that i might be a little too unrelated? what about the idea of using ng-vue to convert the calibration page in a first instance?
+although, i guess it shouldn't take too long to do the polynomial fitter thing in vue...
+
+My reply:
+I'm not sure we actually want to take the `ng-vue` approach at this point.  Using that means developing in Angular first and, piecemeal, moving some parts of it into Vue components which the Angular code uses.  This approach might be better for incremental porting of the HIV site, but for making a de novo Nutrition site, I think maybe it carries more Angular baggage than we may want.  We basically have the opportunity to start almost from scratch, though we can pull over pieces we have in the HIV site as we need them, porting them to Vue components.
+
+His reply:
+ok, well i leave it to you as to what you think is best...but i think david would certainly like to see incremental _optima_ functionality, rather than toy examples. how long do you think the toy example would take, though?
+and i agree it would be a good example for discussing in the publication
+so as long as it won't take too long, i'm in favor of it
+
+My reply:
+I figured the polyfit toy case would be a minimal case and it should be easier to build the Nutrition site once we have that case implemented because we'd have the critical structure of the framework in place, including Python server code (Web Session Manager) and the Vue Client and the stub for the polynomial fitting case should be reasonably easy (approaching trivial) to prototype the Sciris framework.  It's hard to estimate a time-frame for the toy example, though.  At this stage, I'd say at least 3 months, but that's off the top of my head without having really worked with Vue yet, and that is also making the assumption that I'm making a good effort to organize the general Sciris framework itself in the process of making the toy example (so that includes shaping both Vue code and Python code on the server end).  I do have some worries about the 6 month time-frame, but I don't know at this stage what is realistic.  I'm thinking maybe 6 weeks for porting the HIV site from Angular to Vue entirely (with one coder doing everything) would have been way too little time, though.  I can try to regularly reestimate the time that will be involved in this task, but it is a pretty major one, I think, for one coder given it took 2 years to develop the original HIV site.  :-)
+
+His reply:
+...hmm. so, david's head would most likely explode if you told him 3 months for a toy example :)
+
+My reply:
+I suppose Plan B could be to focus on making the Vue Nutrition site from scratch, pulling what I can from Optima HIV, but we risk making the design more Nutrition-specific and less nicely generalized for our desired Sciris framework.
+
+His reply and question:
+i think we might have to do that...
+so, about the incremental port of the calibration page...what are your thoughts on that?
+
+Me:
+Is that worth doing at this stage?  Is it worth porting the HIV site now, or should we wait until our Vue framework has stabilized first and we know how to effectively do the port?
+Even just porting the calibration page seems to require porting a large part of the HIV site apparatus.
+And do we want to do that in Angular?
+
+Cliff:
+ok so i guess this begs the question ... is it worth switching to vue? :)
+I felt that a lot of the infrastructure could remain mostly the same
+
+Me:
+We're making a fresh new Nutrition site, and that seems to be the focus.  I'd say if we want to move to Vue it would be easier to make that site than to painstakingly port the Optima HIV site from Angular.
+
+Cliff:
+i mean my concern is that as you said it took 2 years to make the hiv site from scratch ... so what would be stopping it taking 2 years to make the nutrition site from scratch? :)
+
+Me:
+Well, that's a good question.  I do think we can pull a lot of the HTML and SASS maybe from the Angular code, though I don't know that for sure.  If that's the case, we should be able to bootstrap off of what we've got on that Angular site.
+For the Vue site, though, I think we'd want to structure it using .vue files and the Webpack loading apparatus they suggest for large projects.  That's what I'm looking into right now, how all of that works.
+
+Cliff:
+we should be able to use 100% of the sass and 95% of the HTML...
+
+Me:
+(BTW: I see that the Webpack approach has features for using SASS, so we'll be good there.)
+
+Cliff:
+so i think the first step is getting a mockup from Ruth+Nick about what the gui will look like...
+
+Me:
+Yeah, that makes sense to me.  It will drive the features that are most essential to get developed first.
+I'm thinking maybe for the development process, we could start with Plan A but switch to Plan B if things are clearly taking too long, and we can use what we get developed from Plan A to facilitate B.
+
+Cliff:
+and A and B are?
+
+Me:
+A is developing the general Sciris framework using Vue with the toy example, but also informed by the Nutrition needs.  The toy example would hopefully allow a quicker prototyping of the general framework.  B would be concentrating on getting a Vue site up specifically for Nutrition.  An extreme fallback option (we'll call C) might be taking the Optima HIV site and hacking up a Nutrition site in Angular from the old site.
+
+Cliff:
+ok so i kind of feel we need more intermediate milestones
+what if we replicate a slightly simplified version of your shiny app first?
+so no user management or anything
+this would still not be trivial as it would rely on flask, vue, python at minimum ...
+but maybe could be done in...2 weeks?
+then we add the user stuff
+then we start porting nutrition stuff...
+
+Me:
+We can shoot for that.  It should get me better acclimated to Vue.  I should have a much better idea after 2 weeks of working on that what the process is like working in Vue, how long things might take, and I'll probably have more ideas as well for the structure of the larger framework.
+
+Cliff:
+ok cool
+
+Me:
+I can see what I can do in 2 weeks with this, though the Flask and Twisted stuff could add some trickiness to this.  Getting Vue working alone could take quite a bit of time.  But I'll shoot for maybe a stripped down version of my polyfitter in 2 weeks.
+I'll have to figure out how the mpld3 stuff works.  I'm not all that familiar with this part of the code yet.
+
+Cliff:
+it's super easy :) literally 1 line :)
+anyway sounds good, i'm happy with that plan!
+
+Well, there's a lot to do here and I will have to do it probably in a more messy way than I would have ordinarily.
+
+Ok, I'm going to start by solving an even simpler task.  I will create an app that will make mpld3 scatter plots of data uploaded from a .csv file.  First that .csv file will just have 2 columns.
+
+I just created the scatterplotter directory at
+C:\Users\George\Documents\Career\Contract Coding\Optima HIV\Vue Development\scatterplotter
+by doing
+vue init webpack scatterplotter
+
+Then I went into the directory and did
+npm install
+
+Ok, I'm getting confused on how export and export default work.  Here's a relevant instruction page:
+export (MDN)  MDN = Mozilla Developer Network
+https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Statements/export 
+
+[7/29/17]
+
+Comment to Cliff:
+Well, one additional complication: All of our present JS code is (I assume) written in ECMA5, but things seem to be at ECMA6 (2015) right now, including what people are using in Vue development.  ECMA6 has some significant syntax additions over 5.  Now, I didn't really know ECMA5 all that well before I joined the team, so I suppose I may as well learn ECMA6.  I just need to use more up-to-date references and examples in learning JS than I have been.
+(In case you're wondering, the Webpack process I will be following automatically uses Babel to transpile ES6 into ES5.)
+
+Email Cliff sent out to Nick and Ruth in the Nutrition project:
+
+Hi Nick and Ruth,
+
+I'd like to officially introduce you to George, who is the developer who will be working on the Optima Nutrition GUI. George has a lot of experience not only with JavaScript but also with the Optima HIV backend, so hopefully he'll be able to help out on all aspects of the project, although of course he's not (yet) familiar with the nutrition backend code.
+
+George and I have been discussing a strategy for how to get started, and we have a plan for making the Optima HIV frontend more flexible and portable. However, what we were hoping to get from you guys was a page-by-page mockup of what the nutrition GUI would look like to guide the development process. One option is for you guys to base this on edited screenshots of the existing Optima HIV interface, but it's up to you.
+
+George and I were going to spend the next 2 weeks or so building a flexible proof-of-principle "technology demonstrator" (basically, a very simple Python model coupled to a single-page frontend), and then our plan is to start adding Optima Nutrition components into this framework -- beginning with user management (which we imagine will probably be almost identical to Optima HIV), and then branching out from there. I know doing the mockup is a big task, but hopefully 2-3 weeks would be enough time to complete it -- what do you think?
+
+Of course, we will also need to start thinking about how to bring the nutrition backend closer to the "Optima framework". Did you guys have a plan for this -- e.g. Ruth, were you and Christian going to work together on this? As I mentioned, George has a lot of experience with the Optima HIV backend, but I am also mindful that building the frontend is a colossal task, so he probably won't have a lot of time to spare!
+
+C
+
+----
+
+[7/31/17]
+
+Nick's email reply:
+
+Hi Cliff and George,
+
+That sounds like a good approach to things. I remember having a slight think
+about this previously (I'll see if I can find my hand-written drawings), but
+will try to clarify what should be included this week. Ruth will be back
+next week and so I will chat with her and we will put something helpful
+together for you both. Once we have got something together perhaps it would
+also be best to schedule a call to go through it? I  suspect there will be a
+lot of drop down menus etc. that are probably easier explained that notated
+in huge detail.
+
+Also, it might be helpful for either of you to install spectrum and have a
+play with LiST on your computer. This is because the underlying Optima
+Nutrition model is basically an expansion of LiST, and so the user inputs,
+data requirements, parameters etc. will have a lot of overlap with what gets
+input into their interface—Optima Nutrition will be in some ways making an
+interface that does similar things to LiST but looks more like Optima HIV.
+
+Will be in touch.
+
+Cheers,
+Nick
+
+----
+
+I'm now working with the scatterplotter app.  I have a new / route with a new page, and I moved the original Vue page example to a /vueinfo route.
+
+I commented out the CSS formatting to remove the special fonts and centering.
+
+Ok, now I actually need to start implementing some functionality.  What first?
+
+I guess I will start with a text box whose contents will be displayed in a label afterwards.
+
+Ok!  That was pretty easy.
+
+But now I need to add a server that will take in what's in the text box and pass back a string that answers the request passed to it. (We'll get text transfers working first before we start worrying about graphs!)
+
+I'm asking myself the question of whether I will likely want to use Vuex or not.
+
+I guess Vuex becomes useful when you have multiple components using shared common state.  This seems like it will be the case here because the app will want to keep track of user and project information across which web page the user is currently at.
+
+Ok, I think the answer is a big "Yes" on whether we should use Vuex for Sciris.  Vuex is precisely for maintaining common state:
+"So why don't we extract the shared state out of the components, and manage it in a global singleton? With this, our component tree becomes a big "view", and any component can access the state or trigger actions, no matter where they are in the tree!"  -- from
+https://vuex.vuejs.org/en/intro.html 
+
+Based on the Skype meeting discussion, I can focus on getting the Vue app working.  Cliff doens't mind if I don't specifically get the polynomial fitting part working, and agrees getting stuff up using Flask is fine as a starting point.
+
+Cliff says he'll talk to Nick about them providing more info instead of relying on us looking at spectrum and LiST.  However, if I want to take a look, I need to do a Google search for "avenir health spectrum".  Apparently, the application is written in an ancient language, maybe Turbo Pascal.  :-)
+
+Ok, using the example in the book, I've got axios working, do GETs from an existing advice server.
+
+Here's an article I should read in its entirety at some point because I'm always running into REST and RESTful and wondering what they really mean.
+What exactly is RESTful programming? (Stack Overflow):
+https://stackoverflow.com/questions/671118/what-exactly-is-restful-programming 
+
+Well, I've got a Flask GET request _mostly_ working but I'm getting a message about Cross-Origin Request Blocked.  This is because, even though the domain names are the same (localhost), the ports are different.  See:
+
+Same-origin policy (Wikipedia):
+https://en.wikipedia.org/wiki/Same-origin_policy 
+
+I think there's something I can include in the header to enable this:
+Cross-Origin Request Blocked (Stack Overflow):
+https://stackoverflow.com/questions/22363268/cross-origin-request-blocked 
+
+[8/1/17]
+
+Cliff sent the following email reply to Nick:
+
+Hi Nick,
+
+Thanks for the info. I forgot to mention that on top of the GUI design, at some point we will need a full API specification, like this one for Optima HIV:
+
+https://docs.google.com/document/d/1u1uu0hbgSvhY80vmXdHxZeiQS5HAgPZpTy6WVaRFKmo
+
+If you're looking at that and thinking "Whoa, that's a lot of work" -- don't worry, you're right :P (As evidenced by the fact that it is neither complete nor fully up-to-date!)
+
+Although I think it will be useful to have a call (it is actually kind of a shame that we can't all be in one room for this), I think it is actually very important to "notate things in huge detail". Although that sounds like a waste of time, if you call it "documentation" instead, it might sound more appealing, and I imagine would be very important to e.g. help get Christian up-to-speed.
+
+C
+
+----
+
+Comment to Cliff:
+I've got AJAX calls working (through the axios library) on my Vue template, but in trying to interface with Flask, I'm running into an interesting issue.  It looks like the web pages need to be served from the same host-name and port as the server, or I get complaints about violation of the Same Origin Policy https://en.wikipedia.org/wiki/Same-origin_policy 
+and packets get blocked.  (Webpack hosts the development pages on a different port when I test with it.)  I'm guessing issues like this are probably one reason Optima uses Twisted to serve everything together.
+
+His reply on this:
+for server, everything should just be on localhost and served with a simple python server, no?
+
+Me:
+re: server, I'm thinking the "simple Python server" will mean Twisted.
+
+Cliff:
+for production, yes, but for testing/development we should be able to use something way simpler, no...?
+
+Me:
+I'm not sure if basic Twisted functionality is all that hard compared to other options.  Did you have a particular server method in mind?
+
+Cliff:
+i was thinking just the built-in python server: python -m SimpleHTTPServer
+but twisted is ok if not too difficult
+there's also server from webserver.py in the optima repo
+
+Me:
+Ok, I might check out those other options as well.  Twisted doesn't look too bad, though, and I can try to pattern after the HIV code in part.
+
+Cliff:
+actually...yeah, twisted shouldn't be too bad
+i was confusing it with rproxy
+which still seems to me to be black magic :)
+
+---
+
+Cliff would like me to put the Sciris repo up on GitHub:
+oh do you have a git repo for sciris yet? if not i'll make a stub
+
+Me:
+I made a local git repo.  Do you want me to put it up on GitHub somewhere?
+
+Cliff:
+yes, can you add it to optimamodel in github?
+
+Me:
+Ok, I'll add the repo to GitHub.
+
+---
+
+Cliff also wants me to look a bit into Geppetto:
+btw, could you spend maybe an hour or so looking into geppetto? i'm meeting the team behind it in about 10 days to see if there's any 'technology transfer' possible
+(i think probably not, despite how similar the missions seem to be)
+
+Me:
+re: gepetto, What is it?
+I remember you mentioned it in the context of NEURON and its GUI.
+
+Cliff:
+http://www.geppetto.org/
+yeah, well -- so the alternative to developing our own in-house thing would be to extend geppetto
+i can see a lot of reasons for not doing that, but the people who developed it are great, and it seems to be so similar to sciris ("flexible, javascript-based platform for running scientific simulations") that i feel we can't not know what it does :slightly_smiling_face:
+though i dunno, every time i look at it it looks more narrow...
+
+Me:
+Ok, I guess I'll keep in mind while looking at it what features we might want to include in our framework.
+Are they affiliated with Bill's group, the team?
+
+Cliff:
+yeah, loosely
+independent contractors
+
+---
+
+Ok, I'll start by setting up a new GitHub optimamodel/sciris repo.
+
+Comment to Cliff:
+It doesn't look like I have permission to create a new repo for optimamodel.  (Just tried on GitHub.)  If you make a stub repo, though, I can probably clone that and just put in the README.md file I've started on that.
+
+He says he'll do that.
+
+Comment to Cliff:
+I'm having a look at Geppetto now.
+
+Looks like they've got some nice 3D visualization tools.
+I like the idea of a console you can open and use.
+
+Comments to Cliff:
+Geppetto looks nice, but all of the examples seem to be around neuronal modeling, so it's kind of hard to tell whether their framework will nicely generalize to our kind of models.  One idea I see they have that I like, though, that I hadn't thought of is having a pop-up console you can bring up to direct simulations.  That could be a useful feature to go beyond the limitations of using GUI functionality we've taken the time to implement.
+I'm imagining the possibility of having a site like the Optima HIV site, where you could also bring up the console window and give Python commands like you would using the backend in Spyder.  Maybe the GUI elements would actually call the Python commands which would then get added to the console history, so you could look at the effects of using the GUI commands.  How to make this paradigm fit with the private user-session setup we have for the Optima HIV site I'd have to think about.  But for a general scientific simulation framework, having an execution console seems like a good idea.
+
+Note to Cliff:
+Looking over my July timesheet, I would estimate that 30.5 of my 169 hours were for Optima Nutrition and the remainder (138.5) were for Optima HIV.
+
+This article looks useful for my situation:
+Using webpack to proxy to your local web server to avoid Cross Site errors
+http://www.avitzurel.com/blog/2016/07/19/using-webpack-to-proxy-to-your-local-web-server-to-avoid-cross-site-errors/ 
+
+Cliff's reply about the console idea:
+console: yeah, the only major issue i foresee is security (`import os; os.rmdir('/')`)
+
+Ok, I found a fix to my damn CORS problem.  Basically, I need to go into config/index.js and make sure the 
+following block is in the dev: part:
+
+    proxyTable: {
+      // proxy all requests starting with /api to http://localhost:5000
+      '/api': {
+        target: 'http://localhost:5000',
+        changeOrigin: true,
+        pathRewrite: {
+          '^/api':""
+        },
+      }
+    },
+
+What's really damn weird is that this is provided at
+https://vuejs-templates.github.io/webpack/proxy.html 
+but the line:
+'^/api': ''
+is there and it doesn't work.  Someone found the solution for this at
+https://github.com/vuejs-templates/webpack/issues/465 
+That is really bizarre!
+
+Hmmm... Well, I changed it back manually to the above setting and it worked.  I wonder if there was a tab or something that got caught in the cut and paste.  So it now reads:
+
+    proxyTable: {
+      // proxy all requests starting with /api to http://localhost:5000
+      '/api': {
+        target: 'http://localhost:5000',
+        changeOrigin: true,
+        pathRewrite: {
+          '^/api': ''
+        },
+      }
+    },
+
+Alright, that's fixed, so now I can (finally!) move on to trying the handshaking between client and server.
+
+[8/2/17]
+
+Question for Cliff and update:
+Should I include the "proof of (Vue) concept" thing I'm developing now in the sciris repo (probably in another directory)?  Also, should I put up this repo on my personal (gchadder3) GitHub area or wait until there's a sciris repo on optimamodel?
+I found a solution to the cross-origin-request blocked problem yesterday.  Basically, Webpack has a way of setting up a proxy server that will shunt HTTP requests and responses from one host:port to a different one, so I was able to get a GET request working of the Vue app on my little Flask app.
+
+Cliff says he'll set up a sciris subdirectory soon.
+
+He also recommends I take a look at Bosco's start at a framework (though still in Angular).  This is at
+https://github.com/optimamodel/baseoptima 
+
+I'm having a look at Bosco's repo now.
+
+It looks like he stripped down the Optima HIV site here and started getting something working related to the Optima TB model, but I don't see where that model is instantiated in the repo.
+
+If we end up deciding to go back to Angular, starting with Bosco's code might be a good idea.
+
+Ok, I'm going ahead and organizing my sciris repo to include the Vue prototype I'm developing now.
+
+The Vue client is now on my local repo at
+C:\Users\George\GitRepos\OptimaRepos\sciris\vue_proto_webapps\scatterplotter_p1\vue_client
+
+I need to add axios to the package dependencies:
+npm install axios --save
+
+I staged the new package.json file for commiting, then did
+npm install
+After a long wait, things seem to be installed, so now I do
+npm run dev
+...
+and it works!
+
+Ok, I just got my GET requests to pass information.  Basically the way that works is that if, for example, I send a GET request to
+/api?value=graph1&furry=cat
+Flask can pick up arguments using
+request.args['value'] and request.args['furry']
+
+Let's do that now with a POST instead.
+
+Alright!  I got POSTs working now.  There are some differences.  Here's the axios command I needed:
+
+      // Use a POST request to pass along the value.
+      axios.post('/api', {
+        value: this.infoselect
+      })
+      .then(response => {
+        this.serverresponse = response.data
+      })
+      .catch(error => {
+        this.serverresponse = 'There was an error: ' + error.message
+      })
+
+On the Flask end, I needed to access the value element through
+request.get_json()['value']
+
+One thing I need to beware of regarding my work thus far: this will only run using
+npm run dev
+Trying with build instead of dev won't work at this stage.  For things to work, I will probably need to get my simple Twisted server up to do this.  That may or may not be easy, but should be instructive.
+
+Ok, so now we are getting to what I think will be a larger challenge: I'd like to now get my Flask app to pass back a Python graph.
+
+Comment to Cliff:
+I've made some progress here today.  I've gotten both GET and POST to work between Vue and Flask, so I can pass info between the two processes (through axios).  So the next thing is having Flask run a Python graph and passing it back to Vue.  That, I imagine, will be more of a challenge because I now need to get mpld3 working.  But I can look at the Angular code and probably figure that out from that.
+
+His reply:
+it's really easy, you don't even need to look at the angular code
+just look at browser() in webserver.py
+in the optima repo
+
+Cliff made some changes to get this working and I pulled.
+
+To run it, I just start a new Spyder kernel, then:
+import optima as op
+P = op.demo(0)
+op.browser(P.result())
+
+Comment to Cliff:
+yeah, this should help me get this working faster in Vue.
+
+So, if I run this, it brings the graphs up, and then if I go to 
+Tools -> Web Developer -> Page Source
+in Firefox, I can see how this gets rendered. 
+
+I will give a partial listing of that here:
+
+<html><head><title>mpld3 plot</title></head><body>
+
+    <html>
+    <head><script src="https://code.jquery.com/jquery-1.11.3.min.js"></script></head>
+    <body>
+    <div style="float: left" id="fig0" class="fig"></div>
+<div style="float: left" id="fig1" class="fig"></div>
+<div style="float: left" id="fig2" class="fig"></div>
+<div style="float: left" id="fig3" class="fig"></div>
+<div style="float: left" id="fig4" class="fig"></div>
+<div style="float: left" id="fig5" class="fig"></div>
+<div style="float: left" id="fig6" class="fig"></div>
+<div style="float: left" id="fig7" class="fig"></div>
+<div style="float: left" id="fig8" class="fig"></div>
+<div style="float: left" id="fig9" class="fig"></div>
+<div style="float: left" id="fig10" class="fig"></div>
+<div style="float: left" id="fig11" class="fig"></div>
+
+    <script>function mpld3_load_lib(url, callback){var s = document.createElement('script'); s.src = url; s.async = true; s.onreadystatechange = s.onload = callback; s.onerror = function(){console.warn("failed to load library " + url);}; document.getElementsByTagName("head")[0].appendChild(s)} mpld3_load_lib("https://mpld3.github.io/js/d3.v3.min.js", function(){mpld3_load_lib("https://mpld3.github.io/js/mpld3.v0.3git.js", function(){
+mpld3.draw_figure("fig0", {"axes": [{"xlim": [2000.0, 2030.0],   [...] 
+mpld3.draw_figure("fig1", {"axes": [{"xlim": [2000.0, 2030.0],   [...]
+mpld3.draw_figure("fig2", {"axes": [{"xlim": [2000.0, 2030.0],   [...]
+mpld3.draw_figure("fig3", {"axes": [{"xlim": [2000.0, 2030.0],   [...]
+mpld3.draw_figure("fig4", {"axes": [{"xlim": [2000.0, 2030.0],   [...]
+mpld3.draw_figure("fig5", {"axes": [{"xlim": [2000.0, 2030.0],   [...]
+mpld3.draw_figure("fig6", {"axes": [{"xlim": [2000.0, 2030.0],   [...]
+mpld3.draw_figure("fig7", {"axes": [{"xlim": [2000.0, 2030.0],   [...]
+mpld3.draw_figure("fig8", {"axes": [{"xlim": [2000.0, 2030.0],   [...]
+mpld3.draw_figure("fig9", {"axes": [{"xlim": [2000.0, 2030.0],   [...]
+mpld3.draw_figure("fig10", {"axes": [{"xlim": [2000.0, 2030.0],   [...]
+mpld3.draw_figure("fig11", {"axes": [{"xlim": [2000.0, 2030.0],   [...]
+   })});
+    </script>
+    <script>
+    function move_year() {
+        console.log('trying to move year');
+        var al = $('.mpld3-baseaxes').length;
+        var dl = $('div.fig').length
+        if (al === dl) {
+            $('.mpld3-baseaxes > text').each(function() {
+                var value = $(this).text();
+                if (value === 'Year') {
+                    console.log('found year');
+                    $(this).attr('y', parseInt($(this).attr('y'))+10);
+                    console.log($(this).attr('y'));
+                }
+            });
+        } else {
+            setTimeout(move_year, 150);
+        }
+    }
+    function format_xaxis() {
+        var axes = $('.mpld3-xaxis');
+        var al = axes.length;
+        var dl = $('div.fig').length;
+        if (al === dl) {
+            $(axes).find('g.tick > text').each(function() {
+                $(this).text($(this).text().replace(',',''));
+            });
+        } else {
+            setTimeout(format_xaxis, 150);
+        }
+    }
+    function add_lines_to_legends() {
+        console.log('adding lines to legends');
+        var al = $('.mpld3-baseaxes').length;
+        var dl = $('div.fig').length
+        if (al === dl) {
+            $('div.fig').each(function() {
+                var paths = $(this).find('.mpld3-baseaxes > text');
+                if (paths) {
+                    var legend_length = paths.length - 2;
+                    var lines = $(this).find('.mpld3-axes > path');
+                    var lines_to_copy = lines.slice(lines.length - legend_length, lines.length);
+                    $(this).find('.mpld3-baseaxes').append(lines_to_copy);
+                }
+            });
+        } else {
+            setTimeout(add_lines_to_legends, 150);
+        }
+    }
+    $(document).ready(function() {
+        format_xaxis();
+        move_year();
+        add_lines_to_legends();
+    });
+    </script>
+    </body></html>
+    </body></html>
+
+----
+
+Comment to Cliff:
+The code that's actually there embedded in the `browser()` function `html` variable looks like it was probably a bit tricky to figure out.
+There are calls to make the graphs, and then JS calls to tweak the parts of them after the DOM is generated with them in it.
+
+His reply:
+yeah, i think most of it's deprecated
+
+My reply:
+I'll definitely look at the primary `mpld3` docs.  But this does give me a pretty good idea of how the `mpld3` works, in general.
+
+The GitHub sciris repo is now up and I've cloned it, copied my code to it (on my local machine), and commited it (locally).  Soon, I'll test it, and then hopefully, I can push it back to GitHub.
+
+Alright, that works, and I've pushed everything.
+
+[8/3/17]
+
+Comment to Cliff:
+I've added and pushed what I have so far to the new `optimamodel/sciris` repo.  The "proof of concept" Vue/Flask application I'm working on is in the `vue_proto_webapps/scatterplot_p1` directory.
+
+So, today I want to get as far as I can on adding mpld3 to my Vue/Flask app.
+
+Interesting.  These lines bring up first a Python plot, and then put the plot on a server, like the browser() command did that Cliff pointed me to:
+import matplotlib.pyplot as plt, mpld3
+plt.plot([3,1,4,1,5], 'ks-', mec='w', mew=5, ms=20)
+mpld3.show()
+
+Here's the critical mpld3 (GitHub) webpage:
+http://mpld3.github.io/ 
+
+Question to Cliff:
+Oh, I noted a comment you had made on one of the Trello cards about mpld3 being a matter of contention on the team.  I was curious what the source of contention was.  It's looking like it's a pretty easy to use package.  I'm going through the docs on their GitHub site now.
+
+His answer:
+the matter of contention is that bosco had his pet package that he was trying to foist on us. things that he told me were impossible to do in mpld3 I later found out took about 30 min to fix. :)
+
+My answer:
+Admittedly I'm not deep enough yet into these packages to have much of a basis for comparison, but I know D3.js is a standard in web data visualization and matplotlib is probably still the "go-to" graphics library, so `mpld3` a priori seems like a good choice for us.  :-)
+
+It sounds like Bosco was trying to write his own graphics package.  That would be a crazy amount of work!
+
+Question for Cliff:
+So when you need to tweak the appearance of the mpld3 graphs, do you tend to make the tweaks on the JavaScript end, or on the matplotlib end?
+
+His reply:
+usually matplotlib, unless it's a bug in mpld3
+
+A useful article (GitHub issue) from the developers:
+Display multiple mpld3 exports on a single HTML page:
+https://github.com/mpld3/mpld3/issues/128 
+
+Even more explicit answers are given here:
+Display multiple mpld3 exports on a single HTML page (StackOverflow):
+https://stackoverflow.com/questions/22981359/display-multiple-mpld3-exports-on-a-single-html-page/ 
+
+jakevdp has the good answer.  Here's sample JS:
+
+<script type="text/javascript" src="http://d3js.org/d3.v3.min.js"></script>
+<script type="text/javascript" src="http://mpld3.github.io/js/mpld3.v0.1.js"></script>
+<style>
+</style>
+<div id="fig01"></div>
+<div id="fig02"></div>
+<div id="fig03"></div>
+<script type="text/javascript">
+  var json01 = { <snip JSON code> };
+  var json02 = { <snip JSON code> };
+  var json03 = { <snip JSON code> };
+  mpld3.draw_figure("fig01", json01);
+  mpld3.draw_figure("fig02", json02);
+  mpld3.draw_figure("fig03", json03);
+</script>
+
+and here's code on the Python side:
+
+import json
+
+# ... create matplotlib figure
+
+json01 = json.dumps(mpld3.fig_to_dict(fig))
+
+This ought to be fairly immediately applicable.
+
+Hmmm...  Well, I've got Flask passing back a JSON represntation of a figure, but I need to figure out how to do the JavaScript additions under the Webpack Vue apparatus.
+
+I pulled those 2 JavaScript files (for D3.js and mpld3) off of the web and have saved them in local files.  I'm having some trouble figuring out how to load from the web URL using Webpack.
+
+These lines aren't quite working for loading in the two files:
+
+System.import('http://d3js.org/d3.v3.min.js')
+  .then(function () {
+    console.log('D3.js Loaded!')
+  })
+System.import('http://mpld3.github.io/js/mpld3.v0.1.js')
+  .then(function () {
+    console.log('mpld3 Loaded!')
+  })
+
+Adding these two lines before the <script> in MyPage.vue doesn't help either:
+<script type="text/javascript" src="http://d3js.org/d3.v3.min.js"></script>
+<script type="text/javascript" src="http://mpld3.github.io/js/mpld3.v0.1.js"></script>
+
+How can I get the .vue file to run a JS from a fucking external URL??  This shouldn't be this hard!
+
+Comment to Cliff:
+I've got Flask passing back a matplotlib JSON to my Vue app and I know the JavaScript command I need to call to have the mpld3 figure generated in the window, but I'm struggling to figure out how to get the Webpack apparatus to load either the d3 or mpld3 libraries from an external URL, or even from a standalone JS file.  Seems like there should be a straightforward solution to this, but I'm having some difficulty finding it.  It will probably mean I'll need to get a better understanding of Webpack than my present "cookbook" understanding.
+
+His reply:
+can't you just use vanilla JS? i.e. `<script>`?
+
+My reply:
+Not within the .vue file so that the main JS code in the file can actually find the scripts being run.  The .vue file method I'm using that seems to be what lots of people use relies on vue-loader and Webpack.  I guess a fallback could be abandoning that apparatus, but it makes some things easy (like allowing the HTML, SASS, and JS code for a Vue component to all be in 1 .vue file).
+
+His reply:
+hmm, ok...i kind of think it would be good to be able to use standard JS as well
+
+My reply:
+Well, I'll start a version of this not using vue-loader apparatus.  It might be worth it to compare the overhead involved.  My feeling is that when we are working with larger projects with lots of components, the Webpack approach is likely to be a cleaner one, but if we run into a lot of these kinds of mysteries maybe it won't be worth it.  I guess if I use regular JS, I need to revert to ES5, since not all browsers support ES6.  (Otherwise, I have to use a transpiler, which is one of the things Webpack gives you for free.)
+
+Okay, I made a hello world Vue app here:
+C:\Users\George\GitRepos\OptimaRepos\sciris\vue_proto_webapps\scatterplotter_p1\vue_client2\index.html
+
+To access this, I just need to go to my browser and put in this for the URL:
+file:///C:/Users/George/GitRepos/OptimaRepos/sciris/vue_proto_webapps/scatterplotter_p1/vue_client2/index.html 
+
+Ok, I got axios to send GET requests, but now I've got the damn CORS error again.  :(  
+
+This time, I'm either going to have to set up my own proxy server or I'm going to have to get Twisted working serving both the web page and the app.
+
+Well, I guess I may as well move towards a Twisted solution to the CORS problem I'm currently seeing.  Plainly, that will be a problem even for the Webpack method because the build method will no longer engage the proxy server that was engaged during the dev runs.
+
+Actually, let's see if I can makes some progress bashing on this vue-loader / Webpack problem first.  Getting a Twisted server working is a shift of gears I really don't want to make at this stage today.
+
+Let's do a little reading on the subject:
+Webpack: When To Use And Why:
+http://blog.andrewray.me/webpack-when-to-use-and-why/ 
+
+I need to have a plan for what my goal is to have developed by the Monday after next (the 2-week period).  At this point here's what I think we need to have:
+* The web client needs to be in Vue without the vue-loader apparatus.
+* GET and POST requests to the Flask app and responses from it need to be working.  That means we'll need to get the Twisted server working serving both the client and Flask server.
+* We need to be able to send a text string that selects which mpld3 graph the server shows to the Vue client and the interface needs to be working for switching among the selected graphs.
+
+That's the bare minimum, and I should be embarrassed if that is the best I can do in the remaining time.  Beyond that, it would be good to have the following:
+* It should be possible to upload a .csv file to the Flask app and have it do a scatter plot of it and send it back for display to the Vue client.
+* It would be nice to be able to download a .png file of the displayed matplotlib graph.
+
+Ok, I think this is probably plenty of work here for the remaining time.
+
+[8/4/17]
+
+I was looking in my Vue 2 Cookbook book in the chapter focused on Webpack, and I see something I want to try, basically just moving JavaScript (.js) files into the src directory.
+
+Hmmm...  Well... I was able to put a .js file in src, but it was a function and I had to wrap it in an export default function.  That's not quite what I need.
+
+Well, shit!  It looks like you have to have Webpack do a special dance to bring in non-ES6-modules in JS files:
+
+Shimming (Webpack docs):
+https://webpack.js.org/guides/shimming/ 
+
+Shimming Modules (older Webpack 1 docs):
+https://webpack.github.io/docs/shimming-modules.html 
+
+Generally, the configuration of the Vue webpack template is a biatch!
+
+Ok, I tried noParse and that completely didn't work.
+
+Well, I've had quite enough of this.  I've already frittered away 3 hours on this and have made the barest dent in the problem.  I'm going to spend the rest of the day working back into the no-webpack domain.
+
+Maybe I should actually do something uncharacteristic and post a StackOverflow question.  (That would be my first on that forum; so far I've just consulted StackOverflow, never posted or answered any questions.)  Yeah, I'll do that.  But I will wait until I've made some more progress on the no-webpack path first.  But it would be worth posting the question because I think we ultimately do want to be able to use the webpack template Vue provides when we have a large project.  It may take awhile for the community to answer the question, but it's worth getting the answer while I'm following Plan B.
+
+I really hate Spyder; that damn program is so brittle and crashes every day I use it!  And the fucking thing, at least half of the time when I restart the kernal, fails and has to try several times before the kernel runs properly.
+
+I'm moving this notebook and the MindMap for Sciris into the sciris repo.
+

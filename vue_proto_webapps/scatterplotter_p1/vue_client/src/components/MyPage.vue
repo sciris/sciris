@@ -9,12 +9,14 @@
       <button @click="sendRequest">Send request to server</button>
       <h2>Server return</h2>
       <p>{{ serverresponse }}</p>
+      <div id="fig01"></div>
     </div>
   </div>
 </template>
 
 <script>
 import axios from 'axios'
+import mytestlog from '../mytestlog'
 export default {
   name: 'MyPage',
   data () {
@@ -25,6 +27,8 @@ export default {
   },
   methods: {
     sendRequest () {
+      mytestlog()
+
       // Use a GET request to pass along the value.
       /* var getResource = '/api?value=' + this.infoselect
       axios.get(getResource)
@@ -41,6 +45,8 @@ export default {
       })
       .then(response => {
         this.serverresponse = response.data
+        // console.log('Weeno! Ya weeno! Ya weeno!')
+        // mpld3.draw_figure('fig01', response.data)
       })
       .catch(error => {
         this.serverresponse = 'There was an error: ' + error.message

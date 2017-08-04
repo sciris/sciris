@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>My first Vue app</title>
+  <script src="https://unpkg.com/vue"></script>
+</head>
+<body>
+  <div id="app">
+    <h1>Scatterplotter for Vue</h1>
+    <h2>Client request</h2>
+    <label>Server info request</label>
+    <input v-model="infoselect">
+    <button @click="sendRequest">Send request to server</button>
+    <h2>Server return</h2>
+    <p>{{ serverresponse }}</p>
+    <div id="fig01"></div>
+  </div>
+
+  <script src="https://unpkg.com/axios/dist/axios.min.js"></script>
+
+  <script>
+    var app = new Vue({
+      el: '#app',
+      data: {
+        infoselect: 'graph1', 
+        serverresponse: ''
+      }, 
+      methods: {
+        sendRequest: function() {
+          var getResource = 'http://localhost:5000/api?value=' + this.infoselect;
+          axios.get(getResource)
+            .then(function(response) {
+               this.serverresponse = response
+            })
+            .catch(function(error) {
+              this.serverresponse = 'There was an error: ' + error.message
+            });
+        }
+      }
+    })
+  </script>
+</body>
+</html>
