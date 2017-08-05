@@ -23,17 +23,18 @@
       el: '#app',
       data: {
         infoselect: 'graph1', 
-        serverresponse: ''
+        serverresponse: '[Click button to send request]'
       }, 
       methods: {
         sendRequest: function() {
-          var getResource = 'http://localhost:5000/api?value=' + this.infoselect;
+          var getResource = 'http://localhost:8080/api?value=' + this.infoselect;
+          var vm = this;
           axios.get(getResource)
             .then(function(response) {
-               this.serverresponse = response
+              vm.serverresponse = response.data;
             })
             .catch(function(error) {
-              this.serverresponse = 'There was an error: ' + error.message
+              vm.serverresponse = 'There was an error: ' + error.message;
             });
         }
       }

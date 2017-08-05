@@ -1354,3 +1354,25 @@ I tried adding the proxyTable stuff to the webpack.config.js file, and things ba
 
 Ok, I got my new code to the stage of having a CORS error.  So this road, too, leads to Twisted.  ;-)
 
+Ok, so I'm going to go ahead and probably just work with the vue_client1b client here since it has nice reloading features, unlike the inchoate "plain old JavaScript and HTML" version I've been creating.  I may have to go back to the latter method to get mpld3 working once I've solved the CORS problem.
+
+Hmmm...  Actually, it may be easier to start by pushing the single index.html file from vue_client2 to the server.  I'm basically trying to lift _twisted_wsgi.py and almost use it directly.
+
+Ok!  I'm getting close here!  With basically a couple of changes to the _twisted_wsgi.py file, I have it so that the GET packets are flowing between the Vue client and Flask server.  However, for some reason, it's not showing the return.
+
+Hmmm...  I don't get it.  The GET response has the correct text, but it's not updating the Vue variable.
+
+Well, this is weird.  I see that when the button is clicked the axios.get() call is spawned.  Right after this I had a line show the old variable value, and then when the success callback is entered for the GET response.  It find undefined for this.serverresponse before it is set, which is obviously a problem.
+
+Okay!  I found the fix at:
+https://laracasts.com/discuss/channels/vue/update-vue-object-with-axios-response-data 
+
+Basically, you need to put in
+var vm = this;
+before you do the axios calls, and then you reference
+vm.serverresponse
+instead of
+this.serverresponse
+
+Alright!  This is good.  I have some good news to report to Cliff.
+
