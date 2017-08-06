@@ -1376,3 +1376,35 @@ this.serverresponse
 
 Alright!  This is good.  I have some good news to report to Cliff.
 
+Ok, I pushed my changes.
+
+Update for Cliff:
+I was able to get Twisted working today to serve both the Vue client and Flask app.  (Mostly I was able to reuse the existing `_twisted_wsgi.py` file.)  So, I have GET HTTP calls working for the "plain JS" app (`vue_client2` in the sciris repo).  Next step will be to get POSTs working (which should be easy), and then mpld3 graphs!
+
+Now I wonder, though...  Do I have what I need to make vue_client1b work?  (That's the one that uses the webpack-simple template instead of the webpack one.)  I don't think I can really use the same Twisted solution for that when I run in dev mode.  That is because there is no file for me to set as a resource in _twisted_wsgi.py; webpack just spawns stuff and opens up a server.  I guess if I could find out where the temporary files are (if temp files are used) by the dev server, then I could point Twisted to them, although Twisted would have to set up the server on a different port than what Webpack uses.  I might look into this a little, but not right now.
+
+It occurs to me that I might want to send the mpld3 people a question about whether they have a way of using their library with Webpack.  It really seems like the problem is on their end because there really ought to be a package that can be downloaded from npm for this and there isn't.
+
+Ah, their website (mpld3's) specifically says:
+Please direct questions about how to do specific plots or interactions to Stack Overflow and tag them with mpld3 to make sure we see them. Pull requests, feature requests, and other ideas can be submitted via the GitHub page. 
+
+So, I will start with a question on StackOverflow.  If I hear nothing or their answer indicates that this feature is not implemented, then I can go to GitHub and submit a feature request.
+
+[8/6/17]
+
+Ok, I got POSTs working.  That was fairly straightforward.
+
+Now let's see how things go with mpld3.
+
+Comment to Cliff:
+Well, this is less than ideal news:
+"Note: mpld3 is no longer being actively maintained: feature requests & bug reports are likely to go unanswered. If you are interested in maintaining this project, please contact one of the repository owners."
+from https://github.com/mpld3/mpld3 
+I'm not sure if I'd say this means we need to use a different library, but it sounds like it's a dying project.  :(
+
+Well, this is a bummer.  It also suggests it's not worth it to post any StackOverflow query about this.
+
+I think the latest version of matplotlib is 0.3.
+
+Comment to Cliff:
+Well, the _good_ news, though, is that I just got mpld3 working on my "plain JS" Vue app (vue_client2).  So now I've got Flask and Twisted working together to serve and display a graph from a Flask app.

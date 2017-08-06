@@ -4,15 +4,18 @@
 <node CREATED="1501095710060" ID="ID_833907438" MODIFIED="1501095759545" POSITION="right" TEXT="My Objectives (7/26/17)">
 <node CREATED="1501095786430" ID="ID_1294954997" MODIFIED="1501095831335" TEXT="Develop the Sciris framework for building web applications where users log into web sessions and run model simulations."/>
 </node>
-<node CREATED="1501095720395" ID="ID_210371767" MODIFIED="1501528599654" POSITION="right" TEXT="My Agenda (7/31/17)">
+<node CREATED="1501095720395" ID="ID_210371767" MODIFIED="1501899567159" POSITION="right" TEXT="My Agenda (8/4/17)">
 <font BOLD="true" NAME="SansSerif" SIZE="12"/>
-<node CREATED="1501096688972" ID="ID_962056441" MODIFIED="1501096699059" TEXT="Get familiar with Vue.">
+<node CREATED="1501899509650" ID="ID_145732380" MODIFIED="1501899535690" TEXT="Submit query to StackOverflow about how to get mpld3 working with Vue and webpack.">
 <font BOLD="true" NAME="SansSerif" SIZE="12"/>
 </node>
-<node CREATED="1501273896300" ID="ID_1969609736" MODIFIED="1501273950603" TEXT="Get stripped down version of my polyfitter Shiny app working in Vue using webpack template.">
+<node CREATED="1501899619767" ID="ID_524731174" MODIFIED="1501899631263" TEXT="Get scatterplotter_p1 app working.">
 <font BOLD="true" NAME="SansSerif" SIZE="12"/>
 <node CREATED="1501297526016" ID="ID_1694767845" MODIFIED="1501297538302" TEXT="due Monday, 8/14/17"/>
-<node CREATED="1501297552503" ID="ID_285998393" MODIFIED="1501297576358" TEXT="I will start with a scatter-plot data-loader and graphing application."/>
+<node CREATED="1501899643920" ID="ID_104761882" MODIFIED="1501899661962" TEXT="original idea was to implement my Shiny R polyfitter app"/>
+</node>
+<node CREATED="1501096688972" ID="ID_962056441" MODIFIED="1501096699059" TEXT="Get familiar with Vue.">
+<font BOLD="true" NAME="SansSerif" SIZE="12"/>
 </node>
 <node CREATED="1501091624919" ID="ID_1785334982" MODIFIED="1501273890230" TEXT="Figure out how I want to structure the Sciris framework.">
 <font NAME="SansSerif" SIZE="12"/>
@@ -297,7 +300,10 @@
 </node>
 <node CREATED="1501776727211" ID="ID_331782536" MODIFIED="1501776731523" TEXT="mpld3">
 <node CREATED="1490113813130" ID="ID_928809867" MODIFIED="1499637971102" TEXT="Matplotlib D3">
-<node CREATED="1490113819834" ID="ID_1029673621" LINK="http://mpld3.github.io/" MODIFIED="1490113944412" TEXT="GitHub project page"/>
+<node CREATED="1490113819834" ID="ID_1029673621" LINK="http://mpld3.github.io/" MODIFIED="1502049397621" TEXT="project home page">
+<font BOLD="true" NAME="SansSerif" SIZE="12"/>
+</node>
+<node CREATED="1502048129783" ID="ID_552468356" LINK="https://github.com/mpld3/mpld3" MODIFIED="1502048134853" TEXT="GitHub source"/>
 <node CREATED="1501786621870" ID="ID_860725635" LINK="http://mpld3.github.io/modules/API.html" MODIFIED="1501788665287" TEXT="API documentation"/>
 <node CREATED="1490113868626" MODIFIED="1490113868626" TEXT="The mpld3 project brings together Matplotlib, the popular Python-based graphing library, and D3js, the popular JavaScript library for creating interactive data visualizations for the web."/>
 </node>
