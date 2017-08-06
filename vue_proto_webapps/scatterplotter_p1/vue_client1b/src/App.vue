@@ -12,6 +12,7 @@
 
 <script>
 import axios from 'axios'
+import mytestlog from './mytestlog'
 export default {
   name: 'app',
   data () {
@@ -22,8 +23,10 @@ export default {
   },
   methods: {
     sendRequest () {
+      mytestlog()
+
       // Use a GET request to pass along the value.
-      var getResource = 'http://localhost:5000/api?value=' + this.infoselect
+      var getResource = 'http://localhost:8080/api?value=' + this.infoselect
       axios.get(getResource)
         .then(response => {
           this.serverresponse = response.data

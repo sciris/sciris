@@ -4,14 +4,21 @@
 <node CREATED="1501095710060" ID="ID_833907438" MODIFIED="1501095759545" POSITION="right" TEXT="My Objectives (7/26/17)">
 <node CREATED="1501095786430" ID="ID_1294954997" MODIFIED="1501095831335" TEXT="Develop the Sciris framework for building web applications where users log into web sessions and run model simulations."/>
 </node>
-<node CREATED="1501095720395" ID="ID_210371767" MODIFIED="1501899567159" POSITION="right" TEXT="My Agenda (8/4/17)">
+<node CREATED="1501095720395" ID="ID_210371767" MODIFIED="1502050312182" POSITION="right" TEXT="My Agenda (8/6/17)">
 <font BOLD="true" NAME="SansSerif" SIZE="12"/>
 <node CREATED="1501899509650" ID="ID_145732380" MODIFIED="1501899535690" TEXT="Submit query to StackOverflow about how to get mpld3 working with Vue and webpack.">
 <font BOLD="true" NAME="SansSerif" SIZE="12"/>
 </node>
 <node CREATED="1501899619767" ID="ID_524731174" MODIFIED="1501899631263" TEXT="Get scatterplotter_p1 app working.">
 <font BOLD="true" NAME="SansSerif" SIZE="12"/>
-<node CREATED="1501297526016" ID="ID_1694767845" MODIFIED="1501297538302" TEXT="due Monday, 8/14/17"/>
+<node CREATED="1502050161311" ID="ID_871612260" MODIFIED="1502050204343" TEXT="Get canonical scatterplot plot set up in api.py."/>
+<node CREATED="1502050210311" ID="ID_1469324660" MODIFIED="1502050267011" TEXT="Get it set up so you can send datapoints to /api to be plotted."/>
+<node CREATED="1502050273537" ID="ID_1947045183" MODIFIED="1502050303062" TEXT="Enable opening and uploading of .csv data to Flask app."/>
+<node CREATED="1502050339039" ID="ID_1888839643" MODIFIED="1502050387115" TEXT="Possibly, get stuff working for (webpack-based) vue_client.">
+<node CREATED="1502050976212" ID="ID_1594625265" MODIFIED="1502051030002" TEXT="Get non-module src .js file working in vue_client1b."/>
+<node CREATED="1502051030682" ID="ID_1782470415" MODIFIED="1502051041428" TEXT="Get URL load working in vue_client1b."/>
+</node>
+<node CREATED="1501297526016" ID="ID_1694767845" MODIFIED="1502050154378" TEXT="[due Monday, 8/14/17]"/>
 <node CREATED="1501899643920" ID="ID_104761882" MODIFIED="1501899661962" TEXT="original idea was to implement my Shiny R polyfitter app"/>
 </node>
 <node CREATED="1501096688972" ID="ID_962056441" MODIFIED="1501096699059" TEXT="Get familiar with Vue.">

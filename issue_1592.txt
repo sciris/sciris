@@ -1408,3 +1408,18 @@ I think the latest version of matplotlib is 0.3.
 
 Comment to Cliff:
 Well, the _good_ news, though, is that I just got mpld3 working on my "plain JS" Vue app (vue_client2).  So now I've got Flask and Twisted working together to serve and display a graph from a Flask app.
+
+Cliff replies:
+oh, that really sucks about mpld3...but glad you got it working
+i still think it's the way to go
+other things like plotly are disgustingly rigid
+and custom-written is hell
+
+I'm working with vue_client1b, trying to get some more stuff working.
+
+First, I figured out how to get Twisted up for
+npm run build
+
+After I do the above command, it builds everything and makes a /dist/build.js file that gets referenced by index.html.  So, I just need to change my line in _twisted_wsgi.py to reference the /vue_client1b directory. Easy-peasy!
+
+Ok, that's cool.  I've fixed the CORS problem for vue_client1b.  I should be able to do the same similarly for vue_client.
