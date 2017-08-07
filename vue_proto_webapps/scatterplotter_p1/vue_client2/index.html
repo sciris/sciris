@@ -49,6 +49,12 @@
           })
           .then(function (response) {
             vm.serverresponse = 'See graph below';
+            // If we already have a figure, pop the figure object, and clear 
+            // the DOM.
+            if (mpld3.figures.length > 0) {
+              mpld3.figures.pop();
+              document.getElementById('fig01').innerHTML = '';
+            }
             mpld3.draw_figure('fig01', response.data);
           })
           .catch(function (error) {
