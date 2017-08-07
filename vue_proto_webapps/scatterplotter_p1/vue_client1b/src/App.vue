@@ -12,7 +12,8 @@
 
 <script>
 import axios from 'axios'
-import mytestlog from './mytestlog'
+require('script-loader!./mytestlog.js');
+// import mytestlog from './mytestlog'
 export default {
   name: 'app',
   data () {
