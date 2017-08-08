@@ -1,7 +1,7 @@
 {
   "name": "vue_client",
   "version": "1.0.0",
-  "description": "A Vue.js project",
+  "description": "Random scatterplot app implemented from vue-cli webpack template",
   "author": "gchadder3 <gchadder3@gmail.com>",
   "private": true,
   "scripts": {

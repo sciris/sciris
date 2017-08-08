@@ -21,8 +21,9 @@
 
 <script>
 import axios from 'axios'
-require('script-loader!./d3.v3.min.js');
-require('script-loader!./mpld3.v0.3.js');
+require('script-loader!./d3.v3.min.js')
+require('script-loader!./mpld3.v0.3.js')
+require('script-loader!../testlog.js')
 export default {
   name: 'app',
   data () {
@@ -33,6 +34,8 @@ export default {
   },
   methods: {
     sendRequest () {
+      testlog()
+
       // Use a POST request to pass along the value.
       axios.post('/api', {
         value: this.infoselect
@@ -42,8 +45,8 @@ export default {
         // If we already have a figure, pop the figure object, and clear 
         // the DOM.
         if (mpld3.figures.length > 0) {
-          mpld3.figures.pop();
-          document.getElementById('fig01').innerHTML = '';
+          mpld3.figures.pop()
+          document.getElementById('fig01').innerHTML = ''
         }
         mpld3.draw_figure('fig01', response.data)
       })
