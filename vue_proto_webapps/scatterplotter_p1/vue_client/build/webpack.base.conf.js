@@ -27,12 +27,19 @@ module.exports = {
   },
   module: {
     rules: [
+/*      {
+        test: /testlog\.js$/,
+        use: [ 'script-loader' ]
+      },
+      {
+        test: [/d3\.v3\.min\.js$/, /mpld3\.v0\.3\.js$/],
+        use: [ 'script-loader' ]
+      }, */
       {
         test: /\.(js|vue)$/,
         loader: 'eslint-loader',
         enforce: 'pre',
         include: [resolve('src'), resolve('test')],
-//        exclude: /testlog\.js/,
         options: {
           formatter: require('eslint-friendly-formatter')
         }

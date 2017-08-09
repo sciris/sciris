@@ -23,7 +23,10 @@
 import axios from 'axios'
 // require('script-loader!../d3.v3.min.js')
 // require('script-loader!../mpld3.v0.3.js')
-require('script-loader!../testlog.js')
+// require('script-loader!../testlog.js')
+// import exec from '../d3.v3.min.js'
+// import exec2 from '../mpld3.v0.3.js'
+// import exec3 from '../testlog.js'
 export default {
   name: 'MyPage',
   data () {
@@ -34,7 +37,7 @@ export default {
   },
   methods: {
     sendRequest () {
-      testlog()
+      // testlog()
 
       // Use a POST request to pass along the value.
       axios.post('/api', {
@@ -44,7 +47,7 @@ export default {
         this.serverresponse = response.data
         // If we already have a figure, pop the figure object, and clear
         // the DOM.
-        /* if (mpld3.figures.length > 0) {
+/*        if (mpld3.figures.length > 0) {
           mpld3.figures.pop()
           document.getElementById('fig01').innerHTML = ''
         }

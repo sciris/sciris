@@ -40,8 +40,8 @@ def run():
             return r
     
     #base_resource = File('../vue_client/dist/')
-    #base_resource = File('../vue_client1b/')
-    base_resource = File('../vue_client2/')
+    base_resource = File('../vue_client1b/')
+    #base_resource = File('../vue_client2/')
     #base_resource.putChild('dev', File('client/source/'))
     base_resource.putChild('api', OptimaResource(wsgi_app))
 
