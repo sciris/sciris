@@ -16,7 +16,7 @@
   <div id="app">
     <h1>Hello, world</h1>
     <button @click="sendRequest">Get new dots</button>
-    <div id="fig01"></div>
+    <div id="randomgraph"></div>
   </div>
 
 
@@ -43,9 +43,9 @@
             // If we already have a figure, pop the figure object, and clear the DOM -- WARNING, needs fixing
             if (mpld3.figures.length > 0) {
               mpld3.figures.pop();
-              document.getElementById('fig01').innerHTML = '';
+              document.getElementById('randomgraph').innerHTML = '';
             }
-            mpld3.draw_figure('fig01', response.data);
+            mpld3.draw_figure('randomgraph', response.data);
           })
           .catch(function (error) {
             vm.serverresponse = 'There was an error: ' + error.message;

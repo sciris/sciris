@@ -1,5 +1,11 @@
-import sys
+'''
+Twisted server -- should not need to be modified. Run this to start the server!
 
+Usage:
+   python server.py
+'''
+
+import sys
 from twisted.internet import reactor
 from twisted.internet.endpoints import serverFromString
 from twisted.logger import globalLogBeginner, FileLogObserver, formatEvent
@@ -8,7 +14,6 @@ from twisted.web.server import Site
 from twisted.web.static import File
 from twisted.web.wsgi import WSGIResource
 from twisted.python.threadpool import ThreadPool
-
 import api
 
 
