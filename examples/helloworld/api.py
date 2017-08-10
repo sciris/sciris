@@ -12,7 +12,7 @@ from flask import Flask, request # The webapp
 app = Flask(__name__) 
 
 # Define the API
-@app.route('/getgraph', methods=['GET', 'POST'])
+@app.route('/api', methods=['GET', 'POST'])
 def showGraph():
     graphdata = model.makegraph() # Create the graph from Python
     graphjson = json.dumps(mpld3.fig_to_dict(graphdata)) # Convert to JSON

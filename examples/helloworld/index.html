@@ -35,7 +35,7 @@
           var vm = this;
 
           // Use a POST request to pass along the value.
-          axios.post('http://localhost:8080/getgraph', {
+          axios.post('http://localhost:8080/api', {
             value: vm.infoselect
           })
           .then(function (response) {
