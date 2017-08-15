@@ -39,7 +39,7 @@ def run():
             request.responseHeaders.setRawHeaders(b'expires', [b'0'])
             return r
     
-    base_resource = File('../user_interface/')
+    base_resource = File('../user_interface/dist/')
     #base_resource.putChild('dev', File('client/source/'))
     base_resource.putChild('api', OptimaResource(wsgi_app))
 

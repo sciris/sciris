@@ -15,7 +15,49 @@ together.
 
 ### Windows Systems
 
-[needs to be written...]
+#### Initial Build of the Client
+
+After cloning or pulling this repo, the following steps start up the app:
+* `cd bin`
+* `win_first_build` does the initial `npm install` (which can take a few 
+minutes) and then does the initial build.
+
+#### Running Using the Build Version
+
+* `cd bin`
+* `win_buildrun` brings up the server hosting both the 
+client / UI and server-side code.
+* Now you can go into your browser and navigate to http://localhost:8080 .
+You may possibly need to refresh/reload, but you should see the button
+when the app is up.
+* Use `Ctrl-C` to end the Twisted session, taking down the server. (You can 
+answer `n` to the "Terminate batch job" query.)
+
+#### Running Using the Webpack Development Server
+
+The process for using the Webpack dev server (which has the benefit of 
+allowing hot-reloading of client files when you edit them during development) 
+is somewhat different: it does not use Twisted but instead sets up the Flask 
+server directly on Port 5000, and the Webpack dev server sets up a server 
+for the Vue web-pages on Port 8080, and also sets up a proxy to send the 
+RPC requests to Port 5000.  To set this up, in a first terminal window, do 
+the following:
+* `cd bin`
+* `win_devserver` starts the Flask server in Port 5000.
+* `Ctrl-C` closes down the Flask server when you are finished using the dev 
+server site. (You can answer `n` to the "Terminate batch job" query.)
+
+Then in a second terminal window, do the following:
+* `cd bin`
+* `win_devclient` compiles the code and brings up the Webpack dev server and 
+automatically opens a browser window pointed to the web page.
+* `Ctrl-C` shuts down the dev server and proxy when you are finished with 
+the web site.  (You can answer `n` to the "Terminate batch job" query.)
+
+#### Rebuilding the Build Version After Development Changes
+
+* `cd bin`
+* `win_build` generates the (new) build version of the app.
 
 ### Mac OSX Systems
 
