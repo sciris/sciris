@@ -25,7 +25,7 @@ together.
 ## Vue/Python Code Examples
 
 In the `examples` and `vue_proto_webapps` directories are contained a number 
-of working examples of web applications combining Vue, Flask, and Twisted.  
+of working examples of web applications combining Vue, Flask, and Twisted. 
 These are being used as stepping stones for developing the main framework 
 based in `user_interface`, `session_manager`, `model_code`, and `bin`.
 

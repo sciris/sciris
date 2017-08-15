@@ -11,7 +11,7 @@ server has been enabled.
 After cloning or pulling this repo, the following steps start up the app:
 * `cd vue_proto_webapps/scatterplotter_p1/vue_client`
 * `npm install` builds the Node modules the app uses.  This step can take 
-significant time.
+a few minutes to complete.
 * `npm run build` generates the build version of the app.
 
 ## Running Using the Build Version
@@ -31,7 +31,8 @@ allowing hot-reloading of client files when you edit them during development)
 is somewhat different: it does not use Twisted but instead sets up the Flask 
 server directly on Port 5000, and the Webpack dev server sets up a server 
 for the Vue web-pages on Port 8080, and also sets up a proxy to send the 
-RPC requests to Port 5000.  To set this up, in a first terminal window, does
+RPC requests to Port 5000.  To set this up, in a first terminal window, do 
+the following:
 * `cd vue_proto_webapps/scatterplotter_p1/flask_server`
 * `python api.py` starts the Flask server in Port 5000.
 * `Ctrl-C` closes down the Flask server when you are finished using the dev 
