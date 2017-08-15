@@ -17,7 +17,7 @@ together.
 
 #### Initial Build of the Client
 
-After cloning or pulling this repo, use following steps start up the do the 
+After cloning or pulling this repo, use the following steps to do the 
 initial build of the app:
 * `cd user_interface`
 * `npm install` builds the Node modules the app uses.  This step can take 
@@ -49,7 +49,8 @@ the following:
 * `Ctrl-C` closes down the Flask server when you are finished using the dev 
 server site. (You can answer `n` to the "Terminate batch job" query.)
 
-Then in a second terminal window, do the following:
+With the first window running the Flask server, in a second terminal window, 
+do the following:
 * `cd bin`
 * `win_devclient` compiles the code and brings up the Webpack dev server and 
 automatically opens a browser window pointed to the web page.
