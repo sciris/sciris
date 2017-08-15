@@ -23,10 +23,10 @@ module.exports = {
         test: /testlog\.js$/,
         use: [ 'script-loader' ]
       }, */
-      {
+      /* {
         test: [/d3\.v3\.min\.js$/, /mpld3\.v0\.3\.js$/],
         use: [ 'script-loader' ]
-      },
+      }, */
       {
         test: /\.js$/,
         loader: 'babel-loader',
