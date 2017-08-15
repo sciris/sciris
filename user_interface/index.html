@@ -1,78 +1,11 @@
 <!DOCTYPE html>
 <html>
-<head>
-  <title>My first Vue app</title>
-  <script src="https://unpkg.com/vue"></script>
-</head>
-<body>
-  <div id="app">
-    <h1>Random Scatterplotter for Vue</h1>
-    <button @click="sendRequest">Get random scatterplot</button>
-    <div id="fig01"></div>
-  </div>
-
-  <!-- old version
-  <div id="app">
-    <h1>Scatterplotter for Vue</h1>
-    <h2>Client request</h2>
-    <label>Server info request</label>
-    <input v-model="infoselect">
-    <button @click="sendRequest">Send request to server</button>
-    <h2>Server return</h2>
-    <p>{{ serverresponse }}</p>
-    <div id="fig01"></div>
-  </div>
-  -->
-
-  <!-- Load the axios library for HTTP calls. -->
-  <script src="https://unpkg.com/axios/dist/axios.min.js"></script>
-
-  <script src="http://d3js.org/d3.v3.min.js"></script>
-
-  <!-- Load the latest mpld3 library (Version 0.3). -->
-  <script src="http://mpld3.github.io/js/mpld3.v0.3.js"></script>
-
-  <script>
-    var app = new Vue({
-      el: '#app',
-      data: {
-        infoselect: 'graph1', 
-        serverresponse: '[Click button to send request]'
-      }, 
-      methods: {
-        sendRequest: function () {
-          var vm = this;
-
-          // Use a POST request to pass along the value.
-          axios.post('http://localhost:8080/api', {
-            value: vm.infoselect
-          })
-          .then(function (response) {
-            vm.serverresponse = 'See graph below';
-            // If we already have a figure, pop the figure object, and clear 
-            // the DOM.
-            if (mpld3.figures.length > 0) {
-              mpld3.figures.pop();
-              document.getElementById('fig01').innerHTML = '';
-            }
-            mpld3.draw_figure('fig01', response.data);
-          })
-          .catch(function (error) {
-            vm.serverresponse = 'There was an error: ' + error.message;
-          })
-
-          // Use a GET request to pass along the value.
-          /* var getResource = 'http://localhost:8080/api?value=' + this.infoselect;
-          axios.get(getResource)
-            .then(function (response) {
-              vm.serverresponse = response.data;
-            })
-            .catch(function (error) {
-              vm.serverresponse = 'There was an error: ' + error.message;
-            }); */
-        }
-      }
-    })
-  </script>
-</body>
+  <head>
+    <meta charset="utf-8">
+    <title>user_interface</title>
+  </head>
+  <body>
+    <div id="app"></div>
+    <!-- built files will be auto injected -->
+  </body>
 </html>
