@@ -9,26 +9,28 @@ together.
 
 ## Installation and Run Instructions
 
-### Linux Systems
+### Installing on Linux Systems
 
 [needs to be written...]
 
-### Windows Systems
+### Installing on Windows Systems
 
 #### Initial Build of the Client
 
-After cloning or pulling this repo, the following steps start up the app:
-* `cd bin`
-* `win_first_build` does the initial `npm install` (which can take a few 
-minutes) and then does the initial build.
+After cloning or pulling this repo, use following steps start up the do the 
+initial build of the app:
+* `cd user_interface`
+* `npm install` builds the Node modules the app uses.  This step can take 
+a few minutes to complete.
+* `npm run build` generates the build version of the app.
 
 #### Running Using the Build Version
 
 * `cd bin`
 * `win_buildrun` brings up the server hosting both the 
 client / UI and server-side code.
-* Now you can go into your browser and navigate to http://localhost:8080 .
-You may possibly need to refresh/reload, but you should see the button
+* Now you can go into your browser and navigate to http://localhost:8080.
+You may possibly need to refresh/reload, but you should see the UI 
 when the app is up.
 * Use `Ctrl-C` to end the Twisted session, taking down the server. (You can 
 answer `n` to the "Terminate batch job" query.)
@@ -59,7 +61,7 @@ the web site.  (You can answer `n` to the "Terminate batch job" query.)
 * `cd bin`
 * `win_build` generates the (new) build version of the app.
 
-### Mac OSX Systems
+### Installing on Mac OSX Systems
 
 [needs to be written...]
 
