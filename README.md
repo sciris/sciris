@@ -15,11 +15,21 @@ together.
 
 ### Installing on Windows Systems
 
+#### Package and Library Depedencies
+
+Make sure that you have `npm` and `git` installed on your machine.  In 
+your Python setup, you also need to have the following packages:
+* numpy
+* matplotlib
+* flask
+* twisted
+* mpld3
+
 #### Initial Build of the Client
 
 After cloning or pulling this repo, use the following steps to do the 
 initial build of the app:
-* `cd user_interface`
+* `cd vueinterface`
 * `npm install` builds the Node modules the app uses.  This step can take 
 a few minutes to complete.
 * `npm run build` generates the build version of the app.

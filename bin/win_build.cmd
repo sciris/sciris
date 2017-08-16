@@ -1,3 +1,3 @@
-cd ../user_interface
+cd ../vueinterface
 npm run build
 cd ../bin

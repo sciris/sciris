@@ -1,3 +1,3 @@
-cd ../session_manager
+cd ../sessionmanager
 python api.py
 cd ../bin
