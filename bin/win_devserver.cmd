@@ -1,3 +1,1 @@
-cd ../sessionmanager
-python api.py
-cd ../bin
+python run_devsessionmanager.py

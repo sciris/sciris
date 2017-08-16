@@ -42,6 +42,9 @@ client / UI and server-side code.
 * Now you can go into your browser and navigate to http://localhost:8080.
 You may possibly need to refresh/reload, but you should see the UI 
 when the app is up.
+* If you make changes to the Python `sessionmanager` or `scirismodel` code, 
+the Twisted/Flask server will automatically restart so changes can be 
+reflected in the app behavior.
 * Use `Ctrl-C` to end the Twisted session, taking down the server. (You can 
 answer `n` to the "Terminate batch job" query.)
 
@@ -64,6 +67,9 @@ do the following:
 * `cd bin`
 * `win_devclient` compiles the code and brings up the Webpack dev server and 
 automatically opens a browser window pointed to the web page.
+* Presently, changes to `sessionmanager` or `scirismodel` code will not 
+cause auto-reloading when the dev-server is used, but potentially this will 
+change in the future.
 * `Ctrl-C` shuts down the dev server and proxy when you are finished with 
 the web site.  (You can answer `n` to the "Terminate batch job" query.)
 

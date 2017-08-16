@@ -1,12 +1,12 @@
 """
 api.py -- script for setting up a flask server
     
-Last update: 8/14/17 (gchadder3)
+Last update: 8/16/17 (gchadder3)
 """
 
 # Do the imports.
 # from pylab import figure, scatter, rand
-import model
+import scirismodel.model as model
 import mpld3
 import json
 from flask import Flask, request
