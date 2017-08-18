@@ -1,22 +1,18 @@
 <template>
   <div id="app">
-    <h1>Random Scatterplotter for Vue</h1>
-    <button @click="sendRequest">Get random scatterplot</button>
-    <div id="fig01"></div>
-  </div>
-
-  <!-- old version
-  <div id="app">
     <h1>Scatterplotter for Vue</h1>
-    <h2>Client request</h2>
-    <label>Server info request</label>
+    <label>Server graph request</label>
     <input v-model="infoselect">
-    <button @click="sendRequest">Send request to server</button>
-    <h2>Server return</h2>
-    <p>{{ serverresponse }}</p>
+    <button @click="sendRequest">Fetch scatterplot</button>
+    <p v-if='loadedfile'> 
+      Following file loaded from server: {{ loadedfile }} 
+    </p>
+    <p v-if='servererror'> 
+      Server could not find following file: {{ servererror }} 
+    </p>
+<!--    <p>{{ serverresponse }}</p> -->
     <div id="fig01"></div>
   </div>
-  -->
 </template>
 
 <script>
@@ -27,24 +23,50 @@ export default {
   data () {
     return {
       infoselect: 'graph1',
-      serverresponse: ''
+      serverresponse: '',
+      loadedfile: '',
+      servererror: ''
     }
   },
   methods: {
     sendRequest () {
-      // Use a POST request to pass along the value.
+      // Use a POST request to pass along the value of the graph to be found.
       axios.post('/api', {
         value: this.infoselect
       })
       .then(response => {
+        // Pull out the response data.
         this.serverresponse = response.data
+
         // If we already have a figure, pop the figure object, and clear
         // the DOM.
         if (mpld3.figures.length > 0) {
           mpld3.figures.pop()
           document.getElementById('fig01').innerHTML = ''
         }
-        mpld3.draw_figure('fig01', response.data)
+
+        // Clear the loaded file.
+        this.loadedfile = ''
+
+        // If there was no error returned...
+        if (typeof(response.data.error) == 'undefined') {
+          // Draw the figure in the 'fig01' div tag.
+          mpld3.draw_figure('fig01', response.data)
+
+          // Remember the file that was loaded.
+          this.loadedfile = 'datafiles/' + this.infoselect + '.csv'
+
+          // Clear the server error.
+          this.servererror = ''
+
+        // Otherwise (we got an error)...
+        } else {
+          // Clear the loaded file.
+          this.loadedfile = ''
+
+          // Set the server error.
+          this.servererror = 'datafiles/' + this.infoselect + '.csv'
+        }
       })
       .catch(error => {
         this.serverresponse = 'There was an error: ' + error.message

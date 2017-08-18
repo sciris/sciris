@@ -1,20 +1,62 @@
 '''
-A tiny Python model. To run from the command line:
-    python model.py
+model.py -- a tiny Python model.
+
+Usage: To run from the command line:
+    python model.py 
+    
+Last update: 8/18/17 (gchadder3)
 '''
 
 from pylab import figure, rand, show
+import os
+import pandas as pd
+
+# Set the datafilesPath.
+datafilesPath = '%s%sdatafiles' % (os.pardir, os.sep)
+
+# Perform any setup that needs to happen to use the model code.
+def init():
+    # Detect whether we're calling from the main (a standalone run).
+    calledFromMain = (__name__ == '__main__')
+      
+    # If the datafiles path doesn't exist yet...
+    if not os.path.exists(datafilesPath):
+        # Create datafiles directory.
+        os.mkdir(datafilesPath)
+        
+        # Create an uploads subdirectory of this.
+        os.mkdir('%s%suploads' % (datafilesPath, os.sep))
+        
+        # Create the fake data for scatterplots.
+        df = pd.DataFrame({'x': rand(50), 'y': rand(50)})
+        df.to_csv('%s/graph1.csv' % datafilesPath)
+        df = pd.DataFrame({'x': rand(50), 'y': rand(50)})
+        df.to_csv('%s/graph2.csv' % datafilesPath)    
+        df = pd.DataFrame({'x': rand(50), 'y': rand(50)})
+        df.to_csv('%s/graph3.csv' % datafilesPath)
 
 # Define the graph
-def makegraph(n=50):
-	fig = figure()
-	ax = fig.add_subplot(111)
-	xdata = rand(n)
-	ydata = rand(n)
-	ax.scatter(xdata, ydata)
-	return fig
+def makeRandomGraph(n=50):
+    fig = figure()
+    ax = fig.add_subplot(111)
+    xdata = rand(n)
+    ydata = rand(n)
+    ax.scatter(xdata, ydata)
+    return fig
 
+# Define the graph
+def makeGraph(fileName):
+    fullFileName = '%s/%s.csv' % (datafilesPath, fileName)
+    if not os.path.exists(fullFileName):
+        return None
+    fig = figure()
+    ax = fig.add_subplot(111)
+    df = pd.read_csv(fullFileName)
+    ax.scatter(df.x, df.y)
+    return fig
+    
 # Run from command line
 if __name__ == "__main__":
-    makegraph()
+    init()
+    makeGraph()
     show()
