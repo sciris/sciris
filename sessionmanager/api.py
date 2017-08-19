@@ -1,15 +1,14 @@
 """
 api.py -- script for setting up a flask server
     
-Last update: 8/17/17 (gchadder3)
+Last update: 8/19/17 (gchadder3)
 """
 
 # Do the imports.
-# from pylab import figure, scatter, rand
+from flask import Flask, request, json, send_from_directory
 import scirismodel.model as model
 import mpld3
-import json
-from flask import Flask, request
+import os
 
 # Create the app
 app = Flask(__name__)
@@ -34,12 +33,25 @@ def showGraph():
     
     # Return the JSON representation of the Matplotlib figure.
     return graphjson 
-    # Use this for the GET method.
-    #return 'I will give you info for: %s ' % request.args['value']
-
-    # Use this for the POST method.
-    #return 'I will give you info for: %s ' % request.get_json()['value']
     
+# Define the /api/download endpoint.
+@app.route('/api/download', methods=['POST'])
+def downloadFile():
+    # Initialize the model code.
+    model.init()
+    
+    # Get the directory and file names for the file we want to download.
+    dirName = '%s%sdatafiles' % (os.pardir, os.sep)
+    fileName = '%s.csv' % request.get_json()['value']
+    
+    # Make the response message with the file loaded as an attachment.
+    response = send_from_directory(dirName, fileName, as_attachment=True)
+    response.status_code = 201
+    response.headers['filename'] = fileName
+    
+    # Return the response message.
+    return response
 
+    
 if __name__ == "__main__":
     app.run()

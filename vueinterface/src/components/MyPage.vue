@@ -6,6 +6,7 @@
     <button @click="sendRequest">Fetch scatterplot</button>
     <p v-if='loadedfile'> 
       Following file loaded from server: {{ loadedfile }} 
+      <button @click="downloadFile">Download it!</button>
     </p>
     <p v-if='servererror'> 
       Server could not find following file: {{ servererror }} 
@@ -17,6 +18,7 @@
 
 <script>
 import axios from 'axios'
+var filesaver = require('file-saver')
 
 export default {
   name: 'MyPage',
@@ -81,6 +83,27 @@ export default {
         .catch(error => {
           this.serverresponse = 'There was an error: ' + error.message
         }) */
+    }, 
+    downloadFile () {
+      // Use a POST request to pass along the value of the graph to be found.
+      axios.post('/api/download', 
+        {
+          value: this.infoselect
+        },
+        {
+          responseType: 'blob'
+        })
+      .then(response => {
+        var blob = new Blob([response.data])
+        var filename = response.headers.filename
+        filesaver.saveAs(blob, filename)
+
+        // Pull out the response data.
+        this.serverresponse = response.headers
+      })
+      .catch(error => {
+        this.serverresponse = 'There was an error: ' + error.message
+      })
     }
   }
 }

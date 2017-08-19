@@ -4,7 +4,7 @@ model.py -- a tiny Python model.
 Usage: To run from the command line:
     python model.py 
     
-Last update: 8/18/17 (gchadder3)
+Last update: 8/19/17 (gchadder3)
 '''
 
 from pylab import figure, rand, show
@@ -35,28 +35,46 @@ def init():
         df = pd.DataFrame({'x': rand(50), 'y': rand(50)})
         df.to_csv('%s/graph3.csv' % datafilesPath)
 
-# Define the graph
+# Make a random scatterplot.
 def makeRandomGraph(n=50):
+    # Create a figure and an axes object for it.
     fig = figure()
     ax = fig.add_subplot(111)
+    
+    # Create random data for all x/y points.
     xdata = rand(n)
     ydata = rand(n)
+    
+    # Generate the scatterplot.
     ax.scatter(xdata, ydata)
+    
+    # Return the figure.
     return fig
 
-# Define the graph
+# Make a scatterplot for a chosen csv file.
 def makeGraph(fileName):
+    # Create a full file name for the file.
     fullFileName = '%s/%s.csv' % (datafilesPath, fileName)
+    
+    # If the file is missing, return None.
     if not os.path.exists(fullFileName):
         return None
+    
+    # Create a figure and an axes object for it.
     fig = figure()
     ax = fig.add_subplot(111)
+    
+    # Load the csv file into a pandas DataFrame.
     df = pd.read_csv(fullFileName)
+    
+    # Generate the scatterplot of the data.
     ax.scatter(df.x, df.y)
+    
+    # Return the figure.
     return fig
     
 # Run from command line
 if __name__ == "__main__":
     init()
-    makeGraph()
+    makeGraph('graph1')
     show()
