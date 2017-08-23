@@ -1,7 +1,7 @@
 """
 api.py -- script for setting up a flask server
     
-Last update: 8/22/17 (gchadder3)
+Last update: 8/23/17 (gchadder3)
 """
 
 # Do the imports.
@@ -23,7 +23,7 @@ def showGraph():
     # Create the matplotlib graph from Python.
     # At the moment, this passes in the 'value' setting to tell model which
     # graph (graph1, graph2, graph3) to load and display.
-    graphData = model.makeGraph(request.get_json()['value'])
+    graphData = model.plotDataFromFile(request.get_json()['value'])
     
     # If we didn't find a match, return a null response.
     if graphData is None:
