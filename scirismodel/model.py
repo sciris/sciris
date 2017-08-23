@@ -4,15 +4,17 @@ model.py -- a tiny Python model.
 Usage: To run from the command line:
     python model.py 
     
-Last update: 8/19/17 (gchadder3)
+Last update: 8/22/17 (gchadder3)
 '''
 
 from pylab import figure, rand, show
 import os
 import pandas as pd
 
-# Set the datafilesPath.
+# Set datafilesPath and uploadsPath.
 datafilesPath = '%s%sdatafiles' % (os.pardir, os.sep)
+uploadsPath = '%s%sdatafiles' % (os.pardir, os.sep)
+# uploadsPath = '%s%suploads' % (datafilesPath, os.sep)
 
 # Perform any setup that needs to happen to use the model code.
 def init():
@@ -25,7 +27,7 @@ def init():
         os.mkdir(datafilesPath)
         
         # Create an uploads subdirectory of this.
-        os.mkdir('%s%suploads' % (datafilesPath, os.sep))
+        # os.mkdir(uploadsPath)
         
         # Create the fake data for scatterplots.
         df = pd.DataFrame({'x': rand(50), 'y': rand(50)})

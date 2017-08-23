@@ -1,11 +1,12 @@
 """
 api.py -- script for setting up a flask server
     
-Last update: 8/19/17 (gchadder3)
+Last update: 8/22/17 (gchadder3)
 """
 
 # Do the imports.
 from flask import Flask, request, json, send_from_directory
+from werkzeug.utils import secure_filename
 import scirismodel.model as model
 import mpld3
 import os
@@ -41,17 +42,38 @@ def downloadFile():
     model.init()
     
     # Get the directory and file names for the file we want to download.
-    dirName = '%s%sdatafiles' % (os.pardir, os.sep)
+    # dirName = '%s%sdatafiles' % (os.pardir, os.sep)
+    dirName = model.datafilesPath   
     fileName = '%s.csv' % request.get_json()['value']
     
     # Make the response message with the file loaded as an attachment.
     response = send_from_directory(dirName, fileName, as_attachment=True)
-    response.status_code = 201
+    response.status_code = 201  # Status 201 = Created
     response.headers['filename'] = fileName
     
     # Return the response message.
     return response
 
+# Define the /api/upload endpoint.
+@app.route('/api/upload', methods=['POST'])
+def uploadFile():
+    # Initialize the model code.
+    model.init()
+      
+    # Grab the formData file that was uploaded.    
+    file = request.files['uploadfile']
     
+    # Grab the filename of this file, and generate the full upload path / 
+    # filename.
+    filename = secure_filename(file.filename)
+    uploaded_fname = os.path.join(model.uploadsPath, filename)
+    
+    # Save the file to the uploads directory.
+    file.save(uploaded_fname)
+    
+    # Return success.
+    return json.dumps({'result': 'success'})  
+ 
+
 if __name__ == "__main__":
     app.run()
