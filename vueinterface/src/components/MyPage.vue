@@ -29,6 +29,7 @@
 <script>
 import axios from 'axios'
 var filesaver = require('file-saver')
+import rpcservice from '../services/rpc-service'
 
 export default {
   name: 'MyPage',
@@ -43,9 +44,7 @@ export default {
   methods: {
     sendRequest () {
       // Use a POST request to pass along the value of the graph to be found.
-      axios.post('/api', {
-        value: this.infoselect
-      })
+      rpcservice.rpcCall('get_graph_from_file', [this.infoselect])
       .then(response => {
         // Pull out the response data.
         // this.serverresponse = response
@@ -84,17 +83,8 @@ export default {
       .catch(error => {
         this.serverresponse = 'There was an error: ' + error.message
       })
-
-      // Use a GET request to pass along the value.
-      /* var getResource = '/api?value=' + this.infoselect
-      axios.get(getResource)
-        .then(response => {
-          this.serverresponse = response.data
-        })
-        .catch(error => {
-          this.serverresponse = 'There was an error: ' + error.message
-        }) */
     }, 
+
     downloadFile () {
       // Use a POST request to pass along the value of the graph to be found.
       axios.post('/api/download', 
@@ -124,6 +114,7 @@ export default {
         this.serverresponse = 'There was an error: ' + error.message
       })
     },
+
     onFileChange (e) {
       var files = e.target.files || e.dataTransfer.files
       if (!files.length)

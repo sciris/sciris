@@ -1,14 +1,14 @@
 '''
-model.py -- a tiny Python model.
+model.py -- a small Python model.
 
 Usage: To run from the command line:
     python model.py 
     
-Last update: 8/23/17 (gchadder3)
+Last update: 8/25/17 (gchadder3)
 '''
 
 #
-# Load relevant packages and functions from packages.
+# Imports
 #
 
 import numpy as np
@@ -141,7 +141,10 @@ def plotDataFromFile(fileName):
     return plotData(df)
     
     
-# Run from command line
+#
+# Script code
+#
+
 if __name__ == "__main__":
     init()
     plotDataFromFile('graph1')
