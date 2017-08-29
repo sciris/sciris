@@ -1,7 +1,7 @@
 """
 api.py -- script for setting up a flask server
     
-Last update: 8/25/17 (gchadder3)
+Last update: 8/29/17 (gchadder3)
 """
 
 #
@@ -80,7 +80,15 @@ def normalRPC():
     args = reqdict.get('args', [])
     kwargs = reqdict.get('kwargs', {})
     
-    # check hasattr??
+    # Check to see whether the function to be called exists.
+    funcExists = hasattr(rpcs, fn_name)
+    print('>> Checking RPC function "rpcs.%s" -> %s' % (fn_name, funcExists))
+    
+    # If the function doesn't exist, return an error to the client saying it 
+    # doesn't exist.
+    if not funcExists:
+        return jsonify({'error': 
+            'Attempted to call non-existent RPC function %s' % fn_name})
     
     # Extract the rpcs module's function.
     fn = getattr(rpcs, fn_name)
