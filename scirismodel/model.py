@@ -4,7 +4,7 @@ model.py -- a small Python model.
 Usage: To run from the command line:
     python model.py 
     
-Last update: 8/25/17 (gchadder3)
+Last update: 8/30/17 (gchadder3)
 '''
 
 #
@@ -14,16 +14,6 @@ Last update: 8/25/17 (gchadder3)
 import numpy as np
 import matplotlib.pyplot as plt
 import pandas as pd
-import os
-
-#
-# Package globals
-#
-
-# Set datafilesPath and uploadsPath.
-datafilesPath = '%s%sdatafiles' % (os.pardir, os.sep)
-uploadsPath = '%s%sdatafiles' % (os.pardir, os.sep)
-# uploadsPath = '%s%suploads' % (datafilesPath, os.sep)
 
 #
 # Classes
@@ -64,88 +54,102 @@ class Gaussian2D(object):
         self.y_std = y_std 
         self.r_xy = r_xy 
         
-    def generateData(self, nPoints=50):
+    def generateData(self, nPoints=50, xLabel='x', yLabel='y'):
         # Draw Gaussian x and y values.
         xs = np.random.normal(self.x_mean, self.x_std, nPoints)
         ys = np.random.normal(self.y_mean, self.y_std, nPoints)
         
         # Create and return a DataFrame holding the data.
-        df = pd.DataFrame({'x': xs, 'y': ys})
+        df = pd.DataFrame({xLabel: xs, yLabel: ys})
+        df = df.ix[:, [xLabel, yLabel]]  # make sure column order correct
         return df
-
+    
+class ScatterplotData(object):
+    """
+    A collection of 2D datapoints for making scatterplots.
+    
+    Methods:
+        __init__(df: DataFrame): void -- constructor 
+        plot(): matplotlib figure -- plots the DataFrame in this object and 
+            returns the figure object
+        loadFromCsv(fullFileName: str): void -- overwrite the DataFrame with 
+            data from a .csv file
+        saveAsCsv(fullFileName: str): void -- save the DataFrame content to a
+            .csv file
+                    
+    Attributes:
+        df -- the pandas DataFrame holding the data
+        
+    Usage:
+        >>> spd = ScatterplotData()
+        >>> spd.loadFromCsv('mydatafile.csv')                     
+    """
+    
+    def __init__(self, df=None):
+        # Set the DataFrame.
+        self.df = df
+        
+    def plot(self):
+        # Create a figure and an axes object for it.
+        fig = plt.figure()
+        ax = fig.add_subplot(111)
+        
+        # Grab the x and y labels, assuming column 0 is x, and 1 y.
+        theXlabel = self.df.columns[0]
+        theYlabel = self.df.columns[1]  
+        
+        # Generate the scatterplot of the data.
+        ax.scatter(self.df[theXlabel], self.df[theYlabel])
+        
+        # Add title and axis labels.
+        plt.title('Scatterplot %s vs. %s' % (theYlabel, theXlabel))
+        plt.xlabel(theXlabel)
+        plt.ylabel(theYlabel)
+        
+        # Return the figure.
+        return fig
+    
+    def loadFromCsv(self, fullFileName):
+        # Load the csv file into a pandas DataFrame.
+        self.df = pd.read_csv(fullFileName, index_col=0)
+    
+    def saveAsCsv(self, fullFileName):
+        # Save the pandas data to a csv file.
+        self.df.to_csv(fullFileName)
+        
 #
 # Functions
 #
-
-# Perform any setup that needs to happen to use the model code.
-def init():
-    # Detect whether we're calling from the main (a standalone run).
-    calledFromMain = (__name__ == '__main__')
-      
-    # If the datafiles path doesn't exist yet...
-    if not os.path.exists(datafilesPath):
-        # Create datafiles directory.
-        os.mkdir(datafilesPath)
-        
-        # Create an uploads subdirectory of this.
-        # os.mkdir(uploadsPath)
-        
-        # Create the fake data for scatterplots.
-        df = makeUniformRandomData(50)
-        df.to_csv('%s/graph1.csv' % datafilesPath)
-        df = makeUniformRandomData(50)
-        df.to_csv('%s/graph2.csv' % datafilesPath)
-        df = makeUniformRandomData(50)
-        df.to_csv('%s/graph3.csv' % datafilesPath)
         
 # Make a (uniform distribution) random scatterplot.
-def makeUniformRandomData(nPoints=50):
+def makeUniformRandomData(nPoints=50, xLabel='x', yLabel='y'):
     # Create (uniform between 0 and 1) random data for all x/y points.
     xs = np.random.uniform(0.0, 1.0, nPoints)
     ys = np.random.uniform(0.0, 1.0, nPoints)
     
     # Create and return a DataFrame holding the data.
-    df = pd.DataFrame({'x': xs, 'y': ys})
+    df = pd.DataFrame({xLabel: xs, yLabel: ys})
+    df = df.ix[:, [xLabel, yLabel]]  # make sure column order correct
     return df
 
-# Plot DataFrame data.
-def plotData(df):
-    # Create a figure and an axes object for it.
-    fig = plt.figure()
-    ax = fig.add_subplot(111)
-    
-    # Generate the scatterplot of the data.
-    ax.scatter(df.x, df.y)
-    
-    # Add title and axis labels.
-    plt.title('Scatterplot y vs. x')
-    plt.xlabel('x')
-    plt.ylabel('y')
-    
-    # Return the figure.
-    return fig
-
-# Make a scatterplot for a chosen csv file.
-def plotDataFromFile(fileName):
-    # Create a full file name for the file.
-    fullFileName = '%s/%s.csv' % (datafilesPath, fileName)
-    
-    # If the file is missing, return None.
-    if not os.path.exists(fullFileName):
-        return None
-    
-    # Load the csv file into a pandas DataFrame.
-    df = pd.read_csv(fullFileName)
-    
-    # Create a scatterplot figure for the data and return it.
-    return plotData(df)
-    
-    
 #
 # Script code
 #
 
 if __name__ == "__main__":
-    init()
-    plotDataFromFile('graph1')
+    # Create a Gaussian 2D model.
+    g1 = Gaussian2D()
+    
+    # Create ScatterplotData for it.
+    spd = ScatterplotData(g1.generateData())
+    
+    # Create a second ScatterplotData object for a uniform distribution.
+    spd2 = ScatterplotData(makeUniformRandomData(50))
+    
+    # Plot the Gaussian scatterplot.
+    spd.plot()
+    
+    # Plot the uniform scatterplot.
+    spd2.plot()
+    
     plt.show()

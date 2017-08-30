@@ -70,8 +70,8 @@ def normalRPC():
         'args': list of arguments for the function
         'kwargs: dictionary of keyword arguments
     """
-    # Initialize the model code.
-    model.init()
+    # Initialize the session.
+    rpcs.init_session()
     
     # Convert the request.data JSON to a Python dict, and pull out the 
     # function name, args, and kwargs.
@@ -102,20 +102,51 @@ def normalRPC():
     # Otherwise, convert the result (probably a dict) to JSON and return it.
     else:
         return jsonify(result)
+
     
-    
-# Define the /api/download endpoint.
+# Define the /api/download endpoint for normal RPCs.
 @app.route('/api/download', methods=['POST'])
 @report_exception_decorator
-def downloadFile():
-    # Initialize the model code.
-    model.init()
+def downloadRPC():
+    """
+    POST-data:
+        'name': string name of function in handler
+        'args': list of arguments for the function
+        'kwargs: dictionary of keyword arguments
+    """
+    # Initialize the session.
+    rpcs.init_session()
     
-    # Get the directory and file names for the file we want to download.
-    # dirName = '%s%sdatafiles' % (os.pardir, os.sep)
-    dirName = model.datafilesPath   
-    fileName = '%s.csv' % request.get_json()['value']
+    # Convert the request.data JSON to a Python dict, and pull out the 
+    # function name, args, and kwargs.
+    reqdict = getRequestDict()
+    fn_name = reqdict['name']
+    args = reqdict.get('args', [])
+    kwargs = reqdict.get('kwargs', {})
     
+    # Check to see whether the function to be called exists.
+    funcExists = hasattr(rpcs, fn_name)
+    print('>> Checking RPC function "rpcs.%s" -> %s' % (fn_name, funcExists))
+    
+    # If the function doesn't exist, return an error to the client saying it 
+    # doesn't exist.
+    if not funcExists:
+        return jsonify({'error': 
+            'Attempted to call non-existent RPC function %s' % fn_name})
+    
+    # Extract the rpcs module's function.
+    fn = getattr(rpcs, fn_name)
+    
+    # Call the function, passing in args and kwargs.
+    fullFileName = fn(*args, **kwargs)
+
+    # If we got None for a fullFileName, return an error to the client.
+    if fullFileName is None:
+        return jsonify({'error': 'Could not find requested resource'})
+
+    # Pull out the directory and file names from the full file name.
+    dirName, fileName = os.path.split(fullFileName)
+     
     # Make the response message with the file loaded as an attachment.
     response = send_from_directory(dirName, fileName, as_attachment=True)
     response.status_code = 201  # Status 201 = Created
@@ -123,13 +154,34 @@ def downloadFile():
     
     # Return the response message.
     return response
+    
+    
+## Define the /api/download endpoint.
+#@app.route('/api/download', methods=['POST'])
+#@report_exception_decorator
+#def downloadFile():
+#    # Initialize the model code.
+#    model.init()
+#    
+#    # Get the directory and file names for the file we want to download.
+#    # dirName = '%s%sdatafiles' % (os.pardir, os.sep)
+#    dirName = model.datafilesPath   
+#    fileName = '%s.csv' % request.get_json()['value']
+#    
+#    # Make the response message with the file loaded as an attachment.
+#    response = send_from_directory(dirName, fileName, as_attachment=True)
+#    response.status_code = 201  # Status 201 = Created
+#    response.headers['filename'] = fileName
+#    
+#    # Return the response message.
+#    return response
 
 # Define the /api/upload endpoint.
 @app.route('/api/upload', methods=['POST'])
 @report_exception_decorator
 def uploadFile():
-    # Initialize the model code.
-    model.init()
+    # Initialize the session.
+    rpcs.init_session()
       
     # Grab the formData file that was uploaded.    
     file = request.files['uploadfile']

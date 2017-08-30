@@ -21,7 +21,7 @@
       Server error: {{ servererror }} 
     </p>
 
-<!--    <p>Server Response: {{ serverresponse }}</p> -->
+    <p>Server Response: {{ serverresponse }}</p>
 
     <div id="fig01"></div>
   </div>
@@ -58,7 +58,7 @@ export default {
       this.servererror = ''
 
       // Call RPC get_graph_from_file.
-      rpcservice.rpcCall('get_graph_from_file', [this.infoselect])
+      rpcservice.rpcCall('get_resource_graph', [this.infoselect])
       .then(response => {
         // Pull out the response data.
         this.serverresponse = response.data
@@ -70,42 +70,29 @@ export default {
         this.loadedfile = 'datafiles/' + this.infoselect + '.csv'
       })
       .catch(error => {
+        // Pull out the error message.
         this.serverresponse = 'There was an error: ' + error.message
 
-        // Clear the server error.
+        // Set the server error.
         this.servererror = error.message
       })
     }, 
 
     downloadFile () {
-      // Use a POST request to pass along the value of the graph to be found.
-      axios.post('/api/download', 
-        {
-          value: this.infoselect
-        },
-        {
-          responseType: 'blob'
-        })
+      // Call RPC get_graph_from_file.
+      rpcservice.rpcDownloadCall('get_resource_file_path', [this.infoselect])
       .then(response => {
-        // Create a new blob object (containing the file data) from the
-        // response.data component.
-        var blob = new Blob([response.data])
-
-        // Grab the file name from response.headers.
-        var filename = response.headers.filename
-
-        // Bring up the browser dialog allowing the user to save the file 
-        // or cancel doing so.
-        filesaver.saveAs(blob, filename)
-
         // Pull out the response data.
-        this.serverresponse = response
-        // this.serverresponse = response.headers
+        this.serverresponse = response.data
       })
       .catch(error => {
+        // Pull out the error message.
         this.serverresponse = 'There was an error: ' + error.message
+
+        // Set the server error.
+        this.servererror = error.message
       })
-    },
+    }, 
 
     onFileChange (e) {
       var files = e.target.files || e.dataTransfer.files
