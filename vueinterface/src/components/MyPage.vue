@@ -1,3 +1,9 @@
+<!-- 
+MyPage.vue -- MyPage Vue component
+
+Last update: 9/1/17 (gchadder3)
+-->
+
 <template>
   <div id="app">
     <h1>Scatterplotter for Vue</h1>
@@ -7,10 +13,8 @@
     <button @click="sendRequest">Fetch scatterplot</button>
     <br/>
 
-    <form enctype="multipart/form-data">
-      <label>File to upload to server:</label>
-      <input type="file" name="uploadfile" accept=".csv" @change="onFileChange"/>
-    </form>
+    <button @click="uploadFile">File Upload</button>
+    <br/>
 
     <p v-if='loadedfile'> 
       Following file loaded from server: {{ loadedfile }} 
@@ -21,7 +25,7 @@
       Server error: {{ servererror }} 
     </p>
 
-    <p>Server Response: {{ serverresponse }}</p>
+<!--    <p>Server Response: {{ serverresponse }}</p> -->
 
     <div id="fig01"></div>
   </div>
@@ -57,8 +61,8 @@ export default {
       // Clear the server error.
       this.servererror = ''
 
-      // Call RPC get_graph_from_file.
-      rpcservice.rpcCall('get_resource_graph', [this.infoselect])
+      // Call RPC get_saved_scatterplotdata_graph.
+      rpcservice.rpcCall('get_saved_scatterplotdata_graph', [this.infoselect])
       .then(response => {
         // Pull out the response data.
         this.serverresponse = response.data
@@ -79,8 +83,8 @@ export default {
     }, 
 
     downloadFile () {
-      // Call RPC get_graph_from_file.
-      rpcservice.rpcDownloadCall('get_resource_file_path', [this.infoselect])
+      // Call RPC download_saved_scatterplotdata.
+      rpcservice.rpcDownloadCall('download_saved_scatterplotdata', [this.infoselect])
       .then(response => {
         // Pull out the response data.
         this.serverresponse = response.data
@@ -94,23 +98,20 @@ export default {
       })
     }, 
 
-    onFileChange (e) {
-      var files = e.target.files || e.dataTransfer.files
-      if (!files.length)
-        return
-
-      const formData = new FormData()
-      formData.append(e.target.name, files[0])
-
-      // Use a POST request to pass along file to the server.
-      axios.post('/api/upload', formData)
+    uploadFile () {
+      // Call RPC upload_scatterplotdata_from_csv.
+      rpcservice.rpcUploadCall('upload_scatterplotdata_from_csv', [this.infoselect], {}, '.csv')
       .then(response => {
         // Pull out the response data.
         this.serverresponse = response.data
       })
       .catch(error => {
+        // Pull out the error message.
         this.serverresponse = 'There was an error: ' + error.message
-      })
+
+        // Set the server error.
+        this.servererror = error.message 
+      })  
     }
   }
 }

@@ -1,6 +1,6 @@
 // rpc-service.js -- RPC functions for Vue to call
 //
-// Last update: 8/30/17 (gchadder3)
+// Last update: 9/1/17 (gchadder3)
 
 import axios from 'axios'
 var filesaver = require('file-saver')
@@ -162,7 +162,73 @@ export default {
     })
   },
 
-  rpcUploadCall (name, args, kwargs) {
-    console.log('upload RPC')
+  rpcUploadCall (name, args, kwargs, fileType) {
+    // Log the upload RPC call.
+    consoleLogCommand("upload", name, args, kwargs)
+
+    // Do the RPC processing, returning results as a Promise.
+    return new Promise((resolve, reject) => {
+      // Function for trapping the change event that has the user-selected 
+      // file.
+      var onFileChange = (e) => {
+        // Pull out the files (should only be 1) that were selected.
+        var files = e.target.files || e.dataTransfer.files
+
+        // If no files were selected, reject the promise.
+        if (!files.length)
+          reject(Error('No file selected'))
+
+        // Create a FormData object for holding the file.
+        const formData = new FormData()
+
+        // Put the selected file in the formData object with 'uploadfile' key.
+        formData.append('uploadfile', files[0])
+
+        // Add the RPC function name to the form data.
+        formData.append('funcname', name)
+
+        // Add args and kwargs to the form data.
+        formData.append('args', JSON.stringify(args))
+        formData.append('kwargs', JSON.stringify(kwargs))
+
+        // Use a POST request to pass along file to the server.
+        axios.post('/api/upload', formData)
+        .then(response => {
+          // If there is an error in the POST response.
+          if (typeof(response.data.error) != 'undefined') {
+            reject(Error(response.data.error))
+          }
+
+          // Signal success with the response.
+          resolve(response)
+        })
+        .catch(error => {
+          // If there was an actual response returned from the server...
+          if (error.response) {
+            // If we have exception information in the response (which indicates 
+            // an exception on the server side)...
+            if (typeof(error.response.data.exception) != 'undefined') {
+              // For now, reject with an error message matching the exception.
+              // In the future, we want to put the exception message in a 
+              // pop-up dialog.
+              reject(Error(error.response.data.exception))
+            }
+          }
+
+          // Reject with the error axios got.
+          reject(error)
+        })
+      }
+
+      // Create an invisible file input element and set its change callback to 
+      // our onFileChange function.
+      var inElem = document.createElement('input')
+      inElem.setAttribute('type', 'file')
+      inElem.setAttribute('accept', fileType)
+      inElem.addEventListener('change', onFileChange)
+
+      // Manually click the button to open the file dialog.
+      inElem.click()
+    })
   }
 }

@@ -1,7 +1,7 @@
 """
 rpcs.py -- code for RPC interfaces between client and server
     
-Last update: 8/30/17 (gchadder3)
+Last update: 9/1/17 (gchadder3)
 """
 
 #
@@ -19,8 +19,7 @@ import os
 # NOTE: These should probably end up in another file since they are session-
 # related.
 datafilesPath = '%s%sdatafiles' % (os.pardir, os.sep)
-uploadsPath = '%s%sdatafiles' % (os.pardir, os.sep)
-# uploadsPath = '%s%suploads' % (datafilesPath, os.sep)
+uploadsPath = '%s%suploads' % (datafilesPath, os.sep)
 
 #
 # Session functions 
@@ -36,7 +35,7 @@ def init_session():
         os.mkdir(datafilesPath)
         
         # Create an uploads subdirectory of this.
-        # os.mkdir(uploadsPath)
+        os.mkdir(uploadsPath)
         
         # Create the fake data for scatterplots.
         sd = model.ScatterplotData(model.makeUniformRandomData(50))
@@ -50,27 +49,27 @@ def init_session():
         sd = model.ScatterplotData(model.makeUniformRandomData(50))
         fullFileName = '%s%sgraph3.csv' % (datafilesPath, os.sep)
         sd.saveAsCsv(fullFileName)
-        
-#
-# RPC functions
-#
-
-def get_resource_file_path(resourceName):
+     
+def get_saved_scatterplotdata_file_path(spdName):
     # Create a full file name for the file.
-    fullFileName = '%s%s%s.csv' % (datafilesPath, os.sep, resourceName)
+    fullFileName = '%s%s%s.csv' % (datafilesPath, os.sep, spdName)
     
     # If the file is there, return the path name; otherwise, return None.
     if os.path.exists(fullFileName):
         return fullFileName
     else:
         return None
+    
+#
+# RPC functions
+#
 
-def get_resource_graph(resourceName):
+def get_saved_scatterplotdata_graph(spdName):
     # Look for a match of the resource, and if we don't find it, return
     # an error.
-    fullFileName = get_resource_file_path(resourceName)
+    fullFileName = get_saved_scatterplotdata_file_path(spdName)
     if fullFileName is None:
-        return {'error': 'Cannot find resource \'%s\'' % resourceName}
+        return {'error': 'Cannot find resource \'%s\'' % spdName}
     
     # Create a ScatterplotData object.
     spd = model.ScatterplotData()
@@ -83,3 +82,19 @@ def get_resource_graph(resourceName):
     
     # Return the dictionary representation of the matplotlib figure.
     return mpld3.fig_to_dict(graphData) 
+
+def download_saved_scatterplotdata(spdName):
+    return get_saved_scatterplotdata_file_path(spdName)
+
+def upload_scatterplotdata_from_csv(fullFileName, spdName):
+    # Pull out the directory and file names from the full file name.
+    dirName, fileName = os.path.split(fullFileName)
+    
+    # Create a new destination for the file in the datafiles directory.
+    newFullFileName = '%s%s%s' % (datafilesPath, os.sep, fileName)
+    
+    # Move the file into the datafiles directory.
+    os.rename(fullFileName, newFullFileName)
+    
+    # Return the new file name.
+    return newFullFileName
