@@ -1,7 +1,7 @@
 <!-- 
 MyPage.vue -- MyPage Vue component
 
-Last update: 9/1/17 (gchadder3)
+Last update: 9/4/17 (gchadder3)
 -->
 
 <template>
@@ -9,7 +9,10 @@ Last update: 9/1/17 (gchadder3)
     <h1>Scatterplotter for Vue</h1>
 
     <label>Server graph request</label>
-    <input v-model="infoselect"/>
+    <select v-model='infoselect'>
+      <option v-for='choice in resourcechoices'>{{ choice }}</option>
+    </select>
+<!--    <input v-model='infoselect'/> -->
     <button @click="sendRequest">Fetch scatterplot</button>
     <br/>
 
@@ -43,10 +46,23 @@ export default {
       infoselect: 'graph1',
       serverresponse: '',
       loadedfile: '', 
-      servererror: ''
+      servererror: '',
+      resourcechoices: ['graph1', 'graph2', 'graph3', 'graph4']
     }
   },
+
+  created () {
+    this.updateScatterplotDataList()
+  },
+
   methods: {
+    updateScatterplotDataList () {
+      rpcservice.rpcCall('list_saved_scatterplotdata_resources')
+      .then(response => {
+        this.resourcechoices = response.data
+      })
+    },
+
     sendRequest () {
       // If we already have a figure, pop the figure object, and clear
       // the DOM.
@@ -104,6 +120,9 @@ export default {
       .then(response => {
         // Pull out the response data.
         this.serverresponse = response.data
+
+        // Update the ScatterplotData list.
+        this.updateScatterplotDataList()
       })
       .catch(error => {
         // Pull out the error message.

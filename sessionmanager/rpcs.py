@@ -1,7 +1,7 @@
 """
 rpcs.py -- code for RPC interfaces between client and server
     
-Last update: 9/1/17 (gchadder3)
+Last update: 9/4/17 (gchadder3)
 """
 
 #
@@ -11,6 +11,7 @@ Last update: 9/1/17 (gchadder3)
 import scirismodel.model as model
 import mpld3
 import os
+import re
 
 #
 # Package globals
@@ -20,6 +21,26 @@ import os
 # related.
 datafilesPath = '%s%sdatafiles' % (os.pardir, os.sep)
 uploadsPath = '%s%suploads' % (datafilesPath, os.sep)
+
+#
+# Classes
+# NOTE: These probably should end up in other files (if I keep them).
+#
+
+# Wraps a Matplotlib figure displayable in the GUI.
+class GraphFigure(object):
+    def __init__(self, theFigure):
+        self.theFigure = theFigure
+
+# Wraps a collection of data.
+class DataCollection(object):
+    def __init__(self, dataObj):
+        self.dataObj = dataObj
+
+# Wraps a directory storage place for the session manager.
+class DirectoryStore(object):
+    def __init__(self, dirPath):
+        self.dirPath = dirPath
 
 #
 # Session functions 
@@ -63,6 +84,19 @@ def get_saved_scatterplotdata_file_path(spdName):
 #
 # RPC functions
 #
+
+def list_saved_scatterplotdata_resources():
+    # Get the total list of entries in the datafiles directory.
+    allEntries = os.listdir(datafilesPath)
+    
+    # Extract just the entries that are .csv files.
+    fTypeEntries = [entry for entry in allEntries if re.match('.+\.csv$', entry)]
+    
+    # Truncate the .csv suffix from each entry.
+    truncEntries = [re.sub('\.csv$', '', entry) for entry in fTypeEntries]
+    
+    # Return the truncated entries.
+    return truncEntries
 
 def get_saved_scatterplotdata_graph(spdName):
     # Look for a match of the resource, and if we don't find it, return
