@@ -1,7 +1,7 @@
 <!-- 
 MyPage.vue -- MyPage Vue component
 
-Last update: 9/4/17 (gchadder3)
+Last update: 9/8/17 (gchadder3)
 -->
 
 <template>
@@ -17,6 +17,10 @@ Last update: 9/4/17 (gchadder3)
     <br/>
 
     <button @click="uploadFile">File Upload</button>
+    <br/>
+
+    <button @click="login">Log Me In!</button>
+    <button @click="logout">Log Me Out</button>
     <br/>
 
     <p v-if='loadedfile'> 
@@ -56,8 +60,16 @@ export default {
   },
 
   methods: {
+    login () {
+      rpcservice.rpcLoginCall('user_login', ['newguy', 'mesogreen'])
+    },
+
+    logout () {
+      rpcservice.rpcLogoutCall('user_logout')
+    },
+
     updateScatterplotDataList () {
-      rpcservice.rpcCall('list_saved_scatterplotdata_resources')
+      rpcservice.rpcPublicCall('list_saved_scatterplotdata_resources')
       .then(response => {
         this.resourcechoices = response.data
       })

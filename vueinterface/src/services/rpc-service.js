@@ -1,12 +1,12 @@
 // rpc-service.js -- RPC functions for Vue to call
 //
-// Last update: 9/1/17 (gchadder3)
+// Last update: 9/8/17 (gchadder3)
 
 import axios from 'axios'
 var filesaver = require('file-saver')
 
 // consoleLogCommand() -- Print an RPC call to the browser console.
-function consoleLogCommand (type, name, args, kwargs) {
+function consoleLogCommand (type, funcname, args, kwargs) {
   // Don't show any arguments if none are passed in.
   if (!args) {
     args = ''
@@ -18,7 +18,7 @@ function consoleLogCommand (type, name, args, kwargs) {
   }
 
   // Print the log line.
-  console.log("RPC service call (" + type + "): " + name, args, kwargs)
+  console.log("RPC service call (" + type + "): " + funcname, args, kwargs)
 }
 
 // readJsonFromBlob(theBlob) -- Attempt to convert a Blob passed in to a JSON.
@@ -52,15 +52,15 @@ function readJsonFromBlob (theBlob) {
 }
 
 export default {
-  rpcCall (name, args, kwargs) {
+  rpcCall (funcname, args, kwargs) {
     // Log the RPC call.
-    consoleLogCommand("normal", name, args, kwargs)
+    consoleLogCommand("normal", funcname, args, kwargs)
 
     // Do the RPC processing, returning results as a Promise.
     return new Promise((resolve, reject) => {
       // Send the POST request for the RPC call.
       axios.post('/api/procedure', {
-        name: name, 
+        funcname: funcname, 
         args: args, 
         kwargs: kwargs
       })
@@ -92,15 +92,55 @@ export default {
     })
   },
 
-  rpcDownloadCall (name, args, kwargs) {
+  rpcPublicCall (funcname, args, kwargs) {
+    // Log the RPC call.
+    consoleLogCommand("normal", funcname, args, kwargs)
+
+    // Do the RPC processing, returning results as a Promise.
+    return new Promise((resolve, reject) => {
+      // Send the POST request for the RPC call.
+      axios.post('/api/publicprocedure', {
+        funcname: funcname, 
+        args: args, 
+        kwargs: kwargs
+      })
+      .then(response => {
+        // If there is an error in the POST response.
+        if (typeof(response.data.error) != 'undefined') {
+          reject(Error(response.data.error))
+        }
+
+        // Signal success with the response.
+        resolve(response)
+      })
+      .catch(error => {
+        // If there was an actual response returned from the server...
+        if (error.response) {
+          // If we have exception information in the response (which indicates 
+          // an exception on the server side)...
+          if (typeof(error.response.data.exception) != 'undefined') {
+            // For now, reject with an error message matching the exception.
+            // In the future, we want to put the exception message in a 
+            // pop-up dialog.
+            reject(Error(error.response.data.exception))
+          }
+        }
+
+        // Reject with the error axios got.
+        reject(error)
+      })
+    })
+  },
+
+  rpcDownloadCall (funcname, args, kwargs) {
     // Log the download RPC call.
-    consoleLogCommand("download", name, args, kwargs)
+    consoleLogCommand("download", funcname, args, kwargs)
 
     // Do the RPC processing, returning results as a Promise.
     return new Promise((resolve, reject) => {
       // Send the POST request for the RPC call.
       axios.post('/api/download', {
-        name: name, 
+        funcname: funcname, 
         args: args, 
         kwargs: kwargs
       }, 
@@ -162,9 +202,9 @@ export default {
     })
   },
 
-  rpcUploadCall (name, args, kwargs, fileType) {
+  rpcUploadCall (funcname, args, kwargs, fileType) {
     // Log the upload RPC call.
-    consoleLogCommand("upload", name, args, kwargs)
+    consoleLogCommand("upload", funcname, args, kwargs)
 
     // Do the RPC processing, returning results as a Promise.
     return new Promise((resolve, reject) => {
@@ -185,7 +225,7 @@ export default {
         formData.append('uploadfile', files[0])
 
         // Add the RPC function name to the form data.
-        formData.append('funcname', name)
+        formData.append('funcname', funcname)
 
         // Add args and kwargs to the form data.
         formData.append('args', JSON.stringify(args))
@@ -229,6 +269,86 @@ export default {
 
       // Manually click the button to open the file dialog.
       inElem.click()
+    })
+  }, 
+
+  rpcLoginCall (funcname, args, kwargs) {
+    // Log the RPC call.
+    consoleLogCommand("login", funcname, args, kwargs)
+
+    // Do the RPC processing, returning results as a Promise.
+    return new Promise((resolve, reject) => {
+      // Send the POST request for the RPC call.
+      axios.post('/api/user/login', {
+        funcname: funcname, 
+        args: args, 
+        kwargs: kwargs
+      })
+      .then(response => {
+        // If there is an error in the POST response.
+        if (typeof(response.data.error) != 'undefined') {
+          reject(Error(response.data.error))
+        }
+
+        // Signal success with the response.
+        resolve(response)
+      })
+      .catch(error => {
+        // If there was an actual response returned from the server...
+        if (error.response) {
+          // If we have exception information in the response (which indicates 
+          // an exception on the server side)...
+          if (typeof(error.response.data.exception) != 'undefined') {
+            // For now, reject with an error message matching the exception.
+            // In the future, we want to put the exception message in a 
+            // pop-up dialog.
+            reject(Error(error.response.data.exception))
+          }
+        }
+
+        // Reject with the error axios got.
+        reject(error)
+      })
+    })
+  }, 
+
+  rpcLogoutCall (funcname, args, kwargs) {
+    // Log the RPC call.
+    consoleLogCommand("logout", funcname, args, kwargs)
+
+    // Do the RPC processing, returning results as a Promise.
+    return new Promise((resolve, reject) => {
+      // Send the POST request for the RPC call.
+      axios.post('/api/user/logout', {
+        funcname: funcname, 
+        args: args, 
+        kwargs: kwargs
+      })
+      .then(response => {
+        // If there is an error in the POST response.
+        if (typeof(response.data.error) != 'undefined') {
+          reject(Error(response.data.error))
+        }
+
+        // Signal success with the response.
+        resolve(response)
+      })
+      .catch(error => {
+        // If there was an actual response returned from the server...
+        if (error.response) {
+          // If we have exception information in the response (which indicates 
+          // an exception on the server side)...
+          if (typeof(error.response.data.exception) != 'undefined') {
+            // For now, reject with an error message matching the exception.
+            // In the future, we want to put the exception message in a 
+            // pop-up dialog.
+            reject(Error(error.response.data.exception))
+          }
+        }
+
+        // Reject with the error axios got.
+        reject(error)
+      })
     })
   }
 }

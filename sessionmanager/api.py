@@ -1,7 +1,7 @@
 """
 api.py -- script for setting up a flask server
     
-Last update: 9/1/17 (gchadder3)
+Last update: 9/8/17 (gchadder3)
 """
 
 #
@@ -10,11 +10,13 @@ Last update: 9/1/17 (gchadder3)
 
 from flask import Flask, request, json, jsonify, current_app, make_response, \
     send_from_directory
+from flask_login import LoginManager, current_user, login_required
 from werkzeug.utils import secure_filename
 from functools import wraps
 import traceback
 import os
 import rpcs
+import user
 
 #
 # Globals
@@ -23,13 +25,16 @@ import rpcs
 # Create the app.
 app = Flask(__name__)
 
+# Create the LoginManager.
+login_manager = LoginManager()
+   
 #
 # Functions
 #
-
-# Return the request.data JSON converted into a Python dict.
-def getRequestDict():
-    return json.loads(request.data)
+    
+@login_manager.user_loader
+def load_user(userid):
+    return user.myUser
 
 # Decorator function which allows any exceptions made by the RPC calls to be 
 # trapped and return in the response message.
@@ -58,92 +63,135 @@ def root():
     """ API root, nothing interesting here """
     return 'Sciris API v.0.0.0'
 
-def commonRPCstart():
-    # Initialize the session.
-    rpcs.init_session()
-    
-    # Create an empty dict for the RPC call.
-    callDict = {}
-    
-    # Convert the request.data JSON to a Python dict, and pull out the 
-    # function name, args, and kwargs.
-    reqdict = getRequestDict()
-    fn_name = reqdict['name']
-    callDict['args'] = reqdict.get('args', [])
-    callDict['kwargs'] = reqdict.get('kwargs', {})
-    callDict['func'] = None     # start with no function found
-    callDict['result'] = None   # start with no result
-    
-    # Check to see whether the function to be called exists.
-    funcExists = hasattr(rpcs, fn_name)
-    print('>> Checking RPC function "rpcs.%s" -> %s' % (fn_name, funcExists))
-    
-    # If the function doesn't exist, prepare an error for the client saying it 
-    # doesn't exist.
-    if not funcExists:
-        callDict['result'] = {'error': 
-            'Attempted to call non-existent RPC function %s' % fn_name}
-    
-    # Otherwise, extract the rpcs module's function.
-    else:
-        callDict['func'] = getattr(rpcs, fn_name)
-    
-    # Return the callDict.
-    return callDict
+# Define the /api/user/login endpont for RPCs for user login.
+@app.route('/api/user/login', methods=['POST'])
+@report_exception_decorator
+def loginRPC():
+    return doRPC('normal', 'user')
+
+# Define the /api/user/logout endpont for RPCs for user logout.
+@app.route('/api/user/logout', methods=['POST'])
+@report_exception_decorator
+def logoutRPC():
+    return doRPC('normal', 'user')
+
+# Define the /api/user/register endpont for RPCs for user registration.
+@app.route('/api/user/register', methods=['POST'])
+@report_exception_decorator
+def registrationRPC():
+    return 'endpoint for user registration'
+#    return doRPC('normal', 'model')
+
+# Define the /api/user/current endpont for RPCs for returning the current 
+# user's user information.
+@app.route('/api/user/current', methods=['GET'])
+@report_exception_decorator
+@login_required
+def currentUserRPC():
+    return 'endpoint for getting current user info'
+#    return doRPC('normal', 'model')
 
 # Define the /api/procedure endpoint for normal RPCs.
 @app.route('/api/procedure', methods=['POST'])
 @report_exception_decorator
+@login_required
 def normalRPC():
-    """
-    POST-data:
-        'name': string name of function in handler
-        'args': list of arguments for the function
-        'kwargs: dictionary of keyword arguments
-    """
-    # Perform the starting RPC functionality, including checking for failure
-    # to find a matching RPC function.
-    callDict = commonRPCstart()
-    
-    # If we have no result yet, call the function, passing in args and kwargs.
-    if callDict['result'] is None:
-        callDict['result'] = callDict['func'](*(callDict['args']), 
-            **(callDict['kwargs']))
+    return doRPC('normal', 'model')
 
-    # If None was returned by the RPC function, return ''.
-    if callDict['result'] is None:
-        return ''
-    
-    # Otherwise, convert the result (probably a dict) to JSON and return it.
-    else:
-        return jsonify(callDict['result'])
-   
-# Define the /api/download endpoint for normal RPCs.
+# Define the /api/procedure endpoint for normal RPCs that don't require a 
+# current valid login.
+@app.route('/api/publicprocedure', methods=['POST'])
+@report_exception_decorator
+def publicNormalRPC():
+    return doRPC('normal', 'model')
+
+# Define the /api/download endpoint for RPCs that download a file to the 
+# client.
 @app.route('/api/download', methods=['POST'])
 @report_exception_decorator
+@login_required
 def downloadRPC():
-    """
-    POST-data:
-        'name': string name of function in handler
-        'args': list of arguments for the function
-        'kwargs: dictionary of keyword arguments
-    """
-    # Perform the starting RPC functionality, including checking for failure
-    # to find a matching RPC function.
-    callDict = commonRPCstart()
+    return doRPC('download', 'model')
+
+# Define the /api/upload endpoint for RPCs that work from uploaded files.
+@app.route('/api/upload', methods=['POST'])
+@report_exception_decorator
+@login_required
+def uploadRPC():
+    return doRPC('upload', 'model')  
+  
+# Do the meat of the RPC calls, passing args and kwargs to the appropriate 
+# function in the appropriate handler location.
+def doRPC(rpcType, handlerLocation):
+    # If we are doing an upload, pull the RPC information out of the request 
+    # form instead of the request data.
+    if rpcType == 'upload':
+        # Pull out the function name, args, and kwargs
+        fn_name = request.form.get('funcname')
+        args = json.loads(request.form.get('args', "[]"))
+        kwargs = json.loads(request.form.get('kwargs', "{}"))
     
-    # If we have no result yet...
-    if callDict['result'] is None:
-        # Call the function, passing in args and kwargs, and hopefully
-        fullFileName = callDict['func'](*(callDict['args']), 
-            **(callDict['kwargs']))
+    # Otherwise (normal and download RPCs), pull the RPC information from the 
+    # request data.
+    else:
+        # Convert the request.data JSON to a Python dict, and pull out the 
+        # function name, args, and kwargs.        
+        reqdict = json.loads(request.data)
+        fn_name = reqdict['funcname']
+        args = reqdict.get('args', [])
+        kwargs = reqdict.get('kwargs', {})
         
-        # If we got None for a fullFileName, return an error to the client.
-        if fullFileName is None:
+    # Check to see whether the function to be called exists and get it ready 
+    # to call in func if it's found.
+    if handlerLocation == 'model':
+        funcExists = hasattr(rpcs, fn_name)
+        print('>> Checking RPC function "rpcs.%s" -> %s' % (fn_name, funcExists))
+        if funcExists:
+            func = getattr(rpcs, fn_name)
+    elif handlerLocation == 'user':
+        funcExists = hasattr(user, fn_name)
+        print('>> Checking RPC function "user.%s" -> %s' % (fn_name, funcExists))
+        if funcExists:
+            func = getattr(user, fn_name)        
+    else:
+        return jsonify({'error': 
+            'Attempted to call RPC function in non-existent handler location \'%s\'' \
+                % handlerLocation}) 
+    
+    # If the function doesn't exist, return an error to the client saying it 
+    # doesn't exist.
+    if not funcExists:
+        return jsonify({'error': 
+            'Attempted to call non-existent RPC function \'%s\'' % fn_name}) 
+    
+    # If we are doing an upload.
+    if rpcType == 'upload':
+        # Grab the formData file that was uploaded.    
+        file = request.files['uploadfile']
+        
+        # Grab the filename of this file, and generate the full upload path / 
+        # filename.
+        filename = secure_filename(file.filename)
+        uploaded_fname = os.path.join(rpcs.uploadsPath, filename)
+        
+        # Save the file to the uploads directory.
+        file.save(uploaded_fname)
+        
+        # Prepend the file name to the args list.
+        args.insert(0, uploaded_fname)
+    
+    # Execute the function to get the results.
+    result = func(*args, **kwargs)   
+     
+    # If we are doing a download, prepare the response and send it off.
+    if rpcType == 'download':
+        # If we got None for a result (the full file name), return an error to 
+        # the client.
+        if result is None:
             return jsonify({'error': 'Could not find requested resource'})
     
         # Pull out the directory and file names from the full file name.
-        dirName, fileName = os.path.split(fullFileName)
+        dirName, fileName = os.path.split(result)
          
         # Make the response message with the file loaded as an attachment.
         response = send_from_directory(dirName, fileName, as_attachment=True)
@@ -152,70 +200,37 @@ def downloadRPC():
         
         # Return the response message.
         return response
+    
+    # Otherwise (normal and upload RPCs), 
+    else:
+        # If None was returned by the RPC function, return ''.
+        if result is None:
+            return ''
         
-    # Otherwise (we had an error), return the result.
-    else:
-        return jsonify(callDict['result'])
-
-# Define the /api/upload endpoint.
-@app.route('/api/upload', methods=['POST'])
-@report_exception_decorator
-def uploadRPC():
-    """
-    POST-data:
-        'funcname': string name of function in handler
-        'args': list of arguments for the function
-        'kwargs: dictionary of keyword arguments
-    """   
-    # Initialize the session.
-    rpcs.init_session()
-
-    # Pull out the function name, args, and kwargs
-    fn_name = request.form.get('funcname')
-    args = json.loads(request.form.get('args', "[]"))
-    kwargs = json.loads(request.form.get('kwargs', "{}"))
-    
-    # Check to see whether the function to be called exists.
-    funcExists = hasattr(rpcs, fn_name)
-    print('>> Checking RPC function "rpcs.%s" -> %s' % (fn_name, funcExists))
-    
-    # If the function doesn't exist, return an error to the client saying it 
-    # doesn't exist.
-    if not funcExists:
-        return jsonify({'error': 
-            'Attempted to call non-existent RPC function %s' % fn_name}) 
-            
-    # Get the function from the rpcs module.        
-    func = getattr(rpcs, fn_name)
-    
-    # Grab the formData file that was uploaded.    
-    file = request.files['uploadfile']
-    
-    # Grab the filename of this file, and generate the full upload path / 
-    # filename.
-    filename = secure_filename(file.filename)
-    uploaded_fname = os.path.join(rpcs.uploadsPath, filename)
-    
-    # Save the file to the uploads directory.
-    file.save(uploaded_fname)
-    
-    # Prepend the file name to the args list.
-    args.insert(0, uploaded_fname)
-    
-    # Execute the function to get the results.
-    result = func(*args, **kwargs)    
-    
-    # If None was returned by the RPC function, return ''.
-    if result is None:
-        return ''
-    
-    # Otherwise, convert the result (probably a dict) to JSON and return it.
-    else:
-        return jsonify(result)
+        # Otherwise, convert the result (probably a dict) to JSON and return it.
+        else:
+            return jsonify(result)
 
 # 
 # Script code
 #
 
+# Try to load the config file.  This may fail, so output a warning message if
+# it does.
+errormsg = 'Could not load Sciris configuration file\n'
+errormsg += 'Please ensure that you have copied server/config_example.py to server/config.py\n'
+errormsg += 'Note that this is NOT done automatically'
+try: # File exists
+    app.config.from_pyfile('config.py')
+except: # File doesn't exist
+    raise Exception(errormsg)
+    
+# Configure app for login with the LoginManager.
+login_manager.init_app(app)
+
+# Make sure that the datafiles directory structure is there if it isn't.
+rpcs.build_datafiles_dirs_if_missing()
+
+# The following code just gets called if we are running this standalone.
 if __name__ == "__main__":
     app.run(threaded=True, debug=True, use_debugger=False)

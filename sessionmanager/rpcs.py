@@ -1,7 +1,7 @@
 """
 rpcs.py -- code for RPC interfaces between client and server
     
-Last update: 9/4/17 (gchadder3)
+Last update: 9/8/17 (gchadder3)
 """
 
 #
@@ -49,7 +49,7 @@ class DirectoryStore(object):
 
 # Put code here that initializes a user session.
 # NOTE: This functionality should probably not go here.
-def init_session():
+def build_datafiles_dirs_if_missing():
     # If the datafiles path doesn't exist yet...
     if not os.path.exists(datafilesPath):
         # Create datafiles directory.
