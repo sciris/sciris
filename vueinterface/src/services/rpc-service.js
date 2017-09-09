@@ -4,6 +4,7 @@
 
 import axios from 'axios'
 var filesaver = require('file-saver')
+var CryptoApi = require('crypto-api')
 
 // consoleLogCommand() -- Print an RPC call to the browser console.
 function consoleLogCommand (type, funcname, args, kwargs) {
@@ -272,17 +273,20 @@ export default {
     })
   }, 
 
-  rpcLoginCall (funcname, args, kwargs) {
+  rpcLoginCall (funcname, username, password) {
+    // Get a hex version of a hashed password using the SHA224 algorithm.
+    var hashPassword = CryptoApi.hash('sha224', password, {}).stringify('hex')
+
     // Log the RPC call.
-    consoleLogCommand("login", funcname, args, kwargs)
+    consoleLogCommand("login", funcname, [username, hashPassword], {})
 
     // Do the RPC processing, returning results as a Promise.
     return new Promise((resolve, reject) => {
       // Send the POST request for the RPC call.
       axios.post('/api/user/login', {
         funcname: funcname, 
-        args: args, 
-        kwargs: kwargs
+        args: [username, hashPassword],
+        kwargs: {}
       })
       .then(response => {
         // If there is an error in the POST response.

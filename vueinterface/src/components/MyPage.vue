@@ -61,7 +61,7 @@ export default {
 
   methods: {
     login () {
-      rpcservice.rpcLoginCall('user_login', ['newguy', 'mesogreen'])
+      rpcservice.rpcLoginCall('user_login', 'newguy', 'mesogreen')
     },
 
     logout () {
