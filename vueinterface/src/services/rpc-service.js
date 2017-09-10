@@ -1,6 +1,6 @@
 // rpc-service.js -- RPC functions for Vue to call
 //
-// Last update: 9/8/17 (gchadder3)
+// Last update: 9/10/17 (gchadder3)
 
 import axios from 'axios'
 var filesaver = require('file-saver')
@@ -316,20 +316,56 @@ export default {
     })
   }, 
 
-  rpcLogoutCall (funcname, args, kwargs) {
+  rpcLogoutCall (funcname) {
     // Log the RPC call.
-    consoleLogCommand("logout", funcname, args, kwargs)
+    consoleLogCommand("logout", funcname, [], {})
 
     // Do the RPC processing, returning results as a Promise.
     return new Promise((resolve, reject) => {
       // Send the POST request for the RPC call.
       axios.post('/api/user/logout', {
         funcname: funcname, 
-        args: args, 
-        kwargs: kwargs
+        args: [], 
+        kwargs: {}
       })
       .then(response => {
         // If there is an error in the POST response.
+        if (typeof(response.data.error) != 'undefined') {
+          reject(Error(response.data.error))
+        }
+
+        // Signal success with the response.
+        resolve(response)
+      })
+      .catch(error => {
+        // If there was an actual response returned from the server...
+        if (error.response) {
+          // If we have exception information in the response (which indicates 
+          // an exception on the server side)...
+          if (typeof(error.response.data.exception) != 'undefined') {
+            // For now, reject with an error message matching the exception.
+            // In the future, we want to put the exception message in a 
+            // pop-up dialog.
+            reject(Error(error.response.data.exception))
+          }
+        }
+
+        // Reject with the error axios got.
+        reject(error)
+      })
+    })
+  },
+
+  rpcGetUserInfo (funcname) {
+    // Log the RPC call.
+    consoleLogCommand("getuserinfo", funcname, [], {})
+
+    // Do the RPC processing, returning results as a Promise.
+    return new Promise((resolve, reject) => {
+      // Send the GET request for the RPC call.
+      axios.get('/api/user/current?funcname=get_current_user_info')
+      .then(response => {
+        // If there is an error in the GET response.
         if (typeof(response.data.error) != 'undefined') {
           reject(Error(response.data.error))
         }

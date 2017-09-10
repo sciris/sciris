@@ -1,7 +1,7 @@
 """
 user.py -- code related to Sciris user management
     
-Last update: 9/8/17 (gchadder3)
+Last update: 9/10/17 (gchadder3)
 """
 
 #
@@ -29,6 +29,8 @@ class User(object):
         rawPassword = 'mesogreen'
         self.password = sha224(rawPassword).hexdigest()
         
+        self.is_admin = False
+        
     def get_id(self):
         return self.uid
 
@@ -48,3 +50,9 @@ def user_login(userName, password):
 def user_logout():
     logout_user()
     return
+
+def get_current_user_info():
+    userInfo = {
+        'username': current_user.username
+    }
+    return userInfo

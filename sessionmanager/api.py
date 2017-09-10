@@ -1,7 +1,7 @@
 """
 api.py -- script for setting up a flask server
     
-Last update: 9/8/17 (gchadder3)
+Last update: 9/10/17 (gchadder3)
 """
 
 #
@@ -67,20 +67,13 @@ def root():
 @app.route('/api/user/login', methods=['POST'])
 @report_exception_decorator
 def loginRPC():
-    return doRPC('normal', 'user')
+    return doRPC('normal', 'user', request.method)
 
 # Define the /api/user/logout endpont for RPCs for user logout.
 @app.route('/api/user/logout', methods=['POST'])
 @report_exception_decorator
 def logoutRPC():
-    return doRPC('normal', 'user')
-
-# Define the /api/user/register endpont for RPCs for user registration.
-@app.route('/api/user/register', methods=['POST'])
-@report_exception_decorator
-def registrationRPC():
-    return 'endpoint for user registration'
-#    return doRPC('normal', 'model')
+    return doRPC('normal', 'user', request.method)
 
 # Define the /api/user/current endpont for RPCs for returning the current 
 # user's user information.
@@ -88,22 +81,28 @@ def registrationRPC():
 @report_exception_decorator
 @login_required
 def currentUserRPC():
-    return 'endpoint for getting current user info'
-#    return doRPC('normal', 'model')
+    return doRPC('normal', 'user', request.method)
+
+# Define the /api/user/register endpont for RPCs for user registration.
+@app.route('/api/user/register', methods=['POST'])
+@report_exception_decorator
+def registrationRPC():
+    return 'endpoint for user registration'
+#    return doRPC('normal', 'user', request.method)
 
 # Define the /api/procedure endpoint for normal RPCs.
 @app.route('/api/procedure', methods=['POST'])
 @report_exception_decorator
 @login_required
 def normalRPC():
-    return doRPC('normal', 'model')
+    return doRPC('normal', 'model', request.method)
 
 # Define the /api/procedure endpoint for normal RPCs that don't require a 
 # current valid login.
 @app.route('/api/publicprocedure', methods=['POST'])
 @report_exception_decorator
 def publicNormalRPC():
-    return doRPC('normal', 'model')
+    return doRPC('normal', 'model', request.method)
 
 # Define the /api/download endpoint for RPCs that download a file to the 
 # client.
@@ -111,18 +110,18 @@ def publicNormalRPC():
 @report_exception_decorator
 @login_required
 def downloadRPC():
-    return doRPC('download', 'model')
+    return doRPC('download', 'model', request.method)
 
 # Define the /api/upload endpoint for RPCs that work from uploaded files.
 @app.route('/api/upload', methods=['POST'])
 @report_exception_decorator
 @login_required
 def uploadRPC():
-    return doRPC('upload', 'model')  
+    return doRPC('upload', 'model', request.method)  
   
 # Do the meat of the RPC calls, passing args and kwargs to the appropriate 
 # function in the appropriate handler location.
-def doRPC(rpcType, handlerLocation):
+def doRPC(rpcType, handlerLocation, requestMethod):
     # If we are doing an upload, pull the RPC information out of the request 
     # form instead of the request data.
     if rpcType == 'upload':
@@ -135,8 +134,11 @@ def doRPC(rpcType, handlerLocation):
     # request data.
     else:
         # Convert the request.data JSON to a Python dict, and pull out the 
-        # function name, args, and kwargs.        
-        reqdict = json.loads(request.data)
+        # function name, args, and kwargs.  
+        if requestMethod == 'POST':
+            reqdict = json.loads(request.data)
+        elif requestMethod == 'GET':
+            reqdict = request.args
         fn_name = reqdict['funcname']
         args = reqdict.get('args', [])
         kwargs = reqdict.get('kwargs', {})

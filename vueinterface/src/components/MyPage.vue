@@ -6,13 +6,10 @@ Last update: 9/8/17 (gchadder3)
 
 <template>
   <div id="app">
-    <h1>Scatterplotter for Vue</h1>
-
     <label>Server graph request</label>
     <select v-model='infoselect'>
       <option v-for='choice in resourcechoices'>{{ choice }}</option>
     </select>
-<!--    <input v-model='infoselect'/> -->
     <button @click="sendRequest">Fetch scatterplot</button>
     <br/>
 
@@ -45,6 +42,7 @@ import rpcservice from '../services/rpc-service'
 
 export default {
   name: 'MyPage',
+
   data () {
     return {
       infoselect: 'graph1',
