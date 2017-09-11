@@ -1,7 +1,7 @@
 <!-- 
 MyPage.vue -- MyPage Vue component
 
-Last update: 9/8/17 (gchadder3)
+Last update: 9/11/17 (gchadder3)
 -->
 
 <template>
@@ -16,9 +16,9 @@ Last update: 9/8/17 (gchadder3)
     <button @click="uploadFile">File Upload</button>
     <br/>
 
-    <button @click="login">Log Me In!</button>
+<!--    <button @click="login">Log Me In!</button>
     <button @click="logout">Log Me Out</button>
-    <br/>
+    <br/> -->
 
     <p v-if='loadedfile'> 
       Following file loaded from server: {{ loadedfile }} 
@@ -39,6 +39,7 @@ Last update: 9/8/17 (gchadder3)
 import axios from 'axios'
 var filesaver = require('file-saver')
 import rpcservice from '../services/rpc-service'
+import router from '../router'
 
 export default {
   name: 'MyPage',

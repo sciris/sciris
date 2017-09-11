@@ -1,7 +1,7 @@
 <!-- 
 LoginPage.vue -- LoginPage Vue component
 
-Last update: 9/9/17 (gchadder3)
+Last update: 9/11/17 (gchadder3)
 -->
 
 <template>
@@ -25,6 +25,7 @@ Last update: 9/9/17 (gchadder3)
 
 <script>
 import rpcservice from '../services/rpc-service'
+import router from '../router'
 
 export default {
   name: 'LoginPage', 
@@ -40,6 +41,23 @@ export default {
   methods: {
     tryLogin () {
       rpcservice.rpcLoginCall('user_login', this.loginUserName, this.loginPassword)
+      .then(response => {
+        if (response.data == 'success') {
+          // Set a success result to show.
+          this.loginResult = 'Success!'
+
+          // Update the username in the menu bar.
+
+          // Navigate automatically to the home page.
+          router.push('/')
+        } else {
+          // Set a failure result to show.
+          this.loginResult = 'Login failed: username or password incorrect.'
+        }
+      })
+      .catch(error => {
+        this.loginResult = 'Server error.  Please try again later.'
+      })
     }
   }
 }

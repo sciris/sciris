@@ -1,7 +1,7 @@
 <!-- 
 App.vue -- App component, the main page
 
-Last update: 9/10/17 (gchadder3)
+Last update: 9/11/17 (gchadder3)
 -->
 
 <template>
@@ -11,12 +11,14 @@ Last update: 9/10/17 (gchadder3)
 
     <!-- router-link menu -->
     <label>Pages:</label>
-    <router-link to="/">
+    <router-link to="/" exact>
       Main Page
     </router-link> &nbsp;
-    <router-link to="/login">
-      Login Page
-    </router-link> &nbsp;
+    <span v-if="username == 'None'">
+      <router-link to="/login">
+        Login Page
+      </router-link> &nbsp;
+    </span>
     <router-link to="/vueinfo">
       Vue Info
     </router-link> &nbsp;
