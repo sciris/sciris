@@ -1,7 +1,7 @@
 <!-- 
 MyPage.vue -- MyPage Vue component
 
-Last update: 9/11/17 (gchadder3)
+Last update: 9/13/17 (gchadder3)
 -->
 
 <template>
@@ -16,10 +16,6 @@ Last update: 9/11/17 (gchadder3)
     <button @click="uploadFile">File Upload</button>
     <br/>
 
-<!--    <button @click="login">Log Me In!</button>
-    <button @click="logout">Log Me Out</button>
-    <br/> -->
-
     <p v-if='loadedfile'> 
       Following file loaded from server: {{ loadedfile }} 
       <button @click="downloadFile">Download it!</button>
@@ -31,6 +27,7 @@ Last update: 9/11/17 (gchadder3)
 
 <!--    <p>Server Response: {{ serverresponse }}</p> -->
 
+    <!-- Window for mpld3 figure -->
     <div id="fig01"></div>
   </div>
 </template>
@@ -55,18 +52,16 @@ export default {
   },
 
   created () {
+    // Get the list of the graphs available.
     this.updateScatterplotDataList()
+
+    // If we have no user logged, in automatically redirect to the login page.
+    if (this.$store.state.username == 'None') {
+      router.push('/login')
+    }
   },
 
   methods: {
-    login () {
-      rpcservice.rpcLoginCall('user_login', 'newguy', 'mesogreen')
-    },
-
-    logout () {
-      rpcservice.rpcLogoutCall('user_logout')
-    },
-
     updateScatterplotDataList () {
       rpcservice.rpcPublicCall('list_saved_scatterplotdata_resources')
       .then(response => {

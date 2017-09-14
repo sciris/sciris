@@ -1,7 +1,7 @@
 <!-- 
 LoginPage.vue -- LoginPage Vue component
 
-Last update: 9/11/17 (gchadder3)
+Last update: 9/13/17 (gchadder3)
 -->
 
 <template>
@@ -46,7 +46,8 @@ export default {
           // Set a success result to show.
           this.loginResult = 'Success!'
 
-          // Update the username in the menu bar.
+          // Update the username.
+          this.$store.commit('newuser', this.loginUserName)
 
           // Navigate automatically to the home page.
           router.push('/')

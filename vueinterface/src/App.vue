@@ -1,7 +1,7 @@
 <!-- 
 App.vue -- App component, the main page
 
-Last update: 9/11/17 (gchadder3)
+Last update: 9/13/17 (gchadder3)
 -->
 
 <template>
@@ -11,24 +11,30 @@ Last update: 9/11/17 (gchadder3)
 
     <!-- router-link menu -->
     <label>Pages:</label>
-    <router-link to="/" exact>
-      Main Page
-    </router-link> &nbsp;
+    <span v-if="username != 'None'">
+      <router-link to="/" exact>
+        Main Page
+      </router-link> 
+      &nbsp;
+    </span>
     <span v-if="username == 'None'">
       <router-link to="/login">
         Login Page
-      </router-link> &nbsp;
+      </router-link> 
+      &nbsp;
     </span>
     <router-link to="/vueinfo">
       Vue Info
-    </router-link> &nbsp;
-
-    <label>Logged In User:</label>
-    {{ username }}
-
+    </router-link> 
     &nbsp;
 
-    <button @click="logout">Log Out</button>
+    <!-- Display of logged in user -->
+    <label>Logged In User:</label>
+    {{ username }}
+    &nbsp;
+
+    <!-- Logout button -->
+    <button v-if="username != 'None'" @click="logout">Log Out</button>
 
     <hr/>
 
@@ -39,13 +45,14 @@ Last update: 9/11/17 (gchadder3)
 
 <script>
 import rpcservice from './services/rpc-service'
+import router from './router'
 
 export default {
   name: 'app', 
 
-  data () {
-    return {
-      username: 'None'
+  computed: {
+    username () {
+      return this.$store.state.username
     }
   },
 
@@ -60,6 +67,9 @@ export default {
       .then(response => {
         // Update the user info.
         this.getUserInfo()
+
+        // Navigate to the login page automatically.
+        router.push('/login')
       })
     },
 
@@ -67,21 +77,13 @@ export default {
       rpcservice.rpcGetUserInfo('get_current_user_info')
       .then(response => {
         // Set the username to what the server indicates.
-        this.username = response.data.username
+        this.$store.commit('newuser', response.data.username)
       })
       .catch(error => {
         // Set the username to 'None'.  An error probably means the 
         // user is not logged in.
-        this.username = 'None'
+        this.$store.commit('newuser', 'None')
       })
-    },
-
-    goMainPage () {
-      console.log('go to the main page')
-    }, 
-
-    goVueInfoPage () {
-      console.log('go to the Vue info page')
     }
   }
 }
