@@ -4,16 +4,23 @@ model.py -- a small Python model.
 Usage: To run from the command line:
     python model.py 
     
-Last update: 8/30/17 (gchadder3)
+Last update: 9/17/17 (gchadder3)
 '''
 
 #
 # Imports
 #
 
+# Temporary stuff
+import sys
+sys.path.append('../sessionmanager')
+import datastore as ds
+import uuid
+
 import numpy as np
 import matplotlib.pyplot as plt
 import pandas as pd
+
 
 #
 # Classes
@@ -153,3 +160,24 @@ if __name__ == "__main__":
     spd2.plot()
     
     plt.show()
+
+    
+    # Temporary stuff for testing datastore code
+    
+    # Create the DataStore object
+    #theStore = ds.DataStore()
+
+    
+#    # Add spd and spd2 to this.
+#    theStore.add(spd, uuid.uuid4(), 'spd', '.spd', 'Gaussian 1')
+#    theStore.add(spd2, uuid.uuid4(), 'spd', '.spd', 'Uniform 1')
+#    
+#    # Save the store state.
+#    theStore.dump()
+    
+    
+    # Load the store state.
+    #theStore.load()
+
+    
+    

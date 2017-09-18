@@ -1,7 +1,7 @@
 <!-- 
 LoginPage.vue -- LoginPage Vue component
 
-Last update: 9/13/17 (gchadder3)
+Last update: 9/14/17 (gchadder3)
 -->
 
 <template>
@@ -19,7 +19,8 @@ Last update: 9/13/17 (gchadder3)
 
     <p v-if="loginResult != ''">{{ loginResult }}</p>
 
-    <p>Hint: Username = 'newguy', Password = 'mesogreen'</p>
+    <p>Login 1: Username = 'newguy', Password = 'mesogreen'</p>
+    <p>Login 2: Username = 'admin', Password = 'mesoawesome'</p>
   </div>
 </template>
 

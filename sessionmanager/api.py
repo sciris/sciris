@@ -1,7 +1,7 @@
 """
 api.py -- script for setting up a flask server
     
-Last update: 9/10/17 (gchadder3)
+Last update: 9/17/17 (gchadder3)
 """
 
 #
@@ -16,13 +16,14 @@ from functools import wraps
 import traceback
 import os
 import rpcs
+import datastore
 import user
 
 #
 # Globals
 #
 
-# Create the app.
+# Create the Flask app.
 app = Flask(__name__)
 
 # Create the LoginManager.
@@ -31,10 +32,17 @@ login_manager = LoginManager()
 #
 # Functions
 #
-    
+
+# This function gets called when authentication gets done by Flask-Login.  
+# userid is the user ID pulled out of the session cookie the browser passes in 
+# during an HTTP request.  The function returns the User object that matches 
+# this, so that the user data may be used to authenticate (for example their 
+# rights to have admin access).  The return sets the Flask-Login current_user 
+# value.
 @login_manager.user_loader
 def load_user(userid):
-    return user.myUser
+    # Return the matching user (if any).
+    return user.myUserList.getUserByUID(userid)
 
 # Decorator function which allows any exceptions made by the RPC calls to be 
 # trapped and return in the response message.
@@ -232,6 +240,12 @@ login_manager.init_app(app)
 
 # Make sure that the datafiles directory structure is there if it isn't.
 rpcs.build_datafiles_dirs_if_missing()
+
+# Initialize the DataStore.
+
+# Initialize the UserList.
+
+# Initialize functionality specific to the Sciris user's functionality.
 
 # The following code just gets called if we are running this standalone.
 if __name__ == "__main__":

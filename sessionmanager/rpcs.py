@@ -1,8 +1,13 @@
 """
 rpcs.py -- code for RPC interfaces between client and server
     
-Last update: 9/8/17 (gchadder3)
+Last update: 9/14/17 (gchadder3)
 """
+
+# NOTE: This file (or whatever we end up renaming it to) should probably be 
+# the focal place where Sciris users write code to interface the framework 
+# with their model.  File name ideas: modelinterface.py, 
+# sessionmodelcontroller.py.
 
 #
 # Imports
@@ -36,11 +41,6 @@ class GraphFigure(object):
 class DataCollection(object):
     def __init__(self, dataObj):
         self.dataObj = dataObj
-
-# Wraps a directory storage place for the session manager.
-class DirectoryStore(object):
-    def __init__(self, dirPath):
-        self.dirPath = dirPath
 
 #
 # Session functions 
