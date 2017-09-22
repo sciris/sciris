@@ -24,6 +24,13 @@ your Python setup, you also need to have the following packages:
 * flask
 * twisted
 * mpld3
+* redis
+
+#### Database Dependencies
+
+If you Redis as your DataStore mode, you will need to have Redis 
+installed on your computer (as a service).  [Add directions on 
+how to do this.]
 
 #### Initial Build of the Client
 

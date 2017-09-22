@@ -1,26 +1,38 @@
 <!-- 
 MyPage.vue -- MyPage Vue component
 
-Last update: 9/21/17 (gchadder3)
+Last update: 9/22/17 (gchadder3)
 -->
 
 <template>
   <div id="app">
-    <label>Server graph request</label>
-    <select v-model='infoselect'>
-      <option v-for='choice in resourcechoices'>{{ choice }}</option>
-    </select>
-    <button @click="sendRequest">Fetch scatterplot</button>
+    <!-- Indicator if the user's directory is empty -->
+    <p v-if='!selectedgraph'>
+      Your directory is empty, so you need to upload a new file.
+    </p>
+
+    <!-- Selector for saved graph of user's -->
+    <div v-if='selectedgraph'>
+      <label>Scatterplot to retrieve</label>
+      <select v-model='selectedgraph'>
+        <option v-for='choice in resourcechoices'>{{ choice }}</option>
+      </select>
+      <button v-if='selectedgraph' @click="sendRequest">Load</button>
+    </div>
+
+    <!-- Button for uploading new files -->
+    <button @click="uploadFile">Upload New File</button>
     <br/>
 
-    <button @click="uploadFile">File Upload</button>
-    <br/>
-
+    <!-- Display of loaded in file along with buttons for downloading or 
+    deleting -->
     <p v-if='loadedfile'> 
       Following file loaded from server: {{ loadedfile }} 
       <button @click="downloadFile">Download it!</button>
+      <button @click="deleteFile">Delete it</button>
     </p>
 
+    <!-- Display of any server error -->
     <p v-if='servererror'> 
       Server error: {{ servererror }} 
     </p>
@@ -43,7 +55,7 @@ export default {
 
   data () {
     return {
-      infoselect: 'graph1',
+      selectedgraph: 'graph1',
       serverresponse: '',
       loadedfile: '', 
       servererror: '',
@@ -52,7 +64,7 @@ export default {
   },
 
   created () {
-    // If we have no user logged, in automatically redirect to the login page.
+    // If we have no user logged in, automatically redirect to the login page.
     if (this.$store.state.username == 'None') {
       router.push('/login')
     } else {
@@ -62,20 +74,33 @@ export default {
   },
 
   methods: {
-    updateScatterplotDataList () {
-      rpcservice.rpcPublicCall('list_saved_scatterplotdata_resources')
-      .then(response => {
-        this.resourcechoices = response.data
-      })
-    },
-
-    sendRequest () {
+    clearFigureWindow () {
       // If we already have a figure, pop the figure object, and clear
       // the DOM.
       if (mpld3.figures.length > 0) {
         mpld3.figures.pop()
         document.getElementById('fig01').innerHTML = ''
       }
+    },
+
+    updateScatterplotDataList () {
+      return new Promise((resolve, reject) => {
+        rpcservice.rpcPublicCall('list_saved_scatterplotdata_resources')
+        .then(response => {
+          this.resourcechoices = response.data
+          this.selectedgraph = this.resourcechoices[0]
+          resolve(response)
+        })
+        .catch(error => {
+          reject(Error(response.data.error))
+        })
+      })
+    },
+
+    sendRequest () {
+      // If we already have a figure, pop the figure object, and clear
+      // the DOM.
+      this.clearFigureWindow()
 
       // Clear the loaded file.
       this.loadedfile = ''
@@ -84,7 +109,7 @@ export default {
       this.servererror = ''
 
       // Call RPC get_saved_scatterplotdata_graph.
-      rpcservice.rpcCall('get_saved_scatterplotdata_graph', [this.infoselect])
+      rpcservice.rpcCall('get_saved_scatterplotdata_graph', [this.selectedgraph])
       .then(response => {
         // Pull out the response data.
         this.serverresponse = response.data
@@ -93,7 +118,7 @@ export default {
         mpld3.draw_figure('fig01', response.data)
 
         // Remember the file that was loaded.
-        this.loadedfile = this.infoselect + '.csv'
+        this.loadedfile = this.selectedgraph + '.csv'
       })
       .catch(error => {
         // Pull out the error message.
@@ -105,8 +130,11 @@ export default {
     }, 
 
     downloadFile () {
+      // Clear the server error.
+      this.servererror = ''
+
       // Call RPC download_saved_scatterplotdata.
-      rpcservice.rpcDownloadCall('download_saved_scatterplotdata', [this.infoselect])
+      rpcservice.rpcDownloadCall('download_saved_scatterplotdata', [this.selectedgraph])
       .then(response => {
         // Pull out the response data.
         this.serverresponse = response.data
@@ -118,17 +146,57 @@ export default {
         // Set the server error.
         this.servererror = error.message
       })
-    }, 
+    },
+ 
+    deleteFile () {
+      // Clear the server error.
+      this.servererror = ''
 
-    uploadFile () {
-      // Call RPC upload_scatterplotdata_from_csv.
-      rpcservice.rpcUploadCall('upload_scatterplotdata_from_csv', [this.infoselect], {}, '.csv')
+      // Call RPC delete_saved_scatterplotdata_graph.
+      rpcservice.rpcCall('delete_saved_scatterplotdata_graph', [this.selectedgraph])
       .then(response => {
         // Pull out the response data.
         this.serverresponse = response.data
 
         // Update the ScatterplotData list.
-        this.updateScatterplotDataList()
+        this.updateScatterplotDataList().
+        then(response => {
+          // Clear the loaded file.
+          this.loadedfile = ''
+
+          // If we already have a figure, pop the figure object, and clear
+          // the DOM.
+          this.clearFigureWindow()
+        })
+      })
+      .catch(error => {
+        // Pull out the error message.
+        this.serverresponse = 'There was an error: ' + error.message
+
+        // Set the server error.
+        this.servererror = error.message
+      })
+    },
+
+    uploadFile () {
+      // Clear the server error.
+      this.servererror = ''
+
+      // Call RPC upload_scatterplotdata_from_csv.
+      rpcservice.rpcUploadCall('upload_scatterplotdata_from_csv', [this.selectedgraph], {}, '.csv')
+      .then(response => {
+        // Pull out the response data.
+        this.serverresponse = response.data
+
+        // Update the ScatterplotData list.
+        this.updateScatterplotDataList().
+        then(response2 => {
+          // Set the selected graph to the new upload.
+          this.selectedgraph = response.data
+
+          // Send a request to fetch the new file.
+          this.sendRequest()
+        })
       })
       .catch(error => {
         // Pull out the error message.

@@ -1,7 +1,7 @@
 """
 main.py -- main code for Sciris users to change to create their web apps
     
-Last update: 9/21/17 (gchadder3)
+Last update: 9/22/17 (gchadder3)
 """
 
 #
@@ -166,6 +166,19 @@ def get_saved_scatterplotdata_graph(spdName):
     # Return the dictionary representation of the matplotlib figure.
     return mpld3.fig_to_dict(graphData) 
 
+def delete_saved_scatterplotdata_graph(spdName):
+    # Look for a match of the resource, and if we don't find it, return
+    # an error.
+    fullFileName = get_saved_scatterplotdata_file_path(spdName)
+    if fullFileName is None:
+        return {'error': 'Cannot find resource \'%s\'' % spdName}
+    
+    # Delete the file.
+    os.remove(fullFileName)
+    
+    # Return success.
+    return 'success'
+    
 def download_saved_scatterplotdata(spdName):
     return get_saved_scatterplotdata_file_path(spdName)
 
@@ -184,8 +197,15 @@ def upload_scatterplotdata_from_csv(fullFileName, spdName):
     # Create a new destination for the file in the datafiles directory.
     newFullFileName = '%s%s%s' % (userFileSavePath, os.sep, fileName)
     
+    # If the new file already exists, return a failure.
+    if os.path.exists(newFullFileName):
+        return {'error': 'Resource \'%s\' already on server' % spdName}        
+    
     # Move the file into the datafiles directory.
     os.rename(fullFileName, newFullFileName)
     
     # Return the new file name.
-    return newFullFileName
+    #return newFullFileName
+
+    # Return the resource we added (i.e. stripping off the full filename).
+    return re.sub('\.csv$', '', fileName)
