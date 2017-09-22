@@ -1,7 +1,7 @@
 <!-- 
 MyPage.vue -- MyPage Vue component
 
-Last update: 9/13/17 (gchadder3)
+Last update: 9/21/17 (gchadder3)
 -->
 
 <template>
@@ -52,12 +52,12 @@ export default {
   },
 
   created () {
-    // Get the list of the graphs available.
-    this.updateScatterplotDataList()
-
     // If we have no user logged, in automatically redirect to the login page.
     if (this.$store.state.username == 'None') {
       router.push('/login')
+    } else {
+      // Otherwise, get the list of the graphs available.   
+      this.updateScatterplotDataList()
     }
   },
 
@@ -93,7 +93,7 @@ export default {
         mpld3.draw_figure('fig01', response.data)
 
         // Remember the file that was loaded.
-        this.loadedfile = 'datafiles/' + this.infoselect + '.csv'
+        this.loadedfile = this.infoselect + '.csv'
       })
       .catch(error => {
         // Pull out the error message.

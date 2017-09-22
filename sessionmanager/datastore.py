@@ -1,10 +1,18 @@
 """
-datastore.py -- code related to Sciris data storage (both files and database)
+datastore.py -- code related to Sciris persistence (both files and database)
     
-Last update: 9/17/17 (gchadder3)
+Last update: 9/21/17 (gchadder3)
 """
 
-# NOTE: We don't want Sciris users to have to customize this file much.
+"""
+DEV NOTES: 
+* We don't want Sciris users to have to customize this file much, or at all.
+* We also don't want classes here for objects that are not intimately tied
+to actual to-disk persistence.
+* We may want to break out the file and directory related stuff into a 
+different file, leaving DataStore-related store here, but maybe file and 
+directory management stuff goes in a file called filemanagement.py.
+"""
 
 #
 # Imports
@@ -26,14 +34,69 @@ from cStringIO import StringIO
 from contextlib import closing
 
 #
+# Globals
+#
+
+# These will get set by calling code.
+
+# The path of the Sciris repo.
+scirisRootPath = None
+
+# The directory that uploaded files are written to as a "way-station."
+uploadsPath = None
+
+# The root path where files may end up being saved.
+fileSaveRootPath = None
+
+# The DataStore object for persistence for the app.  Gets initialized by
+# and loaded by init_datastore().
+theDataStore = None
+
+#
 # Classes
 #
 
 class StoreObjectHandle(object):
-    def __init__(self, theUID, theTypeLabel='obj', theFileSuffix='.obj', 
+    """
+    An object associated with a Python object which permits the Python object 
+    to be store in and retrieved from a DataStore object.
+    
+    Methods:
+        __init__(theUID: UUID, theTypePrefix: str ['obj'], 
+            theFileSuffix: str ['.obj'], theInstanceLabel: str['']): void --
+            constructor
+        getUID(): UUID -- return the StoreObjectHandle's UID
+        fileStore(dirPath: str, theObject: Object): void -- store theObject in 
+            the dirPath directory
+        fileRetrieve(dirPath: str): void -- retrieve the stored object from 
+            the dirPath directory
+        fileDelete(dirPath: str): void -- delete the stored object from the 
+            dirPath directory
+        redisStore(theObject: Object, redisDb: redis.client.StrictRedis): 
+            void -- store theObject in Redis
+        redisRetrieve(redisDb: redis.client.StrictRedis): void -- retrieve 
+            the stored object from Redis
+        redisDelete(redisDb: redis.client.StrictRedis): void -- delete the 
+            stored object from Redis
+        show(): void -- print the contents of the object
+                    
+    Attributes:
+        uid (UUID) -- the unique ID for the handle (uuid Python library-related)
+        typePrefix (str) -- a prefix that gets added to the UUID to give either 
+            a file name or a Redis key
+        fileSuffix (str) -- a suffix that gets added to files
+        instanceLabel (str) -- a name of the object which should at least be 
+            unique across other handles of the save typePrefix
+        
+    Usage:
+        >>> newHandle = StoreObjectHandle(uuid.UUID('12345678123456781234567812345678'), 
+            typePrefix='project', fileSuffix='.prj', instanceLabel='Project 1')
+    """
+    
+    def __init__(self, theUID, theTypePrefix='obj', theFileSuffix='.obj', 
         theInstanceLabel=''):
         self.uid = theUID
-        self.typeLabel = theTypeLabel
+        self.typePrefix = theTypePrefix
         self.fileSuffix = theFileSuffix
         self.instanceLabel = theInstanceLabel
         
@@ -41,9 +104,9 @@ class StoreObjectHandle(object):
         return self.uid
     
     def fileStore(self, dirPath, theObject):
-        # Create a filename containing the type label, hex UID code, and the
+        # Create a filename containing the type prefix, hex UID code, and the
         # appropriate file suffix.
-        fileName = '%s-%s%s' % (self.typeLabel, self.uid.hex, self.fileSuffix)
+        fileName = '%s-%s%s' % (self.typePrefix, self.uid.hex, self.fileSuffix)
         
         # Generate the full file name with path.
         fullFileName = '%s%s%s' % (dirPath, os.sep, fileName)
@@ -52,9 +115,9 @@ class StoreObjectHandle(object):
         objectToGzipStringPickleFile(fullFileName, theObject)
     
     def fileRetrieve(self, dirPath):
-        # Create a filename containing the type label, hex UID code, and the
+        # Create a filename containing the type prefix, hex UID code, and the
         # appropriate file suffix.
-        fileName = '%s-%s%s' % (self.typeLabel, self.uid.hex, self.fileSuffix)
+        fileName = '%s-%s%s' % (self.typePrefix, self.uid.hex, self.fileSuffix)
         
         # Generate the full file name with path.
         fullFileName = '%s%s%s' % (dirPath, os.sep, fileName)
@@ -63,9 +126,9 @@ class StoreObjectHandle(object):
         return gzipStringPickleFileToObject(fullFileName)
     
     def fileDelete(self, dirPath):
-        # Create a filename containing the type label, hex UID code, and the
+        # Create a filename containing the type prefix, hex UID code, and the
         # appropriate file suffix.
-        fileName = '%s-%s%s' % (self.typeLabel, self.uid.hex, self.fileSuffix)
+        fileName = '%s-%s%s' % (self.typePrefix, self.uid.hex, self.fileSuffix)
         
         # Generate the full file name with path.
         fullFileName = '%s%s%s' % (dirPath, os.sep, fileName)
@@ -74,139 +137,280 @@ class StoreObjectHandle(object):
         if os.path.exists(fullFileName):
             os.remove(fullFileName)
     
-    def redisStore(self, theObject):
-        # Make the Redis key containing the type label, and the hex UID code.
-        keyName = '%s-%s' % (self.typeLabel, self.uid.hex)
+    def redisStore(self, theObject, redisDb):
+        # Make the Redis key containing the type prefix, and the hex UID code.
+        keyName = '%s-%s' % (self.typePrefix, self.uid.hex)
         
         # Put the object in Redis.
         redisDb.set(keyName, objectToGzipStringPickle(theObject))
     
-    def redisRetrieve(self):
-        # Make the Redis key containing the type label, and the hex UID code.
-        keyName = '%s-%s' % (self.typeLabel, self.uid.hex) 
+    def redisRetrieve(self, redisDb):
+        # Make the Redis key containing the type prefix, and the hex UID code.
+        keyName = '%s-%s' % (self.typePrefix, self.uid.hex) 
         
         # Get and return the object with the key in Redis.
         return gzipStringPickleToObject(redisDb.get(keyName))
     
-    def redisDelete(self):
-        # Make the Redis key containing the type label, and the hex UID code.
-        keyName = '%s-%s' % (self.typeLabel, self.uid.hex)
+    def redisDelete(self, redisDb):
+        # Make the Redis key containing the type prefix, and the hex UID code.
+        keyName = '%s-%s' % (self.typePrefix, self.uid.hex)
         
         # Delete the entry from Redis.
-        redisDb.delete(keyName)  
+        redisDb.delete(keyName)
+        
+    def show(self):
+        print 'UUID: %s' % self.uid.hex
+        print 'Type Prefix: %s' % self.typePrefix
+        print 'File Suffix: %s' % self.fileSuffix
+        print 'Instance Label: %s' % self.instanceLabel
         
 class DataStore(object):
-    def __init__(self, theDbMode='redis'):
-        self.handleList = []
-        self.uuidHashes = {}
-        self.dbMode = theDbMode
+    """
+    An object allowing storage and retrieval of Python objects using either 
+    files or the Redis database.  You can think of it as being a generalized 
+    key/value-pair-based database.
+    
+    Methods:
+        __init__(theDbMode: str ['redis'], redisDbURL: str [None]): void -- 
+            constructor
+        save(): void -- save the state of the DataStore either to file or 
+            Redis, depending on the mode
+        load(): void -- load the state of the DataStore either from file or 
+            Redis, depending on the mode
+        getHandleByUID(theUID: UUID or str): StoreObjectHandle -- get the 
+            handle (if any) pointed to by an UID
+        add(theObject: Object, theUID: UUID or str, theTypeLabel: str ['obj'], 
+            theFileSuffix: str ['.obj'], theInstanceLabel: str [''], 
+            saveHandleChanges: bool [True]): void -- add a Python object to 
+            the DataStore, creating also a StoreObjectHandle for managing it
+        retrieve(theUID: UUID or str): Object -- retrieve a Python object 
+            stored in the DataStore, keyed by a UID
+        update(theUID: UUID or str, theObject): void -- update a Python object 
+            stored in the DataStore, keyed by a UID
+        delete(theUID: UUID or str, saveHandleChanges=True): void -- delete a 
+            Python object stored in the DataStore, keyed by a UID
+        deleteAll(): void -- delete all of the Python objects in the DataStore
+        showHandles(): void -- show all of the StoreObjectHandles in the 
+            DataStore
+        showRedisKeys(): void -- show all of the keys in the Redis database 
+            we are using
+        clearRedisKeys(): void -- delete all of the keys in the Redis database
+            we are using
+                    
+    Attributes:
+        handleDict (dict) -- the Python dictionary holding the StoreObjectHandles
+        dbMode (str) -- the mode of persistence the DataStore uses (either 
+            'redis' or 'file')
+        redisDb (redis.client.StrictRedis) -- link to the Redis database we 
+            are using
         
-    def dump(self):
+    Usage:
+        >>> theDataStore = DataStore(redisDbURL='redis://localhost:6379/1/')                      
+    """
+    
+    def __init__(self, theDbMode='redis', redisDbURL=None):
+        # Start with an empty dictionary.
+        self.handleDict = {}
+        
+        if redisDbURL is not None:
+            self.dbMode = 'redis'
+        else:
+            self.dbMode = theDbMode
+        
+        # If we are using Redis...
+        if self.dbMode == 'redis':
+            # Open up the Redis database we want to dedicate to Sciris.
+            self.redisDb = redis.StrictRedis.from_url(redisDbURL)
+        
+    def save(self):
         # If we are using Redis...
         if self.dbMode == 'redis':
             # Set the entries for all of the data items.
-            redisDb.set('scirisdatastore-handleList', 
-                objectToGzipStringPickle(self.handleList))
-            redisDb.set('scirisdatastore-uuidHashes', 
-                objectToGzipStringPickle(self.uuidHashes))
-            redisDb.set('scirisdatastore-dbMode', 
+            self.redisDb.set('scirisdatastore-handleDict', 
+                objectToGzipStringPickle(self.handleDict))
+            self.redisDb.set('scirisdatastore-dbMode', 
                 objectToGzipStringPickle(self.dbMode))
             
         # Otherwise (we are using files)...
         else:
             outfile = open('.\\sciris.ds', 'wb')
-            pickle.dump(self.handleList, outfile)
-            pickle.dump(self.uuidHashes, outfile)
+            pickle.dump(self.handleDict, outfile)
             pickle.dump(self.dbMode, outfile)
     
     def load(self):
         # If we are using Redis...
         if self.dbMode == 'redis':
             # Get the entries for all of the data items.
-            self.handleList = gzipStringPickleToObject(redisDb.get('scirisdatastore-handleList'))
-            self.uuidHashes = gzipStringPickleToObject(redisDb.get('scirisdatastore-uuidHashes'))
-            self.dbMode = gzipStringPickleToObject(redisDb.get('scirisdatastore-dbMode'))
+            self.handleDict = gzipStringPickleToObject(self.redisDb.get('scirisdatastore-handleDict'))
+            self.dbMode = gzipStringPickleToObject(self.redisDb.get('scirisdatastore-dbMode'))
         
         # Otherwise (we are using files)...
         else:        
             infile = open('.\\sciris.ds', 'rb')
-            self.handleList = pickle.load(infile)
-            self.uuidHashes = pickle.load(infile)
+            self.handleDict = pickle.load(infile)
             self.dbMode = pickle.load(infile)
     
     def getHandleByUID(self, theUID):
-        return self.handleList[self.uuidHashes[theUID]]
+        # Make sure the argument is a valid UUID, converting a hex text to a
+        # UUID object, if needed.        
+        validUID = getValidUUID(theUID)
+        
+        # If we have a valid UUID...
+        if validUID is not None:
+            return self.handleDict.get(validUID, None)
+        else:
+            return None
     
     def add(self, theObject, theUID, theTypeLabel='obj', theFileSuffix='.obj', 
-        theInstanceLabel=''):
-        # Create the new StoreObjectHandle
-        newHandle = StoreObjectHandle(theUID, theTypeLabel, theFileSuffix, 
-            theInstanceLabel)
+        theInstanceLabel='', saveHandleChanges=True):
+        # Make sure the argument is a valid UUID, converting a hex text to a
+        # UUID object, if needed.        
+        validUID = getValidUUID(theUID)
         
-        # Add the handle to the list.
-        self.handleList.append(newHandle)
-        self.uuidHashes[theUID] = len(self.handleList) - 1
-        
-        # If we are using Redis...
-        if self.dbMode == 'redis':
-            # Put the object in Redis.
-            newHandle.redisStore(theObject)
+        # If we have a valid UUID...
+        if validUID is not None:       
+            # Create the new StoreObjectHandle.
+            newHandle = StoreObjectHandle(validUID, theTypeLabel, theFileSuffix, 
+                theInstanceLabel)
             
-        # Otherwise (we are using files)...
-        else:
-            # Put the object in a file.
-            newHandle.fileStore('.', theObject)
+            # Add the handle to the dictionary.
+            self.handleDict[validUID] = newHandle
+            
+            # If we are using Redis...
+            if self.dbMode == 'redis':
+                # Put the object in Redis.
+                newHandle.redisStore(theObject, self.redisDb)
+                
+            # Otherwise (we are using files)...
+            else:
+                # Put the object in a file.
+                newHandle.fileStore('.', theObject)
+                
+            # Do a save of the database so change is kept.
+            if saveHandleChanges:
+                self.save()
     
     def retrieve(self, theUID):
-        # If we are using Redis...
-        if self.dbMode == 'redis':        
-            # Return the object pointed to by the handle.
-            return self.getHandleByUID(theUID).redisRetrieve()
+        # Make sure the argument is a valid UUID, converting a hex text to a
+        # UUID object, if needed.        
+        validUID = getValidUUID(theUID)
         
-        # Otherwise (we are using files)...
-        else:   
-            # Return the object pointed to by the handle.
-            return self.getHandleByUID(theUID).fileRetrieve('.')
+        # If we have a valid UUID...
+        if validUID is not None: 
+            # Get the handle (if any) matching the UID.
+            theHandle = self.getHandleByUID(validUID)
+            
+            # If we found a matching handle...
+            if theHandle is not None:
+                # If we are using Redis...
+                if self.dbMode == 'redis':        
+                    # Return the object pointed to by the handle.
+                    return theHandle.redisRetrieve(self.redisDb)
+                
+                # Otherwise (we are using files)...
+                else:   
+                    # Return the object pointed to by the handle.
+                    return theHandle.fileRetrieve('.')
+                
+        # Return None (a failure to find a match).
+        return None
     
     def update(self, theUID, theObject):
-        # If we are using Redis...
-        if self.dbMode == 'redis':        
-            # Overwrite the old copy of the object using the handle.
-            self.getHandleByUID(theUID).redisStore(theObject)
+        # Make sure the argument is a valid UUID, converting a hex text to a
+        # UUID object, if needed.        
+        validUID = getValidUUID(theUID)
+        
+        # If we have a valid UUID...
+        if validUID is not None:  
+            # Get the handle (if any) matching the UID.
+            theHandle = self.getHandleByUID(validUID)
             
-        # Otherwise (we are using files)...
-        else:
-            # Overwrite the old copy of the object using the handle.
-            self.getHandleByUID(theUID).fileStore('.', theObject)     
+            # If we found a matching handle...
+            if theHandle is not None:
+                # If we are using Redis...
+                if self.dbMode == 'redis':        
+                    # Overwrite the old copy of the object using the handle.
+                    theHandle.redisStore(theObject, self.redisDb)
+                    
+                # Otherwise (we are using files)...
+                else:
+                    # Overwrite the old copy of the object using the handle.
+                    theHandle.fileStore('.', theObject)     
      
-    def delete(self, theUID):
-        # If we are using Redis...
-        if self.dbMode == 'redis': 
-            # Delete the key using the handle.
-            self.getHandleByUID(theUID).redisDelete()
+    def delete(self, theUID, saveHandleChanges=True):
+        # Make sure the argument is a valid UUID, converting a hex text to a
+        # UUID object, if needed.        
+        validUID = getValidUUID(theUID)
+        
+        # If we have a valid UUID...
+        if validUID is not None: 
+            # Get the handle (if any) matching the UID.
+            theHandle = self.getHandleByUID(validUID) 
             
-        # Otherwise (we are using files)...
-        else:        
-            # Delete the file using the handle.
-            self.getHandleByUID(theUID).fileDelete('.')
-        
-        # Delete the handle from the list.
-        
+            # If we found a matching handle...
+            if theHandle is not None:
+                # If we are using Redis...
+                if self.dbMode == 'redis': 
+                    # Delete the key using the handle.
+                    theHandle.redisDelete(self.redisDb)
+                    
+                # Otherwise (we are using files)...
+                else:        
+                    # Delete the file using the handle.
+                    theHandle.fileDelete('.')
+                
+                # Delete the handle from the dictionary.
+                del self.handleDict[validUID]
+                
+                # Do a save of the database so change is kept.
+                if saveHandleChanges:        
+                    self.save()        
+               
     def deleteAll(self):
-        # Delete all of the resources pointed to by all of the handlers.
-        # Delete all handlers.
-        # Delete the saved version of the store itself.
-        pass
+        # For each key in the dictionary, delete the key and handle, but 
+        # don't do the save of the DataStore object until after the changes 
+        # are made.
+        allKeys = [key for key in self.handleDict]
+        for theKey in allKeys:
+            self.delete(theKey, saveHandleChanges=False)
+        
+        # Save the DataStore object.
+        self.save()
     
-  
-# Wraps a directory storage place for the session manager.
-class DirectoryStore(DataStore):
+    def showHandles(self):
+        # For each key in the dictionary...
+        for theKey in self.handleDict:
+            # Get the handle pointed to.
+            theHandle = self.handleDict[theKey]
+            
+            # Separator line.
+            print '--------------------------------------------'
+            
+            # Show the handle contents.
+            theHandle.show()
+            
+        # Separator line.
+        print '--------------------------------------------'
+    
+    def showRedisKeys(self):
+        # Show all of the keys in the Redis database we are using.
+        print self.redisDb.keys()
+        
+    def clearRedisKeys(self):
+        # Delete all of the keys in the Redis database we are using.
+        for theKey in self.redisDb.keys():
+            self.redisDb.delete(theKey)
+ 
+    
+    
+# Wraps a directory where files may get saved by the site.
+class FileSaveDirectory(object):
     def __init__(self, dirPath):
         self.dirPath = dirPath
         
         
 #
-# Functions
+# Pickle / unpickle functions
 #
 
 def objectToStringPickle(theObject):
@@ -268,8 +472,26 @@ def gzipStringPickleToObject(theGzipStringPickle):
     return theObject
 
 #
-# Script code
+# Other utility functions
 #
 
-# Open up the Redis database we want to dedicate to Sciris.
-redisDb = redis.StrictRedis.from_url('redis://localhost:6379/1/')
+def getValidUUID(uidParam):
+    # Get the type of the parameter passed in.
+    paramType = type(uidParam)
+    
+    # Return what was passed in if it is already the right type.
+    if paramType == uuid.UUID:
+        return uidParam
+    
+    # If the type is a string...
+    if paramType == str:
+        # Check to make sure the string has exactly 32 characters.
+        if len(uidParam) == 32:
+            return uuid.UUID(uidParam)
+    
+    # Return None (a failure to find a good UUID).
+    return None
+
+#
+# RPC functions
+#

@@ -1,6 +1,6 @@
 // rpc-service.js -- RPC functions for Vue to call
 //
-// Last update: 9/10/17 (gchadder3)
+// Last update: 9/21/17 (gchadder3)
 
 import axios from 'axios'
 var filesaver = require('file-saver')
@@ -390,5 +390,49 @@ export default {
         reject(error)
       })
     })
+  },
+
+  rpcRegisterCall (funcname, username, password, displayname, email) {
+    // Get a hex version of a hashed password using the SHA224 algorithm.
+    var hashPassword = CryptoApi.hash('sha224', password, {}).stringify('hex')
+
+    // Log the RPC call.
+    consoleLogCommand("register", funcname, [username, hashPassword, displayname, email], {})
+
+    // Do the RPC processing, returning results as a Promise.
+    return new Promise((resolve, reject) => {
+      // Send the POST request for the RPC call.
+      axios.post('/api/user/register', {
+        funcname: funcname, 
+        args: [username, hashPassword, displayname, email],
+        kwargs: {}
+      })
+      .then(response => {
+        // If there is an error in the POST response.
+        if (typeof(response.data.error) != 'undefined') {
+          reject(Error(response.data.error))
+        }
+
+        // Signal success with the response.
+        resolve(response)
+      })
+      .catch(error => {
+        // If there was an actual response returned from the server...
+        if (error.response) {
+          // If we have exception information in the response (which indicates 
+          // an exception on the server side)...
+          if (typeof(error.response.data.exception) != 'undefined') {
+            // For now, reject with an error message matching the exception.
+            // In the future, we want to put the exception message in a 
+            // pop-up dialog.
+            reject(Error(error.response.data.exception))
+          }
+        }
+
+        // Reject with the error axios got.
+        reject(error)
+      })
+    })
   }
+
 }

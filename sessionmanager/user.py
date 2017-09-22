@@ -1,10 +1,10 @@
 """
 user.py -- code related to Sciris user management
     
-Last update: 9/14/17 (gchadder3)
+Last update: 9/21/17 (gchadder3)
 """
 
-# NOTE: We don't want Sciris users to have to customize this file much.
+# NOTE: We don't want Sciris users to have to customize this file much, or at all.
 
 #
 # Imports
@@ -14,6 +14,15 @@ from flask import session
 from flask_login import current_user, login_user, logout_user
 from hashlib import sha224
 import uuid
+import datastore as ds
+
+#
+# Globals
+#
+
+# The UserDict object for all of the app's users.  Gets initialized by
+# and loaded by init_users().
+theUserDict = None
 
 #
 # Classes
@@ -26,9 +35,11 @@ class User(object):
     Methods:
         __init__(theUsername: str, thePassword: str, theDisplayName: str, 
             theEmail: str [''], hasAdminRights: bool [False], 
-            theUID: UUID [None]): void -- constructor
+            theUID: UUID [None], hashThePassword: bool [True]): 
+            void -- constructor
         get_id(): UUID -- get the unique ID of this user (method required by 
             Flask-Login)
+        show(): void -- print the contents of the object
                     
     Attributes:
         uid (UUID) -- the unique ID for the user (uuid Python library-related)
@@ -51,7 +62,7 @@ class User(object):
     """
     
     def  __init__(self, theUsername, thePassword, theDisplayName, theEmail='', 
-        hasAdminRights=False, theUID=None):
+        hasAdminRights=False, theUID=None, hashThePassword=True):
         # Set the user to be authentic.
         self.is_authenticated = True
         
@@ -67,7 +78,10 @@ class User(object):
         # Set the raw password and use SHA224 to get the hashed version in 
         # hex form.
         rawPassword = thePassword
-        self.password = sha224(rawPassword).hexdigest()        
+        if hashThePassword:
+            self.password = sha224(rawPassword).hexdigest() 
+        else:
+            self.password = thePassword
         
         # Set the displayname (what the browser will show).
         self.displayname = theDisplayName
@@ -87,52 +101,168 @@ class User(object):
         
     def get_id(self):
         return self.uid
-
-myUser = User('newguy', 'mesogreen', 'Ozzy Mandibulus', 'tastybats@yahoo.com', \
-    theUID=uuid.UUID('12345678123456781234567812345678'))
-myUser2 = User('admin', 'mesoawesome', 'Admin Dude', 'admin@scirisuser.net', \
-    hasAdminRights=True, theUID=uuid.UUID('12345678123456781234567812345679'))
-
-class UserList(object):
-    def __init__(self):
-        # Create the Python list to hold the user objects.
-        self.theUsersList = []
+    
+    def show(self):
+        print 'UUID: %s' % self.uid.hex
+        print 'Username: %s' % self.username
+        print 'Displayname: %s' % self.displayname
+        print 'Hashed password: %s' % self.password
+        print 'Email: %s' % self.email
+        if self.is_authenticated:
+            print 'Is authenticated?: Yes'
+        else:
+            print 'Is authenticated?: No'
+        if self.is_active:
+            print 'Account active?: Yes'
+        else:
+            print 'Account active?: No'
+        if self.is_anonymous:
+            print 'Is anonymous?: Yes'
+        else:
+            print 'Is anonymous?: No'
+        if self.is_admin:
+            print 'Has admin rights?: Yes'
+        else:
+            print 'Has admin rights?: No'            
+            
+class UserDict(object):
+    """
+    A dictionary of Sciris users.
+    
+    Methods:
+        __init__(theUID: UUID): void -- constructor            
+        getUserByUID(theUID: UUID or str): User or None -- returns the User  
+            object pointed to by theUID
+        getUserByUsername(theUsername: str): User or None -- return the User
+            object pointed to by the username
+        add(theUser: User): void -- add a User to the dictionary and update
+            the dictionary's DataStore state
+        update(theUser: User): void -- update a User in the dictionary and 
+            update the dictionary's DataStore state
+        deleteByUID(theUID: UUID or str): void -- delete a User in the dictionary
+            selected by the UID, and update the dictionary's DataStore state
+        deleteByUsername(theUsername: str): void -- delete a User in the 
+            dictionary selected by a username, and update the dictionary's 
+            DataStore state
+        deleteAll(): void -- delete the entire contents of the UserDict and 
+            update the dictionary's DataStore state
+        showUsers(): void -- show all of the user information in the 
+            dictionary
+                    
+    Attributes:
+        theUserDict (dict) -- the Python dictionary holding the User objects
+        usernameHashes (dict) -- a dict mapping usernames to UIDs, so either
+            indexing by UIDs or usernames can be fast
+        uid (UUID) -- the unique ID for the user (uuid Python library-related)
         
-        # Add the two sample users.
-        self.theUsersList.append(myUser)
-        self.theUsersList.append(myUser2)
-        
-        self.uuidHashes = {}
-        self.uuidHashes[myUser.get_id()] = 0
-        self.uuidHashes[myUser2.get_id()] = 1
-        
+    Usage:
+        >>> theUserDict = UserDict(uuid.UUID('12345678123456781234567812345678'))                      
+    """
+    
+    def __init__(self, theUID):
+        # Create the Python dicts to hold the user objects and hashes from 
+        # usernames to the UIDs.
+        self.theUserDict = {}
         self.usernameHashes = {}
-        self.usernameHashes[myUser.username] = 0
-        self.usernameHashes[myUser2.username] = 1
+        self.uid = theUID
         
     def getUserByUID(self, theUID):
-        userIndex = self.uuidHashes.get(theUID, None)
-        if userIndex is not None:
-            return self.theUsersList[userIndex]
+        # Make sure the argument is a valid UUID, converting a hex text to a
+        # UUID object, if needed.
+        validUID = ds.getValidUUID(theUID)
+        
+        # If we have a valid UUID, return the matching User (if any); 
+        # otherwise, return None.
+        if validUID is not None:
+            return self.theUserDict.get(validUID, None)
         else:
             return None
     
     def getUserByUsername(self, theUsername):
+        # Get the user's UID matching the username.
         userIndex = self.usernameHashes.get(theUsername, None)
+        
+        # If we found at match, use the UID to try to fetch the user; 
+        # otherwise, return None.
         if userIndex is not None:
-            return self.theUsersList[userIndex]
+            return self.getUserByUID(userIndex)
         else:
             return None
         
-myUserList = UserList()
-
+    def add(self, theUser):
+        # Add the user to the hash table, keyed by the UID.
+        self.theUserDict[theUser.get_id()] = theUser
+        
+        # Add the username hash for this user.
+        self.usernameHashes[theUser.username] = theUser.get_id()
+        
+        # Update our DataStore representation. 
+        ds.theDataStore.update(self.uid, self) 
+    
+    def update(self, theUser):
+        # Do everything the same as adding a new entry.
+        self.add(theUser)
+    
+    def deleteByUID(self, theUID):
+        # Make sure the argument is a valid UUID, converting a hex text to a
+        # UUID object, if needed.        
+        validUID = ds.getValidUUID(theUID)
+        
+        # If we have a valid UUID...
+        if validUID is not None:
+            # Get the user pointed to by the UID.
+            theUser = self.theUserDict[validUID]
+            
+            # If a match is found...
+            if theUser is not None:
+                # Remove entries from both theUserDict and usernameHashes 
+                # attributes.
+                theUsername = theUser.username
+                del self.theUserDict[validUID]
+                del self.usernameHashes[theUsername]
+                
+                # Update our DataStore representation. 
+                ds.theDataStore.update(self.uid, self) 
+        
+    def deleteByUsername(self, theUsername):
+        # Get the UID of the user matching theUsername.
+        userIndex = self.usernameHashes.get(theUsername, None)
+        
+        # If we found a match, call deleteByUID to complete the deletion.
+        if userIndex is not None:
+            self.deleteByUID(userIndex)
+    
+    def deleteAll(self):
+        # Reset the Python dicts to hold the user objects and hashes from 
+        # usernames to the UIDs.
+        self.theUserDict = {}
+        self.usernameHashes = {}
+        
+        # Update our DataStore representation. 
+        ds.theDataStore.update(self.uid, self)  
+        
+    def showUsers(self):
+        # For each key in the dictionary...
+        for theKey in self.theUserDict:
+            # Get the user pointed to.
+            theUser = self.theUserDict[theKey]
+            
+            # Separator line.
+            print '--------------------------------------------'
+            
+            # Show the handle contents.
+            theUser.show()
+            
+        # Separator line.
+        print '--------------------------------------------'
+        
 #
 # RPC functions
 #
 
 def user_login(userName, password):
     # Get the matching user (if any).
-    matchingUser = myUserList.getUserByUsername(userName)
+    matchingUser = theUserDict.getUserByUsername(userName)
     
     # If we have a match and the password matches, also, log in the user and 
     # return success; otherwise, return failure.
@@ -151,10 +281,39 @@ def user_logout():
     # Clear the session cookie.
     session.clear()
     
-    return
+    # Return nothing.
+    return None
 
 def get_current_user_info():
     userInfo = {
         'username': current_user.username
     }
     return userInfo
+
+def user_register(userName, password, displayname, email):
+    # Get for any matching user.
+    matchingUser = theUserDict.getUserByUsername(userName)
+    
+    # If we have a match, fail because we don't want to register an existing 
+    # user.
+    if matchingUser is not None:
+        return 'failure'
+    
+    # Create a new User object with the new information.
+    newUser = User(userName, password, displayname, email, hashThePassword=False)
+    
+    # Put the user right into the UserDict.
+    theUserDict.add(newUser)
+    
+    # Return success.
+    return 'success'
+    
+#
+# Script code
+#
+
+# Create two test Users that can get added to a new UserDict.
+testUser = User('newguy', 'mesogreen', 'Ozzy Mandibulus', 'tastybats@yahoo.com', \
+    theUID=uuid.UUID('12345678123456781234567812345678'))
+testUser2 = User('admin', 'mesoawesome', 'Admin Dude', 'admin@scirisuser.net', \
+    hasAdminRights=True, theUID=uuid.UUID('12345678123456781234567812345679'))

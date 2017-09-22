@@ -1,7 +1,7 @@
 <!-- 
 App.vue -- App component, the main page
 
-Last update: 9/13/17 (gchadder3)
+Last update: 9/21/17 (gchadder3)
 -->
 
 <template>
@@ -20,6 +20,12 @@ Last update: 9/13/17 (gchadder3)
     <span v-if="username == 'None'">
       <router-link to="/login">
         Login Page
+      </router-link> 
+      &nbsp;
+    </span>
+    <span v-if="username == 'None'">
+      <router-link to="/register">
+        Registration Page
       </router-link> 
       &nbsp;
     </span>

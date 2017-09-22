@@ -1,7 +1,7 @@
 """
 api.py -- script for setting up a flask server
     
-Last update: 9/17/17 (gchadder3)
+Last update: 9/21/17 (gchadder3)
 """
 
 #
@@ -15,7 +15,7 @@ from werkzeug.utils import secure_filename
 from functools import wraps
 import traceback
 import os
-import rpcs
+import main
 import datastore
 import user
 
@@ -42,7 +42,7 @@ login_manager = LoginManager()
 @login_manager.user_loader
 def load_user(userid):
     # Return the matching user (if any).
-    return user.myUserList.getUserByUID(userid)
+    return user.theUserDict.getUserByUID(userid)
 
 # Decorator function which allows any exceptions made by the RPC calls to be 
 # trapped and return in the response message.
@@ -95,22 +95,21 @@ def currentUserRPC():
 @app.route('/api/user/register', methods=['POST'])
 @report_exception_decorator
 def registrationRPC():
-    return 'endpoint for user registration'
-#    return doRPC('normal', 'user', request.method)
+    return doRPC('normal', 'user', request.method)
 
 # Define the /api/procedure endpoint for normal RPCs.
 @app.route('/api/procedure', methods=['POST'])
 @report_exception_decorator
 @login_required
 def normalRPC():
-    return doRPC('normal', 'model', request.method)
+    return doRPC('normal', 'main', request.method)
 
 # Define the /api/procedure endpoint for normal RPCs that don't require a 
 # current valid login.
 @app.route('/api/publicprocedure', methods=['POST'])
 @report_exception_decorator
 def publicNormalRPC():
-    return doRPC('normal', 'model', request.method)
+    return doRPC('normal', 'main', request.method)
 
 # Define the /api/download endpoint for RPCs that download a file to the 
 # client.
@@ -118,14 +117,14 @@ def publicNormalRPC():
 @report_exception_decorator
 @login_required
 def downloadRPC():
-    return doRPC('download', 'model', request.method)
+    return doRPC('download', 'main', request.method)
 
 # Define the /api/upload endpoint for RPCs that work from uploaded files.
 @app.route('/api/upload', methods=['POST'])
 @report_exception_decorator
 @login_required
 def uploadRPC():
-    return doRPC('upload', 'model', request.method)  
+    return doRPC('upload', 'main', request.method)  
   
 # Do the meat of the RPC calls, passing args and kwargs to the appropriate 
 # function in the appropriate handler location.
@@ -153,11 +152,11 @@ def doRPC(rpcType, handlerLocation, requestMethod):
         
     # Check to see whether the function to be called exists and get it ready 
     # to call in func if it's found.
-    if handlerLocation == 'model':
-        funcExists = hasattr(rpcs, fn_name)
-        print('>> Checking RPC function "rpcs.%s" -> %s' % (fn_name, funcExists))
+    if handlerLocation == 'main':
+        funcExists = hasattr(main, fn_name)
+        print('>> Checking RPC function "main.%s" -> %s' % (fn_name, funcExists))
         if funcExists:
-            func = getattr(rpcs, fn_name)
+            func = getattr(main, fn_name)
     elif handlerLocation == 'user':
         funcExists = hasattr(user, fn_name)
         print('>> Checking RPC function "user.%s" -> %s' % (fn_name, funcExists))
@@ -182,13 +181,16 @@ def doRPC(rpcType, handlerLocation, requestMethod):
         # Grab the filename of this file, and generate the full upload path / 
         # filename.
         filename = secure_filename(file.filename)
-        uploaded_fname = os.path.join(rpcs.uploadsPath, filename)
+        uploaded_fname = os.path.join(datastore.uploadsPath, filename)
         
         # Save the file to the uploads directory.
         file.save(uploaded_fname)
         
         # Prepend the file name to the args list.
         args.insert(0, uploaded_fname)
+        
+    # Show the call of the function.    
+    print('>> Calling RPC function "%s.%s"' % (handlerLocation, fn_name))
     
     # Execute the function to get the results.
     result = func(*args, **kwargs)   
@@ -238,14 +240,17 @@ except: # File doesn't exist
 # Configure app for login with the LoginManager.
 login_manager.init_app(app)
 
-# Make sure that the datafiles directory structure is there if it isn't.
-rpcs.build_datafiles_dirs_if_missing()
+# Initialize files, paths, and directories.
+print '>> Initializing files, paths, and directories...'
+main.init_filepaths()
 
 # Initialize the DataStore.
+print '>> Initializing the data store...'
+main.init_datastore()
 
-# Initialize the UserList.
-
-# Initialize functionality specific to the Sciris user's functionality.
+# Initialize the users.
+print '>> Initializing the users data...'
+main.init_users()
 
 # The following code just gets called if we are running this standalone.
 if __name__ == "__main__":
