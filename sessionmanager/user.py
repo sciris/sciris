@@ -1,7 +1,7 @@
 """
 user.py -- code related to Sciris user management
     
-Last update: 9/21/17 (gchadder3)
+Last update: 9/22/17 (gchadder3)
 """
 
 # NOTE: We don't want Sciris users to have to customize this file much, or at all.
@@ -286,7 +286,12 @@ def user_logout():
 
 def get_current_user_info():
     userInfo = {
-        'username': current_user.username
+        'user': {
+            'username': current_user.username, 
+            'password': current_user.password, 
+            'displayname': current_user.displayname, 
+            'email': current_user.email                
+        }
     }
     return userInfo
 

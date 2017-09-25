@@ -1,7 +1,7 @@
 <!-- 
 LoginPage.vue -- LoginPage Vue component
 
-Last update: 9/14/17 (gchadder3)
+Last update: 9/22/17 (gchadder3)
 -->
 
 <template>
@@ -47,11 +47,20 @@ export default {
           // Set a success result to show.
           this.loginResult = 'Success!'
 
-          // Update the username.
-          this.$store.commit('newuser', this.loginUserName)
+          // Read in the full current user information.
+          rpcservice.rpcGetUserInfo('get_current_user_info')
+          .then(response2 => {
+            // Set the username to what the server indicates.
+            this.$store.commit('newuser', response2.data.user)
 
-          // Navigate automatically to the home page.
-          router.push('/')
+            // Navigate automatically to the home page.
+            router.push('/')
+          })
+          .catch(error => {
+            // Set the username to {}.  An error probably means the 
+            // user is not logged in.
+            this.$store.commit('newuser', {})
+          })
         } else {
           // Set a failure result to show.
           this.loginResult = 'Login failed: username or password incorrect.'

@@ -1,7 +1,7 @@
 <!-- 
 App.vue -- App component, the main page
 
-Last update: 9/21/17 (gchadder3)
+Last update: 9/23/17 (gchadder3)
 -->
 
 <template>
@@ -11,19 +11,19 @@ Last update: 9/21/17 (gchadder3)
 
     <!-- router-link menu -->
     <label>Pages:</label>
-    <span v-if="username != 'None'">
+    <span v-if="userloggedin()">
       <router-link to="/" exact>
         Main Page
       </router-link> 
       &nbsp;
     </span>
-    <span v-if="username == 'None'">
+    <span v-if="!userloggedin()">
       <router-link to="/login">
         Login Page
       </router-link> 
       &nbsp;
     </span>
-    <span v-if="username == 'None'">
+    <span v-if="!userloggedin()">
       <router-link to="/register">
         Registration Page
       </router-link> 
@@ -36,11 +36,16 @@ Last update: 9/21/17 (gchadder3)
 
     <!-- Display of logged in user -->
     <label>Logged In User:</label>
-    {{ username }}
+    <span v-if="userloggedin()">
+      {{ currentuser.displayname }}
+    </span>
+    <span v-else>
+      None
+    </span>    
     &nbsp;
 
     <!-- Logout button -->
-    <button v-if="username != 'None'" @click="logout">Log Out</button>
+    <button v-if="userloggedin()" @click="logout">Log Out</button>
 
     <hr/>
 
@@ -57,8 +62,8 @@ export default {
   name: 'app', 
 
   computed: {
-    username () {
-      return this.$store.state.username
+    currentuser () {
+      return this.$store.state.currentuser
     }
   },
 
@@ -67,6 +72,13 @@ export default {
   },
 
   methods: {
+    userloggedin () {
+      if (this.currentuser.displayname == undefined) 
+        return false
+      else
+        return true
+    }, 
+
     logout () {
       // Do the logout request.
       rpcservice.rpcLogoutCall('user_logout')
@@ -83,12 +95,12 @@ export default {
       rpcservice.rpcGetUserInfo('get_current_user_info')
       .then(response => {
         // Set the username to what the server indicates.
-        this.$store.commit('newuser', response.data.username)
+        this.$store.commit('newuser', response.data.user)
       })
       .catch(error => {
-        // Set the username to 'None'.  An error probably means the 
+        // Set the username to {}.  An error probably means the 
         // user is not logged in.
-        this.$store.commit('newuser', 'None')
+        this.$store.commit('newuser', {})
       })
     }
   }

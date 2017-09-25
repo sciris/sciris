@@ -32,6 +32,10 @@ export default new Router({
       path: '/vueinfo',
       name: 'Hello',
       component: Hello
+    },
+    { 
+      path: '*', 
+      redirect: '/' 
     }
   ]
 })

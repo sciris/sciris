@@ -1,7 +1,7 @@
 """
 main.py -- main code for Sciris users to change to create their web apps
     
-Last update: 9/22/17 (gchadder3)
+Last update: 9/25/17 (gchadder3)
 """
 
 #
@@ -11,6 +11,7 @@ Last update: 9/22/17 (gchadder3)
 import scirismodel.model as model
 import datastore as ds
 import user
+from flask import current_app
 from flask_login import current_user
 import mpld3
 import os
@@ -36,17 +37,21 @@ class DataCollection(object):
 # Initialization functions 
 #
         
-def init_filepaths():
+def init_filepaths(theApp):
     # Set the Sciris root path to the parent of the current directory, the 
     # latter being the sciris/bin directory since that is where the code is 
     # executed from.
     ds.scirisRootPath = os.path.abspath(os.pardir)
     
-    # Set the uploads path.
-    ds.uploadsPath = '%s%s%s' % (ds.scirisRootPath, os.sep, 'uploads')
-    
-    # Set the file save root path.
-    ds.fileSaveRootPath = '%s%s%s' % (ds.scirisRootPath, os.sep, 'savedfiles')
+    #  Using the current_app set to the passed in app..
+    with theApp.app_context():
+        # Set the uploads path.
+        ds.uploadsPath = '%s%s%s' % (ds.scirisRootPath, os.sep, 
+            current_app.config['UPLOADS_DIR'])
+        
+        # Set the file save root path.
+        ds.fileSaveRootPath = '%s%s%s' % (ds.scirisRootPath, os.sep, 
+            current_app.config['FILESAVEROOT_DIR'])
          
     # If the datafiles path doesn't exist yet...
     if not os.path.exists(ds.fileSaveRootPath):
@@ -69,16 +74,18 @@ def init_filepaths():
         fullFileName = '%s%sgraph3.csv' % (ds.fileSaveRootPath, os.sep)
         sd.saveAsCsv(fullFileName) 
         
-def init_datastore():
+def init_datastore(theApp):
     # Create the DataStore object, setting up Redis.
-    ds.theDataStore = ds.DataStore(redisDbURL='redis://localhost:6379/1/')
+    with theApp.app_context():
+        ds.theDataStore = ds.DataStore(redisDbURL=current_app.config['REDIS_URL'])
     
     # Load the DataStore state from disk.
     ds.theDataStore.load()
     
-def init_users():
+def init_users(theApp):
     # Try to fetch the user dictionary from theDataStore.
-    theUserDictUID = uuid.UUID('12345678123456781234567812345670')
+    with theApp.app_context():
+        theUserDictUID = uuid.UUID(current_app.config['DATASTORE_UUID'])
     user.theUserDict = ds.theDataStore.retrieve(theUserDictUID)
     
     # If the entry is not found...
@@ -162,7 +169,8 @@ def get_saved_scatterplotdata_graph(spdName):
     
     # Generate a matplotib graph for display.
     graphData = spd.plot()
-    
+    print 'Try to print current_app.config stuff!'
+    print current_app.config    
     # Return the dictionary representation of the matplotlib figure.
     return mpld3.fig_to_dict(graphData) 
 

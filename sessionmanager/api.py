@@ -1,20 +1,22 @@
 """
 api.py -- script for setting up a flask server
     
-Last update: 9/21/17 (gchadder3)
+Last update: 9/25/17 (gchadder3)
 """
 
 #
 # Imports
 #
 
-from flask import Flask, request, json, jsonify, current_app, make_response, \
+from flask import Flask, request, json, jsonify, make_response, \
     send_from_directory
 from flask_login import LoginManager, current_user, login_required
 from werkzeug.utils import secure_filename
 from functools import wraps
 import traceback
 import os
+import sys
+import logging
 import main
 import datastore
 import user
@@ -33,6 +35,17 @@ login_manager = LoginManager()
 # Functions
 #
 
+# This function initializes the Flask app's logger.
+def init_logger():
+    stream_handler = logging.StreamHandler(sys.stdout)
+    stream_handler.setLevel(logging.DEBUG)
+    stream_handler.setFormatter(logging.Formatter(
+        '%(asctime)s %(levelname)s: %(message)s '
+        '[in %(pathname)s:%(lineno)d]'
+    ))
+    app.logger.addHandler(stream_handler)
+    app.logger.setLevel(logging.DEBUG)
+    
 # This function gets called when authentication gets done by Flask-Login.  
 # userid is the user ID pulled out of the session cookie the browser passes in 
 # during an HTTP request.  The function returns the User object that matches 
@@ -56,7 +69,7 @@ def report_exception_decorator(api_call):
             exception = traceback.format_exc()
             # limiting the exception information to 10000 characters maximum
             # (to prevent monstrous sqlalchemy outputs)
-            current_app.logger.error("Exception during request %s: %.10000s" % (request, exception))
+            app.logger.error("Exception during request %s: %.10000s" % (request, exception))
             if isinstance(e, HTTPException):
                 raise
             code = 500
@@ -236,21 +249,24 @@ try: # File exists
     app.config.from_pyfile('config.py')
 except: # File doesn't exist
     raise Exception(errormsg)
-    
+
+# Initialize the logger.
+init_logger()
+
 # Configure app for login with the LoginManager.
 login_manager.init_app(app)
 
 # Initialize files, paths, and directories.
 print '>> Initializing files, paths, and directories...'
-main.init_filepaths()
+main.init_filepaths(app)
 
 # Initialize the DataStore.
 print '>> Initializing the data store...'
-main.init_datastore()
+main.init_datastore(app)
 
 # Initialize the users.
 print '>> Initializing the users data...'
-main.init_users()
+main.init_users(app)
 
 # The following code just gets called if we are running this standalone.
 if __name__ == "__main__":

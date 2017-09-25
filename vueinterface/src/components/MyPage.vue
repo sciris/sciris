@@ -1,7 +1,7 @@
 <!-- 
 MyPage.vue -- MyPage Vue component
 
-Last update: 9/22/17 (gchadder3)
+Last update: 9/23/17 (gchadder3)
 -->
 
 <template>
@@ -65,7 +65,7 @@ export default {
 
   created () {
     // If we have no user logged in, automatically redirect to the login page.
-    if (this.$store.state.username == 'None') {
+    if (this.$store.state.currentuser.displayname == undefined) {
       router.push('/login')
     } else {
       // Otherwise, get the list of the graphs available.   
