@@ -1,7 +1,7 @@
 <!-- 
 App.vue -- App component, the main page
 
-Last update: 9/23/17 (gchadder3)
+Last update: 9/27/17 (gchadder3)
 -->
 
 <template>
@@ -14,6 +14,12 @@ Last update: 9/23/17 (gchadder3)
     <span v-if="userloggedin()">
       <router-link to="/" exact>
         Main Page
+      </router-link> 
+      &nbsp;
+    </span>
+    <span v-if="adminloggedin()">
+      <router-link to="/mainadmin" exact>
+        Admin Page
       </router-link> 
       &nbsp;
     </span>
@@ -33,6 +39,16 @@ Last update: 9/23/17 (gchadder3)
       Vue Info
     </router-link> 
     &nbsp;
+    <span v-if="userloggedin()">
+      <router-link to="/changeinfo" exact>
+        Change Account Info
+      </router-link> 
+      &nbsp;
+      <router-link to="/changepassword" exact>
+        Change Password
+      </router-link> 
+      &nbsp;
+    </span>
 
     <!-- Display of logged in user -->
     <label>Logged In User:</label>
@@ -46,6 +62,10 @@ Last update: 9/23/17 (gchadder3)
 
     <!-- Logout button -->
     <button v-if="userloggedin()" @click="logout">Log Out</button>
+
+    <button @click="getallusersinfo">User List</button>
+    <button @click="admingetuserinfo">Admin Get User</button>
+    <button @click="admindeleteuser">Admin Delete User</button>
 
     <hr/>
 
@@ -79,6 +99,24 @@ export default {
         return true
     }, 
 
+    adminloggedin () {
+      if (this.userloggedin) {
+        return this.currentuser.admin
+      }
+    },
+
+    getallusersinfo () {
+      rpcservice.rpcAllGetUsersInfo('get_all_users')
+    },
+
+    admingetuserinfo () {
+      rpcservice.rpcAdminGetUserInfo('admin_get_user_info', 'admin')
+    },
+
+    admindeleteuser () {
+      rpcservice.rpcAdminUserCall('admin_delete_user', 'ed')
+    },
+
     logout () {
       // Do the logout request.
       rpcservice.rpcLogoutCall('user_logout')
@@ -92,7 +130,7 @@ export default {
     },
 
     getUserInfo () {
-      rpcservice.rpcGetUserInfo('get_current_user_info')
+      rpcservice.rpcGetCurrentUserInfo('get_current_user_info')
       .then(response => {
         // Set the username to what the server indicates.
         this.$store.commit('newuser', response.data.user)

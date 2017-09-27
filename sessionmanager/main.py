@@ -110,6 +110,21 @@ def init_users(theApp):
     # Show all of the users in theUserDict.
     print '>> List of all users...'
     user.theUserDict.showUsers()     
+    
+    #user.testUser.addToDataStore()
+    
+#    theUser = ds.theDataStore.retrieve(user.testUser.uid)
+#    theUser.show()
+
+    #user.testUser.deleteFromDataStore()
+    
+    #user.testUser.loadCopyFromDataStore().show()
+    
+#    print '>> ---- thang 1 ----'
+#    user.testUser2.show()
+#    user.testUser2.loadFromDataStore(user.testUser.uid)
+#    print '>> ---- thang 2 ----'
+#    user.testUser2.show()
 
 #
 # Other functions
@@ -169,8 +184,7 @@ def get_saved_scatterplotdata_graph(spdName):
     
     # Generate a matplotib graph for display.
     graphData = spd.plot()
-    print 'Try to print current_app.config stuff!'
-    print current_app.config    
+  
     # Return the dictionary representation of the matplotlib figure.
     return mpld3.fig_to_dict(graphData) 
 

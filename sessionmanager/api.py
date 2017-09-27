@@ -1,14 +1,14 @@
 """
 api.py -- script for setting up a flask server
     
-Last update: 9/25/17 (gchadder3)
+Last update: 9/27/17 (gchadder3)
 """
 
 #
 # Imports
 #
 
-from flask import Flask, request, json, jsonify, make_response, \
+from flask import Flask, request, abort, json, jsonify, make_response, \
     send_from_directory
 from flask_login import LoginManager, current_user, login_required
 from werkzeug.utils import secure_filename
@@ -78,6 +78,22 @@ def report_exception_decorator(api_call):
         
     return _report_exception
 
+# Decorator function for checking that the user that is logged in has admin
+# rights.
+def verify_admin_request_decorator(api_call):
+    @wraps(api_call)
+    def _verify_admin_request(*args, **kwargs):
+        if not current_user.is_anonymous and \
+            current_user.is_authenticated and current_user.is_admin:
+            app.logger.debug("admin_user: %s %s %s" % 
+                (current_user.username, current_user.password, 
+                 current_user.email))
+            return api_call(*args, **kwargs)
+        else:
+            abort(403)
+
+    return _verify_admin_request
+
 # Responder for (unused) /api root endpoint.
 @app.route('/api', methods=['GET'])
 def root():
@@ -104,11 +120,41 @@ def logoutRPC():
 def currentUserRPC():
     return doRPC('normal', 'user', request.method)
 
+# Define the /api/user/list endpont for RPCs for returning (for admin users 
+# only) a summary of all of the users. 
+@app.route('/api/user/list', methods=['GET'])
+@report_exception_decorator
+@verify_admin_request_decorator
+def userListRPC():
+    return doRPC('normal', 'user', request.method)
+
 # Define the /api/user/register endpont for RPCs for user registration.
 @app.route('/api/user/register', methods=['POST'])
 @report_exception_decorator
 def registrationRPC():
     return doRPC('normal', 'user', request.method)
+
+# Define the /api/user/changeinfo endpont for RPCs for user changing their 
+# (non-password) info.
+@app.route('/api/user/changeinfo', methods=['POST'])
+@report_exception_decorator
+@login_required
+def changeUserInfoRPC():
+    return doRPC('normal', 'user', request.method)
+
+# Define the /api/user/changepassword endpont for RPCs for user changing 
+# their password.
+@app.route('/api/user/changepassword', methods=['POST'])
+@report_exception_decorator
+@login_required
+def changePasswordRPC():
+    return doRPC('normal', 'user', request.method)
+
+@app.route('/api/user/<username>', methods=['GET', 'POST'])
+@report_exception_decorator
+@verify_admin_request_decorator
+def specificUserRPC(username):
+    return doRPC('normal', 'user', request.method, username=username)
 
 # Define the /api/procedure endpoint for normal RPCs.
 @app.route('/api/procedure', methods=['POST'])
@@ -141,7 +187,7 @@ def uploadRPC():
   
 # Do the meat of the RPC calls, passing args and kwargs to the appropriate 
 # function in the appropriate handler location.
-def doRPC(rpcType, handlerLocation, requestMethod):
+def doRPC(rpcType, handlerLocation, requestMethod, username=None):
     # If we are doing an upload, pull the RPC information out of the request 
     # form instead of the request data.
     if rpcType == 'upload':
@@ -155,12 +201,16 @@ def doRPC(rpcType, handlerLocation, requestMethod):
     else:
         # Convert the request.data JSON to a Python dict, and pull out the 
         # function name, args, and kwargs.  
-        if requestMethod == 'POST':
+        if requestMethod in ['POST', 'PUT']:
             reqdict = json.loads(request.data)
         elif requestMethod == 'GET':
             reqdict = request.args
         fn_name = reqdict['funcname']
         args = reqdict.get('args', [])
+        # Insert the username as a the first argument if it is passed in not
+        # None.
+        if username is not None:
+            args.insert(0, username)
         kwargs = reqdict.get('kwargs', {})
         
     # Check to see whether the function to be called exists and get it ready 

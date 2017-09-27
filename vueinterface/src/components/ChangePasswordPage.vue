@@ -1,26 +1,23 @@
 <!-- 
-LoginPage.vue -- LoginPage Vue component
+ChangePasswordPage.vue -- Vue component for a page to change password
 
-Last update: 9/26/17 (gchadder3)
+Last update: 9/27/17 (gchadder3)
 -->
 
 <template>
   <div id="app">
-    <label>Username:</label>
-    <input v-model='loginUserName'/>
+    <label>New Password:</label>
+    <input v-model='newPassword'/>
     <br/>
 
-    <label>Password:</label>
-    <input v-model='loginPassword'/>
+    <label>Reenter Old Password (to validate):</label>
+    <input v-model='oldPassword'/>
     <br/>
 
-    <button @click="tryLogin">Login</button>
+    <button @click="tryChangePassword">Update</button>
     <br/>
 
-    <p v-if="loginResult != ''">{{ loginResult }}</p>
-
-    <p>Login 1: Username = 'newguy', Password = 'mesogreen'</p>
-    <p>Login 2: Username = 'admin', Password = 'mesoawesome'</p>
+    <p v-if="changeResult != ''">{{ changeResult }}</p>
   </div>
 </template>
 
@@ -29,23 +26,24 @@ import rpcservice from '../services/rpc-service'
 import router from '../router'
 
 export default {
-  name: 'LoginPage', 
+  name: 'ChangePasswordPage', 
 
   data () {
     return {
-      loginUserName: '',
-      loginPassword: '',
-      loginResult: ''
+      oldPassword: '',
+      newPassword: '',
+      changeResult: ''
     }
   }, 
 
   methods: {
-    tryLogin () {
-      rpcservice.rpcLoginCall('user_login', this.loginUserName, this.loginPassword)
+    tryChangePassword () {
+      rpcservice.rpcChangePasswordCall('user_change_password', this.oldPassword, 
+        this.newPassword)
       .then(response => {
         if (response.data == 'success') {
           // Set a success result to show.
-          this.loginResult = 'Success!'
+          this.changeResult = 'Success!'
 
           // Read in the full current user information.
           rpcservice.rpcGetCurrentUserInfo('get_current_user_info')
@@ -63,11 +61,11 @@ export default {
           })
         } else {
           // Set a failure result to show.
-          this.loginResult = 'Login failed: username or password incorrect.'
+          this.changeResult = 'Change of password failed.'
         }
       })
       .catch(error => {
-        this.loginResult = 'Server error.  Please try again later.'
+        this.changeResult = 'Server error.  Please try again later.'
       })
     }
   }

@@ -1,26 +1,31 @@
 <!-- 
-LoginPage.vue -- LoginPage Vue component
+UserChangeInfoPage.vue -- Vue component for a page to change account info
 
-Last update: 9/26/17 (gchadder3)
+Last update: 9/27/17 (gchadder3)
 -->
 
 <template>
   <div id="app">
     <label>Username:</label>
-    <input v-model='loginUserName'/>
+    <input v-model='changeUserName'/>
     <br/>
 
-    <label>Password:</label>
-    <input v-model='loginPassword'/>
+    <label>Display Name:</label>
+    <input v-model='changeDisplayName'/>
     <br/>
 
-    <button @click="tryLogin">Login</button>
+    <label>Email:</label>
+    <input v-model='changeEmail'/>
     <br/>
 
-    <p v-if="loginResult != ''">{{ loginResult }}</p>
+    <label>Reenter Password (to validate):</label>
+    <input v-model='changePassword'/>
+    <br/>
 
-    <p>Login 1: Username = 'newguy', Password = 'mesogreen'</p>
-    <p>Login 2: Username = 'admin', Password = 'mesoawesome'</p>
+    <button @click="tryChangeInfo">Update</button>
+    <br/>
+
+    <p v-if="changeResult != ''">{{ changeResult }}</p>
   </div>
 </template>
 
@@ -29,23 +34,26 @@ import rpcservice from '../services/rpc-service'
 import router from '../router'
 
 export default {
-  name: 'LoginPage', 
+  name: 'UserChangeInfoPage', 
 
   data () {
     return {
-      loginUserName: '',
-      loginPassword: '',
-      loginResult: ''
+      changeUserName: this.$store.state.currentuser.username,
+      changeDisplayName: this.$store.state.currentuser.displayname,
+      changeEmail: this.$store.state.currentuser.email,
+      changePassword: '',
+      changeResult: ''
     }
   }, 
 
   methods: {
-    tryLogin () {
-      rpcservice.rpcLoginCall('user_login', this.loginUserName, this.loginPassword)
+    tryChangeInfo () {
+      rpcservice.rpcUserChangeInfoCall('user_change_info', this.changeUserName, 
+        this.changePassword, this.changeDisplayName, this.changeEmail)
       .then(response => {
         if (response.data == 'success') {
           // Set a success result to show.
-          this.loginResult = 'Success!'
+          this.changeResult = 'Success!'
 
           // Read in the full current user information.
           rpcservice.rpcGetCurrentUserInfo('get_current_user_info')
@@ -63,11 +71,11 @@ export default {
           })
         } else {
           // Set a failure result to show.
-          this.loginResult = 'Login failed: username or password incorrect.'
+          this.changeResult = 'Change of account info failed.'
         }
       })
       .catch(error => {
-        this.loginResult = 'Server error.  Please try again later.'
+        this.changeResult = 'Server error.  Please try again later.'
       })
     }
   }
