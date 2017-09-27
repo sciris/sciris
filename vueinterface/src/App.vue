@@ -63,9 +63,9 @@ Last update: 9/27/17 (gchadder3)
     <!-- Logout button -->
     <button v-if="userloggedin()" @click="logout">Log Out</button>
 
-    <button @click="getallusersinfo">User List</button>
+<!--    <button @click="getallusersinfo">User List</button>
     <button @click="admingetuserinfo">Admin Get User</button>
-    <button @click="admindeleteuser">Admin Delete User</button>
+    <button @click="admindeleteuser">Admin Delete User</button> -->
 
     <hr/>
 
@@ -105,7 +105,7 @@ export default {
       }
     },
 
-    getallusersinfo () {
+/*    getallusersinfo () {
       rpcservice.rpcAllGetUsersInfo('get_all_users')
     },
 
@@ -115,7 +115,7 @@ export default {
 
     admindeleteuser () {
       rpcservice.rpcAdminUserCall('admin_delete_user', 'ed')
-    },
+    }, */
 
     logout () {
       // Do the logout request.
