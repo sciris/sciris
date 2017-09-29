@@ -1,6 +1,6 @@
 // rpc-service.js -- RPC functions for Vue to call
 //
-// Last update: 9/27/17 (gchadder3)
+// Last update: 9/28/17 (gchadder3)
 
 import axios from 'axios'
 var filesaver = require('file-saver')
@@ -596,7 +596,7 @@ export default {
 
   rpcAdminUserCall (funcname, username) {
     // Log the RPC call.
-    consoleLogCommand("admindeleteuser", funcname, [], {})
+    consoleLogCommand("adminusercall", funcname, [], {})
 
     // Do the RPC processing, returning results as a Promise.
     return new Promise((resolve, reject) => {

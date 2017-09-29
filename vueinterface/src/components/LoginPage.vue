@@ -1,7 +1,7 @@
 <!-- 
 LoginPage.vue -- LoginPage Vue component
 
-Last update: 9/26/17 (gchadder3)
+Last update: 9/28/17 (gchadder3)
 -->
 
 <template>
@@ -63,7 +63,7 @@ export default {
           })
         } else {
           // Set a failure result to show.
-          this.loginResult = 'Login failed: username or password incorrect.'
+          this.loginResult = 'Login failed: username or password incorrect or account not activated.'
         }
       })
       .catch(error => {

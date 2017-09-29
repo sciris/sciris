@@ -1,7 +1,7 @@
 """
 user.py -- code related to Sciris user management
     
-Last update: 9/27/17 (gchadder3)
+Last update: 9/28/17 (gchadder3)
 """
 
 # NOTE: We don't want Sciris users to have to customize this file much, or at all.
@@ -10,7 +10,7 @@ Last update: 9/27/17 (gchadder3)
 # Imports
 #
 
-from flask import session
+from flask import session, current_app
 from flask_login import current_user, login_user, logout_user
 from hashlib import sha224
 import uuid
@@ -339,9 +339,10 @@ def user_login(userName, password):
     # Get the matching user (if any).
     matchingUser = theUserDict.getUserByUsername(userName)
     
-    # If we have a match and the password matches, also, log in the user and 
-    # return success; otherwise, return failure.
-    if matchingUser is not None and matchingUser.password == password:
+    # If we have a match and the password matches, and the account is active,
+    # also, log in the user and return success; otherwise, return failure.
+    if matchingUser is not None and matchingUser.password == password and \
+        matchingUser.is_active:
         # Log the user in.
         login_user(matchingUser)
         
@@ -373,6 +374,12 @@ def user_register(userName, password, displayname, email):
     
     # Create a new User object with the new information.
     newUser = User(userName, password, displayname, email, hashThePassword=False)
+    
+    # Set the user to be inactive (so an admin user needs to activate it, 
+    # even though the account has been created) or active (so that no admin
+    # action is necessary), according to the REGISTER_AUTOACTIVATE config 
+    # parameter.
+    newUser.is_active = current_app.config['REGISTER_AUTOACTIVATE']
     
     # Put the user right into the UserDict.
     theUserDict.add(newUser)
@@ -458,7 +465,99 @@ def admin_delete_user(userName):
 
     # Return success.
     return 'success'
+
+def admin_activate_account(userName):
+    # Get the matching user (if any).
+    matchingUser = theUserDict.getUserByUsername(userName)
     
+    # If we don't have a match, fail.
+    if matchingUser is None:
+        return 'failure'
+    
+    # If the account is already activated, fail.
+    if matchingUser.is_active:
+        return 'failure'
+    
+    # Activate the account.
+    matchingUser.is_active = True
+    theUserDict.update(matchingUser)
+    
+    # Return success.
+    return 'success'    
+
+def admin_deactivate_account(userName):
+    # Get the matching user (if any).
+    matchingUser = theUserDict.getUserByUsername(userName)
+    
+    # If we don't have a match, fail.
+    if matchingUser is None:
+        return 'failure'
+    
+    # If the account is already deactivated, fail.
+    if not matchingUser.is_active:
+        return 'failure'
+    
+    # Activate the account.
+    matchingUser.is_active = False
+    theUserDict.update(matchingUser)
+    
+    # Return success.
+    return 'success'
+
+def admin_grant_admin(userName):
+    # Get the matching user (if any).
+    matchingUser = theUserDict.getUserByUsername(userName)
+    
+    # If we don't have a match, fail.
+    if matchingUser is None:
+        return 'failure'
+    
+    # If the account already has admin access, fail.
+    if matchingUser.is_admin:
+        return 'failure'
+    
+    # Grant admin access.
+    matchingUser.is_admin = True
+    theUserDict.update(matchingUser)
+    
+    # Return success.
+    return 'success'
+
+def admin_revoke_admin(userName):
+    # Get the matching user (if any).
+    matchingUser = theUserDict.getUserByUsername(userName)
+    
+    # If we don't have a match, fail.
+    if matchingUser is None:
+        return 'failure'
+    
+    # If the account has no admin access, fail.
+    if not matchingUser.is_admin:
+        return 'failure'
+    
+    # Revoke admin access.
+    matchingUser.is_admin = False
+    theUserDict.update(matchingUser)
+    
+    # Return success.
+    return 'success'
+
+def admin_reset_password(userName):
+    # Get the matching user (if any).
+    matchingUser = theUserDict.getUserByUsername(userName)
+    
+    # If we don't have a match, fail.
+    if matchingUser is None:
+        return 'failure'
+    
+    # Set the password to the desired raw password for them to use.
+    rawPassword = 'sciris'
+    matchingUser.password = sha224(rawPassword).hexdigest() 
+    theUserDict.update(matchingUser)
+    
+    # Return success.
+    return 'success'
+
 #
 # Script code
 #

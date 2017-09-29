@@ -1,7 +1,7 @@
 <!-- 
 App.vue -- App component, the main page
 
-Last update: 9/27/17 (gchadder3)
+Last update: 9/28/17 (gchadder3)
 -->
 
 <template>
@@ -63,10 +63,6 @@ Last update: 9/27/17 (gchadder3)
     <!-- Logout button -->
     <button v-if="userloggedin()" @click="logout">Log Out</button>
 
-<!--    <button @click="getallusersinfo">User List</button>
-    <button @click="admingetuserinfo">Admin Get User</button>
-    <button @click="admindeleteuser">Admin Delete User</button> -->
-
     <hr/>
 
     <!-- Switchable view -->
@@ -104,18 +100,6 @@ export default {
         return this.currentuser.admin
       }
     },
-
-/*    getallusersinfo () {
-      rpcservice.rpcAllGetUsersInfo('get_all_users')
-    },
-
-    admingetuserinfo () {
-      rpcservice.rpcAdminGetUserInfo('admin_get_user_info', 'admin')
-    },
-
-    admindeleteuser () {
-      rpcservice.rpcAdminUserCall('admin_delete_user', 'ed')
-    }, */
 
     logout () {
       // Do the logout request.
