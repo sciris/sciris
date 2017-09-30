@@ -1,7 +1,7 @@
 """
 main.py -- main code for Sciris users to change to create their web apps
     
-Last update: 9/25/17 (gchadder3)
+Last update: 9/30/17 (gchadder3)
 """
 
 #
@@ -9,6 +9,7 @@ Last update: 9/25/17 (gchadder3)
 #
 
 import scirismodel.model as model
+import scirisobjects as sobj
 import datastore as ds
 import user
 from flask import current_app
@@ -82,26 +83,24 @@ def init_datastore(theApp):
     # Load the DataStore state from disk.
     ds.theDataStore.load()
     
-def init_users(theApp):
-    # Try to fetch the user dictionary from theDataStore.
-    with theApp.app_context():
-        theUserDictUID = uuid.UUID(current_app.config['DATASTORE_UUID'])
-    user.theUserDict = ds.theDataStore.retrieve(theUserDictUID)
+    #ds.theDataStore.deleteAll()
     
-    # If the entry is not found...
-    if user.theUserDict is None:
-        print '>> Created new user dictionary.'
-        # Create a new UserDict (empty) object and store it in theDataStore.
-        user.theUserDict = user.UserDict(theUserDictUID)
-        ds.theDataStore.add(user.theUserDict, theUserDictUID, 
-            theTypeLabel='userdict', theFileSuffix='.ud', 
-            theInstanceLabel='Users Dictionary')
-        
-        # Add the two test users to this UserDict.
-        user.theUserDict.add(user.testUser)
-        user.theUserDict.add(user.testUser2)
+def init_users(theApp):
+    # Create the user dictionary object.
+    with theApp.app_context():
+        theUserDictUID = uuid.UUID(current_app.config['USERDICT_UUID'])
+    user.theUserDict = user.UserDict(theUserDictUID)
+    
+    #user.theUserDict.deleteFromDataStore()
+    # Load (from DataStore) or create (anew) the user dictionary.
+    if user.theUserDict.inDataStore():
+        print '>> Loading UserDict from the DataStore.'
+        user.theUserDict.loadFromDataStore()
     else:
-        print '>> Loaded existing user dictionary.'
+        print '>> Creating a new UserDict.'   
+        user.theUserDict.addToDataStore()
+        user.theUserDict.add(user.testUser)
+        user.theUserDict.add(user.testUser2)     
 
     # Show all of the handles in theDataStore.
     print '>> List of all DataStore handles...'
@@ -109,22 +108,7 @@ def init_users(theApp):
     
     # Show all of the users in theUserDict.
     print '>> List of all users...'
-    user.theUserDict.showUsers()     
-    
-    #user.testUser.addToDataStore()
-    
-#    theUser = ds.theDataStore.retrieve(user.testUser.uid)
-#    theUser.show()
-
-    #user.testUser.deleteFromDataStore()
-    
-    #user.testUser.loadCopyFromDataStore().show()
-    
-#    print '>> ---- thang 1 ----'
-#    user.testUser2.show()
-#    user.testUser2.loadFromDataStore(user.testUser.uid)
-#    print '>> ---- thang 2 ----'
-#    user.testUser2.show()
+    user.theUserDict.show()
 
 #
 # Other functions

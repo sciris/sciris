@@ -1,7 +1,7 @@
 """
 datastore.py -- code related to Sciris persistence (both files and database)
     
-Last update: 9/21/17 (gchadder3)
+Last update: 9/28/17 (gchadder3)
 """
 
 """
@@ -20,7 +20,7 @@ directory management stuff goes in a file called filemanagement.py.
 
 import os
 import redis
-import uuid
+import scirisobjects as sobj
 
 # Import cPickle if it is available in your Python setup because it is a 
 # faster method.  If it's not available, import the regular pickle library.
@@ -253,7 +253,7 @@ class DataStore(object):
     def getHandleByUID(self, theUID):
         # Make sure the argument is a valid UUID, converting a hex text to a
         # UUID object, if needed.        
-        validUID = getValidUUID(theUID)
+        validUID = sobj.getValidUUID(theUID)
         
         # If we have a valid UUID...
         if validUID is not None:
@@ -265,7 +265,7 @@ class DataStore(object):
         theInstanceLabel='', saveHandleChanges=True):
         # Make sure the argument is a valid UUID, converting a hex text to a
         # UUID object, if needed.        
-        validUID = getValidUUID(theUID)
+        validUID = sobj.getValidUUID(theUID)
         
         # If we have a valid UUID...
         if validUID is not None:       
@@ -293,7 +293,7 @@ class DataStore(object):
     def retrieve(self, theUID):
         # Make sure the argument is a valid UUID, converting a hex text to a
         # UUID object, if needed.        
-        validUID = getValidUUID(theUID)
+        validUID = sobj.getValidUUID(theUID)
         
         # If we have a valid UUID...
         if validUID is not None: 
@@ -318,7 +318,7 @@ class DataStore(object):
     def update(self, theUID, theObject):
         # Make sure the argument is a valid UUID, converting a hex text to a
         # UUID object, if needed.        
-        validUID = getValidUUID(theUID)
+        validUID = sobj.getValidUUID(theUID)
         
         # If we have a valid UUID...
         if validUID is not None:  
@@ -328,7 +328,7 @@ class DataStore(object):
             # If we found a matching handle...
             if theHandle is not None:
                 # If we are using Redis...
-                if self.dbMode == 'redis':        
+                if self.dbMode == 'redis':   
                     # Overwrite the old copy of the object using the handle.
                     theHandle.redisStore(theObject, self.redisDb)
                     
@@ -340,7 +340,7 @@ class DataStore(object):
     def delete(self, theUID, saveHandleChanges=True):
         # Make sure the argument is a valid UUID, converting a hex text to a
         # UUID object, if needed.        
-        validUID = getValidUUID(theUID)
+        validUID = sobj.getValidUUID(theUID)
         
         # If we have a valid UUID...
         if validUID is not None: 
@@ -470,27 +470,6 @@ def gzipStringPickleToObject(theGzipStringPickle):
             
     # Return the object.
     return theObject
-
-#
-# Other utility functions
-#
-
-def getValidUUID(uidParam):
-    # Get the type of the parameter passed in.
-    paramType = type(uidParam)
-    
-    # Return what was passed in if it is already the right type.
-    if paramType == uuid.UUID:
-        return uidParam
-    
-    # If the type is a string...
-    if paramType == str:
-        # Check to make sure the string has exactly 32 characters.
-        if len(uidParam) == 32:
-            return uuid.UUID(uidParam)
-    
-    # Return None (a failure to find a good UUID).
-    return None
 
 #
 # RPC functions

@@ -1,10 +1,8 @@
 """
 user.py -- code related to Sciris user management
     
-Last update: 9/28/17 (gchadder3)
+Last update: 9/30/17 (gchadder3)
 """
-
-# NOTE: We don't want Sciris users to have to customize this file much, or at all.
 
 #
 # Imports
@@ -16,7 +14,6 @@ from hashlib import sha224
 import uuid
 import copy
 import scirisobjects as sobj
-import datastore as ds
 
 #
 # Globals
@@ -39,12 +36,20 @@ class User(sobj.ScirisObject):
             theEmail: str [''], hasAdminRights: bool [False], 
             theUID: UUID [None], hashThePassword: bool [True]): 
             void -- constructor
+        loadFromCopy(otherObject): void -- assuming otherObject is another 
+            object of our type, copy its contents to us (calls the 
+            ScirisObject superclass version of this method also)            
         get_id(): UUID -- get the unique ID of this user (method required by 
-            Flask-Login)
+            Flask-Login)    
         show(): void -- print the contents of the object
+        getUserFrontEndRepr(): dict -- get a JSON-friendly dictionary 
+            representation of the object state the front-end uses for non-
+            admin purposes
+        getAdminFrontEndRepr(): dict -- get a JSON-friendly dictionary
+            representation of the object state the front-end uses for admin
+            purposes        
                     
     Attributes:
-        uid (UUID) -- the unique ID for the user (uuid Python library-related)
         is_authenticated (bool) -- is this user authenticated? (attribute 
             required by Flask-Login)
         is_active (bool) -- is this user's account active? (attribute 
@@ -124,7 +129,7 @@ class User(sobj.ScirisObject):
         return self.uid
     
     def show(self):
-        # Set superclass parameters.
+        # Show superclass attributes.
         super(User, self).show()  
         
         print '---------------------'
@@ -181,12 +186,17 @@ class User(sobj.ScirisObject):
         }
         return objInfo             
             
-class UserDict(object):
+class UserDict(sobj.ScirisCollection):
     """
     A dictionary of Sciris users.
     
     Methods:
-        __init__(theUID: UUID): void -- constructor            
+        __init__(theUID: UUID [None], theTypePrefix: str ['userdict'], 
+            theFileSuffix: str ['.ud'], 
+            theInstanceLabel: str ['Users Dictionary']): void -- constructor
+        loadFromCopy(otherObject): void -- assuming otherObject is another 
+            object of our type, copy its contents to us (calls the 
+            ScirisCollection superclass version of this method also)           
         getUserByUID(theUID: UUID or str): User or None -- returns the User  
             object pointed to by theUID
         getUserByUsername(theUsername: str): User or None -- return the User
@@ -201,38 +211,40 @@ class UserDict(object):
             dictionary selected by a username, and update the dictionary's 
             DataStore state
         deleteAll(): void -- delete the entire contents of the UserDict and 
-            update the dictionary's DataStore state
-        showUsers(): void -- show all of the user information in the 
-            dictionary
+            update the dictionary's DataStore state            
+        getUserFrontEndRepr(): dict -- get a JSON-friendly dictionary 
+            representation of the collection state the front-end uses for non-
+            admin purposes
+        getAdminFrontEndRepr(): dict -- get a JSON-friendly dictionary
+            representation of the collection state the front-end uses for admin
+            purposes
                     
     Attributes:
-        theUserDict (dict) -- the Python dictionary holding the User objects
         usernameHashes (dict) -- a dict mapping usernames to UIDs, so either
             indexing by UIDs or usernames can be fast
-        uid (UUID) -- the unique ID for the user (uuid Python library-related)
         
     Usage:
         >>> theUserDict = UserDict(uuid.UUID('12345678123456781234567812345678'))                      
     """
     
-    def __init__(self, theUID):
-        # Create the Python dicts to hold the user objects and hashes from 
-        # usernames to the UIDs.
-        self.theUserDict = {}
+    def __init__(self, theUID, theTypePrefix='userdict', theFileSuffix='.ud', 
+        theInstanceLabel='Users Dictionary'):
+        # Set superclass parameters.
+        super(UserDict, self).__init__(theUID, theTypePrefix, theFileSuffix, 
+             theInstanceLabel)
+        
+        # Create the Python dict to hold the hashes from usernames to the UIDs.
         self.usernameHashes = {}
-        self.uid = theUID
         
+    def loadFromCopy(self, otherObject):
+        if type(otherObject) == type(self):
+            # Do the superclass copying.
+            super(UserDict, self).loadFromCopy(otherObject)
+            
+            self.usernameHashes = otherObject.usernameHashes
+            
     def getUserByUID(self, theUID):
-        # Make sure the argument is a valid UUID, converting a hex text to a
-        # UUID object, if needed.
-        validUID = ds.getValidUUID(theUID)
-        
-        # If we have a valid UUID, return the matching User (if any); 
-        # otherwise, return None.
-        if validUID is not None:
-            return self.theUserDict.get(validUID, None)
-        else:
-            return None
+        return self.getObjectByUID(theUID)
     
     def getUserByUsername(self, theUsername):
         # Get the user's UID matching the username.
@@ -246,53 +258,56 @@ class UserDict(object):
             return None
         
     def add(self, theUser):
-        # Add the user to the hash table, keyed by the UID.
-        self.theUserDict[theUser.get_id()] = theUser
+        # Add the object to the hash table, keyed by the UID.
+        self.theObjectDict[theUser.uid] = theUser
         
         # Add the username hash for this user.
         self.usernameHashes[theUser.username] = theUser.get_id()
         
-        # Update our DataStore representation. 
-        ds.theDataStore.update(self.uid, self) 
+        # Update our DataStore representation if we are there. 
+        if self.inDataStore():
+            self.updateDataStore()
     
     def update(self, theUser):
-        # Get the old username
-        oldUsername = self.theUserDict[theUser.get_id()].username
+        # Get the old username.
+        oldUsername = self.theObjectDict[theUser.get_id()].username
         
         # If we new username is different than the old one, delete the old 
         # usernameHash.
         if theUser.username != oldUsername:
             del self.usernameHashes[oldUsername]
-        
+ 
         # Add the user to the hash table, keyed by the UID.
-        self.theUserDict[theUser.get_id()] = theUser
+        self.theObjectDict[theUser.get_id()] = theUser
         
         # Add the username hash for this user.
         self.usernameHashes[theUser.username] = theUser.get_id()
-        
-        # Update our DataStore representation. 
-        ds.theDataStore.update(self.uid, self) 
+       
+        # Update our DataStore representation if we are there. 
+        if self.inDataStore():
+            self.updateDataStore()
     
     def deleteByUID(self, theUID):
         # Make sure the argument is a valid UUID, converting a hex text to a
         # UUID object, if needed.        
-        validUID = ds.getValidUUID(theUID)
+        validUID = sobj.getValidUUID(theUID)
         
         # If we have a valid UUID...
         if validUID is not None:
-            # Get the user pointed to by the UID.
-            theUser = self.theUserDict[validUID]
+            # Get the object pointed to by the UID.
+            theObject = self.theObjectDict[validUID]
             
             # If a match is found...
-            if theUser is not None:
+            if theObject is not None:
                 # Remove entries from both theUserDict and usernameHashes 
                 # attributes.
-                theUsername = theUser.username
-                del self.theUserDict[validUID]
-                del self.usernameHashes[theUsername]
+                theUsername = theObject.username
+                del self.theObjectDict[validUID]
+                del self.usernameHashes[theUsername]                
                 
-                # Update our DataStore representation. 
-                ds.theDataStore.update(self.uid, self) 
+                # Update our DataStore representation if we are there. 
+                if self.inDataStore():
+                    self.updateDataStore()
         
     def deleteByUsername(self, theUsername):
         # Get the UID of the user matching theUsername.
@@ -305,30 +320,21 @@ class UserDict(object):
     def deleteAll(self):
         # Reset the Python dicts to hold the user objects and hashes from 
         # usernames to the UIDs.
-        self.theUserDict = {}
-        self.usernameHashes = {}
+        self.theObjectDict = {}
+        self.usernameHashes = {}  
         
-        # Update our DataStore representation. 
-        ds.theDataStore.update(self.uid, self)  
-        
-    def showUsers(self):
-        # For each key in the dictionary...
-        for theKey in self.theUserDict:
-            # Get the user pointed to.
-            theUser = self.theUserDict[theKey]
+        # Update our DataStore representation if we are there. 
+        if self.inDataStore():
+            self.updateDataStore()
             
-            # Separator line.
-            print '--------------------------------------------'
-            
-            # Show the handle contents.
-            theUser.show()
-            
-        # Separator line.
-        print '--------------------------------------------'
+    def getUserFrontEndRepr(self):  
+        usersInfo = [self.theObjectDict[theKey].getUserFrontEndRepr() 
+            for theKey in self.theObjectDict]
+        return usersInfo
         
     def getAdminFrontEndRepr(self):
-        usersInfo = [self.theUserDict[theKey].getAdminFrontEndRepr() 
-            for theKey in self.theUserDict]
+        usersInfo = [self.theObjectDict[theKey].getAdminFrontEndRepr() 
+            for theKey in self.theObjectDict]
         return usersInfo         
         
 #
