@@ -1,7 +1,7 @@
 """
 scirismain.py -- main code for Sciris users to change to create their web apps
     
-Last update: 10/3/17 (gchadder3)
+Last update: 10/4/17 (gchadder3)
 """
 
 #
@@ -22,6 +22,7 @@ import mpld3
 import os
 import re
 import uuid
+import copy
 
 #
 # Classes
@@ -248,6 +249,49 @@ def doRPC(rpcType, handlerLocation, requestMethod, username=None):
 #
 # RPC functions
 #
+
+def user_change_info(userName, password, displayname, email):
+    # Check (for security purposes) that the function is being called by the 
+    # correct endpoint, and if not, fail.
+    if request.endpoint != 'changeUserInfoRPC':
+        return {'error': 'Unauthorized RPC'}
+    
+    # Make a copy of the current_user.
+    theUser = copy.copy(current_user)
+    
+    # If the password entered doesn't match the current user password, fail.
+    if password != theUser.password:
+        return 'failure'
+       
+    # If the username entered by the user is different from the current_user
+    # name (meaning they are trying to change the name)...
+    if userName != theUser.username:
+        # Get any matching user (if any) to the new username we're trying to 
+        # switch to.
+        matchingUser = user.theUserDict.getUserByUsername(userName)
+    
+        # If we have a match, fail because we don't want to rename the user to 
+        # another existing user.
+        if matchingUser is not None:
+            return 'failure'
+        
+        # If a directory exists at the old name, rename it to the new name.
+        userOldFileSavePath = '%s%s%s' % (ds.fileSaveRootPath, os.sep, theUser.username)
+        userNewFileSavePath = '%s%s%s' % (ds.fileSaveRootPath, os.sep, userName)
+        if os.path.exists(userOldFileSavePath):
+            os.rename(userOldFileSavePath, userNewFileSavePath)
+        
+    # Change the user name, display name, email, and instance label.
+    theUser.username = userName
+    theUser.displayname = displayname
+    theUser.email = email
+    theUser.instanceLabel = userName
+    
+    # Update the user in theUserDict.
+    user.theUserDict.update(theUser)
+    
+    # Return success.
+    return 'success'
 
 def admin_delete_user(userName):
     # Get the result of doing the normal user.py call.

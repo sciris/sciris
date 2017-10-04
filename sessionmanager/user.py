@@ -1,7 +1,7 @@
 """
 user.py -- code related to Sciris user management
     
-Last update: 10/3/17 (gchadder3)
+Last update: 10/4/17 (gchadder3)
 """
 
 #
@@ -525,8 +525,6 @@ def admin_delete_user(userName):
     
     # Delete the user from the dictionary.
     theUserDict.deleteByUsername(userName)
-    
-    # Delete other resources allocated for the user.
 
     # Return success.
     return 'success'
