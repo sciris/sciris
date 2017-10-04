@@ -302,11 +302,11 @@ def getValidUUID(uidParam):
     if paramType == uuid.UUID:
         return uidParam
     
-    # If the type is a string...
-    if paramType == str:
-        # Check to make sure the string has exactly 32 characters.
-        if len(uidParam) == 32:
-            return uuid.UUID(uidParam)
+    # Try to do the conversion and if it fails, set the conversion to None.
+    try:
+        convertParam = uuid.UUID(uidParam)
+    except:
+        convertParam = None
     
-    # Return None (a failure to find a good UUID).
-    return None    
+    # Return the converted value.
+    return convertParam 

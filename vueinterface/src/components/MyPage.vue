@@ -1,7 +1,7 @@
 <!-- 
 MyPage.vue -- MyPage Vue component
 
-Last update: 9/23/17 (gchadder3)
+Last update: 10/2/17 (gchadder3)
 -->
 
 <template>
@@ -55,11 +55,11 @@ export default {
 
   data () {
     return {
-      selectedgraph: 'graph1',
+      selectedgraph: '',
       serverresponse: '',
       loadedfile: '', 
       servererror: '',
-      resourcechoices: ['graph1', 'graph2', 'graph3', 'graph4']
+      resourcechoices: []
     }
   },
 
@@ -85,7 +85,7 @@ export default {
 
     updateScatterplotDataList () {
       return new Promise((resolve, reject) => {
-        rpcservice.rpcPublicCall('list_saved_scatterplotdata_resources')
+        rpcservice.rpcCall('list_saved_scatterplotdata_resources')
         .then(response => {
           this.resourcechoices = response.data
           this.selectedgraph = this.resourcechoices[0]

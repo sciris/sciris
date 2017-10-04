@@ -1,19 +1,23 @@
 """
-main.py -- main code for Sciris users to change to create their web apps
+scirismain.py -- main code for Sciris users to change to create their web apps
     
-Last update: 10/1/17 (gchadder3)
+Last update: 10/3/17 (gchadder3)
 """
 
 #
 # Imports
 #
 
-import scirismodel.model as model
+import sys
+sys.path.append('../sessionmanager')
+import model
 import scirisobjects as sobj
 import datastore as ds
-import user
-from flask import request, current_app
+import imp
+user = imp.load_source('user', '../sessionmanager/user.py')
+from flask import request, current_app, json, jsonify, send_from_directory
 from flask_login import current_user
+from werkzeug.utils import secure_filename
 import mpld3
 import os
 import re
@@ -79,7 +83,7 @@ def init_datastore(theApp):
     # Create the DataStore object, setting up Redis.
     with theApp.app_context():
         ds.theDataStore = ds.DataStore(redisDbURL=current_app.config['REDIS_URL'])
-    
+
     # Load the DataStore state from disk.
     ds.theDataStore.load()
     
@@ -110,13 +114,6 @@ def init_users(theApp):
     print '>> List of all users...'
     user.theUserDict.show()
     
-def junkaroo(theApp):
-    print 'This is main.py theDataStore'
-    print ds.theDataStore
-
-    print 'This is main.py theUserDict'
-    print user.theUserDict
-    
 #
 # Other functions
 #
@@ -135,10 +132,123 @@ def get_saved_scatterplotdata_file_path(spdName):
     else:
         return None
     
+
+
+# Do the meat of the RPC calls, passing args and kwargs to the appropriate 
+# function in the appropriate handler location.
+def doRPC(rpcType, handlerLocation, requestMethod, username=None):
+    # If we are doing an upload, pull the RPC information out of the request 
+    # form instead of the request data.
+    if rpcType == 'upload':
+        # Pull out the function name, args, and kwargs
+        fn_name = request.form.get('funcname')
+        args = json.loads(request.form.get('args', "[]"))
+        kwargs = json.loads(request.form.get('kwargs', "{}"))
+    
+    # Otherwise (normal and download RPCs), pull the RPC information from the 
+    # request data.
+    else:
+        # Convert the request.data JSON to a Python dict, and pull out the 
+        # function name, args, and kwargs.  
+        if requestMethod in ['POST', 'PUT']:
+            reqdict = json.loads(request.data)
+        elif requestMethod == 'GET':
+            reqdict = request.args
+        fn_name = reqdict['funcname']
+        args = reqdict.get('args', [])
+        # Insert the username as a the first argument if it is passed in not
+        # None.
+        if username is not None:
+            args.insert(0, username)
+        kwargs = reqdict.get('kwargs', {})
+        
+    # Check to see if the function exists here in scirismain.py and get it 
+    # ready to call if it is.
+    funcExists = hasattr(sys.modules[__name__], fn_name)
+    print('>> Checking RPC function "scirismain.%s" -> %s' % (fn_name, funcExists))
+    if funcExists:
+        func = getattr(sys.modules[__name__], fn_name)
+        
+    # Otherwise (it's not in scirismain.py), if the handlerLocation is 'user'...
+    elif handlerLocation == 'user':
+        # Check to see if there is a match.
+        funcExists = hasattr(user, fn_name)
+        print('>> Checking RPC function "user.%s" -> %s' % (fn_name, funcExists))
+        
+        # If there is a match, get the function ready.
+        if funcExists:
+            func = getattr(user, fn_name)
+            
+        # Otherwise, return an error.
+        else:
+            return jsonify({'error': 
+                'Attempted to call RPC function in non-existent handler location \'%s\'' \
+                    % handlerLocation})             
+    else:
+        return jsonify({'error': 
+            'Attempted to call RPC function in non-existent handler location \'%s\'' \
+                % handlerLocation}) 
+
+    # If the function doesn't exist, return an error to the client saying it 
+    # doesn't exist.
+    if not funcExists:
+        return jsonify({'error': 
+            'Attempted to call non-existent RPC function \'%s\'' % fn_name}) 
+    
+    # If we are doing an upload.
+    if rpcType == 'upload':
+        # Grab the formData file that was uploaded.    
+        file = request.files['uploadfile']
+        
+        # Grab the filename of this file, and generate the full upload path / 
+        # filename.
+        filename = secure_filename(file.filename)
+        uploaded_fname = os.path.join(ds.uploadsPath, filename)
+        
+        # Save the file to the uploads directory.
+        file.save(uploaded_fname)
+        
+        # Prepend the file name to the args list.
+        args.insert(0, uploaded_fname)
+        
+    # Show the call of the function.    
+    print('>> Calling RPC function "%s.%s"' % (handlerLocation, fn_name))
+    
+    # Execute the function to get the results.
+    result = func(*args, **kwargs)   
+     
+    # If we are doing a download, prepare the response and send it off.
+    if rpcType == 'download':
+        # If we got None for a result (the full file name), return an error to 
+        # the client.
+        if result is None:
+            return jsonify({'error': 'Could not find requested resource'})
+    
+        # Pull out the directory and file names from the full file name.
+        dirName, fileName = os.path.split(result)
+         
+        # Make the response message with the file loaded as an attachment.
+        response = send_from_directory(dirName, fileName, as_attachment=True)
+        response.status_code = 201  # Status 201 = Created
+        response.headers['filename'] = fileName
+        
+        # Return the response message.
+        return response
+    
+    # Otherwise (normal and upload RPCs), 
+    else:
+        # If None was returned by the RPC function, return ''.
+        if result is None:
+            return ''
+        
+        # Otherwise, convert the result (probably a dict) to JSON and return it.
+        else:
+            return jsonify(result)
+        
 #
 # RPC functions
 #
-
+        
 def list_saved_scatterplotdata_resources():
     # Check (for security purposes) that the function is being called by the 
     # correct endpoint, and if not, fail.

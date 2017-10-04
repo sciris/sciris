@@ -4,17 +4,20 @@ model.py -- a small Python model.
 Usage: To run from the command line:
     python model.py 
     
-Last update: 9/21/17 (gchadder3)
+Last update: 9/30/17 (gchadder3)
 '''
 
 #
 # Imports
 #
 
-# Temporary stuff (uncomment if we test DataStore stuff from here)
+# Temporary stuff (uncomment if we test sessionmanager stuff from here)
 #import sys
 #sys.path.append('../sessionmanager')
+#import scirisobjects as sobj
 #import datastore as ds
+#import imp
+#imp.load_source('user', '../sessionmanager/user.py')
 #import uuid
 
 import numpy as np
@@ -161,7 +164,6 @@ if __name__ == "__main__":
     
     plt.show()
 
-    
     
 
 

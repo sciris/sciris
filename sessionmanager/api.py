@@ -1,25 +1,20 @@
 """
 api.py -- script for setting up a flask server
     
-Last update: 9/27/17 (gchadder3)
+Last update: 10/3/17 (gchadder3)
 """
 
 #
 # Imports
 #
 
-from flask import Flask, request, abort, json, jsonify, make_response, \
-    send_from_directory
+from flask import Flask, request, abort, jsonify, make_response
 from flask_login import LoginManager, current_user, login_required
-from werkzeug.utils import secure_filename
 from functools import wraps
 import traceback
-import os
 import sys
 import logging
-import main
-import datastore
-import user
+import scirismodel.scirismain as scirismain
 
 #
 # Globals
@@ -55,7 +50,7 @@ def init_logger():
 @login_manager.user_loader
 def load_user(userid):
     # Return the matching user (if any).
-    return user.theUserDict.getUserByUID(userid)
+    return scirismain.user.theUserDict.getUserByUID(userid)
 
 # Decorator function which allows any exceptions made by the RPC calls to be 
 # trapped and return in the response message.
@@ -104,13 +99,13 @@ def root():
 @app.route('/api/user/login', methods=['POST'])
 @report_exception_decorator
 def loginRPC():
-    return doRPC('normal', 'user', request.method)
+    return scirismain.doRPC('normal', 'user', request.method)
 
 # Define the /api/user/logout endpont for RPCs for user logout.
 @app.route('/api/user/logout', methods=['POST'])
 @report_exception_decorator
 def logoutRPC():
-    return doRPC('normal', 'user', request.method)
+    return scirismain.doRPC('normal', 'user', request.method)
 
 # Define the /api/user/current endpont for RPCs for returning the current 
 # user's user information.
@@ -118,7 +113,7 @@ def logoutRPC():
 @report_exception_decorator
 @login_required
 def currentUserRPC():
-    return doRPC('normal', 'user', request.method)
+    return scirismain.doRPC('normal', 'user', request.method)
 
 # Define the /api/user/list endpont for RPCs for returning (for admin users 
 # only) a summary of all of the users. 
@@ -126,13 +121,13 @@ def currentUserRPC():
 @report_exception_decorator
 @verify_admin_request_decorator
 def userListRPC():
-    return doRPC('normal', 'user', request.method)
+    return scirismain.doRPC('normal', 'user', request.method)
 
 # Define the /api/user/register endpont for RPCs for user registration.
 @app.route('/api/user/register', methods=['POST'])
 @report_exception_decorator
 def registrationRPC():
-    return doRPC('normal', 'user', request.method)
+    return scirismain.doRPC('normal', 'user', request.method)
 
 # Define the /api/user/changeinfo endpont for RPCs for user changing their 
 # (non-password) info.
@@ -140,7 +135,7 @@ def registrationRPC():
 @report_exception_decorator
 @login_required
 def changeUserInfoRPC():
-    return doRPC('normal', 'user', request.method)
+    return scirismain.doRPC('normal', 'user', request.method)
 
 # Define the /api/user/changepassword endpont for RPCs for user changing 
 # their password.
@@ -148,27 +143,27 @@ def changeUserInfoRPC():
 @report_exception_decorator
 @login_required
 def changePasswordRPC():
-    return doRPC('normal', 'user', request.method)
+    return scirismain.doRPC('normal', 'user', request.method)
 
 @app.route('/api/user/<username>', methods=['GET', 'POST'])
 @report_exception_decorator
 @verify_admin_request_decorator
 def specificUserRPC(username):
-    return doRPC('normal', 'user', request.method, username=username)
+    return scirismain.doRPC('normal', 'user', request.method, username=username)
 
 # Define the /api/procedure endpoint for normal RPCs.
 @app.route('/api/procedure', methods=['POST'])
 @report_exception_decorator
 @login_required
 def normalRPC():
-    return doRPC('normal', 'main', request.method)
+    return scirismain.doRPC('normal', 'scirismain', request.method)
 
 # Define the /api/procedure endpoint for normal RPCs that don't require a 
 # current valid login.
 @app.route('/api/publicprocedure', methods=['POST'])
 @report_exception_decorator
 def publicNormalRPC():
-    return doRPC('normal', 'main', request.method)
+    return scirismain.doRPC('normal', 'scirismain', request.method)
 
 # Define the /api/download endpoint for RPCs that download a file to the 
 # client.
@@ -176,115 +171,14 @@ def publicNormalRPC():
 @report_exception_decorator
 @login_required
 def downloadRPC():
-    return doRPC('download', 'main', request.method)
+    return scirismain.doRPC('download', 'scirismain', request.method)
 
 # Define the /api/upload endpoint for RPCs that work from uploaded files.
 @app.route('/api/upload', methods=['POST'])
 @report_exception_decorator
 @login_required
 def uploadRPC():
-    return doRPC('upload', 'main', request.method)  
-  
-# Do the meat of the RPC calls, passing args and kwargs to the appropriate 
-# function in the appropriate handler location.
-def doRPC(rpcType, handlerLocation, requestMethod, username=None):
-    # If we are doing an upload, pull the RPC information out of the request 
-    # form instead of the request data.
-    if rpcType == 'upload':
-        # Pull out the function name, args, and kwargs
-        fn_name = request.form.get('funcname')
-        args = json.loads(request.form.get('args', "[]"))
-        kwargs = json.loads(request.form.get('kwargs', "{}"))
-    
-    # Otherwise (normal and download RPCs), pull the RPC information from the 
-    # request data.
-    else:
-        # Convert the request.data JSON to a Python dict, and pull out the 
-        # function name, args, and kwargs.  
-        if requestMethod in ['POST', 'PUT']:
-            reqdict = json.loads(request.data)
-        elif requestMethod == 'GET':
-            reqdict = request.args
-        fn_name = reqdict['funcname']
-        args = reqdict.get('args', [])
-        # Insert the username as a the first argument if it is passed in not
-        # None.
-        if username is not None:
-            args.insert(0, username)
-        kwargs = reqdict.get('kwargs', {})
-        
-    # Check to see whether the function to be called exists and get it ready 
-    # to call in func if it's found.
-    if handlerLocation == 'main':
-        funcExists = hasattr(main, fn_name)
-        print('>> Checking RPC function "main.%s" -> %s' % (fn_name, funcExists))
-        if funcExists:
-            func = getattr(main, fn_name)
-    elif handlerLocation == 'user':
-        funcExists = hasattr(user, fn_name)
-        print('>> Checking RPC function "user.%s" -> %s' % (fn_name, funcExists))
-        if funcExists:
-            func = getattr(user, fn_name)        
-    else:
-        return jsonify({'error': 
-            'Attempted to call RPC function in non-existent handler location \'%s\'' \
-                % handlerLocation}) 
-    
-    # If the function doesn't exist, return an error to the client saying it 
-    # doesn't exist.
-    if not funcExists:
-        return jsonify({'error': 
-            'Attempted to call non-existent RPC function \'%s\'' % fn_name}) 
-    
-    # If we are doing an upload.
-    if rpcType == 'upload':
-        # Grab the formData file that was uploaded.    
-        file = request.files['uploadfile']
-        
-        # Grab the filename of this file, and generate the full upload path / 
-        # filename.
-        filename = secure_filename(file.filename)
-        uploaded_fname = os.path.join(datastore.uploadsPath, filename)
-        
-        # Save the file to the uploads directory.
-        file.save(uploaded_fname)
-        
-        # Prepend the file name to the args list.
-        args.insert(0, uploaded_fname)
-        
-    # Show the call of the function.    
-    print('>> Calling RPC function "%s.%s"' % (handlerLocation, fn_name))
-    
-    # Execute the function to get the results.
-    result = func(*args, **kwargs)   
-     
-    # If we are doing a download, prepare the response and send it off.
-    if rpcType == 'download':
-        # If we got None for a result (the full file name), return an error to 
-        # the client.
-        if result is None:
-            return jsonify({'error': 'Could not find requested resource'})
-    
-        # Pull out the directory and file names from the full file name.
-        dirName, fileName = os.path.split(result)
-         
-        # Make the response message with the file loaded as an attachment.
-        response = send_from_directory(dirName, fileName, as_attachment=True)
-        response.status_code = 201  # Status 201 = Created
-        response.headers['filename'] = fileName
-        
-        # Return the response message.
-        return response
-    
-    # Otherwise (normal and upload RPCs), 
-    else:
-        # If None was returned by the RPC function, return ''.
-        if result is None:
-            return ''
-        
-        # Otherwise, convert the result (probably a dict) to JSON and return it.
-        else:
-            return jsonify(result)
+    return scirismain.doRPC('upload', 'scirismain', request.method)  
 
 # 
 # Script code
@@ -308,15 +202,15 @@ login_manager.init_app(app)
 
 # Initialize files, paths, and directories.
 print '>> Initializing files, paths, and directories...'
-main.init_filepaths(app)
+scirismain.init_filepaths(app)
 
 # Initialize the DataStore.
 print '>> Initializing the data store...'
-main.init_datastore(app)
+scirismain.init_datastore(app)
 
 # Initialize the users.
 print '>> Initializing the users data...'
-main.init_users(app)
+scirismain.init_users(app)
 
 # The following code just gets called if we are running this standalone.
 if __name__ == "__main__":
