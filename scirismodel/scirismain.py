@@ -248,7 +248,35 @@ def doRPC(rpcType, handlerLocation, requestMethod, username=None):
 #
 # RPC functions
 #
+
+def admin_delete_user(userName):
+    # Get the result of doing the normal user.py call.
+    callResult = user.admin_delete_user(userName)
+    
+    # If we had a successful result, do the additional processing.
+    if callResult == 'success':
+        # Set the directory to the user's private directory.
+        userFileSavePath = '%s%s%s' % (ds.fileSaveRootPath, os.sep, userName)
         
+        # If the directory exists...
+        if os.path.exists(userFileSavePath):
+            # Get the total list of entries in the user's directory.
+            allEntries = os.listdir(userFileSavePath)
+            
+            # Remove each of the files.
+            for fileName in allEntries:
+                # Create a full file name for the file.
+                fullFileName = '%s%s%s' % (userFileSavePath, os.sep, fileName)
+
+                # Remove the file.                
+                os.remove(fullFileName)
+            
+            # Remove the directory itself.
+            os.rmdir(userFileSavePath)
+        
+    # Return the callResult.    
+    return callResult
+    
 def list_saved_scatterplotdata_resources():
     # Check (for security purposes) that the function is being called by the 
     # correct endpoint, and if not, fail.

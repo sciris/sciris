@@ -328,24 +328,28 @@ class UserDict(sobj.ScirisCollection):
         if self.inDataStore():
             self.updateDataStore()
             
-    def getUserFrontEndRepr(self):  
+    def getUserFrontEndRepr(self):
+        # Get dictionaries for each user in the dictionary.
         usersInfo = [self.theObjectDict[theKey].getUserFrontEndRepr() 
             for theKey in self.theObjectDict]
         return usersInfo
         
     def getAdminFrontEndRepr(self):
+        # Get dictionaries for each user in the dictionary.       
         usersInfo = [self.theObjectDict[theKey].getAdminFrontEndRepr() 
             for theKey in self.theObjectDict]
-        return usersInfo   
+        
+        # Extract just the usernames.
+        userNames = [theUser['user']['username'] for theUser in usersInfo]
+        
+        # Get sorting indices with respect to the usernames.
+        sortOrder = argsort(userNames)
+        
+        # Created a list of the sorted usersInfo list.
+        sortedUsersInfo = [usersInfo[ind] for ind in sortOrder]
 
-# use this to figure out how to sort the entries      
-#def get_user_summaries():
-#    raw_users = [parse_user_record(q) for q in UserDb.query.all()]
-#    user_names = [user['username'] for user in raw_users]
-#    sort_order = argsort(user_names)
-#    sorted_users = [raw_users[o] for o in sort_order]
-#    users_dict = {'users': sorted_users}
-#    return users_dict    
+        # Return the sorted users info.      
+        return sortedUsersInfo  
     
 #
 # RPC functions
