@@ -1,7 +1,7 @@
 """
 datastore.py -- code related to Sciris persistence (both files and database)
     
-Last update: 9/28/17 (gchadder3)
+Last update: 10/6/17 (gchadder3)
 """
 
 """
@@ -240,12 +240,20 @@ class DataStore(object):
     def load(self):
         # If we are using Redis...
         if self.dbMode == 'redis':
+            if self.redisDb.get('scirisdatastore-handleDict') is None:
+                print 'Error: DataStore object has not been saved yet.'
+                return
+            
             # Get the entries for all of the data items.
             self.handleDict = gzipStringPickleToObject(self.redisDb.get('scirisdatastore-handleDict'))
             self.dbMode = gzipStringPickleToObject(self.redisDb.get('scirisdatastore-dbMode'))
         
         # Otherwise (we are using files)...
-        else:        
+        else:    
+            if not os.path.exists('.\\sciris.ds'):
+                print 'Error: DataStore object has not been saved yet.'
+                return
+            
             infile = open('.\\sciris.ds', 'rb')
             self.handleDict = pickle.load(infile)
             self.dbMode = pickle.load(infile)

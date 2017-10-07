@@ -84,7 +84,7 @@ def init_datastore(theApp):
     # Create the DataStore object, setting up Redis.
     with theApp.app_context():
         ds.theDataStore = ds.DataStore(redisDbURL=current_app.config['REDIS_URL'])
-
+   
     # Load the DataStore state from disk.
     ds.theDataStore.load()
     
