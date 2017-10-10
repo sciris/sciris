@@ -1,7 +1,7 @@
 """
 user.py -- code related to Sciris user management
     
-Last update: 10/4/17 (gchadder3)
+Last update: 10/10/17 (gchadder3)
 """
 
 #
@@ -159,6 +159,7 @@ class User(sobj.ScirisObject):
     def getUserFrontEndRepr(self):
         objInfo = {
             'user': {
+                'UID': self.uid.hex,                    
                 'instancelabel': self.instanceLabel,
                 'username': self.username, 
                 'displayname': self.displayname, 
