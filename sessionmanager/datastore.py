@@ -1,7 +1,7 @@
 """
 datastore.py -- code related to Sciris persistence (both files and database)
     
-Last update: 10/6/17 (gchadder3)
+Last update: 10/11/17 (gchadder3)
 """
 
 """
@@ -59,7 +59,7 @@ theDataStore = None
 class StoreObjectHandle(object):
     """
     An object associated with a Python object which permits the Python object 
-    to be store in and retrieved from a DataStore object.
+    to be stored in and retrieved from a DataStore object.
     
     Methods:
         __init__(theUID: UUID, theTypePrefix: str ['obj'], 
@@ -268,7 +268,33 @@ class DataStore(object):
             return self.handleDict.get(validUID, None)
         else:
             return None
-    
+        
+    def getUIDFromInstance(self, typePrefix, instanceLabel):
+        # Initialize an empty list to put the matches in.
+        UIDmatches = []
+        
+        # For each key in the dictionary...
+        for theKey in self.handleDict:
+            # Get the handle pointed to.
+            theHandle = self.handleDict[theKey]
+            
+            # If both the type prefix and instance label match, add the UID
+            # of the handle to the list.
+            if theHandle.typePrefix == typePrefix and \
+                theHandle.instanceLabel == instanceLabel:
+                UIDmatches.append(theHandle.uid)
+                
+        # If there is no match, return None.        
+        if len(UIDmatches) == 0:
+            return None
+        
+        # Else, if there is more than one match, give a warning.
+        elif len(UIDmatches) > 1:
+            print ('Warning: getUIDFromInstance() only returning the first match.')
+            
+        # Return the first (and hopefully only) matching UID.  
+        return UIDmatches[0]
+        
     def add(self, theObject, theUID, theTypeLabel='obj', theFileSuffix='.obj', 
         theInstanceLabel='', saveHandleChanges=True):
         # Make sure the argument is a valid UUID, converting a hex text to a

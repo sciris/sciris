@@ -1,7 +1,7 @@
 """
 scirismain.py -- main code for Sciris users to change to create their web apps
     
-Last update: 10/4/17 (gchadder3)
+Last update: 10/11/17 (gchadder3)
 """
 
 #
@@ -91,21 +91,24 @@ def init_datastore(theApp):
     #ds.theDataStore.deleteAll()
     
 def init_users(theApp):
-    # Create the user dictionary object.
-    with theApp.app_context():
-        theUserDictUID = uuid.UUID(current_app.config['USERDICT_UUID'])
+    # Look for an existing users dictionary.
+    theUserDictUID = ds.theDataStore.getUIDFromInstance('userdict', 'Users Dictionary')
+    
+    # Create the user dictionary object.  Note, that if no match was found, 
+    # this will be assigned a new UID.
     user.theUserDict = user.UserDict(theUserDictUID)
     
-    #user.theUserDict.deleteFromDataStore()
-    # Load (from DataStore) or create (anew) the user dictionary.
-    if user.theUserDict.inDataStore():
+    # If there was a match...
+    if theUserDictUID is not None:
         print '>> Loading UserDict from the DataStore.'
-        user.theUserDict.loadFromDataStore()
+        user.theUserDict.loadFromDataStore() 
+    
+    # Else (no match)...
     else:
         print '>> Creating a new UserDict.'   
         user.theUserDict.addToDataStore()
         user.theUserDict.add(user.testUser)
-        user.theUserDict.add(user.testUser2)     
+        user.theUserDict.add(user.testUser2)   
 
     # Show all of the handles in theDataStore.
     print '>> List of all DataStore handles...'
@@ -114,6 +117,9 @@ def init_users(theApp):
     # Show all of the users in theUserDict.
     print '>> List of all users...'
     user.theUserDict.show()
+    
+def init_main(theApp): 
+    pass
     
 #
 # Other functions

@@ -1,7 +1,7 @@
 """
 api.py -- script for setting up a flask server
     
-Last update: 10/3/17 (gchadder3)
+Last update: 10/11/17 (gchadder3)
 """
 
 #
@@ -211,6 +211,10 @@ scirismain.init_datastore(app)
 # Initialize the users.
 print '>> Initializing the users data...'
 scirismain.init_users(app)
+
+# Perform other scirismain.py-specific initialization.
+print '>> Doing other scirismain-specific initialization...'
+scirismain.init_main(app)
 
 # The following code just gets called if we are running this standalone.
 if __name__ == "__main__":
