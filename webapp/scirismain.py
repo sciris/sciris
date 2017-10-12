@@ -1,7 +1,7 @@
 """
 scirismain.py -- main code for Sciris users to change to create their web apps
     
-Last update: 10/11/17 (gchadder3)
+Last update: 10/12/17 (gchadder3)
 """
 
 #
@@ -10,6 +10,7 @@ Last update: 10/11/17 (gchadder3)
 
 import sys
 sys.path.append('../sessionmanager')
+sys.path.append('../scirismodel')
 import model
 import scirisobjects as sobj
 import datastore as ds

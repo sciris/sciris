@@ -1,7 +1,7 @@
 """
 api.py -- script for setting up a flask server
     
-Last update: 10/11/17 (gchadder3)
+Last update: 10/12/17 (gchadder3)
 """
 
 #
@@ -14,7 +14,7 @@ from functools import wraps
 import traceback
 import sys
 import logging
-import scirismodel.scirismain as scirismain
+import webapp.scirismain as scirismain
 
 #
 # Globals
