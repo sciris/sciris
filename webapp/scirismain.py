@@ -1,7 +1,7 @@
 """
 scirismain.py -- main code for Sciris users to change to create their web apps
     
-Last update: 10/12/17 (gchadder3)
+Last update: 10/13/17 (gchadder3)
 """
 
 #
@@ -32,10 +32,6 @@ scirisRepoFullPath = sys.path[0]
 execfile('%s%s%s%s%s' % (scirisRepoFullPath, os.sep, 'sessionmanager', 
     os.sep, 'config.py'))
 
-#
-# Imports (Block 2, dependent on config file)
-#
-
 # If we have a full path for the model directory, load scirismain.py from that.
 if os.path.isabs(MODEL_DIR):
     modelDirTarget = MODEL_DIR
@@ -44,10 +40,27 @@ if os.path.isabs(MODEL_DIR):
 # respect to the sciris repo directory).
 else:
     modelDirTarget = '%s%s%s' % (os.pardir, os.sep, MODEL_DIR) 
-
+    
+# If we have a full path for the webapp directory, load scirismain.py from that.
+if os.path.isabs(WEBAPP_DIR):
+    webappDirTarget = WEBAPP_DIR
+    
+# Otherwise (we have a relative path), use it (correcting so it is with 
+# respect to the sciris repo directory).
+else:
+    webappDirTarget = '%s%s%s' % (os.pardir, os.sep, WEBAPP_DIR) 
+    
+#
+# Imports (Block 2, dependent on config file)
+#  
+    
 # Append the model directory to the path and import needed files.    
 sys.path.append(modelDirTarget)
 import model
+
+# Append the webapp directory to the path and import needed files.    
+sys.path.append(webappDirTarget)
+# Do any imports from the webapp directory here.
 
 #
 # Classes
