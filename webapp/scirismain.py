@@ -5,25 +5,49 @@ Last update: 10/12/17 (gchadder3)
 """
 
 #
-# Imports
+# Imports (Block 1)
 #
 
-import sys
-sys.path.append('../sessionmanager')
-sys.path.append('../scirismodel')
-import model
-import scirisobjects as sobj
-import datastore as ds
-import imp
-user = imp.load_source('user', '../sessionmanager/user.py')
 from flask import request, current_app, json, jsonify, send_from_directory
 from flask_login import current_user
 from werkzeug.utils import secure_filename
 import mpld3
+import sys
 import os
 import re
-import uuid
 import copy
+import sessionmanager.scirisobjects as sobj
+import sessionmanager.datastore as ds
+import sessionmanager.user as user
+
+#
+# Script code (Block 1)
+#
+
+# Get the full path for the loaded sciris repo.  (It in sys path at the 
+# beginning because the caller puts it there.)
+scirisRepoFullPath = sys.path[0]
+
+# Execute the config.py file to get parameter values we need (directories).
+execfile('%s%s%s%s%s' % (scirisRepoFullPath, os.sep, 'sessionmanager', 
+    os.sep, 'config.py'))
+
+#
+# Imports (Block 2, dependent on config file)
+#
+
+# If we have a full path for the model directory, load scirismain.py from that.
+if os.path.isabs(MODEL_DIR):
+    modelDirTarget = MODEL_DIR
+    
+# Otherwise (we have a relative path), use it (correcting so it is with 
+# respect to the sciris repo directory).
+else:
+    modelDirTarget = '%s%s%s' % (os.pardir, os.sep, MODEL_DIR) 
+
+# Append the model directory to the path and import needed files.    
+sys.path.append(modelDirTarget)
+import model
 
 #
 # Classes
@@ -53,12 +77,28 @@ def init_filepaths(theApp):
     #  Using the current_app set to the passed in app..
     with theApp.app_context():
         # Set the uploads path.
-        ds.uploadsPath = '%s%s%s' % (ds.scirisRootPath, os.sep, 
-            current_app.config['UPLOADS_DIR'])
+        
+        # If we have an absolute directory, use it.
+        if os.path.isabs(current_app.config['UPLOADS_DIR']):
+            ds.uploadsPath = current_app.config['UPLOADS_DIR']
+            
+        # Otherwise (we have a relative path), use it (correcting so it is with 
+        # respect to the sciris repo directory).
+        else:
+            ds.uploadsPath = '%s%s%s' % (os.pardir, os.sep, 
+                current_app.config['UPLOADS_DIR'])  
         
         # Set the file save root path.
-        ds.fileSaveRootPath = '%s%s%s' % (ds.scirisRootPath, os.sep, 
-            current_app.config['FILESAVEROOT_DIR'])
+        
+        # If we have an absolute directory, use it.
+        if os.path.isabs(current_app.config['FILESAVEROOT_DIR']):
+            ds.fileSaveRootPath = current_app.config['FILESAVEROOT_DIR']
+            
+        # Otherwise (we have a relative path), use it (correcting so it is with 
+        # respect to the sciris repo directory).
+        else:
+            ds.fileSaveRootPath = '%s%s%s' % (os.pardir, os.sep, 
+                current_app.config['FILESAVEROOT_DIR'])
          
     # If the datafiles path doesn't exist yet...
     if not os.path.exists(ds.fileSaveRootPath):
@@ -85,7 +125,7 @@ def init_datastore(theApp):
     # Create the DataStore object, setting up Redis.
     with theApp.app_context():
         ds.theDataStore = ds.DataStore(redisDbURL=current_app.config['REDIS_URL'])
-   
+
     # Load the DataStore state from disk.
     ds.theDataStore.load()
     

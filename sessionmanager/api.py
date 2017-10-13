@@ -5,7 +5,7 @@ Last update: 10/12/17 (gchadder3)
 """
 
 #
-# Imports
+# Imports (Block 1)
 #
 
 from flask import Flask, request, abort, jsonify, make_response
@@ -14,7 +14,7 @@ from functools import wraps
 import traceback
 import sys
 import logging
-import webapp.scirismain as scirismain
+import os
 
 #
 # Globals
@@ -25,7 +25,44 @@ app = Flask(__name__)
 
 # Create the LoginManager.
 login_manager = LoginManager()
-   
+
+#
+# Script code (Block 1)
+#
+
+# Get the full path for the loaded sciris repo.  (It in sys path at the 
+# beginning because the caller puts it there.)
+scirisRepoFullPath = sys.path[0]
+
+# Try to load the config file.  This may fail, so output a warning message if
+# it does.
+errormsg = 'Could not load Sciris configuration file\n'
+errormsg += 'Please ensure that you have copied server/config_example.py to server/config.py\n'
+errormsg += 'Note that this is NOT done automatically'
+try: # File exists
+    app.config.from_pyfile('config.py')
+except: # File doesn't exist
+    raise Exception(errormsg)
+    
+#
+# Imports (Block 2, dependent on config file)
+#
+
+# If we have a full path for the webapp directory, load scirismain.py from that.
+if os.path.isabs(app.config['WEBAPP_DIR']):
+    scirismainTarget = '%s%s%s' % (app.config['WEBAPP_DIR'], os.sep, 
+        'scirismain.py')
+    
+# Otherwise (we have a relative path), use it (correcting so it is with 
+# respect to the sciris repo directory).
+else:
+    scirismainTarget = '%s%s%s%s%s' % (os.pardir, os.sep, 
+        app.config['WEBAPP_DIR'], os.sep, 'scirismain.py')  
+    
+# Do the import.
+import imp
+scirismain = imp.load_source('scirismain', scirismainTarget)
+
 #
 # Functions
 #
@@ -181,18 +218,8 @@ def uploadRPC():
     return scirismain.doRPC('upload', 'scirismain', request.method)  
 
 # 
-# Script code
+# Script code (main)
 #
-
-# Try to load the config file.  This may fail, so output a warning message if
-# it does.
-errormsg = 'Could not load Sciris configuration file\n'
-errormsg += 'Please ensure that you have copied server/config_example.py to server/config.py\n'
-errormsg += 'Note that this is NOT done automatically'
-try: # File exists
-    app.config.from_pyfile('config.py')
-except: # File doesn't exist
-    raise Exception(errormsg)
 
 # Initialize the logger.
 init_logger()
