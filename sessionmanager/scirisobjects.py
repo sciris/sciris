@@ -1,7 +1,7 @@
 """
 scirisobjects.py -- classes for Sciris objects which are generally managed
     
-Last update: 9/30/17 (gchadder3)
+Last update: 11/22/17 (gchadder3)
 """
 
 #
@@ -183,6 +183,8 @@ class ScirisCollection(ScirisObject):
             ScirisObject superclass version of this method also)
         getObjectByUID(theUID: UUID): ScirisObject -- get a ScirisObject out of 
             the collection by the UUID passed in
+        getAllObjects(): list of ScirisObjects -- get all of the ScirisObjects 
+           and put them in a list
         addObject(theObject: ScirisObject): void -- add a ScirisObject to the 
             collection
         updateObject(theObject: ScirisObject): void -- update a ScirisObject 
@@ -229,6 +231,9 @@ class ScirisCollection(ScirisObject):
         else:
             return None
         
+    def getAllObjects(self):
+        return [self.theObjectDict[theKey] for theKey in self.theObjectDict]
+    
     def addObject(self, theObject):
         # Add the object to the hash table, keyed by the UID.
         self.theObjectDict[theObject.uid] = theObject
