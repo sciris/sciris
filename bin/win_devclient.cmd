@@ -1,3 +1,1 @@
-cd ../vueinterface
-npm run dev
-cd ../bin
+python run_client.py

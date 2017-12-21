@@ -14,7 +14,7 @@
 SECRET_KEY = 'Pick something unique for your site here'
 
 # Directory containing the client code.
-CLIENT_DIR = 'vueinterface'
+CLIENT_DIR = 'vueinterface_v2'
 
 # Directory containing the model code.  This is the primary Python code that 
 # the web app will rely on related to the actual model.
