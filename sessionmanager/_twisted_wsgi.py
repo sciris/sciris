@@ -1,4 +1,5 @@
 import sys
+import os
 
 from twisted.internet import reactor
 from twisted.internet.endpoints import serverFromString
@@ -11,6 +12,8 @@ from twisted.python.threadpool import ThreadPool
 
 import api
 
+# Run the config file.
+execfile('../sessionmanager/config.py')
 
 def run():
     """
@@ -39,10 +42,12 @@ def run():
             request.responseHeaders.setRawHeaders(b'expires', [b'0'])
             return r
     
-    base_resource = File('../vueinterface/dist/')
-    #base_resource.putChild('dev', File('client/source/'))
+    base_resource = File('%s%s%s%sdist%s' % (os.pardir, os.sep, CLIENT_DIR, 
+        os.sep, os.sep))   
+    base_resource.putChild('dev', File('%s%s%s%ssrc%s' % (os.pardir, os.sep,
+        CLIENT_DIR, os.sep, os.sep))) 
     base_resource.putChild('api', OptimaResource(wsgi_app))
-
+    
     site = Site(base_resource)
 
     try:
