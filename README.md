@@ -17,7 +17,8 @@ together.
 
 #### Package and Library Dependencies
 
-Make sure that you have `npm` and `git` installed on your machine.  In 
+Make sure that you have `npm` (included in Node.js installation) and 
+`git` installed on your machine.  In 
 your Python setup, you also need to have the following packages (instructions
 in parentheses show how to install with Anaconda Python environment already 
 installed):
@@ -54,11 +55,17 @@ database.  To investigate what keys are in, for example, database #2,
 while you are within `redis-cli`, you can type `select 2` to switch to that 
 database.
 
+#### Setup of Config File
+
+`sessionmanager\config.py` is initially set up as a copy of `config_v2.py`, 
+which points to a second version of both the client and webapp.  You can 
+run the initial version by copying `config_v1.py` over `config.py`.
+
 #### Initial Build of the Client
 
 After cloning or pulling this repo, use the following steps to do the 
 initial build of the app:
-* `cd vueinterface`
+* `cd vueinterface_v2`
 * `npm install` builds the Node modules the app uses.  This step can take 
 a few minutes to complete.
 * `npm run build` generates the build version of the app.
