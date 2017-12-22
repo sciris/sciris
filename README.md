@@ -65,7 +65,7 @@ run the initial version by copying `config_v1.py` over `config.py`.
 
 After cloning or pulling this repo, use the following steps to do the 
 initial build of the app:
-* `cd vueinterface_v2`
+* `cd vueinterface_v2` (`cd vueinterface` for the first version of the app)
 * `npm install` builds the Node modules the app uses.  This step can take 
 a few minutes to complete.
 * `npm run build` generates the build version of the app.
