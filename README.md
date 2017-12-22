@@ -15,23 +15,28 @@ together.
 
 ### Installing on Windows Systems
 
-#### Package and Library Depedencies
+#### Package and Library Dependencies
 
 Make sure that you have `npm` and `git` installed on your machine.  In 
-your Python setup, you also need to have the following packages:
-* numpy
-* matplotlib
-* flask
-* twisted
-* mpld3
-* redis
+your Python setup, you also need to have the following packages (instructions
+in parentheses show how to install with Anaconda Python environment already 
+installed):
+* numpy (already installed under Anaconda)
+* matplotlib (already installed under Anaconda)
+* flask (already installed under Anaconda)
+* flask-login (`conda install flask-login`)
+* twisted (`conda install twisted`)
+* mpld3 (`conda install mpld3`)
+* redis (`pip install redis`)
 
 #### Database Dependencies
 
 If you use Redis as your DataStore mode, you will need to have Redis installed 
 on your computer (as a service).  Redis does not directly support Windows, 
 but there is a [MicrosoftArchive page on GitHub](https://github.com/MicrosoftArchive/redis) 
-where you may go for installation directions on your Windows machine. It 
+where you may go for installation directions on your Windows machine. 
+(For example, it can be installed at [this site](https://github.com/MicrosoftArchive/redis/releases)
+, downloading a .msi file).  It 
 ends up being installed as a service which you can navigate to by going 
 the Windows Task Manager and going to the Services tab.  Make sure the `Redis` 
 service is in the Running state.

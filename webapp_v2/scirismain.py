@@ -1,7 +1,7 @@
 """
 scirismain.py -- main code for Sciris users to change to create their web apps
     
-Last update: 12/22/17 (gchadder3)
+Last update: 10/13/17 (gchadder3)
 """
 
 #
@@ -173,7 +173,7 @@ def init_users(theApp):
     user.theUserDict.show()
     
 def init_main(theApp): 
-    print '-- Version 1 of the app --'
+    print '-- Version 2 of the app --'
     
 #
 # Other functions
