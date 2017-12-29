@@ -1,7 +1,7 @@
 """
 scirismain.py -- main code for Sciris users to change to create their web apps
     
-Last update: 12/28/17 (gchadder3)
+Last update: 12/29/17 (gchadder3)
 """
 
 #
@@ -11,6 +11,7 @@ Last update: 12/28/17 (gchadder3)
 from flask import request, current_app, json, jsonify, send_from_directory
 from flask_login import current_user
 from werkzeug.utils import secure_filename
+import numpy as np
 import mpld3
 import sys
 import os
@@ -276,7 +277,10 @@ def doRPC(rpcType, handlerLocation, requestMethod, username=None):
     print('>> Calling RPC function "%s.%s"' % (handlerLocation, fn_name))
     
     # Execute the function to get the results.
-    result = func(*args, **kwargs)   
+    result = func(*args, **kwargs)  
+    
+    print 'wakawaka'
+    print result
      
     # If we are doing a download, prepare the response and send it off.
     if rpcType == 'download':
@@ -304,7 +308,58 @@ def doRPC(rpcType, handlerLocation, requestMethod, username=None):
         
         # Otherwise, convert the result (probably a dict) to JSON and return it.
         else:
-            return jsonify(result)
+            return jsonify(json_sanitize_result(result))
+
+def json_sanitize_result(theResult):
+    """
+    This is the main conversion function for Python data-structures into
+    JSON-compatible data structures.
+
+    Use this as much as possible to guard against data corruption!
+
+    Args:
+        theResult: almost any kind of data structure that is a combination
+            of list, numpy.ndarray, etc.
+
+    Returns:
+        A converted dict/list/value that should be JSON compatible
+    """
+
+    if isinstance(theResult, list) or isinstance(theResult, tuple):
+        return [json_sanitize_result(p) for p in list(theResult)]
+    
+    if isinstance(theResult, np.ndarray):
+        if theResult.shape: # Handle most cases, incluing e.g. array([5])
+            return [json_sanitize_result(p) for p in list(theResult)]
+        else: # Handle the special case of e.g. array(5)
+            return [json_sanitize_result(p) for p in list(np.array([theResult]))]
+
+    if isinstance(theResult, dict):
+        return {str(k): json_sanitize_result(v) for k, v in theResult.items()}
+
+    if isinstance(theResult, np.bool_):
+        return bool(theResult)
+
+    if isinstance(theResult, float):
+        if np.isnan(theResult):
+            return None
+
+    if isinstance(theResult, np.float64):
+        if np.isnan(theResult):
+            return None
+        else:
+            return float(theResult)
+
+    if isinstance(theResult, unicode):
+        return str(theResult)
+
+    if isinstance(theResult, set):
+        return list(theResult)
+
+#    if isinstance(theResult, UUID):
+#        return str(theResult)
+
+    return theResult
         
 #
 # RPC functions
