@@ -1,7 +1,7 @@
 """
 scirismain.py -- main code for Sciris users to change to create their web apps
     
-Last update: 10/13/17 (gchadder3)
+Last update: 12/28/17 (gchadder3)
 """
 
 #
@@ -429,7 +429,7 @@ def get_saved_scatterplotdata_graph(spdName):
     graphData = spd.plot()
   
     # Return the dictionary representation of the matplotlib figure.
-    return mpld3.fig_to_dict(graphData) 
+    return {'graph': mpld3.fig_to_dict(graphData)}
 
 def delete_saved_scatterplotdata_graph(spdName):
     # Check (for security purposes) that the function is being called by the 

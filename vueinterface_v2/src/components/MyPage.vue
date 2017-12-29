@@ -1,7 +1,7 @@
 <!-- 
 MyPage.vue -- MyPage Vue component
 
-Last update: 10/2/17 (gchadder3)
+Last update: 12/28/17 (gchadder3)
 -->
 
 <template>
@@ -115,7 +115,7 @@ export default {
         this.serverresponse = response.data
 
         // Draw the figure in the 'fig01' div tag.
-        mpld3.draw_figure('fig01', response.data)
+        mpld3.draw_figure('fig01', response.data.graph)
 
         // Remember the file that was loaded.
         this.loadedfile = this.selectedgraph + '.csv'
