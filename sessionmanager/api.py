@@ -1,7 +1,7 @@
 """
 api.py -- script for setting up a flask server
     
-Last update: 10/12/17 (gchadder3)
+Last update: 1/15/18 (gchadder3)
 """
 
 #
@@ -238,6 +238,10 @@ scirismain.init_datastore(app)
 # Initialize the users.
 print '>> Initializing the users data...'
 scirismain.init_users(app)
+
+# Initialize the projects.
+print '>> Initializing the projects data...'
+scirismain.init_projects(app)
 
 # Perform other scirismain.py-specific initialization.
 print '>> Doing other scirismain-specific initialization...'

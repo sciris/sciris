@@ -1,7 +1,7 @@
 """
 user.py -- code related to Sciris user management
     
-Last update: 10/10/17 (gchadder3)
+Last update: 1/16/18 (gchadder3)
 """
 
 #
@@ -647,12 +647,24 @@ def admin_reset_password(userName):
     # Return success.
     return 'success'
 
+def get_scirisdemo_user(name='_ScirisDemo'):    
+    # Get the user object matching (if any)...
+    theUser = theUserDict.getUserByUsername(name)
+    
+    # If there is a match, return the UID, otherwise return None.
+    if theUser is not None:
+        return theUser.get_id()
+    else:
+        return None
+    
 #
 # Script code
 #
 
-# Create two test Users that can get added to a new UserDict.
+# Create three test Users that can get added to a new UserDict.
 testUser = User('newguy', 'mesogreen', 'Ozzy Mandibulus', 'tastybats@yahoo.com', \
     theUID=uuid.UUID('12345678123456781234567812345678'))
 testUser2 = User('admin', 'mesoawesome', 'Admin Dude', 'admin@scirisuser.net', \
     hasAdminRights=True, theUID=uuid.UUID('12345678123456781234567812345679'))
+testUser3 = User('_ScirisDemo', '_ScirisDemo', 'Sciris Demos', 'admin@scirisuser.net', \
+    hasAdminRights=False, theUID=uuid.UUID('12345678123456781234567812345672'))

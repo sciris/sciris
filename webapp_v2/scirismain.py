@@ -1,7 +1,7 @@
 """
 scirismain.py -- main code for Sciris users to change to create their web apps
     
-Last update: 12/29/17 (gchadder3)
+Last update: 1/17/18 (gchadder3)
 """
 
 #
@@ -20,6 +20,7 @@ import copy
 import sessionmanager.scirisobjects as sobj
 import sessionmanager.datastore as ds
 import sessionmanager.user as user
+import sessionmanager.project as project
 
 #
 # Script code (Block 1)
@@ -61,7 +62,10 @@ import model
 
 # Append the webapp directory to the path and import needed files.    
 sys.path.append(webappDirTarget)
-# Do any imports from the webapp directory here.
+import imp
+imp.load_source('ourexceptions', '%s%sexceptions.py' % \
+   (webappDirTarget, os.sep))
+from ourexceptions import ProjectDoesNotExist, SpreadsheetDoesNotExist
 
 #
 # Classes
@@ -163,7 +167,8 @@ def init_users(theApp):
         print '>> Creating a new UserDict.'   
         user.theUserDict.addToDataStore()
         user.theUserDict.add(user.testUser)
-        user.theUserDict.add(user.testUser2)   
+        user.theUserDict.add(user.testUser2)
+        user.theUserDict.add(user.testUser3)
 
     # Show all of the handles in theDataStore.
     print '>> List of all DataStore handles...'
@@ -172,6 +177,51 @@ def init_users(theApp):
     # Show all of the users in theUserDict.
     print '>> List of all users...'
     user.theUserDict.show()
+    
+def init_projects(theApp):
+    # Look for an existing ProjectCollection.
+    theProjsUID = ds.theDataStore.getUIDFromInstance('projectscoll', 
+        'Projects Collection')
+    
+    # Create the projects collection object.  Note, that if no match was found, 
+    # this will be assigned a new UID.    
+    project.theProjCollection = project.ProjectCollection(theProjsUID)
+    
+    # If there was a match...
+    if theProjsUID is not None:
+        print '>> Loading ProjectCollection from the DataStore.'
+        project.theProjCollection.loadFromDataStore() 
+    
+    # Else (no match)...
+    else:
+        print '>> Creating a new ProjectCollection.'   
+        project.theProjCollection.addToDataStore()
+        
+        print '>> Starting a demo project.'
+        fullFileName = '%s%sgraph1.csv' % (ds.fileSaveRootPath, os.sep)
+        theProject = project.Project('Graph 1', user.get_scirisdemo_user(), 
+            spreadsheetPath=fullFileName)
+        project.theProjCollection.addObject(theProject)
+        
+        print '>> Starting a second demo project.'
+        fullFileName = '%s%sgraph2.csv' % (ds.fileSaveRootPath, os.sep)
+        theProject = project.Project('Graph 2', user.get_scirisdemo_user(), 
+            spreadsheetPath=fullFileName)
+        project.theProjCollection.addObject(theProject)
+        
+        print '>> Starting a third demo project.'
+        fullFileName = '%s%sgraph3.csv' % (ds.fileSaveRootPath, os.sep)
+        theProject = project.Project('Graph 3', user.get_scirisdemo_user(), 
+            spreadsheetPath=fullFileName)
+        project.theProjCollection.addObject(theProject)
+        
+        print '>> Starting a fourth demo project.'
+        theProject = project.Project('Empty graph', user.get_scirisdemo_user(), 
+            spreadsheetPath=None)
+        project.theProjCollection.addObject(theProject)
+        
+    # Show what's in the ProjectCollection.    
+    project.theProjCollection.show()
     
 def init_main(theApp): 
     print '-- Version 2 of the app --'
@@ -279,9 +329,6 @@ def doRPC(rpcType, handlerLocation, requestMethod, username=None):
     # Execute the function to get the results.
     result = func(*args, **kwargs)  
     
-    print 'wakawaka'
-    print result
-     
     # If we are doing a download, prepare the response and send it off.
     if rpcType == 'download':
         # If we got None for a result (the full file name), return an error to 
