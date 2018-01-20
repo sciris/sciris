@@ -1,7 +1,7 @@
 <!-- 
 LoginPage.vue -- LoginPage Vue component
 
-Last update: 9/28/17 (gchadder3)
+Last update: 1/19/18 (gchadder3)
 -->
 
 <template>
@@ -21,6 +21,7 @@ Last update: 9/28/17 (gchadder3)
 
     <p>Login 1: Username = 'newguy', Password = 'mesogreen'</p>
     <p>Login 2: Username = 'admin', Password = 'mesoawesome'</p>
+    <p>Login 3: Username = '_ScirisDemo', Password = '_ScirisDemo'</p>
   </div>
 </template>
 

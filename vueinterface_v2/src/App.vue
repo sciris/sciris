@@ -1,16 +1,22 @@
 <!-- 
 App.vue -- App component, the main page
 
-Last update: 12/21/17 (gchadder3)
+Last update: 1/19/18 (gchadder3)
 -->
 
 <template>
   <div id="app">
     <!-- Title bar -->
-    <h1>Scatterplotter for Vue Mark II</h1>
+    <h1>Scatterplotter for Vue Version 2</h1>
 
     <!-- router-link menu -->
     <label>Pages:</label>
+    <span v-if="userloggedin()">
+      <router-link to="/projects" exact>
+        Projects Page
+      </router-link> 
+      &nbsp;
+    </span>
     <span v-if="userloggedin()">
       <router-link to="/" exact>
         Main Page

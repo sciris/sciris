@@ -1,9 +1,10 @@
 // index.js -- vue-router path configuration code
 //
-// Last update: 9/27/17 (gchadder3)
+// Last update: 1/19/18 (gchadder3)
 
 import Vue from 'vue'
 import Router from 'vue-router'
+import ProjectsPage from '@/components/ProjectsPage'
 import MyPage from '@/components/MyPage'
 import LoginPage from '@/components/LoginPage'
 import MainAdminPage from '@/components/MainAdminPage'
@@ -16,6 +17,11 @@ Vue.use(Router)
 
 export default new Router({
   routes: [
+    {
+      path: '/projects',
+      name: 'ProjectsPage',
+      component: MyPage
+    },
     {
       path: '/',
       name: 'MyPage',
