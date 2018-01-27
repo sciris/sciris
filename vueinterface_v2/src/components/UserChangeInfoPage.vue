@@ -1,11 +1,11 @@
 <!-- 
 UserChangeInfoPage.vue -- Vue component for a page to change account info
 
-Last update: 9/27/17 (gchadder3)
+Last update: 1/22/18 (gchadder3)
 -->
 
 <template>
-  <div id="app">
+  <div class="UserChangeInfoPage">
     <label>Username:</label>
     <input v-model='changeUserName'/>
     <br/>

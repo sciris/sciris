@@ -1,11 +1,11 @@
 <!-- 
 LoginPage.vue -- LoginPage Vue component
 
-Last update: 1/19/18 (gchadder3)
+Last update: 1/22/18 (gchadder3)
 -->
 
 <template>
-  <div id="app">
+  <div class="LoginPage">
     <label>Username:</label>
     <input v-model='loginUserName'/>
     <br/>

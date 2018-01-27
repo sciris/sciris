@@ -1,11 +1,11 @@
 <!-- 
 ProjectsPage.vue -- ProjectsPage Vue component
 
-Last update: 1/19/18 (gchadder3)
+Last update: 1/22/18 (gchadder3)
 -->
 
 <template>
-  <div id="app">
+  <div class="ProjectsPage">
     <!-- Indicator if the user's directory is empty -->
     <p v-if='!selectedgraph'>
       Your directory is empty, so you need to upload a new file.
@@ -13,7 +13,7 @@ Last update: 1/19/18 (gchadder3)
 
     <!-- Selector for saved graph of user's -->
     <div v-if='selectedgraph'>
-      <label>Scatterplot to retrieve</label>
+      <label>Project page Scatterplot to retrieve</label>
       <select v-model='selectedgraph'>
         <option v-for='choice in resourcechoices'>{{ choice }}</option>
       </select>
@@ -51,7 +51,7 @@ import rpcservice from '../services/rpc-service'
 import router from '../router'
 
 export default {
-  name: 'MyPage',
+  name: 'ProjectsPage',
 
   data () {
     return {

@@ -1,11 +1,11 @@
 <!-- 
 RegisterPage.vue -- RegisterPage Vue component
 
-Last update: 9/21/17 (gchadder3)
+Last update: 1/22/18 (gchadder3)
 -->
 
 <template>
-  <div id="app">
+  <div class="RegisterPage">
     <label>Username:</label>
     <input v-model='registerUserName'/>
     <br/>

@@ -1,6 +1,6 @@
 // index.js -- vue-router path configuration code
 //
-// Last update: 1/19/18 (gchadder3)
+// Last update: 1/20/18 (gchadder3)
 
 import Vue from 'vue'
 import Router from 'vue-router'
@@ -18,12 +18,12 @@ Vue.use(Router)
 export default new Router({
   routes: [
     {
-      path: '/projects',
+      path: '/',
       name: 'ProjectsPage',
-      component: MyPage
+      component: ProjectsPage
     },
     {
-      path: '/',
+      path: '/mypage',
       name: 'MyPage',
       component: MyPage
     },
