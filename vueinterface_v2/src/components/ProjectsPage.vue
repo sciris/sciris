@@ -1,46 +1,65 @@
 <!-- 
 ProjectsPage.vue -- ProjectsPage Vue component
 
-Last update: 1/22/18 (gchadder3)
+Last update: 1/29/18 (gchadder3)
 -->
 
 <template>
   <div class="ProjectsPage">
-    <!-- Indicator if the user's directory is empty -->
-    <p v-if='!selectedgraph'>
-      Your directory is empty, so you need to upload a new file.
-    </p>
+    <h2>Create projects</h2>
 
-    <!-- Selector for saved graph of user's -->
-    <div v-if='selectedgraph'>
-      <label>Project page Scatterplot to retrieve</label>
-      <select v-model='selectedgraph'>
-        <option v-for='choice in resourcechoices'>{{ choice }}</option>
-      </select>
-      <button v-if='selectedgraph' @click="sendRequest">Load</button>
+    <div>
+      Choose a demonstration project from our database:
     </div>
 
-    <!-- Button for uploading new files -->
-    <button @click="uploadFile">Upload New File</button>
-    <br/>
+    [project select] [add demo project button]
 
-    <!-- Display of loaded in file along with buttons for downloading or 
-    deleting -->
-    <p v-if='loadedfile'> 
-      Following file loaded from server: {{ loadedfile }} 
-      <button @click="downloadFile">Download it!</button>
-      <button @click="deleteFile">Delete it</button>
-    </p>
+    <br>
 
-    <!-- Display of any server error -->
-    <p v-if='servererror'> 
-      Server error: {{ servererror }} 
-    </p>
+    <div>
+      Or create/upload a new project:
+    </div>
 
-<!--    <p>Server Response: {{ serverresponse }}</p> -->
+    [create new project button] [upload project from file button] [upload project from spreadsheet]
 
-    <!-- Window for mpld3 figure -->
-    <div id="fig01"></div>
+    <div>
+      <h2>Manage projects</h2>
+
+      [filter textbox]
+
+      <table>
+        <thead>
+          <tr>
+            <th>[checkbox]</th>
+            <th>Name</th>
+            <th>Select</th>
+            <th>Created on</th>
+            <th>Updated on</th>
+            <th>Data uploaded on</th>
+            <th>Actions</th>
+            <th>Data spreadsheet</th>
+            <th>Project file</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>[checkbox]</td>
+            <td>[project name]</td>
+            <td>[open button]</td>
+            <td>[creation time]</td>
+            <td>[update time]</td>
+            <td>[upload time]</td>
+            <td>[copy button] [rename button]</td>
+            <td>[upload button] [download button]</td>
+            <td>[download button] [download with results button]</td>
+          </tr>
+        </tbody>
+      </table>
+
+      <div>
+        [delete selected button] [download selected button]
+      </div>
+    </div>
   </div>
 </template>
 
