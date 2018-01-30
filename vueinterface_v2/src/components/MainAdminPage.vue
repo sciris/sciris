@@ -1,11 +1,11 @@
 <!-- 
 MainAdminPage.vue -- Vue component for the main admin page
 
-Last update: 1/22/18 (gchadder3)
+Last update: 1/29/18 (gchadder3)
 -->
 
 <template>
-  <div class="MainAdminPage">
+  <div class="SitePage">
     <h2>Scatterplotter Users</h2>
     <table v-if="usersList[0] != undefined">
       <tr>

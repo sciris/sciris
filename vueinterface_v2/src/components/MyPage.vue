@@ -1,11 +1,11 @@
 <!-- 
 MyPage.vue -- MyPage Vue component
 
-Last update: 1/22/18 (gchadder3)
+Last update: 1/29/18 (gchadder3)
 -->
 
 <template>
-  <div class="MyPage">
+  <div class="SitePage">
     <!-- Indicator if the user's directory is empty -->
     <p v-if='!selectedgraph'>
       Your directory is empty, so you need to upload a new file.

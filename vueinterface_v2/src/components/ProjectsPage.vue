@@ -5,24 +5,26 @@ Last update: 1/29/18 (gchadder3)
 -->
 
 <template>
-  <div class="ProjectsPage">
-    <h2>Create projects</h2>
+  <div class="SitePage">
+    <div class="PageSection">
+      <h2>Create projects</h2>
 
-    <div>
-      Choose a demonstration project from our database:
+      <div>
+        Choose a demonstration project from our database:
+      </div>
+
+      [project select] [add demo project button]
+
+      <br>
+
+      <div>
+        Or create/upload a new project:
+      </div>
+
+      [create new project button] [upload project from file button] [upload project from spreadsheet]
     </div>
 
-    [project select] [add demo project button]
-
-    <br>
-
-    <div>
-      Or create/upload a new project:
-    </div>
-
-    [create new project button] [upload project from file button] [upload project from spreadsheet]
-
-    <div>
+    <div class="PageSection">
       <h2>Manage projects</h2>
 
       [filter textbox]
@@ -230,5 +232,14 @@ export default {
 </script>
 
 <!-- Add "scoped" attribute to limit CSS to this component only -->
-<style scoped>
+<style lang="scss" scoped>
+  $vue-blue: #32485F;
+  $vue-green: #00C185;
+
+/*  .PageSection h2 {
+    color: red;
+  } */
+/*  h2 {
+    color: $vue-blue;
+  } */
 </style>

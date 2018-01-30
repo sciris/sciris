@@ -1,11 +1,11 @@
 <!-- 
 ChangePasswordPage.vue -- Vue component for a page to change password
 
-Last update: 1/22/18 (gchadder3)
+Last update: 1/29/18 (gchadder3)
 -->
 
 <template>
-  <div class="ChangePasswordPage">
+  <div class="SitePage">
     <label>New Password:</label>
     <input v-model='newPassword'/>
     <br/>
