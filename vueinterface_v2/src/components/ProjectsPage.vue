@@ -104,7 +104,6 @@ export default {
   data () {
     return {
       demoProjectList: [],
-//      demoProjectList: ['Graph 1', 'Graph 2', 'Graph 3'],
       selectedDemoProject: '',
       projectSummaries: [],
       demoProjectSummaries: 
@@ -144,16 +143,12 @@ export default {
 
     // Otherwise...
     else {
-      //this.demoProjectList = ['Graph 1', 'Graph 2', 'Graph 3']
+      // Initialize the demoProjectList by picking out the project names.
+      this.demoProjectList = this.demoProjectSummaries.map(demoProj => demoProj.projectName)
 
-      // picking from the demoProjectSummaries object
-      this.demoProjectList = []
-      for (var ii = 0; ii < this.demoProjectSummaries.length; ii++) {
-        this.demoProjectList.push(this.demoProjectSummaries[ii].projectName)
-      }
-
-      // Initialize the selection of the demo project.
+      // Initialize the selection of the demo project to the first element.
       this.selectedDemoProject = this.demoProjectList[0]
+
 
       // Otherwise, get the list of the graphs available.   
       this.updateScatterplotDataList()
@@ -164,7 +159,11 @@ export default {
     addDemoProject () {
       console.log('addDemoProject() called')
 
-      this.projectSummaries.push(this.demoProjectSummaries[0])
+      // Should I be doing some kind of copy here or is that implicit?
+      var found = this.demoProjectSummaries.find(demoProj => demoProj.projectName == this.selectedDemoProject)
+      this.projectSummaries.push(found)
+
+//      this.projectSummaries.push(this.demoProjectSummaries[0])
     },
 
     createNewProject () {
