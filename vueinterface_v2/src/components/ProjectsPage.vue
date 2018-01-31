@@ -1,7 +1,7 @@
 <!-- 
 ProjectsPage.vue -- ProjectsPage Vue component
 
-Last update: 1/29/18 (gchadder3)
+Last update: 1/30/18 (gchadder3)
 -->
 
 <template>
@@ -13,7 +13,12 @@ Last update: 1/29/18 (gchadder3)
         Choose a demonstration project from our database:
       </div>
 
-      [project select] [add demo project button]
+      <select v-model='selectedDemoProject'>
+        <option v-for='choice in demoProjectList'>
+          {{ choice }}
+        </option>
+      </select>
+      <button @click="addDemoProject">Add this project</button>
 
       <br>
 
@@ -21,18 +26,26 @@ Last update: 1/29/18 (gchadder3)
         Or create/upload a new project:
       </div>
 
-      [create new project button] [upload project from file button] [upload project from spreadsheet]
+      <button @click="createNewProject">Create new project</button>
+      <button @click="uploadProjectFromFile">Upload project from file</button>
+      <button @click="uploadProjectFromSpreadsheet">Upload project from spreadsheet</button>
     </div>
 
-    <div class="PageSection">
+    <div class="PageSection"
+         v-if='projectSummaries.length > 0'>
       <h2>Manage projects</h2>
 
-      [filter textbox]
+      <input type="text"
+             class="txbox"
+             style="margin-bottom: 20px"
+             placeholder="Filter Projects"/>
 
       <table>
         <thead>
           <tr>
-            <th>[checkbox]</th>
+            <th>
+              <input type="checkbox"/>
+            </th>
             <th>Name</th>
             <th>Select</th>
             <th>Created on</th>
@@ -44,22 +57,36 @@ Last update: 1/29/18 (gchadder3)
           </tr>
         </thead>
         <tbody>
-          <tr>
-            <td>[checkbox]</td>
-            <td>[project name]</td>
-            <td>[open button]</td>
-            <td>[creation time]</td>
-            <td>[update time]</td>
-            <td>[upload time]</td>
-            <td>[copy button] [rename button]</td>
-            <td>[upload button] [download button]</td>
-            <td>[download button] [download with results button]</td>
+          <tr v-for='projectSummary in projectSummaries'>
+            <td>
+              <input type="checkbox"/>
+            </td>
+            <td>{{ projectSummary.projectName }}</td>
+            <td>
+              <button @click="openProject">Open</button>
+            </td>
+            <td>{{ projectSummary.creationTime }}</td>
+            <td>{{ projectSummary.updateTime }}</td>
+            <td>{{ projectSummary.spreadsheetUploadTime }}</td>
+            <td>
+              <button @click="copyProject">Copy</button>
+              <button @click="renameProject">Rename</button>
+            </td>
+            <td>
+              <button @click="uploadSpreadsheetToProject">Upload</button>
+              <button @click="downloadSpreadsheetFromProject">Download</button>
+            </td>
+            <td>
+              <button @click="downloadProjectFile">Download</button>
+              <button @click="downloadProjectFileWithResults">Download with results</button>
+            </td>
           </tr>
         </tbody>
       </table>
 
       <div>
-        [delete selected button] [download selected button]
+        <button @click="deleteSelectedProjects">Delete selected</button>
+        <button @click="downloadSelectedProjects">Download selected</button>
       </div>
     </div>
   </div>
@@ -76,6 +103,31 @@ export default {
 
   data () {
     return {
+      demoProjectList: [],
+//      demoProjectList: ['Graph 1', 'Graph 2', 'Graph 3'],
+      selectedDemoProject: '',
+      projectSummaries: [],
+      demoProjectSummaries: 
+        [
+          {
+            projectName: 'Graph 1', 
+            creationTime: '2017-Sep-21 08:44 AM',
+            updateTime: '2017-Sep-21 08:44 AM',
+            spreadsheetUploadTime: '2017-Sep-21 08:44 AM'
+          }, 
+          {
+            projectName: 'Graph 2',
+            creationTime: '2017-Sep-22 08:44 AM',
+            updateTime: '2017-Sep-22 08:44 AM',
+            spreadsheetUploadTime: '2017-Sep-22 08:44 AM'
+          }, 
+          {
+            projectName: 'Graph 3',
+            creationTime: '2017-Sep-23 08:44 AM',
+            updateTime: '2017-Sep-23 08:44 AM',
+            spreadsheetUploadTime: '2017-Sep-23 08:44 AM'
+          }
+        ],
       selectedgraph: '',
       serverresponse: '',
       loadedfile: '', 
@@ -88,13 +140,81 @@ export default {
     // If we have no user logged in, automatically redirect to the login page.
     if (this.$store.state.currentuser.displayname == undefined) {
       router.push('/login')
-    } else {
+    } 
+
+    // Otherwise...
+    else {
+      //this.demoProjectList = ['Graph 1', 'Graph 2', 'Graph 3']
+
+      // picking from the demoProjectSummaries object
+      this.demoProjectList = []
+      for (var ii = 0; ii < this.demoProjectSummaries.length; ii++) {
+        this.demoProjectList.push(this.demoProjectSummaries[ii].projectName)
+      }
+
+      // Initialize the selection of the demo project.
+      this.selectedDemoProject = this.demoProjectList[0]
+
       // Otherwise, get the list of the graphs available.   
       this.updateScatterplotDataList()
     }
   },
 
   methods: {
+    addDemoProject () {
+      console.log('addDemoProject() called')
+
+      this.projectSummaries.push(this.demoProjectSummaries[0])
+    },
+
+    createNewProject () {
+      console.log('createNewProject() called')
+    },
+
+    uploadProjectFromFile () {
+      console.log('uploadProjectFromFile() called')
+    },
+
+    uploadProjectFromSpreadsheet () {
+      console.log('uploadProjectFromSpreadsheet() called')
+    },
+
+    openProject () {
+      console.log('openProject() called')
+    },
+
+    copyProject () {
+      console.log('copyProject() called')
+    },
+
+    renameProject () {
+      console.log('renameProject() called')
+    },
+
+    uploadSpreadsheetToProject () {
+      console.log('uploadSpreadsheetToProject() called')
+    },
+
+    downloadSpreadsheetFromProject () {
+      console.log('downloadSpreadsheetFromProject() called')
+    },
+
+    downloadProjectFile () {
+      console.log('downloadProjectFile() called')
+    },
+
+    downloadProjectFileWithResults () {
+      console.log('downloadProjectFileWithResults() called')
+    },
+
+    deleteSelectedProjects () {
+      console.log('deleteSelectedProjects() called')
+    },
+
+    downloadSelectedProjects () {
+      console.log('downloadSelectedProjects() called')
+    },
+
     clearFigureWindow () {
       // If we already have a figure, pop the figure object, and clear
       // the DOM.
