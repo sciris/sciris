@@ -1,7 +1,7 @@
 <!-- 
 ProjectsPage.vue -- ProjectsPage Vue component
 
-Last update: 1/30/18 (gchadder3)
+Last update: 1/31/18 (gchadder3)
 -->
 
 <template>
@@ -13,8 +13,8 @@ Last update: 1/30/18 (gchadder3)
         Choose a demonstration project from our database:
       </div>
 
-      <select v-model='selectedDemoProject'>
-        <option v-for='choice in demoProjectList'>
+      <select v-model="selectedDemoProject">
+        <option v-for="choice in demoProjectList">
           {{ choice }}
         </option>
       </select>
@@ -32,13 +32,12 @@ Last update: 1/30/18 (gchadder3)
     </div>
 
     <div class="PageSection"
-         v-if='projectSummaries.length > 0'>
+         v-if="projectSummaries.length > 0">
       <h2>Manage projects</h2>
 
       <input type="text"
-             class="txbox"
-             style="margin-bottom: 20px"
-             placeholder="Filter Projects"/>
+             :placeholder="filterPlaceholder"
+             v-model="filterText"/>
 
       <table>
         <thead>
@@ -57,17 +56,19 @@ Last update: 1/30/18 (gchadder3)
           </tr>
         </thead>
         <tbody>
-          <tr v-for='projectSummary in projectSummaries'>
+          <tr v-for="projectSummary in projectSummaries">
             <td>
               <input type="checkbox"/>
             </td>
             <td>{{ projectSummary.projectName }}</td>
             <td>
-              <button @click="openProject">Open</button>
+              <button @click="openProject(projectSummary.projectName)">Open</button>
             </td>
             <td>{{ projectSummary.creationTime }}</td>
-            <td>{{ projectSummary.updateTime }}</td>
-            <td>{{ projectSummary.spreadsheetUploadTime }}</td>
+            <td>{{ projectSummary.updateTime ? projectSummary.updateTime: 
+              'No modification' }}</td>
+            <td>{{ projectSummary.spreadsheetUploadTime ?  projectSummary.spreadsheetUploadTime: 
+              'No data uploaded' }}</td>
             <td>
               <button @click="copyProject">Copy</button>
               <button @click="renameProject">Rename</button>
@@ -105,6 +106,7 @@ export default {
     return {
       demoProjectList: [],
       selectedDemoProject: '',
+      filterText: '',
       projectSummaries: [],
       demoProjectSummaries: 
         [
@@ -117,16 +119,17 @@ export default {
           {
             projectName: 'Graph 2',
             creationTime: '2017-Sep-22 08:44 AM',
-            updateTime: '2017-Sep-22 08:44 AM',
+            updateTime: '',
             spreadsheetUploadTime: '2017-Sep-22 08:44 AM'
           }, 
           {
             projectName: 'Graph 3',
             creationTime: '2017-Sep-23 08:44 AM',
             updateTime: '2017-Sep-23 08:44 AM',
-            spreadsheetUploadTime: '2017-Sep-23 08:44 AM'
+            spreadsheetUploadTime: ''
           }
         ],
+      filterPlaceholder: '\u{1f50e} Filter Projects',
       selectedgraph: '',
       serverresponse: '',
       loadedfile: '', 
@@ -160,7 +163,8 @@ export default {
       console.log('addDemoProject() called')
 
       // Should I be doing some kind of copy here or is that implicit?
-      var found = this.demoProjectSummaries.find(demoProj => demoProj.projectName == this.selectedDemoProject)
+      var found = this.demoProjectSummaries.find(demoProj => 
+        demoProj.projectName == this.selectedDemoProject)
       this.projectSummaries.push(found)
 
 //      this.projectSummaries.push(this.demoProjectSummaries[0])
@@ -178,8 +182,8 @@ export default {
       console.log('uploadProjectFromSpreadsheet() called')
     },
 
-    openProject () {
-      console.log('openProject() called')
+    openProject (projectName) {
+      console.log('openProject() called for ' + projectName)
     },
 
     copyProject () {
