@@ -1,7 +1,7 @@
 <!-- 
 App.vue -- App component, the main page
 
-Last update: 1/29/18 (gchadder3)
+Last update: 2/2/18 (gchadder3)
 -->
 
 <template>
@@ -28,9 +28,8 @@ export default {
 
 <!-- Global SCSS/SASS settings go here. -->
 <style lang="scss">
-/*  .PageSection h2 {
-    color: red;
-  } */
+  @import './sass/main.scss';
+
 /* #app {
   font-family: 'Avenir', Helvetica, Arial, sans-serif;
   -webkit-font-smoothing: antialiased;

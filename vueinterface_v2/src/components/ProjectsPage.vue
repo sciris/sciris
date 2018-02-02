@@ -1,11 +1,20 @@
 <!-- 
 ProjectsPage.vue -- ProjectsPage Vue component
 
-Last update: 1/31/18 (gchadder3)
+Last update: 2/1/18 (gchadder3)
 -->
 
 <template>
   <div class="SitePage">
+    <div v-show="false" class="DoodleArea">
+      <div>
+        Woohoo!
+      </div>
+      <div>
+        Woohoo, too!
+      </div>
+    </div>
+
     <div class="PageSection">
       <h2>Create projects</h2>
 
@@ -358,6 +367,12 @@ export default {
 <style lang="scss" scoped>
   $vue-blue: #32485F;
   $vue-green: #00C185;
+
+  .DoodleArea {
+    height: 200px;
+    width: 1000px;
+    border: 1px solid black;
+  }
 
 /*  .PageSection h2 {
     color: red;
