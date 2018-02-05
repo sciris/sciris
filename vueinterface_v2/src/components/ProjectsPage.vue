@@ -1,11 +1,12 @@
 <!-- 
 ProjectsPage.vue -- ProjectsPage Vue component
 
-Last update: 2/1/18 (gchadder3)
+Last update: 2/3/18 (gchadder3)
 -->
 
 <template>
   <div class="SitePage">
+    <!-- Doodle pane for exploring how SASS styling works. -->
     <div v-show="false" class="DoodleArea">
       <div>
         Woohoo!
@@ -18,26 +19,35 @@ Last update: 2/1/18 (gchadder3)
     <div class="PageSection">
       <h2>Create projects</h2>
 
-      <div>
+      <div class="ControlsRowLabel">
         Choose a demonstration project from our database:
       </div>
 
-      <select v-model="selectedDemoProject">
-        <option v-for="choice in demoProjectList">
-          {{ choice }}
-        </option>
-      </select>
-      <button @click="addDemoProject">Add this project</button>
+      <div class="ControlsRow">
+        <select v-model="selectedDemoProject">
+          <option v-for="choice in demoProjectList">
+            {{ choice }}
+          </option>
+        </select>
+        &nbsp; &nbsp;
+        <a class="btn" @click="addDemoProject">Add this project</a>
+<!--        <button @click="addDemoProject">Add this project</button> -->
+      </div>
 
-      <br>
-
-      <div>
+      <div class="ControlsRowLabel">
         Or create/upload a new project:
       </div>
 
-      <button @click="createNewProject">Create new project</button>
-      <button @click="uploadProjectFromFile">Upload project from file</button>
-      <button @click="uploadProjectFromSpreadsheet">Upload project from spreadsheet</button>
+      <div class="ControlsRow">
+        <a class="btn" @click="createNewProject">Create new project</a>
+<!--        <button @click="createNewProject">Create new project</button> -->
+        &nbsp; &nbsp;
+        <a class="btn" @click="uploadProjectFromFile">Upload project from file</a>
+<!--        <button @click="uploadProjectFromFile">Upload project from file</button> -->
+        &nbsp; &nbsp;
+        <a class="btn" @click="uploadProjectFromSpreadsheet">Upload project from spreadsheet</a>
+<!--        <button @click="uploadProjectFromSpreadsheet">Upload project from spreadsheet</button> -->
+      </div>
     </div>
 
     <div class="PageSection"
@@ -94,8 +104,9 @@ Last update: 2/1/18 (gchadder3)
         </tbody>
       </table>
 
-      <div>
+      <div class="ControlsRow">
         <button @click="deleteSelectedProjects">Delete selected</button>
+        &nbsp; &nbsp;
         <button @click="downloadSelectedProjects">Download selected</button>
       </div>
     </div>

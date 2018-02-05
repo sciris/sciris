@@ -1,0 +1,244 @@
+// Button
+// ======
+
+.btn {
+  @extend .btn.__m;
+  @extend .btn.__medium-blue;
+  border-radius: 2px;
+  border-style: solid;
+  border-width: 1px;
+  cursor: pointer;
+  display: inline-block;
+  text-align: center;
+  text-decoration: none;
+  user-select: none;
+
+  &:focus {
+    box-shadow: 0 0 6px 2px rgba($color-yellow, 0.7);
+    outline: 0;
+  }
+
+  &:disabled {
+    cursor: default !important;
+    opacity: 0.6;
+    pointer-events: none;
+  }
+
+  // Modifiers
+  // ---------
+
+  // ### Sizes
+
+  &.__tiny {
+    @include font-height(10px, 10px);
+    padding: 5px 12px;
+  }
+
+  &.__m {
+    @include font-height(13px, 16px);
+    padding: 5px 12px;
+  }
+
+  &.__w {
+    @include font-height(13px, 16px);
+    padding: 5px 12px;
+    width: 100px;
+  }
+
+  &.__l {
+    @include font-height(16px, normal);
+    padding: 9px 16px;
+  }
+
+  // ### Colours
+
+  &.__white {
+    background: #FFF;
+    border-color: #999999;
+    color: #404446;
+
+    &:hover:not(:disabled) {
+      background: #f5f5f5;
+    }
+
+    &.__active,
+    &:active:not(:disabled) {
+      background: #f5f5f5;
+    }
+
+    &.__active,
+    &.__active:hover {
+      background: #fff6d5;
+    }
+  }
+
+  &.__light-blue {
+    background: #EEF9FF;
+    border-color: #C7DDEA;
+    color: #53646F;
+
+    &:disabled {
+      color: #708897
+    }
+
+    &:hover:not(:disabled) {
+      background: #BEDFF4;
+      border-color: #9DC6DF;
+      color: #3F4D55;
+    }
+
+    &.__active,
+    &:active:not(:disabled) {
+      background: #AFD8F2;
+      border-color: #9DC6DF;
+      color: #3F4D55;
+    }
+
+    &.__active,
+    &.__active:hover {
+      background: #AFD8F2;
+      color: #3F4D55;
+    }
+  }
+
+
+  &.__medium-blue {
+    background: #d2e6ff;
+    border-color: #9DC6DF;
+    color: #000;
+
+    &:disabled {
+      color: #708897
+    }
+
+    &:hover:not(:disabled) {
+      background: #b7d7ec;
+      border-color: #9DC6DF;
+      color: #000;
+    }
+
+    &.__active,
+    &:active:not(:disabled) {
+      background: #a3c7e0;
+      border-color: #9DC6DF;
+      color: #000;
+    }
+
+    &.__active,
+    &.__active:hover {
+      background: #AFD8F2;
+      color: #000;
+    }
+  }
+
+
+  &.__blue {
+    background: #00aeef;
+    border-color: #01A1DD;
+    color: #FFF;
+
+    &:hover:not(:disabled) {
+      background: #0192cc;
+      border-color: #0183b5;
+      color: #FFF;
+    }
+
+    &.__active,
+    &:active:not(:disabled) {
+      background: #0181b5;
+      border-color: #0183b5;
+      color: #FFF;
+    }
+
+    &.__active,
+    &.__active:hover {
+      background: #01a5e2;
+      color: #FFF;
+    }
+  }
+
+  &.__red {
+    background: #F47D7D;
+    border-color: #999;
+    color: #FFF;
+
+    &:hover:not(:disabled) {
+      background: darken(#F47D7D, 10%);
+      border-color: #999;
+      color: #FFF;
+    }
+
+    &.__active,
+    &:active:not(:disabled) {
+      background: lighten(#F47D7D, 5%);
+      border-color: #999;
+      color: #FFF;
+    }
+
+    &.__active,
+    &.__active:hover {
+      background: lighten(#F47D7D, 5%);
+      border-color: #999;
+      color: #FFF;
+    }
+  }
+
+  &.__green {
+    background: #008800;
+    border-color: #999;
+    color: #FFF;
+
+    &:hover:not(:disabled) {
+      background: darken(#008800, 3%);
+      border-color: #999;
+      color: #FFF;
+    }
+
+    &.__active,
+    &:active:not(:disabled) {
+      background: lighten(#008800, 5%);
+      border-color: #999;
+      color: #FFF;
+    }
+
+    &.__active,
+    &.__active:hover {
+      background: lighten(#008800, 5%);
+      border-color: #999;
+      color: #FFF;
+    }
+  }
+
+  &.__black {
+    background: #000;
+    border-color: #000;
+    color: #FFF;
+
+    &:hover:not(:disabled) {
+      background: #555555;
+      border-color: #555555;
+      color: #FFF;
+    }
+
+    &.__active,
+    &:active:not(:disabled) {
+      background: #999999;
+      border-color: #999999;
+      color: #FFF;
+    }
+
+    &.__active,
+    &.__active:hover {
+      background: lighten(#bbbbbb, 5%);
+      border-color: #bbbbbb;
+      color: #FFF;
+    }
+  }
+
+  // ### Misc.
+
+  &.__block {
+    display: block;
+    width: 100%;
+  }
+}
