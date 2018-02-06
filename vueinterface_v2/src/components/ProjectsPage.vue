@@ -1,19 +1,14 @@
 <!-- 
 ProjectsPage.vue -- ProjectsPage Vue component
 
-Last update: 2/5/18 (gchadder3)
+Last update: 2/6/18 (gchadder3)
 -->
 
 <template>
   <div class="SitePage">
     <!-- Doodle pane for exploring how SASS styling works. -->
     <div v-show="false" class="DoodleArea">
-      <div>
-        Woohoo!
-      </div>
-      <div>
-        Woohoo, too!
-      </div>
+      <p>a paragraph</p>
     </div>
 
     <div class="PageSection">
@@ -31,8 +26,6 @@ Last update: 2/5/18 (gchadder3)
         </select>
         &nbsp; &nbsp;
         <button class="btn" @click="addDemoProject">Add this project</button>
-<!--        <a class="btn" @click="addDemoProject">Add this project</a> -->
-<!--        <button @click="addDemoProject">Add this project</button> -->
       </div>
 
       <div class="ControlsRowLabel">
@@ -41,16 +34,10 @@ Last update: 2/5/18 (gchadder3)
 
       <div class="ControlsRow">
         <button class="btn" @click="createNewProject">Create new project</button>
-<!--        <a class="btn" @click="createNewProject">Create new project</a> -->
-<!--        <button @click="createNewProject">Create new project</button> -->
         &nbsp; &nbsp;
         <button class="btn" @click="uploadProjectFromFile">Upload project from file</button>
-<!--        <a class="btn" @click="uploadProjectFromFile">Upload project from file</a> -->
-<!--        <button @click="uploadProjectFromFile">Upload project from file</button> -->
         &nbsp; &nbsp;
         <button class="btn" @click="uploadProjectFromSpreadsheet">Upload project from spreadsheet</button>
-<!--        <a class="btn" @click="uploadProjectFromSpreadsheet">Upload project from spreadsheet</a> -->
-<!--        <button @click="uploadProjectFromSpreadsheet">Upload project from spreadsheet</button> -->
       </div>
     </div>
 
@@ -86,7 +73,6 @@ Last update: 2/5/18 (gchadder3)
             <td>{{ projectSummary.projectName }}</td>
             <td>
               <button class="btn __green" @click="openProject(projectSummary.projectName)">Open</button>
-<!--              <button @click="openProject(projectSummary.projectName)">Open</button> -->
             </td>
             <td>{{ projectSummary.creationTime }}</td>
             <td>{{ projectSummary.updateTime ? projectSummary.updateTime: 
@@ -95,21 +81,15 @@ Last update: 2/5/18 (gchadder3)
               'No data uploaded' }}</td>
             <td>
               <button class="btn" @click="copyProject">Copy</button>
-<!--              <button @click="copyProject">Copy</button> -->
               <button class="btn" @click="renameProject">Rename</button>
-<!--              <button @click="renameProject">Rename</button> -->
             </td>
             <td>
               <button class="btn" @click="uploadSpreadsheetToProject">Upload</button>
-<!--              <button @click="uploadSpreadsheetToProject">Upload</button> -->
               <button class="btn" @click="downloadSpreadsheetFromProject">Download</button>
-<!--              <button @click="downloadSpreadsheetFromProject">Download</button> -->
             </td>
             <td>
               <button class="btn" @click="downloadProjectFile">Download</button>
-<!--              <button @click="downloadProjectFile">Download</button> -->
               <button class="btn" @click="downloadProjectFileWithResults">Download with results</button>
-<!--              <button @click="downloadProjectFileWithResults">Download with results</button> -->
             </td>
           </tr>
         </tbody>
@@ -117,12 +97,8 @@ Last update: 2/5/18 (gchadder3)
 
       <div class="ControlsRow">
         <button class="btn" @click="deleteSelectedProjects">Delete selected</button>
-<!--        <a class="btn" @click="deleteSelectedProjects">Delete selected</a> -->
-<!--        <button @click="deleteSelectedProjects">Delete selected</button> -->
         &nbsp; &nbsp;
         <button class="btn" @click="downloadSelectedProjects">Download selected</button>
-<!--        <a class="btn" @click="downloadSelectedProjects">Download selected</a> -->
-<!--        <button @click="downloadSelectedProjects">Download selected</button> -->
       </div>
     </div>
   </div>
@@ -396,8 +372,15 @@ export default {
 
   .DoodleArea {
     height: 200px;
-    width: 1000px;
+    width: 260px;
     border: 1px solid black;
+  }
+
+  .DoodleArea p {
+    width: 200px;
+    padding: 10px;
+    margin: 20px;
+//    box-sizing: content-box;
   }
 
 /*  .PageSection h2 {

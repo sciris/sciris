@@ -1,12 +1,14 @@
 /*
 main.scss -- main SASS/SCSS file
 
-Last update: 2/5/18 (gchadder3)
+Last update: 2/6/18 (gchadder3)
 */ 
 
 // other files to import... (come up with better comment when I have a better 
 // idea of scope)
+// Global variables, functions, and mixins
 @import 'main/variables';
+// @import 'main/functions'; nothing yet
 @import 'main/mixins';
 
 // MCSS layers
@@ -18,4 +20,4 @@ Last update: 2/5/18 (gchadder3)
 // much).  I.e., any code in here should probably be implemented later in a 
 // more proper way.
 // see http://csswizardry.com/2013/04/shame-css/ 
-// @import 'main/shame';
+// @import 'main/shame'; nothing yet

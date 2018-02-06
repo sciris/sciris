@@ -1,8 +1,10 @@
 /*
 _reset.scss -- SASS/SCSS file for "reset layer" of GUI
 
-Last update: 2/5/18 (gchadder3)
+Last update: 2/6/18 (gchadder3)
 */ 
+
+@import '../node_modules/normalize.css/normalize.css';
 
 // Set all box-sizings to be the border box, including in any pseudo-elements 
 // appended or prepended to an element.
