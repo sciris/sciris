@@ -4,6 +4,10 @@ _reset.scss -- SASS/SCSS file for "reset layer" of GUI
 Last update: 2/6/18 (gchadder3)
 */ 
 
+// Imports normalize.css package, which aims to normalize display across 
+// browsers.  Among other things it does the following:
+// * zeroes out margins for the body element (for all browsers)
+// * gets rid of ugly focus boxes for buttons in Firefox
 @import '../node_modules/normalize.css/normalize.css';
 
 // Set all box-sizings to be the border box, including in any pseudo-elements 
@@ -12,11 +16,10 @@ Last update: 2/6/18 (gchadder3)
   box-sizing: border-box;
 }
 
-// Set the default font to "Open Sans" and remove the HTML body's margin.
+// Set the default font to "Open Sans".
 body {
   font: 13px/1.4 "Open Sans", sans-serif;
 //  font: 13px/1.4 sans-serif;
-  margin: 0;
 }
 
 // Set an inset for the content on a site page.

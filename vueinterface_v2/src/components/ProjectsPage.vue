@@ -45,7 +45,9 @@ Last update: 2/6/18 (gchadder3)
          v-if="projectSummaries.length > 0">
       <h2>Manage projects</h2>
 
-      <input type="text"
+      <input type="text" 
+             class="txbox" 
+             style="margin-bottom: 20px" 
              :placeholder="filterPlaceholder"
              v-model="filterText"/>
 
