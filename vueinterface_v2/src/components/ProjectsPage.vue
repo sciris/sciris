@@ -1,7 +1,7 @@
 <!-- 
 ProjectsPage.vue -- ProjectsPage Vue component
 
-Last update: 2/6/18 (gchadder3)
+Last update: 2/7/18 (gchadder3)
 -->
 
 <template>
@@ -51,7 +51,7 @@ Last update: 2/6/18 (gchadder3)
              :placeholder="filterPlaceholder"
              v-model="filterText"/>
 
-      <table>
+      <table class="table table-bordered table-hover table-striped" style="width: auto">
         <thead>
           <tr>
             <th>
