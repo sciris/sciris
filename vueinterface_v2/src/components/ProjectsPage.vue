@@ -81,15 +81,15 @@ Last update: 2/7/18 (gchadder3)
               'No modification' }}</td>
             <td>{{ projectSummary.spreadsheetUploadTime ?  projectSummary.spreadsheetUploadTime: 
               'No data uploaded' }}</td>
-            <td>
+            <td style="white-space: nowrap">
               <button class="btn" @click="copyProject">Copy</button>
               <button class="btn" @click="renameProject">Rename</button>
             </td>
-            <td>
+            <td style="white-space: nowrap">
               <button class="btn" @click="uploadSpreadsheetToProject">Upload</button>
               <button class="btn" @click="downloadSpreadsheetFromProject">Download</button>
             </td>
-            <td>
+            <td style="white-space: nowrap">
               <button class="btn" @click="downloadProjectFile">Download</button>
               <button class="btn" @click="downloadProjectFileWithResults">Download with results</button>
             </td>

@@ -1,7 +1,7 @@
 /*
 _reset.scss -- SASS/SCSS file for "reset layer" of GUI
 
-Last update: 2/6/18 (gchadder3)
+Last update: 2/7/18 (gchadder3)
 */ 
 
 // Imports normalize.css package, which aims to normalize display across 
@@ -9,6 +9,20 @@ Last update: 2/6/18 (gchadder3)
 // * zeroes out margins for the body element (for all browsers)
 // * gets rid of ugly focus boxes for buttons in Firefox
 @import '../node_modules/normalize.css/normalize.css';
+
+
+// Remove most spacing between table cells.
+// This code was in an earlier version of normalize.css, but was removed.
+
+table {
+  border-collapse: collapse;
+  border-spacing: 0;
+}
+
+td,
+th {
+  padding: 0;
+}
 
 // Set all box-sizings to be the border box, including in any pseudo-elements 
 // appended or prepended to an element.
