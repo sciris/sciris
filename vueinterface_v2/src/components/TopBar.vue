@@ -1,76 +1,20 @@
 <!-- 
 TopBar.vue -- TopBar Vue component
 
-Last update: 1/26/18 (gchadder3)
+Last update: 2/10/18 (gchadder3)
 -->
 
 <template>
   <div class="TopBar">
-    <!-- Title bar -->
-    <h1>Scatterplotter for Vue Version 2</h1>
+    <div class="elastic header">
+      <div style="display:table-cell; width:160px">
+        <img src="../assets/images/optima-logo-nutrition.png" height="50">
+      </div>
 
-    <!-- router-link menu -->
-    <label>Pages:</label>
-    <span v-if="userloggedin()">
-      <router-link to="/" exact>
-        Projects Page
-      </router-link> 
-      &nbsp;
-    </span>
-    <span v-if="userloggedin()">
-      <router-link to="/mypage" exact>
-        Main Page
-      </router-link> 
-      &nbsp;
-    </span>
-    <span v-if="adminloggedin()">
-      <router-link to="/mainadmin" exact>
-        Admin Page
-      </router-link> 
-      &nbsp;
-    </span>
-    <span v-if="!userloggedin()">
-      <router-link to="/login">
-        Login Page
-      </router-link> 
-      &nbsp;
-    </span>
-    <span v-if="!userloggedin()">
-      <router-link to="/register">
-        Registration Page
-      </router-link> 
-      &nbsp;
-    </span>
-    <router-link to="/vueinfo">
-      Vue Info
-    </router-link> 
-    &nbsp;
-    <span v-if="userloggedin()">
-      <router-link to="/changeinfo" exact>
-        Change Account Info
-      </router-link> 
-      &nbsp;
-      <router-link to="/changepassword" exact>
-        Change Password
-      </router-link> 
-      &nbsp;
-    </span>
+      <!-- Logout button (admittedly looks ugly here) -->
+      <button v-if="userloggedin()" @click="logout">Log Out</button>
 
-    <!-- Display of logged in user -->
-    <label>Logged In User:</label>
-    <span v-if="userloggedin()">
-      {{ currentuser.displayname }}
-    </span>
-    <span v-else>
-      None
-    </span>    
-    &nbsp;
-
-    <!-- Logout button -->
-    <button v-if="userloggedin()" @click="logout">Log Out</button>
-
-    <!-- Horizontal line -->
-    <hr/>
+    </div>
   </div>
 </template>
 
@@ -82,30 +26,30 @@ export default {
   name: 'TopBar', 
 
   computed: {
-    currentuser () {
+    currentuser() {
       return this.$store.state.currentuser
     }
   },
 
-  created () {
+  created() {
     this.getUserInfo()
   },
 
   methods: {
-    userloggedin () {
+    userloggedin() {
       if (this.currentuser.displayname == undefined) 
         return false
       else
         return true
     }, 
 
-    adminloggedin () {
+    adminloggedin() {
       if (this.userloggedin) {
         return this.currentuser.admin
       }
     },
 
-    logout () {
+    logout() {
       // Do the logout request.
       rpcservice.rpcLogoutCall('user_logout')
       .then(response => {
@@ -117,7 +61,7 @@ export default {
       })
     },
 
-    getUserInfo () {
+    getUserInfo() {
       rpcservice.rpcGetCurrentUserInfo('get_current_user_info')
       .then(response => {
         // Set the username to what the server indicates.
