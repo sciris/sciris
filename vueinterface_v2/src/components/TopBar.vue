@@ -1,14 +1,14 @@
 <!-- 
 TopBar.vue -- TopBar Vue component
 
-Last update: 2/10/18 (gchadder3)
+Last update: 2/11/18 (gchadder3)
 -->
 
 <template>
   <div class="TopBar">
     <div class="elastic header">
       <div style="display:table-cell; width:160px">
-        <img src="../assets/images/optima-logo-nutrition.png" height="50">
+        <img src="../assets/images/optima-logo-sciris.png" height="50">
       </div>
 
       <!-- Logout button (admittedly looks ugly here) -->
