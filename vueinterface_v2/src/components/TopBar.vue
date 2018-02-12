@@ -1,7 +1,7 @@
 <!-- 
 TopBar.vue -- TopBar Vue component
 
-Last update: 2/11/18 (gchadder3)
+Last update: 2/12/18 (gchadder3)
 -->
 
 <template>
@@ -14,11 +14,15 @@ Last update: 2/11/18 (gchadder3)
       <div style="display:table-cell; vertical-align: middle;" v-if="userloggedin()">
         <div class="menu">
           <div class="menu-item" v-if="adminloggedin()">
-            Admin
+            <router-link to="/mainadmin" tag="span">
+              Admin
+            </router-link> 
           </div>
 
           <div class="menu-item">
-            Projects
+            <router-link to="/" tag="span" exact>
+              Projects
+            </router-link> 
           </div>
 
           <div class="menu-item">
@@ -26,19 +30,27 @@ Last update: 2/11/18 (gchadder3)
           </div>
 
           <div class="menu-item">
-            Main
+            <router-link to="/mypage" tag="span">
+              Main
+            </router-link> 
           </div>
 
           <div class="menu-item">
-            Vue Info
+            <router-link to="/vueinfo" tag="span">
+              Vue info
+            </router-link> 
           </div>
 
           <div class="menu-item">
-            Edit account
+            <router-link to="/changeinfo" tag="span">
+              Edit account
+            </router-link>
           </div>
 
           <div class="menu-item">
-            Change password
+            <router-link to="/changepassword" tag="span">
+              Change password
+            </router-link>
           </div>
 
           <div class="menu-item" @click="logout">
