@@ -1,0 +1,115 @@
+.menu {
+  display: flex;
+  align-items: center;
+  white-space: nowrap;
+  vertical-align: middle;
+
+  & > div {
+
+    position: relative;
+    margin-left: 15px;
+
+    & > .menu-dropdown {
+      position: absolute;
+
+      width: 200px;
+
+      background: #EEF9FF;
+      color: #53646F;
+
+      border-color: #C7DDEA;
+      border-style: solid;
+      border-width: 5px;
+      border-radius: 2px;
+
+      z-index: 100;
+
+      div {
+        @include font-height(13px, 16px);
+        cursor: pointer;
+        border-bottom: 1px solid #C7DDEA;
+        padding: 5px 4px;
+        display: flex;
+        text-align: left;
+        border-top: none;
+      }
+
+      div:hover {
+        background: #BEDFF4;
+        border-color: #9DC6DF;
+        color: #3F4D55;
+      }
+
+      div:last-of-type {
+        border-bottom: none;
+        border-bottom-left-radius: 2px;
+        border-bottom-right-radius: 2px;
+      }
+
+      div:first-of-type {
+        border-top-left-radius: 2px;
+        border-top-right-radius: 2px;
+      }
+    }
+  }
+
+}
+
+.menu-item {
+
+  cursor: pointer;
+  display: inline-block;
+  padding: 5px 4px;
+  vertical-align: middle;
+
+  @include font-height(15px, 15px);
+
+  background: #2aabe1;
+  color: #ffffff;
+
+  border-radius: 2px;
+  border: 5px solid #2aabe1;
+
+  text-align: center;
+  text-decoration: none;
+  user-select: none;
+
+  &:focus {
+    box-shadow: 0 0 6px 2px rgba($color-yellow, 0.7);
+    outline: 0;
+  }
+
+  &:disabled {
+    cursor: default !important;
+    opacity: 0.6;
+    pointer-events: none;
+  }
+
+  &:disabled {
+    color: #708897
+  }
+
+  &:hover:not(:disabled) {
+    background: #1a5978;
+    border-color: #1a5978;
+    color: #ffffff;
+  }
+
+  &.__active,
+  &:active:not(:disabled) {
+    background: #1a5978;
+    border-color: #0c2544;
+    color: #ffffff;
+  }
+
+  &.__active,
+  &.__active:hover {
+    background: #1a5978;
+    color: #ffffff;
+  }
+}
+
+.menu-active {
+  background: #1e749f;
+  border-color: #1e749f;
+}

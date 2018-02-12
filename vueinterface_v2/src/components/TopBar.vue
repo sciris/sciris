@@ -11,8 +11,41 @@ Last update: 2/11/18 (gchadder3)
         <img src="../assets/images/optima-logo-sciris.png" height="50">
       </div>
 
-      <!-- Logout button (admittedly looks ugly here) -->
-      <button v-if="userloggedin()" @click="logout">Log Out</button>
+      <div style="display:table-cell; vertical-align: middle;" v-if="userloggedin()">
+        <div class="menu">
+          <div class="menu-item" v-if="adminloggedin()">
+            Admin
+          </div>
+
+          <div class="menu-item">
+            Projects
+          </div>
+
+          <div class="menu-item">
+            Simulation
+          </div>
+
+          <div class="menu-item">
+            Main
+          </div>
+
+          <div class="menu-item">
+            Vue Info
+          </div>
+
+          <div class="menu-item">
+            Edit account
+          </div>
+
+          <div class="menu-item">
+            Change password
+          </div>
+
+          <div class="menu-item" @click="logout">
+            Logout
+          </div>
+        </div>
+      </div>
 
     </div>
   </div>
