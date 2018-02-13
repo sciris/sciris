@@ -1,7 +1,7 @@
 <!-- 
 RegisterPage.vue -- RegisterPage Vue component
 
-Last update: 1/29/18 (gchadder3)
+Last update: 2/13/18 (gchadder3)
 -->
 
 <template>
@@ -26,6 +26,11 @@ Last update: 1/29/18 (gchadder3)
     <br/>
 
     <p v-if="registerResult != ''">{{ registerResult }}</p>
+
+    Already have an account?
+    <router-link to="/login">
+        Log in
+    </router-link> 
   </div>
 </template>
 

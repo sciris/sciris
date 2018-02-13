@@ -1,7 +1,7 @@
 <!-- 
 LoginPage.vue -- LoginPage Vue component
 
-Last update: 1/29/18 (gchadder3)
+Last update: 2/13/18 (gchadder3)
 -->
 
 <template>
@@ -18,6 +18,11 @@ Last update: 1/29/18 (gchadder3)
     <br/>
 
     <p v-if="loginResult != ''">{{ loginResult }}</p>
+
+    New user?
+    <router-link to="/register">
+        Register here
+    </router-link> 
 
     <p>Login 1: Username = 'newguy', Password = 'mesogreen'</p>
     <p>Login 2: Username = 'admin', Password = 'mesoawesome'</p>
