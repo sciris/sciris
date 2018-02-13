@@ -1,6 +1,6 @@
 // index.js -- vue-router path configuration code
 //
-// Last update: 1/20/18 (gchadder3)
+// Last update: 2/12/18 (gchadder3)
 
 import Vue from 'vue'
 import Router from 'vue-router'
@@ -11,7 +11,6 @@ import MainAdminPage from '@/components/MainAdminPage'
 import RegisterPage from '@/components/RegisterPage'
 import UserChangeInfoPage from '@/components/UserChangeInfoPage'
 import ChangePasswordPage from '@/components/ChangePasswordPage'
-import Hello from '@/components/Hello'
 
 Vue.use(Router)
 
@@ -51,11 +50,6 @@ export default new Router({
       path: '/changepassword',
       name: 'ChangePasswordPage',
       component: ChangePasswordPage
-    },
-    {
-      path: '/vueinfo',
-      name: 'Hello',
-      component: Hello
     },
     { 
       path: '*', 

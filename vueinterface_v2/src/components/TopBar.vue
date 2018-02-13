@@ -26,18 +26,12 @@ Last update: 2/12/18 (gchadder3)
           </div>
 
           <div class="menu-item">
-            Simulation
+            Plot view
           </div>
 
           <div class="menu-item">
             <router-link to="/mypage" tag="span">
-              Main
-            </router-link> 
-          </div>
-
-          <div class="menu-item">
-            <router-link to="/vueinfo" tag="span">
-              Vue info
+              Old main
             </router-link> 
           </div>
 
