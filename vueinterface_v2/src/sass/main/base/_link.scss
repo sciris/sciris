@@ -1,0 +1,35 @@
+.link {
+  @extend .link.__blue;
+
+  cursor: pointer;
+  text-decoration: none;
+
+  // Modifiers
+  // ---------
+
+  // ### Colors
+
+  &.__black {
+    color: #000;
+
+    &:hover {
+      color: $color-blue;
+    }
+  }
+
+  &.__blue {
+    color: $color-blue;
+
+    &:hover {
+      color: #54C1EA;
+    }
+  }
+
+  &.__white {
+    color: rgba(#FFF, 0.9);
+
+    &:hover {
+      color: #FFF;
+    }
+  }
+}

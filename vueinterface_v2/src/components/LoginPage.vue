@@ -6,9 +6,13 @@ Last update: 2/13/18 (gchadder3)
 
 <template>
   <div class="SitePage">
-    <form name="LogInForm" @submit.prevent="tryLogin">
+    <form name="LogInForm" @submit.prevent="tryLogin" 
+          style="max-width: 500px; min-width: 200px; margin: 0 auto">
 
-      <label>Username:</label>
+      <h1>Log in</h1>
+
+      <div class="section" v-if="loginResult != ''">{{ loginResult }}</div>
+
       <input type="text"
              name="username"
              placeholder="User name"
@@ -16,7 +20,6 @@ Last update: 2/13/18 (gchadder3)
              v-model='loginUserName'/>
       <br/>
 
-      <label>Password:</label>
       <input type="password"
              name="password"
              placeholder="Password"
@@ -24,15 +27,16 @@ Last update: 2/13/18 (gchadder3)
              v-model='loginPassword'/>
       <br/>
 
-      <button type="submit">Login</button>
-      <br/>
+      <button type="submit" class="section btn __l __block">Login</button>
 
       <p v-if="loginResult != ''">{{ loginResult }}</p>
 
-      New user?
-      <router-link to="/register">
-        Register here
-      </router-link> 
+      <div class="section">
+        New user?
+        <router-link class="link __blue" to="/register">
+          Register here
+        </router-link> 
+      </div>
 
       <p>Login 1: Username = 'newguy', Password = 'mesogreen'</p>
       <p>Login 2: Username = 'admin', Password = 'mesoawesome'</p>

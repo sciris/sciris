@@ -1,10 +1,12 @@
 /*
 _base.scss -- SASS/SCSS file for importing base layer SCSS code
 
-Last update: 2/11/18 (gchadder3)
+Last update: 2/13/18 (gchadder3)
 */ 
 
 @import 'base/button';
+@import 'base/link';
 @import 'base/menu';
+@import 'base/section';
 @import 'base/table';
 @import 'base/textbox';
