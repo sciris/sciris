@@ -6,12 +6,22 @@ Last update: 2/13/18 (gchadder3)
 
 <template>
   <div class="SitePage">
+    <form name="LogInForm" novalidate="novalidate">
+
     <label>Username:</label>
-    <input v-model='loginUserName'/>
+    <input type="text"
+           name="username"
+           placeholder="User name"
+           required="required"
+           v-model='loginUserName'/>
     <br/>
 
     <label>Password:</label>
-    <input v-model='loginPassword'/>
+    <input type="password"
+           name="password"
+           placeholder="Password"
+           required="required"
+           v-model='loginPassword'/>
     <br/>
 
     <button @click="tryLogin">Login</button>
@@ -27,6 +37,8 @@ Last update: 2/13/18 (gchadder3)
     <p>Login 1: Username = 'newguy', Password = 'mesogreen'</p>
     <p>Login 2: Username = 'admin', Password = 'mesoawesome'</p>
     <p>Login 3: Username = '_ScirisDemo', Password = '_ScirisDemo'</p>
+
+    </form>
   </div>
 </template>
 
