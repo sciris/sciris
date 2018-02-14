@@ -6,37 +6,37 @@ Last update: 2/13/18 (gchadder3)
 
 <template>
   <div class="SitePage">
-    <form name="LogInForm" novalidate="novalidate">
+    <form name="LogInForm" @submit.prevent="tryLogin">
 
-    <label>Username:</label>
-    <input type="text"
-           name="username"
-           placeholder="User name"
-           required="required"
-           v-model='loginUserName'/>
-    <br/>
+      <label>Username:</label>
+      <input type="text"
+             name="username"
+             placeholder="User name"
+             required="required"
+             v-model='loginUserName'/>
+      <br/>
 
-    <label>Password:</label>
-    <input type="password"
-           name="password"
-           placeholder="Password"
-           required="required"
-           v-model='loginPassword'/>
-    <br/>
+      <label>Password:</label>
+      <input type="password"
+             name="password"
+             placeholder="Password"
+             required="required"
+             v-model='loginPassword'/>
+      <br/>
 
-    <button @click="tryLogin">Login</button>
-    <br/>
+      <button type="submit">Login</button>
+      <br/>
 
-    <p v-if="loginResult != ''">{{ loginResult }}</p>
+      <p v-if="loginResult != ''">{{ loginResult }}</p>
 
-    New user?
-    <router-link to="/register">
+      New user?
+      <router-link to="/register">
         Register here
-    </router-link> 
+      </router-link> 
 
-    <p>Login 1: Username = 'newguy', Password = 'mesogreen'</p>
-    <p>Login 2: Username = 'admin', Password = 'mesoawesome'</p>
-    <p>Login 3: Username = '_ScirisDemo', Password = '_ScirisDemo'</p>
+      <p>Login 1: Username = 'newguy', Password = 'mesogreen'</p>
+      <p>Login 2: Username = 'admin', Password = 'mesoawesome'</p>
+      <p>Login 3: Username = '_ScirisDemo', Password = '_ScirisDemo'</p>
 
     </form>
   </div>
