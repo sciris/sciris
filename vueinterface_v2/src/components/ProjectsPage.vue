@@ -1,7 +1,7 @@
 <!-- 
 ProjectsPage.vue -- ProjectsPage Vue component
 
-Last update: 2/7/18 (gchadder3)
+Last update: 2/15/18 (gchadder3)
 -->
 
 <template>
@@ -57,7 +57,10 @@ Last update: 2/7/18 (gchadder3)
             <th>
               <input type="checkbox"/>
             </th>
-            <th>Name</th>
+            <th>
+              Name
+              <i class="fas fa-caret-down"></i>
+            </th>
             <th>Select</th>
             <th>Created on</th>
             <th>Updated on</th>
