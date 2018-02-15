@@ -1,7 +1,10 @@
 /*
 _mixins.scss -- SASS/SCSS file for importing mixins
 
-Last update: 2/5/18 (gchadder3)
+Last update: 2/14/18 (gchadder3)
 */ 
 
 @import 'mixins/font-height';
+@import 'mixins/position';
+@import 'mixins/reject';
+@import 'mixins/size';

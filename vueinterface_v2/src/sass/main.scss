@@ -1,20 +1,19 @@
 /*
 main.scss -- main SASS/SCSS file
 
-Last update: 2/6/18 (gchadder3)
+Last update: 2/14/18 (gchadder3)
 */ 
 
-// other files to import... (come up with better comment when I have a better 
-// idea of scope)
 // Global variables, functions, and mixins
 @import 'main/variables';
-// @import 'main/functions'; nothing yet
+@import 'main/functions';
 @import 'main/mixins';
 
 // MCSS layers
 // see https://operatino.github.io/MCSS/en/ for overall methodology
 @import 'main/reset';   // the lowest (i.e. most global) styling layer
 @import 'main/base';    // layer for basic elements and components
+@import 'main/project'; 
 
 // Reserved just for code only your mother would love (and even then, not very 
 // much).  I.e., any code in here should probably be implemented later in a 

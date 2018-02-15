@@ -1,0 +1,17 @@
+// Should be applied to form input wrapper.
+// Example:
+// <div class="form-input-validate">
+//   <input class="txbox" required>
+// </div>
+// =======
+
+.form-input-validate {
+
+  &.valid .txbox {
+    background: inline("icons/valid.png") #FFF no-repeat 97% 3px;
+  }
+
+  &.invalid .txbox {
+    background: inline("icons/invalid.png") #FFF no-repeat 97% 3px;
+  }
+}

@@ -1,0 +1,43 @@
+.header {
+
+  align-items: center;
+  vertical-align: middle;
+
+  &_right {
+    float: right;
+    text-align: right;
+    margin-left: 20px;
+  }
+
+  &_left {
+    float: left;
+    width: 375px; // To match 4 buttons with 20 pixel widths between them = 344 pixels
+  }
+
+  &_center {
+    text-align: center;
+  }
+
+  .logged-in{
+    font-size: 0.8em;
+    color: #53646F;
+    float: right;
+    white-space: nowrap;
+    margin-left: 10px;
+    margin-right: 20px;
+    &> div{
+      line-height: normal;
+      & > span{
+        float: left;
+        margin-right: 5px;
+      }
+    }
+    b{
+      display: inline-block;
+      white-space: nowrap;
+      text-overflow: ellipsis;
+      text-align: left;
+      width: 100%;
+    }
+  }
+}

@@ -1,7 +1,7 @@
 <!-- 
 LoginPage.vue -- LoginPage Vue component
 
-Last update: 2/13/18 (gchadder3)
+Last update: 2/14/18 (gchadder3)
 -->
 
 <template>
@@ -11,37 +11,41 @@ Last update: 2/13/18 (gchadder3)
 
       <h1>Log in</h1>
 
-      <div class="section" v-if="loginResult != ''">{{ loginResult }}</div>
+      <div class="modal-body">
+        <div class="section" v-if="loginResult != ''">{{ loginResult }}</div>
 
-      <input type="text"
-             name="username"
-             placeholder="User name"
-             required="required"
-             v-model='loginUserName'/>
-      <br/>
+        <div class="section form-input-validate">
+          <input class="txbox __l"
+                 type="text"
+                 name="username"
+                 placeholder="User name"
+                 required="required"
+                 v-model='loginUserName'/>
+        </div>
 
-      <input type="password"
-             name="password"
-             placeholder="Password"
-             required="required"
-             v-model='loginPassword'/>
-      <br/>
+        <div class="section form-input-validate">
+          <input class="txbox __l"
+                 type="password"
+                 name="password"
+                 placeholder="Password"
+                 required="required"
+                 v-model='loginPassword'/>
+        </div>
 
-      <button type="submit" class="section btn __l __block">Login</button>
+        <button type="submit" class="section btn __l __block">Login</button>
 
-      <p v-if="loginResult != ''">{{ loginResult }}</p>
+        <div class="section">
+          New user?
+          <router-link class="link __blue" to="/register">
+            Register here
+          </router-link> 
+        </div>
 
-      <div class="section">
-        New user?
-        <router-link class="link __blue" to="/register">
-          Register here
-        </router-link> 
+        <p>Login 1: Username = 'newguy', Password = 'mesogreen'</p>
+        <p>Login 2: Username = 'admin', Password = 'mesoawesome'</p>
+        <p>Login 3: Username = '_ScirisDemo', Password = '_ScirisDemo'</p>
+
       </div>
-
-      <p>Login 1: Username = 'newguy', Password = 'mesogreen'</p>
-      <p>Login 2: Username = 'admin', Password = 'mesoawesome'</p>
-      <p>Login 3: Username = '_ScirisDemo', Password = '_ScirisDemo'</p>
-
     </form>
   </div>
 </template>
@@ -67,7 +71,7 @@ export default {
       .then(response => {
         if (response.data == 'success') {
           // Set a success result to show.
-          this.loginResult = 'Success!'
+          this.loginResult = 'Logging in...'
 
           // Read in the full current user information.
           rpcservice.rpcGetCurrentUserInfo('get_current_user_info')

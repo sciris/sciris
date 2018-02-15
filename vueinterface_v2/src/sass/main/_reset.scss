@@ -4,7 +4,7 @@ _reset.scss -- SASS/SCSS file for "reset layer" of GUI
 This should contain the styling code that "resets" the display characteristics 
 of the HTML elements for the Sciris code.
 
-Last update: 2/10/18 (gchadder3)
+Last update: 2/14/18 (gchadder3)
 */ 
 
 //
@@ -102,56 +102,6 @@ body {
 /* .TopBar {
   padding: 5px;
 } */
-
-.elastic {
-  display:table-row;
-  width:100%;
-  vertical-align: middle;
-}
-
-.header {
-
-  align-items: center;
-  vertical-align: middle;
-
-  &_right {
-    float: right;
-    text-align: right;
-    margin-left: 20px;
-  }
-
-  &_left {
-    float: left;
-    width: 375px; // To match 4 buttons with 20 pixel widths between them = 344 pixels
-  }
-
-  &_center {
-    text-align: center;
-  }
-
-  .logged-in{
-    font-size: 0.8em;
-    color: #53646F;
-    float: right;
-    white-space: nowrap;
-    margin-left: 10px;
-    margin-right: 20px;
-    &> div{
-      line-height: normal;
-      & > span{
-        float: left;
-        margin-right: 5px;
-      }
-    }
-    b{
-      display: inline-block;
-      white-space: nowrap;
-      text-overflow: ellipsis;
-      text-align: left;
-      width: 100%;
-    }
-  }
-}
 
 //
 // Other component stylings (should be elsewhere but put here for now)

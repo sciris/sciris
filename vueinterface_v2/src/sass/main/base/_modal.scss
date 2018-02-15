@@ -1,0 +1,109 @@
+// Modal
+// =====
+
+.modal {
+  @include position(fixed, 0);
+  -webkit-overflow-scrolling: touch;
+  display: none;
+  outline: 0;
+  overflow-y: scroll;
+  z-index: 1050;
+
+  &-dialog {
+    margin: 10px;
+    position: relative;
+    width: auto;
+
+    .modal.fade & {
+      transform: translate(0, -25%);
+      transition: transform 0.3s ease-out;
+    }
+
+    .modal.in & {
+      transform: translate(0, 0);
+    }
+  }
+
+  &-content {
+    background-color: #FFF;
+    border-radius: 2px;
+    box-shadow: $osx-shadow;
+    outline: 0;
+    padding: 16px;
+    position: relative;
+  }
+
+  &-wrap {
+    background-color: #e2f9ff;
+    padding: 40px;
+  }
+}
+
+.modal-backdrop {
+  @include position(fixed, 0);
+  background-color: black;
+  z-index: 1040;
+
+  &.fade {
+    opacity: 0;
+  }
+
+  &.in {
+    opacity: 0.3;
+  }
+}
+
+.modal-open {
+  overflow-y: hidden;
+}
+
+.modal-header {
+  text-align: center;
+  font-weight: $bold;
+  margin: 0 0 30px;
+  text-transform: uppercase;
+  font-size: 16px;
+}
+
+.modal-body {}
+
+.modal-footer {}
+
+.modal-close {
+  @include position(absolute, 10px 10px none none);
+  @include size(24px);
+  cursor: pointer;
+  font-size: 24px;
+  line-height: 24px;
+  text-align: center;
+
+  &:hover {
+    color: #C00;
+  }
+}
+
+.modal-dialog {
+  &.modal-lg {
+    /*width: 900px;*/
+  }
+}
+
+@media (min-width: 768px) {
+
+  .modal-dialog {
+    width: 700px;
+    margin: 30px auto;
+
+    &.__s {
+      width: 300px;
+    }
+  }
+}
+
+@media (min-width: 992px) {
+
+  .modal-dialog.__l {
+    width: 900px;
+  }
+}
+
