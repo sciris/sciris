@@ -41,11 +41,6 @@ Last update: 2/16/18 (gchadder3)
       </div>
     </div>
 
-    Sorting symbol test (down = name column, regular sort; up = name, reverse, left = non-name:
-    <i v-show="sortColumn == 'name' && !sortReverse" class="fas fa-caret-down"></i>
-    <i v-show="sortColumn == 'name' && sortReverse" class="fas fa-caret-up"></i>
-    <i v-show="sortColumn != 'name'" class="fas fa-caret-left"></i>
-
     <div class="PageSection"
          v-if="projectSummaries.length > 0">
       <h2>Manage projects</h2>
@@ -64,19 +59,52 @@ Last update: 2/16/18 (gchadder3)
             </th>
             <th @click="updateSorting('name')" class="sortable">
               Name
-              <i v-show="sortColumn == 'name' && !sortReverse" class="fas fa-caret-down"></i>
-              <i v-show="sortColumn == 'name' && sortReverse" class="fas fa-caret-up"></i>
-              <i v-show="sortColumn != 'name'" class="fas fa-caret-left"></i>
+              <span v-show="sortColumn == 'name' && !sortReverse">
+                <i class="fas fa-caret-down"></i>
+              </span>
+              <span v-show="sortColumn == 'name' && sortReverse">
+                <i class="fas fa-caret-up"></i>
+              </span>
+              <span v-show="sortColumn != 'name'">
+                <i class="fas fa-caret-up" style="visibility: hidden"></i>
+              </span>
             </th>
             <th>Select</th>
             <th @click="updateSorting('creationTime')" class="sortable">
               Created on
+              <span v-show="sortColumn == 'creationTime' && !sortReverse">
+                <i class="fas fa-caret-down"></i>
+              </span>
+              <span v-show="sortColumn == 'creationTime' && sortReverse">
+                <i class="fas fa-caret-up"></i>
+              </span>
+              <span v-show="sortColumn != 'creationTime'">
+                <i class="fas fa-caret-up" style="visibility: hidden"></i>
+              </span>
             </th>
             <th @click="updateSorting('updatedTime')" class="sortable">
               Updated on
+              <span v-show="sortColumn == 'updatedTime' && !sortReverse">
+                <i class="fas fa-caret-down"></i>
+              </span>
+              <span v-show="sortColumn == 'updatedTime' && sortReverse">
+                <i class="fas fa-caret-up"></i>
+              </span>
+              <span v-show="sortColumn != 'updatedTime'">
+                <i class="fas fa-caret-up" style="visibility: hidden"></i>
+              </span>
             </th>
             <th @click="updateSorting('dataUploadTime')" class="sortable">
               Data uploaded on
+              <span v-show="sortColumn == 'dataUploadTime' && !sortReverse">
+                <i class="fas fa-caret-down"></i>
+              </span>
+              <span v-show="sortColumn == 'dataUploadTime' && sortReverse">
+                <i class="fas fa-caret-up"></i>
+              </span>
+              <span v-show="sortColumn != 'dataUploadTime'">
+                <i class="fas fa-caret-up" style="visibility: hidden"></i>
+              </span>
             </th>
             <th>Actions</th>
             <th>Data spreadsheet</th>
