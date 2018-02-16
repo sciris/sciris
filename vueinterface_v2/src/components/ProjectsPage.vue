@@ -118,7 +118,7 @@ import router from '../router'
 export default {
   name: 'ProjectsPage',
 
-  data () {
+  data() {
     return {
       demoProjectList: [],
       selectedDemoProject: '',
@@ -154,7 +154,7 @@ export default {
     }
   },
 
-  created () {
+  created() {
     // If we have no user logged in, automatically redirect to the login page.
     if (this.$store.state.currentuser.displayname == undefined) {
       router.push('/login')
@@ -167,16 +167,15 @@ export default {
 
       // Initialize the selection of the demo project to the first element.
       this.selectedDemoProject = this.demoProjectList[0]
-
-
-      // Otherwise, get the list of the graphs available.   
-      this.updateScatterplotDataList()
     }
   },
 
   methods: {
-    addDemoProject () {
+    addDemoProject() {
       console.log('addDemoProject() called')
+
+      // way to do a deep copy...
+      // let newObj = JSON.parse(JSON.stringify(obj));
 
       // Should I be doing some kind of copy here or is that implicit?
       var found = this.demoProjectSummaries.find(demoProj => 
@@ -186,185 +185,52 @@ export default {
 //      this.projectSummaries.push(this.demoProjectSummaries[0])
     },
 
-    createNewProject () {
+    createNewProject() {
       console.log('createNewProject() called')
     },
 
-    uploadProjectFromFile () {
+    uploadProjectFromFile() {
       console.log('uploadProjectFromFile() called')
     },
 
-    uploadProjectFromSpreadsheet () {
+    uploadProjectFromSpreadsheet() {
       console.log('uploadProjectFromSpreadsheet() called')
     },
 
-    openProject (projectName) {
+    openProject(projectName) {
       console.log('openProject() called for ' + projectName)
     },
 
-    copyProject () {
+    copyProject() {
       console.log('copyProject() called')
     },
 
-    renameProject () {
+    renameProject() {
       console.log('renameProject() called')
     },
 
-    uploadSpreadsheetToProject () {
+    uploadSpreadsheetToProject() {
       console.log('uploadSpreadsheetToProject() called')
     },
 
-    downloadSpreadsheetFromProject () {
+    downloadSpreadsheetFromProject() {
       console.log('downloadSpreadsheetFromProject() called')
     },
 
-    downloadProjectFile () {
+    downloadProjectFile() {
       console.log('downloadProjectFile() called')
     },
 
-    downloadProjectFileWithResults () {
+    downloadProjectFileWithResults() {
       console.log('downloadProjectFileWithResults() called')
     },
 
-    deleteSelectedProjects () {
+    deleteSelectedProjects() {
       console.log('deleteSelectedProjects() called')
     },
 
-    downloadSelectedProjects () {
+    downloadSelectedProjects() {
       console.log('downloadSelectedProjects() called')
-    },
-
-    clearFigureWindow () {
-      // If we already have a figure, pop the figure object, and clear
-      // the DOM.
-      if (mpld3.figures.length > 0) {
-        mpld3.figures.pop()
-        document.getElementById('fig01').innerHTML = ''
-      }
-    },
-
-    updateScatterplotDataList () {
-      return new Promise((resolve, reject) => {
-        rpcservice.rpcCall('list_saved_scatterplotdata_resources')
-        .then(response => {
-          this.resourcechoices = response.data
-          this.selectedgraph = this.resourcechoices[0]
-          resolve(response)
-        })
-        .catch(error => {
-          reject(Error(response.data.error))
-        })
-      })
-    },
-
-    sendRequest () {
-      // If we already have a figure, pop the figure object, and clear
-      // the DOM.
-      this.clearFigureWindow()
-
-      // Clear the loaded file.
-      this.loadedfile = ''
-
-      // Clear the server error.
-      this.servererror = ''
-
-      // Call RPC get_saved_scatterplotdata_graph.
-      rpcservice.rpcCall('get_saved_scatterplotdata_graph', [this.selectedgraph])
-      .then(response => {
-        // Pull out the response data.
-        this.serverresponse = response.data
-
-        // Draw the figure in the 'fig01' div tag.
-        mpld3.draw_figure('fig01', response.data.graph)
-
-        // Remember the file that was loaded.
-        this.loadedfile = this.selectedgraph + '.csv'
-      })
-      .catch(error => {
-        // Pull out the error message.
-        this.serverresponse = 'There was an error: ' + error.message
-
-        // Set the server error.
-        this.servererror = error.message
-      })
-    }, 
-
-    downloadFile () {
-      // Clear the server error.
-      this.servererror = ''
-
-      // Call RPC download_saved_scatterplotdata.
-      rpcservice.rpcDownloadCall('download_saved_scatterplotdata', [this.selectedgraph])
-      .then(response => {
-        // Pull out the response data.
-        this.serverresponse = response.data
-      })
-      .catch(error => {
-        // Pull out the error message.
-        this.serverresponse = 'There was an error: ' + error.message
-
-        // Set the server error.
-        this.servererror = error.message
-      })
-    },
- 
-    deleteFile () {
-      // Clear the server error.
-      this.servererror = ''
-
-      // Call RPC delete_saved_scatterplotdata_graph.
-      rpcservice.rpcCall('delete_saved_scatterplotdata_graph', [this.selectedgraph])
-      .then(response => {
-        // Pull out the response data.
-        this.serverresponse = response.data
-
-        // Update the ScatterplotData list.
-        this.updateScatterplotDataList().
-        then(response => {
-          // Clear the loaded file.
-          this.loadedfile = ''
-
-          // If we already have a figure, pop the figure object, and clear
-          // the DOM.
-          this.clearFigureWindow()
-        })
-      })
-      .catch(error => {
-        // Pull out the error message.
-        this.serverresponse = 'There was an error: ' + error.message
-
-        // Set the server error.
-        this.servererror = error.message
-      })
-    },
-
-    uploadFile () {
-      // Clear the server error.
-      this.servererror = ''
-
-      // Call RPC upload_scatterplotdata_from_csv.
-      rpcservice.rpcUploadCall('upload_scatterplotdata_from_csv', [this.selectedgraph], {}, '.csv')
-      .then(response => {
-        // Pull out the response data.
-        this.serverresponse = response.data
-
-        // Update the ScatterplotData list.
-        this.updateScatterplotDataList().
-        then(response2 => {
-          // Set the selected graph to the new upload.
-          this.selectedgraph = response.data
-
-          // Send a request to fetch the new file.
-          this.sendRequest()
-        })
-      })
-      .catch(error => {
-        // Pull out the error message.
-        this.serverresponse = 'There was an error: ' + error.message
-
-        // Set the server error.
-        this.servererror = error.message 
-      })  
     }
   }
 }
