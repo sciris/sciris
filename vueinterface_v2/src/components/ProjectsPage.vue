@@ -1,7 +1,7 @@
 <!-- 
 ProjectsPage.vue -- ProjectsPage Vue component
 
-Last update: 2/15/18 (gchadder3)
+Last update: 2/16/18 (gchadder3)
 -->
 
 <template>
@@ -41,6 +41,11 @@ Last update: 2/15/18 (gchadder3)
       </div>
     </div>
 
+    Sorting symbol test (down = name column, regular sort; up = name, reverse, left = non-name:
+    <i v-show="sortColumn == 'name' && !sortReverse" class="fas fa-caret-down"></i>
+    <i v-show="sortColumn == 'name' && sortReverse" class="fas fa-caret-up"></i>
+    <i v-show="sortColumn != 'name'" class="fas fa-caret-left"></i>
+
     <div class="PageSection"
          v-if="projectSummaries.length > 0">
       <h2>Manage projects</h2>
@@ -57,14 +62,22 @@ Last update: 2/15/18 (gchadder3)
             <th>
               <input type="checkbox"/>
             </th>
-            <th>
+            <th @click="updateSorting('name')" class="sortable">
               Name
-              <i class="fas fa-caret-down"></i>
+              <i v-show="sortColumn == 'name' && !sortReverse" class="fas fa-caret-down"></i>
+              <i v-show="sortColumn == 'name' && sortReverse" class="fas fa-caret-up"></i>
+              <i v-show="sortColumn != 'name'" class="fas fa-caret-left"></i>
             </th>
             <th>Select</th>
-            <th>Created on</th>
-            <th>Updated on</th>
-            <th>Data uploaded on</th>
+            <th @click="updateSorting('creationTime')" class="sortable">
+              Created on
+            </th>
+            <th @click="updateSorting('updatedTime')" class="sortable">
+              Updated on
+            </th>
+            <th @click="updateSorting('dataUploadTime')" class="sortable">
+              Data uploaded on
+            </th>
             <th>Actions</th>
             <th>Data spreadsheet</th>
             <th>Project file</th>
@@ -120,37 +133,67 @@ export default {
 
   data() {
     return {
+      // List of projects to choose from (by project name)
       demoProjectList: [],
+
+      // Selected project (by name)
       selectedDemoProject: '',
+
+      // Placeholder text for table filter box
+      filterPlaceholder: '\u{1f50e} Filter Projects',
+
+      // Text in the table filter box
       filterText: '',
+
+      // Column of table used for sorting the projects
+      sortColumn: 'name',  // name, creationTime, updatedTime, dataUploadTime
+
+      // Sort in reverse order?
+      sortReverse: false, 
+
+      // List of summary objects for projects the user has
       projectSummaries: [],
+
+      // List of project summaries
       demoProjectSummaries: 
         [
           {
-            projectName: 'Graph 1', 
+            projectName: 'Gaussian Graph 1', 
             creationTime: '2017-Sep-21 08:44 AM',
             updateTime: '2017-Sep-21 08:44 AM',
             spreadsheetUploadTime: '2017-Sep-21 08:44 AM'
           }, 
           {
-            projectName: 'Graph 2',
+            projectName: 'Gaussian Graph 2',
             creationTime: '2017-Sep-22 08:44 AM',
             updateTime: '',
             spreadsheetUploadTime: '2017-Sep-22 08:44 AM'
           }, 
           {
-            projectName: 'Graph 3',
+            projectName: 'Gaussian Graph 3',
             creationTime: '2017-Sep-23 08:44 AM',
             updateTime: '2017-Sep-23 08:44 AM',
             spreadsheetUploadTime: ''
+          },
+          {
+            projectName: 'Uniform Graph 1', 
+            creationTime: '2017-Mar-21 08:44 AM',
+            updateTime: '2017-Mar-21 08:44 AM',
+            spreadsheetUploadTime: '2017-Mar-21 08:44 AM'
+          }, 
+          {
+            projectName: 'Uniform Graph 2',
+            creationTime: '2017-Mar-22 08:44 AM',
+            updateTime: '',
+            spreadsheetUploadTime: '2017-Mar-22 08:44 AM'
+          }, 
+          {
+            projectName: 'Uniform Graph 3',
+            creationTime: '2017-Mar-23 08:44 AM',
+            updateTime: '2017-Mar-23 08:44 AM',
+            spreadsheetUploadTime: ''
           }
-        ],
-      filterPlaceholder: '\u{1f50e} Filter Projects',
-      selectedgraph: '',
-      serverresponse: '',
-      loadedfile: '', 
-      servererror: '',
-      resourcechoices: []
+        ]
     }
   },
 
@@ -195,6 +238,24 @@ export default {
 
     uploadProjectFromSpreadsheet() {
       console.log('uploadProjectFromSpreadsheet() called')
+    },
+
+    updateSorting(sortColumn) {
+      console.log('updateSorting() called')
+
+      // If the active sorting column is clicked...
+      if (this.sortColumn === sortColumn) {
+          // Reverse the sort.
+          this.sortReverse = !this.sortReverse
+      } 
+      // Otherwise.
+      else {
+        // Select the new column for sorting.
+        this.sortColumn = sortColumn
+
+        // Set the sorting for non-reverse.
+        this.sortReverse = false
+      }
     },
 
     openProject(projectName) {
