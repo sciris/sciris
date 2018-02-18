@@ -1,7 +1,7 @@
 <!-- 
 ProjectsPage.vue -- ProjectsPage Vue component
 
-Last update: 2/16/18 (gchadder3)
+Last update: 2/17/18 (gchadder3)
 -->
 
 <template>
@@ -112,7 +112,7 @@ Last update: 2/16/18 (gchadder3)
           </tr>
         </thead>
         <tbody>
-          <tr v-for="projectSummary in projectSummaries">
+          <tr v-for="projectSummary in sortedFilteredProjectSummaries">
             <td>
               <input type="checkbox"/>
             </td>
@@ -225,6 +225,20 @@ export default {
     }
   },
 
+  computed: {
+    filteredProjectSummaries() {
+      return this.applyFilter(this.projectSummaries)
+    }, 
+
+    sortedProjectSummaries() {
+      return this.applySorting(this.projectSummaries)
+    },
+
+    sortedFilteredProjectSummaries() {
+      return this.applyFilter(this.applySorting(this.projectSummaries))
+    }
+  }, 
+
   created() {
     // If we have no user logged in, automatically redirect to the login page.
     if (this.$store.state.currentuser.displayname == undefined) {
@@ -284,6 +298,34 @@ export default {
         // Set the sorting for non-reverse.
         this.sortReverse = false
       }
+    },
+
+    applyFilter(projects) {
+      console.log('applyFilter() called')
+
+      return projects.filter(theProject => theProject.projectName.toLowerCase().indexOf(this.filterText.toLowerCase()) !== -1)
+    },
+
+    applySorting(projects) {
+      console.log('applySorting() called')
+
+      return projects.sort((proj1, proj2) => 
+        {
+          let sortDir = this.sortReverse ? -1: 1
+          if (this.sortColumn === 'name') {
+            return (proj1.projectName > proj2.projectName ? sortDir: -sortDir)
+          }
+          else if (this.sortColumn === 'creationTime') {
+            return proj1.creationTime > proj2.creationTime ? sortDir: -sortDir
+          }
+          else if (this.sortColumn === 'updatedTime') {
+            return proj1.updateTime > proj2.updateTime ? sortDir: -sortDir
+          }
+          else if (this.sortColumn === 'dataUploadTime') {
+            return proj1.spreadsheetUploadTime > proj2.spreadsheetUploadTime ? sortDir: -sortDir
+          } 
+        }
+      )
     },
 
     openProject(projectName) {
