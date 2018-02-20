@@ -112,13 +112,13 @@ Last update: 2/19/18 (gchadder3)
           </tr>
         </thead>
         <tbody>
-          <tr v-for="projectSummary in sortedFilteredProjectSummaries">
+          <tr v-for="projectSummary in sortedFilteredProjectSummaries" :class="{ highlighted: activeProject.uid === projectSummary.uid }">
             <td>
               <input type="checkbox" @click="uncheckSelectAll()" v-model="projectSummary.selected"/>
             </td>
             <td>{{ projectSummary.projectName }}</td>
             <td>
-              <button class="btn __green" @click="openProject(projectSummary.projectName)">Open</button>
+              <button class="btn __green" @click="openProject(projectSummary.uid)">Open</button>
             </td>
             <td>{{ projectSummary.creationTime }}</td>
             <td>{{ projectSummary.updateTime ? projectSummary.updateTime: 
@@ -126,16 +126,16 @@ Last update: 2/19/18 (gchadder3)
             <td>{{ projectSummary.spreadsheetUploadTime ?  projectSummary.spreadsheetUploadTime: 
               'No data uploaded' }}</td>
             <td style="white-space: nowrap">
-              <button class="btn" @click="copyProject">Copy</button>
-              <button class="btn" @click="renameProject">Rename</button>
+              <button class="btn" @click="copyProject(projectSummary.uid)">Copy</button>
+              <button class="btn" @click="renameProject(projectSummary.uid)">Rename</button>
             </td>
             <td style="white-space: nowrap">
-              <button class="btn" @click="uploadSpreadsheetToProject">Upload</button>
-              <button class="btn" @click="downloadSpreadsheetFromProject">Download</button>
+              <button class="btn" @click="uploadSpreadsheetToProject(projectSummary.uid)">Upload</button>
+              <button class="btn" @click="downloadSpreadsheetFromProject(projectSummary.uid)">Download</button>
             </td>
             <td style="white-space: nowrap">
-              <button class="btn" @click="downloadProjectFile">Download</button>
-              <button class="btn" @click="downloadProjectFileWithResults">Download with results</button>
+              <button class="btn" @click="downloadProjectFile(projectSummary.uid)">Download</button>
+              <button class="btn" @click="downloadProjectFileWithResults(projectSummary.uid)">Download with results</button>
             </td>
           </tr>
         </tbody>
@@ -185,6 +185,9 @@ export default {
       // List of summary objects for projects the user has
       projectSummaries: [],
 
+      // Active project
+      activeProject: {},
+
       // List of project summaries
       demoProjectSummaries: 
         [
@@ -193,6 +196,7 @@ export default {
             creationTime: '2017-Sep-21 08:44 AM',
             updateTime: '2017-Sep-21 08:44 AM',
             spreadsheetUploadTime: '2017-Sep-21 08:44 AM',
+            uid: 1,
             selected: false
           }, 
           {
@@ -200,6 +204,7 @@ export default {
             creationTime: '2017-Sep-22 08:44 AM',
             updateTime: '',
             spreadsheetUploadTime: '2017-Sep-22 08:44 AM',
+            uid: 2,
             selected: false
           },
           {
@@ -207,6 +212,7 @@ export default {
             creationTime: '2017-Sep-21 08:44 AM',
             updateTime: '2017-Sep-21 08:44 AM',
             spreadsheetUploadTime: '2017-Sep-21 08:44 AM',
+            uid: 3,
             selected: false
           }, 
           {
@@ -214,6 +220,7 @@ export default {
             creationTime: '2017-Sep-22 08:44 AM',
             updateTime: '',
             spreadsheetUploadTime: '2017-Sep-22 08:44 AM',
+            uid: 4,
             selected: false
           }, 
           {
@@ -221,6 +228,7 @@ export default {
             creationTime: '2017-Sep-23 08:44 AM',
             updateTime: '2017-Sep-23 08:44 AM',
             spreadsheetUploadTime: '',
+            uid: 5,
             selected: false
           },
           {
@@ -228,6 +236,7 @@ export default {
             creationTime: '2017-Mar-21 08:44 AM',
             updateTime: '2017-Mar-21 08:44 AM',
             spreadsheetUploadTime: '2017-Mar-21 08:44 AM',
+            uid: 6,
             selected: false
           }, 
           {
@@ -235,6 +244,7 @@ export default {
             creationTime: '2017-Mar-22 08:44 AM',
             updateTime: '',
             spreadsheetUploadTime: '2017-Mar-22 08:44 AM',
+            uid: 7,
             selected: false
           }, 
           {
@@ -242,6 +252,7 @@ export default {
             creationTime: '2017-Mar-23 08:44 AM',
             updateTime: '2017-Mar-23 08:44 AM',
             spreadsheetUploadTime: '',
+            uid: 8,
             selected: false
           }
         ]
@@ -363,40 +374,72 @@ export default {
       )
     },
 
-    openProject(projectName) {
-      console.log('openProject() called for ' + projectName)
+    openProject(uid) {
+      // Find the project that matches the UID passed in.
+      let matchProject = this.projectSummaries.find(theProj => theProj.uid === uid)
+
+      console.log('openProject() called for ' + matchProject.projectName)
+
+      // Set the active project to the matched project.
+      this.activeProject = matchProject
     },
 
-    copyProject() {
-      console.log('copyProject() called')
+    copyProject(uid) {
+      // Find the project that matches the UID passed in.
+      let matchProject = this.projectSummaries.find(theProj => theProj.uid === uid)
+
+      console.log('copyProject() called for ' + matchProject.projectName)
     },
 
-    renameProject() {
-      console.log('renameProject() called')
+    renameProject(uid) {
+      // Find the project that matches the UID passed in.
+      let matchProject = this.projectSummaries.find(theProj => theProj.uid === uid)
+
+      console.log('renameProject() called for ' + matchProject.projectName)
     },
 
-    uploadSpreadsheetToProject() {
-      console.log('uploadSpreadsheetToProject() called')
+    uploadSpreadsheetToProject(uid) {
+      // Find the project that matches the UID passed in.
+      let matchProject = this.projectSummaries.find(theProj => theProj.uid === uid)
+
+      console.log('uploadSpreadsheetToProject() called for ' + matchProject.projectName)
     },
 
-    downloadSpreadsheetFromProject() {
-      console.log('downloadSpreadsheetFromProject() called')
+    downloadSpreadsheetFromProject(uid) {
+      // Find the project that matches the UID passed in.
+      let matchProject = this.projectSummaries.find(theProj => theProj.uid === uid)
+
+      console.log('downloadSpreadsheetFromProject() called for ' + matchProject.projectName)
     },
 
-    downloadProjectFile() {
-      console.log('downloadProjectFile() called')
+    downloadProjectFile(uid) {
+      // Find the project that matches the UID passed in.
+      let matchProject = this.projectSummaries.find(theProj => theProj.uid === uid)
+
+      console.log('downloadProjectFile() called for ' + matchProject.projectName)
     },
 
-    downloadProjectFileWithResults() {
-      console.log('downloadProjectFileWithResults() called')
+    downloadProjectFileWithResults(uid) {
+      // Find the project that matches the UID passed in.
+      let matchProject = this.projectSummaries.find(theProj => theProj.uid === uid)
+
+      console.log('downloadProjectFileWithResults() called for ' + matchProject.projectName)
     },
 
     deleteSelectedProjects() {
-      console.log('deleteSelectedProjects() called')
+      // Pull out the names of the projects that are selected.
+      let selectProjects = this.projectSummaries.filter(theProj => 
+        theProj.selected).map(theProj => theProj.projectName)
+
+      console.log('deleteSelectedProjects() called for ', selectProjects)
     },
 
     downloadSelectedProjects() {
-      console.log('downloadSelectedProjects() called')
+      // Pull out the names of the projects that are selected.
+      let selectProjects = this.projectSummaries.filter(theProj => 
+        theProj.selected).map(theProj => theProj.projectName)
+
+      console.log('downloadSelectedProjects() called for ', selectProjects)
     }
   }
 }
