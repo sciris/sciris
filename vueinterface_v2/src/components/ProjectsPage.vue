@@ -55,7 +55,7 @@ Last update: 2/19/18 (gchadder3)
         <thead>
           <tr>
             <th>
-              <input type="checkbox"/>
+              <input type="checkbox" @click="selectAll()" v-model="allSelected"/>
             </th>
             <th @click="updateSorting('name')" class="sortable">
               Name
@@ -114,7 +114,7 @@ Last update: 2/19/18 (gchadder3)
         <tbody>
           <tr v-for="projectSummary in sortedFilteredProjectSummaries">
             <td>
-              <input type="checkbox"/>
+              <input type="checkbox" @click="uncheckSelectAll()" v-model="projectSummary.selected"/>
             </td>
             <td>{{ projectSummary.projectName }}</td>
             <td>
@@ -173,6 +173,9 @@ export default {
       // Text in the table filter box
       filterText: '',
 
+      // Are all of the projects selected?
+      allSelected: false, 
+
       // Column of table used for sorting the projects
       sortColumn: 'name',  // name, creationTime, updatedTime, dataUploadTime
 
@@ -189,49 +192,57 @@ export default {
             projectName: 'Concentrated (demo)', 
             creationTime: '2017-Sep-21 08:44 AM',
             updateTime: '2017-Sep-21 08:44 AM',
-            spreadsheetUploadTime: '2017-Sep-21 08:44 AM'
+            spreadsheetUploadTime: '2017-Sep-21 08:44 AM',
+            selected: false
           }, 
           {
             projectName: 'Generalized (demo)',
             creationTime: '2017-Sep-22 08:44 AM',
             updateTime: '',
-            spreadsheetUploadTime: '2017-Sep-22 08:44 AM'
+            spreadsheetUploadTime: '2017-Sep-22 08:44 AM',
+            selected: false
           },
           {
             projectName: 'Gaussian Graph 1', 
             creationTime: '2017-Sep-21 08:44 AM',
             updateTime: '2017-Sep-21 08:44 AM',
-            spreadsheetUploadTime: '2017-Sep-21 08:44 AM'
+            spreadsheetUploadTime: '2017-Sep-21 08:44 AM',
+            selected: false
           }, 
           {
             projectName: 'Gaussian Graph 2',
             creationTime: '2017-Sep-22 08:44 AM',
             updateTime: '',
-            spreadsheetUploadTime: '2017-Sep-22 08:44 AM'
+            spreadsheetUploadTime: '2017-Sep-22 08:44 AM',
+            selected: false
           }, 
           {
             projectName: 'Gaussian Graph 3',
             creationTime: '2017-Sep-23 08:44 AM',
             updateTime: '2017-Sep-23 08:44 AM',
-            spreadsheetUploadTime: ''
+            spreadsheetUploadTime: '',
+            selected: false
           },
           {
             projectName: 'Uniform Graph 1', 
             creationTime: '2017-Mar-21 08:44 AM',
             updateTime: '2017-Mar-21 08:44 AM',
-            spreadsheetUploadTime: '2017-Mar-21 08:44 AM'
+            spreadsheetUploadTime: '2017-Mar-21 08:44 AM',
+            selected: false
           }, 
           {
             projectName: 'Uniform Graph 2',
             creationTime: '2017-Mar-22 08:44 AM',
             updateTime: '',
-            spreadsheetUploadTime: '2017-Mar-22 08:44 AM'
+            spreadsheetUploadTime: '2017-Mar-22 08:44 AM',
+            selected: false
           }, 
           {
             projectName: 'Uniform Graph 3',
             creationTime: '2017-Mar-23 08:44 AM',
             updateTime: '2017-Mar-23 08:44 AM',
-            spreadsheetUploadTime: ''
+            spreadsheetUploadTime: '',
+            selected: false
           }
         ]
     }
@@ -263,13 +274,17 @@ export default {
     addDemoProject() {
       console.log('addDemoProject() called')
 
-      // way to do a deep copy...
-      // let newObj = JSON.parse(JSON.stringify(obj));
-
-      // Should I be doing some kind of copy here or is that implicit?
-      var found = this.demoProjectSummaries.find(demoProj => 
+      // Find the object in the default project summaries that matches what's 
+      // selected in the select box.
+      let foundProject = this.demoProjectSummaries.find(demoProj => 
         demoProj.projectName == this.selectedDemoProject)
-      this.projectSummaries.push(found)
+
+      // Make a deep copy of the found object by JSON-stringifying the old 
+      // object, and then parsing the result back into a new object.
+      let newProject = JSON.parse(JSON.stringify(foundProject));
+
+      // Push the deep copy to the projectSummaries list.
+      this.projectSummaries.push(newProject)
 
 //      this.projectSummaries.push(this.demoProjectSummaries[0])
     },
@@ -284,6 +299,22 @@ export default {
 
     uploadProjectFromSpreadsheet() {
       console.log('uploadProjectFromSpreadsheet() called')
+    },
+
+    selectAll() {
+      console.log('selectAll() called')
+
+      // For each of the projects, set the selection of the project to the 
+      // _opposite_ of the state of the all-select checkbox's state.
+      // NOTE: This function depends on it getting called before the 
+      // v-model state is updated.  If there are some cases of Vue 
+      // implementation where these happen in the opposite order, then 
+      // this will not give the desired result.
+      this.projectSummaries.forEach(theProject => theProject.selected = !this.allSelected)
+    },
+
+    uncheckSelectAll() {
+      this.allSelected = false
     },
 
     updateSorting(sortColumn) {
