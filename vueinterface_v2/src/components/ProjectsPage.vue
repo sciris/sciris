@@ -1,7 +1,7 @@
 <!-- 
 ProjectsPage.vue -- ProjectsPage Vue component
 
-Last update: 2/17/18 (gchadder3)
+Last update: 2/19/18 (gchadder3)
 -->
 
 <template>
@@ -186,6 +186,18 @@ export default {
       demoProjectSummaries: 
         [
           {
+            projectName: 'Concentrated (demo)', 
+            creationTime: '2017-Sep-21 08:44 AM',
+            updateTime: '2017-Sep-21 08:44 AM',
+            spreadsheetUploadTime: '2017-Sep-21 08:44 AM'
+          }, 
+          {
+            projectName: 'Generalized (demo)',
+            creationTime: '2017-Sep-22 08:44 AM',
+            updateTime: '',
+            spreadsheetUploadTime: '2017-Sep-22 08:44 AM'
+          },
+          {
             projectName: 'Gaussian Graph 1', 
             creationTime: '2017-Sep-21 08:44 AM',
             updateTime: '2017-Sep-21 08:44 AM',
@@ -226,17 +238,9 @@ export default {
   },
 
   computed: {
-    filteredProjectSummaries() {
-      return this.applyFilter(this.projectSummaries)
-    }, 
-
-    sortedProjectSummaries() {
-      return this.applySorting(this.projectSummaries)
-    },
-
     sortedFilteredProjectSummaries() {
       return this.applyFilter(this.applySorting(this.projectSummaries))
-    }
+    } 
   }, 
 
   created() {
