@@ -41,11 +41,19 @@ def run():
                 b'Cache-Control', [b'no-cache', b'no-store', b'must-revalidate'])
             request.responseHeaders.setRawHeaders(b'expires', [b'0'])
             return r
-    
-    base_resource = File('%s%s%s%sdist%s' % (os.pardir, os.sep, CLIENT_DIR, 
-        os.sep, os.sep))   
-    base_resource.putChild('dev', File('%s%s%s%ssrc%s' % (os.pardir, os.sep,
-        CLIENT_DIR, os.sep, os.sep))) 
+        
+    # If we have a full path for the client directory, use that directory.
+    if os.path.isabs(CLIENT_DIR):
+        clientDirTarget = CLIENT_DIR
+        
+    # Otherwise (we have a relative path), use it (correcting so it is with 
+    # respect to the sciris repo directory).
+    else:
+        clientDirTarget = '%s%s%s' % (os.pardir, os.sep, CLIENT_DIR) 
+        
+    base_resource = File('%s%sdist%s' % (clientDirTarget, os.sep, os.sep))   
+    base_resource.putChild('dev', File('%s%ssrc%s' % (clientDirTarget, 
+        os.sep, os.sep))) 
     base_resource.putChild('api', OptimaResource(wsgi_app))
     
     site = Site(base_resource)
