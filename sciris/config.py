@@ -16,11 +16,11 @@ SECRET_KEY = 'Pick something unique for your site here'
 ROOT_DIR = '/u/cliffk/unsw/hpptool/'
 
 # Directory containing the client code.
-CLIENT_DIR = ROOT_DIR+'vueinterface'
+CLIENT_DIR = ROOT_DIR+'client'
 
 # Directory containing the model code.  This is the primary Python code that 
 # the web app will rely on related to the actual model.
-MODEL_DIR = ROOT_DIR+'model'
+MODEL_DIR = ROOT_DIR+'hpptool'
 
 # Directory containing Python code specific to the web app.  sessionmanager 
 # (the directory this config file is in) contains general Python functionality 
