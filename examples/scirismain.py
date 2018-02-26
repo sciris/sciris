@@ -17,10 +17,10 @@ import sys
 import os
 import re
 import copy
-import sessionmanager.scirisobjects as sobj
-import sessionmanager.datastore as ds
-import sessionmanager.user as user
-import sessionmanager.project as project
+from . import scirisobjects as sobj
+from . import datastore as ds
+from . import user as user
+from . import project as project
 
 #
 # Script code (Block 1)
