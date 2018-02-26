@@ -4,7 +4,7 @@ from __future__ import unicode_literals
 
 from setuptools import setup, find_packages
 
-with open("model/version.py", "r") as f:
+with open("version.py", "r") as f:
     version_file = {}
     exec(f.read(), version_file)
     version = version_file["version"]
@@ -29,13 +29,13 @@ CLASSIFIERS = [
 ]
 
 setup(
-    name='hpptool',
+    name='sciris',
     version=version,
     author='Cliff Kerr, George Chadderdon',
     author_email='info@optimamodel.com',
-    description='Health Package Prioritization Tool',
-    url='http://github.com/optimamodel/hpptool',
-    keywords=['optima','UHC'],
+    description='Scientific webapps for Python',
+    url='http://github.com/optimamodel/sciris',
+    keywords=['scientific','webapp', 'framework'],
     platforms=['OS Independent'],
     classifiers=CLASSIFIERS,
     packages=find_packages(),
