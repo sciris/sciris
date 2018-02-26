@@ -13,7 +13,8 @@ from twisted.python.threadpool import ThreadPool
 import api
 
 # Run the config file.
-execfile('../sessionmanager/config.py')
+execfile(os.path.dirname(__file__)+os.sep+'config.py')
+print('Warning fix config file path')
 
 def run():
     """
