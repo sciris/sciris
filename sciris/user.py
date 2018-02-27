@@ -662,9 +662,9 @@ def get_scirisdemo_user(name='_ScirisDemo'):
 #
 
 # Create three test Users that can get added to a new UserDict.
-testUser = User('newguy', 'mesogreen', 'Ozzy Mandibulus', 'tastybats@yahoo.com', \
+testUser = User('demo', 'demo', 'Demo', 'demo@yahoo.com', \
     theUID=uuid.UUID('12345678123456781234567812345678'))
-testUser2 = User('admin', 'mesoawesome', 'Admin Dude', 'admin@scirisuser.net', \
+testUser2 = User('admin', 'admin', 'Admin', 'admin@scirisuser.net', \
     hasAdminRights=True, theUID=uuid.UUID('12345678123456781234567812345679'))
 testUser3 = User('_ScirisDemo', '_ScirisDemo', 'Sciris Demos', 'admin@scirisuser.net', \
     hasAdminRights=False, theUID=uuid.UUID('12345678123456781234567812345672'))

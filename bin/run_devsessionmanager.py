@@ -2,7 +2,7 @@
 import sys
 import os
 
-# Load Optima
+# Load Sciris
 from sciris.api import app
 
 # Run the server
