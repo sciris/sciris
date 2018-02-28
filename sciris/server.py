@@ -70,13 +70,13 @@ def runtwisted(config=None):
             return r
         
     # If we have a full path for the client directory, use that directory.
-    if os.path.isabs(config['CLIENT_DIR']):
-        clientDirTarget = config['CLIENT_DIR']
+    if os.path.isabs(config.CLIENT_DIR):
+        clientDirTarget = config.CLIENT_DIR
         
     # Otherwise (we have a relative path), use it (correcting so it is with 
     # respect to the sciris repo directory).
     else:
-        clientDirTarget = '%s%s%s' % (os.pardir, os.sep, config['CLIENT_DIR']) 
+        clientDirTarget = '%s%s%s' % (os.pardir, os.sep, config.CLIENT_DIR) 
         
     base_resource = File('%s%sdist%s' % (clientDirTarget, os.sep, os.sep))   
     base_resource.putChild('dev', File('%s%ssrc%s' % (clientDirTarget, 
