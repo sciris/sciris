@@ -252,8 +252,3 @@ def makeapp():
     scirismain.init_main(app)
     
     return app
-
-def runapp():
-    app = makeapp()
-    app.run(threaded=True, debug=True, use_debugger=False)
-    return None

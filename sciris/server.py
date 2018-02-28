@@ -16,11 +16,7 @@ from twisted.web.server import Site
 from twisted.web.static import File
 from twisted.web.wsgi import WSGIResource
 from twisted.python.threadpool import ThreadPool
-
-print('STARRRRRRRRRRRRRRRRRRRRTTTING')
-import api
-print('OKAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAy')
-#api.runapp()
+import api # This is key!
 
 
 # Autoreload imports
@@ -203,7 +199,7 @@ def jython_reloader(main_func, args, kwargs):
         time.sleep(1)
 
 
-def main(main_func, args=None, kwargs=None, **more_options):
+def autoreload(main_func, args=None, kwargs=None, **more_options):
     if args is None:
         args = ()
     if kwargs is None:
@@ -222,5 +218,5 @@ def main(main_func, args=None, kwargs=None, **more_options):
 
 def start(*args, **kwargs):
     ''' Start the server by combining the autoreload with the Twisted server '''
-    main(runtwisted, args=args, kwargs=kwargs)
+    autoreload(runtwisted, args=args, kwargs=kwargs)
     return None
