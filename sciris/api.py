@@ -48,16 +48,18 @@ except: # File doesn't exist
 # Imports (Block 2, dependent on config file)
 #
 
+print('Remove hardcoding for scirismain.py')
+
 # If we have a full path for the webapp directory, load scirismain.py from that.
 if os.path.isabs(app.config['WEBAPP_DIR']):
     scirismainTarget = '%s%s%s' % (app.config['WEBAPP_DIR'], os.sep, 
-        'scirismain.py')
+        'main.py')
     
 # Otherwise (we have a relative path), use it (correcting so it is with 
 # respect to the sciris repo directory).
 else:
     scirismainTarget = '%s%s%s%s%s' % (os.pardir, os.sep, 
-        app.config['WEBAPP_DIR'], os.sep, 'scirismain.py')  
+        app.config['WEBAPP_DIR'], os.sep, 'main.py')  
     
 # Do the import.
 import imp
