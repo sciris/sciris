@@ -55,7 +55,8 @@ def runtwisted():
         FileLogObserver(sys.stdout, lambda _: formatEvent(_) + "\n")])
 
     threadpool = ThreadPool(maxthreads=30)
-    wsgi_app = WSGIResource(reactor, threadpool, api.app)
+    app = api.makeapp()
+    wsgi_app = WSGIResource(reactor, threadpool, app)
 
     class OptimaResource(Resource):
         isLeaf = True
