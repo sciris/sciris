@@ -37,16 +37,11 @@ except ImportError:
     pass
 
 
-# Run the config file.
-execfile(os.path.dirname(__file__)+os.sep+'config.py')
-print('Warning fix config file path')
-
-
 ###########################################################################################
 #%% TWISTED
 ###########################################################################################
 
-def runtwisted():
+def runtwisted(config=None):
     """
     Run the Twisted server.
     """
@@ -54,7 +49,7 @@ def runtwisted():
         FileLogObserver(sys.stdout, lambda _: formatEvent(_) + "\n")])
 
     threadpool = ThreadPool(maxthreads=30)
-    app = api.makeapp()
+    app = api.makeapp(config=config)
     wsgi_app = WSGIResource(reactor, threadpool, app)
 
     class OptimaResource(Resource):
@@ -75,13 +70,13 @@ def runtwisted():
             return r
         
     # If we have a full path for the client directory, use that directory.
-    if os.path.isabs(CLIENT_DIR):
-        clientDirTarget = CLIENT_DIR
+    if os.path.isabs(config['CLIENT_DIR']):
+        clientDirTarget = config['CLIENT_DIR']
         
     # Otherwise (we have a relative path), use it (correcting so it is with 
     # respect to the sciris repo directory).
     else:
-        clientDirTarget = '%s%s%s' % (os.pardir, os.sep, CLIENT_DIR) 
+        clientDirTarget = '%s%s%s' % (os.pardir, os.sep, config['CLIENT_DIR']) 
         
     base_resource = File('%s%sdist%s' % (clientDirTarget, os.sep, os.sep))   
     base_resource.putChild('dev', File('%s%ssrc%s' % (clientDirTarget, 

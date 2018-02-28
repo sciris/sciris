@@ -20,7 +20,7 @@ import os
 # Globals
 #
 
-def makeapp():
+def makeapp(config=None):
 
     # Create the Flask app.
     app = Flask(__name__)
@@ -42,7 +42,7 @@ def makeapp():
     errormsg += 'Please ensure that you have copied server/config_example.py to server/config.py\n'
     errormsg += 'Note that this is NOT done automatically'
     try: # File exists
-        app.config.from_pyfile('config.py')
+        app.config.from_object(config)
     except: # File doesn't exist
         raise Exception(errormsg)
         
