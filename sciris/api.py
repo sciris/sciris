@@ -254,7 +254,11 @@ def makeapp():
     return app
 
 def runapp():
-    ''' Actually run the app '''
     app = makeapp()
     app.run(threaded=True, debug=True, use_debugger=False)
-    return app
+    return None
+    
+
+# The following code just gets called if we are running this standalone.
+if __name__ == "__main__":
+    runapp()
