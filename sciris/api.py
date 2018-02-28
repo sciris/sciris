@@ -261,4 +261,5 @@ def runapp():
 
 # The following code just gets called if we are running this standalone.
 if __name__ == "__main__":
-    runapp()
+    print('hi')
+#    runapp()

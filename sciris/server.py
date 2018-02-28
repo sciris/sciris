@@ -17,7 +17,10 @@ from twisted.web.static import File
 from twisted.web.wsgi import WSGIResource
 from twisted.python.threadpool import ThreadPool
 
+print('STARRRRRRRRRRRRRRRRRRRRTTTING')
 import api
+print('OKAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAy')
+#api.runapp()
 
 
 # Autoreload imports
