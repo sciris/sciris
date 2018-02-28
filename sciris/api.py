@@ -257,9 +257,3 @@ def runapp():
     app = makeapp()
     app.run(threaded=True, debug=True, use_debugger=False)
     return None
-    
-
-# The following code just gets called if we are running this standalone.
-if __name__ == "__main__":
-    print('hi')
-#    runapp()
