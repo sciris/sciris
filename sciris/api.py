@@ -1,7 +1,7 @@
 """
 api.py -- script for setting up a flask server
     
-Last update: 1/15/18 (gchadder3)
+Last update: 3/5/18 (gchadder3)
 """
 
 #
@@ -52,7 +52,8 @@ def makeapp(config=None):
     
     print('Remove hardcoding for scirismain.py')
     
-    # If we have a full path for the webapp directory, load scirismain.py from that.
+    # If we have a full path for the webapp directory, load scirismain.py from 
+    # that.
     if os.path.isabs(app.config['WEBAPP_DIR']):
         scirismainTarget = '%s%s%s' % (app.config['WEBAPP_DIR'], os.sep, 
             'main.py')
@@ -191,7 +192,30 @@ def makeapp(config=None):
     @verify_admin_request_decorator
     def specificUserRPC(username):
         return scirismain.doRPC('normal', 'user', request.method, username=username)
+
+    # Define the /api/project/procedure endpoint for normal RPCs.
+    @app.route('/api/project/procedure', methods=['POST'])
+    @report_exception_decorator
+    @login_required
+    def normalProjectRPC():
+        return scirismain.doRPC('normal', 'project', request.method)
     
+    # Define the /api/project/download endpoint for RPCs that download a file 
+    # to the client.
+    @app.route('/api/project/download', methods=['POST'])
+    @report_exception_decorator
+    @login_required
+    def downloadProjectRPC():
+        return scirismain.doRPC('download', 'project', request.method)
+    
+    # Define the /api/project/upload endpoint for RPCs that work from uploaded 
+    # files.
+    @app.route('/api/project/upload', methods=['POST'])
+    @report_exception_decorator
+    @login_required
+    def uploadProjectRPC():
+        return scirismain.doRPC('upload', 'project', request.method)  
+   
     # Define the /api/procedure endpoint for normal RPCs.
     @app.route('/api/procedure', methods=['POST'])
     @report_exception_decorator

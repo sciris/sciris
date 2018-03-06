@@ -1,7 +1,7 @@
 """
 user.py -- code related to Sciris user management
     
-Last update: 1/16/18 (gchadder3)
+Last update: 3/5/18 (gchadder3)
 """
 
 #
@@ -351,6 +351,20 @@ class UserDict(sobj.ScirisCollection):
 
         # Return the sorted users info.      
         return sortedUsersInfo  
+
+#
+# Other functions (mostly helpers for the RPCs)
+#
+
+def get_scirisdemo_user(name='_ScirisDemo'):    
+    # Get the user object matching (if any)...
+    theUser = theUserDict.getUserByUsername(name)
+    
+    # If there is a match, return the UID, otherwise return None.
+    if theUser is not None:
+        return theUser.get_id()
+    else:
+        return None
     
 #
 # RPC functions
@@ -647,16 +661,6 @@ def admin_reset_password(userName):
     # Return success.
     return 'success'
 
-def get_scirisdemo_user(name='_ScirisDemo'):    
-    # Get the user object matching (if any)...
-    theUser = theUserDict.getUserByUsername(name)
-    
-    # If there is a match, return the UID, otherwise return None.
-    if theUser is not None:
-        return theUser.get_id()
-    else:
-        return None
-    
 #
 # Script code
 #
