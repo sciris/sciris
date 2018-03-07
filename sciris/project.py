@@ -1,7 +1,7 @@
 """
 project.py -- code related to Sciris project management
     
-Last update: 3/5/18 (gchadder3)
+Last update: 3/6/18 (gchadder3)
 """
 
 #
@@ -9,6 +9,7 @@ Last update: 3/5/18 (gchadder3)
 #
 
 from flask import request
+from flask_login import current_user
 import datetime
 import dateutil
 import dateutil.tz
@@ -311,6 +312,19 @@ def get_scirisdemo_projects():
     output = {'projects': sortedprojectlist}
     return output
 
+def load_current_user_project_summaries():
+    """
+    Return project summaries for all projects the user has to the client.
+    """ 
+    
+    # Get the ProjectSO entries matching the user UID.
+    projectEntries = theProjCollection.getProjectEntriesByUser(current_user.get_id())
+    
+    # Grab a list of project summaries from the list of ProjectSO objects we 
+    # just got.
+    return {'projects': map(load_project_summary_from_project_record, 
+        projectEntries)}
+                
 #def load_project_record(project_id, raise_exception=True):
 #    """
 #    Return the project DataStore reocord, given a project UID.
@@ -398,18 +412,7 @@ def get_scirisdemo_projects():
 #    # Return a project summary from the accessed ProjectSO entry.
 #    return load_project_summary_from_project_record(project_entry)
 #
-#def load_current_user_project_summaries():
-#    """
-#    Return project summaries for all projects the user has to the client.
-#    """ 
-#    
-#    # Get the ProjectSO entries matching the user UID.
-#    projectEntries = theProjCollection.getProjectEntriesByUser(current_user.get_id())
-#    
-#    # Grab a list of project summaries from the list of ProjectSO objects we 
-#    # just got.
-#    return {'projects': map(load_project_summary_from_project_record, 
-#        projectEntries)}
+
 #
 #def load_all_project_summaries():
 #    """
