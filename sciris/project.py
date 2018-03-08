@@ -31,9 +31,18 @@ theProjCollection = None
 # Classes
 #
 
-class Project(sobj.ScirisObject):
+# At the moment (3/8/18) I'm unsure of whether this class should exist at all. 
+# A Sciris user will need to create a ProjectSO class in webapp/main.py to 
+# wrap whatever Project class or project-relevant data is specific to the app.
+# The question is whether this class here can be made into a useful collection 
+# of reusable code so that it is worth subclassing.  Another question is 
+# whether the more complicated or simpler version of the class below should 
+# be developed from.
+
+# more complicated, recent version...
+class ProjectSOBase(sobj.ScirisObject):
     """
-    A Sciris project.
+    Base class for a Sciris project record wrapper.
     
     Methods:
         __init__(name: str, ownerUID: UUID, theUID: UUID [None], 
@@ -207,7 +216,96 @@ class Project(sobj.ScirisObject):
 #        
 #        # Return the filename (not the full one).
 #        return self.theProject.name + ".prj" 
-       
+
+# simpler version of the class used in nutritiongui...
+#class ProjectSOBase(sobj.ScirisObject):
+#    """
+#    A ScirisObject-wrapped Optima Nutrition Project object.
+#    
+#    Methods:
+#        __init__(theProject: Project, ownerUID: UUID, theUID: UUID [None]): 
+#            void -- constructor
+#        loadFromCopy(otherObject): void -- assuming otherObject is another 
+#            object of our type, copy its contents to us (calls the 
+#            ScirisObject superclass version of this method also)   
+#        show(): void -- print the contents of the object
+#        getUserFrontEndRepr(): dict -- get a JSON-friendly dictionary 
+#            representation of the object state the front-end uses for non-
+#            admin purposes  
+#        saveAsFile(loadDir: str): str -- given a load dictionary, save the 
+#            project in a file there and return the file name
+#                    
+#    Attributes:
+#        theProject (Project) -- the actual Project object being wrapped
+#        ownerUID (UUID) -- the UID of the User that owns the Project
+#        
+#    Usage:
+#        >>> myProject = ProjectSO(theProject,uuid.UUID('12345678123456781234567812345678'))                      
+#    """
+#    
+#    def  __init__(self, theProject, ownerUID, theUID=None):
+#        # NOTE: theUID argument is ignored but kept here to not mess up
+#        # inheritance.
+#        
+#        # Make sure the argument is a valid UUID, converting a hex text to a
+#        # UUID object, if needed.        
+#        validUID = sobj.getValidUUID(ownerUID)
+#        
+#        # If we have a valid UUID...
+#        if validUID is not None:       
+#            # Set superclass parameters (passing in the actual Project's UID).
+#            super(ProjectSO, self).__init__(theProject.uid)
+#                   
+#            # Set the project to the Optima Project that is passed in.
+#            self.theProject = theProject
+#            
+#            # Set the owner (User) UID.
+#            self.ownerUID = validUID
+#        
+#    def loadFromCopy(self, otherObject):
+#        if type(otherObject) == type(self):
+#            # Do the superclass copying.
+#            super(ProjectSO, self).loadFromCopy(otherObject)
+#            
+#            # Copy the Project object itself.
+#            self.theProject = dcp(otherObject.theProject)
+#            
+#            # Copy the owner UID.
+#            self.ownerUID = otherObject.ownerUID
+#                
+#    def show(self):
+#        # Show superclass attributes.
+#        super(ProjectSO, self).show()  
+#        
+#        # Show the Optima defined display text for the project.
+#        print '---------------------'
+#        print 'Owner User UID: %s' % self.ownerUID.hex
+#        print 'Project Name: %s' % self.theProject.name
+#        print 'Spreadsheet Path: %s' % self.theProject.spreadsheetPath
+#        print 'Creation Time: %s' % self.theProject.createdTime
+#        print 'Update Time: %s' % self.theProject.updatedTime
+#        print 'Data Upload Time: %s' % self.theProject.dataUploadTime
+#            
+#    def getUserFrontEndRepr(self):
+#        objInfo = {
+#          'id': self.uid,
+#          'name': self.theProject.name,
+#          'userId': self.ownerUID,
+#          'spreadsheetPath': self.theProject.spreadsheetPath,
+#          'creationTime': self.theProject.createdTime,
+#          'updatedTime': self.theProject.updatedTime,
+#          'dataUploadTime': self.theProject.dataUploadTime,
+#          'simulationOK': (self.theProject.dataUploadTime is not None)
+#        }
+#        return objInfo
+#    
+#    def saveAsFile(self, loadDir):
+#        # Save the project in the file.
+#        self.theProject.saveToPrjFile(loadDir, saveResults=True)
+#        
+#        # Return the filename (not the full one).
+#        return self.theProject.name + ".prj"
+    
 class ProjectCollection(sobj.ScirisCollection):
     """
     A collection of Projects.
@@ -280,7 +378,7 @@ def load_project_record(project_id, raise_exception=True):
     Return the project DataStore reocord, given a project UID.
     """ 
     
-    # Load the matching Project object from the database.
+    # Load the matching ProjectSO object from the database.
     project_record = theProjCollection.getObjectByUID(project_id)
 
     # If we have no match, we may want to throw an exception.
@@ -319,20 +417,22 @@ def get_scirisdemo_projects():
     if request.endpoint != 'normalProjectRPC':
         return {'error': 'Unauthorized RPC'}
     
-    # Get the user UID for the _OptimaDemo user.
+    # Get the user UID for the _ScirisDemo user.
     user_id = user.get_scirisdemo_user()
    
-    # Get the Project entries matching the _OptimaLite user UID.
+    # Get the ProjectSO entries matching the _ScirisDemo user UID.
     projectEntries = theProjCollection.getProjectEntriesByUser(user_id)
 
-    # Get the projects for that user in a project list.
-    projectlist = map(load_project_summary_from_project_record, projectEntries)
+    # Collect the project summaries for that user into a list.
+    projectSummaryList = map(load_project_summary_from_project_record, 
+        projectEntries)
     
     # Sort the projects by the project name.
-    sortedprojectlist = sorted(projectlist, key=lambda proj: proj['project']['name']) # Sorts by project name
+    sortedSummaryList = sorted(projectSummaryList, 
+        key=lambda proj: proj['project']['name']) # Sorts by project name
     
-    # Return a dictionary holding the projects.
-    output = {'projects': sortedprojectlist}
+    # Return a dictionary holding the project summaries.
+    output = {'projects': sortedSummaryList}
     return output
 
 def load_current_user_project_summaries():
@@ -340,10 +440,10 @@ def load_current_user_project_summaries():
     Return project summaries for all projects the user has to the client.
     """ 
     
-    # Get the Project entries matching the user UID.
+    # Get the ProjectSO entries matching the user UID.
     projectEntries = theProjCollection.getProjectEntriesByUser(current_user.get_id())
     
-    # Grab a list of project summaries from the list of Project objects we 
+    # Grab a list of project summaries from the list of ProjectSO objects we 
     # just got.
     return {'projects': map(load_project_summary_from_project_record, 
         projectEntries)}
