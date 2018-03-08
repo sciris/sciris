@@ -1,7 +1,7 @@
 """
 project.py -- code related to Sciris project management
     
-Last update: 3/6/18 (gchadder3)
+Last update: 3/8/18 (gchadder3)
 """
 
 #
@@ -17,6 +17,7 @@ import uuid
 import scirisobjects as sobj
 import datastore as ds
 import user
+from exceptions import ProjectDoesNotExist, SpreadsheetDoesNotExist
 
 #
 # Globals
@@ -274,6 +275,22 @@ def now_utc():
     now = datetime.datetime.now(dateutil.tz.tzutc())
     return now
 
+def load_project_record(project_id, raise_exception=True):
+    """
+    Return the project DataStore reocord, given a project UID.
+    """ 
+    
+    # Load the matching Project object from the database.
+    project_record = theProjCollection.getObjectByUID(project_id)
+
+    # If we have no match, we may want to throw an exception.
+    if project_record is None:
+        if raise_exception:
+            raise ProjectDoesNotExist(id=project_id)
+            
+    # Return the Project object for the match (None if none found).
+    return project_record
+
 def load_project_summary_from_project_record(project_record):
     """
     Return the project summary, given the DataStore record.
@@ -285,6 +302,12 @@ def load_project_summary_from_project_record(project_record):
 #
 # RPC functions
 #
+
+def tester_func(project_id):
+    theProjRecord = load_project_record(project_id)
+    print theProjRecord
+    
+    return 'success'
 
 def get_scirisdemo_projects():
     """
@@ -317,30 +340,15 @@ def load_current_user_project_summaries():
     Return project summaries for all projects the user has to the client.
     """ 
     
-    # Get the ProjectSO entries matching the user UID.
+    # Get the Project entries matching the user UID.
     projectEntries = theProjCollection.getProjectEntriesByUser(current_user.get_id())
     
-    # Grab a list of project summaries from the list of ProjectSO objects we 
+    # Grab a list of project summaries from the list of Project objects we 
     # just got.
     return {'projects': map(load_project_summary_from_project_record, 
         projectEntries)}
                 
-#def load_project_record(project_id, raise_exception=True):
-#    """
-#    Return the project DataStore reocord, given a project UID.
-#    """ 
-#    
-#    # Load the matching ProjectSO object from the database.
-#    project_record = theProjCollection.getObjectByUID(project_id)
-#
-#    # If we have no match, we may want to throw an exception.
-#    if project_record is None:
-#        if raise_exception:
-#            raise ProjectDoesNotExist(id=project_id)
-#            
-#    # Return the ProjectSO object for the match (None if none found).
-#    return project_record
-#
+
 #def save_project(project, skip_result=False):
 #    """
 #    Given a Project object, wrap it in a new ProjectSO object and put this 
