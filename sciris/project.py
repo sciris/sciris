@@ -1,7 +1,7 @@
 """
 project.py -- code related to Sciris project management
     
-Last update: 3/8/18 (gchadder3)
+Last update: 3/9/18 (gchadder3)
 """
 
 #
@@ -416,22 +416,7 @@ def load_project_summary_from_project_record(project_record):
     
     # Return the built project summary.
     return project_record.getUserFrontEndRepr()  
-
-def delete_projects(project_ids):
-    """
-    Delete all of the projects with the passed in UIDs.
-    """ 
-    
-    # Loop over the project UIDs of the projects to be deleted...
-    for project_id in project_ids:
-        # Load the project record matching the UID of the project passed in.
-        record = load_project_record(project_id, raise_exception=True)
-        
-        # If a matching record is found, delete the object from the 
-        # ProjectCollection.
-        if record is not None:
-            theProjCollection.deleteObjectByUID(project_id)
-            
+          
 def get_unique_name(name, other_names=None):
     """
     Given a name and a list of other names, find a replacement to the name 
@@ -441,7 +426,7 @@ def get_unique_name(name, other_names=None):
     # If no list of other_names is passed in, load up a list with all of the 
     # names from the project summaries.
     if other_names is None:
-        other_names = [p['name'] for p in load_current_user_project_summaries()]
+        other_names = [p['project']['name'] for p in load_current_user_project_summaries()['projects']]
       
     # Start with the passed in name.
     i = 0
@@ -545,30 +530,22 @@ def load_all_project_summaries():
     # just got.
     return {'projects': map(load_project_summary_from_project_record, 
         projectEntries)}
-
-#def download_data_spreadsheet(project_id):
-#    """
-#    Get the spreadsheet file in the Nutrition Project with the passed in UID.
-#    """
-#    
-#    # Check (for security purposes) that the function is being called by the 
-#    # correct endpoint, and if not, fail.
-#    if request.endpoint != 'downloadProjectRPC':
-#        return {'error': 'Unauthorized RPC'}  
-#    
-#    # Load the project with the matching UID.
-#    project = load_project(project_id, raise_exception=True)
-#    
-#    # Get the file name directly from from the spreadsheet path saved in the 
-#    # Project.
-#    server_filename = project.spreadsheetPath
-#    
-#    # Display the call information.
-#    print(">> download_data_spreadsheet %s" % (server_filename))
-#    
-#    # Return the full filename.
-#    return server_filename
-#
+    
+def delete_projects(project_ids):
+    """
+    Delete all of the projects with the passed in UIDs.
+    """ 
+    
+    # Loop over the project UIDs of the projects to be deleted...
+    for project_id in project_ids:
+        # Load the project record matching the UID of the project passed in.
+        record = load_project_record(project_id, raise_exception=True)
+        
+        # If a matching record is found, delete the object from the 
+        # ProjectCollection.
+        if record is not None:
+            theProjCollection.deleteObjectByUID(project_id)
+   
 #def download_project(project_id):
 #    """
 #    For the passed in project UID, get the Project on the server, save it in a 
@@ -595,31 +572,6 @@ def load_all_project_summaries():
 #    # Return the full filename.
 #    return server_filename
 #
-#def download_project_with_result(project_id):
-#    """
-#    For the passed in project UID, get the Project on the server, save it in a 
-#    file, and pass the full path of this file back.
-#    """
-#    
-#    # Check (for security purposes) that the function is being called by the 
-#    # correct endpoint, and if not, fail.
-#    if request.endpoint != 'downloadProjectRPC':
-#        return {'error': 'Unauthorized RPC'}  
-#    
-#    # Load the project with the matching UID.
-#    theProj = load_project(project_id, raise_exception=True)
-#            
-#    # Use the uploads directory to put the file in.
-#    dirname = ds.uploadsPath
-#    
-#    # Save the project to the uploads directory file, including results.       
-#    server_filename = theProj.saveToPrjFile(dirPath=dirname, saveResults=True)
-#    
-#    # Display the call information.
-#    print(">> download_project_with_result %s" % (server_filename))
-#    
-#    # Return the full filename.
-#    return server_filename
 
 #def load_zip_of_prj_files(project_ids):
 #    """
