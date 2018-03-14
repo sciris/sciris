@@ -1,7 +1,7 @@
 """
 project.py -- code related to Sciris project management
     
-Last update: 3/9/18 (gchadder3)
+Last update: 3/14/18 (gchadder3)
 """
 
 #
@@ -535,6 +535,11 @@ def delete_projects(project_ids):
     """
     Delete all of the projects with the passed in UIDs.
     """ 
+    
+    # Check (for security purposes) that the function is being called by the 
+    # correct endpoint, and if not, fail.
+    if request.endpoint != 'normalProjectRPC':
+        return {'error': 'Unauthorized RPC'}   
     
     # Loop over the project UIDs of the projects to be deleted...
     for project_id in project_ids:
