@@ -1,2 +1,2 @@
-version = '0.1'
-versiondate = '2018-02-26'
+version = '0.2'
+versiondate = '2018-03-18'
