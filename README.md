@@ -20,7 +20,7 @@ together.
 Make sure that you have `npm` (included in Node.js installation) and
 `git` installed on your machine.  
 
-Install Anaconda Python (for Python 2.7)
+Install [Anaconda Python (for Python 2.7)](https://www.anaconda.com/download/)
 
 In your Python setup, you also need to have the following packages (instructions
 in parentheses show how to install with Anaconda Python environment already
