@@ -7,7 +7,7 @@ except: import pickle
 from gzip import GzipFile
 from cStringIO import StringIO
 from contextlib import closing
-from hptool import makefilepath, odict, HPpath, dataframe
+from sciris.utils import makefilepath, odict, dataframe
 from xlrd import open_workbook
 
 
