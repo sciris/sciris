@@ -1,7 +1,7 @@
 """
 project.py -- code related to Sciris project management
     
-Last update: 3/14/18 (gchadder3)
+Last update: 3/19/18 (gchadder3)
 """
 
 #
@@ -17,6 +17,7 @@ import uuid
 import scirisobjects as sobj
 import datastore as ds
 import user
+import os
 from exceptions import ProjectDoesNotExist, SpreadsheetDoesNotExist
 
 #
@@ -551,32 +552,38 @@ def delete_projects(project_ids):
         if record is not None:
             theProjCollection.deleteObjectByUID(project_id)
    
-#def download_project(project_id):
-#    """
-#    For the passed in project UID, get the Project on the server, save it in a 
-#    file, minus results, and pass the full path of this file back.
-#    """
-#    
-#    # Check (for security purposes) that the function is being called by the 
-#    # correct endpoint, and if not, fail.
-#    if request.endpoint != 'downloadProjectRPC':
-#        return {'error': 'Unauthorized RPC'}   
-#    
-#    # Load the project with the matching UID.
-#    theProj = load_project(project_id, raise_exception=True)
-#    
-#    # Use the uploads directory to put the file in.
-#    dirname = ds.uploadsPath
-#    
-#    # Save the project to the uploads directory file, leaving out results.
-#    server_filename = theProj.saveToPrjFile(dirPath=dirname, saveResults=False)
-#    
-#    # Display the call information.
-#    print(">> download_project %s" % (server_filename))
-#    
-#    # Return the full filename.
-#    return server_filename
-#
+def download_project(project_id):
+    """
+    For the passed in project UID, get the Project on the server, save it in a 
+    file, minus results, and pass the full path of this file back.
+    """
+    
+    # Check (for security purposes) that the function is being called by the 
+    # correct endpoint, and if not, fail.
+    if request.endpoint != 'downloadProjectRPC':
+        return {'error': 'Unauthorized RPC'}   
+    
+    # Load the project with the matching UID.
+    theProj = load_project(project_id, raise_exception=True)
+    
+    # Use the uploads directory to put the file in.
+    dirname = ds.uploadsPath
+    
+    # Create a filename containing the project name followed by a .prj 
+    # suffix.
+    fileName = '%s.prj' % theProj.name
+        
+    # Generate the full file name with path.
+    fullFileName = '%s%s%s' % (dirname, os.sep, fileName)
+        
+    # Write the object to a Gzip string pickle file.
+    ds.objectToGzipStringPickleFile(fullFileName, theProj)
+    
+    # Display the call information.
+    print(">> download_project %s" % (fullFileName))
+    
+    # Return the full filename.
+    return fullFileName
 
 #def load_zip_of_prj_files(project_ids):
 #    """
