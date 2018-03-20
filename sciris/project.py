@@ -1,7 +1,7 @@
 """
 project.py -- code related to Sciris project management
     
-Last update: 3/19/18 (gchadder3)
+Last update: 3/20/18 (gchadder3)
 """
 
 #
@@ -18,6 +18,7 @@ import scirisobjects as sobj
 import datastore as ds
 import user
 import os
+from zipfile import ZipFile
 from exceptions import ProjectDoesNotExist, SpreadsheetDoesNotExist
 
 #
@@ -586,34 +587,39 @@ def download_project(project_id):
     # Return the full filename.
     return fullFileName
 
-#def load_zip_of_prj_files(project_ids):
-#    """
-#    Given a list of project UIDs, make a .zip file containing all of these 
-#    projects as .prj files, and return the full path to this file.
-#    """
-#    
-#    # Use the uploads directory to put the file in.
-#    dirname = ds.uploadsPath
-#
-#    # Build a list of ProjectSO objects for each of the selected projects, 
-#    # saving each of them in separate .prj files.
-#    prjs = [load_project_record(id).saveAsFile(dirname) for id in project_ids]
-#    
-#    # Make the zip file name and the full server file path version of the same..
-#    zip_fname = '{}.zip'.format(uuid.uuid4())
-#    server_zip_fname = os.path.join(dirname, zip_fname)
-#    
-#    # Create the zip file, putting all of the .prj files in a projects 
-#    # directory.
-#    with ZipFile(server_zip_fname, 'w') as zipfile:
-#        for prj in prjs:
-#            zipfile.write(os.path.join(dirname, prj), 'projects/{}'.format(prj))
-#            
-#    # Display the call information.
-#    print(">> load_zip_of_prj_files %s" % (server_zip_fname))
-#
-#    # Return the server file name.
-#    return server_zip_fname
+def load_zip_of_prj_files(project_ids):
+    """
+    Given a list of project UIDs, make a .zip file containing all of these 
+    projects as .prj files, and return the full path to this file.
+    """
+    
+    # Check (for security purposes) that the function is being called by the 
+    # correct endpoint, and if not, fail.
+    if request.endpoint != 'downloadProjectRPC':
+        return {'error': 'Unauthorized RPC'}   
+    
+    # Use the uploads directory to put the file in.
+    dirname = ds.uploadsPath
+
+    # Build a list of ProjectSO objects for each of the selected projects, 
+    # saving each of them in separate .prj files.
+    prjs = [load_project_record(id).saveAsFile(dirname) for id in project_ids]
+    
+    # Make the zip file name and the full server file path version of the same..
+    zip_fname = '{}.zip'.format(uuid.uuid4())
+    server_zip_fname = os.path.join(dirname, zip_fname)
+    
+    # Create the zip file, putting all of the .prj files in a projects 
+    # directory.
+    with ZipFile(server_zip_fname, 'w') as zipfile:
+        for prj in prjs:
+            zipfile.write(os.path.join(dirname, prj), 'projects/{}'.format(prj))
+            
+    # Display the call information.
+    print(">> load_zip_of_prj_files %s" % (server_zip_fname))
+
+    # Return the server file name.
+    return server_zip_fname
 
 #
 # Script code
