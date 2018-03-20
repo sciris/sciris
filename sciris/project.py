@@ -427,7 +427,7 @@ def get_unique_name(name, other_names=None):
     # If no list of other_names is passed in, load up a list with all of the 
     # names from the project summaries.
     if other_names is None:
-        other_names = [p['project']['name'] for p in load_current_user_project_summaries()['projects']]
+        other_names = [p['project']['name'] for p in load_current_user_project_summaries(checkEndpoint=False)['projects']]
       
     # Start with the passed in name.
     i = 0
@@ -496,15 +496,16 @@ def load_project_summary(project_id):
     # Return a project summary from the accessed ProjectSO entry.
     return load_project_summary_from_project_record(project_entry)
 
-def load_current_user_project_summaries():
+def load_current_user_project_summaries(checkEndpoint=True):
     """
     Return project summaries for all projects the user has to the client.
     """ 
     
     # Check (for security purposes) that the function is being called by the 
     # correct endpoint, and if not, fail.
-    if request.endpoint != 'normalProjectRPC':
-        return {'error': 'Unauthorized RPC'}
+    if checkEndpoint:
+        if request.endpoint != 'normalProjectRPC':
+            return {'error': 'Unauthorized RPC'}
     
     # Get the ProjectSO entries matching the user UID.
     projectEntries = theProjCollection.getProjectEntriesByUser(current_user.get_id())
