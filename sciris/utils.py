@@ -1358,31 +1358,35 @@ def runcommand(command, printinput=False, printoutput=False):
 
 
 
-def gitinfo(die=False):
+def gitinfo(filepath=None, die=False, hashlen=7):
     ''' Try to extract git information based on the file structure '''
+    from os import path, sep # Path and file separator
+    if filepath is None: filepath = __file__
     try: # This whole thing could fail, you know!
-        from os import path, sep # Path and file separator
-        rootdir = path.abspath(path.dirname(__file__)) # e.g. /user/username/optima/optima
+        rootdir = path.abspath(filepath) # e.g. /user/username/optima/optima
         while len(rootdir): # Keep going as long as there's something left to go
             gitdir = rootdir+sep+'.git' # look for the git directory in the current directory
             if path.isdir(gitdir): break # It's found! terminate
             else: rootdir = sep.join(rootdir.split(sep)[:-1]) # Remove the last directory and keep looking
         headstrip = 'ref: ref'+sep+'heads'+sep # Header to strip off...hope this is generalizable!
         with open(gitdir+sep+'HEAD') as f: gitbranch = f.read()[len(headstrip)+1:].strip() # Read git branch name
-        with open(gitdir+sep+'refs'+sep+'heads'+sep+gitbranch) as f: gitversion = f.read().strip() # Read git commit
-    except: 
+        with open(gitdir+sep+'refs'+sep+'heads'+sep+gitbranch) as f: githash = f.read().strip() # Read git commit
+    except Exception as E1: 
         try: # Try using git-python instead -- most users probably won't have
             import git
+            rootdir = path.abspath(path.dirname(filepath)) # e.g. /user/username/optima/optima
             repo = git.Repo(path=rootdir, search_parent_directories=True)
             gitbranch = flexstr(repo.active_branch.name) # Just make sure it's a string
-            gitversion = flexstr(repo.head.object.hexsha) # Unicode by default
-        except: # Failure? Give up
+            githash = flexstr(repo.head.object.hexsha) # Unicode by default
+        except Exception as E2: # Failure? Give up
             gitbranch = 'Git branch information not retrivable'
-            gitversion = 'Git version information not retrivable'
+            githash = 'Git hash information not retrivable'
             if die:
-                errormsg = 'Could not extract git info; please check paths or install git-python'
+                errormsg = 'Could not extract git info; please check paths or install git-python:\n%s\n%s' % (repr(E1), repr(E2))
                 raise Exception(errormsg)
-    return gitbranch, gitversion
+    if len(githash)>hashlen: githash = githash[:hashlen]
+    output = {'branch':gitbranch, 'hash':githash}
+    return output
 
 
 
