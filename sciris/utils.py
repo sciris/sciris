@@ -2,8 +2,8 @@
 ### IMPORTS FROM OTHER LIBRARIES
 ##############################################################################
 
-from uuid import uuid4 as uuid
-from copy import deepcopy as dcp
+from uuid import uuid4 as uuid # analysis:ignore
+from copy import deepcopy as dcp  # analysis:ignore
 
 
 
@@ -1362,30 +1362,34 @@ def gitinfo(filepath=None, die=False, hashlen=7):
     ''' Try to extract git information based on the file structure '''
     from os import path, sep # Path and file separator
     if filepath is None: filepath = __file__
-    try: # This whole thing could fail, you know!
+    try: # First try importing git-python
+        import git
         rootdir = path.abspath(filepath) # e.g. /user/username/optima/optima
-        while len(rootdir): # Keep going as long as there's something left to go
-            gitdir = rootdir+sep+'.git' # look for the git directory in the current directory
-            if path.isdir(gitdir): break # It's found! terminate
-            else: rootdir = sep.join(rootdir.split(sep)[:-1]) # Remove the last directory and keep looking
-        headstrip = 'ref: ref'+sep+'heads'+sep # Header to strip off...hope this is generalizable!
-        with open(gitdir+sep+'HEAD') as f: gitbranch = f.read()[len(headstrip)+1:].strip() # Read git branch name
-        with open(gitdir+sep+'refs'+sep+'heads'+sep+gitbranch) as f: githash = f.read().strip() # Read git commit
+        repo = git.Repo(path=rootdir, search_parent_directories=True)
+        gitbranch = flexstr(repo.active_branch.name) # Just make sure it's a string
+        githash = flexstr(repo.head.object.hexsha) # Unicode by default
+        gitdate = flexstr(repo.head.object.authored_datetime.isoformat())
     except Exception as E1: 
-        try: # Try using git-python instead -- most users probably won't have
-            import git
-            rootdir = path.abspath(path.dirname(filepath)) # e.g. /user/username/optima/optima
-            repo = git.Repo(path=rootdir, search_parent_directories=True)
-            gitbranch = flexstr(repo.active_branch.name) # Just make sure it's a string
-            githash = flexstr(repo.head.object.hexsha) # Unicode by default
+        try: # If that fails, try the command-line method
+            rootdir = path.abspath(filepath) # e.g. /user/username/optima/optima
+            while len(rootdir): # Keep going as long as there's something left to go
+                gitdir = rootdir+sep+'.git' # look for the git directory in the current directory
+                if path.isdir(gitdir): break # It's found! terminate
+                else: rootdir = sep.join(rootdir.split(sep)[:-1]) # Remove the last directory and keep looking
+            headstrip = 'ref: ref'+sep+'heads'+sep # Header to strip off...hope this is generalizable!
+            with open(gitdir+sep+'HEAD') as f: gitbranch = f.read()[len(headstrip)+1:].strip() # Read git branch name
+            with open(gitdir+sep+'refs'+sep+'heads'+sep+gitbranch) as f: githash = f.read().strip() # Read git commit
+            try:    gitdate = flexstr(runcommand('cd %s; git show -s --format=%%ci' % gitdir).rstrip())
+            except: gitdate = 'Not available'
         except Exception as E2: # Failure? Give up
             gitbranch = 'Git branch information not retrivable'
             githash = 'Git hash information not retrivable'
             if die:
                 errormsg = 'Could not extract git info; please check paths or install git-python:\n%s\n%s' % (repr(E1), repr(E2))
                 raise Exception(errormsg)
-    if len(githash)>hashlen: githash = githash[:hashlen]
-    output = {'branch':gitbranch, 'hash':githash}
+    
+    if len(githash)>hashlen: githash = githash[:hashlen] # Trim hash to short length
+    output = {'branch':gitbranch, 'hash':githash, 'date':gitdate} # Assemble outupt
     return output
 
 
@@ -1603,7 +1607,7 @@ def commaticks(fig=None, ax=None, axis='y'):
 from collections import OrderedDict
 from numpy import array
 from numbers import Number
-from copy import deepcopy as dcp
+from copy import deepcopy as dcp # analysis:ignore
 
 class odict(OrderedDict):
     '''
@@ -2225,7 +2229,7 @@ class dataframe(object):
     A simple data frame, based on simple lists, for simply storing simple data.
     
     Example usage:
-        a = dataframe(cols=['x','y'],data=[[1238,2],[384,5],[666,7]) # Create data frame
+        a = dataframe(cols=['x','y'],data=[[1238,2],[384,5],[666,7]]) # Create data frame
         print a['x'] # Print out a column
         print a[0] # Print out a row
         print a[0,'x'] # Print out an element
@@ -2332,8 +2336,9 @@ class dataframe(object):
         elif isinstance(col, basestring): output = self.cols.index(col) # Convert to index
         else: output = col
         return output
-        
-    def __getitem__(self, key):
+    
+    def __getitem__(self, key=None):
+        ''' Simple method for returning; see self.get() for a version based on col and row '''
         if isinstance(key, basestring):
             colindex = self.cols.index(key)
             output = self.data[:,colindex]
@@ -2384,6 +2389,27 @@ class dataframe(object):
                 raise Exception(errormsg)
         return None
     
+    def get(self, cols=None, rows=None):
+        '''
+        More complicated way of getting data from a dataframe; example:
+        df = dataframe(cols=['x','y','z'],data=[[1238,2,-1],[384,5,-2],[666,7,-3]]) # Create data frame
+        df.get(cols=['x','z'], rows=[0,2])
+        '''
+        if cols is None:
+            colindices = Ellipsis
+        else:
+            colindices = []
+            for col in promotetolist(cols):
+                colindices.append(self._sanitizecol(col))
+        if rows is None:
+            rowindices = Ellipsis
+        else:
+            rowindices = rows
+        
+        output = self.data[:,colindices][rowindices,:] # Split up so can handle non-consecutive entries in either
+        if output.size == 1: output = output[0] # If it's a single element, return the value rather than the array
+        return output
+   
     def pop(self, key, returnval=True):
         ''' Remove a row from the data frame '''
         rowindex = int(key)
@@ -2458,9 +2484,9 @@ class dataframe(object):
         rowdict = dict(zip(self.cols, row))
         return rowdict
     
-    def getrow(self, key=None, col=None, default=None, closest=False, die=False, asdict=False):
+    def findrow(self, key=None, col=None, default=None, closest=False, die=False, asdict=False):
         '''
-        Get a row by value.
+        Return a row by searching for a matching value.
         
         Arguments:
             key = the value to look for
@@ -2472,10 +2498,10 @@ class dataframe(object):
         
         Example:
             df = dataframe(cols=['year','val'],data=[[2016,0.3],[2017,0.5]])
-            df.getrow(2016) # returns array([2016, 0.3], dtype=object)
-            df.getrow(2013) # returns None, or exception if die is True
-            df.getrow(2013, closest=True) # returns array([2016, 0.3], dtype=object)
-            df.getrow(2016, asdict=True) # returns {'year':2016, 'val':0.3}
+            df.findrow(2016) # returns array([2016, 0.3], dtype=object)
+            df.findrow(2013) # returns None, or exception if die is True
+            df.findrow(2013, closest=True) # returns array([2016, 0.3], dtype=object)
+            df.findrow(2016, asdict=True) # returns {'year':2016, 'val':0.3}
         '''
         if not closest: # Usual case, get 
             index = self._rowindex(key=key, col=col, die=(die and default is None))
@@ -2505,6 +2531,25 @@ class dataframe(object):
         if reverse: sortorder = array(list(reversed(sortorder)))
         self.data = self.data[sortorder,:]
         return None
+        
+    def jsonify(self, cols=None, rows=None, header=None):
+        ''' Export the dataframe to a JSON-compatible format '''
+        
+        # Handle input arguments
+        if cols   is None: cols   = self.cols # Use all columns by default
+        if rows   is None: rows   = list(range(self.nrows())) # Use all rows by default
+        if header is None: header = True # Include headers
+        
+        # Handle output
+        output = []
+        if header: output.append(cols)
+        for r in rows:
+            thisrow = []
+            for col in cols:
+                datum = self.get(cols=col,rows=r)
+                thisrow.append(datum)
+            output.append(thisrow)
+        return output
         
 
 
