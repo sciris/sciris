@@ -14,15 +14,13 @@ for building web applications based on Vue.js and Python.
 
 Note: if you're a developer, you'll likely already have some/all of these packages installed.
 
-0. Install  [Git](https://git-scm.com/downloads) (version control)
+1. Install [NodeJS](https://nodejs.org/en/download/) (JavaScript manager)
 
-0. Install [NodeJS](https://nodejs.org/en/download/) (JavaScript manager)
+2. Install [Redis](https://redis.io/topics/quickstart) (database)
 
-0. Install [Redis](https://redis.io/topics/quickstart) (database)
+3. Install [Anaconda Python](https://www.anaconda.com/download/) for Python 2.7 (simulation engine)
 
-0. Install [Anaconda Python](https://www.anaconda.com/download/) for Python 2.7 (simulation engine)
-
-0. Once you've done all that, to install, simply run `python setup.py develop` in the root folder. This should install Sciris as an importable Python module.
+4. Once you've done all that, to install, simply run `python setup.py develop` in the root folder. This should install Sciris as an importable Python module.
 
 To test, open up a new Python window and type `import sciris`. It should say something like `Sciris v0.3 (2018-03-23) loaded`.
 
@@ -33,7 +31,6 @@ If you have problems, please consult the rest of this guide for more information
 #### Package and library dependencies
 
 Make sure that you have `npm` (included in Node.js installation) and `git` installed on your machine.  
-
 First, install [Anaconda Python (for Python 2.7)](https://www.anaconda.com/download/). In your Python setup, you also need to have the following packages (instructions in parentheses show how to install with Anaconda Python environment already installed). **Note**, these should all be installed automatically when you type `python setup.py develop`.
 * numpy (already installed under Anaconda)
 * matplotlib (already installed under Anaconda)
@@ -70,13 +67,13 @@ database.
 
 ### Installing on Linux
 
-0. Install Git: `sudo apt install git`
+1. Install Git: `sudo apt install git`
 
-0. Install NodeJS: `sudo apt install nodejs`
+2. Install NodeJS: `sudo apt install nodejs`
 
-0. Install Redis: https://redis.io/topics/quickstart
+3. Install Redis: https://redis.io/topics/quickstart
 
-0. Install [Anaconda Python](https://www.anaconda.com/download/) for Python 2.7 (not 3.4!), and make sure it's the default Python, e.g.
+4. Install [Anaconda Python](https://www.anaconda.com/download/) for Python 2.7 (not 3.4!), and make sure it's the default Python, e.g.
 ```
 your_computer:~> python
 Python 2.7.12 |Anaconda 2.1.0 (64-bit)| (default, Jul  2 2016, 17:42:40)
@@ -86,11 +83,11 @@ Anaconda is brought to you by Continuum Analytics.
 Please check out: http://continuum.io/thanks and https://anaconda.org
 ```
 
-0. Clone the Sciris repository: `git clone http://github.com/optimamodel/sciris.git`
+5. Clone the Sciris repository: `git clone http://github.com/optimamodel/sciris.git`
 
-0. Run `python setup.py develop` in the root Sciris folder.
+6. Run `python setup.py develop` in the root Sciris folder.
 
-0. To test, open up a new Python window and type `import sciris`. It should say something like
+7. To test, open up a new Python window and type `import sciris`. It should say something like
 ```
 >>> import sciris
 Sciris v0.3 (2018-03-23) loaded for local use (display=:0)
