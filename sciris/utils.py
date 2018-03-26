@@ -1379,11 +1379,12 @@ def gitinfo(filepath=None, die=False, hashlen=7):
             headstrip = 'ref: ref'+sep+'heads'+sep # Header to strip off...hope this is generalizable!
             with open(gitdir+sep+'HEAD') as f: gitbranch = f.read()[len(headstrip)+1:].strip() # Read git branch name
             with open(gitdir+sep+'refs'+sep+'heads'+sep+gitbranch) as f: githash = f.read().strip() # Read git commit
-            try:    gitdate = flexstr(runcommand('cd %s; git show -s --format=%%ci' % gitdir).rstrip())
-            except: gitdate = 'Not available'
+            try:    gitdate = flexstr(runcommand('cd %s; git show -s --format=%%ci' % gitdir).rstrip()) # Even more likely to fail
+            except: gitdate = 'Git date N/A'
         except Exception as E2: # Failure? Give up
-            gitbranch = 'Git branch information not retrivable'
-            githash = 'Git hash information not retrivable'
+            gitbranch = 'Git branch N/A'
+            githash = 'Git hash N/A'
+            gitdate = 'Git date N/A'
             if die:
                 errormsg = 'Could not extract git info; please check paths or install git-python:\n%s\n%s' % (repr(E1), repr(E2))
                 raise Exception(errormsg)
