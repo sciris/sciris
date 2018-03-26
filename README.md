@@ -3,28 +3,38 @@
 The Sciris framework is intended to be a flexible open source framework
 for building web applications based on Vue.js and Python.
 
-Presently we are developing prototypes for using Vue and Python
-together.
-
 ## Is Sciris ready yet?
 
 **No.** We expect a first version of Sciris to be ready by September 2018. If you would like us to let you know when it's ready for use, please email info@sciris.org.
 
 
-## Installation and Run Instructions
+## Installation and run instructions
 
-### Installing on Windows Systems
+### Quick start guide
 
-#### Package and Library Dependencies
+Note: if you're a developer, you'll likely already have some/all of these packages installed.
 
-Make sure that you have `npm` (included in Node.js installation) and
-`git` installed on your machine.  
+0. Install  [Git](https://git-scm.com/downloads) (version control)
 
-Install [Anaconda Python (for Python 2.7)](https://www.anaconda.com/download/)
+0. Install [NodeJS](https://nodejs.org/en/download/) (JavaScript manager)
 
-In your Python setup, you also need to have the following packages (instructions
-in parentheses show how to install with Anaconda Python environment already
-installed):
+0. Install [Redis](https://redis.io/topics/quickstart) (database)
+
+0. Install [Anaconda Python](https://www.anaconda.com/download/) for Python 2.7 (simulation engine)
+
+0. Once you've done all that, to install, simply run `python setup.py develop` in the root folder. This should install Sciris as an importable Python module.
+
+To test, open up a new Python window and type `import sciris`. It should say something like `Sciris v0.3 (2018-03-23) loaded`.
+
+If you have problems, please consult the rest of this guide for more information.
+
+### Installing on Windows
+
+#### Package and library dependencies
+
+Make sure that you have `npm` (included in Node.js installation) and `git` installed on your machine.  
+
+First, install [Anaconda Python (for Python 2.7)](https://www.anaconda.com/download/). In your Python setup, you also need to have the following packages (instructions in parentheses show how to install with Anaconda Python environment already installed). **Note**, these should all be installed automatically when you type `python setup.py develop`.
 * numpy (already installed under Anaconda)
 * matplotlib (already installed under Anaconda)
 * flask (already installed under Anaconda)
@@ -33,7 +43,7 @@ installed):
 * mpld3 (`conda install mpld3`)
 * redis (`pip install redis`)
 
-#### Database Dependencies
+#### Database dependencies
 
 If you use Redis as your DataStore mode, you will need to have Redis installed
 on your computer (as a service).  Redis does not directly support Windows,
@@ -58,71 +68,36 @@ database.  To investigate what keys are in, for example, database #2,
 while you are within `redis-cli`, you can type `select 2` to switch to that
 database.
 
-#### Setup of Config File
+### Installing on Linux
 
-`sessionmanager\config.py` is initially set up as a copy of `config_v2.py`,
-which points to a second version of both the client and webapp.  You can
-run the initial version by copying `config_v1.py` over `config.py`.
+0. Install Git: `sudo apt install git`
 
-#### Initial Build of the Client
+0. Install NodeJS: `sudo apt install nodejs`
 
-After cloning or pulling this repo, use the following steps to do the
-initial build of the app:
-* `cd vueinterface_v2` (`cd vueinterface` for the first version of the app)
-* `npm install` builds the Node modules the app uses.  This step can take
-a few minutes to complete.
-* `npm run build` generates the build version of the app.
+0. Install Redis: https://redis.io/topics/quickstart
 
-#### Running Using the Build Version
+0. Install [Anaconda Python](https://www.anaconda.com/download/) for Python 2.7 (not 3.4!), and make sure it's the default Python, e.g.
+```
+your_computer:~> python
+Python 2.7.12 |Anaconda 2.1.0 (64-bit)| (default, Jul  2 2016, 17:42:40)
+[GCC 4.4.7 20120313 (Red Hat 4.4.7-1)] on linux2
+Type "help", "copyright", "credits" or "license" for more information.
+Anaconda is brought to you by Continuum Analytics.
+Please check out: http://continuum.io/thanks and https://anaconda.org
+```
 
-* `cd bin`
-* `win_buildrun` brings up the server hosting both the
-client / UI and server-side code.
-* Now you can go into your browser and navigate to http://localhost:8080.
-You may possibly need to refresh/reload, but you should see the UI
-when the app is up.
-* If you make changes to the Python `sessionmanager` or `scirismodel` code,
-the Twisted/Flask server will automatically restart so changes can be
-reflected in the app behavior.
-* Use `Ctrl-C` to end the Twisted session, taking down the server. (You can
-answer `n` to the "Terminate batch job" query.)
+0. Clone the Sciris repository: `git clone http://github.com/optimamodel/sciris.git`
 
-#### Running Using the Webpack Development Server
+0. Run `python setup.py develop` in the root Sciris folder.
 
-The process for using the Webpack dev server (which has the benefit of
-allowing hot-reloading of client files when you edit them during development)
-is somewhat different: it does not use Twisted but instead sets up the Flask
-server directly on Port 5000, and the Webpack dev server sets up a server
-for the Vue web-pages on Port 8080, and also sets up a proxy to send the
-RPC requests to Port 5000.  To set this up, in a first terminal window, do
-the following:
-* `cd bin`
-* `win_devserver` starts the Flask server in Port 5000.
-* `Ctrl-C` closes down the Flask server when you are finished using the dev
-server site. (You can answer `n` to the "Terminate batch job" query.)
+0. To test, open up a new Python window and type `import sciris`. It should say something like
+```
+>>> import sciris
+Sciris v0.3 (2018-03-23) loaded for local use (display=:0)
+>>>
+```
 
-With the first window running the Flask server, in a second terminal window,
-do the following:
-* `cd bin`
-* `win_devclient` compiles the code and brings up the Webpack dev server and
-automatically opens a browser window pointed to the web page.
-* Presently, changes to `sessionmanager` or `scirismodel` code will not
-cause auto-reloading when the dev-server is used, but potentially this will
-change in the future.
-* `Ctrl-C` shuts down the dev server and proxy when you are finished with
-the web site.  (You can answer `n` to the "Terminate batch job" query.)
-
-#### Rebuilding the Build Version After Development Changes
-
-* `cd bin`
-* `win_build` generates the (new) build version of the app.
-
-### Installing on Linux and Mac Systems
-
-Most of the above instructions translate to Linux/Mac systems -- stay tuned for further documentation.
-
-
-## Vue/Python Code Examples
+## Vue/Python code examples
 
 In the `examples` and `vue_proto_webapps` directories are contained a number
 of working examples of web applications combining Vue, Flask, and Twisted.
