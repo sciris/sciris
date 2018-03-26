@@ -95,6 +95,37 @@ Sciris v0.3 (2018-03-23) loaded for local use (display=:0)
 >>>
 ```
 
+### Installing on Mac
+
+**WARNING, work in progress!**
+
+1. Install Git: `sudo apt install git`
+
+2. Install NodeJS: `sudo apt install nodejs`
+
+3. Install Redis: https://redis.io/topics/quickstart
+
+4. Install [Anaconda Python](https://www.anaconda.com/download/) for Python 2.7 (not 3.4!), and make sure it's the default Python, e.g.
+```
+your_computer:~> python
+Python 2.7.12 |Anaconda 2.1.0 (64-bit)| (default, Jul  2 2016, 17:42:40)
+[GCC 4.4.7 20120313 (Red Hat 4.4.7-1)] on linux2
+Type "help", "copyright", "credits" or "license" for more information.
+Anaconda is brought to you by Continuum Analytics.
+Please check out: http://continuum.io/thanks and https://anaconda.org
+```
+
+5. Clone the Sciris repository: `git clone http://github.com/optimamodel/sciris.git`
+
+6. Run `python setup.py develop` in the root Sciris folder.
+
+7. To test, open up a new Python window and type `import sciris`. It should say something like
+```
+>>> import sciris
+Sciris v0.3 (2018-03-23) loaded for local use (display=:0)
+>>>
+```
+
 ## Vue/Python code examples
 
 In the `examples` and `vue_proto_webapps` directories are contained a number
