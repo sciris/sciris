@@ -1,7 +1,8 @@
-# Sciris Framework for Scientific Web Application Development
+# Welcome to Sciris
 
-The Sciris framework is intended to be a flexible open source framework
-for building web applications based on Vue.js and Python.
+## What is Sciris?
+
+Glad you asked! Sciris is a flexible open source framework for building scientific web applications using Python and JavaScript.
 
 ## Is Sciris ready yet?
 
