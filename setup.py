@@ -32,7 +32,7 @@ setup(
     name='sciris',
     version=version,
     author='Cliff Kerr, George Chadderdon',
-    author_email='info@optimamodel.com',
+    author_email='info@sciris.org',
     description='Scientific webapps for Python',
     url='http://github.com/optimamodel/sciris',
     keywords=['scientific','webapp', 'framework'],
