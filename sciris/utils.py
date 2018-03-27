@@ -1066,7 +1066,7 @@ def inclusiverange(*args, **kwargs):
 ##############################################################################
 
 
-def saveobj(filename=None, obj=None, compresslevel=5, verbose=True, folder=None):
+def saveobj(filename=None, obj=None, compresslevel=5, verbose=True, folder=None, method='pickle'):
     '''
     Save an object to file -- use compression 5 by default, since more is much slower but not much smaller.
     Once saved, can be loaded with loadobj() (q.v.).
@@ -1075,12 +1075,29 @@ def saveobj(filename=None, obj=None, compresslevel=5, verbose=True, folder=None)
 		myobj = ['this', 'is', 'a', 'weird', {'object':44}]
 		saveobj('myfile.obj', myobj)
     '''
-    if _PY2: import cPickle as pickle # For Python 3 compatibility
-    else:    import pickle
+    
+    def savepickle(fileobj, obj):
+        ''' Use pickle to do the salty work '''
+        if _PY2: import cPickle as pickle # For Python 3 compatibility
+        else:    import pickle
+        fileobj.write(pickle.dumps(obj, protocol=-1))
+        return None
+    
+    def savedill(fileobj, obj):
+        ''' Use dill to do the sour work '''
+        import dill
+        fileobj.write(dill.dumps(obj, protocol=-1))
+        return None
+    
     from gzip import GzipFile
     fullpath = makefilepath(filename=filename, folder=folder, sanitize=True)
     with GzipFile(fullpath, 'wb', compresslevel=compresslevel) as fileobj:
-        fileobj.write(pickle.dumps(obj, protocol=-1))
+        if method == 'dill': # If dill is requested, use that
+            savedill(fileobj, obj)
+        else: # Otherwise, try pickle
+            try:    savepickle(fileobj, obj) # Use pickle
+            except: savedill(fileobj, obj) # ...but use Dill if that fails
+        
     if verbose: print('Object saved to "%s"' % fullpath)
     return fullpath
 
@@ -1109,7 +1126,11 @@ def loadobj(filename=None, folder=None, verbose=True):
     kwargs = {'mode': 'rb', argtype: filename}
     with GzipFile(**kwargs) as fileobj:
         filestr = fileobj.read() # Convert it to a string
-        obj = pickle.loads(filestr) # Actually load it
+        try: # Try pickle first
+            obj = pickle.loads(filestr) # Actually load it
+        except:
+            import dill
+            obj = dill.loads(filestr)
     if verbose: print('Object loaded from "%s"' % filename)
     return obj
 
