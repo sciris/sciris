@@ -2,7 +2,7 @@
 ### Imports
 #############################################################################################################################
 
-try:    import cPickle as pickle # For Python 2 compatibility
+try:    import cPickle as pickle # For Python 3 compatibility
 except: import pickle
 from gzip import GzipFile
 from cStringIO import StringIO
