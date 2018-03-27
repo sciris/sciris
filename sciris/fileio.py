@@ -16,42 +16,6 @@ from xlrd import open_workbook
 ### Basic I/O functions
 #############################################################################################################################
 
-def saveobj(filename=None, obj=None, compresslevel=5, verbose=True, folder=None):
-    '''
-    Save an object to file -- use compression 5 by default, since more is much slower but not much smaller.
-    Once saved, can be loaded with loadobj() (q.v.).
-
-    Usage:
-		myobj = ['this', 'is', 'a', 'weird', {'object':44}]
-		saveobj('myfile.obj', myobj)
-    '''
-    fullpath = makefilepath(filename=filename, folder=folder, sanitize=True)
-    with GzipFile(fullpath, 'wb', compresslevel=compresslevel) as fileobj:
-        fileobj.write(pickle.dumps(obj, protocol=-1))
-    if verbose: print('Object saved to "%s"' % fullpath)
-    return fullpath
-
-
-def loadobj(filename=None, folder=None, verbose=True):
-    '''
-    Load a saved file.
-
-    Usage:
-    	obj = loadobj('myfile.obj')
-    '''
-    # Handle loading of either filename or file object
-    if isinstance(filename, basestring): 
-        argtype = 'filename'
-        filename = makefilepath(filename=filename, folder=folder) # If it is a file, validate the folder
-    else: 
-        argtype = 'fileobj'
-    kwargs = {'mode': 'rb', argtype: filename}
-    with GzipFile(**kwargs) as fileobj:
-        obj = loadpickle(fileobj)
-    if verbose: print('Object loaded from "%s"' % filename)
-    return obj
-
-
 def dumpstr(obj):
     ''' Write data to a fake file object,then read from it -- used on the FE '''
     result = None

@@ -20,6 +20,8 @@ import os
 # Globals
 #
 
+print 'hIIIIIIIIIIIII'
+
 def makeapp(config=None):
 
     # Create the Flask app.

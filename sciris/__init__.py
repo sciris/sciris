@@ -1,4 +1,5 @@
 from . import utils # Import utilities -- these will always be required
+from . import core
 from .utils import odict # Import odict class
 from .utils import dataframe # Import dataframe class
 
