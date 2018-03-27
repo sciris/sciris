@@ -279,12 +279,12 @@ def printdata(data, name='Variable', depth=1, maxlen=40, indent='', level=0, sho
     '''
     datatype = type(data)
     def printentry(data):
-        if datatype==dict: string = ('dict with %i keys' % len(data.keys()))
-        elif datatype==list: string = ('list of length %i' % len(data))
-        elif datatype==tuple: string = ('tuple of length %i' % len(data))
-        elif datatype==np.ndarray: string = ('array of shape %s' % flexstr(np.shape(data)))
+        if   datatype==dict:              string = ('dict with %i keys' % len(data.keys()))
+        elif datatype==list:              string = ('list of length %i' % len(data))
+        elif datatype==tuple:             string = ('tuple of length %i' % len(data))
+        elif datatype==np.ndarray:        string = ('array of shape %s' % flexstr(np.shape(data)))
         elif datatype.__name__=='module': string = ('module with %i components' % len(dir(data)))
-        elif datatype.__name__=='class': string = ('class with %i components' % len(dir(data)))
+        elif datatype.__name__=='class':  string = ('class with %i components' % len(dir(data)))
         else: string = datatype.__name__
         if showcontents and maxlen>0:
             datastring = ' | '+flexstr(data)
@@ -435,10 +435,10 @@ def slacknotification(to=None, message=None, fromuser=None, token=None, verbose=
     
     # Validate input arguments
     printv('Sending Slack message...', 2, verbose)
-    if token is None: token = '/.slackurl'
-    if to is None: to = '#athena'
+    if token is None:    token = '/.slackurl'
+    if to is None:       to = '#general'
     if fromuser is None: fromuser = getuser()+'-bot'
-    if message is None: message = 'This is an automated notification: your notifier is notifying you.'
+    if message is None:  message = 'This is an automated notification: your notifier is notifying you.'
     printv('Channel: %s | User: %s | Message: %s' % (to, fromuser, message), 3, verbose) # Print details of what's being sent
     
     # Try opening token file    
@@ -602,8 +602,8 @@ def checktype(obj=None, objtype=None, subtype=None, die=False):
     # Handle "objtype" input
     if   objtype in ['str','string']:  objinstance = basestring
     elif objtype in ['num', 'number']: objinstance = Number
-    elif objtype in ['arr', 'array']:  objinstance = type(array([]))
-    elif objtype=='arraylike':         objinstance = (list, tuple, type(array([]))) # Anything suitable as a numerical array
+    elif objtype in ['arr', 'array']:  objinstance = type(np.array([]))
+    elif objtype=='arraylike':         objinstance = (list, tuple, type(np.array([]))) # Anything suitable as a numerical array
     elif type(objtype)==type:          objinstance = objtype  # Don't need to do anything
     elif objtype is None:              return None # If not supplied, exit
     else:
@@ -648,7 +648,7 @@ def promotetoarray(x):
         return array([x]) # e.g. 3
     elif isinstance(x, (list, tuple)):
         return array(x) # e.g. [3]
-    elif isinstance(x, ndarray): 
+    elif isinstance(x, np.ndarray): 
         if shape(x):
             return x # e.g. array([3])
         else: 
@@ -702,7 +702,7 @@ def quantile(data, quantiles=[0.5, 0.25, 0.75]):
     Version: 2014nov23
     '''
     nsamples = len(data) # Number of samples in the dataset
-    indices = (array(quantiles)*(nsamples-1)).round().astype(int) # Calculate the indices to pull out
+    indices = (np.array(quantiles)*(nsamples-1)).round().astype(int) # Calculate the indices to pull out
     output = array(data)
     output.sort(axis=0) # Do the actual sorting along the 
     output = output[indices] # Trim down to the desired quantiles
@@ -721,8 +721,8 @@ def sanitize(data=None, returninds=False, replacenans=None, die=True):
             sanitized = sanitize(array([3,4,nan,8,2,nan,nan,nan,8]), replacenans=0)
         '''
         try:
-            data = array(data,dtype=float) # Make sure it's an array of float type
-            inds = nonzero(~isnan(data))[0] # WARNING, nonzero returns tuple :(
+            data = np.array(data,dtype=float) # Make sure it's an array of float type
+            inds = np.nonzero(~np.isnan(data))[0] # WARNING, nonzero returns tuple :(
             sanitized = data[inds] # Trim data
             if replacenans is not None:
                 newx = range(len(data)) # Create a new x array the size of the original array
@@ -730,7 +730,7 @@ def sanitize(data=None, returninds=False, replacenans=None, die=True):
                 if replacenans in ['nearest','linear']:
                     sanitized = smoothinterp(newx, inds, sanitized, method=replacenans, smoothness=0) # Replace nans with interpolated values
                 else:
-                    naninds = inds = nonzero(isnan(data))[0]
+                    naninds = inds = np.nonzero(isnan(data))[0]
                     sanitized = dcp(data)
                     sanitized[naninds] = replacenans
             if len(sanitized)==0:
@@ -753,20 +753,20 @@ def getvaliddata(data=None, filterdata=None, defaultind=0):
     Example:
         getvaliddata(array([3,5,8,13]), array([2000, nan, nan, 2004])) # Returns array([3,13])
     '''
-    data = array(data)
+    data = np.array(data)
     if filterdata is None: filterdata = data # So it can work on a single input -- more or less replicates sanitize() then
-    filterdata = array(filterdata)
+    filterdata = np.array(filterdata)
     if filterdata.dtype=='bool': validindices = filterdata # It's already boolean, so leave it as is
-    else:                        validindices = ~isnan(filterdata) # Else, assume it's nans that need to be removed
+    else:                        validindices = ~np.isnan(filterdata) # Else, assume it's nans that need to be removed
     if validindices.any(): # There's at least one data point entered
         if len(data)==len(validindices): # They're the same length: use for logical indexing
-            validdata = array(array(data)[validindices]) # Store each year
+            validdata = np.array(array(data)[validindices]) # Store each year
         elif len(validindices)==1: # They're different lengths and it has length 1: it's an assumption
-            validdata = array([array(data)[defaultind]]) # Use the default index; usually either 0 (start) or -1 (end)
+            validdata = np.array([np.array(data)[defaultind]]) # Use the default index; usually either 0 (start) or -1 (end)
         else:
             raise Exception('Array sizes are mismatched: %i vs. %i' % (len(data), len(validindices)))    
     else: 
-        validdata = array([]) # No valid data, return an empty array
+        validdata = np.array([]) # No valid data, return an empty array
     return validdata
 
 
@@ -783,9 +783,9 @@ def getvalidinds(data=None, filterdata=None):
     if filterdata is None: filterdata = data # So it can work on a single input -- more or less replicates sanitize() then
     filterdata = promotetoarray(filterdata)
     if filterdata.dtype=='bool': filterindices = filterdata # It's already boolean, so leave it as is
-    else:                        filterindices = findinds(~isnan(filterdata)) # Else, assume it's nans that need to be removed
-    dataindices = findinds(~isnan(data)) # Also check validity of data
-    validindices = intersect1d(dataindices, filterindices)
+    else:                        filterindices = findinds(~np.isnan(filterdata)) # Else, assume it's nans that need to be removed
+    dataindices = findinds(~np.isnan(data)) # Also check validity of data
+    validindices = np.intersect1d(dataindices, filterindices)
     return validindices # Only return indices -- WARNING, not consistent with sanitize()
 
 
@@ -804,13 +804,13 @@ def findinds(val1, val2=None, eps=1e-6):
     Version: 2016jun06 
     '''
     if val2==None: # Check for equality
-        output = nonzero(val1) # If not, just check the truth condition
+        output = np.nonzero(val1) # If not, just check the truth condition
     else:
         if isstring(val2):
-            output = nonzero(array(val1)==val2)
+            output = np.nonzero(np.array(val1)==val2)
         else:
-            output = nonzero(abs(array(val1)-val2)<eps) # If absolute difference between the two values is less than a certain amount
-    if ndim(val1)==1: # Uni-dimensional
+            output = np.nonzero(abs(np.array(val1)-val2)<eps) # If absolute difference between the two values is less than a certain amount
+    if np.ndim(val1)==1: # Uni-dimensional
         output = output[0] # Return an array rather than a tuple of arrays if one-dimensional
     return output
 
@@ -832,7 +832,7 @@ def findnearest(series=None, value=None):
     '''
     series = promotetoarray(series)
     if isnumber(value):
-        output = argmin(abs(series-value))
+        output = np.argmin(abs(series-value))
     else:
         output = []
         for val in value: output.append(findnearest(series, val))
@@ -843,8 +843,8 @@ def findnearest(series=None, value=None):
 def dataindex(dataarray, index):        
     ''' Take an array of data and return either the first or last (or some other) non-NaN entry. '''
     
-    nrows = shape(dataarray)[0] # See how many rows need to be filled (either npops, nprogs, or 1).
-    output = zeros(nrows)       # Create structure
+    nrows = np.shape(dataarray)[0] # See how many rows need to be filled (either npops, nprogs, or 1).
+    output = np.zeros(nrows)       # Create structure
     for r in range(nrows): 
         output[r] = sanitize(dataarray[r])[index] # Return the specified index -- usually either the first [0] or last [-1]
     
@@ -871,13 +871,13 @@ def smoothinterp(newx=None, origx=None, origy=None, smoothness=None, growth=None
     if isnumber(newx):  newx = [newx] # Make sure it has dimension
     if isnumber(origx): origx = [origx] # Make sure it has dimension
     if isnumber(origy): origy = [origy] # Make sure it has dimension
-    newx = array(newx)
-    origx = array(origx)
-    origy = array(origy)
+    newx  = np.array(newx)
+    origx = np.array(origx)
+    origy = np.array(origy)
     
     # If only a single element, just return it, without checking everything else
     if len(origy)==1: 
-        newy = zeros(newx.shape)+origy[0]
+        newy = np.zeros(newx.shape)+origy[0]
         return newy
     
     if not(newx.shape): raise Exception('To interpolate, must have at least one new x value to interpolate to')
@@ -888,13 +888,13 @@ def smoothinterp(newx=None, origx=None, origy=None, smoothness=None, growth=None
         raise Exception(errormsg)
     
     # Make sure it's in the correct order
-    correctorder = argsort(origx)
+    correctorder = np.argsort(origx)
     origx = origx[correctorder]
     origy = origy[correctorder]
-    newx = newx[argsort(newx)] # And sort newx just in case
+    newx = newx[np.argsort(newx)] # And sort newx just in case
     
     # Only keep finite elements
-    finitey = isfinite(origy) # Boolean for whether it's finite
+    finitey = np.isfinite(origy) # Boolean for whether it's finite
     if finitey.any() and not finitey.all(): # If some but not all is finite, pull out indices that are
         finiteorigy = origy[finitey]
         finiteorigx = origx[finitey]
@@ -904,11 +904,11 @@ def smoothinterp(newx=None, origx=None, origy=None, smoothness=None, growth=None
         
     # Perform actual interpolation
     if method=='linear':
-        newy = interp(newx, finiteorigx, finiteorigy) # Perform standard interpolation without infinities
+        newy = np.interp(newx, finiteorigx, finiteorigy) # Perform standard interpolation without infinities
     elif method=='nearest':
-        newy = zeros(newx.shape) # Create the new array of the right size
+        newy = np.zeros(newx.shape) # Create the new array of the right size
         for i,x in enumerate(newx): # Iterate over each point
-            xind = argmin(abs(finiteorigx-x)) # Find the nearest neighbor
+            xind = np.argmin(abs(finiteorigx-x)) # Find the nearest neighbor
             newy[i] = finiteorigy[xind] # Copy it
     else:
         raise Exception('Method "%s" not found; methods are "linear" or "nearest"' % method)
@@ -918,26 +918,26 @@ def smoothinterp(newx=None, origx=None, origy=None, smoothness=None, growth=None
     smoothness = int(smoothness) # Make sure it's an appropriate number
     
     if smoothness:
-        kernel = exp(-linspace(-2,2,2*smoothness+1)**2)
+        kernel = np.exp(-np.linspace(-2,2,2*smoothness+1)**2)
         kernel /= kernel.sum()
-        validinds = findinds(~isnan(newy)) # Remove nans since these don't exactly smooth well
+        validinds = findinds(~np.isnan(newy)) # Remove nans since these don't exactly smooth well
         if len(validinds): # No point doing these steps if no non-nan values
             validy = newy[validinds]
-            prepend = validy[0]*ones(smoothness)
-            postpend = validy[-1]*ones(smoothness)
+            prepend = validy[0]*np.ones(smoothness)
+            postpend = validy[-1]*np.ones(smoothness)
             if not keepends:
                 try: # Try to compute slope, but use original prepend if it doesn't work
                     dyinitial = (validy[0]-validy[1])
-                    prepend = validy[0]*ones(smoothness) + dyinitial*arange(smoothness,0,-1)
+                    prepend = validy[0]*np.ones(smoothness) + dyinitial*np.arange(smoothness,0,-1)
                 except:
                     pass
                 try: # Try to compute slope, but use original postpend if it doesn't work
                     dyfinal = (validy[-1]-validy[-2])
-                    postpend = validy[-1]*ones(smoothness) + dyfinal*arange(1,smoothness+1,1)
+                    postpend = validy[-1]*np.ones(smoothness) + dyfinal*np.arange(1,smoothness+1,1)
                 except:
                     pass
-            validy = concatenate([prepend, validy, postpend])
-            validy = convolve(validy, kernel, 'valid') # Smooth it out a bit
+            validy = np.concatenate([prepend, validy, postpend])
+            validy = np.convolve(validy, kernel, 'valid') # Smooth it out a bit
             newy[validinds] = validy # Copy back into full vector
     
     # Apply growth if required
@@ -946,26 +946,26 @@ def smoothinterp(newx=None, origx=None, origy=None, smoothness=None, growth=None
         futureindices = findinds(newx>origx[-1])
         if len(pastindices): # If there are past data points
             firstpoint = pastindices[-1]+1
-            newy[pastindices] = newy[firstpoint] * exp((newx[pastindices]-newx[firstpoint])*growth) # Get last 'good' data point and apply inverse growth
+            newy[pastindices] = newy[firstpoint] * np.exp((newx[pastindices]-newx[firstpoint])*growth) # Get last 'good' data point and apply inverse growth
         if len(futureindices): # If there are past data points
             lastpoint = futureindices[0]-1
-            newy[futureindices] = newy[lastpoint] * exp((newx[futureindices]-newx[lastpoint])*growth) # Get last 'good' data point and apply growth
+            newy[futureindices] = newy[lastpoint] * np.exp((newx[futureindices]-newx[lastpoint])*growth) # Get last 'good' data point and apply growth
     
     # Add infinities back in, if they exist
-    if any(~isfinite(origy)): # Infinities exist, need to add them back in manually since interp can only handle nan
+    if any(~np.isfinite(origy)): # Infinities exist, need to add them back in manually since interp can only handle nan
         if not ensurefinite: # If not ensuring all entries are finite, put nonfinite entries back in
-            orignan      = zeros(len(origy)) # Start from scratch
-            origplusinf  = zeros(len(origy)) # Start from scratch
-            origminusinf = zeros(len(origy)) # Start from scratch
-            orignan[isnan(origy)]     = nan  # Replace nan entries with nan
-            origplusinf[origy==inf]   = nan  # Replace plus infinite entries with nan
-            origminusinf[origy==-inf] = nan  # Replace minus infinite entries with nan
-            newnan      = interp(newx, origx, orignan) # Interpolate the nans
-            newplusinf  = interp(newx, origx, origplusinf) # ...again, for positive
-            newminusinf = interp(newx, origx, origminusinf) # ...and again, for negative
+            orignan      = np.zeros(len(origy)) # Start from scratch
+            origplusinf  = np.zeros(len(origy)) # Start from scratch
+            origminusinf = np.zeros(len(origy)) # Start from scratch
+            orignan[isnan(origy)]     = np.nan  # Replace nan entries with nan
+            origplusinf[origy==inf]   = np.nan  # Replace plus infinite entries with nan
+            origminusinf[origy==-inf] = np.nan  # Replace minus infinite entries with nan
+            newnan      = np.interp(newx, origx, orignan) # Interpolate the nans
+            newplusinf  = np.interp(newx, origx, origplusinf) # ...again, for positive
+            newminusinf = np.interp(newx, origx, origminusinf) # ...and again, for negative
             newy[isnan(newminusinf)] = -inf # Add minus infinity back in first
             newy[isnan(newplusinf)]  = inf # Then, plus infinity
-            newy[isnan(newnan)]  = nan # Finally, the nans
+            newy[isnan(newnan)]  = np.nan # Finally, the nans
             
     
     return newy
@@ -973,8 +973,8 @@ def smoothinterp(newx=None, origx=None, origy=None, smoothness=None, growth=None
 
 def perturb(n=1, span=0.5, randseed=None):
     ''' Define an array of numbers uniformly perturbed with a mean of 1. n = number of points; span = width of distribution on either side of 1.'''
-    if randseed is not None: seed(int(randseed)) # Optionally reset random seed
-    output = 1. + 2*span*(rand(n)-0.5)
+    if randseed is not None: np.random.seed(int(randseed)) # Optionally reset random seed
+    output = 1. + 2*span*(np.random.rand(n)-0.5)
     return output
     
     
@@ -982,7 +982,7 @@ def scaleratio(inarray,total):
     ''' Multiply a list or array by some factor so that its sum is equal to the total. '''
     origtotal = float(sum(inarray))
     ratio = total/origtotal
-    outarray = array(inarray)*ratio
+    outarray = np.array(inarray)*ratio
     if type(inarray)==list: outarray = outarray.tolist() # Preserve type
     return outarray
 
@@ -997,13 +997,11 @@ def vec2obj(orig=None, newvec=None, inds=None):
     
     Version: 2016feb04
     '''
-    from copy import deepcopy as dcp
-    
     # Validate input
-    if orig is None: raise Exception('vec2obj() requires an original object to update')
+    if orig   is None: raise Exception('vec2obj() requires an original object to update')
     if newvec is None: raise Exception('vec2obj() requires a vector as input')
     lenorig = len(orig)
-    lennew = len(newvec)
+    lennew  = len(newvec)
     if lennew!=lenorig and inds is None: raise Exception('vec2obj(): if inds is not supplied, lengths must match (orig=%i, new=%i)' % (lenorig, lennew))
     if inds is not None and max(inds)>=len(orig): 
         raise Exception('vec2obj(): maximum index is greater than the length of the object (%i, %i)' % (max(inds), len(orig)))
@@ -1055,9 +1053,11 @@ def inclusiverange(*args, **kwargs):
     if step  is None: step  = 1
     
     # OK, actually generate
-    x = linspace(start, stop, int(round((stop-start)/float(step))+1)) # Can't use arange since handles floating point arithmetic badly, e.g. compare arange(2000, 2020, 0.2) with arange(2000, 2020.2, 0.2)
+    x = np.linspace(start, stop, int(round((stop-start)/float(step))+1)) # Can't use arange since handles floating point arithmetic badly, e.g. compare arange(2000, 2020, 0.2) with arange(2000, 2020.2, 0.2)
     
     return x
+
+
 
 
 ##############################################################################
@@ -1132,7 +1132,8 @@ def checkmem(origvariable, descend=0, order='n', plot=False, verbose=0):
     '''
     from os import getcwd, remove
     from os.path import getsize
-    from cPickle import dump
+    if _PY2: from cPickle import dump
+    else:    from pickle import dump
     
     filename = getcwd()+'/checkmem.tmp'
     
@@ -1311,7 +1312,7 @@ def loadbalancer(maxload=None, index=None, interval=None, maxtime=None, label=No
     if label    is None: label = ''
     else: label += ': '
     if index is None:  
-        pause = np.random.random()*interval
+        pause = np.random.rand()*interval
         index = ''
     else:              
         pause = index*interval
@@ -1327,7 +1328,7 @@ def loadbalancer(maxload=None, index=None, interval=None, maxtime=None, label=No
         currentload = cpu_percent(interval=0.1)/100. # If interval is too small, can give very inaccurate readings
         if currentload>maxload:
             if verbose: print(label+'CPU load too high (%0.2f/%0.2f); process %s queued %i times' % (currentload, maxload, index, count))
-            sleep(interval*2*np.random.random()) # Sleeps for an average of refresh seconds, but do it randomly so you don't get locking
+            sleep(interval*2*np.random.rand()) # Sleeps for an average of refresh seconds, but do it randomly so you don't get locking
         else: 
             toohigh = False 
             if verbose: print(label+'CPU load fine (%0.2f/%0.2f), starting process %s after %i tries' % (currentload, maxload, index, count))
@@ -1336,10 +1337,14 @@ def loadbalancer(maxload=None, index=None, interval=None, maxtime=None, label=No
     
 
 def runcommand(command, printinput=False, printoutput=False):
-   ''' Make it easier to run bash commands. Version: 1.1 Date: 2015sep03 '''
+   '''
+   Make it easier to run shell commands.
+   
+   Date: 2018mar28
+   '''
    from subprocess import Popen, PIPE
    if printinput: print(command)
-   try: output = Popen(command, shell=True, stdout=PIPE).communicate()[0].decode("utf-8")
+   try:    output = Popen(command, shell=True, stdout=PIPE).communicate()[0].decode("utf-8")
    except: output = 'Shell command failed'
    if printoutput: print(output)
    return output
@@ -1667,7 +1672,7 @@ class odict(_OD):
     def __init__(self, *args, **kwargs):
         ''' See collections.py '''
         
-        from numbers import Number # analysis:ignore
+        from numbers import Number
         
         # Standard OrderedDictionary initialization
         if len(args)==1 and args[0] is None: args = [] # Remove a None argument
