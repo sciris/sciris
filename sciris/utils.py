@@ -51,7 +51,7 @@ def blank(n=3):
 
 def createcollist(oldkeys, title, strlen = 18, ncol = 3):
     ''' Creates a string for a nice columnated list (e.g. to use in __repr__ method) '''
-    nrow = int(ceil(float(len(oldkeys))/ncol))
+    nrow = int(np.ceil(float(len(oldkeys))/ncol))
     newkeys = []
     for x in range(nrow):
         newkeys += oldkeys[x::nrow]
@@ -213,7 +213,7 @@ def sigfig(X, sigfigs=5, SI=False, sep=False):
             elif sigfigs is None:
                 output.append(flexstr(x)+suffix)
             else:
-                magnitude = floor(log10(abs(x)))
+                magnitude = np.floor(log10(abs(x)))
                 factor = 10**(sigfigs-magnitude-1)
                 x = round(x*factor)/float(factor)
                 digits = int(abs(magnitude) + max(0, sigfigs - max(0,magnitude) - 1) + 1 + (x<0) + (abs(x)<1)) # one because, one for decimal, one for minus
@@ -914,7 +914,7 @@ def smoothinterp(newx=None, origx=None, origy=None, smoothness=None, growth=None
         raise Exception('Method "%s" not found; methods are "linear" or "nearest"' % method)
 
     # Perform smoothing
-    if smoothness is None: smoothness = ceil(len(newx)/len(origx)) # Calculate smoothness: this is consistent smoothing regardless of the size of the arrays
+    if smoothness is None: smoothness = np.ceil(len(newx)/len(origx)) # Calculate smoothness: this is consistent smoothing regardless of the size of the arrays
     smoothness = int(smoothness) # Make sure it's an appropriate number
     
     if smoothness:

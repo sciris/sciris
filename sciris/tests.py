@@ -58,8 +58,8 @@ def testfiles(path=None, filelist=None):
                 if KEY not in tf_VARIABLES:
                     print('       "%s" complete; deleting "%s"' % (tf_TEST, KEY))
                     exec('del '+KEY)
-        except Exception as tf_EX:
-            tf_FAILED.append({'test':tf_TEST, 'msg':repr(tf_EX)})
+        except:
+            tf_FAILED.append({'test':tf_TEST, 'msg':tf_EXC_INFO()})
     
     
     print('\n'*5)
