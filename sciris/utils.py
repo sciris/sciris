@@ -1412,25 +1412,7 @@ def compareversions(version1=None, version2=None):
 
 
 
-def boxoff(ax=None, removeticks=True, flipticks=True):
-    '''
-    I don't know why there isn't already a Matplotlib command for this.
-    
-    Removes the top and right borders of a plot. Also optionally removes
-    the tick marks, and flips the remaining ones outside.
 
-    Version: 2017may22    
-    '''
-    from pylab import gca
-    if ax is None: ax = gca()
-    ax.spines['top'].set_visible(False)
-    ax.spines['right'].set_visible(False)
-    if removeticks:
-        ax.xaxis.set_ticks_position('bottom')
-        ax.yaxis.set_ticks_position('left')
-    if flipticks:
-        ax.tick_params(direction='out', pad=5)
-    return ax
 
 ##############################################################################
 ### NESTED DICTIONARY FUNCTIONS
@@ -1510,6 +1492,48 @@ def iternested(nesteddict,previous = []):
     return output
 
 
+def flattendict(inputdict=None, basekey=None, subkeys=None, complist=None, keylist=None, limit=100):
+    '''
+    A function for flattening out a recursive dictionary, with an optional list of sub-keys (ignored if non-existent).
+    The flattened out structure is returned as complist. Values can be an object or a list of objects.
+    All keys (including basekey) within the recursion are returned as keylist.
+    
+    Specifically, this function is intended for dictionaries of the form...
+        inputdict[key1][sub_key[0]] = [a, key2, b]
+        inputdict[key1][sub_key[1]] = [c, d]
+        inputdict[key2][sub_key[0]] = e
+        inputdict[key2][sub_key[1]] = [e, f, g]
+    ...which, for this specific example, will output list...
+        [a, e, e, f, g, h, b, c, d]
+        
+    There is a max-depth of limit for the recursion.
+    '''
+    
+    if limit<1:
+        errormsg = 'ERROR: A recursion limit has been reached when flattening a dictionary, stopping at key "%s".' % basekey
+        raise Exception(errormsg)    
+    
+    if complist is None: complist = []
+    if keylist is None: keylist = []
+    keylist.append(basekey)
+
+    if subkeys is None: inputlist = inputdict[basekey]
+    else:
+        inputlist = []
+        for sub_key in subkeys:
+            if sub_key in inputdict[basekey]:
+                val = inputdict[basekey][sub_key]
+                if isinstance(val, list):
+                    inputlist += val
+                else:
+                    inputlist.append(val)      # Handle unlisted objects.
+    
+    for comp in inputlist:
+        if comp in inputdict.keys():
+            flattendict(inputdict=inputdict, basekey=comp, subkeys=subkeys, complist=complist, keylist=keylist, limit=limit-1)
+        else:
+            complist.append(comp)
+    return complist, keylist
 
 
 
@@ -1587,6 +1611,29 @@ def commaticks(fig=None, ax=None, axis='y'):
         else: raise Exception('Axis must be x, y, or z')
         thisaxis.set_major_formatter(ticker.FuncFormatter(lambda x, p: format(int(x), ',')))
     return None
+
+
+
+def boxoff(ax=None, removeticks=True, flipticks=True):
+    '''
+    I don't know why there isn't already a Matplotlib command for this.
+    
+    Removes the top and right borders of a plot. Also optionally removes
+    the tick marks, and flips the remaining ones outside.
+
+    Version: 2017may22    
+    '''
+    from pylab import gca
+    if ax is None: ax = gca()
+    ax.spines['top'].set_visible(False)
+    ax.spines['right'].set_visible(False)
+    if removeticks:
+        ax.xaxis.set_ticks_position('bottom')
+        ax.yaxis.set_ticks_position('left')
+    if flipticks:
+        ax.tick_params(direction='out', pad=5)
+    return ax
+
 
 
 ##############################################################################
