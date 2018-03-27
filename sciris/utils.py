@@ -596,11 +596,12 @@ def checktype(obj=None, objtype=None, subtype=None, die=False):
         checktype(['a','b','c'], 'arraylike') # Returns false
         checktype([{'a':3}], list, dict) # Returns True
     '''
-    if not _PY2: basestring = str
+    if _PY2: String = basestring
+    else:    String = str
     from numbers import Number
     
     # Handle "objtype" input
-    if   objtype in ['str','string']:  objinstance = basestring
+    if   objtype in ['str','string']:  objinstance = String
     elif objtype in ['num', 'number']: objinstance = Number
     elif objtype in ['arr', 'array']:  objinstance = type(np.array([]))
     elif objtype=='arraylike':         objinstance = (list, tuple, type(np.array([]))) # Anything suitable as a numerical array
