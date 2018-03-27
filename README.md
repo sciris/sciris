@@ -99,11 +99,15 @@ Sciris v0.3 (2018-03-23) loaded for local use (display=:0)
 
 **WARNING, work in progress!**
 
-1. Install Git: `sudo apt install git`
+1. Install Git. This can be done by installing Xcode commandline tools.
 
-2. Install NodeJS: `sudo apt install nodejs`
+            xcode-select --install
 
-3. Install Redis: https://redis.io/topics/quickstart
+2. Install NodeJS. Visit https://nodejs.org/en/download/ and download the Mac version and install.
+
+3. Install Redis: https://redis.io/topics/quickstart or run (Assumming brew is installed)
+
+            brew install redis
 
 4. Install [Anaconda Python](https://www.anaconda.com/download/) for Python 2.7 (not 3.4!), and make sure it's the default Python, e.g.
 ```
@@ -115,16 +119,35 @@ Anaconda is brought to you by Continuum Analytics.
 Please check out: http://continuum.io/thanks and https://anaconda.org
 ```
 
-5. Clone the Sciris repository: `git clone http://github.com/optimamodel/sciris.git`
+5. Create a directory that will hold both hptool and scris. For reference purposes we will create and refer to that directory as Optima.
 
-6. Run `python setup.py develop` in the root Sciris folder.
+6. Clone the Sciris repository into Optima: `git clone http://github.com/optimamodel/sciris.git`
 
-7. To test, open up a new Python window and type `import sciris`. It should say something like
-```
->>> import sciris
-Sciris v0.3 (2018-03-23) loaded for local use (display=:0)
->>>
-```
+7. Create a python virtual environment (venv) inside the directory Optima. This will be outside the project directories.
+
+        virtualenv venv
+
+    More information about [python virtual environments](http://docs.python-guide.org/en/latest/dev/virtualenvs/) can be found [here](http://docs.python-guide.org/en/latest/dev/virtualenvs/)
+   The project structure should be as follows;
+
+            -Optima
+                -venv
+                -sciris
+
+8. Get into the virtual environment. While inside the Optima directory, run the command below;
+
+        . /venv/bin/activate
+
+9. Once inside run the following command under the sciris root folder;
+
+        python setup.py develop
+
+10. To test if the if everything is working accordingly, open Python window within the virtual environment and type `import sciris`. It should say something like
+
+        >>> import sciris
+        Sciris v0.3 (2018-03-23) loaded for local use (display=:0)
+        >>>
+
 
 ## Vue/Python code examples
 
