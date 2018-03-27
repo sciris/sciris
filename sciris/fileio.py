@@ -30,22 +30,9 @@ def dumpstr(obj):
 def loadstr(source):
     ''' Load data from a fake file object -- also used on the FE '''
     with closing(StringIO(source)) as output:
-        with GzipFile(fileobj = output, mode = 'rb') as fileobj: 
-            obj = loadpickle(fileobj)
-    return obj
-
-
-def loadpickle(fileobj, verbose=False):
-    ''' Loads a pickled object -- need to define legacy classes here since they're needed for unpickling '''
-    
-    # Load the file string
-    filestr = fileobj.read()
-    
-    try: # Try just loading it
-        obj = pickle.loads(filestr) # Actually load it
-    except Exception as E: # If that fails, create legacy classes and try again
-        raise E
-    
+        with GzipFile(fileobj = output, mode = 'rb') as fileobj:
+            filestr = fileobj.read() # Convert it to a string
+            obj = pickle.loads(filestr) # Actually load it
     return obj
 
 

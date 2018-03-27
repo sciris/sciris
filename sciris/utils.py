@@ -1102,7 +1102,8 @@ def loadobj(filename=None, folder=None, verbose=True):
         argtype = 'fileobj'
     kwargs = {'mode': 'rb', argtype: filename}
     with GzipFile(**kwargs) as fileobj:
-        obj = loadpickle(fileobj)
+        filestr = fileobj.read() # Convert it to a string
+        obj = pickle.loads(filestr) # Actually load it
     if verbose: print('Object loaded from "%s"' % filename)
     return obj
 
