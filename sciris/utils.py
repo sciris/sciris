@@ -2,6 +2,9 @@
 ### IMPORTS FROM OTHER LIBRARIES
 ##############################################################################
 
+from collections import OrderedDict as _OD
+from six import PY2 as _PY2 # Set things for Python3 compatibility
+import numpy as np
 from uuid import uuid4 as uuid # analysis:ignore
 from copy import deepcopy as dcp  # analysis:ignore
 
@@ -48,10 +51,9 @@ def blank(n=3):
 
 def createcollist(oldkeys, title, strlen = 18, ncol = 3):
     ''' Creates a string for a nice columnated list (e.g. to use in __repr__ method) '''
-    from numpy import ceil
     nrow = int(ceil(float(len(oldkeys))/ncol))
     newkeys = []
-    for x in xrange(nrow):
+    for x in range(nrow):
         newkeys += oldkeys[x::nrow]
     
     attstring = title + ':'
@@ -184,7 +186,6 @@ def sigfig(X, sigfigs=5, SI=False, sep=False):
     If SI=True,  then will return e.g. 32433 as 32.433K
     If sep=True, then will return e.g. 32433 as 32,433
     '''
-    from numpy import log10, floor
     output = []
     
     try: 
@@ -245,7 +246,6 @@ def printarr(arr, arrformat='%0.2f  '):
     
     Version: 2014dec01
     '''
-    from numpy import ndim
     if ndim(arr)==1:
         string = ''
         for i in range(len(arr)):
@@ -279,11 +279,10 @@ def printdata(data, name='Variable', depth=1, maxlen=40, indent='', level=0, sho
     '''
     datatype = type(data)
     def printentry(data):
-        from numpy import shape, ndarray
         if datatype==dict: string = ('dict with %i keys' % len(data.keys()))
         elif datatype==list: string = ('list of length %i' % len(data))
         elif datatype==tuple: string = ('tuple of length %i' % len(data))
-        elif datatype==ndarray: string = ('array of shape %s' % flexstr(shape(data)))
+        elif datatype==np.ndarray: string = ('array of shape %s' % flexstr(np.shape(data)))
         elif datatype.__name__=='module': string = ('module with %i components' % len(dir(data)))
         elif datatype.__name__=='class': string = ('class with %i components' % len(dir(data)))
         else: string = datatype.__name__
@@ -379,7 +378,7 @@ def getdate(obj, which='modified', fmt='str'):
         dateformat = '%Y-%b-%d %H:%M:%S'
         
         try:
-            if isinstance(obj, basestring): return obj # Return directly if it's a string
+            if isstring(obj): return obj # Return directly if it's a string
             obj.timetuple() # Try something that will only work if it's a date object
             dateobj = obj # Test passed: it's a date object
         except: # It's not a date object
@@ -559,9 +558,9 @@ def colorize(color=None, string=None, output=False):
 ##############################################################################
 
 def flexstr(arg):
-    ''' Try converting to a regular string, but try unicode if it fails '''
+    ''' Try converting to a regular string, but proceed if it fails '''
     try:    output = str(arg)
-    except: output = unicode(arg)
+    except: output = arg
     return  output
 
 
@@ -597,8 +596,8 @@ def checktype(obj=None, objtype=None, subtype=None, die=False):
         checktype(['a','b','c'], 'arraylike') # Returns false
         checktype([{'a':3}], list, dict) # Returns True
     '''
+    if not _PY2: basestring = str
     from numbers import Number
-    from numpy import array
     
     # Handle "objtype" input
     if   objtype in ['str','string']:  objinstance = basestring
@@ -637,10 +636,14 @@ def isnumber(obj):
     ''' Simply determine whether or not the input is a number, since it's too hard to remember this otherwise '''
     return checktype(obj, 'number')
     
+    
+def isstring(obj):
+    ''' Simply determine whether or not the input is a string, since it's too hard to remember this otherwise '''
+    return checktype(obj, 'string')
+
 
 def promotetoarray(x):
     ''' Small function to ensure consistent format for things that should be arrays '''
-    from numpy import ndarray, shape
     if isnumber(x):
         return array([x]) # e.g. 3
     elif isinstance(x, (list, tuple)):
@@ -698,7 +701,6 @@ def quantile(data, quantiles=[0.5, 0.25, 0.75]):
     
     Version: 2014nov23
     '''
-    from numpy import array
     nsamples = len(data) # Number of samples in the dataset
     indices = (array(quantiles)*(nsamples-1)).round().astype(int) # Calculate the indices to pull out
     output = array(data)
@@ -718,7 +720,6 @@ def sanitize(data=None, returninds=False, replacenans=None, die=True):
             sanitized = sanitize(array([3,4,nan,8,2,nan,nan,nan,8]), replacenans=True)
             sanitized = sanitize(array([3,4,nan,8,2,nan,nan,nan,8]), replacenans=0)
         '''
-        from numpy import array, isnan, nonzero
         try:
             data = array(data,dtype=float) # Make sure it's an array of float type
             inds = nonzero(~isnan(data))[0] # WARNING, nonzero returns tuple :(
@@ -752,7 +753,6 @@ def getvaliddata(data=None, filterdata=None, defaultind=0):
     Example:
         getvaliddata(array([3,5,8,13]), array([2000, nan, nan, 2004])) # Returns array([3,13])
     '''
-    from numpy import array, isnan
     data = array(data)
     if filterdata is None: filterdata = data # So it can work on a single input -- more or less replicates sanitize() then
     filterdata = array(filterdata)
@@ -779,7 +779,6 @@ def getvalidinds(data=None, filterdata=None):
     Example:
         getvalidinds([3,5,8,13], [2000, nan, nan, 2004]) # Returns array([0,3])
     '''
-    from numpy import isnan, intersect1d
     data = promotetoarray(data)
     if filterdata is None: filterdata = data # So it can work on a single input -- more or less replicates sanitize() then
     filterdata = promotetoarray(filterdata)
@@ -804,11 +803,10 @@ def findinds(val1, val2=None, eps=1e-6):
     
     Version: 2016jun06 
     '''
-    from numpy import nonzero, array, ndim
     if val2==None: # Check for equality
         output = nonzero(val1) # If not, just check the truth condition
     else:
-        if isinstance(val2, basestring):
+        if isstring(val2):
             output = nonzero(array(val1)==val2)
         else:
             output = nonzero(abs(array(val1)-val2)<eps) # If absolute difference between the two values is less than a certain amount
@@ -832,7 +830,6 @@ def findnearest(series=None, value=None):
     
     Version: 2017jan07
     '''
-    from numpy import argmin
     series = promotetoarray(series)
     if isnumber(value):
         output = argmin(abs(series-value))
@@ -845,7 +842,6 @@ def findnearest(series=None, value=None):
     
 def dataindex(dataarray, index):        
     ''' Take an array of data and return either the first or last (or some other) non-NaN entry. '''
-    from numpy import zeros, shape
     
     nrows = shape(dataarray)[0] # See how many rows need to be filled (either npops, nprogs, or 1).
     output = zeros(nrows)       # Create structure
@@ -871,8 +867,6 @@ def smoothinterp(newx=None, origx=None, origy=None, smoothness=None, growth=None
     
     Version: 2018jan24
     '''
-    from numpy import array, interp, convolve, linspace, concatenate, ones, exp, nan, inf, isnan, isfinite, argsort, ceil, arange
-    
     # Ensure arrays and remove NaNs
     if isnumber(newx):  newx = [newx] # Make sure it has dimension
     if isnumber(origx): origx = [origx] # Make sure it has dimension
@@ -979,7 +973,6 @@ def smoothinterp(newx=None, origx=None, origy=None, smoothness=None, growth=None
 
 def perturb(n=1, span=0.5, randseed=None):
     ''' Define an array of numbers uniformly perturbed with a mean of 1. n = number of points; span = width of distribution on either side of 1.'''
-    from numpy.random import rand, seed
     if randseed is not None: seed(int(randseed)) # Optionally reset random seed
     output = 1. + 2*span*(rand(n)-0.5)
     return output
@@ -987,7 +980,6 @@ def perturb(n=1, span=0.5, randseed=None):
     
 def scaleratio(inarray,total):
     ''' Multiply a list or array by some factor so that its sum is equal to the total. '''
-    from numpy import array
     origtotal = float(sum(inarray))
     ratio = total/origtotal
     outarray = array(inarray)*ratio
@@ -1034,8 +1026,6 @@ def inclusiverange(*args, **kwargs):
     x = inclusiverange(stop=5)
     x = inclusiverange(6, step=2)
     '''
-    
-    from numpy import linspace
     
     # Handle args
     if len(args)==0:
@@ -1143,7 +1133,6 @@ def checkmem(origvariable, descend=0, order='n', plot=False, verbose=0):
     from os import getcwd, remove
     from os.path import getsize
     from cPickle import dump
-    from numpy import iterable, argsort
     
     filename = getcwd()+'/checkmem.tmp'
     
@@ -1157,10 +1146,10 @@ def checkmem(origvariable, descend=0, order='n', plot=False, verbose=0):
     printsizes = []
     varnames = []
     variables = []
-    if descend==False or not(iterable(origvariable)):
+    if descend==False or not(np.iterable(origvariable)):
         varnames = ['']
         variables = [origvariable]
-    elif descend==1 and iterable(origvariable):
+    elif descend==1 and np.iterable(origvariable):
         if hasattr(origvariable,'keys'):
             for key in origvariable.keys():
                 varnames.append(key)
@@ -1186,9 +1175,9 @@ def checkmem(origvariable, descend=0, order='n', plot=False, verbose=0):
         remove(filename)
 
     if order=='a' or order=='alpha' or order=='alphabetical':
-        inds = argsort(printnames)
+        inds = np.argsort(printnames)
     else:
-        inds = argsort(printbytes)
+        inds = np.argsort(printbytes)
 
     for v in inds:
         print('Variable %s is %s' % (printnames[v], printsizes[v]))
@@ -1314,7 +1303,6 @@ def loadbalancer(maxload=None, index=None, interval=None, maxtime=None, label=No
      '''
     from psutil import cpu_percent
     from time import sleep
-    from numpy.random import random
     
     # Set up processes to start asynchronously
     if maxload  is None: maxload = 0.8
@@ -1323,7 +1311,7 @@ def loadbalancer(maxload=None, index=None, interval=None, maxtime=None, label=No
     if label    is None: label = ''
     else: label += ': '
     if index is None:  
-        pause = random()*interval
+        pause = np.random.random()*interval
         index = ''
     else:              
         pause = index*interval
@@ -1339,7 +1327,7 @@ def loadbalancer(maxload=None, index=None, interval=None, maxtime=None, label=No
         currentload = cpu_percent(interval=0.1)/100. # If interval is too small, can give very inaccurate readings
         if currentload>maxload:
             if verbose: print(label+'CPU load too high (%0.2f/%0.2f); process %s queued %i times' % (currentload, maxload, index, count))
-            sleep(interval*2*random()) # Sleeps for an average of refresh seconds, but do it randomly so you don't get locking
+            sleep(interval*2*np.random.random()) # Sleeps for an average of refresh seconds, but do it randomly so you don't get locking
         else: 
             toohigh = False 
             if verbose: print(label+'CPU load fine (%0.2f/%0.2f), starting process %s after %i tries' % (currentload, maxload, index, count))
@@ -1410,9 +1398,9 @@ def compareversions(version1=None, version2=None):
         raise Exception('Must supply both versions as strings')
     versions = [version1, version2]
     for i in range(2):
-        versions[i] = array(flexstr(versions[i]).split('.'), dtype=float) # Convert to array of numbers
+        versions[i] = np.array(flexstr(versions[i]).split('.'), dtype=float) # Convert to array of numbers
     maxlen = max(len(versions[0]), len(versions[1]))
-    versionsarr = zeros((2,maxlen))
+    versionsarr = np.zeros((2,maxlen))
     for i in range(2):
         versionsarr[i,:len(versions[i])] = versions[i]
     for j in range(maxlen):
@@ -1605,28 +1593,48 @@ def commaticks(fig=None, ax=None, axis='y'):
 ### ODICT CLASS
 ##############################################################################
 
-from collections import OrderedDict
-from numpy import array
-from numbers import Number
-from copy import deepcopy as dcp # analysis:ignore
-
-class odict(OrderedDict):
+class odict(_OD):
     '''
     An ordered dictionary, like the OrderedDict class, but supporting list methods like integer 
     referencing, slicing, and appending.
     
-    Version: 2017oct28
+    Examples:
+        foo = odict({'ah':3,'boo':4, 'cough':6, 'dill': 8}) # Create odict
+        bar = foo.sorted() # Sort the list
+        assert(bar['boo'] == 4) # Show get item by value
+        assert(bar[1] == 4) # Show get item by index
+        assert((bar[0:2] == [3,4]).all()) # Show get item by slice
+        assert((bar['cough':'dill'] == [6,8]).all()) # Show alternate slice notation
+        assert((bar[[2,1]] == [6,4]).all()) # Show get item by list
+        assert((bar[:] == [3,4,6,8]).all()) # Show slice with everything
+        assert((bar[2:] == [6,8]).all()) # Show slice without end
+        bar[3] = [3,4,5] # Show assignment by item
+        bar[0:2] = ['the', 'power'] # Show assignment by slice -- NOTE, inclusive slice!!
+        bar[[0,2]] = ['cat', 'trip'] # Show assignment by list
+        bar.rename('cough','chill') # Show rename
+        print(bar) # Print results
+    
+    Version: 2018mar27
     '''
     
     def __init__(self, *args, **kwargs):
         ''' See collections.py '''
+        
+        from numbers import Number # analysis:ignore
+        
+        # Standard OrderedDictionary initialization
         if len(args)==1 and args[0] is None: args = [] # Remove a None argument
-        OrderedDict.__init__(self, *args, **kwargs) # Standard init
+        _OD.__init__(self, *args, **kwargs) # Standard init
+        
+        # Custom initialization
+        self._num = Number # Store this for type checking
+        if _PY2: self._str = basestring 
+        else:   self._str = str
         return None
 
     def __slicekey(self, key, slice_end):
         shift = int(slice_end=='stop')
-        if isinstance(key, Number): return key
+        if isinstance(key, self._num): return key
         elif type(key) is str: return self.index(key)+shift # +1 since otherwise confusing with names (CK)
         elif key is None: return (len(self) if shift else 0)
         else: raise Exception('To use a slice, %s must be either int or str (%s)' % (slice_end, key))
@@ -1635,16 +1643,16 @@ class odict(OrderedDict):
 
     def __is_odict_iterable(self, key):
         ''' Check to see whether the "key" is actually an iterable '''
-        output = type(key)==list or type(key)==type(array([])) # Do *not* include dict, since that would be recursive
+        output = type(key)==list or type(key)==type(np.array([])) # Do *not* include dict, since that would be recursive
         return output
         
         
     def __sanitize_items(self, items):
         ''' Try to convert the output of a slice to an array, but give up easily and return a list '''
         try: 
-            output = array(items) # Try standard Numpy array...
+            output = np.array(items) # Try standard Numpy array...
             if 'S' in str(output.dtype): # ...but instead of converting to string, convert to object array
-                output = array(items, dtype=object)
+                output = np.array(items, dtype=object)
         except:
             output = items # If that fails, just give up and return the list
         return output
@@ -1653,17 +1661,17 @@ class odict(OrderedDict):
 
     def __getitem__(self, key):
         ''' Allows getitem to support strings, integers, slices, lists, or arrays '''
-        if isinstance(key, (str,tuple)):
+        if isinstance(key, (self._str,tuple)):
             try:
-                output = OrderedDict.__getitem__(self, key)
+                output = _OD.__getitem__(self, key)
                 return output
             except Exception as E: # WARNING, should be KeyError, but this can't print newlines!!!
                 if len(self.keys()): errormsg = '%s\nodict key "%s" not found; available keys are:\n%s' % (repr(E), flexstr(key), '\n'.join([flexstr(k) for k in self.keys()]))
                 else:                errormsg = 'Key "%s" not found since odict is empty'% key
                 raise Exception(errormsg)
-        elif isinstance(key, Number): # Convert automatically from float...dangerous?
+        elif isinstance(key, self._num): # Convert automatically from float...dangerous?
             thiskey = self.keys()[int(key)]
-            return OrderedDict.__getitem__(self,thiskey)
+            return _OD.__getitem__(self,thiskey)
         elif type(key)==slice: # Handle a slice -- complicated
             try:
                 startind = self.__slicekey(key.start, 'start')
@@ -1682,16 +1690,16 @@ class odict(OrderedDict):
             output = self.__sanitize_items(listvals)
             return output
         else: # Handle everything else
-            return OrderedDict.__getitem__(self,key)
+            return _OD.__getitem__(self,key)
         
         
     def __setitem__(self, key, value):
         ''' Allows setitem to support strings, integers, slices, lists, or arrays '''
         if isinstance(key, (str,tuple)):
-            OrderedDict.__setitem__(self, key, value)
-        elif isinstance(key, Number): # Convert automatically from float...dangerous?
+            _OD.__setitem__(self, key, value)
+        elif isinstance(key, self._num): # Convert automatically from float...dangerous?
             thiskey = self.keys()[int(key)]
-            OrderedDict.__setitem__(self, thiskey, value)
+            _OD.__setitem__(self, thiskey, value)
         elif type(key)==slice:
             startind = self.__slicekey(key.start, 'start')
             stopind = self.__slicekey(key.stop, 'stop')
@@ -1719,7 +1727,7 @@ class odict(OrderedDict):
                 errormsg = 'Keys "%s" and values "%s" have different lengths! (%i, %i)' % (key, value, len(key), len(value))
                 raise Exception(errormsg)
         else:
-            OrderedDict.__setitem__(self, key, value)
+            _OD.__setitem__(self, key, value)
         return None
     
      
@@ -1860,11 +1868,11 @@ class odict(OrderedDict):
     
     def pop(self, key, *args, **kwargs):
         ''' Allows pop to support strings, integers, slices, lists, or arrays '''
-        if isinstance(key, basestring):
-            return OrderedDict.pop(self, key, *args, **kwargs)
-        elif isinstance(key, Number): # Convert automatically from float...dangerous?
+        if isinstance(key, self._str):
+            return _OD.pop(self, key, *args, **kwargs)
+        elif isinstance(key, self._num): # Convert automatically from float...dangerous?
             thiskey = self.keys()[int(key)]
-            return OrderedDict.pop(self, thiskey, *args, **kwargs)
+            return _OD.pop(self, thiskey, *args, **kwargs)
         elif type(key)==slice: # Handle a slice -- complicated
             try:
                 startind = self.__slicekey(key.start, 'start')
@@ -1873,18 +1881,18 @@ class odict(OrderedDict):
                     print('Stop index must be >= start index (start=%i, stop=%i)' % (startind, stopind))
                     raise Exception
                 slicevals = [self.pop(i, *args, **kwargs) for i in range(startind,stopind)] # WARNING, not tested
-                try: return array(slicevals) # Try to convert to an array
+                try: return np.array(slicevals) # Try to convert to an array
                 except: return slicevals
             except:
                 print('Invalid odict slice... returning empty list...')
                 return []
         elif self.__is_odict_iterable(key): # Iterate over items
             listvals = [self.pop(item, *args, **kwargs) for item in key]
-            try: return array(listvals)
+            try: return np.array(listvals)
             except: return listvals
         else: # Handle string but also everything else
             try:
-                return OrderedDict.pop(self, key, *args, **kwargs)
+                return _OD.pop(self, key, *args, **kwargs)
             except: # WARNING, should be KeyError, but this can't print newlines!!!
                 if len(self.keys()): 
                     errormsg = 'odict key "%s" not found; available keys are:\n%s' % (flexstr(key), 
@@ -1969,7 +1977,7 @@ class odict(OrderedDict):
     def rename(self, oldkey, newkey):
         ''' Change a key name -- WARNING, very inefficient! '''
         nkeys = len(self)
-        if isinstance(oldkey, Number): 
+        if isinstance(oldkey, self._num): 
             index = oldkey
             keystr = self.keys()[index]
         else: # Forge ahead for strings and anything else!
@@ -1997,13 +2005,13 @@ class odict(OrderedDict):
         if sortby is None: allkeys = sorted(origkeys)
         else:
             if not isiterable(sortby): raise Exception('Please provide a list to determine the sort order.')
-            if all([isinstance(x,basestring) for x in sortby]): # Going to sort by keys
+            if all([isinstance(x,self._str) for x in sortby]): # Going to sort by keys
                 allkeys = sortby # Assume the user knows what s/he is doing
             elif all([isinstance(x,bool) for x in sortby]): # Using Boolean values
                 allkeys = []
                 for i,x in enumerate(sortby):
                      if x: allkeys.append(origkeys[i])
-            elif all([isinstance(x,Number) for x in sortby]): # Going to sort by numbers
+            elif all([isinstance(x,self._num) for x in sortby]): # Going to sort by numbers
                 if not set(sortby)==set(range(len(self))):
                     errormsg = 'List to sort by "%s" is not compatible with length of odict "%i"' % (sortby, len(self))
                     raise Exception(errormsg)
@@ -2055,9 +2063,9 @@ class odict(OrderedDict):
             return None # Nothing to do if nothing supplied
         if keys is None and vals is not None:
             keys = len(promotetolist(vals)) # Values are supplied but keys aren't: use default keys
-        if isinstance(keys, Number): # It's a single number: pre-generate
+        if isinstance(keys, self._num): # It's a single number: pre-generate
             keylist = ['%i'%i for i in range(keys)] # Generate keylist
-        elif isinstance(keys, basestring): # It's a single string
+        elif isinstance(keys, self._str): # It's a single string
             keylist = [flexstr(keys)]
         elif isinstance(keys, list): # It's a list: use directly
             keylist = keys
@@ -2106,7 +2114,7 @@ class odict(OrderedDict):
         if source is not None: # Don't do anything if there's nothing there
             if not(isiterable(source)): # Make sure it's iterable
                 source = promotetolist(source)
-            elif isinstance(source, basestring):
+            elif isinstance(source, self._str):
                 source = [source] # Special case -- strings are iterable, but we don't want to
             
             if len(source)==0:
@@ -2205,9 +2213,19 @@ class odict(OrderedDict):
             iterator.append(thistuple)
         return iterator
         
+    # Python 3 compatibility
+    if not _PY2:
+        def keys(self):
+            """ Method to get a list of keys as in Python 2. """
+            return list(_OD.keys(self))
         
+        def values(self):
+            """ Method to get a list of values as in Python 2. """
+            return list(_OD.values(self))
         
-        
+        def iteritems(self):
+            """ Method to generate an item iterator as in Python 2. """
+            return list(_OD.items(self))
         
         
         
@@ -2220,10 +2238,6 @@ class odict(OrderedDict):
 ##############################################################################
 ### DATA FRAME CLASS
 ##############################################################################
-
-# Some of these are repeated to make this frationally more self-contained
-from numpy import array, zeros, empty, vstack, hstack, matrix, argsort, argmin, floor, log10 # analysis:ignore
-from numbers import Number # analysis:ignore
 
 class dataframe(object):
     '''
@@ -2251,15 +2265,20 @@ class dataframe(object):
     
     Works for both numeric and non-numeric data.
     
-    Version: 2018mar17
+    Version: 2018mar27
     '''
 
     def __init__(self, cols=None, data=None):
+        from numbers import Number # analysis:ignore
+        self._num = Number # Store this for type checking
+        if _PY2: self._str = basestring 
+        else:    self._str = str
+        
         if cols is None: cols = list()
         if data is None: 
-            data = zeros((0,len(cols)), dtype=object) # Object allows more than just numbers to be stored
+            data = np.zeros((0,len(cols)), dtype=object) # Object allows more than just numbers to be stored
         else:
-            data = array(data, dtype=object)
+            data = np.array(data, dtype=object)
             if data.ndim != 2:
                 errormsg = 'Dimension of data must be 2, not %s' % data.ndim
                 raise Exception(errormsg)
@@ -2295,7 +2314,7 @@ class dataframe(object):
                         outputlist[col].append(output)
                 outputformats[col] = '%'+'%i'%(maxlen+spacing)+'s'
             
-            indformat = '%%%is' % (floor(log10(nrows))+1) # Choose the right number of digits to print
+            indformat = '%%%is' % (np.floor(np.log10(nrows))+1) # Choose the right number of digits to print
             
             # Assemble output
             output = indformat % '' # Empty column for index
@@ -2314,19 +2333,19 @@ class dataframe(object):
     def _val2row(self, value=None):
         ''' Convert a list, array, or dictionary to the right format for appending to a dataframe '''
         if isinstance(value, dict):
-            output = zeros(self.ncols(), dtype=object)
+            output = np.zeros(self.ncols(), dtype=object)
             for c,col in enumerate(self.cols):
                 try: 
                     output[c] = value[col]
                 except: 
                     errormsg = 'Entry for column %s not found; keys you supplied are: %s' % (col, value.keys())
                     raise Exception(errormsg)
-            output = array(output, dtype=object)
+            output = np.array(output, dtype=object)
         elif value is None:
-            output = empty(self.ncols(),dtype=object)
+            output = np.empty(self.ncols(),dtype=object)
         else: # Not sure what it is, just make it an array
             if len(value)==self.ncols():
-                output = array(value, dtype=object)
+                output = np.array(value, dtype=object)
             else:
                 errormsg = 'Row has wrong length (%s supplied, %s expected)' % (len(value), self.ncols())
         return output
@@ -2334,16 +2353,16 @@ class dataframe(object):
     def _sanitizecol(self, col):
         ''' Take None or a string and return the index of the column '''
         if col is None: output = 0 # If not supplied, assume first column is control
-        elif isinstance(col, basestring): output = self.cols.index(col) # Convert to index
+        elif isinstance(col, self._str): output = self.cols.index(col) # Convert to index
         else: output = col
         return output
     
     def __getitem__(self, key=None):
         ''' Simple method for returning; see self.get() for a version based on col and row '''
-        if isinstance(key, basestring):
+        if isinstance(key, self._str):
             colindex = self.cols.index(key)
             output = self.data[:,colindex]
-        elif isinstance(key, Number):
+        elif isinstance(key, self._num):
             rowindex = int(key)
             output = self.data[rowindex,:]
         elif isinstance(key, tuple):
@@ -2359,7 +2378,7 @@ class dataframe(object):
         return output
         
     def __setitem__(self, key, value):
-        if isinstance(key, basestring): # Add column
+        if isinstance(key, self._str): # Add column
             if len(value) != self.nrows(): 
                 errormsg = 'Vector has incorrect length (%i vs. %i)' % (len(value), self.nrows())
                 raise Exception(errormsg)
@@ -2369,8 +2388,8 @@ class dataframe(object):
             except:
                 self.cols.append(key)
                 colindex = self.cols.index(key)
-                self.data = hstack((self.data, array(value, dtype=object)))
-        elif isinstance(key, Number):
+                self.data = np.hstack((self.data, np.array(value, dtype=object)))
+        elif isinstance(key, self._num):
             value = self._val2row(value) # Make sure it's in the correct format
             if len(value) != self.ncols(): 
                 errormsg = 'Vector has incorrect length (%i vs. %i)' % (len(value), self.ncols())
@@ -2379,7 +2398,7 @@ class dataframe(object):
             try:
                 self.data[rowindex,:] = value
             except:
-                self.data = vstack((self.data, array(value, dtype=object)))
+                self.data = np.vstack((self.data, np.array(value, dtype=object)))
         elif isinstance(key, tuple):
             try:
                 colindex = self.cols.index(key[0])
@@ -2415,14 +2434,14 @@ class dataframe(object):
         ''' Remove a row from the data frame '''
         rowindex = int(key)
         thisrow = self.data[rowindex,:]
-        self.data = vstack((self.data[:rowindex,:], self.data[rowindex+1:,:]))
+        self.data = np.vstack((self.data[:rowindex,:], self.data[rowindex+1:,:]))
         if returnval: return thisrow
         else:         return None
     
     def append(self, value):
         ''' Add a row to the end of the data frame '''
         value = self._val2row(value) # Make sure it's in the correct format
-        self.data = vstack((self.data, array(value, dtype=object)))
+        self.data = np.vstack((self.data, np.array(value, dtype=object)))
         return None
     
     def ncols(self):
@@ -2447,7 +2466,7 @@ class dataframe(object):
         ''' Remove a column from the data frame '''
         colindex = self.cols.index(key)
         self.cols.pop(colindex) # Remove from list of columns
-        self.data = hstack((self.data[:,:colindex], self.data[:,colindex+1:])) # Remove from data
+        self.data = np.hstack((self.data[:,:colindex], self.data[:,colindex+1:])) # Remove from data
         return None
     
     def addrow(self, value=None, overwrite=True, col=None, reverse=False):
@@ -2509,7 +2528,7 @@ class dataframe(object):
         else:
             col = self._sanitizecol(col)
             coldata = self.data[:,col] # Get data for this column
-            index = argmin(abs(coldata-key)) # Find the closest match to the key
+            index = np.argmin(abs(coldata-key)) # Find the closest match to the key
         if index is not None:
             thisrow = self.data[index,:]
             if asdict:
@@ -2522,14 +2541,14 @@ class dataframe(object):
         ''' Insert a row at the specified location '''
         rowindex = int(row)
         value = self._val2row(value) # Make sure it's in the correct format
-        self.data = vstack((self.data[:rowindex,:], value, self.data[rowindex:,:]))
+        self.data = np.vstack((self.data[:rowindex,:], value, self.data[rowindex:,:]))
         return None
     
     def sort(self, col=None, reverse=False):
         ''' Sort the data frame by the specified column '''
         col = self._sanitizecol(col)
-        sortorder = argsort(self.data[:,col])
-        if reverse: sortorder = array(list(reversed(sortorder)))
+        sortorder = np.argsort(self.data[:,col])
+        if reverse: sortorder = np.array(list(reversed(sortorder)))
         self.data = self.data[sortorder,:]
         return None
         
