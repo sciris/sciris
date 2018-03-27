@@ -1092,12 +1092,16 @@ def loadobj(filename=None, folder=None, verbose=True):
     Usage:
     	obj = loadobj('myfile.obj')
     '''
-    if _PY2: import cPickle as pickle # For Python 3 compatibility
-    else:    import pickle
+    if _PY2: 
+        import cPickle as pickle # For Python 3 compatibility
+        String = basestring
+    else:    
+        import pickle
+        String = str
     from gzip import GzipFile
     
     # Handle loading of either filename or file object
-    if isinstance(filename, basestring): 
+    if isinstance(filename, String): 
         argtype = 'filename'
         filename = makefilepath(filename=filename, folder=folder) # If it is a file, validate the folder
     else: 
