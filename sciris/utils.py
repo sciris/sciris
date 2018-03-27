@@ -1092,6 +1092,8 @@ def loadobj(filename=None, folder=None, verbose=True):
     Usage:
     	obj = loadobj('myfile.obj')
     '''
+    if _PY2: import cPickle as pickle # For Python 3 compatibility
+    else:    import pickle
     from gzip import GzipFile
     
     # Handle loading of either filename or file object
