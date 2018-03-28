@@ -2,10 +2,13 @@
 ### Imports
 #############################################################################################################################
 
-try:    import cPickle as pickle # For Python 2 compatibility
-except: import pickle
+try: # Python 2
+    import cPickle as pickle
+    from cStringIO import StringIO
+except: # Python 3
+    import pickle
+    from io import StringIO
 from gzip import GzipFile
-from cStringIO import StringIO
 from contextlib import closing
 from sciris.utils import makefilepath, odict, dataframe
 from xlrd import open_workbook
@@ -15,42 +18,6 @@ from xlrd import open_workbook
 #############################################################################################################################
 ### Basic I/O functions
 #############################################################################################################################
-
-def saveobj(filename=None, obj=None, compresslevel=5, verbose=True, folder=None):
-    '''
-    Save an object to file -- use compression 5 by default, since more is much slower but not much smaller.
-    Once saved, can be loaded with loadobj() (q.v.).
-
-    Usage:
-		myobj = ['this', 'is', 'a', 'weird', {'object':44}]
-		saveobj('myfile.obj', myobj)
-    '''
-    fullpath = makefilepath(filename=filename, folder=folder, sanitize=True)
-    with GzipFile(fullpath, 'wb', compresslevel=compresslevel) as fileobj:
-        fileobj.write(pickle.dumps(obj, protocol=-1))
-    if verbose: print('Object saved to "%s"' % fullpath)
-    return fullpath
-
-
-def loadobj(filename=None, folder=None, verbose=True):
-    '''
-    Load a saved file.
-
-    Usage:
-    	obj = loadobj('myfile.obj')
-    '''
-    # Handle loading of either filename or file object
-    if isinstance(filename, basestring): 
-        argtype = 'filename'
-        filename = makefilepath(filename=filename, folder=folder) # If it is a file, validate the folder
-    else: 
-        argtype = 'fileobj'
-    kwargs = {'mode': 'rb', argtype: filename}
-    with GzipFile(**kwargs) as fileobj:
-        obj = loadpickle(fileobj)
-    if verbose: print('Object loaded from "%s"' % filename)
-    return obj
-
 
 def dumpstr(obj):
     ''' Write data to a fake file object,then read from it -- used on the FE '''
@@ -66,22 +33,9 @@ def dumpstr(obj):
 def loadstr(source):
     ''' Load data from a fake file object -- also used on the FE '''
     with closing(StringIO(source)) as output:
-        with GzipFile(fileobj = output, mode = 'rb') as fileobj: 
-            obj = loadpickle(fileobj)
-    return obj
-
-
-def loadpickle(fileobj, verbose=False):
-    ''' Loads a pickled object -- need to define legacy classes here since they're needed for unpickling '''
-    
-    # Load the file string
-    filestr = fileobj.read()
-    
-    try: # Try just loading it
-        obj = pickle.loads(filestr) # Actually load it
-    except Exception as E: # If that fails, create legacy classes and try again
-        raise E
-    
+        with GzipFile(fileobj = output, mode = 'rb') as fileobj:
+            filestr = fileobj.read() # Convert it to a string
+            obj = pickle.loads(filestr) # Actually load it
     return obj
 
 
