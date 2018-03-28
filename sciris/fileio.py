@@ -2,10 +2,13 @@
 ### Imports
 #############################################################################################################################
 
-try:    import cPickle as pickle # For Python 3 compatibility
-except: import pickle
+try: # Python 2
+    import cPickle as pickle
+    from cStringIO import StringIO
+except: # Python 3
+    import pickle
+    from io import StringIO
 from gzip import GzipFile
-from cStringIO import StringIO
 from contextlib import closing
 from sciris.utils import makefilepath, odict, dataframe
 from xlrd import open_workbook
