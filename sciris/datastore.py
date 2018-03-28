@@ -1,7 +1,7 @@
 """
 datastore.py -- code related to Sciris persistence (both files and database)
     
-Last update: 10/11/17 (gchadder3)
+Last update: 3/27/18 (gchadder3)
 """
 
 """
@@ -19,6 +19,9 @@ directory management stuff goes in a file called filemanagement.py.
 #
 
 import os
+from tempfile import mkdtemp
+from shutil import rmtree
+import atexit
 import redis
 import scirisobjects as sobj
 
@@ -42,11 +45,21 @@ from contextlib import closing
 # The path of the Sciris repo.
 scirisRootPath = None
 
+
+
 # The directory that uploaded files are written to as a "way-station."
 uploadsPath = None
 
 # The root path where files may end up being saved.
 fileSaveRootPath = None
+
+
+
+# Directory (FileSaveDirectory object) for file uploads to be routed to.
+uploadsDir = None
+
+# Directory (FileSaveDirectory object) for file downloads to be routed to.
+downloadsDir = None
 
 # The DataStore object for persistence for the app.  Gets initialized by
 # and loaded by init_datastore().
@@ -435,13 +448,25 @@ class DataStore(object):
         for theKey in self.redisDb.keys():
             self.redisDb.delete(theKey)
  
-    
+
+# Directory-related classes
+# NOTE: If enough code ends up here, we may want to break it out into another 
+# file.
     
 # Wraps a directory where files may get saved by the site.
 class FileSaveDirectory(object):
-    def __init__(self, dirPath):
-        self.dirPath = dirPath
+    def __init__(self, dirPath=None):
+        if dirPath is None:
+            self.dirPath = mkdtemp()
+        else:
+            self.dirPath = dirPath
+        atexit.register(self.cleanup)
+            
+    def cleanup(self):
+        print 'Cleaning up FileSaveDirectory at %s' % self.dirPath
         
+        # Delete the entire directory (file contents included).
+        rmtree(self.dirPath)
         
 #
 # Pickle / unpickle functions
