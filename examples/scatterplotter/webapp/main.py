@@ -1,7 +1,7 @@
 """
-scirismain.py -- main code for Sciris users to change to create their web apps
+main.py -- main code for Sciris users to change to create their web apps
     
-Last update: 1/17/18 (gchadder3)
+Last update: 4/21/18 (gchadder3)
 """
 
 #
@@ -17,10 +17,12 @@ import sys
 import os
 import re
 import copy
-from . import scirisobjects as sobj
-from . import datastore as ds
-from . import user as user
-from . import project as project
+import sciris
+import sciris.scirisobjects as sobj
+import sciris.datastore as ds
+import sciris.user as user
+import sciris.project as project
+import config
 
 #
 # Script code (Block 1)
@@ -28,29 +30,25 @@ from . import project as project
 
 # Get the full path for the loaded sciris repo.  (It in sys path at the 
 # beginning because the caller puts it there.)
-scirisRepoFullPath = sys.path[0]
-
-# Execute the config.py file to get parameter values we need (directories).
-execfile('%s%s%s%s%s' % (scirisRepoFullPath, os.sep, 'sessionmanager', 
-    os.sep, 'config.py'))
+scirisRepoFullPath = os.path.dirname(sciris.__file__)
 
 # If we have a full path for the model directory, load scirismain.py from that.
-if os.path.isabs(MODEL_DIR):
-    modelDirTarget = MODEL_DIR
+if os.path.isabs(config.MODEL_DIR):
+    modelDirTarget = config.MODEL_DIR
     
 # Otherwise (we have a relative path), use it (correcting so it is with 
 # respect to the sciris repo directory).
 else:
-    modelDirTarget = '%s%s%s' % (os.pardir, os.sep, MODEL_DIR) 
+    modelDirTarget = '%s%s%s' % (os.pardir, os.sep, config.MODEL_DIR) 
     
 # If we have a full path for the webapp directory, load scirismain.py from that.
-if os.path.isabs(WEBAPP_DIR):
-    webappDirTarget = WEBAPP_DIR
+if os.path.isabs(config.WEBAPP_DIR):
+    webappDirTarget = config.WEBAPP_DIR
     
 # Otherwise (we have a relative path), use it (correcting so it is with 
 # respect to the sciris repo directory).
 else:
-    webappDirTarget = '%s%s%s' % (os.pardir, os.sep, WEBAPP_DIR) 
+    webappDirTarget = '%s%s%s' % (os.pardir, os.sep, config.WEBAPP_DIR) 
     
 #
 # Imports (Block 2, dependent on config file)
@@ -58,14 +56,16 @@ else:
     
 # Append the model directory to the path and import needed files.    
 sys.path.append(modelDirTarget)
+print "model dir target" + modelDirTarget
 import model
 
 # Append the webapp directory to the path and import needed files.    
 sys.path.append(webappDirTarget)
-import imp
-imp.load_source('ourexceptions', '%s%sexceptions.py' % \
-   (webappDirTarget, os.sep))
-from ourexceptions import ProjectDoesNotExist, SpreadsheetDoesNotExist
+
+#import imp
+#imp.load_source('ourexceptions', '%s%sexceptions.py' % \
+#   (webappDirTarget, os.sep))
+#from ourexceptions import ProjectDoesNotExist, SpreadsheetDoesNotExist
 
 #
 # Classes
