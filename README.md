@@ -159,4 +159,4 @@ A very simple test case of Sciris. In the `examples/helloworld` folder, type `py
 
 ### Scatterplotter
 
-[This is being repaired so that it runs again.]
+See the directions [here](https://github.com/optimamodel/sciris/tree/fix-examples/examples/scatterplotter) on how to install and run this example.
