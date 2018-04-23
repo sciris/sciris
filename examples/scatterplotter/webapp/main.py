@@ -1,7 +1,7 @@
 """
 main.py -- main code for Sciris users to change to create their web apps
     
-Last update: 4/21/18 (gchadder3)
+Last update: 4/23/18 (gchadder3)
 """
 
 #
@@ -28,8 +28,7 @@ import config
 # Script code (Block 1)
 #
 
-# Get the full path for the loaded sciris repo.  (It in sys path at the 
-# beginning because the caller puts it there.)
+# Get the full path for the loaded sciris repo.
 scirisRepoFullPath = os.path.dirname(sciris.__file__)
 
 # If we have a full path for the model directory, load scirismain.py from that.
@@ -38,6 +37,7 @@ if os.path.isabs(config.MODEL_DIR):
     
 # Otherwise (we have a relative path), use it (correcting so it is with 
 # respect to the sciris repo directory).
+# TODO: Something is probably erroneous here.
 else:
     modelDirTarget = '%s%s%s' % (os.pardir, os.sep, config.MODEL_DIR) 
     
@@ -47,6 +47,7 @@ if os.path.isabs(config.WEBAPP_DIR):
     
 # Otherwise (we have a relative path), use it (correcting so it is with 
 # respect to the sciris repo directory).
+# TODO: Something is probably erroneous here.
 else:
     webappDirTarget = '%s%s%s' % (os.pardir, os.sep, config.WEBAPP_DIR) 
     
@@ -56,11 +57,12 @@ else:
     
 # Append the model directory to the path and import needed files.    
 sys.path.append(modelDirTarget)
-print "model dir target" + modelDirTarget
+print "modelDirTarget = " + modelDirTarget
 import model
 
 # Append the webapp directory to the path and import needed files.    
 sys.path.append(webappDirTarget)
+print "webappDirTarget = " + webappDirTarget
 
 #import imp
 #imp.load_source('ourexceptions', '%s%sexceptions.py' % \
@@ -87,10 +89,8 @@ class DataCollection(object):
 #
         
 def init_filepaths(theApp):
-    # Set the Sciris root path to the parent of the current directory, the 
-    # latter being the sciris/bin directory since that is where the code is 
-    # executed from.
-    ds.scirisRootPath = os.path.abspath(os.pardir)
+    # Set the Sciris root path to the package directory for sciris itself.
+    ds.scirisRootPath = scirisRepoFullPath
     
     #  Using the current_app set to the passed in app..
     with theApp.app_context():
@@ -197,28 +197,29 @@ def init_projects(theApp):
         print '>> Creating a new ProjectCollection.'   
         project.theProjCollection.addToDataStore()
         
-        print '>> Starting a demo project.'
-        fullFileName = '%s%sgraph1.csv' % (ds.fileSaveRootPath, os.sep)
-        theProject = project.Project('Graph 1', user.get_scirisdemo_user(), 
-            spreadsheetPath=fullFileName)
-        project.theProjCollection.addObject(theProject)
-        
-        print '>> Starting a second demo project.'
-        fullFileName = '%s%sgraph2.csv' % (ds.fileSaveRootPath, os.sep)
-        theProject = project.Project('Graph 2', user.get_scirisdemo_user(), 
-            spreadsheetPath=fullFileName)
-        project.theProjCollection.addObject(theProject)
-        
-        print '>> Starting a third demo project.'
-        fullFileName = '%s%sgraph3.csv' % (ds.fileSaveRootPath, os.sep)
-        theProject = project.Project('Graph 3', user.get_scirisdemo_user(), 
-            spreadsheetPath=fullFileName)
-        project.theProjCollection.addObject(theProject)
-        
-        print '>> Starting a fourth demo project.'
-        theProject = project.Project('Empty graph', user.get_scirisdemo_user(), 
-            spreadsheetPath=None)
-        project.theProjCollection.addObject(theProject)
+        # TODO: The demo projects definition code doesn't work right, yet.
+#        print '>> Starting a demo project.'
+#        fullFileName = '%s%sgraph1.csv' % (ds.fileSaveRootPath, os.sep)
+#        theProject = project.Project('Graph 1', user.get_scirisdemo_user(), 
+#            spreadsheetPath=fullFileName)
+#        project.theProjCollection.addObject(theProject)
+#        
+#        print '>> Starting a second demo project.'
+#        fullFileName = '%s%sgraph2.csv' % (ds.fileSaveRootPath, os.sep)
+#        theProject = project.Project('Graph 2', user.get_scirisdemo_user(), 
+#            spreadsheetPath=fullFileName)
+#        project.theProjCollection.addObject(theProject)
+#        
+#        print '>> Starting a third demo project.'
+#        fullFileName = '%s%sgraph3.csv' % (ds.fileSaveRootPath, os.sep)
+#        theProject = project.Project('Graph 3', user.get_scirisdemo_user(), 
+#            spreadsheetPath=fullFileName)
+#        project.theProjCollection.addObject(theProject)
+#        
+#        print '>> Starting a fourth demo project.'
+#        theProject = project.Project('Empty graph', user.get_scirisdemo_user(), 
+#            spreadsheetPath=None)
+#        project.theProjCollection.addObject(theProject)
         
     # Show what's in the ProjectCollection.    
     project.theProjCollection.show()
