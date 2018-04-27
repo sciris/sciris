@@ -1,23 +1,20 @@
 <!DOCTYPE html>
 <html>
-<head>
-<!-- Load core scripts -->
-  <title>Hello (random) world</title>
-  <script src="https://unpkg.com/vue"></script>
-  <script src="https://unpkg.com/axios/dist/axios.min.js"></script>
-  <script src="http://d3js.org/d3.v3.min.js"></script>
-  <script src="http://mpld3.github.io/js/mpld3.v0.3.js"></script>
-</head>
+  <head>
+    <!-- Load core scripts -->
+    <title>Hello neighbor</title>
+    <script src="https://unpkg.com/vue"></script>
+  </head>
 
-
-<!-- Define the layout -->
-
-<body>
-  <div id="app">
-    <h1>Hello, world</h1>
-    <button @click="sendRequest">Get new dots</button>
-    <div id="randomgraph"></div>
-  </div>
+  <body>
+  
+    <!-- Define the layout -->  
+  
+    <div id="app">
+      <h1>Hello, neighbor</h1>
+      <button @click="changeText">Flip-flop</button>
+      <div>{{ changingText }}</div>
+    </div>
 
 
 
@@ -27,32 +24,17 @@
     var app = new Vue({
       el: '#app',
       data: {
-        infoselect: 'graph1', 
-        serverresponse: '[Click button to send request]'
+        changingText: '', 
       }, 
       methods: {
-        sendRequest: function () {
-          var vm = this;
-
-          // Use a POST request to pass along the value.
-          axios.post('http://localhost:8080/api', {
-            value: vm.infoselect
-          })
-          .then(function (response) {
-            vm.serverresponse = 'See graph below';
-            // If we already have a figure, pop the figure object, and clear the DOM -- WARNING, needs fixing
-            if (mpld3.figures.length > 0) {
-              mpld3.figures.pop();
-              document.getElementById('randomgraph').innerHTML = '';
-            }
-            mpld3.draw_figure('randomgraph', response.data);
-          })
-          .catch(function (error) {
-            vm.serverresponse = 'There was an error: ' + error.message;
-          })
+        changeText: function () {
+          if (this.changingText == 'Flip')
+            this.changingText = 'Flop'
+          else
+            this.changingText = 'Flip'
         }
       }
     })
   </script>
-</body>
+  </body>
 </html>
