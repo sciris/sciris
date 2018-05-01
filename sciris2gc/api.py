@@ -66,9 +66,16 @@ app = Flask(__name__)
 @app.route('/api', methods=['GET', 'POST'])
 def showGraph():
     graphdata = model.makegraph() # Create the graph from Python
-    graphdict = mpld3.fig_to_dict(graphdata)  # Convert to dict
-    graphjson = json.dumps(json_sanitize_result(graphdict)) # Convert to JSON
-    return graphjson # Return the JSON representation of the Matplotlib figure
+    graphHtml = mpld3.fig_to_html(graphdata)
+    funcHtml = \
+    '''
+<script src="testfunc.js">
+</script>
+    '''
+    return '<h1>My graph</h1>' + funcHtml + graphHtml
+#    graphdict = mpld3.fig_to_dict(graphdata)  # Convert to dict
+#    graphjson = json.dumps(json_sanitize_result(graphdict)) # Convert to JSON
+#    return graphjson # Return the JSON representation of the Matplotlib figure
 
 # Run the webapp
 if __name__ == "__main__":

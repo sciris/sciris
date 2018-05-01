@@ -2,5 +2,6 @@
 Run the server using Twisted.
 """
 
-import sciris2gc
-sciris2gc.server.run()
+# Call the "flip-flop" example.
+from sciris2gc import server
+server.run()
