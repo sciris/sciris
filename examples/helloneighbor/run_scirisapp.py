@@ -16,15 +16,29 @@ if __name__ == "__main__":
     
     appEndpointHandler = theApp.flaskApp.route
     
-    @appEndpointHandler('/')
+#    @appEndpointHandler('/')
+#    def myRootPage():
+#        return '<h1>Hello, Flask!</h1>'
+#    
+#    @appEndpointHandler('/api')
+#    def myApiPage():
+#        return '<h1>Look at that!  Two Flask endpoints!</h1>' 
+#    
+#    @appEndpointHandler('/graph')
+#    def myGraphPage():
+#        graphFig = model.makegraph()
+#        graphHtml = mpld3.fig_to_html(graphFig)
+#        return '<h1>My graph</h1>' + graphHtml
+    
+    @appEndpointHandler('/api')
     def myRootPage():
         return '<h1>Hello, Flask!</h1>'
     
-    @appEndpointHandler('/api')
+    @appEndpointHandler('/api/api')
     def myApiPage():
         return '<h1>Look at that!  Two Flask endpoints!</h1>' 
     
-    @appEndpointHandler('/graph')
+    @appEndpointHandler('/api/graph')
     def myGraphPage():
         graphFig = model.makegraph()
         graphHtml = mpld3.fig_to_html(graphFig)
