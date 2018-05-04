@@ -41,13 +41,21 @@ class ScirisApp(object):
         # Open a new Flask app.
         self.flaskApp = Flask(__name__)
         
-    def runServer(self):       
-#        self.flaskApp.run()
-#        runTwisted(theFlaskApp=self.flaskApp)
-#        runTwisted()  # Nothing, should give error.
-        runTwisted(clientPath='.')   # client page only / no Flask
-#        runTwisted(theFlaskApp=self.flaskApp)  # Flask app only, no client
-        runTwisted(theFlaskApp=self.flaskApp, clientPath='.')
+    def runServer(self, withTwisted=True, withFlask=True, withClient=True):
+        # If we are not running the app with Twisted, just run the Flask app.
+        if not withTwisted:
+            self.flaskApp.run()
+
+        # Otherwise (with Twisted).
+        else:
+            if not withClient and not withFlask:
+                runTwisted()  # nothing, should return error
+            if withClient and not withFlask:
+                runTwisted(clientPath='.')   # client page only / no Flask
+            elif not withClient and withFlask:
+                runTwisted(theFlaskApp=self.flaskApp)  # Flask app only, no client
+            else:
+                runTwisted(theFlaskApp=self.flaskApp, clientPath='.')  # Flask + client
         
         
 class ScirisResource(Resource):
@@ -57,8 +65,8 @@ class ScirisResource(Resource):
         self._wsgi = wsgi
 
     def render(self, request):
-        request.prepath = []
-        request.postpath = ['api'] + request.postpath[:]
+#        request.prepath = []
+#        request.postpath = ['api'] + request.postpath[:]
 
         r = self._wsgi.render(request)
 

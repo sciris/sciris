@@ -16,33 +16,22 @@ if __name__ == "__main__":
     
     appEndpointHandler = theApp.flaskApp.route
     
-#    @appEndpointHandler('/')
-#    def myRootPage():
-#        return '<h1>Hello, Flask!</h1>'
-#    
-#    @appEndpointHandler('/api')
-#    def myApiPage():
-#        return '<h1>Look at that!  Two Flask endpoints!</h1>' 
-#    
-#    @appEndpointHandler('/graph')
-#    def myGraphPage():
-#        graphFig = model.makegraph()
-#        graphHtml = mpld3.fig_to_html(graphFig)
-#        return '<h1>My graph</h1>' + graphHtml
-    
-    @appEndpointHandler('/api')
+    @appEndpointHandler('/')
     def myRootPage():
         return '<h1>Hello, Flask!</h1>'
     
-    @appEndpointHandler('/api/api')
+    @appEndpointHandler('/api')
     def myApiPage():
         return '<h1>Look at that!  Two Flask endpoints!</h1>' 
     
-    @appEndpointHandler('/api/graph')
+    @appEndpointHandler('/graph')
     def myGraphPage():
         graphFig = model.makegraph()
         graphHtml = mpld3.fig_to_html(graphFig)
         return '<h1>My graph</h1>' + graphHtml
         
     # Run the Flask server in the app.
-    theApp.runServer()
+#    theApp.runServer()  # Twisted + client + server    
+#    theApp.runServer(withTwisted=False)  # Flask app (only) without Twisted  
+#    theApp.runServer(withClient=True, withFlask=False)  # client only
+    theApp.runServer(withClient=False, withFlask=True)  # Flask only with Twisted
