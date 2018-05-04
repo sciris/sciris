@@ -12,26 +12,26 @@ import mpld3 # For plotting
 # Run the webapp
 if __name__ == "__main__":
     # Create the ScirisApp object.
-    theApp = ScirisApp()
+    app = ScirisApp()
     
-    appEndpointHandler = theApp.flaskApp.route
+    appEndpointHandler = app.flask_app.route
     
     @appEndpointHandler('/')
-    def myRootPage():
+    def my_root_page():
         return '<h1>Hello, Flask!</h1>'
     
     @appEndpointHandler('/api')
-    def myApiPage():
+    def my_api_page():
         return '<h1>Look at that!  Two Flask endpoints!</h1>' 
     
     @appEndpointHandler('/graph')
-    def myGraphPage():
-        graphFig = model.makegraph()
-        graphHtml = mpld3.fig_to_html(graphFig)
-        return '<h1>My graph</h1>' + graphHtml
+    def my_graph_page():
+        graph_fig = model.makegraph()
+        graph_html = mpld3.fig_to_html(graph_fig)
+        return '<h1>My graph</h1>' + graph_html
         
     # Run the Flask server in the app.
-    theApp.runServer()  # Twisted + client + server    
-#    theApp.runServer(withTwisted=False)  # Flask app (only) without Twisted  
-#    theApp.runServer(withClient=True, withFlask=False)  # client only
-#    theApp.runServer(withClient=False, withFlask=True)  # Flask only with Twisted
+    app.run_server()  # Twisted + client + server    
+#    app.run_server(with_twisted=False)  # Flask app (only) without Twisted  
+#    app.run_server(with_client=True, with_flask=False)  # client only
+#    app.run_server(with_client=False, with_flask=True)  # Flask only with Twisted
