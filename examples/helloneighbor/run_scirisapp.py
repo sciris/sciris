@@ -1,7 +1,7 @@
 """
 run_scirisapp.py -- Simple ScirisApp use case 
     
-Last update: 5/1/18 (gchadder3)
+Last update: 5/4/18 (gchadder3)
 """
 
 # Imports
@@ -31,7 +31,7 @@ if __name__ == "__main__":
         return '<h1>My graph</h1>' + graphHtml
         
     # Run the Flask server in the app.
-#    theApp.runServer()  # Twisted + client + server    
+    theApp.runServer()  # Twisted + client + server    
 #    theApp.runServer(withTwisted=False)  # Flask app (only) without Twisted  
 #    theApp.runServer(withClient=True, withFlask=False)  # client only
-    theApp.runServer(withClient=False, withFlask=True)  # Flask only with Twisted
+#    theApp.runServer(withClient=False, withFlask=True)  # Flask only with Twisted

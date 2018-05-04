@@ -1,7 +1,7 @@
 """
 scirisapp.py -- classes for Sciris (Flask-based) apps 
     
-Last update: 5/3/18 (gchadder3)
+Last update: 5/4/18 (gchadder3)
 """
 
 # Imports
@@ -37,9 +37,18 @@ class ScirisApp(object):
         >>> theApp = ScirisApp()                      
     """
     
-    def  __init__(self):
+    def  __init__(self, clientPath=None):
         # Open a new Flask app.
         self.flaskApp = Flask(__name__)
+        
+        # Save the client path.
+        
+        # If nothing was passed in, then assume the path is the current 
+        # directory.
+        if clientPath is None:
+            self.clientPath = '.'
+        else:
+            self.clientPath = clientPath
         
     def runServer(self, withTwisted=True, withFlask=True, withClient=True):
         # If we are not running the app with Twisted, just run the Flask app.
@@ -51,11 +60,11 @@ class ScirisApp(object):
             if not withClient and not withFlask:
                 runTwisted()  # nothing, should return error
             if withClient and not withFlask:
-                runTwisted(clientPath='.')   # client page only / no Flask
+                runTwisted(clientPath=self.clientPath)   # client page only / no Flask
             elif not withClient and withFlask:
                 runTwisted(theFlaskApp=self.flaskApp)  # Flask app only, no client
             else:
-                runTwisted(theFlaskApp=self.flaskApp, clientPath='.')  # Flask + client
+                runTwisted(theFlaskApp=self.flaskApp, clientPath=self.clientPath)  # Flask + client
         
         
 class ScirisResource(Resource):
@@ -68,11 +77,16 @@ class ScirisResource(Resource):
 #        request.prepath = []
 #        request.postpath = ['api'] + request.postpath[:]
 
+        # Get the WSGI render results (i.e. for Flask app).
         r = self._wsgi.render(request)
 
+        # Keep the client browser from caching Flask response, and set 
+        # the response as already being "expired."
         request.responseHeaders.setRawHeaders(
             b'Cache-Control', [b'no-cache', b'no-store', b'must-revalidate'])
         request.responseHeaders.setRawHeaders(b'expires', [b'0'])
+        
+        # Pass back the WSGI render results.
         return r
     
 
