@@ -1,7 +1,7 @@
 """
 scirisapp.py -- classes for Sciris (Flask-based) apps 
     
-Last update: 5/4/18 (gchadder3)
+Last update: 5/7/18 (gchadder3)
 """
 
 # Imports
@@ -32,6 +32,9 @@ class ScirisApp(object):
                     
     Attributes:
         flask_app (Flask) -- the actual Flask app
+        client_path (str) -- home path for any client browser-side files
+        add_endpoint (func) -- points to the flask_app.route() function so you can 
+            use @app.add_endpoint in the calling code
             
     Usage:
         >>> app = ScirisApp()                      
@@ -40,6 +43,9 @@ class ScirisApp(object):
     def  __init__(self, client_path=None):
         # Open a new Flask app.
         self.flask_app = Flask(__name__)
+        
+        # Remember a decorator for adding an endpoint.
+        self.define_endpoint_callback = self.flask_app.route
         
         # Save the client path.
         
