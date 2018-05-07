@@ -25,6 +25,46 @@ def my_graph_page():
     graph_fig = model.makegraph()
     graph_html = mpld3.fig_to_html(graph_fig)
     return '<h1>My graph</h1>' + graph_html
+
+
+
+# Stuff to pull out...
+class TitleComponent(object):
+    def __init__(self, display_text):
+        self.display_text = display_text
+        
+    def render(self):
+        return '<h1>%s</h1>' % self.display_text
+        
+class ParagraphComponent(object):
+    def __init__(self, display_text):
+        self.display_text = display_text
+        
+    def render(self):
+        return '<p>%s</p>' % self.display_text 
+    
+class GraphComponent(object):
+    def __init__(self, graph_fig):
+        self.graph_fig = graph_fig
+        
+    def render(self):
+        return mpld3.fig_to_html(self.graph_fig) 
+    
+the_layout = [TitleComponent('Here is a Title'), 
+    ParagraphComponent('Here is a sample paragraph.'), 
+    GraphComponent(model.makegraph())]
+      
+@app.define_endpoint_callback('/staticapp')
+def my_staticapp_page():
+    render_str = '<html>'
+    render_str += '<body>'
+    for layout_comp in the_layout:
+        render_str += layout_comp.render()
+    render_str += '</body>'
+    render_str += '</html>'
+    return render_str
+
+
         
 # Run the Flask server in the app.
 #app.run_server()  # Twisted + client + server    
