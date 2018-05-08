@@ -5,7 +5,7 @@ Last update: 5/7/18 (gchadder3)
 """
 
 # Imports
-from flask import Flask
+from flask import Flask, request
 import sys
 from twisted.internet import reactor
 from twisted.internet.endpoints import serverFromString
@@ -33,8 +33,8 @@ class ScirisApp(object):
     Attributes:
         flask_app (Flask) -- the actual Flask app
         client_path (str) -- home path for any client browser-side files
-        add_endpoint (func) -- points to the flask_app.route() function so you can 
-            use @app.add_endpoint in the calling code
+        define_endpoint_callback (func) -- points to the flask_app.route() 
+            function so you can use @app.define_endpoint_callback in the calling code
             
     Usage:
         >>> app = ScirisApp()                      
@@ -46,6 +46,9 @@ class ScirisApp(object):
         
         # Remember a decorator for adding an endpoint.
         self.define_endpoint_callback = self.flask_app.route
+        
+        # Create an empty layout dictionary.
+        self.endpoint_layout_dict = {}
         
         # Save the client path.
         
@@ -71,6 +74,22 @@ class ScirisApp(object):
                 run_twisted(flask_app=self.flask_app)  # Flask app only, no client
             else:
                 run_twisted(flask_app=self.flask_app, client_path=self.client_path)  # Flask + client
+                
+    def define_endpoint_layout(self, rule, layout):
+        # Save the layout in the endpoint layout dictionary.
+        self.endpoint_layout_dict[rule] = layout
+        
+        # Set up the callback, to point to the _layout_render() function.
+        self.flask_app.add_url_rule(rule, 'layout_render', self._layout_render)
+        
+    def _layout_render(self):
+        render_str = '<html>'
+        render_str += '<body>'
+        for layout_comp in self.endpoint_layout_dict[str(request.url_rule)]:
+            render_str += layout_comp.render()
+        render_str += '</body>'
+        render_str += '</html>'
+        return render_str
         
         
 class ScirisResource(Resource):
