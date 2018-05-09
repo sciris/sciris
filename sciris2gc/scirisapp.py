@@ -1,7 +1,7 @@
 """
 scirisapp.py -- classes for Sciris (Flask-based) apps 
     
-Last update: 5/8/18 (gchadder3)
+Last update: 5/9/18 (gchadder3)
 """
 
 # Imports
@@ -82,7 +82,17 @@ class ScirisApp(object):
         
         # Set up the callback, to point to the _layout_render() function.
         self.flask_app.add_url_rule(rule, 'layout_render', self._layout_render)
+
+    def register_RPC(self, rule, **kwargs):
+        def RPC_decorator(RPC_func):
+            def wrapper(*args, **kwargs):
+                # Set up the callback, to point to the _layout_render() function.
+                self.flask_app.add_url_rule(rule, 'RPC', RPC_func)                
+
+            return wrapper
         
+        return RPC_decorator
+           
     def _layout_render(self):
         render_str = '<html>'
         render_str += '<body>'
