@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <!-- Load core scripts -->
+    <title>Hello dotty neighbor</title>
+    <script src="https://unpkg.com/vue"></script>
+    <script src="https://unpkg.com/axios/dist/axios.min.js"></script>
+    <script src="http://d3js.org/d3.v3.min.js"></script>
+    <script src="http://mpld3.github.io/js/mpld3.v0.3.js"></script>    
+  </head>
+
+  <body>
+  
+    <!-- Define the layout -->  
+  
+    <div id="app">
+      <h1>Hello, dotty neighbor</h1>
+      <button @click="sendRequest">Get new dots</button>
+      <div id="randomgraph"></div>
+    </div>
+
+
+
+<!-- Define the functionality -->
+
+  <script>
+    var app = new Vue({
+      el: '#app',
+      data: {
+        infoselect: 'graph1',
+        serverresponse: '[Click button to send request]' 
+      }, 
+      methods: {
+        sendRequest: function () {
+          var vm = this;
+
+          // Use a POST request to pass along the value.
+          axios.post('http://localhost:8080/api/rpcs', {
+            value: vm.infoselect
+          })
+          .then(function (response) {
+            vm.serverresponse = 'See graph below';
+            // If we already have a figure, pop the figure object, and clear the DOM -- WARNING, needs fixing
+            if (mpld3.figures.length > 0) {
+              mpld3.figures.pop();
+              document.getElementById('randomgraph').innerHTML = '';
+            }
+            mpld3.draw_figure('randomgraph', response.data);
+          })
+          .catch(function (error) {
+            vm.serverresponse = 'There was an error: ' + error.message;
+          })
+        }      
+      }
+    })
+  </script>
+  </body>
+</html>
