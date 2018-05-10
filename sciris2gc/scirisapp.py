@@ -1,13 +1,14 @@
 """
 scirisapp.py -- classes for Sciris (Flask-based) apps 
     
-Last update: 5/9/18 (gchadder3)
+Last update: 5/10/18 (gchadder3)
 """
 
 # Imports
-from flask import Flask, request
+from flask import Flask, request, json
 import sys
 import numpy as np
+from functools import wraps
 from twisted.internet import reactor
 from twisted.internet.endpoints import serverFromString
 from twisted.logger import globalLogBeginner, FileLogObserver, formatEvent
@@ -36,6 +37,8 @@ class ScirisApp(object):
         client_path (str) -- home path for any client browser-side files
         define_endpoint_callback (func) -- points to the flask_app.route() 
             function so you can use @app.define_endpoint_callback in the calling code
+        endpoint_layout_dict (dict) -- dictionary holding static page layouts
+        RPC_dict (dict) -- dictionary of site RPCs
             
     Usage:
         >>> app = ScirisApp()                      
@@ -50,6 +53,9 @@ class ScirisApp(object):
         
         # Create an empty layout dictionary.
         self.endpoint_layout_dict = {}
+        
+        # Create an RPC dictionary.
+        self.RPC_dict = {} 
         
         # Save the client path.
         
@@ -83,12 +89,19 @@ class ScirisApp(object):
         # Set up the callback, to point to the _layout_render() function.
         self.flask_app.add_url_rule(rule, 'layout_render', self._layout_render)
 
-    def register_RPC(self, rule, **callerkwargs):
+    def register_RPC(self, **callerkwargs):
         def RPC_decorator(RPC_func):
+            @wraps(RPC_func)
             def wrapper(*args, **kwargs):        
                 RPC_func(*args, **kwargs)
                 
-            self.flask_app.add_url_rule(rule, 'RPC', RPC_func, methods=['POST'])
+            # If we are setting up our first RPC, add the actual endpoint.
+            if len(self.RPC_dict) == 0:
+                self.flask_app.add_url_rule('/rpcs', 'do_RPC', self._do_RPC, methods=['POST'])
+                
+            # Create the RPC and add it to the dictionary.
+            self.RPC_dict[RPC_func.__name__] = ScirisRPC(RPC_func)
+            
             return wrapper
 
         return RPC_decorator
@@ -101,6 +114,18 @@ class ScirisApp(object):
         render_str += '</body>'
         render_str += '</html>'
         return render_str
+    
+    def _do_RPC(self):
+        reqdict = json.loads(request.data)
+        fn_name = reqdict['funcname']
+        
+        if not fn_name in self.RPC_dict:
+            return '<h1>Oopsie!  %s is not there</h1>' % fn_name
+            
+        args = reqdict.get('args', [])
+        kwargs = reqdict.get('kwargs', {})
+        result = self.RPC_dict[fn_name].call_func(*args, **kwargs)
+        return result
         
         
 class ScirisResource(Resource):
@@ -125,7 +150,13 @@ class ScirisResource(Resource):
         # Pass back the WSGI render results.
         return r
     
-
+    
+class ScirisRPC(object):
+    def __init__(self, call_func, call_type='normal'):
+        self.call_func = call_func
+        self.call_type = call_type
+    
+    
 def run_twisted(port=8080, flask_app=None, client_path=None):
     # Give an error if we pass in no Flask server or client path.
     if (flask_app is None) and (client_path is None):

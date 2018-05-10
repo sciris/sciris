@@ -27,7 +27,7 @@
     var app = new Vue({
       el: '#app',
       data: {
-        infoselect: 'graph1',
+        funcname: 'get_graph',
         serverresponse: '[Click button to send request]' 
       }, 
       methods: {
@@ -36,7 +36,9 @@
 
           // Use a POST request to pass along the value.
           axios.post('http://localhost:8080/api/rpcs', {
-            value: vm.infoselect
+            funcname: vm.funcname, 
+            args: [], 
+            kwargs: {}
           })
           .then(function (response) {
             vm.serverresponse = 'See graph below';
