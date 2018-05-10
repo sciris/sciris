@@ -1,7 +1,7 @@
 """
 run_rpcsclientapp.py -- Simple ScirisApp use case 
     
-Last update: 5/8/18 (gchadder3)
+Last update: 5/9/18 (gchadder3)
 """
 
 # Imports
@@ -38,6 +38,14 @@ def rpc():
     graph_dict = mpld3.fig_to_dict(new_graph)
     graph_json = json.dumps(json_sanitize_result(graph_dict)) # Convert to JSON
     return graph_json # Return the JSON representation of the Matplotlib figure
+
+#@app.register_RPC
+#def rpc():
+#    new_graph = model.makegraph()
+#    graph_dict = mpld3.fig_to_dict(new_graph)
+#    graph_json = json.dumps(json_sanitize_result(graph_dict)) # Convert to JSON
+#    return graph_json # Return the JSON representation of the Matplotlib figure
+
 
 
 # Run the client page with Flask and a Twisted server.

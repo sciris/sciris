@@ -83,14 +83,14 @@ class ScirisApp(object):
         # Set up the callback, to point to the _layout_render() function.
         self.flask_app.add_url_rule(rule, 'layout_render', self._layout_render)
 
-    def register_RPC(self, rule, **kwargs):
+    def register_RPC(self, rule, **callerkwargs):
         def RPC_decorator(RPC_func):
-            def wrapper(*args, **kwargs):
-                # Set up the callback, to point to the _layout_render() function.
-                self.flask_app.add_url_rule(rule, 'RPC', RPC_func)                
-
+            def wrapper(*args, **kwargs):        
+                RPC_func(*args, **kwargs)
+                
+            self.flask_app.add_url_rule(rule, 'RPC', RPC_func, methods=['POST'])
             return wrapper
-        
+
         return RPC_decorator
            
     def _layout_render(self):
@@ -218,4 +218,4 @@ def json_sanitize_result(theResult):
 #    if isinstance(theResult, UUID):
 #        return str(theResult)
 
-    return theResult    
+    return theResult
