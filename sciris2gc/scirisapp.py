@@ -1,7 +1,7 @@
 """
 scirisapp.py -- classes for Sciris (Flask-based) apps 
     
-Last update: 5/10/18 (gchadder3)
+Last update: 5/11/18 (gchadder3)
 """
 
 # Imports
@@ -88,19 +88,44 @@ class ScirisApp(object):
         
         # Set up the callback, to point to the _layout_render() function.
         self.flask_app.add_url_rule(rule, 'layout_render', self._layout_render)
+        
+    def add_RPC(self, new_RPC):
+        # If we are setting up our first RPC, add the actual endpoint.
+        if len(self.RPC_dict) == 0:
+            self.flask_app.add_url_rule('/rpcs', 'do_RPC', self._do_RPC, methods=['POST'])
+          
+        # If the function name is in the dictionary...
+        if new_RPC.funcname in self.RPC_dict:
+            # If we have the power to override the function, give a warning.
+            if new_RPC.override:
+                print('>> add_RPC(): WARNING: Overriding previous version of %s:' % new_RPC.funcname)
+                print('>>   Old: %s.%s' % 
+                    (self.RPC_dict[new_RPC.funcname].call_func.__module__, 
+                    self.RPC_dict[new_RPC.funcname].call_func.__name__))
+                print('>>   New: %s.%s' % (new_RPC.call_func.__module__, 
+                    new_RPC.call_func.__name__))
+            # Else, give an error, and exit before the RPC is added.
+            else:
+                print('>> add_RPC(): ERROR: Attempt to override previous version of %s: %s.%s' % \
+                      (new_RPC.funcname, self.RPC_dict[new_RPC.funcname].call_func.__module__, self.RPC_dict[new_RPC.funcname].funcname))
+                return
+        
+        # Create the RPC and add it to the dictionary.
+        self.RPC_dict[new_RPC.funcname] = new_RPC
+    
+    def add_RPC_dict(self, new_RPC_dict):
+        for RPC_funcname in new_RPC_dict:
+            self.add_RPC(new_RPC_dict[RPC_funcname])
 
     def register_RPC(self, **callerkwargs):
         def RPC_decorator(RPC_func):
             @wraps(RPC_func)
             def wrapper(*args, **kwargs):        
                 RPC_func(*args, **kwargs)
-                
-            # If we are setting up our first RPC, add the actual endpoint.
-            if len(self.RPC_dict) == 0:
-                self.flask_app.add_url_rule('/rpcs', 'do_RPC', self._do_RPC, methods=['POST'])
-                
-            # Create the RPC and add it to the dictionary.
-            self.RPC_dict[RPC_func.__name__] = ScirisRPC(RPC_func)
+
+            # Create the RPC and try to add it to the dictionary.
+            new_RPC = ScirisRPC(RPC_func, **callerkwargs)
+            self.add_RPC(new_RPC)
             
             return wrapper
 
@@ -152,9 +177,11 @@ class ScirisResource(Resource):
     
     
 class ScirisRPC(object):
-    def __init__(self, call_func, call_type='normal'):
+    def __init__(self, call_func, call_type='normal', override=False):
         self.call_func = call_func
+        self.funcname = call_func.__name__
         self.call_type = call_type
+        self.override = override
     
     
 def run_twisted(port=8080, flask_app=None, client_path=None):

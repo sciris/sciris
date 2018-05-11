@@ -1,7 +1,11 @@
-'''
-A tiny Python model. To run from the command line:
+"""
+model.py -- A tiny Python model. 
+
+To run from the command line:
     python model.py
-'''
+    
+Last update: 5/11/18 (gchadder3)
+"""
 
 from pylab import figure, rand, show
 
