@@ -3,10 +3,11 @@
   <head>
     <!-- Load core scripts -->
     <title>Hello dotty neighbor</title>
+    <script src="rpc-service.js"></script>
     <script src="https://unpkg.com/vue"></script>
     <script src="https://unpkg.com/axios/dist/axios.min.js"></script>
     <script src="http://d3js.org/d3.v3.min.js"></script>
-    <script src="http://mpld3.github.io/js/mpld3.v0.3.js"></script>    
+    <script src="http://mpld3.github.io/js/mpld3.v0.3.js"></script>  
   </head>
 
   <body>
@@ -16,6 +17,8 @@
     <div id="app">
       <h1>Hello, dotty neighbor</h1>
       <button @click="sendRequest">Get new dots</button>
+      <br/>
+      {{ serverresponse }}      
       <div id="randomgraph"></div>
     </div>
 
@@ -34,12 +37,8 @@
         sendRequest: function () {
           var vm = this;
 
-          // Use a POST request to pass along the value.
-          axios.post('http://localhost:8080/api/rpcs', {
-            funcname: vm.funcname, 
-            args: [], 
-            kwargs: {}
-          })
+          // Make a normal RPC call to get_graph().
+          rpcCall('get_graph', [], {})
           .then(function (response) {
             vm.serverresponse = 'See graph below';
             // If we already have a figure, pop the figure object, and clear the DOM -- WARNING, needs fixing
