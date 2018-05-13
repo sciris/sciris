@@ -6,6 +6,7 @@ Last update: 5/12/18 (gchadder3)
 
 # Imports
 from flask import Flask, request, json, jsonify, send_from_directory
+from werkzeug.utils import secure_filename
 import sys
 import os
 import numpy as np
@@ -175,7 +176,7 @@ class ScirisApp(object):
         # If the function name is not in the RPC dictionary, return an 
         # error.
         if not fn_name in self.RPC_dict:
-            return '<h1>Oopsie!  %s is not there</h1>' % fn_name
+            return jsonify({'error': 'Could not find requested RPC'})
             
         # Get the RPC we've found.
         found_RPC = self.RPC_dict[fn_name]
