@@ -1,12 +1,13 @@
 """
 scirisapp.py -- classes for Sciris (Flask-based) apps 
     
-Last update: 5/11/18 (gchadder3)
+Last update: 5/12/18 (gchadder3)
 """
 
 # Imports
-from flask import Flask, request, json
+from flask import Flask, request, json, jsonify, send_from_directory
 import sys
+import os
 import numpy as np
 from functools import wraps
 from twisted.internet import reactor
@@ -29,8 +30,21 @@ class ScirisApp(object):
     HTTP requests.
     
     Methods:
-        __init__(): void -- constructor
-        run_server(): void -- run the actual server
+        __init__(client_path: str [None]): void -- constructor
+        run_server(with_twisted: bool [True], with_flask: bool [True], 
+            with_client: [True]): void -- run the actual server
+        define_endpoint_layout(rule: str, layout: list): void -- set up an 
+            endpoint with a layout of a static Flask page
+        add_RPC(new_RPC: ScirisRPC): void -- add an RPC to the app's dictionary
+        add_RPC_dict(new_RPC_dict: dict): void -- add RPCs from another RPC 
+            dictionary to the app's dictionary
+        register_RPC(**kwargs): func -- decorator factory for adding a function 
+            as an RPC
+        _layout_render(): void -- render HTML for the layout of the given 
+            rule (in the request)
+        _do_RPC(): void -- process a request in such a way as to find and 
+            dispatch the chosen RPC, doing any validation checking and error 
+            logging necessary in the process
                     
     Attributes:
         flask_app (Flask) -- the actual Flask app
@@ -141,16 +155,94 @@ class ScirisApp(object):
         return render_str
     
     def _do_RPC(self):
-        reqdict = json.loads(request.data)
-        fn_name = reqdict['funcname']
+        # Check to see whether the RPC is getting passed in in request.form.
+        # If so, we are doing an upload, and we want to download the RPC 
+        # request info from the form, not request.data.
+        if 'funcname' in request.form:
+            # Pull out the function name, args, and kwargs
+            fn_name = request.form.get('funcname')
+            args = json.loads(request.form.get('args', "[]"))
+            kwargs = json.loads(request.form.get('kwargs', "{}"))
+            
+        # Otherwise, we have a normal or download RPC, which means we pull 
+        # the RPC request info from request.data.
+        else:
+            reqdict = json.loads(request.data)
+            fn_name = reqdict['funcname']
+            args = reqdict.get('args', [])
+            kwargs = reqdict.get('kwargs', {})
         
+        # If the function name is not in the RPC dictionary, return an 
+        # error.
         if not fn_name in self.RPC_dict:
             return '<h1>Oopsie!  %s is not there</h1>' % fn_name
             
-        args = reqdict.get('args', [])
-        kwargs = reqdict.get('kwargs', {})
-        result = self.RPC_dict[fn_name].call_func(*args, **kwargs)
-        return result
+        # Get the RPC we've found.
+        found_RPC = self.RPC_dict[fn_name]
+        
+        # Do any validation checks we need to do and return errors if they 
+        # don't pass.
+        
+#        # If we are doing an upload...
+#        if found_RPC.call_type == 'upload':
+#            # Grab the formData file that was uploaded.    
+#            file = request.files['uploadfile']
+#        
+#            # Grab the filename of this file, and generate the full upload path / 
+#            # filename.
+#            filename = secure_filename(file.filename)
+#            uploaded_fname = os.path.join(ds.uploadsPath, filename)
+#        
+#            # Save the file to the uploads directory.
+#            file.save(uploaded_fname)
+#        
+#            # Prepend the file name to the args list.
+#            args.insert(0, uploaded_fname)
+        
+        # Show the call of the function.    
+        print('>> Calling RPC function "%s.%s"' % 
+            (found_RPC.call_func.__module__, found_RPC.funcname))
+    
+        # Execute the function to get the results.        
+        result = found_RPC.call_func(*args, **kwargs)
+    
+        # If we are doing a download, prepare the response and send it off.
+        if found_RPC.call_type == 'download':
+            # If we got None for a result (the full file name), return an error 
+            # to the client.
+            if result is None:
+                return jsonify({'error': 'Could not find requested resource'})
+    
+            # Pull out the directory and file names from the full file name.
+            dirName, fileName = os.path.split(result)
+         
+            # Make the response message with the file loaded as an attachment.
+            response = send_from_directory(dirName, fileName, as_attachment=True)
+            response.status_code = 201  # Status 201 = Created
+            response.headers['filename'] = fileName
+                
+            # Unfortunately, we cannot remove the actual file at this point 
+            # because it is in use during the actual download, so we rely on 
+            # later cleanup to remove download files.
+        
+            # Return the response message.
+            return response
+    
+        # Otherwise (normal and upload RPCs), 
+        else:
+            # If we are doing an upload....
+            if found_RPC.call_type == 'upload':
+                # Erase the physical uploaded file, since it is no longer needed.
+#                os.remove(uploaded_fname)
+                pass
+        
+            # If None was returned by the RPC function, return ''.
+            if result is None:
+                return ''
+        
+            # Otherwise, convert the result (probably a dict) to JSON and return it.
+            else:
+                return jsonify(json_sanitize_result(result))
         
         
 class ScirisResource(Resource):

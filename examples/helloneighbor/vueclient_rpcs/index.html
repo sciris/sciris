@@ -6,6 +6,7 @@
     <script src="rpc-service.js"></script>
     <script src="https://unpkg.com/vue"></script>
     <script src="https://unpkg.com/axios/dist/axios.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/1.3.8/FileSaver.min.js"></script>
     <script src="http://d3js.org/d3.v3.min.js"></script>
     <script src="http://mpld3.github.io/js/mpld3.v0.3.js"></script>  
   </head>
@@ -38,8 +39,9 @@
           var vm = this;
 
           // Make a normal RPC call to get_graph().
-//          rpcCall('test_func', [], {})
-          rpcCall('get_graph', [], {})
+//          rpcCall('test_func')
+//          rpcUploadCall('get_graph', [], {}, '.py')
+          rpcCall('get_graph')
           .then(function (response) {
             vm.serverresponse = 'See graph below';
             // If we already have a figure, pop the figure object, and clear the DOM -- WARNING, needs fixing

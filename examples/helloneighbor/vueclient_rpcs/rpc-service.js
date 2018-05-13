@@ -1,9 +1,6 @@
 // rpc-service.js -- RPC functions for Vue to call
 //
-// Last update: 5/10/18 (gchadder3)
-
-// import axios from 'axios'
-// var filesaver = require('file-saver')
+// Last update: 5/12/18 (gchadder3)
 
 // consoleLogCommand() -- Print an RPC call to the browser console.
 function consoleLogCommand (type, funcname, args, kwargs) {
@@ -51,20 +48,150 @@ function readJsonFromBlob (theBlob) {
   })
 }
 
-// export default {
-  // rpcCall() -- normal RPC /api/rpcs calls in scirisapp.py.
-  function rpcCall (funcname, args, kwargs) {
-    // Log the RPC call.
-    consoleLogCommand("normal", funcname, args, kwargs)
+// rpcCall() -- normal RPC /api/rpcs calls in scirisapp.py.
+function rpcCall (funcname, args, kwargs) {
+  // Log the RPC call.
+  consoleLogCommand("normal", funcname, args, kwargs)
 
-    // Do the RPC processing, returning results as a Promise.
-    return new Promise((resolve, reject) => {
-      // Send the POST request for the RPC call.
-      axios.post('/api/rpcs', {
-        funcname: funcname, 
-        args: args, 
-        kwargs: kwargs
+  // Do the RPC processing, returning results as a Promise.
+  return new Promise((resolve, reject) => {
+    // Send the POST request for the RPC call.
+    axios.post('/api/rpcs', {
+      funcname: funcname, 
+      args: args, 
+      kwargs: kwargs
+    })
+    .then(response => {
+      // If there is an error in the POST response.
+      if (typeof(response.data.error) != 'undefined') {
+        reject(Error(response.data.error))
+      }
+
+      // Signal success with the response.
+      resolve(response)
+    })
+    .catch(error => {
+      // If there was an actual response returned from the server...
+      if (error.response) {
+        // If we have exception information in the response (which indicates 
+        // an exception on the server side)...
+        if (typeof(error.response.data.exception) != 'undefined') {
+          // For now, reject with an error message matching the exception.
+          // In the future, we want to put the exception message in a 
+          // pop-up dialog.
+          reject(Error(error.response.data.exception))
+        }
+      }
+
+      // Reject with the error axios got.
+      reject(error)
+    })
+  })
+}
+  
+// rpcDownloadCall() -- download RPC /api/rpcs calls in scirisapp.py.
+function rpcDownloadCall (funcname, args, kwargs) {
+  // Log the download RPC call.
+  consoleLogCommand("download", funcname, args, kwargs)
+
+  // Do the RPC processing, returning results as a Promise.
+  return new Promise((resolve, reject) => {
+    // Send the POST request for the RPC call.
+    axios.post('/api/download', {
+      funcname: funcname, 
+      args: args, 
+      kwargs: kwargs
+    }, 
+    {
+      responseType: 'blob'
+    })
+    .then(response => {
+      readJsonFromBlob(response.data)
+      .then(responsedata => {
+        // If we have error information in the response (which indicates 
+        // a logical error on the server side)...
+        if (typeof(responsedata.error) != 'undefined') {
+          // For now, reject with an error message matching the error.
+          reject(Error(responsedata.error))
+        }
       })
+      .catch(error2 => {
+        // An error here indicates we do in fact have a file to download.
+
+        // Create a new blob object (containing the file data) from the
+        // response.data component.
+        var blob = new Blob([response.data])
+
+        // Grab the file name from response.headers.
+        var filename = response.headers.filename
+
+        // Bring up the browser dialog allowing the user to save the file 
+        // or cancel doing so.
+        filesaver.saveAs(blob, filename)
+
+        // Signal success with the response.
+        resolve(response)
+      })
+    })
+    .catch(error => {
+      // If there was an actual response returned from the server...
+      if (error.response) {
+        readJsonFromBlob(error.response.data)
+        .then(responsedata => {
+          // If we have exception information in the response (which indicates 
+          // an exception on the server side)...
+          if (typeof(responsedata.exception) != 'undefined') {
+            // For now, reject with an error message matching the exception.
+            // In the future, we want to put the exception message in a 
+            // pop-up dialog.
+            reject(Error(responsedata.exception))
+          }
+        })
+        .catch(error2 => {
+          // Reject with the error axios got.
+          reject(error)
+        })
+
+      // Otherwise (no response was delivered), reject with the error axios got.
+      } else {
+        reject(error)
+      }
+    })
+  })
+}
+  
+// rpcUploadCall() -- upload RPC /api/rpcs calls in scirisapp.py.
+function rpcUploadCall (funcname, args, kwargs, fileType) {
+  // Log the upload RPC call.
+  consoleLogCommand("upload", funcname, args, kwargs)
+
+  // Do the RPC processing, returning results as a Promise.
+  return new Promise((resolve, reject) => {
+    // Function for trapping the change event that has the user-selected 
+    // file.
+    var onFileChange = (e) => {
+      // Pull out the files (should only be 1) that were selected.
+      var files = e.target.files || e.dataTransfer.files
+
+      // If no files were selected, reject the promise.
+      if (!files.length)
+        reject(Error('No file selected'))
+
+      // Create a FormData object for holding the file.
+      const formData = new FormData()
+
+      // Put the selected file in the formData object with 'uploadfile' key.
+      formData.append('uploadfile', files[0])
+
+      // Add the RPC function name to the form data.
+      formData.append('funcname', funcname)
+
+      // Add args and kwargs to the form data.
+      formData.append('args', JSON.stringify(args))
+      formData.append('kwargs', JSON.stringify(kwargs))
+
+      // Use a POST request to pass along file to the server.
+      axios.post('/api/rpcs', formData)
       .then(response => {
         // If there is an error in the POST response.
         if (typeof(response.data.error) != 'undefined') {
@@ -90,148 +217,16 @@ function readJsonFromBlob (theBlob) {
         // Reject with the error axios got.
         reject(error)
       })
-    })
-  }
-  
-  // rpcDownloadCall() -- download RPC /api/rpcs calls in scirisapp.py.
-/*  rpcDownloadCall (funcname, args, kwargs) {
-    // Log the download RPC call.
-    consoleLogCommand("download", funcname, args, kwargs)
+    }
 
-    // Do the RPC processing, returning results as a Promise.
-    return new Promise((resolve, reject) => {
-      // Send the POST request for the RPC call.
-      axios.post('/api/download', {
-        funcname: funcname, 
-        args: args, 
-        kwargs: kwargs
-      }, 
-      {
-        responseType: 'blob'
-      })
-      .then(response => {
-        readJsonFromBlob(response.data)
-        .then(responsedata => {
-          // If we have error information in the response (which indicates 
-          // a logical error on the server side)...
-          if (typeof(responsedata.error) != 'undefined') {
-            // For now, reject with an error message matching the error.
-            reject(Error(responsedata.error))
-          }
-        })
-        .catch(error2 => {
-          // An error here indicates we do in fact have a file to download.
+    // Create an invisible file input element and set its change callback to 
+    // our onFileChange function.
+    var inElem = document.createElement('input')
+    inElem.setAttribute('type', 'file')
+    inElem.setAttribute('accept', fileType)
+    inElem.addEventListener('change', onFileChange)
 
-          // Create a new blob object (containing the file data) from the
-          // response.data component.
-          var blob = new Blob([response.data])
-
-          // Grab the file name from response.headers.
-          var filename = response.headers.filename
-
-          // Bring up the browser dialog allowing the user to save the file 
-          // or cancel doing so.
-          filesaver.saveAs(blob, filename)
-
-          // Signal success with the response.
-          resolve(response)
-        })
-      })
-      .catch(error => {
-        // If there was an actual response returned from the server...
-        if (error.response) {
-          readJsonFromBlob(error.response.data)
-          .then(responsedata => {
-            // If we have exception information in the response (which indicates 
-            // an exception on the server side)...
-            if (typeof(responsedata.exception) != 'undefined') {
-              // For now, reject with an error message matching the exception.
-              // In the future, we want to put the exception message in a 
-              // pop-up dialog.
-              reject(Error(responsedata.exception))
-            }
-          })
-          .catch(error2 => {
-            // Reject with the error axios got.
-            reject(error)
-          })
-
-        // Otherwise (no response was delivered), reject with the error axios got.
-        } else {
-          reject(error)
-        }
-      })
-    })
-  },
-  
-  // rpcUploadCall() -- upload RPC /api/rpcs calls in scirisapp.py.
-  rpcUploadCall (funcname, args, kwargs, fileType) {
-    // Log the upload RPC call.
-    consoleLogCommand("upload", funcname, args, kwargs)
-
-    // Do the RPC processing, returning results as a Promise.
-    return new Promise((resolve, reject) => {
-      // Function for trapping the change event that has the user-selected 
-      // file.
-      var onFileChange = (e) => {
-        // Pull out the files (should only be 1) that were selected.
-        var files = e.target.files || e.dataTransfer.files
-
-        // If no files were selected, reject the promise.
-        if (!files.length)
-          reject(Error('No file selected'))
-
-        // Create a FormData object for holding the file.
-        const formData = new FormData()
-
-        // Put the selected file in the formData object with 'uploadfile' key.
-        formData.append('uploadfile', files[0])
-
-        // Add the RPC function name to the form data.
-        formData.append('funcname', funcname)
-
-        // Add args and kwargs to the form data.
-        formData.append('args', JSON.stringify(args))
-        formData.append('kwargs', JSON.stringify(kwargs))
-
-        // Use a POST request to pass along file to the server.
-        axios.post('/api/upload', formData)
-        .then(response => {
-          // If there is an error in the POST response.
-          if (typeof(response.data.error) != 'undefined') {
-            reject(Error(response.data.error))
-          }
-
-          // Signal success with the response.
-          resolve(response)
-        })
-        .catch(error => {
-          // If there was an actual response returned from the server...
-          if (error.response) {
-            // If we have exception information in the response (which indicates 
-            // an exception on the server side)...
-            if (typeof(error.response.data.exception) != 'undefined') {
-              // For now, reject with an error message matching the exception.
-              // In the future, we want to put the exception message in a 
-              // pop-up dialog.
-              reject(Error(error.response.data.exception))
-            }
-          }
-
-          // Reject with the error axios got.
-          reject(error)
-        })
-      }
-
-      // Create an invisible file input element and set its change callback to 
-      // our onFileChange function.
-      var inElem = document.createElement('input')
-      inElem.setAttribute('type', 'file')
-      inElem.setAttribute('accept', fileType)
-      inElem.addEventListener('change', onFileChange)
-
-      // Manually click the button to open the file dialog.
-      inElem.click()
-    })
-  }
-} */
+    // Manually click the button to open the file dialog.
+    inElem.click()
+  })
+}
