@@ -1,16 +1,18 @@
 """
 scirisapp.py -- classes for Sciris (Flask-based) apps 
     
-Last update: 5/12/18 (gchadder3)
+Last update: 5/15/18 (gchadder3)
 """
 
 # Imports
-from flask import Flask, request, json, jsonify, send_from_directory
+from flask import Flask, request, json, jsonify, send_from_directory, make_response
 from werkzeug.utils import secure_filename
+from werkzeug.exceptions import HTTPException
 import sys
 import os
 import numpy as np
 from functools import wraps
+import traceback
 from twisted.internet import reactor
 from twisted.internet.endpoints import serverFromString
 from twisted.logger import globalLogBeginner, FileLogObserver, formatEvent
@@ -204,9 +206,30 @@ class ScirisApp(object):
         print('>> Calling RPC function "%s.%s"' % 
             (found_RPC.call_func.__module__, found_RPC.funcname))
     
-        # Execute the function to get the results.        
-        result = found_RPC.call_func(*args, **kwargs)
-    
+        # Execute the function to get the results, putting it in a try block 
+        # in case there are errors in what's being called. 
+        try:
+            result = found_RPC.call_func(*args, **kwargs)
+        except Exception as e:
+            exception = traceback.format_exc()
+            
+            # Post an error to the Flask logger
+            # limiting the exception information to 10000 characters maximum
+            # (to prevent monstrous sqlalchemy outputs)
+            self.flask_app.logger.error("Exception during request %s: %.10000s" % (request, exception))
+            
+            # If we have a werkzeug exception, pass it on up to werkzeug to 
+            # resolve and reply to.
+            # [Do we really want to do this?: GLC 5/15/18]
+            if isinstance(e, HTTPException):
+                raise
+                
+            # Send back a response with status 500 that includes the exception 
+            # traceback.
+            code = 500
+            reply = {'exception': exception}
+            return make_response(jsonify(reply), code)
+        
         # If we are doing a download, prepare the response and send it off.
         if found_RPC.call_type == 'download':
             # If we got None for a result (the full file name), return an error 

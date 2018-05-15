@@ -17,6 +17,7 @@ app = ScirisApp(client_path='vueclient_rpcs')
 
 @app.register_RPC()
 def get_graph():
+#    x = 1 / 0  # uncomment to test exceptions with ZeroDivisionError
     new_graph = model.makegraph()
     graph_dict = mpld3.fig_to_dict(new_graph)
     return graph_dict
