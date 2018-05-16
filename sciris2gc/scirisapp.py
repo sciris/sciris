@@ -21,6 +21,7 @@ from twisted.web.server import Site
 from twisted.web.static import File
 from twisted.web.wsgi import WSGIResource
 from twisted.python.threadpool import ThreadPool
+import fileio
 
 #
 # Classes
@@ -87,6 +88,9 @@ class ScirisApp(object):
         # Set config parameters in the configs if they were passed in.
         if client_dir is not None:
             self.config['CLIENT_DIR'] = client_dir
+            
+        # Set up file paths.
+        self._init_file_dirs(self.config)
       
     @staticmethod
     def _set_config_defaults(app_config):
@@ -95,7 +99,62 @@ class ScirisApp(object):
             
         if 'TWISTED_PORT' not in app_config:
             app_config['TWISTED_PORT'] = 8080
+
+    @staticmethod
+    def _init_file_dirs(app_config):
+        # If the config parameter is not there (or comment out), set the 
+        # path to None.
+        if 'TRANSFER_DIR' not in app_config:
+            transfer_dir_path = None
+        else:
+            transfer_dir_path = app_config['TRANSFER_DIR']
             
+#            # If we have an absolute directory, use it.
+#            if os.path.isabs(app_config['TRANSFER_DIR']):
+#                transfer_dir_path = app_config['TRANSFER_DIR']
+#                
+#            # Otherwise (we have a relative path), use it (correcting so it is with 
+#            # respect to the sciris repo directory).
+#            else:
+#                transfer_dir_path = '%s%s%s' % (os.pardir, os.sep, 
+#                    app_config['TRANSFER_DIR'])  
+        
+        # Set the file save root path.
+        
+        # If the config parameter is not there (or comment out), set the 
+        # path to None.
+        if 'FILESAVEROOT_DIR' not in app_config:
+            file_save_root_path = None
+        else:  
+            file_save_root_path = app_config['FILESAVEROOT_DIR']
+            
+#            # If we have an absolute directory, use it.
+#            if os.path.isabs(app_config['FILESAVEROOT_DIR']):
+#                file_save_root_path = app_config['FILESAVEROOT_DIR']
+#                
+#            # Otherwise (we have a relative path), use it (correcting so it is with 
+#            # respect to the sciris repo directory).
+#            else:
+#                file_save_root_path = '%s%s%s' % (os.pardir, os.sep, 
+#                    app_config['FILESAVEROOT_DIR'])
+
+        # Create a file save directory.
+        # Perhaps this is unnecessary for this particular webapp, but I'll leave 
+        # it in for now.
+        fileio.file_save_dir = fileio.FileSaveDirectory(file_save_root_path, temp_dir=False)
+        
+        # Create a downloads directory.
+        fileio.downloads_dir = fileio.FileSaveDirectory(transfer_dir_path, temp_dir=True)
+        
+        # Have the uploads directory use the same directory as the downloads 
+        # directory.
+        fileio.uploads_dir = fileio.downloads_dir
+        
+        # Show the downloads and uploads directories.
+        print '>> File save directory path: %s' % fileio.file_save_dir.dir_path
+        print '>> Downloads directory path: %s' % fileio.downloads_dir.dir_path
+        print '>> Uploads directory path: %s' % fileio.uploads_dir.dir_path
+        
     def run_server(self, with_twisted=True, with_flask=True, with_client=True):
         # If we are not running the app with Twisted, just run the Flask app.
         if not with_twisted:
@@ -203,22 +262,22 @@ class ScirisApp(object):
         # Do any validation checks we need to do and return errors if they 
         # don't pass.
         
-#        # If we are doing an upload...
-#        if found_RPC.call_type == 'upload':
-#            # Grab the formData file that was uploaded.    
-#            file = request.files['uploadfile']
-#        
-#            # Extract a sanitized filename from the one we start with.
-#            filename = secure_filename(file.filename)
-#            
-#            # Generate a full upload path/file name.
-#            uploaded_fname = os.path.join(ds.uploadsPath, filename)
-#        
-#            # Save the file to the uploads directory.
-#            file.save(uploaded_fname)
-#        
-#            # Prepend the file name to the args list.
-#            args.insert(0, uploaded_fname)
+        # If we are doing an upload...
+        if found_RPC.call_type == 'upload':
+            # Grab the formData file that was uploaded.    
+            file = request.files['uploadfile']
+        
+            # Extract a sanitized filename from the one we start with.
+            filename = secure_filename(file.filename)
+            
+            # Generate a full upload path/file name.
+            uploaded_fname = os.path.join(fileio.uploads_dir.dir_path, filename)
+        
+            # Save the file to the uploads directory.
+            file.save(uploaded_fname)
+        
+            # Prepend the file name to the args list.
+            args.insert(0, uploaded_fname)
         
         # Show the call of the function.    
         print('>> Calling RPC function "%s.%s"' % 
@@ -276,8 +335,7 @@ class ScirisApp(object):
             # If we are doing an upload....
             if found_RPC.call_type == 'upload':
                 # Erase the physical uploaded file, since it is no longer needed.
-#                os.remove(uploaded_fname)
-                pass
+                os.remove(uploaded_fname)
         
             # If None was returned by the RPC function, return ''.
             if result is None:

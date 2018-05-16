@@ -32,9 +32,9 @@ def test_func():
     return '<h1>Test Me!</h1>'
 
 @app.register_RPC(call_type='upload')
-def show_csv_file():
+def show_csv_file(full_file_name):
     # Extract the data from the .csv file.
-    df = pd.read_csv('./graph1.csv')
+    df = pd.read_csv(full_file_name)
     
     # Create the figure from the data.
     new_graph = figure()

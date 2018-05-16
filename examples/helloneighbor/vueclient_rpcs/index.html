@@ -40,8 +40,8 @@
 
           // Make a normal RPC call to get_graph().
 //          rpcCall('test_func')
-          rpcCall('get_graph')
-//          rpcUploadCall('show_csv_file', [], {}, '.csv')
+//          rpcCall('get_graph')
+          rpcUploadCall('show_csv_file', [], {}, '.csv')
           .then(function (response) {
             vm.serverresponse = 'See graph below';
             // If we already have a figure, pop the figure object, and clear the DOM -- WARNING, needs fixing
