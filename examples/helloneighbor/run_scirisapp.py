@@ -1,7 +1,7 @@
 """
 run_scirisapp.py -- Simple ScirisApp use case 
     
-Last update: 5/7/18 (gchadder3)
+Last update: 5/16/18 (gchadder3)
 """
 
 # Imports
@@ -9,7 +9,8 @@ from sciris2gc.scirisapp import ScirisApp
 import model # The actual Python model we want to incorporate
 import mpld3 # For plotting
 
-# Create the ScirisApp object.
+# Create the ScirisApp object.  NOTE: app.config will thereafter contain all 
+# of the configuration parameters, including for Flask.
 app = ScirisApp()
 
 # Create a callback rendering function at /.

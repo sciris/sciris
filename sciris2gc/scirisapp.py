@@ -1,7 +1,7 @@
 """
 scirisapp.py -- classes for Sciris (Flask-based) apps 
     
-Last update: 5/15/18 (gchadder3)
+Last update: 5/16/18 (gchadder3)
 """
 
 # Imports
@@ -51,7 +51,7 @@ class ScirisApp(object):
                     
     Attributes:
         flask_app (Flask) -- the actual Flask app
-        client_path (str) -- home path for any client browser-side files
+        config (flask.config.Config) -- the Flask configuration dictionary
         define_endpoint_callback (func) -- points to the flask_app.route() 
             function so you can use @app.define_endpoint_callback in the calling code
         endpoint_layout_dict (dict) -- dictionary holding static page layouts
@@ -61,28 +61,41 @@ class ScirisApp(object):
         >>> app = ScirisApp()                      
     """
     
-    def  __init__(self, client_path=None):
+    def  __init__(self, app_config=None, client_dir=None):
         # Open a new Flask app.
         self.flask_app = Flask(__name__)
         
-        # Remember a decorator for adding an endpoint.
+        # If we have a config module, load it into Flask's config dict.
+        if app_config is not None:
+            self.flask_app.config.from_object(app_config)
+            
+        # Set an easier link to the configs dictionary.
+        self.config = self.flask_app.config
+
+        # Set up default values for configs that are not already defined.
+        self._set_config_defaults(self.config)
+        
+        # Set an alias for the decorator factory for adding an endpoint.
         self.define_endpoint_callback = self.flask_app.route
         
         # Create an empty layout dictionary.
         self.endpoint_layout_dict = {}
         
-        # Create an RPC dictionary.
+        # Create an empty RPC dictionary.
         self.RPC_dict = {} 
         
-        # Save the client path.
-        
-        # If nothing was passed in, then assume the path is the current 
-        # directory.
-        if client_path is None:
-            self.client_path = '.'
-        else:
-            self.client_path = client_path
-        
+        # Set config parameters in the configs if they were passed in.
+        if client_dir is not None:
+            self.config['CLIENT_DIR'] = client_dir
+      
+    @staticmethod
+    def _set_config_defaults(app_config):
+        if 'CLIENT_DIR' not in app_config:
+            app_config['CLIENT_DIR'] = '.'
+            
+        if 'TWISTED_PORT' not in app_config:
+            app_config['TWISTED_PORT'] = 8080
+            
     def run_server(self, with_twisted=True, with_flask=True, with_client=True):
         # If we are not running the app with Twisted, just run the Flask app.
         if not with_twisted:
@@ -91,13 +104,17 @@ class ScirisApp(object):
         # Otherwise (with Twisted).
         else:
             if not with_client and not with_flask:
-                run_twisted()  # nothing, should return error
+                run_twisted(port=self.config['TWISTED_PORT'])  # nothing, should return error
             if with_client and not with_flask:
-                run_twisted(client_path=self.client_path)   # client page only / no Flask
+                run_twisted(port=self.config['TWISTED_PORT'], 
+                    client_dir=self.config['CLIENT_DIR'])   # client page only / no Flask
             elif not with_client and with_flask:
-                run_twisted(flask_app=self.flask_app)  # Flask app only, no client
+                run_twisted(port=self.config['TWISTED_PORT'], 
+                    flask_app=self.flask_app)  # Flask app only, no client
             else:
-                run_twisted(flask_app=self.flask_app, client_path=self.client_path)  # Flask + client
+                run_twisted(port=self.config['TWISTED_PORT'], 
+                    flask_app=self.flask_app, 
+                    client_dir=self.config['CLIENT_DIR'])  # Flask + client
                 
     def define_endpoint_layout(self, rule, layout):
         # Save the layout in the endpoint layout dictionary.
@@ -191,9 +208,10 @@ class ScirisApp(object):
 #            # Grab the formData file that was uploaded.    
 #            file = request.files['uploadfile']
 #        
-#            # Grab the filename of this file, and generate the full upload path / 
-#            # filename.
+#            # Extract a sanitized filename from the one we start with.
 #            filename = secure_filename(file.filename)
+#            
+#            # Generate a full upload path/file name.
 #            uploaded_fname = os.path.join(ds.uploadsPath, filename)
 #        
 #            # Save the file to the uploads directory.
@@ -211,6 +229,7 @@ class ScirisApp(object):
         try:
             result = found_RPC.call_func(*args, **kwargs)
         except Exception as e:
+            # Grab the trackback stack.
             exception = traceback.format_exc()
             
             # Post an error to the Flask logger
@@ -300,9 +319,9 @@ class ScirisRPC(object):
         self.override = override
     
     
-def run_twisted(port=8080, flask_app=None, client_path=None):
+def run_twisted(port=8080, flask_app=None, client_dir=None):
     # Give an error if we pass in no Flask server or client path.
-    if (flask_app is None) and (client_path is None):
+    if (flask_app is None) and (client_dir is None):
         print 'ERROR: Neither client or server are defined.'
         return None
     
@@ -311,8 +330,8 @@ def run_twisted(port=8080, flask_app=None, client_path=None):
         FileLogObserver(sys.stdout, lambda _: formatEvent(_) + "\n")])
 
     # If there is a client path, set up the base resource.
-    if client_path is not None:
-        base_resource = File(client_path)
+    if client_dir is not None:
+        base_resource = File(client_dir)
         
     # If we have a flask app...
     if flask_app is not None:
@@ -323,7 +342,7 @@ def run_twisted(port=8080, flask_app=None, client_path=None):
         wsgi_app = WSGIResource(reactor, thread_pool, flask_app)
         
         # If we have no client path, set the WSGI app to be the base resource.
-        if client_path is None:
+        if client_dir is None:
             base_resource = ScirisResource(wsgi_app)
         # Otherwise, make the Flask app a child resource.
         else: 
