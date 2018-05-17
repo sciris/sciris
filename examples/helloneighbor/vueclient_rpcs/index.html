@@ -39,10 +39,7 @@
           var vm = this;
 
           // Make a normal RPC call to get_graph().
-//          rpcCall('test_func')
-//          rpcCall('get_graph')
-//          rpcUploadCall('show_csv_file', [], {}, '.csv')
-          rpcDownloadCall('download_graph_png')
+          rpcCall('get_graph')
           .then(function (response) {
             vm.serverresponse = 'See graph below';
             // If we already have a figure, pop the figure object, and clear the DOM -- WARNING, needs fixing
@@ -55,6 +52,24 @@
           .catch(function (error) {
             vm.serverresponse = 'There was an error: ' + error.message;
           })
+          
+/*          // Make an upload RPC call to graph points in an uploaded .csv file.
+          rpcUploadCall('show_csv_file', [], {}, '.csv')
+          .then(function (response) {
+            vm.serverresponse = 'See graph below';
+            // If we already have a figure, pop the figure object, and clear the DOM -- WARNING, needs fixing
+            if (mpld3.figures.length > 0) {
+              mpld3.figures.pop();
+              document.getElementById('randomgraph').innerHTML = '';
+            }
+            mpld3.draw_figure('randomgraph', response.data);
+          })
+          .catch(function (error) {
+            vm.serverresponse = 'There was an error: ' + error.message;
+          }) */
+
+/*          // Make a download RPC call download a .csv file with random point in it.
+          rpcDownloadCall('download_graph_png')  */ 
         }      
       }
     })
