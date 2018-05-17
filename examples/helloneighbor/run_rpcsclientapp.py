@@ -10,6 +10,7 @@ from sciris2gc import fileio
 import model # The actual Python model we want to incorporate
 import mpld3 # For plotting
 import test_rpcs
+import test_rpcs2
 import pandas as pd
 from pylab import figure
 import config
@@ -69,6 +70,9 @@ def download_graph_png():
 
 # Register the RPCs in the test_rpcs.py module.
 app.add_RPC_dict(test_rpcs.RPC_dict)
+
+# Register the RPCs in the test_rpcs2.py module.
+#app.add_RPC_dict(test_rpcs2.RPC_dict)
 
 # Run the client page with Flask and a Twisted server.
 app.run_server()
