@@ -1,11 +1,12 @@
 """
 run_rpcsclientapp.py -- Simple ScirisApp use case 
     
-Last update: 5/16/18 (gchadder3)
+Last update: 5/17/18 (gchadder3)
 """
 
 # Imports
-from sciris2gc.scirisapp import ScirisApp, fileio
+from sciris2gc.scirisapp import ScirisApp
+from sciris2gc import fileio
 import model # The actual Python model we want to incorporate
 import mpld3 # For plotting
 import test_rpcs
@@ -55,7 +56,6 @@ def show_csv_file(full_file_name):
 def download_graph_png():
 #    x = 1 / 0  # uncomment to test exceptions with ZeroDivisionError
 #    return {'error': 'download_graph_png() just does not feel like working.'}  # uncomment to test custom error
-#    raise Exception, 'download_graph_png() just does not feel like working.'
     
     # Make a new graph with random data.
     new_graph = model.makegraph()

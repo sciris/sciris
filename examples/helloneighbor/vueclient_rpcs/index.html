@@ -42,7 +42,7 @@
 //          rpcCall('test_func')
 //          rpcCall('get_graph')
 //          rpcUploadCall('show_csv_file', [], {}, '.csv')
-          rpcDownloadCall('download_graph_png', [], {})
+          rpcDownloadCall('download_graph_png')
           .then(function (response) {
             vm.serverresponse = 'See graph below';
             // If we already have a figure, pop the figure object, and clear the DOM -- WARNING, needs fixing

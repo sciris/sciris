@@ -1,7 +1,7 @@
 """
 scirisapp.py -- classes for Sciris (Flask-based) apps 
     
-Last update: 5/16/18 (gchadder3)
+Last update: 5/17/18 (gchadder3)
 """
 
 # Imports
@@ -314,7 +314,21 @@ class ScirisApp(object):
             # to the client.
             if result is None:
                 return jsonify({'error': 'Could not find requested resource'})
-    
+            
+            # Else, if the result is not even a string (which means it's not 
+            # a file name as expected)...
+            elif type(result) is not str:
+                # If the result is a dict with an 'error' key, then assume we 
+                # have a custom error that we want the RPC to return to the 
+                # browser, and do so.
+                if type(result) is dict and 'error' in result:
+                    return jsonify(result)
+                
+                # Otherwise, return an error that the download RPC did not 
+                # return a filename.
+                else:
+                    return jsonify({'error': 'Download RPC did not return a filename'})
+            
             # Pull out the directory and file names from the full file name.
             dir_name, file_name = os.path.split(result)
          
