@@ -1,6 +1,6 @@
 // rpc-service.js -- RPC functions for Vue to call
 //
-// Last update: 5/12/18 (gchadder3)
+// Last update: 5/16/18 (gchadder3)
 
 // consoleLogCommand() -- Print an RPC call to the browser console.
 function consoleLogCommand (type, funcname, args, kwargs) {
@@ -97,7 +97,7 @@ function rpcDownloadCall (funcname, args, kwargs) {
   // Do the RPC processing, returning results as a Promise.
   return new Promise((resolve, reject) => {
     // Send the POST request for the RPC call.
-    axios.post('/api/download', {
+    axios.post('/api/rpcs', {
       funcname: funcname, 
       args: args, 
       kwargs: kwargs
@@ -127,7 +127,7 @@ function rpcDownloadCall (funcname, args, kwargs) {
 
         // Bring up the browser dialog allowing the user to save the file 
         // or cancel doing so.
-        filesaver.saveAs(blob, filename)
+        saveAs(blob, filename)
 
         // Signal success with the response.
         resolve(response)

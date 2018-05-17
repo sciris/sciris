@@ -316,12 +316,12 @@ class ScirisApp(object):
                 return jsonify({'error': 'Could not find requested resource'})
     
             # Pull out the directory and file names from the full file name.
-            dirName, fileName = os.path.split(result)
+            dir_name, file_name = os.path.split(result)
          
             # Make the response message with the file loaded as an attachment.
-            response = send_from_directory(dirName, fileName, as_attachment=True)
+            response = send_from_directory(dir_name, file_name, as_attachment=True)
             response.status_code = 201  # Status 201 = Created
-            response.headers['filename'] = fileName
+            response.headers['filename'] = file_name
                 
             # Unfortunately, we cannot remove the actual file at this point 
             # because it is in use during the actual download, so we rely on 
