@@ -69,7 +69,11 @@
           }) */
 
 /*          // Make a download RPC call download a .csv file with random point in it.
-          rpcDownloadCall('download_graph_png')  */ 
+          rpcDownloadCall('download_graph_png') 
+          .catch(function (error) {
+            vm.serverresponse = 'There was an error: ' + error.message;
+          }) */
+          
         }      
       }
     })
