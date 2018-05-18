@@ -484,3 +484,20 @@ def json_sanitize_result(theResult):
 #        return str(theResult)
 
     return theResult
+
+
+def make_register_RPC(RPC_dict, **callerkwargs):
+    def RPC_decorator_factory(**callerkwargs):
+        def RPC_decorator(RPC_func):
+            @wraps(RPC_func)
+            def wrapper(*args, **kwargs):        
+                RPC_func(*args, **kwargs)
+    
+            # Create the RPC and add it to the dictionary.
+            RPC_dict[RPC_func.__name__] = ScirisRPC(RPC_func, **callerkwargs)
+            
+            return wrapper
+    
+        return RPC_decorator
+    
+    return RPC_decorator_factory

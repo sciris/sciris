@@ -6,25 +6,13 @@ Last update: 5/17/18 (gchadder3)
 """
 
 # Imports
-from sciris2gc.scirisapp import ScirisRPC
-from functools import wraps
+from sciris2gc.scirisapp import make_register_RPC
 #import pandas as pd
 #from pylab import figure
 #import mpld3
 #import model
 #import os
 #from sciris2gc import fileio
-
-
-# Attempts to remove boilerplate...
-
-# This appeared to work at first, but test_rpcs and test_rpcs2 then share the 
-# same RPC_dict, which is bad.
-#from sciris2gc.test_rpcs_aux import RPC_dict, register_RPC
-
-# This works only on my machine and uses execfile() which is probably not great.
-#execfile('C:\\GitRepos\\OptimaRepos\\sciris\\sciris2gc\\test_rpcs_aux.py')
-
 
 #
 # Globals
@@ -33,25 +21,8 @@ from functools import wraps
 # Dictionary to hold all of the registered RPCs in this module.
 RPC_dict = {}
 
-#
-# Miscellaneous functions
-#
-
-# Decorator factory for registering RPCs in this module.
-# TODO: If we can, it would be nice to remove this boilerplate by defining 
-# this decorator factory somehow in scirisapp.py.
-def register_RPC(**callerkwargs):
-    def RPC_decorator(RPC_func):
-        @wraps(RPC_func)
-        def wrapper(*args, **kwargs):        
-            RPC_func(*args, **kwargs)
-
-        # Create the RPC and add it to the dictionary.
-        RPC_dict[RPC_func.__name__] = ScirisRPC(RPC_func, **callerkwargs)
-        
-        return wrapper
-
-    return RPC_decorator
+# RPC registration decorator factory created using call to make_register_RPC().
+register_RPC = make_register_RPC(RPC_dict)
 
 #
 # RPC functions

@@ -72,7 +72,7 @@ def download_graph_png():
 app.add_RPC_dict(test_rpcs.RPC_dict)
 
 # Register the RPCs in the test_rpcs2.py module.
-#app.add_RPC_dict(test_rpcs2.RPC_dict)
+app.add_RPC_dict(test_rpcs2.RPC_dict)
 
 # Run the client page with Flask and a Twisted server.
 app.run_server()
