@@ -2407,14 +2407,26 @@ class dataframe(object):
     '''
 
     def __init__(self, cols=None, data=None):
+        
+        # Handle columns        
         if cols is None: cols = list()
+        else:            cols = promotetolist(cols)
+        
+        # Handle data
         if data is None: 
             data = np.zeros((0,len(cols)), dtype=object) # Object allows more than just numbers to be stored
         else:
             data = np.array(data, dtype=object)
             if data.ndim != 2:
-                errormsg = 'Dimension of data must be 2, not %s' % data.ndim
-                raise Exception(errormsg)
+                if data.ndim == 1:
+                    if len(cols)==1:
+                        data = np.reshape(data, (len(data),1))
+                    else:
+                        errormsg = 'Dimension of data can only be 1 if there is 1 column, not %s' % len(cols)
+                        raise Exception(errormsg)
+                else:
+                    errormsg = 'Dimension of data must be 1 or 2, not %s' % data.ndim
+                    raise Exception(errormsg)
             if data.shape[1]==len(cols):
                 pass
             elif data.shape[0]==len(cols):
@@ -2422,6 +2434,8 @@ class dataframe(object):
             else:
                 errormsg = 'Number of columns (%s) does not match array shape (%s)' % (len(cols), data.shape)
                 raise Exception(errormsg)
+        
+        # Store it        
         self.cols = cols
         self.data = data
         return None
