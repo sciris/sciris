@@ -1,7 +1,7 @@
 """
 run_rpcsclientapp.py -- Simple ScirisApp use case 
     
-Last update: 5/17/18 (gchadder3)
+Last update: 5/18/18 (gchadder3)
 """
 
 # Imports
@@ -18,7 +18,8 @@ import os
 
 # Create the ScirisApp object.  NOTE: app.config will thereafter contain all 
 # of the configuration parameters, including for Flask.
-app = ScirisApp(app_config=config, client_dir='vueclient_rpcs')
+#app = ScirisApp(app_config=config, client_dir='vueclient_rpcs')
+app = ScirisApp(__file__, app_config=config)
 
 # Register RPCs directly into the app.
 

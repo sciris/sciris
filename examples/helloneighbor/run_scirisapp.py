@@ -1,7 +1,7 @@
 """
 run_scirisapp.py -- Simple ScirisApp use case 
     
-Last update: 5/16/18 (gchadder3)
+Last update: 5/18/18 (gchadder3)
 """
 
 # Imports
@@ -11,7 +11,7 @@ import mpld3 # For plotting
 
 # Create the ScirisApp object.  NOTE: app.config will thereafter contain all 
 # of the configuration parameters, including for Flask.
-app = ScirisApp()
+app = ScirisApp(__file__)
 
 # Create a callback rendering function at /.
 @app.define_endpoint_callback('/')

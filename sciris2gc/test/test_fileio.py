@@ -1,5 +1,8 @@
 """
 test_fileio.py -- test module for fileio.py
+
+Usage:
+python -m unittest sciris2gc.test.test_fileio
     
 Last update: 5/18/18 (gchadder3)
 """

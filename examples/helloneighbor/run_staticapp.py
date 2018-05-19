@@ -11,7 +11,7 @@ import model # The actual Python model we want to incorporate
 
 # Create the ScirisApp object.  NOTE: app.config will thereafter contain all 
 # of the configuration parameters, including for Flask.
-app = ScirisApp()
+app = ScirisApp(__file__)
     
 # Define the first static page at /staticapp.   
 the_layout = [ \

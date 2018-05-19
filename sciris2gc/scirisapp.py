@@ -1,7 +1,7 @@
 """
 scirisapp.py -- classes for Sciris (Flask-based) apps 
     
-Last update: 5/17/18 (gchadder3)
+Last update: 5/19/18 (gchadder3)
 """
 
 # Imports
@@ -34,7 +34,8 @@ class ScirisApp(object):
     HTTP requests.
     
     Methods:
-        __init__(client_path: str [None]): void -- constructor
+        __init__(script_path: str, app_config: config module [None], 
+            client_dir: str [None]): void -- constructor
         run_server(with_twisted: bool [True], with_flask: bool [True], 
             with_client: [True]): void -- run the actual server
         define_endpoint_layout(rule: str, layout: list): void -- set up an 
@@ -59,20 +60,26 @@ class ScirisApp(object):
         RPC_dict (dict) -- dictionary of site RPCs
             
     Usage:
-        >>> app = ScirisApp()                      
+        >>> app = ScirisApp(__file__)                      
     """
     
-    def  __init__(self, app_config=None, client_dir=None):
+    def  __init__(self, script_path, app_config=None, client_dir=None):
         # Open a new Flask app.
         self.flask_app = Flask(__name__)
-        
+                
         # If we have a config module, load it into Flask's config dict.
         if app_config is not None:
             self.flask_app.config.from_object(app_config)
             
         # Set an easier link to the configs dictionary.
         self.config = self.flask_app.config
-
+        
+        # Get the absolute path of the calling script.
+        abs_script_path = os.path.abspath(script_path)
+        
+        # Extract the absolute directory path from the above.
+        self.config['ROOT_ABS_DIR'] = os.path.dirname(abs_script_path)
+        
         # Set up default values for configs that are not already defined.
         self._set_config_defaults(self.config)
         
@@ -86,6 +93,8 @@ class ScirisApp(object):
         self.RPC_dict = {} 
         
         # Set config parameters in the configs if they were passed in.
+        # A config path explicitly passed in will override the setting 
+        # specified in the config.py file.
         if client_dir is not None:
             self.config['CLIENT_DIR'] = client_dir
             
@@ -102,45 +111,49 @@ class ScirisApp(object):
 
     @staticmethod
     def _init_file_dirs(app_config):
+        # Set the absolute client directory path.
+        
+        # If we do not have an absolute directory, tack what we have onto the 
+        # ROOT_ABS_DIR setting.
+        if not os.path.isabs(app_config['CLIENT_DIR']):
+            app_config['CLIENT_DIR'] = '%s%s%s' % (app_config['ROOT_ABS_DIR'], 
+                os.sep, app_config['CLIENT_DIR'])
+            
+        # Set the transfer directory path.
+        
         # If the config parameter is not there (or comment out), set the 
         # path to None.
         if 'TRANSFER_DIR' not in app_config:
             transfer_dir_path = None
+            
+        # Else, if we do not have an absolute directory, tack what we have onto the 
+        # ROOT_ABS_DIR setting.
+        elif not os.path.isabs(app_config['TRANSFER_DIR']):
+            transfer_dir_path = '%s%s%s' % (app_config['ROOT_ABS_DIR'], 
+                os.sep, app_config['TRANSFER_DIR']) 
+            
+        # Else we have a usable absolute path, so use it.
         else:
             transfer_dir_path = app_config['TRANSFER_DIR']
-            
-#            # If we have an absolute directory, use it.
-#            if os.path.isabs(app_config['TRANSFER_DIR']):
-#                transfer_dir_path = app_config['TRANSFER_DIR']
-#                
-#            # Otherwise (we have a relative path), use it (correcting so it is with 
-#            # respect to the sciris repo directory).
-#            else:
-#                transfer_dir_path = '%s%s%s' % (os.pardir, os.sep, 
-#                    app_config['TRANSFER_DIR'])  
-        
+
         # Set the file save root path.
         
         # If the config parameter is not there (or comment out), set the 
         # path to None.
         if 'FILESAVEROOT_DIR' not in app_config:
             file_save_root_path = None
+            
+        # Else, if we do not have an absolute directory, tack what we have onto the 
+        # ROOT_ABS_DIR setting.
+        elif not os.path.isabs(app_config['FILESAVEROOT_DIR']):
+            file_save_root_path = '%s%s%s' % (app_config['ROOT_ABS_DIR'], 
+                os.sep, app_config['FILESAVEROOT_DIR']) 
+            
+        # Else we have a usable absolute path, so use it.            
         else:  
             file_save_root_path = app_config['FILESAVEROOT_DIR']
-            
-#            # If we have an absolute directory, use it.
-#            if os.path.isabs(app_config['FILESAVEROOT_DIR']):
-#                file_save_root_path = app_config['FILESAVEROOT_DIR']
-#                
-#            # Otherwise (we have a relative path), use it (correcting so it is with 
-#            # respect to the sciris repo directory).
-#            else:
-#                file_save_root_path = '%s%s%s' % (os.pardir, os.sep, 
-#                    app_config['FILESAVEROOT_DIR'])
 
         # Create a file save directory.
-        # Perhaps this is unnecessary for this particular webapp, but I'll leave 
-        # it in for now.
         fileio.file_save_dir = fileio.FileSaveDirectory(file_save_root_path, temp_dir=False)
         
         # Create a downloads directory.
