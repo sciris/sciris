@@ -52,12 +52,24 @@ WEBAPP_DIR = '.'
 # accidental deletion on, for example, reboots.
 FILESAVEROOT_DIR = 'savedfiles'
 
+# Flag for setting whether we use the datastore functionality provided by 
+# Sciris in the webapp.
+USE_DATASTORE = False
+
 # URL for the Redis database that the web app will use to manage 
 # persistence.  Note that the /N/ number at the end should match the 
 # database number you want to use.  (N=0 is the default Redis database.)
 REDIS_URL = 'redis://localhost:6379/0/'
 
+# Flag for setting whether we use the users functionality provided by 
+# Sciris in the webapp.
+USE_USERS = False
+
 # Flag for setting whether registration of a new account automatically 
 # spawns a new active account.  If this is set False, then an admin user has 
 # to manually activate the account for the user.
 REGISTER_AUTOACTIVATE = True
+
+# Flag for setting whether we use the projects functionality provided by 
+# Sciris in the webapp.
+USE_PROJECTS = False
