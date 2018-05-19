@@ -1,7 +1,7 @@
 """
 fileio.py -- code for file management in Sciris 
     
-Last update: 5/16/18 (gchadder3)
+Last update: 5/18/18 (gchadder3)
 """
 
 #
@@ -87,8 +87,8 @@ class FileSaveDirectory(object):
         atexit.register(self.cleanup)
             
     def cleanup(self):
-        # If we are a temp directory, do the cleanup.
-        if self.is_temp_dir:
+        # If we are a temp directory and the directory still exists, do the cleanup.
+        if self.is_temp_dir and os.path.exists(self.dir_path):
             # Show cleanup message.
             print '>> Cleaning up FileSaveDirectory at %s' % self.dir_path
             
@@ -106,34 +106,35 @@ class FileSaveDirectory(object):
         # Delete the entire directory (file contents included).
         rmtree(self.dir_path)
         
+
 #
 # Pickle / unpickle functions
 #
 
-def object_to_string_pickle(the_object):
-    return pickle.dumps(the_object, protocol=-1)
+def object_to_string_pickle(obj):
+    return pickle.dumps(obj, protocol=-1)
 
-def string_pickle_to_object(the_string_pickle):
-    return pickle.loads(the_string_pickle)
+def string_pickle_to_object(string_pickle):
+    return pickle.loads(string_pickle)
 
-def object_to_gzip_string_pickle_file(full_file_name, the_object, compresslevel=5):
+def object_to_gzip_string_pickle_file(full_file_name, obj, compresslevel=5):
     # Object a Gzip file object to write to and set the compression level 
     # (which the function defaults to 5, since higher is much slower, but 
     # not much more compact).
     with GzipFile(full_file_name, 'wb', compresslevel=compresslevel) as fileobj:
         # Write the string pickle conversion of the object to the file.
-        fileobj.write(object_to_string_pickle(the_object))
+        fileobj.write(object_to_string_pickle(obj))
 
 def gzip_string_pickle_file_to_object(full_file_name):
     # Object a Gzip file object to read from.
     with GzipFile(full_file_name, 'rb') as fileobj:
         # Read the string pickle from the file.
-        the_string_pickle = fileobj.read()
+        string_pickle = fileobj.read()
         
     # Return the object gotten from the string pickle.    
-    return string_pickle_to_object(the_string_pickle)
+    return string_pickle_to_object(string_pickle)
 
-def object_to_gzip_string_pickle(the_object):
+def object_to_gzip_string_pickle(obj):
     # Start with a null result.
     result = None
     
@@ -142,7 +143,7 @@ def object_to_gzip_string_pickle(the_object):
         # Open a Gzip-compressing way to write to this "file."
         with GzipFile(fileobj=output, mode='wb') as fileobj: 
             # Write the string pickle conversion of the object to the "file."
-            fileobj.write(object_to_string_pickle(the_object))
+            fileobj.write(object_to_string_pickle(obj))
             
         # Move the mark to the beginning of the "file."
         output.seek(0)
@@ -153,17 +154,17 @@ def object_to_gzip_string_pickle(the_object):
     # Return the read-in result.
     return result
 
-def gzip_string_pickle_to_object(the_gzip_string_pickle):
+def gzip_string_pickle_to_object(gzip_string_pickle):
     # Open a "fake file" with the Gzip string pickle in it.
-    with closing(StringIO(the_gzip_string_pickle)) as output:
+    with closing(StringIO(gzip_string_pickle)) as output:
         # Set a Gzip reader to pull from the "file."
         with GzipFile(fileobj=output, mode='rb') as fileobj: 
             # Read the string pickle from the "file" (applying Gzip 
             # decompression).
-            the_string_pickle = fileobj.read()  
+            string_pickle = fileobj.read()  
             
             # Extract the object from the string pickle.
-            the_object = string_pickle_to_object(the_string_pickle)
+            obj = string_pickle_to_object(string_pickle)
             
     # Return the object.
-    return the_object
+    return obj
