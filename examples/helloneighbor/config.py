@@ -16,7 +16,7 @@ you use a relative path, it is interpreted as being with respect to the
 "webapp directory," that is, the directory containing this config file and the 
 main webapp script that imports it.
  
-Last update: 5/19/18 (gchadder3)
+Last update: 5/21/18 (gchadder3)
 """
 
 # A secret key value used by Python Flask.
@@ -54,7 +54,7 @@ FILESAVEROOT_DIR = 'savedfiles'
 
 # Flag for setting whether we use the datastore functionality provided by 
 # Sciris in the webapp.
-USE_DATASTORE = False
+USE_DATASTORE = True
 
 # URL for the Redis database that the web app will use to manage 
 # persistence.  Note that the /N/ number at the end should match the 

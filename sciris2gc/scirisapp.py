@@ -1,7 +1,7 @@
 """
 scirisapp.py -- classes for Sciris (Flask-based) apps 
     
-Last update: 5/19/18 (gchadder3)
+Last update: 5/21/18 (gchadder3)
 """
 
 # Imports
@@ -22,6 +22,7 @@ from twisted.web.static import File
 from twisted.web.wsgi import WSGIResource
 from twisted.python.threadpool import ThreadPool
 import fileio
+import datastore as ds
 
 #
 # Classes
@@ -100,7 +101,19 @@ class ScirisApp(object):
             
         # Set up file paths.
         self._init_file_dirs(self.config)
-      
+        
+        # If we are including DataStore functionality, initialize it.
+        if self.config['USE_DATASTORE']:
+            self._init_datastore(self.config)
+            
+        # If we are including users functionality, initialize it.
+        if self.config['USE_USERS']:
+            self._init_users(self.config)
+            
+        # If we are including DataStore functionality, initialize it.
+        if self.config['USE_PROJECTS']:
+            self._init_projects(self.config)
+            
     @staticmethod
     def _set_config_defaults(app_config):
         if 'CLIENT_DIR' not in app_config:
@@ -108,6 +121,15 @@ class ScirisApp(object):
             
         if 'TWISTED_PORT' not in app_config:
             app_config['TWISTED_PORT'] = 8080
+            
+        if 'USE_DATASTORE' not in app_config:
+            app_config['USE_DATASTORE'] = False
+
+        if 'USE_USERS' not in app_config:
+            app_config['USE_USERS'] = False
+
+        if 'USE_PROJECTS' not in app_config:
+            app_config['USE_PROJECTS'] = False
 
     @staticmethod
     def _init_file_dirs(app_config):
@@ -164,10 +186,41 @@ class ScirisApp(object):
         fileio.uploads_dir = fileio.downloads_dir
         
         # Show the downloads and uploads directories.
-        print '>> File save directory path: %s' % fileio.file_save_dir.dir_path
-        print '>> Downloads directory path: %s' % fileio.downloads_dir.dir_path
-        print '>> Uploads directory path: %s' % fileio.uploads_dir.dir_path
+        print('>> File save directory path: %s' % fileio.file_save_dir.dir_path)
+        print('>> Downloads directory path: %s' % fileio.downloads_dir.dir_path)
+        print('>> Uploads directory path: %s' % fileio.uploads_dir.dir_path)
         
+    @staticmethod
+    def _init_datastore(app_config):
+        # Create the DataStore object, setting up Redis.
+        ds.data_store = ds.DataStore(redisDbURL=app_config['REDIS_URL'])
+    
+        # Load the DataStore state from disk.
+        ds.data_store.load()
+        
+        # Uncomment this line (for now) to reset the database, and then recomment
+        # before running for usage.
+#        ds.data_store.deleteAll()
+        
+        # Uncomment this to entirely delete the keys at the Redis link.
+        # Careful in using this one!
+#        ds.data_store.clearRedisKeys()
+        
+        # Show that DataStore is initialized.
+        print('>> DataStore initialzed at %s' % app_config['REDIS_URL'])
+        
+        print('DataStore handles:')
+#        ds.data_store.showRedisKeys()
+        ds.data_store.showHandles()
+    
+    @staticmethod
+    def _init_users(app_config):
+        print('>> The users functionality is under construction.')
+    
+    @staticmethod
+    def _init_projects(app_config):
+        print('>> The projects functionality is under construction.')  
+      
     def run_server(self, with_twisted=True, with_flask=True, with_client=True):
         # If we are not running the app with Twisted, just run the Flask app.
         if not with_twisted:
