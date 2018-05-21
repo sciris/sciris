@@ -1,7 +1,7 @@
 """
 datastore.py -- code related to Sciris database persistence
     
-Last update: 5/18/18 (gchadder3)
+Last update: 5/21/18 (gchadder3)
 """
 
 #
@@ -42,107 +42,107 @@ class StoreObjectHandle(object):
     to be stored in and retrieved from a DataStore object.
     
     Methods:
-        __init__(theUID: UUID, theTypePrefix: str ['obj'], 
-            theFileSuffix: str ['.obj'], theInstanceLabel: str['']): void --
+        __init__(UID: UUID, type_prefix: str ['obj'], 
+            file_suffix: str ['.obj'], instance_label: str['']): void --
             constructor
-        getUID(): UUID -- return the StoreObjectHandle's UID
-        fileStore(dirPath: str, theObject: Object): void -- store theObject in 
-            the dirPath directory
-        fileRetrieve(dirPath: str): void -- retrieve the stored object from 
-            the dirPath directory
-        fileDelete(dirPath: str): void -- delete the stored object from the 
-            dirPath directory
-        redisStore(theObject: Object, redisDb: redis.client.StrictRedis): 
-            void -- store theObject in Redis
-        redisRetrieve(redisDb: redis.client.StrictRedis): void -- retrieve 
+        get_uid(): UUID -- return the StoreObjectHandle's UID
+        file_store(dir_path: str, obj: Object): void -- store obj in 
+            the dir_path directory
+        file_retrieve(dir_path: str): void -- retrieve the stored object from 
+            the dir_path directory
+        file_delete(dir_path: str): void -- delete the stored object from the 
+            dir_path directory
+        redis_store(obj: Object, redis_db: redis.client.StrictRedis): 
+            void -- store obj in Redis
+        redis_retrieve(redis_db: redis.client.StrictRedis): void -- retrieve 
             the stored object from Redis
-        redisDelete(redisDb: redis.client.StrictRedis): void -- delete the 
+        redis_delete(redis_db: redis.client.StrictRedis): void -- delete the 
             stored object from Redis
         show(): void -- print the contents of the object
                     
     Attributes:
         uid (UUID) -- the unique ID for the handle (uuid Python library-related)
-        typePrefix (str) -- a prefix that gets added to the UUID to give either 
+        type_prefix (str) -- a prefix that gets added to the UUID to give either 
             a file name or a Redis key
-        fileSuffix (str) -- a suffix that gets added to files
-        instanceLabel (str) -- a name of the object which should at least be 
-            unique across other handles of the save typePrefix
+        file_suffix (str) -- a suffix that gets added to files
+        instance_label (str) -- a name of the object which should at least be 
+            unique across other handles of the save type_prefix
         
     Usage:
-        >>> newHandle = StoreObjectHandle(uuid.UUID('12345678123456781234567812345678'), 
-            typePrefix='project', fileSuffix='.prj', instanceLabel='Project 1')
+        >>> new_handle = StoreObjectHandle(uuid.UUID('12345678123456781234567812345678'), 
+            type_prefix='project', file_suffix='.prj', instance_label='Project 1')
     """
     
-    def __init__(self, theUID, theTypePrefix='obj', theFileSuffix='.obj', 
-        theInstanceLabel=''):
-        self.uid = theUID
-        self.typePrefix = theTypePrefix
-        self.fileSuffix = theFileSuffix
-        self.instanceLabel = theInstanceLabel
+    def __init__(self, UID, type_prefix='obj', file_suffix='.obj', 
+        instance_label=''):
+        self.uid = UID
+        self.type_prefix = type_prefix
+        self.file_suffix = file_suffix
+        self.instance_label = instance_label
         
-    def getUID(self):
+    def get_uid(self):
         return self.uid
     
-    def fileStore(self, dirPath, theObject):
+    def file_store(self, dir_path, obj):
         # Create a filename containing the type prefix, hex UID code, and the
         # appropriate file suffix.
-        fileName = '%s-%s%s' % (self.typePrefix, self.uid.hex, self.fileSuffix)
+        file_name = '%s-%s%s' % (self.type_prefix, self.uid.hex, self.file_suffix)
         
         # Generate the full file name with path.
-        fullFileName = '%s%s%s' % (dirPath, os.sep, fileName)
+        full_file_name = '%s%s%s' % (dir_path, os.sep, file_name)
         
         # Write the object to a Gzip string pickle file.
-        object_to_gzip_string_pickle_file(fullFileName, theObject)
+        object_to_gzip_string_pickle_file(full_file_name, obj)
     
-    def fileRetrieve(self, dirPath):
+    def file_retrieve(self, dir_path):
         # Create a filename containing the type prefix, hex UID code, and the
         # appropriate file suffix.
-        fileName = '%s-%s%s' % (self.typePrefix, self.uid.hex, self.fileSuffix)
+        file_name = '%s-%s%s' % (self.type_prefix, self.uid.hex, self.file_suffix)
         
         # Generate the full file name with path.
-        fullFileName = '%s%s%s' % (dirPath, os.sep, fileName)
+        full_file_name = '%s%s%s' % (dir_path, os.sep, file_name)
         
         # Return object from the Gzip string pickle file.
-        return gzip_string_pickle_file_to_object(fullFileName)
+        return gzip_string_pickle_file_to_object(full_file_name)
     
-    def fileDelete(self, dirPath):
+    def file_delete(self, dir_path):
         # Create a filename containing the type prefix, hex UID code, and the
         # appropriate file suffix.
-        fileName = '%s-%s%s' % (self.typePrefix, self.uid.hex, self.fileSuffix)
+        file_name = '%s-%s%s' % (self.type_prefix, self.uid.hex, self.file_suffix)
         
         # Generate the full file name with path.
-        fullFileName = '%s%s%s' % (dirPath, os.sep, fileName)
+        full_file_name = '%s%s%s' % (dir_path, os.sep, file_name)
         
         # Remove the file if it's there.
-        if os.path.exists(fullFileName):
-            os.remove(fullFileName)
+        if os.path.exists(full_file_name):
+            os.remove(full_file_name)
     
-    def redisStore(self, theObject, redisDb):
+    def redis_store(self, obj, redis_db):
         # Make the Redis key containing the type prefix, and the hex UID code.
-        keyName = '%s-%s' % (self.typePrefix, self.uid.hex)
+        key_name = '%s-%s' % (self.type_prefix, self.uid.hex)
         
         # Put the object in Redis.
-        redisDb.set(keyName, object_to_gzip_string_pickle(theObject))
+        redis_db.set(key_name, object_to_gzip_string_pickle(obj))
     
-    def redisRetrieve(self, redisDb):
+    def redis_retrieve(self, redis_db):
         # Make the Redis key containing the type prefix, and the hex UID code.
-        keyName = '%s-%s' % (self.typePrefix, self.uid.hex) 
+        key_name = '%s-%s' % (self.type_prefix, self.uid.hex) 
         
         # Get and return the object with the key in Redis.
-        return gzip_string_pickle_to_object(redisDb.get(keyName))
+        return gzip_string_pickle_to_object(redis_db.get(key_name))
     
-    def redisDelete(self, redisDb):
+    def redis_delete(self, redis_db):
         # Make the Redis key containing the type prefix, and the hex UID code.
-        keyName = '%s-%s' % (self.typePrefix, self.uid.hex)
+        key_name = '%s-%s' % (self.type_prefix, self.uid.hex)
         
         # Delete the entry from Redis.
-        redisDb.delete(keyName)
+        redis_db.delete(key_name)
         
     def show(self):
         print 'UUID: %s' % self.uid.hex
-        print 'Type Prefix: %s' % self.typePrefix
-        print 'File Suffix: %s' % self.fileSuffix
-        print 'Instance Label: %s' % self.instanceLabel
+        print 'Type Prefix: %s' % self.type_prefix
+        print 'File Suffix: %s' % self.file_suffix
+        print 'Instance Label: %s' % self.instance_label
         
 class DataStore(object):
     """
@@ -151,82 +151,82 @@ class DataStore(object):
     key/value-pair-based database.
     
     Methods:
-        __init__(theDbMode: str ['redis'], redisDbURL: str [None]): void -- 
+        __init__(db_mode: str ['redis'], redis_db_URL: str [None]): void -- 
             constructor
         save(): void -- save the state of the DataStore either to file or 
             Redis, depending on the mode
         load(): void -- load the state of the DataStore either from file or 
             Redis, depending on the mode
-        getHandleByUID(theUID: UUID or str): StoreObjectHandle -- get the 
+        get_handle_by_uid(uid: UUID or str): StoreObjectHandle -- get the 
             handle (if any) pointed to by an UID
-        add(theObject: Object, theUID: UUID or str, theTypeLabel: str ['obj'], 
-            theFileSuffix: str ['.obj'], theInstanceLabel: str [''], 
-            saveHandleChanges: bool [True]): void -- add a Python object to 
+        add(obj: Object, uid: UUID or str, type_label: str ['obj'], 
+            file_suffix: str ['.obj'], instance_label: str [''], 
+            save_handle_changes: bool [True]): void -- add a Python object to 
             the DataStore, creating also a StoreObjectHandle for managing it
-        retrieve(theUID: UUID or str): Object -- retrieve a Python object 
+        retrieve(uid: UUID or str): Object -- retrieve a Python object 
             stored in the DataStore, keyed by a UID
-        update(theUID: UUID or str, theObject): void -- update a Python object 
+        update(uid: UUID or str, obj): void -- update a Python object 
             stored in the DataStore, keyed by a UID
-        delete(theUID: UUID or str, saveHandleChanges=True): void -- delete a 
+        delete(uid: UUID or str, save_handle_changes=True): void -- delete a 
             Python object stored in the DataStore, keyed by a UID
-        deleteAll(): void -- delete all of the Python objects in the DataStore
-        showHandles(): void -- show all of the StoreObjectHandles in the 
+        delete_all(): void -- delete all of the Python objects in the DataStore
+        show_handles(): void -- show all of the StoreObjectHandles in the 
             DataStore
-        showRedisKeys(): void -- show all of the keys in the Redis database 
+        show_redis_keys(): void -- show all of the keys in the Redis database 
             we are using
-        clearRedisKeys(): void -- delete all of the keys in the Redis database
+        clear_redis_keys(): void -- delete all of the keys in the Redis database
             we are using
                     
     Attributes:
-        handleDict (dict) -- the Python dictionary holding the StoreObjectHandles
-        dbMode (str) -- the mode of persistence the DataStore uses (either 
+        handle_dict (dict) -- the Python dictionary holding the StoreObjectHandles
+        db_mode (str) -- the mode of persistence the DataStore uses (either 
             'redis' or 'file')
-        redisDb (redis.client.StrictRedis) -- link to the Redis database we 
+        redis_db (redis.client.StrictRedis) -- link to the Redis database we 
             are using
         
     Usage:
-        >>> theDataStore = DataStore(redisDbURL='redis://localhost:6379/1/')                      
+        >>> data_store = DataStore(redis_db_URL='redis://localhost:6379/0/')                      
     """
     
-    def __init__(self, theDbMode='redis', redisDbURL=None):
+    def __init__(self, db_mode='redis', redis_db_URL=None):
         # Start with an empty dictionary.
-        self.handleDict = {}
+        self.handle_dict = {}
         
-        if redisDbURL is not None:
-            self.dbMode = 'redis'
+        if redis_db_URL is not None:
+            self.db_mode = 'redis'
         else:
-            self.dbMode = theDbMode
+            self.db_mode = db_mode
         
         # If we are using Redis...
-        if self.dbMode == 'redis':
+        if self.db_mode == 'redis':
             # Open up the Redis database we want to dedicate to Sciris.
-            self.redisDb = redis.StrictRedis.from_url(redisDbURL)
+            self.redis_db = redis.StrictRedis.from_url(redis_db_URL)
         
     def save(self):
         # If we are using Redis...
-        if self.dbMode == 'redis':
+        if self.db_mode == 'redis':
             # Set the entries for all of the data items.
-            self.redisDb.set('scirisdatastore-handleDict', 
-                object_to_gzip_string_pickle(self.handleDict))
-            self.redisDb.set('scirisdatastore-dbMode', 
-                object_to_gzip_string_pickle(self.dbMode))
+            self.redis_db.set('scirisdatastore-handle_dict', 
+                object_to_gzip_string_pickle(self.handle_dict))
+            self.redis_db.set('scirisdatastore-db_mode', 
+                object_to_gzip_string_pickle(self.db_mode))
             
         # Otherwise (we are using files)...
         else:
             outfile = open('.\\sciris.ds', 'wb')
-            pickle.dump(self.handleDict, outfile)
-            pickle.dump(self.dbMode, outfile)
+            pickle.dump(self.handle_dict, outfile)
+            pickle.dump(self.db_mode, outfile)
     
     def load(self):
         # If we are using Redis...
-        if self.dbMode == 'redis':
-            if self.redisDb.get('scirisdatastore-handleDict') is None:
+        if self.db_mode == 'redis':
+            if self.redis_db.get('scirisdatastore-handle_dict') is None:
                 print 'Error: DataStore object has not been saved yet.'
                 return
             
             # Get the entries for all of the data items.
-            self.handleDict = gzip_string_pickle_to_object(self.redisDb.get('scirisdatastore-handleDict'))
-            self.dbMode = gzip_string_pickle_to_object(self.redisDb.get('scirisdatastore-dbMode'))
+            self.handle_dict = gzip_string_pickle_to_object(self.redis_db.get('scirisdatastore-handle_dict'))
+            self.db_mode = gzip_string_pickle_to_object(self.redis_db.get('scirisdatastore-db_mode'))
         
         # Otherwise (we are using files)...
         else:    
@@ -235,182 +235,182 @@ class DataStore(object):
                 return
             
             infile = open('.\\sciris.ds', 'rb')
-            self.handleDict = pickle.load(infile)
-            self.dbMode = pickle.load(infile)
+            self.handle_dict = pickle.load(infile)
+            self.db_mode = pickle.load(infile)
     
-    def getHandleByUID(self, theUID):
+    def get_handle_by_uid(self, uid):
         # Make sure the argument is a valid UUID, converting a hex text to a
         # UUID object, if needed.        
-        validUID = sobj.getValidUUID(theUID)
+        valid_uid = sobj.get_valid_uuid(uid)
         
         # If we have a valid UUID...
-        if validUID is not None:
-            return self.handleDict.get(validUID, None)
+        if valid_uid is not None:
+            return self.handle_dict.get(valid_uid, None)
         else:
             return None
         
-    def getUIDFromInstance(self, typePrefix, instanceLabel):
+    def get_uid_from_instance(self, type_prefix, instance_label):
         # Initialize an empty list to put the matches in.
-        UIDmatches = []
+        uid_matches = []
         
         # For each key in the dictionary...
-        for theKey in self.handleDict:
+        for key in self.handle_dict:
             # Get the handle pointed to.
-            theHandle = self.handleDict[theKey]
+            handle = self.handle_dict[key]
             
             # If both the type prefix and instance label match, add the UID
             # of the handle to the list.
-            if theHandle.typePrefix == typePrefix and \
-                theHandle.instanceLabel == instanceLabel:
-                UIDmatches.append(theHandle.uid)
+            if handle.type_prefix == type_prefix and \
+                handle.instance_label == instance_label:
+                uid_matches.append(handle.uid)
                 
         # If there is no match, return None.        
-        if len(UIDmatches) == 0:
+        if len(uid_matches) == 0:
             return None
         
         # Else, if there is more than one match, give a warning.
-        elif len(UIDmatches) > 1:
-            print ('Warning: getUIDFromInstance() only returning the first match.')
+        elif len(uid_matches) > 1:
+            print ('Warning: get_uid_from_instance() only returning the first match.')
             
         # Return the first (and hopefully only) matching UID.  
-        return UIDmatches[0]
+        return uid_matches[0]
         
-    def add(self, theObject, theUID, theTypeLabel='obj', theFileSuffix='.obj', 
-        theInstanceLabel='', saveHandleChanges=True):
+    def add(self, obj, uid, type_label='obj', file_suffix='.obj', 
+        instance_label='', save_handle_changes=True):
         # Make sure the argument is a valid UUID, converting a hex text to a
         # UUID object, if needed.        
-        validUID = sobj.getValidUUID(theUID)
+        valid_uid = sobj.get_valid_uuid(uid)
         
         # If we have a valid UUID...
-        if validUID is not None:       
+        if valid_uid is not None:       
             # Create the new StoreObjectHandle.
-            newHandle = StoreObjectHandle(validUID, theTypeLabel, theFileSuffix, 
-                theInstanceLabel)
+            new_handle = StoreObjectHandle(valid_uid, type_label, file_suffix, 
+                instance_label)
             
             # Add the handle to the dictionary.
-            self.handleDict[validUID] = newHandle
+            self.handle_dict[valid_uid] = new_handle
             
             # If we are using Redis...
-            if self.dbMode == 'redis':
+            if self.db_mode == 'redis':
                 # Put the object in Redis.
-                newHandle.redisStore(theObject, self.redisDb)
+                new_handle.redis_store(obj, self.redis_db)
                 
             # Otherwise (we are using files)...
             else:
                 # Put the object in a file.
-                newHandle.fileStore('.', theObject)
+                new_handle.file_store('.', obj)
                 
             # Do a save of the database so change is kept.
-            if saveHandleChanges:
+            if save_handle_changes:
                 self.save()
     
-    def retrieve(self, theUID):
+    def retrieve(self, uid):
         # Make sure the argument is a valid UUID, converting a hex text to a
         # UUID object, if needed.        
-        validUID = sobj.getValidUUID(theUID)
+        valid_uid = sobj.get_valid_uuid(uid)
         
         # If we have a valid UUID...
-        if validUID is not None: 
+        if valid_uid is not None: 
             # Get the handle (if any) matching the UID.
-            theHandle = self.getHandleByUID(validUID)
+            handle = self.get_handle_by_uid(valid_uid)
             
             # If we found a matching handle...
-            if theHandle is not None:
+            if handle is not None:
                 # If we are using Redis...
-                if self.dbMode == 'redis':        
+                if self.db_mode == 'redis':        
                     # Return the object pointed to by the handle.
-                    return theHandle.redisRetrieve(self.redisDb)
+                    return handle.redis_retrieve(self.redis_db)
                 
                 # Otherwise (we are using files)...
                 else:   
                     # Return the object pointed to by the handle.
-                    return theHandle.fileRetrieve('.')
+                    return handle.file_retrieve('.')
                 
         # Return None (a failure to find a match).
         return None
     
-    def update(self, theUID, theObject):
+    def update(self, uid, obj):
         # Make sure the argument is a valid UUID, converting a hex text to a
         # UUID object, if needed.        
-        validUID = sobj.getValidUUID(theUID)
+        valid_uid = sobj.get_valid_uuid(uid)
         
         # If we have a valid UUID...
-        if validUID is not None:  
+        if valid_uid is not None:  
             # Get the handle (if any) matching the UID.
-            theHandle = self.getHandleByUID(validUID)
+            handle = self.get_handle_by_uid(valid_uid)
             
             # If we found a matching handle...
-            if theHandle is not None:
+            if handle is not None:
                 # If we are using Redis...
-                if self.dbMode == 'redis':   
+                if self.db_mode == 'redis':   
                     # Overwrite the old copy of the object using the handle.
-                    theHandle.redisStore(theObject, self.redisDb)
+                    handle.redis_store(obj, self.redis_db)
                     
                 # Otherwise (we are using files)...
                 else:
                     # Overwrite the old copy of the object using the handle.
-                    theHandle.fileStore('.', theObject)     
+                    handle.file_store('.', obj)     
      
-    def delete(self, theUID, saveHandleChanges=True):
+    def delete(self, uid, save_handle_changes=True):
         # Make sure the argument is a valid UUID, converting a hex text to a
         # UUID object, if needed.        
-        validUID = sobj.getValidUUID(theUID)
+        valid_uid = sobj.get_valid_uuid(uid)
         
         # If we have a valid UUID...
-        if validUID is not None: 
+        if valid_uid is not None: 
             # Get the handle (if any) matching the UID.
-            theHandle = self.getHandleByUID(validUID) 
+            handle = self.get_handle_by_uid(valid_uid) 
             
             # If we found a matching handle...
-            if theHandle is not None:
+            if handle is not None:
                 # If we are using Redis...
-                if self.dbMode == 'redis': 
+                if self.db_mode == 'redis': 
                     # Delete the key using the handle.
-                    theHandle.redisDelete(self.redisDb)
+                    handle.redis_delete(self.redis_db)
                     
                 # Otherwise (we are using files)...
                 else:        
                     # Delete the file using the handle.
-                    theHandle.fileDelete('.')
+                    handle.file_delete('.')
                 
                 # Delete the handle from the dictionary.
-                del self.handleDict[validUID]
+                del self.handle_dict[valid_uid]
                 
                 # Do a save of the database so change is kept.
-                if saveHandleChanges:        
+                if save_handle_changes:        
                     self.save()        
                
-    def deleteAll(self):
+    def delete_all(self):
         # For each key in the dictionary, delete the key and handle, but 
         # don't do the save of the DataStore object until after the changes 
         # are made.
-        allKeys = [key for key in self.handleDict]
-        for theKey in allKeys:
-            self.delete(theKey, saveHandleChanges=False)
+        all_keys = [key for key in self.handle_dict]
+        for key in all_keys:
+            self.delete(key, save_handle_changes=False)
         
         # Save the DataStore object.
         self.save()
     
-    def showHandles(self):
+    def show_handles(self):
         # For each key in the dictionary...
-        for theKey in self.handleDict:
+        for key in self.handle_dict:
             # Get the handle pointed to.
-            theHandle = self.handleDict[theKey]
+            handle = self.handle_dict[key]
             
             # Separator line.
             print '--------------------------------------------'
             
             # Show the handle contents.
-            theHandle.show()
+            handle.show()
             
         # Separator line.
         print '--------------------------------------------'
     
-    def showRedisKeys(self):
+    def show_redis_keys(self):
         # Show all of the keys in the Redis database we are using.
-        print self.redisDb.keys()
+        print self.redis_db.keys()
         
-    def clearRedisKeys(self):
+    def clear_redis_keys(self):
         # Delete all of the keys in the Redis database we are using.
-        for theKey in self.redisDb.keys():
-            self.redisDb.delete(theKey)
+        for key in self.redis_db.keys():
+            self.redis_db.delete(key)

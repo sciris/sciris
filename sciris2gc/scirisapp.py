@@ -193,25 +193,25 @@ class ScirisApp(object):
     @staticmethod
     def _init_datastore(app_config):
         # Create the DataStore object, setting up Redis.
-        ds.data_store = ds.DataStore(redisDbURL=app_config['REDIS_URL'])
+        ds.data_store = ds.DataStore(redis_db_URL=app_config['REDIS_URL'])
     
         # Load the DataStore state from disk.
         ds.data_store.load()
         
         # Uncomment this line (for now) to reset the database, and then recomment
         # before running for usage.
-#        ds.data_store.deleteAll()
+#        ds.data_store.delete_all()
         
         # Uncomment this to entirely delete the keys at the Redis link.
         # Careful in using this one!
-#        ds.data_store.clearRedisKeys()
+#        ds.data_store.clear_redis_keys()
         
         # Show that DataStore is initialized.
         print('>> DataStore initialzed at %s' % app_config['REDIS_URL'])
         
         print('DataStore handles:')
-#        ds.data_store.showRedisKeys()
-        ds.data_store.showHandles()
+#        ds.data_store.show_redis_keys()
+        ds.data_store.show_handles()
     
     @staticmethod
     def _init_users(app_config):

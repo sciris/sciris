@@ -37,13 +37,13 @@ def test_func():
     
     new_uid = uuid.uuid4()
     
-    ds.data_store.add(test_dict, new_uid, theInstanceLabel='testdict')
+    ds.data_store.add(test_dict, new_uid, instance_label='testdict')
     
     return '<h1>test_dict added to database</h1>'
 
 @register_RPC()
 def test_func2():
-    test_dict_uid = ds.data_store.getUIDFromInstance('obj', 'testdict')
+    test_dict_uid = ds.data_store.get_uid_from_instance('obj', 'testdict')
     if test_dict_uid is not None:
         test_dict = ds.data_store.retrieve(test_dict_uid)
         
