@@ -62,21 +62,25 @@ class ScirisObject(object):
     
     def  __init__(self, uid=None, type_prefix='obj', file_suffix='.obj', 
         instance_label=''):        
-        # If a UUID was passed in...
-        if uid is not None:
-            # Make sure the argument is a valid UUID, converting a hex text to a
-            # UUID object, if needed.        
-            valid_uid = get_valid_uuid(uid) 
-            
-            # If a valid_uid was found, use it.
-            if valid_uid is not None:
-                self.uid = valid_uid
-            # Otherwise, generate a new random UUID using uuid4().
-            else:
-                self.uid = uuid.uuid4()
-        # Otherwise, generate a new random UUID using uuid4().
-        else:
-            self.uid = uuid.uuid4()
+#        # If a UUID was passed in...
+#        if uid is not None:
+#            # Make sure the argument is a valid UUID, converting a hex text to a
+#            # UUID object, if needed.        
+#            valid_uid = get_valid_uuid(uid) 
+#            
+#            # If a valid_uid was found, use it.
+#            if valid_uid is not None:
+#                self.uid = valid_uid
+#            # Otherwise, generate a new random UUID using uuid4().
+#            else:
+#                self.uid = uuid.uuid4()
+#        # Otherwise, generate a new random UUID using uuid4().
+#        else:
+#            self.uid = uuid.uuid4()
+        
+        # Get a valid UUID from what is passed in, or if None is passed in, 
+        # get a new ID.
+        self.uid = get_valid_uuid(uid, new_uuid_if_missing=True) 
             
         # Set the other variables that might be used with DataStore.
         self.type_prefix = type_prefix
@@ -299,7 +303,7 @@ class ScirisCollection(ScirisObject):
 # Other utility functions
 #
 
-def get_valid_uuid(uid_param):
+def get_valid_uuid(uid_param, new_uuid_if_missing=False):
     # Get the type of the parameter passed in.
     param_type = type(uid_param)
     
@@ -312,6 +316,11 @@ def get_valid_uuid(uid_param):
         convert_param = uuid.UUID(uid_param)
     except:
         convert_param = None
-    
+        
+    # If we don't have a valid UUID and we are supposed to generate a new 
+    # one if it's missing, do so using uuid4() which generates a random ID.
+    if convert_param is None and new_uuid_if_missing:
+        convert_param = uuid.uuid4()
+        
     # Return the converted value.
     return convert_param 

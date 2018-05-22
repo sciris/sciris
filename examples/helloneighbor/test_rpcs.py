@@ -35,11 +35,10 @@ def test_func():
     # Create a test dict.
     test_dict = { 'optima': 'developer', 'sciris': 'product' }
     
-    new_uid = uuid.uuid4()
+    # Add the test_dict object to the DataStore.
+    new_uid = ds.data_store.add(test_dict, instance_label='testdict')
     
-    ds.data_store.add(test_dict, new_uid, instance_label='testdict')
-    
-    return '<h1>test_dict added to database</h1>'
+    return '<h1>test_dict added to database with UID %s</h1>' % new_uid.hex
 
 @register_RPC()
 def test_func2():

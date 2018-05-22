@@ -42,7 +42,7 @@ class StoreObjectHandle(object):
     to be stored in and retrieved from a DataStore object.
     
     Methods:
-        __init__(UID: UUID, type_prefix: str ['obj'], 
+        __init__(uid: UUID [None], type_prefix: str ['obj'], 
             file_suffix: str ['.obj'], instance_label: str['']): void --
             constructor
         get_uid(): UUID -- return the StoreObjectHandle's UID
@@ -73,9 +73,12 @@ class StoreObjectHandle(object):
             type_prefix='project', file_suffix='.prj', instance_label='Project 1')
     """
     
-    def __init__(self, UID, type_prefix='obj', file_suffix='.obj', 
+    def __init__(self, uid=None, type_prefix='obj', file_suffix='.obj', 
         instance_label=''):
-        self.uid = UID
+        # Set the UID to what was passed in, or if None was passed in, generate 
+        # and use a new one.
+        self.uid = sobj.get_valid_uuid(uid, new_uuid_if_missing=True)
+        
         self.type_prefix = type_prefix
         self.file_suffix = file_suffix
         self.instance_label = instance_label
@@ -159,13 +162,15 @@ class DataStore(object):
             Redis, depending on the mode
         get_handle_by_uid(uid: UUID or str): StoreObjectHandle -- get the 
             handle (if any) pointed to by an UID
-        add(obj: Object, uid: UUID or str, type_label: str ['obj'], 
+        add(obj: Object, uid: UUID or str [None], type_label: str ['obj'], 
             file_suffix: str ['.obj'], instance_label: str [''], 
             save_handle_changes: bool [True]): void -- add a Python object to 
-            the DataStore, creating also a StoreObjectHandle for managing it
+            the DataStore, creating also a StoreObjectHandle for managing it, 
+            and return the UUID (useful if no UID was passed in, and a 
+            new one had to be generated)
         retrieve(uid: UUID or str): Object -- retrieve a Python object 
             stored in the DataStore, keyed by a UID
-        update(uid: UUID or str, obj): void -- update a Python object 
+        update(uid: UUID or str, obj: Object): void -- update a Python object 
             stored in the DataStore, keyed by a UID
         delete(uid: UUID or str, save_handle_changes=True): void -- delete a 
             Python object stored in the DataStore, keyed by a UID
@@ -275,34 +280,35 @@ class DataStore(object):
         # Return the first (and hopefully only) matching UID.  
         return uid_matches[0]
         
-    def add(self, obj, uid, type_label='obj', file_suffix='.obj', 
+    def add(self, obj, uid=None, type_label='obj', file_suffix='.obj', 
         instance_label='', save_handle_changes=True):
         # Make sure the argument is a valid UUID, converting a hex text to a
-        # UUID object, if needed.        
-        valid_uid = sobj.get_valid_uuid(uid)
+        # UUID object, if needed.  If no UID is passed in, generate a new one.    
+        valid_uid = sobj.get_valid_uuid(uid, new_uuid_if_missing=True)
         
-        # If we have a valid UUID...
-        if valid_uid is not None:       
-            # Create the new StoreObjectHandle.
-            new_handle = StoreObjectHandle(valid_uid, type_label, file_suffix, 
-                instance_label)
+        # Create the new StoreObjectHandle.
+        new_handle = StoreObjectHandle(valid_uid, type_label, file_suffix, 
+            instance_label)
+        
+        # Add the handle to the dictionary.
+        self.handle_dict[valid_uid] = new_handle
+        
+        # If we are using Redis...
+        if self.db_mode == 'redis':
+            # Put the object in Redis.
+            new_handle.redis_store(obj, self.redis_db)
             
-            # Add the handle to the dictionary.
-            self.handle_dict[valid_uid] = new_handle
+        # Otherwise (we are using files)...
+        else:
+            # Put the object in a file.
+            new_handle.file_store('.', obj)
             
-            # If we are using Redis...
-            if self.db_mode == 'redis':
-                # Put the object in Redis.
-                new_handle.redis_store(obj, self.redis_db)
-                
-            # Otherwise (we are using files)...
-            else:
-                # Put the object in a file.
-                new_handle.file_store('.', obj)
-                
-            # Do a save of the database so change is kept.
-            if save_handle_changes:
-                self.save()
+        # Do a save of the database so change is kept.
+        if save_handle_changes:
+            self.save()
+            
+        # Return the UUID.
+        return valid_uid
     
     def retrieve(self, uid):
         # Make sure the argument is a valid UUID, converting a hex text to a
