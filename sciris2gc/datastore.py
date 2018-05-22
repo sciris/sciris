@@ -161,7 +161,10 @@ class DataStore(object):
         load(): void -- load the state of the DataStore either from file or 
             Redis, depending on the mode
         get_handle_by_uid(uid: UUID or str): StoreObjectHandle -- get the 
-            handle (if any) pointed to by an UID
+            handle (if any) pointed to by an UID            
+        get_uid_from_instance(type_prefix: str, instance_label: str): UUID -- 
+            find the UID of the first matching case where a handle in the dict 
+            has the same type prefix and instance label        
         add(obj: Object, uid: UUID or str [None], type_label: str ['obj'], 
             file_suffix: str ['.obj'], instance_label: str [''], 
             save_handle_changes: bool [True]): void -- add a Python object to 

@@ -4,18 +4,77 @@ test_datastore.py -- test module for datastore.py
 Usage:
 python -m unittest sciris2gc.test.test_datastore
     
-Last update: 5/21/18 (gchadder3)
+Last update: 5/22/18 (gchadder3)
 """
 
 # Imports
 import unittest
 import sciris2gc.datastore as ds
 import os
+import redis
 
 class StoreObjectHandleTest(unittest.TestCase):
-    def test_thang1(self):
-        pass
-    
+    def setUp(self):
+        # Make a test directory.
+        if not os.path.exists('testdatastoredir'):
+            os.mkdir('testdatastoredir')
+            
+    def tearDown(self):
+        # Remove the test directory.
+        os.rmdir('testdatastoredir')
+            
+    def test_handle_lifecycle(self):
+        # Create a test dict.
+        test_dict = { 'optima': 'developer', 'sciris': 'product' }
+        
+        # Create a new handle which we'll use to store the object.
+        new_handle = ds.StoreObjectHandle(type_prefix='testobj')
+        
+        # Make sure the stored uid is returned by the get_uid function.
+        self.assertEqual(new_handle.get_uid(), new_handle.uid)
+        
+        # Show the new handle.
+        print('The new handle:')
+        new_handle.show()
+        
+        # File storage tests.
+        
+        # Store the object in a file.
+        new_handle.file_store('testdatastoredir', test_dict)
+        
+        # Make sure the file exists and it has the right name.
+        correct_file_name = 'testdatastoredir' + os.sep + \
+            new_handle.type_prefix + '-' + new_handle.uid.hex + \
+            new_handle.file_suffix
+        self.assertTrue(os.path.exists(correct_file_name))
+        
+        # Retrieve the test_dict object and make sure it matches.
+        retrieved_test_dict = new_handle.file_retrieve('testdatastoredir')
+        self.assertEqual(retrieved_test_dict, test_dict, 
+            'Retrieved test object does not match')
+        
+        # Delete the handle and make sure it's gone.
+        new_handle.file_delete('testdatastoredir')
+        self.assertFalse(os.path.exists(correct_file_name), 'File not deleted') 
+        
+        # Redis storage tests.   
+        
+        # Go to the default Redis database (#0).
+        redis_db_URL = 'redis://localhost:6379/0/'
+        redis_db = redis.StrictRedis.from_url(redis_db_URL)
+        
+        # Store the test_dict in the Redis database.
+        new_handle.redis_store(test_dict, redis_db)
+        
+        # Make sure the key exists and retrieval gives a match to test_dict.
+        correct_key_name = new_handle.type_prefix + '-' + new_handle.uid.hex
+        self.assertEqual(new_handle.redis_retrieve(redis_db), 
+            test_dict, 'Retrieved test object does not match')
+        
+        # Delete the Redis entry and make sure it's gone.
+        new_handle.redis_delete(redis_db)
+        self.assertEqual(redis_db.get(correct_key_name), None, 'Key not deleted')
+        
 class DataStoreTest(unittest.TestCase):
     def test_thang1(self):
         pass
