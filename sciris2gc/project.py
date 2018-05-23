@@ -49,11 +49,11 @@ class ProjectSOBase(sobj.ScirisObject):
     Methods:
         __init__(name: str, owner_uid: UUID, uid: UUID [None], 
             spreadsheet_path: str [None]): void -- constructor            
-        updateName(newName: str): void -- change the project name to newName
-        updateSpreadsheet(spreadsheet_path: str): void -- change the 
+        update_name(new_name: str): void -- change the project name to new_name
+        update_spreadsheet(spreadsheet_path: str): void -- change the 
             spreadsheet the project is using
             
-        saveToPrjFile(dirPath: str, saveResults: bool [False]) -- save the 
+        save_to_prj_file(dir_path: str, save_results: bool [False]) -- save the 
             project to a .prj file and return the full path
             
         loadFromCopy(otherObject): void -- assuming otherObject is another 
@@ -138,15 +138,15 @@ class ProjectSOBase(sobj.ScirisObject):
             # Set the instance label to the username.
             self.instance_label = name   
           
-    def updateName(self, newName):
+    def update_name(self, new_name):
         # Set the project name.
-        self.name = newName
-        self.instance_label = newName
+        self.name = new_name
+        self.instance_label = new_name
         
         # Set the updating time to now.
         self.updated_time = now_utc()
         
-    def updateSpreadsheet(self, spreadsheet_path):
+    def update_spreadsheet(self, spreadsheet_path):
         # Set the spreadsheet_path from what's passed in.
         self.spreadsheet_path = spreadsheet_path
         
@@ -156,24 +156,24 @@ class ProjectSOBase(sobj.ScirisObject):
         # Set the updating time to now.
         self.updated_time = now_utc()
         
-#    def saveToPrjFile(self, dirPath, saveResults=False):
+#    def save_to_prj_file(self, dir_path, save_results=False):
 #        # Create a filename containing the project name followed by a .prj 
 #        # suffix.
-#        fileName = '%s.prj' % self.name
+#        file_name = '%s.prj' % self.name
 #        
 #        # Generate the full file name with path.
-#        fullFileName = '%s%s%s' % (dirPath, os.sep, fileName)
+#        full_file_name = '%s%s%s' % (dir_path, os.sep, file_name)
 #        
 #        # Write the object to a Gzip string pickle file.
-#        objectToGzipStringPickleFile(fullFileName, self)
+#        objectToGzipStringPickleFile(full_file_name, self)
 #        
 #        # Return the full file name.
-#        return fullFileName
+#        return full_file_name
 
     def loadFromCopy(self, otherObject):
         if type(otherObject) == type(self):
             # Do the superclass copying.
-            super(Project, self).loadFromCopy(otherObject)
+            super(ProjectSOBase, self).loadFromCopy(otherObject)
             
             self.owner_uid = otherObject.owner_uid
             self.name = otherObject.name
@@ -214,9 +214,9 @@ class ProjectSOBase(sobj.ScirisObject):
     
 #    def saveAsFile(self, loadDir):
 #        # Save the project in the file.
-#        self.theProject.saveToPrjFile(loadDir, saveResults=True)
+#        self.theProject.save_to_prj_file(loadDir, save_results=True)
 #        
-#        # Return the filename (not the full one).
+#        # Return the file_name (not the full one).
 #        return self.theProject.name + ".prj" 
     
 class ProjectCollection(sobj.ScirisCollection):
@@ -480,23 +480,23 @@ def download_project(project_id):
     theProj = load_project(project_id, raise_exception=True)
     
     # Use the downloads directory to put the file in.
-    dirname = ds.downloadsDir.dirPath
+    dirname = ds.downloadsDir.dir_path
         
     # Create a filename containing the project name followed by a .prj 
     # suffix.
-    fileName = '%s.prj' % theProj.name
+    file_name = '%s.prj' % theProj.name
         
     # Generate the full file name with path.
-    fullFileName = '%s%s%s' % (dirname, os.sep, fileName)
+    full_file_name = '%s%s%s' % (dirname, os.sep, file_name)
         
     # Write the object to a Gzip string pickle file.
-    ds.objectToGzipStringPickleFile(fullFileName, theProj)
+    ds.objectToGzipStringPickleFile(full_file_name, theProj)
     
     # Display the call information.
-    print(">> download_project %s" % (fullFileName))
+    print(">> download_project %s" % (full_file_name))
     
     # Return the full filename.
-    return fullFileName
+    return full_file_name
 
 def load_zip_of_prj_files(project_ids):
     """
@@ -510,7 +510,7 @@ def load_zip_of_prj_files(project_ids):
         return {'error': 'Unauthorized RPC'}   
     
     # Use the downloads directory to put the file in.
-    dirname = ds.downloadsDir.dirPath
+    dirname = ds.downloadsDir.dir_path
 
     # Build a list of ProjectSO objects for each of the selected projects, 
     # saving each of them in separate .prj files.

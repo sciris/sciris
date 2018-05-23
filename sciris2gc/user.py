@@ -370,12 +370,7 @@ def get_scirisdemo_user(name='_ScirisDemo'):
 # RPC functions
 #
 
-def user_login(username, password):
-    # Check (for security purposes) that the function is being called by the 
-    # correct endpoint, and if not, fail.
-    if request.endpoint != 'loginRPC':
-        return {'error': 'Unauthorized RPC'}
-    
+def user_login(username, password):  
     # Get the matching user (if any).
     matching_user = user_dict.get_user_by_username(username)
     
@@ -389,13 +384,8 @@ def user_login(username, password):
         return 'success'
     else:
         return 'failure'
-    
+        
 def user_logout():
-    # Check (for security purposes) that the function is being called by the 
-    # correct endpoint, and if not, fail.
-    if request.endpoint != 'logoutRPC':
-        return {'error': 'Unauthorized RPC'}
-    
     # Log the user out and set the session to having an anonymous user.
     logout_user()
     

@@ -1,11 +1,12 @@
 """
 scirisapp.py -- classes for Sciris (Flask-based) apps 
     
-Last update: 5/21/18 (gchadder3)
+Last update: 5/23/18 (gchadder3)
 """
 
 # Imports
 from flask import Flask, request, json, jsonify, send_from_directory, make_response
+from flask_login import LoginManager, current_user, login_required
 from werkzeug.utils import secure_filename
 from werkzeug.exceptions import HTTPException
 import sys
@@ -23,6 +24,7 @@ from twisted.web.wsgi import WSGIResource
 from twisted.python.threadpool import ThreadPool
 import fileio
 import datastore as ds
+import user
 
 #
 # Classes
@@ -106,8 +108,49 @@ class ScirisApp(object):
         if self.config['USE_DATASTORE']:
             self._init_datastore(self.config)
             
-        # If we are including users functionality, initialize it.
-        if self.config['USE_USERS']:
+        # If we are including DataStore and users functionality, initialize 
+        # users.
+        if self.config['USE_DATASTORE'] and self.config['USE_USERS']:
+            # Create a LoginManager() object.
+            self.login_manager = LoginManager()
+            
+            # This function gets called when authentication gets done by 
+            # Flask-Login.  userid is the user ID pulled out of the session 
+            # cookie the browser passes in during an HTTP request.  The 
+            # function returns the User object that matches this, so that the 
+            # user data may be used to authenticate (for example their 
+            # rights to have admin access).  The return sets the Flask-Login 
+            # current_user value.
+            @self.login_manager.user_loader
+            def load_user(userid):
+                # Return the matching user (if any).
+                return user.user_dict.get_user_by_uid(userid)  
+            
+            @self.flask_app.route('/test')
+            @login_required
+            def testroute():
+                user.user_logout()
+                return '<h1>Testing one, two!</h1>'
+            
+            @self.flask_app.route('/login')
+            def testlogin():
+                from hashlib import sha224
+                
+                # Log into the demo account.
+                print('>> Test login')
+                try_username = 'demo'
+                print('Username tried: ' + try_username)
+                try_password = 'demo'
+                print('Password tried: ' + try_password)
+                print('  hashed: %s' % sha224(try_password).hexdigest())
+                login_result = user.user_login(try_username, sha224(try_username).hexdigest())
+                print('login result: ' + login_result)                
+                return '<h1>Kenny logins!</h1>'
+            
+            # Configure Flask app for login with the LoginManager.
+            self.login_manager.init_app(self.flask_app)
+            
+            # Initialize the users.
             self._init_users(self.config)
             
         # If we are including DataStore functionality, initialize it.
@@ -209,13 +252,35 @@ class ScirisApp(object):
         # Show that DataStore is initialized.
         print('>> DataStore initialzed at %s' % app_config['REDIS_URL'])
         
-        print('DataStore handles:')
-#        ds.data_store.show_redis_keys()
+        # Show the DataStore handles.
+        print('>> List of all DataStore handles...')
         ds.data_store.show_handles()
     
     @staticmethod
-    def _init_users(app_config):
-        print('>> The users functionality is under construction.')
+    def _init_users(app_config):        
+        # Look for an existing users dictionary.
+        user_dict_uid = ds.data_store.get_uid_from_instance('userdict', 'Users Dictionary')
+        
+        # Create the user dictionary object.  Note, that if no match was found, 
+        # this will be assigned a new UID.
+        user.user_dict = user.UserDict(user_dict_uid)
+        
+        # If there was a match...
+        if user_dict_uid is not None:
+            print('>> Loading UserDict from the DataStore.')
+            user.user_dict.load_from_data_store() 
+        
+        # Else (no match)...
+        else:
+            print('>> Creating a new UserDict.')
+            user.user_dict.add_to_data_store()
+            user.user_dict.add(user.test_user)
+            user.user_dict.add(user.test_user2)
+            user.user_dict.add(user.test_user3)
+    
+        # Show all of the users in user_dict.
+        print('>> List of all users...')
+        user.user_dict.show()
     
     @staticmethod
     def _init_projects(app_config):
