@@ -2,11 +2,11 @@
 test_rpcs2.py -- A testing file for installing RPCs outside of the caller of
     scirisapp.py
     
-Last update: 5/17/18 (gchadder3)
+Last update: 5/23/18 (gchadder3)
 """
 
 # Imports
-from sciris2gc.scirisapp import make_register_RPC
+from sciris2gc.rpcs import make_register_RPC
 #import pandas as pd
 #from pylab import figure
 #import mpld3

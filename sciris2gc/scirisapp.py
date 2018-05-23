@@ -22,6 +22,7 @@ from twisted.web.server import Site
 from twisted.web.static import File
 from twisted.web.wsgi import WSGIResource
 from twisted.python.threadpool import ThreadPool
+from rpcs import ScirisRPC
 import fileio
 import datastore as ds
 import user
@@ -152,6 +153,9 @@ class ScirisApp(object):
             
             # Initialize the users.
             self._init_users(self.config)
+            
+            # Register the RPCs in the test_rpcs.py module.
+            self.add_RPC_dict(user.RPC_dict)
             
         # If we are including DataStore functionality, initialize it.
         if self.config['USE_PROJECTS']:
@@ -514,14 +518,6 @@ class ScirisResource(Resource):
         return r
     
     
-class ScirisRPC(object):
-    def __init__(self, call_func, call_type='normal', override=False):
-        self.call_func = call_func
-        self.funcname = call_func.__name__
-        self.call_type = call_type
-        self.override = override
-    
-    
 def run_twisted(port=8080, flask_app=None, client_dir=None):
     # Give an error if we pass in no Flask server or client path.
     if (flask_app is None) and (client_dir is None):
@@ -615,20 +611,3 @@ def json_sanitize_result(theResult):
 #        return str(theResult)
 
     return theResult
-
-
-def make_register_RPC(RPC_dict, **callerkwargs):
-    def RPC_decorator_factory(**callerkwargs):
-        def RPC_decorator(RPC_func):
-            @wraps(RPC_func)
-            def wrapper(*args, **kwargs):        
-                RPC_func(*args, **kwargs)
-    
-            # Create the RPC and add it to the dictionary.
-            RPC_dict[RPC_func.__name__] = ScirisRPC(RPC_func, **callerkwargs)
-            
-            return wrapper
-    
-        return RPC_decorator
-    
-    return RPC_decorator_factory

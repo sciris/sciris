@@ -1,13 +1,14 @@
 """
 user.py -- code related to Sciris user management
     
-Last update: 5/22/18 (gchadder3)
+Last update: 5/23/18 (gchadder3)
 """
 
 #
 # Imports
 #
 
+from rpcs import make_register_RPC
 from flask import session, request, current_app
 from flask_login import current_user, login_user, logout_user
 from hashlib import sha224
@@ -23,6 +24,12 @@ import scirisobjects as sobj
 # The UserDict object for all of the app's users.  Gets initialized by
 # and loaded by init_users().
 user_dict = None
+
+# Dictionary to hold all of the registered RPCs in this module.
+RPC_dict = {}
+
+# RPC registration decorator factory created using call to make_register_RPC().
+register_RPC = make_register_RPC(RPC_dict)
 
 #
 # Classes
@@ -369,7 +376,8 @@ def get_scirisdemo_user(name='_ScirisDemo'):
 #
 # RPC functions
 #
-
+        
+#@register_RPC()
 def user_login(username, password):  
     # Get the matching user (if any).
     matching_user = user_dict.get_user_by_username(username)
@@ -384,7 +392,8 @@ def user_login(username, password):
         return 'success'
     else:
         return 'failure'
-        
+    
+#@register_RPC()       
 def user_logout():
     # Log the user out and set the session to having an anonymous user.
     logout_user()
