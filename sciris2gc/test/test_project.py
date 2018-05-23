@@ -1,23 +1,23 @@
 """
-test_user.py -- test module for user.py
+test_project.py -- test module for project.py
 
 Usage:
-python -m unittest sciris2gc.test.test_user
+python -m unittest sciris2gc.test.test_project
     
 Last update: 5/22/18 (gchadder3)
 """
 
 # Imports
 import unittest
-import sciris2gc.user as user
+import sciris2gc.project as project
 import uuid
 import os
 
-class UserTest(unittest.TestCase):
+class ProjectTest(unittest.TestCase):
     def test_thang1(self):
         pass
     
-class UserDictTest(unittest.TestCase):
+class ProjectCollectionTest(unittest.TestCase):
     def test_thang1(self):
         pass 
        

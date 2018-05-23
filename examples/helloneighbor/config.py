@@ -63,7 +63,7 @@ REDIS_URL = 'redis://localhost:6379/0/'
 
 # Flag for setting whether we use the users functionality provided by 
 # Sciris in the webapp.
-USE_USERS = False
+USE_USERS = True
 
 # Flag for setting whether registration of a new account automatically 
 # spawns a new active account.  If this is set False, then an admin user has 
