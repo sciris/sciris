@@ -9,7 +9,7 @@ Last update: 5/23/18 (gchadder3)
 #
 
 from rpcs import make_register_RPC
-from flask import session, request, current_app
+from flask import session, current_app
 from flask_login import current_user, login_user, logout_user
 from hashlib import sha224
 from numpy import argsort
@@ -405,19 +405,9 @@ def user_logout():
     return None
 
 def get_current_user_info():
-    # Check (for security purposes) that the function is being called by the 
-    # correct endpoint, and if not, fail.
-    if request.endpoint != 'currentUserRPC':
-        return {'error': 'Unauthorized RPC'}
-    
     return current_user.get_user_front_end_repr()
 
 def user_register(username, password, displayname, email):
-    # Check (for security purposes) that the function is being called by the 
-    # correct endpoint, and if not, fail.
-    if request.endpoint != 'registrationRPC':
-        return {'error': 'Unauthorized RPC'}
-    
     # Get the matching user (if any).
     matching_user = user_dict.get_user_by_username(username)
     
@@ -442,11 +432,6 @@ def user_register(username, password, displayname, email):
     return 'success'
 
 def user_change_info(username, password, displayname, email):
-    # Check (for security purposes) that the function is being called by the 
-    # correct endpoint, and if not, fail.
-    if request.endpoint != 'changeUserInfoRPC':
-        return {'error': 'Unauthorized RPC'}
-    
     # Make a copy of the current_user.
     the_user = copy.copy(current_user)
     
@@ -479,11 +464,6 @@ def user_change_info(username, password, displayname, email):
     return 'success'
 
 def user_change_password(oldpassword, newpassword):
-    # Check (for security purposes) that the function is being called by the 
-    # correct endpoint, and if not, fail.
-    if request.endpoint != 'changePasswordRPC':
-        return {'error': 'Unauthorized RPC'}
-    
     # Make a copy of the current_user.
     the_user = copy.copy(current_user)
     
@@ -501,20 +481,10 @@ def user_change_password(oldpassword, newpassword):
     return 'success'
 
 def get_all_users():
-    # Check (for security purposes) that the function is being called by the 
-    # correct endpoint, and if not, fail.
-    if request.endpoint != 'userListRPC':
-        return {'error': 'Unauthorized RPC'}
-    
     # Return success.
     return user_dict.get_admin_front_end_repr()
 
 def admin_get_user_info(username):
-    # Check (for security purposes) that the function is being called by the 
-    # correct endpoint, and if not, fail.
-    if request.endpoint != 'specificUserRPC':
-        return {'error': 'Unauthorized RPC'}   
-    
     # Get the matching user (if any).
     matching_user = user_dict.get_user_by_username(username)
     
@@ -525,11 +495,6 @@ def admin_get_user_info(username):
     return matching_user.get_admin_front_end_repr()
 
 def admin_delete_user(username):
-    # Check (for security purposes) that the function is being called by the 
-    # correct endpoint, and if not, fail.
-    if request.endpoint != 'specificUserRPC':
-        return {'error': 'Unauthorized RPC'}   
-    
     # Get the matching user (if any).
     matching_user = user_dict.get_user_by_username(username)
     
@@ -544,11 +509,6 @@ def admin_delete_user(username):
     return 'success'
 
 def admin_activate_account(username):
-    # Check (for security purposes) that the function is being called by the 
-    # correct endpoint, and if not, fail.
-    if request.endpoint != 'specificUserRPC':
-        return {'error': 'Unauthorized RPC'}
-    
     # Get the matching user (if any).
     matching_user = user_dict.get_user_by_username(username)
     
@@ -568,11 +528,6 @@ def admin_activate_account(username):
     return 'success'    
 
 def admin_deactivate_account(username):
-    # Check (for security purposes) that the function is being called by the 
-    # correct endpoint, and if not, fail.
-    if request.endpoint != 'specificUserRPC':
-        return {'error': 'Unauthorized RPC'}
-    
     # Get the matching user (if any).
     matching_user = user_dict.get_user_by_username(username)
     
@@ -592,11 +547,6 @@ def admin_deactivate_account(username):
     return 'success'
 
 def admin_grant_admin(username):
-    # Check (for security purposes) that the function is being called by the 
-    # correct endpoint, and if not, fail.
-    if request.endpoint != 'specificUserRPC':
-        return {'error': 'Unauthorized RPC'}
-    
     # Get the matching user (if any).
     matching_user = user_dict.get_user_by_username(username)
     
@@ -616,11 +566,6 @@ def admin_grant_admin(username):
     return 'success'
 
 def admin_revoke_admin(username):
-    # Check (for security purposes) that the function is being called by the 
-    # correct endpoint, and if not, fail.
-    if request.endpoint != 'specificUserRPC':
-        return {'error': 'Unauthorized RPC'}
-    
     # Get the matching user (if any).
     matching_user = user_dict.get_user_by_username(username)
     
@@ -640,11 +585,6 @@ def admin_revoke_admin(username):
     return 'success'
 
 def admin_reset_password(username):
-    # Check (for security purposes) that the function is being called by the 
-    # correct endpoint, and if not, fail.
-    if request.endpoint != 'specificUserRPC':
-        return {'error': 'Unauthorized RPC'}
-    
     # Get the matching user (if any).
     matching_user = user_dict.get_user_by_username(username)
     

@@ -23,7 +23,7 @@ app = ScirisApp(__file__, app_config=config)
 
 # Register RPCs directly into the app.
 
-@app.register_RPC(validation_type='none')
+@app.register_RPC(validation_type='admin user')
 def get_graph():
 #    x = 1 / 0  # uncomment to test exceptions with ZeroDivisionError
 #    return {'error': 'get_graph() just does not feel like working.'}  # uncomment to test custom error
