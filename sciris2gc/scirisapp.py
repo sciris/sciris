@@ -5,7 +5,8 @@ Last update: 5/23/18 (gchadder3)
 """
 
 # Imports
-from flask import Flask, request, json, jsonify, send_from_directory, make_response
+from flask import Flask, request, abort, json, jsonify, send_from_directory, \
+    make_response
 from flask_login import LoginManager, current_user, login_required
 from werkzeug.utils import secure_filename
 from werkzeug.exceptions import HTTPException
@@ -127,9 +128,19 @@ class ScirisApp(object):
                 # Return the matching user (if any).
                 return user.user_dict.get_user_by_uid(userid)  
             
+#            @self.flask_app.route('/test')
+#            @login_required
+#            def testroute():
+#                user.user_logout()
+#                return '<h1>Testing one, two!</h1>'
+            
             @self.flask_app.route('/test')
-            @login_required
             def testroute():
+                # If we are not authenticated, give an unauthorized message.
+                if not current_user.is_authenticated:
+                    abort(401)
+                
+                # Log out the user.
                 user.user_logout()
                 return '<h1>Testing one, two!</h1>'
             
@@ -139,9 +150,9 @@ class ScirisApp(object):
                 
                 # Log into the demo account.
                 print('>> Test login')
-                try_username = 'demo'
+                try_username = 'admin'
                 print('Username tried: ' + try_username)
-                try_password = 'demo'
+                try_password = 'admin'
                 print('Password tried: ' + try_password)
                 print('  hashed: %s' % sha224(try_password).hexdigest())
                 login_result = user.user_login(try_username, sha224(try_username).hexdigest())
@@ -397,6 +408,42 @@ class ScirisApp(object):
         # Do any validation checks we need to do and return errors if they 
         # don't pass.
         
+        # If the RPC is disabled, always return a Status 403 (Forbidden)
+        if found_RPC.validation_type == 'disabled':
+            abort(403)
+                
+        # Only do other validation if DataStore and users are included.
+        if self.config['USE_DATASTORE'] and self.config['USE_USERS']:
+            # If the RPC should be executable by any user, including an 
+            # anonymous one, but there is no authorization or anonymous login, 
+            # return a Status 401 (Unauthorized)
+            if found_RPC.validation_type == 'any user' and \
+                not (current_user.is_anonymous or current_user.is_authenticated):
+                abort(401)
+                
+            # Else if the RPC should be executable by any non-anonymous user, 
+            # but there is no authorization or there is an anonymous login, 
+            # return a Status 401 (Unauthorized)
+            elif found_RPC.validation_type == 'nonanonymous user' and \
+                (current_user.is_anonymous or not current_user.is_authenticated):
+                abort(401)
+                
+            # Else if the RPC should be executable by any admin user, 
+            # but there is no admin login or it's an anonymous login...
+            elif found_RPC.validation_type == 'admin user':
+                # If the user is anonymous or no authenticated user is logged 
+                # in, return Status 401 (Unauthorized).
+                if current_user.is_anonymous or not current_user.is_authenticated:
+                    abort(401)
+                    
+                # Else, if the user is not an admin user, return Status 403 
+                # (Forbidden).
+                elif not current_user.is_admin:
+                    abort(403)
+                    
+            # NOTE: Any "unknown" validation_type values are treated like 
+            # 'none'.
+                
         # If we are doing an upload...
         if found_RPC.call_type == 'upload':
             # Grab the formData file that was uploaded.    

@@ -56,15 +56,15 @@ class ProjectSOBase(sobj.ScirisObject):
         save_to_prj_file(dir_path: str, save_results: bool [False]) -- save the 
             project to a .prj file and return the full path
             
-        loadFromCopy(otherObject): void -- assuming otherObject is another 
+        load_from_copy(other_object): void -- assuming other_object is another 
             object of our type, copy its contents to us (calls the 
             ScirisObject superclass version of this method also)             
         show(): void -- print the contents of the object
-        getUserFrontEndRepr(): dict -- get a JSON-friendly dictionary 
+        get_user_front_end_repr(): dict -- get a JSON-friendly dictionary 
             representation of the object state the front-end uses for non-
             admin purposes 
             
-        saveAsFile(loadDir: str): str -- given a load dictionary, save the 
+        save_as_file(loadDir: str): str -- given a load dictionary, save the 
             project in a file there and return the file name
             
     Attributes:
@@ -80,7 +80,7 @@ class ProjectSOBase(sobj.ScirisObject):
             spreadsheet was last updated
         
     Usage:
-        >>> theProj = Project('myproject', uuid.UUID('12345678123456781234567812345672'), uuid.UUID('12345678123456781234567812345678'))                    
+        >>> proj = Project('myproject', uuid.UUID('12345678123456781234567812345672'), uuid.UUID('12345678123456781234567812345678'))                    
     """ 
     
     def  __init__(self, name, owner_uid, uid=None, spreadsheet_path=None):
@@ -165,29 +165,29 @@ class ProjectSOBase(sobj.ScirisObject):
 #        full_file_name = '%s%s%s' % (dir_path, os.sep, file_name)
 #        
 #        # Write the object to a Gzip string pickle file.
-#        objectToGzipStringPickleFile(full_file_name, self)
+#        object_to_gzip_string_pickle_file(full_file_name, self)
 #        
 #        # Return the full file name.
 #        return full_file_name
 
-    def loadFromCopy(self, otherObject):
-        if type(otherObject) == type(self):
+    def load_from_copy(self, other_object):
+        if type(other_object) == type(self):
             # Do the superclass copying.
-            super(ProjectSOBase, self).loadFromCopy(otherObject)
+            super(ProjectSOBase, self).load_from_copy(other_object)
             
-            self.owner_uid = otherObject.owner_uid
-            self.name = otherObject.name
-            self.spreadsheet_path = otherObject.spreadsheet_path
-            self.created_time = otherObject.created_time
-            self.updated_time = otherObject.updated_time
-            self.data_upload_time = otherObject.data_upload_time
+            self.owner_uid = other_object.owner_uid
+            self.name = other_object.name
+            self.spreadsheet_path = other_object.spreadsheet_path
+            self.created_time = other_object.created_time
+            self.updated_time = other_object.updated_time
+            self.data_upload_time = other_object.data_upload_time
             
             # Copy the owner UID.
-            self.owner_uid = otherObject.owner_uid
+            self.owner_uid = other_object.owner_uid
             
     def show(self):
         # Show superclass attributes.
-        super(Project, self).show()  
+        super(ProjectSOBase, self).show()  
         
         print '---------------------'
 
@@ -198,8 +198,8 @@ class ProjectSOBase(sobj.ScirisObject):
         print 'Update Time: %s' % self.updated_time
         print 'Data Upload Time: %s' % self.data_upload_time
         
-    def getUserFrontEndRepr(self):
-        objInfo = {
+    def get_user_front_end_repr(self):
+        obj_info = {
             'project': {
                 'id': self.uid,
                 'name': self.name,
@@ -210,14 +210,14 @@ class ProjectSOBase(sobj.ScirisObject):
                 'data_upload_time': self.data_upload_time
             }
         }
-        return objInfo
+        return obj_info
     
-#    def saveAsFile(self, loadDir):
+#    def save_as_file(self, loadDir):
 #        # Save the project in the file.
-#        self.theProject.save_to_prj_file(loadDir, save_results=True)
+#        self.proj.save_to_prj_file(loadDir, save_results=True)
 #        
 #        # Return the file_name (not the full one).
-#        return self.theProject.name + ".prj" 
+#        return self.proj.name + ".prj" 
     
 class ProjectCollection(sobj.ScirisCollection):
     """
@@ -227,10 +227,10 @@ class ProjectCollection(sobj.ScirisCollection):
         __init__(uid: UUID [None], type_prefix: str ['projectscoll'], 
             file_suffix: str ['.pc'], 
             instance_label: str ['Projects Collection']): void -- constructor  
-        getUserFrontEndRepr(owner_uid: UUID): list -- return a list of dicts 
+        get_user_front_end_repr(owner_uid: UUID): list -- return a list of dicts 
             containing JSON-friendly project contents for each project that 
             is owned by the specified user UID
-        getProjectEntriesByUser(owner_uid: UUID): list -- return the ProjectSOs 
+        get_project_entries_by_user(owner_uid: UUID): list -- return the ProjectSOs 
             that match the owning User UID in a list
         
     Usage:
@@ -243,7 +243,7 @@ class ProjectCollection(sobj.ScirisCollection):
         super(ProjectCollection, self).__init__(uid, type_prefix, file_suffix, 
              instance_label)
             
-    def getUserFrontEndRepr(self, owner_uid):
+    def get_user_front_end_repr(self, owner_uid):
         # Make sure the argument is a valid UUID, converting a hex text to a
         # UUID object, if needed.        
         valid_uuid = sobj.get_valid_uuid(owner_uid)
@@ -251,16 +251,16 @@ class ProjectCollection(sobj.ScirisCollection):
         # If we have a valid UUID...
         if valid_uuid is not None:               
             # Get dictionaries for each Project in the dictionary.
-            projectsInfo = [self.theObjectDict[theKey].getUserFrontEndRepr() \
-                for theKey in self.theObjectDict \
-                if self.theObjectDict[theKey].owner_uid == valid_uuid]
-            return projectsInfo
+            projects_info = [self.obj_dict[key].get_user_front_end_repr() \
+                for key in self.obj_dict \
+                if self.obj_dict[key].owner_uid == valid_uuid]
+            return projects_info
         
         # Otherwise, return an empty list.
         else:
             return []
         
-    def getProjectEntriesByUser(self, owner_uid):
+    def get_project_entries_by_user(self, owner_uid):
         # Make sure the argument is a valid UUID, converting a hex text to a
         # UUID object, if needed.        
         valid_uuid = sobj.get_valid_uuid(owner_uid)
@@ -268,10 +268,10 @@ class ProjectCollection(sobj.ScirisCollection):
         # If we have a valid UUID...
         if valid_uuid is not None:    
             # Get ProjectSO entries for each Project in the dictionary.
-            projectEntries = [self.theObjectDict[theKey] \
-                for theKey in self.theObjectDict \
-                if self.theObjectDict[theKey].owner_uid == valid_uuid]
-            return projectEntries
+            project_entries = [self.obj_dict[key] \
+                for key in self.obj_dict \
+                if self.obj_dict[key].owner_uid == valid_uuid]
+            return project_entries
         
         # Otherwise, return an empty list.
         else:
@@ -292,7 +292,7 @@ def load_project_record(project_id, raise_exception=True):
     """ 
     
     # Load the matching ProjectSO object from the database.
-    project_record = proj_collection.getObjectByUID(project_id)
+    project_record = proj_collection.get_object_by_uid(project_id)
 
     # If we have no match, we may want to throw an exception.
     if project_record is None:
@@ -320,7 +320,7 @@ def load_project(project_id, raise_exception=True):
             return None
         
     # Return the found project.
-    return project_record.theProject
+    return project_record.proj
 
 def load_project_summary_from_project_record(project_record):
     """
@@ -328,7 +328,7 @@ def load_project_summary_from_project_record(project_record):
     """ 
     
     # Return the built project summary.
-    return project_record.getUserFrontEndRepr()  
+    return project_record.get_user_front_end_repr()  
           
 def get_unique_name(name, other_names=None):
     """
@@ -339,7 +339,7 @@ def get_unique_name(name, other_names=None):
     # If no list of other_names is passed in, load up a list with all of the 
     # names from the project summaries.
     if other_names is None:
-        other_names = [p['project']['name'] for p in load_current_user_project_summaries(checkEndpoint=False)['projects']]
+        other_names = [p['project']['name'] for p in load_current_user_project_summaries(check_endpoint=False)['projects']]
       
     # Start with the passed in name.
     i = 0
@@ -359,8 +359,8 @@ def get_unique_name(name, other_names=None):
 #
 
 def tester_func_project(project_id):
-    theProj = load_project(project_id)
-    print theProj.name
+    proj = load_project(project_id)
+    print proj.name
     
     return 'success'
 
@@ -378,18 +378,18 @@ def get_scirisdemo_projects():
     user_id = user.get_scirisdemo_user()
    
     # Get the ProjectSO entries matching the _ScirisDemo user UID.
-    projectEntries = proj_collection.getProjectEntriesByUser(user_id)
+    project_entries = proj_collection.get_project_entries_by_user(user_id)
 
     # Collect the project summaries for that user into a list.
-    projectSummaryList = map(load_project_summary_from_project_record, 
-        projectEntries)
+    project_summary_list = map(load_project_summary_from_project_record, 
+        project_entries)
     
     # Sort the projects by the project name.
-    sortedSummaryList = sorted(projectSummaryList, 
+    sorted_summary_list = sorted(project_summary_list, 
         key=lambda proj: proj['project']['name']) # Sorts by project name
     
     # Return a dictionary holding the project summaries.
-    output = {'projects': sortedSummaryList}
+    output = {'projects': sorted_summary_list}
     return output
 
 def load_project_summary(project_id):
@@ -408,24 +408,24 @@ def load_project_summary(project_id):
     # Return a project summary from the accessed ProjectSO entry.
     return load_project_summary_from_project_record(project_entry)
 
-def load_current_user_project_summaries(checkEndpoint=True):
+def load_current_user_project_summaries(check_endpoint=True):
     """
     Return project summaries for all projects the user has to the client.
     """ 
     
     # Check (for security purposes) that the function is being called by the 
     # correct endpoint, and if not, fail.
-    if checkEndpoint:
+    if check_endpoint:
         if request.endpoint != 'normalProjectRPC':
             return {'error': 'Unauthorized RPC'}
     
     # Get the ProjectSO entries matching the user UID.
-    projectEntries = proj_collection.getProjectEntriesByUser(current_user.get_id())
+    project_entries = proj_collection.get_project_entries_by_user(current_user.get_id())
     
     # Grab a list of project summaries from the list of ProjectSO objects we 
     # just got.
     return {'projects': map(load_project_summary_from_project_record, 
-        projectEntries)}
+        project_entries)}
                 
 def load_all_project_summaries():
     """
@@ -438,12 +438,12 @@ def load_all_project_summaries():
         return {'error': 'Unauthorized RPC'}   
     
     # Get all of the ProjectSO entries.
-    projectEntries = proj_collection.getAllObjects()
+    project_entries = proj_collection.get_all_objects()
     
     # Grab a list of project summaries from the list of ProjectSO objects we 
     # just got.
     return {'projects': map(load_project_summary_from_project_record, 
-        projectEntries)}
+        project_entries)}
     
 def delete_projects(project_ids):
     """
@@ -477,20 +477,20 @@ def download_project(project_id):
         return {'error': 'Unauthorized RPC'}   
     
     # Load the project with the matching UID.
-    theProj = load_project(project_id, raise_exception=True)
+    proj = load_project(project_id, raise_exception=True)
     
     # Use the downloads directory to put the file in.
-    dirname = ds.downloadsDir.dir_path
+    dirname = ds.downloads_dir.dir_path
         
     # Create a filename containing the project name followed by a .prj 
     # suffix.
-    file_name = '%s.prj' % theProj.name
+    file_name = '%s.prj' % proj.name
         
     # Generate the full file name with path.
     full_file_name = '%s%s%s' % (dirname, os.sep, file_name)
         
     # Write the object to a Gzip string pickle file.
-    ds.objectToGzipStringPickleFile(full_file_name, theProj)
+    ds.object_to_gzip_string_pickle_file(full_file_name, proj)
     
     # Display the call information.
     print(">> download_project %s" % (full_file_name))
@@ -510,11 +510,11 @@ def load_zip_of_prj_files(project_ids):
         return {'error': 'Unauthorized RPC'}   
     
     # Use the downloads directory to put the file in.
-    dirname = ds.downloadsDir.dir_path
+    dirname = ds.downloads_dir.dir_path
 
     # Build a list of ProjectSO objects for each of the selected projects, 
     # saving each of them in separate .prj files.
-    prjs = [load_project_record(id).saveAsFile(dirname) for id in project_ids]
+    prjs = [load_project_record(id).save_as_file(dirname) for id in project_ids]
     
     # Make the zip file name and the full server file path version of the same..
     zip_fname = '{}.zip'.format(uuid.uuid4())

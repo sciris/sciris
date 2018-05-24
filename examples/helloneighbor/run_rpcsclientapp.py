@@ -1,7 +1,7 @@
 """
 run_rpcsclientapp.py -- Simple ScirisApp use case 
     
-Last update: 5/18/18 (gchadder3)
+Last update: 5/23/18 (gchadder3)
 """
 
 # Imports
@@ -23,7 +23,7 @@ app = ScirisApp(__file__, app_config=config)
 
 # Register RPCs directly into the app.
 
-@app.register_RPC()
+@app.register_RPC(validation_type='none')
 def get_graph():
 #    x = 1 / 0  # uncomment to test exceptions with ZeroDivisionError
 #    return {'error': 'get_graph() just does not feel like working.'}  # uncomment to test custom error
