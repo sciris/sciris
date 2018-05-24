@@ -231,7 +231,7 @@ def sigfig(X, sigfigs=5, SI=False, sep=False):
             elif sigfigs is None:
                 output.append(flexstr(x)+suffix)
             else:
-                magnitude = np.floor(log10(abs(x)))
+                magnitude = np.floor(np.log10(abs(x)))
                 factor = 10**(sigfigs-magnitude-1)
                 x = round(x*factor)/float(factor)
                 digits = int(abs(magnitude) + max(0, sigfigs - max(0,magnitude) - 1) + 1 + (x<0) + (abs(x)<1)) # one because, one for decimal, one for minus
@@ -264,15 +264,15 @@ def printarr(arr, arrformat='%0.2f  '):
     
     Version: 2014dec01
     '''
-    if ndim(arr)==1:
+    if np.ndim(arr)==1:
         string = ''
         for i in range(len(arr)):
             string += arrformat % arr[i]
         print(string)
-    elif ndim(arr)==2:
+    elif np.ndim(arr)==2:
         for i in range(len(arr)):
             printarr(arr[i], arrformat)
-    elif ndim(arr)==3:
+    elif np.ndim(arr)==3:
         for i in range(len(arr)):
             print('='*len(arr[i][0])*len(arrformat % 1))
             for j in range(len(arr[i])):
@@ -660,14 +660,14 @@ def isstring(obj):
 def promotetoarray(x):
     ''' Small function to ensure consistent format for things that should be arrays '''
     if isnumber(x):
-        return array([x]) # e.g. 3
+        return np.array([x]) # e.g. 3
     elif isinstance(x, (list, tuple)):
-        return array(x) # e.g. [3]
+        return np.array(x) # e.g. [3]
     elif isinstance(x, np.ndarray): 
-        if shape(x):
+        if np.shape(x):
             return x # e.g. array([3])
         else: 
-            return array([x]) # e.g. array(3)
+            return np.array([x]) # e.g. array(3)
     else: # e.g. 'foo'
         raise Exception("Expecting a number/list/tuple/ndarray; got: %s" % flexstr(x))
 
@@ -718,7 +718,7 @@ def quantile(data, quantiles=[0.5, 0.25, 0.75]):
     '''
     nsamples = len(data) # Number of samples in the dataset
     indices = (np.array(quantiles)*(nsamples-1)).round().astype(int) # Calculate the indices to pull out
-    output = array(data)
+    output = np.array(data)
     output.sort(axis=0) # Do the actual sorting along the 
     output = output[indices] # Trim down to the desired quantiles
     
@@ -745,7 +745,7 @@ def sanitize(data=None, returninds=False, replacenans=None, die=True):
                 if replacenans in ['nearest','linear']:
                     sanitized = smoothinterp(newx, inds, sanitized, method=replacenans, smoothness=0) # Replace nans with interpolated values
                 else:
-                    naninds = inds = np.nonzero(isnan(data))[0]
+                    naninds = inds = np.nonzero(np.isnan(data))[0]
                     sanitized = dcp(data)
                     sanitized[naninds] = replacenans
             if len(sanitized)==0:
@@ -775,7 +775,7 @@ def getvaliddata(data=None, filterdata=None, defaultind=0):
     else:                        validindices = ~np.isnan(filterdata) # Else, assume it's nans that need to be removed
     if validindices.any(): # There's at least one data point entered
         if len(data)==len(validindices): # They're the same length: use for logical indexing
-            validdata = np.array(array(data)[validindices]) # Store each year
+            validdata = np.array(np.array(data)[validindices]) # Store each year
         elif len(validindices)==1: # They're different lengths and it has length 1: it's an assumption
             validdata = np.array([np.array(data)[defaultind]]) # Use the default index; usually either 0 (start) or -1 (end)
         else:
@@ -972,15 +972,15 @@ def smoothinterp(newx=None, origx=None, origy=None, smoothness=None, growth=None
             orignan      = np.zeros(len(origy)) # Start from scratch
             origplusinf  = np.zeros(len(origy)) # Start from scratch
             origminusinf = np.zeros(len(origy)) # Start from scratch
-            orignan[isnan(origy)]     = np.nan  # Replace nan entries with nan
-            origplusinf[origy==inf]   = np.nan  # Replace plus infinite entries with nan
-            origminusinf[origy==-inf] = np.nan  # Replace minus infinite entries with nan
+            orignan[np.isnan(origy)]     = np.nan  # Replace nan entries with nan
+            origplusinf[origy==np.inf]   = np.nan  # Replace plus infinite entries with nan
+            origminusinf[origy==-np.inf] = np.nan  # Replace minus infinite entries with nan
             newnan      = np.interp(newx, origx, orignan) # Interpolate the nans
             newplusinf  = np.interp(newx, origx, origplusinf) # ...again, for positive
             newminusinf = np.interp(newx, origx, origminusinf) # ...and again, for negative
-            newy[isnan(newminusinf)] = -inf # Add minus infinity back in first
-            newy[isnan(newplusinf)]  = inf # Then, plus infinity
-            newy[isnan(newnan)]  = np.nan # Finally, the nans
+            newy[np.isnan(newminusinf)] = -np.inf # Add minus infinity back in first
+            newy[np.isnan(newplusinf)]  = np.inf # Then, plus infinity
+            newy[np.isnan(newnan)]  = np.nan # Finally, the nans
             
     
     return newy
@@ -2407,14 +2407,26 @@ class dataframe(object):
     '''
 
     def __init__(self, cols=None, data=None):
+        
+        # Handle columns        
         if cols is None: cols = list()
+        else:            cols = promotetolist(cols)
+        
+        # Handle data
         if data is None: 
             data = np.zeros((0,len(cols)), dtype=object) # Object allows more than just numbers to be stored
         else:
             data = np.array(data, dtype=object)
             if data.ndim != 2:
-                errormsg = 'Dimension of data must be 2, not %s' % data.ndim
-                raise Exception(errormsg)
+                if data.ndim == 1:
+                    if len(cols)==1:
+                        data = np.reshape(data, (len(data),1))
+                    else:
+                        errormsg = 'Dimension of data can only be 1 if there is 1 column, not %s' % len(cols)
+                        raise Exception(errormsg)
+                else:
+                    errormsg = 'Dimension of data must be 1 or 2, not %s' % data.ndim
+                    raise Exception(errormsg)
             if data.shape[1]==len(cols):
                 pass
             elif data.shape[0]==len(cols):
@@ -2422,6 +2434,8 @@ class dataframe(object):
             else:
                 errormsg = 'Number of columns (%s) does not match array shape (%s)' % (len(cols), data.shape)
                 raise Exception(errormsg)
+        
+        # Store it        
         self.cols = cols
         self.data = data
         return None
@@ -2510,18 +2524,22 @@ class dataframe(object):
             raise Exception('Unrecognized dataframe key "%s"' % key)
         return output
         
-    def __setitem__(self, key, value):
+    def __setitem__(self, key, value=None):
+        if value is None:
+            value = np.zeros(self.nrows(), dtype=object)
         if isinstance(key, _stringtype): # Add column
             if len(value) != self.nrows(): 
                 errormsg = 'Vector has incorrect length (%i vs. %i)' % (len(value), self.nrows())
                 raise Exception(errormsg)
+            else:
+                val_arr = np.reshape(value, (len(value),1))
             try:
                 colindex = self.cols.index(key)
-                self.data[:,colindex] = value
+                self.data[:,colindex] = val_arr
             except:
                 self.cols.append(key)
                 colindex = self.cols.index(key)
-                self.data = np.hstack((self.data, np.array(value, dtype=object)))
+                self.data = np.hstack((self.data, np.array(val_arr, dtype=object)))
         elif isinstance(key, _numtype):
             value = self._val2row(value) # Make sure it's in the correct format
             if len(value) != self.ncols(): 
@@ -2538,7 +2556,7 @@ class dataframe(object):
                 rowindex = int(key[1])
                 self.data[rowindex,colindex] = value
             except:
-                errormsg = 'Could not insert element (%s,%s) in dataframe of shape %' % (colindex, rowindex, self.data.shape)
+                errormsg = 'Could not insert element (%s,%s) in dataframe of shape %' % (key[0], key[1], self.data.shape)
                 raise Exception(errormsg)
         return None
     
@@ -2591,7 +2609,7 @@ class dataframe(object):
         try:    return self.data.shape[0]
         except: return 0 # If it didn't work, probably because it's empty
     
-    def addcol(self, key, value):
+    def addcol(self, key=None, value=None):
         ''' Add a new column to the data frame -- for consistency only '''
         self.__setitem__(key, value)
     
@@ -2624,10 +2642,33 @@ class dataframe(object):
         return index
         
     def rmrow(self, key=None, col=None, returnval=False, die=True):
-        ''' Like pop, but removes by matching the first column instead of the index '''
+        ''' Like pop, but removes by matching the first column instead of the index -- WARNING, messy '''
         index = self._rowindex(key=key, col=col, die=die)
         if index is not None: self.pop(index)
         return None
+    
+    def _diffindices(self, indices=None):
+        ''' For a given set of indices, get the inverse, in set-speak '''
+        if indices is None: indices = []
+        ind_set = set(np.array(indices))
+        all_set = set(np.arange(self.nrows()))
+        diff_set = np.array(list(all_set - ind_set))
+        return diff_set
+    
+    def rmrows(self, indices=None):
+        ''' Remove rows by index -- WARNING, messy '''
+        keep_set = self._diffindices(indices)
+        self.data = self.data[keep_set,:]
+        return None
+    
+    def replace(self, col=None, old=None, new=None):
+        ''' Replace all of one value in a column with a new value '''
+        col = self._sanitizecol(col)
+        coldata = self.data[:,col] # Get data for this column
+        inds = findinds(coldata==old)
+        self.data[inds,col] = new
+        return None
+        
     
     def _todict(self, row):
         ''' Return row as a dict rather than as an array '''
@@ -2669,6 +2710,29 @@ class dataframe(object):
         else:
             thisrow = default # If not found, return as default
         return thisrow
+    
+    def rowindex(self, key=None, col=None):
+        ''' Return the indices of all rows matching the given key in a given column. '''
+        col = self._sanitizecol(col)
+        coldata = self.data[:,col] # Get data for this column
+        indices = findinds(coldata==key)
+        return indices
+        
+    def _filterrows(self, key=None, col=None, keep=True, verbose=False):
+        ''' Filter rows and either keep the ones matching, or discard them '''
+        indices = self.rowindex(key=key, col=col)
+        if keep: indices = self._diffindices(indices)
+        self.rmrows(indices=indices)
+        if verbose: print('Dataframe filtering: %s rows removed based on key="%s", column="%s"' % (len(indices), key, col))
+        return None
+    
+    def filter_in(self, key=None, col=None, verbose=False):
+        self._filterrows(key=key, col=col, keep=True, verbose=verbose)
+        return None
+    
+    def filter_out(self, key=None, col=None, verbose=False):
+        self._filterrows(key=key, col=col, keep=False, verbose=verbose)
+        return None
         
     def insert(self, row=0, value=None):
         ''' Insert a row at the specified location '''
@@ -2703,6 +2767,13 @@ class dataframe(object):
                 thisrow.append(datum)
             output.append(thisrow)
         return output
+    
+    def export(self, filename=None, sheetname=None, close=True):
+        from sciris.fileio import export_file
+        for_export = dcp(self.data)
+        for_export = np.vstack((self.cols, self.data))
+        export_file(filename=filename, data=for_export, sheetname=sheetname, close=close)
+        return
         
 
 

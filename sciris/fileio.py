@@ -78,3 +78,26 @@ def loadspreadsheet(filename=None, folder=None, sheetname=None, sheetnum=None, a
     # Or leave in the original format
     else:
         return rawdata
+
+
+def export_file(filename=None, data=None, sheetname=None, close=True):
+    '''
+    Little function to format an output results nicely for Excel
+    '''
+    from xlsxwriter import Workbook
+    
+    if filename  is None: filename  = 'default.xlsx'
+    if sheetname is None: sheetname = 'Sheet1'
+    
+    workbook = Workbook(filename)
+    worksheet = workbook.add_worksheet(sheetname)
+    
+    for r,row_data in enumerate(data):
+        for c,cell_data in enumerate(row_data):
+            worksheet.write(r, c, cell_data)
+        
+    if close:
+        workbook.close()
+        return None
+    else:
+        return workbook
