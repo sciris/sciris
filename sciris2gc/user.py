@@ -1,7 +1,7 @@
 """
 user.py -- code related to Sciris user management
     
-Last update: 5/23/18 (gchadder3)
+Last update: 5/24/18 (gchadder3)
 """
 
 #
@@ -404,9 +404,16 @@ def user_logout():
     # Return nothing.
     return None
 
+@register_RPC(validation_type='nonanonymous user') 
 def get_current_user_info():
     return current_user.get_user_front_end_repr()
 
+@register_RPC(validation_type='admin user')
+def get_all_users():
+    # Return success.
+    return user_dict.get_admin_front_end_repr()
+
+@register_RPC()
 def user_register(username, password, displayname, email):
     # Get the matching user (if any).
     matching_user = user_dict.get_user_by_username(username)
@@ -480,10 +487,6 @@ def user_change_password(oldpassword, newpassword):
     # Return success.
     return 'success'
 
-def get_all_users():
-    # Return success.
-    return user_dict.get_admin_front_end_repr()
-
 def admin_get_user_info(username):
     # Get the matching user (if any).
     matching_user = user_dict.get_user_by_username(username)
@@ -494,6 +497,7 @@ def admin_get_user_info(username):
     
     return matching_user.get_admin_front_end_repr()
 
+@register_RPC(validation_type='admin user')
 def admin_delete_user(username):
     # Get the matching user (if any).
     matching_user = user_dict.get_user_by_username(username)

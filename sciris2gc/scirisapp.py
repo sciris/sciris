@@ -1,7 +1,7 @@
 """
 scirisapp.py -- classes for Sciris (Flask-based) apps 
     
-Last update: 5/23/18 (gchadder3)
+Last update: 5/24/18 (gchadder3)
 """
 
 # Imports
@@ -126,38 +126,7 @@ class ScirisApp(object):
             @self.login_manager.user_loader
             def load_user(userid):
                 # Return the matching user (if any).
-                return user.user_dict.get_user_by_uid(userid)  
-            
-#            @self.flask_app.route('/test')
-#            @login_required
-#            def testroute():
-#                user.user_logout()
-#                return '<h1>Testing one, two!</h1>'
-            
-            @self.flask_app.route('/test')
-            def testroute():
-                # If we are not authenticated, give an unauthorized message.
-                if not current_user.is_authenticated:
-                    abort(401)
-                
-                # Log out the user.
-                user.user_logout()
-                return '<h1>Testing one, two!</h1>'
-            
-            @self.flask_app.route('/login')
-            def testlogin():
-                from hashlib import sha224
-                
-                # Log into the demo account.
-                print('>> Test login')
-                try_username = 'admin'
-                print('Username tried: ' + try_username)
-                try_password = 'admin'
-                print('Password tried: ' + try_password)
-                print('  hashed: %s' % sha224(try_password).hexdigest())
-                login_result = user.user_login(try_username, sha224(try_username).hexdigest())
-                print('login result: ' + login_result)                
-                return '<h1>Kenny logins!</h1>'
+                return user.user_dict.get_user_by_uid(userid)
             
             # Configure Flask app for login with the LoginManager.
             self.login_manager.init_app(self.flask_app)
@@ -165,7 +134,7 @@ class ScirisApp(object):
             # Initialize the users.
             self._init_users(self.config)
             
-            # Register the RPCs in the test_rpcs.py module.
+            # Register the RPCs in the user.py module.
             self.add_RPC_dict(user.RPC_dict)
             
         # If we are including DataStore functionality, initialize it.

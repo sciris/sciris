@@ -48,10 +48,13 @@
         demoLogin: function () {
           var vm = this
           
-          loginCall('user_login', 'demo', 'demo')
+          loginCall('demo', 'demo')
           .then(function (response) {
             if (response.data == 'success') {
-              vm.username = 'demo'
+              getCurrentUserInfo()
+              .then(function (response) {
+                vm.username = response.data.user.displayname
+              })
             }
           })
         },
@@ -59,10 +62,13 @@
         adminLogin: function () {
           var vm = this
           
-          loginCall('user_login', 'admin', 'admin')
+          loginCall('admin', 'admin')
           .then(function (response) {
             if (response.data == 'success') {
-              vm.username = 'admin'
+              getCurrentUserInfo()
+              .then(function (response) {
+                vm.username = response.data.user.displayname
+              })
             }
           })          
         },
@@ -70,7 +76,7 @@
         logout: function () {
           var vm = this
           
-          logoutCall('user_logout')
+          logoutCall()
           .then(function (response) {
             vm.username = '[none]'
           })      
@@ -79,6 +85,9 @@
         sendRequest: function () {
           var vm = this;
 
+//          getAllUsersInfo()
+//          registerUser('ozzymandibulus', 'ozzy', 'Ozzymandibulus', 'tastybats@gmail.com')
+//          deleteUser('ozzymandibulus')
           // Make a normal RPC call to get_graph().
 //          rpcCall('test_func')
           rpcCall('get_graph')
