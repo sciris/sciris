@@ -4,9 +4,11 @@
     <!-- Load core scripts -->
     <title>Hello dotty neighbor</title>
     <script src="rpc-service.js"></script>
+    <script src="user-service.js"></script>    
     <script src="https://unpkg.com/vue"></script>
     <script src="https://unpkg.com/axios/dist/axios.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/1.3.8/FileSaver.min.js"></script>
+    <script src="https://nf404.github.io/crypto-api/crypto-api.min.js"></script>
     <script src="http://d3js.org/d3.v3.min.js"></script>
     <script src="http://mpld3.github.io/js/mpld3.v0.3.js"></script>  
   </head>
@@ -17,6 +19,12 @@
   
     <div id="app">
       <h1>Hello, dotty neighbor</h1>
+      <button @click="demoLogin">demo Login</button>
+      <button @click="adminLogin">admin Login</button>      
+      <button @click="logout">Logout</button> 
+      Logged in User: {{ username }} 
+      <br/>  
+      <br/>        
       <button @click="sendRequest">Get new dots</button>
       <br/>
       {{ serverresponse }}      
@@ -30,11 +38,44 @@
   <script>
     var app = new Vue({
       el: '#app',
+      
       data: {
-        funcname: 'get_graph',
+        username: '[none]',
         serverresponse: '[Click button to send request]' 
       }, 
+      
       methods: {
+        demoLogin: function () {
+          var vm = this
+          
+          loginCall('user_login', 'demo', 'demo')
+          .then(function (response) {
+            if (response.data == 'success') {
+              vm.username = 'demo'
+            }
+          })
+        },
+
+        adminLogin: function () {
+          var vm = this
+          
+          loginCall('user_login', 'admin', 'admin')
+          .then(function (response) {
+            if (response.data == 'success') {
+              vm.username = 'admin'
+            }
+          })          
+        },
+        
+        logout: function () {
+          var vm = this
+          
+          logoutCall('user_logout')
+          .then(function (response) {
+            vm.username = '[none]'
+          })      
+        }, 
+        
         sendRequest: function () {
           var vm = this;
 

@@ -377,7 +377,7 @@ def get_scirisdemo_user(name='_ScirisDemo'):
 # RPC functions
 #
         
-#@register_RPC()
+@register_RPC()
 def user_login(username, password):  
     # Get the matching user (if any).
     matching_user = user_dict.get_user_by_username(username)
@@ -393,7 +393,7 @@ def user_login(username, password):
     else:
         return 'failure'
     
-#@register_RPC()       
+@register_RPC(validation_type='nonanonymous user')       
 def user_logout():
     # Log the user out and set the session to having an anonymous user.
     logout_user()
