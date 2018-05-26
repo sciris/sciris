@@ -1,7 +1,7 @@
 """
 scirisapp.py -- classes for Sciris (Flask-based) apps 
     
-Last update: 5/24/18 (gchadder3)
+Last update: 5/25/18 (gchadder3)
 """
 
 # Imports
@@ -137,10 +137,6 @@ class ScirisApp(object):
             # Register the RPCs in the user.py module.
             self.add_RPC_dict(user.RPC_dict)
             
-        # If we are including DataStore functionality, initialize it.
-        if self.config['USE_PROJECTS']:
-            self._init_projects(self.config)
-            
     @staticmethod
     def _set_config_defaults(app_config):
         if 'CLIENT_DIR' not in app_config:
@@ -266,10 +262,6 @@ class ScirisApp(object):
         print('>> List of all users...')
         user.user_dict.show()
     
-    @staticmethod
-    def _init_projects(app_config):
-        print('>> The projects functionality is under construction.')  
-      
     def run_server(self, with_twisted=True, with_flask=True, with_client=True):
         # If we are not running the app with Twisted, just run the Flask app.
         if not with_twisted:

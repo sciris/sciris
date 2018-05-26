@@ -69,7 +69,3 @@ USE_USERS = True
 # spawns a new active account.  If this is set False, then an admin user has 
 # to manually activate the account for the user.
 REGISTER_AUTOACTIVATE = True
-
-# Flag for setting whether we use the projects functionality provided by 
-# Sciris in the webapp.
-USE_PROJECTS = False
