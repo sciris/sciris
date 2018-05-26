@@ -1,7 +1,7 @@
 """
 user.py -- code related to Sciris user management
     
-Last update: 5/24/18 (gchadder3)
+Last update: 5/25/18 (gchadder3)
 """
 
 #
@@ -438,6 +438,7 @@ def user_register(username, password, displayname, email):
     # Return success.
     return 'success'
 
+@register_RPC(validation_type='nonanonymous user') 
 def user_change_info(username, password, displayname, email):
     # Make a copy of the current_user.
     the_user = copy.copy(current_user)
@@ -470,6 +471,7 @@ def user_change_info(username, password, displayname, email):
     # Return success.
     return 'success'
 
+@register_RPC(validation_type='nonanonymous user') 
 def user_change_password(oldpassword, newpassword):
     # Make a copy of the current_user.
     the_user = copy.copy(current_user)
@@ -487,6 +489,7 @@ def user_change_password(oldpassword, newpassword):
     # Return success.
     return 'success'
 
+@register_RPC(validation_type='admin user')
 def admin_get_user_info(username):
     # Get the matching user (if any).
     matching_user = user_dict.get_user_by_username(username)
@@ -512,6 +515,7 @@ def admin_delete_user(username):
     # Return success.
     return 'success'
 
+@register_RPC(validation_type='admin user')
 def admin_activate_account(username):
     # Get the matching user (if any).
     matching_user = user_dict.get_user_by_username(username)
@@ -531,6 +535,7 @@ def admin_activate_account(username):
     # Return success.
     return 'success'    
 
+@register_RPC(validation_type='admin user')
 def admin_deactivate_account(username):
     # Get the matching user (if any).
     matching_user = user_dict.get_user_by_username(username)
@@ -550,6 +555,7 @@ def admin_deactivate_account(username):
     # Return success.
     return 'success'
 
+@register_RPC(validation_type='admin user')
 def admin_grant_admin(username):
     # Get the matching user (if any).
     matching_user = user_dict.get_user_by_username(username)
@@ -569,6 +575,7 @@ def admin_grant_admin(username):
     # Return success.
     return 'success'
 
+@register_RPC(validation_type='admin user')
 def admin_revoke_admin(username):
     # Get the matching user (if any).
     matching_user = user_dict.get_user_by_username(username)
@@ -588,6 +595,7 @@ def admin_revoke_admin(username):
     # Return success.
     return 'success'
 
+@register_RPC(validation_type='admin user')
 def admin_reset_password(username):
     # Get the matching user (if any).
     matching_user = user_dict.get_user_by_username(username)

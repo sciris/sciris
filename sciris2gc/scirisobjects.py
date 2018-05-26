@@ -1,7 +1,7 @@
 """
 scirisobjects.py -- classes for Sciris objects which are generally managed
     
-Last update: 5/21/18 (gchadder3)
+Last update: 5/25/18 (gchadder3)
 """
 
 #
@@ -57,27 +57,11 @@ class ScirisObject(object):
             unique across other handles of the save type_prefix
             
     Usage:
-        >>> theObj = ScirisObject(uuid.UUID('12345678123456781234567812345678'))                      
+        >>> obj = ScirisObject(uuid.UUID('12345678123456781234567812345678'))                      
     """
     
     def  __init__(self, uid=None, type_prefix='obj', file_suffix='.obj', 
-        instance_label=''):        
-#        # If a UUID was passed in...
-#        if uid is not None:
-#            # Make sure the argument is a valid UUID, converting a hex text to a
-#            # UUID object, if needed.        
-#            valid_uid = get_valid_uuid(uid) 
-#            
-#            # If a valid_uid was found, use it.
-#            if valid_uid is not None:
-#                self.uid = valid_uid
-#            # Otherwise, generate a new random UUID using uuid4().
-#            else:
-#                self.uid = uuid.uuid4()
-#        # Otherwise, generate a new random UUID using uuid4().
-#        else:
-#            self.uid = uuid.uuid4()
-        
+        instance_label=''):       
         # Get a valid UUID from what is passed in, or if None is passed in, 
         # get a new ID.
         self.uid = get_valid_uuid(uid, new_uuid_if_missing=True) 
@@ -156,15 +140,15 @@ class ScirisObject(object):
         #print '--------------------------------------------'
         
     def get_user_front_end_repr(self):
-        objInfo = {
+        obj_info = {
             'scirisobject': {
                 'instance_label': self.instance_label                
             }
         }
-        return objInfo
+        return obj_info
     
     def get_admin_front_end_repr(self):
-        objInfo = {
+        obj_info = {
             'scirisobject': {
                 'UID': self.uid.hex, 
                 'type_prefix': self.type_prefix, 
@@ -172,7 +156,7 @@ class ScirisObject(object):
                 'instance_label': self.instance_label                
             }
         }
-        return objInfo 
+        return obj_info 
           
 class ScirisCollection(ScirisObject):
     """
@@ -204,7 +188,7 @@ class ScirisCollection(ScirisObject):
         obj_dict (dict) -- the Python dictionary holding the ScirisObjects
         
     Usage:
-        >>> theObjs = ScirisCollection(uuid.UUID('12345678123456781234567812345678'))                      
+        >>> objs = ScirisCollection(uuid.UUID('12345678123456781234567812345678'))                      
     """
     
     def __init__(self, uid, type_prefix='collection', 
