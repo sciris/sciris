@@ -213,7 +213,7 @@ def sigfig(X, sigfigs=5, SI=False, sep=False):
             elif sigfigs is None:
                 output.append(flexstr(x)+suffix)
             else:
-                magnitude = np.floor(log10(abs(x)))
+                magnitude = np.floor(np.log10(abs(x)))
                 factor = 10**(sigfigs-magnitude-1)
                 x = round(x*factor)/float(factor)
                 digits = int(abs(magnitude) + max(0, sigfigs - max(0,magnitude) - 1) + 1 + (x<0) + (abs(x)<1)) # one because, one for decimal, one for minus
@@ -246,15 +246,15 @@ def printarr(arr, arrformat='%0.2f  '):
     
     Version: 2014dec01
     '''
-    if ndim(arr)==1:
+    if np.ndim(arr)==1:
         string = ''
         for i in range(len(arr)):
             string += arrformat % arr[i]
         print(string)
-    elif ndim(arr)==2:
+    elif np.ndim(arr)==2:
         for i in range(len(arr)):
             printarr(arr[i], arrformat)
-    elif ndim(arr)==3:
+    elif np.ndim(arr)==3:
         for i in range(len(arr)):
             print('='*len(arr[i][0])*len(arrformat % 1))
             for j in range(len(arr[i])):
@@ -646,14 +646,14 @@ def isstring(obj):
 def promotetoarray(x):
     ''' Small function to ensure consistent format for things that should be arrays '''
     if isnumber(x):
-        return array([x]) # e.g. 3
+        return np.array([x]) # e.g. 3
     elif isinstance(x, (list, tuple)):
-        return array(x) # e.g. [3]
+        return np.array(x) # e.g. [3]
     elif isinstance(x, np.ndarray): 
-        if shape(x):
+        if np.shape(x):
             return x # e.g. array([3])
         else: 
-            return array([x]) # e.g. array(3)
+            return np.array([x]) # e.g. array(3)
     else: # e.g. 'foo'
         raise Exception("Expecting a number/list/tuple/ndarray; got: %s" % flexstr(x))
 
@@ -704,7 +704,7 @@ def quantile(data, quantiles=[0.5, 0.25, 0.75]):
     '''
     nsamples = len(data) # Number of samples in the dataset
     indices = (np.array(quantiles)*(nsamples-1)).round().astype(int) # Calculate the indices to pull out
-    output = array(data)
+    output = np.array(data)
     output.sort(axis=0) # Do the actual sorting along the 
     output = output[indices] # Trim down to the desired quantiles
     
@@ -731,7 +731,7 @@ def sanitize(data=None, returninds=False, replacenans=None, die=True):
                 if replacenans in ['nearest','linear']:
                     sanitized = smoothinterp(newx, inds, sanitized, method=replacenans, smoothness=0) # Replace nans with interpolated values
                 else:
-                    naninds = inds = np.nonzero(isnan(data))[0]
+                    naninds = inds = np.nonzero(np.isnan(data))[0]
                     sanitized = dcp(data)
                     sanitized[naninds] = replacenans
             if len(sanitized)==0:
@@ -761,7 +761,7 @@ def getvaliddata(data=None, filterdata=None, defaultind=0):
     else:                        validindices = ~np.isnan(filterdata) # Else, assume it's nans that need to be removed
     if validindices.any(): # There's at least one data point entered
         if len(data)==len(validindices): # They're the same length: use for logical indexing
-            validdata = np.array(array(data)[validindices]) # Store each year
+            validdata = np.array(np.array(data)[validindices]) # Store each year
         elif len(validindices)==1: # They're different lengths and it has length 1: it's an assumption
             validdata = np.array([np.array(data)[defaultind]]) # Use the default index; usually either 0 (start) or -1 (end)
         else:
@@ -958,15 +958,15 @@ def smoothinterp(newx=None, origx=None, origy=None, smoothness=None, growth=None
             orignan      = np.zeros(len(origy)) # Start from scratch
             origplusinf  = np.zeros(len(origy)) # Start from scratch
             origminusinf = np.zeros(len(origy)) # Start from scratch
-            orignan[isnan(origy)]     = np.nan  # Replace nan entries with nan
-            origplusinf[origy==inf]   = np.nan  # Replace plus infinite entries with nan
-            origminusinf[origy==-inf] = np.nan  # Replace minus infinite entries with nan
+            orignan[np.isnan(origy)]     = np.nan  # Replace nan entries with nan
+            origplusinf[origy==np.inf]   = np.nan  # Replace plus infinite entries with nan
+            origminusinf[origy==-np.inf] = np.nan  # Replace minus infinite entries with nan
             newnan      = np.interp(newx, origx, orignan) # Interpolate the nans
             newplusinf  = np.interp(newx, origx, origplusinf) # ...again, for positive
             newminusinf = np.interp(newx, origx, origminusinf) # ...and again, for negative
-            newy[isnan(newminusinf)] = -inf # Add minus infinity back in first
-            newy[isnan(newplusinf)]  = inf # Then, plus infinity
-            newy[isnan(newnan)]  = np.nan # Finally, the nans
+            newy[np.isnan(newminusinf)] = -np.inf # Add minus infinity back in first
+            newy[np.isnan(newplusinf)]  = np.inf # Then, plus infinity
+            newy[np.isnan(newnan)]  = np.nan # Finally, the nans
             
     
     return newy
