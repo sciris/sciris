@@ -1,7 +1,7 @@
 """
 user.py -- code related to Sciris user management
     
-Last update: 5/25/18 (gchadder3)
+Last update: 5/29/18 (gchadder3)
 """
 
 #
@@ -167,7 +167,7 @@ class User(sobj.ScirisObject):
         obj_info = {
             'user': {
                 'UID': self.uid.hex,                    
-                'instance_label': self.instance_label,
+                'instanceLabel': self.instance_label,
                 'username': self.username, 
                 'displayname': self.displayname, 
                 'email': self.email,
@@ -180,9 +180,9 @@ class User(sobj.ScirisObject):
         obj_info = {
             'user': {
                 'UID': self.uid.hex, 
-                'type_prefix': self.type_prefix, 
-                'file_suffix': self.file_suffix, 
-                'instance_label': self.instance_label,
+                'typePrefix': self.type_prefix, 
+                'fileSuffix': self.file_suffix, 
+                'instanceLabel': self.instance_label,
                 'username': self.username, 
                 'password': self.password, 
                 'displayname': self.displayname, 
