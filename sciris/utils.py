@@ -892,7 +892,8 @@ def smoothinterp(newx=None, origx=None, origy=None, smoothness=None, growth=None
     correctorder = np.argsort(origx)
     origx = origx[correctorder]
     origy = origy[correctorder]
-    newx = newx[np.argsort(newx)] # And sort newx just in case
+    neworder = argsort(newx)
+    newx = newx[neworder] # And sort newx just in case
     
     # Only keep finite elements
     finitey = np.isfinite(origy) # Boolean for whether it's finite
@@ -967,7 +968,10 @@ def smoothinterp(newx=None, origx=None, origy=None, smoothness=None, growth=None
             newy[np.isnan(newminusinf)] = -np.inf # Add minus infinity back in first
             newy[np.isnan(newplusinf)]  = np.inf # Then, plus infinity
             newy[np.isnan(newnan)]  = np.nan # Finally, the nans
-            
+    
+    # Restore original sort order for newy
+    restoredorder = argsort(neworder)
+    newy = newy[restoredorder]
     
     return newy
     
