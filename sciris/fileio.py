@@ -2,10 +2,13 @@
 ### Imports
 #############################################################################################################################
 
-try:    import cPickle as pickle # For Python 3 compatibility
-except: import pickle
+try: # Python 2
+    import cPickle as pickle
+    from cStringIO import StringIO
+except: # Python 3
+    import pickle
+    from io import StringIO
 from gzip import GzipFile
-from cStringIO import StringIO
 from contextlib import closing
 from sciris.utils import makefilepath, odict, dataframe
 from xlrd import open_workbook
@@ -75,3 +78,26 @@ def loadspreadsheet(filename=None, folder=None, sheetname=None, sheetnum=None, a
     # Or leave in the original format
     else:
         return rawdata
+
+
+def export_file(filename=None, data=None, sheetname=None, close=True):
+    '''
+    Little function to format an output results nicely for Excel
+    '''
+    from xlsxwriter import Workbook
+    
+    if filename  is None: filename  = 'default.xlsx'
+    if sheetname is None: sheetname = 'Sheet1'
+    
+    workbook = Workbook(filename)
+    worksheet = workbook.add_worksheet(sheetname)
+    
+    for r,row_data in enumerate(data):
+        for c,cell_data in enumerate(row_data):
+            worksheet.write(r, c, cell_data)
+        
+    if close:
+        workbook.close()
+        return None
+    else:
+        return workbook

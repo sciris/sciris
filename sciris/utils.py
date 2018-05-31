@@ -2,13 +2,31 @@
 ### IMPORTS FROM OTHER LIBRARIES
 ##############################################################################
 
-from collections import OrderedDict as _OD
-from six import PY2 as _PY2 # Set things for Python3 compatibility
 import numpy as np
-from uuid import uuid4 as uuid # analysis:ignore
-from copy import deepcopy as dcp  # analysis:ignore
+from collections import OrderedDict as _OD
 
+# Handle types and Python 2/3 compatibility
+from six import PY2 as _PY2
+from numbers import Number as _numtype
+if _PY2: _stringtype = basestring 
+else:    _stringtype = str
 
+def uuid(which=None):
+    ''' Shortcut for creating a UUID; default is to create a UUID4. '''
+    import uuid
+    if which is None: which = 4
+    if   which==1: output = uuid.uuid1()
+    elif which==3: output = uuid.uuid3()
+    elif which==4: output = uuid.uuid4()
+    elif which==5: output = uuid.uuid5()
+    else: raise Exception('UUID type %i not recognized; must be 1,  3, , or 5)' % which)
+    
+    return output
+
+def dcp(obj=None):
+    ''' Shortcut to perform a deep copy operation '''
+    import copy
+    return copy.deepcopy(obj)
 
 
 ##############################################################################
@@ -596,13 +614,9 @@ def checktype(obj=None, objtype=None, subtype=None, die=False):
         checktype(['a','b','c'], 'arraylike') # Returns false
         checktype([{'a':3}], list, dict) # Returns True
     '''
-    if _PY2: String = basestring
-    else:    String = str
-    from numbers import Number
-    
     # Handle "objtype" input
-    if   objtype in ['str','string']:  objinstance = String
-    elif objtype in ['num', 'number']: objinstance = Number
+    if   objtype in ['str','string']:  objinstance = _stringtype
+    elif objtype in ['num', 'number']: objinstance = _numtype
     elif objtype in ['arr', 'array']:  objinstance = type(np.array([]))
     elif objtype=='arraylike':         objinstance = (list, tuple, type(np.array([]))) # Anything suitable as a numerical array
     elif type(objtype)==type:          objinstance = objtype  # Don't need to do anything
@@ -1113,16 +1127,12 @@ def loadobj(filename=None, folder=None, verbose=True):
     Usage:
     	obj = loadobj('myfile.obj')
     '''
-    if _PY2: 
-        import cPickle as pickle # For Python 3 compatibility
-        String = basestring
-    else:    
-        import pickle
-        String = str
+    if _PY2: import cPickle as pickle # For Python 3 compatibility
+    else:    import pickle
     from gzip import GzipFile
     
     # Handle loading of either filename or file object
-    if isinstance(filename, String): 
+    if isinstance(filename, _stringtype): 
         argtype = 'filename'
         filename = makefilepath(filename=filename, folder=folder) # If it is a file, validate the folder
     else: 
@@ -1138,6 +1148,19 @@ def loadobj(filename=None, folder=None, verbose=True):
     if verbose: print('Object loaded from "%s"' % filename)
     return obj
 
+
+def loadtext(filename=None, splitlines=False):
+    ''' Convenience function for reading a text file '''
+    with open(filename) as f: output = f.read()
+    if splitlines: output = output.splitlines()
+    return output
+
+
+def savetext(filename=None, string=None):
+    ''' Convenience function for reading a text file -- accepts a string or list of strings '''
+    if isinstance(string, list): string = '\n'.join(string) # Convert from list to string)
+    with open(filename, 'w') as f: f.write(string)
+    return None
 
 
 def tic():
@@ -1741,27 +1764,19 @@ class odict(_OD):
         bar.rename('cough','chill') # Show rename
         print(bar) # Print results
     
-    Version: 2018mar27
+    Version: 2018mar29
     '''
     
     def __init__(self, *args, **kwargs):
         ''' See collections.py '''
-        
-        from numbers import Number
-        
         # Standard OrderedDictionary initialization
         if len(args)==1 and args[0] is None: args = [] # Remove a None argument
         _OD.__init__(self, *args, **kwargs) # Standard init
-        
-        # Custom initialization
-        self._num = Number # Store this for type checking
-        if _PY2: self._str = basestring 
-        else:   self._str = str
         return None
 
     def __slicekey(self, key, slice_end):
         shift = int(slice_end=='stop')
-        if isinstance(key, self._num): return key
+        if isinstance(key, _numtype): return key
         elif type(key) is str: return self.index(key)+shift # +1 since otherwise confusing with names (CK)
         elif key is None: return (len(self) if shift else 0)
         else: raise Exception('To use a slice, %s must be either int or str (%s)' % (slice_end, key))
@@ -1788,7 +1803,7 @@ class odict(_OD):
 
     def __getitem__(self, key):
         ''' Allows getitem to support strings, integers, slices, lists, or arrays '''
-        if isinstance(key, (self._str,tuple)):
+        if isinstance(key, (_stringtype,tuple)):
             try:
                 output = _OD.__getitem__(self, key)
                 return output
@@ -1796,7 +1811,7 @@ class odict(_OD):
                 if len(self.keys()): errormsg = '%s\nodict key "%s" not found; available keys are:\n%s' % (repr(E), flexstr(key), '\n'.join([flexstr(k) for k in self.keys()]))
                 else:                errormsg = 'Key "%s" not found since odict is empty'% key
                 raise Exception(errormsg)
-        elif isinstance(key, self._num): # Convert automatically from float...dangerous?
+        elif isinstance(key, _numtype): # Convert automatically from float...dangerous?
             thiskey = self.keys()[int(key)]
             return _OD.__getitem__(self,thiskey)
         elif type(key)==slice: # Handle a slice -- complicated
@@ -1824,7 +1839,7 @@ class odict(_OD):
         ''' Allows setitem to support strings, integers, slices, lists, or arrays '''
         if isinstance(key, (str,tuple)):
             _OD.__setitem__(self, key, value)
-        elif isinstance(key, self._num): # Convert automatically from float...dangerous?
+        elif isinstance(key, _numtype): # Convert automatically from float...dangerous?
             thiskey = self.keys()[int(key)]
             _OD.__setitem__(self, thiskey, value)
         elif type(key)==slice:
@@ -1995,9 +2010,9 @@ class odict(_OD):
     
     def pop(self, key, *args, **kwargs):
         ''' Allows pop to support strings, integers, slices, lists, or arrays '''
-        if isinstance(key, self._str):
+        if isinstance(key, _stringtype):
             return _OD.pop(self, key, *args, **kwargs)
-        elif isinstance(key, self._num): # Convert automatically from float...dangerous?
+        elif isinstance(key, _numtype): # Convert automatically from float...dangerous?
             thiskey = self.keys()[int(key)]
             return _OD.pop(self, thiskey, *args, **kwargs)
         elif type(key)==slice: # Handle a slice -- complicated
@@ -2104,7 +2119,7 @@ class odict(_OD):
     def rename(self, oldkey, newkey):
         ''' Change a key name -- WARNING, very inefficient! '''
         nkeys = len(self)
-        if isinstance(oldkey, self._num): 
+        if isinstance(oldkey, _numtype): 
             index = oldkey
             keystr = self.keys()[index]
         else: # Forge ahead for strings and anything else!
@@ -2132,13 +2147,13 @@ class odict(_OD):
         if sortby is None: allkeys = sorted(origkeys)
         else:
             if not isiterable(sortby): raise Exception('Please provide a list to determine the sort order.')
-            if all([isinstance(x,self._str) for x in sortby]): # Going to sort by keys
+            if all([isinstance(x,_stringtype) for x in sortby]): # Going to sort by keys
                 allkeys = sortby # Assume the user knows what s/he is doing
             elif all([isinstance(x,bool) for x in sortby]): # Using Boolean values
                 allkeys = []
                 for i,x in enumerate(sortby):
                      if x: allkeys.append(origkeys[i])
-            elif all([isinstance(x,self._num) for x in sortby]): # Going to sort by numbers
+            elif all([isinstance(x,_numtype) for x in sortby]): # Going to sort by numbers
                 if not set(sortby)==set(range(len(self))):
                     errormsg = 'List to sort by "%s" is not compatible with length of odict "%i"' % (sortby, len(self))
                     raise Exception(errormsg)
@@ -2190,9 +2205,9 @@ class odict(_OD):
             return None # Nothing to do if nothing supplied
         if keys is None and vals is not None:
             keys = len(promotetolist(vals)) # Values are supplied but keys aren't: use default keys
-        if isinstance(keys, self._num): # It's a single number: pre-generate
+        if isinstance(keys, _numtype): # It's a single number: pre-generate
             keylist = ['%i'%i for i in range(keys)] # Generate keylist
-        elif isinstance(keys, self._str): # It's a single string
+        elif isinstance(keys, _stringtype): # It's a single string
             keylist = [flexstr(keys)]
         elif isinstance(keys, list): # It's a list: use directly
             keylist = keys
@@ -2241,7 +2256,7 @@ class odict(_OD):
         if source is not None: # Don't do anything if there's nothing there
             if not(isiterable(source)): # Make sure it's iterable
                 source = promotetolist(source)
-            elif isinstance(source, self._str):
+            elif isinstance(source, _stringtype):
                 source = [source] # Special case -- strings are iterable, but we don't want to
             
             if len(source)==0:
@@ -2322,13 +2337,13 @@ class odict(_OD):
     
     def enumkeys(self):
         ''' Shortcut for enumerate(odict.keys()) '''
-        iterator = enumerate(self.keys())
+        iterator = list(enumerate(self.keys()))
         return iterator
     
     
     def enumvals(self):
         ''' Shortcut for enumerate(odict.values()) '''
-        iterator = enumerate(self.values())
+        iterator = list(enumerate(self.values()))
         return iterator
     
     
@@ -2396,19 +2411,26 @@ class dataframe(object):
     '''
 
     def __init__(self, cols=None, data=None):
-        from numbers import Number # analysis:ignore
-        self._num = Number # Store this for type checking
-        if _PY2: self._str = basestring 
-        else:    self._str = str
         
+        # Handle columns        
         if cols is None: cols = list()
+        else:            cols = promotetolist(cols)
+        
+        # Handle data
         if data is None: 
             data = np.zeros((0,len(cols)), dtype=object) # Object allows more than just numbers to be stored
         else:
             data = np.array(data, dtype=object)
             if data.ndim != 2:
-                errormsg = 'Dimension of data must be 2, not %s' % data.ndim
-                raise Exception(errormsg)
+                if data.ndim == 1:
+                    if len(cols)==1:
+                        data = np.reshape(data, (len(data),1))
+                    else:
+                        errormsg = 'Dimension of data can only be 1 if there is 1 column, not %s' % len(cols)
+                        raise Exception(errormsg)
+                else:
+                    errormsg = 'Dimension of data must be 1 or 2, not %s' % data.ndim
+                    raise Exception(errormsg)
             if data.shape[1]==len(cols):
                 pass
             elif data.shape[0]==len(cols):
@@ -2416,6 +2438,8 @@ class dataframe(object):
             else:
                 errormsg = 'Number of columns (%s) does not match array shape (%s)' % (len(cols), data.shape)
                 raise Exception(errormsg)
+        
+        # Store it        
         self.cols = cols
         self.data = data
         return None
@@ -2480,16 +2504,16 @@ class dataframe(object):
     def _sanitizecol(self, col):
         ''' Take None or a string and return the index of the column '''
         if col is None: output = 0 # If not supplied, assume first column is control
-        elif isinstance(col, self._str): output = self.cols.index(col) # Convert to index
+        elif isinstance(col, _stringtype): output = self.cols.index(col) # Convert to index
         else: output = col
         return output
     
     def __getitem__(self, key=None):
         ''' Simple method for returning; see self.get() for a version based on col and row '''
-        if isinstance(key, self._str):
+        if isinstance(key, _stringtype):
             colindex = self.cols.index(key)
             output = self.data[:,colindex]
-        elif isinstance(key, self._num):
+        elif isinstance(key, _numtype):
             rowindex = int(key)
             output = self.data[rowindex,:]
         elif isinstance(key, tuple):
@@ -2504,19 +2528,23 @@ class dataframe(object):
             raise Exception('Unrecognized dataframe key "%s"' % key)
         return output
         
-    def __setitem__(self, key, value):
-        if isinstance(key, self._str): # Add column
+    def __setitem__(self, key, value=None):
+        if value is None:
+            value = np.zeros(self.nrows(), dtype=object)
+        if isinstance(key, _stringtype): # Add column
             if len(value) != self.nrows(): 
                 errormsg = 'Vector has incorrect length (%i vs. %i)' % (len(value), self.nrows())
                 raise Exception(errormsg)
+            else:
+                val_arr = np.reshape(value, (len(value),1))
             try:
                 colindex = self.cols.index(key)
-                self.data[:,colindex] = value
+                self.data[:,colindex] = val_arr
             except:
                 self.cols.append(key)
                 colindex = self.cols.index(key)
-                self.data = np.hstack((self.data, np.array(value, dtype=object)))
-        elif isinstance(key, self._num):
+                self.data = np.hstack((self.data, np.array(val_arr, dtype=object)))
+        elif isinstance(key, _numtype):
             value = self._val2row(value) # Make sure it's in the correct format
             if len(value) != self.ncols(): 
                 errormsg = 'Vector has incorrect length (%i vs. %i)' % (len(value), self.ncols())
@@ -2532,7 +2560,7 @@ class dataframe(object):
                 rowindex = int(key[1])
                 self.data[rowindex,colindex] = value
             except:
-                errormsg = 'Could not insert element (%s,%s) in dataframe of shape %' % (colindex, rowindex, self.data.shape)
+                errormsg = 'Could not insert element (%s,%s) in dataframe of shape %' % (key[0], key[1], self.data.shape)
                 raise Exception(errormsg)
         return None
     
@@ -2585,7 +2613,7 @@ class dataframe(object):
         try:    return self.data.shape[0]
         except: return 0 # If it didn't work, probably because it's empty
     
-    def addcol(self, key, value):
+    def addcol(self, key=None, value=None):
         ''' Add a new column to the data frame -- for consistency only '''
         self.__setitem__(key, value)
     
@@ -2618,10 +2646,33 @@ class dataframe(object):
         return index
         
     def rmrow(self, key=None, col=None, returnval=False, die=True):
-        ''' Like pop, but removes by matching the first column instead of the index '''
+        ''' Like pop, but removes by matching the first column instead of the index -- WARNING, messy '''
         index = self._rowindex(key=key, col=col, die=die)
         if index is not None: self.pop(index)
         return None
+    
+    def _diffindices(self, indices=None):
+        ''' For a given set of indices, get the inverse, in set-speak '''
+        if indices is None: indices = []
+        ind_set = set(np.array(indices))
+        all_set = set(np.arange(self.nrows()))
+        diff_set = np.array(list(all_set - ind_set))
+        return diff_set
+    
+    def rmrows(self, indices=None):
+        ''' Remove rows by index -- WARNING, messy '''
+        keep_set = self._diffindices(indices)
+        self.data = self.data[keep_set,:]
+        return None
+    
+    def replace(self, col=None, old=None, new=None):
+        ''' Replace all of one value in a column with a new value '''
+        col = self._sanitizecol(col)
+        coldata = self.data[:,col] # Get data for this column
+        inds = findinds(coldata==old)
+        self.data[inds,col] = new
+        return None
+        
     
     def _todict(self, row):
         ''' Return row as a dict rather than as an array '''
@@ -2663,6 +2714,29 @@ class dataframe(object):
         else:
             thisrow = default # If not found, return as default
         return thisrow
+    
+    def rowindex(self, key=None, col=None):
+        ''' Return the indices of all rows matching the given key in a given column. '''
+        col = self._sanitizecol(col)
+        coldata = self.data[:,col] # Get data for this column
+        indices = findinds(coldata==key)
+        return indices
+        
+    def _filterrows(self, key=None, col=None, keep=True, verbose=False):
+        ''' Filter rows and either keep the ones matching, or discard them '''
+        indices = self.rowindex(key=key, col=col)
+        if keep: indices = self._diffindices(indices)
+        self.rmrows(indices=indices)
+        if verbose: print('Dataframe filtering: %s rows removed based on key="%s", column="%s"' % (len(indices), key, col))
+        return None
+    
+    def filter_in(self, key=None, col=None, verbose=False):
+        self._filterrows(key=key, col=col, keep=True, verbose=verbose)
+        return None
+    
+    def filter_out(self, key=None, col=None, verbose=False):
+        self._filterrows(key=key, col=col, keep=False, verbose=verbose)
+        return None
         
     def insert(self, row=0, value=None):
         ''' Insert a row at the specified location '''
@@ -2697,6 +2771,13 @@ class dataframe(object):
                 thisrow.append(datum)
             output.append(thisrow)
         return output
+    
+    def export(self, filename=None, sheetname=None, close=True):
+        from sciris.fileio import export_file
+        for_export = dcp(self.data)
+        for_export = np.vstack((self.cols, self.data))
+        export_file(filename=filename, data=for_export, sheetname=sheetname, close=close)
+        return
         
 
 

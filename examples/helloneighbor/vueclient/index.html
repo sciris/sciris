@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <!-- Load core scripts -->
+    <title>Hello second neighbor</title>
+    <script src="https://unpkg.com/vue"></script>
+  </head>
+
+  <body>
+  
+    <!-- Define the layout -->  
+  
+    <div id="app">
+      <h1>Hello, second neighbor</h1>
+      <button @click="changeText">Flip-flop</button>
+      <div>{{ changingText }}</div>
+    </div>
+
+
+
+<!-- Define the functionality -->
+
+  <script>
+    var app = new Vue({
+      el: '#app',
+      data: {
+        changingText: '', 
+      }, 
+      methods: {
+        changeText: function () {
+          if (this.changingText == 'Flip')
+            this.changingText = 'Flop'
+          else
+            this.changingText = 'Flip'
+        }
+      }
+    })
+  </script>
+  </body>
+</html>

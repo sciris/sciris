@@ -1,7 +1,7 @@
 """
 project.py -- code related to Sciris project management
     
-Last update: 3/20/18 (gchadder3)
+Last update: 3/27/18 (gchadder3)
 """
 
 #
@@ -568,9 +568,9 @@ def download_project(project_id):
     # Load the project with the matching UID.
     theProj = load_project(project_id, raise_exception=True)
     
-    # Use the uploads directory to put the file in.
-    dirname = ds.uploadsPath
-    
+    # Use the downloads directory to put the file in.
+    dirname = ds.downloadsDir.dirPath
+        
     # Create a filename containing the project name followed by a .prj 
     # suffix.
     fileName = '%s.prj' % theProj.name
@@ -598,8 +598,8 @@ def load_zip_of_prj_files(project_ids):
     if request.endpoint != 'downloadProjectRPC':
         return {'error': 'Unauthorized RPC'}   
     
-    # Use the uploads directory to put the file in.
-    dirname = ds.uploadsPath
+    # Use the downloads directory to put the file in.
+    dirname = ds.downloadsDir.dirPath
 
     # Build a list of ProjectSO objects for each of the selected projects, 
     # saving each of them in separate .prj files.

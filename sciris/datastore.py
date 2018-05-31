@@ -1,7 +1,7 @@
 """
 datastore.py -- code related to Sciris persistence (both files and database)
     
-Last update: 10/11/17 (gchadder3)
+Last update: 3/28/18 (gchadder3)
 """
 
 """
@@ -19,6 +19,9 @@ directory management stuff goes in a file called filemanagement.py.
 #
 
 import os
+from tempfile import mkdtemp
+from shutil import rmtree
+import atexit
 import redis
 import scirisobjects as sobj
 
@@ -42,11 +45,14 @@ from contextlib import closing
 # The path of the Sciris repo.
 scirisRootPath = None
 
-# The directory that uploaded files are written to as a "way-station."
-uploadsPath = None
+# Directory (FileSaveDirectory object) for saved files.
+fileSaveDir = None
 
-# The root path where files may end up being saved.
-fileSaveRootPath = None
+# Directory (FileSaveDirectory object) for file uploads to be routed to.
+uploadsDir = None
+
+# Directory (FileSaveDirectory object) for file downloads to be routed to.
+downloadsDir = None
 
 # The DataStore object for persistence for the app.  Gets initialized by
 # and loaded by init_datastore().
@@ -435,13 +441,71 @@ class DataStore(object):
         for theKey in self.redisDb.keys():
             self.redisDb.delete(theKey)
  
+
+# Directory-related classes
+# NOTE: If enough code ends up here, we may want to break it out into another 
+# file.
     
-    
-# Wraps a directory where files may get saved by the site.
 class FileSaveDirectory(object):
-    def __init__(self, dirPath):
-        self.dirPath = dirPath
+    """
+    An object wrapping a directory where files may get saved by the web 
+    application.
+    
+    Methods:
+        __init__(dirPath: str [None], tempDir: bool [False]): void -- 
+            constructor
+        cleanup(): void -- clean up after web app is exited
+        clear(): void -- erase the contents of the directory
+        delete(): void -- delete the entire directory
+                    
+    Attributes:
+        dirPath (str) -- the full path of the directory on disk
+        isTempDir (bool) -- is the directory to be spawned on startup and 
+            erased on exit?
         
+    Usage:
+        >>> newDir = FileSaveDirectory(transferDirPath, tempDir=True)
+    """
+    
+    def __init__(self, dirPath=None, tempDir=False):
+        # Set whether we are a temp directory.
+        self.isTempDir = tempDir
+               
+        # If no path is specified, create the temp directory.
+        if dirPath is None:
+            self.dirPath = mkdtemp()
+            
+        # Otherwise...
+        else:
+            # Set the path to what was passed in.
+            self.dirPath = dirPath
+            
+            # If the directory doesn't exist yet, create it.
+            if not os.path.exists(dirPath):            
+                os.mkdir(dirPath)
+            
+        # Register the cleanup method to be called on web app exit.
+        atexit.register(self.cleanup)
+            
+    def cleanup(self):
+        # If we are a temp directory, do the cleanup.
+        if self.isTempDir:
+            # Show cleanup message.
+            print '>> Cleaning up FileSaveDirectory at %s' % self.dirPath
+            
+            # Delete the entire directory (file contents included).
+            self.delete()
+            
+    def clear(self):
+        # Delete the entire directory (file contents included).
+        rmtree(self.dirPath)
+        
+        # Create a fresh direcgtory
+        os.mkdir(self.dirPath)
+    
+    def delete(self):
+        # Delete the entire directory (file contents included).
+        rmtree(self.dirPath)
         
 #
 # Pickle / unpickle functions
