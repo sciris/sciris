@@ -1,36 +1,33 @@
 """
 fileio.py -- code for file management in Sciris 
     
-Last update: 5/18/18 (gchadder3)
+Last update: 5/31/18 (gchadder3)
 """
 
 #
 # Imports
 #
 
+try: # Python 2
+    import cPickle as pickle
+    from cStringIO import StringIO
+except: # Python 3
+    import pickle
+    from io import StringIO
+from gzip import GzipFile
+from contextlib import closing
+from sciris.utils import makefilepath, odict, dataframe
+from xlrd import open_workbook
 import os
 from tempfile import mkdtemp
 from shutil import rmtree
 import atexit
-
-# Import cPickle if it is available in your Python setup because it is a 
-# faster method.  If it's not available, import the regular pickle library.
-try: 
-    import cPickle as pickle
-except: 
-    import pickle
-    
-from gzip import GzipFile
-from cStringIO import StringIO
-from contextlib import closing  
   
 #
 # Globals
 #
 
 # These will get set by calling code.
-# TODO: I'm not sure if we're going to want to keep and use these globals, or 
-# whether we really will want to put this stuff in ScirisApp attributes.
 
 # Directory (FileSaveDirectory object) for saved files.
 file_save_dir = None
@@ -154,6 +151,10 @@ def object_to_gzip_string_pickle(obj):
     # Return the read-in result.
     return result
 
+# Alias for above function.
+def dumpstr(obj):
+    return object_to_gzip_string_pickle(obj)
+
 def gzip_string_pickle_to_object(gzip_string_pickle):
     # Open a "fake file" with the Gzip string pickle in it.
     with closing(StringIO(gzip_string_pickle)) as output:
@@ -168,3 +169,69 @@ def gzip_string_pickle_to_object(gzip_string_pickle):
             
     # Return the object.
     return obj
+
+# Alias for above function.
+def loadstr(gzip_string_pickle):
+    return gzip_string_pickle_to_object(gzip_string_pickle)
+
+def loadspreadsheet(filename=None, folder=None, sheetname=None, sheetnum=None, asdataframe=True):
+    '''
+    Load a spreadsheet
+    '''
+
+    fullpath = makefilepath(filename=filename, folder=folder)
+    workbook = open_workbook(fullpath)
+    if sheetname is not None: 
+        sheet = workbook.sheet_by_name(sheetname)
+    else:
+        if sheetnum is None: sheetnum = 0
+        sheet = workbook.sheet_by_index(sheetnum)
+    
+    # Load the raw data
+    rawdata = []
+    for rownum in range(sheet.nrows-1):
+        rawdata.append(odict())
+        for colnum in range(sheet.ncols):
+            attr = sheet.cell_value(0,colnum)
+            val = sheet.cell_value(rownum+1,colnum)
+            try:    val = float(val) # Convert it to a number if possible
+            except: 
+                try:    val = str(val)  # But give up easily and convert to a string (not Unicode)
+                except: pass # Still no dice? Fine, we tried
+            rawdata[rownum][attr] = val
+    
+    # Convert to dataframe
+    if asdataframe:
+        cols = rawdata[0].keys()
+        reformatted = []
+        for oldrow in rawdata:
+            newrow = list(oldrow[:])
+            reformatted.append(newrow)
+        dfdata = dataframe(cols=cols, data=reformatted)
+        return dfdata
+    
+    # Or leave in the original format
+    else:
+        return rawdata
+
+def export_file(filename=None, data=None, sheetname=None, close=True):
+    '''
+    Little function to format an output results nicely for Excel
+    '''
+    from xlsxwriter import Workbook
+    
+    if filename  is None: filename  = 'default.xlsx'
+    if sheetname is None: sheetname = 'Sheet1'
+    
+    workbook = Workbook(filename)
+    worksheet = workbook.add_worksheet(sheetname)
+    
+    for r,row_data in enumerate(data):
+        for c,cell_data in enumerate(row_data):
+            worksheet.write(r, c, cell_data)
+        
+    if close:
+        workbook.close()
+        return None
+    else:
+        return workbook
