@@ -174,6 +174,10 @@ def gzip_string_pickle_to_object(gzip_string_pickle):
 def loadstr(gzip_string_pickle):
     return gzip_string_pickle_to_object(gzip_string_pickle)
 
+#
+# Excel spreadsheet functions
+#
+    
 def loadspreadsheet(filename=None, folder=None, sheetname=None, sheetnum=None, asdataframe=True):
     '''
     Load a spreadsheet
