@@ -26,19 +26,6 @@ SECRET_KEY = 'Pick something unique for your site here'
 #   DEFAULT = '.'
 CLIENT_DIR = 'vueclient_rpcs'
 
-# Directory containing the model code.  This is the primary Python code that 
-# the web app will rely on related to the actual model.
-# TODO: I'm not sure we will end up needing this parameter.  We should remove 
-# it if it is redundant.
-MODEL_DIR = '.'
-
-# Directory containing Python code specific to the web app.  sessionmanager 
-# (the directory this config file is in) contains general Python functionality 
-# that the web app directory code makes use of. 
-# TODO: I'm not sure we will end up needing this parameter.  We should remove 
-# it if it is redundant.
-WEBAPP_DIR = '.'
-
 # Directory where uploaded files will be saved, as well as files saved to be 
 # downloadable to user machines.
 # If commented out or omitted, a temporary directory will be kept for this, 
