@@ -16,7 +16,7 @@ you use a relative path, it is interpreted as being with respect to the
 "webapp directory," that is, the directory containing this config file and the 
 main webapp script that imports it.
  
-Last update: 5/21/18 (gchadder3)
+Last update: 5/31/18 (gchadder3)
 """
 
 # A secret key value used by Python Flask.
@@ -45,12 +45,10 @@ WEBAPP_DIR = '.'
 # which will be erased when the application is halted.
 #TRANSFER_DIR = 'transferfiles'
 
-# Directory where files may be saved that the web app should be able to 
+# Directory where files may be saved that the webapp should be able to 
 # access.
-# If commented out or omitted, a persistent directory will be kept for this, 
-# but it will be in a temporary directory location, so it may be subject to 
-# accidental deletion on, for example, reboots.
-FILESAVEROOT_DIR = 'savedfiles'
+# If commented out or omitted, no directory is created for this.
+#FILESAVEROOT_DIR = 'savedfiles'
 
 # Flag for setting whether we use the datastore functionality provided by 
 # Sciris in the webapp.

@@ -1,7 +1,7 @@
 """
 scirisapp.py -- classes for Sciris (Flask-based) apps 
     
-Last update: 5/25/18 (gchadder3)
+Last update: 5/31/18 (gchadder3)
 """
 
 # Imports
@@ -198,8 +198,9 @@ class ScirisApp(object):
         else:  
             file_save_root_path = app_config['FILESAVEROOT_DIR']
 
-        # Create a file save directory.
-        fileio.file_save_dir = fileio.FileSaveDirectory(file_save_root_path, temp_dir=False)
+        # Create a file save directory only if we have a path.
+        if file_save_root_path is not None:
+            fileio.file_save_dir = fileio.FileSaveDirectory(file_save_root_path, temp_dir=False)
         
         # Create a downloads directory.
         fileio.downloads_dir = fileio.FileSaveDirectory(transfer_dir_path, temp_dir=True)
@@ -209,7 +210,8 @@ class ScirisApp(object):
         fileio.uploads_dir = fileio.downloads_dir
         
         # Show the downloads and uploads directories.
-        print('>> File save directory path: %s' % fileio.file_save_dir.dir_path)
+        if file_save_root_path is not None:
+            print('>> File save directory path: %s' % fileio.file_save_dir.dir_path)
         print('>> Downloads directory path: %s' % fileio.downloads_dir.dir_path)
         print('>> Uploads directory path: %s' % fileio.uploads_dir.dir_path)
         
