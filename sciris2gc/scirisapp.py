@@ -1,7 +1,7 @@
 """
 scirisapp.py -- classes for Sciris (Flask-based) apps 
     
-Last update: 5/31/18 (gchadder3)
+Last update: 6/1/18 (gchadder3)
 """
 
 # Imports
@@ -15,6 +15,7 @@ import os
 import numpy as np
 from functools import wraps
 import traceback
+import logging
 from twisted.internet import reactor
 from twisted.internet.endpoints import serverFromString
 from twisted.logger import globalLogBeginner, FileLogObserver, formatEvent
@@ -71,7 +72,7 @@ class ScirisApp(object):
     def  __init__(self, script_path, app_config=None, client_dir=None):
         # Open a new Flask app.
         self.flask_app = Flask(__name__)
-                
+        
         # If we have a config module, load it into Flask's config dict.
         if app_config is not None:
             self.flask_app.config.from_object(app_config)
@@ -84,6 +85,11 @@ class ScirisApp(object):
         
         # Extract the absolute directory path from the above.
         self.config['ROOT_ABS_DIR'] = os.path.dirname(abs_script_path)
+        
+        # Initialize the Flask logger.       
+        self._init_logger(self.flask_app)
+        
+#        self.flask_app.logger.info('Test info log message!')  # Test logger post.
         
         # Set up default values for configs that are not already defined.
         self._set_config_defaults(self.config)
@@ -136,6 +142,17 @@ class ScirisApp(object):
             
             # Register the RPCs in the user.py module.
             self.add_RPC_dict(user.RPC_dict)
+            
+    @staticmethod
+    def _init_logger(app):
+#        stream_handler = logging.StreamHandler(sys.stdout)
+#        stream_handler.setLevel(logging.DEBUG)
+#        stream_handler.setFormatter(logging.Formatter(
+#            '%(asctime)s %(levelname)s: %(message)s '
+#            '[in %(pathname)s:%(lineno)d]'
+#        ))
+#        app.logger.addHandler(stream_handler)
+        app.logger.setLevel(logging.DEBUG)
             
     @staticmethod
     def _set_config_defaults(app_config):
