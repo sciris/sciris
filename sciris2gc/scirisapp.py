@@ -69,7 +69,8 @@ class ScirisApp(object):
         >>> app = ScirisApp(__file__)                      
     """
     
-    def  __init__(self, script_path, app_config=None, client_dir=None):
+    def  __init__(self, script_path, app_config=None, client_dir=None, 
+        logging_mode=None):
         # Open a new Flask app.
         self.flask_app = Flask(__name__)
         
@@ -108,6 +109,11 @@ class ScirisApp(object):
         # specified in the config.py file.
         if client_dir is not None:
             self.config['CLIENT_DIR'] = client_dir
+            
+        # A log mode explicitly passed in will override the setting 
+        # specified in the config.py file.            
+        if logging_mode is not None:
+            self.config['LOGGING_MODE'] = logging_mode
             
         # Set up file paths.
         self._init_file_dirs(self.config)
@@ -158,6 +164,9 @@ class ScirisApp(object):
     def _set_config_defaults(app_config):
         if 'CLIENT_DIR' not in app_config:
             app_config['CLIENT_DIR'] = '.'
+            
+        if 'LOGGING_MODE' not in app_config:
+            app_config['LOGGING_MODE'] = 'FULL' 
             
         if 'TWISTED_PORT' not in app_config:
             app_config['TWISTED_PORT'] = 8080
@@ -227,10 +236,11 @@ class ScirisApp(object):
         fileio.uploads_dir = fileio.downloads_dir
         
         # Show the downloads and uploads directories.
-        if file_save_root_path is not None:
-            print('>> File save directory path: %s' % fileio.file_save_dir.dir_path)
-        print('>> Downloads directory path: %s' % fileio.downloads_dir.dir_path)
-        print('>> Uploads directory path: %s' % fileio.uploads_dir.dir_path)
+        if app_config['LOGGING_MODE'] == 'FULL':
+            if file_save_root_path is not None:
+                print('>> File save directory path: %s' % fileio.file_save_dir.dir_path)
+            print('>> Downloads directory path: %s' % fileio.downloads_dir.dir_path)
+            print('>> Uploads directory path: %s' % fileio.uploads_dir.dir_path)
         
     @staticmethod
     def _init_datastore(app_config):
@@ -248,12 +258,13 @@ class ScirisApp(object):
         # Careful in using this one!
 #        ds.data_store.clear_redis_keys()
         
-        # Show that DataStore is initialized.
-        print('>> DataStore initialzed at %s' % app_config['REDIS_URL'])
-        
-        # Show the DataStore handles.
-        print('>> List of all DataStore handles...')
-        ds.data_store.show_handles()
+        if app_config['LOGGING_MODE'] == 'FULL':
+            # Show that DataStore is initialized.
+            print('>> DataStore initialzed at %s' % app_config['REDIS_URL'])
+            
+            # Show the DataStore handles.
+            print('>> List of all DataStore handles...')
+            ds.data_store.show_handles()
     
     @staticmethod
     def _init_users(app_config):        
@@ -266,22 +277,26 @@ class ScirisApp(object):
         
         # If there was a match...
         if user_dict_uid is not None:
-            print('>> Loading UserDict from the DataStore.')
+            if app_config['LOGGING_MODE'] == 'FULL':
+                print('>> Loading UserDict from the DataStore.')
             user.user_dict.load_from_data_store() 
         
         # Else (no match)...
         else:
-            print('>> Creating a new UserDict.')
+            if app_config['LOGGING_MODE'] == 'FULL':
+                print('>> Creating a new UserDict.')
             user.user_dict.add_to_data_store()
             user.user_dict.add(user.test_user)
             user.user_dict.add(user.test_user2)
             user.user_dict.add(user.test_user3)
     
         # Show all of the users in user_dict.
-        print('>> List of all users...')
-        user.user_dict.show()
+        if app_config['LOGGING_MODE'] == 'FULL':
+            print('>> List of all users...')
+            user.user_dict.show()
     
-    def run_server(self, with_twisted=True, with_flask=True, with_client=True):
+    def run_server(self, with_twisted=True, with_flask=True, with_client=True, 
+        use_twisted_logging=True):
         # If we are not running the app with Twisted, just run the Flask app.
         if not with_twisted:
             self.flask_app.run()
@@ -289,17 +304,21 @@ class ScirisApp(object):
         # Otherwise (with Twisted).
         else:
             if not with_client and not with_flask:
-                run_twisted(port=self.config['TWISTED_PORT'])  # nothing, should return error
+                run_twisted(port=self.config['TWISTED_PORT'], 
+                    use_twisted_logging=use_twisted_logging)  # nothing, should return error
             if with_client and not with_flask:
                 run_twisted(port=self.config['TWISTED_PORT'], 
-                    client_dir=self.config['CLIENT_DIR'])   # client page only / no Flask
+                    client_dir=self.config['CLIENT_DIR'],
+                    use_twisted_logging=use_twisted_logging)   # client page only / no Flask
             elif not with_client and with_flask:
                 run_twisted(port=self.config['TWISTED_PORT'], 
-                    flask_app=self.flask_app)  # Flask app only, no client
+                    flask_app=self.flask_app,
+                    use_twisted_logging=use_twisted_logging)  # Flask app only, no client
             else:
                 run_twisted(port=self.config['TWISTED_PORT'], 
                     flask_app=self.flask_app, 
-                    client_dir=self.config['CLIENT_DIR'])  # Flask + client
+                    client_dir=self.config['CLIENT_DIR'],
+                    use_twisted_logging=use_twisted_logging)  # Flask + client
                 
     def define_endpoint_layout(self, rule, layout):
         # Save the layout in the endpoint layout dictionary.
@@ -317,12 +336,13 @@ class ScirisApp(object):
         if new_RPC.funcname in self.RPC_dict:
             # If we have the power to override the function, give a warning.
             if new_RPC.override:
-                print('>> add_RPC(): WARNING: Overriding previous version of %s:' % new_RPC.funcname)
-                print('>>   Old: %s.%s' % 
-                    (self.RPC_dict[new_RPC.funcname].call_func.__module__, 
-                    self.RPC_dict[new_RPC.funcname].call_func.__name__))
-                print('>>   New: %s.%s' % (new_RPC.call_func.__module__, 
-                    new_RPC.call_func.__name__))
+                if self.config['LOGGING_MODE'] == 'FULL':
+                    print('>> add_RPC(): WARNING: Overriding previous version of %s:' % new_RPC.funcname)
+                    print('>>   Old: %s.%s' % 
+                        (self.RPC_dict[new_RPC.funcname].call_func.__module__, 
+                        self.RPC_dict[new_RPC.funcname].call_func.__name__))
+                    print('>>   New: %s.%s' % (new_RPC.call_func.__module__, 
+                        new_RPC.call_func.__name__))
             # Else, give an error, and exit before the RPC is added.
             else:
                 print('>> add_RPC(): ERROR: Attempt to override previous version of %s: %s.%s' % \
@@ -441,9 +461,10 @@ class ScirisApp(object):
             # Prepend the file name to the args list.
             args.insert(0, uploaded_fname)
         
-        # Show the call of the function.    
-        print('>> Calling RPC function "%s.%s"' % 
-            (found_RPC.call_func.__module__, found_RPC.funcname))
+        # Show the call of the function.
+        if self.config['LOGGING_MODE'] == 'FULL':
+            print('>> Calling RPC function "%s.%s"' % 
+                (found_RPC.call_func.__module__, found_RPC.funcname))
     
         # Execute the function to get the results, putting it in a try block 
         # in case there are errors in what's being called. 
@@ -545,15 +566,17 @@ class ScirisResource(Resource):
         return r
     
     
-def run_twisted(port=8080, flask_app=None, client_dir=None):
+def run_twisted(port=8080, flask_app=None, client_dir=None, 
+    use_twisted_logging=True):
     # Give an error if we pass in no Flask server or client path.
     if (flask_app is None) and (client_dir is None):
         print 'ERROR: Neither client or server are defined.'
         return None
     
     # Set up logging.
-    globalLogBeginner.beginLoggingTo([
-        FileLogObserver(sys.stdout, lambda _: formatEvent(_) + "\n")])
+    if use_twisted_logging:
+        globalLogBeginner.beginLoggingTo([
+            FileLogObserver(sys.stdout, lambda _: formatEvent(_) + "\n")])
 
     # If there is a client path, set up the base resource.
     if client_dir is not None:

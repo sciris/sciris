@@ -32,4 +32,5 @@ app.define_endpoint_layout('/staticapp2', the_layout2)
 #app.run_server()  # Twisted + client + server    
 #app.run_server(with_twisted=False)  # Flask app (only) without Twisted  
 #app.run_server(with_client=True, with_flask=False)  # client only
-app.run_server(with_client=False, with_flask=True)  # Flask only with Twisted
+app.run_server(with_client=False, with_flask=True, 
+    use_twisted_logging=True)  # Flask only with Twisted
