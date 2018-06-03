@@ -1,6 +1,10 @@
-# Specify the version, for the purposes of figuring out which version was used to create a project
-from .version import version, versiondate
+from . import utils # Import utilities -- these will always be required
+from . import core
+from .utils import odict # Import odict class
+from .utils import dataframe # Import dataframe class
+import os as _os
+import matplotlib as _mpl
 
-# Print the license
-sciris_license = 'Sciris %s (%s)' % (version, versiondate)
-print(sciris_license)
+if _os.environ.get('DISPLAY','') == '':
+    print('Sciris: no display found, using non-interactive Agg backend')
+    _mpl.use('Agg')
