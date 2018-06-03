@@ -1,14 +1,15 @@
 """
 user.py -- code related to Sciris user management
     
-Last update: 3/5/18 (gchadder3)
+Last update: 5/29/18 (gchadder3)
 """
 
 #
 # Imports
 #
 
-from flask import session, request, current_app
+from rpcs import make_register_RPC
+from flask import session, current_app
 from flask_login import current_user, login_user, logout_user
 from hashlib import sha224
 from numpy import argsort
@@ -22,7 +23,13 @@ import scirisobjects as sobj
 
 # The UserDict object for all of the app's users.  Gets initialized by
 # and loaded by init_users().
-theUserDict = None
+user_dict = None
+
+# Dictionary to hold all of the registered RPCs in this module.
+RPC_dict = {}
+
+# RPC registration decorator factory created using call to make_register_RPC().
+register_RPC = make_register_RPC(RPC_dict)
 
 #
 # Classes
@@ -33,20 +40,20 @@ class User(sobj.ScirisObject):
     A Sciris user.
     
     Methods:
-        __init__(theUsername: str, thePassword: str, theDisplayName: str, 
-            theEmail: str [''], hasAdminRights: bool [False], 
-            theUID: UUID [None], hashThePassword: bool [True]): 
+        __init__(username: str, password: str, display_name: str, 
+            email: str [''], has_admin_rights: bool [False], 
+            uid: UUID [None], hash_the_password: bool [True]): 
             void -- constructor
-        loadFromCopy(otherObject): void -- assuming otherObject is another 
+        load_from_copy(other_object): void -- assuming other_object is another 
             object of our type, copy its contents to us (calls the 
             ScirisObject superclass version of this method also)            
         get_id(): UUID -- get the unique ID of this user (method required by 
             Flask-Login)    
         show(): void -- print the contents of the object
-        getUserFrontEndRepr(): dict -- get a JSON-friendly dictionary 
+        get_user_front_end_repr(): dict -- get a JSON-friendly dictionary 
             representation of the object state the front-end uses for non-
             admin purposes
-        getAdminFrontEndRepr(): dict -- get a JSON-friendly dictionary
+        get_admin_front_end_repr(): dict -- get a JSON-friendly dictionary
             representation of the object state the front-end uses for admin
             purposes        
                     
@@ -65,14 +72,14 @@ class User(sobj.ScirisObject):
         is_admin (bool) -- does this user have admin rights?
         
     Usage:
-        >>> myUser = User('newguy', 'mesogreen', 'Ozzy Mandibulus',  \
-            'tastybats@yahoo.com', theUID=uuid.UUID('12345678123456781234567812345678'))                      
+        >>> my_user = User('newguy', 'mesogreen', 'Ozzy Mandibulus',  \
+            'tastybats@yahoo.com', uid=uuid.UUID('12345678123456781234567812345678'))                      
     """
     
-    def  __init__(self, theUsername, thePassword, theDisplayName, theEmail='', 
-        hasAdminRights=False, theUID=None, hashThePassword=True):
+    def  __init__(self, username, password, display_name, email='', 
+        has_admin_rights=False, uid=None, hash_the_password=True):
         # Set superclass parameters.
-        super(User, self).__init__(theUID)
+        super(User, self).__init__(uid)
         
         # Set the user to be authentic.
         self.is_authenticated = True
@@ -84,47 +91,47 @@ class User(sobj.ScirisObject):
         self.is_anonymous = False
         
         # Set the username.
-        self.username = theUsername
+        self.username = username
         
         # Set the raw password and use SHA224 to get the hashed version in 
         # hex form.
-        rawPassword = thePassword
-        if hashThePassword:
-            self.password = sha224(rawPassword).hexdigest() 
+        raw_password = password
+        if hash_the_password:
+            self.password = sha224(raw_password).hexdigest() 
         else:
-            self.password = thePassword
+            self.password = password
         
         # Set the displayname (what the browser will show).
-        self.displayname = theDisplayName
+        self.displayname = display_name
         
         # Set the user's email.
-        self.email = theEmail
+        self.email = email
         
         # Set whether this user has admin rights.
-        self.is_admin = hasAdminRights
+        self.is_admin = has_admin_rights
         
         # Set the type prefix to 'user'.
-        self.typePrefix = 'user'
+        self.type_prefix = 'user'
         
         # Set the file suffix to '.usr'.
-        self.fileSuffix = '.usr'
+        self.file_suffix = '.usr'
         
         # Set the instance label to the username.
-        self.instanceLabel = theUsername 
+        self.instance_label = username 
         
-    def loadFromCopy(self, otherObject):
-        if type(otherObject) == type(self):
+    def load_from_copy(self, other_object):
+        if type(other_object) == type(self):
             # Do the superclass copying.
-            super(User, self).loadFromCopy(otherObject)
+            super(User, self).load_from_copy(other_object)
             
-            self.is_authenticated = otherObject.is_authenticated
-            self.is_active = otherObject.is_active
-            self.is_anonymous = otherObject.is_anonymous
-            self.username = otherObject.username
-            self.password = otherObject.password
-            self.displayname = otherObject.displayname
-            self.email = otherObject.email
-            self.is_admin = otherObject.is_admin
+            self.is_authenticated = other_object.is_authenticated
+            self.is_active = other_object.is_active
+            self.is_anonymous = other_object.is_anonymous
+            self.username = other_object.username
+            self.password = other_object.password
+            self.displayname = other_object.displayname
+            self.email = other_object.email
+            self.is_admin = other_object.is_admin
             
     def get_id(self):
         return self.uid
@@ -156,26 +163,26 @@ class User(sobj.ScirisObject):
         else:
             print 'Has admin rights?: No' 
             
-    def getUserFrontEndRepr(self):
-        objInfo = {
+    def get_user_front_end_repr(self):
+        obj_info = {
             'user': {
                 'UID': self.uid.hex,                    
-                'instancelabel': self.instanceLabel,
+                'instanceLabel': self.instance_label,
                 'username': self.username, 
                 'displayname': self.displayname, 
                 'email': self.email,
                 'admin': self.is_admin                
             }
         }
-        return objInfo
+        return obj_info
     
-    def getAdminFrontEndRepr(self):
-        objInfo = {
+    def get_admin_front_end_repr(self):
+        obj_info = {
             'user': {
                 'UID': self.uid.hex, 
-                'typeprefix': self.typePrefix, 
-                'filesuffix': self.fileSuffix, 
-                'instancelabel': self.instanceLabel,
+                'typePrefix': self.type_prefix, 
+                'fileSuffix': self.file_suffix, 
+                'instanceLabel': self.instance_label,
                 'username': self.username, 
                 'password': self.password, 
                 'displayname': self.displayname, 
@@ -186,171 +193,171 @@ class User(sobj.ScirisObject):
                 'admin': self.is_admin                
             }
         }
-        return objInfo             
+        return obj_info             
             
 class UserDict(sobj.ScirisCollection):
     """
     A dictionary of Sciris users.
     
     Methods:
-        __init__(theUID: UUID [None], theTypePrefix: str ['userdict'], 
-            theFileSuffix: str ['.ud'], 
-            theInstanceLabel: str ['Users Dictionary']): void -- constructor
-        loadFromCopy(otherObject): void -- assuming otherObject is another 
+        __init__(uid: UUID [None], type_prefix: str ['userdict'], 
+            file_suffix: str ['.ud'], 
+            instance_label: str ['Users Dictionary']): void -- constructor
+        load_from_copy(other_object): void -- assuming other_object is another 
             object of our type, copy its contents to us (calls the 
             ScirisCollection superclass version of this method also)           
-        getUserByUID(theUID: UUID or str): User or None -- returns the User  
-            object pointed to by theUID
-        getUserByUsername(theUsername: str): User or None -- return the User
+        get_user_by_uid(uid: UUID or str): User or None -- returns the User  
+            object pointed to by uid
+        get_user_by_username(username: str): User or None -- return the User
             object pointed to by the username
-        add(theUser: User): void -- add a User to the dictionary and update
+        add(the_user: User): void -- add a User to the dictionary and update
             the dictionary's DataStore state
-        update(theUser: User): void -- update a User in the dictionary and 
+        update(the_user: User): void -- update a User in the dictionary and 
             update the dictionary's DataStore state
-        deleteByUID(theUID: UUID or str): void -- delete a User in the dictionary
+        delete_by_uid(uid: UUID or str): void -- delete a User in the dictionary
             selected by the UID, and update the dictionary's DataStore state
-        deleteByUsername(theUsername: str): void -- delete a User in the 
+        delete_by_username(username: str): void -- delete a User in the 
             dictionary selected by a username, and update the dictionary's 
             DataStore state
-        deleteAll(): void -- delete the entire contents of the UserDict and 
+        delete_all(): void -- delete the entire contents of the UserDict and 
             update the dictionary's DataStore state            
-        getUserFrontEndRepr(): dict -- get a JSON-friendly dictionary 
+        get_user_front_end_repr(): dict -- get a JSON-friendly dictionary 
             representation of the collection state the front-end uses for non-
             admin purposes
-        getAdminFrontEndRepr(): dict -- get a JSON-friendly dictionary
+        get_admin_front_end_repr(): dict -- get a JSON-friendly dictionary
             representation of the collection state the front-end uses for admin
             purposes
                     
     Attributes:
-        usernameHashes (dict) -- a dict mapping usernames to UIDs, so either
+        username_hashes (dict) -- a dict mapping usernames to UIDs, so either
             indexing by UIDs or usernames can be fast
         
     Usage:
-        >>> theUserDict = UserDict(uuid.UUID('12345678123456781234567812345678'))                      
+        >>> user_dict = UserDict(uuid.UUID('12345678123456781234567812345678'))                      
     """
     
-    def __init__(self, theUID, theTypePrefix='userdict', theFileSuffix='.ud', 
-        theInstanceLabel='Users Dictionary'):
+    def __init__(self, uid, type_prefix='userdict', file_suffix='.ud', 
+        instance_label='Users Dictionary'):
         # Set superclass parameters.
-        super(UserDict, self).__init__(theUID, theTypePrefix, theFileSuffix, 
-             theInstanceLabel)
+        super(UserDict, self).__init__(uid, type_prefix, file_suffix, 
+             instance_label)
         
         # Create the Python dict to hold the hashes from usernames to the UIDs.
-        self.usernameHashes = {}
+        self.username_hashes = {}
         
-    def loadFromCopy(self, otherObject):
-        if type(otherObject) == type(self):
+    def load_from_copy(self, other_object):
+        if type(other_object) == type(self):
             # Do the superclass copying.
-            super(UserDict, self).loadFromCopy(otherObject)
+            super(UserDict, self).load_from_copy(other_object)
             
-            self.usernameHashes = otherObject.usernameHashes
+            self.username_hashes = other_object.username_hashes
             
-    def getUserByUID(self, theUID):
-        return self.getObjectByUID(theUID)
+    def get_user_by_uid(self, uid):
+        return self.get_object_by_uid(uid)
     
-    def getUserByUsername(self, theUsername):
+    def get_user_by_username(self, username):
         # Get the user's UID matching the username.
-        userIndex = self.usernameHashes.get(theUsername, None)
+        user_index = self.username_hashes.get(username, None)
         
         # If we found at match, use the UID to try to fetch the user; 
         # otherwise, return None.
-        if userIndex is not None:
-            return self.getUserByUID(userIndex)
+        if user_index is not None:
+            return self.get_user_by_uid(user_index)
         else:
             return None
         
-    def add(self, theUser):
+    def add(self, the_user):
         # Add the object to the hash table, keyed by the UID.
-        self.theObjectDict[theUser.uid] = theUser
+        self.obj_dict[the_user.uid] = the_user
         
         # Add the username hash for this user.
-        self.usernameHashes[theUser.username] = theUser.get_id()
+        self.username_hashes[the_user.username] = the_user.get_id()
         
         # Update our DataStore representation if we are there. 
-        if self.inDataStore():
-            self.updateDataStore()
+        if self.in_data_store():
+            self.update_data_store()
     
-    def update(self, theUser):
+    def update(self, the_user):
         # Get the old username.
-        oldUsername = self.theObjectDict[theUser.get_id()].username
+        old_username = self.obj_dict[the_user.get_id()].username
         
         # If we new username is different than the old one, delete the old 
         # usernameHash.
-        if theUser.username != oldUsername:
-            del self.usernameHashes[oldUsername]
+        if the_user.username != old_username:
+            del self.username_hashes[old_username]
  
         # Add the user to the hash table, keyed by the UID.
-        self.theObjectDict[theUser.get_id()] = theUser
+        self.obj_dict[the_user.get_id()] = the_user
         
         # Add the username hash for this user.
-        self.usernameHashes[theUser.username] = theUser.get_id()
+        self.username_hashes[the_user.username] = the_user.get_id()
        
         # Update our DataStore representation if we are there. 
-        if self.inDataStore():
-            self.updateDataStore()
+        if self.in_data_store():
+            self.update_data_store()
     
-    def deleteByUID(self, theUID):
+    def delete_by_uid(self, uid):
         # Make sure the argument is a valid UUID, converting a hex text to a
         # UUID object, if needed.        
-        validUID = sobj.getValidUUID(theUID)
+        valid_uuid = sobj.get_valid_uuid(uid)
         
         # If we have a valid UUID...
-        if validUID is not None:
+        if valid_uuid is not None:
             # Get the object pointed to by the UID.
-            theObject = self.theObjectDict[validUID]
+            obj = self.obj_dict[valid_uuid]
             
             # If a match is found...
-            if theObject is not None:
-                # Remove entries from both theUserDict and usernameHashes 
+            if obj is not None:
+                # Remove entries from both user_dict and username_hashes 
                 # attributes.
-                theUsername = theObject.username
-                del self.theObjectDict[validUID]
-                del self.usernameHashes[theUsername]                
+                username = obj.username
+                del self.obj_dict[valid_uuid]
+                del self.username_hashes[username]                
                 
                 # Update our DataStore representation if we are there. 
-                if self.inDataStore():
-                    self.updateDataStore()
+                if self.in_data_store():
+                    self.update_data_store()
         
-    def deleteByUsername(self, theUsername):
-        # Get the UID of the user matching theUsername.
-        userIndex = self.usernameHashes.get(theUsername, None)
+    def delete_by_username(self, username):
+        # Get the UID of the user matching username.
+        user_index = self.username_hashes.get(username, None)
         
-        # If we found a match, call deleteByUID to complete the deletion.
-        if userIndex is not None:
-            self.deleteByUID(userIndex)
+        # If we found a match, call delete_by_uid to complete the deletion.
+        if user_index is not None:
+            self.delete_by_uid(user_index)
     
-    def deleteAll(self):
+    def delete_all(self):
         # Reset the Python dicts to hold the user objects and hashes from 
         # usernames to the UIDs.
-        self.theObjectDict = {}
-        self.usernameHashes = {}  
+        self.obj_dict = {}
+        self.username_hashes = {}  
         
         # Update our DataStore representation if we are there. 
-        if self.inDataStore():
-            self.updateDataStore()
+        if self.in_data_store():
+            self.update_data_store()
             
-    def getUserFrontEndRepr(self):
+    def get_user_front_end_repr(self):
         # Get dictionaries for each user in the dictionary.
-        usersInfo = [self.theObjectDict[theKey].getUserFrontEndRepr() 
-            for theKey in self.theObjectDict]
-        return usersInfo
+        users_info = [self.obj_dict[key].get_user_front_end_repr() 
+            for key in self.obj_dict]
+        return users_info
         
-    def getAdminFrontEndRepr(self):
+    def get_admin_front_end_repr(self):
         # Get dictionaries for each user in the dictionary.       
-        usersInfo = [self.theObjectDict[theKey].getAdminFrontEndRepr() 
-            for theKey in self.theObjectDict]
+        users_info = [self.obj_dict[key].get_admin_front_end_repr() 
+            for key in self.obj_dict]
         
         # Extract just the usernames.
-        userNames = [theUser['user']['username'] for theUser in usersInfo]
+        user_names = [the_user['user']['username'] for the_user in users_info]
         
         # Get sorting indices with respect to the usernames.
-        sortOrder = argsort(userNames)
+        sort_order = argsort(user_names)
         
-        # Created a list of the sorted usersInfo list.
-        sortedUsersInfo = [usersInfo[ind] for ind in sortOrder]
+        # Created a list of the sorted users_info list.
+        sorted_users_info = [users_info[ind] for ind in sort_order]
 
         # Return the sorted users info.      
-        return sortedUsersInfo  
+        return sorted_users_info  
 
 #
 # Other functions (mostly helpers for the RPCs)
@@ -358,44 +365,36 @@ class UserDict(sobj.ScirisCollection):
 
 def get_scirisdemo_user(name='_ScirisDemo'):    
     # Get the user object matching (if any)...
-    theUser = theUserDict.getUserByUsername(name)
+    the_user = user_dict.get_user_by_username(name)
     
     # If there is a match, return the UID, otherwise return None.
-    if theUser is not None:
-        return theUser.get_id()
+    if the_user is not None:
+        return the_user.get_id()
     else:
         return None
     
 #
 # RPC functions
 #
-
-def user_login(userName, password):
-    # Check (for security purposes) that the function is being called by the 
-    # correct endpoint, and if not, fail.
-    if request.endpoint != 'loginRPC':
-        return {'error': 'Unauthorized RPC'}
-    
+        
+@register_RPC()
+def user_login(username, password):  
     # Get the matching user (if any).
-    matchingUser = theUserDict.getUserByUsername(userName)
+    matching_user = user_dict.get_user_by_username(username)
     
     # If we have a match and the password matches, and the account is active,
     # also, log in the user and return success; otherwise, return failure.
-    if matchingUser is not None and matchingUser.password == password and \
-        matchingUser.is_active:
+    if matching_user is not None and matching_user.password == password and \
+        matching_user.is_active:
         # Log the user in.
-        login_user(matchingUser)
+        login_user(matching_user)
         
         return 'success'
     else:
         return 'failure'
     
+@register_RPC(validation_type='nonanonymous user')       
 def user_logout():
-    # Check (for security purposes) that the function is being called by the 
-    # correct endpoint, and if not, fail.
-    if request.endpoint != 'logoutRPC':
-        return {'error': 'Unauthorized RPC'}
-    
     # Log the user out and set the session to having an anonymous user.
     logout_user()
     
@@ -405,258 +404,210 @@ def user_logout():
     # Return nothing.
     return None
 
+@register_RPC(validation_type='nonanonymous user') 
 def get_current_user_info():
-    # Check (for security purposes) that the function is being called by the 
-    # correct endpoint, and if not, fail.
-    if request.endpoint != 'currentUserRPC':
-        return {'error': 'Unauthorized RPC'}
-    
-    return current_user.getUserFrontEndRepr()
+    return current_user.get_user_front_end_repr()
 
-def user_register(userName, password, displayname, email):
-    # Check (for security purposes) that the function is being called by the 
-    # correct endpoint, and if not, fail.
-    if request.endpoint != 'registrationRPC':
-        return {'error': 'Unauthorized RPC'}
-    
+@register_RPC(validation_type='admin user')
+def get_all_users():
+    # Return success.
+    return user_dict.get_admin_front_end_repr()
+
+@register_RPC()
+def user_register(username, password, displayname, email):
     # Get the matching user (if any).
-    matchingUser = theUserDict.getUserByUsername(userName)
+    matching_user = user_dict.get_user_by_username(username)
     
     # If we have a match, fail because we don't want to register an existing 
     # user.
-    if matchingUser is not None:
+    if matching_user is not None:
         return 'failure'
     
     # Create a new User object with the new information.
-    newUser = User(userName, password, displayname, email, hashThePassword=False)
+    new_user = User(username, password, displayname, email, hash_the_password=False)
     
     # Set the user to be inactive (so an admin user needs to activate it, 
     # even though the account has been created) or active (so that no admin
     # action is necessary), according to the REGISTER_AUTOACTIVATE config 
     # parameter.
-    newUser.is_active = current_app.config['REGISTER_AUTOACTIVATE']
+    new_user.is_active = current_app.config['REGISTER_AUTOACTIVATE']
     
     # Put the user right into the UserDict.
-    theUserDict.add(newUser)
+    user_dict.add(new_user)
     
     # Return success.
     return 'success'
 
-def user_change_info(userName, password, displayname, email):
-    # Check (for security purposes) that the function is being called by the 
-    # correct endpoint, and if not, fail.
-    if request.endpoint != 'changeUserInfoRPC':
-        return {'error': 'Unauthorized RPC'}
-    
+@register_RPC(validation_type='nonanonymous user') 
+def user_change_info(username, password, displayname, email):
     # Make a copy of the current_user.
-    theUser = copy.copy(current_user)
+    the_user = copy.copy(current_user)
     
     # If the password entered doesn't match the current user password, fail.
-    if password != theUser.password:
+    if password != the_user.password:
         return 'failure'
        
     # If the username entered by the user is different from the current_user
     # name (meaning they are trying to change the name)...
-    if userName != theUser.username:
+    if username != the_user.username:
         # Get any matching user (if any) to the new username we're trying to 
         # switch to.
-        matchingUser = theUserDict.getUserByUsername(userName)
+        matching_user = user_dict.get_user_by_username(username)
     
         # If we have a match, fail because we don't want to rename the user to 
         # another existing user.
-        if matchingUser is not None:
+        if matching_user is not None:
             return 'failure'
         
     # Change the user name, display name, email, and instance label.
-    theUser.username = userName
-    theUser.displayname = displayname
-    theUser.email = email
-    theUser.instanceLabel = userName
+    the_user.username = username
+    the_user.displayname = displayname
+    the_user.email = email
+    the_user.instance_label = username
     
-    # Update the user in theUserDict.
-    theUserDict.update(theUser)
+    # Update the user in user_dict.
+    user_dict.update(the_user)
     
     # Return success.
     return 'success'
 
+@register_RPC(validation_type='nonanonymous user') 
 def user_change_password(oldpassword, newpassword):
-    # Check (for security purposes) that the function is being called by the 
-    # correct endpoint, and if not, fail.
-    if request.endpoint != 'changePasswordRPC':
-        return {'error': 'Unauthorized RPC'}
-    
     # Make a copy of the current_user.
-    theUser = copy.copy(current_user)
+    the_user = copy.copy(current_user)
     
     # If the password entered doesn't match the current user password, fail.
-    if oldpassword != theUser.password:
+    if oldpassword != the_user.password:
         return 'failure' 
     
     # Change just the password.
-    theUser.password = newpassword
+    the_user.password = newpassword
     
-    # Update the user in theUserDict.
-    theUserDict.update(theUser)
+    # Update the user in user_dict.
+    user_dict.update(the_user)
     
     # Return success.
     return 'success'
 
-def get_all_users():
-    # Check (for security purposes) that the function is being called by the 
-    # correct endpoint, and if not, fail.
-    if request.endpoint != 'userListRPC':
-        return {'error': 'Unauthorized RPC'}
-    
-    # Return success.
-    return theUserDict.getAdminFrontEndRepr()
-
-def admin_get_user_info(userName):
-    # Check (for security purposes) that the function is being called by the 
-    # correct endpoint, and if not, fail.
-    if request.endpoint != 'specificUserRPC':
-        return {'error': 'Unauthorized RPC'}   
-    
+@register_RPC(validation_type='admin user')
+def admin_get_user_info(username):
     # Get the matching user (if any).
-    matchingUser = theUserDict.getUserByUsername(userName)
+    matching_user = user_dict.get_user_by_username(username)
     
     # If we don't have a match, fail.
-    if matchingUser is None:
+    if matching_user is None:
         return 'failure'
     
-    return matchingUser.getAdminFrontEndRepr()
+    return matching_user.get_admin_front_end_repr()
 
-def admin_delete_user(userName):
-    # Check (for security purposes) that the function is being called by the 
-    # correct endpoint, and if not, fail.
-    if request.endpoint != 'specificUserRPC':
-        return {'error': 'Unauthorized RPC'}   
-    
+@register_RPC(validation_type='admin user')
+def admin_delete_user(username):
     # Get the matching user (if any).
-    matchingUser = theUserDict.getUserByUsername(userName)
+    matching_user = user_dict.get_user_by_username(username)
     
     # If we don't have a match, fail.
-    if matchingUser is None:
+    if matching_user is None:
         return 'failure'
     
     # Delete the user from the dictionary.
-    theUserDict.deleteByUsername(userName)
+    user_dict.delete_by_username(username)
 
     # Return success.
     return 'success'
 
-def admin_activate_account(userName):
-    # Check (for security purposes) that the function is being called by the 
-    # correct endpoint, and if not, fail.
-    if request.endpoint != 'specificUserRPC':
-        return {'error': 'Unauthorized RPC'}
-    
+@register_RPC(validation_type='admin user')
+def admin_activate_account(username):
     # Get the matching user (if any).
-    matchingUser = theUserDict.getUserByUsername(userName)
+    matching_user = user_dict.get_user_by_username(username)
     
     # If we don't have a match, fail.
-    if matchingUser is None:
+    if matching_user is None:
         return 'failure'
     
     # If the account is already activated, fail.
-    if matchingUser.is_active:
+    if matching_user.is_active:
         return 'failure'
     
     # Activate the account.
-    matchingUser.is_active = True
-    theUserDict.update(matchingUser)
+    matching_user.is_active = True
+    user_dict.update(matching_user)
     
     # Return success.
     return 'success'    
 
-def admin_deactivate_account(userName):
-    # Check (for security purposes) that the function is being called by the 
-    # correct endpoint, and if not, fail.
-    if request.endpoint != 'specificUserRPC':
-        return {'error': 'Unauthorized RPC'}
-    
+@register_RPC(validation_type='admin user')
+def admin_deactivate_account(username):
     # Get the matching user (if any).
-    matchingUser = theUserDict.getUserByUsername(userName)
+    matching_user = user_dict.get_user_by_username(username)
     
     # If we don't have a match, fail.
-    if matchingUser is None:
+    if matching_user is None:
         return 'failure'
     
     # If the account is already deactivated, fail.
-    if not matchingUser.is_active:
+    if not matching_user.is_active:
         return 'failure'
     
     # Activate the account.
-    matchingUser.is_active = False
-    theUserDict.update(matchingUser)
+    matching_user.is_active = False
+    user_dict.update(matching_user)
     
     # Return success.
     return 'success'
 
-def admin_grant_admin(userName):
-    # Check (for security purposes) that the function is being called by the 
-    # correct endpoint, and if not, fail.
-    if request.endpoint != 'specificUserRPC':
-        return {'error': 'Unauthorized RPC'}
-    
+@register_RPC(validation_type='admin user')
+def admin_grant_admin(username):
     # Get the matching user (if any).
-    matchingUser = theUserDict.getUserByUsername(userName)
+    matching_user = user_dict.get_user_by_username(username)
     
     # If we don't have a match, fail.
-    if matchingUser is None:
+    if matching_user is None:
         return 'failure'
     
     # If the account already has admin access, fail.
-    if matchingUser.is_admin:
+    if matching_user.is_admin:
         return 'failure'
     
     # Grant admin access.
-    matchingUser.is_admin = True
-    theUserDict.update(matchingUser)
+    matching_user.is_admin = True
+    user_dict.update(matching_user)
     
     # Return success.
     return 'success'
 
-def admin_revoke_admin(userName):
-    # Check (for security purposes) that the function is being called by the 
-    # correct endpoint, and if not, fail.
-    if request.endpoint != 'specificUserRPC':
-        return {'error': 'Unauthorized RPC'}
-    
+@register_RPC(validation_type='admin user')
+def admin_revoke_admin(username):
     # Get the matching user (if any).
-    matchingUser = theUserDict.getUserByUsername(userName)
+    matching_user = user_dict.get_user_by_username(username)
     
     # If we don't have a match, fail.
-    if matchingUser is None:
+    if matching_user is None:
         return 'failure'
     
     # If the account has no admin access, fail.
-    if not matchingUser.is_admin:
+    if not matching_user.is_admin:
         return 'failure'
     
     # Revoke admin access.
-    matchingUser.is_admin = False
-    theUserDict.update(matchingUser)
+    matching_user.is_admin = False
+    user_dict.update(matching_user)
     
     # Return success.
     return 'success'
 
-def admin_reset_password(userName):
-    # Check (for security purposes) that the function is being called by the 
-    # correct endpoint, and if not, fail.
-    if request.endpoint != 'specificUserRPC':
-        return {'error': 'Unauthorized RPC'}
-    
+@register_RPC(validation_type='admin user')
+def admin_reset_password(username):
     # Get the matching user (if any).
-    matchingUser = theUserDict.getUserByUsername(userName)
+    matching_user = user_dict.get_user_by_username(username)
     
     # If we don't have a match, fail.
-    if matchingUser is None:
+    if matching_user is None:
         return 'failure'
     
     # Set the password to the desired raw password for them to use.
-    rawPassword = 'sciris'
-    matchingUser.password = sha224(rawPassword).hexdigest() 
-    theUserDict.update(matchingUser)
+    raw_password = 'sciris'
+    matching_user.password = sha224(raw_password).hexdigest() 
+    user_dict.update(matching_user)
     
     # Return success.
     return 'success'
@@ -666,9 +617,9 @@ def admin_reset_password(userName):
 #
 
 # Create three test Users that can get added to a new UserDict.
-testUser = User('demo', 'demo', 'Demo', 'demo@yahoo.com', \
-    theUID=uuid.UUID('12345678123456781234567812345678'))
-testUser2 = User('admin', 'admin', 'Admin', 'admin@scirisuser.net', \
-    hasAdminRights=True, theUID=uuid.UUID('12345678123456781234567812345679'))
-testUser3 = User('_ScirisDemo', '_ScirisDemo', 'Sciris Demos', 'admin@scirisuser.net', \
-    hasAdminRights=False, theUID=uuid.UUID('12345678123456781234567812345672'))
+test_user = User('demo', 'demo', 'Demo', 'demo@yahoo.com', \
+    uid=uuid.UUID('12345678123456781234567812345678'))
+test_user2 = User('admin', 'admin', 'Admin', 'admin@scirisuser.net', \
+    has_admin_rights=True, uid=uuid.UUID('12345678123456781234567812345679'))
+test_user3 = User('_ScirisDemo', '_ScirisDemo', 'Sciris Demos', 'admin@scirisuser.net', \
+    has_admin_rights=False, uid=uuid.UUID('12345678123456781234567812345672'))
