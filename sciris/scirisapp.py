@@ -116,12 +116,11 @@ class ScirisApp(object):
             self.config['LOGGING_MODE'] = logging_mode
         
         # Initialize plotting
-        print('TESSSSSSSSSSSSST')
         try:
             ppl.switch_backend(self.config['MATPLOTLIB_BACKEND'])
-            print('worked')
+            print('Matplotlib backend switched to "%s"; current backend: "%s"' % (self.config['MATPLOTLIB_BACKEND'], matplotlib.get_backend()))
         except Exception as E:
-            print('uh oh')
+            print('Switching Matplotlib backend to "%s" failed, current backend: "%s"' % (self.config['MATPLOTLIB_BACKEND'], matplotlib.get_backend()))
             print(repr(E))
             
         # Set up file paths.
