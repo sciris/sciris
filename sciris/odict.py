@@ -3,7 +3,6 @@
 ##############################################################################
 
 from collections import OrderedDict as _OD
-from six import PY2 as _PY2
 import numpy as np
 from . import utils as ut
 
@@ -170,7 +169,7 @@ class odict(_OD):
                     if numformat is not None:
                         thisvalstr = numformat % thisval
                     elif sigfigs is not None:
-                        thisvalstr = sigfig(thisval, sigfigs=sigfigs)
+                        thisvalstr = ut.sigfig(thisval, sigfigs=sigfigs)
                     else:
                         thisvalstr = ut.flexstr(thisval) # To avoid numpy's stupid 0.4999999999945
                 else: # Otherwise, do the normal repr() read.
@@ -190,7 +189,7 @@ class odict(_OD):
                 
                 if (divider or (maxvallinecounts>dividerthresh)) and \
                     showmultilines and recurselevel==0 and i!=0: # Add a divider line if we should.
-                    newoutput = indent(prefix=theprefix, text=dividerstr, width=80)
+                    newoutput = ut.indent(prefix=theprefix, text=dividerstr, width=80)
                     if newoutput[-1] == '\n':
                         newoutput = newoutput[:-1]
                     output += newoutput        
@@ -617,7 +616,7 @@ class odict(_OD):
         return iterator
         
     # Python 3 compatibility
-    if not _PY2:
+    if not ut._PY2:
         def keys(self):
             """ Method to get a list of keys as in Python 2. """
             return list(_OD.keys(self))
