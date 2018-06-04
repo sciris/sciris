@@ -9,7 +9,7 @@ Version: 2018-06-03
 '''
 
 from .datastore import DataStore
-from .rcps import ScirisPRC, make_register_RPC
+from .rpcs import ScirisRPC, make_register_RPC
 from .scirisapp import ScirisApp
 from .scirisobjects import ScirisObject, ScirisCollection
 from .user import User, UserDict, user_login
