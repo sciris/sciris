@@ -5,14 +5,14 @@ Last update: 6/1/18 (gchadder3)
 """
 
 # Imports
-from flask import Flask, request, abort, json, jsonify, send_from_directory, \
-    make_response
+from flask import Flask, request, abort, json, jsonify, send_from_directory, make_response
 from flask_login import LoginManager, current_user, login_required
 from werkzeug.utils import secure_filename
 from werkzeug.exceptions import HTTPException
 import sys
 import os
 import numpy as np
+import matplotlib as mpl
 from functools import wraps
 import traceback
 import logging
@@ -29,9 +29,9 @@ import fileio
 import datastore as ds
 import user
 
-#
-# Classes
-#
+##########################################################################################################
+#%% Classes
+##########################################################################################################
 
 class ScirisApp(object):
     """
@@ -114,6 +114,9 @@ class ScirisApp(object):
         # specified in the config.py file.            
         if logging_mode is not None:
             self.config['LOGGING_MODE'] = logging_mode
+        
+        # Initialize plotting
+        mpl.use(self.config['MATPLOTLIB_BACKEND'])
             
         # Set up file paths.
         self._init_file_dirs(self.config)
@@ -162,23 +165,13 @@ class ScirisApp(object):
             
     @staticmethod
     def _set_config_defaults(app_config):
-        if 'CLIENT_DIR' not in app_config:
-            app_config['CLIENT_DIR'] = '.'
-            
-        if 'LOGGING_MODE' not in app_config:
-            app_config['LOGGING_MODE'] = 'FULL' 
-            
-        if 'SERVER_PORT' not in app_config:
-            app_config['SERVER_PORT'] = 8080
-            
-        if 'USE_DATASTORE' not in app_config:
-            app_config['USE_DATASTORE'] = False
-
-        if 'USE_USERS' not in app_config:
-            app_config['USE_USERS'] = False
-
-        if 'USE_PROJECTS' not in app_config:
-            app_config['USE_PROJECTS'] = False
+        if 'CLIENT_DIR'         not in app_config: app_config['CLIENT_DIR']         = '.'
+        if 'LOGGING_MODE'       not in app_config: app_config['LOGGING_MODE']       = 'FULL' 
+        if 'SERVER_PORT'        not in app_config: app_config['SERVER_PORT']        = 8080
+        if 'USE_DATASTORE'      not in app_config: app_config['USE_DATASTORE']      = False
+        if 'USE_USERS'          not in app_config: app_config['USE_USERS']          = False
+        if 'USE_PROJECTS'       not in app_config: app_config['USE_PROJECTS']       = False
+        if 'MATPLOTLIB_BACKEND' not in app_config: app_config['MATPLOTLIB_BACKEND'] = 'Agg'
 
     @staticmethod
     def _init_file_dirs(app_config):
