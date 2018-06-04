@@ -303,6 +303,11 @@ class odict(_OD):
                 raise Exception(errormsg)
     
     
+    def remove(self, key, *args, **kwargs):
+        self.pop(key, *args, **kwargs)
+        return None
+    
+    
     def index(self, value):
         ''' Return the index of a given key '''
         return self.keys().index(value)
@@ -373,6 +378,13 @@ class odict(_OD):
             for keytopop in keystopop: # Insert popped items back in
                 self.__setitem__(keytopop, tmpdict.pop(keytopop))
 
+        return None
+    
+    
+    def copy(self, oldkey, newkey):
+        ''' Make a copy of an item '''
+        newval = ut.dcp(self.__getitem__(oldkey))
+        self.__setitem__(newkey, newval)
         return None
         
         
