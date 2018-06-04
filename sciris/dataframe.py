@@ -2,6 +2,9 @@
 ### DATA FRAME CLASS
 ##############################################################################
 
+import numpy as np
+from . import utils as ut
+
 class dataframe(object):
     '''
     A simple data frame, based on simple lists, for simply storing simple data.
@@ -10,7 +13,7 @@ class dataframe(object):
         a = dataframe(cols=['x','y'],data=[[1238,2],[384,5],[666,7]]) # Create data frame
         print a['x'] # Print out a column
         print a[0] # Print out a row
-        print a[0,'x'] # Print out an element
+        print a['x',0] # Print out an element
         a[0] = [123,6]; print a # Set values for a whole row
         a['y'] = [8,5,0]; print a # Set values for a whole column
         a['z'] = [14,14,14]; print a # Add new column
@@ -35,7 +38,7 @@ class dataframe(object):
         
         # Handle columns        
         if cols is None: cols = list()
-        else:            cols = promotetolist(cols)
+        else:            cols = ut.promotetolist(cols)
         
         # Handle data
         if data is None: 
@@ -81,7 +84,7 @@ class dataframe(object):
                 maxlen = len(col) # Start with length of column name
                 if nrows:
                     for val in self.data[:,c]:
-                        output = flexstr(val)
+                        output = ut.flexstr(val)
                         maxlen = max(maxlen, len(output))
                         outputlist[col].append(output)
                 outputformats[col] = '%'+'%i'%(maxlen+spacing)+'s'
@@ -95,7 +98,7 @@ class dataframe(object):
             output += '\n'
             
             for ind in range(nrows): # Loop over rows to print out
-                output += indformat % flexstr(ind)
+                output += indformat % ut.flexstr(ind)
                 for col in self.cols: # Print out data
                     output += outputformats[col] % outputlist[col][ind]
                 output += '\n'
@@ -120,21 +123,22 @@ class dataframe(object):
                 output = np.array(value, dtype=object)
             else:
                 errormsg = 'Row has wrong length (%s supplied, %s expected)' % (len(value), self.ncols())
+                raise Exception(errormsg)
         return output
     
     def _sanitizecol(self, col):
         ''' Take None or a string and return the index of the column '''
         if col is None: output = 0 # If not supplied, assume first column is control
-        elif isinstance(col, _stringtype): output = self.cols.index(col) # Convert to index
+        elif isinstance(col, ut._stringtype): output = self.cols.index(col) # Convert to index
         else: output = col
         return output
     
     def __getitem__(self, key=None):
         ''' Simple method for returning; see self.get() for a version based on col and row '''
-        if isinstance(key, _stringtype):
+        if isinstance(key, ut._stringtype):
             colindex = self.cols.index(key)
             output = self.data[:,colindex]
-        elif isinstance(key, _numtype):
+        elif isinstance(key, ut._numtype):
             rowindex = int(key)
             output = self.data[rowindex,:]
         elif isinstance(key, tuple):
@@ -152,20 +156,20 @@ class dataframe(object):
     def __setitem__(self, key, value=None):
         if value is None:
             value = np.zeros(self.nrows(), dtype=object)
-        if isinstance(key, _stringtype): # Add column
+        if isinstance(key, ut._stringtype): # Add column
             if len(value) != self.nrows(): 
                 errormsg = 'Vector has incorrect length (%i vs. %i)' % (len(value), self.nrows())
                 raise Exception(errormsg)
-            else:
-                val_arr = np.reshape(value, (len(value),1))
             try:
                 colindex = self.cols.index(key)
+                val_arr = np.reshape(value, (len(value),))
                 self.data[:,colindex] = val_arr
             except:
                 self.cols.append(key)
                 colindex = self.cols.index(key)
+                val_arr = np.reshape(value, (len(value),1))
                 self.data = np.hstack((self.data, np.array(val_arr, dtype=object)))
-        elif isinstance(key, _numtype):
+        elif isinstance(key, ut._numtype):
             value = self._val2row(value) # Make sure it's in the correct format
             if len(value) != self.ncols(): 
                 errormsg = 'Vector has incorrect length (%i vs. %i)' % (len(value), self.ncols())
@@ -195,7 +199,7 @@ class dataframe(object):
             colindices = Ellipsis
         else:
             colindices = []
-            for col in promotetolist(cols):
+            for col in ut.promotetolist(cols):
                 colindices.append(self._sanitizecol(col))
         if rows is None:
             rowindices = Ellipsis
@@ -290,7 +294,7 @@ class dataframe(object):
         ''' Replace all of one value in a column with a new value '''
         col = self._sanitizecol(col)
         coldata = self.data[:,col] # Get data for this column
-        inds = findinds(coldata==old)
+        inds = ut.findinds(coldata==old)
         self.data[inds,col] = new
         return None
         
@@ -340,7 +344,7 @@ class dataframe(object):
         ''' Return the indices of all rows matching the given key in a given column. '''
         col = self._sanitizecol(col)
         coldata = self.data[:,col] # Get data for this column
-        indices = findinds(coldata==key)
+        indices = ut.findinds(coldata==key)
         return indices
         
     def _filterrows(self, key=None, col=None, keep=True, verbose=False):
@@ -394,8 +398,30 @@ class dataframe(object):
         return output
     
     def export(self, filename=None, sheetname=None, close=True):
-        from sciris.fileio import export_file
-        for_export = dcp(self.data)
+        from . import fileio as io
+        for_export = ut.dcp(self.data)
         for_export = np.vstack((self.cols, self.data))
-        export_file(filename=filename, data=for_export, sheetname=sheetname, close=close)
+        io.export_file(filename=filename, data=for_export, sheetname=sheetname, close=close)
         return
+
+def test_dataframe():
+    print('Testing dataframe:')
+    a = dataframe(cols=['x','y'],data=[[1238,2],[384,5],[666,7]]) # Create data frame
+    print a['x'] # Print out a column
+    print a[0] # Print out a row
+    print a['x',0] # Print out an element
+    a[0] = [123,6]; print a # Set values for a whole row
+    a['y'] = [8,5,0]; print a # Set values for a whole column
+    a['z'] = [14,14,14]; print a # Add new column
+    a.addcol('z', [14,14,14]); print a # Alternate way to add new column
+    a.rmcol('z'); print a # Remove a column
+    a.pop(1); print a # Remove a row
+    a.append([555,2]); print a # Append a new row
+    a.insert(1,[660,3]); print a # Insert a new row
+    a.sort(); print a # Sort by the first column
+    a.sort('y'); print a # Sort by the second column
+    a.addrow([770,4]); print a # Replace the previous row and sort
+    a.findrow(555) # Return the row starting with value '1'
+    a.rmrow(); print a # Remove last row
+    a.rmrow(123); print a # Remove the row starting with element '3'
+    return None

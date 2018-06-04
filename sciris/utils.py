@@ -524,7 +524,7 @@ def colorize(color=None, string=None, output=False):
     '''
     
     # Define ANSI colors
-    ansicolors = odict([
+    ansicolors = dict([
                   ('black', '30'),
                   ('red', '31'),
                   ('green', '32'),
@@ -682,21 +682,6 @@ def promotetolist(obj=None, objtype=None):
     if obj is None:
         raise Exception('This is mathematically impossible')
     return obj
-
-
-def promotetoodict(obj=None):
-    ''' Like promotetolist, but for odicts -- WARNING, could be made into a method for odicts '''
-    if isinstance(obj, odict):
-        return obj # Don't need to do anything
-    elif isinstance(obj, dict):
-        return odict(obj)
-    elif isinstance(obj, list):
-        newobj = odict()
-        for i,val in enumerate(obj):
-            newobj['Key %i'%i] = val
-        return newobj
-    else:
-        return odict({'Key':obj})
 
 
 

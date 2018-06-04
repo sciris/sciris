@@ -3,6 +3,9 @@
 ##############################################################################
 
 from collections import OrderedDict as _OD
+from six import PY2 as _PY2
+import numpy as np
+from . import utils as ut
 
 class odict(_OD):
     '''
@@ -37,7 +40,7 @@ class odict(_OD):
 
     def __slicekey(self, key, slice_end):
         shift = int(slice_end=='stop')
-        if isinstance(key, _numtype): return key
+        if isinstance(key, ut._numtype): return key
         elif type(key) is str: return self.index(key)+shift # +1 since otherwise confusing with names (CK)
         elif key is None: return (len(self) if shift else 0)
         else: raise Exception('To use a slice, %s must be either int or str (%s)' % (slice_end, key))
@@ -64,15 +67,15 @@ class odict(_OD):
 
     def __getitem__(self, key):
         ''' Allows getitem to support strings, integers, slices, lists, or arrays '''
-        if isinstance(key, (_stringtype,tuple)):
+        if isinstance(key, (ut._stringtype,tuple)):
             try:
                 output = _OD.__getitem__(self, key)
                 return output
             except Exception as E: # WARNING, should be KeyError, but this can't print newlines!!!
-                if len(self.keys()): errormsg = '%s\nodict key "%s" not found; available keys are:\n%s' % (repr(E), flexstr(key), '\n'.join([flexstr(k) for k in self.keys()]))
+                if len(self.keys()): errormsg = '%s\nodict key "%s" not found; available keys are:\n%s' % (repr(E), ut.flexstr(key), '\n'.join([ut.flexstr(k) for k in self.keys()]))
                 else:                errormsg = 'Key "%s" not found since odict is empty'% key
                 raise Exception(errormsg)
-        elif isinstance(key, _numtype): # Convert automatically from float...dangerous?
+        elif isinstance(key, ut._numtype): # Convert automatically from float...dangerous?
             thiskey = self.keys()[int(key)]
             return _OD.__getitem__(self,thiskey)
         elif type(key)==slice: # Handle a slice -- complicated
@@ -100,7 +103,7 @@ class odict(_OD):
         ''' Allows setitem to support strings, integers, slices, lists, or arrays '''
         if isinstance(key, (str,tuple)):
             _OD.__setitem__(self, key, value)
-        elif isinstance(key, _numtype): # Convert automatically from float...dangerous?
+        elif isinstance(key, ut._numtype): # Convert automatically from float...dangerous?
             thiskey = self.keys()[int(key)]
             _OD.__setitem__(self, thiskey, value)
         elif type(key)==slice:
@@ -157,20 +160,19 @@ class odict(_OD):
             valstrs = [] # Start with an empty list which we'll save value strings in.
             vallinecounts = [] # Start with an empty list which we'll save line counts in.
             for i in range(len(self)): # Loop over the dictionary values
-                thiskeystr = flexstr(self.keys()[i]) # Grab a str representation of the current key.  
+                thiskeystr = ut.flexstr(self.keys()[i]) # Grab a str representation of the current key.  
                 thisval = self.values()[i] # Grab the current value.
                                 
                 # If it's another odict, make a call increasing the recurselevel and passing the same parameters we received.
                 if isinstance(thisval, odict):
-                    thisvalstr = flexstr(thisval.__repr__(maxlen=maxlen, showmultilines=showmultilines, divider=divider, 
-                        dividerthresh=dividerthresh, numindents=numindents, recurselevel=recurselevel+1, sigfigs=sigfigs, numformat=numformat))
-                elif isnumber(thisval): # Flexibly print out numbers, since they're largely why we're here
+                    thisvalstr = ut.flexstr(thisval.__repr__(maxlen=maxlen, showmultilines=showmultilines, divider=divider, dividerthresh=dividerthresh, numindents=numindents, recurselevel=recurselevel+1, sigfigs=sigfigs, numformat=numformat))
+                elif ut.isnumber(thisval): # Flexibly print out numbers, since they're largely why we're here
                     if numformat is not None:
                         thisvalstr = numformat % thisval
                     elif sigfigs is not None:
                         thisvalstr = sigfig(thisval, sigfigs=sigfigs)
                     else:
-                        thisvalstr = str(thisval) # To avoid numpy's stupid 0.4999999999945
+                        thisvalstr = ut.flexstr(thisval) # To avoid numpy's stupid 0.4999999999945
                 else: # Otherwise, do the normal repr() read.
                     thisvalstr = repr(thisval)
 
@@ -209,7 +211,7 @@ class odict(_OD):
                     rawoutput = '#%i: "%s":%s \n%s\n' % (i, keystr, spacer, valstr)
                     
                 # Perform the indentation.
-                newoutput = indent(prefix=theprefix, text=rawoutput, width=80)
+                newoutput = ut.indent(prefix=theprefix, text=rawoutput, width=80)
                 
                 # Strip ot any terminal newline.
                 if newoutput[-1] == '\n':
@@ -236,15 +238,13 @@ class odict(_OD):
         Print out flexible representation, short by default.
         
         Example:
-            import optima as op
             import pylab as pl
-            z = op.odict().make(keys=['a','b','c'], vals=(10*pl.rand(3)).tolist())
+            z = odict().make(keys=['a','b','c'], vals=(10*pl.rand(3)).tolist())
             z.disp(sigfigs=3)
             z.disp(numformat='%0.6f')
         '''
-        print(self.__repr__(maxlen=maxlen, showmultilines=showmultilines, 
-            divider=divider, dividerthresh=dividerthresh, 
-            numindents=numindents, recurselevel=0, sigfigs=sigfigs, numformat=None))
+        print(self.__repr__(maxlen=maxlen, showmultilines=showmultilines, divider=divider, dividerthresh=dividerthresh, numindents=numindents, recurselevel=0, sigfigs=sigfigs, numformat=None))
+        return None
     
     
     def export(self, doprint=True):
@@ -271,9 +271,9 @@ class odict(_OD):
     
     def pop(self, key, *args, **kwargs):
         ''' Allows pop to support strings, integers, slices, lists, or arrays '''
-        if isinstance(key, _stringtype):
+        if isinstance(key, ut._stringtype):
             return _OD.pop(self, key, *args, **kwargs)
-        elif isinstance(key, _numtype): # Convert automatically from float...dangerous?
+        elif isinstance(key, ut._numtype): # Convert automatically from float...dangerous?
             thiskey = self.keys()[int(key)]
             return _OD.pop(self, thiskey, *args, **kwargs)
         elif type(key)==slice: # Handle a slice -- complicated
@@ -298,8 +298,8 @@ class odict(_OD):
                 return _OD.pop(self, key, *args, **kwargs)
             except: # WARNING, should be KeyError, but this can't print newlines!!!
                 if len(self.keys()): 
-                    errormsg = 'odict key "%s" not found; available keys are:\n%s' % (flexstr(key), 
-                        '\n'.join([flexstr(k) for k in self.keys()]))
+                    errormsg = 'odict key "%s" not found; available keys are:\n%s' % (ut.flexstr(key), 
+                        '\n'.join([ut.flexstr(k) for k in self.keys()]))
                 else: errormsg = 'Key "%s" not found since odict is empty'% key
                 raise Exception(errormsg)
     
@@ -321,7 +321,7 @@ class odict(_OD):
             value = key
             needkey = True
         if key is None or needkey:
-            keyname = 'key'+flexstr(len(self))  # Define the key just to be the current index
+            keyname = 'key'+ut.flexstr(len(self))  # Define the key just to be the current index
         else:
             keyname = key
         self.__setitem__(keyname, value)
@@ -344,7 +344,7 @@ class odict(_OD):
         realpos, realkey, realvalue = pos, key, value
         if key is None and value is None: # Assume it's called like odict.insert(666)
             realvalue = pos
-            realkey = 'key'+flexstr(len(self))
+            realkey = 'key'+ut.flexstr(len(self))
             realpos = 0
         elif value is None: # Assume it's called like odict.insert('devil', 666)
             realvalue = key
@@ -380,7 +380,7 @@ class odict(_OD):
     def rename(self, oldkey, newkey):
         ''' Change a key name -- WARNING, very inefficient! '''
         nkeys = len(self)
-        if isinstance(oldkey, _numtype): 
+        if isinstance(oldkey, ut._numtype): 
             index = oldkey
             keystr = self.keys()[index]
         else: # Forge ahead for strings and anything else!
@@ -407,14 +407,14 @@ class odict(_OD):
         origkeys = self.keys()
         if sortby is None: allkeys = sorted(origkeys)
         else:
-            if not isiterable(sortby): raise Exception('Please provide a list to determine the sort order.')
-            if all([isinstance(x,_stringtype) for x in sortby]): # Going to sort by keys
+            if not ut.isiterable(sortby): raise Exception('Please provide a list to determine the sort order.')
+            if all([isinstance(x, ut._stringtype) for x in sortby]): # Going to sort by keys
                 allkeys = sortby # Assume the user knows what s/he is doing
             elif all([isinstance(x,bool) for x in sortby]): # Using Boolean values
                 allkeys = []
                 for i,x in enumerate(sortby):
                      if x: allkeys.append(origkeys[i])
-            elif all([isinstance(x,_numtype) for x in sortby]): # Going to sort by numbers
+            elif all([isinstance(x, ut._numtype) for x in sortby]): # Going to sort by numbers
                 if not set(sortby)==set(range(len(self))):
                     errormsg = 'List to sort by "%s" is not compatible with length of odict "%i"' % (sortby, len(self))
                     raise Exception(errormsg)
@@ -465,11 +465,11 @@ class odict(_OD):
         if keys is None and vals is None:
             return None # Nothing to do if nothing supplied
         if keys is None and vals is not None:
-            keys = len(promotetolist(vals)) # Values are supplied but keys aren't: use default keys
-        if isinstance(keys, _numtype): # It's a single number: pre-generate
+            keys = len(ut.promotetolist(vals)) # Values are supplied but keys aren't: use default keys
+        if isinstance(keys, ut._numtype): # It's a single number: pre-generate
             keylist = ['%i'%i for i in range(keys)] # Generate keylist
-        elif isinstance(keys, _stringtype): # It's a single string
-            keylist = [flexstr(keys)]
+        elif isinstance(keys, ut._stringtype): # It's a single string
+            keylist = [ut.flexstr(keys)]
         elif isinstance(keys, list): # It's a list: use directly
             keylist = keys
         else:
@@ -478,12 +478,12 @@ class odict(_OD):
         nkeys = len(keylist)
         
         # Handle values
-        vals = promotetolist(vals)
+        vals = ut.promotetolist(vals)
         nvals = len(vals)
         if nvals==0: # Special case: it's an empty list
-            vallist = [dcp(vals) for _ in range(nkeys)]
+            vallist = [ut.dcp(vals) for _ in range(nkeys)]
         elif nvals==1: # Only a single value: duplicate it
-            vallist = [dcp(vals[0]) for _ in range(nkeys)]
+            vallist = [ut.dcp(vals[0]) for _ in range(nkeys)]
         elif nvals==nkeys: # Lengths match, can use directly
             vallist = vals 
         else:
@@ -515,9 +515,9 @@ class odict(_OD):
         
         # Make sure it's iterable
         if source is not None: # Don't do anything if there's nothing there
-            if not(isiterable(source)): # Make sure it's iterable
-                source = promotetolist(source)
-            elif isinstance(source, _stringtype):
+            if not(ut.isiterable(source)): # Make sure it's iterable
+                source = ut.promotetolist(source)
+            elif isinstance(source, ut._stringtype):
                 source = [source] # Special case -- strings are iterable, but we don't want to
             
             if len(source)==0:
@@ -528,7 +528,7 @@ class odict(_OD):
                     if isinstance(source, (list, tuple)):   keys = range(len(source))
                     elif isinstance(source, dict): keys = source.keys()
                     else:                          raise Exception('Unable to guess keys for object of type %s' % type(source))
-                keys = promotetolist(keys) # Make sure it's a list
+                keys = ut.promotetolist(keys) # Make sure it's a list
                 if keynames is None: keynames = keys # Use key names
                 
                 # Loop over supplied keys
@@ -586,7 +586,7 @@ class odict(_OD):
             z.toeach(ind=3,val=666) #  z is now odict({'a':[1,2,10,666], 'b':[5,6,20,666]})
         '''
         nkeys = len(self.keys())
-        if not(isiterable(val)): # Assume it's meant to be populated in each
+        if not(ut.isiterable(val)): # Assume it's meant to be populated in each
             val = [val]*nkeys # Duplicated
         if len(val)!=nkeys:
             errormsg = 'To map values onto each key, they must be the same length (%i vs. %i)' % (len(val), nkeys)
@@ -632,3 +632,58 @@ class odict(_OD):
         
         
         
+def test_odict():
+    ''' Define a suite of tests for the odict '''
+
+    print('Main tests:')
+    foo = odict({'ah':3,'boo':4, 'cough':6, 'dill': 8}) # Create odict
+    bar = foo.sorted() # Sort the list
+    assert(bar['boo'] == 4) # Show get item by value
+    assert(bar[1] == 4) # Show get item by index
+    assert((bar[0:2] == [3,4]).all()) # Show get item by slice
+    assert((bar['cough':'dill'] == [6,8]).all()) # Show alternate slice notation
+    assert((bar[[2,1]] == [6,4]).all()) # Show get item by list
+    assert((bar[:] == [3,4,6,8]).all()) # Show slice with everything
+    assert((bar[2:] == [6,8]).all()) # Show slice without end
+    bar[3] = [3,4,5] # Show assignment by item
+    bar[0:2] = ['the', 'power'] # Show assignment by slice -- NOTE, inclusive slice!!
+    bar[[0,2]] = ['cat', 'trip'] # Show assignment by list
+    bar.rename('cough','chill') # Show rename
+    print(bar) # Print results
+
+    print('Insert:')
+    z = odict()
+    z['foo'] = 1492
+    z.insert(1604)
+    z.insert(0, 'ganges', 1444)
+    z.insert(2, 'midway', 1234) 
+
+    print('Make:')
+    a = odict().make(5) # Make an odict of length 5, populated with Nones and default key names
+    b = odict().make('foo',34) # Make an odict with a single key 'foo' of value 34
+    c = odict().make(['a','b']) # Make an odict with keys 'a' and 'b'
+    d = odict().make(['a','b'],0) # Make an odict with keys 'a' and 'b', initialized to 0
+    e = odict().make(keys=['a','b'], vals=[1,2]) # Make an odict with 'a':1 and 'b':2
+    f = odict({'a':34, 'b':58}).make(['c','d'],[99,45]) # Add extra keys to an exising odict
+    g = odict().make(keys=['a','b','c'], keys2=['A','B','C'], keys3=['x','y','z'], vals=0) # Make a triply nested odict
+
+    print('Make from:')
+    a = 'cat'; b = 'dog'; o = odict().makefrom(source=locals(), keys=['a','b']) # Make use of fact that variables are stored in a dictionary
+    d = {'a':'cat', 'b':'dog'}; o = odict().makefrom(d) # Same as odict(d)
+    l = ['cat', 'monkey', 'dog']; o = odict().makefrom(source=l, keys=[0,2], keynames=['a','b'])
+
+    print('Map:')
+    cat = odict({'a':[1,2], 'b':[3,4]})
+    def myfunc(mylist): return [i**2 for i in mylist]
+    dog = cat.map(myfunc) # Returns odict({'a':[1,4], 'b':[9,16]})
+
+    print('From each:')
+    z = odict({'a':np.array([1,2,3,4]), 'b':np.array([5,6,7,8])})
+    z.fromeach(2) # Returns array([3,7])
+    z.fromeach(ind=[1,3], asdict=True) # Returns odict({'a':array([2,4]), 'b':array([6,8])})
+
+    print('To each:')
+    z = odict({'a':[1,2,3,4], 'b':[5,6,7,8]})
+    z.toeach(2, [10,20])    # z is now odict({'a':[1,2,10,4], 'b':[5,6,20,8]})
+    z.toeach(ind=3,val=666) #  z is now odict({'a':[1,2,10,666], 'b':[5,6,20,666]})
+    return None
