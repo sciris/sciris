@@ -168,8 +168,8 @@ class ScirisApp(object):
         if 'LOGGING_MODE' not in app_config:
             app_config['LOGGING_MODE'] = 'FULL' 
             
-        if 'TWISTED_PORT' not in app_config:
-            app_config['TWISTED_PORT'] = 8080
+        if 'SERVER_PORT' not in app_config:
+            app_config['SERVER_PORT'] = 8080
             
         if 'USE_DATASTORE' not in app_config:
             app_config['USE_DATASTORE'] = False
@@ -304,18 +304,18 @@ class ScirisApp(object):
         # Otherwise (with Twisted).
         else:
             if not with_client and not with_flask:
-                run_twisted(port=self.config['TWISTED_PORT'], 
+                run_twisted(port=self.config['SERVER_PORT'], 
                     use_twisted_logging=use_twisted_logging)  # nothing, should return error
             if with_client and not with_flask:
-                run_twisted(port=self.config['TWISTED_PORT'], 
+                run_twisted(port=self.config['SERVER_PORT'], 
                     client_dir=self.config['CLIENT_DIR'],
                     use_twisted_logging=use_twisted_logging)   # client page only / no Flask
             elif not with_client and with_flask:
-                run_twisted(port=self.config['TWISTED_PORT'], 
+                run_twisted(port=self.config['SERVER_PORT'], 
                     flask_app=self.flask_app,
                     use_twisted_logging=use_twisted_logging)  # Flask app only, no client
             else:
-                run_twisted(port=self.config['TWISTED_PORT'], 
+                run_twisted(port=self.config['SERVER_PORT'], 
                     flask_app=self.flask_app, 
                     client_dir=self.config['CLIENT_DIR'],
                     use_twisted_logging=use_twisted_logging)  # Flask + client
