@@ -121,9 +121,9 @@ def objrepr(obj, showid=True, showmeth=True, showatt=True):
     return output
 
 
-def defaultrepr(obj, maxlen=None):
+def desc(obj, maxlen=None):
     ''' Prints out the default representation of an object -- all attributes, plust methods and ID '''
-    if maxlen is None: maxlen = 300
+    if maxlen is None: maxlen = 80
     keys = sorted(obj.__dict__.keys()) # Get the attribute keys
     maxkeylen = max([len(key) for key in keys]) # Find the maximum length of the attribute keys
     if maxkeylen<maxlen: maxlen = maxlen - maxkeylen # Shorten the amount of data shown if the keys are long
@@ -141,7 +141,7 @@ def defaultrepr(obj, maxlen=None):
 
 def printdr(obj, maxlen=None):
     ''' Shortcut for printing the default repr for an object '''
-    print(defaultrepr(obj, maxlen=maxlen))
+    print(desc(obj, maxlen=maxlen))
     return None
 
     
@@ -2820,7 +2820,7 @@ class Link(object):
     
     def __repr__(self):
         ''' Just use default '''
-        output  = defaultrepr(self)
+        output  = desc(self)
         return output
     
     def __call__(self, obj=None):
