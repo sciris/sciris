@@ -12,7 +12,7 @@ from werkzeug.exceptions import HTTPException
 import sys
 import os
 import numpy as np
-import matplotlib as mpl
+import matplotlib.pyplot as ppl
 from functools import wraps
 import traceback
 import logging
@@ -116,7 +116,13 @@ class ScirisApp(object):
             self.config['LOGGING_MODE'] = logging_mode
         
         # Initialize plotting
-        mpl.use(self.config['MATPLOTLIB_BACKEND'])
+        print('TESSSSSSSSSSSSST')
+        try:
+            ppl.switch_backend(self.config['MATPLOTLIB_BACKEND'])
+            print('worked')
+        except Exception as E:
+            print('uh oh')
+            print(repr(E))
             
         # Set up file paths.
         self._init_file_dirs(self.config)
