@@ -12,6 +12,7 @@ from werkzeug.exceptions import HTTPException
 import sys
 import os
 import numpy as np
+import matplotlib as mpl
 import matplotlib.pyplot as ppl
 from functools import wraps
 import traceback
@@ -118,9 +119,9 @@ class ScirisApp(object):
         # Initialize plotting
         try:
             ppl.switch_backend(self.config['MATPLOTLIB_BACKEND'])
-            print('Matplotlib backend switched to "%s"; current backend: "%s"' % (self.config['MATPLOTLIB_BACKEND'], matplotlib.get_backend()))
+            print('Matplotlib backend switched to "%s"; current backend: "%s"' % (self.config['MATPLOTLIB_BACKEND'], mpl.get_backend()))
         except Exception as E:
-            print('Switching Matplotlib backend to "%s" failed, current backend: "%s"' % (self.config['MATPLOTLIB_BACKEND'], matplotlib.get_backend()))
+            print('Switching Matplotlib backend to "%s" failed, current backend: "%s"' % (self.config['MATPLOTLIB_BACKEND'], mpl.get_backend()))
             print(repr(E))
             
         # Set up file paths.
