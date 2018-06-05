@@ -11,15 +11,26 @@ from numbers import Number as _numtype
 if _PY2: _stringtype = basestring 
 else:    _stringtype = str
 
-def uuid(which=None):
-    ''' Shortcut for creating a UUID; default is to create a UUID4. '''
+def uuid(uid=None, which=None, die=False):
+    ''' Shortcut for creating a UUID; default is to create a UUID4. Can also convert a UUID. '''
     import uuid
     if which is None: which = 4
-    if   which==1: output = uuid.uuid1()
-    elif which==3: output = uuid.uuid3()
-    elif which==4: output = uuid.uuid4()
-    elif which==5: output = uuid.uuid5()
-    else: raise Exception('UUID type %i not recognized; must be 1,  3, , or 5)' % which)
+    if   which==1: uuid_func = uuid.uuid1
+    elif which==3: uuid_func = uuid.uuid3
+    elif which==4: uuid_func = uuid.uuid4
+    elif which==5: uuid_func = uuid.uuid5
+    else: raise Exception('UUID type %i not recognized; must be 1,  3, 4 [default], or 5)' % which)
+    
+    if uid is None: # If not supplied, create a new UUID
+        output = uuid_func()
+    else: # Otherwise, try converting it
+        try:
+            output = uuid_func(uid)
+        except: 
+            if die:
+                raise Exception('Could not covert "%s" to a UID' % uid)
+            else:
+                output = uuid_func() # Just create a new one
     
     return output
 

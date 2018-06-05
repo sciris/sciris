@@ -9,7 +9,7 @@ Last update: 5/25/18 (gchadder3)
 #
 
 import datastore as ds
-import uuid
+from . import utils as ut
 
 #
 # Classes
@@ -64,7 +64,7 @@ class ScirisObject(object):
         instance_label=''):       
         # Get a valid UUID from what is passed in, or if None is passed in, 
         # get a new ID.
-        self.uid = get_valid_uuid(uid, new_uuid_if_missing=True) 
+        self.uid = ut.uuid(uid) 
             
         # Set the other variables that might be used with DataStore.
         self.type_prefix = type_prefix
@@ -84,7 +84,7 @@ class ScirisObject(object):
         # Check to see if the object is already in the DataStore, and give an 
         # error if so.
         if self.in_data_store():
-            print 'Error: Object ''%s'' is already in DataStore.' % self.uid.hex
+            print('Error: Object ''%s'' is already in DataStore.' % self.uid.hex)
             return
         
         # Add our representation to the DataStore.
@@ -94,7 +94,7 @@ class ScirisObject(object):
     def load_copy_from_data_store(self, uid=None):
         if uid is None:
             if not self.in_data_store():
-                print 'Error: Object ''%s'' is not in DataStore.' % self.uid.hex
+                print('Error: Object ''%s'' is not in DataStore.' % self.uid.hex)
                 return None
             else:
                 return ds.data_store.retrieve(self.uid)
@@ -111,7 +111,7 @@ class ScirisObject(object):
     def update_data_store(self):
         # Give an error if the object is not in the DataStore.
         if not self.in_data_store():
-            print 'Error: Object ''%s'' is not in DataStore.' % self.uid.hex
+            print('Error: Object ''%s'' is not in DataStore.' % self.uid.hex)
             return
         
         # Update our DataStore representation with our current state. 
@@ -120,23 +120,23 @@ class ScirisObject(object):
     def delete_from_data_store(self):
         # Give an error if the object is not in the DataStore.
         if not self.in_data_store():
-            print 'Error: Object ''%s'' is not in DataStore.' % self.uid.hex
+            print('Error: Object ''%s'' is not in DataStore.' % self.uid.hex)
             return
         
         # Delete ourselves from the DataStore.
         ds.data_store.delete(self.uid)
     
     def show(self):
-        print '--------------------------------------------'
-        print 'UUID: %s' % self.uid.hex
-        print 'Type Prefix: %s' % self.type_prefix
-        print 'File Suffix: %s' % self.file_suffix
-        print 'Instance Label: %s' % self.instance_label
+        print('--------------------------------------------')
+        print('UUID: %s' % self.uid.hex)
+        print('Type Prefix: %s' % self.type_prefix)
+        print('File Suffix: %s' % self.file_suffix)
+        print('Instance Label: %s' % self.instance_label)
         in_data_store = self.in_data_store()
         if in_data_store:
-            print 'In DataStore?: Yes'
+            print('In DataStore?: Yes')
         else:
-            print 'In DataStore?: No'
+            print('In DataStore?: No')
         #print '--------------------------------------------'
         
     def get_user_front_end_repr(self):
@@ -210,7 +210,7 @@ class ScirisCollection(ScirisObject):
     def get_object_by_uid(self, uid):
         # Make sure the argument is a valid UUID, converting a hex text to a
         # UUID object, if needed.
-        valid_uid = get_valid_uuid(uid)
+        valid_uid = ut.uuid(uid)
         
         # If we have a valid UUID, return the matching ScirisObject (if any); 
         # otherwise, return None.
@@ -237,7 +237,7 @@ class ScirisCollection(ScirisObject):
     def delete_object_by_uid(self, uid):
         # Make sure the argument is a valid UUID, converting a hex text to a
         # UUID object, if needed.        
-        valid_uid = get_valid_uuid(uid)
+        valid_uid = ut.uuid(uid)
         
         # If we have a valid UUID...
         if valid_uid is not None:
@@ -265,9 +265,9 @@ class ScirisCollection(ScirisObject):
         # Show superclass attributes.
         super(ScirisCollection, self).show()  
         
-        print '---------------------'
-        print 'Contents'
-        print '---------------------'
+        print('---------------------')
+        print('Contents')
+        print('---------------------')
         
         # For each key in the dictionary...
         for key in self.obj_dict:
@@ -281,30 +281,4 @@ class ScirisCollection(ScirisObject):
             obj.show()
             
         # Separator line.
-        print '--------------------------------------------'
-        
-#
-# Other utility functions
-#
-
-def get_valid_uuid(uid_param, new_uuid_if_missing=False):
-    # Get the type of the parameter passed in.
-    param_type = type(uid_param)
-    
-    # Return what was passed in if it is already the right type.
-    if param_type == uuid.UUID:
-        return uid_param
-    
-    # Try to do the conversion and if it fails, set the conversion to None.
-    try:
-        convert_param = uuid.UUID(uid_param)
-    except:
-        convert_param = None
-        
-    # If we don't have a valid UUID and we are supposed to generate a new 
-    # one if it's missing, do so using uuid4() which generates a random ID.
-    if convert_param is None and new_uuid_if_missing:
-        convert_param = uuid.uuid4()
-        
-    # Return the converted value.
-    return convert_param 
+        print('--------------------------------------------')

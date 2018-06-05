@@ -8,9 +8,10 @@ Last update: 5/21/18 (gchadder3)
 # Imports
 #
 
+from . import utils as ut
 import os
 import redis
-import scirisobjects as sobj
+from . import scirisobjects as sobj
 from fileio import object_to_gzip_string_pickle_file, \
     gzip_string_pickle_file_to_object, object_to_gzip_string_pickle, \
     gzip_string_pickle_to_object
@@ -35,6 +36,7 @@ data_store = None
 #
 # Classes
 #
+
 
 class StoreObjectHandle(object):
     """
@@ -77,7 +79,7 @@ class StoreObjectHandle(object):
         instance_label=''):
         # Set the UID to what was passed in, or if None was passed in, generate 
         # and use a new one.
-        self.uid = sobj.get_valid_uuid(uid, new_uuid_if_missing=True)
+        self.uid = ut.uuid(uid)
         
         self.type_prefix = type_prefix
         self.file_suffix = file_suffix
@@ -142,10 +144,10 @@ class StoreObjectHandle(object):
         redis_db.delete(key_name)
         
     def show(self):
-        print 'UUID: %s' % self.uid.hex
-        print 'Type Prefix: %s' % self.type_prefix
-        print 'File Suffix: %s' % self.file_suffix
-        print 'Instance Label: %s' % self.instance_label
+        print('UUID: %s' % self.uid.hex)
+        print('Type Prefix: %s' % self.type_prefix)
+        print('File Suffix: %s' % self.file_suffix)
+        print('Instance Label: %s' % self.instance_label)
         
 class DataStore(object):
     """
@@ -229,8 +231,8 @@ class DataStore(object):
         # If we are using Redis...
         if self.db_mode == 'redis':
             if self.redis_db.get('scirisdatastore-handle_dict') is None:
-                print 'Error: DataStore object has not been saved yet.'
-                return
+                print('Error: DataStore object has not been saved yet.')
+                return None
             
             # Get the entries for all of the data items.
             self.handle_dict = gzip_string_pickle_to_object(self.redis_db.get('scirisdatastore-handle_dict'))
@@ -239,8 +241,8 @@ class DataStore(object):
         # Otherwise (we are using files)...
         else:    
             if not os.path.exists('.\\sciris.ds'):
-                print 'Error: DataStore object has not been saved yet.'
-                return
+                print('Error: DataStore object has not been saved yet.')
+                return None
             
             infile = open('.\\sciris.ds', 'rb')
             self.handle_dict = pickle.load(infile)
@@ -278,7 +280,7 @@ class DataStore(object):
         
         # Else, if there is more than one match, give a warning.
         elif len(uid_matches) > 1:
-            print ('Warning: get_uid_from_instance() only returning the first match.')
+            print('Warning: get_uid_from_instance() only returning the first match.')
             
         # Return the first (and hopefully only) matching UID.  
         return uid_matches[0]
@@ -287,7 +289,7 @@ class DataStore(object):
         instance_label='', save_handle_changes=True):
         # Make sure the argument is a valid UUID, converting a hex text to a
         # UUID object, if needed.  If no UID is passed in, generate a new one.    
-        valid_uid = sobj.get_valid_uuid(uid, new_uuid_if_missing=True)
+        valid_uid = ut.uuid(uid)
         
         # Create the new StoreObjectHandle.
         new_handle = StoreObjectHandle(valid_uid, type_label, file_suffix, 
@@ -407,17 +409,17 @@ class DataStore(object):
             handle = self.handle_dict[key]
             
             # Separator line.
-            print '--------------------------------------------'
+            print('--------------------------------------------')
             
             # Show the handle contents.
             handle.show()
             
         # Separator line.
-        print '--------------------------------------------'
+        print('--------------------------------------------')
     
     def show_redis_keys(self):
         # Show all of the keys in the Redis database we are using.
-        print self.redis_db.keys()
+        print(self.redis_db.keys())
         
     def clear_redis_keys(self):
         # Delete all of the keys in the Redis database we are using.

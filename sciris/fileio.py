@@ -89,7 +89,7 @@ class FileSaveDirectory(object):
         # If we are a temp directory and the directory still exists, do the cleanup.
         if self.is_temp_dir and os.path.exists(self.dir_path):
             # Show cleanup message.
-            print '>> Cleaning up FileSaveDirectory at %s' % self.dir_path
+            print('>> Cleaning up FileSaveDirectory at %s' % self.dir_path)
             
             # Delete the entire directory (file contents included).
             self.delete()
