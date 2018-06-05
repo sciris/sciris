@@ -8,21 +8,12 @@ Last update: 5/21/18 (gchadder3)
 # Imports
 #
 
-from . import utils as ut
+
 import os
 import redis
+from . import utils as ut
 from . import fileio as io
 
-#import object_to_gzip_string_pickle_file, \
-#    gzip_string_pickle_file_to_object, object_to_gzip_string_pickle, \
-#    gzip_string_pickle_to_object
-
-# Import cPickle if it is available in your Python setup because it is a 
-# faster method.  If it's not available, import the regular pickle library.
-try: 
-    import cPickle as pickle
-except: 
-    import pickle
 
 #
 # Globals
@@ -225,8 +216,8 @@ class DataStore(object):
         # Otherwise (we are using files)...
         else:
             outfile = open('.\\sciris.ds', 'wb')
-            pickle.dump(self.handle_dict, outfile)
-            pickle.dump(self.db_mode, outfile)
+            io.pickle.dump(self.handle_dict, outfile)
+            io.pickle.dump(self.db_mode, outfile)
     
     def load(self):
         # If we are using Redis...
@@ -246,8 +237,8 @@ class DataStore(object):
                 return None
             
             infile = open('.\\sciris.ds', 'rb')
-            self.handle_dict = pickle.load(infile)
-            self.db_mode = pickle.load(infile)
+            self.handle_dict = io.pickle.load(infile)
+            self.db_mode = io.pickle.load(infile)
     
     def get_handle_by_uid(self, uid):
         # Make sure the argument is a valid UUID, converting a hex text to a
