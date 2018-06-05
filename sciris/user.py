@@ -8,14 +8,13 @@ Last update: 5/29/18 (gchadder3)
 # Imports
 #
 
-from rpcs import make_register_RPC
+from . import rpcs #import make_register_RPC
 from flask import session, current_app
 from flask_login import current_user, login_user, logout_user
 from hashlib import sha224
 from numpy import argsort
-import uuid
-import copy
-import scirisobjects as sobj
+from . import utils as ut
+from . import scirisobjects as sobj
 
 #
 # Globals
@@ -29,7 +28,7 @@ user_dict = None
 RPC_dict = {}
 
 # RPC registration decorator factory created using call to make_register_RPC().
-register_RPC = make_register_RPC(RPC_dict)
+register_RPC = rpcs.make_register_RPC(RPC_dict)
 
 #
 # Classes
@@ -140,28 +139,28 @@ class User(sobj.ScirisObject):
         # Show superclass attributes.
         super(User, self).show()  
         
-        print '---------------------'
+        print('---------------------')
 
-        print 'Username: %s' % self.username
-        print 'Displayname: %s' % self.displayname
-        print 'Hashed password: %s' % self.password
-        print 'Email: %s' % self.email
+        print('Username: %s' % self.username)
+        print('Displayname: %s' % self.displayname)
+        print('Hashed password: %s' % self.password)
+        print('Email: %s' % self.email)
         if self.is_authenticated:
-            print 'Is authenticated?: Yes'
+            print('Is authenticated?: Yes')
         else:
-            print 'Is authenticated?: No'
+            print('Is authenticated?: No')
         if self.is_active:
-            print 'Account active?: Yes'
+            print('Account active?: Yes')
         else:
-            print 'Account active?: No'
+            print('Account active?: No')
         if self.is_anonymous:
-            print 'Is anonymous?: Yes'
+            print('Is anonymous?: Yes')
         else:
-            print 'Is anonymous?: No'
+            print('Is anonymous?: No')
         if self.is_admin:
-            print 'Has admin rights?: Yes'
+            print('Has admin rights?: Yes')
         else:
-            print 'Has admin rights?: No' 
+            print('Has admin rights?: No')
             
     def get_user_front_end_repr(self):
         obj_info = {
@@ -441,7 +440,7 @@ def user_register(username, password, displayname, email):
 @register_RPC(validation_type='nonanonymous user') 
 def user_change_info(username, password, displayname, email):
     # Make a copy of the current_user.
-    the_user = copy.copy(current_user)
+    the_user = ut.dcp(current_user)
     
     # If the password entered doesn't match the current user password, fail.
     if password != the_user.password:
@@ -474,7 +473,7 @@ def user_change_info(username, password, displayname, email):
 @register_RPC(validation_type='nonanonymous user') 
 def user_change_password(oldpassword, newpassword):
     # Make a copy of the current_user.
-    the_user = copy.copy(current_user)
+    the_user = ut.dcp(current_user)
     
     # If the password entered doesn't match the current user password, fail.
     if oldpassword != the_user.password:
@@ -616,10 +615,6 @@ def admin_reset_password(username):
 # Script code
 #
 
-# Create three test Users that can get added to a new UserDict.
-test_user = User('demo', 'demo', 'Demo', 'demo@yahoo.com', \
-    uid=uuid.UUID('12345678123456781234567812345678'))
-test_user2 = User('admin', 'admin', 'Admin', 'admin@scirisuser.net', \
-    has_admin_rights=True, uid=uuid.UUID('12345678123456781234567812345679'))
-test_user3 = User('_ScirisDemo', '_ScirisDemo', 'Sciris Demos', 'admin@scirisuser.net', \
-    has_admin_rights=False, uid=uuid.UUID('12345678123456781234567812345672'))
+# Create two test Users that can get added to a new UserDict.
+test_user = User('demo', 'demo', 'Demo', 'demo@demo.com', uid=ut.uuid('12345678123456781234567812345678'))
+test_user2 = User('admin', 'admin', 'Admin', 'admin@scirisuser.net', has_admin_rights=True, uid=ut.UUID('12345678123456781234567812345679'))
