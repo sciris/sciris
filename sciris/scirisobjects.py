@@ -8,7 +8,7 @@ Last update: 5/25/18 (gchadder3)
 # Imports
 #
 
-import datastore as ds
+from . import datastore as ds
 from . import utils as ut
 
 #
