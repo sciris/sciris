@@ -285,7 +285,7 @@ class ScirisApp(object):
             if app_config['LOGGING_MODE'] == 'FULL':
                 print('>> Creating a new UserDict.')
             user.user_dict.add_to_data_store()
-            test_users = user.make_tets_users()
+            test_users = user.make_test_users()
             for test_user in test_users:
                 user.user_dict.add(test_user)
     

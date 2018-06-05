@@ -618,6 +618,6 @@ def admin_reset_password(username):
 def make_test_users():
     # Create two test Users that can get added to a new UserDict.
     test_user = User('demo', 'demo', 'Demo', 'demo@demo.com', uid=ut.uuid('12345678123456781234567812345678'))
-    test_user2 = User('admin', 'admin', 'Admin', 'admin@scirisuser.net', has_admin_rights=True, uid=ut.UUID('12345678123456781234567812345679'))
+    test_user2 = User('admin', 'admin', 'Admin', 'admin@scirisuser.net', has_admin_rights=True, uid=ut.uuid('12345678123456781234567812345679'))
     users = [test_user, test_user2]
     return users
