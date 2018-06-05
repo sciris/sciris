@@ -25,11 +25,16 @@ def uuid(uid=None, which=None, die=False, as_string=False):
         output = uuid_func()
     else: # Otherwise, try converting it
         try:
-            output = uuid_func(uid)
-        except: 
+            if isinstance(uid, uuid.UUID):
+                output = uid # Use directly
+            else: # Convert
+                output = uuid.UUID(uid)
+        except Exception as E: 
+            errormsg = 'Could not covert "%s" to a UID (%s)' % (uid, repr(E))
             if die:
-                raise Exception('Could not covert "%s" to a UID' % uid)
+                raise Exception(errormsg)
             else:
+                print(errormsg)
                 output = uuid_func() # Just create a new one
     
     if as_string: output = str(output)
