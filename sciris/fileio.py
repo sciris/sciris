@@ -16,14 +16,14 @@ except: # Python 3
     from io import StringIO
 from gzip import GzipFile
 from contextlib import closing
-from .utils import makefilepath
-from .odict import odict
-from .dataframe import dataframe
 from xlrd import open_workbook
 import os
 from tempfile import mkdtemp
 from shutil import rmtree
 import atexit
+from .utils import makefilepath
+from .odict import odict
+from .dataframe import dataframe
   
 #
 # Globals

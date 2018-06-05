@@ -25,10 +25,10 @@ from twisted.web.server import Site
 from twisted.web.static import File
 from twisted.web.wsgi import WSGIResource
 from twisted.python.threadpool import ThreadPool
-from rpcs import ScirisRPC
-import fileio
-import datastore as ds
-import user
+from . import rpcs
+from . import fileio
+from . import datastore as ds
+from . import user
 
 ##########################################################################################################
 #%% Classes
@@ -362,7 +362,7 @@ class ScirisApp(object):
                 RPC_func(*args, **kwargs)
 
             # Create the RPC and try to add it to the dictionary.
-            new_RPC = ScirisRPC(RPC_func, **callerkwargs)
+            new_RPC = rpcs.ScirisRPC(RPC_func, **callerkwargs)
             self.add_RPC(new_RPC)
             
             return wrapper
@@ -569,7 +569,7 @@ def run_twisted(port=8080, flask_app=None, client_dir=None,
     use_twisted_logging=True):
     # Give an error if we pass in no Flask server or client path.
     if (flask_app is None) and (client_dir is None):
-        print 'ERROR: Neither client or server are defined.'
+        print('ERROR: Neither client or server are defined.')
         return None
     
     # Set up logging.

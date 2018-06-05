@@ -11,10 +11,11 @@ Last update: 5/21/18 (gchadder3)
 from . import utils as ut
 import os
 import redis
-from . import scirisobjects as sobj
-from fileio import object_to_gzip_string_pickle_file, \
-    gzip_string_pickle_file_to_object, object_to_gzip_string_pickle, \
-    gzip_string_pickle_to_object
+from . import fileio as io
+
+#import object_to_gzip_string_pickle_file, \
+#    gzip_string_pickle_file_to_object, object_to_gzip_string_pickle, \
+#    gzip_string_pickle_to_object
 
 # Import cPickle if it is available in your Python setup because it is a 
 # faster method.  If it's not available, import the regular pickle library.
@@ -97,7 +98,7 @@ class StoreObjectHandle(object):
         full_file_name = '%s%s%s' % (dir_path, os.sep, file_name)
         
         # Write the object to a Gzip string pickle file.
-        object_to_gzip_string_pickle_file(full_file_name, obj)
+        io.object_to_gzip_string_pickle_file(full_file_name, obj)
     
     def file_retrieve(self, dir_path):
         # Create a filename containing the type prefix, hex UID code, and the
@@ -108,7 +109,7 @@ class StoreObjectHandle(object):
         full_file_name = '%s%s%s' % (dir_path, os.sep, file_name)
         
         # Return object from the Gzip string pickle file.
-        return gzip_string_pickle_file_to_object(full_file_name)
+        return io.gzip_string_pickle_file_to_object(full_file_name)
     
     def file_delete(self, dir_path):
         # Create a filename containing the type prefix, hex UID code, and the
@@ -127,14 +128,14 @@ class StoreObjectHandle(object):
         key_name = '%s-%s' % (self.type_prefix, self.uid.hex)
         
         # Put the object in Redis.
-        redis_db.set(key_name, object_to_gzip_string_pickle(obj))
+        redis_db.set(key_name, io.object_to_gzip_string_pickle(obj))
     
     def redis_retrieve(self, redis_db):
         # Make the Redis key containing the type prefix, and the hex UID code.
         key_name = '%s-%s' % (self.type_prefix, self.uid.hex) 
         
         # Get and return the object with the key in Redis.
-        return gzip_string_pickle_to_object(redis_db.get(key_name))
+        return io.gzip_string_pickle_to_object(redis_db.get(key_name))
     
     def redis_delete(self, redis_db):
         # Make the Redis key containing the type prefix, and the hex UID code.
@@ -217,9 +218,9 @@ class DataStore(object):
         if self.db_mode == 'redis':
             # Set the entries for all of the data items.
             self.redis_db.set('scirisdatastore-handle_dict', 
-                object_to_gzip_string_pickle(self.handle_dict))
+                io.object_to_gzip_string_pickle(self.handle_dict))
             self.redis_db.set('scirisdatastore-db_mode', 
-                object_to_gzip_string_pickle(self.db_mode))
+                io.object_to_gzip_string_pickle(self.db_mode))
             
         # Otherwise (we are using files)...
         else:
@@ -235,8 +236,8 @@ class DataStore(object):
                 return None
             
             # Get the entries for all of the data items.
-            self.handle_dict = gzip_string_pickle_to_object(self.redis_db.get('scirisdatastore-handle_dict'))
-            self.db_mode = gzip_string_pickle_to_object(self.redis_db.get('scirisdatastore-db_mode'))
+            self.handle_dict = io.gzip_string_pickle_to_object(self.redis_db.get('scirisdatastore-handle_dict'))
+            self.db_mode = io.gzip_string_pickle_to_object(self.redis_db.get('scirisdatastore-db_mode'))
         
         # Otherwise (we are using files)...
         else:    
@@ -251,7 +252,7 @@ class DataStore(object):
     def get_handle_by_uid(self, uid):
         # Make sure the argument is a valid UUID, converting a hex text to a
         # UUID object, if needed.        
-        valid_uid = sobj.get_valid_uuid(uid)
+        valid_uid = ut.uuid(uid)
         
         # If we have a valid UUID...
         if valid_uid is not None:
@@ -318,7 +319,7 @@ class DataStore(object):
     def retrieve(self, uid):
         # Make sure the argument is a valid UUID, converting a hex text to a
         # UUID object, if needed.        
-        valid_uid = sobj.get_valid_uuid(uid)
+        valid_uid = ut.uuid(uid)
         
         # If we have a valid UUID...
         if valid_uid is not None: 
@@ -343,7 +344,7 @@ class DataStore(object):
     def update(self, uid, obj):
         # Make sure the argument is a valid UUID, converting a hex text to a
         # UUID object, if needed.        
-        valid_uid = sobj.get_valid_uuid(uid)
+        valid_uid = ut.uuid(uid)
         
         # If we have a valid UUID...
         if valid_uid is not None:  
@@ -365,7 +366,7 @@ class DataStore(object):
     def delete(self, uid, save_handle_changes=True):
         # Make sure the argument is a valid UUID, converting a hex text to a
         # UUID object, if needed.        
-        valid_uid = sobj.get_valid_uuid(uid)
+        valid_uid = ut.uuid(uid)
         
         # If we have a valid UUID...
         if valid_uid is not None: 
