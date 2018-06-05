@@ -11,7 +11,7 @@ from numbers import Number as _numtype
 if _PY2: _stringtype = basestring 
 else:    _stringtype = str
 
-def uuid(uid=None, which=None, die=False):
+def uuid(uid=None, which=None, die=False, as_string=False):
     ''' Shortcut for creating a UUID; default is to create a UUID4. Can also convert a UUID. '''
     import uuid
     if which is None: which = 4
@@ -32,6 +32,7 @@ def uuid(uid=None, which=None, die=False):
             else:
                 output = uuid_func() # Just create a new one
     
+    if as_string: output = str(output)
     return output
 
 def dcp(obj=None):
