@@ -10,4 +10,6 @@ Version: 2018-06-03
 
 from .utils import *
 from .colortools import *
+from .odict import *
+from .dataframe import *
 from .fileio import loadspreadsheet, export_file # WARNING, make consistent

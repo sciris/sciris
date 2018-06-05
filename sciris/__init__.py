@@ -1,2 +1,8 @@
+# Import core functions
 from . import core
-from . import web
+
+# Import web functions
+try:
+    from . import web
+except:
+    print('Warning: was not able to import web components of Sciris')

@@ -16,12 +16,14 @@ except: # Python 3
     from io import StringIO
 from gzip import GzipFile
 from contextlib import closing
-from sciris.utils import makefilepath, odict, dataframe
 from xlrd import open_workbook
 import os
 from tempfile import mkdtemp
 from shutil import rmtree
 import atexit
+from .utils import makefilepath
+from .odict import odict
+from .dataframe import dataframe
   
 #
 # Globals
@@ -87,7 +89,7 @@ class FileSaveDirectory(object):
         # If we are a temp directory and the directory still exists, do the cleanup.
         if self.is_temp_dir and os.path.exists(self.dir_path):
             # Show cleanup message.
-            print '>> Cleaning up FileSaveDirectory at %s' % self.dir_path
+            print('>> Cleaning up FileSaveDirectory at %s' % self.dir_path)
             
             # Delete the entire directory (file contents included).
             self.delete()
