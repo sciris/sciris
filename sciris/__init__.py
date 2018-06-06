@@ -1,8 +1,20 @@
+# Import version information
+from .version import version, versiondate
+
 # Import core functions
 from . import core
 
 # Import web functions
 try:
     from . import web
-except:
-    print('Warning: was not able to import web components of Sciris')
+    webapptext = 'with webapp'
+except Exception as E:
+    import traceback
+    webapp_error = traceback.format_exc()
+    webapptext = 'without webapp (see sciris.webapp_error for details)'
+
+scirislicense = 'Sciris %s (%s)' % (version, versiondate)
+
+print(scirislicense + ' ' + webapptext)
+
+del scirislicense, webapptext, E, traceback # Remove unneeded variables
