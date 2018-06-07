@@ -5,11 +5,11 @@ Example usage:
 	import sciris.web as sw
 	app = sw.ScirisApp()
 
-Version: 2018-06-03
+Version: 2018-06-07
 '''
 
-from .datastore import DataStore
-from .rpcs import ScirisRPC, make_register_RPC
-from .scirisapp import ScirisApp
-from .scirisobjects import ScirisObject, ScirisCollection
-from .user import User, UserDict, user_login
+from .weblib.datastore import DataStore
+from .weblib.rpcs import ScirisRPC, make_register_RPC
+from .weblib.scirisapp import ScirisApp
+from .weblib.scirisobjects import ScirisObject, ScirisCollection
+from .weblib.user import User, UserDict, user_login
