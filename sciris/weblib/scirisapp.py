@@ -25,8 +25,8 @@ from twisted.web.server import Site
 from twisted.web.static import File
 from twisted.web.wsgi import WSGIResource
 from twisted.python.threadpool import ThreadPool
+from ..corelib import fileio
 from . import rpcs
-from . import fileio
 from . import datastore as ds
 from . import user
 

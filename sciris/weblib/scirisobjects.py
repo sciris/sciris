@@ -9,7 +9,7 @@ Last update: 5/25/18 (gchadder3)
 #
 
 from . import datastore as ds
-from . import utils as ut
+from ..corelib import utils as ut
 
 #
 # Classes

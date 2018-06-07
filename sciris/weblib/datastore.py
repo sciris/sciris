@@ -8,12 +8,10 @@ Last update: 5/21/18 (gchadder3)
 # Imports
 #
 
-import sdlfkjdfkj
-
 import os
 import redis
-from . import utils as ut
-from . import fileio as io
+from ..corelib import utils as ut
+from ..corelib import fileio as io
 
 
 #
