@@ -8,12 +8,12 @@ Last update: 5/29/18 (gchadder3)
 # Imports
 #
 
-from . import rpcs #import make_register_RPC
 from flask import session, current_app
 from flask_login import current_user, login_user, logout_user
 from hashlib import sha224
 from numpy import argsort
-from . import utils as ut
+from ..corelib import utils as ut
+from . import rpcs #import make_register_RPC
 from . import scirisobjects as sobj
 
 #
