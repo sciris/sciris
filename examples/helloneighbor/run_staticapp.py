@@ -1,12 +1,12 @@
 """
 run_staticapp.py -- Simple ScirisApp use case 
     
-Last update: 5/16/18 (gchadder3)
+Last update: 6/8/18 (gchadder3)
 """
 
 # Imports
-from sciris2gc.scirisapp import ScirisApp
-import sciris2gc.appcomponents as acs
+from sciris.weblib.scirisapp import ScirisApp
+import sciris.weblib.appcomponents as acs
 import model # The actual Python model we want to incorporate
 
 # Create the ScirisApp object.  NOTE: app.config will thereafter contain all 

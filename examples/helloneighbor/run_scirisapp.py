@@ -1,11 +1,11 @@
 """
 run_scirisapp.py -- Simple ScirisApp use case 
     
-Last update: 5/18/18 (gchadder3)
+Last update: 6/8/18 (gchadder3)
 """
 
 # Imports
-from sciris2gc.scirisapp import ScirisApp
+from sciris.weblib.scirisapp import ScirisApp
 import model # The actual Python model we want to incorporate
 import mpld3 # For plotting
 

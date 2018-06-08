@@ -1,12 +1,12 @@
 """
 run_rpcsclientapp.py -- Simple ScirisApp use case 
     
-Last update: 5/23/18 (gchadder3)
+Last update: 6/8/18 (gchadder3)
 """
 
 # Imports
-from sciris2gc.scirisapp import ScirisApp
-from sciris2gc import fileio
+from sciris.weblib.scirisapp import ScirisApp
+from sciris.corelib import fileio
 import model # The actual Python model we want to incorporate
 import mpld3 # For plotting
 import test_rpcs
