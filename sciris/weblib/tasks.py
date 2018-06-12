@@ -1,7 +1,7 @@
 """
 tasks.py -- code related to Sciris task queue management
     
-Last update: 6/11/18 (gchadder3)
+Last update: 6/12/18 (gchadder3)
 """
 
 #
@@ -15,11 +15,11 @@ from ..corelib import utils as ut
 
 from celery import Celery
 
-app = Celery('tasks', broker='redis://localhost:6379', 
+celery_instance = Celery('tasks', broker='redis://localhost:6379', 
     backend='redis://localhost:6379')
 
-@app.task
-def add(x, y):
+@celery_instance.task
+def async_add(x, y):
     return x + y
 
 #
@@ -64,6 +64,11 @@ class TaskRecord(sobj.ScirisObject):
     Attributes:
         task_id (str) -- the ID / name for the task that typically is chosen 
             by the client
+        status (str) -- the status of the task:
+            'unknown' : unknown status, for example, just initialized
+        error_text (str) -- string giving an idea of what error has transpired
+        start_time (???) -- the time the task was actually started
+        stop_time (???) -- the time the task completed      
         
     Usage:
         >>> my_task = TaskRecord('my-special-task', uid=uuid.UUID('12345678123456781234567812345678'))                      
@@ -76,6 +81,16 @@ class TaskRecord(sobj.ScirisObject):
         # Set the task ID (what the client typically knows as the task).
         self.task_id = task_id
         
+        # Start the status at 'unknown'.
+        self.status = 'unknown'
+        
+        # Start the error_text at None.
+        self.error_text = None
+        
+        # Start the start and stop times at None.
+        self.start_time = None
+        self.stop_time = None
+        
         # Set the type prefix to 'task'.
         self.type_prefix = 'task'
         
@@ -84,7 +99,7 @@ class TaskRecord(sobj.ScirisObject):
         
         # Set the instance label to the task_id.
         self.instance_label = task_id 
-        
+              
     def load_from_copy(self, other_object):
         if type(other_object) == type(self):
             # Do the superclass copying.
@@ -99,13 +114,21 @@ class TaskRecord(sobj.ScirisObject):
         print('---------------------')
 
         print('Task ID: %s' % self.task_id)
+        print('Status: %s' % self.status)
+        print('Error Text: %s' % self.error_text)
+        print('Start Time: %s' % self.start_time)
+        print('Stop Time: %s' % self.stop_time)
             
     def get_user_front_end_repr(self):
         obj_info = {
             'task': {
                 'UID': self.uid.hex,                    
                 'instanceLabel': self.instance_label,
-                'taskId': self.task_id,               
+                'taskId': self.task_id,
+                'status': self.status,
+                'errorText': self.error_text,
+                'startTime': self.start_time,
+                'stopTime': self.stop_time
             }
         }
         return obj_info
@@ -117,7 +140,11 @@ class TaskRecord(sobj.ScirisObject):
                 'typePrefix': self.type_prefix, 
                 'fileSuffix': self.file_suffix, 
                 'instanceLabel': self.instance_label,
-                'taskId': self.task_id               
+                'taskId': self.task_id,
+                'status': self.status,
+                'errorText': self.error_text,
+                'startTime': self.start_time,
+                'stopTime': self.stop_time                
             }
         }
         return obj_info             
@@ -303,7 +330,7 @@ class TaskDict(sobj.ScirisCollection):
 #
 # RPC functions
 #
- 
+        
 @register_RPC(validation_type='nonanonymous user') 
 def launch_task(task_id='', func_name='', args=[], kwargs={}):
     # Show arguments.
@@ -316,10 +343,39 @@ def launch_task(task_id='', func_name='', args=[], kwargs={}):
     print 'my kwargs'
     print kwargs
     
-    new_task_record = TaskRecord(task_id)
-    task_dict.add(new_task_record)
+    # Start with an empty return dict.
+    return_dict = {}
     
-    return {'error': 'Sorry, not ready!'}
+    # Find a matching task record (if any to the task_id).
+    match_taskrec = task_dict.get_task_record_by_task_id(task_id)
+    
+    # If we did not find a match...
+    if task_dict.get_task_record_by_task_id(task_id) is None:
+        # Create a new TaskRecord.
+        new_task_record = TaskRecord(task_id)
+    
+        # Add the TaskRecord to the TaskDict.
+        task_dict.add(new_task_record)
+    
+        # Create the return dict.
+        return_dict = {
+            'status': 'created'
+        }
+        
+    # Otherwise...
+    else:
+        # xxx
+        if match_taskrec.status == 'completed':
+            return_dict = {
+                'status': 'started'
+            }
+        else:
+            return_dict = {
+                'error': 'blocked'
+            }
+    
+    # Return our result.
+    return return_dict
 
 @register_RPC(validation_type='nonanonymous user') 
 def check_task(task_id): 
