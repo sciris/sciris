@@ -306,13 +306,47 @@ class TaskDict(sobj.ScirisCollection):
  
 @register_RPC(validation_type='nonanonymous user') 
 def launch_task(task_id='', func_name='', args=[], kwargs={}):
+    # Show arguments.
+    print 'task_id'
+    print task_id
     print 'my func'
     print func_name
     print 'my args'
     print args
     print 'my kwargs'
     print kwargs
+    
+    new_task_record = TaskRecord(task_id)
+    task_dict.add(new_task_record)
+    
     return {'error': 'Sorry, not ready!'}
+
+@register_RPC(validation_type='nonanonymous user') 
+def check_task(task_id): 
+    # Check to see if the task exists, and if not, return an error.
+    if task_dict.get_task_record_by_task_id(task_id) is None:
+        return {'error': 'No task found for specified task ID'}
+    else:
+        return {'error': 'Sorry, not ready!'}
+    
+@register_RPC(validation_type='nonanonymous user') 
+def get_task_result(task_id):  
+    # Check to see if the task exists, and if not, return an error.
+    if task_dict.get_task_record_by_task_id(task_id) is None:
+        return {'error': 'No task found for specified task ID'}
+    else:
+        return {'error': 'Sorry, not ready!'}
+    
+@register_RPC(validation_type='nonanonymous user') 
+def delete_task(task_id): 
+    # Check to see if the task exists, and if not, return an error.
+    if task_dict.get_task_record_by_task_id(task_id) is None:
+        return {'error': 'No task found for specified task ID'}
+    
+    # Otherwise, erase the task and return success.
+    else:
+        task_dict.delete_by_task_id(task_id)
+        return 'success'
        
 #@register_RPC()
 #def user_login(username, password):  
@@ -553,14 +587,3 @@ def launch_task(task_id='', func_name='', args=[], kwargs={}):
 # Task functions
 #
 
-
-#
-# Script code
-#
-
-#def make_test_users():
-#    # Create two test Users that can get added to a new UserDict.
-#    test_user = User('demo', 'demo', 'Demo', 'demo@demo.com', uid=ut.uuid('12345678123456781234567812345678'))
-#    test_user2 = User('admin', 'admin', 'Admin', 'admin@scirisuser.net', has_admin_rights=True, uid=ut.uuid('12345678123456781234567812345679'))
-#    users = [test_user, test_user2]
-#    return users
