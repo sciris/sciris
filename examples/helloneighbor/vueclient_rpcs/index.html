@@ -119,8 +119,8 @@
 //          deleteUser('ozzymandibulus')
           
           // Make a normal RPC call to get_graph().
-//          rpcCall('test_func')
-          rpcCall('get_graph')
+          rpcCall('launch_task', ['my_crazy_id', 'my_func_name', ['arg1', 'arg2'], {'kwarg1': 'kw1', 'kwarg2': 'kw2'}])
+/*          rpcCall('get_graph')
           .then(function (response) {
             vm.serverresponse = 'See graph below';
             // If we already have a figure, pop the figure object, and clear the DOM -- WARNING, needs fixing
@@ -132,7 +132,7 @@
           })
           .catch(function (error) {
             vm.serverresponse = 'There was an error: ' + error.message;
-          })
+          }) */
           
 /*          // Make an upload RPC call to graph points in an uploaded .csv file.
           rpcUploadCall('show_csv_file', [], {}, '.csv')

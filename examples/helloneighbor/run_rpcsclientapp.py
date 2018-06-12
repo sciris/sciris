@@ -1,12 +1,14 @@
 """
 run_rpcsclientapp.py -- Simple ScirisApp use case 
     
-Last update: 6/8/18 (gchadder3)
+Last update: 6/11/18 (gchadder3)
 """
 
 # Imports
 from sciris.weblib.scirisapp import ScirisApp
 from sciris.corelib import fileio
+from sciris.weblib import tasks
+from sciris.weblib import datastore as ds
 import model # The actual Python model we want to incorporate
 import mpld3 # For plotting
 import test_rpcs
@@ -15,6 +17,31 @@ import pandas as pd
 from pylab import figure
 import config
 import os
+
+def init_tasks(app_config):
+    # Look for an existing tasks dictionary.
+    task_dict_uid = ds.data_store.get_uid_from_instance('taskdict', 'Task Dictionary')
+    
+    # Create the user dictionary object.  Note, that if no match was found, 
+    # this will be assigned a new UID.
+    tasks.task_dict = tasks.TaskDict(task_dict_uid)
+    
+    # If there was a match...
+    if task_dict_uid is not None:
+        if app_config['LOGGING_MODE'] == 'FULL':
+            print('>> Loading TaskDict from the DataStore.')
+        tasks.task_dict.load_from_data_store() 
+    
+    # Else (no match)...
+    else:
+        if app_config['LOGGING_MODE'] == 'FULL':
+            print('>> Creating a new TaskDict.')
+        tasks.task_dict.add_to_data_store()
+
+    # Show all of the users in user_dict.
+    if app_config['LOGGING_MODE'] == 'FULL':
+        print('>> List of all tasks...')
+        tasks.task_dict.show()    
 
 # Create the ScirisApp object.  NOTE: app.config will thereafter contain all 
 # of the configuration parameters, including for Flask.
@@ -75,5 +102,11 @@ app.add_RPC_dict(test_rpcs.RPC_dict)
 # Register the RPCs in the test_rpcs2.py module.
 app.add_RPC_dict(test_rpcs2.RPC_dict)
 
-# Run the client page with Flask and a Twisted server.
-app.run_server()
+# Register the RPCs in the tests.py module.
+app.add_RPC_dict(tasks.RPC_dict)
+
+if __name__ == '__main__':
+    init_tasks(app.config)
+    
+    # Run the client page with Flask and a Twisted server.
+    app.run_server()
