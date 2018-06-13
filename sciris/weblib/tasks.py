@@ -1,7 +1,7 @@
 """
 tasks.py -- code related to Sciris task queue management
     
-Last update: 6/12/18 (gchadder3)
+Last update: 6/13/18 (gchadder3)
 """
 
 #
@@ -67,8 +67,11 @@ class TaskRecord(sobj.ScirisObject):
         status (str) -- the status of the task:
             'unknown' : unknown status, for example, just initialized
         error_text (str) -- string giving an idea of what error has transpired
+        result_id (str) -- string for the Redis ID of the AsyncResult
         start_time (???) -- the time the task was actually started
-        stop_time (???) -- the time the task completed      
+        stop_time (???) -- the time the task completed  
+        elapsed_time (int) -- the time the process has been running on the 
+            server in seconds
         
     Usage:
         >>> my_task = TaskRecord('my-special-task', uid=uuid.UUID('12345678123456781234567812345678'))                      
@@ -87,9 +90,15 @@ class TaskRecord(sobj.ScirisObject):
         # Start the error_text at None.
         self.error_text = None
         
+        # Start with no result_id.
+        self.result_id = None
+        
         # Start the start and stop times at None.
         self.start_time = None
         self.stop_time = None
+        
+        # Start the elapsed time at zero seconds.
+        self.elapsed_time = 0
         
         # Set the type prefix to 'task'.
         self.type_prefix = 'task'
@@ -116,8 +125,10 @@ class TaskRecord(sobj.ScirisObject):
         print('Task ID: %s' % self.task_id)
         print('Status: %s' % self.status)
         print('Error Text: %s' % self.error_text)
+        print('Result ID: %s' % self.result_id)
         print('Start Time: %s' % self.start_time)
         print('Stop Time: %s' % self.stop_time)
+        print('Elapsed Time: %s sec.' % self.elapsed_time)        
             
     def get_user_front_end_repr(self):
         obj_info = {
@@ -127,8 +138,10 @@ class TaskRecord(sobj.ScirisObject):
                 'taskId': self.task_id,
                 'status': self.status,
                 'errorText': self.error_text,
+                'resultId': self.result_id,
                 'startTime': self.start_time,
-                'stopTime': self.stop_time
+                'stopTime': self.stop_time,
+                'elapsedTime': self.elapsed_time
             }
         }
         return obj_info
@@ -143,8 +156,10 @@ class TaskRecord(sobj.ScirisObject):
                 'taskId': self.task_id,
                 'status': self.status,
                 'errorText': self.error_text,
+                'resultId': self.result_id,                
                 'startTime': self.start_time,
-                'stopTime': self.stop_time                
+                'stopTime': self.stop_time,
+                'elapsedTime': self.elapsed_time                
             }
         }
         return obj_info             
@@ -333,36 +348,35 @@ class TaskDict(sobj.ScirisCollection):
         
 @register_RPC(validation_type='nonanonymous user') 
 def launch_task(task_id='', func_name='', args=[], kwargs={}):
-    # Show arguments.
-    print 'task_id'
-    print task_id
-    print 'my func'
-    print func_name
-    print 'my args'
-    print args
-    print 'my kwargs'
-    print kwargs
-    
     # Start with an empty return dict.
     return_dict = {}
     
-    # Find a matching task record (if any to the task_id).
+    # Find a matching task record (if any) to the task_id.
     match_taskrec = task_dict.get_task_record_by_task_id(task_id)
     
     # If we did not find a match...
     if task_dict.get_task_record_by_task_id(task_id) is None:
-        # Create a new TaskRecord.
-        new_task_record = TaskRecord(task_id)
-    
-        # Add the TaskRecord to the TaskDict.
-        task_dict.add(new_task_record)
-    
-        # Create the return dict.
-        return_dict = {
-            'status': 'created'
-        }
+        if func_name != 'async_add':
+            return_dict = {
+                'error': 'You can run any function as long as its async_add!'
+            }
+        else:
+            # Create a new TaskRecord.
+            new_task_record = TaskRecord(task_id)
         
-    # Otherwise...
+            my_result = async_add.delay(args[0], args[1])
+            
+            new_task_record.result_id = my_result.id
+            new_task_record.status = 'started'
+            new_task_record.start_time = ut.today()
+            
+            # Add the TaskRecord to the TaskDict.
+            task_dict.add(new_task_record)   
+            
+            # Create the return dict from the user repr.
+            return_dict = new_task_record.get_user_front_end_repr()
+        
+    # Otherwise (there is a matching task)...
     else:
         # xxx
         if match_taskrec.status == 'completed':
@@ -379,29 +393,64 @@ def launch_task(task_id='', func_name='', args=[], kwargs={}):
 
 @register_RPC(validation_type='nonanonymous user') 
 def check_task(task_id): 
+    # Find a matching task record (if any) to the task_id.
+    match_taskrec = task_dict.get_task_record_by_task_id(task_id)
+    
     # Check to see if the task exists, and if not, return an error.
-    if task_dict.get_task_record_by_task_id(task_id) is None:
+    if match_taskrec is None:
         return {'error': 'No task found for specified task ID'}
     else:
-        return {'error': 'Sorry, not ready!'}
+        # Update the elapsed time.
+        
+        # Create the return dict from the user repr.
+        return match_taskrec.get_user_front_end_repr()        
     
 @register_RPC(validation_type='nonanonymous user') 
 def get_task_result(task_id):  
+    # Find a matching task record (if any) to the task_id.
+    match_taskrec = task_dict.get_task_record_by_task_id(task_id)
+    
     # Check to see if the task exists, and if not, return an error.
-    if task_dict.get_task_record_by_task_id(task_id) is None:
+    if match_taskrec is None:
         return {'error': 'No task found for specified task ID'}
     else:
-        return {'error': 'Sorry, not ready!'}
+        # If we have a result ID...
+        if match_taskrec.result_id is not None:
+            # Get the result itself from Celery.
+            result = celery_instance.AsyncResult(match_taskrec.result_id) 
+            
+            # If the result is not ready, return an error.
+            if not result.ready():
+                return {'error': 'Task not completed'}
+            
+            # Else (task is ready)...
+            else:
+                return {'result': result.get()}
+            
+        # Else (no result ID)...
+        else:
+            return {'error': 'No result ID'}
     
 @register_RPC(validation_type='nonanonymous user') 
 def delete_task(task_id): 
+    # Find a matching task record (if any) to the task_id.
+    match_taskrec = task_dict.get_task_record_by_task_id(task_id)
+    
     # Check to see if the task exists, and if not, return an error.
-    if task_dict.get_task_record_by_task_id(task_id) is None:
+    if match_taskrec is None:
         return {'error': 'No task found for specified task ID'}
     
-    # Otherwise, erase the task and return success.
+    # Otherwise (matching task).
     else:
+        # If we have a result ID, erase the result from Redis.
+        if match_taskrec.result_id is not None:
+            result = celery_instance.AsyncResult(match_taskrec.result_id)
+            result.forget()
+            
+        # Erase the TaskRecord.
         task_dict.delete_by_task_id(task_id)
+        
+        # Return success.
         return 'success'
        
 #@register_RPC()
