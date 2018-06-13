@@ -1,7 +1,7 @@
 """
 scirisapp.py -- classes for Sciris (Flask-based) apps 
     
-Last update: 6/1/18 (gchadder3)
+Last update: 6/13/18 (gchadder3)
 """
 
 # Imports
@@ -29,6 +29,7 @@ from ..corelib import fileio
 from . import rpcs
 from . import datastore as ds
 from . import user
+from . import tasks
 
 ##########################################################################################################
 #%% Classes
@@ -158,6 +159,14 @@ class ScirisApp(object):
             # Register the RPCs in the user.py module.
             self.add_RPC_dict(user.RPC_dict)
             
+        # If we are including DataStore and tasks, initialize them.    
+        if self.config['USE_DATASTORE'] and self.config['USE_TASKS']:
+            # Initialize the users.
+            self._init_tasks(self.config)
+            
+            # Register the RPCs in the user.py module.
+            self.add_RPC_dict(tasks.RPC_dict)            
+            
     @staticmethod
     def _init_logger(app):
 #        stream_handler = logging.StreamHandler(sys.stdout)
@@ -176,7 +185,7 @@ class ScirisApp(object):
         if 'SERVER_PORT'        not in app_config: app_config['SERVER_PORT']        = 8080
         if 'USE_DATASTORE'      not in app_config: app_config['USE_DATASTORE']      = False
         if 'USE_USERS'          not in app_config: app_config['USE_USERS']          = False
-        if 'USE_PROJECTS'       not in app_config: app_config['USE_PROJECTS']       = False
+        if 'USE_TASKS'          not in app_config: app_config['USE_TASKS']          = False
         if 'MATPLOTLIB_BACKEND' not in app_config: app_config['MATPLOTLIB_BACKEND'] = 'Agg'
 
     @staticmethod
@@ -293,7 +302,33 @@ class ScirisApp(object):
         if app_config['LOGGING_MODE'] == 'FULL':
             print('>> List of all users...')
             user.user_dict.show()
+            
+    @staticmethod        
+    def _init_tasks(app_config):
+        # Look for an existing tasks dictionary.
+        task_dict_uid = ds.data_store.get_uid_from_instance('taskdict', 'Task Dictionary')
+        
+        # Create the user dictionary object.  Note, that if no match was found, 
+        # this will be assigned a new UID.
+        tasks.task_dict = tasks.TaskDict(task_dict_uid)
+        
+        # If there was a match...
+        if task_dict_uid is not None:
+            if app_config['LOGGING_MODE'] == 'FULL':
+                print('>> Loading TaskDict from the DataStore.')
+            tasks.task_dict.load_from_data_store() 
+        
+        # Else (no match)...
+        else:
+            if app_config['LOGGING_MODE'] == 'FULL':
+                print('>> Creating a new TaskDict.')
+            tasks.task_dict.add_to_data_store()
     
+        # Show all of the users in user_dict.
+        if app_config['LOGGING_MODE'] == 'FULL':
+            print('>> List of all tasks...')
+            tasks.task_dict.show()  
+        
     def run_server(self, with_twisted=True, with_flask=True, with_client=True, 
         use_twisted_logging=True):
         # If we are not running the app with Twisted, just run the Flask app.
