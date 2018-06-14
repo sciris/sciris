@@ -1,7 +1,7 @@
 """
 tasks.py -- code related to Sciris task queue management
     
-Last update: 6/13/18 (gchadder3)
+Last update: 6/14/18 (gchadder3)
 """
 
 #
@@ -11,15 +11,7 @@ Last update: 6/13/18 (gchadder3)
 from numpy import argsort
 from . import rpcs #import make_register_RPC
 from . import scirisobjects as sobj
-from . import datastore as ds
 from ..corelib import utils as ut
-import time
-
-from celery import Celery
-
-celery_instance = Celery('tasks', broker='redis://localhost:6379', 
-    backend='redis://localhost:6379')
-celery_instance.conf.CELERY_TRACK_STARTED = True
 
 #
 # Globals
@@ -34,9 +26,6 @@ RPC_dict = {}
 
 # RPC registration decorator factory created using call to make_register_RPC().
 register_RPC = rpcs.make_register_RPC(RPC_dict)
-
-# Dictionary to hold all of the registered task functions in this module.
-task_funcs_dict = {}
 
 #
 # Classes
@@ -350,196 +339,7 @@ class TaskDict(sobj.ScirisCollection):
 
         # Return the sorted users info.      
         return sorted_taskrecs_info  
-
-#
-# Other functions (mostly helpers for the RPCs)
-#
-
-#def get_scirisdemo_user(name='_ScirisDemo'):    
-#    # Get the user object matching (if any)...
-#    the_user = user_dict.get_user_by_username(name)
-#    
-#    # If there is a match, return the UID, otherwise return None.
-#    if the_user is not None:
-#        return the_user.get_id()
-#    else:
-#        return None
-        
-#
-# run_task() function
-#
-        
-@celery_instance.task        
-def run_task(task_id, func_name, args, kwargs):
-    # We need to load in the whole DataStore here because the Celery worker 
-    # (in which this function is running) will not know about the same context 
-    # from the datastore.py module that the server code will.
-    
-    # Create the DataStore object, setting up Redis.
-    ds.data_store = ds.DataStore(redis_db_URL='redis://localhost:6379/0/')
-    
-    # Load the DataStore state from disk.
-    ds.data_store.load()
-    
-    # Look for an existing tasks dictionary.
-    task_dict_uid = ds.data_store.get_uid_from_instance('taskdict', 'Task Dictionary')
-    
-    # Create the task dictionary object.
-    task_dict = TaskDict(task_dict_uid)
-    
-    # Load the TaskDict tasks from Redis.
-    task_dict.load_from_data_store()
-        
-    # Find a matching task record (if any) to the task_id.
-    match_taskrec = task_dict.get_task_record_by_task_id(task_id)
-
-    # Set the TaskRecord to indicate start of the task.
-    match_taskrec.status = 'started'
-    match_taskrec.start_time = ut.today()
-    task_dict.update(match_taskrec)
-    
-    # Make the actual function call.
-    result = async_add(args[0], args[1])
-    
-    # Set the TaskRecord to indicate end of the task.
-    match_taskrec.status = 'completed'
-    match_taskrec.stop_time = ut.today()
-    task_dict.update(match_taskrec)
-    
-    # Return the result.
-    return result
     
 #
 # RPC functions
 #
-        
-@register_RPC(validation_type='nonanonymous user') 
-def launch_task(task_id='', func_name='', args=[], kwargs={}):
-    # Start with an empty return dict.
-    return_dict = {}
-    
-    # Find a matching task record (if any) to the task_id.
-    match_taskrec = task_dict.get_task_record_by_task_id(task_id)
-    
-    # If we did not find a match...
-    if match_taskrec is None:
-        if func_name != 'async_add':
-            return_dict = {
-                'error': 'You can run any function as long as its async_add!'
-            }
-        else:
-            # Create a new TaskRecord.
-            new_task_record = TaskRecord(task_id)
-            
-            # Initialize the TaskRecord with available information.
-            new_task_record.status = 'queued'
-            new_task_record.queue_time = ut.today()
-            new_task_record.func_name = func_name
-            new_task_record.args = args
-            new_task_record.kwargs = kwargs
-            
-            # Add the TaskRecord to the TaskDict.
-            task_dict.add(new_task_record) 
-            
-            # Queue up run_task() for Celery.
-            my_result = run_task.delay(task_id, func_name, args, kwargs)
-            
-            # Add the result ID to the TaskRecord, and update the DataStore.
-            new_task_record.result_id = my_result.id
-            task_dict.update(new_task_record)
-            
-            # Create the return dict from the user repr.
-            return_dict = new_task_record.get_user_front_end_repr()
-        
-    # Otherwise (there is a matching task)...
-    else:
-        # xxx
-        if match_taskrec.status == 'completed':
-            return_dict = {
-                'status': 'started'
-            }
-        else:
-            return_dict = {
-                'error': 'blocked'
-            }
-    
-    # Return our result.
-    return return_dict
-
-@register_RPC(validation_type='nonanonymous user') 
-def check_task(task_id): 
-    # Reload the whole TaskDict from the DataStore because Celery may have 
-    # modified its state in Redis.
-    task_dict.load_from_data_store()
-    
-    # Find a matching task record (if any) to the task_id.
-    match_taskrec = task_dict.get_task_record_by_task_id(task_id)
-    
-    # Check to see if the task exists, and if not, return an error.
-    if match_taskrec is None:
-        return {'error': 'No task found for specified task ID'}
-    else:
-        # Update the elapsed time.
-        
-        # Create the return dict from the user repr.
-        return match_taskrec.get_user_front_end_repr()        
-    
-@register_RPC(validation_type='nonanonymous user') 
-def get_task_result(task_id):
-    # Reload the whole TaskDict from the DataStore because Celery may have 
-    # modified its state in Redis.
-    task_dict.load_from_data_store()
-    
-    # Find a matching task record (if any) to the task_id.
-    match_taskrec = task_dict.get_task_record_by_task_id(task_id)
-    
-    # Check to see if the task exists, and if not, return an error.
-    if match_taskrec is None:
-        return {'error': 'No task found for specified task ID'}
-    else:
-        # If we have a result ID...
-        if match_taskrec.result_id is not None:
-            # Get the result itself from Celery.
-            result = celery_instance.AsyncResult(match_taskrec.result_id) 
-            
-            # If the result is not ready, return an error.
-            if not result.ready():
-                return {'error': 'Task not completed'}
-            
-            # Else (task is ready)...
-            else:
-                return {'result': result.get()}
-            
-        # Else (no result ID)...
-        else:
-            return {'error': 'No result ID'}
-    
-@register_RPC(validation_type='nonanonymous user') 
-def delete_task(task_id): 
-    # Find a matching task record (if any) to the task_id.
-    match_taskrec = task_dict.get_task_record_by_task_id(task_id)
-    
-    # Check to see if the task exists, and if not, return an error.
-    if match_taskrec is None:
-        return {'error': 'No task found for specified task ID'}
-    
-    # Otherwise (matching task).
-    else:
-        # If we have a result ID, erase the result from Redis.
-        if match_taskrec.result_id is not None:
-            result = celery_instance.AsyncResult(match_taskrec.result_id)
-            result.forget()
-            
-        # Erase the TaskRecord.
-        task_dict.delete_by_task_id(task_id)
-        
-        # Return success.
-        return 'success'
-
-#
-# Task functions
-#
-
-def async_add(x, y):
-    time.sleep(120)
-    return x + y

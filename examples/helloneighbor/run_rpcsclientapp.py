@@ -1,14 +1,18 @@
 """
 run_rpcsclientapp.py -- Simple ScirisApp use case 
     
-Last update: 6/13/18 (gchadder3)
+Last update: 6/14/18 (gchadder3)
 """
 
+#
 # Imports
+#
+
 from sciris.weblib.scirisapp import ScirisApp
 from sciris.corelib import fileio
 import model # The actual Python model we want to incorporate
 import mpld3 # For plotting
+import apptasks
 import test_rpcs
 import test_rpcs2
 import pandas as pd
@@ -68,6 +72,9 @@ def download_graph_png():
     
     # Return the full filename.
     return full_file_name
+
+# Register the RPCs in the apptasks.py module.
+app.add_RPC_dict(apptasks.RPC_dict)
 
 # Register the RPCs in the test_rpcs.py module.
 app.add_RPC_dict(test_rpcs.RPC_dict)
