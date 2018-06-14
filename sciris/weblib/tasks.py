@@ -11,6 +11,7 @@ Last update: 6/13/18 (gchadder3)
 from numpy import argsort
 from . import rpcs #import make_register_RPC
 from . import scirisobjects as sobj
+from . import datastore as ds
 from ..corelib import utils as ut
 import time
 
@@ -19,11 +20,6 @@ from celery import Celery
 celery_instance = Celery('tasks', broker='redis://localhost:6379', 
     backend='redis://localhost:6379')
 celery_instance.conf.CELERY_TRACK_STARTED = True
-
-@celery_instance.task
-def async_add(x, y):
-    time.sleep(120)
-    return x + y
 
 #
 # Globals
@@ -70,7 +66,11 @@ class TaskRecord(sobj.ScirisObject):
         status (str) -- the status of the task:
             'unknown' : unknown status, for example, just initialized
         error_text (str) -- string giving an idea of what error has transpired
+        func_name (str) -- string of the function name for what's called
+        args (list) -- list containing args for the function
+        kwargs (dict) -- dict containing kwargs for the function
         result_id (str) -- string for the Redis ID of the AsyncResult
+        queue_time (???) -- the time the task was queued for Celery
         start_time (???) -- the time the task was actually started
         stop_time (???) -- the time the task completed  
         elapsed_time (int) -- the time the process has been running on the 
@@ -93,10 +93,18 @@ class TaskRecord(sobj.ScirisObject):
         # Start the error_text at None.
         self.error_text = None
         
+        # Start the func_name at None.
+        self.func_name = None
+        
+        # Start the args and kwargs at None.
+        self.args = None
+        self.kwargs = None
+        
         # Start with no result_id.
         self.result_id = None
         
-        # Start the start and stop times at None.
+        # Start the queue, start, and stop times at None.
+        self.queue_time = None
         self.start_time = None
         self.stop_time = None
         
@@ -128,7 +136,11 @@ class TaskRecord(sobj.ScirisObject):
         print('Task ID: %s' % self.task_id)
         print('Status: %s' % self.status)
         print('Error Text: %s' % self.error_text)
+        print('Function Name: %s' % self.func_name)
+        print('Function Args: %s' % self.args)
+        print('Function Kwargs: %s' % self.kwargs)        
         print('Result ID: %s' % self.result_id)
+        print('Queue Time: %s' % self.queue_time)        
         print('Start Time: %s' % self.start_time)
         print('Stop Time: %s' % self.stop_time)
         print('Elapsed Time: %s sec.' % self.elapsed_time)        
@@ -141,7 +153,11 @@ class TaskRecord(sobj.ScirisObject):
                 'taskId': self.task_id,
                 'status': self.status,
                 'errorText': self.error_text,
+                'funcName': self.func_name,
+                'funcArgs': self.args,
+                'funcKwargs': self.kwargs,
                 'resultId': self.result_id,
+                'queueTime': self.queue_time,                
                 'startTime': self.start_time,
                 'stopTime': self.stop_time,
                 'elapsedTime': self.elapsed_time
@@ -159,7 +175,11 @@ class TaskRecord(sobj.ScirisObject):
                 'taskId': self.task_id,
                 'status': self.status,
                 'errorText': self.error_text,
-                'resultId': self.result_id,                
+                'funcName': self.func_name,
+                'funcArgs': self.args,
+                'funcKwargs': self.kwargs,                
+                'resultId': self.result_id, 
+                'queueTime': self.queue_time,                    
                 'startTime': self.start_time,
                 'stopTime': self.stop_time,
                 'elapsedTime': self.elapsed_time                
@@ -350,9 +370,45 @@ class TaskDict(sobj.ScirisCollection):
 #
         
 @celery_instance.task        
-def run_task(task_id, func_name, args):
-    pass
+def run_task(task_id, func_name, args, kwargs):
+    # We need to load in the whole DataStore here because the Celery worker 
+    # (in which this function is running) will not know about the same context 
+    # from the datastore.py module that the server code will.
+    
+    # Create the DataStore object, setting up Redis.
+    ds.data_store = ds.DataStore(redis_db_URL='redis://localhost:6379/0/')
+    
+    # Load the DataStore state from disk.
+    ds.data_store.load()
+    
+    # Look for an existing tasks dictionary.
+    task_dict_uid = ds.data_store.get_uid_from_instance('taskdict', 'Task Dictionary')
+    
+    # Create the task dictionary object.
+    task_dict = TaskDict(task_dict_uid)
+    
+    # Load the TaskDict tasks from Redis.
+    task_dict.load_from_data_store()
+        
+    # Find a matching task record (if any) to the task_id.
+    match_taskrec = task_dict.get_task_record_by_task_id(task_id)
 
+    # Set the TaskRecord to indicate start of the task.
+    match_taskrec.status = 'started'
+    match_taskrec.start_time = ut.today()
+    task_dict.update(match_taskrec)
+    
+    # Make the actual function call.
+    result = async_add(args[0], args[1])
+    
+    # Set the TaskRecord to indicate end of the task.
+    match_taskrec.status = 'completed'
+    match_taskrec.stop_time = ut.today()
+    task_dict.update(match_taskrec)
+    
+    # Return the result.
+    return result
+    
 #
 # RPC functions
 #
@@ -366,7 +422,7 @@ def launch_task(task_id='', func_name='', args=[], kwargs={}):
     match_taskrec = task_dict.get_task_record_by_task_id(task_id)
     
     # If we did not find a match...
-    if task_dict.get_task_record_by_task_id(task_id) is None:
+    if match_taskrec is None:
         if func_name != 'async_add':
             return_dict = {
                 'error': 'You can run any function as long as its async_add!'
@@ -374,15 +430,23 @@ def launch_task(task_id='', func_name='', args=[], kwargs={}):
         else:
             # Create a new TaskRecord.
             new_task_record = TaskRecord(task_id)
-        
-            my_result = async_add.delay(args[0], args[1])
             
-            new_task_record.result_id = my_result.id
-            new_task_record.status = 'started'
-            new_task_record.start_time = ut.today()
+            # Initialize the TaskRecord with available information.
+            new_task_record.status = 'queued'
+            new_task_record.queue_time = ut.today()
+            new_task_record.func_name = func_name
+            new_task_record.args = args
+            new_task_record.kwargs = kwargs
             
             # Add the TaskRecord to the TaskDict.
-            task_dict.add(new_task_record)   
+            task_dict.add(new_task_record) 
+            
+            # Queue up run_task() for Celery.
+            my_result = run_task.delay(task_id, func_name, args, kwargs)
+            
+            # Add the result ID to the TaskRecord, and update the DataStore.
+            new_task_record.result_id = my_result.id
+            task_dict.update(new_task_record)
             
             # Create the return dict from the user repr.
             return_dict = new_task_record.get_user_front_end_repr()
@@ -404,6 +468,10 @@ def launch_task(task_id='', func_name='', args=[], kwargs={}):
 
 @register_RPC(validation_type='nonanonymous user') 
 def check_task(task_id): 
+    # Reload the whole TaskDict from the DataStore because Celery may have 
+    # modified its state in Redis.
+    task_dict.load_from_data_store()
+    
     # Find a matching task record (if any) to the task_id.
     match_taskrec = task_dict.get_task_record_by_task_id(task_id)
     
@@ -417,7 +485,11 @@ def check_task(task_id):
         return match_taskrec.get_user_front_end_repr()        
     
 @register_RPC(validation_type='nonanonymous user') 
-def get_task_result(task_id):  
+def get_task_result(task_id):
+    # Reload the whole TaskDict from the DataStore because Celery may have 
+    # modified its state in Redis.
+    task_dict.load_from_data_store()
+    
     # Find a matching task record (if any) to the task_id.
     match_taskrec = task_dict.get_task_record_by_task_id(task_id)
     
@@ -468,3 +540,6 @@ def delete_task(task_id):
 # Task functions
 #
 
+def async_add(x, y):
+    time.sleep(120)
+    return x + y

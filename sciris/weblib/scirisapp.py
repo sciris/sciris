@@ -308,7 +308,7 @@ class ScirisApp(object):
         # Look for an existing tasks dictionary.
         task_dict_uid = ds.data_store.get_uid_from_instance('taskdict', 'Task Dictionary')
         
-        # Create the user dictionary object.  Note, that if no match was found, 
+        # Create the task dictionary object.  Note, that if no match was found, 
         # this will be assigned a new UID.
         tasks.task_dict = tasks.TaskDict(task_dict_uid)
         
