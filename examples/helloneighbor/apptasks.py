@@ -1,7 +1,7 @@
 """
 apptasks.py -- The Celery tasks module for this webapp
     
-Last update: 6/14/18 (gchadder3)
+Last update: 6/15/18 (gchadder3)
 """
 
 #
@@ -70,7 +70,6 @@ def run_task(task_id, func_name, args, kwargs):
     
     # Make the actual function call.
     result = task_func_dict[func_name](*args, **kwargs)
-#    result = async_add(args[0], args[1])
     
     # Set the TaskRecord to indicate end of the task.
     match_taskrec.status = 'completed'
@@ -86,9 +85,6 @@ def run_task(task_id, func_name, args, kwargs):
         
 @register_RPC(validation_type='nonanonymous user') 
 def launch_task(task_id='', func_name='', args=[], kwargs={}):
-    # Start with an empty return dict.
-    return_dict = {}
-    
     # Find a matching task record (if any) to the task_id.
     match_taskrec = tasks.task_dict.get_task_record_by_task_id(task_id)
           
@@ -126,14 +122,37 @@ def launch_task(task_id='', func_name='', args=[], kwargs={}):
         
     # Otherwise (there is a matching task)...
     else:
-        # xxx
+        # If the TaskRecord indicates the task has been completed...
         if match_taskrec.status == 'completed':
-            return_dict = {
-                'status': 'started'
-            }
+            # If we have a result ID, erase the result from Redis.
+            if match_taskrec.result_id is not None:
+                result = celery_instance.AsyncResult(match_taskrec.result_id)
+                result.forget()
+                       
+            # Initialize the TaskRecord to start the task again (though 
+            # possibly with a new function and arguments).
+            match_taskrec.status = 'queued'
+            match_taskrec.queue_time = ut.today()
+            match_taskrec.start_time = None
+            match_taskrec.stop_time = None            
+            match_taskrec.func_name = func_name
+            match_taskrec.args = args
+            match_taskrec.kwargs = kwargs
+            
+            # Queue up run_task() for Celery.
+            my_result = run_task.delay(task_id, func_name, args, kwargs)
+            
+            # Add the new result ID to the TaskRecord, and update the DataStore.
+            match_taskrec.result_id = my_result.id
+            tasks.task_dict.update(match_taskrec)
+            
+            # Create the return dict from the user repr.
+            return_dict = match_taskrec.get_user_front_end_repr()
+            
+        # Else (the task is not completed)...
         else:
             return_dict = {
-                'error': 'blocked'
+                'error': 'Task is already running'
             }
     
     # Return our result.
