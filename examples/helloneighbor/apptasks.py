@@ -10,6 +10,7 @@ Last update: 6/14/18 (gchadder3)
 
 from celery import Celery
 import time
+from functools import wraps
 from sciris.corelib import utils as ut
 from sciris.weblib import datastore as ds
 from sciris.weblib import tasks
@@ -30,6 +31,9 @@ RPC_dict = {}
 
 # RPC registration decorator factory created using call to make_register_RPC().
 register_RPC = make_register_RPC(RPC_dict)
+
+# Dictionary to hold registered task functions to be callable from run_task().
+task_func_dict = {}
 
 #
 # run_task() function
@@ -65,7 +69,8 @@ def run_task(task_id, func_name, args, kwargs):
     tasks.task_dict.update(match_taskrec)
     
     # Make the actual function call.
-    result = async_add(args[0], args[1])
+    result = task_func_dict[func_name](*args, **kwargs)
+#    result = async_add(args[0], args[1])
     
     # Set the TaskRecord to indicate end of the task.
     match_taskrec.status = 'completed'
@@ -86,12 +91,14 @@ def launch_task(task_id='', func_name='', args=[], kwargs={}):
     
     # Find a matching task record (if any) to the task_id.
     match_taskrec = tasks.task_dict.get_task_record_by_task_id(task_id)
-    
+          
     # If we did not find a match...
     if match_taskrec is None:
-        if func_name != 'async_add':
+        # If the function name is not in the task function dictionary, return an 
+        # error.
+        if not func_name in task_func_dict:
             return_dict = {
-                'error': 'You can run any function as long as its async_add!'
+                'error': 'Could not find requested async task function'
             }
         else:
             # Create a new TaskRecord.
@@ -206,6 +213,24 @@ def delete_task(task_id):
 # Task functions
 #
 
+# Decorator function for registering an async task function, putting it in the 
+# task_func_dict.
+def register_async_task(task_func):
+    @wraps(task_func)
+    def wrapper(*args, **kwargs):        
+        task_func(*args, **kwargs)
+
+    # Add the function to the dictionary.
+    task_func_dict[task_func.__name__] = task_func
+    
+    return wrapper
+
+@register_async_task
 def async_add(x, y):
-    time.sleep(120)
+    time.sleep(60)
     return x + y
+
+@register_async_task
+def async_sub(x, y):
+    time.sleep(60)
+    return x - y
