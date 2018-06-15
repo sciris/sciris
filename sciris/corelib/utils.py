@@ -390,7 +390,7 @@ def printvars(localvars=None, varlist=None, label=None, divider=True, spaces=1, 
     return None
 
 
-def today(timezone='utc', die=False):
+def today(timezone='utc', die=False, tostring=False, fmt=None):
     ''' Get the current time, in UTC time '''
     import datetime # today = datetime.today
     try:
@@ -398,19 +398,24 @@ def today(timezone='utc', die=False):
         if timezone=='utc':                           tzinfo = dateutil.tz.tzutc()
         elif timezone is None or timezone=='current': tzinfo = None
         else:                                         raise Exception('Timezone "%s" not understood' % timezone)
-    except:
-        errormsg = 'Timezone information not available'
+    except Exception as E:
+        errormsg = 'Timezone information not available (%s)' % repr(E)
         if die: raise Exception(errormsg)
         tzinfo = None
     now = datetime.datetime.now(tzinfo)
-    return now
+    if tostring:
+        output = getdate(now)
+    else:
+        output = now
+    return output
 
 
-def getdate(obj, which='modified', fmt='str'):
+def getdate(obj, which='modified', fmt='str', dateformat=None):
         ''' Return either the date created or modified ("which") as either a str or int ("fmt") '''
         from time import mktime
         
-        dateformat = '%Y-%b-%d %H:%M:%S'
+        if dateformat is None:
+            dateformat = '%Y-%b-%d %H:%M:%S'
         
         try:
             if isstring(obj): return obj # Return directly if it's a string
