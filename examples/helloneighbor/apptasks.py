@@ -9,6 +9,7 @@ Last update: 6/15/18 (gchadder3)
 #
 
 from celery import Celery
+import config
 import time
 from functools import wraps
 from sciris.corelib import utils as ut
@@ -20,10 +21,13 @@ from sciris.weblib.rpcs import make_register_RPC
 # Globals
 #
 
-# Define the Celery instance and configure so that the actual start of a 
-# task is tracked.
-celery_instance = Celery('tasks', broker='redis://localhost:6379', 
-    backend='redis://localhost:6379')
+# Define the Celery instance.
+celery_instance = Celery('tasks')
+
+# Configure Celery with config.py.
+celery_instance.config_from_object('config')
+
+# Configure so that the actual start of a task is tracked.
 celery_instance.conf.CELERY_TRACK_STARTED = True
 
 # Dictionary to hold all of the registered RPCs in this module.
@@ -46,7 +50,7 @@ def run_task(task_id, func_name, args, kwargs):
     # from the datastore.py module that the server code will.
     
     # Create the DataStore object, setting up Redis.
-    ds.data_store = ds.DataStore(redis_db_URL='redis://localhost:6379/0/')
+    ds.data_store = ds.DataStore(redis_db_URL=config.REDIS_URL)
     
     # Load the DataStore state from disk.
     ds.data_store.load()
