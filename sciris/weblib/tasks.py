@@ -578,7 +578,7 @@ def make_celery(config=None):
             # Return success.
             return 'success'
     
-    return celery_instance
+    return celery_instance, RPC_dict
 
 
 

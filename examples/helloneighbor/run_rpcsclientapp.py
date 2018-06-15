@@ -9,7 +9,6 @@ Last update: 6/14/18 (gchadder3)
 #
 
 from sciris.weblib.scirisapp import ScirisApp
-from sciris.weblib.tasks import RPC_dict
 from sciris.corelib import fileio
 import model # The actual Python model we want to incorporate
 import mpld3 # For plotting
@@ -75,7 +74,7 @@ def download_graph_png():
     return full_file_name
 
 # Register the RPCs in the apptasks.py module.
-app.add_RPC_dict(RPC_dict)
+app.add_RPC_dict(apptasks.RPC_dict)
 
 # Register the RPCs in the test_rpcs.py module.
 app.add_RPC_dict(test_rpcs.RPC_dict)

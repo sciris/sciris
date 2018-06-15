@@ -9,7 +9,7 @@ from sciris.weblib.tasks import register_async_task
 from sciris.weblib.tasks import make_celery
 import config
 
-celery_instance = make_celery(config=config)
+celery_instance, RPC_dict = make_celery(config=config)
 
 @register_async_task
 def async_add(x, y):
