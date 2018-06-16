@@ -1,7 +1,7 @@
 """
 tasks.py -- code related to Sciris task queue management
     
-Last update: 6/14/18 (gchadder3)
+Last update: 6/15/18 (gchadder3)
 """
 
 #
@@ -363,7 +363,6 @@ class TaskDict(sobj.ScirisCollection):
 
 def make_celery(config=None):
     
-    
     from celery import Celery
     from sciris.weblib import datastore as ds
     from sciris.weblib import tasks
@@ -578,8 +577,9 @@ def make_celery(config=None):
             # Return success.
             return 'success'
     
-    return celery_instance, RPC_dict
-
+#    return celery_instance, RPC_dict
+    return celery_instance, RPC_dict, run_task
+#    return celery_instance, RPC_dict, run_task2
 
 
 #
