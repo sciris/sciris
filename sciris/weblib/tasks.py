@@ -1,13 +1,14 @@
 """
 tasks.py -- code related to Sciris task queue management
     
-Last update: 6/15/18 (gchadder3)
+Last update: 6/16/18 (gchadder3)
 """
 
 #
 # Imports
 #
 
+import celery
 from numpy import argsort
 from . import rpcs #import make_register_RPC
 from . import scirisobjects as sobj
@@ -343,6 +344,8 @@ class TaskDict(sobj.ScirisCollection):
 
         # Return the sorted users info.      
         return sorted_taskrecs_info  
+
+
     
 #
 # RPC functions
@@ -383,6 +386,11 @@ def make_celery(config=None):
     # RPC registration decorator factory created using call to make_register_RPC().
     register_RPC = make_register_RPC(RPC_dict)
     
+#    class RunTask(celery.Task):
+#        name = "tasks.run_task"
+#        
+#        def run(self, task_id, func_name, args, kwargs):
+#            return run_task(task_id, func_name, args, kwargs)
     
     #
     # run_task() function
@@ -472,7 +480,8 @@ def make_celery(config=None):
         # Otherwise (there is a matching task)...
         else:
             # If the TaskRecord indicates the task has been completed...
-            if match_taskrec.status == 'completed':
+#            if match_taskrec.status == 'completed':  # TODO: remember to uncomment this
+            if match_taskrec.status != 'xxx':
                 # If we have a result ID, erase the result from Redis.
                 if match_taskrec.result_id is not None:
                     result = celery_instance.AsyncResult(match_taskrec.result_id)
@@ -576,10 +585,13 @@ def make_celery(config=None):
             
             # Return success.
             return 'success'
+        
+    # Register RunTask, which encapsulates the run_task function.
+#    celery_instance.tasks.register(RunTask)
     
-#    return celery_instance, RPC_dict
-    return celery_instance, RPC_dict, run_task
-#    return celery_instance, RPC_dict, run_task2
+    # Return the Celery instance and RPC_dict.
+    return celery_instance, RPC_dict
+#    return celery_instance, RPC_dict, run_task
 
 
 #
