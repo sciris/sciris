@@ -385,13 +385,13 @@ def make_celery(config=None):
     
     # RPC registration decorator factory created using call to make_register_RPC().
     register_RPC = make_register_RPC(RPC_dict)
-    
+         
 #    class RunTask(celery.Task):
 #        name = "tasks.run_task"
 #        
 #        def run(self, task_id, func_name, args, kwargs):
 #            return run_task(task_id, func_name, args, kwargs)
-    
+        
     #
     # run_task() function
     #
@@ -442,6 +442,10 @@ def make_celery(config=None):
             
     @register_RPC(validation_type='nonanonymous user') 
     def launch_task(task_id='', func_name='', args=[], kwargs={}):
+        # Reload the whole TaskDict from the DataStore because Celery may have 
+        # modified its state in Redis.
+        tasks.task_dict.load_from_data_store()
+        
         # Find a matching task record (if any) to the task_id.
         match_taskrec = tasks.task_dict.get_task_record_by_task_id(task_id)
               
@@ -566,6 +570,10 @@ def make_celery(config=None):
         
     @register_RPC(validation_type='nonanonymous user') 
     def delete_task(task_id): 
+        # Reload the whole TaskDict from the DataStore because Celery may have 
+        # modified its state in Redis.
+        tasks.task_dict.load_from_data_store()
+        
         # Find a matching task record (if any) to the task_id.
         match_taskrec = tasks.task_dict.get_task_record_by_task_id(task_id)
         
@@ -590,9 +598,9 @@ def make_celery(config=None):
 #    celery_instance.tasks.register(RunTask)
     
     # Return the Celery instance and RPC_dict.
-    return celery_instance, RPC_dict
-#    return celery_instance, RPC_dict, run_task
-
+#    return celery_instance, RPC_dict
+    return celery_instance, RPC_dict, run_task
+#    return celery_instance, RPC_dict, RunTask
 
 #
 # Task functions
