@@ -7,7 +7,6 @@ Last update: 6/17/18 (gchadder3)
 import time
 from sciris.weblib.tasks import register_async_task
 from sciris.weblib.tasks import make_celery
-#from sciris.weblib.tasks import DummyTask
 import config
 
 celery_instance, RPC_dict = make_celery(config=config)
