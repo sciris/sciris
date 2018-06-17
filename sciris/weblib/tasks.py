@@ -1,14 +1,13 @@
 """
 tasks.py -- code related to Sciris task queue management
     
-Last update: 6/16/18 (gchadder3)
+Last update: 6/17/18 (gchadder3)
 """
 
 #
 # Imports
 #
 
-import celery
 from numpy import argsort
 from . import rpcs #import make_register_RPC
 from . import scirisobjects as sobj
@@ -345,7 +344,12 @@ class TaskDict(sobj.ScirisCollection):
         # Return the sorted users info.      
         return sorted_taskrecs_info  
 
-
+# If I uncomment this, somehow it gets registered by Celery.
+#class DummyTask(celery.Task):
+#    name = "dummy_result"
+#    
+#    def run(self):
+#        return 'here be dummy result'
     
 #
 # RPC functions
@@ -385,12 +389,6 @@ def make_celery(config=None):
     
     # RPC registration decorator factory created using call to make_register_RPC().
     register_RPC = make_register_RPC(RPC_dict)
-         
-#    class RunTask(celery.Task):
-#        name = "tasks.run_task"
-#        
-#        def run(self, task_id, func_name, args, kwargs):
-#            return run_task(task_id, func_name, args, kwargs)
         
     #
     # run_task() function
@@ -472,7 +470,8 @@ def make_celery(config=None):
                 tasks.task_dict.add(new_task_record) 
                 
                 # Queue up run_task() for Celery.
-                my_result = run_task.delay(task_id, func_name, args, kwargs)
+                my_result = celery_instance.tasks['sciris.weblib.tasks.run_task'].delay(task_id, func_name, args, kwargs)
+#                my_result = run_task.delay(task_id, func_name, args, kwargs)
                 
                 # Add the result ID to the TaskRecord, and update the DataStore.
                 new_task_record.result_id = my_result.id
@@ -502,7 +501,10 @@ def make_celery(config=None):
                 match_taskrec.kwargs = kwargs
                 
                 # Queue up run_task() for Celery.
-                my_result = run_task.delay(task_id, func_name, args, kwargs)
+#                print 'celery tasks available:'
+#                print celery_instance.tasks
+                my_result = celery_instance.tasks['sciris.weblib.tasks.run_task'].delay(task_id, func_name, args, kwargs)                
+#                my_result = run_task.delay(task_id, func_name, args, kwargs)
                 
                 # Add the new result ID to the TaskRecord, and update the DataStore.
                 match_taskrec.result_id = my_result.id
@@ -594,13 +596,9 @@ def make_celery(config=None):
             # Return success.
             return 'success'
         
-    # Register RunTask, which encapsulates the run_task function.
-#    celery_instance.tasks.register(RunTask)
-    
     # Return the Celery instance and RPC_dict.
-#    return celery_instance, RPC_dict
-    return celery_instance, RPC_dict, run_task
-#    return celery_instance, RPC_dict, RunTask
+    return celery_instance, RPC_dict
+
 
 #
 # Task functions
