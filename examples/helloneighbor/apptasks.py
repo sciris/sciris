@@ -9,6 +9,9 @@ from sciris.weblib.tasks import register_async_task
 from sciris.weblib.tasks import make_celery
 import config
 
+# Create the Celery instance for this module, and simultaneously the 
+# RPC dictionary which includes RPCs defined in tasks.py for managing 
+# asynchronous tasks.
 celery_instance, RPC_dict = make_celery(config=config)
 
 # This is needed (or creation of a Task class instead) to allow run_task() to 

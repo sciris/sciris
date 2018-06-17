@@ -357,17 +357,6 @@ class TaskDict(sobj.ScirisCollection):
 
 
 
-
-
-#
-# Imports
-#
-
-
-#
-# Globals
-#
-
 def make_celery(config=None):
     
     from celery import Celery
@@ -483,8 +472,7 @@ def make_celery(config=None):
         # Otherwise (there is a matching task)...
         else:
             # If the TaskRecord indicates the task has been completed...
-#            if match_taskrec.status == 'completed':  # TODO: remember to uncomment this
-            if match_taskrec.status != 'xxx':
+            if match_taskrec.status == 'completed':
                 # If we have a result ID, erase the result from Redis.
                 if match_taskrec.result_id is not None:
                     result = celery_instance.AsyncResult(match_taskrec.result_id)
@@ -615,3 +603,8 @@ def register_async_task(task_func):
     task_func_dict[task_func.__name__] = task_func
     
     return wrapper
+
+# Example task function for testing task queuing functionality.
+@register_async_task
+def test_message(message):
+    return 'The message is: ' + message
