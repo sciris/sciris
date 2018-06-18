@@ -74,7 +74,8 @@ def download_graph_png():
     return full_file_name
 
 # Register the RPCs in the apptasks.py module.
-app.add_RPC_dict(apptasks.RPC_dict)
+# TODO: uncomment this
+#app.add_RPC_dict(apptasks.RPC_dict)
 
 # Register the RPCs in the test_rpcs.py module.
 app.add_RPC_dict(test_rpcs.RPC_dict)

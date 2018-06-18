@@ -12,13 +12,14 @@ import config
 # Create the Celery instance for this module, and simultaneously the 
 # RPC dictionary which includes RPCs defined in tasks.py for managing 
 # asynchronous tasks.
-celery_instance, RPC_dict = make_celery(config=config)
+#celery_instance, RPC_dict = make_celery(config=config)
+from sciris.weblib.tasks import celery_instance
 
 # This is needed (or creation of a Task class instead) to allow run_task() to 
 # be found on Windows using celery version 3.1.25.  I have NO idea why!  :-(
-@celery_instance.task
-def dummy_result():
-    return 'here be dummy result'
+#@celery_instance.task
+#def dummy_result():
+#    return 'here be dummy result'
 
 @register_async_task
 def async_add(x, y):
