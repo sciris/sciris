@@ -4,21 +4,35 @@ apptasks.py -- The Celery tasks module for this webapp
 Last update: 6/18/18 (gchadder3)
 """
 
+#
+# Imports
+#
+
 import time
-from sciris.weblib.tasks import register_async_task
-#from sciris.weblib.tasks import make_celery
+#import config
 from sciris.weblib.tasks import make_celery_instance
-import config
+from sciris.weblib.tasks import add_task_funcs
+from sciris.weblib.tasks import make_register_async_task
 
-# Create the Celery instance for this module, and simultaneously the 
-# RPC dictionary which includes RPCs defined in tasks.py for managing 
-# asynchronous tasks.
-#celery_instance, RPC_dict = make_celery(config=config)
-#from sciris.weblib.tasks import celery_instance
+#
+# Globals
+#
+
+# Dictionary to hold all of the registered task functions in this module.
+task_func_dict = {}
+
+# Task function registration decorator created using call to 
+# make_register_async_task().
+register_async_task = make_register_async_task(task_func_dict)
+
+# Create the Celery instance for this module.
 celery_instance = make_celery_instance()
+#celery_instance = make_celery_instance(config=config)
 
-# This is needed (or creation of a Task class instead) to allow run_task() to 
-# be found on Windows using celery version 3.1.25.  I have NO idea why!  :-(
+# This is needed in Windows using celery Version 3.1.25 in order for the
+# add_task_funcs() function below to successfully add the asynchronous task 
+# functions defined in this module to tasks.py.  Why these lines enable this 
+# I do not understand.
 #@celery_instance.task
 #def dummy_result():
 #    return 'here be dummy result'
@@ -32,3 +46,7 @@ def async_add(x, y):
 def async_sub(x, y):
     time.sleep(10)
     return x - y
+
+# Add the asynchronous task functions in this module to the tasks.py module 
+# so run_task() can call them.
+add_task_funcs(task_func_dict)
