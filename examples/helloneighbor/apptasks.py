@@ -9,7 +9,7 @@ Last update: 6/18/18 (gchadder3)
 #
 
 import time
-#import config
+import config
 from sciris.weblib.tasks import make_celery_instance
 from sciris.weblib.tasks import add_task_funcs
 from sciris.weblib.tasks import make_register_async_task
@@ -26,8 +26,7 @@ task_func_dict = {}
 register_async_task = make_register_async_task(task_func_dict)
 
 # Create the Celery instance for this module.
-celery_instance = make_celery_instance()
-#celery_instance = make_celery_instance(config=config)
+celery_instance = make_celery_instance(config=config)
 
 # This is needed in Windows using celery Version 3.1.25 in order for the
 # add_task_funcs() function below to successfully add the asynchronous task 

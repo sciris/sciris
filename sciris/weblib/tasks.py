@@ -8,10 +8,9 @@ Last update: 6/18/18 (gchadder3)
 # Imports
 #
 
-import celery
+#import celery
 from celery import Celery
 from . import datastore as ds
-import config   # TODO: we should probably try to get rid of this dependency
 from numpy import argsort
 from . import rpcs #import make_register_RPC
 from . import scirisobjects as sobj
@@ -352,10 +351,70 @@ class TaskDict(sobj.ScirisCollection):
         return sorted_taskrecs_info  
 
 # Class containing the run_task() asynchronous function.
-class RunTask(celery.Task):
-    name = "sciris.weblib.tasks.run_task"
+# Not sure if using this will work in verion 4.x, but will keep code here in 
+# case some variant might work.
+#class RunTask(celery.Task):
+#    name = "sciris.weblib.tasks.run_task"
+#    
+#    def run(self, task_id, func_name, args, kwargs):
+#        # We need to load in the whole DataStore here because the Celery worker 
+#        # (in which this function is running) will not know about the same context 
+#        # from the datastore.py module that the server code will.
+#        
+#        # Create the DataStore object, setting up Redis.
+#        ds.data_store = ds.DataStore(redis_db_URL=config.REDIS_URL)
+#        
+#        # Load the DataStore state from disk.
+#        ds.data_store.load()
+#        
+#        # Look for an existing tasks dictionary.
+#        task_dict_uid = ds.data_store.get_uid_from_instance('taskdict', 'Task Dictionary')
+#        
+#        # Create the task dictionary object.
+#        task_dict = TaskDict(task_dict_uid)
+#        
+#        # Load the TaskDict tasks from Redis.
+#        task_dict.load_from_data_store()
+#            
+#        # Find a matching task record (if any) to the task_id.
+#        match_taskrec = task_dict.get_task_record_by_task_id(task_id)
+#    
+#        # Set the TaskRecord to indicate start of the task.
+#        match_taskrec.status = 'started'
+#        match_taskrec.start_time = ut.today()
+#        task_dict.update(match_taskrec)
+#        
+#        # Make the actual function call.
+##        print 'show the task_funcs:'
+##        print task_func_dict
+#        result = task_func_dict[func_name](*args, **kwargs)
+#        
+#        # Set the TaskRecord to indicate end of the task.
+#        match_taskrec.status = 'completed'
+#        match_taskrec.stop_time = ut.today()
+#        task_dict.update(match_taskrec)
+#        
+#        # Return the result.
+#        return result
+        
+# Function for creating the Celery instance, resetting the global and also 
+# passing back the same result. for the benefit of callers in non-Sciris 
+# modules.
+def make_celery_instance(config=None):
+    global celery_instance
     
-    def run(self, task_id, func_name, args, kwargs):
+    # Define the Celery instance.
+    celery_instance = Celery('tasks')
+    
+    # Configure Celery with config.py.
+    celery_instance.config_from_object('config')
+    
+    # Configure so that the actual start of a task is tracked.
+    # This may work only under version 3.1.25
+#    celery_instance.conf.CELERY_TRACK_STARTED = True
+   
+    @celery_instance.task
+    def run_task(task_id, func_name, args, kwargs):
         # We need to load in the whole DataStore here because the Celery worker 
         # (in which this function is running) will not know about the same context 
         # from the datastore.py module that the server code will.
@@ -394,22 +453,7 @@ class RunTask(celery.Task):
         task_dict.update(match_taskrec)
         
         # Return the result.
-        return result
-        
-# Function for creating the Celery instance, resetting the global and also 
-# passing back the same result. for the benefit of callers in non-Sciris 
-# modules.
-def make_celery_instance():
-    global celery_instance
-    
-    # Define the Celery instance.
-    celery_instance = Celery('tasks')
-    
-    # Configure Celery with config.py.
-    celery_instance.config_from_object('config')
-    
-    # Configure so that the actual start of a task is tracked.
-    celery_instance.conf.CELERY_TRACK_STARTED = True
+        return result    
     
     # Return the new instance.
     return celery_instance
