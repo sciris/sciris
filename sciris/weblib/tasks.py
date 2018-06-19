@@ -453,7 +453,99 @@ def make_celery_instance(config=None):
         task_dict.update(match_taskrec)
         
         # Return the result.
-        return result    
+        return result 
+    
+    # The launch-task() RPC is the only one included here because it is the 
+    # only one that makes a direct call to run_task().  Any other RPCs that 
+    # would call run_task() would have to be placed in make_celery_instance() 
+    # as well.
+    @register_RPC(validation_type='nonanonymous user') 
+    def launch_task(task_id='', func_name='', args=[], kwargs={}):
+        # Reload the whole TaskDict from the DataStore because Celery may have 
+        # modified its state in Redis.
+        task_dict.load_from_data_store()
+        
+        # Find a matching task record (if any) to the task_id.
+        match_taskrec = task_dict.get_task_record_by_task_id(task_id)
+              
+        # If we did not find a match...
+        if match_taskrec is None:
+            # If the function name is not in the task function dictionary, return an 
+            # error.
+            if not func_name in task_func_dict:
+                return_dict = {
+                    'error': 'Could not find requested async task function'
+                }
+            else:
+                # Create a new TaskRecord.
+                new_task_record = TaskRecord(task_id)
+                
+                # Initialize the TaskRecord with available information.
+                new_task_record.status = 'queued'
+                new_task_record.queue_time = ut.today()
+                new_task_record.func_name = func_name
+                new_task_record.args = args
+                new_task_record.kwargs = kwargs
+                
+                # Add the TaskRecord to the TaskDict.
+                task_dict.add(new_task_record) 
+                
+                # Queue up run_task() for Celery.
+    #            print 'celery tasks available:'
+    #            print celery_instance.tasks 
+                # This version may only work under celery version 3.x.
+    #            my_result = celery_instance.tasks['sciris.weblib.tasks.run_task'].delay(task_id, func_name, args, kwargs)
+                my_result = run_task.delay(task_id, func_name, args, kwargs)
+                
+                # Add the result ID to the TaskRecord, and update the DataStore.
+                new_task_record.result_id = my_result.id
+                task_dict.update(new_task_record)
+                
+                # Create the return dict from the user repr.
+                return_dict = new_task_record.get_user_front_end_repr()
+            
+        # Otherwise (there is a matching task)...
+        else:
+            # If the TaskRecord indicates the task has been completed...
+    #        if match_taskrec.status == 'completed':  # TODO: get rid of line below
+            if match_taskrec.status != 'xxx':            
+                # If we have a result ID, erase the result from Redis.
+                if match_taskrec.result_id is not None:
+                    result = celery_instance.AsyncResult(match_taskrec.result_id)
+                    result.forget()
+                           
+                # Initialize the TaskRecord to start the task again (though 
+                # possibly with a new function and arguments).
+                match_taskrec.status = 'queued'
+                match_taskrec.queue_time = ut.today()
+                match_taskrec.start_time = None
+                match_taskrec.stop_time = None            
+                match_taskrec.func_name = func_name
+                match_taskrec.args = args
+                match_taskrec.kwargs = kwargs
+                
+                # Queue up run_task() for Celery.
+    #                print 'celery tasks available:'
+    #                print celery_instance.tasks
+                # This version may only work under celery version 3.x.
+    #            my_result = celery_instance.tasks['sciris.weblib.tasks.run_task'].delay(task_id, func_name, args, kwargs)            
+                my_result = run_task.delay(task_id, func_name, args, kwargs)                
+                
+                # Add the new result ID to the TaskRecord, and update the DataStore.
+                match_taskrec.result_id = my_result.id
+                task_dict.update(match_taskrec)
+                
+                # Create the return dict from the user repr.
+                return_dict = match_taskrec.get_user_front_end_repr()
+                
+            # Else (the task is not completed)...
+            else:
+                return_dict = {
+                    'error': 'Task is already running'
+                }
+        
+        # Return our result.
+        return return_dict  
     
     # Return the new instance.
     return celery_instance
@@ -470,90 +562,96 @@ def add_task_funcs(new_task_funcs):
 #
 # RPC functions
 #
-    
-@register_RPC(validation_type='nonanonymous user') 
-def launch_task(task_id='', func_name='', args=[], kwargs={}):
-    # Reload the whole TaskDict from the DataStore because Celery may have 
-    # modified its state in Redis.
-    task_dict.load_from_data_store()
-    
-    # Find a matching task record (if any) to the task_id.
-    match_taskrec = task_dict.get_task_record_by_task_id(task_id)
-          
-    # If we did not find a match...
-    if match_taskrec is None:
-        # If the function name is not in the task function dictionary, return an 
-        # error.
-        if not func_name in task_func_dict:
-            return_dict = {
-                'error': 'Could not find requested async task function'
-            }
-        else:
-            # Create a new TaskRecord.
-            new_task_record = TaskRecord(task_id)
-            
-            # Initialize the TaskRecord with available information.
-            new_task_record.status = 'queued'
-            new_task_record.queue_time = ut.today()
-            new_task_record.func_name = func_name
-            new_task_record.args = args
-            new_task_record.kwargs = kwargs
-            
-            # Add the TaskRecord to the TaskDict.
-            task_dict.add(new_task_record) 
-            
-            # Queue up run_task() for Celery.
-#            print 'celery tasks available:'
-#            print celery_instance.tasks            
-            my_result = celery_instance.tasks['sciris.weblib.tasks.run_task'].delay(task_id, func_name, args, kwargs)
-            
-            # Add the result ID to the TaskRecord, and update the DataStore.
-            new_task_record.result_id = my_result.id
-            task_dict.update(new_task_record)
-            
-            # Create the return dict from the user repr.
-            return_dict = new_task_record.get_user_front_end_repr()
-        
-    # Otherwise (there is a matching task)...
-    else:
-        # If the TaskRecord indicates the task has been completed...
-#        if match_taskrec.status == 'completed':  # TODO: get rid of line below
-        if match_taskrec.status != 'xxx':            
-            # If we have a result ID, erase the result from Redis.
-            if match_taskrec.result_id is not None:
-                result = celery_instance.AsyncResult(match_taskrec.result_id)
-                result.forget()
-                       
-            # Initialize the TaskRecord to start the task again (though 
-            # possibly with a new function and arguments).
-            match_taskrec.status = 'queued'
-            match_taskrec.queue_time = ut.today()
-            match_taskrec.start_time = None
-            match_taskrec.stop_time = None            
-            match_taskrec.func_name = func_name
-            match_taskrec.args = args
-            match_taskrec.kwargs = kwargs
-            
-            # Queue up run_task() for Celery.
-#                print 'celery tasks available:'
-#                print celery_instance.tasks
-            my_result = celery_instance.tasks['sciris.weblib.tasks.run_task'].delay(task_id, func_name, args, kwargs)                
-            
-            # Add the new result ID to the TaskRecord, and update the DataStore.
-            match_taskrec.result_id = my_result.id
-            task_dict.update(match_taskrec)
-            
-            # Create the return dict from the user repr.
-            return_dict = match_taskrec.get_user_front_end_repr()
-            
-        # Else (the task is not completed)...
-        else:
-            return_dict = {
-                'error': 'Task is already running'
-            }
-    
-    # Return our result.
-    return return_dict  
+
+# This should be defined here, but it uses run_task(), which is presently 
+# only defined inside the make_celery_instance() function.
+#@register_RPC(validation_type='nonanonymous user') 
+#def launch_task(task_id='', func_name='', args=[], kwargs={}):
+#    # Reload the whole TaskDict from the DataStore because Celery may have 
+#    # modified its state in Redis.
+#    task_dict.load_from_data_store()
+#    
+#    # Find a matching task record (if any) to the task_id.
+#    match_taskrec = task_dict.get_task_record_by_task_id(task_id)
+#          
+#    # If we did not find a match...
+#    if match_taskrec is None:
+#        # If the function name is not in the task function dictionary, return an 
+#        # error.
+#        if not func_name in task_func_dict:
+#            return_dict = {
+#                'error': 'Could not find requested async task function'
+#            }
+#        else:
+#            # Create a new TaskRecord.
+#            new_task_record = TaskRecord(task_id)
+#            
+#            # Initialize the TaskRecord with available information.
+#            new_task_record.status = 'queued'
+#            new_task_record.queue_time = ut.today()
+#            new_task_record.func_name = func_name
+#            new_task_record.args = args
+#            new_task_record.kwargs = kwargs
+#            
+#            # Add the TaskRecord to the TaskDict.
+#            task_dict.add(new_task_record) 
+#            
+#            # Queue up run_task() for Celery.
+##            print 'celery tasks available:'
+##            print celery_instance.tasks 
+#            # This version may only work under celery version 3.x.
+##            my_result = celery_instance.tasks['sciris.weblib.tasks.run_task'].delay(task_id, func_name, args, kwargs)
+#            my_result = run_task.delay(task_id, func_name, args, kwargs)
+#            
+#            # Add the result ID to the TaskRecord, and update the DataStore.
+#            new_task_record.result_id = my_result.id
+#            task_dict.update(new_task_record)
+#            
+#            # Create the return dict from the user repr.
+#            return_dict = new_task_record.get_user_front_end_repr()
+#        
+#    # Otherwise (there is a matching task)...
+#    else:
+#        # If the TaskRecord indicates the task has been completed...
+##        if match_taskrec.status == 'completed':  # TODO: get rid of line below
+#        if match_taskrec.status != 'xxx':            
+#            # If we have a result ID, erase the result from Redis.
+#            if match_taskrec.result_id is not None:
+#                result = celery_instance.AsyncResult(match_taskrec.result_id)
+#                result.forget()
+#                       
+#            # Initialize the TaskRecord to start the task again (though 
+#            # possibly with a new function and arguments).
+#            match_taskrec.status = 'queued'
+#            match_taskrec.queue_time = ut.today()
+#            match_taskrec.start_time = None
+#            match_taskrec.stop_time = None            
+#            match_taskrec.func_name = func_name
+#            match_taskrec.args = args
+#            match_taskrec.kwargs = kwargs
+#            
+#            # Queue up run_task() for Celery.
+##                print 'celery tasks available:'
+##                print celery_instance.tasks
+#            # This version may only work under celery version 3.x.
+##            my_result = celery_instance.tasks['sciris.weblib.tasks.run_task'].delay(task_id, func_name, args, kwargs)            
+#            my_result = run_task.delay(task_id, func_name, args, kwargs)                
+#            
+#            # Add the new result ID to the TaskRecord, and update the DataStore.
+#            match_taskrec.result_id = my_result.id
+#            task_dict.update(match_taskrec)
+#            
+#            # Create the return dict from the user repr.
+#            return_dict = match_taskrec.get_user_front_end_repr()
+#            
+#        # Else (the task is not completed)...
+#        else:
+#            return_dict = {
+#                'error': 'Task is already running'
+#            }
+#    
+#    # Return our result.
+#    return return_dict  
   
 @register_RPC(validation_type='nonanonymous user') 
 def check_task(task_id): 
