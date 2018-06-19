@@ -1477,7 +1477,7 @@ def gitinfo(filepath=None, die=False, hashlen=7):
             headstrip = 'ref: ref'+sep+'heads'+sep # Header to strip off...hope this is generalizable!
             with open(gitdir+sep+'HEAD') as f: gitbranch = f.read()[len(headstrip)+1:].strip() # Read git branch name
             with open(gitdir+sep+'refs'+sep+'heads'+sep+gitbranch) as f: githash = f.read().strip() # Read git commit
-            try:    gitdate = flexstr(runcommand('cd %s; git show -s --format=%%ci' % gitdir).rstrip()) # Even more likely to fail
+            try:    gitdate = flexstr(runcommand('git -C %s show -s --format=%%ci' % gitdir).rstrip()) # Even more likely to fail
             except: gitdate = 'Git date N/A'
         except Exception as E2: # Failure? Give up
             gitbranch = 'Git branch N/A'
