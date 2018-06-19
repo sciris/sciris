@@ -4,7 +4,8 @@
     <!-- Load core scripts -->
     <title>Hello dotty neighbor</title>
     <script src="rpc-service.js"></script>
-    <script src="user-service.js"></script>    
+    <script src="user-service.js"></script>  
+    <script src="task-service.js"></script>     
     <script src="https://unpkg.com/vue"></script>
     <script src="https://unpkg.com/axios/dist/axios.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/1.3.8/FileSaver.min.js"></script>
@@ -118,13 +119,19 @@
 //          loginCall('ozzymandibulus', 'sciris')
 //          deleteUser('ozzymandibulus')
           
-          // Make a normal RPC call to get_graph().              
-          rpcCall('launch_task', ['my_crazy_id', 'async_add', [23, 57]])  
+          // Code for testing task queuing.
+          // Do an async_add(), wait 15 sec., and get the result.
+          getTaskResult('my_crazy_id', 15, 'async_add', [23, 57])
+          .then(response => {
+            console.log('The result is: ' + response.data.result)
+          })          
+//          rpcCall('launch_task', ['my_crazy_id', 'async_add', [23, 57]])  
 //          rpcCall('launch_task', ['my_crazy_id', 'test_message', ['testing celery']])           
 //          rpcCall('launch_task', ['my_crazy_id', 'my_func_name', ['arg1', 'arg2'], {'kwarg1': 'kw1', 'kwarg2': 'kw2'}])
 //          rpcCall('check_task', ['my_crazy_id'])
 //          rpcCall('get_task_result', ['my_crazy_id'])          
 //          rpcCall('delete_task', ['my_crazy_id'])
+          // Make a normal RPC call to get_graph().    
 /*          rpcCall('get_graph')
           .then(function (response) {
             vm.serverresponse = 'See graph below';
