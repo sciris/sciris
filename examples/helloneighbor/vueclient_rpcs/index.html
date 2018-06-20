@@ -121,10 +121,19 @@
           
           // Code for testing task queuing.
           // Do an async_add(), wait 15 sec., and get the result.
-          getTaskResult('my_crazy_id', 15, 'async_add', [23, 57])
+/*          getTaskResult('my_crazy_id', 15, 'async_add', [23, 57])
           .then(response => {
             console.log('The result is: ' + response.data.result)
-          })          
+          }) */
+          
+          // Do an async_add() and try for at most 15 sec. to get a result, polling every 5 sec.
+          getTaskResult2('my_crazy_id', 15, 3, 'async_add', [23, 57])
+          .then(response => {
+            console.log('The result is: ' + response.data.result)
+          })
+          
+//          testsleep(3, 5) 
+         
 //          rpcCall('launch_task', ['my_crazy_id', 'async_add', [23, 57]])  
 //          rpcCall('launch_task', ['my_crazy_id', 'test_message', ['testing celery']])           
 //          rpcCall('launch_task', ['my_crazy_id', 'my_func_name', ['arg1', 'arg2'], {'kwarg1': 'kw1', 'kwarg2': 'kw2'}])
