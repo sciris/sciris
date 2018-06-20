@@ -507,8 +507,7 @@ def make_celery_instance(config=None):
         # Otherwise (there is a matching task)...
         else:
             # If the TaskRecord indicates the task has been completed...
-    #        if match_taskrec.status == 'completed':  # TODO: get rid of line below
-            if match_taskrec.status != 'xxx':            
+            if match_taskrec.status == 'completed':         
                 # If we have a result ID, erase the result from Redis.
                 if match_taskrec.result_id is not None:
                     result = celery_instance.AsyncResult(match_taskrec.result_id)
