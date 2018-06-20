@@ -23,10 +23,19 @@ function getTaskResultWaiting(task_id, waitingtime, func_name, args) {
         // Get the result of the task.
         rpcCall('get_task_result', [task_id])
         .then(response3 => {
-          // Signal success with the response.
+          // Clean up the task_id task.
+          rpcCall('delete_task', [task_id])
+          
+          // Signal success with the result response.
           resolve(response3)              
         })
         .catch(error => {
+          // While we might want to clean up the task as below, the Celery 
+          // worker is likely to "resurrect" the task if it actually is 
+          // running the task to completion.
+          // Clean up the task_id task.
+          // rpcCall('delete_task', [task_id])
+          
           // Reject with the error the task result get attempt gave.
           reject(error)
         })         
@@ -97,6 +106,9 @@ function pollStep(task_id, timeout, pollinterval, elapsedtime) {
             // Get the result of the task.
             rpcCall('get_task_result', [task_id])
             .then(response3 => {
+              // Clean up the task_id task.
+              rpcCall('delete_task', [task_id])
+          
               // Signal success with the response.
               resolve(response3)             
             })

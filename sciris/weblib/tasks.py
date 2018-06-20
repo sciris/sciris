@@ -1,7 +1,7 @@
 """
 tasks.py -- code related to Sciris task queue management
     
-Last update: 6/18/18 (gchadder3)
+Last update: 6/20/18 (gchadder3)
 """
 
 #
@@ -448,6 +448,9 @@ def make_celery_instance(config=None):
         result = task_func_dict[func_name](*args, **kwargs)
         
         # Set the TaskRecord to indicate end of the task.
+        # NOTE: Even if the browser has ordered the deletion of the task 
+        # record, it will be "resurrected" during this update, so the 
+        # delete_task() RPC may not always work as expected.
         match_taskrec.status = 'completed'
         match_taskrec.stop_time = ut.today()
         task_dict.update(match_taskrec)
