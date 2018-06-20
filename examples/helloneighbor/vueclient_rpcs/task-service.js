@@ -90,13 +90,10 @@ function getTaskResult2(task_id, timeout, pollinterval, func_name, args) {
 
 function getTaskResult3(task_id, timeout, pollinterval, func_name, args) {
   return new Promise((resolve, reject) => {
-    // Initialize a timer to 0 seconds.
-    let timer = 0
-    
     // Launch the task.
     rpcCall('launch_task', [task_id, func_name, args])
     .then(response => {
-      pollStep(task_id, timeout, pollinterval)
+      pollStep(task_id, timeout, pollinterval, 0)
       .then(response2 => {
         resolve(response2)
       })
@@ -108,36 +105,45 @@ function getTaskResult3(task_id, timeout, pollinterval, func_name, args) {
   }) 
 } 
 
-function pollStep(task_id, timeout, pollinterval) {
+function pollStep(task_id, timeout, pollinterval, elapsedtime) {
   return new Promise((resolve, reject) => {
-    // Sleep timeout seconds.
-    sleep(pollinterval * 1000)
-    .then(response => {
-      // Check the status of the task.
-      rpcCall('check_task', [task_id])
-      .then(response2 => {
-        // If the task is completed...
-        if (response2.data.task.status == 'completed') {
-          // Get the result of the task.
-          rpcCall('get_task_result', [task_id])
-          .then(response3 => {
-            // Signal success with the response.
-            resolve(response3)             
-          })
-          .catch(error => {
-            // Reject with the error the task result get attempt gave.
-            reject(error)
-          })
-        }   
+    // Check to see if the elapsed time is longer than the timeout, and if so, 
+    // fail.
+    if (elapsedtime > timeout) {
+      reject(Error('Task polling timed out'))
+    }
+    
+    // Otherwise, we've not run out of time yet.
+    else {
+      // Sleep timeout seconds.
+      sleep(pollinterval * 1000)
+      .then(response => {
+        // Check the status of the task.
+        rpcCall('check_task', [task_id])
+        .then(response2 => {
+          // If the task is completed...
+          if (response2.data.task.status == 'completed') {
+            // Get the result of the task.
+            rpcCall('get_task_result', [task_id])
+            .then(response3 => {
+              // Signal success with the response.
+              resolve(response3)             
+            })
+            .catch(error => {
+              // Reject with the error the task result get attempt gave.
+              reject(error)
+            })
+          }   
 
-        // Otherwise, do another poll step.
-        else {
-          pollStep(task_id, timeout, pollinterval)
-          .then(response3 => {
-            resolve(response3)
-          })
-        }          
-      })
-    })    
+          // Otherwise, do another poll step.
+          else {
+            pollStep(task_id, timeout, pollinterval, elapsedtime + pollinterval)
+            .then(response3 => {
+              resolve(response3)
+            })
+          }          
+        })
+      }) 
+    }    
   }) 
 }
