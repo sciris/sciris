@@ -83,9 +83,13 @@
           })      
         }, 
         
+        // This function is wired to the "Get new dots" button, but is used to 
+        // test anything under the sun.  :-)
         sendRequest: function () {
           var vm = this;
-
+          
+          // Code for testing user RPCs.
+          
 //          getAllUsersInfo()
 //          registerUser('ozzymandibulus', 'ozzy', 'Ozzymandibulus', 'tastybats@gmail.com')
 //          deleteUser('ozzymandibulus')
@@ -120,19 +124,34 @@
 //          deleteUser('ozzymandibulus')
           
           // Code for testing task queuing.
-          // Do an async_add(), wait 15 sec., and get the result.
-/*          getTaskResult('my_crazy_id', 15, 'async_add', [23, 57])
+          
+          // Do an async_add(), wait 15 sec., and get the result.  Should 
+          // succeed because async_add() has 10 sec. wait.
+/*          getTaskResultWaiting('my_crazy_id', 15, 'async_add', [23, 57])
+          .then(response => {
+            console.log('The result is: ' + response.data.result)
+          }) */
+          
+          // Do an async_add(), wait 5 sec., and get the result.  Should 
+          // fail because async_add() has 10 sec. wait.
+/*          getTaskResultWaiting('my_crazy_id', 5, 'async_add', [23, 57])
           .then(response => {
             console.log('The result is: ' + response.data.result)
           }) */
           
           // Do an async_add() and try for at most 15 sec. to get a result, polling every 5 sec.
-          getTaskResult3('my_crazy_id', 15, 3, 'async_add', [23, 57])
+          // Should succeed.
+/*          getTaskResultPolling('my_crazy_id', 15, 3, 'async_add', [23, 57])
+          .then(response => {
+            console.log('The result is: ' + response.data.result)
+          }) */
+          
+          // Do an async_add() and try for at most 8 sec. to get a result, polling every 5 sec.
+          // Should fail with a timeout error.
+          getTaskResultPolling('my_crazy_id', 8, 3, 'async_add', [23, 57])
           .then(response => {
             console.log('The result is: ' + response.data.result)
           })
-          
-//          testsleep(3, 5) 
          
 //          rpcCall('launch_task', ['my_crazy_id', 'async_add', [23, 57]])  
 //          rpcCall('launch_task', ['my_crazy_id', 'test_message', ['testing celery']])           
@@ -140,6 +159,9 @@
 //          rpcCall('check_task', ['my_crazy_id'])
 //          rpcCall('get_task_result', ['my_crazy_id'])          
 //          rpcCall('delete_task', ['my_crazy_id'])
+
+          // The actual graph-related stuff!  :-)
+          
           // Make a normal RPC call to get_graph().    
 /*          rpcCall('get_graph')
           .then(function (response) {
