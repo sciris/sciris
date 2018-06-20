@@ -127,7 +127,7 @@
           }) */
           
           // Do an async_add() and try for at most 15 sec. to get a result, polling every 5 sec.
-          getTaskResult2('my_crazy_id', 15, 3, 'async_add', [23, 57])
+          getTaskResult3('my_crazy_id', 15, 3, 'async_add', [23, 57])
           .then(response => {
             console.log('The result is: ' + response.data.result)
           })
