@@ -69,11 +69,12 @@ class TaskRecord(sobj.ScirisObject):
         args (list) -- list containing args for the function
         kwargs (dict) -- dict containing kwargs for the function
         result_id (str) -- string for the Redis ID of the AsyncResult
-        queue_time (???) -- the time the task was queued for Celery
-        start_time (???) -- the time the task was actually started
-        stop_time (???) -- the time the task completed  
-        elapsed_time (int) -- the time the process has been running on the 
-            server in seconds
+        queue_time (datetime.datetime) -- the time the task was queued for Celery
+        start_time (datetime.datetime) -- the time the task was actually started
+        stop_time (datetime.datetime) -- the time the task completed
+        pending_time (int) -- the time the process has been waiting to be 
+            executed on the server in seconds        
+        execution_time (int) -- the time the process required to complete
         
     Usage:
         >>> my_task = TaskRecord('my-special-task', uid=uuid.UUID('12345678123456781234567812345678'))                      
@@ -107,8 +108,9 @@ class TaskRecord(sobj.ScirisObject):
         self.start_time = None
         self.stop_time = None
         
-        # Start the elapsed time at zero seconds.
-        self.elapsed_time = 0
+        # Start the pending and execution times at None.
+        self.pending_time = None
+        self.execution_time = None
         
         # Set the type prefix to 'task'.
         self.type_prefix = 'task'
@@ -142,7 +144,8 @@ class TaskRecord(sobj.ScirisObject):
         print('Queue Time: %s' % self.queue_time)        
         print('Start Time: %s' % self.start_time)
         print('Stop Time: %s' % self.stop_time)
-        print('Elapsed Time: %s sec.' % self.elapsed_time)        
+        print('Pending Time: %s sec.' % self.pending_time)        
+        print('Execution Time: %s sec.' % self.execution_time)  
             
     def get_user_front_end_repr(self):
         obj_info = {
@@ -159,7 +162,8 @@ class TaskRecord(sobj.ScirisObject):
                 'queueTime': self.queue_time,                
                 'startTime': self.start_time,
                 'stopTime': self.stop_time,
-                'elapsedTime': self.elapsed_time
+                'pendingTime': self.pending_time,
+                'executionTime': self.execution_time                
             }
         }
         return obj_info
@@ -181,7 +185,8 @@ class TaskRecord(sobj.ScirisObject):
                 'queueTime': self.queue_time,                    
                 'startTime': self.start_time,
                 'stopTime': self.stop_time,
-                'elapsedTime': self.elapsed_time                
+                'pendingTime': self.pending_time,
+                'executionTime': self.execution_time            
             }
         }
         return obj_info             
@@ -440,6 +445,8 @@ def make_celery_instance(config=None):
         # Set the TaskRecord to indicate start of the task.
         match_taskrec.status = 'started'
         match_taskrec.start_time = ut.today()
+        match_taskrec.pending_time = \
+            (match_taskrec.start_time - match_taskrec.queue_time).total_seconds()        
         task_dict.update(match_taskrec)
         
         # Make the actual function call.
@@ -453,6 +460,8 @@ def make_celery_instance(config=None):
         # delete_task() RPC may not always work as expected.
         match_taskrec.status = 'completed'
         match_taskrec.stop_time = ut.today()
+        match_taskrec.execution_time = \
+            (match_taskrec.stop_time - match_taskrec.start_time).total_seconds()
         task_dict.update(match_taskrec)
         
         # Return the result.
@@ -668,10 +677,32 @@ def check_task(task_id):
     if match_taskrec is None:
         return {'error': 'No task found for specified task ID'}
     else:
-        # Update the elapsed time.
+        # Update the elapsed times.
+        
+        # If we are no longer pending...
+        if match_taskrec.pending_time is not None:
+            # Use the existing pending_time.
+            pending_time = match_taskrec.pending_time
+            
+            # If we have finished executing...
+            if match_taskrec.execution_time is not None:
+                # Use the execution time in the record.
+                execution_time = match_taskrec.execution_time
+                
+            # Else (we are still executing)...
+            else:
+                execution_time = (ut.today() - match_taskrec.start_time).total_seconds()
+                
+        # Else (we are still pending)...
+        else:
+            pending_time = (ut.today() - match_taskrec.queue_time).total_seconds()
+            execution_time = 0
         
         # Create the return dict from the user repr.
-        return match_taskrec.get_user_front_end_repr()        
+        taskrec_dict = match_taskrec.get_user_front_end_repr()
+        taskrec_dict['pendingTime'] = pending_time
+        taskrec_dict['executionTime'] = execution_time
+        return taskrec_dict        
     
 @register_RPC(validation_type='nonanonymous user') 
 def get_task_result(task_id):
