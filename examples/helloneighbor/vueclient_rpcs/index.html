@@ -139,23 +139,30 @@
             console.log('The result is: ' + response.data.result)
           }) */
           
-          // Do an async_add() and try for at most 15 sec. to get a result, polling every 5 sec.
-          // Should succeed.
-/*          getTaskResultPolling('my_crazy_id', 15, 3, 'async_add', [23, 57])
+          // Do a test_error(), wait 15 sec., and get the result.  Should 
+          // fail with divide by zero error.
+/*          getTaskResultWaiting('my_crazy_id', 15, 'test_error')
           .then(response => {
             console.log('The result is: ' + response.data.result)
           }) */
           
-          // Do an async_add() and try for at most 8 sec. to get a result, polling every 5 sec.
-          // Should fail with a timeout error.
-          getTaskResultPolling('my_crazy_id', 8, 3, 'async_add', [23, 57])
+          // Do an async_add() and try for at most 15 sec. to get a result, polling every 5 sec.
+          // Should succeed.
+          getTaskResultPolling('my_crazy_id', 15, 3, 'async_add', [23, 57])
           .then(response => {
             console.log('The result is: ' + response.data.result)
           }) 
           
+          // Do an async_add() and try for at most 8 sec. to get a result, polling every 5 sec.
+          // Should fail with a timeout error.
+/*          getTaskResultPolling('my_crazy_id', 8, 3, 'async_add', [23, 57])
+          .then(response => {
+            console.log('The result is: ' + response.data.result)
+          }) */
+          
           // Do a test_error() and try for at most 15 sec. to get a result, polling every 5 sec.
-          // Should succeed.
-/*          getTaskResultPolling('my_crazy_id', 15, 3, 'test_error', [])
+          // Should fail with divide by zero error.
+/*          getTaskResultPolling('my_crazy_id', 15, 3, 'test_error')
           .then(response => {
             console.log('The result is: ' + response.data.result)
           }) */

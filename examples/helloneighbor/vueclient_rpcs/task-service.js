@@ -13,6 +13,11 @@ function sleep(time) {
 // the task, then wait for the waiting time, then try to get the 
 // result.
 function getTaskResultWaiting(task_id, waitingtime, func_name, args) {
+  // Set the arguments to an empty list if none are passed in.
+  if (!args) {
+    args = []
+  }
+  
   return new Promise((resolve, reject) => {
     // Launch the task.
     rpcCall('launch_task', [task_id, func_name, args])
@@ -53,6 +58,11 @@ function getTaskResultWaiting(task_id, waitingtime, func_name, args) {
 //  and its args, try to launch the task, then start the polling if this is 
 // successful, returning the ultimate results of the polling process. 
 function getTaskResultPolling(task_id, timeout, pollinterval, func_name, args) {
+  // Set the arguments to an empty list if none are passed in.
+  if (!args) {
+    args = []
+  }
+  
   return new Promise((resolve, reject) => {
     // Launch the task.
     rpcCall('launch_task', [task_id, func_name, args])
