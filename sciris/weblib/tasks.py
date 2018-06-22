@@ -1,7 +1,7 @@
 """
 tasks.py -- code related to Sciris task queue management
     
-Last update: 6/20/18 (gchadder3)
+Last update: 6/21/18 (gchadder3)
 """
 
 #
@@ -16,6 +16,7 @@ from . import rpcs #import make_register_RPC
 from . import scirisobjects as sobj
 from ..corelib import utils as ut
 from functools import wraps
+import traceback
 
 #
 # Globals
@@ -64,6 +65,7 @@ class TaskRecord(sobj.ScirisObject):
             by the client
         status (str) -- the status of the task:
             'unknown' : unknown status, for example, just initialized
+            'error': task failed with an actual error
         error_text (str) -- string giving an idea of what error has transpired
         func_name (str) -- string of the function name for what's called
         args (list) -- list containing args for the function
@@ -449,16 +451,26 @@ def make_celery_instance(config=None):
             (match_taskrec.start_time - match_taskrec.queue_time).total_seconds()        
         task_dict.update(match_taskrec)
         
-        # Make the actual function call.
+        # Make the actual function call, inside a try block in case there is 
+        # an exception thrown.
 #        print 'show the task_funcs:'
-#        print task_func_dict
-        result = task_func_dict[func_name](*args, **kwargs)
+#        print task_func_dict      
+        try:
+            result = task_func_dict[func_name](*args, **kwargs)
+            match_taskrec.status = 'completed'
+
+        # If there's an exception, grab the stack track and set the TaskRecord 
+        # to have stopped on in error.
+        except Exception:
+            error_text = traceback.format_exc()
+            match_taskrec.status = 'error'
+            match_taskrec.error_text = error_text
+            result = error_text
         
         # Set the TaskRecord to indicate end of the task.
         # NOTE: Even if the browser has ordered the deletion of the task 
         # record, it will be "resurrected" during this update, so the 
         # delete_task() RPC may not always work as expected.
-        match_taskrec.status = 'completed'
         match_taskrec.stop_time = ut.today()
         match_taskrec.execution_time = \
             (match_taskrec.stop_time - match_taskrec.start_time).total_seconds()
@@ -503,10 +515,6 @@ def make_celery_instance(config=None):
                 task_dict.add(new_task_record) 
                 
                 # Queue up run_task() for Celery.
-    #            print 'celery tasks available:'
-    #            print celery_instance.tasks 
-                # This version may only work under celery version 3.x.
-    #            my_result = celery_instance.tasks['sciris.weblib.tasks.run_task'].delay(task_id, func_name, args, kwargs)
                 my_result = run_task.delay(task_id, func_name, args, kwargs)
                 
                 # Add the result ID to the TaskRecord, and update the DataStore.
@@ -524,22 +532,21 @@ def make_celery_instance(config=None):
                 if match_taskrec.result_id is not None:
                     result = celery_instance.AsyncResult(match_taskrec.result_id)
                     result.forget()
+                    match_taskrec.result_id = None
                            
                 # Initialize the TaskRecord to start the task again (though 
                 # possibly with a new function and arguments).
                 match_taskrec.status = 'queued'
                 match_taskrec.queue_time = ut.today()
                 match_taskrec.start_time = None
-                match_taskrec.stop_time = None            
+                match_taskrec.stop_time = None
+                match_taskrec.pending_time = None
+                match_taskrec.execution_time = None                
                 match_taskrec.func_name = func_name
                 match_taskrec.args = args
                 match_taskrec.kwargs = kwargs
                 
                 # Queue up run_task() for Celery.
-    #                print 'celery tasks available:'
-    #                print celery_instance.tasks
-                # This version may only work under celery version 3.x.
-    #            my_result = celery_instance.tasks['sciris.weblib.tasks.run_task'].delay(task_id, func_name, args, kwargs)            
                 my_result = run_task.delay(task_id, func_name, args, kwargs)                
                 
                 # Add the new result ID to the TaskRecord, and update the DataStore.
@@ -725,6 +732,10 @@ def get_task_result(task_id):
             # If the result is not ready, return an error.
             if not result.ready():
                 return {'error': 'Task not completed'}
+            
+            # Else, if we have failed, return the exception.
+            elif result.failed():
+                return {'error': 'Task failed with an exception'}
             
             # Else (task is ready)...
             else:

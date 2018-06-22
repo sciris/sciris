@@ -141,20 +141,28 @@
           
           // Do an async_add() and try for at most 15 sec. to get a result, polling every 5 sec.
           // Should succeed.
-          getTaskResultPolling('my_crazy_id', 15, 3, 'async_add', [23, 57])
+/*          getTaskResultPolling('my_crazy_id', 15, 3, 'async_add', [23, 57])
+          .then(response => {
+            console.log('The result is: ' + response.data.result)
+          }) */
+          
+          // Do an async_add() and try for at most 8 sec. to get a result, polling every 5 sec.
+          // Should fail with a timeout error.
+          getTaskResultPolling('my_crazy_id', 8, 3, 'async_add', [23, 57])
           .then(response => {
             console.log('The result is: ' + response.data.result)
           }) 
           
-          // Do an async_add() and try for at most 8 sec. to get a result, polling every 5 sec.
-          // Should fail with a timeout error.
-/*          getTaskResultPolling('my_crazy_id', 8, 3, 'async_add', [23, 57])
+          // Do a test_error() and try for at most 15 sec. to get a result, polling every 5 sec.
+          // Should succeed.
+/*          getTaskResultPolling('my_crazy_id', 15, 3, 'test_error', [])
           .then(response => {
             console.log('The result is: ' + response.data.result)
           }) */
-         
+          
 //          rpcCall('launch_task', ['my_crazy_id', 'async_add', [23, 57]])  
-//          rpcCall('launch_task', ['my_crazy_id', 'test_message', ['testing celery']])           
+//          rpcCall('launch_task', ['my_crazy_id', 'test_message', ['testing celery']])
+//          rpcCall('launch_task', ['my_crazy_id', 'test_error'])         
 //          rpcCall('launch_task', ['my_crazy_id', 'my_func_name', ['arg1', 'arg2'], {'kwarg1': 'kw1', 'kwarg2': 'kw2'}])
 //          rpcCall('check_task', ['my_crazy_id'])
 //          rpcCall('get_task_result', ['my_crazy_id'])          

@@ -116,7 +116,13 @@ function pollStep(task_id, timeout, pollinterval, elapsedtime) {
               // Reject with the error the task result get attempt gave.
               reject(error)
             })
-          }   
+          }
+          
+          // Otherwise, if the task ended in an error...
+          else if (response2.data.task.status == 'error') { 
+            // Reject with an error for the exception.
+            reject(Error(response2.data.task.errorText))
+          }
 
           // Otherwise, do another poll step, passing in an incremented 
           // elapsed time.

@@ -1,7 +1,7 @@
 """
 apptasks.py -- The Celery tasks module for this webapp
     
-Last update: 6/18/18 (gchadder3)
+Last update: 6/21/18 (gchadder3)
 """
 
 #
@@ -45,6 +45,11 @@ def async_add(x, y):
 def async_sub(x, y):
     time.sleep(10)
     return x - y
+
+@register_async_task
+def test_error():
+    time.sleep(10)
+    return 1 / 0
 
 # Add the asynchronous task functions in this module to the tasks.py module 
 # so run_task() can call them.
