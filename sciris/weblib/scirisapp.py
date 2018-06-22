@@ -30,6 +30,7 @@ from . import rpcs
 from . import datastore as ds
 from . import user
 from . import tasks
+import sciris.core as sc
 
 ##########################################################################################################
 #%% Classes
@@ -530,11 +531,11 @@ class ScirisApp(object):
             # If we got None for a result (the full file name), return an error 
             # to the client.
             if result is None:
-                return jsonify({'error': 'Could not find requested resource'})
+                return jsonify({'error': 'Could not find requested resource [result is None]'})
             
             # Else, if the result is not even a string (which means it's not 
             # a file name as expected)...
-            elif type(result) is not str:
+            elif not sc.isstring(result):
                 # If the result is a dict with an 'error' key, then assume we 
                 # have a custom error that we want the RPC to return to the 
                 # browser, and do so.
@@ -544,7 +545,7 @@ class ScirisApp(object):
                 # Otherwise, return an error that the download RPC did not 
                 # return a filename.
                 else:
-                    return jsonify({'error': 'Download RPC did not return a filename'})
+                    return jsonify({'error': 'Download RPC did not return a filename (result is of type %s)' % type(result)})
             
             # Pull out the directory and file names from the full file name.
             dir_name, file_name = os.path.split(result)
