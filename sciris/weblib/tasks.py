@@ -1,7 +1,7 @@
 """
 tasks.py -- code related to Sciris task queue management
     
-Last update: 6/21/18 (gchadder3)
+Last update: 6/22/18 (gchadder3)
 """
 
 #
@@ -498,7 +498,8 @@ def make_celery_instance(config=None):
             # error.
             if not func_name in task_func_dict:
                 return_dict = {
-                    'error': 'Could not find requested async task function'
+                    'error': 'Could not find requested async task function \'%s\'' % 
+                        func_name
                 }
             else:
                 # Create a new TaskRecord.
@@ -526,8 +527,10 @@ def make_celery_instance(config=None):
             
         # Otherwise (there is a matching task)...
         else:
-            # If the TaskRecord indicates the task has been completed...
-            if match_taskrec.status == 'completed':         
+            # If the TaskRecord indicates the task has been completed or 
+            # thrown an error...
+            if match_taskrec.status == 'completed' or \
+                match_taskrec.status == 'error':         
                 # If we have a result ID, erase the result from Redis.
                 if match_taskrec.result_id is not None:
                     result = celery_instance.AsyncResult(match_taskrec.result_id)
@@ -559,7 +562,7 @@ def make_celery_instance(config=None):
             # Else (the task is not completed)...
             else:
                 return_dict = {
-                    'error': 'Task is already running'
+                    'error': 'Task is already %s' % match_taskrec.status
                 }
         
         # Return our result.
@@ -709,6 +712,8 @@ def check_task(task_id):
         taskrec_dict = match_taskrec.get_user_front_end_repr()
         taskrec_dict['pendingTime'] = pending_time
         taskrec_dict['executionTime'] = execution_time
+        
+        # Return the has record information and elapsed times.
         return taskrec_dict        
     
 @register_RPC(validation_type='nonanonymous user') 
