@@ -1,7 +1,7 @@
 """
 scirisobjects.py -- classes for Sciris objects which are generally managed
     
-Last update: 5/25/18 (gchadder3)
+Last update: 6/23/18 (gchadder3)
 """
 
 #
@@ -282,27 +282,3 @@ class ScirisCollection(ScirisObject):
             
         # Separator line.
         print('--------------------------------------------')
-
-
-#def get_valid_uuid(uid_param, new_uuid_if_missing=False):
-#    import uuid
-#    # Get the type of the parameter passed in.
-#    param_type = type(uid_param)
-#    
-#    # Return what was passed in if it is already the right type.
-#    if param_type == uuid.UUID:
-#        return uid_param
-#    
-#    # Try to do the conversion and if it fails, set the conversion to None.
-#    try:
-#        convert_param = uuid.UUID(uid_param)
-#    except:
-#        convert_param = None
-#        
-#    # If we don't have a valid UUID and we are supposed to generate a new 
-#    # one if it's missing, do so using uuid4() which generates a random ID.
-#    if convert_param is None and new_uuid_if_missing:
-#        convert_param = uuid.uuid4()
-#        
-#    # Return the converted value.
-#    return convert_param 
