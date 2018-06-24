@@ -1,0 +1,1 @@
+python -m celery worker -A apptasks.celery_instance -l info

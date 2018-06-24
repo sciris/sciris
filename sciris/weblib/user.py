@@ -1,7 +1,7 @@
 """
 user.py -- code related to Sciris user management
     
-Last update: 5/29/18 (gchadder3)
+Last update: 6/23/18 (gchadder3)
 """
 
 #
@@ -298,7 +298,7 @@ class UserDict(sobj.ScirisCollection):
     def delete_by_uid(self, uid):
         # Make sure the argument is a valid UUID, converting a hex text to a
         # UUID object, if needed.        
-        valid_uuid = sobj.get_valid_uuid(uid)
+        valid_uuid = ut.uuid(uid)
         
         # If we have a valid UUID...
         if valid_uuid is not None:

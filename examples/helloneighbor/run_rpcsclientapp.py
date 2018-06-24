@@ -1,20 +1,24 @@
 """
 run_rpcsclientapp.py -- Simple ScirisApp use case 
     
-Last update: 5/23/18 (gchadder3)
+Last update: 6/14/18 (gchadder3)
 """
 
+#
 # Imports
-from sciris2gc.scirisapp import ScirisApp
-from sciris2gc import fileio
+#
+
+from sciris.weblib.scirisapp import ScirisApp
+from sciris.corelib import fileio
 import model # The actual Python model we want to incorporate
 import mpld3 # For plotting
+import apptasks
 import test_rpcs
 import test_rpcs2
 import pandas as pd
 from pylab import figure
 import config
-import os
+import os   
 
 # Create the ScirisApp object.  NOTE: app.config will thereafter contain all 
 # of the configuration parameters, including for Flask.
@@ -69,11 +73,16 @@ def download_graph_png():
     # Return the full filename.
     return full_file_name
 
+# Register the RPCs in the apptasks.py module.
+# TODO: uncomment this
+#app.add_RPC_dict(apptasks.RPC_dict)
+
 # Register the RPCs in the test_rpcs.py module.
 app.add_RPC_dict(test_rpcs.RPC_dict)
 
 # Register the RPCs in the test_rpcs2.py module.
 app.add_RPC_dict(test_rpcs2.RPC_dict)
 
-# Run the client page with Flask and a Twisted server.
-app.run_server()
+if __name__ == '__main__':
+    # Run the client page with Flask and a Twisted server.
+    app.run_server()

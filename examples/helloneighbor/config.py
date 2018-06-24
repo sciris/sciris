@@ -7,8 +7,8 @@ gets used, whether new registered accounts are automatically activated or not,
 and other settings the Sciris webapp developer might want to include in the 
 configuration.
 
-You can also set Flask config parameters in this file, as well as the Sciris-
-and webapp-specific ones.
+You can also set Flask and Celery config parameters in this file, as well as 
+the Sciris- and webapp-specific ones.
 
 NOTE: For the _DIR parameters, you can use full absolute paths also (though you 
 need to make sure you use \\ for path separators under Windows OS).  If 
@@ -16,7 +16,7 @@ you use a relative path, it is interpreted as being with respect to the
 "webapp directory," that is, the directory containing this config file and the 
 main webapp script that imports it.
  
-Last update: 5/31/18 (gchadder3)
+Last update: 6/15/18 (gchadder3)
 """
 
 # A secret key value used by Python Flask.
@@ -25,6 +25,10 @@ SECRET_KEY = 'Pick something unique for your site here'
 # Directory containing the client code.
 #   DEFAULT = '.'
 CLIENT_DIR = 'vueclient_rpcs'
+
+#
+# File IO parameters
+#
 
 # Directory where uploaded files will be saved, as well as files saved to be 
 # downloadable to user machines.
@@ -37,14 +41,22 @@ CLIENT_DIR = 'vueclient_rpcs'
 # If commented out or omitted, no directory is created for this.
 #FILESAVEROOT_DIR = 'savedfiles'
 
+#
+# DataStore parameters
+#
+
 # Flag for setting whether we use the datastore functionality provided by 
 # Sciris in the webapp.
 USE_DATASTORE = True
 
 # URL for the Redis database that the web app will use to manage 
-# persistence.  Note that the /N/ number at the end should match the 
+# persistence.  Note that the /N number at the end should match the 
 # database number you want to use.  (N=0 is the default Redis database.)
-REDIS_URL = 'redis://localhost:6379/0/'
+REDIS_URL = 'redis://localhost:6379/10'
+
+#
+# User parameters
+#
 
 # Flag for setting whether we use the users functionality provided by 
 # Sciris in the webapp.
@@ -54,3 +66,21 @@ USE_USERS = True
 # spawns a new active account.  If this is set False, then an admin user has 
 # to manually activate the account for the user.
 REGISTER_AUTOACTIVATE = True
+
+#
+# Asynchronous task parameters
+#
+
+# Flag for setting whether we use the tasks functionality provided by 
+# Sciris in the webapp.
+USE_TASKS = True
+
+# URL for the Redis database that Celery will use as the broker.
+# Note that the /N number at the end should match the 
+# database number you want to use.  (N=0 is the default Redis database.)
+BROKER_URL = REDIS_URL
+
+# URL for the Redis database that Celery will use to hold task results.
+# Note that the /N number at the end should match the 
+# database number you want to use.  (N=0 is the default Redis database.)
+CELERY_RESULT_BACKEND = REDIS_URL

@@ -2,12 +2,12 @@
 test_rpcs.py -- A testing file for installing RPCs outside of the caller of
     scirisapp.py
     
-Last update: 5/23/18 (gchadder3)
+Last update: 6/8/18 (gchadder3)
 """
 
 # Imports
-from sciris2gc.rpcs import make_register_RPC
-import sciris2gc.datastore as ds
+from sciris.weblib.rpcs import make_register_RPC
+import sciris.weblib.datastore as ds
 import uuid
 #import pandas as pd
 #from pylab import figure

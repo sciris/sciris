@@ -4,7 +4,8 @@
     <!-- Load core scripts -->
     <title>Hello dotty neighbor</title>
     <script src="rpc-service.js"></script>
-    <script src="user-service.js"></script>    
+    <script src="user-service.js"></script>  
+    <script src="task-service.js"></script>     
     <script src="https://unpkg.com/vue"></script>
     <script src="https://unpkg.com/axios/dist/axios.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/1.3.8/FileSaver.min.js"></script>
@@ -82,9 +83,13 @@
           })      
         }, 
         
+        // This function is wired to the "Get new dots" button, but is used to 
+        // test anything under the sun.  :-)
         sendRequest: function () {
           var vm = this;
-
+          
+          // Code for testing user RPCs.
+          
 //          getAllUsersInfo()
 //          registerUser('ozzymandibulus', 'ozzy', 'Ozzymandibulus', 'tastybats@gmail.com')
 //          deleteUser('ozzymandibulus')
@@ -118,9 +123,62 @@
 //          loginCall('ozzymandibulus', 'sciris')
 //          deleteUser('ozzymandibulus')
           
-          // Make a normal RPC call to get_graph().
-//          rpcCall('test_func')
-          rpcCall('get_graph')
+          // Code for testing task queuing.
+          
+          // Do an async_add(), wait 15 sec., and get the result.  Should 
+          // succeed because async_add() has 10 sec. wait.
+/*          getTaskResultWaiting('my_crazy_id', 15, 'async_add', [23, 57])
+          .then(response => {
+            console.log('The result is: ' + response.data.result)
+          }) */
+          
+          // Do an async_add(), wait 5 sec., and get the result.  Should 
+          // fail because async_add() has 10 sec. wait.
+/*          getTaskResultWaiting('my_crazy_id', 5, 'async_add', [23, 57])
+          .then(response => {
+            console.log('The result is: ' + response.data.result)
+          }) */
+          
+          // Do a test_error(), wait 15 sec., and get the result.  Should 
+          // fail with divide by zero error.
+/*          getTaskResultWaiting('my_crazy_id', 15, 'test_error')
+          .then(response => {
+            console.log('The result is: ' + response.data.result)
+          }) */
+          
+          // Do an async_add() and try for at most 15 sec. to get a result, polling every 5 sec.
+          // Should succeed.
+          getTaskResultPolling('my_crazy_id', 15, 3, 'async_add', [23, 57])
+          .then(response => {
+            console.log('The result is: ' + response.data.result)
+          })
+          
+          // Do an async_add() and try for at most 8 sec. to get a result, polling every 5 sec.
+          // Should fail with a timeout error.
+/*          getTaskResultPolling('my_crazy_id', 8, 3, 'async_add', [23, 57])
+          .then(response => {
+            console.log('The result is: ' + response.data.result)
+          }) */
+          
+          // Do a test_error() and try for at most 15 sec. to get a result, polling every 5 sec.
+          // Should fail with divide by zero error.
+/*          getTaskResultPolling('my_crazy_id', 15, 3, 'test_error')
+          .then(response => {
+            console.log('The result is: ' + response.data.result)
+          }) */
+          
+//          rpcCall('launch_task', ['my_crazy_id', 'async_add', [23, 57]])  
+//          rpcCall('launch_task', ['my_crazy_id', 'test_message', ['testing celery']])
+//          rpcCall('launch_task', ['my_crazy_id', 'test_error'])         
+//          rpcCall('launch_task', ['my_crazy_id', 'my_func_name', ['arg1', 'arg2'], {'kwarg1': 'kw1', 'kwarg2': 'kw2'}])
+//          rpcCall('check_task', ['my_crazy_id'])
+//          rpcCall('get_task_result', ['my_crazy_id'])          
+//          rpcCall('delete_task', ['my_crazy_id'])
+
+          // The actual graph-related stuff!  :-)
+          
+          // Make a normal RPC call to get_graph().    
+/*          rpcCall('get_graph')
           .then(function (response) {
             vm.serverresponse = 'See graph below';
             // If we already have a figure, pop the figure object, and clear the DOM -- WARNING, needs fixing
@@ -132,7 +190,7 @@
           })
           .catch(function (error) {
             vm.serverresponse = 'There was an error: ' + error.message;
-          })
+          }) */
           
 /*          // Make an upload RPC call to graph points in an uploaded .csv file.
           rpcUploadCall('show_csv_file', [], {}, '.csv')

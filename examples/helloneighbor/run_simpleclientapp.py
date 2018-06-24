@@ -1,11 +1,11 @@
 """
 run_simpleclientapp.py -- Simple ScirisApp use case 
     
-Last update: 5/18/18 (gchadder3)
+Last update: 6/8/18 (gchadder3)
 """
 
 # Imports
-from sciris2gc.scirisapp import ScirisApp
+from sciris.weblib.scirisapp import ScirisApp
 
 # Create the ScirisApp object.  NOTE: app.config will thereafter contain all 
 # of the configuration parameters, including for Flask.
