@@ -7,14 +7,13 @@ from . import core
 # Import web functions
 try:
     from . import web
-    webapptext = 'with webapp'
-    E, traceback = None, None # So del command later works
-except Exception as E:
-    import traceback
-    webapp_error = traceback.format_exc()
-    webapptext = 'without webapp (see sciris.webapp_error for details)'
+    webtext = 'with web library'
+except Exception as webapp_exception:
+    import traceback as _traceback
+    web_error = _traceback.format_exc()
+    webtext = 'without web library (see sciris.web_error for details)'
 
 scirislicense = 'Sciris %s (%s)' % (version, versiondate)
-print(scirislicense + ' ' + webapptext)
+print(scirislicense + ' ' + webtext)
 
-del scirislicense, webapptext, E, traceback # Remove unneeded variables
+del scirislicense, webtext # Remove unneeded variables
