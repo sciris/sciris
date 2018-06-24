@@ -52,7 +52,7 @@ USE_DATASTORE = True
 # URL for the Redis database that the web app will use to manage 
 # persistence.  Note that the /N number at the end should match the 
 # database number you want to use.  (N=0 is the default Redis database.)
-REDIS_URL = 'redis://localhost:6379/0'
+REDIS_URL = 'redis://localhost:6379/10'
 
 #
 # User parameters
