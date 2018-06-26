@@ -70,10 +70,10 @@ class odict(_OD):
             try:
                 output = _OD.__getitem__(self, key)
                 return output
-            except KeyError as E: # WARNING, should be KeyError, but this can't print newlines!!!
+            except Exception as E: # WARNING, should be KeyError, but this can't print newlines!!!
                 if len(self.keys()): errormsg = '%s\nodict key "%s" not found; available keys are:\n%s' % (repr(E), ut.flexstr(key), '\n'.join([ut.flexstr(k) for k in self.keys()]))
                 else:                errormsg = 'Key "%s" not found since odict is empty'% key
-                raise odictKeyError(errormsg)
+                raise Exception(errormsg)
         elif isinstance(key, ut._numtype): # Convert automatically from float...dangerous?
             thiskey = self.keys()[int(key)]
             return _OD.__getitem__(self,thiskey)
@@ -87,7 +87,7 @@ class odict(_OD):
                 slicevals = [self.__getitem__(i) for i in range(startind,stopind)]
                 output = self.__sanitize_items(slicevals)
                 return output
-            except KeyError:
+            except:
                 print('Invalid odict slice... returning empty list...')
                 return []
         elif self.__is_odict_iterable(key): # Iterate over items
@@ -698,14 +698,3 @@ def test_odict():
     z.toeach(2, [10,20])    # z is now odict({'a':[1,2,10,4], 'b':[5,6,20,8]})
     z.toeach(ind=3,val=666) #  z is now odict({'a':[1,2,10,666], 'b':[5,6,20,666]})
     return None
-
-
-class odictKeyError(KeyError):
-    
-    def __init__(self, errormsg):
-        KeyError.__init__(self)
-        self.errormsg = errormsg
-        return None
-        
-    def __repr__(self):
-        return Exception(self.errormsg).__repr__()
