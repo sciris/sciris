@@ -70,7 +70,7 @@ class odict(_OD):
             try:
                 output = _OD.__getitem__(self, key)
                 return output
-            except Exception as E: # WARNING, should be KeyError, but this can't print newlines!!!
+            except KeyError as E: # WARNING, should be KeyError, but this can't print newlines!!!
                 if len(self.keys()): errormsg = '%s\nodict key "%s" not found; available keys are:\n%s' % (repr(E), ut.flexstr(key), '\n'.join([ut.flexstr(k) for k in self.keys()]))
                 else:                errormsg = 'Key "%s" not found since odict is empty'% key
                 raise Exception(errormsg)
@@ -87,7 +87,7 @@ class odict(_OD):
                 slicevals = [self.__getitem__(i) for i in range(startind,stopind)]
                 output = self.__sanitize_items(slicevals)
                 return output
-            except:
+            except KeyError:
                 print('Invalid odict slice... returning empty list...')
                 return []
         elif self.__is_odict_iterable(key): # Iterate over items
