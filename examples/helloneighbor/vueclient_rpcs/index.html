@@ -134,6 +134,8 @@
           
           // Code for testing task queuing.
           
+          this.serverresponse = 'Running a task...'
+          
           // Do an async_add(), wait 15 sec., and get the result.  Should 
           // succeed because async_add() has 10 sec. wait.
 /*          getTaskResultWaiting('my_crazy_id', 15, 'async_add', [23, 57])
