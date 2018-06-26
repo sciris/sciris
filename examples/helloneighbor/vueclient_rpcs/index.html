@@ -20,17 +20,25 @@
   
     <div id="app">
       <h1>Hello, dotty neighbor</h1>
+      
       <button @click="demoLogin">demo Login</button>
       <button @click="adminLogin">admin Login</button>      
       <button @click="logout">Logout</button> 
       Logged in User: {{ username }} 
       <br/>  
-      <br/>        
-      <button @click="sendRequest">Get new dots</button>
+      <br/> 
+      
+      <button @click="sendRequest">Send request</button>
       <br/>
-      {{ serverresponse }}      
+      {{ serverresponse }}
+      <br/>  
+      <br/> 
+      
+      <button @click="sendGraphRequest">Get new dots</button>
+      <br/>
+      {{ servergraphresponse }}      
       <div id="randomgraph"></div>
-    </div>
+    </div> 
 
 
 
@@ -42,7 +50,8 @@
       
       data: {
         username: '[none]',
-        serverresponse: '[Click button to send request]' 
+        serverresponse: '[Click button to send request]',
+        servergraphresponse: '[Click button to send request]'         
       }, 
       
       methods: {
@@ -83,8 +92,8 @@
           })      
         }, 
         
-        // This function is wired to the "Get new dots" button, but is used to 
-        // test anything under the sun.  :-)
+        // This function is wired to the "Send request" button, and is used to 
+        // test most things under the sun.  :-)
         sendRequest: function () {
           var vm = this;
           
@@ -150,7 +159,8 @@
           // Should succeed.
           getTaskResultPolling('my_crazy_id', 15, 3, 'async_add', [23, 57])
           .then(response => {
-            console.log('The result is: ' + response.data.result)
+            console.log('The result is: ' + response.data.result)          
+            this.serverresponse = 'The result is: ' + response.data.result
           })
           
           // Do an async_add() and try for at most 8 sec. to get a result, polling every 5 sec.
@@ -175,12 +185,16 @@
 //          rpcCall('get_task_result', ['my_crazy_id'])          
 //          rpcCall('delete_task', ['my_crazy_id'])
 
-          // The actual graph-related stuff!  :-)
-          
+        },
+
+        // This function is wired to the "Get new dots" button.
+        sendGraphRequest: function () {
+          var vm = this;
+             
           // Make a normal RPC call to get_graph().    
-/*          rpcCall('get_graph')
+          rpcCall('get_graph')
           .then(function (response) {
-            vm.serverresponse = 'See graph below';
+            vm.servergraphresponse = 'See graph below';
             // If we already have a figure, pop the figure object, and clear the DOM -- WARNING, needs fixing
             if (mpld3.figures.length > 0) {
               mpld3.figures.pop();
@@ -189,8 +203,8 @@
             mpld3.draw_figure('randomgraph', response.data);
           })
           .catch(function (error) {
-            vm.serverresponse = 'There was an error: ' + error.message;
-          }) */
+            vm.servergraphresponse = 'There was an error: ' + error.message;
+          })
           
 /*          // Make an upload RPC call to graph points in an uploaded .csv file.
           rpcUploadCall('show_csv_file', [], {}, '.csv')
@@ -213,7 +227,8 @@
             vm.serverresponse = 'There was an error: ' + error.message;
           }) */
           
-        }      
+        }        
+        
       }
     })
   </script>
