@@ -73,7 +73,7 @@ class odict(_OD):
             except KeyError as E: # WARNING, should be KeyError, but this can't print newlines!!!
                 if len(self.keys()): errormsg = '%s\nodict key "%s" not found; available keys are:\n%s' % (repr(E), ut.flexstr(key), '\n'.join([ut.flexstr(k) for k in self.keys()]))
                 else:                errormsg = 'Key "%s" not found since odict is empty'% key
-                raise Exception(errormsg)
+                raise odictKeyError(errormsg)
         elif isinstance(key, ut._numtype): # Convert automatically from float...dangerous?
             thiskey = self.keys()[int(key)]
             return _OD.__getitem__(self,thiskey)
@@ -698,3 +698,14 @@ def test_odict():
     z.toeach(2, [10,20])    # z is now odict({'a':[1,2,10,4], 'b':[5,6,20,8]})
     z.toeach(ind=3,val=666) #  z is now odict({'a':[1,2,10,666], 'b':[5,6,20,666]})
     return None
+
+
+class odictKeyError(KeyError):
+    
+    def __init__(self, errormsg):
+        KeyError.__init__(self)
+        self.errormsg = errormsg
+        return None
+        
+    def __repr__(self):
+        return Exception(self.errormsg).__repr__()
