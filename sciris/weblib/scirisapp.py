@@ -1,7 +1,7 @@
 """
 scirisapp.py -- classes for Sciris (Flask-based) apps 
     
-Last update: 6/18/18 (gchadder3)
+Last update: 6/26/18 (gchadder3)
 """
 
 # Imports
@@ -681,7 +681,13 @@ def json_sanitize_result(theResult):
     if isinstance(theResult, float):
         if np.isnan(theResult):
             return None
-
+        
+    if isinstance(theResult, np.int64):
+        if np.isnan(theResult):
+            return None
+        else:
+            return int(theResult)
+        
     if isinstance(theResult, np.float64):
         if np.isnan(theResult):
             return None
