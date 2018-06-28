@@ -1183,7 +1183,7 @@ def tic():
 
 
 
-def toc(start=None, label=None, sigfigs=None, filename=None, output=False):
+def toc(start=None, output=False, label=None, sigfigs=None, filename=None):
     '''
     A little pair of functions to calculate a time difference, sort of like Matlab:
     tic() [but you can also use the form t = tic()]
