@@ -811,6 +811,12 @@ def getvalidinds(data=None, filterdata=None):
     return validindices # Only return indices -- WARNING, not consistent with sanitize()
 
 
+def approx(val1=None, val2=None, eps=None):
+    ''' Determine whether two scalars approximately match '''
+    if eps is None: eps = 1e-9
+    output = abs(val1-val2)<eps
+    return output
+
 
 def findinds(val1, val2=None, eps=1e-6):
     '''
