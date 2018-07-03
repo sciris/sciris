@@ -454,8 +454,8 @@ def make_celery_instance(config=None):
         
         # Make the actual function call, inside a try block in case there is 
         # an exception thrown.
-#        print 'show the task_funcs:'
-#        print task_func_dict      
+#        print('Available task_funcs:')
+#        print(task_func_dict)
         try:
             result = task_func_dict[func_name](*args, **kwargs)
             match_taskrec.status = 'completed'
