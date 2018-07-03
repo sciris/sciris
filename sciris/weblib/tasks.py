@@ -1,7 +1,7 @@
 """
 tasks.py -- code related to Sciris task queue management
     
-Last update: 6/29/18 (gchadder3)
+Last update: 7/3/18 (gchadder3)
 """
 
 #
@@ -415,7 +415,7 @@ def make_celery_instance(config=None):
     
     # Configure Celery with config.py.
     if config is not None:
-        celery_instance.config_from_object('config')
+        celery_instance.config_from_object(config)
     
     # Configure so that the actual start of a task is tracked.
     # This may work only under version 3.1.25
@@ -486,10 +486,10 @@ def make_celery_instance(config=None):
     # as well.
     @register_RPC(validation_type='nonanonymous user') 
     def launch_task(task_id='', func_name='', args=[], kwargs={}):
-        print('Here is the celery_instance:')
-        print celery_instance
-        print('Here are the celery_instance tasks:')
-        print celery_instance.tasks 
+#        print('Here is the celery_instance:')
+#        print celery_instance
+#        print('Here are the celery_instance tasks:')
+#        print celery_instance.tasks 
                     
         # Reload the whole TaskDict from the DataStore because Celery may have 
         # modified its state in Redis.
@@ -574,11 +574,6 @@ def make_celery_instance(config=None):
         # Return our result.
         return return_dict 
     
-    print('Here is the celery_instance:')
-    print celery_instance
-    print('Here are the celery_instance tasks:')
-    print celery_instance.tasks
-   
     # Return the new instance.
     return celery_instance
 
