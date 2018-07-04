@@ -410,9 +410,12 @@ def today(timezone='utc', die=False, tostring=False, fmt=None):
     return output
 
 
-def getdate(obj, which='modified', fmt='str', dateformat=None):
+def getdate(obj=None, which='modified', fmt='str', dateformat=None):
         ''' Return either the date created or modified ("which") as either a str or int ("fmt") '''
         from time import mktime
+        
+        if obj is None:
+            obj = today()
         
         if dateformat is None:
             dateformat = '%Y-%b-%d %H:%M:%S'

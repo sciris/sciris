@@ -4,6 +4,13 @@ from .version import version, versiondate
 # Import core functions
 from . import core
 
+# Simplifying...
+from .corelib.utils import *
+from .corelib.colortools import *
+from .corelib.odict import *
+from .corelib.dataframe import *
+from .corelib.fileio import loadspreadsheet, export_file # WARNING, make consistent
+
 # Import web functions
 try:
     from . import web
