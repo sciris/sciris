@@ -1,7 +1,7 @@
 """
 tasks.py -- code related to Sciris task queue management
     
-Last update: 7/3/18 (gchadder3)
+Last update: 7/4/18 (gchadder3)
 """
 
 #
@@ -122,13 +122,17 @@ class TaskRecord(sobj.ScirisObject):
         
         # Set the instance label to the task_id.
         self.instance_label = task_id 
-              
-    def load_from_copy(self, other_object):
-        if type(other_object) == type(self):
-            # Do the superclass copying.
-            super(TaskRecord, self).load_from_copy(other_object)
+        
+    # TODO: Possibly try to get rid of check_type_match parameter (presently 
+    # used to allow cases of inexact type matches when Celery is being used).               
+    def load_from_copy(self, other_object, check_type_match=True):
+        if check_type_match and type(other_object) != type(self):
+            return        
 
-            self.task_id = other_object.task_id
+        # Do the superclass copying.
+        super(TaskRecord, self).load_from_copy(other_object)
+
+        self.task_id = other_object.task_id
             
     def show(self):
         # Show superclass attributes.
@@ -243,12 +247,16 @@ class TaskDict(sobj.ScirisCollection):
         # Create the Python dict to hold the hashes from task_ids to the UIDs.
         self.task_id_hashes = {}
         
-    def load_from_copy(self, other_object):
-        if type(other_object) == type(self):
-            # Do the superclass copying.
-            super(TaskDict, self).load_from_copy(other_object)
-            
-            self.task_id_hashes = other_object.task_id_hashes
+    # TODO: Possibly try to get rid of check_type_match parameter (presently 
+    # used to allow cases of inexact type matches when Celery is being used).         
+    def load_from_copy(self, other_object, check_type_match=True):
+        if check_type_match and type(other_object) != type(self):
+            return
+        
+        # Do the superclass copying.
+        super(TaskDict, self).load_from_copy(other_object)
+        
+        self.task_id_hashes = other_object.task_id_hashes
             
     def get_task_record_by_uid(self, uid):
         return self.get_object_by_uid(uid)

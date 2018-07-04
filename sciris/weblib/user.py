@@ -1,7 +1,7 @@
 """
 user.py -- code related to Sciris user management
     
-Last update: 6/23/18 (gchadder3)
+Last update: 7/4/18 (gchadder3)
 """
 
 #
@@ -116,21 +116,25 @@ class User(sobj.ScirisObject):
         self.file_suffix = '.usr'
         
         # Set the instance label to the username.
-        self.instance_label = username 
+        self.instance_label = username
         
-    def load_from_copy(self, other_object):
-        if type(other_object) == type(self):
-            # Do the superclass copying.
-            super(User, self).load_from_copy(other_object)
-            
-            self.is_authenticated = other_object.is_authenticated
-            self.is_active = other_object.is_active
-            self.is_anonymous = other_object.is_anonymous
-            self.username = other_object.username
-            self.password = other_object.password
-            self.displayname = other_object.displayname
-            self.email = other_object.email
-            self.is_admin = other_object.is_admin
+    # TODO: Possibly try to get rid of check_type_match parameter (presently 
+    # used to allow cases of inexact type matches when Celery is being used).        
+    def load_from_copy(self, other_object, check_type_match=True):
+        if check_type_match and type(other_object) != type(self):
+            return
+        
+        # Do the superclass copying.
+        super(User, self).load_from_copy(other_object)
+        
+        self.is_authenticated = other_object.is_authenticated
+        self.is_active = other_object.is_active
+        self.is_anonymous = other_object.is_anonymous
+        self.username = other_object.username
+        self.password = other_object.password
+        self.displayname = other_object.displayname
+        self.email = other_object.email
+        self.is_admin = other_object.is_admin
             
     def get_id(self):
         return self.uid
@@ -244,12 +248,16 @@ class UserDict(sobj.ScirisCollection):
         # Create the Python dict to hold the hashes from usernames to the UIDs.
         self.username_hashes = {}
         
-    def load_from_copy(self, other_object):
-        if type(other_object) == type(self):
-            # Do the superclass copying.
-            super(UserDict, self).load_from_copy(other_object)
-            
-            self.username_hashes = other_object.username_hashes
+    # TODO: Possibly try to get rid of check_type_match parameter (presently 
+    # used to allow cases of inexact type matches when Celery is being used).         
+    def load_from_copy(self, other_object, check_type_match=True):
+        if check_type_match and type(other_object) != type(self):
+            return        
+
+        # Do the superclass copying.
+        super(UserDict, self).load_from_copy(other_object)
+        
+        self.username_hashes = other_object.username_hashes
             
     def get_user_by_uid(self, uid):
         return self.get_object_by_uid(uid)
