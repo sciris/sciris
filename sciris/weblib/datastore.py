@@ -1,7 +1,7 @@
 """
 datastore.py -- code related to Sciris database persistence
     
-Last update: 5/21/18 (gchadder3)
+Last update: 7/11/18 (gchadder3)
 """
 
 #
@@ -88,7 +88,9 @@ class StoreObjectHandle(object):
         full_file_name = '%s%s%s' % (dir_path, os.sep, file_name)
         
         # Write the object to a Gzip string pickle file.
+#        ut.tic()
         io.object_to_gzip_string_pickle_file(full_file_name, obj)
+#        ut.toc(label='file_store (%s)' % self.instance_label)
     
     def file_retrieve(self, dir_path):
         # Create a filename containing the type prefix, hex UID code, and the
@@ -99,7 +101,10 @@ class StoreObjectHandle(object):
         full_file_name = '%s%s%s' % (dir_path, os.sep, file_name)
         
         # Return object from the Gzip string pickle file.
-        return io.gzip_string_pickle_file_to_object(full_file_name)
+#        ut.tic()
+        obj = io.gzip_string_pickle_file_to_object(full_file_name)
+#        ut.toc(label='file_retrieve (%s)' % self.instance_label)
+        return obj
     
     def file_delete(self, dir_path):
         # Create a filename containing the type prefix, hex UID code, and the
@@ -111,37 +116,37 @@ class StoreObjectHandle(object):
         
         # Remove the file if it's there.
         if os.path.exists(full_file_name):
+#            ut.tic()
             os.remove(full_file_name)
+#            ut.toc(label='file_delete (%s)' % self.instance_label)
     
     def redis_store(self, obj, redis_db):
         # Make the Redis key containing the type prefix, and the hex UID code.
         key_name = '%s-%s' % (self.type_prefix, self.uid.hex)
         
         # Put the object in Redis.
-        ut.tic()
-#        redis_db.set(key_name, io.object_to_gzip_string_pickle(obj))
-        xxx = io.object_to_gzip_string_pickle(obj)
-        ut.toc(label='redis_store zip')
-        redis_db.set(key_name, xxx)
-        ut.toc(label='redis_store end')
+#        ut.tic()
+        redis_db.set(key_name, io.object_to_gzip_string_pickle(obj))
+#        ut.toc(label='redis_store (%s)' % self.instance_label)
     
     def redis_retrieve(self, redis_db):
         # Make the Redis key containing the type prefix, and the hex UID code.
         key_name = '%s-%s' % (self.type_prefix, self.uid.hex) 
         
         # Get and return the object with the key in Redis.
-        ut.tic()
-        return io.gzip_string_pickle_to_object(redis_db.get(key_name))
-        ut.toc(label='redis_retrieve')
+#        ut.tic()
+        obj = io.gzip_string_pickle_to_object(redis_db.get(key_name))
+#        ut.toc(label='redis_retrieve (%s)' % self.instance_label)
+        return obj
     
     def redis_delete(self, redis_db):
         # Make the Redis key containing the type prefix, and the hex UID code.
         key_name = '%s-%s' % (self.type_prefix, self.uid.hex)
         
         # Delete the entry from Redis.
-        ut.tic()
+#        ut.tic()
         redis_db.delete(key_name)
-        ut.toc(label='redis_delete')
+#        ut.toc(label='redis_delete (%s)' % self.instance_label)
         
     def show(self):
         print('UUID: %s' % self.uid.hex)
