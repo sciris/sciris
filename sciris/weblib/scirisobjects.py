@@ -165,7 +165,7 @@ class ScirisCollection(ScirisObject):
     Methods:
         __init__(uid: UUID [None], type_prefix: str ['collection'], 
             file_suffix: str ['.scl'], instance_label: str [''], 
-            objs_within_dict: bool [True]): void -- constructor        
+            objs_within_dict: bool [False]): void -- constructor        
         load_from_copy(other_obj): void -- assuming other_obj is another 
             object of our type, copy its contents to us (calls the 
             ScirisObject superclass version of this method also)
