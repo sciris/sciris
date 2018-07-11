@@ -197,7 +197,7 @@ class ScirisCollection(ScirisObject):
     """
     
     def __init__(self, uid, type_prefix='collection', 
-        file_suffix='.scl', instance_label='', objs_within_coll=True):
+        file_suffix='.scl', instance_label='', objs_within_coll=False):
         # Set superclass parameters.
         super(ScirisCollection, self).__init__(uid, type_prefix, 
              file_suffix, instance_label)
