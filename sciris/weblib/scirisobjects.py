@@ -302,12 +302,12 @@ class ScirisCollection(ScirisObject):
             # Otherwise, we are using the UUID set...
             else:
                 # If the UUID is in the set...
-                if uid in self.ds_uuid_set:
+                if valid_uid in self.ds_uuid_set:
                     # Remove the UUID from the set.
-                    self.ds_uuid_set.remove(uid)
+                    self.ds_uuid_set.remove(valid_uid)
                     
                     # Delete the object in the global DataStore object.
-                    ds.data_store.delete(uid)
+                    ds.data_store.delete(valid_uid)
                     
                     # Set to update the data store
                     need_to_update = True                    
