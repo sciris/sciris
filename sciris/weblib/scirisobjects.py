@@ -1,7 +1,7 @@
 """
 scirisobjects.py -- classes for Sciris objects which are generally managed
     
-Last update: 6/23/18 (gchadder3)
+Last update: 7/10/18 (gchadder3)
 """
 
 #
@@ -164,8 +164,8 @@ class ScirisCollection(ScirisObject):
     
     Methods:
         __init__(uid: UUID [None], type_prefix: str ['collection'], 
-            file_suffix: str ['.scl'], instance_label: str ['']): 
-            void -- constructor        
+            file_suffix: str ['.scl'], instance_label: str [''], 
+            objs_within_dict: bool [True]): void -- constructor        
         load_from_copy(other_obj): void -- assuming other_obj is another 
             object of our type, copy its contents to us (calls the 
             ScirisObject superclass version of this method also)
@@ -186,13 +186,18 @@ class ScirisCollection(ScirisObject):
                     
     Attributes:
         obj_dict (dict) -- the Python dictionary holding the ScirisObjects
+        objs_within_coll (bool) -- are the objects themselves within the 
+            collection? If they are not, they are kept as separate data store 
+            entries and handle_dict is used.
+        ds_uuid_set (set) -- the Python set holding UUIDs to DataStore 
+            entries for the ScirisObjects (used only if objs_within_coll is False)
         
     Usage:
         >>> objs = ScirisCollection(uuid.UUID('12345678123456781234567812345678'))                      
     """
     
     def __init__(self, uid, type_prefix='collection', 
-        file_suffix='.scl', instance_label=''):
+        file_suffix='.scl', instance_label='', objs_within_coll=True):
         # Set superclass parameters.
         super(ScirisCollection, self).__init__(uid, type_prefix, 
              file_suffix, instance_label)
@@ -200,39 +205,76 @@ class ScirisCollection(ScirisObject):
         # Create a Python dict to hold the ScirisObjects.
         self.obj_dict = {}
         
+        # Set the flag for whether the objects are stored within the collection 
+        # itself (or outside in separate data store entries).
+        self.objs_within_coll = objs_within_coll
+        
+        # Set the datastore UUID set to empty.
+        self.ds_uuid_set = set()
+        
     def load_from_copy(self, other_obj):
         if type(other_obj) == type(self):
             # Do the superclass copying.
             super(ScirisCollection, self).load_from_copy(other_obj)
             
+            # Copy other items specific to this class.
             self.obj_dict = other_obj.obj_dict
+            self.objs_within_coll = other_obj.objs_within_coll
+            self.ds_uuid_set = other_obj.ds_uuid_set
             
     def get_object_by_uid(self, uid):
         # Make sure the argument is a valid UUID, converting a hex text to a
         # UUID object, if needed.
         valid_uid = ut.uuid(uid)
         
-        # If we have a valid UUID, return the matching ScirisObject (if any); 
-        # otherwise, return None.
+        # If we have a valid UUID...
         if valid_uid is not None:
-            return self.obj_dict.get(valid_uid, None)
+            # If we have the objects within the collection itself...
+            if self.objs_within_coll:
+                # Return the object.
+                return self.obj_dict.get(valid_uid, None)
+            # Otherwise...
+            else:
+                # Return the object that is in the global DataStore object.
+                return ds.data_store.retrieve(valid_uid)
         else:
             return None
         
     def get_all_objects(self):
-        return [self.obj_dict[key] for key in self.obj_dict]
+        if self.objs_within_coll:
+            return [self.obj_dict[key] for key in self.obj_dict]
+        else:
+            return [ds.data_store.retrieve(uid) for uid in self.ds_uuid_set]
     
     def add_object(self, obj):
-        # Add the object to the hash table, keyed by the UID.
-        self.obj_dict[obj.uid] = obj
+        # If we are storing things inside the obj_dict...
+        if self.objs_within_coll:        
+            # Add the object to the hash table, keyed by the UID.
+            self.obj_dict[obj.uid] = obj
+            
+        # Otherwise, we are using the UUID set...
+        else:
+            # Put the UUID in the set.
+            self.ds_uuid_set.add(obj.uid)
+            
+            # If the object is not actually in the DataStore, put it there.
+            if not obj.in_data_store():
+                obj.add_to_data_store()
         
         # Update our DataStore representation if we are there. 
         if self.in_data_store():
             self.update_data_store()
             
     def update_object(self, obj):
-        # Do the same behavior as add_object().
-        self.add_object(obj)
+        # If we are storing things inside the obj_dict...
+        if self.objs_within_coll:           
+            # Do the same behavior as add_object().
+            self.add_object(obj)
+            
+        # Otherwise, we are using the UUID set...
+        else:
+            # Update the object in the global DataStore object.
+            ds.data_store.update(obj.uid, obj)
             
     def delete_object_by_uid(self, uid):
         # Make sure the argument is a valid UUID, converting a hex text to a
@@ -241,22 +283,55 @@ class ScirisCollection(ScirisObject):
         
         # If we have a valid UUID...
         if valid_uid is not None:
-            # Get the object pointed to by the UID.
-            obj = self.obj_dict[valid_uid]
+            # Default to not needing to update the data store.
+            need_to_update = False
             
-            # If a match is found...
-            if obj is not None:
-                # Remove entries from obj_dict.
-                del self.obj_dict[valid_uid]
+            # If we are storing things inside the obj_dict...
+            if self.objs_within_coll:             
+                # Get the object pointed to by the UID.
+                obj = self.obj_dict[valid_uid]
                 
-                # Update our DataStore representation if we are there. 
-                if self.in_data_store():
-                    self.update_data_store()
+                # If a match is found...
+                if obj is not None:
+                    # Remove entries from obj_dict.
+                    del self.obj_dict[valid_uid]
+                    
+                    # Set to update the data store
+                    need_to_update = True
+                    
+            # Otherwise, we are using the UUID set...
+            else:
+                # If the UUID is in the set...
+                if uid in self.ds_uuid_set:
+                    # Remove the UUID from the set.
+                    self.ds_uuid_set.remove(uid)
+                    
+                    # Delete the object in the global DataStore object.
+                    ds.data_store.delete(uid)
+                    
+                    # Set to update the data store
+                    need_to_update = True                    
+            
+            # Update our DataStore representation if we are there. 
+            if need_to_update and self.in_data_store():
+                self.update_data_store()
     
     def delete_all_objects(self):
-        # Reset the Python dicts.
-        self.obj_dict = {}
-        
+        # If we are storing things inside the obj_dict...
+        if self.objs_within_coll:          
+            # Reset the Python dicts.
+            self.obj_dict = {}
+            
+        # Otherwise, we are using the UUID set...
+        else:
+            # For each item in the set...
+            for uid in self.ds_uuid_set:
+                # Delete the object with that UID in the DataStore.
+                ds.data_store.delete(uid)
+                
+            # Clear the UUID set.
+            self.ds_uuid_set.clear()
+         
         # Update our DataStore representation if we are there. 
         if self.in_data_store():
             self.update_data_store()  
@@ -264,21 +339,35 @@ class ScirisCollection(ScirisObject):
     def show(self):
         # Show superclass attributes.
         super(ScirisCollection, self).show()  
-        
+
+        if self.objs_within_coll:
+            print('Objects stored within dict?: Yes')
+        else:
+            print('Objects stored within dict?: No')
+            
         print('---------------------')
         print('Contents')
         print('---------------------')
         
-        # For each key in the dictionary...
-        for key in self.obj_dict:
-            # Get the object pointed to.
-            obj = self.obj_dict[key]
-            
-            # Separator line.
-            #print '--------------------------------------------'
-            
-            # Show the handle contents.
-            obj.show()
+        # If we are storing things inside the obj_dict...
+        if self.objs_within_coll:
+            # For each key in the dictionary...
+            for key in self.obj_dict:
+                # Get the object pointed to.
+                obj = self.obj_dict[key]
+                
+                # Separator line.
+                #print '--------------------------------------------'
+                
+                # Show the handle contents.
+                obj.show()
+                
+        # Otherwise, we are using the UUID set.
+        else:
+            # For each item in the set...
+            for uid in self.ds_uuid_set:
+                # Show the object with that UID in the DataStore.
+                ds.data_store.retrieve(uid).show()
             
         # Separator line.
         print('--------------------------------------------')

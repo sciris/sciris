@@ -118,21 +118,30 @@ class StoreObjectHandle(object):
         key_name = '%s-%s' % (self.type_prefix, self.uid.hex)
         
         # Put the object in Redis.
-        redis_db.set(key_name, io.object_to_gzip_string_pickle(obj))
+        ut.tic()
+#        redis_db.set(key_name, io.object_to_gzip_string_pickle(obj))
+        xxx = io.object_to_gzip_string_pickle(obj)
+        ut.toc(label='redis_store zip')
+        redis_db.set(key_name, xxx)
+        ut.toc(label='redis_store end')
     
     def redis_retrieve(self, redis_db):
         # Make the Redis key containing the type prefix, and the hex UID code.
         key_name = '%s-%s' % (self.type_prefix, self.uid.hex) 
         
         # Get and return the object with the key in Redis.
+        ut.tic()
         return io.gzip_string_pickle_to_object(redis_db.get(key_name))
+        ut.toc(label='redis_retrieve')
     
     def redis_delete(self, redis_db):
         # Make the Redis key containing the type prefix, and the hex UID code.
         key_name = '%s-%s' % (self.type_prefix, self.uid.hex)
         
         # Delete the entry from Redis.
+        ut.tic()
         redis_db.delete(key_name)
+        ut.toc(label='redis_delete')
         
     def show(self):
         print('UUID: %s' % self.uid.hex)
@@ -351,7 +360,7 @@ class DataStore(object):
                 # Otherwise (we are using files)...
                 else:
                     # Overwrite the old copy of the object using the handle.
-                    handle.file_store('.', obj)     
+                    handle.file_store('.', obj) 
      
     def delete(self, uid, save_handle_changes=True):
         # Make sure the argument is a valid UUID, converting a hex text to a
