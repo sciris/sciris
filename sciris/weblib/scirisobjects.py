@@ -1,7 +1,7 @@
 """
 scirisobjects.py -- classes for Sciris objects which are generally managed
     
-Last update: 7/11/18 (gchadder3)
+Last update: 7/12/18 (gchadder3)
 """
 
 #
@@ -234,10 +234,14 @@ class ScirisCollection(ScirisObject):
                 # Return the object.
                 return self.obj_dict.get(valid_uid, None)
             
-            # Otherwise...
-            else:
+            # Otherwise, if the UUID is in the set...
+            elif valid_uid in self.ds_uuid_set:
                 # Return the object that is in the global DataStore object.
                 return ds.data_store.retrieve(valid_uid)
+            
+            # Otherwise (no match)...
+            else:
+                return None
         else:
             return None
         
