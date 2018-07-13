@@ -13,3 +13,4 @@ from .corelib.colortools import *
 from .corelib.odict import *
 from .corelib.dataframe import *
 from .corelib.fileio import loadspreadsheet, export_file # WARNING, make consistent
+from .corelib.asd import asd
