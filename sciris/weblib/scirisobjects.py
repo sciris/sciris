@@ -1,7 +1,7 @@
 """
 scirisobjects.py -- classes for Sciris objects which are generally managed
     
-Last update: 7/4/18 (gchadder3)
+Last update: 6/23/18 (gchadder3)
 """
 
 #
@@ -73,16 +73,12 @@ class ScirisObject(object):
         
     def in_data_store(self):
         return (ds.data_store.retrieve(self.uid) is not None)
-
-    # TODO: Possibly try to get rid of check_type_match parameter (presently 
-    # used to allow cases of inexact type matches when Celery is being used).    
-    def load_from_copy(self, other_obj, check_type_match=True):
-        if check_type_match and type(other_obj) != type(self):
-            return
-
-        self.uid = other_obj.uid
-        self.type_prefix = other_obj.type_prefix
-        self.instance_label = other_obj.instance_label
+    
+    def load_from_copy(self, other_obj):
+        if type(other_obj) == type(self):
+            self.uid = other_obj.uid
+            self.type_prefix = other_obj.type_prefix
+            self.instance_label = other_obj.instance_label
             
     def add_to_data_store(self):
         # Check to see if the object is already in the DataStore, and give an 
@@ -104,15 +100,13 @@ class ScirisObject(object):
                 return ds.data_store.retrieve(self.uid)
         else:
             return ds.data_store.retrieve(uid)
-        
-    # TODO: Possibly try to get rid of check_type_match parameter (presently 
-    # used to allow cases of inexact type matches when Celery is being used).                
-    def load_from_data_store(self, uid=None, check_type_match=True):
+            
+    def load_from_data_store(self, uid=None):
         # Get a copy from the DataStore.
         copy_from_store = self.load_copy_from_data_store(uid)
         
         # Copy the internal information over from the copy to ourselves.
-        self.load_from_copy(copy_from_store, check_type_match)
+        self.load_from_copy(copy_from_store)
         
     def update_data_store(self):
         # Give an error if the object is not in the DataStore.
@@ -206,16 +200,12 @@ class ScirisCollection(ScirisObject):
         # Create a Python dict to hold the ScirisObjects.
         self.obj_dict = {}
         
-    # TODO: Possibly try to get rid of check_type_match parameter (presently 
-    # used to allow cases of inexact type matches when Celery is being used).         
-    def load_from_copy(self, other_obj, check_type_match=True):
-        if check_type_match and type(other_obj) != type(self):
-            return
-        
-        # Do the superclass copying.
-        super(ScirisCollection, self).load_from_copy(other_obj, check_type_match)
-        
-        self.obj_dict = other_obj.obj_dict
+    def load_from_copy(self, other_obj):
+        if type(other_obj) == type(self):
+            # Do the superclass copying.
+            super(ScirisCollection, self).load_from_copy(other_obj)
+            
+            self.obj_dict = other_obj.obj_dict
             
     def get_object_by_uid(self, uid):
         # Make sure the argument is a valid UUID, converting a hex text to a

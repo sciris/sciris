@@ -1,7 +1,7 @@
 """
 tasks.py -- code related to Sciris task queue management
     
-Last update: 7/4/18 (gchadder3)
+Last update: 7/16/18 (gchadder3)
 """
 
 #
@@ -122,17 +122,13 @@ class TaskRecord(sobj.ScirisObject):
         
         # Set the instance label to the task_id.
         self.instance_label = task_id 
-        
-    # TODO: Possibly try to get rid of check_type_match parameter (presently 
-    # used to allow cases of inexact type matches when Celery is being used).               
-    def load_from_copy(self, other_object, check_type_match=True):
-        if check_type_match and type(other_object) != type(self):
-            return        
+              
+    def load_from_copy(self, other_object):
+        if type(other_object) == type(self):
+            # Do the superclass copying.
+            super(TaskRecord, self).load_from_copy(other_object)
 
-        # Do the superclass copying.
-        super(TaskRecord, self).load_from_copy(other_object)
-
-        self.task_id = other_object.task_id
+            self.task_id = other_object.task_id
             
     def show(self):
         # Show superclass attributes.
@@ -247,16 +243,12 @@ class TaskDict(sobj.ScirisCollection):
         # Create the Python dict to hold the hashes from task_ids to the UIDs.
         self.task_id_hashes = {}
         
-    # TODO: Possibly try to get rid of check_type_match parameter (presently 
-    # used to allow cases of inexact type matches when Celery is being used).         
-    def load_from_copy(self, other_object, check_type_match=True):
-        if check_type_match and type(other_object) != type(self):
-            return
-        
-        # Do the superclass copying.
-        super(TaskDict, self).load_from_copy(other_object)
-        
-        self.task_id_hashes = other_object.task_id_hashes
+    def load_from_copy(self, other_object):
+        if type(other_object) == type(self):
+            # Do the superclass copying.
+            super(TaskDict, self).load_from_copy(other_object)
+            
+            self.task_id_hashes = other_object.task_id_hashes
             
     def get_task_record_by_uid(self, uid):
         return self.get_object_by_uid(uid)
@@ -463,7 +455,7 @@ def make_celery_instance(config=None):
         # Make the actual function call, inside a try block in case there is 
         # an exception thrown.
 #        print('Available task_funcs:')
-#        print(task_func_dict)
+#        print(task_func_dict)     
         try:
             result = task_func_dict[func_name](*args, **kwargs)
             match_taskrec.status = 'completed'
@@ -497,8 +489,8 @@ def make_celery_instance(config=None):
 #        print('Here is the celery_instance:')
 #        print celery_instance
 #        print('Here are the celery_instance tasks:')
-#        print celery_instance.tasks 
-                    
+#        print celery_instance.tasks
+
         # Reload the whole TaskDict from the DataStore because Celery may have 
         # modified its state in Redis.
         task_dict.load_from_data_store()
@@ -580,7 +572,7 @@ def make_celery_instance(config=None):
                 }
         
         # Return our result.
-        return return_dict 
+        return return_dict  
     
     # Return the new instance.
     return celery_instance
