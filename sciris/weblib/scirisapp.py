@@ -1,7 +1,7 @@
 """
 scirisapp.py -- classes for Sciris (Flask-based) apps 
     
-Last update: 6/26/18 (gchadder3)
+Last update: 6/29/18 (gchadder3)
 """
 
 # Imports
@@ -331,8 +331,8 @@ class ScirisApp(object):
             tasks.task_dict.show()
             
         # Have the tasks.py module make the Celery app to connect to the 
-        # worker.
-        tasks.make_celery_instance()
+        # worker, passing in the config parameters.
+        tasks.make_celery_instance(app_config)
         
     def run_server(self, with_twisted=True, with_flask=True, with_client=True, 
         use_twisted_logging=True):
