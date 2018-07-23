@@ -1,7 +1,7 @@
 """
 user.py -- code related to Sciris user management
     
-Last update: 6/23/18 (gchadder3)
+Last update: 7/11/18 (gchadder3)
 """
 
 #
@@ -239,7 +239,7 @@ class UserDict(sobj.ScirisCollection):
         instance_label='Users Dictionary'):
         # Set superclass parameters.
         super(UserDict, self).__init__(uid, type_prefix, file_suffix, 
-             instance_label)
+             instance_label, objs_within_coll=True)
         
         # Create the Python dict to hold the hashes from usernames to the UIDs.
         self.username_hashes = {}
