@@ -89,11 +89,15 @@ def browser(figs=None, doserve=True, jquery_url=None, d3_url=None, mpld3_url=Non
     Create an MPLD3 GUI and display in the browser.
     
     Usage example:
-    	import optima as op
-    	P = op.demo(0)
-        browser(P.result())
+        import pylab as pl
+        figs = []
+        for n in [10, 50]:
+            fig = pl.figure()
+            pl.plot(pl.rand(n), pl.rand(n))
+            figs.append(fig)
+        qs.browser(figs)
     
-    where figs is a list of figures.
+    figs can be a single figure or a list of figures.
     
     With doserve=True, launch a web server. Otherwise, return the HTML representation of the figures.
     
