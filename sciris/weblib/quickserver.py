@@ -84,7 +84,7 @@ def serve(html, ip='127.0.0.1', port=8888, n_retries=50):
     srvr.handle_request()
 
 
-def browser(figs=None, doserve=True):
+def browser(figs=None, doserve=True, jquery_url=None, d3_url=None, mpld3_url=None):
     ''' 
     Create an MPLD3 GUI and display in the browser.
     
@@ -97,16 +97,16 @@ def browser(figs=None, doserve=True):
     
     With doserve=True, launch a web server. Otherwise, return the HTML representation of the figures.
     
-    Version: 2017aug02
+    Version: 2018jul24
     '''
     import mpld3 # Only import this if needed, since might not always be available
     import json
 
     ## Specify the div style, and create the HTML template we'll add the data to -- WARNING, library paths are hardcoded!
     divstyle = "float: left"
-    jquery_path = 'https://code.jquery.com/jquery-1.11.3.min.js'
-    d3_path = 'https://mpld3.github.io/js/d3.v3.min.js'
-    mpld3_path = 'https://mpld3.github.io/js/mpld3.v0.3git.js'
+    if jquery_url is None: jquery_url = 'https://code.jquery.com/jquery-1.11.3.min.js'
+    if d3_url     is None: d3_url     = 'https://mpld3.github.io/js/d3.v3.min.js'
+    if mpld3_url  is None: mpld3_url  = 'https://mpld3.github.io/js/mpld3.v0.3git.js'
     html = '''
     <html>
     <head><script src="%s"></script></head>
@@ -118,7 +118,7 @@ def browser(figs=None, doserve=True):
     })});
     </script>
     </body></html>
-    ''' % (jquery_path, d3_path, mpld3_path)
+    ''' % (jquery_url, d3_url, mpld3_url)
     
     ## Create the figures to plot
     jsons = [] # List for storing the converted JSONs
