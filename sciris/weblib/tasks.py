@@ -238,7 +238,7 @@ class TaskDict(sobj.ScirisCollection):
         instance_label='Task Dictionary'):
         # Set superclass parameters.
         super(TaskDict, self).__init__(uid, type_prefix, file_suffix, 
-             instance_label)
+             instance_label, objs_within_coll=True)
         
         # Create the Python dict to hold the hashes from task_ids to the UIDs.
         self.task_id_hashes = {}
