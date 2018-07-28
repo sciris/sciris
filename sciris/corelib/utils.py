@@ -697,15 +697,18 @@ def promotetoarray(x):
         raise Exception("Expecting a number/list/tuple/ndarray; got: %s" % flexstr(x))
 
 
-def promotetolist(obj=None, objtype=None):
+def promotetolist(obj=None, objtype=None, keepnone=False):
     ''' Make sure object is iterable -- used so functions can handle inputs like 'FSW' or ['FSW', 'MSM'] '''
-    if type(obj)!=list:
-        obj = [obj] # Listify it
-    if objtype is not None:  # Check that the types match -- now that we know it's a list, we can iterate over it
+    isnone = False
+    if not isinstance(obj, list):
+        if obj is None and keepnone:
+            obj = None
+            isnone = True
+        else:
+            obj = [obj] # Main usage case -- listify it
+    if objtype is not None and not isnone:  # Check that the types match -- now that we know it's a list, we can iterate over it
         for item in obj:
             checktype(obj=item, objtype=objtype, die=True)
-    if obj is None:
-        raise Exception('This is mathematically impossible')
     return obj
 
 
