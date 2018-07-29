@@ -156,7 +156,7 @@ def desc(obj, maxlen=None):
     return output
 
 
-def printdr(obj, maxlen=None):
+def pr(obj, maxlen=None):
     ''' Shortcut for printing the default repr for an object '''
     print(desc(obj, maxlen=maxlen))
     return None
@@ -1699,13 +1699,13 @@ def setylim(data=None, ax=None):
     return lowerlim,upperlim
 
 
-def SItickformatter(x, pos, sigfigs=2, SI=True, *args, **kwargs):  # formatter function takes tick label and tick position
+def SItickformatter(x, pos=None, sigfigs=2, SI=True, *args, **kwargs):  # formatter function takes tick label and tick position
     ''' Formats axis ticks so that e.g. 34,243 becomes 34K '''
     output = sigfig(x, sigfigs=sigfigs, SI=SI) # Pretty simple since sigfig() does all the work
     return output
 
 
-def SIticks(fig=None, ax=None, axis='y'):
+def SIticks(fig=None, ax=None, axis='y', fixed=False):
     ''' Apply SI tick formatting to one axis of a figure '''
     from matplotlib import ticker
     if  fig is not None: axlist = fig.axes
@@ -1716,7 +1716,14 @@ def SIticks(fig=None, ax=None, axis='y'):
         elif axis=='y': thisaxis = ax.yaxis
         elif axis=='z': thisaxis = ax.zaxis
         else: raise Exception('Axis must be x, y, or z')
-        thisaxis.set_major_formatter(ticker.FuncFormatter(SItickformatter))
+        if fixed:
+            ticklocs = thisaxis.get_ticklocs()
+            ticklabels = []
+            for tickloc in ticklocs:
+                ticklabels.append(SItickformatter(tickloc))
+            thisaxis.set_major_formatter(ticker.FixedFormatter(ticklabels))
+        else:
+            thisaxis.set_major_formatter(ticker.FuncFormatter(SItickformatter))
     return None
 
 

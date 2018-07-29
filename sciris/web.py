@@ -10,6 +10,6 @@ Version: 2018-06-07
 
 from .weblib.datastore import DataStore
 from .weblib.rpcs import ScirisRPC, make_register_RPC
-from .weblib.scirisapp import ScirisApp
+from .weblib.scirisapp import ScirisApp, json_sanitize_result
 from .weblib.scirisobjects import ScirisObject, ScirisCollection
 from .weblib.user import User, UserDict, user_login
