@@ -220,24 +220,118 @@ def loadspreadsheet(filename=None, folder=None, sheetname=None, sheetnum=None, a
     else:
         return rawdata
 
-def export_file(filename=None, data=None, sheetname=None, close=True):
+def export_xlsx(filename=None, data=None, sheetnames=None, close=True, formats=None, formatdata=None, verbose=False):
     '''
-    Little function to format an output results nicely for Excel
+    Little function to format an output results nicely for Excel. Examples:
+    
+    import sciris.core as sc
+    import pylab as pl
+    
+    # Simple example
+    testdata1 = pl.rand(8,3)
+    sc.export_file(filename='test1.xlsx', data=testdata1)
+    
+    # Include column headers
+    test2headers = [['A','B','C']] # Need double to get right shape
+    test2values = pl.rand(8,3).tolist()
+    testdata2 = test2headers + test2values
+    sc.export_file(filename='test2.xlsx', data=testdata2)
+    
+    # Multiple sheets
+    testdata3 = [pl.rand(10,10), pl.rand(20,5)]
+    sheetnames = ['Ten by ten', 'Twenty by five']
+    sc.export_file(filename='test3.xlsx', data=testdata3, sheetnames=sheetnames)
+    
+    # Supply data as an odict
+    testdata4 = sc.odict([('First sheet', pl.rand(6,2)), ('Second sheet', pl.rand(3,3))])
+    sc.export_file(filename='test4.xlsx', data=testdata4, sheetnames=sheetnames)
+    
+    # Include formatting
+    nrows = 15
+    ncols = 3
+    formats = {
+        'header':{'bold':True, 'bg_color':'#3c7d3e', 'color':'#ffffff'},
+        'plain': {},
+        'big':   {'bg_color':'#ffcccc'}}
+    testdata5  = pl.zeros((nrows+1, ncols), dtype=object) # Includes header row
+    formatdata = pl.zeros((nrows+1, ncols), dtype=object) # Format data needs to be the same size
+    testdata5[0,:] = ['A', 'B', 'C'] # Create header
+    testdata5[1:,:] = pl.rand(nrows,ncols) # Create data
+    formatdata[1:,:] = 'plain' # Format data
+    formatdata[testdata5>0.7] = 'big' # Find "big" numbers and format them differently
+    formatdata[0,:] = 'header' # Format header
+    sc.export_file(filename='test5.xlsx', data=testdata5, formats=formats, formatdata=formatdata)
     '''
     from xlsxwriter import Workbook
     
     if filename  is None: filename  = 'default.xlsx'
-    if sheetname is None: sheetname = 'Sheet1'
+    datadict   = odict()
+    formatdict = odict()
+    hasformats = (formats is not None) and (formatdata is not None)
     
-    workbook = Workbook(filename)
-    worksheet = workbook.add_worksheet(sheetname)
-    
-    for r,row_data in enumerate(data):
-        for c,cell_data in enumerate(row_data):
-            worksheet.write(r, c, cell_data)
+    # Handle input arguments
+    if isinstance(data, dict) and sheetnames is None:
+        if verbose: print('Data is a dict, taking sheetnames from keys')
+        sheetnames = data.keys()
+        datadict   = odict(data) # Use directly, converting to odict first
+        if hasformats: formatdict = odict(formatdata) #  NB, might be None but should be ok
+    elif isinstance(data, dict) and sheetnames is not None:
+        if verbose: print('Data is a dict, taking sheetnames from input')
+        if len(sheetnames) != len(data):
+            errormsg = 'If supplying data as a dict as well as sheetnames, length must matc (%s vs %s)' % (len(data), len(sheetnames))
+            raise Exception(errormsg)
+        datadict   = odict(data) # Use directly, but keep original sheet names
+        if hasformats: formatdict = odict(formatdata)
+    elif not isinstance(data, dict):
+        if sheetnames is None:
+            if verbose: print('Data is a simple array')
+            sheetnames = ['Sheet1']
+            datadict[sheetnames[0]]   = data # Set it explicitly
+            formatdict[sheetnames[0]] = formatdata # Set it explicitly -- NB, might be None but should be ok
+        else:
+            if verbose: print('Data is a list, taking matching sheetnames from inputs')
+            if len(sheetnames) == len(data):
+                for s,sheetname in enumerate(sheetnames):
+                    datadict[sheetname] = data[s] # Assume there's a 1-to-1 mapping
+                    if hasformats: formatdict[sheetname] = formatdata[s]
+            else:
+                errormsg = 'Unable to figure out how to match %s sheet names with data of length %s' % (len(sheetnames), len(data))
+                raise Exception(errormsg)
+    else:
+        raise Exception('Cannot figure out the format of the data') # This shouldn't happen!
         
+    # Create workbook
+    if verbose: print('Creating file %s' % filename)
+    workbook = Workbook(filename)
+    
+    # Optionally add formats
+    if formats is not None:
+        if verbose: print('  Adding %s formats' % len(formats))
+        workbook_formats = dict()
+        for formatkey,formatval in formats.items():
+            workbook_formats[formatkey] = workbook.add_format(formatval)
+       
+    # Actually write the data
+    for sheetname in datadict.keys():
+        if verbose: print('  Creating sheet %s' % sheetname)
+        sheetdata   = datadict[sheetname]
+        if hasformats: sheetformat = formatdict[sheetname]
+        worksheet = workbook.add_worksheet(sheetname)
+        for r,row_data in enumerate(sheetdata):
+            if verbose: print('    Writing row %s/%s' % (r, len(sheetdata)))
+            for c,cell_data in enumerate(row_data):
+                if verbose: print('      Writing cell %s/%s' % (c, len(row_data)))
+                if hasformats:
+                    thisformat = workbook_formats[sheetformat[r][c]] # Get the actual format
+                    worksheet.write(r, c, cell_data, thisformat) # Write with formatting
+                else:
+                    worksheet.write(r, c, cell_data) # Write without formatting
+    
+    # Either close the workbook and write to file, or return it for further working
     if close:
+        if verbose: print('Saving file %s and closing' % filename)
         workbook.close()
         return None
     else:
+        if verbose: print('Returning workbook')
         return workbook
