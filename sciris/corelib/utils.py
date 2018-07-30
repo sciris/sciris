@@ -141,7 +141,11 @@ def objrepr(obj, showid=True, showmeth=True, showatt=True):
 def desc(obj, maxlen=None):
     ''' Prints out the default representation of an object -- all attributes, plust methods and ID '''
     if maxlen is None: maxlen = 80
-    keys = sorted(obj.__dict__.keys()) # Get the attribute keys
+    try:
+        keys = sorted(obj.__dict__.keys()) # Get the attribute keys
+    except:
+        errormsg = 'desc() only implemented for classes, not objects of type %s' % type(obj)
+        raise Exception(errormsg)
     maxkeylen = max([len(key) for key in keys]) # Find the maximum length of the attribute keys
     if maxkeylen<maxlen: maxlen = maxlen - maxkeylen # Shorten the amount of data shown if the keys are long
     formatstr = '%'+ '%i'%maxkeylen + 's' # Assemble the format string for the keys, e.g. '%21s'
@@ -739,7 +743,7 @@ def quantile(data, quantiles=[0.5, 0.25, 0.75]):
 
 
 
-def sanitize(data=None, returninds=False, replacenans=None, die=True):
+def sanitize(data=None, returninds=False, replacenans=None, die=True, label=None, verbose=True):
         '''
         Sanitize input to remove NaNs. Warning, does not work on multidimensional data!!
         
@@ -763,7 +767,9 @@ def sanitize(data=None, returninds=False, replacenans=None, die=True):
                     sanitized[naninds] = replacenans
             if len(sanitized)==0:
                 sanitized = 0.0
-                print('                WARNING, no data entered for this parameter, assuming 0')
+                if verbose:
+                    if label is None: label = 'this parameter'
+                    print('sanitize(): no data entered for %s, assuming 0' % label)
         except Exception as E:
             if die: 
                 raise Exception('Sanitization failed on array: "%s":\n %s' % (repr(E), data))

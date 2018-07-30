@@ -105,12 +105,18 @@ def browser(figs=None, doserve=True, jquery_url=None, d3_url=None, mpld3_url=Non
     '''
     import mpld3 # Only import this if needed, since might not always be available
     import json
+    legacy = False
 
     ## Specify the div style, and create the HTML template we'll add the data to -- WARNING, library paths are hardcoded!
     divstyle = "float: left"
-    if jquery_url is None: jquery_url = 'https://code.jquery.com/jquery-1.11.3.min.js'
-    if d3_url     is None: d3_url     = 'https://mpld3.github.io/js/d3.v3.min.js'
-    if mpld3_url  is None: mpld3_url  = 'https://mpld3.github.io/js/mpld3.v0.3git.js'
+    if legacy:
+        if jquery_url is None: jquery_url = 'https://code.jquery.com/jquery-1.11.3.min.js'
+        if d3_url     is None: d3_url     = 'https://mpld3.github.io/js/d3.v3.min.js'
+        if mpld3_url  is None: mpld3_url  = 'https://mpld3.github.io/js/mpld3.v0.3git.js'
+    else:
+        if jquery_url is None: jquery_url = 'https://code.jquery.com/jquery-1.11.3.min.js'
+        if d3_url     is None: d3_url     = 'http://thekerrlab.com/tmp/d3.v5.min.js'
+        if mpld3_url  is None: mpld3_url  = 'http://thekerrlab.com/tmp/mpld3.v0.4.0.min.js'
     html = '''
     <html>
     <head><script src="%s"></script></head>
