@@ -141,20 +141,26 @@ def objrepr(obj, showid=True, showmeth=True, showatt=True):
 def desc(obj, maxlen=None):
     ''' Prints out the default representation of an object -- all attributes, plust methods and ID '''
     if maxlen is None: maxlen = 80
-    try:
-        keys = sorted(obj.__dict__.keys()) # Get the attribute keys
-    except:
-        errormsg = 'desc() only implemented for classes, not objects of type %s' % type(obj)
-        raise Exception(errormsg)
-    maxkeylen = max([len(key) for key in keys]) # Find the maximum length of the attribute keys
+    
+    # Initialize things to print out
+    labels = []
+    values = []
+    if hasattr(obj, '__dict__'):
+        labels = sorted(obj.__dict__.keys()) # Get the attribute keys
+        values = [flexstr(getattr(obj, attr)) for attr in labels] # Get the string representation of the attribute
+    else: # If it's not an object, just get its representation
+        labels = ['%s' % type(obj)]
+        values = [flexstr(obj)]
+    
+    # Decide how to print them
+    maxkeylen = max([len(label) for label in labels]) # Find the maximum length of the attribute keys
     if maxkeylen<maxlen: maxlen = maxlen - maxkeylen # Shorten the amount of data shown if the keys are long
     formatstr = '%'+ '%i'%maxkeylen + 's' # Assemble the format string for the keys, e.g. '%21s'
     output  = objrepr(obj, showatt=False) # Get the methods
-    for key in keys: # Loop over each attribute
-        thisattr = flexstr(getattr(obj, key)) # Get the string representation of the attribute
-        if len(thisattr)>maxlen: thisattr = thisattr[:maxlen] + ' [...]' # Shorten it
-        prefix = formatstr%key + ': ' # The format key
-        output += indent(prefix, thisattr)
+    for label,value in zip(labels,values): # Loop over each attribute
+        if len(value)>maxlen: value = value[:maxlen] + ' [...]' # Shorten it
+        prefix = formatstr%label + ': ' # The format key
+        output += indent(prefix, value)
     output += '============================================================\n'
 
     return output
