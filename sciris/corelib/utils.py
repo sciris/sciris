@@ -140,9 +140,8 @@ def objrepr(obj, showid=True, showmeth=True, showatt=True):
 
 def desc(obj, maxlen=None):
     ''' Prints out the default representation of an object -- all attributes, plust methods and ID '''
-    if maxlen is None: maxlen = 80
-    
     # Initialize things to print out
+    if maxlen is None: maxlen = 80
     labels = []
     values = []
     if hasattr(obj, '__dict__'):
@@ -162,7 +161,6 @@ def desc(obj, maxlen=None):
         prefix = formatstr%label + ': ' # The format key
         output += indent(prefix, value)
     output += '============================================================\n'
-
     return output
 
 
