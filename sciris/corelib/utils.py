@@ -743,7 +743,7 @@ def quantile(data, quantiles=[0.5, 0.25, 0.75]):
 
 
 
-def sanitize(data=None, returninds=False, replacenans=None, die=True, label=None, verbose=True):
+def sanitize(data=None, returninds=False, replacenans=None, die=True, defaultval=None, label=None, verbose=True):
         '''
         Sanitize input to remove NaNs. Warning, does not work on multidimensional data!!
         
@@ -766,10 +766,13 @@ def sanitize(data=None, returninds=False, replacenans=None, die=True, label=None
                     sanitized = dcp(data)
                     sanitized[naninds] = replacenans
             if len(sanitized)==0:
-                sanitized = 0.0
-                if verbose:
-                    if label is None: label = 'this parameter'
-                    print('sanitize(): no data entered for %s, assuming 0' % label)
+                if defaultval is not None:
+                    sanitized = defaultval
+                else:
+                    sanitized = 0.0
+                    if verbose:
+                        if label is None: label = 'this parameter'
+                        print('sanitize(): no data entered for %s, assuming 0' % label)
         except Exception as E:
             if die: 
                 raise Exception('Sanitization failed on array: "%s":\n %s' % (repr(E), data))
