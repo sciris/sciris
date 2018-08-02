@@ -315,9 +315,16 @@ class odict(_OD):
     
     def valind(self, value):
         ''' Return the index of a given value '''
-        return self.items().index(value)
+        return self.values().index(value)
     
-    
+    def find(self, value):
+        ''' Returns the key(s) that match a given value '''
+        keys = []
+        for key,val in self.items():
+            if val==value:
+                keys.append(key)
+        return keys
+        
     def append(self, key=None, value=None):
         ''' Support an append method, like a list '''
         needkey = False
