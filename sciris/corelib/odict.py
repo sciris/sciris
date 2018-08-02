@@ -92,7 +92,10 @@ class odict(_OD):
                 return []
         elif self.__is_odict_iterable(key): # Iterate over items
             listvals = [self.__getitem__(item) for item in key]
-            output = self.__sanitize_items(listvals)
+            if isinstance(key, list): # If the user supplied the keys as a list, assume they want the output as a list
+                output = listvals
+            else:
+                output = self.__sanitize_items(listvals) # Otherwise, assume as an array
             return output
         else: # Handle everything else
             return _OD.__getitem__(self,key)
