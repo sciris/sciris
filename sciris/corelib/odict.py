@@ -307,7 +307,15 @@ class odict(_OD):
     
     
     def remove(self, key, *args, **kwargs):
+        ''' Remove an item by key and do not return it '''
         self.pop(key, *args, **kwargs)
+        return None
+    
+    
+    def clear(self):
+        ''' Reset to an empty odict '''
+        for key in self.keys():
+            self.remove(key)
         return None
     
     
