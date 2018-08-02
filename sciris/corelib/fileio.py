@@ -220,7 +220,7 @@ def loadspreadsheet(filename=None, folder=None, sheetname=None, sheetnum=None, a
     else:
         return rawdata
 
-def export_xlsx(filename=None, data=None, sheetnames=None, close=True, formats=None, formatdata=None, verbose=False):
+def export_xlsx(filename=None, data=None, folder=None, sheetnames=None, close=True, formats=None, formatdata=None, verbose=False):
     '''
     Little function to format an output results nicely for Excel. Examples:
     
@@ -264,7 +264,7 @@ def export_xlsx(filename=None, data=None, sheetnames=None, close=True, formats=N
     '''
     from xlsxwriter import Workbook
     
-    if filename  is None: filename  = 'default.xlsx'
+    fullpath = makefilepath(filename=filename, folder=folder, default='default.xlsx')
     datadict   = odict()
     formatdict = odict()
     hasformats = (formats is not None) and (formatdata is not None)
@@ -301,8 +301,8 @@ def export_xlsx(filename=None, data=None, sheetnames=None, close=True, formats=N
         raise Exception('Cannot figure out the format of the data') # This shouldn't happen!
         
     # Create workbook
-    if verbose: print('Creating file %s' % filename)
-    workbook = Workbook(filename)
+    if verbose: print('Creating file %s' % fullpath)
+    workbook = Workbook(fullpath)
     
     # Optionally add formats
     if formats is not None:
