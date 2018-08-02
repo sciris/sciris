@@ -317,12 +317,20 @@ class odict(_OD):
         ''' Return the index of a given value '''
         return self.values().index(value)
     
-    def find(self, value):
-        ''' Returns the key(s) that match a given value '''
+    def find(self, value, first=True):
+        '''
+        Returns the key(s) that match a given value. Example:
+            z = odict({'dog':[2,3], 'cat':[4,6], 'mongoose':[4,6]})
+            z.find([4,6]) # returns 'cat'
+            z.find([4,6], first=False) # returns ['cat', 'mongoose']
+        '''
         keys = []
         for key,val in self.items():
             if val==value:
-                keys.append(key)
+                if first:
+                    return key
+                else:
+                    keys.append(key)
         return keys
         
     def append(self, key=None, value=None):
