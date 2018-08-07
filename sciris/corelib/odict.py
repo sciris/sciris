@@ -271,6 +271,11 @@ class odict(_OD):
             return output
     
     
+    def to_OD(self):
+        ''' Export the odict to an OrderedDict '''
+        return _OD(self)
+    
+    
     def pop(self, key, *args, **kwargs):
         ''' Allows pop to support strings, integers, slices, lists, or arrays '''
         if isinstance(key, ut._stringtype):
