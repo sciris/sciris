@@ -8,9 +8,10 @@ Example usage:
 Version: 2018-06-03
 '''
 
-from .corelib.utils import *
-from .corelib.colortools import *
-from .corelib.odict import *
-from .corelib.dataframe import *
-from .corelib.fileio import loadspreadsheet, export_xlsx # WARNING, make consistent
-from .corelib.asd import asd
+print('Use of "import sciris.core as sc" is deprecated. Please use "import sciris as sc" instead.')
+from .utils import *
+from .colortools import *
+from .odict import *
+from .dataframe import *
+from .fileio import loadspreadsheet, export_xlsx # WARNING, make consistent
+from .asd import asd

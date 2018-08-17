@@ -1,26 +1,10 @@
 # Import version information
-from .version import version, versiondate
+from .version import version as __version__, versiondate as __versiondate__
 
 # Import core functions
-from . import core
-
-# Simplifying...
-from .corelib.utils import *
-from .corelib.colortools import *
-from .corelib.odict import *
-from .corelib.dataframe import *
-from .corelib.fileio import loadspreadsheet, export_xlsx # WARNING, make consistent
-
-# Import web functions
-try:
-    from . import web
-    webtext = 'with web library'
-except Exception as webapp_exception:
-    import traceback as _traceback
-    web_error = _traceback.format_exc()
-    webtext = 'without web library (see sciris.web_error for details)'
-
-scirislicense = 'Sciris %s (%s)' % (version, versiondate)
-print(scirislicense + ' ' + webtext)
-
-del scirislicense, webtext # Remove unneeded variables
+from .utils import *
+from .colortools import *
+from .odict import *
+from .dataframe import *
+from .fileio import loadspreadsheet, export_xlsx # WARNING, make consistent
+from .asd import asd
