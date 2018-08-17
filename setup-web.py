@@ -36,7 +36,9 @@ setup(
         'sciris',
         'redis',
         'mpld3',
-        'twisted',
+        'flask',
         'flask-login',
+        'werkzeug',
+        'twisted',
     ],
 )
