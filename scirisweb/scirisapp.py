@@ -25,7 +25,7 @@ from twisted.web.server import Site
 from twisted.web.static import File
 from twisted.web.wsgi import WSGIResource
 from twisted.python.threadpool import ThreadPool
-from ..corelib import fileio
+import sciris as sc
 from . import rpcs
 from . import datastore as ds
 from . import user
@@ -235,21 +235,21 @@ class ScirisApp(object):
 
         # Create a file save directory only if we have a path.
         if file_save_root_path is not None:
-            fileio.file_save_dir = fileio.FileSaveDirectory(file_save_root_path, temp_dir=False)
+            sc.file_save_dir = sc.FileSaveDirectory(file_save_root_path, temp_dir=False)
         
         # Create a downloads directory.
-        fileio.downloads_dir = fileio.FileSaveDirectory(transfer_dir_path, temp_dir=True)
+        sc.downloads_dir = sc.FileSaveDirectory(transfer_dir_path, temp_dir=True)
         
         # Have the uploads directory use the same directory as the downloads 
         # directory.
-        fileio.uploads_dir = fileio.downloads_dir
+        sc.uploads_dir = sc.downloads_dir
         
         # Show the downloads and uploads directories.
         if app_config['LOGGING_MODE'] == 'FULL':
             if file_save_root_path is not None:
-                print('>> File save directory path: %s' % fileio.file_save_dir.dir_path)
-            print('>> Downloads directory path: %s' % fileio.downloads_dir.dir_path)
-            print('>> Uploads directory path: %s' % fileio.uploads_dir.dir_path)
+                print('>> File save directory path: %s' % sc.file_save_dir.dir_path)
+            print('>> Downloads directory path: %s' % sc.downloads_dir.dir_path)
+            print('>> Uploads directory path: %s' % sc.uploads_dir.dir_path)
         
     @staticmethod
     def _init_datastore(app_config):
@@ -492,7 +492,7 @@ class ScirisApp(object):
             filename = secure_filename(file.filename)
             
             # Generate a full upload path/file name.
-            uploaded_fname = os.path.join(fileio.uploads_dir.dir_path, filename)
+            uploaded_fname = os.path.join(sc.uploads_dir.dir_path, filename)
         
             # Save the file to the uploads directory.
             file.save(uploaded_fname)
@@ -696,13 +696,8 @@ def json_sanitize_result(theResult):
 
     if isinstance(theResult, unicode):
         return theResult
-#        return str(theResult)  # original line  (watch to make sure the 
-#                                                 new line doesn't break things)
     
     if isinstance(theResult, set):
         return list(theResult)
-
-#    if isinstance(theResult, UUID):
-#        return str(theResult)
 
     return theResult

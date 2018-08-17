@@ -9,7 +9,7 @@ Last update: 7/12/18 (gchadder3)
 #
 
 from . import datastore as ds
-from ..corelib import utils as ut
+import sciris as sc
 
 #
 # Classes
@@ -64,7 +64,7 @@ class ScirisObject(object):
         instance_label=''):       
         # Get a valid UUID from what is passed in, or if None is passed in, 
         # get a new ID.
-        self.uid = ut.uuid(uid) 
+        self.uid = sc.uuid(uid) 
             
         # Set the other variables that might be used with DataStore.
         self.type_prefix = type_prefix
@@ -225,7 +225,7 @@ class ScirisCollection(ScirisObject):
     def get_object_by_uid(self, uid):
         # Make sure the argument is a valid UUID, converting a hex text to a
         # UUID object, if needed.
-        valid_uid = ut.uuid(uid)
+        valid_uid = sc.uuid(uid)
         
         # If we have a valid UUID...
         if valid_uid is not None:
@@ -284,7 +284,7 @@ class ScirisCollection(ScirisObject):
     def delete_object_by_uid(self, uid):
         # Make sure the argument is a valid UUID, converting a hex text to a
         # UUID object, if needed.        
-        valid_uid = ut.uuid(uid)
+        valid_uid = sc.uuid(uid)
         
         # If we have a valid UUID...
         if valid_uid is not None:
