@@ -10,8 +10,7 @@ Last update: 7/11/18 (gchadder3)
 
 import os
 import redis
-from ..corelib import utils as ut
-from ..corelib import fileio as io
+import sciris as sc
 
 
 #
@@ -70,7 +69,7 @@ class StoreObjectHandle(object):
         instance_label=''):
         # Set the UID to what was passed in, or if None was passed in, generate 
         # and use a new one.
-        self.uid = ut.uuid(uid)
+        self.uid = sc.uuid(uid)
         
         self.type_prefix = type_prefix
         self.file_suffix = file_suffix
@@ -88,9 +87,9 @@ class StoreObjectHandle(object):
         full_file_name = '%s%s%s' % (dir_path, os.sep, file_name)
         
         # Write the object to a Gzip string pickle file.
-#        ut.tic()
-        io.object_to_gzip_string_pickle_file(full_file_name, obj)
-#        ut.toc(label='file_store (%s)' % self.instance_label)
+#        sc.tic()
+        sc.object_to_gzip_string_pickle_file(full_file_name, obj)
+#        sc.toc(label='file_store (%s)' % self.instance_label)
     
     def file_retrieve(self, dir_path):
         # Create a filename containing the type prefix, hex UID code, and the
@@ -101,9 +100,9 @@ class StoreObjectHandle(object):
         full_file_name = '%s%s%s' % (dir_path, os.sep, file_name)
         
         # Return object from the Gzip string pickle file.
-#        ut.tic()
-        obj = io.gzip_string_pickle_file_to_object(full_file_name)
-#        ut.toc(label='file_retrieve (%s)' % self.instance_label)
+#        sc.tic()
+        obj = sc.gzip_string_pickle_file_to_object(full_file_name)
+#        sc.toc(label='file_retrieve (%s)' % self.instance_label)
         return obj
     
     def file_delete(self, dir_path):
@@ -116,27 +115,27 @@ class StoreObjectHandle(object):
         
         # Remove the file if it's there.
         if os.path.exists(full_file_name):
-#            ut.tic()
+#            sc.tic()
             os.remove(full_file_name)
-#            ut.toc(label='file_delete (%s)' % self.instance_label)
+#            sc.toc(label='file_delete (%s)' % self.instance_label)
     
     def redis_store(self, obj, redis_db):
         # Make the Redis key containing the type prefix, and the hex UID code.
         key_name = '%s-%s' % (self.type_prefix, self.uid.hex)
         
         # Put the object in Redis.
-#        ut.tic()
-        redis_db.set(key_name, io.object_to_gzip_string_pickle(obj))
-#        ut.toc(label='redis_store (%s)' % self.instance_label)
+#        sc.tic()
+        redis_db.set(key_name, sc.object_to_gzip_string_pickle(obj))
+#        sc.toc(label='redis_store (%s)' % self.instance_label)
     
     def redis_retrieve(self, redis_db):
         # Make the Redis key containing the type prefix, and the hex UID code.
         key_name = '%s-%s' % (self.type_prefix, self.uid.hex) 
         
         # Get and return the object with the key in Redis.
-#        ut.tic()
-        obj = io.gzip_string_pickle_to_object(redis_db.get(key_name))
-#        ut.toc(label='redis_retrieve (%s)' % self.instance_label)
+#        sc.tic()
+        obj = sc.gzip_string_pickle_to_object(redis_db.get(key_name))
+#        sc.toc(label='redis_retrieve (%s)' % self.instance_label)
         return obj
     
     def redis_delete(self, redis_db):
@@ -144,9 +143,9 @@ class StoreObjectHandle(object):
         key_name = '%s-%s' % (self.type_prefix, self.uid.hex)
         
         # Delete the entry from Redis.
-#        ut.tic()
+#        sc.tic()
         redis_db.delete(key_name)
-#        ut.toc(label='redis_delete (%s)' % self.instance_label)
+#        sc.toc(label='redis_delete (%s)' % self.instance_label)
         
     def show(self):
         print('UUID: %s' % self.uid.hex)
@@ -222,15 +221,15 @@ class DataStore(object):
         if self.db_mode == 'redis':
             # Set the entries for all of the data items.
             self.redis_db.set('scirisdatastore-handle_dict', 
-                io.object_to_gzip_string_pickle(self.handle_dict))
+                sc.object_to_gzip_string_pickle(self.handle_dict))
             self.redis_db.set('scirisdatastore-db_mode', 
-                io.object_to_gzip_string_pickle(self.db_mode))
+                sc.object_to_gzip_string_pickle(self.db_mode))
             
         # Otherwise (we are using files)...
         else:
             outfile = open('.\\sciris.ds', 'wb')
-            io.pickle.dump(self.handle_dict, outfile)
-            io.pickle.dump(self.db_mode, outfile)
+            sc.pickle.dump(self.handle_dict, outfile)
+            sc.pickle.dump(self.db_mode, outfile)
     
     def load(self):
         # If we are using Redis...
@@ -240,8 +239,8 @@ class DataStore(object):
                 return None
             
             # Get the entries for all of the data items.
-            self.handle_dict = io.gzip_string_pickle_to_object(self.redis_db.get('scirisdatastore-handle_dict'))
-            self.db_mode = io.gzip_string_pickle_to_object(self.redis_db.get('scirisdatastore-db_mode'))
+            self.handle_dict = sc.gzip_string_pickle_to_object(self.redis_db.get('scirisdatastore-handle_dict'))
+            self.db_mode = sc.gzip_string_pickle_to_object(self.redis_db.get('scirisdatastore-db_mode'))
         
         # Otherwise (we are using files)...
         else:    
@@ -250,13 +249,13 @@ class DataStore(object):
                 return None
             
             infile = open('.\\sciris.ds', 'rb')
-            self.handle_dict = io.pickle.load(infile)
-            self.db_mode = io.pickle.load(infile)
+            self.handle_dict = sc.pickle.load(infile)
+            self.db_mode = sc.pickle.load(infile)
     
     def get_handle_by_uid(self, uid):
         # Make sure the argument is a valid UUID, converting a hex text to a
         # UUID object, if needed.        
-        valid_uid = ut.uuid(uid)
+        valid_uid = sc.uuid(uid)
         
         # If we have a valid UUID...
         if valid_uid is not None:
@@ -294,7 +293,7 @@ class DataStore(object):
         instance_label='', save_handle_changes=True):
         # Make sure the argument is a valid UUID, converting a hex text to a
         # UUID object, if needed.  If no UID is passed in, generate a new one.    
-        valid_uid = ut.uuid(uid)
+        valid_uid = sc.uuid(uid)
         
         # Create the new StoreObjectHandle.
         new_handle = StoreObjectHandle(valid_uid, type_label, file_suffix, 
@@ -323,7 +322,7 @@ class DataStore(object):
     def retrieve(self, uid):
         # Make sure the argument is a valid UUID, converting a hex text to a
         # UUID object, if needed.        
-        valid_uid = ut.uuid(uid)
+        valid_uid = sc.uuid(uid)
         
         # If we have a valid UUID...
         if valid_uid is not None: 
@@ -348,7 +347,7 @@ class DataStore(object):
     def update(self, uid, obj):
         # Make sure the argument is a valid UUID, converting a hex text to a
         # UUID object, if needed.        
-        valid_uid = ut.uuid(uid)
+        valid_uid = sc.uuid(uid)
         
         # If we have a valid UUID...
         if valid_uid is not None:  
@@ -370,7 +369,7 @@ class DataStore(object):
     def delete(self, uid, save_handle_changes=True):
         # Make sure the argument is a valid UUID, converting a hex text to a
         # UUID object, if needed.        
-        valid_uid = ut.uuid(uid)
+        valid_uid = sc.uuid(uid)
         
         # If we have a valid UUID...
         if valid_uid is not None: 
