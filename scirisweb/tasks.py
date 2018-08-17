@@ -10,13 +10,14 @@ Last update: 7/16/18 (gchadder3)
 
 #import celery
 from celery import Celery
-from . import datastore as ds
-from numpy import argsort
-from . import rpcs #import make_register_RPC
-from . import scirisobjects as sobj
-from ..corelib import utils as ut
 from functools import wraps
 import traceback
+from numpy import argsort
+import sciris as sc
+from . import datastore as ds
+from . import rpcs #import make_register_RPC
+from . import scirisobjects as sobj
+
 
 #
 # Globals
@@ -297,7 +298,7 @@ class TaskDict(sobj.ScirisCollection):
     def delete_by_uid(self, uid):
         # Make sure the argument is a valid UUID, converting a hex text to a
         # UUID object, if needed.        
-        valid_uuid = ut.uuid(uid)
+        valid_uuid = sc.uuid(uid)
         
         # If we have a valid UUID...
         if valid_uuid is not None:
@@ -388,7 +389,7 @@ class TaskDict(sobj.ScirisCollection):
 #    
 #        # Set the TaskRecord to indicate start of the task.
 #        match_taskrec.status = 'started'
-#        match_taskrec.start_time = ut.today()
+#        match_taskrec.start_time = sc.today()
 #        task_dict.update(match_taskrec)
 #        
 #        # Make the actual function call.
@@ -398,7 +399,7 @@ class TaskDict(sobj.ScirisCollection):
 #        
 #        # Set the TaskRecord to indicate end of the task.
 #        match_taskrec.status = 'completed'
-#        match_taskrec.stop_time = ut.today()
+#        match_taskrec.stop_time = sc.today()
 #        task_dict.update(match_taskrec)
 #        
 #        # Return the result.
@@ -447,7 +448,7 @@ def make_celery_instance(config=None):
     
         # Set the TaskRecord to indicate start of the task.
         match_taskrec.status = 'started'
-        match_taskrec.start_time = ut.today()
+        match_taskrec.start_time = sc.today()
         match_taskrec.pending_time = \
             (match_taskrec.start_time - match_taskrec.queue_time).total_seconds()        
         task_dict.update(match_taskrec)
@@ -472,7 +473,7 @@ def make_celery_instance(config=None):
         # NOTE: Even if the browser has ordered the deletion of the task 
         # record, it will be "resurrected" during this update, so the 
         # delete_task() RPC may not always work as expected.
-        match_taskrec.stop_time = ut.today()
+        match_taskrec.stop_time = sc.today()
         match_taskrec.execution_time = \
             (match_taskrec.stop_time - match_taskrec.start_time).total_seconds()
         task_dict.update(match_taskrec)
@@ -513,7 +514,7 @@ def make_celery_instance(config=None):
                 
                 # Initialize the TaskRecord with available information.
                 new_task_record.status = 'queued'
-                new_task_record.queue_time = ut.today()
+                new_task_record.queue_time = sc.today()
                 new_task_record.func_name = func_name
                 new_task_record.args = args
                 new_task_record.kwargs = kwargs
@@ -546,7 +547,7 @@ def make_celery_instance(config=None):
                 # Initialize the TaskRecord to start the task again (though 
                 # possibly with a new function and arguments).
                 match_taskrec.status = 'queued'
-                match_taskrec.queue_time = ut.today()
+                match_taskrec.queue_time = sc.today()
                 match_taskrec.start_time = None
                 match_taskrec.stop_time = None
                 match_taskrec.pending_time = None
@@ -615,7 +616,7 @@ def add_task_funcs(new_task_funcs):
 #            
 #            # Initialize the TaskRecord with available information.
 #            new_task_record.status = 'queued'
-#            new_task_record.queue_time = ut.today()
+#            new_task_record.queue_time = sc.today()
 #            new_task_record.func_name = func_name
 #            new_task_record.args = args
 #            new_task_record.kwargs = kwargs
@@ -650,7 +651,7 @@ def add_task_funcs(new_task_funcs):
 #            # Initialize the TaskRecord to start the task again (though 
 #            # possibly with a new function and arguments).
 #            match_taskrec.status = 'queued'
-#            match_taskrec.queue_time = ut.today()
+#            match_taskrec.queue_time = sc.today()
 #            match_taskrec.start_time = None
 #            match_taskrec.stop_time = None            
 #            match_taskrec.func_name = func_name
@@ -707,11 +708,11 @@ def check_task(task_id):
                 
             # Else (we are still executing)...
             else:
-                execution_time = (ut.today() - match_taskrec.start_time).total_seconds()
+                execution_time = (sc.today() - match_taskrec.start_time).total_seconds()
                 
         # Else (we are still pending)...
         else:
-            pending_time = (ut.today() - match_taskrec.queue_time).total_seconds()
+            pending_time = (sc.today() - match_taskrec.queue_time).total_seconds()
             execution_time = 0
         
         # Create the return dict from the user repr.

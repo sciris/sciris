@@ -12,7 +12,7 @@ from flask import session, current_app
 from flask_login import current_user, login_user, logout_user
 from hashlib import sha224
 from numpy import argsort
-from ..corelib import utils as ut
+import sciris as sc
 from . import rpcs #import make_register_RPC
 from . import scirisobjects as sobj
 
@@ -298,7 +298,7 @@ class UserDict(sobj.ScirisCollection):
     def delete_by_uid(self, uid):
         # Make sure the argument is a valid UUID, converting a hex text to a
         # UUID object, if needed.        
-        valid_uuid = ut.uuid(uid)
+        valid_uuid = sc.uuid(uid)
         
         # If we have a valid UUID...
         if valid_uuid is not None:
@@ -440,7 +440,7 @@ def user_register(username, password, displayname, email):
 @register_RPC(validation_type='nonanonymous user') 
 def user_change_info(username, password, displayname, email):
     # Make a copy of the current_user.
-    the_user = ut.dcp(current_user)
+    the_user = sc.dcp(current_user)
     
     # If the password entered doesn't match the current user password, fail.
     if password != the_user.password:
@@ -473,7 +473,7 @@ def user_change_info(username, password, displayname, email):
 @register_RPC(validation_type='nonanonymous user') 
 def user_change_password(oldpassword, newpassword):
     # Make a copy of the current_user.
-    the_user = ut.dcp(current_user)
+    the_user = sc.dcp(current_user)
     
     # If the password entered doesn't match the current user password, fail.
     if oldpassword != the_user.password:
@@ -617,7 +617,7 @@ def admin_reset_password(username):
 
 def make_test_users():
     # Create two test Users that can get added to a new UserDict.
-    test_user = User('demo', 'demo', 'Demo', 'demo@demo.com', uid=ut.uuid('12345678123456781234567812345678'))
-    test_user2 = User('admin', 'admin', 'Admin', 'admin@scirisuser.net', has_admin_rights=True, uid=ut.uuid('12345678123456781234567812345679'))
+    test_user = User('demo', 'demo', 'Demo', 'demo@demo.com', uid=sc.uuid('12345678123456781234567812345678'))
+    test_user2 = User('admin', 'admin', 'Admin', 'admin@scirisuser.net', has_admin_rights=True, uid=sc.uuid('12345678123456781234567812345679'))
     users = [test_user, test_user2]
     return users
