@@ -11,7 +11,7 @@ import itertools
 import random
 import numpy as np
 from collections import OrderedDict
-import sciris.core as sc
+import sciris as sc
 try:    import BaseHTTPServer as server # Python 2.x
 except: from http import server # Python 3.x
 

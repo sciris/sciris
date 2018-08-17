@@ -30,7 +30,6 @@ from . import rpcs
 from . import datastore as ds
 from . import user
 from . import tasks
-import sciris.core as sc
 
 ##########################################################################################################
 #%% Classes
