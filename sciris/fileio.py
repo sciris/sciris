@@ -4,183 +4,229 @@ fileio.py -- code for file management in Sciris
 Last update: 5/31/18 (gchadder3)
 """
 
-#
-# Imports
-#
+##############################################################################
+### Imports
+##############################################################################
 
-try: # Python 2
-    import cPickle as pickle
-    from cStringIO import StringIO
-except: # Python 3
-    import pickle
-    from io import StringIO
+# Basic imports
+from glob import glob
+import os
+import dill
 from gzip import GzipFile
 from contextlib import closing
 from xlrd import open_workbook
-import os
-from tempfile import mkdtemp
-from shutil import rmtree
-import atexit
-from .utils import makefilepath
+from .utils import promotetolist
 from .odict import odict
 from .dataframe import dataframe
-  
-#
-# Globals
-#
 
-# These will get set by calling code.
+# Handle types and Python 2/3 compatibility
+from six import PY2 as _PY2
+if _PY2: # Python 2
+    _stringtype = basestring 
+    import cPickle as pickle
+    from cStringIO import StringIO
+else: # Python 3
+    _stringtype = str
+    import pickle
+    from io import StringIO
 
-# Directory (FileSaveDirectory object) for saved files.
-file_save_dir = None
 
-# Directory (FileSaveDirectory object) for file uploads to be routed to.
-uploads_dir = None
 
-# Directory (FileSaveDirectory object) for file downloads to be routed to.
-downloads_dir = None
+##############################################################################
+### Key file functions
+##############################################################################
 
-#
-# Classes
-#
-    
-class FileSaveDirectory(object):
-    """
-    An object wrapping a directory where files may get saved by the web 
-    application.
-    
-    Methods:
-        __init__(dir_path: str [None], temp_dir: bool [False]): void -- 
-            constructor
-        cleanup(): void -- clean up after web app is exited
-        clear(): void -- erase the contents of the directory
-        delete(): void -- delete the entire directory
-                    
-    Attributes:
-        dir_path (str) -- the full path of the directory on disk
-        is_temp_dir (bool) -- is the directory to be spawned on startup and 
-            erased on exit?
-        
+def saveobj(filename=None, obj=None, compresslevel=5, verbose=True, folder=None, method='pickle'):
+    '''
+    Save an object to file -- use compression 5 by default, since more is much slower but not much smaller.
+    Once saved, can be loaded with loadobj() (q.v.).
+
     Usage:
-        >>> new_dir = FileSaveDirectory(transfer_dir_path, temp_dir=True)
-    """
+        myobj = ['this', 'is', 'a', 'weird', {'object':44}]
+        saveobj('myfile.obj', myobj)
+    '''
     
-    def __init__(self, dir_path=None, temp_dir=False):
-        # Set whether we are a temp directory.
-        self.is_temp_dir = temp_dir
-               
-        # If no path is specified, create the temp directory.
-        if dir_path is None:
-            self.dir_path = mkdtemp()
-            
-        # Otherwise...
-        else:
-            # Set the path to what was passed in.
-            self.dir_path = dir_path
-            
-            # If the directory doesn't exist yet, create it.
-            if not os.path.exists(dir_path):            
-                os.mkdir(dir_path)
-            
-        # Register the cleanup method to be called on web app exit.
-        atexit.register(self.cleanup)
-            
-    def cleanup(self):
-        # If we are a temp directory and the directory still exists, do the cleanup.
-        if self.is_temp_dir and os.path.exists(self.dir_path):
-            # Show cleanup message.
-            print('>> Cleaning up FileSaveDirectory at %s' % self.dir_path)
-            
-            # Delete the entire directory (file contents included).
-            self.delete()
-            
-    def clear(self):
-        # Delete the entire directory (file contents included).
-        rmtree(self.dir_path)
-        
-        # Create a fresh direcgtory
-        os.mkdir(self.dir_path)
+    def savepickle(fileobj, obj):
+        ''' Use pickle to do the salty work '''
+        fileobj.write(pickle.dumps(obj, protocol=-1))
+        return None
     
-    def delete(self):
-        # Delete the entire directory (file contents included).
-        rmtree(self.dir_path)
-        
-
-#
-# Pickle / unpickle functions
-#
-
-def object_to_string_pickle(obj):
-    return pickle.dumps(obj, protocol=-1)
-
-def string_pickle_to_object(string_pickle):
-    return pickle.loads(string_pickle)
-
-def object_to_gzip_string_pickle_file(full_file_name, obj, compresslevel=5):
-    # Object a Gzip file object to write to and set the compression level 
-    # (which the function defaults to 5, since higher is much slower, but 
-    # not much more compact).
-    with GzipFile(full_file_name, 'wb', compresslevel=compresslevel) as fileobj:
-        # Write the string pickle conversion of the object to the file.
-        fileobj.write(object_to_string_pickle(obj))
-
-def gzip_string_pickle_file_to_object(full_file_name):
-    # Object a Gzip file object to read from.
-    with GzipFile(full_file_name, 'rb') as fileobj:
-        # Read the string pickle from the file.
-        string_pickle = fileobj.read()
-        
-    # Return the object gotten from the string pickle.    
-    return string_pickle_to_object(string_pickle)
-
-def object_to_gzip_string_pickle(obj):
-    # Start with a null result.
-    result = None
+    def savedill(fileobj, obj):
+        ''' Use dill to do the sour work '''
+        fileobj.write(dill.dumps(obj, protocol=-1))
+        return None
     
-    # Open a "fake file."
-    with closing(StringIO()) as output:
-        # Open a Gzip-compressing way to write to this "file."
-        with GzipFile(fileobj=output, mode='wb') as fileobj: 
-            # Write the string pickle conversion of the object to the "file."
-            fileobj.write(object_to_string_pickle(obj))
-            
-        # Move the mark to the beginning of the "file."
-        output.seek(0)
+    fullpath = makefilepath(filename=filename, folder=folder, sanitize=True)
+    with GzipFile(fullpath, 'wb', compresslevel=compresslevel) as fileobj:
+        if method == 'dill': # If dill is requested, use that
+            savedill(fileobj, obj)
+        else: # Otherwise, try pickle
+            try:    savepickle(fileobj, obj) # Use pickle
+            except: savedill(fileobj, obj) # ...but use Dill if that fails
         
-        # Read all of the content into result.
-        result = output.read()
-        
-    # Return the read-in result.
-    return result
+    if verbose: print('Object saved to "%s"' % fullpath)
+    return fullpath
 
-# Alias for above function.
-def dumpstr(obj):
-    return object_to_gzip_string_pickle(obj)
 
-def gzip_string_pickle_to_object(gzip_string_pickle):
-    # Open a "fake file" with the Gzip string pickle in it.
-    with closing(StringIO(gzip_string_pickle)) as output:
-        # Set a Gzip reader to pull from the "file."
-        with GzipFile(fileobj=output, mode='rb') as fileobj: 
-            # Read the string pickle from the "file" (applying Gzip 
-            # decompression).
-            string_pickle = fileobj.read()  
-            
-            # Extract the object from the string pickle.
-            obj = string_pickle_to_object(string_pickle)
-            
-    # Return the object.
+
+def loadobj(filename=None, folder=None, verbose=True):
+    '''
+    Load a saved file.
+
+    Usage:
+        obj = loadobj('myfile.obj')
+    '''
+    
+    # Handle loading of either filename or file object
+    if isinstance(filename, _stringtype): 
+        argtype = 'filename'
+        filename = makefilepath(filename=filename, folder=folder) # If it is a file, validate the folder
+    else: 
+        argtype = 'fileobj'
+    kwargs = {'mode': 'rb', argtype: filename}
+    with GzipFile(**kwargs) as fileobj:
+        filestr = fileobj.read() # Convert it to a string
+        try: # Try pickle first
+            obj = pickle.loads(filestr) # Actually load it
+        except:
+            import dill
+            obj = dill.loads(filestr)
+    if verbose: print('Object loaded from "%s"' % filename)
     return obj
 
-# Alias for above function.
-def loadstr(gzip_string_pickle):
-    return gzip_string_pickle_to_object(gzip_string_pickle)
 
-#
-# Excel spreadsheet functions
-#
+
+def dumpstr(obj):
+    with closing(StringIO()) as output: # Open a "fake file."
+        with GzipFile(fileobj=output, mode='wb') as fileobj:  # Open a Gzip-compressing way to write to this "file."
+            fileobj.write(pickle.dumps(obj, protocol=-1)) # Write the string pickle conversion of the object to the "file."
+        output.seek(0) # Move the mark to the beginning of the "file."
+        result = output.read() # Read all of the content into result.
+    return result
+
+
+
+def loadstr(gzip_string_pickle):
+    with closing(StringIO(gzip_string_pickle)) as output: # Open a "fake file" with the Gzip string pickle in it.
+        with GzipFile(fileobj=output, mode='rb') as fileobj: # Set a Gzip reader to pull from the "file."
+            string_pickle = fileobj.read() # Read the string pickle from the "file" (applying Gzip decompression).
+    obj = pickle.loads(string_pickle) # Return the object gotten from the string pickle.   
+    return obj
     
-def loadspreadsheet(filename=None, folder=None, sheetname=None, sheetnum=None, asdataframe=True):
+    
+    
+def loadtext(filename=None, splitlines=False):
+    ''' Convenience function for reading a text file '''
+    with open(filename) as f: output = f.read()
+    if splitlines: output = output.splitlines()
+    return output
+
+
+
+def savetext(filename=None, string=None):
+    ''' Convenience function for reading a text file -- accepts a string or list of strings '''
+    if isinstance(string, list): string = '\n'.join(string) # Convert from list to string)
+    with open(filename, 'w') as f: f.write(string)
+    return None
+
+
+
+def getfilelist(folder=None, ext=None, pattern=None):
+    ''' A short-hand since glob is annoying '''
+    if folder is None: folder = os.getcwd()
+    if pattern is None:
+        if ext is None: ext = '*'
+        pattern = '*.'+ext
+    filelist = sorted(glob(os.path.join(folder, pattern)))
+    return filelist
+
+
+
+def sanitizefilename(rawfilename):
+    '''
+    Takes a potentially Linux- and Windows-unfriendly candidate file name, and 
+    returns a "sanitized" version that is more usable.
+    '''
+    import re # Import regular expression package.
+    filtername = re.sub('[\!\?\"\'<>]', '', rawfilename) # Erase certain characters we don't want at all: !, ?, ", ', <, >
+    filtername = re.sub('[:/\\\*\|,]', '_', filtername) # Change certain characters that might be being used as separators from what they were to underscores: space, :, /, \, *, |, comma
+    return filtername # Return the sanitized file name.
+
+
+
+def makefilepath(filename=None, folder=None, ext=None, default=None, split=False, abspath=True, makedirs=True, verbose=False, sanitize=False):
+    '''
+    Utility for taking a filename and folder -- or not -- and generating a valid path from them.
+    
+    Inputs:
+        filename = the filename, or full file path, to save to -- in which case this utility does nothing
+        folder = the name of the folder to be prepended to the filename
+        ext = the extension to ensure the file has
+        default = a name or list of names to use if filename is None
+        split = whether to return the path and filename separately
+        makedirs = whether or not to make the folders to save into if they don't exist
+        verbose = how much detail to print
+    
+    Example:
+        makefilepath(filename=None, folder='./congee', ext='prj', default=[project.filename, project.name], split=True, abspath=True, makedirs=True)
+    
+    Assuming project.filename is None and project.name is "soggyrice" and ./congee doesn't exist:
+        * Makes folder ./congee
+        * Returns e.g. ('/home/optima/congee', 'soggyrice.prj')
+    
+    Actual code example from project.py:
+        fullpath = makefilepath(filename=filename, folder=folder, default=[self.filename, self.name], ext='prj')
+    
+    Version: 2017apr04    
+    '''
+    
+    # Initialize
+    filefolder = '' # The folder the file will be located in
+    filebasename = '' # The filename
+    
+    # Process filename
+    if filename is None:
+        defaultnames = promotetolist(default) # Loop over list of default names
+        for defaultname in defaultnames:
+            if not filename and defaultname: filename = defaultname # Replace empty name with default name
+    if filename is not None: # If filename exists by now, use it
+        filebasename = os.path.basename(filename)
+        filefolder = os.path.dirname(filename)
+    if not filebasename: filebasename = 'default' # If all else fails
+    
+    # Add extension if it's defined but missing from the filebasename
+    if ext and not filebasename.endswith(ext): 
+        filebasename += '.'+ext
+    if verbose:
+        print('From filename="%s", default="%s", extension="%s", made basename "%s"' % (filename, default, ext, filebasename))
+    
+    # Sanitize base filename
+    if sanitize: filebasename = sanitizefilename(filebasename)
+    
+    # Process folder
+    if folder is not None: # Replace with specified folder, if defined
+        filefolder = folder 
+    if abspath: # Convert to absolute path
+        filefolder = os.path.abspath(filefolder) 
+    if makedirs: # Make sure folder exists
+        try: os.makedirs(filefolder)
+        except: pass
+    if verbose:
+        print('From filename="%s", folder="%s", abspath="%s", makedirs="%s", made folder name "%s"' % (filename, folder, abspath, makedirs, filefolder))
+    
+    fullfile = os.path.join(filefolder, filebasename) # And the full thing
+    
+    if split: return filefolder, filebasename
+    else:     return fullfile # Or can do os.path.split() on output
+
+
+
+
+##############################################################################
+### Spreadsheet functions
+##############################################################################
+    
+def readexcel(filename=None, folder=None, sheetname=None, sheetnum=None, asdataframe=True):
     '''
     Load a spreadsheet
     '''
@@ -220,11 +266,13 @@ def loadspreadsheet(filename=None, folder=None, sheetname=None, sheetnum=None, a
     else:
         return rawdata
 
-def export_xlsx(filename=None, data=None, folder=None, sheetnames=None, close=True, formats=None, formatdata=None, verbose=False):
+
+
+def exportexcel(filename=None, data=None, folder=None, sheetnames=None, close=True, formats=None, formatdata=None, verbose=False):
     '''
     Little function to format an output results nicely for Excel. Examples:
     
-    import sciris.core as sc
+    import sciris as sc
     import pylab as pl
     
     # Simple example

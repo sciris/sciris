@@ -1112,87 +1112,8 @@ def inclusiverange(*args, **kwargs):
 
 
 ##############################################################################
-### FILE/MISC. FUNCTIONS
+### MISC. FUNCTIONS
 ##############################################################################
-
-
-def saveobj(filename=None, obj=None, compresslevel=5, verbose=True, folder=None, method='pickle'):
-    '''
-    Save an object to file -- use compression 5 by default, since more is much slower but not much smaller.
-    Once saved, can be loaded with loadobj() (q.v.).
-
-    Usage:
-		myobj = ['this', 'is', 'a', 'weird', {'object':44}]
-		saveobj('myfile.obj', myobj)
-    '''
-    
-    def savepickle(fileobj, obj):
-        ''' Use pickle to do the salty work '''
-        if _PY2: import cPickle as pickle # For Python 3 compatibility
-        else:    import pickle
-        fileobj.write(pickle.dumps(obj, protocol=-1))
-        return None
-    
-    def savedill(fileobj, obj):
-        ''' Use dill to do the sour work '''
-        import dill
-        fileobj.write(dill.dumps(obj, protocol=-1))
-        return None
-    
-    from gzip import GzipFile
-    fullpath = makefilepath(filename=filename, folder=folder, sanitize=True)
-    with GzipFile(fullpath, 'wb', compresslevel=compresslevel) as fileobj:
-        if method == 'dill': # If dill is requested, use that
-            savedill(fileobj, obj)
-        else: # Otherwise, try pickle
-            try:    savepickle(fileobj, obj) # Use pickle
-            except: savedill(fileobj, obj) # ...but use Dill if that fails
-        
-    if verbose: print('Object saved to "%s"' % fullpath)
-    return fullpath
-
-
-def loadobj(filename=None, folder=None, verbose=True):
-    '''
-    Load a saved file.
-
-    Usage:
-    	obj = loadobj('myfile.obj')
-    '''
-    if _PY2: import cPickle as pickle # For Python 3 compatibility
-    else:    import pickle
-    from gzip import GzipFile
-    
-    # Handle loading of either filename or file object
-    if isinstance(filename, _stringtype): 
-        argtype = 'filename'
-        filename = makefilepath(filename=filename, folder=folder) # If it is a file, validate the folder
-    else: 
-        argtype = 'fileobj'
-    kwargs = {'mode': 'rb', argtype: filename}
-    with GzipFile(**kwargs) as fileobj:
-        filestr = fileobj.read() # Convert it to a string
-        try: # Try pickle first
-            obj = pickle.loads(filestr) # Actually load it
-        except:
-            import dill
-            obj = dill.loads(filestr)
-    if verbose: print('Object loaded from "%s"' % filename)
-    return obj
-
-
-def loadtext(filename=None, splitlines=False):
-    ''' Convenience function for reading a text file '''
-    with open(filename) as f: output = f.read()
-    if splitlines: output = output.splitlines()
-    return output
-
-
-def savetext(filename=None, string=None):
-    ''' Convenience function for reading a text file -- accepts a string or list of strings '''
-    if isinstance(string, list): string = '\n'.join(string) # Convert from list to string)
-    with open(filename, 'w') as f: f.write(string)
-    return None
 
 
 def tic():
@@ -1322,98 +1243,6 @@ def checkmem(origvariable, descend=0, order='n', plot=False, verbose=0):
 
 
 
-def getfilelist(folder=None, ext=None, pattern=None):
-    ''' A short-hand since glob is annoying '''
-    from glob import glob
-    import os
-    if folder is None: folder = os.getcwd()
-    if pattern is None:
-        if ext is None: ext = '*'
-        pattern = '*.'+ext
-    filelist = sorted(glob(os.path.join(folder, pattern)))
-    return filelist
-
-
-
-def sanitizefilename(rawfilename):
-    '''
-    Takes a potentially Linux- and Windows-unfriendly candidate file name, and 
-    returns a "sanitized" version that is more usable.
-    '''
-    import re # Import regular expression package.
-    filtername = re.sub('[\!\?\"\'<>]', '', rawfilename) # Erase certain characters we don't want at all: !, ?, ", ', <, >
-    filtername = re.sub('[:/\\\*\|,]', '_', filtername) # Change certain characters that might be being used as separators from what they were to underscores: space, :, /, \, *, |, comma
-    return filtername # Return the sanitized file name.
-
-
-
-def makefilepath(filename=None, folder=None, ext=None, default=None, split=False, abspath=True, makedirs=True, verbose=False, sanitize=False):
-    '''
-    Utility for taking a filename and folder -- or not -- and generating a valid path from them.
-    
-    Inputs:
-        filename = the filename, or full file path, to save to -- in which case this utility does nothing
-        folder = the name of the folder to be prepended to the filename
-        ext = the extension to ensure the file has
-        default = a name or list of names to use if filename is None
-        split = whether to return the path and filename separately
-        makedirs = whether or not to make the folders to save into if they don't exist
-        verbose = how much detail to print
-    
-    Example:
-        makefilepath(filename=None, folder='./congee', ext='prj', default=[project.filename, project.name], split=True, abspath=True, makedirs=True)
-    
-    Assuming project.filename is None and project.name is "soggyrice" and ./congee doesn't exist:
-        * Makes folder ./congee
-        * Returns e.g. ('/home/optima/congee', 'soggyrice.prj')
-    
-    Actual code example from project.py:
-        fullpath = makefilepath(filename=filename, folder=folder, default=[self.filename, self.name], ext='prj')
-    
-    Version: 2017apr04    
-    '''
-    
-    # Initialize
-    import os
-    filefolder = '' # The folder the file will be located in
-    filebasename = '' # The filename
-    
-    # Process filename
-    if filename is None:
-        defaultnames = promotetolist(default) # Loop over list of default names
-        for defaultname in defaultnames:
-            if not filename and defaultname: filename = defaultname # Replace empty name with default name
-    if filename is not None: # If filename exists by now, use it
-        filebasename = os.path.basename(filename)
-        filefolder = os.path.dirname(filename)
-    if not filebasename: filebasename = 'default' # If all else fails
-    
-    # Add extension if it's defined but missing from the filebasename
-    if ext and not filebasename.endswith(ext): 
-        filebasename += '.'+ext
-    if verbose:
-        print('From filename="%s", default="%s", extension="%s", made basename "%s"' % (filename, default, ext, filebasename))
-    
-    # Sanitize base filename
-    if sanitize: filebasename = sanitizefilename(filebasename)
-    
-    # Process folder
-    if folder is not None: # Replace with specified folder, if defined
-        filefolder = folder 
-    if abspath: # Convert to absolute path
-        filefolder = os.path.abspath(filefolder) 
-    if makedirs: # Make sure folder exists
-        try: os.makedirs(filefolder)
-        except: pass
-    if verbose:
-        print('From filename="%s", folder="%s", abspath="%s", makedirs="%s", made folder name "%s"' % (filename, folder, abspath, makedirs, filefolder))
-    
-    fullfile = os.path.join(filefolder, filebasename) # And the full thing
-    
-    if split: return filefolder, filebasename
-    else:     return fullfile # Or can do os.path.split() on output
-
-
 def loadbalancer(maxload=None, index=None, interval=None, maxtime=None, label=None, verbose=True):
     '''
     A little function to delay execution while CPU load is too high -- a very simple load balancer.
@@ -1464,7 +1293,7 @@ def loadbalancer(maxload=None, index=None, interval=None, maxtime=None, label=No
             if verbose: print(label+'CPU load fine (%0.2f/%0.2f), starting process %s after %i tries' % (currentload, maxload, index, count))
     return None
     
-    
+
 
 def runcommand(command, printinput=False, printoutput=False):
    '''

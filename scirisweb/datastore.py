@@ -10,6 +10,9 @@ Last update: 7/11/18 (gchadder3)
 
 import os
 import redis
+from tempfile import mkdtemp
+from shutil import rmtree
+import atexit
 import sciris as sc
 
 
@@ -22,6 +25,93 @@ import sciris as sc
 # The DataStore object for persistence for the app.  Gets initialized by
 # and loaded by init_datastore().
 data_store = None
+
+
+
+#
+# Globals
+#
+
+# These globals will get set by calling code.
+
+# Directory (FileSaveDirectory object) for saved files.
+file_save_dir = None
+
+# Directory (FileSaveDirectory object) for file uploads to be routed to.
+uploads_dir = None
+
+# Directory (FileSaveDirectory object) for file downloads to be routed to.
+downloads_dir = None
+
+#
+# Classes
+#
+    
+class FileSaveDirectory(object):
+    """
+    An object wrapping a directory where files may get saved by the web 
+    application.
+    
+    Methods:
+        __init__(dir_path: str [None], temp_dir: bool [False]): void -- 
+            constructor
+        cleanup(): void -- clean up after web app is exited
+        clear(): void -- erase the contents of the directory
+        delete(): void -- delete the entire directory
+                    
+    Attributes:
+        dir_path (str) -- the full path of the directory on disk
+        is_temp_dir (bool) -- is the directory to be spawned on startup and 
+            erased on exit?
+        
+    Usage:
+        >>> new_dir = FileSaveDirectory(transfer_dir_path, temp_dir=True)
+    """
+    
+    def __init__(self, dir_path=None, temp_dir=False):
+        # Set whether we are a temp directory.
+        self.is_temp_dir = temp_dir
+               
+        # If no path is specified, create the temp directory.
+        if dir_path is None:
+            self.dir_path = mkdtemp()
+            
+        # Otherwise...
+        else:
+            # Set the path to what was passed in.
+            self.dir_path = dir_path
+            
+            # If the directory doesn't exist yet, create it.
+            if not os.path.exists(dir_path):            
+                os.mkdir(dir_path)
+            
+        # Register the cleanup method to be called on web app exit.
+        atexit.register(self.cleanup)
+            
+    def cleanup(self):
+        # If we are a temp directory and the directory still exists, do the cleanup.
+        if self.is_temp_dir and os.path.exists(self.dir_path):
+            # Show cleanup message.
+            print('>> Cleaning up FileSaveDirectory at %s' % self.dir_path)
+            
+            # Delete the entire directory (file contents included).
+            self.delete()
+            
+    def clear(self):
+        # Delete the entire directory (file contents included).
+        rmtree(self.dir_path)
+        
+        # Create a fresh direcgtory
+        os.mkdir(self.dir_path)
+    
+    def delete(self):
+        # Delete the entire directory (file contents included).
+        rmtree(self.dir_path)
+
+
+
+
+
 
 #
 # Classes
@@ -88,7 +178,7 @@ class StoreObjectHandle(object):
         
         # Write the object to a Gzip string pickle file.
 #        sc.tic()
-        sc.object_to_gzip_string_pickle_file(full_file_name, obj)
+        sc.saveobj(full_file_name, obj)
 #        sc.toc(label='file_store (%s)' % self.instance_label)
     
     def file_retrieve(self, dir_path):
@@ -101,7 +191,7 @@ class StoreObjectHandle(object):
         
         # Return object from the Gzip string pickle file.
 #        sc.tic()
-        obj = sc.gzip_string_pickle_file_to_object(full_file_name)
+        obj = sc.loadobj(full_file_name)
 #        sc.toc(label='file_retrieve (%s)' % self.instance_label)
         return obj
     
@@ -125,7 +215,7 @@ class StoreObjectHandle(object):
         
         # Put the object in Redis.
 #        sc.tic()
-        redis_db.set(key_name, sc.object_to_gzip_string_pickle(obj))
+        redis_db.set(key_name, sc.dumpstr(obj))
 #        sc.toc(label='redis_store (%s)' % self.instance_label)
     
     def redis_retrieve(self, redis_db):
@@ -134,7 +224,7 @@ class StoreObjectHandle(object):
         
         # Get and return the object with the key in Redis.
 #        sc.tic()
-        obj = sc.gzip_string_pickle_to_object(redis_db.get(key_name))
+        obj = sc.loadstr(redis_db.get(key_name))
 #        sc.toc(label='redis_retrieve (%s)' % self.instance_label)
         return obj
     
@@ -221,9 +311,9 @@ class DataStore(object):
         if self.db_mode == 'redis':
             # Set the entries for all of the data items.
             self.redis_db.set('scirisdatastore-handle_dict', 
-                sc.object_to_gzip_string_pickle(self.handle_dict))
+                sc.dumpstr(self.handle_dict))
             self.redis_db.set('scirisdatastore-db_mode', 
-                sc.object_to_gzip_string_pickle(self.db_mode))
+                sc.dumpstr(self.db_mode))
             
         # Otherwise (we are using files)...
         else:
@@ -239,8 +329,8 @@ class DataStore(object):
                 return None
             
             # Get the entries for all of the data items.
-            self.handle_dict = sc.gzip_string_pickle_to_object(self.redis_db.get('scirisdatastore-handle_dict'))
-            self.db_mode = sc.gzip_string_pickle_to_object(self.redis_db.get('scirisdatastore-db_mode'))
+            self.handle_dict = sc.loadstr(self.redis_db.get('scirisdatastore-handle_dict'))
+            self.db_mode = sc.loadstr(self.redis_db.get('scirisdatastore-db_mode'))
         
         # Otherwise (we are using files)...
         else:    
