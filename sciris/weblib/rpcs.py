@@ -30,7 +30,7 @@ class ScirisRPC(object):
 # Functions
 #
         
-def make_register_RPC(RPC_dict, **callerkwargs):
+def make_register_RPC(RPC_dict=None, **callerkwargs):
     def RPC_decorator_factory(**callerkwargs):
         def RPC_decorator(RPC_func):
             @wraps(RPC_func)
