@@ -380,13 +380,13 @@ def make_celery_instance(config=None):
         # from the datastore.py module that the server code will.
         
         # Create the DataStore object, setting up Redis.
-        ds.data_store = ds.DataStore(redis_db_URL=config.REDIS_URL)
+        ds.globalvars.data_store = ds.DataStore(redis_db_URL=config.REDIS_URL)
         
         # Load the DataStore state from disk.
-        ds.data_store.load()
+        ds.globalvars.data_store.load()
         
         # Look for an existing tasks dictionary.
-        task_dict_uid = ds.data_store.get_uid_from_instance('taskdict', 'Task Dictionary')
+        task_dict_uid = ds.globalvars.data_store.get_uid('taskdict', 'Task Dictionary')
         
         # Create the task dictionary object.
         task_dict = TaskDict(task_dict_uid)
@@ -399,7 +399,7 @@ def make_celery_instance(config=None):
     
         # Set the TaskRecord to indicate start of the task.
         match_taskrec.status = 'started'
-        match_taskrec.start_time = sc.today()
+        match_taskrec.start_time = sc.now()
         match_taskrec.pending_time = \
             (match_taskrec.start_time - match_taskrec.queue_time).total_seconds()        
         task_dict.update(match_taskrec)
@@ -424,7 +424,7 @@ def make_celery_instance(config=None):
         # NOTE: Even if the browser has ordered the deletion of the task 
         # record, it will be "resurrected" during this update, so the 
         # delete_task() RPC may not always work as expected.
-        match_taskrec.stop_time = sc.today()
+        match_taskrec.stop_time = sc.now()
         match_taskrec.execution_time = \
             (match_taskrec.stop_time - match_taskrec.start_time).total_seconds()
         task_dict.update(match_taskrec)
@@ -465,7 +465,7 @@ def make_celery_instance(config=None):
                 
                 # Initialize the TaskRecord with available information.
                 new_task_record.status = 'queued'
-                new_task_record.queue_time = sc.today()
+                new_task_record.queue_time = sc.now()
                 new_task_record.func_name = func_name
                 new_task_record.args = args
                 new_task_record.kwargs = kwargs
@@ -498,7 +498,7 @@ def make_celery_instance(config=None):
                 # Initialize the TaskRecord to start the task again (though 
                 # possibly with a new function and arguments).
                 match_taskrec.status = 'queued'
-                match_taskrec.queue_time = sc.today()
+                match_taskrec.queue_time = sc.now()
                 match_taskrec.start_time = None
                 match_taskrec.stop_time = None
                 match_taskrec.pending_time = None
@@ -565,11 +565,11 @@ def check_task(task_id):
                 
             # Else (we are still executing)...
             else:
-                execution_time = (sc.today() - match_taskrec.start_time).total_seconds()
+                execution_time = (sc.now() - match_taskrec.start_time).total_seconds()
                 
         # Else (we are still pending)...
         else:
-            pending_time = (sc.today() - match_taskrec.queue_time).total_seconds()
+            pending_time = (sc.now() - match_taskrec.queue_time).total_seconds()
             execution_time = 0
         
         # Create the return dict from the user repr.
