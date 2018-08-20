@@ -1,5 +1,5 @@
 # Import version information
-from .version import version as __version__, versiondate as __versiondate__
+from .version import version as __version__, versiondate as __versiondate__, scirislicense as __license__
 
 # Import core functions
 from .utils import *

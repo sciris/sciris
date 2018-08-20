@@ -1,2 +1,4 @@
-version = '0.6.1'
-versiondate = '2018-07-28'
+version       = '0.7.0'
+versiondate   = '2018-08-20'
+scirislicense = 'Sciris %s (%s) -- (c) 2018 by the Optima Consortium (info@sciris.org)' % (version, versiondate)
+
