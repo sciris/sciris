@@ -1,7 +1,7 @@
 """
 user.py -- code related to Sciris user management
     
-Last update: 7/11/18 (gchadder3)
+Last update: 2018aug20
 """
 
 from flask import session, current_app
