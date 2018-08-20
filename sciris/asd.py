@@ -51,7 +51,7 @@ def asd(function, x, args=None, stepsize=0.1, sinc=2, sdec=2, pinc=2, pdec=2,
 
     from numpy import array, shape, reshape, ones, zeros, mean, cumsum, mod, concatenate, floor, flatnonzero, isnan, inf
     from numpy.random import random, seed
-    from copy import deepcopy # For arrays, even y = x[:] doesn't copy properly
+    from .utils import dcp, sigfig
     from time import time
     if randseed is not None:
         seed(int(randseed)) # Don't reset it if not supplied
@@ -102,7 +102,7 @@ def asd(function, x, args=None, stepsize=0.1, sinc=2, sdec=2, pinc=2, pdec=2,
     if args is None: args = {} # Reset if no function arguments supplied
     fval = function(x, **args) # Calculate initial value of the objective function
     fvalorig = fval # Store the original value of the objective function, since fval is overwritten on each step
-    xorig = deepcopy(x) # Keep the original x, just in case
+    xorig = dcp(x) # Keep the original x, just in case
 
     # Initialize history
     abserrorhistory = zeros(stalliters) # Store previous error changes
@@ -141,7 +141,7 @@ def asd(function, x, args=None, stepsize=0.1, sinc=2, sdec=2, pinc=2, pdec=2,
             break
 
         # Calculate the new value
-        xnew = deepcopy(x) # Initialize the new parameter set
+        xnew = dcp(x) # Initialize the new parameter set
         xnew[par] = newval # Update the new parameter set
         fvalnew = function(xnew, **args) # Calculate the objective function for the new parameter set
         abserrorhistory[mod(count, stalliters)] = max(0, fval - fvalnew) # Keep track of improvements in the error
@@ -163,7 +163,7 @@ def asd(function, x, args=None, stepsize=0.1, sinc=2, sdec=2, pinc=2, pdec=2,
         else:
             exitreason = 'Objective function returned NaN'
             break
-        if verbose >= 2: print(offset + label + ' step %i (%0.1f s) %s (orig: %s | best:%s | new:%s | diff:%s)' % ((count, time() - start, flag) + multisigfig([fvalorig, fvalold, fvalnew, fvalnew - fvalold])))
+        if verbose >= 2: print(offset + label + ' step %i (%0.1f s) %s (orig: %s | best:%s | new:%s | diff:%s)' % ((count, time() - start, flag) + sigfig([fvalorig, fvalold, fvalnew, fvalnew - fvalold])))
 
         # Store output information
         fvals[count] = fval # Store objective function evaluations
@@ -174,13 +174,13 @@ def asd(function, x, args=None, stepsize=0.1, sinc=2, sdec=2, pinc=2, pdec=2,
             exitreason = 'Maximum iterations reached'
             break
         if (time() - start) > maxtime:
-            exitreason = 'Time limit reached (%s > %s)' % multisigfig([(time() - start), maxtime])
+            exitreason = 'Time limit reached (%s > %s)' % sigfig([(time() - start), maxtime])
             break
         if (count > stalliters) and (abs(mean(abserrorhistory)) < abstol): # Stop if improvement is too small
-            exitreason = 'Absolute improvement too small (%s < %s)' % multisigfig([mean(abserrorhistory), abstol])
+            exitreason = 'Absolute improvement too small (%s < %s)' % sigfig([mean(abserrorhistory), abstol])
             break
         if (count > stalliters) and (sum(relerrorhistory) < reltol): # Stop if improvement is too small
-            exitreason = 'Relative improvement too small (%s < %s)' % multisigfig([mean(relerrorhistory), reltol])
+            exitreason = 'Relative improvement too small (%s < %s)' % sigfig([mean(relerrorhistory), reltol])
             break
         if stoppingfunc and stoppingfunc():
             exitreason = 'Stopping function called'
@@ -189,7 +189,7 @@ def asd(function, x, args=None, stepsize=0.1, sinc=2, sdec=2, pinc=2, pdec=2,
     # Return
     x = reshape(x, origshape) # Parameters
     fvals = fvals[:count + 1] # Function evaluations
-    if verbose >= 2: print('=== %s %s (%i steps, orig: %s | best: %s | ratio: %s) ===' % ((label, exitreason, count) + multisigfig([fvals[0], fvals[-1], fvals[-1] / fvals[0]])))
+    if verbose >= 2: print('=== %s %s (%i steps, orig: %s | best: %s | ratio: %s) ===' % ((label, exitreason, count) + sigfig([fvals[0], fvals[-1], fvals[-1] / fvals[0]])))
     if fulloutput:
         details = dict()
         details['exitreason'] = exitreason
@@ -199,43 +199,3 @@ def asd(function, x, args=None, stepsize=0.1, sinc=2, sdec=2, pinc=2, pdec=2,
         return (x, fvals, details)
     else:
         return (x, None, None) # so that it has the same shape regardless of fulloutput
-
-
-
-
-def multisigfig(X, sigfigs=5):
-    """ Return a string representation of variable x with sigfigs number of significant figures """
-    from numpy import log10, floor
-    import numpy as np
-
-    output = []
-    try:
-        n = len(X)
-        islist = True
-    except:
-        X = [X]
-        n = 1
-        islist = False
-    for i in range(n):
-        x = X[i]
-        if not np.isfinite(x):
-            output.append(str(x))
-        else:
-            try:
-                if x == 0:
-                    output.append('0')
-                else:
-                    magnitude = floor(log10(abs(x)))
-                    factor = 10 ** (sigfigs - magnitude - 1)
-                    x = round(x * factor) / float(factor)
-                    digits = int(abs(magnitude) + max(0, sigfigs - max(0, magnitude) - 1) + 1 + (x < 0) + (abs(x) < 1)) # one because, one for decimal, one for minus
-                    decimals = int(max(0, -magnitude + sigfigs - 1))
-                    strformat = '%' + '%i.%i' % (digits, decimals) + 'f'
-                    string = strformat % x
-                    output.append(string)
-            except:
-                output.append(str(x))
-    if islist:
-        return tuple(output)
-    else:
-        return output[0]

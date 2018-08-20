@@ -226,7 +226,7 @@ def makefilepath(filename=None, folder=None, ext=None, default=None, split=False
 ### Spreadsheet functions
 ##############################################################################
     
-def readexcel(filename=None, folder=None, sheetname=None, sheetnum=None, asdataframe=True):
+def loadspreadsheet(filename=None, folder=None, sheetname=None, sheetnum=None, asdataframe=True):
     '''
     Load a spreadsheet
     '''
@@ -268,7 +268,7 @@ def readexcel(filename=None, folder=None, sheetname=None, sheetnum=None, asdataf
 
 
 
-def exportexcel(filename=None, data=None, folder=None, sheetnames=None, close=True, formats=None, formatdata=None, verbose=False):
+def savespreadsheet(filename=None, data=None, folder=None, sheetnames=None, close=True, formats=None, formatdata=None, verbose=False):
     '''
     Little function to format an output results nicely for Excel. Examples:
     
