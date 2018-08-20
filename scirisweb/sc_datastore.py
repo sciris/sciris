@@ -12,22 +12,20 @@ import atexit
 import sciris as sc
 
 #__all__ = ['data_store', 'file_save_dir', 'uploads_dir', 'downloads_dir', 'FileSaveDirectory', 'StoreObjectHandle', 'DataStore']
-__all__ = ['globalvars', 'FileSaveDirectory', 'StoreObjectHandle', 'DataStore']
+__all__ = ['gv', 'FileSaveDirectory', 'StoreObjectHandle', 'DataStore']
 
 ################################################################################
 ### Globals
 ################################################################################
 
-# These will get set by calling code.
-
-print('!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!! defining datastore')
-class globalVars:
+# These will get set by calling code -- these need to be in a class so they can be imported.
+class GlobalVars:
     data_store    = None # The DataStore object for persistence for the app.  Gets initialized by and loaded by init_datastore().
     file_save_dir = None # Directory (FileSaveDirectory object) for saved files.
     uploads_dir   = None # Directory (FileSaveDirectory object) for file uploads to be routed to.
     downloads_dir = None # Directory (FileSaveDirectory object) for file downloads to be routed to.
 
-globalvars = globalVars()
+gv = GlobalVars()
 
 ################################################################################
 ### Classes

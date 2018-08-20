@@ -230,11 +230,10 @@ class ScirisApp(object):
     @staticmethod
     def _init_datastore(app_config):
         # Create the DataStore object, setting up Redis.
-        ds.globalvars.data_store = ds.DataStore(redis_db_URL=app_config['REDIS_URL'])
-        print('!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!! RE-defining datastore as %s' % ds.globalvars.data_store)
+        ds.gv.data_store = ds.DataStore(redis_db_URL=app_config['REDIS_URL'])
     
         # Load the DataStore state from disk.
-        ds.globalvars.data_store.load()
+        ds.gv.data_store.load()
         
         # Uncomment this line (for now) to reset the database, and then recomment
         # before running for usage.
@@ -250,13 +249,13 @@ class ScirisApp(object):
             
             # Show the DataStore handles.
             print('>> List of all DataStore handles...')
-            ds.globalvars.data_store.show_handles()
+            ds.gv.data_store.show_handles()
         return None
     
     @staticmethod
     def _init_users(app_config):        
         # Look for an existing users dictionary.
-        user_dict_uid = ds.globalvars.data_store.get_uid('userdict', 'Users Dictionary')
+        user_dict_uid = ds.gv.data_store.get_uid('userdict', 'Users Dictionary')
         
         # Create the user dictionary object.  Note, that if no match was found, 
         # this will be assigned a new UID.
@@ -285,7 +284,7 @@ class ScirisApp(object):
     @staticmethod        
     def _init_tasks(app_config):
         # Look for an existing tasks dictionary.
-        task_dict_uid = ds.globalvars.data_store.get_uid('taskdict', 'Task Dictionary')
+        task_dict_uid = ds.gv.data_store.get_uid('taskdict', 'Task Dictionary')
         
         # Create the task dictionary object.  Note, that if no match was found, 
         # this will be assigned a new UID.
@@ -426,7 +425,7 @@ class ScirisApp(object):
         # don't pass.
         
         # If the RPC is disabled, always return a Status 403 (Forbidden)
-        if found_RPC.validation_type == 'disabled':
+        if found_RPC.validation == 'disabled':
             abort(403)
                 
         # Only do other validation if DataStore and users are included.
@@ -434,18 +433,18 @@ class ScirisApp(object):
             # If the RPC should be executable by any user, including an 
             # anonymous one, but there is no authorization or anonymous login, 
             # return a Status 401 (Unauthorized)
-            if found_RPC.validation_type == 'any' and not (current_user.is_anonymous or current_user.is_authenticated):
+            if found_RPC.validation == 'any' and not (current_user.is_anonymous or current_user.is_authenticated):
                 abort(401)
                 
             # Else if the RPC should be executable by any non-anonymous user, 
             # but there is no authorization or there is an anonymous login, 
             # return a Status 401 (Unauthorized)
-            elif found_RPC.validation_type == 'named' and (current_user.is_anonymous or not current_user.is_authenticated):
+            elif found_RPC.validation == 'named' and (current_user.is_anonymous or not current_user.is_authenticated):
                 abort(401)
                 
             # Else if the RPC should be executable by any admin user, 
             # but there is no admin login or it's an anonymous login...
-            elif found_RPC.validation_type == 'admin':
+            elif found_RPC.validation == 'admin':
                 # If the user is anonymous or no authenticated user is logged 
                 # in, return Status 401 (Unauthorized).
                 if current_user.is_anonymous or not current_user.is_authenticated:
@@ -456,7 +455,7 @@ class ScirisApp(object):
                 elif not current_user.is_admin:
                     abort(403)
                     
-            # NOTE: Any "unknown" validation_type values are treated like 
+            # NOTE: Any "unknown" validation values are treated like 
             # 'none'.
                 
         # If we are doing an upload...
