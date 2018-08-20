@@ -209,21 +209,21 @@ class ScirisApp(object):
 
         # Create a file save directory only if we have a path.
         if file_save_root_path is not None:
-            ds.file_save_dir = ds.FileSaveDirectory(file_save_root_path, temp_dir=False)
+            ds.gv.file_save_dir = ds.FileSaveDirectory(file_save_root_path, temp_dir=False)
         
         # Create a downloads directory.
-        ds.downloads_dir = ds.FileSaveDirectory(transfer_dir_path, temp_dir=True)
+        ds.gv.downloads_dir = ds.FileSaveDirectory(transfer_dir_path, temp_dir=True)
         
         # Have the uploads directory use the same directory as the downloads 
         # directory.
-        ds.uploads_dir = ds.downloads_dir
+        ds.gv.uploads_dir = ds.gv.downloads_dir
         
         # Show the downloads and uploads directories.
         if app_config['LOGGING_MODE'] == 'FULL':
             if file_save_root_path is not None:
-                print('>> File save directory path: %s' % ds.file_save_dir.dir_path)
-            print('>> Downloads directory path: %s' % ds.downloads_dir.dir_path)
-            print('>> Uploads directory path: %s' % ds.uploads_dir.dir_path)
+                print('>> File save directory path: %s' % ds.gv.file_save_dir.dir_path)
+            print('>> Downloads directory path: %s' % ds.gv.downloads_dir.dir_path)
+            print('>> Uploads directory path: %s' % ds.gv.uploads_dir.dir_path)
         
         return None
         
@@ -467,7 +467,7 @@ class ScirisApp(object):
             filename = secure_filename(file.filename)
             
             # Generate a full upload path/file name.
-            uploaded_fname = os.path.join(ds.uploads_dir.dir_path, filename)
+            uploaded_fname = os.path.join(ds.gv.uploads_dir.dir_path, filename)
         
             # Save the file to the uploads directory.
             file.save(uploaded_fname)
