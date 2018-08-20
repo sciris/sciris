@@ -6,6 +6,9 @@ from collections import OrderedDict as _OD
 import numpy as np
 from . import utils as ut
 
+# Restrict imports to user-facing modules
+__all__ = ['odict']
+
 class odict(_OD):
     '''
     An ordered dictionary, like the OrderedDict class, but supporting list methods like integer 

@@ -11,10 +11,12 @@ Last update: 5/31/18 (gchadder3)
 # Basic imports
 from glob import glob
 import os
+import re
 import dill
 from gzip import GzipFile
 from contextlib import closing
 from xlrd import open_workbook
+from xlsxwriter import Workbook
 from .utils import promotetolist
 from .odict import odict
 from .dataframe import dataframe
@@ -89,7 +91,6 @@ def loadobj(filename=None, folder=None, verbose=True):
         try: # Try pickle first
             obj = pickle.loads(filestr) # Actually load it
         except:
-            import dill
             obj = dill.loads(filestr)
     if verbose: print('Object loaded from "%s"' % filename)
     return obj
@@ -147,7 +148,6 @@ def sanitizefilename(rawfilename):
     Takes a potentially Linux- and Windows-unfriendly candidate file name, and 
     returns a "sanitized" version that is more usable.
     '''
-    import re # Import regular expression package.
     filtername = re.sub('[\!\?\"\'<>]', '', rawfilename) # Erase certain characters we don't want at all: !, ?, ", ', <, >
     filtername = re.sub('[:/\\\*\|,]', '_', filtername) # Change certain characters that might be being used as separators from what they were to underscores: space, :, /, \, *, |, comma
     return filtername # Return the sanitized file name.
@@ -310,8 +310,6 @@ def savespreadsheet(filename=None, data=None, folder=None, sheetnames=None, clos
     formatdata[0,:] = 'header' # Format header
     sc.export_file(filename='test5.xlsx', data=testdata5, formats=formats, formatdata=formatdata)
     '''
-    from xlsxwriter import Workbook
-    
     fullpath = makefilepath(filename=filename, folder=folder, default='default.xlsx')
     datadict   = odict()
     formatdict = odict()
