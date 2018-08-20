@@ -2,20 +2,18 @@
 ### IMPORTS FROM OTHER LIBRARIES
 ##############################################################################
 
+import os
 import numpy as np
 import uuid as py_uuid
 import copy
-from textwrap import fill
-from pprint import pformat
 import datetime
 import dateutil
 from time import time, mktime, sleep
-from os import getcwd, remove
-from os.path import getsize
+from textwrap import fill
+from pprint import pformat
 from psutil import cpu_percent
 from subprocess import Popen, PIPE
 from functools import reduce
-from os import path, sep # Path and file separator
 
 # Handle types and Python 2/3 compatibility
 from six import PY2 as _PY2
@@ -817,7 +815,7 @@ def checkmem(origvariable, descend=0, order='n', plot=False, verbose=0):
         from utils import checkmem
         checkmem(['spiffy',rand(2483,589)],descend=1)
     '''
-    filename = getcwd()+'/checkmem.tmp'
+    filename = os.getcwd()+'/checkmem.tmp'
     
     def dumpfile(variable):
         wfid = open(filename,'wb')
@@ -844,7 +842,7 @@ def checkmem(origvariable, descend=0, order='n', plot=False, verbose=0):
     for v,variable in enumerate(variables):
         if verbose: print('Processing variable %i of %i' % (v+1, len(variables)))
         dumpfile(variable)
-        filesize = getsize(filename)
+        filesize = os.path.getsize(filename)
         factor = 1
         label = 'B'
         labels = ['KB','MB','GB']
@@ -855,7 +853,7 @@ def checkmem(origvariable, descend=0, order='n', plot=False, verbose=0):
         printnames.append(varnames[v])
         printbytes.append(filesize)
         printsizes.append('%0.3f %s' % (float(filesize/float(factor)), label))
-        remove(filename)
+        os.remove(filename)
 
     if order=='a' or order=='alpha' or order=='alphabetical':
         inds = np.argsort(printnames)
@@ -945,21 +943,21 @@ def gitinfo(filepath=None, die=False, hashlen=7):
     if filepath is None: filepath = __file__
     try: # First try importing git-python
         import git
-        rootdir = path.abspath(filepath) # e.g. /user/username/optima/optima
+        rootdir = os.path.abspath(filepath) # e.g. /user/username/optima/optima
         repo = git.Repo(path=rootdir, search_parent_directories=True)
         gitbranch = flexstr(repo.active_branch.name) # Just make sure it's a string
         githash = flexstr(repo.head.object.hexsha) # Unicode by default
         gitdate = flexstr(repo.head.object.authored_datetime.isoformat())
     except Exception as E1: 
         try: # If that fails, try the command-line method
-            rootdir = path.abspath(filepath) # e.g. /user/username/optima/optima
+            rootdir = os.path.abspath(filepath) # e.g. /user/username/optima/optima
             while len(rootdir): # Keep going as long as there's something left to go
-                gitdir = rootdir+sep+'.git' # look for the git directory in the current directory
-                if path.isdir(gitdir): break # It's found! terminate
-                else: rootdir = sep.join(rootdir.split(sep)[:-1]) # Remove the last directory and keep looking
-            headstrip = 'ref: ref'+sep+'heads'+sep # Header to strip off...hope this is generalizable!
-            with open(gitdir+sep+'HEAD') as f: gitbranch = f.read()[len(headstrip)+1:].strip() # Read git branch name
-            with open(gitdir+sep+'refs'+sep+'heads'+sep+gitbranch) as f: githash = f.read().strip() # Read git commit
+                gitdir = rootdir+os.sep+'.git' # look for the git directory in the current directory
+                if os.path.isdir(gitdir): break # It's found! terminate
+                else: rootdir = os.sep.join(rootdir.split(os.sep)[:-1]) # Remove the last directory and keep looking
+            headstrip = 'ref: ref'+os.sep+'heads'+os.sep # Header to strip off...hope this is generalizable!
+            with open(gitdir+os.sep+'HEAD') as f: gitbranch = f.read()[len(headstrip)+1:].strip() # Read git branch name
+            with open(gitdir+os.sep+'refs'+os.sep+'heads'+os.sep+gitbranch) as f: githash = f.read().strip() # Read git commit
             try:    gitdate = flexstr(runcommand('git -C "%s" show -s --format=%%ci' % gitdir).rstrip()) # Even more likely to fail
             except: gitdate = 'Git date N/A'
         except Exception as E2: # Failure? Give up
