@@ -2,7 +2,9 @@
 from .version import version as __version__, versiondate as __versiondate__, scirislicense as __license__
 
 # Import core functions
-from .utils import *
+from . import utils as sc_utils; from .utils import *
+from .math import *
+from .plotting import *
 from .odict import *
 from .dataframe import *
 from .fileio import *

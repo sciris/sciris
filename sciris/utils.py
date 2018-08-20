@@ -13,8 +13,6 @@ import dateutil
 from time import time, mktime, sleep
 from os import getcwd, remove
 from os.path import getsize
-if _PY2: from cPickle import dump
-else:    from pickle import dump
 from psutil import cpu_percent
 from subprocess import Popen, PIPE
 from functools import reduce
@@ -25,15 +23,19 @@ try:
     from requests import post # Simple way of posting data to a URL
     from json import dumps # For sanitizing the message
     from getpass import getuser # In case username is left blank
-    _slackimports = 'success'
+    _slackimporterror = ''
 except Exception as E:
-    _slackimports = repr(E)
+    _slackimporterror = repr(E)
     
 # Handle types and Python 2/3 compatibility
 from six import PY2 as _PY2
 from numbers import Number as _numtype
-if _PY2: _stringtype = basestring 
-else:    _stringtype = str
+if _PY2: 
+    _stringtype = basestring 
+    from cPickle import dump
+else:   
+    _stringtype = str
+    from pickle import dump
 
 
 def uuid(uid=None, which=None, die=False, as_string=False):
@@ -478,14 +480,17 @@ def slacknotification(to=None, message=None, fromuser=None, token=None, verbose=
     What's the point? Add this to the end of a very long-running script to notify
     your loved ones that the script has finished.
         
-    Version: 2017feb09
+    Version: 2018aug20
     '''
+    if _slackimporterror:
+        raise Exception('Cannot use Slack notification since imports failed: %s' % _slackimporterror)
+    
     # Validate input arguments
     printv('Sending Slack message...', 2, verbose)
-    if token is None:    token = '/.slackurl'
-    if to is None:       to = '#general'
+    if token    is None: token    = '/.slackurl'
+    if to       is None: to       = '#general'
     if fromuser is None: fromuser = getuser()+'-bot'
-    if message is None:  message = 'This is an automated notification: your notifier is notifying you.'
+    if message  is None: message  = 'This is an automated notification: your notifier is notifying you.'
     printv('Channel: %s | User: %s | Message: %s' % (to, fromuser, message), 3, verbose) # Print details of what's being sent
     
     # Try opening token file    
@@ -952,9 +957,9 @@ def gitinfo(filepath=None, die=False, hashlen=7):
             gitbranch = 'Git branch N/A'
             githash = 'Git hash N/A'
             gitdate = 'Git date N/A'
-            if die:
-                errormsg = 'Could not extract git info; please check paths or install git-python:\n%s\n%s' % (repr(E1), repr(E2))
-                raise Exception(errormsg)
+            errormsg = 'Could not extract git info; please check paths or install git-python:\n%s\n%s' % (repr(E1), repr(E2))
+            if die: raise Exception(errormsg)
+            else:   print(errormsg)
     
     if len(githash)>hashlen: githash = githash[:hashlen] # Trim hash to short length
     output = {'branch':gitbranch, 'hash':githash, 'date':gitdate} # Assemble outupt

@@ -7,7 +7,7 @@ Version:
 ##############################################################################
 
 import numpy as np
-from .utils import isnumber, isstring, promotetoarray
+from . import utils as ut
 
 def quantile(data, quantiles=[0.5, 0.25, 0.75]):
     '''
@@ -47,7 +47,7 @@ def sanitize(data=None, returninds=False, replacenans=None, die=True, defaultval
                     sanitized = smoothinterp(newx, inds, sanitized, method=replacenans, smoothness=0) # Replace nans with interpolated values
                 else:
                     naninds = inds = np.nonzero(np.isnan(data))[0]
-                    sanitized = dcp(data)
+                    sanitized = ut.dcp(data)
                     sanitized[naninds] = replacenans
             if len(sanitized)==0:
                 if defaultval is not None:
@@ -100,9 +100,9 @@ def getvalidinds(data=None, filterdata=None):
     Example:
         getvalidinds([3,5,8,13], [2000, nan, nan, 2004]) # Returns array([0,3])
     '''
-    data = promotetoarray(data)
+    data = ut.promotetoarray(data)
     if filterdata is None: filterdata = data # So it can work on a single input -- more or less replicates sanitize() then
-    filterdata = promotetoarray(filterdata)
+    filterdata = ut.promotetoarray(filterdata)
     if filterdata.dtype=='bool': filterindices = filterdata # It's already boolean, so leave it as is
     else:                        filterindices = findinds(~np.isnan(filterdata)) # Else, assume it's nans that need to be removed
     dataindices = findinds(~np.isnan(data)) # Also check validity of data
@@ -133,7 +133,7 @@ def findinds(val1, val2=None, eps=1e-6):
     if val2==None: # Check for equality
         output = np.nonzero(val1) # If not, just check the truth condition
     else:
-        if isstring(val2):
+        if ut.isstring(val2):
             output = np.nonzero(np.array(val1)==val2)
         else:
             output = np.nonzero(abs(np.array(val1)-val2)<eps) # If absolute difference between the two values is less than a certain amount
@@ -157,13 +157,13 @@ def findnearest(series=None, value=None):
     
     Version: 2017jan07
     '''
-    series = promotetoarray(series)
-    if isnumber(value):
+    series = ut.promotetoarray(series)
+    if ut.isnumber(value):
         output = np.argmin(abs(series-value))
     else:
         output = []
         for val in value: output.append(findnearest(series, val))
-        output = promotetoarray(output)
+        output = ut.promotetoarray(output)
     return output
     
     
@@ -195,9 +195,9 @@ def smoothinterp(newx=None, origx=None, origy=None, smoothness=None, growth=None
     Version: 2018jan24
     '''
     # Ensure arrays and remove NaNs
-    if isnumber(newx):  newx = [newx] # Make sure it has dimension
-    if isnumber(origx): origx = [origx] # Make sure it has dimension
-    if isnumber(origy): origy = [origy] # Make sure it has dimension
+    if ut.isnumber(newx):  newx = [newx] # Make sure it has dimension
+    if ut.isnumber(origx): origx = [origx] # Make sure it has dimension
+    if ut.isnumber(origy): origy = [origy] # Make sure it has dimension
     newx  = np.array(newx)
     origx = np.array(origx)
     origy = np.array(origy)
