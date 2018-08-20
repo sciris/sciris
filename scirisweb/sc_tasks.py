@@ -23,7 +23,7 @@ __all__ = ['task_dict', 'celery_instance'] # Others for internal use only
 task_dict = None # The TaskDict object for all of the app's existing asynchronous tasks. Gets initialized by and loaded by init_tasks().
 task_func_dict = {} # Dictionary to hold registered task functions to be callable from run_task().
 RPC_dict = {} # Dictionary to hold all of the registered RPCs in this module.
-RPC = rpcs.RPCtag(RPC_dict) # RPC registration decorator factory created using call to make_RPC().
+RPC = rpcs.makeRPCtag(RPC_dict) # RPC registration decorator factory created using call to make_RPC().
 celery_instance = None # Celery instance.
 
 ################################################################################
@@ -354,7 +354,7 @@ class TaskDict(sobj.BlobDict):
 ### Functions
 ################################################################################
 
-__all__ += ['make_celery_instance', 'add_task_funcs', 'check_task', 'get_task_result', 'delete_task', 'async_task_tag', 'test_message']
+__all__ += ['make_celery_instance', 'add_task_funcs', 'check_task', 'get_task_result', 'delete_task', 'make_async_tag']
         
 # Function for creating the Celery instance, resetting the global and also 
 # passing back the same result. for the benefit of callers in non-Sciris 
@@ -642,7 +642,7 @@ def delete_task(task_id):
 
 
 # Function for making a register_async_task decorator in other modules.
-def async_task_tag(task_func_dict):
+def make_async_tag(task_func_dict):
     def task_func_decorator(task_func):
         @wraps(task_func)
         def wrapper(*args, **kwargs):        

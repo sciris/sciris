@@ -10,7 +10,7 @@ from functools import wraps
 import numpy as np
 import sciris as sc
 
-__all__ = ['sanitize_json', 'ScirisRPC', 'RPCtag']
+__all__ = ['sanitize_json', 'ScirisRPC', 'makeRPCtag']
 
 
 
@@ -93,7 +93,7 @@ class ScirisRPC(object):
             
 
         
-def RPCtag(RPC_dict=None, **callerkwargs):
+def makeRPCtag(RPC_dict=None, **callerkwargs):
     def RPC_decorator_factory(**callerkwargs):
         def RPC_decorator(RPC_func):
             @wraps(RPC_func)
