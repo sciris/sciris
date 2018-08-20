@@ -18,4 +18,4 @@ from .sc_components import *
 from .sc_server import *
 
 import sciris as sc
-print('Sciris Web %s (%s) -- (c) 2018 by the Optima Consortium (info@sciris.org)' % (sc.__version__, sc.__versiondate__))
+print('Sciris Web %s (%s) -- (c) Optima Consortium' % (sc.__version__, sc.__versiondate__))
