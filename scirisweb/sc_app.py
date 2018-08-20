@@ -34,20 +34,20 @@ from . import sc_tasks as tasks
 ### Globals
 ################################################################################
 
-__all__ = ['data_store', 'file_save_dir', 'uploads_dir', 'downloads_dir']
-
-# These will get set by calling code.
-
-data_store    = None # The DataStore object for persistence for the app.  Gets initialized by and loaded by init_datastore().
-file_save_dir = None # Directory (FileSaveDirectory object) for saved files.
-uploads_dir   = None # Directory (FileSaveDirectory object) for file uploads to be routed to.
-downloads_dir = None # Directory (FileSaveDirectory object) for file downloads to be routed to.
+#__all__ = ['data_store', 'file_save_dir', 'uploads_dir', 'downloads_dir']
+#
+## These will get set by calling code.
+#
+#data_store    = 'uninitialized' # The DataStore object for persistence for the app.  Gets initialized by and loaded by init_datastore().
+#file_save_dir = 'uninitialized' # Directory (FileSaveDirectory object) for saved files.
+#uploads_dir   = 'uninitialized' # Directory (FileSaveDirectory object) for file uploads to be routed to.
+#downloads_dir = 'uninitialized' # Directory (FileSaveDirectory object) for file downloads to be routed to.
 
 ##########################################################################################################
 #%% Classes
 ##########################################################################################################
 
-__all__ += ['ScirisApp', 'ScirisResource', 'run_twisted']
+__all__ = ['ScirisApp', 'ScirisResource', 'run_twisted']
 
 class ScirisApp(object):
     """
