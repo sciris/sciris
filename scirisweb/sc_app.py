@@ -230,10 +230,11 @@ class ScirisApp(object):
     @staticmethod
     def _init_datastore(app_config):
         # Create the DataStore object, setting up Redis.
-        ds.data_store = ds.DataStore(redis_db_URL=app_config['REDIS_URL'])
+        ds.globalvars.data_store = ds.DataStore(redis_db_URL=app_config['REDIS_URL'])
+        print('!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!! RE-defining datastore as %s' % ds.globalvars.data_store)
     
         # Load the DataStore state from disk.
-        ds.data_store.load()
+        ds.globalvars.data_store.load()
         
         # Uncomment this line (for now) to reset the database, and then recomment
         # before running for usage.
@@ -249,13 +250,13 @@ class ScirisApp(object):
             
             # Show the DataStore handles.
             print('>> List of all DataStore handles...')
-            ds.data_store.show_handles()
+            ds.globalvars.data_store.show_handles()
         return None
     
     @staticmethod
     def _init_users(app_config):        
         # Look for an existing users dictionary.
-        user_dict_uid = ds.data_store.get_uid('userdict', 'Users Dictionary')
+        user_dict_uid = ds.globalvars.data_store.get_uid('userdict', 'Users Dictionary')
         
         # Create the user dictionary object.  Note, that if no match was found, 
         # this will be assigned a new UID.
@@ -284,7 +285,7 @@ class ScirisApp(object):
     @staticmethod        
     def _init_tasks(app_config):
         # Look for an existing tasks dictionary.
-        task_dict_uid = ds.data_store.get_uid('taskdict', 'Task Dictionary')
+        task_dict_uid = ds.globalvars.data_store.get_uid('taskdict', 'Task Dictionary')
         
         # Create the task dictionary object.  Note, that if no match was found, 
         # this will be assigned a new UID.
