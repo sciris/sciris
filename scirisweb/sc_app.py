@@ -209,31 +209,31 @@ class ScirisApp(object):
 
         # Create a file save directory only if we have a path.
         if file_save_root_path is not None:
-            ds.gv.file_save_dir = ds.FileSaveDirectory(file_save_root_path, temp_dir=False)
+            ds.globalvars.file_save_dir = ds.FileSaveDirectory(file_save_root_path, temp_dir=False)
         
         # Create a downloads directory.
-        ds.gv.downloads_dir = ds.FileSaveDirectory(transfer_dir_path, temp_dir=True)
+        ds.globalvars.downloads_dir = ds.FileSaveDirectory(transfer_dir_path, temp_dir=True)
         
         # Have the uploads directory use the same directory as the downloads 
         # directory.
-        ds.gv.uploads_dir = ds.gv.downloads_dir
+        ds.globalvars.uploads_dir = ds.globalvars.downloads_dir
         
         # Show the downloads and uploads directories.
         if app_config['LOGGING_MODE'] == 'FULL':
             if file_save_root_path is not None:
-                print('>> File save directory path: %s' % ds.gv.file_save_dir.dir_path)
-            print('>> Downloads directory path: %s' % ds.gv.downloads_dir.dir_path)
-            print('>> Uploads directory path: %s' % ds.gv.uploads_dir.dir_path)
+                print('>> File save directory path: %s' % ds.globalvars.file_save_dir.dir_path)
+            print('>> Downloads directory path: %s' % ds.globalvars.downloads_dir.dir_path)
+            print('>> Uploads directory path: %s' % ds.globalvars.uploads_dir.dir_path)
         
         return None
         
     @staticmethod
     def _init_datastore(app_config):
         # Create the DataStore object, setting up Redis.
-        ds.gv.data_store = ds.DataStore(redis_db_URL=app_config['REDIS_URL'])
+        ds.globalvars.data_store = ds.DataStore(redis_db_URL=app_config['REDIS_URL'])
     
         # Load the DataStore state from disk.
-        ds.gv.data_store.load()
+        ds.globalvars.data_store.load()
         
         # Uncomment this line (for now) to reset the database, and then recomment
         # before running for usage.
@@ -249,13 +249,13 @@ class ScirisApp(object):
             
             # Show the DataStore handles.
             print('>> List of all DataStore handles...')
-            ds.gv.data_store.show_handles()
+            ds.globalvars.data_store.show_handles()
         return None
     
     @staticmethod
     def _init_users(app_config):        
         # Look for an existing users dictionary.
-        user_dict_uid = ds.gv.data_store.get_uid('userdict', 'Users Dictionary')
+        user_dict_uid = ds.globalvars.data_store.get_uid('userdict', 'Users Dictionary')
         
         # Create the user dictionary object.  Note, that if no match was found, 
         # this will be assigned a new UID.
@@ -284,7 +284,7 @@ class ScirisApp(object):
     @staticmethod        
     def _init_tasks(app_config):
         # Look for an existing tasks dictionary.
-        task_dict_uid = ds.gv.data_store.get_uid('taskdict', 'Task Dictionary')
+        task_dict_uid = ds.globalvars.data_store.get_uid('taskdict', 'Task Dictionary')
         
         # Create the task dictionary object.  Note, that if no match was found, 
         # this will be assigned a new UID.
@@ -467,7 +467,7 @@ class ScirisApp(object):
             filename = secure_filename(file.filename)
             
             # Generate a full upload path/file name.
-            uploaded_fname = os.path.join(ds.gv.uploads_dir.dir_path, filename)
+            uploaded_fname = os.path.join(ds.globalvars.uploads_dir.dir_path, filename)
         
             # Save the file to the uploads directory.
             file.save(uploaded_fname)

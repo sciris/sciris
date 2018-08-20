@@ -65,7 +65,7 @@ class Blob(object):
         self.instance_label = instance_label
         
     def in_data_store(self):
-        return (ds.gv.data_store.retrieve(self.uid) is not None)
+        return (ds.globalvars.data_store.retrieve(self.uid) is not None)
     
     def load_from_copy(self, other_obj):
         if type(other_obj) == type(self):
@@ -80,7 +80,7 @@ class Blob(object):
             return
         
         # Add our representation to the DataStore.
-        ds.gv.data_store.add(self, self.uid, self.type_prefix, self.file_suffix, 
+        ds.globalvars.data_store.add(self, self.uid, self.type_prefix, self.file_suffix, 
             self.instance_label)
         
     def load_copy_from_data_store(self, uid=None):
@@ -89,9 +89,9 @@ class Blob(object):
                 print('Error: Object ''%s'' is not in DataStore.' % self.uid.hex)
                 return None
             else:
-                return ds.gv.data_store.retrieve(self.uid)
+                return ds.globalvars.data_store.retrieve(self.uid)
         else:
-            return ds.gv.data_store.retrieve(uid)
+            return ds.globalvars.data_store.retrieve(uid)
             
     def load_from_data_store(self, uid=None):
         # Get a copy from the DataStore.
@@ -107,7 +107,7 @@ class Blob(object):
             return
         
         # Update our DataStore representation with our current state. 
-        ds.gv.data_store.update(self.uid, self) 
+        ds.globalvars.data_store.update(self.uid, self) 
         
     def delete_from_data_store(self):
         # Give an error if the object is not in the DataStore.
@@ -116,7 +116,7 @@ class Blob(object):
             return
         
         # Delete ourselves from the DataStore.
-        ds.gv.data_store.delete(self.uid)
+        ds.globalvars.data_store.delete(self.uid)
     
     def show(self):
         print('--------------------------------------------')
@@ -230,7 +230,7 @@ class BlobDict(Blob):
             # Otherwise, if the UUID is in the set...
             elif valid_uid in self.ds_uuid_set:
                 # Return the object that is in the global DataStore object.
-                return ds.gv.data_store.retrieve(valid_uid)
+                return ds.globalvars.data_store.retrieve(valid_uid)
             
             # Otherwise (no match)...
             else:
@@ -242,7 +242,7 @@ class BlobDict(Blob):
         if self.objs_within_coll:
             return [self.obj_dict[key] for key in self.obj_dict]
         else:
-            return [ds.gv.data_store.retrieve(uid) for uid in self.ds_uuid_set]
+            return [ds.globalvars.data_store.retrieve(uid) for uid in self.ds_uuid_set]
     
     def add_object(self, obj):
         # If we are storing things inside the obj_dict...
@@ -272,7 +272,7 @@ class BlobDict(Blob):
         # Otherwise, we are using the UUID set...
         else:
             # Update the object in the global DataStore object.
-            ds.gv.data_store.update(obj.uid, obj)
+            ds.globalvars.data_store.update(obj.uid, obj)
             
     def delete_object_by_uid(self, uid):
         # Make sure the argument is a valid UUID, converting a hex text to a
@@ -305,7 +305,7 @@ class BlobDict(Blob):
                     self.ds_uuid_set.remove(valid_uid)
                     
                     # Delete the object in the global DataStore object.
-                    ds.gv.data_store.delete(valid_uid)
+                    ds.globalvars.data_store.delete(valid_uid)
                     
                     # Set to update the data store
                     need_to_update = True                    
@@ -325,7 +325,7 @@ class BlobDict(Blob):
             # For each item in the set...
             for uid in self.ds_uuid_set:
                 # Delete the object with that UID in the DataStore.
-                ds.gv.data_store.delete(uid)
+                ds.globalvars.data_store.delete(uid)
                 
             # Clear the UUID set.
             self.ds_uuid_set.clear()
@@ -348,5 +348,5 @@ class BlobDict(Blob):
                 obj.show() # Show the handle contents.
         else: # Otherwise, we are using the UUID set.
             for uid in self.ds_uuid_set: # For each item in the set...
-                ds.gv.data_store.retrieve(uid).show() # Show the object with that UID in the DataStore.
+                ds.globalvars.data_store.retrieve(uid).show() # Show the object with that UID in the DataStore.
         print('--------------------------------------------')

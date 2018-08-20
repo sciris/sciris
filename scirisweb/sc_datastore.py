@@ -12,7 +12,7 @@ import atexit
 import sciris as sc
 
 #__all__ = ['data_store', 'file_save_dir', 'uploads_dir', 'downloads_dir', 'FileSaveDirectory', 'StoreObjectHandle', 'DataStore']
-__all__ = ['gv', 'FileSaveDirectory', 'StoreObjectHandle', 'DataStore']
+__all__ = ['globalvars', 'FileSaveDirectory', 'StoreObjectHandle', 'DataStore']
 
 ################################################################################
 ### Globals
@@ -25,7 +25,7 @@ class GlobalVars:
     uploads_dir   = None # Directory (FileSaveDirectory object) for file uploads to be routed to.
     downloads_dir = None # Directory (FileSaveDirectory object) for file downloads to be routed to.
 
-gv = GlobalVars()
+globalvars = GlobalVars()
 
 ################################################################################
 ### Classes
