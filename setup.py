@@ -38,5 +38,6 @@ setup(
         'dill',
         'xlrd',
         'xlsxwriter',
+        'psutil',
     ],
 )
