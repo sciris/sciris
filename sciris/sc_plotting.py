@@ -1,3 +1,20 @@
+##############################################################################
+### IMPORTS
+##############################################################################
+
+from matplotlib.colors import rgb_to_hsv, hsv_to_rgb
+from numpy import ndim, array
+from matplotlib import ticker
+from . import sc_utils as ut
+
+
+##############################################################################
+### COLOR FUNCTIONS
+##############################################################################
+
+__all__ = ['processcolors', 'shifthue', 'gridcolors', 'alpinecolormap', 'vectocolor', 'bicolormap', 'hex2rgb'] # apinecolortest and bicolormaptest not included
+
+
 def processcolors(colors=None, asarray=False, reverse=False):
     ''' 
     Small helper function to do common transformations on the colors, once generated.
@@ -9,8 +26,10 @@ def processcolors(colors=None, asarray=False, reverse=False):
         if reverse: output = output[::-1] # Reverse the array
     else:
         output = []
-        for c in colors: output.append(tuple(c)) # Gather output
-        if reverse: output.reverse() # Reverse the list
+        for c in colors: # Gather output
+            output.append(tuple(c))
+        if reverse: # Reverse the list
+            output.reverse()
     return output
 
 
@@ -21,11 +40,7 @@ def shifthue(colors=None, hueshift=0.0):
     Example:
         colors = shifthue(colors=[(1,0,0),(0,1,0)], hueshift=0.5)
     '''
-    from copy import deepcopy as dcp
-    from matplotlib.colors import rgb_to_hsv, hsv_to_rgb
-    from numpy import ndim, array
-    
-    colors = dcp(colors) # So we don't overwrite the original
+    colors = ut.dcp(colors) # So we don't overwrite the original
     origndim = ndim(colors) # Original dimensionality
     if origndim==1: colors = [colors] # Wrap it in another list
     colors = array(colors) # Just convert it to an array
@@ -193,7 +208,7 @@ def alpinecolormap(gap=0.1,mingreen=0.2,redbluemix=0.5,epsilon=0.01):
    return cmap
 
 ## Test
-def alpinecolortest():
+def alpinecolormaptest():
     from pylab import randn, show, convolve, array, seed, linspace, meshgrid, xlabel, ylabel, figure, pcolor
     from mpl_toolkits.mplot3d import Axes3D # analysis:ignore
     
@@ -344,7 +359,7 @@ def bicolormap(gap=0.1,mingreen=0.2,redbluemix=0.5,epsilon=0.01):
    return cmap
 
 ## Test
-def testbicolormap():
+def bicolormaptest():
     from pylab import figure, subplot, imshow, colorbar, rand, show
     
     maps=[]
@@ -362,9 +377,123 @@ def testbicolormap():
     show()
 
 
+
 def hex2rgb(string):
     ''' A little helper function to convert e.g. '86bc25' to a pleasing shade of green. '''
     from numpy import array
     from struct import unpack
     rgb = array(unpack('BBB',string.decode('hex')),dtype=float)/255.
     return rgb
+
+
+
+
+##############################################################################
+### PLOTTING FUNCTIONS
+##############################################################################
+
+__all__ += ['boxoff', 'setylim', 'commaticks', 'SItickformatter', 'SIticks']
+
+
+def boxoff(ax=None, removeticks=True, flipticks=True):
+    '''
+    I don't know why there isn't already a Matplotlib command for this.
+    
+    Removes the top and right borders of a plot. Also optionally removes
+    the tick marks, and flips the remaining ones outside.
+
+    Version: 2017may22    
+    '''
+    from pylab import gca
+    if ax is None: ax = gca()
+    ax.spines['top'].set_visible(False)
+    ax.spines['right'].set_visible(False)
+    if removeticks:
+        ax.xaxis.set_ticks_position('bottom')
+        ax.yaxis.set_ticks_position('left')
+    if flipticks:
+        ax.tick_params(direction='out', pad=5)
+    return ax
+    
+    
+
+def setylim(data=None, ax=None):
+    '''
+    A small script to determine how the y limits should be set. Looks
+    at all data (a list of arrays) and computes the lower limit to
+    use, e.g.
+    
+        setylim([array([-3,4]), array([6,4,6])], ax)
+    
+    will keep Matplotlib's lower limit, since at least one data value
+    is below 0.
+    
+    Note, if you just want to set the lower limit, you can do that 
+    with this function via:
+        setylim(0, ax)
+    '''
+    # Get current limits
+    currlower, currupper = ax.get_ylim()
+    
+    # Calculate the lower limit based on all the data
+    lowerlim = 0
+    upperlim = 0
+    data = ut.promotetolist(data) # Make sure it'siterable
+    for ydata in data:
+        lowerlim = min(lowerlim, ut.promotetoarray(ydata).min())
+        upperlim = max(upperlim, ut.promotetoarray(ydata).max())
+    
+    # Set the new y limits
+    if lowerlim<0: lowerlim = currlower # If and only if the data lower limit is negative, use the plotting lower limit
+    upperlim = max(upperlim, currupper) # Shouldn't be an issue, but just in case...
+    
+    # Specify the new limits and return
+    ax.set_ylim((lowerlim, upperlim))
+    return lowerlim,upperlim
+
+
+
+def commaticks(fig=None, ax=None, axis='y'):
+    ''' Use commas in formatting the y axis of a figure -- see http://stackoverflow.com/questions/25973581/how-to-format-axis-number-format-to-thousands-with-a-comma-in-matplotlib '''
+    from matplotlib import ticker
+    if   ax  is not None: axlist = ut.promotetolist(ax)
+    elif fig is not None: axlist = fig.axes
+    else: raise Exception('Must supply either figure or axes')
+    for ax in axlist:
+        if   axis=='x': thisaxis = ax.xaxis
+        elif axis=='y': thisaxis = ax.yaxis
+        elif axis=='z': thisaxis = ax.zaxis
+        else: raise Exception('Axis must be x, y, or z')
+        thisaxis.set_major_formatter(ticker.FuncFormatter(lambda x, p: format(int(x), ',')))
+    return None
+    
+    
+
+def SItickformatter(x, pos=None, sigfigs=2, SI=True, *args, **kwargs):  # formatter function takes tick label and tick position
+    ''' Formats axis ticks so that e.g. 34,243 becomes 34K '''
+    output = ut.sigfig(x, sigfigs=sigfigs, SI=SI) # Pretty simple since ut.sigfig() does all the work
+    return output
+
+
+
+def SIticks(fig=None, ax=None, axis='y', fixed=False):
+    ''' Apply SI tick formatting to one axis of a figure '''
+    if  fig is not None: axlist = fig.axes
+    elif ax is not None: axlist = ut.promotetolist(ax)
+    else: raise Exception('Must supply either figure or axes')
+    for ax in axlist:
+        if   axis=='x': thisaxis = ax.xaxis
+        elif axis=='y': thisaxis = ax.yaxis
+        elif axis=='z': thisaxis = ax.zaxis
+        else: raise Exception('Axis must be x, y, or z')
+        if fixed:
+            ticklocs = thisaxis.get_ticklocs()
+            ticklabels = []
+            for tickloc in ticklocs:
+                ticklabels.append(SItickformatter(tickloc))
+            thisaxis.set_major_formatter(ticker.FixedFormatter(ticklabels))
+        else:
+            thisaxis.set_major_formatter(ticker.FuncFormatter(SItickformatter))
+    return None
+
+

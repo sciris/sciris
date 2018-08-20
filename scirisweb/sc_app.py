@@ -1,18 +1,16 @@
 """
 scirisapp.py -- classes for Sciris (Flask-based) apps 
     
-Last update: 6/29/18 (gchadder3)
+Last update: 2018aug20
 """
 
 # Imports
 from flask import Flask, request, abort, json, jsonify, send_from_directory, make_response
-from flask_login import LoginManager, current_user, login_required
+from flask_login import LoginManager, current_user
 from werkzeug.utils import secure_filename
 from werkzeug.exceptions import HTTPException
 import sys
 import os
-import numpy as np
-import matplotlib as mpl
 import matplotlib.pyplot as ppl
 from functools import wraps
 import traceback
@@ -25,16 +23,31 @@ from twisted.web.server import Site
 from twisted.web.static import File
 from twisted.web.wsgi import WSGIResource
 from twisted.python.threadpool import ThreadPool
-from ..corelib import fileio
-from . import rpcs
-from . import datastore as ds
-from . import user
-from . import tasks
-import sciris.core as sc
+import sciris as sc
+from . import sc_rpcs as rpcs
+from . import sc_datastore as ds
+from . import sc_user as user
+from . import sc_tasks as tasks
+
+
+################################################################################
+### Globals
+################################################################################
+
+#__all__ = ['data_store', 'file_save_dir', 'uploads_dir', 'downloads_dir']
+#
+## These will get set by calling code.
+#
+#data_store    = 'uninitialized' # The DataStore object for persistence for the app.  Gets initialized by and loaded by init_datastore().
+#file_save_dir = 'uninitialized' # Directory (FileSaveDirectory object) for saved files.
+#uploads_dir   = 'uninitialized' # Directory (FileSaveDirectory object) for file uploads to be routed to.
+#downloads_dir = 'uninitialized' # Directory (FileSaveDirectory object) for file downloads to be routed to.
 
 ##########################################################################################################
 #%% Classes
 ##########################################################################################################
+
+__all__ = ['ScirisApp', 'ScirisResource', 'run_twisted']
 
 class ScirisApp(object):
     """
@@ -72,59 +85,34 @@ class ScirisApp(object):
         >>> app = ScirisApp(__file__)                      
     """
     
-    def  __init__(self, script_path, app_config=None, client_dir=None, 
-        logging_mode=None):
-        # Open a new Flask app.
-        self.flask_app = Flask(__name__)
-        
-        # If we have a config module, load it into Flask's config dict.
-        if app_config is not None:
-            self.flask_app.config.from_object(app_config)
-            
-        # Set an easier link to the configs dictionary.
-        self.config = self.flask_app.config
-        
-        # Get the absolute path of the calling script.
-        abs_script_path = os.path.abspath(script_path)
-        
-        # Extract the absolute directory path from the above.
-        self.config['ROOT_ABS_DIR'] = os.path.dirname(abs_script_path)
-        
-        # Initialize the Flask logger.       
-        self._init_logger(self.flask_app)
-        
-#        self.flask_app.logger.info('Test info log message!')  # Test logger post.
-        
-        # Set up default values for configs that are not already defined.
-        self._set_config_defaults(self.config)
-        
-        # Set an alias for the decorator factory for adding an endpoint.
-        self.define_endpoint_callback = self.flask_app.route
-        
-        # Create an empty layout dictionary.
-        self.endpoint_layout_dict = {}
-        
-        # Create an empty RPC dictionary.
-        self.RPC_dict = {} 
+    def  __init__(self, filepath=None, config=None, clientdir=None, logging_mode=None):
+        self.flask_app = Flask(__name__) # Open a new Flask app.
+        if config is not None: # If we have a config module, load it into Flask's config dict.
+            self.flask_app.config.from_object(config)
+        self.config = self.flask_app.config # Set an easier link to the configs dictionary.
+        self.config['ROOT_ABS_DIR'] = os.path.dirname(os.path.abspath(filepath)) # Extract the absolute directory path from the above.
+        self._init_logger(self.flask_app) # Initialize the Flask logger. 
+        self._set_config_defaults(self.config) # Set up default values for configs that are not already defined.
+        self.define_endpoint_callback = self.flask_app.route # Set an alias for the decorator factory for adding an endpoint.
+        self.endpoint_layout_dict = {} # Create an empty layout dictionary.
+        self.RPC_dict = {}  # Create an empty RPC dictionary.
         
         # Set config parameters in the configs if they were passed in.
         # A config path explicitly passed in will override the setting 
         # specified in the config.py file.
-        if client_dir is not None:
-            self.config['CLIENT_DIR'] = client_dir
+        if clientdir is not None:
+            self.config['CLIENT_DIR'] = clientdir
             
-        # A log mode explicitly passed in will override the setting 
-        # specified in the config.py file.            
+        # A log mode explicitly passed in will override the setting specified in the config.py file.            
         if logging_mode is not None:
             self.config['LOGGING_MODE'] = logging_mode
         
         # Initialize plotting
         try:
             ppl.switch_backend(self.config['MATPLOTLIB_BACKEND'])
-            print('Matplotlib backend switched to "%s"; current backend: "%s"' % (self.config['MATPLOTLIB_BACKEND'], mpl.get_backend()))
+            print('Matplotlib backend switched to "%s"' % (self.config['MATPLOTLIB_BACKEND']))
         except Exception as E:
-            print('Switching Matplotlib backend to "%s" failed, current backend: "%s"' % (self.config['MATPLOTLIB_BACKEND'], mpl.get_backend()))
-            print(repr(E))
+            print('Switching Matplotlib backend to "%s" failed: %s' % (self.config['MATPLOTLIB_BACKEND'], repr(E)))
             
         # Set up file paths.
         self._init_file_dirs(self.config)
@@ -133,11 +121,9 @@ class ScirisApp(object):
         if self.config['USE_DATASTORE']:
             self._init_datastore(self.config)
             
-        # If we are including DataStore and users functionality, initialize 
-        # users.
+        # If we are including DataStore and users functionality, initialize users.
         if self.config['USE_DATASTORE'] and self.config['USE_USERS']:
-            # Create a LoginManager() object.
-            self.login_manager = LoginManager()
+            self.login_manager = LoginManager() # Create a LoginManager() object.
             
             # This function gets called when authentication gets done by 
             # Flask-Login.  userid is the user ID pulled out of the session 
@@ -148,36 +134,23 @@ class ScirisApp(object):
             # current_user value.
             @self.login_manager.user_loader
             def load_user(userid):
-                # Return the matching user (if any).
-                return user.user_dict.get_user_by_uid(userid)
+                return user.user_dict.get_user_by_uid(userid) # Return the matching user (if any).
             
-            # Configure Flask app for login with the LoginManager.
-            self.login_manager.init_app(self.flask_app)
-            
-            # Initialize the users.
-            self._init_users(self.config)
-            
-            # Register the RPCs in the user.py module.
-            self.add_RPC_dict(user.RPC_dict)
+            self.login_manager.init_app(self.flask_app) # Configure Flask app for login with the LoginManager.
+            self._init_users(self.config) # Initialize the users.
+            self.add_RPC_dict(user.RPC_dict) # Register the RPCs in the user.py module.
             
         # If we are including DataStore and tasks, initialize them.    
         if self.config['USE_DATASTORE'] and self.config['USE_TASKS']:
-            # Initialize the users.
-            self._init_tasks(self.config)
-            
-            # Register the RPCs in the user.py module.
-            self.add_RPC_dict(tasks.RPC_dict)            
+            self._init_tasks(self.config) # Initialize the users.
+            self.add_RPC_dict(tasks.RPC_dict) # Register the RPCs in the user.py module.    
+        
+        return None # End of __init__
             
     @staticmethod
     def _init_logger(app):
-#        stream_handler = logging.StreamHandler(sys.stdout)
-#        stream_handler.setLevel(logging.DEBUG)
-#        stream_handler.setFormatter(logging.Formatter(
-#            '%(asctime)s %(levelname)s: %(message)s '
-#            '[in %(pathname)s:%(lineno)d]'
-#        ))
-#        app.logger.addHandler(stream_handler)
         app.logger.setLevel(logging.DEBUG)
+        return None
             
     @staticmethod
     def _set_config_defaults(app_config):
@@ -188,6 +161,7 @@ class ScirisApp(object):
         if 'USE_USERS'          not in app_config: app_config['USE_USERS']          = False
         if 'USE_TASKS'          not in app_config: app_config['USE_TASKS']          = False
         if 'MATPLOTLIB_BACKEND' not in app_config: app_config['MATPLOTLIB_BACKEND'] = 'Agg'
+        return None
 
     @staticmethod
     def _init_file_dirs(app_config):
@@ -235,29 +209,31 @@ class ScirisApp(object):
 
         # Create a file save directory only if we have a path.
         if file_save_root_path is not None:
-            fileio.file_save_dir = fileio.FileSaveDirectory(file_save_root_path, temp_dir=False)
+            ds.globalvars.file_save_dir = ds.FileSaveDirectory(file_save_root_path, temp_dir=False)
         
         # Create a downloads directory.
-        fileio.downloads_dir = fileio.FileSaveDirectory(transfer_dir_path, temp_dir=True)
+        ds.globalvars.downloads_dir = ds.FileSaveDirectory(transfer_dir_path, temp_dir=True)
         
         # Have the uploads directory use the same directory as the downloads 
         # directory.
-        fileio.uploads_dir = fileio.downloads_dir
+        ds.globalvars.uploads_dir = ds.globalvars.downloads_dir
         
         # Show the downloads and uploads directories.
         if app_config['LOGGING_MODE'] == 'FULL':
             if file_save_root_path is not None:
-                print('>> File save directory path: %s' % fileio.file_save_dir.dir_path)
-            print('>> Downloads directory path: %s' % fileio.downloads_dir.dir_path)
-            print('>> Uploads directory path: %s' % fileio.uploads_dir.dir_path)
+                print('>> File save directory path: %s' % ds.globalvars.file_save_dir.dir_path)
+            print('>> Downloads directory path: %s' % ds.globalvars.downloads_dir.dir_path)
+            print('>> Uploads directory path: %s' % ds.globalvars.uploads_dir.dir_path)
+        
+        return None
         
     @staticmethod
     def _init_datastore(app_config):
         # Create the DataStore object, setting up Redis.
-        ds.data_store = ds.DataStore(redis_db_URL=app_config['REDIS_URL'])
+        ds.globalvars.data_store = ds.DataStore(redis_db_URL=app_config['REDIS_URL'])
     
         # Load the DataStore state from disk.
-        ds.data_store.load()
+        ds.globalvars.data_store.load()
         
         # Uncomment this line (for now) to reset the database, and then recomment
         # before running for usage.
@@ -273,12 +249,13 @@ class ScirisApp(object):
             
             # Show the DataStore handles.
             print('>> List of all DataStore handles...')
-            ds.data_store.show_handles()
+            ds.globalvars.data_store.show_handles()
+        return None
     
     @staticmethod
     def _init_users(app_config):        
         # Look for an existing users dictionary.
-        user_dict_uid = ds.data_store.get_uid_from_instance('userdict', 'Users Dictionary')
+        user_dict_uid = ds.globalvars.data_store.get_uid('userdict', 'Users Dictionary')
         
         # Create the user dictionary object.  Note, that if no match was found, 
         # this will be assigned a new UID.
@@ -307,7 +284,7 @@ class ScirisApp(object):
     @staticmethod        
     def _init_tasks(app_config):
         # Look for an existing tasks dictionary.
-        task_dict_uid = ds.data_store.get_uid_from_instance('taskdict', 'Task Dictionary')
+        task_dict_uid = ds.globalvars.data_store.get_uid('taskdict', 'Task Dictionary')
         
         # Create the task dictionary object.  Note, that if no match was found, 
         # this will be assigned a new UID.
@@ -448,7 +425,7 @@ class ScirisApp(object):
         # don't pass.
         
         # If the RPC is disabled, always return a Status 403 (Forbidden)
-        if found_RPC.validation_type == 'disabled':
+        if found_RPC.validation == 'disabled':
             abort(403)
                 
         # Only do other validation if DataStore and users are included.
@@ -456,20 +433,18 @@ class ScirisApp(object):
             # If the RPC should be executable by any user, including an 
             # anonymous one, but there is no authorization or anonymous login, 
             # return a Status 401 (Unauthorized)
-            if found_RPC.validation_type == 'any user' and \
-                not (current_user.is_anonymous or current_user.is_authenticated):
+            if found_RPC.validation == 'any' and not (current_user.is_anonymous or current_user.is_authenticated):
                 abort(401)
                 
             # Else if the RPC should be executable by any non-anonymous user, 
             # but there is no authorization or there is an anonymous login, 
             # return a Status 401 (Unauthorized)
-            elif found_RPC.validation_type == 'nonanonymous user' and \
-                (current_user.is_anonymous or not current_user.is_authenticated):
+            elif found_RPC.validation == 'named' and (current_user.is_anonymous or not current_user.is_authenticated):
                 abort(401)
                 
             # Else if the RPC should be executable by any admin user, 
             # but there is no admin login or it's an anonymous login...
-            elif found_RPC.validation_type == 'admin user':
+            elif found_RPC.validation == 'admin':
                 # If the user is anonymous or no authenticated user is logged 
                 # in, return Status 401 (Unauthorized).
                 if current_user.is_anonymous or not current_user.is_authenticated:
@@ -480,7 +455,7 @@ class ScirisApp(object):
                 elif not current_user.is_admin:
                     abort(403)
                     
-            # NOTE: Any "unknown" validation_type values are treated like 
+            # NOTE: Any "unknown" validation values are treated like 
             # 'none'.
                 
         # If we are doing an upload...
@@ -492,7 +467,7 @@ class ScirisApp(object):
             filename = secure_filename(file.filename)
             
             # Generate a full upload path/file name.
-            uploaded_fname = os.path.join(fileio.uploads_dir.dir_path, filename)
+            uploaded_fname = os.path.join(ds.globalvars.uploads_dir.dir_path, filename)
         
             # Save the file to the uploads directory.
             file.save(uploaded_fname)
@@ -579,7 +554,7 @@ class ScirisApp(object):
         
             # Otherwise, convert the result (probably a dict) to JSON and return it.
             else:
-                return jsonify(json_sanitize_result(result))
+                return jsonify(rpcs.sanitize_json(result))
         
         
 class ScirisResource(Resource):
@@ -589,16 +564,10 @@ class ScirisResource(Resource):
         self._wsgi = wsgi
 
     def render(self, request):
-#        request.prepath = []
-#        request.postpath = ['api'] + request.postpath[:]
+        r = self._wsgi.render(request) # Get the WSGI render results (i.e. for Flask app).
 
-        # Get the WSGI render results (i.e. for Flask app).
-        r = self._wsgi.render(request)
-
-        # Keep the client browser from caching Flask response, and set 
-        # the response as already being "expired."
-        request.responseHeaders.setRawHeaders(
-            b'Cache-Control', [b'no-cache', b'no-store', b'must-revalidate'])
+        # Keep the client browser from caching Flask response, and set the response as already being "expired."
+        request.responseHeaders.setRawHeaders(b'Cache-Control', [b'no-cache', b'no-store', b'must-revalidate'])
         request.responseHeaders.setRawHeaders(b'expires', [b'0'])
         
         # Pass back the WSGI render results.
@@ -651,58 +620,3 @@ def run_twisted(port=8080, flask_app=None, client_dir=None,
     reactor.run()  
     
     
-def json_sanitize_result(theResult):
-    """
-    This is the main conversion function for Python data-structures into
-    JSON-compatible data structures.
-    Use this as much as possible to guard against data corruption!
-    Args:
-        theResult: almost any kind of data structure that is a combination
-            of list, numpy.ndarray, etc.
-    Returns:
-        A converted dict/list/value that should be JSON compatible
-    """
-
-    if isinstance(theResult, list) or isinstance(theResult, tuple):
-        return [json_sanitize_result(p) for p in list(theResult)]
-    
-    if isinstance(theResult, np.ndarray):
-        if theResult.shape: # Handle most cases, incluing e.g. array([5])
-            return [json_sanitize_result(p) for p in list(theResult)]
-        else: # Handle the special case of e.g. array(5)
-            return [json_sanitize_result(p) for p in list(np.array([theResult]))]
-
-    if isinstance(theResult, dict):
-        return {str(k): json_sanitize_result(v) for k, v in theResult.items()}
-
-    if isinstance(theResult, np.bool_):
-        return bool(theResult)
-
-    if isinstance(theResult, float):
-        if np.isnan(theResult):
-            return None
-        
-    if isinstance(theResult, np.int64):
-        if np.isnan(theResult):
-            return None
-        else:
-            return int(theResult)
-        
-    if isinstance(theResult, np.float64):
-        if np.isnan(theResult):
-            return None
-        else:
-            return float(theResult)
-
-    if isinstance(theResult, unicode):
-        return theResult
-#        return str(theResult)  # original line  (watch to make sure the 
-#                                                 new line doesn't break things)
-    
-    if isinstance(theResult, set):
-        return list(theResult)
-
-#    if isinstance(theResult, UUID):
-#        return str(theResult)
-
-    return theResult

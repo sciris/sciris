@@ -21,11 +21,11 @@ CLASSIFIERS = [
 ]
 
 setup(
-    name='sciris',
+    name='scirisweb',
     version=version,
     author='Cliff Kerr, George Chadderdon',
     author_email='info@sciris.org',
-    description='Scientific tools for Python',
+    description='Scientific webapps for Python',
     url='http://github.com/optimamodel/sciris',
     keywords=['scientific','webapp', 'framework'],
     platforms=['OS Independent'],
@@ -33,11 +33,13 @@ setup(
     packages=find_packages(),
     include_package_data=True,
     install_requires=[
-        'matplotlib>=1.4.2', # Plotting
-        'numpy>=1.10.1', # Numerical functions
-        'dill', # File I/O
-        'xlrd', # Spreadsheet input
-        'xlsxwriter', # Spreadsheet output
-        'psutil', # Load monitoring
+        'sciris', # Basic tools
+        'redis', # Database
+        'mpld3', # Rendering plots in the browser
+        'flask', # Creating the webapp
+        'flask-login', # Handling users
+        'werkzeug', # HTTP tools
+        'twisted', # Server
+        'celery', # Task manager
     ],
 )

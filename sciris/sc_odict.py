@@ -4,7 +4,10 @@
 
 from collections import OrderedDict as _OD
 import numpy as np
-from . import utils as ut
+from . import sc_utils as ut
+
+# Restrict imports to user-facing modules
+__all__ = ['odict']
 
 class odict(_OD):
     '''
@@ -674,7 +677,7 @@ class odict(_OD):
         
         
         
-def test_odict():
+def testodict():
     ''' Define a suite of tests for the odict '''
 
     print('Main tests:')
