@@ -36,6 +36,9 @@ if _PY2:
 else:   
     _stringtype = str
     from pickle import dump
+    
+
+__all__ = ['uuid', 'dcp']
 
 
 def uuid(uid=None, which=None, die=False, as_string=False):
@@ -74,6 +77,10 @@ def dcp(obj=None):
 ##############################################################################
 ### PRINTING/NOTIFICATION FUNCTIONS
 ##############################################################################
+
+__all__ += ['printv', 'blank', 'createcollist', 'objectid', 'objatt', 'objmeth', 'objrepr']
+__all__ += ['prepr', 'pr', 'indent', 'sigfig', 'printarr', 'printdata', 'printvars', 'getdate']
+__all__ += ['slacknotification', 'printtologfile', 'colorize']
 
 def printv(string, thisverbose=1, verbose=2, newline=True, indent=True):
     '''
@@ -609,6 +616,8 @@ def colorize(color=None, string=None, output=False):
 ### TYPE FUNCTIONS
 ##############################################################################
 
+__all__ += ['flexstr', 'isiterable', 'checktype', 'isnumber', 'isstring', 'promotetoarray', 'promotetolist']
+
 def flexstr(arg):
     ''' Try converting to a regular string, but proceed if it fails '''
     try:    output = str(arg)
@@ -733,6 +742,8 @@ def promotetolist(obj=None, objtype=None, keepnone=False):
 ##############################################################################
 ### MISC. FUNCTIONS
 ##############################################################################
+
+__all__ += ['now', 'tic', 'toc', 'percentcomplete', 'checkmem', 'loadbalancer', 'runcommand', 'gitinfo', 'compareversions']
 
 def now(timezone='utc', die=False, tostring=False, fmt=None):
     ''' Get the current time, in UTC time '''
@@ -1002,7 +1013,9 @@ def compareversions(version1=None, version2=None):
 ### NESTED DICTIONARY FUNCTIONS
 ##############################################################################
 
-'''
+__all__ += ['getnested', 'setnested', 'makenested', 'iternested', 'flattendict']
+
+docstring = '''
 Four little functions to get and set data from nested dictionaries. The first two were adapted from:
     http://stackoverflow.com/questions/14692690/access-python-nested-dictionary-items-via-a-list-of-keys
 
@@ -1047,17 +1060,14 @@ Version: 2014nov29
 '''
 
 def getnested(nesteddict, keylist, safe=False): 
-    ''' Get a value from a nested dictionary'''
     output = reduce(lambda d, k: d.get(k) if d else None if safe else d[k], keylist, nesteddict)
     return output
 
 def setnested(nesteddict, keylist, value): 
-    ''' Set a value in a nested dictionary '''
     getnested(nesteddict, keylist[:-1])[keylist[-1]] = value
     return None # Modify nesteddict in place
 
 def makenested(nesteddict, keylist,item=None):
-    ''' Insert item into nested dictionary, creating keys if required '''
     currentlevel = nesteddict
     for i,key in enumerate(keylist[:-1]):
         if not(key in currentlevel):
@@ -1073,6 +1083,10 @@ def iternested(nesteddict,previous = []):
         else:
             output.append(previous+[k[0]])
     return output
+
+# Set the docstrings for these functions
+for func in [getnested, setnested, makenested, iternested]:
+    func.__doc__ = docstring
 
 
 def flattendict(inputdict=None, basekey=None, subkeys=None, complist=None, keylist=None, limit=100):
@@ -1126,6 +1140,7 @@ def flattendict(inputdict=None, basekey=None, subkeys=None, complist=None, keyli
 ### LINKS
 ##############################################################################
 
+__all__ += ['LinkException', 'Link']
 
 class LinkException(Exception):
         ''' An exception to raise when links are broken -- note, can't define classes inside classes :( '''

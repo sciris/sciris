@@ -4,7 +4,7 @@
 
 from collections import OrderedDict as _OD
 import numpy as np
-from . import utils as ut
+from . import sc_utils as ut
 
 # Restrict imports to user-facing modules
 __all__ = ['odict']

@@ -3,7 +3,7 @@
 ##############################################################################
 
 import numpy as np
-from . import utils as ut
+from . import sc_utils as ut
 
 class dataframe(object):
     '''

@@ -17,9 +17,9 @@ from gzip import GzipFile
 from contextlib import closing
 from xlrd import open_workbook
 from xlsxwriter import Workbook
-from .utils import promotetolist
-from .odict import odict
-from .dataframe import dataframe
+from .sc_utils import promotetolist
+from .sc_odict import odict
+from .sc_dataframe import dataframe
 
 # Handle types and Python 2/3 compatibility
 from six import PY2 as _PY2
@@ -37,6 +37,8 @@ else: # Python 3
 ##############################################################################
 ### Key file functions
 ##############################################################################
+
+__all__ = ['saveobj', 'loadobj', 'dumpstr', 'loadstr', 'loadtext', 'savetext', 'getfilelist', 'sanitizefilename', 'makefilepath']
 
 def saveobj(filename=None, obj=None, compresslevel=5, verbose=True, folder=None, method='pickle'):
     '''
@@ -225,6 +227,8 @@ def makefilepath(filename=None, folder=None, ext=None, default=None, split=False
 ##############################################################################
 ### Spreadsheet functions
 ##############################################################################
+
+__all__ += ['loadspreadsheet', 'savespreadsheet']
     
 def loadspreadsheet(filename=None, folder=None, sheetname=None, sheetnum=None, asdataframe=True):
     '''
