@@ -46,13 +46,12 @@ def asd(function, x, args=None, stepsize=0.1, sinc=2, sdec=2, pinc=2, pdec=2,
         from numpy.linalg import norm
         x, fval, details = asd(norm, [1, 2, 3])
     
-    Version: 2017may17 by Cliff Kerr (cliff@thekerrlab.com)
+    Version: 2018aug20 by Cliff Kerr (cliff@thekerrlab.com)
     """
-
     from numpy import array, shape, reshape, ones, zeros, mean, cumsum, mod, concatenate, floor, flatnonzero, isnan, inf
     from numpy.random import random, seed
-    from .utils import dcp, sigfig
     from time import time
+    from .sc_utils import dcp, sigfig
     if randseed is not None:
         seed(int(randseed)) # Don't reset it if not supplied
         if verbose >= 3: print('Launching ASD with random seed is %i; sample: %f' % (randseed, random()))

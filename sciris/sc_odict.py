@@ -677,7 +677,7 @@ class odict(_OD):
         
         
         
-def test_odict():
+def testodict():
     ''' Define a suite of tests for the odict '''
 
     print('Main tests:')

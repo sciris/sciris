@@ -3,7 +3,9 @@
 ##############################################################################
 
 import numpy as np
-from . import sc_utils as ut
+from . import sc_utils as ut # Note, sc_fileio is also used, but is only imported when required to avoid a circular import
+
+__all__ = ['dataframe']
 
 class dataframe(object):
     '''
@@ -398,13 +400,13 @@ class dataframe(object):
         return output
     
     def export(self, filename=None, sheetname=None, close=True):
-        from . import fileio as io
+        from . import sc_fileio as io
         for_export = ut.dcp(self.data)
         for_export = np.vstack((self.cols, self.data))
-        io.export_file(filename=filename, data=for_export, sheetname=sheetname, close=close)
+        io.exportexcel(filename=filename, data=for_export, sheetname=sheetname, close=close)
         return
 
-def test_dataframe():
+def testdataframe():
     print('Testing dataframe:')
     a = dataframe(cols=['x','y'],data=[[1238,2],[384,5],[666,7]]) # Create data frame
     print(a['x']) # Print out a column

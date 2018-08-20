@@ -2,7 +2,6 @@
 ### IMPORTS FROM OTHER LIBRARIES
 ##############################################################################
 
-
 import numpy as np
 import uuid as py_uuid
 import copy
@@ -18,15 +17,6 @@ from subprocess import Popen, PIPE
 from functools import reduce
 from os import path, sep # Path and file separator
 
-# Imports required for slacknotification
-try:
-    from requests import post # Simple way of posting data to a URL
-    from json import dumps # For sanitizing the message
-    from getpass import getuser # In case username is left blank
-    _slackimporterror = ''
-except Exception as E:
-    _slackimporterror = repr(E)
-    
 # Handle types and Python 2/3 compatibility
 from six import PY2 as _PY2
 from numbers import Number as _numtype
@@ -36,8 +26,8 @@ if _PY2:
 else:   
     _stringtype = str
     from pickle import dump
-    
 
+# Define the modules being loaded
 __all__ = ['uuid', 'dcp']
 
 
@@ -69,9 +59,11 @@ def uuid(uid=None, which=None, die=False, as_string=False):
     if as_string: output = str(output)
     return output
 
+
 def dcp(obj=None):
     ''' Shortcut to perform a deep copy operation '''
-    return copy.deepcopy(obj)
+    output = copy.deepcopy(obj)
+    return output
 
 
 ##############################################################################
@@ -489,9 +481,13 @@ def slacknotification(to=None, message=None, fromuser=None, token=None, verbose=
         
     Version: 2018aug20
     '''
-    if _slackimporterror:
-        raise Exception('Cannot use Slack notification since imports failed: %s' % _slackimporterror)
-    
+    try:
+        from requests import post # Simple way of posting data to a URL
+        from json import dumps # For sanitizing the message
+        from getpass import getuser # In case username is left blank
+    except Exception as E:
+        raise Exception('Cannot use Slack notification since imports failed: %s' % repr(E))
+        
     # Validate input arguments
     printv('Sending Slack message...', 2, verbose)
     if token    is None: token    = '/.slackurl'
@@ -870,8 +866,10 @@ def checkmem(origvariable, descend=0, order='n', plot=False, verbose=0):
         print('Variable %s is %s' % (printnames[v], printsizes[v]))
 
     if plot==True:
-        try:    from pylab import pie, array, axes
-        except: raise Exception('Cannot plot since import failed: %s' % repr(E))
+        try:    
+            from pylab import pie, array, axes
+        except Exception as E: 
+            raise Exception('Cannot plot since import failed: %s' % repr(E))
         axes(aspect=1)
         pie(array(printbytes)[inds], labels=array(printnames)[inds], autopct='%0.2f')
 
@@ -1188,5 +1186,3 @@ class Link(object):
     def __deepcopy__(self, *args, **kwargs):
         ''' Same as copy '''
         return self.__copy__(self, *args, **kwargs)
-        
-        
