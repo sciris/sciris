@@ -29,11 +29,25 @@ from . import sc_datastore as ds
 from . import sc_user as user
 from . import sc_tasks as tasks
 
+
+################################################################################
+### Globals
+################################################################################
+
+__all__ = ['data_store', 'file_save_dir', 'uploads_dir', 'downloads_dir']
+
+# These will get set by calling code.
+
+data_store    = None # The DataStore object for persistence for the app.  Gets initialized by and loaded by init_datastore().
+file_save_dir = None # Directory (FileSaveDirectory object) for saved files.
+uploads_dir   = None # Directory (FileSaveDirectory object) for file uploads to be routed to.
+downloads_dir = None # Directory (FileSaveDirectory object) for file downloads to be routed to.
+
 ##########################################################################################################
 #%% Classes
 ##########################################################################################################
 
-__all__ = ['ScirisApp', 'ScirisResource', 'run_twisted']
+__all__ += ['ScirisApp', 'ScirisResource', 'run_twisted']
 
 class ScirisApp(object):
     """
@@ -71,14 +85,12 @@ class ScirisApp(object):
         >>> app = ScirisApp(__file__)                      
     """
     
-    def  __init__(self, script_path, app_config=None, client_dir=None, 
-        logging_mode=None):
+    def  __init__(self, filepath=None, config=None, clientdir=None, logging_mode=None):
         self.flask_app = Flask(__name__) # Open a new Flask app.
-        if app_config is not None: # If we have a config module, load it into Flask's config dict.
-            self.flask_app.config.from_object(app_config)
+        if config is not None: # If we have a config module, load it into Flask's config dict.
+            self.flask_app.config.from_object(config)
         self.config = self.flask_app.config # Set an easier link to the configs dictionary.
-        abs_script_path = os.path.abspath(script_path) # Get the absolute path of the calling script.
-        self.config['ROOT_ABS_DIR'] = os.path.dirname(abs_script_path) # Extract the absolute directory path from the above.
+        self.config['ROOT_ABS_DIR'] = os.path.dirname(os.path.abspath(filepath)) # Extract the absolute directory path from the above.
         self._init_logger(self.flask_app) # Initialize the Flask logger. 
         self._set_config_defaults(self.config) # Set up default values for configs that are not already defined.
         self.define_endpoint_callback = self.flask_app.route # Set an alias for the decorator factory for adding an endpoint.
@@ -88,8 +100,8 @@ class ScirisApp(object):
         # Set config parameters in the configs if they were passed in.
         # A config path explicitly passed in will override the setting 
         # specified in the config.py file.
-        if client_dir is not None:
-            self.config['CLIENT_DIR'] = client_dir
+        if clientdir is not None:
+            self.config['CLIENT_DIR'] = clientdir
             
         # A log mode explicitly passed in will override the setting specified in the config.py file.            
         if logging_mode is not None:
@@ -197,21 +209,21 @@ class ScirisApp(object):
 
         # Create a file save directory only if we have a path.
         if file_save_root_path is not None:
-            sc.file_save_dir = sc.FileSaveDirectory(file_save_root_path, temp_dir=False)
+            ds.file_save_dir = ds.FileSaveDirectory(file_save_root_path, temp_dir=False)
         
         # Create a downloads directory.
-        sc.downloads_dir = sc.FileSaveDirectory(transfer_dir_path, temp_dir=True)
+        ds.downloads_dir = ds.FileSaveDirectory(transfer_dir_path, temp_dir=True)
         
         # Have the uploads directory use the same directory as the downloads 
         # directory.
-        sc.uploads_dir = sc.downloads_dir
+        ds.uploads_dir = ds.downloads_dir
         
         # Show the downloads and uploads directories.
         if app_config['LOGGING_MODE'] == 'FULL':
             if file_save_root_path is not None:
-                print('>> File save directory path: %s' % sc.file_save_dir.dir_path)
-            print('>> Downloads directory path: %s' % sc.downloads_dir.dir_path)
-            print('>> Uploads directory path: %s' % sc.uploads_dir.dir_path)
+                print('>> File save directory path: %s' % ds.file_save_dir.dir_path)
+            print('>> Downloads directory path: %s' % ds.downloads_dir.dir_path)
+            print('>> Uploads directory path: %s' % ds.uploads_dir.dir_path)
         
         return None
         
@@ -455,7 +467,7 @@ class ScirisApp(object):
             filename = secure_filename(file.filename)
             
             # Generate a full upload path/file name.
-            uploaded_fname = os.path.join(sc.uploads_dir.dir_path, filename)
+            uploaded_fname = os.path.join(ds.uploads_dir.dir_path, filename)
         
             # Save the file to the uploads directory.
             file.save(uploaded_fname)
