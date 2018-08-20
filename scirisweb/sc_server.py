@@ -9,67 +9,12 @@ import webbrowser
 import socket
 import itertools
 import random
-import numpy as np
-from collections import OrderedDict
 import sciris as sc
+from .sc_rpcs import sanitize_json
 try:    import BaseHTTPServer as server # Python 2.x
 except: from http import server # Python 3.x
 
-def normalize_obj(obj):
-    """
-    This is the main conversion function for Python data-structures into
-    JSON-compatible data structures.
 
-    Use this as much as possible to guard against data corruption!
-
-    Args:
-        obj: almost any kind of data structure that is a combination
-            of list, numpy.ndarray, odicts etc
-
-    Returns:
-        A converted dict/list/value that should be JSON compatible
-    """
-
-    if isinstance(obj, list) or isinstance(obj, tuple):
-        return [normalize_obj(p) for p in list(obj)]
-    
-    if isinstance(obj, np.ndarray):
-        if obj.shape: # Handle most cases, incluing e.g. array([5])
-            return [normalize_obj(p) for p in list(obj)]
-        else: # Handle the special case of e.g. array(5)
-            return [normalize_obj(p) for p in list(np.array([obj]))]
-
-    if isinstance(obj, dict):
-        return {str(k): normalize_obj(v) for k, v in obj.items()}
-
-    if isinstance(obj, sc.odict):
-        result = OrderedDict()
-        for k, v in obj.items():
-            result[str(k)] = normalize_obj(v)
-        return result
-
-    if isinstance(obj, np.bool_):
-        return bool(obj)
-
-    if isinstance(obj, float):
-        if np.isnan(obj):
-            return None
-
-    if isinstance(obj, np.float64):
-        if np.isnan(obj):
-            return None
-        else:
-            return float(obj)
-
-    if isinstance(obj, unicode):
-        try:    string = str(obj) # Try to convert it to ascii
-        except: string = obj # Give up and use original
-        return string
-
-    if isinstance(obj, set):
-        return list(obj)
-
-    return obj
 
 def generate_handler(html, files=None):
     if files is None:
@@ -192,7 +137,7 @@ def browser(figs=None, doserve=True, jquery_url=None, d3_url=None, mpld3_url=Non
     figs = sc.promotetolist(figs)
     nfigs = len(figs) # Figure out how many plots there are
     for f in range(nfigs): # Loop over each plot
-        jsons.append(str(json.dumps(normalize_obj(mpld3.fig_to_dict(figs[f]))))) # Save to JSON
+        jsons.append(str(json.dumps(sanitize_json(mpld3.fig_to_dict(figs[f]))))) # Save to JSON
     
     ## Create div and JSON strings to replace the placeholers above
     divstr = ''

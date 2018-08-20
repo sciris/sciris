@@ -4,37 +4,32 @@ user.py -- code related to Sciris user management
 Last update: 7/11/18 (gchadder3)
 """
 
-#
-# Imports
-#
-
 from flask import session, current_app
 from flask_login import current_user, login_user, logout_user
 from hashlib import sha224
 from numpy import argsort
 import sciris as sc
-from . import rpcs #import make_register_RPC
-from . import scirisobjects as sobj
+from . import sc_rpcs as rpcs #import make_RPC
+from . import sc_objects as sobj
 
-#
-# Globals
-#
+##############################################################
+### Globals
+##############################################################
 
-# The UserDict object for all of the app's users.  Gets initialized by
-# and loaded by init_users().
-user_dict = None
+__all__ = ['user_dict'] # 'RPC_dict', 'RPC' not visible
 
-# Dictionary to hold all of the registered RPCs in this module.
-RPC_dict = {}
+user_dict = None # The UserDict object for all of the app's users.  Gets initialized by and loaded by init_users().
+RPC_dict = {} # Dictionary to hold all of the registered RPCs in this module.
+RPC = rpcs.RPCtag(RPC_dict) # RPC registration decorator factory created using call to make_RPC().
 
-# RPC registration decorator factory created using call to make_register_RPC().
-register_RPC = rpcs.make_register_RPC(RPC_dict)
 
-#
-# Classes
-#
+##############################################################
+### Classes
+##############################################################
 
-class User(sobj.ScirisObject):
+__all__ += ['User', 'UserDict']
+
+class User(sobj.Blob):
     """
     A Sciris user.
     
@@ -45,7 +40,7 @@ class User(sobj.ScirisObject):
             void -- constructor
         load_from_copy(other_object): void -- assuming other_object is another 
             object of our type, copy its contents to us (calls the 
-            ScirisObject superclass version of this method also)            
+            Blob superclass version of this method also)            
         get_id(): UUID -- get the unique ID of this user (method required by 
             Flask-Login)    
         show(): void -- print the contents of the object
@@ -194,7 +189,7 @@ class User(sobj.ScirisObject):
         }
         return obj_info             
             
-class UserDict(sobj.ScirisCollection):
+class UserDict(sobj.BlobDict):
     """
     A dictionary of Sciris users.
     
@@ -204,7 +199,7 @@ class UserDict(sobj.ScirisCollection):
             instance_label: str ['Users Dictionary']): void -- constructor
         load_from_copy(other_object): void -- assuming other_object is another 
             object of our type, copy its contents to us (calls the 
-            ScirisCollection superclass version of this method also)           
+            BlobDict superclass version of this method also)           
         get_user_by_uid(uid: UUID or str): User or None -- returns the User  
             object pointed to by uid
         get_user_by_username(username: str): User or None -- return the User
@@ -358,9 +353,15 @@ class UserDict(sobj.ScirisCollection):
         # Return the sorted users info.      
         return sorted_users_info  
 
-#
-# Other functions (mostly helpers for the RPCs)
-#
+
+
+##############################################################
+### Functions and RPCs
+##############################################################
+
+__all__ += ['get_scirisdemo_user', 'user_login', 'user_logout', 'get_current_user_info', 'get_all_users', 'user_register']
+__all__ += ['user_change_info', 'user_change_password', 'admin_get_user_info', 'admin_delete_user', 'admin_activate_account']
+__all__ += ['admin_deactivate_account', 'admin_grant_admin', 'admin_revoke_admin', 'admin_reset_password', 'make_test_users']
 
 def get_scirisdemo_user(name='_ScirisDemo'):    
     # Get the user object matching (if any)...
@@ -371,12 +372,9 @@ def get_scirisdemo_user(name='_ScirisDemo'):
         return the_user.get_id()
     else:
         return None
-    
-#
-# RPC functions
-#
+
         
-@register_RPC()
+@RPC()
 def user_login(username, password):  
     # Get the matching user (if any).
     matching_user = user_dict.get_user_by_username(username)
@@ -392,7 +390,7 @@ def user_login(username, password):
     else:
         return 'failure'
     
-@register_RPC(validation_type='nonanonymous user')       
+@RPC(validation='named')       
 def user_logout():
     # Log the user out and set the session to having an anonymous user.
     logout_user()
@@ -403,17 +401,17 @@ def user_logout():
     # Return nothing.
     return None
 
-@register_RPC(validation_type='nonanonymous user') 
-def get_current_user_info():
+@RPC(validation='named') 
+def get_current_user_info(): 
     return current_user.get_user_front_end_repr()
 
-@register_RPC(validation_type='admin user')
+@RPC(validation='admin')
 def get_all_users():
     # Return success.
     return user_dict.get_admin_front_end_repr()
 
-@register_RPC()
-def user_register(username, password, displayname, email):
+@RPC()
+def user_register(username, password, displayname, email): 
     # Get the matching user (if any).
     matching_user = user_dict.get_user_by_username(username)
     
@@ -437,7 +435,7 @@ def user_register(username, password, displayname, email):
     # Return success.
     return 'success'
 
-@register_RPC(validation_type='nonanonymous user') 
+@RPC(validation='named') 
 def user_change_info(username, password, displayname, email):
     # Make a copy of the current_user.
     the_user = sc.dcp(current_user)
@@ -470,7 +468,7 @@ def user_change_info(username, password, displayname, email):
     # Return success.
     return 'success'
 
-@register_RPC(validation_type='nonanonymous user') 
+@RPC(validation='named') 
 def user_change_password(oldpassword, newpassword):
     # Make a copy of the current_user.
     the_user = sc.dcp(current_user)
@@ -488,7 +486,7 @@ def user_change_password(oldpassword, newpassword):
     # Return success.
     return 'success'
 
-@register_RPC(validation_type='admin user')
+@RPC(validation='admin')
 def admin_get_user_info(username):
     # Get the matching user (if any).
     matching_user = user_dict.get_user_by_username(username)
@@ -499,7 +497,7 @@ def admin_get_user_info(username):
     
     return matching_user.get_admin_front_end_repr()
 
-@register_RPC(validation_type='admin user')
+@RPC(validation='admin')
 def admin_delete_user(username):
     # Get the matching user (if any).
     matching_user = user_dict.get_user_by_username(username)
@@ -514,7 +512,7 @@ def admin_delete_user(username):
     # Return success.
     return 'success'
 
-@register_RPC(validation_type='admin user')
+@RPC(validation='admin')
 def admin_activate_account(username):
     # Get the matching user (if any).
     matching_user = user_dict.get_user_by_username(username)
@@ -534,7 +532,7 @@ def admin_activate_account(username):
     # Return success.
     return 'success'    
 
-@register_RPC(validation_type='admin user')
+@RPC(validation='admin')
 def admin_deactivate_account(username):
     # Get the matching user (if any).
     matching_user = user_dict.get_user_by_username(username)
@@ -554,7 +552,7 @@ def admin_deactivate_account(username):
     # Return success.
     return 'success'
 
-@register_RPC(validation_type='admin user')
+@RPC(validation='admin')
 def admin_grant_admin(username):
     # Get the matching user (if any).
     matching_user = user_dict.get_user_by_username(username)
@@ -574,7 +572,7 @@ def admin_grant_admin(username):
     # Return success.
     return 'success'
 
-@register_RPC(validation_type='admin user')
+@RPC(validation='admin')
 def admin_revoke_admin(username):
     # Get the matching user (if any).
     matching_user = user_dict.get_user_by_username(username)
@@ -594,7 +592,7 @@ def admin_revoke_admin(username):
     # Return success.
     return 'success'
 
-@register_RPC(validation_type='admin user')
+@RPC(validation='admin')
 def admin_reset_password(username):
     # Get the matching user (if any).
     matching_user = user_dict.get_user_by_username(username)
@@ -611,9 +609,6 @@ def admin_reset_password(username):
     # Return success.
     return 'success'
 
-#
-# Script code
-#
 
 def make_test_users():
     # Create two test Users that can get added to a new UserDict.

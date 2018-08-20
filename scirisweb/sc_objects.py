@@ -1,21 +1,15 @@
 """
-scirisobjects.py -- classes for Sciris objects which are generally managed
+Blobs.py -- classes for Sciris objects which are generally managed
     
-Last update: 7/12/18 (gchadder3)
+Last update: 2018aug20
 """
 
-#
-# Imports
-#
-
-from . import datastore as ds
 import sciris as sc
+from . import sc_datastore as ds
 
-#
-# Classes
-#
+__all__ = ['Blob', 'BlobDict']
 
-class ScirisObject(object):
+class Blob(object):
     """
     A general Sciris object (base class for all such objects).  Objects of this 
     type are meant to be storable using Sciris' DataStore persistence 
@@ -30,8 +24,8 @@ class ScirisObject(object):
             object of our type, copy its contents to us
         add_to_data_store(): void -- add ourselves to the Sciris DataStore 
             (theDataStore object)
-        load_copy_from_data_store(uid: UUID [None]): ScirisObject -- return 
-            the ScirisObject matching a UUID (usually ourselves in UUID is 
+        load_copy_from_data_store(uid: UUID [None]): Blob -- return 
+            the Blob matching a UUID (usually ourselves in UUID is 
             None)
         load_from_data_store(self, uid=None): void -- overwrite our current 
             state with what's in the DataStore (usually from our stored 
@@ -57,11 +51,10 @@ class ScirisObject(object):
             unique across other handles of the save type_prefix
             
     Usage:
-        >>> obj = ScirisObject(uuid.UUID('12345678123456781234567812345678'))                      
+        >>> obj = Blob(uuid.UUID('12345678123456781234567812345678'))                      
     """
     
-    def  __init__(self, uid=None, type_prefix='obj', file_suffix='.obj', 
-        instance_label=''):       
+    def  __init__(self, uid=None, type_prefix='obj', file_suffix='.obj', instance_label=''):       
         # Get a valid UUID from what is passed in, or if None is passed in, 
         # get a new ID.
         self.uid = sc.uuid(uid) 
@@ -81,8 +74,7 @@ class ScirisObject(object):
             self.instance_label = other_obj.instance_label
             
     def add_to_data_store(self):
-        # Check to see if the object is already in the DataStore, and give an 
-        # error if so.
+        # Check to see if the object is already in the DataStore, and give an error if so.
         if self.in_data_store():
             print('Error: Object ''%s'' is already in DataStore.' % self.uid.hex)
             return
@@ -128,10 +120,10 @@ class ScirisObject(object):
     
     def show(self):
         print('--------------------------------------------')
-        print('UUID: %s' % self.uid.hex)
-        print('Type Prefix: %s' % self.type_prefix)
-        print('File Suffix: %s' % self.file_suffix)
-        print('Instance Label: %s' % self.instance_label)
+        print('          UUID: %s' % self.uid.hex)
+        print('   Type prefix: %s' % self.type_prefix)
+        print('   File suffix: %s' % self.file_suffix)
+        print('Instance label: %s' % self.instance_label)
         in_data_store = self.in_data_store()
         if in_data_store:
             print('In DataStore?: Yes')
@@ -141,7 +133,7 @@ class ScirisObject(object):
         
     def get_user_front_end_repr(self):
         obj_info = {
-            'scirisobject': {
+            'Blob': {
                 'instance_label': self.instance_label                
             }
         }
@@ -149,7 +141,7 @@ class ScirisObject(object):
     
     def get_admin_front_end_repr(self):
         obj_info = {
-            'scirisobject': {
+            'Blob': {
                 'UID': self.uid.hex, 
                 'type_prefix': self.type_prefix, 
                 'file_suffix': self.file_suffix, 
@@ -157,10 +149,11 @@ class ScirisObject(object):
             }
         }
         return obj_info 
-          
-class ScirisCollection(ScirisObject):
+
+
+class BlobDict(Blob):
     """
-    A collection of ScirisObjects (stored in a Python dict obj_dict).
+    A collection of Blobs (stored in an odict).
     
     Methods:
         __init__(uid: UUID [None], type_prefix: str ['collection'], 
@@ -168,42 +161,42 @@ class ScirisCollection(ScirisObject):
             objs_within_dict: bool [False]): void -- constructor        
         load_from_copy(other_obj): void -- assuming other_obj is another 
             object of our type, copy its contents to us (calls the 
-            ScirisObject superclass version of this method also)
-        get_object_by_uid(uid: UUID): ScirisObject -- get a ScirisObject out of 
+            Blob superclass version of this method also)
+        get_object_by_uid(uid: UUID): Blob -- get a Blob out of 
             the collection by the UUID passed in
-        get_all_objects(): list of ScirisObjects -- get all of the ScirisObjects 
+        get_all_objects(): list of Blobs -- get all of the Blobs 
            and put them in a list
-        add_object(obj: ScirisObject): void -- add a ScirisObject to the 
+        add_object(obj: Blob): void -- add a Blob to the 
             collection
-        update_object(obj: ScirisObject): void -- update a ScirisObject 
+        update_object(obj: Blob): void -- update a Blob 
             passed in to the collection
-        delete_object_by_uid(uid: UUID): void -- delete the ScirisObject 
+        delete_object_by_uid(uid: UUID): void -- delete the Blob 
             indexed by the UUID from the collection
-        delete_all_objects(): void -- delete all ScirisObjects from the 
+        delete_all_objects(): void -- delete all Blobs from the 
             collection
         show(): void -- print the contents of the collection, including the 
             object information as well as the objects
                     
     Attributes:
-        obj_dict (dict) -- the Python dictionary holding the ScirisObjects
+        obj_dict (dict) -- the Python dictionary holding the Blobs
         objs_within_coll (bool) -- are the objects themselves within the 
             collection? If they are not, they are kept as separate data store 
             entries and handle_dict is used.
         ds_uuid_set (set) -- the Python set holding UUIDs to DataStore 
-            entries for the ScirisObjects (used only if objs_within_coll is False)
+            entries for the Blobs (used only if objs_within_coll is False)
         
     Usage:
-        >>> objs = ScirisCollection(uuid.UUID('12345678123456781234567812345678'))                      
+        >>> objs = BlobDict(uuid.UUID('12345678123456781234567812345678'))                      
     """
     
     def __init__(self, uid, type_prefix='collection', 
         file_suffix='.scl', instance_label='', objs_within_coll=False):
         # Set superclass parameters.
-        super(ScirisCollection, self).__init__(uid, type_prefix, 
+        super(BlobDict, self).__init__(uid, type_prefix, 
              file_suffix, instance_label)
         
-        # Create a Python dict to hold the ScirisObjects.
-        self.obj_dict = {}
+        # Create an odict to hold the Blobs.
+        self.obj_dict = sc.odict()
         
         # Set the flag for whether the objects are stored within the collection 
         # itself (or outside in separate data store entries).
@@ -215,10 +208,10 @@ class ScirisCollection(ScirisObject):
     def load_from_copy(self, other_obj):
         if type(other_obj) == type(self):
             # Do the superclass copying.
-            super(ScirisCollection, self).load_from_copy(other_obj)
+            super(BlobDict, self).load_from_copy(other_obj)
             
             # Copy other items specific to this class.
-            self.obj_dict = other_obj.obj_dict
+            self.obj_dict = sc.odict(other_obj.obj_dict)
             self.objs_within_coll = other_obj.objs_within_coll
             self.ds_uuid_set = other_obj.ds_uuid_set
             
@@ -342,37 +335,18 @@ class ScirisCollection(ScirisObject):
             self.update_data_store()  
         
     def show(self):
-        # Show superclass attributes.
-        super(ScirisCollection, self).show()  
-
-        if self.objs_within_coll:
-            print('Objects stored within dict?: Yes')
-        else:
-            print('Objects stored within dict?: No')
-            
+        super(BlobDict, self).show()   # Show superclass attributes.
+        if self.objs_within_coll: print('Objects stored within dict?: Yes')
+        else:                     print('Objects stored within dict?: No')
         print('---------------------')
         print('Contents')
         print('---------------------')
         
-        # If we are storing things inside the obj_dict...
-        if self.objs_within_coll:
-            # For each key in the dictionary...
-            for key in self.obj_dict:
-                # Get the object pointed to.
-                obj = self.obj_dict[key]
-                
-                # Separator line.
-                #print '--------------------------------------------'
-                
-                # Show the handle contents.
-                obj.show()
-                
-        # Otherwise, we are using the UUID set.
-        else:
-            # For each item in the set...
-            for uid in self.ds_uuid_set:
-                # Show the object with that UID in the DataStore.
-                ds.data_store.retrieve(uid).show()
-            
-        # Separator line.
+        if self.objs_within_coll: # If we are storing things inside the obj_dict...
+            for key in self.obj_dict: # For each key in the dictionary...
+                obj = self.obj_dict[key] # Get the object pointed to.
+                obj.show() # Show the handle contents.
+        else: # Otherwise, we are using the UUID set.
+            for uid in self.ds_uuid_set: # For each item in the set...
+                ds.data_store.retrieve(uid).show() # Show the object with that UID in the DataStore.
         print('--------------------------------------------')
