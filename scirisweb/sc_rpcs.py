@@ -8,7 +8,7 @@ Last update: 5/23/18 (gchadder3)
 from collections import OrderedDict
 from functools import wraps
 import numpy as np
-import scirs as sc
+import sciris as sc
 
 __all__ = ['sanitize_json', 'ScirisRPC', 'RPCtag']
 

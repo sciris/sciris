@@ -11,7 +11,7 @@ from shutil import rmtree
 import atexit
 import sciris as sc
 
-__all__ = ['data_store', 'file_save_dir', 'uploads_dir', 'downloads_dir', 'sanitize_json', 'FileSaveDirectory', 'StoreObjectHandle', 'DataStore']
+__all__ = ['data_store', 'file_save_dir', 'uploads_dir', 'downloads_dir', 'FileSaveDirectory', 'StoreObjectHandle', 'DataStore']
 
 
 ################################################################################

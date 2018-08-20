@@ -1,7 +1,7 @@
 """
 A simple server used to show mpld3 images -- based on _server in the mpld3 package.
 
-Version: 2015dec29
+Version: 2018aug20
 """
 
 import threading
@@ -14,7 +14,7 @@ from .sc_rpcs import sanitize_json
 try:    import BaseHTTPServer as server # Python 2.x
 except: from http import server # Python 3.x
 
-
+__all__ = ['serve', 'browser'] # Others are for internal use only
 
 def generate_handler(html, files=None):
     if files is None:
