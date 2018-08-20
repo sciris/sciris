@@ -33,12 +33,13 @@ setup(
     packages=find_packages(),
     include_package_data=True,
     install_requires=[
-        'sciris',
-        'redis',
-        'mpld3',
-        'flask',
-        'flask-login',
-        'werkzeug',
-        'twisted',
+        'sciris', # Basic tools
+        'redis', # Database
+        'mpld3', # Rendering plots in the browser
+        'flask', # Creating the webapp
+        'flask-login', # Handling users
+        'werkzeug', # HTTP tools
+        'twisted', # Server
+        'celery', # Task manager
     ],
 )
