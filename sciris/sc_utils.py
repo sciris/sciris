@@ -710,11 +710,18 @@ def promotetoarray(x):
 
 
 def promotetolist(obj=None, objtype=None, keepnone=False):
-    ''' Make sure object is iterable -- used so functions can handle inputs like 'FSW' or ['FSW', 'MSM'] '''
+    '''
+    Make sure object is iterable -- used so functions can handle inputs like 'a' or ['a', 'b'].
+    
+    If keepnone is false, then None is converted to an empty list. Otherwise, it's converted to
+    [None].
+    
+    Version: 2018aug24
+    '''
     isnone = False
     if not isinstance(obj, list):
-        if obj is None and keepnone:
-            obj = None
+        if obj is None and not keepnone:
+            obj = []
             isnone = True
         else:
             obj = [obj] # Main usage case -- listify it

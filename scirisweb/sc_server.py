@@ -86,7 +86,7 @@ def serve(html, ip='127.0.0.1', port=8888, n_retries=50):
     srvr.handle_request()
 
 
-def browser(figs=None, doserve=True, jquery_url=None, d3_url=None, mpld3_url=None):
+def browser(figs=None, jsons=None, doserve=True, jquery_url=None, d3_url=None, mpld3_url=None):
     ''' 
     Create an MPLD3 GUI and display in the browser.
     
@@ -133,7 +133,7 @@ def browser(figs=None, doserve=True, jquery_url=None, d3_url=None, mpld3_url=Non
     ''' % (jquery_url, d3_url, mpld3_url)
     
     ## Create the figures to plot
-    jsons = [] # List for storing the converted JSONs
+    if jsons is None: jsons = [] # List for storing the converted JSONs
     figs = sc.promotetolist(figs)
     nfigs = len(figs) # Figure out how many plots there are
     for f in range(nfigs): # Loop over each plot
