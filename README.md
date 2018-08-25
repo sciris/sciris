@@ -27,44 +27,6 @@ To test, open up a new Python window and type `import sciris`.
 
 If you have problems, please consult the rest of this guide for more information.
 
-### Installing on Windows
-
-#### Package and library dependencies
-
-Make sure that you have `npm` (included in Node.js installation) and `git` installed on your machine.  
-First, install [Anaconda Python (for Python 2.7)](https://www.anaconda.com/download/). In your Python setup, you also need to have the following packages (instructions in parentheses show how to install with Anaconda Python environment already installed). **Note**, these should all be installed automatically when you type `python setup.py develop`.
-* numpy (already installed under Anaconda)
-* matplotlib (already installed under Anaconda)
-* flask (already installed under Anaconda)
-* flask-login (`conda install flask-login`)
-* twisted (`conda install twisted`)
-* mpld3 (`conda install mpld3`)
-* redis (`pip install redis`)
-
-#### Database dependencies
-
-If you use Redis as your DataStore mode, you will need to have Redis installed
-on your computer (as a service).  Redis does not directly support Windows,
-but there is a [MicrosoftArchive page on GitHub](https://github.com/MicrosoftArchive/redis)
-where you may go for installation directions on your Windows machine.
-(For example, it can be installed at [this site](https://github.com/MicrosoftArchive/redis/releases)
-, downloading a .msi file).  It
-ends up being installed as a service which you can navigate to by going
-the Windows Task Manager and going to the Services tab.  Make sure the `Redis`
-service is in the Running state.
-
-(For Linux installations, you can probably use the
-[Redis Quick Start](https://redis.io/topics/quickstart) site directions.)
-
-Most likely, the directory for your Redis executables will be installed at
-`C:\Program Files\Redis`.  In that directory, you can double-click the icon
-for `redis-cli.exe` to start the redis database command line interface at
-the default Redis database (#0).  You can do `keys *` to look at all of the
-store key / value pairs in the database, and `exit` exits the interface.  
-Most likely, you will want to use a non-default (i.e. `N` is not 0)
-database.  To investigate what keys are in, for example, database #2,
-while you are within `redis-cli`, you can type `select 2` to switch to that
-database.
 
 ### Installing on Linux
 
@@ -93,6 +55,44 @@ Please check out: http://continuum.io/thanks and https://anaconda.org
 >>> import sciris
 >>>
 ```
+
+
+### Installing on Windows
+
+#### Package and library dependencies
+
+Make sure that you have `npm` (included in Node.js installation) and `git` installed on your machine.  
+First, install [Anaconda Python (for Python 2.7)](https://www.anaconda.com/download/). In your Python setup, you also need to have the following packages (instructions in parentheses show how to install with Anaconda Python environment already installed). **Note**, these should all be installed automatically when you type `python setup.py develop`.
+* numpy (already installed under Anaconda)
+* matplotlib (already installed under Anaconda)
+* flask (already installed under Anaconda)
+* flask-login (`conda install flask-login`)
+* twisted (`conda install twisted`)
+* mpld3 (`conda install mpld3`)
+* redis (`pip install redis`)
+
+#### Database dependencies
+
+If you use Redis as your DataStore mode, you will need to have Redis installed
+on your computer (as a service).  Redis does not directly support Windows,
+but there is a [MicrosoftArchive page on GitHub](https://github.com/MicrosoftArchive/redis)
+where you may go for installation directions on your Windows machine.
+(For example, it can be installed at [this site](https://github.com/MicrosoftArchive/redis/releases)
+, downloading a .msi file).  It
+ends up being installed as a service which you can navigate to by going
+the Windows Task Manager and going to the Services tab.  Make sure the `Redis`
+service is in the Running state.
+
+Most likely, the directory for your Redis executables will be installed at
+`C:\Program Files\Redis`.  In that directory, you can double-click the icon
+for `redis-cli.exe` to start the redis database command line interface at
+the default Redis database (#0).  You can do `keys *` to look at all of the
+store key / value pairs in the database, and `exit` exits the interface.  
+Most likely, you will want to use a non-default (i.e. `N` is not 0)
+database.  To investigate what keys are in, for example, database #2,
+while you are within `redis-cli`, you can type `select 2` to switch to that
+database.
+
 
 ### Installing on Mac
 
