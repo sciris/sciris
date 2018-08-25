@@ -18,7 +18,7 @@ from gzip import GzipFile
 from contextlib import closing
 from xlrd import open_workbook
 from xlsxwriter import Workbook
-from .sc_utils import promotetolist, dcp
+from . import sc_utils as ut
 from .sc_odict import odict
 from .sc_dataframe import dataframe
 
@@ -76,77 +76,43 @@ def saveobj(filename=None, obj=None, compresslevel=5, verbose=True, folder=None,
 
 
 class Failed(object):
+    ''' An empty class to represent a failed object loading '''
     def __init__(self, *args, **kwargs):
         pass
 
-
 def makefailed(module_name=None, name=None, error=None):
-    failed = dcp(Failed)
-    failed.module_name = module_name
-    failed.name = name
-    failed.error = repr(error)
+    ''' Create a class -- not an object! -- that contains the failure info '''
+    uniquename = 'failed_' + str(ut.uuid())[:6]
+    exec('class %s(Failed): pass' % uniquename)
+    failed = eval(uniquename)
+    failed.failure_info = dict()
+    failed.failure_info['module'] = module_name
+    failed.failure_info['class'] = name
+    failed.failure_info['error'] = repr(error)
     return failed
 
 class RobustUnpickler(Unpickler):
-    
-    def find_global(self, module_name, name):
-        # Only allow safe classes from builtins.
-        module = __import__(module_name)
-        return getattr(module, name)
-
     def find_class(self, module_name, name):
-        # Only allow safe classes from builtins.
-    
-        mapping = {
-            'dateutil.tz': 'dateutil.tz.tz',
-            }
-        
         try:
-            print('HI! trying %s & %s' % (module_name, name))
-            if module_name in mapping:
-                module_name = mapping[module_name]
             module = __import__(module_name)
-            print(module)
-            try: 
-                obj = getattr(module, name)
-            except:
+            obj = getattr(module, name)
+        except:
+            try:
                 string = 'from %s import %s as obj' % (module_name, name)
-                print('FAILEDDDDD, trying %s' % string)
                 exec(string)
-            print(obj)
-            return obj
-        except Exception as E:
-            print('FAILED: %s %s (%s)' % (module_name, name, repr(E)))
-            return makefailed(module_name=module_name, name=name, error=E)
-#        try:
-#            return getattr(module, name)
-#        except:
-#            return 'foo'
+            except Exception as E:
+                print('Unpickling warning: could not import %s.%s: %s' % (module_name, name, repr(E)))
+                obj = makefailed(module_name=module_name, name=name, error=E)
+        return obj
 
-def robustunpickle(s):
-    """Helper function analogous to pkl.loads()."""
-    return RobustUnpickler(io.BytesIO(s)).load()
-
-
-def _unpickler(string, recursion=0, recursionlimit=100):
-#    recursion += 1
-#    importerrorstr = 'No module named '
-    obj = robustunpickle(string) # pkl.loads(string) # Actually load it
-#    try: # Try pickle first
-#        obj = robustunpickle(string) # pkl.loads(string) # Actually load it
-#    except:
-#        try:
-#            obj = robustunpickle(string)
-#        except Exception as E:
-#            print('FUCK')
-#            print E.message
-#            if E.message.startswith(importerrorstr):
-#                if recursion < recursionlimit:
-#                    print('Unpickling failed on attempt %s: "%s"' % (recursion+1, E.message))
-#                    obj = _unpickler(string, recursion)
-#                else:
-#                    errormsg = 'Unpickling failed: recursion limit reached (%s)' % recursionlimit
-#                    raise Exception(errormsg)
+def _unpickler(string):
+    try: # Try pickle first
+        obj = pkl.loads(string) # Actually load it -- main usage case
+    except:
+        try:
+            obj = dill.loads(string) # If that fails, try dill
+        except:
+            obj = RobustUnpickler(io.BytesIO(string)).load() # And if that trails, throw everything at it
     return obj
 
 
@@ -262,7 +228,7 @@ def makefilepath(filename=None, folder=None, ext=None, default=None, split=False
     
     # Process filename
     if filename is None:
-        defaultnames = promotetolist(default) # Loop over list of default names
+        defaultnames = ut.promotetolist(default) # Loop over list of default names
         for defaultname in defaultnames:
             if not filename and defaultname: filename = defaultname # Replace empty name with default name
     if filename is not None: # If filename exists by now, use it

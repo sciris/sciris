@@ -133,14 +133,16 @@ def objectid(obj):
 def objatt(obj, strlen=18, ncol=3):
     ''' Return a sorted string of object attributes for the Python __repr__ method '''
     oldkeys = sorted(obj.__dict__.keys())
-    output = createcollist(oldkeys, 'Attributes', strlen = 18, ncol = 3)
+    if len(oldkeys): output = createcollist(oldkeys, 'Attributes', strlen = 18, ncol = 3)
+    else:            output = 'No attributes\n'
     return output
 
 
 def objmeth(obj, strlen=18, ncol=3):
     ''' Return a sorted string of object methods for the Python __repr__ method '''
     oldkeys = sorted([method + '()' for method in dir(obj) if callable(getattr(obj, method)) and not method.startswith('__')])
-    output = createcollist(oldkeys, 'Methods', strlen=strlen, ncol=ncol)
+    if len(oldkeys): output = createcollist(oldkeys, 'Methods', strlen=strlen, ncol=ncol)
+    else:            output = 'No methods\n'
     return output
 
 
@@ -167,15 +169,27 @@ def prepr(obj, maxlen=None):
     labels = []
     values = []
     if hasattr(obj, '__dict__'):
-        labels = sorted(obj.__dict__.keys()) # Get the attribute keys
-        values = [flexstr(getattr(obj, attr)) for attr in labels] # Get the string representation of the attribute
+        if len(obj.__dict__):
+            labels = sorted(obj.__dict__.keys()) # Get the attribute keys
+            values = [flexstr(getattr(obj, attr)) for attr in labels] # Get the string representation of the attribute
+        else:
+            items = dir(obj)
+            for attr in items:
+                if not attr.startswith('__'):
+                    try:    value = flexstr(getattr(obj, attr))
+                    except: value = 'N/A'
+                    labels.append(attr)
+                    values.append(value)
     else: # If it's not an object, just get its representation
         labels = ['%s' % type(obj)]
         values = [flexstr(obj)]
     
     # Decide how to print them
-    maxkeylen = max([len(label) for label in labels]) # Find the maximum length of the attribute keys
-    if maxkeylen<maxlen: maxlen = maxlen - maxkeylen # Shorten the amount of data shown if the keys are long
+    maxkeylen = 0
+    if len(labels):  
+        maxkeylen = max([len(label) for label in labels]) # Find the maximum length of the attribute keys
+    if maxkeylen<maxlen: 
+        maxlen = maxlen - maxkeylen # Shorten the amount of data shown if the keys are long
     formatstr = '%'+ '%i'%maxkeylen + 's' # Assemble the format string for the keys, e.g. '%21s'
     output  = objrepr(obj, showatt=False) # Get the methods
     for label,value in zip(labels,values): # Loop over each attribute
