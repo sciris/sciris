@@ -8,6 +8,7 @@ import traceback
 from functools import wraps
 from numpy import argsort
 from celery import Celery
+from celery.task.control import revoke
 import sciris as sc
 from . import sc_datastore as ds
 from . import sc_rpcs as rpcs
@@ -632,6 +633,13 @@ def delete_task(task_id):
         # If we have a result ID, erase the result from Redis.
         if match_taskrec.result_id is not None:
             result = celery_instance.AsyncResult(match_taskrec.result_id)
+            # None of the following seem to work with the eventlet setting on 
+            # my (gchadder3's) Windows machine, but maybe the first solution 
+            # might work on Linux??  revoke() is supposed to be able to stop 
+            # a currently executing Celery task.
+            result.revoke(terminate=True)
+#            revoke(task_id, terminate=True)
+#            revoke(task_id)
             result.forget()
             
         # Erase the TaskRecord.
