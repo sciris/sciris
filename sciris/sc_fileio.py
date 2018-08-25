@@ -18,7 +18,7 @@ from gzip import GzipFile
 from contextlib import closing
 from xlrd import open_workbook
 from xlsxwriter import Workbook
-from .sc_utils import promotetolist
+from .sc_utils import promotetolist, dcp
 from .sc_odict import odict
 from .sc_dataframe import dataframe
 
@@ -75,10 +75,19 @@ def saveobj(filename=None, obj=None, compresslevel=5, verbose=True, folder=None,
     return fullpath
 
 
+class Failed(object):
+    def __init__(self, *args, **kwargs):
+        pass
+
+
+def makefailed(module_name=None, name=None, error=None):
+    failed = dcp(Failed)
+    failed.module_name = module_name
+    failed.name = name
+    failed.error = repr(error)
+    return failed
 
 class RobustUnpickler(Unpickler):
-    
-    import imp
     
     def find_global(self, module_name, name):
         # Only allow safe classes from builtins.
@@ -87,13 +96,28 @@ class RobustUnpickler(Unpickler):
 
     def find_class(self, module_name, name):
         # Only allow safe classes from builtins.
+    
+        mapping = {
+            'dateutil.tz': 'dateutil.tz.tz',
+            }
+        
         try:
+            print('HI! trying %s & %s' % (module_name, name))
+            if module_name in mapping:
+                module_name = mapping[module_name]
             module = __import__(module_name)
-            obj = getattr(module, name)
+            print(module)
+            try: 
+                obj = getattr(module, name)
+            except:
+                string = 'from %s import %s as obj' % (module_name, name)
+                print('FAILEDDDDD, trying %s' % string)
+                exec(string)
+            print(obj)
             return obj
-        except:
-            print('FAILED: %s %s' % (module_name, name))
-            return object
+        except Exception as E:
+            print('FAILED: %s %s (%s)' % (module_name, name, repr(E)))
+            return makefailed(module_name=module_name, name=name, error=E)
 #        try:
 #            return getattr(module, name)
 #        except:
@@ -105,8 +129,8 @@ def robustunpickle(s):
 
 
 def _unpickler(string, recursion=0, recursionlimit=100):
-    recursion += 1
-    importerrorstr = 'No module named '
+#    recursion += 1
+#    importerrorstr = 'No module named '
     obj = robustunpickle(string) # pkl.loads(string) # Actually load it
 #    try: # Try pickle first
 #        obj = robustunpickle(string) # pkl.loads(string) # Actually load it
