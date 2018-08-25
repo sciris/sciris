@@ -10,6 +10,7 @@ Last update: 5/31/18 (gchadder3)
 
 # Basic imports
 from glob import glob
+import io
 import os
 import re
 import dill
@@ -17,7 +18,7 @@ from gzip import GzipFile
 from contextlib import closing
 from xlrd import open_workbook
 from xlsxwriter import Workbook
-from .sc_utils import promotetolist
+from . import sc_utils as ut
 from .sc_odict import odict
 from .sc_dataframe import dataframe
 
@@ -25,55 +26,71 @@ from .sc_dataframe import dataframe
 from six import PY2 as _PY2
 if _PY2: # Python 2
     _stringtype = basestring 
-    import cPickle as pickle
     from cStringIO import StringIO
+    import cPickle as pkl
 else: # Python 3
     _stringtype = str
-    import pickle
     from io import StringIO
+    import pickle as pkl
+from pickle import Unpickler # This is the same for Python 2 and 3
+
 
 
 
 ##############################################################################
-### Key file functions
+### Pickling functions
 ##############################################################################
 
-__all__ = ['saveobj', 'loadobj', 'dumpstr', 'loadstr', 'loadtext', 'savetext', 'getfilelist', 'sanitizefilename', 'makefilepath']
-
-def saveobj(filename=None, obj=None, compresslevel=5, verbose=True, folder=None, method='pickle'):
-    '''
-    Save an object to file -- use compression 5 by default, since more is much slower but not much smaller.
-    Once saved, can be loaded with loadobj() (q.v.).
-
-    Usage:
-        myobj = ['this', 'is', 'a', 'weird', {'object':44}]
-        saveobj('myfile.obj', myobj)
-    '''
-    
-    def savepickle(fileobj, obj):
-        ''' Use pickle to do the salty work '''
-        fileobj.write(pickle.dumps(obj, protocol=-1))
-        return None
-    
-    def savedill(fileobj, obj):
-        ''' Use dill to do the sour work '''
-        fileobj.write(dill.dumps(obj, protocol=-1))
-        return None
-    
-    fullpath = makefilepath(filename=filename, folder=folder, sanitize=True)
-    with GzipFile(fullpath, 'wb', compresslevel=compresslevel) as fileobj:
-        if method == 'dill': # If dill is requested, use that
-            savedill(fileobj, obj)
-        else: # Otherwise, try pickle
-            try:    savepickle(fileobj, obj) # Use pickle
-            except: savedill(fileobj, obj) # ...but use Dill if that fails
-        
-    if verbose: print('Object saved to "%s"' % fullpath)
-    return fullpath
+__all__ = ['loadobj', 'loadstr', 'saveobj', 'dumpstr']
 
 
+class Failed(object):
+    ''' An empty class to represent a failed object loading '''
+    failure_info = odict()
+    def __init__(self, *args, **kwargs):
+        pass
 
-def loadobj(filename=None, folder=None, verbose=True):
+def makefailed(module_name=None, name=None, error=None):
+    ''' Create a class -- not an object! -- that contains the failure info '''
+    key = 'Failure %s' % (len(Failed.failure_info)+1)
+    Failed.failure_info[key] = odict()
+    Failed.failure_info[key]['module'] = module_name
+    Failed.failure_info[key]['class'] = name
+    Failed.failure_info[key]['error'] = repr(error)
+    return Failed
+
+class RobustUnpickler(Unpickler):
+    ''' Try to import an object, and if that fails, return a Failed object rather than crashing '''
+    def find_class(self, module_name, name, verbose=False):
+        try:
+            module = __import__(module_name)
+            obj = getattr(module, name)
+        except:
+            try:
+                string = 'from %s import %s as obj' % (module_name, name)
+                exec(string)
+            except Exception as E:
+                if verbose: print('Unpickling warning: could not import %s.%s: %s' % (module_name, name, repr(E)))
+                obj = makefailed(module_name=module_name, name=name, error=E)
+        return obj
+
+def unpickler(string=None, die=None):
+    if die is None: die = False
+    try: # Try pickle first
+        obj = pkl.loads(string) # Actually load it -- main usage case
+    except Exception as E:
+        if die: 
+            raise E
+        else:
+            try:    obj = dill.loads(string) # If that fails, try dill
+            except: obj = RobustUnpickler(io.BytesIO(string)).load() # And if that trails, throw everything at it
+    if isinstance(obj, Failed):
+        print('Warning, the following errors were encountered during unpickling:')
+        print(obj.failure_info)
+    return obj
+
+
+def loadobj(filename=None, folder=None, verbose=True, die=None):
     '''
     Load a saved file.
 
@@ -90,33 +107,69 @@ def loadobj(filename=None, folder=None, verbose=True):
     kwargs = {'mode': 'rb', argtype: filename}
     with GzipFile(**kwargs) as fileobj:
         filestr = fileobj.read() # Convert it to a string
-        try: # Try pickle first
-            obj = pickle.loads(filestr) # Actually load it
-        except:
-            obj = dill.loads(filestr)
+        obj = unpickler(filestr, die=die) # Actually load it
     if verbose: print('Object loaded from "%s"' % filename)
     return obj
 
 
+def loadstr(string=None, die=None):
+    with closing(StringIO(string)) as output: # Open a "fake file" with the Gzip string pickle in it.
+        with GzipFile(fileobj=output, mode='rb') as fileobj: # Set a Gzip reader to pull from the "file."
+            picklestring = fileobj.read() # Read the string pickle from the "file" (applying Gzip decompression).
+    obj = unpickler(picklestring, die=die) # Return the object gotten from the string pickle.   
+    return obj
 
-def dumpstr(obj):
+
+def savepickle(fileobj=None, obj=None):
+        ''' Use pickle to do the salty work '''
+        fileobj.write(pkl.dumps(obj, protocol=-1))
+        return None
+    
+def savedill(fileobj=None, obj=None):
+    ''' Use dill to do the sour work '''
+    fileobj.write(dill.dumps(obj, protocol=-1))
+    return None
+
+def saveobj(filename=None, obj=None, compresslevel=5, verbose=True, folder=None, method='pickle'):
+    '''
+    Save an object to file -- use compression 5 by default, since more is much slower but not much smaller.
+    Once saved, can be loaded with loadobj() (q.v.).
+
+    Usage:
+        myobj = ['this', 'is', 'a', 'weird', {'object':44}]
+        saveobj('myfile.obj', myobj)
+    '''
+    
+    fullpath = makefilepath(filename=filename, folder=folder, sanitize=True)
+    with GzipFile(fullpath, 'wb', compresslevel=compresslevel) as fileobj:
+        if method == 'dill': # If dill is requested, use that
+            savedill(fileobj, obj)
+        else: # Otherwise, try pickle
+            try:    savepickle(fileobj, obj) # Use pickle
+            except: savedill(fileobj, obj) # ...but use Dill if that fails
+        
+    if verbose: print('Object saved to "%s"' % fullpath)
+    return fullpath
+
+
+def dumpstr(obj=None):
     with closing(StringIO()) as output: # Open a "fake file."
         with GzipFile(fileobj=output, mode='wb') as fileobj:  # Open a Gzip-compressing way to write to this "file."
-            fileobj.write(pickle.dumps(obj, protocol=-1)) # Write the string pickle conversion of the object to the "file."
+            try:    savepickle(fileobj, obj) # Use pickle
+            except: savedill(fileobj, obj) # ...but use Dill if that fails
         output.seek(0) # Move the mark to the beginning of the "file."
         result = output.read() # Read all of the content into result.
     return result
 
 
 
-def loadstr(gzip_string_pickle):
-    with closing(StringIO(gzip_string_pickle)) as output: # Open a "fake file" with the Gzip string pickle in it.
-        with GzipFile(fileobj=output, mode='rb') as fileobj: # Set a Gzip reader to pull from the "file."
-            string_pickle = fileobj.read() # Read the string pickle from the "file" (applying Gzip decompression).
-    obj = pickle.loads(string_pickle) # Return the object gotten from the string pickle.   
-    return obj
-    
-    
+##############################################################################
+### Other file functions
+##############################################################################
+
+__all__ += ['loadtext', 'savetext', 'getfilelist', 'sanitizefilename', 'makefilepath']
+
+
     
 def loadtext(filename=None, splitlines=False):
     ''' Convenience function for reading a text file '''
@@ -188,7 +241,7 @@ def makefilepath(filename=None, folder=None, ext=None, default=None, split=False
     
     # Process filename
     if filename is None:
-        defaultnames = promotetolist(default) # Loop over list of default names
+        defaultnames = ut.promotetolist(default) # Loop over list of default names
         for defaultname in defaultnames:
             if not filename and defaultname: filename = defaultname # Replace empty name with default name
     if filename is not None: # If filename exists by now, use it
