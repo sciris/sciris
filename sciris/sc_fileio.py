@@ -10,6 +10,7 @@ Last update: 5/31/18 (gchadder3)
 
 # Basic imports
 from glob import glob
+import io
 import os
 import re
 import dill
@@ -25,12 +26,14 @@ from .sc_dataframe import dataframe
 from six import PY2 as _PY2
 if _PY2: # Python 2
     _stringtype = basestring 
-    import cPickle as pickle
     from cStringIO import StringIO
+    import cPickle as pkl
 else: # Python 3
     _stringtype = str
-    import pickle
     from io import StringIO
+    import pickle as pkl
+from pickle import Unpickler # This is the same for Python 2 and 3
+
 
 
 
@@ -52,7 +55,7 @@ def saveobj(filename=None, obj=None, compresslevel=5, verbose=True, folder=None,
     
     def savepickle(fileobj, obj):
         ''' Use pickle to do the salty work '''
-        fileobj.write(pickle.dumps(obj, protocol=-1))
+        fileobj.write(pkl.dumps(obj, protocol=-1))
         return None
     
     def savedill(fileobj, obj):
@@ -73,6 +76,56 @@ def saveobj(filename=None, obj=None, compresslevel=5, verbose=True, folder=None,
 
 
 
+class RobustUnpickler(Unpickler):
+    
+    import imp
+    
+    def find_global(self, module_name, name):
+        # Only allow safe classes from builtins.
+        module = __import__(module_name)
+        return getattr(module, name)
+
+    def find_class(self, module_name, name):
+        # Only allow safe classes from builtins.
+        try:
+            module = __import__(module_name)
+            obj = getattr(module, name)
+            return obj
+        except:
+            print('FAILED: %s %s' % (module_name, name))
+            return object
+#        try:
+#            return getattr(module, name)
+#        except:
+#            return 'foo'
+
+def robustunpickle(s):
+    """Helper function analogous to pkl.loads()."""
+    return RobustUnpickler(io.BytesIO(s)).load()
+
+
+def _unpickler(string, recursion=0, recursionlimit=100):
+    recursion += 1
+    importerrorstr = 'No module named '
+    obj = robustunpickle(string) # pkl.loads(string) # Actually load it
+#    try: # Try pickle first
+#        obj = robustunpickle(string) # pkl.loads(string) # Actually load it
+#    except:
+#        try:
+#            obj = robustunpickle(string)
+#        except Exception as E:
+#            print('FUCK')
+#            print E.message
+#            if E.message.startswith(importerrorstr):
+#                if recursion < recursionlimit:
+#                    print('Unpickling failed on attempt %s: "%s"' % (recursion+1, E.message))
+#                    obj = _unpickler(string, recursion)
+#                else:
+#                    errormsg = 'Unpickling failed: recursion limit reached (%s)' % recursionlimit
+#                    raise Exception(errormsg)
+    return obj
+
+
 def loadobj(filename=None, folder=None, verbose=True):
     '''
     Load a saved file.
@@ -90,10 +143,7 @@ def loadobj(filename=None, folder=None, verbose=True):
     kwargs = {'mode': 'rb', argtype: filename}
     with GzipFile(**kwargs) as fileobj:
         filestr = fileobj.read() # Convert it to a string
-        try: # Try pickle first
-            obj = pickle.loads(filestr) # Actually load it
-        except:
-            obj = dill.loads(filestr)
+        obj = _unpickler(filestr) # Actually load it
     if verbose: print('Object loaded from "%s"' % filename)
     return obj
 
@@ -102,7 +152,7 @@ def loadobj(filename=None, folder=None, verbose=True):
 def dumpstr(obj):
     with closing(StringIO()) as output: # Open a "fake file."
         with GzipFile(fileobj=output, mode='wb') as fileobj:  # Open a Gzip-compressing way to write to this "file."
-            fileobj.write(pickle.dumps(obj, protocol=-1)) # Write the string pickle conversion of the object to the "file."
+            fileobj.write(pkl.dumps(obj, protocol=-1)) # Write the string pickle conversion of the object to the "file."
         output.seek(0) # Move the mark to the beginning of the "file."
         result = output.read() # Read all of the content into result.
     return result
@@ -113,7 +163,7 @@ def loadstr(gzip_string_pickle):
     with closing(StringIO(gzip_string_pickle)) as output: # Open a "fake file" with the Gzip string pickle in it.
         with GzipFile(fileobj=output, mode='rb') as fileobj: # Set a Gzip reader to pull from the "file."
             string_pickle = fileobj.read() # Read the string pickle from the "file" (applying Gzip decompression).
-    obj = pickle.loads(string_pickle) # Return the object gotten from the string pickle.   
+    obj = pkl.loads(string_pickle) # Return the object gotten from the string pickle.   
     return obj
     
     
