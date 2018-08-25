@@ -5,7 +5,9 @@
 from matplotlib.colors import rgb_to_hsv, hsv_to_rgb
 from numpy import ndim, array
 from matplotlib import ticker
+import pylab as pl
 from . import sc_utils as ut
+
 
 
 ##############################################################################
@@ -497,3 +499,98 @@ def SIticks(fig=None, ax=None, axis='y', fixed=False):
     return None
 
 
+
+##############################################################################
+### FIGURE SAVING
+##############################################################################
+
+__all__ += ['savefigs']
+
+
+def savefigs(plots=None, filetype=None, filename=None, folder=None, savefigargs=None, index=None, verbose=2, **kwargs):
+    '''
+    Save the requested plots to disk.
+    
+    Arguments:
+        plots -- the figure objects to save
+        filetype -- the file type; can be 'fig', 'singlepdf' (default), or anything supported by savefig()
+        folder -- the folder to save the file(s) in
+        filename -- the file to save to (only uses path if multiple files)
+        savefigargs -- dictionary of arguments passed to savefig()
+        index -- optional argument to only save the specified plot index
+        kwargs -- passed to makeplots()
+    
+    Example usages:
+        import pylab as pl
+        import sciris as sc
+        fig1 = pl.figure(); pl.plot(pl.rand(10))
+        fig2 = pl.figure(); pl.plot(pl.rand(10))
+        sc.savefigs([fig1, fig2]) # Save everything to one PDF file
+        sc.savefigs(fig2, 'png', filename='myfig.png', savefigargs={'dpi':200})
+        sc.savefigs([fig1, fig2], filepath='/home/me', filetype='svg')
+        sc.savefigs(fig1, position=[0.3,0.3,0.5,0.5])
+    
+    If saved as 'fig', then can load and display the plot using op.loadplot().
+    
+    Version: 2018aug26 
+    '''
+    
+    # Preliminaries
+    wasinteractive = pl.isinteractive() # You might think you can get rid of this...you can't!
+    if wasinteractive: pl.ioff()
+    if filetype is None: filetype = 'singlepdf' # This ensures that only one file is created
+    
+    # Either take supplied plots, or generate them
+    plots = sc.promotetoodict(plots)
+    nplots = len(plots)
+    
+    # Handle file types
+    filenames = []
+    if filetype=='singlepdf': # See http://matplotlib.org/examples/pylab_examples/multipage_pdf.html
+        from matplotlib.backends.backend_pdf import PdfPages
+        defaultname = 'figures.pdf'
+        fullpath = sc.makefilepath(filename=filename, folder=folder, default=defaultname, ext='pdf')
+        pdf = PdfPages(fullpath)
+        filenames.append(fullpath)
+        sc.printv('PDF saved to %s' % fullpath, 2, verbose)
+    for p,item in enumerate(plots.items()):
+        key,plt = item
+        if index is None or index==p:
+            # Handle filename
+            if filename and nplots==1: # Single plot, filename supplied -- use it
+                fullpath = sc.makefilepath(filename=filename, folder=folder, default='optima-figure', ext=filetype) # NB, this filename not used for singlepdf filetype, so it's OK
+            else: # Any other case, generate a filename
+                keyforfilename = filter(str.isalnum, str(key)) # Strip out non-alphanumeric stuff for key
+                defaultname = keyforfilename
+                fullpath = sc.makefilepath(filename=filename, folder=folder, default=defaultname, ext=filetype)
+            
+            # Do the saving
+            if savefigargs is None: savefigargs = {}
+            defaultsavefigargs = {'dpi':200, 'bbox_inches':'tight'} # Specify a higher default DPI and save the figure tightly
+            defaultsavefigargs.update(savefigargs) # Update the default arguments with the user-supplied arguments
+            if filetype == 'fig':
+                sc.saveobj(fullpath, plt)
+                filenames.append(fullpath)
+                sc.printv('Figure object saved to %s' % fullpath, 2, verbose)
+            else:
+                reanimateplots(plt)
+                if filetype=='singlepdf':
+                    pdf.savefig(figure=plt, **defaultsavefigargs) # It's confusing, but defaultsavefigargs is correct, since we updated it from the user version
+                else:
+                    plt.savefig(fullpath, **defaultsavefigargs)
+                    filenames.append(fullpath)
+                    sc.printv('%s plot saved to %s' % (filetype.upper(),fullpath), 2, verbose)
+                pl.close(plt)
+
+    if filetype=='singlepdf': pdf.close()
+    if wasinteractive: pl.ion()
+    return filenames
+
+
+def reanimateplots(plots=None):
+    ''' Reconnect plots (actually figures) to the Matplotlib backend. plots must be an odict of figure objects. '''
+    if len(pl.get_fignums()): fignum = pl.gcf().number # This is the number of the current active figure, if it exists
+    else: fignum = 1
+    plots = sc.promotetoodict(plots) # Convert to an odict
+    for plot in plots.values(): pl.nfmgf(fignum, plot) # Make sure each figure object is associated with the figure manager -- WARNING, is it correct to associate the plot with an existing figure?
+    return None

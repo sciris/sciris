@@ -758,7 +758,7 @@ def promotetolist(obj=None, objtype=None, keepnone=False):
 ### MISC. FUNCTIONS
 ##############################################################################
 
-__all__ += ['now', 'tic', 'toc', 'percentcomplete', 'checkmem', 'loadbalancer', 'runcommand', 'gitinfo', 'compareversions']
+__all__ += ['now', 'tic', 'toc', 'percentcomplete', 'checkmem', 'loadbalancer', 'runcommand', 'gitinfo', 'compareversions', 'uniquename']
 
 def now(timezone='utc', die=False, tostring=False, fmt=None):
     ''' Get the current time, in UTC time '''
@@ -1023,7 +1023,19 @@ def compareversions(version1=None, version2=None):
         raise Exception('Failed to compare %s and %s' % (version1, version2))
 
 
-
+def uniquename(name=None, namelist=None, style=None):
+    """
+    Given a name and a list of other names, find a replacement to the name 
+    that doesn't conflict with the other names, and pass it back.
+    """
+    if style is None: style = ' (%d)'
+    namelist = promotetolist(namelist)
+    unique_name = name # Start with the passed in name.
+    i = 0 # Reset the counter
+    while unique_name in namelist: # Try adding an index (i) to the name until we find one that's unique
+        i += 1
+        unique_name = name + style%i
+    return unique_name # Return the found name.
 
 
 ##############################################################################
