@@ -58,7 +58,7 @@ class ScirisApp(object):
     Methods:
         __init__(script_path: str, app_config: config module [None], 
             client_dir: str [None]): void -- constructor
-        run_server(with_twisted: bool [True], with_flask: bool [True], 
+        run(with_twisted: bool [True], with_flask: bool [True], 
             with_client: [True]): void -- run the actual server
         define_endpoint_layout(rule: str, layout: list): void -- set up an 
             endpoint with a layout of a static Flask page
@@ -311,7 +311,7 @@ class ScirisApp(object):
         # worker, passing in the config parameters.
         tasks.make_celery_instance(app_config)
         
-    def run_server(self, with_twisted=True, with_flask=True, with_client=True, 
+    def run(self, with_twisted=True, with_flask=True, with_client=True, 
         use_twisted_logging=True):
         # If we are not running the app with Twisted, just run the Flask app.
         if not with_twisted:

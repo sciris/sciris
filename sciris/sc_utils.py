@@ -133,14 +133,16 @@ def objectid(obj):
 def objatt(obj, strlen=18, ncol=3):
     ''' Return a sorted string of object attributes for the Python __repr__ method '''
     oldkeys = sorted(obj.__dict__.keys())
-    output = createcollist(oldkeys, 'Attributes', strlen = 18, ncol = 3)
+    if len(oldkeys): output = createcollist(oldkeys, 'Attributes', strlen = 18, ncol = 3)
+    else:            output = 'No attributes\n'
     return output
 
 
 def objmeth(obj, strlen=18, ncol=3):
     ''' Return a sorted string of object methods for the Python __repr__ method '''
     oldkeys = sorted([method + '()' for method in dir(obj) if callable(getattr(obj, method)) and not method.startswith('__')])
-    output = createcollist(oldkeys, 'Methods', strlen=strlen, ncol=ncol)
+    if len(oldkeys): output = createcollist(oldkeys, 'Methods', strlen=strlen, ncol=ncol)
+    else:            output = 'No methods\n'
     return output
 
 
@@ -167,15 +169,27 @@ def prepr(obj, maxlen=None):
     labels = []
     values = []
     if hasattr(obj, '__dict__'):
-        labels = sorted(obj.__dict__.keys()) # Get the attribute keys
-        values = [flexstr(getattr(obj, attr)) for attr in labels] # Get the string representation of the attribute
+        if len(obj.__dict__):
+            labels = sorted(obj.__dict__.keys()) # Get the attribute keys
+            values = [flexstr(getattr(obj, attr)) for attr in labels] # Get the string representation of the attribute
+        else:
+            items = dir(obj)
+            for attr in items:
+                if not attr.startswith('__'):
+                    try:    value = flexstr(getattr(obj, attr))
+                    except: value = 'N/A'
+                    labels.append(attr)
+                    values.append(value)
     else: # If it's not an object, just get its representation
         labels = ['%s' % type(obj)]
         values = [flexstr(obj)]
     
     # Decide how to print them
-    maxkeylen = max([len(label) for label in labels]) # Find the maximum length of the attribute keys
-    if maxkeylen<maxlen: maxlen = maxlen - maxkeylen # Shorten the amount of data shown if the keys are long
+    maxkeylen = 0
+    if len(labels):  
+        maxkeylen = max([len(label) for label in labels]) # Find the maximum length of the attribute keys
+    if maxkeylen<maxlen: 
+        maxlen = maxlen - maxkeylen # Shorten the amount of data shown if the keys are long
     formatstr = '%'+ '%i'%maxkeylen + 's' # Assemble the format string for the keys, e.g. '%21s'
     output  = objrepr(obj, showatt=False) # Get the methods
     for label,value in zip(labels,values): # Loop over each attribute
@@ -710,11 +724,18 @@ def promotetoarray(x):
 
 
 def promotetolist(obj=None, objtype=None, keepnone=False):
-    ''' Make sure object is iterable -- used so functions can handle inputs like 'FSW' or ['FSW', 'MSM'] '''
+    '''
+    Make sure object is iterable -- used so functions can handle inputs like 'a' or ['a', 'b'].
+    
+    If keepnone is false, then None is converted to an empty list. Otherwise, it's converted to
+    [None].
+    
+    Version: 2018aug24
+    '''
     isnone = False
     if not isinstance(obj, list):
-        if obj is None and keepnone:
-            obj = None
+        if obj is None and not keepnone:
+            obj = []
             isnone = True
         else:
             obj = [obj] # Main usage case -- listify it
@@ -737,7 +758,7 @@ def promotetolist(obj=None, objtype=None, keepnone=False):
 ### MISC. FUNCTIONS
 ##############################################################################
 
-__all__ += ['now', 'tic', 'toc', 'percentcomplete', 'checkmem', 'loadbalancer', 'runcommand', 'gitinfo', 'compareversions']
+__all__ += ['now', 'tic', 'toc', 'percentcomplete', 'checkmem', 'loadbalancer', 'runcommand', 'gitinfo', 'compareversions', 'uniquename']
 
 def now(timezone='utc', die=False, tostring=False, fmt=None):
     ''' Get the current time, in UTC time '''
@@ -1002,7 +1023,19 @@ def compareversions(version1=None, version2=None):
         raise Exception('Failed to compare %s and %s' % (version1, version2))
 
 
-
+def uniquename(name=None, namelist=None, style=None):
+    """
+    Given a name and a list of other names, find a replacement to the name 
+    that doesn't conflict with the other names, and pass it back.
+    """
+    if style is None: style = ' (%d)'
+    namelist = promotetolist(namelist)
+    unique_name = name # Start with the passed in name.
+    i = 0 # Reset the counter
+    while unique_name in namelist: # Try adding an index (i) to the name until we find one that's unique
+        i += 1
+        unique_name = name + style%i
+    return unique_name # Return the found name.
 
 
 ##############################################################################

@@ -2,7 +2,23 @@
 
 ## What is Sciris?
 
-Glad you asked! Sciris is a flexible open source framework for building scientific web applications using Python and JavaScript.
+Glad you asked! Sciris is a flexible open source framework for building scientific web applications using Python and JavaScript. It comes in two parts: `sciris` is a collection of tools that should make scientific Python coding a more pleasant experience, while `scirisweb` is a collection of tools that allow you to easily build Python webapps.
+
+Some highlights of `sciris`:
+* `odict` -- like an OrderedDict, but allows reference by position like a list, as well as many powerful methods (such as casting to array, sorting and enumeration functions, etc.)
+* `promotetoarray` -- standardizes any kind of numeric input to a Numpy array, so e.g. `1`, `[1]`, `(1,)` etc. are all converted to `array([1])`
+* `checktype` -- quickly determine the type of the input, e.g. `checktype([1,2,3], 'arraylike', subtype='number') # returns True`
+* `findnearest` -- find the element of an array closest to the input value
+* `loadobj`, `saveobj` -- flexible methods to save/load arbitrary Python objects
+* `vectocolor` -- map a given vector into a set of colors
+* `gridcolors` -- pick a set of colors from maximally distant parts of color-space (e.g. for plots with large numbers of lines)
+* `smoothinterp` -- linear interpolation with smoothing
+* `asd` -- adaptive stochastic descent, an algorithm for optimizing functions as few function evaluations as possible
+
+Some highlights of `scirisweb`:
+* `ScirisApp` -- a fully featured server that can be created as simply as `app = ScirisApp(config)` and run with `app.run()`
+* `RPC` -- a simple function for defining links between the frontend and the backend
+* `Datastore` -- user and data management built on Redis
 
 ## Is Sciris ready yet?
 
@@ -21,50 +37,12 @@ Note: if you're a developer, you'll likely already have some/all of these packag
 
 3. Install [Anaconda Python](https://www.anaconda.com/download/) for Python 2.7 (simulation engine)
 
-4. Once you've done all that, to install, simply run `python setup.py develop` in the root folder. This should install Sciris as an importable Python module.
+4. Once you've done all that, to install, simply run `python setup.py develop` in the root folder. This should install Sciris as an importable Python module. If you need Sciris Web as well, run `python setup-web.py develop`.
 
-To test, open up a new Python window and type `import sciris`.
+To test, open up a new Python window and type `import sciris` (and/or `import scirisweb`)
 
 If you have problems, please consult the rest of this guide for more information.
 
-### Installing on Windows
-
-#### Package and library dependencies
-
-Make sure that you have `npm` (included in Node.js installation) and `git` installed on your machine.  
-First, install [Anaconda Python (for Python 2.7)](https://www.anaconda.com/download/). In your Python setup, you also need to have the following packages (instructions in parentheses show how to install with Anaconda Python environment already installed). **Note**, these should all be installed automatically when you type `python setup.py develop`.
-* numpy (already installed under Anaconda)
-* matplotlib (already installed under Anaconda)
-* flask (already installed under Anaconda)
-* flask-login (`conda install flask-login`)
-* twisted (`conda install twisted`)
-* mpld3 (`conda install mpld3`)
-* redis (`pip install redis`)
-
-#### Database dependencies
-
-If you use Redis as your DataStore mode, you will need to have Redis installed
-on your computer (as a service).  Redis does not directly support Windows,
-but there is a [MicrosoftArchive page on GitHub](https://github.com/MicrosoftArchive/redis)
-where you may go for installation directions on your Windows machine.
-(For example, it can be installed at [this site](https://github.com/MicrosoftArchive/redis/releases)
-, downloading a .msi file).  It
-ends up being installed as a service which you can navigate to by going
-the Windows Task Manager and going to the Services tab.  Make sure the `Redis`
-service is in the Running state.
-
-(For Linux installations, you can probably use the
-[Redis Quick Start](https://redis.io/topics/quickstart) site directions.)
-
-Most likely, the directory for your Redis executables will be installed at
-`C:\Program Files\Redis`.  In that directory, you can double-click the icon
-for `redis-cli.exe` to start the redis database command line interface at
-the default Redis database (#0).  You can do `keys *` to look at all of the
-store key / value pairs in the database, and `exit` exits the interface.  
-Most likely, you will want to use a non-default (i.e. `N` is not 0)
-database.  To investigate what keys are in, for example, database #2,
-while you are within `redis-cli`, you can type `select 2` to switch to that
-database.
 
 ### Installing on Linux
 
@@ -86,13 +64,46 @@ Please check out: http://continuum.io/thanks and https://anaconda.org
 
 5. Clone the Sciris repository: `git clone http://github.com/optimamodel/sciris.git`
 
-6. Run `python setup.py develop` in the root Sciris folder.
+6. Run `python setup.py develop` and `python setup-web.py develop` in the root Sciris folder.
 
-7. To test, open up a new Python window and type `import sciris`. It should return immediately, i.e.
+7. To test, open up a new Python window and type `import sciris` and `import scirisweb`. You should see something like:
 ```
 >>> import sciris
+>>> import scirisweb
+Sciris Web 0.7.1 (2018-08-25) -- (c) Optima Consortium
 >>>
 ```
+
+
+### Installing on Windows
+
+#### Package and library dependencies
+
+Make sure that you have `npm` (included in Node.js installation) and `git` installed on your machine.  
+First, install [Anaconda Python (for Python 2.7)](https://www.anaconda.com/download/). In your Python setup, you also need to have the following packages (instructions in parentheses show how to install with Anaconda Python environment already installed). **Note**, these should all be installed automatically when you type `python setup.py develop` and `python setup-web.py develop`.
+
+#### Database dependencies
+
+If you use Redis as your DataStore mode, you will need to have Redis installed
+on your computer (as a service).  Redis does not directly support Windows,
+but there is a [MicrosoftArchive page on GitHub](https://github.com/MicrosoftArchive/redis)
+where you may go for installation directions on your Windows machine.
+(For example, it can be installed at [this site](https://github.com/MicrosoftArchive/redis/releases)
+, downloading a .msi file).  It
+ends up being installed as a service which you can navigate to by going
+the Windows Task Manager and going to the Services tab.  Make sure the `Redis`
+service is in the Running state.
+
+Most likely, the directory for your Redis executables will be installed at
+`C:\Program Files\Redis`.  In that directory, you can double-click the icon
+for `redis-cli.exe` to start the redis database command line interface at
+the default Redis database (#0).  You can do `keys *` to look at all of the
+store key / value pairs in the database, and `exit` exits the interface.  
+Most likely, you will want to use a non-default (i.e. `N` is not 0)
+database.  To investigate what keys are in, for example, database #2,
+while you are within `redis-cli`, you can type `select 2` to switch to that
+database.
+
 
 ### Installing on Mac
 
@@ -139,10 +150,12 @@ Please check out: http://continuum.io/thanks and https://anaconda.org
         ./venv/bin/activate
 
 9. Change to the Sciris root folder and type:
+   ```
+python setup.py develop
+python setup-web.py develop
+   ```
 
-        `python setup.py develop`
-
-10. To test if the if everything is working accordingly, open Python window within the virtual environment and type `import sciris`. If no errors occur, then the import worked.
+10. To test if the if everything is working accordingly, open Python window within the virtual environment and type `import sciris` and `import scirisweb`. If no errors occur, then the import worked.
 
 
 
