@@ -660,6 +660,26 @@ class odict(_OD):
             thistuple = (ind,)+item # Combine into one tuple
             iterator.append(thistuple)
         return iterator
+     
+    @staticmethod
+    def promote(obj=None):
+        '''
+        Like promotetolist, but for odicts. Example:
+            od = sc.odict.promote(['There','are',4,'keys'])
+        
+        Note, in most cases odict(obj) or odict().make(obj) can be used instead.
+        '''
+        if isinstance(obj, odict):
+            return obj # Don't need to do anything
+        elif isinstance(obj, dict):
+            return odict(obj)
+        elif isinstance(obj, list):
+            newobj = odict()
+            for i,val in enumerate(obj):
+                newobj['Key %i'%i] = val
+            return newobj
+        else:
+            return odict({'Key':obj})
         
     # Python 3 compatibility
     if not ut._PY2:
