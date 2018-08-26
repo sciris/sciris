@@ -508,7 +508,7 @@ def SIticks(fig=None, ax=None, axis='y', fixed=False):
 __all__ += ['savefigs', 'loadfig']
 
 
-def savefigs(plots=None, filetype=None, filename=None, folder=None, savefigargs=None, index=None, verbose=2, **kwargs):
+def savefigs(plots=None, filetype=None, filename=None, folder=None, savefigargs=None, index=None, verbose=False, **kwargs):
     '''
     Save the requested plots to disk.
     
@@ -553,7 +553,7 @@ def savefigs(plots=None, filetype=None, filename=None, folder=None, savefigargs=
         fullpath = fio.makefilepath(filename=filename, folder=folder, default=defaultname, ext='pdf')
         pdf = PdfPages(fullpath)
         filenames.append(fullpath)
-        ut.printv('PDF saved to %s' % fullpath, 2, verbose)
+        if verbose: print('PDF saved to %s' % fullpath)
     for p,item in enumerate(plots.items()):
         key,plt = item
         if index is None or index==p:
@@ -572,7 +572,7 @@ def savefigs(plots=None, filetype=None, filename=None, folder=None, savefigargs=
             if filetype == 'fig':
                 fio.saveobj(fullpath, plt)
                 filenames.append(fullpath)
-                ut.printv('Figure object saved to %s' % fullpath, 2, verbose)
+                if verbose: print('Figure object saved to %s' % fullpath)
             else:
                 reanimateplots(plt)
                 if filetype=='singlepdf':
@@ -580,7 +580,7 @@ def savefigs(plots=None, filetype=None, filename=None, folder=None, savefigargs=
                 else:
                     plt.savefig(fullpath, **defaultsavefigargs)
                     filenames.append(fullpath)
-                    ut.printv('%s plot saved to %s' % (filetype.upper(),fullpath), 2, verbose)
+                    if verbose: print('%s plot saved to %s' % (filetype.upper(),fullpath))
                 pl.close(plt)
 
     if filetype=='singlepdf': pdf.close()
@@ -596,9 +596,9 @@ def loadfig(filename=None):
         import pylab as pl
         import sciris as sc
         fig = pl.figure(); pl.plot(pl.rand(10))
-        op.saveplots(fig, filetype='fig', filename='example.fig')
+        sc.savefigs(fig, filetype='fig', filename='example.fig')
     Later:
-        example = op.loadplot('example.fig')
+        example = sc.loadfig('example.fig')
     '''
     pl.ion() # Without this, it doesn't show up
     fig = fio.loadobj(filename)
