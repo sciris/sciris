@@ -413,10 +413,9 @@ class ScirisApp(object):
             args = reqdict.get('args', [])
             kwargs = reqdict.get('kwargs', {})
         
-        # If the function name is not in the RPC dictionary, return an 
-        # error.
+        # If the function name is not in the RPC dictionary, return an error.
         if not fn_name in self.RPC_dict:
-            return jsonify({'error': 'Could not find requested RPC'})
+            return jsonify({'error': 'Could not find requested RPC "%s"' % fn_name})
             
         # Get the RPC we've found.
         found_RPC = self.RPC_dict[fn_name]
@@ -491,7 +490,7 @@ class ScirisApp(object):
             # Post an error to the Flask logger
             # limiting the exception information to 10000 characters maximum
             # (to prevent monstrous sqlalchemy outputs)
-            self.flask_app.logger.error("Exception during request %s: %.10000s" % (request, exception))
+            self.flask_app.logger.error('Exception during RPC "%s" request %s: %.10000s' % (fn_name, request, exception))
             
             # If we have a werkzeug exception, pass it on up to werkzeug to 
             # resolve and reply to.
@@ -499,32 +498,26 @@ class ScirisApp(object):
             if isinstance(e, HTTPException):
                 raise
                 
-            # Send back a response with status 500 that includes the exception 
-            # traceback.
+            # Send back a response with status 500 that includes the exception traceback.
             code = 500
             reply = {'exception': exception}
             return make_response(jsonify(reply), code)
         
         # If we are doing a download, prepare the response and send it off.
         if found_RPC.call_type == 'download':
-            # If we got None for a result (the full file name), return an error 
-            # to the client.
+            # If we got None for a result (the full file name), return an error to the client.
             if result is None:
-                return jsonify({'error': 'Could not find requested resource [result is None]'})
+                return jsonify({'error': 'Could not find resource to download from RPC "%s": result is None' % fn_name})
             
-            # Else, if the result is not even a string (which means it's not 
-            # a file name as expected)...
+            # Else, if the result is not even a string (which means it's not a file name as expected)...
             elif not sc.isstring(result):
-                # If the result is a dict with an 'error' key, then assume we 
-                # have a custom error that we want the RPC to return to the 
-                # browser, and do so.
+                # If the result is a dict with an 'error' key, then assume we have a custom error that we want the RPC to return to the browser, and do so.
                 if type(result) is dict and 'error' in result:
                     return jsonify(result)
                 
-                # Otherwise, return an error that the download RPC did not 
-                # return a filename.
+                # Otherwise, return an error that the download RPC did not return a filename.
                 else:
-                    return jsonify({'error': 'Download RPC did not return a filename (result is of type %s)' % type(result)})
+                    return jsonify({'error': 'Download RPC "%s" did not return a filename (result is of type %s)' % (fn_name, type(result))})
             
             # Pull out the directory and file names from the full file name.
             dir_name, file_name = os.path.split(result)
