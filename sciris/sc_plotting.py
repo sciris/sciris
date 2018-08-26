@@ -2,17 +2,16 @@
 ### IMPORTS
 ##############################################################################
 
-from matplotlib.colors import rgb_to_hsv, hsv_to_rgb
-from matplotlib import ticker
+from struct import unpack
+import pylab as pl
 import numpy as np
 from numpy.linalg import norm
-import pylab as pl
+from matplotlib import ticker
+from matplotlib.colors import rgb_to_hsv, hsv_to_rgb
+from matplotlib.colors import LinearSegmentedColormap as makecolormap
+from .sc_odict import odict
 from . import sc_utils as ut
 from . import sc_fileio as fio
-from .sc_odict import odict
-from numpy import linspace, meshgrid, array, transpose, inf, zeros, argmax, minimum
-from pylab import randn, show, convolve, array, seed, linspace, meshgrid, xlabel, ylabel, figure, pcolor
-from matplotlib.colors import LinearSegmentedColormap as makecolormap
 
 
 
@@ -91,7 +90,7 @@ def gridcolors(ncolors=10, limits=None, nsteps=10, asarray=False, reverse=False,
     """
 
     # Steal colorbrewer colors for small numbers of colors
-    colorbrewercolors = array([
+    colorbrewercolors = np.array([
     [ 55, 126, 184], # [27,  158, 119], # Old color
     [228,  26,  28], # [217, 95,  2],
     [ 77, 175,  74], # [117, 112, 179],
@@ -114,18 +113,18 @@ def gridcolors(ncolors=10, limits=None, nsteps=10, asarray=False, reverse=False,
         
         ## Calculate primitives and dot locations
         primitive = np.linspace(limits[0], limits[1], nsteps) # Define primitive color vector
-        x, y, z = meshgrid(primitive, primitive, primitive) # Create grid of all possible points
-        dots = transpose(array([x.flatten(), y.flatten(), z.flatten()])) # Flatten into an array of dots
+        x, y, z = np.meshgrid(primitive, primitive, primitive) # Create grid of all possible points
+        dots = np.transpose(np.array([x.flatten(), y.flatten(), z.flatten()])) # Flatten into an array of dots
         ndots = nsteps**3 # Calculate the number of dots
         indices = [0] # Initialize the array
         
         ## Calculate the distances
         for pt in range(ncolors-1): # Loop over each point
-            totaldistances = inf+zeros(ndots) # Initialize distances
+            totaldistances = np.inf+np.zeros(ndots) # Initialize distances
             for ind in indices: # Loop over each existing point
                 rgbdistances = dots - dots[ind] # Calculate the distance in RGB space
-                totaldistances = minimum(totaldistances, norm(rgbdistances,axis=1)) # Calculate the minimum Euclidean distance
-            maxindex = argmax(totaldistances) # Find the point that maximizes the minimum distance
+                totaldistances = np.minimum(totaldistances, norm(rgbdistances,axis=1)) # Calculate the minimum Euclidean distance
+            maxindex = np.argmax(totaldistances) # Find the point that maximizes the minimum distance
             indices.append(maxindex) # Append this index
         
         colors = dots[indices,:]
@@ -156,99 +155,99 @@ def gridcolors(ncolors=10, limits=None, nsteps=10, asarray=False, reverse=False,
 
 
 ## Create colormap
-def alpinecolormap(gap=0.1, mingreen=0.2, redbluemix=0.5, epsilon=0.01, test=False):
-   """
-   ALPINECOLORMAP
-
-   This program generates a map based on ascending height. Based on data from
-   Kazakhstan.
-
-   Test case:
-   import alpinecolormap
-   alpinecolormap.testcolormap()
-
-   Usage example:
-   from alpinecolormap import alpinecolormap
-   from pylab import randn, imshow, show
-   imshow(randn(20,20),interpolation='none',cmap=alpinecolormap())
-   show()
-
-   Version: 2014aug06 
-   """
-   water = array([3,18,59])/256.
-   desert = array([194,175,160*0.6])/256.
-   forest1 = array([61,86,46])/256.
-   forest2 = array([61,86,46])/256.*1.2
-   rock = array([119,111,109])/256.*1.3
-   snow = array([243,239,238])/256.
-   breaks = [0.0,0.5,0.7,0.8,0.9,1.0]
+def alpinecolormap(gap=0.1, mingreen=0.2, redbluemix=0.5, epsilon=0.01, demo=False):
+    """
+    ALPINECOLORMAP
+ 
+    This program generates a map based on ascending height. Based on data from
+    Kazakhstan.
+ 
+    Test case:
+    import alpinecolormap
+    alpinecolormap.testcolormap()
+ 
+    Usage example:
+    from alpinecolormap import alpinecolormap
+    from pylab import randn, imshow, show
+    imshow(randn(20,20),interpolation='none',cmap=alpinecolormap())
+    show()
+ 
+    Version: 2014aug06 
+    """
+    water = np.array([3,18,59])/256.
+    desert = np.array([194,175,160*0.6])/256.
+    forest1 = np.array([61,86,46])/256.
+    forest2 = np.array([61,86,46])/256.*1.2
+    rock = np.array([119,111,109])/256.*1.3
+    snow = np.array([243,239,238])/256.
+    breaks = [0.0,0.5,0.7,0.8,0.9,1.0]
+    
+    cdict = {'red': ((breaks[0], water[0], water[0]),
+                     (breaks[1], desert[0], desert[0]),
+                     (breaks[2], forest1[0], forest1[0]),
+                     (breaks[3], forest2[0], forest2[0]),
+                     (breaks[4], rock[0], rock[0]),
+                     (breaks[5], snow[0], snow[0])),
+ 
+          'green':  ((breaks[0], water[1], water[1]),
+                     (breaks[1], desert[1], desert[1]),
+                     (breaks[2], forest1[1], forest1[1]),
+                     (breaks[3], forest2[1], forest2[1]),
+                     (breaks[4], rock[1], rock[1]),
+                     (breaks[5], snow[1], snow[1])),
+ 
+          'blue':   ((breaks[0], water[2], water[2]),
+                     (breaks[1], desert[2], desert[2]),
+                     (breaks[2], forest1[2], forest1[2]),
+                     (breaks[3], forest2[2], forest2[2]),
+                     (breaks[4], rock[2], rock[2]),
+                     (breaks[5], snow[2], snow[2]))}
+    
+    cmap = makecolormap('alpinecolormap',cdict,256)
    
-   cdict = {'red': ((breaks[0], water[0], water[0]),
-                    (breaks[1], desert[0], desert[0]),
-                    (breaks[2], forest1[0], forest1[0]),
-                    (breaks[3], forest2[0], forest2[0]),
-                    (breaks[4], rock[0], rock[0]),
-                    (breaks[5], snow[0], snow[0])),
-
-         'green':  ((breaks[0], water[1], water[1]),
-                    (breaks[1], desert[1], desert[1]),
-                    (breaks[2], forest1[1], forest1[1]),
-                    (breaks[3], forest2[1], forest2[1]),
-                    (breaks[4], rock[1], rock[1]),
-                    (breaks[5], snow[1], snow[1])),
-
-         'blue':   ((breaks[0], water[2], water[2]),
-                    (breaks[1], desert[2], desert[2]),
-                    (breaks[2], forest1[2], forest1[2]),
-                    (breaks[3], forest2[2], forest2[2]),
-                    (breaks[4], rock[2], rock[2]),
-                    (breaks[5], snow[2], snow[2]))}
    
-   cmap = makecolormap('alpinecolormap',cdict,256)
-   
-   
-   if test:
-       from mpl_toolkits.mplot3d import Axes3D # analysis:ignore
+    def demoplot():
+        from mpl_toolkits.mplot3d import Axes3D # analysis:ignore
     
         maxheight = 3
         horizontalsize = 4;
-        seed(8)
+        np.seed(8)
         n = 100
         smoothing = 40;
-        kernel = array([0.25,0.5,0.25])
-        data = randn(n,n)
+        kernel = np.array([0.25,0.5,0.25])
+        data = np.randn(n,n)
         for s in range(smoothing): # Quick-and-dirty-and-slow smoothing
-            for i in range(n): data[:,i] = convolve(data[:,i],kernel,mode='same')
-            for i in range(n): data[i,:] = convolve(data[i,:],kernel,mode='same')
+            for i in range(n): data[:,i] = np.convolve(data[:,i],kernel,mode='same')
+            for i in range(n): data[i,:] = np.convolve(data[i,:],kernel,mode='same')
         data -= data.min()
         data /= data.max()
         data *= maxheight
         
-        fig = figure(figsize=(18,8))
+        fig = pl.figure(figsize=(18,8))
         ax = fig.gca(projection='3d')
         ax.view_init(elev=45, azim=30)
         X = np.linspace(0,horizontalsize,n)
-        X, Y = meshgrid(X, X)
+        X, Y = np.meshgrid(X, X)
         surf = ax.plot_surface(X, Y, data, rstride=1, cstride=1, cmap=alpinecolormap(), linewidth=0, antialiased=False)
         cb = fig.colorbar(surf)
         cb.set_label('Height (km)',horizontalalignment='right', labelpad=50)
-        xlabel('Position (km)')
-        ylabel('Position (km)')
-        show()
+        pl.xlabel('Position (km)')
+        pl.ylabel('Position (km)')
+        pl.show()
     
-        fig = figure(figsize=(8,6))
+        fig = pl.figure(figsize=(8,6))
         ax = fig.gca()
         X = np.linspace(0,horizontalsize,n)
-        pcl = pcolor(X, X, data, cmap=alpinecolormap(), linewidth=0, antialiased=False)
+        pcl = pl.pcolor(X, X, data, cmap=alpinecolormap(), linewidth=0, antialiased=False)
         cb2 = fig.colorbar(pcl)
         cb2.set_label('Height (km)',horizontalalignment='right', labelpad=50)
-        xlabel('Position (km)')
-        ylabel('Position (km)')
-        show()
-   
-   
-   
-   return cmap
+        pl.xlabel('Position (km)')
+        pl.ylabel('Position (km)')
+        pl.show()
+        
+    if demo: demoplot()
+
+    return cmap
 
 
 
@@ -290,7 +289,7 @@ def vectocolor(vector, cmap=None, asarray=True, reverse=False):
 
    # The vector has elements
    if len(vector):
-      vector = array(vector) # Just to be sure
+      vector = np.array(vector) # Just to be sure
       vector = vector-vector.min() # Subtract minimum
       vector = vector/float(vector.max()) # Divide by maximum
       nelements = len(vector) # Count number of elements
@@ -312,80 +311,81 @@ def vectocolor(vector, cmap=None, asarray=True, reverse=False):
 
 
 ## Create colormap
-def bicolormap(gap=0.1,mingreen=0.2,redbluemix=0.5,epsilon=0.01):
-   """
-   BICOLORMAP
-
-   This program generators a two-color map, blue for negative, red for
-   positive changes, with grey in the middle. The input argument is how much
-   of a color gap there is between the red scale and the blue one.
-
-   The function has four parameters:
-     gap: sets how big of a gap between red and blue color scales there is (0=no gap; 1=pure red and pure blue)
-     mingreen: how much green to include at the extremes of the red-blue color scale
-     redbluemix: how much red to mix with the blue and vice versa at the extremes of the scale
-     epsilon: what fraction of the colormap to make gray in the middle
-
-   Examples:
-     bicolormap(gap=0,mingreen=0,redbluemix=1,epsilon=0) # From pure red to pure blue with white in the middle
-     bicolormap(gap=0,mingreen=0,redbluemix=0,epsilon=0.1) # Red -> yellow -> gray -> turquoise -> blue
-     bicolormap(gap=0.3,mingreen=0.2,redbluemix=0,epsilon=0.01) # Red and blue with a sharp distinction between
-
-   Version: 2013sep13 
-   """
-   from matplotlib.colors import LinearSegmentedColormap as makecolormap
-   
-   mng=mingreen; # Minimum amount of green to add into the colors
-   mix=redbluemix; # How much red to mix with the blue an vice versa
-   eps=epsilon; # How much of the center of the colormap to make gray
-   omg=1-gap # omg = one minus gap
-   
-   cdict = {'red': ((0.00000, 0.0, 0.0),
-                    (0.5-eps, mix, omg),
-                    (0.50000, omg, omg),
-                    (0.5+eps, omg, 1.0),
-                    (1.00000, 1.0, 1.0)),
-
-         'green':  ((0.00000, mng, mng),
-                    (0.5-eps, omg, omg),
-                    (0.50000, omg, omg),
-                    (0.5+eps, omg, omg),
-                    (1.00000, mng, mng)),
-
-         'blue':   ((0.00000, 1.0, 1.0),
-                    (0.5-eps, 1.0, omg),
-                    (0.50000, omg, omg),
-                    (0.5+eps, omg, mix),
-                    (1.00000, 0.0, 0.0))}
-   cmap = makecolormap('bicolormap',cdict,256)
-
-   return cmap
-
-## Test
-def bicolormaptest():
-    from pylab import figure, subplot, imshow, colorbar, rand, show
+def bicolormap(gap=0.1, mingreen=0.2, redbluemix=0.5, epsilon=0.01, demo=False):
+    """
+    BICOLORMAP
+ 
+    This program generators a two-color map, blue for negative, red for
+    positive changes, with grey in the middle. The input argument is how much
+    of a color gap there is between the red scale and the blue one.
+ 
+    The function has four parameters:
+      gap: sets how big of a gap between red and blue color scales there is (0=no gap; 1=pure red and pure blue)
+      mingreen: how much green to include at the extremes of the red-blue color scale
+      redbluemix: how much red to mix with the blue and vice versa at the extremes of the scale
+      epsilon: what fraction of the colormap to make gray in the middle
+ 
+    Examples:
+      bicolormap(gap=0,mingreen=0,redbluemix=1,epsilon=0) # From pure red to pure blue with white in the middle
+      bicolormap(gap=0,mingreen=0,redbluemix=0,epsilon=0.1) # Red -> yellow -> gray -> turquoise -> blue
+      bicolormap(gap=0.3,mingreen=0.2,redbluemix=0,epsilon=0.01) # Red and blue with a sharp distinction between
+ 
+    Version: 2013sep13 
+    """
+    from matplotlib.colors import LinearSegmentedColormap as makecolormap
     
-    maps=[]
-    maps.append(bicolormap()) # Default ,should work for most things
-    maps.append(bicolormap(gap=0,mingreen=0,redbluemix=1,epsilon=0)) # From pure red to pure blue with white in the middle
-    maps.append(bicolormap(gap=0,mingreen=0,redbluemix=0,epsilon=0.1)) # Red -> yellow -> gray -> turquoise -> blue
-    maps.append(bicolormap(gap=0.3,mingreen=0.2,redbluemix=0,epsilon=0.01)) # Red and blue with a sharp distinction between
-    nexamples=len(maps)
+    mng=mingreen; # Minimum amount of green to add into the colors
+    mix=redbluemix; # How much red to mix with the blue an vice versa
+    eps=epsilon; # How much of the center of the colormap to make gray
+    omg=1-gap # omg = one minus gap
     
-    figure(figsize=(5*nexamples,4))    
-    for m in range(nexamples):
-        subplot(1,nexamples,m+1)
-        imshow(rand(20,20),cmap=maps[m],interpolation='none');
-        colorbar()
-    show()
+    cdict = {'red': ((0.00000, 0.0, 0.0),
+                     (0.5-eps, mix, omg),
+                     (0.50000, omg, omg),
+                     (0.5+eps, omg, 1.0),
+                     (1.00000, 1.0, 1.0)),
+ 
+          'green':  ((0.00000, mng, mng),
+                     (0.5-eps, omg, omg),
+                     (0.50000, omg, omg),
+                     (0.5+eps, omg, omg),
+                     (1.00000, mng, mng)),
+ 
+          'blue':   ((0.00000, 1.0, 1.0),
+                     (0.5-eps, 1.0, omg),
+                     (0.50000, omg, omg),
+                     (0.5+eps, omg, mix),
+                     (1.00000, 0.0, 0.0))}
+    cmap = makecolormap('bicolormap',cdict,256)
+    
+    def demoplot():
+        from pylab import figure, subplot, imshow, colorbar, rand, show
+        
+        maps=[]
+        maps.append(bicolormap()) # Default ,should work for most things
+        maps.append(bicolormap(gap=0,mingreen=0,redbluemix=1,epsilon=0)) # From pure red to pure blue with white in the middle
+        maps.append(bicolormap(gap=0,mingreen=0,redbluemix=0,epsilon=0.1)) # Red -> yellow -> gray -> turquoise -> blue
+        maps.append(bicolormap(gap=0.3,mingreen=0.2,redbluemix=0,epsilon=0.01)) # Red and blue with a sharp distinction between
+        nexamples=len(maps)
+        
+        figure(figsize=(5*nexamples,4))    
+        for m in range(nexamples):
+            subplot(1,nexamples,m+1)
+            imshow(rand(20,20),cmap=maps[m],interpolation='none');
+            colorbar()
+        show()
+    
+    if demo: demoplot()
+
+    return cmap
+
+
 
 
 
 def hex2rgb(string):
     ''' A little helper function to convert e.g. '86bc25' to a pleasing shade of green. '''
-    from numpy import array
-    from struct import unpack
-    rgb = array(unpack('BBB',string.decode('hex')),dtype=float)/255.
+    rgb = np.array(unpack('BBB',string.decode('hex')),dtype=float)/255.
     return rgb
 
 
@@ -426,7 +426,7 @@ def setylim(data=None, ax=None):
     at all data (a list of arrays) and computes the lower limit to
     use, e.g.
     
-        setylim([array([-3,4]), array([6,4,6])], ax)
+        setylim([np.array([-3,4]), np.array([6,4,6])], ax)
     
     will keep Matplotlib's lower limit, since at least one data value
     is below 0.
