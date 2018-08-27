@@ -1,7 +1,7 @@
 def asd(function, x, args=None, stepsize=0.1, sinc=2, sdec=2, pinc=2, pdec=2,
-    pinitial=None, sinitial=None, absinitial=None, xmin=None, xmax=None,
-    maxiters=None, maxtime=None, abstol=1e-6, reltol=1e-3, stalliters=None,
-    stoppingfunc=None, randseed=None, label=None, fulloutput=True, verbose=2, **kwargs):
+    pinitial=None, sinitial=None, xmin=None, xmax=None, maxiters=None, maxtime=None, 
+    abstol=1e-6, reltol=1e-3, stalliters=None, stoppingfunc=None, randseed=None, 
+    label=None, fulloutput=True, verbose=2, **kwargs):
     """
     Optimization using adaptive stochastic descent (ASD).
     
@@ -33,8 +33,8 @@ def asd(function, x, args=None, stepsize=0.1, sinc=2, sdec=2, pinc=2, pdec=2,
       maxiters       1000    Maximum number of iterations (1 iteration = 1 function evaluation)
       maxtime        3600    Maximum time allowed, in seconds
       abstol         1e-6    Minimum absolute change in objective function
-      reltol         5e-3    Minimum relative change in objective function
-      stalliters     50      Number of iterations over which to calculate TolFun
+      reltol         1e-3    Minimum relative change in objective function
+      stalliters     10*n    Number of iterations over which to calculate TolFun (n = number of parameters)
       stoppingfunc   None    External method that can be used to stop the calculation from the outside.
       randseed       None    The random seed to use
       fulloutput     True    Whether or not to return the full output
@@ -46,7 +46,7 @@ def asd(function, x, args=None, stepsize=0.1, sinc=2, sdec=2, pinc=2, pdec=2,
         from numpy.linalg import norm
         x, fval, details = asd(norm, [1, 2, 3])
     
-    Version: 2018aug20 by Cliff Kerr (cliff@thekerrlab.com)
+    Version: 2018aug26 by Cliff Kerr (cliff@thekerrlab.com)
     """
     from numpy import array, shape, reshape, ones, zeros, mean, cumsum, mod, concatenate, floor, flatnonzero, isnan, inf
     from numpy.random import random, seed
@@ -65,7 +65,7 @@ def asd(function, x, args=None, stepsize=0.1, sinc=2, sdec=2, pinc=2, pdec=2,
         else:         return output
 
     # Handle inputs and set defaults
-    if maxtime  is None: maxtime = 3600
+    if maxtime  is None: maxtime  = 3600
     if maxiters is None: maxiters = 1000
     maxrangeiters = 1000 # Number of times to try generating a new parameter
     x, origshape = consistentshape(x, origshape=True) # Turn it into a vector but keep the original shape (not necessarily class, though)
