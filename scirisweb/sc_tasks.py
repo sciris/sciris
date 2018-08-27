@@ -646,7 +646,8 @@ def make_async_tag(task_func_dict):
     def task_func_decorator(task_func):
         @wraps(task_func)
         def wrapper(*args, **kwargs):        
-            task_func(*args, **kwargs)
+            output = task_func(*args, **kwargs)
+            return output
             
         # Add the function to the dictionary.
         task_func_dict[task_func.__name__] = task_func
