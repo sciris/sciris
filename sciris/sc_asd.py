@@ -1,6 +1,6 @@
 def asd(function, x, args=None, stepsize=0.1, sinc=2, sdec=2, pinc=2, pdec=2,
-    pinitial=None, sinitial=None, absinitial=None, xmin=None, xmax=None,
-    maxiters=None, maxtime=None, abstol=1e-6, reltol=1e-3, stalliters=None,
+    pinitial=None, sinitial=None, xmin=None, xmax=None,
+    maxiters=None, maxtime=None, abstol=1e-6, reltol=1e-3, stalliters=50,
     stoppingfunc=None, randseed=None, label=None, fulloutput=True, verbose=2, **kwargs):
     """
     Optimization using adaptive stochastic descent (ASD).
