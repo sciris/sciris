@@ -365,13 +365,6 @@ def make_celery_instance(config=None):
     # Define the Celery instance.
     celery_instance = Celery('tasks')
     
-    # TODO: remove this stuff post-debugging
-    if config is None:
-        print 'OH NO: config is None!'
-    else:
-        print 'OKAY: config is not None: '
-        print config
-    
     # Configure Celery with config.py.
     if config is not None:
         celery_instance.config_from_object(config)
