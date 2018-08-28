@@ -235,6 +235,56 @@ class ScirisApp(object):
         # Load the DataStore state from disk.
         ds.globalvars.data_store.load()
         
+        # Save the directories in the DataStore so Celery can potentially 
+        # have access to them.
+        
+        # If we have a file save directory path...
+        if ds.globalvars.file_save_dir is not None:
+            # Look for an existing file_save_dir UID.
+            file_save_dir_uid = ds.globalvars.data_store.get_uid('filesavedir', 
+                'File Save Directory')
+            
+            # If there was a match, update with the file save directory.
+            if file_save_dir_uid is not None:        
+                ds.globalvars.data_store.update(file_save_dir_uid, 
+                    ds.globalvars.file_save_dir)
+                
+            # Otherwise, add the file save directory.
+            else:
+                ds.globalvars.data_store.add(ds.globalvars.file_save_dir, 
+                    type_label='filesavedir', file_suffix='.fsd', 
+                    instance_label='File Save Directory')
+        
+        # Look for an existing downloads_dir UID.
+        downloads_dir_uid = ds.globalvars.data_store.get_uid('filesavedir', 
+            'Downloads Directory')
+        
+        # If there was a match, update with the downloads directory.
+        if downloads_dir_uid is not None:        
+            ds.globalvars.data_store.update(downloads_dir_uid, 
+                ds.globalvars.downloads_dir)
+            
+        # Otherwise, add the downloads directory.
+        else:
+            ds.globalvars.data_store.add(ds.globalvars.downloads_dir, 
+                type_label='filesavedir', file_suffix='.fsd', 
+                instance_label='Downloads Directory')
+        
+        # Look for an existing uploads_dir UID.
+        uploads_dir_uid = ds.globalvars.data_store.get_uid('filesavedir', 
+            'Uploads Directory')
+        
+        # If there was a match, update with the uploads directory.
+        if uploads_dir_uid is not None:        
+            ds.globalvars.data_store.update(uploads_dir_uid, 
+                ds.globalvars.uploads_dir)
+            
+        # Otherwise, add the uploads directory.
+        else:
+            ds.globalvars.data_store.add(ds.globalvars.uploads_dir, 
+                type_label='filesavedir', file_suffix='.fsd', 
+                instance_label='Uploads Directory')
+            
         # Uncomment this line (for now) to reset the database, and then recomment
         # before running for usage.
 #        ds.data_store.delete_all()
@@ -309,6 +359,7 @@ class ScirisApp(object):
             
         # Have the tasks.py module make the Celery app to connect to the 
         # worker, passing in the config parameters.
+        print '** make_celery_instance() _init_tasks() call'
         tasks.make_celery_instance(app_config)
         
     def run(self, with_twisted=True, with_flask=True, with_client=True, 
@@ -413,10 +464,9 @@ class ScirisApp(object):
             args = reqdict.get('args', [])
             kwargs = reqdict.get('kwargs', {})
         
-        # If the function name is not in the RPC dictionary, return an 
-        # error.
+        # If the function name is not in the RPC dictionary, return an error.
         if not fn_name in self.RPC_dict:
-            return jsonify({'error': 'Could not find requested RPC'})
+            return jsonify({'error': 'Could not find requested RPC "%s"' % fn_name})
             
         # Get the RPC we've found.
         found_RPC = self.RPC_dict[fn_name]
@@ -491,7 +541,7 @@ class ScirisApp(object):
             # Post an error to the Flask logger
             # limiting the exception information to 10000 characters maximum
             # (to prevent monstrous sqlalchemy outputs)
-            self.flask_app.logger.error("Exception during request %s: %.10000s" % (request, exception))
+            self.flask_app.logger.error('Exception during RPC "%s" request %s: %.10000s' % (fn_name, request, exception))
             
             # If we have a werkzeug exception, pass it on up to werkzeug to 
             # resolve and reply to.
@@ -499,32 +549,26 @@ class ScirisApp(object):
             if isinstance(e, HTTPException):
                 raise
                 
-            # Send back a response with status 500 that includes the exception 
-            # traceback.
+            # Send back a response with status 500 that includes the exception traceback.
             code = 500
             reply = {'exception': exception}
             return make_response(jsonify(reply), code)
         
         # If we are doing a download, prepare the response and send it off.
         if found_RPC.call_type == 'download':
-            # If we got None for a result (the full file name), return an error 
-            # to the client.
+            # If we got None for a result (the full file name), return an error to the client.
             if result is None:
-                return jsonify({'error': 'Could not find requested resource [result is None]'})
+                return jsonify({'error': 'Could not find resource to download from RPC "%s": result is None' % fn_name})
             
-            # Else, if the result is not even a string (which means it's not 
-            # a file name as expected)...
+            # Else, if the result is not even a string (which means it's not a file name as expected)...
             elif not sc.isstring(result):
-                # If the result is a dict with an 'error' key, then assume we 
-                # have a custom error that we want the RPC to return to the 
-                # browser, and do so.
+                # If the result is a dict with an 'error' key, then assume we have a custom error that we want the RPC to return to the browser, and do so.
                 if type(result) is dict and 'error' in result:
                     return jsonify(result)
                 
-                # Otherwise, return an error that the download RPC did not 
-                # return a filename.
+                # Otherwise, return an error that the download RPC did not return a filename.
                 else:
-                    return jsonify({'error': 'Download RPC did not return a filename (result is of type %s)' % type(result)})
+                    return jsonify({'error': 'Download RPC "%s" did not return a filename (result is of type %s)' % (fn_name, type(result))})
             
             # Pull out the directory and file names from the full file name.
             dir_name, file_name = os.path.split(result)

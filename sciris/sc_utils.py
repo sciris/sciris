@@ -47,7 +47,7 @@ def uuid(uid=None, which=None, die=False, as_string=False):
             else: # Convert
                 output = py_uuid.UUID(uid)
         except Exception as E: 
-            errormsg = 'Could not covert "%s" to a UID (%s)' % (uid, repr(E))
+            errormsg = 'Could not convert "%s" to a UID (%s)' % (uid, repr(E))
             if die:
                 raise Exception(errormsg)
             else:

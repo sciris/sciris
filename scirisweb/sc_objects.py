@@ -65,6 +65,8 @@ class Blob(object):
         self.instance_label = instance_label
         
     def in_data_store(self):
+        if self.instance_label == 'Task Dictionary':
+            print('>>> CHECKING WHETHER TASK DICTIONARY IS IN DATASTORE')
         return (ds.globalvars.data_store.retrieve(self.uid) is not None)
     
     def load_from_copy(self, other_obj):
