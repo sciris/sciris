@@ -283,7 +283,10 @@ class TaskDict(sobj.BlobDict):
        
         # Update our DataStore representation if we are there. 
         if self.in_data_store():
+            print '>>> TASKDICT IN THE DATASTORE'
             self.update_data_store()
+        else:
+            print '>>> TASKDICT NOT IN THE DATASTORE'
     
     def delete_by_uid(self, uid):
         # Make sure the argument is a valid UUID, converting a hex text to a
@@ -379,8 +382,10 @@ def make_celery_instance(config=None):
         # (in which this function is running) will not know about the same context 
         # from the datastore.py module that the server code will.
         
-        # Create the DataStore object, setting up Redis.
-        ds.globalvars.data_store = ds.DataStore(redis_db_URL=config.REDIS_URL)
+        # Only if we have not already done so, create the DataStore object, 
+        # setting up Redis.
+        if ds.globalvars.data_store is None:
+            ds.globalvars.data_store = ds.DataStore(redis_db_URL=config.REDIS_URL)
         
         # Load the DataStore state from disk.
         ds.globalvars.data_store.load()
@@ -393,7 +398,7 @@ def make_celery_instance(config=None):
         
         # Load the TaskDict tasks from Redis.
         task_dict.load_from_data_store()
-        
+        print('>>> STARTING run_task() FOR A TASK.')
         task_dict.show()  # TODO: remove this post-debugging
             
         # Find a matching task record (if any) to the task_id.
@@ -413,6 +418,7 @@ def make_celery_instance(config=None):
         try:
             result = task_func_dict[func_name](*args, **kwargs)
             match_taskrec.status = 'completed'
+            print('>>> DUDE, WE COMPLETED A TASK HERE.')
 
         # If there's an exception, grab the stack track and set the TaskRecord 
         # to have stopped on in error.
@@ -429,7 +435,9 @@ def make_celery_instance(config=None):
         match_taskrec.stop_time = sc.now()
         match_taskrec.execution_time = \
             (match_taskrec.stop_time - match_taskrec.start_time).total_seconds()
+        print('>>> IM GUESSING THE ERROR IS IN THE FOLLOWING LINE.')
         task_dict.update(match_taskrec)
+        print('>>> AT THIS POINT, WE TRIED TO UPDATE THE TASK DICT FOR DONENESS.')
         
         # Return the result.
         return result 
