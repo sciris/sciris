@@ -365,6 +365,13 @@ def make_celery_instance(config=None):
     # Define the Celery instance.
     celery_instance = Celery('tasks')
     
+    # TODO: remove this stuff post-debugging
+    if config is None:
+        print 'OH NO: config is None!'
+    else:
+        print 'OKAY: config is not None: '
+        print config
+    
     # Configure Celery with config.py.
     if config is not None:
         celery_instance.config_from_object(config)
@@ -393,6 +400,8 @@ def make_celery_instance(config=None):
         
         # Load the TaskDict tasks from Redis.
         task_dict.load_from_data_store()
+        
+        task_dict.show()  # TODO: remove this post-debugging
             
         # Find a matching task record (if any) to the task_id.
         match_taskrec = task_dict.get_task_record_by_task_id(task_id)

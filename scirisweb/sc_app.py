@@ -235,6 +235,56 @@ class ScirisApp(object):
         # Load the DataStore state from disk.
         ds.globalvars.data_store.load()
         
+        # Save the directories in the DataStore so Celery can potentially 
+        # have access to them.
+        
+        # If we have a file save directory path...
+        if ds.globalvars.file_save_dir is not None:
+            # Look for an existing file_save_dir UID.
+            file_save_dir_uid = ds.globalvars.data_store.get_uid('filesavedir', 
+                'File Save Directory')
+            
+            # If there was a match, update with the file save directory.
+            if file_save_dir_uid is not None:        
+                ds.globalvars.data_store.update(file_save_dir_uid, 
+                    ds.globalvars.file_save_dir)
+                
+            # Otherwise, add the file save directory.
+            else:
+                ds.globalvars.data_store.add(ds.globalvars.file_save_dir, 
+                    type_label='filesavedir', file_suffix='.fsd', 
+                    instance_label='File Save Directory')
+        
+        # Look for an existing downloads_dir UID.
+        downloads_dir_uid = ds.globalvars.data_store.get_uid('filesavedir', 
+            'Downloads Directory')
+        
+        # If there was a match, update with the downloads directory.
+        if downloads_dir_uid is not None:        
+            ds.globalvars.data_store.update(downloads_dir_uid, 
+                ds.globalvars.downloads_dir)
+            
+        # Otherwise, add the downloads directory.
+        else:
+            ds.globalvars.data_store.add(ds.globalvars.downloads_dir, 
+                type_label='filesavedir', file_suffix='.fsd', 
+                instance_label='Downloads Directory')
+        
+        # Look for an existing uploads_dir UID.
+        uploads_dir_uid = ds.globalvars.data_store.get_uid('filesavedir', 
+            'Uploads Directory')
+        
+        # If there was a match, update with the uploads directory.
+        if uploads_dir_uid is not None:        
+            ds.globalvars.data_store.update(uploads_dir_uid, 
+                ds.globalvars.uploads_dir)
+            
+        # Otherwise, add the uploads directory.
+        else:
+            ds.globalvars.data_store.add(ds.globalvars.uploads_dir, 
+                type_label='filesavedir', file_suffix='.fsd', 
+                instance_label='Uploads Directory')
+            
         # Uncomment this line (for now) to reset the database, and then recomment
         # before running for usage.
 #        ds.data_store.delete_all()
@@ -309,6 +359,7 @@ class ScirisApp(object):
             
         # Have the tasks.py module make the Celery app to connect to the 
         # worker, passing in the config parameters.
+        print '** make_celery_instance() _init_tasks() call'
         tasks.make_celery_instance(app_config)
         
     def run(self, with_twisted=True, with_flask=True, with_client=True, 
