@@ -379,6 +379,7 @@ def make_celery_instance(config=None):
    
     @celery_instance.task
     def run_task(task_id, func_name, args, kwargs):
+        print('>>> START OF run_task() FOR %s' % task_id)
         # We need to load in the whole DataStore here because the Celery worker 
         # (in which this function is running) will not know about the same context 
         # from the datastore.py module that the server code will.
@@ -389,6 +390,7 @@ def make_celery_instance(config=None):
             ds.globalvars.data_store = ds.DataStore(redis_db_URL=config.REDIS_URL)
         
         # Load the DataStore state from disk.
+        print('>>> LOADING DATASTORE FOR %s' % task_id)
         ds.globalvars.data_store.load()
         
         # Look for an existing tasks dictionary.
@@ -399,7 +401,7 @@ def make_celery_instance(config=None):
         
         # Load the TaskDict tasks from Redis.
         task_dict.load_from_data_store()
-        print('>>> STARTING run_task() FOR A TASK.')
+        print('>>> FINISHED LOADING DATASTORE FOR %s' % task_id)
         task_dict.show()  # TODO: remove this post-debugging
             
         # Find a matching task record (if any) to the task_id.
@@ -409,8 +411,10 @@ def make_celery_instance(config=None):
         match_taskrec.status = 'started'
         match_taskrec.start_time = sc.now()
         match_taskrec.pending_time = \
-            (match_taskrec.start_time - match_taskrec.queue_time).total_seconds()        
+            (match_taskrec.start_time - match_taskrec.queue_time).total_seconds()
+        print('>>> BEFORE STARTED UPDATE OF TASK DICTIONARY FOR %s' % task_id)
         task_dict.update(match_taskrec)
+        print('>>> AFTER STARTED UPDATE OF TASK DICTIONARY FOR %s' % task_id)
         
         # Make the actual function call, inside a try block in case there is 
         # an exception thrown.
@@ -419,7 +423,7 @@ def make_celery_instance(config=None):
         try:
             result = task_func_dict[func_name](*args, **kwargs)
             match_taskrec.status = 'completed'
-            print('>>> DUDE, WE COMPLETED A TASK HERE.')
+            print('>>> SUCCESSFULLY COMPLETED TASK %s' % task_id)
 
         # If there's an exception, grab the stack track and set the TaskRecord 
         # to have stopped on in error.
@@ -428,6 +432,7 @@ def make_celery_instance(config=None):
             match_taskrec.status = 'error'
             match_taskrec.error_text = error_text
             result = error_text
+            print('>>> FAILED TASK %s' % task_id)
         
         # Set the TaskRecord to indicate end of the task.
         # NOTE: Even if the browser has ordered the deletion of the task 
@@ -436,9 +441,10 @@ def make_celery_instance(config=None):
         match_taskrec.stop_time = sc.now()
         match_taskrec.execution_time = \
             (match_taskrec.stop_time - match_taskrec.start_time).total_seconds()
-        print('>>> IM GUESSING THE ERROR IS IN THE FOLLOWING LINE.')
+        print('>>> BEFORE FINISHED UPDATE OF TASK DICTIONARY FOR %s' % task_id)
         task_dict.update(match_taskrec)
-        print('>>> AT THIS POINT, WE TRIED TO UPDATE THE TASK DICT FOR DONENESS.')
+        print('>>> AFTER FINISHED UPDATE OF TASK DICTIONARY FOR %s' % task_id)
+        print('>>> END OF run_task() FOR %s' % task_id)
         
         # Return the result.
         return result 
