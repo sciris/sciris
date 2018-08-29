@@ -14,6 +14,8 @@ from . import sc_datastore as ds
 from . import sc_rpcs as rpcs
 from . import sc_objects as sobj
 
+from time import sleep
+
 
 ################################################################################
 ### Globals
@@ -379,6 +381,7 @@ def make_celery_instance(config=None):
    
     @celery_instance.task
     def run_task(task_id, func_name, args, kwargs):
+        sleep(5)
         print('>>> START OF run_task() FOR %s' % task_id)
         # We need to load in the whole DataStore here because the Celery worker 
         # (in which this function is running) will not know about the same context 
