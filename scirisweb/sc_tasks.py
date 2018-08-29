@@ -286,7 +286,10 @@ class TaskDict(sobj.BlobDict):
             del self.task_id_hashes[old_task_id]            
             
         # Add the task_id hash for this task record.
-        self.task_id_hashes[task_record.task_id] = task_record.uid            
+        self.task_id_hashes[task_record.task_id] = task_record.uid
+        # TODO: I'm not sure if this change gets propagated when the 
+        # TaskRecords are separate from the TaskDict.  If not, changing the 
+        # task_id in the update call might not work.          
                        
         # Do the rest of the object update.
         self.update_object(task_record)
