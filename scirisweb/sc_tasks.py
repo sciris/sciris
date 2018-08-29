@@ -14,7 +14,7 @@ from . import sc_datastore as ds
 from . import sc_rpcs as rpcs
 from . import sc_objects as sobj
 
-from time import sleep
+from time import sleep  # TODO: remove this later (assuming we don't need it)
 
 
 ################################################################################
@@ -232,7 +232,7 @@ class TaskDict(sobj.BlobDict):
         instance_label='Task Dictionary'):
         # Set superclass parameters.
         super(TaskDict, self).__init__(uid, type_prefix, file_suffix, 
-             instance_label, objs_within_coll=True)
+             instance_label, objs_within_coll=False)
         
         # Create the Python dict to hold the hashes from task_ids to the UIDs.
         self.task_id_hashes = {}
@@ -250,6 +250,11 @@ class TaskDict(sobj.BlobDict):
     def get_task_record_by_task_id(self, task_id):
         # Get the task record's UID matching the task_id.
         id_index = self.task_id_hashes.get(task_id, None)
+        print('TRYING TO GET TASK RECORD')
+        print('whole dict')
+        print self.task_id_hashes
+#        print('the fetch')
+#        print self.task_id_hashes[task_id]
         
         # If we found at match, use the UID to try to fetch the task record; 
         # otherwise, return None.
@@ -259,59 +264,85 @@ class TaskDict(sobj.BlobDict):
             return None
         
     def add(self, task_record):
-        # Add the object to the hash table, keyed by the UID.
-        self.obj_dict[task_record.uid] = task_record
-        
         # Add the task_id hash for this task record.
         self.task_id_hashes[task_record.task_id] = task_record.uid
-        
-        # Update our DataStore representation if we are there. 
-        if self.in_data_store():
-            self.update_data_store()
+
+        # Do the rest of the object addition.
+        self.add_object(task_record)
     
     def update(self, task_record):
-        # Get the old task_id.
-        old_task_id = self.obj_dict[task_record.uid].task_id
+        # Get the old task ID (the ID the FE is aware of).
+        # If we are storing things inside the obj_dict...
+        if self.objs_within_coll:
+            old_task_id = self.obj_dict[task_record.uid].task_id
+            
+        # Otherwise, we are using the UUID set.
+        elif task_record.uid in self.ds_uuid_set:
+            old_task_id = ds.globalvars.data_store.retrieve(task_record.uid).task_id
         
         # If we new task_id is different than the old one, delete the old 
         # task_id hash.
         if task_record.task_id != old_task_id:
-            del self.task_id_hashes[old_task_id]
- 
-        # Add the task record to the hash table, keyed by the UID.
-        self.obj_dict[task_record.uid] = task_record
-        
+            del self.task_id_hashes[old_task_id]            
+            
         # Add the task_id hash for this task record.
-        self.task_id_hashes[task_record.task_id] = task_record.uid
-       
-        # Update our DataStore representation if we are there. 
-        if self.in_data_store():
-            print '>>> TASKDICT IN THE DATASTORE'
-            self.update_data_store()
-        else:
-            print '>>> TASKDICT NOT IN THE DATASTORE'
+        self.task_id_hashes[task_record.task_id] = task_record.uid            
+                       
+        # Do the rest of the object update.
+        self.update_object(task_record)
     
     def delete_by_uid(self, uid):
         # Make sure the argument is a valid UUID, converting a hex text to a
         # UUID object, if needed.        
-        valid_uuid = sc.uuid(uid)
+        valid_uid = sc.uuid(uid)
         
         # If we have a valid UUID...
-        if valid_uuid is not None:
-            # Get the object pointed to by the UID.
-            obj = self.obj_dict[valid_uuid]
+        if valid_uid is not None:
+            # Default to not needing to update the data store.
+            need_to_update = False
             
-            # If a match is found...
-            if obj is not None:
-                # Remove entries from both task_dict and task_id_hashes 
-                # attributes.
-                task_id = obj.task_id
-                del self.obj_dict[valid_uuid]
-                del self.task_id_hashes[task_id]                
+            # If we are storing things inside the obj_dict...
+            if self.objs_within_coll:             
+                # Get the object pointed to by the UID.
+                obj = self.obj_dict[valid_uid]
                 
-                # Update our DataStore representation if we are there. 
-                if self.in_data_store():
-                    self.update_data_store()
+                # If a match is found...
+                if obj is not None:
+                    # Remove entries from obj_dict.
+                    del self.obj_dict[valid_uid]
+                    
+                    # Remove entry from task_id_hashes 
+                    # attributes.
+                    task_id = obj.task_id
+                    del self.task_id_hashes[task_id]  
+                    
+                    # Set to update the data store
+                    need_to_update = True
+                    
+            # Otherwise, we are using the UUID set...
+            else:
+                # If the UUID is in the set...
+                if valid_uid in self.ds_uuid_set:
+                    # Get the object so we can get the task_id.
+                    obj = ds.globalvars.data_store.retrieve(valid_uid)
+                    
+                    # Remove entry from task_id_hashes 
+                    # attributes.
+                    task_id = obj.task_id
+                    del self.task_id_hashes[task_id]
+                    
+                    # Remove the UUID from the set.
+                    self.ds_uuid_set.remove(valid_uid)
+                    
+                    # Delete the object in the global DataStore object.
+                    ds.globalvars.data_store.delete(valid_uid)
+                                     
+                    # Set to update the data store
+                    need_to_update = True                    
+            
+            # Update our DataStore representation if we are there. 
+            if need_to_update and self.in_data_store():
+                self.update_data_store()
         
     def delete_by_task_id(self, task_id):
         # Get the UID of the task record matching task_id.
@@ -322,26 +353,43 @@ class TaskDict(sobj.BlobDict):
             self.delete_by_uid(id_index)
     
     def delete_all(self):
-        # Reset the Python dicts to hold the task record objects and hashes from 
-        # task_ids to the UIDs.
-        self.obj_dict = {}
-        self.task_id_hashes = {}  
+        # Reset the hashes from task_ids to UIDs.
+        self.task_id_hashes = {}
         
-        # Update our DataStore representation if we are there. 
-        if self.in_data_store():
-            self.update_data_store()
+        # Do the rest of the deletion process.
+        self.delete_all_objects()
             
     def get_user_front_end_repr(self):
-        # Get dictionaries for each task record in the dictionary.
-        taskrecs_info = [self.obj_dict[key].get_user_front_end_repr() 
-            for key in self.obj_dict]
-        return taskrecs_info
+        # If we are storing things inside the obj_dict...
+        if self.objs_within_coll:  
+            # Get dictionaries for each task record in the dictionary.
+            taskrecs_info = [self.obj_dict[key].get_user_front_end_repr() 
+                for key in self.obj_dict]
+        
+        # Otherwise, we are using the UUID set.
+        else:
+            taskrecs_info = []
+            for uid in self.ds_uuid_set:
+                obj = ds.globalvars.data_store.retrieve(uid)
+                taskrecs_info.append(obj.get_user_front_end_repr())
+                    
+        # Return the info.            
+        return taskrecs_info        
         
     def get_admin_front_end_repr(self):
-        # Get dictionaries for each task record in the dictionary.       
-        taskrecs_info = [self.obj_dict[key].get_admin_front_end_repr() 
-            for key in self.obj_dict]
-        
+        # If we are storing things inside the obj_dict...
+        if self.objs_within_coll:          
+            # Get dictionaries for each task record in the dictionary.       
+            taskrecs_info = [self.obj_dict[key].get_admin_front_end_repr() 
+                for key in self.obj_dict]
+            
+        # Otherwise, we are using the UUID set.
+        else:
+            taskrecs_info = []
+            for uid in self.ds_uuid_set:
+                obj = ds.globalvars.data_store.retrieve(uid)
+                taskrecs_info.append(obj.get_admin_front_end_repr())
+                
         # Extract just the task_ids.
         task_ids = [task_record['task']['task_id'] for task_record in taskrecs_info]
         
@@ -409,6 +457,9 @@ def make_celery_instance(config=None):
             
         # Find a matching task record (if any) to the task_id.
         match_taskrec = task_dict.get_task_record_by_task_id(task_id)
+        if match_taskrec is None:
+            print('>>> FAILED TO FIND TASK RECORD FOR %s' % task_id)
+            return { 'error': 'Could not access TaskRecord' }
     
         # Set the TaskRecord to indicate start of the task.
         match_taskrec.status = 'started'
