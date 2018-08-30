@@ -418,6 +418,9 @@ __all__ += ['make_celery_instance', 'add_task_funcs', 'check_task', 'get_task_re
 # modules.
 def make_celery_instance(config=None):
     global celery_instance
+    global run_task_lock
+    
+    run_task_lock = False
     
     # Define the Celery instance.
     celery_instance = Celery('tasks')
@@ -429,11 +432,37 @@ def make_celery_instance(config=None):
     # Configure so that the actual start of a task is tracked.
     # This may work only under version 3.1.25
 #    celery_instance.conf.CELERY_TRACK_STARTED = True
-   
+    
+    def lock_run_task():
+        global run_task_lock
+        
+        print('>>> CHECKING LOCK ON run_task()')
+        # Until there is no lock, sit and sleep.
+#        if ds.globalvars.data_store.get_uid('lock', 'run_task Lock') is not None:
+        while run_task_lock:
+            print('>>> DETECTED LOCK.  WAITING...')
+            sleep(5)
+        
+        print('>>> NO LOCK DETECTED')
+        print('>>> LOCKING run_task()')
+        # Set the lock to keep other run_task() instances from co-occurring on 
+        # the same Celery worker.
+#            lock_uid = ds.globalvars.data_store.add('dummy string', uid=None, type_label='lock', file_suffix='.lck', instance_label='run_task Lock')
+#            return lock_uid
+        run_task_lock = True
+        
+    def unlock_run_task():
+        global run_task_lock
+        
+        print('>>> UNLOCKING run_task()')
+        # Remove the lock for this Celery worker.
+        run_task_lock = False
+#        ds.globalvars.data_store.delete(lock_uid)
+        
     @celery_instance.task
     def run_task(task_id, func_name, args, kwargs):
-        sleep(5)
         print('>>> START OF run_task() FOR %s' % task_id)
+        
         # We need to load in the whole DataStore here because the Celery worker 
         # (in which this function is running) will not know about the same context 
         # from the datastore.py module that the server code will.
@@ -441,9 +470,22 @@ def make_celery_instance(config=None):
         # Only if we have not already done so, create the DataStore object, 
         # setting up Redis.
         if ds.globalvars.data_store is None:
+            # Create the DataStore object, setting up Redis.
             ds.globalvars.data_store = ds.DataStore(redis_db_URL=config.REDIS_URL)
+            
+        # Check if run_task() locked and wait until it isn't, then lock it for 
+        # other run_task() instances in this Celery worker.
+        lock_run_task()
         
-        # Load the DataStore state from disk.
+        print('>>> EFFECTIVE START OF run_task() FOR %s' % task_id)
+        
+        # Load the DataStore state from disk. 
+        # NOTE: This could corrupt DataStore access by concurrently active 
+        # run_task() instances running in the same Celery worker because it 
+        # overwrites ds.globalvars.data_store with the new disk state.
+        # TODO: For this reason, locking needs to be done to prevent this, although 
+        # the locking should allow run_task() instances on separate Celery 
+        # workers to run concurrently.
         print('>>> LOADING DATASTORE FOR %s' % task_id)
         ds.globalvars.data_store.load()
         
@@ -469,12 +511,20 @@ def make_celery_instance(config=None):
         match_taskrec.start_time = sc.now()
         match_taskrec.pending_time = \
             (match_taskrec.start_time - match_taskrec.queue_time).total_seconds()
-        print('>>> BEFORE STARTED UPDATE OF TASK DICTIONARY FOR %s' % task_id)
+        print('>>> BEFORE STARTED UPDATE OF TASK RECORD FOR %s' % task_id)
+        # Do the actual update of the TaskRecord.
+        # NOTE: At the moment the TaskDict on disk is not modified here, which 
+        # which is a good thing because that could disrupt actiities in other 
+        # run_task() instances.
         task_dict.update(match_taskrec)
-        print('>>> AFTER STARTED UPDATE OF TASK DICTIONARY FOR %s' % task_id)
+        print('>>> AFTER STARTED UPDATE OF TASK RECORD FOR %s' % task_id)
         
         # Make the actual function call, inside a try block in case there is 
         # an exception thrown.
+        # NOTE: This block is likely to run for several seconds or even 
+        # minutes or hours, depending on the task.
+        # NOTE / WARNING: The function being called which the result is being 
+        # taken from may rely on the contents of the DataStore.
 #        print('Available task_funcs:')
 #        print(task_func_dict)     
         try:
@@ -495,13 +545,22 @@ def make_celery_instance(config=None):
         # NOTE: Even if the browser has ordered the deletion of the task 
         # record, it will be "resurrected" during this update, so the 
         # delete_task() RPC may not always work as expected.
+        # TODO: Check to see if this is still true. (8/29/18)
         match_taskrec.stop_time = sc.now()
         match_taskrec.execution_time = \
             (match_taskrec.stop_time - match_taskrec.start_time).total_seconds()
-        print('>>> BEFORE FINISHED UPDATE OF TASK DICTIONARY FOR %s' % task_id)
+        print('>>> BEFORE FINISHED UPDATE OF TASK RECORD FOR %s' % task_id)
+        # Do the actual update of the TaskRecord.
+        # NOTE: At the moment the TaskDict on disk is not modified here, which 
+        # which is a good thing because that could disrupt actiities in other 
+        # run_task() instances.        
         task_dict.update(match_taskrec)
-        print('>>> AFTER FINISHED UPDATE OF TASK DICTIONARY FOR %s' % task_id)
+        print('>>> AFTER FINISHED UPDATE OF TASK RECORD FOR %s' % task_id)
         print('>>> END OF run_task() FOR %s' % task_id)
+        
+        # Unlock run-task() for other run_task() instances running on the same 
+        # Celery worker.
+        unlock_run_task()
         
         # Return the result.
         return result 
@@ -512,13 +571,15 @@ def make_celery_instance(config=None):
     # as well.
     @RPC(validation='named') 
     def launch_task(task_id='', func_name='', args=[], kwargs={}):
+        # NOTE: We might want to add a concurrency lock to this function.
+        
 #        print('Here is the celery_instance:')
 #        print celery_instance
 #        print('Here are the celery_instance tasks:')
 #        print celery_instance.tasks
 
         # Reload the whole TaskDict from the DataStore because Celery may have 
-        # modified its state in Redis.
+        # modified its state in Redis (in particular, modified the TaskRecords).
         task_dict.load_from_data_store()
         
         # Find a matching task record (if any) to the task_id.
@@ -615,7 +676,7 @@ def add_task_funcs(new_task_funcs):
 @RPC(validation='named') 
 def check_task(task_id): 
     # Reload the whole TaskDict from the DataStore because Celery may have 
-    # modified its state in Redis.
+    # modified its state in Redis (in particular, modified the TaskRecords).
     task_dict.load_from_data_store()
     
     # Find a matching task record (if any) to the task_id.
@@ -657,7 +718,7 @@ def check_task(task_id):
 @RPC(validation='named') 
 def get_task_result(task_id):
     # Reload the whole TaskDict from the DataStore because Celery may have 
-    # modified its state in Redis.
+    # modified its state in Redis (in particular, modified the TaskRecords).
     task_dict.load_from_data_store()
     
     # Find a matching task record (if any) to the task_id.
@@ -690,8 +751,10 @@ def get_task_result(task_id):
     
 @RPC(validation='named') 
 def delete_task(task_id): 
+    # NOTE: We might want to add a concurrency lock to this function.
+    
     # Reload the whole TaskDict from the DataStore because Celery may have 
-    # modified its state in Redis.
+    # modified its state in Redis (in particular, modified the TaskRecords).
     task_dict.load_from_data_store()
     
     # Find a matching task record (if any) to the task_id.
