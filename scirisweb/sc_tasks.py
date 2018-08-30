@@ -378,29 +378,15 @@ def make_celery_instance(config=None):
         # We need to load in the whole DataStore here because the Celery worker 
         # (in which this function is running) will not know about the same context 
         # from the datastore.py module that the server code will.
-        
-        # Create the DataStore object, setting up Redis.
-        ds.globalvars.data_store = ds.DataStore(redis_db_URL=config.REDIS_URL)
-        
-        # Load the DataStore state from disk.
-        ds.globalvars.data_store.load()
-        
-        # Look for an existing tasks dictionary.
-        task_dict_uid = ds.globalvars.data_store.get_uid('taskdict', 'Task Dictionary')
-        
-        # Create the task dictionary object.
-        task_dict = TaskDict(task_dict_uid)
-        
-        # Load the TaskDict tasks from Redis.
-        task_dict.load_from_data_store()
-        
+        if kwargs is None: kwargs = {} # So **kwargs works below
+        ds.globalvars.data_store = ds.DataStore(redis_db_URL=config.REDIS_URL) # Create the DataStore object, setting up Redis.
+        ds.globalvars.data_store.load() # Load the DataStore state from disk.
+        task_dict_uid = ds.globalvars.data_store.get_uid('taskdict', 'Task Dictionary') # Look for an existing tasks dictionary.
+        task_dict = TaskDict(task_dict_uid) # Create the task dictionary object.
+        task_dict.load_from_data_store() # Load the TaskDict tasks from Redis.
         task_dict.show()  # TODO: remove this post-debugging
-            
-        # Find a matching task record (if any) to the task_id.
-        match_taskrec = task_dict.get_task_record_by_task_id(task_id)
-    
-        # Set the TaskRecord to indicate start of the task.
-        match_taskrec.status = 'started'
+        match_taskrec = task_dict.get_task_record_by_task_id(task_id) # Find a matching task record (if any) to the task_id.
+        match_taskrec.status = 'started' # Set the TaskRecord to indicate start of the task.
         match_taskrec.start_time = sc.now()
         match_taskrec.pending_time = \
             (match_taskrec.start_time - match_taskrec.queue_time).total_seconds()        
