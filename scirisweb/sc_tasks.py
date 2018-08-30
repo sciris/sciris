@@ -481,7 +481,7 @@ def make_celery_instance(config=None):
         # NOTE: This could corrupt DataStore access by concurrently active 
         # run_task() instances running in the same Celery worker because it 
         # overwrites ds.globalvars.data_store with the new disk state.
-        # TODO: For this reason, locking needs to be done to prevent this, although 
+        # For this reason, locking needs to be done to prevent this, although 
         # the locking should allow run_task() instances on separate Celery 
         # workers to run concurrently.
         print('>>> LOADING DATASTORE FOR %s' % task_id)
@@ -509,7 +509,9 @@ def make_celery_instance(config=None):
         match_taskrec.start_time = sc.now()
         match_taskrec.pending_time = \
             (match_taskrec.start_time - match_taskrec.queue_time).total_seconds()
+            
         print('>>> BEFORE STARTED UPDATE OF TASK RECORD FOR %s' % task_id)
+        
         # Do the actual update of the TaskRecord.
         # NOTE: At the moment the TaskDict on disk is not modified here, which 
         # which is a good thing because that could disrupt actiities in other 
@@ -548,11 +550,22 @@ def make_celery_instance(config=None):
         match_taskrec.execution_time = \
             (match_taskrec.stop_time - match_taskrec.start_time).total_seconds()
         print('>>> BEFORE FINISHED UPDATE OF TASK RECORD FOR %s' % task_id)
-        # Do the actual update of the TaskRecord.
+        
+        # Do the actual update of the TaskRecord.  Do this in a try / except 
+        # block because this step may fail.  For example, if a TaskRecord is 
+        # deleted by the webapp, the update here will crash.
         # NOTE: At the moment the TaskDict on disk is not modified here, which 
         # which is a good thing because that could disrupt actiities in other 
-        # run_task() instances.        
-        task_dict.update(match_taskrec)
+        # run_task() instances.
+        try:
+            task_dict.update(match_taskrec)           
+        except Exception:
+            error_text = traceback.format_exc()
+            match_taskrec.status = 'error'
+            match_taskrec.error_text = error_text
+            result = error_text
+            print('>>> FAILED TASK %s' % task_id)            
+            
         print('>>> AFTER FINISHED UPDATE OF TASK RECORD FOR %s' % task_id)
         print('>>> END OF run_task() FOR %s' % task_id)
         
