@@ -433,31 +433,29 @@ def make_celery_instance(config=None):
     # This may work only under version 3.1.25
 #    celery_instance.conf.CELERY_TRACK_STARTED = True
     
-    def lock_run_task():
+    def lock_run_task(task_id):
         global run_task_lock
         
-        print('>>> CHECKING LOCK ON run_task()')
-        # Until there is no lock, sit and sleep.
-#        if ds.globalvars.data_store.get_uid('lock', 'run_task Lock') is not None:
-        while run_task_lock:
-            print('>>> DETECTED LOCK.  WAITING...')
-            sleep(5)
+        print('>>> CHECKING LOCK ON run_task() FOR %s' % task_id)
         
-        print('>>> NO LOCK DETECTED')
-        print('>>> LOCKING run_task()')
+        # Until there is no lock, sit and sleep.
+        while run_task_lock:
+            print('>>> DETECTED LOCK ON %s.  WAITING...' % task_id)
+            sleep(5)  # sleep 5 seconds before trying again
+        
+        print('>>> NO LOCK DETECTED ON %s' % task_id)
+        print('>>> LOCKING run_task() ON %s' % task_id)
+        
         # Set the lock to keep other run_task() instances from co-occurring on 
         # the same Celery worker.
-#            lock_uid = ds.globalvars.data_store.add('dummy string', uid=None, type_label='lock', file_suffix='.lck', instance_label='run_task Lock')
-#            return lock_uid
         run_task_lock = True
         
-    def unlock_run_task():
+    def unlock_run_task(task_id):
         global run_task_lock
         
-        print('>>> UNLOCKING run_task()')
+        print('>>> UNLOCKING run_task() FOR %s' % task_id)
         # Remove the lock for this Celery worker.
         run_task_lock = False
-#        ds.globalvars.data_store.delete(lock_uid)
         
     @celery_instance.task
     def run_task(task_id, func_name, args, kwargs):
@@ -475,7 +473,7 @@ def make_celery_instance(config=None):
             
         # Check if run_task() locked and wait until it isn't, then lock it for 
         # other run_task() instances in this Celery worker.
-        lock_run_task()
+        lock_run_task(task_id)
         
         print('>>> EFFECTIVE START OF run_task() FOR %s' % task_id)
         
@@ -560,7 +558,7 @@ def make_celery_instance(config=None):
         
         # Unlock run-task() for other run_task() instances running on the same 
         # Celery worker.
-        unlock_run_task()
+        unlock_run_task(task_id)
         
         # Return the result.
         return result 
