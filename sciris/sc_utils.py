@@ -1166,10 +1166,17 @@ def flattendict(inputdict=None, basekey=None, subkeys=None, complist=None, keyli
 
 
 ##############################################################################
-### LINKS
+### CLASSES
 ##############################################################################
 
-__all__ += ['LinkException', 'Link']
+__all__ += ['prettyobj', 'LinkException', 'Link']
+
+class prettyobj(object):
+    def __repr__(self):
+        ''' Use pretty repr for objects '''
+        output  = prepr(self)
+        return output
+    
 
 class LinkException(Exception):
         ''' An exception to raise when links are broken -- note, can't define classes inside classes :( '''
