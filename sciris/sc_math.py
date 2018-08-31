@@ -11,7 +11,7 @@ from . import sc_utils as ut
 ### FIND FUNCTIONS
 ##############################################################################
 
-__all__ = ['approx', 'findinds', 'findnearest', 'dataindex', 'getvalidinds', 'sanitize', 'getvaliddata']
+__all__ = ['approx', 'findinds', 'findnearest', 'dataindex', 'getvalidinds', 'sanitize', 'getvaliddata', 'isprime']
 
 
 def approx(val1=None, val2=None, eps=None):
@@ -164,6 +164,39 @@ def getvaliddata(data=None, filterdata=None, defaultind=0):
         validdata = np.array([]) # No valid data, return an empty array
     return validdata
 
+
+def isprime(n, verbose=False):
+    ''' From https://stackoverflow.com/questions/15285534/isprime-function-for-python-language '''
+    if n < 2:
+        if verbose: print('Not prime: n<2')
+        return False
+    if n == 2:
+        if verbose: print('Is prime: n=2')
+        return True
+    if n == 3:
+        if verbose: print('Is prime: n=3')
+        return True
+    if n%2 == 0: 
+        if verbose: print('Not prime: divisible by 2')
+        return False
+    if n%3 == 0:
+        if verbose: print('Not prime: divisible by 3')
+        return False
+    if n < 9:
+        if verbose: print('Is prime: <9 and not divisible by 2')          
+        return True
+    r = int(n**0.5)
+    f = 5
+    while f <= r:
+        if n%f == 0:
+            if verbose: print('Not prime: divisible by %s' % f)
+            return False
+        if n%(f+2) == 0:
+            if verbose: print('Not prime: divisible by %s' % (f+2))
+            return False
+        f +=6
+    if verbose: print('Is prime!')
+    return True 
 
 
 

@@ -459,6 +459,8 @@ def make_celery_instance(config=None):
         
     @celery_instance.task
     def run_task(task_id, func_name, args, kwargs):
+        if kwargs is None: kwargs = {} # So **kwargs works below
+        
         print('>>> START OF run_task() FOR %s' % task_id)
         
         # We need to load in the whole DataStore here because the Celery worker 

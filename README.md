@@ -35,7 +35,7 @@ Note: if you're a developer, you'll likely already have some/all of these packag
 
 2. Install [Redis](https://redis.io/topics/quickstart) (database)
 
-3. Install [Anaconda Python](https://www.anaconda.com/download/) for Python 2.7 (simulation engine)
+3. Install [Anaconda Python](https://www.anaconda.com/download/) (simulation engine)
 
 4. Once you've done all that, to install, simply run `python setup.py develop` in the root folder. This should install Sciris as an importable Python module. If you need Sciris Web as well, run `python setup-web.py develop`.
 
@@ -52,7 +52,7 @@ If you have problems, please consult the rest of this guide for more information
 
 3. Install Redis: https://redis.io/topics/quickstart
 
-4. Install [Anaconda Python](https://www.anaconda.com/download/) for Python 2.7 (not 3.4!), and make sure it's the default Python, e.g.
+4. Install [Anaconda Python](https://www.anaconda.com/download/), and make sure it's the default Python, e.g.
 ```
 your_computer:~> python
 Python 2.7.12 |Anaconda 2.1.0 (64-bit)| (default, Jul  2 2016, 17:42:40)
@@ -80,7 +80,7 @@ Sciris Web 0.7.1 (2018-08-25) -- (c) Optima Consortium
 #### Package and library dependencies
 
 Make sure that you have `npm` (included in Node.js installation) and `git` installed on your machine.  
-First, install [Anaconda Python (for Python 2.7)](https://www.anaconda.com/download/). In your Python setup, you also need to have the following packages (instructions in parentheses show how to install with Anaconda Python environment already installed). **Note**, these should all be installed automatically when you type `python setup.py develop` and `python setup-web.py develop`.
+First, install [Anaconda Python](https://www.anaconda.com/download/). In your Python setup, you also need to have the following packages (instructions in parentheses show how to install with Anaconda Python environment already installed). **Note**, these should all be installed automatically when you type `python setup.py develop` and `python setup-web.py develop`.
 
 #### Database dependencies
 
@@ -119,7 +119,7 @@ database.
 
             brew install redis
 
-4. Install [Anaconda Python](https://www.anaconda.com/download/) for Python 2.7 (not 3.4!), and make sure it's the default Python, e.g.
+4. Install [Anaconda Python](https://www.anaconda.com/download/), and make sure it's the default Python, e.g.
 ```
 your_computer:~> python
 Python 2.7.12 |Anaconda 2.1.0 (64-bit)| (default, Jul  2 2016, 17:42:40)
