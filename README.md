@@ -2,7 +2,7 @@
 
 ## What is Sciris?
 
-Glad you asked! Sciris is a flexible open source framework for building scientific web applications using Python and JavaScript. It comes in two parts: `sciris` is a collection of tools that should make scientific Python coding a more pleasant experience, while `scirisweb` is a collection of tools that allow you to easily build Python webapps.
+Glad you asked! Sciris is a flexible open source framework for building scientific web applications using Python and JavaScript. It comes in two parts: `sciris` is a collection of tools that should make scientific Python coding a more pleasant experience, while `scirisweb` is a collection of tools that allow you to easily build Python webapps. Sciris is built on Numpy and Matplotlib, while Sciris Web is built on Vue.js, Flask, Twisted, Redis, and `mpld3`.
 
 Some highlights of `sciris`:
 * `odict` -- like an OrderedDict, but allows reference by position like a list, as well as many powerful methods (such as casting to array, sorting and enumeration functions, etc.)
@@ -18,11 +18,11 @@ Some highlights of `sciris`:
 Some highlights of `scirisweb`:
 * `ScirisApp` -- a fully featured server that can be created as simply as `app = ScirisApp(config)` and run with `app.run()`
 * `RPC` -- a simple function for defining links between the frontend and the backend
-* `Datastore` -- user and data management built on Redis
+* `Datastore` -- user and data management based on Redis
 
 ## Is Sciris ready yet?
 
-**No.** We expect a first version of Sciris to be ready by September 2018. If you would like us to let you know when it's ready for use, please email info@sciris.org.
+**No.** We expect a first version of Sciris to be ready by October 2018. If you would like us to let you know when it's ready for use, please email info@sciris.org.
 
 
 ## Installation and run instructions
