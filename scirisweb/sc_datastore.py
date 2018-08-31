@@ -273,9 +273,6 @@ class DataStore(object):
     def get_handle_by_uid(self, uid):
         valid_uid = sc.uuid(uid) # Make sure the argument is a valid UUID, converting a hex text to a UUID object, if needed.       
         if valid_uid is not None: # If we have a valid UUID...
-            if uid.hex == '731229a2d07c4deeb35ea136209f225d':
-                print('>>> TRYING A handle_dict.get() ON TASK DICTIONARY')
-                print self.handle_dict[valid_uid]
             return self.handle_dict.get(valid_uid, None)
         else:
             return None
@@ -305,16 +302,9 @@ class DataStore(object):
         return valid_uid # Return the UUID.
     
     def retrieve(self, uid):
-        if uid.hex == '731229a2d07c4deeb35ea136209f225d':
-            print('>>> TRYING A retrieve() ON TASK DICTIONARY')
         valid_uid = sc.uuid(uid) # Make sure the argument is a valid UUID, converting a hex text to a UUID object, if needed.   
         if valid_uid is not None:  # If we have a valid UUID...
             handle = self.get_handle_by_uid(valid_uid) # Get the handle (if any) matching the UID.
-            if uid.hex == '731229a2d07c4deeb35ea136209f225d':
-                if handle is None:
-                    print('>>> WE ARE LACKING A HANDLE')
-                else:
-                    print('>>> WE HAVE A GOOD HANDLE')
             if handle is not None: # If we found a matching handle...
                 if self.db_mode == 'redis': # If we are using Redis...   
                     return handle.redis_retrieve(self.redis_db) # Return the object pointed to by the handle.

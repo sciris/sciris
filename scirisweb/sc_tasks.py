@@ -9,12 +9,11 @@ from functools import wraps
 from numpy import argsort
 from celery import Celery
 from celery.task.control import revoke
+from time import sleep
 import sciris as sc
 from . import sc_datastore as ds
 from . import sc_rpcs as rpcs
 from . import sc_objects as sobj
-
-from time import sleep  # TODO: remove this later (assuming we don't need it)
 
 
 ################################################################################
@@ -250,11 +249,6 @@ class TaskDict(sobj.BlobDict):
     def get_task_record_by_task_id(self, task_id):
         # Get the task record's UID matching the task_id.
         id_index = self.task_id_hashes.get(task_id, None)
-        print('TRYING TO GET TASK RECORD')
-        print('whole dict')
-        print self.task_id_hashes
-#        print('the fetch')
-#        print self.task_id_hashes[task_id]
         
         # If we found at match, use the UID to try to fetch the task record; 
         # otherwise, return None.
@@ -782,13 +776,9 @@ def delete_task(task_id):
         # If we have a result ID, erase the result from Redis.
         if match_taskrec.result_id is not None:
             result = celery_instance.AsyncResult(match_taskrec.result_id)
-            # None of the following seem to work with the eventlet setting on 
-            # my (gchadder3's) Windows machine, but maybe the first solution 
-            # might work on Linux??  revoke() is supposed to be able to stop 
-            # a currently executing Celery task.
+            # This commmand works under Linux, but not under the Windows 
+            # Celery setup.  It allows terminating a task in mid-run.
             result.revoke(terminate=True)
-#            revoke(task_id, terminate=True)
-#            revoke(task_id)
             result.forget()
             
         # Erase the TaskRecord.
