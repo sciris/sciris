@@ -10,7 +10,7 @@ import datetime
 import dateutil
 from time import time, mktime, sleep
 from textwrap import fill
-from pprint import pformat
+from pprint import pprint, pformat
 from psutil import cpu_percent
 from subprocess import Popen, PIPE
 from functools import reduce
@@ -69,7 +69,7 @@ def dcp(obj=None):
 ##############################################################################
 
 __all__ += ['printv', 'blank', 'createcollist', 'objectid', 'objatt', 'objmeth', 'objrepr']
-__all__ += ['prepr', 'pr', 'indent', 'sigfig', 'printarr', 'printdata', 'printvars', 'getdate']
+__all__ += ['prepr', 'pr', 'pp', 'indent', 'sigfig', 'printarr', 'printdata', 'printvars', 'getdate']
 __all__ += ['slacknotification', 'printtologfile', 'colorize']
 
 def printv(string, thisverbose=1, verbose=2, newline=True, indent=True):
@@ -203,6 +203,12 @@ def prepr(obj, maxlen=None):
 def pr(obj, maxlen=None):
     ''' Shortcut for printing the pretty repr for an object '''
     print(prepr(obj, maxlen=maxlen))
+    return None
+
+
+def pp(obj):
+    ''' Shortcut for pretty-printing the object '''
+    pprint(obj)
     return None
 
     
