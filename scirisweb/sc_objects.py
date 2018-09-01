@@ -348,5 +348,9 @@ class BlobDict(Blob):
                 obj.show() # Show the handle contents.
         else: # Otherwise, we are using the UUID set.
             for uid in self.ds_uuid_set: # For each item in the set...
-                ds.globalvars.data_store.retrieve(uid).show() # Show the object with that UID in the DataStore.
+                obj = ds.globalvars.data_store.retrieve(uid)
+                if obj is None:
+                    print('ERROR: UID %s object failed to retrieve' % uid)
+                else:
+                    obj.show() # Show the object with that UID in the DataStore.
         print('--------------------------------------------')
