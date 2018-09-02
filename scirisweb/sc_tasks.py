@@ -498,6 +498,7 @@ def make_celery_instance(config=None):
         match_taskrec = task_dict.get_task_record_by_task_id(task_id)
         if match_taskrec is None:
             print('>>> FAILED TO FIND TASK RECORD FOR %s' % task_id)
+            unlock_run_task(task_id)
             return { 'error': 'Could not access TaskRecord' }
     
         # Set the TaskRecord to indicate start of the task.
@@ -519,6 +520,15 @@ def make_celery_instance(config=None):
         # an exception thrown.
         # NOTE: This block is likely to run for several seconds or even 
         # minutes or hours, depending on the task.
+        
+        # WARNING: It is a very bad idea to have any calls in your task code 
+        # that modify data_store.handle_dict.  That includes calls that add 
+        # new entries to a BlobDict where the entries are kept external from 
+        # the BlobDict object.  Writing to handle_dict will lead to conflicts 
+        # with the webapp process, which has long stretches between reading in  
+        # the handle_dict state and modifying it, during which Celery task 
+        # worker writes to handle_dict will end up in lost modifications.
+        
         # NOTE / WARNING: The function being called which the result is being 
         # taken from may rely on the contents of the DataStore.
 #        print('Available task_funcs:')
