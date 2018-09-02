@@ -287,7 +287,7 @@ class ScirisApp(object):
             
         # Uncomment this line (for now) to reset the database, and then recomment
         # before running for usage.
-#        ds.data_store.delete_all()
+#        ds.globalvars.data_store.delete_all()
         
         # Uncomment this to entirely delete the keys at the Redis link.
         # Careful in using this one!
