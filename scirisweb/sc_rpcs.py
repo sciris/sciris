@@ -30,10 +30,8 @@ def sanitize_json(obj):
         return [sanitize_json(p) for p in list(obj)]
     
     if isinstance(obj, np.ndarray):
-        if obj.shape: # Handle most cases, incluing e.g. array([5])
-            return [sanitize_json(p) for p in list(obj)]
-        else: # Handle the special case of e.g. array(5)
-            return [sanitize_json(p) for p in list(np.array([obj]))]
+        if obj.shape: return [sanitize_json(p) for p in list(obj)] # Handle most cases, incluing e.g. array([5])
+        else:         return [sanitize_json(p) for p in list(np.array([obj]))] # Handle the special case of e.g. array(5)
 
     if isinstance(obj, dict):
         return {str(k): sanitize_json(v) for k, v in obj.items()}
@@ -48,20 +46,16 @@ def sanitize_json(obj):
         return bool(obj)
 
     if isinstance(obj, float):
-        if np.isnan(obj):
-            return None
+        if np.isnan(obj): return None
+        else:             return obj
         
     if isinstance(obj, np.int64):
-        if np.isnan(obj):
-            return None
-        else:
-            return int(obj)
+        if np.isnan(obj): return None
+        else:             return int(obj)
         
     if isinstance(obj, np.float64):
-        if np.isnan(obj):
-            return None
-        else:
-            return float(obj)
+        if np.isnan(obj): return None
+        else:             return float(obj)
 
     if isinstance(obj, unicode):
         try:    string = str(obj) # Try to convert it to ascii

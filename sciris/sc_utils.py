@@ -3,17 +3,19 @@
 ##############################################################################
 
 import os
+import sys
 import numpy as np
 import uuid as py_uuid
 import copy
+import time
 import datetime
 import dateutil
-from time import time, mktime, sleep
+import pprint
 from textwrap import fill
-from pprint import pformat
+from functools import reduce
 from psutil import cpu_percent
 from subprocess import Popen, PIPE
-from functools import reduce
+from collections import OrderedDict as OD
 
 # Handle types and Python 2/3 compatibility
 from six import PY2 as _PY2
@@ -64,12 +66,17 @@ def dcp(obj=None):
     return output
 
 
+def pp(obj):
+    ''' Shortcut for pretty-printing the object '''
+    pprint.pprint(obj)
+    return None
+
 ##############################################################################
 ### PRINTING/NOTIFICATION FUNCTIONS
 ##############################################################################
 
 __all__ += ['printv', 'blank', 'createcollist', 'objectid', 'objatt', 'objmeth', 'objrepr']
-__all__ += ['prepr', 'pr', 'indent', 'sigfig', 'printarr', 'printdata', 'printvars', 'getdate']
+__all__ += ['prepr', 'pr', 'pp', 'indent', 'sigfig', 'printarr', 'printdata', 'printvars', 'getdate']
 __all__ += ['slacknotification', 'printtologfile', 'colorize']
 
 def printv(string, thisverbose=1, verbose=2, newline=True, indent=True):
@@ -201,7 +208,7 @@ def prepr(obj, maxlen=None):
 
 
 def pr(obj, maxlen=None):
-    ''' Shortcut for printing the pretty repr for an object '''
+    ''' Shortcut for printing the pretty repr for an object -- comparable to sc.pp() '''
     print(prepr(obj, maxlen=maxlen))
     return None
 
@@ -231,7 +238,7 @@ def indent(prefix=None, text=None, suffix='\n', n=0, pretty=False, simple=True, 
     if prefix is None: prefix = ' '*n
     
     # Get text in the right format -- i.e. a string
-    if pretty: text = pformat(text)
+    if pretty: text = pprint.pformat(text)
     else:      text = flexstr(text)
 
     # If there is no newline in the text, process the output normally.
@@ -455,7 +462,7 @@ def getdate(obj=None, fmt='str', dateformat=None):
                 output = dateobj.strftime(dateformat)
                 return output
         elif fmt=='int': 
-            output = mktime(dateobj.timetuple()) # So ugly!! But it works -- return integer representation of time
+            output = time.mktime(dateobj.timetuple()) # So ugly!! But it works -- return integer representation of time
             return output
         else:
             errormsg = '"fmt=%s" not understood; must be "str" or "int"' % fmt
@@ -569,11 +576,26 @@ def colorize(color=None, string=None, output=False):
     Note: although implemented as a class (to allow the "with" syntax),
     this actually functions more like a function.
     
-    Version: 2017oct27
+    Version: 2018sep02
     '''
     
+    # Try to add Windows support
+    if 'win' in sys.platform:
+        try:
+           import colorama
+           colorama.init()
+           ansi_support = True
+        except:
+           try:
+               import tendo.ansiterm # analysis:ignore
+               ansi_support = True
+           except:
+               ansi_support = False # print('Warning: you have called colorize() on Windows but do not have either the colorama or tendo modules.')
+    else:
+        ansi_support = True
+    
     # Define ANSI colors
-    ansicolors = dict([
+    ansicolors = OD([
                   ('black', '30'),
                   ('red', '31'),
                   ('green', '32'),
@@ -599,14 +621,24 @@ def colorize(color=None, string=None, output=False):
     colorlist = promotetolist(color) # Make sure it's a list
     for color in colorlist:
         if color not in ansicolors.keys(): 
-            if color!='help': print('Color "%s" is not available.' % color)
-            print('Available colors are:  \n%s' % '\n  '.join(ansicolors.keys()))
+            if color!='help':print('Color "%s" is not available.' % color)
+            print('Available colors are:')
+            for key in ansicolors.keys():
+                if key[:2] == 'bg':
+                    darks = ['bgblack', 'bgred', 'bgblue', 'bgmagenta']
+                    if key in darks: foreground = 'gray'
+                    else:            foreground = 'black'
+                    helpcolors = [foreground, key]
+                else:
+                    helpcolors = key
+                colorize(helpcolors, '  '+key)
             return None # Don't proceed if no color supplied
     ansicolor = ''
     for color in colorlist:
         ansicolor += ansicolors[color]
     
     # Modify string, if supplied
+    if not ansi_support: ansicolor = '' # To avoid garbling output on unsupported systems
     if string is None: ansistring = ansicolor # Just return the color
     else:              ansistring = ansicolor + str(string) + ansicolors['reset'] # Add to start and end of the string
 
@@ -781,7 +813,7 @@ def tic():
     toc() [but you can also use the form toc(t) where to is the output of tic()]
     '''
     global tictime  # The saved time is stored in this global.    
-    tictime = time()  # Store the present time in the global.
+    tictime = time.time()  # Store the present time in the global.
     return tictime    # Return the same stored number.
 
 
@@ -802,7 +834,7 @@ def toc(start=None, output=False, label=None, sigfigs=None, filename=None):
         except: start = 0 # This doesn't exist, so just leave start at 0.
             
     # Get the elapsed time in seconds.
-    elapsed = time() - start
+    elapsed = time.time() - start
     
     # Create the message giving the elapsed time.
     if label=='': base = 'Elapsed time: '
@@ -926,7 +958,7 @@ def loadbalancer(maxload=None, index=None, interval=None, maxtime=None, label=No
     else:              
         pause = index*interval
     if maxload>1: maxload/100. # If it's >1, assume it was given as a percent
-    sleep(pause) # Give it time to asynchronize
+    time.sleep(pause) # Give it time to asynchronize
     
     # Loop until load is OK
     toohigh = True # Assume too high
@@ -937,7 +969,7 @@ def loadbalancer(maxload=None, index=None, interval=None, maxtime=None, label=No
         currentload = cpu_percent(interval=0.1)/100. # If interval is too small, can give very inaccurate readings
         if currentload>maxload:
             if verbose: print(label+'CPU load too high (%0.2f/%0.2f); process %s queued %i times' % (currentload, maxload, index, count))
-            sleep(interval*2*np.random.rand()) # Sleeps for an average of refresh seconds, but do it randomly so you don't get locking
+            time.sleep(interval*2*np.random.rand()) # Sleeps for an average of refresh seconds, but do it randomly so you don't get locking
         else: 
             toohigh = False 
             if verbose: print(label+'CPU load fine (%0.2f/%0.2f), starting process %s after %i tries' % (currentload, maxload, index, count))
