@@ -362,30 +362,19 @@ class ScirisApp(object):
         print('** make_celery_instance() _init_tasks() call')
         tasks.make_celery_instance(app_config)
         
-    def run(self, with_twisted=True, with_flask=True, with_client=True, 
-        use_twisted_logging=True):
+    def run(self, with_twisted=True, with_flask=True, with_client=True, do_log=False):
         # If we are not running the app with Twisted, just run the Flask app.
         if not with_twisted:
             self.flask_app.run()
 
         # Otherwise (with Twisted).
         else:
-            if not with_client and not with_flask:
-                run_twisted(port=self.config['SERVER_PORT'], 
-                    use_twisted_logging=use_twisted_logging)  # nothing, should return error
-            if with_client and not with_flask:
-                run_twisted(port=self.config['SERVER_PORT'], 
-                    client_dir=self.config['CLIENT_DIR'],
-                    use_twisted_logging=use_twisted_logging)   # client page only / no Flask
-            elif not with_client and with_flask:
-                run_twisted(port=self.config['SERVER_PORT'], 
-                    flask_app=self.flask_app,
-                    use_twisted_logging=use_twisted_logging)  # Flask app only, no client
-            else:
-                run_twisted(port=self.config['SERVER_PORT'], 
-                    flask_app=self.flask_app, 
-                    client_dir=self.config['CLIENT_DIR'],
-                    use_twisted_logging=use_twisted_logging)  # Flask + client
+            port       = self.config['SERVER_PORT']
+            client_dir = self.config['CLIENT_DIR']
+            if not with_client and not with_flask: run_twisted(port=port, do_log=do_log)  # nothing, should return error
+            if with_client and not with_flask:     run_twisted(port=port, do_log=do_log, client_dir=client_dir)   # client page only / no Flask
+            elif not with_client and with_flask:   run_twisted(port=port, do_log=do_log, flask_app=self.flask_app)  # Flask app only, no client
+            else:                                  run_twisted(port=port, do_log=do_log, flask_app=self.flask_app, client_dir=client_dir)  # Flask + client
                 
     def define_endpoint_layout(self, rule, layout):
         # Save the layout in the endpoint layout dictionary.
@@ -450,15 +439,11 @@ class ScirisApp(object):
         # Check to see whether the RPC is getting passed in in request.form.
         # If so, we are doing an upload, and we want to download the RPC 
         # request info from the form, not request.data.
-        if 'funcname' in request.form:
-            # Pull out the function name, args, and kwargs
+        if 'funcname' in request.form: # Pull out the function name, args, and kwargs
             fn_name = request.form.get('funcname')
             args = json.loads(request.form.get('args', "[]"))
             kwargs = json.loads(request.form.get('kwargs', "{}"))
-            
-        # Otherwise, we have a normal or download RPC, which means we pull 
-        # the RPC request info from request.data.
-        else:
+        else: # Otherwise, we have a normal or download RPC, which means we pull the RPC request info from request.data.
             reqdict = json.loads(request.data)
             fn_name = reqdict['funcname']
             args = reqdict.get('args', [])
@@ -467,111 +452,64 @@ class ScirisApp(object):
         # If the function name is not in the RPC dictionary, return an error.
         if not fn_name in self.RPC_dict:
             return jsonify({'error': 'Could not find requested RPC "%s"' % fn_name})
-            
-        # Get the RPC we've found.
-        found_RPC = self.RPC_dict[fn_name]
         
-        # Do any validation checks we need to do and return errors if they 
-        # don't pass.
+        found_RPC = self.RPC_dict[fn_name] # Get the RPC we've found.
+        
+        ## Do any validation checks we need to do and return errors if they don't pass.
         
         # If the RPC is disabled, always return a Status 403 (Forbidden)
         if found_RPC.validation == 'disabled':
             abort(403)
                 
-        # Only do other validation if DataStore and users are included.
+        # Only do other validation if DataStore and users are included -- NOTE: Any "unknown" validation values are treated like 'none'.
         if self.config['USE_DATASTORE'] and self.config['USE_USERS']:
-            # If the RPC should be executable by any user, including an 
-            # anonymous one, but there is no authorization or anonymous login, 
-            # return a Status 401 (Unauthorized)
             if found_RPC.validation == 'any' and not (current_user.is_anonymous or current_user.is_authenticated):
-                abort(401)
-                
-            # Else if the RPC should be executable by any non-anonymous user, 
-            # but there is no authorization or there is an anonymous login, 
-            # return a Status 401 (Unauthorized)
+                abort(401) # If the RPC should be executable by any user, including an anonymous one, but there is no authorization or anonymous login, return a Status 401 (Unauthorized)
             elif found_RPC.validation == 'named' and (current_user.is_anonymous or not current_user.is_authenticated):
-                abort(401)
-                
-            # Else if the RPC should be executable by any admin user, 
-            # but there is no admin login or it's an anonymous login...
-            elif found_RPC.validation == 'admin':
-                # If the user is anonymous or no authenticated user is logged 
-                # in, return Status 401 (Unauthorized).
+                abort(401) # Else if the RPC should be executable by any non-anonymous user, but there is no authorization or there is an anonymous login, return a Status 401 (Unauthorized)
+            elif found_RPC.validation == 'admin': # Else if the RPC should be executable by any admin user, but there is no admin login or it's an anonymous login...
                 if current_user.is_anonymous or not current_user.is_authenticated:
-                    abort(401)
-                    
-                # Else, if the user is not an admin user, return Status 403 
-                # (Forbidden).
+                    abort(401) # If the user is anonymous or no authenticated user is logged in, return Status 401 (Unauthorized).
                 elif not current_user.is_admin:
-                    abort(403)
+                    abort(403) # Else, if the user is not an admin user, return Status 403 (Forbidden).
                     
-            # NOTE: Any "unknown" validation values are treated like 
-            # 'none'.
-                
         # If we are doing an upload...
         if found_RPC.call_type == 'upload':
-            # Grab the formData file that was uploaded.    
-            file = request.files['uploadfile']
-        
-            # Extract a sanitized filename from the one we start with.
-            filename = secure_filename(file.filename)
-            
-            # Generate a full upload path/file name.
-            uploaded_fname = os.path.join(ds.globalvars.uploads_dir.dir_path, filename)
-        
-            # Save the file to the uploads directory.
-            file.save(uploaded_fname)
-        
-            # Prepend the file name to the args list.
-            args.insert(0, uploaded_fname)
+            thisfile = request.files['uploadfile'] # Grab the formData file that was uploaded.    
+            filename = secure_filename(file.filename) # Extract a sanitized filename from the one we start with.
+            uploaded_fname = os.path.join(ds.globalvars.uploads_dir.dir_path, filename) # Generate a full upload path/file name.
+            thisfile.save(uploaded_fname) # Save the file to the uploads directory.
+            args.insert(0, uploaded_fname) # Prepend the file name to the args list.
         
         # Show the call of the function.
         if self.config['LOGGING_MODE'] == 'FULL':
-            print('>> Calling RPC function "%s.%s"' % 
-                (found_RPC.call_func.__module__, found_RPC.funcname))
+            RPCcolor = ['green', 'bgblack']
+            string = '[%s] RPC called: "%s.%s"' % (sc.now(tostring=True), found_RPC.call_func.__module__, found_RPC.funcname)
+            sc.colorize(RPCcolor, string)
     
-        # Execute the function to get the results, putting it in a try block 
-        # in case there are errors in what's being called. 
+        # Execute the function to get the results, putting it in a try block in case there are errors in what's being called. 
         try:
             result = found_RPC.call_func(*args, **kwargs)
-        except Exception as e:
-            # Grab the trackback stack.
-            exception = traceback.format_exc()
-            
-            # Post an error to the Flask logger
-            # limiting the exception information to 10000 characters maximum
-            # (to prevent monstrous sqlalchemy outputs)
-            self.flask_app.logger.error('Exception during RPC "%s" request %s: %.10000s' % (fn_name, request, exception))
-            
-            # If we have a werkzeug exception, pass it on up to werkzeug to 
-            # resolve and reply to.
-            # [Do we really want to do this?: GLC 5/15/18]
-            if isinstance(e, HTTPException):
-                raise
-                
-            # Send back a response with status 500 that includes the exception traceback.
-            code = 500
+        except Exception as E:
+            exception = traceback.format_exc() # Grab the trackback stack.
+            errormsg = 'Exception during RPC "%s" request %s: %.10000s' % (fn_name, request, exception)
+            self.flask_app.logger.error(errormsg) # Post an error to the Flask logger limiting the exception information to 10000 characters maximum (to prevent monstrous sqlalchemy outputs)
+            if isinstance(E, HTTPException): # If we have a werkzeug exception, pass it on up to werkzeug to resolve and reply to.
+                raise E
+            code = 500 # Send back a response with status 500 that includes the exception traceback.
             reply = {'exception': exception}
             return make_response(jsonify(reply), code)
         
         # If we are doing a download, prepare the response and send it off.
         if found_RPC.call_type == 'download':
-            # If we got None for a result (the full file name), return an error to the client.
-            if result is None:
+            if result is None: # If we got None for a result (the full file name), return an error to the client.
                 return jsonify({'error': 'Could not find resource to download from RPC "%s": result is None' % fn_name})
-            
-            # Else, if the result is not even a string (which means it's not a file name as expected)...
-            elif not sc.isstring(result):
-                # If the result is a dict with an 'error' key, then assume we have a custom error that we want the RPC to return to the browser, and do so.
-                if type(result) is dict and 'error' in result:
+            elif not sc.isstring(result): # Else, if the result is not even a string (which means it's not a file name as expected)...
+                if type(result) is dict and 'error' in result: # If the result is a dict with an 'error' key, then assume we have a custom error that we want the RPC to return to the browser, and do so.
                     return jsonify(result)
-                
-                # Otherwise, return an error that the download RPC did not return a filename.
-                else:
+                else: # Otherwise, return an error that the download RPC did not return a filename.
                     return jsonify({'error': 'Download RPC "%s" did not return a filename (result is of type %s)' % (fn_name, type(result))})
-            
-            # Pull out the directory and file names from the full file name.
-            dir_name, file_name = os.path.split(result)
+            dir_name, file_name = os.path.split(result)  # Pull out the directory and file names from the full file name.
          
             # Make the response message with the file loaded as an attachment.
             response = send_from_directory(dir_name, file_name, as_attachment=True)
@@ -581,23 +519,15 @@ class ScirisApp(object):
             # Unfortunately, we cannot remove the actual file at this point 
             # because it is in use during the actual download, so we rely on 
             # later cleanup to remove download files.
-        
-            # Return the response message.
-            return response
+            return response # Return the response message.
     
         # Otherwise (normal and upload RPCs), 
-        else:
-            # If we are doing an upload....
-            if found_RPC.call_type == 'upload':
-                # Erase the physical uploaded file, since it is no longer needed.
-                os.remove(uploaded_fname)
-        
-            # If None was returned by the RPC function, return ''.
-            if result is None:
+        else: 
+            if found_RPC.call_type == 'upload': # If we are doing an upload....
+                os.remove(uploaded_fname) # Erase the physical uploaded file, since it is no longer needed.
+            if result is None: # If None was returned by the RPC function, return ''.
                 return ''
-        
-            # Otherwise, convert the result (probably a dict) to JSON and return it.
-            else:
+            else: # Otherwise, convert the result (probably a dict) to JSON and return it.
                 return jsonify(rpcs.sanitize_json(result))
         
         
@@ -618,15 +548,14 @@ class ScirisResource(Resource):
         return r
     
     
-def run_twisted(port=8080, flask_app=None, client_dir=None, 
-    use_twisted_logging=True):
+def run_twisted(port=8080, flask_app=None, client_dir=None, do_log=False):
     # Give an error if we pass in no Flask server or client path.
     if (flask_app is None) and (client_dir is None):
         print('ERROR: Neither client or server are defined.')
         return None
     
     # Set up logging.
-    if use_twisted_logging:
+    if do_log:
         globalLogBeginner.beginLoggingTo([
             FileLogObserver(sys.stdout, lambda _: formatEvent(_) + "\n")])
 
