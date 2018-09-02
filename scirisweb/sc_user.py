@@ -9,6 +9,7 @@ from flask_login import current_user, login_user, logout_user
 from flask.ext.session import Session
 from hashlib import sha224
 from numpy import argsort
+import six
 import sciris as sc
 from . import sc_rpcs as rpcs #import make_RPC
 from . import sc_objects as sobj
@@ -73,52 +74,28 @@ class User(sobj.Blob):
     
     def  __init__(self, username, password, display_name, email='', 
         has_admin_rights=False, uid=None, hash_the_password=True):
-        # Set superclass parameters.
-        super(User, self).__init__(uid)
-        
-        # Set the user to be authentic.
-        self.is_authenticated = True
-        
-        # Set the account to be active.
-        self.is_active = True
-        
-        # The user is not anonymous.
-        self.is_anonymous = False
-        
-        # Set the username.
-        self.username = username
-        
-        # Set the raw password and use SHA224 to get the hashed version in 
-        # hex form.
-        raw_password = password
+        super(User, self).__init__(uid) # Set superclass parameters.
+        self.is_authenticated = True # Set the user to be authentic.
+        self.is_active = True # Set the account to be active.
+        self.is_anonymous = False # The user is not anonymous.
+        self.username = username # Set the username.
+        raw_password = password # Set the raw password and use SHA224 to get the hashed version in hex form.
         if hash_the_password:
+            if six.PY3: raw_password = raw_password.encode('utf-8')
             self.password = sha224(raw_password).hexdigest() 
-        else:
+        else:                
             self.password = password
-        
-        # Set the displayname (what the browser will show).
-        self.displayname = display_name
-        
-        # Set the user's email.
-        self.email = email
-        
-        # Set whether this user has admin rights.
-        self.is_admin = has_admin_rights
-        
-        # Set the type prefix to 'user'.
-        self.type_prefix = 'user'
-        
-        # Set the file suffix to '.usr'.
-        self.file_suffix = '.usr'
-        
-        # Set the instance label to the username.
-        self.instance_label = username 
+        self.displayname = display_name # Set the displayname (what the browser will show).
+        self.email = email # Set the user's email.
+        self.is_admin = has_admin_rights # Set whether this user has admin rights.
+        self.type_prefix = 'user' # Set the type prefix to 'user'.
+        self.file_suffix = '.usr' # Set the file suffix to '.usr'.
+        self.instance_label = username  # Set the instance label to the username.
         
     def load_from_copy(self, other_object):
         if type(other_object) == type(self):
             # Do the superclass copying.
             super(User, self).load_from_copy(other_object)
-            
             self.is_authenticated = other_object.is_authenticated
             self.is_active = other_object.is_active
             self.is_anonymous = other_object.is_anonymous
@@ -134,29 +111,16 @@ class User(sobj.Blob):
     def show(self):
         # Show superclass attributes.
         super(User, self).show()  
-        
         print('---------------------')
-
-        print('Username: %s' % self.username)
-        print('Displayname: %s' % self.displayname)
-        print('Hashed password: %s' % self.password)
-        print('Email: %s' % self.email)
-        if self.is_authenticated:
-            print('Is authenticated?: Yes')
-        else:
-            print('Is authenticated?: No')
-        if self.is_active:
-            print('Account active?: Yes')
-        else:
-            print('Account active?: No')
-        if self.is_anonymous:
-            print('Is anonymous?: Yes')
-        else:
-            print('Is anonymous?: No')
-        if self.is_admin:
-            print('Has admin rights?: Yes')
-        else:
-            print('Has admin rights?: No')
+        print('        Username: %s' % self.username)
+        print('    Display name: %s' % self.displayname)
+        print(' Hashed password: %s' % self.password)
+        print('   Email address: %s' % self.email)
+        print('Is authenticated: %s' % self.is_authenticated)
+        print('       Is active: %s' % self.is_active)
+        print('    Is anonymous: %s' % self.is_anonymous)
+        print('        Is admin: %s' % self.is_admin)
+        return None
             
     def get_user_front_end_repr(self):
         obj_info = {

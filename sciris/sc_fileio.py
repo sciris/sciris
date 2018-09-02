@@ -14,6 +14,7 @@ import os
 import re
 import pickle
 import dill
+import types
 from glob import glob
 from gzip import GzipFile
 from contextlib import closing
@@ -25,14 +26,15 @@ from .sc_dataframe import dataframe
 
 # Handle types and Python 2/3 compatibility
 import six
+_stringtype = six.string_types[0]
 if six.PY3: # Python 3
-    _stringtype = str
-    from io import StringIO
+    from io import BytesIO as IO
     import pickle as pkl
+    import copyreg as cpreg
 else: # Python 2
-    _stringtype = basestring 
-    from cStringIO import StringIO
+    from cStringIO import StringIO as IO
     import cPickle as pkl
+    import copy_reg as cpreg
 
 
 
@@ -67,7 +69,7 @@ def loadobj(filename=None, folder=None, verbose=True, die=None):
 
 
 def loadstr(string=None, die=None):
-    with closing(StringIO(string)) as output: # Open a "fake file" with the Gzip string pickle in it.
+    with closing(IO(string)) as output: # Open a "fake file" with the Gzip string pickle in it.
         with GzipFile(fileobj=output, mode='rb') as fileobj: # Set a Gzip reader to pull from the "file."
             picklestring = fileobj.read() # Read the string pickle from the "file" (applying Gzip decompression).
     obj = unpickler(picklestring, die=die) # Return the object gotten from the string pickle.   
@@ -97,7 +99,7 @@ def saveobj(filename=None, obj=None, compresslevel=5, verbose=True, folder=None,
 
 
 def dumpstr(obj=None):
-    with closing(StringIO()) as output: # Open a "fake file."
+    with closing(IO()) as output: # Open a "fake file."
         with GzipFile(fileobj=output, mode='wb') as fileobj:  # Open a Gzip-compressing way to write to this "file."
             try:    savepickle(fileobj, obj) # Use pickle
             except: savedill(fileobj, obj) # ...but use Dill if that fails
@@ -470,9 +472,6 @@ def savedill(fileobj=None, obj=None):
 # The above copyright notice and this permission notice shall be
 # included in all copies or substantial portions of the Software.
 
-import types
-import copy_reg
-
 if six.PY2:
     import cPickle
     class _UniversalPicklingError(pickle.PicklingError, cPickle.PicklingError):
@@ -505,4 +504,4 @@ def unpickleMethod(im_name, im_self, im_class):
         bound = types.MethodType(methodFunction, im_self, *maybeClass)
         return bound
 
-copy_reg.pickle(types.MethodType, pickleMethod, unpickleMethod)
+cpreg.pickle(types.MethodType, pickleMethod, unpickleMethod)
