@@ -24,7 +24,12 @@ __all__ = ['user_dict'] # 'RPC_dict', 'RPC' not visible
 user_dict = None # The UserDict object for all of the app's users.  Gets initialized by and loaded by init_users().
 RPC_dict = {} # Dictionary to hold all of the registered RPCs in this module.
 RPC = rpcs.makeRPCtag(RPC_dict) # RPC registration decorator factory created using call to make_RPC().
-flask.ext.session.RedisSessionInterface(ds.theDataStore, 'sess')
+SESSION_TYPE = 'redis'
+SESSION_REDIS = 'redis://...'
+sess = Session()
+sess.init_app(current_app)
+flask.ext.session.RedisSessionInterface(ds.globalvars.data_store, 'sess')
+
 ##############################################################
 ### Classes
 ##############################################################

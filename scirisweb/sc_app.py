@@ -120,7 +120,10 @@ class ScirisApp(object):
         # If we are including DataStore functionality, initialize it.
         if self.config['USE_DATASTORE']:
             self._init_datastore(self.config)
-            
+
+        # ds.globalvars.data_store
+        # self.flask_app
+
         # If we are including DataStore and users functionality, initialize users.
         if self.config['USE_DATASTORE'] and self.config['USE_USERS']:
             self.login_manager = LoginManager() # Create a LoginManager() object.
@@ -144,7 +147,7 @@ class ScirisApp(object):
         if self.config['USE_DATASTORE'] and self.config['USE_TASKS']:
             self._init_tasks(self.config) # Initialize the users.
             self.add_RPC_dict(tasks.RPC_dict) # Register the RPCs in the user.py module.    
-        
+                
         return None # End of __init__
             
     @staticmethod
