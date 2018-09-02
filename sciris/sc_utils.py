@@ -578,6 +578,21 @@ def colorize(color=None, string=None, output=False):
     Version: 2018sep02
     '''
     
+    # Try to add Windows support
+    if 'win' in sys.platform:
+        try:
+           import colorama
+           colorama.init()
+           ansi_support = True
+        except:
+           try:
+               import tendo.ansiterm # analysis:ignore
+               ansi_support = True
+           except:
+               ansi_support = False # print('Warning: you have called colorize() on Windows but do not have either the colorama or tendo modules.')
+    else:
+        ansi_support = True
+    
     # Define ANSI colors
     ansicolors = OD([
                   ('black', '30'),
@@ -622,6 +637,7 @@ def colorize(color=None, string=None, output=False):
         ansicolor += ansicolors[color]
     
     # Modify string, if supplied
+    if not ansi_support: ansicolor = '' # To avoid garbling output on unsupported systems
     if string is None: ansistring = ansicolor # Just return the color
     else:              ansistring = ansicolor + str(string) + ansicolors['reset'] # Add to start and end of the string
 

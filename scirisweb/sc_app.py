@@ -362,13 +362,16 @@ class ScirisApp(object):
         print('** make_celery_instance() _init_tasks() call')
         tasks.make_celery_instance(app_config)
         
-    def run(self, with_twisted=True, with_flask=True, with_client=True, do_log=False):
-        # If we are not running the app with Twisted, just run the Flask app.
-        if not with_twisted:
+    def run(self, with_twisted=True, with_flask=True, with_client=True, do_log=False, show_logo=True):
+        logostr = '''      ___   ___ 
+     / __| / __|
+     \__ \| (__    ScirisApp now running!
+     |___/ \___|
+     '''
+        if show_logo: sc.colorize(['green','bgblue'],logostr)
+        if not with_twisted: # If we are not running the app with Twisted, just run the Flask app.
             self.flask_app.run()
-
-        # Otherwise (with Twisted).
-        else:
+        else: # Otherwise (with Twisted).
             port       = self.config['SERVER_PORT']
             client_dir = self.config['CLIENT_DIR']
             if not with_client and not with_flask: run_twisted(port=port, do_log=do_log)  # nothing, should return error
