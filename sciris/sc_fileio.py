@@ -28,11 +28,11 @@ from .sc_dataframe import dataframe
 import six
 _stringtype = six.string_types[0]
 if six.PY3: # Python 3
-    from io import StringIO
+    from io import BytesIO as IO
     import pickle as pkl
     import copyreg as cpreg
 else: # Python 2
-    from cStringIO import StringIO
+    from cStringIO import StringIO as IO
     import cPickle as pkl
     import copy_reg as cpreg
 
@@ -69,7 +69,7 @@ def loadobj(filename=None, folder=None, verbose=True, die=None):
 
 
 def loadstr(string=None, die=None):
-    with closing(StringIO(string)) as output: # Open a "fake file" with the Gzip string pickle in it.
+    with closing(IO(string)) as output: # Open a "fake file" with the Gzip string pickle in it.
         with GzipFile(fileobj=output, mode='rb') as fileobj: # Set a Gzip reader to pull from the "file."
             picklestring = fileobj.read() # Read the string pickle from the "file" (applying Gzip decompression).
     obj = unpickler(picklestring, die=die) # Return the object gotten from the string pickle.   
@@ -99,7 +99,7 @@ def saveobj(filename=None, obj=None, compresslevel=5, verbose=True, folder=None,
 
 
 def dumpstr(obj=None):
-    with closing(StringIO()) as output: # Open a "fake file."
+    with closing(IO()) as output: # Open a "fake file."
         with GzipFile(fileobj=output, mode='wb') as fileobj:  # Open a Gzip-compressing way to write to this "file."
             try:    savepickle(fileobj, obj) # Use pickle
             except: savedill(fileobj, obj) # ...but use Dill if that fails

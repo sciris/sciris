@@ -484,7 +484,10 @@ class ScirisApp(object):
         # Show the call of the function.
         if self.config['LOGGING_MODE'] == 'FULL':
             RPCcolor = ['green', 'bgblack']
-            string = '[%s] RPC called: "%s.%s"' % (sc.now(tostring=True), found_RPC.call_func.__module__, found_RPC.funcname)
+            timestr = '[%s]' % sc.now(tostring=True)
+            try:    userstr = ' <%s>' % current_user.username
+            except: userstr =' <no user>'
+            string = '%s%s RPC called: "%s.%s"' % (timestr, userstr, found_RPC.call_func.__module__, found_RPC.funcname)
             sc.colorize(RPCcolor, string)
     
         # Execute the function to get the results, putting it in a try block in case there are errors in what's being called. 
