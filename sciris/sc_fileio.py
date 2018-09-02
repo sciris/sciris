@@ -15,6 +15,7 @@ import re
 import pickle
 import dill
 import types
+import openpyxl
 from glob import glob
 from gzip import GzipFile
 from contextlib import closing
@@ -228,11 +229,85 @@ def makefilepath(filename=None, folder=None, ext=None, default=None, split=False
 ### Spreadsheet functions
 ##############################################################################
 
-__all__ += ['loadspreadsheet', 'savespreadsheet']
+__all__ += ['Spreadsheet', 'loadspreadsheet', 'savespreadsheet']
+
+class Spreadsheet(object):
+    '''
+    A class for reading and writing Excel files in binary format.
+    
+    This object provides an interface for managing the contents of files (particularly spreadsheets) as Python objects
+    that can be stored in the FE database. Basic usage is as follows:
+    
+    ss = AtomicaSpreadsheet('input.xlsx') # Load a file into this object
+    f = ss.get_file() # Retrieve an in-memory file-like IO stream from the data
+    book = openpyxl.load_workbook(f) # This stream can be passed straight to openpyxl
+    book.create_sheet(...)
+    book.save(f) # The workbook can be saved back to this stream
+    ss.insert(f) # We can update the contents of the AtomicaSpreadsheet with the newly written workbook
+    ss.save('output.xlsx') # Can also write the contents back to disk
+    
+    As shown above, no disk IO needs to happen to manipulate the spreadsheets with openpyxl (or xlrd/xlsxwriter)
+
+    Version: 2018sep03
+    '''
+
+    def __init__(self, source=None):
+        # "source" is a specification of where to get the data from
+        # It can be anything supported by AtomicaSpreadsheet.insert() which are
+        # - A filename, which will get loaded
+        # - A io.BytesIO which will get dumped into this instance
+        self.filename  = None
+        self.data      = None
+        self.load_date = None
+        if source is not None:
+            self.insert(source)
+        return None
+
+    def __repr__(self):
+        output = ut.prepr(self)
+        return output
+
+    def load(self, source):
+        ''' This function loads the spreadsheet from a file or object. '''
+        if isinstance(source,io.BytesIO):
+            source.flush()
+            source.seek(0)
+            self.data = source.read()
+        else:
+            filepath = ut.makefilepath(filename=source)
+            self.filename = filepath
+            self.load_date = ut.now()
+            with open(filepath, mode='rb') as f:
+                self.data = f.read()
+        self.load_date = ut.now()
+        return None
+
+    def save(self, filename=None):
+        ''' This function writes the spreadsheet to a file on disk. '''
+        if filename is None:
+            if self.filename is not None:
+                filename = self.filename
+            else:
+                raise Exception('Cannot determine filename')
+        filepath = ut.makefilepath(filename=filename)
+        with open(filepath, mode='wb') as f:
+            f.write(self.data)
+        print('Spreadsheet saved to %s.' % filepath)
+        return filepath
+
+    def as_file(self):
+        '''
+        Return a file-like object with the contents of the file.
+        This can then be used to open the workbook from memory without writing anything to disk e.g.
+        - book = openpyxl.load_workbook(self.get_file())
+        - book = xlrd.open_workbook(file_contents=self.get_file().read())
+        '''
+        return io.BytesIO(self.data)
+    
     
 def loadspreadsheet(filename=None, folder=None, sheetname=None, sheetnum=None, asdataframe=True):
     '''
-    Load a spreadsheet
+    Load a spreadsheet as a dataframe.
     '''
 
     fullpath = makefilepath(filename=filename, folder=folder)

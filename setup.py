@@ -34,10 +34,11 @@ setup(
     include_package_data=True,
     install_requires=[
         'matplotlib>=1.4.2', # Plotting
-        'numpy>=1.10.1', # Numerical functions
-        'dill', # File I/O
-        'xlrd', # Spreadsheet input
-        'xlsxwriter', # Spreadsheet output
-        'psutil', # Load monitoring
+        'numpy>=1.10.1',     # Numerical functions
+        'dill',              # File I/O
+        'xlrd',              # Spreadsheet input
+        'xlsxwriter',        # Spreadsheet output
+        'openpyxl',          # Spreadsheet functions
+        'psutil',            # Load monitoring
     ],
 )
