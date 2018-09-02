@@ -10,7 +10,7 @@ import datetime
 import dateutil
 from time import time, mktime, sleep
 from textwrap import fill
-from pprint import pprint, pformat
+import pprint
 from psutil import cpu_percent
 from subprocess import Popen, PIPE
 from functools import reduce
@@ -63,6 +63,11 @@ def dcp(obj=None):
     output = copy.deepcopy(obj)
     return output
 
+
+def pp(obj):
+    ''' Shortcut for pretty-printing the object '''
+    pprint.pprint(obj)
+    return None
 
 ##############################################################################
 ### PRINTING/NOTIFICATION FUNCTIONS
@@ -201,14 +206,8 @@ def prepr(obj, maxlen=None):
 
 
 def pr(obj, maxlen=None):
-    ''' Shortcut for printing the pretty repr for an object '''
+    ''' Shortcut for printing the pretty repr for an object -- comparable to sc.pp() '''
     print(prepr(obj, maxlen=maxlen))
-    return None
-
-
-def pp(obj):
-    ''' Shortcut for pretty-printing the object '''
-    pprint(obj)
     return None
 
     
@@ -237,7 +236,7 @@ def indent(prefix=None, text=None, suffix='\n', n=0, pretty=False, simple=True, 
     if prefix is None: prefix = ' '*n
     
     # Get text in the right format -- i.e. a string
-    if pretty: text = pformat(text)
+    if pretty: text = pprint.pformat(text)
     else:      text = flexstr(text)
 
     # If there is no newline in the text, process the output normally.
