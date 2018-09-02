@@ -38,6 +38,7 @@ setup(
         'mpld3', # Rendering plots in the browser
         'flask', # Creating the webapp
         'flask-login', # Handling users
+        'Flask-Session', # use redis for sessions
         'werkzeug', # HTTP tools
         'twisted', # Server
         'celery', # Task manager
