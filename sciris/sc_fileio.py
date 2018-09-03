@@ -15,6 +15,7 @@ import re
 import pickle
 import dill
 import types
+import xlrd
 import openpyxl
 from glob import glob
 from gzip import GzipFile
@@ -229,27 +230,10 @@ def makefilepath(filename=None, folder=None, ext=None, default=None, split=False
 ### Spreadsheet functions
 ##############################################################################
 
-__all__ += ['Spreadsheet', 'loadspreadsheet', 'savespreadsheet']
+__all__ += ['Blobject', 'Spreadsheet', 'loadspreadsheet', 'savespreadsheet']
 
-class Spreadsheet(object):
-    '''
-    A class for reading and writing Excel files in binary format.
-    
-    This object provides an interface for managing the contents of files (particularly spreadsheets) as Python objects
-    that can be stored in the FE database. Basic usage is as follows:
-    
-    ss = AtomicaSpreadsheet('input.xlsx') # Load a file into this object
-    f = ss.get_file() # Retrieve an in-memory file-like IO stream from the data
-    book = openpyxl.load_workbook(f) # This stream can be passed straight to openpyxl
-    book.create_sheet(...)
-    book.save(f) # The workbook can be saved back to this stream
-    ss.load(f) # We can update the contents of the AtomicaSpreadsheet with the newly written workbook
-    ss.save('output.xlsx') # Can also write the contents back to disk
-    
-    As shown above, no disk IO needs to happen to manipulate the spreadsheets with openpyxl (or xlrd/xlsxwriter)
-
-    Version: 2018sep03
-    '''
+class Blobject(object):
+    ''' A wrapper for a binary file '''
 
     def __init__(self, source=None, name=None, filename=None):
         # "source" is a specification of where to get the data from
@@ -263,33 +247,54 @@ class Spreadsheet(object):
         if name     is None and filename is not None: name = os.path.basename(filename) # If not supplied, use the filename
         
         # Define quantities
-        self.name      = name
-        self.filename  = filename
-        self.created   = ut.now()
-        self.modified  = ut.now()
-        self.blob      = None
+        self.name      = name # Name of the object
+        self.filename  = filename # Filename (used as default for load/save)
+        self.created   = ut.now() # When the object was created
+        self.modified  = ut.now() # When it was last modified
+        self.blob  = None # The binary data
+        self.bytes = None # The filestream representation of the binary data
         if source is not None: self.load(source)
         return None
 
     def __repr__(self):
-        output = ut.prepr(self)
-        return output
+        return ut.prepr(self, skip=['blob','bytes'])
 
-    def load(self, source):
-        ''' This function loads the spreadsheet from a file or object. '''
-        if isinstance(source,io.BytesIO):
+    def load(self, source=None):
+        '''
+        This function loads the spreadsheet from a file or object. If no input argument is supplied,
+        then it will read self.bytes, assuming it exists.
+        '''
+        def read_bin(source):
             source.flush()
             source.seek(0)
-            self.blob = source.read()
-        elif ut.isstring(source):
-            filepath = makefilepath(filename=source)
-            self.filename = filepath
-            self.modified = ut.now()
+            output = source.read()
+            return output
+        
+        def read_file(filename):
+            filepath = makefilepath(filename=filename)
+            self.filename = filename
             with open(filepath, mode='rb') as f:
-                self.blob = f.read()
+                output = f.read()
+            return output
+            
+        if source is None:
+            if self.bytes is not None:
+                self.blob = read_bin(self.bytes)
+                self.bytes = None # Once read in, delete
+            else:
+                if self.filename is not None:
+                    self.blob = read_file(self.filename)
+                else:
+                    print('Nothing to load.')
         else:
-            errormsg = 'Input source must be type string (for a filename) or BytesIO, not %s' % type(source)
-            raise Exception(errormsg)
+            if isinstance(source,io.BytesIO):
+                self.blob = read_bin(source)
+            elif ut.isstring(source):
+                self.blob = read_file(source)
+            else:
+                errormsg = 'Input source must be type string (for a filename) or BytesIO, not %s' % type(source)
+                raise Exception(errormsg)
+        
         self.modified = ut.now()
         return None
 
@@ -298,8 +303,13 @@ class Spreadsheet(object):
         if filename is None:
             if self.filename is not None:
                 filename = self.filename
+            elif self.name is not None:
+                if self.name.endswith('.xlsx'):
+                    filename = self.name
+                else:
+                    filename = self.name + '.xlsx'
             else:
-                raise Exception('Cannot determine filename')
+                filename = 'spreadsheet.xlsx' # Come up with a terrible default name
         filepath = makefilepath(filename=filename)
         with open(filepath, mode='wb') as f:
             f.write(self.blob)
@@ -307,14 +317,76 @@ class Spreadsheet(object):
         print('Spreadsheet saved to %s.' % filepath)
         return filepath
 
-    def as_file(self):
+    def tofile(self, output=True):
         '''
         Return a file-like object with the contents of the file.
         This can then be used to open the workbook from memory without writing anything to disk e.g.
-        - book = openpyxl.load_workbook(self.get_file())
-        - book = xlrd.open_workbook(file_contents=self.get_file().read())
+        - book = openpyxl.load_workbook(self.tofile())
+        - book = xlrd.open_workbook(file_contents=self.tofile().read())
         '''
-        return io.BytesIO(self.blob)
+        bytesblob = io.BytesIO(self.blob)
+        if output:
+            return bytesblob
+        else:
+            self.bytes = bytesblob
+            return None
+    
+    
+    
+class Spreadsheet(Blobject):
+    '''
+    A class for reading and writing Excel files in binary format.
+    
+    This object provides an interface for managing the contents of files (particularly spreadsheets) as Python objects
+    that can be stored in the FE database. Basic usage is as follows:
+    
+    ss = Spreadsheet('input.xlsx') # Load a file into this object
+    f = ss.get_file() # Retrieve an in-memory file-like IO stream from the data
+    book = openpyxl.load_workbook(f) # This stream can be passed straight to openpyxl
+    book.create_sheet(...)
+    book.save(f) # The workbook can be saved back to this stream
+    ss.load(f) # We can update the contents of the AtomicaSpreadsheet with the newly written workbook
+    ss.save('output.xlsx') # Can also write the contents back to disk
+    
+    As shown above, no disk IO needs to happen to manipulate the spreadsheets with openpyxl (or xlrd/xlsxwriter)
+
+    Version: 2018sep03
+    '''
+    
+    def xlrd(self):
+        ''' Return a book as opened by xlrd '''
+        book = xlrd.open_workbook(file_contents=self.tofile().read())
+        return book
+    
+    def openpyxl(self):
+        ''' Return a book as opened by openpyxl '''
+        self.tofile(output=False)
+        book = openpyxl.load_workbook(self.bytes) # This stream can be passed straight to openpyxl
+        return book
+        
+    def pandas(self):
+        try:    import pandas as pd
+        except: raise Exception('Cannot use Spreadsheet.pandas() since pandas is not installed')
+        self.tofile(output=False)
+        book = pd.ExcelFile(self.bytes)
+        return book
+    
+    def update(self, book):
+        self.tofile(output=False)
+        book.save(self.bytes)
+        self.load()
+        return None
+    
+    def readcells(self, sheet, cells):
+        pass
+    
+    def writecells(self, sheet, cells, vals):
+        cells = ut.promotetolist(cells)
+        vals  = ut.promotetolist(vals)
+        return None
+        
+    
+    pass
     
     
 def loadspreadsheet(filename=None, folder=None, sheetname=None, sheetnum=None, asdataframe=True):
@@ -368,22 +440,22 @@ def savespreadsheet(filename=None, data=None, folder=None, sheetnames=None, clos
     
     # Simple example
     testdata1 = pl.rand(8,3)
-    sc.export_file(filename='test1.xlsx', data=testdata1)
+    sc.savespreadsheet(filename='test1.xlsx', data=testdata1)
     
     # Include column headers
     test2headers = [['A','B','C']] # Need double to get right shape
     test2values = pl.rand(8,3).tolist()
     testdata2 = test2headers + test2values
-    sc.export_file(filename='test2.xlsx', data=testdata2)
+    sc.savespreadsheet(filename='test2.xlsx', data=testdata2)
     
     # Multiple sheets
     testdata3 = [pl.rand(10,10), pl.rand(20,5)]
     sheetnames = ['Ten by ten', 'Twenty by five']
-    sc.export_file(filename='test3.xlsx', data=testdata3, sheetnames=sheetnames)
+    sc.savespreadsheet(filename='test3.xlsx', data=testdata3, sheetnames=sheetnames)
     
     # Supply data as an odict
     testdata4 = sc.odict([('First sheet', pl.rand(6,2)), ('Second sheet', pl.rand(3,3))])
-    sc.export_file(filename='test4.xlsx', data=testdata4, sheetnames=sheetnames)
+    sc.savespreadsheet(filename='test4.xlsx', data=testdata4, sheetnames=sheetnames)
     
     # Include formatting
     nrows = 15
@@ -399,7 +471,7 @@ def savespreadsheet(filename=None, data=None, folder=None, sheetnames=None, clos
     formatdata[1:,:] = 'plain' # Format data
     formatdata[testdata5>0.7] = 'big' # Find "big" numbers and format them differently
     formatdata[0,:] = 'header' # Format header
-    sc.export_file(filename='test5.xlsx', data=testdata5, formats=formats, formatdata=formatdata)
+    sc.savespreadsheet(filename='test5.xlsx', data=testdata5, formats=formats, formatdata=formatdata)
     '''
     fullpath = makefilepath(filename=filename, folder=folder, default='default.xlsx')
     datadict   = odict()

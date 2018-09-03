@@ -37,7 +37,7 @@ Note: if you're a developer, you'll likely already have some/all of these packag
 
 3. Install [Anaconda Python](https://www.anaconda.com/download/) (simulation engine)
 
-4. Once you've done all that, to install, simply run `python setup.py develop` in the root folder. This should install Sciris as an importable Python module. If you need Sciris Web as well, run `python setup-web.py develop`.
+4. Once you've done all that, to install, simply run `python setup.py develop` in the root folder, or `python setup.py develop minimal` to skip installing optional dependencies (e.g. spreadsheet reading and writing). This should install Sciris as an importable Python module. If you need Sciris Web as well, run `python setup-web.py develop`.
 
 To test, open up a new Python window and type `import sciris` (and/or `import scirisweb`)
 

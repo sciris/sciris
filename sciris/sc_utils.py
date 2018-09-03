@@ -169,15 +169,23 @@ def objrepr(obj, showid=True, showmeth=True, showatt=True):
     return output
 
 
-def prepr(obj, maxlen=None):
-    ''' Akin to "pretty print", returns a pretty representation of an object -- all attributes, plust methods and ID '''
-    # Initialize things to print out
+def prepr(obj, maxlen=None, skip=None):
+    ''' 
+    Akin to "pretty print", returns a pretty representation of an object -- 
+    all attributes (except any that are skipped), plust methods and ID.
+    '''
+    
+    # Handle input arguments
     if maxlen is None: maxlen = 80
+    if skip   is None: skip   = []
+    else:              skip = promotetolist(skip)
+    
+    # Initialize things to print out
     labels = []
     values = []
     if hasattr(obj, '__dict__'):
         if len(obj.__dict__):
-            labels = sorted(obj.__dict__.keys()) # Get the attribute keys
+            labels = sorted(set(obj.__dict__.keys()) - set(skip)) # Get the attribute keys
             values = [flexstr(getattr(obj, attr)) for attr in labels] # Get the string representation of the attribute
         else:
             items = dir(obj)

@@ -1,9 +1,25 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 from __future__ import unicode_literals
-
+import sys
 from setuptools import setup, find_packages
 
+# Optionally define extras
+if 'minimal' in sys.argv:
+    sys.argv.remove('minimal')
+    extras = []
+else:
+    extras = [
+        'git',               # Version information
+        'dill',              # File I/O
+        'xlrd',              # Spreadsheet input
+        'xlsxwriter',        # Spreadsheet output
+        'openpyxl',          # Spreadsheet functions
+        'pandas',            # Spreadsheet input
+        'psutil',            # Load monitoring
+        ]
+
+# Get the version
 with open("sciris/sc_version.py", "r") as f:
     version_file = {}
     exec(f.read(), version_file)
@@ -35,10 +51,5 @@ setup(
     install_requires=[
         'matplotlib>=1.4.2', # Plotting
         'numpy>=1.10.1',     # Numerical functions
-        'dill',              # File I/O
-        'xlrd',              # Spreadsheet input
-        'xlsxwriter',        # Spreadsheet output
-        'openpyxl',          # Spreadsheet functions
-        'psutil',            # Load monitoring
-    ],
+    ] + extras,              # Optional dependencies
 )
