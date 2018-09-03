@@ -125,8 +125,10 @@ def loadtext(filename=None, splitlines=False):
 
 
 def savetext(filename=None, string=None):
-    ''' Convenience function for reading a text file -- accepts a string or list of strings '''
+    ''' Convenience function for saving a text file -- accepts a string or list of strings '''
     if isinstance(string, list): string = '\n'.join(string) # Convert from list to string)
+    if not ut.isstring(string):
+        string = str(string)
     with open(filename, 'w') as f: f.write(string)
     return None
 
@@ -388,19 +390,22 @@ class Spreadsheet(Blobject):
     pass
     
     
-def loadspreadsheet(filename=None, folder=None, sheetname=None, sheetnum=None, asdataframe=True):
+def loadspreadsheet(filename=None, folder=None, fileobj=None, sheetname=None, sheetnum=None, asdataframe=True):
     '''
-    Load a spreadsheet as a dataframe.
+    Load a spreadsheet as a list of lists or as a dataframe. Read from either a filename or a file object.
     '''
     import xlrd # Optional import
-
-    fullpath = makefilepath(filename=filename, folder=folder)
-    workbook = xlrd.open_workbook(fullpath)
+    
+    if fileobj is None:
+        fullpath = makefilepath(filename=filename, folder=folder)
+        book = xlrd.open_workbook(fullpath)
+    else:
+        book = xlrd.open_workbook(file_contents=fileobj.read())
     if sheetname is not None: 
-        sheet = workbook.sheet_by_name(sheetname)
+        sheet = book.sheet_by_name(sheetname)
     else:
         if sheetnum is None: sheetnum = 0
-        sheet = workbook.sheet_by_index(sheetnum)
+        sheet = book.sheet_by_index(sheetnum)
     
     # Load the raw data
     rawdata = []

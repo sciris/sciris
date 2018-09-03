@@ -39,7 +39,7 @@ class odict(_OD):
         if len(args)==1 and args[0] is None: args = [] # Remove a None argument
         _OD.__init__(self, *args, **kwargs) # Standard init
         return None
-
+    
     def __slicekey(self, key, slice_end):
         shift = int(slice_end=='stop')
         if isinstance(key, ut._numtype): return key
@@ -141,6 +141,19 @@ class odict(_OD):
             _OD.__setitem__(self, key, value)
         return None
     
+    
+    def __getattribute__(self, attr):
+        ''' Allows odict keys to get retrieved (but not set) via dict.key notation '''
+        try:
+            output = _OD.__getattribute__(self, attr)
+            return output
+        except Exception as E:
+            try:
+                output = self.__getitem__(attr)
+                return output
+            except:
+                raise E
+            
      
     def __repr__(self, maxlen=None, showmultilines=True, divider=False, dividerthresh=10, numindents=0, recurselevel=0, sigfigs=None, numformat=None):
         ''' Print a meaningful representation of the odict '''

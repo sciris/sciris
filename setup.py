@@ -10,6 +10,7 @@ if 'minimal' in sys.argv:
     extras = []
 else:
     extras = [
+        'attrdict',          # Class-like dictionaries
         'dill',              # File I/O
         'gitpython',         # Version information
         'openpyxl',          # Spreadsheet functions
