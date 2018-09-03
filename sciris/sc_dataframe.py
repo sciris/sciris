@@ -103,7 +103,7 @@ class dataframe(object):
                 output += indformat % ut.flexstr(ind)
                 for col in self.cols: # Print out data
                     output += outputformats[col] % outputlist[col][ind]
-                output += '\n'
+                if ind<nrows-1: output += '\n'
             
             return output
     
@@ -399,31 +399,23 @@ class dataframe(object):
             output.append(thisrow)
         return output
     
+    def pandas(self, df=None):
+        ''' Function to export to pandas (if no argument) or import from pandas (with an argument) '''
+        import pandas as pd # Optional import
+        if df is None: # Convert
+            output = pd.DataFrame(data=self.data, columns=self.cols)
+            return output
+        else:
+            if type(df) != pd.DataFrame:
+                errormsg = 'Can only read pandas dataframes, not %s' % type(df)
+                raise Exception(errormsg)
+            self.cols = list(df.columns)
+            self.data = np.array(df, dtype=object)
+            return None
+    
     def export(self, filename=None, sheetname=None, close=True):
-        from . import sc_fileio as io
+        from . import sc_fileio as io # Optional import
         for_export = ut.dcp(self.data)
         for_export = np.vstack((self.cols, self.data))
-        io.exportexcel(filename=filename, data=for_export, sheetname=sheetname, close=close)
+        io.savespreadsheet(filename=filename, data=for_export, sheetname=sheetname, close=close)
         return
-
-def testdataframe():
-    print('Testing dataframe:')
-    a = dataframe(cols=['x','y'],data=[[1238,2],[384,5],[666,7]]) # Create data frame
-    print(a['x']) # Print out a column
-    print(a[0]) # Print out a row
-    print(a['x',0]) # Print out an element
-    a[0] = [123,6]; print(a) # Set values for a whole row
-    a['y'] = [8,5,0]; print(a) # Set values for a whole column
-    a['z'] = [14,14,14]; print(a) # Add new column
-    a.addcol('z', [14,14,14]); print(a) # Alternate way to add new column
-    a.rmcol('z'); print(a) # Remove a column
-    a.pop(1); print(a) # Remove a row
-    a.append([555,2]); print(a) # Append a new row
-    a.insert(1,[660,3]); print(a) # Insert a new row
-    a.sort(); print(a) # Sort by the first column
-    a.sort('y'); print(a) # Sort by the second column
-    a.addrow([770,4]); print(a) # Replace the previous row and sort
-    a.findrow(555) # Return the row starting with value '1'
-    a.rmrow(); print(a) # Remove last row
-    a.rmrow(123); print(a) # Remove the row starting with element '3'
-    return None
