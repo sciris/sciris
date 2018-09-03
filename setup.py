@@ -11,7 +11,7 @@ if 'minimal' in sys.argv:
 else:
     extras = [
         'dill',              # File I/O
-        'git',               # Version information
+        'gitpython',         # Version information
         'openpyxl',          # Spreadsheet functions
         'pandas',            # Spreadsheet input
         'psutil',            # Load monitoring
