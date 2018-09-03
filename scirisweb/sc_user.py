@@ -25,7 +25,7 @@ user_dict = None # The UserDict object for all of the app's users.  Gets initial
 RPC_dict = {} # Dictionary to hold all of the registered RPCs in this module.
 RPC = rpcs.makeRPCtag(RPC_dict) # RPC registration decorator factory created using call to make_RPC().
 SESSION_TYPE = 'redis'
-SESSION_REDIS = 'redis://...'
+SESSION_REDIS = current_app.config['REDIS_URL']
 sess = Session()
 sess.init_app(current_app)
 flask.ext.session.RedisSessionInterface(ds.globalvars.data_store, 'sess')
