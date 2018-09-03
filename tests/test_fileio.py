@@ -5,6 +5,7 @@ Version:
 import sciris as sc
 import pylab as pl
 import openpyxl
+import os
 
 
 torun = [
@@ -75,14 +76,14 @@ if check('Blobject'):
 # Test spreadsheet saving
 if check('Spreadsheet'):
     S = sc.Spreadsheet(files.excel)
-    S.writecells(cells=['A6','B7','C8','D9'], vals=['this','is','a','test'])
+    S.writecells(cells=['A6','B7','C8','D9','E10'], vals=['this','is','a','test','!']) # Method 1
     newdata = (pl.rand(3,3)*100).round()
-    S.writecells(row=10, col=2, vals=newdata)
-    data = S.readcells()
+    S.writecells(row=13, col=0, vals=newdata, verbose=True) # Method 2
+    S.save()
+    data = S.readcells(header=False)
     print(S)
     sc.pp(data)
     
-
 
 if check('saveobj', ['loadobj']):
     sc.saveobj(files.binary, testdata)
@@ -105,5 +106,14 @@ if check('loadtext'):
 if check('getfilelist'):
     print('Files in current folder:')
     sc.pp(sc.getfilelist())
+
+# Tidy up
+sc.blank()
+for fn in files.values():
+    try:    
+        os.remove(fn)
+        print('Removed %s' % fn)
+    except:
+        pass
 
 print('Done.')

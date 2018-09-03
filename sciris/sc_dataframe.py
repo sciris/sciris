@@ -4,6 +4,7 @@
 
 import numpy as np
 from . import sc_utils as ut # Note, sc_fileio is also used, but is only imported when required to avoid a circular import
+from .sc_odict import odict
 
 __all__ = ['dataframe']
 
@@ -76,8 +77,8 @@ class dataframe(object):
             return ''
         
         else: # Go for it
-            outputlist = dict()
-            outputformats = dict()
+            outputlist = odict()
+            outputformats = odict()
             
             # Gather data
             nrows = self.nrows()
@@ -306,7 +307,7 @@ class dataframe(object):
         if len(row)!=len(self.cols): 
             errormsg = 'Length mismatch between "%s" and "%s"' % (row, self.cols)
             raise Exception(errormsg)
-        rowdict = dict(zip(self.cols, row))
+        rowdict = odict(zip(self.cols, row))
         return rowdict
     
     def findrow(self, key=None, col=None, default=None, closest=False, die=False, asdict=False):

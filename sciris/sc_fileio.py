@@ -335,20 +335,8 @@ class Blobject(object):
     
 class Spreadsheet(Blobject):
     '''
-    A class for reading and writing Excel files in binary format.
-    
-    This object provides an interface for managing the contents of files (particularly spreadsheets) as Python objects
-    that can be stored in the FE database. Basic usage is as follows:
-    
-    ss = Spreadsheet('input.xlsx') # Load a file into this object
-    f = ss.get_file() # Retrieve an in-memory file-like IO stream from the data
-    book = openpyxl.load_workbook(f) # This stream can be passed straight to openpyxl
-    book.create_sheet(...)
-    book.save(f) # The workbook can be saved back to this stream
-    ss.load(f) # We can update the contents of the AtomicaSpreadsheet with the newly written workbook
-    ss.save('output.xlsx') # Can also write the contents back to disk
-    
-    As shown above, no disk IO needs to happen to manipulate the spreadsheets with openpyxl (or xlrd/xlsxwriter)
+    A class for reading and writing Excel files in binary format.No disk IO needs 
+    to happen to manipulate the spreadsheets with openpyxl (or xlrd or pandas).
 
     Version: 2018sep03
     '''
@@ -379,13 +367,14 @@ class Spreadsheet(Blobject):
         self.load()
         return None
     
-    def readcells(self, sheetname=None, sheetnum=None, asdataframe=None):
+    def readcells(self, *args, **kwargs):
         ''' Alias to loadspreadsheet() '''
         f = self.tofile()
-        output = loadspreadsheet(fileobj=f)
+        kwargs['fileobj'] = f
+        output = loadspreadsheet(*args, **kwargs)
         return output
     
-    def writecells(self, cells=None, row=None, col=None, vals=None, sheetname=None, sheetnum=None):
+    def writecells(self, cells=None, row=None, col=None, vals=None, sheetname=None, sheetnum=None, verbose=False):
         '''
         Specify cells to write. Can supply either a list of cells of the same length
         as the values, or else specify a starting row and column and write the values
@@ -396,11 +385,13 @@ class Spreadsheet(Blobject):
         # Load workbook
         self.tofile(output=False) # Convert to bytes
         wb = openpyxl.load_workbook(self.bytes)
+        if verbose: print('Workbook loaded: %s' % wb)
         
         # Get right worksheet
         if   sheetname is not None: ws = wb[sheetname]
         elif sheetnum  is not None: ws = wb[wb.sheetnames[sheetnum]]
         else:                       ws = wb.active
+        if verbose: print('Worksheet loaded: %s' % ws)
         
         # Determine the cells
         if cells is not None: # A list of cells is supplied
@@ -412,20 +403,26 @@ class Spreadsheet(Blobject):
             for cell,val in zip(cells,vals):
                 try:
                     ws[cell] = val
+                    if verbose: print('  Cell %s = %s' % (cell,val))
                 except Exception as E:
                     errormsg = 'Could not write "%s" to cell "%s": %s' % (val, cell, repr(E))
                     raise Exception(errormsg)
         else:# Cells aren't supplied, assume a matrix
-            if row is None: row = 1
-            if col is None: col = 1
+            if row is None: row = 0
+            if col is None: col = 0
+            origcol = col
             valarray = np.atleast_2d(np.array(vals, dtype=object))
             for rowvals in valarray:
+                row += 1
+                col = origcol
                 for val in rowvals:
+                    col += 1
                     try:
-                        cell = ws.cell(row=row, column=col)
-                        cell.value = val
+                        key = 'row:%s col:%s' % (row,col)
+                        ws.cell(row=row, column=col, value=val)
+                        if verbose: print('  Cell %s = %s' % (key, val))
                     except Exception as E:
-                        errormsg = 'Could not write "%s" to row=%s, col=%s: %s' % (val, row, col, repr(E))
+                        errormsg = 'Could not write "%s" to %s: %s' % (val, key, repr(E))
                         raise Exception(errormsg)
         
         # Save
@@ -438,7 +435,7 @@ class Spreadsheet(Blobject):
     pass
     
     
-def loadspreadsheet(filename=None, folder=None, fileobj=None, sheetname=None, sheetnum=None, asdataframe=None):
+def loadspreadsheet(filename=None, folder=None, fileobj=None, sheetname=None, sheetnum=None, asdataframe=None, header=True):
     '''
     Load a spreadsheet as a list of lists or as a dataframe. Read from either a filename or a file object.
     '''
@@ -460,16 +457,19 @@ def loadspreadsheet(filename=None, folder=None, fileobj=None, sheetname=None, sh
     
     # Load the raw data
     rawdata = []
-    for rownum in range(sheet.nrows-1):
+    for rownum in range(sheet.nrows-header):
         rawdata.append(odict())
         for colnum in range(sheet.ncols):
-            attr = sheet.cell_value(0,colnum)
-            val = sheet.cell_value(rownum+1,colnum)
-            try:    val = float(val) # Convert it to a number if possible
+            if header: attr = sheet.cell_value(0,colnum)
+            else:      attr = 'Column %s' % colnum
+            attr = ut.uniquename(attr, namelist=rawdata[rownum].keys(), style='(%d)')
+            val = sheet.cell_value(rownum+header,colnum)
+            try:
+                val = float(val) # Convert it to a number if possible
             except: 
                 try:    val = str(val)  # But give up easily and convert to a string (not Unicode)
                 except: pass # Still no dice? Fine, we tried
-            rawdata[rownum][attr] = val
+            rawdata[rownum][str(attr)] = val
     
     # Convert to dataframe
     if asdataframe:
