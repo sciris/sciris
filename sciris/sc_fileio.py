@@ -243,7 +243,7 @@ class Spreadsheet(object):
     book = openpyxl.load_workbook(f) # This stream can be passed straight to openpyxl
     book.create_sheet(...)
     book.save(f) # The workbook can be saved back to this stream
-    ss.insert(f) # We can update the contents of the AtomicaSpreadsheet with the newly written workbook
+    ss.load(f) # We can update the contents of the AtomicaSpreadsheet with the newly written workbook
     ss.save('output.xlsx') # Can also write the contents back to disk
     
     As shown above, no disk IO needs to happen to manipulate the spreadsheets with openpyxl (or xlrd/xlsxwriter)
@@ -251,16 +251,24 @@ class Spreadsheet(object):
     Version: 2018sep03
     '''
 
-    def __init__(self, source=None):
+    def __init__(self, source=None, name=None, filename=None):
         # "source" is a specification of where to get the data from
         # It can be anything supported by AtomicaSpreadsheet.insert() which are
         # - A filename, which will get loaded
         # - A io.BytesIO which will get dumped into this instance
-        self.filename  = None
-        self.data      = None
-        self.load_date = None
-        if source is not None:
-            self.insert(source)
+    
+        # Handle inputs
+        if source   is None and filename is not None: source   = filename # Reset the source to be the filename, e.g. Spreadsheet(filename='foo.xlsx')
+        if filename is None and ut.isstring(source):  filename = source   # Reset the filename to be the source, e.g. Spreadsheet('foo.xlsx')
+        if name     is None and filename is not None: name = os.path.basename(filename) # If not supplied, use the filename
+        
+        # Define quantities
+        self.name      = name
+        self.filename  = filename
+        self.created   = ut.now()
+        self.modified  = ut.now()
+        self.blob      = None
+        if source is not None: self.load(source)
         return None
 
     def __repr__(self):
@@ -272,14 +280,17 @@ class Spreadsheet(object):
         if isinstance(source,io.BytesIO):
             source.flush()
             source.seek(0)
-            self.data = source.read()
-        else:
-            filepath = ut.makefilepath(filename=source)
+            self.blob = source.read()
+        elif ut.isstring(source):
+            filepath = makefilepath(filename=source)
             self.filename = filepath
-            self.load_date = ut.now()
+            self.modified = ut.now()
             with open(filepath, mode='rb') as f:
-                self.data = f.read()
-        self.load_date = ut.now()
+                self.blob = f.read()
+        else:
+            errormsg = 'Input source must be type string (for a filename) or BytesIO, not %s' % type(source)
+            raise Exception(errormsg)
+        self.modified = ut.now()
         return None
 
     def save(self, filename=None):
@@ -289,9 +300,10 @@ class Spreadsheet(object):
                 filename = self.filename
             else:
                 raise Exception('Cannot determine filename')
-        filepath = ut.makefilepath(filename=filename)
+        filepath = makefilepath(filename=filename)
         with open(filepath, mode='wb') as f:
-            f.write(self.data)
+            f.write(self.blob)
+        self.filename = filename
         print('Spreadsheet saved to %s.' % filepath)
         return filepath
 
@@ -302,7 +314,7 @@ class Spreadsheet(object):
         - book = openpyxl.load_workbook(self.get_file())
         - book = xlrd.open_workbook(file_contents=self.get_file().read())
         '''
-        return io.BytesIO(self.data)
+        return io.BytesIO(self.blob)
     
     
 def loadspreadsheet(filename=None, folder=None, sheetname=None, sheetnum=None, asdataframe=True):
