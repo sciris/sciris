@@ -10,13 +10,13 @@ if 'minimal' in sys.argv:
     extras = []
 else:
     extras = [
-        'git',               # Version information
         'dill',              # File I/O
-        'xlrd',              # Spreadsheet input
-        'xlsxwriter',        # Spreadsheet output
+        'git',               # Version information
         'openpyxl',          # Spreadsheet functions
         'pandas',            # Spreadsheet input
         'psutil',            # Load monitoring
+        'xlrd',              # Spreadsheet input
+        'xlsxwriter',        # Spreadsheet output
         ]
 
 # Get the version
