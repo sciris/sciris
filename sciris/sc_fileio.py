@@ -15,13 +15,9 @@ import re
 import pickle
 import dill
 import types
-import xlrd
-import openpyxl
 from glob import glob
 from gzip import GzipFile
 from contextlib import closing
-from xlrd import open_workbook
-from xlsxwriter import Workbook
 from . import sc_utils as ut
 from .sc_odict import odict
 from .sc_dataframe import dataframe
@@ -232,6 +228,7 @@ def makefilepath(filename=None, folder=None, ext=None, default=None, split=False
 
 __all__ += ['Blobject', 'Spreadsheet', 'loadspreadsheet', 'savespreadsheet']
 
+
 class Blobject(object):
     ''' A wrapper for a binary file '''
 
@@ -355,20 +352,22 @@ class Spreadsheet(Blobject):
     
     def xlrd(self):
         ''' Return a book as opened by xlrd '''
+        import xlrd # Optional import
         book = xlrd.open_workbook(file_contents=self.tofile().read())
         return book
     
     def openpyxl(self):
         ''' Return a book as opened by openpyxl '''
+        import openpyxl # Optional iport
         self.tofile(output=False)
         book = openpyxl.load_workbook(self.bytes) # This stream can be passed straight to openpyxl
         return book
         
     def pandas(self):
-        try:    import pandas as pd
-        except: raise Exception('Cannot use Spreadsheet.pandas() since pandas is not installed')
+        ''' Return a book as opened by pandas '''
+        import pandas # Optional import
         self.tofile(output=False)
-        book = pd.ExcelFile(self.bytes)
+        book = pandas.ExcelFile(self.bytes)
         return book
     
     def update(self, book):
@@ -393,9 +392,10 @@ def loadspreadsheet(filename=None, folder=None, sheetname=None, sheetnum=None, a
     '''
     Load a spreadsheet as a dataframe.
     '''
+    import xlrd # Optional import
 
     fullpath = makefilepath(filename=filename, folder=folder)
-    workbook = open_workbook(fullpath)
+    workbook = xlrd.open_workbook(fullpath)
     if sheetname is not None: 
         sheet = workbook.sheet_by_name(sheetname)
     else:
@@ -473,6 +473,7 @@ def savespreadsheet(filename=None, data=None, folder=None, sheetnames=None, clos
     formatdata[0,:] = 'header' # Format header
     sc.savespreadsheet(filename='test5.xlsx', data=testdata5, formats=formats, formatdata=formatdata)
     '''
+    import xlsxwriter # Optional import
     fullpath = makefilepath(filename=filename, folder=folder, default='default.xlsx')
     datadict   = odict()
     formatdict = odict()
@@ -511,7 +512,7 @@ def savespreadsheet(filename=None, data=None, folder=None, sheetnames=None, clos
         
     # Create workbook
     if verbose: print('Creating file %s' % fullpath)
-    workbook = Workbook(fullpath)
+    workbook = xlsxwriter.Workbook(fullpath)
     
     # Optionally add formats
     if formats is not None:

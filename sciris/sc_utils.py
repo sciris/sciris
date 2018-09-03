@@ -798,7 +798,7 @@ def promotetolist(obj=None, objtype=None, keepnone=False):
 ### MISC. FUNCTIONS
 ##############################################################################
 
-__all__ += ['now', 'tic', 'toc', 'percentcomplete', 'checkmem', 'loadbalancer', 'runcommand', 'gitinfo', 'compareversions', 'uniquename']
+__all__ += ['now', 'tic', 'toc', 'percentcomplete', 'checkmem', 'loadbalancer', 'runcommand', 'gitinfo', 'compareversions', 'uniquename', 'importbyname']
 
 def now(timezone='utc', die=False, tostring=False, fmt=None):
     ''' Get the current time, in UTC time '''
@@ -1077,6 +1077,20 @@ def uniquename(name=None, namelist=None, style=None):
         unique_name = name + style%i
     return unique_name # Return the found name.
 
+
+def importbyname(name=None, output=False, die=True):
+    ''' A little function to try loading optional imports '''
+    import importlib
+    try:
+        module = importlib.import_module(name)
+        globals()[name] = module
+    except Exception as E:
+        errormsg = 'Cannot use "%s" since %s is not installed.\nPlease install %s and try again.' % (name,)*3
+        print(errormsg)
+        if die: raise E
+        else:   return False
+    if output: return module
+    else:      return True
 
 ##############################################################################
 ### NESTED DICTIONARY FUNCTIONS
