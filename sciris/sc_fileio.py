@@ -15,6 +15,7 @@ import re
 import pickle
 import dill
 import types
+import numpy as np
 from glob import glob
 from gzip import GzipFile
 from contextlib import closing
@@ -378,24 +379,74 @@ class Spreadsheet(Blobject):
         self.load()
         return None
     
-    def readcells(self, sheet, cells):
-        pass
+    def readcells(self, sheetname=None, sheetnum=None, asdataframe=None):
+        ''' Alias to loadspreadsheet() '''
+        f = self.tofile()
+        output = loadspreadsheet(fileobj=f)
+        return output
     
-    def writecells(self, sheet, cells, vals):
-        cells = ut.promotetolist(cells)
-        vals  = ut.promotetolist(vals)
+    def writecells(self, cells=None, row=None, col=None, vals=None, sheetname=None, sheetnum=None):
+        '''
+        Specify cells to write. Can supply either a list of cells of the same length
+        as the values, or else specify a starting row and column and write the values
+        from there.
+        '''
+        import openpyxl # Optional import
+        
+        # Load workbook
+        self.tofile(output=False) # Convert to bytes
+        wb = openpyxl.load_workbook(self.bytes)
+        
+        # Get right worksheet
+        if   sheetname is not None: ws = wb[sheetname]
+        elif sheetnum  is not None: ws = wb[wb.sheetnames[sheetnum]]
+        else:                       ws = wb.active
+        
+        # Determine the cells
+        if cells is not None: # A list of cells is supplied
+            cells = ut.promotetolist(cells)
+            vals  = ut.promotetolist(vals)
+            if len(cells) != len(vals):
+                errormsg = 'If using cells, cells and vals must have the same length (%s vs. %s)' % (len(cells), len(vals))
+                raise Exception(errormsg)
+            for cell,val in zip(cells,vals):
+                try:
+                    ws[cell] = val
+                except Exception as E:
+                    errormsg = 'Could not write "%s" to cell "%s": %s' % (val, cell, repr(E))
+                    raise Exception(errormsg)
+        else:# Cells aren't supplied, assume a matrix
+            if row is None: row = 1
+            if col is None: col = 1
+            valarray = np.atleast_2d(np.array(vals, dtype=object))
+            for rowvals in valarray:
+                for val in rowvals:
+                    try:
+                        cell = ws.cell(row=row, column=col)
+                        cell.value = val
+                    except Exception as E:
+                        errormsg = 'Could not write "%s" to row=%s, col=%s: %s' % (val, row, col, repr(E))
+                        raise Exception(errormsg)
+        
+        # Save
+        wb.save(self.bytes)
+        self.load()
+        
         return None
         
     
     pass
     
     
-def loadspreadsheet(filename=None, folder=None, fileobj=None, sheetname=None, sheetnum=None, asdataframe=True):
+def loadspreadsheet(filename=None, folder=None, fileobj=None, sheetname=None, sheetnum=None, asdataframe=None):
     '''
     Load a spreadsheet as a list of lists or as a dataframe. Read from either a filename or a file object.
     '''
     import xlrd # Optional import
     
+    # Handle inputs
+    if asdataframe is None: asdataframe = True
+    if isinstance(filename, io.BytesIO): fileobj = filename # It's actually a fileobj
     if fileobj is None:
         fullpath = makefilepath(filename=filename, folder=folder)
         book = xlrd.open_workbook(fullpath)

@@ -75,8 +75,9 @@ if check('Blobject'):
 # Test spreadsheet saving
 if check('Spreadsheet'):
     S = sc.Spreadsheet(files.excel)
-    S.writecells(cells=['A1','B2','C3','D4'], vals=['this','is','a','test'])
-    S.save()
+    S.writecells(cells=['A6','B7','C8','D9'], vals=['this','is','a','test'])
+    newdata = (pl.rand(3,3)*100).round()
+    S.writecells(row=10, col=2, vals=newdata)
     data = S.readcells()
     print(S)
     sc.pp(data)
