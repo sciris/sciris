@@ -6,7 +6,6 @@ Last update: 2018aug20
 
 from flask import Flask, session, current_app
 from flask_login import current_user, login_user, logout_user
-from flask.ext.session import Session
 from hashlib import sha224
 from numpy import argsort
 import six
@@ -24,11 +23,7 @@ __all__ = ['user_dict'] # 'RPC_dict', 'RPC' not visible
 user_dict = None # The UserDict object for all of the app's users.  Gets initialized by and loaded by init_users().
 RPC_dict = {} # Dictionary to hold all of the registered RPCs in this module.
 RPC = rpcs.makeRPCtag(RPC_dict) # RPC registration decorator factory created using call to make_RPC().
-SESSION_TYPE = 'redis'
-SESSION_REDIS = current_app.config['REDIS_URL']
-sess = Session()
-sess.init_app(current_app)
-flask.ext.session.RedisSessionInterface(ds.globalvars.data_store, 'sess')
+
 
 ##############################################################
 ### Classes

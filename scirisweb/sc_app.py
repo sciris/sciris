@@ -7,6 +7,7 @@ Last update: 2018aug20
 # Imports
 from flask import Flask, request, abort, json, jsonify, send_from_directory, make_response
 from flask_login import LoginManager, current_user
+from flask_session import RedisSessionInterface
 from werkzeug.utils import secure_filename
 from werkzeug.exceptions import HTTPException
 import sys
@@ -97,6 +98,12 @@ class ScirisApp(object):
         self.endpoint_layout_dict = {} # Create an empty layout dictionary.
         self.RPC_dict = {}  # Create an empty RPC dictionary.
         
+        with self.flask_app.app_context():
+            # SESSION_TYPE = 'redis'
+            # SESSION_REDIS = current_app.config['REDIS_URL']
+            # sess = Session()
+            # sess.init_app(self.flask_app)
+            RedisSessionInterface(ds.globalvars.data_store, 'sess')
         # Set config parameters in the configs if they were passed in.
         # A config path explicitly passed in will override the setting 
         # specified in the config.py file.
