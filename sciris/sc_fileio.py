@@ -237,14 +237,14 @@ class Blobject(object):
 
     def __init__(self, source=None, name=None, filename=None):
         # "source" is a specification of where to get the data from
-        # It can be anything supported by AtomicaSpreadsheet.insert() which are
+        # It can be anything supported by Blobject.load() which are
         # - A filename, which will get loaded
         # - A io.BytesIO which will get dumped into this instance
     
         # Handle inputs
         if source   is None and filename is not None: source   = filename # Reset the source to be the filename, e.g. Spreadsheet(filename='foo.xlsx')
         if filename is None and ut.isstring(source):  filename = source   # Reset the filename to be the source, e.g. Spreadsheet('foo.xlsx')
-        if name     is None and filename is not None: name = os.path.basename(filename) # If not supplied, use the filename
+        if name     is None and filename is not None: name     = os.path.basename(filename) # If not supplied, use the filename
         
         # Define quantities
         self.name      = name # Name of the object
@@ -265,12 +265,14 @@ class Blobject(object):
         then it will read self.bytes, assuming it exists.
         '''
         def read_bin(source):
+            ''' Helper to read a binary stream '''
             source.flush()
             source.seek(0)
             output = source.read()
             return output
         
         def read_file(filename):
+            ''' Helper to read an actual file '''
             filepath = makefilepath(filename=filename)
             self.filename = filename
             with open(filepath, mode='rb') as f:
@@ -285,7 +287,7 @@ class Blobject(object):
                 if self.filename is not None:
                     self.blob = read_file(self.filename)
                 else:
-                    print('Nothing to load.')
+                    print('Nothing to load: no source or filename supplied and self.bytes is empty.')
         else:
             if isinstance(source,io.BytesIO):
                 self.blob = read_bin(source)
