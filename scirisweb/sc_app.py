@@ -104,7 +104,8 @@ class ScirisApp(object):
             # sess = Session()
             # sess.init_app(self.flask_app)
 
-        self.flask_app.session_interface = RedisSessionInterface(ds.globalvars.data_store, 'sess')
+        print('\n\n !!!!!!!!   ds.globalvars.data_store.redis_db \n\n')
+        self.flask_app.session_interface = RedisSessionInterface(ds.globalvars.data_store.redis_db, 'sess')
 
         # Set config parameters in the configs if they were passed in.
         # A config path explicitly passed in will override the setting 
