@@ -347,6 +347,9 @@ class DataStore(object):
             self.delete(key, save_handle_changes=False)
         self.save() # Save the DataStore object.
         return None
+
+    def redis_obj(self):
+        return self.redis_db
     
     def show_handles(self):
         for key in self.handle_dict: # For each key in the dictionary...
