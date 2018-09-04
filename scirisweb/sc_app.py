@@ -364,11 +364,12 @@ class ScirisApp(object):
         
     def run(self, with_twisted=True, with_flask=True, with_client=True, do_log=False, show_logo=True):
         logostr = '''      ___   ___ 
-     / __| / __|
-     \__ \| (__    ScirisApp now running!
-     |___/ \___|
+     / __| / __|   ===========================
+     \__ \| (__    ScirisApp is now running :)
+     |___/ \___|   ===========================
      '''
-        if show_logo: sc.colorize(['green','bgblue'],logostr)
+        logocolors = ['black','bgblue'] # ['gray','bgblue']
+        if show_logo: sc.colorize(logocolors,logostr)
         if not with_twisted: # If we are not running the app with Twisted, just run the Flask app.
             self.flask_app.run()
         else: # Otherwise (with Twisted).
@@ -486,7 +487,7 @@ class ScirisApp(object):
         
         # Show the call of the function.
         if self.config['LOGGING_MODE'] == 'FULL':
-            RPCcolor = ['green', 'bgblack']
+            RPCcolor = 'blue' # ['green', 'bgblack']
             timestr = '[%s]' % sc.now(tostring=True)
             try:    userstr = ' <%s>' % current_user.username
             except: userstr =' <no user>'
