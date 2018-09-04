@@ -486,18 +486,30 @@ class ScirisApp(object):
             args.insert(0, uploaded_fname) # Prepend the file name to the args list.
         
         # Show the call of the function.
+        callcolor = 'blue'
+        successcolor = 'black'
+        failcolor = ['green', 'bgblack']
+        timestr = '[%s]' % sc.now(tostring=True)
+        try:    userstr = ' <%s>' % current_user.username
+        except: userstr =' <no user>'
+        RPCinfo = sc.odict({'time':timestr, 'user':userstr, 'module':found_RPC.call_func.__module__, 'name':found_RPC.funcname})
+        
         if self.config['LOGGING_MODE'] == 'FULL':
-            RPCcolor = 'blue' # ['green', 'bgblack']
-            timestr = '[%s]' % sc.now(tostring=True)
-            try:    userstr = ' <%s>' % current_user.username
-            except: userstr =' <no user>'
-            string = '%s%s RPC called: "%s.%s"' % (timestr, userstr, found_RPC.call_func.__module__, found_RPC.funcname)
-            sc.colorize(RPCcolor, string)
+            string = '%s%s RPC called: "%s.%s"' % (RPCinfo.time, RPCinfo.user, RPCinfo.module, RPCinfo.name)
+            sc.colorize(callcolor, string)
     
         # Execute the function to get the results, putting it in a try block in case there are errors in what's being called. 
         try:
+            T = sc.tic()
             result = found_RPC.call_func(*args, **kwargs)
+            elapsed = sc.toc(T, output=True)
+            if self.config['LOGGING_MODE'] == 'FULL':
+                string = '%s%s RPC finished in %0.2f s: "%s.%s"' % (RPCinfo.time, RPCinfo.user, elapsed, RPCinfo.module, RPCinfo.name)
+                sc.colorize(successcolor, string)
         except Exception as E:
+            if self.config['LOGGING_MODE'] == 'FULL':
+                string = '%s%s RPC failed: "%s.%s"' % (RPCinfo.time, RPCinfo.user, RPCinfo.module, RPCinfo.name)
+                sc.colorize(failcolor, string)
             exception = traceback.format_exc() # Grab the trackback stack.
             errormsg = 'Exception during RPC "%s" request %s: %.10000s' % (fn_name, request, exception)
             self.flask_app.logger.error(errormsg) # Post an error to the Flask logger limiting the exception information to 10000 characters maximum (to prevent monstrous sqlalchemy outputs)
