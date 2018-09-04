@@ -85,7 +85,9 @@ class ScirisApp(object):
         >>> app = ScirisApp(__file__)                      
     """
     
-    def  __init__(self, filepath=None, config=None, clientdir=None, logging_mode=None):
+    def  __init__(self, filepath=None, config=None, name=None, clientdir=None, logging_mode=None):
+        if name is None: name = 'default'
+        self.name = name
         self.flask_app = Flask(__name__) # Open a new Flask app.
         if config is not None: # If we have a config module, load it into Flask's config dict.
             self.flask_app.config.from_object(config)
@@ -363,13 +365,19 @@ class ScirisApp(object):
         tasks.make_celery_instance(app_config)
         
     def run(self, with_twisted=True, with_flask=True, with_client=True, do_log=False, show_logo=True):
+        
+        # Display the logo
+        appstring = 'ScirisApp "%s" is now running :)' % self.name
+        borderstr = '='*len(appstring)
         logostr = '''      ___   ___ 
-     / __| / __|   ===========================
-     \__ \| (__    ScirisApp is now running :)
-     |___/ \___|   ===========================
-     '''
+     / __| / __|   %s
+     \__ \| (__    %s
+     |___/ \___|   %s
+     ''' % (borderstr, appstring, borderstr)
         logocolors = ['black','bgblue'] # ['gray','bgblue']
         if show_logo: sc.colorize(logocolors,logostr)
+        
+        # Run the thing
         if not with_twisted: # If we are not running the app with Twisted, just run the Flask app.
             self.flask_app.run()
         else: # Otherwise (with Twisted).
@@ -488,7 +496,6 @@ class ScirisApp(object):
         # Show the call of the function.
         callcolor = 'blue'
         successcolor = 'black'
-        failcolor = ['green', 'bgblack']
         timestr = '[%s]' % sc.now(tostring=True)
         try:    userstr = ' <%s>' % current_user.username
         except: userstr =' <no user>'
@@ -507,9 +514,6 @@ class ScirisApp(object):
                 string = '%s%s RPC finished in %0.2f s: "%s.%s"' % (RPCinfo.time, RPCinfo.user, elapsed, RPCinfo.module, RPCinfo.name)
                 sc.colorize(successcolor, string)
         except Exception as E:
-            if self.config['LOGGING_MODE'] == 'FULL':
-                string = '%s%s RPC failed: "%s.%s"' % (RPCinfo.time, RPCinfo.user, RPCinfo.module, RPCinfo.name)
-                sc.colorize(failcolor, string)
             exception = traceback.format_exc() # Grab the trackback stack.
             errormsg = 'Exception during RPC "%s" request %s: %.10000s' % (fn_name, request, exception)
             self.flask_app.logger.error(errormsg) # Post an error to the Flask logger limiting the exception information to 10000 characters maximum (to prevent monstrous sqlalchemy outputs)
