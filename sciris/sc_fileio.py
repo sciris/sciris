@@ -369,11 +369,36 @@ class Spreadsheet(Blobject):
         self.load()
         return None
     
+    @staticmethod
+    def _getsheet(book, sheetname=None, sheetnum=None):
+        if   sheetname is not None: sheet = book[sheetname]
+        elif sheetnum  is not None: sheet = book[book.sheetnames[sheetnum]]
+        else:                       sheet = book.active
+        return sheet
+    
     def readcells(self, *args, **kwargs):
         ''' Alias to loadspreadsheet() '''
+        if 'method' in kwargs:
+            method = kwargs['method']
+            kwargs.pop('method')
+        else:
+            method = None
+        if method is None: method = 'xlrd'
         f = self.tofile()
         kwargs['fileobj'] = f
-        output = loadspreadsheet(*args, **kwargs)
+        if method == 'xlrd':
+            output = loadspreadsheet(*args, **kwargs)
+        elif method == 'openpyxl':
+            book = self.openpyxl()
+            ws = self._getsheet(book=book, sheetname=kwargs.get('sheetname'), sheetnum=kwargs.get('sheetname'))
+            rawdata = tuple(ws.rows)
+            output = np.empty(np.shape(rawdata), dtype=object)
+            for r,rowdata in enumerate(rawdata):
+                for c,val in enumerate(rowdata):
+                    output[r][c] = rawdata[r][c].value
+        else:
+            errormsg = 'Reading method not found; must be one of xlrd, openpyxl, or pandas, not %s' % method
+            raise Exception(errormsg)
         return output
     
     def writecells(self, cells=None, row=None, col=None, vals=None, sheetname=None, sheetnum=None, verbose=False):
@@ -390,9 +415,7 @@ class Spreadsheet(Blobject):
         if verbose: print('Workbook loaded: %s' % wb)
         
         # Get right worksheet
-        if   sheetname is not None: ws = wb[sheetname]
-        elif sheetnum  is not None: ws = wb[wb.sheetnames[sheetnum]]
-        else:                       ws = wb.active
+        ws = self._getsheet(book=wb, sheetname=sheetname, sheetnum=sheetnum)
         if verbose: print('Worksheet loaded: %s' % ws)
         
         # Determine the cells

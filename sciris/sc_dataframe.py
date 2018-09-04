@@ -69,6 +69,7 @@ class dataframe(object):
         # Store it        
         self.cols = cols
         self.data = data
+        self.shape = (self.nrows(), self.ncols())
         return None
     
     def __repr__(self, spacing=2):
@@ -190,6 +191,7 @@ class dataframe(object):
             except:
                 errormsg = 'Could not insert element (%s,%s) in dataframe of shape %' % (key[0], key[1], self.data.shape)
                 raise Exception(errormsg)
+        self.shape = (self.nrows(), self.ncols())
         return None
     
     def get(self, cols=None, rows=None):
