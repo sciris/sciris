@@ -494,8 +494,8 @@ class ScirisApp(object):
             args.insert(0, uploaded_fname) # Prepend the file name to the args list.
         
         # Show the call of the function.
-        callcolor = 'blue'
-        successcolor = 'black'
+        callcolor = 'magenta'
+        successcolor = 'blue'
         timestr = '[%s]' % sc.now(tostring=True)
         try:    userstr = ' <%s>' % current_user.username
         except: userstr =' <no user>'
