@@ -343,27 +343,28 @@ class Spreadsheet(Blobject):
     Version: 2018sep03
     '''
     
-    def xlrd(self):
+    def xlrd(self, *args, **kwargs):
         ''' Return a book as opened by xlrd '''
         import xlrd # Optional import
-        book = xlrd.open_workbook(file_contents=self.tofile().read())
+        book = xlrd.open_workbook(file_contents=self.tofile().read(), *args, **kwargs)
         return book
     
-    def openpyxl(self):
+    def openpyxl(self, *args, **kwargs):
         ''' Return a book as opened by openpyxl '''
         import openpyxl # Optional iport
         self.tofile(output=False)
-        book = openpyxl.load_workbook(self.bytes) # This stream can be passed straight to openpyxl
+        book = openpyxl.load_workbook(self.bytes, *args, **kwargs) # This stream can be passed straight to openpyxl
         return book
         
-    def pandas(self):
+    def pandas(self, *args, **kwargs):
         ''' Return a book as opened by pandas '''
         import pandas # Optional import
         self.tofile(output=False)
-        book = pandas.ExcelFile(self.bytes)
+        book = pandas.ExcelFile(self.bytes, *args, **kwargs)
         return book
     
     def update(self, book):
+        ''' Updated the stored spreadsheet with book instead '''
         self.tofile(output=False)
         book.save(self.bytes)
         self.load()
@@ -401,7 +402,7 @@ class Spreadsheet(Blobject):
             raise Exception(errormsg)
         return output
     
-    def writecells(self, cells=None, startrow=None, startcol=None, vals=None, sheetname=None, sheetnum=None, verbose=False):
+    def writecells(self, cells=None, startrow=None, startcol=None, vals=None, sheetname=None, sheetnum=None, verbose=False, wbargs=None):
         '''
         Specify cells to write. Can supply either a list of cells of the same length
         as the values, or else specify a starting row and column and write the values
@@ -410,8 +411,9 @@ class Spreadsheet(Blobject):
         import openpyxl # Optional import
         
         # Load workbook
+        if wbargs is None: wbargs = {}
         self.tofile(output=False) # Convert to bytes
-        wb = openpyxl.load_workbook(self.bytes)
+        wb = openpyxl.load_workbook(self.bytes, **wbargs)
         if verbose: print('Workbook loaded: %s' % wb)
         
         # Get right worksheet
