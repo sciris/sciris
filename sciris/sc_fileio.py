@@ -401,7 +401,7 @@ class Spreadsheet(Blobject):
             raise Exception(errormsg)
         return output
     
-    def writecells(self, cells=None, row=None, col=None, vals=None, sheetname=None, sheetnum=None, verbose=False):
+    def writecells(self, cells=None, startrow=None, startcol=None, vals=None, sheetname=None, sheetnum=None, verbose=False):
         '''
         Specify cells to write. Can supply either a list of cells of the same length
         as the values, or else specify a starting row and column and write the values
@@ -427,21 +427,25 @@ class Spreadsheet(Blobject):
                 raise Exception(errormsg)
             for cell,val in zip(cells,vals):
                 try:
-                    ws[cell] = val
+                    if ut.isstring(cell): # Handles e.g. cell='A1'
+                        ws[cell] = val
+                    elif ut.checktype(cell, 'arraylike','number') and len(cell)==2: # Handles e.g. cell=(0,0)
+                        ws.cell(row=cell[0], column=cell[1], value=val)
+                    else:
+                        errormsg = 'Cell must be formatted as a label or row-column pair, e.g. "A1" or (3,5); not "%s"' % cell
+                        raise Exception(errormsg)
                     if verbose: print('  Cell %s = %s' % (cell,val))
                 except Exception as E:
                     errormsg = 'Could not write "%s" to cell "%s": %s' % (val, cell, repr(E))
                     raise Exception(errormsg)
         else:# Cells aren't supplied, assume a matrix
-            if row is None: row = 0
-            if col is None: col = 0
-            origcol = col
+            if startrow is None: startrow = 1 # Excel uses 1-based indexing
+            if startcol is None: startcol = 1
             valarray = np.atleast_2d(np.array(vals, dtype=object))
-            for rowvals in valarray:
-                row += 1
-                col = origcol
-                for val in rowvals:
-                    col += 1
+            for i,rowvals in enumerate(valarray):
+                row = startrow + i
+                for j,val in enumerate(rowvals):
+                    col = startcol + j
                     try:
                         key = 'row:%s col:%s' % (row,col)
                         ws.cell(row=row, column=col, value=val)
