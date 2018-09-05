@@ -1,7 +1,7 @@
 """
 tasks.py -- code related to Sciris task queue management
     
-Last update: 2018aug20
+Last update: 2018sep02
 """
 
 import traceback
