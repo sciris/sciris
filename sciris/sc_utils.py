@@ -169,15 +169,23 @@ def objrepr(obj, showid=True, showmeth=True, showatt=True):
     return output
 
 
-def prepr(obj, maxlen=None):
-    ''' Akin to "pretty print", returns a pretty representation of an object -- all attributes, plust methods and ID '''
-    # Initialize things to print out
+def prepr(obj, maxlen=None, skip=None):
+    ''' 
+    Akin to "pretty print", returns a pretty representation of an object -- 
+    all attributes (except any that are skipped), plust methods and ID.
+    '''
+    
+    # Handle input arguments
     if maxlen is None: maxlen = 80
+    if skip   is None: skip   = []
+    else:              skip = promotetolist(skip)
+    
+    # Initialize things to print out
     labels = []
     values = []
     if hasattr(obj, '__dict__'):
         if len(obj.__dict__):
-            labels = sorted(obj.__dict__.keys()) # Get the attribute keys
+            labels = sorted(set(obj.__dict__.keys()) - set(skip)) # Get the attribute keys
             values = [flexstr(getattr(obj, attr)) for attr in labels] # Get the string representation of the attribute
         else:
             items = dir(obj)
@@ -790,7 +798,7 @@ def promotetolist(obj=None, objtype=None, keepnone=False):
 ### MISC. FUNCTIONS
 ##############################################################################
 
-__all__ += ['now', 'tic', 'toc', 'percentcomplete', 'checkmem', 'loadbalancer', 'runcommand', 'gitinfo', 'compareversions', 'uniquename']
+__all__ += ['now', 'tic', 'toc', 'percentcomplete', 'checkmem', 'loadbalancer', 'runcommand', 'gitinfo', 'compareversions', 'uniquename', 'importbyname']
 
 def now(timezone='utc', die=False, tostring=False, fmt=None):
     ''' Get the current time, in UTC time '''
@@ -1069,6 +1077,20 @@ def uniquename(name=None, namelist=None, style=None):
         unique_name = name + style%i
     return unique_name # Return the found name.
 
+
+def importbyname(name=None, output=False, die=True):
+    ''' A little function to try loading optional imports '''
+    import importlib
+    try:
+        module = importlib.import_module(name)
+        globals()[name] = module
+    except Exception as E:
+        errormsg = 'Cannot use "%s" since %s is not installed.\nPlease install %s and try again.' % (name,)*3
+        print(errormsg)
+        if die: raise E
+        else:   return False
+    if output: return module
+    else:      return True
 
 ##############################################################################
 ### NESTED DICTIONARY FUNCTIONS
