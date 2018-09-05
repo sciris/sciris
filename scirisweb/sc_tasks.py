@@ -218,6 +218,7 @@ class TaskDict(sobj.BlobDict):
         get_admin_front_end_repr(): dict -- get a JSON-friendly dictionary
             representation of the collection state the front-end uses for admin
             purposes
+        show(): void -- show the whole TaskDict and its contents
                     
     Attributes:
         task_id_hashes (dict) -- a dict mapping task_ids to UIDs, so either
@@ -397,8 +398,31 @@ class TaskDict(sobj.BlobDict):
         sorted_taskrecs_info = [taskrecs_info[ind] for ind in sort_order]
 
         # Return the sorted users info.      
-        return sorted_taskrecs_info  
-
+        return sorted_taskrecs_info 
+    
+    def show(self):
+        super(sobj.BlobDict, self).show()   # Show superclass attributes.
+        if self.objs_within_coll: print('Objects stored within dict?: Yes')
+        else:                     print('Objects stored within dict?: No')
+        print('Task ID dict contents: ')
+        print(self.task_id_hashes)         
+        print('---------------------')
+        print('Contents')
+        print('---------------------')
+        
+        if self.objs_within_coll: # If we are storing things inside the obj_dict...
+            for key in self.obj_dict: # For each key in the dictionary...
+                obj = self.obj_dict[key] # Get the object pointed to.
+                obj.show() # Show the handle contents.
+        else: # Otherwise, we are using the UUID set.
+            for uid in self.ds_uuid_set: # For each item in the set...
+                obj = ds.globalvars.data_store.retrieve(uid)
+                if obj is None:
+                    print('--------------------------------------------')
+                    print('ERROR: UID %s object failed to retrieve' % uid)
+                else:
+                    obj.show() # Show the object with that UID in the DataStore.
+        print('--------------------------------------------')
 
 
 ################################################################################
