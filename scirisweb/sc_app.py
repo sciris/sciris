@@ -516,7 +516,7 @@ class ScirisApp(object):
                 sc.colorize(successcolor, string)
         except Exception as E:
             exception = traceback.format_exc() # Grab the trackback stack.
-            errormsg = 'Exception during RPC "%s" request %s: %.10000s' % (fn_name, request, exception)
+            errormsg = '%s%s Exception during RPC "%s.%s"! \nRequest: %s \n%.10000s' % (RPCinfo.time, RPCinfo.user, RPCinfo.module, RPCinfo.name, request, exception)
             sc.colorize(failcolor, errormsg) # Post an error to the Flask logger limiting the exception information to 10000 characters maximum (to prevent monstrous sqlalchemy outputs)
             if isinstance(E, HTTPException): # If we have a werkzeug exception, pass it on up to werkzeug to resolve and reply to.
                 raise E
