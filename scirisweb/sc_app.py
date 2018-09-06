@@ -369,10 +369,10 @@ class ScirisApp(object):
         # Display the logo
         appstring = 'ScirisApp "%s" is now running :)' % self.name
         borderstr = '='*len(appstring)
-        logostr = '''      ___   ___ 
-     / __| / __|   %s
-     \__ \| (__    %s
-     |___/ \___|   %s
+        logostr = '''      ___  ___ 
+     / __|/ __|   %s
+     \__ \ |__    %s
+     |___/\___|   %s
      ''' % (borderstr, appstring, borderstr)
         logocolors = ['black','bgblue'] # ['gray','bgblue']
         if show_logo: sc.colorize(logocolors,logostr)
@@ -488,7 +488,7 @@ class ScirisApp(object):
         # If we are doing an upload...
         if found_RPC.call_type == 'upload':
             thisfile = request.files['uploadfile'] # Grab the formData file that was uploaded.    
-            filename = secure_filename(file.filename) # Extract a sanitized filename from the one we start with.
+            filename = secure_filename(thisfile.filename) # Extract a sanitized filename from the one we start with.
             uploaded_fname = os.path.join(ds.globalvars.uploads_dir.dir_path, filename) # Generate a full upload path/file name.
             thisfile.save(uploaded_fname) # Save the file to the uploads directory.
             args.insert(0, uploaded_fname) # Prepend the file name to the args list.
