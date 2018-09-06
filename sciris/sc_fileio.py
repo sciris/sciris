@@ -75,7 +75,7 @@ def loadstr(string=None, die=None):
     return obj
 
 
-def saveobj(filename=None, obj=None, compresslevel=5, verbose=True, folder=None, method='pickle'):
+def saveobj(filename=None, obj=None, compresslevel=5, verbose=0, folder=None, method='pickle'):
     '''
     Save an object to file -- use compression 5 by default, since more is much slower but not much smaller.
     Once saved, can be loaded with loadobj() (q.v.).
@@ -88,10 +88,15 @@ def saveobj(filename=None, obj=None, compresslevel=5, verbose=True, folder=None,
     fullpath = makefilepath(filename=filename, folder=folder, sanitize=True)
     with GzipFile(fullpath, 'wb', compresslevel=compresslevel) as fileobj:
         if method == 'dill': # If dill is requested, use that
+            if verbose>=2: print('Saving as dill...')
             savedill(fileobj, obj)
         else: # Otherwise, try pickle
-            try:    savepickle(fileobj, obj) # Use pickle
-            except: savedill(fileobj, obj) # ...but use Dill if that fails
+            try:
+                if verbose>=2: print('Saving as pickle...')
+                savepickle(fileobj, obj) # Use pickle
+            except Exception as E: 
+                if verbose>=2: print('Exception when saving as pickle (%s), saving as dill...' % repr(E))
+                savedill(fileobj, obj) # ...but use Dill if that fails
         
     if verbose: print('Object saved to "%s"' % fullpath)
     return fullpath

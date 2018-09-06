@@ -3,6 +3,7 @@
 ##############################################################################
 
 from collections import OrderedDict as _OD
+import six
 import numpy as np
 from . import sc_utils as ut
 
@@ -695,7 +696,7 @@ class odict(_OD):
             return odict({'Key':obj})
         
     # Python 3 compatibility
-    if not ut._PY2:
+    if six.PY3:
         def keys(self):
             """ Method to get a list of keys as in Python 2. """
             return list(_OD.keys(self))
