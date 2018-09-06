@@ -18,14 +18,10 @@ from subprocess import Popen, PIPE
 from collections import OrderedDict as OD
 
 # Handle types and Python 2/3 compatibility
-from six import PY2 as _PY2
+import six
+_stringtype = six.string_types[0]
 from numbers import Number as _numtype
-if _PY2: 
-    _stringtype = basestring 
-    from cPickle import dump
-else:   
-    _stringtype = str
-    from pickle import dump
+
 
 # Define the modules being loaded
 __all__ = ['uuid', 'dcp']
@@ -169,15 +165,23 @@ def objrepr(obj, showid=True, showmeth=True, showatt=True):
     return output
 
 
-def prepr(obj, maxlen=None):
-    ''' Akin to "pretty print", returns a pretty representation of an object -- all attributes, plust methods and ID '''
-    # Initialize things to print out
+def prepr(obj, maxlen=None, skip=None):
+    ''' 
+    Akin to "pretty print", returns a pretty representation of an object -- 
+    all attributes (except any that are skipped), plust methods and ID.
+    '''
+    
+    # Handle input arguments
     if maxlen is None: maxlen = 80
+    if skip   is None: skip   = []
+    else:              skip = promotetolist(skip)
+    
+    # Initialize things to print out
     labels = []
     values = []
     if hasattr(obj, '__dict__'):
         if len(obj.__dict__):
-            labels = sorted(obj.__dict__.keys()) # Get the attribute keys
+            labels = sorted(set(obj.__dict__.keys()) - set(skip)) # Get the attribute keys
             values = [flexstr(getattr(obj, attr)) for attr in labels] # Get the string representation of the attribute
         else:
             items = dir(obj)
@@ -790,7 +794,7 @@ def promotetolist(obj=None, objtype=None, keepnone=False):
 ### MISC. FUNCTIONS
 ##############################################################################
 
-__all__ += ['now', 'tic', 'toc', 'percentcomplete', 'checkmem', 'loadbalancer', 'runcommand', 'gitinfo', 'compareversions', 'uniquename']
+__all__ += ['now', 'tic', 'toc', 'percentcomplete', 'checkmem', 'loadbalancer', 'runcommand', 'gitinfo', 'compareversions', 'uniquename', 'importbyname']
 
 def now(timezone='utc', die=False, tostring=False, fmt=None):
     ''' Get the current time, in UTC time '''
@@ -860,7 +864,7 @@ def percentcomplete(step=None, maxsteps=None, indent=1):
 
 
 
-def checkmem(origvariable, descend=0, order='n', plot=False, verbose=0):
+def checkmem(origvariable, descend=False, order='n', plot=False, verbose=False):
     '''
     Checks how much memory the variable in question uses by dumping it to file.
     
@@ -868,33 +872,34 @@ def checkmem(origvariable, descend=0, order='n', plot=False, verbose=0):
         from utils import checkmem
         checkmem(['spiffy',rand(2483,589)],descend=1)
     '''
+    from .sc_fileio import saveobj
     filename = os.getcwd()+'/checkmem.tmp'
-    
-    def dumpfile(variable):
-        wfid = open(filename,'wb')
-        dump(variable, wfid)
-        return None
     
     printnames = []
     printbytes = []
     printsizes = []
     varnames = []
     variables = []
-    if descend==False or not(np.iterable(origvariable)):
+    if not descend:
         varnames = ['']
         variables = [origvariable]
-    elif descend==1 and np.iterable(origvariable):
+    elif descend and np.iterable(origvariable):
         if hasattr(origvariable,'keys'):
             for key in origvariable.keys():
                 varnames.append(key)
                 variables.append(origvariable[key])
         else:
             varnames = range(len(origvariable))
-            variables = origvariable
+            variables = [origvariable[i] for i in varnames]
+    elif descend and not np.iterable(origvariable):
+        varnames = sorted(origvariable.__dict__.keys())
+        variables = [getattr(origvariable, attr) for attr in varnames]
+    else:
+        raise Exception('Something went wrong; this should be unreachable')
     
     for v,variable in enumerate(variables):
         if verbose: print('Processing variable %i of %i' % (v+1, len(variables)))
-        dumpfile(variable)
+        saveobj(filename, variable)
         filesize = os.path.getsize(filename)
         factor = 1
         label = 'B'
@@ -918,11 +923,11 @@ def checkmem(origvariable, descend=0, order='n', plot=False, verbose=0):
 
     if plot==True:
         try:    
-            from pylab import pie, array, axes
+            import pylab as pl
         except Exception as E: 
             raise Exception('Cannot plot since import failed: %s' % repr(E))
-        axes(aspect=1)
-        pie(array(printbytes)[inds], labels=array(printnames)[inds], autopct='%0.2f')
+        pl.axes(aspect=1)
+        pl.pie(pl.array(printbytes)[inds], labels=pl.array(printnames)[inds], autopct='%0.2f')
 
     return None
 
@@ -1069,6 +1074,20 @@ def uniquename(name=None, namelist=None, style=None):
         unique_name = name + style%i
     return unique_name # Return the found name.
 
+
+def importbyname(name=None, output=False, die=True):
+    ''' A little function to try loading optional imports '''
+    import importlib
+    try:
+        module = importlib.import_module(name)
+        globals()[name] = module
+    except Exception as E:
+        errormsg = 'Cannot use "%s" since %s is not installed.\nPlease install %s and try again.' % (name,)*3
+        print(errormsg)
+        if die: raise E
+        else:   return False
+    if output: return module
+    else:      return True
 
 ##############################################################################
 ### NESTED DICTIONARY FUNCTIONS

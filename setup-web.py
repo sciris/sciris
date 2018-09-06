@@ -41,6 +41,6 @@ setup(
         'Flask-Session', # use redis for sessions
         'werkzeug', # HTTP tools
         'twisted', # Server
-        'celery', # Task manager
+        'celery>=4.0', # Task manager
     ],
 )

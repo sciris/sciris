@@ -15,11 +15,10 @@ import re
 import pickle
 import dill
 import types
+import numpy as np
 from glob import glob
 from gzip import GzipFile
 from contextlib import closing
-from xlrd import open_workbook
-from xlsxwriter import Workbook
 from . import sc_utils as ut
 from .sc_odict import odict
 from .sc_dataframe import dataframe
@@ -76,7 +75,7 @@ def loadstr(string=None, die=None):
     return obj
 
 
-def saveobj(filename=None, obj=None, compresslevel=5, verbose=True, folder=None, method='pickle'):
+def saveobj(filename=None, obj=None, compresslevel=5, verbose=0, folder=None, method='pickle'):
     '''
     Save an object to file -- use compression 5 by default, since more is much slower but not much smaller.
     Once saved, can be loaded with loadobj() (q.v.).
@@ -89,10 +88,15 @@ def saveobj(filename=None, obj=None, compresslevel=5, verbose=True, folder=None,
     fullpath = makefilepath(filename=filename, folder=folder, sanitize=True)
     with GzipFile(fullpath, 'wb', compresslevel=compresslevel) as fileobj:
         if method == 'dill': # If dill is requested, use that
+            if verbose>=2: print('Saving as dill...')
             savedill(fileobj, obj)
         else: # Otherwise, try pickle
-            try:    savepickle(fileobj, obj) # Use pickle
-            except: savedill(fileobj, obj) # ...but use Dill if that fails
+            try:
+                if verbose>=2: print('Saving as pickle...')
+                savepickle(fileobj, obj) # Use pickle
+            except Exception as E: 
+                if verbose>=2: print('Exception when saving as pickle (%s), saving as dill...' % repr(E))
+                savedill(fileobj, obj) # ...but use Dill if that fails
         
     if verbose: print('Object saved to "%s"' % fullpath)
     return fullpath
@@ -127,8 +131,10 @@ def loadtext(filename=None, splitlines=False):
 
 
 def savetext(filename=None, string=None):
-    ''' Convenience function for reading a text file -- accepts a string or list of strings '''
+    ''' Convenience function for saving a text file -- accepts a string or list of strings '''
     if isinstance(string, list): string = '\n'.join(string) # Convert from list to string)
+    if not ut.isstring(string):
+        string = str(string)
     with open(filename, 'w') as f: f.write(string)
     return None
 
@@ -228,33 +234,278 @@ def makefilepath(filename=None, folder=None, ext=None, default=None, split=False
 ### Spreadsheet functions
 ##############################################################################
 
-__all__ += ['loadspreadsheet', 'savespreadsheet']
-    
-def loadspreadsheet(filename=None, folder=None, sheetname=None, sheetnum=None, asdataframe=True):
-    '''
-    Load a spreadsheet
-    '''
+__all__ += ['Blobject', 'Spreadsheet', 'loadspreadsheet', 'savespreadsheet']
 
-    fullpath = makefilepath(filename=filename, folder=folder)
-    workbook = open_workbook(fullpath)
+
+class Blobject(object):
+    ''' A wrapper for a binary file '''
+
+    def __init__(self, source=None, name=None, filename=None):
+        # "source" is a specification of where to get the data from
+        # It can be anything supported by Blobject.load() which are
+        # - A filename, which will get loaded
+        # - A io.BytesIO which will get dumped into this instance
+    
+        # Handle inputs
+        if source   is None and filename is not None: source   = filename # Reset the source to be the filename, e.g. Spreadsheet(filename='foo.xlsx')
+        if filename is None and ut.isstring(source):  filename = source   # Reset the filename to be the source, e.g. Spreadsheet('foo.xlsx')
+        if name     is None and filename is not None: name     = os.path.basename(filename) # If not supplied, use the filename
+        
+        # Define quantities
+        self.name      = name # Name of the object
+        self.filename  = filename # Filename (used as default for load/save)
+        self.created   = ut.now() # When the object was created
+        self.modified  = ut.now() # When it was last modified
+        self.blob  = None # The binary data
+        self.bytes = None # The filestream representation of the binary data
+        if source is not None: self.load(source)
+        return None
+
+    def __repr__(self):
+        return ut.prepr(self, skip=['blob','bytes'])
+
+    def load(self, source=None):
+        '''
+        This function loads the spreadsheet from a file or object. If no input argument is supplied,
+        then it will read self.bytes, assuming it exists.
+        '''
+        def read_bin(source):
+            ''' Helper to read a binary stream '''
+            source.flush()
+            source.seek(0)
+            output = source.read()
+            return output
+        
+        def read_file(filename):
+            ''' Helper to read an actual file '''
+            filepath = makefilepath(filename=filename)
+            self.filename = filename
+            with open(filepath, mode='rb') as f:
+                output = f.read()
+            return output
+            
+        if source is None:
+            if self.bytes is not None:
+                self.blob = read_bin(self.bytes)
+                self.bytes = None # Once read in, delete
+            else:
+                if self.filename is not None:
+                    self.blob = read_file(self.filename)
+                else:
+                    print('Nothing to load: no source or filename supplied and self.bytes is empty.')
+        else:
+            if isinstance(source,io.BytesIO):
+                self.blob = read_bin(source)
+            elif ut.isstring(source):
+                self.blob = read_file(source)
+            else:
+                errormsg = 'Input source must be type string (for a filename) or BytesIO, not %s' % type(source)
+                raise Exception(errormsg)
+        
+        self.modified = ut.now()
+        return None
+
+    def save(self, filename=None):
+        ''' This function writes the spreadsheet to a file on disk. '''
+        if filename is None:
+            if self.filename is not None:
+                filename = self.filename
+            elif self.name is not None:
+                if self.name.endswith('.xlsx'):
+                    filename = self.name
+                else:
+                    filename = self.name + '.xlsx'
+            else:
+                filename = 'spreadsheet.xlsx' # Come up with a terrible default name
+        filepath = makefilepath(filename=filename)
+        with open(filepath, mode='wb') as f:
+            f.write(self.blob)
+        self.filename = filename
+        print('Spreadsheet saved to %s.' % filepath)
+        return filepath
+
+    def tofile(self, output=True):
+        '''
+        Return a file-like object with the contents of the file.
+        This can then be used to open the workbook from memory without writing anything to disk e.g.
+        - book = openpyxl.load_workbook(self.tofile())
+        - book = xlrd.open_workbook(file_contents=self.tofile().read())
+        '''
+        bytesblob = io.BytesIO(self.blob)
+        if output:
+            return bytesblob
+        else:
+            self.bytes = bytesblob
+            return None
+    
+    
+    
+class Spreadsheet(Blobject):
+    '''
+    A class for reading and writing Excel files in binary format.No disk IO needs 
+    to happen to manipulate the spreadsheets with openpyxl (or xlrd or pandas).
+
+    Version: 2018sep03
+    '''
+    
+    def xlrd(self, *args, **kwargs):
+        ''' Return a book as opened by xlrd '''
+        import xlrd # Optional import
+        book = xlrd.open_workbook(file_contents=self.tofile().read(), *args, **kwargs)
+        return book
+    
+    def openpyxl(self, *args, **kwargs):
+        ''' Return a book as opened by openpyxl '''
+        import openpyxl # Optional iport
+        self.tofile(output=False)
+        book = openpyxl.load_workbook(self.bytes, *args, **kwargs) # This stream can be passed straight to openpyxl
+        return book
+        
+    def pandas(self, *args, **kwargs):
+        ''' Return a book as opened by pandas '''
+        import pandas # Optional import
+        self.tofile(output=False)
+        book = pandas.ExcelFile(self.bytes, *args, **kwargs)
+        return book
+    
+    def update(self, book):
+        ''' Updated the stored spreadsheet with book instead '''
+        self.tofile(output=False)
+        book.save(self.bytes)
+        self.load()
+        return None
+    
+    @staticmethod
+    def _getsheet(book, sheetname=None, sheetnum=None):
+        if   sheetname is not None: sheet = book[sheetname]
+        elif sheetnum  is not None: sheet = book[book.sheetnames[sheetnum]]
+        else:                       sheet = book.active
+        return sheet
+    
+    def readcells(self, *args, **kwargs):
+        ''' Alias to loadspreadsheet() '''
+        if 'method' in kwargs:
+            method = kwargs['method']
+            kwargs.pop('method')
+        else:
+            method = None
+        if method is None: method = 'xlrd'
+        f = self.tofile()
+        kwargs['fileobj'] = f
+        if method == 'xlrd':
+            output = loadspreadsheet(*args, **kwargs)
+        elif method == 'openpyxl':
+            book = self.openpyxl()
+            ws = self._getsheet(book=book, sheetname=kwargs.get('sheetname'), sheetnum=kwargs.get('sheetname'))
+            rawdata = tuple(ws.rows)
+            output = np.empty(np.shape(rawdata), dtype=object)
+            for r,rowdata in enumerate(rawdata):
+                for c,val in enumerate(rowdata):
+                    output[r][c] = rawdata[r][c].value
+        else:
+            errormsg = 'Reading method not found; must be one of xlrd, openpyxl, or pandas, not %s' % method
+            raise Exception(errormsg)
+        return output
+    
+    def writecells(self, cells=None, startrow=None, startcol=None, vals=None, sheetname=None, sheetnum=None, verbose=False, wbargs=None):
+        '''
+        Specify cells to write. Can supply either a list of cells of the same length
+        as the values, or else specify a starting row and column and write the values
+        from there.
+        '''
+        import openpyxl # Optional import
+        
+        # Load workbook
+        if wbargs is None: wbargs = {}
+        self.tofile(output=False) # Convert to bytes
+        wb = openpyxl.load_workbook(self.bytes, **wbargs)
+        if verbose: print('Workbook loaded: %s' % wb)
+        
+        # Get right worksheet
+        ws = self._getsheet(book=wb, sheetname=sheetname, sheetnum=sheetnum)
+        if verbose: print('Worksheet loaded: %s' % ws)
+        
+        # Determine the cells
+        if cells is not None: # A list of cells is supplied
+            cells = ut.promotetolist(cells)
+            vals  = ut.promotetolist(vals)
+            if len(cells) != len(vals):
+                errormsg = 'If using cells, cells and vals must have the same length (%s vs. %s)' % (len(cells), len(vals))
+                raise Exception(errormsg)
+            for cell,val in zip(cells,vals):
+                try:
+                    if ut.isstring(cell): # Handles e.g. cell='A1'
+                        ws[cell] = val
+                    elif ut.checktype(cell, 'arraylike','number') and len(cell)==2: # Handles e.g. cell=(0,0)
+                        ws.cell(row=cell[0], column=cell[1], value=val)
+                    else:
+                        errormsg = 'Cell must be formatted as a label or row-column pair, e.g. "A1" or (3,5); not "%s"' % cell
+                        raise Exception(errormsg)
+                    if verbose: print('  Cell %s = %s' % (cell,val))
+                except Exception as E:
+                    errormsg = 'Could not write "%s" to cell "%s": %s' % (val, cell, repr(E))
+                    raise Exception(errormsg)
+        else:# Cells aren't supplied, assume a matrix
+            if startrow is None: startrow = 1 # Excel uses 1-based indexing
+            if startcol is None: startcol = 1
+            valarray = np.atleast_2d(np.array(vals, dtype=object))
+            for i,rowvals in enumerate(valarray):
+                row = startrow + i
+                for j,val in enumerate(rowvals):
+                    col = startcol + j
+                    try:
+                        key = 'row:%s col:%s' % (row,col)
+                        ws.cell(row=row, column=col, value=val)
+                        if verbose: print('  Cell %s = %s' % (key, val))
+                    except Exception as E:
+                        errormsg = 'Could not write "%s" to %s: %s' % (val, key, repr(E))
+                        raise Exception(errormsg)
+        
+        # Save
+        wb.save(self.bytes)
+        self.load()
+        
+        return None
+        
+    
+    pass
+    
+    
+def loadspreadsheet(filename=None, folder=None, fileobj=None, sheetname=None, sheetnum=None, asdataframe=None, header=True):
+    '''
+    Load a spreadsheet as a list of lists or as a dataframe. Read from either a filename or a file object.
+    '''
+    import xlrd # Optional import
+    
+    # Handle inputs
+    if asdataframe is None: asdataframe = True
+    if isinstance(filename, io.BytesIO): fileobj = filename # It's actually a fileobj
+    if fileobj is None:
+        fullpath = makefilepath(filename=filename, folder=folder)
+        book = xlrd.open_workbook(fullpath)
+    else:
+        book = xlrd.open_workbook(file_contents=fileobj.read())
     if sheetname is not None: 
-        sheet = workbook.sheet_by_name(sheetname)
+        sheet = book.sheet_by_name(sheetname)
     else:
         if sheetnum is None: sheetnum = 0
-        sheet = workbook.sheet_by_index(sheetnum)
+        sheet = book.sheet_by_index(sheetnum)
     
     # Load the raw data
     rawdata = []
-    for rownum in range(sheet.nrows-1):
+    for rownum in range(sheet.nrows-header):
         rawdata.append(odict())
         for colnum in range(sheet.ncols):
-            attr = sheet.cell_value(0,colnum)
-            val = sheet.cell_value(rownum+1,colnum)
-            try:    val = float(val) # Convert it to a number if possible
+            if header: attr = sheet.cell_value(0,colnum)
+            else:      attr = 'Column %s' % colnum
+            attr = ut.uniquename(attr, namelist=rawdata[rownum].keys(), style='(%d)')
+            val = sheet.cell_value(rownum+header,colnum)
+            try:
+                val = float(val) # Convert it to a number if possible
             except: 
                 try:    val = str(val)  # But give up easily and convert to a string (not Unicode)
                 except: pass # Still no dice? Fine, we tried
-            rawdata[rownum][attr] = val
+            rawdata[rownum][str(attr)] = val
     
     # Convert to dataframe
     if asdataframe:
@@ -281,22 +532,22 @@ def savespreadsheet(filename=None, data=None, folder=None, sheetnames=None, clos
     
     # Simple example
     testdata1 = pl.rand(8,3)
-    sc.export_file(filename='test1.xlsx', data=testdata1)
+    sc.savespreadsheet(filename='test1.xlsx', data=testdata1)
     
     # Include column headers
     test2headers = [['A','B','C']] # Need double to get right shape
     test2values = pl.rand(8,3).tolist()
     testdata2 = test2headers + test2values
-    sc.export_file(filename='test2.xlsx', data=testdata2)
+    sc.savespreadsheet(filename='test2.xlsx', data=testdata2)
     
     # Multiple sheets
     testdata3 = [pl.rand(10,10), pl.rand(20,5)]
     sheetnames = ['Ten by ten', 'Twenty by five']
-    sc.export_file(filename='test3.xlsx', data=testdata3, sheetnames=sheetnames)
+    sc.savespreadsheet(filename='test3.xlsx', data=testdata3, sheetnames=sheetnames)
     
     # Supply data as an odict
     testdata4 = sc.odict([('First sheet', pl.rand(6,2)), ('Second sheet', pl.rand(3,3))])
-    sc.export_file(filename='test4.xlsx', data=testdata4, sheetnames=sheetnames)
+    sc.savespreadsheet(filename='test4.xlsx', data=testdata4, sheetnames=sheetnames)
     
     # Include formatting
     nrows = 15
@@ -312,8 +563,9 @@ def savespreadsheet(filename=None, data=None, folder=None, sheetnames=None, clos
     formatdata[1:,:] = 'plain' # Format data
     formatdata[testdata5>0.7] = 'big' # Find "big" numbers and format them differently
     formatdata[0,:] = 'header' # Format header
-    sc.export_file(filename='test5.xlsx', data=testdata5, formats=formats, formatdata=formatdata)
+    sc.savespreadsheet(filename='test5.xlsx', data=testdata5, formats=formats, formatdata=formatdata)
     '''
+    import xlsxwriter # Optional import
     fullpath = makefilepath(filename=filename, folder=folder, default='default.xlsx')
     datadict   = odict()
     formatdict = odict()
@@ -352,7 +604,7 @@ def savespreadsheet(filename=None, data=None, folder=None, sheetnames=None, clos
         
     # Create workbook
     if verbose: print('Creating file %s' % fullpath)
-    workbook = Workbook(fullpath)
+    workbook = xlsxwriter.Workbook(fullpath)
     
     # Optionally add formats
     if formats is not None:

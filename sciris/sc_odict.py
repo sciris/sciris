@@ -3,6 +3,7 @@
 ##############################################################################
 
 from collections import OrderedDict as _OD
+import six
 import numpy as np
 from . import sc_utils as ut
 
@@ -39,7 +40,7 @@ class odict(_OD):
         if len(args)==1 and args[0] is None: args = [] # Remove a None argument
         _OD.__init__(self, *args, **kwargs) # Standard init
         return None
-
+    
     def __slicekey(self, key, slice_end):
         shift = int(slice_end=='stop')
         if isinstance(key, ut._numtype): return key
@@ -141,6 +142,19 @@ class odict(_OD):
             _OD.__setitem__(self, key, value)
         return None
     
+    
+    def __getattribute__(self, attr):
+        ''' Allows odict keys to get retrieved (but not set) via dict.key notation '''
+        try:
+            output = _OD.__getattribute__(self, attr)
+            return output
+        except Exception as E:
+            try:
+                output = self.__getitem__(attr)
+                return output
+            except:
+                raise E
+            
      
     def __repr__(self, maxlen=None, showmultilines=True, divider=False, dividerthresh=10, numindents=0, recurselevel=0, sigfigs=None, numformat=None):
         ''' Print a meaningful representation of the odict '''
@@ -682,7 +696,7 @@ class odict(_OD):
             return odict({'Key':obj})
         
     # Python 3 compatibility
-    if not ut._PY2:
+    if six.PY3:
         def keys(self):
             """ Method to get a list of keys as in Python 2. """
             return list(_OD.keys(self))
@@ -694,61 +708,3 @@ class odict(_OD):
         def iteritems(self):
             """ Method to generate an item iterator as in Python 2. """
             return list(_OD.items(self))
-        
-        
-        
-def testodict():
-    ''' Define a suite of tests for the odict '''
-
-    print('Main tests:')
-    foo = odict({'ah':3,'boo':4, 'cough':6, 'dill': 8}) # Create odict
-    bar = foo.sorted() # Sort the list
-    assert(bar['boo'] == 4) # Show get item by value
-    assert(bar[1] == 4) # Show get item by index
-    assert((bar[0:2] == [3,4]).all()) # Show get item by slice
-    assert((bar['cough':'dill'] == [6,8]).all()) # Show alternate slice notation
-    assert((bar[[2,1]] == [6,4]).all()) # Show get item by list
-    assert((bar[:] == [3,4,6,8]).all()) # Show slice with everything
-    assert((bar[2:] == [6,8]).all()) # Show slice without end
-    bar[3] = [3,4,5] # Show assignment by item
-    bar[0:2] = ['the', 'power'] # Show assignment by slice -- NOTE, inclusive slice!!
-    bar[[0,2]] = ['cat', 'trip'] # Show assignment by list
-    bar.rename('cough','chill') # Show rename
-    print(bar) # Print results
-
-    print('Insert:')
-    z = odict()
-    z['foo'] = 1492
-    z.insert(1604)
-    z.insert(0, 'ganges', 1444)
-    z.insert(2, 'midway', 1234) 
-
-    print('Make:')
-    a = odict().make(5) # Make an odict of length 5, populated with Nones and default key names
-    b = odict().make('foo',34) # Make an odict with a single key 'foo' of value 34
-    c = odict().make(['a','b']) # Make an odict with keys 'a' and 'b'
-    d = odict().make(['a','b'],0) # Make an odict with keys 'a' and 'b', initialized to 0
-    e = odict().make(keys=['a','b'], vals=[1,2]) # Make an odict with 'a':1 and 'b':2
-    f = odict({'a':34, 'b':58}).make(['c','d'],[99,45]) # Add extra keys to an exising odict
-    g = odict().make(keys=['a','b','c'], keys2=['A','B','C'], keys3=['x','y','z'], vals=0) # Make a triply nested odict
-
-    print('Make from:')
-    a = 'cat'; b = 'dog'; o = odict().makefrom(source=locals(), keys=['a','b']) # Make use of fact that variables are stored in a dictionary
-    d = {'a':'cat', 'b':'dog'}; o = odict().makefrom(d) # Same as odict(d)
-    l = ['cat', 'monkey', 'dog']; o = odict().makefrom(source=l, keys=[0,2], keynames=['a','b'])
-
-    print('Map:')
-    cat = odict({'a':[1,2], 'b':[3,4]})
-    def myfunc(mylist): return [i**2 for i in mylist]
-    dog = cat.map(myfunc) # Returns odict({'a':[1,4], 'b':[9,16]})
-
-    print('From each:')
-    z = odict({'a':np.array([1,2,3,4]), 'b':np.array([5,6,7,8])})
-    z.fromeach(2) # Returns array([3,7])
-    z.fromeach(ind=[1,3], asdict=True) # Returns odict({'a':array([2,4]), 'b':array([6,8])})
-
-    print('To each:')
-    z = odict({'a':[1,2,3,4], 'b':[5,6,7,8]})
-    z.toeach(2, [10,20])    # z is now odict({'a':[1,2,10,4], 'b':[5,6,20,8]})
-    z.toeach(ind=3,val=666) #  z is now odict({'a':[1,2,10,666], 'b':[5,6,20,666]})
-    return None
