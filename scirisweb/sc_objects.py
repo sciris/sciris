@@ -1,7 +1,7 @@
 """
 Blobs.py -- classes for Sciris objects which are generally managed
     
-Last update: 2018aug20
+Last update: 2018sep02
 """
 
 import sciris as sc
@@ -350,6 +350,7 @@ class BlobDict(Blob):
             for uid in self.ds_uuid_set: # For each item in the set...
                 obj = ds.globalvars.data_store.retrieve(uid)
                 if obj is None:
+                    print('--------------------------------------------')
                     print('ERROR: UID %s object failed to retrieve' % uid)
                 else:
                     obj.show() # Show the object with that UID in the DataStore.

@@ -1,7 +1,7 @@
 """
 tasks.py -- code related to Sciris task queue management
     
-Last update: 2018aug20
+Last update: 2018sep02
 """
 
 import traceback
@@ -218,6 +218,7 @@ class TaskDict(sobj.BlobDict):
         get_admin_front_end_repr(): dict -- get a JSON-friendly dictionary
             representation of the collection state the front-end uses for admin
             purposes
+        show(): void -- show the whole TaskDict and its contents
                     
     Attributes:
         task_id_hashes (dict) -- a dict mapping task_ids to UIDs, so either
@@ -397,8 +398,31 @@ class TaskDict(sobj.BlobDict):
         sorted_taskrecs_info = [taskrecs_info[ind] for ind in sort_order]
 
         # Return the sorted users info.      
-        return sorted_taskrecs_info  
-
+        return sorted_taskrecs_info 
+    
+    def show(self):
+        super(sobj.BlobDict, self).show()   # Show superclass attributes.
+        if self.objs_within_coll: print('Objects stored within dict?: Yes')
+        else:                     print('Objects stored within dict?: No')
+        print('Task ID dict contents: ')
+        print(self.task_id_hashes)         
+        print('---------------------')
+        print('Contents')
+        print('---------------------')
+        
+        if self.objs_within_coll: # If we are storing things inside the obj_dict...
+            for key in self.obj_dict: # For each key in the dictionary...
+                obj = self.obj_dict[key] # Get the object pointed to.
+                obj.show() # Show the handle contents.
+        else: # Otherwise, we are using the UUID set.
+            for uid in self.ds_uuid_set: # For each item in the set...
+                obj = ds.globalvars.data_store.retrieve(uid)
+                if obj is None:
+                    print('--------------------------------------------')
+                    print('ERROR: UID %s object failed to retrieve' % uid)
+                else:
+                    obj.show() # Show the object with that UID in the DataStore.
+        print('--------------------------------------------')
 
 
 ################################################################################
@@ -498,6 +522,7 @@ def make_celery_instance(config=None):
         match_taskrec = task_dict.get_task_record_by_task_id(task_id)
         if match_taskrec is None:
             print('>>> FAILED TO FIND TASK RECORD FOR %s' % task_id)
+            unlock_run_task(task_id)
             return { 'error': 'Could not access TaskRecord' }
     
         # Set the TaskRecord to indicate start of the task.
@@ -519,6 +544,15 @@ def make_celery_instance(config=None):
         # an exception thrown.
         # NOTE: This block is likely to run for several seconds or even 
         # minutes or hours, depending on the task.
+        
+        # WARNING: It is a very bad idea to have any calls in your task code 
+        # that modify data_store.handle_dict.  That includes calls that add 
+        # new entries to a BlobDict where the entries are kept external from 
+        # the BlobDict object.  Writing to handle_dict will lead to conflicts 
+        # with the webapp process, which has long stretches between reading in  
+        # the handle_dict state and modifying it, during which Celery task 
+        # worker writes to handle_dict will end up in lost modifications.
+        
         # NOTE / WARNING: The function being called which the result is being 
         # taken from may rely on the contents of the DataStore.
 #        print('Available task_funcs:')
