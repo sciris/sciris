@@ -375,9 +375,10 @@ class ScirisApp(object):
      \__ \ |__    %s     
      |___/\___|   %s     
 %s''' % (' '*(len(appstring)+8), borderstr, appstring, borderstr, ' '*(len(appstring)+23))
-        logocolors = ['gray','bgblue'] # ['gray','bgblue']
+        logocolors = ['cyan','bgblue'] # ['gray','bgblue']
         if show_logo:
             for linestr in logostr.splitlines(): sc.colorize(logocolors,linestr)
+            print('')
         
         # Run the thing
         if not with_twisted: # If we are not running the app with Twisted, just run the Flask app.
@@ -496,9 +497,9 @@ class ScirisApp(object):
             args.insert(0, uploaded_fname) # Prepend the file name to the args list.
         
         # Show the call of the function.
-        callcolor    = ['cyan', 'bgblack']
-        successcolor = ['green', 'bgblack']
-        failcolor    = ['red', 'bggray']
+        callcolor    = ['cyan', 'bgblue']
+        successcolor = ['green', 'bgblue']
+        failcolor    = ['gray', 'bgred']
         timestr = '[%s]' % sc.now(tostring=True)
         try:    userstr = ' <%s>' % current_user.username
         except: userstr =' <no user>'
@@ -518,12 +519,12 @@ class ScirisApp(object):
                 sc.colorize(successcolor, string)
         except Exception as E:
             exception = traceback.format_exc() # Grab the trackback stack.
-            errormsg = '%s%s Exception during RPC "%s.%s"! \nRequest: %s \n%.10000s' % (RPCinfo.time, RPCinfo.user, RPCinfo.module, RPCinfo.name, request, exception)
+            errormsg = '%s%s Exception during RPC "%s.%s" \nRequest: %s \n%.10000s' % (RPCinfo.time, RPCinfo.user, RPCinfo.module, RPCinfo.name, request, exception)
             sc.colorize(failcolor, errormsg) # Post an error to the Flask logger limiting the exception information to 10000 characters maximum (to prevent monstrous sqlalchemy outputs)
             if isinstance(E, HTTPException): # If we have a werkzeug exception, pass it on up to werkzeug to resolve and reply to.
                 raise E
             code = 500 # Send back a response with status 500 that includes the exception traceback.
-            reply = {'exception': E.message, 'traceback': exception}
+            reply = {'exception':str(E), 'traceback':errormsg} # NB, not sure how to actually access 'traceback' on the FE, but keeping it here for future
             return make_response(jsonify(reply), code)
         
         # If we are doing a download, prepare the response and send it off.
