@@ -52,5 +52,6 @@ setup(
     install_requires=[
         'matplotlib>=1.4.2', # Plotting
         'numpy>=1.10.1',     # Numerical functions
+        'Flask-Session==0.3.1',
     ] + extras,              # Optional dependencies
 )
