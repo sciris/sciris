@@ -309,12 +309,12 @@ class ScirisApp(object):
 #        ds.data_store.clear_redis_keys()
         
         if app_config['LOGGING_MODE'] == 'FULL':
-            # Show that DataStore is initialized.
             print('>> DataStore initialzed at %s' % app_config['REDIS_URL'])
-            
-            # Show the DataStore handles.
-            print('>> List of all DataStore handles...')
-            ds.globalvars.data_store.show_handles()
+#            print('>> List of all DataStore handles...')
+#            ds.globalvars.data_store.show_handles()
+#            print('>> List of all Redis keys...')
+#            ds.globalvars.data_store.show_redis_keys()
+            print('>> Loaded datastore with %s Redis keys' % len(ds.globalvars.data_store.redis_db.keys()))
         return None
     
     @staticmethod
@@ -328,8 +328,8 @@ class ScirisApp(object):
         
         # If there was a match...
         if user_dict_uid is not None:
-            if app_config['LOGGING_MODE'] == 'FULL':
-                print('>> Loading UserDict from the DataStore.')
+#            if app_config['LOGGING_MODE'] == 'FULL':
+#                print('>> Loading UserDict from the DataStore.')
             user.user_dict.load_from_data_store() 
         
         # Else (no match)...
@@ -343,8 +343,9 @@ class ScirisApp(object):
     
         # Show all of the users in user_dict.
         if app_config['LOGGING_MODE'] == 'FULL':
-            print('>> List of all users...')
-            user.user_dict.show()
+#            print('>> List of all users...')
+#            user.user_dict.show()
+            print('>> Loaded user_dict with %s users' % len(user.user_dict.keys()))
             
     @staticmethod        
     def _init_tasks(app_config):
@@ -357,8 +358,8 @@ class ScirisApp(object):
         
         # If there was a match...
         if task_dict_uid is not None:
-            if app_config['LOGGING_MODE'] == 'FULL':
-                print('>> Loading TaskDict from the DataStore.')
+#            if app_config['LOGGING_MODE'] == 'FULL':
+#                print('>> Loading TaskDict from the DataStore.')
             tasks.task_dict.load_from_data_store() 
         
         # Else (no match)...
@@ -369,8 +370,9 @@ class ScirisApp(object):
     
         # Show all of the users in user_dict.
         if app_config['LOGGING_MODE'] == 'FULL':
-            print('>> List of all tasks...')
-            tasks.task_dict.show()
+#            print('>> List of all tasks...')
+#            tasks.task_dict.show()
+            print('>> Loaded task_dict with %s tasks' % len(tasks.task_dict.keys()))
             
         # Have the tasks.py module make the Celery app to connect to the 
         # worker, passing in the config parameters.
@@ -382,13 +384,17 @@ class ScirisApp(object):
         # Display the logo
         appstring = 'ScirisApp "%s" is now running :)' % self.name
         borderstr = '='*len(appstring)
-        logostr = '''      ___  ___ 
-     / __|/ __|   %s
-     \__ \ |__    %s
-     |___/\___|   %s
-     ''' % (borderstr, appstring, borderstr)
-        logocolors = ['black','bgblue'] # ['gray','bgblue']
-        if show_logo: sc.colorize(logocolors,logostr)
+        logostr = \
+'''      ___  ___%s 
+     / __|/ __|   %s     
+     \__ \ |__    %s     
+     |___/\___|   %s     
+%s''' % (' '*(len(appstring)+8), borderstr, appstring, borderstr, ' '*(len(appstring)+23))
+        logocolors = ['cyan','bgblue'] # ['gray','bgblue']
+        if show_logo:
+            print('')
+            for linestr in logostr.splitlines(): sc.colorize(logocolors,linestr)
+            print('')
         
         # Run the thing
         if not with_twisted: # If we are not running the app with Twisted, just run the Flask app.
@@ -507,12 +513,13 @@ class ScirisApp(object):
             args.insert(0, uploaded_fname) # Prepend the file name to the args list.
         
         # Show the call of the function.
-        callcolor = 'magenta'
-        successcolor = 'blue'
+        callcolor    = ['cyan', 'bgblue']
+        successcolor = ['green', 'bgblue']
+        failcolor    = ['gray', 'bgred']
         timestr = '[%s]' % sc.now(tostring=True)
         try:    userstr = ' <%s>' % current_user.username
         except: userstr =' <no user>'
-        RPCinfo = sc.odict({'time':timestr, 'user':userstr, 'module':found_RPC.call_func.__module__, 'name':found_RPC.funcname})
+        RPCinfo = sc.objdict({'time':timestr, 'user':userstr, 'module':found_RPC.call_func.__module__, 'name':found_RPC.funcname})
         
         if self.config['LOGGING_MODE'] == 'FULL':
             string = '%s%s RPC called: "%s.%s"' % (RPCinfo.time, RPCinfo.user, RPCinfo.module, RPCinfo.name)
@@ -528,12 +535,12 @@ class ScirisApp(object):
                 sc.colorize(successcolor, string)
         except Exception as E:
             exception = traceback.format_exc() # Grab the trackback stack.
-            errormsg = 'Exception during RPC "%s" request %s: %.10000s' % (fn_name, request, exception)
-            self.flask_app.logger.error(errormsg) # Post an error to the Flask logger limiting the exception information to 10000 characters maximum (to prevent monstrous sqlalchemy outputs)
+            errormsg = '%s%s Exception during RPC "%s.%s" \nRequest: %s \n%.10000s' % (RPCinfo.time, RPCinfo.user, RPCinfo.module, RPCinfo.name, request, exception)
+            sc.colorize(failcolor, errormsg) # Post an error to the Flask logger limiting the exception information to 10000 characters maximum (to prevent monstrous sqlalchemy outputs)
             if isinstance(E, HTTPException): # If we have a werkzeug exception, pass it on up to werkzeug to resolve and reply to.
                 raise E
             code = 500 # Send back a response with status 500 that includes the exception traceback.
-            reply = {'exception': exception}
+            reply = {'exception':str(E), 'traceback':errormsg} # NB, not sure how to actually access 'traceback' on the FE, but keeping it here for future
             return make_response(jsonify(reply), code)
         
         # If we are doing a download, prepare the response and send it off.
