@@ -301,7 +301,7 @@ class ScirisApp(object):
 #            ds.globalvars.data_store.show_handles()
 #            print('>> List of all Redis keys...')
 #            ds.globalvars.data_store.show_redis_keys()
-            print('>> Loading datastore: there are currently %s Redis keys' % len(ds.globalvars.data_store.redis_db.keys()))
+            print('>> Loaded datastore with %s Redis keys' % len(ds.globalvars.data_store.redis_db.keys()))
         return None
     
     @staticmethod
@@ -315,8 +315,8 @@ class ScirisApp(object):
         
         # If there was a match...
         if user_dict_uid is not None:
-            if app_config['LOGGING_MODE'] == 'FULL':
-                print('>> Loading UserDict from the DataStore.')
+#            if app_config['LOGGING_MODE'] == 'FULL':
+#                print('>> Loading UserDict from the DataStore.')
             user.user_dict.load_from_data_store() 
         
         # Else (no match)...
@@ -332,7 +332,7 @@ class ScirisApp(object):
         if app_config['LOGGING_MODE'] == 'FULL':
 #            print('>> List of all users...')
 #            user.user_dict.show()
-            print('>> Loading users: there are currently %s users' % len(user.user_dict.keys()))
+            print('>> Loaded user_dict with %s users' % len(user.user_dict.keys()))
             
     @staticmethod        
     def _init_tasks(app_config):
@@ -345,8 +345,8 @@ class ScirisApp(object):
         
         # If there was a match...
         if task_dict_uid is not None:
-            if app_config['LOGGING_MODE'] == 'FULL':
-                print('>> Loading TaskDict from the DataStore.')
+#            if app_config['LOGGING_MODE'] == 'FULL':
+#                print('>> Loading TaskDict from the DataStore.')
             tasks.task_dict.load_from_data_store() 
         
         # Else (no match)...
@@ -359,7 +359,7 @@ class ScirisApp(object):
         if app_config['LOGGING_MODE'] == 'FULL':
 #            print('>> List of all tasks...')
 #            tasks.task_dict.show()
-            print('>> Loading tasks: there are currently %s tasks' % len(tasks.task_dict.keys()))
+            print('>> Loaded task_dict with %s tasks' % len(tasks.task_dict.keys()))
             
         # Have the tasks.py module make the Celery app to connect to the 
         # worker, passing in the config parameters.
@@ -379,6 +379,7 @@ class ScirisApp(object):
 %s''' % (' '*(len(appstring)+8), borderstr, appstring, borderstr, ' '*(len(appstring)+23))
         logocolors = ['cyan','bgblue'] # ['gray','bgblue']
         if show_logo:
+            print('')
             for linestr in logostr.splitlines(): sc.colorize(logocolors,linestr)
             print('')
         

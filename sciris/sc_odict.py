@@ -2,15 +2,15 @@
 ### ODICT CLASS
 ##############################################################################
 
-from collections import OrderedDict as _OD
+from collections import OrderedDict as OD
 import six
 import numpy as np
 from . import sc_utils as ut
 
 # Restrict imports to user-facing modules
-__all__ = ['odict']
+__all__ = ['odict', 'objdict']
 
-class odict(_OD):
+class odict(OD):
     '''
     An ordered dictionary, like the OrderedDict class, but supporting list methods like integer 
     referencing, slicing, and appending.
@@ -38,7 +38,7 @@ class odict(_OD):
         ''' See collections.py '''
         # Standard OrderedDictionary initialization
         if len(args)==1 and args[0] is None: args = [] # Remove a None argument
-        _OD.__init__(self, *args, **kwargs) # Standard init
+        OD.__init__(self, *args, **kwargs) # Standard init
         return None
     
     def __slicekey(self, key, slice_end):
@@ -50,7 +50,7 @@ class odict(_OD):
         return None
 
 
-    def __is_odict_iterable(self, key):
+    def __isODict_iterable(self, key):
         ''' Check to see whether the "key" is actually an iterable '''
         output = type(key)==list or type(key)==type(np.array([])) # Do *not* include dict, since that would be recursive
         return output
@@ -72,7 +72,7 @@ class odict(_OD):
         ''' Allows getitem to support strings, integers, slices, lists, or arrays '''
         if isinstance(key, (ut._stringtype,tuple)):
             try:
-                output = _OD.__getitem__(self, key)
+                output = OD.__getitem__(self, key)
                 return output
             except Exception as E: # WARNING, should be KeyError, but this can't print newlines!!!
                 if len(self.keys()): errormsg = '%s\nodict key "%s" not found; available keys are:\n%s' % (repr(E), ut.flexstr(key), '\n'.join([ut.flexstr(k) for k in self.keys()]))
@@ -80,7 +80,7 @@ class odict(_OD):
                 raise Exception(errormsg)
         elif isinstance(key, ut._numtype): # Convert automatically from float...dangerous?
             thiskey = self.keys()[int(key)]
-            return _OD.__getitem__(self,thiskey)
+            return OD.__getitem__(self,thiskey)
         elif type(key)==slice: # Handle a slice -- complicated
             try:
                 startind = self.__slicekey(key.start, 'start')
@@ -94,7 +94,7 @@ class odict(_OD):
             except:
                 print('Invalid odict slice... returning empty list...')
                 return []
-        elif self.__is_odict_iterable(key): # Iterate over items
+        elif self.__isODict_iterable(key): # Iterate over items
             listvals = [self.__getitem__(item) for item in key]
             if isinstance(key, list): # If the user supplied the keys as a list, assume they want the output as a list
                 output = listvals
@@ -102,16 +102,16 @@ class odict(_OD):
                 output = self.__sanitize_items(listvals) # Otherwise, assume as an array
             return output
         else: # Handle everything else
-            return _OD.__getitem__(self,key)
+            return OD.__getitem__(self,key)
         
         
     def __setitem__(self, key, value):
         ''' Allows setitem to support strings, integers, slices, lists, or arrays '''
         if isinstance(key, (str,tuple)):
-            _OD.__setitem__(self, key, value)
+            OD.__setitem__(self, key, value)
         elif isinstance(key, ut._numtype): # Convert automatically from float...dangerous?
             thiskey = self.keys()[int(key)]
-            _OD.__setitem__(self, thiskey, value)
+            OD.__setitem__(self, thiskey, value)
         elif type(key)==slice:
             startind = self.__slicekey(key.start, 'start')
             stopind = self.__slicekey(key.stop, 'stop')
@@ -131,7 +131,7 @@ class odict(_OD):
             else: 
                 for valind,index in enumerator:
                     self.__setitem__(index, value) # e.g. odict[:] = 4
-        elif self.__is_odict_iterable(key) and hasattr(value, '__len__'): # Iterate over items
+        elif self.__isODict_iterable(key) and hasattr(value, '__len__'): # Iterate over items
             if len(key)==len(value):
                 for valind,thiskey in enumerate(key): 
                     self.__setitem__(thiskey, value[valind])
@@ -139,24 +139,11 @@ class odict(_OD):
                 errormsg = 'Keys "%s" and values "%s" have different lengths! (%i, %i)' % (key, value, len(key), len(value))
                 raise Exception(errormsg)
         else:
-            _OD.__setitem__(self, key, value)
+            OD.__setitem__(self, key, value)
         return None
     
     
-    def __getattribute__(self, attr):
-        ''' Allows odict keys to get retrieved (but not set) via dict.key notation '''
-        try:
-            output = _OD.__getattribute__(self, attr)
-            return output
-        except Exception as E:
-            try:
-                output = self.__getitem__(attr)
-                return output
-            except:
-                raise E
-            
-     
-    def __repr__(self, maxlen=None, showmultilines=True, divider=False, dividerthresh=10, numindents=0, recurselevel=0, sigfigs=None, numformat=None):
+    def __repr__(self, maxlen=None, showmultilines=True, divider=False, dividerthresh=10, numindents=0, recursionlevel=0, sigfigs=None, numformat=None):
         ''' Print a meaningful representation of the odict '''
         
         # Set primitives for display.
@@ -166,7 +153,7 @@ class odict(_OD):
         maxrecursion = 10          # It's a repr, no one could want more than that
         
         # Only if we are in the root call, indent by the number of indents.
-        if recurselevel == 0: 
+        if recursionlevel == 0: 
             theprefix = indentstr * numindents
         else: # Otherwise (if we are in a recursive call), indent only 1 indent.
             theprefix = indentstr 
@@ -183,10 +170,10 @@ class odict(_OD):
                 thiskeystr = ut.flexstr(self.keys()[i]) # Grab a str representation of the current key.  
                 thisval = self.values()[i] # Grab the current value.
                                 
-                # If it's another odict, make a call increasing the recurselevel and passing the same parameters we received.
+                # If it's another odict, make a call increasing the recursionlevel and passing the same parameters we received.
                 if isinstance(thisval, odict):
                     if recursionlevel <= maxrecursion:
-                        thisvalstr = ut.flexstr(thisval.__repr__(maxlen=maxlen, showmultilines=showmultilines, divider=divider, dividerthresh=dividerthresh, numindents=numindents, recurselevel=recurselevel+1, sigfigs=sigfigs, numformat=numformat))
+                        thisvalstr = ut.flexstr(thisval.__repr__(maxlen=maxlen, showmultilines=showmultilines, divider=divider, dividerthresh=dividerthresh, numindents=numindents, recursionlevel=recursionlevel+1, sigfigs=sigfigs, numformat=numformat))
                     else:
                         thisvalstr = 'odict() [maximum recursion reached]'
                 elif ut.isnumber(thisval): # Flexibly print out numbers, since they're largely why we're here
@@ -212,7 +199,7 @@ class odict(_OD):
                 vallinecount = vallinecounts[i]
                 
                 if (divider or (maxvallinecounts>dividerthresh)) and \
-                    showmultilines and recurselevel==0 and i!=0: # Add a divider line if we should.
+                    showmultilines and recursionlevel==0 and i!=0: # Add a divider line if we should.
                     newoutput = ut.indent(prefix=theprefix, text=dividerstr, width=80)
                     if newoutput[-1] == '\n':
                         newoutput = newoutput[:-1]
@@ -266,7 +253,7 @@ class odict(_OD):
             z.disp(sigfigs=3)
             z.disp(numformat='%0.6f')
         '''
-        print(self.__repr__(maxlen=maxlen, showmultilines=showmultilines, divider=divider, dividerthresh=dividerthresh, numindents=numindents, recurselevel=0, sigfigs=sigfigs, numformat=None))
+        print(self.__repr__(maxlen=maxlen, showmultilines=showmultilines, divider=divider, dividerthresh=dividerthresh, numindents=numindents, recursionlevel=0, sigfigs=sigfigs, numformat=None))
         return None
     
     
@@ -294,16 +281,16 @@ class odict(_OD):
     
     def to_OD(self):
         ''' Export the odict to an OrderedDict '''
-        return _OD(self)
+        return OD(self)
     
     
     def pop(self, key, *args, **kwargs):
         ''' Allows pop to support strings, integers, slices, lists, or arrays '''
         if isinstance(key, ut._stringtype):
-            return _OD.pop(self, key, *args, **kwargs)
+            return OD.pop(self, key, *args, **kwargs)
         elif isinstance(key, ut._numtype): # Convert automatically from float...dangerous?
             thiskey = self.keys()[int(key)]
-            return _OD.pop(self, thiskey, *args, **kwargs)
+            return OD.pop(self, thiskey, *args, **kwargs)
         elif type(key)==slice: # Handle a slice -- complicated
             try:
                 startind = self.__slicekey(key.start, 'start')
@@ -317,13 +304,13 @@ class odict(_OD):
             except:
                 print('Invalid odict slice... returning empty list...')
                 return []
-        elif self.__is_odict_iterable(key): # Iterate over items
+        elif self.__isODict_iterable(key): # Iterate over items
             listvals = [self.pop(item, *args, **kwargs) for item in key]
             try: return np.array(listvals)
             except: return listvals
         else: # Handle string but also everything else
             try:
-                return _OD.pop(self, key, *args, **kwargs)
+                return OD.pop(self, key, *args, **kwargs)
             except: # WARNING, should be KeyError, but this can't print newlines!!!
                 if len(self.keys()): 
                     errormsg = 'odict key "%s" not found; available keys are:\n%s' % (ut.flexstr(key), 
@@ -703,12 +690,30 @@ class odict(_OD):
     if six.PY3:
         def keys(self):
             """ Method to get a list of keys as in Python 2. """
-            return list(_OD.keys(self))
+            return list(OD.keys(self))
         
         def values(self):
             """ Method to get a list of values as in Python 2. """
-            return list(_OD.values(self))
+            return list(OD.values(self))
+        
+        def items(self):
+            """ Method to generate an item iterator as in Python 2. """
+            return list(OD.items(self))
         
         def iteritems(self):
             """ Method to generate an item iterator as in Python 2. """
-            return list(_OD.items(self))
+            return list(OD.items(self))
+
+
+class objdict(odict):
+    ''' Exactly the same as an odict, but allows keys to be retrieved by object notiation '''
+    def __getattribute__(self, attr):
+        try:
+            output = odict.__getattribute__(self, attr)
+            return output
+        except Exception as E:
+            try:
+                output = odict.__getitem__(self, attr)
+                return output
+            except:
+                raise E
