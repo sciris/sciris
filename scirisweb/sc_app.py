@@ -369,13 +369,15 @@ class ScirisApp(object):
         # Display the logo
         appstring = 'ScirisApp "%s" is now running :)' % self.name
         borderstr = '='*len(appstring)
-        logostr = '''      ___  ___ 
-     / __|/ __|   %s
-     \__ \ |__    %s
-     |___/\___|   %s
-     ''' % (borderstr, appstring, borderstr)
-        logocolors = ['black','bgblue'] # ['gray','bgblue']
-        if show_logo: sc.colorize(logocolors,logostr)
+        logostr = \
+'''      ___  ___%s 
+     / __|/ __|   %s     
+     \__ \ |__    %s     
+     |___/\___|   %s     
+%s''' % (' '*(len(appstring)+8), borderstr, appstring, borderstr, ' '*(len(appstring)+23))
+        logocolors = ['gray','bgblue'] # ['gray','bgblue']
+        if show_logo:
+            for linestr in logostr.splitlines(): sc.colorize(logocolors,linestr)
         
         # Run the thing
         if not with_twisted: # If we are not running the app with Twisted, just run the Flask app.
@@ -494,9 +496,9 @@ class ScirisApp(object):
             args.insert(0, uploaded_fname) # Prepend the file name to the args list.
         
         # Show the call of the function.
-        callcolor = 'magenta'
-        successcolor = 'blue'
-        failcolor = 'red'
+        callcolor    = ['cyan', 'bgblack']
+        successcolor = ['green', 'bgblack']
+        failcolor    = ['red', 'bggray']
         timestr = '[%s]' % sc.now(tostring=True)
         try:    userstr = ' <%s>' % current_user.username
         except: userstr =' <no user>'
@@ -521,7 +523,7 @@ class ScirisApp(object):
             if isinstance(E, HTTPException): # If we have a werkzeug exception, pass it on up to werkzeug to resolve and reply to.
                 raise E
             code = 500 # Send back a response with status 500 that includes the exception traceback.
-            reply = {'exception': exception}
+            reply = {'exception': E.message, 'traceback': exception}
             return make_response(jsonify(reply), code)
         
         # If we are doing a download, prepare the response and send it off.
