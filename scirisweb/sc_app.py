@@ -296,12 +296,12 @@ class ScirisApp(object):
 #        ds.data_store.clear_redis_keys()
         
         if app_config['LOGGING_MODE'] == 'FULL':
-            # Show that DataStore is initialized.
             print('>> DataStore initialzed at %s' % app_config['REDIS_URL'])
-            
-            # Show the DataStore handles.
-            print('>> List of all DataStore handles...')
-            ds.globalvars.data_store.show_handles()
+#            print('>> List of all DataStore handles...')
+#            ds.globalvars.data_store.show_handles()
+#            print('>> List of all Redis keys...')
+#            ds.globalvars.data_store.show_redis_keys()
+            print('>> Loading datastore: there are currently %s Redis keys' % len(ds.globalvars.data_store.redis_db.keys()))
         return None
     
     @staticmethod
@@ -330,8 +330,9 @@ class ScirisApp(object):
     
         # Show all of the users in user_dict.
         if app_config['LOGGING_MODE'] == 'FULL':
-            print('>> List of all users...')
-            user.user_dict.show()
+#            print('>> List of all users...')
+#            user.user_dict.show()
+            print('>> Loading users: there are currently %s users' % len(user.user_dict.keys()))
             
     @staticmethod        
     def _init_tasks(app_config):
@@ -356,8 +357,9 @@ class ScirisApp(object):
     
         # Show all of the users in user_dict.
         if app_config['LOGGING_MODE'] == 'FULL':
-            print('>> List of all tasks...')
-            tasks.task_dict.show()
+#            print('>> List of all tasks...')
+#            tasks.task_dict.show()
+            print('>> Loading tasks: there are currently %s tasks' % len(tasks.task_dict.keys()))
             
         # Have the tasks.py module make the Celery app to connect to the 
         # worker, passing in the config parameters.

@@ -160,9 +160,10 @@ class odict(_OD):
         ''' Print a meaningful representation of the odict '''
         
         # Set primitives for display.
-        toolong = ' [...]' # String to display at end of line when maximum value character length is overrun.
-        dividerstr = '*'*40+'\n' # String to use as an inter-item divider.
-        indentstr = '    ' # Create string to use to indent.
+        toolong      = ' [...]'    # String to display at end of line when maximum value character length is overrun.
+        dividerstr   = '*'*40+'\n' # String to use as an inter-item divider.
+        indentstr    = '    '      # Create string to use to indent.
+        maxrecursion = 10          # It's a repr, no one could want more than that
         
         # Only if we are in the root call, indent by the number of indents.
         if recurselevel == 0: 
@@ -184,7 +185,10 @@ class odict(_OD):
                                 
                 # If it's another odict, make a call increasing the recurselevel and passing the same parameters we received.
                 if isinstance(thisval, odict):
-                    thisvalstr = ut.flexstr(thisval.__repr__(maxlen=maxlen, showmultilines=showmultilines, divider=divider, dividerthresh=dividerthresh, numindents=numindents, recurselevel=recurselevel+1, sigfigs=sigfigs, numformat=numformat))
+                    if recursionlevel <= maxrecursion:
+                        thisvalstr = ut.flexstr(thisval.__repr__(maxlen=maxlen, showmultilines=showmultilines, divider=divider, dividerthresh=dividerthresh, numindents=numindents, recurselevel=recurselevel+1, sigfigs=sigfigs, numformat=numformat))
+                    else:
+                        thisvalstr = 'odict() [maximum recursion reached]'
                 elif ut.isnumber(thisval): # Flexibly print out numbers, since they're largely why we're here
                     if numformat is not None:
                         thisvalstr = numformat % thisval

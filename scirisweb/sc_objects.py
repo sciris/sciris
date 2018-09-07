@@ -204,6 +204,15 @@ class BlobDict(Blob):
         
         # Set the datastore UUID set to empty.
         self.ds_uuid_set = set()
+    
+    def keys(self):
+        return self.obj_dict.keys()
+    
+    def values(self):
+        return self.obj_dict.values()
+    
+    def items(self):
+        return self.obj_dict.items()
         
     def load_from_copy(self, other_obj):
         if type(other_obj) == type(self):
