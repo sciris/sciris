@@ -506,7 +506,7 @@ class ScirisApp(object):
         timestr = '[%s]' % sc.now(tostring=True)
         try:    userstr = ' <%s>' % current_user.username
         except: userstr =' <no user>'
-        RPCinfo = sc.odict({'time':timestr, 'user':userstr, 'module':found_RPC.call_func.__module__, 'name':found_RPC.funcname})
+        RPCinfo = sc.objdict({'time':timestr, 'user':userstr, 'module':found_RPC.call_func.__module__, 'name':found_RPC.funcname})
         
         if self.config['LOGGING_MODE'] == 'FULL':
             string = '%s%s RPC called: "%s.%s"' % (RPCinfo.time, RPCinfo.user, RPCinfo.module, RPCinfo.name)
