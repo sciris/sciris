@@ -11,8 +11,8 @@ import itertools
 import random
 import json
 import mpld3
+import pylab as pl
 import sciris as sc
-from .sc_rpcs import sanitize_json
 try:    import BaseHTTPServer as server # Python 2.x
 except: from http import server # Python 3.x
 
@@ -88,13 +88,30 @@ def serve(html, ip='127.0.0.1', port=8888, n_retries=50):
     srvr.handle_request()
 
 
-def mpld3ify(fig, to_mpld3=True, do_sanitize=True, do_jsonify=True, do_stringify=True):
+def mpld3ify(fig, sanitize=True, jsonify=True, stringify=True):
     ''' Do all the processing steps that might be necessary to render a figure displayable '''
-    if to_mpld3:     fig = mpld3.fig_to_dict(fig)
-    if do_sanitize:  fig = sanitize_json(fig)
-    if do_jsonify:   fig = json.dumps(fig)
-    if do_stringify: fig = str(fig)
+    
+    # Nothing to do if already a string
+    if sc.isstring(fig):
+        return fig 
+    
+    # If it's empty or null, make a small figure
+    if not fig: 
+        fig = pl.figure(figsize=(1,1)) # Make a dummy plot since no legend
+        fig.add_subplot(111) # So axis commands work
+        fig.get_axes()[0].set_visible(False) # Turn off axes
+    
+    # Convert to mpld3 -- this is the big step
+    if isinstance(fig, pl.Figure()):
+        fig = mpld3.fig_to_dict(fig)
+    
+    # Optionally do additional sanitization
+    if sanitize:                         fig = sc.sanitize_json(fig)
+    if jsonify and not sc.isstring(fig): fig = json.dumps(fig) # Could cause problems to jsonify a string
+    if stringify:                        fig = sc.flexstr(fig)
+    
     return fig
+
 
 def browser(figs=None, jsons=None, doserve=True, legacy=False, jquery_url=None, d3_url=None, mpld3_url=None):
     ''' 

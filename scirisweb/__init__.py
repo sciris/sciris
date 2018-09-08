@@ -14,7 +14,6 @@ from .sc_app import *
 from .sc_objects import *
 from .sc_user import *
 from .sc_tasks import *
-from .sc_components import *
 from .sc_server import *
 
 import sciris as sc
