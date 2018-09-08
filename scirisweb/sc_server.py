@@ -133,7 +133,8 @@ def browser(figs=None, jsons=None, doserve=True, legacy=False, jquery_url=None, 
     
     ## Create the figures to plot
     if jsons is None: jsons = [] # List for storing the converted JSONs
-    figs = sc.promotetolist(figs)
+    jsons = sc.promotetolist(jsons)
+    figs  = sc.promotetolist(figs)
     nfigs = len(figs) # Figure out how many plots there are
     for f in range(nfigs): # Loop over each plot
         jsons.append(str(json.dumps(sanitize_json(mpld3.fig_to_dict(figs[f]))))) # Save to JSON

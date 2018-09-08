@@ -23,4 +23,5 @@ if 'browser' in torun:
     pl.bar(pl.arange(10), pl.rand(10))
     graph_dict = mpld3.fig_to_dict(barfig)
     json = str(json.dumps(sw.sanitize_json(mpld3.fig_to_dict(barfig)))) # This shouldn't be necessary, but it is...
-    sw.browser(figs=figs+[barfig])
+#    json = str(json.dumps(sw.sanitize_json(mpld3.fig_to_dict(barfig))))
+    sw.browser(figs=figs+[barfig], jsons=[json])
