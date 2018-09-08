@@ -649,7 +649,8 @@ def colorize(color=None, string=None, output=False):
     if output: 
         return ansistring # Return the modified string
     else:
-        print(ansistring) # Content, so print with newline
+        try:    print(ansistring) # Content, so print with newline
+        except: print(string) # If that fails, just go with plain version
         return None
     
 
