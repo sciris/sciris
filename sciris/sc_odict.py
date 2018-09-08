@@ -150,7 +150,7 @@ class odict(OD):
         toolong      = ' [...]'    # String to display at end of line when maximum value character length is overrun.
         dividerstr   = '*'*40+'\n' # String to use as an inter-item divider.
         indentstr    = '    '      # Create string to use to indent.
-        maxrecursion = 10          # It's a repr, no one could want more than that
+        maxrecursion = 5           # It's a repr, no one could want more than that
         
         # Only if we are in the root call, indent by the number of indents.
         if recursionlevel == 0: 
@@ -169,22 +169,25 @@ class odict(OD):
             for i in range(len(self)): # Loop over the dictionary values
                 thiskeystr = ut.flexstr(self.keys()[i]) # Grab a str representation of the current key.  
                 thisval = self.values()[i] # Grab the current value.
-                                
-                # If it's another odict, make a call increasing the recursionlevel and passing the same parameters we received.
-                if isinstance(thisval, odict):
-                    if recursionlevel <= maxrecursion:
-                        thisvalstr = ut.flexstr(thisval.__repr__(maxlen=maxlen, showmultilines=showmultilines, divider=divider, dividerthresh=dividerthresh, numindents=numindents, recursionlevel=recursionlevel+1, sigfigs=sigfigs, numformat=numformat))
-                    else:
-                        thisvalstr = 'odict() [maximum recursion reached]'
-                elif ut.isnumber(thisval): # Flexibly print out numbers, since they're largely why we're here
-                    if numformat is not None:
-                        thisvalstr = numformat % thisval
-                    elif sigfigs is not None:
-                        thisvalstr = ut.sigfig(thisval, sigfigs=sigfigs)
-                    else:
-                        thisvalstr = ut.flexstr(thisval) # To avoid numpy's stupid 0.4999999999945
-                else: # Otherwise, do the normal repr() read.
-                    thisvalstr = repr(thisval)
+                
+                try: # It's rare, but sometimes repr fails
+                    # If it's another odict, make a call increasing the recursionlevel and passing the same parameters we received.
+                    if isinstance(thisval, odict):
+                        if recursionlevel <= maxrecursion:
+                            thisvalstr = ut.flexstr(thisval.__repr__(maxlen=maxlen, showmultilines=showmultilines, divider=divider, dividerthresh=dividerthresh, numindents=numindents, recursionlevel=recursionlevel+1, sigfigs=sigfigs, numformat=numformat))
+                        else:
+                            thisvalstr = 'odict() [maximum recursion reached]'
+                    elif ut.isnumber(thisval): # Flexibly print out numbers, since they're largely why we're here
+                        if numformat is not None:
+                            thisvalstr = numformat % thisval
+                        elif sigfigs is not None:
+                            thisvalstr = ut.sigfig(thisval, sigfigs=sigfigs)
+                        else:
+                            thisvalstr = ut.flexstr(thisval) # To avoid numpy's stupid 0.4999999999945
+                    else: # Otherwise, do the normal repr() read.
+                        thisvalstr = repr(thisval)
+                except Exception as E:
+                    thisvalstr = '%s read failed: %s' % (ut.objectid(thisval), str(E))
 
                 # Add information to the lists to retrace afterwards.
                 keystrs.append(thiskeystr)
