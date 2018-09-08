@@ -2,15 +2,13 @@
 Version:
 """
 import pylab as pl
-import mpld3
 import scirisweb as sw
-import json
-
 
 
 torun = [
 'browser'
 ]
+
 
 if 'browser' in torun:
     figs = []
@@ -21,7 +19,5 @@ if 'browser' in torun:
     
     barfig = pl.figure()
     pl.bar(pl.arange(10), pl.rand(10))
-    graph_dict = mpld3.fig_to_dict(barfig)
-    json = str(json.dumps(sw.sanitize_json(mpld3.fig_to_dict(barfig)))) # This shouldn't be necessary, but it is...
-#    json = str(json.dumps(sw.sanitize_json(mpld3.fig_to_dict(barfig))))
-    sw.browser(figs=figs+[barfig], jsons=[json])
+    barjson = sw.mpld3ify(barfig)
+    sw.browser(figs=figs, jsons=barjson)
