@@ -157,6 +157,7 @@ def browser(figs=None, doserve=True, legacy=False, jquery_url=None, d3_url=None,
     
     ## Create the figures to plot
     figjsons = []
+    if not figs: figs = sc.emptyfig() # figs is None, or '', or [], etc. -- render a blank figure instead
     figs  = sc.promotetolist(figs)
     for fig in figs: # Loop over each plot
         figjsons.append(mpld3ify(fig)) # Save to JSON

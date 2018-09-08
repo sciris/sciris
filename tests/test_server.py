@@ -8,9 +8,13 @@ import scirisweb as sw
 
 
 torun = [
+#'blank', # An emtpy figure
 #'browser', # Simple example of three figures
 'advanced', # Illustrates separate legend plotting and direct editing of the JSON
 ]
+
+if 'blank' in torun:
+    sw.browser()
 
 
 if 'browser' in torun:
@@ -32,11 +36,11 @@ if 'advanced' in torun:
         fig = pl.figure()
         ax = fig.add_subplot(111)
         ax.plot([1,4,3,4,], label='mish')
-        ax.plot([8,4,3,2], label='mush')
+        ax.plot([8,4,3,2], label='mashed potatoes')
         return fig,ax
 
     fig,ax = make_fig()
-    legend = sc.separatelegend(ax)
+    legend = sc.separatelegend(ax, figsettings={'figsize':(4.8,4.8)})
     
     json1 = sw.mpld3ify(fig,    jsonify=False)
     json2 = sw.mpld3ify(legend, jsonify=False)

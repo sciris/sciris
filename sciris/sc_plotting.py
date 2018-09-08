@@ -505,7 +505,7 @@ def SIticks(fig=None, ax=None, axis='y', fixed=False):
 ### FIGURE SAVING
 ##############################################################################
 
-__all__ += ['savefigs', 'loadfig', 'separatelegend']
+__all__ += ['savefigs', 'loadfig', 'emptyfig', 'separatelegend']
 
 
 
@@ -621,13 +621,22 @@ def reanimateplots(plots=None):
     return None
 
 
-def separatelegend(ax=None, handles=None, labels=None, reverse=False, legendsettings=None):
+def emptyfig():
+    ''' The emptiest figure possible '''
+    fig = pl.Figure(facecolor='None')
+    return fig
+
+
+def separatelegend(ax=None, handles=None, labels=None, reverse=False, figsettings=None, legendsettings=None):
     ''' Allows the legend of a figure to be rendered in a separate window instead '''
     
     # Handle settings
-    settings = {'loc': 'center', 'bbox_to_anchor': None, 'frameon': False}
+    if figsettings    is None: figsettings = {}
     if legendsettings is None: legendsettings = {}
-    settings.update(legendsettings)
+    f_settings = {'figsize':(4.0,4.8)} # (6.4,4.8) is the default, so make it a bit narrower
+    l_settings = {'loc': 'center', 'bbox_to_anchor': None, 'frameon': False}
+    f_settings.update(figsettings)
+    l_settings.update(legendsettings)
     
     # Handle figure/axes
     if ax is None: ax = pl.gca() # Get current axes, if none supplied
@@ -639,7 +648,8 @@ def separatelegend(ax=None, handles=None, labels=None, reverse=False, legendsett
     if labels  is None: labels = axlabels
 
     # Set up new plot
-    fig, ax = pl.subplots()
+    fig = pl.figure(**f_settings)
+    ax = fig.add_subplot(111)
     ax.set_position([-0.05,-0.05,1.1,1.1]) # This cuts off the axis labels, ha-ha
     
     # A legend renders the line/patch based on the object handle. However, an object
@@ -654,6 +664,6 @@ def separatelegend(ax=None, handles=None, labels=None, reverse=False, legendsett
         labels   = labels[::-1]
     
     # Plot the new legend
-    ax.legend(handles=handles, labels=labels, **settings)
+    ax.legend(handles=handles, labels=labels, **l_settings)
 
     return fig
