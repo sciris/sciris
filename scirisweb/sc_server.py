@@ -88,7 +88,7 @@ def serve(html, ip='127.0.0.1', port=8888, n_retries=50):
     srvr.handle_request()
 
 
-def mpld3ify(fig, sanitize=True, jsonify=True, stringify=True):
+def mpld3ify(fig, sanitize=True, jsonify=True):
     ''' Do all the processing steps that might be necessary to render a figure displayable '''
     
     # Nothing to do if already a string
@@ -102,18 +102,17 @@ def mpld3ify(fig, sanitize=True, jsonify=True, stringify=True):
         fig.get_axes()[0].set_visible(False) # Turn off axes
     
     # Convert to mpld3 -- this is the big step
-    if isinstance(fig, pl.Figure()):
+    if isinstance(fig, pl.Figure):
         fig = mpld3.fig_to_dict(fig)
     
     # Optionally do additional sanitization
-    if sanitize:                         fig = sc.sanitize_json(fig)
+    if sanitize:                         fig = sc.sanitizejson(fig)
     if jsonify and not sc.isstring(fig): fig = json.dumps(fig) # Could cause problems to jsonify a string
-    if stringify:                        fig = sc.flexstr(fig)
     
     return fig
 
 
-def browser(figs=None, jsons=None, doserve=True, legacy=False, jquery_url=None, d3_url=None, mpld3_url=None):
+def browser(figs=None, doserve=True, legacy=False, jquery_url=None, d3_url=None, mpld3_url=None):
     ''' 
     Create an MPLD3 GUI and display in the browser.
     
@@ -130,7 +129,7 @@ def browser(figs=None, jsons=None, doserve=True, legacy=False, jquery_url=None, 
     
     With doserve=True, launch a web server. Otherwise, return the HTML representation of the figures.
     
-    Version: 2018jul24
+    Version: 2018sep08
     '''
 
     ## Specify the div style, and create the HTML template we'll add the data to -- WARNING, library paths are hardcoded!
@@ -157,20 +156,17 @@ def browser(figs=None, jsons=None, doserve=True, legacy=False, jquery_url=None, 
     ''' % (jquery_url, d3_url, mpld3_url)
     
     ## Create the figures to plot
-    if jsons is None: jsons = [] # List for storing the converted JSONs
-    jsons = sc.promotetolist(jsons)
+    figjsons = []
     figs  = sc.promotetolist(figs)
-    nfigs = len(figs) # Figure out how many plots there are
-    for f in range(nfigs): # Loop over each plot
-        jsons.append(mpld3ify(figs[f])) # Save to JSON
-    njsons = len(jsons)
+    for fig in figs: # Loop over each plot
+        figjsons.append(mpld3ify(fig)) # Save to JSON
     
     ## Create div and JSON strings to replace the placeholers above
     divstr = ''
     jsonstr = ''
-    for j in range(njsons):
-        divstr += '<div style="%s" id="fig%i" class="fig"></div>\n' % (divstyle, j) # Add div information: key is unique ID for each figure
-        jsonstr += 'mpld3.draw_figure("fig%i", %s);\n' % (j, jsons[j]) # Add the JSON representation of each figure -- THIS IS KEY!
+    for f,figjson in enumerate(figjsons):
+        divstr += '<div style="%s" id="fig%i" class="fig"></div>\n' % (divstyle, f) # Add div information: key is unique ID for each figure
+        jsonstr += 'mpld3.draw_figure("fig%i", %s);\n' % (f, figjson) # Add the JSON representation of each figure -- THIS IS KEY!
     html = html.replace('!MAKE DIVS!',divstr) # Populate div information
     html = html.replace('!DRAW FIGURES!',jsonstr) # Populate figure information
     

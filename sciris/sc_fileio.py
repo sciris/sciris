@@ -234,6 +234,9 @@ def makefilepath(filename=None, folder=None, ext=None, default=None, split=False
 ### JSON functions
 ##############################################################################
 
+__all__ += ['sanitizejson', 'loadjson', 'savejson']
+
+
 def sanitizejson(obj):
     """
     This is the main conversion function for Python data-structures into

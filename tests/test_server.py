@@ -20,4 +20,4 @@ if 'browser' in torun:
     barfig = pl.figure()
     pl.bar(pl.arange(10), pl.rand(10))
     barjson = sw.mpld3ify(barfig)
-    sw.browser(figs=figs, jsons=barjson)
+    sw.browser(figs=figs+[barjson])
