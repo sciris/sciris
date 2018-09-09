@@ -505,7 +505,8 @@ def SIticks(fig=None, ax=None, axis='y', fixed=False):
 ### FIGURE SAVING
 ##############################################################################
 
-__all__ += ['savefigs', 'loadfig']
+__all__ += ['savefigs', 'loadfig', 'emptyfig', 'separatelegend']
+
 
 
 def savefigs(plots=None, filetype=None, filename=None, folder=None, savefigargs=None, index=None, verbose=False, **kwargs):
@@ -618,3 +619,51 @@ def reanimateplots(plots=None):
     plots = odict.promote(plots) # Convert to an odict
     for plot in plots.values(): nfmgf(fignum, plot) # Make sure each figure object is associated with the figure manager -- WARNING, is it correct to associate the plot with an existing figure?
     return None
+
+
+def emptyfig():
+    ''' The emptiest figure possible '''
+    fig = pl.Figure(facecolor='None')
+    return fig
+
+
+def separatelegend(ax=None, handles=None, labels=None, reverse=False, figsettings=None, legendsettings=None):
+    ''' Allows the legend of a figure to be rendered in a separate window instead '''
+    
+    # Handle settings
+    if figsettings    is None: figsettings = {}
+    if legendsettings is None: legendsettings = {}
+    f_settings = {'figsize':(4.0,4.8)} # (6.4,4.8) is the default, so make it a bit narrower
+    l_settings = {'loc': 'center', 'bbox_to_anchor': None, 'frameon': False}
+    f_settings.update(figsettings)
+    l_settings.update(legendsettings)
+    
+    # Handle figure/axes
+    if ax is None: ax = pl.gca() # Get current axes, if none supplied
+    if isinstance(ax, pl.Figure): ax = ax.axes[0] # Allows an argument of a figure instead of an axes
+    
+    # Handle handles
+    axhandles, axlabels = ax.get_legend_handles_labels()
+    if handles is None: handles = axhandles
+    if labels  is None: labels = axlabels
+
+    # Set up new plot
+    fig = pl.figure(**f_settings)
+    ax = fig.add_subplot(111)
+    ax.set_position([-0.05,-0.05,1.1,1.1]) # This cuts off the axis labels, ha-ha
+    
+    # A legend renders the line/patch based on the object handle. However, an object
+    # can only appear in one figure. Thus, if the legend is in a different figure, the
+    # object cannot be shown in both the original figure and in the legend. Thus we need
+    # to copy the handles, and use the copies to render the legend
+    handles = [ut.cp(x) for x in handles]
+    
+    # Reverse order, e.g. for stacked plots
+    if reverse:
+        handles = handles[::-1]
+        labels   = labels[::-1]
+    
+    # Plot the new legend
+    ax.legend(handles=handles, labels=labels, **l_settings)
+
+    return fig

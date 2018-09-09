@@ -24,7 +24,7 @@ from numbers import Number as _numtype
 
 
 # Define the modules being loaded
-__all__ = ['uuid', 'dcp']
+__all__ = ['uuid', 'dcp', 'cp', 'pp']
 
 
 def uuid(uid=None, which=None, die=False, as_string=False):
@@ -56,9 +56,27 @@ def uuid(uid=None, which=None, die=False, as_string=False):
     return output
 
 
-def dcp(obj=None):
+def dcp(obj, verbose=True, die=False):
     ''' Shortcut to perform a deep copy operation '''
-    output = copy.deepcopy(obj)
+    try:
+        output = copy.deepcopy(obj)
+    except Exception as E:
+        output = cp(obj)
+        errormsg = 'Warning: could not perform deep copy, performing shallow instead: %s' % str(E)
+        if die: raise Exception(errormsg)
+        else:   print(errormsg)
+    return output
+
+
+def cp(obj, verbose=True, die=True):
+    ''' Shortcut to perform a shallow copy operation '''
+    try:
+        output = copy.copy(obj)
+    except Exception as E:
+        output = obj
+        errormsg = 'Warning: could not perform shallow copy, returning original object: %s' % str(E)
+        if die: raise Exception(errormsg)
+        else:   print(errormsg)
     return output
 
 
@@ -67,12 +85,15 @@ def pp(obj):
     pprint.pprint(obj)
     return None
 
+
+
+
 ##############################################################################
 ### PRINTING/NOTIFICATION FUNCTIONS
 ##############################################################################
 
 __all__ += ['printv', 'blank', 'createcollist', 'objectid', 'objatt', 'objmeth', 'objrepr']
-__all__ += ['prepr', 'pr', 'pp', 'indent', 'sigfig', 'printarr', 'printdata', 'printvars', 'getdate']
+__all__ += ['prepr', 'pr', 'indent', 'sigfig', 'printarr', 'printdata', 'printvars', 'getdate']
 __all__ += ['slacknotification', 'printtologfile', 'colorize']
 
 def printv(string, thisverbose=1, verbose=2, newline=True, indent=True):

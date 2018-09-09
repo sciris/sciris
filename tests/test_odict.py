@@ -23,7 +23,7 @@ odprint('Main tests:')
 foo = sc.odict({'ah':3,'boo':4, 'cough':6, 'dill': 8}) # Create odict
 bar = foo.sorted() # Sort the list
 assert(bar['boo'] == 4) # Show get item by value
-assert(bar.boo == 4) # Show get item by value, method 2
+assert(sc.objdict(bar).boo == 4) # Show get item by value, method 2
 assert(bar[1] == 4) # Show get item by index
 assert((bar[0:2] == [3,4]).all()) # Show get item by slice
 assert((bar['cough':'dill'] == [6,8]).all()) # Show alternate slice notation

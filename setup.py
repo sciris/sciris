@@ -11,6 +11,7 @@ if 'minimal' in sys.argv:
 else:
     extras = [
         'dill',              # File I/O
+        'json',              # More file I/O
         'gitpython',         # Version information
         'openpyxl>=2.5',     # Spreadsheet functions
         'pandas',            # Spreadsheet input

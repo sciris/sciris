@@ -27,7 +27,7 @@ def check(test, dependencies=None):
     return tf
     
 # Define filenames
-files = sc.odict()
+files = sc.objdict()
 files['excel']  = 'test.xlsx'
 files['binary'] = 'test.obj'
 files['text']   = 'text.txt'

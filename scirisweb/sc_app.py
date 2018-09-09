@@ -561,7 +561,7 @@ class ScirisApp(object):
             if result is None: # If None was returned by the RPC function, return ''.
                 return ''
             else: # Otherwise, convert the result (probably a dict) to JSON and return it.
-                return jsonify(rpcs.sanitize_json(result))
+                return jsonify(sc.sanitizejson(result))
         
         
 class ScirisResource(Resource):

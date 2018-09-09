@@ -13,12 +13,12 @@ import io
 import os
 import re
 import pickle
-import dill
 import types
 import numpy as np
 from glob import glob
 from gzip import GzipFile
 from contextlib import closing
+from collections import OrderedDict
 from . import sc_utils as ut
 from .sc_odict import odict
 from .sc_dataframe import dataframe
@@ -227,6 +227,86 @@ def makefilepath(filename=None, folder=None, ext=None, default=None, split=False
     if split: return filefolder, filebasename
     else:     return fullfile # Or can do os.path.split() on output
 
+
+
+
+##############################################################################
+### JSON functions
+##############################################################################
+
+__all__ += ['sanitizejson', 'loadjson', 'savejson']
+
+
+def sanitizejson(obj):
+    """
+    This is the main conversion function for Python data-structures into
+    JSON-compatible data structures.
+    Use this as much as possible to guard against data corruption!
+    Args:
+        obj: almost any kind of data structure that is a combination
+            of list, numpy.ndarray, odicts, etc.
+    Returns:
+        A converted dict/list/value that should be JSON compatible
+    """
+
+    if isinstance(obj, list) or isinstance(obj, tuple):
+        return [sanitizejson(p) for p in list(obj)]
+    
+    if isinstance(obj, np.ndarray):
+        if obj.shape: return [sanitizejson(p) for p in list(obj)] # Handle most cases, incluing e.g. array([5])
+        else:         return [sanitizejson(p) for p in list(np.array([obj]))] # Handle the special case of e.g. array(5)
+
+    if isinstance(obj, dict):
+        return {str(k): sanitizejson(v) for k, v in obj.items()}
+
+    if isinstance(obj, odict):
+        result = OrderedDict()
+        for k,v in obj.items():
+            result[str(k)] = sanitizejson(v)
+        return result
+
+    if isinstance(obj, np.bool_):
+        return bool(obj)
+
+    if isinstance(obj, float):
+        if np.isnan(obj): return None
+        else:             return obj
+        
+    if isinstance(obj, np.int64):
+        if np.isnan(obj): return None
+        else:             return int(obj)
+        
+    if isinstance(obj, np.float64):
+        if np.isnan(obj): return None
+        else:             return float(obj)
+
+    if isinstance(obj, unicode):
+        try:    string = str(obj) # Try to convert it to ascii
+        except: string = obj # Give up and use original
+        return string
+
+    if isinstance(obj, set):
+        return list(obj)
+
+    return obj
+
+
+
+def loadjson(filename=None):
+    ''' Convenience function for reading a text file '''
+    import json # Optional Sciris dependency
+    with open(filename) as f:
+        output = json.load(f)
+    return output
+
+
+
+def savejson(filename=None, obj=None):
+    ''' Convenience function for saving a text file -- accepts a string or list of strings '''
+    import json # Optional Sciris dependency
+    with open(filename, 'w') as f:
+        json.dump(sanitizejson(obj), f)
+    return None
 
 
 
@@ -650,6 +730,7 @@ class Failed(object):
     def __init__(self, *args, **kwargs):
         pass
 
+
 def makefailed(module_name=None, name=None, error=None):
     ''' Create a class -- not an object! -- that contains the failure info '''
     key = 'Failure %s' % (len(Failed.failure_info)+1)
@@ -658,6 +739,7 @@ def makefailed(module_name=None, name=None, error=None):
     Failed.failure_info[key]['class'] = name
     Failed.failure_info[key]['error'] = repr(error)
     return Failed
+
 
 class RobustUnpickler(pickle.Unpickler):
     ''' Try to import an object, and if that fails, return a Failed object rather than crashing '''
@@ -674,7 +756,9 @@ class RobustUnpickler(pickle.Unpickler):
                 obj = makefailed(module_name=module_name, name=name, error=E)
         return obj
 
+
 def unpickler(string=None, die=None):
+    import dill # Optional Sciris dependency
     if die is None: die = False
     try: # Try pickle first
         obj = pkl.loads(string) # Actually load it -- main usage case
@@ -689,13 +773,16 @@ def unpickler(string=None, die=None):
         print(obj.failure_info)
     return obj
 
+
 def savepickle(fileobj=None, obj=None):
         ''' Use pickle to do the salty work '''
         fileobj.write(pkl.dumps(obj, protocol=-1))
         return None
-      
+    
+    
 def savedill(fileobj=None, obj=None):
     ''' Use dill to do the sour work '''
+    import dill # Optional Sciris dependency
     fileobj.write(dill.dumps(obj, protocol=-1))
     return None
 
