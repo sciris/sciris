@@ -36,11 +36,11 @@ setup(
         'sciris', # Basic tools
         'redis', # Database
         'mpld3', # Rendering plots in the browser
-        'flask', # Creating the webapp
-        'flask-login', # Handling users
-        'Flask-Session', # use redis for sessions
         'werkzeug', # HTTP tools
-        'twisted', # Server
-        'celery>=4.0', # Task manager
+        'flask', # Creating the webapp
+        'flask-login>=0.4.1', # Handling users
+        'flask-session>=0.3.1', # use redis for sessions
+        'celery>=4.2', # Task manager
+        'twisted>=18.4.0', # Server
     ],
 )

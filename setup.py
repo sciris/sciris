@@ -50,10 +50,6 @@ setup(
     packages=find_packages(),
     include_package_data=True,
     install_requires=[
-        'Flask-Login==0.4.1',
-        'Flask-Session==0.3.1',
-        'Twisted==18.4.0',
-        'celery==4.2.0',
         'matplotlib>=1.4.2', # Plotting
         'numpy>=1.10.1',     # Numerical functions
     ] + extras,              # Optional dependencies
