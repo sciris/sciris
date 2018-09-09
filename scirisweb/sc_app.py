@@ -99,12 +99,6 @@ class ScirisApp(object):
         self.define_endpoint_callback = self.flask_app.route # Set an alias for the decorator factory for adding an endpoint.
         self.endpoint_layout_dict = {} # Create an empty layout dictionary.
         self.RPC_dict = {}  # Create an empty RPC dictionary.
-        
-        # with self.flask_app.app_context():
-            # SESSION_TYPE = 'redis'
-            # SESSION_REDIS = current_app.config['REDIS_URL']
-            # sess = Session()
-            # sess.init_app(self.flask_app)
 
         # Set config parameters in the configs if they were passed in.
         # A config path explicitly passed in will override the setting 
