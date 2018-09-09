@@ -15,7 +15,6 @@ else:
         'openpyxl>=2.5',     # Spreadsheet functions
         'pandas',            # Spreadsheet input
         'psutil',            # Load monitoring
-        'redis==2.10.6',
         'xlrd',              # Spreadsheet input
         'xlsxwriter',        # Spreadsheet output
         ]

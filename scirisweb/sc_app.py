@@ -129,12 +129,8 @@ class ScirisApp(object):
         # If we are including DataStore functionality, initialize it.
         if self.config['USE_DATASTORE']:
             self._init_datastore(self.config)
-
-        # ds.globalvars.data_store
-        # self.flask_app
-
-        print('\n\n !!!!!!!!   ds.globalvars.data_store.redis_db \n\n')
-        self.flask_app.session_interface = RedisSessionInterface(ds.globalvars.data_store.redis_obj(), 'sess')
+            print('Storing datastore in the app...')
+            self.flask_app.session_interface = RedisSessionInterface(ds.globalvars.data_store.redis_obj(), 'sess')
 
         # If we are including DataStore and users functionality, initialize users.
         if self.config['USE_DATASTORE'] and self.config['USE_USERS']:
