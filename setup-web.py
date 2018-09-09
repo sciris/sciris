@@ -34,7 +34,7 @@ setup(
     include_package_data=True,
     install_requires=[
         'sciris', # Basic tools -- NB, this includes numpy, scipy, pandas, and matplotlib as dependencies
-        'redis>=2.10.6'', # Database
+        'redis>=2.10.6', # Database
         'mpld3',    # Rendering plots in the browser
         'werkzeug', # HTTP tools
         'flask', # Creating the webapp
