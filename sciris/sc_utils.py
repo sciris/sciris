@@ -582,7 +582,7 @@ def printtologfile(message=None, filename=None):
     return None
     
 
-def colorize(color=None, string=None, output=False):
+def colorize(color=None, string=None, output=False, showhelp=False):
     '''
     Colorize output text. Arguments:
         color = the color you want (use 'bg' with background colors, e.g. 'bgblue')
@@ -596,12 +596,9 @@ def colorize(color=None, string=None, output=False):
         colorize('magenta') # Now type in magenta for a while
         colorize() # Stop typing in magenta
     
-    To get available colors, type colorize('help').
+    To get available colors, type colorize(showhelp=True).
     
-    Note: although implemented as a class (to allow the "with" syntax),
-    this actually functions more like a function.
-    
-    Version: 2018sep02
+    Version: 2018sep09
     '''
     
     # Try to add Windows support
@@ -642,32 +639,32 @@ def colorize(color=None, string=None, output=False):
     for key,val in ansicolors.items(): ansicolors[key] = '\033['+val+'m'
     
     # Determine what color to use
-    if color is None: color = 'reset' # By default, reset
     colorlist = promotetolist(color) # Make sure it's a list
     for color in colorlist:
         if color not in ansicolors.keys(): 
-            if color!='help':print('Color "%s" is not available.' % color)
-            print('Available colors are:')
-            for key in ansicolors.keys():
-                if key[:2] == 'bg':
-                    darks = ['bgblack', 'bgred', 'bgblue', 'bgmagenta']
-                    if key in darks: foreground = 'gray'
-                    else:            foreground = 'black'
-                    helpcolors = [foreground, key]
-                else:
-                    helpcolors = key
-                colorize(helpcolors, '  '+key)
-            return None # Don't proceed if no color supplied
+            print('Color "%s" is not available, use colorize(showhelp=True) to show options.' % color)
+            return None # Don't proceed if the color isn't found
     ansicolor = ''
     for color in colorlist:
         ansicolor += ansicolors[color]
     
     # Modify string, if supplied
-    if not ansi_support: ansicolor = '' # To avoid garbling output on unsupported systems
     if string is None: ansistring = ansicolor # Just return the color
     else:              ansistring = ansicolor + str(string) + ansicolors['reset'] # Add to start and end of the string
+    if not ansi_support: ansistring = str(string) # To avoid garbling output on unsupported systems
 
-    if output: 
+    if showhelp:
+        print('Available colors are:')
+        for key in ansicolors.keys():
+            if key[:2] == 'bg':
+                darks = ['bgblack', 'bgred', 'bgblue', 'bgmagenta']
+                if key in darks: foreground = 'gray'
+                else:            foreground = 'black'
+                helpcolor = [foreground, key]
+            else:
+                helpcolor = key
+            colorize(helpcolor, '  '+key)
+    elif output: 
         return ansistring # Return the modified string
     else:
         try:    print(ansistring) # Content, so print with newline

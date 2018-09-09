@@ -4,7 +4,7 @@ user.py -- code related to Sciris user management
 Last update: 2018aug20
 """
 
-from flask import session, current_app
+from flask import Flask, session, current_app
 from flask_login import current_user, login_user, logout_user
 from hashlib import sha224
 from numpy import argsort
@@ -12,6 +12,7 @@ import six
 import sciris as sc
 from . import sc_rpcs as rpcs #import make_RPC
 from . import sc_objects as sobj
+from . import sc_datastore as ds
 
 ##############################################################
 ### Globals

@@ -239,6 +239,7 @@ class DataStore(object):
         else:
             self.db_mode = db_mode
         if self.db_mode == 'redis': # If we are using Redis...
+            print('[sc_datastore#__init__] Trying to connect to Redis on ' + redis_db_URL)
             self.redis_db = redis.StrictRedis.from_url(redis_db_URL)
         return None
         
@@ -347,6 +348,9 @@ class DataStore(object):
             self.delete(key, save_handle_changes=False)
         self.save() # Save the DataStore object.
         return None
+
+    def redis_obj(self):
+        return self.redis_db
     
     def show_handles(self):
         for key in self.handle_dict: # For each key in the dictionary...

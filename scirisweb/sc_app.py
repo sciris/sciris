@@ -7,6 +7,7 @@ Last update: 2018aug20
 # Imports
 from flask import Flask, request, abort, json, jsonify, send_from_directory, make_response
 from flask_login import LoginManager, current_user
+from flask_session import RedisSessionInterface
 from werkzeug.utils import secure_filename
 from werkzeug.exceptions import HTTPException
 import sys
@@ -98,7 +99,7 @@ class ScirisApp(object):
         self.define_endpoint_callback = self.flask_app.route # Set an alias for the decorator factory for adding an endpoint.
         self.endpoint_layout_dict = {} # Create an empty layout dictionary.
         self.RPC_dict = {}  # Create an empty RPC dictionary.
-        
+
         # Set config parameters in the configs if they were passed in.
         # A config path explicitly passed in will override the setting 
         # specified in the config.py file.
@@ -122,7 +123,9 @@ class ScirisApp(object):
         # If we are including DataStore functionality, initialize it.
         if self.config['USE_DATASTORE']:
             self._init_datastore(self.config)
-            
+            print('Storing datastore in the app...')
+            self.flask_app.session_interface = RedisSessionInterface(ds.globalvars.data_store.redis_obj(), 'sess')
+
         # If we are including DataStore and users functionality, initialize users.
         if self.config['USE_DATASTORE'] and self.config['USE_USERS']:
             self.login_manager = LoginManager() # Create a LoginManager() object.
@@ -146,7 +149,7 @@ class ScirisApp(object):
         if self.config['USE_DATASTORE'] and self.config['USE_TASKS']:
             self._init_tasks(self.config) # Initialize the users.
             self.add_RPC_dict(tasks.RPC_dict) # Register the RPCs in the user.py module.    
-        
+                
         return None # End of __init__
             
     @staticmethod
