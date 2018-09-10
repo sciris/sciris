@@ -421,5 +421,5 @@ class dataframe(object):
         from . import sc_fileio as io # Optional import
         for_export = ut.dcp(self.data)
         for_export = np.vstack((self.cols, self.data))
-        filepath = io.savespreadsheet(filename=filename, data=for_export, sheetname=sheetname, close=close)
+        filepath = io.savespreadsheet(filename=filename, data=for_export, close=close)
         return filepath
