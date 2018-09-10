@@ -4,6 +4,7 @@
 
 import numpy as np
 from . import sc_utils as ut # Note, sc_fileio is also used, but is only imported when required to avoid a circular import
+from . import sc_math as mh
 from .sc_odict import odict
 
 __all__ = ['dataframe']
@@ -299,7 +300,7 @@ class dataframe(object):
         ''' Replace all of one value in a column with a new value '''
         col = self._sanitizecol(col)
         coldata = self.data[:,col] # Get data for this column
-        inds = ut.findinds(coldata==old)
+        inds = mh.findinds(coldata==old)
         self.data[inds,col] = new
         return None
         
@@ -349,7 +350,7 @@ class dataframe(object):
         ''' Return the indices of all rows matching the given key in a given column. '''
         col = self._sanitizecol(col)
         coldata = self.data[:,col] # Get data for this column
-        indices = ut.findinds(coldata==key)
+        indices = mh.findinds(coldata==key)
         return indices
         
     def _filterrows(self, key=None, col=None, keep=True, verbose=False):
