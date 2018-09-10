@@ -509,7 +509,7 @@ __all__ += ['savefigs', 'loadfig', 'emptyfig', 'separatelegend']
 
 
 
-def savefigs(plots=None, filetype=None, filename=None, folder=None, savefigargs=None, index=None, verbose=False, **kwargs):
+def savefigs(figs=None, filetype=None, filename=None, folder=None, savefigargs=None, verbose=False, **kwargs):
     '''
     Save the requested plots to disk.
     
@@ -520,7 +520,6 @@ def savefigs(plots=None, filetype=None, filename=None, folder=None, savefigargs=
         filename -- the file to save to (only uses path if multiple files)
         savefigargs -- dictionary of arguments passed to savefig()
         index -- optional argument to only save the specified plot index
-        kwargs -- passed to makeplots()
     
     Example usages:
         import pylab as pl
@@ -543,8 +542,8 @@ def savefigs(plots=None, filetype=None, filename=None, folder=None, savefigargs=
     if filetype is None: filetype = 'singlepdf' # This ensures that only one file is created
     
     # Either take supplied plots, or generate them
-    plots = odict.promote(plots)
-    nplots = len(plots)
+    figs = odict.promote(figs)
+    nfigs = len(figs)
     
     # Handle file types
     filenames = []
@@ -555,34 +554,33 @@ def savefigs(plots=None, filetype=None, filename=None, folder=None, savefigargs=
         pdf = PdfPages(fullpath)
         filenames.append(fullpath)
         if verbose: print('PDF saved to %s' % fullpath)
-    for p,item in enumerate(plots.items()):
+    for p,item in enumerate(figs.items()):
         key,plt = item
-        if index is None or index==p:
-            # Handle filename
-            if filename and nplots==1: # Single plot, filename supplied -- use it
-                fullpath = fio.makefilepath(filename=filename, folder=folder, default='optima-figure', ext=filetype) # NB, this filename not used for singlepdf filetype, so it's OK
-            else: # Any other case, generate a filename
-                keyforfilename = filter(str.isalnum, str(key)) # Strip out non-alphanumeric stuff for key
-                defaultname = keyforfilename
-                fullpath = fio.makefilepath(filename=filename, folder=folder, default=defaultname, ext=filetype)
-            
-            # Do the saving
-            if savefigargs is None: savefigargs = {}
-            defaultsavefigargs = {'dpi':200, 'bbox_inches':'tight'} # Specify a higher default DPI and save the figure tightly
-            defaultsavefigargs.update(savefigargs) # Update the default arguments with the user-supplied arguments
-            if filetype == 'fig':
-                fio.saveobj(fullpath, plt)
-                filenames.append(fullpath)
-                if verbose: print('Figure object saved to %s' % fullpath)
+        # Handle filename
+        if filename and nfigs==1: # Single plot, filename supplied -- use it
+            fullpath = fio.makefilepath(filename=filename, folder=folder, default='optima-figure', ext=filetype) # NB, this filename not used for singlepdf filetype, so it's OK
+        else: # Any other case, generate a filename
+            keyforfilename = filter(str.isalnum, str(key)) # Strip out non-alphanumeric stuff for key
+            defaultname = keyforfilename
+            fullpath = fio.makefilepath(filename=filename, folder=folder, default=defaultname, ext=filetype)
+        
+        # Do the saving
+        if savefigargs is None: savefigargs = {}
+        defaultsavefigargs = {'dpi':200, 'bbox_inches':'tight'} # Specify a higher default DPI and save the figure tightly
+        defaultsavefigargs.update(savefigargs) # Update the default arguments with the user-supplied arguments
+        if filetype == 'fig':
+            fio.saveobj(fullpath, plt)
+            filenames.append(fullpath)
+            if verbose: print('Figure object saved to %s' % fullpath)
+        else:
+            reanimateplots(plt)
+            if filetype=='singlepdf':
+                pdf.savefig(figure=plt, **defaultsavefigargs) # It's confusing, but defaultsavefigargs is correct, since we updated it from the user version
             else:
-                reanimateplots(plt)
-                if filetype=='singlepdf':
-                    pdf.savefig(figure=plt, **defaultsavefigargs) # It's confusing, but defaultsavefigargs is correct, since we updated it from the user version
-                else:
-                    plt.savefig(fullpath, **defaultsavefigargs)
-                    filenames.append(fullpath)
-                    if verbose: print('%s plot saved to %s' % (filetype.upper(),fullpath))
-                pl.close(plt)
+                plt.savefig(fullpath, **defaultsavefigargs)
+                filenames.append(fullpath)
+                if verbose: print('%s plot saved to %s' % (filetype.upper(),fullpath))
+            pl.close(plt)
 
     if filetype=='singlepdf': pdf.close()
     if wasinteractive: pl.ion()
