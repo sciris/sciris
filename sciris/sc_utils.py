@@ -503,14 +503,18 @@ def slacknotification(to=None, message=None, fromuser=None, token=None, verbose=
     
     Arguments:
         to:
-            The Slack channel or user to post to. Note that channels begin with #, while users begin with @.
+            The Slack channel or user to post to. Note that channels begin with #, while users 
+            begin with @.
         message:
             The message to be posted.
         fromuser:
             The pseudo-user the message will appear from.
         token:
-            This must be a plain text file containing a single line which is the Slack API URL token.
-            Tokens are effectively passwords and must be kept secure. If you need one, contact me.
+            This is either a string containing the URL of the token, or a plain text file containing 
+            a single line which is the Slack API URL token. By default it will look for the file
+            ".slackurl" in the user's home folder. The token needs to look something like
+            "https://hooks.slack.com/services/af7d8w7f/sfd7df9sb/lkcpfj6kf93ds3gj". Tokens are 
+            effectively passwords and must be kept secure!
         verbose:
             How much detail to display.
         die:
@@ -523,37 +527,46 @@ def slacknotification(to=None, message=None, fromuser=None, token=None, verbose=
     What's the point? Add this to the end of a very long-running script to notify
     your loved ones that the script has finished.
         
-    Version: 2018aug20
+    Version: 2018sep10
     '''
     try:
         from requests import post # Simple way of posting data to a URL
         from json import dumps # For sanitizing the message
-        from getpass import getuser # In case username is left blank
     except Exception as E:
-        raise Exception('Cannot use Slack notification since imports failed: %s' % repr(E))
+        errormsg = 'Cannot use Slack notification since imports failed: %s' % str(E)
+        if die: raise Exception(errormsg)
+        else:   print(errormsg)
         
     # Validate input arguments
     printv('Sending Slack message...', 2, verbose)
-    if token    is None: token    = '/.slackurl'
+    if token    is None: token    = os.path.expanduser('~/.slackurl')
     if to       is None: to       = '#general'
-    if fromuser is None: fromuser = getuser()+'-bot'
+    if fromuser is None: fromuser = 'sciris-bot'
     if message  is None: message  = 'This is an automated notification: your notifier is notifying you.'
     printv('Channel: %s | User: %s | Message: %s' % (to, fromuser, message), 3, verbose) # Print details of what's being sent
     
-    # Try opening token file    
-    try:
-        with open(token) as f: slackurl = f.read()
-    except:
-        print('Could not open Slack URL/token file "%s"' % token)
-        if die: raise
-        else: return None
+    # Try opening token as a file
+    if os.path.exists(os.path.expanduser(token)):
+        with open(os.path.expanduser(token)) as f: slackurl = f.read()
+    elif token.find('slack')>=0: # It seems to be a URL, let's proceed
+        slackurl = token
+    else:
+        slackurl = token # It doesn't seemt to be a URL but let's try anyway
+        errormsg = '"%s" does not seem to be a valid Slack URL/token string or file' % token
+        if die: raise Exception(errormsg)
+        else:   print(errormsg)
     
     # Package and post payload
-    payload = '{"text": %s, "channel": %s, "username": %s}' % (dumps(message), dumps(to), dumps(fromuser))
-    printv('Full payload: %s' % payload, 4, verbose)
-    response = post(url=slackurl, data=payload)
-    printv(response, 3, verbose) # Optionally print response
-    printv('Message sent.', 1, verbose) # We're done
+    try:
+        payload = '{"text": %s, "channel": %s, "username": %s}' % (dumps(message), dumps(to), dumps(fromuser))
+        printv('Full payload: %s' % payload, 4, verbose)
+        response = post(url=slackurl, data=payload)
+        printv(response, 3, verbose) # Optionally print response
+        printv('Message sent.', 1, verbose) # We're done
+    except Exception as E:
+        errormsg = 'Sending of Slack message failed: %s' % repr(E)
+        if die: raise Exception(errormsg)
+        else:   print(errormsg)
     return None
 
 

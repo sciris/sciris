@@ -18,6 +18,7 @@ else:
         'psutil',            # Load monitoring
         'xlrd',              # Spreadsheet input
         'xlsxwriter',        # Spreadsheet output
+        'requests',          # HTTP methods
         ]
 
 # Get the version

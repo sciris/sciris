@@ -5,17 +5,18 @@ Last update: 2018aug20
 """
 
 # Imports
+import sys
+import os
+import socket
+import logging
+import traceback
+from functools import wraps
+import matplotlib.pyplot as ppl
+from werkzeug.utils import secure_filename
+from werkzeug.exceptions import HTTPException
 from flask import Flask, request, abort, json, jsonify, send_from_directory, make_response
 from flask_login import LoginManager, current_user
 from flask_session import RedisSessionInterface
-from werkzeug.utils import secure_filename
-from werkzeug.exceptions import HTTPException
-import sys
-import os
-import matplotlib.pyplot as ppl
-from functools import wraps
-import traceback
-import logging
 from twisted.internet import reactor
 from twisted.internet.endpoints import serverFromString
 from twisted.logger import globalLogBeginner, FileLogObserver, formatEvent
@@ -166,6 +167,7 @@ class ScirisApp(object):
         if 'USE_USERS'          not in app_config: app_config['USE_USERS']          = False
         if 'USE_TASKS'          not in app_config: app_config['USE_TASKS']          = False
         if 'MATPLOTLIB_BACKEND' not in app_config: app_config['MATPLOTLIB_BACKEND'] = 'Agg'
+        if 'SLACK'              not in app_config: app_config['SLACK']              = None
         return None
 
     @staticmethod
@@ -396,14 +398,24 @@ class ScirisApp(object):
             if with_client and not with_flask:     run_twisted(port=port, do_log=do_log, client_dir=client_dir)   # client page only / no Flask
             elif not with_client and with_flask:   run_twisted(port=port, do_log=do_log, flask_app=self.flask_app)  # Flask app only, no client
             else:                                  run_twisted(port=port, do_log=do_log, flask_app=self.flask_app, client_dir=client_dir)  # Flask + client
-                
+        return None      
+    
     def define_endpoint_layout(self, rule, layout):
         # Save the layout in the endpoint layout dictionary.
         self.endpoint_layout_dict[rule] = layout
         
         # Set up the callback, to point to the _layout_render() function.
         self.flask_app.add_url_rule(rule, 'layout_render', self._layout_render)
+        return None
         
+    def slacknotification(self, message=None):
+        ''' Send a message on Slack '''
+        if self.config['SLACK']:
+            sc.slacknotification(to=self.config['SLACK']['to'], message=message, fromuser=self.config['SLACK']['from'], token=self.config['SLACK']['token'], die=False)
+        else:
+            print('Cannot send Slack message "%s": Slack not enabled in config file' % message)
+        return None
+
     def add_RPC(self, new_RPC):
         # If we are setting up our first RPC, add the actual endpoint.
         if len(self.RPC_dict) == 0:
@@ -527,6 +539,10 @@ class ScirisApp(object):
             exception = traceback.format_exc() # Grab the trackback stack.
             errormsg = '%s%s Exception during RPC "%s.%s" \nRequest: %s \n%.10000s' % (RPCinfo.time, RPCinfo.user, RPCinfo.module, RPCinfo.name, request, exception)
             sc.colorize(failcolor, errormsg) # Post an error to the Flask logger limiting the exception information to 10000 characters maximum (to prevent monstrous sqlalchemy outputs)
+            if self.config['SLACK']:
+                hostname = socket.gethostname()
+                fullmessage = ('|%s| '% hostname) + errormsg
+                self.slacknotification(fullmessage)
             if isinstance(E, HTTPException): # If we have a werkzeug exception, pass it on up to werkzeug to resolve and reply to.
                 raise E
             code = 500 # Send back a response with status 500 that includes the exception traceback.
