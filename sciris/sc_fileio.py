@@ -713,7 +713,7 @@ def savespreadsheet(filename=None, data=None, folder=None, sheetnames=None, clos
     if close:
         if verbose: print('Saving file %s and closing' % filename)
         workbook.close()
-        return None
+        return fullpath
     else:
         if verbose: print('Returning workbook')
         return workbook
