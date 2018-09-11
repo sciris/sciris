@@ -44,5 +44,6 @@ setup(
         'celery>=4.2', # Task manager
         'twisted>=18.4.0', # Server
         'service_identity', # Identity manager for Celery (not installed with Celery though)
+        'pyasn1', # Required for service_identity (but not listed as a dependency!)
     ],
 )
