@@ -264,22 +264,16 @@ class BlobDict(Blob):
         
     def show(self):
         super(BlobDict, self).show()   # Show superclass attributes.
-        if self.objs_within_coll: print('Objects stored within dict?: Yes')
-        else:                     print('Objects stored within dict?: No')
+        print('Objects stored within dict?: No')
         print('---------------------')
         print('Contents')
         print('---------------------')
         
-        if self.objs_within_coll: # If we are storing things inside the obj_dict...
-            for key in self.obj_dict: # For each key in the dictionary...
-                obj = self.obj_dict[key] # Get the object pointed to.
-                obj.show() # Show the handle contents.
-        else: # Otherwise, we are using the UUID set.
-            for uid in self.ds_uuid_set: # For each item in the set...
-                obj = ds.globalvars.data_store.retrieve(uid)
-                if obj is None:
-                    print('--------------------------------------------')
-                    print('ERROR: UID %s object failed to retrieve' % uid)
-                else:
-                    obj.show() # Show the object with that UID in the DataStore.
+        for uid in self.ds_uuid_set: # For each item in the set...
+            obj = ds.globalvars.data_store.retrieve(uid)
+            if obj is None:
+                print('--------------------------------------------')
+                print('ERROR: UID %s object failed to retrieve' % uid)
+            else:
+                obj.show() # Show the object with that UID in the DataStore.
         print('--------------------------------------------')

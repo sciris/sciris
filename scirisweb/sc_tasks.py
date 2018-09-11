@@ -228,11 +228,9 @@ class TaskDict(sobj.BlobDict):
         >>> task_dict = TaskDict(uuid.UUID('12345678123456781234567812345678'))                      
     """
     
-    def __init__(self, uid, type_prefix='taskdict', file_suffix='.td', 
-        instance_label='Task Dictionary'):
+    def __init__(self, uid, type_prefix='taskdict', file_suffix='.td', instance_label='Task Dictionary'):
         # Set superclass parameters.
-        super(TaskDict, self).__init__(uid, type_prefix, file_suffix, 
-             instance_label, objs_within_coll=False)
+        super(TaskDict, self).__init__(uid, type_prefix, file_suffix, instance_label)
         
         # Create the Python dict to hold the hashes from task_ids to the UIDs.
         self.task_id_hashes = {}
@@ -267,12 +265,9 @@ class TaskDict(sobj.BlobDict):
     
     def update(self, task_record):
         # Get the old task ID (the ID the FE is aware of).
-        # If we are storing things inside the obj_dict...
-        if self.objs_within_coll:
-            old_task_id = self.obj_dict[task_record.uid].task_id
             
         # Otherwise, we are using the UUID set.
-        elif task_record.uid in self.ds_uuid_set:
+        if task_record.uid in self.ds_uuid_set:
             old_task_id = ds.globalvars.data_store.retrieve(task_record.uid).task_id
         
         # If we new task_id is different than the old one, delete the old 
@@ -292,55 +287,24 @@ class TaskDict(sobj.BlobDict):
     def delete_by_uid(self, uid):
         # Make sure the argument is a valid UUID, converting a hex text to a
         # UUID object, if needed.        
-        valid_uid = sc.uuid(uid)
-        
-        # If we have a valid UUID...
-        if valid_uid is not None:
-            # Default to not needing to update the data store.
-            need_to_update = False
+
+        # If the UUID is in the set...
+        if valid_uid in self.ds_uuid_set:
+            # Get the object so we can get the task_id.
+            obj = ds.globalvars.data_store.retrieve(valid_uid)
             
-            # If we are storing things inside the obj_dict...
-            if self.objs_within_coll:             
-                # Get the object pointed to by the UID.
-                obj = self.obj_dict[valid_uid]
-                
-                # If a match is found...
-                if obj is not None:
-                    # Remove entries from obj_dict.
-                    del self.obj_dict[valid_uid]
-                    
-                    # Remove entry from task_id_hashes 
-                    # attributes.
-                    task_id = obj.task_id
-                    del self.task_id_hashes[task_id]  
-                    
-                    # Set to update the data store
-                    need_to_update = True
-                    
-            # Otherwise, we are using the UUID set...
-            else:
-                # If the UUID is in the set...
-                if valid_uid in self.ds_uuid_set:
-                    # Get the object so we can get the task_id.
-                    obj = ds.globalvars.data_store.retrieve(valid_uid)
-                    
-                    # Remove entry from task_id_hashes 
-                    # attributes.
-                    task_id = obj.task_id
-                    del self.task_id_hashes[task_id]
-                    
-                    # Remove the UUID from the set.
-                    self.ds_uuid_set.remove(valid_uid)
-                    
-                    # Delete the object in the global DataStore object.
-                    ds.globalvars.data_store.delete(valid_uid)
-                                     
-                    # Set to update the data store
-                    need_to_update = True                    
+            # Remove entry from task_id_hashes 
+            # attributes.
+            task_id = obj.task_id
+            del self.task_id_hashes[task_id]
             
-            # Update our DataStore representation if we are there. 
-            if need_to_update and self.in_data_store():
-                self.update_data_store()
+            # Remove the UUID from the set.
+            self.ds_uuid_set.remove(valid_uid)
+            
+            # Delete the object in the global DataStore object.
+            ds.globalvars.data_store.delete(valid_uid)
+                             
+            self.update_data_store()
         
     def delete_by_task_id(self, task_id):
         # Get the UID of the task record matching task_id.
@@ -358,35 +322,19 @@ class TaskDict(sobj.BlobDict):
         self.delete_all_objects()
             
     def get_user_front_end_repr(self):
-        # If we are storing things inside the obj_dict...
-        if self.objs_within_coll:  
-            # Get dictionaries for each task record in the dictionary.
-            taskrecs_info = [self.obj_dict[key].get_user_front_end_repr() 
-                for key in self.obj_dict]
-        
-        # Otherwise, we are using the UUID set.
-        else:
-            taskrecs_info = []
-            for uid in self.ds_uuid_set:
-                obj = ds.globalvars.data_store.retrieve(uid)
-                taskrecs_info.append(obj.get_user_front_end_repr())
+        taskrecs_info = []
+        for uid in self.ds_uuid_set:
+            obj = ds.globalvars.data_store.retrieve(uid)
+            taskrecs_info.append(obj.get_user_front_end_repr())
                     
         # Return the info.            
         return taskrecs_info        
         
     def get_admin_front_end_repr(self):
-        # If we are storing things inside the obj_dict...
-        if self.objs_within_coll:          
-            # Get dictionaries for each task record in the dictionary.       
-            taskrecs_info = [self.obj_dict[key].get_admin_front_end_repr() 
-                for key in self.obj_dict]
-            
-        # Otherwise, we are using the UUID set.
-        else:
-            taskrecs_info = []
-            for uid in self.ds_uuid_set:
-                obj = ds.globalvars.data_store.retrieve(uid)
-                taskrecs_info.append(obj.get_admin_front_end_repr())
+        taskrecs_info = []
+        for uid in self.ds_uuid_set:
+            obj = ds.globalvars.data_store.retrieve(uid)
+            taskrecs_info.append(obj.get_admin_front_end_repr())
                 
         # Extract just the task_ids.
         task_ids = [task_record['task']['task_id'] for task_record in taskrecs_info]
@@ -402,26 +350,20 @@ class TaskDict(sobj.BlobDict):
     
     def show(self):
         super(sobj.BlobDict, self).show()   # Show superclass attributes.
-        if self.objs_within_coll: print('Objects stored within dict?: Yes')
-        else:                     print('Objects stored within dict?: No')
+        print('Objects stored within dict?: No')
         print('Task ID dict contents: ')
         print(self.task_id_hashes)         
         print('---------------------')
         print('Contents')
         print('---------------------')
         
-        if self.objs_within_coll: # If we are storing things inside the obj_dict...
-            for key in self.obj_dict: # For each key in the dictionary...
-                obj = self.obj_dict[key] # Get the object pointed to.
-                obj.show() # Show the handle contents.
-        else: # Otherwise, we are using the UUID set.
-            for uid in self.ds_uuid_set: # For each item in the set...
-                obj = ds.globalvars.data_store.retrieve(uid)
-                if obj is None:
-                    print('--------------------------------------------')
-                    print('ERROR: UID %s object failed to retrieve' % uid)
-                else:
-                    obj.show() # Show the object with that UID in the DataStore.
+        for uid in self.ds_uuid_set: # For each item in the set...
+            obj = ds.globalvars.data_store.retrieve(uid)
+            if obj is None:
+                print('--------------------------------------------')
+                print('ERROR: UID %s object failed to retrieve' % uid)
+            else:
+                obj.show() # Show the object with that UID in the DataStore.
         print('--------------------------------------------')
 
 

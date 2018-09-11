@@ -198,11 +198,9 @@ class UserDict(sobj.BlobDict):
         >>> user_dict = UserDict(uuid.UUID('12345678123456781234567812345678'))                      
     """
     
-    def __init__(self, uid, type_prefix='userdict', file_suffix='.ud', 
-        instance_label='Users Dictionary'):
+    def __init__(self, uid, type_prefix='userdict', file_suffix='.ud', instance_label='Users Dictionary'):
         # Set superclass parameters.
-        super(UserDict, self).__init__(uid, type_prefix, file_suffix, 
-             instance_label, objs_within_coll=True)
+        super(UserDict, self).__init__(uid, type_prefix, file_suffix, instance_label)
         
         # Create the Python dict to hold the hashes from usernames to the UIDs.
         self.username_hashes = {}
@@ -230,7 +228,7 @@ class UserDict(sobj.BlobDict):
         
     def add(self, the_user):
         # Add the object to the hash table, keyed by the UID.
-        self.obj_dict[the_user.uid] = the_user
+        self.add_object(the_user)
         
         # Add the username hash for this user.
         self.username_hashes[the_user.username] = the_user.get_id()
@@ -240,16 +238,16 @@ class UserDict(sobj.BlobDict):
             self.update_data_store()
     
     def update(self, the_user):
-        # Get the old username.
-        old_username = self.obj_dict[the_user.get_id()].username
-        
-        # If we new username is different than the old one, delete the old 
-        # usernameHash.
-        if the_user.username != old_username:
-            del self.username_hashes[old_username]
+#        # Get the old username.
+#        old_username = self.obj_dict[the_user.get_id()].username
+#        
+#        # If we new username is different than the old one, delete the old 
+#        # usernameHash.
+#        if the_user.username != old_username:
+#            del self.username_hashes[old_username]
  
         # Add the user to the hash table, keyed by the UID.
-        self.obj_dict[the_user.get_id()] = the_user
+        self.add_object(the_user)
         
         # Add the username hash for this user.
         self.username_hashes[the_user.username] = the_user.get_id()
@@ -261,24 +259,20 @@ class UserDict(sobj.BlobDict):
     def delete_by_uid(self, uid):
         # Make sure the argument is a valid UUID, converting a hex text to a
         # UUID object, if needed.        
-        valid_uuid = sc.uuid(uid)
+
+        obj = self.obj_dict[uid]
         
-        # If we have a valid UUID...
-        if valid_uuid is not None:
-            # Get the object pointed to by the UID.
-            obj = self.obj_dict[valid_uuid]
+        # If a match is found...
+        if obj is not None:
+            # Remove entries from both user_dict and username_hashes 
+            # attributes.
+            username = obj.username
+            del self.obj_dict[uid]
+            del self.username_hashes[username]                
             
-            # If a match is found...
-            if obj is not None:
-                # Remove entries from both user_dict and username_hashes 
-                # attributes.
-                username = obj.username
-                del self.obj_dict[valid_uuid]
-                del self.username_hashes[username]                
-                
-                # Update our DataStore representation if we are there. 
-                if self.in_data_store():
-                    self.update_data_store()
+            # Update our DataStore representation if we are there. 
+            if self.in_data_store():
+                self.update_data_store()
         
     def delete_by_username(self, username):
         # Get the UID of the user matching username.

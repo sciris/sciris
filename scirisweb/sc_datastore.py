@@ -335,6 +335,9 @@ class DataStore(object):
         self.save() # Save the DataStore object.
         return None
 
+    def redis_obj(self):
+        return self.redis_db
+    
     def show_handles(self):
         for key in self.handle_dict: # For each key in the dictionary...
             handle = self.handle_dict[key] # Get the handle pointed to.

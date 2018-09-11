@@ -337,8 +337,7 @@ class ScirisApp(object):
         # Show all of the users in user_dict.
         if self.config['LOGGING_MODE'] == 'FULL':
 #            print('>> List of all users...')
-            location = 'internal' if user.user_dict.objs_within_coll else 'external'
-            print('>> Loaded %s user_dict with %s users' % (location, len(user.user_dict.keys())))
+            print('>> Loaded user_dict with %s users' % (len(user.user_dict.keys())))
             user.user_dict.show()
             
     def _init_tasks(self):
