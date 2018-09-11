@@ -12,7 +12,7 @@ import six
 import sciris as sc
 from . import sc_rpcs as rpcs #import make_RPC
 from . import sc_objects as sobj
-from . import sc_datastore as ds
+
 
 ##############################################################
 ### Globals
@@ -108,18 +108,21 @@ class User(sobj.Blob):
     def get_id(self):
         return self.uid
     
-    def show(self):
+    def show(self, verbose=False):
         # Show superclass attributes.
-        super(User, self).show()  
-        print('---------------------')
-        print('        Username: %s' % self.username)
-        print('    Display name: %s' % self.displayname)
-        print(' Hashed password: %s' % self.password)
-        print('   Email address: %s' % self.email)
-        print('Is authenticated: %s' % self.is_authenticated)
-        print('       Is active: %s' % self.is_active)
-        print('    Is anonymous: %s' % self.is_anonymous)
-        print('        Is admin: %s' % self.is_admin)
+        if verbose:
+            super(User, self).show()
+            print('---------------------')
+            print('        Username: %s' % self.username)
+            print('    Display name: %s' % self.displayname)
+            print(' Hashed password: %s' % self.password)
+            print('   Email address: %s' % self.email)
+            print('Is authenticated: %s' % self.is_authenticated)
+            print('       Is active: %s' % self.is_active)
+            print('    Is anonymous: %s' % self.is_anonymous)
+            print('        Is admin: %s' % self.is_admin)
+        else:
+            print('Username: %s; UID: %s' % (self.username, self.uid))
         return None
             
     def get_user_front_end_repr(self):
