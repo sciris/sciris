@@ -213,7 +213,7 @@ class UserDict(sobj.BlobDict):
             self.username_hashes = other_object.username_hashes
             
     def get_user_by_uid(self, uid):
-        return self.get_object_by_uid(uid)
+        return sc.loadstr(self.get_object_by_uid(uid))
     
     def get_user_by_username(self, username):
         # Get the user's UID matching the username.
@@ -340,6 +340,9 @@ def get_scirisdemo_user(name='_ScirisDemo'):
 def user_login(username, password):  
     # Get the matching user (if any).
     matching_user = user_dict.get_user_by_username(username)
+    
+    print('TEMP: Matching user:')
+    print(matching_user)
     
     # If we have a match and the password matches, and the account is active,
     # also, log in the user and return success; otherwise, return failure.
