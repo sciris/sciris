@@ -34,6 +34,7 @@ setup(
     include_package_data=True,
     install_requires=[
         'sciris', # Basic tools -- NB, this includes numpy, scipy, pandas, and matplotlib as dependencies
+        'decorator>=4.1.2', # For API calls
         'redis>=2.10.6', # Database
         'mpld3',    # Rendering plots in the browser
         'werkzeug', # HTTP tools
@@ -42,5 +43,6 @@ setup(
         'flask-session>=0.3.1', # use redis for sessions
         'celery>=4.2', # Task manager
         'twisted>=18.4.0', # Server
+        'service_identity', # Identity manager for Celery (not installed with Celery though)
     ],
 )
