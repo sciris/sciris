@@ -294,6 +294,7 @@ class DataStore(object):
         return uid_matches[0] # Return the first (and hopefully only) matching UID.  
         
     def add(self, obj, uid=None, type_label='obj', file_suffix='.obj', instance_label='', save_handle_changes=True):
+        print('Adding %s...' % uid)
         new_handle = StoreObjectHandle(uid, type_label, file_suffix, instance_label) # Create the new StoreObjectHandle.
         self.handle_dict[uid] = new_handle # Add the handle to the dictionary.
         if self.db_mode == 'redis': # If we are using Redis...
@@ -305,13 +306,22 @@ class DataStore(object):
         return uid # Return the UUID.
     
     def retrieve(self, uid):
-        return self.redis_db.get(uid)
+        print('Retrieving %s...' % uid)
+        string = self.redis_db.get(uid)
+        try:    
+            output = sc.loadstr(string)
+        except: 
+            print('Note: object %s is not pickled' % uid)
+            output = string
+        return output
     
     def update(self, uid, obj):
-        self.redis_db.set(uid, obj) # Overwrite the old copy of the object using the handle.
+        print('Updating %s...' % uid)
+        self.redis_db.set(uid, sc.dumpstr(obj)) # Overwrite the old copy of the object using the handle.
         return None
      
     def delete(self, uid, save_handle_changes=True):
+        print('Deleting %s...' % uid)
         self.redis_db.delete(uid)
         handle = self.get_handle_by_uid(uid)  # Get the handle (if any) matching the UID.
         if handle is not None: # If we found a matching handle...

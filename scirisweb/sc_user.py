@@ -213,7 +213,7 @@ class UserDict(sobj.BlobDict):
             self.username_hashes = other_object.username_hashes
             
     def get_user_by_uid(self, uid):
-        return sc.loadstr(self.get_object_by_uid(uid))
+        return self.get_object_by_uid(uid)
     
     def get_user_by_username(self, username):
         # Get the user's UID matching the username.
