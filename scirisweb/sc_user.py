@@ -12,7 +12,7 @@ import six
 import sciris as sc
 from . import sc_rpcs as rpcs #import make_RPC
 from . import sc_objects as sobj
-
+from . import sc_datastore as ds # CK: Not sure if this is needed
 
 ##############################################################
 ### Globals
