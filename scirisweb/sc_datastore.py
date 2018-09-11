@@ -131,9 +131,9 @@ class StoreObjectHandle(object):
             type_prefix='project', file_suffix='.prj', instance_label='Project 1')
     """
     
-    def __init__(self, uid=None, type_prefix='obj', file_suffix='.obj', 
-        instance_label=''):
-        self.uid = sc.uuid(uid) # Set the UID to what was passed in, or if None was passed in, generate and use a new one
+    def __init__(self, uid=None, type_prefix='obj', file_suffix='.obj', instance_label=''):
+        if uid is None: uid = sc.uuid()
+        self.uid = uid # Set the UID to what was passed in, or if None was passed in, generate and use a new one
         self.type_prefix = type_prefix
         self.file_suffix = file_suffix
         self.instance_label = instance_label
@@ -161,22 +161,25 @@ class StoreObjectHandle(object):
         return None
     
     def redis_store(self, obj, redis_db):
-        key_name = '%s-%s' % (self.type_prefix, self.uid.hex) # Make the Redis key containing the type prefix, and the hex UID code.
+        key_name = self.uid # Make the Redis key containing the type prefix, and the hex UID code.
+        if redis_db.get(key_name):
+            key_name = str(key_name) +'_' + str(sc.uuid()) # If it already exists, append a proper UID
+            self.uid = key_name
         redis_db.set(key_name, sc.dumpstr(obj)) # Put the object in Redis.
         return None
     
     def redis_retrieve(self, redis_db):
-        key_name = '%s-%s' % (self.type_prefix, self.uid.hex) # Make the Redis key containing the type prefix, and the hex UID code.
+        key_name = self.uid # Make the Redis key containing the type prefix, and the hex UID code.
         obj = sc.loadstr(redis_db.get(key_name)) # Get and return the object with the key in Redis.
         return obj
     
     def redis_delete(self, redis_db):
-        key_name = '%s-%s' % (self.type_prefix, self.uid.hex) # Make the Redis key containing the type prefix, and the hex UID code.
+        key_name = self.uid # Make the Redis key containing the type prefix, and the hex UID code.
         redis_db.delete(key_name) # Delete the entry from Redis.
         return None
         
     def show(self):
-        print('          UUID: %s' % self.uid.hex)
+        print('          UUID: %s' % self.uid)
         print('   Type prefix: %s' % self.type_prefix)
         print('   File suffix: %s' % self.file_suffix)
         print('Instance label: %s' % self.instance_label)
@@ -291,51 +294,34 @@ class DataStore(object):
         return uid_matches[0] # Return the first (and hopefully only) matching UID.  
         
     def add(self, obj, uid=None, type_label='obj', file_suffix='.obj', instance_label='', save_handle_changes=True):
-        valid_uid = sc.uuid(uid) # Make sure the argument is a valid UUID, converting a hex text to a UUID object, if needed.  If no UID is passed in, generate a new one.
-        new_handle = StoreObjectHandle(valid_uid, type_label, file_suffix, instance_label) # Create the new StoreObjectHandle.
-        self.handle_dict[valid_uid] = new_handle # Add the handle to the dictionary.
+        new_handle = StoreObjectHandle(uid, type_label, file_suffix, instance_label) # Create the new StoreObjectHandle.
+        self.handle_dict[uid] = new_handle # Add the handle to the dictionary.
         if self.db_mode == 'redis': # If we are using Redis...
             new_handle.redis_store(obj, self.redis_db) # Put the object in Redis.
         else: # Otherwise (we are using files)...
             new_handle.file_store('.', obj) # Put the object in a file.
         if save_handle_changes: # Do a save of the database so change is kept.
             self.save()
-        return valid_uid # Return the UUID.
+        return uid # Return the UUID.
     
     def retrieve(self, uid):
-        valid_uid = sc.uuid(uid) # Make sure the argument is a valid UUID, converting a hex text to a UUID object, if needed.   
-        if valid_uid is not None:  # If we have a valid UUID...
-            handle = self.get_handle_by_uid(valid_uid) # Get the handle (if any) matching the UID.
-            if handle is not None: # If we found a matching handle...
-                if self.db_mode == 'redis': # If we are using Redis...   
-                    return handle.redis_retrieve(self.redis_db) # Return the object pointed to by the handle.
-                else: # Otherwise (we are using files)...
-                    return handle.file_retrieve('.') # Return the object pointed to by the handle.
-        return None # Return None (a failure to find a match).
+        return self.redis_db.get(uid)
     
     def update(self, uid, obj):
-        valid_uid = sc.uuid(uid) # Make sure the argument is a valid UUID, converting a hex text to a UUID object, if needed. 
-        if valid_uid is not None:   # If we have a valid UUID...
-            handle = self.get_handle_by_uid(valid_uid) # Get the handle (if any) matching the UID.
-            if handle is not None: # If we found a matching handle...
-                if self.db_mode == 'redis':    # If we are using Redis...
-                    handle.redis_store(obj, self.redis_db) # Overwrite the old copy of the object using the handle.
-                else: # Otherwise (we are using files)...
-                    handle.file_store('.', obj)  # Overwrite the old copy of the object using the handle.
+        self.redis_db.set(uid, obj) # Overwrite the old copy of the object using the handle.
         return None
      
     def delete(self, uid, save_handle_changes=True):
-        valid_uid = sc.uuid(uid) # Make sure the argument is a valid UUID, converting a hex text to a UUID object, if needed.    
-        if valid_uid is not None:  # If we have a valid UUID...
-            handle = self.get_handle_by_uid(valid_uid)  # Get the handle (if any) matching the UID.
-            if handle is not None: # If we found a matching handle...
-                if self.db_mode == 'redis': # If we are using Redis...
-                    handle.redis_delete(self.redis_db) # Delete the key using the handle.
-                else: # Otherwise (we are using files)...
-                    handle.file_delete('.') # Delete the file using the handle.
-                del self.handle_dict[valid_uid] # Delete the handle from the dictionary.
-                if save_handle_changes: # Do a save of the database so change is kept.     
-                    self.save()
+        self.redis_db.delete(uid)
+        handle = self.get_handle_by_uid(uid)  # Get the handle (if any) matching the UID.
+        if handle is not None: # If we found a matching handle...
+            if self.db_mode == 'redis': # If we are using Redis...
+                handle.redis_delete(self.redis_db) # Delete the key using the handle.
+            else: # Otherwise (we are using files)...
+                handle.file_delete('.') # Delete the file using the handle.
+            del self.handle_dict[uid] # Delete the handle from the dictionary.
+            if save_handle_changes: # Do a save of the database so change is kept.     
+                self.save()
         return None
                
     def delete_all(self):
@@ -349,9 +335,6 @@ class DataStore(object):
         self.save() # Save the DataStore object.
         return None
 
-    def redis_obj(self):
-        return self.redis_db
-    
     def show_handles(self):
         for key in self.handle_dict: # For each key in the dictionary...
             handle = self.handle_dict[key] # Get the handle pointed to.
