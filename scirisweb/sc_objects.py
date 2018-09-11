@@ -206,13 +206,26 @@ class BlobDict(Blob):
         self.ds_uuid_set = set()
     
     def keys(self):
-        return self.obj_dict.keys()
+        if self.objs_within_coll:
+            return self.obj_dict.keys()
+        else:
+            return self.ds_uuid_set
     
     def values(self):
-        return self.obj_dict.values()
+        if self.ds_uuid_set:
+            output = self.obj_dict.values()
+            return output
+        else:
+            output = []
+            for uid in self.ds_uuid_set: # For each item in the set...
+                output.append(ds.globalvars.data_store.retrieve(uid))
+                return output
     
     def items(self):
-        return self.obj_dict.items()
+        keys = self.keys()
+        vals = self.values()
+        output = zip(keys,vals)
+        return output
         
     def load_from_copy(self, other_obj):
         if type(other_obj) == type(self):

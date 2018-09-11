@@ -58,7 +58,7 @@ class ScirisApp(object):
     HTTP requests.
     
     Methods:
-        __init__(script_path: str, app_config: config module [None], 
+        __init__(script_path: str, self.config: config module [None], 
             client_dir: str [None]): void -- constructor
         run(with_twisted: bool [True], with_flask: bool [True], 
             with_client: [True]): void -- run the actual server
@@ -87,7 +87,7 @@ class ScirisApp(object):
         >>> app = ScirisApp(__file__)                      
     """
     
-    def  __init__(self, filepath=None, config=None, name=None, clientdir=None, logging_mode=None):
+    def  __init__(self, filepath=None, config=None, name=None, **kwargs):
         if name is None: name = 'default'
         self.name = name
         self.flask_app = Flask(__name__) # Open a new Flask app.
@@ -95,21 +95,12 @@ class ScirisApp(object):
             self.flask_app.config.from_object(config)
         self.config = self.flask_app.config # Set an easier link to the configs dictionary.
         self.config['ROOT_ABS_DIR'] = os.path.dirname(os.path.abspath(filepath)) # Extract the absolute directory path from the above.
-        self._init_logger(self.flask_app) # Initialize the Flask logger. 
-        self._set_config_defaults(self.config) # Set up default values for configs that are not already defined.
+        self._init_logger() # Initialize the Flask logger. 
+        self._set_config_defaults() # Set up default values for configs that are not already defined.
+        self._update_config_defaults(**kwargs) # If additional command-line arguments are supplied, use them
         self.define_endpoint_callback = self.flask_app.route # Set an alias for the decorator factory for adding an endpoint.
         self.endpoint_layout_dict = {} # Create an empty layout dictionary.
         self.RPC_dict = {}  # Create an empty RPC dictionary.
-
-        # Set config parameters in the configs if they were passed in.
-        # A config path explicitly passed in will override the setting 
-        # specified in the config.py file.
-        if clientdir is not None:
-            self.config['CLIENT_DIR'] = clientdir
-            
-        # A log mode explicitly passed in will override the setting specified in the config.py file.            
-        if logging_mode is not None:
-            self.config['LOGGING_MODE'] = logging_mode
         
         # Initialize plotting
         try:
@@ -119,11 +110,11 @@ class ScirisApp(object):
             print('Switching Matplotlib backend to "%s" failed: %s' % (self.config['MATPLOTLIB_BACKEND'], repr(E)))
             
         # Set up file paths.
-        self._init_file_dirs(self.config)
+        self._init_file_dirs()
         
         # If we are including DataStore functionality, initialize it.
         if self.config['USE_DATASTORE']:
-            self._init_datastore(self.config)
+            self._init_datastore()
             print('Storing datastore in the app...')
             self.flask_app.session_interface = RedisSessionInterface(ds.globalvars.data_store.redis_obj(), 'sess')
 
@@ -143,76 +134,88 @@ class ScirisApp(object):
                 return user.user_dict.get_user_by_uid(userid) # Return the matching user (if any).
             
             self.login_manager.init_app(self.flask_app) # Configure Flask app for login with the LoginManager.
-            self._init_users(self.config) # Initialize the users.
+            self._init_users() # Initialize the users.
             self.add_RPC_dict(user.RPC_dict) # Register the RPCs in the user.py module.
             
         # If we are including DataStore and tasks, initialize them.    
         if self.config['USE_DATASTORE'] and self.config['USE_TASKS']:
-            self._init_tasks(self.config) # Initialize the users.
+            self._init_tasks() # Initialize the users.
             self.add_RPC_dict(tasks.RPC_dict) # Register the RPCs in the user.py module.    
                 
         return None # End of __init__
             
-    @staticmethod
-    def _init_logger(app):
-        app.logger.setLevel(logging.DEBUG)
+    def _init_logger(self):
+        self.flask_app.logger.setLevel(logging.DEBUG)
         return None
-            
-    @staticmethod
-    def _set_config_defaults(app_config):
-        if 'CLIENT_DIR'         not in app_config: app_config['CLIENT_DIR']         = '.'
-        if 'LOGGING_MODE'       not in app_config: app_config['LOGGING_MODE']       = 'FULL' 
-        if 'SERVER_PORT'        not in app_config: app_config['SERVER_PORT']        = 8080
-        if 'USE_DATASTORE'      not in app_config: app_config['USE_DATASTORE']      = False
-        if 'USE_USERS'          not in app_config: app_config['USE_USERS']          = False
-        if 'USE_TASKS'          not in app_config: app_config['USE_TASKS']          = False
-        if 'MATPLOTLIB_BACKEND' not in app_config: app_config['MATPLOTLIB_BACKEND'] = 'Agg'
-        if 'SLACK'              not in app_config: app_config['SLACK']              = None
+    
+    def _set_config_defaults(self):
+        if 'CLIENT_DIR'         not in self.config: self.config['CLIENT_DIR']         = '.'
+        if 'LOGGING_MODE'       not in self.config: self.config['LOGGING_MODE']       = 'FULL' 
+        if 'SERVER_PORT'        not in self.config: self.config['SERVER_PORT']        = 8080
+        if 'USE_DATASTORE'      not in self.config: self.config['USE_DATASTORE']      = False
+        if 'USE_USERS'          not in self.config: self.config['USE_USERS']          = False
+        if 'USE_TASKS'          not in self.config: self.config['USE_TASKS']          = False
+        if 'MATPLOTLIB_BACKEND' not in self.config: self.config['MATPLOTLIB_BACKEND'] = 'Agg'
+        if 'SLACK'              not in self.config: self.config['SLACK']              = None
         return None
+    
+    def _update_config_defaults(self, **kwargs):
+        ''' Used to update config with command-line arguments '''
+        for key,val in kwargs.items():
+            KEY = key.upper() # Since they're always uppercase
+            if KEY in self.config:
+                origval = self.config[KEY]
+                self.config[KEY] = val
+                print('Resetting configuration option "%s" from "%s" to "%s"' % (KEY, origval, val))
+            else:
+                warningmsg = '\nWARNING: kwarg "%s":"%.100s" will be ignored since it is not in the list of valid config options:\n' % (KEY, val)
+                for validkey in sorted(self.config.keys()):
+                    warningmsg += '  %s\n' % validkey
+                print(warningmsg)
+        return None
+                
 
-    @staticmethod
-    def _init_file_dirs(app_config):
+    def _init_file_dirs(self):
         # Set the absolute client directory path.
         
         # If we do not have an absolute directory, tack what we have onto the 
         # ROOT_ABS_DIR setting.
-        if not os.path.isabs(app_config['CLIENT_DIR']):
-            app_config['CLIENT_DIR'] = '%s%s%s' % (app_config['ROOT_ABS_DIR'], 
-                os.sep, app_config['CLIENT_DIR'])
+        if not os.path.isabs(self.config['CLIENT_DIR']):
+            self.config['CLIENT_DIR'] = os.path.join(self.config['ROOT_ABS_DIR'], self.config['CLIENT_DIR'])
             
         # Set the transfer directory path.
         
         # If the config parameter is not there (or comment out), set the 
         # path to None.
-        if 'TRANSFER_DIR' not in app_config:
+        if 'TRANSFER_DIR' not in self.config:
             transfer_dir_path = None
             
         # Else, if we do not have an absolute directory, tack what we have onto the 
         # ROOT_ABS_DIR setting.
-        elif not os.path.isabs(app_config['TRANSFER_DIR']):
-            transfer_dir_path = '%s%s%s' % (app_config['ROOT_ABS_DIR'], 
-                os.sep, app_config['TRANSFER_DIR']) 
+        elif not os.path.isabs(self.config['TRANSFER_DIR']):
+            transfer_dir_path = '%s%s%s' % (self.config['ROOT_ABS_DIR'], 
+                os.sep, self.config['TRANSFER_DIR']) 
             
         # Else we have a usable absolute path, so use it.
         else:
-            transfer_dir_path = app_config['TRANSFER_DIR']
+            transfer_dir_path = self.config['TRANSFER_DIR']
 
         # Set the file save root path.
         
         # If the config parameter is not there (or comment out), set the 
         # path to None.
-        if 'FILESAVEROOT_DIR' not in app_config:
+        if 'FILESAVEROOT_DIR' not in self.config:
             file_save_root_path = None
             
         # Else, if we do not have an absolute directory, tack what we have onto the 
         # ROOT_ABS_DIR setting.
-        elif not os.path.isabs(app_config['FILESAVEROOT_DIR']):
-            file_save_root_path = '%s%s%s' % (app_config['ROOT_ABS_DIR'], 
-                os.sep, app_config['FILESAVEROOT_DIR']) 
+        elif not os.path.isabs(self.config['FILESAVEROOT_DIR']):
+            file_save_root_path = '%s%s%s' % (self.config['ROOT_ABS_DIR'], 
+                os.sep, self.config['FILESAVEROOT_DIR']) 
             
         # Else we have a usable absolute path, so use it.            
         else:  
-            file_save_root_path = app_config['FILESAVEROOT_DIR']
+            file_save_root_path = self.config['FILESAVEROOT_DIR']
 
         # Create a file save directory only if we have a path.
         if file_save_root_path is not None:
@@ -226,7 +229,7 @@ class ScirisApp(object):
         ds.globalvars.uploads_dir = ds.globalvars.downloads_dir
         
         # Show the downloads and uploads directories.
-        if app_config['LOGGING_MODE'] == 'FULL':
+        if self.config['LOGGING_MODE'] == 'FULL':
             if file_save_root_path is not None:
                 print('>> File save directory path: %s' % ds.globalvars.file_save_dir.dir_path)
             print('>> Downloads directory path: %s' % ds.globalvars.downloads_dir.dir_path)
@@ -234,10 +237,9 @@ class ScirisApp(object):
         
         return None
         
-    @staticmethod
-    def _init_datastore(app_config):
+    def _init_datastore(self):
         # Create the DataStore object, setting up Redis.
-        ds.globalvars.data_store = ds.DataStore(redis_db_URL=app_config['REDIS_URL'])
+        ds.globalvars.data_store = ds.DataStore(redis_db_URL=self.config['REDIS_URL'])
     
         # Load the DataStore state from disk.
         ds.globalvars.data_store.load()
@@ -300,8 +302,8 @@ class ScirisApp(object):
         # Careful in using this one!
 #        ds.data_store.clear_redis_keys()
         
-        if app_config['LOGGING_MODE'] == 'FULL':
-            print('>> DataStore initialzed at %s' % app_config['REDIS_URL'])
+        if self.config['LOGGING_MODE'] == 'FULL':
+            print('>> DataStore initialzed at %s' % self.config['REDIS_URL'])
 #            print('>> List of all DataStore handles...')
 #            ds.globalvars.data_store.show_handles()
 #            print('>> List of all Redis keys...')
@@ -309,8 +311,7 @@ class ScirisApp(object):
             print('>> Loaded datastore with %s Redis keys' % len(ds.globalvars.data_store.redis_db.keys()))
         return None
     
-    @staticmethod
-    def _init_users(app_config):        
+    def _init_users(self):        
         # Look for an existing users dictionary.
         user_dict_uid = ds.globalvars.data_store.get_uid('userdict', 'Users Dictionary')
         
@@ -320,13 +321,13 @@ class ScirisApp(object):
         
         # If there was a match...
         if user_dict_uid is not None:
-#            if app_config['LOGGING_MODE'] == 'FULL':
+#            if self.config['LOGGING_MODE'] == 'FULL':
 #                print('>> Loading UserDict from the DataStore.')
             user.user_dict.load_from_data_store() 
         
         # Else (no match)...
         else:
-            if app_config['LOGGING_MODE'] == 'FULL':
+            if self.config['LOGGING_MODE'] == 'FULL':
                 print('>> Creating a new UserDict.')
             user.user_dict.add_to_data_store()
             test_users = user.make_test_users()
@@ -334,13 +335,13 @@ class ScirisApp(object):
                 user.user_dict.add(test_user)
     
         # Show all of the users in user_dict.
-        if app_config['LOGGING_MODE'] == 'FULL':
+        if self.config['LOGGING_MODE'] == 'FULL':
 #            print('>> List of all users...')
-#            user.user_dict.show()
-            print('>> Loaded user_dict with %s users' % len(user.user_dict.keys()))
+            location = 'internal' if user.user_dict.objs_within_coll else 'external'
+            print('>> Loaded %s user_dict with %s users' % (location, len(user.user_dict.keys())))
+            user.user_dict.show()
             
-    @staticmethod        
-    def _init_tasks(app_config):
+    def _init_tasks(self):
         # Look for an existing tasks dictionary.
         task_dict_uid = ds.globalvars.data_store.get_uid('taskdict', 'Task Dictionary')
         
@@ -350,18 +351,18 @@ class ScirisApp(object):
         
         # If there was a match...
         if task_dict_uid is not None:
-#            if app_config['LOGGING_MODE'] == 'FULL':
+#            if self.config['LOGGING_MODE'] == 'FULL':
 #                print('>> Loading TaskDict from the DataStore.')
             tasks.task_dict.load_from_data_store() 
         
         # Else (no match)...
         else:
-            if app_config['LOGGING_MODE'] == 'FULL':
+            if self.config['LOGGING_MODE'] == 'FULL':
                 print('>> Creating a new TaskDict.')
             tasks.task_dict.add_to_data_store()
     
         # Show all of the users in user_dict.
-        if app_config['LOGGING_MODE'] == 'FULL':
+        if self.config['LOGGING_MODE'] == 'FULL':
 #            print('>> List of all tasks...')
 #            tasks.task_dict.show()
             print('>> Loaded task_dict with %s tasks' % len(tasks.task_dict.keys()))
@@ -369,7 +370,7 @@ class ScirisApp(object):
         # Have the tasks.py module make the Celery app to connect to the 
         # worker, passing in the config parameters.
         print('** make_celery_instance() _init_tasks() call')
-        tasks.make_celery_instance(app_config)
+        tasks.make_celery_instance(self.config)
         
     def run(self, with_twisted=True, with_flask=True, with_client=True, do_log=False, show_logo=True):
         
@@ -392,12 +393,12 @@ class ScirisApp(object):
         if not with_twisted: # If we are not running the app with Twisted, just run the Flask app.
             self.flask_app.run()
         else: # Otherwise (with Twisted).
-            port       = self.config['SERVER_PORT']
+            port       = int(self.config['SERVER_PORT']) # Not sure if casting to int is necessary
             client_dir = self.config['CLIENT_DIR']
-            if not with_client and not with_flask: run_twisted(port=port, do_log=do_log)  # nothing, should return error
-            if with_client and not with_flask:     run_twisted(port=port, do_log=do_log, client_dir=client_dir)   # client page only / no Flask
-            elif not with_client and with_flask:   run_twisted(port=port, do_log=do_log, flask_app=self.flask_app)  # Flask app only, no client
-            else:                                  run_twisted(port=port, do_log=do_log, flask_app=self.flask_app, client_dir=client_dir)  # Flask + client
+            if   not with_client and not with_flask: run_twisted(port=port, do_log=do_log)  # nothing, should return error
+            if   with_client     and not with_flask: run_twisted(port=port, do_log=do_log, client_dir=client_dir)   # client page only / no Flask
+            elif not with_client and     with_flask: run_twisted(port=port, do_log=do_log, flask_app=self.flask_app)  # Flask app only, no client
+            else:                                    run_twisted(port=port, do_log=do_log, flask_app=self.flask_app, client_dir=client_dir)  # Flask + client
         return None      
     
     def define_endpoint_layout(self, rule, layout):
