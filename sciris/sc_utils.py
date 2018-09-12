@@ -550,6 +550,8 @@ def slacknotification(to=None, message=None, fromuser=None, token=None, verbose=
         with open(os.path.expanduser(token)) as f: slackurl = f.read()
     elif token.find('slack')>=0: # It seems to be a URL, let's proceed
         slackurl = token
+    elif os.getenv('slackurl'): # See if it's set in the user's environment variables
+        slackurl = os.getenv('slackurl')
     else:
         slackurl = token # It doesn't seemt to be a URL but let's try anyway
         errormsg = '"%s" does not seem to be a valid Slack URL/token string or file' % token
