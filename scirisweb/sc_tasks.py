@@ -564,9 +564,9 @@ def make_celery_instance(config=None):
 
         # If there's an exception, grab the stack track and set the TaskRecord 
         # to have stopped on in error.
-        except Exception:
+        except Exception as E:
             error_text = traceback.format_exc()
-            match_taskrec.status = 'error'
+            match_taskrec.status = 'error1 "%s": '%str(E) + error_text # TEMPPP DEBUGGING
             match_taskrec.error_text = error_text
             result = error_text
             print('>>> FAILED TASK %s' % task_id)
@@ -589,9 +589,9 @@ def make_celery_instance(config=None):
         # run_task() instances.
         try:
             task_dict.update(match_taskrec)           
-        except Exception:
+        except Exception as E:
             error_text = traceback.format_exc()
-            match_taskrec.status = 'error'
+            match_taskrec.status = 'error2 "%s": '%str(E) + error_text # TEMPPP DEBUGGING
             match_taskrec.error_text = error_text
             result = error_text
             print('>>> FAILED TASK %s' % task_id)            
@@ -664,7 +664,7 @@ def make_celery_instance(config=None):
             # If the TaskRecord indicates the task has been completed or 
             # thrown an error...
             if match_taskrec.status == 'completed' or \
-                match_taskrec.status == 'error':         
+                match_taskrec.status.find('error')>=0:         
                 # If we have a result ID, erase the result from Redis.
                 if match_taskrec.result_id is not None:
                     result = celery_instance.AsyncResult(match_taskrec.result_id)
