@@ -538,16 +538,15 @@ class ScirisApp(object):
                 sc.colorize(successcolor, string)
         except Exception as E:
             exception = traceback.format_exc() # Grab the trackback stack.
-            errormsg = '%s%s Exception during RPC "%s.%s" \nRequest: %s \n%.10000s' % (RPCinfo.time, RPCinfo.user, RPCinfo.module, RPCinfo.name, request, exception)
+            hostname = '|%s| ' % socket.gethostname()
+            errormsg = '%s%s%s Exception during RPC "%s.%s" \nRequest: %s \n%.10000s' % (hostname, RPCinfo.time, RPCinfo.user, RPCinfo.module, RPCinfo.name, request, exception)
             sc.colorize(failcolor, errormsg) # Post an error to the Flask logger limiting the exception information to 10000 characters maximum (to prevent monstrous sqlalchemy outputs)
             if self.config['SLACK']:
-                hostname = socket.gethostname()
-                fullmessage = ('|%s| '% hostname) + errormsg
-                self.slacknotification(fullmessage)
+                self.slacknotification(errormsg)
             if isinstance(E, HTTPException): # If we have a werkzeug exception, pass it on up to werkzeug to resolve and reply to.
                 raise E
             code = 500 # Send back a response with status 500 that includes the exception traceback.
-            reply = {'exception':str(E), 'traceback':errormsg} # NB, not sure how to actually access 'traceback' on the FE, but keeping it here for future
+            reply = {'exception':errormsg, 'traceback':errormsg} # NB, not sure how to actually access 'traceback' on the FE, but keeping it here for future
             return make_response(jsonify(reply), code)
         
         # If we are doing a download, prepare the response and send it off.
