@@ -303,7 +303,7 @@ class ScirisApp(object):
 #        ds.data_store.clear_redis_keys()
         
         if self.config['LOGGING_MODE'] == 'FULL':
-            print('>> DataStore initialzed at %s' % self.config['REDIS_URL'])
+            print('>> DataStore initialized at %s' % self.config['REDIS_URL'])
 #            print('>> List of all DataStore handles...')
 #            ds.globalvars.data_store.show_handles()
 #            print('>> List of all Redis keys...')
