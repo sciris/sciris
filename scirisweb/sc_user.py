@@ -1,10 +1,10 @@
 """
 user.py -- code related to Sciris user management
     
-Last update: 2018aug20
+Last update: 2018sep19
 """
 
-from flask import Flask, session, current_app # analysis:ignore
+from flask import Flask, session, current_app as app # analysis:ignore
 from flask_login import current_user, login_user, logout_user
 import hashlib
 import sciris as sc
@@ -16,42 +16,37 @@ from . import sc_rpcs as rpcs
 ### Globals
 ##############################################################
 
-__all__ = ['user_dict'] # 'RPC_dict', 'RPC' not visible
-
-user_dict = None # The UserDict object for all of the app's users.  Gets initialized by and loaded by init_users().
-RPC_dict = {} # Dictionary to hold all of the registered RPCs in this module.
-RPC = rpcs.makeRPCtag(RPC_dict) # RPC registration decorator factory created using call to make_RPC().
-
-
+RPC = rpcs.makeRPCtag({}) # RPC registration decorator factory created using call to make_RPC().
 
 
 ##############################################################
 ### Functions and RPCs
 ##############################################################
 
-__all__ += ['user_login', 'user_logout', 'user_register']
-__all__ += ['user_change_info', 'user_change_password', 'admin_get_user_info', 'admin_delete_user', 'admin_activate_account']
+__all__  = ['user_login', 'user_logout', 'user_register']
+__all__ += ['user_change_info', 'user_change_password', 'admin_delete_user', 'admin_activate_account']
 __all__ += ['admin_deactivate_account', 'admin_grant_admin', 'admin_revoke_admin', 'admin_reset_password', 'make_test_users']
 
         
 @RPC()
 def user_login(username, password):  
-    # Get the matching user (if any).
-    matching_user = user_dict.get_user_by_username(username)
+    matching_user = app.datastore.loaduser(username) # Get the matching user (if any).
     
-    # If we have a match and the password matches, and the account is active,
-    # also, log in the user and return success; otherwise, return failure.
-    if matching_user is not None and matching_user.password == password and \
-        matching_user.is_active:
-        # Log the user in.
-        login_user(matching_user)
-        
-        return 'success'
+    # If we have a match and the password matches, and the account is active, also, log in the user and return success; otherwise, return failure.
+    if matching_user and matching_user.password==password and matching_user.is_active:
+        login_user(matching_user) # Log the user in.
     else:
-        return 'failure'
+        if not matching_user:
+            errormsg = 'Could not log in: user "%s" does not exist' % username
+        elif not matching_user.password==password: 
+            errormsg = 'Could not log in: password for user "%s" is incorrect' % username
+        elif not matching_user.is_active:
+            errormsg = 'Could not log in: user "%s" is inactive' % username
+        raise Exception(errormsg)
+    return 'success' 
     
     
-@RPC(validation='named')       
+@RPC(validation='named')
 def user_logout():
     logout_user() # Log the user out and set the session to having an anonymous user.
     session.clear() # Clear the session cookie.
@@ -60,30 +55,17 @@ def user_logout():
 
 @RPC()
 def user_register(username, password, displayname, email): 
-    # Get the matching user (if any).
-    matching_user = user_dict.get_user_by_username(username)
-    
-    # If we have a match, fail because we don't want to register an existing 
-    # user.
-    if matching_user is not None:
-        return 'failure'
-    
-    # Create a new User object with the new information.
-    new_user = User(username, password, displayname, email, hash_the_password=False)
-    
-    # Set the user to be inactive (so an admin user needs to activate it, 
-    # even though the account has been created) or active (so that no admin
-    # action is necessary), according to the REGISTER_AUTOACTIVATE config 
-    # parameter.
-    new_user.is_active = current_app.config['REGISTER_AUTOACTIVATE']
-    
-    # Put the user right into the UserDict.
-    user_dict.add(new_user)
-    
-    # Return success.
-    return 'success'
+    matching_user = app.datastore.loaduser(username) # Get the matching user (if any).
+    if matching_user is not None: # If we have a match, fail because we don't want to register an existing user.
+        errormsg = 'Could not register user: user "%s" already exists' % username
+        raise Exception(errormsg)
+    new_user = User(username=username, password=password, displayname=displayname, email=email) # Create a new User object with the new information.
+    new_user.is_active = app.config['REGISTER_AUTOACTIVATE'] # Optionally set the user to be inactive (so an admin user needs to activate it)
+    app.datastore.saveuser(new_user) # Save the user
+    return 'success' # Return success.
 
-@RPC(validation='named') 
+
+@RPC(validation='named')
 def user_change_info(username, password, displayname, email):
     # Make a copy of the current_user.
     the_user = sc.dcp(current_user)
@@ -97,7 +79,7 @@ def user_change_info(username, password, displayname, email):
     if username != the_user.username:
         # Get any matching user (if any) to the new username we're trying to 
         # switch to.
-        matching_user = user_dict.get_user_by_username(username)
+        matching_user = app.datastore.loaduser(username)
     
         # If we have a match, fail because we don't want to rename the user to 
         # another existing user.
@@ -111,7 +93,7 @@ def user_change_info(username, password, displayname, email):
     the_user.instance_label = username
     
     # Update the user in user_dict.
-    user_dict.update(the_user)
+    app.datastore.saveuser(the_user, overwrite=True)
     
     # Return success.
     return 'success'
@@ -129,7 +111,7 @@ def user_change_password(oldpassword, newpassword):
     the_user.password = newpassword
     
     # Update the user in user_dict.
-    user_dict.update(the_user)
+    app.datastore.saveuser(the_user, overwrite=True)
     
     # Return success.
     return 'success'
@@ -137,7 +119,7 @@ def user_change_password(oldpassword, newpassword):
 @RPC(validation='admin')
 def admin_get_user_info(username):
     # Get the matching user (if any).
-    matching_user = user_dict.get_user_by_username(username)
+    matching_user = app.datastore.loaduser(username)
     
     # If we don't have a match, fail.
     if matching_user is None:
@@ -148,14 +130,14 @@ def admin_get_user_info(username):
 @RPC(validation='admin')
 def admin_delete_user(username):
     # Get the matching user (if any).
-    matching_user = user_dict.get_user_by_username(username)
+    matching_user = app.datastore.loaduser(username)
     
     # If we don't have a match, fail.
     if matching_user is None:
         return 'failure'
     
     # Delete the user from the dictionary.
-    user_dict.delete_by_username(username)
+    app.datastore.delete(objtype='user', uid=username)
 
     # Return success.
     return 'success'
@@ -163,7 +145,7 @@ def admin_delete_user(username):
 @RPC(validation='admin')
 def admin_activate_account(username):
     # Get the matching user (if any).
-    matching_user = user_dict.get_user_by_username(username)
+    matching_user = app.datastore.loaduser(username)
     
     # If we don't have a match, fail.
     if matching_user is None:
@@ -175,7 +157,7 @@ def admin_activate_account(username):
     
     # Activate the account.
     matching_user.is_active = True
-    user_dict.update(matching_user)
+    app.datastore.saveuser(matching_user, overwrite=True)
     
     # Return success.
     return 'success'    
@@ -183,7 +165,7 @@ def admin_activate_account(username):
 @RPC(validation='admin')
 def admin_deactivate_account(username):
     # Get the matching user (if any).
-    matching_user = user_dict.get_user_by_username(username)
+    matching_user = app.datastore.loaduser(username)
     
     # If we don't have a match, fail.
     if matching_user is None:
@@ -195,7 +177,7 @@ def admin_deactivate_account(username):
     
     # Activate the account.
     matching_user.is_active = False
-    user_dict.update(matching_user)
+    app.datastore.saveuser(matching_user, overwrite=True)
     
     # Return success.
     return 'success'
@@ -203,7 +185,7 @@ def admin_deactivate_account(username):
 @RPC(validation='admin')
 def admin_grant_admin(username):
     # Get the matching user (if any).
-    matching_user = user_dict.get_user_by_username(username)
+    matching_user = app.datastore.loaduser(username)
     
     # If we don't have a match, fail.
     if matching_user is None:
@@ -215,7 +197,7 @@ def admin_grant_admin(username):
     
     # Grant admin access.
     matching_user.is_admin = True
-    user_dict.update(matching_user)
+    app.datastore.saveuser(matching_user, overwrite=True)
     
     # Return success.
     return 'success'
@@ -223,7 +205,7 @@ def admin_grant_admin(username):
 @RPC(validation='admin')
 def admin_revoke_admin(username):
     # Get the matching user (if any).
-    matching_user = user_dict.get_user_by_username(username)
+    matching_user = app.datastore.loaduser(username)
     
     # If we don't have a match, fail.
     if matching_user is None:
@@ -235,7 +217,7 @@ def admin_revoke_admin(username):
     
     # Revoke admin access.
     matching_user.is_admin = False
-    user_dict.update(matching_user)
+    app.datastore.saveuser(matching_user, overwrite=True)
     
     # Return success.
     return 'success'
@@ -243,7 +225,7 @@ def admin_revoke_admin(username):
 @RPC(validation='admin')
 def admin_reset_password(username):
     # Get the matching user (if any).
-    matching_user = user_dict.get_user_by_username(username)
+    matching_user = app.datastore.loaduser(username)
     
     # If we don't have a match, fail.
     if matching_user is None:
@@ -252,15 +234,17 @@ def admin_reset_password(username):
     # Set the password to the desired raw password for them to use.
     raw_password = 'sciris'
     matching_user.password = hashlib.sha224(raw_password).hexdigest() 
-    user_dict.update(matching_user)
+    app.datastore.saveuser(matching_user, overwrite=True)
     
     # Return success.
     return 'success'
 
 
-def make_test_users():
-    # Create two test Users that can get added to a new UserDict.
-    test_user = User('demo', 'demo', 'Demo', 'demo@demo.com', uid=sc.uuid('12345678123456781234567812345678'))
-    test_user2 = User('admin', 'admin', 'Admin', 'admin@scirisuser.net', has_admin_rights=True, uid=sc.uuid('12345678123456781234567812345679'))
-    users = [test_user, test_user2]
+def make_test_users(include_admin=False):
+    # Create two test Users that can get added
+    test_user = User('demo', 'demo', 'Demo', 'demo@sciris.org', uid='abcdef0123456789')
+    users = [test_user]
+    if include_admin:
+        admin_user = User('admin', 'admin', 'Admin', 'admin@sciris.org', is_admin=True, uid='00112233445566778899')
+        users.append(admin_user)
     return users

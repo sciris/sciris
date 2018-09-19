@@ -28,7 +28,7 @@ from twisted.python.threadpool import ThreadPool
 import sciris as sc
 from . import sc_rpcs as rpcs
 from . import sc_datastore as ds
-from . import sc_user as user
+from . import sc_users as users
 from . import sc_tasks as tasks
 
 
