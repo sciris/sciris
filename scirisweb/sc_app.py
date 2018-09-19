@@ -32,19 +32,6 @@ from . import sc_users as users
 from . import sc_tasks as tasks
 
 
-################################################################################
-### Globals
-################################################################################
-
-#__all__ = ['data_store', 'file_save_dir', 'uploads_dir', 'downloads_dir']
-#
-## These will get set by calling code.
-#
-#data_store    = 'uninitialized' # The DataStore object for persistence for the app.  Gets initialized by and loaded by init_datastore().
-#file_save_dir = 'uninitialized' # Directory (FileSaveDirectory object) for saved files.
-#uploads_dir   = 'uninitialized' # Directory (FileSaveDirectory object) for file uploads to be routed to.
-#downloads_dir = 'uninitialized' # Directory (FileSaveDirectory object) for file downloads to be routed to.
-
 ##########################################################################################################
 #%% Classes
 ##########################################################################################################
@@ -116,7 +103,7 @@ class ScirisApp(object):
         if self.config['USE_DATASTORE']:
             self._init_datastore()
             print('Storing datastore in the app...')
-            self.flask_app.session_interface = RedisSessionInterface(ds.globalvars.data_store.redis_obj(), 'sess')
+            self.flask_app.session_interface = RedisSessionInterface(self.datastore.redis_obj(), 'sess')
 
         # If we are including DataStore and users functionality, initialize users.
         if self.config['USE_DATASTORE'] and self.config['USE_USERS']:
@@ -187,7 +174,7 @@ class ScirisApp(object):
         
     def _init_datastore(self):
         # Create the DataStore object, setting up Redis.
-        self.datastore = ds.DataStore(redis_db_URL=self.config['REDIS_URL'])
+        self.datastore = ds.DataStore(redis_url=self.config['REDIS_URL'])
                 
         if self.config['LOGGING_MODE'] == 'FULL':
             print('>> DataStore initialized at %s' % self.config['REDIS_URL'])
