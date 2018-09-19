@@ -38,7 +38,7 @@ class DataStore(object):
         
         # Create Redis
         self.redis = redis.StrictRedis.from_url(self.redis_url)
-        self.separator = separator if separator is not None else '<___>' # Define the separator between a key type and uid
+        self.separator = separator if separator is not None else '__|__' # Define the separator between a key type and uid
         print('New DataStore initialized at %s with temp folder %s' % (self.redis_url, self.tempfolder))
         return None
     
@@ -51,7 +51,7 @@ class DataStore(object):
         return None
         
     
-    def _makekey(self, key, objtype, uid, obj=None, create=False, fulloutput=False):
+    def _makekey(self, key=None, objtype=None, uid=None, obj=None, create=False, fulloutput=False):
         '''
         Construct a database key, either from a given key (do nothing), or else from
         a supplied objtype and uid, or else read them from the object (e.g. Blob) supplied.
@@ -138,18 +138,21 @@ class DataStore(object):
         return output
     
     
-    @classmethod
-    def _checktype(key, obj, objtype):
-        if   objtype == 'Blob': objclass = Blob
-        elif objtype == 'User': objclass = User
-        elif objtype == 'Task': objclass = Task
-        else:
-            errormsg = 'Unrecognized type "%s": must be Blob, User, or Task'
-            raise Exception(errormsg)
-        if not isinstance(obj, objclass):
-            errormsg = 'Cannot load %s as a %s since it is %s' % (key, objtype, type(obj))
-            raise Exception(errormsg)
+    def _checktype(self, key, obj, objtype):
         return None
+#        if   objtype == 'Blob': objclass = Blob
+#        elif objtype == 'User': objclass = User
+#        elif objtype == 'Task': objclass = Task
+#        else:
+#            errormsg = 'Unrecognized type "%s": must be Blob, User, or Task'
+#            raise Exception(errormsg)
+#        if obj is None:
+#            errormsg = 'Cannot load %s as a %s: key not found' % (key, objtype)
+#            raise Exception(errormsg)
+#        if not isinstance(obj, objclass):
+#            errormsg = 'Cannot load %s as a %s since it is %s' % (key, objtype, type(obj))
+#            raise Exception(errormsg)
+#        return None
         
     
     def saveblob(self, data, key=None, obj=None, objtype=None, uid=None, overwrite=True):
@@ -174,21 +177,21 @@ class DataStore(object):
         return key
     
     
-    def loadblob(self, key=None, objtype=None, uid=None):
+    def loadblob(self, key=None, objtype=None, uid=None, die=True):
         ''' Load a blob from Redis '''
         key = self._makekey(key, objtype, uid)
         blob = self.get(key)
-        self._checktype(key, blob, 'Blob')
+        if die: self._checktype(key, blob, 'Blob')
         data = blob.load()
         print('Blob "%s" loaded' % key)
         return data
     
     
-    def saveuser(self, user, key=None, username=None, overwrite=False):
+    def saveuser(self, user, overwrite=False):
         '''
         Add a new or update existing User in Redis, returns key.
         '''
-        key, objtype, username = self._makekey(key=key, objtype='user', uid=username, obj=user, fulloutput=True)
+        key, objtype, username = self._makekey(objtype='user', uid=user.username, fulloutput=True)
         olduser = self.get(key)
         if olduser and not overwrite:
             errormsg = 'User %s already exists' % key
@@ -200,11 +203,11 @@ class DataStore(object):
         return key
     
     
-    def loaduser(self, key=None, username=None):
+    def loaduser(self, username=None, key=None, die=True):
         ''' Load a user from Redis '''
         key = self._makekey(key=key, objtype='user', uid=username)
         user = self.get(key)
-        self._checktype(key, user, 'User')
+        if die: self._checktype(key, user, 'User')
         print('User "%s" loaded' % key)
         return user
         
@@ -225,10 +228,10 @@ class DataStore(object):
         return key
     
     
-    def loadtask(self, key=None, uid=None):
+    def loadtask(self, key=None, uid=None, die=True):
         ''' Load a user from Redis '''
         key = self._makekey(key=key, objtype='task', uid=uid)
         task = self.get(key)
-        self._checktype(key, task, 'Task')
+        if die: self._checktype(key, task, 'Task')
         print('Task "%s" loaded' % key)
         return task

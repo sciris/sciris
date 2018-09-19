@@ -16,14 +16,17 @@ from . import sc_rpcs as rpcs
 ### Globals
 ##############################################################
 
-RPC = rpcs.makeRPCtag({}) # RPC registration decorator factory created using call to make_RPC().
+__all__ = ['RPC_dict']
+
+RPC_dict = {}
+RPC = rpcs.makeRPCtag(RPC_dict) # RPC registration decorator factory created using call to make_RPC().
 
 
 ##############################################################
 ### Functions and RPCs
 ##############################################################
 
-__all__  = ['user_login', 'user_logout', 'user_register']
+__all__ += ['user_login', 'user_logout', 'user_register']
 __all__ += ['user_change_info', 'user_change_password', 'admin_delete_user', 'admin_activate_account']
 __all__ += ['admin_deactivate_account', 'admin_grant_admin', 'admin_revoke_admin', 'admin_reset_password', 'make_test_users']
 
@@ -55,7 +58,7 @@ def user_logout():
 
 @RPC()
 def user_register(username, password, displayname, email): 
-    matching_user = app.datastore.loaduser(username) # Get the matching user (if any).
+    matching_user = app.datastore.loaduser(username, die=False) # Get the matching user (if any).
     if matching_user is not None: # If we have a match, fail because we don't want to register an existing user.
         errormsg = 'Could not register user: user "%s" already exists' % username
         raise Exception(errormsg)

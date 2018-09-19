@@ -103,7 +103,8 @@ class ScirisApp(object):
         if self.config['USE_DATASTORE']:
             self._init_datastore()
             print('Storing datastore in the app...')
-            self.flask_app.session_interface = RedisSessionInterface(self.datastore.redis_obj(), 'sess')
+            self.flask_app.datastore = self.datastore
+            self.flask_app.session_interface = RedisSessionInterface(self.datastore.redis, 'sess')
 
         # If we are including DataStore and users functionality, initialize users.
         if self.config['USE_DATASTORE'] and self.config['USE_USERS']:
@@ -121,8 +122,7 @@ class ScirisApp(object):
                 return self.datastore.loaduser(userid) # Return the matching user (if any).
             
             self.login_manager.init_app(self.flask_app) # Configure Flask app for login with the LoginManager.
-            self._init_users() # Initialize the users.
-            self.add_RPC_dict(users.RPC_dict) # Register the RPCs in the user.py module.
+            self.add_RPC_dict(users.RPC_dict) # Register the RPCs in the users.py module.
             
         # If we are including DataStore and tasks, initialize them.    
         if self.config['USE_DATASTORE'] and self.config['USE_TASKS']:
