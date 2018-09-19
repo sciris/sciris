@@ -14,6 +14,11 @@ from . import sc_rpcs as rpcs #import make_RPC
 from . import sc_objects as sobj
 from . import sc_datastore as ds # CK: Not sure if this is needed
 
+from tempfile import mkdtemp
+from shutil import rmtree
+import atexit
+import os
+
 ##############################################################
 ### Globals
 ##############################################################
@@ -30,6 +35,69 @@ RPC = rpcs.makeRPCtag(RPC_dict) # RPC registration decorator factory created usi
 ##############################################################
 
 __all__ += ['User', 'UserDict']
+
+
+class FileSaveDirectory(object):
+    """
+    An object wrapping a directory where files may get saved by the web 
+    application.
+    
+    Methods:
+        __init__(dir_path: str [None], temp_dir: bool [False]): void -- 
+            constructor
+        cleanup(): void -- clean up after web app is exited
+        clear(): void -- erase the contents of the directory
+        delete(): void -- delete the entire directory
+                    
+    Attributes:
+        dir_path (str) -- the full path of the directory on disk
+        is_temp_dir (bool) -- is the directory to be spawned on startup and 
+            erased on exit?
+        
+    Usage:
+        >>> new_dir = FileSaveDirectory(transfer_dir_path, temp_dir=True)
+    """
+    
+    def __init__(self, dir_path=None, temp_dir=False):
+        # Set whether we are a temp directory.
+        self.is_temp_dir = temp_dir
+               
+        # If no path is specified, create the temp directory.
+        if dir_path is None:
+            self.dir_path = mkdtemp()
+            
+        # Otherwise...
+        else:
+            # Set the path to what was passed in.
+            self.dir_path = dir_path
+            
+            # If the directory doesn't exist yet, create it.
+            if not os.path.exists(dir_path):            
+                os.mkdir(dir_path)
+            
+        # Register the cleanup method to be called on web app exit.
+        atexit.register(self.cleanup)
+            
+    def cleanup(self):
+        # If we are a temp directory and the directory still exists, do the cleanup.
+        if self.is_temp_dir and os.path.exists(self.dir_path):
+            # Show cleanup message.
+            print('>> Cleaning up FileSaveDirectory at %s' % self.dir_path)
+            
+            # Delete the entire directory (file contents included).
+            self.delete()
+            
+    def clear(self):
+        # Delete the entire directory (file contents included).
+        rmtree(self.dir_path)
+        
+        # Create a fresh direcgtory
+        os.mkdir(self.dir_path)
+    
+    def delete(self):
+        # Delete the entire directory (file contents included).
+        rmtree(self.dir_path)
+
 
 class User(sobj.Blob):
     """

@@ -1,366 +1,214 @@
 """
 datastore.py -- code related to Sciris database persistence
     
-Last update: 2018aug20
+Last update: 2018sep19
 """
 
-import os
 import redis
-from tempfile import mkdtemp
-from shutil import rmtree
-import atexit
 import sciris as sc
+from .sc_objects import Blob, User, Task
 
-#__all__ = ['data_store', 'file_save_dir', 'uploads_dir', 'downloads_dir', 'FileSaveDirectory', 'StoreObjectHandle', 'DataStore']
-__all__ = ['globalvars', 'FileSaveDirectory', 'StoreObjectHandle', 'DataStore']
+__all__ = ['DataStore']
 
-################################################################################
-### Globals
-################################################################################
-
-# These will get set by calling code -- these need to be in a class so they can be imported.
-class GlobalVars:
-    data_store    = None # The DataStore object for persistence for the app.  Gets initialized by and loaded by init_datastore().
-    file_save_dir = None # Directory (FileSaveDirectory object) for saved files.
-    uploads_dir   = None # Directory (FileSaveDirectory object) for file uploads to be routed to.
-    downloads_dir = None # Directory (FileSaveDirectory object) for file downloads to be routed to.
-
-globalvars = GlobalVars()
 
 ################################################################################
 ### Classes
 ################################################################################
-    
-class FileSaveDirectory(object):
-    """
-    An object wrapping a directory where files may get saved by the web 
-    application.
-    
-    Methods:
-        __init__(dir_path: str [None], temp_dir: bool [False]): void -- 
-            constructor
-        cleanup(): void -- clean up after web app is exited
-        clear(): void -- erase the contents of the directory
-        delete(): void -- delete the entire directory
-                    
-    Attributes:
-        dir_path (str) -- the full path of the directory on disk
-        is_temp_dir (bool) -- is the directory to be spawned on startup and 
-            erased on exit?
-        
-    Usage:
-        >>> new_dir = FileSaveDirectory(transfer_dir_path, temp_dir=True)
-    """
-    
-    def __init__(self, dir_path=None, temp_dir=False):
-        # Set whether we are a temp directory.
-        self.is_temp_dir = temp_dir
-               
-        # If no path is specified, create the temp directory.
-        if dir_path is None:
-            self.dir_path = mkdtemp()
-            
-        # Otherwise...
-        else:
-            # Set the path to what was passed in.
-            self.dir_path = dir_path
-            
-            # If the directory doesn't exist yet, create it.
-            if not os.path.exists(dir_path):            
-                os.mkdir(dir_path)
-            
-        # Register the cleanup method to be called on web app exit.
-        atexit.register(self.cleanup)
-            
-    def cleanup(self):
-        # If we are a temp directory and the directory still exists, do the cleanup.
-        if self.is_temp_dir and os.path.exists(self.dir_path):
-            # Show cleanup message.
-            print('>> Cleaning up FileSaveDirectory at %s' % self.dir_path)
-            
-            # Delete the entire directory (file contents included).
-            self.delete()
-            
-    def clear(self):
-        # Delete the entire directory (file contents included).
-        rmtree(self.dir_path)
-        
-        # Create a fresh direcgtory
-        os.mkdir(self.dir_path)
-    
-    def delete(self):
-        # Delete the entire directory (file contents included).
-        rmtree(self.dir_path)
-
-
-
-class StoreObjectHandle(object):
-    """
-    An object associated with a Python object which permits the Python object 
-    to be stored in and retrieved from a DataStore object.
-    
-    Methods:
-        __init__(uid: UUID [None], type_prefix: str ['obj'], 
-            file_suffix: str ['.obj'], instance_label: str['']): void --
-            constructor
-        get_uid(): UUID -- return the StoreObjectHandle's UID
-        file_store(dir_path: str, obj: Object): void -- store obj in 
-            the dir_path directory
-        file_retrieve(dir_path: str): void -- retrieve the stored object from 
-            the dir_path directory
-        file_delete(dir_path: str): void -- delete the stored object from the 
-            dir_path directory
-        redis_store(obj: Object, redis_db: redis.client.StrictRedis): 
-            void -- store obj in Redis
-        redis_retrieve(redis_db: redis.client.StrictRedis): void -- retrieve 
-            the stored object from Redis
-        redis_delete(redis_db: redis.client.StrictRedis): void -- delete the 
-            stored object from Redis
-        show(): void -- print the contents of the object
-                    
-    Attributes:
-        uid (UUID) -- the unique ID for the handle (uuid Python library-related)
-        type_prefix (str) -- a prefix that gets added to the UUID to give either 
-            a file name or a Redis key
-        file_suffix (str) -- a suffix that gets added to files
-        instance_label (str) -- a name of the object which should at least be 
-            unique across other handles of the save type_prefix
-        
-    Usage:
-        >>> new_handle = StoreObjectHandle(uuid.UUID('12345678123456781234567812345678'), 
-            type_prefix='project', file_suffix='.prj', instance_label='Project 1')
-    """
-    
-    def __init__(self, uid=None, type_prefix='obj', file_suffix='.obj', instance_label=''):
-        if uid is None: uid = sc.uuid()
-        self.uid = uid # Set the UID to what was passed in, or if None was passed in, generate and use a new one
-        self.type_prefix = type_prefix
-        self.file_suffix = file_suffix
-        self.instance_label = instance_label
-        
-    def get_uid(self):
-        return self.uid
-    
-    def file_store(self, dir_path, obj):
-        file_name = '%s-%s%s' % (self.type_prefix, self.uid.hex, self.file_suffix) # Create a filename containing the type prefix, hex UID code, and the appropriate file suffix.
-        full_file_name = '%s%s%s' % (dir_path, os.sep, file_name) # Generate the full file name with path.
-        sc.saveobj(full_file_name, obj) # Write the object to a Gzip string pickle file.
-        return None
-    
-    def file_retrieve(self, dir_path):
-        file_name = '%s-%s%s' % (self.type_prefix, self.uid.hex, self.file_suffix) # Create a filename containing the type prefix, hex UID code, and the appropriate file suffix.
-        full_file_name = '%s%s%s' % (dir_path, os.sep, file_name) # Generate the full file name with path.
-        obj = sc.loadobj(full_file_name) # Return object from the Gzip string pickle file.
-        return obj
-    
-    def file_delete(self, dir_path):
-        file_name = '%s-%s%s' % (self.type_prefix, self.uid.hex, self.file_suffix) # Create a filename containing the type prefix, hex UID code, and the appropriate file suffix.
-        full_file_name = '%s%s%s' % (dir_path, os.sep, file_name) # Generate the full file name with path.
-        if os.path.exists(full_file_name): # Remove the file if it's there.
-            os.remove(full_file_name)
-        return None
-    
-    def redis_store(self, obj, redis_db):
-        key_name = self.uid # Make the Redis key containing the type prefix, and the hex UID code.
-        if redis_db.get(key_name):
-            key_name = str(key_name) +'_' + str(sc.uuid()) # If it already exists, append a proper UID
-            self.uid = key_name
-        redis_db.set(key_name, sc.dumpstr(obj)) # Put the object in Redis.
-        return None
-    
-    def redis_retrieve(self, redis_db):
-        key_name = self.uid # Make the Redis key containing the type prefix, and the hex UID code.
-        obj = sc.loadstr(redis_db.get(key_name)) # Get and return the object with the key in Redis.
-        return obj
-    
-    def redis_delete(self, redis_db):
-        key_name = self.uid # Make the Redis key containing the type prefix, and the hex UID code.
-        redis_db.delete(key_name) # Delete the entry from Redis.
-        return None
-        
-    def show(self):
-        print('          UUID: %s' % self.uid)
-        print('   Type prefix: %s' % self.type_prefix)
-        print('   File suffix: %s' % self.file_suffix)
-        print('Instance label: %s' % self.instance_label)
-
-
 
 class DataStore(object):
     """
-    An object allowing storage and retrieval of Python objects using either 
-    files or the Redis database.  You can think of it as being a generalized 
-    key/value-pair-based database.
-    
-    Methods:
-        __init__(db_mode: str ['redis'], redis_db_URL: str [None]): void -- 
-            constructor
-        save(): void -- save the state of the DataStore either to file or 
-            Redis, depending on the mode
-        load(): void -- load the state of the DataStore either from file or 
-            Redis, depending on the mode
-        get_handle_by_uid(uid: UUID or str): StoreObjectHandle -- get the 
-            handle (if any) pointed to by an UID            
-        get_uid(type_prefix: str, instance_label: str): UUID -- 
-            find the UID of the first matching case where a handle in the dict 
-            has the same type prefix and instance label        
-        add(obj: Object, uid: UUID or str [None], type_label: str ['obj'], 
-            file_suffix: str ['.obj'], instance_label: str [''], 
-            save_handle_changes: bool [True]): void -- add a Python object to 
-            the DataStore, creating also a StoreObjectHandle for managing it, 
-            and return the UUID (useful if no UID was passed in, and a 
-            new one had to be generated)
-        retrieve(uid: UUID or str): Object -- retrieve a Python object 
-            stored in the DataStore, keyed by a UID
-        update(uid: UUID or str, obj: Object): void -- update a Python object 
-            stored in the DataStore, keyed by a UID
-        delete(uid: UUID or str, save_handle_changes=True): void -- delete a 
-            Python object stored in the DataStore, keyed by a UID
-        delete_all(): void -- delete all of the Python objects in the DataStore
-        show_handles(): void -- show all of the StoreObjectHandles in the 
-            DataStore
-        show_redis_keys(): void -- show all of the keys in the Redis database 
-            we are using
-        clear_redis_keys(): void -- delete all of the keys in the Redis database
-            we are using
-                    
-    Attributes:
-        handle_dict (dict) -- the Python dictionary holding the StoreObjectHandles
-        db_mode (str) -- the mode of persistence the DataStore uses (either 
-            'redis' or 'file')
-        redis_db (redis.client.StrictRedis) -- link to the Redis database we 
-            are using
-        
-    Usage:
-        >>> data_store = DataStore(redis_db_URL='redis://localhost:6379/0/')                      
+    Interface to the Redis database.                   
     """
     
-    def __init__(self, db_mode='redis', redis_db_URL=None):
-        self.handle_dict = {} # Start with an empty dictionary.
-        if redis_db_URL is not None:
-            self.db_mode = 'redis'
+    def __init__(self, redis_url=None, separator=None):
+        ''' Establishes data-structure wrapping a particular Redis URL. '''
+        default_url = 'redis://localhost:6379/'
+        if redis_url is None:        redis_url = default_url + '0' # e.g. sw.DataStore()
+        elif sc.isnumber(redis_url): redis_url = default_url + '%i'%redis_url # e.g. sw.DataStore(3)
+        self.redis = redis.StrictRedis.from_url(redis_url)
+        self.separator = separator if separator is not None else '<___>' # Define the separator between a key type and uid
+        print('New DataStore initialized at %s' % redis_url)
+        return None
+    
+    
+    def _makekey(self, key, objtype, uid, obj=None, create=False, fulloutput=False):
+        '''
+        Construct a database key, either from a given key (do nothing), or else from
+        a supplied objtype and uid, or else read them from the object (e.g. Blob) supplied.
+        '''
+        
+        # Get any missing properties from the object
+        if obj is not None: # Populate any missing values from the object
+            if key     is None and hasattr(obj, 'key'):     key     = obj.key
+            if objtype is None and hasattr(obj, 'objtype'): objtype = obj.objtype
+            if uid     is None and hasattr(obj, 'uid'):     uid     = obj.uid
+        
+        # Construct the key if it doesn't exist
+        if key is None: # Only worry about the key if none is provided
+            if objtype is not None and uid is not None:
+                key = '%s%s%s' % (objtype, self.separator, uid)
+            elif create:
+                if objtype is None: objtype = 'object'
+                if uid     is None: uid     = str(sc.uuid())
+                key = '%s%s%s' % (objtype, self.separator, uid)
+            else:
+                errormsg = 'To create a key, you must either specify the key, or the objtype and the uid, or use an object with these'
+                raise Exception(errormsg)
+        
+        # Determine the objtype and uid from the key
+        splitkey = key.split(self.separator)
+        if len(splitkey)==2:
+            if objtype and objtype != splitkey[0]: print('Key warning: requested objtypes do not match (%s vs. %s)' % (objtype, splitkey[0]))
+            if uid     and uid     != splitkey[1]: print('Key warning: requested UIDs do not match (%s vs. %s)'     % (uid,     splitkey[1]))
+            objtype = splitkey[0]
+            uid  = splitkey[1]
         else:
-            self.db_mode = db_mode
-        if self.db_mode == 'redis': # If we are using Redis...
-            print('Initializing Redis on ' + redis_db_URL)
-            self.redis_db = redis.StrictRedis.from_url(redis_db_URL)
-        return None
+            errormsg = 'Warning: could not split key "%s" into objtype and uid using separator "%s"' % (key, self.separator)
+            if fulloutput and objtype is None or uid is None: # Don't worry about it unless full output is requested
+                raise Exception(errormsg)
+            else:
+                print(errormsg) # Still warn, but don't crash
         
-    def save(self):
-        if self.db_mode == 'redis': # If we are using Redis...
-            self.redis_db.set('scirisdatastore-handle_dict',  # Set the entries for all of the data items.
-                sc.dumpstr(self.handle_dict))
-            self.redis_db.set('scirisdatastore-db_mode', 
-                sc.dumpstr(self.db_mode))
-        else: # Otherwise (we are using files)...
-            outfile = open('.\\sciris.ds', 'wb')
-            sc.pickle.dump(self.handle_dict, outfile)
-            sc.pickle.dump(self.db_mode, outfile)
-        return None
+        # Return what we need to return
+        if fulloutput: return key, objtype, uid
+        else:          return key
     
-    def load(self):
-        if self.db_mode == 'redis': # If we are using Redis...
-            if self.redis_db.get('scirisdatastore-handle_dict') is None:
-                print('Error: DataStore object has not been saved yet.')
-                return None
-            self.handle_dict = sc.loadstr(self.redis_db.get('scirisdatastore-handle_dict')) # Get the entries for all of the data items.
-            self.db_mode = sc.loadstr(self.redis_db.get('scirisdatastore-db_mode'))
-        else: # Otherwise (we are using files)...
-            if not os.path.exists('.\\sciris.ds'):
-                print('Error: DataStore object has not been saved yet.')
-                return None
-            infile = open('.\\sciris.ds', 'rb')
-            self.handle_dict = sc.pickle.load(infile)
-            self.db_mode = sc.pickle.load(infile)
-        return None
     
-    def get_handle_by_uid(self, uid):
-        valid_uid = sc.uuid(uid) # Make sure the argument is a valid UUID, converting a hex text to a UUID object, if needed.       
-        if valid_uid is not None: # If we have a valid UUID...
-            return self.handle_dict.get(valid_uid, None)
-        else:
-            return None
-        
-    def get_uid(self, type_prefix, instance_label):
-        uid_matches = [] # Initialize an empty list to put the matches in.
-        for key in self.handle_dict: # For each key in the dictionary...
-            handle = self.handle_dict[key] # Get the handle pointed to.
-            if handle.type_prefix == type_prefix and handle.instance_label == instance_label:
-                uid_matches.append(handle.uid) # If both the type prefix and instance label match, add the UID of the handle to the list.
-        if len(uid_matches) == 0: # If there is no match, return None.   
-            return None
-        elif len(uid_matches) > 1: # Else, if there is more than one match, give a warning.
-            print('Warning: get_uid() only returning the first match.')
-        return uid_matches[0] # Return the first (and hopefully only) matching UID.  
-        
-    def add(self, obj, uid=None, type_label='obj', file_suffix='.obj', instance_label='', save_handle_changes=True):
-        print('Adding %s...' % uid)
-        new_handle = StoreObjectHandle(uid, type_label, file_suffix, instance_label) # Create the new StoreObjectHandle.
-        self.handle_dict[uid] = new_handle # Add the handle to the dictionary.
-        if self.db_mode == 'redis': # If we are using Redis...
-            new_handle.redis_store(obj, self.redis_db) # Put the object in Redis.
-        else: # Otherwise (we are using files)...
-            new_handle.file_store('.', obj) # Put the object in a file.
-        if save_handle_changes: # Do a save of the database so change is kept.
-            self.save()
-        return uid # Return the UUID.
     
-    def retrieve(self, uid):
-        print('Retrieving %s...' % uid)
-        string = self.redis_db.get(uid)
-        try:    
-            output = sc.loadstr(string)
-        except: 
-            print('Note: object %s is not pickled' % uid)
-            output = string
+    def set(self, key=None, obj=None, objtype=None, uid=None):
+        ''' Alias to redis.set() '''
+        key = self._makekey(key, objtype, uid, obj)
+        output = self.redis.set(key, obj)
         return output
     
-    def update(self, uid, obj):
-        print('Updating %s...' % uid)
-        self.redis_db.set(uid, sc.dumpstr(obj)) # Overwrite the old copy of the object using the handle.
-        return None
-     
-    def delete(self, uid, save_handle_changes=True):
-        print('Deleting %s...' % uid)
-        self.redis_db.delete(uid)
-        handle = self.get_handle_by_uid(uid)  # Get the handle (if any) matching the UID.
-        if handle is not None: # If we found a matching handle...
-            if self.db_mode == 'redis': # If we are using Redis...
-                handle.redis_delete(self.redis_db) # Delete the key using the handle.
-            else: # Otherwise (we are using files)...
-                handle.file_delete('.') # Delete the file using the handle.
-            del self.handle_dict[uid] # Delete the handle from the dictionary.
-            if save_handle_changes: # Do a save of the database so change is kept.     
-                self.save()
-        return None
-               
-    def delete_all(self):
-        '''
-        For each key in the dictionary, delete the key and handle, but don't do the 
-        save of the DataStore object until after the changes are made.
-        '''
-        all_keys = [key for key in self.handle_dict]
-        for key in all_keys:
-            self.delete(key, save_handle_changes=False)
-        self.save() # Save the DataStore object.
-        return None
-
-    def redis_obj(self):
-        return self.redis_db
     
-    def show_handles(self):
-        for key in self.handle_dict: # For each key in the dictionary...
-            handle = self.handle_dict[key] # Get the handle pointed to.
-            print('--------------------------------------------')
-            handle.show() # Show the handle contents.
-        print('--------------------------------------------')
-        return None
+    def get(self, key=None, obj=None, objtype=None, uid=None):
+        ''' Alias to redis.get() '''
+        key = self._makekey(key, objtype, uid, obj)
+        output = self.redis.get(key)
+        return output
     
-    def show_redis_keys(self):
-        ''' Show all of the keys in the Redis database we are using. '''
-        print(self.redis_db.keys())
+    
+    def delete(self, key=None, obj=None, objtype=None, uid=None):
+        ''' Alias to redis.delete() '''
+        key = self._makekey(key, objtype, uid, obj)
+        output = self.redis.delete(key)
+        return output
+    
+    
+    def flushdb(self):
+        ''' Alias to redis.flushdb() '''
+        output = self.redis.flushdb()
+        return output
+    
+    
+    def keys(self, pattern=None):
+        ''' Alias to redis.keys() '''
+        if pattern is None: pattern = '*'
+        output = self.redis.keys(pattern=pattern)
+        return output
+    
+    
+    def items(self, pattern=None):
+        ''' Return all found items in an odict '''
+        output = sc.odict()
+        keys = self.keys(pattern=pattern)
+        for key in keys:
+            output[key] = self.get(key)
+        return output
+    
+    
+    @classmethod
+    def _checktype(key, obj, objtype):
+        if   objtype == 'Blob': objclass = Blob
+        elif objtype == 'User': objclass = User
+        elif objtype == 'Task': objclass = Task
+        else:
+            errormsg = 'Unrecognized type "%s": must be Blob, User, or Task'
+            raise Exception(errormsg)
+        if not isinstance(obj, objclass):
+            errormsg = 'Cannot load %s as a %s since it is %s' % (key, objtype, type(obj))
+            raise Exception(errormsg)
+        return None
         
-    def clear_redis_keys(self):
-        ''' Delete all of the keys in the Redis database we are using. '''
-        for key in self.redis_db.keys():
-            self.redis_db.delete(key)
+    
+    def saveblob(self, data, key=None, obj=None, objtype=None, uid=None, overwrite=True):
+        '''
+        Add a new or update existing Blob in Redis, returns key. If key is None, 
+        constructs a key from the Blob (objtype:uid); otherwise, updates the Blob with the 
+        provided key.
+        '''
+        key, objtype, uid = self._makekey(key, objtype, uid, obj, fulloutput=True)
+        blob = self.get(key)
+        if blob:
+            self._checktype(key, blob, 'Blob')
+            if overwrite:
+                blob.save(data)
+            else:
+                errormsg = 'Blob %s already exists and overwrite is set to False' % key
+                raise Exception(errormsg)
+        else:
+            blob = Blob(key=key, objtype=objtype, uid=uid, data=data)
+        self.set(key=key, obj=blob)
+        print('Blob "%s" saved' % key)
+        return key
+    
+    
+    def loadblob(self, key=None, objtype=None, uid=None):
+        ''' Load a blob from Redis '''
+        key = self._makekey(key, objtype, uid)
+        blob = self.get(key)
+        self._checktype(key, blob, 'Blob')
+        data = blob.load()
+        print('Blob "%s" loaded' % key)
+        return data
+    
+    
+    def saveuser(self, user, key=None, username=None, overwrite=False):
+        '''
+        Add a new or update existing User in Redis, returns key.
+        '''
+        key, objtype, username = self._makekey(key=key, objtype='user', uid=username, obj=user, fulloutput=True)
+        olduser = self.get(key)
+        if olduser and not overwrite:
+            errormsg = 'User %s already exists' % key
+            raise Exception(errormsg)
+        else:
+            self._checktype(key, user, 'User')
+            self.set(key=key, obj=user)
+        print('User "%s" saved' % key)
+        return key
+    
+    
+    def loaduser(self, key=None, username=None):
+        ''' Load a user from Redis '''
+        key = self._makekey(key=key, objtype='user', uid=username)
+        user = self.get(key)
+        self._checktype(key, user, 'User')
+        print('User "%s" loaded' % key)
+        return user
+        
+    
+    def savetask(self, task, key=None, uid=None, overwrite=False):
+        '''
+        Add a new or update existing Task in Redis, returns key.
+        '''
+        key, objtype, uid = self._makekey(key=key, objtype='task', uid=uid, obj=task, fulloutput=True)
+        oldtask = self.get(key)
+        if oldtask and not overwrite:
+            errormsg = 'Task %s already exists' % key
+            raise Exception(errormsg)
+        else:
+            self._checktype(key, task, 'Task')
+            self.set(key=key, obj=task)
+        print('Task "%s" saved' % key)
+        return key
+    
+    
+    def loadtask(self, key=None, uid=None):
+        ''' Load a user from Redis '''
+        key = self._makekey(key=key, objtype='task', uid=uid)
+        task = self.get(key)
+        self._checktype(key, task, 'Task')
+        print('Task "%s" loaded' % key)
+        return task
