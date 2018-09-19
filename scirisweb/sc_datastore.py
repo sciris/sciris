@@ -4,6 +4,11 @@ datastore.py -- code related to Sciris database persistence
 Last update: 2018sep19
 """
 
+# Imports
+import os
+import atexit
+import tempfile
+import shutil
 import redis
 import sciris as sc
 from .sc_objects import Blob, User, Task
@@ -11,25 +16,40 @@ from .sc_objects import Blob, User, Task
 __all__ = ['DataStore']
 
 
-################################################################################
-### Classes
-################################################################################
-
 class DataStore(object):
     """
     Interface to the Redis database.                   
     """
     
-    def __init__(self, redis_url=None, separator=None):
+    def __init__(self, redis_url=None, tempfolder=None, separator=None):
         ''' Establishes data-structure wrapping a particular Redis URL. '''
+        
+        # Handle the Redis URL
         default_url = 'redis://localhost:6379/'
         if redis_url is None:        redis_url = default_url + '0' # e.g. sw.DataStore()
         elif sc.isnumber(redis_url): redis_url = default_url + '%i'%redis_url # e.g. sw.DataStore(3)
-        self.redis = redis.StrictRedis.from_url(redis_url)
+        self.redis_url = redis_url
+        
+        # Handle the temporary folder
+        self.tempfolder = tempfolder if tempfolder is not None else tempfile.mkdtemp()
+        if not os.path.exists(self.tempfolder):
+            os.mkdir(self.tempfolder)
+            atexit.register(self._rmtempfolder) # Only register this if we've just created the temp folder
+        
+        # Create Redis
+        self.redis = redis.StrictRedis.from_url(self.redis_url)
         self.separator = separator if separator is not None else '<___>' # Define the separator between a key type and uid
-        print('New DataStore initialized at %s' % redis_url)
+        print('New DataStore initialized at %s with temp folder %s' % (self.redis_url, self.tempfolder))
         return None
     
+    
+    def _rmtempfolder(self):
+        ''' Remove the temporary folder that was created '''
+        if os.path.exists(self.tempfolder):
+            print('Removing up temporary folder at %s' % self.tempfolder)
+            shutil.rmtree(self.tempfolder)
+        return None
+        
     
     def _makekey(self, key, objtype, uid, obj=None, create=False, fulloutput=False):
         '''

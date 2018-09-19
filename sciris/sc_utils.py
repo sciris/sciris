@@ -622,10 +622,13 @@ def colorize(color=None, string=None, output=False, showhelp=False):
     '''
     
     # Try to add Windows support
+    ansi_support = True
+    using_colorama = False
     if 'win' in sys.platform:
         try:
            import colorama
            colorama.init()
+           using_colorama = True
            ansi_support = True
         except:
            try:
@@ -633,8 +636,6 @@ def colorize(color=None, string=None, output=False, showhelp=False):
                ansi_support = True
            except:
                ansi_support = False # print('Warning: you have called colorize() on Windows but do not have either the colorama or tendo modules.')
-    else:
-        ansi_support = True
     
     # Define ANSI colors
     ansicolors = OD([
@@ -687,8 +688,13 @@ def colorize(color=None, string=None, output=False, showhelp=False):
     elif output: 
         return ansistring # Return the modified string
     else:
-        try:    print(ansistring) # Content, so print with newline
-        except: print(string) # If that fails, just go with plain version
+        try:    
+            print(ansistring) # Content, so print with newline
+        except: 
+            print(string) # If that fails, just go with plain version
+        finally: 
+            if using_colorama:
+                colorama.deinit()
         return None
     
 
