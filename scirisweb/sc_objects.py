@@ -12,7 +12,7 @@ __all__ = ['DSObject', 'Blob', 'User', 'Task']
 
 
 class DSObject(sc.prettyobj):
-    ''' A general Sciris object (base class for all such objects). '''
+    ''' A general Sciris object (base class for all such objects) '''
     
     def __init__(self, objtype=None, uid=None):
         # Handle input arguments
@@ -133,20 +133,20 @@ class Task(DSObject):
     A Sciris record for an asynchronous task.
     
     Attributes:
-        task_id (str) -- the ID / name for the task that typically is chosen by the client
-        status (str) -- the status of the task:
-            'unknown' : unknown status, for example, just initialized
-            'error': task failed with an actual error
-        error_text (str) -- string giving an idea of what error has transpired
-        func_name (str) -- string of the function name for what's called
-        args (list) -- list containing args for the function
-        kwargs (dict) -- dict containing kwargs for the function
-        result_id (str) -- string for the Redis ID of the AsyncResult
-        queue_time (datetime.datetime) -- the time the task was queued for Celery
-        start_time (datetime.datetime) -- the time the task was actually started
-        stop_time (datetime.datetime) -- the time the task completed
-        pending_time (int) -- the time the process has been waiting to be executed on the server in seconds        
-        execution_time (int) -- the time the process required to complete
+        task_id (str)         -- the ID / name for the task that typically is chosen by the client
+        status (str)          -- the status of the task:
+                                    'unknown': unknown status, for example, just initialized
+                                    'error':   task failed with an actual error
+        error_text (str)      -- string giving an idea of what error has transpired
+        func_name (str)       -- string of the function name for what's called
+        args (list)           -- list containing args for the function
+        kwargs (dict)         -- dict containing kwargs for the function
+        result_id (str)       -- string for the Redis ID of the AsyncResult
+        queue_time (datetime) -- the time the task was queued for Celery
+        start_time (datetime) -- the time the task was actually started
+        stop_time (datetime)  -- the time the task completed
+        pending_time (int)    -- the time the process has been waiting to be executed on the server in seconds        
+        execution_time (int)  -- the time the process required to complete
     '''
     
     def  __init__(self, task_id):
