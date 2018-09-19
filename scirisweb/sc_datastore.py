@@ -98,14 +98,17 @@ class DataStore(object):
     def set(self, key=None, obj=None, objtype=None, uid=None):
         ''' Alias to redis.set() '''
         key = self._makekey(key, objtype, uid, obj)
-        output = self.redis.set(key, obj)
+        objstr = sc.dumpstr(obj)
+        output = self.redis.set(key, objstr)
         return output
     
     
     def get(self, key=None, obj=None, objtype=None, uid=None):
         ''' Alias to redis.get() '''
         key = self._makekey(key, objtype, uid, obj)
-        output = self.redis.get(key)
+        objstr = self.redis.get(key)
+        if objstr is not None: output = sc.loadstr(objstr)
+        else:                  output = None
         return output
     
     
@@ -139,20 +142,19 @@ class DataStore(object):
     
     
     def _checktype(self, key, obj, objtype):
+        if   objtype == 'Blob': objclass = Blob
+        elif objtype == 'User': objclass = User
+        elif objtype == 'Task': objclass = Task
+        else:
+            errormsg = 'Unrecognized type "%s": must be Blob, User, or Task'
+            raise Exception(errormsg)
+        if obj is None:
+            errormsg = 'Cannot load %s as a %s: key not found' % (key, objtype)
+            raise Exception(errormsg)
+        if not isinstance(obj, objclass):
+            errormsg = 'Cannot load %s as a %s since it is %s' % (key, objtype, type(obj))
+            raise Exception(errormsg)
         return None
-#        if   objtype == 'Blob': objclass = Blob
-#        elif objtype == 'User': objclass = User
-#        elif objtype == 'Task': objclass = Task
-#        else:
-#            errormsg = 'Unrecognized type "%s": must be Blob, User, or Task'
-#            raise Exception(errormsg)
-#        if obj is None:
-#            errormsg = 'Cannot load %s as a %s: key not found' % (key, objtype)
-#            raise Exception(errormsg)
-#        if not isinstance(obj, objclass):
-#            errormsg = 'Cannot load %s as a %s since it is %s' % (key, objtype, type(obj))
-#            raise Exception(errormsg)
-#        return None
         
     
     def saveblob(self, data, key=None, obj=None, objtype=None, uid=None, overwrite=True):

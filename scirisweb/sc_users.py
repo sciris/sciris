@@ -35,6 +35,8 @@ __all__ += ['admin_deactivate_account', 'admin_grant_admin', 'admin_revoke_admin
 def user_login(username, password):  
     matching_user = app.datastore.loaduser(username) # Get the matching user (if any).
     
+    matching_user.show(verbose=True)  # TEMP
+    
     # If we have a match and the password matches, and the account is active, also, log in the user and return success; otherwise, return failure.
     if matching_user and matching_user.password==password and matching_user.is_active:
         login_user(matching_user) # Log the user in.
@@ -42,7 +44,7 @@ def user_login(username, password):
         if not matching_user:
             errormsg = 'Could not log in: user "%s" does not exist' % username
         elif not matching_user.password==password: 
-            errormsg = 'Could not log in: password for user "%s" is incorrect' % username
+            errormsg = 'Could not log in: password for user "%s" is incorrect (%s vs %s TEMP)' % (username, matching_user.password, password)
         elif not matching_user.is_active:
             errormsg = 'Could not log in: user "%s" is inactive' % username
         raise Exception(errormsg)
@@ -210,6 +212,11 @@ def admin_reset_password(username):
     
     # Return success.
     return 'success'
+
+
+@RPC(validation='named') 
+def get_current_user_info():
+    return current_user.jsonify()
 
 
 def make_test_users(include_admin=False):

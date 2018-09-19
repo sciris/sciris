@@ -8,13 +8,13 @@ import six
 import hashlib
 import sciris as sc
 
-__all__ = ['DSObject', 'Blob', 'User', 'Task']
+__all__ = ['Blob', 'User', 'Task']
 
 
-class DSObject(sc.prettyobj):
-    ''' A general Sciris object (base class for all such objects) '''
+class Blob(sc.prettyobj):
+    ''' Wrapper for any Python object we want to store in the DataStore. '''
     
-    def __init__(self, objtype=None, uid=None):
+    def __init__(self, objtype=None, uid=None, data=None):
         # Handle input arguments
         if objtype is None: objtype = 'object'
         if uid     is None: uid     = sc.uuid()
@@ -24,6 +24,10 @@ class DSObject(sc.prettyobj):
         self.uid      = uid
         self.created  = sc.now()
         self.modified = [self.created]
+        
+        self.data = None
+        if data is not None:
+            self.save(data)
         return None
     
     def update(self):
@@ -32,31 +36,19 @@ class DSObject(sc.prettyobj):
         self.modified.append(now)
         return now
         
-
-class Blob(DSObject):
-    ''' Wrapper for any Python object we want to store in the DataStore. '''
-    
-    def __init__(self, objtype=None, uid=None, data=None):
-        ''' Create a new Blob, optionally saving data if provided '''
-        DSObject.__init__(self, objtype=objtype, uid=uid)
-        self.data = None
-        if data is not None:
-            self.save(data)
-        return None
-    
     def save(self, data):
         ''' Save new data to the Blob '''
-        self.data = sc.dumpstr(data)
+        self.data = data
         self.update()
         return None
     
     def load(self):
         ''' Load data from the Blob '''
-        output = sc.loadstr(self.data)
+        output = self.data
         return output
 
 
-class User(DSObject):
+class User(sc.prettyobj):
     '''
     A Sciris user.
                     
@@ -69,31 +61,36 @@ class User(DSObject):
         displayname (str)       -- the user's name, which gets displayed in the  browser
         email (str)             -- the user's email     
         password (str)          -- the user's SHA224-hashed password
+        raw_password (str)      -- the user's unhashed password
     '''
     
-    def  __init__(self, username=None, password=None, displayname=None, email=None, uid=None, is_admin=False):
+    def  __init__(self, username=None, password=None, displayname=None, email=None, uid=None, raw_password=None, is_admin=False):
         # Handle general properties
-        if username    is None: username    = 'default'
-        if password    is None: password    = 'default'
-        if displayname is None: displayname = username
-        
-        # General initialization
-        DSObject.__init__(self, objtype='user', uid=uid) # Set superclass parameters.
+        if not username:    username    = 'default'
+        if not password:    password    = 'default'
+        if not displayname: displayname = username
+        if not uid:         uid         = sc.uuid()
         
         # Set user-specific properties
+        self.username         = username # Set the username.
+        self.displayname      = displayname # Set the displayname (what the browser will show).
+        self.email            = email  # Set the user's email.
+        self.uid              = uid # The user's UID
         self.is_authenticated = True # Set the user to be authentic.
         self.is_active        = True # Set the account to be active.
         self.is_anonymous     = False # The user is not anonymous.
         self.is_admin         = is_admin # Set whether this user has admin rights.
-        self.username         = username # Set the username.
-        self.displayname      = displayname # Set the displayname (what the browser will show).
-        self.email            = email  # Set the user's email.
         
         # Handle the password
-        if six.PY3: raw_password = password.encode('utf-8')
-        else:       raw_password = password # Set the raw password and use SHA224 to get the hashed version in hex form.
-        self.password = hashlib.sha224(raw_password).hexdigest()
+        if password is None and raw_password is not None:
+            if six.PY3: raw_password = raw_password.encode('utf-8')
+            password = hashlib.sha224(raw_password).hexdigest()
+        self.password = password
         return None
+    
+    def get_id(self):
+        ''' Method required by Flask-login '''
+        return self.username
     
     def show(self, verbose=False):
         ''' Display the user's properties '''
@@ -105,6 +102,7 @@ class User(DSObject):
             print('    Display name: %s' % self.displayname)
             print(' Hashed password: %s' % self.password)
             print('   Email address: %s' % self.email)
+            print('             UID: %s' % self.uid)
             print('Is authenticated: %s' % self.is_authenticated)
             print('       Is active: %s' % self.is_active)
             print('    Is anonymous: %s' % self.is_anonymous)
@@ -114,12 +112,13 @@ class User(DSObject):
     
     def jsonify(self, verbose=False):
         ''' Return a JSON-friendly representation of a user '''
-        output = {'username':    self.username, 
+        output = {}
+        output['user'] = {'username':    self.username, 
                   'displayname': self.displayname, 
                   'email':       self.email,
                   'uid':         self.uid}
         if verbose:
-            output.update({'is_authenticated': self.is_authenticated,
+            output['user'].update({'is_authenticated': self.is_authenticated,
                            'is_active':        self.is_active,
                            'is_anonymous':     self.is_anonymous,
                            'is_admin':         self.is_admin,
@@ -128,7 +127,7 @@ class User(DSObject):
         return output
 
 
-class Task(DSObject):
+class Task(sc.prettyobj):
     '''
     A Sciris record for an asynchronous task.
     
@@ -150,11 +149,8 @@ class Task(DSObject):
     '''
     
     def  __init__(self, task_id):
-        # General initialization
-        DSObject.__init__(self, objtype='task', uid=task_id) # Set superclass parameters.
-        
-        # Set other properties
         self.task_id        = task_id # Set the task ID (what the client typically knows as the task).
+        self.uid            = task_id # Make it the same as the task ID...WARNING, fix
         self.status         = 'unknown' # Start the status at 'unknown'.
         self.error_text     = None # Start the error_text at None.
         self.func_name      = None # Start the func_name at None.
