@@ -5,14 +5,14 @@ Example usage:
     import scirisweb as sw
     app = sw.ScirisApp()
 
-Version: 2018-09-08
+Version: 2018sep19
 '''
 
 from .sc_datastore import * # analysis:ignore
 from .sc_rpcs      import * # analysis:ignore
 from .sc_app       import * # analysis:ignore
 from .sc_objects   import * # analysis:ignore
-from .sc_user      import * # analysis:ignore
+from .sc_users     import * # analysis:ignore
 from .sc_tasks     import * # analysis:ignore
 from .sc_server    import * # analysis:ignore
 
