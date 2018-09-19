@@ -1,7 +1,7 @@
 """
-scirisapp.py -- classes for Sciris (Flask-based) apps 
+sc_app.py -- classes for Sciris (Flask-based) apps 
     
-Last update: 2018aug20
+Last update: 2018sep19
 """
 
 # Imports
@@ -131,11 +131,11 @@ class ScirisApp(object):
             # current_user value.
             @self.login_manager.user_loader
             def load_user(userid):
-                return user.user_dict.get_user_by_uid(userid) # Return the matching user (if any).
+                return self.datastore.loaduser(userid) # Return the matching user (if any).
             
             self.login_manager.init_app(self.flask_app) # Configure Flask app for login with the LoginManager.
             self._init_users() # Initialize the users.
-            self.add_RPC_dict(user.RPC_dict) # Register the RPCs in the user.py module.
+            self.add_RPC_dict(users.RPC_dict) # Register the RPCs in the user.py module.
             
         # If we are including DataStore and tasks, initialize them.    
         if self.config['USE_DATASTORE'] and self.config['USE_TASKS']:
@@ -182,190 +182,19 @@ class ScirisApp(object):
         # ROOT_ABS_DIR setting.
         if not os.path.isabs(self.config['CLIENT_DIR']):
             self.config['CLIENT_DIR'] = os.path.join(self.config['ROOT_ABS_DIR'], self.config['CLIENT_DIR'])
-            
-        # Set the transfer directory path.
-        
-        # If the config parameter is not there (or comment out), set the 
-        # path to None.
-        if 'TRANSFER_DIR' not in self.config:
-            transfer_dir_path = None
-            
-        # Else, if we do not have an absolute directory, tack what we have onto the 
-        # ROOT_ABS_DIR setting.
-        elif not os.path.isabs(self.config['TRANSFER_DIR']):
-            transfer_dir_path = '%s%s%s' % (self.config['ROOT_ABS_DIR'], 
-                os.sep, self.config['TRANSFER_DIR']) 
-            
-        # Else we have a usable absolute path, so use it.
-        else:
-            transfer_dir_path = self.config['TRANSFER_DIR']
-
-        # Set the file save root path.
-        
-        # If the config parameter is not there (or comment out), set the 
-        # path to None.
-        if 'FILESAVEROOT_DIR' not in self.config:
-            file_save_root_path = None
-            
-        # Else, if we do not have an absolute directory, tack what we have onto the 
-        # ROOT_ABS_DIR setting.
-        elif not os.path.isabs(self.config['FILESAVEROOT_DIR']):
-            file_save_root_path = '%s%s%s' % (self.config['ROOT_ABS_DIR'], 
-                os.sep, self.config['FILESAVEROOT_DIR']) 
-            
-        # Else we have a usable absolute path, so use it.            
-        else:  
-            file_save_root_path = self.config['FILESAVEROOT_DIR']
-
-        # Create a file save directory only if we have a path.
-        if file_save_root_path is not None:
-            ds.globalvars.file_save_dir = ds.FileSaveDirectory(file_save_root_path, temp_dir=False)
-        
-        # Create a downloads directory.
-        ds.globalvars.downloads_dir = ds.FileSaveDirectory(transfer_dir_path, temp_dir=True)
-        
-        # Have the uploads directory use the same directory as the downloads 
-        # directory.
-        ds.globalvars.uploads_dir = ds.globalvars.downloads_dir
-        
-        # Show the downloads and uploads directories.
-        if self.config['LOGGING_MODE'] == 'FULL':
-            if file_save_root_path is not None:
-                print('>> File save directory path: %s' % ds.globalvars.file_save_dir.dir_path)
-            print('>> Downloads directory path: %s' % ds.globalvars.downloads_dir.dir_path)
-            print('>> Uploads directory path: %s' % ds.globalvars.uploads_dir.dir_path)
         
         return None
         
     def _init_datastore(self):
         # Create the DataStore object, setting up Redis.
-        ds.globalvars.data_store = ds.DataStore(redis_db_URL=self.config['REDIS_URL'])
-    
-        # Load the DataStore state from disk.
-        ds.globalvars.data_store.load()
-        
-        # Save the directories in the DataStore so Celery can potentially 
-        # have access to them.
-        
-        # If we have a file save directory path...
-        if ds.globalvars.file_save_dir is not None:
-            # Look for an existing file_save_dir UID.
-            file_save_dir_uid = ds.globalvars.data_store.get_uid('filesavedir', 
-                'File Save Directory')
-            
-            # If there was a match, update with the file save directory.
-            if file_save_dir_uid is not None:        
-                ds.globalvars.data_store.update(file_save_dir_uid, 
-                    ds.globalvars.file_save_dir)
+        self.datastore = ds.DataStore(redis_db_URL=self.config['REDIS_URL'])
                 
-            # Otherwise, add the file save directory.
-            else:
-                ds.globalvars.data_store.add(ds.globalvars.file_save_dir, 
-                    type_label='filesavedir', file_suffix='.fsd', 
-                    instance_label='File Save Directory')
-        
-        # Look for an existing downloads_dir UID.
-        downloads_dir_uid = ds.globalvars.data_store.get_uid('filesavedir', 
-            'Downloads Directory')
-        
-        # If there was a match, update with the downloads directory.
-        if downloads_dir_uid is not None:        
-            ds.globalvars.data_store.update(downloads_dir_uid, 
-                ds.globalvars.downloads_dir)
-            
-        # Otherwise, add the downloads directory.
-        else:
-            ds.globalvars.data_store.add(ds.globalvars.downloads_dir, 
-                type_label='filesavedir', file_suffix='.fsd', 
-                instance_label='Downloads Directory')
-        
-        # Look for an existing uploads_dir UID.
-        uploads_dir_uid = ds.globalvars.data_store.get_uid('filesavedir', 
-            'Uploads Directory')
-        
-        # If there was a match, update with the uploads directory.
-        if uploads_dir_uid is not None:        
-            ds.globalvars.data_store.update(uploads_dir_uid, 
-                ds.globalvars.uploads_dir)
-            
-        # Otherwise, add the uploads directory.
-        else:
-            ds.globalvars.data_store.add(ds.globalvars.uploads_dir, 
-                type_label='filesavedir', file_suffix='.fsd', 
-                instance_label='Uploads Directory')
-            
-        # Uncomment this line (for now) to reset the database, and then recomment
-        # before running for usage.
-#        ds.globalvars.data_store.delete_all()
-        
-        # Uncomment this to entirely delete the keys at the Redis link.
-        # Careful in using this one!
-#        ds.data_store.clear_redis_keys()
-        
         if self.config['LOGGING_MODE'] == 'FULL':
             print('>> DataStore initialized at %s' % self.config['REDIS_URL'])
-#            print('>> List of all DataStore handles...')
-#            ds.globalvars.data_store.show_handles()
-#            print('>> List of all Redis keys...')
-#            ds.globalvars.data_store.show_redis_keys()
-            print('>> Loaded datastore with %s Redis keys' % len(ds.globalvars.data_store.redis_db.keys()))
+            print('>> Loaded datastore with %s Redis keys' % len(self.datastore.keys()))
         return None
     
-    def _init_users(self):        
-        # Look for an existing users dictionary.
-        user_dict_uid = ds.globalvars.data_store.get_uid('userdict', 'Users Dictionary')
-        
-        # Create the user dictionary object.  Note, that if no match was found, 
-        # this will be assigned a new UID.
-        user.user_dict = user.UserDict(user_dict_uid)
-        
-        # If there was a match...
-        if user_dict_uid is not None:
-#            if self.config['LOGGING_MODE'] == 'FULL':
-#                print('>> Loading UserDict from the DataStore.')
-            user.user_dict.load_from_data_store() 
-        
-        # Else (no match)...
-        else:
-            if self.config['LOGGING_MODE'] == 'FULL':
-                print('>> Creating a new UserDict.')
-            user.user_dict.add_to_data_store()
-            test_users = user.make_test_users()
-            for test_user in test_users:
-                user.user_dict.add(test_user)
-    
-        # Show all of the users in user_dict.
-        if self.config['LOGGING_MODE'] == 'FULL':
-#            print('>> List of all users...')
-            print('>> Loaded user_dict with %s users' % (len(user.user_dict.keys())))
-            user.user_dict.show()
-            
     def _init_tasks(self):
-        # Look for an existing tasks dictionary.
-        task_dict_uid = ds.globalvars.data_store.get_uid('taskdict', 'Task Dictionary')
-        
-        # Create the task dictionary object.  Note, that if no match was found, 
-        # this will be assigned a new UID.
-        tasks.task_dict = tasks.TaskDict(task_dict_uid)
-        
-        # If there was a match...
-        if task_dict_uid is not None:
-#            if self.config['LOGGING_MODE'] == 'FULL':
-#                print('>> Loading TaskDict from the DataStore.')
-            tasks.task_dict.load_from_data_store() 
-        
-        # Else (no match)...
-        else:
-            if self.config['LOGGING_MODE'] == 'FULL':
-                print('>> Creating a new TaskDict.')
-            tasks.task_dict.add_to_data_store()
-    
-        # Show all of the users in user_dict.
-        if self.config['LOGGING_MODE'] == 'FULL':
-#            print('>> List of all tasks...')
-#            tasks.task_dict.show()
-            print('>> Loaded task_dict with %s tasks' % len(tasks.task_dict.keys()))
-            
         # Have the tasks.py module make the Celery app to connect to the 
         # worker, passing in the config parameters.
         print('** make_celery_instance() _init_tasks() call')
@@ -598,46 +427,31 @@ class ScirisResource(Resource):
     
 def run_twisted(port=8080, flask_app=None, client_dir=None, do_log=False):
     # Give an error if we pass in no Flask server or client path.
-    if (flask_app is None) and (client_dir is None):
+    if (flask_app is None) and (client_dir is None): 
         print('ERROR: Neither client or server are defined.')
         return None
-    
-    # Set up logging.
-    if do_log:
-        globalLogBeginner.beginLoggingTo([
-            FileLogObserver(sys.stdout, lambda _: formatEvent(_) + "\n")])
-
-    # If there is a client path, set up the base resource.
-    if client_dir is not None:
+    if do_log: # Set up logging.
+        globalLogBeginner.beginLoggingTo([FileLogObserver(sys.stdout, lambda _: formatEvent(_) + "\n")])
+    if client_dir is not None: # If there is a client path, set up the base resource.
         base_resource = File(client_dir)
         
     # If we have a flask app...
     if flask_app is not None:
-        # Create a thread pool to use with the app.
-        thread_pool = ThreadPool(maxthreads=30)
-        
-        # Create the WSGIResource object for the flask server.
-        wsgi_app = WSGIResource(reactor, thread_pool, flask_app)
-        
-        # If we have no client path, set the WSGI app to be the base resource.
-        if client_dir is None:
+        thread_pool = ThreadPool(maxthreads=30) # Create a thread pool to use with the app.
+        wsgi_app = WSGIResource(reactor, thread_pool, flask_app) # Create the WSGIResource object for the flask server.
+        if client_dir is None: # If we have no client path, set the WSGI app to be the base resource.
             base_resource = ScirisResource(wsgi_app)
-        # Otherwise, make the Flask app a child resource.
-        else: 
+        else:  # Otherwise, make the Flask app a child resource.
             base_resource.putChild('api', ScirisResource(wsgi_app))
-
-        # Start the threadpool now, shut it down when we're closing
-        thread_pool.start()
+        thread_pool.start() # Start the threadpool now, shut it down when we're closing
         reactor.addSystemEventTrigger('before', 'shutdown', thread_pool.stop)
-    
-    # Create the site.
-    site = Site(base_resource)
-    
-    # Create the endpoint we want to listen on, and point it to the site.
-    endpoint = serverFromString(reactor, "tcp:port=" + str(port))
-    endpoint.listen(site)
 
-    # Start the reactor.
-    reactor.run()  
+    # Create the site.
+    site = Site(base_resource) 
+    endpoint = serverFromString(reactor, "tcp:port=" + str(port)) # Create the endpoint we want to listen on, and point it to the site.
+    endpoint.listen(site)
+    reactor.run() # Start the reactor.
+    return None
+    
     
     

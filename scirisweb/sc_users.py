@@ -67,80 +67,49 @@ def user_register(username, password, displayname, email):
 
 @RPC(validation='named')
 def user_change_info(username, password, displayname, email):
-    # Make a copy of the current_user.
-    the_user = sc.dcp(current_user)
-    
-    # If the password entered doesn't match the current user password, fail.
-    if password != the_user.password:
-        return 'failure'
+    the_user = sc.dcp(current_user) # Make a copy of the current_user.
+    if password != the_user.password: # If the password entered doesn't match the current user password, fail.
+        errormsg = 'Could not change user info: password for user "%s" is incorrect' % username
+        raise Exception(errormsg)
        
-    # If the username entered by the user is different from the current_user
-    # name (meaning they are trying to change the name)...
+    # If the username entered by the user is different from the current_user name (meaning they are trying to change the name)...
     if username != the_user.username:
-        # Get any matching user (if any) to the new username we're trying to 
-        # switch to.
-        matching_user = app.datastore.loaduser(username)
-    
-        # If we have a match, fail because we don't want to rename the user to 
-        # another existing user.
-        if matching_user is not None:
-            return 'failure'
+        matching_user = app.datastore.loaduser(username) # Get any matching user (if any) to the new username we're trying to switch to.
+        if matching_user is not None: # If we have a match, fail because we don't want to rename the user to another existing user.
+            errormsg = 'Could not rename user: user "%s" already exists' % username
+            raise Exception(errormsg)
         
     # Change the user name, display name, email, and instance label.
-    the_user.username = username
+    the_user.username    = username
     the_user.displayname = displayname
-    the_user.email = email
-    the_user.instance_label = username
+    the_user.email       = email
     
     # Update the user in user_dict.
     app.datastore.saveuser(the_user, overwrite=True)
-    
-    # Return success.
     return 'success'
+
 
 @RPC(validation='named') 
 def user_change_password(oldpassword, newpassword):
-    # Make a copy of the current_user.
-    the_user = sc.dcp(current_user)
+    the_user = sc.dcp(current_user) # Make a copy of the current_user.
     
     # If the password entered doesn't match the current user password, fail.
     if oldpassword != the_user.password:
-        return 'failure' 
+        errormsg = 'Could not change password: password for user "%s" is incorrect' % the_user.username
+        raise Exception(errormsg)
     
-    # Change just the password.
-    the_user.password = newpassword
-    
-    # Update the user in user_dict.
-    app.datastore.saveuser(the_user, overwrite=True)
-    
-    # Return success.
+    the_user.password = newpassword # Change just the password.
+    app.datastore.saveuser(the_user, overwrite=True) # Update the user in user_dict.
     return 'success'
 
-@RPC(validation='admin')
-def admin_get_user_info(username):
-    # Get the matching user (if any).
-    matching_user = app.datastore.loaduser(username)
-    
-    # If we don't have a match, fail.
-    if matching_user is None:
-        return 'failure'
-    
-    return matching_user.get_admin_front_end_repr()
 
 @RPC(validation='admin')
 def admin_delete_user(username):
-    # Get the matching user (if any).
-    matching_user = app.datastore.loaduser(username)
-    
-    # If we don't have a match, fail.
-    if matching_user is None:
-        return 'failure'
-    
-    # Delete the user from the dictionary.
-    app.datastore.delete(objtype='user', uid=username)
-
-    # Return success.
+    matching_user = app.datastore.loaduser(username) # Get the matching user (if any).
+    if matching_user is None: return 'failure' # If we don't have a match, fail.
+    app.datastore.delete(objtype='user', uid=username) # Delete the user from the dictionary.
     return 'success'
+
 
 @RPC(validation='admin')
 def admin_activate_account(username):
