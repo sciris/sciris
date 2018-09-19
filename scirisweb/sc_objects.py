@@ -4,11 +4,12 @@ Blobs.py -- classes for Sciris objects which are generally managed
 Last update: 2018sep19
 """
 
-from hashlib import sha224
 import six
+import hashlib
 import sciris as sc
 
 __all__ = ['DSObject', 'Blob', 'User', 'Task']
+
 
 class DSObject(sc.prettyobj):
     ''' A general Sciris object (base class for all such objects). '''
@@ -32,7 +33,6 @@ class DSObject(sc.prettyobj):
         return now
         
 
-
 class Blob(DSObject):
     ''' Wrapper for any Python object we want to store in the DataStore. '''
     
@@ -54,7 +54,6 @@ class Blob(DSObject):
         ''' Load data from the Blob '''
         output = sc.loadstr(self.data)
         return output
-
 
 
 class User(DSObject):
@@ -93,9 +92,8 @@ class User(DSObject):
         # Handle the password
         if six.PY3: raw_password = password.encode('utf-8')
         else:       raw_password = password # Set the raw password and use SHA224 to get the hashed version in hex form.
-        self.password = sha224(raw_password).hexdigest()
+        self.password = hashlib.sha224(raw_password).hexdigest()
         return None
-    
     
     def show(self, verbose=False):
         ''' Display the user's properties '''
@@ -114,7 +112,6 @@ class User(DSObject):
             print('---------------------')
         return None
     
-    
     def jsonify(self, verbose=False):
         ''' Return a JSON-friendly representation of a user '''
         output = {'username':    self.username, 
@@ -128,4 +125,78 @@ class User(DSObject):
                            'is_admin':         self.is_admin,
                            'created':          self.created,
                            'modified':         self.modified[-1]})
+        return output
+
+
+class Task(DSObject):
+    '''
+    A Sciris record for an asynchronous task.
+    
+    Attributes:
+        task_id (str) -- the ID / name for the task that typically is chosen by the client
+        status (str) -- the status of the task:
+            'unknown' : unknown status, for example, just initialized
+            'error': task failed with an actual error
+        error_text (str) -- string giving an idea of what error has transpired
+        func_name (str) -- string of the function name for what's called
+        args (list) -- list containing args for the function
+        kwargs (dict) -- dict containing kwargs for the function
+        result_id (str) -- string for the Redis ID of the AsyncResult
+        queue_time (datetime.datetime) -- the time the task was queued for Celery
+        start_time (datetime.datetime) -- the time the task was actually started
+        stop_time (datetime.datetime) -- the time the task completed
+        pending_time (int) -- the time the process has been waiting to be executed on the server in seconds        
+        execution_time (int) -- the time the process required to complete
+    '''
+    
+    def  __init__(self, task_id):
+        # General initialization
+        DSObject.__init__(self, objtype='task', uid=task_id) # Set superclass parameters.
+        
+        # Set other properties
+        self.task_id        = task_id # Set the task ID (what the client typically knows as the task).
+        self.status         = 'unknown' # Start the status at 'unknown'.
+        self.error_text     = None # Start the error_text at None.
+        self.func_name      = None # Start the func_name at None.
+        self.args           = None # Start the args and kwargs at None.
+        self.kwargs         = None
+        self.result_id      = None # Start with no result_id.
+        self.queue_time     = None # Start the queue, start, and stop times at None.
+        self.start_time     = None
+        self.stop_time      = None
+        self.pending_time   = None # Start the pending and execution times at None.
+        self.execution_time = None
+        return None
+    
+    def show(self):
+        print('-----------------------------')
+        print('        Task ID: %s'   % self.task_id)
+        print('         Status: %s'   % self.status)
+        print('     Error text: %s'   % self.error_text)
+        print('  Function name: %s'   % self.func_name)
+        print('  Function args: %s'   % self.args)
+        print('Function kwargs: %s'   % self.kwargs)        
+        print('      Result ID: %s'   % self.result_id)
+        print('     Queue time: %s'   % self.queue_time)        
+        print('     Start time: %s'   % self.start_time)
+        print('      Stop time: %s'   % self.stop_time)
+        print('   Pending time: %s s' % self.pending_time)        
+        print(' Execution time: %s s' % self.execution_time)  
+        print('-----------------------------')
+    
+    def jsonify(self):
+        output = {'UID':           self.uid,                    
+                  'taskId':        self.task_id,
+                  'status':        self.status,
+                  'errorText':     self.error_text,
+                  'funcName':      self.func_name,
+                  'funcArgs':      self.args,
+                  'funcKwargs':    self.kwargs,
+                  'resultId':      self.result_id,
+                  'queueTime':     self.queue_time,                
+                  'startTime':     self.start_time,
+                  'stopTime':      self.stop_time,
+                  'pendingTime':   self.pending_time,
+                  'executionTime': self.execution_time                
+        }
         return output
