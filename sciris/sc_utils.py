@@ -285,7 +285,7 @@ def indent(prefix=None, text=None, suffix='\n', n=0, pretty=False, simple=True, 
     
 
 
-def sigfig(X, sigfigs=5, SI=False, sep=False):
+def sigfig(X, sigfigs=5, SI=False, sep=False, keepints=False):
     '''
     Return a string representation of variable x with sigfigs number of significant figures -- 
     copied from asd.py.
@@ -319,6 +319,11 @@ def sigfig(X, sigfigs=5, SI=False, sep=False):
                 output.append('0')
             elif sigfigs is None:
                 output.append(flexstr(x)+suffix)
+            elif x>(10**sigfigs) and not SI and keepints: # e.g. x = 23432.23, sigfigs=3, output is 23432
+                roundnumber = int(round(x))
+                if sep: string = format(roundnumber, ',')
+                else:   string = '%0.0f' % x
+                output.append(string)
             else:
                 magnitude = np.floor(np.log10(abs(x)))
                 factor = 10**(sigfigs-magnitude-1)
@@ -550,6 +555,8 @@ def slacknotification(to=None, message=None, fromuser=None, token=None, verbose=
         with open(os.path.expanduser(token)) as f: slackurl = f.read()
     elif token.find('slack')>=0: # It seems to be a URL, let's proceed
         slackurl = token
+    elif os.getenv('SLACKURL'): # See if it's set in the user's environment variables
+        slackurl = os.getenv('SLACKURL')
     else:
         slackurl = token # It doesn't seemt to be a URL but let's try anyway
         errormsg = '"%s" does not seem to be a valid Slack URL/token string or file' % token
