@@ -29,28 +29,15 @@ RPC = rpcs.makeRPCtag(RPC_dict) # RPC registration decorator factory created usi
 ### Functions and RPCs
 ##############################################################
 
-__all__ += ['get_scirisdemo_user', 'user_login', 'user_logout', 'get_current_user_info', 'get_all_users', 'user_register']
+__all__ += ['user_login', 'user_logout', 'user_register']
 __all__ += ['user_change_info', 'user_change_password', 'admin_get_user_info', 'admin_delete_user', 'admin_activate_account']
 __all__ += ['admin_deactivate_account', 'admin_grant_admin', 'admin_revoke_admin', 'admin_reset_password', 'make_test_users']
-
-def get_scirisdemo_user(name='_ScirisDemo'):    
-    # Get the user object matching (if any)...
-    the_user = user_dict.get_user_by_username(name)
-    
-    # If there is a match, return the UID, otherwise return None.
-    if the_user is not None:
-        return the_user.get_id()
-    else:
-        return None
 
         
 @RPC()
 def user_login(username, password):  
     # Get the matching user (if any).
     matching_user = user_dict.get_user_by_username(username)
-    
-    print('TEMP: Matching user:')
-    print(matching_user)
     
     # If we have a match and the password matches, and the account is active,
     # also, log in the user and return success; otherwise, return failure.
@@ -63,25 +50,13 @@ def user_login(username, password):
     else:
         return 'failure'
     
+    
 @RPC(validation='named')       
 def user_logout():
-    # Log the user out and set the session to having an anonymous user.
-    logout_user()
-    
-    # Clear the session cookie.
-    session.clear()
-    
-    # Return nothing.
-    return None
+    logout_user() # Log the user out and set the session to having an anonymous user.
+    session.clear() # Clear the session cookie.
+    return None # Return nothing.
 
-@RPC(validation='named') 
-def get_current_user_info(): 
-    return current_user.get_user_front_end_repr()
-
-@RPC(validation='admin')
-def get_all_users():
-    # Return success.
-    return user_dict.get_admin_front_end_repr()
 
 @RPC()
 def user_register(username, password, displayname, email): 
