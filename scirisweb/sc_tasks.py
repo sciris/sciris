@@ -10,7 +10,6 @@ from celery import Celery
 from time import sleep
 import sciris as sc
 import scirisweb as sw
-#from . import sc_datastore as ds
 from . import sc_rpcs as rpcs
 
 
@@ -18,9 +17,8 @@ from . import sc_rpcs as rpcs
 ### Globals
 ################################################################################
 
-__all__ = ['task_dict', 'celery_instance'] # Others for internal use only
+__all__ = ['celery_instance'] # Others for internal use only
 
-task_dict = None # The TaskDict object for all of the app's existing asynchronous tasks. Gets initialized by and loaded by init_tasks().
 task_func_dict = {} # Dictionary to hold registered task functions to be callable from run_task().
 RPC_dict = {} # Dictionary to hold all of the registered RPCs in this module.
 RPC = rpcs.makeRPCtag(RPC_dict) # RPC registration decorator factory created using call to make_RPC().
@@ -117,6 +115,7 @@ __all__ += ['make_celery_instance', 'add_task_funcs', 'check_task', 'get_task_re
 # passing back the same result. for the benefit of callers in non-Sciris 
 # modules.
 def make_celery_instance(config=None):
+    from . import sc_datastore as ds # This needs to be here to avoid a circular import
     global celery_instance
     global run_task_lock
     
@@ -129,9 +128,12 @@ def make_celery_instance(config=None):
     if config is not None:
         celery_instance.config_from_object(config)
     
-    # Configure so that the actual start of a task is tracked.
-    # This may work only under version 3.1.25
-#    celery_instance.conf.CELERY_TRACK_STARTED = True
+    # Only if we have not already done so, create the DataStore object, setting up Redis.
+    try:
+        datastore = sw.flaskapp.datastore
+        assert datastore is not None
+    except:
+        datastore = ds.DataStore(redis_url=config.REDIS_URL)
     
     def lock_run_task(task_id):
         global run_task_lock
@@ -167,41 +169,14 @@ def make_celery_instance(config=None):
         # (in which this function is running) will not know about the same context 
         # from the datastore.py module that the server code will.
         
-        # Only if we have not already done so, create the DataStore object, 
-        # setting up Redis.
-        if sw.flaskapp.datastore is None:
-            # Create the DataStore object, setting up Redis.
-            sw.flaskapp.datastore = ds.DataStore(redis_db_URL=config.REDIS_URL)
-            
         # Check if run_task() locked and wait until it isn't, then lock it for 
         # other run_task() instances in this Celery worker.
         lock_run_task(task_id)
         
         print('>>> EFFECTIVE START OF run_task() FOR %s' % task_id)
-        
-        # Load the DataStore state from disk. 
-        # NOTE: This could corrupt DataStore access by concurrently active 
-        # run_task() instances running in the same Celery worker because it 
-        # overwrites ds.globalvars.data_store with the new disk state.
-        # For this reason, locking needs to be done to prevent this, although 
-        # the locking should allow run_task() instances on separate Celery 
-        # workers to run concurrently.
-        print('>>> LOADING DATASTORE FOR %s' % task_id)
-        sw.flaskapp.datastore.load()
-        
-        # Look for an existing tasks dictionary.
-        task_dict_uid = sw.flaskapp.datastore.get_uid('taskdict', 'Task Dictionary')
-        
-        # Create the task dictionary object.
-        task_dict = TaskDict(task_dict_uid)
-        
-        # Load the TaskDict tasks from Redis.
-        task_dict.load_from_data_store()
-        print('>>> FINISHED LOADING DATASTORE FOR %s' % task_id)
-        task_dict.show()  # TODO: remove this post-debugging
-            
+
         # Find a matching task record (if any) to the task_id.
-        match_taskrec = task_dict.get_task_record_by_task_id(task_id)
+        match_taskrec = datastore.loadtask(task_id)
         if match_taskrec is None:
             print('>>> FAILED TO FIND TASK RECORD FOR %s' % task_id)
             unlock_run_task(task_id)
@@ -210,8 +185,7 @@ def make_celery_instance(config=None):
         # Set the TaskRecord to indicate start of the task.
         match_taskrec.status = 'started'
         match_taskrec.start_time = sc.now()
-        match_taskrec.pending_time = \
-            (match_taskrec.start_time - match_taskrec.queue_time).total_seconds()
+        match_taskrec.pending_time = (match_taskrec.start_time - match_taskrec.queue_time).total_seconds()
             
         print('>>> BEFORE STARTED UPDATE OF TASK RECORD FOR %s' % task_id)
         
@@ -219,34 +193,18 @@ def make_celery_instance(config=None):
         # NOTE: At the moment the TaskDict on disk is not modified here, which 
         # which is a good thing because that could disrupt actiities in other 
         # run_task() instances.
-        task_dict.update(match_taskrec)
+        datastore.savetask(match_taskrec)
         print('>>> AFTER STARTED UPDATE OF TASK RECORD FOR %s' % task_id)
         
         # Make the actual function call, inside a try block in case there is 
         # an exception thrown.
         # NOTE: This block is likely to run for several seconds or even 
         # minutes or hours, depending on the task.
-        
-        # WARNING: It is a very bad idea to have any calls in your task code 
-        # that modify data_store.handle_dict.  That includes calls that add 
-        # new entries to a BlobDict where the entries are kept external from 
-        # the BlobDict object.  Writing to handle_dict will lead to conflicts 
-        # with the webapp process, which has long stretches between reading in  
-        # the handle_dict state and modifying it, during which Celery task 
-        # worker writes to handle_dict will end up in lost modifications.
-        
-        # NOTE / WARNING: The function being called which the result is being 
-        # taken from may rely on the contents of the DataStore.
-#        print('Available task_funcs:')
-#        print(task_func_dict)     
         try:
             result = task_func_dict[func_name](*args, **kwargs)
             match_taskrec.status = 'completed'
             print('>>> SUCCESSFULLY COMPLETED TASK %s' % task_id)
-
-        # If there's an exception, grab the stack track and set the TaskRecord 
-        # to have stopped on in error.
-        except Exception:
+        except Exception: # If there's an exception, grab the stack track and set the TaskRecord to have stopped on in error.
             error_text = traceback.format_exc()
             match_taskrec.status = 'error'
             match_taskrec.error_text = error_text
@@ -257,10 +215,8 @@ def make_celery_instance(config=None):
         # NOTE: Even if the browser has ordered the deletion of the task 
         # record, it will be "resurrected" during this update, so the 
         # delete_task() RPC may not always work as expected.
-        # TODO: Check to see if this is still true. (8/29/18)
         match_taskrec.stop_time = sc.now()
-        match_taskrec.execution_time = \
-            (match_taskrec.stop_time - match_taskrec.start_time).total_seconds()
+        match_taskrec.execution_time = (match_taskrec.stop_time - match_taskrec.start_time).total_seconds()
         print('>>> BEFORE FINISHED UPDATE OF TASK RECORD FOR %s' % task_id)
         
         # Do the actual update of the TaskRecord.  Do this in a try / except 
@@ -270,7 +226,7 @@ def make_celery_instance(config=None):
         # which is a good thing because that could disrupt actiities in other 
         # run_task() instances.
         try:
-            task_dict.update(match_taskrec)           
+            datastore.savetask(match_taskrec)         
         except Exception:
             error_text = traceback.format_exc()
             match_taskrec.status = 'error'
@@ -301,12 +257,8 @@ def make_celery_instance(config=None):
 #        print('Here are the celery_instance tasks:')
 #        print celery_instance.tasks
 
-        # Reload the whole TaskDict from the DataStore because Celery may have 
-        # modified its state in Redis (in particular, modified the TaskRecords).
-        task_dict.load_from_data_store()
-        
         # Find a matching task record (if any) to the task_id.
-        match_taskrec = task_dict.get_task_record_by_task_id(task_id)
+        match_taskrec = datastore.loadtask(task_id)
               
         # If we did not find a match...
         if match_taskrec is None:
@@ -319,7 +271,7 @@ def make_celery_instance(config=None):
                 }
             else:
                 # Create a new TaskRecord.
-                new_task_record = TaskRecord(task_id)
+                new_task_record = Task(task_id)
                 
                 # Initialize the TaskRecord with available information.
                 new_task_record.status = 'queued'
@@ -329,17 +281,17 @@ def make_celery_instance(config=None):
                 new_task_record.kwargs = kwargs
                 
                 # Add the TaskRecord to the TaskDict.
-                task_dict.add(new_task_record) 
+                datastore.savetask(new_task_record) 
                 
                 # Queue up run_task() for Celery.
                 my_result = run_task.delay(task_id, func_name, args, kwargs)
                 
                 # Add the result ID to the TaskRecord, and update the DataStore.
                 new_task_record.result_id = my_result.id
-                task_dict.update(new_task_record)
+                datastore.savetask(new_task_record)
                 
                 # Create the return dict from the user repr.
-                return_dict = new_task_record.get_user_front_end_repr()
+                return_dict = new_task_record.jsonify()
             
         # Otherwise (there is a matching task)...
         else:
@@ -373,7 +325,7 @@ def make_celery_instance(config=None):
                 task_dict.update(match_taskrec)
                 
                 # Create the return dict from the user repr.
-                return_dict = match_taskrec.get_user_front_end_repr()
+                return_dict = match_taskrec.jsonify()
                 
             # Else (the task is not completed)...
             else:
@@ -391,17 +343,12 @@ def make_celery_instance(config=None):
 def add_task_funcs(new_task_funcs):
     global task_func_dict
     
-    # For all of the keys in the dict passed in, put the key/value pairs in 
-    # the global dict.
+    # For all of the keys in the dict passed in, put the key/value pairs in the global dict.
     for key in new_task_funcs:
         task_func_dict[key] = new_task_funcs[key]
   
 @RPC(validation='named') 
 def check_task(task_id): 
-    # Reload the whole TaskDict from the DataStore because Celery may have 
-    # modified its state in Redis (in particular, modified the TaskRecords).
-    task_dict.load_from_data_store()
-    
     # Find a matching task record (if any) to the task_id.
     match_taskrec = task_dict.get_task_record_by_task_id(task_id)
     
@@ -431,7 +378,7 @@ def check_task(task_id):
             execution_time = 0
         
         # Create the return dict from the user repr.
-        taskrec_dict = match_taskrec.get_user_front_end_repr()
+        taskrec_dict = match_taskrec.jsonify()
         taskrec_dict['pendingTime'] = pending_time
         taskrec_dict['executionTime'] = execution_time
         
