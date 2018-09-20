@@ -7,7 +7,6 @@ Last update: 2018sep20
 from flask import Flask, session, current_app as app # analysis:ignore
 from flask_login import current_user, login_user, logout_user
 import six
-import hashlib
 import sciris as sc
 from . import sc_rpcs as rpcs
 
@@ -66,7 +65,7 @@ class User(sc.prettyobj):
         # Handle the password
         if password is None and raw_password is not None:
             if six.PY3: raw_password = raw_password.encode('utf-8')
-            password = hashlib.sha224(raw_password).hexdigest()
+            password = sc.sha(raw_password).hexdigest()
         self.password = password
         return None
     
@@ -116,7 +115,7 @@ class User(sc.prettyobj):
 
 __all__ += ['save_user', 'load_user', 'user_login', 'user_logout', 'user_register']
 __all__ += ['user_change_info', 'user_change_password', 'admin_delete_user', 'admin_activate_account']
-__all__ += ['admin_deactivate_account', 'admin_grant_admin', 'admin_revoke_admin', 'admin_reset_password', 'make_test_users']
+__all__ += ['admin_deactivate_account', 'admin_grant_admin', 'admin_revoke_admin', 'admin_reset_password', 'make_default_users']
 
 
 
@@ -309,7 +308,7 @@ def admin_reset_password(username):
     
     # Set the password to the desired raw password for them to use.
     raw_password = 'sciris'
-    matching_user.password = hashlib.sha224(raw_password).hexdigest() 
+    matching_user.password = sc.sha(raw_password).hexdigest() 
     app.datastore.saveuser(matching_user, overwrite=True)
     
     # Return success.
@@ -321,11 +320,13 @@ def get_current_user_info():
     return current_user.jsonify()
 
 
-def make_test_users(include_admin=False):
+def make_default_users(include_admin=False):
     # Create two test Users that can get added
-    test_user = User('demo', 'demo', 'Demo', 'demo@sciris.org', uid='abcdef0123456789')
+    test_user = User(username='demo', raw_password='demo', uid='abcdef0123456789')
     users = [test_user]
     if include_admin:
-        admin_user = User('admin', 'admin', 'Admin', 'admin@sciris.org', is_admin=True, uid='00112233445566778899')
+        admin_user = User(username='admin', raw_password='admin', uid='00112233445566778899', is_admin=True)
         users.append(admin_user)
+    for user in users:
+        app.datastore.saveuser(user) # Save the user
     return users

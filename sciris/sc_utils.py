@@ -4,13 +4,16 @@
 
 import os
 import sys
-import numpy as np
-import uuid as py_uuid
+import six
 import copy
 import time
+import pprint
+import hashlib
 import datetime
 import dateutil
-import pprint
+import numbers
+import numpy as np
+import uuid as py_uuid
 from textwrap import fill
 from functools import reduce
 from psutil import cpu_percent
@@ -18,13 +21,12 @@ from subprocess import Popen, PIPE
 from collections import OrderedDict as OD
 
 # Handle types and Python 2/3 compatibility
-import six
 _stringtype = six.string_types[0]
-from numbers import Number as _numtype
+_numtype    = numbers.Number
 
 
 # Define the modules being loaded
-__all__ = ['uuid', 'dcp', 'cp', 'pp']
+__all__ = ['uuid', 'dcp', 'cp', 'pp', 'sha']
 
 
 def uuid(uid=None, which=None, die=False, as_string=False):
@@ -86,7 +88,10 @@ def pp(obj):
     return None
 
 
-
+def sha(string, *args, **kwargs):
+    ''' Shortcut for the standard hashing (SHA) method '''
+    output = hashlib.sha224(string, *args, **kwargs)
+    return output
 
 ##############################################################################
 ### PRINTING/NOTIFICATION FUNCTIONS
