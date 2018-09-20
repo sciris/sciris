@@ -134,22 +134,21 @@ def load_user():
 
 @RPC()
 def user_login(username, password):  
-    matching_user = app.datastore.loaduser(username) # Get the matching user (if any).
-    
-    matching_user.show(verbose=True)  # TEMP
+    matching_user = app.datastore.loaduser(username, die=False) # Get the matching user (if any).
     
     # If we have a match and the password matches, and the account is active, also, log in the user and return success; otherwise, return failure.
-    if matching_user and matching_user.password==password and matching_user.is_active:
+    password_match = matching_user.password==password
+    is_active = matching_user.is_active
+    if matching_user and password_match and is_active:
         login_user(matching_user) # Log the user in.
+        matching_user.show(verbose=True)
+        return 'success'
     else:
-        if not matching_user:
-            errormsg = 'Could not log in: user "%s" does not exist' % username
-        elif not matching_user.password==password: 
-            errormsg = 'Could not log in: password for user "%s" is incorrect (%s vs %s TEMP)' % (username, matching_user.password, password)
-        elif not matching_user.is_active:
-            errormsg = 'Could not log in: user "%s" is inactive' % username
-        raise Exception(errormsg)
-    return 'success' 
+        if   not matching_user:  errormsg = 'Login failed: user "%s" does not exist.' % username
+        elif not password_match: errormsg = 'Login failed: password for user "%s" is incorrect.' % username
+        elif not is_active:      errormsg = 'Login failed: user "%s" is inactive.' % username
+        return errormsg
+    
     
     
 @RPC(validation='named')
@@ -163,8 +162,8 @@ def user_logout():
 def user_register(username, password, displayname, email): 
     matching_user = app.datastore.loaduser(username, die=False) # Get the matching user (if any).
     if matching_user is not None: # If we have a match, fail because we don't want to register an existing user.
-        errormsg = 'Could not register user: user "%s" already exists' % username
-        raise Exception(errormsg)
+        errormsg = 'User registration failed: user "%s" already exists' % username
+        return errormsg
     new_user = User(username=username, password=password, displayname=displayname, email=email) # Create a new User object with the new information.
     new_user.is_active = app.config['REGISTER_AUTOACTIVATE'] # Optionally set the user to be inactive (so an admin user needs to activate it)
     app.datastore.saveuser(new_user) # Save the user
@@ -175,15 +174,15 @@ def user_register(username, password, displayname, email):
 def user_change_info(username, password, displayname, email):
     the_user = sc.dcp(current_user) # Make a copy of the current_user.
     if password != the_user.password: # If the password entered doesn't match the current user password, fail.
-        errormsg = 'Could not change user info: password for user "%s" is incorrect' % username
-        raise Exception(errormsg)
+        errormsg = 'User info change failed: password for user "%s" is incorrect.' % username
+        return errormsg
        
     # If the username entered by the user is different from the current_user name (meaning they are trying to change the name)...
     if username != the_user.username:
         matching_user = app.datastore.loaduser(username) # Get any matching user (if any) to the new username we're trying to switch to.
         if matching_user is not None: # If we have a match, fail because we don't want to rename the user to another existing user.
-            errormsg = 'Could not rename user: user "%s" already exists' % username
-            raise Exception(errormsg)
+            errormsg = 'User rename failed: user "%s" already exists.' % username
+            return errormsg
         
     # Change the user name, display name, email, and instance label.
     the_user.username    = username
@@ -201,8 +200,8 @@ def user_change_password(oldpassword, newpassword):
     
     # If the password entered doesn't match the current user password, fail.
     if oldpassword != the_user.password:
-        errormsg = 'Could not change password: password for user "%s" is incorrect' % the_user.username
-        raise Exception(errormsg)
+        errormsg = 'Password change failed: password for user "%s" is incorrect.' % the_user.username
+        return errormsg
     
     the_user.password = newpassword # Change just the password.
     app.datastore.saveuser(the_user, overwrite=True) # Update the user in user_dict.
