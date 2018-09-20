@@ -14,7 +14,12 @@ if 'datastore' in torun:
     testkey = 'testkey'
     ds = sw.DataStore(verbose=True)
     testdata = sc.odict({'foo':[1,2,3], 'bar':[4,5,6]})
-    ds.saveblob(data=testdata, key=testkey)
+    key = ds.saveblob(obj=testdata, key=testkey)
     dataout = ds.loadblob(testkey)
-    ds.delete(testkey)
+    success = ds.delete(testkey)
+    failure = ds.delete(testkey+'foo')
     assert testdata == dataout
+    assert key == testkey
+    assert success == 1
+    assert failure == 0
+    

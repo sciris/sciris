@@ -20,9 +20,9 @@ from .sc_users import User
 from .sc_tasks import Task
 
 # Global variables
-default_url         = 'redis://localhost:6379/' # The default URL for the Redis database
+default_url         = 'redis://127.0.0.1:6379/' # The default URL for the Redis database
 default_settingskey = '!DataStoreSettings'      # Key for holding DataStore settings
-default_separator   = '=>'                     # Define the separator between a key type and uid
+default_separator   = '::'                     # Define the separator between a key type and uid
 
 
 #################################################################
@@ -35,16 +35,15 @@ __all__ = ['Blob', 'DataStoreSettings', 'DataStore']
 class Blob(sc.prettyobj):
     ''' Wrapper for any Python object we want to store in the DataStore. '''
     
-    def __init__(self, obj=None, key=None, objtype=None, uid=None, force=False):
+    def __init__(self, obj=None, key=None, objtype=None, uid=None, force=True):
         # Handle input arguments
-        if objtype is None: objtype = 'blob'
         if uid is None: 
             if force:
                 uid = sc.uuid()
             else:
                 errormsg = 'DataStore: Not creating a new Blob UUID since force is set to False: key=%s, objtype=%s, uid=%s, obj=%s' % (key, objtype, uid, obj)
                 raise Exception(errormsg)
-        if key is None: key = '%s%s%s' % (objtype, default_separator, uid)
+        if not key: key = '%s%s%s' % (objtype, default_separator, uid)
         
         # Set attributes
         self.key      = key
@@ -85,7 +84,7 @@ class DataStoreSettings(sc.prettyobj):
         self.separator  = separator
         
         # 2. Existing settings
-        if settings is None:
+        if not settings:
             self.is_new    = True
             old_tempfolder = None
             old_separator  = None
@@ -102,10 +101,10 @@ class DataStoreSettings(sc.prettyobj):
         tempfolder_list = [old_tempfolder, def_tempfolder]
         separator_list  = [old_separator,  def_separator]
         for folder in tempfolder_list:
-            if self.tempfolder is None:
+            if not self.tempfolder:
                 self.tempfolder = folder
         for sep in separator_list:
-            if self.separator is None:
+            if not self.separator:
                 self.separator = sep
         
         return None
@@ -118,7 +117,7 @@ class DataStore(sc.prettyobj):
         ''' Establishes data-structure wrapping a particular Redis URL. '''
         
         # Handle the Redis URL
-        if redis_url is None:        redis_url = default_url + '0' # e.g. sw.DataStore()
+        if not redis_url:            redis_url = default_url + '0' # e.g. sw.DataStore()
         elif sc.isnumber(redis_url): redis_url = default_url + '%i'%redis_url # e.g. sw.DataStore(3)
         self.redis_url  = redis_url
         self.tempfolder = None # Populated by self.settings()
@@ -137,7 +136,7 @@ class DataStore(sc.prettyobj):
     
     def settings(self, settingskey=None, redis_url=None, tempfolder=None, separator=None):
         ''' Handle the DataStore settings '''
-        if settingskey is None: settingskey = default_settingskey
+        if not settingskey: settingskey = default_settingskey
         settings = DataStoreSettings(settings=self.get(settingskey), tempfolder=tempfolder, separator=separator)
         self.tempfolder = settings.tempfolder
         self.separator  = settings.separator
@@ -172,20 +171,19 @@ class DataStore(sc.prettyobj):
         '''
         
         # Get any missing properties from the object
-        if obj is not None: # Populate any missing values from the object
-            if key     is None and hasattr(obj, 'key'):     key     = obj.key
-            if objtype is None and hasattr(obj, 'objtype'): objtype = obj.objtype
-            if uid     is None and hasattr(obj, 'uid'):     uid     = obj.uid
+        if obj: # Populate any missing values from the object
+            if not key     and hasattr(obj, 'key'):     key     = obj.key
+            if not objtype and hasattr(obj, 'objtype'): objtype = obj.objtype
+            if not uid     and hasattr(obj, 'uid'):     uid     = obj.uid
         
         
         # Optionally force non-None objtype and uid
-        if forcecreate:
-            if objtype is None: objtype = 'object'
-            if uid     is None: uid     = str(sc.uuid())
+        if forcecreate and not uid: 
+            uid = str(sc.uuid())
         
         # Construct the key if it doesn't exist
-        if key is None: # Only worry about the key if none is provided
-            if objtype is not None and uid is not None:
+        if not key: # Only worry about the key if none is provided
+            if objtype and uid:
                 key = self.makekey(objtype=objtype, uid=uid)
             else:
                 errormsg = 'To create a key, you must either specify the key, or the objtype and the uid, or use an object with these'
@@ -193,7 +191,7 @@ class DataStore(sc.prettyobj):
         
         # If a uid is supplied as a key, turn it into a key
         splitkey = key.split(self.separator)
-        if objtype is not None:
+        if objtype:
             if splitkey[0] != objtype: # The prefix doesn't match
                 if len(splitkey)==2: # It's the right length, though
                     errormsg = 'DataStore: you have requested object "%s" of type "%s", but type is "%s"' % (key, objtype, splitkey[0])
@@ -204,13 +202,12 @@ class DataStore(sc.prettyobj):
         # Determine the objtype and uid from the key
         if fulloutput:
             if len(splitkey)==2:
-                if objtype and objtype  != splitkey[0]: print('Key warning: requested objtypes do not match (%s vs. %s)' % (objtype, splitkey[0]))
-                if uid     and str(uid) != splitkey[1]: print('Key warning: requested UIDs do not match (%s vs. %s)'     % (uid,     splitkey[1]))
+                if objtype and objtype != splitkey[0]: 
+                    if self.verbose: print('DataStore key warning: requested objtypes do not match (%s vs. %s)' % (objtype, splitkey[0]))
+                if uid     and str(uid) != splitkey[1]:
+                    if self.verbose: print('DataStore key warning: requested UIDs do not match (%s vs. %s)'     % (uid,     splitkey[1]))
                 objtype = splitkey[0]
                 uid  = splitkey[1]
-            elif (objtype is None or uid is None):
-                errormsg = 'Warning: could not split key "%s" into objtype and uid using separator "%s"' % (key, self.separator)
-                print(errormsg) # Still warn, but don't crash
         
         # Return what we need to return
         if fulloutput: return key, objtype, uid
@@ -229,7 +226,7 @@ class DataStore(sc.prettyobj):
         ''' Alias to redis.get() '''
         key = self.getkey(key, objtype, uid, obj)
         objstr = self.redis.get(key)
-        if objstr is not None:
+        if objstr:
             output = sc.loadstr(objstr)
         else:                  
             if die:
@@ -240,8 +237,9 @@ class DataStore(sc.prettyobj):
         return output
     
     
-    def delete(self, key=None, obj=None, objtype=None, uid=None):
+    def delete(self, key=None, obj=None, objtype=None, uid=None, die=None):
         ''' Alias to redis.delete() '''
+        if die is None: die = True
         key = self.getkey(key, objtype, uid, obj)
         output = self.redis.delete(key)
         if self.verbose: print('DataStore: deleted key %s' % key)
@@ -290,13 +288,14 @@ class DataStore(sc.prettyobj):
         return None
         
     
-    def saveblob(self, obj, key=None, objtype=None, uid=None, overwrite=True):
+    def saveblob(self, obj, key=None, objtype=None, uid=None, overwrite=True, die=None):
         '''
         Add a new or update existing Blob in Redis, returns key. If key is None, 
         constructs a key from the Blob (objtype:uid); otherwise, updates the Blob with the 
         provided key.
         '''
-        key, objtype, uid = self.getkey(key, objtype, uid, obj, forcecreate=True, fulloutput=True)
+        if die is None: die = True
+        key, objtype, uid = self.getkey(key, objtype, uid, obj, forcecreate=False, fulloutput=True)
         blob = self.get(key)
         if blob:
             self._checktype(key, blob, 'Blob')
@@ -304,7 +303,8 @@ class DataStore(sc.prettyobj):
                 blob.save(obj)
             else:
                 errormsg = 'DataStore: Blob %s already exists and overwrite is set to False' % key
-                raise Exception(errormsg)
+                if die: raise Exception(errormsg)
+                else:   print(errormsg)
         else:
             blob = Blob(key=key, objtype=objtype, uid=uid, obj=obj)
         self.set(key=key, obj=blob)
@@ -318,7 +318,7 @@ class DataStore(sc.prettyobj):
         key = self.getkey(key, objtype, uid)
         blob = self.get(key)
         if die: self._checktype(key, blob, 'Blob')
-        if blob is not None:
+        if isinstance(blob, Blob):
             obj = blob.load()
             if self.verbose: print('DataStore: Blob "%s" loaded' % key)
             return obj
@@ -327,19 +327,23 @@ class DataStore(sc.prettyobj):
             return None
     
     
-    def saveuser(self, user, overwrite=True):
+    def saveuser(self, user, overwrite=True, die=None):
         '''
         Add a new or update existing User in Redis, returns key.
         '''
+        if die is None: die = True
         key, objtype, username = self.getkey(objtype='user', uid=user.username, fulloutput=True)
         olduser = self.get(key)
         if olduser and not overwrite:
-            errormsg = 'DataStore: User %s already exists' % key
-            raise Exception(errormsg)
+            errormsg = 'DataStore: User %s already exists, not overwriting' % key
+            if die: raise Exception(errormsg)
+            else:   print(errormsg)
         else:
             self._checktype(key, user, 'User')
             self.set(key=key, obj=user)
-        if self.verbose: print('DataStore: User "%s" saved' % key)
+            if self.verbose:
+                if olduser: print('DataStore: User "%s" updated' % key)
+                else:       print('DataStore: User "%s" created' % key)
         return key
     
     
@@ -349,7 +353,7 @@ class DataStore(sc.prettyobj):
         key = self.getkey(key=key, objtype='user', uid=username)
         user = self.get(key)
         if die: self._checktype(key, user, 'User')
-        if user is not None:
+        if isinstance(user, User):
             if self.verbose: print('DataStore: User "%s" loaded' % key)
             return user
         else:
@@ -379,7 +383,7 @@ class DataStore(sc.prettyobj):
         key = self.getkey(key=key, objtype='task', uid=uid)
         task = self.get(key)
         if die: self._checktype(key, task, 'Task')
-        if task is not None:
+        if isinstance(task, Task):
             if self.verbose: print('DataStore: Task "%s" loaded' % key)
             return task
         else:

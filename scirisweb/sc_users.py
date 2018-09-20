@@ -63,7 +63,7 @@ class User(sc.prettyobj):
         self.is_admin         = is_admin # Set whether this user has admin rights.
         
         # Handle the password
-        if password is None and raw_password is not None:
+        if raw_password is not None:
             if six.PY3: raw_password = raw_password.encode('utf-8')
             password = sc.sha(raw_password).hexdigest()
         self.password = password
@@ -328,5 +328,5 @@ def make_default_users(app, include_admin=False):
         admin_user = User(username='admin', raw_password='admin', uid='00112233445566778899', is_admin=True)
         users.append(admin_user)
     for user in users:
-        app.datastore.saveuser(user) # Save the user
+        app.datastore.saveuser(user, overwrite=False, die=False) # Save the user
     return users
