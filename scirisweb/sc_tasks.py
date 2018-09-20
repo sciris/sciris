@@ -19,6 +19,7 @@ from . import sc_rpcs as rpcs
 
 __all__ = ['celery_instance'] # Others for internal use only
 
+datastore = None
 task_func_dict = {} # Dictionary to hold registered task functions to be callable from run_task().
 RPC_dict = {} # Dictionary to hold all of the registered RPCs in this module.
 RPC = rpcs.makeRPCtag(RPC_dict) # RPC registration decorator factory created using call to make_RPC().
@@ -119,7 +120,11 @@ def get_datastore(config=None):
         datastore = sw.flaskapp.datastore
         assert datastore is not None
     except:
-        datastore = ds.DataStore(redis_url=config.REDIS_URL)
+        if isinstance(config, dict):
+            redis_url = config['REDIS_URL']
+        else:
+            redis_url = config.REDIS_URL
+        datastore = ds.DataStore(redis_url=redis_url)
     return datastore
 
 
@@ -130,6 +135,7 @@ def make_celery_instance(config=None):
     
     global celery_instance
     global run_task_lock
+    global datastore # So it's accessible in other functions
     
     run_task_lock = False
     
@@ -356,9 +362,7 @@ def add_task_funcs(new_task_funcs):
         task_func_dict[key] = new_task_funcs[key]
   
 @RPC(validation='named') 
-def check_task(task_id, config=None): 
-    
-    datastore = get_datastore(config=config)
+def check_task(task_id): 
     
     # Find a matching task record (if any) to the task_id.
     match_taskrec = datastore.loadtask(task_id)
@@ -397,9 +401,7 @@ def check_task(task_id, config=None):
         return taskrec_dict        
     
 @RPC(validation='named') 
-def get_task_result(task_id, config=None):
-    
-    datastore = get_datastore(config=config)
+def get_task_result(task_id):
     
     # Find a matching task record (if any) to the task_id.
     match_taskrec = datastore.loadtask(task_id)
@@ -430,9 +432,7 @@ def get_task_result(task_id, config=None):
             return {'error': 'No result ID'}
     
 @RPC(validation='named') 
-def delete_task(task_id, config=None): 
-    
-    datastore = get_datastore(config=config)
+def delete_task(task_id): 
     
     # Find a matching task record (if any) to the task_id.
     match_taskrec = datastore.loadtask(task_id)
