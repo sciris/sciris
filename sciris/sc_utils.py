@@ -600,7 +600,24 @@ def printtologfile(message=None, filename=None):
         print('WARNING, could not write to logfile %s' % filename)
     
     return None
-    
+
+
+# Add Windows support for colors (do this at the module level so that colorama.init() only gets called once)
+if 'win' in sys.platform:
+    try:
+        import colorama
+
+        colorama.init()
+        ansi_support = True
+    except:
+        try:
+            import tendo.ansiterm  # analysis:ignore
+
+            ansi_support = True
+        except:
+            ansi_support = False  # print('Warning: you have called colorize() on Windows but do not have either the colorama or tendo modules.')
+else:
+    ansi_support = True
 
 def colorize(color=None, string=None, output=False, showhelp=False):
     '''
@@ -608,93 +625,80 @@ def colorize(color=None, string=None, output=False, showhelp=False):
         color = the color you want (use 'bg' with background colors, e.g. 'bgblue')
         string = the text to be colored
         output = whether to return the modified version of the string
-    
+
     Examples:
         colorize('green', 'hi') # Simple example
         colorize(['yellow', 'bgblack']); print('Hello world'); print('Goodbye world'); colorize() # Colorize all output in between
         bluearray = colorize(color='blue', string=str(range(5)), output=True); print("c'est bleu: " + bluearray)
         colorize('magenta') # Now type in magenta for a while
         colorize() # Stop typing in magenta
-    
+
     To get available colors, type colorize(showhelp=True).
-    
+
     Version: 2018sep09
     '''
-    
-    # Try to add Windows support
-    ansi_support = True
-    using_colorama = False
-    if 'win' in sys.platform:
-        try:
-           import colorama
-           colorama.init()
-           using_colorama = True
-           ansi_support = True
-        except:
-           try:
-               import tendo.ansiterm # analysis:ignore
-               ansi_support = True
-           except:
-               ansi_support = False # print('Warning: you have called colorize() on Windows but do not have either the colorama or tendo modules.')
-    
+
+    global ansi_support
+
     # Define ANSI colors
     ansicolors = OD([
-                  ('black', '30'),
-                  ('red', '31'),
-                  ('green', '32'),
-                  ('yellow', '33'),
-                  ('blue', '34'),
-                  ('magenta', '35'),
-                  ('cyan', '36'),
-                  ('gray', '37'),
-                  ('bgblack', '40'),
-                  ('bgred', '41'),
-                  ('bggreen', '42'),
-                  ('bgyellow', '43'),
-                  ('bgblue', '44'),
-                  ('bgmagenta', '45'),
-                  ('bgcyan', '46'),
-                  ('bggray', '47'),
-                  ('reset', '0'),
-                  ])
-    for key,val in ansicolors.items(): ansicolors[key] = '\033['+val+'m'
-    
+        ('black', '30'),
+        ('red', '31'),
+        ('green', '32'),
+        ('yellow', '33'),
+        ('blue', '34'),
+        ('magenta', '35'),
+        ('cyan', '36'),
+        ('gray', '37'),
+        ('bgblack', '40'),
+        ('bgred', '41'),
+        ('bggreen', '42'),
+        ('bgyellow', '43'),
+        ('bgblue', '44'),
+        ('bgmagenta', '45'),
+        ('bgcyan', '46'),
+        ('bggray', '47'),
+        ('reset', '0'),
+    ])
+    for key, val in ansicolors.items(): ansicolors[key] = '\033[' + val + 'm'
+
     # Determine what color to use
-    colorlist = promotetolist(color) # Make sure it's a list
+    colorlist = promotetolist(color)  # Make sure it's a list
     for color in colorlist:
-        if color not in ansicolors.keys(): 
+        if color not in ansicolors.keys():
             print('Color "%s" is not available, use colorize(showhelp=True) to show options.' % color)
-            return None # Don't proceed if the color isn't found
+            return None  # Don't proceed if the color isn't found
     ansicolor = ''
     for color in colorlist:
         ansicolor += ansicolors[color]
-    
+
     # Modify string, if supplied
-    if string is None: ansistring = ansicolor # Just return the color
-    else:              ansistring = ansicolor + str(string) + ansicolors['reset'] # Add to start and end of the string
-    if not ansi_support: ansistring = str(string) # To avoid garbling output on unsupported systems
+    if string is None:
+        ansistring = ansicolor  # Just return the color
+    else:
+        ansistring = ansicolor + str(string) + ansicolors['reset']  # Add to start and end of the string
+    if not ansi_support: ansistring = str(string)  # To avoid garbling output on unsupported systems
 
     if showhelp:
         print('Available colors are:')
         for key in ansicolors.keys():
             if key[:2] == 'bg':
                 darks = ['bgblack', 'bgred', 'bgblue', 'bgmagenta']
-                if key in darks: foreground = 'gray'
-                else:            foreground = 'black'
+                if key in darks:
+                    foreground = 'gray'
+                else:
+                    foreground = 'black'
                 helpcolor = [foreground, key]
             else:
                 helpcolor = key
-            colorize(helpcolor, '  '+key)
-    elif output: 
-        return ansistring # Return the modified string
+            colorize(helpcolor, '  ' + key)
+    elif output:
+        return ansistring  # Return the modified string
     else:
-        try:    
-            print(ansistring) # Content, so print with newline
-        except: 
-            print(string) # If that fails, just go with plain version
-        finally: 
-            if using_colorama:
-                colorama.deinit()
+        try:
+            print(ansistring)  # Content, so print with newline
+        except:
+            print(string)  # If that fails, just go with plain version
         return None
     
 
