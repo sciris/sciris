@@ -4,6 +4,11 @@ datastore.py -- code related to Sciris database persistence
 Last update: 2018sep19
 """
 
+
+#################################################################
+### Imports and global variables
+#################################################################
+
 # Imports
 import os
 import atexit
@@ -13,47 +18,80 @@ import redis
 import sciris as sc
 from .sc_objects import Blob, User, Task
 
-__all__ = ['DataStore']
+# Global variables
+default_url         = 'redis://localhost:6379/' # The default URL for the Redis database
+default_settingskey = '!DataStoreSettings'      # Key for holding DataStore settings
+default_separator   = '__|__'                   # Define the separator between a key type and uid
 
 
-class DataStore(object):
-    """
-    Interface to the Redis database.                   
-    """
+#################################################################
+### Classes
+#################################################################
+
+__all__ = ['DataStoreSettings', 'DataStore']
+
+
+class DataStoreSettings(sc.prettyobj):
+    ''' Global settings for the DataStore '''
+    
+    def __init__(self, settings=None, tempfolder=None, separator=None, overwrite=None):
+        
+        # Initialize
+        self.tempfolder = None
+        self.separator  = None
+        self.is_new     = True
+        
+        # Are we creating this for the first time? If not, load from existing settings object
+        if settings is not None:
+            self.is_new     = False
+            self.tempfolder = settings.tempfolder
+            self.separator  = settings.separator
+            
+        # Handle the folder and separator
+        if self.tempfolder is None: self.tempfolder = tempfile.mkdtemp()
+        if self.separator  is None: self.separator  = default_separator
+        
+        return None
+
+
+class DataStore(sc.prettyobj):
+    """ Interface to the Redis database. """
     
     def __init__(self, redis_url=None, tempfolder=None, separator=None, settingskey=None, overwrite=False):
         ''' Establishes data-structure wrapping a particular Redis URL. '''
         
         # Handle the Redis URL
-        default_url = 'redis://localhost:6379/'
         if redis_url is None:        redis_url = default_url + '0' # e.g. sw.DataStore()
         elif sc.isnumber(redis_url): redis_url = default_url + '%i'%redis_url # e.g. sw.DataStore(3)
         self.redis_url  = redis_url
         self.tempfolder = None # Populated by self.settings()
         self.separator  = None # Populated by self.settings()
+        self.is_new     = None # Populated by self.settings()
         
         # Create Redis
         self.redis = redis.StrictRedis.from_url(self.redis_url)
-        self.settings(settingskey=None, tempfolder=tempfolder, separator=separator, overwrite=overwrite) # Set or get the settings
-        
-        print('New DataStore initialized at %s with temp folder %s' % (self.redis_url, self.tempfolder))
+        self.settings(settingskey=settingskey, redis_url=redis_url, tempfolder=tempfolder, separator=separator, overwrite=overwrite) # Set or get the settings
+        if self.is_new: actionstring = 'created'
+        else:           actionstring = 'loaded'
+        print('DataStore %s at %s with temp folder %s' % (self.redis_url, actionstring, self.tempfolder))
         return None
     
-    def settings(self, settingskey=None, tempfolder=None, separator=None, overwrite=False):
-        if settingskey is None: settingskey = '!DataStoreSettings' # Key for holding DataStore settings
-        
-        settings = self.get(settingskey)
-        
+    
+    def settings(self, settingskey=None, redis_url=None, tempfolder=None, separator=None, overwrite=False):
+        ''' Handle the DataStore settings '''
+        if settingskey is None: settingskey = default_settingskey
+        settings = DataStoreSettings(settings=self.get(settingskey), tempfolder=tempfolder, separator=separator)
+        self.tempfolder = settings.tempfolder
+        self.separator  = settings.separator
+        self.is_new     = settings.is_new
         
         # Handle the temporary folder
-        self.tempfolder = tempfolder if tempfolder is not None else tempfile.mkdtemp()
         if not os.path.exists(self.tempfolder):
             os.mkdir(self.tempfolder)
             atexit.register(self._rmtempfolder) # Only register this if we've just created the temp folder
-        self.separator = separator if separator is not None else '__|__' # Define the separator between a key type and uid
-
         
-        ashapewithlionbodyandtheheadofaman
+        return settings
+
     
     def _rmtempfolder(self):
         ''' Remove the temporary folder that was created '''
@@ -166,12 +204,15 @@ class DataStore(object):
         else:
             errormsg = 'Unrecognized type "%s": must be Blob, User, or Task'
             raise Exception(errormsg)
+        
         if obj is None:
             errormsg = 'Cannot load %s as a %s: key not found' % (key, objtype)
             raise Exception(errormsg)
+        
         if not isinstance(obj, objclass):
             errormsg = 'Cannot load %s as a %s since it is %s' % (key, objtype, type(obj))
             raise Exception(errormsg)
+        
         return None
         
     
