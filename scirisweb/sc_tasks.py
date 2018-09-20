@@ -9,6 +9,7 @@ from functools import wraps
 from celery import Celery
 from time import sleep
 import sciris as sc
+import scirisweb as sw
 #from . import sc_datastore as ds
 from . import sc_rpcs as rpcs
 
@@ -168,9 +169,9 @@ def make_celery_instance(config=None):
         
         # Only if we have not already done so, create the DataStore object, 
         # setting up Redis.
-        if ds.globalvars.data_store is None:
+        if sw.flaskapp.datastore is None:
             # Create the DataStore object, setting up Redis.
-            ds.globalvars.data_store = ds.DataStore(redis_db_URL=config.REDIS_URL)
+            sw.flaskapp.datastore = ds.DataStore(redis_db_URL=config.REDIS_URL)
             
         # Check if run_task() locked and wait until it isn't, then lock it for 
         # other run_task() instances in this Celery worker.
@@ -186,10 +187,10 @@ def make_celery_instance(config=None):
         # the locking should allow run_task() instances on separate Celery 
         # workers to run concurrently.
         print('>>> LOADING DATASTORE FOR %s' % task_id)
-        ds.globalvars.data_store.load()
+        sw.flaskapp.datastore.load()
         
         # Look for an existing tasks dictionary.
-        task_dict_uid = ds.globalvars.data_store.get_uid('taskdict', 'Task Dictionary')
+        task_dict_uid = sw.flaskapp.datastore.get_uid('taskdict', 'Task Dictionary')
         
         # Create the task dictionary object.
         task_dict = TaskDict(task_dict_uid)
