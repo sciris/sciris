@@ -14,7 +14,7 @@ from functools import wraps
 import matplotlib.pyplot as ppl
 from werkzeug.utils import secure_filename
 from werkzeug.exceptions import HTTPException
-from flask import Flask, request, abort, json, jsonify, send_from_directory, make_response
+from flask import Flask, request, abort, json, jsonify, send_from_directory, make_response, current_app as flaskapp
 from flask_login import LoginManager, current_user
 from flask_session import RedisSessionInterface
 from twisted.internet import reactor
@@ -36,7 +36,7 @@ from . import sc_tasks as tasks
 ### Classes
 #################################################################
 
-__all__ = ['ScirisApp', 'ScirisResource', 'run_twisted']
+__all__ = ['ScirisApp', 'ScirisResource', 'run_twisted', 'flaskapp']
 
 class ScirisApp(object):
     """
