@@ -10,16 +10,22 @@ torun = [
 'datastore',
 ]
 
+T = sc.tic()
+
 if 'datastore' in torun:
-    testkey = 'testkey'
-    ds = sw.DataStore(verbose=True)
-    testdata = sc.odict({'foo':[1,2,3], 'bar':[4,5,6]})
-    key = ds.saveblob(obj=testdata, key=testkey)
-    dataout = ds.loadblob(testkey)
-    success = ds.delete(testkey)
-    failure = ds.delete(testkey+'foo')
-    assert testdata == dataout
-    assert key == testkey
+    key_in   = 'testkey'
+    ds       = sw.DataStore(verbose=True)
+    data_in  = sc.odict({'foo':[1,2,3], 'bar':[4,5,6]})
+    key_out  = ds.saveblob(obj=data_in, key=key_in)
+    data_out = ds.loadblob(key_in)
+    success  = ds.delete(key_in)
+    failure  = ds.delete(key_in+'foo')
+    assert key_in  == key_out
+    assert data_in == data_out
     assert success == 1
     assert failure == 0
     
+
+
+sc.toc(T)
+print('Done running %s tests.' % len(torun))
