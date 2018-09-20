@@ -35,12 +35,18 @@ __all__ = ['Blob', 'DataStoreSettings', 'DataStore']
 class Blob(sc.prettyobj):
     ''' Wrapper for any Python object we want to store in the DataStore. '''
     
-    def __init__(self, obj=None, key=None, objtype=None, uid=None):
+    def __init__(self, obj=None, key=None, objtype=None, uid=None, force=False):
         # Handle input arguments
         if objtype is None: objtype = 'blob'
         if uid is None: 
-            if hasattr(obj, 'uid'): uid = obj.uid
-            else:                   uid = sc.uuid()
+            if hasattr(obj, 'uid'):
+                uid = obj.uid
+            else:
+                if force:
+                    uid = sc.uuid()
+                else:
+                    errormsg = 'DataStore: Not creating a new Blob UUID since force is set to False: key=%s, objtype=%s, uid=%s, obj=%s' % (key, objtype, uid, obj)
+                    raise Exception(errormsg)
         if key is None: key = '%s%s%s' % (objtype, default_separator, uid)
         
         # Set attributes
