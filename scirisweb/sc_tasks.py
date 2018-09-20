@@ -110,7 +110,7 @@ class Task(sc.prettyobj):
 ### Functions
 ################################################################################
 
-__all__ += ['make_celery_instance', 'add_task_funcs', 'check_task', 'get_task_result', 'delete_task', 'make_async_tag']
+__all__ += ['get_datastore', 'make_celery_instance', 'add_task_funcs', 'check_task', 'get_task_result', 'delete_task', 'make_async_tag']
 
 
 def get_datastore(config=None):
@@ -120,10 +120,8 @@ def get_datastore(config=None):
         datastore = sw.flaskapp.datastore
         assert datastore is not None
     except:
-        if isinstance(config, dict):
-            redis_url = config['REDIS_URL']
-        else:
-            redis_url = config.REDIS_URL
+        if isinstance(config, dict): redis_url = config['REDIS_URL']
+        else:                        redis_url = config.REDIS_URL
         datastore = ds.DataStore(redis_url=redis_url)
     return datastore
 

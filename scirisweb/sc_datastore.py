@@ -360,10 +360,11 @@ class DataStore(sc.prettyobj):
             return None
         
     
-    def savetask(self, task, key=None, uid=None, overwrite=False):
+    def savetask(self, task, key=None, uid=None, overwrite=None):
         '''
         Add a new or update existing Task in Redis, returns key.
         '''
+        if overwrite is None: overwrite = True
         key, objtype, uid = self.getkey(key=key, objtype='task', uid=uid, obj=task, fulloutput=True)
         oldtask = self.get(key)
         if oldtask and not overwrite:
@@ -378,7 +379,7 @@ class DataStore(sc.prettyobj):
     
     def loadtask(self, key=None, uid=None, die=None):
         ''' Load a user from Redis '''
-        if die is None: die = True
+        if die is None: die = False # Here, we won't always know whether the task exists
         key = self.getkey(key=key, objtype='task', uid=uid)
         task = self.get(key)
         if die: self._checktype(key, task, 'Task')
