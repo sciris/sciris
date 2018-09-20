@@ -63,7 +63,7 @@ class User(sc.prettyobj):
         self.is_admin         = is_admin # Set whether this user has admin rights.
         
         # Handle the password
-        if password is None and raw_password is not None:
+        if raw_password is not None:
             if six.PY3: raw_password = raw_password.encode('utf-8')
             password = sc.sha(raw_password).hexdigest()
         self.password = password
