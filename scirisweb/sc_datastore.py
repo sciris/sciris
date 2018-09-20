@@ -22,7 +22,7 @@ from .sc_tasks import Task
 # Global variables
 default_url         = 'redis://localhost:6379/' # The default URL for the Redis database
 default_settingskey = '!DataStoreSettings'      # Key for holding DataStore settings
-default_separator   = '<<>>'                     # Define the separator between a key type and uid
+default_separator   = '[__]'                     # Define the separator between a key type and uid
 
 
 #################################################################
