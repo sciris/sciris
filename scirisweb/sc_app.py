@@ -74,7 +74,7 @@ class ScirisApp(object):
         >>> app = ScirisApp(__file__)                      
     """
     
-    def  __init__(self, filepath=None, config=None, name=None, **kwargs):
+    def  __init__(self, filepath=None, config=None, name=None, RPC_dict=None, **kwargs):
         if name is None: name = 'default'
         self.name = name
         self.flask_app = Flask(__name__) # Open a new Flask app.
@@ -98,6 +98,10 @@ class ScirisApp(object):
             
         # Set up file paths.
         self._init_file_dirs()
+        
+        # Set up RPCs
+        if RPC_dict:
+            self.add_RPC_dict(self.add_RPC_dict)
         
         # If we are including DataStore functionality, initialize it.
         if self.config['USE_DATASTORE']:
