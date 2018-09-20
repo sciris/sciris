@@ -39,14 +39,11 @@ class Blob(sc.prettyobj):
         # Handle input arguments
         if objtype is None: objtype = 'blob'
         if uid is None: 
-            if hasattr(obj, 'uid'):
-                uid = obj.uid
+            if force:
+                uid = sc.uuid()
             else:
-                if force:
-                    uid = sc.uuid()
-                else:
-                    errormsg = 'DataStore: Not creating a new Blob UUID since force is set to False: key=%s, objtype=%s, uid=%s, obj=%s' % (key, objtype, uid, obj)
-                    raise Exception(errormsg)
+                errormsg = 'DataStore: Not creating a new Blob UUID since force is set to False: key=%s, objtype=%s, uid=%s, obj=%s' % (key, objtype, uid, obj)
+                raise Exception(errormsg)
         if key is None: key = '%s%s%s' % (objtype, default_separator, uid)
         
         # Set attributes
@@ -55,10 +52,7 @@ class Blob(sc.prettyobj):
         self.uid      = uid
         self.created  = sc.now()
         self.modified = [self.created]
-        
-        self.obj = None
-        if obj is not None:
-            self.save(obj)
+        self.obj      = obj
         return None
     
     def update(self):
@@ -323,9 +317,13 @@ class DataStore(sc.prettyobj):
         key = self.getkey(key, objtype, uid)
         blob = self.get(key)
         if die: self._checktype(key, blob, 'Blob')
-        obj = blob.load()
-        if self.verbose: print('DataStore: Blob "%s" loaded' % key)
-        return obj
+        if blob is not None:
+            obj = blob.load()
+            if self.verbose: print('DataStore: Blob "%s" loaded' % key)
+            return obj
+        else:
+            if self.verbose: print('DataStore: Blob "%s" not found' % key)
+            return None
     
     
     def saveuser(self, user, overwrite=True):
@@ -349,8 +347,12 @@ class DataStore(sc.prettyobj):
         key = self.getkey(key=key, objtype='user', uid=username)
         user = self.get(key)
         if die: self._checktype(key, user, 'User')
-        if self.verbose: print('DataStore: User "%s" loaded' % key)
-        return user
+        if user is not None:
+            if self.verbose: print('DataStore: User "%s" loaded' % key)
+            return user
+        else:
+            if self.verbose: print('DataStore: User "%s" not found' % key)
+            return None
         
     
     def savetask(self, task, key=None, uid=None, overwrite=False):
@@ -374,5 +376,9 @@ class DataStore(sc.prettyobj):
         key = self.getkey(key=key, objtype='task', uid=uid)
         task = self.get(key)
         if die: self._checktype(key, task, 'Task')
-        if self.verbose: print('DataStore: Task "%s" loaded' % key)
-        return task
+        if task is not None:
+            if self.verbose: print('DataStore: Task "%s" loaded' % key)
+            return task
+        else:
+            if self.verbose: print('DataStore: Task "%s" not found' % key)
+            return None
