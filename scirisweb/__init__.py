@@ -5,9 +5,8 @@ Example usage:
     import scirisweb as sw
     app = sw.ScirisApp()
 
-Version: 2018sep19
+Version: 2018sep20
 '''
-
 
 from .sc_rpcs      import * # analysis:ignore
 from .sc_users     import * # analysis:ignore
