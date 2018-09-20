@@ -20,9 +20,9 @@ from .sc_users import User
 from .sc_tasks import Task
 
 # Global variables
-default_url         = 'redis://localhost:6379/' # The default URL for the Redis database
+default_url         = 'redis://127.0.0.1:6379/' # The default URL for the Redis database
 default_settingskey = '!DataStoreSettings'      # Key for holding DataStore settings
-default_separator   = '=>'                     # Define the separator between a key type and uid
+default_separator   = '::'                     # Define the separator between a key type and uid
 
 
 #################################################################
@@ -35,12 +35,13 @@ __all__ = ['Blob', 'DataStoreSettings', 'DataStore']
 class Blob(sc.prettyobj):
     ''' Wrapper for any Python object we want to store in the DataStore. '''
     
-    def __init__(self, obj=None, key=None, objtype=None, uid=None, force=False):
+    def __init__(self, obj=None, key=None, objtype=None, uid=None, force=True):
         # Handle input arguments
         if objtype is None: objtype = 'blob'
         if uid is None: 
             if force:
                 uid = sc.uuid()
+                print('DataStore: creating a new blob uid: %s' % uid)
             else:
                 errormsg = 'DataStore: Not creating a new Blob UUID since force is set to False: key=%s, objtype=%s, uid=%s, obj=%s' % (key, objtype, uid, obj)
                 raise Exception(errormsg)
@@ -204,8 +205,10 @@ class DataStore(sc.prettyobj):
         # Determine the objtype and uid from the key
         if fulloutput:
             if len(splitkey)==2:
-                if objtype and objtype  != splitkey[0]: print('Key warning: requested objtypes do not match (%s vs. %s)' % (objtype, splitkey[0]))
-                if uid     and str(uid) != splitkey[1]: print('Key warning: requested UIDs do not match (%s vs. %s)'     % (uid,     splitkey[1]))
+                if objtype and objtype != splitkey[0]: 
+                    if self.verbose: print('DataStore key warning: requested objtypes do not match (%s vs. %s)' % (objtype, splitkey[0]))
+                if uid     and str(uid) != splitkey[1]:
+                    if self.verbose: print('DataStore key warning: requested UIDs do not match (%s vs. %s)'     % (uid,     splitkey[1]))
                 objtype = splitkey[0]
                 uid  = splitkey[1]
             elif (objtype is None or uid is None):
@@ -240,8 +243,9 @@ class DataStore(sc.prettyobj):
         return output
     
     
-    def delete(self, key=None, obj=None, objtype=None, uid=None):
+    def delete(self, key=None, obj=None, objtype=None, uid=None, die=None):
         ''' Alias to redis.delete() '''
+        if die is None: die = True
         key = self.getkey(key, objtype, uid, obj)
         output = self.redis.delete(key)
         if self.verbose: print('DataStore: deleted key %s' % key)
@@ -290,13 +294,14 @@ class DataStore(sc.prettyobj):
         return None
         
     
-    def saveblob(self, obj, key=None, objtype=None, uid=None, overwrite=True):
+    def saveblob(self, obj, key=None, objtype=None, uid=None, overwrite=True, die=None):
         '''
         Add a new or update existing Blob in Redis, returns key. If key is None, 
         constructs a key from the Blob (objtype:uid); otherwise, updates the Blob with the 
         provided key.
         '''
-        key, objtype, uid = self.getkey(key, objtype, uid, obj, forcecreate=True, fulloutput=True)
+        if die is None: die = True
+        key, objtype, uid = self.getkey(key, objtype, uid, obj, forcecreate=False, fulloutput=True)
         blob = self.get(key)
         if blob:
             self._checktype(key, blob, 'Blob')
@@ -304,7 +309,8 @@ class DataStore(sc.prettyobj):
                 blob.save(obj)
             else:
                 errormsg = 'DataStore: Blob %s already exists and overwrite is set to False' % key
-                raise Exception(errormsg)
+                if die: raise Exception(errormsg)
+                else:   print(errormsg)
         else:
             blob = Blob(key=key, objtype=objtype, uid=uid, obj=obj)
         self.set(key=key, obj=blob)
@@ -327,19 +333,23 @@ class DataStore(sc.prettyobj):
             return None
     
     
-    def saveuser(self, user, overwrite=True):
+    def saveuser(self, user, overwrite=True, die=None):
         '''
         Add a new or update existing User in Redis, returns key.
         '''
+        if die is None: die = True
         key, objtype, username = self.getkey(objtype='user', uid=user.username, fulloutput=True)
         olduser = self.get(key)
         if olduser and not overwrite:
-            errormsg = 'DataStore: User %s already exists' % key
-            raise Exception(errormsg)
+            errormsg = 'DataStore: User %s already exists, not overwriting' % key
+            if die: raise Exception(errormsg)
+            else:   print(errormsg)
         else:
             self._checktype(key, user, 'User')
             self.set(key=key, obj=user)
-        if self.verbose: print('DataStore: User "%s" saved' % key)
+            if self.verbose:
+                if olduser: print('DataStore: User "%s" updated' % key)
+                else:       print('DataStore: User "%s" created' % key)
         return key
     
     

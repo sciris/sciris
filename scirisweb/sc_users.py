@@ -328,5 +328,5 @@ def make_default_users(app, include_admin=False):
         admin_user = User(username='admin', raw_password='admin', uid='00112233445566778899', is_admin=True)
         users.append(admin_user)
     for user in users:
-        app.datastore.saveuser(user) # Save the user
+        app.datastore.saveuser(user, overwrite=False, die=False) # Save the user
     return users
