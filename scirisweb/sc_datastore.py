@@ -1,7 +1,7 @@
 """
 datastore.py -- code related to Sciris database persistence
     
-Last update: 2018sep19
+Last update: 2018sep20
 """
 
 
@@ -22,7 +22,7 @@ from .sc_tasks import Task
 # Global variables
 default_url         = 'redis://localhost:6379/' # The default URL for the Redis database
 default_settingskey = '!DataStoreSettings'      # Key for holding DataStore settings
-default_separator   = '<!>'                   # Define the separator between a key type and uid
+default_separator   = '<!>'                     # Define the separator between a key type and uid
 
 
 #################################################################
@@ -35,11 +35,13 @@ __all__ = ['Blob', 'DataStoreSettings', 'DataStore']
 class Blob(sc.prettyobj):
     ''' Wrapper for any Python object we want to store in the DataStore. '''
     
-    def __init__(self, data=None, key=None, objtype=None, uid=None):
+    def __init__(self, obj=None, key=None, objtype=None, uid=None):
         # Handle input arguments
-        if objtype is None: objtype = 'object'
-        if uid     is None: uid     = sc.uuid()
-        if key     is None: key     = uid
+        if objtype is None: objtype = 'blob'
+        if uid is None: 
+            if hasattr(obj, 'uid'): uid = obj.uid
+            else:                   uid = sc.uuid()
+        if key is None: key = '%s%s%s' % (objtype, default_separator, uid)
         
         # Set attributes
         self.key      = key
@@ -48,9 +50,9 @@ class Blob(sc.prettyobj):
         self.created  = sc.now()
         self.modified = [self.created]
         
-        self.data = None
-        if data is not None:
-            self.save(data)
+        self.obj = None
+        if obj is not None:
+            self.save(obj)
         return None
     
     def update(self):
@@ -59,15 +61,15 @@ class Blob(sc.prettyobj):
         self.modified.append(now)
         return now
         
-    def save(self, data):
-        ''' Save new data to the Blob '''
-        self.data = data
+    def save(self, obj):
+        ''' Save new object to the Blob '''
+        self.obj = obj
         self.update()
         return None
     
     def load(self):
         ''' Load data from the Blob '''
-        output = self.data
+        output = self.obj
         return output
 
 
@@ -158,7 +160,7 @@ class DataStore(sc.prettyobj):
         return None
         
     
-    def _makekey(self, key=None, objtype=None, uid=None, obj=None, forcecreate=False, fulloutput=False):
+    def makekey(self, key=None, objtype=None, uid=None, obj=None, forcecreate=False, fulloutput=False):
         '''
         Construct a database key, either from a given key (do nothing), or else from
         a supplied objtype and uid, or else read them from the object (e.g. Blob) supplied.
@@ -204,7 +206,7 @@ class DataStore(sc.prettyobj):
     
     def set(self, key=None, obj=None, objtype=None, uid=None):
         ''' Alias to redis.set() '''
-        key = self._makekey(key, objtype, uid, obj)
+        key = self.makekey(key, objtype, uid, obj)
         objstr = sc.dumpstr(obj)
         output = self.redis.set(key, objstr)
         return output
@@ -212,7 +214,7 @@ class DataStore(sc.prettyobj):
     
     def get(self, key=None, obj=None, objtype=None, uid=None, die=False):
         ''' Alias to redis.get() '''
-        key = self._makekey(key, objtype, uid, obj)
+        key = self.makekey(key, objtype, uid, obj)
         objstr = self.redis.get(key)
         if objstr is not None:
             output = sc.loadstr(objstr)
@@ -227,7 +229,7 @@ class DataStore(sc.prettyobj):
     
     def delete(self, key=None, obj=None, objtype=None, uid=None):
         ''' Alias to redis.delete() '''
-        key = self._makekey(key, objtype, uid, obj)
+        key = self.makekey(key, objtype, uid, obj)
         output = self.redis.delete(key)
         if self.verbose: print('DataStore: deleted key %s' % key)
         return output
@@ -281,7 +283,7 @@ class DataStore(sc.prettyobj):
         constructs a key from the Blob (objtype:uid); otherwise, updates the Blob with the 
         provided key.
         '''
-        key, objtype, uid = self._makekey(key, objtype, uid, obj, forcecreate=True, fulloutput=True)
+        key, objtype, uid = self.makekey(key, objtype, uid, obj, forcecreate=True, fulloutput=True)
         blob = self.get(key)
         if blob:
             self._checktype(key, blob, 'Blob')
@@ -299,7 +301,7 @@ class DataStore(sc.prettyobj):
     
     def loadblob(self, key=None, objtype=None, uid=None, die=True):
         ''' Load a blob from Redis '''
-        key = self._makekey(key, objtype, uid)
+        key = self.makekey(key, objtype, uid)
         blob = self.get(key)
         if die: self._checktype(key, blob, 'Blob')
         data = blob.load()
@@ -311,7 +313,7 @@ class DataStore(sc.prettyobj):
         '''
         Add a new or update existing User in Redis, returns key.
         '''
-        key, objtype, username = self._makekey(objtype='user', uid=user.username, fulloutput=True)
+        key, objtype, username = self.makekey(objtype='user', uid=user.username, fulloutput=True)
         olduser = self.get(key)
         if olduser and not overwrite:
             errormsg = 'DataStore: User %s already exists' % key
@@ -325,7 +327,7 @@ class DataStore(sc.prettyobj):
     
     def loaduser(self, username=None, key=None, die=True):
         ''' Load a user from Redis '''
-        key = self._makekey(key=key, objtype='user', uid=username)
+        key = self.makekey(key=key, objtype='user', uid=username)
         user = self.get(key)
         if die: self._checktype(key, user, 'User')
         if self.verbose: print('DataStore: User "%s" loaded' % key)
@@ -336,7 +338,7 @@ class DataStore(sc.prettyobj):
         '''
         Add a new or update existing Task in Redis, returns key.
         '''
-        key, objtype, uid = self._makekey(key=key, objtype='task', uid=uid, obj=task, fulloutput=True)
+        key, objtype, uid = self.makekey(key=key, objtype='task', uid=uid, obj=task, fulloutput=True)
         oldtask = self.get(key)
         if oldtask and not overwrite:
             errormsg = 'DataStore: Task %s already exists' % key
@@ -350,7 +352,7 @@ class DataStore(sc.prettyobj):
     
     def loadtask(self, key=None, uid=None, die=True):
         ''' Load a user from Redis '''
-        key = self._makekey(key=key, objtype='task', uid=uid)
+        key = self.makekey(key=key, objtype='task', uid=uid)
         task = self.get(key)
         if die: self._checktype(key, task, 'Task')
         if self.verbose: print('DataStore: Task "%s" loaded' % key)

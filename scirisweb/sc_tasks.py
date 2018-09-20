@@ -1,7 +1,7 @@
 """
 tasks.py -- code related to Sciris task queue management
     
-Last update: 2018sep02
+Last update: 2018sep20
 """
 
 import traceback
@@ -9,7 +9,7 @@ from functools import wraps
 from celery import Celery
 from time import sleep
 import sciris as sc
-from . import sc_datastore as ds
+#from . import sc_datastore as ds
 from . import sc_rpcs as rpcs
 
 

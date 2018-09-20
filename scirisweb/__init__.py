@@ -8,12 +8,12 @@ Example usage:
 Version: 2018sep19
 '''
 
-from .sc_datastore import * # analysis:ignore
+
 from .sc_rpcs      import * # analysis:ignore
-from .sc_app       import * # analysis:ignore
-from .sc_objects   import * # analysis:ignore
 from .sc_users     import * # analysis:ignore
 from .sc_tasks     import * # analysis:ignore
+from .sc_datastore import * # analysis:ignore
+from .sc_app       import * # analysis:ignore
 from .sc_server    import * # analysis:ignore
 
 import sciris as sc
