@@ -102,7 +102,6 @@ class ScirisApp(object):
         # If we are including DataStore functionality, initialize it.
         if self.config['USE_DATASTORE']:
             self._init_datastore()
-            print('Storing datastore in the app...')
             self.flask_app.datastore = self.datastore
             self.flask_app.session_interface = RedisSessionInterface(self.datastore.redis, 'sess')
 
@@ -177,14 +176,12 @@ class ScirisApp(object):
         self.datastore = ds.DataStore(redis_url=self.config['REDIS_URL'])
                 
         if self.config['LOGGING_MODE'] == 'FULL':
-            print('>> DataStore initialized at %s' % self.config['REDIS_URL'])
             print('>> Loaded datastore with %s Redis keys' % len(self.datastore.keys()))
         return None
     
     def _init_tasks(self):
-        # Have the tasks.py module make the Celery app to connect to the 
-        # worker, passing in the config parameters.
-        print('** make_celery_instance() _init_tasks() call')
+        # Have the tasks.py module make the Celery app to connect to the worker, passing in the config parameters.
+        print('Making Celery instance...')
         tasks.make_celery_instance(self.config)
         
     def run(self, with_twisted=True, with_flask=True, with_client=True, do_log=False, show_logo=True):
