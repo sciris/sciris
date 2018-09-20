@@ -110,12 +110,24 @@ class Task(sc.prettyobj):
 ################################################################################
 
 __all__ += ['make_celery_instance', 'add_task_funcs', 'check_task', 'get_task_result', 'delete_task', 'make_async_tag']
-        
+
+
+def get_datastore(config=None):
+    ''' Only if we have not already done so, create the DataStore object, setting up Redis. '''
+    from . import sc_datastore as ds # This needs to be here to avoid a circular import
+    try:
+        datastore = sw.flaskapp.datastore
+        assert datastore is not None
+    except:
+        datastore = ds.DataStore(redis_url=config.REDIS_URL)
+    return datastore
+
+
 # Function for creating the Celery instance, resetting the global and also 
 # passing back the same result. for the benefit of callers in non-Sciris 
 # modules.
 def make_celery_instance(config=None):
-    from . import sc_datastore as ds # This needs to be here to avoid a circular import
+    
     global celery_instance
     global run_task_lock
     
@@ -128,12 +140,8 @@ def make_celery_instance(config=None):
     if config is not None:
         celery_instance.config_from_object(config)
     
-    # Only if we have not already done so, create the DataStore object, setting up Redis.
-    try:
-        datastore = sw.flaskapp.datastore
-        assert datastore is not None
-    except:
-        datastore = ds.DataStore(redis_url=config.REDIS_URL)
+    datastore = get_datastore(config=config)
+
     
     def lock_run_task(task_id):
         global run_task_lock
@@ -322,7 +330,7 @@ def make_celery_instance(config=None):
                 
                 # Add the new result ID to the TaskRecord, and update the DataStore.
                 match_taskrec.result_id = my_result.id
-                task_dict.update(match_taskrec)
+                datastore.savetask(match_taskrec)
                 
                 # Create the return dict from the user repr.
                 return_dict = match_taskrec.jsonify()
@@ -348,9 +356,12 @@ def add_task_funcs(new_task_funcs):
         task_func_dict[key] = new_task_funcs[key]
   
 @RPC(validation='named') 
-def check_task(task_id): 
+def check_task(task_id, config=None): 
+    
+    datastore = get_datastore(config=config)
+    
     # Find a matching task record (if any) to the task_id.
-    match_taskrec = task_dict.get_task_record_by_task_id(task_id)
+    match_taskrec = datastore.loadtask(task_id)
     
     # Check to see if the task exists, and if not, return an error.
     if match_taskrec is None:
@@ -386,13 +397,12 @@ def check_task(task_id):
         return taskrec_dict        
     
 @RPC(validation='named') 
-def get_task_result(task_id):
-    # Reload the whole TaskDict from the DataStore because Celery may have 
-    # modified its state in Redis (in particular, modified the TaskRecords).
-    task_dict.load_from_data_store()
+def get_task_result(task_id, config=None):
+    
+    datastore = get_datastore(config=config)
     
     # Find a matching task record (if any) to the task_id.
-    match_taskrec = task_dict.get_task_record_by_task_id(task_id)
+    match_taskrec = datastore.loadtask(task_id)
     
     # Check to see if the task exists, and if not, return an error.
     if match_taskrec is None:
@@ -420,15 +430,12 @@ def get_task_result(task_id):
             return {'error': 'No result ID'}
     
 @RPC(validation='named') 
-def delete_task(task_id): 
-    # NOTE: We might want to add a concurrency lock to this function.
+def delete_task(task_id, config=None): 
     
-    # Reload the whole TaskDict from the DataStore because Celery may have 
-    # modified its state in Redis (in particular, modified the TaskRecords).
-    task_dict.load_from_data_store()
+    datastore = get_datastore(config=config)
     
     # Find a matching task record (if any) to the task_id.
-    match_taskrec = task_dict.get_task_record_by_task_id(task_id)
+    match_taskrec = datastore.loadtask(task_id)
     
     # Check to see if the task exists, and if not, return an error.
     if match_taskrec is None:
@@ -445,7 +452,7 @@ def delete_task(task_id):
             result.forget()
             
         # Erase the TaskRecord.
-        task_dict.delete_by_task_id(task_id)
+        datastore.delete(task_id)
         
         # Return success.
         return 'success'
