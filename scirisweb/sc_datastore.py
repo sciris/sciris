@@ -164,11 +164,13 @@ class DataStore(sc.prettyobj):
         return key
         
     
-    def getkey(self, key=None, objtype=None, uid=None, obj=None, forcecreate=False, fulloutput=False):
+    def getkey(self, key=None, objtype=None, uid=None, obj=None, create=None, fulloutput=None):
         '''
         Construct a database key, either from a given key (do nothing), or else from
         a supplied objtype and uid, or else read them from the object (e.g. Blob) supplied.
         '''
+        if create is None: create = False
+        if fulloutput  is None: fulloutput = False
         
         # Get any missing properties from the object
         if obj: # Populate any missing values from the object
@@ -176,9 +178,8 @@ class DataStore(sc.prettyobj):
             if not objtype and hasattr(obj, 'objtype'): objtype = obj.objtype
             if not uid     and hasattr(obj, 'uid'):     uid     = obj.uid
         
-        
-        # Optionally force non-None objtype and uid
-        if forcecreate and not uid: 
+        # Optionally force non-None uid
+        if not uid and create:
             uid = str(sc.uuid())
         
         # Construct the key if it doesn't exist
@@ -191,23 +192,21 @@ class DataStore(sc.prettyobj):
         
         # If a uid is supplied as a key, turn it into a key
         splitkey = key.split(self.separator)
+        twohalves = len(splitkey)==2
         if objtype:
             if splitkey[0] != objtype: # The prefix doesn't match
-                if len(splitkey)==2: # It's the right length, though
+                if twohalves: # It's the right length, though
                     errormsg = 'DataStore: you have requested object "%s" of type "%s", but type is "%s"' % (key, objtype, splitkey[0])
                     raise Exception(errormsg)
-                else: # Assume it's just missing the object type
+                elif key not in self.keys(): # If the key's not found anyway, remake it
                     key = self.makekey(objtype=objtype, uid=key)
         
         # Determine the objtype and uid from the key
-        if fulloutput:
-            if len(splitkey)==2:
-                if objtype and objtype != splitkey[0]: 
-                    if self.verbose: print('DataStore key warning: requested objtypes do not match (%s vs. %s)' % (objtype, splitkey[0]))
-                if uid     and str(uid) != splitkey[1]:
-                    if self.verbose: print('DataStore key warning: requested UIDs do not match (%s vs. %s)'     % (uid,     splitkey[1]))
-                objtype = splitkey[0]
-                uid  = splitkey[1]
+        if fulloutput and twohalves:
+            if objtype and objtype  != splitkey[0] and self.verbose: print('DataStore key warning: requested objtypes do not match (%s vs. %s)' % (objtype, splitkey[0]))
+            if uid     and str(uid) != splitkey[1] and self.verbose: print('DataStore key warning: requested UIDs do not match (%s vs. %s)'     % (uid,     splitkey[1]))
+            objtype = splitkey[0]
+            uid     = splitkey[1]
         
         # Return what we need to return
         if fulloutput: return key, objtype, uid
@@ -295,7 +294,7 @@ class DataStore(sc.prettyobj):
         provided key.
         '''
         if die is None: die = True
-        key, objtype, uid = self.getkey(key, objtype, uid, obj, forcecreate=False, fulloutput=True)
+        key, objtype, uid = self.getkey(key, objtype, uid, obj, create=False, fulloutput=True)
         blob = self.get(key)
         if blob:
             self._checktype(key, blob, 'Blob')
