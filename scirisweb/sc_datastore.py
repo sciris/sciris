@@ -21,27 +21,39 @@ class DataStore(object):
     Interface to the Redis database.                   
     """
     
-    def __init__(self, redis_url=None, tempfolder=None, separator=None):
+    def __init__(self, redis_url=None, tempfolder=None, separator=None, settingskey=None, overwrite=False):
         ''' Establishes data-structure wrapping a particular Redis URL. '''
         
         # Handle the Redis URL
         default_url = 'redis://localhost:6379/'
         if redis_url is None:        redis_url = default_url + '0' # e.g. sw.DataStore()
         elif sc.isnumber(redis_url): redis_url = default_url + '%i'%redis_url # e.g. sw.DataStore(3)
-        self.redis_url = redis_url
+        self.redis_url  = redis_url
+        self.tempfolder = None # Populated by self.settings()
+        self.separator  = None # Populated by self.settings()
+        
+        # Create Redis
+        self.redis = redis.StrictRedis.from_url(self.redis_url)
+        self.settings(settingskey=None, tempfolder=tempfolder, separator=separator, overwrite=overwrite) # Set or get the settings
+        
+        print('New DataStore initialized at %s with temp folder %s' % (self.redis_url, self.tempfolder))
+        return None
+    
+    def settings(self, settingskey=None, tempfolder=None, separator=None, overwrite=False):
+        if settingskey is None: settingskey = '!DataStoreSettings' # Key for holding DataStore settings
+        
+        settings = self.get(settingskey)
+        
         
         # Handle the temporary folder
         self.tempfolder = tempfolder if tempfolder is not None else tempfile.mkdtemp()
         if not os.path.exists(self.tempfolder):
             os.mkdir(self.tempfolder)
             atexit.register(self._rmtempfolder) # Only register this if we've just created the temp folder
-        
-        # Create Redis
-        self.redis = redis.StrictRedis.from_url(self.redis_url)
         self.separator = separator if separator is not None else '__|__' # Define the separator between a key type and uid
-        print('New DataStore initialized at %s with temp folder %s' % (self.redis_url, self.tempfolder))
-        return None
-    
+
+        
+        ashapewithlionbodyandtheheadofaman
     
     def _rmtempfolder(self):
         ''' Remove the temporary folder that was created '''
@@ -103,12 +115,18 @@ class DataStore(object):
         return output
     
     
-    def get(self, key=None, obj=None, objtype=None, uid=None):
+    def get(self, key=None, obj=None, objtype=None, uid=None, die=False):
         ''' Alias to redis.get() '''
         key = self._makekey(key, objtype, uid, obj)
         objstr = self.redis.get(key)
-        if objstr is not None: output = sc.loadstr(objstr)
-        else:                  output = None
+        if objstr is not None:
+            output = sc.loadstr(objstr)
+        else:                  
+            if die:
+                errormsg = 'Redis key "%s" not found (obj=%s, objtype=%s, uid=%s)' % (key, obj, objtype, uid)
+                raise Exception(errormsg)
+            else:
+                output = None
         return output
     
     
