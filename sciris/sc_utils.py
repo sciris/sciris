@@ -604,15 +604,11 @@ def printtologfile(message=None, filename=None):
 # Try to add Windows support
 if 'win' in sys.platform:
     try:
-       import colorama
-       colorama.init()
-       ansi_support = True
+        import colorama
+        colorama.init()
+        ansi_support = True
     except:
-       try:
-           import tendo.ansiterm # analysis:ignore
-           ansi_support = True
-       except:
-           ansi_support = False # print('Warning: you have called colorize() on Windows but do not have either the colorama or tendo modules.')
+        ansi_support = False  # print('Warning: you have called colorize() on Windows but do not have either the colorama or tendo modules.')
 else:
     ansi_support = True
 
@@ -634,8 +630,6 @@ def colorize(color=None, string=None, output=False, showhelp=False):
 
     Version: 2018sep09
     '''
-
-    global ansi_support
 
     # Define ANSI colors
     ansicolors = OD([
