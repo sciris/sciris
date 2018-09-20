@@ -26,11 +26,25 @@ RPC = rpcs.makeRPCtag(RPC_dict) # RPC registration decorator factory created usi
 ### Functions and RPCs
 ##############################################################
 
-__all__ += ['user_login', 'user_logout', 'user_register']
+__all__ += ['save_user', 'load_user', 'user_login', 'user_logout', 'user_register']
 __all__ += ['user_change_info', 'user_change_password', 'admin_delete_user', 'admin_activate_account']
 __all__ += ['admin_deactivate_account', 'admin_grant_admin', 'admin_revoke_admin', 'admin_reset_password', 'make_test_users']
 
-        
+
+
+def save_user(user):
+    ''' Save the specified user to the DataStore '''
+    app.datastore.saveuser(user)
+    return None
+
+
+def load_user():
+    ''' Load the currently active user from the DataStore '''
+    username = current_user.get_id()
+    user = app.datastore.loaduser(username)
+    return user
+
+
 @RPC()
 def user_login(username, password):  
     matching_user = app.datastore.loaduser(username) # Get the matching user (if any).

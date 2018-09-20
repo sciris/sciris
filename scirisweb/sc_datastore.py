@@ -21,7 +21,7 @@ from .sc_objects import Blob, User, Task
 # Global variables
 default_url         = 'redis://localhost:6379/' # The default URL for the Redis database
 default_settingskey = '!DataStoreSettings'      # Key for holding DataStore settings
-default_separator   = '__|__'                   # Define the separator between a key type and uid
+default_separator   = '<!>'                   # Define the separator between a key type and uid
 
 
 #################################################################
@@ -36,20 +36,35 @@ class DataStoreSettings(sc.prettyobj):
     
     def __init__(self, settings=None, tempfolder=None, separator=None):
         
-        # Initialize
-        self.tempfolder = None
-        self.separator  = None
-        self.is_new     = True
+        ''' Initialize with highest priority given to the inputs, then the stored settings, then the defaults '''
         
-        # Are we creating this for the first time? If not, load from existing settings object
-        if settings is not None:
-            self.is_new     = False
-            self.tempfolder = settings.tempfolder
-            self.separator  = settings.separator
-            
-        # Handle the folder and separator
-        if self.tempfolder is None: self.tempfolder = tempfile.mkdtemp()
-        if self.separator  is None: self.separator  = default_separator
+        # 1. Arguments
+        self.tempfolder = tempfolder
+        self.separator  = separator
+        
+        # 2. Existing settings
+        if settings is None:
+            self.is_new    = True
+            old_tempfolder = None
+            old_separator  = None
+        else:
+            self.is_new    = False
+            old_tempfolder = settings.tempfolder
+            old_separator  = settings.separator
+        
+        # 3. Defaults
+        def_tempfolder = tempfile.mkdtemp()
+        def_separator  = default_separator
+        
+        # Iterate in order 
+        tempfolder_list = [old_tempfolder, def_tempfolder]
+        separator_list  = [old_separator,  def_separator]
+        for folder in tempfolder_list:
+            if self.tempfolder is None:
+                self.tempfolder = folder
+        for sep in separator_list:
+            if self.separator is None:
+                self.separator = sep
         
         return None
 
@@ -252,7 +267,7 @@ class DataStore(sc.prettyobj):
         return data
     
     
-    def saveuser(self, user, overwrite=False):
+    def saveuser(self, user, overwrite=True):
         '''
         Add a new or update existing User in Redis, returns key.
         '''
