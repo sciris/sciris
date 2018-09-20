@@ -320,7 +320,7 @@ def get_current_user_info():
     return current_user.jsonify()
 
 
-def make_default_users(include_admin=False):
+def make_default_users(app, include_admin=False):
     # Create two test Users that can get added
     test_user = User(username='demo', raw_password='demo', uid='abcdef0123456789')
     users = [test_user]

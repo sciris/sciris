@@ -312,8 +312,9 @@ class DataStore(sc.prettyobj):
         return key
     
     
-    def loadblob(self, key=None, objtype=None, uid=None, die=True):
+    def loadblob(self, key=None, objtype=None, uid=None, die=None):
         ''' Load a blob from Redis '''
+        if die is None: die = True
         key = self.getkey(key, objtype, uid)
         blob = self.get(key)
         if die: self._checktype(key, blob, 'Blob')
@@ -342,8 +343,9 @@ class DataStore(sc.prettyobj):
         return key
     
     
-    def loaduser(self, username=None, key=None, die=True):
+    def loaduser(self, username=None, key=None, die=None):
         ''' Load a user from Redis '''
+        if die is None: die = True
         key = self.getkey(key=key, objtype='user', uid=username)
         user = self.get(key)
         if die: self._checktype(key, user, 'User')
@@ -371,8 +373,9 @@ class DataStore(sc.prettyobj):
         return key
     
     
-    def loadtask(self, key=None, uid=None, die=True):
+    def loadtask(self, key=None, uid=None, die=None):
         ''' Load a user from Redis '''
+        if die is None: die = True
         key = self.getkey(key=key, objtype='task', uid=uid)
         task = self.get(key)
         if die: self._checktype(key, task, 'Task')
