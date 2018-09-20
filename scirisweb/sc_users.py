@@ -6,9 +6,9 @@ Last update: 2018sep19
 
 from flask import Flask, session, current_app as app # analysis:ignore
 from flask_login import current_user, login_user, logout_user
+import six
 import hashlib
 import sciris as sc
-from .sc_objects import User
 from . import sc_rpcs as rpcs
 
 
@@ -20,6 +20,94 @@ __all__ = ['RPC_dict']
 
 RPC_dict = {}
 RPC = rpcs.makeRPCtag(RPC_dict) # RPC registration decorator factory created using call to make_RPC().
+
+
+
+##############################################################
+### Classes
+##############################################################
+
+__all__ += ['User']
+
+
+class User(sc.prettyobj):
+    '''
+    A Sciris user.
+                    
+    Attributes:
+        is_authenticated (bool) -- is this user authenticated? (attribute required by Flask-Login)
+        is_active (bool)        -- is this user's account active? (attribute required by Flask-Login)
+        is_anonymous (bool)     -- is this user considered anonymous?  (attribute required by Flask-Login)
+        is_admin (bool)         -- does this user have admin rights?
+        username (str)          -- the username used to log in
+        displayname (str)       -- the user's name, which gets displayed in the  browser
+        email (str)             -- the user's email     
+        password (str)          -- the user's SHA224-hashed password
+        raw_password (str)      -- the user's unhashed password
+    '''
+    
+    def  __init__(self, username=None, password=None, displayname=None, email=None, uid=None, raw_password=None, is_admin=False):
+        # Handle general properties
+        if not username:    username    = 'default'
+        if not password:    password    = 'default'
+        if not displayname: displayname = username
+        if not uid:         uid         = sc.uuid()
+        
+        # Set user-specific properties
+        self.username         = username # Set the username.
+        self.displayname      = displayname # Set the displayname (what the browser will show).
+        self.email            = email  # Set the user's email.
+        self.uid              = uid # The user's UID
+        self.is_authenticated = True # Set the user to be authentic.
+        self.is_active        = True # Set the account to be active.
+        self.is_anonymous     = False # The user is not anonymous.
+        self.is_admin         = is_admin # Set whether this user has admin rights.
+        
+        # Handle the password
+        if password is None and raw_password is not None:
+            if six.PY3: raw_password = raw_password.encode('utf-8')
+            password = hashlib.sha224(raw_password).hexdigest()
+        self.password = password
+        return None
+    
+    def get_id(self):
+        ''' Method required by Flask-login '''
+        return self.username
+    
+    def show(self, verbose=False):
+        ''' Display the user's properties '''
+        if not verbose: # Simply display the username and UID
+            print('Username: %s; UID: %s' % (self.username, self.uid))
+        else: # Or full information
+            print('---------------------')
+            print('        Username: %s' % self.username)
+            print('    Display name: %s' % self.displayname)
+            print(' Hashed password: %s' % self.password)
+            print('   Email address: %s' % self.email)
+            print('             UID: %s' % self.uid)
+            print('Is authenticated: %s' % self.is_authenticated)
+            print('       Is active: %s' % self.is_active)
+            print('    Is anonymous: %s' % self.is_anonymous)
+            print('        Is admin: %s' % self.is_admin)
+            print('---------------------')
+        return None
+    
+    def jsonify(self, verbose=False):
+        ''' Return a JSON-friendly representation of a user '''
+        output = {}
+        output['user'] = {'username':    self.username, 
+                  'displayname': self.displayname, 
+                  'email':       self.email,
+                  'uid':         self.uid}
+        if verbose:
+            output['user'].update({'is_authenticated': self.is_authenticated,
+                           'is_active':        self.is_active,
+                           'is_anonymous':     self.is_anonymous,
+                           'is_admin':         self.is_admin,
+                           'created':          self.created,
+                           'modified':         self.modified[-1]})
+        return output
+
 
 
 ##############################################################

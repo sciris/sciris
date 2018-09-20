@@ -16,7 +16,8 @@ import tempfile
 import shutil
 import redis
 import sciris as sc
-from .sc_objects import Blob, User, Task
+from .sc_users import User
+from .sc_tasks import Task
 
 # Global variables
 default_url         = 'redis://localhost:6379/' # The default URL for the Redis database
@@ -28,7 +29,46 @@ default_separator   = '<!>'                   # Define the separator between a k
 ### Classes
 #################################################################
 
-__all__ = ['DataStoreSettings', 'DataStore']
+__all__ = ['Blob', 'DataStoreSettings', 'DataStore']
+
+
+class Blob(sc.prettyobj):
+    ''' Wrapper for any Python object we want to store in the DataStore. '''
+    
+    def __init__(self, data=None, key=None, objtype=None, uid=None):
+        # Handle input arguments
+        if objtype is None: objtype = 'object'
+        if uid     is None: uid     = sc.uuid()
+        if key     is None: key     = uid
+        
+        # Set attributes
+        self.key      = key
+        self.objtype  = objtype
+        self.uid      = uid
+        self.created  = sc.now()
+        self.modified = [self.created]
+        
+        self.data = None
+        if data is not None:
+            self.save(data)
+        return None
+    
+    def update(self):
+        ''' When the object is updated, append the current time to the modified list '''
+        now = sc.now()
+        self.modified.append(now)
+        return now
+        
+    def save(self, data):
+        ''' Save new data to the Blob '''
+        self.data = data
+        self.update()
+        return None
+    
+    def load(self):
+        ''' Load data from the Blob '''
+        output = self.data
+        return output
 
 
 class DataStoreSettings(sc.prettyobj):
