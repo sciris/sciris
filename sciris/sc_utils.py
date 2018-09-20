@@ -601,6 +601,20 @@ def printtologfile(message=None, filename=None):
     
     return None
     
+# Try to add Windows support
+if 'win' in sys.platform:
+    try:
+       import colorama
+       colorama.init()
+       ansi_support = True
+    except:
+       try:
+           import tendo.ansiterm # analysis:ignore
+           ansi_support = True
+       except:
+           ansi_support = False # print('Warning: you have called colorize() on Windows but do not have either the colorama or tendo modules.')
+else:
+    ansi_support = True
 
 def colorize(color=None, string=None, output=False, showhelp=False):
     '''
@@ -608,34 +622,21 @@ def colorize(color=None, string=None, output=False, showhelp=False):
         color = the color you want (use 'bg' with background colors, e.g. 'bgblue')
         string = the text to be colored
         output = whether to return the modified version of the string
-    
+
     Examples:
         colorize('green', 'hi') # Simple example
         colorize(['yellow', 'bgblack']); print('Hello world'); print('Goodbye world'); colorize() # Colorize all output in between
         bluearray = colorize(color='blue', string=str(range(5)), output=True); print("c'est bleu: " + bluearray)
         colorize('magenta') # Now type in magenta for a while
         colorize() # Stop typing in magenta
-    
+
     To get available colors, type colorize(showhelp=True).
-    
+
     Version: 2018sep09
     '''
-    
-    # Try to add Windows support
-    if 'win' in sys.platform:
-        try:
-           import colorama
-           colorama.init()
-           ansi_support = True
-        except:
-           try:
-               import tendo.ansiterm # analysis:ignore
-               ansi_support = True
-           except:
-               ansi_support = False # print('Warning: you have called colorize() on Windows but do not have either the colorama or tendo modules.')
-    else:
-        ansi_support = True
-    
+
+    global ansi_support
+
     # Define ANSI colors
     ansicolors = OD([
                   ('black', '30'),
