@@ -34,7 +34,7 @@ __all__ = ['DataStoreSettings', 'DataStore']
 class DataStoreSettings(sc.prettyobj):
     ''' Global settings for the DataStore '''
     
-    def __init__(self, settings=None, tempfolder=None, separator=None, overwrite=None):
+    def __init__(self, settings=None, tempfolder=None, separator=None):
         
         # Initialize
         self.tempfolder = None
@@ -57,7 +57,7 @@ class DataStoreSettings(sc.prettyobj):
 class DataStore(sc.prettyobj):
     """ Interface to the Redis database. """
     
-    def __init__(self, redis_url=None, tempfolder=None, separator=None, settingskey=None, overwrite=False, verbose=True):
+    def __init__(self, redis_url=None, tempfolder=None, separator=None, settingskey=None, verbose=True):
         ''' Establishes data-structure wrapping a particular Redis URL. '''
         
         # Handle the Redis URL
@@ -71,20 +71,21 @@ class DataStore(sc.prettyobj):
         
         # Create Redis
         self.redis = redis.StrictRedis.from_url(self.redis_url)
-        self.settings(settingskey=settingskey, redis_url=redis_url, tempfolder=tempfolder, separator=separator, overwrite=overwrite) # Set or get the settings
+        self.settings(settingskey=settingskey, redis_url=redis_url, tempfolder=tempfolder, separator=separator) # Set or get the settings
         if self.is_new: actionstring = 'created'
         else:           actionstring = 'loaded'
         if self.verbose: print('DataStore %s at %s with temp folder %s' % (actionstring, self.redis_url, self.tempfolder))
         return None
     
     
-    def settings(self, settingskey=None, redis_url=None, tempfolder=None, separator=None, overwrite=False):
+    def settings(self, settingskey=None, redis_url=None, tempfolder=None, separator=None):
         ''' Handle the DataStore settings '''
         if settingskey is None: settingskey = default_settingskey
         settings = DataStoreSettings(settings=self.get(settingskey), tempfolder=tempfolder, separator=separator)
         self.tempfolder = settings.tempfolder
         self.separator  = settings.separator
         self.is_new     = settings.is_new
+        self.set(settingskey, settings) # Save back to the database
         
         # Handle the temporary folder
         if not os.path.exists(self.tempfolder):
