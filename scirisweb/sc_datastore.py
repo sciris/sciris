@@ -22,7 +22,7 @@ from .sc_tasks import Task
 # Global variables
 default_url         = 'redis://localhost:6379/' # The default URL for the Redis database
 default_settingskey = '!DataStoreSettings'      # Key for holding DataStore settings
-default_separator   = '<!>'                     # Define the separator between a key type and uid
+default_separator   = '<<>>'                     # Define the separator between a key type and uid
 
 
 #################################################################
@@ -204,8 +204,8 @@ class DataStore(sc.prettyobj):
         # Determine the objtype and uid from the key
         if fulloutput:
             if len(splitkey)==2:
-                if objtype and objtype != splitkey[0]: print('Key warning: requested objtypes do not match (%s vs. %s)' % (objtype, splitkey[0]))
-                if uid     and uid     != splitkey[1]: print('Key warning: requested UIDs do not match (%s vs. %s)'     % (uid,     splitkey[1]))
+                if objtype and objtype  != splitkey[0]: print('Key warning: requested objtypes do not match (%s vs. %s)' % (objtype, splitkey[0]))
+                if uid     and str(uid) != splitkey[1]: print('Key warning: requested UIDs do not match (%s vs. %s)'     % (uid,     splitkey[1]))
                 objtype = splitkey[0]
                 uid  = splitkey[1]
             elif (objtype is None or uid is None):
