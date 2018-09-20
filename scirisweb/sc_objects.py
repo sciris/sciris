@@ -14,12 +14,14 @@ __all__ = ['Blob', 'User', 'Task']
 class Blob(sc.prettyobj):
     ''' Wrapper for any Python object we want to store in the DataStore. '''
     
-    def __init__(self, objtype=None, uid=None, data=None):
+    def __init__(self, data=None, key=None, objtype=None, uid=None):
         # Handle input arguments
         if objtype is None: objtype = 'object'
         if uid     is None: uid     = sc.uuid()
+        if key     is None: key     = uid
         
         # Set attributes
+        self.key      = key
         self.objtype  = objtype
         self.uid      = uid
         self.created  = sc.now()

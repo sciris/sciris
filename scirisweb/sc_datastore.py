@@ -115,13 +115,15 @@ class DataStore(sc.prettyobj):
             if objtype is None and hasattr(obj, 'objtype'): objtype = obj.objtype
             if uid     is None and hasattr(obj, 'uid'):     uid     = obj.uid
         
+        
+        # Optionally force non-None objtype and uid
+        if forcecreate:
+            if objtype is None: objtype = 'object'
+            if uid     is None: uid     = str(sc.uuid())
+        
         # Construct the key if it doesn't exist
         if key is None: # Only worry about the key if none is provided
             if objtype is not None and uid is not None:
-                key = '%s%s%s' % (objtype, self.separator, uid)
-            elif forcecreate:
-                if objtype is None: objtype = 'object'
-                if uid     is None: uid     = str(sc.uuid())
                 key = '%s%s%s' % (objtype, self.separator, uid)
             else:
                 errormsg = 'To create a key, you must either specify the key, or the objtype and the uid, or use an object with these'
@@ -135,10 +137,9 @@ class DataStore(sc.prettyobj):
                 if uid     and uid     != splitkey[1]: print('Key warning: requested UIDs do not match (%s vs. %s)'     % (uid,     splitkey[1]))
                 objtype = splitkey[0]
                 uid  = splitkey[1]
-            else:
+            elif (objtype is None or uid is None):
                 errormsg = 'Warning: could not split key "%s" into objtype and uid using separator "%s"' % (key, self.separator)
-                if (objtype is None or uid is None): raise Exception(errormsg) # Don't worry about it unless full output is requested
-                else:                                print(errormsg) # Still warn, but don't crash
+                print(errormsg) # Still warn, but don't crash
         
         # Return what we need to return
         if fulloutput: return key, objtype, uid
@@ -225,19 +226,19 @@ class DataStore(sc.prettyobj):
         constructs a key from the Blob (objtype:uid); otherwise, updates the Blob with the 
         provided key.
         '''
-        key, objtype, uid = self._makekey(key, objtype, uid, obj, fulloutput=True)
+        key, objtype, uid = self._makekey(key, objtype, uid, obj, forcecreate=True, fulloutput=True)
         blob = self.get(key)
         if blob:
             self._checktype(key, blob, 'Blob')
             if overwrite:
                 blob.save(data)
             else:
-                errormsg = 'Blob %s already exists and overwrite is set to False' % key
+                errormsg = 'DataStore: Blob %s already exists and overwrite is set to False' % key
                 raise Exception(errormsg)
         else:
             blob = Blob(key=key, objtype=objtype, uid=uid, data=data)
         self.set(key=key, obj=blob)
-        if self.verbose: print('Blob "%s" saved' % key)
+        if self.verbose: print('DataStore: Blob "%s" saved' % key)
         return key
     
     
@@ -247,7 +248,7 @@ class DataStore(sc.prettyobj):
         blob = self.get(key)
         if die: self._checktype(key, blob, 'Blob')
         data = blob.load()
-        if self.verbose: print('Blob "%s" loaded' % key)
+        if self.verbose: print('DataStore: Blob "%s" loaded' % key)
         return data
     
     
@@ -258,12 +259,12 @@ class DataStore(sc.prettyobj):
         key, objtype, username = self._makekey(objtype='user', uid=user.username, fulloutput=True)
         olduser = self.get(key)
         if olduser and not overwrite:
-            errormsg = 'User %s already exists' % key
+            errormsg = 'DataStore: User %s already exists' % key
             raise Exception(errormsg)
         else:
             self._checktype(key, user, 'User')
             self.set(key=key, obj=user)
-        if self.verbose: print('User "%s" saved' % key)
+        if self.verbose: print('DataStore: User "%s" saved' % key)
         return key
     
     
@@ -272,7 +273,7 @@ class DataStore(sc.prettyobj):
         key = self._makekey(key=key, objtype='user', uid=username)
         user = self.get(key)
         if die: self._checktype(key, user, 'User')
-        if self.verbose: print('User "%s" loaded' % key)
+        if self.verbose: print('DataStore: User "%s" loaded' % key)
         return user
         
     
@@ -283,12 +284,12 @@ class DataStore(sc.prettyobj):
         key, objtype, uid = self._makekey(key=key, objtype='task', uid=uid, obj=task, fulloutput=True)
         oldtask = self.get(key)
         if oldtask and not overwrite:
-            errormsg = 'Task %s already exists' % key
+            errormsg = 'DataStore: Task %s already exists' % key
             raise Exception(errormsg)
         else:
             self._checktype(key, task, 'Task')
             self.set(key=key, obj=task)
-        if self.verbose: print('Task "%s" saved' % key)
+        if self.verbose: print('DataStore: Task "%s" saved' % key)
         return key
     
     
@@ -297,5 +298,5 @@ class DataStore(sc.prettyobj):
         key = self._makekey(key=key, objtype='task', uid=uid)
         task = self.get(key)
         if die: self._checktype(key, task, 'Task')
-        if self.verbose: print('Task "%s" loaded' % key)
+        if self.verbose: print('DataStore: Task "%s" loaded' % key)
         return task

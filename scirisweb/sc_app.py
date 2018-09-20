@@ -176,7 +176,17 @@ class ScirisApp(object):
         self.datastore = ds.DataStore(redis_url=self.config['REDIS_URL'])
                 
         if self.config['LOGGING_MODE'] == 'FULL':
-            print('>> Loaded datastore with %s Redis keys' % len(self.datastore.keys()))
+            maxkeystoshow = 10
+            keys = self.datastore.keys()
+            nkeys = len(keys)
+            keyinds = range(1,nkeys+1)
+            keypairs = zip(keyinds, keys)
+            print('>> Loaded DataStore with %s Redis key(s)' % nkeys)
+            if nkeys>2*maxkeystoshow:
+                print('>> First and last %s keys:' % maxkeystoshow)
+                keypairs    = keypairs[:maxkeystoshow] + keypairs[-maxkeystoshow:]
+            for k,key in keypairs:
+                print('  Key %02i: %s' % (k,key))
         return None
     
     def _init_tasks(self):
