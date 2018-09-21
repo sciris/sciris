@@ -122,8 +122,9 @@ __all__ += ['loadtext', 'savetext', 'getfilelist', 'sanitizefilename', 'makefile
 
 
     
-def loadtext(filename=None, splitlines=False):
+def loadtext(filename=None, folder=None, splitlines=False):
     ''' Convenience function for reading a text file '''
+    filename = makefilepath(filename=filename, folder=folder)
     with open(filename) as f: output = f.read()
     if splitlines: output = output.splitlines()
     return output
@@ -133,8 +134,8 @@ def loadtext(filename=None, splitlines=False):
 def savetext(filename=None, string=None):
     ''' Convenience function for saving a text file -- accepts a string or list of strings '''
     if isinstance(string, list): string = '\n'.join(string) # Convert from list to string)
-    if not ut.isstring(string):
-        string = str(string)
+    if not ut.isstring(string):  string = str(string)
+    filename = makefilepath(filename=filename)
     with open(filename, 'w') as f: f.write(string)
     return None
 
@@ -143,6 +144,7 @@ def savetext(filename=None, string=None):
 def getfilelist(folder=None, ext=None, pattern=None):
     ''' A short-hand since glob is annoying '''
     if folder is None: folder = os.getcwd()
+    folder = os.path.expanduser(folder)
     if pattern is None:
         if ext is None: ext = '*'
         pattern = '*.'+ext
@@ -215,7 +217,7 @@ def makefilepath(filename=None, folder=None, ext=None, default=None, split=False
     if folder is not None: # Replace with specified folder, if defined
         filefolder = folder 
     if abspath: # Convert to absolute path
-        filefolder = os.path.abspath(filefolder) 
+        filefolder = os.path.abspath(os.path.expanduser(filefolder))
     if makedirs: # Make sure folder exists
         try: os.makedirs(filefolder)
         except: pass
@@ -292,18 +294,20 @@ def sanitizejson(obj):
 
 
 
-def loadjson(filename=None):
+def loadjson(filename=None, folder=None):
     ''' Convenience function for reading a text file '''
     import json # Optional Sciris dependency
+    filename = makefilepath(filename=filename, folder=folder)
     with open(filename) as f:
         output = json.load(f)
     return output
 
 
 
-def savejson(filename=None, obj=None):
+def savejson(filename=None, obj=None, folder=None):
     ''' Convenience function for saving a text file -- accepts a string or list of strings '''
     import json # Optional Sciris dependency
+    filename = makefilepath(filename=filename, folder=folder)
     with open(filename, 'w') as f:
         json.dump(sanitizejson(obj), f)
     return None

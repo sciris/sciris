@@ -27,11 +27,11 @@ def check(test, dependencies=None):
     return tf
     
 # Define filenames
-files = sc.objdict()
-files['excel']  = 'test.xlsx'
-files['binary'] = 'test.obj'
-files['text']   = 'text.txt'
-tidyup = False
+files = sc.prettyobj()
+files.excel  = 'test.xlsx'
+files.binary = 'test.obj'
+files.text   = 'text.txt'
+tidyup = True
 
 # Define the test data
 nrows = 15
@@ -112,7 +112,7 @@ if check('getfilelist'):
 # Tidy up
 if tidyup:
     sc.blank()
-    for fn in files.values():
+    for fn in [files.excel, files.binary, files.text]:
         try:    
             os.remove(fn)
             print('Removed %s' % fn)
