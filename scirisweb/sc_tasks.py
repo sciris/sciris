@@ -360,14 +360,16 @@ def add_task_funcs(new_task_funcs):
         task_func_dict[key] = new_task_funcs[key]
   
 @RPC(validation='named') 
-def check_task(task_id): 
+def check_task(task_id, verbose=True): 
     
     # Find a matching task record (if any) to the task_id.
     match_taskrec = datastore.loadtask(task_id)
     
     # Check to see if the task exists, and if not, return an error.
     if match_taskrec is None:
-        return {'error': 'No task found for specified task ID'}
+        errormsg = {'error': 'No task found for specified task ID (%s)' % task_id}
+        if verbose: print(errormsg)
+        return errormsg
     else:
         # Update the elapsed times.
         
@@ -394,6 +396,8 @@ def check_task(task_id):
         taskrec_dict = match_taskrec.jsonify()
         taskrec_dict['pendingTime'] = pending_time
         taskrec_dict['executionTime'] = execution_time
+        
+        if verbose: sc.pp(taskrec_dict)
         
         # Return the has record information and elapsed times.
         return taskrec_dict        
