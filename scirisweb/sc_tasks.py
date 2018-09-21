@@ -88,20 +88,22 @@ class Task(sc.prettyobj):
         print('-----------------------------')
     
     def jsonify(self):
-        output = {'UID':           self.uid,                    
-                  'taskId':        self.task_id,
-                  'status':        self.status,
-                  'errorText':     self.error_text,
-                  'funcName':      self.func_name,
-                  'funcArgs':      self.args,
-                  'funcKwargs':    self.kwargs,
-                  'resultId':      self.result_id,
-                  'queueTime':     self.queue_time,                
-                  'startTime':     self.start_time,
-                  'stopTime':      self.stop_time,
-                  'pendingTime':   self.pending_time,
-                  'executionTime': self.execution_time                
-        }
+        output = {'task':
+                     {'UID':           self.uid,                    
+                      'taskId':        self.task_id,
+                      'status':        self.status,
+                      'errorText':     self.error_text,
+                      'funcName':      self.func_name,
+                      'funcArgs':      self.args,
+                      'funcKwargs':    self.kwargs,
+                      'resultId':      self.result_id,
+                      'queueTime':     self.queue_time,                
+                      'startTime':     self.start_time,
+                      'stopTime':      self.stop_time,
+                      'pendingTime':   self.pending_time,
+                      'executionTime': self.execution_time     
+                      }
+                  }
         return output
 
 

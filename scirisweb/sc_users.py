@@ -93,18 +93,19 @@ class User(sc.prettyobj):
     
     def jsonify(self, verbose=False):
         ''' Return a JSON-friendly representation of a user '''
-        output = {}
-        output['user'] = {'username':    self.username, 
-                  'displayname': self.displayname, 
-                  'email':       self.email,
-                  'uid':         self.uid}
+        output = {'user':
+                         {'username':    self.username, 
+                          'displayname': self.displayname, 
+                          'email':       self.email,
+                          'uid':         self.uid}
+                 }
         if verbose:
             output['user'].update({'is_authenticated': self.is_authenticated,
-                           'is_active':        self.is_active,
-                           'is_anonymous':     self.is_anonymous,
-                           'is_admin':         self.is_admin,
-                           'created':          self.created,
-                           'modified':         self.modified[-1]})
+                                   'is_active':        self.is_active,
+                                   'is_anonymous':     self.is_anonymous,
+                                   'is_admin':         self.is_admin,
+                                   'created':          self.created,
+                                   'modified':         self.modified[-1]})
         return output
 
 
