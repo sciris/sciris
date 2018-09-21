@@ -231,7 +231,7 @@ class DataStore(sc.prettyobj):
     
     def set(self, key=None, obj=None, objtype=None, uid=None):
         ''' Alias to redis.set() '''
-        key = self.getkey(key, objtype, uid, obj)
+        key = self.getkey(key=key, objtype=objtype, uid=uid, obj=obj)
         objstr = sc.dumpstr(obj)
         output = self.redis.set(key, objstr)
         return output
@@ -239,7 +239,7 @@ class DataStore(sc.prettyobj):
     
     def get(self, key=None, obj=None, objtype=None, uid=None, die=False):
         ''' Alias to redis.get() '''
-        key = self.getkey(key, objtype, uid, obj)
+        key = self.getkey(key=key, objtype=objtype, uid=uid, obj=obj)
         objstr = self.redis.get(key)
         if objstr:
             output = sc.loadstr(objstr)
@@ -255,7 +255,7 @@ class DataStore(sc.prettyobj):
     def delete(self, key=None, obj=None, objtype=None, uid=None, die=None):
         ''' Alias to redis.delete() '''
         if die is None: die = True
-        key = self.getkey(key, objtype, uid, obj)
+        key = self.getkey(key=key, objtype=objtype, uid=uid, obj=obj)
         output = self.redis.delete(key)
         if self.verbose: print('DataStore: deleted key %s' % key)
         return output
@@ -316,7 +316,7 @@ class DataStore(sc.prettyobj):
         provided key.
         '''
         if die is None: die = True
-        key, objtype, uid = self.getkey(key, objtype, uid, obj, create=False, fulloutput=True)
+        key, objtype, uid = self.getkey(key=key, objtype=objtype, uid=uid, obj=obj, fulloutput=True)
         blob = self.get(key)
         if blob:
             self._checktype(key, blob, 'Blob')
@@ -336,7 +336,7 @@ class DataStore(sc.prettyobj):
     def loadblob(self, key=None, objtype=None, uid=None, die=None):
         ''' Load a blob from Redis '''
         if die is None: die = True
-        key = self.getkey(key, objtype, uid)
+        key = self.getkey(key=key, objtype=objtype, uid=uid)
         blob = self.get(key)
         if die: self._checktype(key, blob, 'Blob')
         if isinstance(blob, Blob):
