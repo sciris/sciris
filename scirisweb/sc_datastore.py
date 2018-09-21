@@ -191,7 +191,7 @@ class DataStore(sc.prettyobj):
         # Populate all non-None entries from the input arguments
         for p in props:
             if args[p]:
-                final[p] = args[p]
+                final[p] = str(args[p]) # Convert to string since you don't know what crazy thing might be passed
 
         # Populate what we can from the object, if it hasn't already been populated
         for p in props:
@@ -200,7 +200,7 @@ class DataStore(sc.prettyobj):
         
         # If the key is supplied but other things aren't, try to create them now
         if final['key'] and (not final['objtype'] or not final['uid']):
-            splitkey = key.split(self.separator, 1)
+            splitkey = final['key'].split(self.separator, 1)
             if len(splitkey)==2: # Check that the key split properly
                 if not final['objtype']: final['objtype'] = splitkey[0]
                 if not final['uid']:     final['uid']     = splitkey[1]
