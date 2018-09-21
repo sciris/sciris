@@ -145,7 +145,7 @@ class DataStore(sc.prettyobj):
         
         # Handle the temporary folder
         if not os.path.exists(self.tempfolder):
-            os.mkdir(self.tempfolder)
+            os.makedirs(self.tempfolder)
             atexit.register(self._rmtempfolder) # Only register this if we've just created the temp folder
         
         return settings

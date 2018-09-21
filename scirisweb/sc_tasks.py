@@ -362,7 +362,7 @@ def add_task_funcs(new_task_funcs):
         task_func_dict[key] = new_task_funcs[key]
   
 @RPC(validation='named') 
-def check_task(task_id, verbose=True): 
+def check_task(task_id, verbose=False): 
     
     # Find a matching task record (if any) to the task_id.
     match_taskrec = datastore.loadtask(task_id)
