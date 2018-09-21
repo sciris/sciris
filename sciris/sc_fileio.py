@@ -17,6 +17,7 @@ import types
 import numpy as np
 from glob import glob
 from gzip import GzipFile
+from zipfile import ZipFile
 from contextlib import closing
 from collections import OrderedDict
 from . import sc_utils as ut
@@ -118,7 +119,7 @@ def dumpstr(obj=None):
 ### Other file functions
 ##############################################################################
 
-__all__ += ['loadtext', 'savetext', 'getfilelist', 'sanitizefilename', 'makefilepath']
+__all__ += ['loadtext', 'savetext', 'savezip', 'getfilelist', 'sanitizefilename', 'makefilepath']
 
 
     
@@ -130,7 +131,6 @@ def loadtext(filename=None, folder=None, splitlines=False):
     return output
 
 
-
 def savetext(filename=None, string=None):
     ''' Convenience function for saving a text file -- accepts a string or list of strings '''
     if isinstance(string, list): string = '\n'.join(string) # Convert from list to string)
@@ -139,6 +139,19 @@ def savetext(filename=None, string=None):
     with open(filename, 'w') as f: f.write(string)
     return None
 
+
+def savezip(filename=None, filelist=None, folder=None, basename=True, verbose=True):
+    ''' Create a zip file from the supplied lst of files '''
+    fullpath = makefilepath(filename=filename, folder=folder, sanitize=True)
+    filelist = ut.promotetolist(filelist)
+    with ZipFile(fullpath, 'w') as zf: # Create the zip file
+        for thisfile in filelist:
+            thispath = makefilepath(filename=thisfile, abspath=False)
+            if basename: thisname = os.path.basename(thispath)
+            else:        thisname = thispath
+            zf.write(thispath, thisname)
+    if verbose: print('Zip file saved to "%s"' % fullpath)
+    return fullpath
 
 
 def getfilelist(folder=None, ext=None, pattern=None):
@@ -152,7 +165,6 @@ def getfilelist(folder=None, ext=None, pattern=None):
     return filelist
 
 
-
 def sanitizefilename(rawfilename):
     '''
     Takes a potentially Linux- and Windows-unfriendly candidate file name, and 
@@ -161,7 +173,6 @@ def sanitizefilename(rawfilename):
     filtername = re.sub('[\!\?\"\'<>]', '', rawfilename) # Erase certain characters we don't want at all: !, ?, ", ', <, >
     filtername = re.sub('[:/\\\*\|,]', '_', filtername) # Change certain characters that might be being used as separators from what they were to underscores: space, :, /, \, *, |, comma
     return filtername # Return the sanitized file name.
-
 
 
 def makefilepath(filename=None, folder=None, ext=None, default=None, split=False, abspath=True, makedirs=True, verbose=False, sanitize=False):
@@ -228,7 +239,6 @@ def makefilepath(filename=None, folder=None, ext=None, default=None, split=False
     
     if split: return filefolder, filebasename
     else:     return fullfile # Or can do os.path.split() on output
-
 
 
 
