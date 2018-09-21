@@ -418,6 +418,11 @@ class Blobject(object):
             self.bytes = bytesblob
             return None
     
+    def freshbytes(self):
+        ''' Refresh the bytes object to accept new data '''
+        self.bytes = io.BytesIO()
+        return self.bytes
+    
     
     
 class Spreadsheet(Blobject):
@@ -451,7 +456,7 @@ class Spreadsheet(Blobject):
     def update(self, book):
         ''' Updated the stored spreadsheet with book instead '''
         self.tofile(output=False)
-        book.save(self.bytes)
+        book.save(self.freshbytes())
         self.load()
         return None
     
@@ -542,7 +547,7 @@ class Spreadsheet(Blobject):
                         raise Exception(errormsg)
         
         # Save
-        wb.save(self.bytes)
+        wb.save(self.freshbytes())
         self.load()
         
         return None
