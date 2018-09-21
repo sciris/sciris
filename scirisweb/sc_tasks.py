@@ -1,442 +1,141 @@
 """
 tasks.py -- code related to Sciris task queue management
     
-Last update: 2018sep02
+Last update: 2018sep20
 """
 
 import traceback
 from functools import wraps
-from numpy import argsort
 from celery import Celery
-from celery.task.control import revoke
 from time import sleep
 import sciris as sc
-from . import sc_datastore as ds
+import scirisweb as sw
 from . import sc_rpcs as rpcs
-from . import sc_objects as sobj
 
 
 ################################################################################
 ### Globals
 ################################################################################
 
-__all__ = ['task_dict', 'celery_instance'] # Others for internal use only
+__all__ = ['celery_instance'] # Others for internal use only
 
-task_dict = None # The TaskDict object for all of the app's existing asynchronous tasks. Gets initialized by and loaded by init_tasks().
+datastore = None
 task_func_dict = {} # Dictionary to hold registered task functions to be callable from run_task().
 RPC_dict = {} # Dictionary to hold all of the registered RPCs in this module.
 RPC = rpcs.makeRPCtag(RPC_dict) # RPC registration decorator factory created using call to make_RPC().
 celery_instance = None # Celery instance.
 
+
+
 ################################################################################
 ### Classes
 ################################################################################
 
-__all__ += ['TaskRecord', 'TaskDict']
+__all__ += ['Task']
 
 
-class TaskRecord(sobj.Blob):
-    """
+class Task(sc.prettyobj):
+    '''
     A Sciris record for an asynchronous task.
     
-    Methods:
-        __init__(task_id: str, password: str, uid: UUID [None]): 
-            void -- constructor
-        load_from_copy(other_object): void -- assuming other_object is another 
-            object of our type, copy its contents to us (calls the 
-            Blob superclass version of this method also)  
-        show(): void -- print the contents of the object
-        get_user_front_end_repr(): dict -- get a JSON-friendly dictionary 
-            representation of the object state the front-end uses for non-
-            admin purposes
-        get_admin_front_end_repr(): dict -- get a JSON-friendly dictionary
-            representation of the object state the front-end uses for admin
-            purposes        
-                    
     Attributes:
-        task_id (str) -- the ID / name for the task that typically is chosen 
-            by the client
-        status (str) -- the status of the task:
-            'unknown' : unknown status, for example, just initialized
-            'error': task failed with an actual error
-        error_text (str) -- string giving an idea of what error has transpired
-        func_name (str) -- string of the function name for what's called
-        args (list) -- list containing args for the function
-        kwargs (dict) -- dict containing kwargs for the function
-        result_id (str) -- string for the Redis ID of the AsyncResult
-        queue_time (datetime.datetime) -- the time the task was queued for Celery
-        start_time (datetime.datetime) -- the time the task was actually started
-        stop_time (datetime.datetime) -- the time the task completed
-        pending_time (int) -- the time the process has been waiting to be 
-            executed on the server in seconds        
-        execution_time (int) -- the time the process required to complete
-        
-    Usage:
-        >>> my_task = TaskRecord('my-special-task', uid=uuid.UUID('12345678123456781234567812345678'))                      
-    """
+        task_id (str)         -- the ID / name for the task that typically is chosen by the client
+        status (str)          -- the status of the task:
+                                    'unknown': unknown status, for example, just initialized
+                                    'error':   task failed with an actual error
+        error_text (str)      -- string giving an idea of what error has transpired
+        func_name (str)       -- string of the function name for what's called
+        args (list)           -- list containing args for the function
+        kwargs (dict)         -- dict containing kwargs for the function
+        result_id (str)       -- string for the Redis ID of the AsyncResult
+        queue_time (datetime) -- the time the task was queued for Celery
+        start_time (datetime) -- the time the task was actually started
+        stop_time (datetime)  -- the time the task completed
+        pending_time (int)    -- the time the process has been waiting to be executed on the server in seconds        
+        execution_time (int)  -- the time the process required to complete
+    '''
     
-    def  __init__(self, task_id, uid=None):
-        # Set superclass parameters.
-        super(TaskRecord, self).__init__(uid)
-        
-        # Set the task ID (what the client typically knows as the task).
-        self.task_id = task_id
-        
-        # Start the status at 'unknown'.
-        self.status = 'unknown'
-        
-        # Start the error_text at None.
-        self.error_text = None
-        
-        # Start the func_name at None.
-        self.func_name = None
-        
-        # Start the args and kwargs at None.
-        self.args = None
-        self.kwargs = None
-        
-        # Start with no result_id.
-        self.result_id = None
-        
-        # Start the queue, start, and stop times at None.
-        self.queue_time = None
-        self.start_time = None
-        self.stop_time = None
-        
-        # Start the pending and execution times at None.
-        self.pending_time = None
+    def  __init__(self, task_id):
+        self.task_id        = task_id # Set the task ID (what the client typically knows as the task).
+        self.uid            = task_id # Make it the same as the task ID...WARNING, fix
+        self.status         = 'unknown' # Start the status at 'unknown'.
+        self.error_text     = None # Start the error_text at None.
+        self.func_name      = None # Start the func_name at None.
+        self.args           = None # Start the args and kwargs at None.
+        self.kwargs         = None
+        self.result_id      = None # Start with no result_id.
+        self.queue_time     = None # Start the queue, start, and stop times at None.
+        self.start_time     = None
+        self.stop_time      = None
+        self.pending_time   = None # Start the pending and execution times at None.
         self.execution_time = None
-        
-        # Set the type prefix to 'task'.
-        self.type_prefix = 'task'
-        
-        # Set the file suffix to '.tsk'.
-        self.file_suffix = '.tsk'
-        
-        # Set the instance label to the task_id.
-        self.instance_label = task_id 
-              
-    def load_from_copy(self, other_object):
-        if type(other_object) == type(self):
-            # Do the superclass copying.
-            super(TaskRecord, self).load_from_copy(other_object)
-
-            self.task_id = other_object.task_id
-            
-    def show(self):
-        # Show superclass attributes.
-        super(TaskRecord, self).show()  
-        
-        print('---------------------')
-
-        print('Task ID: %s' % self.task_id)
-        print('Status: %s' % self.status)
-        print('Error Text: %s' % self.error_text)
-        print('Function Name: %s' % self.func_name)
-        print('Function Args: %s' % self.args)
-        print('Function Kwargs: %s' % self.kwargs)        
-        print('Result ID: %s' % self.result_id)
-        print('Queue Time: %s' % self.queue_time)        
-        print('Start Time: %s' % self.start_time)
-        print('Stop Time: %s' % self.stop_time)
-        print('Pending Time: %s sec.' % self.pending_time)        
-        print('Execution Time: %s sec.' % self.execution_time)  
-            
-    def get_user_front_end_repr(self):
-        obj_info = {
-            'task': {
-                'UID': self.uid.hex,                    
-                'instanceLabel': self.instance_label,
-                'taskId': self.task_id,
-                'status': self.status,
-                'errorText': self.error_text,
-                'funcName': self.func_name,
-                'funcArgs': self.args,
-                'funcKwargs': self.kwargs,
-                'resultId': self.result_id,
-                'queueTime': self.queue_time,                
-                'startTime': self.start_time,
-                'stopTime': self.stop_time,
-                'pendingTime': self.pending_time,
-                'executionTime': self.execution_time                
-            }
-        }
-        return obj_info
-    
-    def get_admin_front_end_repr(self):
-        obj_info = {
-            'task': {
-                'UID': self.uid.hex, 
-                'typePrefix': self.type_prefix, 
-                'fileSuffix': self.file_suffix, 
-                'instanceLabel': self.instance_label,
-                'taskId': self.task_id,
-                'status': self.status,
-                'errorText': self.error_text,
-                'funcName': self.func_name,
-                'funcArgs': self.args,
-                'funcKwargs': self.kwargs,                
-                'resultId': self.result_id, 
-                'queueTime': self.queue_time,                    
-                'startTime': self.start_time,
-                'stopTime': self.stop_time,
-                'pendingTime': self.pending_time,
-                'executionTime': self.execution_time            
-            }
-        }
-        return obj_info             
-            
-class TaskDict(sobj.BlobDict):
-    """
-    A dictionary of Sciris tasks.
-    
-    Methods:
-        __init__(uid: UUID [None], type_prefix: str ['taskdict'], 
-            file_suffix: str ['.td'], 
-            instance_label: str ['Task Dictionary']): void -- constructor
-        load_from_copy(other_object): void -- assuming other_object is another 
-            object of our type, copy its contents to us (calls the 
-            BlobDict superclass version of this method also)           
-        get_task_record_by_uid(uid: UUID or str): TaskRecord or None -- 
-            returns the TaskRecord object pointed to by uid
-        get_task_record_by_task_id(task_id: str): TaskRecord or None -- 
-            return the TaskRecord object pointed to by the task_id
-        add(task_record: TaskRecord): void -- add a TaskRecord to the dictionary and update
-            the dictionary's DataStore state
-        update(task_record: TaskRecord): void -- update a TaskRecord in the dictionary and 
-            update the dictionary's DataStore state
-        delete_by_uid(uid: UUID or str): void -- delete a TaskRecord in the dictionary
-            selected by the UID, and update the dictionary's DataStore state
-        delete_by_task_id(task_id: str): void -- delete a TaskRecord in the 
-            dictionary selected by a task_id, and update the dictionary's 
-            DataStore state
-        delete_all(): void -- delete the entire contents of the TaskDict and 
-            update the dictionary's DataStore state            
-        get_user_front_end_repr(): dict -- get a JSON-friendly dictionary 
-            representation of the collection state the front-end uses for non-
-            admin purposes
-        get_admin_front_end_repr(): dict -- get a JSON-friendly dictionary
-            representation of the collection state the front-end uses for admin
-            purposes
-        show(): void -- show the whole TaskDict and its contents
-                    
-    Attributes:
-        task_id_hashes (dict) -- a dict mapping task_ids to UIDs, so either
-            indexing by UIDs or task_ids can be fast
-        
-    Usage:
-        >>> task_dict = TaskDict(uuid.UUID('12345678123456781234567812345678'))                      
-    """
-    
-    def __init__(self, uid, type_prefix='taskdict', file_suffix='.td', 
-        instance_label='Task Dictionary'):
-        # Set superclass parameters.
-        super(TaskDict, self).__init__(uid, type_prefix, file_suffix, 
-             instance_label, objs_within_coll=False)
-        
-        # Create the Python dict to hold the hashes from task_ids to the UIDs.
-        self.task_id_hashes = {}
-        
-    def load_from_copy(self, other_object):
-        if type(other_object) == type(self):
-            # Do the superclass copying.
-            super(TaskDict, self).load_from_copy(other_object)
-            
-            self.task_id_hashes = other_object.task_id_hashes
-            
-    def get_task_record_by_uid(self, uid):
-        return self.get_object_by_uid(uid)
-    
-    def get_task_record_by_task_id(self, task_id):
-        # Get the task record's UID matching the task_id.
-        id_index = self.task_id_hashes.get(task_id, None)
-        
-        # If we found at match, use the UID to try to fetch the task record; 
-        # otherwise, return None.
-        if id_index is not None:
-            return self.get_task_record_by_uid(id_index)
-        else:
-            return None
-        
-    def add(self, task_record):
-        # Add the task_id hash for this task record.
-        self.task_id_hashes[task_record.task_id] = task_record.uid
-
-        # Do the rest of the object addition.
-        self.add_object(task_record)
-    
-    def update(self, task_record):
-        # Get the old task ID (the ID the FE is aware of).
-        # If we are storing things inside the obj_dict...
-        if self.objs_within_coll:
-            old_task_id = self.obj_dict[task_record.uid].task_id
-            
-        # Otherwise, we are using the UUID set.
-        elif task_record.uid in self.ds_uuid_set:
-            old_task_id = ds.globalvars.data_store.retrieve(task_record.uid).task_id
-        
-        # If we new task_id is different than the old one, delete the old 
-        # task_id hash.
-        if task_record.task_id != old_task_id:
-            del self.task_id_hashes[old_task_id]            
-            
-        # Add the task_id hash for this task record.
-        self.task_id_hashes[task_record.task_id] = task_record.uid
-        # TODO: I'm not sure if this change gets propagated when the 
-        # TaskRecords are separate from the TaskDict.  If not, changing the 
-        # task_id in the update call might not work.          
-                       
-        # Do the rest of the object update.
-        self.update_object(task_record)
-    
-    def delete_by_uid(self, uid):
-        # Make sure the argument is a valid UUID, converting a hex text to a
-        # UUID object, if needed.        
-        valid_uid = sc.uuid(uid)
-        
-        # If we have a valid UUID...
-        if valid_uid is not None:
-            # Default to not needing to update the data store.
-            need_to_update = False
-            
-            # If we are storing things inside the obj_dict...
-            if self.objs_within_coll:             
-                # Get the object pointed to by the UID.
-                obj = self.obj_dict[valid_uid]
-                
-                # If a match is found...
-                if obj is not None:
-                    # Remove entries from obj_dict.
-                    del self.obj_dict[valid_uid]
-                    
-                    # Remove entry from task_id_hashes 
-                    # attributes.
-                    task_id = obj.task_id
-                    del self.task_id_hashes[task_id]  
-                    
-                    # Set to update the data store
-                    need_to_update = True
-                    
-            # Otherwise, we are using the UUID set...
-            else:
-                # If the UUID is in the set...
-                if valid_uid in self.ds_uuid_set:
-                    # Get the object so we can get the task_id.
-                    obj = ds.globalvars.data_store.retrieve(valid_uid)
-                    
-                    # Remove entry from task_id_hashes 
-                    # attributes.
-                    task_id = obj.task_id
-                    del self.task_id_hashes[task_id]
-                    
-                    # Remove the UUID from the set.
-                    self.ds_uuid_set.remove(valid_uid)
-                    
-                    # Delete the object in the global DataStore object.
-                    ds.globalvars.data_store.delete(valid_uid)
-                                     
-                    # Set to update the data store
-                    need_to_update = True                    
-            
-            # Update our DataStore representation if we are there. 
-            if need_to_update and self.in_data_store():
-                self.update_data_store()
-        
-    def delete_by_task_id(self, task_id):
-        # Get the UID of the task record matching task_id.
-        id_index = self.task_id_hashes.get(task_id, None)
-        
-        # If we found a match, call delete_by_uid to complete the deletion.
-        if id_index is not None:
-            self.delete_by_uid(id_index)
-    
-    def delete_all(self):
-        # Reset the hashes from task_ids to UIDs.
-        self.task_id_hashes = {}
-        
-        # Do the rest of the deletion process.
-        self.delete_all_objects()
-            
-    def get_user_front_end_repr(self):
-        # If we are storing things inside the obj_dict...
-        if self.objs_within_coll:  
-            # Get dictionaries for each task record in the dictionary.
-            taskrecs_info = [self.obj_dict[key].get_user_front_end_repr() 
-                for key in self.obj_dict]
-        
-        # Otherwise, we are using the UUID set.
-        else:
-            taskrecs_info = []
-            for uid in self.ds_uuid_set:
-                obj = ds.globalvars.data_store.retrieve(uid)
-                taskrecs_info.append(obj.get_user_front_end_repr())
-                    
-        # Return the info.            
-        return taskrecs_info        
-        
-    def get_admin_front_end_repr(self):
-        # If we are storing things inside the obj_dict...
-        if self.objs_within_coll:          
-            # Get dictionaries for each task record in the dictionary.       
-            taskrecs_info = [self.obj_dict[key].get_admin_front_end_repr() 
-                for key in self.obj_dict]
-            
-        # Otherwise, we are using the UUID set.
-        else:
-            taskrecs_info = []
-            for uid in self.ds_uuid_set:
-                obj = ds.globalvars.data_store.retrieve(uid)
-                taskrecs_info.append(obj.get_admin_front_end_repr())
-                
-        # Extract just the task_ids.
-        task_ids = [task_record['task']['task_id'] for task_record in taskrecs_info]
-        
-        # Get sorting indices with respect to the task_ids.
-        sort_order = argsort(task_ids)
-        
-        # Created a list of the sorted users_info list.
-        sorted_taskrecs_info = [taskrecs_info[ind] for ind in sort_order]
-
-        # Return the sorted users info.      
-        return sorted_taskrecs_info 
+        return None
     
     def show(self):
-        super(sobj.BlobDict, self).show()   # Show superclass attributes.
-        if self.objs_within_coll: print('Objects stored within dict?: Yes')
-        else:                     print('Objects stored within dict?: No')
-        print('Task ID dict contents: ')
-        print(self.task_id_hashes)         
-        print('---------------------')
-        print('Contents')
-        print('---------------------')
-        
-        if self.objs_within_coll: # If we are storing things inside the obj_dict...
-            for key in self.obj_dict: # For each key in the dictionary...
-                obj = self.obj_dict[key] # Get the object pointed to.
-                obj.show() # Show the handle contents.
-        else: # Otherwise, we are using the UUID set.
-            for uid in self.ds_uuid_set: # For each item in the set...
-                obj = ds.globalvars.data_store.retrieve(uid)
-                if obj is None:
-                    print('--------------------------------------------')
-                    print('ERROR: UID %s object failed to retrieve' % uid)
-                else:
-                    obj.show() # Show the object with that UID in the DataStore.
-        print('--------------------------------------------')
+        print('-----------------------------')
+        print('        Task ID: %s'   % self.task_id)
+        print('         Status: %s'   % self.status)
+        print('     Error text: %s'   % self.error_text)
+        print('  Function name: %s'   % self.func_name)
+        print('  Function args: %s'   % self.args)
+        print('Function kwargs: %s'   % self.kwargs)        
+        print('      Result ID: %s'   % self.result_id)
+        print('     Queue time: %s'   % self.queue_time)        
+        print('     Start time: %s'   % self.start_time)
+        print('      Stop time: %s'   % self.stop_time)
+        print('   Pending time: %s s' % self.pending_time)        
+        print(' Execution time: %s s' % self.execution_time)  
+        print('-----------------------------')
+    
+    def jsonify(self):
+        output = {'task':
+                     {'UID':           self.uid,                    
+                      'taskId':        self.task_id,
+                      'status':        self.status,
+                      'errorText':     self.error_text,
+                      'funcName':      self.func_name,
+                      'funcArgs':      self.args,
+                      'funcKwargs':    self.kwargs,
+                      'resultId':      self.result_id,
+                      'queueTime':     self.queue_time,                
+                      'startTime':     self.start_time,
+                      'stopTime':      self.stop_time,
+                      'pendingTime':   self.pending_time,
+                      'executionTime': self.execution_time     
+                      }
+                  }
+        return output
+
 
 
 ################################################################################
 ### Functions
 ################################################################################
 
-__all__ += ['make_celery_instance', 'add_task_funcs', 'check_task', 'get_task_result', 'delete_task', 'make_async_tag']
-        
+__all__ += ['get_datastore', 'make_celery_instance', 'add_task_funcs', 'check_task', 'get_task_result', 'delete_task', 'make_async_tag']
+
+
+def get_datastore(config=None):
+    ''' Only if we have not already done so, create the DataStore object, setting up Redis. '''
+    from . import sc_datastore as ds # This needs to be here to avoid a circular import
+    try:
+        datastore = sw.flaskapp.datastore
+        assert datastore is not None
+    except:
+        if isinstance(config, dict): redis_url = config['REDIS_URL']
+        else:                        redis_url = config.REDIS_URL
+        datastore = ds.DataStore(redis_url=redis_url)
+    return datastore
+
+
 # Function for creating the Celery instance, resetting the global and also 
 # passing back the same result. for the benefit of callers in non-Sciris 
 # modules.
 def make_celery_instance(config=None):
+    
     global celery_instance
     global run_task_lock
+    global datastore # So it's accessible in other functions
     
     run_task_lock = False
     
@@ -447,9 +146,8 @@ def make_celery_instance(config=None):
     if config is not None:
         celery_instance.config_from_object(config)
     
-    # Configure so that the actual start of a task is tracked.
-    # This may work only under version 3.1.25
-#    celery_instance.conf.CELERY_TRACK_STARTED = True
+    datastore = get_datastore(config=config)
+
     
     def lock_run_task(task_id):
         global run_task_lock
@@ -485,41 +183,14 @@ def make_celery_instance(config=None):
         # (in which this function is running) will not know about the same context 
         # from the datastore.py module that the server code will.
         
-        # Only if we have not already done so, create the DataStore object, 
-        # setting up Redis.
-        if ds.globalvars.data_store is None:
-            # Create the DataStore object, setting up Redis.
-            ds.globalvars.data_store = ds.DataStore(redis_db_URL=config.REDIS_URL)
-            
         # Check if run_task() locked and wait until it isn't, then lock it for 
         # other run_task() instances in this Celery worker.
         lock_run_task(task_id)
         
         print('>>> EFFECTIVE START OF run_task() FOR %s' % task_id)
-        
-        # Load the DataStore state from disk. 
-        # NOTE: This could corrupt DataStore access by concurrently active 
-        # run_task() instances running in the same Celery worker because it 
-        # overwrites ds.globalvars.data_store with the new disk state.
-        # For this reason, locking needs to be done to prevent this, although 
-        # the locking should allow run_task() instances on separate Celery 
-        # workers to run concurrently.
-        print('>>> LOADING DATASTORE FOR %s' % task_id)
-        ds.globalvars.data_store.load()
-        
-        # Look for an existing tasks dictionary.
-        task_dict_uid = ds.globalvars.data_store.get_uid('taskdict', 'Task Dictionary')
-        
-        # Create the task dictionary object.
-        task_dict = TaskDict(task_dict_uid)
-        
-        # Load the TaskDict tasks from Redis.
-        task_dict.load_from_data_store()
-        print('>>> FINISHED LOADING DATASTORE FOR %s' % task_id)
-        task_dict.show()  # TODO: remove this post-debugging
-            
+
         # Find a matching task record (if any) to the task_id.
-        match_taskrec = task_dict.get_task_record_by_task_id(task_id)
+        match_taskrec = datastore.loadtask(task_id)
         if match_taskrec is None:
             print('>>> FAILED TO FIND TASK RECORD FOR %s' % task_id)
             unlock_run_task(task_id)
@@ -528,8 +199,7 @@ def make_celery_instance(config=None):
         # Set the TaskRecord to indicate start of the task.
         match_taskrec.status = 'started'
         match_taskrec.start_time = sc.now()
-        match_taskrec.pending_time = \
-            (match_taskrec.start_time - match_taskrec.queue_time).total_seconds()
+        match_taskrec.pending_time = (match_taskrec.start_time - match_taskrec.queue_time).total_seconds()
             
         print('>>> BEFORE STARTED UPDATE OF TASK RECORD FOR %s' % task_id)
         
@@ -537,34 +207,18 @@ def make_celery_instance(config=None):
         # NOTE: At the moment the TaskDict on disk is not modified here, which 
         # which is a good thing because that could disrupt actiities in other 
         # run_task() instances.
-        task_dict.update(match_taskrec)
+        datastore.savetask(match_taskrec)
         print('>>> AFTER STARTED UPDATE OF TASK RECORD FOR %s' % task_id)
         
         # Make the actual function call, inside a try block in case there is 
         # an exception thrown.
         # NOTE: This block is likely to run for several seconds or even 
         # minutes or hours, depending on the task.
-        
-        # WARNING: It is a very bad idea to have any calls in your task code 
-        # that modify data_store.handle_dict.  That includes calls that add 
-        # new entries to a BlobDict where the entries are kept external from 
-        # the BlobDict object.  Writing to handle_dict will lead to conflicts 
-        # with the webapp process, which has long stretches between reading in  
-        # the handle_dict state and modifying it, during which Celery task 
-        # worker writes to handle_dict will end up in lost modifications.
-        
-        # NOTE / WARNING: The function being called which the result is being 
-        # taken from may rely on the contents of the DataStore.
-#        print('Available task_funcs:')
-#        print(task_func_dict)     
         try:
             result = task_func_dict[func_name](*args, **kwargs)
             match_taskrec.status = 'completed'
             print('>>> SUCCESSFULLY COMPLETED TASK %s' % task_id)
-
-        # If there's an exception, grab the stack track and set the TaskRecord 
-        # to have stopped on in error.
-        except Exception:
+        except Exception: # If there's an exception, grab the stack track and set the TaskRecord to have stopped on in error.
             error_text = traceback.format_exc()
             match_taskrec.status = 'error'
             match_taskrec.error_text = error_text
@@ -575,10 +229,8 @@ def make_celery_instance(config=None):
         # NOTE: Even if the browser has ordered the deletion of the task 
         # record, it will be "resurrected" during this update, so the 
         # delete_task() RPC may not always work as expected.
-        # TODO: Check to see if this is still true. (8/29/18)
         match_taskrec.stop_time = sc.now()
-        match_taskrec.execution_time = \
-            (match_taskrec.stop_time - match_taskrec.start_time).total_seconds()
+        match_taskrec.execution_time = (match_taskrec.stop_time - match_taskrec.start_time).total_seconds()
         print('>>> BEFORE FINISHED UPDATE OF TASK RECORD FOR %s' % task_id)
         
         # Do the actual update of the TaskRecord.  Do this in a try / except 
@@ -588,7 +240,7 @@ def make_celery_instance(config=None):
         # which is a good thing because that could disrupt actiities in other 
         # run_task() instances.
         try:
-            task_dict.update(match_taskrec)           
+            datastore.savetask(match_taskrec)         
         except Exception:
             error_text = traceback.format_exc()
             match_taskrec.status = 'error'
@@ -619,12 +271,8 @@ def make_celery_instance(config=None):
 #        print('Here are the celery_instance tasks:')
 #        print celery_instance.tasks
 
-        # Reload the whole TaskDict from the DataStore because Celery may have 
-        # modified its state in Redis (in particular, modified the TaskRecords).
-        task_dict.load_from_data_store()
-        
         # Find a matching task record (if any) to the task_id.
-        match_taskrec = task_dict.get_task_record_by_task_id(task_id)
+        match_taskrec = datastore.loadtask(task_id)
               
         # If we did not find a match...
         if match_taskrec is None:
@@ -637,7 +285,7 @@ def make_celery_instance(config=None):
                 }
             else:
                 # Create a new TaskRecord.
-                new_task_record = TaskRecord(task_id)
+                new_task_record = Task(task_id)
                 
                 # Initialize the TaskRecord with available information.
                 new_task_record.status = 'queued'
@@ -647,17 +295,17 @@ def make_celery_instance(config=None):
                 new_task_record.kwargs = kwargs
                 
                 # Add the TaskRecord to the TaskDict.
-                task_dict.add(new_task_record) 
+                datastore.savetask(new_task_record) 
                 
                 # Queue up run_task() for Celery.
                 my_result = run_task.delay(task_id, func_name, args, kwargs)
                 
                 # Add the result ID to the TaskRecord, and update the DataStore.
                 new_task_record.result_id = my_result.id
-                task_dict.update(new_task_record)
+                datastore.savetask(new_task_record)
                 
                 # Create the return dict from the user repr.
-                return_dict = new_task_record.get_user_front_end_repr()
+                return_dict = new_task_record.jsonify()
             
         # Otherwise (there is a matching task)...
         else:
@@ -688,10 +336,10 @@ def make_celery_instance(config=None):
                 
                 # Add the new result ID to the TaskRecord, and update the DataStore.
                 match_taskrec.result_id = my_result.id
-                task_dict.update(match_taskrec)
+                datastore.savetask(match_taskrec)
                 
                 # Create the return dict from the user repr.
-                return_dict = match_taskrec.get_user_front_end_repr()
+                return_dict = match_taskrec.jsonify()
                 
             # Else (the task is not completed)...
             else:
@@ -709,23 +357,21 @@ def make_celery_instance(config=None):
 def add_task_funcs(new_task_funcs):
     global task_func_dict
     
-    # For all of the keys in the dict passed in, put the key/value pairs in 
-    # the global dict.
+    # For all of the keys in the dict passed in, put the key/value pairs in the global dict.
     for key in new_task_funcs:
         task_func_dict[key] = new_task_funcs[key]
   
 @RPC(validation='named') 
-def check_task(task_id): 
-    # Reload the whole TaskDict from the DataStore because Celery may have 
-    # modified its state in Redis (in particular, modified the TaskRecords).
-    task_dict.load_from_data_store()
+def check_task(task_id, verbose=False): 
     
     # Find a matching task record (if any) to the task_id.
-    match_taskrec = task_dict.get_task_record_by_task_id(task_id)
+    match_taskrec = datastore.loadtask(task_id)
     
     # Check to see if the task exists, and if not, return an error.
     if match_taskrec is None:
-        return {'error': 'No task found for specified task ID'}
+        errormsg = {'error': 'No task found for specified task ID (%s)' % task_id}
+        if verbose: print(errormsg)
+        return errormsg
     else:
         # Update the elapsed times.
         
@@ -749,21 +395,20 @@ def check_task(task_id):
             execution_time = 0
         
         # Create the return dict from the user repr.
-        taskrec_dict = match_taskrec.get_user_front_end_repr()
+        taskrec_dict = match_taskrec.jsonify()
         taskrec_dict['pendingTime'] = pending_time
         taskrec_dict['executionTime'] = execution_time
+        
+        if verbose: sc.pp(taskrec_dict)
         
         # Return the has record information and elapsed times.
         return taskrec_dict        
     
 @RPC(validation='named') 
 def get_task_result(task_id):
-    # Reload the whole TaskDict from the DataStore because Celery may have 
-    # modified its state in Redis (in particular, modified the TaskRecords).
-    task_dict.load_from_data_store()
     
     # Find a matching task record (if any) to the task_id.
-    match_taskrec = task_dict.get_task_record_by_task_id(task_id)
+    match_taskrec = datastore.loadtask(task_id)
     
     # Check to see if the task exists, and if not, return an error.
     if match_taskrec is None:
@@ -792,14 +437,9 @@ def get_task_result(task_id):
     
 @RPC(validation='named') 
 def delete_task(task_id): 
-    # NOTE: We might want to add a concurrency lock to this function.
-    
-    # Reload the whole TaskDict from the DataStore because Celery may have 
-    # modified its state in Redis (in particular, modified the TaskRecords).
-    task_dict.load_from_data_store()
     
     # Find a matching task record (if any) to the task_id.
-    match_taskrec = task_dict.get_task_record_by_task_id(task_id)
+    match_taskrec = datastore.loadtask(task_id)
     
     # Check to see if the task exists, and if not, return an error.
     if match_taskrec is None:
@@ -816,7 +456,7 @@ def delete_task(task_id):
             result.forget()
             
         # Erase the TaskRecord.
-        task_dict.delete_by_task_id(task_id)
+        datastore.delete(task_id)
         
         # Return success.
         return 'success'
