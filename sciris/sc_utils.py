@@ -4,13 +4,16 @@
 
 import os
 import sys
-import numpy as np
-import uuid as py_uuid
+import six
 import copy
 import time
+import pprint
+import hashlib
 import datetime
 import dateutil
-import pprint
+import numbers
+import numpy as np
+import uuid as py_uuid
 from textwrap import fill
 from functools import reduce
 from psutil import cpu_percent
@@ -18,13 +21,12 @@ from subprocess import Popen, PIPE
 from collections import OrderedDict as OD
 
 # Handle types and Python 2/3 compatibility
-import six
 _stringtype = six.string_types[0]
-from numbers import Number as _numtype
+_numtype    = numbers.Number
 
 
 # Define the modules being loaded
-__all__ = ['uuid', 'dcp', 'cp', 'pp']
+__all__ = ['uuid', 'dcp', 'cp', 'pp', 'sha']
 
 
 def uuid(uid=None, which=None, die=False, as_string=False):
@@ -86,7 +88,10 @@ def pp(obj):
     return None
 
 
-
+def sha(string, *args, **kwargs):
+    ''' Shortcut for the standard hashing (SHA) method '''
+    output = hashlib.sha224(string, *args, **kwargs)
+    return output
 
 ##############################################################################
 ### PRINTING/NOTIFICATION FUNCTIONS
@@ -600,8 +605,9 @@ def printtologfile(message=None, filename=None):
         print('WARNING, could not write to logfile %s' % filename)
     
     return None
-    
-# Try to add Windows support
+
+
+# Add Windows support for colors (do this at the module level so that colorama.init() only gets called once)
 if 'win' in sys.platform:
     try:
         import colorama
@@ -633,36 +639,36 @@ def colorize(color=None, string=None, output=False, showhelp=False):
 
     # Define ANSI colors
     ansicolors = OD([
-                  ('black', '30'),
-                  ('red', '31'),
-                  ('green', '32'),
-                  ('yellow', '33'),
-                  ('blue', '34'),
-                  ('magenta', '35'),
-                  ('cyan', '36'),
-                  ('gray', '37'),
-                  ('bgblack', '40'),
-                  ('bgred', '41'),
-                  ('bggreen', '42'),
-                  ('bgyellow', '43'),
-                  ('bgblue', '44'),
-                  ('bgmagenta', '45'),
-                  ('bgcyan', '46'),
-                  ('bggray', '47'),
-                  ('reset', '0'),
-                  ])
-    for key,val in ansicolors.items(): ansicolors[key] = '\033['+val+'m'
-    
+        ('black', '30'),
+        ('red', '31'),
+        ('green', '32'),
+        ('yellow', '33'),
+        ('blue', '34'),
+        ('magenta', '35'),
+        ('cyan', '36'),
+        ('gray', '37'),
+        ('bgblack', '40'),
+        ('bgred', '41'),
+        ('bggreen', '42'),
+        ('bgyellow', '43'),
+        ('bgblue', '44'),
+        ('bgmagenta', '45'),
+        ('bgcyan', '46'),
+        ('bggray', '47'),
+        ('reset', '0'),
+    ])
+    for key, val in ansicolors.items(): ansicolors[key] = '\033[' + val + 'm'
+
     # Determine what color to use
-    colorlist = promotetolist(color) # Make sure it's a list
+    colorlist = promotetolist(color)  # Make sure it's a list
     for color in colorlist:
-        if color not in ansicolors.keys(): 
+        if color not in ansicolors.keys():
             print('Color "%s" is not available, use colorize(showhelp=True) to show options.' % color)
-            return None # Don't proceed if the color isn't found
+            return None  # Don't proceed if the color isn't found
     ansicolor = ''
     for color in colorlist:
         ansicolor += ansicolors[color]
-    
+
     # Modify string, if supplied
     if string is None: ansistring = ansicolor # Just return the color
     else:              ansistring = ansicolor + str(string) + ansicolors['reset'] # Add to start and end of the string
@@ -678,9 +684,9 @@ def colorize(color=None, string=None, output=False, showhelp=False):
                 helpcolor = [foreground, key]
             else:
                 helpcolor = key
-            colorize(helpcolor, '  '+key)
-    elif output: 
-        return ansistring # Return the modified string
+            colorize(helpcolor, '  ' + key)
+    elif output:
+        return ansistring  # Return the modified string
     else:
         try:    print(ansistring) # Content, so print with newline
         except: print(string) # If that fails, just go with plain version
