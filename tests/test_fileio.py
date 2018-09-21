@@ -31,6 +31,7 @@ files = sc.objdict()
 files['excel']  = 'test.xlsx'
 files['binary'] = 'test.obj'
 files['text']   = 'text.txt'
+tidyup = False
 
 # Define the test data
 nrows = 15
@@ -109,12 +110,13 @@ if check('getfilelist'):
     sc.pp(sc.getfilelist())
 
 # Tidy up
-sc.blank()
-for fn in files.values():
-    try:    
-        os.remove(fn)
-        print('Removed %s' % fn)
-    except:
-        pass
+if tidyup:
+    sc.blank()
+    for fn in files.values():
+        try:    
+            os.remove(fn)
+            print('Removed %s' % fn)
+        except:
+            pass
 
 print('Done.')
