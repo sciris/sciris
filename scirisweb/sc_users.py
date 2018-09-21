@@ -126,9 +126,14 @@ def save_user(user):
     return None
 
 
-def load_user():
+def load_user(username=None):
     ''' Load the currently active user from the DataStore '''
-    username = current_user.get_id()
+    if username is None:
+        try: 
+            username = current_user.get_id()
+        except Exception as E:
+            errormsg = 'No username supplied and could not get current user: %s' % str(E)
+            raise Exception(errormsg)
     user = app.datastore.loaduser(username)
     return user
 
