@@ -160,57 +160,73 @@ class DataStore(sc.prettyobj):
     
     
     def makekey(self, objtype, uid):
-        key = '%s%s%s' % (objtype, self.separator, uid)
+        ''' Create a key from an object type and UID '''
+        if objtype: key = '%s%s%s' % (objtype, self.separator, uid) # Construct a key with an object type and separator
+        else:       key = '%s'     % uid                            # ...or, just return the UID
         return key
         
     
-    def getkey(self, key=None, objtype=None, uid=None, obj=None, create=None, fulloutput=None):
+    def getkey(self, key=None, objtype=None, uid=None, obj=None, fulloutput=None):
         '''
-        Construct a database key, either from a given key (do nothing), or else from
-        a supplied objtype and uid, or else read them from the object (e.g. Blob) supplied.
+        Get a valid database key, either from a given key (do nothing), or else from
+        a supplied objtype and uid, or else read them from the object supplied. The
+        idea is for this method to be as forgiving as possible for different possible
+        combinations of inputs.
         '''
-        if create is None: create = False
-        if fulloutput  is None: fulloutput = False
+        # Handle optional input arguments
+        if fulloutput is None: fulloutput = False
         
-        # Get any missing properties from the object
-        if obj: # Populate any missing values from the object
-            if not key     and hasattr(obj, 'key'):     key     = obj.key
-            if not objtype and hasattr(obj, 'objtype'): objtype = obj.objtype
-            if not uid     and hasattr(obj, 'uid'):     uid     = obj.uid
+        # Handle different sources for things
+        props = ['key', 'objtype', 'uid']
+        args    = {'key':key,  'objtype':objtype, 'uid':uid}  # These are what have been supplied by the user
+        fromobj = {'key':None, 'objtype':None,    'uid':None} # This is from the object
+        final   = {'key':None, 'objtype':None,    'uid':None} # These will eventually be the output values -- copy of args
         
-        # Optionally force non-None uid
-        if not uid and create:
-            uid = str(sc.uuid())
+        # Look for missing properties from the object
+        if obj:
+            if hasattr(obj, 'key'):     fromobj['key']     = obj.key
+            if hasattr(obj, 'objtype'): fromobj['objtype'] = obj.objtype
+            if hasattr(obj, 'uid'):     fromobj['uid']     = obj.uid
         
-        # Construct the key if it doesn't exist
-        if not key: # Only worry about the key if none is provided
-            if objtype and uid:
-                key = self.makekey(objtype=objtype, uid=uid)
-            else:
-                errormsg = 'To create a key, you must either specify the key, or the objtype and the uid, or use an object with these'
-                raise Exception(errormsg)
+        # Populate all non-None entries from the input arguments
+        for p in props:
+            if args[p]:
+                final[p] = args[p]
+
+        # Populate what we can from the object, if it hasn't already been populated
+        for p in props:
+            if fromobj[p] and not final[p]:
+                final[p] = fromobj[p]
         
-        # If a uid is supplied as a key, turn it into a key
-        splitkey = key.split(self.separator)
-        twohalves = len(splitkey)==2
-        if objtype:
-            if splitkey[0] != objtype: # The prefix doesn't match
-                if twohalves: # It's the right length, though
-                    errormsg = 'DataStore: you have requested object "%s" of type "%s", but type is "%s"' % (key, objtype, splitkey[0])
-                    raise Exception(errormsg)
-                elif key not in self.keys(): # If the key's not found anyway, remake it
-                    key = self.makekey(objtype=objtype, uid=key)
+        # If the key is supplied but other things aren't, try to create them now
+        if final['key'] and (not final['objtype'] or not final['uid']):
+            splitkey = key.split(self.separator, 1)
+            if len(splitkey)==2: # Check that the key split properly
+                if not final['objtype']: final['objtype'] = splitkey[0]
+                if not final['uid']:     final['uid']     = splitkey[1]
         
-        # Determine the objtype and uid from the key
-        if fulloutput and twohalves:
-            if objtype and objtype  != splitkey[0] and self.verbose: print('DataStore key warning: requested objtypes do not match (%s vs. %s)' % (objtype, splitkey[0]))
-            if uid     and str(uid) != splitkey[1] and self.verbose: print('DataStore key warning: requested UIDs do not match (%s vs. %s)'     % (uid,     splitkey[1]))
-            objtype = splitkey[0]
-            uid     = splitkey[1]
+        # If we're still stuck, try making a new uid
+        if not final['key'] and not final['uid']:
+            final['uid'] = str(sc.uuid())
+        
+        # If everything is supplied except the key, create it
+        if not final['key']:
+            if final['objtype'] and final['uid']: # Construct a key from the object type and UID
+                final['key'] = self.makekey(objtype=final['objtype'], uid=final['uid'])
+            elif not final['objtype'] and final['uid']: # Otherwise, just use the UID
+                final['key'] = final['uid']
+            
+        # Check that it's found, and if not, treat the key as a UID and try again
+        keyexists = self.exists(final['key']) # Check to see whether a match has been found
+        if not keyexists: # If not, treat the key as a UID instead
+            newkey = self.makekey(objtype=final['objtype'], uid=final['key'])
+            newkeyexists = self.exists(newkey) # Check to see whether a match has been found
+            if newkeyexists:
+                final['key'] = newkey
         
         # Return what we need to return
-        if fulloutput: return key, objtype, uid
-        else:          return key
+        if fulloutput: return final['key'], final['objtype'], final['uid']
+        else:          return final['key']
     
     
     def set(self, key=None, obj=None, objtype=None, uid=None):
@@ -249,6 +265,12 @@ class DataStore(sc.prettyobj):
         ''' Alias to redis.flushdb() '''
         output = self.redis.flushdb()
         if self.verbose: print('DataStore flushed.')
+        return output
+    
+    
+    def exists(self, key):
+        ''' Alias to redis.exists() '''
+        output = self.redis.exists(key)
         return output
     
     
