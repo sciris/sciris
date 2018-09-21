@@ -670,21 +670,17 @@ def colorize(color=None, string=None, output=False, showhelp=False):
         ansicolor += ansicolors[color]
 
     # Modify string, if supplied
-    if string is None:
-        ansistring = ansicolor  # Just return the color
-    else:
-        ansistring = ansicolor + str(string) + ansicolors['reset']  # Add to start and end of the string
-    if not ansi_support: ansistring = str(string)  # To avoid garbling output on unsupported systems
+    if string is None: ansistring = ansicolor # Just return the color
+    else:              ansistring = ansicolor + str(string) + ansicolors['reset'] # Add to start and end of the string
+    if not ansi_support: ansistring = str(string) # To avoid garbling output on unsupported systems
 
     if showhelp:
         print('Available colors are:')
         for key in ansicolors.keys():
             if key[:2] == 'bg':
                 darks = ['bgblack', 'bgred', 'bgblue', 'bgmagenta']
-                if key in darks:
-                    foreground = 'gray'
-                else:
-                    foreground = 'black'
+                if key in darks: foreground = 'gray'
+                else:            foreground = 'black'
                 helpcolor = [foreground, key]
             else:
                 helpcolor = key
@@ -692,10 +688,8 @@ def colorize(color=None, string=None, output=False, showhelp=False):
     elif output:
         return ansistring  # Return the modified string
     else:
-        try:
-            print(ansistring)  # Content, so print with newline
-        except:
-            print(string)  # If that fails, just go with plain version
+        try:    print(ansistring) # Content, so print with newline
+        except: print(string) # If that fails, just go with plain version
         return None
     
 
