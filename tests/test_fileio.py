@@ -119,7 +119,7 @@ if check('savezip'):
 # Tidy up
 if tidyup:
     sc.blank()
-    for fn in [files.excel, files.binary, files.text]:
+    for fn in [files.excel, files.binary, files.text, files.zip]:
         try:    
             os.remove(fn)
             print('Removed %s' % fn)

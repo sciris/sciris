@@ -193,12 +193,12 @@ def makefilepath(filename=None, folder=None, ext=None, default=None, split=False
     
     Assuming project.filename is None and project.name is "soggyrice" and ./congee doesn't exist:
         * Makes folder ./congee
-        * Returns e.g. ('/home/optima/congee', 'soggyrice.prj')
+        * Returns e.g. ('/home/myname/congee', 'soggyrice.prj')
     
     Actual code example from project.py:
         fullpath = makefilepath(filename=filename, folder=folder, default=[self.filename, self.name], ext='prj')
     
-    Version: 2017apr04    
+    Version: 2018sep22 
     '''
     
     # Initialize

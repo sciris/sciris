@@ -5,7 +5,7 @@ Example usage:
     import scirisweb as sw
     app = sw.ScirisApp()
 
-Version: 2018sep20
+Version: 2018sep22
 '''
 
 from .sc_rpcs      import * # analysis:ignore
@@ -16,4 +16,4 @@ from .sc_app       import * # analysis:ignore
 from .sc_server    import * # analysis:ignore
 
 import sciris as sc
-print('Sciris Web %s (%s) -- (c) Optima Consortium' % (sc.__version__, sc.__versiondate__))
+print(sc.__license__)

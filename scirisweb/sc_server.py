@@ -58,8 +58,8 @@ def serve(html, ip='127.0.0.1', port=8888, n_retries=50):
 
     Example:
        html = '<b>Hello, world!</b>'
-       import optima as op
-       op._webserver.serve(html)
+       import scirisweb as sw
+       sw.serve(html)
 
     Parameters
     ----------

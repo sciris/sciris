@@ -558,7 +558,7 @@ def savefigs(figs=None, filetype=None, filename=None, folder=None, savefigargs=N
         key,plt = item
         # Handle filename
         if filename and nfigs==1: # Single plot, filename supplied -- use it
-            fullpath = fio.makefilepath(filename=filename, folder=folder, default='optima-figure', ext=filetype) # NB, this filename not used for singlepdf filetype, so it's OK
+            fullpath = fio.makefilepath(filename=filename, folder=folder, default='Figure', ext=filetype) # NB, this filename not used for singlepdf filetype, so it's OK
         else: # Any other case, generate a filename
             keyforfilename = filter(str.isalnum, str(key)) # Strip out non-alphanumeric stuff for key
             defaultname = keyforfilename
