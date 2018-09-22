@@ -1,7 +1,5 @@
-# Import version information
-from .sc_version import version as __version__, versiondate as __versiondate__, scirislicense as __license__
-
-# Import core functions
+# Import everything
+from .sc_version import *
 from .sc_utils import *
 from .sc_math import *
 from .sc_odict import *
