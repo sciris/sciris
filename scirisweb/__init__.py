@@ -8,6 +8,7 @@ Example usage:
 Version: 2018sep22
 '''
 
+# Import everything
 from .sc_rpcs      import * # analysis:ignore
 from .sc_users     import * # analysis:ignore
 from .sc_tasks     import * # analysis:ignore
@@ -15,5 +16,6 @@ from .sc_datastore import * # analysis:ignore
 from .sc_app       import * # analysis:ignore
 from .sc_server    import * # analysis:ignore
 
+# Print the license
 import sciris as sc
 print(sc.__license__)
