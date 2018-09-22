@@ -9,15 +9,16 @@ import os
 
 
 torun = [
-#'savespreadsheet',
-#'loadspreadsheet',
-#'Blobject',
+'savespreadsheet',
+'loadspreadsheet',
+'Blobject',
 'Spreadsheet',
-#'saveobj',
-#'loadobj',
-#'savetext',
-#'loadtext',
-#'getfilelist',
+'saveobj',
+'loadobj',
+'savetext',
+'loadtext',
+'getfilelist',
+'savezip',
 ]
 
 
@@ -27,10 +28,12 @@ def check(test, dependencies=None):
     return tf
     
 # Define filenames
-files = sc.objdict()
-files['excel']  = 'test.xlsx'
-files['binary'] = 'test.obj'
-files['text']   = 'text.txt'
+files = sc.prettyobj()
+files.excel  = 'test.xlsx'
+files.binary = 'test.obj'
+files.text   = 'text.txt'
+files.zip    = 'test.zip'
+tidyup = True
 
 # Define the test data
 nrows = 15
@@ -40,7 +43,7 @@ testdata[0,:] = ['A', 'B', 'C'] # Create header
 testdata[1:,:] = pl.rand(nrows,ncols) # Create data
 
 # Test spreadsheet writing, and create the file for later
-if check('savespreadsheet', ['loadspreadsheet', 'Spreadsheet']):
+if check('savespreadsheet', ['loadspreadsheet', 'Spreadsheet', 'savezip']):
     
     formats = {
         'header':{'bold':True, 'bg_color':'#3c7d3e', 'color':'#ffffff'},
@@ -95,7 +98,7 @@ if check('loadobj'):
     print(obj)
 
 
-if check('savetext', ['loadtext']):
+if check('savetext', ['loadtext', 'savezip']):
     sc.savetext(files.text, testdata)
 
 
@@ -108,13 +111,19 @@ if check('getfilelist'):
     print('Files in current folder:')
     sc.pp(sc.getfilelist())
 
+
+if check('savezip'):
+    sc.savezip(files.zip, [files.text, files.excel])
+
+
 # Tidy up
-sc.blank()
-for fn in files.values():
-    try:    
-        os.remove(fn)
-        print('Removed %s' % fn)
-    except:
-        pass
+if tidyup:
+    sc.blank()
+    for fn in [files.excel, files.binary, files.text]:
+        try:    
+            os.remove(fn)
+            print('Removed %s' % fn)
+        except:
+            pass
 
 print('Done.')

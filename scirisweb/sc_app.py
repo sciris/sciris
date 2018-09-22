@@ -203,13 +203,13 @@ class ScirisApp(object):
         # Display the logo
         appstring = 'ScirisApp "%s" is now running :)' % self.name
         borderstr = '='*len(appstring)
-        logostr = \
-'''      ___  ___%s 
+        logostr = '''\
+      ___  ___    %s 
      / __|/ __|   %s     
      \__ \ |__    %s     
      |___/\___|   %s     
-%s''' % (' '*(len(appstring)+8), borderstr, appstring, borderstr, ' '*(len(appstring)+23))
-        logocolors = ['cyan','bgblue'] # ['gray','bgblue']
+                  %s''' % (' '*(len(appstring)+4), borderstr, appstring, borderstr, ' '*(len(appstring)+5))
+        logocolors = ['gray','bgblue'] # ['gray','bgblue']
         if show_logo:
             print('')
             for linestr in logostr.splitlines(): sc.colorize(logocolors,linestr)
