@@ -166,7 +166,7 @@ class DataStore(sc.prettyobj):
         return key
         
     
-    def getkey(self, key=None, objtype=None, uid=None, obj=None, fulloutput=None):
+    def getkey(self, key=None, objtype=None, uid=None, obj=None, fulloutput=None, forcetype=None):
         '''
         Get a valid database key, either from a given key (do nothing), or else from
         a supplied objtype and uid, or else read them from the object supplied. The
@@ -175,6 +175,7 @@ class DataStore(sc.prettyobj):
         '''
         # Handle optional input arguments
         if fulloutput is None: fulloutput = False
+        if forcetype  is None: forcetype  = True
         
         # Handle different sources for things
         props = ['key', 'objtype', 'uid']
@@ -200,7 +201,7 @@ class DataStore(sc.prettyobj):
         
         # If the key is supplied but other things aren't, try to create them now
         if final['key'] and (not final['objtype'] or not final['uid']):
-            splitkey = final['key'].split(self.separator, 1)
+            splitkey = final['key'].split(self.separator)
             if len(splitkey)==2: # Check that the key split properly
                 if not final['objtype']: final['objtype'] = splitkey[0]
                 if not final['uid']:     final['uid']     = splitkey[1]
@@ -223,6 +224,12 @@ class DataStore(sc.prettyobj):
             newkeyexists = self.exists(newkey) # Check to see whether a match has been found
             if newkeyexists:
                 final['key'] = newkey
+        
+        # Finally, force the type if requested
+        if forcetype and final['objtype']:
+            splitkey = final['key'].split(self.separator, 1)
+            if splitkey[0] != final['objtype']:
+                final['key'] = self.makekey(objtype=final['objtype'], uid=final['key'])
         
         # Return what we need to return
         if fulloutput: return final['key'], final['objtype'], final['uid']
@@ -309,14 +316,17 @@ class DataStore(sc.prettyobj):
         return None
         
     
-    def saveblob(self, obj, key=None, objtype=None, uid=None, overwrite=True, die=None):
+    def saveblob(self, obj, key=None, objtype=None, uid=None, overwrite=None, forcetype=None, die=None):
         '''
         Add a new or update existing Blob in Redis, returns key. If key is None, 
         constructs a key from the Blob (objtype:uid); otherwise, updates the Blob with the 
         provided key.
         '''
-        if die is None: die = True
-        key, objtype, uid = self.getkey(key=key, objtype=objtype, uid=uid, obj=obj, fulloutput=True)
+        # Set default arguments
+        if overwrite is None: overwrite = True
+        if die       is None: die       = True
+        
+        key, objtype, uid = self.getkey(key=key, objtype=objtype, uid=uid, obj=obj, fulloutput=True, forcetype=forcetype)
         blob = self.get(key)
         if blob:
             self._checktype(key, blob, 'Blob')
@@ -333,10 +343,10 @@ class DataStore(sc.prettyobj):
         return key
     
     
-    def loadblob(self, key=None, objtype=None, uid=None, die=None):
+    def loadblob(self, key=None, objtype=None, uid=None, forcetype=None, die=None):
         ''' Load a blob from Redis '''
         if die is None: die = True
-        key = self.getkey(key=key, objtype=objtype, uid=uid)
+        key = self.getkey(key=key, objtype=objtype, uid=uid, forcetype=forcetype)
         blob = self.get(key)
         if die: self._checktype(key, blob, 'Blob')
         if isinstance(blob, Blob):
@@ -348,12 +358,12 @@ class DataStore(sc.prettyobj):
             return None
     
     
-    def saveuser(self, user, overwrite=True, die=None):
+    def saveuser(self, user, overwrite=True, forcetype=None, die=None):
         '''
         Add a new or update existing User in Redis, returns key.
         '''
         if die is None: die = True
-        key, objtype, username = self.getkey(objtype='user', uid=user.username, fulloutput=True)
+        key, objtype, username = self.getkey(objtype='user', uid=user.username, fulloutput=True, forcetype=forcetype)
         olduser = self.get(key)
         if olduser and not overwrite:
             errormsg = 'DataStore: User %s already exists, not overwriting' % key
@@ -368,10 +378,10 @@ class DataStore(sc.prettyobj):
         return key
     
     
-    def loaduser(self, username=None, key=None, die=None):
+    def loaduser(self, username=None, key=None, forcetype=None, die=None):
         ''' Load a user from Redis '''
         if die is None: die = True
-        key = self.getkey(key=key, objtype='user', uid=username)
+        key = self.getkey(key=key, objtype='user', uid=username, forcetype=forcetype)
         user = self.get(key)
         if die: self._checktype(key, user, 'User')
         if isinstance(user, User):
@@ -382,12 +392,12 @@ class DataStore(sc.prettyobj):
             return None
         
     
-    def savetask(self, task, key=None, uid=None, overwrite=None):
+    def savetask(self, task, key=None, uid=None, overwrite=None, forcetype=None):
         '''
         Add a new or update existing Task in Redis, returns key.
         '''
         if overwrite is None: overwrite = True
-        key, objtype, uid = self.getkey(key=key, objtype='task', uid=uid, obj=task, fulloutput=True)
+        key, objtype, uid = self.getkey(key=key, objtype='task', uid=uid, obj=task, fulloutput=True, forcetype=forcetype)
         oldtask = self.get(key)
         if oldtask and not overwrite:
             errormsg = 'DataStore: Task %s already exists' % key
@@ -399,10 +409,10 @@ class DataStore(sc.prettyobj):
         return key
     
     
-    def loadtask(self, key=None, uid=None, die=None):
+    def loadtask(self, key=None, uid=None, forcetype=None, die=None):
         ''' Load a user from Redis '''
         if die is None: die = False # Here, we won't always know whether the task exists
-        key = self.getkey(key=key, objtype='task', uid=uid)
+        key = self.getkey(key=key, objtype='task', uid=uid, forcetype=forcetype)
         task = self.get(key)
         if die: self._checktype(key, task, 'Task')
         if isinstance(task, Task):
