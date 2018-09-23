@@ -18,7 +18,7 @@ from . import sc_rpcs as rpcs
 __all__ = ['RPC_dict']
 
 RPC_dict = {}
-RPC = rpcs.makeRPCtag(RPC_dict) # RPC registration decorator factory created using call to make_RPC().
+RPC = rpcs.RPCwrapper(RPC_dict) # RPC registration decorator factory created using call to make_RPC().
 
 
 

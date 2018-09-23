@@ -22,7 +22,7 @@ __all__ = ['celery_instance'] # Others for internal use only
 datastore = None
 task_func_dict = {} # Dictionary to hold registered task functions to be callable from run_task().
 RPC_dict = {} # Dictionary to hold all of the registered RPCs in this module.
-RPC = rpcs.makeRPCtag(RPC_dict) # RPC registration decorator factory created using call to make_RPC().
+RPC = rpcs.RPCwrapper(RPC_dict) # RPC registration decorator factory created using call to make_RPC().
 celery_instance = None # Celery instance.
 
 
@@ -112,7 +112,7 @@ class Task(sc.prettyobj):
 ### Functions
 ################################################################################
 
-__all__ += ['get_datastore', 'make_celery_instance', 'add_task_funcs', 'check_task', 'get_task_result', 'delete_task', 'make_async_tag']
+__all__ += ['get_datastore', 'make_celery', 'add_task_funcs', 'check_task', 'get_task_result', 'delete_task', 'taskwrapper']
 
 
 def get_datastore(config=None):
@@ -131,7 +131,7 @@ def get_datastore(config=None):
 # Function for creating the Celery instance, resetting the global and also 
 # passing back the same result. for the benefit of callers in non-Sciris 
 # modules.
-def make_celery_instance(config=None, verbose=True):
+def make_celery(config=None, verbose=True):
     global celery_instance
     global run_task_lock
     global datastore # So it's accessible in other functions
@@ -244,7 +244,7 @@ def make_celery_instance(config=None, verbose=True):
     
     # The launch-task() RPC is the only one included here because it is the 
     # only one that makes a direct call to run_task().  Any other RPCs that 
-    # would call run_task() would have to be placed in make_celery_instance() 
+    # would call run_task() would have to be placed in make_celery() 
     # as well.
     @RPC(validation='named') 
     def launch_task(task_id='', func_name='', args=[], kwargs={}):
@@ -368,7 +368,7 @@ def delete_task(task_id):
         return 'success'
 
 
-def make_async_tag(task_func_dict):
+def taskwrapper(task_func_dict):
     ''' Function for making a register_async_task decorator in other modules '''
     def task_func_decorator(task_func):
         @wraps(task_func)

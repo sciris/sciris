@@ -196,7 +196,7 @@ class ScirisApp(object):
     def _init_tasks(self):
         # Have the tasks.py module make the Celery app to connect to the worker, passing in the config parameters.
         print('Making Celery instance...')
-        tasks.make_celery_instance(self.config)
+        tasks.make_celery(self.config)
         
     def run(self, with_twisted=True, with_flask=True, with_client=True, do_log=False, show_logo=True):
         

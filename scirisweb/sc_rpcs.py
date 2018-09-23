@@ -8,7 +8,7 @@ Last update: 5/23/18 (gchadder3)
 
 from functools import wraps
 
-__all__ = ['ScirisRPC', 'makeRPCtag']
+__all__ = ['ScirisRPC', 'RPCwrapper']
 
 
 
@@ -32,7 +32,7 @@ class ScirisRPC(object):
             
 
         
-def makeRPCtag(RPC_dict=None, **callerkwargs):
+def RPCwrapper(RPC_dict=None, **callerkwargs):
     def RPC_decorator_factory(**callerkwargs):
         def RPC_decorator(RPC_func):
             @wraps(RPC_func)
