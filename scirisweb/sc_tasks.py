@@ -364,7 +364,7 @@ def delete_task(task_id):
             result = celery_instance.AsyncResult(match_taskrec.result_id)
             result.revoke(terminate=True) # This commmand works under Linux, but not under the Windows Celery setup.  It allows terminating a task in mid-run.
             result.forget()
-        datastore.delete(task_id) # Erase the TaskRecord.
+        datastore.delete(task_id, objtype='task') # Erase the TaskRecord.
         return 'success'
 
 
