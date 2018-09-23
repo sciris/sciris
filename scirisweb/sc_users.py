@@ -143,18 +143,15 @@ def user_login(username, password):
     matching_user = app.datastore.loaduser(username, die=False) # Get the matching user (if any).
     
     # If we have a match and the password matches, and the account is active, also, log in the user and return success; otherwise, return failure.
-    password_match = matching_user.password==password
-    is_active = matching_user.is_active
-    if matching_user and password_match and is_active:
+    if matching_user and matching_user.password==password and matching_user.is_active:
         login_user(matching_user) # Log the user in.
         matching_user.show(verbose=True)
         return 'success'
     else:
-        if   not matching_user:  errormsg = 'Login failed: user "%s" does not exist.' % username
-        elif not password_match: errormsg = 'Login failed: password for user "%s" is incorrect.' % username
-        elif not is_active:      errormsg = 'Login failed: user "%s" is inactive.' % username
+        if   not matching_user:                    errormsg = 'Login failed: user "%s" does not exist.' % username
+        elif not matching_user.password==password: errormsg = 'Login failed: password for user "%s" is incorrect.' % username
+        elif not matching_user.is_active:          errormsg = 'Login failed: user "%s" is inactive.' % username
         return errormsg
-    
     
     
 @RPC(validation='named')
