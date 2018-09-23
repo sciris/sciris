@@ -7,7 +7,7 @@ from setuptools import setup, find_packages
 with open("sciris/sc_version.py", "r") as f:
     version_file = {}
     exec(f.read(), version_file)
-    version = version_file["version"]
+    version = version_file["__version__"]
 
 CLASSIFIERS = [
     'Environment :: Console',
@@ -23,7 +23,7 @@ CLASSIFIERS = [
 setup(
     name='scirisweb',
     version=version,
-    author='Cliff Kerr, George Chadderdon',
+    author='ScirisOrg',
     author_email='info@sciris.org',
     description='Scientific webapps for Python',
     url='http://github.com/optimamodel/sciris',
