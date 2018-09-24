@@ -46,7 +46,7 @@ def asd(function, x, args=None, stepsize=0.1, sinc=2, sdec=2, pinc=2, pdec=2,
         from numpy.linalg import norm
         x, fval, details = asd(norm, [1, 2, 3])
     
-    Version: 2018aug26 by Cliff Kerr (cliff@thekerrlab.com)
+    Version: 2018sep24
     """
     from numpy import array, shape, reshape, ones, zeros, mean, cumsum, mod, concatenate, floor, flatnonzero, isnan, inf
     from numpy.random import random, seed
@@ -54,7 +54,7 @@ def asd(function, x, args=None, stepsize=0.1, sinc=2, sdec=2, pinc=2, pdec=2,
     from .sc_utils import dcp, sigfig
     if randseed is not None:
         seed(int(randseed)) # Don't reset it if not supplied
-        if verbose >= 3: print('Launching ASD with random seed is %i; sample: %f' % (randseed, random()))
+        if verbose >= 3: print('ASD: Launching with random seed is %i; sample: %f' % (randseed, random()))
 
     def consistentshape(userinput, origshape=False):
         """
@@ -70,10 +70,26 @@ def asd(function, x, args=None, stepsize=0.1, sinc=2, sdec=2, pinc=2, pdec=2,
     maxrangeiters = 100 # Number of times to try generating a new parameter
     x, origshape = consistentshape(x, origshape=True) # Turn it into a vector but keep the original shape (not necessarily class, though)
     nparams = len(x) # Number of parameters
+    if not nparams:
+        errormsg = 'ASD: The length of the input vector cannot be zero'
+        raise Exception(errormsg)
+    if sinc<1:
+        print('ASD: sinc cannot be less than 1; resetting to 2'); sinc = 2
+    if sdec<1:
+        print('ASD: sdec cannot be less than 1; resetting to 2'); sdec = 2
+    if pinc<1:
+        print('ASD: pinc cannot be less than 1; resetting to 2')
+        pinc = 2
+    if pdec<1:
+        print('ASD: pdec cannot be less than 1; resetting to 2')
+        pdec = 2
 
     # Set initial parameter selection probabilities -- uniform by default
     if pinitial is None: probabilities = ones(2 * nparams)
     else:                probabilities = consistentshape(pinitial)
+    if not sum(probabilities):
+        errormsg = 'ASD: The sum of input probabilities cannot be zero'
+        raise Exception(errormsg)
 
     # Handle step sizes
     if sinitial is None:
@@ -88,7 +104,7 @@ def asd(function, x, args=None, stepsize=0.1, sinc=2, sdec=2, pinc=2, pdec=2,
 
     # Final input checking
     if sum(isnan(x)):
-        errormsg = 'At least one value in the vector of starting points is NaN:\n%s' % x
+        errormsg = 'ASD: At least one value in the vector of starting points is NaN:\n%s' % x
         raise Exception(errormsg)
     if label is None: label = ''
     if stalliters is None: stalliters = 10 * nparams # By default, try 10 times per parameter on average
@@ -141,11 +157,16 @@ def asd(function, x, args=None, stepsize=0.1, sinc=2, sdec=2, pinc=2, pdec=2,
             stepsizes[choice] = stepsizes[choice] / sdec
 
         # Calculate the new value
+        
         xnew = dcp(x) # Initialize the new parameter set
         xnew[par] = newval # Update the new parameter set
         fvalnew = function(xnew, **args) # Calculate the objective function for the new parameter set
-        abserrorhistory[mod(count, stalliters)] = max(0, fval - fvalnew) # Keep track of improvements in the error
-        relerrorhistory[mod(count, stalliters)] = max(0, fval / float(fvalnew) - 1.0) # Keep track of improvements in the error
+        eps = 1e-12 # Small value to avoid divide-by-zero errors
+        if abs(fvalnew)<eps and abs(fval)<eps: ratio = 1 # They're both zero: set the ratio to 1
+        elif abs(fvalnew)<eps:                 ratio = 1.0/eps # Only the denominator is zero: reset to the maximum ratio
+        else:                                  ratio = fval/float(fvalnew) # The normal situation: calculate the real ratio
+        abserrorhistory[mod(count, stalliters)] = max(0, fval-fvalnew) # Keep track of improvements in the error
+        relerrorhistory[mod(count, stalliters)] = max(0, ratio-1.0) # Keep track of improvements in the error
         if verbose >= 3: print(offset + 'step=%i choice=%s, par=%s, pm=%s, origval=%s, newval=%s' % (count, choice, par, pm, x[par], xnew[par]))
 
         # Check if this step was an improvement
@@ -174,7 +195,7 @@ def asd(function, x, args=None, stepsize=0.1, sinc=2, sdec=2, pinc=2, pdec=2,
             exitreason = 'Maximum iterations reached'
             break
         if (time() - start) > maxtime:
-            exitreason = 'Time limit reached (%s > %s)' % sigfig([(time() - start), maxtime])
+            exitreason = 'Time limit reached (%s > %s)' % sigfig([(time()-start), maxtime])
             break
         if (count > stalliters) and (abs(mean(abserrorhistory)) < abstol): # Stop if improvement is too small
             exitreason = 'Absolute improvement too small (%s < %s)' % sigfig([mean(abserrorhistory), abstol])
