@@ -1,7 +1,7 @@
 """
 sc_app.py -- classes for Sciris (Flask-based) apps 
     
-Last update: 2018sep19
+Last update: 2018sep24
 """
 
 # Imports
@@ -12,6 +12,7 @@ import logging
 import traceback
 from functools import wraps
 import matplotlib.pyplot as ppl
+from collections import OrderedDict
 from werkzeug.utils import secure_filename
 from werkzeug.exceptions import HTTPException
 from flask import Flask, request, abort, json, jsonify, send_from_directory, make_response, current_app as flaskapp
@@ -304,10 +305,10 @@ class ScirisApp(object):
         # request info from the form, not request.data.
         if 'funcname' in request.form: # Pull out the function name, args, and kwargs
             fn_name = request.form.get('funcname')
-            args = json.loads(request.form.get('args', "[]"))
-            kwargs = json.loads(request.form.get('kwargs', "{}"))
+            args = json.loads(request.form.get('args', "[]"), object_pairs_hook=OrderedDict)
+            kwargs = json.loads(request.form.get('kwargs', "{}"), object_pairs_hook=OrderedDict)
         else: # Otherwise, we have a normal or download RPC, which means we pull the RPC request info from request.data.
-            reqdict = json.loads(request.data)
+            reqdict = json.loads(request.data, object_pairs_hook=OrderedDict)
             fn_name = reqdict['funcname']
             args = reqdict.get('args', [])
             kwargs = reqdict.get('kwargs', {})
@@ -369,14 +370,15 @@ class ScirisApp(object):
             shortmsg = str(E)
             exception = traceback.format_exc() # Grab the trackback stack.
             hostname = '|%s| ' % socket.gethostname()
-            errormsg = '%s%s%s Exception during RPC "%s.%s" \nRequest: %s \n%.10000s' % (hostname, RPCinfo.time, RPCinfo.user, RPCinfo.module, RPCinfo.name, request, exception)
-            sc.colorize(failcolor, errormsg) # Post an error to the Flask logger limiting the exception information to 10000 characters maximum (to prevent monstrous sqlalchemy outputs)
+            tracemsg = '%s%s%s Exception during RPC "%s.%s" \nRequest: %s \n%.10000s' % (hostname, RPCinfo.time, RPCinfo.user, RPCinfo.module, RPCinfo.name, request, exception)
+            sc.colorize(failcolor, tracemsg) # Post an error to the Flask logger limiting the exception information to 10000 characters maximum (to prevent monstrous sqlalchemy outputs)
             if self.config['SLACK']:
-                self.slacknotification(errormsg)
+                self.slacknotification(tracemsg)
             if isinstance(E, HTTPException): # If we have a werkzeug exception, pass it on up to werkzeug to resolve and reply to.
                 raise E
             code = 500 # Send back a response with status 500 that includes the exception traceback.
-            reply = {'exception':{'message':shortmsg, 'traceback':errormsg}} # NB, not sure how to actually access 'traceback' on the FE, but keeping it here for future
+            fullmsg = shortmsg + '\n\nTraceback information:\n' + tracemsg
+            reply = {'exception':fullmsg} # NB, not sure how to actually access 'traceback' on the FE, but keeping it here for future
             return make_response(jsonify(reply), code)
         
         # If we are doing a download, prepare the response and send it off.
