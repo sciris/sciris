@@ -546,7 +546,7 @@ def slacknotification(to=None, message=None, fromuser=None, token=None, verbose=
     What's the point? Add this to the end of a very long-running script to notify
     your loved ones that the script has finished.
         
-    Version: 2018sep10
+    Version: 2018sep24
     '''
     try:
         from requests import post # Simple way of posting data to a URL
@@ -558,10 +558,10 @@ def slacknotification(to=None, message=None, fromuser=None, token=None, verbose=
         
     # Validate input arguments
     printv('Sending Slack message...', 2, verbose)
-    if token    is None: token    = os.path.expanduser('~/.slackurl')
-    if to       is None: to       = '#general'
-    if fromuser is None: fromuser = 'sciris-bot'
-    if message  is None: message  = 'This is an automated notification: your notifier is notifying you.'
+    if not token:    token    = os.path.expanduser('~/.slackurl')
+    if not to:       to       = '#general'
+    if not fromuser: fromuser = 'sciris-bot'
+    if not message:  message  = 'This is an automated notification: your notifier is notifying you.'
     printv('Channel: %s | User: %s | Message: %s' % (to, fromuser, message), 3, verbose) # Print details of what's being sent
     
     # Try opening token as a file
