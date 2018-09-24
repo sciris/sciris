@@ -14,6 +14,7 @@ import os
 import re
 import pickle
 import types
+import datetime
 import numpy as np
 from glob import glob
 from gzip import GzipFile
@@ -285,6 +286,9 @@ def sanitizejson(obj, verbose=True, die=False):
         output = OrderedDict()
         for key,val in obj.items():
             output[str(key)] = sanitizejson(val)
+    
+    elif isinstance(obj, datetime.datetime):
+        output = str(obj)
     
     elif ut.isstring(obj): # It's a string of some kind
         try:    string = str(obj) # Try to convert it to ascii
