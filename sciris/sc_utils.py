@@ -7,6 +7,7 @@ import sys
 import six
 import copy
 import time
+import json
 import pprint
 import hashlib
 import datetime
@@ -82,9 +83,17 @@ def cp(obj, verbose=True, die=True):
     return output
 
 
-def pp(obj):
+def pp(obj, jsonify=True, verbose=False):
     ''' Shortcut for pretty-printing the object '''
-    pprint.pprint(obj)
+    if jsonify:
+        try:
+            toprint = json.loads(json.dumps(obj)) # This is to handle things like OrderedDicts
+        except Exception as E:
+            if verbose: print('Could not jsonify object ("%s"), printing default...' % str(E))
+            toprint = obj # If problems are encountered, just return the object
+    else:
+        toprint = obj
+    pprint.pprint(toprint)
     return None
 
 
