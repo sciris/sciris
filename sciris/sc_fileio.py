@@ -261,7 +261,7 @@ def sanitizejson(obj, verbose=True, die=False):
         A converted dict/list/value that should be JSON compatible
     """
     
-    if isinstance(obj, None): # Return None unchanged
+    if obj is None: # Return None unchanged
         output = None
     
     elif isinstance(obj, [bool, np.bool_]): # It's true/false
