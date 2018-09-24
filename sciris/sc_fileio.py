@@ -1,7 +1,7 @@
 """
 fileio.py -- code for file management in Sciris 
     
-Last update: 5/31/18 (gchadder3)
+Last update: 2018sep24
 """
 
 ##############################################################################
@@ -249,7 +249,7 @@ def makefilepath(filename=None, folder=None, ext=None, default=None, split=False
 __all__ += ['sanitizejson', 'loadjson', 'savejson']
 
 
-def sanitizejson(obj):
+def sanitizejson(obj, verbose=True, die=False):
     """
     This is the main conversion function for Python data-structures into
     JSON-compatible data structures.
@@ -260,47 +260,44 @@ def sanitizejson(obj):
     Returns:
         A converted dict/list/value that should be JSON compatible
     """
-
-    if isinstance(obj, list) or isinstance(obj, tuple):
-        return [sanitizejson(p) for p in list(obj)]
     
-    if isinstance(obj, np.ndarray):
-        if obj.shape: return [sanitizejson(p) for p in list(obj)] # Handle most cases, incluing e.g. array([5])
-        else:         return [sanitizejson(p) for p in list(np.array([obj]))] # Handle the special case of e.g. array(5)
+    if isinstance(obj, None): # Return None unchanged
+        output = None
+    
+    elif isinstance(obj, [bool, np.bool_]): # It's true/false
+        output = bool(obj)
+    
+    elif ut.isnumber(obj): # It's a number
+        if np.isnan(obj): # It's nan, so return None
+            output = None
+        else:
+            if isinstance(obj, [int, np.int64]): output = int(obj) # It's an integer
+            else:                                output = float(obj)# It's something else, treat it as a float
 
-    if isinstance(obj, dict):
-        return {str(k): sanitizejson(v) for k, v in obj.items()}
+    elif isinstance(obj, np.ndarray): # It's an array, iterate recursively
+        if obj.shape: output = [sanitizejson(p) for p in list(obj)] # Handle most cases, incluing e.g. array([5])
+        else:         output = [sanitizejson(p) for p in list(np.array([obj]))] # Handle the special case of e.g. array(5)
 
-    if isinstance(obj, odict):
-        result = OrderedDict()
-        for k,v in obj.items():
-            result[str(k)] = sanitizejson(v)
-        return result
-
-    if isinstance(obj, np.bool_):
-        return bool(obj)
-
-    if isinstance(obj, float):
-        if np.isnan(obj): return None
-        else:             return obj
-        
-    if isinstance(obj, np.int64):
-        if np.isnan(obj): return None
-        else:             return int(obj)
-        
-    if isinstance(obj, np.float64):
-        if np.isnan(obj): return None
-        else:             return float(obj)
-
-    if isinstance(obj, unicode):
+    elif isinstance(obj, [list, set, tuple]): # It's another kind of interable, so iterate recurisevly
+        output = [sanitizejson(p) for p in list(obj)]
+    
+    elif isinstance(obj, dict): # Treat all dictionaries as ordered dictionaries
+        output = OrderedDict()
+        for key,val in obj.items():
+            output[str(key)] = sanitizejson(val)
+    
+    elif ut.isstring(obj): # It's a string of some kind
         try:    string = str(obj) # Try to convert it to ascii
         except: string = obj # Give up and use original
-        return string
+        output = string
+    
+    else: # None of the above
+        errormsg = 'Could not sanitize "%s" %s, continuing...' % (obj, type(obj))
+        if die:       raise Exception(errormsg)
+        elif verbose: print(errormsg)
+        output = obj
 
-    if isinstance(obj, set):
-        return list(obj)
-
-    return obj
+    return output
 
 
 
