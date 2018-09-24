@@ -12,6 +12,7 @@ import logging
 import traceback
 from functools import wraps
 import matplotlib.pyplot as ppl
+from collections import OrderedDict
 from werkzeug.utils import secure_filename
 from werkzeug.exceptions import HTTPException
 from flask import Flask, request, abort, json, jsonify, send_from_directory, make_response, current_app as flaskapp
@@ -37,6 +38,14 @@ from . import sc_tasks as tasks
 #################################################################
 
 __all__ = ['ScirisApp', 'ScirisResource', 'run_twisted', 'flaskapp']
+
+def ordered_jsonify(obj):
+    ''' In contrast to flask.jsonify(), preserve order when jsonifying output '''
+    indent   = None if request.is_xhr else 2
+    mimetype = 'application/json'
+    string   = json.dumps(sc.sanitizejson(obj), indent=indent, object_pairs_hook=OrderedDict)
+    output   = flaskapp.response_class(string, mimetype=mimetype)
+    return output
 
 class ScirisApp(object):
     """
@@ -366,6 +375,7 @@ class ScirisApp(object):
                 string = '%s%s RPC finished in %0.2f s: "%s.%s"' % (RPCinfo.time, RPCinfo.user, elapsed, RPCinfo.module, RPCinfo.name)
                 sc.colorize(successcolor, string)
         except Exception as E:
+            shortmsg = str(E)
             exception = traceback.format_exc() # Grab the trackback stack.
             hostname = '|%s| ' % socket.gethostname()
             errormsg = '%s%s%s Exception during RPC "%s.%s" \nRequest: %s \n%.10000s' % (hostname, RPCinfo.time, RPCinfo.user, RPCinfo.module, RPCinfo.name, request, exception)
@@ -375,7 +385,7 @@ class ScirisApp(object):
             if isinstance(E, HTTPException): # If we have a werkzeug exception, pass it on up to werkzeug to resolve and reply to.
                 raise E
             code = 500 # Send back a response with status 500 that includes the exception traceback.
-            reply = {'exception':errormsg, 'traceback':errormsg} # NB, not sure how to actually access 'traceback' on the FE, but keeping it here for future
+            reply = {'exception':{'message':shortmsg, 'traceback':errormsg}} # NB, not sure how to actually access 'traceback' on the FE, but keeping it here for future
             return make_response(jsonify(reply), code)
         
         # If we are doing a download, prepare the response and send it off.
@@ -406,7 +416,7 @@ class ScirisApp(object):
             if result is None: # If None was returned by the RPC function, return ''.
                 return ''
             else: # Otherwise, convert the result (probably a dict) to JSON and return it.
-                return jsonify(sc.sanitizejson(result))
+                return ordered_jsonify(result)
         
         
 class ScirisResource(Resource):
