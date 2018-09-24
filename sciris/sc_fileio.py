@@ -264,21 +264,21 @@ def sanitizejson(obj, verbose=True, die=False):
     if obj is None: # Return None unchanged
         output = None
     
-    elif isinstance(obj, [bool, np.bool_]): # It's true/false
+    elif isinstance(obj, (bool, np.bool_)): # It's true/false
         output = bool(obj)
     
     elif ut.isnumber(obj): # It's a number
         if np.isnan(obj): # It's nan, so return None
             output = None
         else:
-            if isinstance(obj, [int, np.int64]): output = int(obj) # It's an integer
+            if isinstance(obj, (int, np.int64)): output = int(obj) # It's an integer
             else:                                output = float(obj)# It's something else, treat it as a float
 
     elif isinstance(obj, np.ndarray): # It's an array, iterate recursively
         if obj.shape: output = [sanitizejson(p) for p in list(obj)] # Handle most cases, incluing e.g. array([5])
         else:         output = [sanitizejson(p) for p in list(np.array([obj]))] # Handle the special case of e.g. array(5)
 
-    elif isinstance(obj, [list, set, tuple]): # It's another kind of interable, so iterate recurisevly
+    elif isinstance(obj, (list, set, tuple)): # It's another kind of interable, so iterate recurisevly
         output = [sanitizejson(p) for p in list(obj)]
     
     elif isinstance(obj, dict): # Treat all dictionaries as ordered dictionaries
