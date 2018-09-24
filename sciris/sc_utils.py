@@ -1107,11 +1107,11 @@ def uniquename(name=None, namelist=None, style=None):
     """
     if style is None: style = ' (%d)'
     namelist = promotetolist(namelist)
-    unique_name = name # Start with the passed in name.
+    unique_name = str(name) # Start with the passed in name.
     i = 0 # Reset the counter
     while unique_name in namelist: # Try adding an index (i) to the name until we find one that's unique
         i += 1
-        unique_name = name + style%i
+        unique_name = str(name) + style%i
     return unique_name # Return the found name.
 
 
