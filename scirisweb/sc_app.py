@@ -12,7 +12,6 @@ import logging
 import traceback
 from functools import wraps
 import matplotlib.pyplot as ppl
-from collections import OrderedDict
 from werkzeug.utils import secure_filename
 from werkzeug.exceptions import HTTPException
 from flask import Flask, request, abort, json, jsonify, send_from_directory, make_response, current_app as flaskapp
@@ -38,14 +37,6 @@ from . import sc_tasks as tasks
 #################################################################
 
 __all__ = ['ScirisApp', 'ScirisResource', 'run_twisted', 'flaskapp']
-
-def ordered_jsonify(obj):
-    ''' In contrast to flask.jsonify(), preserve order when jsonifying output '''
-    indent   = None if request.is_xhr else 2
-    mimetype = 'application/json'
-    string   = json.dumps(sc.sanitizejson(obj), indent=indent, object_pairs_hook=OrderedDict)
-    output   = flaskapp.response_class(string, mimetype=mimetype)
-    return output
 
 class ScirisApp(object):
     """
@@ -416,7 +407,7 @@ class ScirisApp(object):
             if result is None: # If None was returned by the RPC function, return ''.
                 return ''
             else: # Otherwise, convert the result (probably a dict) to JSON and return it.
-                return ordered_jsonify(result)
+                return jsonify(sc.sanitizejson(result))
         
         
 class ScirisResource(Resource):
