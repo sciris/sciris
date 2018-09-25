@@ -523,37 +523,37 @@ def getdate(obj=None, fmt='str', dateformat=None):
 
 
 
-def slacknotification(to=None, message=None, fromuser=None, token=None, verbose=2, die=False):
+def slacknotification(message=None, webhook=None, to=None, fromuser=None, verbose=2, die=False):
     ''' 
     Send a Slack notification when something is finished.
     
     Arguments:
-        to:
-            The Slack channel or user to post to. Note that channels begin with #, while users 
-            begin with @.
         message:
             The message to be posted.
-        fromuser:
+        webhook:
+            This is either a string containing the webhook itself, or a plain text file containing 
+            a single line which is the Slack webhook. By default it will look for the file
+            ".slackurl" in the user's home folder. The webhook needs to look something like
+            "https://hooks.slack.com/services/af7d8w7f/sfd7df9sb/lkcpfj6kf93ds3gj". Webhooks are 
+            effectively passwords and must be kept secure! Alternatively, you can specify the webhook
+            in the environment variable SLACKURL.
+        to (WARNING: ignored by new-style webhooks):
+            The Slack channel or user to post to. Channels begin with #, while users begin with @.
+        fromuser (WARNING: ignored by new-style webhooks):
             The pseudo-user the message will appear from.
-        token:
-            This is either a string containing the URL of the token, or a plain text file containing 
-            a single line which is the Slack API URL token. By default it will look for the file
-            ".slackurl" in the user's home folder. The token needs to look something like
-            "https://hooks.slack.com/services/af7d8w7f/sfd7df9sb/lkcpfj6kf93ds3gj". Tokens are 
-            effectively passwords and must be kept secure!
         verbose:
             How much detail to display.
         die:
             If false, prints warnings. If true, raises exceptions.
     
     Example usage:
-        slacknotification('#athena', 'Long process is finished')
-        slacknotification(token='/.slackurl', channel='@username', message='Hi, how are you going?')
+        slacknotification('Long process is finished')
+        slacknotification(webhook='/.slackurl', channel='@username', message='Hi, how are you going?')
     
     What's the point? Add this to the end of a very long-running script to notify
     your loved ones that the script has finished.
         
-    Version: 2018sep24
+    Version: 2018sep25
     '''
     try:
         from requests import post # Simple way of posting data to a URL
@@ -564,18 +564,18 @@ def slacknotification(to=None, message=None, fromuser=None, token=None, verbose=
         else:   print(errormsg)
         
     # Validate input arguments
-    printv('Sending Slack message...', 2, verbose)
-    if not token:    token    = os.path.expanduser('~/.slackurl')
+    printv('Sending Slack message', 1, verbose)
+    if not webhook:  webhook    = os.path.expanduser('~/.slackurl')
     if not to:       to       = '#general'
     if not fromuser: fromuser = 'sciris-bot'
     if not message:  message  = 'This is an automated notification: your notifier is notifying you.'
     printv('Channel: %s | User: %s | Message: %s' % (to, fromuser, message), 3, verbose) # Print details of what's being sent
     
     # Try opening token as a file
-    if os.path.exists(os.path.expanduser(token)):
-        with open(os.path.expanduser(token)) as f: slackurl = f.read()
-    elif token.find('slack')>=0: # It seems to be a URL, let's proceed
+    if token.find('hooks.slack.com')>=0: # It seems to be a URL, let's proceed
         slackurl = token
+    elif os.path.exists(os.path.expanduser(token)): # If not, look for it sa a file
+        with open(os.path.expanduser(token)) as f: slackurl = f.read()
     elif os.getenv('SLACKURL'): # See if it's set in the user's environment variables
         slackurl = os.getenv('SLACKURL')
     else:
@@ -590,7 +590,7 @@ def slacknotification(to=None, message=None, fromuser=None, token=None, verbose=
         printv('Full payload: %s' % payload, 4, verbose)
         response = post(url=slackurl, data=payload)
         printv(response, 3, verbose) # Optionally print response
-        printv('Message sent.', 1, verbose) # We're done
+        printv('Message sent.', 2, verbose) # We're done
     except Exception as E:
         errormsg = 'Sending of Slack message failed: %s' % repr(E)
         if die: raise Exception(errormsg)

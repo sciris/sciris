@@ -238,11 +238,11 @@ class ScirisApp(object):
         
     def slacknotification(self, message=None):
         ''' Send a message on Slack '''
-        if self.config['SLACK']:
-            slack_to    = self.config['SLACK'].get('to')
-            slack_from  = self.config['SLACK'].get('from')
-            slack_token = self.config['SLACK'].get('token')
-            sc.slacknotification(to=slack_to, message=message, fromuser=slack_from, token=slack_token, die=False)
+        if self.config.get('SLACK'):
+            slack_to      = self.config['SLACK'].get('to')
+            slack_from    = self.config['SLACK'].get('from')
+            slack_webhook = self.config['SLACK'].get('webhook')
+            sc.slacknotification(message=message, webhook=slack_webhook, to=slack_to, fromuser=slack_from, die=False)
         else:
             print('Cannot send Slack message "%s": Slack not enabled in config file' % message)
         return None
