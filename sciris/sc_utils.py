@@ -83,8 +83,9 @@ def cp(obj, verbose=True, die=True):
     return output
 
 
-def pp(obj, jsonify=True, verbose=False):
+def pp(obj, jsonify=True, verbose=False, doprint=True, *args, **kwargs):
     ''' Shortcut for pretty-printing the object '''
+    # Get object
     if jsonify:
         try:
             toprint = json.loads(json.dumps(obj)) # This is to handle things like OrderedDicts
@@ -93,8 +94,14 @@ def pp(obj, jsonify=True, verbose=False):
             toprint = obj # If problems are encountered, just return the object
     else:
         toprint = obj
-    pprint.pprint(toprint)
-    return None
+    
+    # Decide what to do with object
+    if doprint:
+        pprint.pprint(toprint, *args, **kwargs)
+        return None
+    else:
+        output = pprint.pformat(toprint, *args, **kwargs)
+        return output
 
 
 def sha(string, *args, **kwargs):

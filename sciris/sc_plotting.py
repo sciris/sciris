@@ -276,16 +276,20 @@ def vectocolor(vector, cmap=None, asarray=True, reverse=False):
    c = vectocolor(y);
    scatter(x,y,20,c)
 
-   Version: 2016sep28 
+   Version: 2018sep25
    """
    from numpy import array, zeros
    from pylab import cm
-
+   
    if cmap==None:
       cmap = cm.jet
    elif type(cmap)==str:
       try: cmap = getattr(cm,cmap)
       except: raise Exception('%s is not a valid color map; choices are:\n%s' % (cmap, '\n'.join(sorted(cm.datad.keys()))))
+
+    # If a scalar is supplied, convert it to a vector instead
+   if ut.isnumber(vector):
+        vector = np.arange(vector)
 
    # The vector has elements
    if len(vector):
@@ -298,7 +302,8 @@ def vectocolor(vector, cmap=None, asarray=True, reverse=False):
          colors[i,:]=array(cmap(vector[i]))
 
    # It doesn't; just return black
-   else: colors=(0,0,0,1)
+   else:
+       colors=(0,0,0,1)
    
    # Process output
    output = processcolors(colors=colors, asarray=asarray, reverse=reverse)
