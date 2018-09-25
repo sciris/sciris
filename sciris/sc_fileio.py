@@ -340,7 +340,7 @@ class Blobject(object):
         # It can be anything supported by Blobject.load() which are
         # - A filename, which will get loaded
         # - A io.BytesIO which will get dumped into this instance
-    
+        
         # Handle inputs
         if source   is None and filename is not None: source   = filename # Reset the source to be the filename, e.g. Spreadsheet(filename='foo.xlsx')
         if filename is None and ut.isstring(source):  filename = source   # Reset the filename to be the source, e.g. Spreadsheet('foo.xlsx')

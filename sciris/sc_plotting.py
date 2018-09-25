@@ -514,17 +514,17 @@ __all__ += ['savefigs', 'loadfig', 'emptyfig', 'separatelegend']
 
 
 
-def savefigs(figs=None, filetype=None, filename=None, folder=None, savefigargs=None, verbose=False, **kwargs):
+def savefigs(figs=None, filetype=None, filename=None, folder=None, savefigargs=None, aslist=False, verbose=False, **kwargs):
     '''
     Save the requested plots to disk.
     
     Arguments:
-        plots -- the figure objects to save
-        filetype -- the file type; can be 'fig', 'singlepdf' (default), or anything supported by savefig()
-        folder -- the folder to save the file(s) in
-        filename -- the file to save to (only uses path if multiple files)
+        figs        -- the figure objects to save
+        filetype    -- the file type; can be 'fig', 'singlepdf' (default), or anything supported by savefig()
+        filename    -- the file to save to (only uses path if multiple files)
+        folder      -- the folder to save the file(s) in
         savefigargs -- dictionary of arguments passed to savefig()
-        index -- optional argument to only save the specified plot index
+        aslist      -- whether or not return a list even for a single file
     
     Example usages:
         import pylab as pl
@@ -586,10 +586,14 @@ def savefigs(figs=None, filetype=None, filename=None, folder=None, savefigargs=N
                 filenames.append(fullpath)
                 if verbose: print('%s plot saved to %s' % (filetype.upper(),fullpath))
             pl.close(plt)
-
+    
+    # Do final tidying
     if filetype=='singlepdf': pdf.close()
     if wasinteractive: pl.ion()
-    return filenames
+    if aslist or len(filenames)>1:
+        return filenames
+    else:
+        return filenames[0]
 
 
 def loadfig(filename=None):
