@@ -69,9 +69,11 @@ class User(sc.prettyobj):
         self.password = password
         return None
     
+    
     def get_id(self):
         ''' Method required by Flask-login '''
         return self.username
+    
     
     def show(self, verbose=False):
         ''' Display the user's properties '''
@@ -90,6 +92,7 @@ class User(sc.prettyobj):
             print('        Is admin: %s' % self.is_admin)
             print('---------------------')
         return None
+    
     
     def jsonify(self, verbose=False):
         ''' Return a JSON-friendly representation of a user '''
@@ -175,7 +178,7 @@ def user_register(username, password, displayname, email):
 
 @RPC(validation='named')
 def user_change_info(username, password, displayname, email):
-    the_user = sc.dcp(current_user) # Make a copy of the current_user.
+    the_user = app.datastore.loaduser(current_user.username) # Reload the current user from the database
     if password != the_user.password: # If the password entered doesn't match the current user password, fail.
         errormsg = 'User info change failed: password for user "%s" is incorrect.' % username
         return errormsg
@@ -199,7 +202,7 @@ def user_change_info(username, password, displayname, email):
 
 @RPC(validation='named') 
 def user_change_password(oldpassword, newpassword):
-    the_user = sc.dcp(current_user) # Make a copy of the current_user.
+    the_user = app.datastore.loaduser(current_user.username) # Reload the current user from the database
     
     # If the password entered doesn't match the current user password, fail.
     if oldpassword != the_user.password:
