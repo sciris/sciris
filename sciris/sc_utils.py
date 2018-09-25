@@ -30,7 +30,7 @@ _numtype    = numbers.Number
 __all__ = ['uuid', 'dcp', 'cp', 'pp', 'sha']
 
 
-def uuid(uid=None, which=None, die=False, as_string=False):
+def uuid(uid=None, which=None, die=False, tostring=False):
     ''' Shortcut for creating a UUID; default is to create a UUID4. Can also convert a UUID. '''
     if which is None: which = 4
     if   which==1: uuid_func = py_uuid.uuid1
@@ -55,7 +55,7 @@ def uuid(uid=None, which=None, die=False, as_string=False):
                 print(errormsg)
                 output = uuid_func() # Just create a new one
     
-    if as_string: output = str(output)
+    if tostring: output = str(output)
     return output
 
 
@@ -489,40 +489,6 @@ def printvars(localvars=None, varlist=None, label=None, divider=True, spaces=1, 
 
 
 
-def getdate(obj=None, fmt='str', dateformat=None):
-        ''' Return either the date created or modified ("which") as either a str or int ("fmt") '''
-        if obj is None:
-            obj = now()
-        
-        if dateformat is None:
-            dateformat = '%Y-%b-%d %H:%M:%S'
-        
-        try:
-            if isstring(obj): return obj # Return directly if it's a string
-            obj.timetuple() # Try something that will only work if it's a date object
-            dateobj = obj # Test passed: it's a date object
-        except Exception as E: # It's not a date object
-            raise Exception('Getting date failed; date must be a string or a date object: %s' % repr(E))
-        
-        if fmt=='str':
-            try:
-                output = dateobj.strftime(dateformat).encode('ascii', 'ignore') # Return string representation of time
-                return output
-            except UnicodeDecodeError:
-                dateformat = '%Y-%m-%d %H:%M:%S'
-                output = dateobj.strftime(dateformat)
-                return output
-        elif fmt=='int': 
-            output = time.mktime(dateobj.timetuple()) # So ugly!! But it works -- return integer representation of time
-            return output
-        else:
-            errormsg = '"fmt=%s" not understood; must be "str" or "int"' % fmt
-            raise Exception(errormsg)
-        return None # Should not be possible to get to this point
-
-
-
-
 def slacknotification(message=None, webhook=None, to=None, fromuser=None, verbose=2, die=False):
     ''' 
     Send a Slack notification when something is finished.
@@ -852,19 +818,49 @@ def promotetolist(obj=None, objtype=None, keepnone=False):
 
 __all__ += ['now', 'tic', 'toc', 'percentcomplete', 'checkmem', 'loadbalancer', 'runcommand', 'gitinfo', 'compareversions', 'uniquename', 'importbyname']
 
-def now(timezone='utc', die=False, tostring=False, fmt=None):
-    ''' Get the current time, in UTC time '''
-    if timezone=='utc':                           tzinfo = dateutil.tz.tzutc()
-    elif timezone is None or timezone=='current': tzinfo = None
-    else:                                         raise Exception('Timezone "%s" not understood' % timezone)
+def now(utc=False, die=False, tostring=False, fmt=None):
+    ''' Get the current time, optionally in UTC time '''
+    if utc: tzinfo = dateutil.tz.tzutc()
+    else:   tzinfo = None
     timenow = datetime.datetime.now(tzinfo)
-    if tostring:
-        output = getdate(timenow)
-    else:
-        output = timenow
+    if tostring: output = getdate(timenow)
+    else:        output = timenow
     return output
     
     
+
+def getdate(obj=None, fmt='str', dateformat=None):
+        ''' Return either the date created or modified ("which") as either a str or int ("fmt") '''
+        if obj is None:
+            obj = now()
+        
+        if dateformat is None:
+            dateformat = '%Y-%b-%d %H:%M:%S'
+        
+        try:
+            if isstring(obj): return obj # Return directly if it's a string
+            obj.timetuple() # Try something that will only work if it's a date object
+            dateobj = obj # Test passed: it's a date object
+        except Exception as E: # It's not a date object
+            raise Exception('Getting date failed; date must be a string or a date object: %s' % repr(E))
+        
+        if fmt=='str':
+            try:
+                output = dateobj.strftime(dateformat).encode('ascii', 'ignore') # Return string representation of time
+                return output
+            except UnicodeDecodeError:
+                dateformat = '%Y-%m-%d %H:%M:%S'
+                output = dateobj.strftime(dateformat)
+                return output
+        elif fmt=='int': 
+            output = time.mktime(dateobj.timetuple()) # So ugly!! But it works -- return integer representation of time
+            return output
+        else:
+            errormsg = '"fmt=%s" not understood; must be "str" or "int"' % fmt
+            raise Exception(errormsg)
+        return None # Should not be possible to get to this point
+
+
 
 def tic():
     '''
