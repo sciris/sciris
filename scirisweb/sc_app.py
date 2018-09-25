@@ -377,7 +377,7 @@ class ScirisApp(object):
             if isinstance(E, HTTPException): # If we have a werkzeug exception, pass it on up to werkzeug to resolve and reply to.
                 raise E
             code = 500 # Send back a response with status 500 that includes the exception traceback.
-            fullmsg = shortmsg + '\n\nTraceback information:\n' + tracemsg
+            fullmsg = shortmsg + '\n\nException details:\n' + tracemsg
             reply = {'exception':fullmsg} # NB, not sure how to actually access 'traceback' on the FE, but keeping it here for future
             return make_response(jsonify(reply), code)
         
