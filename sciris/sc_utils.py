@@ -571,16 +571,16 @@ def slacknotification(message=None, webhook=None, to=None, fromuser=None, verbos
     if not message:  message  = 'This is an automated notification: your notifier is notifying you.'
     printv('Channel: %s | User: %s | Message: %s' % (to, fromuser, message), 3, verbose) # Print details of what's being sent
     
-    # Try opening token as a file
-    if token.find('hooks.slack.com')>=0: # It seems to be a URL, let's proceed
-        slackurl = token
-    elif os.path.exists(os.path.expanduser(token)): # If not, look for it sa a file
-        with open(os.path.expanduser(token)) as f: slackurl = f.read()
+    # Try opening webhook as a file
+    if webhook.find('hooks.slack.com')>=0: # It seems to be a URL, let's proceed
+        slackurl = webhook
+    elif os.path.exists(os.path.expanduser(webhook)): # If not, look for it sa a file
+        with open(os.path.expanduser(webhook)) as f: slackurl = f.read()
     elif os.getenv('SLACKURL'): # See if it's set in the user's environment variables
         slackurl = os.getenv('SLACKURL')
     else:
-        slackurl = token # It doesn't seemt to be a URL but let's try anyway
-        errormsg = '"%s" does not seem to be a valid Slack URL/token string or file' % token
+        slackurl = webhook # It doesn't seemt to be a URL but let's try anyway
+        errormsg = '"%s" does not seem to be a valid webhook string or file' % webhook
         if die: raise Exception(errormsg)
         else:   print(errormsg)
     
