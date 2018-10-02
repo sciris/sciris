@@ -162,9 +162,14 @@ class dataframe(object):
         if value is None:
             value = np.zeros(self.nrows(), dtype=object)
         if isinstance(key, ut._stringtype): # Add column
-            if len(value) != self.nrows(): 
-                errormsg = 'Vector has incorrect length (%i vs. %i)' % (len(value), self.nrows())
-                raise Exception(errormsg)
+            if not ut.isiterable(value):
+                value = ut.promotetolist(value)
+            if len(value) != self.nrows():
+                if len(value) == 1:
+                    value = [value]*self.nrows() # Get it the right length
+                else:
+                    errormsg = 'Cannot add column %s with value %s: incorrect length (%s vs. %s)' % (key, value, len(value), self.nrows())
+                    raise Exception(errormsg)
             try:
                 colindex = self.cols.index(key)
                 val_arr = np.reshape(value, (len(value),))
