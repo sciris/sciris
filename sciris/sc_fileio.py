@@ -712,6 +712,8 @@ def savespreadsheet(filename=None, data=None, folder=None, sheetnames=None, clos
         workbook_formats = dict()
         for formatkey,formatval in formats.items():
             workbook_formats[formatkey] = workbook.add_format(formatval)
+    else:
+        thisformat = workbook.add_format({}) # Plain formatting
        
     # Actually write the data
     for sheetname in datadict.keys():
@@ -725,9 +727,11 @@ def savespreadsheet(filename=None, data=None, folder=None, sheetnames=None, clos
                 if verbose: print('      Writing cell %s/%s' % (c, len(row_data)))
                 if hasformats:
                     thisformat = workbook_formats[sheetformat[r][c]] # Get the actual format
-                    worksheet.write(r, c, cell_data, thisformat) # Write with formatting
-                else:
-                    worksheet.write(r, c, cell_data) # Write without formatting
+                try:
+                    worksheet.write(r, c, cell_data, thisformat) # Write with or without formatting
+                except Exception as E:
+                    errormsg = 'Could not write cell [%s,%s] data="%s", format="%s": %s' % (r, c, cell_data, thisformat, str(E))
+                    raise Exception(errormsg)
     
     # Either close the workbook and write to file, or return it for further working
     if close:

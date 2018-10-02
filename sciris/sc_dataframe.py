@@ -131,19 +131,37 @@ class dataframe(object):
                 raise Exception(errormsg)
         return output
     
-    def _sanitizecol(self, col):
+    def _sanitizecol(self, col, die=True):
         ''' Take None or a string and return the index of the column '''
-        if col is None: output = 0 # If not supplied, assume first column is control
-        elif isinstance(col, ut._stringtype): output = self.cols.index(col) # Convert to index
-        else: output = col
+        if col is None:
+            output = 0 # If not supplied, assume first column is control
+        elif ut.isstring(col):
+            try:
+                output = self.cols.index(col) # Convert to index
+            except Exception as E:
+                errormsg = 'Could not get index of column "%s"; columns are:\n%s\n%s' % (col, '\n'.join(self.cols), str(E))
+                if die: 
+                    raise Exception(errormsg)
+                else:
+                    print(errormsg)
+                    output = None
+        elif ut.isnumber(col):
+            output = col
+        else:
+            errormsg = 'Unrecognized column/column type "%s" %s' % (col, type(col))
+            if die:
+                raise Exception(errormsg)
+            else:
+                print(errormsg)
+                output = None
         return output
     
-    def __getitem__(self, key=None):
+    def __getitem__(self, key=None, die=True):
         ''' Simple method for returning; see self.get() for a version based on col and row '''
-        if isinstance(key, ut._stringtype):
+        if ut.isstring(key):
             colindex = self.cols.index(key)
             output = self.data[:,colindex]
-        elif isinstance(key, ut._numtype):
+        elif ut.isnumber(key):
             rowindex = int(key)
             output = self.data[rowindex,:]
         elif isinstance(key, tuple):
@@ -155,13 +173,18 @@ class dataframe(object):
             slicedata = self.data[rowslice,:]
             output = dataframe(cols=self.cols, data=slicedata)
         else:
-            raise Exception('Unrecognized dataframe key "%s"' % key)
+            errormsg = 'Unrecognized dataframe key "%s"' % key
+            if die:
+                raise Exception(errormsg)
+            else:
+                print(errormsg)
+                output = None
         return output
         
     def __setitem__(self, key, value=None):
         if value is None:
             value = np.zeros(self.nrows(), dtype=object)
-        if isinstance(key, ut._stringtype): # Add column
+        if ut.isstring(key): # Add column
             if not ut.isiterable(value):
                 value = ut.promotetolist(value)
             if len(value) != self.nrows():
@@ -179,7 +202,7 @@ class dataframe(object):
                 colindex = self.cols.index(key)
                 val_arr = np.reshape(value, (len(value),1))
                 self.data = np.hstack((self.data, np.array(val_arr, dtype=object)))
-        elif isinstance(key, ut._numtype):
+        elif ut.isnumber(key):
             value = self._val2row(value) # Make sure it's in the correct format
             if len(value) != self.ncols(): 
                 errormsg = 'Vector has incorrect length (%i vs. %i)' % (len(value), self.ncols())
@@ -253,11 +276,18 @@ class dataframe(object):
         ''' Add a new column to the data frame -- for consistency only '''
         self.__setitem__(key, value)
     
-    def rmcol(self, key):
-        ''' Remove a column from the data frame '''
-        colindex = self.cols.index(key)
-        self.cols.pop(colindex) # Remove from list of columns
-        self.data = np.hstack((self.data[:,:colindex], self.data[:,colindex+1:])) # Remove from data
+    def rmcol(self, key, die=True):
+        ''' Remove a column or columns from the data frame '''
+        cols = ut.promotetolist(key)
+        for col in cols:
+            if col not in self.cols:
+                errormsg = 'Dataframe: cannot remove column %s: columns are:\n%s' % (col, '\n'.join(self.cols))
+                if die: raise Exception(errormsg)
+                else:   print(errormsg)
+            else:
+                colindex = self.cols.index(col)
+                self.cols.pop(colindex) # Remove from list of columns
+                self.data = np.hstack((self.data[:,:colindex], self.data[:,colindex+1:])) # Remove from data
         return None
     
     def addrow(self, value=None, overwrite=True, col=None, reverse=False):
@@ -373,6 +403,13 @@ class dataframe(object):
     def filter_out(self, key=None, col=None, verbose=False):
         self._filterrows(key=key, col=col, keep=False, verbose=verbose)
         return None
+    
+    def filtercols(self, cols=None):
+        cols = ut.promotetolist(cols)
+        toremove = list(set(self.cols) - set(cols))
+        if toremove:
+            self.rmcol(toremove)
+        return None
         
     def insert(self, row=0, value=None):
         ''' Insert a row at the specified location '''
@@ -389,7 +426,7 @@ class dataframe(object):
         self.data = self.data[sortorder,:]
         return None
         
-    def jsonify(self, cols=None, rows=None, header=None):
+    def jsonify(self, cols=None, rows=None, header=None, die=True):
         ''' Export the dataframe to a JSON-compatible format '''
         
         # Handle input arguments
@@ -397,14 +434,25 @@ class dataframe(object):
         if rows   is None: rows   = list(range(self.nrows())) # Use all rows by default
         if header is None: header = True # Include headers
         
+        # Validate
+        cols = ut.promotetolist(cols)
+        for col in cols:
+            if col not in self.cols:
+                errormsg = 'Dataframe: cannot jsonify column %s: columns are:\n%s' % (col, '\n'.join(self.cols))
+                if die: raise Exception(errormsg)
+                else:   print(errormsg)
+        
         # Handle output
         output = []
         if header: output.append(cols)
         for r in rows:
             thisrow = []
             for col in cols:
-                datum = self.get(cols=col,rows=r)
-                thisrow.append(datum)
+                try:
+                    datum = self.get(cols=col,rows=r)
+                    thisrow.append(datum)
+                except:
+                    pass # This has already been handled by the validation above
             output.append(thisrow)
         return output
     
@@ -422,9 +470,11 @@ class dataframe(object):
             self.data = np.array(df, dtype=object)
             return None
     
-    def export(self, filename=None, sheetname=None, close=True):
+    def export(self, filename=None, cols=None, close=True):
         from . import sc_fileio as io # Optional import
-        for_export = ut.dcp(self.data)
-        for_export = np.vstack((self.cols, self.data))
-        filepath = io.savespreadsheet(filename=filename, data=for_export, close=close)
+        exportdf = ut.dcp(self)
+        if cols is None: cols = exportdf.cols # Use all columns by default
+        exportdf.filtercols(cols)
+        exportdata = np.vstack((exportdf.cols, exportdf.data))
+        filepath = io.savespreadsheet(filename=filename, data=exportdata, close=close)
         return filepath
