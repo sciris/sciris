@@ -12,6 +12,7 @@ Last update: 2018sep24
 import io
 import os
 import re
+import json
 import pickle
 import types
 import datetime
@@ -250,7 +251,7 @@ def makefilepath(filename=None, folder=None, ext=None, default=None, split=False
 __all__ += ['sanitizejson', 'loadjson', 'savejson']
 
 
-def sanitizejson(obj, verbose=True, die=False):
+def sanitizejson(obj, verbose=True, die=False, tostring=False):
     """
     This is the main conversion function for Python data-structures into
     JSON-compatible data structures.
@@ -261,7 +262,6 @@ def sanitizejson(obj, verbose=True, die=False):
     Returns:
         A converted dict/list/value that should be JSON compatible
     """
-    
     if obj is None: # Return None unchanged
         output = None
     
@@ -301,13 +301,13 @@ def sanitizejson(obj, verbose=True, die=False):
         elif verbose: print(errormsg)
         output = obj
 
-    return output
+    if tostring: return json.dumps(output)
+    else:        return output
 
 
 
 def loadjson(filename=None, folder=None):
     ''' Convenience function for reading a text file '''
-    import json # Optional Sciris dependency
     filename = makefilepath(filename=filename, folder=folder)
     with open(filename) as f:
         output = json.load(f)
@@ -317,7 +317,6 @@ def loadjson(filename=None, folder=None):
 
 def savejson(filename=None, obj=None, folder=None):
     ''' Convenience function for saving a text file -- accepts a string or list of strings '''
-    import json # Optional Sciris dependency
     filename = makefilepath(filename=filename, folder=folder)
     with open(filename, 'w') as f:
         json.dump(sanitizejson(obj), f)
