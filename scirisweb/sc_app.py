@@ -15,7 +15,7 @@ import matplotlib.pyplot as ppl
 from collections import OrderedDict
 from werkzeug.utils import secure_filename
 from werkzeug.exceptions import HTTPException
-from flask import Flask, request, abort, json, jsonify, send_from_directory, make_response, current_app as flaskapp
+from flask import Flask, request, abort, json, jsonify as flask_jsonify, send_from_directory, make_response, current_app as flaskapp
 from flask_login import LoginManager, current_user
 from flask_session import RedisSessionInterface
 from twisted.internet import reactor
@@ -34,10 +34,17 @@ from . import sc_tasks as tasks
 
 
 #################################################################
-### Classes
+### Classes and functions
 #################################################################
 
-__all__ = ['ScirisApp', 'ScirisResource', 'run_twisted', 'flaskapp']
+__all__ = ['robustjsonify', 'ScirisApp', 'ScirisResource', 'run_twisted', 'flaskapp']
+
+def robustjsonify(response):
+    ''' Flask's default jsonifier clobbers dict order; this preserves it '''
+    output = flask_jsonify('placeholder') # Create the payload with placeholder content
+    output.response = sc.sanitizejson(response, tostring=True) # Replace there response with a properly formatted JSON
+    return output
+
 
 class ScirisApp(object):
     """
@@ -315,7 +322,7 @@ class ScirisApp(object):
         
         # If the function name is not in the RPC dictionary, return an error.
         if not fn_name in self.RPC_dict:
-            return jsonify({'error': 'Could not find requested RPC "%s"' % fn_name})
+            return robustjsonify({'error': 'Could not find requested RPC "%s"' % fn_name})
         
         found_RPC = self.RPC_dict[fn_name] # Get the RPC we've found.
         
@@ -379,17 +386,17 @@ class ScirisApp(object):
             code = 500 # Send back a response with status 500 that includes the exception traceback.
             fullmsg = shortmsg + '\n\nException details:\n' + tracemsg
             reply = {'exception':fullmsg} # NB, not sure how to actually access 'traceback' on the FE, but keeping it here for future
-            return make_response(jsonify(reply), code)
+            return make_response(robustjsonify(reply), code)
         
         # If we are doing a download, prepare the response and send it off.
         if found_RPC.call_type == 'download':
             if result is None: # If we got None for a result (the full file name), return an error to the client.
-                return jsonify({'error': 'Could not find resource to download from RPC "%s": result is None' % fn_name})
+                return robustjsonify({'error': 'Could not find resource to download from RPC "%s": result is None' % fn_name})
             elif not sc.isstring(result): # Else, if the result is not even a string (which means it's not a file name as expected)...
                 if type(result) is dict and 'error' in result: # If the result is a dict with an 'error' key, then assume we have a custom error that we want the RPC to return to the browser, and do so.
-                    return jsonify(result)
+                    return robustjsonify(result)
                 else: # Otherwise, return an error that the download RPC did not return a filename.
-                    return jsonify({'error': 'Download RPC "%s" did not return a filename (result is of type %s)' % (fn_name, type(result))})
+                    return robustjsonify({'error': 'Download RPC "%s" did not return a filename (result is of type %s)' % (fn_name, type(result))})
             dir_name, file_name = os.path.split(result)  # Pull out the directory and file names from the full file name.
          
             # Make the response message with the file loaded as an attachment.
@@ -409,7 +416,8 @@ class ScirisApp(object):
             if result is None: # If None was returned by the RPC function, return ''.
                 return ''
             else: # Otherwise, convert the result (probably a dict) to JSON and return it.
-                return jsonify(sc.sanitizejson(result))
+                output = robustjsonify(result)
+                return output
         
         
 class ScirisResource(Resource):
