@@ -405,6 +405,7 @@ class dataframe(object):
         return None
     
     def filtercols(self, cols=None):
+        if cols is None: cols = ut.dcp(self.cols)
         cols = ut.promotetolist(cols)
         toremove = list(set(self.cols) - set(cols))
         if toremove:

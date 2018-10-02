@@ -728,6 +728,8 @@ def savespreadsheet(filename=None, data=None, folder=None, sheetnames=None, clos
                 if hasformats:
                     thisformat = workbook_formats[sheetformat[r][c]] # Get the actual format
                 try:
+                    if not ut.isnumber(cell_data):
+                        cell_data = str(cell_data) # Convert everything except numbers to strings -- use formatting to handle the rest
                     worksheet.write(r, c, cell_data, thisformat) # Write with or without formatting
                 except Exception as E:
                     errormsg = 'Could not write cell [%s,%s] data="%s", format="%s": %s' % (r, c, cell_data, thisformat, str(E))
