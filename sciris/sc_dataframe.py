@@ -434,22 +434,18 @@ class dataframe(object):
         if rows   is None: rows   = list(range(self.nrows())) # Use all rows by default
         if header is None: header = True # Include headers
         
-        # Validate
-        cols = ut.promotetolist(cols)
-        for col in cols:
-            if col not in self.cols:
-                errormsg = 'Dataframe: cannot jsonify column %s: columns are:\n%s' % (col, '\n'.join(self.cols))
-                if die: raise Exception(errormsg)
-                else:   print(errormsg)
+        # Optionally filter columns after making a copy
+        exportdf = ut.dcp(self)
+        exportdf.filtercols(cols)
         
         # Handle output
         output = []
-        if header: output.append(cols)
+        if header: output.append(exportdf.cols)
         for r in rows:
             thisrow = []
-            for col in cols:
+            for col in exportdf.cols:
                 try:
-                    datum = self.get(cols=col,rows=r)
+                    datum = exportdf.get(cols=col,rows=r)
                     thisrow.append(datum)
                 except:
                     pass # This has already been handled by the validation above
@@ -473,7 +469,6 @@ class dataframe(object):
     def export(self, filename=None, cols=None, close=True):
         from . import sc_fileio as io # Optional import
         exportdf = ut.dcp(self)
-        if cols is None: cols = exportdf.cols # Use all columns by default
         exportdf.filtercols(cols)
         exportdata = np.vstack((exportdf.cols, exportdf.data))
         filepath = io.savespreadsheet(filename=filename, data=exportdata, close=close)
