@@ -39,10 +39,13 @@ from . import sc_tasks as tasks
 
 __all__ = ['robustjsonify', 'ScirisApp', 'ScirisResource', 'run_twisted', 'flaskapp']
 
-def robustjsonify(response):
-    ''' Flask's default jsonifier clobbers dict order; this preserves it '''
-    output = flask_jsonify() # Create the container
-    output.response = sc.sanitizejson(response, tostring=True) # Replace there response with a properly formatted JSON
+def robustjsonify(response, robustify=False):
+    ''' Flask's default jsonifier clobbers dict order; this preserves it -- warning, may cause problems with some payloads, use with caution! '''
+    if robustify:
+        output = flask_jsonify('placeholder') # Create the container
+        output.response = sc.sanitizejson(response, tostring=True) # Replace there response with a properly formatted JSON
+    else:
+        output = flask_jsonify(response) # Use standard Flask jsonification
     return output
 
 
