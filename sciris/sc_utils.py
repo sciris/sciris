@@ -760,7 +760,7 @@ def isnumber(obj, isnan=None):
     ''' Simply determine whether or not the input is a number, since it's too hard to remember this otherwise '''
     output = checktype(obj, 'number')
     if output and isnan is not None: # It is a number, so can check for nan
-        output = (np.insan(obj) == isnan) # See if they match
+        output = (np.isnan(obj) == isnan) # See if they match
     return output
     
     
