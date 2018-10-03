@@ -39,22 +39,19 @@ from . import sc_tasks as tasks
 
 __all__ = ['robustjsonify', 'ScirisApp', 'ScirisResource', 'run_twisted', 'flaskapp']
 
-def robustjsonify(response, robustify=True):
+def robustjsonify(response, robustify=True, verbose=True):
     ''' Flask's default jsonifier clobbers dict order; this preserves it -- warning, may cause problems with some payloads, use with caution! '''
-    a = flask_jsonify(sc.sanitizejson(response)) # Use standard Flask jsonification
-    sc.pr(a)
-    sc.pp(a)
-    resp_a = a.response
-    resp_b = [sc.sanitizejson(response, tostring=True)+'\n']
-    print('HIIIIIIIIIIIIIIIIIIIIII')
-    print(sc.prepr(resp_a))
-    print(repr(resp_b))
-    if robustify:
-        output = flask_jsonify('placeholder') # Create the container
-        output.response = resp_a # Replace there response with a properly formatted JSON
-    else:
-        output = flask_jsonify(sc.sanitizejson(response)) # Use standard Flask jsonification
-    return output
+    robustjson = sc.sanitizejson(response, tostring=True)
+    lenjson = len(robustjson)
+    placeholder = '_'*(lenjson-3) # This may fail, but then then the lenghts won't match so will be caughtlater
+    flaskjson = flask_jsonify(placeholder) # Use standard Flask jsonification
+    if robustify and len(flaskjson.response[0]) == lenjson: # If there's a length mismatch, fall back to regular Flask
+        flaskjson.response[0] = robustjson
+    else: # Use standard Flask jsonification if anything went wrong
+        if verbose and robustify and lenjson>3: # JSONs like "" or [] are known to be mismatched
+            print('ScirisApp: not robustifying JSON since length mismatch (%s vs. %s)' % (lenjson, len(flaskjson.response[0])))
+        flaskjson = flask_jsonify(sc.sanitizejson(response)) 
+    return flaskjson
 
 
 class ScirisApp(object):
