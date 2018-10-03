@@ -191,8 +191,11 @@ class dataframe(object):
                 if len(value) == 1:
                     value = [value]*self.nrows() # Get it the right length
                 else:
-                    errormsg = 'Cannot add column %s with value %s: incorrect length (%s vs. %s)' % (key, value, len(value), self.nrows())
-                    raise Exception(errormsg)
+                    if self.ncols()==0:
+                        self.data = np.zeros((len(value),0), dtype=object) # Prepare data for writing
+                    else:
+                        errormsg = 'Cannot add column %s with value %s: incorrect length (%s vs. %s)' % (key, value, len(value), self.nrows())
+                        raise Exception(errormsg)
             try:
                 colindex = self.cols.index(key)
                 val_arr = np.reshape(value, (len(value),))
@@ -404,12 +407,22 @@ class dataframe(object):
         self._filterrows(key=key, col=col, keep=False, verbose=verbose)
         return None
     
-    def filtercols(self, cols=None):
-        if cols is None: cols = ut.dcp(self.cols)
+    def filtercols(self, cols, die=True):
         cols = ut.promotetolist(cols)
-        toremove = list(set(self.cols) - set(cols))
-        if toremove:
-            self.rmcol(toremove)
+        order = []
+        notfound = []
+        for col in cols:
+            if col in self.cols:
+                order.append(self.cols.index(col))
+            else:
+                cols.remove(col)
+                notfound.append(col)
+        if len(notfound):
+            errormsg = 'Dataframe: could not find the following column(s): %s\nChoices are: %s' % (notfound, self.cols)
+            if die: raise Exception(errormsg)
+            else:   print(errormsg)
+        self.cols = cols # These should be in the correct order
+        self.data = self.data[:,order] # Resort and filter the data
         return None
         
     def insert(self, row=0, value=None):
@@ -425,7 +438,14 @@ class dataframe(object):
         sortorder = np.argsort(self.data[:,col])
         if reverse: sortorder = np.array(list(reversed(sortorder)))
         self.data = self.data[sortorder,:]
-        return None
+        return sortorder
+    
+    def sortcols(self, reverse=False):
+        sortorder = np.argsort(self.cols)
+        if reverse: sortorder = np.array(list(reversed(sortorder)))
+        self.cols = list(np.array(self.cols)[sortorder])
+        self.data = self.data[:,sortorder]
+        return sortorder
         
     def jsonify(self, cols=None, rows=None, header=None, die=True):
         ''' Export the dataframe to a JSON-compatible format '''
