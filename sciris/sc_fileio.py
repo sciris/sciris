@@ -296,10 +296,13 @@ def sanitizejson(obj, verbose=True, die=False, tostring=False):
         output = string
     
     else: # None of the above
-        errormsg = 'Could not sanitize "%s" %s, continuing...' % (obj, type(obj))
-        if die:       raise Exception(errormsg)
-        elif verbose: print(errormsg)
-        output = obj
+        try:
+            output = json.loads(json.dumps(obj)) # Try passing it through jsonification
+        except Exception as E:
+            errormsg = 'Could not sanitize "%s" %s (%s), converting to string instead' % (obj, type(obj), str(E))
+            if die:       raise Exception(errormsg)
+            elif verbose: print(errormsg)
+            output = str(obj)
 
     if tostring: return json.dumps(output)
     else:        return output
