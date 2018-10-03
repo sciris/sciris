@@ -41,8 +41,8 @@ __all__ = ['robustjsonify', 'ScirisApp', 'ScirisResource', 'run_twisted', 'flask
 
 def robustjsonify(response):
     ''' Flask's default jsonifier clobbers dict order; this preserves it '''
-    output = flask_jsonify() # Create the container
-    output.response = sc.sanitizejson(response, tostring=True) # Replace there response with a properly formatted JSON
+    output = flask_jsonify(sc.sanitizejson(response)) # Create the container
+    # output.response = sc.sanitizejson(response, tostring=True) # Replace there response with a properly formatted JSON
     return output
 
 
