@@ -45,7 +45,7 @@ def robustjsonify(response, robustify=False):
         output = flask_jsonify('placeholder') # Create the container
         output.response = sc.sanitizejson(response, tostring=True) # Replace there response with a properly formatted JSON
     else:
-        output = flask_jsonify(response) # Use standard Flask jsonification
+        output = flask_jsonify(sc.sanitizejson(response)) # Use standard Flask jsonification
     return output
 
 
