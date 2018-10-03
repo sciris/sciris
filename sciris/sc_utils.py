@@ -756,9 +756,12 @@ def checktype(obj=None, objtype=None, subtype=None, die=False):
         return result
    
          
-def isnumber(obj):
+def isnumber(obj, isnan=None):
     ''' Simply determine whether or not the input is a number, since it's too hard to remember this otherwise '''
-    return checktype(obj, 'number')
+    output = checktype(obj, 'number')
+    if output and isnan is not None: # It is a number, so can check for nan
+        output = (np.insan(obj) == isnan) # See if they match
+    return output
     
     
 def isstring(obj):
