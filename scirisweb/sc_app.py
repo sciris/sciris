@@ -39,14 +39,28 @@ from . import sc_tasks as tasks
 
 __all__ = ['robustjsonify', 'ScirisApp', 'ScirisResource', 'run_twisted', 'flaskapp']
 
-def robustjsonify(response, robustify=False):
-    ''' Flask's default jsonifier clobbers dict order; this preserves it -- warning, may cause problems with some payloads, use with caution! '''
-    if robustify:
-        output = flask_jsonify('placeholder') # Create the container
-        output.response = sc.sanitizejson(response, tostring=True) # Replace there response with a properly formatted JSON
+def robustjsonify(response, fallback=False, verbose=True):
+    ''' 
+    Flask's default jsonifier clobbers dict order; this preserves it; however, it falls 
+    back to regular Flask jsonify if needed.
+    '''
+    minlength = 8 # The minimum length to try to robustify the JSON -- shortest is probably actually 16 (json.dumps({0:0,1:1}))
+    robustjson = sc.sanitizejson(response, tostring=True)
+    lenjson = len(robustjson)
+    if lenjson>minlength: # It's too short, just use the usual jsonification
+        fallback = True
     else:
-        output = flask_jsonify(sc.sanitizejson(response)) # Use standard Flask jsonification
-    return output
+        placeholder = '_'*(lenjson-2)
+        flaskjson = flask_jsonify(placeholder) # Use standard Flask jsonification
+        lenplaceholder = len(flaskjson.response[0])
+        if lenplaceholder == lenjson: # Lengths match, proceed
+            flaskjson.response[0] = robustjson+'\n' # The newline is part of Flask: https://github.com/pallets/flask/issues/1877
+        else: # If there's a length mismatch, fall back to regular Flask
+            if verbose: print('ScirisApp: not robustifying JSON since length mismatch (%s vs. %s)' % (lenjson, len(flaskjson.response[0])))
+            fallback = True
+    if fallback: # Use standard Flask jsonification if anything went wrong
+        flaskjson = flask_jsonify(sc.sanitizejson(response)) 
+    return flaskjson
 
 
 class ScirisApp(object):
