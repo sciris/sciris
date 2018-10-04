@@ -239,6 +239,14 @@ class dataframe(object):
     def __deepcopy__(self, *args, **kwargs):
         ''' As above '''
         return self.__copy__(*args, **kwargs)
+    
+    
+    def __eq__(self, other):
+        ''' If columns and data match, the dataframes match '''
+        if not isinstance(other, dataframe): return False
+        if  self.cols != other.cols:         return False
+        if (self.data != other.data).any():  return False
+        return True
         
     
     def get(self, cols=None, rows=None):

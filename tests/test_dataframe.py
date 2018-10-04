@@ -36,5 +36,6 @@ q = p.add(p); dfprint('Do a pandas operation', q)
 a.pandas(q); dfprint('Convert back', a)
 
 a.filtercols(['m','x']); dfprint('Filter to columns m and x', a)
+b = sc.dcp(a); dfprint('Dataframe copying:', a==b)
 
 print('Done.')
