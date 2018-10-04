@@ -226,6 +226,21 @@ class dataframe(object):
         self.shape = (self.nrows(), self.ncols())
         return None
     
+    
+    def __copy__(self, *args, **kwargs):
+        ''' Warning, there is a bug in Numpy such that deepcopy(array) != array if array contains lists '''
+        newcols = ut.dcp(self.cols)
+        listdata = self.data.tolist()
+        copied = ut.dcp(listdata)
+        newdata = np.array(copied, dtype=object)
+        return dataframe(cols=newcols, data=newdata)
+    
+    
+    def __deepcopy__(self, *args, **kwargs):
+        ''' As above '''
+        return self.__copy__(*args, **kwargs)
+        
+    
     def get(self, cols=None, rows=None):
         '''
         More complicated way of getting data from a dataframe; example:
