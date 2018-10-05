@@ -430,7 +430,8 @@ class dataframe(object):
         self._filterrows(key=key, col=col, keep=False, verbose=verbose)
         return None
     
-    def filtercols(self, cols, die=True):
+    def filtercols(self, cols=None, die=True):
+        if cols is None: cols = ut.dcp(self.cols) # By default, do nothing
         cols = ut.promotetolist(cols)
         order = []
         notfound = []

@@ -60,7 +60,7 @@ def shifthue(colors=None, hueshift=0.0):
     return colors
 
 
-def gridcolors(ncolors=10, limits=None, nsteps=10, asarray=False, reverse=False, doplot=False, hueshift=0):
+def gridcolors(ncolors=10, limits=None, nsteps=10, asarray=False, reverse=False, doplot=False, hueshift=0, skipbw=False):
     """
     GRIDCOLORS
 
