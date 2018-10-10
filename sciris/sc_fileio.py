@@ -310,7 +310,7 @@ def sanitizejson(obj, verbose=True, die=False, tostring=False):
 
 
 def loadjson(filename=None, folder=None):
-    ''' Convenience function for reading a text file '''
+    ''' Convenience function for reading a JSON file '''
     filename = makefilepath(filename=filename, folder=folder)
     with open(filename) as f:
         output = json.load(f)
@@ -319,7 +319,7 @@ def loadjson(filename=None, folder=None):
 
 
 def savejson(filename=None, obj=None, folder=None):
-    ''' Convenience function for saving a text file -- accepts a string or list of strings '''
+    ''' Convenience function for saving a JSON '''
     filename = makefilepath(filename=filename, folder=folder)
     with open(filename, 'w') as f:
         json.dump(sanitizejson(obj), f)
