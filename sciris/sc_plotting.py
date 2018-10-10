@@ -19,10 +19,10 @@ from . import sc_fileio as fio
 ### COLOR FUNCTIONS
 ##############################################################################
 
-__all__ = ['processcolors', 'shifthue', 'gridcolors', 'alpinecolormap', 'vectocolor', 'bicolormap', 'hex2rgb'] # apinecolortest and bicolormaptest not included
+__all__ = ['processcolors', 'shifthue', 'gridcolors', 'alpinecolormap', 'vectocolor', 'bicolormap', 'hex2rgb', 'rgb2hex'] # apinecolortest and bicolormaptest not included
 
 
-def processcolors(colors=None, asarray=False, reverse=False):
+def processcolors(colors=None, asarray=False, ashex=False, reverse=False):
     ''' 
     Small helper function to do common transformations on the colors, once generated.
     Expects colors to be an array. If asarray is True and reverse are False, returns 
@@ -37,6 +37,9 @@ def processcolors(colors=None, asarray=False, reverse=False):
             output.append(tuple(c))
         if reverse: # Reverse the list
             output.reverse()
+        if ashex:
+            for c in colors:
+                output[c] = rgb2hex(output[c])
     return output
 
 
@@ -60,7 +63,7 @@ def shifthue(colors=None, hueshift=0.0):
     return colors
 
 
-def gridcolors(ncolors=10, limits=None, nsteps=10, asarray=False, reverse=False, doplot=False, hueshift=0, skipbw=False):
+def gridcolors(ncolors=10, limits=None, nsteps=10, asarray=False, ashex=False, reverse=False, doplot=False, hueshift=0, skipbw=False):
     """
     GRIDCOLORS
 
@@ -131,7 +134,7 @@ def gridcolors(ncolors=10, limits=None, nsteps=10, asarray=False, reverse=False,
     
     ## Wrap up -- turn color array into a list, or reverse
     if hueshift: colors = shifthue(colors, hueshift=hueshift) # Shift hue if requested
-    output = processcolors(colors=colors, asarray=asarray, reverse=reverse)
+    output = processcolors(colors=colors, asarray=asarray, ashex=ashex, reverse=reverse)
     
     ## For plotting -- optional
     if doplot:
@@ -248,9 +251,6 @@ def alpinecolormap(gap=0.1, mingreen=0.2, redbluemix=0.5, epsilon=0.01, demo=Fal
     if demo: demoplot()
 
     return cmap
-
-
-
 
 
 
@@ -386,12 +386,22 @@ def bicolormap(gap=0.1, mingreen=0.2, redbluemix=0.5, epsilon=0.01, demo=False):
 
 
 
-
-
 def hex2rgb(string):
     ''' A little helper function to convert e.g. '86bc25' to a pleasing shade of green. '''
     rgb = np.array(unpack('BBB',string.decode('hex')),dtype=float)/255.
     return rgb
+
+
+
+def rgb2hex(arr):
+    ''' And going back the other way '''
+    arr = np.array(arr)
+    if len(arr) != 3:
+        errormsg = 'Cannot convert "%s" to hex: wrong length' % arr
+        raise Exception(errormsg)
+    if all(arr<=1): arr *= 255. # Convert from 0-1 to 0-255
+    hexstr = '#%02x%02x%02x' % (arr[0], arr[1], arr[2])
+    return hexstr
 
 
 
