@@ -38,8 +38,8 @@ def processcolors(colors=None, asarray=False, ashex=False, reverse=False):
         if reverse: # Reverse the list
             output.reverse()
         if ashex:
-            for c in colors:
-                output[c] = rgb2hex(output[c])
+            for c,color in enumerate(output):
+                output[c] = rgb2hex(color)
     return output
 
 
