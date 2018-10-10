@@ -658,7 +658,8 @@ def separatelegend(ax=None, handles=None, labels=None, reverse=False, figsetting
     fig = pl.figure(**f_settings)
     ax = fig.add_subplot(111)
     ax.set_position([-0.05,-0.05,1.1,1.1]) # This cuts off the axis labels, ha-ha
-    
+    ax.set_axis_off()  # Hide axis lines
+
     # A legend renders the line/patch based on the object handle. However, an object
     # can only appear in one figure. Thus, if the legend is in a different figure, the
     # object cannot be shown in both the original figure and in the legend. Thus we need
