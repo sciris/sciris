@@ -654,21 +654,30 @@ def separatelegend(ax=None, handles=None, labels=None, reverse=False, figsetting
     l_settings = {'loc': 'center', 'bbox_to_anchor': None, 'frameon': False}
     f_settings.update(figsettings)
     l_settings.update(legendsettings)
-    
-    # Handle figure/axes
-    if ax is None: ax = pl.gca() # Get current axes, if none supplied
-    if isinstance(ax, pl.Figure): ax = ax.axes[0] # Allows an argument of a figure instead of an axes
-    
-    # Handle handles
-    axhandles, axlabels = ax.get_legend_handles_labels()
-    if handles is None: handles = axhandles
-    if labels  is None: labels = axlabels
+
+    # Construct handle and label list, from either
+    # - A list of handles and a list of labels
+    # - A list of handles, where each handle contains the label
+    # - An axis object, containing the objects that should appear in the legend
+    # - A figure object, from which the first axis will be used
+    if handles is None:
+        if ax is None:
+            ax = pl.gca()
+        else:
+            if isinstance(ax, pl.Figure): ax = ax.axes[0]  # Allows an argument of a figure instead of an axes
+        handles, labels = ax.get_legend_handles_labels()
+    else:
+        if labels is None:
+            labels = [h.get_label() for h in handles]
+        else:
+            assert len(handles) == len(labels), "Number of handles (%d) and labels (%d) must match" % (len(handles),len(labels))
 
     # Set up new plot
     fig = pl.figure(**f_settings)
     ax = fig.add_subplot(111)
     ax.set_position([-0.05,-0.05,1.1,1.1]) # This cuts off the axis labels, ha-ha
-    
+    ax.set_axis_off()  # Hide axis lines
+
     # A legend renders the line/patch based on the object handle. However, an object
     # can only appear in one figure. Thus, if the legend is in a different figure, the
     # object cannot be shown in both the original figure and in the legend. Thus we need
