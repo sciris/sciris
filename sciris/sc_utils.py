@@ -848,13 +848,9 @@ def getdate(obj=None, fmt='str', dateformat=None):
             raise Exception('Getting date failed; date must be a string or a date object: %s' % repr(E))
         
         if fmt=='str':
-            try:
-                output = dateobj.strftime(dateformat).encode('ascii', 'ignore') # Return string representation of time
-                return output
-            except UnicodeDecodeError:
-                dateformat = '%Y-%m-%d %H:%M:%S'
-                output = dateobj.strftime(dateformat)
-                return output
+            dateformat = '%Y-%m-%d %H:%M:%S'
+            output = dateobj.strftime(dateformat)
+            return output
         elif fmt=='int': 
             output = time.mktime(dateobj.timetuple()) # So ugly!! But it works -- return integer representation of time
             return output
