@@ -270,6 +270,11 @@ class ScirisApp(object):
         else:
             print('Cannot send Slack message "%s": Slack not enabled in config file' % message)
         return None
+    
+    def route(self, rule, methods=None, *args, **kwargs):
+        ''' Shortcut to Flask route decorator '''
+        if methods is None: methods = ['GET', 'POST']
+        return self.flask_app.route(rule, methods=methods, *args, **kwargs)
 
     def add_RPC(self, new_RPC):
         # If we are setting up our first RPC, add the actual endpoint.
