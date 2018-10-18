@@ -476,7 +476,7 @@ def run_twisted(port=8080, flask_app=None, client_dir=None, do_log=False):
         if client_dir is None: # If we have no client path, set the WSGI app to be the base resource.
             base_resource = ScirisResource(wsgi_app)
         else:  # Otherwise, make the Flask app a child resource.
-            base_resource.putChild('api', ScirisResource(wsgi_app))
+            base_resource.putChild(b'api', ScirisResource(wsgi_app))
         thread_pool.start() # Start the threadpool now, shut it down when we're closing
         reactor.addSystemEventTrigger('before', 'shutdown', thread_pool.stop)
 
