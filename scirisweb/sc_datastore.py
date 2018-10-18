@@ -282,9 +282,9 @@ class DataStore(sc.prettyobj):
     
     
     def keys(self, pattern=None):
-        ''' Alias to redis.keys() '''
+        ''' Alias to (a listified) redis.keys() '''
         if pattern is None: pattern = '*'
-        output = self.redis.keys(pattern=pattern)
+        output = list(self.redis.keys(pattern=pattern))
         return output
     
     
