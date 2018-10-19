@@ -38,7 +38,7 @@ setup(
         'redis>=2.10.6', # Database
         'mpld3',    # Rendering plots in the browser
         'werkzeug', # HTTP tools
-        'flask', # Creating the webapp
+        'flask>=1.0.0', # Creating the webapp
         'flask-login>=0.4.1', # Handling users
         'flask-session>=0.3.1', # use redis for sessions
         'celery>=4.2', # Task manager

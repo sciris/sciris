@@ -142,11 +142,12 @@ def load_user(username=None):
 
 
 @RPC()
-def user_login(username, password):  
+def user_login(username, password, verbose=True):  
     matching_user = app.datastore.loaduser(username, die=False) # Get the matching user (if any).
     
     # If we have a match and the password matches, and the account is active, also, log in the user and return success; otherwise, return failure.
     if matching_user and matching_user.password==password and matching_user.is_active:
+        if verbose: print('User %s found, logging in' % username)
         login_user(matching_user) # Log the user in.
         matching_user.show(verbose=True)
         return 'success'
@@ -154,6 +155,8 @@ def user_login(username, password):
         if   not matching_user:                    errormsg = 'Login failed: user "%s" does not exist.' % username
         elif not matching_user.password==password: errormsg = 'Login failed: password for user "%s" is incorrect.' % username
         elif not matching_user.is_active:          errormsg = 'Login failed: user "%s" is inactive.' % username
+        else:                                      errormsg = 'Unknown error'
+        if verbose: print('User %s not found, not logging in (%s)' % (username, errormsg))
         return errormsg
     
     
