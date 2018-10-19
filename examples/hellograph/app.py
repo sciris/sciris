@@ -2,8 +2,6 @@
 import scirisweb as sw
 from pylab import figure, rand
 
-import flask
-
 # Create the app
 app = sw.ScirisApp(__name__, name="HelloGraph")
 
@@ -21,8 +19,6 @@ def makegraph(n=50):
 def showgraph():
     graphdata = makegraph() # Create the graph from Python
     graphjson = sw.mpld3ify(graphdata)  # Convert to dict
-    z = flask.jsonify('success')
-    print(z)
     return graphjson  # Return the JSON representation of the Matplotlib figure
 
 # Run the server
