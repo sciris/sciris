@@ -3,7 +3,7 @@
 
 <!-- Load core scripts -->
 <head>
-  <title>Hello (random) world</title>
+  <title>Google Trend Index</title>
   <script src="https://unpkg.com/vue"></script>
   <script src="https://unpkg.com/axios/dist/axios.min.js"></script>
   <script src="http://d3js.org/d3.v3.min.js"></script>
@@ -14,9 +14,17 @@
 <!-- Define the layout -->
 <body>
   <div id="app">
-    <h1>Hello, graph!</h1>
-    <button @click="getdots">Get new dots</button>
-    <div id="randomgraph"></div>
+    <h1>Google Trend Index</h1>
+    <b>Trend index</b><br>
+
+    <button @click="gettrendoptions">Get</button>
+
+    {{trendoptions}}
+
+    <b>Date range</b><br>
+
+    <button @click="plottrend">Plot</button>
+    <div id="trend"></div>
   </div>
 </body>
 
@@ -24,14 +32,33 @@
 <script>
   var app = new Vue({
     el: '#app',
+
+    data: {
+        trendoptions: ['foo'],
+      },
+
+    computed: {
+
+    },
+
     methods: {
-      getdots: function () {
-        axios.post('http://localhost:8080/api/showgraph') // Use a POST request to pass along the value.
+        gettrendoptions: function () {
+        axios.post('http://localhost:8080/api/getoptions') // Use a POST request to pass along the value.
         .then(function (response) {
-          document.getElementById('randomgraph').innerHTML = ''; // Clear the DOM before redrawing
-          mpld3.draw_figure('randomgraph', response.data);
+            console.log('hiiiiiiiiiiiiiiii')
+            console.log(response.data)
+            this.trendoptions = response.data
+            return response.data
         })
-      }
+      },
+
+      plottrend: function () {
+        axios.post('http://localhost:8080/api/plotdata') // Use a POST request to pass along the value.
+        .then(function (response) {
+          document.getElementById('trend').innerHTML = ''; // Clear the DOM before redrawing
+          mpld3.draw_figure('trend', response.data);
+        })
+      },
     }
   })
 </script>
