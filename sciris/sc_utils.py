@@ -13,6 +13,7 @@ import hashlib
 import datetime
 import dateutil
 import numbers
+import urllib2
 import numpy as np
 import uuid as py_uuid
 from textwrap import fill
@@ -27,7 +28,7 @@ _numtype    = numbers.Number
 
 
 # Define the modules being loaded
-__all__ = ['uuid', 'dcp', 'cp', 'pp', 'sha']
+__all__ = ['uuid', 'dcp', 'cp', 'pp', 'sha', 'wget']
 
 
 def uuid(uid=None, which=None, die=False, tostring=False):
@@ -109,6 +110,13 @@ def sha(string, *args, **kwargs):
     output = hashlib.sha224(string, *args, **kwargs)
     return output
 
+
+def wget(url):
+    ''' Download a URL '''
+    output = urllib2.urlopen(url).read()
+    return output
+    
+    
 ##############################################################################
 ### PRINTING/NOTIFICATION FUNCTIONS
 ##############################################################################
@@ -712,6 +720,10 @@ def checktype(obj=None, objtype=None, subtype=None, die=False):
     If subtype is not None, then checktype will iterate over obj and check
     recursively that each element matches the subtype.
     
+    Special types are "listlike", which will check for lists, tuples, and
+    arrays; and "arraylike", which is the same as "listlike" but will also
+    check that elements are numeric.
+    
     Arguments:
         obj     = the object to check the type of
         objtype = the type to confirm the object belongs to
@@ -719,15 +731,16 @@ def checktype(obj=None, objtype=None, subtype=None, die=False):
         die     = whether or not to raise an exception if the object is the wrong type.
     
     Examples:
-        checktype(rand(10), 'array', 'number') # Returns true
-        checktype(['a','b','c'], 'arraylike') # Returns false
+        checktype(rand(10), 'array', 'number') # Returns True
+        checktype(['a','b','c'], 'listlike') # Returns True
+        checktype(['a','b','c'], 'arraylike') # Returns False
         checktype([{'a':3}], list, dict) # Returns True
     '''
     # Handle "objtype" input
-    if   objtype in ['str','string']:  objinstance = _stringtype
-    elif objtype in ['num', 'number']: objinstance = _numtype
-    elif objtype in ['arr', 'array']:  objinstance = type(np.array([]))
-    elif objtype=='arraylike':         objinstance = (list, tuple, type(np.array([]))) # Anything suitable as a numerical array
+    if   objtype in ['str','string']:          objinstance = _stringtype
+    elif objtype in ['num', 'number']:         objinstance = _numtype
+    elif objtype in ['arr', 'array']:          objinstance = type(np.array([]))
+    elif objtype in ['listlike', 'arraylike']: objinstance = (list, tuple, type(np.array([]))) # Anything suitable as a numerical array
     elif type(objtype)==type:          objinstance = objtype  # Don't need to do anything
     elif objtype is None:              return None # If not supplied, exit
     else:
@@ -738,9 +751,9 @@ def checktype(obj=None, objtype=None, subtype=None, die=False):
     result = isinstance(obj, objinstance)
     
     # Do second round checking
-    if result and objtype=='arraylike': # Special case for handling arrays which may be multi-dimensional
+    if result and objtype in ['listlike', 'arraylike']: # Special case for handling arrays which may be multi-dimensional
         obj = promotetoarray(obj).flatten() # Flatten all elements
-        if subtype is None: subtype = 'number' # This is the default
+        if objtype == 'arraylike' and subtype is None: subtype = 'number'
     if isiterable(obj) and subtype is not None:
         for item in obj:
             result = result and checktype(item, subtype)
@@ -1139,6 +1152,8 @@ def importbyname(name=None, output=False, die=True):
         else:   return False
     if output: return module
     else:      return True
+
+
 
 ##############################################################################
 ### NESTED DICTIONARY FUNCTIONS

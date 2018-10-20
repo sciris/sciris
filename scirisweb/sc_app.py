@@ -122,13 +122,6 @@ class ScirisApp(object):
         self.endpoint_layout_dict = {} # Create an empty layout dictionary.
         self.RPC_dict = {}  # Create an empty RPC dictionary.
         
-        # Initialize plotting
-        try:
-            ppl.switch_backend(self.config['MATPLOTLIB_BACKEND'])
-            print('Matplotlib backend switched to "%s"' % (self.config['MATPLOTLIB_BACKEND']))
-        except Exception as E:
-            print('Switching Matplotlib backend to "%s" failed: %s' % (self.config['MATPLOTLIB_BACKEND'], repr(E)))
-            
         # Set up file paths.
         self._init_file_dirs()
         
@@ -232,9 +225,17 @@ class ScirisApp(object):
         tasks.make_celery(self.config)
         
     def run(self, with_twisted=True, with_flask=True, with_client=True, do_log=False, show_logo=True):
+
+        # Initialize plotting
+        try:
+            ppl.switch_backend(self.config['MATPLOTLIB_BACKEND'])
+            print('Matplotlib backend switched to "%s"' % (self.config['MATPLOTLIB_BACKEND']))
+        except Exception as E:
+            print('Switching Matplotlib backend to "%s" failed: %s' % (self.config['MATPLOTLIB_BACKEND'], repr(E)))
         
         # Display the logo
-        appstring = 'ScirisApp "%s" is now running :)' % self.name
+        port = int(self.config['SERVER_PORT']) # Not sure if casting to int is necessary
+        appstring = 'ScirisApp "%s" is now running on port %s' % (self.name, port)
         borderstr = '='*len(appstring)
         logostr = '''\
       ___  ___    %s 
@@ -249,10 +250,10 @@ class ScirisApp(object):
             print('')
         
         # Run the thing
+        
         if not with_twisted: # If we are not running the app with Twisted, just run the Flask app.
-            self.flask_app.run()
+            self.flask_app.run(port=port)
         else: # Otherwise (with Twisted).
-            port       = int(self.config['SERVER_PORT']) # Not sure if casting to int is necessary
             client_dir = self.config['CLIENT_DIR']
             if   not with_client and not with_flask: run_twisted(port=port, do_log=do_log)  # nothing, should return error
             if   with_client     and not with_flask: run_twisted(port=port, do_log=do_log, client_dir=client_dir)   # client page only / no Flask

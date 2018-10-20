@@ -35,48 +35,19 @@ class dataframe(object):
     
     Works for both numeric and non-numeric data.
     
-    Version: 2018mar27
+    Version: 2018oct20
     '''
 
     def __init__(self, cols=None, data=None):
-        
-        # Handle columns        
-        if cols is None: cols = list()
-        else:            cols = ut.promotetolist(cols)
-        
-        # Handle data
-        if data is None: 
-            data = np.zeros((0,len(cols)), dtype=object) # Object allows more than just numbers to be stored
-        else:
-            data = np.array(data, dtype=object)
-            if data.ndim != 2:
-                if data.ndim == 1:
-                    if len(cols)==1:
-                        data = np.reshape(data, (len(data),1))
-                    else:
-                        errormsg = 'Dimension of data can only be 1 if there is 1 column, not %s' % len(cols)
-                        raise Exception(errormsg)
-                else:
-                    errormsg = 'Dimension of data must be 1 or 2, not %s' % data.ndim
-                    raise Exception(errormsg)
-            if data.shape[1]==len(cols):
-                pass
-            elif data.shape[0]==len(cols):
-                data = data.transpose()
-            else:
-                errormsg = 'Number of columns (%s) does not match array shape (%s)' % (len(cols), data.shape)
-                raise Exception(errormsg)
-        
-        # Store it        
-        self.cols = cols
-        self.data = data
-        self.shape = (self.nrows(), self.ncols())
+        self.cols = None
+        self.data = None
+        self.make(cols=cols, data=data)
         return None
     
     def __repr__(self, spacing=2):
         ''' spacing = space between columns '''
         if not self.cols: # No keys, give up
-            return ''
+            return '<empty dataframe>'
         
         else: # Go for it
             outputlist = odict()
@@ -94,7 +65,8 @@ class dataframe(object):
                         outputlist[col].append(output)
                 outputformats[col] = '%'+'%i'%(maxlen+spacing)+'s'
             
-            indformat = '%%%is' % (np.floor(np.log10(nrows))+1) # Choose the right number of digits to print
+            ndigits = (np.floor(np.log10(max(1,nrows)))+1) # Don't allow 0 rows
+            indformat = '%%%is' % ndigits # Choose the right number of digits to print
             
             # Assemble output
             output = indformat % '' # Empty column for index
@@ -223,7 +195,6 @@ class dataframe(object):
             except:
                 errormsg = 'Could not insert element (%s,%s) in dataframe of shape %' % (key[0], key[1], self.data.shape)
                 raise Exception(errormsg)
-        self.shape = (self.nrows(), self.ncols())
         return None
     
     
@@ -247,7 +218,60 @@ class dataframe(object):
         if  self.cols != other.cols:         return False
         if (self.data != other.data).any():  return False
         return True
+    
+    
+    def make(self, cols=None, data=None):
+        '''
+        Creates a dataframe from the supplied input data. Usage examples:
+            df = dataframe()
+            df = dataframe(['a','b','c'])
+            df = dataframe([['a','b','c'],[1,2,3],[4,5,6]])
+            df = dataframe(['a','b','c'], [[1,2,3],[4,5,6]])
+            df = dataframe(cols=['a','b','c'], data=[[1,2,3],[4,5,6]])
+        '''
         
+        # Handle columns
+        if cols is None and data is None:
+            cols = list()
+            data = np.zeros((0,len(cols)), dtype=object) # Object allows more than just numbers to be stored
+        elif cols is None and data is not None: # Shouldn't happen, but if it does, swap inputs
+            cols = data
+            data = None
+        if not ut.checktype(cols, 'listlike'):
+            errormsg = 'Inputs to dataframe must be list, tuple, or array, not %s' % (type(cols))
+            raise Exception(errormsg)
+        
+        # Handle data
+        if data is None:
+            if np.ndim(cols)==2 and np.shape(cols)[0]>1: # It's a 2D array with more than one row: treat first as header
+                data = ut.dcp(cols[1:])
+                cols = ut.dcp(cols[0])
+            else:
+                data = np.zeros((0,len(cols)), dtype=object) # Just use default
+        data = np.array(data, dtype=object)
+        if data.ndim != 2:
+            if data.ndim == 1:
+                if len(cols)==1:
+                    data = np.reshape(data, (len(data),1))
+                else:
+                    errormsg = 'Dimension of data can only be 1 if there is 1 column, not %s' % len(cols)
+                    raise Exception(errormsg)
+            else:
+                errormsg = 'Dimension of data must be 1 or 2, not %s' % data.ndim
+                raise Exception(errormsg)
+        if data.shape[1]==len(cols):
+            pass
+        elif data.shape[0]==len(cols):
+            data = data.transpose()
+        else:
+            errormsg = 'Number of columns (%s) does not match array shape (%s)' % (len(cols), data.shape)
+            raise Exception(errormsg)
+        
+        # Store it        
+        self.cols = list(cols)
+        self.data = data
+        return None
+    
     
     def get(self, cols=None, rows=None):
         '''
@@ -406,6 +430,17 @@ class dataframe(object):
         else:
             thisrow = default # If not found, return as default
         return thisrow
+    
+    
+    def findrows(self, key=None, col=None, asarray=False):
+        indices = self.rowindex(key=key, col=col)
+        arr = self.get(rows=indices)
+        if asarray:
+            return arr
+        else:
+            df = dataframe(cols=self.cols, data=arr)
+            return df
+
     
     def rowindex(self, key=None, col=None):
         ''' Return the indices of all rows matching the given key in a given column. '''
