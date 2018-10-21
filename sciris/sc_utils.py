@@ -13,7 +13,6 @@ import hashlib
 import datetime
 import dateutil
 import numbers
-import urllib2
 import numpy as np
 import uuid as py_uuid
 from textwrap import fill
@@ -113,7 +112,12 @@ def sha(string, *args, **kwargs):
 
 def wget(url):
     ''' Download a URL '''
-    output = urllib2.urlopen(url).read()
+    if six.PY2:
+        import urllib2
+        output = urllib2.urlopen(url).read()
+    else:
+        import urllib.request
+        output = urllib.request.urlopen(url).read()
     return output
     
     
