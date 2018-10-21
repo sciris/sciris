@@ -17,9 +17,9 @@
     <h1>Google Trend Index</h1>
     <b>Trend index</b><br>
 
-    <button @click="gettrendoptions">Get</button>
+    <button @click="gettrendoptions">Get</button><br>
 
-    {{trendoptions}}
+    {{trendoptions}}<br>
 
     <b>Date range</b><br>
 
@@ -43,13 +43,21 @@
 
     methods: {
         gettrendoptions: function () {
+            this.trendoptions = ['temp']
         axios.post('http://localhost:8080/api/getoptions') // Use a POST request to pass along the value.
         .then(function (response) {
+            this.trendoptions = ['goshimop']
             console.log('hiiiiiiiiiiiiiiii')
-            console.log(response.data)
-            this.trendoptions = response.data
-            return response.data
+            console.log(this.trendoptions)
+            this.trendoptions.push('ffuu')
+            // this.trendoptions = response.data
+            // return response.data
         })
+        this.trendoptions = ['gish']
+      },
+
+      gettrendoptions2: function () {
+        this.trendoptions = ['sdoifud']
       },
 
       plottrend: function () {
