@@ -32,7 +32,7 @@
 <script>
   var vm = new Vue({
     data: {
-        trendoptions: ['foo'],
+        trendoptions: []
       },
 
     computed: {
@@ -40,22 +40,13 @@
     },
 
     methods: {
-        gettrendoptions: function () {
-            vm.trendoptions = ['temp']
-        axios.post('http://localhost:8080/api/getoptions') // Use a POST request to pass along the value.
-        .then(function (response) {
-            vm.trendoptions = ['goshimop']
-            console.log('hiiiiiiiiiiiiiiii')
-            console.log(vm.trendoptions)
-            vm.trendoptions.push('ffuu')
-            // this.trendoptions = response.data
-            // return response.data
-        })
-        // this.trendoptions = ['gish']
-      },
 
-      gettrendoptions2: function () {
-        this.trendoptions = ['sdoifud']
+        gettrendoptions: function () {
+            axios.post('http://localhost:8080/api/getoptions') // Use a POST request to pass along the value.
+            .then(function (response) {
+                vm.trendoptions = response.data
+                return response.data
+        })
       },
 
       plottrend: function () {
