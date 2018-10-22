@@ -17,7 +17,7 @@
     <h1>Google Trend Index</h1>
     <b>Trend index</b><br>
 
-    <button @click="gettrendoptions">Getkk</button><br>
+    <button>Get</button><br>
 
     {{trendoptions}}<br>
 
@@ -32,33 +32,21 @@
 <script>
   var vm = new Vue({
     el: '#app',
-    
+
     data: {
-        trendoptions: ['foo'],
+        trendoptions: ['tesst'],
       },
 
-    computed: {
-
-    },
-
-    methods: {
-        gettrendoptions: function () {
-            vm.trendoptions = ['temp']
+    created: function () {
+        console.log('hiiiiiiiii')
         axios.post('http://localhost:8080/api/getoptions') // Use a POST request to pass along the value.
         .then(function (response) {
-            vm.trendoptions = ['goshimop']
-            console.log('hiiiiiiiiiiiiiiii')
-            console.log(vm.trendoptions)
-            vm.trendoptions.push('ffuu')
-            // this.trendoptions = response.data
-            // return response.data
+            console.log('hiiiiiiksddiii')
+            vm.trendoptions = response.data
         })
-        // this.trendoptions = ['gish']
       },
 
-      gettrendoptions2: function () {
-        this.trendoptions = ['sdoifud']
-      },
+    methods: {
 
       plottrend: function () {
         axios.post('http://localhost:8080/api/plotdata') // Use a POST request to pass along the value.
