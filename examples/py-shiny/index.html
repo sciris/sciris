@@ -9,34 +9,52 @@
   <script src="http://thekerrlab.com/tmp/d3.v5.min.js"></script>
   <script src="http://thekerrlab.com/tmp/mpld3.v0.4.1.min.js"></script>
   <script src="https://unpkg.com/vuejs-datepicker"></script>
+  <link href='https://fonts.googleapis.com/css?family=Avenir' rel='stylesheet'>
+  <style>
+  body {
+      font-family: 'Avenir';
+      font-size: 0.8em;
+  }
+
+  .app {
+    padding: 20px;
+    justify-content: center;
+    display: flex;
+  }
+
+  .controls {
+    display: inline-block;
+    background-color: #f3f3f3;
+    padding: 20px;
+    border: solid 2px #aaa;
+  }
+  </style>
 </head>
 
 
 <!-- Define the layout -->
 <body>
-  <div id="app">
-
-    <h1>Google Trend Index</h1>
-
-    <b>Trend index</b><br>
-    <select v-model="trendselection">
-              <option v-for='trendoption in trendoptions'>
-                {{ trendoption }}
-              </option>
-            </select>
-    <br>
-    <br>
-    <b>Date range</b>
-    <br>
-    <vuejs-datepicker :disabled-dates="disabledDates" v-model="startdate" name="start"></vuejs-datepicker>
-    to
-    <vuejs-datepicker :disabled-dates="disabledDates" v-model="enddate" name="end"></vuejs-datepicker>
-    <br>
-    <input type="checkbox" v-model="trendline">Overlay smooth trend line</input>
-    <br>
-    <br>
-    <button @click="plottrend">Plot</button>
-    <div id="trend"></div>
+  <div id="app" class="app">
+    <div>
+      <h1>Google Trend Index</h1>
+      <div class="controls">
+        <b>Trend index</b><br>
+        <select v-model="trendselection">
+          <option v-for='trendoption in trendoptions'>{{ trendoption }}</option>
+        </select>
+        <br>
+        <br>
+        <b>Date range</b>
+        <br>
+        <vuejs-datepicker v-model="startdate" style="display:inline-block;"></vuejs-datepicker>
+        to
+        <vuejs-datepicker v-model="enddate" style="display:inline-block;"></vuejs-datepicker>
+        <br>
+        <br>
+        <input type="checkbox" v-model="trendline"><b>Overlay smooth trend line</b></input>
+      </div>
+      <div id="trend"></div>
+    </div>
   </div>
 </body>
 
@@ -51,14 +69,10 @@
 
     data() {
       return {
-          trendselection: '',
+          trendselection: 'Travel',
           trendoptions: [],
           startdate: new Date(2007, 0, 1),
           enddate: new Date(2017, 6, 31),
-          disabledDates: {
-            to: new Date(2006, 11, 32),
-            from: new Date(2017, 7, 0),
-          },
           trendline: false,
         }
       },
@@ -67,9 +81,16 @@
         axios.post('http://localhost:8080/api/getoptions') // Use a POST request to pass along the value.
         .then(function (response) {
             vm.trendoptions = response.data
-            vm.trendselection = vm.trendoptions[0]
+            vm.plotdata()
         })
       },
+
+    watch: {
+      trendselection: function() { this.plotdata() },
+      startdate:      function() { this.plotdata() },
+      enddate:        function() { this.plotdata() },
+      trendline:      function() { this.plotdata() },
+    },
 
     methods: {
       plotdata: function () {

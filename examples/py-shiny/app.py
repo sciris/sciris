@@ -42,7 +42,7 @@ def getoptions(tojson=True):
         ('Education',      'educat'),
         ('Small business', 'smallbiz'),
         ('Travel',         'travel'),
-        ('Unemployment',   'umepl'),
+        ('Unemployment',   'unempl'),
         ])
     if tojson:
         output = sc.sanitizejson(options.keys(), tostring=True)
@@ -62,21 +62,21 @@ def plotdata(trendselection=None, startdate='2000-01-01', enddate='2018-01-01', 
 
     # Make graph
     fig = pl.figure()
-    ax = fig.add_subplot(111)
+    fig.add_subplot(111)
     thesedata = df.findrows(key=datatype, col='type')
     years = thesedata['date']
     vals = thesedata['close']
     validinds = sc.findinds(pl.logical_and(years>=startyear, years<=endyear))
     x = years[validinds]
     y = vals[validinds]
-    ax.plot(x, y)
+    pl.plot(x, y)
     pl.xlabel('Date')
     pl.ylabel('Trend index')
     
     # Add optional trendline
     if trendline == 'true':
         newy = sc.smoothinterp(x, x, y, smoothness=200)
-        ax.plot(x, newy)
+        pl.plot(x, newy, lw=3)
     
     # Convert to FE
     graphjson = sw.mpld3ify(fig)  # Convert to dict
