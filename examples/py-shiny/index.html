@@ -8,20 +8,35 @@
   <script src="https://unpkg.com/axios/dist/axios.min.js"></script>
   <script src="http://d3js.org/d3.v3.min.js"></script>
   <script src="http://mpld3.github.io/js/mpld3.v0.3.js"></script>
+  <script src="https://unpkg.com/vuejs-datepicker"></script>
 </head>
 
 
 <!-- Define the layout -->
 <body>
   <div id="app">
+
     <h1>Google Trend Index</h1>
+
     <b>Trend index</b><br>
+    <select v-model="trendselection">
+              <option v-for='trendoption in trendoptions'>
+                {{ trendoption }}
+              </option>
+            </select>
 
-    <button>Get</button><br>
-
-    {{trendoptions}}<br>
-
+    <br>
+    <br>
     <b>Date range</b><br>
+
+    <vuejs-datepicker :disabled-dates="disabledDates" :value="startdate" v-model="startdate" name="start"></vuejs-datepicker>
+    to
+    <vuejs-datepicker :disabled-dates="disabledDates" :value="enddate" v-model="enddate" name="end"></vuejs-datepicker>
+
+    <br>
+    <input type="checkbox" v-model="trendline">Overlay smooth trend line</input>
+    <br>
+    <br>
 
     <button @click="plottrend">Plot</button>
     <div id="trend"></div>
@@ -33,23 +48,42 @@
   var vm = new Vue({
     el: '#app',
 
-    data: {
-        trendoptions: ['tesst'],
+    components: {
+      vuejsDatepicker
+    },
+
+    data() {
+      return {
+          trendselection: '',
+          trendoptions: [],
+          startdate: new Date(2007, 0, 1),
+          enddate: new Date(2017, 6, 31),
+          disabledDates: {
+            to: new Date(2006, 12, 31),
+            from: new Date(2020, 8, 1),
+          },
+          trendline: false,
+        }
       },
 
     created: function () {
-        console.log('hiiiiiiiii')
         axios.post('http://localhost:8080/api/getoptions') // Use a POST request to pass along the value.
         .then(function (response) {
-            console.log('hiiiiiiksddiii')
             vm.trendoptions = response.data
+            vm.trendselection = vm.trendoptions[0]
+            vm.startdate = vm.mindate
+            vm.enddate = vm.maxdate
         })
       },
 
     methods: {
-
       plottrend: function () {
-        axios.post('http://localhost:8080/api/plotdata') // Use a POST request to pass along the value.
+        var url = 'http://localhost:8080/api/plotdata'
+        url += '/' + vm.trendselection
+        url += '/' + vm.startdate.toISOString().substring(0, 10)
+        url += '/' + vm.enddate.toISOString().substring(0, 10)
+        url += '/' + vm.trendline
+        axios.post(url) // Use a POST request to pass along the value.
         .then(function (response) {
           document.getElementById('trend').innerHTML = ''; // Clear the DOM before redrawing
           mpld3.draw_figure('trend', response.data);

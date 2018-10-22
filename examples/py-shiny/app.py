@@ -2,12 +2,19 @@
 import pylab as pl
 import sciris as sc
 import scirisweb as sw
-import datetime
+from datetime import datetime as dt
 
 runserver = True # Choose to run in the frontend or backend
 
+# Convert dates to years
+def convertdate(datestr, fmt):
+    date = dt.strptime(datestr, fmt)
+    yearnum = date.year + (date.month-1)/12. + (date.day-1)/365.
+    return yearnum
+
 # Get the data
 def loaddata():
+    print('Loading data...')
     dataurl = 'https://raw.githubusercontent.com/rstudio/shiny-examples/master/120-goog-index/data/trend_data.csv'
     rawdata = sc.wget(dataurl).splitlines()
     data = []
@@ -17,8 +24,7 @@ def loaddata():
             cols = line
         else: # Read data
             tag = line[0]
-            date = datetime.datetime.strptime(line[1], '%Y-%m-%dT%I:%M:%fZ')
-            yearnum = date.year + (date.month-1)/12. + (date.day-1)/365.
+            yearnum = convertdate(line[1], '%Y-%m-%dT%I:%M:%fZ')
             value = float(line[2]) if r>0 else line[2]
             data.append([tag, yearnum, value])
     df = sc.dataframe(cols=cols, data=data)
@@ -29,18 +35,42 @@ app = sw.ScirisApp(__name__, name="PyShiny")
 df = loaddata()
 
 # Define the API
-
 @app.route('/getoptions')
-def getoptions():
-    output = sc.sanitizejson(list(set(df['type'])), tostring=True)
+def getoptions(tojson=True):
+    options = sc.odict([
+        ('Advertising',    'advert'),
+        ('Education',      'educat'),
+        ('Small business', 'smallbiz'),
+        ('Travel',         'travel'),
+        ('Unemployment',   'umepl'),
+        ])
+    if tojson:
+        output = sc.sanitizejson(options.keys(), tostring=True)
+    else:
+        output = options
     return output
 
-@app.route('/plotdata')
-def plotdata(datatype=None, startdate=None, enddate=None):
+@app.route('/plotdata/<trendselection>/<startdate>/<enddate>/<trendline>')
+def plotdata(trendselection=None, startdate='2000-01-01', enddate='2018-01-01', trendline=False):
+    print('hiiiiiiiiiiiiiiiiiiiiiii')
+    print trendselection
+    print startdate
+    print enddate
+    print trendline
+    print('okkkkkkkkkk')
     
-    if datatype  is None: datatype  = df['type'][0]
-    if startdate is None: startdate = -pl.inf
-    if enddate   is None: enddate   = pl.inf
+    trendoptions = getoptions(tojson=False)
+    
+    if trendselection  is None: trendselection  = trendoptions.keys()[0]
+    startyear = convertdate(startdate, '%Y-%m-%d')
+    endyear   = convertdate(enddate,   '%Y-%m-%d')
+    datatype = trendoptions[trendselection]
+    
+    print('processed')
+    print startyear
+    print endyear
+    print datatype
+    print trendline
     
     # Make graph
     fig = pl.figure()
@@ -48,9 +78,8 @@ def plotdata(datatype=None, startdate=None, enddate=None):
     thesedata = df.findrows(key=datatype, col='type')
     years = thesedata['date']
     vals = thesedata['close']
-    validinds = sc.findinds(pl.logical_and(years>=float(startdate), years<=float(enddate)))
+    validinds = sc.findinds(pl.logical_and(years>=startyear, years<=endyear))
     ax.plot(years[validinds], vals[validinds])
-    print(years)
     
     # Convert to FE
     graphjson = sw.mpld3ify(fig)  # Convert to dict
