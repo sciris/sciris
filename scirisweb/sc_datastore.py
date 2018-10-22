@@ -252,13 +252,13 @@ class DataStore(sc.prettyobj):
         return output
     
     
-    def get(self, key=None, obj=None, objtype=None, uid=None, notnone=False, die=True):
+    def get(self, key=None, obj=None, objtype=None, uid=None, notnone=False, die=False):
         ''' Alias to redis.get() '''
         key = self.getkey(key=key, objtype=objtype, uid=uid, obj=obj)
         objstr = self.redis.get(key)
         if objstr is not None:
             try:
-                output = sc.loadstr(objstr)
+                output = sc.loadstr(objstr, die=die)
             except:
                 output = None
                 errormsg = 'Datastore error: unpickling failed:\n%s' % traceback.format_exc() # Grab the trackback stack
