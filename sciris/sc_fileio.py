@@ -772,6 +772,7 @@ def makefailed(module_name=None, name=None, error=None):
 class RobustUnpickler(pickle.Unpickler):
     ''' Try to import an object, and if that fails, return a Failed object rather than crashing '''
     def find_class(self, module_name, name, verbose=False):
+        obj = makefailed(module_name, name, 'Unknown error') # This should get overwritten unless something goes terribly wrong
         try:
             module = __import__(module_name)
             obj = getattr(module, name)
