@@ -63,11 +63,8 @@ def robustjsonify(response, fallback=False, verbose=True):
         try:
             flaskjson = flask_jsonify(sc.sanitizejson(response)) 
         except Exception as E:
-            s = sc.sanitizejson(response)
-            print(type(s))
-            print(s)
-            print(repr(s))
-            print('DSOFIUSDOFUDSOFUSDOIFUDOIUFDFIDU %s' % str(E))
+            errormsg = 'Flask jsonification of "%s" failed: %s' % (response, str(E))
+            raise Exception(errormsg)
     return flaskjson
 
 
@@ -337,7 +334,7 @@ class ScirisApp(object):
         render_str += '</html>'
         return render_str
     
-    def _do_RPC(self, verbose=True):
+    def _do_RPC(self, verbose=False):
         # Check to see whether the RPC is getting passed in in request.form.
         # If so, we are doing an upload, and we want to download the RPC 
         # request info from the form, not request.data.
@@ -352,9 +349,10 @@ class ScirisApp(object):
             kwargs = reqdict.get('kwargs', {})
         
         if verbose:
-            print('fn_name: %s' % fn_name)
-            print('   args: %s' % args)
-            print(' kwargs: %s' % kwargs)
+            print('RPC(): RPC properties:')
+            print('  fn_name: %s' % fn_name)
+            print('     args: %s' % args)
+            print('   kwargs: %s' % kwargs)
         
         # If the function name is not in the RPC dictionary, return an error.
         if not fn_name in self.RPC_dict:
@@ -366,7 +364,7 @@ class ScirisApp(object):
         
         # If the RPC is disabled, always return a Status 403 (Forbidden)
         if found_RPC.validation == 'disabled':
-            if verbose: print('RPC disabled')
+            if verbose: print('RPC(): RPC disabled')
             abort(403)
                 
         # Only do other validation if DataStore and users are included -- NOTE: Any "unknown" validation values are treated like 'none'.
@@ -405,7 +403,7 @@ class ScirisApp(object):
     
         # Execute the function to get the results, putting it in a try block in case there are errors in what's being called. 
         try:
-            if verbose: print('Starting RPC...')
+            if verbose: print('RPC(): Starting RPC...')
             T = sc.tic()
             result = found_RPC.call_func(*args, **kwargs)
             elapsed = sc.toc(T, output=True)
@@ -413,7 +411,7 @@ class ScirisApp(object):
                 string = '%s%s RPC finished in %0.2f s: "%s.%s"' % (RPCinfo.time, RPCinfo.user, elapsed, RPCinfo.module, RPCinfo.name)
                 sc.colorize(successcolor, string)
         except Exception as E:
-            if verbose: print('Exception encountered...')
+            if verbose: print('RPC(): Exception encountered...')
             shortmsg = str(E)
             exception = traceback.format_exc() # Grab the trackback stack.
             hostname = '|%s| ' % socket.gethostname()
@@ -430,7 +428,7 @@ class ScirisApp(object):
         
         # If we are doing a download, prepare the response and send it off.
         if found_RPC.call_type == 'download':
-            if verbose: print('Starting download...')
+            if verbose: print('RPC(): Starting download...')
             if result is None: # If we got None for a result (the full file name), return an error to the client.
                 return robustjsonify({'error': 'Could not find resource to download from RPC "%s": result is None' % fn_name})
             elif not sc.isstring(result): # Else, if the result is not even a string (which means it's not a file name as expected)...
@@ -452,15 +450,14 @@ class ScirisApp(object):
     
         # Otherwise (normal and upload RPCs), 
         else: 
-            if verbose: print('Finishing RPC...')
             if found_RPC.call_type == 'upload': # If we are doing an upload....
                 os.remove(uploaded_fname) # Erase the physical uploaded file, since it is no longer needed.
             if result is None: # If None was returned by the RPC function, return ''.
-                print('RPC REALLY FINISHED!!!!!!!!!!!!!!!!!')
+                if verbose: print('RPC(): RPC finished, returning None')
                 return ''
             else: # Otherwise, convert the result (probably a dict) to JSON and return it.
                 output = robustjsonify(result)
-                print('RPC REALLY FINISHED!!!!!!!!!!!!!!!!!')
+                if verbose: print('RPC(): RPC finished, returning result')
                 return output
         
         
