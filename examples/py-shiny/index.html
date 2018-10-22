@@ -6,8 +6,8 @@
   <title>Google Trend Index</title>
   <script src="https://unpkg.com/vue"></script>
   <script src="https://unpkg.com/axios/dist/axios.min.js"></script>
-  <script src="http://d3js.org/d3.v3.min.js"></script>
-  <script src="http://mpld3.github.io/js/mpld3.v0.3.js"></script>
+  <script src="http://thekerrlab.com/tmp/d3.v5.min.js"></script>
+  <script src="http://thekerrlab.com/tmp/mpld3.v0.4.1.min.js"></script>
   <script src="https://unpkg.com/vuejs-datepicker"></script>
 </head>
 
@@ -24,20 +24,17 @@
                 {{ trendoption }}
               </option>
             </select>
-
     <br>
     <br>
-    <b>Date range</b><br>
-
-    <vuejs-datepicker :disabled-dates="disabledDates" :value="startdate" v-model="startdate" name="start"></vuejs-datepicker>
+    <b>Date range</b>
+    <br>
+    <vuejs-datepicker :disabled-dates="disabledDates" v-model="startdate" name="start"></vuejs-datepicker>
     to
-    <vuejs-datepicker :disabled-dates="disabledDates" :value="enddate" v-model="enddate" name="end"></vuejs-datepicker>
-
+    <vuejs-datepicker :disabled-dates="disabledDates" v-model="enddate" name="end"></vuejs-datepicker>
     <br>
     <input type="checkbox" v-model="trendline">Overlay smooth trend line</input>
     <br>
     <br>
-
     <button @click="plottrend">Plot</button>
     <div id="trend"></div>
   </div>
@@ -59,8 +56,8 @@
           startdate: new Date(2007, 0, 1),
           enddate: new Date(2017, 6, 31),
           disabledDates: {
-            to: new Date(2006, 12, 31),
-            from: new Date(2020, 8, 1),
+            to: new Date(2006, 11, 32),
+            from: new Date(2017, 7, 0),
           },
           trendline: false,
         }
@@ -71,13 +68,11 @@
         .then(function (response) {
             vm.trendoptions = response.data
             vm.trendselection = vm.trendoptions[0]
-            vm.startdate = vm.mindate
-            vm.enddate = vm.maxdate
         })
       },
 
     methods: {
-      plottrend: function () {
+      plotdata: function () {
         var url = 'http://localhost:8080/api/plotdata'
         url += '/' + vm.trendselection
         url += '/' + vm.startdate.toISOString().substring(0, 10)

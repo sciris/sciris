@@ -307,9 +307,9 @@ def smoothinterp(newx=None, origx=None, origy=None, smoothness=None, growth=None
     if ut.isnumber(newx):  newx = [newx] # Make sure it has dimension
     if ut.isnumber(origx): origx = [origx] # Make sure it has dimension
     if ut.isnumber(origy): origy = [origy] # Make sure it has dimension
-    newx  = np.array(newx)
-    origx = np.array(origx)
-    origy = np.array(origy)
+    newx  = np.array(newx, dtype=float)
+    origx = np.array(origx, dtype=float)
+    origy = np.array(origy, dtype=float)
     
     # If only a single element, just return it, without checking everything else
     if len(origy)==1: 

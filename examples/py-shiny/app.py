@@ -51,27 +51,15 @@ def getoptions(tojson=True):
     return output
 
 @app.route('/plotdata/<trendselection>/<startdate>/<enddate>/<trendline>')
-def plotdata(trendselection=None, startdate='2000-01-01', enddate='2018-01-01', trendline=False):
-    print('hiiiiiiiiiiiiiiiiiiiiiii')
-    print trendselection
-    print startdate
-    print enddate
-    print trendline
-    print('okkkkkkkkkk')
+def plotdata(trendselection=None, startdate='2000-01-01', enddate='2018-01-01', trendline='false'):
     
-    trendoptions = getoptions(tojson=False)
-    
-    if trendselection  is None: trendselection  = trendoptions.keys()[0]
+    # Handle inputs
     startyear = convertdate(startdate, '%Y-%m-%d')
     endyear   = convertdate(enddate,   '%Y-%m-%d')
+    trendoptions = getoptions(tojson=False)
+    if trendselection is None: trendselection  = trendoptions.keys()[0]
     datatype = trendoptions[trendselection]
-    
-    print('processed')
-    print startyear
-    print endyear
-    print datatype
-    print trendline
-    
+
     # Make graph
     fig = pl.figure()
     ax = fig.add_subplot(111)
@@ -79,7 +67,16 @@ def plotdata(trendselection=None, startdate='2000-01-01', enddate='2018-01-01', 
     years = thesedata['date']
     vals = thesedata['close']
     validinds = sc.findinds(pl.logical_and(years>=startyear, years<=endyear))
-    ax.plot(years[validinds], vals[validinds])
+    x = years[validinds]
+    y = vals[validinds]
+    ax.plot(x, y)
+    pl.xlabel('Date')
+    pl.ylabel('Trend index')
+    
+    # Add optional trendline
+    if trendline == 'true':
+        newy = sc.smoothinterp(x, x, y, smoothness=200)
+        ax.plot(x, newy)
     
     # Convert to FE
     graphjson = sw.mpld3ify(fig)  # Convert to dict
