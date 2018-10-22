@@ -21,10 +21,6 @@ from psutil import cpu_percent
 from subprocess import Popen, PIPE
 from collections import OrderedDict as OD
 
-# Handle types and Python 2/3 compatibility
-_stringtype = six.string_types[0]
-_numtype    = numbers.Number
-
 
 # Define the modules being loaded
 __all__ = ['uuid', 'dcp', 'cp', 'pp', 'sha', 'wget']
@@ -104,8 +100,13 @@ def pp(obj, jsonify=True, verbose=False, doprint=True, *args, **kwargs):
         return output
 
 
-def sha(string, *args, **kwargs):
+def sha(string, encoding='utf-8', *args, **kwargs):
     ''' Shortcut for the standard hashing (SHA) method '''
+    if not isstring(string): # Ensure it's actually a string
+        string = str(string)
+    needsencoding = (six.PY2 and isinstance(string, unicode)) or (six.PY3 and isinstance(string, str))
+    if needsencoding: # If it's unicode, encode it to bytes first
+        string = string.encode(encoding)
     output = hashlib.sha224(string, *args, **kwargs)
     return output
 
@@ -740,13 +741,19 @@ def checktype(obj=None, objtype=None, subtype=None, die=False):
         checktype(['a','b','c'], 'arraylike') # Returns False
         checktype([{'a':3}], list, dict) # Returns True
     '''
+    
+    # Handle types and Python 2/3 compatibility
+    if six.PY2: _stringtype = (basestring,)
+    else:       _stringtype = (str, bytes)
+    _numtype    = numbers.Number
+    
     # Handle "objtype" input
     if   objtype in ['str','string']:          objinstance = _stringtype
     elif objtype in ['num', 'number']:         objinstance = _numtype
     elif objtype in ['arr', 'array']:          objinstance = type(np.array([]))
     elif objtype in ['listlike', 'arraylike']: objinstance = (list, tuple, type(np.array([]))) # Anything suitable as a numerical array
-    elif type(objtype)==type:          objinstance = objtype  # Don't need to do anything
-    elif objtype is None:              return None # If not supplied, exit
+    elif type(objtype)==type:                  objinstance = objtype  # Don't need to do anything
+    elif objtype is None:                      return None # If not supplied, exit
     else:
         errormsg = 'Could not understand what type you want to check: should be either a string or a type, not "%s"' % objtype
         raise Exception(errormsg)
