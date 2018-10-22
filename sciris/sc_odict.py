@@ -70,7 +70,7 @@ class odict(OD):
 
     def __getitem__(self, key):
         ''' Allows getitem to support strings, integers, slices, lists, or arrays '''
-        if isinstance(key, (ut._stringtype,tuple)):
+        if isinstance(key, ut._stringtypes) or isinstance(key, tuple):
             try:
                 output = OD.__getitem__(self, key)
                 return output
@@ -289,7 +289,7 @@ class odict(OD):
     
     def pop(self, key, *args, **kwargs):
         ''' Allows pop to support strings, integers, slices, lists, or arrays '''
-        if isinstance(key, ut._stringtype):
+        if isinstance(key, ut._stringtypes):
             return OD.pop(self, key, *args, **kwargs)
         elif isinstance(key, ut._numtype): # Convert automatically from float...dangerous?
             thiskey = self.keys()[int(key)]
@@ -461,7 +461,7 @@ class odict(OD):
         if sortby is None: allkeys = sorted(origkeys)
         else:
             if not ut.isiterable(sortby): raise Exception('Please provide a list to determine the sort order.')
-            if all([isinstance(x, ut._stringtype) for x in sortby]): # Going to sort by keys
+            if all([isinstance(x, ut._stringtypes) for x in sortby]): # Going to sort by keys
                 allkeys = sortby # Assume the user knows what s/he is doing
             elif all([isinstance(x,bool) for x in sortby]): # Using Boolean values
                 allkeys = []
@@ -521,7 +521,7 @@ class odict(OD):
             keys = len(ut.promotetolist(vals)) # Values are supplied but keys aren't: use default keys
         if isinstance(keys, ut._numtype): # It's a single number: pre-generate
             keylist = ['%i'%i for i in range(keys)] # Generate keylist
-        elif isinstance(keys, ut._stringtype): # It's a single string
+        elif isinstance(keys, ut._stringtypes): # It's a single string
             keylist = [ut.flexstr(keys)]
         elif isinstance(keys, list): # It's a list: use directly
             keylist = keys
@@ -570,7 +570,7 @@ class odict(OD):
         if source is not None: # Don't do anything if there's nothing there
             if not(ut.isiterable(source)): # Make sure it's iterable
                 source = ut.promotetolist(source)
-            elif isinstance(source, ut._stringtype):
+            elif isinstance(source, ut._stringtypes):
                 source = [source] # Special case -- strings are iterable, but we don't want to
             
             if len(source)==0:

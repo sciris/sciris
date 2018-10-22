@@ -28,7 +28,6 @@ from .sc_dataframe import dataframe
 
 # Handle types and Python 2/3 compatibility
 import six
-_stringtype = six.string_types[0]
 if six.PY3: # Python 3
     from io import BytesIO as IO
     import pickle as pkl
@@ -57,7 +56,7 @@ def loadobj(filename=None, folder=None, verbose=True, die=None):
     '''
     
     # Handle loading of either filename or file object
-    if isinstance(filename, _stringtype): 
+    if isinstance(filename, ut._stringtypes): 
         argtype = 'filename'
         filename = makefilepath(filename=filename, folder=folder) # If it is a file, validate the folder
     else: 

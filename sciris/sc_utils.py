@@ -21,6 +21,11 @@ from psutil import cpu_percent
 from subprocess import Popen, PIPE
 from collections import OrderedDict as OD
 
+# Handle types and Python 2/3 compatibility
+if six.PY2: _stringtypes = (basestring,)
+else:       _stringtypes = (str, bytes)
+_numtype    = numbers.Number
+
 
 # Define the modules being loaded
 __all__ = ['uuid', 'dcp', 'cp', 'pp', 'sha', 'wget']
@@ -742,13 +747,8 @@ def checktype(obj=None, objtype=None, subtype=None, die=False):
         checktype([{'a':3}], list, dict) # Returns True
     '''
     
-    # Handle types and Python 2/3 compatibility
-    if six.PY2: _stringtype = (basestring,)
-    else:       _stringtype = (str, bytes)
-    _numtype    = numbers.Number
-    
     # Handle "objtype" input
-    if   objtype in ['str','string']:          objinstance = _stringtype
+    if   objtype in ['str','string']:          objinstance = _stringtypes
     elif objtype in ['num', 'number']:         objinstance = _numtype
     elif objtype in ['arr', 'array']:          objinstance = type(np.array([]))
     elif objtype in ['listlike', 'arraylike']: objinstance = (list, tuple, type(np.array([]))) # Anything suitable as a numerical array
