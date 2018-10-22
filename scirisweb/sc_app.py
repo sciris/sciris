@@ -45,7 +45,7 @@ def robustjsonify(response, fallback=False, verbose=True):
     back to regular Flask jsonify if needed.
     '''
     
-    minlength = 8 # The minimum length to try to robustify the JSON -- shortest is probably actually 16 (json.dumps({0:0,1:1}))
+    minlength = 16 # The minimum length to try to robustify the JSON -- shortest should be 16 (json.dumps({0:0,1:1}))
     robustjson = sc.sanitizejson(response, tostring=True)
     lenjson = len(robustjson)
     if lenjson>minlength: # It's too short, just use the usual jsonification
@@ -389,9 +389,9 @@ class ScirisApp(object):
             args.insert(0, uploaded_fname) # Prepend the file name to the args list.
         
         # Show the call of the function.
-        callcolor    = ['cyan', 'bgblue']
+        callcolor    = ['cyan',  'bgblue']
         successcolor = ['green', 'bgblue']
-        failcolor    = ['gray', 'bgred']
+        failcolor    = ['gray',  'bgred']
         timestr = '[%s]' % sc.now(tostring=True)
         try:    userstr = ' <%s>' % current_user.username
         except: userstr =' <no user>'
@@ -413,7 +413,7 @@ class ScirisApp(object):
         except Exception as E:
             if verbose: print('RPC(): Exception encountered...')
             shortmsg = str(E)
-            exception = traceback.format_exc() # Grab the trackback stack.
+            exception = traceback.format_exc() # Grab the trackback stack
             hostname = '|%s| ' % socket.gethostname()
             tracemsg = '%s%s%s Exception during RPC "%s.%s" \nRequest: %s \n%.10000s' % (hostname, RPCinfo.time, RPCinfo.user, RPCinfo.module, RPCinfo.name, request, exception)
             sc.colorize(failcolor, tracemsg) # Post an error to the Flask logger limiting the exception information to 10000 characters maximum (to prevent monstrous sqlalchemy outputs)

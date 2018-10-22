@@ -54,7 +54,7 @@ class dataframe(object):
             outputformats = odict()
             
             # Gather data
-            nrows = self.nrows()
+            nrows = self.nrows
             for c,col in enumerate(self.cols):
                 outputlist[col] = list()
                 maxlen = len(col) # Start with length of column name
@@ -85,7 +85,7 @@ class dataframe(object):
     def _val2row(self, value=None):
         ''' Convert a list, array, or dictionary to the right format for appending to a dataframe '''
         if isinstance(value, dict):
-            output = np.zeros(self.ncols(), dtype=object)
+            output = np.zeros(self.ncols, dtype=object)
             for c,col in enumerate(self.cols):
                 try: 
                     output[c] = value[col]
@@ -94,12 +94,12 @@ class dataframe(object):
                     raise Exception(errormsg)
             output = np.array(output, dtype=object)
         elif value is None:
-            output = np.empty(self.ncols(),dtype=object)
+            output = np.empty(self.ncols,dtype=object)
         else: # Not sure what it is, just make it an array
-            if len(value)==self.ncols():
+            if len(value)==self.ncols:
                 output = np.array(value, dtype=object)
             else:
-                errormsg = 'Row has wrong length (%s supplied, %s expected)' % (len(value), self.ncols())
+                errormsg = 'Row has wrong length (%s supplied, %s expected)' % (len(value), self.ncols)
                 raise Exception(errormsg)
         return output
     
@@ -155,18 +155,18 @@ class dataframe(object):
         
     def __setitem__(self, key, value=None):
         if value is None:
-            value = np.zeros(self.nrows(), dtype=object)
+            value = np.zeros(self.nrows, dtype=object)
         if ut.isstring(key): # Add column
             if not ut.isiterable(value):
                 value = ut.promotetolist(value)
-            if len(value) != self.nrows():
+            if len(value) != self.nrows:
                 if len(value) == 1:
-                    value = [value]*self.nrows() # Get it the right length
+                    value = [value]*self.nrows # Get it the right length
                 else:
-                    if self.ncols()==0:
+                    if self.ncols==0:
                         self.data = np.zeros((len(value),0), dtype=object) # Prepare data for writing
                     else:
-                        errormsg = 'Cannot add column %s with value %s: incorrect length (%s vs. %s)' % (key, value, len(value), self.nrows())
+                        errormsg = 'Cannot add column %s with value %s: incorrect length (%s vs. %s)' % (key, value, len(value), self.nrows)
                         raise Exception(errormsg)
             try:
                 colindex = self.cols.index(key)
@@ -179,8 +179,8 @@ class dataframe(object):
                 self.data = np.hstack((self.data, np.array(val_arr, dtype=object)))
         elif ut.isnumber(key):
             value = self._val2row(value) # Make sure it's in the correct format
-            if len(value) != self.ncols(): 
-                errormsg = 'Vector has incorrect length (%i vs. %i)' % (len(value), self.ncols())
+            if len(value) != self.ncols: 
+                errormsg = 'Vector has incorrect length (%i vs. %i)' % (len(value), self.ncols)
                 raise Exception(errormsg)
             rowindex = int(key)
             try:
@@ -223,11 +223,11 @@ class dataframe(object):
     def make(self, cols=None, data=None):
         '''
         Creates a dataframe from the supplied input data. Usage examples:
-            df = dataframe()
-            df = dataframe(['a','b','c'])
-            df = dataframe([['a','b','c'],[1,2,3],[4,5,6]])
-            df = dataframe(['a','b','c'], [[1,2,3],[4,5,6]])
-            df = dataframe(cols=['a','b','c'], data=[[1,2,3],[4,5,6]])
+            df = sc.dataframe()
+            df = sc.dataframe(['a','b','c'])
+            df = sc.dataframe([['a','b','c'],[1,2,3],[4,5,6]])
+            df = sc.dataframe(['a','b','c'], [[1,2,3],[4,5,6]])
+            df = sc.dataframe(cols=['a','b','c'], data=[[1,2,3],[4,5,6]])
         '''
         
         # Handle columns
@@ -302,12 +302,15 @@ class dataframe(object):
         if returnval: return thisrow
         else:         return None
     
+    
     def append(self, value):
         ''' Add a row to the end of the data frame '''
         value = self._val2row(value) # Make sure it's in the correct format
         self.data = np.vstack((self.data, np.array(value, dtype=object)))
         return None
     
+    
+    @property
     def ncols(self):
         ''' Get the number of columns in the data frame '''
         ncols = len(self.cols)
@@ -317,10 +320,18 @@ class dataframe(object):
             raise Exception(errormsg)
         return ncols
 
+
+    @property
     def nrows(self):
         ''' Get the number of rows in the data frame '''
         try:    return self.data.shape[0]
         except: return 0 # If it didn't work, probably because it's empty
+    
+    
+    @property
+    def shape(self):
+        ''' Equivalent to the shape of the data array, minus the headers '''
+        return (self.nrows, self.ncols)
     
     def addcol(self, key=None, value=None):
         ''' Add a new column to the data frame -- for consistency only '''
@@ -371,7 +382,7 @@ class dataframe(object):
         ''' For a given set of indices, get the inverse, in set-speak '''
         if indices is None: indices = []
         ind_set = set(np.array(indices))
-        all_set = set(np.arange(self.nrows()))
+        all_set = set(np.arange(self.nrows))
         diff_set = np.array(list(all_set - ind_set))
         return diff_set
     
@@ -511,7 +522,7 @@ class dataframe(object):
         
         # Handle input arguments
         if cols   is None: cols   = self.cols # Use all columns by default
-        if rows   is None: rows   = list(range(self.nrows())) # Use all rows by default
+        if rows   is None: rows   = list(range(self.nrows)) # Use all rows by default
         if header is None: header = True # Include headers
         
         # Optionally filter columns after making a copy

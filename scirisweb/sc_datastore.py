@@ -13,6 +13,7 @@ Last update: 2018sep20
 import os
 import atexit
 import tempfile
+import traceback
 import shutil
 import redis
 import sciris as sc
@@ -134,10 +135,17 @@ class DataStore(sc.prettyobj):
         return None
     
     
-    def settings(self, settingskey=None, redis_url=None, tempfolder=None, separator=None):
+    def settings(self, settingskey=None, redis_url=None, tempfolder=None, separator=None, die=False):
         ''' Handle the DataStore settings '''
         if not settingskey: settingskey = default_settingskey
-        settings = DataStoreSettings(settings=self.get(settingskey), tempfolder=tempfolder, separator=separator)
+        try:
+            origsettings = self.get(settingskey)
+        except Exception as E:
+            origsettings = None
+            errormsg = 'Datastore: warning, could not load settings, using defaults: %s' % str(E)
+            if die: raise Exception(errormsg)
+            else:   print(errormsg)
+        settings = DataStoreSettings(settings=origsettings, tempfolder=tempfolder, separator=separator)
         self.tempfolder = settings.tempfolder
         self.separator  = settings.separator
         self.is_new     = settings.is_new
@@ -244,14 +252,20 @@ class DataStore(sc.prettyobj):
         return output
     
     
-    def get(self, key=None, obj=None, objtype=None, uid=None, die=False):
+    def get(self, key=None, obj=None, objtype=None, uid=None, notnone=False, die=True):
         ''' Alias to redis.get() '''
         key = self.getkey(key=key, objtype=objtype, uid=uid, obj=obj)
         objstr = self.redis.get(key)
-        if objstr:
-            output = sc.loadstr(objstr)
+        if objstr is not None:
+            try:
+                output = sc.loadstr(objstr)
+            except:
+                output = None
+                errormsg = 'Datastore error: unpickling failed:\n%s' % traceback.format_exc() # Grab the trackback stack
+                if die: raise Exception(errormsg)
+                else:   print(errormsg)
         else:                  
-            if die:
+            if notnone:
                 errormsg = 'Redis key "%s" not found (obj=%s, objtype=%s, uid=%s)' % (key, obj, objtype, uid)
                 raise Exception(errormsg)
             else:
