@@ -702,11 +702,23 @@ def colorize(color=None, string=None, output=False, showhelp=False):
 
 __all__ += ['flexstr', 'isiterable', 'checktype', 'isnumber', 'isstring', 'promotetoarray', 'promotetolist']
 
-def flexstr(arg):
-    ''' Try converting to a regular string, but proceed if it fails '''
-    try:    output = str(arg)
-    except: output = arg
-    return  output
+def flexstr(arg, force=True):
+    ''' Try converting to a "regular" string (i.e. "str" in both Python 2 or 3), but proceed if it fails '''
+    if isstring(arg): # It's a string
+        if six.PY2:
+            try:    
+                output = str(arg) # Try to convert to ASCII string from unicode
+            except: 
+                output = arg # If anything goes wrong, just return as-is
+        else:
+            if isinstance(arg, six.binary_type): 
+                output = arg.decode() # If it's bytes, decode to unicode
+            else: 
+                output = arg # Otherwise, return as-is
+    else:
+        if force: output = str(arg) 
+        else:     output = arg # Optionally don't do anything for non-strings
+    return output
 
 
 def isiterable(obj):
