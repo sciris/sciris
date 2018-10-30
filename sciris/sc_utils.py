@@ -20,6 +20,7 @@ from functools import reduce
 from psutil import cpu_percent
 from subprocess import Popen, PIPE
 from collections import OrderedDict as OD
+from distutils.version import LooseVersion
 
 # Handle types and Python 2/3 compatibility
 if six.PY2: _stringtypes = (basestring,)
@@ -1119,32 +1120,24 @@ def gitinfo(filepath=None, die=False, hashlen=7):
 
 
 
-def compareversions(version1=None, version2=None):
+def compareversions(version1, version2):
     '''
     Function to compare versions, expecting both arguments to be a string of the 
     format 1.2.3, but numeric works too.
     
     Usage:
         compareversions('1.2.3', '2.3.4') # returns -1
-        compareversions(2, '2.0.0.0') # returns 0
+        compareversions(2, '2') # returns 0
         compareversions('3.1', '2.99') # returns 1
     
     '''
-    if version1 is None or version2 is None: 
-        raise Exception('Must supply both versions as strings')
-    versions = [version1, version2]
-    for i in range(2):
-        versions[i] = np.array(flexstr(versions[i]).split('.'), dtype=float) # Convert to array of numbers
-    maxlen = max(len(versions[0]), len(versions[1]))
-    versionsarr = np.zeros((2,maxlen))
-    for i in range(2):
-        versionsarr[i,:len(versions[i])] = versions[i]
-    for j in range(maxlen):
-        if versionsarr[0,j]<versionsarr[1,j]: return -1
-        if versionsarr[0,j]>versionsarr[1,j]: return 1
-    if (versionsarr[0,:]==versionsarr[1,:]).all(): return 0
+
+    if LooseVersion(str(version1)) > LooseVersion(str(version2)):
+        return 1
+    elif LooseVersion(str(version1)) == LooseVersion(str(version2)):
+        return 0
     else:
-        raise Exception('Failed to compare %s and %s' % (version1, version2))
+        return -1
 
 
 def uniquename(name=None, namelist=None, style=None):
