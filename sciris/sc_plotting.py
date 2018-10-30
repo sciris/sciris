@@ -13,7 +13,6 @@ from matplotlib.colors import LinearSegmentedColormap as makecolormap
 from .sc_odict import odict
 from . import sc_utils as ut
 from . import sc_fileio as fio
-import six
 
 
 ##############################################################################
@@ -411,6 +410,13 @@ def bicolormap(gap=0.1, mingreen=0.2, redbluemix=0.5, epsilon=0.01, demo=False):
 
 def hex2rgb(string):
     ''' A little helper function to convert e.g. '86bc25' to a pleasing shade of green. '''
+    if string[0] == '#':
+        string = string[1:] # Trim leading #, if it exists
+    if len(string)==3:
+        string = string[0]*2+string[1]*2+string[2]*2 # Convert e.g. '8b2' to '88bb22'
+    if len(string)!=6:
+        errormsg = 'Cannot convert "%s" to an RGB color:must be 3 or 6 characters long' % string
+        raise Exception(errormsg)
     if six.PY3: hexstring = bytes.fromhex(string) # Ensure it's the right type
     else:       hexstring = string.decode('hex')
     rgb = np.array(unpack('BBB',hexstring),dtype=float)/255.
