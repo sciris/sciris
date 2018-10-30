@@ -63,7 +63,7 @@ def shifthue(colors=None, hueshift=0.0):
     return colors
 
 
-def gridcolors(ncolors=10, limits=None, nsteps=20, asarray=False, ashex=False, reverse=False, hueshift=0, usecolorbrewer=True, doplot=False):
+def gridcolors(ncolors=10, limits=None, nsteps=20, asarray=False, ashex=False, reverse=False, hueshift=0, basis='default', doplot=False):
     """
     GRIDCOLORS
 
@@ -77,6 +77,7 @@ def gridcolors(ncolors=10, limits=None, nsteps=20, asarray=False, ashex=False, r
         nsteps: the discretization of the color cube (e.g. 10 = 10 units per side = 1000 points total)
         asarray: whether to return the colors as an array instead of as a list of tuples
         doplot: whether or not to plot the color cube itself
+        basis: what basis to use -- options are 'colorbrewer', 'kelly', 'default', or 'none'
 
     Usage example:
         from pylab import *
@@ -91,6 +92,11 @@ def gridcolors(ncolors=10, limits=None, nsteps=20, asarray=False, ashex=False, r
 
     Version: 1.2 (2015dec29) 
     """
+    
+    # Choose default colors
+    if basis == 'default':
+        if ncolors<=9: basis = 'colorbrewer' # Use these cos they're nicer
+        else:          basis = 'kelly' # Use these cos there are more of them
 
     # Steal colorbrewer colors for small numbers of colors
     colorbrewercolors = np.array([
@@ -105,9 +111,16 @@ def gridcolors(ncolors=10, limits=None, nsteps=20, asarray=False, ashex=False, r
     [153, 153, 153],
     ])/255.
     
-    if usecolorbrewer and ncolors<=len(colorbrewercolors):
+    # Steal Kelly's colors from https://gist.github.com/ollieglass/f6ddd781eeae1d24e391265432297538, removing '222222', 
+    kellycolors = ['F2F3F4', 'F3C300', '875692', 'F38400', 'A1CAF1', 'BE0032', 'C2B280', '848482', '008856', 'E68FAC', '0067A5', 'F99379', '604E97', 'F6A600', 'B3446C', 'DCD300', '882D17', '8DB600', '654522', 'E25822', '2B3D26']
+    for c,color in enumerate(kellycolors):
+        kellycolors[c] = list(hex2rgb(color))
+    kellycolors = np.array(kellycolors)
+    
+    if basis == 'colorbrewer' and ncolors<=len(colorbrewercolors):
         colors = colorbrewercolors[:ncolors]
-        
+    elif basis == 'kelly' and ncolors<=len(kellycolors):
+        colors = kellycolors[:ncolors]
     else: # Too many colors, calculate instead
         ## Calculate sliding limits if none provided
         if limits is None:
@@ -121,9 +134,11 @@ def gridcolors(ncolors=10, limits=None, nsteps=20, asarray=False, ashex=False, r
         ndots = nsteps**3 # Calculate the number of dots
         
         ## Start from the colorbrewer colors
-        if usecolorbrewer:
+        if basis=='colorbrewer' or basis=='kelly':
             indices = [] # Initialize the array
-            for color in colorbrewercolors:
+            if   basis == 'colorbrewer': basiscolors = colorbrewercolors
+            elif basis == 'kelly':       basiscolors = kellycolors
+            for color in basiscolors:
                 rgbdistances = dots - color # Calculate the distance in RGB space
                 totaldistances = norm(rgbdistances,axis=1)
                 closest = np.argmin(totaldistances)
