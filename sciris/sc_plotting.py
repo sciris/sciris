@@ -2,6 +2,7 @@
 ### IMPORTS
 ##############################################################################
 
+import six
 from struct import unpack
 import pylab as pl
 import numpy as np
@@ -410,7 +411,9 @@ def bicolormap(gap=0.1, mingreen=0.2, redbluemix=0.5, epsilon=0.01, demo=False):
 
 def hex2rgb(string):
     ''' A little helper function to convert e.g. '86bc25' to a pleasing shade of green. '''
-    rgb = np.array(unpack('BBB',string.decode('hex')),dtype=float)/255.
+    if six.PY3: hexstring = bytes.fromhex(string) # Ensure it's the right type
+    else:       hexstring = string.decode('hex')
+    rgb = np.array(unpack('BBB',hexstring),dtype=float)/255.
     return rgb
 
 
