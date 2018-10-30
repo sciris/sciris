@@ -63,7 +63,7 @@ def shifthue(colors=None, hueshift=0.0):
     return colors
 
 
-def gridcolors(ncolors=10, limits=None, nsteps=10, asarray=False, ashex=False, reverse=False, doplot=False, hueshift=0, skipbw=False):
+def gridcolors(ncolors=10, limits=None, nsteps=20, asarray=False, ashex=False, reverse=False, hueshift=0, usecolorbrewer=True, doplot=False):
     """
     GRIDCOLORS
 
@@ -105,7 +105,7 @@ def gridcolors(ncolors=10, limits=None, nsteps=10, asarray=False, ashex=False, r
     [153, 153, 153],
     ])/255.
     
-    if ncolors<=len(colorbrewercolors):
+    if usecolorbrewer and ncolors<=len(colorbrewercolors):
         colors = colorbrewercolors[:ncolors]
         
     else: # Too many colors, calculate instead
@@ -119,10 +119,20 @@ def gridcolors(ncolors=10, limits=None, nsteps=10, asarray=False, ashex=False, r
         x, y, z = np.meshgrid(primitive, primitive, primitive) # Create grid of all possible points
         dots = np.transpose(np.array([x.flatten(), y.flatten(), z.flatten()])) # Flatten into an array of dots
         ndots = nsteps**3 # Calculate the number of dots
-        indices = [0] # Initialize the array
+        
+        ## Start from the colorbrewer colors
+        if usecolorbrewer:
+            indices = [] # Initialize the array
+            for color in colorbrewercolors:
+                rgbdistances = dots - color # Calculate the distance in RGB space
+                totaldistances = norm(rgbdistances,axis=1)
+                closest = np.argmin(totaldistances)
+                indices.append(closest)
+        else:
+            indices = [0]
         
         ## Calculate the distances
-        for pt in range(ncolors-1): # Loop over each point
+        for pt in range(ncolors-len(indices)): # Loop over each point
             totaldistances = np.inf+np.zeros(ndots) # Initialize distances
             for ind in indices: # Loop over each existing point
                 rgbdistances = dots - dots[ind] # Calculate the distance in RGB space
@@ -139,11 +149,8 @@ def gridcolors(ncolors=10, limits=None, nsteps=10, asarray=False, ashex=False, r
     ## For plotting -- optional
     if doplot:
         from mpl_toolkits.mplot3d import Axes3D # analysis:ignore
-        if doplot=='new':
-            fig = pl.figure(facecolor='w')
-            ax = fig.add_subplot(111, projection='3d')
-        else:
-            ax = pl.gca()
+        fig = pl.figure(facecolor='w')
+        ax = fig.add_subplot(111, projection='3d')
         ax.scatter(colors[:,0], colors[:,1], colors[:,2], c=output, s=200, depthshade=False, lw=0)
         ax.set_xlabel('Red', fontweight='bold')
         ax.set_ylabel('Green', fontweight='bold')
