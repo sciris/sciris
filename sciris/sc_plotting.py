@@ -13,7 +13,7 @@ from matplotlib.colors import LinearSegmentedColormap as makecolormap
 from .sc_odict import odict
 from . import sc_utils as ut
 from . import sc_fileio as fio
-
+import six
 
 
 ##############################################################################
