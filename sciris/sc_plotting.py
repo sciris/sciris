@@ -111,8 +111,9 @@ def gridcolors(ncolors=10, limits=None, nsteps=20, asarray=False, ashex=False, r
     [153, 153, 153],
     ])/255.
     
-    # Steal Kelly's colors from https://gist.github.com/ollieglass/f6ddd781eeae1d24e391265432297538, removing '222222', 
-    kellycolors = ['F2F3F4', 'F3C300', '875692', 'F38400', 'A1CAF1', 'BE0032', 'C2B280', '848482', '008856', 'E68FAC', '0067A5', 'F99379', '604E97', 'F6A600', 'B3446C', 'DCD300', '882D17', '8DB600', '654522', 'E25822', '2B3D26']
+    # Steal Kelly's colors from https://gist.github.com/ollieglass/f6ddd781eeae1d24e391265432297538, removing
+    # black: '222222', off-white: 'F2F3F4', mid-grey: '848482',
+    kellycolors = ['F3C300', '875692', 'F38400', 'A1CAF1', 'BE0032', 'C2B280', '008856', 'E68FAC', '0067A5', 'F99379', '604E97', 'F6A600', 'B3446C', 'DCD300', '882D17', '8DB600', '654522', 'E25822', '2B3D26']
     for c,color in enumerate(kellycolors):
         kellycolors[c] = list(hex2rgb(color))
     kellycolors = np.array(kellycolors)
