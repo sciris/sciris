@@ -90,7 +90,7 @@ def gridcolors(ncolors=10, limits=None, nsteps=20, asarray=False, ashex=False, r
         gridcolors(ncolors, doplot=True)
         show()
 
-    Version: 1.2 (2015dec29) 
+    Version: 2.0 (2018oct30) 
     """
     
     # Choose default colors
