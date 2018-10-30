@@ -236,11 +236,11 @@ def alpinecolormap(gap=0.1, mingreen=0.2, redbluemix=0.5, epsilon=0.01, demo=Fal
     
         maxheight = 3
         horizontalsize = 4;
-        np.seed(8)
+        pl.seed(8)
         n = 100
         smoothing = 40;
         kernel = np.array([0.25,0.5,0.25])
-        data = np.randn(n,n)
+        data = pl.randn(n,n)
         for s in range(smoothing): # Quick-and-dirty-and-slow smoothing
             for i in range(n): data[:,i] = np.convolve(data[:,i],kernel,mode='same')
             for i in range(n): data[i,:] = np.convolve(data[i,:],kernel,mode='same')
