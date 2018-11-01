@@ -17,7 +17,6 @@ import numpy as np
 import uuid as py_uuid
 from textwrap import fill
 from functools import reduce
-from psutil import cpu_percent
 from subprocess import Popen, PIPE
 from collections import OrderedDict as OD
 from distutils.version import LooseVersion
@@ -26,6 +25,17 @@ from distutils.version import LooseVersion
 if six.PY2: _stringtypes = (basestring,)
 else:       _stringtypes = (str, bytes)
 _numtype    = numbers.Number
+
+# Add Windows support for colors (do this at the module level so that colorama.init() only gets called once)
+if 'win' in sys.platform:
+    try:
+        import colorama
+        colorama.init()
+        ansi_support = True
+    except:
+        ansi_support = False  # print('Warning: you have called colorize() on Windows but do not have either the colorama or tendo modules.')
+else:
+    ansi_support = True
 
 
 # Define the modules being loaded
@@ -608,17 +618,6 @@ def printtologfile(message=None, filename=None):
     return None
 
 
-# Add Windows support for colors (do this at the module level so that colorama.init() only gets called once)
-if 'win' in sys.platform:
-    try:
-        import colorama
-        colorama.init()
-        ansi_support = True
-    except:
-        ansi_support = False  # print('Warning: you have called colorize() on Windows but do not have either the colorama or tendo modules.')
-else:
-    ansi_support = True
-
 def colorize(color=None, string=None, output=False, showhelp=False):
     '''
     Colorize output text. Arguments:
@@ -856,7 +855,7 @@ def promotetolist(obj=None, objtype=None, keepnone=False):
 ### MISC. FUNCTIONS
 ##############################################################################
 
-__all__ += ['now', 'tic', 'toc', 'percentcomplete', 'checkmem', 'loadbalancer', 'runcommand', 'gitinfo', 'compareversions', 'uniquename', 'importbyname']
+__all__ += ['now', 'tic', 'toc', 'percentcomplete', 'checkmem', 'runcommand', 'gitinfo', 'compareversions', 'uniquename', 'importbyname']
 
 def now(utc=False, die=False, tostring=False, fmt=None):
     ''' Get the current time, optionally in UTC time '''
@@ -1019,55 +1018,6 @@ def checkmem(origvariable, descend=False, order='n', plot=False, verbose=False):
 
     return None
 
-
-
-def loadbalancer(maxload=None, index=None, interval=None, maxtime=None, label=None, verbose=True):
-    '''
-    A little function to delay execution while CPU load is too high -- a very simple load balancer.
-
-    Arguments:
-        maxload:  the maximum load to allow for the task to still start (default 0.5)
-        index:    the index of the task -- used to start processes asynchronously (default None)
-        interval: the time delay to poll to see if CPU load is OK (default 5 seconds)
-        maxtime:  maximum amount of time to wait to start the task (default 36000 seconds (10 hours))
-        label:    the label to print out when outputting information about task delay or start (default None)
-        verbose:  whether or not to print information about task delay or start (default True)
-
-    Usage examples:
-        loadbalancer() # Simplest usage -- delay while load is >50%
-        for nproc in processlist: loadbalancer(maxload=0.9, index=nproc) # Use a maximum load of 90%, and stagger the start by process number
-
-    Version: 2017oct25
-     '''
-    # Set up processes to start asynchronously
-    if maxload  is None: maxload = 0.8
-    if interval is None: interval = 5.0
-    if maxtime  is None: maxtime = 36000
-    if label    is None: label = ''
-    else: label += ': '
-    if index is None:  
-        pause = np.random.rand()*interval
-        index = ''
-    else:              
-        pause = index*interval
-    if maxload>1: maxload/100. # If it's >1, assume it was given as a percent
-    time.sleep(pause) # Give it time to asynchronize
-    
-    # Loop until load is OK
-    toohigh = True # Assume too high
-    count = 0
-    maxcount = maxtime/float(interval)
-    while toohigh and count<maxcount:
-        count += 1
-        currentload = cpu_percent(interval=0.1)/100. # If interval is too small, can give very inaccurate readings
-        if currentload>maxload:
-            if verbose: print(label+'CPU load too high (%0.2f/%0.2f); process %s queued %i times' % (currentload, maxload, index, count))
-            time.sleep(interval*2*np.random.rand()) # Sleeps for an average of refresh seconds, but do it randomly so you don't get locking
-        else: 
-            toohigh = False 
-            if verbose: print(label+'CPU load fine (%0.2f/%0.2f), starting process %s after %i tries' % (currentload, maxload, index, count))
-    return None
-    
 
 
 def runcommand(command, printinput=False, printoutput=False):
