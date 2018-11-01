@@ -10,7 +10,6 @@ from . import sc_utils as ut
 
 
 
-
 __all__ = ['loadbalancer', 'parallelize', 'parallelcmd']
 
 
@@ -63,6 +62,20 @@ def loadbalancer(maxload=None, index=None, interval=None, maxtime=None, label=No
 
 
 
+class TaskArgs(ut.prettyobj):
+        ''' A class to hold the arguments for the task -- must match both parallelize() and parallel_task() '''
+        def __init__(self, func, index, iterval, itervar, args, kwargs, maxload):
+            self.func = func
+            self.index = index
+            self.iterval = iterval
+            self.itervar = itervar
+            self.args = args
+            self.kwargs = kwargs
+            self.maxload = maxload
+            return None
+
+
+
 def parallelize(func=None, iterarg=None, itervar=None, args=None, kwargs=None, ncpus=None, maxload=None):
     '''
     Shortcut for parallelizing a function. iterarg can be an iterable or an integer;
@@ -88,6 +101,8 @@ def parallelize(func=None, iterarg=None, itervar=None, args=None, kwargs=None, n
         xy = parallelize(myfunc, kwargs={'x':3, 'y':8}, iterarg=n, itervar='i', maxload=0.8)
         for i in range(n):
             pl.scatter(xy[i][0], xy[i][1])
+    
+    Version: 2018nov01
     '''
     # Handle maxload
     if ncpus is None and maxload is None:
@@ -104,9 +119,9 @@ def parallelize(func=None, iterarg=None, itervar=None, args=None, kwargs=None, n
     # Construct argument list
     argslist = []
     niters = len(iterarg)
-    for i,ival in enumerate(iterarg):
-        args = ({'func':func, 'index':i, 'iterval':ival, 'itervar':itervar, 'args':args, 'kwargs':kwargs, 'maxload':maxload},)
-        argslist.append(args)
+    for index,iterval in enumerate(iterarg):
+        taskargs = TaskArgs(func, index, iterval, itervar, args, kwargs, maxload)
+        argslist.append(taskargs)
         
     # Decide how to run -- not load-balanced, use map
     if ncpus:
@@ -139,28 +154,23 @@ def parallel_task(taskargs):
     ''' Task called by parallelize() -- not to be called directly '''
     
     # Handle inputs
-    taskargs = taskargs[0]
-    func = taskargs['func']
-    index = taskargs['index']
-    args = taskargs['args']
-    kwargs = taskargs['kwargs']
+    func = taskargs.func
+    index = taskargs.index
+    args = taskargs.args
+    kwargs = taskargs.kwargs
     if args   is None: args   = ()
     if kwargs is None: kwargs = {}
-    if taskargs['itervar'] is None:
-        args = (taskargs['iterval'],) + args # If variable name is not supplied, prepend it to args
+    if taskargs.itervar is None:
+        args = (taskargs.iterval,) + args # If variable name is not supplied, prepend it to args
     else: 
-        kwargs[taskargs['itervar']] = taskargs['iterval'] # Otherwise, include it in kwargs
+        kwargs[taskargs.itervar] = taskargs.iterval # Otherwise, include it in kwargs
     
     # Handle load balancing
-    maxload = taskargs['maxload']
+    maxload = taskargs.maxload
     if maxload:
         loadbalancer(maxload=maxload, index=index)
     
     # Call the function
-    print('MY NAME IS ISHMAEL')
-    print(args)
-    print(kwargs)
-    print('DONE')
     output = func(*args, **kwargs)
         
     # Handle output
@@ -195,7 +205,9 @@ newval = val+const # Note that this can't be indented
 result = newval**2
         """
         results = parallelize(cmd=cmd, parfor=parfor, returnval=returnval, const=const)
-        '''
+        
+    Version: 2018nov01
+    '''
     
     nfor = len(list(parfor.values())[0])
     outputqueue = mp.Queue()
