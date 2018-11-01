@@ -2,10 +2,10 @@ import sciris as sc
 import pylab as pl
 
 torun = [
-#'simple',
-#'embarrassing',
-#'multiargs',
-#'kwargs',
+'simple',
+'embarrassing',
+'multiargs',
+'kwargs',
 'noniterated'
 ]
 
