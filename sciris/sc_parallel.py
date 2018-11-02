@@ -64,7 +64,7 @@ def loadbalancer(maxload=None, index=None, interval=None, maxtime=None, label=No
 
 class TaskArgs(ut.prettyobj):
         ''' A class to hold the arguments for the task -- must match both parallelize() and parallel_task() '''
-        def __init__(self, func, index, iterval, iterdict, args, kwargs, maxload):
+        def __init__(self, func, index, iterval, iterdict, args, kwargs, maxload, interval):
             self.func     = func      # The function being called
             self.index    = index     # The place in the queue
             self.iterval  = iterval   # The value being iterated (may be None if iterdict is not None)
@@ -72,11 +72,12 @@ class TaskArgs(ut.prettyobj):
             self.args     = args      # Arguments passed directly to the function
             self.kwargs   = kwargs    # Keyword arguments passed directly to the function
             self.maxload  = maxload   # Maximum CPU load (ignored if ncpus is not None in parallelize()
+            self.interval = interval  # Interval to check load (only used with maxload)
             return None
 
 
 
-def parallelize(func=None, iterarg=None, iterkwargs=None, args=None, kwargs=None, ncpus=None, maxload=None):
+def parallelize(func=None, iterarg=None, iterkwargs=None, args=None, kwargs=None, ncpus=None, maxload=None, interval=None):
     '''
     Shortcut for parallelizing a function. Most simply, acts as an shortcut for using
     multiprocessing.Pool() or Queue(). However, this function can also iterate over more
@@ -116,13 +117,15 @@ def parallelize(func=None, iterarg=None, iterkwargs=None, args=None, kwargs=None
         assert results1 == results2 == results3
     
     Example 4 -- using non-iterated arguments and dynamic load balancing:
-        import pylab as pl
-        def myfunc(x, y, i):
-            xy = [x+i*pl.rand(100), y+i*pl.randn(100)]
+        def myfunc(i, x, y):
+            xy = [x+i*pl.randn(100), y+i*pl.randn(100)]
             return xy
-        xylist = sc.parallelize(myfunc, kwargs={'x':3, 'y':8}, iterarg=range(5), maxload=0.8)
-        for xy in xylist:
-            pl.scatter(xy[0], xy[1])
+        
+        xylist = sc.parallelize(myfunc, kwargs={'x':3, 'y':8}, iterarg=range(5), maxload=0.8, interval=0.2)
+        
+        for i,xy in enumerate(reversed(xylist)):
+            pl.scatter(xy[0], xy[1], label='Run %i'%i)
+        pl.legend()
     
     Version: 2018nov02
     '''
@@ -184,33 +187,13 @@ def parallelize(func=None, iterarg=None, iterkwargs=None, args=None, kwargs=None
             else: # Should be caught by previous checking, so shouldn't happen
                 errormsg = 'iterkwargs type not understood (%s)' % type(iterkwargs)
                 raise Exception(errormsg)
-        taskargs = TaskArgs(func, index, iterval, iterdict, args, kwargs, maxload)
+        taskargs = TaskArgs(func, index, iterval, iterdict, args, kwargs, maxload, interval)
         argslist.append(taskargs)
         
-    # Decide how to run -- fixed number of CPUs, use map
-    if ncpus:
-        multipool = mp.Pool(processes=ncpus)
-        outputlist = multipool.map(parallel_task, argslist)
-        return outputlist
-    
-    # Dynamic number of CPUs, use Process/Queue
-    else:
-        outputqueue = mp.Queue()
-        outputlist = np.empty(niters, dtype=object)
-        processes = []
-        for i in range(niters):
-            prc = mp.Process(target=parallel_task, args=(argslist[i], outputqueue))
-            prc.start()
-            processes.append(prc)
-        for i in range(niters):
-            _i,returnval = outputqueue.get()
-            outputlist[_i] = returnval
-        for prc in processes:
-            prc.join() # Wait for them to finish
-        
-        outputlist = outputlist.tolist()
-        
-        return outputlist
+    # Run simply using map -- no advantage here to using Process/Queue
+    multipool = mp.Pool(processes=ncpus)
+    outputlist = multipool.map(parallel_task, argslist)
+    return outputlist
 
 
 
@@ -235,7 +218,7 @@ def parallel_task(taskargs, outputqueue=None):
     # Handle load balancing
     maxload = taskargs.maxload
     if maxload:
-        loadbalancer(maxload=maxload, index=index)
+        loadbalancer(maxload=maxload, index=index, interval=taskargs.interval)
     
     # Call the function
     output = func(*args, **kwargs)

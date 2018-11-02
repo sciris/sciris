@@ -2,11 +2,13 @@ import sciris as sc
 import pylab as pl
 
 torun = [
-#'simple',
-#'embarrassing',
+'simple',
+'embarrassing',
 'multiargs',
-#'noniterated'
+'noniterated'
 ]
+
+doplot = True
 
 
 
@@ -49,10 +51,12 @@ if 'multiargs' in torun:
 if 'noniterated' in torun:
 
     def myfunc(i, x, y):
-        xy = [x+i*pl.rand(100), y+i*pl.randn(100)]
+        xy = [x+i*pl.randn(100), y+i*pl.randn(100)]
         return xy
     
-    xylist = sc.parallelize(myfunc, kwargs={'x':3, 'y':8}, iterarg=range(5), maxload=0.8)
+    xylist = sc.parallelize(myfunc, kwargs={'x':3, 'y':8}, iterarg=range(5), maxload=0.8, interval=0.2)
     
-    for xy in xylist:
-        pl.scatter(xy[0], xy[1])
+    if doplot:
+        for i,xy in enumerate(reversed(xylist)):
+            pl.scatter(xy[0], xy[1], label='Run %i'%i)
+        pl.legend()
