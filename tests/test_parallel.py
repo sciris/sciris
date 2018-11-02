@@ -2,10 +2,11 @@ import sciris as sc
 import pylab as pl
 
 torun = [
-'simple',
-'embarrassing',
-'multiargs',
-'noniterated'
+#'simple',
+#'embarrassing',
+#'multiargs',
+#'noniterated'
+'parallelcmd'
 ]
 
 doplot = True
@@ -60,3 +61,15 @@ if 'noniterated' in torun:
         for i,xy in enumerate(reversed(xylist)):
             pl.scatter(xy[0], xy[1], label='Run %i'%i)
         pl.legend()
+
+
+if 'parallelcmd' in torun:
+        const = 4
+        parfor = {'val':[3,5,9]}
+        returnval = 'result'
+        cmd = """
+newval = val+const # Note that this can't be indented
+result = newval**2
+        """
+        results = sc.parallelcmd(cmd=cmd, parfor=parfor, returnval=returnval, const=const, maxload=0)
+        print(results)

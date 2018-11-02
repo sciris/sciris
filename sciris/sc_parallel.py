@@ -1,6 +1,6 @@
-"""
-Version:
-"""
+##############################################################################
+### IMPORTS
+##############################################################################
 
 import time
 import psutil
@@ -9,6 +9,10 @@ import numpy as np
 from . import sc_utils as ut
 
 
+
+##############################################################################
+### PARALLELIZATION FUNCTIONS
+##############################################################################
 
 __all__ = ['loadbalancer', 'parallelize', 'parallelcmd']
 
@@ -26,14 +30,14 @@ def loadbalancer(maxload=None, index=None, interval=None, maxtime=None, label=No
         verbose:  whether or not to print information about task delay or start (default True)
 
     Usage examples:
-        loadbalancer() # Simplest usage -- delay while load is >50%
+        loadbalancer() # Simplest usage -- delay while load is >80%
         for nproc in processlist: loadbalancer(maxload=0.9, index=nproc) # Use a maximum load of 90%, and stagger the start by process number
 
     Version: 2018nov01
      '''
     # Set up processes to start asynchronously
     if maxload  is None: maxload = 0.8
-    if interval is None: interval = 0.5
+    if interval is None: interval = 1.0
     if maxtime  is None: maxtime = 36000
     if label    is None: label = ''
     else: label += ': '
@@ -43,7 +47,10 @@ def loadbalancer(maxload=None, index=None, interval=None, maxtime=None, label=No
     else:              
         pause = index*interval
     if maxload>1: maxload/100. # If it's >1, assume it was given as a percent
-    time.sleep(pause) # Give it time to asynchronize
+    if not maxload>0:
+        return None # Return immediately if no max load
+    else:
+        time.sleep(pause) # Give it time to asynchronize
     
     # Loop until load is OK
     toohigh = True # Assume too high
@@ -59,21 +66,6 @@ def loadbalancer(maxload=None, index=None, interval=None, maxtime=None, label=No
             toohigh = False 
             if verbose: print(label+'CPU load fine (%0.2f/%0.2f), starting process %s after %i tries' % (currentload, maxload, index, count))
     return None
-
-
-
-class TaskArgs(ut.prettyobj):
-        ''' A class to hold the arguments for the task -- must match both parallelize() and parallel_task() '''
-        def __init__(self, func, index, iterval, iterdict, args, kwargs, maxload, interval):
-            self.func     = func      # The function being called
-            self.index    = index     # The place in the queue
-            self.iterval  = iterval   # The value being iterated (may be None if iterdict is not None)
-            self.iterdict = iterdict  # A dictionary of values being iterated (may be None if iterval is not None)
-            self.args     = args      # Arguments passed directly to the function
-            self.kwargs   = kwargs    # Keyword arguments passed directly to the function
-            self.maxload  = maxload   # Maximum CPU load (ignored if ncpus is not None in parallelize()
-            self.interval = interval  # Interval to check load (only used with maxload)
-            return None
 
 
 
@@ -197,6 +189,71 @@ def parallelize(func=None, iterarg=None, iterkwargs=None, args=None, kwargs=None
 
 
 
+def parallelcmd(cmd=None, parfor=None, returnval=None, maxload=None, interval=None, **kwargs):
+    '''
+    A function to parallelize any block of code. Note: this is intended for quick
+    prototyping; since it uses exec(), it is not recommended for use in production
+    code.
+    
+    Arguments:
+        cmd -- a string representation of the code to be run in parallel
+        parfor -- a dictionary of lists of the variables to loop over
+        returnval -- the name of the output variable
+        maxload -- the maxmium CPU load, used in loadbalancer()
+        **kwargs -- variables to pass into the code
+    
+    Example:
+        const = 4
+        parfor = {'val':[3,5,9]}
+        returnval = 'result'
+        cmd = """
+newval = val+const # Note that this can't be indented
+result = newval**2
+        """
+        results = parallelcmd(cmd=cmd, parfor=parfor, returnval=returnval, const=const)
+        
+    Version: 2018nov01
+    '''
+    
+    nfor = len(list(parfor.values())[0])
+    outputqueue = mp.Queue()
+    outputlist = np.empty(nfor, dtype=object)
+    processes = []
+    for i in range(nfor):
+        prc = mp.Process(target=parallelcmd_task, args=(cmd, parfor, returnval, i, outputqueue, maxload, interval, kwargs))
+        prc.start()
+        processes.append(prc)
+    for i in range(nfor):
+        _i,returnval = outputqueue.get()
+        outputlist[_i] = returnval
+    for prc in processes:
+        prc.join() # Wait for them to finish
+    
+    outputlist = outputlist.tolist()
+    
+    return outputlist
+    
+
+
+##############################################################################
+### HELPER FUNCTIONS/CLASSES
+##############################################################################
+
+class TaskArgs(ut.prettyobj):
+        ''' A class to hold the arguments for the task -- must match both parallelize() and parallel_task() '''
+        def __init__(self, func, index, iterval, iterdict, args, kwargs, maxload, interval):
+            self.func     = func      # The function being called
+            self.index    = index     # The place in the queue
+            self.iterval  = iterval   # The value being iterated (may be None if iterdict is not None)
+            self.iterdict = iterdict  # A dictionary of values being iterated (may be None if iterval is not None)
+            self.args     = args      # Arguments passed directly to the function
+            self.kwargs   = kwargs    # Keyword arguments passed directly to the function
+            self.maxload  = maxload   # Maximum CPU load (ignored if ncpus is not None in parallelize()
+            self.interval = interval  # Interval to check load (only used with maxload)
+            return None
+
+
+
 def parallel_task(taskargs, outputqueue=None):
     ''' Task called by parallelize() -- not to be called directly '''
     
@@ -229,62 +286,15 @@ def parallel_task(taskargs, outputqueue=None):
         return None
     else:
         return output
-    
-    
 
 
-def parallelcmd(cmd=None, parfor=None, returnval=None, maxload=None, **kwargs):
-    '''
-    A function to parallelize any block of code. Note: this is intended for quick
-    prototyping; since it uses exec(), it is not recommended for use in production
-    code.
-    
-    Arguments:
-        cmd -- a string representation of the code to be run in parallel
-        parfor -- a dictionary of lists of the variables to loop over
-        returnval -- the name of the output variable
-        maxload -- the maxmium CPU load, used in loadbalancer()
-        **kwargs -- variables to pass into the code
-    
-    Example:
-        const = 4
-        parfor = {'val':[3,5,9]}
-        returnval = 'result'
-        cmd = """
-newval = val+const # Note that this can't be indented
-result = newval**2
-        """
-        results = parallelcmd(cmd=cmd, parfor=parfor, returnval=returnval, const=const)
-        
-    Version: 2018nov01
-    '''
-    
-    nfor = len(list(parfor.values())[0])
-    outputqueue = mp.Queue()
-    outputlist = np.empty(nfor, dtype=object)
-    processes = []
-    for i in range(nfor):
-        prc = mp.Process(target=parallelcmd_task, args=(cmd, parfor, returnval, i, outputqueue, maxload, kwargs))
-        prc.start()
-        processes.append(prc)
-    for i in range(nfor):
-        _i,returnval = outputqueue.get()
-        outputlist[_i] = returnval
-    for prc in processes:
-        prc.join() # Wait for them to finish
-    
-    outputlist = outputlist.tolist()
-    
-    return outputlist
-
-
-def parallelcmd_task(_cmd, _parfor, _returnval, _i, _outputqueue, _maxload, _kwargs):
+def parallelcmd_task(_cmd, _parfor, _returnval, _i, _outputqueue, _maxload, _interval, _kwargs):
     '''
     The task to be executed by parallelcmd(). All internal variables start with
     underscores to avoid possible collisions in the exec() statements. Not to be called
     directly.
     '''
-    loadbalancer(maxload=_maxload, index=_i)
+    loadbalancer(maxload=_maxload, index=_i, interval=_interval)
     
     # Set the loop variables
     for _key in _parfor.keys(): 
@@ -306,5 +316,4 @@ def parallelcmd_task(_cmd, _parfor, _returnval, _i, _outputqueue, _maxload, _kwa
     # Append results
     _outputqueue.put((_i,eval(_returnval)))
     
-    print('...done.')
     return None
