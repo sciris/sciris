@@ -104,21 +104,18 @@ def parallelize(func=None, iterarg=None, iterkwargs=None, args=None, kwargs=None
             import pylab as pl
             return pl.rand()
         
-        results = sc.parallelize(rnd, 10)
+        results = sc.parallelize(rnd, 10, ncpus=4)
     
-    Example 3 -- using multiple arguments:
+    Example 3 -- three different equivalent ways to use multiple arguments:
         def f(x,y):
             return x*y
         
-        results = sc.parallelize(func=f, iterarg=[(1,2),(2,3),(3,4)], ncpus=3)
+        results1 = sc.parallelize(func=f, iterarg=[(1,2),(2,3),(3,4)])
+        results2 = sc.parallelize(func=f, iterkwargs={'x':[1,2,3], 'y':[2,3,4]})
+        results3 = sc.parallelize(func=f, iterkwargs=[{'x':1, 'y':2}, {'x':2, 'y':3}, {'x':3, 'y':4}])
+        assert results1 == results2 == results3
     
-    Example 4 -- using multiple keyword arguments:
-        def f(x,y):
-            return x*y
-        
-        results = sc.parallelize(func=f, iterkwargs={'x':[1,2,3], 'y':[2,3,4]}, ncpus=3)
-    
-    Example 5 -- using non-iterated arguments and dynamic load balancing:
+    Example 4 -- using non-iterated arguments and dynamic load balancing:
         import pylab as pl
         def myfunc(x, y, i):
             xy = [x+i*pl.rand(100), y+i*pl.randn(100)]
@@ -127,7 +124,7 @@ def parallelize(func=None, iterarg=None, iterkwargs=None, args=None, kwargs=None
         for xy in xylist:
             pl.scatter(xy[0], xy[1])
     
-    Version: 2018nov01
+    Version: 2018nov02
     '''
     # Handle maxload
     if ncpus is None and maxload is None:
@@ -147,19 +144,26 @@ def parallelize(func=None, iterarg=None, iterkwargs=None, args=None, kwargs=None
                 raise Exception(errormsg)
         niters = len(iterarg)
     if iterkwargs is not None: # Check that iterkwargs has the right format
-        if not isinstance(iterkwargs, dict):
-            errormsg = 'iterkwargs must be a dict or None, not %s' % type(iterkwargs)
-            raise Exception(errormsg)
-        for key,val in iterkwargs.items():
-            if not ut.isiterable(val):
-                errormsg = 'iterkwargs entries must be iterable, not %s' % type(val)
-                raise Exception(errormsg)
-            if not niters:
-                niters = len(val)
-            else:
-                if len(val) != niters:
-                    errormsg = 'All iterkwargs iterables must be the same length, not %s vs. %s' % (niters, len(val))
+        if isinstance(iterkwargs, dict): # It's a dict of lists, e.g. {'x':[1,2,3], 'y':[2,3,4]}
+            for key,val in iterkwargs.items():
+                if not ut.isiterable(val):
+                    errormsg = 'iterkwargs entries must be iterable, not %s' % type(val)
                     raise Exception(errormsg)
+                if not niters:
+                    niters = len(val)
+                else:
+                    if len(val) != niters:
+                        errormsg = 'All iterkwargs iterables must be the same length, not %s vs. %s' % (niters, len(val))
+                        raise Exception(errormsg)
+        elif isinstance(iterkwargs, list): # It's a list of dicts, e.g. [{'x':1, 'y':2}, {'x':2, 'y':3}, {'x':3, 'y':4}]
+            niters = len(iterkwargs)
+            for item in iterkwargs:
+                if not isinstance(item, dict):
+                    errormsg = 'If iterkwargs is a list, each entry must be a dict, not %s' % type(item)
+                    raise Exception(errormsg)
+        else:
+            errormsg = 'iterkwargs must be a dict of lists, a list of dicts, or None, not %s' % type(iterkwargs)
+            raise Exception(errormsg)
     
     # Construct argument list
     argslist = []
@@ -171,19 +175,25 @@ def parallelize(func=None, iterarg=None, iterkwargs=None, args=None, kwargs=None
         if iterkwargs is None:
             iterdict = None
         else:
-            iterdict = {}
-            for key,val in iterkwargs.items():
-                iterdict[key] = val[index]
+            if isinstance(iterkwargs, dict): # Dict of lists
+                iterdict = {}
+                for key,val in iterkwargs.items():
+                    iterdict[key] = val[index]
+            elif isinstance(iterkwargs, list): # List of dicts
+                iterdict = iterkwargs[index]
+            else: # Should be caught by previous checking, so shouldn't happen
+                errormsg = 'iterkwargs type not understood (%s)' % type(iterkwargs)
+                raise Exception(errormsg)
         taskargs = TaskArgs(func, index, iterval, iterdict, args, kwargs, maxload)
         argslist.append(taskargs)
         
-    # Decide how to run -- not load-balanced, use map
+    # Decide how to run -- fixed number of CPUs, use map
     if ncpus:
         multipool = mp.Pool(processes=ncpus)
         outputlist = multipool.map(parallel_task, argslist)
         return outputlist
     
-    # It is load-balanced, use Process/Queue
+    # Dynamic number of CPUs, use Process/Queue
     else:
         outputqueue = mp.Queue()
         outputlist = np.empty(niters, dtype=object)

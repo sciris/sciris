@@ -2,11 +2,10 @@ import sciris as sc
 import pylab as pl
 
 torun = [
-'simple',
-'embarrassing',
+#'simple',
+#'embarrassing',
 'multiargs',
-'kwargs',
-'noniterated'
+#'noniterated'
 ]
 
 
@@ -39,20 +38,14 @@ if 'multiargs' in torun:
     def f(x,y):
         return x*y
     
-    results = sc.parallelize(func=f, iterarg=[(1,2),(2,3),(3,4)], ncpus=3)
-    print(results)
+    results1 = sc.parallelize(func=f, iterarg=[(1,2),(2,3),(3,4)])
+    results2 = sc.parallelize(func=f, iterkwargs={'x':[1,2,3], 'y':[2,3,4]})
+    results3 = sc.parallelize(func=f, iterkwargs=[{'x':1, 'y':2}, {'x':2, 'y':3}, {'x':3, 'y':4}])
+    assert results1 == results2 == results3
+    print(results1)
 
 
-#Example 4 -- using multiple keyword arguments:
-if 'kwargs' in torun:
-
-    def f(x,y):
-        return x*y
-    
-    results = sc.parallelize(func=f, iterkwargs={'x':[1,2,3], 'y':[2,3,4]}, ncpus=3)
-    print(results)
-
-#Example 5 -- using non-iterated arguments and dynamic load balancing:
+#Example 4 -- using non-iterated arguments and dynamic load balancing:
 if 'noniterated' in torun:
 
     def myfunc(i, x, y):
