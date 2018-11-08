@@ -432,7 +432,7 @@ def rgb2hex(arr):
         errormsg = 'Cannot convert "%s" to hex: wrong length' % arr
         raise Exception(errormsg)
     if all(arr<=1): arr *= 255. # Convert from 0-1 to 0-255
-    hexstr = '#%02x%02x%02x' % (arr[0], arr[1], arr[2])
+    hexstr = '#%02x%02x%02x' % (int(arr[0]), int(arr[1]), int(arr[2]))
     return hexstr
 
 
