@@ -1,12 +1,7 @@
 import sciris as sc
 
-torun = [
-'colorize',
-'printing',
-]
-
 # Test colorize
-if 'colorize' in torun:
+def test_colorize():
     sc.colorize(showhelp=True)
     sc.colorize('green', 'hi') # Simple example
     sc.colorize(['yellow', 'bgblack']); print('Hello world'); print('Goodbye world'); sc.colorize('reset') # Colorize all output in between
@@ -16,7 +11,7 @@ if 'colorize' in torun:
     sc.colorize('reset') # Stop typing in magenta
 
 # Test printing functions
-if 'printing' in torun:
+def test_printing():
     example = sc.prettyobj()
     example.data = sc.vectocolor(10)
     print('sc.pr():')
@@ -24,3 +19,7 @@ if 'printing' in torun:
     print('sc.pp():')
     sc.pp(example.data)
     string = sc.pp(example.data, doprint=False)
+
+if __name__ == '__main__':
+    test_colorize()
+    test_printing()
