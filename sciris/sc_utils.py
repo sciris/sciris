@@ -22,8 +22,17 @@ from collections import OrderedDict as OD
 from distutils.version import LooseVersion
 
 # Handle types and Python 2/3 compatibility
-if six.PY2: _stringtypes = (basestring,)
-else:       _stringtypes = (str, bytes)
+if six.PY2: 
+    _stringtypes = (basestring,)
+    import urllib2 as urlrequester
+    import cgi as htmlencoder
+    import HTMLParser
+    htmldecoder = HTMLParser.HTMLParser() # Old method, have to define an instance
+else:       
+    _stringtypes = (str, bytes)
+    import urllib.request as urlrequester
+    import html as htmlencoder
+    htmldecoder = htmlencoder # New method, these are the same now
 _numtype    = numbers.Number
 
 # Add Windows support for colors (do this at the module level so that colorama.init() only gets called once)
@@ -39,7 +48,7 @@ else:
 
 
 # Define the modules being loaded
-__all__ = ['uuid', 'dcp', 'cp', 'pp', 'sha', 'wget']
+__all__ = ['uuid', 'dcp', 'cp', 'pp', 'sha', 'wget', 'htmlify']
 
 
 def uuid(uid=None, which=None, die=False, tostring=False):
@@ -129,15 +138,29 @@ def sha(string, encoding='utf-8', *args, **kwargs):
 
 def wget(url):
     ''' Download a URL '''
-    if six.PY2:
-        import urllib2
-        output = urllib2.urlopen(url).read()
-    else:
-        import urllib.request
-        output = urllib.request.urlopen(url).read()
+    output = urlrequester.urlopen(url).read()
     return output
     
+
+def htmlify(string, reverse=False):
+    '''
+    Convert a string to its HTML representation by converting unicode characters,
+    characters that need to be escaped, and newlines. If reverse=True, will convert
+    HTML to string.
     
+    Examples:
+        output = sc.htmlify('foo&\nbar') # Returns 'foo&amp;<br>bar'
+        output = sc.htmlify('foo&amp;<br>bar', reverse=True) # Returns 'foo&\nbar'
+    '''
+    if not reverse: # Convert to HTML
+        output = htmlencoder.escape(string).encode('ascii', 'xmlcharrefreplace') # Replace non-ASCII characters
+        output = output.replace(b'\n',b'<br>') # Replace newlines with <br>
+    else: # Convert from HTML
+        output = htmldecoder.unescape(string)
+        output = output.replace('<br>','\n').replace('<BR>','\n')
+    return output
+
+
 ##############################################################################
 ### PRINTING/NOTIFICATION FUNCTIONS
 ##############################################################################
