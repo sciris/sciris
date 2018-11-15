@@ -1034,17 +1034,20 @@ def runcommand(command, printinput=False, printoutput=False):
 
 
 
-def gitinfo(filepath=None, die=False, hashlen=7):
+def gitinfo(filepath=None, die=False, hashlen=7, verbose=True):
     ''' Try to extract git information based on the file structure '''
     if filepath is None: filepath = __file__
     try: # First try importing git-python
         import git
         rootdir = os.path.abspath(filepath) # e.g. /user/username/optima/optima
         repo = git.Repo(path=rootdir, search_parent_directories=True)
-        gitbranch = flexstr(repo.active_branch.name) # Just make sure it's a string
+        try:
+            gitbranch = flexstr(repo.active_branch.name)  # Just make sure it's a string
+        except TypeError:
+            gitbranch = 'Detached head (no branch)'
         githash = flexstr(repo.head.object.hexsha) # Unicode by default
         gitdate = flexstr(repo.head.object.authored_datetime.isoformat())
-    except Exception as E1: 
+    except Exception as E1:
         try: # If that fails, try the command-line method
             rootdir = os.path.abspath(filepath) # e.g. /user/username/optima/optima
             while len(rootdir): # Keep going as long as there's something left to go
@@ -1062,8 +1065,8 @@ def gitinfo(filepath=None, die=False, hashlen=7):
             gitdate = 'Git date N/A'
             errormsg = 'Could not extract git info; please check paths or install git-python:\n%s\n%s' % (repr(E1), repr(E2))
             if die: raise Exception(errormsg)
-            else:   print(errormsg)
-    
+            elif verbose:   print(errormsg)
+
     if len(githash)>hashlen: githash = githash[:hashlen] # Trim hash to short length
     output = {'branch':gitbranch, 'hash':githash, 'date':gitdate} # Assemble outupt
     return output
