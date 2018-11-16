@@ -49,18 +49,22 @@ __all__ = ['loadobj', 'loadstr', 'saveobj', 'dumpstr']
 
 def loadobj(filename=None, folder=None, verbose=True, die=None):
     '''
-    Load a saved file.
+    Load a file that has been saved as a gzipped pickle file. Accepts either 
+    a filename (standard usage) or a file object as the first argument.
 
     Usage:
         obj = loadobj('myfile.obj')
     '''
     
     # Handle loading of either filename or file object
-    if isinstance(filename, ut._stringtypes): 
+    if ut.isstring(filename): 
         argtype = 'filename'
         filename = makefilepath(filename=filename, folder=folder) # If it is a file, validate the folder
-    else: 
+    elif isinstance(filename, file): 
         argtype = 'fileobj'
+    else:
+        errormsg = 'First argument to loadobj() must be a string or file object, not %s' % type(filename)
+        raise Exception(errormsg)
     kwargs = {'mode': 'rb', argtype: filename}
     with GzipFile(**kwargs) as fileobj:
         filestr = fileobj.read() # Convert it to a string
@@ -86,8 +90,7 @@ def saveobj(filename=None, obj=None, compresslevel=5, verbose=0, folder=None, me
         myobj = ['this', 'is', 'a', 'weird', {'object':44}]
         saveobj('myfile.obj', myobj)
     '''
-    
-    fullpath = makefilepath(filename=filename, folder=folder, sanitize=True)
+    fullpath = makefilepath(filename=filename, folder=folder, default='default.obj', sanitize=True)
     with GzipFile(fullpath, 'wb', compresslevel=compresslevel) as fileobj:
         if method == 'dill': # If dill is requested, use that
             if verbose>=2: print('Saving as dill...')
