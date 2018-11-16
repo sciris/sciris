@@ -1,3 +1,23 @@
+"""
+SCIRIS
+
+.. autosummary::
+    :toctree: _autosummary
+
+    sc_asd
+    sc_dataframe
+    sc_fileio
+    sc_math
+    sc_odict
+    sc_parallel
+    sc_plotting
+    sc_utils
+    sc_version
+
+"""
+
+
+
 # Import everything
 from .sc_version   import *
 from .sc_utils     import *
