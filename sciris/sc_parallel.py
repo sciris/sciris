@@ -119,6 +119,18 @@ def parallelize(func=None, iterarg=None, iterkwargs=None, args=None, kwargs=None
             pl.scatter(xy[0], xy[1], label='Run %i'%i)
         pl.legend()
     
+    Note: to use on Windows, parallel calls must contained with an `if __name__ == '__main__'` block,
+    for example:
+
+        import sciris as sc
+
+        def f(x,y):
+          return x*y
+
+        if __name__ == '__main__':   
+          results = sc.parallelize(func=f, iterarg=[(1,2),(2,3),(3,4)])
+          print(results)
+    
     Version: 2018nov02
     '''
     # Handle maxload

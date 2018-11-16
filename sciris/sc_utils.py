@@ -1129,7 +1129,12 @@ def uniquename(name=None, namelist=None, style=None):
 
 
 def importbyname(name=None, output=False, die=True):
-    ''' A little function to try loading optional imports '''
+    '''
+    A little function to try loading optional imports.
+    
+    Example:
+        np = importbyname('numpy')
+    '''
     import importlib
     try:
         module = importlib.import_module(name)
