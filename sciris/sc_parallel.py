@@ -125,11 +125,11 @@ def parallelize(func=None, iterarg=None, iterkwargs=None, args=None, kwargs=None
         import sciris as sc
 
         def f(x,y):
-          return x*y
+            return x*y
 
         if __name__ == '__main__':   
-          results = sc.parallelize(func=f, iterarg=[(1,2),(2,3),(3,4)])
-          print(results)
+            results = sc.parallelize(func=f, iterarg=[(1,2),(2,3),(3,4)])
+            print(results)
     
     Version: 2018nov02
     '''
