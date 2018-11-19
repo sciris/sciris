@@ -389,7 +389,7 @@ class odict(OD):
         return keys
     
     
-    def findbykey(self, pattern=None, method=None, first=None):
+    def findbykey(self, pattern=None, method=None, first=True):
         ''' Same as findkeys, but returns values instead '''
         keys = self.findkeys(pattern=pattern, method=method, first=first)
         if not first and len(keys) == 1: keys = keys[0] # If it's a list of one element, turn it into that element instead
