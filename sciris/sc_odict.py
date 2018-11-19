@@ -412,6 +412,22 @@ class odict(OD):
                 if first: return key
                 else:     keys.append(key)
         return keys
+    
+    
+    def filter(self, pattern=None, method=None, exclude=False):
+        ''' Filter the odict keys and return a new odict which is a subset '''
+        filtered = odict()
+        keys = self.findkeys(pattern=pattern, method=method, first=False)
+        if not exclude:
+            for key in keys:
+                filtered[key] = self.__getitem__(key)
+        else:
+            for key in self.keys():
+                if key not in keys:
+                    filtered[key] = self.__getitem__(key)
+        return filtered
+        
+        
         
         
     def append(self, key=None, value=None):

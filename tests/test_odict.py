@@ -88,6 +88,8 @@ print(yy.findkeys('oo', method='endswith'))
 print(yy.findkeys('cat'))
 print(yy.findbykey('ar'))
 print(yy.findbyval([5,6,7,8]))
+print(yy.filter('a'))
+print(yy.filter('a', exclude=True))
 
 
 
