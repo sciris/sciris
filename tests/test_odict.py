@@ -79,4 +79,17 @@ z.toeach(2, [10,20])    # z is now sc.odict({'a':[1,2,10,4], 'b':[5,6,20,8]})
 z.toeach(ind=3,val=666) #  z is now sc.odict({'a':[1,2,10,666], 'b':[5,6,20,666]})
 printexamples([z])
 
+odprint('Findkeys, findbykey, and findvals:')
+yy = sc.odict({'foo':[1,2,3,4], 'bar':[5,6,7,8], ('cat','dog'):[5,6,7,8]})
+print(yy.findkeys()) # Equivalent to yy.keys()
+print(yy.findkeys('oo'))
+print(yy.findkeys('^oo'))
+print(yy.findkeys('oo', method='endswith'))
+print(yy.findkeys('cat'))
+print(yy.findbykey('ar'))
+print(yy.findbyval([5,6,7,8]))
+
+
+
+
 print('Done.')

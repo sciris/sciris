@@ -3,6 +3,7 @@
 ##############################################################################
 
 from collections import OrderedDict as OD
+import re
 import six
 import numpy as np
 from . import sc_utils as ut
@@ -344,21 +345,67 @@ class odict(OD):
         ''' Return the index of a given value '''
         return self.values().index(value)
     
-    def find(self, value, first=True):
+    
+    @staticmethod
+    def _matchkey(key, pattern, method):
+        ''' Helper function for findkeys '''
+        match = False
+        if ut.isstring(key):
+            if   method == 're':         match = bool(re.search(pattern, key))
+            elif method == 'in':         match = pattern in key
+            elif method == 'startswith': match = key.startswith(pattern)
+            elif method == 'endswith':   match = key.endswith(pattern)
+            else:
+                errormsg = 'Method "%s" not found; must be "re", "in", "startswith", or "endswith"' % method
+                raise Exception(errormsg)
+        elif isinstance(key, tuple):
+            for item in key:
+                if odict._matchkey(item, pattern, method):
+                    return True
+        return match
+        
+    
+    def findkeys(self, pattern=None, method=None, first=None):
         '''
-        Returns the key(s) that match a given value. Example:
+        Find all keys that match a given pattern. By default uses regex, but other options 
+        are 'find', 'startswith', 'endswith'. Can also specify whether or not to only return 
+        the first result (default false). If the key is a tuple instead of a string, it will
+        search each element of the tuple.
+        '''
+        if pattern is None: pattern = ''
+        if method  is None: method  = 're'
+        if first   is None: first   = False
+        keys = []
+        for key in self.keys():
+            if self._matchkey(key, pattern, method):
+                keys.append(key)
+                if first: break
+        return keys
+    
+    
+    def findbykey(self, pattern=None, method=None, first=None):
+        ''' Same as findkeys, but returns values instead '''
+        keys = self.findkeys(pattern=pattern, method=method, first=first)
+        return self.__getitem__(keys)
+        
+    
+    def findbyval(self, value, first=False):
+        '''
+        Returns the key(s) that match a given value -- reverse of findbykey, except here
+        uses exact matches to values.
+        
+        Example:
             z = odict({'dog':[2,3], 'cat':[4,6], 'mongoose':[4,6]})
-            z.find([4,6]) # returns 'cat'
-            z.find([4,6], first=False) # returns ['cat', 'mongoose']
+            z.findvals([4,6]) # returns 'cat'
+            z.findvals([4,6], first=False) # returns ['cat', 'mongoose']
         '''
         keys = []
         for key,val in self.items():
-            if val==value:
-                if first:
-                    return key
-                else:
-                    keys.append(key)
+            if val == value:
+                if first: return key
+                else:     keys.append(key)
         return keys
+        
         
     def append(self, key=None, value=None):
         ''' Support an append method, like a list '''
