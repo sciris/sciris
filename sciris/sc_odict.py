@@ -350,7 +350,17 @@ class odict(OD):
     def _matchkey(key, pattern, method):
         ''' Helper function for findkeys '''
         match = False
-        if ut.isstring(key):
+        if isinstance(key, tuple):
+            for item in key:
+                if odict._matchkey(item, pattern, method):
+                    return True
+        else: # For everything except a tuple, treat it as a string
+            if not ut.isstring(key):
+                try:
+                    key = str(key) # Try to cast it to a string
+                except Exception as E:
+                    errormsg = 'Could not convert odict key of type %s to a string: %s' % (type(key), str(E))
+                    raise Exception(E)
             if   method == 're':         match = bool(re.search(pattern, key))
             elif method == 'in':         match = pattern in key
             elif method == 'startswith': match = key.startswith(pattern)
@@ -358,10 +368,6 @@ class odict(OD):
             else:
                 errormsg = 'Method "%s" not found; must be "re", "in", "startswith", or "endswith"' % method
                 raise Exception(errormsg)
-        elif isinstance(key, tuple):
-            for item in key:
-                if odict._matchkey(item, pattern, method):
-                    return True
         return match
         
     
@@ -378,14 +384,15 @@ class odict(OD):
         keys = []
         for key in self.keys():
             if self._matchkey(key, pattern, method):
-                keys.append(key)
-                if first: break
+                if first: return key
+                else:     keys.append(key)
         return keys
     
     
     def findbykey(self, pattern=None, method=None, first=None):
         ''' Same as findkeys, but returns values instead '''
         keys = self.findkeys(pattern=pattern, method=method, first=first)
+        if not first and len(keys) == 1: keys = keys[0] # If it's a list of one element, turn it into that element instead
         return self.__getitem__(keys)
         
     
