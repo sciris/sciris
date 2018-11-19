@@ -396,7 +396,7 @@ class odict(OD):
         return self.__getitem__(keys)
         
     
-    def findbyval(self, value, first=False):
+    def findbyval(self, value, first=True):
         '''
         Returns the key(s) that match a given value -- reverse of findbykey, except here
         uses exact matches to values.
