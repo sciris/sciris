@@ -415,7 +415,10 @@ class odict(OD):
     
     
     def filter(self, pattern=None, method=None, exclude=False):
-        ''' Filter the odict keys and return a new odict which is a subset '''
+        '''
+        Filter the odict keys and return a new odict which is a subset. Matches keys
+        using findkeys(). If exclude=True, then will exclude rather than include matches.
+        '''
         filtered = odict()
         keys = self.findkeys(pattern=pattern, method=method, first=False)
         if not exclude:
