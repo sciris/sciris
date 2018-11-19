@@ -396,10 +396,10 @@ class odict(OD):
         return self.__getitem__(keys)
         
     
-    def findbyval(self, value, first=True):
+    def findbyval(self, value, first=True, strict=False):
         '''
         Returns the key(s) that match a given value -- reverse of findbykey, except here
-        uses exact matches to values.
+        uses exact matches to the value or values provided.
         
         Example:
             z = odict({'dog':[2,3], 'cat':[4,6], 'mongoose':[4,6]})
@@ -408,19 +408,30 @@ class odict(OD):
         '''
         keys = []
         for key,val in self.items():
-            if val == value:
+            if val == value:  # Exact match, return a match
+                match = True
+            elif not strict and isinstance(value, list) and val in value: # "value" is a list and it's contained
+                match = True
+            else:
+                match = False
+            if match:
                 if first: return key
                 else:     keys.append(key)
         return keys
     
     
-    def filter(self, pattern=None, method=None, exclude=False):
+    def filter(self, keys=None, pattern=None, method=None, exclude=False):
         '''
-        Filter the odict keys and return a new odict which is a subset. Matches keys
-        using findkeys(). If exclude=True, then will exclude rather than include matches.
+        Filter the odict keys and return a new odict which is a subset. If keys is a list,
+        then uses that for matching. If the first argument is a string, then treats as a pattern 
+        for matching using findkeys(). If exclude=True, then will exclude rather than include matches.
         '''
+        if ut.isstring(keys) and pattern is None: # Assume first argument, transfer
+            pattern = keys
+            keys = None
         filtered = odict()
-        keys = self.findkeys(pattern=pattern, method=method, first=False)
+        if keys is None:
+            keys = self.findkeys(pattern=pattern, method=method, first=False)
         if not exclude:
             for key in keys:
                 filtered[key] = self.__getitem__(key)
@@ -429,8 +440,12 @@ class odict(OD):
                 if key not in keys:
                     filtered[key] = self.__getitem__(key)
         return filtered
-        
-        
+    
+    
+    def filtervals(self, value):
+        ''' Like filter, but filters by value rather than key '''
+        keys = self.findbyval(value)
+        return self.filter(keys=keys)
         
         
     def append(self, key=None, value=None):
