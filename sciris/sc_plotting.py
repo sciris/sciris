@@ -714,14 +714,19 @@ def separatelegend(ax=None, handles=None, labels=None, reverse=False, figsetting
     # can only appear in one figure. Thus, if the legend is in a different figure, the
     # object cannot be shown in both the original figure and in the legend. Thus we need
     # to copy the handles, and use the copies to render the legend
-    handles = [ut.cp(x) for x in handles]
-    
+    handles2 = []
+    for h in handles:
+        h2 = ut.cp(h)
+        h2.axes = None
+        h2.figure = None
+        handles2.append(h2)
+
     # Reverse order, e.g. for stacked plots
     if reverse:
-        handles = handles[::-1]
+        handles2 = handles2[::-1]
         labels   = labels[::-1]
     
     # Plot the new legend
-    ax.legend(handles=handles, labels=labels, **l_settings)
+    ax.legend(handles=handles2, labels=labels, **l_settings)
 
     return fig
