@@ -20,11 +20,12 @@ else:
         'requests',          # HTTP methods
         ]
 
-# Get the version
-with open("sciris/sc_version.py", "r") as f:
-    version_file = {}
-    exec(f.read(), version_file)
-    version = version_file["__version__"]
+# Get version information
+versionfile = 'sciris/sc_version.py'
+with open(versionfile, 'r') as f:
+    versiondict = {}
+    exec(f.read(), versiondict)
+    version = versiondict['__version__']
 
 CLASSIFIERS = [
     'Environment :: Console',
@@ -33,8 +34,9 @@ CLASSIFIERS = [
     'Operating System :: OS Independent',
     'Programming Language :: Python',
     'Topic :: Software Development :: Libraries :: Python Modules',
-    'Development Status :: 3 - Alpha',
+    'Development Status :: 4 - Beta',
     'Programming Language :: Python :: 2.7',
+    'Programming Language :: Python :: 3.7',
 ]
 
 setup(
@@ -44,7 +46,7 @@ setup(
     author_email='info@sciris.org',
     description='Scientific tools for Python',
     url='http://github.com/sciris/sciris',
-    keywords=['scientific','webapp', 'framework'],
+    keywords=['scientific', 'webapp', 'framework'],
     platforms=['OS Independent'],
     classifiers=CLASSIFIERS,
     packages=find_packages(),
