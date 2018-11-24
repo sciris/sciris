@@ -773,6 +773,10 @@ def makefailed(module_name=None, name=None, error=None):
 
 class RobustUnpickler(pickle.Unpickler):
     ''' Try to import an object, and if that fails, return a Failed object rather than crashing '''
+    
+    def __init__(self, tmpfile, fix_imports=True, encoding="latin1", errors="ignore"):
+        pickle.Unpickler.__init__(self, tmpfile, fix_imports=fix_imports, encoding=encoding, errors=errors)
+    
     def find_class(self, module_name, name, verbose=False):
         obj = makefailed(module_name, name, 'Unknown error') # This should get overwritten unless something goes terribly wrong
         try:
@@ -814,7 +818,13 @@ def unpickler(string=None, die=None, verbose=True):
                 except Exception as E3:
                     if verbose: print('Dill failed (%s), trying robust unpickler...' % str(E3))
                     try:
-                        obj = RobustUnpickler(io.BytesIO(string)).load() # And if that trails, throw everything at it
+#                        string = string.decode('latin1')
+                        thing = io.BytesIO(string)
+                        RU = RobustUnpickler(thing)
+#                        RU.encoding='latin1'
+#                        RU.errors='ignore'
+                        obj = RU.load()
+#                        obj = RobustUnpickler(io.BytesIO(string)).load() # And if that trails, throw everything at it
                     except Exception as E4:
                         if verbose: print('Robust unpickler failed (%s), giving up...' % str(E4))
                         raise E4
