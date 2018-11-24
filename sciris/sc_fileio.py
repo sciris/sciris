@@ -788,17 +788,36 @@ class RobustUnpickler(pickle.Unpickler):
         return obj
 
 
-def unpickler(string=None, die=None):
+def unpickler(string=None, die=None, verbose=True):
     import dill # Optional Sciris dependency
     if die is None: die = False
+    
+    print('HIIIIIIIIIIIIIII')
+    print(string[:10])
+    print(type(string))
+    
     try: # Try pickle first
+        if verbose: print('Standard unpickling...')
         obj = pkl.loads(string) # Actually load it -- main usage case
-    except Exception as E:
+    except Exception as E1:
         if die: 
-            raise E
+            raise E1
         else:
-            try:    obj = dill.loads(string) # If that fails, try dill
-            except: obj = RobustUnpickler(io.BytesIO(string)).load() # And if that trails, throw everything at it
+            try:
+                if verbose: print('Standard unpickling failed (%s), trying encoding...' % str(E1))
+#                string = string.decode('latin1').encode('latin1')
+                obj = pkl.loads(string, encoding='latin1') # Try loading it again with different encoding
+            except Exception as E2:
+                if verbose: print('Encoded unpickling failed (%s), trying dill...' % str(E2))
+                try:
+                    obj = dill.loads(string) # If that fails, try dill
+                except Exception as E3:
+                    if verbose: print('Dill failed (%s), trying robust unpickler...' % str(E3))
+                    try:
+                        obj = RobustUnpickler(io.BytesIO(string)).load() # And if that trails, throw everything at it
+                    except Exception as E4:
+                        if verbose: print('Robust unpickler failed (%s), giving up...' % str(E4))
+                        raise E4
     if isinstance(obj, Failed):
         print('Warning, the following errors were encountered during unpickling:')
         print(obj.failure_info)
