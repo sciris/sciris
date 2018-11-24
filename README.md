@@ -22,7 +22,7 @@ Some highlights of `scirisweb`:
 
 ## Is Sciris ready yet?
 
-**No.** We expect a first version of Sciris to be ready by October 2018. If you would like us to let you know when it's ready for use, please email info@sciris.org.
+**Sort of.** Sciris is available for use, but is still undergoing rapid deveopment. We expect a first stable version of Sciris to be ready in early 2019. If you would like us to let you know when it's ready, please email info@sciris.org.
 
 
 ## Installation and run instructions
@@ -46,13 +46,15 @@ If you have problems, please consult the rest of this guide for more information
 
 ### Installing on Linux
 
+The easiest way to install Sciris is by using pip: `pip install scirisweb` (which will also automatically install `sciris`). If you want to install from source, follow these steps:
+
 1. Install Git: `sudo apt install git`
 
 2. Install NodeJS: `sudo apt install nodejs`
 
 3. Install Redis: https://redis.io/topics/quickstart
 
-4. Install [Anaconda Python](https://www.anaconda.com/download/), and make sure it's the default Python, e.g.
+4. (Optional) Install [Anaconda Python](https://www.anaconda.com/download/) (Sciris is compatible with both Python 2 and Python 3), and make sure it's the default Python, e.g.
 ```
 your_computer:~> python
 Python 2.7.12 |Anaconda 2.1.0 (64-bit)| (default, Jul  2 2016, 17:42:40)
@@ -62,15 +64,15 @@ Anaconda is brought to you by Continuum Analytics.
 Please check out: http://continuum.io/thanks and https://anaconda.org
 ```
 
-5. Clone the Sciris repository: `git clone http://github.com/optimamodel/sciris.git`
+5. Clone the Sciris repositories: `git clone http://github.com/sciris/sciris.git` and `git clone http://github.com/sciris/scirisweb.git`.
 
-6. Run `python setup.py develop` and `python setup-web.py develop` in the root Sciris folder.
+6. Run `python setup.py develop` in each of the two Sciris folders.
 
 7. To test, open up a new Python window and type `import sciris` and `import scirisweb`. You should see something like:
 ```
 >>> import sciris
 >>> import scirisweb
-Sciris Web 0.7.1 (2018-08-25) -- (c) Optima Consortium
+Sciris Web 0.12.0 (2018-11-24) -- (c) Sciris
 >>>
 ```
 
@@ -131,9 +133,9 @@ Please check out: http://continuum.io/thanks and https://anaconda.org
 
 5. Create a directory that will hold Scris. For reference purposes we will create and refer to that directory as `pyenv`.
 
-6. Clone the Sciris repository into `pyenv`: `git clone http://github.com/optimamodel/sciris.git`
+6. Clone the Sciris repository into `pyenv`: `git clone http://github.com/sciris/sciris.git`
 
-7. Create a Python virtual environment (venv) inside the directory Optima. This will be the parent of the Sciris folder.
+7. Create a Python virtual environment (venv) inside the directory of your choice. This will be the parent of the Sciris folder.
 
         `virtualenv venv`
 
@@ -170,6 +172,4 @@ based in `user_interface`, `session_manager`, `model_code`, and `bin`.
 
 A very simple test case of Sciris. In the `examples/helloworld` folder, type `python server.py`. If you go to `localhost:8080` in your browser, it should be running a simple Python webapp.
 
-### Scatterplotter
-
-See the directions [here](https://github.com/optimamodel/sciris/tree/develop/examples/scatterplotter) on how to install and run this example.
+See the directions [here](https://github.com/sciris/scirisweb/tree/develop/examples/helloworld) on how to install and run this example.
