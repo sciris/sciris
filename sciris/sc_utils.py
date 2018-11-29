@@ -136,9 +136,10 @@ def sha(string, encoding='utf-8', *args, **kwargs):
     return output
 
 
-def wget(url):
+def wget(url, convert=True):
     ''' Download a URL '''
     output = urlrequester.urlopen(url).read()
+    if convert and six.PY3: output = output.decode()
     return output
     
 
