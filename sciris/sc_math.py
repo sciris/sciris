@@ -17,10 +17,12 @@ __all__ = ['approx', 'safedivide', 'findinds', 'findnearest', 'dataindex', 'getv
 def approx(val1=None, val2=None, eps=None):
     '''
     Determine whether two scalars approximately match. Example:
-        sc.approx(2*6, 11.9999999, eps=1e-6) # returns True
+        sc.approx(2*6, 11.9999999, eps=1e-6) # Returns True
+        sc.approx([3,12,11.9], 12) # Returns array([False, True, False], dtype=bool)
     '''
     if val2 is None: val2 = 0.0
     if eps  is None: eps = 1e-9
+    if isinstance(val1, list): val1 = np.array(val1) # If it's a list, convert to an array first
     output = abs(val1-val2)<=eps
     return output
 
@@ -39,13 +41,13 @@ def safedivide(numerator=None, denominator=None, default=None, eps=None, warn=Fa
     if default     is None: default     = 0.0
     
     # Handle the logic
+    invalid = approx(denominator, 0.0, eps=eps)
     if ut.isnumber(denominator): # The denominator is a scalar
-        if approx(denominator, 0.0, eps=eps):
+        if invalid:
             output = default
         else:
             output = numerator/denominator
     elif ut.checktype(denominator, 'array'):
-        invalid = approx(denominator, 0.0, eps=eps)
         if not warn:
             denominator[invalid] = 1.0 # Replace invalid values with 1 
         output = numerator/denominator
