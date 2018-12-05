@@ -8,18 +8,54 @@ import numpy as np
 from . import sc_utils as ut
 
 ##############################################################################
-### FIND FUNCTIONS
+### FIND AND APPROXIMATION FUNCTIONS
 ##############################################################################
 
-__all__ = ['approx', 'findinds', 'findnearest', 'dataindex', 'getvalidinds', 'sanitize', 'getvaliddata', 'isprime']
+__all__ = ['approx', 'safedivide', 'findinds', 'findnearest', 'dataindex', 'getvalidinds', 'sanitize', 'getvaliddata', 'isprime']
 
 
 def approx(val1=None, val2=None, eps=None):
-    ''' Determine whether two scalars approximately match '''
+    '''
+    Determine whether two scalars approximately match. Example:
+        sc.approx(2*6, 11.9999999, eps=1e-6) # returns True
+    '''
     if val2 is None: val2 = 0.0
-    if eps is None: eps = 1e-9
-    output = abs(val1-val2)<eps
+    if eps  is None: eps = 1e-9
+    output = abs(val1-val2)<=eps
     return output
+
+
+
+def safedivide(numerator=None, denominator=None, default=None, eps=None, warn=False):
+    '''
+    Handle divide-by-zero and divide-by-nan elegantly. Examples:
+        sc.safedivide(numerator=0, denominator=0, default=1, eps=0) # Returns 1
+        sc.safedivide(numerator=5, denominator=2.0, default=1, eps=1e-3) # Returns 2.5
+        sc.safedivide(3,array([1,3,0]),-1, warn=True) # Returns array([ 3,  1, -1])
+    '''
+    # Set some defaults
+    if numerator   is None: numerator   = 1.0
+    if denominator is None: denominator = 1.0
+    if default     is None: default     = 0.0
+    
+    # Handle the logic
+    if ut.isnumber(denominator): # The denominator is a scalar
+        if approx(denominator, 0.0, eps=eps):
+            output = default
+        else:
+            output = numerator/denominator
+    elif ut.checktype(denominator, 'array'):
+        invalid = approx(denominator, 0.0, eps=eps)
+        if not warn:
+            denominator[invalid] = 1.0 # Replace invalid values with 1 
+        output = numerator/denominator
+        output[invalid] = default
+    else: # Unclear input, raise exception
+        errormsg = 'Input type %s not understood: must be number or array' % type(denominator)
+        raise Exception(errormsg)
+        
+    return output    
+    
 
 
 def findinds(val1, val2=None, eps=1e-6):
