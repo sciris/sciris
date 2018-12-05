@@ -16,6 +16,7 @@ __all__ = ['approx', 'findinds', 'findnearest', 'dataindex', 'getvalidinds', 'sa
 
 def approx(val1=None, val2=None, eps=None):
     ''' Determine whether two scalars approximately match '''
+    if val2 is None: val2 = 0.0
     if eps is None: eps = 1e-9
     output = abs(val1-val2)<eps
     return output
