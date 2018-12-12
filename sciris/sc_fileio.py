@@ -754,11 +754,18 @@ def savespreadsheet(filename=None, data=None, folder=None, sheetnames=None, clos
 ### Pickling support methods
 ##############################################################################
 
+
+__all__ += ['Failed']
+
 class Failed(object):
     ''' An empty class to represent a failed object loading '''
     failure_info = odict()
+    
     def __init__(self, *args, **kwargs):
         pass
+
+    def __setstate__(self, state):
+        return
 
 
 def makefailed(module_name=None, name=None, error=None):
