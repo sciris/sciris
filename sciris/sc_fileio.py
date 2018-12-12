@@ -799,7 +799,7 @@ class RobustUnpickler(pickle.Unpickler):
         return obj
 
 
-def unpickler(string=None, filename=None, die=None, verbose=False):
+def unpickler(string=None, filename=None, filestring=None, die=None, verbose=False):
     
     if die is None: die = False
     
@@ -824,7 +824,7 @@ def unpickler(string=None, filename=None, die=None, verbose=False):
                     except Exception as E4:
                         try:
                             if verbose: print('Robust unpickler failed (%s), trying Python 2->3 conversion...' % str(E4))
-                            obj = loadobj2to3(filename)
+                            obj = loadobj2to3(filename=filename, filestring=filestring)
                         except Exception as E5:
                             if verbose: print('Python 2->3 conversion failed (%s), giving up...' % str(E5))
                             errormsg = 'All available unpickling methods failed:\n    Standard: %s\n     Encoded: %s\n        Dill: %s\n      Robust: %s\n  Python2->3: %s' % (E1, E2, E3, E4, E5)
