@@ -799,13 +799,9 @@ class RobustUnpickler(pickle.Unpickler):
         return obj
 
 
-def unpickler(string=None, die=None, verbose=True):
-    import dill # Optional Sciris dependency
-    if die is None: die = False
+def unpickler(string=None, die=None, verbose=False):
     
-    print('HIIIIIIIIIIIIIII')
-    print(string[:10])
-    print(type(string))
+    if die is None: die = False
     
     try: # Try pickle first
         if verbose: print('Standard unpickling...')
@@ -816,22 +812,16 @@ def unpickler(string=None, die=None, verbose=True):
         else:
             try:
                 if verbose: print('Standard unpickling failed (%s), trying encoding...' % str(E1))
-#                string = string.decode('latin1').encode('latin1')
                 obj = pkl.loads(string, encoding='latin1') # Try loading it again with different encoding
             except Exception as E2:
-                if verbose: print('Encoded unpickling failed (%s), trying dill...' % str(E2))
                 try:
+                    if verbose: print('Encoded unpickling failed (%s), trying dill...' % str(E2))
+                    import dill # Optional Sciris dependency
                     obj = dill.loads(string) # If that fails, try dill
                 except Exception as E3:
-                    if verbose: print('Dill failed (%s), trying robust unpickler...' % str(E3))
                     try:
-#                        string = string.decode('latin1')
-                        thing = io.BytesIO(string)
-                        RU = RobustUnpickler(thing)
-#                        RU.encoding='latin1'
-#                        RU.errors='ignore'
-                        obj = RU.load()
-#                        obj = RobustUnpickler(io.BytesIO(string)).load() # And if that trails, throw everything at it
+                        if verbose: print('Dill failed (%s), trying robust unpickler...' % str(E3))
+                        obj = RobustUnpickler(io.BytesIO(string)).load() # And if that trails, throw everything at it
                     except Exception as E4:
                         if verbose: print('Robust unpickler failed (%s), giving up...' % str(E4))
                         raise E4
@@ -839,6 +829,7 @@ def unpickler(string=None, die=None, verbose=True):
         print('Warning, the following errors were encountered during unpickling:')
         print(obj.failure_info)
     return obj
+
 
 
 def savepickle(fileobj=None, obj=None):
