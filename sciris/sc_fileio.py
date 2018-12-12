@@ -68,7 +68,7 @@ def loadobj(filename=None, folder=None, verbose=True, die=None):
     kwargs = {'mode': 'rb', argtype: filename}
     with GzipFile(**kwargs) as fileobj:
         filestr = fileobj.read() # Convert it to a string
-        obj = unpickler(filestr, die=die) # Actually load it
+        obj = unpickler(filestr, fileobj=fileobj, die=die) # Actually load it
     if verbose: print('Object loaded from "%s"' % filename)
     return obj
 
@@ -799,7 +799,7 @@ class RobustUnpickler(pickle.Unpickler):
         return obj
 
 
-def unpickler(string=None, die=None, verbose=False):
+def unpickler(string=None, fileobj=None, die=None, verbose=False):
     
     if die is None: die = False
     
@@ -823,8 +823,12 @@ def unpickler(string=None, die=None, verbose=False):
                         if verbose: print('Dill failed (%s), trying robust unpickler...' % str(E3))
                         obj = RobustUnpickler(io.BytesIO(string)).load() # And if that trails, throw everything at it
                     except Exception as E4:
-                        if verbose: print('Robust unpickler failed (%s), giving up...' % str(E4))
-                        raise E4
+                        try:
+                            if verbose: print('Robust unpickler failed (%s), trying Python 2-> conversion...' % str(E4))
+                            obj = loadobj2to3(fileobj)
+                        except Exception as E5:
+                            if verbose: print('Python 2->3 conversion failed (%s), giving up...' % str(E5))
+                            raise E5
     if isinstance(obj, Failed):
         print('Warning, the following errors were encountered during unpickling:')
         print(obj.failure_info)
@@ -843,6 +847,81 @@ def savedill(fileobj=None, obj=None):
     import dill # Optional Sciris dependency
     fileobj.write(dill.dumps(obj, protocol=-1))
     return None
+
+
+##############################################################################
+### Python 2 legacy support
+##############################################################################
+
+not_string_pickleable = ['datetime', 'BytesIO']
+byte_objects = ['datetime', 'BytesIO', 'odict', 'spreadsheet', 'blobject']
+
+def loadobj2to3(fileobj):
+    ''' Used automatically by loadobj() to load Python2 objects in Python3 if all other loading methods fail '''
+
+    class Placeholder():
+        ''' Replace these corrupted classes with properly loaded ones '''
+        def __init__(*args):
+            return
+
+        def __setstate__(self, state):
+            if isinstance(state,dict):
+                self.__dict__ = state
+            else:
+                self.state = state
+            return
+
+    class StringUnpickler(pickle.Unpickler):
+        def find_class(self, module, name):
+            if name not in not_string_pickleable:
+                return pickle.Unpickler.find_class(self,module,name)
+            else:
+                return Failed
+
+    class BytesUnpickler(pickle.Unpickler):
+        def find_class(self, module, name):
+            if name in byte_objects:
+                return pickle.Unpickler.find_class(self,module,name)
+            else:
+                return Placeholder
+
+    def recursive_substitute(obj1, obj2, track=None):
+        if track is None:
+            track = []
+
+        if isinstance(obj1, Blobject): # Handle blobjects (usually spreadsheets)
+            obj1.blob = obj2.__dict__[b'blob']
+            obj2.bytes = obj2.__dict__[b'bytes']
+
+        if isinstance(obj2, dict): # Handle dictionaries
+            for k,v in obj2.items():
+                if isinstance(v, datetime.datetime):
+                    setattr(obj1, k.decode('latin1'), v)
+                elif isinstance(v, dict) or hasattr(v,'__dict__'):
+                    if isinstance(k, (bytes, bytearray)):
+                        k = k.decode('latin1')
+                    track2 = track.copy()
+                    track2.append(k)
+                    recursive_substitute(obj1[k], v, track2)
+        else:
+            for k,v in obj2.__dict__.items():
+                if isinstance(v,datetime.datetime):
+                    setattr(obj1,k.decode('latin1'), v)
+                elif isinstance(v,dict) or hasattr(v,'__dict__'):
+                    if isinstance(k, (bytes, bytearray)):
+                        k = k.decode('latin1')
+                    track2 = track.copy()
+                    track2.append(k)
+                    recursive_substitute(getattr(obj1,k), v, track2)
+
+    unpickler1 = StringUnpickler(fileobj, encoding='latin1')
+    unpickler2 = BytesUnpickler(fileobj,  encoding='bytes')
+    stringout = unpickler1.load()
+    bytesout  = unpickler2.load()
+    recursive_substitute(stringout,bytesout)
+    return stringout
+
+
 
 
 ##############################################################################
