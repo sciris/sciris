@@ -754,12 +754,16 @@ def savespreadsheet(filename=None, data=None, folder=None, sheetnames=None, clos
 ### Pickling support methods
 ##############################################################################
 
-
-__all__ += ['Failed']
-
 class Failed(object):
     ''' An empty class to represent a failed object loading '''
     failure_info = odict()
+    
+    def __init__(self, *args, **kwargs):
+        pass
+
+
+class Empty(object):
+    ''' Another empty class to represent a failed object loading '''
     
     def __init__(self, *args, **kwargs):
         pass
@@ -876,7 +880,7 @@ def loadobj2to3(filename=None, filestring=None):
     class StringUnpickler(pickle.Unpickler):
         def find_class(self, module, name):
             if name in not_string_pickleable:
-                return Failed
+                return Empty
             else:
                 return pickle.Unpickler.find_class(self,module,name)
 
