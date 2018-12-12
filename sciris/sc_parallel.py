@@ -197,6 +197,9 @@ def parallelize(func=None, iterarg=None, iterkwargs=None, args=None, kwargs=None
     # Run simply using map -- no advantage here to using Process/Queue
     multipool = mp.Pool(processes=ncpus)
     outputlist = multipool.map(parallel_task, argslist)
+    multipool.close()
+    multipool.join()
+
     return outputlist
 
 
