@@ -76,10 +76,10 @@ def parallelize(func=None, iterarg=None, iterkwargs=None, args=None, kwargs=None
     complex arguments.
     
     Either or both of iterarg or iterkwargs can be used. iterarg can be an iterable or an integer;
-    if the latter, it will run the function that number of times (which may be useful for
-    running "embarrassingly parallel" simulations). iterkwargs is a dict of iterables; each
-    iterable must be the same length (and the same length of iterarg, if it exists), and each 
-    dict key will be used as a kwarg to the called function.
+    if the latter, it will run the function that number of times and not pass the argument to the 
+    function (which may be useful for running "embarrassingly parallel" simulations). iterkwargs 
+    is a dict of iterables; each iterable must be the same length (and the same length of iterarg, 
+    if it exists), and each dict key will be used as a kwarg to the called function.
     
     This function can either use a fixed number of CPUs or allocate dynamically based
     on load. If ncpus is None and maxload is None, then it will use the number of CPUs
@@ -93,7 +93,7 @@ def parallelize(func=None, iterarg=None, iterkwargs=None, args=None, kwargs=None
         results = sc.parallelize(f, [1,2,3])
     
     Example 2 -- simple usage for "embarrassingly parallel" processing:
-        def rnd(i):
+        def rnd():
             import pylab as pl
             return pl.rand()
         
@@ -139,6 +139,7 @@ def parallelize(func=None, iterarg=None, iterkwargs=None, args=None, kwargs=None
     
     # Handle iterarg and iterkwargs
     niters = 0
+    embarrassing = False # Whether or not it's an embarrassingly parallel optimization
     if iterarg is not None and iterkwargs is not None:
         errormsg = 'You can only use one of iterarg or iterkwargs as your iterable, not both'
         raise Exception(errormsg)
@@ -146,6 +147,7 @@ def parallelize(func=None, iterarg=None, iterkwargs=None, args=None, kwargs=None
         if not(ut.isiterable(iterarg)):
             try:
                 iterarg = np.arange(iterarg)
+                embarrassing = True
             except Exception as E:
                 errormsg = 'Could not understand iterarg "%s": not iterable and not an integer: %s' % (iterarg, str(E))
                 raise Exception(errormsg)
@@ -191,7 +193,7 @@ def parallelize(func=None, iterarg=None, iterkwargs=None, args=None, kwargs=None
             else: # Should be caught by previous checking, so shouldn't happen
                 errormsg = 'iterkwargs type not understood (%s)' % type(iterkwargs)
                 raise Exception(errormsg)
-        taskargs = TaskArgs(func, index, iterval, iterdict, args, kwargs, maxload, interval)
+        taskargs = TaskArgs(func, index, iterval, iterdict, args, kwargs, maxload, interval, embarrassing)
         argslist.append(taskargs)
         
     # Run simply using map -- no advantage here to using Process/Queue
@@ -256,15 +258,16 @@ result = newval**2
 
 class TaskArgs(ut.prettyobj):
         ''' A class to hold the arguments for the task -- must match both parallelize() and parallel_task() '''
-        def __init__(self, func, index, iterval, iterdict, args, kwargs, maxload, interval):
-            self.func     = func      # The function being called
-            self.index    = index     # The place in the queue
-            self.iterval  = iterval   # The value being iterated (may be None if iterdict is not None)
-            self.iterdict = iterdict  # A dictionary of values being iterated (may be None if iterval is not None)
-            self.args     = args      # Arguments passed directly to the function
-            self.kwargs   = kwargs    # Keyword arguments passed directly to the function
-            self.maxload  = maxload   # Maximum CPU load (ignored if ncpus is not None in parallelize()
-            self.interval = interval  # Interval to check load (only used with maxload)
+        def __init__(self, func, index, iterval, iterdict, args, kwargs, maxload, interval, embarrassing):
+            self.func         = func         # The function being called
+            self.index        = index        # The place in the queue
+            self.iterval      = iterval      # The value being iterated (may be None if iterdict is not None)
+            self.iterdict     = iterdict     # A dictionary of values being iterated (may be None if iterval is not None)
+            self.args         = args         # Arguments passed directly to the function
+            self.kwargs       = kwargs       # Keyword arguments passed directly to the function
+            self.maxload      = maxload      # Maximum CPU load (ignored if ncpus is not None in parallelize()
+            self.interval     = interval     # Interval to check load (only used with maxload)
+            self.embarrassing = embarrassing # Whether or not to pass the iterarg to the function (no if it's embarrassing)
             return None
 
 
@@ -273,16 +276,17 @@ def parallel_task(taskargs, outputqueue=None):
     ''' Task called by parallelize() -- not to be called directly '''
     
     # Handle inputs
-    func = taskargs.func
-    index = taskargs.index
-    args = taskargs.args
+    func   = taskargs.func
+    index  = taskargs.index
+    args   = taskargs.args
     kwargs = taskargs.kwargs
     if args   is None: args   = ()
     if kwargs is None: kwargs = {}
     if taskargs.iterval is not None:
         if not isinstance(taskargs.iterval, tuple): # Ensure it's a tuple
             taskargs.iterval = (taskargs.iterval,)
-        args = taskargs.iterval + args # If variable name is not supplied, prepend it to args
+        if not taskargs.embarrassing:
+            args = taskargs.iterval + args # If variable name is not supplied, prepend it to args
     if taskargs.iterdict is not None:
         for key,val in taskargs.iterdict.items():
             kwargs[key] = val # Otherwise, include it in kwargs

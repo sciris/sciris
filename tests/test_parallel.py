@@ -2,10 +2,10 @@ import sciris as sc
 import pylab as pl
 
 torun = [
-#'simple',
-#'embarrassing',
-#'multiargs',
-#'noniterated'
+'simple',
+'embarrassing',
+'multiargs',
+'noniterated'
 'parallelcmd'
 ]
 
@@ -27,7 +27,7 @@ if 'simple' in torun:
 #Example 2 -- simple usage for "embarrassingly parallel" processing:
 if 'embarrassing' in torun:
     
-    def rnd(i):
+    def rnd():
         import pylab as pl
         return pl.rand()
     
