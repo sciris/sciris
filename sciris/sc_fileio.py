@@ -875,10 +875,10 @@ def loadobj2to3(filename=None, filestring=None):
 
     class StringUnpickler(pickle.Unpickler):
         def find_class(self, module, name):
-            if name not in not_string_pickleable:
-                return pickle.Unpickler.find_class(self,module,name)
-            else:
+            if name in not_string_pickleable:
                 return Failed
+            else:
+                return pickle.Unpickler.find_class(self,module,name)
 
     class BytesUnpickler(pickle.Unpickler):
         def find_class(self, module, name):
@@ -892,8 +892,8 @@ def loadobj2to3(filename=None, filestring=None):
             track = []
 
         if isinstance(obj1, Blobject): # Handle blobjects (usually spreadsheets)
-            obj1.blob = obj2.__dict__[b'blob']
-            obj2.bytes = obj2.__dict__[b'bytes']
+            obj1.blob  = obj2.__dict__[b'blob']
+            obj1.bytes = obj2.__dict__[b'bytes']
 
         if isinstance(obj2, dict): # Handle dictionaries
             for k,v in obj2.items():
