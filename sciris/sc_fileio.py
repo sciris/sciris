@@ -47,7 +47,7 @@ else: # Python 2
 __all__ = ['loadobj', 'loadstr', 'saveobj', 'dumpstr']
 
 
-def loadobj(filename=None, folder=None, verbose=True, die=None):
+def loadobj(filename=None, folder=None, verbose=False, die=None):
     '''
     Load a file that has been saved as a gzipped pickle file. Accepts either 
     a filename (standard usage) or a file object as the first argument.
@@ -68,16 +68,16 @@ def loadobj(filename=None, folder=None, verbose=True, die=None):
     kwargs = {'mode': 'rb', argtype: filename}
     with GzipFile(**kwargs) as fileobj:
         filestr = fileobj.read() # Convert it to a string
-        obj = unpickler(filestr, fileobj=fileobj, die=die) # Actually load it
+        obj = unpickler(filestr, filename=filename, verbose=verbose, die=die) # Actually load it
     if verbose: print('Object loaded from "%s"' % filename)
     return obj
 
 
-def loadstr(string=None, die=None):
+def loadstr(string=None, verbose=False, die=None):
     with closing(IO(string)) as output: # Open a "fake file" with the Gzip string pickle in it.
         with GzipFile(fileobj=output, mode='rb') as fileobj: # Set a Gzip reader to pull from the "file."
             picklestring = fileobj.read() # Read the string pickle from the "file" (applying Gzip decompression).
-    obj = unpickler(picklestring, die=die) # Return the object gotten from the string pickle.   
+    obj = unpickler(picklestring, filestring=string, verbose=verbose, die=die) # Return the object gotten from the string pickle.   
     return obj
 
 
@@ -799,12 +799,11 @@ class RobustUnpickler(pickle.Unpickler):
         return obj
 
 
-def unpickler(string=None, fileobj=None, die=None, verbose=False):
+def unpickler(string=None, filename=None, die=None, verbose=False):
     
     if die is None: die = False
     
     try: # Try pickle first
-        if verbose: print('Standard unpickling...')
         obj = pkl.loads(string) # Actually load it -- main usage case
     except Exception as E1:
         if die: 
@@ -824,16 +823,18 @@ def unpickler(string=None, fileobj=None, die=None, verbose=False):
                         obj = RobustUnpickler(io.BytesIO(string)).load() # And if that trails, throw everything at it
                     except Exception as E4:
                         try:
-                            if verbose: print('Robust unpickler failed (%s), trying Python 2-> conversion...' % str(E4))
-                            obj = loadobj2to3(fileobj)
+                            if verbose: print('Robust unpickler failed (%s), trying Python 2->3 conversion...' % str(E4))
+                            obj = loadobj2to3(filename)
                         except Exception as E5:
                             if verbose: print('Python 2->3 conversion failed (%s), giving up...' % str(E5))
-                            raise E5
+                            errormsg = 'All available unpickling methods failed:\n    Standard: %s\n     Encoded: %s\n        Dill: %s\n      Robust: %s\n  Python2->3: %s' % (E1, E2, E3, E4, E5)
+                            raise Exception(errormsg)
+    
     if isinstance(obj, Failed):
         print('Warning, the following errors were encountered during unpickling:')
         print(obj.failure_info)
+    
     return obj
-
 
 
 def savepickle(fileobj=None, obj=None):
@@ -849,6 +850,7 @@ def savedill(fileobj=None, obj=None):
     return None
 
 
+
 ##############################################################################
 ### Python 2 legacy support
 ##############################################################################
@@ -856,7 +858,7 @@ def savedill(fileobj=None, obj=None):
 not_string_pickleable = ['datetime', 'BytesIO']
 byte_objects = ['datetime', 'BytesIO', 'odict', 'spreadsheet', 'blobject']
 
-def loadobj2to3(fileobj):
+def loadobj2to3(filename=None, filestring=None):
     ''' Used automatically by loadobj() to load Python2 objects in Python3 if all other loading methods fail '''
 
     class Placeholder():
@@ -914,11 +916,29 @@ def loadobj2to3(fileobj):
                     track2.append(k)
                     recursive_substitute(getattr(obj1,k), v, track2)
 
-    unpickler1 = StringUnpickler(fileobj, encoding='latin1')
-    unpickler2 = BytesUnpickler(fileobj,  encoding='bytes')
-    stringout = unpickler1.load()
-    bytesout  = unpickler2.load()
-    recursive_substitute(stringout,bytesout)
+    # Load either from file or from string
+    if filename:
+        with GzipFile(filename) as fileobj:
+            unpickler1 = StringUnpickler(fileobj, encoding='latin1')
+            stringout = unpickler1.load()
+        with GzipFile(filename) as fileobj:
+            unpickler2 = BytesUnpickler(fileobj,  encoding='bytes')
+            bytesout  = unpickler2.load()
+    elif filestring:
+        with closing(IO(filestring)) as output: 
+            with GzipFile(fileobj=output, mode='rb') as fileobj:
+                unpickler1 = StringUnpickler(fileobj, encoding='latin1')
+                stringout = unpickler1.load()
+        with closing(IO(filestring)) as output:
+            with GzipFile(fileobj=output, mode='rb') as fileobj:
+                unpickler2 = BytesUnpickler(fileobj,  encoding='bytes')
+                bytesout  = unpickler2.load()
+    else:
+        errormsg = 'You must supply either a filename or a filestring for loadobj() or loadstr(), respectively'
+        raise Exception(errormsg)
+    
+    # Actually do the load, with correct substitution
+    recursive_substitute(stringout, bytesout)
     return stringout
 
 
