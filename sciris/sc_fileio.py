@@ -769,7 +769,7 @@ class Empty(object):
         pass
 
     def __setstate__(self, state):
-        return
+        pass
 
 
 def makefailed(module_name=None, name=None, error=None):
