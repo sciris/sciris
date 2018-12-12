@@ -736,11 +736,15 @@ def flexstr(arg, force=True):
                 output = arg # If anything goes wrong, just return as-is
         else:
             if isinstance(arg, six.binary_type): 
-                output = arg.decode() # If it's bytes, decode to unicode
+                try:
+                    output = arg.decode() # If it's bytes, decode to unicode
+                except:
+                    if force: output = repr(arg) # If that fails, just print its representation
+                    else:     output = arg
             else: 
                 output = arg # Otherwise, return as-is
     else:
-        if force: output = str(arg) 
+        if force: output = repr(arg)
         else:     output = arg # Optionally don't do anything for non-strings
     return output
 
