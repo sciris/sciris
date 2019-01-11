@@ -243,7 +243,7 @@ def isprime(n, verbose=False):
 ### OTHER FUNCTIONS
 ##############################################################################
 
-__all__ += ['quantile', 'perturb', 'scaleratio', 'inclusiverange', 'smoothinterp']
+__all__ += ['quantile', 'perturb', 'scaleratio', 'normalize', 'inclusiverange', 'smoothinterp']
 
 
 def quantile(data, quantiles=[0.5, 0.25, 0.75]):
@@ -274,6 +274,7 @@ def perturb(n=1, span=0.5, randseed=None):
     
 def scaleratio(inarray, total=None):
     ''' Multiply a list or array by some factor so that its sum is equal to the total. '''
+    if total is None: total = 1.0
     origtotal = float(sum(inarray))
     ratio = total/origtotal
     outarray = np.array(inarray)*ratio
