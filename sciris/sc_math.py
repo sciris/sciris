@@ -243,7 +243,7 @@ def isprime(n, verbose=False):
 ### OTHER FUNCTIONS
 ##############################################################################
 
-__all__ += ['quantile', 'perturb', 'scaleratio', 'normalize', 'inclusiverange', 'smoothinterp']
+__all__ += ['quantile', 'perturb', 'scaleratio', 'normalize', 'inclusiverange', 'smooth', 'smoothinterp']
 
 
 def quantile(data, quantiles=[0.5, 0.25, 0.75]):
@@ -335,7 +335,24 @@ def inclusiverange(*args, **kwargs):
     x = np.linspace(start, stop, int(round((stop-start)/float(step))+1)) # Can't use arange since handles floating point arithmetic badly, e.g. compare arange(2000, 2020, 0.2) with arange(2000, 2020.2, 0.2)
     
     return x
-    
+
+
+
+def smooth(data, repeats=None):
+    ''' Very crude function to smooth a 2D array -- very slow but simple and easy to use '''
+    output = np.array(data)
+    kernel = np.array([0.25,0.5,0.25])
+    for r in range(repeats):
+        if output.ndim == 1:
+            np.convolve(data, kernel, mode='same')
+        elif output.ndim == 2:
+            for i in range(output.shape[0]): output[i,:] = np.convolve(output[i,:], kernel, mode='same')
+            for j in range(output.shape[1]): output[:,j] = np.convolve(output[:,j], kernel, mode='same')
+        else:
+            errormsg = 'Simple smooting only implemented for 1D and 2D arrays'
+            raise Exception(errormsg)
+    return output
+
 
 
 def smoothinterp(newx=None, origx=None, origy=None, smoothness=None, growth=None, ensurefinite=False, keepends=True, method='linear'):
