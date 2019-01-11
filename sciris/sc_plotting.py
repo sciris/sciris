@@ -436,7 +436,7 @@ def rgb2hex(arr):
 ### PLOTTING FUNCTIONS
 ##############################################################################
 
-__all__ += ['ax3d', 'surf3d', 'boxoff', 'setylim', 'commaticks', 'SItickformatter', 'SIticks']
+__all__ += ['ax3d', 'surf3d', 'bar3d', 'boxoff', 'setylim', 'commaticks', 'SItickformatter', 'SIticks']
 
 
 def ax3d(fig=None, returnfig=False, **kwargs):
@@ -450,14 +450,14 @@ def ax3d(fig=None, returnfig=False, **kwargs):
         return ax
 
 
-def surf3d(data, fig=None, returnfig=False, colormap=None, plotkwargs=None, colorbar=True, **kwargs):
+
+def surf3d(data, fig=None, returnfig=False, plotkwargs=None, colorbar=True, **kwargs):
     ''' Plot 2D data as a 3D surface '''
     
     # Set default arguments
-    defaultplotkwargs = {'rstride':1, 'cstride':1, 'linewidth':0, 'antialiased':False, 'cmap':'viridis'}
-    if plotkwargs is None:
-        plotkwargs = {}
-    defaultplotkwargs.update(plotkwargs)
+    if plotkwargs is None: plotkwargs = {}
+    settings = {'rstride':1, 'cstride':1, 'linewidth':0, 'antialiased':False, 'cmap':'viridis'}
+    settings.update(plotkwargs)
     
     # Create figure
     fig,ax = ax3d(returnfig=True, fig=fig, **kwargs)
@@ -466,9 +466,40 @@ def surf3d(data, fig=None, returnfig=False, colormap=None, plotkwargs=None, colo
     x = np.arange(nx)
     y = np.arange(ny)
     X, Y = np.meshgrid(x, y)
-    surf = ax.plot_surface(X, Y, data, **defaultplotkwargs)
+    surf = ax.plot_surface(X, Y, data, **settings)
     if colorbar:
         fig.colorbar(surf)
+    
+    if returnfig:
+        return fig,ax
+    else:
+        return ax
+
+
+
+def bar3d(data, fig=None, returnfig=False, plotkwargs=None, **kwargs):
+    ''' Plot 2D data as 3D bars '''
+    
+    # Set default arguments
+    if plotkwargs is None: plotkwargs = {}
+    settings = {'width':0.8, 'depth':0.8, 'shade':True, 'cmap':'viridis'}
+    settings.update(plotkwargs)
+    
+    # Create figure
+    fig,ax = ax3d(returnfig=True, fig=fig, **kwargs)
+    
+    x, y, z = [], [], []
+    dx, dy, dz = [], [], []
+    color = vectocolor(data.flatten(), cmap=settings['cmap'])
+    for i in range(data.shape[0]):
+        for j in range(data.shape[1]):
+            x.append(i)
+            y.append(j)
+            z.append(0)
+            dx.append(settings['width'])
+            dy.append(settings['depth'])
+            dz.append(data[i,j])
+    ax.bar3d(x=x, y=y, z=z, dx=settings['width'], dy=settings['depth'], dz=dz, color=color, shade=settings['shade'])
     
     if returnfig:
         return fig,ax

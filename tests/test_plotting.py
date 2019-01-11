@@ -8,7 +8,8 @@ import sciris as sc
 torun = [
 #'hex2rgb',
 #'gridcolors',
-'surf3d'
+#'surf3d',
+'bar3d',
 ]
 
 doplot = True
@@ -27,4 +28,10 @@ if 'surf3d' in torun:
     smoothdata = sc.smooth(data,20)
     if doplot:
         sc.surf3d(smoothdata)
+
+if 'bar3d' in torun:
+    data = pl.rand(20,20)
+    smoothdata = sc.smooth(data)
+    if doplot:
+        sc.bar3d(smoothdata)
 

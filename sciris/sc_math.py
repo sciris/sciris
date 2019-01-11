@@ -340,6 +340,8 @@ def inclusiverange(*args, **kwargs):
 
 def smooth(data, repeats=None):
     ''' Very crude function to smooth a 2D array -- very slow but simple and easy to use '''
+    if repeats is None:
+        repeats = int(np.floor(len(data)/5))
     output = np.array(data)
     kernel = np.array([0.25,0.5,0.25])
     for r in range(repeats):
