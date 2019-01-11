@@ -282,6 +282,17 @@ def scaleratio(inarray, total=None):
 
 
 
+def normalize(inarray, minval=0.0, maxval=1.0):
+    ''' Rescale an array between a minimum value and a maximum value '''
+    outarray = np.array(inarray)
+    outarray -= outarray.min()
+    outarray /= outarray.max()
+    outarray *= (maxval - minval)
+    outarray += minval
+    return outarray
+
+
+
 def inclusiverange(*args, **kwargs):
     '''
     Like arange/linspace, but includes the start and stop points. 
