@@ -454,7 +454,7 @@ def surf3d(data, fig=None, returnfig=False, colormap=None, plotkwargs=None, colo
     ''' Plot 2D data as a 3D surface '''
     
     # Set default arguments
-    defaultplotkwargs = {'rstride':1, 'cstride':1, 'linewidth':0, 'antialiased':False, 'cmap':alpinecolormap()}
+    defaultplotkwargs = {'rstride':1, 'cstride':1, 'linewidth':0, 'antialiased':False, 'cmap':'viridis'}
     if plotkwargs is None:
         plotkwargs = {}
     defaultplotkwargs.update(plotkwargs)
