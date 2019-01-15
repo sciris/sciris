@@ -12,12 +12,12 @@ import pprint
 import hashlib
 import datetime
 import dateutil
+import subprocess
 import numbers
 import numpy as np
 import uuid as py_uuid
 from textwrap import fill
 from functools import reduce
-from subprocess import Popen, PIPE
 from collections import OrderedDict as OD
 from distutils.version import LooseVersion
 
@@ -1049,16 +1049,27 @@ def checkmem(origvariable, descend=False, order='n', plot=False, verbose=False):
 
 
 def runcommand(command, printinput=False, printoutput=False):
-   '''
-   Make it easier to run shell commands.
-   
-   Date: 2018mar28
-   '''
-   if printinput: print(command)
-   try:    output = Popen(command, shell=True, stdout=PIPE).communicate()[0].decode("utf-8")
-   except: output = 'Shell command failed'
-   if printoutput: print(output)
-   return output
+    '''
+    Make it easier to run shell commands.
+
+    Examples:
+        myfiles = sc.runcommand('ls').split('\n') # Get a list of files in the current folder
+        sc.runcommand('sshpass -f %s scp myfile.txt me@myserver:myfile.txt' % 'pa55w0rd', printinput=True, printoutput=True) # Copy a file remotely
+    
+    Date: 2019jan15
+    '''
+    if printinput:
+        print(command)
+    try:
+        p = subprocess.Popen(command, shell=True, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
+        stderr = p.stdout.read().decode("utf-8") # Somewhat confusingly, send stderr to stdout
+        stdout = p.communicate()[0].decode("utf-8") # ...and then stdout to the pipe
+        output = stdout + '\n' + stderr if stderr else stdout # Only include the error if it was non-empty
+    except Exception as E:
+        output = 'runcommand(): shell command failed: %s' % str(E) # This is for a Python error, not a shell error -- those get passed to output
+    if printoutput: 
+        print(output)
+    return output
 
 
 
