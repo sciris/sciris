@@ -1,15 +1,13 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 from __future__ import unicode_literals
-import sys
 from setuptools import setup, find_packages
+import sys
 
-# Optionally define extras
-if 'minimal' in sys.argv:
-    sys.argv.remove('minimal')
-    extras = []
-else:
-    extras = [
+# Define the requirements and extras
+requirements = [
+        'matplotlib>=1.4.2', # Plotting
+        'numpy>=1.10.1',     # Numerical functions
         'dill',              # File I/O
         'gitpython',         # Version information
         'openpyxl>=2.5',     # Spreadsheet functions
@@ -19,6 +17,15 @@ else:
         'xlsxwriter',        # Spreadsheet output
         'requests',          # HTTP methods
         ]
+
+# Optionally define extras
+if 'minimal' in sys.argv:
+    print('Performing minimal installation -- some file read/write functions will not work')
+    sys.argv.remove('minimal')
+    requirements = [
+        'matplotlib>=1.4.2', # Plotting
+        'numpy>=1.10.1',     # Numerical functions
+    ]
 
 # Get version information
 versionfile = 'sciris/sc_version.py'
@@ -57,8 +64,5 @@ setup(
     classifiers=CLASSIFIERS,
     packages=find_packages(),
     include_package_data=True,
-    install_requires=[
-        'matplotlib>=1.4.2', # Plotting
-        'numpy>=1.10.1',     # Numerical functions
-    ] + extras,              # Optional dependencies
+    install_requires=requirements
 )

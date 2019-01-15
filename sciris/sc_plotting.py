@@ -233,8 +233,6 @@ def alpinecolormap(gap=0.1, mingreen=0.2, redbluemix=0.5, epsilon=0.01, demo=Fal
    
    
     def demoplot():
-        from mpl_toolkits.mplot3d import Axes3D # analysis:ignore
-    
         maxheight = 3
         horizontalsize = 4;
         pl.seed(8)
@@ -249,8 +247,7 @@ def alpinecolormap(gap=0.1, mingreen=0.2, redbluemix=0.5, epsilon=0.01, demo=Fal
         data /= data.max()
         data *= maxheight
         
-        fig = pl.figure(figsize=(18,8))
-        ax = fig.gca(projection='3d')
+        fig,ax = ax3d(returnfig=True, figsize=(18,8))
         ax.view_init(elev=45, azim=30)
         X = np.linspace(0,horizontalsize,n)
         X, Y = np.meshgrid(X, X)
@@ -332,9 +329,6 @@ def vectocolor(vector, cmap=None, asarray=True, reverse=False):
    output = processcolors(colors=colors, asarray=asarray, reverse=reverse)
 
    return output
-
-
-
 
 
 
@@ -442,7 +436,81 @@ def rgb2hex(arr):
 ### PLOTTING FUNCTIONS
 ##############################################################################
 
-__all__ += ['boxoff', 'setylim', 'commaticks', 'SItickformatter', 'SIticks']
+__all__ += ['ax3d', 'surf3d', 'bar3d', 'boxoff', 'setylim', 'commaticks', 'SItickformatter', 'SIticks']
+
+
+def ax3d(fig=None, returnfig=False, silent=False, **kwargs):
+    ''' Create a 3D axis to plot in -- all arguments are passed to figure() '''
+    from mpl_toolkits.mplot3d import Axes3D # analysis:ignore
+    if fig is None: 
+        fig = pl.figure(**kwargs)
+    else:
+        silent = False # Never close an already open figure
+    ax = fig.gca(projection='3d')
+    if silent:
+        pl.close(fig)
+    if returnfig:
+        return fig,ax
+    else:
+        return ax
+
+
+
+def surf3d(data, fig=None, returnfig=False, plotkwargs=None, colorbar=True, **kwargs):
+    ''' Plot 2D data as a 3D surface '''
+    
+    # Set default arguments
+    if plotkwargs is None: plotkwargs = {}
+    settings = {'rstride':1, 'cstride':1, 'linewidth':0, 'antialiased':False, 'cmap':'viridis'}
+    settings.update(plotkwargs)
+    
+    # Create figure
+    fig,ax = ax3d(returnfig=True, fig=fig, **kwargs)
+    ax.view_init(elev=45, azim=30)
+    nx,ny = pl.array(data).shape
+    x = np.arange(nx)
+    y = np.arange(ny)
+    X, Y = np.meshgrid(x, y)
+    surf = ax.plot_surface(X, Y, data, **settings)
+    if colorbar:
+        fig.colorbar(surf)
+    
+    if returnfig:
+        return fig,ax
+    else:
+        return ax
+
+
+
+def bar3d(data, fig=None, returnfig=False, plotkwargs=None, **kwargs):
+    ''' Plot 2D data as 3D bars '''
+    
+    # Set default arguments
+    if plotkwargs is None: plotkwargs = {}
+    settings = {'width':0.8, 'depth':0.8, 'shade':True, 'cmap':'viridis'}
+    settings.update(plotkwargs)
+    
+    # Create figure
+    fig,ax = ax3d(returnfig=True, fig=fig, **kwargs)
+    
+    x, y, z = [], [], []
+    dx, dy, dz = [], [], []
+    color = vectocolor(data.flatten(), cmap=settings['cmap'])
+    for i in range(data.shape[0]):
+        for j in range(data.shape[1]):
+            x.append(i)
+            y.append(j)
+            z.append(0)
+            dx.append(settings['width'])
+            dy.append(settings['depth'])
+            dz.append(data[i,j])
+    ax.bar3d(x=x, y=y, z=z, dx=settings['width'], dy=settings['depth'], dz=dz, color=color, shade=settings['shade'])
+    
+    if returnfig:
+        return fig,ax
+    else:
+        return ax
+
 
 
 def boxoff(ax=None, removeticks=True, flipticks=True):
