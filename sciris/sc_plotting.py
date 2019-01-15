@@ -439,11 +439,16 @@ def rgb2hex(arr):
 __all__ += ['ax3d', 'surf3d', 'bar3d', 'boxoff', 'setylim', 'commaticks', 'SItickformatter', 'SIticks']
 
 
-def ax3d(fig=None, returnfig=False, **kwargs):
+def ax3d(fig=None, returnfig=False, silent=False, **kwargs):
     ''' Create a 3D axis to plot in -- all arguments are passed to figure() '''
     from mpl_toolkits.mplot3d import Axes3D # analysis:ignore
-    if fig is None: fig = pl.figure(**kwargs)
+    if fig is None: 
+        fig = pl.figure(**kwargs)
+    else:
+        silent = False # Never close an already open figure
     ax = fig.gca(projection='3d')
+    if silent:
+        pl.close(fig)
     if returnfig:
         return fig,ax
     else:
