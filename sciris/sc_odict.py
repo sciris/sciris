@@ -61,7 +61,7 @@ class odict(OD):
         ''' Try to convert the output of a slice to an array, but give up easily and return a list '''
         try: 
             output = np.array(items) # Try standard Numpy array...
-            if 'S' in str(output.dtype): # ...but instead of converting to string, convert to object array
+            if 'S' in str(output.dtype) or 'U' in str(output.dtype): # ...but instead of converting to string, convert to object array for Python 2 or 3 -- WARNING, fragile!
                 output = np.array(items, dtype=object)
         except:
             output = items # If that fails, just give up and return the list

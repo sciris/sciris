@@ -606,7 +606,7 @@ def loadspreadsheet(filename=None, folder=None, fileobj=None, sheetname=None, sh
             val = sheet.cell_value(rownum+header,colnum)
             try:
                 val = float(val) # Convert it to a number if possible
-            except: 
+            except:
                 try:    val = str(val)  # But give up easily and convert to a string (not Unicode)
                 except: pass # Still no dice? Fine, we tried
             rawdata[rownum][str(attr)] = val
