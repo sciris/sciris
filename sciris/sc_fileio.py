@@ -427,7 +427,7 @@ class Blobject(object):
         '''
         Return a file-like object with the contents of the file.
         This can then be used to open the workbook from memory without writing anything to disk e.g.
-        - book = openpyxl.load_workbook(self.tofile())
+        - book = openpyexcel.load_workbook(self.tofile())
         - book = xlrd.open_workbook(file_contents=self.tofile().read())
         '''
         bytesblob = io.BytesIO(self.blob)
@@ -447,7 +447,7 @@ class Blobject(object):
 class Spreadsheet(Blobject):
     '''
     A class for reading and writing Excel files in binary format.No disk IO needs 
-    to happen to manipulate the spreadsheets with openpyxl (or xlrd or pandas).
+    to happen to manipulate the spreadsheets with openpyexcel (or xlrd or pandas).
 
     Version: 2018sep03
     '''
@@ -458,11 +458,11 @@ class Spreadsheet(Blobject):
         book = xlrd.open_workbook(file_contents=self.tofile().read(), *args, **kwargs)
         return book
     
-    def openpyxl(self, *args, **kwargs):
-        ''' Return a book as opened by openpyxl '''
-        import openpyxl # Optional iport
+    def openpyexcel(self, *args, **kwargs):
+        ''' Return a book as opened by openpyexcel '''
+        import openpyexcel # Optional iport
         self.tofile(output=False)
-        book = openpyxl.load_workbook(self.bytes, *args, **kwargs) # This stream can be passed straight to openpyxl
+        book = openpyexcel.load_workbook(self.bytes, *args, **kwargs) # This stream can be passed straight to openpyexcel
         return book
         
     def pandas(self, *args, **kwargs):
@@ -498,8 +498,8 @@ class Spreadsheet(Blobject):
         kwargs['fileobj'] = f
         if method == 'xlrd':
             output = loadspreadsheet(*args, **kwargs)
-        elif method == 'openpyxl':
-            book = self.openpyxl()
+        elif method == 'openpyexcel':
+            book = self.openpyexcel()
             ws = self._getsheet(book=book, sheetname=kwargs.get('sheetname'), sheetnum=kwargs.get('sheetname'))
             rawdata = tuple(ws.rows)
             output = np.empty(np.shape(rawdata), dtype=object)
@@ -507,7 +507,7 @@ class Spreadsheet(Blobject):
                 for c,val in enumerate(rowdata):
                     output[r][c] = rawdata[r][c].value
         else:
-            errormsg = 'Reading method not found; must be one of xlrd, openpyxl, or pandas, not %s' % method
+            errormsg = 'Reading method not found; must be one of xlrd, openpyexcel, or pandas, not %s' % method
             raise Exception(errormsg)
         return output
     
@@ -517,12 +517,12 @@ class Spreadsheet(Blobject):
         as the values, or else specify a starting row and column and write the values
         from there.
         '''
-        import openpyxl # Optional import
+        import openpyexcel # Optional import
         
         # Load workbook
         if wbargs is None: wbargs = {}
         self.tofile(output=False) # Convert to bytes
-        wb = openpyxl.load_workbook(self.bytes, **wbargs)
+        wb = openpyexcel.load_workbook(self.bytes, **wbargs)
         if verbose: print('Workbook loaded: %s' % wb)
         
         # Get right worksheet
