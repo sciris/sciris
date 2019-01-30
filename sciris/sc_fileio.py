@@ -486,7 +486,7 @@ class Spreadsheet(Blobject):
         else:                       sheet = book.active
         return sheet
     
-    def readcells(self, *args, **kwargs):
+    def readcells(self, wbargs=None, *args, **kwargs):
         ''' Alias to loadspreadsheet() '''
         if 'method' in kwargs:
             method = kwargs['method']
@@ -499,7 +499,8 @@ class Spreadsheet(Blobject):
         if method == 'xlrd':
             output = loadspreadsheet(*args, **kwargs)
         elif method == 'openpyexcel':
-            book = self.openpyexcel()
+            if wbargs is None: wbargs = {}
+            book = self.openpyexcel(**wbargs)
             ws = self._getsheet(book=book, sheetname=kwargs.get('sheetname'), sheetnum=kwargs.get('sheetname'))
             rawdata = tuple(ws.rows)
             output = np.empty(np.shape(rawdata), dtype=object)
@@ -517,12 +518,9 @@ class Spreadsheet(Blobject):
         as the values, or else specify a starting row and column and write the values
         from there.
         '''
-        import openpyexcel # Optional import
-        
         # Load workbook
         if wbargs is None: wbargs = {}
-        self.tofile(output=False) # Convert to bytes
-        wb = openpyexcel.load_workbook(self.bytes, **wbargs)
+        wb = self.openpyexcel(**wbargs)
         if verbose: print('Workbook loaded: %s' % wb)
         
         # Get right worksheet
