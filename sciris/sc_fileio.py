@@ -537,13 +537,18 @@ class Spreadsheet(Blobject):
             for cell,val in zip(cells,vals):
                 try:
                     if ut.isstring(cell): # Handles e.g. cell='A1'
-                        ws[cell] = val
+                        cellobj = ws[cell]
                     elif ut.checktype(cell, 'arraylike','number') and len(cell)==2: # Handles e.g. cell=(0,0)
-                        ws.cell(row=cell[0], column=cell[1], value=val)
+                        cellobj = ws.cell(row=cell[0], column=cell[1])
                     else:
                         errormsg = 'Cell must be formatted as a label or row-column pair, e.g. "A1" or (3,5); not "%s"' % cell
                         raise Exception(errormsg)
                     if verbose: print('  Cell %s = %s' % (cell,val))
+                    if isinstance(val,tuple):
+                        cellobj.value = val[0]
+                        cellobj.cached_value = val[1]
+                    else:
+                        cellobj.value = val
                 except Exception as E:
                     errormsg = 'Could not write "%s" to cell "%s": %s' % (val, cell, repr(E))
                     raise Exception(errormsg)
