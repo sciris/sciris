@@ -460,7 +460,7 @@ class Spreadsheet(Blobject):
     
     def openpyexcel(self, *args, **kwargs):
         ''' Return a book as opened by openpyexcel '''
-        import openpyexcel # Optional iport
+        import openpyexcel # Optional import
         self.tofile(output=False)
         book = openpyexcel.load_workbook(self.bytes, *args, **kwargs) # This stream can be passed straight to openpyexcel
         return book
