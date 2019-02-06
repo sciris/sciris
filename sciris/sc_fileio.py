@@ -496,21 +496,36 @@ class Spreadsheet(Blobject):
         if method is None: method = 'xlrd'
         f = self.tofile()
         kwargs['fileobj'] = f
+
+        # Read in sheetoutput (sciris dataframe object for xlrd, 2D numpy array for openpyexcel).
         if method == 'xlrd':
-            output = loadspreadsheet(*args, **kwargs)
+            sheetoutput = loadspreadsheet(*args, **kwargs)  # returns sciris dataframe object
         elif method == 'openpyexcel':
             if wbargs is None: wbargs = {}
             book = self.openpyexcel(**wbargs)
             ws = self._getsheet(book=book, sheetname=kwargs.get('sheetname'), sheetnum=kwargs.get('sheetname'))
             rawdata = tuple(ws.rows)
-            output = np.empty(np.shape(rawdata), dtype=object)
+            sheetoutput = np.empty(np.shape(rawdata), dtype=object)
             for r,rowdata in enumerate(rawdata):
                 for c,val in enumerate(rowdata):
-                    output[r][c] = rawdata[r][c].value
+                    sheetoutput[r][c] = rawdata[r][c].value
         else:
             errormsg = 'Reading method not found; must be one of xlrd, openpyexcel, or pandas, not %s' % method
             raise Exception(errormsg)
-        return output
+
+        # Return the appropriate output.
+        cells = kwargs.get('cells')
+        if cells is None:  # If no cells specified, return the whole sheet.
+            return sheetoutput
+        else:
+            results = []
+            for cell in cells:  # Loop over all cells
+                rownum = cell[0]
+                colnum = cell[1]
+                if method == 'xlrd':  # If we're using xlrd, reduce the row number by 1.
+                    rownum -= 1
+                results.append(sheetoutput[rownum][colnum])  # Grab and append the result at the cell.
+            return results
     
     def writecells(self, cells=None, startrow=None, startcol=None, vals=None, sheetname=None, sheetnum=None, verbose=False, wbargs=None):
         '''
@@ -578,7 +593,7 @@ class Spreadsheet(Blobject):
     pass
     
     
-def loadspreadsheet(filename=None, folder=None, fileobj=None, sheetname=None, sheetnum=None, asdataframe=None, header=True):
+def loadspreadsheet(filename=None, folder=None, fileobj=None, sheetname=None, sheetnum=None, asdataframe=None, header=True, cells=None):
     '''
     Load a spreadsheet as a list of lists or as a dataframe. Read from either a filename or a file object.
     '''
