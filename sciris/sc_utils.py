@@ -966,7 +966,6 @@ def toc(start=None, output=False, label=None, sigfigs=None, filename=None):
         if filename is not None: printtologfile(logmessage, filename) # If we passed in a filename, append the message to that file.
         else: print(logmessage) # Otherwise, print the message.
         return None
-    
 
 
 def percentcomplete(step=None, maxsteps=None, indent=1):
@@ -1299,7 +1298,7 @@ def flattendict(inputdict=None, basekey=None, subkeys=None, complist=None, keyli
 ### CLASSES
 ##############################################################################
 
-__all__ += ['prettyobj', 'LinkException', 'Link']
+__all__ += ['prettyobj', 'LinkException', 'Link', 'Timer']
 
 class prettyobj(object):
     def __repr__(self):
@@ -1354,3 +1353,63 @@ class Link(object):
     def __deepcopy__(self, *args, **kwargs):
         ''' Same as copy '''
         return self.__copy__(*args, **kwargs)
+
+
+class Timer(object):
+    '''
+    Simple timer class
+
+    This wraps `tic` and `toc` with the formatting arguments and
+    the start time (at construction)
+    Use this in a ``with...as``` block to automatically print
+    elapsed time when the block finishes.
+
+    Implementation based on https://preshing.com/20110924/timing-your-code-using-pythons-with-statement/
+
+    Example making repeated calls to the same Timer:
+
+    >>> timer = Timer()
+    >>> timer.toc()
+    Elapsed time: 2.63 s
+    >>> timer.toc()
+    Elapsed time: 5.00 s
+
+    Example wrapping code using with-as:
+
+    >>> with Timer(label='mylabel') as t:
+    >>>     foo()
+
+    '''
+
+    def __init__(self,**kwargs):
+        self.tic()
+        self.kwargs = kwargs #: Store kwargs to pass to :func:`toc` at the end of the block
+
+    def __enter__(self):
+        '''
+        Reset start time when entering with-as block
+        '''
+
+        self.tic()
+        return self
+
+    def __exit__(self, *args):
+        '''
+        Print elapsed time when leaving a with-as block
+        '''
+
+        self.toc()
+
+    def tic(self):
+        '''
+        Set start time
+        '''
+
+        self.start = tic()
+
+    def toc(self):
+        '''
+        Print elapsed time
+        '''
+
+        toc(self.start,**self.kwargs)
