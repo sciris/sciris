@@ -427,7 +427,7 @@ class Blobject(object):
         '''
         Return a file-like object with the contents of the file.
         This can then be used to open the workbook from memory without writing anything to disk e.g.
-        - book = openpyxl.load_workbook(self.tofile())
+        - book = openpyexcel.load_workbook(self.tofile())
         - book = xlrd.open_workbook(file_contents=self.tofile().read())
         '''
         bytesblob = io.BytesIO(self.blob)
@@ -447,7 +447,7 @@ class Blobject(object):
 class Spreadsheet(Blobject):
     '''
     A class for reading and writing Excel files in binary format.No disk IO needs 
-    to happen to manipulate the spreadsheets with openpyxl (or xlrd or pandas).
+    to happen to manipulate the spreadsheets with openpyexcel (or xlrd or pandas).
 
     Version: 2018sep03
     '''
@@ -458,11 +458,11 @@ class Spreadsheet(Blobject):
         book = xlrd.open_workbook(file_contents=self.tofile().read(), *args, **kwargs)
         return book
     
-    def openpyxl(self, *args, **kwargs):
-        ''' Return a book as opened by openpyxl '''
-        import openpyxl # Optional iport
+    def openpyexcel(self, *args, **kwargs):
+        ''' Return a book as opened by openpyexcel '''
+        import openpyexcel # Optional import
         self.tofile(output=False)
-        book = openpyxl.load_workbook(self.bytes, *args, **kwargs) # This stream can be passed straight to openpyxl
+        book = openpyexcel.load_workbook(self.bytes, *args, **kwargs) # This stream can be passed straight to openpyexcel
         return book
         
     def pandas(self, *args, **kwargs):
@@ -486,7 +486,7 @@ class Spreadsheet(Blobject):
         else:                       sheet = book.active
         return sheet
     
-    def readcells(self, *args, **kwargs):
+    def readcells(self, wbargs=None, *args, **kwargs):
         ''' Alias to loadspreadsheet() '''
         if 'method' in kwargs:
             method = kwargs['method']
@@ -496,20 +496,36 @@ class Spreadsheet(Blobject):
         if method is None: method = 'xlrd'
         f = self.tofile()
         kwargs['fileobj'] = f
+
+        # Read in sheetoutput (sciris dataframe object for xlrd, 2D numpy array for openpyexcel).
         if method == 'xlrd':
-            output = loadspreadsheet(*args, **kwargs)
-        elif method == 'openpyxl':
-            book = self.openpyxl()
+            sheetoutput = loadspreadsheet(*args, **kwargs)  # returns sciris dataframe object
+        elif method == 'openpyexcel':
+            if wbargs is None: wbargs = {}
+            book = self.openpyexcel(**wbargs)
             ws = self._getsheet(book=book, sheetname=kwargs.get('sheetname'), sheetnum=kwargs.get('sheetname'))
             rawdata = tuple(ws.rows)
-            output = np.empty(np.shape(rawdata), dtype=object)
+            sheetoutput = np.empty(np.shape(rawdata), dtype=object)
             for r,rowdata in enumerate(rawdata):
                 for c,val in enumerate(rowdata):
-                    output[r][c] = rawdata[r][c].value
+                    sheetoutput[r][c] = rawdata[r][c].value
         else:
-            errormsg = 'Reading method not found; must be one of xlrd, openpyxl, or pandas, not %s' % method
+            errormsg = 'Reading method not found; must be one of xlrd, openpyexcel, or pandas, not %s' % method
             raise Exception(errormsg)
-        return output
+
+        # Return the appropriate output.
+        cells = kwargs.get('cells')
+        if cells is None:  # If no cells specified, return the whole sheet.
+            return sheetoutput
+        else:
+            results = []
+            for cell in cells:  # Loop over all cells
+                rownum = cell[0]
+                colnum = cell[1]
+                if method == 'xlrd':  # If we're using xlrd, reduce the row number by 1.
+                    rownum -= 1
+                results.append(sheetoutput[rownum][colnum])  # Grab and append the result at the cell.
+            return results
     
     def writecells(self, cells=None, startrow=None, startcol=None, vals=None, sheetname=None, sheetnum=None, verbose=False, wbargs=None):
         '''
@@ -517,12 +533,9 @@ class Spreadsheet(Blobject):
         as the values, or else specify a starting row and column and write the values
         from there.
         '''
-        import openpyxl # Optional import
-        
         # Load workbook
         if wbargs is None: wbargs = {}
-        self.tofile(output=False) # Convert to bytes
-        wb = openpyxl.load_workbook(self.bytes, **wbargs)
+        wb = self.openpyexcel(**wbargs)
         if verbose: print('Workbook loaded: %s' % wb)
         
         # Get right worksheet
@@ -539,13 +552,18 @@ class Spreadsheet(Blobject):
             for cell,val in zip(cells,vals):
                 try:
                     if ut.isstring(cell): # Handles e.g. cell='A1'
-                        ws[cell] = val
+                        cellobj = ws[cell]
                     elif ut.checktype(cell, 'arraylike','number') and len(cell)==2: # Handles e.g. cell=(0,0)
-                        ws.cell(row=cell[0], column=cell[1], value=val)
+                        cellobj = ws.cell(row=cell[0], column=cell[1])
                     else:
                         errormsg = 'Cell must be formatted as a label or row-column pair, e.g. "A1" or (3,5); not "%s"' % cell
                         raise Exception(errormsg)
                     if verbose: print('  Cell %s = %s' % (cell,val))
+                    if isinstance(val,tuple):
+                        cellobj.value = val[0]
+                        cellobj.cached_value = val[1]
+                    else:
+                        cellobj.value = val
                 except Exception as E:
                     errormsg = 'Could not write "%s" to cell "%s": %s' % (val, cell, repr(E))
                     raise Exception(errormsg)
@@ -575,7 +593,7 @@ class Spreadsheet(Blobject):
     pass
     
     
-def loadspreadsheet(filename=None, folder=None, fileobj=None, sheetname=None, sheetnum=None, asdataframe=None, header=True):
+def loadspreadsheet(filename=None, folder=None, fileobj=None, sheetname=None, sheetnum=None, asdataframe=None, header=True, cells=None):
     '''
     Load a spreadsheet as a list of lists or as a dataframe. Read from either a filename or a file object.
     '''
