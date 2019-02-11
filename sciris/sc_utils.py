@@ -642,12 +642,13 @@ def printtologfile(message=None, filename=None):
     return None
 
 
-def colorize(color=None, string=None, output=False, showhelp=False):
+def colorize(color=None, string=None, output=False, showhelp=False, enable=True):
     '''
     Colorize output text. Arguments:
         color = the color you want (use 'bg' with background colors, e.g. 'bgblue')
         string = the text to be colored
         output = whether to return the modified version of the string
+        enable = switch to allow colorize() to be easily turned off
 
     Examples:
         colorize('green', 'hi') # Simple example
@@ -660,6 +661,14 @@ def colorize(color=None, string=None, output=False, showhelp=False):
 
     Version: 2018sep09
     '''
+
+    # Handle short-circuit case
+    if not enable:
+        if output:
+            return string
+        else:
+            print(string)
+            return None
 
     # Define ANSI colors
     ansicolors = OD([
