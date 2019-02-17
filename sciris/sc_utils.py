@@ -143,19 +143,22 @@ def wget(url, convert=True):
     return output
     
 
-def htmlify(string, reverse=False):
+def htmlify(string, reverse=False, tostring=False):
     '''
     Convert a string to its HTML representation by converting unicode characters,
     characters that need to be escaped, and newlines. If reverse=True, will convert
-    HTML to string.
+    HTML to string. If tostring=True, will convert the bytestring back to Unicode.
     
     Examples:
-        output = sc.htmlify('foo&\nbar') # Returns 'foo&amp;<br>bar'
+        output = sc.htmlify('foo&\nbar') # Returns b'foo&amp;<br>bar'
+        output = sc.htmlify('foo&\nbar', tostring=True) # Returns 'foo&amp;<br>bar'
         output = sc.htmlify('foo&amp;<br>bar', reverse=True) # Returns 'foo&\nbar'
     '''
     if not reverse: # Convert to HTML
         output = htmlencoder.escape(string).encode('ascii', 'xmlcharrefreplace') # Replace non-ASCII characters
         output = output.replace(b'\n',b'<br>') # Replace newlines with <br>
+        if tostring: # Convert from bytestring to unicode
+            output = output.decode()
     else: # Convert from HTML
         output = htmldecoder.unescape(string)
         output = output.replace('<br>','\n').replace('<BR>','\n')
