@@ -4,8 +4,12 @@
 
 import numpy as np
 from . import sc_utils as ut # Note, sc_fileio is also used, but is only imported when required to avoid a circular import
-from . import sc_math as mh
+from . import sc_math as ma
 from .sc_odict import odict
+try:
+    import pandas as pd
+except Exception as E:
+    pd = 'Warning: could not import pandas (%s)' % str(E)
 
 __all__ = ['dataframe']
 
@@ -35,7 +39,7 @@ class dataframe(object):
     
     Works for both numeric and non-numeric data.
     
-    Version: 2018oct20
+    Version: 2019mar25
     '''
 
     def __init__(self, cols=None, data=None):
@@ -220,6 +224,11 @@ class dataframe(object):
         return True
     
     
+    def __len__(self):
+        ''' Return the number of rows in the dataframe '''
+        return self.nrows
+    
+    
     def make(self, cols=None, data=None):
         '''
         Creates a dataframe from the supplied input data. Usage examples:
@@ -237,6 +246,13 @@ class dataframe(object):
         elif cols is None and data is not None: # Shouldn't happen, but if it does, swap inputs
             cols = data
             data = None
+        
+        if not ut.isstring(pd):
+            if isinstance(cols, pd.DataFrame): # It's actually a Pandas dataframe
+                self.pandas(df=cols)
+        else:
+            print(pd)
+        
         if not ut.checktype(cols, 'listlike'):
             errormsg = 'Inputs to dataframe must be list, tuple, or array, not %s' % (type(cols))
             raise Exception(errormsg)
@@ -396,7 +412,7 @@ class dataframe(object):
         ''' Replace all of one value in a column with a new value '''
         col = self._sanitizecol(col)
         coldata = self.data[:,col] # Get data for this column
-        inds = mh.findinds(coldata==old)
+        inds = ma.findinds(coldata==old)
         self.data[inds,col] = new
         return None
         
@@ -457,7 +473,7 @@ class dataframe(object):
         ''' Return the indices of all rows matching the given key in a given column. '''
         col = self._sanitizecol(col)
         coldata = self.data[:,col] # Get data for this column
-        indices = mh.findinds(coldata==key)
+        indices = ma.findinds(coldata==key)
         return indices
         
     def _filterrows(self, key=None, col=None, keep=True, verbose=False):
@@ -545,7 +561,8 @@ class dataframe(object):
     
     def pandas(self, df=None):
         ''' Function to export to pandas (if no argument) or import from pandas (with an argument) '''
-        import pandas as pd # Optional import
+        if ut.isstring(pd):
+            raise Exception(pd) # Raise an exception if Pandas couldn't be imported
         if df is None: # Convert
             output = pd.DataFrame(data=self.data, columns=self.cols)
             return output
@@ -558,6 +575,7 @@ class dataframe(object):
             return None
     
     def export(self, filename=None, cols=None, close=True):
+        ''' Export to Excel '''
         from . import sc_fileio as io # Optional import
         exportdf = ut.dcp(self)
         exportdf.filtercols(cols)
