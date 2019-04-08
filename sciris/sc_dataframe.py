@@ -192,12 +192,15 @@ class dataframe(object):
             except:
                 self.data = np.vstack((self.data, np.array(value, dtype=object)))
         elif isinstance(key, tuple):
+            if key[0] not in self.cols:
+                errormsg = 'Column name "%s" not found; available columns are:\n%s' % (key[0], '\n'.join(self.cols))
+                raise Exception(errormsg)
             try:
                 colindex = self.cols.index(key[0])
                 rowindex = int(key[1])
                 self.data[rowindex,colindex] = value
-            except:
-                errormsg = 'Could not insert element (%s,%s) in dataframe of shape %' % (key[0], key[1], self.data.shape)
+            except Exception as E:
+                errormsg = 'Could not insert element (%s,%s) in dataframe of shape %s: %s' % (key[0], key[1], self.data.shape, str(E))
                 raise Exception(errormsg)
         return None
     
@@ -485,10 +488,12 @@ class dataframe(object):
         return None
     
     def filter_in(self, key=None, col=None, verbose=False):
+        '''Keep only rows matching a criterion (in place) '''
         self._filterrows(key=key, col=col, keep=True, verbose=verbose)
         return None
     
     def filter_out(self, key=None, col=None, verbose=False):
+        '''Remove rows matching a criterion (in place) '''
         self._filterrows(key=key, col=col, keep=False, verbose=verbose)
         return None
     
@@ -519,15 +524,17 @@ class dataframe(object):
         return None
     
     def sort(self, col=None, reverse=False):
-        ''' Sort the data frame by the specified column '''
-        col = self._sanitizecol(col)
-        sortorder = np.argsort(self.data[:,col])
-        if reverse: sortorder = np.array(list(reversed(sortorder)))
-        self.data = self.data[sortorder,:]
+        ''' Sort the data frame by the specified column(s) -- WARNING, sortorder is not correct for >1 column'''
+        cols = list(reversed(ut.promotetolist(col)))
+        for col in cols:
+            col = self._sanitizecol(col)
+            sortorder = np.argsort(self.data[:,col], kind='mergesort') # To preserve order
+            if reverse: sortorder = np.array(list(reversed(sortorder)))
+            self.data = self.data[sortorder,:]
         return sortorder
     
     def sortcols(self, reverse=False):
-        sortorder = np.argsort(self.cols)
+        sortorder = np.argsort(self.cols, kind='mergesort')
         if reverse: sortorder = np.array(list(reversed(sortorder)))
         self.cols = list(np.array(self.cols)[sortorder])
         self.data = self.data[:,sortorder]

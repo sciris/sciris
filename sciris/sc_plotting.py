@@ -19,10 +19,25 @@ from . import sc_fileio as fio
 ### COLOR FUNCTIONS
 ##############################################################################
 
-__all__ = ['processcolors', 'shifthue', 'gridcolors', 'alpinecolormap', 'vectocolor', 'bicolormap', 'hex2rgb', 'rgb2hex'] # apinecolortest and bicolormaptest not included
+__all__ = ['shifthue', 'gridcolors', 'alpinecolormap', 'vectocolor', 'bicolormap', 'hex2rgb', 'rgb2hex', 'rgb2hsv', 'hsv2rgb'] # apinecolortest and bicolormaptest not included
 
 
-def processcolors(colors=None, asarray=False, ashex=False, reverse=False):
+def _listify_colors(colors, origndim=None):
+    ''' Do standard transformation on colors -- internal helpfer function '''
+    if not origndim:
+        colors = ut.dcp(colors) # So we don't overwrite the original
+        origndim = np.ndim(colors) # Original dimensionality
+        if origndim==1: 
+            colors = [colors] # Wrap it in another list if needed
+        colors = np.array(colors) # Just convert it to an array
+        return colors, origndim
+    else: # Reverse the transformation
+        if origndim==1: 
+            colors = colors[0] # Pull it out again
+        return colors
+
+
+def _processcolors(colors=None, asarray=False, ashex=False, reverse=False):
     ''' 
     Small helper function to do common transformations on the colors, once generated.
     Expects colors to be an array. If asarray is True and reverse are False, returns 
@@ -50,16 +65,13 @@ def shifthue(colors=None, hueshift=0.0):
     Example:
         colors = shifthue(colors=[(1,0,0),(0,1,0)], hueshift=0.5)
     '''
-    colors = ut.dcp(colors) # So we don't overwrite the original
-    origndim = np.ndim(colors) # Original dimensionality
-    if origndim==1: colors = [colors] # Wrap it in another list
-    colors = np.array(colors) # Just convert it to an array
+    colors, origndim = _listify_colors(colors)
     for c,color in enumerate(colors):
         hsvcolor = rgb_to_hsv(color)
         hsvcolor[0] = (hsvcolor[0]+hueshift) % 1.0 # Calculate new hue and return the modulus
         rgbcolor = hsv_to_rgb(hsvcolor)
         colors[c] = rgbcolor
-    if origndim==1: colors = colors[0] # Pull it out again
+    colors = _listify_colors(colors, origndim)
     return colors
 
 
@@ -431,12 +443,32 @@ def rgb2hex(arr):
 
 
 
+def rgb2hsv(colors=None):
+    ''' Shortcut to Matplotlib's rgb_to_hsv method, accepts a color triplet or a list/array of color triplets '''
+    colors, origndim = _listify_colors(colors)
+    for c,color in enumerate(colors):
+        hsvcolor = rgb_to_hsv(color)
+        colors[c] = hsvcolor
+    colors = _listify_colors(colors, origndim)
+    return colors
+
+
+
+def hsv2rgb(colors=None):
+    ''' Shortcut to Matplotlib's hsv_to_rgb method, accepts a color triplet or a list/array of color triplets '''
+    colors, origndim = _listify_colors(colors)
+    for c,color in enumerate(colors):
+        hsvcolor = hsv_to_rgb(color)
+        colors[c] = hsvcolor
+    colors = _listify_colors(colors, origndim)
+    return colors
+
 
 ##############################################################################
 ### PLOTTING FUNCTIONS
 ##############################################################################
 
-__all__ += ['ax3d', 'surf3d', 'bar3d', 'boxoff', 'setylim', 'commaticks', 'SItickformatter', 'SIticks']
+__all__ += ['ax3d', 'scatter3d', 'surf3d', 'bar3d', 'boxoff', 'setylim', 'commaticks', 'SItickformatter', 'SIticks']
 
 
 def ax3d(fig=None, returnfig=False, silent=False, **kwargs):
@@ -454,6 +486,24 @@ def ax3d(fig=None, returnfig=False, silent=False, **kwargs):
     else:
         return ax
 
+
+def scatter3d(x, y, z, c=None, fig=None, returnfig=False, plotkwargs=None, **kwargs):
+    ''' Plot 3D data as a scatter '''
+    # Set default arguments
+    if plotkwargs is None: plotkwargs = {}
+    settings = {'s':200, 'depthshade':False, 'linewidth':0}
+    settings.update(plotkwargs)
+    
+    # Create figure
+    fig,ax = ax3d(returnfig=True, fig=fig, **kwargs)
+    ax.view_init(elev=45, azim=30)
+
+    ax.scatter(x, y, z, c=c, **settings)
+
+    if returnfig:
+        return fig,ax
+    else:
+        return ax
 
 
 def surf3d(data, fig=None, returnfig=False, plotkwargs=None, colorbar=True, **kwargs):
