@@ -134,16 +134,35 @@ class dataframe(object):
     
     def __getitem__(self, key=None, die=True):
         ''' Simple method for returning; see self.get() for a version based on col and row '''
-        if ut.isstring(key):
+        if ut.isstring(key): # e.g. df['a']
             colindex = self.cols.index(key)
             output = self.data[:,colindex]
-        elif ut.isnumber(key):
+        elif ut.isnumber(key): # e.g. df[0]
             rowindex = int(key)
             output = self.data[rowindex,:]
+        elif ut.checktype(key, 'arraylike'): # e.g. df[[0,2,4]]
+            rowindices = key
+            rowdata = self.data[rowindices,:]
+            output = dataframe(cols=self.cols, data=rowdata)
         elif isinstance(key, tuple):
-            colindex = self.cols.index(key[0])
-            rowindex = int(key[1])
-            output = self.data[rowindex,colindex]
+            if ut.isstring(key[0]) and ut.isnumber(key[1]): # e.g. df['a',0]
+                colindex = self.cols.index(key[0])
+                rowindex = int(key[1])
+                output = self.data[rowindex,colindex]
+            elif ut.isstring(key[1]) and ut.isnumber(key[0]): # e.g. df[0,'a']
+                colindex = self.cols.index(key[1])
+                rowindex = int(key[0])
+                output = self.data[rowindex,colindex]
+            elif isinstance(key[0], slice) or isinstance(key[1], slice): # e.g. df[0,:] or df[:,0]
+                if not isinstance(key[0], slice):
+                    rowindices = key[0]
+                elif not isinstance(key[1], slice):
+                    rowindices = key[1]
+                else:
+                    errormsg = "When using a tuple with a slice as an index, both values can't be slices"
+                    raise Exception(errormsg)
+                rowdata = self.data[rowindices,:]
+                output = dataframe(cols=self.cols, data=rowdata)
         elif isinstance(key, slice):
             rowslice = key
             slicedata = self.data[rowslice,:]
@@ -270,8 +289,10 @@ class dataframe(object):
         data = np.array(data, dtype=object)
         if data.ndim != 2:
             if data.ndim == 1:
-                if len(cols)==1:
+                if len(cols)==1: # A single column, use the data to populate the rows
                     data = np.reshape(data, (len(data),1))
+                elif len(data)==len(cols): # A single row, use the data to populate the columns
+                    data = np.reshape(data, (1,len(data)))
                 else:
                     errormsg = 'Dimension of data can only be 1 if there is 1 column, not %s' % len(cols)
                     raise Exception(errormsg)
