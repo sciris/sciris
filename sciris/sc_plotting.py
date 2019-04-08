@@ -172,7 +172,7 @@ def gridcolors(ncolors=10, limits=None, nsteps=20, asarray=False, ashex=False, r
     
     ## Wrap up -- turn color array into a list, or reverse
     if hueshift: colors = shifthue(colors, hueshift=hueshift) # Shift hue if requested
-    output = processcolors(colors=colors, asarray=asarray, ashex=ashex, reverse=reverse)
+    output = _processcolors(colors=colors, asarray=asarray, ashex=ashex, reverse=reverse)
     
     ## For plotting -- optional
     if doplot:
@@ -338,7 +338,7 @@ def vectocolor(vector, cmap=None, asarray=True, reverse=False):
        colors=(0,0,0,1)
    
    # Process output
-   output = processcolors(colors=colors, asarray=asarray, reverse=reverse)
+   output = _processcolors(colors=colors, asarray=asarray, reverse=reverse)
 
    return output
 
@@ -468,7 +468,7 @@ def hsv2rgb(colors=None):
 ### PLOTTING FUNCTIONS
 ##############################################################################
 
-__all__ += ['ax3d', 'scatter3d', 'surf3d', 'bar3d', 'boxoff', 'setylim', 'commaticks', 'SItickformatter', 'SIticks']
+__all__ += ['ax3d', 'scatter3d', 'surf3d', 'bar3d', 'boxoff', 'setaxislim', 'setxlim', 'setylim', 'commaticks', 'SItickformatter', 'SIticks']
 
 
 def ax3d(fig=None, returnfig=False, silent=False, **kwargs):
@@ -585,40 +585,66 @@ def boxoff(ax=None, removeticks=True, flipticks=True):
     
     
 
-def setylim(data=None, ax=None):
+def setaxislim(which=None, ax=None, data=None):
     '''
     A small script to determine how the y limits should be set. Looks
     at all data (a list of arrays) and computes the lower limit to
     use, e.g.
     
-        setylim([np.array([-3,4]), np.array([6,4,6])], ax)
+        setaxislim([np.array([-3,4]), np.array([6,4,6])], ax)
     
     will keep Matplotlib's lower limit, since at least one data value
     is below 0.
     
     Note, if you just want to set the lower limit, you can do that 
     with this function via:
-        setylim(0, ax)
+        setaxislim()
     '''
+
+    # Handle which axis
+    if which is None:
+        which = 'both'
+    if which not in ['x','y','both']:
+        errormsg = 'Setting axis limit for axis %s is not supported' % which
+        raise Exception(errormsg)
+    if which == 'both':
+        setaxislim(which='x', ax=ax, data=data)
+        setaxislim(which='y', ax=ax, data=data)
+        return None
+
+    # Ensure axis exists
+    if ax is None:
+        ax = pl.gca()
+
     # Get current limits
-    currlower, currupper = ax.get_ylim()
+    if   which == 'x': currlower, currupper = ax.get_xlim()
+    elif which == 'y': currlower, currupper = ax.get_ylim()
     
     # Calculate the lower limit based on all the data
     lowerlim = 0
     upperlim = 0
-    data = ut.promotetolist(data) # Make sure it'siterable
-    for ydata in data:
-        lowerlim = min(lowerlim, ut.promotetoarray(ydata).min())
-        upperlim = max(upperlim, ut.promotetoarray(ydata).max())
+    if ut.checktype(data, 'arraylike'): # Ensure it's numeric data (probably just None)
+        flatdata = ut.promotetoarray(data).flatten() # Make sure it's iterable
+        lowerlim = min(lowerlim, flatdata.min())
+        upperlim = max(upperlim, flatdata.max())
     
     # Set the new y limits
     if lowerlim<0: lowerlim = currlower # If and only if the data lower limit is negative, use the plotting lower limit
     upperlim = max(upperlim, currupper) # Shouldn't be an issue, but just in case...
     
     # Specify the new limits and return
-    ax.set_ylim((lowerlim, upperlim))
+    if   which == 'x': ax.set_xlim((lowerlim, upperlim))
+    elif which == 'y': ax.set_ylim((lowerlim, upperlim))
     return lowerlim,upperlim
 
+
+def setxlim(data=None, ax=None):
+    ''' See setaxislim '''
+    return setaxislim(data=data, ax=ax, which='x')
+
+def setylim(data=None, ax=None):
+    ''' See setaxislim '''
+    return setaxislim(data=data, ax=ax, which='y')
 
 
 def commaticks(fig=None, ax=None, axis='y'):
