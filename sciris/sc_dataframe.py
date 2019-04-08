@@ -415,7 +415,7 @@ class dataframe(object):
     def rmrow(self, key=None, col=None, returnval=False, die=True):
         ''' Like pop, but removes by matching the first column instead of the index -- WARNING, messy '''
         index = self._rowindex(key=key, col=col, die=die)
-        if index is not None: self.pop(index)
+        if index is not None: self.pop(index, returnval=returnval)
         return None
     
     def _diffindices(self, indices=None):
@@ -426,11 +426,17 @@ class dataframe(object):
         diff_set = np.array(list(all_set - ind_set))
         return diff_set
     
-    def rmrows(self, indices=None):
+    def rmrows(self, indices=None, copy=None):
         ''' Remove rows by index -- WARNING, messy '''
+        if copy is None: copy = False
         keep_set = self._diffindices(indices)
-        self.data = self.data[keep_set,:]
-        return None
+        keep_data = self.data[keep_set,:]
+        if copy:
+            output = dataframe(cols=self.cols, data=keep_data)
+            return output
+        else:
+            self.data = keep_data
+            return None
     
     def replace(self, col=None, old=None, new=None):
         ''' Replace all of one value in a column with a new value '''
@@ -484,6 +490,7 @@ class dataframe(object):
     
     
     def findrows(self, key=None, col=None, asarray=False):
+        ''' A method like get() or indexing, but returns a dataframe by default -- WARNING, redundant? '''
         indices = self.rowindex(key=key, col=col)
         arr = self.get(rows=indices)
         if asarray:
@@ -500,25 +507,24 @@ class dataframe(object):
         indices = ma.findinds(coldata==key)
         return indices
         
-    def _filterrows(self, key=None, col=None, keep=True, verbose=False):
+    def _filterrows(self, key=None, col=None, keep=True, verbose=False, copy=None):
         ''' Filter rows and either keep the ones matching, or discard them '''
         indices = self.rowindex(key=key, col=col)
         if keep: indices = self._diffindices(indices)
-        self.rmrows(indices=indices)
         if verbose: print('Dataframe filtering: %s rows removed based on key="%s", column="%s"' % (len(indices), key, col))
-        return None
+        output = self.rmrows(indices=indices, copy=copy)
+        return output
     
-    def filter_in(self, key=None, col=None, verbose=False):
+    def filter_in(self, key=None, col=None, verbose=False, copy=None):
         '''Keep only rows matching a criterion (in place) '''
-        self._filterrows(key=key, col=col, keep=True, verbose=verbose)
-        return None
+        return self._filterrows(key=key, col=col, keep=True, verbose=verbose, copy=copy)
     
-    def filter_out(self, key=None, col=None, verbose=False):
+    def filter_out(self, key=None, col=None, verbose=False, copy=None):
         '''Remove rows matching a criterion (in place) '''
-        self._filterrows(key=key, col=col, keep=False, verbose=verbose)
-        return None
+        return self._filterrows(key=key, col=col, keep=False, verbose=verbose, copy=copy)
     
-    def filtercols(self, cols=None, die=True):
+    def filtercols(self, cols=None, die=True, copy=None):
+        if copy is None: copy = False
         if cols is None: cols = ut.dcp(self.cols) # By default, do nothing
         cols = ut.promotetolist(cols)
         order = []
@@ -533,9 +539,14 @@ class dataframe(object):
             errormsg = 'Dataframe: could not find the following column(s): %s\nChoices are: %s' % (notfound, self.cols)
             if die: raise Exception(errormsg)
             else:   print(errormsg)
-        self.cols = cols # These should be in the correct order
-        self.data = self.data[:,order] # Resort and filter the data
-        return None
+        ordered_data = self.data[:,order] # Resort and filter the data
+        if copy:
+            output = dataframe(cols=cols, data=ordered_data)
+            return output
+        else:
+            self.cols = cols # These should be in the correct order
+            self.data = ordered_data
+            return None
         
     def insert(self, row=0, value=None):
         ''' Insert a row at the specified location '''
