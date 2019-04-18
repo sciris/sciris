@@ -517,7 +517,7 @@ def surf3d(data, fig=None, returnfig=False, plotkwargs=None, colorbar=True, **kw
     # Create figure
     fig,ax = ax3d(returnfig=True, fig=fig, **kwargs)
     ax.view_init(elev=45, azim=30)
-    nx,ny = pl.array(data).shape
+    ny,nx = pl.array(data).shape
     x = np.arange(nx)
     y = np.arange(ny)
     X, Y = np.meshgrid(x, y)

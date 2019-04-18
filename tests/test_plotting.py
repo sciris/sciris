@@ -8,8 +8,8 @@ import sciris as sc
 torun = [
 #'hex2rgb',
 #'gridcolors',
-#'surf3d',
-'bar3d',
+'surf3d',
+#'bar3d',
 ]
 
 doplot = True
