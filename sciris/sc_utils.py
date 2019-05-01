@@ -943,9 +943,9 @@ def tic():
     tic() [but you can also use the form t = tic()]
     toc() [but you can also use the form toc(t) where to is the output of tic()]
     '''
-    global tictime  # The saved time is stored in this global.    
-    tictime = time.time()  # Store the present time in the global.
-    return tictime    # Return the same stored number.
+    global _tictime  # The saved time is stored in this global.    
+    _tictime = time.time()  # Store the present time in the global.
+    return _tictime    # Return the same stored number.
 
 
 
@@ -959,9 +959,9 @@ def toc(start=None, output=False, label=None, sigfigs=None, filename=None):
     if label   is None: label = ''
     if sigfigs is None: sigfigs = 3
     
-    # If no start value is passed in, try to grab the global tictime.
+    # If no start value is passed in, try to grab the global _tictime.
     if start is None:
-        try:    start = tictime
+        try:    start = _tictime
         except: start = 0 # This doesn't exist, so just leave start at 0.
             
     # Get the elapsed time in seconds.
@@ -978,6 +978,36 @@ def toc(start=None, output=False, label=None, sigfigs=None, filename=None):
         if filename is not None: printtologfile(logmessage, filename) # If we passed in a filename, append the message to that file.
         else: print(logmessage) # Otherwise, print the message.
         return None
+
+
+def fixedpause(delay=None, verbose=True):
+    '''
+    Delay for a certain amount of time, to ensure accurate timing. Example:
+
+    for i in range(10):
+        sc.fixedpause('start') # Initialize
+        for j in range(int(1e6)):
+            tmp = pl.rand()
+        sc.fixedpause(1) # Wait for one second including computation time
+    '''
+    global _delaytime
+    if delay is None or delay=='start':
+        _delaytime = time.time()  # Store the present time in the global.
+        return _delaytime         # Return the same stored number.
+    else:
+        try:    
+            import pylab as pl
+        except Exception as E: 
+            raise Exception('Cannot use fixedpause() since pylab import failed: %s' % str(E))
+        try:    start = _delaytime
+        except: start = time.time()
+        elapsed = time.time() - start
+        if elapsed<delay:
+            pl.pause(delay-elapsed)
+        else:
+            if verbose:
+                print('Warning, delay less than elapsed time (%0.1f vs. %0.1f)' % (delay, elapsed))
+    return None
 
 
 def percentcomplete(step=None, maxsteps=None, indent=1):
