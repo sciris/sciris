@@ -895,7 +895,7 @@ def promotetolist(obj=None, objtype=None, keepnone=False):
 ### MISC. FUNCTIONS
 ##############################################################################
 
-__all__ += ['now', 'tic', 'toc', 'percentcomplete', 'checkmem', 'runcommand', 'gitinfo', 'compareversions', 'uniquename', 'importbyname']
+__all__ += ['now', 'tic', 'toc', 'fixedpause', 'percentcomplete', 'checkmem', 'runcommand', 'gitinfo', 'compareversions', 'uniquename', 'importbyname']
 
 def now(utc=False, die=False, tostring=False, fmt=None):
     ''' Get the current time, optionally in UTC time '''
