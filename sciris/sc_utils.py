@@ -1006,7 +1006,7 @@ def fixedpause(delay=None, verbose=True):
         if remaining>0:
             if verbose:
                 print('Pausing for %0.1f s' % remaining)
-            pl.pause(remaining)
+            time.sleep(remaining)
         else:
             if verbose:
                 print('Warning, delay less than elapsed time (%0.1f vs. %0.1f)' % (delay, elapsed))
