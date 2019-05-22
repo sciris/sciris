@@ -4,8 +4,12 @@
 
 import numpy as np
 from . import sc_utils as ut # Note, sc_fileio is also used, but is only imported when required to avoid a circular import
-from . import sc_math as mh
+from . import sc_math as ma
 from .sc_odict import odict
+try:
+    import pandas as pd
+except Exception as E:
+    pd = 'Warning: could not import pandas (%s)' % str(E)
 
 __all__ = ['dataframe']
 
@@ -35,7 +39,7 @@ class dataframe(object):
     
     Works for both numeric and non-numeric data.
     
-    Version: 2018oct20
+    Version: 2019mar25
     '''
 
     def __init__(self, cols=None, data=None):
@@ -130,16 +134,35 @@ class dataframe(object):
     
     def __getitem__(self, key=None, die=True):
         ''' Simple method for returning; see self.get() for a version based on col and row '''
-        if ut.isstring(key):
+        if ut.isstring(key): # e.g. df['a']
             colindex = self.cols.index(key)
             output = self.data[:,colindex]
-        elif ut.isnumber(key):
+        elif ut.isnumber(key): # e.g. df[0]
             rowindex = int(key)
             output = self.data[rowindex,:]
+        elif ut.checktype(key, 'arraylike'): # e.g. df[[0,2,4]]
+            rowindices = key
+            rowdata = self.data[rowindices,:]
+            output = dataframe(cols=self.cols, data=rowdata)
         elif isinstance(key, tuple):
-            colindex = self.cols.index(key[0])
-            rowindex = int(key[1])
-            output = self.data[rowindex,colindex]
+            if ut.isstring(key[0]) and ut.isnumber(key[1]): # e.g. df['a',0]
+                colindex = self.cols.index(key[0])
+                rowindex = int(key[1])
+                output = self.data[rowindex,colindex]
+            elif ut.isstring(key[1]) and ut.isnumber(key[0]): # e.g. df[0,'a']
+                colindex = self.cols.index(key[1])
+                rowindex = int(key[0])
+                output = self.data[rowindex,colindex]
+            elif isinstance(key[0], slice) or isinstance(key[1], slice): # e.g. df[0,:] or df[:,0]
+                if not isinstance(key[0], slice):
+                    rowindices = key[0]
+                elif not isinstance(key[1], slice):
+                    rowindices = key[1]
+                else:
+                    errormsg = "When using a tuple with a slice as an index, both values can't be slices"
+                    raise Exception(errormsg)
+                rowdata = self.data[rowindices,:]
+                output = dataframe(cols=self.cols, data=rowdata)
         elif isinstance(key, slice):
             rowslice = key
             slicedata = self.data[rowslice,:]
@@ -188,12 +211,15 @@ class dataframe(object):
             except:
                 self.data = np.vstack((self.data, np.array(value, dtype=object)))
         elif isinstance(key, tuple):
+            if key[0] not in self.cols:
+                errormsg = 'Column name "%s" not found; available columns are:\n%s' % (key[0], '\n'.join(self.cols))
+                raise Exception(errormsg)
             try:
                 colindex = self.cols.index(key[0])
                 rowindex = int(key[1])
                 self.data[rowindex,colindex] = value
-            except:
-                errormsg = 'Could not insert element (%s,%s) in dataframe of shape %' % (key[0], key[1], self.data.shape)
+            except Exception as E:
+                errormsg = 'Could not insert element (%s,%s) in dataframe of shape %s: %s' % (key[0], key[1], self.data.shape, str(E))
                 raise Exception(errormsg)
         return None
     
@@ -220,6 +246,11 @@ class dataframe(object):
         return True
     
     
+    def __len__(self):
+        ''' Return the number of rows in the dataframe '''
+        return self.nrows
+    
+    
     def make(self, cols=None, data=None):
         '''
         Creates a dataframe from the supplied input data. Usage examples:
@@ -237,6 +268,13 @@ class dataframe(object):
         elif cols is None and data is not None: # Shouldn't happen, but if it does, swap inputs
             cols = data
             data = None
+        
+        if not ut.isstring(pd):
+            if isinstance(cols, pd.DataFrame): # It's actually a Pandas dataframe
+                self.pandas(df=cols)
+        else:
+            print(pd)
+        
         if not ut.checktype(cols, 'listlike'):
             errormsg = 'Inputs to dataframe must be list, tuple, or array, not %s' % (type(cols))
             raise Exception(errormsg)
@@ -251,8 +289,10 @@ class dataframe(object):
         data = np.array(data, dtype=object)
         if data.ndim != 2:
             if data.ndim == 1:
-                if len(cols)==1:
+                if len(cols)==1: # A single column, use the data to populate the rows
                     data = np.reshape(data, (len(data),1))
+                elif len(data)==len(cols): # A single row, use the data to populate the columns
+                    data = np.reshape(data, (1,len(data)))
                 else:
                     errormsg = 'Dimension of data can only be 1 if there is 1 column, not %s' % len(cols)
                     raise Exception(errormsg)
@@ -375,7 +415,7 @@ class dataframe(object):
     def rmrow(self, key=None, col=None, returnval=False, die=True):
         ''' Like pop, but removes by matching the first column instead of the index -- WARNING, messy '''
         index = self._rowindex(key=key, col=col, die=die)
-        if index is not None: self.pop(index)
+        if index is not None: self.pop(index, returnval=returnval)
         return None
     
     def _diffindices(self, indices=None):
@@ -386,17 +426,23 @@ class dataframe(object):
         diff_set = np.array(list(all_set - ind_set))
         return diff_set
     
-    def rmrows(self, indices=None):
+    def rmrows(self, indices=None, copy=None):
         ''' Remove rows by index -- WARNING, messy '''
+        if copy is None: copy = False
         keep_set = self._diffindices(indices)
-        self.data = self.data[keep_set,:]
-        return None
+        keep_data = self.data[keep_set,:]
+        if copy:
+            output = dataframe(cols=self.cols, data=keep_data)
+            return output
+        else:
+            self.data = keep_data
+            return None
     
     def replace(self, col=None, old=None, new=None):
         ''' Replace all of one value in a column with a new value '''
         col = self._sanitizecol(col)
         coldata = self.data[:,col] # Get data for this column
-        inds = mh.findinds(coldata==old)
+        inds = ma.findinds(coldata==old)
         self.data[inds,col] = new
         return None
         
@@ -444,6 +490,7 @@ class dataframe(object):
     
     
     def findrows(self, key=None, col=None, asarray=False):
+        ''' A method like get() or indexing, but returns a dataframe by default -- WARNING, redundant? '''
         indices = self.rowindex(key=key, col=col)
         arr = self.get(rows=indices)
         if asarray:
@@ -457,26 +504,27 @@ class dataframe(object):
         ''' Return the indices of all rows matching the given key in a given column. '''
         col = self._sanitizecol(col)
         coldata = self.data[:,col] # Get data for this column
-        indices = mh.findinds(coldata==key)
+        indices = ma.findinds(coldata==key)
         return indices
         
-    def _filterrows(self, key=None, col=None, keep=True, verbose=False):
+    def _filterrows(self, key=None, col=None, keep=True, verbose=False, copy=None):
         ''' Filter rows and either keep the ones matching, or discard them '''
         indices = self.rowindex(key=key, col=col)
         if keep: indices = self._diffindices(indices)
-        self.rmrows(indices=indices)
         if verbose: print('Dataframe filtering: %s rows removed based on key="%s", column="%s"' % (len(indices), key, col))
-        return None
+        output = self.rmrows(indices=indices, copy=copy)
+        return output
     
-    def filter_in(self, key=None, col=None, verbose=False):
-        self._filterrows(key=key, col=col, keep=True, verbose=verbose)
-        return None
+    def filter_in(self, key=None, col=None, verbose=False, copy=None):
+        '''Keep only rows matching a criterion (in place) '''
+        return self._filterrows(key=key, col=col, keep=True, verbose=verbose, copy=copy)
     
-    def filter_out(self, key=None, col=None, verbose=False):
-        self._filterrows(key=key, col=col, keep=False, verbose=verbose)
-        return None
+    def filter_out(self, key=None, col=None, verbose=False, copy=None):
+        '''Remove rows matching a criterion (in place) '''
+        return self._filterrows(key=key, col=col, keep=False, verbose=verbose, copy=copy)
     
-    def filtercols(self, cols=None, die=True):
+    def filtercols(self, cols=None, die=True, copy=None):
+        if copy is None: copy = False
         if cols is None: cols = ut.dcp(self.cols) # By default, do nothing
         cols = ut.promotetolist(cols)
         order = []
@@ -491,9 +539,14 @@ class dataframe(object):
             errormsg = 'Dataframe: could not find the following column(s): %s\nChoices are: %s' % (notfound, self.cols)
             if die: raise Exception(errormsg)
             else:   print(errormsg)
-        self.cols = cols # These should be in the correct order
-        self.data = self.data[:,order] # Resort and filter the data
-        return None
+        ordered_data = self.data[:,order] # Resort and filter the data
+        if copy:
+            output = dataframe(cols=cols, data=ordered_data)
+            return output
+        else:
+            self.cols = cols # These should be in the correct order
+            self.data = ordered_data
+            return None
         
     def insert(self, row=0, value=None):
         ''' Insert a row at the specified location '''
@@ -503,15 +556,17 @@ class dataframe(object):
         return None
     
     def sort(self, col=None, reverse=False):
-        ''' Sort the data frame by the specified column '''
-        col = self._sanitizecol(col)
-        sortorder = np.argsort(self.data[:,col])
-        if reverse: sortorder = np.array(list(reversed(sortorder)))
-        self.data = self.data[sortorder,:]
+        ''' Sort the data frame by the specified column(s) -- WARNING, sortorder is not correct for >1 column'''
+        cols = list(reversed(ut.promotetolist(col)))
+        for col in cols:
+            col = self._sanitizecol(col)
+            sortorder = np.argsort(self.data[:,col], kind='mergesort') # To preserve order
+            if reverse: sortorder = np.array(list(reversed(sortorder)))
+            self.data = self.data[sortorder,:]
         return sortorder
     
     def sortcols(self, reverse=False):
-        sortorder = np.argsort(self.cols)
+        sortorder = np.argsort(self.cols, kind='mergesort')
         if reverse: sortorder = np.array(list(reversed(sortorder)))
         self.cols = list(np.array(self.cols)[sortorder])
         self.data = self.data[:,sortorder]
@@ -545,7 +600,8 @@ class dataframe(object):
     
     def pandas(self, df=None):
         ''' Function to export to pandas (if no argument) or import from pandas (with an argument) '''
-        import pandas as pd # Optional import
+        if ut.isstring(pd):
+            raise Exception(pd) # Raise an exception if Pandas couldn't be imported
         if df is None: # Convert
             output = pd.DataFrame(data=self.data, columns=self.cols)
             return output
@@ -558,6 +614,7 @@ class dataframe(object):
             return None
     
     def export(self, filename=None, cols=None, close=True):
+        ''' Export to Excel '''
         from . import sc_fileio as io # Optional import
         exportdf = ut.dcp(self)
         exportdf.filtercols(cols)

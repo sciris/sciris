@@ -1,7 +1,7 @@
 """
 fileio.py -- code for file management in Sciris 
     
-Last update: 2018sep24
+Last update: 2019feb18
 """
 
 ##############################################################################
@@ -13,6 +13,7 @@ import io
 import os
 import re
 import json
+import uuid
 import pickle
 import types
 import datetime
@@ -290,6 +291,9 @@ def sanitizejson(obj, verbose=True, die=False, tostring=False):
             output[str(key)] = sanitizejson(val)
     
     elif isinstance(obj, datetime.datetime):
+        output = str(obj)
+
+    elif isinstance(obj, uuid.UUID):
         output = str(obj)
     
     elif ut.isstring(obj): # It's a string of some kind
