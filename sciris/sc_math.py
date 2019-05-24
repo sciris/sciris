@@ -346,7 +346,7 @@ def smooth(data, repeats=None):
     kernel = np.array([0.25,0.5,0.25])
     for r in range(repeats):
         if output.ndim == 1:
-            np.convolve(data, kernel, mode='same')
+            output = np.convolve(output, kernel, mode='same')
         elif output.ndim == 2:
             for i in range(output.shape[0]): output[i,:] = np.convolve(output[i,:], kernel, mode='same')
             for j in range(output.shape[1]): output[:,j] = np.convolve(output[:,j], kernel, mode='same')
