@@ -801,7 +801,7 @@ def elapsed_time_str(past_time, max_days=5, short_months=True):
 
         # Check if the time is within the last minute
         if elapsed_time < datetime.timedelta(seconds=60):
-            if elapsed_time.seconds == 1:
+            if elapsed_time.seconds <= 10:
                 time_str = "just now"
             else:
                 time_str = "%d secs ago" % elapsed_time.seconds
