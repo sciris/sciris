@@ -170,7 +170,7 @@ def htmlify(string, reverse=False, tostring=False):
 ##############################################################################
 
 __all__ += ['printv', 'blank', 'createcollist', 'objectid', 'objatt', 'objmeth', 'objrepr']
-__all__ += ['prepr', 'pr', 'indent', 'sigfig', 'printarr', 'printdata', 'printvars', 'getdate']
+__all__ += ['prepr', 'pr', 'indent', 'sigfig', 'printarr', 'printdata', 'printvars']
 __all__ += ['slacknotification', 'printtologfile', 'colorize']
 
 def printv(string, thisverbose=1, verbose=2, newline=True, indent=True):
@@ -727,11 +727,9 @@ def colorize(color=None, string=None, output=False, showhelp=False, enable=True)
         try:    print(ansistring) # Content, so print with newline
         except: print(string) # If that fails, just go with plain version
         return None
-    
 
 
-        
-    
+
 ##############################################################################
 ### TYPE FUNCTIONS
 ##############################################################################
@@ -892,10 +890,10 @@ def promotetolist(obj=None, objtype=None, keepnone=False):
 
 
 ##############################################################################
-### MISC. FUNCTIONS
+### TIME/DATE FUNCTIONS
 ##############################################################################
 
-__all__ += ['now', 'tic', 'toc', 'fixedpause', 'percentcomplete', 'checkmem', 'runcommand', 'gitinfo', 'compareversions', 'uniquename', 'importbyname']
+__all__ += ['now', 'getdate', 'elapsedtimestr', 'tic', 'toc', 'timedsleep']
 
 def now(utc=False, die=False, tostring=False, fmt=None):
     ''' Get the current time, optionally in UTC time '''
@@ -934,6 +932,110 @@ def getdate(obj=None, fmt='str', dateformat=None):
             errormsg = '"fmt=%s" not understood; must be "str" or "int"' % fmt
             raise Exception(errormsg)
         return None # Should not be possible to get to this point
+
+
+
+def elapsedtimestr(pasttime, maxdays=5, shortmonths=True):
+    """Accepts a datetime object or a string in ISO 8601 format and returns a
+    human-readable string explaining when this time was.
+    The rules are as follows:
+    * If a time is within the last hour, return 'XX minutes'
+    * If a time is within the last 24 hours, return 'XX hours'
+    * If within the last 5 days, return 'XX days'
+    * If in the same year, print the date without the year
+    * If in a different year, print the date with the whole year
+    These can be configured as options.
+    """
+
+    # Elapsed time function by Alex Chan
+    # https://gist.github.com/alexwlchan/73933442112f5ae431cc
+    def print_date(date, includeyear=True, shortmonths=True):
+        """Prints a datetime object as a full date, stripping off any leading
+        zeroes from the day (strftime() gives the day of the month as a zero-padded
+        decimal number).
+        """
+        # %b/%B are the tokens for abbreviated/full names of months to strftime()
+        if shortmonths:
+            month_token = '%b'
+        else:
+            month_token = '%B'
+
+        # Get a string from strftime()
+        if includeyear:
+            date_str = date.strftime('%d ' + month_token + ' %Y')
+        else:
+            date_str = date.strftime('%d ' + month_token)
+
+        # There will only ever be at most one leading zero, so check for this and
+        # remove if necessary
+        if date_str[0] == '0':
+            date_str = date_str[1:]
+
+        return date_str
+    now_time = datetime.datetime.now()
+
+    # If the user passes in a string, try to turn it into a datetime object before continuing
+    if isinstance(pasttime, str):
+        try:
+            pasttime = datetime.datetime.strptime(pasttime, "%Y-%m-%dT%H:%M:%S.%fZ")
+        except ValueError:
+            raise ValueError("User supplied string %s is not in ISO 8601 "
+                             "format." % pasttime)
+    elif isinstance(pasttime, datetime.datetime):
+        pass
+    else:
+        raise ValueError("User-supplied value %s is neither a datetime object "
+                         "nor an ISO 8601 string." % pasttime)
+
+    # It doesn't make sense to measure time elapsed between now and a future date, so we'll just print the date
+    if pasttime > now_time:
+        includeyear = (pasttime.year != now_time.year)
+        time_str = print_date(pasttime, includeyear=includeyear, shortmonths=shortmonths)
+
+    # Otherwise, start by getting the elapsed time as a datetime object
+    else:
+        elapsed_time = now_time - pasttime
+
+        # Check if the time is within the last minute
+        if elapsed_time < datetime.timedelta(seconds=60):
+            if elapsed_time.seconds <= 10:
+                time_str = "just now"
+            else:
+                time_str = "%d secs ago" % elapsed_time.seconds
+
+        # Check if the time is within the last hour
+        elif elapsed_time < datetime.timedelta(seconds=60 * 60):
+
+            # We know that seconds > 60, so we can safely round down
+            minutes = elapsed_time.seconds / 60
+            if minutes == 1:
+                time_str = "a minute ago"
+            else:
+                time_str = "%d mins ago" % minutes
+
+        # Check if the time is within the last day
+        elif elapsed_time < datetime.timedelta(seconds=60 * 60 * 24 - 1):
+
+            # We know that it's at least an hour, so we can safely round down
+            hours = elapsed_time.seconds / (60 * 60)
+            if hours == 1:
+                time_str = "an hour ago"
+            else:
+                time_str = "%d hours ago" % hours
+
+        # Check if it's within the last N days, where N is a user-supplied argument
+        elif elapsed_time < datetime.timedelta(days=maxdays):
+            if elapsed_time.days == 1:
+                time_str = "yesterday"
+            else:
+                time_str = "%d days ago" % elapsed_time.days
+
+        # If it's not within the last N days, then we're just going to print the date
+        else:
+            includeyear = (pasttime.year != now_time.year)
+            time_str = print_date(pasttime, includeyear=includeyear, shortmonths=shortmonths)
+
+    return time_str
 
 
 
@@ -980,15 +1082,15 @@ def toc(start=None, output=False, label=None, sigfigs=None, filename=None):
         return None
 
 
-def fixedpause(delay=None, verbose=True):
+def timedsleep(delay=None, verbose=True):
     '''
     Delay for a certain amount of time, to ensure accurate timing. Example:
 
     for i in range(10):
-        sc.fixedpause('start') # Initialize
+        sc.timedsleep('start') # Initialize
         for j in range(int(1e6)):
             tmp = pl.rand()
-        sc.fixedpause(1) # Wait for one second including computation time
+        sc.timedsleep(1) # Wait for one second including computation time
     '''
     global _delaytime
     if delay is None or delay=='start':
@@ -998,7 +1100,7 @@ def fixedpause(delay=None, verbose=True):
         try:    
             import pylab as pl
         except Exception as E: 
-            raise Exception('Cannot use fixedpause() since pylab import failed: %s' % str(E))
+            raise Exception('Cannot use timedsleep() since pylab import failed: %s' % str(E))
         try:    start = _delaytime
         except: start = time.time()
         elapsed = time.time() - start
@@ -1009,6 +1111,22 @@ def fixedpause(delay=None, verbose=True):
                 print('Warning, delay less than elapsed time (%0.1f vs. %0.1f)' % (delay, elapsed))
     return None
 
+
+
+
+
+
+
+
+
+
+
+
+##############################################################################
+### MISC. FUNCTIONS
+##############################################################################
+
+__all__ += ['percentcomplete', 'checkmem', 'runcommand', 'gitinfo', 'compareversions', 'uniquename', 'importbyname']
 
 def percentcomplete(step=None, maxsteps=None, indent=1):
     ''' Display progress '''
