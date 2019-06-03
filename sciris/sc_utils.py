@@ -170,7 +170,7 @@ def htmlify(string, reverse=False, tostring=False):
 ##############################################################################
 
 __all__ += ['printv', 'blank', 'createcollist', 'objectid', 'objatt', 'objmeth', 'objrepr']
-__all__ += ['prepr', 'pr', 'indent', 'sigfig', 'printarr', 'printdata', 'printvars', 'getdate', 'elapsedtimestr']
+__all__ += ['prepr', 'pr', 'indent', 'sigfig', 'printarr', 'printdata', 'printvars']
 __all__ += ['slacknotification', 'printtologfile', 'colorize']
 
 def printv(string, thisverbose=1, verbose=2, newline=True, indent=True):
@@ -890,10 +890,10 @@ def promotetolist(obj=None, objtype=None, keepnone=False):
 
 
 ##############################################################################
-### MISC. FUNCTIONS
+### TIME/DATE FUNCTIONS
 ##############################################################################
 
-__all__ += ['now', 'tic', 'toc', 'timedsleep', 'percentcomplete', 'checkmem', 'runcommand', 'gitinfo', 'compareversions', 'uniquename', 'importbyname']
+__all__ += ['now', 'getdate', 'elapsedtimestr', 'tic', 'toc', 'timedsleep']
 
 def now(utc=False, die=False, tostring=False, fmt=None):
     ''' Get the current time, optionally in UTC time '''
@@ -1111,6 +1111,22 @@ def timedsleep(delay=None, verbose=True):
                 print('Warning, delay less than elapsed time (%0.1f vs. %0.1f)' % (delay, elapsed))
     return None
 
+
+
+
+
+
+
+
+
+
+
+
+##############################################################################
+### MISC. FUNCTIONS
+##############################################################################
+
+__all__ += ['percentcomplete', 'checkmem', 'runcommand', 'gitinfo', 'compareversions', 'uniquename', 'importbyname']
 
 def percentcomplete(step=None, maxsteps=None, indent=1):
     ''' Display progress '''
