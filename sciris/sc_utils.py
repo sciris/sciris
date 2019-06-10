@@ -962,9 +962,9 @@ def elapsedtimestr(pasttime, maxdays=5, shortmonths=True):
 
         # Get a string from strftime()
         if includeyear:
-            date_str = date.strftime('%d ' + month_token + ' %Y')
+            date_str = date.strftime('%d ' + month_token.capitalize() + ' %Y')
         else:
-            date_str = date.strftime('%d ' + month_token)
+            date_str = date.strftime('%d ' + month_token.capitalize())
 
         # There will only ever be at most one leading zero, so check for this and
         # remove if necessary
