@@ -343,23 +343,26 @@ __all__ += ['Blobject', 'Spreadsheet', 'loadspreadsheet', 'savespreadsheet']
 class Blobject(object):
     ''' A wrapper for a binary file '''
 
-    def __init__(self, source=None, name=None, filename=None):
+    def __init__(self, source=None, name=None, filename=None, blob=None):
         # "source" is a specification of where to get the data from
         # It can be anything supported by Blobject.load() which are
         # - A filename, which will get loaded
         # - A io.BytesIO which will get dumped into this instance
+        # Alternatively, can specify `blob` which is a binary string that gets stored directly
+        # in the `blob` attribute
         
         # Handle inputs
         if source   is None and filename is not None: source   = filename # Reset the source to be the filename, e.g. Spreadsheet(filename='foo.xlsx')
         if filename is None and ut.isstring(source):  filename = source   # Reset the filename to be the source, e.g. Spreadsheet('foo.xlsx')
         if name     is None and filename is not None: name     = os.path.basename(filename) # If not supplied, use the filename
-        
+        if blob is not None and source is not None: raise Exception('Can initialize from either source or blob, but not both')
+
         # Define quantities
         self.name      = name # Name of the object
         self.filename  = filename # Filename (used as default for load/save)
         self.created   = ut.now() # When the object was created
         self.modified  = ut.now() # When it was last modified
-        self.blob  = None # The binary data
+        self.blob  = blob # The binary data
         self.bytes = None # The filestream representation of the binary data
         if source is not None: self.load(source)
         return None
