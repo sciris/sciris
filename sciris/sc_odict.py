@@ -32,7 +32,7 @@ class odict(OD):
         bar.rename('cough','chill') # Show rename
         print(bar) # Print results
     
-    Version: 2018mar29
+    Version: 2018jun25
     '''
     
     def __init__(self, *args, **kwargs):
@@ -536,34 +536,41 @@ class odict(OD):
         return None
     
     
-    def sort(self, sortby=None, reverse=False, copy=False):
+    def sort(self, sortby=None, reverse=False, copy=False, verbose=True):
         '''
         Create a sorted version of the odict. Sorts by order of sortby, if provided, otherwise alphabetical.
         If copy is True, then returns a copy (like sorted()).
         
         Note that you can also use this to do filtering.
         
-        Note: very slow, do not use for serious computations!!
+        Note: slow, do not use for time-limited computations!!
         '''
         origkeys = self.keys()
-        if sortby is None: allkeys = sorted(origkeys)
+        if sortby is None or sortby is 'keys': 
+            allkeys = sorted(origkeys)
         else:
-            if not ut.isiterable(sortby): raise Exception('Please provide a list to determine the sort order.')
+            if sortby is 'values':
+                origvals = self.values()
+                sortby = sorted(range(len(origvals)), key=origvals.__getitem__) # Reset sortby based on https://stackoverflow.com/questions/3382352/equivalent-of-numpy-argsort-in-basic-python
+            if not ut.isiterable(sortby): 
+                raise Exception('Please provide a list to determine the sort order.')
             if all([isinstance(x, ut._stringtypes) for x in sortby]): # Going to sort by keys
                 allkeys = sortby # Assume the user knows what s/he is doing
-            elif all([isinstance(x,bool) for x in sortby]): # Using Boolean values
+            elif all([isinstance(x,bool) for x in sortby]): # Using Boolean values to filter
                 allkeys = []
                 for i,x in enumerate(sortby):
                      if x: allkeys.append(origkeys[i])
             elif all([isinstance(x, ut._numtype) for x in sortby]): # Going to sort by numbers
                 if not set(sortby)==set(range(len(self))):
-                    errormsg = 'List to sort by "%s" is not compatible with length of odict "%i"' % (sortby, len(self))
-                    raise Exception(errormsg)
-                else: allkeys = [y for (x,y) in sorted(zip(sortby,origkeys))]
+                    warningmsg = 'Warning: list to sort by "%s" has different length than odict "%i"' % (sortby, len(self))
+                    if verbose: print(warningmsg)
+                allkeys = [origkeys[ind] for ind in sortby]
+                print(allkeys)
             else: 
                 raise Exception('Cannot figure out how to sort by "%s"' % sortby)
         tmpdict = odict()
-        if reverse: allkeys.reverse() # If requested, reverse order
+        if reverse: 
+            allkeys.reverse() # If requested, reverse order
         if copy:
             for key in allkeys: tmpdict[key] = self[key]
             return tmpdict
@@ -572,8 +579,9 @@ class odict(OD):
             for key in allkeys: self.__setitem__(key, tmpdict.pop(key))
             return None
     
+    
     def sorted(self, sortby=None, reverse=False):
-        ''' Shortcut for making a copy of the sorted odict '''
+        ''' Shortcut for making a copy of the sorted odict -- see sort() for options '''
         return self.sort(sortby=sortby, copy=True, reverse=reverse)
 
 
