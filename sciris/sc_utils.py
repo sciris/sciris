@@ -1131,12 +1131,16 @@ def timedsleep(delay=None, verbose=True):
 
 __all__ += ['percentcomplete', 'checkmem', 'runcommand', 'gitinfo', 'compareversions', 'uniquename', 'importbyname']
 
-def percentcomplete(step=None, maxsteps=None, indent=1):
+def percentcomplete(step=None, maxsteps=None, prefix=None):
     ''' Display progress '''
+    if prefix is None:
+        prefix = ' '
+    elif isnumber(prefix):
+        prefix = ' '*prefix
     onepercent = max(1,round(maxsteps/100)); # Calculate how big a single step is -- not smaller than 1
     if not step%onepercent: # Does this value lie on a percent
         thispercent = round(step/maxsteps*100) # Calculate what percent it is
-        print('%s%i%%\n'% (' '*indent, thispercent)) # Display the output
+        print(prefix + '%i%%'% thispercent) # Display the output
     return None
 
 
