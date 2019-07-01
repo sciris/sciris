@@ -94,12 +94,12 @@ def saveobj(filename=None, obj=None, compresslevel=5, verbose=0, folder=None, me
 
 
     if filename is None:
-        bytes = io.BytesIO()
+        bytesobj = io.BytesIO()
     else:
         filename = makefilepath(filename=filename, folder=folder, default='default.obj', sanitize=True)
-        bytes = None
+        bytesobj = None
 
-    with GzipFile(filename=filename, fileobj=bytes, mode='wb', compresslevel=compresslevel) as fileobj:
+    with GzipFile(filename=filename, fileobj=bytesobj, mode='wb', compresslevel=compresslevel) as fileobj:
         if method == 'dill': # If dill is requested, use that
             if verbose>=2: print('Saving as dill...')
             savedill(fileobj, obj)
@@ -116,8 +116,8 @@ def saveobj(filename=None, obj=None, compresslevel=5, verbose=0, folder=None, me
     if filename:
         return filename
     else:
-        bytes.seek(0)
-        return bytes
+        bytesobj.seek(0)
+        return bytesobj
 
 
 def dumpstr(obj=None):
