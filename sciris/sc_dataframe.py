@@ -251,20 +251,23 @@ class dataframe(object):
         return self.nrows
     
     
-    def make(self, cols=None, data=None):
+    def make(self, cols=None, data=None, nrows=None):
         '''
         Creates a dataframe from the supplied input data. Usage examples:
             df = sc.dataframe()
             df = sc.dataframe(['a','b','c'])
+            df = sc.dataframe(['a','b','c'], nrows=2)
             df = sc.dataframe([['a','b','c'],[1,2,3],[4,5,6]])
             df = sc.dataframe(['a','b','c'], [[1,2,3],[4,5,6]])
             df = sc.dataframe(cols=['a','b','c'], data=[[1,2,3],[4,5,6]])
         '''
         
         # Handle columns
+        if nrows is None:
+            nrows = 0
         if cols is None and data is None:
             cols = list()
-            data = np.zeros((0,len(cols)), dtype=object) # Object allows more than just numbers to be stored
+            data = np.zeros((nrows, 0), dtype=object) # Object allows more than just numbers to be stored
         elif cols is None and data is not None: # Shouldn't happen, but if it does, swap inputs
             cols = data
             data = None
@@ -285,7 +288,7 @@ class dataframe(object):
                 data = ut.dcp(cols[1:])
                 cols = ut.dcp(cols[0])
             else:
-                data = np.zeros((0,len(cols)), dtype=object) # Just use default
+                data = np.zeros((nrows,len(cols)), dtype=object) # Just use default
         data = np.array(data, dtype=object)
         if data.ndim != 2:
             if data.ndim == 1:
@@ -313,7 +316,7 @@ class dataframe(object):
         return None
     
     
-    def get(self, cols=None, rows=None):
+    def get(self, cols=None, rows=None, asarray=True):
         '''
         More complicated way of getting data from a dataframe; example:
         df = dataframe(cols=['x','y','z'],data=[[1238,2,-1],[384,5,-2],[666,7,-3]]) # Create data frame
@@ -332,8 +335,12 @@ class dataframe(object):
         
         output = self.data[:,colindices][rowindices,:] # Split up so can handle non-consecutive entries in either
         if output.size == 1: output = output[0] # If it's a single element, return the value rather than the array
-        return output
-   
+        if asarray:
+            return output
+        else:
+            df = dataframe(cols=np.array(self.cols)[colindices].tolist(), data=output)
+            return df
+
     def pop(self, key, returnval=True):
         ''' Remove a row from the data frame '''
         rowindex = int(key)
@@ -556,7 +563,7 @@ class dataframe(object):
         return None
     
     def sort(self, col=None, reverse=False):
-        ''' Sort the data frame by the specified column(s) -- WARNING, sortorder is not correct for >1 column'''
+        ''' Sort the data frame by the specified column(s)'''
         cols = list(reversed(ut.promotetolist(col)))
         for col in cols:
             col = self._sanitizecol(col)
