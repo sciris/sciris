@@ -884,8 +884,8 @@ def savedill(fileobj=None, obj=None):
 ### Python 2 legacy support
 ##############################################################################
 
-not_string_pickleable = ['datetime', 'dateutil.tz.tz', 'BytesIO']
-byte_objects = ['datetime', 'dateutil.tz.tz', 'BytesIO', 'odict', 'spreadsheet', 'blobject']
+not_string_pickleable = ['datetime', 'BytesIO']
+byte_objects = ['datetime', 'tzutc', 'tzinfo', 'BytesIO', 'odict', 'spreadsheet', 'blobject']
 
 def loadobj2to3(filename=None, filestring=None):
     ''' Used automatically by loadobj() to load Python2 objects in Python3 if all other loading methods fail '''
@@ -918,6 +918,7 @@ def loadobj2to3(filename=None, filestring=None):
     class BytesUnpickler(pickle.Unpickler):
         print('LSDKJFSLDKJFDLJK')
         def find_class(self, module, name):
+            print('aflajfa %s %s' % (module, name))
             if name in byte_objects:
                 try:
                     output = pickle.Unpickler.find_class(self,module,name)
@@ -928,9 +929,14 @@ def loadobj2to3(filename=None, filestring=None):
             else:
                 return Placeholder
 
-    def recursive_substitute(obj1, obj2, track=None):
+    def recursive_substitute(obj1, obj2, track=None, count=0, maxcount=100):
         
-        print('oh hiaiiaii')
+        count += 1
+        
+        string = 'oh hiaiiaii %s %s' % (type(obj1), type(obj2))
+        if 'tz' in string:
+            print('OMGODGIUDGOIUDODGIUOGIUD')
+#        print(str)
         if track is None:
             track = []
 
@@ -947,7 +953,10 @@ def loadobj2to3(filename=None, filestring=None):
                         k = k.decode('latin1')
                     track2 = track.copy()
                     track2.append(k)
-                    recursive_substitute(obj1[k], v, track2)
+                    if count<maxcount:
+                        count = recursive_substitute(obj1[k], v, track2, count)
+                    else:
+                        print('MAX COUTN EXCEEDED 1 %s %s %s' % (count, type(obj1), type(obj2)))
         else:
             for k,v in obj2.__dict__.items():
                 if isinstance(v,datetime.datetime):
@@ -957,7 +966,11 @@ def loadobj2to3(filename=None, filestring=None):
                         k = k.decode('latin1')
                     track2 = track.copy()
                     track2.append(k)
-                    recursive_substitute(getattr(obj1,k), v, track2)
+                    if count<maxcount:
+                        count = recursive_substitute(getattr(obj1,k), v, track2, count)
+                    else:
+                        print('MAX COUTN EXCEEDED 2 %s %s %s' % (count, type(obj1), type(obj2)))
+        return count
 
     # Load either from file or from string
     if filename:
@@ -967,14 +980,15 @@ def loadobj2to3(filename=None, filestring=None):
                 stringout = unpickler1.load()
             except:
                 print('PLACE 1')
-                stringout = Empty()
+                stringout = Empty
         with GzipFile(filename) as fileobj:
             unpickler2 = BytesUnpickler(fileobj,  encoding='bytes')
             try:
                 bytesout  = unpickler2.load()
-            except:
+            except Exception as E:
                 print('PLACE 2')
-                bytesout = Empty()
+#                import traceback; traceback.print_exc(); import pdb; pdb.set_trace()
+                bytesout = Placeholder
     elif filestring:
         with closing(IO(filestring)) as output: 
             with GzipFile(fileobj=output, mode='rb') as fileobj:
@@ -983,7 +997,7 @@ def loadobj2to3(filename=None, filestring=None):
                     stringout = unpickler1.load()
                 except:
                     print('PLACE 3')
-                    stringout = Empty()
+                    stringout = Empty
         with closing(IO(filestring)) as output:
             with GzipFile(fileobj=output, mode='rb') as fileobj:
                 unpickler2 = BytesUnpickler(fileobj,  encoding='bytes')
@@ -991,13 +1005,13 @@ def loadobj2to3(filename=None, filestring=None):
                     bytesout  = unpickler2.load()
                 except:
                     print('PLACE 4')
-                    bytesout = Empty()
+                    bytesout = Placeholder
     else:
         errormsg = 'You must supply either a filename or a filestring for loadobj() or loadstr(), respectively'
         raise Exception(errormsg)
     
     # Actually do the load, with correct substitution
-    recursive_substitute(stringout, bytesout)
+    count = recursive_substitute(stringout, bytesout, count=0)
     return stringout
 
 
