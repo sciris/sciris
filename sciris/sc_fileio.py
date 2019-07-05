@@ -884,8 +884,8 @@ def savedill(fileobj=None, obj=None):
 ### Python 2 legacy support
 ##############################################################################
 
-not_string_pickleable = ['datetime', 'BytesIO']
-byte_objects = ['datetime', 'BytesIO', 'odict', 'spreadsheet', 'blobject']
+not_string_pickleable = ['datetime', 'dateutil.tz.tz', 'BytesIO']
+byte_objects = ['datetime', 'dateutil.tz.tz', 'BytesIO', 'odict', 'spreadsheet', 'blobject']
 
 def loadobj2to3(filename=None, filestring=None):
     ''' Used automatically by loadobj() to load Python2 objects in Python3 if all other loading methods fail '''
@@ -904,19 +904,33 @@ def loadobj2to3(filename=None, filestring=None):
 
     class StringUnpickler(pickle.Unpickler):
         def find_class(self, module, name):
+            print('HIIIIIII %s %s' % (module, name))
             if name in not_string_pickleable:
                 return Empty
             else:
-                return pickle.Unpickler.find_class(self,module,name)
+                try:
+                    output = pickle.Unpickler.find_class(self,module,name)
+                except Exception as E:
+                    print('PROBLEM WITH %s %s %s' % (module, name, str(E)))
+                    output = Empty
+                return output
 
     class BytesUnpickler(pickle.Unpickler):
+        print('LSDKJFSLDKJFDLJK')
         def find_class(self, module, name):
             if name in byte_objects:
-                return pickle.Unpickler.find_class(self,module,name)
+                try:
+                    output = pickle.Unpickler.find_class(self,module,name)
+                except Exception as E:
+                    print('PROBLEM WITH %s %s %s' % (module, name, str(E)))
+                    output = Placeholder
+                return output
             else:
                 return Placeholder
 
     def recursive_substitute(obj1, obj2, track=None):
+        
+        print('oh hiaiiaii')
         if track is None:
             track = []
 
@@ -949,19 +963,35 @@ def loadobj2to3(filename=None, filestring=None):
     if filename:
         with GzipFile(filename) as fileobj:
             unpickler1 = StringUnpickler(fileobj, encoding='latin1')
-            stringout = unpickler1.load()
+            try:
+                stringout = unpickler1.load()
+            except:
+                print('PLACE 1')
+                stringout = Empty()
         with GzipFile(filename) as fileobj:
             unpickler2 = BytesUnpickler(fileobj,  encoding='bytes')
-            bytesout  = unpickler2.load()
+            try:
+                bytesout  = unpickler2.load()
+            except:
+                print('PLACE 2')
+                bytesout = Empty()
     elif filestring:
         with closing(IO(filestring)) as output: 
             with GzipFile(fileobj=output, mode='rb') as fileobj:
                 unpickler1 = StringUnpickler(fileobj, encoding='latin1')
-                stringout = unpickler1.load()
+                try:
+                    stringout = unpickler1.load()
+                except:
+                    print('PLACE 3')
+                    stringout = Empty()
         with closing(IO(filestring)) as output:
             with GzipFile(fileobj=output, mode='rb') as fileobj:
                 unpickler2 = BytesUnpickler(fileobj,  encoding='bytes')
-                bytesout  = unpickler2.load()
+                try:
+                    bytesout  = unpickler2.load()
+                except:
+                    print('PLACE 4')
+                    bytesout = Empty()
     else:
         errormsg = 'You must supply either a filename or a filestring for loadobj() or loadstr(), respectively'
         raise Exception(errormsg)

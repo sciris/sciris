@@ -1131,13 +1131,23 @@ def timedsleep(delay=None, verbose=True):
 
 __all__ += ['percentcomplete', 'checkmem', 'runcommand', 'gitinfo', 'compareversions', 'uniquename', 'importbyname']
 
-def percentcomplete(step=None, maxsteps=None, prefix=None):
-    ''' Display progress '''
+def percentcomplete(step=None, maxsteps=None, stepsize=1, prefix=None):
+    '''
+    Display progress.
+    
+    Usage example:
+        
+        maxiters = 500
+        for i in range(maxiters):
+            sc.percentcomplete(i, maxiters) # will print on every 5th iteration
+            sc.percentcomplete(i, maxiters, stepsize=10) # will print on every 50th iteration
+            sc.percentcomplete(i, maxiters, prefix='Completeness: ') # will print e.g. 'Completeness: 1%'
+    '''
     if prefix is None:
         prefix = ' '
     elif isnumber(prefix):
         prefix = ' '*prefix
-    onepercent = max(1,round(maxsteps/100)); # Calculate how big a single step is -- not smaller than 1
+    onepercent = max(stepsize,round(maxsteps/100*stepsize)); # Calculate how big a single step is -- not smaller than 1
     if not step%onepercent: # Does this value lie on a percent
         thispercent = round(step/maxsteps*100) # Calculate what percent it is
         print(prefix + '%i%%'% thispercent) # Display the output

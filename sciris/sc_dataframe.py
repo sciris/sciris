@@ -42,10 +42,10 @@ class dataframe(object):
     Version: 2019mar25
     '''
 
-    def __init__(self, cols=None, data=None):
+    def __init__(self, cols=None, data=None, nrows=None):
         self.cols = None
         self.data = None
-        self.make(cols=cols, data=data)
+        self.make(cols=cols, data=data, nrows=nrows)
         return None
     
     def __repr__(self, spacing=2):
@@ -132,14 +132,28 @@ class dataframe(object):
                 output = None
         return output
     
-    def __getitem__(self, key=None, die=True):
+    @staticmethod
+    def _cast(arr):
+        ''' Attempt to cast an array to different data types '''
+        try: # Try to cast the whole array to the type of the first element
+            output = np.array(arr, dtype=type(arr[0]))
+            return output
+        except: # If anything goes wrong, do nothing
+            return arr
+        
+    
+    def __getitem__(self, key=None, die=True, cast=True):
         ''' Simple method for returning; see self.get() for a version based on col and row '''
         if ut.isstring(key): # e.g. df['a']
             colindex = self.cols.index(key)
             output = self.data[:,colindex]
+            if cast:
+                output = self._cast(output)
         elif ut.isnumber(key): # e.g. df[0]
             rowindex = int(key)
             output = self.data[rowindex,:]
+            if cast:
+                output = self._cast(output)
         elif ut.checktype(key, 'arraylike'): # e.g. df[[0,2,4]]
             rowindices = key
             rowdata = self.data[rowindices,:]
@@ -211,6 +225,8 @@ class dataframe(object):
             except:
                 self.data = np.vstack((self.data, np.array(value, dtype=object)))
         elif isinstance(key, tuple):
+            if ut.isstring(key[1]) and ut.isnumber(key[0]): # Keys supplied in opposite order
+                key = (key[1], key[0]) # Swap order
             if key[0] not in self.cols:
                 errormsg = 'Column name "%s" not found; available columns are:\n%s' % (key[0], '\n'.join(self.cols))
                 raise Exception(errormsg)
@@ -316,7 +332,7 @@ class dataframe(object):
         return None
     
     
-    def get(self, cols=None, rows=None, asarray=True):
+    def get(self, cols=None, rows=None, asarray=True, cast=True):
         '''
         More complicated way of getting data from a dataframe; example:
         df = dataframe(cols=['x','y','z'],data=[[1238,2,-1],[384,5,-2],[666,7,-3]]) # Create data frame
@@ -336,6 +352,8 @@ class dataframe(object):
         output = self.data[:,colindices][rowindices,:] # Split up so can handle non-consecutive entries in either
         if output.size == 1: output = output[0] # If it's a single element, return the value rather than the array
         if asarray:
+            if cast:
+                output = self.cast(output)
             return output
         else:
             df = dataframe(cols=np.array(self.cols)[colindices].tolist(), data=output)
