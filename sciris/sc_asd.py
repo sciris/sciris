@@ -42,11 +42,14 @@ def asd(function, x, args=None, stepsize=0.1, sinc=2, sdec=2, pinc=2, pdec=2,
       label          None    A label to use to annotate the output
   
     Example:
-        from sciris import asd
+        import sciris as sc
         from numpy.linalg import norm
-        x, fval, details = asd(norm, [1, 2, 3])
+        x = sc.asd(norm, [1, 2, 3])
+
+    Please use the following citation for this method:
+        CC Kerr, S Dura-Bernal, TG Smolinski, GL Chadderdon, DP Wilson (2018). Optimization by adaptive stochastic descent. PloS ONE 13 (3), e0192944. Available from: thekerrlab.com/asd.
     
-    Version: 2018sep24
+    Version: 2019jul06
     """
     from numpy import array, shape, reshape, ones, zeros, mean, cumsum, mod, concatenate, floor, flatnonzero, isnan, inf
     from numpy.random import random, seed
@@ -156,8 +159,7 @@ def asd(function, x, args=None, stepsize=0.1, sinc=2, sdec=2, pinc=2, pdec=2,
             probabilities[choice] = probabilities[choice] / pdec
             stepsizes[choice] = stepsizes[choice] / sdec
 
-        # Calculate the new value
-        
+        # Calculate the new value 
         xnew = dcp(x) # Initialize the new parameter set
         xnew[par] = newval # Update the new parameter set
         fvalnew = function(xnew, **args) # Calculate the objective function for the new parameter set
