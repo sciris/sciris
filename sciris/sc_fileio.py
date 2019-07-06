@@ -91,8 +91,15 @@ def saveobj(filename=None, obj=None, compresslevel=5, verbose=0, folder=None, me
         myobj = ['this', 'is', 'a', 'weird', {'object':44}]
         saveobj('myfile.obj', myobj)
     '''
-    fullpath = makefilepath(filename=filename, folder=folder, default='default.obj', sanitize=True)
-    with GzipFile(fullpath, 'wb', compresslevel=compresslevel) as fileobj:
+
+
+    if filename is None:
+        bytesobj = io.BytesIO()
+    else:
+        filename = makefilepath(filename=filename, folder=folder, default='default.obj', sanitize=True)
+        bytesobj = None
+
+    with GzipFile(filename=filename, fileobj=bytesobj, mode='wb', compresslevel=compresslevel) as fileobj:
         if method == 'dill': # If dill is requested, use that
             if verbose>=2: print('Saving as dill...')
             savedill(fileobj, obj)
@@ -104,8 +111,13 @@ def saveobj(filename=None, obj=None, compresslevel=5, verbose=0, folder=None, me
                 if verbose>=2: print('Exception when saving as pickle (%s), saving as dill...' % repr(E))
                 savedill(fileobj, obj) # ...but use Dill if that fails
         
-    if verbose: print('Object saved to "%s"' % fullpath)
-    return fullpath
+    if verbose and filename: print('Object saved to "%s"' % filename)
+
+    if filename:
+        return filename
+    else:
+        bytesobj.seek(0)
+        return bytesobj
 
 
 def dumpstr(obj=None):
