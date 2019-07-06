@@ -61,7 +61,7 @@ def loadobj(filename=None, folder=None, verbose=False, die=None):
     if ut.isstring(filename): 
         argtype = 'filename'
         filename = makefilepath(filename=filename, folder=folder) # If it is a file, validate the folder
-    elif isinstance(filename, file): 
+    elif isinstance(filename, io.BytesIO): 
         argtype = 'fileobj'
     else:
         errormsg = 'First argument to loadobj() must be a string or file object, not %s' % type(filename)
@@ -785,6 +785,9 @@ class Failed(object):
     
     def __init__(self, *args, **kwargs):
         pass
+    
+    def __setstate__(self, state):
+        pass
 
 
 class Empty(object):
@@ -885,7 +888,7 @@ def savedill(fileobj=None, obj=None):
 ##############################################################################
 
 not_string_pickleable = ['datetime', 'BytesIO']
-byte_objects = ['datetime', 'tzutc', 'tzinfo', 'BytesIO', 'odict', 'spreadsheet', 'blobject']
+byte_objects = ['datetime', 'BytesIO', 'odict', 'spreadsheet', 'blobject']
 
 def loadobj2to3(filename=None, filestring=None):
     ''' Used automatically by loadobj() to load Python2 objects in Python3 if all other loading methods fail '''
@@ -903,40 +906,39 @@ def loadobj2to3(filename=None, filestring=None):
             return
 
     class StringUnpickler(pickle.Unpickler):
-        def find_class(self, module, name):
-            print('HIIIIIII %s %s' % (module, name))
+        def find_class(self, module, name, verbose=False):
+            if verbose: print('Unpickling string module %s , name %s' % (module, name))
             if name in not_string_pickleable:
                 return Empty
             else:
                 try:
                     output = pickle.Unpickler.find_class(self,module,name)
                 except Exception as E:
-                    print('PROBLEM WITH %s %s %s' % (module, name, str(E)))
+                    print('Warning, string unpickling could not find module %s, name %s: %s' % (module, name, str(E)))
                     output = Empty
                 return output
 
     class BytesUnpickler(pickle.Unpickler):
-        print('LSDKJFSLDKJFDLJK')
-        def find_class(self, module, name):
-            print('aflajfa %s %s' % (module, name))
+        def find_class(self, module, name, verbose=False):
+            if verbose: print('Unpickling bytes module %s , name %s' % (module, name))
             if name in byte_objects:
                 try:
                     output = pickle.Unpickler.find_class(self,module,name)
                 except Exception as E:
-                    print('PROBLEM WITH %s %s %s' % (module, name, str(E)))
+                    print('Warning, bytes unpickling could not find module %s, name %s: %s' % (module, name, str(E)))
                     output = Placeholder
                 return output
             else:
                 return Placeholder
 
-    def recursive_substitute(obj1, obj2, track=None, count=0, maxcount=100):
+    def recursive_substitute(obj1, obj2, track=None, count=0, maxcount=1000):
+        
+        def recursion_warning(count, obj1, obj2):
+            output = 'Warning, internal recursion depth exceeded, aborting: depth=%s, %s -> %s' % (count, type(obj1), type(obj2))
+            return output
         
         count += 1
         
-        string = 'oh hiaiiaii %s %s' % (type(obj1), type(obj2))
-        if 'tz' in string:
-            print('OMGODGIUDGOIUDODGIUOGIUD')
-#        print(str)
         if track is None:
             track = []
 
@@ -953,10 +955,10 @@ def loadobj2to3(filename=None, filestring=None):
                         k = k.decode('latin1')
                     track2 = track.copy()
                     track2.append(k)
-                    if count<maxcount:
+                    if count<=maxcount:
                         count = recursive_substitute(obj1[k], v, track2, count)
                     else:
-                        print('MAX COUTN EXCEEDED 1 %s %s %s' % (count, type(obj1), type(obj2)))
+                        print(recursion_warning(count, obj1, obj2))
         else:
             for k,v in obj2.__dict__.items():
                 if isinstance(v,datetime.datetime):
@@ -966,52 +968,50 @@ def loadobj2to3(filename=None, filestring=None):
                         k = k.decode('latin1')
                     track2 = track.copy()
                     track2.append(k)
-                    if count<maxcount:
+                    if count<=maxcount:
                         count = recursive_substitute(getattr(obj1,k), v, track2, count)
                     else:
-                        print('MAX COUTN EXCEEDED 2 %s %s %s' % (count, type(obj1), type(obj2)))
+                        print(recursion_warning(count, obj1, obj2))
         return count
+    
+    def loadintostring(fileobj):
+        unpickler1 = StringUnpickler(fileobj, encoding='latin1')
+        try:
+            stringout = unpickler1.load()
+        except Exception as E:
+            print('Warning, string pickle loading failed: %s' % str(E))
+            stringout = makefailed(module_name='String unpickler failed', name='n/a', error=E)
+        return stringout
+    
+    def loadintobytes(fileobj):
+        unpickler2 = BytesUnpickler(fileobj,  encoding='bytes')
+        try:
+            bytesout  = unpickler2.load()
+        except Exception as E:
+            print('Warning, bytes pickle loading failed: %s' % str(E))
+            bytesout = makefailed(module_name='Bytes unpickler failed', name='n/a', error=E)
+        return bytesout
 
     # Load either from file or from string
     if filename:
         with GzipFile(filename) as fileobj:
-            unpickler1 = StringUnpickler(fileobj, encoding='latin1')
-            try:
-                stringout = unpickler1.load()
-            except:
-                print('PLACE 1')
-                stringout = Empty
+            stringout = loadintostring(fileobj)
         with GzipFile(filename) as fileobj:
-            unpickler2 = BytesUnpickler(fileobj,  encoding='bytes')
-            try:
-                bytesout  = unpickler2.load()
-            except Exception as E:
-                print('PLACE 2')
-#                import traceback; traceback.print_exc(); import pdb; pdb.set_trace()
-                bytesout = Placeholder
+            bytesout = loadintobytes(fileobj)
+            
     elif filestring:
         with closing(IO(filestring)) as output: 
             with GzipFile(fileobj=output, mode='rb') as fileobj:
-                unpickler1 = StringUnpickler(fileobj, encoding='latin1')
-                try:
-                    stringout = unpickler1.load()
-                except:
-                    print('PLACE 3')
-                    stringout = Empty
+                stringout = loadintostring(fileobj)
         with closing(IO(filestring)) as output:
             with GzipFile(fileobj=output, mode='rb') as fileobj:
-                unpickler2 = BytesUnpickler(fileobj,  encoding='bytes')
-                try:
-                    bytesout  = unpickler2.load()
-                except:
-                    print('PLACE 4')
-                    bytesout = Placeholder
+                bytesout = loadintobytes(fileobj)
     else:
         errormsg = 'You must supply either a filename or a filestring for loadobj() or loadstr(), respectively'
         raise Exception(errormsg)
     
     # Actually do the load, with correct substitution
-    count = recursive_substitute(stringout, bytesout, count=0)
+    recursive_substitute(stringout, bytesout, count=0)
     return stringout
 
 
