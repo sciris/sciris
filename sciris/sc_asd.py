@@ -217,6 +217,6 @@ def asd(function, x, args=None, stepsize=0.1, sinc=2, sdec=2, pinc=2, pdec=2,
         details['probabilities'] = probabilities
         details['stepsizes'] = stepsizes
         details['allsteps'] = allsteps[:count + 1, :]
-        return (x, fvals, details)
+        return (x, fvals, details) # Return parameter vector as well as details about run
     else:
-        return (x, None, None) # so that it has the same shape regardless of fulloutput
+        return x # Basic usage: Just return the parameter vector
