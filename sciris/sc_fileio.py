@@ -791,19 +791,16 @@ def savespreadsheet(filename=None, data=None, folder=None, sheetnames=None, clos
 ### Pickling support methods
 ##############################################################################
 
-class Failed(object):
+class Failed(ut.prettyobj):
     ''' An empty class to represent a failed object loading '''
     failure_info = odict()
     
     def __init__(self, *args, **kwargs):
         pass
-    
-    def __setstate__(self, state):
-        pass
 
 
 class Empty(object):
-    ''' Another empty class to represent a failed object loading '''
+    ''' Another empty class to represent a failed object loading, but do not proceed with setstate '''
     
     def __init__(self, *args, **kwargs):
         pass
@@ -902,8 +899,11 @@ def savedill(fileobj=None, obj=None):
 not_string_pickleable = ['datetime', 'BytesIO']
 byte_objects = ['datetime', 'BytesIO', 'odict', 'spreadsheet', 'blobject']
 
-def loadobj2to3(filename=None, filestring=None):
-    ''' Used automatically by loadobj() to load Python2 objects in Python3 if all other loading methods fail '''
+def loadobj2to3(filename=None, filestring=None, recursionlimit=None):
+    '''
+    Used automatically by loadobj() to load Python2 objects in Python3 if all other 
+    loading methods fail. Uses a recursive approach, so can set a recursion limit.
+    '''
 
     class Placeholder():
         ''' Replace these corrupted classes with properly loaded ones '''
@@ -943,13 +943,15 @@ def loadobj2to3(filename=None, filestring=None):
             else:
                 return Placeholder
 
-    def recursive_substitute(obj1, obj2, track=None, count=0, maxcount=1000):
+    def recursive_substitute(obj1, obj2, track=None, recursionlevel=0, recursionlimit=None):
+        if recursionlimit is None: # Recursion limit
+            recursionlimit = 1000 # Better to die here than hit Python's recursion limit
         
         def recursion_warning(count, obj1, obj2):
             output = 'Warning, internal recursion depth exceeded, aborting: depth=%s, %s -> %s' % (count, type(obj1), type(obj2))
             return output
         
-        count += 1
+        recursionlevel += 1
         
         if track is None:
             track = []
@@ -967,10 +969,10 @@ def loadobj2to3(filename=None, filestring=None):
                         k = k.decode('latin1')
                     track2 = track.copy()
                     track2.append(k)
-                    if count<=maxcount:
-                        count = recursive_substitute(obj1[k], v, track2, count)
+                    if recursionlevel<=recursionlimit:
+                        recursionlevel = recursive_substitute(obj1[k], v, track2, recursionlevel, recursionlimit)
                     else:
-                        print(recursion_warning(count, obj1, obj2))
+                        print(recursion_warning(recursionlevel, obj1, obj2))
         else:
             for k,v in obj2.__dict__.items():
                 if isinstance(v,datetime.datetime):
@@ -980,11 +982,11 @@ def loadobj2to3(filename=None, filestring=None):
                         k = k.decode('latin1')
                     track2 = track.copy()
                     track2.append(k)
-                    if count<=maxcount:
-                        count = recursive_substitute(getattr(obj1,k), v, track2, count)
+                    if recursionlevel<=recursionlimit:
+                        recursionlevel = recursive_substitute(getattr(obj1,k), v, track2, recursionlevel, recursionlimit)
                     else:
-                        print(recursion_warning(count, obj1, obj2))
-        return count
+                        print(recursion_warning(recursionlevel, obj1, obj2))
+        return recursionlevel
     
     def loadintostring(fileobj):
         unpickler1 = StringUnpickler(fileobj, encoding='latin1')
@@ -1023,7 +1025,7 @@ def loadobj2to3(filename=None, filestring=None):
         raise Exception(errormsg)
     
     # Actually do the load, with correct substitution
-    recursive_substitute(stringout, bytesout, count=0)
+    recursive_substitute(stringout, bytesout, recursionlevel=0, recursionlimit=recursionlimit)
     return stringout
 
 
