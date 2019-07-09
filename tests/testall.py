@@ -19,7 +19,9 @@ doplot = False # Don't run plotting in batch
 
 
 ## Run the tests in a loop
-VARIABLES = []
+KEY = None
+ORIGINALVARIABLES = []
+CURRENTVARIABLES = []
 VERYSTART = TIME()
 FAILED = []
 SUCCEEDED = []
@@ -27,14 +29,15 @@ MASTER = GLOB(OS.path.dirname(OS.path.realpath(__file__))+OS.sep+'test_*.py') # 
 for TEST in MASTER:
     try:
         THISSTART = TIME()
-        VARIABLES = locals().keys() # Get the state before the test is run
+        ORIGINALVARIABLES = list(locals().keys()) # Get the state before the test is run
         print('\n'*10+'#'*200)
         print('NOW RUNNING: %s' % TEST)
         print('#'*200+'\n'*3)
         exec(open(TEST).read()) # Run the test!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
         SUCCEEDED.append({'test':TEST, 'time':TIME()-THISSTART})
-        for KEY in locals().keys(): # Clean up -- delete any new variables added
-            if KEY not in VARIABLES:
+        CURRENTVARIABLES = list(locals().keys())
+        for KEY in CURRENTVARIABLES: # Clean up -- delete any new variables added
+            if KEY not in ORIGINALVARIABLES:
                 print('       "%s" complete; deleting "%s"' % (TEST, KEY))
                 exec('del '+KEY)
     except:
