@@ -218,10 +218,11 @@ def asd(function, x, args=None, stepsize=0.1, sinc=2, sdec=2, pinc=2, pdec=2,
     if verbose >= 2: print('=== %s %s (%i steps, orig: %s | best: %s | ratio: %s) ===' % ((label, exitreason, count) + sigfig([fvals[0], fvals[-1], fvals[-1] / fvals[0]])))
     output = objdict()
     output['x'] = np.reshape(x, origshape) # Parameters
-    output['fvals'] = fvals[:count+1] # Function evaluations
+    output['fval'] = fvals[count]
     output['exitreason'] = exitreason
     output['details'] = objdict()
+    output['details']['fvals'] = fvals[:count+1] # Function evaluations
+    output['details']['xvals'] = allsteps[:count+1, :]
     output['details']['probabilities'] = probabilities
     output['details']['stepsizes'] = stepsizes
-    output['details']['allsteps'] = allsteps[:count+1, :]
     return output # Return parameter vector as well as details about run

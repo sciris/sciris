@@ -61,10 +61,10 @@ if 'complex' in torun:
         pl.ylabel('y')
         
         # Plot trajectory
-        X2 = result.details.allsteps[:,0]
-        Y2 = result.details.allsteps[:,1]
-        Z2 = result.details.allsteps[:,2]
-        O2 = pl.log10(result.fvals)
+        X2 = result.details.xvals[:,0]
+        Y2 = result.details.xvals[:,1]
+        Z2 = result.details.xvals[:,2]
+        O2 = pl.log10(result.details.fvals)
         ax = sc.scatter3d(X2, Y2, Z2, O2, fig=fig, plotkwargs={'alpha':1.0, 'marker':'d'})
         ax = sc.plot3d(X2, Y2, Z2, fig=fig, plotkwargs={'c':(0,0,0), 'lw':3})
 
