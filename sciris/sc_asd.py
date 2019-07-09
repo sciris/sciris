@@ -4,6 +4,8 @@ from time import time
 from .sc_utils import dcp, sigfig
 from .sc_odict import objdict
 
+__all__ = ['asd']
+
 def asd(function, x, args=None, stepsize=0.1, sinc=2, sdec=2, pinc=2, pdec=2,
     pinitial=None, sinitial=None, xmin=None, xmax=None, maxiters=None, maxtime=None, 
     abstol=1e-6, reltol=1e-3, stalliters=None, stoppingfunc=None, randseed=None, 
@@ -216,10 +218,10 @@ def asd(function, x, args=None, stepsize=0.1, sinc=2, sdec=2, pinc=2, pdec=2,
     if verbose >= 2: print('=== %s %s (%i steps, orig: %s | best: %s | ratio: %s) ===' % ((label, exitreason, count) + sigfig([fvals[0], fvals[-1], fvals[-1] / fvals[0]])))
     output = objdict()
     output['x'] = np.reshape(x, origshape) # Parameters
-    output['fvals'] = fvals[:count + 1] # Function evaluations
+    output['fvals'] = fvals[:count+1] # Function evaluations
     output['exitreason'] = exitreason
     output['details'] = objdict()
     output['details']['probabilities'] = probabilities
     output['details']['stepsizes'] = stepsizes
-    output['details']['allsteps'] = allsteps[:count + 1, :]
+    output['details']['allsteps'] = allsteps[:count+1, :]
     return output # Return parameter vector as well as details about run
