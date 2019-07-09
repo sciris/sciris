@@ -468,7 +468,7 @@ def hsv2rgb(colors=None):
 ### PLOTTING FUNCTIONS
 ##############################################################################
 
-__all__ += ['ax3d', 'scatter3d', 'surf3d', 'bar3d', 'boxoff', 'setaxislim', 'setxlim', 'setylim', 'commaticks', 'SItickformatter', 'SIticks']
+__all__ += ['ax3d', 'plot3d', 'scatter3d', 'surf3d', 'bar3d', 'boxoff', 'setaxislim', 'setxlim', 'setylim', 'commaticks', 'SItickformatter', 'SIticks']
 
 
 def ax3d(fig=None, returnfig=False, silent=False, **kwargs):
@@ -481,6 +481,25 @@ def ax3d(fig=None, returnfig=False, silent=False, **kwargs):
     ax = fig.gca(projection='3d')
     if silent:
         pl.close(fig)
+    if returnfig:
+        return fig,ax
+    else:
+        return ax
+
+
+def plot3d(x, y, z, c=None, fig=None, returnfig=False, plotkwargs=None, **kwargs):
+    ''' Plot 3D data as a scatter '''
+    # Set default arguments
+    if plotkwargs is None: plotkwargs = {}
+    settings = {'lw':2}
+    settings.update(plotkwargs)
+    
+    # Create figure
+    fig,ax = ax3d(returnfig=True, fig=fig, **kwargs)
+    ax.view_init(elev=45, azim=30)
+
+    ax.plot(x, y, z, **settings)
+
     if returnfig:
         return fig,ax
     else:
