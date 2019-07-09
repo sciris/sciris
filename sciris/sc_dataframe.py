@@ -42,9 +42,10 @@ class dataframe(object):
     Version: 2019mar25
     '''
 
-    def __init__(self, cols=None, data=None, nrows=None):
+    def __init__(self, cols=None, data=None, nrows=None, pandify=True):
         self.cols = None
         self.data = None
+        self.pandify = pandify
         self.make(cols=cols, data=data, nrows=nrows)
         return None
     
@@ -288,9 +289,10 @@ class dataframe(object):
             cols = data
             data = None
         
-        if not ut.isstring(pd):
+        if not ut.isstring(pd): # This is done because if pandas import fails, it replaes it with a string
             if isinstance(cols, pd.DataFrame): # It's actually a Pandas dataframe
                 self.pandas(df=cols)
+                return None # We're done
         else:
             print(pd)
         

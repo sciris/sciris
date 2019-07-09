@@ -1,5 +1,5 @@
 """
-Version:
+Version: 2019jul09
 """
 
 import sciris as sc
@@ -38,4 +38,4 @@ a.pandas(q); dfprint('Convert back', a)
 a.filtercols(['m','x']); dfprint('Filter to columns m and x', a)
 b = sc.dcp(a); dfprint('Dataframe copying:', a==b)
 
-print('Done.')
+print('Done: dataframe tests succeeded.')
