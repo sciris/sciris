@@ -17,6 +17,7 @@ import uuid
 import pickle
 import types
 import datetime
+import traceback
 import numpy as np
 from glob import glob
 from gzip import GzipFile
@@ -791,12 +792,34 @@ def savespreadsheet(filename=None, data=None, folder=None, sheetnames=None, clos
 ### Pickling support methods
 ##############################################################################
 
-class Failed(ut.prettyobj):
+class Failed(object):
     ''' An empty class to represent a failed object loading '''
     failure_info = odict()
     
     def __init__(self, *args, **kwargs):
         pass
+    
+    def __repr__(self):
+        output = ut.prepr(self) # This does not include failure_info since it's a class attribute
+        output += self.showfailures(verbose=False, tostring=True)
+        return output
+    
+    def showfailures(self, verbose=True, tostring=False):
+        output = ''
+        for f,failure in self.failure_info.enumvals():
+            output += '\nFailure %s of %s:\n' % (f+1, len(self.failure_info))
+            output += 'Module: %s\n' % failure['module']
+            output += 'Class: %s\n' % failure['class']
+            output += 'Error: %s\n' % failure['error']
+            if verbose:
+                output += '\nTraceback:\n'
+                output += failure['exception']
+                output += '\n\n'
+        if tostring:
+            return output
+        else:
+            print(output)
+            return None
 
 
 class Empty(object):
@@ -809,13 +832,14 @@ class Empty(object):
         pass
 
 
-def makefailed(module_name=None, name=None, error=None):
+def makefailed(module_name=None, name=None, error=None, exception=None):
     ''' Create a class -- not an object! -- that contains the failure info '''
     key = 'Failure %s' % (len(Failed.failure_info)+1)
     Failed.failure_info[key] = odict()
     Failed.failure_info[key]['module'] = module_name
     Failed.failure_info[key]['class'] = name
-    Failed.failure_info[key]['error'] = repr(error)
+    Failed.failure_info[key]['error'] = error
+    Failed.failure_info[key]['exception'] = exception
     return Failed
 
 
@@ -826,7 +850,6 @@ class RobustUnpickler(pickle.Unpickler):
         pickle.Unpickler.__init__(self, tmpfile, fix_imports=fix_imports, encoding=encoding, errors=errors)
     
     def find_class(self, module_name, name, verbose=False):
-        obj = makefailed(module_name, name, 'Unknown error') # This should get overwritten unless something goes terribly wrong
         try:
             module = __import__(module_name)
             obj = getattr(module, name)
@@ -835,8 +858,9 @@ class RobustUnpickler(pickle.Unpickler):
                 string = 'from %s import %s as obj' % (module_name, name)
                 exec(string)
             except Exception as E:
-                if verbose: print('Unpickling warning: could not import %s.%s: %s' % (module_name, name, repr(E)))
-                obj = makefailed(module_name=module_name, name=name, error=E)
+                if verbose: print('Unpickling warning: could not import %s.%s: %s' % (module_name, name, str(E)))
+                exception = traceback.format_exc() # Grab the trackback stack
+                obj = makefailed(module_name=module_name, name=name, error=E, exception=exception)
         return obj
 
 
@@ -873,7 +897,7 @@ def unpickler(string=None, filename=None, filestring=None, die=None, verbose=Fal
     
     if isinstance(obj, Failed):
         print('Warning, the following errors were encountered during unpickling:')
-        print(obj.failure_info)
+        obj.showfailures(verbose=False)
     
     return obj
 
@@ -994,7 +1018,8 @@ def loadobj2to3(filename=None, filestring=None, recursionlimit=None):
             stringout = unpickler1.load()
         except Exception as E:
             print('Warning, string pickle loading failed: %s' % str(E))
-            stringout = makefailed(module_name='String unpickler failed', name='n/a', error=E)
+            exception = traceback.format_exc() # Grab the trackback stack
+            stringout = makefailed(module_name='String unpickler failed', name='n/a', error=E, exception=exception)
         return stringout
     
     def loadintobytes(fileobj):
@@ -1003,7 +1028,8 @@ def loadobj2to3(filename=None, filestring=None, recursionlimit=None):
             bytesout  = unpickler2.load()
         except Exception as E:
             print('Warning, bytes pickle loading failed: %s' % str(E))
-            bytesout = makefailed(module_name='Bytes unpickler failed', name='n/a', error=E)
+            exception = traceback.format_exc() # Grab the trackback stack
+            bytesout = makefailed(module_name='Bytes unpickler failed', name='n/a', error=E, exception=exception)
         return bytesout
 
     # Load either from file or from string
