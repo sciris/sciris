@@ -42,10 +42,9 @@ class dataframe(object):
     Version: 2019mar25
     '''
 
-    def __init__(self, cols=None, data=None, nrows=None, pandify=True):
+    def __init__(self, cols=None, data=None, nrows=None):
         self.cols = None
         self.data = None
-        self.pandify = pandify
         self.make(cols=cols, data=data, nrows=nrows)
         return None
     
