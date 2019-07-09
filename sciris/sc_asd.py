@@ -18,17 +18,8 @@ def asd(function, x, args=None, stepsize=0.1, sinc=2, sdec=2, pinc=2, pdec=2,
     function value evaluated  at x. x0 can be a scalar, list, or Numpy array of 
     any size. 
     
-    The function returns an objdict (which can be accessed by index, key, or attribute)
-    with the following items:
-        x       -- The parameter set that minimizes the objective function
-        fval    -- The value of the objective function at each iteration (use fval[-1] for final)
-        details -- A objdict with additional output: exitreason, why the algorithm terminated;
-                   probabilities, the probability of each step; and stepsizes, the size of each
-                   step for each parameter
-    
     asd() has the following options that can be set using keyword arguments. Their
     names and default values are as follows:
-    
       stepsize       0.1     Initial step size as a fraction of each parameter
       sinc           2       Step size learning rate (increase)
       sdec           2       Step size learning rate (decrease)
@@ -47,11 +38,21 @@ def asd(function, x, args=None, stepsize=0.1, sinc=2, sdec=2, pinc=2, pdec=2,
       randseed       None    The random seed to use
       verbose        2       How much information to print during the run
       label          None    A label to use to annotate the output
+     
+    asd() returns an objdict (which can be accessed by index, key, or attribute)
+    with the following items:
+        x          -- The parameter set that minimizes the objective function
+        fval       -- The value of the objective function at the final iteration
+        exitreason -- Why the algorithm terminated;
+        details    -- A objdict with additional output: fvals, the value of the objective
+                      function at each iteration; xvals, the parameter values at each iteration;
+                      probabilities, the probability of each step; and stepsizes, the size of each
+                      step for each parameter.
   
     Example:
+        import numpy as np
         import sciris as sc
-        from numpy.linalg import norm
-        result = sc.asd(norm, [1, 2, 3])
+        result = sc.asd(np.linalg.norm, [1, 2, 3])
         print(result.x)
 
     Please use the following citation for this method:
