@@ -6,13 +6,13 @@ import pylab as pl
 import sciris as sc
 
 torun = [
-#'hex2rgb',
-#'gridcolors',
+'hex2rgb',
+'gridcolors',
 'surf3d',
-#'bar3d',
+'bar3d',
 ]
 
-doplot = True
+if 'doplot' not in locals(): doplot = True
 
 if 'hex2rgb' in torun:
     c1 = sc.hex2rgb('#fff')

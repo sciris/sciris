@@ -6,18 +6,22 @@ TESTALL
 Run all tests. It runs everything in the same namespace, but deletes variables that get
 added along the way.
 
-Version: 2018oct26
+Version: 2019jul09
 """
 
 ## Initialization
 from time import time as TIME # Use caps to distinguish 'global' variables
-from sys import exc_info as EXC_INFO, argv as ARGV
+from sys import exc_info as EXC_INFO
 from glob import glob as GLOB
 import os as OS
 
+doplot = False # Don't run plotting in batch
+
 
 ## Run the tests in a loop
-VARIABLES = []
+KEY = None
+ORIGINALVARIABLES = []
+CURRENTVARIABLES = []
 VERYSTART = TIME()
 FAILED = []
 SUCCEEDED = []
@@ -25,14 +29,15 @@ MASTER = GLOB(OS.path.dirname(OS.path.realpath(__file__))+OS.sep+'test_*.py') # 
 for TEST in MASTER:
     try:
         THISSTART = TIME()
-        VARIABLES = locals().keys() # Get the state before the test is run
+        ORIGINALVARIABLES = list(locals().keys()) # Get the state before the test is run
         print('\n'*10+'#'*200)
         print('NOW RUNNING: %s' % TEST)
         print('#'*200+'\n'*3)
         exec(open(TEST).read()) # Run the test!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
         SUCCEEDED.append({'test':TEST, 'time':TIME()-THISSTART})
-        for KEY in locals().keys(): # Clean up -- delete any new variables added
-            if KEY not in VARIABLES:
+        CURRENTVARIABLES = list(locals().keys())
+        for KEY in CURRENTVARIABLES: # Clean up -- delete any new variables added
+            if KEY not in ORIGINALVARIABLES:
                 print('       "%s" complete; deleting "%s"' % (TEST, KEY))
                 exec('del '+KEY)
     except:

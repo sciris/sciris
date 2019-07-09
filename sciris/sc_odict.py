@@ -674,10 +674,10 @@ class odict(OD):
             else:
                 # Handle cases where keys or keynames are not supplied
                 if keys is None:
-                    if isinstance(source, (list, tuple)):   keys = range(len(source))
-                    elif isinstance(source, dict): keys = source.keys()
-                    else:                          raise Exception('Unable to guess keys for object of type %s' % type(source))
-                keys = ut.promotetolist(keys) # Make sure it's a list
+                    if   isinstance(source, (list, tuple)):   keys = range(len(source))
+                    elif isinstance(source, dict):            keys = list(source.keys())
+                    else:                                     raise Exception('Unable to guess keys for object of type %s' % type(source))
+                keys = ut.promotetolist(keys) # Make sure it's a list -- note, does not convert other iterables to a list!
                 if keynames is None: keynames = keys # Use key names
                 
                 # Loop over supplied keys

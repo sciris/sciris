@@ -9,7 +9,7 @@ torun = [
 'parallelcmd'
 ]
 
-doplot = True
+if 'doplot' not in locals(): doplot = True
 
 
 
