@@ -6,14 +6,16 @@ TESTALL
 Run all tests. It runs everything in the same namespace, but deletes variables that get
 added along the way.
 
-Version: 2018oct26
+Version: 2019jul09
 """
 
 ## Initialization
 from time import time as TIME # Use caps to distinguish 'global' variables
-from sys import exc_info as EXC_INFO, argv as ARGV
+from sys import exc_info as EXC_INFO
 from glob import glob as GLOB
 import os as OS
+
+doplot = False # Don't run plotting in batch
 
 
 ## Run the tests in a loop

@@ -582,7 +582,10 @@ class dataframe(object):
     
     def sort(self, col=None, reverse=False):
         ''' Sort the data frame by the specified column(s)'''
+        if col is None:
+            col = 0 # Sort by first column by default
         cols = list(reversed(ut.promotetolist(col)))
+        sortorder = [] # In case there are no columns
         for col in cols:
             col = self._sanitizecol(col)
             sortorder = np.argsort(self.data[:,col], kind='mergesort') # To preserve order
@@ -590,9 +593,10 @@ class dataframe(object):
             self.data = self.data[sortorder,:]
         return sortorder
     
-    def sortcols(self, reverse=False):
-        sortorder = np.argsort(self.cols, kind='mergesort')
-        if reverse: sortorder = np.array(list(reversed(sortorder)))
+    def sortcols(self, sortorder=None, reverse=False):
+        if sortorder is None:
+            sortorder = np.argsort(self.cols, kind='mergesort')
+            if reverse: sortorder = np.array(list(reversed(sortorder)))
         self.cols = list(np.array(self.cols)[sortorder])
         self.data = self.data[:,sortorder]
         return sortorder

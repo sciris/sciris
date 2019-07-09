@@ -8,13 +8,17 @@ import scirisweb as sw
 
 
 torun = [
-#'blank', # An emtpy figure
-#'browser', # Simple example of three figures
+'blank', # An empty figure
+'browser', # Simple example of three figures
 'advanced', # Illustrates separate legend plotting and direct editing of the JSON
 ]
 
-if 'blank' in torun:
-    sw.browser()
+if 'doplot' not in locals(): doplot = True
+
+
+if 'blank' in torun and doplot:
+    if doplot:
+        sw.browser()
 
 
 if 'browser' in torun:
@@ -26,7 +30,8 @@ if 'browser' in torun:
     barfig = pl.figure()
     pl.bar(pl.arange(10), pl.rand(10))
     barjson = sw.mpld3ify(barfig)
-    sw.browser(figs=figs+[barjson])
+    if doplot:
+        sw.browser(figs=figs+[barjson])
 
 
 
@@ -47,4 +52,5 @@ if 'advanced' in torun:
     json2['axes'][0]['texts'][1]['text'] = 'mashed potatoes' # Change legend text
     json2['axes'][0]['paths'] = [] # Remove the box around the legend
     
-    sw.browser([json1, json2])
+    if doplot:
+        sw.browser([json1, json2])
