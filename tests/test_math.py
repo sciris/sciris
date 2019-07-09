@@ -9,7 +9,7 @@ torun = [
 'smooth',
 ]
 
-doplot = True
+if 'doplot' not in locals(): doplot = True
 
 if 'smooth' in torun:
     data = pl.randn(200,100)

@@ -42,10 +42,10 @@ class dataframe(object):
     Version: 2019mar25
     '''
 
-    def __init__(self, cols=None, data=None):
+    def __init__(self, cols=None, data=None, nrows=None):
         self.cols = None
         self.data = None
-        self.make(cols=cols, data=data)
+        self.make(cols=cols, data=data, nrows=nrows)
         return None
     
     def __repr__(self, spacing=2):
@@ -132,14 +132,28 @@ class dataframe(object):
                 output = None
         return output
     
-    def __getitem__(self, key=None, die=True):
+    @staticmethod
+    def _cast(arr):
+        ''' Attempt to cast an array to different data types '''
+        try: # Try to cast the whole array to the type of the first element
+            output = np.array(arr, dtype=type(arr[0]))
+            return output
+        except: # If anything goes wrong, do nothing
+            return arr
+        
+    
+    def __getitem__(self, key=None, die=True, cast=True):
         ''' Simple method for returning; see self.get() for a version based on col and row '''
         if ut.isstring(key): # e.g. df['a']
             colindex = self.cols.index(key)
             output = self.data[:,colindex]
+            if cast:
+                output = self._cast(output)
         elif ut.isnumber(key): # e.g. df[0]
             rowindex = int(key)
             output = self.data[rowindex,:]
+            if cast:
+                output = self._cast(output)
         elif ut.checktype(key, 'arraylike'): # e.g. df[[0,2,4]]
             rowindices = key
             rowdata = self.data[rowindices,:]
@@ -211,6 +225,8 @@ class dataframe(object):
             except:
                 self.data = np.vstack((self.data, np.array(value, dtype=object)))
         elif isinstance(key, tuple):
+            if ut.isstring(key[1]) and ut.isnumber(key[0]): # Keys supplied in opposite order
+                key = (key[1], key[0]) # Swap order
             if key[0] not in self.cols:
                 errormsg = 'Column name "%s" not found; available columns are:\n%s' % (key[0], '\n'.join(self.cols))
                 raise Exception(errormsg)
@@ -251,27 +267,31 @@ class dataframe(object):
         return self.nrows
     
     
-    def make(self, cols=None, data=None):
+    def make(self, cols=None, data=None, nrows=None):
         '''
         Creates a dataframe from the supplied input data. Usage examples:
             df = sc.dataframe()
             df = sc.dataframe(['a','b','c'])
+            df = sc.dataframe(['a','b','c'], nrows=2)
             df = sc.dataframe([['a','b','c'],[1,2,3],[4,5,6]])
             df = sc.dataframe(['a','b','c'], [[1,2,3],[4,5,6]])
             df = sc.dataframe(cols=['a','b','c'], data=[[1,2,3],[4,5,6]])
         '''
         
         # Handle columns
+        if nrows is None:
+            nrows = 0
         if cols is None and data is None:
             cols = list()
-            data = np.zeros((0,len(cols)), dtype=object) # Object allows more than just numbers to be stored
+            data = np.zeros((nrows, 0), dtype=object) # Object allows more than just numbers to be stored
         elif cols is None and data is not None: # Shouldn't happen, but if it does, swap inputs
             cols = data
             data = None
         
-        if not ut.isstring(pd):
+        if not ut.isstring(pd): # This is done because if pandas import fails, it replaes it with a string
             if isinstance(cols, pd.DataFrame): # It's actually a Pandas dataframe
                 self.pandas(df=cols)
+                return None # We're done
         else:
             print(pd)
         
@@ -285,7 +305,7 @@ class dataframe(object):
                 data = ut.dcp(cols[1:])
                 cols = ut.dcp(cols[0])
             else:
-                data = np.zeros((0,len(cols)), dtype=object) # Just use default
+                data = np.zeros((nrows,len(cols)), dtype=object) # Just use default
         data = np.array(data, dtype=object)
         if data.ndim != 2:
             if data.ndim == 1:
@@ -313,7 +333,7 @@ class dataframe(object):
         return None
     
     
-    def get(self, cols=None, rows=None):
+    def get(self, cols=None, rows=None, asarray=True, cast=True):
         '''
         More complicated way of getting data from a dataframe; example:
         df = dataframe(cols=['x','y','z'],data=[[1238,2,-1],[384,5,-2],[666,7,-3]]) # Create data frame
@@ -332,8 +352,14 @@ class dataframe(object):
         
         output = self.data[:,colindices][rowindices,:] # Split up so can handle non-consecutive entries in either
         if output.size == 1: output = output[0] # If it's a single element, return the value rather than the array
-        return output
-   
+        if asarray:
+            if cast:
+                output = self.cast(output)
+            return output
+        else:
+            df = dataframe(cols=np.array(self.cols)[colindices].tolist(), data=output)
+            return df
+
     def pop(self, key, returnval=True):
         ''' Remove a row from the data frame '''
         rowindex = int(key)
@@ -556,8 +582,11 @@ class dataframe(object):
         return None
     
     def sort(self, col=None, reverse=False):
-        ''' Sort the data frame by the specified column(s) -- WARNING, sortorder is not correct for >1 column'''
+        ''' Sort the data frame by the specified column(s)'''
+        if col is None:
+            col = 0 # Sort by first column by default
         cols = list(reversed(ut.promotetolist(col)))
+        sortorder = [] # In case there are no columns
         for col in cols:
             col = self._sanitizecol(col)
             sortorder = np.argsort(self.data[:,col], kind='mergesort') # To preserve order
@@ -565,9 +594,10 @@ class dataframe(object):
             self.data = self.data[sortorder,:]
         return sortorder
     
-    def sortcols(self, reverse=False):
-        sortorder = np.argsort(self.cols, kind='mergesort')
-        if reverse: sortorder = np.array(list(reversed(sortorder)))
+    def sortcols(self, sortorder=None, reverse=False):
+        if sortorder is None:
+            sortorder = np.argsort(self.cols, kind='mergesort')
+            if reverse: sortorder = np.array(list(reversed(sortorder)))
         self.cols = list(np.array(self.cols)[sortorder])
         self.data = self.data[:,sortorder]
         return sortorder

@@ -17,6 +17,7 @@ import uuid
 import pickle
 import types
 import datetime
+import traceback
 import numpy as np
 from glob import glob
 from gzip import GzipFile
@@ -61,7 +62,7 @@ def loadobj(filename=None, folder=None, verbose=False, die=None):
     if ut.isstring(filename): 
         argtype = 'filename'
         filename = makefilepath(filename=filename, folder=folder) # If it is a file, validate the folder
-    elif isinstance(filename, file): 
+    elif isinstance(filename, io.BytesIO): 
         argtype = 'fileobj'
     else:
         errormsg = 'First argument to loadobj() must be a string or file object, not %s' % type(filename)
@@ -797,10 +798,32 @@ class Failed(object):
     
     def __init__(self, *args, **kwargs):
         pass
+    
+    def __repr__(self):
+        output = ut.prepr(self) # This does not include failure_info since it's a class attribute
+        output += self.showfailures(verbose=False, tostring=True)
+        return output
+    
+    def showfailures(self, verbose=True, tostring=False):
+        output = ''
+        for f,failure in self.failure_info.enumvals():
+            output += '\nFailure %s of %s:\n' % (f+1, len(self.failure_info))
+            output += 'Module: %s\n' % failure['module']
+            output += 'Class: %s\n' % failure['class']
+            output += 'Error: %s\n' % failure['error']
+            if verbose:
+                output += '\nTraceback:\n'
+                output += failure['exception']
+                output += '\n\n'
+        if tostring:
+            return output
+        else:
+            print(output)
+            return None
 
 
 class Empty(object):
-    ''' Another empty class to represent a failed object loading '''
+    ''' Another empty class to represent a failed object loading, but do not proceed with setstate '''
     
     def __init__(self, *args, **kwargs):
         pass
@@ -809,13 +832,14 @@ class Empty(object):
         pass
 
 
-def makefailed(module_name=None, name=None, error=None):
+def makefailed(module_name=None, name=None, error=None, exception=None):
     ''' Create a class -- not an object! -- that contains the failure info '''
     key = 'Failure %s' % (len(Failed.failure_info)+1)
     Failed.failure_info[key] = odict()
     Failed.failure_info[key]['module'] = module_name
     Failed.failure_info[key]['class'] = name
-    Failed.failure_info[key]['error'] = repr(error)
+    Failed.failure_info[key]['error'] = error
+    Failed.failure_info[key]['exception'] = exception
     return Failed
 
 
@@ -826,7 +850,6 @@ class RobustUnpickler(pickle.Unpickler):
         pickle.Unpickler.__init__(self, tmpfile, fix_imports=fix_imports, encoding=encoding, errors=errors)
     
     def find_class(self, module_name, name, verbose=False):
-        obj = makefailed(module_name, name, 'Unknown error') # This should get overwritten unless something goes terribly wrong
         try:
             module = __import__(module_name)
             obj = getattr(module, name)
@@ -835,8 +858,9 @@ class RobustUnpickler(pickle.Unpickler):
                 string = 'from %s import %s as obj' % (module_name, name)
                 exec(string)
             except Exception as E:
-                if verbose: print('Unpickling warning: could not import %s.%s: %s' % (module_name, name, repr(E)))
-                obj = makefailed(module_name=module_name, name=name, error=E)
+                if verbose: print('Unpickling warning: could not import %s.%s: %s' % (module_name, name, str(E)))
+                exception = traceback.format_exc() # Grab the trackback stack
+                obj = makefailed(module_name=module_name, name=name, error=E, exception=exception)
         return obj
 
 
@@ -873,7 +897,7 @@ def unpickler(string=None, filename=None, filestring=None, die=None, verbose=Fal
     
     if isinstance(obj, Failed):
         print('Warning, the following errors were encountered during unpickling:')
-        print(obj.failure_info)
+        obj.showfailures(verbose=False)
     
     return obj
 
@@ -899,8 +923,11 @@ def savedill(fileobj=None, obj=None):
 not_string_pickleable = ['datetime', 'BytesIO']
 byte_objects = ['datetime', 'BytesIO', 'odict', 'spreadsheet', 'blobject']
 
-def loadobj2to3(filename=None, filestring=None):
-    ''' Used automatically by loadobj() to load Python2 objects in Python3 if all other loading methods fail '''
+def loadobj2to3(filename=None, filestring=None, recursionlimit=None):
+    '''
+    Used automatically by loadobj() to load Python2 objects in Python3 if all other 
+    loading methods fail. Uses a recursive approach, so can set a recursion limit.
+    '''
 
     class Placeholder():
         ''' Replace these corrupted classes with properly loaded ones '''
@@ -915,20 +942,41 @@ def loadobj2to3(filename=None, filestring=None):
             return
 
     class StringUnpickler(pickle.Unpickler):
-        def find_class(self, module, name):
+        def find_class(self, module, name, verbose=False):
+            if verbose: print('Unpickling string module %s , name %s' % (module, name))
             if name in not_string_pickleable:
                 return Empty
             else:
-                return pickle.Unpickler.find_class(self,module,name)
+                try:
+                    output = pickle.Unpickler.find_class(self,module,name)
+                except Exception as E:
+                    print('Warning, string unpickling could not find module %s, name %s: %s' % (module, name, str(E)))
+                    output = Empty
+                return output
 
     class BytesUnpickler(pickle.Unpickler):
-        def find_class(self, module, name):
+        def find_class(self, module, name, verbose=False):
+            if verbose: print('Unpickling bytes module %s , name %s' % (module, name))
             if name in byte_objects:
-                return pickle.Unpickler.find_class(self,module,name)
+                try:
+                    output = pickle.Unpickler.find_class(self,module,name)
+                except Exception as E:
+                    print('Warning, bytes unpickling could not find module %s, name %s: %s' % (module, name, str(E)))
+                    output = Placeholder
+                return output
             else:
                 return Placeholder
 
-    def recursive_substitute(obj1, obj2, track=None):
+    def recursive_substitute(obj1, obj2, track=None, recursionlevel=0, recursionlimit=None):
+        if recursionlimit is None: # Recursion limit
+            recursionlimit = 1000 # Better to die here than hit Python's recursion limit
+        
+        def recursion_warning(count, obj1, obj2):
+            output = 'Warning, internal recursion depth exceeded, aborting: depth=%s, %s -> %s' % (count, type(obj1), type(obj2))
+            return output
+        
+        recursionlevel += 1
+        
         if track is None:
             track = []
 
@@ -945,7 +993,10 @@ def loadobj2to3(filename=None, filestring=None):
                         k = k.decode('latin1')
                     track2 = track.copy()
                     track2.append(k)
-                    recursive_substitute(obj1[k], v, track2)
+                    if recursionlevel<=recursionlimit:
+                        recursionlevel = recursive_substitute(obj1[k], v, track2, recursionlevel, recursionlimit)
+                    else:
+                        print(recursion_warning(recursionlevel, obj1, obj2))
         else:
             for k,v in obj2.__dict__.items():
                 if isinstance(v,datetime.datetime):
@@ -955,31 +1006,52 @@ def loadobj2to3(filename=None, filestring=None):
                         k = k.decode('latin1')
                     track2 = track.copy()
                     track2.append(k)
-                    recursive_substitute(getattr(obj1,k), v, track2)
+                    if recursionlevel<=recursionlimit:
+                        recursionlevel = recursive_substitute(getattr(obj1,k), v, track2, recursionlevel, recursionlimit)
+                    else:
+                        print(recursion_warning(recursionlevel, obj1, obj2))
+        return recursionlevel
+    
+    def loadintostring(fileobj):
+        unpickler1 = StringUnpickler(fileobj, encoding='latin1')
+        try:
+            stringout = unpickler1.load()
+        except Exception as E:
+            print('Warning, string pickle loading failed: %s' % str(E))
+            exception = traceback.format_exc() # Grab the trackback stack
+            stringout = makefailed(module_name='String unpickler failed', name='n/a', error=E, exception=exception)
+        return stringout
+    
+    def loadintobytes(fileobj):
+        unpickler2 = BytesUnpickler(fileobj,  encoding='bytes')
+        try:
+            bytesout  = unpickler2.load()
+        except Exception as E:
+            print('Warning, bytes pickle loading failed: %s' % str(E))
+            exception = traceback.format_exc() # Grab the trackback stack
+            bytesout = makefailed(module_name='Bytes unpickler failed', name='n/a', error=E, exception=exception)
+        return bytesout
 
     # Load either from file or from string
     if filename:
         with GzipFile(filename) as fileobj:
-            unpickler1 = StringUnpickler(fileobj, encoding='latin1')
-            stringout = unpickler1.load()
+            stringout = loadintostring(fileobj)
         with GzipFile(filename) as fileobj:
-            unpickler2 = BytesUnpickler(fileobj,  encoding='bytes')
-            bytesout  = unpickler2.load()
+            bytesout = loadintobytes(fileobj)
+            
     elif filestring:
         with closing(IO(filestring)) as output: 
             with GzipFile(fileobj=output, mode='rb') as fileobj:
-                unpickler1 = StringUnpickler(fileobj, encoding='latin1')
-                stringout = unpickler1.load()
+                stringout = loadintostring(fileobj)
         with closing(IO(filestring)) as output:
             with GzipFile(fileobj=output, mode='rb') as fileobj:
-                unpickler2 = BytesUnpickler(fileobj,  encoding='bytes')
-                bytesout  = unpickler2.load()
+                bytesout = loadintobytes(fileobj)
     else:
         errormsg = 'You must supply either a filename or a filestring for loadobj() or loadstr(), respectively'
         raise Exception(errormsg)
     
     # Actually do the load, with correct substitution
-    recursive_substitute(stringout, bytesout)
+    recursive_substitute(stringout, bytesout, recursionlevel=0, recursionlimit=recursionlimit)
     return stringout
 
 
