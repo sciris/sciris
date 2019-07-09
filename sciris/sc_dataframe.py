@@ -288,7 +288,7 @@ class dataframe(object):
             cols = data
             data = None
         
-        if not ut.isstring(pd): # This is done because if pandas import fails, it replaes it with a string
+        if not ut.isstring(pd): # This is done because if pandas import fails, it replaces it with a string
             if isinstance(cols, pd.DataFrame): # It's actually a Pandas dataframe
                 self.pandas(df=cols)
                 return None # We're done
