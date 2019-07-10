@@ -76,6 +76,9 @@ def loadobj(filename=None, folder=None, verbose=False, die=None):
 
 
 def loadstr(string=None, verbose=False, die=None):
+    if string is None:
+        errormsg = 'loadstr() error: input received was None, not a string'
+        raise Exception(errormsg)
     with closing(IO(string)) as output: # Open a "fake file" with the Gzip string pickle in it.
         with GzipFile(fileobj=output, mode='rb') as fileobj: # Set a Gzip reader to pull from the "file."
             picklestring = fileobj.read() # Read the string pickle from the "file" (applying Gzip decompression).
