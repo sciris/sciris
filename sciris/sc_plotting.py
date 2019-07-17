@@ -668,7 +668,6 @@ def setylim(data=None, ax=None):
 
 def commaticks(fig=None, ax=None, axis='y'):
     ''' Use commas in formatting the y axis of a figure -- see http://stackoverflow.com/questions/25973581/how-to-format-axis-number-format-to-thousands-with-a-comma-in-matplotlib '''
-    from matplotlib import ticker
     if   ax  is not None: axlist = ut.promotetolist(ax)
     elif fig is not None: axlist = fig.axes
     else: raise Exception('Must supply either figure or axes')
