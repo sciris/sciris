@@ -283,7 +283,7 @@ class dataframe(object):
             nrows = 0
         if cols is None and data is None:
             cols = list()
-            data = np.zeros((nrows, 0), dtype=object) # Object allows more than just numbers to be stored
+            data = np.zeros((int(nrows), 0), dtype=object) # Object allows more than just numbers to be stored
         elif cols is None and data is not None: # Shouldn't happen, but if it does, swap inputs
             cols = data
             data = None
@@ -305,7 +305,7 @@ class dataframe(object):
                 data = ut.dcp(cols[1:])
                 cols = ut.dcp(cols[0])
             else:
-                data = np.zeros((nrows,len(cols)), dtype=object) # Just use default
+                data = np.zeros((int(nrows),len(cols)), dtype=object) # Just use default
         data = np.array(data, dtype=object)
         if data.ndim != 2:
             if data.ndim == 1:
