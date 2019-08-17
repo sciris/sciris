@@ -732,9 +732,15 @@ def colorize(color=None, string=None, output=False, showhelp=False, enable=True)
         return None
 
 
-def heading(string=None, color=None, divider=None, spaces=None, minlength=None, **kwargs):
+def heading(string=None, color=None, divider=None, spaces=None, minlength=None, maxlength=None, **kwargs):
     '''
-    Shortcut to sc.colorize() to create a heading. Examples:
+    Shortcut to sc.colorize() to create a heading. If just supplied with a string,
+    create blue text with horizontal lines above and below and 3 spaces above. You 
+    can customize the color, the divider character, how many spaces appear before 
+    the heading, and the minimum length of the divider (otherwise will expand to 
+    match the length of the string, up to a maximum length).
+    
+    Examples:
     
     >>> import sciris as sc
     >>> sc.heading('This is a heading')
@@ -758,11 +764,13 @@ def heading(string=None, color=None, divider=None, spaces=None, minlength=None, 
         else:             divider   = '-' # Keep it a string to be simple
     if spaces    is None: spaces    = 2
     if minlength is None: minlength = 30
+    if maxlength is None: maxlength = 200
     
-    length = max(minlength, len(string))
+    length = np.median([minlength, len(string), maxlength])
     space = '\n'*spaces
-    divider = '\n'+divider*length+'\n'
-    fullstring = space + divider + string + divider
+    if divider and length: fulldivider = '\n'+divider*length+'\n'
+    else:                  fulldivider = ''
+    fullstring = space + fulldivider + string + fulldivider
     output = colorize(color=color, string=fullstring, **kwargs)
     return output
 
