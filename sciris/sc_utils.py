@@ -772,21 +772,9 @@ def heading(string=None, color=None, divider=None, spaces=None, minlength=None, 
     
     Examples
     --------
-    
     >>> import sciris as sc
     >>> sc.heading('This is a heading')
-        
-    
-    
-    ——————————————————————————————
-    This is a heading
-    ——————————————————————————————
-    
     >>> sc.heading(string='This is also a heading', color='red', divider='*', spaces=0, minlength=50)
-    
-    **************************************************
-    This is also a heading
-    **************************************************
     '''
     if string    is None: string    = ''
     if color     is None: color     = 'blue'
