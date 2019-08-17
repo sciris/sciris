@@ -1,4 +1,4 @@
- # -*- coding: utf-8 -*-
+# -*- coding: utf-8 -*-
 
 ##############################################################################
 ### IMPORTS FROM OTHER LIBRARIES
@@ -29,7 +29,8 @@ if six.PY3:
     import urllib.request as urlrequester
     import html as htmlencoder
     htmldecoder = htmlencoder # New method, these are the same now
-    basestring = str # Not needed, but to avoid Python 3 linting warnings
+    basestring = bytes # Not needed, but to avoid Python 3 linting warnings
+    unicode = str # Ditto
 else:       
     _stringtypes = (basestring,)
     import urllib2 as urlrequester
@@ -740,7 +741,37 @@ def heading(string=None, color=None, divider=None, spaces=None, minlength=None, 
     the heading, and the minimum length of the divider (otherwise will expand to 
     match the length of the string, up to a maximum length).
     
-    Examples:
+    Parameters
+    ----------
+    string : str
+        The string to print as the heading
+    
+    color : str
+        The color to use for the heading (default blue)
+    
+    divider : str
+        The symbol to use for the divider (default em dash)
+    
+    spaces : int
+        The number of spaces to put before the heading
+    
+    minlength : int
+        The minimum length of the divider
+    
+    maxlength : int
+        The maximum length of the divider
+    
+    kwargs : dict
+        Arguments to pass to sc.colorize()
+    
+    
+    Returns
+    -------
+    None, unless specified to produce the string as output using output=True.
+        
+    
+    Examples
+    --------
     
     >>> import sciris as sc
     >>> sc.heading('This is a heading')
@@ -761,12 +792,12 @@ def heading(string=None, color=None, divider=None, spaces=None, minlength=None, 
     if color     is None: color     = 'blue'
     if divider   is None:
         if six.PY3:       divider   = '—' # Em dash for a continuous line
-        else:             divider   = '-' # Keep it a string to be simple
+        else:             divider   = '-' # For legacy support, keep it a string to be simple
     if spaces    is None: spaces    = 2
     if minlength is None: minlength = 30
-    if maxlength is None: maxlength = 200
+    if maxlength is None: maxlength = 120
     
-    length = np.median([minlength, len(string), maxlength])
+    length = int(np.median([minlength, len(string), maxlength]))
     space = '\n'*spaces
     if divider and length: fulldivider = '\n'+divider*length+'\n'
     else:                  fulldivider = ''
@@ -1143,10 +1174,6 @@ def timedsleep(delay=None, verbose=True):
         _delaytime = time.time()  # Store the present time in the global.
         return _delaytime         # Return the same stored number.
     else:
-        try:    
-            import pylab as pl
-        except Exception as E: 
-            raise Exception('Cannot use timedsleep() since pylab import failed: %s' % str(E))
         try:    start = _delaytime
         except: start = time.time()
         elapsed = time.time() - start
