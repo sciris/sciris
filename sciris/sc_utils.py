@@ -1,3 +1,5 @@
+ # -*- coding: utf-8 -*-
+
 ##############################################################################
 ### IMPORTS FROM OTHER LIBRARIES
 ##############################################################################
@@ -22,17 +24,18 @@ from collections import OrderedDict as OD
 from distutils.version import LooseVersion
 
 # Handle types and Python 2/3 compatibility
-if six.PY2: 
+if six.PY3: 
+    _stringtypes = (str, bytes)
+    import urllib.request as urlrequester
+    import html as htmlencoder
+    htmldecoder = htmlencoder # New method, these are the same now
+    basestring = str # Not needed, but to avoid Python 3 linting warnings
+else:       
     _stringtypes = (basestring,)
     import urllib2 as urlrequester
     import cgi as htmlencoder
     import HTMLParser
     htmldecoder = HTMLParser.HTMLParser() # Old method, have to define an instance
-else:       
-    _stringtypes = (str, bytes)
-    import urllib.request as urlrequester
-    import html as htmlencoder
-    htmldecoder = htmlencoder # New method, these are the same now
 _numtype    = numbers.Number
 
 # Add Windows support for colors (do this at the module level so that colorama.init() only gets called once)
@@ -171,7 +174,7 @@ def htmlify(string, reverse=False, tostring=False):
 
 __all__ += ['printv', 'blank', 'createcollist', 'objectid', 'objatt', 'objmeth', 'objrepr']
 __all__ += ['prepr', 'pr', 'indent', 'sigfig', 'printarr', 'printdata', 'printvars']
-__all__ += ['slacknotification', 'printtologfile', 'colorize']
+__all__ += ['slacknotification', 'printtologfile', 'colorize', 'heading']
 
 def printv(string, thisverbose=1, verbose=2, newline=True, indent=True):
     '''
@@ -727,6 +730,41 @@ def colorize(color=None, string=None, output=False, showhelp=False, enable=True)
         try:    print(ansistring) # Content, so print with newline
         except: print(string) # If that fails, just go with plain version
         return None
+
+
+def heading(string=None, color=None, divider=None, spaces=None, minlength=None, **kwargs):
+    '''
+    Shortcut to sc.colorize() to create a heading. Examples:
+    
+    >>> import sciris as sc
+    >>> sc.heading('This is a heading')
+        
+    
+    
+    ——————————————————————————————
+    This is a heading
+    ——————————————————————————————
+    
+    >>> sc.heading(string='This is also a heading', color='red', divider='*', spaces=0, minlength=50)
+    
+    **************************************************
+    This is also a heading
+    **************************************************
+    '''
+    if string    is None: string    = ''
+    if color     is None: color     = 'blue'
+    if divider   is None:
+        if six.PY3:       divider   = '—' # Em dash for a continuous line
+        else:             divider   = '-' # Keep it a string to be simple
+    if spaces    is None: spaces    = 2
+    if minlength is None: minlength = 30
+    
+    length = max(minlength, len(string))
+    space = '\n'*spaces
+    divider = '\n'+divider*length+'\n'
+    fullstring = space + divider + string + divider
+    output = colorize(color=color, string=fullstring, **kwargs)
+    return output
 
 
 
