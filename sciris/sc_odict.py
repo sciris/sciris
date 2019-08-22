@@ -805,7 +805,17 @@ class odict(OD):
 
 
 class objdict(odict):
-    ''' Exactly the same as an odict, but allows keys to be retrieved by object notiation '''
+    '''
+    Exactly the same as an odict, but allows keys to be set/retrieved by object 
+    notiation.
+    
+    Example
+    -------
+    >>> import sciris as sc
+    >>> od = sc.objdict({'height':1.65, 'mass':59})
+    >>> od.bmi = od.mass/od.height**2
+    '''
+    
     def __getattribute__(self, attr):
         try:
             output = odict.__getattribute__(self, attr)
@@ -816,3 +826,12 @@ class objdict(odict):
                 return output
             except:
                 raise E
+    
+    def __setattr__(self, name, value):
+        if hasattr(self, name):
+            print('Warning: setting an attribute rather than a key of an objdict is usually unintentional')
+            odict.__setattr__(self, name, value)
+        else:
+            odict.__setitem__(self, name, value)
+        return None
+            
