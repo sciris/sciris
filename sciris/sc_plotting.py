@@ -2,6 +2,7 @@
 ### IMPORTS
 ##############################################################################
 
+import os
 import six
 from struct import unpack
 import pylab as pl
@@ -714,7 +715,7 @@ def SIticks(fig=None, ax=None, axis='y', fixed=False):
 ### FIGURE SAVING
 ##############################################################################
 
-__all__ += ['savefigs', 'loadfig', 'emptyfig', 'separatelegend']
+__all__ += ['savefigs', 'loadfig', 'emptyfig', 'separatelegend', 'savemovie']
 
 
 
@@ -892,3 +893,142 @@ def separatelegend(ax=None, handles=None, labels=None, reverse=False, figsetting
     ax.legend(handles=handles2, labels=labels, **l_settings)
 
     return fig
+
+
+def savemovie(frames, filename=None, fps=None, quality=None, dpi=None, writer=None, bitrate=None, interval=None, repeat=False, repeat_delay=None, blit=False, verbose=True, **kwargs):
+    '''
+    Save a set of Matplotlib artists as a movie.
+    
+    Parameters
+    ----------
+    frames : list
+        The list of frames to animate
+    
+    filename : str
+        The name (or full path) of the file; expected to end with mp4 or gif (default movie.mp4)
+    
+    fps : int
+        The number of frames per second (default 10)
+    
+    quality : string
+        The quality of the movie, in terms of dpi (default "high" = 300 dpi)
+    
+    dpi : int
+        Instead of using quality, set an exact dpi
+    
+    writer : str or object
+        Specify the writer to be passed to matplotlib.animation.save() (default "ffmpeg")
+    
+    bitrate : int
+        The bitrate. Note, may be ignored; best to specify in a writer and to pass in the writer as an argument
+    
+    interval : int
+        The interval between frames; alternative to using fps
+    
+    repeat : bool
+        Whether or not to loop the animation (default False)
+        
+    repeat_delay : bool
+        Delay between repeats, if repeat=True (default None)
+    
+    blit : bool
+        Whether or not to "blit" the frames (default False, since otherwise does not detect changes )
+        
+    verbose : bool
+        Whether to print statistics on finishing.
+    
+    kwargs : dict
+        Passed to matplotlib.animation.save()
+    
+    
+    Returns
+    -------
+    anim : object
+        A Matplotlib animation object
+    
+    
+    Example
+    -------
+    import pylab as pl
+    import sciris as sc
+    nframes = 100 # Set the number of frames
+    ndots = 100 # Set the number of dots
+    axislim = 5*pl.sqrt(nframes) # Pick axis limits
+    dots = pl.zeros((ndots, 2)) # Initialize the dots
+    frames = [] # Initialize the frames
+    old_dots = sc.dcp(dots)
+    for i in range(nframes): # Loop over the frames
+        dots += pl.randn(ndots, 2) # Move the dots randomly
+        color = pl.norm(dots, axis=1) # Set the dot color
+        old = pl.array(old_dots) # Turn into an array
+        plot1 = pl.scatter(old[:,0], old[:,1], c='k') # Plot old dots in black
+        plot2 = pl.scatter(dots[:,0], dots[:,1], c=color) # Note: Frames will be combined here, but separate in the animation
+        pl.xlim((-axislim, axislim)) # Set the axis limits
+        pl.ylim((-axislim, axislim))
+        pl.title('Fleeing dots') # Note that unfortunately dynamic titles can't be 
+        frames.append((plot1, plot2)) # Store updated artists
+        old_dots = pl.vstack([old_dots, dots]) # Store the new dots as old dots
+    sc.savemovie(frames, 'fleeing_dots.mp4') # Actually save the movie!
+    
+    Version: 2019aug21
+    '''
+    
+    from matplotlib import animation # Place here since specific only to this function
+    
+    if not isinstance(frames, list):
+        raise Exception(f'savemovie(): Argument "frames" must be a list, not "{type(frames)}"')
+    for f in range(len(frames)):
+        if not isinstance(frames[f], tuple):
+            frames[f] = (frames[f],) # Stupidly, this must be a tuple to work with ArtistAnimation
+    
+    # Try to get the figure from the frames, else use the current one
+    try:    fig = frames[0][0].get_figure()
+    except: fig = pl.gcf()
+    
+    # Set parameters
+    if filename is None:
+        filename = 'movie.mp4'
+    if writer is None:
+        if   filename.endswith('mp4'): writer = 'ffmpeg'
+        elif filename.endswith('gif'): writer = 'imagemagick'
+        else: raise Exception(f'savemovie(): Unknown movie extension for file {filename}')
+    if fps is None:
+        fps = 10
+    if interval is None:
+        interval = 1000./fps
+        fps = 1000./interval # To ensure it's correct
+    
+    # Handle dpi/quality
+    if dpi is None and quality is None:
+        quality = 'high' # Make it high quailty by default
+    if isinstance(dpi, str):
+        quality = dpi # Interpret dpi arg as a quality command
+        dpi = None
+    if dpi is not None and quality is not None:
+        print(f'savemovie() warning: quality is simply a shortcut for dpi; please specify one or the other, not both (dpi={dpi}, quality={quality})')
+    if quality is not None:
+        if   quality == 'low':    dpi =  50
+        elif quality == 'medium': dpi = 150
+        elif quality == 'high':   dpi = 300
+        else: raise Exception(f'Quality must be high, medium, or low, not "{quality}"')
+    
+    # Optionally print progress
+    if verbose:
+        start = ut.tic()
+        print(f'Saving {len(frames)} frames at {fps} fps at {dpi} dpi to "{filename}" using {writer}...')
+    
+    # Actually create the animation -- warning, no way to not actually have it render!
+    anim = animation.ArtistAnimation(fig, frames, interval=interval, repeat_delay=repeat_delay, repeat=repeat, blit=blit)
+    anim.save(filename, writer=writer, fps=fps, dpi=dpi, bitrate=bitrate, **kwargs)
+
+    if verbose:
+        print(f'Movie saved to "{filename}"')
+        try: # Not essential, so don't try too hard if this doesn't work
+            filesize = os.path.getsize(filename)
+            if filesize<1e6: print('File size: %0.0f KB' % (filesize/1e3))
+            else:            print('File size: %0.2f MB' % (filesize/1e6))
+        except:
+            pass
+        ut.toc(start)
+    
+    return anim
