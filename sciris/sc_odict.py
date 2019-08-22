@@ -814,24 +814,36 @@ class objdict(odict):
     >>> import sciris as sc
     >>> od = sc.objdict({'height':1.65, 'mass':59})
     >>> od.bmi = od.mass/od.height**2
+    >>> od.keys = 3 # This will return an exception since od.keys already exists
     '''
     
     def __getattribute__(self, attr):
-        try:
+        try: # First, try to get the attribute as an attribute
             output = odict.__getattribute__(self, attr)
             return output
-        except Exception as E:
+        except Exception as E: # If that fails, try to get it as a dict item
             try:
                 output = odict.__getitem__(self, attr)
                 return output
-            except:
+            except: # If that fails, raise the original exception
                 raise E
     
-    def __setattr__(self, name, value):
-        if hasattr(self, name):
-            print('Warning: setting an attribute rather than a key of an objdict is usually unintentional')
-            odict.__setattr__(self, name, value)
-        else:
-            odict.__setitem__(self, name, value)
+    def __setattr__(self, name, value, forceattr=False):
+        ''' Set key in dict, not attribute! '''
+        
+        # Ensure 
+        try:
+            odict.__getattribute__(self, name) # Try retrieving this as an attribute, expect AttributeError...
+        except AttributeError:
+            return odict.__setitem__(self, name, value) # If so, simply return
+        
+        # Otherwise, raise an exception
+        errormsg = '"%s" exists as an attribute, so cannot be set as key; use setattribute() instead' % name
+        raise Exception(errormsg)
+        
         return None
+    
+    def setattribute(self, name, value):
+        ''' Set attribute if truly desired '''
+        return odict.__setattr__(self, name, value)
             
