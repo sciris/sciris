@@ -972,8 +972,8 @@ def savemovie(frames, filename=None, fps=None, quality=None, dpi=None, writer=No
         plot2 = pl.scatter(dots[:,0], dots[:,1], c=color) # Note: Frames will be separate in the animation
         pl.xlim((-axislim, axislim)) # Set x-axis limits
         pl.ylim((-axislim, axislim)) # Set y-axis limits
-        titlekwargs = {'transform':pl.gca().transAxes, 'horizontalalignment':'center'} # Set the "title" properties
-        title = pl.text(0.5, 1.05, f'Iteration {i+1}/{nframes}', **titlekwargs) # Unfortunately pl.title() can't be dynamically updated
+        kwargs = {'transform':pl.gca().transAxes, 'horizontalalignment':'center'} # Set the "title" properties
+        title = pl.text(0.5, 1.05, f'Iteration {i+1}/{nframes}', **kwargs) # Unfortunately pl.title() can't be dynamically updated
         pl.xlabel('Latitude') # But static labels are fine
         pl.ylabel('Longitude') # Ditto
         frames.append((plot1, plot2, title)) # Store updated artists
