@@ -583,14 +583,20 @@ pl.cm.register_cmap('bi', bicolormap())
 __all__ += ['ax3d', 'plot3d', 'scatter3d', 'surf3d', 'bar3d', 'boxoff', 'setaxislim', 'setxlim', 'setylim', 'commaticks', 'SItickformatter', 'SIticks']
 
 
-def ax3d(fig=None, returnfig=False, silent=False, **kwargs):
-    ''' Create a 3D axis to plot in -- all arguments are passed to figure() '''
+def ax3d(fig=None, returnfig=False, silent=False, elev=None, azim=None, **kwargs):
+    ''' Create a 3D axis to plot in -- all keyword arguments are passed to figure() '''
     from mpl_toolkits.mplot3d import Axes3D # analysis:ignore
+    
+    # Handle the figure
     if fig is None: 
-        fig = pl.figure(**kwargs)
+        fig = pl.figure(**kwargs) # It's necessary to have an open figure or else the commands won't work
     else:
         silent = False # Never close an already open figure
+    
+    # Create and initialize the axis
     ax = fig.gca(projection='3d')
+    if elev is not None and azim is not None:
+        ax.view_init(elev=elev, azim=azim)
     if silent:
         pl.close(fig)
     if returnfig:
@@ -608,7 +614,6 @@ def plot3d(x, y, z, c=None, fig=None, returnfig=False, plotkwargs=None, **kwargs
     
     # Create figure
     fig,ax = ax3d(returnfig=True, fig=fig, **kwargs)
-    ax.view_init(elev=45, azim=30)
 
     ax.plot(x, y, z, **settings)
 
@@ -627,7 +632,6 @@ def scatter3d(x, y, z, c=None, fig=None, returnfig=False, plotkwargs=None, **kwa
     
     # Create figure
     fig,ax = ax3d(returnfig=True, fig=fig, **kwargs)
-    ax.view_init(elev=45, azim=30)
 
     ax.scatter(x, y, z, c=c, **settings)
 
@@ -647,7 +651,6 @@ def surf3d(data, fig=None, returnfig=False, plotkwargs=None, colorbar=True, **kw
     
     # Create figure
     fig,ax = ax3d(returnfig=True, fig=fig, **kwargs)
-    ax.view_init(elev=45, azim=30)
     ny,nx = pl.array(data).shape
     x = np.arange(nx)
     y = np.arange(ny)

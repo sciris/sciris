@@ -1285,23 +1285,27 @@ def checkmem(origvariable, descend=False, order='n', plot=False, verbose=False):
 
 
 
-def runcommand(command, printinput=False, printoutput=False):
+def runcommand(command, printinput=False, printoutput=False, wait=True):
     '''
     Make it easier to run shell commands.
 
     Examples:
         myfiles = sc.runcommand('ls').split('\n') # Get a list of files in the current folder
         sc.runcommand('sshpass -f %s scp myfile.txt me@myserver:myfile.txt' % 'pa55w0rd', printinput=True, printoutput=True) # Copy a file remotely
+        sc.runcommand('sleep 600; mkdir foo', wait=False) # Waits 10 min, then creates the folder "foo", but the function returns immediately
     
-    Date: 2019jan15
+    Date: 2019sep04
     '''
     if printinput:
         print(command)
     try:
         p = subprocess.Popen(command, shell=True, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
-        stderr = p.stdout.read().decode("utf-8") # Somewhat confusingly, send stderr to stdout
-        stdout = p.communicate()[0].decode("utf-8") # ...and then stdout to the pipe
-        output = stdout + '\n' + stderr if stderr else stdout # Only include the error if it was non-empty
+        if wait: # Whether to run in the background
+            stderr = p.stdout.read().decode("utf-8") # Somewhat confusingly, send stderr to stdout
+            stdout = p.communicate()[0].decode("utf-8") # ...and then stdout to the pipe
+            output = stdout + '\n' + stderr if stderr else stdout # Only include the error if it was non-empty
+        else:
+            output = ''
     except Exception as E:
         output = 'runcommand(): shell command failed: %s' % str(E) # This is for a Python error, not a shell error -- those get passed to output
     if printoutput: 
