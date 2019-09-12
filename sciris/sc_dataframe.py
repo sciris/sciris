@@ -354,7 +354,7 @@ class dataframe(object):
         if output.size == 1: output = output[0] # If it's a single element, return the value rather than the array
         if asarray:
             if cast:
-                output = self.cast(output)
+                output = self._cast(output)
             return output
         else:
             df = dataframe(cols=np.array(self.cols)[colindices].tolist(), data=output)
