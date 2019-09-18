@@ -796,7 +796,7 @@ def savespreadsheet(filename=None, data=None, folder=None, sheetnames=None, clos
         
 __all__ += ['savepptx']
 
-def savepptx(filename=None, template=None, slides=None, image_path=None):
+def savepptx(filename=None, template=None, slides=None, image_path=''):
     '''
     :param filename: A name for the desired output document. It should end in .pptx.
     :param template: The filepath to the powerpoint template which is to be used.
@@ -989,7 +989,7 @@ def update_fail(presentation):
           " attributes according to the specifications of savepptx.")
     return presentation
 
-def update_custom(presentation, slide_details, slide_num, image_path=None):
+def update_custom(presentation, slide_details, slide_num, image_path=''):
     name = slide_details['style']
     slide = False
     for trial_slide in presentation.slides:
