@@ -793,6 +793,8 @@ def savespreadsheet(filename=None, data=None, folder=None, sheetnames=None, clos
 ##############################################################################
 ### Powerpoint functions
 ##############################################################################
+        
+__all__ += ['savepptx']
 
 def savepptx(filename=None, template=None, slides=None, image_path=None):
     '''
