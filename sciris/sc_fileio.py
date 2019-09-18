@@ -993,9 +993,19 @@ def update_fail(presentation):
 def update_custom(presentation, slide_details, slide_num, image_path=''):
     name = slide_details['style']
     slide = False
-    for trial_slide in presentation.slides:
-        if trial_slide.slide_layout.name == name:
-            slide = trial_slide
+    if len(presentation.slide_masters) > 1:
+        print('There are %d Slide Masters saved in this template, by default the first is being used. If this was not'
+              ' intended then please ensure that only one Slide Master is present in the template, or that the'
+              ' intended Slide Master is at the top of the order.' % len(presentation.slide_masters))
+        master_layouts = presentation.slide_masters[0].slide_layouts
+    elif len(presentation.slide_masters) == 1:
+        master_layouts = presentation.slide_masters[0].slide_layouts
+    else:
+        presentation = update_fail(presentation)
+        return presentation
+    for layout in master_layouts:
+        if layout.name == name:
+            slide = presentation.slides.add_slide(layout)
     if slide:
         for shape in slide.placeholders:
             if 'title' in slide_details.keys() and 'Title' in shape.name:
@@ -1009,6 +1019,7 @@ def update_custom(presentation, slide_details, slide_num, image_path=''):
 #                                                       , height=shape.height, width=shape.width
                                                        )
                         del slide_details[entry]
+                        shape.element.getparent().remove(shape.element)
                         break
             elif 'Text' in shape.name or 'Content' in shape.name:
                 for entry in slide_details.keys():
