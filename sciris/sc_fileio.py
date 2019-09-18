@@ -796,6 +796,7 @@ def savespreadsheet(filename=None, data=None, folder=None, sheetnames=None, clos
         
 __all__ += ['savepptx']
 
+
 def savepptx(filename=None, template=None, slides=None, image_path=''):
     '''
     :param filename: A name for the desired output document. It should end in .pptx.
@@ -1004,8 +1005,9 @@ def update_custom(presentation, slide_details, slide_num, image_path=''):
                     if 'im' in entry or 'pic' in entry or 'leg' in entry:
                         image_name = slide_details[entry]
                         img_path = os.path.join(image_path, image_name)
-                        pic = slide.shapes.add_picture(img_path, shape.left, shape.top, height=shape.height,
-                                                       width=shape.width)
+                        pic = slide.shapes.add_picture(img_path, shape.left, shape.top, width=shape.width
+#                                                       , height=shape.height, width=shape.width
+                                                       )
                         del slide_details[entry]
                         break
             elif 'Text' in shape.name or 'Content' in shape.name:
