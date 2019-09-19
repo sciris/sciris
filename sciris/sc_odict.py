@@ -674,10 +674,10 @@ class odict(OD):
             else:
                 # Handle cases where keys or keynames are not supplied
                 if keys is None:
-                    if isinstance(source, (list, tuple)):   keys = range(len(source))
-                    elif isinstance(source, dict): keys = source.keys()
-                    else:                          raise Exception('Unable to guess keys for object of type %s' % type(source))
-                keys = ut.promotetolist(keys) # Make sure it's a list
+                    if   isinstance(source, (list, tuple)):   keys = range(len(source))
+                    elif isinstance(source, dict):            keys = list(source.keys())
+                    else:                                     raise Exception('Unable to guess keys for object of type %s' % type(source))
+                keys = ut.promotetolist(keys) # Make sure it's a list -- note, does not convert other iterables to a list!
                 if keynames is None: keynames = keys # Use key names
                 
                 # Loop over supplied keys
@@ -805,14 +805,45 @@ class odict(OD):
 
 
 class objdict(odict):
-    ''' Exactly the same as an odict, but allows keys to be retrieved by object notiation '''
+    '''
+    Exactly the same as an odict, but allows keys to be set/retrieved by object 
+    notiation.
+    
+    Example
+    -------
+    >>> import sciris as sc
+    >>> od = sc.objdict({'height':1.65, 'mass':59})
+    >>> od.bmi = od.mass/od.height**2
+    >>> od.keys = 3 # This will return an exception since od.keys already exists
+    '''
+    
     def __getattribute__(self, attr):
-        try:
+        try: # First, try to get the attribute as an attribute
             output = odict.__getattribute__(self, attr)
             return output
-        except Exception as E:
+        except Exception as E: # If that fails, try to get it as a dict item
             try:
                 output = odict.__getitem__(self, attr)
                 return output
-            except:
+            except: # If that fails, raise the original exception
                 raise E
+    
+    def __setattr__(self, name, value, forceattr=False):
+        ''' Set key in dict, not attribute! '''
+        
+        # Ensure 
+        try:
+            odict.__getattribute__(self, name) # Try retrieving this as an attribute, expect AttributeError...
+        except AttributeError:
+            return odict.__setitem__(self, name, value) # If so, simply return
+        
+        # Otherwise, raise an exception
+        errormsg = '"%s" exists as an attribute, so cannot be set as key; use setattribute() instead' % name
+        raise Exception(errormsg)
+        
+        return None
+    
+    def setattribute(self, name, value):
+        ''' Set attribute if truly desired '''
+        return odict.__setattr__(self, name, value)
+            

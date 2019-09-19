@@ -1,7 +1,13 @@
+'''
+Note -- unlike most Sciris modules, which simply define code, this executes the
+colormap functions and registers them with Matplotlib.
+'''
+
 ##############################################################################
 ### IMPORTS
 ##############################################################################
 
+import os
 import six
 from struct import unpack
 import pylab as pl
@@ -19,8 +25,7 @@ from . import sc_fileio as fio
 ### COLOR FUNCTIONS
 ##############################################################################
 
-__all__ = ['shifthue', 'gridcolors', 'alpinecolormap', 'vectocolor', 'bicolormap', 'hex2rgb', 'rgb2hex', 'rgb2hsv', 'hsv2rgb'] # apinecolortest and bicolormaptest not included
-
+__all__ = ['shifthue', 'hex2rgb', 'rgb2hex', 'rgb2hsv', 'hsv2rgb']
 
 def _listify_colors(colors, origndim=None):
     ''' Do standard transformation on colors -- internal helpfer function '''
@@ -35,6 +40,7 @@ def _listify_colors(colors, origndim=None):
         if origndim==1: 
             colors = colors[0] # Pull it out again
         return colors
+
 
 
 def _processcolors(colors=None, asarray=False, ashex=False, reverse=False):
@@ -58,6 +64,7 @@ def _processcolors(colors=None, asarray=False, ashex=False, reverse=False):
     return output
 
 
+
 def shifthue(colors=None, hueshift=0.0):
     '''
     Shift the hue of the colors being fed in.
@@ -75,10 +82,123 @@ def shifthue(colors=None, hueshift=0.0):
     return colors
 
 
-def gridcolors(ncolors=10, limits=None, nsteps=20, asarray=False, ashex=False, reverse=False, hueshift=0, basis='default', doplot=False):
-    """
-    GRIDCOLORS
 
+def hex2rgb(string):
+    ''' A little helper function to convert e.g. '86bc25' to a pleasing shade of green. '''
+    if string[0] == '#':
+        string = string[1:] # Trim leading #, if it exists
+    if len(string)==3:
+        string = string[0]*2+string[1]*2+string[2]*2 # Convert e.g. '8b2' to '88bb22'
+    if len(string)!=6:
+        errormsg = 'Cannot convert "%s" to an RGB color:must be 3 or 6 characters long' % string
+        raise Exception(errormsg)
+    if six.PY3: hexstring = bytes.fromhex(string) # Ensure it's the right type
+    else:       hexstring = string.decode('hex')
+    rgb = np.array(unpack('BBB',hexstring),dtype=float)/255.
+    return rgb
+
+
+
+def rgb2hex(arr):
+    ''' And going back the other way '''
+    arr = np.array(arr)
+    if len(arr) != 3:
+        errormsg = 'Cannot convert "%s" to hex: wrong length' % arr
+        raise Exception(errormsg)
+    if all(arr<=1): arr *= 255. # Convert from 0-1 to 0-255
+    hexstr = '#%02x%02x%02x' % (int(arr[0]), int(arr[1]), int(arr[2]))
+    return hexstr
+
+
+
+def rgb2hsv(colors=None):
+    ''' Shortcut to Matplotlib's rgb_to_hsv method, accepts a color triplet or a list/array of color triplets '''
+    colors, origndim = _listify_colors(colors)
+    for c,color in enumerate(colors):
+        hsvcolor = rgb_to_hsv(color)
+        colors[c] = hsvcolor
+    colors = _listify_colors(colors, origndim)
+    return colors
+
+
+
+def hsv2rgb(colors=None):
+    ''' Shortcut to Matplotlib's hsv_to_rgb method, accepts a color triplet or a list/array of color triplets '''
+    colors, origndim = _listify_colors(colors)
+    for c,color in enumerate(colors):
+        hsvcolor = hsv_to_rgb(color)
+        colors[c] = hsvcolor
+    colors = _listify_colors(colors, origndim)
+    return colors
+
+
+
+##############################################################################
+### COLORMAPS
+##############################################################################
+
+__all__ += ['vectocolor', 'gridcolors', 'colormapdemo', 'alpinecolormap', 'bicolormap', 'parulacolormap', 'bandedcolormap']
+
+def vectocolor(vector, cmap=None, asarray=True, reverse=False):
+   """
+   This function converts a vector of N values into an Nx3 matrix of color
+   values according to the current colormap. It automatically scales the 
+   vector to provide maximum dynamic range for the color map.
+
+   Usage:
+       colors = vectocolor(vector,cmap=None)
+
+   where:
+       colors is an Nx4 list of RGB-alpha color values
+       vector is the input vector (or list, it's converted to an array)
+       cmap is the colormap (default: jet)
+
+   Example:
+       n = 1000
+       x = randn(n,1);
+       y = randn(n,1);
+       c = vectocolor(y);
+       scatter(x,y,20,c)
+
+   Version: 2018sep25
+   """
+   
+   from numpy import array, zeros
+   from pylab import cm
+   
+   if cmap==None:
+      cmap = cm.jet
+   elif type(cmap)==str:
+      try: cmap = getattr(cm,cmap)
+      except: raise Exception('%s is not a valid color map; choices are:\n%s' % (cmap, '\n'.join(sorted(cm.datad.keys()))))
+
+    # If a scalar is supplied, convert it to a vector instead
+   if ut.isnumber(vector):
+        vector = np.arange(vector)
+
+   # The vector has elements
+   if len(vector):
+      vector = np.array(vector) # Just to be sure
+      vector = vector-vector.min() # Subtract minimum
+      vector = vector/float(vector.max()) # Divide by maximum
+      nelements = len(vector) # Count number of elements
+      colors=zeros((nelements,4))
+      for i in range(nelements):
+         colors[i,:]=array(cmap(vector[i]))
+
+   # It doesn't; just return black
+   else:
+       colors=(0,0,0,1)
+   
+   # Process output
+   output = _processcolors(colors=colors, asarray=asarray, reverse=reverse)
+
+   return output
+
+
+
+def gridcolors(ncolors=10, limits=None, nsteps=20, asarray=False, ashex=False, reverse=False, hueshift=0, basis='default', demo=False):
+    """
     Create a qualitative "color map" by assigning points according to the maximum pairwise distance in the
     color cube. Basically, the algorithm generates n points that are maximally uniformly spaced in the
     [R, G, B] color cube.
@@ -93,16 +213,16 @@ def gridcolors(ncolors=10, limits=None, nsteps=20, asarray=False, ashex=False, r
 
     Usage example:
         from pylab import *
-        from colortools import gridcolors
+        from sciris import gridcolors
         ncolors = 10
         piedata = rand(ncolors)
         colors = gridcolors(ncolors)
         figure()
         pie(piedata, colors=colors)
-        gridcolors(ncolors, doplot=True)
+        gridcolors(ncolors, demo=True)
         show()
 
-    Version: 2.0 (2018oct30) 
+    Version: 2018oct30
     """
     
     # Choose default colors
@@ -175,7 +295,7 @@ def gridcolors(ncolors=10, limits=None, nsteps=20, asarray=False, ashex=False, r
     output = _processcolors(colors=colors, asarray=asarray, ashex=ashex, reverse=reverse)
     
     ## For plotting -- optional
-    if doplot:
+    if demo:
         from mpl_toolkits.mplot3d import Axes3D # analysis:ignore
         fig = pl.figure(facecolor='w')
         ax = fig.add_subplot(111, projection='3d')
@@ -191,27 +311,80 @@ def gridcolors(ncolors=10, limits=None, nsteps=20, asarray=False, ashex=False, r
     
     
 
+def colormapdemo(cmap, n=None, smoothing=None, randseed=None):
+    '''
+    Demonstrate a color map using simulated elevation data, shown in both 2D and
+    3D. The argument can be either a colormap itself or a string describing a
+    colormap.
+    
+    Examples:
+        sc.colormapdemo('inferno') # Use a registered Matplotlib colormap
+        sc.colormapdemo('parula') # Use a registered Sciris colormap
+        sc.colormapdemo(sc.alpinecolormap(), n=200, smoothing=20, randseed=2942) # Use a colormap object
+    
+    Version: 2019aug22
+    '''
+    
+    # Set data
+    if n         is None: n         = 100
+    if smoothing is None: smoothing = 40
+    if randseed  is None: randseed  = 8
+    maxheight = 1
+    horizontalsize = 4
+    pl.seed(randseed)
+    kernel = np.array([0.25,0.5,0.25])
+    data = pl.randn(n,n)
+    for s in range(smoothing): # Quick-and-dirty-and-slow smoothing
+        for i in range(n): data[:,i] = np.convolve(data[:,i],kernel,mode='same')
+        for i in range(n): data[i,:] = np.convolve(data[i,:],kernel,mode='same')
+    data -= data.min()
+    data /= data.max()
+    data *= maxheight
+    
+    # Plot in 2D
+    fig1 = pl.figure(figsize=(10,8))
+    X = np.linspace(0,horizontalsize,n)
+    pcl = pl.pcolor(X, X, data, cmap=cmap, linewidth=0, antialiased=False)
+    cb2 = fig1.colorbar(pcl)
+    cb2.set_label('Height (km)',horizontalalignment='right', labelpad=50)
+    pl.xlabel('Position (km)')
+    pl.ylabel('Position (km)')
+    pl.show()
 
-## Create colormap
-def alpinecolormap(gap=0.1, mingreen=0.2, redbluemix=0.5, epsilon=0.01, demo=False):
+    # Plot in 3D
+    fig2,ax2 = ax3d(returnfig=True, figsize=(18,8))
+    ax2.view_init(elev=45, azim=30)
+    X = np.linspace(0,horizontalsize,n)
+    X, Y = np.meshgrid(X, X)
+    surf = ax2.plot_surface(X, Y, data, rstride=1, cstride=1, cmap=cmap, linewidth=0, antialiased=False)
+    cb = fig2.colorbar(surf)
+    cb.set_label('Height (km)',horizontalalignment='right', labelpad=50)
+    pl.xlabel('Position (km)')
+    pl.ylabel('Position (km)')
+    pl.show()
+    
+    return {'2d':fig1, '3d':fig2}
+    
+
+
+def alpinecolormap():
     """
-    ALPINECOLORMAP
- 
-    This program generates a map based on ascending height. Based on data from
+    This function generates a map based on ascending height. Based on data from
     Kazakhstan.
  
     Test case:
-    import alpinecolormap
-    alpinecolormap.testcolormap()
+        sc.colormapdemo('alpine')
  
     Usage example:
-    from alpinecolormap import alpinecolormap
-    from pylab import randn, imshow, show
-    imshow(randn(20,20),interpolation='none',cmap=alpinecolormap())
-    show()
+        import sciris as sc
+        import pylab as pl
+        from pylab import randn, imshow, show
+        pl.imshow(pl.randn(20,20), interpolation='none', cmap=sc.alpinecolormap())
  
-    Version: 2014aug06 
+    Version: 2014aug06
     """
+    
+    # Set parameters
     water = np.array([3,18,59])/256.
     desert = np.array([194,175,160*0.6])/256.
     forest1 = np.array([61,86,46])/256.
@@ -220,6 +393,7 @@ def alpinecolormap(gap=0.1, mingreen=0.2, redbluemix=0.5, epsilon=0.01, demo=Fal
     snow = np.array([243,239,238])/256.
     breaks = [0.0,0.5,0.7,0.8,0.9,1.0]
     
+    # Create dictionary
     cdict = {'red': ((breaks[0], water[0], water[0]),
                      (breaks[1], desert[0], desert[0]),
                      (breaks[2], forest1[0], forest1[0]),
@@ -241,115 +415,15 @@ def alpinecolormap(gap=0.1, mingreen=0.2, redbluemix=0.5, epsilon=0.01, demo=Fal
                      (breaks[4], rock[2], rock[2]),
                      (breaks[5], snow[2], snow[2]))}
     
-    cmap = makecolormap('alpinecolormap',cdict,256)
-   
-   
-    def demoplot():
-        maxheight = 3
-        horizontalsize = 4;
-        pl.seed(8)
-        n = 100
-        smoothing = 40;
-        kernel = np.array([0.25,0.5,0.25])
-        data = pl.randn(n,n)
-        for s in range(smoothing): # Quick-and-dirty-and-slow smoothing
-            for i in range(n): data[:,i] = np.convolve(data[:,i],kernel,mode='same')
-            for i in range(n): data[i,:] = np.convolve(data[i,:],kernel,mode='same')
-        data -= data.min()
-        data /= data.max()
-        data *= maxheight
-        
-        fig,ax = ax3d(returnfig=True, figsize=(18,8))
-        ax.view_init(elev=45, azim=30)
-        X = np.linspace(0,horizontalsize,n)
-        X, Y = np.meshgrid(X, X)
-        surf = ax.plot_surface(X, Y, data, rstride=1, cstride=1, cmap=alpinecolormap(), linewidth=0, antialiased=False)
-        cb = fig.colorbar(surf)
-        cb.set_label('Height (km)',horizontalalignment='right', labelpad=50)
-        pl.xlabel('Position (km)')
-        pl.ylabel('Position (km)')
-        pl.show()
-    
-        fig = pl.figure(figsize=(8,6))
-        ax = fig.gca()
-        X = np.linspace(0,horizontalsize,n)
-        pcl = pl.pcolor(X, X, data, cmap=alpinecolormap(), linewidth=0, antialiased=False)
-        cb2 = fig.colorbar(pcl)
-        cb2.set_label('Height (km)',horizontalalignment='right', labelpad=50)
-        pl.xlabel('Position (km)')
-        pl.ylabel('Position (km)')
-        pl.show()
-        
-    if demo: demoplot()
-
+    # Make map
+    cmap = makecolormap('alpine', cdict, 256)
     return cmap
 
 
 
-def vectocolor(vector, cmap=None, asarray=True, reverse=False):
-   """
-   VECTOCOLOR
-   This function converts a vector of N values into an Nx3 matrix of color
-   values according to the current colormap. It automatically scales the 
-   vector to provide maximum dynamic range for the color map.
-
-   Usage:
-   colors = vectocolor(vector,cmap=None)
-
-   where:
-   colors is an Nx4 list of RGB-alpha color values
-   vector is the input vector (or list, it's converted to an array)
-   cmap is the colormap (default: jet)
-
-   Example:
-   n = 1000
-   x = randn(n,1);
-   y = randn(n,1);
-   c = vectocolor(y);
-   scatter(x,y,20,c)
-
-   Version: 2018sep25
-   """
-   from numpy import array, zeros
-   from pylab import cm
-   
-   if cmap==None:
-      cmap = cm.jet
-   elif type(cmap)==str:
-      try: cmap = getattr(cm,cmap)
-      except: raise Exception('%s is not a valid color map; choices are:\n%s' % (cmap, '\n'.join(sorted(cm.datad.keys()))))
-
-    # If a scalar is supplied, convert it to a vector instead
-   if ut.isnumber(vector):
-        vector = np.arange(vector)
-
-   # The vector has elements
-   if len(vector):
-      vector = np.array(vector) # Just to be sure
-      vector = vector-vector.min() # Subtract minimum
-      vector = vector/float(vector.max()) # Divide by maximum
-      nelements = len(vector) # Count number of elements
-      colors=zeros((nelements,4))
-      for i in range(nelements):
-         colors[i,:]=array(cmap(vector[i]))
-
-   # It doesn't; just return black
-   else:
-       colors=(0,0,0,1)
-   
-   # Process output
-   output = _processcolors(colors=colors, asarray=asarray, reverse=reverse)
-
-   return output
-
-
-
-## Create colormap
 def bicolormap(gap=0.1, mingreen=0.2, redbluemix=0.5, epsilon=0.01, demo=False):
     """
-    BICOLORMAP
- 
-    This program generators a two-color map, blue for negative, red for
+    This function generators a two-color map, blue for negative, red for
     positive changes, with grey in the middle. The input argument is how much
     of a color gap there is between the red scale and the blue one.
  
@@ -366,8 +440,6 @@ def bicolormap(gap=0.1, mingreen=0.2, redbluemix=0.5, epsilon=0.01, demo=False):
  
     Version: 2013sep13 
     """
-    from matplotlib.colors import LinearSegmentedColormap as makecolormap
-    
     mng=mingreen; # Minimum amount of green to add into the colors
     mix=redbluemix; # How much red to mix with the blue an vice versa
     eps=epsilon; # How much of the center of the colormap to make gray
@@ -414,73 +486,137 @@ def bicolormap(gap=0.1, mingreen=0.2, redbluemix=0.5, epsilon=0.01, demo=False):
     return cmap
 
 
+def parulacolormap():
+    '''
+    Create a map similar to Viridis, but brighter.
+    
+    Demo and example:
+        cmap = sc.parulacolormap()
+        sc.colormapdemo(cmap=cmap)
+    
+    Version: 2019aug22
+    '''
+    data = [[0.2422,0.1504,0.6603], [0.2444,0.1534,0.6728], [0.2464,0.1569,0.6847], [0.2484,0.1607,0.6961], [0.2503,0.1648,0.7071], [0.2522,0.1689,0.7179], [0.2540,0.1732,0.7286], [0.2558,0.1773,0.7393],
+            [0.2576,0.1814,0.7501], [0.2594,0.1854,0.7610], [0.2611,0.1893,0.7719], [0.2628,0.1932,0.7828], [0.2645,0.1972,0.7937], [0.2661,0.2011,0.8043], [0.2676,0.2052,0.8148], [0.2691,0.2094,0.8249],
+            [0.2704,0.2138,0.8346], [0.2717,0.2184,0.8439], [0.2729,0.2231,0.8528], [0.2740,0.2280,0.8612], [0.2749,0.2330,0.8692], [0.2758,0.2382,0.8767], [0.2766,0.2435,0.8840], [0.2774,0.2489,0.8908],
+            [0.2781,0.2543,0.8973], [0.2788,0.2598,0.9035], [0.2794,0.2653,0.9094], [0.2798,0.2708,0.9150], [0.2802,0.2764,0.9204], [0.2806,0.2819,0.9255], [0.2809,0.2875,0.9305], [0.2811,0.2930,0.9352],
+            [0.2813,0.2985,0.9397], [0.2814,0.3040,0.9441], [0.2814,0.3095,0.9483], [0.2813,0.3150,0.9524], [0.2811,0.3204,0.9563], [0.2809,0.3259,0.9600], [0.2807,0.3313,0.9636], [0.2803,0.3367,0.9670],
+            [0.2798,0.3421,0.9702], [0.2791,0.3475,0.9733], [0.2784,0.3529,0.9763], [0.2776,0.3583,0.9791], [0.2766,0.3638,0.9817], [0.2754,0.3693,0.9840], [0.2741,0.3748,0.9862], [0.2726,0.3804,0.9881],
+            [0.2710,0.3860,0.9898], [0.2691,0.3916,0.9912], [0.2670,0.3973,0.9924], [0.2647,0.4030,0.9935], [0.2621,0.4088,0.9946], [0.2591,0.4145,0.9955], [0.2556,0.4203,0.9965], [0.2517,0.4261,0.9974],
+            [0.2473,0.4319,0.9983], [0.2424,0.4378,0.9991], [0.2369,0.4437,0.9996], [0.2311,0.4497,0.9995], [0.2250,0.4559,0.9985], [0.2189,0.4620,0.9968], [0.2128,0.4682,0.9948], [0.2066,0.4743,0.9926],
+            [0.2006,0.4803,0.9906], [0.1950,0.4861,0.9887], [0.1903,0.4919,0.9867], [0.1869,0.4975,0.9844], [0.1847,0.5030,0.9819], [0.1831,0.5084,0.9793], [0.1818,0.5138,0.9766], [0.1806,0.5191,0.9738],
+            [0.1795,0.5244,0.9709], [0.1785,0.5296,0.9677], [0.1778,0.5349,0.9641], [0.1773,0.5401,0.9602], [0.1768,0.5452,0.9560], [0.1764,0.5504,0.9516], [0.1755,0.5554,0.9473], [0.1740,0.5605,0.9432],
+            [0.1716,0.5655,0.9393], [0.1686,0.5705,0.9357], [0.1649,0.5755,0.9323], [0.1610,0.5805,0.9289], [0.1573,0.5854,0.9254], [0.1540,0.5902,0.9218], [0.1513,0.5950,0.9182], [0.1492,0.5997,0.9147],
+            [0.1475,0.6043,0.9113], [0.1461,0.6089,0.9080], [0.1446,0.6135,0.9050], [0.1429,0.6180,0.9022], [0.1408,0.6226,0.8998], [0.1383,0.6272,0.8975], [0.1354,0.6317,0.8953], [0.1321,0.6363,0.8932],
+            [0.1288,0.6408,0.8910], [0.1253,0.6453,0.8887], [0.1219,0.6497,0.8862], [0.1185,0.6541,0.8834], [0.1152,0.6584,0.8804], [0.1119,0.6627,0.8770], [0.1085,0.6669,0.8734], [0.1048,0.6710,0.8695],
+            [0.1009,0.6750,0.8653], [0.0964,0.6789,0.8609], [0.0914,0.6828,0.8562], [0.0855,0.6865,0.8513], [0.0789,0.6902,0.8462], [0.0713,0.6938,0.8409], [0.0628,0.6972,0.8355], [0.0535,0.7006,0.8299],
+            [0.0433,0.7039,0.8242], [0.0328,0.7071,0.8183], [0.0234,0.7103,0.8124], [0.0155,0.7133,0.8064], [0.0091,0.7163,0.8003], [0.0046,0.7192,0.7941], [0.0019,0.7220,0.7878], [0.0009,0.7248,0.7815],
+            [0.0018,0.7275,0.7752], [0.0046,0.7301,0.7688], [0.0094,0.7327,0.7623], [0.0162,0.7352,0.7558], [0.0253,0.7376,0.7492], [0.0369,0.7400,0.7426], [0.0504,0.7423,0.7359], [0.0638,0.7446,0.7292],
+            [0.0770,0.7468,0.7224], [0.0899,0.7489,0.7156], [0.1023,0.7510,0.7088], [0.1141,0.7531,0.7019], [0.1252,0.7552,0.6950], [0.1354,0.7572,0.6881], [0.1448,0.7593,0.6812], [0.1532,0.7614,0.6741],
+            [0.1609,0.7635,0.6671], [0.1678,0.7656,0.6599], [0.1741,0.7678,0.6527], [0.1799,0.7699,0.6454], [0.1853,0.7721,0.6379], [0.1905,0.7743,0.6303], [0.1954,0.7765,0.6225], [0.2003,0.7787,0.6146],
+            [0.2061,0.7808,0.6065], [0.2118,0.7828,0.5983], [0.2178,0.7849,0.5899], [0.2244,0.7869,0.5813], [0.2318,0.7887,0.5725], [0.2401,0.7905,0.5636], [0.2491,0.7922,0.5546], [0.2589,0.7937,0.5454],
+            [0.2695,0.7951,0.5360], [0.2809,0.7964,0.5266], [0.2929,0.7975,0.5170], [0.3052,0.7985,0.5074], [0.3176,0.7994,0.4975], [0.3301,0.8002,0.4876], [0.3424,0.8009,0.4774], [0.3548,0.8016,0.4669],
+            [0.3671,0.8021,0.4563], [0.3795,0.8026,0.4454], [0.3921,0.8029,0.4344], [0.4050,0.8031,0.4233], [0.4184,0.8030,0.4122], [0.4322,0.8028,0.4013], [0.4463,0.8024,0.3904], [0.4608,0.8018,0.3797],
+            [0.4753,0.8011,0.3691], [0.4899,0.8002,0.3586], [0.5044,0.7993,0.3480], [0.5187,0.7982,0.3374], [0.5329,0.7970,0.3267], [0.5470,0.7957,0.3159], [0.5609,0.7943,0.3050], [0.5748,0.7929,0.2941],
+            [0.5886,0.7913,0.2833], [0.6024,0.7896,0.2726], [0.6161,0.7878,0.2622], [0.6297,0.7859,0.2521], [0.6433,0.7839,0.2423], [0.6567,0.7818,0.2329], [0.6701,0.7796,0.2239], [0.6833,0.7773,0.2155],
+            [0.6963,0.7750,0.2075], [0.7091,0.7727,0.1998], [0.7218,0.7703,0.1924], [0.7344,0.7679,0.1852], [0.7468,0.7654,0.1782], [0.7590,0.7629,0.1717], [0.7710,0.7604,0.1658], [0.7829,0.7579,0.1608],
+            [0.7945,0.7554,0.1570], [0.8060,0.7529,0.1546], [0.8172,0.7505,0.1535], [0.8281,0.7481,0.1536], [0.8389,0.7457,0.1546], [0.8495,0.7435,0.1564], [0.8600,0.7413,0.1587], [0.8703,0.7392,0.1615],
+            [0.8804,0.7372,0.1650], [0.8903,0.7353,0.1695], [0.9000,0.7336,0.1749], [0.9093,0.7321,0.1815], [0.9184,0.7308,0.1890], [0.9272,0.7298,0.1973], [0.9357,0.7290,0.2061], [0.9440,0.7285,0.2151],
+            [0.9523,0.7284,0.2237], [0.9606,0.7285,0.2312], [0.9689,0.7292,0.2373], [0.9770,0.7304,0.2418], [0.9842,0.7330,0.2446], [0.9900,0.7365,0.2429], [0.9946,0.7407,0.2394], [0.9966,0.7458,0.2351],
+            [0.9971,0.7513,0.2309], [0.9972,0.7569,0.2267], [0.9971,0.7626,0.2224], [0.9969,0.7683,0.2181], [0.9966,0.7740,0.2138], [0.9962,0.7798,0.2095], [0.9957,0.7856,0.2053], [0.9949,0.7915,0.2012],
+            [0.9938,0.7974,0.1974], [0.9923,0.8034,0.1939], [0.9906,0.8095,0.1906], [0.9885,0.8156,0.1875], [0.9861,0.8218,0.1846], [0.9835,0.8280,0.1817], [0.9807,0.8342,0.1787], [0.9778,0.8404,0.1757],
+            [0.9748,0.8467,0.1726], [0.9720,0.8529,0.1695], [0.9694,0.8591,0.1665], [0.9671,0.8654,0.1636], [0.9651,0.8716,0.1608], [0.9634,0.8778,0.1582], [0.9619,0.8840,0.1557], [0.9608,0.8902,0.1532],
+            [0.9601,0.8963,0.1507], [0.9596,0.9023,0.1480], [0.9595,0.9084,0.1450], [0.9597,0.9143,0.1418], [0.9601,0.9203,0.1382], [0.9608,0.9262,0.1344], [0.9618,0.9320,0.1304], [0.9629,0.9379,0.1261],
+            [0.9642,0.9437,0.1216], [0.9657,0.9494,0.1168], [0.9674,0.9552,0.1116], [0.9692,0.9609,0.1061], [0.9711,0.9667,0.1001], [0.9730,0.9724,0.0938], [0.9749,0.9782,0.0872], [0.9769,0.9839,0.0805]]
+    
+    cmap = makecolormap.from_list('parula', data)
+    return cmap
 
-def hex2rgb(string):
-    ''' A little helper function to convert e.g. '86bc25' to a pleasing shade of green. '''
-    if string[0] == '#':
-        string = string[1:] # Trim leading #, if it exists
-    if len(string)==3:
-        string = string[0]*2+string[1]*2+string[2]*2 # Convert e.g. '8b2' to '88bb22'
-    if len(string)!=6:
-        errormsg = 'Cannot convert "%s" to an RGB color:must be 3 or 6 characters long' % string
-        raise Exception(errormsg)
-    if six.PY3: hexstring = bytes.fromhex(string) # Ensure it's the right type
-    else:       hexstring = string.decode('hex')
-    rgb = np.array(unpack('BBB',hexstring),dtype=float)/255.
-    return rgb
 
 
 
-def rgb2hex(arr):
-    ''' And going back the other way '''
-    arr = np.array(arr)
-    if len(arr) != 3:
-        errormsg = 'Cannot convert "%s" to hex: wrong length' % arr
-        raise Exception(errormsg)
-    if all(arr<=1): arr *= 255. # Convert from 0-1 to 0-255
-    hexstr = '#%02x%02x%02x' % (int(arr[0]), int(arr[1]), int(arr[2]))
-    return hexstr
+
+def bandedcolormap(minvalue=None, minsaturation=None, hueshift=None, saturationscale=None, npts=None):
+    '''
+    Map colors onto bands of hue and saturation, with lightness mapped linearly.
+    Unlike most colormaps, this colormap does not aim to be percentually uniform,
+    but rather aims to make it easy to relate colors to as-exact-as-possible numbers 
+    (while still maintaining a semblance of overall trend from low to high).
+    
+    Demo and example:
+        cmap = sc.bandedcolormap(minvalue=0, minsaturation=0)
+        sc.colormapdemo(cmap=cmap)
+    
+    Version: 2019aug22
+    '''
+    # Set parameters
+    if minvalue        is None: minvalue        = 0.1
+    if hueshift        is None: hueshift        = 0.8
+    if minsaturation   is None: minsaturation   = 0.5
+    if saturationscale is None: saturationscale = 4.3
+    if npts            is None: npts            = 256
+    
+    # Calculate
+    x = pl.linspace(0, pl.pi, npts)
+    hsv = pl.zeros((npts, 3))
+    hsv[:,2] = pl.sqrt(pl.linspace(minvalue,1,npts)) # Value: map linearly
+    hsv[:,0] = pl.sin(x+hueshift)**2 # Hue: a big sine wave
+    hsv[:,1] = minsaturation+(1-minsaturation)*pl.sin(saturationscale*x)**2 # Saturation: a small sine wave
+    data = hsv2rgb(hsv)
+    
+    # Create and use
+    cmap = makecolormap.from_list('banded', data)
+    return cmap
 
 
-
-def rgb2hsv(colors=None):
-    ''' Shortcut to Matplotlib's rgb_to_hsv method, accepts a color triplet or a list/array of color triplets '''
-    colors, origndim = _listify_colors(colors)
-    for c,color in enumerate(colors):
-        hsvcolor = rgb_to_hsv(color)
-        colors[c] = hsvcolor
-    colors = _listify_colors(colors, origndim)
-    return colors
-
-
-
-def hsv2rgb(colors=None):
-    ''' Shortcut to Matplotlib's hsv_to_rgb method, accepts a color triplet or a list/array of color triplets '''
-    colors, origndim = _listify_colors(colors)
-    for c,color in enumerate(colors):
-        hsvcolor = hsv_to_rgb(color)
-        colors[c] = hsvcolor
-    colors = _listify_colors(colors, origndim)
-    return colors
+# Register colormaps
+pl.cm.register_cmap('alpine', alpinecolormap())
+pl.cm.register_cmap('parula', parulacolormap())
+pl.cm.register_cmap('banded', bandedcolormap())
+pl.cm.register_cmap('bi', bicolormap())
 
 
 ##############################################################################
 ### PLOTTING FUNCTIONS
 ##############################################################################
 
-__all__ += ['ax3d', 'scatter3d', 'surf3d', 'bar3d', 'boxoff', 'setaxislim', 'setxlim', 'setylim', 'commaticks', 'SItickformatter', 'SIticks']
+__all__ += ['ax3d', 'plot3d', 'scatter3d', 'surf3d', 'bar3d', 'boxoff', 'setaxislim', 'setxlim', 'setylim', 'commaticks', 'SItickformatter', 'SIticks']
 
 
-def ax3d(fig=None, returnfig=False, silent=False, **kwargs):
-    ''' Create a 3D axis to plot in -- all arguments are passed to figure() '''
+def ax3d(fig=None, returnfig=False, silent=False, elev=None, azim=None, **kwargs):
+    ''' Create a 3D axis to plot in -- all keyword arguments are passed to figure() '''
     from mpl_toolkits.mplot3d import Axes3D # analysis:ignore
+    
+    # Handle the figure
     if fig is None: 
-        fig = pl.figure(**kwargs)
+        fig = pl.figure(**kwargs) # It's necessary to have an open figure or else the commands won't work
     else:
         silent = False # Never close an already open figure
+    
+    # Create and initialize the axis
     ax = fig.gca(projection='3d')
+    if elev is not None and azim is not None:
+        ax.view_init(elev=elev, azim=azim)
     if silent:
         pl.close(fig)
+    if returnfig:
+        return fig,ax
+    else:
+        return ax
+
+
+def plot3d(x, y, z, c=None, fig=None, returnfig=False, plotkwargs=None, **kwargs):
+    ''' Plot 3D data as a scatter '''
+    # Set default arguments
+    if plotkwargs is None: plotkwargs = {}
+    settings = {'lw':2}
+    settings.update(plotkwargs)
+    
+    # Create figure
+    fig,ax = ax3d(returnfig=True, fig=fig, **kwargs)
+
+    ax.plot(x, y, z, **settings)
+
     if returnfig:
         return fig,ax
     else:
@@ -496,7 +632,6 @@ def scatter3d(x, y, z, c=None, fig=None, returnfig=False, plotkwargs=None, **kwa
     
     # Create figure
     fig,ax = ax3d(returnfig=True, fig=fig, **kwargs)
-    ax.view_init(elev=45, azim=30)
 
     ax.scatter(x, y, z, c=c, **settings)
 
@@ -516,7 +651,6 @@ def surf3d(data, fig=None, returnfig=False, plotkwargs=None, colorbar=True, **kw
     
     # Create figure
     fig,ax = ax3d(returnfig=True, fig=fig, **kwargs)
-    ax.view_init(elev=45, azim=30)
     ny,nx = pl.array(data).shape
     x = np.arange(nx)
     y = np.arange(ny)
@@ -649,7 +783,6 @@ def setylim(data=None, ax=None):
 
 def commaticks(fig=None, ax=None, axis='y'):
     ''' Use commas in formatting the y axis of a figure -- see http://stackoverflow.com/questions/25973581/how-to-format-axis-number-format-to-thousands-with-a-comma-in-matplotlib '''
-    from matplotlib import ticker
     if   ax  is not None: axlist = ut.promotetolist(ax)
     elif fig is not None: axlist = fig.axes
     else: raise Exception('Must supply either figure or axes')
@@ -696,7 +829,7 @@ def SIticks(fig=None, ax=None, axis='y', fixed=False):
 ### FIGURE SAVING
 ##############################################################################
 
-__all__ += ['savefigs', 'loadfig', 'emptyfig', 'separatelegend']
+__all__ += ['savefigs', 'loadfig', 'emptyfig', 'separatelegend', 'savemovie']
 
 
 
@@ -874,3 +1007,152 @@ def separatelegend(ax=None, handles=None, labels=None, reverse=False, figsetting
     ax.legend(handles=handles2, labels=labels, **l_settings)
 
     return fig
+
+
+def savemovie(frames, filename=None, fps=None, quality=None, dpi=None, writer=None, bitrate=None, interval=None, repeat=False, repeat_delay=None, blit=False, verbose=True, **kwargs):
+    '''
+    Save a set of Matplotlib artists as a movie.
+    
+    Parameters
+    ----------
+    frames : list
+        The list of frames to animate
+    
+    filename : str
+        The name (or full path) of the file; expected to end with mp4 or gif (default movie.mp4)
+    
+    fps : int
+        The number of frames per second (default 10)
+    
+    quality : string
+        The quality of the movie, in terms of dpi (default "high" = 300 dpi)
+    
+    dpi : int
+        Instead of using quality, set an exact dpi
+    
+    writer : str or object
+        Specify the writer to be passed to matplotlib.animation.save() (default "ffmpeg")
+    
+    bitrate : int
+        The bitrate. Note, may be ignored; best to specify in a writer and to pass in the writer as an argument
+    
+    interval : int
+        The interval between frames; alternative to using fps
+    
+    repeat : bool
+        Whether or not to loop the animation (default False)
+        
+    repeat_delay : bool
+        Delay between repeats, if repeat=True (default None)
+    
+    blit : bool
+        Whether or not to "blit" the frames (default False, since otherwise does not detect changes )
+        
+    verbose : bool
+        Whether to print statistics on finishing.
+    
+    kwargs : dict
+        Passed to matplotlib.animation.save()
+    
+    
+    Returns
+    -------
+    anim : object
+        A Matplotlib animation object
+    
+    
+    Examples
+    --------
+    import pylab as pl
+    import sciris as sc
+    
+    # Simple example (takes ~5 s)
+    frames = [pl.plot(pl.cumsum(pl.randn(100))) for i in range(20)] # Create frames
+    sc.savemovie(frames, 'dancing_lines.gif') # Save movie as medium-quality gif
+    
+    # Complicated example (takes ~15 s)
+    nframes = 100 # Set the number of frames
+    ndots = 100 # Set the number of dots
+    axislim = 5*pl.sqrt(nframes) # Pick axis limits
+    dots = pl.zeros((ndots, 2)) # Initialize the dots
+    frames = [] # Initialize the frames
+    old_dots = sc.dcp(dots) # Copy the dots we just made
+    fig = pl.figure(figsize=(10,8)) # Create a new figure
+    for i in range(nframes): # Loop over the frames
+        dots += pl.randn(ndots, 2) # Move the dots randomly
+        color = pl.norm(dots, axis=1) # Set the dot color
+        old = pl.array(old_dots) # Turn into an array
+        plot1 = pl.scatter(old[:,0], old[:,1], c='k') # Plot old dots in black
+        plot2 = pl.scatter(dots[:,0], dots[:,1], c=color) # Note: Frames will be separate in the animation
+        pl.xlim((-axislim, axislim)) # Set x-axis limits
+        pl.ylim((-axislim, axislim)) # Set y-axis limits
+        kwargs = {'transform':pl.gca().transAxes, 'horizontalalignment':'center'} # Set the "title" properties
+        title = pl.text(0.5, 1.05, f'Iteration {i+1}/{nframes}', **kwargs) # Unfortunately pl.title() can't be dynamically updated
+        pl.xlabel('Latitude') # But static labels are fine
+        pl.ylabel('Longitude') # Ditto
+        frames.append((plot1, plot2, title)) # Store updated artists
+        old_dots = pl.vstack([old_dots, dots]) # Store the new dots as old dots
+    sc.savemovie(frames, 'fleeing_dots.mp4', fps=20, quality='high') # Save movie as a high-quality mp4
+    
+    Version: 2019aug21
+    '''
+    
+    from matplotlib import animation # Place here since specific only to this function
+    
+    if not isinstance(frames, list):
+        raise Exception(f'savemovie(): Argument "frames" must be a list, not "{type(frames)}"')
+    for f in range(len(frames)):
+        if not ut.isiterable(frames[f]):
+            frames[f] = (frames[f],) # This must be either a tuple or a list to work with ArtistAnimation
+    
+    # Try to get the figure from the frames, else use the current one
+    try:    fig = frames[0][0].get_figure()
+    except: fig = pl.gcf()
+    
+    # Set parameters
+    if filename is None:
+        filename = 'movie.mp4'
+    if writer is None:
+        if   filename.endswith('mp4'): writer = 'ffmpeg'
+        elif filename.endswith('gif'): writer = 'imagemagick'
+        else: raise Exception(f'savemovie(): Unknown movie extension for file {filename}')
+    if fps is None:
+        fps = 10
+    if interval is None:
+        interval = 1000./fps
+        fps = 1000./interval # To ensure it's correct
+    
+    # Handle dpi/quality
+    if dpi is None and quality is None:
+        quality = 'medium' # Make it medium quailty by default
+    if isinstance(dpi, str):
+        quality = dpi # Interpret dpi arg as a quality command
+        dpi = None
+    if dpi is not None and quality is not None:
+        print(f'savemovie() warning: quality is simply a shortcut for dpi; please specify one or the other, not both (dpi={dpi}, quality={quality})')
+    if quality is not None:
+        if   quality == 'low':    dpi =  50
+        elif quality == 'medium': dpi = 150
+        elif quality == 'high':   dpi = 300
+        else: raise Exception(f'Quality must be high, medium, or low, not "{quality}"')
+    
+    # Optionally print progress
+    if verbose:
+        start = ut.tic()
+        print(f'Saving {len(frames)} frames at {fps} fps and {dpi} dpi to "{filename}" using {writer}...')
+    
+    # Actually create the animation -- warning, no way to not actually have it render!
+    anim = animation.ArtistAnimation(fig, frames, interval=interval, repeat_delay=repeat_delay, repeat=repeat, blit=blit)
+    anim.save(filename, writer=writer, fps=fps, dpi=dpi, bitrate=bitrate, **kwargs)
+
+    if verbose:
+        print(f'Done; movie saved to "{filename}"')
+        try: # Not essential, so don't try too hard if this doesn't work
+            filesize = os.path.getsize(filename)
+            if filesize<1e6: print('File size: %0.0f KB' % (filesize/1e3))
+            else:            print('File size: %0.2f MB' % (filesize/1e6))
+        except:
+            pass
+        ut.toc(start)
+    
+    return anim

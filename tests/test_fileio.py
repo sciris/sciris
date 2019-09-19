@@ -11,6 +11,7 @@ import os
 torun = [
 'savespreadsheet',
 'loadspreadsheet',
+'readcells',
 'Blobject',
 'Spreadsheet',
 'saveobj',
@@ -19,6 +20,7 @@ torun = [
 'loadtext',
 'getfilelist',
 'savezip',
+'loadfailed',
 ]
 
 
@@ -28,11 +30,12 @@ def check(test, dependencies=None):
     return tf
     
 # Define filenames
+filedir = 'files' + os.sep
 files = sc.prettyobj()
-files.excel  = 'test.xlsx'
-files.binary = 'test.obj'
-files.text   = 'text.txt'
-files.zip    = 'test.zip'
+files.excel  = filedir+'test.xlsx'
+files.binary = filedir+'test.obj'
+files.text   = filedir+'text.txt'
+files.zip    = filedir+'test.zip'
 tidyup = True
 
 # Define the test data
@@ -51,7 +54,7 @@ if check('savespreadsheet', ['loadspreadsheet', 'Spreadsheet', 'savezip']):
         'big':   {'bg_color':'#ffcccc'}}
     formatdata = pl.zeros((nrows+1, ncols), dtype=object) # Format data needs to be the same size
     formatdata[1:,:] = 'plain' # Format data
-    formatdata[testdata>0.7] = 'big' # Find "big" numbers and format them differently
+    formatdata[1:,:][testdata[1:,:]>0.7] = 'big' # Find "big" numbers and format them differently
     formatdata[0,:] = 'header' # Format header
     sc.savespreadsheet(filename=files.excel, data=testdata, formats=formats, formatdata=formatdata)
 
@@ -60,6 +63,14 @@ if check('savespreadsheet', ['loadspreadsheet', 'Spreadsheet', 'savezip']):
 if check('loadspreadsheet'):
     data = sc.loadspreadsheet(files.excel)
     print(data)
+
+
+if check('readcells'):
+    wb = sc.Spreadsheet(filename=filedir+'exampledata.xlsx') # Load a sample databook to try pulling cells from
+    celltest = wb.readcells(method='xlrd', sheetname='Baseline year population inputs', cells=[[46, 2], [47, 2]]) # Grab cells using xlrd
+    celltest2 = wb.readcells(method='openpyexcel', wbargs={'data_only': True}, sheetname='Baseline year population inputs', cells=[[46, 2], [47, 2]]) # Grab cells using openpyexcel.  You have to set wbargs={'data_only': True} to pull out cached values instead of formula strings
+    print('xlrd output: %s' % celltest)
+    print('openpyxl output: %s' % celltest2)
 
 
 if check('Blobject'):
@@ -116,6 +127,30 @@ if check('savezip'):
     sc.savezip(files.zip, [files.text, files.excel])
 
 
+if check('loadfailed'):
+    '''
+    Check that loading an object with a non-existent class works. The file
+    deadclass.obj was created with:
+
+    deadclass.py:
+    -------------------------------------------------
+    class DeadClass():
+        def __init__(self, x):
+            self.x = x
+    -------------------------------------------------
+
+    then:
+    -------------------------------------------------
+    import deadclass as dc
+    import sciris as sc
+    deadclass = dc.DeadClass(238473)
+    sc.saveobj('deadclass.obj', deadclass)
+    -------------------------------------------------
+    '''
+    obj = sc.loadobj(filedir+'deadclass.obj')
+    print('Loading corrupted object succeeded, x=%s' % obj.x)
+
+
 # Tidy up
 if tidyup:
     sc.blank()
@@ -126,4 +161,4 @@ if tidyup:
         except:
             pass
 
-print('Done.')
+print('Done, all fileio tests succeeded')

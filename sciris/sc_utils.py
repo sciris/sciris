@@ -1,3 +1,5 @@
+# -*- coding: utf-8 -*-
+
 ##############################################################################
 ### IMPORTS FROM OTHER LIBRARIES
 ##############################################################################
@@ -22,17 +24,19 @@ from collections import OrderedDict as OD
 from distutils.version import LooseVersion
 
 # Handle types and Python 2/3 compatibility
-if six.PY2: 
+if six.PY3: 
+    _stringtypes = (str, bytes)
+    import urllib.request as urlrequester
+    import html as htmlencoder
+    htmldecoder = htmlencoder # New method, these are the same now
+    basestring = bytes # Not needed, but to avoid Python 3 linting warnings
+    unicode = str # Ditto
+else:       
     _stringtypes = (basestring,)
     import urllib2 as urlrequester
     import cgi as htmlencoder
     import HTMLParser
     htmldecoder = HTMLParser.HTMLParser() # Old method, have to define an instance
-else:       
-    _stringtypes = (str, bytes)
-    import urllib.request as urlrequester
-    import html as htmlencoder
-    htmldecoder = htmlencoder # New method, these are the same now
 _numtype    = numbers.Number
 
 # Add Windows support for colors (do this at the module level so that colorama.init() only gets called once)
@@ -171,7 +175,7 @@ def htmlify(string, reverse=False, tostring=False):
 
 __all__ += ['printv', 'blank', 'createcollist', 'objectid', 'objatt', 'objmeth', 'objrepr']
 __all__ += ['prepr', 'pr', 'indent', 'sigfig', 'printarr', 'printdata', 'printvars']
-__all__ += ['slacknotification', 'printtologfile', 'colorize']
+__all__ += ['slacknotification', 'printtologfile', 'colorize', 'heading']
 
 def printv(string, thisverbose=1, verbose=2, newline=True, indent=True):
     '''
@@ -729,6 +733,67 @@ def colorize(color=None, string=None, output=False, showhelp=False, enable=True)
         return None
 
 
+def heading(string=None, color=None, divider=None, spaces=None, minlength=None, maxlength=None, **kwargs):
+    '''
+    Shortcut to sc.colorize() to create a heading. If just supplied with a string,
+    create blue text with horizontal lines above and below and 3 spaces above. You 
+    can customize the color, the divider character, how many spaces appear before 
+    the heading, and the minimum length of the divider (otherwise will expand to 
+    match the length of the string, up to a maximum length).
+    
+    Parameters
+    ----------
+    string : str
+        The string to print as the heading
+    
+    color : str
+        The color to use for the heading (default blue)
+    
+    divider : str
+        The symbol to use for the divider (default em dash)
+    
+    spaces : int
+        The number of spaces to put before the heading
+    
+    minlength : int
+        The minimum length of the divider
+    
+    maxlength : int
+        The maximum length of the divider
+    
+    kwargs : dict
+        Arguments to pass to sc.colorize()
+    
+    
+    Returns
+    -------
+    None, unless specified to produce the string as output using output=True.
+        
+    
+    Examples
+    --------
+    >>> import sciris as sc
+    >>> sc.heading('This is a heading')
+    >>> sc.heading(string='This is also a heading', color='red', divider='*', spaces=0, minlength=50)
+    '''
+    if string    is None: string    = ''
+    if color     is None: color     = 'blue'
+    if divider   is None:
+        if six.PY3:       divider   = '—' # Em dash for a continuous line
+        else:             divider   = '-' # For legacy support, keep it a string to be simple
+    if spaces    is None: spaces    = 2
+    if minlength is None: minlength = 30
+    if maxlength is None: maxlength = 120
+    
+    length = int(np.median([minlength, len(string), maxlength]))
+    space = '\n'*spaces
+    if divider and length: fulldivider = '\n'+divider*length+'\n'
+    else:                  fulldivider = ''
+    fullstring = space + fulldivider + string + fulldivider
+    output = colorize(color=color, string=fullstring, **kwargs)
+    return output
+
+
 
 ##############################################################################
 ### TYPE FUNCTIONS
@@ -895,24 +960,42 @@ def promotetolist(obj=None, objtype=None, keepnone=False):
 
 __all__ += ['now', 'getdate', 'elapsedtimestr', 'tic', 'toc', 'timedsleep']
 
-def now(utc=False, die=False, tostring=False, fmt=None):
-    ''' Get the current time, optionally in UTC time '''
-    if utc: tzinfo = dateutil.tz.tzutc()
-    else:   tzinfo = None
+def now(timezone=None, utc=False, die=False, astype='dateobj', dateformat=None):
+    '''
+    Get the current time, optionally in UTC time.
+    
+    Examples:
+        sc.now() # Return current local time, e.g. 2019-03-14 15:09:26
+        sc.now('US/Pacific') # Return the time now in a specific timezone
+        sc.now(utc=True) # Return the time in UTC
+        sc.now(astype='str') # Return the current time as a string instead of a date object
+        sc.now(dateformat='%Y-%b-%d') # Return a different date format
+    '''
+    if isinstance(utc, str): timezone = utc # Assume it's a timezone
+    if timezone is not None: tzinfo = dateutil.tz.gettz(timezone)
+    elif utc:                tzinfo = dateutil.tz.tzutc()
+    else:                    tzinfo = None
     timenow = datetime.datetime.now(tzinfo)
-    if tostring: output = getdate(timenow)
-    else:        output = timenow
+    output = getdate(timenow, astype=astype, dateformat=dateformat)
     return output
     
     
 
-def getdate(obj=None, fmt='str', dateformat=None):
-        ''' Return either the date created or modified ("which") as either a str or int ("fmt") '''
+def getdate(obj=None, astype='str', dateformat=None):
+        '''
+        Alias for converting a date objet to a formatted string.
+        
+        Examples:
+            sc.getdate() # Returns a string for the current date
+            sc.getdate(sc.now(), astype='int') # Convert today's time to an integer
+        '''
         if obj is None:
             obj = now()
         
         if dateformat is None:
             dateformat = '%Y-%b-%d %H:%M:%S'
+        else:
+            astype = 'str' # If dateformat is specified, assume type is a string
         
         try:
             if isstring(obj): return obj # Return directly if it's a string
@@ -921,15 +1004,16 @@ def getdate(obj=None, fmt='str', dateformat=None):
         except Exception as E: # It's not a date object
             raise Exception('Getting date failed; date must be a string or a date object: %s' % repr(E))
         
-        if fmt=='str':
-            dateformat = '%Y-%m-%d %H:%M:%S'
+        if astype=='str':
             output = dateobj.strftime(dateformat)
             return output
-        elif fmt=='int': 
+        elif astype=='int': 
             output = time.mktime(dateobj.timetuple()) # So ugly!! But it works -- return integer representation of time
             return output
+        elif astype=='dateobj':
+            return dateobj
         else:
-            errormsg = '"fmt=%s" not understood; must be "str" or "int"' % fmt
+            errormsg = '"astype=%s" not understood; must be "str" or "int"' % astype
             raise Exception(errormsg)
         return None # Should not be possible to get to this point
 
@@ -1097,10 +1181,6 @@ def timedsleep(delay=None, verbose=True):
         _delaytime = time.time()  # Store the present time in the global.
         return _delaytime         # Return the same stored number.
     else:
-        try:    
-            import pylab as pl
-        except Exception as E: 
-            raise Exception('Cannot use timedsleep() since pylab import failed: %s' % str(E))
         try:    start = _delaytime
         except: start = time.time()
         elapsed = time.time() - start
@@ -1131,13 +1211,23 @@ def timedsleep(delay=None, verbose=True):
 
 __all__ += ['percentcomplete', 'checkmem', 'runcommand', 'gitinfo', 'compareversions', 'uniquename', 'importbyname']
 
-def percentcomplete(step=None, maxsteps=None, prefix=None):
-    ''' Display progress '''
+def percentcomplete(step=None, maxsteps=None, stepsize=1, prefix=None):
+    '''
+    Display progress.
+    
+    Usage example:
+        
+        maxiters = 500
+        for i in range(maxiters):
+            sc.percentcomplete(i, maxiters) # will print on every 5th iteration
+            sc.percentcomplete(i, maxiters, stepsize=10) # will print on every 50th iteration
+            sc.percentcomplete(i, maxiters, prefix='Completeness: ') # will print e.g. 'Completeness: 1%'
+    '''
     if prefix is None:
         prefix = ' '
     elif isnumber(prefix):
         prefix = ' '*prefix
-    onepercent = max(1,round(maxsteps/100)); # Calculate how big a single step is -- not smaller than 1
+    onepercent = max(stepsize,round(maxsteps/100*stepsize)); # Calculate how big a single step is -- not smaller than 1
     if not step%onepercent: # Does this value lie on a percent
         thispercent = round(step/maxsteps*100) # Calculate what percent it is
         print(prefix + '%i%%'% thispercent) # Display the output
@@ -1214,23 +1304,27 @@ def checkmem(origvariable, descend=False, order='n', plot=False, verbose=False):
 
 
 
-def runcommand(command, printinput=False, printoutput=False):
+def runcommand(command, printinput=False, printoutput=False, wait=True):
     '''
     Make it easier to run shell commands.
 
     Examples:
         myfiles = sc.runcommand('ls').split('\n') # Get a list of files in the current folder
         sc.runcommand('sshpass -f %s scp myfile.txt me@myserver:myfile.txt' % 'pa55w0rd', printinput=True, printoutput=True) # Copy a file remotely
+        sc.runcommand('sleep 600; mkdir foo', wait=False) # Waits 10 min, then creates the folder "foo", but the function returns immediately
     
-    Date: 2019jan15
+    Date: 2019sep04
     '''
     if printinput:
         print(command)
     try:
         p = subprocess.Popen(command, shell=True, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
-        stderr = p.stdout.read().decode("utf-8") # Somewhat confusingly, send stderr to stdout
-        stdout = p.communicate()[0].decode("utf-8") # ...and then stdout to the pipe
-        output = stdout + '\n' + stderr if stderr else stdout # Only include the error if it was non-empty
+        if wait: # Whether to run in the background
+            stderr = p.stdout.read().decode("utf-8") # Somewhat confusingly, send stderr to stdout
+            stdout = p.communicate()[0].decode("utf-8") # ...and then stdout to the pipe
+            output = stdout + '\n' + stderr if stderr else stdout # Only include the error if it was non-empty
+        else:
+            output = ''
     except Exception as E:
         output = 'runcommand(): shell command failed: %s' % str(E) # This is for a Python error, not a shell error -- those get passed to output
     if printoutput: 
