@@ -797,7 +797,7 @@ def savespreadsheet(filename=None, data=None, folder=None, sheetnames=None, clos
 __all__ += ['savepptx']
 
 
-def savepptx(filename=None, template=None, slides=None, image_path=''):
+def savepptx(filename=None, template=None, slides=None, image_path='', close=True, verbose=False):
     '''
     :param filename: A name for the desired output document. It should end in .pptx.
     :param template: The filepath to the powerpoint template which is to be used.
@@ -829,20 +829,19 @@ def savepptx(filename=None, template=None, slides=None, image_path=''):
                   '3x1': [3, 1], '3x2': [3, 2], '3x3': [3, 3]}
     if filename is None:
         filename = 'output_file.pptx'
-        print("A filename was not specified. As such, the output will be saved as: %s" %filename)
+        if verbose: print("A filename was not specified. As such, the output will be saved as: %s" %filename)
     if template is None:
         prs = pp.Presentation()
-        print("A presentation template was not specified. As such, an automatic template is being used.")
+        if verbose: print("A presentation template was not specified. As such, an automatic template is being used.")
     else:
         if os.path.exists(template):
             prs = pp.Presentation(template)
             template_provided = True
         else:
             prs = pp.Presentation()
-            print("The specified template file could not be found. As such, an automatic template is being used.")
+            if verbose: print("The specified template file could not be found. As such, an automatic template is being used.")
     if slides is None or slides == []:
-        prs.save(filename)
-        print("No slide data was provided. As such, the blank template has been saved as: %s" %filename)
+        if verbose: print("No slide data was provided. As such, the blank template has been saved as: %s" %filename)
     else:
         if template_provided:
             for s, slide in enumerate(slides):
@@ -850,32 +849,35 @@ def savepptx(filename=None, template=None, slides=None, image_path=''):
                     entry.lower()
                 num_features = len(slide)
                 if num_features > 0:
-                    prs = update_custom(prs, slide, s, image_path=image_path)
+                    prs = update_custom(prs, slide, s, image_path=image_path, verbose=verbose)
         else:
             for slide in slides:
                 for attr in slide.keys():
                     if attr not in allowed_features:
                         del slide[attr]
-                        print("Slide contained an invalid attribute: %s, which has been deleted." %attr)
+                        if verbose: print("Slide contained an invalid attribute: %s, which has been deleted." %attr)
                 num_features = len(slide)
                 if num_features > 0:
                     try:
                         format = slide['style']
                     except KeyError:
-                        prs = update_fail(prs)
+                        prs = update_fail(prs, verbose=verbose)
                     if format in image_sets:
-                        prs = update_image(prs, slide, arrange=image_sets[format], image_path=image_path)
+                        prs = update_image(prs, slide, arrange=image_sets[format], image_path=image_path, verbose=verbose)
                     elif format == 'text':
-                        prs = update_text(prs, slide)
+                        prs = update_text(prs, slide, verbose=verbose)
                     else:
-                        prs = update_fail(prs)
+                        prs = update_fail(prs, verbose=verbose)
                 else:
-                    prs = update_fail(prs)
+                    prs = update_fail(prs, verbose=verbose)
+    if close:
         prs.save(filename)
-        print("The powerpoint has been saved as: %s" %filename)
+        if verbose: print("The powerpoint has been saved as: %s" %filename)
+    else:
+        return prs
 
 
-def update_image(presentation, slide_details, arrange=[1, 1], image_path=None):
+def update_image(presentation, slide_details, arrange=[1, 1], image_path=None, verbose=False):
     num_attributes = len(slide_details) - 1
     num_image = arrange[0]*arrange[1]
     slide_layout = presentation.slide_layouts[1]
@@ -935,13 +937,13 @@ def update_image(presentation, slide_details, arrange=[1, 1], image_path=None):
             del slide_details[image_key]
             counter += 1
         else:
-            print("%s image(s) expected in the slide, but %s was either keyed incorrectly or does not exist."
+            if verbose: print("%s image(s) expected in the slide, but %s was either keyed incorrectly or does not exist."
                   %(num_image, image_key))
     if num_attributes > 0:
-        presentation = update_text(presentation, slide_details, slide=slide)
+        presentation = update_text(presentation, slide_details, slide=slide, verbose=verbose)
     return presentation
 
-def update_text(presentation, slide_details, slide=None):
+def update_text(presentation, slide_details, slide=None, verbose=False):
     num_attributes = len(slide_details) - 1
     if slide is None:
         slide_layout = presentation.slide_layouts[1]
@@ -966,7 +968,7 @@ def update_text(presentation, slide_details, slide=None):
                     run = p.add_run()
                     run.text = text_info
             else:
-                print("%s paragraphs were expected in the slide, but '%s' was either keyed incorrectly or does not "
+                if verbose: print("%s paragraphs were expected in the slide, but '%s' was either keyed incorrectly or does not "
                       "exist." % (num_attributes, text_key))
     elif num_attributes > 0:
         text_key = 'text1'
@@ -978,30 +980,30 @@ def update_text(presentation, slide_details, slide=None):
             run = p.add_run()
             run.text = text_info
         else:
-            print("A paragraph was expected in the slide, but 'text1' was either keyed incorrectly or does not exist.")
+            if verbose: print("A paragraph was expected in the slide, but 'text1' was either keyed incorrectly or does not exist.")
     else:
-        print("At least one piece of text was expected for the slide, but none were found.")
+        if verbose: print("At least one piece of text was expected for the slide, but none were found.")
     return presentation
 
-def update_fail(presentation):
+def update_fail(presentation, verbose=False):
     slide_layout = presentation.slide_layouts[6]
     slide = presentation.slides.add_slide(slide_layout)
-    print("The slide format provided was not understood. A blank slide was added in its place. Please provide slide"
+    if verbose: print("The slide format provided was not understood. A blank slide was added in its place. Please provide slide"
           " attributes according to the specifications of savepptx.")
     return presentation
 
-def update_custom(presentation, slide_details, slide_num, image_path=''):
+def update_custom(presentation, slide_details, slide_num, image_path='', verbose=False):
     name = slide_details['style']
     slide = False
     if len(presentation.slide_masters) > 1:
-        print('There are %d Slide Masters saved in this template, by default the first is being used. If this was not'
+        if verbose: print('There are %d Slide Masters saved in this template, by default the first is being used. If this was not'
               ' intended then please ensure that only one Slide Master is present in the template, or that the'
               ' intended Slide Master is at the top of the order.' % len(presentation.slide_masters))
         master_layouts = presentation.slide_masters[0].slide_layouts
     elif len(presentation.slide_masters) == 1:
         master_layouts = presentation.slide_masters[0].slide_layouts
     else:
-        presentation = update_fail(presentation)
+        presentation = update_fail(presentation, verbose=verbose)
         return presentation
     for layout in master_layouts:
         if layout.name == name:
@@ -1030,22 +1032,22 @@ def update_custom(presentation, slide_details, slide_num, image_path=''):
         if len(slide_details) > 1:
             for entry in slide_details.keys():
                 if 'im' in entry or 'pic' in entry or 'leg' in entry:
-                    print('Note: More images were provided for slide %d than there were Picture Placeholders available. '
+                    if verbose: print('Note: More images were provided for slide %d than there were Picture Placeholders available. '
                           'As such, some images may have been omitted.' % slide_num)
                 elif 'text' in entry or 'par' in entry or 'txt' in entry:
-                    print('Note: More text paragraphs were provided for slide %d than there were Text Placeholders available'
+                    if verbose: print('Note: More text paragraphs were provided for slide %d than there were Text Placeholders available'
                           '. As such, some text may have been omitted.' % slide_num)
         elif len(slide_details) > 0:
             if 'im' in slide_details.keys()[0] or 'pic' in slide_details.keys()[0] or 'leg' in slide_details.keys()[0]:
-                print('Note: More images were provided for slide %d than there were Picture Placeholders available. '
+                if verbose: print('Note: More images were provided for slide %d than there were Picture Placeholders available. '
                       'As such, some images may have been omitted.' % slide_num)
             elif 'text' in slide_details.keys()[0] or 'par' in slide_details.keys()[0] or 'txt' in slide_details.keys()[0]:
-                print(
+                if verbose: print(
                     'Note: More text paragraphs were provided for slide %d than there were Text Placeholders available'
                     '. As such, some text may have been omitted.' % slide_num)
         return presentation
     else:
-        print('Note: The style (%s) attributed to slide %d does not match any layout name in the Slide Master'
+        if verbose: print('Note: The style (%s) attributed to slide %d does not match any layout name in the Slide Master'
               % (name, slide_num))
         return presentation
 
