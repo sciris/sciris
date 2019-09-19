@@ -824,7 +824,7 @@ def savepptx(filename=None, template=None, slides=None, image_path='', close=Tru
     
     template_provided = False
     allowed_features = ['style', 'title', 'legend', 'img1', 'img2', 'img3', 'img4', 'img5', 'img6', 'img7', 'img8',
-                        'img9', 'text1']
+                        'img9', 'text1', 'text2', 'text3']
     image_sets = {'1x1': [1, 1], '1x2': [1, 2], '1x3': [1, 3], '2x1': [2, 1], '2x2': [2, 2], '2x3': [2, 3],
                   '3x1': [3, 1], '3x2': [3, 2], '3x3': [3, 3]}
     if filename is None:
