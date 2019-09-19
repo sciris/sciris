@@ -960,7 +960,7 @@ def promotetolist(obj=None, objtype=None, keepnone=False):
 
 __all__ += ['now', 'getdate', 'elapsedtimestr', 'tic', 'toc', 'timedsleep']
 
-def now(timezone=None, utc=False, die=False, astype='dateobj', dateformat=None):
+def now(timezone=None, utc=False, die=False, astype='dateobj', tostring=False, dateformat=None):
     '''
     Get the current time, optionally in UTC time.
     
@@ -969,12 +969,14 @@ def now(timezone=None, utc=False, die=False, astype='dateobj', dateformat=None):
         sc.now('US/Pacific') # Return the time now in a specific timezone
         sc.now(utc=True) # Return the time in UTC
         sc.now(astype='str') # Return the current time as a string instead of a date object
+        sc.now(tostring=True) # Backwards-compatible alias for astype='str'
         sc.now(dateformat='%Y-%b-%d') # Return a different date format
     '''
     if isinstance(utc, str): timezone = utc # Assume it's a timezone
-    if timezone is not None: tzinfo = dateutil.tz.gettz(timezone)
-    elif utc:                tzinfo = dateutil.tz.tzutc()
-    else:                    tzinfo = None
+    if timezone is not None: tzinfo = dateutil.tz.gettz(timezone) # Timezone is a string
+    elif utc:                tzinfo = dateutil.tz.tzutc() # UTC has been specified
+    else:                    tzinfo = None # Otherwise, do nothing
+    if tostring: astype = 'str'
     timenow = datetime.datetime.now(tzinfo)
     output = getdate(timenow, astype=astype, dateformat=dateformat)
     return output
