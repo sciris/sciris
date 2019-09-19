@@ -873,6 +873,7 @@ def savepptx(filename=None, template=None, slides=None, image_path='', close=Tru
     if close:
         prs.save(filename)
         if verbose: print("The powerpoint has been saved as: %s" %filename)
+        return filename
     else:
         return prs
 
