@@ -19,9 +19,9 @@ if 'hex2rgb' in torun:
     c2 = sc.hex2rgb('fabcd8')
 
 if 'gridcolors' in torun:
-    colors_a = sc.gridcolors(ncolors=8,  doplot=doplot)
-    colors_b = sc.gridcolors(ncolors=18, doplot=doplot)
-    colors_c = sc.gridcolors(ncolors=28, doplot=doplot)
+    colors_a = sc.gridcolors(ncolors=8,  demo=doplot)
+    colors_b = sc.gridcolors(ncolors=18, demo=doplot)
+    colors_c = sc.gridcolors(ncolors=28, demo=doplot)
 
 if 'surf3d' in torun:
     data = pl.randn(50,50)
