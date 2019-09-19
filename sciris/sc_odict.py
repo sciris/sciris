@@ -817,6 +817,7 @@ class objdict(odict):
     >>> od.keys = 3 # This will return an exception since od.keys already exists
     '''
     
+    
     def __getattribute__(self, attr):
         try: # First, try to get the attribute as an attribute
             output = odict.__getattribute__(self, attr)
@@ -828,22 +829,24 @@ class objdict(odict):
             except: # If that fails, raise the original exception
                 raise E
     
-    def __setattr__(self, name, value, forceattr=False):
-        ''' Set key in dict, not attribute! '''
-        
-        # Ensure 
-        try:
-            odict.__getattribute__(self, name) # Try retrieving this as an attribute, expect AttributeError...
-        except AttributeError:
-            return odict.__setitem__(self, name, value) # If so, simply return
-        
-        # Otherwise, raise an exception
-        errormsg = '"%s" exists as an attribute, so cannot be set as key; use setattribute() instead' % name
-        raise Exception(errormsg)
-        
-        return None
+    # Unfortunately, this check doesn't work in Python 2
+    if six.PY3:
+        def __setattr__(self, name, value):
+            ''' Set key in dict, not attribute! '''
+            
+            # Ensure 
+            try:
+                odict.__getattribute__(self, name) # Try retrieving this as an attribute, expect AttributeError...
+            except AttributeError:
+                return odict.__setitem__(self, name, value) # If so, simply return
+            
+            # Otherwise, raise an exception
+            errormsg = '"%s" exists as an attribute, so cannot be set as key; use setattribute() instead' % name
+            raise Exception(errormsg)
+            
+            return None
     
     def setattribute(self, name, value):
         ''' Set attribute if truly desired '''
         return odict.__setattr__(self, name, value)
-            
+                
