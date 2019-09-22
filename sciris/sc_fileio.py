@@ -1019,33 +1019,36 @@ def update_custom(presentation, slide_details, slide_num, image_path='', verbose
             elif 'Picture' in shape.name or 'Content' in shape.name:
                 for entry in slide_details.keys():
                     if 'im' in entry or 'pic' in entry or 'leg' in entry:
-                        image_name = slide_details[entry]
-                        img_path = os.path.join(image_path, image_name)
-                        if 'im' in entry or 'pic' in entry:
-                            pic = slide.shapes.add_picture(img_path, shape.left, shape.top, width=shape.width
-#                                                       , height=shape.height, width=shape.width
-                                                       )
-                        else:
-                            pic = slide.shapes.add_picture(img_path, shape.left, shape.top) #don't resize legends
+                        if not slide_details[entry] is None:
+                            image_name = slide_details[entry]
+                            img_path = os.path.join(image_path, image_name)
+                            if 'im' in entry or 'pic' in entry:
+                                pic = slide.shapes.add_picture(img_path, shape.left, shape.top, width=shape.width
+    #                                                       , height=shape.height, width=shape.width
+                                                           )
+                            else:
+                                pic = slide.shapes.add_picture(img_path, shape.left, shape.top) #don't resize legends
+                            shape.element.getparent().remove(shape.element)
                         del slide_details[entry]
-                        shape.element.getparent().remove(shape.element)
                         break
             elif 'Text' in shape.name or 'Content' in shape.name:
                 filled = False
                 for entry in slide_details.keys():
                     if 'text' in entry or 'txt' in entry:
-                        shape.text = slide_details[entry]
-                        del slide_details[entry]
+                        if not slide_details[entry] is None:
+                            shape.text = slide_details[entry]
                         filled = True
+                        del slide_details[entry]
                         break
                     elif 'par' in entry or 'paras' in entry: #it should be a list of tuples giving paragraphs and the level of each
-                        p = shape.text_frame.paragraphs[0]    
-                        for pn, par in enumerate(slide_details[entry]):
-                            if pn>0:
-                                p = shape.text_frame.add_paragraph()
-                            p.text = par[1]
-                            p.level = par[0]
-                            
+                        if not slide_details[entry] is None:
+                            p = shape.text_frame.paragraphs[0]    
+                            for pn, par in enumerate(slide_details[entry]):
+                                if pn>0:
+                                    p = shape.text_frame.add_paragraph()
+                                p.text = par[1]
+                                p.level = par[0]
+                                
                         filled = True  
                         del slide_details[entry]
                         break
