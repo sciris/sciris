@@ -1059,19 +1059,19 @@ def update_custom(presentation, slide_details, slide_num, image_path='', verbose
         if len(slide_details) > 1:
             for entry in slide_details.keys():
                 if 'im' in entry or 'pic' in entry or 'leg' in entry:
-                    if verbose: print('Note: More images were provided for slide %d than there were Picture Placeholders available. '
-                          'As such, some images may have been omitted.' % slide_num)
+                    if verbose: print('Note: More images were provided for slide %d (%s) than there were Picture Placeholders available. '
+                          'As such, some images may have been omitted.' % (slide_num, slide_details['title']))
                 elif 'text' in entry or 'par' in entry or 'txt' in entry:
-                    if verbose: print('Note: More text paragraphs were provided for slide %d than there were Text Placeholders available'
-                          '. As such, some text may have been omitted.' % slide_num)
+                    if verbose: print('Note: More text paragraphs were provided for slide %d (%s) than there were Text Placeholders available'
+                          '. As such, some text may have been omitted.' % (slide_num, slide_details['title']))
         elif len(slide_details) > 0:
             if 'im' in slide_details.keys()[0] or 'pic' in slide_details.keys()[0] or 'leg' in slide_details.keys()[0]:
-                if verbose: print('Note: More images were provided for slide %d than there were Picture Placeholders available. '
-                      'As such, some images may have been omitted.' % slide_num)
+                if verbose: print('Note: More images were provided for slide %d (%s) than there were Picture Placeholders available. '
+                      'As such, some images may have been omitted.' % (slide_num, slide_details['title']))
             elif 'text' in slide_details.keys()[0] or 'par' in slide_details.keys()[0] or 'txt' in slide_details.keys()[0]:
                 if verbose: print(
-                    'Note: More text paragraphs were provided for slide %d than there were Text Placeholders available'
-                    '. As such, some text may have been omitted.' % slide_num)
+                    'Note: More text paragraphs were provided for slide %d (%s) than there were Text Placeholders available'
+                    '. As such, some text may have been omitted.' % (slide_num, slide_details['title']))
         return presentation
     else:
         if verbose: print('Note: The style (%s) attributed to slide %d does not match any layout name in the Slide Master'
