@@ -2,6 +2,7 @@
 ### DATA FRAME CLASS
 ##############################################################################
 
+import numbers # For numeric type
 import numpy as np
 from . import sc_utils as ut # Note, sc_fileio is also used, but is only imported when required to avoid a circular import
 from . import sc_math as ma
@@ -140,7 +141,7 @@ class dataframe(object):
     def _cast(arr):
         ''' Attempt to cast an array to different data types, to avoid having completely numeric arrays of object type '''
         output = arr
-        if isinstance(arr, np.ndarray) and np.can_cast(arr, np.double, casting='same_kind'): # Check that everything is a number before trying to cast to an array
+        if isinstance(arr, np.ndarray) and np.can_cast(arr, numbers.Number, casting='same_kind'): # Check that everything is a number before trying to cast to an array
             try: # If it is, try to cast the whole array to the type of the first element
                 output = np.array(arr, dtype=type(arr[0]))
             except: # If anything goes wrong, do nothing
