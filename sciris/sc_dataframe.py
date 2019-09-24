@@ -39,7 +39,7 @@ class dataframe(object):
     
     Works for both numeric and non-numeric data.
     
-    Version: 2019mar25
+    Version: 2019sep24
     '''
 
     def __init__(self, cols=None, data=None, nrows=None):
@@ -47,6 +47,7 @@ class dataframe(object):
         self.data = None
         self.make(cols=cols, data=data, nrows=nrows)
         return None
+    
     
     def __repr__(self, spacing=2):
         ''' spacing = space between columns '''
@@ -86,6 +87,7 @@ class dataframe(object):
             
             return output
     
+    
     def _val2row(self, value=None):
         ''' Convert a list, array, or dictionary to the right format for appending to a dataframe '''
         if isinstance(value, dict):
@@ -106,6 +108,7 @@ class dataframe(object):
                 errormsg = 'Row has wrong length (%s supplied, %s expected)' % (len(value), self.ncols)
                 raise Exception(errormsg)
         return output
+    
     
     def _sanitizecol(self, col, die=True):
         ''' Take None or a string and return the index of the column '''
@@ -132,13 +135,17 @@ class dataframe(object):
                 output = None
         return output
     
+    
     @staticmethod
     def _cast(arr):
         ''' Attempt to cast an array to different data types '''
-        try: # Try to cast the whole array to the type of the first element
-            output = np.array(arr, dtype=type(arr[0]))
-            return output
-        except: # If anything goes wrong, do nothing
+        if ut.isnumber(arr[0]): # Check that the first element is a number before trying to cast to an array
+            try: # If it is, try to cast the whole array to the type of the first element
+                output = np.array(arr, dtype=type(arr[0]))
+                return output
+            except: # If anything goes wrong, do nothing
+                return arr
+        else:
             return arr
         
     
@@ -190,6 +197,7 @@ class dataframe(object):
                 output = None
         return output
         
+    
     def __setitem__(self, key, value=None):
         if value is None:
             value = np.zeros(self.nrows, dtype=object)
@@ -622,6 +630,7 @@ class dataframe(object):
             for col in exportdf.cols:
                 try:
                     datum = exportdf.get(cols=col,rows=r)
+                    print(f'I AM DATUM: {col}, {r}, {datum}, {type(datum)}')
                     thisrow.append(datum)
                 except:
                     pass # This has already been handled by the validation above
