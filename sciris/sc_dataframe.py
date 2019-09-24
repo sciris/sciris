@@ -630,7 +630,6 @@ class dataframe(object):
             for col in exportdf.cols:
                 try:
                     datum = exportdf.get(cols=col,rows=r)
-                    print(f'I AM DATUM: {col}, {r}, {datum}, {type(datum)}')
                     thisrow.append(datum)
                 except:
                     pass # This has already been handled by the validation above
