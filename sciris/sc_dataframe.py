@@ -138,15 +138,14 @@ class dataframe(object):
     
     @staticmethod
     def _cast(arr):
-        ''' Attempt to cast an array to different data types '''
-        if ut.isnumber(arr[0]): # Check that the first element is a number before trying to cast to an array
+        ''' Attempt to cast an array to different data types, to avoid having completely numeric arrays of object type '''
+        output = arr
+        if isinstance(arr, np.ndarray) and np.can_cast(arr, np.double, casting='same_kind'): # Check that everything is a number before trying to cast to an array
             try: # If it is, try to cast the whole array to the type of the first element
                 output = np.array(arr, dtype=type(arr[0]))
-                return output
             except: # If anything goes wrong, do nothing
-                return arr
-        else:
-            return arr
+                pass
+        return output
         
     
     def __getitem__(self, key=None, die=True, cast=True):
