@@ -1054,6 +1054,19 @@ def update_custom(presentation, slide_details, slide_num, image_path='', verbose
                         break
                 if not filled:
                     shape.element.getparent().remove(shape.element)
+            elif 'Table' in shape.name or 'Content' in shape.name:
+                for entry in slide_details.keys():
+                    if 'tab' in entry :
+                        if not slide_details[entry] is None:
+                            data = slide_details[entry]
+                            graphic_frame = shape.insert_table(rows=len(data), cols=len(data[0]))
+                            table = graphic_frame.table
+                            for row in range(len(data)):
+                                for col in range(len(data[0])):
+                                    table.cell(row, col).text = str(data[row][col])
+#                            shape.element.getparent().remove(shape.element)
+                        del slide_details[entry]
+                        break
                     
 
         if len(slide_details) > 1:
