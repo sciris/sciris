@@ -785,7 +785,7 @@ def commaticks(fig=None, ax=None, axis='y'):
     ''' Use commas in formatting the y axis of a figure -- see http://stackoverflow.com/questions/25973581/how-to-format-axis-number-format-to-thousands-with-a-comma-in-matplotlib '''
     if   ax  is not None: axlist = ut.promotetolist(ax)
     elif fig is not None: axlist = fig.axes
-    else: raise Exception('Must supply either figure or axes')
+    else:                 axlist = [pl.gca()]
     for ax in axlist:
         if   axis=='x': thisaxis = ax.xaxis
         elif axis=='y': thisaxis = ax.yaxis
@@ -807,7 +807,7 @@ def SIticks(fig=None, ax=None, axis='y', fixed=False):
     ''' Apply SI tick formatting to one axis of a figure '''
     if  fig is not None: axlist = fig.axes
     elif ax is not None: axlist = ut.promotetolist(ax)
-    else: raise Exception('Must supply either figure or axes')
+    else:                axlist = [pl.gca()]
     for ax in axlist:
         if   axis=='x': thisaxis = ax.xaxis
         elif axis=='y': thisaxis = ax.yaxis
