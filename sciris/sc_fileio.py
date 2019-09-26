@@ -824,7 +824,7 @@ def savepptx(filename=None, template=None, slides=None, image_path='', close=Tru
     
     template_provided = False
     allowed_features = ['style', 'title', 'legend', 'img1', 'img2', 'img3', 'img4', 'img5', 'img6', 'img7', 'img8',
-                        'img9', 'text1', 'text2', 'text3']
+                        'img9', 'text1'] #these are the allowed features for the default XxY layouts of images if no template is provided, more generally any feature names can be added
     image_sets = {'1x1': [1, 1], '1x2': [1, 2], '1x3': [1, 3], '2x1': [2, 1], '2x2': [2, 2], '2x3': [2, 3],
                   '3x1': [3, 1], '3x2': [3, 2], '3x3': [3, 3]}
     if filename is None:
@@ -1013,10 +1013,11 @@ def update_custom(presentation, slide_details, slide_num, image_path='', verbose
         for shape in slide.placeholders:
             if 'Title' in shape.name:
                 if 'title' in slide_details.keys():
-                    shape.text = slide_details['title']
+                    if not slide_details['title'] is None:
+                        shape.text = slide_details['title']
                 else:
                     shape.element.getparent().remove(shape.element)
-            elif 'Picture' in shape.name or 'Content' in shape.name:
+            elif 'Picture' in shape.name or 'Content' in shape.name: #NOTE: this means that 'Content' placeholders will always be treated only as 'Picture' placeholders, edits would have to be made to enable them to be flexible
                 for entry in slide_details.keys():
                     if 'im' in entry or 'pic' in entry or 'leg' in entry:
                         if not slide_details[entry] is None:
