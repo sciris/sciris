@@ -692,7 +692,7 @@ def savespreadsheet(filename=None, data=None, folder=None, sheetnames=None, clos
     
     # Supply data as an odict
     testdata4 = sc.odict([('First sheet', pl.rand(6,2)), ('Second sheet', pl.rand(3,3))])
-    sc.savespreadsheet(filename='test4.xlsx', data=testdata4, sheetnames=sheetnames)
+    sc.savespreadsheet(filename='test4.xlsx', data=testdata4)
     
     # Include formatting
     nrows = 15
