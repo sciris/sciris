@@ -1017,22 +1017,29 @@ def update_custom(presentation, slide_details, slide_num, image_path='', verbose
                         shape.text = slide_details['title']
                 else:
                     shape.element.getparent().remove(shape.element)
-            elif 'Picture' in shape.name or 'Content' in shape.name: #NOTE: this means that 'Content' placeholders will always be treated only as 'Picture' placeholders, edits would have to be made to enable them to be flexible
+            elif 'Picture' in shape.name: #NOTE: this means that 'Content' placeholders will always be treated only as 'Picture' placeholders, edits would have to be made to enable them to be flexible
                 for entry in slide_details.keys():
-                    if 'im' in entry or 'pic' in entry or 'leg' in entry:
+                    if 'im' in entry or 'pic' in entry:
                         if not slide_details[entry] is None:
                             image_name = slide_details[entry]
                             img_path = os.path.join(image_path, image_name)
-                            if 'im' in entry or 'pic' in entry:
-                                pic = slide.shapes.add_picture(img_path, shape.left, shape.top, width=shape.width
+                            pic = slide.shapes.add_picture(img_path, shape.left, shape.top, width=shape.width
     #                                                       , height=shape.height, width=shape.width
                                                            )
-                            else:
-                                pic = slide.shapes.add_picture(img_path, shape.left, shape.top) #don't resize legends
                             shape.element.getparent().remove(shape.element)
                         del slide_details[entry]
                         break
-            elif 'Text' in shape.name or 'Content' in shape.name:
+            elif 'Content' in shape.name: #Assume that 'content' is for legends specifically and only!
+                for entry in slide_details.keys():
+                    if 'leg' in entry:
+                        if not slide_details[entry] is None:
+                            image_name = slide_details[entry]
+                            img_path = os.path.join(image_path, image_name)
+                            pic = slide.shapes.add_picture(img_path, shape.left, shape.top) #don't resize legends
+                            shape.element.getparent().remove(shape.element)
+                        del slide_details[entry]
+                        break
+            elif 'Text' in shape.name:
                 filled = False
                 for entry in slide_details.keys():
                     if 'text' in entry or 'txt' in entry:
@@ -1055,7 +1062,7 @@ def update_custom(presentation, slide_details, slide_num, image_path='', verbose
                         break
                 if not filled:
                     shape.element.getparent().remove(shape.element)
-            elif 'Table' in shape.name or 'Content' in shape.name:
+            elif 'Table' in shape.name:
                 for entry in slide_details.keys():
                     if 'tab' in entry :
                         if not slide_details[entry] is None:
