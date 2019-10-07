@@ -2,6 +2,7 @@
 ### DATA FRAME CLASS
 ##############################################################################
 
+import numbers # For numeric type
 import numpy as np
 from . import sc_utils as ut # Note, sc_fileio is also used, but is only imported when required to avoid a circular import
 from . import sc_math as ma
@@ -39,7 +40,7 @@ class dataframe(object):
     
     Works for both numeric and non-numeric data.
     
-    Version: 2019mar25
+    Version: 2019sep24
     '''
 
     def __init__(self, cols=None, data=None, nrows=None):
@@ -47,6 +48,7 @@ class dataframe(object):
         self.data = None
         self.make(cols=cols, data=data, nrows=nrows)
         return None
+    
     
     def __repr__(self, spacing=2):
         ''' spacing = space between columns '''
@@ -86,6 +88,7 @@ class dataframe(object):
             
             return output
     
+    
     def _val2row(self, value=None):
         ''' Convert a list, array, or dictionary to the right format for appending to a dataframe '''
         if isinstance(value, dict):
@@ -106,6 +109,7 @@ class dataframe(object):
                 errormsg = 'Row has wrong length (%s supplied, %s expected)' % (len(value), self.ncols)
                 raise Exception(errormsg)
         return output
+    
     
     def _sanitizecol(self, col, die=True):
         ''' Take None or a string and return the index of the column '''
@@ -132,14 +136,17 @@ class dataframe(object):
                 output = None
         return output
     
+    
     @staticmethod
     def _cast(arr):
-        ''' Attempt to cast an array to different data types '''
-        try: # Try to cast the whole array to the type of the first element
-            output = np.array(arr, dtype=type(arr[0]))
-            return output
-        except: # If anything goes wrong, do nothing
-            return arr
+        ''' Attempt to cast an array to different data types, to avoid having completely numeric arrays of object type '''
+        output = arr
+        if isinstance(arr, np.ndarray) and np.can_cast(arr, numbers.Number, casting='same_kind'): # Check that everything is a number before trying to cast to an array
+            try: # If it is, try to cast the whole array to the type of the first element
+                output = np.array(arr, dtype=type(arr[0]))
+            except: # If anything goes wrong, do nothing
+                pass
+        return output
         
     
     def __getitem__(self, key=None, die=True, cast=True):
@@ -190,6 +197,7 @@ class dataframe(object):
                 output = None
         return output
         
+    
     def __setitem__(self, key, value=None):
         if value is None:
             value = np.zeros(self.nrows, dtype=object)

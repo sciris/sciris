@@ -785,7 +785,7 @@ def commaticks(fig=None, ax=None, axis='y'):
     ''' Use commas in formatting the y axis of a figure -- see http://stackoverflow.com/questions/25973581/how-to-format-axis-number-format-to-thousands-with-a-comma-in-matplotlib '''
     if   ax  is not None: axlist = ut.promotetolist(ax)
     elif fig is not None: axlist = fig.axes
-    else: raise Exception('Must supply either figure or axes')
+    else:                 axlist = [pl.gca()]
     for ax in axlist:
         if   axis=='x': thisaxis = ax.xaxis
         elif axis=='y': thisaxis = ax.yaxis
@@ -807,7 +807,7 @@ def SIticks(fig=None, ax=None, axis='y', fixed=False):
     ''' Apply SI tick formatting to one axis of a figure '''
     if  fig is not None: axlist = fig.axes
     elif ax is not None: axlist = ut.promotetolist(ax)
-    else: raise Exception('Must supply either figure or axes')
+    else:                axlist = [pl.gca()]
     for ax in axlist:
         if   axis=='x': thisaxis = ax.xaxis
         elif axis=='y': thisaxis = ax.yaxis
@@ -1100,7 +1100,7 @@ def savemovie(frames, filename=None, fps=None, quality=None, dpi=None, writer=No
     from matplotlib import animation # Place here since specific only to this function
     
     if not isinstance(frames, list):
-        raise Exception(f'savemovie(): Argument "frames" must be a list, not "{type(frames)}"')
+        raise Exception('savemovie(): Argument "frames" must be a list, not "%s"' % type(frames))
     for f in range(len(frames)):
         if not ut.isiterable(frames[f]):
             frames[f] = (frames[f],) # This must be either a tuple or a list to work with ArtistAnimation
@@ -1115,7 +1115,7 @@ def savemovie(frames, filename=None, fps=None, quality=None, dpi=None, writer=No
     if writer is None:
         if   filename.endswith('mp4'): writer = 'ffmpeg'
         elif filename.endswith('gif'): writer = 'imagemagick'
-        else: raise Exception(f'savemovie(): Unknown movie extension for file {filename}')
+        else: raise Exception('savemovie(): Unknown movie extension for file %s' % filename)
     if fps is None:
         fps = 10
     if interval is None:
@@ -1129,24 +1129,24 @@ def savemovie(frames, filename=None, fps=None, quality=None, dpi=None, writer=No
         quality = dpi # Interpret dpi arg as a quality command
         dpi = None
     if dpi is not None and quality is not None:
-        print(f'savemovie() warning: quality is simply a shortcut for dpi; please specify one or the other, not both (dpi={dpi}, quality={quality})')
+        print('savemovie() warning: quality is simply a shortcut for dpi; please specify one or the other, not both (dpi=%s, quality=%s)' % (dpi, quality))
     if quality is not None:
         if   quality == 'low':    dpi =  50
         elif quality == 'medium': dpi = 150
         elif quality == 'high':   dpi = 300
-        else: raise Exception(f'Quality must be high, medium, or low, not "{quality}"')
+        else: raise Exception('Quality must be high, medium, or low, not "%s"' % quality)
     
     # Optionally print progress
     if verbose:
         start = ut.tic()
-        print(f'Saving {len(frames)} frames at {fps} fps and {dpi} dpi to "{filename}" using {writer}...')
+        print('Saving %s frames at %s fps and %s dpi to "%s" using %s...' % (len(frames), fps, dpi, filename, writer))
     
     # Actually create the animation -- warning, no way to not actually have it render!
     anim = animation.ArtistAnimation(fig, frames, interval=interval, repeat_delay=repeat_delay, repeat=repeat, blit=blit)
     anim.save(filename, writer=writer, fps=fps, dpi=dpi, bitrate=bitrate, **kwargs)
 
     if verbose:
-        print(f'Done; movie saved to "{filename}"')
+        print('Done; movie saved to "%s"' % filename)
         try: # Not essential, so don't try too hard if this doesn't work
             filesize = os.path.getsize(filename)
             if filesize<1e6: print('File size: %0.0f KB' % (filesize/1e3))

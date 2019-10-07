@@ -960,24 +960,44 @@ def promotetolist(obj=None, objtype=None, keepnone=False):
 
 __all__ += ['now', 'getdate', 'elapsedtimestr', 'tic', 'toc', 'timedsleep']
 
-def now(utc=False, die=False, tostring=False, fmt=None):
-    ''' Get the current time, optionally in UTC time '''
-    if utc: tzinfo = dateutil.tz.tzutc()
-    else:   tzinfo = None
+def now(timezone=None, utc=False, die=False, astype='dateobj', tostring=False, dateformat=None):
+    '''
+    Get the current time, optionally in UTC time.
+    
+    Examples:
+        sc.now() # Return current local time, e.g. 2019-03-14 15:09:26
+        sc.now('US/Pacific') # Return the time now in a specific timezone
+        sc.now(utc=True) # Return the time in UTC
+        sc.now(astype='str') # Return the current time as a string instead of a date object
+        sc.now(tostring=True) # Backwards-compatible alias for astype='str'
+        sc.now(dateformat='%Y-%b-%d') # Return a different date format
+    '''
+    if isinstance(utc, str): timezone = utc # Assume it's a timezone
+    if timezone is not None: tzinfo = dateutil.tz.gettz(timezone) # Timezone is a string
+    elif utc:                tzinfo = dateutil.tz.tzutc() # UTC has been specified
+    else:                    tzinfo = None # Otherwise, do nothing
+    if tostring: astype = 'str'
     timenow = datetime.datetime.now(tzinfo)
-    if tostring: output = getdate(timenow)
-    else:        output = timenow
+    output = getdate(timenow, astype=astype, dateformat=dateformat)
     return output
     
     
 
-def getdate(obj=None, fmt='str', dateformat=None):
-        ''' Return either the date created or modified ("which") as either a str or int ("fmt") '''
+def getdate(obj=None, astype='str', dateformat=None):
+        '''
+        Alias for converting a date objet to a formatted string.
+        
+        Examples:
+            sc.getdate() # Returns a string for the current date
+            sc.getdate(sc.now(), astype='int') # Convert today's time to an integer
+        '''
         if obj is None:
             obj = now()
         
         if dateformat is None:
             dateformat = '%Y-%b-%d %H:%M:%S'
+        else:
+            astype = 'str' # If dateformat is specified, assume type is a string
         
         try:
             if isstring(obj): return obj # Return directly if it's a string
@@ -986,15 +1006,16 @@ def getdate(obj=None, fmt='str', dateformat=None):
         except Exception as E: # It's not a date object
             raise Exception('Getting date failed; date must be a string or a date object: %s' % repr(E))
         
-        if fmt=='str':
-            dateformat = '%Y-%m-%d %H:%M:%S'
+        if astype=='str':
             output = dateobj.strftime(dateformat)
             return output
-        elif fmt=='int': 
+        elif astype=='int': 
             output = time.mktime(dateobj.timetuple()) # So ugly!! But it works -- return integer representation of time
             return output
+        elif astype=='dateobj':
+            return dateobj
         else:
-            errormsg = '"fmt=%s" not understood; must be "str" or "int"' % fmt
+            errormsg = '"astype=%s" not understood; must be "str" or "int"' % astype
             raise Exception(errormsg)
         return None # Should not be possible to get to this point
 
