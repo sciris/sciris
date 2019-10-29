@@ -53,7 +53,7 @@ else:
 
 
 # Define the modules being loaded
-__all__ = ['uuid', 'dcp', 'cp', 'pp', 'sha', 'wget', 'htmlify']
+__all__ = ['uuid', 'dcp', 'cp', 'pp', 'sha', 'wget', 'htmlify', 'suggest']
 
 
 def uuid(uid=None, which=None, die=False, tostring=False):
