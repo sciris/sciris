@@ -1580,7 +1580,11 @@ def suggest(user_input, valid_inputs, threshold=4, die=False):
 
     """
 
-    valid_inputs = promotetolist(valid_inputs)
+    if isstring(valid_inputs):
+        valid_inputs = [valid_inputs]
+    else:
+        valid_inputs = list(valid_inputs)
+
     distance = np.zeros(len(valid_inputs))
     cs_distance = np.zeros(len(valid_inputs))
     # We will switch inputs to lowercase because we want to consider case substitution a 'free' operation
