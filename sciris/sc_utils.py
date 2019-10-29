@@ -924,6 +924,7 @@ def promotetoarray(x):
             return np.array([x]) # e.g. array(3)
     else: # e.g. 'foo'
         raise Exception("Expecting a number/list/tuple/ndarray; got: %s" % flexstr(x))
+    return # Should be unreachable
 
 
 def promotetolist(obj=None, objtype=None, keepnone=False):
@@ -953,7 +954,7 @@ def promotetolist(obj=None, objtype=None, keepnone=False):
                     try:
                         for item in obj:
                             checktype(obj=item, objtype=objtype, die=True)
-                        return list(obj)
+                        return list(obj) # If all type checking passes, cast to list
                     except Exception as E:
                         errormsg = 'promotetolist() type mismatch: %s' % str(E)
                         raise Exception(errormsg).with_traceback(E.__traceback__)
