@@ -16,6 +16,7 @@ requirements = [
         'xlrd',              # Spreadsheet input
         'xlsxwriter',        # Spreadsheet output
         'requests',          # HTTP methods
+        'python-Levenshtein',
         ]
 
 # Optionally define extras

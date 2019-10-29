@@ -14,6 +14,7 @@ import pprint
 import hashlib
 import datetime
 import dateutil
+import Levenshtein
 import subprocess
 import numbers
 import numpy as np
@@ -1553,8 +1554,54 @@ def flattendict(inputdict=None, basekey=None, subkeys=None, complist=None, keyli
             complist.append(comp)
     return complist, keylist
 
+def suggest(user_input, valid_inputs, threshold=4, die=False):
+    """
+    Return suggested item
 
+    Returns item with lowest Levenshtein distance, where case substitution and stripping
+    whitespace are not included in the distance. If there are ties, then the additional operations
+    will be included
 
+    :param user_input: String with user's input
+    :param valid_inputs: List/collection of valid strings
+    :param threshold: Maximum number of edits required for an option to be suggested
+    :param die: If True, an informative error will be raised (to avoid having to implement this in the calling code)
+    :return: Suggested string. Returns None if no suggestions with edit distance less than threshold were found. This helps to make
+             suggestions more relevant.
+
+    Example usage:
+
+    >>> suggest('foo',['Foo','Bar'])
+    'Foo'
+    >>> suggest('foo',['FOO','Foo'])
+    'Foo'
+    >>> suggest('foo',['Foo ','boo'])
+    'Foo '
+
+    """
+
+    valid_inputs = promotetolist(valid_inputs)
+    distance = np.zeros(len(valid_inputs))
+    cs_distance = np.zeros(len(valid_inputs))
+    # We will switch inputs to lowercase because we want to consider case substitution a 'free' operation
+    # Similarly, stripping whitespace is a free operation. This ensures that something like
+    # 'foo ' will match 'Foo' ahead of 'boo '
+    for i, s in enumerate(valid_inputs):
+        distance[i] = Levenshtein.distance(user_input, s.strip().lower())
+        cs_distance[i] = Levenshtein.distance(user_input, s.strip())
+
+    if sum(distance==min(distance)) > 1:
+        # If there is a tie for the minimum distance, use the case sensitive comparison
+        distance = cs_distance
+
+    suggestion = valid_inputs[np.argmin(distance)]
+
+    if min(distance) > threshold:
+        return None
+    elif die == True:
+        raise Exception('"%s" not found - did you mean "%s"?' % (user_input, suggestion))
+    else:
+        return suggestion
 
 
 ##############################################################################
