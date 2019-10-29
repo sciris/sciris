@@ -6,17 +6,17 @@ import sys
 
 # Define the requirements and extras
 requirements = [
-        'matplotlib>=1.4.2', # Plotting
-        'numpy>=1.10.1',     # Numerical functions
-        'dill',              # File I/O
-        'gitpython',         # Version information
-        'openpyexcel>=2.5',  # Spreadsheet functions -- fork of openpyxl
-        'pandas',            # Spreadsheet input
-        'psutil',            # Load monitoring
-        'xlrd',              # Spreadsheet input
-        'xlsxwriter',        # Spreadsheet output
-        'requests',          # HTTP methods
-        'python-Levenshtein',
+        'matplotlib>=1.4.2',  # Plotting
+        'numpy>=1.10.1',      # Numerical functions
+        'dill',               # File I/O
+        'gitpython',          # Version information
+        'openpyexcel>=2.5',   # Spreadsheet functions -- fork of openpyxl
+        'pandas',             # Spreadsheet input
+        'psutil',             # Load monitoring
+        'xlrd',               # Spreadsheet input
+        'xlsxwriter',         # Spreadsheet output
+        'requests',           # HTTP methods
+        'python-Levenshtein', # For fuzzy string matching
         ]
 
 # Optionally define extras

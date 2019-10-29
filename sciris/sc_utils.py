@@ -14,7 +14,6 @@ import pprint
 import hashlib
 import datetime
 import dateutil
-import Levenshtein
 import subprocess
 import numbers
 import numpy as np
@@ -53,7 +52,7 @@ else:
 
 
 # Define the modules being loaded
-__all__ = ['uuid', 'dcp', 'cp', 'pp', 'sha', 'wget', 'htmlify', 'suggest']
+__all__ = ['uuid', 'dcp', 'cp', 'pp', 'sha', 'wget', 'htmlify']
 
 
 def uuid(uid=None, which=None, die=False, tostring=False):
@@ -168,6 +167,9 @@ def htmlify(string, reverse=False, tostring=False):
         output = htmldecoder.unescape(string)
         output = output.replace('<br>','\n').replace('<BR>','\n')
     return output
+
+
+
 
 
 ##############################################################################
@@ -931,26 +933,31 @@ def promotetolist(obj=None, objtype=None, keepnone=False):
     If keepnone is false, then None is converted to an empty list. Otherwise, it's converted to
     [None].
     
-    Version: 2018aug24
+    Version: 2019oct29
     '''
-    isnone = False
-    if not isinstance(obj, list):
-        if obj is None and not keepnone:
-            obj = []
-            isnone = True
+    if isinstance(obj, list):
+        return obj # Don't do anything if it's already a list
+    else:
+        if obj is None:
+            if keepnone:
+                return [None]
+            else:
+                return []
         else:
-            obj = [obj] # Main usage case -- listify it
-    if objtype is not None and not isnone:  # Check that the types match -- now that we know it's a list, we can iterate over it
-        for item in obj:
-            checktype(obj=item, objtype=objtype, die=True)
-    return obj
-
-
-
-
-
-
-
+            if objtype is None:
+                return [obj] # Main usage case -- listify it
+            else:
+                if checktype(obj=obj, objtype=objtype, die=False):
+                    return [obj] # If the object is already of the right type, wrap it in a list
+                else:
+                    try:
+                        for item in obj:
+                            checktype(obj=item, objtype=objtype, die=True)
+                        return list(obj)
+                    except Exception as E:
+                        errormsg = 'promotetolist() type mismatch: %s' % str(E)
+                        raise Exception(errormsg).with_traceback(E.__traceback__)
+    return # Should be unreachable
 
 
 
@@ -1212,7 +1219,7 @@ def timedsleep(delay=None, verbose=True):
 ### MISC. FUNCTIONS
 ##############################################################################
 
-__all__ += ['percentcomplete', 'checkmem', 'runcommand', 'gitinfo', 'compareversions', 'uniquename', 'importbyname']
+__all__ += ['percentcomplete', 'checkmem', 'runcommand', 'gitinfo', 'compareversions', 'uniquename', 'importbyname', 'suggest']
 
 def percentcomplete(step=None, maxsteps=None, stepsize=1, prefix=None):
     '''
@@ -1430,6 +1437,69 @@ def importbyname(name=None, output=False, die=True):
     else:      return True
 
 
+def suggest(user_input, valid_inputs, n=1, threshold=4, fulloutput=False, die=False):
+    """
+    Return suggested item
+
+    Returns item with lowest Levenshtein distance, where case substitution and stripping
+    whitespace are not included in the distance. If there are ties, then the additional operations
+    will be included
+
+    :param user_input: String with user's input
+    :param valid_inputs: List/collection of valid strings
+    :param threshold: Maximum number of edits required for an option to be suggested
+    :param die: If True, an informative error will be raised (to avoid having to implement this in the calling code)
+    :return: Suggested string. Returns None if no suggestions with edit distance less than threshold were found. This helps to make
+             suggestions more relevant.
+
+    Example usage:
+
+    >>> suggest('foo',['Foo','Bar'])
+    'Foo'
+    >>> suggest('foo',['FOO','Foo'])
+    'Foo'
+    >>> suggest('foo',['Foo ','boo'])
+    'Foo '
+
+    """
+    import Levenshtein # To allow as an optional import
+    
+    valid_inputs = promotetolist(valid_inputs, objtype='string')
+
+    distance = np.zeros(len(valid_inputs))
+    cs_distance = np.zeros(len(valid_inputs))
+    # We will switch inputs to lowercase because we want to consider case substitution a 'free' operation
+    # Similarly, stripping whitespace is a free operation. This ensures that something like
+    # 'foo ' will match 'Foo' ahead of 'boo '
+    for i, s in enumerate(valid_inputs):
+        distance[i] = Levenshtein.distance(user_input, s.strip().lower())
+        cs_distance[i] = Levenshtein.distance(user_input, s.strip())
+
+    # If there is a tie for the minimum distance, use the case sensitive comparison
+    if sum(distance==min(distance)) > 1:
+        distance = cs_distance
+    
+    # Order by distance, then pull out the right inputs, then turn them into a list
+    order = np.argsort(distance)
+    suggestions = [valid_inputs[i] for i in order]
+    suggestionstr = ', '.join(['"' + sugg + '"' for sugg in suggestions[:n]])
+    
+    if min(distance) > threshold:
+        if die:
+            raise Exception('"%s" not found' % user_input)
+        else:
+            return None
+    elif die:
+        raise Exception('"%s" not found - did you mean %s?' % (user_input, suggestionstr))
+    else:
+        if fulloutput:
+            output = dict(zip(suggestions, distance[order]))
+            return output
+        else:
+            if n==1:
+                return suggestions[0]
+            else:
+                return suggestions[:n]
 
 ##############################################################################
 ### NESTED DICTIONARY FUNCTIONS
@@ -1553,62 +1623,6 @@ def flattendict(inputdict=None, basekey=None, subkeys=None, complist=None, keyli
         else:
             complist.append(comp)
     return complist, keylist
-
-def suggest(user_input, valid_inputs, threshold=4, die=False):
-    """
-    Return suggested item
-
-    Returns item with lowest Levenshtein distance, where case substitution and stripping
-    whitespace are not included in the distance. If there are ties, then the additional operations
-    will be included
-
-    :param user_input: String with user's input
-    :param valid_inputs: List/collection of valid strings
-    :param threshold: Maximum number of edits required for an option to be suggested
-    :param die: If True, an informative error will be raised (to avoid having to implement this in the calling code)
-    :return: Suggested string. Returns None if no suggestions with edit distance less than threshold were found. This helps to make
-             suggestions more relevant.
-
-    Example usage:
-
-    >>> suggest('foo',['Foo','Bar'])
-    'Foo'
-    >>> suggest('foo',['FOO','Foo'])
-    'Foo'
-    >>> suggest('foo',['Foo ','boo'])
-    'Foo '
-
-    """
-
-    if isstring(valid_inputs):
-        valid_inputs = [valid_inputs]
-    else:
-        valid_inputs = list(valid_inputs)
-
-    distance = np.zeros(len(valid_inputs))
-    cs_distance = np.zeros(len(valid_inputs))
-    # We will switch inputs to lowercase because we want to consider case substitution a 'free' operation
-    # Similarly, stripping whitespace is a free operation. This ensures that something like
-    # 'foo ' will match 'Foo' ahead of 'boo '
-    for i, s in enumerate(valid_inputs):
-        distance[i] = Levenshtein.distance(user_input, s.strip().lower())
-        cs_distance[i] = Levenshtein.distance(user_input, s.strip())
-
-    if sum(distance==min(distance)) > 1:
-        # If there is a tie for the minimum distance, use the case sensitive comparison
-        distance = cs_distance
-
-    suggestion = valid_inputs[np.argmin(distance)]
-
-    if min(distance) > threshold:
-        if die:
-            raise Exception('"%s" not found' % user_input)
-        else:
-            return None
-    elif die:
-        raise Exception('"%s" not found - did you mean "%s"?' % (user_input, suggestion))
-    else:
-        return suggestion
 
 
 ##############################################################################
