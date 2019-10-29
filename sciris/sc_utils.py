@@ -1597,8 +1597,11 @@ def suggest(user_input, valid_inputs, threshold=4, die=False):
     suggestion = valid_inputs[np.argmin(distance)]
 
     if min(distance) > threshold:
-        return None
-    elif die == True:
+        if die:
+            raise Exception('"%s" not found' % user_input)
+        else:
+            return None
+    elif die:
         raise Exception('"%s" not found - did you mean "%s"?' % (user_input, suggestion))
     else:
         return suggestion
