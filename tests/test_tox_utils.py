@@ -1,6 +1,6 @@
 import numpy as np
 import sciris as sc
-
+import pytest
 
 def test_colorize():
     sc.heading('test_colorize()')
@@ -36,23 +36,18 @@ def test_promotetolist():
     res2b = sc.promotetolist(ex2, objtype='str')
     res3a = sc.promotetolist(ex3)
     res3b = sc.promotetolist(ex3, objtype='number')
-    errstr = ''
-    try:
+    with pytest.raises(TypeError):
         sc.promotetolist(ex3, objtype='str')
-    except Exception as E:
-        errstr = str(E)
     assert res1 == ['a']
     assert res2a == [{'a', 'b'}]
     assert sorted(res2b) == ['a', 'b'] # Sets randomize the order...
     assert repr(res3a) == repr([np.array([0,1,2])]) # Direct quality comparison fails due to the array
     assert res3b == [0,1,2]
-    assert errstr == "promotetolist() type mismatch: Incorrect type: object is <class 'numpy.int64'>, but str is required"
     print(res1)
     print(res2a)
     print(res2b)
     print(res3a)
     print(res3b)
-    print('Example error message: %s' % errstr)
     return
 
 
@@ -68,10 +63,8 @@ def test_suggest():
     res2 = sc.suggest(string, ex2)
     res3 = sc.suggest(string, ex3)
     res4 = sc.suggest(string, ex4, threshold=4)
-    try:
+    with pytest.raises(Exception):
         sc.suggest(string, ex1, threshold=4, die=True)
-    except Exception as E:
-        errstr = str(E)
     res5a = sc.suggest(string, ex5, n=3)
     res5b = sc.suggest(string, ex5, fulloutput=True)
     assert res1 == 'Foo'
@@ -80,14 +73,12 @@ def test_suggest():
     assert res4 == None
     assert res5a == ['foo', 'fou', 'fol']
     assert res5b == {'foo': 0.0, 'fou': 1.0, 'fol': 1.0, 'fal': 2.0, 'fil': 2.0}
-    assert errstr == '"foo" not found - did you mean "Foo"?'
     print(res1)
     print(res2)
     print(res3)
     print(res4)
     print(res5a)
     print(res5b)
-    print('Example error message: %s' % errstr)
     return
     
 

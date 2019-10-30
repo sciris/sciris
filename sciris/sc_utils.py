@@ -891,7 +891,7 @@ def checktype(obj=None, objtype=None, subtype=None, die=False):
     if die: # Either raise an exception or do nothing if die is True
         if not result: # It's not an instance
             errormsg = 'Incorrect type: object is %s, but %s is required' % (type(obj), objtype)
-            raise Exception(errormsg)
+            raise TypeError(errormsg)
         else:
             return None # It's fine, do nothing
     else: # Return the result of the comparison
@@ -955,9 +955,9 @@ def promotetolist(obj=None, objtype=None, keepnone=False):
                         for item in obj:
                             checktype(obj=item, objtype=objtype, die=True)
                         return list(obj) # If all type checking passes, cast to list
-                    except Exception as E:
+                    except TypeError as E:
                         errormsg = 'promotetolist() type mismatch: %s' % str(E)
-                        raise Exception(errormsg).with_traceback(E.__traceback__)
+                        raise TypeError(errormsg).with_traceback(E.__traceback__)
     return # Should be unreachable
 
 
