@@ -352,7 +352,7 @@ def colormapdemo(cmap, n=None, smoothing=None, randseed=None):
     pl.show()
 
     # Plot in 3D
-    fig2,ax2 = ax3d(returnfig=True, figsize=(18,8))
+    fig2,ax2 = fig3d(returnax=True, figsize=(18,8))
     ax2.view_init(elev=45, azim=30)
     X = np.linspace(0,horizontalsize,n)
     X, Y = np.meshgrid(X, X)
@@ -580,14 +580,31 @@ pl.cm.register_cmap('bi', bicolormap())
 ### PLOTTING FUNCTIONS
 ##############################################################################
 
-__all__ += ['ax3d', 'plot3d', 'scatter3d', 'surf3d', 'bar3d', 'boxoff', 'setaxislim', 'setxlim', 'setylim', 'commaticks', 'SItickformatter', 'SIticks']
+__all__ += ['fig3d', 'ax3d', 'plot3d', 'scatter3d', 'surf3d', 'bar3d', 'boxoff', 'setaxislim', 'setxlim', 'setylim', 'commaticks', 'SItickformatter', 'SIticks']
 
 
-def ax3d(fig=None, returnfig=False, silent=False, elev=None, azim=None, figkwargs=None, **kwargs):
-    ''' Create a 3D axis to plot in -- all keyword arguments are passed to figure() '''
+def fig3d(returnax=False, figkwargs=None, axkwargs=None, **kwargs):
+    ''' Shortcut for creating a figure with 3D axes -- kwargs are passed to figure() '''
+
+    if figkwargs is None: figkwargs = {}
+    if axkwargs is None: axkwargs = {}
+    figkwargs.update(kwargs)
+
+    fig = pl.figure(**figkwargs)
+    ax = ax3d(**axkwargs)
+    if returnax:
+        return fig,ax
+    else:
+        return fig
+
+
+def ax3d(fig=None, returnfig=False, silent=False, elev=None, azim=None, figkwargs=None, axkwargs=None, **kwargs):
+    ''' Create a 3D axis to plot in -- kwags are passed to add_subplot() '''
     from mpl_toolkits.mplot3d import Axes3D # analysis:ignore
 
     if figkwargs is None: figkwargs = {}
+    if axkwargs is None: axkwargs = {}
+    axkwargs.update(kwargs)
     
     # Handle the figure
     if fig is None: 
@@ -596,7 +613,7 @@ def ax3d(fig=None, returnfig=False, silent=False, elev=None, azim=None, figkwarg
         silent = False # Never close an already open figure
     
     # Create and initialize the axis
-    ax = fig.add_subplot(projection='3d', **kwargs)
+    ax = fig.add_subplot(projection='3d', **axkwargs)
     if elev is not None and azim is not None:
         ax.view_init(elev=elev, azim=azim)
     if silent:
@@ -607,17 +624,17 @@ def ax3d(fig=None, returnfig=False, silent=False, elev=None, azim=None, figkwarg
         return ax
 
 
-def plot3d(x, y, z, c=None, fig=None, returnfig=False, plotkwargs=None, **kwargs):
-    ''' Plot 3D data as a scatter '''
+def plot3d(x, y, z, c=None, fig=None, returnfig=False, figkwargs=None, axkwargs=None, plotkwargs=None, **kwargs):
+    ''' Plot 3D data as a scatter -- kwargs are passed to plot() '''
     # Set default arguments
+    default_plotkwargs = {'lw':2}
     if plotkwargs is None: plotkwargs = {}
-    settings = {'lw':2}
-    settings.update(plotkwargs)
+    plotkwargs = dict(default_plotkwargs, **plotkwargs) # Reverse of plotkwargs.update(default_plotkwargs)
     
     # Create figure
-    fig,ax = ax3d(returnfig=True, fig=fig, **kwargs)
+    fig,ax = ax3d(returnfig=True, fig=fig, figkwargs=figkwargs, axkwargs=axkwargs)
 
-    ax.plot(x, y, z, **settings)
+    ax.plot(x, y, z, **plotkwargs)
 
     if returnfig:
         return fig,ax
@@ -625,17 +642,17 @@ def plot3d(x, y, z, c=None, fig=None, returnfig=False, plotkwargs=None, **kwargs
         return ax
 
 
-def scatter3d(x, y, z, c=None, fig=None, returnfig=False, plotkwargs=None, **kwargs):
+def scatter3d(x, y, z, c=None, fig=None, returnfig=False, figkwargs=None, axkwargs=None, plotkwargs=None, **kwargs):
     ''' Plot 3D data as a scatter '''
     # Set default arguments
+    default_plotkwargs = {'s':200, 'depthshade':False, 'linewidth':0}
     if plotkwargs is None: plotkwargs = {}
-    settings = {'s':200, 'depthshade':False, 'linewidth':0}
-    settings.update(plotkwargs)
+    plotkwargs = dict(default_plotkwargs, **plotkwargs) # Reverse of plotkwargs.update(default_plotkwargs)
     
     # Create figure
-    fig,ax = ax3d(returnfig=True, fig=fig, **kwargs)
+    fig,ax = ax3d(returnfig=True, fig=fig, figkwargs=figkwargs, axkwargs=axkwargs)
 
-    ax.scatter(x, y, z, c=c, **settings)
+    ax.scatter(x, y, z, c=c, **plotkwargs)
 
     if returnfig:
         return fig,ax
@@ -643,21 +660,21 @@ def scatter3d(x, y, z, c=None, fig=None, returnfig=False, plotkwargs=None, **kwa
         return ax
 
 
-def surf3d(data, fig=None, returnfig=False, plotkwargs=None, colorbar=True, **kwargs):
+def surf3d(data, fig=None, returnfig=False, colorbar=True, figkwargs=None, axkwargs=None, plotkwargs=None, **kwargs):
     ''' Plot 2D data as a 3D surface '''
     
     # Set default arguments
+    default_plotkwargs = {'rstride':1, 'cstride':1, 'linewidth':0, 'antialiased':False, 'cmap':'viridis'}
     if plotkwargs is None: plotkwargs = {}
-    settings = {'rstride':1, 'cstride':1, 'linewidth':0, 'antialiased':False, 'cmap':'viridis'}
-    settings.update(plotkwargs)
+    plotkwargs = dict(default_plotkwargs, **plotkwargs) # Reverse of plotkwargs.update(default_plotkwargs)
     
     # Create figure
-    fig,ax = ax3d(returnfig=True, fig=fig, **kwargs)
+    fig,ax = ax3d(returnfig=True, fig=fig, figkwargs=figkwargs, axkwargs=axkwargs)
     ny,nx = pl.array(data).shape
     x = np.arange(nx)
     y = np.arange(ny)
     X, Y = np.meshgrid(x, y)
-    surf = ax.plot_surface(X, Y, data, **settings)
+    surf = ax.plot_surface(X, Y, data, **plotkwargs)
     if colorbar:
         fig.colorbar(surf)
     
@@ -668,29 +685,28 @@ def surf3d(data, fig=None, returnfig=False, plotkwargs=None, colorbar=True, **kw
 
 
 
-def bar3d(data, fig=None, returnfig=False, plotkwargs=None, **kwargs):
+def bar3d(data, fig=None, returnfig=False, cmap='viridis', figkwargs=None, axkwargs=None, plotkwargs=None, **kwargs):
     ''' Plot 2D data as 3D bars '''
     
     # Set default arguments
+    default_plotkwargs = {'dx':0.8, 'dy':0.8, 'shade':True}
     if plotkwargs is None: plotkwargs = {}
-    settings = {'width':0.8, 'depth':0.8, 'shade':True, 'cmap':'viridis'}
-    settings.update(plotkwargs)
+    plotkwargs = dict(default_plotkwargs, **plotkwargs) # Reverse of plotkwargs.update(default_plotkwargs)
     
     # Create figure
-    fig,ax = ax3d(returnfig=True, fig=fig, **kwargs)
+    fig,ax = ax3d(returnfig=True, fig=fig, figkwargs=figkwargs, axkwargs=axkwargs)
     
     x, y, z = [], [], []
-    dx, dy, dz = [], [], []
-    color = vectocolor(data.flatten(), cmap=settings['cmap'])
+    dz = []
+    if cmap:
+        plotkwargs['color'] = vectocolor(data.flatten(), cmap=settings['cmap'])
     for i in range(data.shape[0]):
         for j in range(data.shape[1]):
             x.append(i)
             y.append(j)
             z.append(0)
-            dx.append(settings['width'])
-            dy.append(settings['depth'])
             dz.append(data[i,j])
-    ax.bar3d(x=x, y=y, z=z, dx=settings['width'], dy=settings['depth'], dz=dz, color=color, shade=settings['shade'])
+    ax.bar3d(x=x, y=y, z=z, dz=dz, **plotkwargs)
     
     if returnfig:
         return fig,ax
