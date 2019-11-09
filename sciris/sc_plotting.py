@@ -583,18 +583,20 @@ pl.cm.register_cmap('bi', bicolormap())
 __all__ += ['ax3d', 'plot3d', 'scatter3d', 'surf3d', 'bar3d', 'boxoff', 'setaxislim', 'setxlim', 'setylim', 'commaticks', 'SItickformatter', 'SIticks']
 
 
-def ax3d(fig=None, returnfig=False, silent=False, elev=None, azim=None, **kwargs):
+def ax3d(fig=None, returnfig=False, silent=False, elev=None, azim=None, figkwargs=None, **kwargs):
     ''' Create a 3D axis to plot in -- all keyword arguments are passed to figure() '''
     from mpl_toolkits.mplot3d import Axes3D # analysis:ignore
+
+    if figkwargs is None: figkwargs = {}
     
     # Handle the figure
     if fig is None: 
-        fig = pl.figure(**kwargs) # It's necessary to have an open figure or else the commands won't work
+        fig = pl.figure(**figkwargs) # It's necessary to have an open figure or else the commands won't work
     else:
         silent = False # Never close an already open figure
     
     # Create and initialize the axis
-    ax = fig.gca(projection='3d')
+    ax = fig.add_subplot(projection='3d', **kwargs)
     if elev is not None and azim is not None:
         ax.view_init(elev=elev, azim=azim)
     if silent:
