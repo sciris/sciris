@@ -26,6 +26,8 @@ def test_printing():
     print('sc.pp():')
     sc.pp(example.data)
     string = sc.pp(example.data, doprint=False)
+    print('sc.printdata():')
+    sc.printdata(example.data)
     return string
     
 
