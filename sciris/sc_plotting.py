@@ -598,23 +598,31 @@ def fig3d(returnax=False, figkwargs=None, axkwargs=None, **kwargs):
         return fig
 
 
-def ax3d(fig=None, returnfig=False, silent=False, elev=None, azim=None, figkwargs=None, axkwargs=None, **kwargs):
+def ax3d(fig=None, ax=None, returnfig=False, silent=False, elev=None, azim=None, figkwargs=None, axkwargs=None, **kwargs):
     ''' Create a 3D axis to plot in -- kwags are passed to add_subplot() '''
     from mpl_toolkits.mplot3d import Axes3D # analysis:ignore
 
     if figkwargs is None: figkwargs = {}
     if axkwargs is None: axkwargs = {}
     axkwargs.update(kwargs)
+    nrows = axkwargs.pop('nrows', 1) # Since fig.add_subplot() can't handle kwargs...
+    ncols = axkwargs.pop('ncols', 1)
+    index = axkwargs.pop('index', 1)
     
     # Handle the figure
     if fig is None: 
-        fig = pl.figure(**figkwargs) # It's necessary to have an open figure or else the commands won't work
+        if ax is None:
+            fig = pl.figure(**figkwargs) # It's necessary to have an open figure or else the commands won't work
+        else:
+            fig = ax.figure
+            silent = False
     else:
         silent = False # Never close an already open figure
-    
+            
     # Create and initialize the axis
-    ax = fig.add_subplot(projection='3d', **axkwargs)
-    if elev is not None and azim is not None:
+    if ax is None:
+        ax = fig.add_subplot(nrows, ncols, index, projection='3d', **axkwargs)
+    if elev is not None or azim is not None:
         ax.view_init(elev=elev, azim=azim)
     if silent:
         pl.close(fig)
@@ -624,15 +632,15 @@ def ax3d(fig=None, returnfig=False, silent=False, elev=None, azim=None, figkwarg
         return ax
 
 
-def plot3d(x, y, z, c=None, fig=None, returnfig=False, figkwargs=None, axkwargs=None, plotkwargs=None, **kwargs):
+def plot3d(x, y, z, c=None, fig=None, ax=None, returnfig=False, figkwargs=None, axkwargs=None, plotkwargs=None, **kwargs):
     ''' Plot 3D data as a scatter -- kwargs are passed to plot() '''
     # Set default arguments
     default_plotkwargs = {'lw':2}
     if plotkwargs is None: plotkwargs = {}
     plotkwargs = dict(default_plotkwargs, **plotkwargs) # Reverse of plotkwargs.update(default_plotkwargs)
     
-    # Create figure
-    fig,ax = ax3d(returnfig=True, fig=fig, figkwargs=figkwargs, axkwargs=axkwargs)
+    # Create axis
+    fig,ax = ax3d(returnfig=True, fig=fig, ax=ax, figkwargs=figkwargs, **axkwargs)
 
     ax.plot(x, y, z, **plotkwargs)
 
@@ -650,7 +658,7 @@ def scatter3d(x, y, z, c=None, fig=None, returnfig=False, figkwargs=None, axkwar
     plotkwargs = dict(default_plotkwargs, **plotkwargs) # Reverse of plotkwargs.update(default_plotkwargs)
     
     # Create figure
-    fig,ax = ax3d(returnfig=True, fig=fig, figkwargs=figkwargs, axkwargs=axkwargs)
+    fig,ax = ax3d(returnfig=True, fig=fig, figkwargs=figkwargs, **axkwargs)
 
     ax.scatter(x, y, z, c=c, **plotkwargs)
 
@@ -669,7 +677,7 @@ def surf3d(data, fig=None, returnfig=False, colorbar=True, figkwargs=None, axkwa
     plotkwargs = dict(default_plotkwargs, **plotkwargs) # Reverse of plotkwargs.update(default_plotkwargs)
     
     # Create figure
-    fig,ax = ax3d(returnfig=True, fig=fig, figkwargs=figkwargs, axkwargs=axkwargs)
+    fig,ax = ax3d(returnfig=True, fig=fig, figkwargs=figkwargs, **axkwargs)
     ny,nx = pl.array(data).shape
     x = np.arange(nx)
     y = np.arange(ny)
@@ -694,12 +702,15 @@ def bar3d(data, fig=None, returnfig=False, cmap='viridis', figkwargs=None, axkwa
     plotkwargs = dict(default_plotkwargs, **plotkwargs) # Reverse of plotkwargs.update(default_plotkwargs)
     
     # Create figure
-    fig,ax = ax3d(returnfig=True, fig=fig, figkwargs=figkwargs, axkwargs=axkwargs)
+    fig,ax = ax3d(returnfig=True, fig=fig, figkwargs=figkwargs, **axkwargs)
     
     x, y, z = [], [], []
     dz = []
-    if cmap:
-        plotkwargs['color'] = vectocolor(data.flatten(), cmap=settings['cmap'])
+    if 'color' not in plotkwargs:
+        try:
+            plotkwargs['color'] = vectocolor(data.flatten(), cmap=cmap)
+        except Exception as E:
+            print(f'bar3d(): Attempt to auto-generate colors failed: {str(E)}')
     for i in range(data.shape[0]):
         for j in range(data.shape[1]):
             x.append(i)
