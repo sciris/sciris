@@ -35,6 +35,16 @@ with open(versionfile, 'r') as f:
     exec(f.read(), versiondict)
     version = versiondict['__version__']
 
+# Get version
+versionfile = 'sc_version.py'
+versionstr = '__version__ = '
+cwd = os.path.abspath(os.path.dirname(__file__))
+versionpath = os.path.join(cwd, 'sciris', versionfile)
+with open(versionpath, 'r') as f:
+    lines = f.readlines()
+    assert lines[0].startswith(versionstr)
+    version = lines[0].split(versionstr)[1].rstrip()
+
 # Get the documentation
 with open("README.md", "r") as fh:
     long_description = fh.read()
@@ -47,7 +57,6 @@ CLASSIFIERS = [
     'Programming Language :: Python',
     'Topic :: Software Development :: Libraries :: Python Modules',
     'Development Status :: 4 - Beta',
-    'Programming Language :: Python :: 2.7',
     'Programming Language :: Python :: 3.7',
 ]
 
