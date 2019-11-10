@@ -636,6 +636,7 @@ def plot3d(x, y, z, c=None, fig=None, ax=None, returnfig=False, figkwargs=None, 
     ''' Plot 3D data as a scatter -- kwargs are passed to plot() '''
     # Set default arguments
     default_plotkwargs = {'lw':2}
+    if axkwargs   is None: axkwargs   = {}
     if plotkwargs is None: plotkwargs = {}
     plotkwargs = dict(default_plotkwargs, **plotkwargs) # Reverse of plotkwargs.update(default_plotkwargs)
     
@@ -654,6 +655,7 @@ def scatter3d(x, y, z, c=None, fig=None, returnfig=False, figkwargs=None, axkwar
     ''' Plot 3D data as a scatter '''
     # Set default arguments
     default_plotkwargs = {'s':200, 'depthshade':False, 'linewidth':0}
+    if axkwargs   is None: axkwargs   = {}
     if plotkwargs is None: plotkwargs = {}
     plotkwargs = dict(default_plotkwargs, **plotkwargs) # Reverse of plotkwargs.update(default_plotkwargs)
     
@@ -673,6 +675,7 @@ def surf3d(data, fig=None, returnfig=False, colorbar=True, figkwargs=None, axkwa
     
     # Set default arguments
     default_plotkwargs = {'rstride':1, 'cstride':1, 'linewidth':0, 'antialiased':False, 'cmap':'viridis'}
+    if axkwargs   is None: axkwargs   = {}
     if plotkwargs is None: plotkwargs = {}
     plotkwargs = dict(default_plotkwargs, **plotkwargs) # Reverse of plotkwargs.update(default_plotkwargs)
     
@@ -698,6 +701,7 @@ def bar3d(data, fig=None, returnfig=False, cmap='viridis', figkwargs=None, axkwa
     
     # Set default arguments
     default_plotkwargs = {'dx':0.8, 'dy':0.8, 'shade':True}
+    if axkwargs   is None: axkwargs   = {}
     if plotkwargs is None: plotkwargs = {}
     plotkwargs = dict(default_plotkwargs, **plotkwargs) # Reverse of plotkwargs.update(default_plotkwargs)
     
