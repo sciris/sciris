@@ -927,44 +927,15 @@ def promotetoarray(x):
     return # Should be unreachable
 
 
-#def promotetolist(obj=None, objtype=None, keepnone=False):
-#    '''
-#    Make sure object is iterable -- used so functions can handle inputs like 'a' or ['a', 'b'].
-#    
-#    If keepnone is false, then None is converted to an empty list. Otherwise, it's converted to
-#    [None].
-#    
-#    Version: 2019nov10
-#    '''
-#    if isinstance(obj, list):
-#        return obj # Don't do anything if it's already a list
-#    else:
-#        if obj is None:
-#            if keepnone:
-#                return [None]
-#            else:
-#                return []
-#        else:
-#            if objtype is None:
-#                return [obj] # Main usage case -- listify it
-#            else:
-#                if checktype(obj=obj, objtype=objtype, die=False):
-#                    return [obj] # If the object is already of the right type, wrap it in a list
-#                else:
-#                    try:
-#                        for item in obj:
-#                            checktype(obj=item, objtype=objtype, die=True)
-#                        return list(obj) # If all type checking passes, cast to list
-#                    except TypeError as E:
-#                        errormsg = 'promotetolist() type mismatch: %s' % str(E)
-#                        raise TypeError(errormsg).with_traceback(E.__traceback__)
-#    return # Should be unreachable
-
-
-
 def promotetolist(obj=None, objtype=None, keepnone=False):
+    '''
+    Make sure object is iterable -- used so functions can handle inputs like 'a' or ['a', 'b'].
     
+    If keepnone is false, then None is converted to an empty list. Otherwise, it's converted to
+    [None].
     
+    Version: 2019nov10
+    '''    
     if objtype is None: # Don't do type checking
         if isinstance(obj, list):
             output = obj # If it's already a list and we're not doing type checking, just return
