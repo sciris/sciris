@@ -5,12 +5,15 @@ import pytest
 def test_colorize():
     sc.heading('test_colorize()')
     sc.colorize(showhelp=True)
-    sc.colorize('green', 'hi') # Simple example
-    sc.colorize(['yellow', 'bgblack']); print('Hello world'); print('Goodbye world'); sc.colorize('reset') # Colorize all output in between
-    bluearray = sc.colorize(color='blue', string=str(range(5)), output=True); print("c'est bleu: " + bluearray)
-    sc.colorize('magenta') # Now type in magenta for a while
-    print('this is magenta')
-    sc.colorize('reset') # Stop typing in magenta
+    print('Simple example:')
+    sc.colorize('green', 'hi')
+    print('More complicated example:')
+    sc.colorize(['yellow', 'bgblack'])
+    print('Hello world')
+    print('Goodbye world')
+    sc.colorize('reset') # Colorize all output in between
+    bluearray = sc.colorize(color='blue', string=str(range(5)), output=True)
+    print("This should be blue: " + bluearray)
     return
 
 
@@ -28,16 +31,26 @@ def test_printing():
 
 def test_promotetolist():
     sc.heading('test_promotetolist()')
+    ex0 = 1
     ex1 = 'a'
     ex2 = {'a', 'b'}
     ex3 = np.array([0,1,2])
+    ex4 = [1,2,3]
+    res0 = sc.promotetolist(ex0, int)
     res1 = sc.promotetolist(ex1)
     res2a = sc.promotetolist(ex2)
     res2b = sc.promotetolist(ex2, objtype='str')
     res3a = sc.promotetolist(ex3)
     res3b = sc.promotetolist(ex3, objtype='number')
     with pytest.raises(TypeError):
+        sc.promotetolist(ex0, str)
+    with pytest.raises(TypeError):
+        sc.promotetolist(ex1, int)
+    with pytest.raises(TypeError):
         sc.promotetolist(ex3, objtype='str')
+    with pytest.raises(TypeError):
+        sc.promotetolist(ex4, objtype='str')
+    assert res0 == [1]
     assert res1 == ['a']
     assert res2a == [{'a', 'b'}]
     assert sorted(res2b) == ['a', 'b'] # Sets randomize the order...
