@@ -30,14 +30,15 @@ if 'minimal' in sys.argv:
     ]
 
 # Get version
+versiondir = 'sciris'
 versionfile = 'sc_version.py'
-versionstr = '__version__ = '
+versionstr = '__version__'
 cwd = os.path.abspath(os.path.dirname(__file__))
-versionpath = os.path.join(cwd, 'sciris', versionfile)
+versionpath = os.path.join(cwd, versiondir, versionfile)
 with open(versionpath, 'r') as f:
-    lines = f.readlines()
-    assert lines[0].startswith(versionstr)
-    version = lines[0].split(versionstr)[1].rstrip()
+    versiondict = {}
+    exec(f.read(), versiondict)
+    version = versiondict[versionstr]
 
 # Get the documentation
 with open("README.md", "r") as fh:
