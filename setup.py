@@ -2,6 +2,7 @@
 # -*- coding: utf-8 -*-
 from __future__ import unicode_literals
 from setuptools import setup, find_packages
+import os
 import sys
 
 # Define the requirements and extras
@@ -27,13 +28,6 @@ if 'minimal' in sys.argv:
         'matplotlib>=1.4.2', # Plotting
         'numpy>=1.10.1',     # Numerical functions
     ]
-
-# Get version information
-versionfile = 'sciris/sc_version.py'
-with open(versionfile, 'r') as f:
-    versiondict = {}
-    exec(f.read(), versiondict)
-    version = versiondict['__version__']
 
 # Get version
 versionfile = 'sc_version.py'
