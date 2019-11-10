@@ -2,20 +2,22 @@
 # -*- coding: utf-8 -*-
 from __future__ import unicode_literals
 from setuptools import setup, find_packages
+import os
 import sys
 
 # Define the requirements and extras
 requirements = [
-        'matplotlib>=1.4.2', # Plotting
-        'numpy>=1.10.1',     # Numerical functions
-        'dill',              # File I/O
-        'gitpython',         # Version information
-        'openpyexcel>=2.5',  # Spreadsheet functions -- fork of openpyxl
-        'pandas',            # Spreadsheet input
-        'psutil',            # Load monitoring
-        'xlrd',              # Spreadsheet input
-        'xlsxwriter',        # Spreadsheet output
-        'requests',          # HTTP methods
+        'matplotlib>=1.4.2',  # Plotting
+        'numpy>=1.10.1',      # Numerical functions
+        'dill',               # File I/O
+        'gitpython',          # Version information
+        'openpyexcel>=2.5',   # Spreadsheet functions -- fork of openpyxl
+        'pandas',             # Spreadsheet input
+        'psutil',             # Load monitoring
+        'xlrd',               # Spreadsheet input
+        'xlsxwriter',         # Spreadsheet output
+        'requests',           # HTTP methods
+        'python-Levenshtein', # For fuzzy string matching
         ]
 
 # Optionally define extras
@@ -27,12 +29,16 @@ if 'minimal' in sys.argv:
         'numpy>=1.10.1',     # Numerical functions
     ]
 
-# Get version information
-versionfile = 'sciris/sc_version.py'
-with open(versionfile, 'r') as f:
+# Get version
+versiondir = 'sciris'
+versionfile = 'sc_version.py'
+versionstr = '__version__'
+cwd = os.path.abspath(os.path.dirname(__file__))
+versionpath = os.path.join(cwd, versiondir, versionfile)
+with open(versionpath, 'r') as f:
     versiondict = {}
     exec(f.read(), versiondict)
-    version = versiondict['__version__']
+    version = versiondict[versionstr]
 
 # Get the documentation
 with open("README.md", "r") as fh:
@@ -46,7 +52,6 @@ CLASSIFIERS = [
     'Programming Language :: Python',
     'Topic :: Software Development :: Libraries :: Python Modules',
     'Development Status :: 4 - Beta',
-    'Programming Language :: Python :: 2.7',
     'Programming Language :: Python :: 3.7',
 ]
 

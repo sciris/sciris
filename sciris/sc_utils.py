@@ -169,6 +169,9 @@ def htmlify(string, reverse=False, tostring=False):
     return output
 
 
+
+
+
 ##############################################################################
 ### PRINTING/NOTIFICATION FUNCTIONS
 ##############################################################################
@@ -468,7 +471,7 @@ def printdata(data, name='Variable', depth=1, maxlen=40, indent='', level=0, sho
       maxlen: number of characters of data to display (if 0, don't show data)
       indent: where to start the indent (used internally)
     
-    Version: 1.0 (2015aug21)    
+    Version: 2015aug21 
     '''
     datatype = type(data)
     def printentry(data):
@@ -485,7 +488,7 @@ def printdata(data, name='Variable', depth=1, maxlen=40, indent='', level=0, sho
         else: datastring=''
         return string+datastring
     
-    string = printentry(data).replace('\n',' \ ') # Remove newlines
+    string = printentry(data).replace('\n',' ') # Remove newlines
     print(level*'..' + indent + name + ' | ' + string)
 
     if depth>0:
@@ -888,7 +891,7 @@ def checktype(obj=None, objtype=None, subtype=None, die=False):
     if die: # Either raise an exception or do nothing if die is True
         if not result: # It's not an instance
             errormsg = 'Incorrect type: object is %s, but %s is required' % (type(obj), objtype)
-            raise Exception(errormsg)
+            raise TypeError(errormsg)
         else:
             return None # It's fine, do nothing
     else: # Return the result of the comparison
@@ -921,6 +924,7 @@ def promotetoarray(x):
             return np.array([x]) # e.g. array(3)
     else: # e.g. 'foo'
         raise Exception("Expecting a number/list/tuple/ndarray; got: %s" % flexstr(x))
+    return # Should be unreachable
 
 
 def promotetolist(obj=None, objtype=None, keepnone=False):
@@ -930,27 +934,34 @@ def promotetolist(obj=None, objtype=None, keepnone=False):
     If keepnone is false, then None is converted to an empty list. Otherwise, it's converted to
     [None].
     
-    Version: 2018aug24
-    '''
-    isnone = False
-    if not isinstance(obj, list):
-        if obj is None and not keepnone:
-            obj = []
-            isnone = True
+    Version: 2019nov10
+    '''    
+    if objtype is None: # Don't do type checking
+        if isinstance(obj, list):
+            output = obj # If it's already a list and we're not doing type checking, just return
+        elif obj is None:
+            if keepnone:
+                output = [None] # Wrap in a list
+            else:
+                output = [] # Return an empty list, the "none" equivalent for a list
         else:
-            obj = [obj] # Main usage case -- listify it
-    if objtype is not None and not isnone:  # Check that the types match -- now that we know it's a list, we can iterate over it
-        for item in obj:
-            checktype(obj=item, objtype=objtype, die=True)
-    return obj
-
-
-
-
-
-
-
-
+            output = [obj] # Main usage case -- listify it
+    else: # Do type checking
+        if checktype(obj=obj, objtype=objtype, die=False):
+            output = [obj] # If the object is already of the right type, wrap it in a list
+        else:
+            try:
+                if not isiterable(obj): # Ensure it's iterable -- a mini promote-to-list
+                    iterable_obj = [obj]
+                else:
+                    iterable_obj = obj
+                for item in iterable_obj:
+                    checktype(obj=item, objtype=objtype, die=True)
+                output = list(iterable_obj) # If all type checking passes, cast to list instead of wrapping
+            except TypeError as E:
+                errormsg = 'promotetolist() type mismatch: %s' % str(E)
+                raise TypeError(errormsg).with_traceback(E.__traceback__)
+    return output
 
 
 
@@ -1217,7 +1228,7 @@ def timedsleep(delay=None, verbose=True):
 ### MISC. FUNCTIONS
 ##############################################################################
 
-__all__ += ['percentcomplete', 'checkmem', 'runcommand', 'gitinfo', 'compareversions', 'uniquename', 'importbyname']
+__all__ += ['percentcomplete', 'checkmem', 'runcommand', 'gitinfo', 'compareversions', 'uniquename', 'importbyname', 'suggest']
 
 def percentcomplete(step=None, maxsteps=None, stepsize=1, prefix=None):
     '''
@@ -1435,6 +1446,69 @@ def importbyname(name=None, output=False, die=True):
     else:      return True
 
 
+def suggest(user_input, valid_inputs, n=1, threshold=4, fulloutput=False, die=False):
+    """
+    Return suggested item
+
+    Returns item with lowest Levenshtein distance, where case substitution and stripping
+    whitespace are not included in the distance. If there are ties, then the additional operations
+    will be included
+
+    :param user_input: String with user's input
+    :param valid_inputs: List/collection of valid strings
+    :param threshold: Maximum number of edits required for an option to be suggested
+    :param die: If True, an informative error will be raised (to avoid having to implement this in the calling code)
+    :return: Suggested string. Returns None if no suggestions with edit distance less than threshold were found. This helps to make
+             suggestions more relevant.
+
+    Example usage:
+
+    >>> suggest('foo',['Foo','Bar'])
+    'Foo'
+    >>> suggest('foo',['FOO','Foo'])
+    'Foo'
+    >>> suggest('foo',['Foo ','boo'])
+    'Foo '
+
+    """
+    import Levenshtein # To allow as an optional import
+    
+    valid_inputs = promotetolist(valid_inputs, objtype='string')
+
+    distance = np.zeros(len(valid_inputs))
+    cs_distance = np.zeros(len(valid_inputs))
+    # We will switch inputs to lowercase because we want to consider case substitution a 'free' operation
+    # Similarly, stripping whitespace is a free operation. This ensures that something like
+    # 'foo ' will match 'Foo' ahead of 'boo '
+    for i, s in enumerate(valid_inputs):
+        distance[i] = Levenshtein.distance(user_input, s.strip().lower())
+        cs_distance[i] = Levenshtein.distance(user_input, s.strip())
+
+    # If there is a tie for the minimum distance, use the case sensitive comparison
+    if sum(distance==min(distance)) > 1:
+        distance = cs_distance
+    
+    # Order by distance, then pull out the right inputs, then turn them into a list
+    order = np.argsort(distance)
+    suggestions = [valid_inputs[i] for i in order]
+    suggestionstr = ', '.join(['"' + sugg + '"' for sugg in suggestions[:n]])
+    
+    if min(distance) > threshold:
+        if die:
+            raise Exception('"%s" not found' % user_input)
+        else:
+            return None
+    elif die:
+        raise Exception('"%s" not found - did you mean %s?' % (user_input, suggestionstr))
+    else:
+        if fulloutput:
+            output = dict(zip(suggestions, distance[order]))
+            return output
+        else:
+            if n==1:
+                return suggestions[0]
+            else:
+                return suggestions[:n]
 
 ##############################################################################
 ### NESTED DICTIONARY FUNCTIONS
@@ -1558,9 +1632,6 @@ def flattendict(inputdict=None, basekey=None, subkeys=None, complist=None, keyli
         else:
             complist.append(comp)
     return complist, keylist
-
-
-
 
 
 ##############################################################################
