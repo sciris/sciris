@@ -296,10 +296,7 @@ def gridcolors(ncolors=10, limits=None, nsteps=20, asarray=False, ashex=False, r
     
     ## For plotting -- optional
     if demo:
-        from mpl_toolkits.mplot3d import Axes3D # analysis:ignore
-        fig = pl.figure(facecolor='w')
-        ax = fig.add_subplot(111, projection='3d')
-        ax.scatter(colors[:,0], colors[:,1], colors[:,2], c=output, s=200, depthshade=False, lw=0)
+        ax = scatter3d(colors[:,0], colors[:,1], colors[:,2], c=output, s=200, depthshade=False, lw=0, figkwargs={'facecolor':'w'})
         ax.set_xlabel('Red', fontweight='bold')
         ax.set_ylabel('Green', fontweight='bold')
         ax.set_zlabel('Blue', fontweight='bold')
@@ -311,7 +308,7 @@ def gridcolors(ncolors=10, limits=None, nsteps=20, asarray=False, ashex=False, r
     
     
 
-def colormapdemo(cmap, n=None, smoothing=None, randseed=None):
+def colormapdemo(cmap=None, n=None, smoothing=None, randseed=None):
     '''
     Demonstrate a color map using simulated elevation data, shown in both 2D and
     3D. The argument can be either a colormap itself or a string describing a
@@ -329,6 +326,7 @@ def colormapdemo(cmap, n=None, smoothing=None, randseed=None):
     if n         is None: n         = 100
     if smoothing is None: smoothing = 40
     if randseed  is None: randseed  = 8
+    if cmap is None: cmap = 'parula' # For no particular reason
     maxheight = 1
     horizontalsize = 4
     pl.seed(randseed)
@@ -590,8 +588,7 @@ def fig3d(returnax=False, figkwargs=None, axkwargs=None, **kwargs):
     if axkwargs is None: axkwargs = {}
     figkwargs.update(kwargs)
 
-    fig = pl.figure(**figkwargs)
-    ax = ax3d(**axkwargs)
+    fig,ax = ax3d(returnfig=True, figkwargs=figkwargs, **axkwargs)
     if returnax:
         return fig,ax
     else:
