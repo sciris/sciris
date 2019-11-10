@@ -1140,18 +1140,20 @@ def tic():
     tic() [but you can also use the form t = tic()]
     toc() [but you can also use the form toc(t) where to is the output of tic()]
     '''
-    global _tictime  # The saved time is stored in this global.    
-    _tictime = time.time()  # Store the present time in the global.
-    return _tictime    # Return the same stored number.
+    global _tictime  # The saved time is stored in this global
+    _tictime = time.time()  # Store the present time in the global
+    return _tictime    # Return the same stored number
 
 
 
-def toc(start=None, output=False, label=None, sigfigs=None, filename=None):
+def toc(start=None, output=False, label=None, sigfigs=None, filename=None, reset=False):
     '''
     A little pair of functions to calculate a time difference, sort of like Matlab:
     tic() [but you can also use the form t = tic()]
     toc() [but you can also use the form toc(t) where to is the output of tic()]
-    '''   
+    '''
+    global _tictime  # The saved time is stored in this global
+
     # Set defaults
     if label   is None: label = ''
     if sigfigs is None: sigfigs = 3
@@ -1168,6 +1170,10 @@ def toc(start=None, output=False, label=None, sigfigs=None, filename=None):
     if label=='': base = 'Elapsed time: '
     else:         base = 'Elapsed time for %s: ' % label
     logmessage = base + '%s s' % sigfig(elapsed, sigfigs=sigfigs)
+
+    # Optionally reset the counter
+    if reset:
+        _tictime = time.time()  # Store the present time in the global
     
     if output:
         return elapsed
