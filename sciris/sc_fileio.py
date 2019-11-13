@@ -854,8 +854,8 @@ def savepptx(filename=None, template=None, slides=None, image_path='', close=Tru
             for slide in slides:
                 for attr in slide.keys():
                     if attr not in allowed_features:
-                        del slide[attr]
-                        if verbose: print("Slide contained an invalid attribute: %s, which has been deleted." %attr)
+#                        del slide[attr]
+                        if verbose: print("Slide contained an invalid attribute: %s, which has been ignored." %attr)
                 num_features = len(slide)
                 if num_features > 0:
                     try:
