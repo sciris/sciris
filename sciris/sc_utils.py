@@ -1514,7 +1514,7 @@ def suggest(user_input, valid_inputs, n=1, threshold=4, fulloutput=False, die=Fa
 ### NESTED DICTIONARY FUNCTIONS
 ##############################################################################
 
-__all__ += ['getnested', 'setnested', 'makenested', 'iternested', 'flattendict']
+__all__ += ['getnested', 'setnested', 'makenested', 'iternested', 'mergenested', 'flattendict']
 
 docstring = '''
 Four little functions to get and set data from nested dictionaries. The first two were adapted from:
@@ -1585,8 +1585,29 @@ def iternested(nesteddict,previous = []):
             output.append(previous+[k[0]])
     return output
 
+def mergenested(dict1, dict2, path=None, die=False, verbose=False):
+    # Adapted/stolen from https://stackoverflow.com/questions/7204805/dictionaries-of-dictionaries-merge
+    a = dcp(dict1) # Make a copy
+    b = dict2 # Don't need to make a copy
+    if path is None: path = []
+    for key in b:
+        if key in a:
+            if isinstance(a[key], dict) and isinstance(b[key], dict):
+                mergenested(a[key], b[key], path + [str(key)])
+            elif a[key] == b[key]:
+                pass # same leaf value
+            else:
+                errormsg = 'Conflict at %s' % '.'.join(path + [str(key)])
+                if die:
+                    raise Exception(errormsg)
+                elif verbose:
+                    print(errormsg)
+        else:
+            a[key] = b[key]
+    return a
+
 # Set the docstrings for these functions
-for func in [getnested, setnested, makenested, iternested]:
+for func in [getnested, setnested, makenested, iternested, mergenested]:
     func.__doc__ = docstring
 
 
