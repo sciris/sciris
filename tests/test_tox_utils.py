@@ -97,8 +97,19 @@ def test_suggest():
     return
     
 
+def test_nested_dicts():
+    sc.heading('test_nested_dicts()')
+    dict1 = {'key1':{'a':'A'},  'key2':{'b':'B'}}
+    dict2 = {'key1':{'a':'A*'}, 'key2':{'b+':'B+'}, 'key3':{'c':'C'}}
+    dict3 = sc.mergenested(dict1, dict2, verbose=True)
+    print(f'Dict1: {dict1}')
+    print(f'Dict2: {dict2}')
+    print(f'Dict3: {dict3}')
+    assert dict3 == {'key1': {'a': 'A*'}, 'key2': {'b': 'B', 'b+': 'B+'}, 'key3': {'c': 'C'}}
+
 if __name__ == '__main__':
-    test_colorize()
-    test_printing()
-    test_promotetolist()
-    test_suggest()
+#    test_colorize()
+#    test_printing()
+#    test_promotetolist()
+#    test_suggest()
+    test_nested_dicts()

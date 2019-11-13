@@ -1585,23 +1585,32 @@ def iternested(nesteddict,previous = []):
             output.append(previous+[k[0]])
     return output
 
-def mergenested(dict1, dict2, path=None, die=False, verbose=False):
+def mergenested(dict1, dict2, die=False, verbose=False, _path=None):
     # Adapted/stolen from https://stackoverflow.com/questions/7204805/dictionaries-of-dictionaries-merge
-    a = dcp(dict1) # Make a copy
+    if _path is None: _path = []
+    if _path:
+        a = dict1 # If we're being recursive, work in place
+    else:
+        a = dcp(dict1) # Otherwise, make a copy
     b = dict2 # Don't need to make a copy
-    if path is None: path = []
+    
     for key in b:
+        keypath = ".".join(_path + [str(key)])
+        if verbose:
+            print(f'Working on {keypath}')
         if key in a:
             if isinstance(a[key], dict) and isinstance(b[key], dict):
-                mergenested(a[key], b[key], path + [str(key)])
+                mergenested(dict1=a[key], dict2=b[key], _path=_path+[str(key)], die=die, verbose=verbose)
             elif a[key] == b[key]:
                 pass # same leaf value
             else:
-                errormsg = 'Conflict at %s' % '.'.join(path + [str(key)])
+                errormsg = f'Warning! Conflict at {keypath}: {a[key]} vs. {b[key]}'
                 if die:
                     raise Exception(errormsg)
-                elif verbose:
-                    print(errormsg)
+                else:
+                    a[key] = b[key]
+                    if verbose:
+                        print(errormsg)
         else:
             a[key] = b[key]
     return a
