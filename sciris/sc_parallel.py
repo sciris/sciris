@@ -69,7 +69,7 @@ def loadbalancer(maxload=None, index=None, interval=None, maxtime=None, label=No
 
 
 
-def parallelize(func=None, iterarg=None, iterkwargs=None, args=None, kwargs=None, ncpus=None, maxload=None, interval=None):
+def parallelize(func, iterarg=None, iterkwargs=None, args=None, kwargs=None, ncpus=None, maxload=None, interval=None):
     '''
     Shortcut for parallelizing a function. Most simply, acts as an shortcut for using
     multiprocessing.Pool() or Queue(). However, this function can also iterate over more
