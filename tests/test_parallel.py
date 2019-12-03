@@ -5,7 +5,7 @@ torun = [
 'simple',
 'embarrassing',
 'multiargs',
-'noniterated'
+'noniterated',
 'parallelcmd'
 ]
 
@@ -50,17 +50,21 @@ if 'multiargs' in torun:
 
 #Example 4 -- using non-iterated arguments and dynamic load balancing:
 if 'noniterated' in torun:
-
+    
     def myfunc(i, x, y):
         xy = [x+i*pl.randn(100), y+i*pl.randn(100)]
         return xy
     
-    xylist = sc.parallelize(myfunc, kwargs={'x':3, 'y':8}, iterarg=range(5), maxload=0.8, interval=0.2)
+    xylist1 = sc.parallelize(myfunc, kwargs={'x':3, 'y':8}, iterarg=range(5), maxload=0.8, interval=0.2) # Use kwargs dict
+    xylist2 = sc.parallelize(myfunc, x=5, y=10, iterarg=[5,10,15]) # Supply kwargs directly
     
     if doplot:
-        for i,xy in enumerate(reversed(xylist)):
-            pl.scatter(xy[0], xy[1], label='Run %i'%i)
-        pl.legend()
+        for p,xylist in enumerate([xylist1, xylist2]):
+            pl.subplot(2,1,p+1)
+            for i,xy in enumerate(reversed(xylist)):
+                pl.scatter(xy[0], xy[1], label='Run %i'%i)
+            pl.legend()
+        
 
 
 if 'parallelcmd' in torun:
