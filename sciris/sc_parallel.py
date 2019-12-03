@@ -69,7 +69,7 @@ def loadbalancer(maxload=None, index=None, interval=None, maxtime=None, label=No
 
 
 
-def parallelize(func, iterarg=None, iterkwargs=None, args=None, kwargs=None, ncpus=None, maxload=None, interval=None):
+def parallelize(func, iterarg=None, iterkwargs=None, args=None, kwargs=None, ncpus=None, maxload=None, interval=None, **func_kwargs):
     '''
     Shortcut for parallelizing a function. Most simply, acts as an shortcut for using
     multiprocessing.Pool() or Queue(). However, this function can also iterate over more
@@ -79,7 +79,8 @@ def parallelize(func, iterarg=None, iterkwargs=None, args=None, kwargs=None, ncp
     if the latter, it will run the function that number of times and not pass the argument to the 
     function (which may be useful for running "embarrassingly parallel" simulations). iterkwargs 
     is a dict of iterables; each iterable must be the same length (and the same length of iterarg, 
-    if it exists), and each dict key will be used as a kwarg to the called function.
+    if it exists), and each dict key will be used as a kwarg to the called function. Any other kwargs
+    passed to parallelize() will also be passed to the function.
     
     This function can either use a fixed number of CPUs or allocate dynamically based
     on load. If ncpus is None and maxload is None, then it will use the number of CPUs
@@ -113,11 +114,14 @@ def parallelize(func, iterarg=None, iterkwargs=None, args=None, kwargs=None, ncp
             xy = [x+i*pl.randn(100), y+i*pl.randn(100)]
             return xy
         
-        xylist = sc.parallelize(myfunc, kwargs={'x':3, 'y':8}, iterarg=range(5), maxload=0.8, interval=0.2)
+        xylist1 = sc.parallelize(myfunc, kwargs={'x':3, 'y':8}, iterarg=range(5), maxload=0.8, interval=0.2) # Use kwargs dict
+        xylist2 = sc.parallelize(myfunc, x=5, y=10, iterarg=[0,1,2]) # Supply kwargs directly
         
-        for i,xy in enumerate(reversed(xylist)):
-            pl.scatter(xy[0], xy[1], label='Run %i'%i)
-        pl.legend()
+        for p,xylist in enumerate([xylist1, xylist2]):
+            pl.subplot(2,1,p+1)
+            for i,xy in enumerate(reversed(xylist)):
+                pl.scatter(xy[0], xy[1], label='Run %i'%i)
+            pl.legend()
     
     Note: to use on Windows, parallel calls must contained with an `if __name__ == '__main__'` block,
     for example:
@@ -131,11 +135,18 @@ def parallelize(func, iterarg=None, iterkwargs=None, args=None, kwargs=None, ncp
             results = sc.parallelize(func=f, iterarg=[(1,2),(2,3),(3,4)])
             print(results)
     
-    Version: 2018nov02
+    Version: 2019dec03
     '''
     # Handle maxload
     if ncpus is None and maxload is None:
         ncpus = mp.cpu_count()
+    
+    # Handle kwargs
+    if func_kwargs:
+        if kwargs is None:
+            kwargs = func_kwargs
+        else:
+            kwargs.update(func_kwargs)
     
     # Handle iterarg and iterkwargs
     niters = 0

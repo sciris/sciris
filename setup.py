@@ -1,9 +1,15 @@
 #!/usr/bin/env python
-# -*- coding: utf-8 -*-
-from __future__ import unicode_literals
+
+'''
+Sciris is a flexible open source framework for building scientific web 
+applications using Python and JavaScript. This library provides the underlying
+functions and data structures that support the webapp features, as well as
+being generally useful for scientific computing.
+'''
+
 from setuptools import setup, find_packages
-import os
 import sys
+import runpy
 
 # Define the requirements and extras
 requirements = [
@@ -30,15 +36,7 @@ if 'minimal' in sys.argv:
     ]
 
 # Get version
-versiondir = 'sciris'
-versionfile = 'sc_version.py'
-versionstr = '__version__'
-cwd = os.path.abspath(os.path.dirname(__file__))
-versionpath = os.path.join(cwd, versiondir, versionfile)
-with open(versionpath, 'r') as f:
-    versiondict = {}
-    exec(f.read(), versiondict)
-    version = versiondict[versionstr]
+version = runpy.run_path('sciris/sc_version.py')['__version__']
 
 # Get the documentation
 with open("README.md", "r") as fh:
