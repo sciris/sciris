@@ -8,8 +8,12 @@ being generally useful for scientific computing.
 '''
 
 from setuptools import setup, find_packages
+import os
 import sys
 import runpy
+
+# Get the current folder
+cwd = os.path.abspath(os.path.dirname(__file__))
 
 # Define the requirements and extras
 requirements = [
@@ -36,10 +40,11 @@ if 'minimal' in sys.argv:
     ]
 
 # Get version
-version = runpy.run_path('sciris/sc_version.py')['__version__']
+versionpath = os.path.join(cwd, 'sciris', 'sc_version.py')
+version = runpy.run_path(versionpath)['__version__']
 
 # Get the documentation
-with open("README.md", "r") as fh:
+with open(os.path.join(cwd, 'README.md'), "r") as fh:
     long_description = fh.read()
 
 CLASSIFIERS = [
