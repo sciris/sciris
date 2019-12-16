@@ -780,7 +780,7 @@ def heading(string=None, color=None, divider=None, spaces=None, minlength=None, 
     >>> sc.heading(string='This is also a heading', color='red', divider='*', spaces=0, minlength=50)
     '''
     if string    is None: string    = ''
-    if color     is None: color     = 'blue'
+    if color     is None: color     = 'cyan' # Reasonable defualt for light and dark consoles
     if divider   is None:
         if six.PY3:       divider   = '—' # Em dash for a continuous line
         else:             divider   = '-' # For legacy support, keep it a string to be simple
