@@ -1228,7 +1228,7 @@ def timedsleep(delay=None, verbose=True):
 ### MISC. FUNCTIONS
 ##############################################################################
 
-__all__ += ['percentcomplete', 'checkmem', 'runcommand', 'gitinfo', 'compareversions', 'uniquename', 'importbyname', 'suggest']
+__all__ += ['percentcomplete', 'checkmem', 'runcommand', 'gitinfo', 'compareversions', 'uniquename', 'importbyname', 'suggest', 'profile']
 
 def percentcomplete(step=None, maxsteps=None, stepsize=1, prefix=None):
     '''
@@ -1509,6 +1509,87 @@ def suggest(user_input, valid_inputs, n=1, threshold=4, fulloutput=False, die=Fa
                 return suggestions[0]
             else:
                 return suggestions[:n]
+
+
+def profile(run, follow=None):
+    '''
+    Profile a function.
+    
+    Parameters
+    ----------
+    run : function
+        The function to be run
+    follow : function
+        The function or list of functions to be followed in the profiler; if 
+        None, defaults to the run function
+
+    Returns
+    -------
+    The profile report.
+    
+    Example
+    -------
+    def slow_fn():
+        n = 10000
+        int_list = []
+        int_dict = {}
+        for i in range(n):
+            int_list.append(i)
+            int_dict[i] = i
+        return
+            
+    class Foo:
+        def __init__(self):
+            self.a = 0
+            return
+        
+        def outer(self):
+            for i in range(100):
+                self.inner()
+            return
+        
+        def inner(self):
+            for i in range(1000):
+                self.a += 1
+            return
+    
+    foo = Foo()
+    sc.profile(run=foo.outer, follow=[foo.outer, foo.inner])
+    sc.profile(slow_fn)
+    '''
+    import line_profiler as lp
+    
+    # Handle the functions to follow
+    if follow is None:
+        follow = run
+    follow = promotetolist(follow)
+
+    # Define the profiling
+    def do_profile(follow=None):
+      def inner(func):
+          def profiled_func(*args, **kwargs):
+              try:
+                  profiler = lp.LineProfiler()
+                  profiler.add_function(func)
+                  for f in follow:
+                      profiler.add_function(f)
+                  profiler.enable_by_count()
+                  return func(*args, **kwargs)
+              finally:
+                  profiler.print_stats()
+          return profiled_func
+      return inner
+    
+    # Do the profiling
+    print('Profiling...')
+    @do_profile(follow=follow) # Add decorator to runmodel function
+    def runwrapper():
+        run()
+    runwrapper()
+    
+    print('Done.')
+
+
 
 ##############################################################################
 ### NESTED DICTIONARY FUNCTIONS

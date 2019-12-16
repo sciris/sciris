@@ -1,8 +1,9 @@
 import sciris as sc
 
 torun = [
-'colorize',
-'printing',
+# 'colorize',
+# 'printing',
+'profile',
 ]
 
 # Test colorize
@@ -24,3 +25,35 @@ if 'printing' in torun:
     print('sc.pp():')
     sc.pp(example.data)
     string = sc.pp(example.data, doprint=False)
+    
+    
+# Test profiling functions
+if 'profile' in torun:
+    
+    def slow_fn():
+        n = 10000
+        int_list = []
+        int_dict = {}
+        for i in range(n):
+            int_list.append(i)
+            int_dict[i] = i
+        return
+            
+    class Foo:
+        def __init__(self):
+            self.a = 0
+            return
+        
+        def outer(self):
+            for i in range(100):
+                self.inner()
+            return
+        
+        def inner(self):
+            for i in range(1000):
+                self.a += 1
+            return
+    
+    foo = Foo()
+    sc.profile(run=foo.outer, follow=[foo.outer, foo.inner])
+    sc.profile(slow_fn)
