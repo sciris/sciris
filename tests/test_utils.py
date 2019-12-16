@@ -1,8 +1,8 @@
 import sciris as sc
 
 torun = [
-# 'colorize',
-# 'printing',
+'colorize',
+'printing',
 'profile',
 ]
 
