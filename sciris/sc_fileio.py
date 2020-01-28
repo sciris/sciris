@@ -24,6 +24,7 @@ from gzip import GzipFile
 from zipfile import ZipFile
 from contextlib import closing
 from collections import OrderedDict
+from pathlib import Path
 from . import sc_utils as ut
 from .sc_odict import odict
 from .sc_dataframe import dataframe
@@ -59,9 +60,11 @@ def loadobj(filename=None, folder=None, verbose=False, die=None):
     '''
     
     # Handle loading of either filename or file object
+    if isinstance(filename, Path):
+        filename = str(filename)
     if ut.isstring(filename): 
         argtype = 'filename'
-        filename = makefilepath(filename=filename, folder=folder) # If it is a file, validate the folder
+        filename = makefilepath(filename=filename, folder=folder, makedirs=False) # If it is a file, validate the folder (but don't create one if it's missing)
     elif isinstance(filename, io.BytesIO): 
         argtype = 'fileobj'
     else:
@@ -95,13 +98,12 @@ def saveobj(filename=None, obj=None, compresslevel=5, verbose=0, folder=None, me
         myobj = ['this', 'is', 'a', 'weird', {'object':44}]
         saveobj('myfile.obj', myobj)
     '''
-
-
+    if isinstance(filename, Path):
+        filename = str(filename)
     if filename is None:
         bytesobj = io.BytesIO()
     else:
         filename = makefilepath(filename=filename, folder=folder, default='default.obj', sanitize=True)
-        bytesobj = None
 
     with GzipFile(filename=filename, fileobj=bytesobj, mode='wb', compresslevel=compresslevel) as fileobj:
         if method == 'dill': # If dill is requested, use that
