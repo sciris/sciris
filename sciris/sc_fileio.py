@@ -98,11 +98,12 @@ def saveobj(filename=None, obj=None, compresslevel=5, verbose=0, folder=None, me
         myobj = ['this', 'is', 'a', 'weird', {'object':44}]
         saveobj('myfile.obj', myobj)
     '''
-    if isinstance(filename, Path):
+    if isinstance(filename, Path): # If it's a path object, convert to string
         filename = str(filename)
-    if filename is None:
+    if filename is None: # If it doesn't exist, just create a byte stream
         bytesobj = io.BytesIO()
-    else:
+    else: # Normal use case: make a file path
+        bytesobj = None
         filename = makefilepath(filename=filename, folder=folder, default='default.obj', sanitize=True)
 
     with GzipFile(filename=filename, fileobj=bytesobj, mode='wb', compresslevel=compresslevel) as fileobj:
