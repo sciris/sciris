@@ -28,6 +28,7 @@ requirements = [
         'xlsxwriter',         # Spreadsheet output
         'requests',           # HTTP methods
         'python-Levenshtein', # For fuzzy string matching
+        'line_profiler',      # For function profiling
         ]
 
 # Optionally define extras

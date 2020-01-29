@@ -22,12 +22,26 @@ Some highlights of `scirisweb`:
 
 ## Is Sciris ready yet?
 
-**Sort of.** Sciris is available for use, but is still undergoing rapid deveopment. We expect a first stable version of Sciris to be ready in early 2019. If you would like us to let you know when it's ready, please email info@sciris.org.
+**Sort of.** Sciris is available for use, but is still undergoing rapid deveopment. We expect a first stable version of Sciris to be ready in early 2020. If you would like us to let you know when it's ready, please email info@sciris.org.
 
 
 ## Installation and run instructions
 
-### Quick start guide
+### 20-second quick start guide
+
+1. Install Sciris: `pip install scirisweb`
+
+2. Download ScirisWeb (e.g. `git clone http://github.com/sciris/scirisweb`)
+
+3. Change to the Hello World folder: `cd scirisweb/examples/helloworld`
+
+4. Run the app: `python app.py`
+
+5. Go to `localhost:8080` in your browser
+
+6. Have fun!
+
+### Medium-quick start guide
 
 Note: if you're a developer, you'll likely already have some/all of these packages installed.
 
