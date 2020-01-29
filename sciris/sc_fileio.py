@@ -870,8 +870,6 @@ class RobustUnpickler(pickle.Unpickler):
 def unpickler(string=None, filename=None, filestring=None, die=None, verbose=False):
     
     if die is None: die = False
-    obj = RobustUnpickler(io.BytesIO(string)).load()  # And if that trails, throw everything at it
-    return obj
     try: # Try pickle first
         obj = pkl.loads(string) # Actually load it -- main usage case
     except Exception as E1:
