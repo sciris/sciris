@@ -17,6 +17,7 @@ import uuid
 import pickle
 import types
 import datetime
+import importlib
 import traceback
 import numpy as np
 from glob import glob
@@ -855,25 +856,22 @@ class RobustUnpickler(pickle.Unpickler):
     def __init__(self, tmpfile, fix_imports=True, encoding="latin1", errors="ignore"):
         pickle.Unpickler.__init__(self, tmpfile, fix_imports=fix_imports, encoding=encoding, errors=errors)
     
-    def find_class(self, module_name, name, verbose=False):
+    def find_class(self, module_name, name, verbose=True):
         try:
-            module = __import__(module_name)
+            module = importlib.import_module(module_name)
             obj = getattr(module, name)
-        except:
-            try:
-                string = 'from %s import %s as obj' % (module_name, name)
-                exec(string)
-            except Exception as E:
-                if verbose: print('Unpickling warning: could not import %s.%s: %s' % (module_name, name, str(E)))
-                exception = traceback.format_exc() # Grab the trackback stack
-                obj = makefailed(module_name=module_name, name=name, error=E, exception=exception)
+        except Exception as E:
+            if verbose: print('Unpickling warning: could not import %s.%s: %s' % (module_name, name, str(E)))
+            exception = traceback.format_exc() # Grab the trackback stack
+            obj = makefailed(module_name=module_name, name=name, error=E, exception=exception)
         return obj
 
 
 def unpickler(string=None, filename=None, filestring=None, die=None, verbose=False):
     
     if die is None: die = False
-    
+    obj = RobustUnpickler(io.BytesIO(string)).load()  # And if that trails, throw everything at it
+    return obj
     try: # Try pickle first
         obj = pkl.loads(string) # Actually load it -- main usage case
     except Exception as E1:
