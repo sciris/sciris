@@ -1556,6 +1556,12 @@ def profile(run, follow=None, *args, **kwargs):
     foo = Foo()
     sc.profile(run=foo.outer, follow=[foo.outer, foo.inner])
     sc.profile(slow_fn)
+
+    # Profile the constructor for Foo
+    f = lambda: Foo()
+    sc.profile(run=f, follow=[foo.__init__])
+
+
     '''
 
 
