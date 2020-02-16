@@ -1564,8 +1564,10 @@ def profile(run, follow=None, *args, **kwargs):
 
     '''
 
-
-    from line_profiler import LineProfiler
+    try:
+        from line_profiler import LineProfiler
+    except ModuleNotFoundError as e:
+        raise Exception('The "line_profiler" Python package is required to perform profiling') from e
 
     lp = LineProfiler()
     follow = promotetolist(follow)

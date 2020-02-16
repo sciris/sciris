@@ -15,7 +15,7 @@ import runpy
 # Get the current folder
 cwd = os.path.abspath(os.path.dirname(__file__))
 
-# Define the requirements and extras
+# Define the requirements for core functionality
 requirements = [
         'matplotlib>=1.4.2',  # Plotting
         'numpy>=1.10.1',      # Numerical functions
@@ -28,8 +28,13 @@ requirements = [
         'xlsxwriter',         # Spreadsheet output
         'requests',           # HTTP methods
         'python-Levenshtein', # For fuzzy string matching
-        'line_profiler',      # For function profiling
         ]
+
+# Define extended requirements for optional features. These would generally be packages
+# that are difficult to install (e.g. require compilation)
+optional_requirements = {
+    'profiling': ['line_profiler'],  # For function profiling
+}
 
 # Optionally define extras
 if 'minimal' in sys.argv:
@@ -73,5 +78,6 @@ setup(
     classifiers=CLASSIFIERS,
     packages=find_packages(),
     include_package_data=True,
-    install_requires=requirements
+    install_requires=requirements,
+    extras_require=optional_requirements,
 )
