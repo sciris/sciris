@@ -1471,7 +1471,10 @@ def suggest(user_input, valid_inputs, n=1, threshold=4, fulloutput=False, die=Fa
     'Foo '
 
     """
-    import Levenshtein # To allow as an optional import
+    try:
+        import Levenshtein # To allow as an optional import
+    except ModuleNotFoundError as e:
+            raise Exception('The "Levenshtein" Python package is not available; please install manually') from e
     
     valid_inputs = promotetolist(valid_inputs, objtype='string')
 
@@ -1511,7 +1514,7 @@ def suggest(user_input, valid_inputs, n=1, threshold=4, fulloutput=False, die=Fa
                 return suggestions[:n]
 
 
-def profile(run, follow=None):
+def profile(run, follow=None, *args, **kwargs):
     '''
     Profile a function.
     
@@ -1525,7 +1528,7 @@ def profile(run, follow=None):
 
     Returns
     -------
-    The profile report.
+    None (the profile output is printed to stdout)
     
     Example
     -------
@@ -1556,39 +1559,30 @@ def profile(run, follow=None):
     foo = Foo()
     sc.profile(run=foo.outer, follow=[foo.outer, foo.inner])
     sc.profile(slow_fn)
+
+    # Profile the constructor for Foo
+    f = lambda: Foo()
+    sc.profile(run=f, follow=[foo.__init__])
+
+
     '''
-    import line_profiler as lp
-    
-    # Handle the functions to follow
-    if follow is None:
-        follow = run
+
+    try:
+        from line_profiler import LineProfiler
+    except ModuleNotFoundError as e:
+        raise Exception('The "line_profiler" Python package is required to perform profiling') from e
+
+    lp = LineProfiler()
     follow = promotetolist(follow)
+    for f in follow:
+        lp.add_function(f)
+    lp.enable_by_count()
+    wrapper = lp(run)
 
-    # Define the profiling
-    def do_profile(follow=None):
-      def inner(func):
-          def profiled_func(*args, **kwargs):
-              try:
-                  profiler = lp.LineProfiler()
-                  profiler.add_function(func)
-                  for f in follow:
-                      profiler.add_function(f)
-                  profiler.enable_by_count()
-                  return func(*args, **kwargs)
-              finally:
-                  profiler.print_stats()
-          return profiled_func
-      return inner
-    
-    # Do the profiling
     print('Profiling...')
-    @do_profile(follow=follow) # Add decorator to runmodel function
-    def runwrapper():
-        run()
-    runwrapper()
-    
+    wrapper(*args, **kwargs)
+    lp.print_stats()
     print('Done.')
-
 
 
 ##############################################################################

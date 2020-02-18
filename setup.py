@@ -15,7 +15,7 @@ import runpy
 # Get the current folder
 cwd = os.path.abspath(os.path.dirname(__file__))
 
-# Define the requirements and extras
+# Define the requirements for core functionality
 requirements = [
         'matplotlib>=1.4.2',  # Plotting
         'numpy>=1.10.1',      # Numerical functions
@@ -28,7 +28,8 @@ requirements = [
         'xlsxwriter',         # Spreadsheet output
         'requests',           # HTTP methods
         'python-Levenshtein', # For fuzzy string matching
-        'line_profiler',      # For function profiling
+        'line_profiler ; platform_system != "Windows"', # For the line profiler -- do not install on Windows
+        'colorama ;      platform_system == "Windows"', # For colored text output -- only install on Windows
         ]
 
 # Optionally define extras
