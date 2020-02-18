@@ -1471,7 +1471,10 @@ def suggest(user_input, valid_inputs, n=1, threshold=4, fulloutput=False, die=Fa
     'Foo '
 
     """
-    import Levenshtein # To allow as an optional import
+    try:
+        import Levenshtein # To allow as an optional import
+    except ModuleNotFoundError as e:
+            raise Exception('The "Levenshtein" Python package is not available; please install manually') from e
     
     valid_inputs = promotetolist(valid_inputs, objtype='string')
 
@@ -1564,8 +1567,10 @@ def profile(run, follow=None, *args, **kwargs):
 
     '''
 
-
-    from line_profiler import LineProfiler
+    try:
+        from line_profiler import LineProfiler
+    except ModuleNotFoundError as e:
+        raise Exception('The "line_profiler" Python package is required to perform profiling') from e
 
     lp = LineProfiler()
     follow = promotetolist(follow)
