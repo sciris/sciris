@@ -1471,7 +1471,10 @@ def suggest(user_input, valid_inputs, n=1, threshold=4, fulloutput=False, die=Fa
     'Foo '
 
     """
-    import Levenshtein # To allow as an optional import
+    try:
+        import Levenshtein # To allow as an optional import
+    except ModuleNotFoundError as e:
+            raise Exception('The "Levenshtein" Python package is not available; please install manually') from e
     
     valid_inputs = promotetolist(valid_inputs, objtype='string')
 

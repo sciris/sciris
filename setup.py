@@ -28,13 +28,9 @@ requirements = [
         'xlsxwriter',         # Spreadsheet output
         'requests',           # HTTP methods
         'python-Levenshtein', # For fuzzy string matching
+        'line_profiler ; platform_system != "Windows"', # For the line profiler -- do not install on Windows
+        'colorama ;      platform_system == "Windows"', # For colored text output -- only install on Windows
         ]
-
-# Define extended requirements for optional features. These would generally be packages
-# that are difficult to install (e.g. require compilation)
-optional_requirements = {
-    'profiling': ['line_profiler'],  # For function profiling
-}
 
 # Optionally define extras
 if 'minimal' in sys.argv:
@@ -79,5 +75,4 @@ setup(
     packages=find_packages(),
     include_package_data=True,
     install_requires=requirements,
-    extras_require=optional_requirements,
 )

@@ -481,20 +481,29 @@ class Spreadsheet(Blobject):
     
     def xlrd(self, *args, **kwargs):
         ''' Return a book as opened by xlrd '''
-        import xlrd # Optional import
+        try:
+            import xlrd # Optional import
+        except ModuleNotFoundError as e:
+            raise Exception('The "xlrd" Python package is not available; please install manually') from e
         book = xlrd.open_workbook(file_contents=self.tofile().read(), *args, **kwargs)
         return book
     
     def openpyexcel(self, *args, **kwargs):
         ''' Return a book as opened by openpyexcel '''
-        import openpyexcel # Optional import
+        try:
+            import openpyexcel # Optional import
+        except ModuleNotFoundError as e:
+            raise Exception('The "openpyexcel" Python package is not available; please install manually') from e
         self.tofile(output=False)
         book = openpyexcel.load_workbook(self.bytes, *args, **kwargs) # This stream can be passed straight to openpyexcel
         return book
         
     def pandas(self, *args, **kwargs):
         ''' Return a book as opened by pandas '''
-        import pandas # Optional import
+        try:
+            import pandas # Optional import
+        except ModuleNotFoundError as e:
+            raise Exception('The "pandas" Python package is not available; please install manually') from e
         self.tofile(output=False)
         book = pandas.ExcelFile(self.bytes, *args, **kwargs)
         return book
@@ -624,7 +633,10 @@ def loadspreadsheet(filename=None, folder=None, fileobj=None, sheetname=None, sh
     '''
     Load a spreadsheet as a list of lists or as a dataframe. Read from either a filename or a file object.
     '''
-    import xlrd # Optional import
+    try:
+        import xlrd # Optional import
+    except ModuleNotFoundError as e:
+        raise Exception('The "xlrd" Python package is not available; please install manually') from e
     
     # Handle inputs
     if asdataframe is None: asdataframe = True
@@ -714,7 +726,10 @@ def savespreadsheet(filename=None, data=None, folder=None, sheetnames=None, clos
     formatdata[0,:] = 'header' # Format header
     sc.savespreadsheet(filename='test5.xlsx', data=testdata5, formats=formats, formatdata=formatdata)
     '''
-    import xlsxwriter # Optional import
+    try:
+        import xlsxwriter # Optional import
+    except ModuleNotFoundError as e:
+            raise Exception('The "xlsxwriter" Python package is not available; please install manually') from e
     fullpath = makefilepath(filename=filename, folder=folder, default='default.xlsx')
     datadict   = odict()
     formatdict = odict()
@@ -912,7 +927,10 @@ def savepickle(fileobj=None, obj=None):
     
 def savedill(fileobj=None, obj=None):
     ''' Use dill to do the sour work '''
-    import dill # Optional Sciris dependency
+    try:
+        import dill # Optional Sciris dependency
+    except ModuleNotFoundError as e:
+        raise Exception('The "dill" Python package is not available; please install manually') from e
     fileobj.write(dill.dumps(obj, protocol=-1))
     return None
 
