@@ -365,7 +365,7 @@ def colormapdemo(cmap=None, n=None, smoothing=None, randseed=None):
     
 
 
-def alpinecolormap():
+def alpinecolormap(apply=False):
     """
     This function generates a map based on ascending height. Based on data from
     Kazakhstan.
@@ -415,11 +415,13 @@ def alpinecolormap():
     
     # Make map
     cmap = makecolormap('alpine', cdict, 256)
+    if apply:
+        pl.set_cmap(cmap)
     return cmap
 
 
 
-def bicolormap(gap=0.1, mingreen=0.2, redbluemix=0.5, epsilon=0.01, demo=False):
+def bicolormap(gap=0.1, mingreen=0.2, redbluemix=0.5, epsilon=0.01, demo=False, apply=False):
     """
     This function generators a two-color map, blue for negative, red for
     positive changes, with grey in the middle. The input argument is how much
@@ -460,7 +462,10 @@ def bicolormap(gap=0.1, mingreen=0.2, redbluemix=0.5, epsilon=0.01, demo=False):
                      (0.50000, omg, omg),
                      (0.5+eps, omg, mix),
                      (1.00000, 0.0, 0.0))}
-    cmap = makecolormap('bicolormap',cdict,256)
+    
+    cmap = makecolormap('bi',cdict,256)
+    if apply:
+        pl.set_cmap(cmap)
     
     def demoplot():
         from pylab import figure, subplot, imshow, colorbar, rand, show
@@ -484,9 +489,10 @@ def bicolormap(gap=0.1, mingreen=0.2, redbluemix=0.5, epsilon=0.01, demo=False):
     return cmap
 
 
-def parulacolormap():
+def parulacolormap(apply=False):
     '''
-    Create a map similar to Viridis, but brighter.
+    Create a map similar to Viridis, but brighter. Set apply=True to use
+    immediately.
     
     Demo and example:
         cmap = sc.parulacolormap()
@@ -528,13 +534,15 @@ def parulacolormap():
             [0.9642,0.9437,0.1216], [0.9657,0.9494,0.1168], [0.9674,0.9552,0.1116], [0.9692,0.9609,0.1061], [0.9711,0.9667,0.1001], [0.9730,0.9724,0.0938], [0.9749,0.9782,0.0872], [0.9769,0.9839,0.0805]]
     
     cmap = makecolormap.from_list('parula', data)
+    if apply:
+        pl.set_cmap(cmap)
     return cmap
 
 
 
 
 
-def bandedcolormap(minvalue=None, minsaturation=None, hueshift=None, saturationscale=None, npts=None):
+def bandedcolormap(minvalue=None, minsaturation=None, hueshift=None, saturationscale=None, npts=None, apply=False):
     '''
     Map colors onto bands of hue and saturation, with lightness mapped linearly.
     Unlike most colormaps, this colormap does not aim to be percentually uniform,
@@ -564,6 +572,8 @@ def bandedcolormap(minvalue=None, minsaturation=None, hueshift=None, saturations
     
     # Create and use
     cmap = makecolormap.from_list('banded', data)
+    if apply:
+        pl.set_cmap(cmap)
     return cmap
 
 
