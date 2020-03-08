@@ -170,7 +170,7 @@ def vectocolor(vector, cmap=None, asarray=True, reverse=False, minval=None, maxv
     from pylab import cm
     
     if cmap == None:
-        cmap = cm.jet
+        cmap = pl.get_cmap() # Get current colormap
     elif type(cmap) == str:
         try:
             cmap = cm.get_cmap(cmap)
@@ -191,9 +191,8 @@ def vectocolor(vector, cmap=None, asarray=True, reverse=False, minval=None, maxv
         if maxval is None:
             maxval = vector.max()
          
-        
-        # vector = vector-minval # Subtract minimum
-        # vector = vector/float(maxval-minval) # Divide by maximum
+        vector = vector-minval # Subtract minimum
+        vector = vector/float(maxval-minval) # Divide by maximum
         nelements = len(vector) # Count number of elements
         colors = zeros((nelements,4))
         for i in range(nelements):
@@ -230,6 +229,7 @@ def arraycolors(arr, **kwargs):
     
     Version: 2020mar07
     """
+    arr = ut.dcp(arr) # Avoid modifications
     new_shape = arr.shape + (4,) # RGBα
     colors = np.zeros(new_shape)
     colorvec = vectocolor(vector=arr.reshape(-1), **kwargs)
