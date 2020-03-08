@@ -137,63 +137,107 @@ def hsv2rgb(colors=None):
 ### COLORMAPS
 ##############################################################################
 
-__all__ += ['vectocolor', 'gridcolors', 'colormapdemo', 'alpinecolormap', 'bicolormap', 'parulacolormap', 'bandedcolormap']
+__all__ += ['vectocolor', 'arraycolors', 'gridcolors', 'colormapdemo', 'alpinecolormap', 'bicolormap', 'parulacolormap', 'bandedcolormap']
 
-def vectocolor(vector, cmap=None, asarray=True, reverse=False):
-   """
-   This function converts a vector of N values into an Nx3 matrix of color
-   values according to the current colormap. It automatically scales the 
-   vector to provide maximum dynamic range for the color map.
 
-   Usage:
-       colors = vectocolor(vector,cmap=None)
-
-   where:
-       colors is an Nx4 list of RGB-alpha color values
-       vector is the input vector (or list, it's converted to an array)
-       cmap is the colormap (default: jet)
-
-   Example:
-       n = 1000
-       x = randn(n,1);
-       y = randn(n,1);
-       c = vectocolor(y);
-       scatter(x,y,20,c)
-
-   Version: 2018sep25
-   """
-   
-   from numpy import array, zeros
-   from pylab import cm
-   
-   if cmap==None:
-      cmap = cm.jet
-   elif type(cmap)==str:
-      try: cmap = getattr(cm,cmap)
-      except: raise Exception('%s is not a valid color map; choices are:\n%s' % (cmap, '\n'.join(sorted(cm.datad.keys()))))
-
+def vectocolor(vector, cmap=None, asarray=True, reverse=False, minval=None, maxval=None):
+    """
+    This function converts a vector of N values into an Nx3 matrix of color
+    values according to the current colormap. It automatically scales the 
+    vector to provide maximum dynamic range for the color map.
+    
+    Note: see arraycolors() for multidimensional input.
+    
+    Usage:
+        colors = vectocolor(vector, cmap=None)
+    
+    Args:
+        vector (array): Input vector (or list, it's converted to an array)
+        cmap (str): is the colormap (default: current)
+    
+    Returns:
+        colors (array): Nx4 array of RGB-alpha color values
+    
+    Example:
+        n = 1000
+        x = randn(n,1);
+        y = randn(n,1);
+        c = sc.vectocolor(y);
+        pl.scatter(x, y, c=c, s=50)
+    
+    Version: 2020mar07
+    """
+    
+    from numpy import array, zeros
+    from pylab import cm
+    
+    if cmap == None:
+        cmap = pl.get_cmap() # Get current colormap
+    elif type(cmap) == str:
+        try:
+            cmap = cm.get_cmap(cmap)
+        except:
+            choices = "\n".join(sorted(cm.datad.keys()))
+            raise Exception(f'{cmap} is not a valid color map; choices are:\n{choices}')
+    
     # If a scalar is supplied, convert it to a vector instead
-   if ut.isnumber(vector):
-        vector = np.arange(vector)
+    if ut.isnumber(vector):
+        vector = np.linspace(0, 1, vector)
+    
+    # Usual situation -- the vector has elements
+    vector = ut.dcp(vector) # To avoid in-place modification
+    vector = np.array(vector) # Just to be sure
+    if len(vector):
+        if minval is None:
+            minval = vector.min()
+        if maxval is None:
+            maxval = vector.max()
+         
+        vector = vector-minval # Subtract minimum
+        vector = vector/float(maxval-minval) # Divide by maximum
+        nelements = len(vector) # Count number of elements
+        colors = zeros((nelements,4))
+        for i in range(nelements):
+            colors[i,:] = array(cmap(vector[i]))
+    
+    # It doesn't; just return black
+    else:
+        colors=(0,0,0,1)
+    
+    # Process output
+    output = _processcolors(colors=colors, asarray=asarray, reverse=reverse)
+    
+    return output
 
-   # The vector has elements
-   if len(vector):
-      vector = np.array(vector) # Just to be sure
-      vector = vector-vector.min() # Subtract minimum
-      vector = vector/float(vector.max()) # Divide by maximum
-      nelements = len(vector) # Count number of elements
-      colors=zeros((nelements,4))
-      for i in range(nelements):
-         colors[i,:]=array(cmap(vector[i]))
 
-   # It doesn't; just return black
-   else:
-       colors=(0,0,0,1)
-   
-   # Process output
-   output = _processcolors(colors=colors, asarray=asarray, reverse=reverse)
 
-   return output
+def arraycolors(arr, **kwargs):
+    """
+    Map an N-dimensional array of values onto the current colormap. An extension
+    of vectocolor() for multidimensional arrays; see that function for additional
+    arguments.
+    
+    Example:
+        n = 1000
+        ncols = 5
+        arr = pl.rand(n,ncols)
+        for c in range(ncols):
+            arr[:,c] += c
+        x = pl.rand(n)
+        y = pl.rand(n)
+        colors = sc.arraycolors(arr)
+        pl.figure(figsize=(20,16))
+        for c in range(ncols):
+            pl.scatter(x+c, y, s=50, c=colors[:,c])
+    
+    Version: 2020mar07
+    """
+    arr = ut.dcp(arr) # Avoid modifications
+    new_shape = arr.shape + (4,) # RGBα
+    colors = np.zeros(new_shape)
+    colorvec = vectocolor(vector=arr.reshape(-1), **kwargs)
+    colors = colorvec.reshape(new_shape)
+    return colors
 
 
 
@@ -305,8 +349,8 @@ def gridcolors(ncolors=10, limits=None, nsteps=20, asarray=False, ashex=False, r
         ax.set_zlim((0,1))
     
     return output
-    
-    
+
+
 
 def colormapdemo(cmap=None, n=None, smoothing=None, randseed=None):
     '''
