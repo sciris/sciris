@@ -146,20 +146,24 @@ def vectocolor(vector, cmap=None, asarray=True, reverse=False, minval=None, maxv
     values according to the current colormap. It automatically scales the 
     vector to provide maximum dynamic range for the color map.
     
-    Usage:
-        colors = vectocolor(vector,cmap=None)
+    Note: see arraycolors() for multidimensional input.
     
-    where:
-        colors is an Nx4 list of RGB-alpha color values
-        vector is the input vector (or list, it's converted to an array)
-        cmap is the colormap (default: jet)
+    Usage:
+        colors = vectocolor(vector, cmap=None)
+    
+    Args:
+        vector (array): Input vector (or list, it's converted to an array)
+        cmap (str): is the colormap (default: current)
+    
+    Returns:
+        colors (array): Nx4 array of RGB-alpha color values
     
     Example:
         n = 1000
         x = randn(n,1);
         y = randn(n,1);
-        c = vectocolor(y);
-        scatter(x,y,20,c)
+        c = sc.vectocolor(y);
+        pl.scatter(x, y, c=c, s=50)
     
     Version: 2020mar07
     """
@@ -209,8 +213,9 @@ def vectocolor(vector, cmap=None, asarray=True, reverse=False, minval=None, maxv
 
 def arraycolors(arr, **kwargs):
     """
-    Convenience function that is like vectocolor, but operates on multidimensional
-    arrays.
+    Map an N-dimensional array of values onto the current colormap. An extension
+    of vectocolor() for multidimensional arrays; see that function for additional
+    arguments.
     
     Example:
         n = 1000
