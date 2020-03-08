@@ -146,8 +146,6 @@ def vectocolor(vector, cmap=None, asarray=True, reverse=False, minval=None, maxv
     values according to the current colormap. It automatically scales the 
     vector to provide maximum dynamic range for the color map.
     
-    NOTE: deprecated in favor of arraycolors.
-    
     Usage:
         colors = vectocolor(vector,cmap=None)
     
