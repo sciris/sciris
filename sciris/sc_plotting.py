@@ -137,13 +137,16 @@ def hsv2rgb(colors=None):
 ### COLORMAPS
 ##############################################################################
 
-__all__ += ['vectocolor', 'gridcolors', 'colormapdemo', 'alpinecolormap', 'bicolormap', 'parulacolormap', 'bandedcolormap']
+__all__ += ['vectocolor', 'arraycolors', 'gridcolors', 'colormapdemo', 'alpinecolormap', 'bicolormap', 'parulacolormap', 'bandedcolormap']
+
 
 def vectocolor(vector, cmap=None, asarray=True, reverse=False):
    """
    This function converts a vector of N values into an Nx3 matrix of color
    values according to the current colormap. It automatically scales the 
    vector to provide maximum dynamic range for the color map.
+   
+   NOTE: deprecated in favor of arraycolors.
 
    Usage:
        colors = vectocolor(vector,cmap=None)
@@ -160,13 +163,13 @@ def vectocolor(vector, cmap=None, asarray=True, reverse=False):
        c = vectocolor(y);
        scatter(x,y,20,c)
 
-   Version: 2018sep25
+   Version: 2020mar07
    """
    
    from numpy import array, zeros
    from pylab import cm
    
-   if cmap==None:
+   if cmap == None:
       cmap = cm.jet
    elif type(cmap)==str:
       try: cmap = getattr(cm,cmap)
@@ -194,6 +197,34 @@ def vectocolor(vector, cmap=None, asarray=True, reverse=False):
    output = _processcolors(colors=colors, asarray=asarray, reverse=reverse)
 
    return output
+
+
+def arraycolors(arr, cmap=None):
+    """
+   This function converts an array of scalar values into an array of color
+   values according to the current colormap. It automatically scales the 
+   vector to provide maximum dynamic range for the color map.
+   
+   Usage:
+       colors = sc.arraycolors(array, cmap=None)
+
+   Args:
+       arr (array): Array of input values
+       cmap (str or array): The colormap to map to
+      
+    Returns:
+        colors (array): Nx4 list of RGB-alpha color values
+
+   Example:
+       n = 1000
+       arr = pl.rand(n,2)
+       cols = sc.arraycolors(arr)
+       for i in range(2):
+           pl.scatter(arr[:,i],y,20,c)
+
+   Version: 2020mar07
+   """
+    
 
 
 
