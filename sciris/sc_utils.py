@@ -55,7 +55,7 @@ else:
 __all__ = ['uuid', 'dcp', 'cp', 'pp', 'sha', 'wget', 'htmlify']
 
 
-def uuid(uid=None, which=None, die=False, tostring=False):
+def uuid(uid=None, which=None, die=False, tostring=False, length=None):
     ''' Shortcut for creating a UUID; default is to create a UUID4. Can also convert a UUID. '''
     if which is None: which = 4
     if   which==1: uuid_func = py_uuid.uuid1
@@ -80,7 +80,15 @@ def uuid(uid=None, which=None, die=False, tostring=False):
                 print(errormsg)
                 output = uuid_func() # Just create a new one
     
-    if tostring: output = str(output)
+    # Convert to a string, and optionally trim
+    if tostring or length:
+        output = str(output)
+    if length:
+        if length<len(output):
+            output = output[:length]
+        else:
+            print(f'Cannot choose first {length} chars since UID has length {len(output)}')
+            raise Exception(errormsg)
     return output
 
 
@@ -270,15 +278,16 @@ def objrepr(obj, showid=True, showmeth=True, showatt=True):
     return output
 
 
-def prepr(obj, maxlen=None, skip=None):
+def prepr(obj, maxlen=None, maxitems=None, skip=None):
     ''' 
     Akin to "pretty print", returns a pretty representation of an object -- 
     all attributes (except any that are skipped), plust methods and ID.
     '''
     
     # Handle input arguments
-    if maxlen is None: maxlen = 80
-    if skip   is None: skip   = []
+    if maxlen   is None: maxlen   = 80
+    if maxitems is None: maxitems = 100
+    if skip   is None: skip = []
     else:              skip = promotetolist(skip)
     
     # Initialize things to print out
@@ -287,15 +296,24 @@ def prepr(obj, maxlen=None, skip=None):
     if hasattr(obj, '__dict__'):
         if len(obj.__dict__):
             labels = sorted(set(obj.__dict__.keys()) - set(skip)) # Get the attribute keys
+            extraitems = len(labels) - maxitems
+            if extraitems>0:
+                labels = labels[:maxitems]
             values = [flexstr(getattr(obj, attr)) for attr in labels] # Get the string representation of the attribute
         else:
             items = dir(obj)
+            extraitems = len(items) - maxitems
+            if extraitems > 0:
+                items = items[:maxitems]
             for attr in items:
                 if not attr.startswith('__'):
                     try:    value = flexstr(getattr(obj, attr))
                     except: value = 'N/A'
                     labels.append(attr)
                     values.append(value)
+        if extraitems > 0:
+            labels.append('etc.')
+            values.append(f'{extraitems} entries not shown')
     else: # If it's not an object, just get its representation
         labels = ['%s' % type(obj)]
         values = [flexstr(obj)]
