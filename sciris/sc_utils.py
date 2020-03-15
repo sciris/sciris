@@ -24,14 +24,14 @@ from collections import OrderedDict as OD
 from distutils.version import LooseVersion
 
 # Handle types and Python 2/3 compatibility
-if six.PY3: 
+if six.PY3:
     _stringtypes = (str, bytes)
     import urllib.request as urlrequester
     import html as htmlencoder
     htmldecoder = htmlencoder # New method, these are the same now
     basestring = bytes # Not needed, but to avoid Python 3 linting warnings
     unicode = str # Ditto
-else:       
+else:
     _stringtypes = (basestring,)
     import urllib2 as urlrequester
     import cgi as htmlencoder
@@ -55,7 +55,7 @@ else:
 __all__ = ['uuid', 'dcp', 'cp', 'pp', 'sha', 'wget', 'htmlify']
 
 
-def uuid(uid=None, which=None, die=False, tostring=False):
+def uuid(uid=None, which=None, die=False, tostring=False, length=None):
     ''' Shortcut for creating a UUID; default is to create a UUID4. Can also convert a UUID. '''
     if which is None: which = 4
     if   which==1: uuid_func = py_uuid.uuid1
@@ -63,7 +63,7 @@ def uuid(uid=None, which=None, die=False, tostring=False):
     elif which==4: uuid_func = py_uuid.uuid4
     elif which==5: uuid_func = py_uuid.uuid5
     else: raise Exception('UUID type %i not recognized; must be 1,  3, 4 [default], or 5)' % which)
-    
+
     if uid is None: # If not supplied, create a new UUID
         output = uuid_func()
     else: # Otherwise, try converting it
@@ -72,15 +72,23 @@ def uuid(uid=None, which=None, die=False, tostring=False):
                 output = uid # Use directly
             else: # Convert
                 output = py_uuid.UUID(uid)
-        except Exception as E: 
+        except Exception as E:
             errormsg = 'Could not convert "%s" to a UID (%s)' % (uid, repr(E))
             if die:
                 raise Exception(errormsg)
             else:
                 print(errormsg)
                 output = uuid_func() # Just create a new one
-    
-    if tostring: output = str(output)
+
+    # Convert to a string, and optionally trim
+    if tostring or length:
+        output = str(output)
+    if length:
+        if length<len(output):
+            output = output[:length]
+        else:
+            errormsg = f'Cannot choose first {length} chars since UID has length {len(output)}'
+            raise ValueError(errormsg)
     return output
 
 
@@ -119,7 +127,7 @@ def pp(obj, jsonify=True, verbose=False, doprint=True, *args, **kwargs):
             toprint = obj # If problems are encountered, just return the object
     else:
         toprint = obj
-    
+
     # Decide what to do with object
     if doprint:
         pprint.pprint(toprint, *args, **kwargs)
@@ -145,14 +153,14 @@ def wget(url, convert=True):
     output = urlrequester.urlopen(url).read()
     if convert and six.PY3: output = output.decode()
     return output
-    
+
 
 def htmlify(string, reverse=False, tostring=False):
     '''
     Convert a string to its HTML representation by converting unicode characters,
     characters that need to be escaped, and newlines. If reverse=True, will convert
     HTML to string. If tostring=True, will convert the bytestring back to Unicode.
-    
+
     Examples:
         output = sc.htmlify('foo&\nbar') # Returns b'foo&amp;<br>bar'
         output = sc.htmlify('foo&\nbar', tostring=True) # Returns 'foo&amp;<br>bar'
@@ -192,7 +200,7 @@ def printv(string, thisverbose=1, verbose=2, newline=True, indent=True):
         2 = standard printout
         3 = extra debugging detail (e.g., printout on each iteration)
         4 = everything possible (e.g., printout on each timestep)
-    
+
     Thus a very important statement might be e.g.
         printv('WARNING, everything is wrong', 1, verbose)
 
@@ -220,9 +228,9 @@ def createcollist(oldkeys, title, strlen = 18, ncol = 3):
     newkeys = []
     for x in range(nrow):
         newkeys += oldkeys[x::nrow]
-    
+
     attstring = title + ':'
-    c = 0    
+    c = 0
     for x in newkeys:
         if c%ncol == 0: attstring += '\n  '
         if len(x) > strlen: x = x[:strlen-3] + '...'
@@ -270,41 +278,51 @@ def objrepr(obj, showid=True, showmeth=True, showatt=True):
     return output
 
 
-def prepr(obj, maxlen=None, skip=None):
-    ''' 
-    Akin to "pretty print", returns a pretty representation of an object -- 
+def prepr(obj, maxlen=None, maxitems=None, skip=None):
+    '''
+    Akin to "pretty print", returns a pretty representation of an object --
     all attributes (except any that are skipped), plust methods and ID.
     '''
-    
+
     # Handle input arguments
-    if maxlen is None: maxlen = 80
-    if skip   is None: skip   = []
+    if maxlen   is None: maxlen   = 80
+    if maxitems is None: maxitems = 100
+    if skip   is None: skip = []
     else:              skip = promotetolist(skip)
-    
+
     # Initialize things to print out
     labels = []
     values = []
     if hasattr(obj, '__dict__'):
         if len(obj.__dict__):
             labels = sorted(set(obj.__dict__.keys()) - set(skip)) # Get the attribute keys
+            extraitems = len(labels) - maxitems
+            if extraitems>0:
+                labels = labels[:maxitems]
             values = [flexstr(getattr(obj, attr)) for attr in labels] # Get the string representation of the attribute
         else:
             items = dir(obj)
+            extraitems = len(items) - maxitems
+            if extraitems > 0:
+                items = items[:maxitems]
             for attr in items:
                 if not attr.startswith('__'):
                     try:    value = flexstr(getattr(obj, attr))
                     except: value = 'N/A'
                     labels.append(attr)
                     values.append(value)
+        if extraitems > 0:
+            labels.append('etc.')
+            values.append(f'{extraitems} entries not shown')
     else: # If it's not an object, just get its representation
         labels = ['%s' % type(obj)]
         values = [flexstr(obj)]
-    
+
     # Decide how to print them
     maxkeylen = 0
-    if len(labels):  
+    if len(labels):
         maxkeylen = max([len(label) for label in labels]) # Find the maximum length of the attribute keys
-    if maxkeylen<maxlen: 
+    if maxkeylen<maxlen:
         maxlen = maxlen - maxkeylen # Shorten the amount of data shown if the keys are long
     formatstr = '%'+ '%i'%maxkeylen + 's' # Assemble the format string for the keys, e.g. '%21s'
     output  = objrepr(obj, showatt=False) # Get the methods
@@ -321,11 +339,11 @@ def pr(obj, maxlen=None):
     print(prepr(obj, maxlen=maxlen))
     return None
 
-    
+
 def indent(prefix=None, text=None, suffix='\n', n=0, pretty=False, simple=True, width=70, **kwargs):
     '''
     Small wrapper to make textwrap more user friendly.
-    
+
     Arguments:
         prefix = text to begin with (optional)
         text = text to wrap
@@ -333,19 +351,19 @@ def indent(prefix=None, text=None, suffix='\n', n=0, pretty=False, simple=True, 
         n = if prefix is not specified, the size of the indent
         prettify = whether to use pprint to format the text
         kwargs = anything to pass to textwrap.fill() (e.g., linewidth)
-    
+
     Examples:
         prefix = 'and then they said:'
         text = 'blah '*100
         print(indent(prefix, text))
-        
+
         print('my fave is: ' + indent(text=rand(100), n=14))
-    
+
     Version: 2017feb20
     '''
     # Handle no prefix
     if prefix is None: prefix = ' '*n
-    
+
     # Get text in the right format -- i.e. a string
     if pretty: text = pprint.pformat(text)
     else:      text = flexstr(text)
@@ -363,23 +381,23 @@ def indent(prefix=None, text=None, suffix='\n', n=0, pretty=False, simple=True, 
             else:
                 theprefix = ' '*len(prefix)
             output += fill(textline, initial_indent=theprefix, subsequent_indent=' '*len(prefix), width=width, **kwargs)+suffix
-    
+
     if n: output = output[n:] # Need to remove the fake prefix
     return output
-    
+
 
 
 def sigfig(X, sigfigs=5, SI=False, sep=False, keepints=False):
     '''
-    Return a string representation of variable x with sigfigs number of significant figures -- 
+    Return a string representation of variable x with sigfigs number of significant figures --
     copied from asd.py.
-    
+
     If SI=True,  then will return e.g. 32433 as 32.433K
     If sep=True, then will return e.g. 32433 as 32,433
     '''
     output = []
-    
-    try: 
+
+    try:
         n=len(X)
         islist = True
     except:
@@ -388,7 +406,7 @@ def sigfig(X, sigfigs=5, SI=False, sep=False, keepints=False):
         islist = False
     for i in range(n):
         x = X[i]
-        
+
         suffix = ''
         formats = [(1e18,'e18'), (1e15,'e15'), (1e12,'t'), (1e9,'b'), (1e6,'m'), (1e3,'k')]
         if SI:
@@ -397,7 +415,7 @@ def sigfig(X, sigfigs=5, SI=False, sep=False, keepints=False):
                     x = x/val
                     suffix = suff
                     break # Find at most one match
-        
+
         try:
             if x==0:
                 output.append('0')
@@ -432,14 +450,14 @@ def sigfig(X, sigfigs=5, SI=False, sep=False, keepints=False):
 
 
 def printarr(arr, arrformat='%0.2f  '):
-    ''' 
+    '''
     Print a numpy array nicely.
-    
+
     Example:
         from utils import printarr
         from numpy import random
         printarr(rand(3,7,4))
-    
+
     Version: 2014dec01
     '''
     if np.ndim(arr)==1:
@@ -470,8 +488,8 @@ def printdata(data, name='Variable', depth=1, maxlen=40, indent='', level=0, sho
       depth: how many levels of recursion to follow
       maxlen: number of characters of data to display (if 0, don't show data)
       indent: where to start the indent (used internally)
-    
-    Version: 2015aug21 
+
+    Version: 2015aug21
     '''
     datatype = type(data)
     def printentry(data):
@@ -487,7 +505,7 @@ def printdata(data, name='Variable', depth=1, maxlen=40, indent='', level=0, sho
             if len(datastring)>maxlen: datastring = datastring[:maxlen] + ' <etc> ' + datastring[-maxlen:]
         else: datastring=''
         return string+datastring
-    
+
     string = printentry(data).replace('\n',' ') # Remove newlines
     print(level*'..' + indent + name + ' | ' + string)
 
@@ -516,7 +534,7 @@ def printdata(data, name='Variable', depth=1, maxlen=40, indent='', level=0, sho
 def printvars(localvars=None, varlist=None, label=None, divider=True, spaces=1, color=None):
     '''
     Print out a list of variables. Note that the first argument must be locals().
-    
+
     Arguments:
         localvars = function must be called with locals() as first argument
         varlist = the list of variables to print out
@@ -524,19 +542,19 @@ def printvars(localvars=None, varlist=None, label=None, divider=True, spaces=1, 
         divider = whether or not to offset the printout with a spacer (i.e. ------)
         spaces = how many spaces to use between variables
         color = optionally label the variable names in color so they're easier to see
-    
+
     Simple usage example:
         a = range(5); b = 'example'; printvars(locals(), ['a','b'], color='blue')
-    
+
     Another useful usage case is to print out the kwargs for a function:
         printvars(locals(), kwargs.keys())
-        
+
     Version: 2017oct28
     '''
-    
+
     varlist = promotetolist(varlist) # Make sure it's actually a list
     dividerstr = '-'*40
-    
+
     if label:  print('Variables for %s:' % label)
     if divider: print(dividerstr)
     for varnum,varname in enumerate(varlist):
@@ -553,17 +571,17 @@ def printvars(localvars=None, varlist=None, label=None, divider=True, spaces=1, 
 
 
 def slacknotification(message=None, webhook=None, to=None, fromuser=None, verbose=2, die=False):
-    ''' 
+    '''
     Send a Slack notification when something is finished.
-    
+
     Arguments:
         message:
             The message to be posted.
         webhook:
-            This is either a string containing the webhook itself, or a plain text file containing 
+            This is either a string containing the webhook itself, or a plain text file containing
             a single line which is the Slack webhook. By default it will look for the file
             ".slackurl" in the user's home folder. The webhook needs to look something like
-            "https://hooks.slack.com/services/af7d8w7f/sfd7df9sb/lkcpfj6kf93ds3gj". Webhooks are 
+            "https://hooks.slack.com/services/af7d8w7f/sfd7df9sb/lkcpfj6kf93ds3gj". Webhooks are
             effectively passwords and must be kept secure! Alternatively, you can specify the webhook
             in the environment variable SLACKURL.
         to (WARNING: ignored by new-style webhooks):
@@ -574,14 +592,14 @@ def slacknotification(message=None, webhook=None, to=None, fromuser=None, verbos
             How much detail to display.
         die:
             If false, prints warnings. If true, raises exceptions.
-    
+
     Example usage:
         slacknotification('Long process is finished')
         slacknotification(webhook='/.slackurl', channel='@username', message='Hi, how are you going?')
-    
+
     What's the point? Add this to the end of a very long-running script to notify
     your loved ones that the script has finished.
-        
+
     Version: 2018sep25
     '''
     try:
@@ -591,7 +609,7 @@ def slacknotification(message=None, webhook=None, to=None, fromuser=None, verbos
         errormsg = 'Cannot use Slack notification since imports failed: %s' % str(E)
         if die: raise Exception(errormsg)
         else:   print(errormsg)
-        
+
     # Validate input arguments
     printv('Sending Slack message', 1, verbose)
     if not webhook:  webhook    = os.path.expanduser('~/.slackurl')
@@ -599,7 +617,7 @@ def slacknotification(message=None, webhook=None, to=None, fromuser=None, verbos
     if not fromuser: fromuser = 'sciris-bot'
     if not message:  message  = 'This is an automated notification: your notifier is notifying you.'
     printv('Channel: %s | User: %s | Message: %s' % (to, fromuser, message), 3, verbose) # Print details of what's being sent
-    
+
     # Try opening webhook as a file
     if webhook.find('hooks.slack.com')>=0: # It seems to be a URL, let's proceed
         slackurl = webhook
@@ -612,7 +630,7 @@ def slacknotification(message=None, webhook=None, to=None, fromuser=None, verbos
         errormsg = '"%s" does not seem to be a valid webhook string or file' % webhook
         if die: raise Exception(errormsg)
         else:   print(errormsg)
-    
+
     # Package and post payload
     try:
         payload = '{"text": %s, "channel": %s, "username": %s}' % (dumps(message), dumps(to), dumps(fromuser))
@@ -629,26 +647,26 @@ def slacknotification(message=None, webhook=None, to=None, fromuser=None, verbos
 
 def printtologfile(message=None, filename=None):
     '''
-    Append a message string to a file specified by a filename name/path.  This 
-    is especially useful for capturing information from spawned processes not 
+    Append a message string to a file specified by a filename name/path.  This
+    is especially useful for capturing information from spawned processes not
     so handily captured through print statements.
     Warning: If you pass a file in, existing or not, it will try to append
     text to it!
     '''
-    
+
     # Set defaults
-    if message is None:  
+    if message is None:
         return None # Return immediately if nothing to append
-    if filename is None: 
+    if filename is None:
         filename = '/tmp/logfile' # Some generic filename that should work on *nix systems
-    
+
     # Try writing to file
     try:
         with open(filename, 'a') as f:
             f.write('\n'+message+'\n') # Add a newline to the message.
     except: # Fail gracefully
         print('WARNING, could not write to logfile %s' % filename)
-    
+
     return None
 
 
@@ -739,40 +757,40 @@ def colorize(color=None, string=None, output=False, showhelp=False, enable=True)
 def heading(string=None, color=None, divider=None, spaces=None, minlength=None, maxlength=None, **kwargs):
     '''
     Shortcut to sc.colorize() to create a heading. If just supplied with a string,
-    create blue text with horizontal lines above and below and 3 spaces above. You 
-    can customize the color, the divider character, how many spaces appear before 
-    the heading, and the minimum length of the divider (otherwise will expand to 
+    create blue text with horizontal lines above and below and 3 spaces above. You
+    can customize the color, the divider character, how many spaces appear before
+    the heading, and the minimum length of the divider (otherwise will expand to
     match the length of the string, up to a maximum length).
-    
+
     Parameters
     ----------
     string : str
         The string to print as the heading
-    
+
     color : str
         The color to use for the heading (default blue)
-    
+
     divider : str
         The symbol to use for the divider (default em dash)
-    
+
     spaces : int
         The number of spaces to put before the heading
-    
+
     minlength : int
         The minimum length of the divider
-    
+
     maxlength : int
         The maximum length of the divider
-    
+
     kwargs : dict
         Arguments to pass to sc.colorize()
-    
-    
+
+
     Returns
     -------
     None, unless specified to produce the string as output using output=True.
-        
-    
+
+
     Examples
     --------
     >>> import sciris as sc
@@ -787,7 +805,7 @@ def heading(string=None, color=None, divider=None, spaces=None, minlength=None, 
     if spaces    is None: spaces    = 2
     if minlength is None: minlength = 30
     if maxlength is None: maxlength = 120
-    
+
     length = int(np.median([minlength, len(string), maxlength]))
     space = '\n'*spaces
     if divider and length: fulldivider = '\n'+divider*length+'\n'
@@ -808,18 +826,18 @@ def flexstr(arg, force=True):
     ''' Try converting to a "regular" string (i.e. "str" in both Python 2 or 3), but proceed if it fails '''
     if isstring(arg): # It's a string
         if six.PY2:
-            try:    
+            try:
                 output = str(arg) # Try to convert to ASCII string from unicode
-            except: 
+            except:
                 output = arg # If anything goes wrong, just return as-is
         else:
-            if isinstance(arg, six.binary_type): 
+            if isinstance(arg, six.binary_type):
                 try:
                     output = arg.decode() # If it's bytes, decode to unicode
                 except:
                     if force: output = repr(arg) # If that fails, just print its representation
                     else:     output = arg
-            else: 
+            else:
                 output = arg # Otherwise, return as-is
     else:
         if force: output = repr(arg)
@@ -837,34 +855,34 @@ def isiterable(obj):
         return True
     except:
         return False
-    
+
 
 def checktype(obj=None, objtype=None, subtype=None, die=False):
-    ''' 
+    '''
     A convenience function for checking instances. If objtype is a type,
     then this function works exactly like isinstance(). But, it can also
     be a string, e.g. 'array'.
-    
+
     If subtype is not None, then checktype will iterate over obj and check
     recursively that each element matches the subtype.
-    
+
     Special types are "listlike", which will check for lists, tuples, and
     arrays; and "arraylike", which is the same as "listlike" but will also
     check that elements are numeric.
-    
+
     Arguments:
         obj     = the object to check the type of
         objtype = the type to confirm the object belongs to
         subtype = optionally check the subtype if the object is iterable
         die     = whether or not to raise an exception if the object is the wrong type.
-    
+
     Examples:
         checktype(rand(10), 'array', 'number') # Returns True
         checktype(['a','b','c'], 'listlike') # Returns True
         checktype(['a','b','c'], 'arraylike') # Returns False
         checktype([{'a':3}], list, dict) # Returns True
     '''
-    
+
     # Handle "objtype" input
     if   objtype in ['str','string']:          objinstance = _stringtypes
     elif objtype in ['num', 'number']:         objinstance = _numtype
@@ -875,10 +893,10 @@ def checktype(obj=None, objtype=None, subtype=None, die=False):
     else:
         errormsg = 'Could not understand what type you want to check: should be either a string or a type, not "%s"' % objtype
         raise Exception(errormsg)
-    
+
     # Do first-round checking
     result = isinstance(obj, objinstance)
-    
+
     # Do second round checking
     if result and objtype in ['listlike', 'arraylike']: # Special case for handling arrays which may be multi-dimensional
         obj = promotetoarray(obj).flatten() # Flatten all elements
@@ -896,16 +914,16 @@ def checktype(obj=None, objtype=None, subtype=None, die=False):
             return None # It's fine, do nothing
     else: # Return the result of the comparison
         return result
-   
-         
+
+
 def isnumber(obj, isnan=None):
     ''' Simply determine whether or not the input is a number, since it's too hard to remember this otherwise '''
     output = checktype(obj, 'number')
     if output and isnan is not None: # It is a number, so can check for nan
         output = (np.isnan(obj) == isnan) # See if they match
     return output
-    
-    
+
+
 def isstring(obj):
     ''' Simply determine whether or not the input is a string, since it's too hard to remember this otherwise '''
     return checktype(obj, 'string')
@@ -917,10 +935,10 @@ def promotetoarray(x):
         return np.array([x]) # e.g. 3
     elif isinstance(x, (list, tuple)):
         return np.array(x) # e.g. [3]
-    elif isinstance(x, np.ndarray): 
+    elif isinstance(x, np.ndarray):
         if np.shape(x):
             return x # e.g. array([3])
-        else: 
+        else:
             return np.array([x]) # e.g. array(3)
     else: # e.g. 'foo'
         raise Exception("Expecting a number/list/tuple/ndarray; got: %s" % flexstr(x))
@@ -930,12 +948,12 @@ def promotetoarray(x):
 def promotetolist(obj=None, objtype=None, keepnone=False):
     '''
     Make sure object is iterable -- used so functions can handle inputs like 'a' or ['a', 'b'].
-    
+
     If keepnone is false, then None is converted to an empty list. Otherwise, it's converted to
     [None].
-    
+
     Version: 2019nov10
-    '''    
+    '''
     if objtype is None: # Don't do type checking
         if isinstance(obj, list):
             output = obj # If it's already a list and we're not doing type checking, just return
@@ -974,7 +992,7 @@ __all__ += ['now', 'getdate', 'elapsedtimestr', 'tic', 'toc', 'timedsleep']
 def now(timezone=None, utc=False, die=False, astype='dateobj', tostring=False, dateformat=None):
     '''
     Get the current time, optionally in UTC time.
-    
+
     Examples:
         sc.now() # Return current local time, e.g. 2019-03-14 15:09:26
         sc.now('US/Pacific') # Return the time now in a specific timezone
@@ -991,36 +1009,36 @@ def now(timezone=None, utc=False, die=False, astype='dateobj', tostring=False, d
     timenow = datetime.datetime.now(tzinfo)
     output = getdate(timenow, astype=astype, dateformat=dateformat)
     return output
-    
-    
+
+
 
 def getdate(obj=None, astype='str', dateformat=None):
         '''
         Alias for converting a date objet to a formatted string.
-        
+
         Examples:
             sc.getdate() # Returns a string for the current date
             sc.getdate(sc.now(), astype='int') # Convert today's time to an integer
         '''
         if obj is None:
             obj = now()
-        
+
         if dateformat is None:
             dateformat = '%Y-%b-%d %H:%M:%S'
         else:
             astype = 'str' # If dateformat is specified, assume type is a string
-        
+
         try:
             if isstring(obj): return obj # Return directly if it's a string
             obj.timetuple() # Try something that will only work if it's a date object
             dateobj = obj # Test passed: it's a date object
         except Exception as E: # It's not a date object
             raise Exception('Getting date failed; date must be a string or a date object: %s' % repr(E))
-        
+
         if astype=='str':
             output = dateobj.strftime(dateformat)
             return output
-        elif astype=='int': 
+        elif astype=='int':
             output = time.mktime(dateobj.timetuple()) # So ugly!! But it works -- return integer representation of time
             return output
         elif astype=='dateobj':
@@ -1159,15 +1177,15 @@ def toc(start=None, output=False, label=None, sigfigs=None, filename=None, reset
     # Set defaults
     if label   is None: label = ''
     if sigfigs is None: sigfigs = 3
-    
+
     # If no start value is passed in, try to grab the global _tictime.
     if start is None:
         try:    start = _tictime
         except: start = 0 # This doesn't exist, so just leave start at 0.
-            
+
     # Get the elapsed time in seconds.
     elapsed = time.time() - start
-    
+
     # Create the message giving the elapsed time.
     if label=='': base = 'Elapsed time: '
     else:         base = 'Elapsed time for %s: ' % label
@@ -1176,7 +1194,7 @@ def toc(start=None, output=False, label=None, sigfigs=None, filename=None, reset
     # Optionally reset the counter
     if reset:
         _tictime = time.time()  # Store the present time in the global
-    
+
     if output:
         return elapsed
     else:
@@ -1233,9 +1251,9 @@ __all__ += ['percentcomplete', 'checkmem', 'runcommand', 'gitinfo', 'comparevers
 def percentcomplete(step=None, maxsteps=None, stepsize=1, prefix=None):
     '''
     Display progress.
-    
+
     Usage example:
-        
+
         maxiters = 500
         for i in range(maxiters):
             sc.percentcomplete(i, maxiters) # will print on every 5th iteration
@@ -1257,14 +1275,14 @@ def percentcomplete(step=None, maxsteps=None, stepsize=1, prefix=None):
 def checkmem(origvariable, descend=False, order='n', plot=False, verbose=False):
     '''
     Checks how much memory the variable in question uses by dumping it to file.
-    
+
     Example:
         from utils import checkmem
         checkmem(['spiffy',rand(2483,589)],descend=1)
     '''
     from .sc_fileio import saveobj
     filename = os.getcwd()+'/checkmem.tmp'
-    
+
     printnames = []
     printbytes = []
     printsizes = []
@@ -1286,7 +1304,7 @@ def checkmem(origvariable, descend=False, order='n', plot=False, verbose=False):
         variables = [getattr(origvariable, attr) for attr in varnames]
     else:
         raise Exception('Something went wrong; this should be unreachable')
-    
+
     for v,variable in enumerate(variables):
         if verbose: print('Processing variable %i of %i' % (v+1, len(variables)))
         saveobj(filename, variable)
@@ -1312,9 +1330,9 @@ def checkmem(origvariable, descend=False, order='n', plot=False, verbose=False):
         print('Variable %s is %s' % (printnames[v], printsizes[v]))
 
     if plot==True:
-        try:    
+        try:
             import pylab as pl
-        except Exception as E: 
+        except Exception as E:
             raise Exception('Cannot plot since import failed: %s' % repr(E))
         pl.axes(aspect=1)
         pl.pie(pl.array(printbytes)[inds], labels=pl.array(printnames)[inds], autopct='%0.2f')
@@ -1331,7 +1349,7 @@ def runcommand(command, printinput=False, printoutput=False, wait=True):
         myfiles = sc.runcommand('ls').split('\n') # Get a list of files in the current folder
         sc.runcommand('sshpass -f %s scp myfile.txt me@myserver:myfile.txt' % 'pa55w0rd', printinput=True, printoutput=True) # Copy a file remotely
         sc.runcommand('sleep 600; mkdir foo', wait=False) # Waits 10 min, then creates the folder "foo", but the function returns immediately
-    
+
     Date: 2019sep04
     '''
     if printinput:
@@ -1346,7 +1364,7 @@ def runcommand(command, printinput=False, printoutput=False, wait=True):
             output = ''
     except Exception as E:
         output = 'runcommand(): shell command failed: %s' % str(E) # This is for a Python error, not a shell error -- those get passed to output
-    if printoutput: 
+    if printoutput:
         print(output)
     return output
 
@@ -1393,14 +1411,14 @@ def gitinfo(filepath=None, die=False, hashlen=7, verbose=True):
 
 def compareversions(version1, version2):
     '''
-    Function to compare versions, expecting both arguments to be a string of the 
+    Function to compare versions, expecting both arguments to be a string of the
     format 1.2.3, but numeric works too.
-    
+
     Usage:
         compareversions('1.2.3', '2.3.4') # returns -1
         compareversions(2, '2') # returns 0
         compareversions('3.1', '2.99') # returns 1
-    
+
     '''
 
     if LooseVersion(str(version1)) > LooseVersion(str(version2)):
@@ -1413,7 +1431,7 @@ def compareversions(version1, version2):
 
 def uniquename(name=None, namelist=None, style=None):
     """
-    Given a name and a list of other names, find a replacement to the name 
+    Given a name and a list of other names, find a replacement to the name
     that doesn't conflict with the other names, and pass it back.
     """
     if style is None: style = ' (%d)'
@@ -1429,7 +1447,7 @@ def uniquename(name=None, namelist=None, style=None):
 def importbyname(name=None, output=False, die=True):
     '''
     A little function to try loading optional imports.
-    
+
     Example:
         np = importbyname('numpy')
     '''
@@ -1475,7 +1493,7 @@ def suggest(user_input, valid_inputs, n=1, threshold=4, fulloutput=False, die=Fa
         import Levenshtein # To allow as an optional import
     except ModuleNotFoundError as e:
             raise Exception('The "Levenshtein" Python package is not available; please install manually') from e
-    
+
     valid_inputs = promotetolist(valid_inputs, objtype='string')
 
     distance = np.zeros(len(valid_inputs))
@@ -1490,12 +1508,12 @@ def suggest(user_input, valid_inputs, n=1, threshold=4, fulloutput=False, die=Fa
     # If there is a tie for the minimum distance, use the case sensitive comparison
     if sum(distance==min(distance)) > 1:
         distance = cs_distance
-    
+
     # Order by distance, then pull out the right inputs, then turn them into a list
     order = np.argsort(distance)
     suggestions = [valid_inputs[i] for i in order]
     suggestionstr = ', '.join(['"' + sugg + '"' for sugg in suggestions[:n]])
-    
+
     if min(distance) > threshold:
         if die:
             raise Exception('"%s" not found' % user_input)
@@ -1517,19 +1535,19 @@ def suggest(user_input, valid_inputs, n=1, threshold=4, fulloutput=False, die=Fa
 def profile(run, follow=None, *args, **kwargs):
     '''
     Profile a function.
-    
+
     Parameters
     ----------
     run : function
         The function to be run
     follow : function
-        The function or list of functions to be followed in the profiler; if 
+        The function or list of functions to be followed in the profiler; if
         None, defaults to the run function
 
     Returns
     -------
     None (the profile output is printed to stdout)
-    
+
     Example
     -------
     def slow_fn():
@@ -1540,22 +1558,22 @@ def profile(run, follow=None, *args, **kwargs):
             int_list.append(i)
             int_dict[i] = i
         return
-            
+
     class Foo:
         def __init__(self):
             self.a = 0
             return
-        
+
         def outer(self):
             for i in range(100):
                 self.inner()
             return
-        
+
         def inner(self):
             for i in range(1000):
                 self.a += 1
             return
-    
+
     foo = Foo()
     sc.profile(run=foo.outer, follow=[foo.outer, foo.inner])
     sc.profile(slow_fn)
@@ -1632,14 +1650,14 @@ Example 2:
         count += 1
         setnested(foo, twig, count)   # {'a': {'y': 1, 'x': 2, 'z': 3}, 'b': {'a': {'y': 4, 'x': 5}}}
 
-Version: 2014nov29 
+Version: 2014nov29
 '''
 
-def getnested(nesteddict, keylist, safe=False): 
+def getnested(nesteddict, keylist, safe=False):
     output = reduce(lambda d, k: d.get(k) if d else None if safe else d[k], keylist, nesteddict)
     return output
 
-def setnested(nesteddict, keylist, value): 
+def setnested(nesteddict, keylist, value):
     getnested(nesteddict, keylist[:-1])[keylist[-1]] = value
     return None # Modify nesteddict in place
 
@@ -1668,7 +1686,7 @@ def mergenested(dict1, dict2, die=False, verbose=False, _path=None):
     else:
         a = dcp(dict1) # Otherwise, make a copy
     b = dict2 # Don't need to make a copy
-    
+
     for key in b:
         keypath = ".".join(_path + [str(key)])
         if verbose:
@@ -1700,7 +1718,7 @@ def flattendict(inputdict=None, basekey=None, subkeys=None, complist=None, keyli
     A function for flattening out a recursive dictionary, with an optional list of sub-keys (ignored if non-existent).
     The flattened out structure is returned as complist. Values can be an object or a list of objects.
     All keys (including basekey) within the recursion are returned as keylist.
-    
+
     Specifically, this function is intended for dictionaries of the form...
         inputdict[key1][sub_key[0]] = [a, key2, b]
         inputdict[key1][sub_key[1]] = [c, d]
@@ -1708,14 +1726,14 @@ def flattendict(inputdict=None, basekey=None, subkeys=None, complist=None, keyli
         inputdict[key2][sub_key[1]] = [e, f, g]
     ...which, for this specific example, will output list...
         [a, e, e, f, g, h, b, c, d]
-        
+
     There is a max-depth of limit for the recursion.
     '''
-    
+
     if limit<1:
         errormsg = 'ERROR: A recursion limit has been reached when flattening a dictionary, stopping at key "%s".' % basekey
-        raise Exception(errormsg)    
-    
+        raise Exception(errormsg)
+
     if complist is None: complist = []
     if keylist is None: keylist = []
     keylist.append(basekey)
@@ -1730,7 +1748,7 @@ def flattendict(inputdict=None, basekey=None, subkeys=None, complist=None, keyli
                     inputlist += val
                 else:
                     inputlist.append(val)      # Handle unlisted objects.
-    
+
     for comp in inputlist:
         if comp in inputdict.keys():
             flattendict(inputdict=inputdict, basekey=comp, subkeys=subkeys, complist=complist, keylist=keylist, limit=limit-1)
@@ -1750,7 +1768,7 @@ class prettyobj(object):
         ''' Use pretty repr for objects '''
         output  = prepr(self)
         return output
-    
+
 
 class LinkException(Exception):
         ''' An exception to raise when links are broken -- note, can't define classes inside classes :( '''
@@ -1765,36 +1783,36 @@ class Link(object):
     parsed differently from other objects -- most notably, a recursive method
     (such as a pickle) would skip over Link objects, and then would fix them up
     after the other objects had been reinstated.
-    
+
     Version: 2017jan31
     '''
-    
+
     def __init__(self, obj=None):
         ''' Store the reference to the object being referred to '''
         self.obj = obj # Store the object -- or rather a reference to it, if it's mutable
-        try:    self.uid = obj.uid # If the object has a UID, store it separately 
+        try:    self.uid = obj.uid # If the object has a UID, store it separately
         except: self.uid = None # If not, just use None
-    
-    
+
+
     def __repr__(self):
         ''' Just use default '''
         output  = prepr(self)
         return output
-    
+
     def __call__(self, obj=None):
         ''' If called with no argument, return the stored object; if called with argument, update object '''
         if obj is None:
             if type(self.obj)==LinkException: # If the link is broken, raise it now
-                raise self.obj 
+                raise self.obj
             return self.obj
         else:
             self.__init__(obj)
             return None
-    
+
     def __copy__(self, *args, **kwargs):
         ''' Do NOT automatically copy link objects!! '''
         return Link(LinkException('Link object copied but not yet repaired'))
-    
+
     def __deepcopy__(self, *args, **kwargs):
         ''' Same as copy '''
         return self.__copy__(*args, **kwargs)
