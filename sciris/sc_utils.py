@@ -87,8 +87,8 @@ def uuid(uid=None, which=None, die=False, tostring=False, length=None):
         if length<len(output):
             output = output[:length]
         else:
-            print(f'Cannot choose first {length} chars since UID has length {len(output)}')
-            raise Exception(errormsg)
+            errormsg = f'Cannot choose first {length} chars since UID has length {len(output)}'
+            raise ValueError(errormsg)
     return output
 
 

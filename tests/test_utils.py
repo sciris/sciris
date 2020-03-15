@@ -1,4 +1,5 @@
 import sciris as sc
+import pytest
 
 
 def test_colorize():
@@ -68,6 +69,23 @@ def test_prepr():
     return myobj
 
 
+def test_uuid():
+    ''' Test UID generation '''
+    import uuid
+    u0 = uuid.uuid4()
+    u1 = sc.uuid()
+    u2 = sc.uuid()
+    assert u1 != u2
+    assert isinstance(u1, type(u0))
+    u3 = sc.uuid(length=4)
+    assert isinstance(u3, str)
+    with pytest.raises(ValueError):
+        sc.uuid(length=400)
+    print(f'UIDs:\n{u0}\n{u1}\n{u2}\n{u3}')
+    return u3
+
+
+
 #%% Run as a script
 if __name__ == '__main__':
     sc.tic()
@@ -76,5 +94,6 @@ if __name__ == '__main__':
     string = test_printing()
     foo = test_profile()
     myobj = test_prepr()
+    uid = test_uuid()
 
     sc.toc()
