@@ -75,9 +75,9 @@ def test_uuid():
     u0 = uuid.uuid4()
     u1 = sc.uuid()
     u2 = sc.uuid()
+    u3 = sc.uuid(length=4)
     assert u1 != u2
     assert isinstance(u1, type(u0))
-    u3 = sc.uuid(length=4)
     assert isinstance(u3, str)
     with pytest.raises(ValueError):
         sc.uuid(length=400)
