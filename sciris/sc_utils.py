@@ -52,7 +52,7 @@ else:
 
 
 # Define the modules being loaded
-__all__ = ['uuid', 'dcp', 'cp', 'pp', 'sha', 'wget', 'htmlify']
+__all__ = ['uuid', 'dcp', 'cp', 'pp', 'sha', 'wget', 'htmlify', 'thisdir']
 
 
 def uuid(uid=None, which=None, die=False, tostring=False, length=None):
@@ -177,6 +177,13 @@ def htmlify(string, reverse=False, tostring=False):
     return output
 
 
+def thisdir(filename):
+    '''
+    Tiny helper function to get the folder name of the current code. Usage:
+        thisdir = sc.thisdir(__file__)
+    '''
+    output = os.path.abspath(os.path.dirname(filename))
+    return output
 
 
 

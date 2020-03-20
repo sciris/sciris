@@ -85,6 +85,16 @@ def test_uuid():
     return u3
 
 
+def test_thisdir():
+    ''' Test getting the current file directory '''
+    import os
+
+    thisdir = sc.thisdir(__file__)
+    assert os.path.split(thisdir)[-1] == 'tests'
+    print(f'Current folder: {thisdir}')
+
+    return thisdir
+
 
 #%% Run as a script
 if __name__ == '__main__':
@@ -95,5 +105,6 @@ if __name__ == '__main__':
     foo = test_profile()
     myobj = test_prepr()
     uid = test_uuid()
+    thisdir = test_thisdir()
 
     sc.toc()
