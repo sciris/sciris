@@ -1,9 +1,13 @@
+'''
+Test Sciris utility/helper functions.
+'''
+
 import sciris as sc
 import pytest
 
 
 def test_colorize():
-    ''' Test text colorization '''
+    sc.heading('Test text colorization')
     sc.colorize(showhelp=True)
     sc.colorize('green', 'hi') # Simple example
     sc.colorize(['yellow', 'bgblack']); print('Hello world'); print('Goodbye world'); sc.colorize('reset') # Colorize all output in between
@@ -14,7 +18,7 @@ def test_colorize():
 
 
 def test_printing():
-    ''' Test printing functions '''
+    sc.heading('Test printing functions')
     example = sc.prettyobj()
     example.data = sc.vectocolor(10)
     print('sc.pr():')
@@ -26,7 +30,7 @@ def test_printing():
 
 
 def test_profile():
-    ''' Test profiling functions '''
+    sc.heading('Test profiling functions')
 
     def slow_fn():
         n = 10000
@@ -59,7 +63,7 @@ def test_profile():
 
 
 def test_prepr():
-    ''' Test pretty representation of an object '''
+    sc.heading('Test pretty representation of an object')
     n_attrs = 500
     myobj = sc.prettyobj()
     for i in range(n_attrs):
@@ -70,7 +74,7 @@ def test_prepr():
 
 
 def test_uuid():
-    ''' Test UID generation '''
+    sc.heading('Test UID generation')
     import uuid
     u0 = uuid.uuid4()
     u1 = sc.uuid()
@@ -86,12 +90,27 @@ def test_uuid():
 
 
 def test_thisdir():
-    ''' Test getting the current file directory '''
+    sc.heading('Test getting the current file directory')
     import os
 
     thisdir = sc.thisdir(__file__)
     assert os.path.split(thisdir)[-1] == 'tests'
     print(f'Current folder: {thisdir}')
+
+    return thisdir
+
+
+def test_traceback():
+    sc.heading('Test printing traceback text')
+
+    dct = {'a':3}
+    try:
+        b = dct['b']
+    except:
+        text = sc.traceback()
+
+    print(f'Example traceback text:\n{text}')
+    print('NB: this is an example, not an actual error!')
 
     return thisdir
 
@@ -106,5 +125,6 @@ if __name__ == '__main__':
     myobj = test_prepr()
     uid = test_uuid()
     thisdir = test_thisdir()
+    traceback = test_traceback()
 
     sc.toc()

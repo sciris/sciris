@@ -18,6 +18,7 @@ import subprocess
 import numbers
 import numpy as np
 import uuid as py_uuid
+import traceback as py_traceback
 from textwrap import fill
 from functools import reduce
 from collections import OrderedDict as OD
@@ -52,7 +53,7 @@ else:
 
 
 # Define the modules being loaded
-__all__ = ['uuid', 'dcp', 'cp', 'pp', 'sha', 'wget', 'htmlify', 'thisdir']
+__all__ = ['uuid', 'dcp', 'cp', 'pp', 'sha', 'wget', 'htmlify', 'thisdir', 'traceback']
 
 
 def uuid(uid=None, which=None, die=False, tostring=False, length=None):
@@ -185,6 +186,10 @@ def thisdir(filename):
     output = os.path.abspath(os.path.dirname(filename))
     return output
 
+
+def traceback(*args, **kwargs):
+    ''' Shortcut for accessing the traceback '''
+    return py_traceback.format_exc(*args, **kwargs)
 
 
 ##############################################################################
