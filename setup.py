@@ -17,7 +17,7 @@ cwd = os.path.abspath(os.path.dirname(__file__))
 
 # Define the requirements for core functionality
 requirements = [
-        'matplotlib>=1.4.2',  # Plotting
+        'matplotlib>=2.2.2',  # Plotting
         'numpy>=1.10.1',      # Numerical functions
         'dill',               # File I/O
         'gitpython',          # Version information
