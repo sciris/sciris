@@ -271,7 +271,7 @@ def makefilepath(filename=None, folder=None, ext=None, default=None, split=False
 ### JSON functions
 ##############################################################################
 
-__all__ += ['sanitizejson', 'loadjson', 'savejson']
+__all__ += ['sanitizejson', 'jsonify', 'loadjson', 'savejson']
 
 
 def sanitizejson(obj, verbose=True, die=False, tostring=False, **kwargs):
@@ -333,6 +333,11 @@ def sanitizejson(obj, verbose=True, die=False, tostring=False, **kwargs):
     if tostring: return json.dumps(output, **kwargs)
     else:        return output
 
+
+
+def jsonify(*args, **kwargs):
+    ''' Alias to sanitizejson() '''
+    return sanitizejson(*args, **kwargs)
 
 
 def loadjson(filename=None, folder=None, **kwargs):

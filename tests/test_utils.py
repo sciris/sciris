@@ -105,7 +105,7 @@ def test_traceback():
 
     dct = {'a':3}
     try:
-        b = dct['b']
+        dct['b'] # This will cause a KeyError
     except:
         text = sc.traceback()
 

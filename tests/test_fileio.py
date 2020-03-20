@@ -2,8 +2,9 @@
 Test Sciris file I/O functions.
 '''
 
-import sciris as sc
 import pytest
+import pylab as pl
+import sciris as sc
 
 
 def legacy_tests():
@@ -12,7 +13,6 @@ def legacy_tests():
     due to reliance on openpyxl (which is not a required Sciris dependency).
     '''
 
-    import pylab as pl
     import openpyxl
     import os
 
@@ -69,11 +69,13 @@ def legacy_tests():
 
     # Test loading
     if check('loadspreadsheet'):
+        sc.heading('Loading spreadsheet')
         data = sc.loadspreadsheet(files.excel)
         print(data)
 
 
     if check('readcells'):
+        sc.heading('Reading cells')
         wb = sc.Spreadsheet(filename=filedir+'exampledata.xlsx') # Load a sample databook to try pulling cells from
         celltest = wb.readcells(method='xlrd', sheetname='Baseline year population inputs', cells=[[46, 2], [47, 2]]) # Grab cells using xlrd
         celltest2 = wb.readcells(method='openpyexcel', wbargs={'data_only': True}, sheetname='Baseline year population inputs', cells=[[46, 2], [47, 2]]) # Grab cells using openpyexcel.  You have to set wbargs={'data_only': True} to pull out cached values instead of formula strings
@@ -82,6 +84,7 @@ def legacy_tests():
 
 
     if check('Blobject'):
+        sc.heading('Loading a blobject')
         blob = sc.Blobject(files.excel)
         f = blob.tofile()
         wb = openpyxl.load_workbook(f)
@@ -97,6 +100,7 @@ def legacy_tests():
 
     # Test spreadsheet saving
     if check('Spreadsheet'):
+        sc.heading('Using a Spreadsheet')
         S = sc.Spreadsheet(files.excel)
         S.writecells(cells=['A6','B7','C8','D9'], vals=['This','is','a','test']) # Method 1
         S.writecells(cells=[pl.array([7,1])+i for i in range(4)], vals=['And','so','is','this']) # Method 2
@@ -109,6 +113,7 @@ def legacy_tests():
 
 
     if check('saveobj', ['loadobj']):
+        sc.heading('Saveobj/loadobj')
         sc.saveobj(files.binary, testdata)
 
 
@@ -118,6 +123,7 @@ def legacy_tests():
 
 
     if check('savetext', ['loadtext', 'savezip']):
+        sc.heading('Savetext/loadtext')
         sc.savetext(files.text, testdata)
 
 
@@ -127,11 +133,13 @@ def legacy_tests():
 
 
     if check('getfilelist'):
+        sc.heading('Get files')
         print('Files in current folder:')
         sc.pp(sc.getfilelist())
 
 
     if check('savezip'):
+        sc.heading('Save zip')
         sc.savezip(files.zip, [files.text, files.excel])
 
 
@@ -155,6 +163,7 @@ def legacy_tests():
         sc.saveobj('deadclass.obj', deadclass)
         -------------------------------------------------
         '''
+        sc.heading('Intentionally loading corrupted file')
         obj = sc.loadobj(filedir+'deadclass.obj')
         print('Loading corrupted object succeeded, x=%s' % obj.x)
 
@@ -162,6 +171,7 @@ def legacy_tests():
     # Tidy up
     if tidyup:
         sc.blank()
+        sc.heading('Tidying up')
         for fn in [files.excel, files.binary, files.text, files.zip]:
             try:
                 os.remove(fn)
@@ -172,13 +182,41 @@ def legacy_tests():
     print('Done, all fileio tests succeeded')
 
 
+def test_json():
+    sc.heading('Testing JSON read/write functions')
+
+    not_jsonifiable = sc.Blobject() # Create an object that can't be JSON serialized
+
+    print('Testing jsonifying a NON-jsonifiable object:')
+    sc.jsonify(not_jsonifiable, die=False) # Will return a string representation
+    with pytest.raises(Exception):
+        sc.sanitizejson(not_jsonifiable, die=True) # Will die
+
+    jsonifiable = sc.objdict().make(keys=['a','b'], vals=pl.rand(10))
+    json_obj = sc.jsonify(jsonifiable)
+    json_str = sc.jsonify(jsonifiable, tostring=True, indent=2) # kwargs are passed to json.dumps()
+
+    print('JSON as sanitized object:')
+    print(json_obj)
+    print('JSON as string:')
+    print(json_str)
+
+    return json_str
+
+
+
 #%% Run as a script
 if __name__ == '__main__':
     sc.tic()
 
     try:
         legacy_tests()
-    except Exception as E:
+    except:
+        print('\n\nNOTE: Legacy tests failed -- this is no major cause for concern, but the cause was:\n')
+        print(sc.traceback())
+        print('Continuing with other tests...')
+
+    json = test_json()
 
 
 
