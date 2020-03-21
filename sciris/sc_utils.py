@@ -941,9 +941,11 @@ def isstring(obj):
     return checktype(obj, 'string')
 
 
-def promotetoarray(x):
+def promotetoarray(x, skipnone=False):
     ''' Small function to ensure consistent format for things that should be arrays '''
-    if isnumber(x):
+    if x is None and skipnone:
+        return np.array([])
+    elif isnumber(x):
         return np.array([x]) # e.g. 3
     elif isinstance(x, (list, tuple)):
         return np.array(x) # e.g. [3]
@@ -1026,7 +1028,7 @@ def now(timezone=None, utc=False, die=False, astype='dateobj', tostring=False, d
 
 def getdate(obj=None, astype='str', dateformat=None):
         '''
-        Alias for converting a date objet to a formatted string.
+        Alias for converting a date object to a formatted string.
 
         Examples:
             sc.getdate() # Returns a string for the current date
