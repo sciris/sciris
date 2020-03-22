@@ -93,7 +93,9 @@ def test_uuid():
     assert isinstance(u.u1, type(u.u0))
     assert isinstance(u.u3, str)
     with pytest.raises(ValueError):
-        sc.uuid(length=400)
+        sc.uuid(length=400) # UUID is only 16 characters long
+    with pytest.raises(ValueError):
+        sc.uuid(which='numeric', length=2, n=10) # Not enough unique choices
 
     # Print results
     print(f'UIDs:')

@@ -58,7 +58,7 @@ else:
 __all__ = ['fast_uuid', 'uuid', 'dcp', 'cp', 'pp', 'sha', 'wget', 'htmlify', 'thisdir', 'traceback']
 
 
-def fast_uuid(which=None, length=None, n=1, secure=False, forcelist=False):
+def fast_uuid(which=None, length=None, n=1, secure=False, forcelist=False, safety=1000):
     '''
     Create a fast UID or set of UIDs.
 
@@ -66,6 +66,8 @@ def fast_uuid(which=None, length=None, n=1, secure=False, forcelist=False):
         which (str): the set of characters to choose from (default ascii)
         length (int): length of UID (default 6)
         n (int): number of UUIDs to generate
+        forcelist (bool): whether or not to return a list even for a single UID (used for recursive calls)
+        safety (float): ensure that the space of possible UIDs is at least this much larger than the number requested
 
     Returns:
         uid (str): a string UID
@@ -94,6 +96,14 @@ def fast_uuid(which=None, length=None, n=1, secure=False, forcelist=False):
         raise KeyError(errormsg)
     else:
         charlist = choices[which]
+
+    # Check that there are enough options
+    if n > 1:
+        n_possibilities = len(charlist)**length
+        allowed = n_possibilities//safety
+        if n > allowed:
+            errormsg = f'With a UID of type "{which}" and length {length}, there are {n_possibilities} possible UIDs, and you requested {n}, which exceeds the maximum allowed ({allowed})'
+            raise ValueError(errormsg)
 
     # Secure uses system random which is secure, but >10x slower
     if secure:
