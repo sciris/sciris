@@ -76,17 +76,33 @@ def test_prepr():
 def test_uuid():
     sc.heading('Test UID generation')
     import uuid
-    u0 = uuid.uuid4()
-    u1 = sc.uuid()
-    u2 = sc.uuid()
-    u3 = sc.uuid(length=4)
-    assert u1 != u2
-    assert isinstance(u1, type(u0))
-    assert isinstance(u3, str)
+
+    # Create them
+    u = sc.objdict()
+    u.u0 = uuid.uuid4()
+    u.u1 = sc.uuid()
+    u.u2 = sc.uuid()
+    u.u3 = sc.uuid(length=4)
+    u.u4 = sc.uuid(which='ascii', length=16)
+    u.u5 = sc.uuid(n=3)
+    u.u6 = sc.uuid(which='hex', length=20)
+    u.u7 = sc.uuid(which='numeric', length=10, n=5)
+
+    # Tests
+    assert u.u1 != u.u2
+    assert isinstance(u.u1, type(u.u0))
+    assert isinstance(u.u3, str)
     with pytest.raises(ValueError):
-        sc.uuid(length=400)
-    print(f'UIDs:\n{u0}\n{u1}\n{u2}\n{u3}')
-    return u3
+        sc.uuid(length=400) # UUID is only 16 characters long
+    with pytest.raises(ValueError):
+        sc.uuid(which='numeric', length=2, n=10) # Not enough unique choices
+
+    # Print results
+    print(f'UIDs:')
+    for key,val in u.items():
+        print(f'{key}: {val}')
+
+    return u
 
 
 def test_thisdir():
@@ -112,7 +128,30 @@ def test_traceback():
     print(f'Example traceback text:\n{text}')
     print('NB: this is an example, not an actual error!')
 
-    return thisdir
+    return text
+
+
+def test_readdate():
+    sc.heading('Test string-to-date conversion')
+
+    string1 = '2020-Mar-21'
+    string2 = '2020-03-21'
+    string3 = 'Sat Mar 21 23:13:56 2020'
+    dateobj1 = sc.readdate(string1)
+    dateobj2 = sc.readdate(string2)
+    sc.readdate(string3)
+    assert dateobj1 == dateobj2
+    with pytest.raises(ValueError):
+        sc.readdate('Not a date')
+
+    # Automated tests
+    formats_to_try = sc.readdate(return_defaults=True)
+    for key,fmt in formats_to_try.items():
+        datestr = sc.getdate(dateformat=fmt)
+        dateobj = sc.readdate(datestr, dateformat=fmt)
+        print(f'{key:15s} {fmt:22s}: {dateobj}')
+
+    return dateobj1
 
 
 #%% Run as a script
@@ -126,5 +165,6 @@ if __name__ == '__main__':
     uid = test_uuid()
     thisdir = test_thisdir()
     traceback = test_traceback()
+    dateobj = test_readdate()
 
     sc.toc()

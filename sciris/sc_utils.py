@@ -16,7 +16,9 @@ import datetime
 import dateutil
 import subprocess
 import numbers
+import string
 import numpy as np
+import random as rnd
 import uuid as py_uuid
 import traceback as py_traceback
 from textwrap import fill
@@ -53,21 +55,118 @@ else:
 
 
 # Define the modules being loaded
-__all__ = ['uuid', 'dcp', 'cp', 'pp', 'sha', 'wget', 'htmlify', 'thisdir', 'traceback']
+__all__ = ['fast_uuid', 'uuid', 'dcp', 'cp', 'pp', 'sha', 'wget', 'htmlify', 'thisdir', 'traceback']
 
 
-def uuid(uid=None, which=None, die=False, tostring=False, length=None):
-    ''' Shortcut for creating a UUID; default is to create a UUID4. Can also convert a UUID. '''
-    if which is None: which = 4
+def fast_uuid(which=None, length=None, n=1, secure=False, forcelist=False, safety=1000):
+    '''
+    Create a fast UID or set of UIDs.
+
+    Args:
+        which (str): the set of characters to choose from (default ascii)
+        length (int): length of UID (default 6)
+        n (int): number of UUIDs to generate
+        forcelist (bool): whether or not to return a list even for a single UID (used for recursive calls)
+        safety (float): ensure that the space of possible UIDs is at least this much larger than the number requested
+
+    Returns:
+        uid (str): a string UID
+
+    Inspired by https://stackoverflow.com/questions/2257441/random-string-generation-with-upper-case-letters-and-digits/30038250#30038250
+    '''
+
+    # Set defaults
+    if which  is None: which  = 'ascii'
+    if length is None: length = 6
+
+    choices = {
+        'lowercase':    string.ascii_lowercase,
+        'letters':      string.ascii_letters,
+        'numeric':      string.digits,
+        'digits':       string.digits,
+        'hex':          string.hexdigits.lower(),
+        'hexdigits':    string.hexdigits.lower(),
+        'alphanumeric': string.ascii_lowercase + string.digits,
+        'ascii':        string.ascii_letters + string.digits,
+        }
+
+    if which not in choices:
+        choicekeys = ', '.join(list(choices.keys()))
+        errormsg = f'Choice {which} not found; choices are: {choicekeys}'
+        raise KeyError(errormsg)
+    else:
+        charlist = choices[which]
+
+    # Check that there are enough options
+    if n > 1:
+        n_possibilities = len(charlist)**length
+        allowed = n_possibilities//safety
+        if n > allowed:
+            errormsg = f'With a UID of type "{which}" and length {length}, there are {n_possibilities} possible UIDs, and you requested {n}, which exceeds the maximum allowed ({allowed})'
+            raise ValueError(errormsg)
+
+    # Secure uses system random which is secure, but >10x slower
+    if secure:
+        choices_func = rnd.SystemRandom().choices
+    else:
+        choices_func = rnd.choices
+
+    # Generate the UUID(s) string as one big block
+    uid_str = ''.join(choices_func(charlist, k=length*n))
+
+    # Parse if n>1
+    if n == 1:
+        if forcelist:
+            output = [uid_str]
+        else:
+            output = uid_str
+    else:
+        output = [uid_str[chunk*length:(chunk+1)*length] for chunk in range(len(uid_str)//length)]
+        n_unique_keys = len(dict.fromkeys(output))
+        while n_unique_keys != n: # Check that length is correct, i.e. no duplicates!
+            new_n = n - n_unique_keys
+            new_uuids = fast_uuid(which=which, length=length, n=new_n, secure=secure, forcelist=True)
+            output.extend(new_uuids)
+
+    return output
+
+
+def uuid(uid=None, which=None, die=False, tostring=False, length=None, n=1):
+    '''
+    Shortcut for creating a UUID; default is to create a UUID4. Can also convert a UUID.
+
+    Args:
+        uid (str or uuid): if a string, convert to an actual UUID; otherwise, return unchanged
+        which (int or str): if int, choose a Python UUID function; otherwise, generate a random alphanumeric string (default 4)
+        die (bool): whether to fail for converting a supplied uuid (default False)
+        tostring (bool): whether or not to return a string instead of a UUID object (default False)
+        length (int): number of characters to trim to, if returning a string
+        n (int): number of UUIDs to generate; if n>1, return a list
+
+    Returns:
+        uid (UUID or str): the UID object
+
+    Examples:
+        sc.uuid() # Alias to uuid.uuid4()
+        sc.uuid(which='hex') # Creates a length-6 hex string
+        sc.uuid(which='ascii', length=10, n=50) # Creates 50 UUIDs of length 10 each using the full ASCII character set
+
+    '''
+
+    # Set default UUID type
+    if which is None:
+        which = 4
+
+    # Choose the different functions
     if   which==1: uuid_func = py_uuid.uuid1
     elif which==3: uuid_func = py_uuid.uuid3
     elif which==4: uuid_func = py_uuid.uuid4
     elif which==5: uuid_func = py_uuid.uuid5
-    else: raise Exception('UUID type %i not recognized; must be 1,  3, 4 [default], or 5)' % which)
+    else:
+        return fast_uuid(which=which, length=length, n=n) # ...or just go to fast_uuid()
 
-    if uid is None: # If not supplied, create a new UUID
-        output = uuid_func()
-    else: # Otherwise, try converting it
+    # If a UUID was supplied, try to parse it
+    if uid is not None:
         try:
             if isinstance(uid, py_uuid.UUID):
                 output = uid # Use directly
@@ -79,17 +178,31 @@ def uuid(uid=None, which=None, die=False, tostring=False, length=None):
                 raise Exception(errormsg)
             else:
                 print(errormsg)
-                output = uuid_func() # Just create a new one
+                uid = None # Just create a new one
 
-    # Convert to a string, and optionally trim
-    if tostring or length:
-        output = str(output)
-    if length:
-        if length<len(output):
-            output = output[:length]
+    # If not, make a new one
+    if uid is None:
+        uuid_list = []
+        for i in range(n): # Loop over
+            uid = uuid_func()  # If not supplied, create a new UUID
+
+            # Convert to a string, and optionally trim
+            if tostring or length:
+                uid = str(uid)
+            if length:
+                if length<len(uid):
+                    uid = uid[:length]
+                else:
+                    errormsg = f'Cannot choose first {length} chars since UID has length {len(uid)}'
+                    raise ValueError(errormsg)
+            uuid_list.append(uid)
+
+        # Process the output: string if 1, list if more
+        if len(uuid_list) == 1:
+            output = uuid_list[0]
         else:
-            errormsg = f'Cannot choose first {length} chars since UID has length {len(output)}'
-            raise ValueError(errormsg)
+            output = uuid_list
+
     return output
 
 
@@ -941,9 +1054,11 @@ def isstring(obj):
     return checktype(obj, 'string')
 
 
-def promotetoarray(x):
+def promotetoarray(x, skipnone=False):
     ''' Small function to ensure consistent format for things that should be arrays '''
-    if isnumber(x):
+    if x is None and skipnone:
+        return np.array([])
+    elif isnumber(x):
         return np.array([x]) # e.g. 3
     elif isinstance(x, (list, tuple)):
         return np.array(x) # e.g. [3]
@@ -999,7 +1114,7 @@ def promotetolist(obj=None, objtype=None, keepnone=False):
 ### TIME/DATE FUNCTIONS
 ##############################################################################
 
-__all__ += ['now', 'getdate', 'elapsedtimestr', 'tic', 'toc', 'timedsleep']
+__all__ += ['now', 'getdate', 'readdate', 'elapsedtimestr', 'tic', 'toc', 'timedsleep']
 
 def now(timezone=None, utc=False, die=False, astype='dateobj', tostring=False, dateformat=None):
     '''
@@ -1026,7 +1141,7 @@ def now(timezone=None, utc=False, die=False, astype='dateobj', tostring=False, d
 
 def getdate(obj=None, astype='str', dateformat=None):
         '''
-        Alias for converting a date objet to a formatted string.
+        Alias for converting a date object to a formatted string.
 
         Examples:
             sc.getdate() # Returns a string for the current date
@@ -1059,6 +1174,60 @@ def getdate(obj=None, astype='str', dateformat=None):
             errormsg = '"astype=%s" not understood; must be "str" or "int"' % astype
             raise Exception(errormsg)
         return None # Should not be possible to get to this point
+
+
+def readdate(datestr=None, dateformat=None, return_defaults=False):
+    '''
+    Convenience function for loading a date from a string. If dateformat is None,
+    this function tries a list of standard date types.
+
+    Args:
+        datestr (str): the string containing the date
+        dateformat (str or list): the format for the date, if known; can be a list of options
+        return_defaults (bool): don't convert the date, just return the defaults
+
+    Returns:
+        dateobj (date): a datetime object
+
+    Example:
+        string = '2020-03-03'
+        dateobj = sc.readdate(string) # Standard format, so works
+    '''
+
+    formats_to_try = {
+        'date':           '%Y-%m-%d', # 2020-03-21
+        'date-alpha':     '%Y-%b-%d', # 2020-Mar-21
+        'date-numeric':   '%Y%m%d',   # 20200321
+        'datetime':       '%Y-%m-%d %H:%M:%S',    # 2020-03-21 14:35:21
+        'datetime-alpha': '%Y-%b-%d %H:%M:%S',    # 2020-Mar-21 14:35:21
+        'default':        '%Y-%m-%d %H:%M:%S.%f', # 2020-03-21 14:35:21.23483
+        'ctime':          '%a %b %d %H:%M:%S %Y', # Sat Mar 21 23:09:29 2020
+        }
+
+    # To get the available formats
+    if return_defaults:
+        return formats_to_try
+
+    if isstring(dateformat):
+        format_list = promotetolist(dateformat)
+        formats_to_try = {}
+        for f,fmt in enumerate(format_list):
+            formats_to_try[str(f)] = fmt
+
+    dateobj = None
+    for fmt in formats_to_try.values():
+        try:
+            dateobj = datetime.datetime.strptime(datestr, fmt)
+            break # If we find one that works, we can stop
+        except:
+            pass
+
+    if dateobj is None:
+        formatstr = '\n'.join([f'{item[0]:15s}: {item[1]}' for item in formats_to_try.items()])
+        errormsg = f'Was unable to convert "{datestr}" to a date using the formats:\n{formatstr}'
+        raise ValueError(errormsg)
+
+    return dateobj
 
 
 

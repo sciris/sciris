@@ -340,11 +340,34 @@ def jsonify(*args, **kwargs):
     return sanitizejson(*args, **kwargs)
 
 
-def loadjson(filename=None, folder=None, **kwargs):
-    ''' Convenience function for reading a JSON file '''
-    filename = makefilepath(filename=filename, folder=folder)
-    with open(filename) as f:
-        output = json.load(f, **kwargs)
+def loadjson(filename=None, folder=None, string=None, fromfile=True, **kwargs):
+    '''
+    Convenience function for reading a JSON file (or string).
+
+    Args:
+        filename (str): the file to load, or the JSON object if using positional arguments
+        folder (str): folder if not part of the filename
+        string (str): if not loading from a file, a string representation of the JSON
+        fromfile (bool): whether or not to load from file
+        kwargs (dict): passed to json.load()
+
+    Returns:
+        output (dict): the JSON object
+
+    '''
+    if fromfile:
+        filename = makefilepath(filename=filename, folder=folder)
+        try:
+            with open(filename) as f:
+                output = json.load(f, **kwargs)
+        except FileNotFoundError as E:
+            print('Warning: file not found. Use fromfile=False if not loading from a file')
+            raise E
+    else:
+        if string is None and filename is not None:
+            string = filename # Swap arguments
+        output = json.loads(string, **kwargs)
+
     return output
 
 
