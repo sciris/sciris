@@ -1114,7 +1114,7 @@ def promotetolist(obj=None, objtype=None, keepnone=False):
 ### TIME/DATE FUNCTIONS
 ##############################################################################
 
-__all__ += ['now', 'getdate', 'elapsedtimestr', 'tic', 'toc', 'timedsleep']
+__all__ += ['now', 'getdate', 'readdate', 'elapsedtimestr', 'tic', 'toc', 'timedsleep']
 
 def now(timezone=None, utc=False, die=False, astype='dateobj', tostring=False, dateformat=None):
     '''
@@ -1174,6 +1174,60 @@ def getdate(obj=None, astype='str', dateformat=None):
             errormsg = '"astype=%s" not understood; must be "str" or "int"' % astype
             raise Exception(errormsg)
         return None # Should not be possible to get to this point
+
+
+def readdate(datestr=None, dateformat=None, return_defaults=False):
+    '''
+    Convenience function for loading a date from a string. If dateformat is None,
+    this function tries a list of standard date types.
+
+    Args:
+        datestr (str): the string containing the date
+        dateformat (str or list): the format for the date, if known; can be a list of options
+        return_defaults (bool): don't convert the date, just return the defaults
+
+    Returns:
+        dateobj (date): a datetime object
+
+    Example:
+        string = '2020-03-03'
+        dateobj = sc.readdate(string) # Standard format, so works
+    '''
+
+    formats_to_try = {
+        'date':           '%Y-%m-%d', # 2020-03-21
+        'date-alpha':     '%Y-%b-%d', # 2020-Mar-21
+        'date-numeric':   '%Y%m%d',   # 20200321
+        'datetime':       '%Y-%m-%d %H:%M:%S',    # 2020-03-21 14:35:21
+        'datetime-alpha': '%Y-%b-%d %H:%M:%S',    # 2020-Mar-21 14:35:21
+        'default':        '%Y-%m-%d %H:%M:%S.%f', # 2020-03-21 14:35:21.23483
+        'ctime':          '%a %b %d %H:%M:%S %Y', # Sat Mar 21 23:09:29 2020
+        }
+
+    # To get the available formats
+    if return_defaults:
+        return formats_to_try
+
+    if isstring(dateformat):
+        format_list = promotetolist(dateformat)
+        formats_to_try = {}
+        for f,fmt in enumerate(format_list):
+            formats_to_try[str(f)] = fmt
+
+    dateobj = None
+    for fmt in formats_to_try.values():
+        try:
+            dateobj = datetime.datetime.strptime(datestr, fmt)
+            break # If we find one that works, we can stop
+        except:
+            pass
+
+    if dateobj is None:
+        formatstr = '\n'.join([f'{item[0]:15s}: {item[1]}' for item in formats_to_try.items()])
+        errormsg = f'Was unable to convert "{datestr}" to a date using the formats:\n{formatstr}'
+        raise ValueError(errormsg)
+
+    return dateobj
 
 
 

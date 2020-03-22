@@ -131,16 +131,40 @@ def test_traceback():
     return text
 
 
+def test_readdate():
+    sc.heading('Test string-to-date conversion')
+
+    string1 = '2020-Mar-21'
+    string2 = '2020-03-21'
+    string3 = 'Sat Mar 21 23:13:56 2020'
+    dateobj1 = sc.readdate(string1)
+    dateobj2 = sc.readdate(string2)
+    sc.readdate(string3)
+    assert dateobj1 == dateobj2
+    with pytest.raises(ValueError):
+        sc.readdate('Not a date')
+
+    # Automated tests
+    formats_to_try = sc.readdate(return_defaults=True)
+    for key,fmt in formats_to_try.items():
+        datestr = sc.getdate(dateformat=fmt)
+        dateobj = sc.readdate(datestr, dateformat=fmt)
+        print(f'{key:15s} {fmt:22s}: {dateobj}')
+
+    return dateobj1
+
+
 #%% Run as a script
 if __name__ == '__main__':
     sc.tic()
 
-    # test_colorize()
-    # string = test_printing()
-    # foo = test_profile()
-    # myobj = test_prepr()
+    test_colorize()
+    string = test_printing()
+    foo = test_profile()
+    myobj = test_prepr()
     uid = test_uuid()
-    # thisdir = test_thisdir()
-    # traceback = test_traceback()
+    thisdir = test_thisdir()
+    traceback = test_traceback()
+    dateobj = test_readdate()
 
     sc.toc()
