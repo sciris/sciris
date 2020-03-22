@@ -76,17 +76,31 @@ def test_prepr():
 def test_uuid():
     sc.heading('Test UID generation')
     import uuid
-    u0 = uuid.uuid4()
-    u1 = sc.uuid()
-    u2 = sc.uuid()
-    u3 = sc.uuid(length=4)
-    assert u1 != u2
-    assert isinstance(u1, type(u0))
-    assert isinstance(u3, str)
+
+    # Create them
+    u = sc.objdict()
+    u.u0 = uuid.uuid4()
+    u.u1 = sc.uuid()
+    u.u2 = sc.uuid()
+    u.u3 = sc.uuid(length=4)
+    u.u4 = sc.uuid(which='ascii', length=16)
+    u.u5 = sc.uuid(n=3)
+    u.u6 = sc.uuid(which='hex', length=20)
+    u.u7 = sc.uuid(which='numeric', length=10, n=5)
+
+    # Tests
+    assert u.u1 != u.u2
+    assert isinstance(u.u1, type(u.u0))
+    assert isinstance(u.u3, str)
     with pytest.raises(ValueError):
         sc.uuid(length=400)
-    print(f'UIDs:\n{u0}\n{u1}\n{u2}\n{u3}')
-    return u3
+
+    # Print results
+    print(f'UIDs:')
+    for key,val in u.items():
+        print(f'{key}: {val}')
+
+    return u
 
 
 def test_thisdir():
@@ -112,19 +126,19 @@ def test_traceback():
     print(f'Example traceback text:\n{text}')
     print('NB: this is an example, not an actual error!')
 
-    return thisdir
+    return text
 
 
 #%% Run as a script
 if __name__ == '__main__':
     sc.tic()
 
-    test_colorize()
-    string = test_printing()
-    foo = test_profile()
-    myobj = test_prepr()
+    # test_colorize()
+    # string = test_printing()
+    # foo = test_profile()
+    # myobj = test_prepr()
     uid = test_uuid()
-    thisdir = test_thisdir()
-    traceback = test_traceback()
+    # thisdir = test_thisdir()
+    # traceback = test_traceback()
 
     sc.toc()
