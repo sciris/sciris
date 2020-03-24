@@ -230,6 +230,11 @@ def makefilepath(filename=None, folder=None, ext=None, default=None, split=False
     filefolder = '' # The folder the file will be located in
     filebasename = '' # The filename
 
+    if isinstance(filename, Path):
+        filename = str(filename)
+    if isinstance(folder, Path): # If it's a path object, convert to string
+        folder = str(folder)
+
     # Process filename
     if filename is None:
         defaultnames = ut.promotetolist(default) # Loop over list of default names
@@ -437,6 +442,9 @@ class Blobject(object):
             with open(filepath, mode='rb') as f:
                 output = f.read()
             return output
+
+        if isinstance(source, Path):  # If it's a path object, convert to string
+            source = str(source)
 
         if source is None:
             if self.bytes is not None:
