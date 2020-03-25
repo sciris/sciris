@@ -50,19 +50,21 @@ else:
 __all__ = ['fast_uuid', 'uuid', 'dcp', 'cp', 'pp', 'sha', 'wget', 'htmlify', 'thisdir', 'traceback']
 
 
-def fast_uuid(which=None, length=None, n=1, secure=False, forcelist=False, safety=1000):
+def fast_uuid(which=None, length=None, n=1, secure=False, forcelist=False, safety=1000, recursion=0, recursion_limit=10, verbose=True):
     '''
     Create a fast UID or set of UIDs.
 
     Args:
         which (str): the set of characters to choose from (default ascii)
         length (int): length of UID (default 6)
-        n (int): number of UUIDs to generate
+        n (int): number of UIDs to generate
         forcelist (bool): whether or not to return a list even for a single UID (used for recursive calls)
         safety (float): ensure that the space of possible UIDs is at least this much larger than the number requested
+        recursion (int): the recursion level of the call (since the function calls itself if not all UIDs are unique)
+        recursion_limit (int): # Maximum number of times to try regeneraring keys
 
     Returns:
-        uid (str): a string UID
+        uid (str or list): a string UID, or a list of string UIDs
 
     Inspired by https://stackoverflow.com/questions/2257441/random-string-generation-with-upper-case-letters-and-digits/30038250#30038250
     '''
@@ -106,24 +108,40 @@ def fast_uuid(which=None, length=None, n=1, secure=False, forcelist=False, safet
     # Generate the UUID(s) string as one big block
     uid_str = ''.join(choices_func(charlist, k=length*n))
 
-    # Parse if n>1
+    # Parse if n==1
     if n == 1:
         if forcelist:
             output = [uid_str]
         else:
             output = uid_str
+
+    # Otherwise, we're generating multiple, so do additional checking to ensure they're actually unique
     else:
+        # Split from one long string into multiple and check length
         output = [uid_str[chunk*length:(chunk+1)*length] for chunk in range(len(uid_str)//length)]
         n_unique_keys = len(dict.fromkeys(output))
-        while n_unique_keys != n: # Check that length is correct, i.e. no duplicates!
+
+        # Check that length is correct, i.e. no duplicates!
+        while n_unique_keys != n:
+
+            # Set recursion and do error checking
+            recursion += 1
+            if recursion > recursion_limit:
+                errormsg = f'Could only generate {n_unique_keys}/{n} unique UIDs after {recursion_limit} tries: please increase UID length or character set size to ensure more unique options'
+                raise ValueError(errormsg)
+            if verbose:
+                print(f'Warning: duplicates found in UID list ({n_unique_keys}/{n} unique); regenerating...')
+
+            # Extend the list of UIDs
             new_n = n - n_unique_keys
-            new_uuids = fast_uuid(which=which, length=length, n=new_n, secure=secure, forcelist=True)
+            new_uuids = fast_uuid(which=which, length=length, n=new_n, secure=secure, safety=safety, recursion=recursion, recursion_limit=recursion_limit, verbose=verbose, forcelist=True)
             output.extend(new_uuids)
+            n_unique_keys = len(dict.fromkeys(output)) # Recalculate the number of keys
 
     return output
 
 
-def uuid(uid=None, which=None, die=False, tostring=False, length=None, n=1):
+def uuid(uid=None, which=None, die=False, tostring=False, length=None, n=1, **kwargs):
     '''
     Shortcut for creating a UUID; default is to create a UUID4. Can also convert a UUID.
 
@@ -155,7 +173,7 @@ def uuid(uid=None, which=None, die=False, tostring=False, length=None, n=1):
     elif which==4: uuid_func = py_uuid.uuid4
     elif which==5: uuid_func = py_uuid.uuid5
     else:
-        return fast_uuid(which=which, length=length, n=n) # ...or just go to fast_uuid()
+        return fast_uuid(which=which, length=length, n=n, **kwargs) # ...or just go to fast_uuid()
 
     # If a UUID was supplied, try to parse it
     if uid is not None:
@@ -176,7 +194,7 @@ def uuid(uid=None, which=None, die=False, tostring=False, length=None, n=1):
     if uid is None:
         uuid_list = []
         for i in range(n): # Loop over
-            uid = uuid_func()  # If not supplied, create a new UUID
+            uid = uuid_func(**kwargs)  # If not supplied, create a new UUID
 
             # Convert to a string, and optionally trim
             if tostring or length:
