@@ -28,10 +28,13 @@ def test_printing():
     string = sc.pp(example.data, doprint=False)
     return string
 
+
 def test_flattendict():
     # Simple integration test to make sure the function runs without raising an error
     sc.flattendict({'a': {'b': 1, 'c': {'d': 2, 'e': 3}}})
-    sc.flattendict({'a': {'b': 1, 'c': {'d': 2, 'e': 3}}}, sep='_')
+    flat = sc.flattendict({'a': {'b': 1, 'c': {'d': 2, 'e': 3}}}, sep='_')
+    return flat
+
 
 def test_profile():
     sc.heading('Test profiling functions')
@@ -164,6 +167,7 @@ if __name__ == '__main__':
 
     test_colorize()
     string = test_printing()
+    flat = test_flattendict()
     foo = test_profile()
     myobj = test_prepr()
     uid = test_uuid()
