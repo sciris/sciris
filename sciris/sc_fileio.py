@@ -26,20 +26,12 @@ from zipfile import ZipFile
 from contextlib import closing
 from collections import OrderedDict
 from pathlib import Path
+from io import BytesIO as IO
+import pickle as pkl
+import copyreg as cpreg
 from . import sc_utils as ut
 from .sc_odict import odict
 from .sc_dataframe import dataframe
-
-# Handle types and Python 2/3 compatibility
-import six
-if six.PY3: # Python 3
-    from io import BytesIO as IO
-    import pickle as pkl
-    import copyreg as cpreg
-else: # Python 2
-    from cStringIO import StringIO as IO
-    import cPickle as pkl
-    import copy_reg as cpreg
 
 
 
@@ -1137,21 +1129,14 @@ def loadobj2to3(filename=None, filestring=None, recursionlimit=None):
 # The above copyright notice and this permission notice shall be
 # included in all copies or substantial portions of the Software.
 
-if six.PY2:
-    import cPickle
-    class _UniversalPicklingError(pickle.PicklingError, cPickle.PicklingError):
-        pass
-else:
-    _UniversalPicklingError = pickle.PicklingError
+_UniversalPicklingError = pickle.PicklingError
 
 def pickleMethod(method):
-    if six.PY3: return (unpickleMethod, (method.__name__,         method.__self__, method.__self__.__class__))
-    else:       return (unpickleMethod, (method.im_func.__name__, method.im_self,  method.im_class))
+    return (unpickleMethod, (method.__name__,         method.__self__, method.__self__.__class__))
 
 def _methodFunction(classObject, methodName):
     methodObject = getattr(classObject, methodName)
-    if six.PY3: return methodObject
-    else:       return methodObject.im_func
+    return methodObject
 
 def unpickleMethod(im_name, im_self, im_class):
     if im_self is None:
@@ -1164,8 +1149,7 @@ def unpickleMethod(im_name, im_self, im_class):
             raise
         return unpickleMethod(im_name, im_self, im_self.__class__)
     else:
-        if six.PY3: maybeClass = ()
-        else:       maybeClass = tuple([im_class])
+        maybeClass = ()
         bound = types.MethodType(methodFunction, im_self, *maybeClass)
         return bound
 

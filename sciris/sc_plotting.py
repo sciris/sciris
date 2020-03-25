@@ -8,7 +8,6 @@ colormap functions and registers them with Matplotlib.
 ##############################################################################
 
 import os
-import six
 from struct import unpack
 import pylab as pl
 import numpy as np
@@ -92,8 +91,7 @@ def hex2rgb(string):
     if len(string)!=6:
         errormsg = 'Cannot convert "%s" to an RGB color:must be 3 or 6 characters long' % string
         raise Exception(errormsg)
-    if six.PY3: hexstring = bytes.fromhex(string) # Ensure it's the right type
-    else:       hexstring = string.decode('hex')
+    hexstring = bytes.fromhex(string) # Ensure it's the right type
     rgb = np.array(unpack('BBB',hexstring),dtype=float)/255.
     return rgb
 

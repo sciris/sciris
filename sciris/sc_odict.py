@@ -4,7 +4,6 @@
 
 from collections import OrderedDict as OD
 import re
-import six
 import numpy as np
 from . import sc_utils as ut
 
@@ -805,22 +804,21 @@ class odict(OD):
             return odict({'Key':obj})
 
     # Python 3 compatibility
-    if six.PY3:
-        def keys(self):
-            """ Method to get a list of keys as in Python 2. """
-            return list(OD.keys(self))
+    def keys(self):
+        """ Method to get a list of keys as in Python 2. """
+        return list(OD.keys(self))
 
-        def values(self):
-            """ Method to get a list of values as in Python 2. """
-            return list(OD.values(self))
+    def values(self):
+        """ Method to get a list of values as in Python 2. """
+        return list(OD.values(self))
 
-        def items(self):
-            """ Method to generate an item iterator as in Python 2. """
-            return list(OD.items(self))
+    def items(self):
+        """ Method to generate an item iterator as in Python 2. """
+        return list(OD.items(self))
 
-        def iteritems(self):
-            """ Method to generate an item iterator as in Python 2. """
-            return list(OD.items(self))
+    def iteritems(self):
+        """ Method to generate an item iterator as in Python 2. """
+        return list(OD.items(self))
 
 
 class objdict(odict):
@@ -848,22 +846,19 @@ class objdict(odict):
             except: # If that fails, raise the original exception
                 raise E
 
-    # Unfortunately, this check doesn't work in Python 2
-    if six.PY3:
-        def __setattr__(self, name, value):
-            ''' Set key in dict, not attribute! '''
+    def __setattr__(self, name, value):
+        ''' Set key in dict, not attribute! '''
 
-            # Ensure
-            try:
-                odict.__getattribute__(self, name) # Try retrieving this as an attribute, expect AttributeError...
-            except AttributeError:
-                return odict.__setitem__(self, name, value) # If so, simply return
+        try:
+            odict.__getattribute__(self, name) # Try retrieving this as an attribute, expect AttributeError...
+        except AttributeError:
+            return odict.__setitem__(self, name, value) # If so, simply return
 
-            # Otherwise, raise an exception
-            errormsg = '"%s" exists as an attribute, so cannot be set as key; use setattribute() instead' % name
-            raise Exception(errormsg)
+        # Otherwise, raise an exception
+        errormsg = '"%s" exists as an attribute, so cannot be set as key; use setattribute() instead' % name
+        raise Exception(errormsg)
 
-            return None
+        return None
 
     def setattribute(self, name, value):
         ''' Set attribute if truly desired '''
