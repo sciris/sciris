@@ -104,6 +104,10 @@ def test_uuid():
     with pytest.raises(ValueError):
         sc.uuid(which='numeric', length=2, n=10) # Not enough unique choices
 
+    print('NOTE: This is supposed to print warnings and then raise a (caught) exception\n')
+    with pytest.raises(ValueError):
+        sc.uuid(which='numeric', length=2, n=99, safety=1, verbose=True) # Not enough unique choices
+
     # Print results
     print(f'UIDs:')
     for key,val in u.items():
@@ -132,8 +136,9 @@ def test_traceback():
     except:
         text = sc.traceback()
 
+    print('NOTE: This is an example traceback, not an actual error!\n')
     print(f'Example traceback text:\n{text}')
-    print('NB: this is an example, not an actual error!')
+
 
     return text
 
