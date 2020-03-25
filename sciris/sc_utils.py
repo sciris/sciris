@@ -6,7 +6,6 @@
 
 import os
 import sys
-import six
 import copy
 import time
 import json
@@ -26,20 +25,13 @@ from functools import reduce
 from collections import OrderedDict as OD
 from distutils.version import LooseVersion
 
-# Handle types and Python 2/3 compatibility
-if six.PY3:
-    _stringtypes = (str, bytes)
-    import urllib.request as urlrequester
-    import html as htmlencoder
-    htmldecoder = htmlencoder # New method, these are the same now
-    basestring = bytes # Not needed, but to avoid Python 3 linting warnings
-    unicode = str # Ditto
-else:
-    _stringtypes = (basestring,)
-    import urllib2 as urlrequester
-    import cgi as htmlencoder
-    import HTMLParser
-    htmldecoder = HTMLParser.HTMLParser() # Old method, have to define an instance
+# Handle types and legacy Python 2 compatibility
+import urllib.request as urlrequester
+import html as htmlencoder
+_stringtypes = (str, bytes)
+htmldecoder = htmlencoder # New method, these are the same now
+basestring = bytes # Not needed, but to avoid Python 3 linting warnings
+unicode = str # Ditto
 _numtype    = numbers.Number
 
 # Add Windows support for colors (do this at the module level so that colorama.init() only gets called once)
@@ -255,7 +247,7 @@ def sha(string, encoding='utf-8', *args, **kwargs):
     ''' Shortcut for the standard hashing (SHA) method '''
     if not isstring(string): # Ensure it's actually a string
         string = str(string)
-    needsencoding = (six.PY2 and isinstance(string, unicode)) or (six.PY3 and isinstance(string, str))
+    needsencoding = isinstance(string, str)
     if needsencoding: # If it's unicode, encode it to bytes first
         string = string.encode(encoding)
     output = hashlib.sha224(string, *args, **kwargs)
@@ -265,7 +257,8 @@ def sha(string, encoding='utf-8', *args, **kwargs):
 def wget(url, convert=True):
     ''' Download a URL '''
     output = urlrequester.urlopen(url).read()
-    if convert and six.PY3: output = output.decode()
+    if convert:
+        output = output.decode()
     return output
 
 
@@ -924,9 +917,7 @@ def heading(string=None, color=None, divider=None, spaces=None, minlength=None, 
     '''
     if string    is None: string    = ''
     if color     is None: color     = 'cyan' # Reasonable defualt for light and dark consoles
-    if divider   is None:
-        if six.PY3:       divider   = '—' # Em dash for a continuous line
-        else:             divider   = '-' # For legacy support, keep it a string to be simple
+    if divider   is None: divider   = '—' # Em dash for a continuous line
     if spaces    is None: spaces    = 2
     if minlength is None: minlength = 30
     if maxlength is None: maxlength = 120
@@ -950,20 +941,14 @@ __all__ += ['flexstr', 'isiterable', 'checktype', 'isnumber', 'isstring', 'promo
 def flexstr(arg, force=True):
     ''' Try converting to a "regular" string (i.e. "str" in both Python 2 or 3), but proceed if it fails '''
     if isstring(arg): # It's a string
-        if six.PY2:
+        if isinstance(arg, bytes):
             try:
-                output = str(arg) # Try to convert to ASCII string from unicode
+                output = arg.decode() # If it's bytes, decode to unicode
             except:
-                output = arg # If anything goes wrong, just return as-is
+                if force: output = repr(arg) # If that fails, just print its representation
+                else:     output = arg
         else:
-            if isinstance(arg, six.binary_type):
-                try:
-                    output = arg.decode() # If it's bytes, decode to unicode
-                except:
-                    if force: output = repr(arg) # If that fails, just print its representation
-                    else:     output = arg
-            else:
-                output = arg # Otherwise, return as-is
+            output = arg # Otherwise, return as-is
     else:
         if force: output = repr(arg)
         else:     output = arg # Optionally don't do anything for non-strings
