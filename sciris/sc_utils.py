@@ -1894,48 +1894,45 @@ for func in [getnested, setnested, makenested, iternested, mergenested]:
     func.__doc__ = docstring
 
 
-def flattendict(inputdict=None, basekey=None, subkeys=None, complist=None, keylist=None, limit=100):
-    '''
-    A function for flattening out a recursive dictionary, with an optional list of sub-keys (ignored if non-existent).
-    The flattened out structure is returned as complist. Values can be an object or a list of objects.
-    All keys (including basekey) within the recursion are returned as keylist.
+def flattendict(input_dict: dict, sep: str = None, _prefix=None) -> dict:
+    """
+    Flatten nested dictionary
 
-    Specifically, this function is intended for dictionaries of the form...
-        inputdict[key1][sub_key[0]] = [a, key2, b]
-        inputdict[key1][sub_key[1]] = [c, d]
-        inputdict[key2][sub_key[0]] = e
-        inputdict[key2][sub_key[1]] = [e, f, g]
-    ...which, for this specific example, will output list...
-        [a, e, e, f, g, h, b, c, d]
+    Example:
 
-    There is a max-depth of limit for the recursion.
-    '''
+        >>> flattendict({'a':{'b':1,'c':{'d':2,'e':3}}})
+        {('a', 'b'): 1, ('a', 'c', 'd'): 2, ('a', 'c', 'e'): 3}
+        >>> flattendict({'a':{'b':1,'c':{'d':2,'e':3}}}, sep='_')
+        {'a_b': 1, 'a_c_d': 2, 'a_c_e': 3}
 
-    if limit<1:
-        errormsg = 'ERROR: A recursion limit has been reached when flattening a dictionary, stopping at key "%s".' % basekey
-        raise Exception(errormsg)
+    Args:
+        d: Input dictionary potentially containing dicts as values
+        sep: Concatenate keys using string separator. If ``None`` the returned dictionary will have tuples as keys
+        _prefix: Internal argument for recursively accumulating the nested keys
+    Returns:
+        A flat dictionary where no values are dicts
 
-    if complist is None: complist = []
-    if keylist is None: keylist = []
-    keylist.append(basekey)
+    """
 
-    if subkeys is None: inputlist = inputdict[basekey]
-    else:
-        inputlist = []
-        for sub_key in subkeys:
-            if sub_key in inputdict[basekey]:
-                val = inputdict[basekey][sub_key]
-                if isinstance(val, list):
-                    inputlist += val
-                else:
-                    inputlist.append(val)      # Handle unlisted objects.
-
-    for comp in inputlist:
-        if comp in inputdict.keys():
-            flattendict(inputdict=inputdict, basekey=comp, subkeys=subkeys, complist=complist, keylist=keylist, limit=limit-1)
+    output_dict = {}
+    for k, v in input_dict.items():
+        if sep is None:
+            if _prefix is None:
+                k2 = (k,)
+            else:
+                k2 = _prefix + (k,)
         else:
-            complist.append(comp)
-    return complist, keylist
+            if _prefix is None:
+                k2 = k
+            else:
+                k2 = _prefix + sep + k
+
+        if isinstance(v, dict):
+            output_dict.update(flattendict(input_dict[k], sep=sep, _prefix=k2))
+        else:
+            output_dict[k2] = v
+
+    return output_dict
 
 
 ##############################################################################
