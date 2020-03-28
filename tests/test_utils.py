@@ -166,6 +166,20 @@ def test_readdate():
     return dateobj1
 
 
+def test_mergedicts():
+    sc.heading('Test merging dictionaries')
+
+    md = sc.mergedicts({'a':1}, {'b':2}) # Returns {'a':1, 'b':2}
+    sc.mergedicts({'a':1, 'b':2}, {'b':3, 'c':4}) # Returns {'a':1, 'b':3, 'c':4}
+    sc.mergedicts({'b':3, 'c':4}, {'a':1, 'b':2}) # Returns {'a':1, 'b':2, 'c':4}
+    with pytest.raises(KeyError):
+        sc.mergedicts({'b':3, 'c':4}, {'a':1, 'b':2}, overwrite=False) # Raises exception
+    with pytest.raises(TypeError):
+        sc.mergedicts({'b':3, 'c':4}, None, strict=True) # Raises exception
+
+    return md
+
+
 #%% Run as a script
 if __name__ == '__main__':
     sc.tic()
@@ -179,5 +193,6 @@ if __name__ == '__main__':
     thisdir = test_thisdir()
     traceback = test_traceback()
     dateobj = test_readdate()
+    md = test_mergedicts()
 
     sc.toc()
