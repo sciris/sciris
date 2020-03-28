@@ -168,6 +168,7 @@ def test_readdate():
 
 def test_mergedicts():
     sc.heading('Test merging dictionaries')
+
     md = sc.mergedicts({'a':1}, {'b':2}) # Returns {'a':1, 'b':2}
     sc.mergedicts({'a':1, 'b':2}, {'b':3, 'c':4}) # Returns {'a':1, 'b':3, 'c':4}
     sc.mergedicts({'b':3, 'c':4}, {'a':1, 'b':2}) # Returns {'a':1, 'b':2, 'c':4}
@@ -175,6 +176,7 @@ def test_mergedicts():
         sc.mergedicts({'b':3, 'c':4}, {'a':1, 'b':2}, overwrite=False) # Raises exception
     with pytest.raises(TypeError):
         sc.mergedicts({'b':3, 'c':4}, None, strict=True) # Raises exception
+
     return md
 
 
