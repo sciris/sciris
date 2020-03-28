@@ -954,7 +954,7 @@ def heading(string=None, color=None, divider=None, spaces=None, minlength=None, 
 ### TYPE FUNCTIONS
 ##############################################################################
 
-__all__ += ['flexstr', 'isiterable', 'checktype', 'isnumber', 'isstring', 'promotetoarray', 'promotetolist']
+__all__ += ['flexstr', 'isiterable', 'checktype', 'isnumber', 'isstring', 'promotetoarray', 'promotetolist', 'mergedicts']
 
 def flexstr(arg, force=True):
     ''' Try converting to a "regular" string (i.e. "str" in both Python 2 or 3), but proceed if it fails '''
@@ -1110,6 +1110,42 @@ def promotetolist(obj=None, objtype=None, keepnone=False):
                 errormsg = 'promotetolist() type mismatch: %s' % str(E)
                 raise TypeError(errormsg).with_traceback(E.__traceback__)
     return output
+
+
+def mergedicts(*args, strict=False, overwrite=True):
+    '''
+    Tiny function to merge multiple dicts together. By default, skips things
+    that are not, dicts (e.g., None), and allows keys to be set multiple times.
+
+    Args:
+        strict (bool): if True, raise an exception if an argument isn't a dict
+        overwrite (bool): if False, raise an exception if multiple keys are found
+        *args (dict): the sequence of dicts to be merged
+
+
+    Examples:
+        d1 = sc.mergedicts({'a':1}, {'b':2}) # Returns {'a':1, 'b':2}
+        d2 = sc.mergedicts({'a':1, 'b':2}, {'b':3, 'c':4}) # Returns {'a':1, 'b':3, 'c':4}
+        d3 = sc.mergedicts({'b':3, 'c':4}, {'a':1, 'b':2}) # Returns {'a':1, 'b':2, 'c':4}
+        d4 = sc.mergedicts({'b':3, 'c':4}, {'a':1, 'b':2}, overwrite=False) # Raises exception
+
+    '''
+    outputdict = {}
+    for arg in args:
+        is_dict = isinstance(arg, dict)
+        if strict and not is_dict:
+            errormsg = f'Argument of "{type(arg)}" found; must be dict since strict=True'
+            raise TypeError(errormsg)
+        if is_dict:
+            if not overwrite:
+                intersection = set(outputdict.keys()).intersection(arg.keys())
+                if len(intersection):
+                    keys = ', '.join(intersection)
+                    errormsg = f'Could not merge dicts since keys "{keys}" overlap and overwrite=False'
+                    raise KeyError(errormsg)
+            outputdict.update(arg)
+    return outputdict
+
 
 
 
