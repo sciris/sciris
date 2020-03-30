@@ -2,10 +2,10 @@
 
 ## What is Sciris?
 
-Glad you asked! Sciris is a flexible open source framework for building scientific web applications using Python and JavaScript. It comes in two parts: `sciris` is a collection of tools that should make scientific Python coding a more pleasant experience, while `scirisweb` is a collection of tools that allow you to easily build Python webapps. Sciris is built on Numpy and Matplotlib, while Sciris Web is built on Vue.js, Flask, Twisted, Redis, and `mpld3`.
+Glad you asked! Sciris is a flexible open source framework for building scientific web applications using Python and JavaScript. It comes in two parts: `sciris` is a collection of tools that should make scientific Python coding a more pleasant experience, while `scirisweb` is a collection of tools that allow you to easily build Python webapps. Sciris is built on Numpy and Matplotlib, while ScirisWeb is built on Vue.js, Flask, Twisted, Redis, and `mpld3`.
 
 Some highlights of `sciris`:
-* `odict` -- like an OrderedDict, but allows reference by position like a list, as well as many powerful methods (such as casting to array, sorting and enumeration functions, etc.)
+* `odict` and `objdict` -- like an OrderedDict, but allows reference by position like a list, as well as many powerful methods (such as casting to array, sorting and enumeration functions, etc.). For example, instead of `my_plain_dict[list(my_plain_dict.keys())[0]]['value']`, you can use `my_obj_dict[0].value`.
 * `promotetoarray` -- standardizes any kind of numeric input to a Numpy array, so e.g. `1`, `[1]`, `(1,)` etc. are all converted to `array([1])`
 * `checktype` -- quickly determine the type of the input, e.g. `checktype([1,2,3], 'arraylike', subtype='number') # returns True`
 * `findnearest` -- find the element of an array closest to the input value
@@ -17,23 +17,33 @@ Some highlights of `sciris`:
 
 Some highlights of `scirisweb`:
 * `ScirisApp` -- a fully featured server that can be created as simply as `app = ScirisApp(config)` and run with `app.run()`
-* `RPC` -- a simple function for defining links between the frontend and the backend
+* `RPC` -- a simple function for defining links between the frontend (web interface) and the backend (server)
 * `Datastore` -- user and data management based on Redis
+
+## I'm not convinced.
+
+That's OK. Perhaps you'd be interested in seeing what a script that performs tasks like parallelization, saving and loading files, and 3D plotting looks like when written in [vanilla Python](https://github.com/sciris/sciris/blob/develop/tests/showcase_vanilla.py) compared to [using Sciris](https://github.com/sciris/sciris/blob/develop/tests/showcase.py).
 
 ## Is Sciris ready yet?
 
-**Sort of.** Sciris is available for use, but is still undergoing rapid deveopment. We expect a first stable version of Sciris to be ready in early 2020. If you would like us to let you know when it's ready, please email info@sciris.org.
+**Yes.** Sciris is available for use, but is still undergoing rapid development. We expect an official launch some time during 2020. If you would like us to let you know when this happens, please email info@sciris.org.
 
 
 ## Installation and run instructions
 
+### 5-second quick start guide
+
+1. Install Sciris: `pip install sciris`
+
+2. Use Sciris: `import sciris as sc`
+
 ### 20-second quick start guide
 
-1. Install Sciris: `pip install scirisweb`
+1. Download ScirisWeb (e.g. `git clone http://github.com/sciris/scirisweb`)
 
-2. Download ScirisWeb (e.g. `git clone http://github.com/sciris/scirisweb`)
+2. Install ScirisWeb (which will install Sciris as well): `cd scirisweb; python setup.py develop`
 
-3. Change to the Hello World folder: `cd scirisweb/examples/helloworld`
+3. Change to the Hello World folder: `cd examples/helloworld`
 
 4. Run the app: `python app.py`
 
@@ -49,13 +59,17 @@ Note: if you're a developer, you'll likely already have some/all of these packag
 
 2. Install [Redis](https://redis.io/topics/quickstart) (database)
 
-3. Install [Anaconda Python](https://www.anaconda.com/download/) (simulation engine)
+3. Install [Anaconda Python](https://www.anaconda.com/download/) (scientific Python environment)
 
-4. Once you've done all that, to install, simply run `python setup.py develop` in the root folder, or `python setup.py develop minimal` to skip installing optional dependencies (e.g. spreadsheet reading and writing). This should install Sciris as an importable Python module. If you need Sciris Web as well, run `python setup-web.py develop`.
+4. Clone and install Sciris: `git clone http://github.com/sciris/sciris`
+
+5. Clone ScirisWeb: `git clone http://github.com/sciris/scirisweb`
+
+6. Once you've done all that, to install, simply run `python setup.py develop` in the root folders of `sciris` and `scirisweb`. This should install Sciris and ScirisWeb as importable Python modules.
 
 To test, open up a new Python window and type `import sciris` (and/or `import scirisweb`)
 
-If you have problems, please consult the rest of this guide for more information.
+If you have problems, please email info@sciris.org, or consult the rest of this guide for more information.
 
 
 ### Installing on Linux
@@ -71,7 +85,7 @@ The easiest way to install Sciris is by using pip: `pip install scirisweb` (whic
 4. (Optional) Install [Anaconda Python](https://www.anaconda.com/download/) (as of version 0.15, Sciris is only compatible with Python 3), and make sure it's the default Python, e.g.
 ```
 your_computer:~> python
-Python 3.7.4 (default, Aug 13 2019, 20:35:49) 
+Python 3.7.4 (default, Aug 13 2019, 20:35:49)
 [GCC 7.3.0] :: Anaconda, Inc. on linux
 Type "help", "copyright", "credits" or "license" for more information.
 ```
@@ -84,7 +98,6 @@ Type "help", "copyright", "credits" or "license" for more information.
 ```
 >>> import sciris
 >>> import scirisweb
-Sciris Web 0.12.0 (2018-11-24) -- (c) Sciris
 >>>
 ```
 
@@ -121,8 +134,6 @@ database.
 
 ### Installing on Mac
 
-**WARNING, work in progress!**
-
 1. Install Git. This can be done by installing Xcode commandline tools.
 
             xcode-select --install
@@ -136,12 +147,12 @@ database.
 4. Install [Anaconda Python 3](https://www.anaconda.com/download/), and make sure it's the default Python, e.g.
 ```
 your_computer:~> python
-Python 3.7.4 (default, Aug 13 2019, 20:35:49) 
+Python 3.7.4 (default, Aug 13 2019, 20:35:49)
 [GCC 7.3.0] :: Anaconda, Inc. on linux
 Type "help", "copyright", "credits" or "license" for more information.
 ```
 
-5. Create a directory that will hold Scris. For reference purposes we will create and refer to that directory as `pyenv`.
+5. Create a directory that will hold Sciris. For reference purposes we will create and refer to that directory as `pyenv`.
 
 6. Clone the Sciris repository into `pyenv`: `git clone http://github.com/sciris/sciris.git`
 
@@ -164,10 +175,14 @@ Type "help", "copyright", "credits" or "license" for more information.
 9. Change to the Sciris root folder and type:
    ```
 python setup.py develop
-python setup-web.py develop
    ```
 
-10. To test if the if everything is working accordingly, open Python window within the virtual environment and type `import sciris` and `import scirisweb`. If no errors occur, then the import worked.
+10. Repeat in the ScirisWeb root folder:
+      ```
+   python setup.py develop
+      ```
+
+11. To test if the if everything is working accordingly, open Python window within the virtual environment and type `import sciris` and `import scirisweb`. If no errors occur, then the import worked.
 
 
 
@@ -180,6 +195,6 @@ based in `user_interface`, `session_manager`, `model_code`, and `bin`.
 
 ### Hello World
 
-A very simple test case of Sciris. In the `examples/helloworld` folder, type `python server.py`. If you go to `localhost:8080` in your browser, it should be running a simple Python webapp.
+A very simple test case of Sciris. In the `examples/helloworld` folder, type `python app.py`. If you go to `localhost:8080` in your browser, it should be running a simple Python webapp.
 
 See the directions [here](https://github.com/sciris/scirisweb/tree/develop/examples/helloworld) on how to install and run this example.
