@@ -564,10 +564,10 @@ class odict(OD):
         Note: slow, do not use for time-limited computations!!
         '''
         origkeys = self.keys()
-        if sortby is None or sortby is 'keys':
+        if sortby is None or sortby == 'keys':
             allkeys = sorted(origkeys)
         else:
-            if sortby is 'values':
+            if sortby == 'values':
                 origvals = self.values()
                 sortby = sorted(range(len(origvals)), key=origvals.__getitem__) # Reset sortby based on https://stackoverflow.com/questions/3382352/equivalent-of-numpy-argsort-in-basic-python
             if not ut.isiterable(sortby):
