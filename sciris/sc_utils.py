@@ -47,7 +47,7 @@ else:
 
 
 # Define the modules being loaded
-__all__ = ['fast_uuid', 'uuid', 'dcp', 'cp', 'pp', 'sha', 'wget', 'htmlify', 'thisdir', 'traceback']
+__all__ = ['fast_uuid', 'uuid', 'dcp', 'cp', 'pp', 'sha', 'wget', 'htmlify', 'traceback']
 
 
 def fast_uuid(which=None, length=None, n=1, secure=False, forcelist=False, safety=1000, recursion=0, recursion_limit=10, verbose=True):
@@ -302,15 +302,6 @@ def htmlify(string, reverse=False, tostring=False):
     else: # Convert from HTML
         output = htmldecoder.unescape(string)
         output = output.replace('<br>','\n').replace('<BR>','\n')
-    return output
-
-
-def thisdir(filename):
-    '''
-    Tiny helper function to get the folder name of the current code. Usage:
-        thisdir = sc.thisdir(__file__)
-    '''
-    output = os.path.abspath(os.path.dirname(filename))
     return output
 
 

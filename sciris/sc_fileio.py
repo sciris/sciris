@@ -136,7 +136,7 @@ def dumpstr(obj=None):
 ### Other file functions
 ##############################################################################
 
-__all__ += ['loadtext', 'savetext', 'savezip', 'getfilelist', 'sanitizefilename', 'makefilepath']
+__all__ += ['loadtext', 'savetext', 'savezip', 'getfilelist', 'sanitizefilename', 'makefilepath', 'thisdir']
 
 
 
@@ -300,6 +300,26 @@ def makefilepath(filename=None, folder=None, ext=None, default=None, split=False
 
     return output
 
+
+def thisdir(file, *args, **kwargs):
+    '''
+    Tiny helper function to get the folder for a file, usually the current file.
+
+    Args:
+        file (str): the file to get the directory from; usually __file__
+        args (list): passed to os.path.join()
+        kwargs (dict): also passed to os.path.join()
+
+    Returns:
+        filepath (str): the full path to the folder (or filename if additional arguments are given)
+
+    Examples:
+        thisdir = sc.thisdir(__file__)
+        file_in_same_dir = sc.thisdir(__file__, 'new_file.txt')
+    '''
+    folder = os.path.abspath(os.path.dirname(file))
+    filepath = os.path.join(folder, *args, **kwargs)
+    return filepath
 
 
 ##############################################################################
