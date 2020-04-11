@@ -313,12 +313,18 @@ def sanitizejson(obj, verbose=True, die=False, tostring=False, **kwargs):
     """
     This is the main conversion function for Python data-structures into
     JSON-compatible data structures.
-    Use this as much as possible to guard against data corruption!
+
     Args:
-        obj: almost any kind of data structure that is a combination
-            of list, numpy.ndarray, odicts, etc.
+        obj (any): almost any kind of data structure that is a combination of list, numpy.ndarray, odicts, etc.
+        verbose (bool): level of detail to print
+        die (bool): whether or not to raise an exception if conversion failed (otherwise, return a string)
+        tostring (bool): whether to return a string representation of the sanitized object instead of the object itself
+        kwargs (dict): passed to json.dumps() if tostring=True
+
     Returns:
-        A converted dict/list/value that should be JSON compatible
+        object (any or str): the converted object that should be JSON compatible, or its representation as a string if tostring=True
+
+    Version: 2020apr11
     """
     if obj is None: # Return None unchanged
         output = None
@@ -333,6 +339,11 @@ def sanitizejson(obj, verbose=True, die=False, tostring=False, **kwargs):
             if isinstance(obj, (int, np.int64)): output = int(obj) # It's an integer
             else:                                output = float(obj)# It's something else, treat it as a float
 
+    elif ut.isstring(obj): # It's a string of some kind
+        try:    string = str(obj) # Try to convert it to ascii
+        except: string = obj # Give up and use original
+        output = string
+
     elif isinstance(obj, np.ndarray): # It's an array, iterate recursively
         if obj.shape: output = [sanitizejson(p) for p in list(obj)] # Handle most cases, incluing e.g. array([5])
         else:         output = [sanitizejson(p) for p in list(np.array([obj]))] # Handle the special case of e.g. array(5)
@@ -340,21 +351,14 @@ def sanitizejson(obj, verbose=True, die=False, tostring=False, **kwargs):
     elif isinstance(obj, (list, set, tuple)): # It's another kind of interable, so iterate recurisevly
         output = [sanitizejson(p) for p in list(obj)]
 
-    elif isinstance(obj, dict): # Treat all dictionaries as ordered dictionaries
-        output = OrderedDict()
-        for key,val in obj.items():
-            output[str(key)] = sanitizejson(val)
+    elif isinstance(obj, dict): # It's a dictionary, so iterate over the items
+        output = {str(key):sanitizejson(val) for key,val in obj.items()}
 
-    elif isinstance(obj, datetime.datetime):
+    elif isinstance(obj, (datetime.time, datetime.date, datetime.datetime)):
         output = str(obj)
 
     elif isinstance(obj, uuid.UUID):
         output = str(obj)
-
-    elif ut.isstring(obj): # It's a string of some kind
-        try:    string = str(obj) # Try to convert it to ascii
-        except: string = obj # Give up and use original
-        output = string
 
     else: # None of the above
         try:
@@ -365,8 +369,11 @@ def sanitizejson(obj, verbose=True, die=False, tostring=False, **kwargs):
             elif verbose: print(errormsg)
             output = str(obj)
 
-    if tostring: return json.dumps(output, **kwargs)
-    else:        return output
+    # Convert to string if desired
+    if tostring:
+        output = json.dumps(output, **kwargs)
+
+    return output
 
 
 

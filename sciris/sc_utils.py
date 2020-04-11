@@ -72,6 +72,8 @@ def fast_uuid(which=None, length=None, n=1, secure=False, forcelist=False, safet
     # Set defaults
     if which  is None: which  = 'ascii'
     if length is None: length = 6
+    length = int(length)
+    n = int(n)
 
     choices = {
         'lowercase':    string.ascii_lowercase,
@@ -166,6 +168,7 @@ def uuid(uid=None, which=None, die=False, tostring=False, length=None, n=1, **kw
     # Set default UUID type
     if which is None:
         which = 4
+    n = int(n)
 
     # Choose the different functions
     if   which==1: uuid_func = py_uuid.uuid1
