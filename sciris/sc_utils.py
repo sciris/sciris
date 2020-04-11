@@ -19,6 +19,7 @@ import string
 import numpy as np
 import random as rnd
 import uuid as py_uuid
+import tempfile
 import traceback as py_traceback
 from textwrap import fill
 from functools import reduce
@@ -314,7 +315,7 @@ def traceback(*args, **kwargs):
 ### PRINTING/NOTIFICATION FUNCTIONS
 ##############################################################################
 
-__all__ += ['printv', 'blank', 'createcollist', 'objectid', 'objatt', 'objmeth', 'objrepr']
+__all__ += ['printv', 'blank', 'createcollist', 'objectid', 'objatt', 'objmeth', 'objprop', 'objrepr']
 __all__ += ['prepr', 'pr', 'indent', 'sigfig', 'printarr', 'printdata', 'printvars']
 __all__ += ['slacknotification', 'printtologfile', 'colorize', 'heading']
 
@@ -380,7 +381,7 @@ def objatt(obj, strlen=18, ncol=3):
     ''' Return a sorted string of object attributes for the Python __repr__ method '''
     oldkeys = sorted(obj.__dict__.keys())
     if len(oldkeys): output = createcollist(oldkeys, 'Attributes', strlen = 18, ncol = 3)
-    else:            output = 'No attributes\n'
+    else:            output = ''
     return output
 
 
@@ -388,33 +389,51 @@ def objmeth(obj, strlen=18, ncol=3):
     ''' Return a sorted string of object methods for the Python __repr__ method '''
     oldkeys = sorted([method + '()' for method in dir(obj) if callable(getattr(obj, method)) and not method.startswith('__')])
     if len(oldkeys): output = createcollist(oldkeys, 'Methods', strlen=strlen, ncol=ncol)
-    else:            output = 'No methods\n'
+    else:            output = ''
     return output
 
 
-def objrepr(obj, showid=True, showmeth=True, showatt=True):
+def objprop(obj, strlen=18, ncol=3):
+    ''' Return a sorted string of object properties for the Python __repr__ method '''
+    oldkeys = sorted([prop for prop in dir(obj) if isinstance(getattr(type(obj), prop, None), property) and not prop.startswith('__')])
+    if len(oldkeys): output = createcollist(oldkeys, 'Properties', strlen=strlen, ncol=ncol)
+    else:            output = ''
+    return output
+
+
+def objrepr(obj, showid=True, showmeth=True, showprop=True, showatt=True, dividerchar='—', dividerlen=60):
     ''' Return useful printout for the Python __repr__ method '''
-    divider = '============================================================\n'
+    divider = dividerchar*dividerlen + '\n'
     output = ''
     if showid:
         output += objectid(obj)
         output += divider
     if showmeth:
-        output += objmeth(obj)
-        output += divider
+        meths = objmeth(obj)
+        if meths:
+            output += objmeth(obj)
+            output += divider
+    if showprop:
+        props = objprop(obj)
+        if props:
+            output += props
+            output += divider
     if showatt:
-        output += objatt(obj)
-        output += divider
+        attrs = objatt(obj)
+        if attrs:
+            output += attrs
+            output += divider
     return output
 
 
-def prepr(obj, maxlen=None, maxitems=None, skip=None):
+def prepr(obj, maxlen=None, maxitems=None, skip=None, dividerchar='—', dividerlen=60):
     '''
     Akin to "pretty print", returns a pretty representation of an object --
     all attributes (except any that are skipped), plust methods and ID.
     '''
 
     # Handle input arguments
+    divider = dividerchar*dividerlen + '\n'
     if maxlen   is None: maxlen   = 80
     if maxitems is None: maxitems = 100
     if skip   is None: skip = []
@@ -455,12 +474,12 @@ def prepr(obj, maxlen=None, maxitems=None, skip=None):
     if maxkeylen<maxlen:
         maxlen = maxlen - maxkeylen # Shorten the amount of data shown if the keys are long
     formatstr = '%'+ '%i'%maxkeylen + 's' # Assemble the format string for the keys, e.g. '%21s'
-    output  = objrepr(obj, showatt=False) # Get the methods
+    output  = objrepr(obj, showatt=False, dividerchar=dividerchar, dividerlen=dividerlen) # Get the methods
     for label,value in zip(labels,values): # Loop over each attribute
         if len(value)>maxlen: value = value[:maxlen] + ' [...]' # Shorten it
         prefix = formatstr%label + ': ' # The format key
         output += indent(prefix, value)
-    output += '============================================================\n'
+    output += divider
     return output
 
 
@@ -1486,43 +1505,36 @@ def percentcomplete(step=None, maxsteps=None, stepsize=1, prefix=None):
 
 
 
-def checkmem(origvariable, descend=False, order='n', plot=False, verbose=False):
+def checkmem(var, descend=False, alphabetical=False, plot=False, verbose=False):
     '''
-    Checks how much memory the variable in question uses by dumping it to file.
+    Checks how much memory the variable or variables in question use by dumping them to file.
+
+    Args:
+        var (any): the variable being checked
+        descend (bool): whether or not to descend one level into the object
+        alphabetical (bool): if descending into a dict or object, whether to list items by name rather than size
+        plot (bool): if descending, show the results as a pie chart
+        verbose (bool or int): detail to print, if >1, print repr of objects along the way
 
     Example:
         from utils import checkmem
-        checkmem(['spiffy',rand(2483,589)],descend=1)
+        checkmem(['spiffy',rand(2483,589)], descend=True)
     '''
-    from .sc_fileio import saveobj
-    filename = os.getcwd()+'/checkmem.tmp'
+    from .sc_fileio import saveobj # Here to avoid recursion
 
-    printnames = []
-    printbytes = []
-    printsizes = []
-    varnames = []
-    variables = []
-    if not descend:
-        varnames = ['']
-        variables = [origvariable]
-    elif descend and np.iterable(origvariable):
-        if hasattr(origvariable,'keys'):
-            for key in origvariable.keys():
-                varnames.append(key)
-                variables.append(origvariable[key])
-        else:
-            varnames = range(len(origvariable))
-            variables = [origvariable[i] for i in varnames]
-    elif descend and not np.iterable(origvariable):
-        varnames = sorted(origvariable.__dict__.keys())
-        variables = [getattr(origvariable, attr) for attr in varnames]
-    else:
-        raise Exception('Something went wrong; this should be unreachable')
+    def check_one_object(variable):
+        ''' Check the size of one variable '''
 
-    for v,variable in enumerate(variables):
-        if verbose: print('Processing variable %i of %i' % (v+1, len(variables)))
+        if verbose>1:
+            print(f'  Checking size of {variable}...')
+
+        # Create a temporary file, save the object, check the size, remove it
+        filename = tempfile.mktemp()
         saveobj(filename, variable)
         filesize = os.path.getsize(filename)
+        os.remove(filename)
+
+        # Convert to string
         factor = 1
         label = 'B'
         labels = ['KB','MB','GB']
@@ -1530,26 +1542,57 @@ def checkmem(origvariable, descend=False, order='n', plot=False, verbose=False):
             if filesize>10**f:
                 factor = 10**f
                 label = labels[i]
-        printnames.append(varnames[v])
-        printbytes.append(filesize)
-        printsizes.append('%0.3f %s' % (float(filesize/float(factor)), label))
-        os.remove(filename)
+        humansize = float(filesize/float(factor))
+        sizestr = f'{humansize:0.3f} {label}'
+        return filesize, sizestr
 
-    if order=='a' or order=='alpha' or order=='alphabetical':
-        inds = np.argsort(printnames)
+    # Initialize
+    varnames  = []
+    variables = []
+    sizes     = []
+    sizestrs  = []
+
+    # Create the object(s) to check the size(s) of
+    varnames = [''] # Set defaults
+    variables = [var]
+    if descend:
+        if hasattr(var, '__dict__'): # It's an object
+            if verbose>1: print('Iterating over object')
+            varnames = sorted(list(var.__dict__.keys()))
+            variables = [getattr(var, attr) for attr in varnames]
+        elif np.iterable(var): # Handle dicts and lists
+            if isinstance(var, dict): # Handle dicts
+                if verbose>1: print('Iterating over dict')
+                varnames = list(var.keys())
+                variables = var.values()
+            else: # Handle lists and other things
+                if verbose>1: print('Iterating over list')
+                varnames = [f'item {i}' for i in range(len(var))]
+                variables = var
+        else:
+            print('Object is not iterable: cannot descend') # Print warning and use default
+
+    # Compute the sizes
+    for v,variable in enumerate(variables):
+        if verbose:
+            print(f'Processing variable {v} of {len(variables)}')
+        filesize, sizestr = check_one_object(variable)
+        sizes.append(filesize)
+        sizestrs.append(sizestr)
+
+    if alphabetical:
+        inds = np.argsort(varnames)
     else:
-        inds = np.argsort(printbytes)
+        inds = np.argsort(sizes)[::-1]
 
-    for v in inds:
-        print('Variable %s is %s' % (printnames[v], printsizes[v]))
+    for i in inds:
+        varstr = f'Variable "{varnames[i]}"' if varnames[i] else 'Variable'
+        print(f'{varstr} is {sizestrs[i]}')
 
     if plot==True:
-        try:
-            import pylab as pl
-        except Exception as E:
-            raise Exception('Cannot plot since import failed: %s' % repr(E))
+        import pylab as pl # Optional import
         pl.axes(aspect=1)
-        pl.pie(pl.array(printbytes)[inds], labels=pl.array(printnames)[inds], autopct='%0.2f')
+        pl.pie(pl.array(sizes)[inds], labels=pl.array(varnames)[inds], autopct='%0.2f')
 
     return None
 

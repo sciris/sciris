@@ -9,7 +9,9 @@ By import convention, components of the Sciris library are listed beginning with
 
 ## Version 0.16.8 (2020-04-11)
 - Added a [Code of Conduct](CODE_OF_CONDUCT.md).
-- Added a `checkexists` flag to `sc.makefilepath()`, which will optionally raise an exception if the file does (or doesn't) exist.
-- Added handing of `datetime.date` and `datetime.time` to `sc.sanitizejson()`.
+- `sc.makefilepath()` now has a `checkexists` flag, which will optionally raise an exception if the file does (or doesn't) exist.
+- `sc.sanitizejson()` now handles `datetime.date` and `datetime.time`.
 - `sc.uuid()` and `sc.fast_uuid()` now work with non-integer inputs, e.g., `sc.uuid(n=10e3)`.
-- The `sc.thisdir()` function now accepts additional arguments, so can be used to form a full path, e.g. `sc.thisdir(__file__, 'myfile.txt')`.
+- `sc.thisdir()` now accepts additional arguments, so can be used to form a full path, e.g. `sc.thisdir(__file__, 'myfile.txt')`.
+- `sc.checkmem()` has better parsing of objects.
+- `sc.prepr()` now lists properties of objects, and has some aesthetic improvements.
