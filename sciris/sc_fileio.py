@@ -136,7 +136,7 @@ def dumpstr(obj=None):
 ### Other file functions
 ##############################################################################
 
-__all__ += ['loadtext', 'savetext', 'savezip', 'getfilelist', 'sanitizefilename', 'makefilepath']
+__all__ += ['loadtext', 'savetext', 'savezip', 'getfilelist', 'sanitizefilename', 'makefilepath', 'thisdir']
 
 
 
@@ -192,30 +192,38 @@ def sanitizefilename(rawfilename):
     return filtername # Return the sanitized file name.
 
 
-def makefilepath(filename=None, folder=None, ext=None, default=None, split=False, abspath=True, makedirs=True, verbose=False, sanitize=False):
+def makefilepath(filename=None, folder=None, ext=None, default=None, split=False, abspath=True, makedirs=True, checkexists=None, sanitize=False, die=True, verbose=False):
     '''
-    Utility for taking a filename and folder -- or not -- and generating a valid path from them.
+    Utility for taking a filename and folder -- or not -- and generating a
+    valid path from them. By default, this function will combine a filename and
+    folder using os.path.join, create the folder(s) if needed with os.makedirs,
+    and return the absolute path.
 
-    Inputs:
-        filename = the filename, or full file path, to save to -- in which case this utility does nothing
-        folder = the name of the folder to be prepended to the filename
-        ext = the extension to ensure the file has
-        default = a name or list of names to use if filename is None
-        split = whether to return the path and filename separately
-        makedirs = whether or not to make the folders to save into if they don't exist
-        verbose = how much detail to print
+    Args:
+        filename (str or Path): the filename, or full file path, to save to -- in which case this utility does nothing
+        folder (str, Path, or list): the name of the folder to be prepended to the filename; if a list, fed to os.path.join()
+        ext (str): the extension to ensure the file has
+        default (str or list): a name or list of names to use if filename is None
+        split (bool): whether to return the path and filename separately
+        makedirs (bool): whether or not to make the folders to save into if they don't exist
+        checkexists (bool): if False/True, raises an exception if the path does/doesn't exist
+        sanitize (bool): whether or not to remove special characters from the path; see sc.sanitizefilename() for details
+        verbose (bool): how much detail to print
 
-    Example:
-        makefilepath(filename=None, folder='./congee', ext='prj', default=[project.filename, project.name], split=True, abspath=True, makedirs=True)
+    Returns:
+        filepath (str): the validated path (or the folder and filename if split=True)
+
+    Simple example:
+        filepath = sc.makefilepath('myfile.obj') # Equivalent to os.path.abspath(os.path.expanduser('myfile.obj'))
+
+    Complex example:
+        filepath = makefilepath(filename=None, folder='./congee', ext='prj', default=[project.filename, project.name], split=True, abspath=True, makedirs=True)
 
     Assuming project.filename is None and project.name is "soggyrice" and ./congee doesn't exist:
         * Makes folder ./congee
         * Returns e.g. ('/home/myname/congee', 'soggyrice.prj')
 
-    Actual code example from project.py:
-        fullpath = makefilepath(filename=filename, folder=folder, default=[self.filename, self.name], ext='prj')
-
-    Version: 2018sep22
+    Version: 2020apr11
     '''
 
     # Initialize
@@ -226,6 +234,8 @@ def makefilepath(filename=None, folder=None, ext=None, default=None, split=False
         filename = str(filename)
     if isinstance(folder, Path): # If it's a path object, convert to string
         folder = str(folder)
+    if isinstance(folder, list): # It's a list, join together
+        folder = os.path.join(*folder)
 
     # Process filename
     if filename is None:
@@ -251,17 +261,65 @@ def makefilepath(filename=None, folder=None, ext=None, default=None, split=False
         filefolder = folder
     if abspath: # Convert to absolute path
         filefolder = os.path.abspath(os.path.expanduser(filefolder))
-    if makedirs: # Make sure folder exists
-        try: os.makedirs(filefolder)
-        except: pass
+
+    # Make sure folder exists
+    if makedirs:
+        try:
+            os.makedirs(filefolder, exist_ok=True)
+        except Exception as E:
+            if die:
+                raise E
+            else:
+                print(f'Could not create folders: {str(E)}')
+
+    # Create the full path
+    filepath = os.path.join(filefolder, filebasename)
+
+    # Optionally check if it exists
+    if checkexists is not None:
+        exists = os.path.exists(filepath)
+        errormsg = ''
+        if exists and not checkexists:
+            errormsg = f'File {filepath} should not exist, but it does'
+            if die:
+                raise FileExistsError(errormsg)
+        if not exists and checkexists:
+            errormsg = f'File {filepath} should exist, but it does not'
+            if die:
+                raise FileNotFoundError(errormsg)
+        if errormsg:
+            print(errormsg)
+
+    # Decide on output
     if verbose:
-        print('From filename="%s", folder="%s", abspath="%s", makedirs="%s", made folder name "%s"' % (filename, folder, abspath, makedirs, filefolder))
+        print(f'From filename="{filename}", folder="{folder}", made path name "{filepath}"')
+    if split:
+        output = filefolder, filebasename
+    else:
+        output = filepath
 
-    fullfile = os.path.join(filefolder, filebasename) # And the full thing
+    return output
 
-    if split: return filefolder, filebasename
-    else:     return fullfile # Or can do os.path.split() on output
 
+def thisdir(file, *args, **kwargs):
+    '''
+    Tiny helper function to get the folder for a file, usually the current file.
+
+    Args:
+        file (str): the file to get the directory from; usually __file__
+        args (list): passed to os.path.join()
+        kwargs (dict): also passed to os.path.join()
+
+    Returns:
+        filepath (str): the full path to the folder (or filename if additional arguments are given)
+
+    Examples:
+        thisdir = sc.thisdir(__file__)
+        file_in_same_dir = sc.thisdir(__file__, 'new_file.txt')
+    '''
+    folder = os.path.abspath(os.path.dirname(file))
+    filepath = os.path.join(folder, *args, **kwargs)
+    return filepath
 
 
 ##############################################################################
@@ -275,12 +333,18 @@ def sanitizejson(obj, verbose=True, die=False, tostring=False, **kwargs):
     """
     This is the main conversion function for Python data-structures into
     JSON-compatible data structures.
-    Use this as much as possible to guard against data corruption!
+
     Args:
-        obj: almost any kind of data structure that is a combination
-            of list, numpy.ndarray, odicts, etc.
+        obj (any): almost any kind of data structure that is a combination of list, numpy.ndarray, odicts, etc.
+        verbose (bool): level of detail to print
+        die (bool): whether or not to raise an exception if conversion failed (otherwise, return a string)
+        tostring (bool): whether to return a string representation of the sanitized object instead of the object itself
+        kwargs (dict): passed to json.dumps() if tostring=True
+
     Returns:
-        A converted dict/list/value that should be JSON compatible
+        object (any or str): the converted object that should be JSON compatible, or its representation as a string if tostring=True
+
+    Version: 2020apr11
     """
     if obj is None: # Return None unchanged
         output = None
@@ -295,6 +359,11 @@ def sanitizejson(obj, verbose=True, die=False, tostring=False, **kwargs):
             if isinstance(obj, (int, np.int64)): output = int(obj) # It's an integer
             else:                                output = float(obj)# It's something else, treat it as a float
 
+    elif ut.isstring(obj): # It's a string of some kind
+        try:    string = str(obj) # Try to convert it to ascii
+        except: string = obj # Give up and use original
+        output = string
+
     elif isinstance(obj, np.ndarray): # It's an array, iterate recursively
         if obj.shape: output = [sanitizejson(p) for p in list(obj)] # Handle most cases, incluing e.g. array([5])
         else:         output = [sanitizejson(p) for p in list(np.array([obj]))] # Handle the special case of e.g. array(5)
@@ -302,21 +371,14 @@ def sanitizejson(obj, verbose=True, die=False, tostring=False, **kwargs):
     elif isinstance(obj, (list, set, tuple)): # It's another kind of interable, so iterate recurisevly
         output = [sanitizejson(p) for p in list(obj)]
 
-    elif isinstance(obj, dict): # Treat all dictionaries as ordered dictionaries
-        output = OrderedDict()
-        for key,val in obj.items():
-            output[str(key)] = sanitizejson(val)
+    elif isinstance(obj, dict): # It's a dictionary, so iterate over the items
+        output = {str(key):sanitizejson(val) for key,val in obj.items()}
 
-    elif isinstance(obj, datetime.datetime):
+    elif isinstance(obj, (datetime.time, datetime.date, datetime.datetime)):
         output = str(obj)
 
     elif isinstance(obj, uuid.UUID):
         output = str(obj)
-
-    elif ut.isstring(obj): # It's a string of some kind
-        try:    string = str(obj) # Try to convert it to ascii
-        except: string = obj # Give up and use original
-        output = string
 
     else: # None of the above
         try:
@@ -327,8 +389,11 @@ def sanitizejson(obj, verbose=True, die=False, tostring=False, **kwargs):
             elif verbose: print(errormsg)
             output = str(obj)
 
-    if tostring: return json.dumps(output, **kwargs)
-    else:        return output
+    # Convert to string if desired
+    if tostring:
+        output = json.dumps(output, **kwargs)
+
+    return output
 
 
 
