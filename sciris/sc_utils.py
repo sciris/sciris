@@ -1479,7 +1479,7 @@ def timedsleep(delay=None, verbose=True):
 ### MISC. FUNCTIONS
 ##############################################################################
 
-__all__ += ['percentcomplete', 'checkmem', 'runcommand', 'gitinfo', 'compareversions', 'uniquename', 'importbyname', 'suggest', 'profile']
+__all__ += ['percentcomplete', 'checkmem', 'runcommand', 'gitinfo', 'compareversions', 'uniquename', 'importbyname', 'suggest', 'profile', 'mprofile']
 
 def percentcomplete(step=None, maxsteps=None, stepsize=1, prefix=None):
     '''
@@ -1858,6 +1858,30 @@ def profile(run, follow=None, *args, **kwargs):
     wrapper(*args, **kwargs)
     lp.print_stats()
     print('Done.')
+
+
+def mprofile(run, follow=None, *args, **kwargs):
+    '''
+    Profile the memory of a function.
+    '''
+
+    try:
+        import memory_profiler as mp
+    except ModuleNotFoundError as e:
+        raise Exception('The "memory_profiler" Python package is required to perform profiling') from e
+
+    lp = mp.LineProfiler()
+    follow = promotetolist(follow)
+    for f in follow:
+        lp.add_function(f)
+    lp.enable_by_count()
+    wrapper = lp(run)
+
+    print('Profiling...')
+    wrapper(*args, **kwargs)
+    mp.show_results(lp)
+    print('Done.')
+
 
 
 ##############################################################################
