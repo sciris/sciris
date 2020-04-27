@@ -1791,19 +1791,15 @@ def suggest(user_input, valid_inputs, n=1, threshold=4, fulloutput=False, die=Fa
 
 def profile(run, follow=None, *args, **kwargs):
     '''
-    Profile a function.
+    Profile the line-by-line time required by a function.
 
-    Parameters
-    ----------
-    run : function
-        The function to be run
-    follow : function
-        The function or list of functions to be followed in the profiler; if
-        None, defaults to the run function
+    Args:
+        run (function): The function to be run
+        follow (function): The function or list of functions to be followed in the profiler; if None, defaults to the run function
+        args, kwargs: Passed to the function to be run
 
-    Returns
-    -------
-    None (the profile output is printed to stdout)
+    Returns:
+        None (the profile output is printed to stdout)
 
     Example
     -------
@@ -1838,14 +1834,16 @@ def profile(run, follow=None, *args, **kwargs):
     # Profile the constructor for Foo
     f = lambda: Foo()
     sc.profile(run=f, follow=[foo.__init__])
-
-
     '''
 
     try:
         from line_profiler import LineProfiler
     except ModuleNotFoundError as e:
         raise Exception('The "line_profiler" Python package is required to perform profiling') from e
+
+    if follow is None:
+        follow = run
+    orig_func = run
 
     lp = LineProfiler()
     follow = promotetolist(follow)
@@ -1857,12 +1855,24 @@ def profile(run, follow=None, *args, **kwargs):
     print('Profiling...')
     wrapper(*args, **kwargs)
     lp.print_stats()
+    run = orig_func
     print('Done.')
+
+    return
 
 
 def mprofile(run, follow=None, *args, **kwargs):
     '''
-    Profile the memory of a function.
+    Profile the line-by-line memory required by a function. See profile() for a
+    usage example.
+
+    Args:
+        run (function): The function to be run
+        follow (function): The function or list of functions to be followed in the profiler; if None, defaults to the run function
+        args, kwargs: Passed to the function to be run
+
+    Returns:
+        None (the profile output is printed to stdout)
     '''
 
     try:
@@ -1870,17 +1880,25 @@ def mprofile(run, follow=None, *args, **kwargs):
     except ModuleNotFoundError as e:
         raise Exception('The "memory_profiler" Python package is required to perform profiling') from e
 
+    if follow is None:
+        follow = run
+
     lp = mp.LineProfiler()
     follow = promotetolist(follow)
     for f in follow:
         lp.add_function(f)
     lp.enable_by_count()
-    wrapper = lp(run)
+    try:
+        wrapper = lp(run)
+    except TypeError as e:
+        raise Exception('Function wrapping failed; are you profiling an already-profiled function?') from e
 
     print('Profiling...')
     wrapper(*args, **kwargs)
     mp.show_results(lp)
     print('Done.')
+
+    return
 
 
 
