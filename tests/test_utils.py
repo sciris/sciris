@@ -73,7 +73,10 @@ def test_profile():
             return
 
     foo = Foo()
-    sc.mprofile(big_fn) # NB, cannot re-profile the same function at the same time
+    try:
+        sc.mprofile(big_fn) # NB, cannot re-profile the same function at the same time
+    except TypeError: # This happens when re-running this script
+        pass
     sc.profile(run=foo.outer, follow=[foo.outer, foo.inner])
     sc.profile(slow_fn)
 
@@ -263,8 +266,9 @@ def test_mergedicts():
 
     return md
 
+
 def test_nested_dicts():
-    sc.heading('test_nested_dicts()')
+    sc.heading('Testing nested dictionaries')
     dict1 = {'key1':{'a':'A'},  'key2':{'b':'B'}}
     dict2 = {'key1':{'a':'A*'}, 'key2':{'b+':'B+'}, 'key3':{'c':'C'}}
     dict3 = sc.mergenested(dict1, dict2, verbose=True)
@@ -273,6 +277,15 @@ def test_nested_dicts():
     print(f'Dict3: {dict3}')
     assert dict3 == {'key1': {'a': 'A*'}, 'key2': {'b': 'B', 'b+': 'B+'}, 'key3': {'c': 'C'}}
     return dict3
+
+
+def test_progress_bar():
+    sc.heading('Progress bar')
+    n = 50
+    for i in range(n):
+        sc.progressbar(i+1, n)
+        sc.timedsleep(1.0/n, verbose=False)
+    return i
 
 
 #%% Run as a script
@@ -292,6 +305,7 @@ if __name__ == '__main__':
     flat      = test_flattendict()
     md        = test_mergedicts()
     nested    = test_nested_dicts()
+    ind       = test_progress_bar()
 
     sc.toc()
     print('Done.')

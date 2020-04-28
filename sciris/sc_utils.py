@@ -311,6 +311,7 @@ def traceback(*args, **kwargs):
     return py_traceback.format_exc(*args, **kwargs)
 
 
+
 ##############################################################################
 ### PRINTING/NOTIFICATION FUNCTIONS
 ##############################################################################
@@ -1161,7 +1162,6 @@ def mergedicts(*args, strict=False, overwrite=True):
 
 
 
-
 ##############################################################################
 ### TIME/DATE FUNCTIONS
 ##############################################################################
@@ -1466,20 +1466,11 @@ def timedsleep(delay=None, verbose=True):
 
 
 
-
-
-
-
-
-
-
-
-
 ##############################################################################
 ### MISC. FUNCTIONS
 ##############################################################################
 
-__all__ += ['percentcomplete', 'checkmem', 'runcommand', 'gitinfo', 'compareversions', 'uniquename', 'importbyname', 'suggest', 'profile', 'mprofile']
+__all__ += ['percentcomplete', 'progressbar', 'checkmem', 'runcommand', 'gitinfo', 'compareversions', 'uniquename', 'importbyname', 'suggest', 'profile', 'mprofile']
 
 def percentcomplete(step=None, maxsteps=None, stepsize=1, prefix=None):
     '''
@@ -1503,6 +1494,36 @@ def percentcomplete(step=None, maxsteps=None, stepsize=1, prefix=None):
         print(prefix + '%i%%'% thispercent) # Display the output
     return None
 
+
+def progressbar(i, maxiters, label='', length=30, empty='—', full='•', newline=False):
+    '''
+    Call in a loop to create terminal progress bar.
+
+    Args:
+        i (int): current iteration
+        maxiters (int): maximum number of iterations
+        label (str): initial label to print
+        length (int): length of progress bar
+        empty (str): character for empty steps
+        full (str): character for empty steps
+
+    **Example**::
+
+        import pylab as pl
+        for i in range(100):
+            progressbar(i+1, 100)
+            pl.pause(0.05)
+
+    Adapted from example by Greenstick (https://stackoverflow.com/questions/3173320/text-progress-bar-in-the-console)
+    '''
+    ending = None if newline else '\r'
+    pct = i/maxiters*100
+    percent = f'{pct:0.0f}%'
+    filled = int(length*i//maxiters)
+    bar = full*filled + empty*(length-filled)
+    print(f'\r{label} {bar} {percent}', end=ending)
+    if i == maxiters: print()
+    return
 
 
 def checkmem(var, descend=False, alphabetical=False, plot=False, verbose=False):
@@ -1878,7 +1899,7 @@ def mprofile(run, follow=None, *args, **kwargs):
     try:
         import memory_profiler as mp
     except ModuleNotFoundError as e:
-        raise Exception('The "memory_profiler" Python package is required to perform profiling') from e
+        raise ModuleNotFoundError('The "memory_profiler" Python package is required to perform profiling') from e
 
     if follow is None:
         follow = run
@@ -1891,7 +1912,7 @@ def mprofile(run, follow=None, *args, **kwargs):
     try:
         wrapper = lp(run)
     except TypeError as e:
-        raise Exception('Function wrapping failed; are you profiling an already-profiled function?') from e
+        raise TypeError('Function wrapping failed; are you profiling an already-profiled function?') from e
 
     print('Profiling...')
     wrapper(*args, **kwargs)

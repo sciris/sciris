@@ -5,7 +5,7 @@ All notable changes to this project will be documented in this file.
 By import convention, components of the Sciris library are listed beginning with `sc.`, e.g. `sc.odict()`.
 
 ## Version 0.17.0 (2020-04-27)
-1. `sc.mprofile()` has been added, which does memory profiling the just like `sc.profile()`.
+1. `sc.mprofile()` has been added, which does memory profiling just like `sc.profile()`.
 1. `sc.progressbar()` has been added, which prints a progress bar.
 1. `sc.jsonify()` checks objects for a `to_json()` method, handling e.g Pandas dataframes.
 1. `sc.suggest()` now uses `jellyfish` instead of `python-levenshtein` for fuzzy string matching.

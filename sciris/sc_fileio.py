@@ -24,7 +24,6 @@ from glob import glob
 from gzip import GzipFile
 from zipfile import ZipFile
 from contextlib import closing
-from collections import OrderedDict
 from pathlib import Path
 from io import BytesIO as IO
 import pickle as pkl
@@ -82,10 +81,21 @@ def loadstr(string=None, verbose=False, die=None):
     return obj
 
 
-def saveobj(filename=None, obj=None, compresslevel=5, verbose=0, folder=None, method='pickle'):
+def saveobj(filename=None, obj=None, compresslevel=5, verbose=0, folder=None, method='pickle', *args, **kwargs):
     '''
     Save an object to file -- use compression 5 by default, since more is much slower but not much smaller.
-    Once saved, can be loaded with loadobj() (q.v.).
+    Once saved, can be loaded with sc.loadobj().
+
+    Args:
+        filename (str or Path): the filename to save to; if str, passed to sc.makefilepath()
+        obj (literally anything): the object to save
+        compresslevel (int): the level of gzip compression
+        verbose (int): detail to print
+        folder (str): passed to sc.makefilepath()
+        method (str): whether to use pickle (default) or dill
+        args (list): passed to pickle.dumps()
+        kwargs (dict): passed to pickle.dumps()
+
 
     Usage:
         myobj = ['this', 'is', 'a', 'weird', {'object':44}]
@@ -106,12 +116,13 @@ def saveobj(filename=None, obj=None, compresslevel=5, verbose=0, folder=None, me
         else: # Otherwise, try pickle
             try:
                 if verbose>=2: print('Saving as pickle...')
-                savepickle(fileobj, obj) # Use pickle
+                savepickle(fileobj, obj, *args, **kwargs) # Use pickle
             except Exception as E:
                 if verbose>=2: print('Exception when saving as pickle (%s), saving as dill...' % repr(E))
-                savedill(fileobj, obj) # ...but use Dill if that fails
+                savedill(fileobj, obj, *args, **kwargs) # ...but use Dill if that fails
 
-    if verbose and filename: print('Object saved to "%s"' % filename)
+    if verbose and filename:
+        print('Object saved to "%s"' % filename)
 
     if filename:
         return filename
@@ -121,6 +132,7 @@ def saveobj(filename=None, obj=None, compresslevel=5, verbose=0, folder=None, me
 
 
 def dumpstr(obj=None):
+    ''' Dump an object as a bytes-like string '''
     with closing(IO()) as output: # Open a "fake file."
         with GzipFile(fileobj=output, mode='wb') as fileobj:  # Open a Gzip-compressing way to write to this "file."
             try:    savepickle(fileobj, obj) # Use pickle
@@ -1012,19 +1024,21 @@ def unpickler(string=None, filename=None, filestring=None, die=None, verbose=Fal
     return obj
 
 
-def savepickle(fileobj=None, obj=None):
+def savepickle(fileobj=None, obj=None, protocol=None, *args, **kwargs):
         ''' Use pickle to do the salty work '''
-        fileobj.write(pkl.dumps(obj, protocol=-1))
+        if protocol is None:
+            protocol = 4
+        fileobj.write(pkl.dumps(obj, protocol=protocol, *args, **kwargs))
         return None
 
 
-def savedill(fileobj=None, obj=None):
+def savedill(fileobj=None, obj=None, *args, **kwargs):
     ''' Use dill to do the sour work '''
     try:
         import dill # Optional Sciris dependency
     except ModuleNotFoundError as e:
         raise Exception('The "dill" Python package is not available; please install manually') from e
-    fileobj.write(dill.dumps(obj, protocol=-1))
+    fileobj.write(dill.dumps(obj, protocol=-1, *args, **kwargs))
     return None
 
 
