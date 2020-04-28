@@ -1,17 +1,15 @@
 """
-Version: 2019jan10
+Version: 2020apr27
 """
 
 import pylab as pl
 import sciris as sc
 
-torun = [
-'smooth',
-]
 
 if 'doplot' not in locals(): doplot = True
 
-if 'smooth' in torun:
+
+def test_smooth():
     data = pl.randn(200,100)
     smoothdata = sc.smooth(data,10)
     if doplot:
@@ -19,3 +17,14 @@ if 'smooth' in torun:
         pl.pcolor(data)
         pl.subplot(1,2,2)
         pl.pcolor(smoothdata)
+    return smoothdata
+
+
+#%% Run as a script
+if __name__ == '__main__':
+    sc.tic()
+
+    smoothed = test_smooth()
+
+    sc.toc()
+    print('Done.')

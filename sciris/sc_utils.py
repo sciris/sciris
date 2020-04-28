@@ -311,6 +311,7 @@ def traceback(*args, **kwargs):
     return py_traceback.format_exc(*args, **kwargs)
 
 
+
 ##############################################################################
 ### PRINTING/NOTIFICATION FUNCTIONS
 ##############################################################################
@@ -1161,7 +1162,6 @@ def mergedicts(*args, strict=False, overwrite=True):
 
 
 
-
 ##############################################################################
 ### TIME/DATE FUNCTIONS
 ##############################################################################
@@ -1466,20 +1466,11 @@ def timedsleep(delay=None, verbose=True):
 
 
 
-
-
-
-
-
-
-
-
-
 ##############################################################################
 ### MISC. FUNCTIONS
 ##############################################################################
 
-__all__ += ['percentcomplete', 'checkmem', 'runcommand', 'gitinfo', 'compareversions', 'uniquename', 'importbyname', 'suggest', 'profile']
+__all__ += ['percentcomplete', 'progressbar', 'checkmem', 'runcommand', 'gitinfo', 'compareversions', 'uniquename', 'importbyname', 'suggest', 'profile', 'mprofile']
 
 def percentcomplete(step=None, maxsteps=None, stepsize=1, prefix=None):
     '''
@@ -1503,6 +1494,36 @@ def percentcomplete(step=None, maxsteps=None, stepsize=1, prefix=None):
         print(prefix + '%i%%'% thispercent) # Display the output
     return None
 
+
+def progressbar(i, maxiters, label='', length=30, empty='—', full='•', newline=False):
+    '''
+    Call in a loop to create terminal progress bar.
+
+    Args:
+        i (int): current iteration
+        maxiters (int): maximum number of iterations
+        label (str): initial label to print
+        length (int): length of progress bar
+        empty (str): character for empty steps
+        full (str): character for empty steps
+
+    **Example**::
+
+        import pylab as pl
+        for i in range(100):
+            progressbar(i+1, 100)
+            pl.pause(0.05)
+
+    Adapted from example by Greenstick (https://stackoverflow.com/questions/3173320/text-progress-bar-in-the-console)
+    '''
+    ending = None if newline else '\r'
+    pct = i/maxiters*100
+    percent = f'{pct:0.0f}%'
+    filled = int(length*i//maxiters)
+    bar = full*filled + empty*(length-filled)
+    print(f'\r{label} {bar} {percent}', end=ending)
+    if i == maxiters: print()
+    return
 
 
 def checkmem(var, descend=False, alphabetical=False, plot=False, verbose=False):
@@ -1721,37 +1742,55 @@ def importbyname(name=None, output=False, die=True):
     else:      return True
 
 
-def suggest(user_input, valid_inputs, n=1, threshold=4, fulloutput=False, die=False):
+def suggest(user_input, valid_inputs, n=1, threshold=4, fulloutput=False, die=False, which='damerau'):
     """
     Return suggested item
 
     Returns item with lowest Levenshtein distance, where case substitution and stripping
     whitespace are not included in the distance. If there are ties, then the additional operations
-    will be included
+    will be included.
 
-    :param user_input: String with user's input
-    :param valid_inputs: List/collection of valid strings
-    :param threshold: Maximum number of edits required for an option to be suggested
-    :param die: If True, an informative error will be raised (to avoid having to implement this in the calling code)
-    :return: Suggested string. Returns None if no suggestions with edit distance less than threshold were found. This helps to make
+    Args:
+        user_input (str): User's input
+        valid_inputs (list): List/collection of valid strings
+        n (int): Maximum number of suggestions to return
+        threshold (int): Maximum number of edits required for an option to be suggested
+        die (bool): If True, an informative error will be raised (to avoid having to implement this in the calling code)
+        which (str): Distance calculation method used; options are "damerau" (default), "levenshtein", or "jaro"
+
+    Returns:
+        suggestions (str or list): Suggested string. Returns None if no suggestions with edit distance less than threshold were found. This helps to make
              suggestions more relevant.
 
-    Example usage:
+    **Examples**::
 
-    >>> suggest('foo',['Foo','Bar'])
-    'Foo'
-    >>> suggest('foo',['FOO','Foo'])
-    'Foo'
-    >>> suggest('foo',['Foo ','boo'])
-    'Foo '
-
+        >>> suggest('foo',['Foo','Bar'])
+        'Foo'
+        >>> suggest('foo',['FOO','Foo'])
+        'Foo'
+        >>> suggest('foo',['Foo ','boo'])
+        'Foo '
     """
     try:
-        import Levenshtein # To allow as an optional import
+        import jellyfish # To allow as an optional import
     except ModuleNotFoundError as e:
-            raise Exception('The "Levenshtein" Python package is not available; please install manually') from e
+            raise Exception('The "jellyfish" Python package is not available; please install via "pip install jellyfish"') from e
 
     valid_inputs = promotetolist(valid_inputs, objtype='string')
+
+    mapping = {
+        'damerau':     jellyfish.damerau_levenshtein_distance,
+        'levenshtein': jellyfish.levenshtein_distance,
+        'jaro':        jellyfish.jaro_distance,
+        }
+
+    keys = list(mapping.keys())
+    if which not in keys:
+        available = ', '.join(keys)
+        errormsg = f'Method {which} not available; options are {available}'
+        raise NotImplementedError(errormsg)
+
+    dist_func = mapping[which]
 
     distance = np.zeros(len(valid_inputs))
     cs_distance = np.zeros(len(valid_inputs))
@@ -1759,8 +1798,8 @@ def suggest(user_input, valid_inputs, n=1, threshold=4, fulloutput=False, die=Fa
     # Similarly, stripping whitespace is a free operation. This ensures that something like
     # 'foo ' will match 'Foo' ahead of 'boo '
     for i, s in enumerate(valid_inputs):
-        distance[i] = Levenshtein.distance(user_input, s.strip().lower())
-        cs_distance[i] = Levenshtein.distance(user_input, s.strip())
+        distance[i]    = dist_func(user_input, s.strip().lower())
+        cs_distance[i] = dist_func(user_input, s.strip())
 
     # If there is a tie for the minimum distance, use the case sensitive comparison
     if sum(distance==min(distance)) > 1:
@@ -1791,19 +1830,15 @@ def suggest(user_input, valid_inputs, n=1, threshold=4, fulloutput=False, die=Fa
 
 def profile(run, follow=None, *args, **kwargs):
     '''
-    Profile a function.
+    Profile the line-by-line time required by a function.
 
-    Parameters
-    ----------
-    run : function
-        The function to be run
-    follow : function
-        The function or list of functions to be followed in the profiler; if
-        None, defaults to the run function
+    Args:
+        run (function): The function to be run
+        follow (function): The function or list of functions to be followed in the profiler; if None, defaults to the run function
+        args, kwargs: Passed to the function to be run
 
-    Returns
-    -------
-    None (the profile output is printed to stdout)
+    Returns:
+        None (the profile output is printed to stdout)
 
     Example
     -------
@@ -1838,14 +1873,16 @@ def profile(run, follow=None, *args, **kwargs):
     # Profile the constructor for Foo
     f = lambda: Foo()
     sc.profile(run=f, follow=[foo.__init__])
-
-
     '''
 
     try:
         from line_profiler import LineProfiler
     except ModuleNotFoundError as e:
         raise Exception('The "line_profiler" Python package is required to perform profiling') from e
+
+    if follow is None:
+        follow = run
+    orig_func = run
 
     lp = LineProfiler()
     follow = promotetolist(follow)
@@ -1857,7 +1894,51 @@ def profile(run, follow=None, *args, **kwargs):
     print('Profiling...')
     wrapper(*args, **kwargs)
     lp.print_stats()
+    run = orig_func
     print('Done.')
+
+    return
+
+
+def mprofile(run, follow=None, *args, **kwargs):
+    '''
+    Profile the line-by-line memory required by a function. See profile() for a
+    usage example.
+
+    Args:
+        run (function): The function to be run
+        follow (function): The function or list of functions to be followed in the profiler; if None, defaults to the run function
+        args, kwargs: Passed to the function to be run
+
+    Returns:
+        None (the profile output is printed to stdout)
+    '''
+
+    try:
+        import memory_profiler as mp
+    except ModuleNotFoundError as e:
+        raise ModuleNotFoundError('The "memory_profiler" Python package is required to perform profiling') from e
+
+    if follow is None:
+        follow = run
+
+    lp = mp.LineProfiler()
+    follow = promotetolist(follow)
+    for f in follow:
+        lp.add_function(f)
+    lp.enable_by_count()
+    try:
+        wrapper = lp(run)
+    except TypeError as e:
+        raise TypeError('Function wrapping failed; are you profiling an already-profiled function?') from e
+
+    print('Profiling...')
+    wrapper(*args, **kwargs)
+    mp.show_results(lp)
+    print('Done.')
+
+    return
+
 
 
 ##############################################################################
@@ -2015,19 +2096,48 @@ def flattendict(input_dict: dict, sep: str = None, _prefix=None) -> dict:
 ### CLASSES
 ##############################################################################
 
-__all__ += ['prettyobj', 'LinkException', 'Link', 'Timer']
+__all__ += ['KeyNotFoundError', 'LinkException', 'prettyobj', 'Link', 'Timer']
 
-class prettyobj(object):
-    def __repr__(self):
-        ''' Use pretty repr for objects '''
-        output  = prepr(self)
-        return output
+
+class KeyNotFoundError(KeyError):
+    '''
+    A tiny class to fix repr for KeyErrors. KeyError prints the repr of the error
+    message, rather than the actual message, so e.g. newline characters print as
+    the character rather than the actual newline.
+
+    **Example**::
+
+        raise sc.KeyNotFoundError('The key "foo" is not available, but these are:\n"bar"\n"cat"')
+    '''
+
+    def __str__(self):
+        return Exception.__str__(self)
 
 
 class LinkException(Exception):
-        ''' An exception to raise when links are broken -- note, can't define classes inside classes :( '''
-        def __init(self, *args, **kwargs):
-            Exception.__init__(self, *args, **kwargs)
+    '''
+    An exception to raise when links are broken, for exclusive use with the Link
+    class.
+    '''
+
+    def __init(self, *args, **kwargs):
+        Exception.__init__(self, *args, **kwargs)
+
+
+class prettyobj(object):
+    '''
+    Use pretty repr for objects.
+
+    **Example**::
+
+        myobj = sc.prettyobj()
+        myobj.a = 3
+        print(myobj)
+    '''
+
+    def __repr__(self):
+        output  = prepr(self)
+        return output
 
 
 class Link(object):

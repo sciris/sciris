@@ -17,19 +17,21 @@ cwd = os.path.abspath(os.path.dirname(__file__))
 
 # Define the requirements for core functionality
 requirements = [
-        'matplotlib>=2.2.2',  # Plotting
-        'numpy>=1.10.1',      # Numerical functions
-        'dill',               # File I/O
-        'gitpython',          # Version information
-        'openpyexcel>=2.5',   # Spreadsheet functions -- fork of openpyxl
-        'pandas',             # Spreadsheet input
-        'psutil',             # Load monitoring
-        'xlrd',               # Spreadsheet input
-        'xlsxwriter',         # Spreadsheet output
-        'requests',           # HTTP methods
-        'python-Levenshtein', # For fuzzy string matching
-        'line_profiler ; platform_system == "Linux"',   # For the line profiler -- only install on Linux
-        'colorama ;      platform_system == "Windows"', # For colored text output -- only install on Windows
+        'matplotlib>=2.2.2', # Plotting
+        'numpy>=1.10.1',     # Numerical functions
+        'pandas',            # Dataframes and spreadsheet input
+        'openpyexcel>=2.5',  # Spreadsheet functions -- fork of openpyxl
+        'xlrd',              # Spreadsheet input
+        'xlsxwriter',        # Spreadsheet output
+        'psutil',            # Load monitoring
+        'dill',              # File I/O
+        'jsonpickle',        # For converting arbitrary objects to JSON
+        'gitpython',         # Version information
+        'requests',          # HTTP methods
+        'jellyfish',         # For fuzzy string matching
+        'line_profiler ;   platform_system == "Linux"',   # For the line profiler -- only install on Linux
+        'memory_profiler ; platform_system == "Linux"',   # For the memory profiler -- only install on Linux
+        'colorama ;        platform_system == "Windows"', # For colored text output -- only install on Windows
         ]
 
 # Optionally define extras

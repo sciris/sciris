@@ -6,7 +6,7 @@ TESTALL
 Run all tests. It runs everything in the same namespace, but deletes variables that get
 added along the way.
 
-Version: 2019jul09
+Version: 2020apr27
 """
 
 ## Initialization
@@ -30,9 +30,9 @@ for TEST in MASTER:
     try:
         THISSTART = TIME()
         ORIGINALVARIABLES = list(locals().keys()) # Get the state before the test is run
-        print('\n'*10+'#'*200)
+        print('\n'*10+'•'*100)
         print('NOW RUNNING: %s' % TEST)
-        print('#'*200+'\n'*3)
+        print('•'*100+'\n'*3)
         exec(open(TEST).read()) # Run the test!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
         SUCCEEDED.append({'test':TEST, 'time':TIME()-THISSTART})
         CURRENTVARIABLES = list(locals().keys())
@@ -49,6 +49,6 @@ if len(FAILED):
     print('The following %i/%i tests failed :(' % (len(FAILED), len(MASTER)))
     for FAIL in FAILED: print('  %s: %s' % (FAIL['test'], FAIL['msg']))
 else:
-    print('All %i tests passed!!! You are the best!!' % len(MASTER))
+    print('All %i tests passed!!!' % len(MASTER))
     for SUCCESS in SUCCEEDED: print('  %s: %0.1f s' % (SUCCESS['test'], SUCCESS['time']))
 print('Elapsed time: %0.1f s.' % (TIME()-VERYSTART))

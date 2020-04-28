@@ -24,7 +24,6 @@ from glob import glob
 from gzip import GzipFile
 from zipfile import ZipFile
 from contextlib import closing
-from collections import OrderedDict
 from pathlib import Path
 from io import BytesIO as IO
 import pickle as pkl
@@ -82,10 +81,21 @@ def loadstr(string=None, verbose=False, die=None):
     return obj
 
 
-def saveobj(filename=None, obj=None, compresslevel=5, verbose=0, folder=None, method='pickle'):
+def saveobj(filename=None, obj=None, compresslevel=5, verbose=0, folder=None, method='pickle', *args, **kwargs):
     '''
     Save an object to file -- use compression 5 by default, since more is much slower but not much smaller.
-    Once saved, can be loaded with loadobj() (q.v.).
+    Once saved, can be loaded with sc.loadobj().
+
+    Args:
+        filename (str or Path): the filename to save to; if str, passed to sc.makefilepath()
+        obj (literally anything): the object to save
+        compresslevel (int): the level of gzip compression
+        verbose (int): detail to print
+        folder (str): passed to sc.makefilepath()
+        method (str): whether to use pickle (default) or dill
+        args (list): passed to pickle.dumps()
+        kwargs (dict): passed to pickle.dumps()
+
 
     Usage:
         myobj = ['this', 'is', 'a', 'weird', {'object':44}]
@@ -106,12 +116,13 @@ def saveobj(filename=None, obj=None, compresslevel=5, verbose=0, folder=None, me
         else: # Otherwise, try pickle
             try:
                 if verbose>=2: print('Saving as pickle...')
-                savepickle(fileobj, obj) # Use pickle
+                savepickle(fileobj, obj, *args, **kwargs) # Use pickle
             except Exception as E:
                 if verbose>=2: print('Exception when saving as pickle (%s), saving as dill...' % repr(E))
-                savedill(fileobj, obj) # ...but use Dill if that fails
+                savedill(fileobj, obj, *args, **kwargs) # ...but use Dill if that fails
 
-    if verbose and filename: print('Object saved to "%s"' % filename)
+    if verbose and filename:
+        print('Object saved to "%s"' % filename)
 
     if filename:
         return filename
@@ -121,6 +132,7 @@ def saveobj(filename=None, obj=None, compresslevel=5, verbose=0, folder=None, me
 
 
 def dumpstr(obj=None):
+    ''' Dump an object as a bytes-like string '''
     with closing(IO()) as output: # Open a "fake file."
         with GzipFile(fileobj=output, mode='wb') as fileobj:  # Open a Gzip-compressing way to write to this "file."
             try:    savepickle(fileobj, obj) # Use pickle
@@ -326,7 +338,7 @@ def thisdir(file, *args, **kwargs):
 ### JSON functions
 ##############################################################################
 
-__all__ += ['sanitizejson', 'jsonify', 'loadjson', 'savejson']
+__all__ += ['sanitizejson', 'jsonify', 'loadjson', 'savejson', 'jsonpickle', 'jsonunpickle']
 
 
 def sanitizejson(obj, verbose=True, die=False, tostring=False, **kwargs):
@@ -356,8 +368,10 @@ def sanitizejson(obj, verbose=True, die=False, tostring=False, **kwargs):
         if np.isnan(obj): # It's nan, so return None
             output = None
         else:
-            if isinstance(obj, (int, np.int64)): output = int(obj) # It's an integer
-            else:                                output = float(obj)# It's something else, treat it as a float
+            if isinstance(obj, (int, np.int64)):
+                output = int(obj) # It's an integer
+            else:
+                output = float(obj)# It's something else, treat it as a float
 
     elif ut.isstring(obj): # It's a string of some kind
         try:    string = str(obj) # Try to convert it to ascii
@@ -380,9 +394,18 @@ def sanitizejson(obj, verbose=True, die=False, tostring=False, **kwargs):
     elif isinstance(obj, uuid.UUID):
         output = str(obj)
 
+    elif callable(getattr(obj, 'to_dict', None)): # Handle e.g. pandas, where we want to return the object, not the string
+        output = obj.to_dict()
+
+    elif callable(getattr(obj, 'to_json', None)):
+        output = obj.to_json()
+
+    elif callable(getattr(obj, 'toJSON', None)):
+        output = obj.toJSON()
+
     else: # None of the above
         try:
-            output = json.loads(json.dumps(obj)) # Try passing it through jsonification
+            output = jsonpickle(obj)
         except Exception as E:
             errormsg = 'Could not sanitize "%s" %s (%s), converting to string instead' % (obj, type(obj), str(E))
             if die:       raise Exception(errormsg)
@@ -441,6 +464,39 @@ def savejson(filename=None, obj=None, folder=None, **kwargs):
         json.dump(sanitizejson(obj), f, **kwargs)
     return None
 
+
+def jsonpickle(obj, tostring=False):
+    ''' Use jsonpickle to return a representation of an object '''
+    import jsonpickle as jp
+    import jsonpickle.ext.numpy as jsonpickle_numpy
+    import jsonpickle.ext.pandas as jsonpickle_pandas
+    jsonpickle_numpy.register_handlers()
+    jsonpickle_pandas.register_handlers()
+
+    if tostring:
+        output = jp.dumps(obj)
+    else:
+        pickler = jp.pickler.Pickler()
+        output = pickler.flatten(obj)
+
+    return output
+
+
+def jsonunpickle(json):
+    ''' Use jsonunpickle to restore an object '''
+    import jsonpickle as jp
+    import jsonpickle.ext.numpy as jsonpickle_numpy
+    import jsonpickle.ext.pandas as jsonpickle_pandas
+    jsonpickle_numpy.register_handlers()
+    jsonpickle_pandas.register_handlers()
+
+    if isinstance(json, str):
+        output = jp.loads(json)
+    else:
+        unpickler = jp.unpickler.Unpickler()
+        output = unpickler.restore(json)
+
+    return output
 
 
 ##############################################################################
@@ -1012,19 +1068,21 @@ def unpickler(string=None, filename=None, filestring=None, die=None, verbose=Fal
     return obj
 
 
-def savepickle(fileobj=None, obj=None):
+def savepickle(fileobj=None, obj=None, protocol=None, *args, **kwargs):
         ''' Use pickle to do the salty work '''
-        fileobj.write(pkl.dumps(obj, protocol=-1))
+        if protocol is None:
+            protocol = 4
+        fileobj.write(pkl.dumps(obj, protocol=protocol, *args, **kwargs))
         return None
 
 
-def savedill(fileobj=None, obj=None):
+def savedill(fileobj=None, obj=None, *args, **kwargs):
     ''' Use dill to do the sour work '''
     try:
         import dill # Optional Sciris dependency
     except ModuleNotFoundError as e:
         raise Exception('The "dill" Python package is not available; please install manually') from e
-    fileobj.write(dill.dumps(obj, protocol=-1))
+    fileobj.write(dill.dumps(obj, protocol=-1, *args, **kwargs))
     return None
 
 
