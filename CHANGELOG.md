@@ -11,7 +11,7 @@ By import convention, components of the Sciris library are listed beginning with
 1. `sc.suggest()` now uses `jellyfish` instead of `python-levenshtein` for fuzzy string matching.
 1. `sc.saveobj()` now uses protocol 4 instead of the latest by default, to avoid backwards incompatibility issues caused by using protocol 5 (only compatible with Python 3.8).
 1.  `sc.odict()` and related classes now raise `sc.KeyNotFound` exceptions. These are derived from `KeyError`, but fix a bug in the string representation (https://stackoverflow.com/questions/34051333/strange-error-message-printed-out-for-keyerror) to allow multi-line error messages.
-
+1. Rewrote all tests to be pytest-compatible.
 
 ## Version 0.16.8 (2020-04-11)
 1. Added a [Code of Conduct](CODE_OF_CONDUCT.md).
