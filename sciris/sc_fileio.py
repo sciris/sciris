@@ -394,6 +394,9 @@ def sanitizejson(obj, verbose=True, die=False, tostring=False, **kwargs):
     elif isinstance(obj, uuid.UUID):
         output = str(obj)
 
+    elif callable(getattr(obj, 'to_dict', None)): # Handle e.g. pandas, where we want to return the object, not the string
+        output = obj.to_dict()
+
     elif callable(getattr(obj, 'to_json', None)):
         output = obj.to_json()
 
