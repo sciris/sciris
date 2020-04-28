@@ -7,7 +7,7 @@ import pylab as pl
 import sciris as sc
 
 
-def legacy_tests():
+def test_legacy():
     '''
     Preserved for completeness, but too fragile to be used in automated unit testing
     due to reliance on openpyxl (which is not a required Sciris dependency).
@@ -181,6 +181,8 @@ def legacy_tests():
 
     print('Done, all fileio tests succeeded')
 
+    return S
+
 
 def test_json():
     sc.heading('Testing JSON read/write functions')
@@ -209,15 +211,8 @@ def test_json():
 if __name__ == '__main__':
     sc.tic()
 
-    try:
-        legacy_tests()
-    except:
-        print('\n\nNOTE: Legacy tests failed -- this is no major cause for concern, but the cause was:\n')
-        print(sc.traceback())
-        print('Continuing with other tests...')
-
+    spread = test_legacy()
     json = test_json()
 
-
-
     sc.toc()
+    print('Done.')

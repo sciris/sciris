@@ -123,3 +123,4 @@ if __name__ == '__main__':
     test_repr()
 
     sc.toc()
+    print('Done.')

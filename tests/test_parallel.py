@@ -1,27 +1,32 @@
+'''
+Test parallelization. Not written as pytest tests because it conflicts with pytest's
+built-in parallelization.
+'''
+
 import sciris as sc
 import pylab as pl
-
-torun = [
-'simple',
-'embarrassing',
-'multiargs',
-'noniterated',
-'parallelcmd'
-]
 
 if 'doplot' not in locals(): doplot = True
 
 
-if __name__ == '__main__':
+def test_legacy():
+
+    torun = [
+    'simple',
+    'embarrassing',
+    'multiargs',
+    'noniterated',
+    'parallelcmd'
+    ]
 
     #Example 1 -- simple usage as a shortcut to multiprocessing.map():
-    if 'simple' in torun:
+    # if 'simple' in torun:
 
-        def f(x):
-            return x*x
+    def f(x):
+        return x*x
 
-        results = sc.parallelize(f, [1,2,3])
-        print(results)
+    results = sc.parallelize(f, [1,2,3])
+    print(results)
 
 
 
@@ -78,3 +83,15 @@ result = newval**2
         """
         results = sc.parallelcmd(cmd=cmd, parfor=parfor, returnval=returnval, const=const, maxload=0)
         print(results)
+
+    return results
+
+
+#%% Run as a script
+if __name__ == '__main__':
+    sc.tic()
+
+    results = test_legacy()
+
+    sc.toc()
+    print('Done.')
