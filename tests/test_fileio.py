@@ -2,11 +2,12 @@
 Test Sciris file I/O functions.
 '''
 
+import os
 import pytest
 import pylab as pl
 import pandas as pd
+import openpyexcel
 import sciris as sc
-
 
 def test_legacy():
     '''
@@ -14,8 +15,7 @@ def test_legacy():
     due to reliance on openpyxl (which is not a required Sciris dependency).
     '''
 
-    import openpyxl
-    import os
+
 
     torun = [
     'savespreadsheet',
@@ -88,7 +88,7 @@ def test_legacy():
         sc.heading('Loading a blobject')
         blob = sc.Blobject(files.excel)
         f = blob.tofile()
-        wb = openpyxl.load_workbook(f)
+        wb = openpyexcel.load_workbook(f)
         ws = wb.active
         ws['B7'] = 'Hi!     '
         wb.save(f)
@@ -191,14 +191,15 @@ def test_json():
     not_jsonifiable = sc.Blobject() # Create an object that can't be JSON serialized
 
     print('Testing jsonifying a NON-jsonifiable object:')
-    sc.jsonify(not_jsonifiable, die=False) # Will return a string representation
-    with pytest.raises(Exception):
-        sc.sanitizejson(not_jsonifiable, die=True) # Will die
+    notjson = sc.jsonify(not_jsonifiable, die=False) # Will return a string representation
+    sc.sanitizejson(not_jsonifiable, die=True) # Will still not die thanks to jsonpickle
 
     jsonifiable = sc.objdict().make(keys=['a','b'], vals=pl.rand(10))
     json_obj = sc.jsonify(jsonifiable)
     json_str = sc.jsonify(jsonifiable, tostring=True, indent=2) # kwargs are passed to json.dumps()
 
+    print('Not-a-JSON as sanitized object:')
+    print(notjson)
     print('JSON as sanitized object:')
     print(json_obj)
     print('JSON as string:')
@@ -229,8 +230,8 @@ def test_jsonpickle():
 if __name__ == '__main__':
     sc.tic()
 
-    # spread = test_legacy()
-    # json   = test_json()
+    spread = test_legacy()
+    json   = test_json()
     jp     = test_jsonpickle()
 
     sc.toc()
