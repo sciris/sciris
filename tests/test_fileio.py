@@ -4,6 +4,7 @@ Test Sciris file I/O functions.
 
 import pytest
 import pylab as pl
+import pandas as pd
 import sciris as sc
 
 
@@ -206,13 +207,31 @@ def test_json():
     return json_str
 
 
+def test_jsonpickle():
+    sc.heading('Testing JSON read/write functions')
+
+    myobj = sc.prettyobj()
+    myobj.a = 3
+    myobj.b = pd.DataFrame.from_dict({'a':[3,5,23]})
+
+    jp = sc.jsonpickle(myobj)
+    jps = sc.jsonpickle(myobj, tostring=True)
+    myobj2 = sc.jsonunpickle(jp)
+    myobj3 = sc.jsonunpickle(jps)
+
+    assert myobj.b.equals(myobj2.b)
+    assert myobj.b.equals(myobj3.b)
+
+    return jp
+
 
 #%% Run as a script
 if __name__ == '__main__':
     sc.tic()
 
-    spread = test_legacy()
-    json = test_json()
+    # spread = test_legacy()
+    # json   = test_json()
+    jp     = test_jsonpickle()
 
     sc.toc()
     print('Done.')

@@ -7,7 +7,8 @@ By import convention, components of the Sciris library are listed beginning with
 ## Version 0.17.0 (2020-04-27)
 1. `sc.mprofile()` has been added, which does memory profiling just like `sc.profile()`.
 1. `sc.progressbar()` has been added, which prints a progress bar.
-1. `sc.jsonify()` checks objects for a `to_json()` method, handling e.g Pandas dataframes.
+1. `sc.jsonpickle()` and `sc.jsonunpickle()` have been added, wrapping the module of the same name, to convert arbitrary objects to JSON.
+1. `sc.jsonify()` checks objects for a `to_json()` method, handling e.g Pandas dataframes, and falls back to `sc.jsonpickle()` instead of raising an exception for unknown object types.
 1. `sc.suggest()` now uses `jellyfish` instead of `python-levenshtein` for fuzzy string matching.
 1. `sc.saveobj()` now uses protocol 4 instead of the latest by default, to avoid backwards incompatibility issues caused by using protocol 5 (only compatible with Python 3.8).
 1.  `sc.odict()` and related classes now raise `sc.KeyNotFound` exceptions. These are derived from `KeyError`, but fix a bug in the string representation (https://stackoverflow.com/questions/34051333/strange-error-message-printed-out-for-keyerror) to allow multi-line error messages.

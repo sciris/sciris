@@ -25,6 +25,7 @@ requirements = [
         'xlsxwriter',        # Spreadsheet output
         'psutil',            # Load monitoring
         'dill',              # File I/O
+        'jsonpickle',        # For converting arbitrary objects to JSON
         'gitpython',         # Version information
         'requests',          # HTTP methods
         'jellyfish',         # For fuzzy string matching

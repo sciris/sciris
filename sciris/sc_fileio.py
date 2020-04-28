@@ -338,7 +338,7 @@ def thisdir(file, *args, **kwargs):
 ### JSON functions
 ##############################################################################
 
-__all__ += ['sanitizejson', 'jsonify', 'loadjson', 'savejson']
+__all__ += ['sanitizejson', 'jsonify', 'loadjson', 'savejson', 'jsonpickle', 'jsonunpickle']
 
 
 def sanitizejson(obj, verbose=True, die=False, tostring=False, **kwargs):
@@ -368,8 +368,10 @@ def sanitizejson(obj, verbose=True, die=False, tostring=False, **kwargs):
         if np.isnan(obj): # It's nan, so return None
             output = None
         else:
-            if isinstance(obj, (int, np.int64)): output = int(obj) # It's an integer
-            else:                                output = float(obj)# It's something else, treat it as a float
+            if isinstance(obj, (int, np.int64)):
+                output = int(obj) # It's an integer
+            else:
+                output = float(obj)# It's something else, treat it as a float
 
     elif ut.isstring(obj): # It's a string of some kind
         try:    string = str(obj) # Try to convert it to ascii
@@ -392,9 +394,15 @@ def sanitizejson(obj, verbose=True, die=False, tostring=False, **kwargs):
     elif isinstance(obj, uuid.UUID):
         output = str(obj)
 
+    elif callable(getattr(obj, 'to_json', None)):
+        output = obj.to_json()
+
+    elif callable(getattr(obj, 'toJSON', None)):
+        output = obj.toJSON()
+
     else: # None of the above
         try:
-            output = json.loads(json.dumps(obj)) # Try passing it through jsonification
+            output = jsonpickle(obj)
         except Exception as E:
             errormsg = 'Could not sanitize "%s" %s (%s), converting to string instead' % (obj, type(obj), str(E))
             if die:       raise Exception(errormsg)
@@ -453,6 +461,39 @@ def savejson(filename=None, obj=None, folder=None, **kwargs):
         json.dump(sanitizejson(obj), f, **kwargs)
     return None
 
+
+def jsonpickle(obj, tostring=False):
+    ''' Use jsonpickle to return a representation of an object '''
+    import jsonpickle as jp
+    import jsonpickle.ext.numpy as jsonpickle_numpy
+    import jsonpickle.ext.pandas as jsonpickle_pandas
+    jsonpickle_numpy.register_handlers()
+    jsonpickle_pandas.register_handlers()
+
+    if tostring:
+        output = jp.dumps(obj)
+    else:
+        pickler = jp.pickler.Pickler()
+        output = pickler.flatten(obj)
+
+    return output
+
+
+def jsonunpickle(json):
+    ''' Use jsonunpickle to restore an object '''
+    import jsonpickle as jp
+    import jsonpickle.ext.numpy as jsonpickle_numpy
+    import jsonpickle.ext.pandas as jsonpickle_pandas
+    jsonpickle_numpy.register_handlers()
+    jsonpickle_pandas.register_handlers()
+
+    if isinstance(json, str):
+        output = jp.loads(json)
+    else:
+        unpickler = jp.unpickler.Unpickler()
+        output = unpickler.restore(json)
+
+    return output
 
 
 ##############################################################################

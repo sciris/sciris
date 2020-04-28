@@ -297,8 +297,8 @@ if __name__ == '__main__':
     foo       = test_profile()
     myobj     = test_prepr()
     uid       = test_uuid()
-    plist     = test_promotetolist
-    dists     = test_suggest
+    plist     = test_promotetolist()
+    dists     = test_suggest()
     thisdir   = test_thisdir()
     traceback = test_traceback()
     dateobj   = test_readdate()
