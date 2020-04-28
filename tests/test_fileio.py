@@ -3,7 +3,6 @@ Test Sciris file I/O functions.
 '''
 
 import os
-import pytest
 import pylab as pl
 import pandas as pd
 import openpyexcel
@@ -48,13 +47,16 @@ def test_legacy():
     data = sc.loadspreadsheet(files.excel)
     print(data)
 
-
-    sc.heading('Reading cells')
-    wb = sc.Spreadsheet(filename=filedir+'exampledata.xlsx') # Load a sample databook to try pulling cells from
-    celltest = wb.readcells(method='xlrd', sheetname='Baseline year population inputs', cells=[[46, 2], [47, 2]]) # Grab cells using xlrd
-    celltest2 = wb.readcells(method='openpyexcel', wbargs={'data_only': True}, sheetname='Baseline year population inputs', cells=[[46, 2], [47, 2]]) # Grab cells using openpyexcel.  You have to set wbargs={'data_only': True} to pull out cached values instead of formula strings
-    print('xlrd output: %s' % celltest)
-    print('openpyxl output: %s' % celltest2)
+    excel_path = filedir+'exampledata.xlsx'
+    if os.path.exists(excel_path):
+        sc.heading('Reading cells')
+        wb = sc.Spreadsheet(filename=excel_path) # Load a sample databook to try pulling cells from
+        celltest = wb.readcells(method='xlrd', sheetname='Baseline year population inputs', cells=[[46, 2], [47, 2]]) # Grab cells using xlrd
+        celltest2 = wb.readcells(method='openpyexcel', wbargs={'data_only': True}, sheetname='Baseline year population inputs', cells=[[46, 2], [47, 2]]) # Grab cells using openpyexcel.  You have to set wbargs={'data_only': True} to pull out cached values instead of formula strings
+        print('xlrd output: %s' % celltest)
+        print('openpyxl output: %s' % celltest2)
+    else:
+        print(f'{excel_path} not found, skipping...')
 
 
     sc.heading('Loading a blobject')
@@ -128,9 +130,13 @@ def test_legacy():
     sc.saveobj('deadclass.obj', deadclass)
     -------------------------------------------------
     '''
-    sc.heading('Intentionally loading corrupted file')
-    obj = sc.loadobj(filedir+'deadclass.obj')
-    print('Loading corrupted object succeeded, x=%s' % obj.x)
+    dead_path = filedir+'deadclass.obj'
+    if os.path.exists(dead_path):
+        sc.heading('Intentionally loading corrupted file')
+        obj = sc.loadobj(dead_path)
+        print('Loading corrupted object succeeded, x=%s' % obj.x)
+    else:
+        print(f'{dead_path} not found, skipping...')
 
 
     # Tidy up
