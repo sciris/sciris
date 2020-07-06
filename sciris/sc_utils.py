@@ -1355,7 +1355,7 @@ def elapsedtimestr(pasttime, maxdays=5, shortmonths=True):
         elif elapsed_time < datetime.timedelta(seconds=60 * 60):
 
             # We know that seconds > 60, so we can safely round down
-            minutes = elapsed_time.seconds / 60
+            minutes = int(elapsed_time.seconds / 60)
             if minutes == 1:
                 time_str = "a minute ago"
             else:
@@ -1365,9 +1365,9 @@ def elapsedtimestr(pasttime, maxdays=5, shortmonths=True):
         elif elapsed_time < datetime.timedelta(seconds=60 * 60 * 24 - 1):
 
             # We know that it's at least an hour, so we can safely round down
-            hours = elapsed_time.seconds / (60 * 60)
+            hours = int(elapsed_time.seconds / (60 * 60))
             if hours == 1:
-                time_str = "an hour ago"
+                time_str = "1 hour ago"
             else:
                 time_str = "%d hours ago" % hours
 
