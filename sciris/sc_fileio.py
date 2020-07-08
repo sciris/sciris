@@ -580,7 +580,7 @@ class Blobject(object):
         self.modified = ut.now()
         return None
 
-    def save(self, filename):
+    def save(self, filename=None):
         ''' This function writes the spreadsheet to a file on disk. '''
         filepath = makefilepath(filename=filename)
         with open(filepath, mode='wb') as f:
