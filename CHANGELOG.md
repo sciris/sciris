@@ -4,6 +4,9 @@ All notable changes to this project will be documented in this file.
 
 By import convention, components of the Sciris library are listed beginning with `sc.`, e.g. `sc.odict()`.
 
+## Version 0.17.1 (2020-07-07)
+1. `sc.Blobject` has been modified to allow more flexibility with saving (e.g., `Path` objects).
+
 ## Version 0.17.0 (2020-04-27)
 1. `sc.mprofile()` has been added, which does memory profiling just like `sc.profile()`.
 1. `sc.progressbar()` has been added, which prints a progress bar.
