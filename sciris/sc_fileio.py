@@ -582,21 +582,11 @@ class Blobject(object):
 
     def save(self, filename=None):
         ''' This function writes the spreadsheet to a file on disk. '''
-        if filename is None:
-            if self.filename is not None:
-                filename = self.filename
-            elif self.name is not None:
-                if self.name.endswith('.xlsx'):
-                    filename = self.name
-                else:
-                    filename = self.name + '.xlsx'
-            else:
-                filename = 'spreadsheet.xlsx' # Come up with a terrible default name
         filepath = makefilepath(filename=filename)
         with open(filepath, mode='wb') as f:
             f.write(self.blob)
         self.filename = filename
-        print('Spreadsheet saved to %s.' % filepath)
+        print('Object saved to %s.' % filepath)
         return filepath
 
     def tofile(self, output=True):
@@ -774,9 +764,9 @@ class Spreadsheet(Blobject):
 
         return None
 
-
-    pass
-
+    def save(self, filename='spreadsheet.xlsx'):
+        filepath = makefilepath(filename=filename, ext='xlsx')
+        super().save(filepath)
 
 def loadspreadsheet(filename=None, folder=None, fileobj=None, sheetname=None, sheetnum=None, asdataframe=None, header=True, cells=None):
     '''
