@@ -1945,7 +1945,7 @@ def mprofile(run, follow=None, *args, **kwargs):
 ### NESTED DICTIONARY FUNCTIONS
 ##############################################################################
 
-__all__ += ['getnested', 'setnested', 'makenested', 'iternested', 'mergenested', 'flattendict']
+__all__ += ['getnested', 'setnested', 'makenested', 'iternested', 'mergenested', 'flattendict', 'search']
 
 docstring = '''
 Four little functions to get and set data from nested dictionaries. The first two were adapted from:
@@ -2091,6 +2091,52 @@ def flattendict(input_dict: dict, sep: str = None, _prefix=None) -> dict:
 
     return output_dict
 
+def search(obj, attribute, _trace=''):
+    """
+    Find a key or attribute within a dictionary or object.
+
+    This function facilitates finding nested key(s) or attributes within an object,
+    by searching recursively through keys or attributes.
+
+
+    Args:
+        obj: A dict or class with __dict__ attribute
+        attribute: The substring to search for
+        _trace: Not for user input - internal variable used for recursion
+
+    Returns:
+        A list of matching attributes. The items in the list are the Python
+        strings used to access the attribute (via attribute or dict indexing)
+
+    Example::
+
+        nested = {'a':{'foo':1, 'bar':2}, 'b':{'bar':3, 'cat':4}}
+        matches = sc.search(nested, 'bar') # Returns ['["a"]["bar"]', '["b"]["bar"]']
+
+    """
+
+    matches = []
+
+    if isinstance(obj, dict):
+        d = obj
+    elif hasattr(obj, '__dict__'):
+        d = obj.__dict__
+    else:
+        return matches
+
+    for attr in d:
+
+        if isinstance(obj, dict):
+            s = _trace + f'["{attr}"]'
+        else:
+            s = _trace + f'.{attr}'
+
+        if attribute in attr:
+            matches.append(s)
+
+        matches += search(d[attr], attribute, s)
+
+    return matches
 
 ##############################################################################
 ### CLASSES

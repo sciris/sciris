@@ -4,6 +4,9 @@ All notable changes to this project will be documented in this file.
 
 By import convention, components of the Sciris library are listed beginning with `sc.`, e.g. `sc.odict()`.
 
+## Version 0.17.2 (2020-07-13)
+1. `sc.search()` is a new function to find nested attributes/keys within objects or dictionaries.
+
 ## Version 0.17.1 (2020-07-07)
 1. `sc.Blobject` has been modified to allow more flexibility with saving (e.g., `Path` objects).
 

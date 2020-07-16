@@ -279,6 +279,14 @@ def test_nested_dicts():
     return dict3
 
 
+def test_search():
+    sc.heading('Testing search')
+    nested = {'a':{'foo':1, 'bar':2}, 'b':{'bar':3, 'cat':4}}
+    matches = sc.search(nested, 'bar') # Returns ['["a"]["bar"]', '["b"]["bar"]']
+    print(matches)
+    return matches
+
+
 def test_progress_bar():
     sc.heading('Progress bar')
     n = 50
@@ -305,6 +313,7 @@ if __name__ == '__main__':
     flat      = test_flattendict()
     md        = test_mergedicts()
     nested    = test_nested_dicts()
+    matches   = test_search()
     ind       = test_progress_bar()
 
     sc.toc()
