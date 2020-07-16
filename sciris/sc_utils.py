@@ -2093,9 +2093,10 @@ def flattendict(input_dict: dict, sep: str = None, _prefix=None) -> dict:
 
 def search(obj, attribute, _trace=''):
     """
-    Find a key or attribute within a dict/class
+    Find a key or attribute within a dictionary or object.
 
-    This function facilitates finding nested key(s) or attributes within an object
+    This function facilitates finding nested key(s) or attributes within an object,
+    by searching recursively through keys or attributes.
 
 
     Args:
@@ -2106,6 +2107,11 @@ def search(obj, attribute, _trace=''):
     Returns:
         A list of matching attributes. The items in the list are the Python
         strings used to access the attribute (via attribute or dict indexing)
+
+    Example::
+
+        nested = {'a':{'foo':1, 'bar':2}, 'b':{'bar':3, 'cat':4}}
+        matches = sc.search(nested, 'bar') # Returns ['["a"]["bar"]', '["b"]["bar"]']
 
     """
 
