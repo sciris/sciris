@@ -287,6 +287,7 @@ def parallel_task(taskargs, outputqueue=None):
     ''' Task called by parallelize() -- not to be called directly '''
     
     # Handle inputs
+    taskargs = ut.dcp(taskargs)
     func   = taskargs.func
     index  = taskargs.index
     args   = taskargs.args
