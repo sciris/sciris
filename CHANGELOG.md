@@ -4,6 +4,9 @@ All notable changes to this project will be documented in this file.
 
 By import convention, components of the Sciris library are listed beginning with `sc.`, e.g. `sc.odict()`.
 
+## Version 0.17.3 (2020-07-21)
+1. `sc.parallelize()` now explicitly deep-copies objects, since on some platforms this copying does not take place as part of the parallelization process.
+
 ## Version 0.17.2 (2020-07-13)
 1. `sc.search()` is a new function to find nested attributes/keys within objects or dictionaries.
 
