@@ -443,9 +443,18 @@ def prepr(obj, maxlen=None, maxitems=None, skip=None, dividerchar='—', divider
     # Initialize things to print out
     labels = []
     values = []
-    if hasattr(obj, '__dict__'):
-        if len(obj.__dict__):
-            labels = sorted(set(obj.__dict__.keys()) - set(skip)) # Get the attribute keys
+
+    if not (hasattr(obj, '__dict__') or hasattr(obj, '__slots__')):
+        # It's a plain object
+        labels = ['%s' % type(obj)]
+        values = [flexstr(obj)]
+    else:
+        if hasattr(obj, '__dict__'):
+            labels = sorted(set(obj.__dict__.keys()) - set(skip))  # Get the dict attribute keys
+        else:
+            labels = sorted(set(obj.__slots__) - set(skip))  # Get the slots attribute keys
+
+        if len(labels):
             extraitems = len(labels) - maxitems
             if extraitems>0:
                 labels = labels[:maxitems]
@@ -464,9 +473,6 @@ def prepr(obj, maxlen=None, maxitems=None, skip=None, dividerchar='—', divider
         if extraitems > 0:
             labels.append('etc.')
             values.append(f'{extraitems} entries not shown')
-    else: # If it's not an object, just get its representation
-        labels = ['%s' % type(obj)]
-        values = [flexstr(obj)]
 
     # Decide how to print them
     maxkeylen = 0
@@ -1828,17 +1834,18 @@ def suggest(user_input, valid_inputs, n=1, threshold=4, fulloutput=False, die=Fa
                 return suggestions[:n]
 
 
-def profile(run, follow=None, *args, **kwargs):
+def profile(run, follow=None, print_stats=True, *args, **kwargs):
     '''
     Profile the line-by-line time required by a function.
 
     Args:
         run (function): The function to be run
         follow (function): The function or list of functions to be followed in the profiler; if None, defaults to the run function
+        print_stats (bool): whether to print the statistics of the profile to stdout
         args, kwargs: Passed to the function to be run
 
     Returns:
-        None (the profile output is printed to stdout)
+        LineProfiler (by default, the profile output is also printed to stdout)
 
     Example
     -------
@@ -1891,16 +1898,17 @@ def profile(run, follow=None, *args, **kwargs):
     lp.enable_by_count()
     wrapper = lp(run)
 
-    print('Profiling...')
+    if print_stats:
+        print('Profiling...')
     wrapper(*args, **kwargs)
-    lp.print_stats()
     run = orig_func
-    print('Done.')
+    if print_stats:
+        lp.print_stats()
+        print('Done.')
+    return lp
 
-    return
 
-
-def mprofile(run, follow=None, *args, **kwargs):
+def mprofile(run, follow=None, show_results=True, *args, **kwargs):
     '''
     Profile the line-by-line memory required by a function. See profile() for a
     usage example.
@@ -1908,10 +1916,11 @@ def mprofile(run, follow=None, *args, **kwargs):
     Args:
         run (function): The function to be run
         follow (function): The function or list of functions to be followed in the profiler; if None, defaults to the run function
+        show_results (bool): whether to print the statistics of the profile to stdout
         args, kwargs: Passed to the function to be run
 
     Returns:
-        None (the profile output is printed to stdout)
+        LineProfiler (by default, the profile output is also printed to stdout)
     '''
 
     try:
@@ -1932,12 +1941,13 @@ def mprofile(run, follow=None, *args, **kwargs):
     except TypeError as e:
         raise TypeError('Function wrapping failed; are you profiling an already-profiled function?') from e
 
-    print('Profiling...')
+    if show_results:
+        print('Profiling...')
     wrapper(*args, **kwargs)
-    mp.show_results(lp)
-    print('Done.')
-
-    return
+    if show_results:
+        mp.show_results(lp)
+        print('Done.')
+    return lp
 
 
 
