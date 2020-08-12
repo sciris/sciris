@@ -2148,7 +2148,7 @@ def search(obj, attribute, _trace=''):
 ### CLASSES
 ##############################################################################
 
-__all__ += ['KeyNotFoundError', 'LinkException', 'prettyobj', 'Link', 'Timer', 'cachefile']
+__all__ += ['KeyNotFoundError', 'LinkException', 'prettyobj', 'Link', 'Timer']
 
 
 class KeyNotFoundError(KeyError):
@@ -2292,5 +2292,3 @@ class Timer(object):
         '''
 
         toc(self.start,**self.kwargs)
-
-
