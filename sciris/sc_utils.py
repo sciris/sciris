@@ -2296,31 +2296,3 @@ class Timer(object):
         toc(self.start,**self.kwargs)
 
 
-def cachefile(fcn):
-
-    @wraps(fcn)
-    def wrapper(*args, **kwargs):
-
-        try:
-            hash = hashlib.sha1(pickle.dumps((args,kwargs))).hexdigest()[0:8]
-        except pickle.PicklingError:
-            print('Argument is not picklable, will not cache function run')
-            return fcn(*args, **kwargs)
-
-        fname = f'_cachefile_{fcn.__name__}_{hash}'
-
-        try:
-            print(f'Trying cache file {fname}')
-            return loadobj(fname, die=True)
-        except (FileNotFoundError, pickle.UnpicklingError):
-            print('Cache file not successful, re-running function')
-            val = fcn(*args, **kwargs)
-            try:
-                saveobj(fname, val)
-                print('Saved cache file for next run')
-            except Exception as E:
-                print(f'Cache error: {str(E)}')
-
-            return val
-
-    return wrapper
