@@ -4,6 +4,11 @@ All notable changes to this project will be documented in this file.
 
 By import convention, components of the Sciris library are listed beginning with `sc.`, e.g. `sc.odict()`.
 
+
+## Version 0.17.4 (2020-08-11)
+1. `sc.profile()` and `sc.mprofile()` now return the line profiler instance for later use (e.g., to extract additional statistics).
+1. `sc.prepr()` (also used in `sc.prettyobj()`) can now support objects with slots instead of dicts.
+
 ## Version 0.17.3 (2020-07-21)
 1. `sc.parallelize()` now explicitly deep-copies objects, since on some platforms this copying does not take place as part of the parallelization process.
 
