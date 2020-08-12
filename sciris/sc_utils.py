@@ -10,6 +10,7 @@ import copy
 import time
 import json
 import pprint
+import pickle
 import hashlib
 import datetime
 import dateutil
@@ -22,9 +23,10 @@ import uuid as py_uuid
 import tempfile
 import traceback as py_traceback
 from textwrap import fill
-from functools import reduce
+from functools import reduce, wraps
 from collections import OrderedDict as OD
 from distutils.version import LooseVersion
+from .sc_fileio import loadobj, saveobj
 
 # Handle types and legacy Python 2 compatibility
 import urllib.request as urlrequester
@@ -2286,3 +2288,32 @@ class Timer(object):
         '''
 
         toc(self.start,**self.kwargs)
+
+def cachefile(fcn):
+
+    @wraps(fcn)
+    def wrapper(*args, **kwargs):
+
+        try:
+            hash = hashlib.sha1(pickle.dumps((args,kwargs))).hexdigest()[0:8]
+        except pickle.PicklingError:
+            print('Argument is not picklable, will not cache function run')
+            return fcn(*args, **kwargs)
+
+        fname = f'_cachefile_{fcn.__name__}_{hash}'
+
+        try:
+            print(f'Trying cache file {fname}')
+            return loadobj(fname, die=True)
+        except (FileNotFoundError, pickle.UnpicklingError):
+            print('Cache file not successful, re-running function')
+            val = fcn(*args, **kwargs)
+            try:
+                saveobj(fname, val)
+                print('Saved cache file for next run')
+            except Exception as E:
+                print(f'Cache error: {str(E)}')
+
+            return val
+
+    return wrapper
