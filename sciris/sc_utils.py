@@ -10,6 +10,7 @@ import copy
 import time
 import json
 import pprint
+import pickle
 import hashlib
 import datetime
 import dateutil
@@ -22,9 +23,10 @@ import uuid as py_uuid
 import tempfile
 import traceback as py_traceback
 from textwrap import fill
-from functools import reduce
+from functools import reduce, wraps
 from collections import OrderedDict as OD
 from distutils.version import LooseVersion
+from .sc_fileio import loadobj, saveobj
 
 # Handle types and legacy Python 2 compatibility
 import urllib.request as urlrequester
@@ -443,9 +445,18 @@ def prepr(obj, maxlen=None, maxitems=None, skip=None, dividerchar='—', divider
     # Initialize things to print out
     labels = []
     values = []
-    if hasattr(obj, '__dict__'):
-        if len(obj.__dict__):
-            labels = sorted(set(obj.__dict__.keys()) - set(skip)) # Get the attribute keys
+
+    if not (hasattr(obj, '__dict__') or hasattr(obj, '__slots__')):
+        # It's a plain object
+        labels = ['%s' % type(obj)]
+        values = [flexstr(obj)]
+    else:
+        if hasattr(obj, '__dict__'):
+            labels = sorted(set(obj.__dict__.keys()) - set(skip))  # Get the dict attribute keys
+        else:
+            labels = sorted(set(obj.__slots__) - set(skip))  # Get the slots attribute keys
+
+        if len(labels):
             extraitems = len(labels) - maxitems
             if extraitems>0:
                 labels = labels[:maxitems]
@@ -464,9 +475,6 @@ def prepr(obj, maxlen=None, maxitems=None, skip=None, dividerchar='—', divider
         if extraitems > 0:
             labels.append('etc.')
             values.append(f'{extraitems} entries not shown')
-    else: # If it's not an object, just get its representation
-        labels = ['%s' % type(obj)]
-        values = [flexstr(obj)]
 
     # Decide how to print them
     maxkeylen = 0
@@ -2142,7 +2150,7 @@ def search(obj, attribute, _trace=''):
 ### CLASSES
 ##############################################################################
 
-__all__ += ['KeyNotFoundError', 'LinkException', 'prettyobj', 'Link', 'Timer']
+__all__ += ['KeyNotFoundError', 'LinkException', 'prettyobj', 'Link', 'Timer', 'cachefile']
 
 
 class KeyNotFoundError(KeyError):
@@ -2286,3 +2294,33 @@ class Timer(object):
         '''
 
         toc(self.start,**self.kwargs)
+
+
+def cachefile(fcn):
+
+    @wraps(fcn)
+    def wrapper(*args, **kwargs):
+
+        try:
+            hash = hashlib.sha1(pickle.dumps((args,kwargs))).hexdigest()[0:8]
+        except pickle.PicklingError:
+            print('Argument is not picklable, will not cache function run')
+            return fcn(*args, **kwargs)
+
+        fname = f'_cachefile_{fcn.__name__}_{hash}'
+
+        try:
+            print(f'Trying cache file {fname}')
+            return loadobj(fname, die=True)
+        except (FileNotFoundError, pickle.UnpicklingError):
+            print('Cache file not successful, re-running function')
+            val = fcn(*args, **kwargs)
+            try:
+                saveobj(fname, val)
+                print('Saved cache file for next run')
+            except Exception as E:
+                print(f'Cache error: {str(E)}')
+
+            return val
+
+    return wrapper

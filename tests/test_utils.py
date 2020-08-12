@@ -93,6 +93,17 @@ def test_prepr():
     print(myobj)
     return myobj
 
+def test_prepr_slots():
+    sc.heading('Test pretty representation of an object using slots')
+
+    class Foo():
+        __slots__ = ['bar']
+        def __init__(self):
+            self.bar = 1
+
+    x = Foo()
+    sc.prepr(x)
+    return None
 
 def test_uuid():
     sc.heading('Test UID generation')
@@ -304,6 +315,7 @@ if __name__ == '__main__':
     string    = test_printing()
     foo       = test_profile()
     myobj     = test_prepr()
+    test_prepr_slots()
     uid       = test_uuid()
     plist     = test_promotetolist()
     dists     = test_suggest()
