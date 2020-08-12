@@ -75,12 +75,12 @@ def test_profile():
     foo = Foo()
     try:
         sc.mprofile(big_fn) # NB, cannot re-profile the same function at the same time
-    except TypeError: # This happens when re-running this script
-        pass
+    except TypeError as E: # This happens when re-running this script
+        print(f'Unable to re-profile memory function; this is usually not cause for concern ({E})')
     sc.profile(run=foo.outer, follow=[foo.outer, foo.inner])
-    sc.profile(slow_fn)
+    lp = sc.profile(slow_fn)
 
-    return foo
+    return lp
 
 
 def test_prepr():
@@ -93,6 +93,7 @@ def test_prepr():
     print(myobj)
     return myobj
 
+
 def test_prepr_slots():
     sc.heading('Test pretty representation of an object using slots')
 
@@ -102,8 +103,9 @@ def test_prepr_slots():
             self.bar = 1
 
     x = Foo()
-    sc.prepr(x)
-    return None
+    print(sc.prepr(x))
+    return x
+
 
 def test_uuid():
     sc.heading('Test UID generation')
@@ -313,9 +315,9 @@ if __name__ == '__main__':
 
     bluearray = test_colorize()
     string    = test_printing()
-    foo       = test_profile()
+    lp        = test_profile()
     myobj     = test_prepr()
-    test_prepr_slots()
+    myobj2    = test_prepr_slots()
     uid       = test_uuid()
     plist     = test_promotetolist()
     dists     = test_suggest()
