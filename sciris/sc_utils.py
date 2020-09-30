@@ -1275,6 +1275,7 @@ def readdate(datestr=None, dateformat=None, return_defaults=False):
     dateobj = None
     for fmt in formats_to_try.values():
         try:
+            if '%T' in fmt: fmt = fmt.replace('%T', '%X')       # replaces %T with %X to remove error caused by strptime
             dateobj = datetime.datetime.strptime(datestr, fmt)
             break # If we find one that works, we can stop
         except:
