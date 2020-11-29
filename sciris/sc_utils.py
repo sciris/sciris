@@ -1,5 +1,5 @@
 ##############################################################################
-### IMPORTS
+### Imports
 ##############################################################################
 
 import os
@@ -12,7 +12,6 @@ import zlib
 import psutil
 import pprint
 import hashlib
-import datetime
 import dateutil
 import subprocess
 import itertools
@@ -20,6 +19,7 @@ import numbers
 import string
 import numpy as np
 import random as rnd
+import datetime as dt
 import uuid as py_uuid
 import tempfile
 import traceback as py_traceback
@@ -46,7 +46,7 @@ else:
 
 
 ##############################################################################
-### ADAPTATIONS FROM OTHER LIBRARIES
+### Adaptations from other libraries
 ##############################################################################
 
 # Define the modules being loaded
@@ -317,7 +317,7 @@ def traceback(*args, **kwargs):
 
 
 ##############################################################################
-### PRINTING/NOTIFICATION FUNCTIONS
+### Printing/notification functions
 ##############################################################################
 
 __all__ += ['printv', 'blank', 'createcollist', 'objectid', 'objatt', 'objmeth', 'objprop', 'objrepr']
@@ -975,10 +975,10 @@ def heading(string=None, color=None, divider=None, spaces=None, minlength=None, 
 
 
 ##############################################################################
-### TYPE FUNCTIONS
+### Type functions
 ##############################################################################
 
-__all__ += ['flexstr', 'isiterable', 'checktype', 'isnumber', 'isstring', 'promotetoarray', 'promotetolist', 'mergedicts']
+__all__ += ['flexstr', 'isiterable', 'checktype', 'isnumber', 'isstring', 'isarray', 'promotetoarray', 'promotetolist', 'mergedicts']
 
 def flexstr(arg, force=True):
     ''' Try converting to a "regular" string (i.e. "str" in both Python 2 or 3), but proceed if it fails '''
@@ -1022,7 +1022,7 @@ def checktype(obj=None, objtype=None, subtype=None, die=False):
     arrays; and "arraylike", which is the same as "listlike" but will also
     check that elements are numeric.
 
-    Arguments:
+    Args:
         obj     = the object to check the type of
         objtype = the type to confirm the object belongs to
         subtype = optionally check the subtype if the object is iterable
@@ -1038,9 +1038,9 @@ def checktype(obj=None, objtype=None, subtype=None, die=False):
     # Handle "objtype" input
     if   objtype in ['str','string']:          objinstance = _stringtypes
     elif objtype in ['num', 'number']:         objinstance = _numtype
-    elif objtype in ['arr', 'array']:          objinstance = type(np.array([]))
-    elif objtype in ['listlike', 'arraylike']: objinstance = (list, tuple, type(np.array([]))) # Anything suitable as a numerical array
-    elif type(objtype)==type:                  objinstance = objtype  # Don't need to do anything
+    elif objtype in ['arr', 'array']:          objinstance = np.ndarray
+    elif objtype in ['listlike', 'arraylike']: objinstance = (list, tuple, np.ndarray) # Anything suitable as a numerical array
+    elif type(objtype) == type:                objinstance = objtype  # Don't need to do anything
     elif objtype is None:                      return None # If not supplied, exit
     else:
         errormsg = 'Could not understand what type you want to check: should be either a string or a type, not "%s"' % objtype
@@ -1079,6 +1079,18 @@ def isnumber(obj, isnan=None):
 def isstring(obj):
     ''' Simply determine whether or not the input is a string, since it's too hard to remember this otherwise '''
     return checktype(obj, 'string')
+
+
+def isarray(obj, dtype=None):
+    ''' Check whether something is a Numpy array, and optionally check the dtype '''
+    if isinstance(obj, np.ndarray):
+        if dtype is None:
+            return True
+        else:
+            if obj.dtype == dtype:
+                return True
+            else:
+                return False
 
 
 def promotetoarray(x, skipnone=False):
@@ -1173,10 +1185,10 @@ def mergedicts(*args, strict=False, overwrite=True):
 
 
 ##############################################################################
-### TIME/DATE FUNCTIONS
+### Time/date functions
 ##############################################################################
 
-__all__ += ['now', 'getdate', 'readdate', 'elapsedtimestr', 'tic', 'toc', 'toctic', 'timedsleep']
+__all__ += ['now', 'getdate', 'readdate', 'date', 'day', 'daydiff', 'date_range', 'elapsedtimestr', 'tic', 'toc', 'toctic', 'timedsleep']
 
 def now(timezone=None, utc=False, die=False, astype='dateobj', tostring=False, dateformat=None):
     '''
@@ -1195,7 +1207,7 @@ def now(timezone=None, utc=False, die=False, astype='dateobj', tostring=False, d
     elif utc:                tzinfo = dateutil.tz.tzutc() # UTC has been specified
     else:                    tzinfo = None # Otherwise, do nothing
     if tostring: astype = 'str'
-    timenow = datetime.datetime.now(tzinfo)
+    timenow = dt.datetime.now(tzinfo)
     output = getdate(timenow, astype=astype, dateformat=dateformat)
     return output
 
@@ -1295,7 +1307,7 @@ def readdate(datestr=None, dateformat=None, return_defaults=False):
         exceptions = {}
         for key,fmt in formats_to_try.items():
             try:
-                dateobj = datetime.datetime.strptime(datestr, fmt)
+                dateobj = dt.datetime.strptime(datestr, fmt)
                 break # If we find one that works, we can stop
             except Exception as E:
                 exceptions[key] = str(E)
@@ -1309,6 +1321,187 @@ def readdate(datestr=None, dateformat=None, return_defaults=False):
         return dateobjs[0]
     else:
         return dateobjs
+
+
+def date(obj, *args, start_date=None, dateformat=None, as_date=True):
+    '''
+    Convert a string or a datetime object to a date object. To convert to an integer
+    from the start day, it is recommended you supply a start date, or use sim.date()
+    instead; otherwise, it will calculate the date counting days from 2020-01-01.
+    This means that the output of cv.date() will not necessarily match the output
+    of sim.date() for an integer input.
+
+    Args:
+        obj (str, date, datetime, list, array): the object to convert
+        args (str, date, datetime): additional objects to convert
+        start_date (str, date, datetime): the starting date, if an integer is supplied
+        dateformat (str): the format to return the date in
+        as_date (bool): whether to return as a datetime date instead of a string
+
+    Returns:
+        dates (date or list): either a single date object, or a list of them
+
+    **Examples**::
+
+        cv.date('2020-04-05') # Returns datetime.date(2020, 4, 5)
+        cv.date('2020-04-14', start_date='2020-04-04', as_date=False) # Returns 10
+        cv.date([35,36,37], as_date=False) # Returns ['2020-02-05', '2020-02-06', '2020-02-07']
+    '''
+
+    if obj is None:
+        return None
+
+    # Convert to list and handle other inputs
+    if isinstance(obj, np.ndarray):
+        obj = obj.tolist() # If it's an array, convert to a list
+    obj = promotetolist(obj) # Ensure it's iterable
+    obj.extend(args)
+    if dateformat is None:
+        dateformat = '%Y-%m-%d'
+    if start_date is None:
+        start_date = '2020-01-01'
+
+    dates = []
+    for d in obj:
+        if d is None:
+            dates.append(d)
+            continue
+        try:
+            if type(d) == dt.date: # Do not use isinstance, since must be the exact type
+                pass
+            elif isstring(d):
+                d = readdate(d).date()
+            elif isinstance(d, dt.datetime):
+                d = d.date()
+            elif isnumber(d):
+                if start_date is None:
+                    errormsg = f'To convert the number {d} to a date, you must supply start_date'
+                    raise ValueError(errormsg)
+                d = date(start_date) + dt.timedelta(days=int(d))
+            else:
+                errormsg = f'Cannot interpret {type(d)} as a date, must be date, datetime, or string'
+                raise TypeError(errormsg)
+            if as_date:
+                dates.append(d)
+            else:
+                dates.append(d.strftime(dateformat))
+        except Exception as E:
+            errormsg = f'Conversion of "{d}" to a date failed: {str(E)}'
+            raise ValueError(errormsg)
+
+    # Return an integer rather than a list if only one provided
+    if len(dates)==1:
+        dates = dates[0]
+
+    return dates
+
+
+def day(obj, *args, start_day=None):
+    '''
+    Convert a string, date/datetime object, or int to a day (int), the number of
+    days since the start day. See also date() and daydiff(). Used primarily via
+    sim.day() rather than directly.
+
+    Args:
+        obj (str, date, int, or list): convert any of these objects to a day relative to the start day
+        args (list): additional days
+        start_day (str or date): the start day; if none is supplied, return days since 2020-01-01.
+
+    Returns:
+        days (int or str): the day(s) in simulation time
+
+    **Example**::
+
+        sim.day('2020-04-05') # Returns 35
+    '''
+
+    # Do not process a day if it's not supplied
+    if obj is None:
+        return None
+    if start_day is None:
+        start_day = '2020-01-01'
+
+    # Convert to list
+    if isstring(obj) or isnumber(obj) or isinstance(obj, (dt.date, dt.datetime)):
+        obj = promotetolist(obj) # Ensure it's iterable
+    elif isinstance(obj, np.ndarray):
+        obj = obj.tolist() # Convert to list if it's an array
+    obj.extend(args)
+
+    days = []
+    for d in obj:
+        if d is None:
+            days.append(d)
+        elif isnumber(d):
+            days.append(int(d)) # Just convert to an integer
+        else:
+            try:
+                if isstring(d):
+                    d = readdate(d).date()
+                elif isinstance(d, dt.datetime):
+                    d = d.date()
+                d_day = (d - date(start_day)).days # Heavy lifting -- actually compute the day
+                days.append(d_day)
+            except Exception as E:
+                errormsg = f'Could not interpret "{d}" as a date: {str(E)}'
+                raise ValueError(errormsg)
+
+    # Return an integer rather than a list if only one provided
+    if len(days)==1:
+        days = days[0]
+
+    return days
+
+
+def daydiff(*args):
+    '''
+    Convenience function to find the difference between two or more days. With
+    only one argument, calculate days since 2020-01-01.
+
+    **Example**::
+
+        since_ny = cv.daydiff('2020-03-20') # Returns 79 days since Jan. 1st
+        diff     = cv.daydiff('2020-03-20', '2020-04-05') # Returns 16
+        diffs    = cv.daydiff('2020-03-20', '2020-04-05', '2020-05-01') # Returns [16, 26]
+    '''
+    days = [date(day) for day in args]
+    if len(days) == 1:
+        days.insert(0, date('2020-01-01')) # With one date, return days since Jan. 1st
+
+    output = []
+    for i in range(len(days)-1):
+        diff = (days[i+1] - days[i]).days
+        output.append(diff)
+
+    if len(output) == 1:
+        output = output[0]
+
+    return output
+
+
+def date_range(start_date, end_date, inclusive=True, as_date=False, dateformat=None):
+    '''
+    Return a list of dates from the start date to the end date. To convert a list
+    of days (as integers) to dates, use sc.date() instead.
+
+    Args:
+        start_date (int/str/date): the starting date, in any format
+        end_date (int/str/date): the end date, in any format
+        inclusive (bool): if True (default), return to end_date inclusive; otherwise, stop the day before
+        as_date (bool): if True, return a list of datetime.date objects instead of strings
+        dateformat (str): passed to date()
+
+    **Example**::
+
+        dates = cv.date_range('2020-03-01', '2020-04-04')
+    '''
+    start_day = day(start_date)
+    end_day = day(end_date)
+    if inclusive:
+        end_day += 1
+    days = np.arange(start_day, end_day)
+    dates = date(days, as_date=as_date, dateformat=dateformat)
+    return dates
 
 
 def elapsedtimestr(pasttime, maxdays=5, shortmonths=True):
@@ -1348,16 +1541,16 @@ def elapsedtimestr(pasttime, maxdays=5, shortmonths=True):
             date_str = date_str[1:]
 
         return date_str
-    now_time = datetime.datetime.now()
+    now_time = dt.datetime.now()
 
     # If the user passes in a string, try to turn it into a datetime object before continuing
     if isinstance(pasttime, str):
         try:
-            pasttime = datetime.datetime.strptime(pasttime, "%Y-%m-%dT%H:%M:%S.%fZ")
+            pasttime = dt.datetime.strptime(pasttime, "%Y-%m-%dT%H:%M:%S.%fZ")
         except ValueError:
             raise ValueError("User supplied string %s is not in ISO 8601 "
                              "format." % pasttime)
-    elif isinstance(pasttime, datetime.datetime):
+    elif isinstance(pasttime, dt.datetime):
         pass
     else:
         raise ValueError("User-supplied value %s is neither a datetime object "
@@ -1373,14 +1566,14 @@ def elapsedtimestr(pasttime, maxdays=5, shortmonths=True):
         elapsed_time = now_time - pasttime
 
         # Check if the time is within the last minute
-        if elapsed_time < datetime.timedelta(seconds=60):
+        if elapsed_time < dt.timedelta(seconds=60):
             if elapsed_time.seconds <= 10:
                 time_str = "just now"
             else:
                 time_str = "%d secs ago" % elapsed_time.seconds
 
         # Check if the time is within the last hour
-        elif elapsed_time < datetime.timedelta(seconds=60 * 60):
+        elif elapsed_time < dt.timedelta(seconds=60 * 60):
 
             # We know that seconds > 60, so we can safely round down
             minutes = int(elapsed_time.seconds / 60)
@@ -1390,7 +1583,7 @@ def elapsedtimestr(pasttime, maxdays=5, shortmonths=True):
                 time_str = "%d mins ago" % minutes
 
         # Check if the time is within the last day
-        elif elapsed_time < datetime.timedelta(seconds=60 * 60 * 24 - 1):
+        elif elapsed_time < dt.timedelta(seconds=60 * 60 * 24 - 1):
 
             # We know that it's at least an hour, so we can safely round down
             hours = int(elapsed_time.seconds / (60 * 60))
@@ -1400,7 +1593,7 @@ def elapsedtimestr(pasttime, maxdays=5, shortmonths=True):
                 time_str = "%d hours ago" % hours
 
         # Check if it's within the last N days, where N is a user-supplied argument
-        elif elapsed_time < datetime.timedelta(days=maxdays):
+        elif elapsed_time < dt.timedelta(days=maxdays):
             if elapsed_time.days == 1:
                 time_str = "yesterday"
             else:
@@ -1514,10 +1707,13 @@ def timedsleep(delay=None, verbose=True):
 
 
 ##############################################################################
-### MISC. FUNCTIONS
+### Misc. functions
 ##############################################################################
 
-__all__ += ['percentcomplete', 'progressbar', 'checkmem', 'checkram', 'runcommand', 'gitinfo', 'compareversions', 'uniquename', 'importbyname', 'suggest', 'profile', 'mprofile']
+__all__ += ['percentcomplete', 'progressbar', 'checkmem', 'checkram', 'runcommand',
+            'gitinfo', 'compareversions', 'uniquename', 'importbyname', 'suggest',
+            'profile', 'mprofile', 'get_caller']
+
 
 def percentcomplete(step=None, maxsteps=None, stepsize=1, prefix=None):
     '''
@@ -2018,9 +2214,41 @@ def mprofile(run, follow=None, show_results=True, *args, **kwargs):
     return lp
 
 
+def get_caller(frame=2, tostring=True):
+        '''
+        Try to get information on the calling function, but fail gracefully.
+
+        Frame 1 is the current file (this one), so not very useful. Frame 2 is
+        the default assuming it is being called directly. Frame 3 is used if
+        another function is calling this function internally.
+
+        Args:
+            frame (int): how many frames to descend (e.g. the caller of the caller of the...)
+            tostring (bool): whether to return a string instead of a dict
+
+        Returns:
+            output (str/dict): the filename and line number of the calling function, either as a string or dict
+        '''
+        try:
+            import inspect
+            result = inspect.getouterframes(inspect.currentframe(), 2)
+            fname = str(result[frame][1])
+            lineno = str(result[frame][2])
+            if tostring:
+                output = f'{fname}, line {lineno}'
+            else:
+                output = {'filename':fname, 'lineno':lineno}
+        except Exception as E:
+            if tostring:
+                output = f'Calling function information not available ({str(E)})'
+            else:
+                output = {'filename':'N/A', 'lineno':'N/A'}
+        return output
+
+
 
 ##############################################################################
-### NESTED DICTIONARY FUNCTIONS
+### Nested dictionary functions
 ##############################################################################
 
 __all__ += ['getnested', 'setnested', 'makenested', 'iternested', 'mergenested', 'flattendict', 'search']
@@ -2219,7 +2447,7 @@ def search(obj, attribute, _trace=''):
 
 
 ##############################################################################
-### ATOMICA UTILITIES
+### Atomica utilities
 ##############################################################################
 
 # Created by Romesh Abeysuriya as part of Atomica (https://atomica.tools)
@@ -2384,7 +2612,7 @@ def parallel_progress(fcn, inputs, num_workers=None, show_progress=True, initial
     return results
 
 
-def datetime_to_year(dt):
+def datetime_to_year(dateobj):
     """
     Convert a DateTime instance to decimal year
 
@@ -2395,14 +2623,14 @@ def datetime_to_year(dt):
 
     """
     # By Luke Davis from https://stackoverflow.com/a/42424261
-    year_part = dt - datetime(year=dt.year, month=1, day=1)
-    year_length = datetime(year=dt.year + 1, month=1, day=1) - datetime(year=dt.year, month=1, day=1)
-    return dt.year + year_part / year_length
+    year_part = dateobj - dt.datetime(year=dt.year, month=1, day=1)
+    year_length = dateobj.datetime(year=dt.year + 1, month=1, day=1) - dt.datetime(year=dt.year, month=1, day=1)
+    return dateobj.year + year_part / year_length
 
 
 
 ##############################################################################
-### CLASSES
+### Classes
 ##############################################################################
 
 __all__ += ['KeyNotFoundError', 'LinkException', 'prettyobj', 'Link', 'Timer']

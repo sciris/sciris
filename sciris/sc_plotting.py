@@ -4,7 +4,7 @@ colormap functions and registers them with Matplotlib.
 '''
 
 ##############################################################################
-### IMPORTS
+### Imports
 ##############################################################################
 
 import os
@@ -20,7 +20,7 @@ from . import sc_fileio as fio
 
 
 ##############################################################################
-### COLOR FUNCTIONS
+### Color functions
 ##############################################################################
 
 __all__ = ['shifthue', 'hex2rgb', 'rgb2hex', 'rgb2hsv', 'hsv2rgb']
@@ -130,7 +130,7 @@ def hsv2rgb(colors=None):
 
 
 ##############################################################################
-### COLORMAPS
+### Colormaps
 ##############################################################################
 
 __all__ += ['vectocolor', 'arraycolors', 'gridcolors', 'colormapdemo', 'alpinecolormap', 'bicolormap', 'parulacolormap', 'turbocolormap', 'bandedcolormap', 'orangebluecolormap']
@@ -167,7 +167,7 @@ def vectocolor(vector, cmap=None, asarray=True, reverse=False, minval=None, maxv
     from numpy import array, zeros
     from pylab import cm
 
-    if cmap == None:
+    if cmap is None:
         cmap = pl.get_cmap() # Get current colormap
     elif type(cmap) == str:
         try:
@@ -701,11 +701,12 @@ pl.cm.register_cmap('bi',         bicolormap())
 pl.cm.register_cmap('orangeblue', orangebluecolormap())
 
 
+
 ##############################################################################
-### PLOTTING FUNCTIONS
+### 3D plotting functions
 ##############################################################################
 
-__all__ += ['fig3d', 'ax3d', 'plot3d', 'scatter3d', 'surf3d', 'bar3d', 'boxoff', 'setaxislim', 'setxlim', 'setylim', 'commaticks', 'SItickformatter', 'SIticks']
+__all__ += ['fig3d', 'ax3d', 'plot3d', 'scatter3d', 'surf3d', 'bar3d']
 
 
 def fig3d(returnax=False, figkwargs=None, axkwargs=None, **kwargs):
@@ -854,6 +855,13 @@ def bar3d(data, fig=None, returnfig=False, cmap='viridis', figkwargs=None, axkwa
 
 
 
+##############################################################################
+### Other plotting functions
+##############################################################################
+
+__all__ += ['boxoff', 'setaxislim', 'setxlim', 'setylim', 'commaticks', 'SItickformatter', 'SIticks', 'get_rows_cols', 'maximize']
+
+
 def boxoff(ax=None, removeticks=True, flipticks=True):
     '''
     I don't know why there isn't already a Matplotlib command for this.
@@ -982,8 +990,71 @@ def SIticks(fig=None, ax=None, axis='y', fixed=False):
 
 
 
+def get_rows_cols(n, nrows=None, ncols=None, ratio=1):
+    '''
+    If you have 37 plots, then how many rows and columns of axes do you know? This
+    function convert a number (i.e. of plots) to a number of required rows and columns.
+    If nrows or ncols is provided, the other will be calculated. Ties are broken
+    in favor of more rows (i.e. 7x6 is preferred to 6x7).
+
+    Args:
+        n (int): the number (of plots) to accommodate
+        nrows (int): if supplied, keep this fixed and calculate the columns
+        ncols (int): if supplied, keep this fixed and calculate the rows
+        ratio (float): sets the number of rows relative to the number of columns (i.e. for 100 plots, 1 will give 10x10, 4 will give 20x5, etc.).
+
+    Returns:
+        A tuple of ints for the number of rows and the number of columns (which, of course, you can reverse)
+
+    **Examples**::
+
+        nrows,ncols = cv.get_rows_cols(36) # Returns 6,6
+        nrows,ncols = cv.get_rows_cols(37) # Returns 7,6
+        nrows,ncols = cv.get_rows_cols(100, ratio=2) # Returns 15,7
+        nrows,ncols = cv.get_rows_cols(100, ratio=0.5) # Returns 8,13 since rows are prioritized
+    '''
+
+    # Simple cases -- calculate the one missing
+    if nrows is not None:
+        ncols = int(np.ceil(n/nrows))
+    elif ncols is not None:
+        nrows = int(np.ceil(n/ncols))
+
+    # Standard case -- calculate both
+    else:
+        guess = np.sqrt(n)
+        nrows = int(np.ceil(guess*np.sqrt(ratio)))
+        ncols = int(np.ceil(n/nrows)) # Could also call recursively!
+
+    return nrows,ncols
+
+
+def maximize(fig=None, die=False):
+    '''
+    Maximize the current (or supplied) figure. Note: not guaranteed to work for
+    all Matplotlib backends (e.g., agg).
+
+    Args:
+        fig (Figure): the figure object; if not supplied, use the current active figure
+        die (bool): whether to propagate an exception if encountered (default no)
+    '''
+    if fig is not None:
+        pl.figure(fig.number) # Set the current figure
+    try:
+        mng = pl.get_current_fig_manager()
+        mng.window.showMaximized()
+    except Exception as E:
+        errormsg = f'Warning: maximizing the figure failed: {str(E)}'
+        if die:
+            raise RuntimeError(errormsg) from E
+        else:
+            print(errormsg)
+    return
+
+
+
 ##############################################################################
-### FIGURE SAVING
+### Figure saving
 ##############################################################################
 
 __all__ += ['savefigs', 'loadfig', 'emptyfig', 'separatelegend', 'savemovie']

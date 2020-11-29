@@ -16,10 +16,10 @@ import json
 import uuid
 import types
 import inspect
-import datetime
 import importlib
 import traceback
 import numpy as np
+import datetime as dt
 from glob import glob
 from gzip import GzipFile
 from zipfile import ZipFile
@@ -33,22 +33,21 @@ from .sc_odict import odict
 from .sc_dataframe import dataframe
 
 
-
-
 ##############################################################################
 ### Pickling functions
 ##############################################################################
 
-__all__ = ['loadobj', 'loadstr', 'saveobj', 'dumpstr']
+__all__ = ['loadobj', 'loadstr', 'saveobj', 'dumpstr', 'load', 'save']
 
 
 def loadobj(filename=None, folder=None, verbose=False, die=None):
     '''
-    Load a file that has been saved as a gzipped pickle file. Accepts either
-    a filename (standard usage) or a file object as the first argument.
+    Load a file that has been saved as a gzipped pickle file, e.g. by sc.saveobj().
+    Accepts either a filename (standard usage) or a file object as the first argument.
+    Note that loadobj()/load() are aliases.
 
     Usage:
-        obj = loadobj('myfile.obj')
+        obj = sc.loadobj('myfile.obj')
     '''
 
     # Handle loading of either filename or file object
@@ -81,10 +80,11 @@ def loadstr(string=None, verbose=False, die=None):
     return obj
 
 
-def saveobj(filename=None, obj=None, compresslevel=5, verbose=0, folder=None, method='pickle', *args, **kwargs):
+def saveobj(filename=None, obj=None, compresslevel=5, verbose=0, folder=None, method='pickle', die=True, *args, **kwargs):
     '''
-    Save an object to file -- use compression 5 by default, since more is much slower but not much smaller.
-    Once saved, can be loaded with sc.loadobj().
+    Save an object to file as a gzipped pickle -- use compression 5 by default,
+    since more is much slower but not much smaller. Once saved, can be loaded
+    with sc.loadobj(). Note that saveobj()/save() are aliases.
 
     Args:
         filename (str or Path): the filename to save to; if str, passed to sc.makefilepath()
@@ -93,13 +93,13 @@ def saveobj(filename=None, obj=None, compresslevel=5, verbose=0, folder=None, me
         verbose (int): detail to print
         folder (str): passed to sc.makefilepath()
         method (str): whether to use pickle (default) or dill
+        die (bool): whether to fail if no object is provided
         args (list): passed to pickle.dumps()
         kwargs (dict): passed to pickle.dumps()
 
-
     Usage:
         myobj = ['this', 'is', 'a', 'weird', {'object':44}]
-        saveobj('myfile.obj', myobj)
+        sc.saveobj('myfile.obj', myobj)
     '''
     if isinstance(filename, Path): # If it's a path object, convert to string
         filename = str(filename)
@@ -108,6 +108,11 @@ def saveobj(filename=None, obj=None, compresslevel=5, verbose=0, folder=None, me
     else: # Normal use case: make a file path
         bytesobj = None
         filename = makefilepath(filename=filename, folder=folder, default='default.obj', sanitize=True)
+
+    if obj is None:
+        errormsg = 'No object was supplied to saveobj(), or the object was empty'
+        if die: raise ValueError(errormsg)
+        else:   print(errormsg)
 
     with GzipFile(filename=filename, fileobj=bytesobj, mode='wb', compresslevel=compresslevel) as fileobj:
         if method == 'dill': # If dill is requested, use that
@@ -142,6 +147,11 @@ def dumpstr(obj=None):
     return result
 
 
+# Aliases to make them even easier to use
+load = loadobj
+save = saveobj
+
+
 
 
 ##############################################################################
@@ -149,7 +159,6 @@ def dumpstr(obj=None):
 ##############################################################################
 
 __all__ += ['loadtext', 'savetext', 'savezip', 'getfilelist', 'sanitizefilename', 'makefilepath', 'thisdir']
-
 
 
 def loadtext(filename=None, folder=None, splitlines=False):
@@ -170,7 +179,7 @@ def savetext(filename=None, string=None):
 
 
 def savezip(filename=None, filelist=None, folder=None, basename=True, verbose=True):
-    ''' Create a zip file from the supplied lst of files '''
+    ''' Create a zip file from the supplied list of files '''
     fullpath = makefilepath(filename=filename, folder=folder, sanitize=True)
     filelist = ut.promotetolist(filelist)
     with ZipFile(fullpath, 'w') as zf: # Create the zip file
@@ -394,7 +403,7 @@ def sanitizejson(obj, verbose=True, die=False, tostring=False, **kwargs):
     elif isinstance(obj, dict): # It's a dictionary, so iterate over the items
         output = {str(key):sanitizejson(val) for key,val in obj.items()}
 
-    elif isinstance(obj, (datetime.time, datetime.date, datetime.datetime)):
+    elif isinstance(obj, (dt.time, dt.date, dt.datetime)):
         output = str(obj)
 
     elif isinstance(obj, uuid.UUID):
@@ -463,11 +472,19 @@ def loadjson(filename=None, folder=None, string=None, fromfile=True, **kwargs):
 
 
 
-def savejson(filename=None, obj=None, folder=None, **kwargs):
+def savejson(filename=None, obj=None, folder=None, die=True, **kwargs):
     ''' Convenience function for saving a JSON '''
+
     filename = makefilepath(filename=filename, folder=folder)
+
+    if obj is None:
+        errormsg = 'No object was supplied to savejson(), or the object was empty'
+        if die: raise ValueError(errormsg)
+        else:   print(errormsg)
+
     with open(filename, 'w') as f:
         json.dump(sanitizejson(obj), f, **kwargs)
+
     return None
 
 
@@ -1094,6 +1111,7 @@ def loadobj2to3(filename=None, filestring=None, recursionlimit=None):
     '''
     Used automatically by loadobj() to load Python2 objects in Python3 if all other
     loading methods fail. Uses a recursive approach, so can set a recursion limit.
+    Note that this function, like Python 2, is deprecated.
     '''
 
     class Placeholder():
@@ -1153,7 +1171,7 @@ def loadobj2to3(filename=None, filestring=None, recursionlimit=None):
 
         if isinstance(obj2, dict): # Handle dictionaries
             for k,v in obj2.items():
-                if isinstance(v, datetime.datetime):
+                if isinstance(v, dt.datetime):
                     setattr(obj1, k.decode('latin1'), v)
                 elif isinstance(v, dict) or hasattr(v,'__dict__'):
                     if isinstance(k, (bytes, bytearray)):
@@ -1166,7 +1184,7 @@ def loadobj2to3(filename=None, filestring=None, recursionlimit=None):
                         print(recursion_warning(recursionlevel, obj1, obj2))
         else:
             for k,v in obj2.__dict__.items():
-                if isinstance(v,datetime.datetime):
+                if isinstance(v,dt.datetime):
                     setattr(obj1,k.decode('latin1'), v)
                 elif isinstance(v,dict) or hasattr(v,'__dict__'):
                     if isinstance(k, (bytes, bytearray)):
