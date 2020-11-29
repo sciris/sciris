@@ -2463,11 +2463,9 @@ def nested_loop(inputs, loop_order):
     """
     Zip list of lists in order
 
-    This is used in :func:`plot_bars` to control whether 'times' or 'results' are the
-    outer grouping. This function takes in a list of lists to iterate over, and their
-    nesting order. It then yields tuples of items in the given order. Only tested
-    for two levels (which are all that get used in :func:`plot_bars` but in theory
-    supports an arbitrary number of items.
+    This function takes in a list of lists to iterate over, and their nesting order.
+    It then yields tuples of items in the given order. Only tested for two levels
+    but in theory supports an arbitrary number of items.
 
     :param inputs: List of lists. All lists should have the same length
     :param loop_order: Nesting order for the lists
@@ -2487,9 +2485,7 @@ def nested_loop(inputs, loop_order):
 
     Notice now how now the first two items have different values from the
     first list but the same items from the second list.
-
     """
-
     loop_order = list(loop_order)  # Convert to list, in case loop order was passed in as a generator e.g. from map()
     inputs = [inputs[i] for i in loop_order]
     iterator = itertools.product(*inputs)  # This is in the loop order
