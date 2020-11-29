@@ -4,7 +4,7 @@
 
 import time
 import psutil
-import multiprocessing as mp
+import multiprocess as mp
 import numpy as np
 from . import sc_utils as ut
 
@@ -44,14 +44,14 @@ def loadbalancer(maxload=None, index=None, interval=None, maxtime=None, label=No
     if index is None:
         pause = np.random.rand()*interval
         index = ''
-    else:              
+    else:
         pause = index*interval
     if maxload>1: maxload/100. # If it's >1, assume it was given as a percent
     if not maxload>0:
         return None # Return immediately if no max load
     else:
         time.sleep(pause) # Give it time to asynchronize
-    
+
     # Loop until load is OK
     toohigh = True # Assume too high
     count = 0
@@ -62,8 +62,8 @@ def loadbalancer(maxload=None, index=None, interval=None, maxtime=None, label=No
         if currentload>maxload:
             if verbose: print(label+'CPU load too high (%0.2f/%0.2f); process %s queued %i times' % (currentload, maxload, index, count))
             time.sleep(interval*2*np.random.rand()) # Sleeps for an average of refresh seconds, but do it randomly so you don't get locking
-        else: 
-            toohigh = False 
+        else:
+            toohigh = False
             if verbose: print(label+'CPU load fine (%0.2f/%0.2f), starting process %s after %i tries' % (currentload, maxload, index, count))
     return None
 
@@ -74,55 +74,55 @@ def parallelize(func, iterarg=None, iterkwargs=None, args=None, kwargs=None, ncp
     Shortcut for parallelizing a function. Most simply, acts as an shortcut for using
     multiprocessing.Pool() or Queue(). However, this function can also iterate over more
     complex arguments.
-    
+
     Either or both of iterarg or iterkwargs can be used. iterarg can be an iterable or an integer;
-    if the latter, it will run the function that number of times and not pass the argument to the 
-    function (which may be useful for running "embarrassingly parallel" simulations). iterkwargs 
-    is a dict of iterables; each iterable must be the same length (and the same length of iterarg, 
+    if the latter, it will run the function that number of times and not pass the argument to the
+    function (which may be useful for running "embarrassingly parallel" simulations). iterkwargs
+    is a dict of iterables; each iterable must be the same length (and the same length of iterarg,
     if it exists), and each dict key will be used as a kwarg to the called function. Any other kwargs
     passed to parallelize() will also be passed to the function.
-    
+
     This function can either use a fixed number of CPUs or allocate dynamically based
     on load. If ncpus is None and maxload is None, then it will use the number of CPUs
     returned by multiprocessing; if ncpus is not None, it will use the specified number of CPUs;
     if ncpus is None and maxload is not None, it will allocate the number of CPUs dynamically.
-    
+
     Example 1 -- simple usage as a shortcut to multiprocessing.map():
         def f(x):
             return x*x
-        
+
         results = sc.parallelize(f, [1,2,3])
-    
+
     Example 2 -- simple usage for "embarrassingly parallel" processing:
         def rnd():
             import pylab as pl
             return pl.rand()
-        
+
         results = sc.parallelize(rnd, 10, ncpus=4)
-    
+
     Example 3 -- three different equivalent ways to use multiple arguments:
         def f(x,y):
             return x*y
-        
+
         results1 = sc.parallelize(func=f, iterarg=[(1,2),(2,3),(3,4)])
         results2 = sc.parallelize(func=f, iterkwargs={'x':[1,2,3], 'y':[2,3,4]})
         results3 = sc.parallelize(func=f, iterkwargs=[{'x':1, 'y':2}, {'x':2, 'y':3}, {'x':3, 'y':4}])
         assert results1 == results2 == results3
-    
+
     Example 4 -- using non-iterated arguments and dynamic load balancing:
         def myfunc(i, x, y):
             xy = [x+i*pl.randn(100), y+i*pl.randn(100)]
             return xy
-        
+
         xylist1 = sc.parallelize(myfunc, kwargs={'x':3, 'y':8}, iterarg=range(5), maxload=0.8, interval=0.2) # Use kwargs dict
         xylist2 = sc.parallelize(myfunc, x=5, y=10, iterarg=[0,1,2]) # Supply kwargs directly
-        
+
         for p,xylist in enumerate([xylist1, xylist2]):
             pl.subplot(2,1,p+1)
             for i,xy in enumerate(reversed(xylist)):
                 pl.scatter(xy[0], xy[1], label='Run %i'%i)
             pl.legend()
-    
+
     Note: to use on Windows, parallel calls must contained with an `if __name__ == '__main__'` block,
     for example:
 
@@ -131,23 +131,23 @@ def parallelize(func, iterarg=None, iterkwargs=None, args=None, kwargs=None, ncp
         def f(x,y):
             return x*y
 
-        if __name__ == '__main__':   
+        if __name__ == '__main__':
             results = sc.parallelize(func=f, iterarg=[(1,2),(2,3),(3,4)])
             print(results)
-    
+
     Version: 2019dec03
     '''
     # Handle maxload
     if ncpus is None and maxload is None:
         ncpus = mp.cpu_count()
-    
+
     # Handle kwargs
     if func_kwargs:
         if kwargs is None:
             kwargs = func_kwargs
         else:
             kwargs.update(func_kwargs)
-    
+
     # Handle iterarg and iterkwargs
     niters = 0
     embarrassing = False # Whether or not it's an embarrassingly parallel optimization
@@ -184,7 +184,7 @@ def parallelize(func, iterarg=None, iterkwargs=None, args=None, kwargs=None, ncp
         else:
             errormsg = 'iterkwargs must be a dict of lists, a list of dicts, or None, not %s' % type(iterkwargs)
             raise Exception(errormsg)
-    
+
     # Construct argument list
     argslist = []
     for index in range(niters):
@@ -206,7 +206,7 @@ def parallelize(func, iterarg=None, iterkwargs=None, args=None, kwargs=None, ncp
                 raise Exception(errormsg)
         taskargs = TaskArgs(func, index, iterval, iterdict, args, kwargs, maxload, interval, embarrassing)
         argslist.append(taskargs)
-        
+
     # Run simply using map -- no advantage here to using Process/Queue
     multipool = mp.Pool(processes=ncpus)
     outputlist = multipool.map(parallel_task, argslist)
@@ -222,14 +222,14 @@ def parallelcmd(cmd=None, parfor=None, returnval=None, maxload=None, interval=No
     A function to parallelize any block of code. Note: this is intended for quick
     prototyping; since it uses exec(), it is not recommended for use in production
     code.
-    
+
     Arguments:
         cmd -- a string representation of the code to be run in parallel
         parfor -- a dictionary of lists of the variables to loop over
         returnval -- the name of the output variable
         maxload -- the maxmium CPU load, used in loadbalancer()
         **kwargs -- variables to pass into the code
-    
+
     Example:
         const = 4
         parfor = {'val':[3,5,9]}
@@ -239,10 +239,10 @@ newval = val+const # Note that this can't be indented
 result = newval**2
         """
         results = parallelcmd(cmd=cmd, parfor=parfor, returnval=returnval, const=const)
-        
+
     Version: 2018nov01
     '''
-    
+
     nfor = len(list(parfor.values())[0])
     outputqueue = mp.Queue()
     outputlist = np.empty(nfor, dtype=object)
@@ -256,11 +256,11 @@ result = newval**2
         outputlist[_i] = returnval
     for prc in processes:
         prc.join() # Wait for them to finish
-    
+
     outputlist = outputlist.tolist()
-    
+
     return outputlist
-    
+
 
 
 ##############################################################################
@@ -285,7 +285,7 @@ class TaskArgs(ut.prettyobj):
 
 def parallel_task(taskargs, outputqueue=None):
     ''' Task called by parallelize() -- not to be called directly '''
-    
+
     # Handle inputs
     taskargs = ut.dcp(taskargs)
     func   = taskargs.func
@@ -302,15 +302,15 @@ def parallel_task(taskargs, outputqueue=None):
     if taskargs.iterdict is not None:
         for key,val in taskargs.iterdict.items():
             kwargs[key] = val # Otherwise, include it in kwargs
-    
+
     # Handle load balancing
     maxload = taskargs.maxload
     if maxload:
         loadbalancer(maxload=maxload, index=index, interval=taskargs.interval)
-    
+
     # Call the function
     output = func(*args, **kwargs)
-        
+
     # Handle output
     if outputqueue:
         outputqueue.put((index,output))
@@ -326,25 +326,25 @@ def parallelcmd_task(_cmd, _parfor, _returnval, _i, _outputqueue, _maxload, _int
     directly.
     '''
     loadbalancer(maxload=_maxload, index=_i, interval=_interval)
-    
+
     # Set the loop variables
-    for _key in _parfor.keys(): 
+    for _key in _parfor.keys():
         _thisval = _parfor[_key][_i] # analysis:ignore
         exec('%s = _thisval' % _key) # Set the value of this variable
-    
+
     # Set the keyword arguments
-    for _key in _kwargs.keys(): 
+    for _key in _kwargs.keys():
         _thisval = _kwargs[_key] # analysis:ignore
         exec('%s = _thisval' % _key) # Set the value of this variable
-    
+
     # Calculate the command
     try:
         exec(_cmd) # The meat of the matter!
     except Exception as E:
         print('WARNING, parallel task failed:\n%s' % str(E))
         exec('%s = None' % _returnval)
-    
+
     # Append results
     _outputqueue.put((_i,eval(_returnval)))
-    
+
     return None

@@ -25,6 +25,7 @@ requirements = [
         'xlsxwriter',        # Spreadsheet output
         'psutil',            # Load monitoring
         'dill',              # File I/O
+        'multiprocess',      # More powerful version of multiprocessing
         'jsonpickle',        # For converting arbitrary objects to JSON
         'gitpython',         # Version information
         'requests',          # HTTP methods
