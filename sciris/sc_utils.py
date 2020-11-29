@@ -2570,8 +2570,6 @@ def parallel_progress(fcn, inputs, num_workers=None, show_progress=True, initial
     >>> list(map(fcn, inputs))
 
     But with execution in parallel and with a single progress bar being shown.
-    The Atomica logger level will be changed to hide output below the
-    WARNING level.
 
     :param fcn: Function object to call, accepting one argument, OR a function with zero arguments in which
                 case inputs should be an integer
