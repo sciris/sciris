@@ -53,7 +53,7 @@ def safedivide(numerator=None, denominator=None, default=None, eps=None, warn=Fa
     return output
 
 
-def findinds(val1, val2=None, eps=1e-6, first=False, last=False):
+def findinds(arr, val=None, eps=1e-6, first=False, last=False):
     '''
     Little function to find matches even if two things aren't eactly equal (eg.
     due to floats vs. ints). If one argument, find nonzero values. With two arguments,
@@ -61,8 +61,8 @@ def findinds(val1, val2=None, eps=1e-6, first=False, last=False):
     else returns an array.
 
     Args:
-        val1 (array): the array to find values in
-        val2 (float): if provided, the value to match
+        arr (array): the array to find values in
+        val (float): if provided, the value to match
         eps (float): the precision for matching (default 1e-6)
         first (bool): whether to return the first matching value
         last (bool): whether to return the last matching value
@@ -85,22 +85,23 @@ def findinds(val1, val2=None, eps=1e-6, first=False, last=False):
         ind = None
 
     # Calculate matches
-    if val2 is None: # Check for equality
-        output = np.nonzero(val1) # If not, just check the truth condition
+    arr = np.array(arr)
+    if val is None: # Check for equality
+        output = np.nonzero(arr) # If not, just check the truth condition
     else:
-        if ut.isstring(val2):
-            output = np.nonzero(np.array(val1)==val2)
+        if ut.isstring(val):
+            output = np.nonzero(arr==val)
         else:
-            output = np.nonzero(abs(np.array(val1)-val2)<eps) # If absolute difference between the two values is less than a certain amount
+            output = np.nonzero(abs(arr-val)<eps) # If absolute difference between the two values is less than a certain amount
 
     # Process output
-    if val1.ndim == 1: # Uni-dimensional
+    if arr.ndim == 1: # Uni-dimensional
         output = output[0] # Return an array rather than a tuple of arrays if one-dimensional
         if ind is not None:
             output = output[ind] # And get the first element
     else:
         if ind is not None:
-            output = [output[i][ind] for i in range(val1.ndim)]
+            output = [output[i][ind] for i in range(arr.ndim)]
 
     return output
 
