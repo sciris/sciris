@@ -8,7 +8,7 @@ import numpy as np
 from . import sc_utils as ut
 
 # Restrict imports to user-facing modules
-__all__ = ['odict', 'objdict']
+__all__ = ['odict', 'objdict', 'asobj']
 
 class odict(OD):
     '''
@@ -863,3 +863,60 @@ class objdict(odict):
     def setattribute(self, name, value):
         ''' Set attribute if truly desired '''
         return odict.__setattr__(self, name, value)
+
+
+def asobj(obj, strict=True):
+    '''
+    Convert any object for which you would normally do a['b'] to one where you
+    can do a.b.
+
+    Note: this may lead to unexpected behavior in some cases. Use at your own risk.
+    At minimum, objects created using this function have an extremely odd type -- namely
+    "sciris.sc_odict.asobj.<locals>.objobj".
+
+    Args:
+        obj (anything): the object you want to convert
+        strict (bool): whether to raise an exception if an attribute is being set (instead of a key)
+
+    Example:
+        d = dict(foo=1, bar=2)
+        d_obj = sc.asobj(d)
+        d_obj.foo = 10
+    '''
+
+    objtype = type(obj)
+
+    class objobj(objtype):
+
+        def __getattribute__(self, attr):
+            try: # First, try to get the attribute as an attribute
+                output = objtype.__getattribute__(self, attr)
+                return output
+            except Exception as E: # If that fails, try to get it as a dict item
+                try:
+                    output = objtype.__getitem__(self, attr)
+                    return output
+                except: # If that fails, raise the original exception
+                    raise E
+
+        def __setattr__(self, name, value):
+            ''' Set key in dict, not attribute! '''
+
+            try:
+                objtype.__getattribute__(self, name) # Try retrieving this as an attribute, expect AttributeError...
+            except AttributeError:
+                return objtype.__setitem__(self, name, value) # If so, simply return
+
+            if not strict: # Let the attribute be set anyway
+                objtype.__setattr__(self, name, value)
+            else: # Otherwise, raise an exception
+                errormsg = '"%s" exists as an attribute, so cannot be set as key; use setattribute() instead' % name
+                raise Exception(errormsg)
+
+            return
+
+        def setattribute(self, name, value):
+            ''' Set attribute if truly desired '''
+            return objtype.__setattr__(self, name, value)
+
+    return objobj(obj)

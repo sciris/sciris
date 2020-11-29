@@ -431,18 +431,21 @@ def objrepr(obj, showid=True, showmeth=True, showprop=True, showatt=True, divide
     return output
 
 
-def prepr(obj, maxlen=None, maxitems=None, skip=None, dividerchar='—', dividerlen=60):
+def prepr(obj, maxlen=None, maxitems=None, skip=None, dividerchar='—', dividerlen=60, use_repr=False):
     '''
     Akin to "pretty print", returns a pretty representation of an object --
     all attributes (except any that are skipped), plust methods and ID.
     '''
 
+    # Decide how to handle representation function -- repr is dangerous since can lead to recursion
+    repr_fn = repr if use_repr else str
+
     # Handle input arguments
     divider = dividerchar*dividerlen + '\n'
     if maxlen   is None: maxlen   = 80
     if maxitems is None: maxitems = 100
-    if skip   is None: skip = []
-    else:              skip = promotetolist(skip)
+    if skip     is None: skip = []
+    else:                skip = promotetolist(skip)
 
     # Initialize things to print out
     labels = []
@@ -451,7 +454,7 @@ def prepr(obj, maxlen=None, maxitems=None, skip=None, dividerchar='—', divider
     if not (hasattr(obj, '__dict__') or hasattr(obj, '__slots__')):
         # It's a plain object
         labels = ['%s' % type(obj)]
-        values = [flexstr(obj)]
+        values = [repr_fn(obj)]
     else:
         if hasattr(obj, '__dict__'):
             labels = sorted(set(obj.__dict__.keys()) - set(skip))  # Get the dict attribute keys
@@ -462,7 +465,7 @@ def prepr(obj, maxlen=None, maxitems=None, skip=None, dividerchar='—', divider
             extraitems = len(labels) - maxitems
             if extraitems>0:
                 labels = labels[:maxitems]
-            values = [flexstr(getattr(obj, attr)) for attr in labels] # Get the string representation of the attribute
+            values = [repr_fn(getattr(obj, attr)) for attr in labels] # Get the string representation of the attribute
         else:
             items = dir(obj)
             extraitems = len(items) - maxitems
@@ -470,7 +473,7 @@ def prepr(obj, maxlen=None, maxitems=None, skip=None, dividerchar='—', divider
                 items = items[:maxitems]
             for attr in items:
                 if not attr.startswith('__'):
-                    try:    value = flexstr(getattr(obj, attr))
+                    try:    value = repr_fn(getattr(obj, attr))
                     except: value = 'N/A'
                     labels.append(attr)
                     values.append(value)
