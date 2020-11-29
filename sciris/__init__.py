@@ -16,8 +16,6 @@ SCIRIS
 
 """
 
-
-
 # Import everything
 from .sc_version   import *
 from .sc_utils     import *

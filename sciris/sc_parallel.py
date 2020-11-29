@@ -208,10 +208,29 @@ def parallelize(func, iterarg=None, iterkwargs=None, args=None, kwargs=None, ncp
         argslist.append(taskargs)
 
     # Run simply using map -- no advantage here to using Process/Queue
-    multipool = mp.Pool(processes=ncpus)
-    outputlist = multipool.map(parallel_task, argslist)
-    multipool.close()
-    multipool.join()
+    try:
+        multipool = mp.Pool(processes=ncpus)
+        outputlist = multipool.map(parallel_task, argslist)
+        multipool.close()
+        multipool.join()
+    except RuntimeError as E: # Handle if run outside of __main__ on Windows
+        if 'freeze_support' in E.args[0]: # For this error, add additional information
+            errormsg = '''
+ Uh oh! It appears you are trying to run with multiprocessing on Windows outside
+ of the __main__ block; please see https://docs.python.org/3/library/multiprocessing.html
+ for more information. The correct syntax to use is e.g.
+
+ import sciris as sc
+
+ def my_func(x):
+     return
+
+ if __name__ == '__main__':
+     sc.parallelize(my_func)
+ '''
+            raise RuntimeError(errormsg) from E
+        else: # For all other runtime errors, raise the original exception
+            raise E
 
     return outputlist
 

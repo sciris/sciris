@@ -1,19 +1,21 @@
-# -*- coding: utf-8 -*-
-
 ##############################################################################
-### IMPORTS FROM OTHER LIBRARIES
+### IMPORTS
 ##############################################################################
 
 import os
+import re
 import sys
 import copy
 import time
 import json
+import zlib
+import psutil
 import pprint
 import hashlib
 import datetime
 import dateutil
 import subprocess
+import itertools
 import numbers
 import string
 import numpy as np
@@ -22,17 +24,12 @@ import uuid as py_uuid
 import tempfile
 import traceback as py_traceback
 from textwrap import fill
-from functools import reduce
+from functools import reduce, partial
 from collections import OrderedDict as OD
 from distutils.version import LooseVersion
 
 # Handle types and legacy Python 2 compatibility
-import urllib.request as urlrequester
-import html as htmlencoder
 _stringtypes = (str, bytes)
-htmldecoder = htmlencoder # New method, these are the same now
-basestring = bytes # Not needed, but to avoid Python 3 linting warnings
-unicode = str # Ditto
 _numtype    = numbers.Number
 
 # Add Windows support for colors (do this at the module level so that colorama.init() only gets called once)
@@ -46,6 +43,11 @@ if 'win' in sys.platform:
 else:
     ansi_support = True
 
+
+
+##############################################################################
+### ADAPTATIONS FROM OTHER LIBRARIES
+##############################################################################
 
 # Define the modules being loaded
 __all__ = ['fast_uuid', 'uuid', 'dcp', 'cp', 'pp', 'sha', 'wget', 'htmlify', 'traceback']
@@ -278,7 +280,8 @@ def sha(string, encoding='utf-8', *args, **kwargs):
 
 def wget(url, convert=True):
     ''' Download a URL '''
-    output = urlrequester.urlopen(url).read()
+    import urllib
+    output = urllib.request.urlopen(url).read()
     if convert:
         output = output.decode()
     return output
@@ -295,13 +298,14 @@ def htmlify(string, reverse=False, tostring=False):
         output = sc.htmlify('foo&\nbar', tostring=True) # Returns 'foo&amp;<br>bar'
         output = sc.htmlify('foo&amp;<br>bar', reverse=True) # Returns 'foo&\nbar'
     '''
+    import html
     if not reverse: # Convert to HTML
-        output = htmlencoder.escape(string).encode('ascii', 'xmlcharrefreplace') # Replace non-ASCII characters
+        output = html.escape(string).encode('ascii', 'xmlcharrefreplace') # Replace non-ASCII characters
         output = output.replace(b'\n',b'<br>') # Replace newlines with <br>
         if tostring: # Convert from bytestring to unicode
             output = output.decode()
     else: # Convert from HTML
-        output = htmldecoder.unescape(string)
+        output = html.unescape(string)
         output = output.replace('<br>','\n').replace('<BR>','\n')
     return output
 
@@ -1266,12 +1270,14 @@ def readdate(datestr=None, dateformat=None, return_defaults=False):
     if return_defaults:
         return formats_to_try
 
+    # Handle date formats
     if isstring(dateformat):
         format_list = promotetolist(dateformat)
         formats_to_try = {}
         for f,fmt in enumerate(format_list):
-            formats_to_try[str(f)] = fmt
+            formats_to_try[f'User supplied {f}'] = fmt
 
+    # Handle date strings
     if isstring(datestr):
         datestrs = [datestr]
         was_string = True
@@ -1282,6 +1288,7 @@ def readdate(datestr=None, dateformat=None, return_defaults=False):
         errormsg = f'Could not recognize type {type(datestr)}: expecting string or list'
         raise TypeError(errormsg)
 
+    # Actually process the dates
     dateobjs = []
     for datestr in datestrs: # Iterate over them
         dateobj = None
@@ -1292,9 +1299,8 @@ def readdate(datestr=None, dateformat=None, return_defaults=False):
                 break # If we find one that works, we can stop
             except Exception as E:
                 exceptions[key] = str(E)
-
         if dateobj is None:
-            formatstr = '\n'.join([f'{item[0]:15s}: {item[1]} ({exceptions[item[0]]})' for item in formats_to_try.items()])
+            formatstr = '\n'.join([f'Format "{item[1]}" raised exception: {exceptions[item[0]]}' for item in formats_to_try.items()])
             errormsg = f'Was unable to convert "{datestr}" to a date using the formats:\n{formatstr}'
             raise ValueError(errormsg)
         dateobjs.append(dateobj)
@@ -1303,7 +1309,6 @@ def readdate(datestr=None, dateformat=None, return_defaults=False):
         return dateobjs[0]
     else:
         return dateobjs
-
 
 
 def elapsedtimestr(pasttime, maxdays=5, shortmonths=True):
@@ -1512,7 +1517,7 @@ def timedsleep(delay=None, verbose=True):
 ### MISC. FUNCTIONS
 ##############################################################################
 
-__all__ += ['percentcomplete', 'progressbar', 'checkmem', 'runcommand', 'gitinfo', 'compareversions', 'uniquename', 'importbyname', 'suggest', 'profile', 'mprofile']
+__all__ += ['percentcomplete', 'progressbar', 'checkmem', 'checkram', 'runcommand', 'gitinfo', 'compareversions', 'uniquename', 'importbyname', 'suggest', 'profile', 'mprofile']
 
 def percentcomplete(step=None, maxsteps=None, stepsize=1, prefix=None):
     '''
@@ -1568,9 +1573,10 @@ def progressbar(i, maxiters, label='', length=30, empty='—', full='•', newli
     return
 
 
-def checkmem(var, descend=False, alphabetical=False, plot=False, verbose=False):
+def checkmem(var, descend=None, alphabetical=False, plot=False, verbose=False):
     '''
-    Checks how much memory the variable or variables in question use by dumping them to file.
+    Checks how much memory the variable or variables in question use by dumping
+    them to file. See also checkram().
 
     Args:
         var (any): the variable being checked
@@ -1580,8 +1586,8 @@ def checkmem(var, descend=False, alphabetical=False, plot=False, verbose=False):
         verbose (bool or int): detail to print, if >1, print repr of objects along the way
 
     Example:
-        from utils import checkmem
-        checkmem(['spiffy',rand(2483,589)], descend=True)
+        import sciris as sc
+        sc.checkmem(['spiffy',rand(2483,589)], descend=True)
     '''
     from .sc_fileio import saveobj # Here to avoid recursion
 
@@ -1618,7 +1624,7 @@ def checkmem(var, descend=False, alphabetical=False, plot=False, verbose=False):
     # Create the object(s) to check the size(s) of
     varnames = [''] # Set defaults
     variables = [var]
-    if descend:
+    if descend or descend is None:
         if hasattr(var, '__dict__'): # It's an object
             if verbose>1: print('Iterating over object')
             varnames = sorted(list(var.__dict__.keys()))
@@ -1633,7 +1639,8 @@ def checkmem(var, descend=False, alphabetical=False, plot=False, verbose=False):
                 varnames = [f'item {i}' for i in range(len(var))]
                 variables = var
         else:
-            print('Object is not iterable: cannot descend') # Print warning and use default
+            if descend: # Could also be None
+                print('Object is not iterable: cannot descend') # Print warning and use default
 
     # Compute the sizes
     for v,variable in enumerate(variables):
@@ -1659,6 +1666,31 @@ def checkmem(var, descend=False, alphabetical=False, plot=False, verbose=False):
 
     return None
 
+
+def checkram(unit='mb', fmt='0.2f', start=0, to_string=True):
+    '''
+    Unlike checkmem(), checkram() looks at actual memory usage, typically at different
+    points throughout execution.
+
+    Example:
+        import sciris as sc
+        import numpy as np
+        start = sc.checkram(to_string=False)
+        a = np.random.random((1_000, 10_000))
+        print(sc.checkram(start=start))
+    '''
+    process = psutil.Process(os.getpid())
+    mapping = {'b':1, 'kb':1e3, 'mb':1e6, 'gb':1e9}
+    try:
+        factor = mapping[unit.lower()]
+    except KeyError:
+        raise KeyNotFoundError(f'Unit {unit} not found')
+    mem_use = process.memory_info().rss/factor - start
+    if to_string:
+        output = f'{mem_use:{fmt}} {unit.upper()}'
+    else:
+        output = mem_use
+    return output
 
 
 def runcommand(command, printinput=False, printoutput=False, wait=True):
@@ -1776,7 +1808,7 @@ def importbyname(name=None, output=False, die=True):
         module = importlib.import_module(name)
         globals()[name] = module
     except Exception as E:
-        errormsg = 'Cannot use "%s" since %s is not installed.\nPlease install %s and try again.' % (name,)*3
+        errormsg = f'Cannot use "{name}" since {name} is not installed.\nPlease install {name} and try again.'
         print(errormsg)
         if die: raise E
         else:   return False
@@ -2183,6 +2215,191 @@ def search(obj, attribute, _trace=''):
         matches += search(d[attr], attribute, s)
 
     return matches
+
+
+
+##############################################################################
+### ATOMICA UTILITIES
+##############################################################################
+
+# Created by Romesh Abeysuriya as part of Atomica (https://atomica.tools)
+
+
+__all__ += ['nested_loop', 'fast_gitinfo', 'parallel_progress', 'datetime_to_year']
+
+
+def nested_loop(inputs, loop_order):
+    """
+    Zip list of lists in order
+
+    This is used in :func:`plot_bars` to control whether 'times' or 'results' are the
+    outer grouping. This function takes in a list of lists to iterate over, and their
+    nesting order. It then yields tuples of items in the given order. Only tested
+    for two levels (which are all that get used in :func:`plot_bars` but in theory
+    supports an arbitrary number of items.
+
+    :param inputs: List of lists. All lists should have the same length
+    :param loop_order: Nesting order for the lists
+    :return: Generator yielding tuples of items, one for each list
+
+    Example usage:
+
+    >>> list(nested_loop([['a','b'],[1,2]],[0,1]))
+    [['a', 1], ['a', 2], ['b', 1], ['b', 2]]
+
+    Notice how the first two items have the same value for the first list
+    while the items from the second list vary. If the `loop_order` is
+    reversed, then:
+
+    >>> list(nested_loop([['a','b'],[1,2]],[1,0]))
+    [['a', 1], ['b', 1], ['a', 2], ['b', 2]]
+
+    Notice now how now the first two items have different values from the
+    first list but the same items from the second list.
+
+    """
+
+    loop_order = list(loop_order)  # Convert to list, in case loop order was passed in as a generator e.g. from map()
+    inputs = [inputs[i] for i in loop_order]
+    iterator = itertools.product(*inputs)  # This is in the loop order
+    for item in iterator:
+        out = [None] * len(loop_order)
+        for i in range(len(item)):
+            out[loop_order[i]] = item[i]
+        yield out
+
+
+def fast_gitinfo(path):
+    """
+    Retrieve git info
+
+    This function reads git branch and commit information from a .git directory.
+    Given a path, it will check for a `.git` directory. If the path doesn't contain
+    that directory, it will search parent directories for `.git` until it finds one.
+    Then, the current information will be parsed.
+
+    :param path: A folder either containing a ``.git`` directory, or with a parent that contains a ``.git`` directory
+
+    """
+
+    try:
+        # First, get the .git directory
+        curpath = os.path.abspath(path)
+        while curpath:
+            if os.path.exists(os.path.join(curpath, ".git")):
+                gitdir = os.path.join(curpath, ".git")
+                break
+            else:
+                parent, _ = os.path.split(curpath)
+                if parent == curpath:
+                    curpath = None
+                else:
+                    curpath = parent
+        else:
+            raise Exception("Could not find .git directory")
+
+        # Then, get the branch and commit
+        with open(os.path.join(gitdir, "HEAD"), "r") as f1:
+            ref = f1.read()
+            if ref.startswith("ref:"):
+                refdir = ref.split(" ")[1].strip()  # The path to the file with the commit
+                gitbranch = refdir.replace("refs/heads/", "")  # / is always used (not os.sep)
+                with open(os.path.join(gitdir, refdir), "r") as f2:
+                    githash = f2.read().strip()  # The hash of the commit
+            else:
+                gitbranch = "Detached head (no branch)"
+                githash = ref.strip()
+
+        # Now read the time from the commit
+        compressed_contents = open(os.path.join(gitdir, "objects", githash[0:2], githash[2:]), "rb").read()
+        decompressed_contents = zlib.decompress(compressed_contents).decode()
+        for line in decompressed_contents.split("\n"):
+            if line.startswith("author"):
+                _re_actor_epoch = re.compile(r"^.+? (.*) (\d+) ([+-]\d+).*$")
+                m = _re_actor_epoch.search(line)
+                actor, epoch, offset = m.groups()
+                t = time.gmtime(int(epoch))
+                gitdate = time.strftime("%Y-%m-%d %H:%M:%S UTC", t)
+
+    except Exception:
+        gitbranch = "Git branch N/A"
+        githash = "Git hash N/A"
+        gitdate = "Git date N/A"
+
+    output = {"branch": gitbranch, "hash": githash, "date": gitdate}  # Assemble outupt
+    return output
+
+
+def parallel_progress(fcn, inputs, num_workers=None, show_progress=True, initializer=None):
+    """
+    Run a function in parallel with a optional single progress bar
+
+    The result is essentially equivalent to
+
+    >>> list(map(fcn, inputs))
+
+    But with execution in parallel and with a single progress bar being shown.
+    The Atomica logger level will be changed to hide output below the
+    WARNING level.
+
+    :param fcn: Function object to call, accepting one argument, OR a function with zero arguments in which
+                case inputs should be an integer
+    :param inputs: A collection of inputs that will each be passed to (list, array, etc.)
+                    OR a number, if the fcn() has no input arguments
+    :param num_workers: Number of processes, defaults to the number of CPUs
+    :return: An list of outputs
+
+    """
+    from multiprocess import pool
+    from tqdm import tqdm
+
+    pool = pool.Pool(num_workers, initializer=initializer)
+
+    results = [None]
+    if isnumber(inputs):
+        results *= inputs
+        pbar = tqdm(total=inputs) if show_progress else None
+    else:
+        results *= len(inputs)
+        pbar = tqdm(total=len(inputs)) if show_progress else None
+
+    def callback(result, idx):
+        results[idx] = result
+        if show_progress:
+            pbar.update(1)
+
+    if isnumber(inputs):
+        for i in range(inputs):
+            pool.apply_async(fcn, callback=partial(callback, idx=i))
+    else:
+        for i, x in enumerate(inputs):
+            pool.apply_async(fcn, args=(x,), callback=partial(callback, idx=i))
+
+    pool.close()
+    pool.join()
+
+    if show_progress:
+        pbar.close()
+
+    return results
+
+
+def datetime_to_year(dt):
+    """
+    Convert a DateTime instance to decimal year
+
+    For example, 1/7/2010 would be approximately 2010.5
+
+    :param dt: The datetime instance to convert
+    :return: Equivalent decimal year
+
+    """
+    # By Luke Davis from https://stackoverflow.com/a/42424261
+    year_part = dt - datetime(year=dt.year, month=1, day=1)
+    year_length = datetime(year=dt.year + 1, month=1, day=1) - datetime(year=dt.year, month=1, day=1)
+    return dt.year + year_part / year_length
+
+
 
 ##############################################################################
 ### CLASSES

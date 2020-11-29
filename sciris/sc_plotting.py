@@ -12,9 +12,8 @@ from struct import unpack
 import pylab as pl
 import numpy as np
 from numpy.linalg import norm
-from matplotlib import ticker
-from matplotlib.colors import rgb_to_hsv, hsv_to_rgb
-from matplotlib.colors import LinearSegmentedColormap as makecolormap
+import matplotlib as mpl
+import matplotlib.colors as mplc
 from .sc_odict import odict
 from . import sc_utils as ut
 from . import sc_fileio as fio
@@ -25,6 +24,7 @@ from . import sc_fileio as fio
 ##############################################################################
 
 __all__ = ['shifthue', 'hex2rgb', 'rgb2hex', 'rgb2hsv', 'hsv2rgb']
+
 
 def _listify_colors(colors, origndim=None):
     ''' Do standard transformation on colors -- internal helpfer function '''
@@ -39,7 +39,6 @@ def _listify_colors(colors, origndim=None):
         if origndim==1:
             colors = colors[0] # Pull it out again
         return colors
-
 
 
 def _processcolors(colors=None, asarray=False, ashex=False, reverse=False):
@@ -63,7 +62,6 @@ def _processcolors(colors=None, asarray=False, ashex=False, reverse=False):
     return output
 
 
-
 def shifthue(colors=None, hueshift=0.0):
     '''
     Shift the hue of the colors being fed in.
@@ -73,9 +71,9 @@ def shifthue(colors=None, hueshift=0.0):
     '''
     colors, origndim = _listify_colors(colors)
     for c,color in enumerate(colors):
-        hsvcolor = rgb_to_hsv(color)
+        hsvcolor = mplc.rgb_to_hsv(color)
         hsvcolor[0] = (hsvcolor[0]+hueshift) % 1.0 # Calculate new hue and return the modulus
-        rgbcolor = hsv_to_rgb(hsvcolor)
+        rgbcolor = mplc.hsv_to_rgb(hsvcolor)
         colors[c] = rgbcolor
     colors = _listify_colors(colors, origndim)
     return colors
@@ -113,7 +111,7 @@ def rgb2hsv(colors=None):
     ''' Shortcut to Matplotlib's rgb_to_hsv method, accepts a color triplet or a list/array of color triplets '''
     colors, origndim = _listify_colors(colors)
     for c,color in enumerate(colors):
-        hsvcolor = rgb_to_hsv(color)
+        hsvcolor = mplc.rgb_to_hsv(color)
         colors[c] = hsvcolor
     colors = _listify_colors(colors, origndim)
     return colors
@@ -124,7 +122,7 @@ def hsv2rgb(colors=None):
     ''' Shortcut to Matplotlib's hsv_to_rgb method, accepts a color triplet or a list/array of color triplets '''
     colors, origndim = _listify_colors(colors)
     for c,color in enumerate(colors):
-        hsvcolor = hsv_to_rgb(color)
+        hsvcolor = mplc.hsv_to_rgb(color)
         colors[c] = hsvcolor
     colors = _listify_colors(colors, origndim)
     return colors
@@ -456,7 +454,7 @@ def alpinecolormap(apply=False):
                      (breaks[5], snow[2], snow[2]))}
 
     # Make map
-    cmap = makecolormap('alpine', cdict, 256)
+    cmap = mplc.LinearSegmentedColormap('alpine', cdict, 256)
     if apply:
         pl.set_cmap(cmap)
     return cmap
@@ -505,7 +503,7 @@ def bicolormap(gap=0.1, mingreen=0.2, redbluemix=0.5, epsilon=0.01, demo=False, 
                      (0.5+eps, omg, mix),
                      (1.00000, 0.0, 0.0))}
 
-    cmap = makecolormap('bi',cdict,256)
+    cmap = mplc.LinearSegmentedColormap('bi',cdict,256)
     if apply:
         pl.set_cmap(cmap)
 
@@ -575,7 +573,7 @@ def parulacolormap(apply=False):
             [0.9601,0.8963,0.1507], [0.9596,0.9023,0.1480], [0.9595,0.9084,0.1450], [0.9597,0.9143,0.1418], [0.9601,0.9203,0.1382], [0.9608,0.9262,0.1344], [0.9618,0.9320,0.1304], [0.9629,0.9379,0.1261],
             [0.9642,0.9437,0.1216], [0.9657,0.9494,0.1168], [0.9674,0.9552,0.1116], [0.9692,0.9609,0.1061], [0.9711,0.9667,0.1001], [0.9730,0.9724,0.0938], [0.9749,0.9782,0.0872], [0.9769,0.9839,0.0805]]
 
-    cmap = makecolormap.from_list('parula', data)
+    cmap = mplc.LinearSegmentedColormap.from_list('parula', data)
     if apply:
         pl.set_cmap(cmap)
     return cmap
@@ -631,7 +629,7 @@ def turbocolormap(apply=False):
             [0.66449,0.08436,0.00424],[0.65345,0.07902,0.00408],[0.64223,0.07380,0.00401],[0.63082,0.06868,0.00401],[0.61923,0.06367,0.00410],[0.60746,0.05878,0.00427],[0.59550,0.05399,0.00453],[0.58336,0.04931,0.00486],
             [0.57103,0.04474,0.00529],[0.55852,0.04028,0.00579],[0.54583,0.03593,0.00638],[0.53295,0.03169,0.00705],[0.51989,0.02756,0.00780],[0.50664,0.02354,0.00863],[0.49321,0.01963,0.00955],[0.47960,0.01583,0.01055]]
 
-    cmap = makecolormap.from_list('turbo', data)
+    cmap = mplc.LinearSegmentedColormap.from_list('turbo', data)
     if apply:
         pl.set_cmap(cmap)
     return cmap
@@ -667,7 +665,7 @@ def bandedcolormap(minvalue=None, minsaturation=None, hueshift=None, saturations
     data = hsv2rgb(hsv)
 
     # Create and use
-    cmap = makecolormap.from_list('banded', data)
+    cmap = mplc.LinearSegmentedColormap.from_list('banded', data)
     if apply:
         pl.set_cmap(cmap)
     return cmap
@@ -688,7 +686,7 @@ def orangebluecolormap(apply=False):
     data = np.vstack((top(x), bottom(x)))
 
     # Create and use
-    cmap = makecolormap.from_list('orangeblue', data)
+    cmap = mplc.LinearSegmentedColormap.from_list('orangeblue', data)
     if apply:
         pl.set_cmap(cmap)
     return cmap
@@ -950,7 +948,7 @@ def commaticks(fig=None, ax=None, axis='y'):
         elif axis=='y': thisaxis = ax.yaxis
         elif axis=='z': thisaxis = ax.zaxis
         else: raise Exception('Axis must be x, y, or z')
-        thisaxis.set_major_formatter(ticker.FuncFormatter(lambda x, p: format(int(x), ',')))
+        thisaxis.set_major_formatter(mpl.ticker.FuncFormatter(lambda x, p: format(int(x), ',')))
     return None
 
 
@@ -977,9 +975,9 @@ def SIticks(fig=None, ax=None, axis='y', fixed=False):
             ticklabels = []
             for tickloc in ticklocs:
                 ticklabels.append(SItickformatter(tickloc))
-            thisaxis.set_major_formatter(ticker.FixedFormatter(ticklabels))
+            thisaxis.set_major_formatter(mpl.ticker.FixedFormatter(ticklabels))
         else:
-            thisaxis.set_major_formatter(ticker.FuncFormatter(SItickformatter))
+            thisaxis.set_major_formatter(mpl.ticker.FuncFormatter(SItickformatter))
     return None
 
 

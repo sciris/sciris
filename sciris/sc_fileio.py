@@ -14,8 +14,8 @@ import os
 import re
 import json
 import uuid
-import pickle
 import types
+import inspect
 import datetime
 import importlib
 import traceback
@@ -313,24 +313,30 @@ def makefilepath(filename=None, folder=None, ext=None, default=None, split=False
     return output
 
 
-def thisdir(file, *args, **kwargs):
+def thisdir(file=None, *args, as_path=False, **kwargs):
     '''
     Tiny helper function to get the folder for a file, usually the current file.
+    If not supplied, then use the current file.
 
     Args:
         file (str): the file to get the directory from; usually __file__
         args (list): passed to os.path.join()
+        as_path (bool): whether to return a Path object instead of a string
         kwargs (dict): also passed to os.path.join()
 
     Returns:
         filepath (str): the full path to the folder (or filename if additional arguments are given)
 
     Examples:
-        thisdir = sc.thisdir(__file__)
+        thisdir = sc.thisdir()
         file_in_same_dir = sc.thisdir(__file__, 'new_file.txt')
     '''
+    if file is None:
+         file = str(Path(inspect.stack()[1][1])) # Adopted from Atomica
     folder = os.path.abspath(os.path.dirname(file))
     filepath = os.path.join(folder, *args, **kwargs)
+    if as_path:
+        filepath = Path(filepath)
     return filepath
 
 
@@ -1004,11 +1010,11 @@ def makefailed(module_name=None, name=None, error=None, exception=None):
     return Failed
 
 
-class RobustUnpickler(pickle.Unpickler):
+class RobustUnpickler(pkl.Unpickler):
     ''' Try to import an object, and if that fails, return a Failed object rather than crashing '''
 
     def __init__(self, tmpfile, fix_imports=True, encoding="latin1", errors="ignore"):
-        pickle.Unpickler.__init__(self, tmpfile, fix_imports=fix_imports, encoding=encoding, errors=errors)
+        pkl.Unpickler.__init__(self, tmpfile, fix_imports=fix_imports, encoding=encoding, errors=errors)
 
     def find_class(self, module_name, name, verbose=True):
         try:
@@ -1102,25 +1108,25 @@ def loadobj2to3(filename=None, filestring=None, recursionlimit=None):
                 self.state = state
             return
 
-    class StringUnpickler(pickle.Unpickler):
+    class StringUnpickler(pkl.Unpickler):
         def find_class(self, module, name, verbose=False):
             if verbose: print('Unpickling string module %s , name %s' % (module, name))
             if name in not_string_pickleable:
                 return Empty
             else:
                 try:
-                    output = pickle.Unpickler.find_class(self,module,name)
+                    output = pkl.Unpickler.find_class(self,module,name)
                 except Exception as E:
                     print('Warning, string unpickling could not find module %s, name %s: %s' % (module, name, str(E)))
                     output = Empty
                 return output
 
-    class BytesUnpickler(pickle.Unpickler):
+    class BytesUnpickler(pkl.Unpickler):
         def find_class(self, module, name, verbose=False):
             if verbose: print('Unpickling bytes module %s , name %s' % (module, name))
             if name in byte_objects:
                 try:
-                    output = pickle.Unpickler.find_class(self,module,name)
+                    output = pkl.Unpickler.find_class(self,module,name)
                 except Exception as E:
                     print('Warning, bytes unpickling could not find module %s, name %s: %s' % (module, name, str(E)))
                     output = Placeholder
@@ -1242,7 +1248,7 @@ def loadobj2to3(filename=None, filestring=None, recursionlimit=None):
 # The above copyright notice and this permission notice shall be
 # included in all copies or substantial portions of the Software.
 
-_UniversalPicklingError = pickle.PicklingError
+_UniversalPicklingError = pkl.PicklingError
 
 def pickleMethod(method):
     return (unpickleMethod, (method.__name__,         method.__self__, method.__self__.__class__))

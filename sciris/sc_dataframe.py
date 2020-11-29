@@ -2,27 +2,28 @@
 ### DATA FRAME CLASS
 ##############################################################################
 
+# NB: Pandas is imported later
 import numbers # For numeric type
 import numpy as np
 from . import sc_utils as ut # Note, sc_fileio is also used, but is only imported when required to avoid a circular import
 from . import sc_math as ma
 from .sc_odict import odict
-try:
-    import pandas as pd
-except Exception as E:
-    pd = 'Warning: could not import pandas (%s)' % str(E)
+
 
 __all__ = ['dataframe']
 
 class dataframe(object):
     '''
     A simple data frame, based on simple lists, for simply storing simple data.
+    Much less feature-rich than a Pandas data frame, but simpler to use. Note:
+    this class is semi-deprecated; use at your own risk. To be honest, Pandas
+    is a much better solution better most of the time.
 
     Example usage:
-        a = dataframe(cols=['x','y'],data=[[1238,2],[384,5],[666,7]]) # Create data frame
-        print(a)['x'] # Print out a column
-        print(a)[0] # Print out a row
-        print(a)['x',0] # Print out an element
+        a = sc.dataframe(cols=['x','y'],data=[[1238,2],[384,5],[666,7]]) # Create data frame
+        a['x'] # Print out a column
+        a[0] # Print out a row
+        a['x',0] # Print out an element
         a[0] = [123,6]; print(a) # Set values for a whole row
         a['y'] = [8,5,0]; print(a) # Set values for a whole column
         a['z'] = [14,14,14]; print(a) # Add new column
@@ -40,7 +41,7 @@ class dataframe(object):
 
     Works for both numeric and non-numeric data.
 
-    Version: 2019sep24
+    Version: 2020nov29
     '''
 
     def __init__(self, cols=None, data=None, nrows=None):
@@ -285,6 +286,7 @@ class dataframe(object):
             df = sc.dataframe(['a','b','c'], [[1,2,3],[4,5,6]])
             df = sc.dataframe(cols=['a','b','c'], data=[[1,2,3],[4,5,6]])
         '''
+        import pandas as pd
 
         # Handle columns
         if nrows is None:
@@ -296,12 +298,9 @@ class dataframe(object):
             cols = data
             data = None
 
-        if not ut.isstring(pd): # This is done because if pandas import fails, it replaces it with a string
-            if isinstance(cols, pd.DataFrame): # It's actually a Pandas dataframe
-                self.pandas(df=cols)
-                return None # We're done
-        else:
-            print(pd)
+        if isinstance(cols, pd.DataFrame): # It's actually a Pandas dataframe
+            self.pandas(df=cols)
+            return None # We're done
 
         # A dictionary is supplied: assume keys are columns, and the rest is the data
         if isinstance(cols, dict):
@@ -641,10 +640,11 @@ class dataframe(object):
             output.append(thisrow)
         return output
 
+
     def pandas(self, df=None):
         ''' Function to export to pandas (if no argument) or import from pandas (with an argument) '''
-        if ut.isstring(pd):
-            raise Exception(pd) # Raise an exception if Pandas couldn't be imported
+        import pandas as pd
+
         if df is None: # Convert
             output = pd.DataFrame(data=self.data, columns=self.cols)
             return output
@@ -655,6 +655,7 @@ class dataframe(object):
             self.cols = list(df.columns)
             self.data = np.array(df, dtype=object)
             return None
+
 
     def export(self, filename=None, cols=None, close=True):
         ''' Export to Excel '''
