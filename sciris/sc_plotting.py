@@ -135,7 +135,7 @@ def hsv2rgb(colors=None):
 ### COLORMAPS
 ##############################################################################
 
-__all__ += ['vectocolor', 'arraycolors', 'gridcolors', 'colormapdemo', 'alpinecolormap', 'bicolormap', 'parulacolormap', 'turbocolormap', 'bandedcolormap']
+__all__ += ['vectocolor', 'arraycolors', 'gridcolors', 'colormapdemo', 'alpinecolormap', 'bicolormap', 'parulacolormap', 'turbocolormap', 'bandedcolormap', 'orangebluecolormap']
 
 
 def vectocolor(vector, cmap=None, asarray=True, reverse=False, minval=None, maxval=None):
@@ -384,7 +384,7 @@ def colormapdemo(cmap=None, n=None, smoothing=None, randseed=None):
     # Plot in 2D
     fig1 = pl.figure(figsize=(10,8))
     X = np.linspace(0,horizontalsize,n)
-    pcl = pl.pcolor(X, X, data, cmap=cmap, linewidth=0, antialiased=False)
+    pcl = pl.pcolor(X, X, data, cmap=cmap, linewidth=0, antialiased=False, shading='auto')
     cb2 = fig1.colorbar(pcl)
     cb2.set_label('Height (km)',horizontalalignment='right', labelpad=50)
     pl.xlabel('Position (km)')
@@ -673,12 +673,34 @@ def bandedcolormap(minvalue=None, minsaturation=None, hueshift=None, saturations
     return cmap
 
 
+def orangebluecolormap(apply=False):
+    '''
+    Create an orange-blue colormap; most like RdYlBu but more pleasing. Created
+    by Prashanth Selvaraj.
+
+    Demo and example:
+        cmap = sc.orangebluecolormap()
+        sc.colormapdemo(cmap=cmap)
+    '''
+    bottom = pl.cm.get_cmap('Oranges', 128)
+    top = pl.cm.get_cmap('Blues_r', 128)
+    x = np.linspace(0, 1, 128)
+    data = np.vstack((top(x), bottom(x)))
+
+    # Create and use
+    cmap = makecolormap.from_list('orangeblue', data)
+    if apply:
+        pl.set_cmap(cmap)
+    return cmap
+
+
 # Register colormaps
-pl.cm.register_cmap('alpine', alpinecolormap())
-pl.cm.register_cmap('parula', parulacolormap())
-pl.cm.register_cmap('turbo',  turbocolormap())
-pl.cm.register_cmap('banded', bandedcolormap())
-pl.cm.register_cmap('bi',     bicolormap())
+pl.cm.register_cmap('alpine',     alpinecolormap())
+pl.cm.register_cmap('parula',     parulacolormap())
+pl.cm.register_cmap('turbo',      turbocolormap())
+pl.cm.register_cmap('banded',     bandedcolormap())
+pl.cm.register_cmap('bi',         bicolormap())
+pl.cm.register_cmap('orangeblue', orangebluecolormap())
 
 
 ##############################################################################

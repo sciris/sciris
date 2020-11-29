@@ -1172,7 +1172,7 @@ def mergedicts(*args, strict=False, overwrite=True):
 ### TIME/DATE FUNCTIONS
 ##############################################################################
 
-__all__ += ['now', 'getdate', 'readdate', 'elapsedtimestr', 'tic', 'toc', 'timedsleep']
+__all__ += ['now', 'getdate', 'readdate', 'elapsedtimestr', 'tic', 'toc', 'toctic', 'timedsleep']
 
 def now(timezone=None, utc=False, die=False, astype='dateobj', tostring=False, dateformat=None):
     '''
@@ -1240,16 +1240,16 @@ def readdate(datestr=None, dateformat=None, return_defaults=False):
     this function tries a list of standard date types.
 
     Args:
-        datestr (str): the string containing the date
+        datestr (str or list): the string containing the date, or a list of dates
         dateformat (str or list): the format for the date, if known; can be a list of options
         return_defaults (bool): don't convert the date, just return the defaults
 
     Returns:
         dateobj (date): a datetime object
 
-    Example:
-        string = '2020-03-03'
-        dateobj = sc.readdate(string) # Standard format, so works
+    Examples:
+        dateobj = sc.readdate('2020-03-03') # Standard format, so works
+        dateobjs = sc.readdate(['2020-06', '2020-07'], dateformat='%Y-%m')
     '''
 
     formats_to_try = {
@@ -1272,20 +1272,37 @@ def readdate(datestr=None, dateformat=None, return_defaults=False):
         for f,fmt in enumerate(format_list):
             formats_to_try[str(f)] = fmt
 
-    dateobj = None
-    for fmt in formats_to_try.values():
-        try:
-            dateobj = datetime.datetime.strptime(datestr, fmt)
-            break # If we find one that works, we can stop
-        except:
-            pass
+    if isstring(datestr):
+        datestrs = [datestr]
+        was_string = True
+    elif isinstance(datestr, list):
+        datestrs = datestr
+        was_string = False
+    else:
+        errormsg = f'Could not recognize type {type(datestr)}: expecting string or list'
+        raise TypeError(errormsg)
 
-    if dateobj is None:
-        formatstr = '\n'.join([f'{item[0]:15s}: {item[1]}' for item in formats_to_try.items()])
-        errormsg = f'Was unable to convert "{datestr}" to a date using the formats:\n{formatstr}'
-        raise ValueError(errormsg)
+    dateobjs = []
+    for datestr in datestrs: # Iterate over them
+        dateobj = None
+        exceptions = {}
+        for key,fmt in formats_to_try.items():
+            try:
+                dateobj = datetime.datetime.strptime(datestr, fmt)
+                break # If we find one that works, we can stop
+            except Exception as E:
+                exceptions[key] = str(E)
 
-    return dateobj
+        if dateobj is None:
+            formatstr = '\n'.join([f'{item[0]:15s}: {item[1]} ({exceptions[item[0]]})' for item in formats_to_try.items()])
+            errormsg = f'Was unable to convert "{datestr}" to a date using the formats:\n{formatstr}'
+            raise ValueError(errormsg)
+        dateobjs.append(dateobj)
+
+    if was_string:
+        return dateobjs[0]
+    else:
+        return dateobjs
 
 
 
@@ -1440,6 +1457,25 @@ def toc(start=None, output=False, label=None, sigfigs=None, filename=None, reset
         if filename is not None: printtologfile(logmessage, filename) # If we passed in a filename, append the message to that file.
         else: print(logmessage) # Otherwise, print the message.
         return None
+
+
+def toctic(returntic=False, returntoc=False, *args, **kwargs):
+    '''
+    A convenience function for multiple timings. Can return the default output of
+    either tic() or toc() (default neither). Arguments are passed to toc().
+
+    Example:
+        sc.tic()
+        slow_operation_1()
+        sc.toctic()
+        slow_operation_2()
+        sc.toc()
+    '''
+    tocout = toc(*args, **kwargs)
+    ticout = tic()
+    if   returntic: return ticout
+    elif returntoc: return tocout
+    else:           return None
 
 
 def timedsleep(delay=None, verbose=True):
