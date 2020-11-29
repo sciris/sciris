@@ -271,7 +271,7 @@ def isprime(n, verbose=False):
 ### Other functions
 ##############################################################################
 
-__all__ += ['quantile', 'perturb', 'scaleratio', 'normalize', 'inclusiverange', 'smooth', 'smoothinterp', 'randround']
+__all__ += ['quantile', 'perturb', 'scaleratio', 'normalize', 'inclusiverange', 'smooth', 'smoothinterp', 'randround', 'cat']
 
 
 def quantile(data, quantiles=[0.5, 0.25, 0.75]):
@@ -527,4 +527,21 @@ def randround(x):
         output = [randround(i) for i in x]
     else:
         output = int(np.floor(x+np.random.random()))
+    return output
+
+
+def cat(*args, axis=None):
+    '''
+    Like np.concatenate(), but takes anything and returns an array. Useful for
+    e.g. appending a single number onto the beginning or end of an array.
+
+    Examples:
+        arr = sc.cat(4, np.ones(3))
+        arr = sc.cat(np.array([1,2,3]), [4,5], 6)
+        arr = sc.cat(np.random.rand(2,4), np.random.rand(2,6), axis=1)
+    '''
+    output = ut.promotetoarray(args[0])
+    for arg in args[1:]:
+        arg = ut.promotetoarray(arg)
+        output = np.concatenate((output, arg), axis=axis)
     return output

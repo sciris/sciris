@@ -472,7 +472,7 @@ def loadjson(filename=None, folder=None, string=None, fromfile=True, **kwargs):
 
 
 
-def savejson(filename=None, obj=None, folder=None, die=True, **kwargs):
+def savejson(filename=None, obj=None, folder=None, die=True, indent=2, **kwargs):
     ''' Convenience function for saving a JSON '''
 
     filename = makefilepath(filename=filename, folder=folder)
@@ -483,7 +483,7 @@ def savejson(filename=None, obj=None, folder=None, die=True, **kwargs):
         else:   print(errormsg)
 
     with open(filename, 'w') as f:
-        json.dump(sanitizejson(obj), f, **kwargs)
+        json.dump(sanitizejson(obj), f, indent=indent, **kwargs)
 
     return None
 
@@ -975,6 +975,9 @@ def savespreadsheet(filename=None, data=None, folder=None, sheetnames=None, clos
 ##############################################################################
 ### Pickling support methods
 ##############################################################################
+
+__all__ += ['Failed', 'Empty']
+
 
 class Failed(object):
     ''' An empty class to represent a failed object loading '''
