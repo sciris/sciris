@@ -1164,7 +1164,7 @@ def isarray(obj, dtype=None):
     Example:
         sc.isarray(np.array([1,2,3]), dtype=float) # False, dtype is int
 
-    New in version 0.18.0.
+    New in version 1.0.0.
     '''
     if isinstance(obj, np.ndarray):
         if dtype is None:
@@ -1432,7 +1432,7 @@ def date(obj, *args, start_date=None, dateformat=None, as_date=True):
         sc.date('2020-04-14', start_date='2020-04-04', as_date=False) # Returns 10
         sc.date([35,36,37], as_date=False) # Returns ['2020-02-05', '2020-02-06', '2020-02-07']
 
-    New in version 0.18.0.
+    New in version 1.0.0.
     '''
 
     if obj is None:
@@ -1500,7 +1500,7 @@ def day(obj, *args, start_day=None):
 
         sc.day(sc.now()) # Returns how many days into the year we are
 
-    New in version 0.18.0.
+    New in version 1.0.0.
     '''
 
     # Do not process a day if it's not supplied
@@ -1551,7 +1551,7 @@ def daydiff(*args):
         diff  = sc.daydiff('2020-03-20', '2020-04-05') # Returns 16
         diffs = sc.daydiff('2020-03-20', '2020-04-05', '2020-05-01') # Returns [16, 26]
 
-    New in version 0.18.0.
+    New in version 1.0.0.
     '''
     days = [date(day) for day in args]
     if len(days) == 1:
@@ -1584,7 +1584,7 @@ def daterange(start_date, end_date, inclusive=True, as_date=False, dateformat=No
 
         dates = sc.daterange('2020-03-01', '2020-04-04')
 
-    New in version 0.18.0.
+    New in version 1.0.0.
     '''
     start_day = day(start_date)
     end_day = day(end_date)
@@ -1611,7 +1611,7 @@ def datetoyear(dateobj, dateformat=None):
 
     By Luke Davis from https://stackoverflow.com/a/42424261, adapted by Romesh Abeysuriya.
 
-    New in version 0.18.0.
+    New in version 1.0.0.
     """
     if isstring(dateobj):
         dateobj = readdate(dateobj, dateformat=dateformat)
@@ -1785,7 +1785,7 @@ def toctic(returntic=False, returntoc=False, *args, **kwargs):
         slow_operation_2()
         sc.toc()
 
-    New in version 0.18.0.
+    New in version 1.0.0.
     '''
     tocout = toc(*args, **kwargs)
     ticout = tic()
@@ -1938,7 +1938,7 @@ def checkram(unit='mb', fmt='0.2f', start=0, to_string=True):
         a = np.random.random((1_000, 10_000))
         print(sc.checkram(start=start))
 
-    New in version 0.18.0.
+    New in version 1.0.0.
     '''
     process = psutil.Process(os.getpid())
     mapping = {'b':1, 'kb':1e3, 'mb':1e6, 'gb':1e9}
@@ -2335,7 +2335,7 @@ def getcaller(frame=2, tostring=True):
     Returns:
         output (str/dict): the filename and line number of the calling function, either as a string or dict
 
-    New in version 0.18.0.
+    New in version 1.0.0.
     '''
     try:
         import inspect
@@ -2584,7 +2584,7 @@ def nested_loop(inputs, loop_order):
 
     From Atomica by Romesh Abeysuriya.
 
-    New in version 0.18.0.
+    New in version 1.0.0.
     """
     loop_order = list(loop_order)  # Convert to list, in case loop order was passed in as a generator e.g. from map()
     inputs = [inputs[i] for i in loop_order]

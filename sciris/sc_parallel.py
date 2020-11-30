@@ -303,7 +303,7 @@ def parallel_progress(fcn, inputs, num_workers=None, show_progress=True, initial
     Returns:
         A list of outputs
 
-    New in version 0.18.0.
+    New in version 1.0.0.
     """
     from multiprocess import pool
     from tqdm import tqdm
