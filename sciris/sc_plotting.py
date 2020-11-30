@@ -77,7 +77,8 @@ def shifthue(colors=None, hueshift=0.0):
     '''
     Shift the hue of the colors being fed in.
 
-    Example:
+    **Example**::
+
         colors = sc.shifthue(colors=[(1,0,0),(0,1,0)], hueshift=0.5)
     '''
     colors, origndim = _listify_colors(colors)
@@ -95,7 +96,8 @@ def rgb2hex(arr):
     '''
     A little helper function to convert e.g. [0.53, 0.74, 0.15] to a pleasing shade of green.
 
-    Example:
+    **Example**::
+
         hx = sc.rgb2hex([0.53, 0.74, 0.15])
     '''
     arr = np.array(arr)
@@ -111,7 +113,8 @@ def hex2rgb(string):
     '''
     A little helper function to convert e.g. '87bc26' to a pleasing shade of green.
 
-    Example:
+    **Example**::
+
         rgb = sc.hex2rgb('#86bc25')
     '''
     if string[0] == '#':
@@ -130,7 +133,8 @@ def rgb2hsv(colors=None):
     '''
     Shortcut to Matplotlib's rgb_to_hsv method, accepts a color triplet or a list/array of color triplets.
 
-    Example:
+    **Example**::
+
         hsv = sc.rgb2hsv([0.53, 0.74, 0.15])
     '''
     colors, origndim = _listify_colors(colors)
@@ -146,7 +150,8 @@ def hsv2rgb(colors=None):
     '''
     Shortcut to Matplotlib's hsv_to_rgb method, accepts a color triplet or a list/array of color triplets.
 
-    Example:
+    **Example**::
+
         rgb = sc.hsv2rgb([0.23, 0.80, 0.74])
     '''
     colors, origndim = _listify_colors(colors)
@@ -183,7 +188,8 @@ def vectocolor(vector, cmap=None, asarray=True, reverse=False, minval=None, maxv
     Returns:
         colors (array): Nx4 array of RGB-alpha color values
 
-    Example:
+    **Example**::
+
         n = 1000
         x = randn(n,1);
         y = randn(n,1);
@@ -242,7 +248,8 @@ def arraycolors(arr, **kwargs):
     of vectocolor() for multidimensional arrays; see that function for additional
     arguments.
 
-    Example:
+    **Example**::
+
         n = 1000
         ncols = 5
         arr = pl.rand(n,ncols)
@@ -280,7 +287,8 @@ def gridcolors(ncolors=10, limits=None, nsteps=20, asarray=False, ashex=False, r
         doplot: whether or not to plot the color cube itself
         basis: what basis to use -- options are 'colorbrewer', 'kelly', 'default', or 'none'
 
-    Usage example:
+    **Example**::
+
         from pylab import *
         from sciris import gridcolors
         ncolors = 10
@@ -383,7 +391,8 @@ def colormapdemo(cmap=None, n=None, smoothing=None, randseed=None, doshow=True):
     3D. The argument can be either a colormap itself or a string describing a
     colormap.
 
-    Examples:
+    **Examples**::
+
         sc.colormapdemo('inferno') # Use a registered Matplotlib colormap
         sc.colormapdemo('parula') # Use a registered Sciris colormap
         sc.colormapdemo(sc.alpinecolormap(), n=200, smoothing=20, randseed=2942) # Use a colormap object
@@ -441,13 +450,14 @@ def alpinecolormap(apply=False):
     This function generates a map based on ascending height. Based on data from
     Kazakhstan.
 
-    Test case:
+    **Test case**::
+
         sc.colormapdemo('alpine')
 
-    Usage example:
+    **Usage example**::
+
         import sciris as sc
         import pylab as pl
-        from pylab import randn, imshow, show
         pl.imshow(pl.randn(20,20), interpolation='none', cmap=sc.alpinecolormap())
 
     Version: 2014aug06
@@ -498,16 +508,17 @@ def bicolormap(gap=0.1, mingreen=0.2, redbluemix=0.5, epsilon=0.01, demo=False, 
     positive changes, with grey in the middle. The input argument is how much
     of a color gap there is between the red scale and the blue one.
 
-    The function has four parameters:
+    Args:
       gap: sets how big of a gap between red and blue color scales there is (0=no gap; 1=pure red and pure blue)
       mingreen: how much green to include at the extremes of the red-blue color scale
       redbluemix: how much red to mix with the blue and vice versa at the extremes of the scale
       epsilon: what fraction of the colormap to make gray in the middle
 
-    Examples:
-      bicolormap(gap=0,mingreen=0,redbluemix=1,epsilon=0) # From pure red to pure blue with white in the middle
-      bicolormap(gap=0,mingreen=0,redbluemix=0,epsilon=0.1) # Red -> yellow -> gray -> turquoise -> blue
-      bicolormap(gap=0.3,mingreen=0.2,redbluemix=0,epsilon=0.01) # Red and blue with a sharp distinction between
+    **Examples**::
+
+        bicolormap(gap=0,mingreen=0,redbluemix=1,epsilon=0) # From pure red to pure blue with white in the middle
+        bicolormap(gap=0,mingreen=0,redbluemix=0,epsilon=0.1) # Red -> yellow -> gray -> turquoise -> blue
+        bicolormap(gap=0.3,mingreen=0.2,redbluemix=0,epsilon=0.01) # Red and blue with a sharp distinction between
 
     Version: 2013sep13
     """
@@ -565,7 +576,8 @@ def parulacolormap(apply=False):
     Create a map similar to Viridis, but brighter. Set apply=True to use
     immediately.
 
-    Demo and example:
+    **Demo and example**::
+
         cmap = sc.parulacolormap()
         sc.colormapdemo(cmap=cmap)
 
@@ -621,7 +633,8 @@ def turbocolormap(apply=False):
     Create a map similar to Jet, but better. Set apply=True to use
     immediately.
 
-    Demo and example:
+    **Demo and example**::
+
         cmap = sc.turbocolormap()
         sc.colormapdemo(cmap=cmap)
 
@@ -674,7 +687,8 @@ def bandedcolormap(minvalue=None, minsaturation=None, hueshift=None, saturations
     but rather aims to make it easy to relate colors to as-exact-as-possible numbers
     (while still maintaining a semblance of overall trend from low to high).
 
-    Demo and example:
+    **Demo and example**::
+
         cmap = sc.bandedcolormap(minvalue=0, minsaturation=0)
         sc.colormapdemo(cmap=cmap)
 
@@ -707,7 +721,8 @@ def orangebluecolormap(apply=False):
     Create an orange-blue colormap; most like RdYlBu but more pleasing. Created
     by Prashanth Selvaraj.
 
-    Demo and example:
+    **Demo and example**::
+
         cmap = sc.orangebluecolormap()
         sc.colormapdemo(cmap=cmap)
 
@@ -743,7 +758,11 @@ __all__ += ['fig3d', 'ax3d', 'plot3d', 'scatter3d', 'surf3d', 'bar3d']
 
 
 def fig3d(returnax=False, figkwargs=None, axkwargs=None, **kwargs):
-    ''' Shortcut for creating a figure with 3D axes -- kwargs are passed to figure() '''
+    '''
+    Shortcut for creating a figure with 3D axes.
+
+    Usually not invoked directly; kwargs are passed to figure()
+    '''
 
     if figkwargs is None: figkwargs = {}
     if axkwargs is None: axkwargs = {}
@@ -757,7 +776,11 @@ def fig3d(returnax=False, figkwargs=None, axkwargs=None, **kwargs):
 
 
 def ax3d(fig=None, ax=None, returnfig=False, silent=False, elev=None, azim=None, figkwargs=None, axkwargs=None, **kwargs):
-    ''' Create a 3D axis to plot in -- kwags are passed to add_subplot() '''
+    '''
+    Create a 3D axis to plot in.
+
+    Usually not invoked directly; kwags are passed to add_subplot()
+    '''
     from mpl_toolkits.mplot3d import Axes3D # analysis:ignore
 
     if figkwargs is None: figkwargs = {}
@@ -791,12 +814,29 @@ def ax3d(fig=None, ax=None, returnfig=False, silent=False, elev=None, azim=None,
 
 
 def plot3d(x, y, z, c=None, fig=None, ax=None, returnfig=False, figkwargs=None, axkwargs=None, plotkwargs=None, **kwargs):
-    ''' Plot 3D data as a scatter -- kwargs are passed to plot() '''
+    '''
+    Plot 3D data as a line
+
+    Args:
+        x (arr): x coordinate data
+        y (arr): y coordinate data
+        z (arr): z coordinate data
+        fig (fig): an existing figure to draw the plot in
+        ax (axes): an existing axes to draw the plot in
+        returnfig (bool): whether to return the figure, or just the axes
+        figkwargs (dict): passed to figure()
+        axkwargs (dict): passed to axes()
+        plotkwargs (dict): passed to plot()
+        kwargs (dict): also passed to plot()
+
+    **Example**::
+
+        x,y,z = pl.rand(3,10)
+        sc.plot3d(x, y, z)
+    '''
     # Set default arguments
-    default_plotkwargs = {'lw':2}
-    if axkwargs   is None: axkwargs   = {}
-    if plotkwargs is None: plotkwargs = {}
-    plotkwargs = dict(default_plotkwargs, **plotkwargs) # Reverse of plotkwargs.update(default_plotkwargs)
+    plotkwargs = ut.mergedicts({'lw':2, 'c':c}, plotkwargs, kwargs)
+    axkwargs = ut.mergedicts(axkwargs)
 
     # Create axis
     fig,ax = ax3d(returnfig=True, fig=fig, ax=ax, figkwargs=figkwargs, **axkwargs)
@@ -810,12 +850,30 @@ def plot3d(x, y, z, c=None, fig=None, ax=None, returnfig=False, figkwargs=None, 
 
 
 def scatter3d(x, y, z, c=None, fig=None, returnfig=False, figkwargs=None, axkwargs=None, plotkwargs=None, **kwargs):
-    ''' Plot 3D data as a scatter '''
+    '''
+    Plot 3D data as a scatter
+
+    Args:
+        x (arr): x coordinate data
+        y (arr): y coordinate data
+        z (arr): z coordinate data
+        c (arr): color data
+        fig (fig): an existing figure to draw the plot in
+        ax (axes): an existing axes to draw the plot in
+        returnfig (bool): whether to return the figure, or just the axes
+        figkwargs (dict): passed to figure()
+        axkwargs (dict): passed to axes()
+        plotkwargs (dict): passed to plot()
+        kwargs (dict): also passed to plot()
+
+    **Example**::
+
+        x,y,z = pl.rand(3,10)
+        sc.scatter3d(x, y, z, c=z)
+    '''
     # Set default arguments
-    default_plotkwargs = {'s':200, 'depthshade':False, 'linewidth':0}
-    if axkwargs   is None: axkwargs   = {}
-    if plotkwargs is None: plotkwargs = {}
-    plotkwargs = dict(default_plotkwargs, **plotkwargs) # Reverse of plotkwargs.update(default_plotkwargs)
+    plotkwargs = ut.mergedicts({'s':200, 'depthshade':False, 'linewidth':0}, plotkwargs, kwargs)
+    axkwargs = ut.mergedicts(axkwargs)
 
     # Create figure
     fig,ax = ax3d(returnfig=True, fig=fig, figkwargs=figkwargs, **axkwargs)
@@ -828,21 +886,47 @@ def scatter3d(x, y, z, c=None, fig=None, returnfig=False, figkwargs=None, axkwar
         return ax
 
 
-def surf3d(data, fig=None, returnfig=False, colorbar=True, figkwargs=None, axkwargs=None, plotkwargs=None, **kwargs):
-    ''' Plot 2D data as a 3D surface '''
+def surf3d(data, x=None, y=None, fig=None, returnfig=False, colorbar=True, figkwargs=None, axkwargs=None, plotkwargs=None, **kwargs):
+    '''
+    Plot 2D data as a 3D surface
+
+    Args:
+        data (arr): 2D data
+        x (arr): 1D vector or 2D grid of x coordinates (optional)
+        y (arr): 1D vector or 2D grid of y coordinates (optional)
+        fig (fig): an existing figure to draw the plot in
+        ax (axes): an existing axes to draw the plot in
+        returnfig (bool): whether to return the figure, or just the axes
+        colorbar (bool): whether to plot a colorbar
+        figkwargs (dict): passed to figure()
+        axkwargs (dict): passed to axes()
+        plotkwargs (dict): passed to plot()
+        kwargs (dict): also passed to plot()
+
+    **Example**::
+
+        data = sc.smooth(pl.rand(30,50))
+        sc.surf3d(data)
+    '''
 
     # Set default arguments
-    default_plotkwargs = {'rstride':1, 'cstride':1, 'linewidth':0, 'antialiased':False, 'cmap':'viridis'}
-    if axkwargs   is None: axkwargs   = {}
-    if plotkwargs is None: plotkwargs = {}
-    plotkwargs = dict(default_plotkwargs, **plotkwargs) # Reverse of plotkwargs.update(default_plotkwargs)
+    plotkwargs = ut.mergedicts({'rstride':1, 'cstride':1, 'linewidth':0, 'antialiased':False, 'cmap':'viridis'}, plotkwargs, kwargs)
+    axkwargs = ut.mergedicts(axkwargs)
 
     # Create figure
     fig,ax = ax3d(returnfig=True, fig=fig, figkwargs=figkwargs, **axkwargs)
     ny,nx = pl.array(data).shape
-    x = np.arange(nx)
-    y = np.arange(ny)
-    X, Y = np.meshgrid(x, y)
+
+    if x is None:
+        x = np.arange(nx)
+    if y is None:
+        y = np.arange(ny)
+
+    if x.ndim == 1 or y.ndim == 1:
+        X,Y = np.meshgrid(x, y)
+    else:
+        X,Y = x,y
+
     surf = ax.plot_surface(X, Y, data, **plotkwargs)
     if colorbar:
         fig.colorbar(surf)
@@ -855,13 +939,29 @@ def surf3d(data, fig=None, returnfig=False, colorbar=True, figkwargs=None, axkwa
 
 
 def bar3d(data, fig=None, returnfig=False, cmap='viridis', figkwargs=None, axkwargs=None, plotkwargs=None, **kwargs):
-    ''' Plot 2D data as 3D bars '''
+    '''
+    Plot 2D data as 3D bars
+
+    Args:
+        data (arr): 2D data
+        fig (fig): an existing figure to draw the plot in
+        ax (axes): an existing axes to draw the plot in
+        returnfig (bool): whether to return the figure, or just the axes
+        colorbar (bool): whether to plot a colorbar
+        figkwargs (dict): passed to figure()
+        axkwargs (dict): passed to axes()
+        plotkwargs (dict): passed to plot()
+        kwargs (dict): also passed to plot()
+
+    **Example**::
+
+        data = pl.rand(5,4)
+        sc.bar3d(data)
+    '''
 
     # Set default arguments
-    default_plotkwargs = {'dx':0.8, 'dy':0.8, 'shade':True}
-    if axkwargs   is None: axkwargs   = {}
-    if plotkwargs is None: plotkwargs = {}
-    plotkwargs = dict(default_plotkwargs, **plotkwargs) # Reverse of plotkwargs.update(default_plotkwargs)
+    plotkwargs = ut.mergedicts({'dx':0.8, 'dy':0.8, 'shade':True}, plotkwargs, kwargs)
+    axkwargs = ut.mergedicts(axkwargs)
 
     # Create figure
     fig,ax = ax3d(returnfig=True, fig=fig, figkwargs=figkwargs, **axkwargs)
@@ -901,6 +1001,11 @@ def boxoff(ax=None, removeticks=True, flipticks=True):
 
     Removes the top and right borders of a plot. Also optionally removes
     the tick marks, and flips the remaining ones outside.
+
+    **Example**::
+
+        pl.plot([2,5,3])
+        sc.boxoff()
 
     Version: 2017may22
     '''
@@ -980,7 +1085,17 @@ def setylim(data=None, ax=None):
 
 
 def commaticks(fig=None, ax=None, axis='y'):
-    ''' Use commas in formatting the y axis of a figure -- see http://stackoverflow.com/questions/25973581/how-to-format-axis-number-format-to-thousands-with-a-comma-in-matplotlib '''
+    '''
+    Use commas in formatting the y axis of a figure (e.g., 34,000 instead of 34000)
+
+    **Example**::
+
+        data = pl.rand(10)*1e4
+        pl.plot(data)
+        sc.commaticks()
+
+    See http://stackoverflow.com/questions/25973581/how-to-format-axis-number-format-to-thousands-with-a-comma-in-matplotlib
+    '''
     if   ax  is not None: axlist = ut.promotetolist(ax)
     elif fig is not None: axlist = fig.axes
     else:                 axlist = [pl.gca()]
@@ -993,16 +1108,22 @@ def commaticks(fig=None, ax=None, axis='y'):
     return None
 
 
-
 def SItickformatter(x, pos=None, sigfigs=2, SI=True, *args, **kwargs):  # formatter function takes tick label and tick position
-    ''' Formats axis ticks so that e.g. 34,243 becomes 34K '''
+    ''' Formats axis ticks so that e.g. 34000 becomes 34k -- usually not invoked directly '''
     output = ut.sigfig(x, sigfigs=sigfigs, SI=SI) # Pretty simple since ut.sigfig() does all the work
     return output
 
 
-
 def SIticks(fig=None, ax=None, axis='y', fixed=False):
-    ''' Apply SI tick formatting to one axis of a figure '''
+    '''
+    Apply SI tick formatting to one axis of a figure  (e.g., 34k instead of 34000)
+
+    **Example**::
+
+        data = pl.rand(10)*1e4
+        pl.plot(data)
+        sc.SIticks()
+    '''
     if  fig is not None: axlist = fig.axes
     elif ax is not None: axlist = ut.promotetolist(ax)
     else:                axlist = [pl.gca()]
@@ -1072,6 +1193,11 @@ def maximize(fig=None, die=False):
     Args:
         fig (Figure): the figure object; if not supplied, use the current active figure
         die (bool): whether to propagate an exception if encountered (default no)
+
+    **Example**::
+
+        pl.plot([2,3,5])
+        sc.maximize()
 
     New in version 1.0.0.
     '''
@@ -1184,12 +1310,15 @@ def loadfig(filename=None):
     '''
     Load a plot from a file and reanimate it.
 
-    Example usage:
+    **Example usage**::
+
         import pylab as pl
         import sciris as sc
         fig = pl.figure(); pl.plot(pl.rand(10))
         sc.savefigs(fig, filetype='fig', filename='example.fig')
-    Later:
+
+    **Later**::
+
         example = sc.loadfig('example.fig')
     '''
     pl.ion() # Without this, it doesn't show up
@@ -1278,86 +1407,56 @@ def savemovie(frames, filename=None, fps=None, quality=None, dpi=None, writer=No
     '''
     Save a set of Matplotlib artists as a movie.
 
-    Parameters
-    ----------
-    frames : list
-        The list of frames to animate
+    Args:
+        frames (list): The list of frames to animate
+        filename (str): The name (or full path) of the file; expected to end with mp4 or gif (default movie.mp4)
+        fps (int): The number of frames per second (default 10)
+        quality (string): The quality of the movie, in terms of dpi (default "high" = 300 dpi)
+        dpi (int): Instead of using quality, set an exact dpi
+        writer (str or object): Specify the writer to be passed to matplotlib.animation.save() (default "ffmpeg")
+        bitrate (int): The bitrate. Note, may be ignored; best to specify in a writer and to pass in the writer as an argument
+        interval (int): The interval between frames; alternative to using fps
+        repeat (bool): Whether or not to loop the animation (default False)
+        repeat_delay (bool): Delay between repeats, if repeat=True (default None)
+        blit (bool): Whether or not to "blit" the frames (default False, since otherwise does not detect changes )
+        verbose (bool): Whether to print statistics on finishing.
+        kwargs (dict): Passed to matplotlib.animation.save()
 
-    filename : str
-        The name (or full path) of the file; expected to end with mp4 or gif (default movie.mp4)
-
-    fps : int
-        The number of frames per second (default 10)
-
-    quality : string
-        The quality of the movie, in terms of dpi (default "high" = 300 dpi)
-
-    dpi : int
-        Instead of using quality, set an exact dpi
-
-    writer : str or object
-        Specify the writer to be passed to matplotlib.animation.save() (default "ffmpeg")
-
-    bitrate : int
-        The bitrate. Note, may be ignored; best to specify in a writer and to pass in the writer as an argument
-
-    interval : int
-        The interval between frames; alternative to using fps
-
-    repeat : bool
-        Whether or not to loop the animation (default False)
-
-    repeat_delay : bool
-        Delay between repeats, if repeat=True (default None)
-
-    blit : bool
-        Whether or not to "blit" the frames (default False, since otherwise does not detect changes )
-
-    verbose : bool
-        Whether to print statistics on finishing.
-
-    kwargs : dict
-        Passed to matplotlib.animation.save()
-
-
-    Returns
-    -------
-    anim : object
+    Returns:
         A Matplotlib animation object
 
+    **Examples**::
 
-    Examples
-    --------
-    import pylab as pl
-    import sciris as sc
+        import pylab as pl
+        import sciris as sc
 
-    # Simple example (takes ~5 s)
-    frames = [pl.plot(pl.cumsum(pl.randn(100))) for i in range(20)] # Create frames
-    sc.savemovie(frames, 'dancing_lines.gif') # Save movie as medium-quality gif
+        # Simple example (takes ~5 s)
+        frames = [pl.plot(pl.cumsum(pl.randn(100))) for i in range(20)] # Create frames
+        sc.savemovie(frames, 'dancing_lines.gif') # Save movie as medium-quality gif
 
-    # Complicated example (takes ~15 s)
-    nframes = 100 # Set the number of frames
-    ndots = 100 # Set the number of dots
-    axislim = 5*pl.sqrt(nframes) # Pick axis limits
-    dots = pl.zeros((ndots, 2)) # Initialize the dots
-    frames = [] # Initialize the frames
-    old_dots = sc.dcp(dots) # Copy the dots we just made
-    fig = pl.figure(figsize=(10,8)) # Create a new figure
-    for i in range(nframes): # Loop over the frames
-        dots += pl.randn(ndots, 2) # Move the dots randomly
-        color = pl.norm(dots, axis=1) # Set the dot color
-        old = pl.array(old_dots) # Turn into an array
-        plot1 = pl.scatter(old[:,0], old[:,1], c='k') # Plot old dots in black
-        plot2 = pl.scatter(dots[:,0], dots[:,1], c=color) # Note: Frames will be separate in the animation
-        pl.xlim((-axislim, axislim)) # Set x-axis limits
-        pl.ylim((-axislim, axislim)) # Set y-axis limits
-        kwargs = {'transform':pl.gca().transAxes, 'horizontalalignment':'center'} # Set the "title" properties
-        title = pl.text(0.5, 1.05, f'Iteration {i+1}/{nframes}', **kwargs) # Unfortunately pl.title() can't be dynamically updated
-        pl.xlabel('Latitude') # But static labels are fine
-        pl.ylabel('Longitude') # Ditto
-        frames.append((plot1, plot2, title)) # Store updated artists
-        old_dots = pl.vstack([old_dots, dots]) # Store the new dots as old dots
-    sc.savemovie(frames, 'fleeing_dots.mp4', fps=20, quality='high') # Save movie as a high-quality mp4
+        # Complicated example (takes ~15 s)
+        nframes = 100 # Set the number of frames
+        ndots = 100 # Set the number of dots
+        axislim = 5*pl.sqrt(nframes) # Pick axis limits
+        dots = pl.zeros((ndots, 2)) # Initialize the dots
+        frames = [] # Initialize the frames
+        old_dots = sc.dcp(dots) # Copy the dots we just made
+        fig = pl.figure(figsize=(10,8)) # Create a new figure
+        for i in range(nframes): # Loop over the frames
+            dots += pl.randn(ndots, 2) # Move the dots randomly
+            color = pl.norm(dots, axis=1) # Set the dot color
+            old = pl.array(old_dots) # Turn into an array
+            plot1 = pl.scatter(old[:,0], old[:,1], c='k') # Plot old dots in black
+            plot2 = pl.scatter(dots[:,0], dots[:,1], c=color) # Note: Frames will be separate in the animation
+            pl.xlim((-axislim, axislim)) # Set x-axis limits
+            pl.ylim((-axislim, axislim)) # Set y-axis limits
+            kwargs = {'transform':pl.gca().transAxes, 'horizontalalignment':'center'} # Set the "title" properties
+            title = pl.text(0.5, 1.05, f'Iteration {i+1}/{nframes}', **kwargs) # Unfortunately pl.title() can't be dynamically updated
+            pl.xlabel('Latitude') # But static labels are fine
+            pl.ylabel('Longitude') # Ditto
+            frames.append((plot1, plot2, title)) # Store updated artists
+            old_dots = pl.vstack([old_dots, dots]) # Store the new dots as old dots
+        sc.savemovie(frames, 'fleeing_dots.mp4', fps=20, quality='high') # Save movie as a high-quality mp4
 
     Version: 2019aug21
     '''
