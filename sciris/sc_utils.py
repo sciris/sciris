@@ -2844,7 +2844,7 @@ class KeyNotFoundError(KeyError):
 
     **Example**::
 
-        raise sc.KeyNotFoundError('The key "foo" is not available, but these are:\n"bar"\n"cat"')
+        raise sc.KeyNotFoundError('The key "foo" is not available, but these are: "bar", "cat"')
     '''
 
     def __str__(self):
@@ -2869,29 +2869,35 @@ class prettyobj(object):
 
     **Examples**
 
-    >>> myobj = sc.prettyobj()
-    >>> myobj.a = 3
-    >>> myobj.b = {'a':6}
-    >>> print(myobj)
-    <sciris.sc_utils.prettyobj at 0x7ffa1e243910>
-    ————————————————————————————————————————————————————————————
-    a: 3
-    b: {'a': 6}
-    ————————————————————————————————————————————————————————————
+        >>> myobj = sc.prettyobj()
+        >>> myobj.a = 3
+        >>> myobj.b = {'a':6}
+        >>> print(myobj)
+        <sciris.sc_utils.prettyobj at 0x7ffa1e243910>
+        ————————————————————————————————————————————————————————————
+        a: 3
+        b: {'a': 6}
+        ————————————————————————————————————————————————————————————
 
-    .. code::
-
-        class MyObj(sc.prettyobj):
-
-            def __init__(self, a, b):
-                self.a = a
-                self.b = b
-
-            def mult(self):
-                return self.a * self.b
-
-        myobj = MyObj(a=4, b=6)
-        print(myobj)
+        >>> class MyObj(sc.prettyobj):
+        >>>
+        >>>     def __init__(self, a, b):
+        >>>         self.a = a
+        >>>         self.b = b
+        >>>
+        >>>     def mult(self):
+        >>>         return self.a * self.b
+        >>>
+        >>> myobj = MyObj(a=4, b=6)
+        >>> print(myobj)
+        <__main__.MyObj at 0x7fd9acd96c10>
+        ————————————————————————————————————————————————————————————
+        Methods:
+          mult()
+        ————————————————————————————————————————————————————————————
+        a: 4
+        b: 6
+        ————————————————————————————————————————————————————————————
 
 
     '''
