@@ -52,52 +52,52 @@ Here are a few more of the most commonly used features.
 Containers
 ~~~~~~~~~~
 
--  ``sc.odict()`` # flexible container for best-of-all-worlds for lists, dicts, and arrays
--  ``sc.objdict()`` # like an odict, but allows get/set via e.g. foo.bar instead of foo['bar']
+-  ``sc.odict()``: flexible container for best-of-all-worlds for lists, dicts, and arrays
+-  ``sc.objdict()``: like an odict, but allows get/set via e.g. foo.bar instead of foo['bar']
 
 File utilities
 ~~~~~~~~~~~~~~
 
--  ``sc.saveobj()/sc.loadobj()`` # efficiently save/load any Python object (via pickling)
--  ``sc.savejson()/sc.loadjson()`` # likewise, for JSONs
--  ``sc.thisdir()`` # get current folder
--  ``sc.getfilelist()`` # easy way to access glob
+-  ``sc.saveobj()/sc.loadobj()``: efficiently save/load any Python object (via pickling)
+-  ``sc.savejson()/sc.loadjson()``: likewise, for JSONs
+-  ``sc.thisdir()``: get current folder
+-  ``sc.getfilelist()``: easy way to access glob
 
 Basic utilities
 ~~~~~~~~~~~~~~~
 
--  ``sc.dcp()`` # shortcut to copy.deepcopy()
--  ``sc.pr()`` # print detailed representation of an object
--  ``sc.heading()`` # print text as a 'large' heading
--  ``sc.colorize()`` # print text in a certain color
--  ``sc.sigfigs()`` # truncate a number to a certain number of significant figures
--  ``sc.isnumber()`` # checks if something is any number type
--  ``sc.promotetolist()`` # converts strings or scalars to lists, for consistent iteration
--  ``sc.readdate()`` # convert strings to dates using common formats
--  ``sc.tic()/sc.toc()`` # simple method for timing durations
--  ``sc.runcommand()`` # simple way of executing a shell command
--  ``sc.findinds()`` # find indices of an array matching a condition
--  ``sc.findnearest()`` # find nearest matching value
--  ``sc.smooth()`` # simple smoothing of 1D or 2D arrays
+-  ``sc.dcp()``: shortcut to copy.deepcopy()
+-  ``sc.pr()``: print detailed representation of an object
+-  ``sc.heading()``: print text as a 'large' heading
+-  ``sc.colorize()``: print text in a certain color
+-  ``sc.sigfigs()``: truncate a number to a certain number of significant figures
+-  ``sc.isnumber()``: checks if something is any number type
+-  ``sc.promotetolist()``: converts strings or scalars to lists, for consistent iteration
+-  ``sc.readdate()``: convert strings to dates using common formats
+-  ``sc.tic()/sc.toc()``: simple method for timing durations
+-  ``sc.runcommand()``: simple way of executing a shell command
+-  ``sc.findinds()``: find indices of an array matching a condition
+-  ``sc.findnearest()``: find nearest matching value
+-  ``sc.smooth()``: simple smoothing of 1D or 2D arrays
 
 Plotting utilities
 ~~~~~~~~~~~~~~~~~~
 
--  ``sc.hex2grb()/sc.rgb2hex()`` # convert between different color conventions
--  ``sc.vectocolor()`` # map a list of sequential values onto a list of colors
--  ``sc.gridcolors()`` # map a list of qualitative categories onto a list of colors
--  ``sc.plot3d()/sc.surf3d()`` # easy way to render 3D plots
--  ``sc.boxoff()`` # turn off top and right parts of the axes box
--  ``sc.commaticks()`` # convert labels from "10000" and "1e6" to "10,000" and "1,000,0000"
--  ``sc.SIticks()`` # convert labels from "10000" and "1e6" to "10k" and "1m"
--  ``sc.maximize()`` # make the figure fill the whole screen
--  ``sc.savemovie()`` # save a sequence of figures as an MP4 or other movie
+-  ``sc.hex2grb()/sc.rgb2hex()``: convert between different color conventions
+-  ``sc.vectocolor()``: map a list of sequential values onto a list of colors
+-  ``sc.gridcolors()``: map a list of qualitative categories onto a list of colors
+-  ``sc.plot3d()/sc.surf3d()``: easy way to render 3D plots
+-  ``sc.boxoff()``: turn off top and right parts of the axes box
+-  ``sc.commaticks()``: convert labels from "10000" and "1e6" to "10,000" and "1,000,0000"
+-  ``sc.SIticks()``: convert labels from "10000" and "1e6" to "10k" and "1m"
+-  ``sc.maximize()``: make the figure fill the whole screen
+-  ``sc.savemovie()``: save a sequence of figures as an MP4 or other movie
 
 Parallelization utilities
 ~~~~~~~~~~~~~~~~~~~~~~~~~
 
--  ``sc.parallelize()`` # as-easy-as-possible parallelization
--  ``sc.loadbalancer()`` # very basic load balancer
+-  ``sc.parallelize()``: as-easy-as-possible parallelization
+-  ``sc.loadbalancer()``: very basic load balancer
 
 
 Installation and run instructions
