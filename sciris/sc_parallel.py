@@ -1,11 +1,12 @@
 '''
 Parallelization functions, allowing multiprocessing to be used simply.
 
-NB: Uses multiprocess instead of multiprocessing for broader support (e.g. Jupyter notebooks).
+NB: Uses ``multiprocess`` instead of ``multiprocessing`` under the hood for 
+broadest support  across platforms (e.g. Jupyter notebooks).
 
 Highlights:
-    - sc.parallelize() # as-easy-as-possible parallelization
-    - sc.loadbalancer() # very basic load balancer
+    - ``sc.parallelize()``: as-easy-as-possible parallelization
+    - ``sc.loadbalancer()``: very basic load balancer
 '''
 
 import time

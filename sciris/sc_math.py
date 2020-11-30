@@ -2,9 +2,9 @@
 Extensions to Numpy, including finding array elements and smoothing data.
 
 Highlights:
-    - sc.findinds() # find indices of an array matching a condition
-    - sc.findnearest() # find nearest matching value
-    - sc.smooth() # simple smoothing of 1D or 2D arrays
+    - ``sc.findinds()``: find indices of an array matching a condition
+    - ``sc.findnearest()``: find nearest matching value
+    - ``sc.smooth()``: simple smoothing of 1D or 2D arrays
 '''
 
 import numpy as np

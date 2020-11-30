@@ -2,8 +2,8 @@
 The 'odict' class, combining features from an OrderedDict and a list/array.
 
 Highlights:
-    - sc.odict() # flexible container for best-of-all-worlds for lists, dicts, and arrays
-    - sc.objdict() # like an odict, but allows get/set via e.g. foo.bar instead of foo['bar']
+    - ``sc.odict()``: flexible container representing the best-of-all-worlds for lists, dicts, and arrays
+    - ``sc.objdict()``: like an odict, but allows get/set via e.g. foo.bar instead of foo['bar']
 '''
 
 ##############################################################################

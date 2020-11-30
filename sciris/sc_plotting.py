@@ -3,15 +3,15 @@ Extensions to Matplotlib, including colormaps, 3D plotting, and plot manipulatio
 
 Highlights:
     - Adds colormaps including 'turbo', 'parula', and 'orangeblue'
-    - sc.hex2grb()/sc.rgb2hex() # convert between different color conventions
-    - sc.vectocolor() # map a list of sequential values onto a list of colors
-    - sc.gridcolors() # map a list of qualitative categories onto a list of colors
-    - sc.plot3d()/sc.surf3d() # easy way to render 3D plots
-    - sc.boxoff() # turn off top and right parts of the axes box
-    - sc.commaticks() # convert labels from "10000" and "1e6" to "10,000" and "1,000,0000"
-    - sc.SIticks() # convert labels from "10000" and "1e6" to "10k" and "1m"
-    - sc.maximize() # make the figure fill the whole screen
-    - sc.savemovie() # save a sequence of figures as an MP4 or other movie
+    - ``sc.hex2grb()/sc.rgb2hex()``: convert between different color conventions
+    - ``sc.vectocolor()``: map a list of sequential values onto a list of colors
+    - ``sc.gridcolors()``: map a list of qualitative categories onto a list of colors
+    - ``sc.plot3d()``:c.surf3d() # easy way to render 3D plots
+    - ``sc.boxoff()``: turn off top and right parts of the axes box
+    - ``sc.commaticks()``: convert labels from "10000" and "1e6" to "10,000" and "1,000,0000"
+    - ``sc.SIticks()``: convert labels from "10000" and "1e6" to "10k" and "1m"
+    - ``sc.maximize()``: make the figure fill the whole screen
+    - ``sc.savemovie()``: save a sequence of figures as an MP4 or other movie
 '''
 
 ##############################################################################
