@@ -34,7 +34,7 @@ from . import sc_fileio as fio
 ### Color functions
 ##############################################################################
 
-__all__ = ['shifthue', 'hex2rgb', 'rgb2hex', 'rgb2hsv', 'hsv2rgb']
+__all__ = ['shifthue', 'rgb2hex', 'hex2rgb', 'rgb2hsv', 'hsv2rgb']
 
 
 def _listify_colors(colors, origndim=None):
@@ -78,7 +78,7 @@ def shifthue(colors=None, hueshift=0.0):
     Shift the hue of the colors being fed in.
 
     Example:
-        colors = shifthue(colors=[(1,0,0),(0,1,0)], hueshift=0.5)
+        colors = sc.shifthue(colors=[(1,0,0),(0,1,0)], hueshift=0.5)
     '''
     colors, origndim = _listify_colors(colors)
     for c,color in enumerate(colors):
@@ -91,8 +91,29 @@ def shifthue(colors=None, hueshift=0.0):
 
 
 
+def rgb2hex(arr):
+    '''
+    A little helper function to convert e.g. [0.53, 0.74, 0.15] to a pleasing shade of green.
+
+    Example:
+        hx = sc.rgb2hex([0.53, 0.74, 0.15])
+    '''
+    arr = np.array(arr)
+    if len(arr) != 3:
+        errormsg = 'Cannot convert "%s" to hex: wrong length' % arr
+        raise Exception(errormsg)
+    if all(arr<=1): arr *= 255. # Convert from 0-1 to 0-255
+    hexstr = '#%02x%02x%02x' % (int(arr[0]), int(arr[1]), int(arr[2]))
+    return hexstr
+
+
 def hex2rgb(string):
-    ''' A little helper function to convert e.g. '86bc25' to a pleasing shade of green. '''
+    '''
+    A little helper function to convert e.g. '87bc26' to a pleasing shade of green.
+
+    Example:
+        rgb = sc.hex2rgb('#86bc25')
+    '''
     if string[0] == '#':
         string = string[1:] # Trim leading #, if it exists
     if len(string)==3:
@@ -105,21 +126,13 @@ def hex2rgb(string):
     return rgb
 
 
-
-def rgb2hex(arr):
-    ''' And going back the other way '''
-    arr = np.array(arr)
-    if len(arr) != 3:
-        errormsg = 'Cannot convert "%s" to hex: wrong length' % arr
-        raise Exception(errormsg)
-    if all(arr<=1): arr *= 255. # Convert from 0-1 to 0-255
-    hexstr = '#%02x%02x%02x' % (int(arr[0]), int(arr[1]), int(arr[2]))
-    return hexstr
-
-
-
 def rgb2hsv(colors=None):
-    ''' Shortcut to Matplotlib's rgb_to_hsv method, accepts a color triplet or a list/array of color triplets '''
+    '''
+    Shortcut to Matplotlib's rgb_to_hsv method, accepts a color triplet or a list/array of color triplets.
+
+    Example:
+        hsv = sc.rgb2hsv([0.53, 0.74, 0.15])
+    '''
     colors, origndim = _listify_colors(colors)
     for c,color in enumerate(colors):
         hsvcolor = mplc.rgb_to_hsv(color)
@@ -130,7 +143,12 @@ def rgb2hsv(colors=None):
 
 
 def hsv2rgb(colors=None):
-    ''' Shortcut to Matplotlib's hsv_to_rgb method, accepts a color triplet or a list/array of color triplets '''
+    '''
+    Shortcut to Matplotlib's hsv_to_rgb method, accepts a color triplet or a list/array of color triplets.
+
+    Example:
+        rgb = sc.hsv2rgb([0.23, 0.80, 0.74])
+    '''
     colors, origndim = _listify_colors(colors)
     for c,color in enumerate(colors):
         hsvcolor = mplc.hsv_to_rgb(color)
@@ -1019,10 +1037,10 @@ def get_rows_cols(n, nrows=None, ncols=None, ratio=1):
 
     **Examples**::
 
-        nrows,ncols = cv.get_rows_cols(36) # Returns 6,6
-        nrows,ncols = cv.get_rows_cols(37) # Returns 7,6
-        nrows,ncols = cv.get_rows_cols(100, ratio=2) # Returns 15,7
-        nrows,ncols = cv.get_rows_cols(100, ratio=0.5) # Returns 8,13 since rows are prioritized
+        nrows,ncols = sc.get_rows_cols(36) # Returns 6,6
+        nrows,ncols = sc.get_rows_cols(37) # Returns 7,6
+        nrows,ncols = sc.get_rows_cols(100, ratio=2) # Returns 15,7
+        nrows,ncols = sc.get_rows_cols(100, ratio=0.5) # Returns 8,13 since rows are prioritized
     '''
 
     # Simple cases -- calculate the one missing
