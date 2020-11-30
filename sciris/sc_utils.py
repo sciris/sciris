@@ -85,6 +85,9 @@ def fast_uuid(which=None, length=None, n=1, secure=False, forcelist=False, safet
     Returns:
         uid (str or list): a string UID, or a list of string UIDs
 
+    Example:
+        uuids = sc.fast_uuid(n=100) # Generate 100 UUIDs
+
     Inspired by https://stackoverflow.com/questions/2257441/random-string-generation-with-upper-case-letters-and-digits/30038250#30038250
     '''
 
@@ -256,8 +259,8 @@ def cp(obj, verbose=True, die=True):
         output = copy.copy(obj)
     except Exception as E:
         output = obj
-        errormsg = 'Warning: could not perform shallow copy, returning original object: %s' % str(E)
-        if die: raise Exception(errormsg)
+        errormsg = 'Could not perform shallow copy, returning original object'
+        if die: raise ValueError(errormsg) from E
         else:   print(errormsg)
     return output
 
@@ -296,8 +299,8 @@ def sha(string, encoding='utf-8', *args, **kwargs):
 
 def wget(url, convert=True):
     ''' Download a URL '''
-    import urllib
-    output = urllib.request.urlopen(url).read()
+    from urllib import request # Bizarrely, urllib.request sometimes fails
+    output = request.urlopen(url).read()
     if convert:
         output = output.decode()
     return output
@@ -336,9 +339,9 @@ def traceback(*args, **kwargs):
 ### Printing/notification functions
 ##############################################################################
 
-__all__ += ['printv', 'blank', 'createcollist', 'objectid', 'objatt', 'objmeth', 'objprop', 'objrepr']
-__all__ += ['prepr', 'pr', 'indent', 'sigfig', 'printarr', 'printdata', 'printvars']
-__all__ += ['slacknotification', 'printtologfile', 'colorize', 'heading']
+__all__ += ['printv', 'blank', 'createcollist', 'objectid', 'objatt', 'objmeth', 'objprop', 'objrepr',
+            'prepr', 'pr', 'indent', 'sigfig', 'printarr', 'printdata', 'printvars',
+            'slacknotification', 'printtologfile', 'colorize', 'heading', 'percentcomplete', 'progressbar']
 
 def printv(string, thisverbose=1, verbose=2, newline=True, indent=True):
     '''
@@ -992,6 +995,60 @@ def heading(string=None, color=None, divider=None, spaces=None, minlength=None, 
     return output
 
 
+def percentcomplete(step=None, maxsteps=None, stepsize=1, prefix=None):
+    '''
+    Display progress.
+
+    Usage example:
+
+        maxiters = 500
+        for i in range(maxiters):
+            sc.percentcomplete(i, maxiters) # will print on every 5th iteration
+            sc.percentcomplete(i, maxiters, stepsize=10) # will print on every 50th iteration
+            sc.percentcomplete(i, maxiters, prefix='Completeness: ') # will print e.g. 'Completeness: 1%'
+    '''
+    if prefix is None:
+        prefix = ' '
+    elif isnumber(prefix):
+        prefix = ' '*prefix
+    onepercent = max(stepsize,round(maxsteps/100*stepsize)); # Calculate how big a single step is -- not smaller than 1
+    if not step%onepercent: # Does this value lie on a percent
+        thispercent = round(step/maxsteps*100) # Calculate what percent it is
+        print(prefix + '%i%%'% thispercent) # Display the output
+    return None
+
+
+def progressbar(i, maxiters, label='', length=30, empty='—', full='•', newline=False):
+    '''
+    Call in a loop to create terminal progress bar.
+
+    Args:
+        i (int): current iteration
+        maxiters (int): maximum number of iterations
+        label (str): initial label to print
+        length (int): length of progress bar
+        empty (str): character for empty steps
+        full (str): character for empty steps
+
+    **Example**::
+
+        import pylab as pl
+        for i in range(100):
+            progressbar(i+1, 100)
+            pl.pause(0.05)
+
+    Adapted from example by Greenstick (https://stackoverflow.com/questions/3173320/text-progress-bar-in-the-console)
+    '''
+    ending = None if newline else '\r'
+    pct = i/maxiters*100
+    percent = f'{pct:0.0f}%'
+    filled = int(length*i//maxiters)
+    bar = full*filled + empty*(length-filled)
+    print(f'\r{label} {bar} {percent}', end=ending)
+    if i == maxiters: print()
+    return
+
+
 
 ##############################################################################
 ### Type functions
@@ -1126,7 +1183,8 @@ def promotetoarray(x, skipnone=False):
         else:
             return np.array([x]) # e.g. array(3)
     else: # e.g. 'foo'
-        raise Exception("Expecting a number/list/tuple/ndarray; got: %s" % flexstr(x))
+        errormsg = f'Expecting a number/list/tuple/ndarray; got type {type(x)}: "{x}"'
+        raise TypeError(errormsg)
     return # Should be unreachable
 
 
@@ -1345,10 +1403,10 @@ def readdate(datestr=None, dateformat=None, return_defaults=False):
 def date(obj, *args, start_date=None, dateformat=None, as_date=True):
     '''
     Convert a string or a datetime object to a date object. To convert to an integer
-    from the start day, it is recommended you supply a start date, or use sim.date()
+    from the start day, it is recommended you supply a start date, or use sc.date()
     instead; otherwise, it will calculate the date counting days from 2020-01-01.
-    This means that the output of cv.date() will not necessarily match the output
-    of sim.date() for an integer input.
+    This means that the output of sc.date() will not necessarily match the output
+    of sc.date() for an integer input.
 
     Args:
         obj (str, date, datetime, list, array): the object to convert
@@ -1362,9 +1420,9 @@ def date(obj, *args, start_date=None, dateformat=None, as_date=True):
 
     **Examples**::
 
-        cv.date('2020-04-05') # Returns datetime.date(2020, 4, 5)
-        cv.date('2020-04-14', start_date='2020-04-04', as_date=False) # Returns 10
-        cv.date([35,36,37], as_date=False) # Returns ['2020-02-05', '2020-02-06', '2020-02-07']
+        sc.date('2020-04-05') # Returns datetime.date(2020, 4, 5)
+        sc.date('2020-04-14', start_date='2020-04-04', as_date=False) # Returns 10
+        sc.date([35,36,37], as_date=False) # Returns ['2020-02-05', '2020-02-06', '2020-02-07']
     '''
 
     if obj is None:
@@ -1419,26 +1477,26 @@ def day(obj, *args, start_day=None):
     '''
     Convert a string, date/datetime object, or int to a day (int), the number of
     days since the start day. See also date() and daydiff(). Used primarily via
-    sim.day() rather than directly.
+    sc.day() rather than directly.
 
     Args:
         obj (str, date, int, or list): convert any of these objects to a day relative to the start day
         args (list): additional days
-        start_day (str or date): the start day; if none is supplied, return days since 2020-01-01.
+        start_day (str or date): the start day; if none is supplied, return days since (current year)-01-01.
 
     Returns:
         days (int or str): the day(s) in simulation time
 
     **Example**::
 
-        sim.day('2020-04-05') # Returns 35
+        sc.day('2020-04-04') # Returns 94
     '''
 
     # Do not process a day if it's not supplied
     if obj is None:
         return None
     if start_day is None:
-        start_day = '2020-01-01'
+        start_day = f'{now().year}-01-01'
 
     # Convert to list
     if isstring(obj) or isnumber(obj) or isinstance(obj, (dt.date, dt.datetime)):
@@ -1477,15 +1535,14 @@ def daydiff(*args):
     Convenience function to find the difference between two or more days. With
     only one argument, calculate days since 2020-01-01.
 
-    **Example**::
+    **Examples**::
 
-        since_ny = cv.daydiff('2020-03-20') # Returns 79 days since Jan. 1st
-        diff     = cv.daydiff('2020-03-20', '2020-04-05') # Returns 16
-        diffs    = cv.daydiff('2020-03-20', '2020-04-05', '2020-05-01') # Returns [16, 26]
+        diff  = sc.daydiff('2020-03-20', '2020-04-05') # Returns 16
+        diffs = sc.daydiff('2020-03-20', '2020-04-05', '2020-05-01') # Returns [16, 26]
     '''
     days = [date(day) for day in args]
     if len(days) == 1:
-        days.insert(0, date('2020-01-01')) # With one date, return days since Jan. 1st
+        days.insert(0, date(f'{now().year}-01-01')) # With one date, return days since Jan. 1st
 
     output = []
     for i in range(len(days)-1):
@@ -1512,7 +1569,7 @@ def date_range(start_date, end_date, inclusive=True, as_date=False, dateformat=N
 
     **Example**::
 
-        dates = cv.date_range('2020-03-01', '2020-04-04')
+        dates = sc.date_range('2020-03-01', '2020-04-04')
     '''
     start_day = day(start_date)
     end_day = day(end_date)
@@ -1729,63 +1786,8 @@ def timedsleep(delay=None, verbose=True):
 ### Misc. functions
 ##############################################################################
 
-__all__ += ['percentcomplete', 'progressbar', 'checkmem', 'checkram', 'runcommand',
-            'gitinfo', 'compareversions', 'uniquename', 'importbyname', 'suggest',
-            'profile', 'mprofile', 'get_caller']
-
-
-def percentcomplete(step=None, maxsteps=None, stepsize=1, prefix=None):
-    '''
-    Display progress.
-
-    Usage example:
-
-        maxiters = 500
-        for i in range(maxiters):
-            sc.percentcomplete(i, maxiters) # will print on every 5th iteration
-            sc.percentcomplete(i, maxiters, stepsize=10) # will print on every 50th iteration
-            sc.percentcomplete(i, maxiters, prefix='Completeness: ') # will print e.g. 'Completeness: 1%'
-    '''
-    if prefix is None:
-        prefix = ' '
-    elif isnumber(prefix):
-        prefix = ' '*prefix
-    onepercent = max(stepsize,round(maxsteps/100*stepsize)); # Calculate how big a single step is -- not smaller than 1
-    if not step%onepercent: # Does this value lie on a percent
-        thispercent = round(step/maxsteps*100) # Calculate what percent it is
-        print(prefix + '%i%%'% thispercent) # Display the output
-    return None
-
-
-def progressbar(i, maxiters, label='', length=30, empty='—', full='•', newline=False):
-    '''
-    Call in a loop to create terminal progress bar.
-
-    Args:
-        i (int): current iteration
-        maxiters (int): maximum number of iterations
-        label (str): initial label to print
-        length (int): length of progress bar
-        empty (str): character for empty steps
-        full (str): character for empty steps
-
-    **Example**::
-
-        import pylab as pl
-        for i in range(100):
-            progressbar(i+1, 100)
-            pl.pause(0.05)
-
-    Adapted from example by Greenstick (https://stackoverflow.com/questions/3173320/text-progress-bar-in-the-console)
-    '''
-    ending = None if newline else '\r'
-    pct = i/maxiters*100
-    percent = f'{pct:0.0f}%'
-    filled = int(length*i//maxiters)
-    bar = full*filled + empty*(length-filled)
-    print(f'\r{label} {bar} {percent}', end=ending)
-    if i == maxiters: print()
-    return
+__all__ += ['checkmem', 'checkram', 'runcommand', 'gitinfo', 'compareversions',
+            'uniquename', 'importbyname', 'suggest', 'profile', 'mprofile', 'getcaller']
 
 
 def checkmem(var, descend=None, alphabetical=False, plot=False, verbose=False):
@@ -1939,7 +1941,10 @@ def runcommand(command, printinput=False, printoutput=False, wait=True):
 
 def gitinfo(filepath=None, die=False, hashlen=7, verbose=True):
     ''' Try to extract git information based on the file structure '''
-    if filepath is None: filepath = __file__
+
+    if filepath is None:
+        filepath = os.getcwd()
+
     try: # First try importing git-python
         import git
         rootdir = os.path.abspath(filepath) # e.g. /user/username/optima/optima
@@ -1961,11 +1966,11 @@ def gitinfo(filepath=None, die=False, hashlen=7, verbose=True):
             with open(gitdir+os.sep+'HEAD') as f: gitbranch = f.read()[len(headstrip)+1:].strip() # Read git branch name
             with open(gitdir+os.sep+'refs'+os.sep+'heads'+os.sep+gitbranch) as f: githash = f.read().strip() # Read git commit
             try:    gitdate = flexstr(runcommand('git -C "%s" show -s --format=%%ci' % gitdir).rstrip()) # Even more likely to fail
-            except: gitdate = 'Git date N/A'
+            except: gitdate = 'Date N/A'
         except Exception as E2: # Failure? Give up
-            gitbranch = 'Git branch N/A'
-            githash = 'Git hash N/A'
-            gitdate = 'Git date N/A'
+            gitbranch = 'Branch N/A'
+            githash = 'Hash N/A'
+            gitdate = 'Date N/A'
             errormsg = 'Could not extract git info; please check paths or install git-python:\n%s\n%s' % (repr(E1), repr(E2))
             if die: raise Exception(errormsg)
             elif verbose:   print(errormsg)
@@ -1982,9 +1987,9 @@ def compareversions(version1, version2):
     format 1.2.3, but numeric works too.
 
     Usage:
-        compareversions('1.2.3', '2.3.4') # returns -1
-        compareversions(2, '2') # returns 0
-        compareversions('3.1', '2.99') # returns 1
+        sc.compareversions('1.2.3', '2.3.4') # returns -1
+        sc.compareversions(2, '2') # returns 0
+        sc.compareversions('3.1', '2.99') # returns 1
 
     '''
 
@@ -2000,6 +2005,9 @@ def uniquename(name=None, namelist=None, style=None):
     """
     Given a name and a list of other names, find a replacement to the name
     that doesn't conflict with the other names, and pass it back.
+
+    Example:
+        name = sc.uniquename(name='file', namelist=['file', 'file (1)', 'file (2)'])
     """
     if style is None: style = ' (%d)'
     namelist = promotetolist(namelist)
@@ -2016,7 +2024,7 @@ def importbyname(name=None, output=False, die=True):
     A little function to try loading optional imports.
 
     Example:
-        np = importbyname('numpy')
+        np = sc.importbyname('numpy')
     '''
     import importlib
     try:
@@ -2063,7 +2071,7 @@ def suggest(user_input, valid_inputs, n=1, threshold=4, fulloutput=False, die=Fa
     try:
         import jellyfish # To allow as an optional import
     except ModuleNotFoundError as e:
-            raise Exception('The "jellyfish" Python package is not available; please install via "pip install jellyfish"') from e
+        raise Exception('The "jellyfish" Python package is not available; please install via "pip install jellyfish"') from e
 
     valid_inputs = promotetolist(valid_inputs, objtype='string')
 
@@ -2233,7 +2241,7 @@ def mprofile(run, follow=None, show_results=True, *args, **kwargs):
     return lp
 
 
-def get_caller(frame=2, tostring=True):
+def getcaller(frame=2, tostring=True):
         '''
         Try to get information on the calling function, but fail gracefully.
 
@@ -2289,29 +2297,27 @@ Four little functions to get and set data from nested dictionaries. The first tw
     twigs = iternested(foo)
 
 Example 1:
-    from nested import makenested, getnested, setnested
     foo = {}
-    makenested(foo, ['a','b'])
+    sc.makenested(foo, ['a','b'])
     foo['a']['b'] = 3
-    print getnested(foo, ['a','b'])    # 3
-    setnested(foo, ['a','b'], 7)
-    print getnested(foo, ['a','b'])    # 7
-    makenested(foo, ['yerevan','parcels'])
-    setnested(foo, ['yerevan','parcels'], 'were tasty')
-    print foo['yerevan']  # {'parcels': 'were tasty'}
+    print(sc.getnested(foo, ['a','b']))    # 3
+    sc.setnested(foo, ['a','b'], 7)
+    print(sc.getnested(foo, ['a','b']))    # 7
+    sc.makenested(foo, ['bar','cat'])
+    sc.setnested(foo, ['bar','cat'], 'in the hat')
+    print(foo['bar'])  # {'cat': 'in the hat'}
 
 Example 2:
-    from nested import makenested, iternested, setnested
     foo = {}
-    makenested(foo, ['a','x'])
-    makenested(foo, ['a','y'])
-    makenested(foo, ['a','z'])
-    makenested(foo, ['b','a','x'])
-    makenested(foo, ['b','a','y'])
+    sc.makenested(foo, ['a','x'])
+    sc.makenested(foo, ['a','y'])
+    sc.makenested(foo, ['a','z'])
+    sc.makenested(foo, ['b','a','x'])
+    sc.makenested(foo, ['b','a','y'])
     count = 0
-    for twig in iternested(foo):
+    for twig in sc.iternested(foo):
         count += 1
-        setnested(foo, twig, count)   # {'a': {'y': 1, 'x': 2, 'z': 3}, 'b': {'a': {'y': 4, 'x': 5}}}
+        sc.setnested(foo, twig, count)   # {'a': {'y': 1, 'x': 2, 'z': 3}, 'b': {'a': {'y': 4, 'x': 5}}}
 
 Version: 2014nov29
 '''
@@ -2512,7 +2518,7 @@ def nested_loop(inputs, loop_order):
         yield out
 
 
-def fast_gitinfo(path):
+def fast_gitinfo(path=None):
     """
     Retrieve git info
 
@@ -2524,6 +2530,9 @@ def fast_gitinfo(path):
     :param path: A folder either containing a ``.git`` directory, or with a parent that contains a ``.git`` directory
 
     """
+
+    if path is None:
+        path = os.getcwd()
 
     try:
         # First, get the .git directory
@@ -2625,19 +2634,26 @@ def parallel_progress(fcn, inputs, num_workers=None, show_progress=True, initial
     return results
 
 
-def datetime_to_year(dateobj):
+def datetime_to_year(dateobj, dateformat=None):
     """
-    Convert a DateTime instance to decimal year
+    Convert a DateTime instance to decimal year.
 
-    For example, 1/7/2010 would be approximately 2010.5
+    Args:
+        dateobj (date, str):  The datetime instance to convert
+        dateformat (str): If dateobj is a string, the optional date conversion format to use
 
-    :param dt: The datetime instance to convert
-    :return: Equivalent decimal year
+    Returns:
+        Equivalent decimal year
 
+    Example:
+        sc.datetime_to_year('2010-07-01') # Returns approximately 2010.5
+
+    By Luke Davis from https://stackoverflow.com/a/42424261
     """
-    # By Luke Davis from https://stackoverflow.com/a/42424261
-    year_part = dateobj - dt.datetime(year=dt.year, month=1, day=1)
-    year_length = dateobj.datetime(year=dt.year + 1, month=1, day=1) - dt.datetime(year=dt.year, month=1, day=1)
+    if isstring(dateobj):
+        dateobj = readdate(dateobj, dateformat=dateformat)
+    year_part = dateobj - dt.datetime(year=dateobj.year, month=1, day=1)
+    year_length = dt.datetime(year=dateobj.year + 1, month=1, day=1) - dt.datetime(year=dateobj.year, month=1, day=1)
     return dateobj.year + year_part / year_length
 
 
