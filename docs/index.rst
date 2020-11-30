@@ -2,16 +2,14 @@
 Welcome to Sciris
 ==================
 
-.. mdinclude:: ../README.md
-   :start-line: 2
+`Sciris <http://sciris.org>`__ is library of functions for scientific computing that provide additional flexibility and ease-of-use on top of Numpy, Scipy, and Matplotlib.
 
-======================
-Full package reference
-======================
+ScirisWeb, built on Sciris, is a toolbox that makes building webapps easy -- think of it as `Shiny <https://shiny.rstudio.com/>`__ for Python.
 
 .. toctree::
    :maxdepth: 4
 
+   overview
    whatsnew
    code_of_conduct
    modules
