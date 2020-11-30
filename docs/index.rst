@@ -1,16 +1,17 @@
-Welcome to Sciris's documentation!
-===================================
-
-.. toctree::
-    :maxdepth: 1
-
-    general/index
-    code_documentation
-
-
-Indices and tables
+==================
+Welcome to Sciris
 ==================
 
-* :ref:`genindex`
-* :ref:`modindex`
-* :ref:`search`
+.. mdinclude:: ../README.md
+   :start-line: 2
+
+======================
+Full package reference
+======================
+
+.. toctree::
+   :maxdepth: 4
+
+   whatsnew
+   code_of_conduct
+   modules
