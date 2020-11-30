@@ -1,4 +1,4 @@
-name: Covasim CI workflow
+name: Sciris CI workflow
 on: [pull_request]
 
 jobs:
