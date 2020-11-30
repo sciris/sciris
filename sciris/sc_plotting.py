@@ -98,7 +98,7 @@ def rgb2hex(arr):
 
     **Example**::
 
-        hx = sc.rgb2hex([0.53, 0.74, 0.15])
+        hx = sc.rgb2hex([0.53, 0.74, 0.15]) # Returns '#87bc26'
     '''
     arr = np.array(arr)
     if len(arr) != 3:
@@ -115,7 +115,7 @@ def hex2rgb(string):
 
     **Example**::
 
-        rgb = sc.hex2rgb('#86bc25')
+        rgb = sc.hex2rgb('#87bc26') # Returns array([0.52941176, 0.7372549 , 0.14901961])
     '''
     if string[0] == '#':
         string = string[1:] # Trim leading #, if it exists
@@ -135,7 +135,7 @@ def rgb2hsv(colors=None):
 
     **Example**::
 
-        hsv = sc.rgb2hsv([0.53, 0.74, 0.15])
+        hsv = sc.rgb2hsv([0.53, 0.74, 0.15]) # Returns array([0.2259887, 0.7972973, 0.74     ])
     '''
     colors, origndim = _listify_colors(colors)
     for c,color in enumerate(colors):
@@ -152,7 +152,7 @@ def hsv2rgb(colors=None):
 
     **Example**::
 
-        rgb = sc.hsv2rgb([0.23, 0.80, 0.74])
+        rgb = sc.hsv2rgb([0.23, 0.80, 0.74]) # Returns array([0.51504, 0.74   , 0.148  ])
     '''
     colors, origndim = _listify_colors(colors)
     for c,color in enumerate(colors):
@@ -172,14 +172,11 @@ __all__ += ['vectocolor', 'arraycolors', 'gridcolors', 'colormapdemo', 'alpineco
 
 def vectocolor(vector, cmap=None, asarray=True, reverse=False, minval=None, maxval=None):
     """
-    This function converts a vector of N values into an Nx3 matrix of color
-    values according to the current colormap. It automatically scales the
+    This function converts a vector (i.e., 1D array) of N values into an Nx3 matrix
+    of color values according to the current colormap. It automatically scales the
     vector to provide maximum dynamic range for the color map.
 
-    Note: see arraycolors() for multidimensional input.
-
-    Usage:
-        colors = vectocolor(vector, cmap=None)
+    Note: see sc.arraycolors() for multidimensional input.
 
     Args:
         vector (array): Input vector (or list, it's converted to an array)
@@ -625,7 +622,9 @@ def parulacolormap(apply=False):
 def turbocolormap(apply=False):
     '''
     Copyright 2019 Google LLC.
+
     SPDX-License-Identifier: Apache-2.0
+
     Author: Anton Mikhailov
 
     Borrowed directly from https://gist.github.com/mikhailov-work/ee72ba4191942acecc03fe6da94fc73f, with thanks!
@@ -1026,16 +1025,17 @@ def setaxislim(which=None, ax=None, data=None):
     '''
     A small script to determine how the y limits should be set. Looks
     at all data (a list of arrays) and computes the lower limit to
-    use, e.g.
+    use, e.g.::
 
-        setaxislim([np.array([-3,4]), np.array([6,4,6])], ax)
+        sc.setaxislim([np.array([-3,4]), np.array([6,4,6])], ax)
 
     will keep Matplotlib's lower limit, since at least one data value
     is below 0.
 
     Note, if you just want to set the lower limit, you can do that
-    with this function via:
-        setaxislim()
+    with this function via::
+
+        sc.setaxislim()
     '''
 
     # Handle which axis
@@ -1076,11 +1076,18 @@ def setaxislim(which=None, ax=None, data=None):
 
 
 def setxlim(data=None, ax=None):
-    ''' See setaxislim '''
+    ''' Alias for sc.setaxislim(which='x') '''
     return setaxislim(data=data, ax=ax, which='x')
 
 def setylim(data=None, ax=None):
-    ''' See setaxislim '''
+    '''
+    Alias for sc.setaxislim(which='y').
+
+    **Example**::
+
+        pl.plot([124,146,127])
+        sc.setylim()
+    '''
     return setaxislim(data=data, ax=ax, which='y')
 
 
@@ -1223,20 +1230,20 @@ def maximize(fig=None, die=False):
 __all__ += ['savefigs', 'loadfig', 'emptyfig', 'separatelegend', 'savemovie']
 
 
-
 def savefigs(figs=None, filetype=None, filename=None, folder=None, savefigargs=None, aslist=False, verbose=False, **kwargs):
     '''
     Save the requested plots to disk.
 
-    Arguments:
-        figs        -- the figure objects to save
-        filetype    -- the file type; can be 'fig', 'singlepdf' (default), or anything supported by savefig()
-        filename    -- the file to save to (only uses path if multiple files)
-        folder      -- the folder to save the file(s) in
-        savefigargs -- dictionary of arguments passed to savefig()
-        aslist      -- whether or not return a list even for a single file
+    Args:
+        figs:        the figure objects to save
+        filetype:    the file type; can be 'fig', 'singlepdf' (default), or anything supported by savefig()
+        filename:    the file to save to (only uses path if multiple files)
+        folder:      the folder to save the file(s) in
+        savefigargs: dictionary of arguments passed to savefig()
+        aslist:      whether or not return a list even for a single file
 
-    Example usages:
+    **Examples**::
+
         import pylab as pl
         import sciris as sc
         fig1 = pl.figure(); pl.plot(pl.rand(10))
@@ -1328,7 +1335,7 @@ def loadfig(filename=None):
 
 
 def reanimateplots(plots=None):
-    ''' Reconnect plots (actually figures) to the Matplotlib backend. plots must be an odict of figure objects. '''
+    ''' Reconnect plots (actually figures) to the Matplotlib backend. Plots must be an odict of figure objects. '''
     try:
         from matplotlib.backends.backend_agg import new_figure_manager_given_figure as nfmgf # Warning -- assumes user has agg on their system, but should be ok. Use agg since doesn't require an X server
     except Exception as E:
