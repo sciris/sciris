@@ -204,7 +204,14 @@ def savetext(filename=None, string=None):
 
 
 def savezip(filename=None, filelist=None, folder=None, basename=True, verbose=True):
-    ''' Create a zip file from the supplied list of files '''
+    '''
+    Create a zip file from the supplied list of files
+
+    **Example**::
+
+        scripts = sc.getfilelist('./code/*.py')
+        sc.savezip('scripts.zip', scripts)
+    '''
     fullpath = makefilepath(filename=filename, folder=folder, sanitize=True)
     filelist = ut.promotetolist(filelist)
     with ZipFile(fullpath, 'w') as zf: # Create the zip file
@@ -223,7 +230,7 @@ def getfilelist(folder='.', pattern=None, abspath=False, nopath=False, filesonly
 
     Args:
         folder      (str):  the folder to find files in (default, current)
-        pattern     (str):  the pattern to match (default, *); can be excluded if part of the folder
+        pattern     (str):  the pattern to match (default, wildcard); can be excluded if part of the folder
         abspath     (bool): whether to return the full path
         nopath      (bool): whether to return no path
         filesonly   (bool): whether to only return files (not folders)
@@ -512,6 +519,10 @@ def loadjson(filename=None, folder=None, string=None, fromfile=True, **kwargs):
 
     Returns:
         output (dict): the JSON object
+
+    **Example**::
+
+        json = sc.loadjson('my-file.json')
     '''
     if fromfile:
         filename = makefilepath(filename=filename, folder=folder)
@@ -544,6 +555,11 @@ def savejson(filename=None, obj=None, folder=None, die=True, indent=2, **kwargs)
 
     Returns:
         None
+
+    **Example**::
+
+        json = {'foo':'bar', 'data':[1,2,3]}
+        sc.savejson('my-file.json', json)
     '''
 
     filename = makefilepath(filename=filename, folder=folder)
@@ -612,16 +628,20 @@ __all__ += ['Blobject', 'Spreadsheet', 'loadspreadsheet', 'savespreadsheet']
 
 
 class Blobject(object):
-    ''' A wrapper for a binary file '''
+    '''
+    A wrapper for a binary file -- rarely used directly.
+
+    So named because it's an object representing a blob.
+
+    "source" is a specification of where to get the data from. It can be anything
+    supported by Blobject.load() which are (a) a filename, which will get loaded,
+    or (b) a io.BytesIO which will get dumped into this instance
+
+    Alternatively, can specify ``blob`` which is a binary string that gets stored directly
+    in the ``blob`` attribute
+    '''
 
     def __init__(self, source=None, name=None, filename=None, blob=None):
-        # "source" is a specification of where to get the data from
-        # It can be anything supported by Blobject.load() which are
-        # - A filename, which will get loaded
-        # - A io.BytesIO which will get dumped into this instance
-        # Alternatively, can specify `blob` which is a binary string that gets stored directly
-        # in the `blob` attribute
-
         # Handle inputs
         if source   is None and filename is not None: source   = filename # Reset the source to be the filename, e.g. Spreadsheet(filename='foo.xlsx')
         if filename is None and ut.isstring(source):  filename = source   # Reset the filename to be the source, e.g. Spreadsheet('foo.xlsx')
@@ -697,9 +717,11 @@ class Blobject(object):
     def tofile(self, output=True):
         '''
         Return a file-like object with the contents of the file.
+
         This can then be used to open the workbook from memory without writing anything to disk e.g.
-        - book = openpyexcel.load_workbook(self.tofile())
-        - book = xlrd.open_workbook(file_contents=self.tofile().read())
+
+            - book = openpyexcel.load_workbook(self.tofile())
+            - book = xlrd.open_workbook(file_contents=self.tofile().read())
         '''
         bytesblob = io.BytesIO(self.blob)
         if output:
@@ -717,7 +739,7 @@ class Blobject(object):
 
 class Spreadsheet(Blobject):
     '''
-    A class for reading and writing Excel files in binary format.No disk IO needs
+    A class for reading and writing Excel files in binary format. No disk IO needs
     to happen to manipulate the spreadsheets with openpyexcel (or xlrd or pandas).
 
     Version: 2018sep03
@@ -1114,7 +1136,7 @@ def makefailed(module_name=None, name=None, error=None, exception=None):
     return Failed
 
 
-class RobustUnpickler(pkl.Unpickler):
+class _RobustUnpickler(pkl.Unpickler):
     ''' Try to import an object, and if that fails, return a Failed object rather than crashing '''
 
     def __init__(self, tmpfile, fix_imports=True, encoding="latin1", errors="ignore"):
@@ -1152,7 +1174,7 @@ def _unpickler(string=None, filename=None, filestring=None, die=None, verbose=Fa
                 except Exception as E3:
                     try:
                         if verbose: print('Dill failed (%s), trying robust unpickler...' % str(E3))
-                        obj = RobustUnpickler(io.BytesIO(string)).load() # And if that trails, throw everything at it
+                        obj = _RobustUnpickler(io.BytesIO(string)).load() # And if that trails, throw everything at it
                     except Exception as E4:
                         try:
                             if verbose: print('Robust unpickler failed (%s), trying Python 2->3 conversion...' % str(E4))
