@@ -448,8 +448,8 @@ def test_misc():
     o.caller = sc.getcaller()
     print(o.caller)
 
-    print('Testing nested_loop')
-    o.nested = list(sc.nested_loop([['a','b'],[1,2]],[0,1]))
+    print('Testing nestedloop')
+    o.nested = list(sc.nestedloop([['a','b'],[1,2]],[0,1]))
 
     return o
 
