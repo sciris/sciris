@@ -21,7 +21,7 @@ clean: # The -f is to ignore missing files, not to force remove
 
 .PHONY: generate-api
 generate-api:
-	sphinx-apidoc -f -e -M -o . ../sciris
+	sphinx-apidoc -f -e -M -o _autosummary ../sciris -t _templates
 
 # Catch-all target: route all unknown targets to Sphinx using the new
 # "make mode" option.  $(O) is meant as a shortcut for $(SPHINXOPTS).

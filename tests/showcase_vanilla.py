@@ -38,7 +38,7 @@ for n,noiseval in enumerate(noisevals):
         fileobj.write(pickle.dumps(output[n]))
     filenames.append(filename)
 
-# Create odict from files
+# Create dict from files
 data = {}
 for filename in filenames:
     with gzip.GzipFile(filename) as fileobj:
@@ -54,10 +54,11 @@ ny,nx = np.array(data_array).shape
 x = np.arange(nx)
 y = np.arange(ny)
 X, Y = np.meshgrid(x, y)
-settings = {'rstride':1, 'cstride':1, 'linewidth':0, 'antialiased':False, 'cmap':'viridis'}
+settings = {'rstride':1, 'cstride':1, 'linewidth':0}
 surf = ax.plot_surface(X, Y, data_array, **settings)
 fig.colorbar(surf)
 
 # Print elapsed time
 elapsed = time.time() - start
 print('Elapsed time: %0.1f s' % elapsed)
+
