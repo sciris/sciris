@@ -71,7 +71,7 @@ Here are a few more of the most commonly used features.
 
 That's OK. Perhaps you'd be interested in seeing what a script that performs tasks like parallelization, saving and loading files, and 3D plotting looks like when written in [vanilla Python](https://github.com/sciris/sciris/blob/develop/tests/showcase_vanilla.py) compared to [using Sciris](https://github.com/sciris/sciris/blob/develop/tests/showcase.py):
 
-![Sciris showcase](../docs/sciris-showcase-code.png)
+![Sciris showcase](/docs/sciris-showcase-code.png)
 
 
 ## Is Sciris ready yet?
