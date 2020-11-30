@@ -1,7 +1,7 @@
 '''
 Simple alternative to the Pandas DataFrame.
 
-This class is rarely used and not well maintained; in most cases, it is probably 
+This class is rarely used and not well maintained; in most cases, it is probably
 better to just use the Pandas one.
 '''
 
@@ -26,7 +26,8 @@ class dataframe(object):
     this class is semi-deprecated; use at your own risk. To be honest, Pandas
     is a much better solution better most of the time.
 
-    Example usage:
+    **Example**::
+
         a = sc.dataframe(cols=['x','y'],data=[[1238,2],[384,5],[666,7]]) # Create data frame
         a['x'] # Print out a column
         a[0] # Print out a row
@@ -46,7 +47,7 @@ class dataframe(object):
         a.rmrow(); print(a) # Remove last row
         a.rmrow(1238); print(a) # Remove the row starting with element '3'
 
-    Works for both numeric and non-numeric data.
+    The dataframe can be used for both numeric and non-numeric data.
 
     Version: 2020nov29
     '''
@@ -285,7 +286,10 @@ class dataframe(object):
 
     def make(self, cols=None, data=None, nrows=None):
         '''
-        Creates a dataframe from the supplied input data. Usage examples:
+        Creates a dataframe from the supplied input data.
+
+        **Usage examples**::
+
             df = sc.dataframe()
             df = sc.dataframe(['a','b','c'])
             df = sc.dataframe(['a','b','c'], nrows=2)
@@ -354,9 +358,12 @@ class dataframe(object):
 
     def get(self, cols=None, rows=None, asarray=True, cast=True):
         '''
-        More complicated way of getting data from a dataframe; example:
-        df = dataframe(cols=['x','y','z'],data=[[1238,2,-1],[384,5,-2],[666,7,-3]]) # Create data frame
-        df.get(cols=['x','z'], rows=[0,2])
+        More complicated way of getting data from a dataframe.
+
+        **Example**::
+
+            df = dataframe(cols=['x','y','z'],data=[[1238,2,-1],[384,5,-2],[666,7,-3]]) # Create data frame
+            df.get(cols=['x','z'], rows=[0,2])
         '''
         if cols is None:
             colindices = Ellipsis
@@ -504,15 +511,16 @@ class dataframe(object):
         '''
         Return a row by searching for a matching value.
 
-        Arguments:
-            key = the value to look for
-            col = the column to look for this value in
-            default = the value to return if key is not found (overrides die)
-            closest = whether or not to return the closest row (overrides default and die)
-            die = whether to raise an exception if the value is not found
-            asdict = whether to return results as dict rather than list
+        Args:
+            key: the value to look for
+            col: the column to look for this value in
+            default: the value to return if key is not found (overrides die)
+            closest: whether or not to return the closest row (overrides default and die)
+            die: whether to raise an exception if the value is not found
+            asdict: whether to return results as dict rather than list
 
-        Example:
+        **Example**::
+
             df = dataframe(cols=['year','val'],data=[[2016,0.3],[2017,0.5]])
             df.findrow(2016) # returns array([2016, 0.3], dtype=object)
             df.findrow(2013) # returns None, or exception if die is True
@@ -569,6 +577,7 @@ class dataframe(object):
         return self._filterrows(key=key, col=col, keep=False, verbose=verbose, copy=copy)
 
     def filtercols(self, cols=None, die=True, copy=None):
+        ''' Filter columns keeping only those specified '''
         if copy is None: copy = False
         if cols is None: cols = ut.dcp(self.cols) # By default, do nothing
         cols = ut.promotetolist(cols)
@@ -614,6 +623,7 @@ class dataframe(object):
         return sortorder
 
     def sortcols(self, sortorder=None, reverse=False):
+        ''' Like sort, but rows by column instead '''
         if sortorder is None:
             sortorder = np.argsort(self.cols, kind='mergesort')
             if reverse: sortorder = np.array(list(reversed(sortorder)))
