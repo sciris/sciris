@@ -20,7 +20,10 @@ __all__ = ['approx', 'safedivide', 'findinds', 'findfirst', 'findlast', 'findnea
 
 def approx(val1=None, val2=None, eps=None):
     '''
-    Determine whether two scalars approximately match. Example:
+    Determine whether two scalars approximately match.
+
+    **Examples**::
+
         sc.approx(2*6, 11.9999999, eps=1e-6) # Returns True
         sc.approx([3,12,11.9], 12) # Returns array([False, True, False], dtype=bool)
 
