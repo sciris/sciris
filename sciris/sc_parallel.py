@@ -43,7 +43,8 @@ def loadbalancer(maxload=None, index=None, interval=None, maxtime=None, label=No
         for nproc in processlist: loadbalancer(maxload=0.9, index=nproc) # Use a maximum load of 90%, and stagger the start by process number
 
     Version: 2018nov01
-     '''
+    '''
+
     # Set up processes to start asynchronously
     if maxload  is None: maxload = 0.8
     if interval is None: interval = 1.0

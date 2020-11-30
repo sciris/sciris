@@ -38,7 +38,7 @@ def safedivide(numerator=None, denominator=None, default=None, eps=None, warn=Fa
     Handle divide-by-zero and divide-by-nan elegantly. Examples:
         sc.safedivide(numerator=0, denominator=0, default=1, eps=0) # Returns 1
         sc.safedivide(numerator=5, denominator=2.0, default=1, eps=1e-3) # Returns 2.5
-        sc.safedivide(3,array([1,3,0]),-1, warn=True) # Returns array([ 3,  1, -1])
+        sc.safedivide(3, npp.array([1,3,0]), -1, warn=True) # Returns array([ 3,  1, -1])
     '''
     # Set some defaults
     if numerator   is None: numerator   = 1.0
@@ -180,6 +180,30 @@ def getvalidinds(data=None, filterdata=None):
     return validindices # Only return indices -- WARNING, not consistent with sanitize()
 
 
+def getvaliddata(data=None, filterdata=None, defaultind=0):
+    '''
+    Return the years that are valid based on the validity of the input data.
+
+    Example:
+        getvaliddata(array([3,5,8,13]), array([2000, nan, nan, 2004])) # Returns array([3,13])
+    '''
+    data = np.array(data)
+    if filterdata is None: filterdata = data # So it can work on a single input -- more or less replicates sanitize() then
+    filterdata = np.array(filterdata)
+    if filterdata.dtype=='bool': validindices = filterdata # It's already boolean, so leave it as is
+    else:                        validindices = ~np.isnan(filterdata) # Else, assume it's nans that need to be removed
+    if validindices.any(): # There's at least one data point entered
+        if len(data)==len(validindices): # They're the same length: use for logical indexing
+            validdata = np.array(np.array(data)[validindices]) # Store each year
+        elif len(validindices)==1: # They're different lengths and it has length 1: it's an assumption
+            validdata = np.array([np.array(data)[defaultind]]) # Use the default index; usually either 0 (start) or -1 (end)
+        else:
+            raise Exception('Array sizes are mismatched: %i vs. %i' % (len(data), len(validindices)))
+    else:
+        validdata = np.array([]) # No valid data, return an empty array
+    return validdata
+
+
 def sanitize(data=None, returninds=False, replacenans=None, die=True, defaultval=None, label=None, verbose=True):
         '''
         Sanitize input to remove NaNs. Warning, does not work on multidimensional data!!
@@ -220,32 +244,13 @@ def sanitize(data=None, returninds=False, replacenans=None, die=True, defaultval
         else:          return sanitized
 
 
-def getvaliddata(data=None, filterdata=None, defaultind=0):
+def isprime(n, verbose=False):
     '''
-    Return the years that are valid based on the validity of the input data.
+    From https://stackoverflow.com/questions/15285534/isprime-function-for-python-language
 
     Example:
-        getvaliddata(array([3,5,8,13]), array([2000, nan, nan, 2004])) # Returns array([3,13])
+        for i in range(100): print(i) if sc.isprime(i) else None
     '''
-    data = np.array(data)
-    if filterdata is None: filterdata = data # So it can work on a single input -- more or less replicates sanitize() then
-    filterdata = np.array(filterdata)
-    if filterdata.dtype=='bool': validindices = filterdata # It's already boolean, so leave it as is
-    else:                        validindices = ~np.isnan(filterdata) # Else, assume it's nans that need to be removed
-    if validindices.any(): # There's at least one data point entered
-        if len(data)==len(validindices): # They're the same length: use for logical indexing
-            validdata = np.array(np.array(data)[validindices]) # Store each year
-        elif len(validindices)==1: # They're different lengths and it has length 1: it's an assumption
-            validdata = np.array([np.array(data)[defaultind]]) # Use the default index; usually either 0 (start) or -1 (end)
-        else:
-            raise Exception('Array sizes are mismatched: %i vs. %i' % (len(data), len(validindices)))
-    else:
-        validdata = np.array([]) # No valid data, return an empty array
-    return validdata
-
-
-def isprime(n, verbose=False):
-    ''' From https://stackoverflow.com/questions/15285534/isprime-function-for-python-language '''
     if n < 2:
         if verbose: print('Not prime: n<2')
         return False
@@ -283,61 +288,79 @@ def isprime(n, verbose=False):
 ### Other functions
 ##############################################################################
 
-__all__ += ['quantile', 'perturb', 'scaleratio', 'normalize', 'inclusiverange', 'smooth', 'smoothinterp', 'randround', 'cat']
+__all__ += ['perturb', 'normsum', 'normalize', 'inclusiverange', 'smooth', 'smoothinterp', 'randround', 'cat']
 
 
-def quantile(data, quantiles=[0.5, 0.25, 0.75]):
+def perturb(n=1, span=0.5, randseed=None, normal=False):
     '''
-    Custom function for calculating quantiles most efficiently for a given dataset.
-        data = a list of arrays, or an array where he first dimension is to be sorted
-        quantiles = a list of floats >=0 and <=1
+    Define an array of numbers uniformly perturbed with a mean of 1.
 
-    Version: 2014nov23
+    Args:
+        n (int): number of points
+        span (float): width of distribution on either side of 1
+        normal (bool):  whether to use a normal distribution instead of uniform
+
+    Example:
+        sc.perturb(10, 0.3)
     '''
-    nsamples = len(data) # Number of samples in the dataset
-    indices = (np.array(quantiles)*(nsamples-1)).round().astype(int) # Calculate the indices to pull out
-    output = np.array(data)
-    output.sort(axis=0) # Do the actual sorting along the
-    output = output[indices] # Trim down to the desired quantiles
-
+    if randseed is not None:
+        np.random.seed(int(randseed)) # Optionally reset random seed
+    if normal:
+        output = 1.0 + span*np.random.randn(n)
+    else:
+        output = 1.0 + 2*span*(np.random.rand(n)-0.5)
     return output
 
 
-def perturb(n=1, span=0.5, randseed=None):
-    ''' Define an array of numbers uniformly perturbed with a mean of 1. n = number of points; span = width of distribution on either side of 1.'''
-    if randseed is not None: np.random.seed(int(randseed)) # Optionally reset random seed
-    output = 1. + 2*span*(np.random.rand(n)-0.5)
-    return output
+def normsum(arr, total=None):
+    '''
+    Multiply a list or array by some normalizing factor so that its sum is equal
+    to the total. Formerly called sc.scaleratio().
 
+    Args:
+        arr (array): array (or list) to normalize
+        total (float): amount to sum to (default 1)
 
-def scaleratio(inarray, total=None):
-    ''' Multiply a list or array by some factor so that its sum is equal to the total. '''
+    Example:
+        normarr = sc.normsum([2,5,3,6,2,6,7,2,3,4], 100) # Scale so sum equals 100
+    '''
     if total is None: total = 1.0
-    origtotal = float(sum(inarray))
-    ratio = total/origtotal
-    outarray = np.array(inarray)*ratio
-    if type(inarray)==list: outarray = outarray.tolist() # Preserve type
-    return outarray
+    origtotal = float(sum(arr))
+    ratio = float(total)/origtotal
+    out = np.array(arr)*ratio
+    if isinstance(arr, list): out = out.tolist() # Preserve type
+    return out
 
 
-def normalize(inarray, minval=0.0, maxval=1.0):
-    ''' Rescale an array between a minimum value and a maximum value '''
-    outarray = np.array(inarray)
-    outarray -= outarray.min()
-    outarray /= outarray.max()
-    outarray *= (maxval - minval)
-    outarray += minval
-    return outarray
+def normalize(arr, minval=0.0, maxval=1.0):
+    '''
+    Rescale an array between a minimum value and a maximum value.
+
+    Args:
+        arr (array): array to normalize
+        minval (float): minimum value in rescaled array
+        maxval (float): maximum value in rescaled array
+
+    Example:
+        normarr = sc.normalize([2,3,7,27])
+    '''
+    out = np.array(arr, dtype=float) # Ensure it's a float so divide works
+    out -= out.min()
+    out /= out.max()
+    out *= (maxval - minval)
+    out += minval
+    return out
 
 
 def inclusiverange(*args, **kwargs):
     '''
     Like arange/linspace, but includes the start and stop points.
-    Accepts 0-3 args, or the kwargs start, stop, step. Examples:
+    Accepts 0-3 args, or the kwargs start, stop, step.
 
-    x = inclusiverange(3,5,0.2)
-    x = inclusiverange(stop=5)
-    x = inclusiverange(6, step=2)
+    Examples:
+        x = sc.inclusiverange(3,5,0.2)
+        x = sc.inclusiverange(stop=5)
+        x = sc.inclusiverange(6, step=2)
     '''
 
     # Handle args
@@ -374,7 +397,17 @@ def inclusiverange(*args, **kwargs):
 
 
 def smooth(data, repeats=None):
-    ''' Very crude function to smooth a 2D array -- very slow but simple and easy to use '''
+    '''
+    Very simple function to smooth a 2D array -- slow but simple and easy to use.
+
+    Args:
+        data (arr): 1D or 2D array to smooth
+        repeats (int): number of times to apply smoothing
+
+    Example:
+        data = pl.randn(5,5)
+        smoothdata = sc.smooth(data)
+    '''
     if repeats is None:
         repeats = int(np.floor(len(data)/5))
     output = np.array(data)
@@ -396,14 +429,12 @@ def smoothinterp(newx=None, origx=None, origy=None, smoothness=None, growth=None
     Smoothly interpolate over values and keep end points. Same format as numpy.interp.
 
     Example:
-        from utils import smoothinterp
-        origy = array([0,0.1,0.3,0.8,0.7,0.9,0.95,1])
-        origx = linspace(0,1,len(origy))
-        newx = linspace(0,1,5*len(origy))
-        newy = smoothinterp(newx, origx, origy, smoothness=5)
-        plot(newx,newy)
-        hold(True)
-        scatter(origx,origy)
+        origy = np.array([0,0.1,0.3,0.8,0.7,0.9,0.95,1])
+        origx = np.linspace(0,1,len(origy))
+        newx = np.linspace(0,1,5*len(origy))
+        newy = sc.smoothinterp(newx, origx, origy, smoothness=5)
+        pl.plot(newx,newy)
+        pl.scatter(origx,origy)
 
     Version: 2018jan24
     '''

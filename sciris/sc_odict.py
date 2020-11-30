@@ -592,7 +592,6 @@ class odict(OD):
                     warningmsg = 'Warning: list to sort by "%s" has different length than odict "%i"' % (sortby, len(self))
                     if verbose: print(warningmsg)
                 allkeys = [origkeys[ind] for ind in sortby]
-                print(allkeys)
             else:
                 raise Exception('Cannot figure out how to sort by "%s"' % sortby)
         tmpdict = odict()

@@ -1,0 +1,11 @@
+#!/bin/bash
+coverage run --source=../sciris -m pytest -v test_*.py
+
+echo 'Creating HTML report...'
+coverage html
+
+echo 'Running report...'
+coverage report
+
+echo 'Report location:'
+echo "`pwd`/htmlcov/index.html"

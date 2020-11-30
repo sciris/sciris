@@ -175,6 +175,15 @@ def test_json():
     print('JSON as string:')
     print(json_str)
 
+    # Test JSON load/save
+    sc.thisdir() # Just put this here for testing
+    jsonfile = 'test.json'
+    testdata = {'key1':pl.rand(5,5).tolist(), 'key2':['test1', None]}
+    sc.savejson(jsonfile, testdata)
+    testdata2 = sc.loadjson(jsonfile)
+    assert testdata == testdata2
+    os.remove(jsonfile)
+
     return json_str
 
 
@@ -194,6 +203,7 @@ def test_jsonpickle():
     assert myobj.b.equals(myobj3.b)
 
     return jp
+
 
 
 #%% Run as a script

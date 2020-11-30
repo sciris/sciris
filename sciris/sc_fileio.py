@@ -151,10 +151,15 @@ def dumpstr(obj=None):
     return result
 
 
-# Aliases to make them even easier to use
-load = loadobj
-save = saveobj
+# Aliases to make these core functions even easier to use
 
+def load(*args, **kwargs):
+    ''' Alias to loadobj() '''
+    return loadobj(*args, **kwargs)
+
+def save(*args, **kwargs):
+    ''' Alias to saveobj() '''
+    return saveobj(*args, **kwargs)
 
 
 
