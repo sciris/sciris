@@ -387,7 +387,7 @@ Set up nginx
 
 For example, this will start it running at ``localhost:8188``:
 
-.. code:: script
+.. code:: bash
 
    server {
        listen 8188;
@@ -428,7 +428,7 @@ in which case the ``launch_my_app_gunicorn`` script should contain
 
 For example:
 
-.. code:: script
+.. code:: bash
 
    cd my_app
    screen -S my_app_session
@@ -464,4 +464,4 @@ See the directions
 `here <https://github.com/sciris/scirisweb/tree/develop/examples/helloworld>`__
 on how to install and run this example.
 
-.. |Sciris showcase| image:: /docs/sciris-showcase-code.png
+.. |Sciris showcase| image:: sciris-showcase-code.png

@@ -1,5 +1,5 @@
 ==================
-Welcome to Sciris
+Sciris
 ==================
 
 `Sciris <http://sciris.org>`__ is library of functions for scientific computing that provide additional flexibility and ease-of-use on top of Numpy, Scipy, and Matplotlib.
