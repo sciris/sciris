@@ -1,5 +1,6 @@
 # Welcome to Sciris
 
+
 ## What is Sciris?
 
 Glad you asked! Sciris is a flexible open source framework for building scientific web applications using Python and JavaScript. It comes in two parts: `sciris` is a collection of tools that should make scientific Python coding a more pleasant experience, while `scirisweb` is a collection of tools that allow you to easily build Python webapps. Sciris is built on Numpy and Matplotlib, while ScirisWeb is built on Vue.js, Flask, Twisted, Redis, and `mpld3`.
@@ -20,14 +21,62 @@ Some highlights of `scirisweb`:
 * `RPC` -- a simple function for defining links between the frontend (web interface) and the backend (server)
 * `Datastore` -- user and data management based on Redis
 
+
+## Okay, tell me more.
+
+Here are a few more of the most commonly used features.
+
+### Containers
+- `sc.odict()` # flexible container for best-of-all-worlds for lists, dicts, and arrays
+- `sc.objdict()` # like an odict, but allows get/set via e.g. foo.bar instead of foo['bar']
+
+### File utilities
+- `sc.saveobj()/sc.loadobj()` # efficiently save/load any Python object (via pickling)
+- `sc.savejson()/sc.loadjson()` # likewise, for JSONs
+- `sc.thisdir()` # get current folder
+- `sc.getfilelist()` # easy way to access glob
+
+### Basic utilities
+- `sc.dcp()` # shortcut to copy.deepcopy()
+- `sc.pr()` # print detailed representation of an object
+- `sc.heading()` # print text as a 'large' heading
+- `sc.colorize()` # print text in a certain color
+- `sc.sigfigs()` # truncate a number to a certain number of significant figures
+- `sc.isnumber()` # checks if something is any number type
+- `sc.promotetolist()` # converts strings or scalars to lists, for consistent iteration
+- `sc.readdate()` # convert strings to dates using common formats
+- `sc.tic()/sc.toc()` # simple method for timing durations
+- `sc.runcommand()` # simple way of executing a shell command
+- `sc.findinds()` # find indices of an array matching a condition
+- `sc.findnearest()` # find nearest matching value
+- `sc.smooth()` # simple smoothing of 1D or 2D arrays
+
+### Plotting utilities
+- `sc.hex2grb()/sc.rgb2hex()` # convert between different color conventions
+- `sc.vectocolor()` # map a list of sequential values onto a list of colors
+- `sc.gridcolors()` # map a list of qualitative categories onto a list of colors
+- `sc.plot3d()/sc.surf3d()` # easy way to render 3D plots
+- `sc.boxoff()` # turn off top and right parts of the axes box
+- `sc.commaticks()` # convert labels from "10000" and "1e6" to "10,000" and "1,000,0000"
+- `sc.SIticks()` # convert labels from "10000" and "1e6" to "10k" and "1m"
+- `sc.maximize()` # make the figure fill the whole screen
+- `sc.savemovie()` # save a sequence of figures as an MP4 or other movie
+
+### Parallelization utilities
+- `sc.parallelize()` # as-easy-as-possible parallelization
+- `sc.loadbalancer()` # very basic load balancer
+
+
 ## I'm not convinced.
 
-That's OK. Perhaps you'd be interested in seeing what a script that performs tasks like parallelization, saving and loading files, and 3D plotting looks like when written in [vanilla Python](https://github.com/sciris/sciris/blob/develop/tests/showcase_vanilla.py) compared to [using Sciris](https://github.com/sciris/sciris/blob/develop/tests/showcase.py).
+That's OK. Perhaps you'd be interested in seeing what a script that performs tasks like parallelization, saving and loading files, and 3D plotting looks like when written in [vanilla Python](https://github.com/sciris/sciris/blob/develop/tests/showcase_vanilla.py) compared to [using Sciris](https://github.com/sciris/sciris/blob/develop/tests/showcase.py):
+
+![Sciris showcase](../docs/sciris-showcase-code.png)
+
 
 ## Is Sciris ready yet?
 
-**Yes.** Sciris is available for use, but is still undergoing rapid development. We expect an official launch some time during 2020. If you would like us to let you know when this happens, please email info@sciris.org.
-
+**Yes.** Sciris is available for use, but is still undergoing rapid development. We expect an official launch some time during 2021. If you would like us to let you know when this happens, please email info@sciris.org.
 
 ## Installation and run instructions
 
