@@ -306,8 +306,8 @@ def test_dates():
     o.diff  = sc.daydiff('2020-03-20', '2020-04-05') # Returns 16
     o.diffs = sc.daydiff('2020-03-20', '2020-04-05', '2020-05-01') # Returns [16, 26]
 
-    print('Testing isarray')
-    o.dates = sc.date_range('2020-03-01', '2020-04-04')
+    print('Testing daterange')
+    o.dates = sc.daterange('2020-03-01', '2020-04-04')
 
     print('Testing elapsedtimestr')
     now = sc.now()
@@ -327,8 +327,8 @@ def test_dates():
     with sc.Timer():
         sc.timedsleep(0.1)
 
-    print('Testing datetime_to_year')
-    o.year = sc.datetime_to_year('2010-07-01')
+    print('Testing datetoyear')
+    o.year = sc.datetoyear('2010-07-01')
 
     return o
 
@@ -414,15 +414,6 @@ def test_suggest():
     return res5b
 
 
-def test_gitinfo():
-    sc.heading('Testing gitinfo functions')
-    o = sc.objdict()
-
-    o.gitinfo = sc.gitinfo()
-    o.fast_gitinfo = sc.fast_gitinfo()
-
-    return o
-
 def test_misc():
     sc.heading('Testing miscellaneous functions')
     o = sc.objdict()
@@ -436,6 +427,9 @@ def test_misc():
 
     print('Testing runcommand')
     sc.runcommand('command_probably_not_found')
+
+    print('Testing gitinfo functions')
+    o.gitinfo = sc.gitinfo()
 
     print('Testing compareversions')
     assert sc.compareversions('1.2.3', '2.3.4') == -1
@@ -577,7 +571,6 @@ if __name__ == '__main__':
     lp        = test_profile()
     dists     = test_suggest()
     misc      = test_misc()
-    git       = test_gitinfo()
 
     nested    = test_nested()
     dicts     = test_dicts()

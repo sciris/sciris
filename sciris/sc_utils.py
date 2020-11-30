@@ -1265,7 +1265,8 @@ def mergedicts(*args, strict=False, overwrite=True):
 ### Time/date functions
 ##############################################################################
 
-__all__ += ['now', 'getdate', 'readdate', 'date', 'day', 'daydiff', 'date_range', 'elapsedtimestr', 'tic', 'toc', 'toctic', 'timedsleep']
+__all__ += ['now', 'getdate', 'readdate', 'date', 'day', 'daydiff', 'daterange', 'datetoyear',
+            'elapsedtimestr', 'tic', 'toc', 'toctic', 'timedsleep']
 
 def now(timezone=None, utc=False, die=False, astype='dateobj', tostring=False, dateformat=None):
     '''
@@ -1476,8 +1477,7 @@ def date(obj, *args, start_date=None, dateformat=None, as_date=True):
 def day(obj, *args, start_day=None):
     '''
     Convert a string, date/datetime object, or int to a day (int), the number of
-    days since the start day. See also date() and daydiff(). Used primarily via
-    sc.day() rather than directly.
+    days since the start day. See also sc.date() and sc.daydiff().
 
     Args:
         obj (str, date, int, or list): convert any of these objects to a day relative to the start day
@@ -1489,7 +1489,7 @@ def day(obj, *args, start_day=None):
 
     **Example**::
 
-        sc.day('2020-04-04') # Returns 94
+        sc.day(sc.now()) # Returns how many days into the year we are
     '''
 
     # Do not process a day if it's not supplied
@@ -1555,7 +1555,7 @@ def daydiff(*args):
     return output
 
 
-def date_range(start_date, end_date, inclusive=True, as_date=False, dateformat=None):
+def daterange(start_date, end_date, inclusive=True, as_date=False, dateformat=None):
     '''
     Return a list of dates from the start date to the end date. To convert a list
     of days (as integers) to dates, use sc.date() instead.
@@ -1569,7 +1569,7 @@ def date_range(start_date, end_date, inclusive=True, as_date=False, dateformat=N
 
     **Example**::
 
-        dates = sc.date_range('2020-03-01', '2020-04-04')
+        dates = sc.daterange('2020-03-01', '2020-04-04')
     '''
     start_day = day(start_date)
     end_day = day(end_date)
@@ -1578,6 +1578,29 @@ def date_range(start_date, end_date, inclusive=True, as_date=False, dateformat=N
     days = np.arange(start_day, end_day)
     dates = date(days, as_date=as_date, dateformat=dateformat)
     return dates
+
+
+def datetoyear(dateobj, dateformat=None):
+    """
+    Convert a DateTime instance to decimal year.
+
+    Args:
+        dateobj (date, str):  The datetime instance to convert
+        dateformat (str): If dateobj is a string, the optional date conversion format to use
+
+    Returns:
+        Equivalent decimal year
+
+    Example:
+        sc.datetoyear('2010-07-01') # Returns approximately 2010.5
+
+    By Luke Davis from https://stackoverflow.com/a/42424261, adapted by Romesh Abeysuriya
+    """
+    if isstring(dateobj):
+        dateobj = readdate(dateobj, dateformat=dateformat)
+    year_part = dateobj - dt.datetime(year=dateobj.year, month=1, day=1)
+    year_length = dt.datetime(year=dateobj.year + 1, month=1, day=1) - dt.datetime(year=dateobj.year, month=1, day=1)
+    return dateobj.year + year_part / year_length
 
 
 def elapsedtimestr(pasttime, maxdays=5, shortmonths=True):
@@ -1939,46 +1962,81 @@ def runcommand(command, printinput=False, printoutput=False, wait=True):
 
 
 
-def gitinfo(filepath=None, die=False, hashlen=7, verbose=True):
-    ''' Try to extract git information based on the file structure '''
+def gitinfo(path=None, hashlen=7, die=False, verbose=True):
+    """
+    Retrieve git info
 
-    if filepath is None:
-        filepath = os.getcwd()
+    This function reads git branch and commit information from a .git directory.
+    Given a path, it will check for a `.git` directory. If the path doesn't contain
+    that directory, it will search parent directories for `.git` until it finds one.
+    Then, the current information will be parsed.
 
-    try: # First try importing git-python
-        import git
-        rootdir = os.path.abspath(filepath) # e.g. /user/username/optima/optima
-        repo = git.Repo(path=rootdir, search_parent_directories=True)
-        try:
-            gitbranch = flexstr(repo.active_branch.name)  # Just make sure it's a string
-        except TypeError:
-            gitbranch = 'Detached head (no branch)'
-        githash = flexstr(repo.head.object.hexsha) # Unicode by default
-        gitdate = flexstr(repo.head.object.authored_datetime.isoformat())
-    except Exception as E1:
-        try: # If that fails, try the command-line method
-            rootdir = os.path.abspath(filepath) # e.g. /user/username/optima/optima
-            while len(rootdir): # Keep going as long as there's something left to go
-                gitdir = rootdir+os.sep+'.git' # look for the git directory in the current directory
-                if os.path.isdir(gitdir): break # It's found! terminate
-                else: rootdir = os.sep.join(rootdir.split(os.sep)[:-1]) # Remove the last directory and keep looking
-            headstrip = 'ref: ref'+os.sep+'heads'+os.sep # Header to strip off...hope this is generalizable!
-            with open(gitdir+os.sep+'HEAD') as f: gitbranch = f.read()[len(headstrip)+1:].strip() # Read git branch name
-            with open(gitdir+os.sep+'refs'+os.sep+'heads'+os.sep+gitbranch) as f: githash = f.read().strip() # Read git commit
-            try:    gitdate = flexstr(runcommand('git -C "%s" show -s --format=%%ci' % gitdir).rstrip()) # Even more likely to fail
-            except: gitdate = 'Date N/A'
-        except Exception as E2: # Failure? Give up
-            gitbranch = 'Branch N/A'
-            githash = 'Hash N/A'
-            gitdate = 'Date N/A'
-            errormsg = 'Could not extract git info; please check paths or install git-python:\n%s\n%s' % (repr(E1), repr(E2))
-            if die: raise Exception(errormsg)
-            elif verbose:   print(errormsg)
+    Args:
+        path (str): A folder either containing a .git directory, or with a parent that contains a .git directory
+        hashlen (int): Length of hash to return (default: 7)
+        die (bool): whether to raise an exception if git information can't be retrieved (default: no)
+        verbose (bool): if not dying, whether to print information about the exception
+
+    Returns:
+        Dictionary containing the branch, hash, and commit date
+    """
+
+    if path is None:
+        path = os.getcwd()
+
+    try:
+        # First, get the .git directory
+        curpath = os.path.dirname(os.path.abspath(path))
+        while curpath:
+            if os.path.exists(os.path.join(curpath, ".git")):
+                gitdir = os.path.join(curpath, ".git")
+                break
+            else:
+                parent, _ = os.path.split(curpath)
+                if parent == curpath:
+                    curpath = None
+                else:
+                    curpath = parent
+        else:
+            raise Exception("Could not find .git directory")
+
+        # Then, get the branch and commit
+        with open(os.path.join(gitdir, "HEAD"), "r") as f1:
+            ref = f1.read()
+            if ref.startswith("ref:"):
+                refdir = ref.split(" ")[1].strip()  # The path to the file with the commit
+                gitbranch = refdir.replace("refs/heads/", "")  # / is always used (not os.sep)
+                with open(os.path.join(gitdir, refdir), "r") as f2:
+                    githash = f2.read().strip()  # The hash of the commit
+            else:
+                gitbranch = "Detached head (no branch)"
+                githash = ref.strip()
+
+        # Now read the time from the commit
+        compressed_contents = open(os.path.join(gitdir, "objects", githash[0:2], githash[2:]), "rb").read()
+        decompressed_contents = zlib.decompress(compressed_contents).decode()
+        for line in decompressed_contents.split("\n"):
+            if line.startswith("author"):
+                _re_actor_epoch = re.compile(r"^.+? (.*) (\d+) ([+-]\d+).*$")
+                m = _re_actor_epoch.search(line)
+                actor, epoch, offset = m.groups()
+                t = time.gmtime(int(epoch))
+                gitdate = time.strftime("%Y-%m-%d %H:%M:%S UTC", t)
+
+    except Exception as E:
+        gitbranch = "Branch N/A"
+        githash   = "Hash N/A"
+        gitdate   = "Date N/A"
+        errormsg = 'Could not extract git info; please check paths'
+        if die:
+            raise Exception(errormsg) from E
+        elif verbose:
+            print(errormsg + f'\nError: {str(E)}')
 
     if len(githash)>hashlen: githash = githash[:hashlen] # Trim hash to short length
-    output = {'branch':gitbranch, 'hash':githash, 'date':gitdate} # Assemble outupt
-    return output
+    output = {"branch": gitbranch, "hash": githash, "date": gitdate}  # Assemble outupt
 
+    return output
 
 
 def compareversions(version1, version2):
@@ -2278,7 +2336,8 @@ def getcaller(frame=2, tostring=True):
 ### Nested dictionary functions
 ##############################################################################
 
-__all__ += ['getnested', 'setnested', 'makenested', 'iternested', 'mergenested', 'flattendict', 'search']
+__all__ += ['getnested', 'setnested', 'makenested', 'iternested', 'mergenested',
+            'flattendict', 'search', 'nested_loop']
 
 docstring = '''
 Four little functions to get and set data from nested dictionaries. The first two were adapted from:
@@ -2470,17 +2529,6 @@ def search(obj, attribute, _trace=''):
     return matches
 
 
-
-##############################################################################
-### Atomica utilities
-##############################################################################
-
-# Created by Romesh Abeysuriya as part of Atomica (https://atomica.tools)
-
-
-__all__ += ['nested_loop', 'fast_gitinfo', 'parallel_progress', 'datetime_to_year']
-
-
 def nested_loop(inputs, loop_order):
     """
     Zip list of lists in order
@@ -2489,24 +2537,29 @@ def nested_loop(inputs, loop_order):
     It then yields tuples of items in the given order. Only tested for two levels
     but in theory supports an arbitrary number of items.
 
-    :param inputs: List of lists. All lists should have the same length
-    :param loop_order: Nesting order for the lists
-    :return: Generator yielding tuples of items, one for each list
+    Args:
+        inputs (list): List of lists. All lists should have the same length
+        loop_order (list): Nesting order for the lists
+
+    Returns:
+        Generator yielding tuples of items, one for each list
 
     Example usage:
 
-    >>> list(nested_loop([['a','b'],[1,2]],[0,1]))
-    [['a', 1], ['a', 2], ['b', 1], ['b', 2]]
+        >>> list(nested_loop([['a','b'],[1,2]],[0,1]))
+        [['a', 1], ['a', 2], ['b', 1], ['b', 2]]
 
     Notice how the first two items have the same value for the first list
     while the items from the second list vary. If the `loop_order` is
     reversed, then:
 
-    >>> list(nested_loop([['a','b'],[1,2]],[1,0]))
-    [['a', 1], ['b', 1], ['a', 2], ['b', 2]]
+        >>> list(nested_loop([['a','b'],[1,2]],[1,0]))
+        [['a', 1], ['b', 1], ['a', 2], ['b', 2]]
 
     Notice now how now the first two items have different values from the
     first list but the same items from the second list.
+
+    From Atomica by Romesh Abeysuriya
     """
     loop_order = list(loop_order)  # Convert to list, in case loop order was passed in as a generator e.g. from map()
     inputs = [inputs[i] for i in loop_order]
@@ -2516,145 +2569,6 @@ def nested_loop(inputs, loop_order):
         for i in range(len(item)):
             out[loop_order[i]] = item[i]
         yield out
-
-
-def fast_gitinfo(path=None):
-    """
-    Retrieve git info
-
-    This function reads git branch and commit information from a .git directory.
-    Given a path, it will check for a `.git` directory. If the path doesn't contain
-    that directory, it will search parent directories for `.git` until it finds one.
-    Then, the current information will be parsed.
-
-    :param path: A folder either containing a ``.git`` directory, or with a parent that contains a ``.git`` directory
-
-    """
-
-    if path is None:
-        path = os.getcwd()
-
-    try:
-        # First, get the .git directory
-        curpath = os.path.abspath(path)
-        while curpath:
-            if os.path.exists(os.path.join(curpath, ".git")):
-                gitdir = os.path.join(curpath, ".git")
-                break
-            else:
-                parent, _ = os.path.split(curpath)
-                if parent == curpath:
-                    curpath = None
-                else:
-                    curpath = parent
-        else:
-            raise Exception("Could not find .git directory")
-
-        # Then, get the branch and commit
-        with open(os.path.join(gitdir, "HEAD"), "r") as f1:
-            ref = f1.read()
-            if ref.startswith("ref:"):
-                refdir = ref.split(" ")[1].strip()  # The path to the file with the commit
-                gitbranch = refdir.replace("refs/heads/", "")  # / is always used (not os.sep)
-                with open(os.path.join(gitdir, refdir), "r") as f2:
-                    githash = f2.read().strip()  # The hash of the commit
-            else:
-                gitbranch = "Detached head (no branch)"
-                githash = ref.strip()
-
-        # Now read the time from the commit
-        compressed_contents = open(os.path.join(gitdir, "objects", githash[0:2], githash[2:]), "rb").read()
-        decompressed_contents = zlib.decompress(compressed_contents).decode()
-        for line in decompressed_contents.split("\n"):
-            if line.startswith("author"):
-                _re_actor_epoch = re.compile(r"^.+? (.*) (\d+) ([+-]\d+).*$")
-                m = _re_actor_epoch.search(line)
-                actor, epoch, offset = m.groups()
-                t = time.gmtime(int(epoch))
-                gitdate = time.strftime("%Y-%m-%d %H:%M:%S UTC", t)
-
-    except Exception:
-        gitbranch = "Git branch N/A"
-        githash = "Git hash N/A"
-        gitdate = "Git date N/A"
-
-    output = {"branch": gitbranch, "hash": githash, "date": gitdate}  # Assemble outupt
-    return output
-
-
-def parallel_progress(fcn, inputs, num_workers=None, show_progress=True, initializer=None):
-    """
-    Run a function in parallel with a optional single progress bar
-
-    The result is essentially equivalent to
-
-    >>> list(map(fcn, inputs))
-
-    But with execution in parallel and with a single progress bar being shown.
-
-    :param fcn: Function object to call, accepting one argument, OR a function with zero arguments in which
-                case inputs should be an integer
-    :param inputs: A collection of inputs that will each be passed to (list, array, etc.)
-                    OR a number, if the fcn() has no input arguments
-    :param num_workers: Number of processes, defaults to the number of CPUs
-    :return: An list of outputs
-
-    """
-    from multiprocess import pool
-    from tqdm import tqdm
-
-    pool = pool.Pool(num_workers, initializer=initializer)
-
-    results = [None]
-    if isnumber(inputs):
-        results *= inputs
-        pbar = tqdm(total=inputs) if show_progress else None
-    else:
-        results *= len(inputs)
-        pbar = tqdm(total=len(inputs)) if show_progress else None
-
-    def callback(result, idx):
-        results[idx] = result
-        if show_progress:
-            pbar.update(1)
-
-    if isnumber(inputs):
-        for i in range(inputs):
-            pool.apply_async(fcn, callback=partial(callback, idx=i))
-    else:
-        for i, x in enumerate(inputs):
-            pool.apply_async(fcn, args=(x,), callback=partial(callback, idx=i))
-
-    pool.close()
-    pool.join()
-
-    if show_progress:
-        pbar.close()
-
-    return results
-
-
-def datetime_to_year(dateobj, dateformat=None):
-    """
-    Convert a DateTime instance to decimal year.
-
-    Args:
-        dateobj (date, str):  The datetime instance to convert
-        dateformat (str): If dateobj is a string, the optional date conversion format to use
-
-    Returns:
-        Equivalent decimal year
-
-    Example:
-        sc.datetime_to_year('2010-07-01') # Returns approximately 2010.5
-
-    By Luke Davis from https://stackoverflow.com/a/42424261
-    """
-    if isstring(dateobj):
-        dateobj = readdate(dateobj, dateformat=dateformat)
-    year_part = dateobj - dt.datetime(year=dateobj.year, month=1, day=1)
-    year_length = dt.datetime(year=dateobj.year + 1, month=1, day=1) - dt.datetime(year=dateobj.year, month=1, day=1)
-    return dateobj.year + year_part / year_length
 
 
 

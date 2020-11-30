@@ -377,7 +377,7 @@ def gridcolors(ncolors=10, limits=None, nsteps=20, asarray=False, ashex=False, r
 
 
 
-def colormapdemo(cmap=None, n=None, smoothing=None, randseed=None):
+def colormapdemo(cmap=None, n=None, smoothing=None, randseed=None, doshow=True):
     '''
     Demonstrate a color map using simulated elevation data, shown in both 2D and
     3D. The argument can be either a colormap itself or a string describing a
@@ -416,7 +416,8 @@ def colormapdemo(cmap=None, n=None, smoothing=None, randseed=None):
     cb2.set_label('Height (km)',horizontalalignment='right', labelpad=50)
     pl.xlabel('Position (km)')
     pl.ylabel('Position (km)')
-    pl.show()
+    if doshow:
+        pl.show()
 
     # Plot in 3D
     fig2,ax2 = fig3d(returnax=True, figsize=(18,8))
@@ -428,7 +429,8 @@ def colormapdemo(cmap=None, n=None, smoothing=None, randseed=None):
     cb.set_label('Height (km)',horizontalalignment='right', labelpad=50)
     pl.xlabel('Position (km)')
     pl.ylabel('Position (km)')
-    pl.show()
+    if doshow:
+        pl.show()
 
     return {'2d':fig1, '3d':fig2}
 

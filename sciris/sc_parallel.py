@@ -7,23 +7,19 @@ Highlights:
     - sc.loadbalancer() # very basic load balancer
 '''
 
-##############################################################################
-### IMPORTS
-##############################################################################
-
 import time
 import psutil
 import multiprocess as mp
 import numpy as np
+from functools import partial
 from . import sc_utils as ut
-
 
 
 ##############################################################################
 ### PARALLELIZATION FUNCTIONS
 ##############################################################################
 
-__all__ = ['loadbalancer', 'parallelize', 'parallelcmd']
+__all__ = ['loadbalancer', 'parallelize', 'parallelcmd', 'parallel_progress']
 
 
 def loadbalancer(maxload=None, index=None, interval=None, maxtime=None, label=None, verbose=True):
@@ -76,7 +72,6 @@ def loadbalancer(maxload=None, index=None, interval=None, maxtime=None, label=No
             toohigh = False
             if verbose: print(label+'CPU load fine (%0.2f/%0.2f), starting process %s after %i tries' % (currentload, maxload, index, count))
     return None
-
 
 
 def parallelize(func, iterarg=None, iterkwargs=None, args=None, kwargs=None, ncpus=None, maxload=None, interval=None, **func_kwargs):
@@ -245,7 +240,6 @@ def parallelize(func, iterarg=None, iterkwargs=None, args=None, kwargs=None, ncp
     return outputlist
 
 
-
 def parallelcmd(cmd=None, parfor=None, returnval=None, maxload=None, interval=None, **kwargs):
     '''
     A function to parallelize any block of code. Note: this is intended for quick
@@ -289,6 +283,58 @@ result = newval**2
     outputlist = outputlist.tolist()
 
     return outputlist
+
+
+def parallel_progress(fcn, inputs, num_workers=None, show_progress=True, initializer=None):
+    """
+    Run a function in parallel with a optional single progress bar
+
+    The result is essentially equivalent to
+
+    >>> list(map(fcn, inputs))
+
+    But with execution in parallel and with a single progress bar being shown.
+
+    Args:
+        fcn (function): Function object to call, accepting one argument, OR a function with zero arguments in which case inputs should be an integer
+        inputs (list): A collection of inputs that will each be passed to the function OR a number, if the fcn() has no input arguments
+        num_workers (int): Number of processes, defaults to the number of CPUs
+
+    Returns:
+        A list of outputs
+    """
+    from multiprocess import pool
+    from tqdm import tqdm
+
+    pool = pool.Pool(num_workers, initializer=initializer)
+
+    results = [None]
+    if ut.isnumber(inputs):
+        results *= inputs
+        pbar = tqdm(total=inputs) if show_progress else None
+    else:
+        results *= len(inputs)
+        pbar = tqdm(total=len(inputs)) if show_progress else None
+
+    def callback(result, idx):
+        results[idx] = result
+        if show_progress:
+            pbar.update(1)
+
+    if ut.isnumber(inputs):
+        for i in range(inputs):
+            pool.apply_async(fcn, callback=partial(callback, idx=i))
+    else:
+        for i, x in enumerate(inputs):
+            pool.apply_async(fcn, args=(x,), callback=partial(callback, idx=i))
+
+    pool.close()
+    pool.join()
+
+    if show_progress:
+        pbar.close()
+
+    return results
 
 
 

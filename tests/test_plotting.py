@@ -58,17 +58,13 @@ def test_colormaps(doplot=doplot):
     o.arraycolors = colors
 
     print('Testing gridcolors')
-    colors_a = sc.gridcolors(ncolors=8,  demo=doplot)
-    colors_b = sc.gridcolors(ncolors=18, demo=doplot)
-    colors_c = sc.gridcolors(ncolors=28, demo=doplot)
-    print('\n8 colors:', colors_a)
-    print('\n18 colors:', colors_b)
-    print('\n28 colors:', colors_c)
-    o.gridcolors = colors_a
+    o.gridcolors = sc.gridcolors(ncolors=8,  demo=doplot)
+    sc.gridcolors(ncolors=28, demo=doplot)
+    print('\n8 colors:', o.gridcolors)
 
     print('Testing colormapdemo')
     if doplot:
-        sc.colormapdemo('parula')
+        sc.colormapdemo('parula', doshow=False)
 
     return o
 
@@ -118,7 +114,12 @@ def test_other(doplot=doplot):
         pl.plot(data)
         sc.SIticks()
 
-        sc.maximize()
+        try:
+            sc.maximize()
+        except Exception as E:
+            print(f'sc.maximize() failed with {str(E)}:')
+            print(sc.traceback())
+            print('↑↑↑ Ignoring since sc.maximize() unlikely to work via e.g. automated testing')
 
     return o
 

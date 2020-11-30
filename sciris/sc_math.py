@@ -38,7 +38,7 @@ def safedivide(numerator=None, denominator=None, default=None, eps=None, warn=Fa
     Handle divide-by-zero and divide-by-nan elegantly. Examples:
         sc.safedivide(numerator=0, denominator=0, default=1, eps=0) # Returns 1
         sc.safedivide(numerator=5, denominator=2.0, default=1, eps=1e-3) # Returns 2.5
-        sc.safedivide(3, npp.array([1,3,0]), -1, warn=True) # Returns array([ 3,  1, -1])
+        sc.safedivide(3, np.array([1,3,0]), -1, warn=True) # Returns array([ 3,  1, -1])
     '''
     # Set some defaults
     if numerator   is None: numerator   = 1.0
