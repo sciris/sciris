@@ -12,7 +12,7 @@ Highlights
 
 Some highlights of ``sciris``:
 
--  ``odict`` and ``objdict`` -- like an OrderedDict, but allows reference by position like a list, as well as many powerful methods (such as casting to array, sorting and enumeration functions, etc.). For example, let's say you have a dictionary of dictionaries ``results``, each entry of which has a key ``data``. With Sciris, you can access the data from the first item in ``results`` via ``results[0].data``. Without Sciris, this would be``results[list(results.keys())[0]]['data']``. Nicer, eh?
+-  ``odict`` and ``objdict`` -- like an OrderedDict, but allows reference by position like a list, as well as many powerful methods (such as casting to array, sorting and enumeration functions, etc.). For example, let's say you have a dictionary of dictionaries ``results``, each entry of which has a key ``data``. With Sciris, you can access the data from the first item in ``results`` via ``results[0].data``. Without Sciris, this would be ``results[list(results.keys())[0]]['data']``. Nicer, eh?
 -  ``promotetoarray`` -- standardizes any kind of numeric input to a Numpy array, so e.g. ``1``, ``[1]``, ``(1,)`` etc. are all converted to ``array([1])``
 -  ``findnearest`` -- find the element of an array closest to the input value
 -  ``loadobj``, ``saveobj`` -- flexible methods to save/load arbitrary Python objects
