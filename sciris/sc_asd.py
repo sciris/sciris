@@ -1,6 +1,5 @@
 '''
-Adaptive stochastic descent optimization algorithm -- comparable to the algorithms 
-in scipy.optimize.
+Adaptive stochastic descent optimization algorithm, building on scipy.optimize.
 
 This algorithm is published as "Optimization by adaptive stochastic descent" by
 Kerr et al. (2018).

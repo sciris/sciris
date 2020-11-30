@@ -1,6 +1,7 @@
 '''
-Parallelization functions. Uses multiprocess instad of multiprocessing for better
-support (e.g. Jupyter notebooks).
+Parallelization functions, allowing multiprocessing to be used simply.
+
+NB: Uses multiprocess instead of multiprocessing for broader support (e.g. Jupyter notebooks).
 
 Highlights:
     - sc.parallelize() # as-easy-as-possible parallelization
