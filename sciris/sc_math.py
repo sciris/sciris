@@ -1,3 +1,12 @@
+'''
+Mathematical functions -- in almost all cases, extensions/simplifications of numpy.
+
+Highlights:
+    - sc.findinds() # find indices of an array matching a condition
+    - sc.findnearest() # find nearest matching value
+    - sc.smooth() # simple smoothing of 1D or 2D arrays
+'''
+
 import numpy as np
 from . import sc_utils as ut
 
@@ -14,6 +23,8 @@ def approx(val1=None, val2=None, eps=None):
     Determine whether two scalars approximately match. Example:
         sc.approx(2*6, 11.9999999, eps=1e-6) # Returns True
         sc.approx([3,12,11.9], 12) # Returns array([False, True, False], dtype=bool)
+
+    Note: in most cases, np.isclose() is preferable.
     '''
     if val2 is None: val2 = 0.0
     if eps  is None: eps = 1e-9

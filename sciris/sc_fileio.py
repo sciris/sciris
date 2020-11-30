@@ -1,7 +1,11 @@
 """
-fileio.py -- code for file management in Sciris
+Functions for reading/writing to files.
 
-Last update: 2019feb18
+Highlights:
+    - sc.saveobj()/sc.loadobj() # efficiently save/load any Python object (via pickling)
+    - sc.savejson()/sc.loadjson() # likewise, for JSONs
+    - sc.thisdir() # get current folder
+    - sc.getfilelist() # easy way to access glob
 """
 
 ##############################################################################
@@ -192,14 +196,40 @@ def savezip(filename=None, filelist=None, folder=None, basename=True, verbose=Tr
     return fullpath
 
 
-def getfilelist(folder=None, ext=None, pattern=None):
-    ''' A short-hand since glob is annoying '''
-    if folder is None: folder = os.getcwd()
+def getfilelist(folder='.', pattern=None, abspath=False, nopath=False, filesonly=False, foldersonly=False, recursive=False):
+    '''
+    A shortcut for using glob.
+
+    Args:
+        folder      (str):  the folder to find files in (default, current)
+        pattern     (str):  the pattern to match (default, *); can be excluded if part of the folder
+        abspath     (bool): whether to return the full path
+        nopath      (bool): whether to return no path
+        filesonly   (bool): whether to only return files (not folders)
+        foldersonly (bool): whether to only return folders (not files)
+        recursive   (bool): passd to glob()
+
+    Returns:
+        List of files/folders
+
+    Examples:
+        sc.getfilelist() # return all files and folders in current folder
+        sc.getfilelist('~/temp', '*.py', abspath=True) # return absolute paths of all Python files in ~/temp folder
+        sc.getfilelist('~/temp/*.py') # Like above
+    '''
     folder = os.path.expanduser(folder)
-    if pattern is None:
-        if ext is None: ext = '*'
-        pattern = '*.'+ext
-    filelist = sorted(glob(os.path.join(folder, pattern)))
+    if abspath:
+        folder = os.path.abspath(folder)
+    if os.path.isdir(folder) and pattern is None:
+        pattern = '*'
+    globstr = os.path.join(folder, pattern) if pattern else folder
+    filelist = sorted(glob(globstr, recursive=recursive))
+    if filesonly:
+        filelist = [f for f in filelist if os.path.isfile(f)]
+    elif foldersonly:
+        filelist = [f for f in filelist if os.path.isdir(f)]
+    if nopath:
+        filelist = [f[len(folder):] for f in filelist]
     return filelist
 
 
@@ -453,7 +483,6 @@ def loadjson(filename=None, folder=None, string=None, fromfile=True, **kwargs):
 
     Returns:
         output (dict): the JSON object
-
     '''
     if fromfile:
         filename = makefilepath(filename=filename, folder=folder)
@@ -473,7 +502,20 @@ def loadjson(filename=None, folder=None, string=None, fromfile=True, **kwargs):
 
 
 def savejson(filename=None, obj=None, folder=None, die=True, indent=2, **kwargs):
-    ''' Convenience function for saving a JSON '''
+    '''
+    Convenience function for saving to a JSON file.
+
+    Args:
+        filename (str): the file to save
+        obj (anything): the object to save; if not already in JSON format, conversion will be attempted
+        folder (str): folder if not part of the filename
+        die (bool): whether or not to raise an exception if saving an empty object
+        indent (int): indentation to use for saved JSON
+        kwargs (dict): passed to json.dump()
+
+    Returns:
+        None
+    '''
 
     filename = makefilepath(filename=filename, folder=folder)
 
@@ -485,7 +527,7 @@ def savejson(filename=None, obj=None, folder=None, die=True, indent=2, **kwargs)
     with open(filename, 'w') as f:
         json.dump(sanitizejson(obj), f, indent=indent, **kwargs)
 
-    return None
+    return
 
 
 def jsonpickle(obj, tostring=False):

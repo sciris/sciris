@@ -1,3 +1,12 @@
+'''
+Parallelization functions. Uses multiprocess instad of multiprocessing for better
+support (e.g. Jupyter notebooks).
+
+Highlights:
+    - sc.parallelize() # as-easy-as-possible parallelization
+    - sc.loadbalancer() # very basic load balancer
+'''
+
 ##############################################################################
 ### IMPORTS
 ##############################################################################
