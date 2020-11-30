@@ -6,13 +6,17 @@ What is Sciris?
 
 Glad you asked! Sciris is a flexible open source framework for building scientific web applications using Python and JavaScript. It comes in two parts: ``sciris`` is a collection of tools that should make scientific Python coding a more pleasant experience, while ``scirisweb`` is a collection of tools that allow you to easily build Python webapps. Sciris is built on Numpy and Matplotlib, while ScirisWeb is built on Vue.js, Flask, Twisted, Redis, and ``mpld3``.
 
+
+Highlights
+~~~~~~~~~~
+
 Some highlights of ``sciris``:
 
--  ``odict`` and ``objdict`` -- like an OrderedDict, but allows reference by position like a list, as well as many powerful methods (such as casting to array, sorting and enumeration functions, etc.). For example, instead of ``my_plain_dict[list(my_plain_dict.keys())[0]]['value']``, you can use ``my_obj_dict[0].value``.
+-  ``odict`` and ``objdict`` -- like an OrderedDict, but allows reference by position like a list, as well as many powerful methods (such as casting to array, sorting and enumeration functions, etc.). For example, let's say you have a dictionary of dictionaries ``results``, each entry of which has a key ``data``. With Sciris, you can access the data from the first item in ``results`` via ``results[0].data``. Without Sciris, this would be``results[list(results.keys())[0]]['data']``. Nicer, eh?
 -  ``promotetoarray`` -- standardizes any kind of numeric input to a Numpy array, so e.g. ``1``, ``[1]``, ``(1,)`` etc. are all converted to ``array([1])``
--  ``checktype`` -- quickly determine the type of the input, e.g. ``checktype([1,2,3], 'arraylike', subtype='number') # returns True``
 -  ``findnearest`` -- find the element of an array closest to the input value
 -  ``loadobj``, ``saveobj`` -- flexible methods to save/load arbitrary Python objects
+- ``parallelize`` -- one-liner method for running functions in parallel
 -  ``vectocolor`` -- map a given vector into a set of colors
 -  ``gridcolors`` -- pick a set of colors from maximally distant parts of color-space (e.g. for plots with large numbers of lines)
 -  ``smoothinterp`` -- linear interpolation with smoothing
@@ -23,6 +27,21 @@ Some highlights of ``scirisweb``:
 -  ``ScirisApp`` -- a fully featured server that can be created as simply as ``app = ScirisApp(config)`` and run with ``app.run()``
 -  ``RPC`` -- a simple function for defining links between the frontend (web interface) and the backend (server)
 -  ``Datastore`` -- user and data management based on Redis
+
+
+I'm not convinced.
+~~~~~~~~~~~~~~~~~~
+
+That's OK. Perhaps you'd be interested in seeing what a script that performs tasks like parallelization, saving and loading files, and 3D plotting looks like when written in `vanilla Python <https://github.com/sciris/sciris/blob/develop/tests/showcase_vanilla.py>`__ compared to `using Sciris <https://github.com/sciris/sciris/blob/develop/tests/showcase.py>`__:
+
+|Sciris showcase|
+
+
+Is Sciris ready yet?
+~~~~~~~~~~~~~~~~~~~~
+
+**Yes.** Sciris is currently used for a number of scientific computing libraries, including `Atomica <http://atomica.tools>`__ and `Covasim <http://covasim.org>`__. Sciris provides the backend for webapps such as the `Cascade Analysis Tool <http://cascade.tools>`__ and `HIPtool <http://hiptool.org>`__. However, note that Sciris is still undergoing rapid development. If you would like to be notified of major updates, please email info@sciris.org.
+
 
 
 Features
@@ -79,21 +98,6 @@ Parallelization utilities
 
 -  ``sc.parallelize()`` # as-easy-as-possible parallelization
 -  ``sc.loadbalancer()`` # very basic load balancer
-
-
-I'm not convinced.
-------------------
-
-That's OK. Perhaps you'd be interested in seeing what a script that performs tasks like parallelization, saving and loading files, and 3D plotting looks like when written in `vanilla Python <https://github.com/sciris/sciris/blob/develop/tests/showcase_vanilla.py>`__ compared to `using Sciris <https://github.com/sciris/sciris/blob/develop/tests/showcase.py>`__:
-
-|Sciris showcase|
-
-
-Is Sciris ready yet?
---------------------
-
-**Yes.** Sciris is currently used for a number of scientific computing libraries, including `Atomica <http://atomica.tools>`__ and `Covasim <http://covasim.org>`__. Sciris provides the backend for webapps such as the `Cascade Analysis Tool <http://cascade.tools>`__ and `HIPtool <http://hiptool.org>`__. However, note that Sciris is still undergoing rapid development. If you would like to be notified of major updates, please email info@sciris.org.
-
 
 
 Installation and run instructions
