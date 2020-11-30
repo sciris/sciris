@@ -18,13 +18,13 @@ matplotlib.use('agg')
 # -- Project information -----------------------------------------------------
 
 project = 'Sciris'
-copyright = '2018, Sciris'
+copyright = '2020, Sciris.org'
 author = 'Sciris'
 
 # The short X.Y version
-version = ''
+version = '1.0.0'
 # The full version, including alpha/beta/rc tags
-release = ''
+release = '1.0.0'
 
 
 # -- General configuration ---------------------------------------------------
@@ -173,7 +173,7 @@ man_pages = [
 #  dir menu entry, description, category)
 texinfo_documents = [
     (master_doc, 'Sciris', 'Sciris Documentation',
-     author, 'Sciris', 'One line description of project.',
+     author, 'Sciris', 'Sciris library for scientific computation.',
      'Miscellaneous'),
 ]
 
