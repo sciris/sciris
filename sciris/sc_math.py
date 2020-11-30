@@ -1,5 +1,5 @@
 '''
-Mathematical functions -- in almost all cases, extensions/simplifications of numpy.
+Mathematical functions -- mostly extensions to or simplifications of numpy.
 
 Highlights:
     - sc.findinds() # find indices of an array matching a condition

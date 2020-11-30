@@ -1,8 +1,8 @@
 '''
-Functions that extend Matplotlib.  Adds colormaps including 'turbo', 'parula',
-and 'orangeblue'.
+Extensions to Matplotlib, including colormaps, 3D plotting, and plot manipulations.
 
 Highlights:
+    - Adds colormaps including 'turbo', 'parula', and 'orangeblue'
     - sc.hex2grb()/sc.rgb2hex() # convert between different color conventions
     - sc.vectocolor() # map a list of sequential values onto a list of colors
     - sc.gridcolors() # map a list of qualitative categories onto a list of colors

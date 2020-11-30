@@ -1,6 +1,6 @@
 '''
-The 'odict' (ordered dictionary) class, halfway between Python's OrderedDict and
-a list/array, specialized for scientific computing applications.
+The 'odict' (ordered dictionary) class, combining features from an OrderedDict and
+a list/array.
 
 Highlights:
     - sc.odict() # flexible container for best-of-all-worlds for lists, dicts, and arrays

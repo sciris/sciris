@@ -1,5 +1,5 @@
 '''
-Sciris is a library of utilities, and these are the utilities for the utilities.
+Miscellaneous utilities for type checking, printing, dates and times, etc.
 
 Highlights:
     - sc.dcp() # shortcut to copy.deepcopy()

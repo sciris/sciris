@@ -15,7 +15,7 @@ ScirisWeb, built on Sciris, is a toolbox that makes building webapps easy -- thi
 
 .. autosummary::
    :toctree: _autosummary
-   :caption: API Reference
+   :caption: API reference
    :template: custom-module-template.rst
    :recursive:
 

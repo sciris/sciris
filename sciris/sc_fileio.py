@@ -1,5 +1,5 @@
 """
-Functions for reading/writing to files.
+Functions for reading/writing to files, including pickles, JSONs, and Excel.
 
 Highlights:
     -  ``sc.saveobj()/sc.loadobj()``: efficiently save/load any Python object (via pickling)
