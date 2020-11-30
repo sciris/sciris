@@ -154,11 +154,11 @@ def dumpstr(obj=None):
 # Aliases to make these core functions even easier to use
 
 def load(*args, **kwargs):
-    ''' Alias to loadobj() '''
+    ''' Alias to loadobj(). New in version 0.18.0. '''
     return loadobj(*args, **kwargs)
 
 def save(*args, **kwargs):
-    ''' Alias to saveobj() '''
+    ''' Alias to saveobj(). New in version 0.18.0. '''
     return saveobj(*args, **kwargs)
 
 

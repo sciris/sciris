@@ -118,12 +118,12 @@ def findinds(arr, val=None, eps=1e-6, first=False, last=False):
 
 
 def findfirst(*args, **kwargs):
-    ''' Alias for findinds(..., first=True) '''
+    ''' Alias for findinds(..., first=True). New in version 0.18.0. '''
     return findinds(*args, **kwargs, first=True)
 
 
 def findlast(*args, **kwargs):
-    ''' Alias for findinds(..., last=True) '''
+    ''' Alias for findinds(..., last=True). New in version 0.18.0. '''
     return findinds(*args, **kwargs, last=True)
 
 
@@ -323,6 +323,8 @@ def normsum(arr, total=None):
 
     Example:
         normarr = sc.normsum([2,5,3,6,2,6,7,2,3,4], 100) # Scale so sum equals 100
+
+    Renamed in version 0.18.0.
     '''
     if total is None: total = 1.0
     origtotal = float(sum(arr))
@@ -563,6 +565,8 @@ def randround(x):
     **Example**::
 
         sc.randround(np.random.randn(20))
+
+    New in version 0.18.0.
     '''
     if isinstance(x, np.ndarray):
         output = np.array(np.floor(x+np.random.random(x.size)), dtype=int)
@@ -582,6 +586,8 @@ def cat(*args, axis=None):
         arr = sc.cat(4, np.ones(3))
         arr = sc.cat(np.array([1,2,3]), [4,5], 6)
         arr = sc.cat(np.random.rand(2,4), np.random.rand(2,6), axis=1)
+
+    New in version 0.18.0.
     '''
     output = ut.promotetoarray(args[0])
     for arg in args[1:]:

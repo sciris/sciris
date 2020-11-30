@@ -890,6 +890,8 @@ def asobj(obj, strict=True):
         d = dict(foo=1, bar=2)
         d_obj = sc.asobj(d)
         d_obj.foo = 10
+
+    New in version 0.18.0.
     '''
 
     objtype = type(obj)

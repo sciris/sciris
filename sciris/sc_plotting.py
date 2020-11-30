@@ -710,6 +710,8 @@ def orangebluecolormap(apply=False):
     Demo and example:
         cmap = sc.orangebluecolormap()
         sc.colormapdemo(cmap=cmap)
+
+    New in version 0.18.0.
     '''
     bottom = pl.cm.get_cmap('Oranges', 128)
     top = pl.cm.get_cmap('Blues_r', 128)
@@ -1043,6 +1045,8 @@ def get_rows_cols(n, nrows=None, ncols=None, ratio=1):
         nrows,ncols = sc.get_rows_cols(37) # Returns 7,6
         nrows,ncols = sc.get_rows_cols(100, ratio=2) # Returns 15,7
         nrows,ncols = sc.get_rows_cols(100, ratio=0.5) # Returns 8,13 since rows are prioritized
+
+    New in version 0.18.0.
     '''
 
     # Simple cases -- calculate the one missing
@@ -1068,6 +1072,8 @@ def maximize(fig=None, die=False):
     Args:
         fig (Figure): the figure object; if not supplied, use the current active figure
         die (bool): whether to propagate an exception if encountered (default no)
+
+    New in version 0.18.0.
     '''
     if fig is not None:
         pl.figure(fig.number) # Set the current figure

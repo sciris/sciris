@@ -6,7 +6,7 @@ By import convention, components of the Sciris library are listed beginning with
 
 
 ## Version 0.18.0 (2020-11-29)
-Major update with many new features and expanded documentation and testing.
+This major update includes many new utilities adopted from the [Covasim](http://covasim.org) and [Atomica](http://atomica.tools) libraries, as well as important improvements and bugfixes for parallel processing, object representation, and file I/O.
 
 ### New functions
 

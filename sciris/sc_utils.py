@@ -40,7 +40,7 @@ import uuid as py_uuid
 import tempfile
 import traceback as py_traceback
 from textwrap import fill
-from functools import reduce, partial
+from functools import reduce
 from collections import OrderedDict as OD
 from distutils.version import LooseVersion
 
@@ -1158,7 +1158,14 @@ def isstring(obj):
 
 
 def isarray(obj, dtype=None):
-    ''' Check whether something is a Numpy array, and optionally check the dtype '''
+    '''
+    Check whether something is a Numpy array, and optionally check the dtype.
+
+    Example:
+        sc.isarray(np.array([1,2,3]), dtype=float) # False, dtype is int
+
+    New in version 0.18.0.
+    '''
     if isinstance(obj, np.ndarray):
         if dtype is None:
             return True
@@ -1424,6 +1431,8 @@ def date(obj, *args, start_date=None, dateformat=None, as_date=True):
         sc.date('2020-04-05') # Returns datetime.date(2020, 4, 5)
         sc.date('2020-04-14', start_date='2020-04-04', as_date=False) # Returns 10
         sc.date([35,36,37], as_date=False) # Returns ['2020-02-05', '2020-02-06', '2020-02-07']
+
+    New in version 0.18.0.
     '''
 
     if obj is None:
@@ -1490,6 +1499,8 @@ def day(obj, *args, start_day=None):
     **Example**::
 
         sc.day(sc.now()) # Returns how many days into the year we are
+
+    New in version 0.18.0.
     '''
 
     # Do not process a day if it's not supplied
@@ -1539,6 +1550,8 @@ def daydiff(*args):
 
         diff  = sc.daydiff('2020-03-20', '2020-04-05') # Returns 16
         diffs = sc.daydiff('2020-03-20', '2020-04-05', '2020-05-01') # Returns [16, 26]
+
+    New in version 0.18.0.
     '''
     days = [date(day) for day in args]
     if len(days) == 1:
@@ -1570,6 +1583,8 @@ def daterange(start_date, end_date, inclusive=True, as_date=False, dateformat=No
     **Example**::
 
         dates = sc.daterange('2020-03-01', '2020-04-04')
+
+    New in version 0.18.0.
     '''
     start_day = day(start_date)
     end_day = day(end_date)
@@ -1594,7 +1609,9 @@ def datetoyear(dateobj, dateformat=None):
     Example:
         sc.datetoyear('2010-07-01') # Returns approximately 2010.5
 
-    By Luke Davis from https://stackoverflow.com/a/42424261, adapted by Romesh Abeysuriya
+    By Luke Davis from https://stackoverflow.com/a/42424261, adapted by Romesh Abeysuriya.
+
+    New in version 0.18.0.
     """
     if isstring(dateobj):
         dateobj = readdate(dateobj, dateformat=dateformat)
@@ -1767,6 +1784,8 @@ def toctic(returntic=False, returntoc=False, *args, **kwargs):
         sc.toctic()
         slow_operation_2()
         sc.toc()
+
+    New in version 0.18.0.
     '''
     tocout = toc(*args, **kwargs)
     ticout = tic()
@@ -1918,6 +1937,8 @@ def checkram(unit='mb', fmt='0.2f', start=0, to_string=True):
         start = sc.checkram(to_string=False)
         a = np.random.random((1_000, 10_000))
         print(sc.checkram(start=start))
+
+    New in version 0.18.0.
     '''
     process = psutil.Process(os.getpid())
     mapping = {'b':1, 'kb':1e3, 'mb':1e6, 'gb':1e9}
@@ -2300,35 +2321,37 @@ def mprofile(run, follow=None, show_results=True, *args, **kwargs):
 
 
 def getcaller(frame=2, tostring=True):
-        '''
-        Try to get information on the calling function, but fail gracefully.
+    '''
+    Try to get information on the calling function, but fail gracefully.
 
-        Frame 1 is the current file (this one), so not very useful. Frame 2 is
-        the default assuming it is being called directly. Frame 3 is used if
-        another function is calling this function internally.
+    Frame 1 is the current file (this one), so not very useful. Frame 2 is
+    the default assuming it is being called directly. Frame 3 is used if
+    another function is calling this function internally.
 
-        Args:
-            frame (int): how many frames to descend (e.g. the caller of the caller of the...)
-            tostring (bool): whether to return a string instead of a dict
+    Args:
+        frame (int): how many frames to descend (e.g. the caller of the caller of the...)
+        tostring (bool): whether to return a string instead of a dict
 
-        Returns:
-            output (str/dict): the filename and line number of the calling function, either as a string or dict
-        '''
-        try:
-            import inspect
-            result = inspect.getouterframes(inspect.currentframe(), 2)
-            fname = str(result[frame][1])
-            lineno = str(result[frame][2])
-            if tostring:
-                output = f'{fname}, line {lineno}'
-            else:
-                output = {'filename':fname, 'lineno':lineno}
-        except Exception as E:
-            if tostring:
-                output = f'Calling function information not available ({str(E)})'
-            else:
-                output = {'filename':'N/A', 'lineno':'N/A'}
-        return output
+    Returns:
+        output (str/dict): the filename and line number of the calling function, either as a string or dict
+
+    New in version 0.18.0.
+    '''
+    try:
+        import inspect
+        result = inspect.getouterframes(inspect.currentframe(), 2)
+        fname = str(result[frame][1])
+        lineno = str(result[frame][2])
+        if tostring:
+            output = f'{fname}, line {lineno}'
+        else:
+            output = {'filename':fname, 'lineno':lineno}
+    except Exception as E:
+        if tostring:
+            output = f'Calling function information not available ({str(E)})'
+        else:
+            output = {'filename':'N/A', 'lineno':'N/A'}
+    return output
 
 
 
@@ -2559,7 +2582,9 @@ def nested_loop(inputs, loop_order):
     Notice now how now the first two items have different values from the
     first list but the same items from the second list.
 
-    From Atomica by Romesh Abeysuriya
+    From Atomica by Romesh Abeysuriya.
+
+    New in version 0.18.0.
     """
     loop_order = list(loop_order)  # Convert to list, in case loop order was passed in as a generator e.g. from map()
     inputs = [inputs[i] for i in loop_order]
