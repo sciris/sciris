@@ -1,7 +1,7 @@
 '''
 Parallelization functions, allowing multiprocessing to be used simply.
 
-NB: Uses ``multiprocess`` instead of ``multiprocessing`` under the hood for 
+NB: Uses ``multiprocess`` instead of ``multiprocessing`` under the hood for
 broadest support  across platforms (e.g. Jupyter notebooks).
 
 Highlights:
@@ -18,7 +18,7 @@ from . import sc_utils as ut
 
 
 ##############################################################################
-### PARALLELIZATION FUNCTIONS
+### Parallelization functions
 ##############################################################################
 
 __all__ = ['loadbalancer', 'parallelize', 'parallelcmd', 'parallel_progress']
@@ -36,7 +36,8 @@ def loadbalancer(maxload=None, index=None, interval=None, maxtime=None, label=No
         label:    the label to print out when outputting information about task delay or start (default None)
         verbose:  whether or not to print information about task delay or start (default True)
 
-    Usage examples:
+    **Examples**::
+
         loadbalancer() # Simplest usage -- delay while load is >80%
         for nproc in processlist: loadbalancer(maxload=0.9, index=nproc) # Use a maximum load of 90%, and stagger the start by process number
 
@@ -78,9 +79,10 @@ def loadbalancer(maxload=None, index=None, interval=None, maxtime=None, label=No
 
 def parallelize(func, iterarg=None, iterkwargs=None, args=None, kwargs=None, ncpus=None, maxload=None, interval=None, **func_kwargs):
     '''
-    Shortcut for parallelizing a function. Most simply, acts as an shortcut for using
-    multiprocessing.Pool() or Queue(). However, this function can also iterate over more
-    complex arguments.
+    Main method for parallelizing a function.
+
+    Most simply, acts as an shortcut for using multiprocessing.Pool() or Queue().
+    However, this function can also iterate over more complex arguments.
 
     Either or both of iterarg or iterkwargs can be used. iterarg can be an iterable or an integer;
     if the latter, it will run the function that number of times and not pass the argument to the
@@ -94,20 +96,23 @@ def parallelize(func, iterarg=None, iterkwargs=None, args=None, kwargs=None, ncp
     returned by multiprocessing; if ncpus is not None, it will use the specified number of CPUs;
     if ncpus is None and maxload is not None, it will allocate the number of CPUs dynamically.
 
-    Example 1 -- simple usage as a shortcut to multiprocessing.map():
+    **Example 1 -- simple usage as a shortcut to multiprocessing.map()**::
+
         def f(x):
             return x*x
 
         results = sc.parallelize(f, [1,2,3])
 
-    Example 2 -- simple usage for "embarrassingly parallel" processing:
+    **Example 2 -- simple usage for "embarrassingly parallel" processing**::
+
         def rnd():
             import pylab as pl
             return pl.rand()
 
         results = sc.parallelize(rnd, 10, ncpus=4)
 
-    Example 3 -- three different equivalent ways to use multiple arguments:
+    **Example 3 -- three different equivalent ways to use multiple arguments**::
+
         def f(x,y):
             return x*y
 
@@ -116,7 +121,8 @@ def parallelize(func, iterarg=None, iterkwargs=None, args=None, kwargs=None, ncp
         results3 = sc.parallelize(func=f, iterkwargs=[{'x':1, 'y':2}, {'x':2, 'y':3}, {'x':3, 'y':4}])
         assert results1 == results2 == results3
 
-    Example 4 -- using non-iterated arguments and dynamic load balancing:
+    **Example 4 -- using non-iterated arguments and dynamic load balancing**::
+
         def myfunc(i, x, y):
             xy = [x+i*pl.randn(100), y+i*pl.randn(100)]
             return xy
@@ -130,8 +136,9 @@ def parallelize(func, iterarg=None, iterkwargs=None, args=None, kwargs=None, ncp
                 pl.scatter(xy[0], xy[1], label='Run %i'%i)
             pl.legend()
 
-    Note: to use on Windows, parallel calls must contained with an `if __name__ == '__main__'` block,
-    for example:
+    Note: to use on Windows, parallel calls must contained with an ``if __name__ == '__main__'`` block.
+
+    For example::
 
         import sciris as sc
 
@@ -217,7 +224,7 @@ def parallelize(func, iterarg=None, iterkwargs=None, args=None, kwargs=None, ncp
     # Run simply using map -- no advantage here to using Process/Queue
     try:
         multipool = mp.Pool(processes=ncpus)
-        outputlist = multipool.map(parallel_task, argslist)
+        outputlist = multipool.map(_parallel_task, argslist)
         multipool.close()
         multipool.join()
     except RuntimeError as E: # Handle if run outside of __main__ on Windows
@@ -248,22 +255,22 @@ def parallelcmd(cmd=None, parfor=None, returnval=None, maxload=None, interval=No
     prototyping; since it uses exec(), it is not recommended for use in production
     code.
 
-    Arguments:
-        cmd -- a string representation of the code to be run in parallel
-        parfor -- a dictionary of lists of the variables to loop over
-        returnval -- the name of the output variable
-        maxload -- the maxmium CPU load, used in loadbalancer()
-        **kwargs -- variables to pass into the code
+    Args:
+        cmd (str): a string representation of the code to be run in parallel
+        parfor (dict): a dictionary of lists of the variables to loop over
+        returnval (str): the name of the output variable
+        maxload (float): the maxmium CPU load, used in loadbalancer()
+        kwargs (dict): variables to pass into the code
 
-    Example:
+    **Example**::
+
         const = 4
         parfor = {'val':[3,5,9]}
         returnval = 'result'
-        cmd = """
-newval = val+const # Note that this can't be indented
-result = newval**2
+        cmd = """newval = val+const # Note that this can't be indented
+        result = newval**2
         """
-        results = parallelcmd(cmd=cmd, parfor=parfor, returnval=returnval, const=const)
+        results = sc.parallelcmd(cmd=cmd, parfor=parfor, returnval=returnval, const=const)
 
     Version: 2018nov01
     '''
@@ -273,7 +280,7 @@ result = newval**2
     outputlist = np.empty(nfor, dtype=object)
     processes = []
     for i in range(nfor):
-        prc = mp.Process(target=parallelcmd_task, args=(cmd, parfor, returnval, i, outputqueue, maxload, interval, kwargs))
+        prc = mp.Process(target=_parallelcmd_task, args=(cmd, parfor, returnval, i, outputqueue, maxload, interval, kwargs))
         prc.start()
         processes.append(prc)
     for i in range(nfor):
@@ -343,11 +350,14 @@ def parallel_progress(fcn, inputs, num_workers=None, show_progress=True, initial
 
 
 ##############################################################################
-### HELPER FUNCTIONS/CLASSES
+### Helper functions/classes
 ##############################################################################
 
 class TaskArgs(ut.prettyobj):
-        ''' A class to hold the arguments for the task -- must match both parallelize() and parallel_task() '''
+        '''
+        A class to hold the arguments for the parallel task -- not to be invoked by the user.
+
+        Arguments and ordering must match both parallelize() and _parallel_task() '''
         def __init__(self, func, index, iterval, iterdict, args, kwargs, maxload, interval, embarrassing):
             self.func         = func         # The function being called
             self.index        = index        # The place in the queue
@@ -361,8 +371,7 @@ class TaskArgs(ut.prettyobj):
             return None
 
 
-
-def parallel_task(taskargs, outputqueue=None):
+def _parallel_task(taskargs, outputqueue=None):
     ''' Task called by parallelize() -- not to be called directly '''
 
     # Handle inputs
@@ -398,7 +407,7 @@ def parallel_task(taskargs, outputqueue=None):
         return output
 
 
-def parallelcmd_task(_cmd, _parfor, _returnval, _i, _outputqueue, _maxload, _interval, _kwargs):
+def _parallelcmd_task(_cmd, _parfor, _returnval, _i, _outputqueue, _maxload, _interval, _kwargs):
     '''
     The task to be executed by parallelcmd(). All internal variables start with
     underscores to avoid possible collisions in the exec() statements. Not to be called
