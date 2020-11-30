@@ -38,7 +38,7 @@ def approx(val1=None, val2=None, eps=None):
 
 def safedivide(numerator=None, denominator=None, default=None, eps=None, warn=False):
     '''
-    Handle divide-by-zero and divide-by-nan elegantly. Examples:
+    Handle divide-by-zero and divide-by-nan elegantly. **Examples**::
         sc.safedivide(numerator=0, denominator=0, default=1, eps=0) # Returns 1
         sc.safedivide(numerator=5, denominator=2.0, default=1, eps=1e-3) # Returns 2.5
         sc.safedivide(3, np.array([1,3,0]), -1, warn=True) # Returns array([ 3,  1, -1])
@@ -81,7 +81,8 @@ def findinds(arr, val=None, eps=1e-6, first=False, last=False):
         first (bool): whether to return the first matching value
         last (bool): whether to return the last matching value
 
-    Examples:
+    **Examples**::
+
         sc.findinds(rand(10)<0.5) # e.g. array([2, 4, 5, 9])
         sc.findinds([2,3,6,3], 6) # e.g. array([2])
 
@@ -136,7 +137,7 @@ def findnearest(series=None, value=None):
     always returns an object with the same type as value (i.e. findnearest with
     a number returns a number, findnearest with an array returns an array).
 
-    Examples:
+    **Examples**::
         findnearest(rand(10), 0.5) # returns whichever index is closest to 0.5
         findnearest([2,3,6,3], 6) # returns 2
         findnearest([2,3,6,3], 6) # returns 2
@@ -170,7 +171,8 @@ def getvalidinds(data=None, filterdata=None):
     Return the years that are valid based on the validity of the input data from an arbitrary number
     of 1-D vector inputs. Warning, closely related to getvaliddata()!
 
-    Example:
+    **Example**::
+
         getvalidinds([3,5,8,13], [2000, nan, nan, 2004]) # Returns array([0,3])
     '''
     data = ut.promotetoarray(data)
@@ -187,7 +189,8 @@ def getvaliddata(data=None, filterdata=None, defaultind=0):
     '''
     Return the years that are valid based on the validity of the input data.
 
-    Example:
+    **Example**::
+
         getvaliddata(array([3,5,8,13]), array([2000, nan, nan, 2004])) # Returns array([3,13])
     '''
     data = np.array(data)
@@ -211,7 +214,8 @@ def sanitize(data=None, returninds=False, replacenans=None, die=True, defaultval
         '''
         Sanitize input to remove NaNs. Warning, does not work on multidimensional data!!
 
-        Examples:
+        **Examples**::
+
             sanitized,inds = sanitize(array([3,4,nan,8,2,nan,nan,nan,8]), returninds=True)
             sanitized = sanitize(array([3,4,nan,8,2,nan,nan,nan,8]), replacenans=True)
             sanitized = sanitize(array([3,4,nan,8,2,nan,nan,nan,8]), replacenans=0)
@@ -249,9 +253,12 @@ def sanitize(data=None, returninds=False, replacenans=None, die=True, defaultval
 
 def isprime(n, verbose=False):
     '''
+    Determine if a number is prime.
+
     From https://stackoverflow.com/questions/15285534/isprime-function-for-python-language
 
-    Example:
+    **Example**::
+
         for i in range(100): print(i) if sc.isprime(i) else None
     '''
     if n < 2:
@@ -303,7 +310,8 @@ def perturb(n=1, span=0.5, randseed=None, normal=False):
         span (float): width of distribution on either side of 1
         normal (bool):  whether to use a normal distribution instead of uniform
 
-    Example:
+    **Example**::
+
         sc.perturb(10, 0.3)
     '''
     if randseed is not None:
@@ -324,7 +332,8 @@ def normsum(arr, total=None):
         arr (array): array (or list) to normalize
         total (float): amount to sum to (default 1)
 
-    Example:
+    **Example**::
+
         normarr = sc.normsum([2,5,3,6,2,6,7,2,3,4], 100) # Scale so sum equals 100
 
     Renamed in version 1.0.0.
@@ -346,7 +355,8 @@ def normalize(arr, minval=0.0, maxval=1.0):
         minval (float): minimum value in rescaled array
         maxval (float): maximum value in rescaled array
 
-    Example:
+    **Example**::
+
         normarr = sc.normalize([2,3,7,27])
     '''
     out = np.array(arr, dtype=float) # Ensure it's a float so divide works
@@ -362,7 +372,7 @@ def inclusiverange(*args, **kwargs):
     Like arange/linspace, but includes the start and stop points.
     Accepts 0-3 args, or the kwargs start, stop, step.
 
-    Examples:
+    **Examples**::
         x = sc.inclusiverange(3,5,0.2)
         x = sc.inclusiverange(stop=5)
         x = sc.inclusiverange(6, step=2)
@@ -409,7 +419,8 @@ def smooth(data, repeats=None):
         data (arr): 1D or 2D array to smooth
         repeats (int): number of times to apply smoothing
 
-    Example:
+    **Example**::
+
         data = pl.randn(5,5)
         smoothdata = sc.smooth(data)
     '''
@@ -433,7 +444,8 @@ def smoothinterp(newx=None, origx=None, origy=None, smoothness=None, growth=None
     '''
     Smoothly interpolate over values and keep end points. Same format as numpy.interp.
 
-    Example:
+    **Example**::
+
         origy = np.array([0,0.1,0.3,0.8,0.7,0.9,0.95,1])
         origx = np.linspace(0,1,len(origy))
         newx = np.linspace(0,1,5*len(origy))
@@ -585,7 +597,8 @@ def cat(*args, axis=None):
     Like np.concatenate(), but takes anything and returns an array. Useful for
     e.g. appending a single number onto the beginning or end of an array.
 
-    Examples:
+    **Examples**::
+
         arr = sc.cat(4, np.ones(3))
         arr = sc.cat(np.array([1,2,3]), [4,5], 6)
         arr = sc.cat(np.random.rand(2,4), np.random.rand(2,6), axis=1)
