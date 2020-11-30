@@ -38,7 +38,10 @@ def approx(val1=None, val2=None, eps=None):
 
 def safedivide(numerator=None, denominator=None, default=None, eps=None, warn=False):
     '''
-    Handle divide-by-zero and divide-by-nan elegantly. **Examples**::
+    Handle divide-by-zero and divide-by-nan elegantly.
+
+    **Examples**::
+
         sc.safedivide(numerator=0, denominator=0, default=1, eps=0) # Returns 1
         sc.safedivide(numerator=5, denominator=2.0, default=1, eps=1e-3) # Returns 2.5
         sc.safedivide(3, np.array([1,3,0]), -1, warn=True) # Returns array([ 3,  1, -1])
@@ -138,6 +141,7 @@ def findnearest(series=None, value=None):
     a number returns a number, findnearest with an array returns an array).
 
     **Examples**::
+
         findnearest(rand(10), 0.5) # returns whichever index is closest to 0.5
         findnearest([2,3,6,3], 6) # returns 2
         findnearest([2,3,6,3], 6) # returns 2
@@ -168,8 +172,8 @@ def dataindex(dataarray, index):
 
 def getvalidinds(data=None, filterdata=None):
     '''
-    Return the years that are valid based on the validity of the input data from an arbitrary number
-    of 1-D vector inputs. Warning, closely related to getvaliddata()!
+    Return the indices that are valid based on the validity of the input data from an arbitrary number
+    of 1-D vector inputs. Warning, closely related to getvaliddata() and somewhat deprecated.
 
     **Example**::
 
@@ -187,7 +191,8 @@ def getvalidinds(data=None, filterdata=None):
 
 def getvaliddata(data=None, filterdata=None, defaultind=0):
     '''
-    Return the years that are valid based on the validity of the input data.
+    Return the data value indices that are valid based on the validity of the input data.
+    Somewhat deprecated.
 
     **Example**::
 
@@ -312,7 +317,7 @@ def perturb(n=1, span=0.5, randseed=None, normal=False):
 
     **Example**::
 
-        sc.perturb(10, 0.3)
+        sc.perturb(5, 0.3) # Returns e.g. array([0.73852362, 0.7088094 , 0.93713658, 1.13150755, 0.87183371])
     '''
     if randseed is not None:
         np.random.seed(int(randseed)) # Optionally reset random seed
@@ -334,7 +339,7 @@ def normsum(arr, total=None):
 
     **Example**::
 
-        normarr = sc.normsum([2,5,3,6,2,6,7,2,3,4], 100) # Scale so sum equals 100
+        normarr = sc.normsum([2,5,3,10], 100) # Scale so sum equals 100; returns [10.0, 25.0, 15.0, 50.0]
 
     Renamed in version 1.0.0.
     '''
@@ -357,13 +362,14 @@ def normalize(arr, minval=0.0, maxval=1.0):
 
     **Example**::
 
-        normarr = sc.normalize([2,3,7,27])
+        normarr = sc.normalize([2,3,7,27]) # Returns array([0.  , 0.04, 0.2 , 1.  ])
     '''
     out = np.array(arr, dtype=float) # Ensure it's a float so divide works
     out -= out.min()
     out /= out.max()
     out *= (maxval - minval)
     out += minval
+    if isinstance(arr, list): out = out.tolist() # Preserve type
     return out
 
 
@@ -373,6 +379,7 @@ def inclusiverange(*args, **kwargs):
     Accepts 0-3 args, or the kwargs start, stop, step.
 
     **Examples**::
+
         x = sc.inclusiverange(3,5,0.2)
         x = sc.inclusiverange(stop=5)
         x = sc.inclusiverange(6, step=2)
@@ -417,7 +424,7 @@ def smooth(data, repeats=None):
 
     Args:
         data (arr): 1D or 2D array to smooth
-        repeats (int): number of times to apply smoothing
+        repeats (int): number of times to apply smoothing (by default, scale with length of data)
 
     **Example**::
 
@@ -442,7 +449,7 @@ def smooth(data, repeats=None):
 
 def smoothinterp(newx=None, origx=None, origy=None, smoothness=None, growth=None, ensurefinite=False, keepends=True, method='linear'):
     '''
-    Smoothly interpolate over values and keep end points. Same format as numpy.interp.
+    Smoothly interpolate over values and keep end points. Same format as numpy.interp().
 
     **Example**::
 
@@ -579,7 +586,7 @@ def randround(x):
 
     **Example**::
 
-        sc.randround(np.random.randn(20))
+        sc.randround(np.random.randn(8)) # Returns e.g. array([-1,  0,  1, -2,  2,  0,  0,  0])
 
     New in version 1.0.0.
     '''
