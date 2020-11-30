@@ -46,7 +46,7 @@ Some highlights of ``scirisweb``:
 
 .. _okay-tell-me-more:
 
-Okay, tell me more.
+Features
 -------------------
 
 Here are a few more of the most commonly used features.
@@ -129,10 +129,7 @@ Sciris <https://github.com/sciris/sciris/blob/develop/tests/showcase.py>`__:
 Is Sciris ready yet?
 --------------------
 
-**Yes.** Sciris is available for use, but is still undergoing rapid
-development. We expect an official launch some time during 2021. If you
-would like us to let you know when this happens, please email
-info@sciris.org.
+**Yes.** Sciris is currently used for a number of scientific computing libraries, including `Atomica <http://atomica.tools>`__ and `Covasim <http://covasim.org>`__. Sciris provides the backend for webapps such as the `Cascade Analysis Tool <http://cascade.tools>`__ and `HIPtool <http://hiptool.org>`__. However, note that Sciris is still undergoing rapid development. If you would like to be notified of major updates, please email info@sciris.org.
 
 Installation and run instructions
 ---------------------------------
@@ -464,4 +461,4 @@ See the directions
 `here <https://github.com/sciris/scirisweb/tree/develop/examples/helloworld>`__
 on how to install and run this example.
 
-.. |Sciris showcase| image:: sciris-showcase-code.png
+.. |Sciris showcase| image:: docs/sciris-showcase-code.png

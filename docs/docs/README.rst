@@ -1,0 +1,1 @@
+This folder exists so relative links to images work in both the parent folder and here so documentation can be built correctly.
