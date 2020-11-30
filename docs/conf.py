@@ -58,8 +58,8 @@ napoleon_google_docstring = True
 autosummary_generate = True  # Turn on sphinx.ext.autosummary
 autoclass_content = "both"  # Add __init__ doc (ie. params) to class summaries
 html_show_sourcelink = False  # Remove 'view source code' from top of page (for html, not python)
-
-
+autodoc_member_order = 'bysource' # Keep original ordering
+add_module_names = False 
 
 # Add any paths that contain templates here, relative to this directory.
 templates_path = ["_templates"]
@@ -67,13 +67,35 @@ templates_path = ["_templates"]
 # List of patterns, relative to source directory, that match files and
 # directories to ignore when looking for source files.
 # This pattern also affects html_static_path and html_extra_path.
-exclude_patterns = ["_build", "Thumbs.db", ".DS_Store", "**.ipynb_checkpoints"]
+exclude_patterns = ["_build", "Thumbs.db", ".DS_Store", "**.ipynb_checkpoints", 
+                    "_autosummary/_autosummary", # CK: Not sure why this gets created, but exclude it here
+                    ]
 
 
 # -- Options for HTML output -------------------------------------------------
 
 # Use RTD
 import sphinx_rtd_theme
-
 html_theme = "sphinx_rtd_theme"
 html_theme_path = [sphinx_rtd_theme.get_html_theme_path()]
+
+
+
+
+import subprocess
+
+on_rtd = os.environ.get('READTHEDOCS') == 'True'
+
+if sys.platform in ["linux", "darwin"]:
+    subprocess.check_output(["make", "generate-api"], cwd=os.path.dirname(os.path.abspath(__file__)))
+else:
+    subprocess.check_output(["make.bat", "generate-api"], cwd=os.path.dirname(os.path.abspath(__file__)))
+
+# Rename "covasim package" to "API reference"
+filename = os.path.join('_autosummary/', 'sciris.rst') # This must match the Makefile
+with open(filename) as f: # Read exitsting file
+    lines = f.readlines()
+lines[0] = "This is a test\n" # Blast away the existing heading and replace with this
+lines[1] = "==============\n" # Ensure the heading is the right length
+with open(filename, "w") as f: # Write new file
+    f.writelines(lines)
