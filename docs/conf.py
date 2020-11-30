@@ -78,20 +78,3 @@ exclude_patterns = ["_build", "Thumbs.db", ".DS_Store", "**.ipynb_checkpoints",
 import sphinx_rtd_theme
 html_theme = "sphinx_rtd_theme"
 html_theme_path = [sphinx_rtd_theme.get_html_theme_path()]
-
-
-# Fix files...
-import subprocess
-if sys.platform in ["linux", "darwin"]:
-    subprocess.check_output(["make", "generate-api"], cwd=os.path.dirname(os.path.abspath(__file__)))
-else:
-    subprocess.check_output(["make.bat", "generate-api"], cwd=os.path.dirname(os.path.abspath(__file__)))
-
-# Rename "covasim package" to "API reference"
-# filename = os.path.join('_autosummary', 'sciris.rst') # This must match the Makefile
-# with open(filename) as f: # Read exitsting file
-#     lines = f.readlines()
-# lines[0] = "sldjfdkfdjdjk\n" # Blast away the existing heading and replace with this
-# lines[1] = "=============\n" # Ensure the heading is the right length
-# with open(filename, "w") as f: # Write new file
-#     f.writelines(lines)

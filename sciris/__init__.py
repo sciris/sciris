@@ -1,19 +1,7 @@
 """
-SCIRIS
-
-.. autosummary::
-    :toctree: _autosummary
-
-    sc_asd
-    sc_dataframe
-    sc_fileio
-    sc_math
-    sc_odict
-    sc_parallel
-    sc_plotting
-    sc_utils
-    sc_version
-
+Functions in Sciris are organized into submodules. However, standard
+usage is to call the functions directly, e.g. ``sc.parallelize()`` instead
+of ``sc.sc_parallel.parallelize()``.
 """
 
 # Import everything
