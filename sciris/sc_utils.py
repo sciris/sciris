@@ -89,7 +89,8 @@ def fast_uuid(which=None, length=None, n=1, secure=False, forcelist=False, safet
     Returns:
         uid (str or list): a string UID, or a list of string UIDs
 
-    Example:
+    **Example**::
+
         uuids = sc.fast_uuid(n=100) # Generate 100 UUIDs
 
     Inspired by https://stackoverflow.com/questions/2257441/random-string-generation-with-upper-case-letters-and-digits/30038250#30038250
@@ -184,11 +185,11 @@ def uuid(uid=None, which=None, die=False, tostring=False, length=None, n=1, **kw
     Returns:
         uid (UUID or str): the UID object
 
-    Examples:
+    **Examples**::
+
         sc.uuid() # Alias to uuid.uuid4()
         sc.uuid(which='hex') # Creates a length-6 hex string
         sc.uuid(which='ascii', length=10, n=50) # Creates 50 UUIDs of length 10 each using the full ASCII character set
-
     '''
 
     # Set default UUID type
@@ -246,7 +247,11 @@ def uuid(uid=None, which=None, die=False, tostring=False, length=None, n=1, **kw
 
 
 def dcp(obj, verbose=True, die=False):
-    ''' Shortcut to perform a deep copy operation '''
+    '''
+    Shortcut to perform a deep copy operation
+
+    Almost identical to ``copy.deepcopy()``
+    '''
     try:
         output = copy.deepcopy(obj)
     except Exception as E:
@@ -258,7 +263,11 @@ def dcp(obj, verbose=True, die=False):
 
 
 def cp(obj, verbose=True, die=True):
-    ''' Shortcut to perform a shallow copy operation '''
+    '''
+    Shortcut to perform a shallow copy operation
+
+    Almost identical to ``copy.copy()``
+    '''
     try:
         output = copy.copy(obj)
     except Exception as E:
@@ -270,7 +279,11 @@ def cp(obj, verbose=True, die=True):
 
 
 def pp(obj, jsonify=True, verbose=False, doprint=True, *args, **kwargs):
-    ''' Shortcut for pretty-printing the object '''
+    '''
+    Shortcut for pretty-printing the object
+
+    Almost identical to ``pprint.pprint()``
+    '''
     # Get object
     if jsonify:
         try:
@@ -291,7 +304,11 @@ def pp(obj, jsonify=True, verbose=False, doprint=True, *args, **kwargs):
 
 
 def sha(string, encoding='utf-8', *args, **kwargs):
-    ''' Shortcut for the standard hashing (SHA) method '''
+    '''
+    Shortcut for the standard hashing (SHA) method
+
+    Equivalent to hashlib.sha224()
+    '''
     if not isstring(string): # Ensure it's actually a string
         string = str(string)
     needsencoding = isinstance(string, str)
@@ -302,7 +319,15 @@ def sha(string, encoding='utf-8', *args, **kwargs):
 
 
 def wget(url, convert=True):
-    ''' Download a URL '''
+    '''
+    Download a URL
+
+    Alias to urllib.request.urlopen(url).read()
+
+    **Example**::
+
+        html = sc.wget('http://sciris.org')
+    '''
     from urllib import request # Bizarrely, urllib.request sometimes fails
     output = request.urlopen(url).read()
     if convert:
@@ -316,10 +341,11 @@ def htmlify(string, reverse=False, tostring=False):
     characters that need to be escaped, and newlines. If reverse=True, will convert
     HTML to string. If tostring=True, will convert the bytestring back to Unicode.
 
-    Examples:
-        output = sc.htmlify('foo&\nbar') # Returns b'foo&amp;<br>bar'
-        output = sc.htmlify('foo&\nbar', tostring=True) # Returns 'foo&amp;<br>bar'
-        output = sc.htmlify('foo&amp;<br>bar', reverse=True) # Returns 'foo&\nbar'
+    **Examples**::
+
+        output = sc.htmlify('foo&\\nbar') # Returns b'foo&amp;<br>bar'
+        output = sc.htmlify('foo&\\nbar', tostring=True) # Returns 'foo&amp;<br>bar'
+        output = sc.htmlify('foo&amp;<br>bar', reverse=True) # Returns 'foo&\\nbar'
     '''
     import html
     if not reverse: # Convert to HTML
@@ -334,7 +360,11 @@ def htmlify(string, reverse=False, tostring=False):
 
 
 def traceback(*args, **kwargs):
-    ''' Shortcut for accessing the traceback '''
+    '''
+    Shortcut for accessing the traceback
+
+    Alias for ``traceback.format_exc()``.
+    '''
     return py_traceback.format_exc(*args, **kwargs)
 
 
@@ -354,17 +384,20 @@ def printv(string, thisverbose=1, verbose=2, newline=True, indent=True):
     subfunctions, determining how much detail to print out.
 
     The general idea is that verbose is an integer from 0-4 as follows:
-        0 = no printout whatsoever
-        1 = only essential warnings, e.g. suppressed exceptions
-        2 = standard printout
-        3 = extra debugging detail (e.g., printout on each iteration)
-        4 = everything possible (e.g., printout on each timestep)
+
+    * 0 = no printout whatsoever
+    * 1 = only essential warnings, e.g. suppressed exceptions
+    * 2 = standard printout
+    * 3 = extra debugging detail (e.g., printout on each iteration)
+    * 4 = everything possible (e.g., printout on each timestep)
 
     Thus a very important statement might be e.g.
-        printv('WARNING, everything is wrong', 1, verbose)
+
+    >>> sc.printv('WARNING, everything is wrong', 1, verbose)
 
     whereas a much less important message might be
-        printv('This is timestep %i' % i, 4, verbose)
+
+    >>> sc.printv(f'This is timestep {i}', 4, verbose)
 
     Version: 2016jan30
     '''
@@ -415,7 +448,10 @@ def objatt(obj, strlen=18, ncol=3):
 
 def objmeth(obj, strlen=18, ncol=3):
     ''' Return a sorted string of object methods for the Python __repr__ method '''
-    oldkeys = sorted([method + '()' for method in dir(obj) if callable(getattr(obj, method)) and not method.startswith('__')])
+    try:
+        oldkeys = sorted([method + '()' for method in dir(obj) if callable(getattr(obj, method)) and not method.startswith('__')])
+    except:
+        oldkeys = ['Methods N/A']
     if len(oldkeys): output = createcollist(oldkeys, 'Methods', strlen=strlen, ncol=ncol)
     else:            output = ''
     return output
@@ -423,7 +459,10 @@ def objmeth(obj, strlen=18, ncol=3):
 
 def objprop(obj, strlen=18, ncol=3):
     ''' Return a sorted string of object properties for the Python __repr__ method '''
-    oldkeys = sorted([prop for prop in dir(obj) if isinstance(getattr(type(obj), prop, None), property) and not prop.startswith('__')])
+    try:
+        oldkeys = sorted([prop for prop in dir(obj) if isinstance(getattr(type(obj), prop, None), property) and not prop.startswith('__')])
+    except:
+        oldkeys = ['Properties N/A']
     if len(oldkeys): output = createcollist(oldkeys, 'Properties', strlen=strlen, ncol=ncol)
     else:            output = ''
     return output
@@ -454,14 +493,28 @@ def objrepr(obj, showid=True, showmeth=True, showprop=True, showatt=True, divide
     return output
 
 
-def prepr(obj, maxlen=None, maxitems=None, skip=None, dividerchar='—', dividerlen=60, use_repr=False):
+def prepr(obj, maxlen=None, maxitems=None, skip=None, dividerchar='—', dividerlen=60, use_repr=True, maxtime=3):
     '''
     Akin to "pretty print", returns a pretty representation of an object --
-    all attributes (except any that are skipped), plust methods and ID.
+    all attributes (except any that are skipped), plust methods and ID. Usually
+    used via the interactive sc.pr() (which prints), rather than this (which returns
+    a string).
+
+    Args:
+        obj (anything): the object to be represented
+        maxlen (int): maximum number of characters to show for each item
+        maxitems (int): maximum number of items to show in the object
+        skip (list): any properties to skip
+        dividerchar (str): divider for methods, attributes, etc.
+        divierlen (int): number of divider characters
+        use_repr (bool): whether to use repr() or str() to parse the object
+        maxtime (float): maximum amount of time to spend on trying to print the object
     '''
 
     # Decide how to handle representation function -- repr is dangerous since can lead to recursion
     repr_fn = repr if use_repr else str
+    T = time.time() # Start the timer
+    time_exceeded = False
 
     # Handle input arguments
     divider = dividerchar*dividerlen + '\n'
@@ -488,20 +541,36 @@ def prepr(obj, maxlen=None, maxitems=None, skip=None, dividerchar='—', divider
             extraitems = len(labels) - maxitems
             if extraitems>0:
                 labels = labels[:maxitems]
-            values = [repr_fn(getattr(obj, attr)) for attr in labels] # Get the string representation of the attribute
+            values = []
+            for a,attr in enumerate(labels):
+                if (time.time() - T) < maxtime:
+                    try: value = repr_fn(getattr(obj, attr))
+                    except: value = 'N/A'
+                    values.append(value)
+                else:
+                    labels = labels[:a]
+                    labels.append('etc. (time exceeded)')
+                    values.append(f'{len(labels)-a} entries not shown')
+                    time_exceeded = True
+                    break
         else:
             items = dir(obj)
             extraitems = len(items) - maxitems
             if extraitems > 0:
                 items = items[:maxitems]
-            for attr in items:
+            for a,attr in enumerate(items):
                 if not attr.startswith('__'):
-                    try:    value = repr_fn(getattr(obj, attr))
-                    except: value = 'N/A'
-                    labels.append(attr)
-                    values.append(value)
+                    if (time.time() - T) < maxtime:
+                        try:    value = repr_fn(getattr(obj, attr))
+                        except: value = 'N/A'
+                        labels.append(attr)
+                        values.append(value)
+                    else:
+                        labels.append('etc. (time exceeded)')
+                        values.append(f'{len(labels)-a} entries not shown')
+                        time_exceeded = True
         if extraitems > 0:
-            labels.append('etc.')
+            labels.append('etc. (too many items)')
             values.append(f'{extraitems} entries not shown')
 
     # Decide how to print them
@@ -517,12 +586,25 @@ def prepr(obj, maxlen=None, maxitems=None, skip=None, dividerchar='—', divider
         prefix = formatstr%label + ': ' # The format key
         output += indent(prefix, value)
     output += divider
+    if time_exceeded:
+        timestr = f'\nNote: the object did not finish printing within maxtime={maxtime} s.\n'
+        timestr += 'To see the full object, call prepr() with increased maxtime.'
+        output += timestr
     return output
 
 
-def pr(obj, maxlen=None):
-    ''' Shortcut for printing the pretty repr for an object -- comparable to sc.pp() '''
-    print(prepr(obj, maxlen=maxlen))
+def pr(obj, *args, **kwargs):
+    '''
+    Shortcut for printing the pretty repr for an object -- similar to prettyprint
+
+    **Example**::
+
+        import pandas as pd
+        df = pd.DataFrame({'a':[1,2,3], 'b':[4,5,6]})
+        print(df) # See just the data
+        sc.pr(df) # See all the methods too
+    '''
+    print(prepr(obj, *args, **kwargs))
     return None
 
 
@@ -530,15 +612,16 @@ def indent(prefix=None, text=None, suffix='\n', n=0, pretty=False, simple=True, 
     '''
     Small wrapper to make textwrap more user friendly.
 
-    Arguments:
-        prefix = text to begin with (optional)
-        text = text to wrap
-        suffix = what to put on the end (by default, a newline)
-        n = if prefix is not specified, the size of the indent
-        prettify = whether to use pprint to format the text
-        kwargs = anything to pass to textwrap.fill() (e.g., linewidth)
+    Args:
+        prefix: text to begin with (optional)
+        text: text to wrap
+        suffix: what to put on the end (by default, a newline)
+        n: if prefix is not specified, the size of the indent
+        prettify: whether to use pprint to format the text
+        kwargs: anything to pass to textwrap.fill() (e.g., linewidth)
 
-    Examples:
+    **Examples**::
+
         prefix = 'and then they said:'
         text = 'blah '*100
         print(indent(prefix, text))
@@ -573,21 +656,31 @@ def indent(prefix=None, text=None, suffix='\n', n=0, pretty=False, simple=True, 
 
 
 
-def sigfig(X, sigfigs=5, SI=False, sep=False, keepints=False):
+def sigfig(x, sigfigs=5, SI=False, sep=False, keepints=False):
     '''
-    Return a string representation of variable x with sigfigs number of significant figures --
-    copied from asd.py.
+    Return a string representation of variable x with sigfigs number of significant figures
 
-    If SI=True,  then will return e.g. 32433 as 32.433K
-    If sep=True, then will return e.g. 32433 as 32,433
+    Args:
+        x (int/float/arr): the number(s) to round
+        sigfigs (int): number of significant figures to round to
+        SI (bool): whether to use SI notation
+        sep (bool/str): if provided, use as thousands separator
+        keepints (bool): never round ints
+
+    **Examples**::
+
+        x = 32433.3842
+        sc.sigfig(x, SI=True) # Returns 32.433k
+        sc.sigfig(x, sep=True) # Returns 32,433
     '''
     output = []
 
     try:
-        n=len(X)
+        n=len(x)
+        X = x
         islist = True
     except:
-        X = [X]
+        X = [x]
         n = 1
         islist = False
     for i in range(n):
@@ -639,10 +732,9 @@ def printarr(arr, arrformat='%0.2f  '):
     '''
     Print a numpy array nicely.
 
-    Example:
-        from utils import printarr
-        from numpy import random
-        printarr(rand(3,7,4))
+    **Example**::
+
+        sc.printarr(pl.rand(3,7,4))
 
     Version: 2014dec01
     '''
@@ -668,7 +760,8 @@ def printarr(arr, arrformat='%0.2f  '):
 def printdata(data, name='Variable', depth=1, maxlen=40, indent='', level=0, showcontents=False):
     '''
     Nicely print a complicated data structure, a la Matlab.
-    Arguments:
+
+    Args:
       data: the data to display
       name: the name of the variable (automatically read except for first one)
       depth: how many levels of recursion to follow
@@ -721,19 +814,21 @@ def printvars(localvars=None, varlist=None, label=None, divider=True, spaces=1, 
     '''
     Print out a list of variables. Note that the first argument must be locals().
 
-    Arguments:
-        localvars = function must be called with locals() as first argument
-        varlist = the list of variables to print out
-        label = optional label to print out, so you know where the variables came from
-        divider = whether or not to offset the printout with a spacer (i.e. ------)
-        spaces = how many spaces to use between variables
-        color = optionally label the variable names in color so they're easier to see
+    Args:
+        localvars: function must be called with locals() as first argument
+        varlist: the list of variables to print out
+        label: optional label to print out, so you know where the variables came from
+        divider: whether or not to offset the printout with a spacer (i.e. ------)
+        spaces: how many spaces to use between variables
+        color: optionally label the variable names in color so they're easier to see
 
-    Simple usage example:
+    **Example**::
+
         a = range(5); b = 'example'; printvars(locals(), ['a','b'], color='blue')
 
     Another useful usage case is to print out the kwargs for a function:
-        printvars(locals(), kwargs.keys())
+
+    >>> printvars(locals(), kwargs.keys())
 
     Version: 2017oct28
     '''
@@ -760,28 +855,25 @@ def slacknotification(message=None, webhook=None, to=None, fromuser=None, verbos
     '''
     Send a Slack notification when something is finished.
 
-    Arguments:
-        message:
-            The message to be posted.
-        webhook:
-            This is either a string containing the webhook itself, or a plain text file containing
-            a single line which is the Slack webhook. By default it will look for the file
-            ".slackurl" in the user's home folder. The webhook needs to look something like
-            "https://hooks.slack.com/services/af7d8w7f/sfd7df9sb/lkcpfj6kf93ds3gj". Webhooks are
-            effectively passwords and must be kept secure! Alternatively, you can specify the webhook
-            in the environment variable SLACKURL.
-        to (WARNING: ignored by new-style webhooks):
-            The Slack channel or user to post to. Channels begin with #, while users begin with @.
-        fromuser (WARNING: ignored by new-style webhooks):
-            The pseudo-user the message will appear from.
-        verbose:
-            How much detail to display.
-        die:
-            If false, prints warnings. If true, raises exceptions.
+    The webhook is either a string containing the webhook itself, or a plain text file containing
+    a single line which is the Slack webhook. By default it will look for the file
+    ".slackurl" in the user's home folder. The webhook needs to look something like
+    "https://hooks.slack.com/services/af7d8w7f/sfd7df9sb/lkcpfj6kf93ds3gj". Webhooks are
+    effectively passwords and must be kept secure! Alternatively, you can specify the webhook
+    in the environment variable SLACKURL.
 
-    Example usage:
-        slacknotification('Long process is finished')
-        slacknotification(webhook='/.slackurl', channel='@username', message='Hi, how are you going?')
+    Args:
+        message (str): The message to be posted.
+        webhook (str): See above
+        to (str): The Slack channel or user to post to. Channels begin with #, while users begin with @ (note: ignored by new-style webhooks)
+        fromuser (str): The pseudo-user the message will appear from (note: ignored by new-style webhooks)
+        verbose (bool): How much detail to display.
+        die (bool): If false, prints warnings. If true, raises exceptions.
+
+    **Example**::
+
+        sc.slacknotification('Long process is finished')
+        sc.slacknotification(webhook='/.slackurl', channel='@username', message='Hi, how are you going?')
 
     What's the point? Add this to the end of a very long-running script to notify
     your loved ones that the script has finished.
@@ -858,20 +950,23 @@ def printtologfile(message=None, filename=None):
 
 def colorize(color=None, string=None, output=False, showhelp=False, enable=True):
     '''
-    Colorize output text. Arguments:
-        color = the color you want (use 'bg' with background colors, e.g. 'bgblue')
-        string = the text to be colored
-        output = whether to return the modified version of the string
-        enable = switch to allow colorize() to be easily turned off
+    Colorize output text.
 
-    Examples:
-        colorize('green', 'hi') # Simple example
-        colorize(['yellow', 'bgblack']); print('Hello world'); print('Goodbye world'); colorize() # Colorize all output in between
-        bluearray = colorize(color='blue', string=str(range(5)), output=True); print("c'est bleu: " + bluearray)
-        colorize('magenta') # Now type in magenta for a while
-        colorize() # Stop typing in magenta
+    Args:
+        color: the color you want (use 'bg' with background colors, e.g. 'bgblue')
+        string: the text to be colored
+        output: whether to return the modified version of the string
+        enable: switch to allow colorize() to be easily turned off
 
-    To get available colors, type colorize(showhelp=True).
+    **Examples**::
+
+        sc.colorize('green', 'hi') # Simple example
+        sc.colorize(['yellow', 'bgblack']); print('Hello world'); print('Goodbye world'); colorize() # Colorize all output in between
+        bluearray = sc.colorize(color='blue', string=str(range(5)), output=True); print("c'est bleu: " + bluearray)
+        sc.colorize('magenta') # Now type in magenta for a while
+        sc.colorize() # Stop typing in magenta
+
+    To get available colors, type ``sc.colorize(showhelp=True)``.
 
     Version: 2018sep09
     '''
@@ -1003,7 +1098,8 @@ def percentcomplete(step=None, maxsteps=None, stepsize=1, prefix=None):
     '''
     Display progress.
 
-    Usage example:
+    **Example**::
+
 
         maxiters = 500
         for i in range(maxiters):
@@ -1079,7 +1175,11 @@ def flexstr(arg, force=True):
 
 def isiterable(obj):
     '''
-    Simply determine whether or not the input is iterable, since it's too hard to remember this otherwise.
+    Simply determine whether or not the input is iterable.
+
+    Works by trying to iterate via iter(), and if that raises an exception, it's
+    not iterable.
+
     From http://stackoverflow.com/questions/1952464/in-python-how-do-i-determine-if-an-object-is-iterable
     '''
     try:
@@ -1103,16 +1203,17 @@ def checktype(obj=None, objtype=None, subtype=None, die=False):
     check that elements are numeric.
 
     Args:
-        obj     = the object to check the type of
-        objtype = the type to confirm the object belongs to
-        subtype = optionally check the subtype if the object is iterable
-        die     = whether or not to raise an exception if the object is the wrong type.
+        obj:     the object to check the type of
+        objtype: the type to confirm the object belongs to
+        subtype: optionally check the subtype if the object is iterable
+        die:     whether or not to raise an exception if the object is the wrong type
 
-    Examples:
-        checktype(rand(10), 'array', 'number') # Returns True
-        checktype(['a','b','c'], 'listlike') # Returns True
-        checktype(['a','b','c'], 'arraylike') # Returns False
-        checktype([{'a':3}], list, dict) # Returns True
+    **Examples**::
+
+        sc.checktype(rand(10), 'array', 'number') # Returns True
+        sc.checktype(['a','b','c'], 'listlike') # Returns True
+        sc.checktype(['a','b','c'], 'arraylike') # Returns False
+        sc.checktype([{'a':3}], list, dict) # Returns True
     '''
 
     # Handle "objtype" input
@@ -1149,7 +1250,11 @@ def checktype(obj=None, objtype=None, subtype=None, die=False):
 
 
 def isnumber(obj, isnan=None):
-    ''' Simply determine whether or not the input is a number, since it's too hard to remember this otherwise '''
+    '''
+    Determine whether or not the input is a number.
+
+    Almost identical to isinstance(obj, numbers.Number).
+    '''
     output = checktype(obj, 'number')
     if output and isnan is not None: # It is a number, so can check for nan
         output = (np.isnan(obj) == isnan) # See if they match
@@ -1157,7 +1262,11 @@ def isnumber(obj, isnan=None):
 
 
 def isstring(obj):
-    ''' Simply determine whether or not the input is a string, since it's too hard to remember this otherwise '''
+    '''
+    Determine whether or not the input is a string (i.e., str or bytes).
+
+    Equivalent to isinstance(obj, (str, bytes))
+    '''
     return checktype(obj, 'string')
 
 
@@ -1165,7 +1274,10 @@ def isarray(obj, dtype=None):
     '''
     Check whether something is a Numpy array, and optionally check the dtype.
 
-    Example:
+    Almost the same as ``isinstance(obj, np.ndarray)``.
+
+    **Example**::
+
         sc.isarray(np.array([1,2,3]), dtype=float) # False, dtype is int
 
     New in version 1.0.0.
@@ -1181,7 +1293,15 @@ def isarray(obj, dtype=None):
 
 
 def promotetoarray(x, skipnone=False):
-    ''' Small function to ensure consistent format for things that should be arrays '''
+    '''
+    Small function to ensure consistent format for things that should be arrays
+
+    **Examples**::
+
+        sc.promotetoarray(5) # Returns array([5])
+        sc.promotetoarray([3,5]) # Returns array([3,5])
+        sc.promotetoarray(None, skipnone=True) # Returns array([])
+    '''
     if x is None and skipnone:
         return np.array([])
     elif isnumber(x):
@@ -1201,10 +1321,32 @@ def promotetoarray(x, skipnone=False):
 
 def promotetolist(obj=None, objtype=None, keepnone=False):
     '''
-    Make sure object is iterable -- used so functions can handle inputs like 'a' or ['a', 'b'].
+    Make sure object is always a list.
 
-    If keepnone is false, then None is converted to an empty list. Otherwise, it's converted to
-    [None].
+    Used so functions can handle inputs like ``'a'``  or ``['a', 'b']``. In other
+    words, if an argument can either be a single thing (e.g., a single dict key)
+    or a list (e.g., a list of dict keys), this function can be used to do the
+    conversion, so it's always safe to iterate over the output.
+
+    Args:
+        obj (anything): object to ensure is a list
+        objtype (anything): optional type to check for each element
+        keepnone (bool): if ``keepnone`` is false, then ``None`` is converted to ``[]``; else, it's converted to ``[None]``
+
+    **Examples**::
+
+        sc.promotetolist(5) # Returns [5]
+        sc.promotetolist(np.array([3,5])) # Returns [np.array([3,5])] -- not [3,5]!
+        sc.promotetoarray(None) # Returns []
+
+        def myfunc(data, keys):
+            keys = sc.promotetolist(keys)
+            for key in keys:
+                print(data[key])
+
+        data = {'a':[1,2,3], 'b':[4,5,6]}
+        myfunc(data, keys=['a', 'b']) # Works
+        myfunc(data, keys='a') # Still works, equivalent to needing to supply keys=['a'] without promotetolist()
 
     Version: 2019nov10
     '''
@@ -1240,6 +1382,10 @@ def mergedicts(*args, strict=False, overwrite=True):
     '''
     Tiny function to merge multiple dicts together. By default, skips things
     that are not, dicts (e.g., None), and allows keys to be set multiple times.
+    Similar to dict.update(), except returns a value.
+
+    Useful for cases, e.g. function arguments, where the default option is ``None``
+    but you will need a dict later on.
 
     Args:
         strict (bool): if True, raise an exception if an argument isn't a dict
@@ -1247,7 +1393,9 @@ def mergedicts(*args, strict=False, overwrite=True):
         *args (dict): the sequence of dicts to be merged
 
 
-    Examples:
+    **Examples**::
+
+        d0 = sc.mergedicts(user_args) # Useful if user_args might be None, but d0 is always a dict
         d1 = sc.mergedicts({'a':1}, {'b':2}) # Returns {'a':1, 'b':2}
         d2 = sc.mergedicts({'a':1, 'b':2}, {'b':3, 'c':4}) # Returns {'a':1, 'b':3, 'c':4}
         d3 = sc.mergedicts({'b':3, 'c':4}, {'a':1, 'b':2}) # Returns {'a':1, 'b':2, 'c':4}
@@ -1283,7 +1431,8 @@ def now(timezone=None, utc=False, die=False, astype='dateobj', tostring=False, d
     '''
     Get the current time, optionally in UTC time.
 
-    Examples:
+    **Examples**::
+
         sc.now() # Return current local time, e.g. 2019-03-14 15:09:26
         sc.now('US/Pacific') # Return the time now in a specific timezone
         sc.now(utc=True) # Return the time in UTC
@@ -1306,7 +1455,8 @@ def getdate(obj=None, astype='str', dateformat=None):
         '''
         Alias for converting a date object to a formatted string.
 
-        Examples:
+        **Examples**::
+
             sc.getdate() # Returns a string for the current date
             sc.getdate(sc.now(), astype='int') # Convert today's time to an integer
         '''
@@ -1352,7 +1502,8 @@ def readdate(datestr=None, dateformat=None, return_defaults=False):
     Returns:
         dateobj (date): a datetime object
 
-    Examples:
+    **Examples**::
+
         dateobj = sc.readdate('2020-03-03') # Standard format, so works
         dateobjs = sc.readdate(['2020-06', '2020-07'], dateformat='%Y-%m')
     '''
@@ -1610,7 +1761,8 @@ def datetoyear(dateobj, dateformat=None):
     Returns:
         Equivalent decimal year
 
-    Example:
+    **Example**::
+
         sc.datetoyear('2010-07-01') # Returns approximately 2010.5
 
     By Luke Davis from https://stackoverflow.com/a/42424261, adapted by Romesh Abeysuriya.
@@ -1625,14 +1777,18 @@ def datetoyear(dateobj, dateformat=None):
 
 
 def elapsedtimestr(pasttime, maxdays=5, shortmonths=True):
-    """Accepts a datetime object or a string in ISO 8601 format and returns a
+    """
+    Accepts a datetime object or a string in ISO 8601 format and returns a
     human-readable string explaining when this time was.
+
     The rules are as follows:
+
     * If a time is within the last hour, return 'XX minutes'
     * If a time is within the last 24 hours, return 'XX hours'
     * If within the last 5 days, return 'XX days'
     * If in the same year, print the date without the year
     * If in a different year, print the date with the whole year
+
     These can be configured as options.
     """
 
@@ -1730,9 +1886,17 @@ def elapsedtimestr(pasttime, maxdays=5, shortmonths=True):
 
 def tic():
     '''
-    A little pair of functions to calculate a time difference, sort of like Matlab:
-    tic() [but you can also use the form t = tic()]
-    toc() [but you can also use the form toc(t) where to is the output of tic()]
+    With toc(), a little pair of functions to calculate a time difference:
+
+    **Examples**::
+
+        sc.tic()
+        slow_func()
+        sc.toc()
+
+        T = sc.tic()
+        slow_func2()
+        sc.toc(T, label='slow_func2')
     '''
     global _tictime  # The saved time is stored in this global
     _tictime = time.time()  # Store the present time in the global
@@ -1742,9 +1906,25 @@ def tic():
 
 def toc(start=None, output=False, label=None, sigfigs=None, filename=None, reset=False):
     '''
-    A little pair of functions to calculate a time difference, sort of like Matlab:
-    tic() [but you can also use the form t = tic()]
-    toc() [but you can also use the form toc(t) where to is the output of tic()]
+    With tic(), a little pair of functions to calculate a time difference.
+
+    Args:
+        start (float): the starting time, as returned by e.g. sc.tic()
+        output (bool): whether to return the output (otherwise print)
+        label (str): optional label to add
+        sigfigs (int): number of significant figures for time estimate
+        filename (str): log file to write results to
+        reset (bool): reset the time; like calling sc.toctic() or sc.tic() again
+
+    **Examples**::
+
+        sc.tic()
+        slow_func()
+        sc.toc()
+
+        T = sc.tic()
+        slow_func2()
+        sc.toc(T, label='slow_func2')
     '''
     global _tictime  # The saved time is stored in this global
 
@@ -1780,9 +1960,11 @@ def toc(start=None, output=False, label=None, sigfigs=None, filename=None, reset
 def toctic(returntic=False, returntoc=False, *args, **kwargs):
     '''
     A convenience function for multiple timings. Can return the default output of
-    either tic() or toc() (default neither). Arguments are passed to toc().
+    either tic() or toc() (default neither). Arguments are passed to toc(). Equivalent
+    to sc.toc(reset=True).
 
-    Example:
+    **Example**::
+
         sc.tic()
         slow_operation_1()
         sc.toctic()
@@ -1800,13 +1982,15 @@ def toctic(returntic=False, returntoc=False, *args, **kwargs):
 
 def timedsleep(delay=None, verbose=True):
     '''
-    Delay for a certain amount of time, to ensure accurate timing. Example:
+    Delay for a certain amount of time, to ensure accurate timing.
 
-    for i in range(10):
-        sc.timedsleep('start') # Initialize
-        for j in range(int(1e6)):
-            tmp = pl.rand()
-        sc.timedsleep(1) # Wait for one second including computation time
+    **Example**::
+
+        for i in range(10):
+            sc.timedsleep('start') # Initialize
+            for j in range(int(1e6)):
+                tmp = pl.rand()
+            sc.timedsleep(1) # Wait for one second including computation time
     '''
     global _delaytime
     if delay is None or delay=='start':
@@ -1848,7 +2032,8 @@ def checkmem(var, descend=None, alphabetical=False, plot=False, verbose=False):
         plot (bool): if descending, show the results as a pie chart
         verbose (bool or int): detail to print, if >1, print repr of objects along the way
 
-    Example:
+    **Example**::
+
         import sciris as sc
         sc.checkmem(['spiffy',rand(2483,589)], descend=True)
     '''
@@ -1935,7 +2120,8 @@ def checkram(unit='mb', fmt='0.2f', start=0, to_string=True):
     Unlike checkmem(), checkram() looks at actual memory usage, typically at different
     points throughout execution.
 
-    Example:
+    **Example**::
+
         import sciris as sc
         import numpy as np
         start = sc.checkram(to_string=False)
@@ -1962,8 +2148,11 @@ def runcommand(command, printinput=False, printoutput=False, wait=True):
     '''
     Make it easier to run shell commands.
 
-    Examples:
-        myfiles = sc.runcommand('ls').split('\n') # Get a list of files in the current folder
+    Alias to ``subprocess.Popen()``.
+
+    **Examples**::
+
+        myfiles = sc.runcommand('ls').split('\\n') # Get a list of files in the current folder
         sc.runcommand('sshpass -f %s scp myfile.txt me@myserver:myfile.txt' % 'pa55w0rd', printinput=True, printoutput=True) # Copy a file remotely
         sc.runcommand('sleep 600; mkdir foo', wait=False) # Waits 10 min, then creates the folder "foo", but the function returns immediately
 
@@ -1992,8 +2181,8 @@ def gitinfo(path=None, hashlen=7, die=False, verbose=True):
     Retrieve git info
 
     This function reads git branch and commit information from a .git directory.
-    Given a path, it will check for a `.git` directory. If the path doesn't contain
-    that directory, it will search parent directories for `.git` until it finds one.
+    Given a path, it will check for a ``.git`` directory. If the path doesn't contain
+    that directory, it will search parent directories for ``.git`` until it finds one.
     Then, the current information will be parsed.
 
     Args:
@@ -2004,6 +2193,10 @@ def gitinfo(path=None, hashlen=7, die=False, verbose=True):
 
     Returns:
         Dictionary containing the branch, hash, and commit date
+
+    **Example**::
+
+        info = sc.gitinfo() # Get git info for current script repository
     """
 
     if path is None:
@@ -2069,13 +2262,12 @@ def compareversions(version1, version2):
     Function to compare versions, expecting both arguments to be a string of the
     format 1.2.3, but numeric works too.
 
-    Usage:
+    **Examples**::
+
         sc.compareversions('1.2.3', '2.3.4') # returns -1
         sc.compareversions(2, '2') # returns 0
         sc.compareversions('3.1', '2.99') # returns 1
-
     '''
-
     if LooseVersion(str(version1)) > LooseVersion(str(version2)):
         return 1
     elif LooseVersion(str(version1)) == LooseVersion(str(version2)):
@@ -2089,7 +2281,8 @@ def uniquename(name=None, namelist=None, style=None):
     Given a name and a list of other names, find a replacement to the name
     that doesn't conflict with the other names, and pass it back.
 
-    Example:
+    **Example**::
+
         name = sc.uniquename(name='file', namelist=['file', 'file (1)', 'file (2)'])
     """
     if style is None: style = ' (%d)'
@@ -2106,7 +2299,8 @@ def importbyname(name=None, output=False, die=True):
     '''
     A little function to try loading optional imports.
 
-    Example:
+    **Example**::
+
         np = sc.importbyname('numpy')
     '''
     import importlib
@@ -2221,39 +2415,39 @@ def profile(run, follow=None, print_stats=True, *args, **kwargs):
     Returns:
         LineProfiler (by default, the profile output is also printed to stdout)
 
-    Example
-    -------
-    def slow_fn():
-        n = 10000
-        int_list = []
-        int_dict = {}
-        for i in range(n):
-            int_list.append(i)
-            int_dict[i] = i
-        return
+    **Example**::
 
-    class Foo:
-        def __init__(self):
-            self.a = 0
+        def slow_fn():
+            n = 10000
+            int_list = []
+            int_dict = {}
+            for i in range(n):
+                int_list.append(i)
+                int_dict[i] = i
             return
 
-        def outer(self):
-            for i in range(100):
-                self.inner()
-            return
+        class Foo:
+            def __init__(self):
+                self.a = 0
+                return
 
-        def inner(self):
-            for i in range(1000):
-                self.a += 1
-            return
+            def outer(self):
+                for i in range(100):
+                    self.inner()
+                return
 
-    foo = Foo()
-    sc.profile(run=foo.outer, follow=[foo.outer, foo.inner])
-    sc.profile(slow_fn)
+            def inner(self):
+                for i in range(1000):
+                    self.a += 1
+                return
 
-    # Profile the constructor for Foo
-    f = lambda: Foo()
-    sc.profile(run=f, follow=[foo.__init__])
+        foo = Foo()
+        sc.profile(run=foo.outer, follow=[foo.outer, foo.inner])
+        sc.profile(slow_fn)
+
+        # Profile the constructor for Foo
+        f = lambda: Foo()
+        sc.profile(run=f, follow=[foo.__init__])
     '''
 
     try:
@@ -2364,67 +2558,99 @@ def getcaller(frame=2, tostring=True):
 ##############################################################################
 
 __all__ += ['getnested', 'setnested', 'makenested', 'iternested', 'mergenested',
-            'flattendict', 'search', 'nested_loop']
+            'flattendict', 'search', 'nestedloop']
 
-docstring = '''
-Four little functions to get and set data from nested dictionaries. The first two were adapted from:
-    http://stackoverflow.com/questions/14692690/access-python-nested-dictionary-items-via-a-list-of-keys
-
-"getnested" will get the value for the given list of keys:
-    getnested(foo, ['a','b'])
-
-"setnested" will set the value for the given list of keys:
-    setnested(foo, ['a','b'], 3)
-
-"makenested" will recursively update a dictionary with the given list of keys:
-    makenested(foo, ['a','b'])
-
-"iternested" will return a list of all the twigs in the current dictionary:
-    twigs = iternested(foo)
-
-Example 1:
-    foo = {}
-    sc.makenested(foo, ['a','b'])
-    foo['a']['b'] = 3
-    print(sc.getnested(foo, ['a','b']))    # 3
-    sc.setnested(foo, ['a','b'], 7)
-    print(sc.getnested(foo, ['a','b']))    # 7
-    sc.makenested(foo, ['bar','cat'])
-    sc.setnested(foo, ['bar','cat'], 'in the hat')
-    print(foo['bar'])  # {'cat': 'in the hat'}
-
-Example 2:
-    foo = {}
-    sc.makenested(foo, ['a','x'])
-    sc.makenested(foo, ['a','y'])
-    sc.makenested(foo, ['a','z'])
-    sc.makenested(foo, ['b','a','x'])
-    sc.makenested(foo, ['b','a','y'])
-    count = 0
-    for twig in sc.iternested(foo):
-        count += 1
-        sc.setnested(foo, twig, count)   # {'a': {'y': 1, 'x': 2, 'z': 3}, 'b': {'a': {'y': 4, 'x': 5}}}
-
-Version: 2014nov29
-'''
-
-def getnested(nesteddict, keylist, safe=False):
-    output = reduce(lambda d, k: d.get(k) if d else None if safe else d[k], keylist, nesteddict)
-    return output
-
-def setnested(nesteddict, keylist, value):
-    getnested(nesteddict, keylist[:-1])[keylist[-1]] = value
-    return None # Modify nesteddict in place
 
 def makenested(nesteddict, keylist,item=None):
+    '''
+    Little functions to get and set data from nested dictionaries.
+
+    The first two were adapted from: http://stackoverflow.com/questions/14692690/access-python-nested-dictionary-items-via-a-list-of-keys
+
+    "getnested" will get the value for the given list of keys:
+
+    >>> sc.getnested(foo, ['a','b'])
+
+    "setnested" will set the value for the given list of keys:
+
+    >>> sc.setnested(foo, ['a','b'], 3)
+
+    "makenested" will recursively update a dictionary with the given list of keys:
+
+    >>> sc.makenested(foo, ['a','b'])
+
+    "iternested" will return a list of all the twigs in the current dictionary:
+
+    >>> twigs = sc.iternested(foo)
+
+    **Example 1**::
+
+        foo = {}
+        sc.makenested(foo, ['a','b'])
+        foo['a']['b'] = 3
+        print(sc.getnested(foo, ['a','b']))    # 3
+        sc.setnested(foo, ['a','b'], 7)
+        print(sc.getnested(foo, ['a','b']))    # 7
+        sc.makenested(foo, ['bar','cat'])
+        sc.setnested(foo, ['bar','cat'], 'in the hat')
+        print(foo['bar'])  # {'cat': 'in the hat'}
+
+    **Example 2**::
+
+        foo = {}
+        sc.makenested(foo, ['a','x'])
+        sc.makenested(foo, ['a','y'])
+        sc.makenested(foo, ['a','z'])
+        sc.makenested(foo, ['b','a','x'])
+        sc.makenested(foo, ['b','a','y'])
+        count = 0
+        for twig in sc.iternested(foo):
+            count += 1
+            sc.setnested(foo, twig, count)   # {'a': {'y': 1, 'x': 2, 'z': 3}, 'b': {'a': {'y': 4, 'x': 5}}}
+
+    Version: 2014nov29
+    '''
     currentlevel = nesteddict
     for i,key in enumerate(keylist[:-1]):
         if not(key in currentlevel):
             currentlevel[key] = {}
         currentlevel = currentlevel[key]
     currentlevel[keylist[-1]] = item
+    return
+
+
+def getnested(nesteddict, keylist, safe=False):
+    '''
+    Get the value for the given list of keys
+
+    >>> sc.getnested(foo, ['a','b'])
+
+    See makenested() for full documentation.
+    '''
+    output = reduce(lambda d, k: d.get(k) if d else None if safe else d[k], keylist, nesteddict)
+    return output
+
+
+def setnested(nesteddict, keylist, value):
+    '''
+    Set the value for the given list of keys
+
+    >>> sc.setnested(foo, ['a','b'], 3)
+
+    See makenested() for full documentation.
+    '''
+    getnested(nesteddict, keylist[:-1])[keylist[-1]] = value
+    return # Modify nesteddict in place
+
 
 def iternested(nesteddict,previous = []):
+    '''
+    Return a list of all the twigs in the current dictionary
+
+    >>> twigs = sc.iternested(foo)
+
+    See makenested() for full documentation.
+    '''
     output = []
     for k in nesteddict.items():
         if isinstance(k[1],dict):
@@ -2433,8 +2659,15 @@ def iternested(nesteddict,previous = []):
             output.append(previous+[k[0]])
     return output
 
+
 def mergenested(dict1, dict2, die=False, verbose=False, _path=None):
-    # Adapted/stolen from https://stackoverflow.com/questions/7204805/dictionaries-of-dictionaries-merge
+    '''
+    Merge different nested dictionaries
+
+    See makenested() for full documentation.
+
+    Adapted from https://stackoverflow.com/questions/7204805/dictionaries-of-dictionaries-merge
+    '''
     if _path is None: _path = []
     if _path:
         a = dict1 # If we're being recursive, work in place
@@ -2463,16 +2696,12 @@ def mergenested(dict1, dict2, die=False, verbose=False, _path=None):
             a[key] = b[key]
     return a
 
-# Set the docstrings for these functions
-for func in [getnested, setnested, makenested, iternested, mergenested]:
-    func.__doc__ = docstring
-
 
 def flattendict(input_dict: dict, sep: str = None, _prefix=None) -> dict:
     """
     Flatten nested dictionary
 
-    Example:
+    **Example**::
 
         >>> flattendict({'a':{'b':1,'c':{'d':2,'e':3}}})
         {('a', 'b'): 1, ('a', 'c', 'd'): 2, ('a', 'c', 'e'): 3}
@@ -2483,11 +2712,10 @@ def flattendict(input_dict: dict, sep: str = None, _prefix=None) -> dict:
         d: Input dictionary potentially containing dicts as values
         sep: Concatenate keys using string separator. If ``None`` the returned dictionary will have tuples as keys
         _prefix: Internal argument for recursively accumulating the nested keys
+
     Returns:
         A flat dictionary where no values are dicts
-
     """
-
     output_dict = {}
     for k, v in input_dict.items():
         if sep is None:
@@ -2508,6 +2736,7 @@ def flattendict(input_dict: dict, sep: str = None, _prefix=None) -> dict:
 
     return output_dict
 
+
 def search(obj, attribute, _trace=''):
     """
     Find a key or attribute within a dictionary or object.
@@ -2525,11 +2754,10 @@ def search(obj, attribute, _trace=''):
         A list of matching attributes. The items in the list are the Python
         strings used to access the attribute (via attribute or dict indexing)
 
-    Example::
+    **Example**::
 
         nested = {'a':{'foo':1, 'bar':2}, 'b':{'bar':3, 'cat':4}}
         matches = sc.search(nested, 'bar') # Returns ['["a"]["bar"]', '["b"]["bar"]']
-
     """
 
     matches = []
@@ -2556,7 +2784,7 @@ def search(obj, attribute, _trace=''):
     return matches
 
 
-def nested_loop(inputs, loop_order):
+def nestedloop(inputs, loop_order):
     """
     Zip list of lists in order
 
@@ -2573,15 +2801,15 @@ def nested_loop(inputs, loop_order):
 
     Example usage:
 
-        >>> list(nested_loop([['a','b'],[1,2]],[0,1]))
-        [['a', 1], ['a', 2], ['b', 1], ['b', 2]]
+    >>> list(sc.nestedloop([['a','b'],[1,2]],[0,1]))
+    [['a', 1], ['a', 2], ['b', 1], ['b', 2]]
 
     Notice how the first two items have the same value for the first list
     while the items from the second list vary. If the `loop_order` is
     reversed, then:
 
-        >>> list(nested_loop([['a','b'],[1,2]],[1,0]))
-        [['a', 1], ['b', 1], ['a', 2], ['b', 2]]
+    >>> list(sc.nestedloop([['a','b'],[1,2]],[1,0]))
+    [['a', 1], ['b', 1], ['a', 2], ['b', 2]]
 
     Notice now how now the first two items have different values from the
     first list but the same items from the second list.
@@ -2635,13 +2863,37 @@ class LinkException(Exception):
 
 class prettyobj(object):
     '''
-    Use pretty repr for objects.
+    Use pretty repr for objects, instead of just showing the type and memory pointer
+    (the Python default for objects). Can also be used as the base class for custom
+    classes.
 
-    **Example**::
+    **Examples**
 
-        myobj = sc.prettyobj()
-        myobj.a = 3
+    >>> myobj = sc.prettyobj()
+    >>> myobj.a = 3
+    >>> myobj.b = {'a':6}
+    >>> print(myobj)
+    <sciris.sc_utils.prettyobj at 0x7ffa1e243910>
+    ————————————————————————————————————————————————————————————
+    a: 3
+    b: {'a': 6}
+    ————————————————————————————————————————————————————————————
+
+    .. code::
+
+        class MyObj(sc.prettyobj):
+
+            def __init__(self, a, b):
+                self.a = a
+                self.b = b
+
+            def mult(self):
+                return self.a * self.b
+
+        myobj = MyObj(a=4, b=6)
         print(myobj)
+
+
     '''
 
     def __repr__(self):
@@ -2661,7 +2913,6 @@ class Link(object):
     '''
 
     def __init__(self, obj=None):
-        ''' Store the reference to the object being referred to '''
         self.obj = obj # Store the object -- or rather a reference to it, if it's mutable
         try:    self.uid = obj.uid # If the object has a UID, store it separately
         except: self.uid = None # If not, just use None
