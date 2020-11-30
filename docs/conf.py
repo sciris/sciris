@@ -13,6 +13,8 @@ import matplotlib
 matplotlib.use("agg")
 sys.path.insert(0, os.path.abspath("../"))  # Source code dir relative to this file
 
+import sciris as sc
+
 # -- Path setup --------------------------------------------------------------
 
 # If extensions (or modules to document with autodoc) are in another directory,
@@ -26,9 +28,9 @@ copyright = '2020, Sciris.org.'
 author = 'Sciris.org'
 
 # The short X.Y version
-version = '1.0.0'
+version = sc.__version__
 # The full version, including alpha/beta/rc tags
-release = '1.0.0'
+release = sc.__version__
 
 
 # -- General configuration ---------------------------------------------------

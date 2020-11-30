@@ -1,5 +1,8 @@
 '''
-Dataframe -- alternative to pandas.DataFrame
+Simple alternative to the Pandas DataFrame.
+
+This class is rarely used and not well maintained; in most cases, it is probably 
+better to just use the Pandas one.
 '''
 
 ##############################################################################

@@ -2,10 +2,10 @@
 Functions for reading/writing to files.
 
 Highlights:
-    - sc.saveobj()/sc.loadobj() # efficiently save/load any Python object (via pickling)
-    - sc.savejson()/sc.loadjson() # likewise, for JSONs
-    - sc.thisdir() # get current folder
-    - sc.getfilelist() # easy way to access glob
+    -  ``sc.saveobj()/sc.loadobj()``: efficiently save/load any Python object (via pickling)
+    -  ``sc.savejson()/sc.loadjson()``: likewise, for JSONs
+    -  ``sc.thisdir()``: get current folder
+    -  ``sc.getfilelist()``: easy way to access glob
 """
 
 ##############################################################################

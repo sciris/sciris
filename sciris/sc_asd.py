@@ -1,6 +1,9 @@
 '''
-Adaptive stochastic descent fitting algorithm. Comparable to the algorithms in
-scipy.optimize.
+Adaptive stochastic descent optimization algorithm -- comparable to the algorithms 
+in scipy.optimize.
+
+This algorithm is published as "Optimization by adaptive stochastic descent" by
+Kerr et al. (2018).
 '''
 
 import numpy as np
@@ -63,7 +66,7 @@ def asd(function, x, args=None, stepsize=0.1, sinc=2, sdec=2, pinc=2, pdec=2,
     Please use the following citation for this method:
         CC Kerr, S Dura-Bernal, TG Smolinski, GL Chadderdon, DP Wilson (2018).
         Optimization by adaptive stochastic descent.
-        PloS ONE 13 (3), e0192944.
+        PLOS ONE 13 (3), e0192944.
 
     Version: 2019jul08
     """
