@@ -50,7 +50,8 @@ def loadobj(filename=None, folder=None, verbose=False, die=None):
     Accepts either a filename (standard usage) or a file object as the first argument.
     Note that loadobj()/load() are aliases.
 
-    Usage:
+    **Example**::
+
         obj = sc.loadobj('myfile.obj')
     '''
 
@@ -68,19 +69,20 @@ def loadobj(filename=None, folder=None, verbose=False, die=None):
     kwargs = {'mode': 'rb', argtype: filename}
     with GzipFile(**kwargs) as fileobj:
         filestr = fileobj.read() # Convert it to a string
-        obj = unpickler(filestr, filename=filename, verbose=verbose, die=die) # Actually load it
+        obj = _unpickler(filestr, filename=filename, verbose=verbose, die=die) # Actually load it
     if verbose: print('Object loaded from "%s"' % filename)
     return obj
 
 
 def loadstr(string=None, verbose=False, die=None):
+    ''' Like loadobj(), but for a bytes-like string (rarely used) '''
     if string is None:
         errormsg = 'loadstr() error: input received was None, not a string'
         raise Exception(errormsg)
     with closing(IO(string)) as output: # Open a "fake file" with the Gzip string pickle in it.
         with GzipFile(fileobj=output, mode='rb') as fileobj: # Set a Gzip reader to pull from the "file."
             picklestring = fileobj.read() # Read the string pickle from the "file" (applying Gzip decompression).
-    obj = unpickler(picklestring, filestring=string, verbose=verbose, die=die) # Return the object gotten from the string pickle.
+    obj = _unpickler(picklestring, filestring=string, verbose=verbose, die=die) # Return the object gotten from the string pickle.
     return obj
 
 
@@ -101,7 +103,8 @@ def saveobj(filename=None, obj=None, compresslevel=5, verbose=0, folder=None, me
         args (list): passed to pickle.dumps()
         kwargs (dict): passed to pickle.dumps()
 
-    Usage:
+    **Example**::
+
         myobj = ['this', 'is', 'a', 'weird', {'object':44}]
         sc.saveobj('myfile.obj', myobj)
     '''
@@ -121,14 +124,14 @@ def saveobj(filename=None, obj=None, compresslevel=5, verbose=0, folder=None, me
     with GzipFile(filename=filename, fileobj=bytesobj, mode='wb', compresslevel=compresslevel) as fileobj:
         if method == 'dill': # If dill is requested, use that
             if verbose>=2: print('Saving as dill...')
-            savedill(fileobj, obj)
+            _savedill(fileobj, obj)
         else: # Otherwise, try pickle
             try:
                 if verbose>=2: print('Saving as pickle...')
-                savepickle(fileobj, obj, *args, **kwargs) # Use pickle
+                _savepickle(fileobj, obj, *args, **kwargs) # Use pickle
             except Exception as E:
                 if verbose>=2: print('Exception when saving as pickle (%s), saving as dill...' % repr(E))
-                savedill(fileobj, obj, *args, **kwargs) # ...but use Dill if that fails
+                _savedill(fileobj, obj, *args, **kwargs) # ...but use Dill if that fails
 
     if verbose and filename:
         print('Object saved to "%s"' % filename)
@@ -141,11 +144,11 @@ def saveobj(filename=None, obj=None, compresslevel=5, verbose=0, folder=None, me
 
 
 def dumpstr(obj=None):
-    ''' Dump an object as a bytes-like string '''
+    ''' Dump an object as a bytes-like string (rarely used) '''
     with closing(IO()) as output: # Open a "fake file."
         with GzipFile(fileobj=output, mode='wb') as fileobj:  # Open a Gzip-compressing way to write to this "file."
-            try:    savepickle(fileobj, obj) # Use pickle
-            except: savedill(fileobj, obj) # ...but use Dill if that fails
+            try:    _savepickle(fileobj, obj) # Use pickle
+            except: _savedill(fileobj, obj) # ...but use Dill if that fails
         output.seek(0) # Move the mark to the beginning of the "file."
         result = output.read() # Read all of the content into result.
     return result
@@ -171,7 +174,13 @@ __all__ += ['loadtext', 'savetext', 'savezip', 'getfilelist', 'sanitizefilename'
 
 
 def loadtext(filename=None, folder=None, splitlines=False):
-    ''' Convenience function for reading a text file '''
+    '''
+    Convenience function for reading a text file
+
+    **Example**::
+
+        mytext = sc.loadtext('my-document.txt')
+    '''
     filename = makefilepath(filename=filename, folder=folder)
     with open(filename) as f: output = f.read()
     if splitlines: output = output.splitlines()
@@ -179,7 +188,14 @@ def loadtext(filename=None, folder=None, splitlines=False):
 
 
 def savetext(filename=None, string=None):
-    ''' Convenience function for saving a text file -- accepts a string or list of strings '''
+    '''
+    Convenience function for saving a text file -- accepts a string or list of strings.
+
+    **Example**::
+
+        text = ['Here', 'is', 'a', 'poem']
+        sc.savetext('my-document.txt', text)
+    '''
     if isinstance(string, list): string = '\n'.join(string) # Convert from list to string)
     if not ut.isstring(string):  string = str(string)
     filename = makefilepath(filename=filename)
@@ -217,7 +233,8 @@ def getfilelist(folder='.', pattern=None, abspath=False, nopath=False, filesonly
     Returns:
         List of files/folders
 
-    Examples:
+    **Examples**::
+
         sc.getfilelist() # return all files and folders in current folder
         sc.getfilelist('~/temp', '*.py', abspath=True) # return absolute paths of all Python files in ~/temp folder
         sc.getfilelist('~/temp/*.py') # Like above
@@ -242,6 +259,11 @@ def sanitizefilename(rawfilename):
     '''
     Takes a potentially Linux- and Windows-unfriendly candidate file name, and
     returns a "sanitized" version that is more usable.
+
+    **Example**::
+
+        bad_name = 'How*is*this*even*a*filename?!.doc'
+        good_name = sc.sanitizefilename(bad_name) # Returns 'How_is_this_even_a_filename.doc'
     '''
     filtername = re.sub(r'[\!\?\"\'<>]', '', rawfilename) # Erase certain characters we don't want at all: !, ?, ", ', <, >
     filtername = re.sub(r'[:/\\\*\|,]', '_', filtername) # Change certain characters that might be being used as separators from what they were to underscores: space, :, /, \, *, |, comma
@@ -269,15 +291,16 @@ def makefilepath(filename=None, folder=None, ext=None, default=None, split=False
     Returns:
         filepath (str): the validated path (or the folder and filename if split=True)
 
-    Simple example:
+    **Simple example**::
+
         filepath = sc.makefilepath('myfile.obj') # Equivalent to os.path.abspath(os.path.expanduser('myfile.obj'))
 
-    Complex example:
+    **Complex example**::
+
         filepath = makefilepath(filename=None, folder='./congee', ext='prj', default=[project.filename, project.name], split=True, abspath=True, makedirs=True)
 
-    Assuming project.filename is None and project.name is "soggyrice" and ./congee doesn't exist:
-        * Makes folder ./congee
-        * Returns e.g. ('/home/myname/congee', 'soggyrice.prj')
+    Assuming project.filename is None and project.name is "recipe" and ./congee
+    doesn't exist, this will makes folder ./congee and returns e.g. ('/home/myname/congee', 'recipe.prj')
 
     Version: 2020apr11
     '''
@@ -371,7 +394,8 @@ def thisdir(file=None, *args, as_path=False, **kwargs):
     Returns:
         filepath (str): the full path to the folder (or filename if additional arguments are given)
 
-    Examples:
+    **Examples**::
+
         thisdir = sc.thisdir()
         file_in_same_dir = sc.thisdir(__file__, 'new_file.txt')
     '''
@@ -536,7 +560,18 @@ def savejson(filename=None, obj=None, folder=None, die=True, indent=2, **kwargs)
 
 
 def jsonpickle(obj, tostring=False):
-    ''' Use jsonpickle to return a representation of an object '''
+    '''
+    Save any Python object to a JSON file using jsonpickle.
+
+    Args:
+        obj (any): the object to pickle as a JSON
+        tostring (bool): whether to return a string (rather than the JSONified Python object)
+
+    Returns:
+        Either a string or a Python object for the JSON
+
+    Wrapper for the jsonpickle library: https://jsonpickle.github.io/
+    '''
     import jsonpickle as jp
     import jsonpickle.ext.numpy as jsonpickle_numpy
     import jsonpickle.ext.pandas as jsonpickle_pandas
@@ -553,7 +588,7 @@ def jsonpickle(obj, tostring=False):
 
 
 def jsonunpickle(json):
-    ''' Use jsonunpickle to restore an object '''
+    ''' Use jsonpickle to restore an object (see jsonpickle()) '''
     import jsonpickle as jp
     import jsonpickle.ext.numpy as jsonpickle_numpy
     import jsonpickle.ext.pandas as jsonpickle_pandas
@@ -895,45 +930,47 @@ def loadspreadsheet(filename=None, folder=None, fileobj=None, sheetname=None, sh
 
 def savespreadsheet(filename=None, data=None, folder=None, sheetnames=None, close=True, formats=None, formatdata=None, verbose=False):
     '''
-    Little function to format an output results nicely for Excel. Examples:
+    Not-so-little function to format an output results nicely for Excel.
 
-    import sciris as sc
-    import pylab as pl
+    **Examples**::
 
-    # Simple example
-    testdata1 = pl.rand(8,3)
-    sc.savespreadsheet(filename='test1.xlsx', data=testdata1)
+        import sciris as sc
+        import pylab as pl
 
-    # Include column headers
-    test2headers = [['A','B','C']] # Need double to get right shape
-    test2values = pl.rand(8,3).tolist()
-    testdata2 = test2headers + test2values
-    sc.savespreadsheet(filename='test2.xlsx', data=testdata2)
+        # Simple example
+        testdata1 = pl.rand(8,3)
+        sc.savespreadsheet(filename='test1.xlsx', data=testdata1)
 
-    # Multiple sheets
-    testdata3 = [pl.rand(10,10), pl.rand(20,5)]
-    sheetnames = ['Ten by ten', 'Twenty by five']
-    sc.savespreadsheet(filename='test3.xlsx', data=testdata3, sheetnames=sheetnames)
+        # Include column headers
+        test2headers = [['A','B','C']] # Need double to get right shape
+        test2values = pl.rand(8,3).tolist()
+        testdata2 = test2headers + test2values
+        sc.savespreadsheet(filename='test2.xlsx', data=testdata2)
 
-    # Supply data as an odict
-    testdata4 = sc.odict([('First sheet', pl.rand(6,2)), ('Second sheet', pl.rand(3,3))])
-    sc.savespreadsheet(filename='test4.xlsx', data=testdata4, sheetnames=sheetnames)
+        # Multiple sheets
+        testdata3 = [pl.rand(10,10), pl.rand(20,5)]
+        sheetnames = ['Ten by ten', 'Twenty by five']
+        sc.savespreadsheet(filename='test3.xlsx', data=testdata3, sheetnames=sheetnames)
 
-    # Include formatting
-    nrows = 15
-    ncols = 3
-    formats = {
-        'header':{'bold':True, 'bg_color':'#3c7d3e', 'color':'#ffffff'},
-        'plain': {},
-        'big':   {'bg_color':'#ffcccc'}}
-    testdata5  = pl.zeros((nrows+1, ncols), dtype=object) # Includes header row
-    formatdata = pl.zeros((nrows+1, ncols), dtype=object) # Format data needs to be the same size
-    testdata5[0,:] = ['A', 'B', 'C'] # Create header
-    testdata5[1:,:] = pl.rand(nrows,ncols) # Create data
-    formatdata[1:,:] = 'plain' # Format data
-    formatdata[testdata5>0.7] = 'big' # Find "big" numbers and format them differently
-    formatdata[0,:] = 'header' # Format header
-    sc.savespreadsheet(filename='test5.xlsx', data=testdata5, formats=formats, formatdata=formatdata)
+        # Supply data as an odict
+        testdata4 = sc.odict([('First sheet', pl.rand(6,2)), ('Second sheet', pl.rand(3,3))])
+        sc.savespreadsheet(filename='test4.xlsx', data=testdata4, sheetnames=sheetnames)
+
+        # Include formatting
+        nrows = 15
+        ncols = 3
+        formats = {
+            'header':{'bold':True, 'bg_color':'#3c7d3e', 'color':'#ffffff'},
+            'plain': {},
+            'big':   {'bg_color':'#ffcccc'}}
+        testdata5  = pl.zeros((nrows+1, ncols), dtype=object) # Includes header row
+        formatdata = pl.zeros((nrows+1, ncols), dtype=object) # Format data needs to be the same size
+        testdata5[0,:] = ['A', 'B', 'C'] # Create header
+        testdata5[1:,:] = pl.rand(nrows,ncols) # Create data
+        formatdata[1:,:] = 'plain' # Format data
+        formatdata[testdata5>0.7] = 'big' # Find "big" numbers and format them differently
+        formatdata[0,:] = 'header' # Format header
+        sc.savespreadsheet(filename='test5.xlsx', data=testdata5, formats=formats, formatdata=formatdata)
     '''
     try:
         import xlsxwriter # Optional import
@@ -1067,7 +1104,7 @@ class Empty(object):
 
 
 def makefailed(module_name=None, name=None, error=None, exception=None):
-    ''' Create a class -- not an object! -- that contains the failure info '''
+    ''' Create a class -- not an object! -- that contains the failure info for a pickle that failed to load '''
     key = 'Failure %s' % (len(Failed.failure_info)+1)
     Failed.failure_info[key] = odict()
     Failed.failure_info[key]['module'] = module_name
@@ -1094,7 +1131,8 @@ class RobustUnpickler(pkl.Unpickler):
         return obj
 
 
-def unpickler(string=None, filename=None, filestring=None, die=None, verbose=False):
+def _unpickler(string=None, filename=None, filestring=None, die=None, verbose=False):
+    ''' Not invoked directly; used as a helper function for saveobj/loadobj '''
 
     if die is None: die = False
     try: # Try pickle first
@@ -1131,7 +1169,7 @@ def unpickler(string=None, filename=None, filestring=None, die=None, verbose=Fal
     return obj
 
 
-def savepickle(fileobj=None, obj=None, protocol=None, *args, **kwargs):
+def _savepickle(fileobj=None, obj=None, protocol=None, *args, **kwargs):
         ''' Use pickle to do the salty work '''
         if protocol is None:
             protocol = 4
@@ -1139,7 +1177,7 @@ def savepickle(fileobj=None, obj=None, protocol=None, *args, **kwargs):
         return None
 
 
-def savedill(fileobj=None, obj=None, *args, **kwargs):
+def _savedill(fileobj=None, obj=None, *args, **kwargs):
     ''' Use dill to do the sour work '''
     try:
         import dill # Optional Sciris dependency
@@ -1318,14 +1356,14 @@ def loadobj2to3(filename=None, filestring=None, recursionlimit=None):
 
 _UniversalPicklingError = pkl.PicklingError
 
-def pickleMethod(method):
-    return (unpickleMethod, (method.__name__,         method.__self__, method.__self__.__class__))
+def _pickleMethod(method):
+    return (_unpickleMethod, (method.__name__,         method.__self__, method.__self__.__class__))
 
 def _methodFunction(classObject, methodName):
     methodObject = getattr(classObject, methodName)
     return methodObject
 
-def unpickleMethod(im_name, im_self, im_class):
+def _unpickleMethod(im_name, im_self, im_class):
     if im_self is None:
         return getattr(im_class, im_name)
     try:
@@ -1334,10 +1372,10 @@ def unpickleMethod(im_name, im_self, im_class):
         assert im_self is not None, "No recourse: no instance to guess from."
         if im_self.__class__ is im_class:
             raise
-        return unpickleMethod(im_name, im_self, im_self.__class__)
+        return _unpickleMethod(im_name, im_self, im_self.__class__)
     else:
         maybeClass = ()
         bound = types.MethodType(methodFunction, im_self, *maybeClass)
         return bound
 
-cpreg.pickle(types.MethodType, pickleMethod, unpickleMethod)
+cpreg.pickle(types.MethodType, _pickleMethod, _unpickleMethod)
