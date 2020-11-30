@@ -9,8 +9,6 @@
 import os
 import sys
 import matplotlib
-from m2r import MdInclude
-from recommonmark.transform import AutoStructify
 
 matplotlib.use("agg")
 sys.path.insert(0, os.path.abspath("../"))  # Source code dir relative to this file
@@ -37,7 +35,7 @@ release = '1.0.0'
 
 # If your documentation needs a minimal Sphinx version, state it here.
 #
-# needs_sphinx = '1.0'
+needs_sphinx = '3.0'
 
 # Add any Sphinx extension module names here, as strings. They can be
 # extensions coming with Sphinx (named 'sphinx.ext.*') or your custom
@@ -54,8 +52,7 @@ extensions = [
     "recommonmark",
 ]
 
-# Parse md files
-source_suffix = ['.rst', '.md']
+napoleon_google_docstring = True
 
 # Configure autosummary
 autosummary_generate = True  # Turn on sphinx.ext.autosummary
@@ -80,20 +77,3 @@ import sphinx_rtd_theme
 
 html_theme = "sphinx_rtd_theme"
 html_theme_path = [sphinx_rtd_theme.get_html_theme_path()]
-
-# https://github.com/rtfd/recommonmark/blob/master/docs/conf.py
-def setup(app):
-    config = {
-        # 'url_resolver': lambda url: github_doc_root + url,
-        'auto_toc_tree_section': 'Contents',
-        'enable_eval_rst': True,
-    }
-    app.add_config_value('recommonmark_config', config, True)
-    app.add_transform(AutoStructify)
-
-    # from m2r to make `mdinclude` work
-    app.add_config_value('no_underscore_emphasis', False, 'env')
-    app.add_config_value('m2r_parse_relative_links', False, 'env')
-    app.add_config_value('m2r_anonymous_references', False, 'env')
-    app.add_config_value('m2r_disable_inline_math', False, 'env')
-    app.add_directive('mdinclude', MdInclude)

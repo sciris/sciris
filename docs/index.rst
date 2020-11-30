@@ -12,4 +12,11 @@ ScirisWeb, built on Sciris, is a toolbox that makes building webapps easy -- thi
    overview
    whatsnew
    code_of_conduct
-   modules
+
+.. autosummary::
+   :toctree: _autosummary
+   :caption: API Reference
+   :template: custom-module-template.rst
+   :recursive:
+
+   sciris
