@@ -1,0 +1,53 @@
+.wy-table-responsive table td, .wy-table-responsive table th {
+    white-space: normal;
+}
+
+.wy-table-responsive table td p {
+    font-size: 100%;
+}
+
+footer p {
+    font-size: 14px;
+    margin-top: 0px;
+    margin-bottom: 0px;
+}
+
+h1, h2, .rst-content .toctree-wrapper p.caption, h3, h4, h5, h6, legend {
+    font-family: "Montserrat", "Lato", "Open Sans", sans-serif;
+    margin-bottom: 0.5em;
+}
+
+h1 {
+    margin-bottom: 1.0em;
+}
+
+h2 {
+    font-size: 125%;
+    color: #0055af !important;
+    margin-bottom: 1.0em;
+}
+
+h3 {
+    font-size: 115%;
+    color: #38761d;
+}
+
+h4 {
+    font-size: 105%;
+    color: #bf9000;
+}
+
+div.document span.search-highlight {
+    background-color: yellow;
+}
+
+.btn {
+    margin-bottom: 10px;
+}
+
+.rst-content table.docutils:not(.field-list) tr:nth-child(2n-1) td, .wy-table-backed, .wy-table-odd td, .wy-table-striped tr:nth-child(2n-1) td {
+    background-color: #acf;
+}
+tr.row-even {
+    background-color: #def;
+}

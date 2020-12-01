@@ -78,3 +78,13 @@ html_theme = "sphinx_rtd_theme"
 html_theme_path = [sphinx_rtd_theme.get_html_theme_path()]
 html_logo = "sciris-logo-small.png"
 html_favicon = "favicon.ico"
+html_static_path = ['_static']
+html_context = {
+    'css_files': [
+        '_static/theme_overrides.css'
+    ]
+}
+
+html_show_sourcelink = True
+html_show_sphinx = False
+htmlhelp_basename = 'Sciris'

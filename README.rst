@@ -1,11 +1,14 @@
+.. image:: docs/sciris-logo.png
+    :scale: 10%
+    :align: center
+
 Welcome to Sciris
 =================
 
 What is Sciris?
 ---------------
 
-Glad you asked! `Sciris <http://sciris.org>`__ is a flexible open source framework for building scientific web applications using Python and JavaScript. It comes in two parts: ``sciris`` is a collection of tools that should make scientific Python coding a more pleasant experience, while ``scirisweb`` is a collection of tools that allow you to easily build Python webapps. Sciris is built on Numpy and Matplotlib, while ScirisWeb is built on Vue.js, Flask, Twisted, Redis, and ``mpld3``. Full documentation is available at http://docs.sciris.org.
-
+Glad you asked! `Sciris <http://sciris.org>`__ is a flexible open source framework for building scientific web applications using Python and JavaScript. It comes in two parts: ``sciris`` is a collection of tools that should make scientific Python coding a more pleasant experience, while ``scirisweb`` is a collection of tools that allow you to easily build Python webapps. Sciris is built on Numpy and Matplotlib, while ScirisWeb is built on Vue.js, Flask, Twisted, Redis, and ``mpld3``. Sciris is available on `PyPi <https://pypi.org/project/sciris/>`__ and `GitHub <https://github.com/sciris/sciris>`__. Full documentation is available at http://docs.sciris.org.
 
 Highlights
 ~~~~~~~~~~
@@ -176,7 +179,6 @@ The easiest way to install Sciris is by using pip: ``pip install scirisweb`` (wh
 
    >>> import sciris
    >>> import scirisweb
-   >>>
 
 
 Installing on Windows

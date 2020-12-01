@@ -1,6 +1,6 @@
 .. title:: Sciris
 
-.. image:: sciris-logo.png
+.. image:: docs/sciris-logo.png
     :scale: 40%
     :align: center
 
