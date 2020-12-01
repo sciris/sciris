@@ -305,18 +305,35 @@ def pp(obj, jsonify=True, verbose=False, doprint=True, *args, **kwargs):
         return output
 
 
-def sha(string, encoding='utf-8', *args, **kwargs):
+def sha(obj, encoding='utf-8', digest=False):
     '''
     Shortcut for the standard hashing (SHA) method
 
-    Equivalent to hashlib.sha224()
+    Equivalent to ``hashlib.sha224()``.
+
+    Args:
+        obj (any): the object to be hashed; if not a string, converted to one
+        encoding (str): the encoding to use
+        digest (bool): whether to return the hex digest instead of the hash objet
+
+    **Example**::
+
+        sha1 = sc.sha(dict(foo=1, bar=2), digest=True)
+        sha2 = sc.sha(dict(foo=1, bar=2), digest=True)
+        sha3 = sc.sha(dict(foo=1, bar=3), digest=True)
+        assert sha1 == sha2
+        assert sha2 != sha3
     '''
-    if not isstring(string): # Ensure it's actually a string
-        string = str(string)
+    if not isstring(obj): # Ensure it's actually a string
+        string = repr(obj)
+    else:
+        string = obj
     needsencoding = isinstance(string, str)
     if needsencoding: # If it's unicode, encode it to bytes first
         string = string.encode(encoding)
-    output = hashlib.sha224(string, *args, **kwargs)
+    output = hashlib.sha224(string)
+    if digest:
+        output = output.hexdigest()
     return output
 
 
@@ -826,11 +843,13 @@ def printvars(localvars=None, varlist=None, label=None, divider=True, spaces=1, 
 
     **Example**::
 
-        a = range(5); b = 'example'; printvars(locals(), ['a','b'], color='blue')
+    >>> a = range(5)
+    >>> b = 'example'
+    >>> sc.printvars(locals(), ['a','b'], color='green')
 
     Another useful usage case is to print out the kwargs for a function:
 
-    >>> printvars(locals(), kwargs.keys())
+    >>> sc.printvars(locals(), kwargs.keys())
 
     Version: 2017oct28
     '''
@@ -930,6 +949,7 @@ def printtologfile(message=None, filename=None):
     Append a message string to a file specified by a filename name/path.  This
     is especially useful for capturing information from spawned processes not
     so handily captured through print statements.
+
     Warning: If you pass a file in, existing or not, it will try to append
     text to it!
     '''
@@ -1045,33 +1065,17 @@ def heading(string=None, color=None, divider=None, spaces=None, minlength=None, 
     the heading, and the minimum length of the divider (otherwise will expand to
     match the length of the string, up to a maximum length).
 
-    Parameters
-    ----------
-    string : str
-        The string to print as the heading
+    Args:
+        string (str): The string to print as the heading
+        color (str): The color to use for the heading (default blue)
+        divider (str): The symbol to use for the divider (default em dash)
+        spaces (int): The number of spaces to put before the heading
+        minlength (int): The minimum length of the divider
+        maxlength (int): The maximum length of the divider
+        kwargs (dict): Arguments to pass to sc.colorize()
 
-    color : str
-        The color to use for the heading (default blue)
-
-    divider : str
-        The symbol to use for the divider (default em dash)
-
-    spaces : int
-        The number of spaces to put before the heading
-
-    minlength : int
-        The minimum length of the divider
-
-    maxlength : int
-        The maximum length of the divider
-
-    kwargs : dict
-        Arguments to pass to sc.colorize()
-
-
-    Returns
-    -------
-    None, unless specified to produce the string as output using output=True.
+    Returns:
+        None, unless specified to produce the string as output using output=True.
 
 
     Examples
@@ -1101,7 +1105,6 @@ def percentcomplete(step=None, maxsteps=None, stepsize=1, prefix=None):
     Display progress.
 
     **Example**::
-
 
         maxiters = 500
         for i in range(maxiters):
