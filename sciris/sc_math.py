@@ -5,6 +5,7 @@ Highlights:
     - ``sc.findinds()``: find indices of an array matching a condition
     - ``sc.findnearest()``: find nearest matching value
     - ``sc.smooth()``: simple smoothing of 1D or 2D arrays
+    - ``sc.smoothinterp()``: linear interpolation with smoothing
 '''
 
 import numpy as np
