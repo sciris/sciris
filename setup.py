@@ -25,6 +25,7 @@ requirements = [
         'xlsxwriter',        # Spreadsheet output
         'psutil',            # Load monitoring
         'dill',              # File I/O
+        'multiprocess',      # More powerful version of multiprocessing
         'jsonpickle',        # For converting arbitrary objects to JSON
         'gitpython',         # Version information
         'requests',          # HTTP methods
@@ -48,7 +49,7 @@ versionpath = os.path.join(cwd, 'sciris', 'sc_version.py')
 version = runpy.run_path(versionpath)['__version__']
 
 # Get the documentation
-with open(os.path.join(cwd, 'README.md'), "r") as fh:
+with open(os.path.join(cwd, 'README.rst'), "r") as fh:
     long_description = fh.read()
 
 CLASSIFIERS = [
@@ -58,8 +59,8 @@ CLASSIFIERS = [
     'Operating System :: OS Independent',
     'Programming Language :: Python',
     'Topic :: Software Development :: Libraries :: Python Modules',
-    'Development Status :: 4 - Beta',
-    'Programming Language :: Python :: 3.7',
+    'Development Status :: 5 - Production/Stable',
+    'Programming Language :: Python :: 3.8',
 ]
 
 setup(
@@ -69,7 +70,7 @@ setup(
     author_email='info@sciris.org',
     description='Scientific tools for Python',
     long_description=long_description,
-    long_description_content_type="text/markdown",
+    long_description_content_type="text/x-rst",
     url='http://github.com/sciris/sciris',
     keywords=['scientific', 'webapp', 'framework'],
     platforms=['OS Independent'],

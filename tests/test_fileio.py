@@ -72,7 +72,6 @@ def test_legacy():
     print(blob)
     sc.pp(data)
 
-
     # Test spreadsheet saving
     sc.heading('Using a Spreadsheet')
     S = sc.Spreadsheet(files.excel)
@@ -85,27 +84,21 @@ def test_legacy():
     print(S)
     sc.pp(data)
 
-
     sc.heading('Saveobj/loadobj')
     sc.saveobj(files.binary, testdata)
-
 
     obj = sc.loadobj(files.binary)
     print(obj)
 
-
     sc.heading('Savetext/loadtext')
     sc.savetext(files.text, testdata)
-
 
     obj = sc.loadtext(files.text)
     print(obj)
 
-
     sc.heading('Get files')
     print('Files in current folder:')
     sc.pp(sc.getfilelist())
-
 
     sc.heading('Save zip')
     sc.savezip(files.zip, [files.text, files.excel])
@@ -143,7 +136,7 @@ def test_legacy():
     if tidyup:
         sc.blank()
         sc.heading('Tidying up')
-        for fn in [files.excel, files.binary, files.text, files.zip]:
+        for fn in [files.excel, files.binary, files.text, files.zip, 'spreadsheet.xlsx']:
             try:
                 os.remove(fn)
                 print('Removed %s' % fn)
@@ -175,6 +168,15 @@ def test_json():
     print('JSON as string:')
     print(json_str)
 
+    # Test JSON load/save
+    sc.thisdir() # Just put this here for testing
+    jsonfile = 'test.json'
+    testdata = {'key1':pl.rand(5,5).tolist(), 'key2':['test1', None]}
+    sc.savejson(jsonfile, testdata)
+    testdata2 = sc.loadjson(jsonfile)
+    assert testdata == testdata2
+    os.remove(jsonfile)
+
     return json_str
 
 
@@ -194,6 +196,7 @@ def test_jsonpickle():
     assert myobj.b.equals(myobj3.b)
 
     return jp
+
 
 
 #%% Run as a script

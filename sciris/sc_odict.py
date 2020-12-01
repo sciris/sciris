@@ -1,3 +1,11 @@
+'''
+The 'odict' class, combining features from an OrderedDict and a list/array.
+
+Highlights:
+    - ``sc.odict()``: flexible container representing the best-of-all-worlds across lists, dicts, and arrays
+    - ``sc.objdict()``: like an odict, but allows get/set via e.g. ``foo.bar`` instead of ``foo['bar']``
+'''
+
 ##############################################################################
 ### ODICT CLASS
 ##############################################################################
@@ -8,30 +16,39 @@ import numpy as np
 from . import sc_utils as ut
 
 # Restrict imports to user-facing modules
-__all__ = ['odict', 'objdict']
+__all__ = ['odict', 'objdict', 'asobj']
 
 class odict(OD):
     '''
-    An ordered dictionary, like the OrderedDict class, but supporting list methods like integer
-    referencing, slicing, and appending.
+    An ordered dictionary, like the OrderedDict class, but supports list methods like integer
+    indexing, key slicing, and item inserting.
 
-    Examples:
-        foo = odict({'ah':3,'boo':4, 'cough':6, 'dill': 8}) # Create odict
-        bar = foo.sorted() # Sort the list
-        assert(bar['boo'] == 4) # Show get item by value
-        assert(bar[1] == 4) # Show get item by index
-        assert((bar[0:2] == [3,4]).all()) # Show get item by slice
-        assert((bar['cough':'dill'] == [6,8]).all()) # Show alternate slice notation
-        assert((bar[[2,1]] == [6,4]).all()) # Show get item by list
-        assert((bar[:] == [3,4,6,8]).all()) # Show slice with everything
-        assert((bar[2:] == [6,8]).all()) # Show slice without end
+    **Examples**::
+
+        # Simple example
+        mydict = sc.odict(foo=[1,2,3], bar=[4,5,6]) # Assignment is the same as ordinary dictionaries
+        mydict['foo'] == mydict[0] # Access by key or by index
+        mydict[:].sum() == 21 # Slices are returned as numpy arrays by default
+        for i,key,value in mydict.enumitems(): # Additional methods for iteration
+            print(f'Item {i} is named {key} and has value {value}')
+
+        # Detailed example
+        foo = sc.odict({'ant':3,'bear':4, 'clam':6, 'donkey': 8}) # Create odict
+        bar = foo.sorted() # Sort the dict
+        assert bar['bear'] == 4 # Show get item by value
+        assert bar[1] == 4 # Show get item by index
+        assert (bar[0:2] == [3,4]).all() # Show get item by slice
+        assert (bar['clam':'donkey'] == [6,8]).all() # Show alternate slice notation
+        assert (bar[np.array([2,1])] == [6,4]).all() # Show get item by list
+        assert (bar[:] == [3,4,6,8]).all() # Show slice with everything
+        assert (bar[2:] == [6,8]).all() # Show slice without end
         bar[3] = [3,4,5] # Show assignment by item
-        bar[0:2] = ['the', 'power'] # Show assignment by slice -- NOTE, inclusive slice!!
-        bar[[0,2]] = ['cat', 'trip'] # Show assignment by list
-        bar.rename('cough','chill') # Show rename
+        bar[0:2] = ['the', 'power'] # Show assignment by slice
+        bar[[0,3]] = ['hill', 'trip'] # Show assignment by list
+        bar.rename('clam','oyster') # Show rename
         print(bar) # Print results
 
-    Version: 2018jun25
+    Version: 2020nov30
     '''
 
     def __init__(self, *args, **kwargs):
@@ -269,7 +286,8 @@ class odict(OD):
         '''
         Print out flexible representation, short by default.
 
-        Example:
+        **Example**::
+
             import pylab as pl
             z = odict().make(keys=['a','b','c'], vals=(10*pl.rand(3)).tolist())
             z.disp(sigfigs=3)
@@ -419,7 +437,8 @@ class odict(OD):
         Returns the key(s) that match a given value -- reverse of findbykey, except here
         uses exact matches to the value or values provided.
 
-        Example:
+        **Example**::
+
             z = odict({'dog':[2,3], 'cat':[4,6], 'mongoose':[4,6]})
             z.findvals([4,6]) # returns 'cat'
             z.findvals([4,6], first=False) # returns ['cat', 'mongoose']
@@ -482,14 +501,15 @@ class odict(OD):
 
     def insert(self, pos=None, key=None, value=None):
         '''
-        Stupid, slow function to do insert -- WARNING, should be able to use approach more like rename...
+        Function to do insert a key -- note, computationally inefficient.
 
-        Usage:
+        **Example**::
+
             z = odict()
             z['foo'] = 1492
             z.insert(1604)
             z.insert(0, 'ganges', 1444)
-            z.insert(2, 'midway', 1234)
+            z.insert(2, 'meikang', 1234)
         '''
 
         # Handle inputs
@@ -583,7 +603,6 @@ class odict(OD):
                     warningmsg = 'Warning: list to sort by "%s" has different length than odict "%i"' % (sortby, len(self))
                     if verbose: print(warningmsg)
                 allkeys = [origkeys[ind] for ind in sortby]
-                print(allkeys)
             else:
                 raise Exception('Cannot figure out how to sort by "%s"' % sortby)
         tmpdict = odict()
@@ -618,7 +637,10 @@ class odict(OD):
 
     def make(self, keys=None, vals=None, keys2=None, keys3=None):
         '''
-        An alternate way of making or adding to an odict. Examples:
+        An alternate way of making or adding to an odict.
+
+        **Examples**::
+
             a = odict().make(5) # Make an odict of length 5, populated with Nones and default key names
             b = odict().make('foo',34) # Make an odict with a single key 'foo' of value 34
             c = odict().make(['a','b']) # Make an odict with keys 'a' and 'b'
@@ -674,7 +696,8 @@ class odict(OD):
         Create an odict from entries in another dictionary. If keys is None, then
         use all keys from the current dictionary.
 
-        Examples:
+        **Examples**::
+
             a = 'cat'; b = 'dog'; o = odict().makefrom(source=locals(), keys=['a','b']) # Make use of fact that variables are stored in a dictionary
             d = {'a':'cat', 'b':'dog'}; o = odict().makefrom(d) # Same as odict(d)
             l = ['cat', 'monkey', 'dog']; o = odict().makefrom(source=l, keys=[0,2], keynames=['a','b'])
@@ -713,7 +736,8 @@ class odict(OD):
         Apply a function to each element of the odict, returning
         a new odict with the same keys.
 
-        Example:
+        **Example**::
+
             cat = odict({'a':[1,2], 'b':[3,4]})
             def myfunc(mylist): return [i**2 for i in mylist]
             dog = cat.map(myfunc) # Returns odict({'a':[1,4], 'b':[9,16]})
@@ -730,7 +754,8 @@ class odict(OD):
         operation to entry. The simplest usage is just to pick an index.
         However, you can also use it to apply a function to each key.
 
-        Example:
+        **Example**::
+
             z = odict({'a':array([1,2,3,4]), 'b':array([5,6,7,8])})
             z.fromeach(2) # Returns array([3,7])
             z.fromeach(ind=[1,3], asdict=True) # Returns odict({'a':array([2,4]), 'b':array([6,8])})
@@ -747,7 +772,8 @@ class odict(OD):
         The inverse of fromeach: partially reset elements within
         each odict key.
 
-        Example:
+        **Example**::
+
             z = odict({'a':[1,2,3,4], 'b':[5,6,7,8]})
             z.toeach(2, [10,20])    # z is now odict({'a':[1,2,10,4], 'b':[5,6,20,8]})
             z.toeach(ind=3,val=666) #  z is now odict({'a':[1,2,10,666], 'b':[5,6,20,666]})
@@ -786,7 +812,10 @@ class odict(OD):
     @staticmethod
     def promote(obj=None):
         '''
-        Like promotetolist, but for odicts. Example:
+        Like promotetolist, but for odicts.
+
+        **Example**::
+
             od = sc.odict.promote(['There','are',4,'keys'])
 
         Note, in most cases odict(obj) or odict().make(obj) can be used instead.
@@ -803,37 +832,36 @@ class odict(OD):
         else:
             return odict({'Key':obj})
 
-    # Python 3 compatibility
     def keys(self):
-        """ Method to get a list of keys as in Python 2. """
+        """ Return a list of keys (as in Python 2), not a dict_keys object. """
         return list(OD.keys(self))
 
     def values(self):
-        """ Method to get a list of values as in Python 2. """
+        """ Return a list of values (as in Python 2). """
         return list(OD.values(self))
 
     def items(self):
-        """ Method to generate an item iterator as in Python 2. """
+        """ Return a list of items, as in Python 2. """
         return list(OD.items(self))
 
     def iteritems(self):
-        """ Method to generate an item iterator as in Python 2. """
+        """ Alias to items() """
         return list(OD.items(self))
 
 
 class objdict(odict):
     '''
     Exactly the same as an odict, but allows keys to be set/retrieved by object
-    notiation.
+    notation.
 
     Example
     -------
     >>> import sciris as sc
     >>> od = sc.objdict({'height':1.65, 'mass':59})
     >>> od.bmi = od.mass/od.height**2
-    >>> od.keys = 3 # This will return an exception since od.keys already exists
+    >>> od['bmi'] = od['mass']/od['height']**2 # Vanilla syntax still works
+    >>> od.keys = 3 # This raises an exception (you can't overwrite the keys() method)
     '''
-
 
     def __getattribute__(self, attr):
         try: # First, try to get the attribute as an attribute
@@ -863,3 +891,63 @@ class objdict(odict):
     def setattribute(self, name, value):
         ''' Set attribute if truly desired '''
         return odict.__setattr__(self, name, value)
+
+
+def asobj(obj, strict=True):
+    '''
+    Convert any object for which you would normally do a['b'] to one where you
+    can do a.b.
+
+    Note: this may lead to unexpected behavior in some cases. Use at your own risk.
+    At minimum, objects created using this function have an extremely odd type -- namely
+    "sciris.sc_odict.asobj.<locals>.objobj".
+
+    Args:
+        obj (anything): the object you want to convert
+        strict (bool): whether to raise an exception if an attribute is being set (instead of a key)
+
+    **Example**::
+
+        d = dict(foo=1, bar=2)
+        d_obj = sc.asobj(d)
+        d_obj.foo = 10
+
+    New in version 1.0.0.
+    '''
+
+    objtype = type(obj)
+
+    class objobj(objtype):
+
+        def __getattribute__(self, attr):
+            try: # First, try to get the attribute as an attribute
+                output = objtype.__getattribute__(self, attr)
+                return output
+            except Exception as E: # If that fails, try to get it as a dict item
+                try:
+                    output = objtype.__getitem__(self, attr)
+                    return output
+                except: # If that fails, raise the original exception
+                    raise E
+
+        def __setattr__(self, name, value):
+            ''' Set key in dict, not attribute! '''
+
+            try:
+                objtype.__getattribute__(self, name) # Try retrieving this as an attribute, expect AttributeError...
+            except AttributeError:
+                return objtype.__setitem__(self, name, value) # If so, simply return
+
+            if not strict: # Let the attribute be set anyway
+                objtype.__setattr__(self, name, value)
+            else: # Otherwise, raise an exception
+                errormsg = '"%s" exists as an attribute, so cannot be set as key; use setattribute() instead' % name
+                raise Exception(errormsg)
+
+            return
+
+        def setattribute(self, name, value):
+            ''' Set attribute if truly desired '''
+            return objtype.__setattr__(self, name, value)
+
+    return objobj(obj)

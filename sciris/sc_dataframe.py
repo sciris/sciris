@@ -1,28 +1,37 @@
+'''
+Simple alternative to the Pandas DataFrame.
+
+This class is rarely used and not well maintained; in most cases, it is probably
+better to just use the Pandas one.
+'''
+
 ##############################################################################
 ### DATA FRAME CLASS
 ##############################################################################
 
+# NB: Pandas is imported later
 import numbers # For numeric type
 import numpy as np
 from . import sc_utils as ut # Note, sc_fileio is also used, but is only imported when required to avoid a circular import
 from . import sc_math as ma
 from .sc_odict import odict
-try:
-    import pandas as pd
-except Exception as E:
-    pd = 'Warning: could not import pandas (%s)' % str(E)
+
 
 __all__ = ['dataframe']
 
 class dataframe(object):
     '''
     A simple data frame, based on simple lists, for simply storing simple data.
+    Much less feature-rich than a Pandas data frame, but simpler to use. Note:
+    this class is semi-deprecated; use at your own risk. To be honest, Pandas
+    is a much better solution better most of the time.
 
-    Example usage:
-        a = dataframe(cols=['x','y'],data=[[1238,2],[384,5],[666,7]]) # Create data frame
-        print(a)['x'] # Print out a column
-        print(a)[0] # Print out a row
-        print(a)['x',0] # Print out an element
+    **Example**::
+
+        a = sc.dataframe(cols=['x','y'],data=[[1238,2],[384,5],[666,7]]) # Create data frame
+        a['x'] # Print out a column
+        a[0] # Print out a row
+        a['x',0] # Print out an element
         a[0] = [123,6]; print(a) # Set values for a whole row
         a['y'] = [8,5,0]; print(a) # Set values for a whole column
         a['z'] = [14,14,14]; print(a) # Add new column
@@ -38,9 +47,9 @@ class dataframe(object):
         a.rmrow(); print(a) # Remove last row
         a.rmrow(1238); print(a) # Remove the row starting with element '3'
 
-    Works for both numeric and non-numeric data.
+    The dataframe can be used for both numeric and non-numeric data.
 
-    Version: 2019sep24
+    Version: 2020nov29
     '''
 
     def __init__(self, cols=None, data=None, nrows=None):
@@ -277,7 +286,10 @@ class dataframe(object):
 
     def make(self, cols=None, data=None, nrows=None):
         '''
-        Creates a dataframe from the supplied input data. Usage examples:
+        Creates a dataframe from the supplied input data.
+
+        **Usage examples**::
+
             df = sc.dataframe()
             df = sc.dataframe(['a','b','c'])
             df = sc.dataframe(['a','b','c'], nrows=2)
@@ -285,6 +297,7 @@ class dataframe(object):
             df = sc.dataframe(['a','b','c'], [[1,2,3],[4,5,6]])
             df = sc.dataframe(cols=['a','b','c'], data=[[1,2,3],[4,5,6]])
         '''
+        import pandas as pd
 
         # Handle columns
         if nrows is None:
@@ -296,12 +309,9 @@ class dataframe(object):
             cols = data
             data = None
 
-        if not ut.isstring(pd): # This is done because if pandas import fails, it replaces it with a string
-            if isinstance(cols, pd.DataFrame): # It's actually a Pandas dataframe
-                self.pandas(df=cols)
-                return None # We're done
-        else:
-            print(pd)
+        if isinstance(cols, pd.DataFrame): # It's actually a Pandas dataframe
+            self.pandas(df=cols)
+            return None # We're done
 
         # A dictionary is supplied: assume keys are columns, and the rest is the data
         if isinstance(cols, dict):
@@ -348,9 +358,12 @@ class dataframe(object):
 
     def get(self, cols=None, rows=None, asarray=True, cast=True):
         '''
-        More complicated way of getting data from a dataframe; example:
-        df = dataframe(cols=['x','y','z'],data=[[1238,2,-1],[384,5,-2],[666,7,-3]]) # Create data frame
-        df.get(cols=['x','z'], rows=[0,2])
+        More complicated way of getting data from a dataframe.
+
+        **Example**::
+
+            df = dataframe(cols=['x','y','z'],data=[[1238,2,-1],[384,5,-2],[666,7,-3]]) # Create data frame
+            df.get(cols=['x','z'], rows=[0,2])
         '''
         if cols is None:
             colindices = Ellipsis
@@ -498,15 +511,16 @@ class dataframe(object):
         '''
         Return a row by searching for a matching value.
 
-        Arguments:
-            key = the value to look for
-            col = the column to look for this value in
-            default = the value to return if key is not found (overrides die)
-            closest = whether or not to return the closest row (overrides default and die)
-            die = whether to raise an exception if the value is not found
-            asdict = whether to return results as dict rather than list
+        Args:
+            key: the value to look for
+            col: the column to look for this value in
+            default: the value to return if key is not found (overrides die)
+            closest: whether or not to return the closest row (overrides default and die)
+            die: whether to raise an exception if the value is not found
+            asdict: whether to return results as dict rather than list
 
-        Example:
+        **Example**::
+
             df = dataframe(cols=['year','val'],data=[[2016,0.3],[2017,0.5]])
             df.findrow(2016) # returns array([2016, 0.3], dtype=object)
             df.findrow(2013) # returns None, or exception if die is True
@@ -563,6 +577,7 @@ class dataframe(object):
         return self._filterrows(key=key, col=col, keep=False, verbose=verbose, copy=copy)
 
     def filtercols(self, cols=None, die=True, copy=None):
+        ''' Filter columns keeping only those specified '''
         if copy is None: copy = False
         if cols is None: cols = ut.dcp(self.cols) # By default, do nothing
         cols = ut.promotetolist(cols)
@@ -608,6 +623,7 @@ class dataframe(object):
         return sortorder
 
     def sortcols(self, sortorder=None, reverse=False):
+        ''' Like sort, but rows by column instead '''
         if sortorder is None:
             sortorder = np.argsort(self.cols, kind='mergesort')
             if reverse: sortorder = np.array(list(reversed(sortorder)))
@@ -641,10 +657,11 @@ class dataframe(object):
             output.append(thisrow)
         return output
 
+
     def pandas(self, df=None):
         ''' Function to export to pandas (if no argument) or import from pandas (with an argument) '''
-        if ut.isstring(pd):
-            raise Exception(pd) # Raise an exception if Pandas couldn't be imported
+        import pandas as pd
+
         if df is None: # Convert
             output = pd.DataFrame(data=self.data, columns=self.cols)
             return output
@@ -655,6 +672,7 @@ class dataframe(object):
             self.cols = list(df.columns)
             self.data = np.array(df, dtype=object)
             return None
+
 
     def export(self, filename=None, cols=None, close=True):
         ''' Export to Excel '''

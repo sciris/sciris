@@ -1,3 +1,10 @@
+'''
+Adaptive stochastic descent optimization algorithm, building on scipy.optimize.
+
+This algorithm is published as "Optimization by adaptive stochastic descent" by
+Kerr et al. (2018).
+'''
+
 import numpy as np
 import numpy.random as nr
 from time import time
@@ -7,59 +14,68 @@ from .sc_odict import objdict
 __all__ = ['asd']
 
 def asd(function, x, args=None, stepsize=0.1, sinc=2, sdec=2, pinc=2, pdec=2,
-    pinitial=None, sinitial=None, xmin=None, xmax=None, maxiters=None, maxtime=None, 
-    abstol=1e-6, reltol=1e-3, stalliters=None, stoppingfunc=None, randseed=None, 
+    pinitial=None, sinitial=None, xmin=None, xmax=None, maxiters=None, maxtime=None,
+    abstol=1e-6, reltol=1e-3, stalliters=None, stoppingfunc=None, randseed=None,
     label=None, verbose=2, **kwargs):
     """
-    Optimization using adaptive stochastic descent (ASD).
-    
-    output = asd(func,x0) starts at x0 and attempts to find a 
-    local minimizer x of the function func. func accepts input x and returns a scalar 
-    function value evaluated  at x. x0 can be a scalar, list, or Numpy array of 
-    any size. 
-    
-    asd() has the following options that can be set using keyword arguments. Their
-    names and default values are as follows:
-      stepsize       0.1     Initial step size as a fraction of each parameter
-      sinc           2       Step size learning rate (increase)
-      sdec           2       Step size learning rate (decrease)
-      pinc           2       Parameter selection learning rate (increase)
-      pdec           2       Parameter selection learning rate (decrease)
-      pinitial       None    Set initial parameter selection probabilities
-      sinitial       None    Set initial step sizes; if empty, calculated from stepsize instead
-      xmin           None    Min value allowed for each parameter  
-      xmax           None    Max value allowed for each parameter 
-      maxiters       1000    Maximum number of iterations (1 iteration = 1 function evaluation)
-      maxtime        3600    Maximum time allowed, in seconds
-      abstol         1e-6    Minimum absolute change in objective function
-      reltol         1e-3    Minimum relative change in objective function
-      stalliters     10*n    Number of iterations over which to calculate TolFun (n = number of parameters)
-      stoppingfunc   None    External method that can be used to stop the calculation from the outside.
-      randseed       None    The random seed to use
-      verbose        2       How much information to print during the run
-      label          None    A label to use to annotate the output
-     
-    asd() returns an objdict (which can be accessed by index, key, or attribute)
-    with the following items:
-        x          -- The parameter set that minimizes the objective function
-        fval       -- The value of the objective function at the final iteration
-        exitreason -- Why the algorithm terminated;
-        details    -- A objdict with additional output: fvals, the value of the objective
-                      function at each iteration; xvals, the parameter values at each iteration;
-                      probabilities, the probability of each step; and stepsizes, the size of each
-                      step for each parameter.
-  
-    Example:
+    Optimization using adaptive stochastic descent (ASD). Can be used as a faster
+    and more powerful alternative to e.g. ``scipy.optimize.minimize()``.
+
+    ASD starts at ``x0`` and attempts to find a local minimizer ``x`` of the function ``func()``.
+    ``func()`` accepts input ``x`` and returns a scalar function value evaluated at ``x``.
+    ``x0`` can be a scalar, list, or Numpy array of any size.
+
+    Args:
+      stepsize     (0.1):   Initial step size as a fraction of each parameter
+      sinc         (2):     Step size learning rate (increase)
+      sdec         (2):     Step size learning rate (decrease)
+      pinc         (2):     Parameter selection learning rate (increase)
+      pdec         (2):     Parameter selection learning rate (decrease)
+      pinitial     (None):  Set initial parameter selection probabilities
+      sinitial     (None):  Set initial step sizes; if empty, calculated from stepsize instead
+      xmin         (None):  Min value allowed for each parameter
+      xmax         (None):  Max value allowed for each parameter
+      maxiters     (1000):  Maximum number of iterations (1 iteration = 1 function evaluation)
+      maxtime      (3600):  Maximum time allowed, in seconds
+      abstol       (1e-6):  Minimum absolute change in objective function
+      reltol       (1e-3):  Minimum relative change in objective function
+      stalliters   (10*n):  Number of iterations over which to calculate TolFun (n = number of parameters)
+      stoppingfunc (None):  External method that can be used to stop the calculation from the outside.
+      randseed     (None):  The random seed to use
+      verbose      (2):     How much information to print during the run
+      label        (None):  A label to use to annotate the output
+
+    Returns:
+        objdict (see below)
+
+    The returned object is an ``objdict``, which can be accessed by index, key,
+    or attribute. Its keys/attributes are:
+
+        - ``x``          -- The parameter set that minimizes the objective function
+        - ``fval``       -- The value of the objective function at the final iteration
+        - ``exitreason`` -- Why the algorithm terminated;
+        - ``details``    -- See below
+
+    The ``details`` key consists of:
+
+        - ``fvals``         -- The value of the objective function at each iteration
+        - ``xvals``         -- The parameter values at each iteration;
+        - ``probabilities`` -- The probability of each step; and
+        - ``stepsizes``     -- The size of each step for each parameter.
+
+    **Example**::
+
         import numpy as np
         import sciris as sc
         result = sc.asd(np.linalg.norm, [1, 2, 3])
         print(result.x)
 
     Please use the following citation for this method:
-        CC Kerr, S Dura-Bernal, TG Smolinski, GL Chadderdon, DP Wilson (2018). 
-        Optimization by adaptive stochastic descent. 
-        PloS ONE 13 (3), e0192944.
-    
+
+        CC Kerr, S Dura-Bernal, TG Smolinski, GL Chadderdon, DP Wilson (2018).
+        Optimization by adaptive stochastic descent.
+        PLOS ONE 13 (3), e0192944.
+
     Version: 2019jul08
     """
     if randseed is not None:
@@ -146,7 +162,7 @@ def asd(function, x, args=None, stepsize=0.1, sinc=2, sdec=2, pinc=2, pdec=2,
         count += 1 # Increment the count
         if verbose == 1: print(offset + label + 'Iteration %i; elapsed %0.1f s; objective: %0.3e' % (count, time() - start, fval)) # For more verbose, use other print statement below
         if verbose >= 4: print('\n\n Count=%i \n x=%s \n probabilities=%s \n stepsizes=%s' % (count, x, probabilities, stepsizes))
-        
+
         # Calculate next parameters
         probabilities = probabilities / sum(probabilities) # Normalize probabilities
         cumprobs = np.cumsum(probabilities) # Calculate the cumulative distribution
@@ -166,7 +182,7 @@ def asd(function, x, args=None, stepsize=0.1, sinc=2, sdec=2, pinc=2, pdec=2,
             probabilities[choice] = probabilities[choice] / pdec
             stepsizes[choice] = stepsizes[choice] / sdec
 
-        # Calculate the new value 
+        # Calculate the new value
         xnew = dcp(x) # Initialize the new parameter set
         xnew[par] = newval # Update the new parameter set
         fvalnew = function(xnew, **args) # Calculate the objective function for the new parameter set
