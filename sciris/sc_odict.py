@@ -20,27 +20,35 @@ __all__ = ['odict', 'objdict', 'asobj']
 
 class odict(OD):
     '''
-    An ordered dictionary, like the OrderedDict class, but supporting list methods like integer
-    referencing, slicing, and appending.
+    An ordered dictionary, like the OrderedDict class, but supports list methods like integer
+    indexing, key slicing, and item inserting.
 
     **Examples**::
 
-        foo = odict({'ah':3,'boo':4, 'cough':6, 'dill': 8}) # Create odict
-        bar = foo.sorted() # Sort the list
-        assert(bar['boo'] == 4) # Show get item by value
-        assert(bar[1] == 4) # Show get item by index
-        assert((bar[0:2] == [3,4]).all()) # Show get item by slice
-        assert((bar['cough':'dill'] == [6,8]).all()) # Show alternate slice notation
-        assert((bar[[2,1]] == [6,4]).all()) # Show get item by list
-        assert((bar[:] == [3,4,6,8]).all()) # Show slice with everything
-        assert((bar[2:] == [6,8]).all()) # Show slice without end
+        # Simple example
+        mydict = sc.odict(foo=[1,2,3], bar=[4,5,6]) # Assignment is the same as ordinary dictionaries
+        mydict['foo'] == mydict[0] # Access by key or by index
+        mydict[:].sum() == 21 # Slices are returned as numpy arrays by default
+        for i,key,value in mydict.enumitems(): # Additional methods for iteration
+            print(f'Item {i} is named {key} and has value {value}')
+
+        # Detailed example
+        foo = sc.odict({'ant':3,'bear':4, 'clam':6, 'donkey': 8}) # Create odict
+        bar = foo.sorted() # Sort the dict
+        assert bar['bear'] == 4 # Show get item by value
+        assert bar[1] == 4 # Show get item by index
+        assert (bar[0:2] == [3,4]).all() # Show get item by slice
+        assert (bar['clam':'donkey'] == [6,8]).all() # Show alternate slice notation
+        assert (bar[np.array([2,1])] == [6,4]).all() # Show get item by list
+        assert (bar[:] == [3,4,6,8]).all() # Show slice with everything
+        assert (bar[2:] == [6,8]).all() # Show slice without end
         bar[3] = [3,4,5] # Show assignment by item
-        bar[0:2] = ['the', 'power'] # Show assignment by slice -- NOTE, inclusive slice!!
-        bar[[0,2]] = ['cat', 'trip'] # Show assignment by list
-        bar.rename('cough','chill') # Show rename
+        bar[0:2] = ['the', 'power'] # Show assignment by slice
+        bar[[0,3]] = ['hill', 'trip'] # Show assignment by list
+        bar.rename('clam','oyster') # Show rename
         print(bar) # Print results
 
-    Version: 2018jun25
+    Version: 2020nov30
     '''
 
     def __init__(self, *args, **kwargs):
@@ -851,9 +859,9 @@ class objdict(odict):
     >>> import sciris as sc
     >>> od = sc.objdict({'height':1.65, 'mass':59})
     >>> od.bmi = od.mass/od.height**2
-    >>> od.keys = 3 # This will return an exception since od.keys already exists
+    >>> od['bmi'] = od['mass']/od['height']**2 # Vanilla syntax still works
+    >>> od.keys = 3 # This raises an exception (you can't overwrite the keys() method)
     '''
-
 
     def __getattribute__(self, attr):
         try: # First, try to get the attribute as an attribute
