@@ -1,5 +1,5 @@
-.. image:: docs/sciris-logo.png
-    :scale: 10%
+.. image:: docs/sciris-logo-medium.png
+    :scale: 100%
     :align: center
 
 Welcome to Sciris
