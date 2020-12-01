@@ -153,13 +153,13 @@ def parallelize(func, iterarg=None, iterkwargs=None, args=None, kwargs=None, ncp
 
     **Example 5 -- using a custom parallelization function**::
 
-        def f(x):
-            return x*x
+        def f(x,y):
+            return [x]*y
 
         import multiprocessing as mp
         multipool = mp.Pool(processes=2)
-        results = sc.parallelize(f, [1,2,3], parallelizer=multipool.map)
-        multipool.close()
+        results = sc.parallelize(f, iterkwargs=dict(x=[1,2,3], y=[4,5,6]), parallelizer=multipool.map)
+        multipool.close() # NB, in this case, close and join are not strictly required
         multipool.join()
 
     **Note**: to use on Windows, parallel calls must contained with an ``if __name__ == '__main__'`` block.
