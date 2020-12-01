@@ -8,7 +8,9 @@
 
 import os
 import sys
+import matplotlib
 
+matplotlib.use("agg") # To ensure figures don't render
 sys.path.insert(0, os.path.abspath("../"))  # Source code dir relative to this file
 
 import sciris as sc
