@@ -45,12 +45,10 @@ needs_sphinx = '3.0'
 extensions = [
     "sphinx.ext.autodoc",  # Core Sphinx library for auto html doc generation from docstrings
     "sphinx.ext.autosummary",  # Create neat summary tables for modules/classes/methods etc
-    "sphinx.ext.mathjax",
     "sphinx.ext.viewcode",  # Add a link to the Python source code for classes, functions etc.
     "sphinx.ext.napoleon",
     "sphinx.ext.autosectionlabel",
     "sphinx_autodoc_typehints",  # Automatically document param types (less noise in class signature)
-    "sphinx_markdown_tables",
     "recommonmark",
 ]
 
@@ -61,8 +59,8 @@ autosummary_generate = True  # Turn on sphinx.ext.autosummary
 autoclass_content = "both"  # Add __init__ doc (ie. params) to class summaries
 html_show_sourcelink = False  # Remove 'view source code' from top of page (for html, not python)
 autodoc_member_order = 'bysource' # Keep original ordering
-add_module_names = False 
-autodoc_inherit_docstrings = False
+add_module_names = False  # NB, does not work
+autodoc_inherit_docstrings = False # Stops sublcasses from including docs from parent classes
 
 # Add any paths that contain templates here, relative to this directory.
 templates_path = ["_templates"]
@@ -70,9 +68,7 @@ templates_path = ["_templates"]
 # List of patterns, relative to source directory, that match files and
 # directories to ignore when looking for source files.
 # This pattern also affects html_static_path and html_extra_path.
-exclude_patterns = ["_build", "Thumbs.db", ".DS_Store", "**.ipynb_checkpoints", 
-                    "_autosummary/_autosummary", # CK: Not sure why this gets created, but exclude it here
-                    ]
+exclude_patterns = ["_build", "Thumbs.db", ".DS_Store", "**.ipynb_checkpoints"]
 
 
 # -- Options for HTML output -------------------------------------------------
