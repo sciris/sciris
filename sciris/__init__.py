@@ -1,5 +1,7 @@
 """
-Functions in Sciris are organized into submodules. However, standard
+Sciris root module
+
+Functions in Sciris are of course organized into submodules. However, standard
 usage is to call the functions directly, e.g. ``sc.parallelize()`` instead
 of ``sc.sc_parallel.parallelize()``.
 """

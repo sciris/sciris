@@ -1,10 +1,16 @@
-==================
-Sciris
-==================
+.. title:: Sciris
+
+.. image:: sciris-logo.png
+    :scale: 40%
+    :align: center
 
 `Sciris <http://sciris.org>`__ is library of functions for scientific computing that provide additional flexibility and ease-of-use on top of Numpy, Scipy, and Matplotlib.
 
 ScirisWeb, built on Sciris, is a toolbox that makes building webapps easy -- think of it as `Shiny <https://shiny.rstudio.com/>`__ for Python.
+
+========
+Contents
+========
 
 .. toctree::
    :maxdepth: 4

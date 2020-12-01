@@ -36,7 +36,6 @@ release = sc.__version__
 # -- General configuration ---------------------------------------------------
 
 # If your documentation needs a minimal Sphinx version, state it here.
-#
 # needs_sphinx = '3.0'
 
 # Add any Sphinx extension module names here, as strings. They can be
@@ -77,3 +76,5 @@ exclude_patterns = ["_build", "Thumbs.db", ".DS_Store", "**.ipynb_checkpoints"]
 import sphinx_rtd_theme
 html_theme = "sphinx_rtd_theme"
 html_theme_path = [sphinx_rtd_theme.get_html_theme_path()]
+html_logo = "sciris-logo-small.png"
+html_favicon = "favicon.ico"

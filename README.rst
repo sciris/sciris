@@ -4,12 +4,12 @@ Welcome to Sciris
 What is Sciris?
 ---------------
 
-Glad you asked! `Sciris <http://sciris.org>`__ is a flexible open source framework for building scientific web applications using Python and JavaScript. It comes in two parts: ``sciris`` is a collection of tools that should make scientific Python coding a more pleasant experience, while ``scirisweb`` is a collection of tools that allow you to easily build Python webapps. Sciris is built on Numpy and Matplotlib, while ScirisWeb is built on Vue.js, Flask, Twisted, Redis, and ``mpld3``. Full documentation is available at https://sciris.readthedocs.io.
+Glad you asked! `Sciris <http://sciris.org>`__ is a flexible open source framework for building scientific web applications using Python and JavaScript. It comes in two parts: ``sciris`` is a collection of tools that should make scientific Python coding a more pleasant experience, while ``scirisweb`` is a collection of tools that allow you to easily build Python webapps. Sciris is built on Numpy and Matplotlib, while ScirisWeb is built on Vue.js, Flask, Twisted, Redis, and ``mpld3``. Full documentation is available at http://docs.sciris.org.
 
 
 Highlights
 ~~~~~~~~~~
-Some highlights of ``sciris``:
+Some highlights of Sciris:
 
 -  ``odict`` and ``objdict`` -- like an OrderedDict, but allows reference by position as if it were a list, and includes many powerful methods (such as casting to array, sorting and enumeration functions, etc.). For example, let's say you have a dictionary ``results``, each entry of which is itself a dictionary ``result``, which has a key ``data``. Using a Sciris ``objdict``, you can access the data from the first item in ``results`` via ``results[0].data``. Using vanilla Python dictionaries, this would be ``results[list(results.keys())[0]]['data']`` -- almost 3x longer to type.
 -  ``promotetoarray`` -- standardizes any kind of numeric input to a Numpy array, so e.g. ``1``, ``[1]``, ``(1,)`` etc. are all converted to ``array([1])``
