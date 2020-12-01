@@ -8,9 +8,7 @@
 
 import os
 import sys
-import matplotlib
 
-matplotlib.use("agg")
 sys.path.insert(0, os.path.abspath("../"))  # Source code dir relative to this file
 
 import sciris as sc
@@ -24,7 +22,7 @@ import sciris as sc
 # -- Project information -----------------------------------------------------
 
 project = 'Sciris'
-copyright = '2020, Sciris.org.'
+copyright = f'2020 by the Sciris team (version {sc.__version__}).'
 author = 'Sciris.org'
 
 # The short X.Y version
