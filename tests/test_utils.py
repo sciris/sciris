@@ -5,6 +5,7 @@ Test Sciris utility/helper functions.
 import pytest
 import numpy as np
 import sciris as sc
+import datetime as dt
 
 
 ### Adaptations from other libraries
@@ -13,24 +14,24 @@ def test_adaptations():
     sc.heading('Test function adaptations')
     o = sc.objdict()
 
-    print('Testing sha')
+    print('\nTesting sha')
     o.sha = sc.sha({'a':np.random.rand(5)})
 
-    print('Testing cp and dcp')
+    print('\nTesting cp and dcp')
     o.sha2 = sc.dcp(o.sha.hexdigest())
     with pytest.raises(ValueError):
         o.sha3 = sc.cp(o.sha)
     with pytest.raises(ValueError):
         o.sha3 = sc.dcp(o.sha)
 
-    print('Testing wget')
+    print('\nTesting wget')
     o.wget = sc.wget('http://sciris.org/')
 
-    print('Testing htmlify')
+    print('\nTesting htmlify')
     o.html = sc.htmlify('foo&\nbar') # Returns b'foo&amp;<br>bar'
     o.nothtml = sc.htmlify(o.wget, reverse=True)
 
-    print('Testing traceback')
+    print('\nTesting traceback')
     o.traceback = sc.traceback()
 
     return o
@@ -70,10 +71,10 @@ def test_uuid():
         print(f'{key}: {val}')
 
 
-    print('Testing fast_uuid')
+    print('\nTesting fast_uuid')
     u.uuids = sc.fast_uuid(n=100) # Generate 100 UUIDs
 
-    print('Testing uuid')
+    print('\nTesting uuid')
     u.uuid = sc.uuid()
 
     return u
@@ -129,31 +130,31 @@ def test_printing():
 
     o = sc.objdict()
 
-    print('Testing print')
+    print('\nTesting print')
     sc.printv('test print', 1, 2)
 
-    print('Testing objatt')
+    print('\nTesting objatt')
     o.att = sc.objatt(o)
 
-    print('Testing prepr')
+    print('\nTesting prepr')
     sc.prepr(o)
 
-    print('Testing printarr')
+    print('\nTesting printarr')
     sc.printarr(np.random.rand(3,4,5))
 
-    print('Testing printvars')
+    print('\nTesting printvars')
     a = range(5)
     b = 'example'
     sc.printvars(locals(), ['a','b'], color='green')
 
-    print('Testing slacknotification')
+    print('\nTesting slacknotification')
     sc.slacknotification(webhook='http://invalid.hooks.slack.com.test', message='Test notification to nowhere')
     print('↑↑↑ Will raise a error since not a valid webhook, this is OK')
 
-    print('Testing printtologfile')
+    print('\nTesting printtologfile')
     sc.printtologfile('Test message')
 
-    print('Testing sigfig')
+    print('\nTesting sigfig')
     sc.sigfig(np.random.rand(10), SI=True, sep='.')
 
     return o
@@ -168,7 +169,7 @@ def test_prepr():
         setattr(myobj, key, i**2)
     print(myobj)
 
-    print('Test pretty representation of an object using slots')
+    print('Testing pretty representation of an object using slots')
     class Foo():
         __slots__ = ['bar']
         def __init__(self):
@@ -239,22 +240,22 @@ def test_types():
     sc.heading('Test type functions')
     o = sc.objdict()
 
-    print('Testing isarray')
+    print('\nTesting isarray')
     assert sc.isarray(np.array([1,2,3]))
     assert not sc.isarray([1,2,3])
     assert not sc.isarray(np.array([1,2,3]), dtype=float)
 
-    print('Testing mergedicts')
+    print('\nTesting mergedicts')
     o.dicts1 = sc.mergedicts({'a':4, 'b':5}, {'b':8, 'c':8})
     with pytest.raises(TypeError):
         sc.mergedicts({'a':4, 'b':5}, 3, strict=True)
     with pytest.raises(KeyError):
         sc.mergedicts({'a':4, 'b':5}, {'b':8, 'c':8}, overwrite=False)
 
-    print('Testing flexstr')
+    print('\nTesting flexstr')
     o.flexstr = sc.flexstr(b'bytestring')
 
-    print('Testing promotetoarray')
+    print('\nTesting promotetoarray')
     assert not len(sc.promotetoarray(None, skipnone=True))
     assert sc.promotetoarray(np.array(3))[0] == 3
     with pytest.raises(TypeError):
@@ -289,37 +290,37 @@ def test_readdate():
 
 
 def test_dates():
-    print('Testing other date functions')
+    sc.heading('Testing other date functions')
     o = sc.objdict()
 
-    print('Testing date')
+    print('\nTesting date')
     o.date1 = sc.date('2020-04-05') # Returns datetime.date(2020, 4, 5)
     o.date2 = sc.date('2020-04-14', start_date='2020-04-04', as_date=False) # Returns 10
     o.date3 = sc.date([35,36,37], as_date=False) # Returns ['2020-02-05', '2020-02-06', '2020-02-07']
 
-    print('Testing day')
+    print('\nTesting day')
     year = str(sc.now().year)
     o.day = sc.day(f'{year}-04-04') # Returns 94
     assert o.day == 94
 
-    print('Testing daydiff')
+    print('\nTesting daydiff')
     o.diff  = sc.daydiff('2020-03-20', '2020-04-05') # Returns 16
     o.diffs = sc.daydiff('2020-03-20', '2020-04-05', '2020-05-01') # Returns [16, 26]
 
-    print('Testing daterange')
+    print('\nTesting daterange')
     o.dates = sc.daterange('2020-03-01', '2020-04-04')
 
-    print('Testing elapsedtimestr')
+    print('\nTesting elapsedtimestr')
     now = sc.now()
-    future = now.replace(year=now.year+1)
-    earlier1 = now.replace(minute=now.minute-min(now.minute, 1))
-    earlier2 = now.replace(hour=now.hour-min(now.hour, 1))
-    earlier3 = now.replace(day=now.day-min(now.day, 1))
-    earlier4 = now.replace(year=now.year-1)
-    for date in [future, earlier1, earlier2, earlier3, earlier4]:
-        print(sc.elapsedtimestr(date))
+    dates = sc.objdict()
+    dates.future = now.replace(year=now.year+1)
+    dates.year =   now.replace(year=now.year-1)
+    for key in ['days', 'hours', 'minutes']:
+        dates[key] = now - dt.timedelta(**{key:1})
+    for key, date in dates.items():
+        print(key, sc.elapsedtimestr(date))
 
-    print('Testing tictoc and timedsleep')
+    print('\nTesting tictoc and timedsleep')
     sc.tic()
     sc.timedsleep(0.2)
     sc.toctic()
@@ -327,7 +328,7 @@ def test_dates():
     with sc.Timer():
         sc.timedsleep(0.1)
 
-    print('Testing datetoyear')
+    print('\nTesting datetoyear')
     o.year = sc.datetoyear('2010-07-01')
 
     return o
@@ -418,37 +419,37 @@ def test_misc():
     sc.heading('Testing miscellaneous functions')
     o = sc.objdict()
 
-    print('Testing checkmem')
+    print('\nTesting checkmem')
     sc.checkmem(['spiffy',np.random.rand(243,589)], descend=True)
 
-    print('Testing checkram')
+    print('\nTesting checkram')
     o.ram = sc.checkram()
     print(o.ram)
 
-    print('Testing runcommand')
+    print('\nTesting runcommand')
     sc.runcommand('command_probably_not_found')
 
-    print('Testing gitinfo functions')
+    print('\nTesting gitinfo functions')
     o.gitinfo = sc.gitinfo()
 
-    print('Testing compareversions')
+    print('\nTesting compareversions')
     assert sc.compareversions('1.2.3', '2.3.4') == -1
     assert sc.compareversions(2, '2') == 0
     assert sc.compareversions('3.1', '2.99') == 1
 
-    print('Testing uniquename')
+    print('\nTesting uniquename')
     namelist = ['file', 'file (1)', 'file (2)']
     o.unique = sc.uniquename(name='file', namelist=namelist)
     assert o.unique not in namelist
 
-    print('Testing importbyname')
+    print('\nTesting importbyname')
     sc.importbyname('numpy')
 
-    print('Testing get_caller()')
+    print('\nTesting get_caller()')
     o.caller = sc.getcaller()
     print(o.caller)
 
-    print('Testing nestedloop')
+    print('\nTesting nestedloop')
     o.nested = list(sc.nestedloop([['a','b'],[1,2]],[0,1]))
 
     return o
@@ -491,11 +492,11 @@ def test_dicts():
     sc.heading('Testing dicts')
     o = sc.objdict()
 
-    print('Testing flattendict')
+    print('\nTesting flattendict')
     sc.flattendict({'a': {'b': 1, 'c': {'d': 2, 'e': 3}}})
     o.flat = sc.flattendict({'a': {'b': 1, 'c': {'d': 2, 'e': 3}}}, sep='_')
 
-    print('Test merging dictionaries')
+    print('Testing merging dictionaries')
     o.md = sc.mergedicts({'a':1}, {'b':2}) # Returns {'a':1, 'b':2}
     sc.mergedicts({'a':1, 'b':2}, {'b':3, 'c':4}) # Returns {'a':1, 'b':3, 'c':4}
     sc.mergedicts({'b':3, 'c':4}, {'a':1, 'b':2}) # Returns {'a':1, 'b':2, 'c':4}
@@ -504,7 +505,7 @@ def test_dicts():
     with pytest.raises(TypeError):
         sc.mergedicts({'b':3, 'c':4}, None, strict=True) # Raises exception
 
-    print('Testing nested dictionaries')
+    print('\nTesting nested dictionaries')
     dict1 = {'key1':{'a':'A'},  'key2':{'b':'B'}}
     dict2 = {'key1':{'a':'A*'}, 'key2':{'b+':'B+'}, 'key3':{'c':'C'}}
     dict3 = sc.mergenested(dict1, dict2, verbose=True)
@@ -514,7 +515,7 @@ def test_dicts():
     assert dict3 == {'key1': {'a': 'A*'}, 'key2': {'b': 'B', 'b+': 'B+'}, 'key3': {'c': 'C'}}
     o.dict3 = dict3
 
-    print('Testing search')
+    print('\nTesting search')
     nested = {'a':{'foo':1, 'bar':2}, 'b':{'bar':3, 'cat':4}}
     matches = sc.search(nested, 'bar') # Returns ['["a"]["bar"]', '["b"]["bar"]']
     print(matches)
