@@ -1,7 +1,3 @@
-.. image:: docs/sciris-logo-medium.png
-    :scale: 100%
-    :align: center
-
 Welcome to Sciris
 =================
 
