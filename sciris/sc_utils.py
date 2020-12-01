@@ -6,13 +6,15 @@ ignore a function that you don't need than write one from scratch that you
 do need.
 
 Highlights:
-    - ``sc.dcp()``: shortcut to copy.deepcopy()
-    - ``sc.pr()``: print detailed representation of an object
+    - ``sc.dcp()``: shortcut to ``copy.deepcopy()``
+    - ``sc.pp()``: shortcut to ``pprint.pprint()``
+    - ``sc.pr()``: print full representation of an object, including methods and each attribute
     - ``sc.heading()``: print text as a 'large' heading
     - ``sc.colorize()``: print text in a certain color
     - ``sc.sigfigs()``: truncate a number to a certain number of significant figures
     - ``sc.isnumber()``: checks if something is any number type
-    - ``sc.promotetolist()``: converts strings or scalars to lists, for consistent iteration
+    - ``sc.promotetolist()``: converts any object to a list, for easy iteration
+    - ``sc.promotetoarray()``: tries to convert any object to an array, for easy use with numpy
     - ``sc.readdate()``: convert strings to dates using common formats
     - ``sc.tic()/sc.toc()``: simple method for timing durations
     - ``sc.runcommand()``: simple way of executing a shell command

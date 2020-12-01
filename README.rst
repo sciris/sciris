@@ -9,10 +9,9 @@ Glad you asked! `Sciris <http://sciris.org>`__ is a flexible open source framewo
 
 Highlights
 ~~~~~~~~~~
-
 Some highlights of ``sciris``:
 
--  ``odict`` and ``objdict`` -- like an OrderedDict, but allows reference by position like a list, as well as many powerful methods (such as casting to array, sorting and enumeration functions, etc.). For example, let's say you have a dictionary of dictionaries ``results``, each entry of which has a key ``data``. With Sciris, you can access the data from the first item in ``results`` via ``results[0].data``. Without Sciris, this would be ``results[list(results.keys())[0]]['data']``. Nicer, eh?
+-  ``odict`` and ``objdict`` -- like an OrderedDict, but allows reference by position as if it were a list, and includes many powerful methods (such as casting to array, sorting and enumeration functions, etc.). For example, let's say you have a dictionary ``results``, each entry of which is itself a dictionary ``result``, which has a key ``data``. Using a Sciris ``objdict``, you can access the data from the first item in ``results`` via ``results[0].data``. Using vanilla Python dictionaries, this would be ``results[list(results.keys())[0]]['data']`` -- almost 3x longer to type.
 -  ``promotetoarray`` -- standardizes any kind of numeric input to a Numpy array, so e.g. ``1``, ``[1]``, ``(1,)`` etc. are all converted to ``array([1])``
 -  ``findnearest`` -- find the element of an array closest to the input value
 -  ``loadobj``, ``saveobj`` -- flexible methods to save/load arbitrary Python objects
@@ -31,17 +30,14 @@ Some highlights of ``scirisweb``:
 
 I'm not convinced.
 ~~~~~~~~~~~~~~~~~~
-
-That's OK. Perhaps you'd be interested in seeing what a script that performs tasks like parallelization, saving and loading files, and 3D plotting looks like when written in `vanilla Python <https://github.com/sciris/sciris/blob/develop/tests/showcase_vanilla.py>`__ compared to `using Sciris <https://github.com/sciris/sciris/blob/develop/tests/showcase.py>`__:
+That's OK. Perhaps you'd be interested in seeing what a script that performs tasks like parallelization, saving and loading files, and 3D plotting looks like when written in `vanilla Python <https://github.com/sciris/sciris/blob/develop/tests/showcase_vanilla.py>`__ (left) compared to `using Sciris <https://github.com/sciris/sciris/blob/develop/tests/showcase.py>`__ (right):
 
 |Sciris showcase|
 
 
 Is Sciris ready yet?
 ~~~~~~~~~~~~~~~~~~~~
-
-**Yes.** Sciris is currently used for a number of scientific computing libraries, including `Atomica <http://atomica.tools>`__ and `Covasim <http://covasim.org>`__. Sciris provides the backend for webapps such as the `Cascade Analysis Tool <http://cascade.tools>`__ and `HIPtool <http://hiptool.org>`__. However, note that Sciris is still undergoing rapid development. If you would like to be notified of major updates, please email info@sciris.org.
-
+**Yes.** Sciris is currently used for a number of scientific computing libraries, including `Atomica <http://atomica.tools>`__ and `Covasim <http://covasim.org>`__. Sciris provides the backend for webapps such as the `Cascade Analysis Tool <http://cascade.tools>`__, `HIPtool <http://hiptool.org>`__, and `Covasim <http://app.covasim.org>`__. However, note that Sciris is still undergoing rapid development. If you would like to be notified of major updates, please email info@sciris.org.
 
 
 Features
@@ -51,13 +47,11 @@ Here are a few more of the most commonly used features.
 
 Containers
 ~~~~~~~~~~
-
--  ``sc.odict()``: flexible container for best-of-all-worlds for lists, dicts, and arrays
--  ``sc.objdict()``: like an odict, but allows get/set via e.g. foo.bar instead of foo['bar']
+-  ``sc.odict()``: flexible container representing the best-of-all-worlds across lists, dicts, and arrays
+-  ``sc.objdict()``: like an odict, but allows get/set via e.g. ``foo.bar`` instead of ``foo['bar']``
 
 File utilities
 ~~~~~~~~~~~~~~
-
 -  ``sc.saveobj()/sc.loadobj()``: efficiently save/load any Python object (via pickling)
 -  ``sc.savejson()/sc.loadjson()``: likewise, for JSONs
 -  ``sc.thisdir()``: get current folder
@@ -65,24 +59,24 @@ File utilities
 
 Basic utilities
 ~~~~~~~~~~~~~~~
-
--  ``sc.dcp()``: shortcut to copy.deepcopy()
--  ``sc.pr()``: print detailed representation of an object
--  ``sc.heading()``: print text as a 'large' heading
--  ``sc.colorize()``: print text in a certain color
--  ``sc.sigfigs()``: truncate a number to a certain number of significant figures
--  ``sc.isnumber()``: checks if something is any number type
--  ``sc.promotetolist()``: converts strings or scalars to lists, for consistent iteration
--  ``sc.readdate()``: convert strings to dates using common formats
--  ``sc.tic()/sc.toc()``: simple method for timing durations
--  ``sc.runcommand()``: simple way of executing a shell command
 -  ``sc.findinds()``: find indices of an array matching a condition
 -  ``sc.findnearest()``: find nearest matching value
 -  ``sc.smooth()``: simple smoothing of 1D or 2D arrays
+-  ``sc.isnumber()``: checks if something is any number type
+-  ``sc.promotetolist()``: converts any object to a list, for easy iteration
+-  ``sc.promotetoarray()``: tries to convert any object to an array, for easy use with numpy
+-  ``sc.readdate()``: convert strings to dates using common formats
+-  ``sc.tic()/sc.toc()``: simple method for timing durations
+-  ``sc.runcommand()``: simple way of executing a shell command (shortcut to ``subprocess.Popen()``)
+-  ``sc.dcp()``: shortcut to ``copy.deepcopy()``
+-  ``sc.pp()``: shortcut to ``pprint.pprint()``
+-  ``sc.pr()``: print full representation of an object, including methods and each attribute
+-  ``sc.heading()``: print text as a 'large' heading
+-  ``sc.colorize()``: print text in a certain color
+-  ``sc.sigfigs()``: truncate a number to a certain number of significant figures
 
 Plotting utilities
 ~~~~~~~~~~~~~~~~~~
-
 -  ``sc.hex2grb()/sc.rgb2hex()``: convert between different color conventions
 -  ``sc.vectocolor()``: map a list of sequential values onto a list of colors
 -  ``sc.gridcolors()``: map a list of qualitative categories onto a list of colors
@@ -95,7 +89,6 @@ Plotting utilities
 
 Parallelization utilities
 ~~~~~~~~~~~~~~~~~~~~~~~~~
-
 -  ``sc.parallelize()``: as-easy-as-possible parallelization
 -  ``sc.loadbalancer()``: very basic load balancer
 
