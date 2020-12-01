@@ -77,12 +77,12 @@ def loadbalancer(maxload=None, index=None, interval=None, maxtime=None, label=No
     return None
 
 
-def parallelize(func, iterarg=None, iterkwargs=None, args=None, kwargs=None, ncpus=None, maxload=None, interval=None, **func_kwargs):
+def parallelize(func, iterarg=None, iterkwargs=None, args=None, kwargs=None, ncpus=None, maxload=None, interval=None, parallelizer=None, **func_kwargs):
     '''
     Main method for parallelizing a function.
 
-    Most simply, acts as an shortcut for using multiprocessing.Pool() or Queue().
-    However, this function can also iterate over more complex arguments.
+    Most simply, acts as an shortcut for using multiprocess.Pool(). However, this
+    function can also iterate over more complex arguments.
 
     Either or both of iterarg or iterkwargs can be used. iterarg can be an iterable or an integer;
     if the latter, it will run the function that number of times and not pass the argument to the
@@ -96,6 +96,20 @@ def parallelize(func, iterarg=None, iterkwargs=None, args=None, kwargs=None, ncp
     returned by multiprocessing; if ncpus is not None, it will use the specified number of CPUs;
     if ncpus is None and maxload is not None, it will allocate the number of CPUs dynamically.
 
+    Args:
+        func (function): the function to parallelize
+        iterarg (list): the variable(s) to provide to each process (see examples below)
+        iterkwargs (dict): another way of providing variables to each process (see examples below)
+        args (list): positional arguments, the same for all processes
+        kwargs (dict): keyword arguments, the same for all processes
+        ncpus (int): number of CPUs to use (if None, use loadbalancer)
+        maxload (float): maximum CPU load to use (not used if ncpus is specified)
+        interval (float): number of seconds to pause between starting processes for checking load (not used if ncpus is specified)
+        parallelizer (func): alternate parallelization function instead of multiprocess.Pool.map()
+
+    Returns:
+        List of outputs from each process
+
     **Example 1 -- simple usage as a shortcut to multiprocessing.map()**::
 
         def f(x):
@@ -105,9 +119,10 @@ def parallelize(func, iterarg=None, iterkwargs=None, args=None, kwargs=None, ncp
 
     **Example 2 -- simple usage for "embarrassingly parallel" processing**::
 
+        import numpy as np
+
         def rnd():
-            import pylab as pl
-            return pl.rand()
+            return np.random.random()
 
         results = sc.parallelize(rnd, 10, ncpus=4)
 
@@ -136,7 +151,18 @@ def parallelize(func, iterarg=None, iterkwargs=None, args=None, kwargs=None, ncp
                 pl.scatter(xy[0], xy[1], label='Run %i'%i)
             pl.legend()
 
-    Note: to use on Windows, parallel calls must contained with an ``if __name__ == '__main__'`` block.
+    **Example 5 -- using a custom parallelization function**::
+
+        def f(x):
+            return x*x
+
+        import multiprocessing as mp
+        multipool = mp.Pool(processes=2)
+        results = sc.parallelize(f, [1,2,3], parallelizer=multipool.map)
+        multipool.close()
+        multipool.join()
+
+    **Note**: to use on Windows, parallel calls must contained with an ``if __name__ == '__main__'`` block.
 
     For example::
 
@@ -149,7 +175,7 @@ def parallelize(func, iterarg=None, iterkwargs=None, args=None, kwargs=None, ncp
             results = sc.parallelize(func=f, iterarg=[(1,2),(2,3),(3,4)])
             print(results)
 
-    Version: 2019dec03
+    Version: 2020nov30
     '''
     # Handle maxload
     if ncpus is None and maxload is None:
@@ -223,10 +249,13 @@ def parallelize(func, iterarg=None, iterkwargs=None, args=None, kwargs=None, ncp
 
     # Run simply using map -- no advantage here to using Process/Queue
     try:
-        multipool = mp.Pool(processes=ncpus)
-        outputlist = multipool.map(_parallel_task, argslist)
-        multipool.close()
-        multipool.join()
+        if parallelizer is None: # Standard usage: use the default map() function
+            multipool = mp.Pool(processes=ncpus)
+            outputlist = multipool.map(_parallel_task, argslist)
+            multipool.close()
+            multipool.join()
+        else: # Use a custom parallelization method
+            outputlist = parallelizer(_parallel_task, argslist)
     except RuntimeError as E: # Handle if run outside of __main__ on Windows
         if 'freeze_support' in E.args[0]: # For this error, add additional information
             errormsg = '''
