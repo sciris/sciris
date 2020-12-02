@@ -122,6 +122,7 @@ def parallelize(func, iterarg=None, iterkwargs=None, args=None, kwargs=None, ncp
         import numpy as np
 
         def rnd():
+            np.random.seed()
             return np.random.random()
 
         results = sc.parallelize(rnd, 10, ncpus=4)
@@ -139,7 +140,8 @@ def parallelize(func, iterarg=None, iterkwargs=None, args=None, kwargs=None, ncp
     **Example 4 -- using non-iterated arguments and dynamic load balancing**::
 
         def myfunc(i, x, y):
-            xy = [x+i*pl.randn(100), y+i*pl.randn(100)]
+            np.random.seed()
+            xy = [x+i*np.random.randn(100), y+i*np.andom.randn(100)]
             return xy
 
         xylist1 = sc.parallelize(myfunc, kwargs={'x':3, 'y':8}, iterarg=range(5), maxload=0.8, interval=0.2) # Use kwargs dict

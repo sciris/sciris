@@ -909,7 +909,7 @@ def surf3d(data, x=None, y=None, fig=None, returnfig=False, colorbar=True, figkw
     '''
 
     # Set default arguments
-    plotkwargs = ut.mergedicts({'rstride':1, 'cstride':1, 'linewidth':0, 'antialiased':False, 'cmap':'viridis'}, plotkwargs, kwargs)
+    plotkwargs = ut.mergedicts({'cmap':'viridis'}, plotkwargs, kwargs)
     axkwargs = ut.mergedicts(axkwargs)
 
     # Create figure

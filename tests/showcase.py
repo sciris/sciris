@@ -5,35 +5,32 @@ import sciris as sc
 # Set parameters and define random wave generator
 xmin = 0
 xmax = 10
-npts = 200
-std = 0.1
+npts = 50
 repeats = 10
-noisevals = np.linspace(0,1,21)
+noisevals = np.linspace(0, 1, 11)
 x = np.linspace(xmin, xmax, npts)
 
-def randgen(std):
+def randwave(std):
+    np.random.seed()
     a = np.cos(x)
-    b = np.random.randn(npts)*std
-    return a+b
+    b = np.random.randn(npts)
+    return a + b*std
 
 # Start timing
-sc.tic() 
+sc.tic()
 
 # Create object in parallel
-output = sc.parallelize(randgen, noisevals)
-
+output = sc.parallelize(randwave, noisevals)
 
 # Save to files
 filenames = []
 for n,noiseval in enumerate(noisevals):
-    filename = 'noise%0.1f.obj' % noiseval
+    filename = f'noise{noiseval:0.1f}.obj'
     sc.saveobj(filename, output[n])
     filenames.append(filename)
 
 # Create dict from files
-data = sc.odict()
-for filename in filenames:
-    data[filename] = sc.loadobj(filename)
+data = sc.odict({filename:sc.loadobj(filename) for filename in filenames})
 
 # Create 3D plot
 sc.surf3d(data[:])
