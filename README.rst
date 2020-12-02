@@ -4,39 +4,42 @@ Welcome to Sciris
 What is Sciris?
 ---------------
 
-Glad you asked! `Sciris <http://sciris.org>`__ is a flexible open source framework for building scientific web applications using Python and JavaScript. It comes in two parts: ``sciris`` is a collection of tools that should make scientific Python coding a more pleasant experience, while ``scirisweb`` is a collection of tools that allow you to easily build Python webapps. Sciris is built on Numpy and Matplotlib, while ScirisWeb is built on Vue.js, Flask, Twisted, Redis, and ``mpld3``. Sciris is available on `PyPi <https://pypi.org/project/sciris/>`__ and `GitHub <https://github.com/sciris/sciris>`__. Full documentation is available at http://docs.sciris.org.
+Glad you asked! `Sciris <http://sciris.org>`__ is a library of tools that make it faster and more pleasant to write scientific Python code. Among other things, it provides functions covering a wide range of common array and plotting operations, so you can spend more time writing code and less time looking up how to do things on StackOverflow. Sciris is built on top of NumPy and Matplotlib, and complements pandas and SciPy. 
+
+ScirisWeb is an extension of Sciris that allows you to build Python webapps without reinventing the wheel. ScirisWeb is built on `Flask <https://flask.palletsprojects.com/>`__ and `mpld3 <https://github.com/mpld3/mpld3>`__. Whereas `Plotly Dash <https://plotly.com/dash/>`__ and `Streamlit <https://www.streamlit.io/>`__ are self-contained ecosystems, ScirisWeb is completely modular, so you have control over which tools to use for which aspects of the project. Out of the box, ScirisWeb provides a "just works" solution using `Vuejs <https://vuejs.org/>`__ for the frontend, `Redis <https://redis.io/>`__ for the (optional) database, and Matplotlib for plotting. But if you want a React frontend linked to an SQL database with Plotly figures, ScirisWeb can serve as the glue holding everything together.
+
+Sciris is available on `PyPi <https://pypi.org/project/sciris/>`__ (``pip install sciris``) and `GitHub <https://github.com/sciris/sciris>`__. Full documentation is available at http://docs.sciris.org. If you have questions, feature suggestions, or would like some help getting started, please reach out to us at info@sciris.org.
 
 Highlights
 ~~~~~~~~~~
-Some highlights of Sciris:
+Some highlights of Sciris (``import sciris as sc``):
 
--  ``odict`` and ``objdict`` -- like an OrderedDict, but allows reference by position as if it were a list, and includes many powerful methods (such as casting to array, sorting and enumeration functions, etc.). For example, let's say you have a dictionary ``results``, each entry of which is itself a dictionary ``result``, which has a key ``data``. Using a Sciris ``objdict``, you can access the data from the first item in ``results`` via ``results[0].data``. Using vanilla Python dictionaries, this would be ``results[list(results.keys())[0]]['data']`` -- almost 3x longer to type.
--  ``promotetoarray`` -- standardizes any kind of numeric input to a Numpy array, so e.g. ``1``, ``[1]``, ``(1,)`` etc. are all converted to ``array([1])``
--  ``findnearest`` -- find the element of an array closest to the input value
--  ``loadobj``, ``saveobj`` -- flexible methods to save/load arbitrary Python objects
-- ``parallelize`` -- one-liner method for running functions in parallel
--  ``vectocolor`` -- map a given vector into a set of colors
--  ``gridcolors`` -- pick a set of colors from maximally distant parts of color-space (e.g. for plots with large numbers of lines)
--  ``smoothinterp`` -- linear interpolation with smoothing
--  ``asd`` -- adaptive stochastic descent, an algorithm for optimizing functions as few function evaluations as possible
+- **Powerful containers** -- The ``sc.odict`` class is what ``OrderedDict`` (almost) could have been, allowing reference by position or key, casting to a NumPy array, sorting and enumeration functions, etc.
+- **Array operations** -- Want to find the indices of an array that match a certain value or condition? ``sc.findinds()`` will do that. How about just the nearest value, regardless of exact match? ``sc.findnearest()``. What about the last matching value? ``sc.findlast()``. Yes, you could do ``np.nonzero()[0][-1]`` instead, but ``sc.findlast()`` is easier to read, type, and remember, and handles edge cases more elegantly.
+- **File I/O** -- One-liner functions for saving and loading text, JSON, spreadsheets, or even arbitrary Python objects.
+- **Plotting recipes** -- Simple functions for mapping sequential or qualitative data onto colors, manipulating color data, and updating axis limits and tick labels, plus several new colormaps.
 
-Some highlights of ``scirisweb``:
+Some highlights of ScirisWeb (``import scirisweb as sw``):
 
--  ``ScirisApp`` -- a fully featured server that can be created as simply as ``app = ScirisApp(config)`` and run with ``app.run()``
--  ``RPC`` -- a simple function for defining links between the frontend (web interface) and the backend (server)
--  ``Datastore`` -- user and data management based on Redis
+-  **ScirisApp** -- An extension of a Flask App that can be created as simply as ``app = sw.ScirisApp(config)`` and run with ``app.run()``.
+-  **RPCs** -- Simple "remote procedure calls" that define how the frontend (web interface) interacts with the backend (Python server).
+-  **Datastore** -- For more fully-featured webapps, user and data management are available based on Redis (with additional options for SQL or file-based databases).
 
 
 I'm not convinced.
 ~~~~~~~~~~~~~~~~~~
-That's OK. Perhaps you'd be interested in seeing what a script that performs tasks like parallelization, saving and loading files, and 3D plotting looks like when written in `vanilla Python <https://github.com/sciris/sciris/blob/develop/tests/showcase_vanilla.py>`__ (left) compared to `using Sciris <https://github.com/sciris/sciris/blob/develop/tests/showcase.py>`__ (right):
+That's OK. Perhaps you'd be interested in seeing what a script that performs tasks like parallelization, saving and loading files, and 3D plotting looks like when written in "`vanilla Python <https://github.com/sciris/sciris/blob/develop/tests/showcase_vanilla.py>`__" (left) compared to `using Sciris <https://github.com/sciris/sciris/blob/develop/tests/showcase.py>`__ (right):
 
 |Sciris showcase|
+
+Both of these do the same thing, but vanilla Python requires 50% more lines of code to produce this graph:
+
+|Sciris output|
 
 
 Is Sciris ready yet?
 ~~~~~~~~~~~~~~~~~~~~
-**Yes.** Sciris is currently used for a number of scientific computing libraries, including `Atomica <http://atomica.tools>`__ and `Covasim <http://covasim.org>`__. Sciris provides the backend for webapps such as the `Cascade Analysis Tool <http://cascade.tools>`__, `HIPtool <http://hiptool.org>`__, and `Covasim <http://app.covasim.org>`__. However, note that Sciris is still undergoing rapid development. If you would like to be notified of major updates, please email info@sciris.org.
+**Yes.** Sciris is currently used by a number of scientific computing libraries, including `Atomica <http://atomica.tools>`__ and `Covasim <http://covasim.org>`__. ScirisWeb provides the backend for webapps such as the `Cascade Analysis Tool <http://cascade.tools>`__, `HIPtool <http://hiptool.org>`__, and `Covasim <http://app.covasim.org>`__. Note that Sciris is still undergoing rapid development, and ScirisWeb, while functional, is still in beta development.
 
 
 Features
@@ -49,33 +52,24 @@ Containers
 -  ``sc.odict()``: flexible container representing the best-of-all-worlds across lists, dicts, and arrays
 -  ``sc.objdict()``: like an odict, but allows get/set via e.g. ``foo.bar`` instead of ``foo['bar']``
 
-File utilities
-~~~~~~~~~~~~~~
--  ``sc.saveobj()/sc.loadobj()``: efficiently save/load any Python object (via pickling)
--  ``sc.savejson()/sc.loadjson()``: likewise, for JSONs
--  ``sc.thisdir()``: get current folder
--  ``sc.getfilelist()``: easy way to access glob
-
-Basic utilities
-~~~~~~~~~~~~~~~
--  ``sc.findinds()``: find indices of an array matching a condition
+Array operations
+~~~~~~~~~~~~~~~~
+-  ``sc.findinds()``: find indices of an array matching a value or condition
 -  ``sc.findnearest()``: find nearest matching value
 -  ``sc.smooth()``: simple smoothing of 1D or 2D arrays
 -  ``sc.isnumber()``: checks if something is any number type
 -  ``sc.promotetolist()``: converts any object to a list, for easy iteration
 -  ``sc.promotetoarray()``: tries to convert any object to an array, for easy use with numpy
--  ``sc.readdate()``: convert strings to dates using common formats
--  ``sc.tic()/sc.toc()``: simple method for timing durations
--  ``sc.runcommand()``: simple way of executing a shell command (shortcut to ``subprocess.Popen()``)
--  ``sc.dcp()``: shortcut to ``copy.deepcopy()``
--  ``sc.pp()``: shortcut to ``pprint.pprint()``
--  ``sc.pr()``: print full representation of an object, including methods and each attribute
--  ``sc.heading()``: print text as a 'large' heading
--  ``sc.colorize()``: print text in a certain color
--  ``sc.sigfigs()``: truncate a number to a certain number of significant figures
 
-Plotting utilities
-~~~~~~~~~~~~~~~~~~
+File I/O
+~~~~~~~~
+-  ``sc.saveobj()/sc.loadobj()``: efficiently save/load any Python object (via pickling)
+-  ``sc.savejson()/sc.loadjson()``: likewise, for JSONs
+-  ``sc.thisdir()``: get current folder
+-  ``sc.getfilelist()``: easy way to access glob
+
+Plotting
+~~~~~~~~
 -  ``sc.hex2grb()/sc.rgb2hex()``: convert between different color conventions
 -  ``sc.vectocolor()``: map a list of sequential values onto a list of colors
 -  ``sc.gridcolors()``: map a list of qualitative categories onto a list of colors
@@ -86,10 +80,21 @@ Plotting utilities
 -  ``sc.maximize()``: make the figure fill the whole screen
 -  ``sc.savemovie()``: save a sequence of figures as an MP4 or other movie
 
-Parallelization utilities
-~~~~~~~~~~~~~~~~~~~~~~~~~
+Parallelization
+~~~~~~~~~~~~~~~
 -  ``sc.parallelize()``: as-easy-as-possible parallelization
 -  ``sc.loadbalancer()``: very basic load balancer
+
+Other utilities
+~~~~~~~~~~~~~~~
+-  ``sc.readdate()``: convert strings to dates using common formats
+-  ``sc.tic()/sc.toc()``: simple method for timing durations
+-  ``sc.runcommand()``: simple way of executing a shell command (shortcut to ``subprocess.Popen()``)
+-  ``sc.dcp()``: shortcut to ``copy.deepcopy()``
+-  ``sc.pr()``: print full representation of an object, including methods and each attribute
+-  ``sc.heading()``: print text as a 'large' heading
+-  ``sc.colorize()``: print text in a certain color
+-  ``sc.sigfigs()``: truncate a number to a certain number of significant figures
 
 
 Installation and run instructions
@@ -355,3 +360,4 @@ A very simple test case of Sciris. In the ``examples/helloworld`` folder, type `
 See the directions `here <https://github.com/sciris/scirisweb/tree/develop/examples/helloworld>`__ on how to install and run this example.
 
 .. |Sciris showcase| image:: docs/sciris-showcase-code.png
+.. |Sciris output| image:: docs/sciris-showcase-output.png
