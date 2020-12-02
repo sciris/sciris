@@ -4,11 +4,12 @@ Welcome to Sciris
 What is Sciris?
 ---------------
 
-Glad you asked! `Sciris <http://sciris.org>`__ is a library of tools that make it faster and more pleasant to write scientific Python code. Among other things, it provides functions covering a wide range of common array and plotting operations, so you can spend more time writing code and less time looking up how to do things on StackOverflow. Sciris is built on top of NumPy and Matplotlib, and complements pandas and SciPy. 
+Glad you asked! **Sciris** (http://sciris.org) is a library of tools that make it faster and more pleasant to write scientific Python code. Built on top of `NumPy <https://numpy.org/>`__ and `Matplotlib <https://matplotlib.org/>`__, Sciris provides functions covering a wide range of common array and plotting operations. This means you can get more done with less code, and spend less time looking things up on StackOverflow.
 
-ScirisWeb is an extension of Sciris that allows you to build Python webapps without reinventing the wheel. ScirisWeb is built on `Flask <https://flask.palletsprojects.com/>`__ and `mpld3 <https://github.com/mpld3/mpld3>`__. Whereas `Plotly Dash <https://plotly.com/dash/>`__ and `Streamlit <https://www.streamlit.io/>`__ are self-contained ecosystems, ScirisWeb is completely modular, so you have control over which tools to use for which aspects of the project. Out of the box, ScirisWeb provides a "just works" solution using `Vuejs <https://vuejs.org/>`__ for the frontend, `Redis <https://redis.io/>`__ for the (optional) database, and Matplotlib for plotting. But if you want a React frontend linked to an SQL database with Plotly figures, ScirisWeb can serve as the glue holding everything together.
+**ScirisWeb** is an extension of Sciris that allows you to build Python webapps without reinventing the wheel -- kind of like `Shiny <https://shiny.rstudio.com/>`__ for Python. In contrast to `Plotly Dash <https://plotly.com/dash/>`__ and `Streamlit <https://www.streamlit.io/>`__, which have limited options for customization, ScirisWeb is completely modular, so you have control over which tools to use for which aspects of the project. Out of the box, ScirisWeb provides a "just works" solution using `Vuejs <https://vuejs.org/>`__ for the frontend, `Flask <https://flask.palletsprojects.com/>`__ as the web framework, `Redis <https://redis.io/>`__ for the (optional) database, and Matplotlib/`mpld3 <https://github.com/mpld3/mpld3>`__ for plotting. But if you want a React frontend linked to an SQL database with Plotly figures, ScirisWeb can serve as the glue holding all of that together.
 
 Sciris is available on `PyPi <https://pypi.org/project/sciris/>`__ (``pip install sciris``) and `GitHub <https://github.com/sciris/sciris>`__. Full documentation is available at http://docs.sciris.org. If you have questions, feature suggestions, or would like some help getting started, please reach out to us at info@sciris.org.
+
 
 Highlights
 ~~~~~~~~~~
@@ -32,9 +33,16 @@ That's OK. Perhaps you'd be interested in seeing what a script that performs tas
 
 |Sciris showcase|
 
-Both of these do the same thing, but vanilla Python requires 50% more lines of code to produce this graph:
+Both of these do the same thing, but the plain Python version requires 50% more lines of code to produce the same graph:
 
 |Sciris output|
+
+
+Where did Sciris come from?
+~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Development of Sciris began in 2014 to support development of the `Optima <http://optimamodel.com>`__ suite of tools. We kept encounting the same issues and inconveniences over and over while building scientific webapps, and began collecting the tools we used to overcome these issues into a shared library. This library evolved into Sciris. (Note: while "Sciris" doesn't mean anything, "iris" means "rainbow" in Greek, and the name was loosely inspired by the wide range of features included in Sciris.)
+
+To give a based-on-a-true-story example, let's say you have a dictionary of results for multiple runs of your model, called ``results``. The output of each model run is itself a dictionary, with keys such as ``name`` and ``data``. Now let's say you want to access the data from the first model run. Using plain Python dictionaries, this would be ``results[list(results.keys())[0]]['data']``. Using a Sciris ``objdict``, this is ``results[0].data`` -- almost 3x shorter.
 
 
 Is Sciris ready yet?
