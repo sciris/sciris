@@ -6,7 +6,7 @@ What is Sciris?
 
 Glad you asked! **Sciris** (http://sciris.org) is a library of tools that make it faster and more pleasant to write scientific Python code. Built on top of `NumPy <https://numpy.org/>`__ and `Matplotlib <https://matplotlib.org/>`__, Sciris provides functions covering a wide range of common array and plotting operations. This means you can get more done with less code, and spend less time looking things up on StackOverflow.
 
-**ScirisWeb** is an extension of Sciris that allows you to build Python webapps without reinventing the wheel -- kind of like `Shiny <https://shiny.rstudio.com/>`__ for Python. In contrast to `Plotly Dash <https://plotly.com/dash/>`__ and `Streamlit <https://www.streamlit.io/>`__, which have limited options for customization, ScirisWeb is completely modular, so you have control over which tools to use for which aspects of the project. Out of the box, ScirisWeb provides a "just works" solution using `Vuejs <https://vuejs.org/>`__ for the frontend, `Flask <https://flask.palletsprojects.com/>`__ as the web framework, `Redis <https://redis.io/>`__ for the (optional) database, and Matplotlib/`mpld3 <https://github.com/mpld3/mpld3>`__ for plotting. But if you want a React frontend linked to an SQL database with Plotly figures, ScirisWeb can serve as the glue holding all of that together.
+**ScirisWeb** is an extension of Sciris that allows you to build Python webapps without reinventing the wheel – kind of like `Shiny <https://shiny.rstudio.com/>`__ for Python. In contrast to `Plotly Dash <https://plotly.com/dash/>`__ and `Streamlit <https://www.streamlit.io/>`__, which have limited options for customization, ScirisWeb is completely modular, so you have control over which tools to use for which aspects of the project. Out of the box, ScirisWeb provides a "just works" solution using `Vuejs <https://vuejs.org/>`__ for the frontend, `Flask <https://flask.palletsprojects.com/>`__ as the web framework, `Redis <https://redis.io/>`__ for the (optional) database, and Matplotlib/`mpld3 <https://github.com/mpld3/mpld3>`__ for plotting. But if you want a React frontend linked to an SQL database with Plotly figures, ScirisWeb can serve as the glue holding all of that together.
 
 Sciris is available on `PyPi <https://pypi.org/project/sciris/>`__ (``pip install sciris``) and `GitHub <https://github.com/sciris/sciris>`__. Full documentation is available at http://docs.sciris.org. If you have questions, feature suggestions, or would like some help getting started, please reach out to us at info@sciris.org.
 
@@ -15,16 +15,16 @@ Highlights
 ~~~~~~~~~~
 Some highlights of Sciris (``import sciris as sc``):
 
-- **Powerful containers** -- The ``sc.odict`` class is what ``OrderedDict`` (almost) could have been, allowing reference by position or key, casting to a NumPy array, sorting and enumeration functions, etc.
-- **Array operations** -- Want to find the indices of an array that match a certain value or condition? ``sc.findinds()`` will do that. How about just the nearest value, regardless of exact match? ``sc.findnearest()``. What about the last matching value? ``sc.findlast()``. Yes, you could do ``np.nonzero()[0][-1]`` instead, but ``sc.findlast()`` is easier to read, type, and remember, and handles edge cases more elegantly.
-- **File I/O** -- One-liner functions for saving and loading text, JSON, spreadsheets, or even arbitrary Python objects.
-- **Plotting recipes** -- Simple functions for mapping sequential or qualitative data onto colors, manipulating color data, and updating axis limits and tick labels, plus several new colormaps.
+- **Powerful containers** – The ``sc.odict`` class is what ``OrderedDict`` (almost) could have been, allowing reference by position or key, casting to a NumPy array, sorting and enumeration functions, etc.
+- **Array operations** – Want to find the indices of an array that match a certain value or condition? ``sc.findinds()`` will do that. How about just the nearest value, regardless of exact match? ``sc.findnearest()``. What about the last matching value? ``sc.findlast()``. Yes, you could do ``np.nonzero()[0][-1]`` instead, but ``sc.findlast()`` is easier to read, type, and remember, and handles edge cases more elegantly.
+- **File I/O** – One-liner functions for saving and loading text, JSON, spreadsheets, or even arbitrary Python objects.
+- **Plotting recipes** – Simple functions for mapping sequential or qualitative data onto colors, manipulating color data, and updating axis limits and tick labels, plus several new colormaps.
 
 Some highlights of ScirisWeb (``import scirisweb as sw``):
 
--  **ScirisApp** -- An extension of a Flask App that can be created as simply as ``app = sw.ScirisApp(config)`` and run with ``app.run()``.
--  **RPCs** -- Simple "remote procedure calls" that define how the frontend (web interface) interacts with the backend (Python server).
--  **Datastore** -- For more fully-featured webapps, user and data management are available based on Redis (with additional options for SQL or file-based databases).
+-  **ScirisApp** – An extension of a Flask App that can be created as simply as ``app = sw.ScirisApp(config)`` and run with ``app.run()``.
+-  **RPCs** – Simple "remote procedure calls" that define how the frontend (web interface) interacts with the backend (Python server).
+-  **Datastore** – For more fully-featured webapps, user and data management are available based on Redis (with additional options for SQL or file-based databases).
 
 
 I'm not convinced.
@@ -40,9 +40,9 @@ Both of these do the same thing, but the plain Python version requires 50% more 
 
 Where did Sciris come from?
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~
-Development of Sciris began in 2014 to support development of the `Optima <http://optimamodel.com>`__ suite of tools. We kept encounting the same issues and inconveniences over and over while building scientific webapps, and began collecting the tools we used to overcome these issues into a shared library. This library evolved into Sciris. (Note: while "Sciris" doesn't mean anything, "iris" means "rainbow" in Greek, and the name was loosely inspired by the wide range of features included in Sciris.)
+Development of Sciris began in 2014 to support development of the `Optima <http://optimamodel.com>`__ suite of models. We kept encounting the same issues and inconveniences over and over while building scientific webapps, and began collecting the tools we used to overcome these issues into a shared library. This library evolved into Sciris. (Note: while "Sciris" doesn't mean anything, "iris" means "rainbow" in Greek, and the name was loosely inspired by the wide spectrum of scientific computing features included in Sciris.)
 
-To give a based-on-a-true-story example, let's say you have a dictionary of results for multiple runs of your model, called ``results``. The output of each model run is itself a dictionary, with keys such as ``name`` and ``data``. Now let's say you want to access the data from the first model run. Using plain Python dictionaries, this would be ``results[list(results.keys())[0]]['data']``. Using a Sciris ``objdict``, this is ``results[0].data`` -- almost 3x shorter.
+To give a based-on-a-true-story example, let's say you have a dictionary of results for multiple runs of your model, called ``results``. The output of each model run is itself a dictionary, with keys such as ``name`` and ``data``. Now let's say you want to access the data from the first model run. Using plain Python dictionaries, this would be ``results[list(results.keys())[0]]['data']``. Using a Sciris ``objdict``, this is ``results[0].data`` – almost 3x shorter.
 
 
 Is Sciris ready yet?
@@ -67,7 +67,7 @@ Array operations
 -  ``sc.smooth()``: simple smoothing of 1D or 2D arrays
 -  ``sc.isnumber()``: checks if something is any number type
 -  ``sc.promotetolist()``: converts any object to a list, for easy iteration
--  ``sc.promotetoarray()``: tries to convert any object to an array, for easy use with numpy
+-  ``sc.promotetoarray()``: tries to convert any object to an array, for easy use with NumPy
 
 File I/O
 ~~~~~~~~
@@ -97,8 +97,8 @@ Other utilities
 ~~~~~~~~~~~~~~~
 -  ``sc.readdate()``: convert strings to dates using common formats
 -  ``sc.tic()/sc.toc()``: simple method for timing durations
--  ``sc.runcommand()``: simple way of executing a shell command (shortcut to ``subprocess.Popen()``)
--  ``sc.dcp()``: shortcut to ``copy.deepcopy()``
+-  ``sc.runcommand()``: simple way of executing shell commands (shortcut to ``subprocess.Popen()``)
+-  ``sc.dcp()``: simple way of copying objects (shortcut to ``copy.deepcopy()``)
 -  ``sc.pr()``: print full representation of an object, including methods and each attribute
 -  ``sc.heading()``: print text as a 'large' heading
 -  ``sc.colorize()``: print text in a certain color
@@ -199,7 +199,7 @@ Package and library dependencies
 
 First, make sure that you have ``npm`` (included in Node.js installation) and ``git`` installed on your machine.
 
-Install `Anaconda Python <https://www.anaconda.com/download/>`__. In your Python setup, you also need to have the following packages (instructions in parentheses show how to install with Anaconda Python environment already installed). **Note**, these should all be installed automatically when you type ``python setup.py develop`` and  ``python setup-web.py develop``.
+Install `Anaconda Python <https://www.anaconda.com/download/>`__. In your Python setup, you also need to have the following packages (instructions in parentheses show how to install with Anaconda Python environment already installed). **Note**, these should all be installed automatically when you type ``python setup.py develop`` in the Sciris and ScirisWeb folders.
 
 
 Database dependencies

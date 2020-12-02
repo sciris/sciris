@@ -6,7 +6,6 @@ import sciris as sc
 xmin = 0
 xmax = 10
 npts = 50
-repeats = 10
 noisevals = np.linspace(0, 1, 11)
 x = np.linspace(xmin, xmax, npts)
 

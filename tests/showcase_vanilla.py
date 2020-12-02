@@ -11,7 +11,6 @@ from mpl_toolkits.mplot3d import Axes3D # Unused but must be imported
 xmin = 0
 xmax = 10
 npts = 50
-repeats = 10
 noisevals = np.linspace(0, 1, 11)
 x = np.linspace(xmin, xmax, npts)
 
