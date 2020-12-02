@@ -28,11 +28,11 @@ Some highlights of ScirisWeb (``import scirisweb as sw``):
 
 I'm not convinced.
 ~~~~~~~~~~~~~~~~~~
-That's OK. Perhaps you'd be interested in seeing what a script that performs tasks like parallelization, saving and loading files, and 3D plotting looks like when written in `vanilla Python <https://github.com/sciris/sciris/blob/develop/tests/showcase_vanilla.py>`__ (left) compared to `using Sciris <https://github.com/sciris/sciris/blob/develop/tests/showcase.py>`__ (right):
+That's OK. Perhaps you'd be interested in seeing what a script that performs tasks like parallelization, saving and loading files, and 3D plotting looks like when written in "`vanilla Python <https://github.com/sciris/sciris/blob/develop/tests/showcase_vanilla.py>`__" (left) compared to `using Sciris <https://github.com/sciris/sciris/blob/develop/tests/showcase.py>`__ (right):
 
 |Sciris showcase|
 
-Both of these produce this graph:
+Both of these do the same thing, but vanilla Python requires 50% more lines of code to produce this graph:
 
 |Sciris output|
 
