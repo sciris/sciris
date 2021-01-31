@@ -235,7 +235,7 @@ def getfilelist(folder='.', pattern=None, abspath=False, nopath=False, filesonly
         nopath      (bool): whether to return no path
         filesonly   (bool): whether to only return files (not folders)
         foldersonly (bool): whether to only return folders (not files)
-        recursive   (bool): passd to glob()
+        recursive   (bool): passed to glob()
 
     Returns:
         List of files/folders
