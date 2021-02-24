@@ -742,10 +742,13 @@ def orangebluecolormap(apply=False):
 # Register colormaps
 pl.cm.register_cmap('alpine',     alpinecolormap())
 pl.cm.register_cmap('parula',     parulacolormap())
-pl.cm.register_cmap('turbo',      turbocolormap())
 pl.cm.register_cmap('banded',     bandedcolormap())
 pl.cm.register_cmap('bi',         bicolormap())
 pl.cm.register_cmap('orangeblue', orangebluecolormap())
+try:
+    pl.cm.register_cmap('turbo',      turbocolormap())
+except: # Included since Matplotlib 3.4.0
+    pass
 
 
 
