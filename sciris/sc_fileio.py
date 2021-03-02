@@ -520,9 +520,10 @@ def loadjson(filename=None, folder=None, string=None, fromfile=True, **kwargs):
     Returns:
         output (dict): the JSON object
 
-    **Example**::
+    **Examples**::
 
         json = sc.loadjson('my-file.json')
+        json = sc.loadjson(string='{"a":null, "b":[1,2,3]}')
     '''
     if string is not None or not fromfile:
         if string is None and filename is not None:
