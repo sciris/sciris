@@ -524,19 +524,18 @@ def loadjson(filename=None, folder=None, string=None, fromfile=True, **kwargs):
 
         json = sc.loadjson('my-file.json')
     '''
-    if fromfile:
-        filename = makefilepath(filename=filename, folder=folder)
-        try:
-            with open(filename) as f:
-                output = json.load(f, **kwargs)
-        except FileNotFoundError as E:
-            print('Warning: file not found. Use fromfile=False if not loading from a file')
-            raise E
-    else:
+    if string is not None or not fromfile:
         if string is None and filename is not None:
             string = filename # Swap arguments
         output = json.loads(string, **kwargs)
-
+    else:
+        filepath = makefilepath(filename=filename, folder=folder)
+        try:
+            with open(filepath) as f:
+                output = json.load(f, **kwargs)
+        except FileNotFoundError as E:
+            errormsg = f'No such file "{filename}". Use fromfile=False if loading a JSON string rather than a file.'
+            raise FileNotFoundError(errormsg) from E
     return output
 
 
