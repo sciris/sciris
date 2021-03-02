@@ -1585,8 +1585,8 @@ def date(obj, *args, start_date=None, dateformat=None, as_date=True):
     of sc.date() for an integer input.
 
     Args:
-        obj (str, date, datetime, list, array): the object to convert
-        args (str, date, datetime): additional objects to convert
+        obj (str, int, float, date, datetime, list, array): the object to convert
+        args (str, int, float, date, datetime): additional objects to convert
         start_date (str, date, datetime): the starting date, if an integer is supplied
         dateformat (str): the format to return the date in
         as_date (bool): whether to return as a datetime date instead of a string
@@ -1624,7 +1624,7 @@ def date(obj, *args, start_date=None, dateformat=None, as_date=True):
         try:
             if type(d) == dt.date: # Do not use isinstance, since must be the exact type
                 pass
-            elif isstring(d):
+            elif isstring(d) or isnumber(d):
                 d = readdate(d).date()
             elif isinstance(d, dt.datetime):
                 d = d.date()
