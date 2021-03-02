@@ -1386,9 +1386,11 @@ def promotetolist(obj=None, objtype=None, keepnone=False):
 
 def mergedicts(*args, strict=False, overwrite=True):
     '''
-    Tiny function to merge multiple dicts together. By default, skips things
+    Small function to merge multiple dicts together. By default, skips things
     that are not, dicts (e.g., None), and allows keys to be set multiple times.
-    Similar to dict.update(), except returns a value.
+    Similar to dict.update(), except returns a value. The first dictionary supplied
+    will be used for the output type (e.g. if the first dictionary is an odict,
+    an odict will be returned).
 
     Useful for cases, e.g. function arguments, where the default option is ``None``
     but you will need a dict later on.
@@ -1398,17 +1400,23 @@ def mergedicts(*args, strict=False, overwrite=True):
         overwrite (bool): if False, raise an exception if multiple keys are found
         *args (dict): the sequence of dicts to be merged
 
-
     **Examples**::
 
         d0 = sc.mergedicts(user_args) # Useful if user_args might be None, but d0 is always a dict
         d1 = sc.mergedicts({'a':1}, {'b':2}) # Returns {'a':1, 'b':2}
         d2 = sc.mergedicts({'a':1, 'b':2}, {'b':3, 'c':4}) # Returns {'a':1, 'b':3, 'c':4}
-        d3 = sc.mergedicts({'b':3, 'c':4}, {'a':1, 'b':2}) # Returns {'a':1, 'b':2, 'c':4}
+        d3 = sc.mergedicts(sc.odict({'b':3, 'c':4}), {'a':1, 'b':2}) # Returns sc.odict({'b':2, 'c':4, 'a':1})
         d4 = sc.mergedicts({'b':3, 'c':4}, {'a':1, 'b':2}, overwrite=False) # Raises exception
 
     '''
-    outputdict = {}
+    # Try to get the output type from the first argument, but revert to a standard dict if that fails
+    try:
+        assert isinstance(args[0], dict)
+        outputdict = args[0].__class__() # This creates a new instance of the class
+    except:
+        outputdict = {}
+
+    # Merge over the dictionaries in order
     for arg in args:
         is_dict = isinstance(arg, dict)
         if strict and not is_dict:
