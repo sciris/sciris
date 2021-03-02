@@ -21,7 +21,7 @@ requirements = [
         'numpy>=1.10.1',     # Numerical functions
         'pandas',            # Dataframes and spreadsheet input
         'openpyexcel>=2.5',  # Spreadsheet functions -- fork of openpyxl
-        'xlrd',              # Spreadsheet input
+        'xlrd==1.2.0',       # Spreadsheet input
         'xlsxwriter',        # Spreadsheet output
         'psutil',            # Load monitoring
         'dill',              # File I/O
