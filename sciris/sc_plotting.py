@@ -1211,13 +1211,24 @@ def maximize(fig=None, die=False):
 
     New in version 1.0.0.
     '''
+    backend = pl.get_backend().lower()
     if fig is not None:
         pl.figure(fig.number) # Set the current figure
     try:
-        mng = pl.get_current_fig_manager()
-        mng.window.showMaximized()
+        mgr = pl.get_current_fig_manager()
+        if 'qt' in backend:
+            mgr.window.showMaximized()
+        elif 'gtk' in backend:
+            mgr.window.maximize()
+        elif 'wx' in backend:
+            mgr.frame.Maximize(True)
+        elif 'tk' in backend:
+            mgr.resize(*mgr.window.maxsize())
+        else:
+            errormsg = f'The maximize() function is not supported for the backend "{backend}"; use Qt5Agg if possible'
+            raise NotImplementedError(errormsg)
     except Exception as E:
-        errormsg = f'Warning: maximizing the figure failed: {str(E)}'
+        errormsg = f'Warning: maximizing the figure failed because: "{str(E)}"'
         if die:
             raise RuntimeError(errormsg) from E
         else:
