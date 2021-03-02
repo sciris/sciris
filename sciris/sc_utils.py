@@ -513,7 +513,7 @@ def objrepr(obj, showid=True, showmeth=True, showprop=True, showatt=True, divide
     return output
 
 
-def prepr(obj, maxlen=None, maxitems=None, skip=None, dividerchar='—', dividerlen=60, use_repr=True, maxtime=3):
+def prepr(obj, maxlen=None, maxitems=None, skip=None, dividerchar='—', dividerlen=60, use_repr=True, maxtime=3, die=False):
     '''
     Akin to "pretty print", returns a pretty representation of an object --
     all attributes (except any that are skipped), plust methods and ID. Usually
@@ -529,6 +529,7 @@ def prepr(obj, maxlen=None, maxitems=None, skip=None, dividerchar='—', divider
         divierlen (int): number of divider characters
         use_repr (bool): whether to use repr() or str() to parse the object
         maxtime (float): maximum amount of time to spend on trying to print the object
+        die (bool): whether to raise an exception if an error is encountered
     '''
 
     # Decide how to handle representation function -- repr is dangerous since can lead to recursion
@@ -547,69 +548,84 @@ def prepr(obj, maxlen=None, maxitems=None, skip=None, dividerchar='—', divider
     labels = []
     values = []
 
-    if not (hasattr(obj, '__dict__') or hasattr(obj, '__slots__')):
-        # It's a plain object
-        labels = ['%s' % type(obj)]
-        values = [repr_fn(obj)]
-    else:
-        if hasattr(obj, '__dict__'):
-            labels = sorted(set(obj.__dict__.keys()) - set(skip))  # Get the dict attribute keys
+    # Wrap entire process in a try-except in case it fails
+    try:
+        if not (hasattr(obj, '__dict__') or hasattr(obj, '__slots__')):
+            # It's a plain object
+            labels = ['%s' % type(obj)]
+            values = [repr_fn(obj)]
         else:
-            labels = sorted(set(obj.__slots__) - set(skip))  # Get the slots attribute keys
+            if hasattr(obj, '__dict__'):
+                labels = sorted(set(obj.__dict__.keys()) - set(skip))  # Get the dict attribute keys
+            else:
+                labels = sorted(set(obj.__slots__) - set(skip))  # Get the slots attribute keys
 
-        if len(labels):
-            extraitems = len(labels) - maxitems
-            if extraitems>0:
-                labels = labels[:maxitems]
-            values = []
-            for a,attr in enumerate(labels):
-                if (time.time() - T) < maxtime:
-                    try: value = repr_fn(getattr(obj, attr))
-                    except: value = 'N/A'
-                    values.append(value)
-                else:
-                    labels = labels[:a]
-                    labels.append('etc. (time exceeded)')
-                    values.append(f'{len(labels)-a} entries not shown')
-                    time_exceeded = True
-                    break
-        else:
-            items = dir(obj)
-            extraitems = len(items) - maxitems
-            if extraitems > 0:
-                items = items[:maxitems]
-            for a,attr in enumerate(items):
-                if not attr.startswith('__'):
+            if len(labels):
+                extraitems = len(labels) - maxitems
+                if extraitems>0:
+                    labels = labels[:maxitems]
+                values = []
+                for a,attr in enumerate(labels):
                     if (time.time() - T) < maxtime:
-                        try:    value = repr_fn(getattr(obj, attr))
+                        try: value = repr_fn(getattr(obj, attr))
                         except: value = 'N/A'
-                        labels.append(attr)
                         values.append(value)
                     else:
+                        labels = labels[:a]
                         labels.append('etc. (time exceeded)')
                         values.append(f'{len(labels)-a} entries not shown')
                         time_exceeded = True
-        if extraitems > 0:
-            labels.append('etc. (too many items)')
-            values.append(f'{extraitems} entries not shown')
+                        break
+            else:
+                items = dir(obj)
+                extraitems = len(items) - maxitems
+                if extraitems > 0:
+                    items = items[:maxitems]
+                for a,attr in enumerate(items):
+                    if not attr.startswith('__'):
+                        if (time.time() - T) < maxtime:
+                            try:    value = repr_fn(getattr(obj, attr))
+                            except: value = 'N/A'
+                            labels.append(attr)
+                            values.append(value)
+                        else:
+                            labels.append('etc. (time exceeded)')
+                            values.append(f'{len(labels)-a} entries not shown')
+                            time_exceeded = True
+            if extraitems > 0:
+                labels.append('etc. (too many items)')
+                values.append(f'{extraitems} entries not shown')
 
-    # Decide how to print them
-    maxkeylen = 0
-    if len(labels):
-        maxkeylen = max([len(label) for label in labels]) # Find the maximum length of the attribute keys
-    if maxkeylen<maxlen:
-        maxlen = maxlen - maxkeylen # Shorten the amount of data shown if the keys are long
-    formatstr = '%'+ '%i'%maxkeylen + 's' # Assemble the format string for the keys, e.g. '%21s'
-    output  = objrepr(obj, showatt=False, dividerchar=dividerchar, dividerlen=dividerlen) # Get the methods
-    for label,value in zip(labels,values): # Loop over each attribute
-        if len(value)>maxlen: value = value[:maxlen] + ' [...]' # Shorten it
-        prefix = formatstr%label + ': ' # The format key
-        output += indent(prefix, value)
-    output += divider
-    if time_exceeded:
-        timestr = f'\nNote: the object did not finish printing within maxtime={maxtime} s.\n'
-        timestr += 'To see the full object, call prepr() with increased maxtime.'
-        output += timestr
+        # Decide how to print them
+        maxkeylen = 0
+        if len(labels):
+            maxkeylen = max([len(label) for label in labels]) # Find the maximum length of the attribute keys
+        if maxkeylen<maxlen:
+            maxlen = maxlen - maxkeylen # Shorten the amount of data shown if the keys are long
+        formatstr = '%'+ '%i'%maxkeylen + 's' # Assemble the format string for the keys, e.g. '%21s'
+        output  = objrepr(obj, showatt=False, dividerchar=dividerchar, dividerlen=dividerlen) # Get the methods
+        for label,value in zip(labels,values): # Loop over each attribute
+            if len(value)>maxlen: value = value[:maxlen] + ' [...]' # Shorten it
+            prefix = formatstr%label + ': ' # The format key
+            output += indent(prefix, value)
+        output += divider
+        if time_exceeded:
+            timestr = f'\nNote: the object did not finish printing within maxtime={maxtime} s.\n'
+            timestr += 'To see the full object, call prepr() with increased maxtime.'
+            output += timestr
+
+    # If that failed, try progressively simpler approaches
+    except Exception as E:
+        if die:
+            errormsg = 'Failed to create pretty representation of object'
+            raise RuntimeError(errormsg) from E
+        else:
+            try: # Next try the objrepr, which is the same except doesn't print attribute values
+                output = objrepr(obj, dividerchar=dividerchar, dividerlen=dividerlen)
+                output += f'\nWarning: showing simplified output since full repr failed {str(E)}'
+            except: # If that fails, try just the string representation
+                output = str(obj)
+
     return output
 
 
