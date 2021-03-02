@@ -1502,13 +1502,14 @@ def getdate(obj=None, astype='str', dateformat=None):
         return None # Should not be possible to get to this point
 
 
-def readdate(datestr=None, dateformat=None, return_defaults=False):
+def readdate(datestr=None, *args, dateformat=None, return_defaults=False):
     '''
     Convenience function for loading a date from a string. If dateformat is None,
     this function tries a list of standard date types.
 
     Args:
-        datestr (str or list): the string containing the date, or a list of dates
+        datestr (int, float, str or list): the string containing the date, or the timestamp (in seconds), or a list of either
+        args (list): additional dates to convert
         dateformat (str or list): the format for the date, if known; can be a list of options
         return_defaults (bool): don't convert the date, just return the defaults
 
@@ -1518,7 +1519,9 @@ def readdate(datestr=None, dateformat=None, return_defaults=False):
     **Examples**::
 
         dateobj = sc.readdate('2020-03-03') # Standard format, so works
-        dateobjs = sc.readdate(['2020-06', '2020-07'], dateformat='%Y-%m')
+        dateobj = sc.readdate(1611661666) # Can read timestamps as well
+        dateobjs = sc.readdate(['2020-06', '2020-07'], dateformat='%Y-%m') # Can read custom date formats
+        dateobjs = sc.readdate('20200321', 1611661666) # Can mix and match formats
     '''
 
     formats_to_try = {
@@ -1542,35 +1545,32 @@ def readdate(datestr=None, dateformat=None, return_defaults=False):
         for f,fmt in enumerate(format_list):
             formats_to_try[f'User supplied {f}'] = fmt
 
-    # Handle date strings
-    if isstring(datestr):
-        datestrs = [datestr]
-        was_string = True
-    elif isinstance(datestr, list):
-        datestrs = datestr
-        was_string = False
-    else:
-        errormsg = f'Could not recognize type {type(datestr)}: expecting string or list'
-        raise TypeError(errormsg)
-
     # Actually process the dates
+    datestrs = promotetolist(datestr)
+    datestrs.extend(args)
     dateobjs = []
     for datestr in datestrs: # Iterate over them
         dateobj = None
         exceptions = {}
-        for key,fmt in formats_to_try.items():
-            try:
-                dateobj = dt.datetime.strptime(datestr, fmt)
-                break # If we find one that works, we can stop
-            except Exception as E:
-                exceptions[key] = str(E)
-        if dateobj is None:
-            formatstr = '\n'.join([f'Format "{item[1]}" raised exception: {exceptions[item[0]]}' for item in formats_to_try.items()])
-            errormsg = f'Was unable to convert "{datestr}" to a date using the formats:\n{formatstr}'
-            raise ValueError(errormsg)
+        if isinstance(datestr, dt.datetime):
+            dateobj = datestr # Nothing to do
+        elif isnumber(datestr):
+            dateobj = dt.datetime.fromtimestamp(datestr)
+        else:
+            for key,fmt in formats_to_try.items():
+                try:
+                    dateobj = dt.datetime.strptime(datestr, fmt)
+                    break # If we find one that works, we can stop
+                except Exception as E:
+                    exceptions[key] = str(E)
+            if dateobj is None:
+                formatstr = '\n'.join([f'Format "{item[1]}" raised exception: {exceptions[item[0]]}' for item in formats_to_try.items()])
+                errormsg = f'Was unable to convert "{datestr}" to a date using the formats:\n{formatstr}'
+                raise ValueError(errormsg)
         dateobjs.append(dateobj)
 
-    if was_string:
+    # If only a single date was supplied, return just that; else return the list
+    if not isinstance(datestr, list) and not len(args):
         return dateobjs[0]
     else:
         return dateobjs
