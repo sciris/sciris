@@ -363,18 +363,20 @@ def htmlify(string, reverse=False, tostring=False):
     **Examples**::
 
         output = sc.htmlify('foo&\\nbar') # Returns b'foo&amp;<br>bar'
-        output = sc.htmlify('foo&\\nbar', tostring=True) # Returns 'foo&amp;<br>bar'
+        output = sc.htmlify('föö&\\nbar', tostring=True) # Returns 'f&#246;&#246;&amp;&nbsp;&nbsp;&nbsp;&nbsp;bar'
         output = sc.htmlify('foo&amp;<br>bar', reverse=True) # Returns 'foo&\\nbar'
     '''
     import html
     if not reverse: # Convert to HTML
         output = html.escape(string).encode('ascii', 'xmlcharrefreplace') # Replace non-ASCII characters
-        output = output.replace(b'\n',b'<br>') # Replace newlines with <br>
+        output = output.replace(b'\n', b'<br>') # Replace newlines with <br>
+        output = output.replace(b'\t', b'&nbsp;&nbsp;&nbsp;&nbsp;') # Replace tabs with 4 spaces
         if tostring: # Convert from bytestring to unicode
             output = output.decode()
     else: # Convert from HTML
         output = html.unescape(string)
-        output = output.replace('<br>','\n').replace('<BR>','\n')
+        output = output.replace('<br>','\n').replace('<br />','\n').replace('<BR>','\n')
+        output = output.replace()
     return output
 
 
