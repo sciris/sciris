@@ -2209,13 +2209,18 @@ def gitinfo(path=None, hashlen=7, die=False, verbose=True):
     Returns:
         Dictionary containing the branch, hash, and commit date
 
-    **Example**::
+    **Examples**::
 
         info = sc.gitinfo() # Get git info for current script repository
+        info = sc.gitinfo(my_package.__file__) # Get git info for a particular Python package
     """
 
     if path is None:
         path = os.getcwd()
+
+    gitbranch = "Branch N/A"
+    githash   = "Hash N/A"
+    gitdate   = "Date N/A"
 
     try:
         # First, get the .git directory
@@ -2257,17 +2262,18 @@ def gitinfo(path=None, hashlen=7, die=False, verbose=True):
                 gitdate = time.strftime("%Y-%m-%d %H:%M:%S UTC", t)
 
     except Exception as E:
-        gitbranch = "Branch N/A"
-        githash   = "Hash N/A"
-        gitdate   = "Date N/A"
         errormsg = 'Could not extract git info; please check paths'
         if die:
             raise Exception(errormsg) from E
         elif verbose:
             print(errormsg + f'\nError: {str(E)}')
 
-    if len(githash)>hashlen: githash = githash[:hashlen] # Trim hash to short length
-    output = {"branch": gitbranch, "hash": githash, "date": gitdate}  # Assemble outupt
+    # Trim the hash, but not if loading failed
+    if len(githash)>hashlen and 'N/A' not in githash:
+        githash = githash[:hashlen]
+
+    # Assemble output
+    output = {"branch": gitbranch, "hash": githash, "date": gitdate}
 
     return output
 
