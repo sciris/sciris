@@ -19,21 +19,25 @@ from . import sc_utils as ut
 __all__ = ['approx', 'safedivide', 'findinds', 'findfirst', 'findlast', 'findnearest', 'dataindex', 'getvalidinds', 'sanitize', 'getvaliddata', 'isprime']
 
 
-def approx(val1=None, val2=None, eps=None):
+def approx(val1=None, val2=None, eps=None, **kwargs):
     '''
-    Determine whether two scalars approximately match.
+    Determine whether two scalars (or an array and a scalar) approximately match.
+    Alias for np.isclose() and may be removed in future versions.
+
+    Args:
+        val1 (number or array): the first value
+        val2 (number): the second value
+        eps (float): absolute tolerance
+        kwargs (dict): passed to np.isclose()
 
     **Examples**::
 
         sc.approx(2*6, 11.9999999, eps=1e-6) # Returns True
         sc.approx([3,12,11.9], 12) # Returns array([False, True, False], dtype=bool)
-
-    Note: in most cases, np.isclose() is preferable.
     '''
-    if val2 is None: val2 = 0.0
-    if eps  is None: eps = 1e-9
-    if isinstance(val1, list): val1 = np.array(val1) # If it's a list, convert to an array first
-    output = abs(val1-val2)<=eps
+    if eps is not None:
+        kwargs['atol'] = eps # Rename kwarg to match np.isclose()
+    output = np.isclose(a=val1, b=val2, **kwargs)
     return output
 
 
@@ -76,7 +80,7 @@ def findinds(arr, val=None, eps=1e-6, first=False, last=False, **kwargs):
     Little function to find matches even if two things aren't eactly equal (eg.
     due to floats vs. ints). If one argument, find nonzero values. With two arguments,
     check for equality using eps. Returns a tuple of arrays if val1 is multidimensional,
-    else returns an array.
+    else returns an array. Similar to calling np.nonzero(np.isclose(arr, val)).
 
     Args:
         arr (array): the array to find values in
@@ -91,7 +95,7 @@ def findinds(arr, val=None, eps=1e-6, first=False, last=False, **kwargs):
         sc.findinds(rand(10)<0.5) # e.g. array([2, 4, 5, 9])
         sc.findinds([2,3,6,3], 6) # e.g. array([2])
 
-    Version: 2020nov29
+    Version: 2021mar01
     '''
 
     # Handle first or last
