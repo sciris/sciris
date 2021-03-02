@@ -6,6 +6,26 @@ All notable changes to this project will be documented in this file.
 By import convention, components of the Sciris library are listed beginning with ``sc.``, e.g. ``sc.odict()``.
 
 
+Version 1.0.1 (2021-03-01)
+---------------------------
+0. Added a new function, ``sc.orderlegend()``, that lets you specify the order you want the legend items to appear.
+1. Fixed bug with paths returned by ``sc.getfilelist(nopath=True)``.
+2. Fixed bug with ``sc.loadjson()`` only reading from a string if ``fromfile=False``.
+3. Fixed recursion issue with printing ``sc.Failed`` objects.
+4. Changed ``sc.approx()`` to be an alias to ``np.isclose()``; this function may be removed in future versions.
+5. Changed ``sc.findinds()`` to call ``np.isclose()``, allowing for greater flexibility.
+6. Changed the ``repr`` for ``sc.objdict()`` to differ from ``sc.odict()``.
+7. Fixed bug with Matplotlib 3.4.0 also defining colormap ``'turbo'``, causing an error on load.
+8. Improved ``sc.maximize()`` to work on more platforms (but still not inline or on Macs).
+9. Improved the flexiblity of ``sc.htmlify()`` to handle tabs and other kinds of newlines.
+10. Added additional checks to ``sc.prepr()`` to avoid failing on recursive objects.
+11. Updated ``sc.mergedicts()`` to return the same type as the first dict supplied.
+12. Updated ``sc.readdate()`` and ``sc.date()`` to support timestamps as well as strings.
+13. Updated ``sc.gitinfo()`` to try each piece independently, so if it fails on one (e.g., extracting the date) it will still return the other pieces (e.g., the hash).
+14. Pinned ``xlrd`` to 1.2.0 since later versions fail to read xlsx files.
+
+
+
 Version 1.0.0 (2020-11-30)
 --------------------------
 This major update (and official release!) includes many new utilities adopted from the `Covasim <http://covasim.org>`__ and `Atomica <http://atomica.tools>`__ libraries, as well as important improvements and bugfixes for parallel processing, object representation, and file I/O.
