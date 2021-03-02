@@ -481,7 +481,7 @@ def test_nested():
     count = 0
     for twig in sc.iternested(foo):
         count += 1
-        sc.setnested(foo, twig, count)   # {'a': {'y': 1, 'x': 2, 'z': 3}, 'b': {'a': {'y': 4, 'x': 5}}}
+        sc.setnested(foo, twig, count) # Yields {'a': {'y': 1, 'x': 2, 'z': 3}, 'b': {'a': {'y': 4, 'x': 5}}}
     o.foo2 = foo
 
     return o

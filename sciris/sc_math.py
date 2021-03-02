@@ -71,7 +71,7 @@ def safedivide(numerator=None, denominator=None, default=None, eps=None, warn=Fa
     return output
 
 
-def findinds(arr, val=None, eps=1e-6, first=False, last=False):
+def findinds(arr, val=None, eps=1e-6, first=False, last=False, **kwargs):
     '''
     Little function to find matches even if two things aren't eactly equal (eg.
     due to floats vs. ints). If one argument, find nonzero values. With two arguments,
@@ -81,9 +81,10 @@ def findinds(arr, val=None, eps=1e-6, first=False, last=False):
     Args:
         arr (array): the array to find values in
         val (float): if provided, the value to match
-        eps (float): the precision for matching (default 1e-6)
+        eps (float): the precision for matching (default 1e-6, equivalent to np.isclose's atol)
         first (bool): whether to return the first matching value
         last (bool): whether to return the last matching value
+        kwargs (dict): passed to np.isclose()
 
     **Examples**::
 
@@ -102,6 +103,7 @@ def findinds(arr, val=None, eps=1e-6, first=False, last=False):
         ind = -1
     else:
         ind = None
+    atol = kwargs.pop('atol', eps) # Ensure atol isn't specified twice
 
     # Calculate matches
     arr = np.array(arr)
@@ -111,7 +113,7 @@ def findinds(arr, val=None, eps=1e-6, first=False, last=False):
         if ut.isstring(val):
             output = np.nonzero(arr==val)
         else:
-            output = np.nonzero(abs(arr-val)<eps) # If absolute difference between the two values is less than a certain amount
+            output = np.nonzero(np.isclose(a=arr, b=val, atol=atol, **kwargs)) # If absolute difference between the two values is less than a certain amount
 
     # Process output
     if arr.ndim == 1: # Uni-dimensional
