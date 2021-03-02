@@ -299,8 +299,7 @@ def test_dates():
     o.date3 = sc.date([35,36,37], as_date=False) # Returns ['2020-02-05', '2020-02-06', '2020-02-07']
 
     print('\nTesting day')
-    year = str(sc.now().year)
-    o.day = sc.day(f'{year}-04-04') # Returns 94
+    o.day = sc.day('2020-04-04') # Returns 94
     assert o.day == 94
 
     print('\nTesting daydiff')
@@ -509,6 +508,7 @@ def test_dicts():
     dict1 = {'key1':{'a':'A'},  'key2':{'b':'B'}}
     dict2 = {'key1':{'a':'A*'}, 'key2':{'b+':'B+'}, 'key3':{'c':'C'}}
     dict3 = sc.mergenested(dict1, dict2, verbose=True)
+    print('↑ Should print warning above')
     print(f'Dict1: {dict1}')
     print(f'Dict2: {dict2}')
     print(f'Dict3: {dict3}')

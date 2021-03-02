@@ -1651,7 +1651,7 @@ def day(obj, *args, start_day=None):
     Args:
         obj (str, date, int, or list): convert any of these objects to a day relative to the start day
         args (list): additional days
-        start_day (str or date): the start day; if none is supplied, return days since (current year)-01-01.
+        start_day (str or date): the start day; if none is supplied, return days since (supplied year)-01-01.
 
     Returns:
         days (int or str): the day(s) in simulation time
@@ -1666,8 +1666,6 @@ def day(obj, *args, start_day=None):
     # Do not process a day if it's not supplied
     if obj is None:
         return None
-    if start_day is None:
-        start_day = f'{now().year}-01-01'
 
     # Convert to list
     if isstring(obj) or isnumber(obj) or isinstance(obj, (dt.date, dt.datetime)):
@@ -1688,7 +1686,11 @@ def day(obj, *args, start_day=None):
                     d = readdate(d).date()
                 elif isinstance(d, dt.datetime):
                     d = d.date()
-                d_day = (d - date(start_day)).days # Heavy lifting -- actually compute the day
+                if start_day:
+                    start_date = date(start_day)
+                else:
+                    start_date = date(f'{d.year}-01-01')
+                d_day = (d - start_date).days # Heavy lifting -- actually compute the day
                 days.append(d_day)
             except Exception as E:
                 errormsg = f'Could not interpret "{d}" as a date: {str(E)}'
