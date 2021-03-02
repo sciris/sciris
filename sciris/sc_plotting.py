@@ -621,6 +621,9 @@ def parulacolormap(apply=False):
 
 def turbocolormap(apply=False):
     '''
+    NOTE: as of Matplotlib 3.4.0, this colormap is included by default, and will
+    soon be removed from Sciris.
+
     Copyright 2019 Google LLC.
 
     SPDX-License-Identifier: Apache-2.0

@@ -1093,7 +1093,7 @@ class Failed(object):
         pass
 
     def __repr__(self):
-        output = ut.prepr(self) # This does not include failure_info since it's a class attribute
+        output = ut.objrepr(self) # This does not include failure_info since it's a class attribute
         output += self.showfailures(verbose=False, tostring=True)
         return output
 
@@ -1401,3 +1401,7 @@ def _unpickleMethod(im_name, im_self, im_class):
         return bound
 
 cpreg.pickle(types.MethodType, _pickleMethod, _unpickleMethod)
+
+# Legacy support for loading Sciris <1.0 objects; may be removed in future
+pickleMethod = _pickleMethod
+unpickleMethod = _unpickleMethod
