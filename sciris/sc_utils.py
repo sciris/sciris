@@ -1407,7 +1407,6 @@ def mergedicts(*args, strict=False, overwrite=True):
         d2 = sc.mergedicts({'a':1, 'b':2}, {'b':3, 'c':4}) # Returns {'a':1, 'b':3, 'c':4}
         d3 = sc.mergedicts(sc.odict({'b':3, 'c':4}), {'a':1, 'b':2}) # Returns sc.odict({'b':2, 'c':4, 'a':1})
         d4 = sc.mergedicts({'b':3, 'c':4}, {'a':1, 'b':2}, overwrite=False) # Raises exception
-
     '''
     # Try to get the output type from the first argument, but revert to a standard dict if that fails
     try:
