@@ -258,7 +258,7 @@ def getfilelist(folder='.', pattern=None, abspath=False, nopath=False, filesonly
     elif foldersonly:
         filelist = [f for f in filelist if os.path.isdir(f)]
     if nopath:
-        filelist = [f[len(folder):] for f in filelist]
+        filelist = [os.path.basename(f) for f in filelist]
     return filelist
 
 
