@@ -1241,7 +1241,7 @@ def maximize(fig=None, die=False):
 ### Figure saving
 ##############################################################################
 
-__all__ += ['savefigs', 'loadfig', 'emptyfig', 'separatelegend', 'savemovie']
+__all__ += ['savefigs', 'loadfig', 'emptyfig', 'separatelegend', 'orderlegend', 'savemovie']
 
 
 def savefigs(figs=None, filetype=None, filename=None, folder=None, savefigargs=None, aslist=False, verbose=False, **kwargs):
@@ -1368,33 +1368,37 @@ def emptyfig():
     return fig
 
 
-def separatelegend(ax=None, handles=None, labels=None, reverse=False, figsettings=None, legendsettings=None):
-    ''' Allows the legend of a figure to be rendered in a separate window instead '''
-
-    # Handle settings
-    if figsettings    is None: figsettings = {}
-    if legendsettings is None: legendsettings = {}
-    f_settings = {'figsize':(4.0,4.8)} # (6.4,4.8) is the default, so make it a bit narrower
-    l_settings = {'loc': 'center', 'bbox_to_anchor': None, 'frameon': False}
-    f_settings.update(figsettings)
-    l_settings.update(legendsettings)
-
-    # Construct handle and label list, from either
-    # - A list of handles and a list of labels
-    # - A list of handles, where each handle contains the label
-    # - An axis object, containing the objects that should appear in the legend
-    # - A figure object, from which the first axis will be used
+def _get_legend_handles(ax, handles, labels):
+    '''
+    Construct handle and label list, from one of:
+     - A list of handles and a list of labels
+     - A list of handles, where each handle contains the label
+     - An axis object, containing the objects that should appear in the legend
+     - A figure object, from which the first axis will be used
+    '''
     if handles is None:
         if ax is None:
             ax = pl.gca()
-        else:
-            if isinstance(ax, pl.Figure): ax = ax.axes[0]  # Allows an argument of a figure instead of an axes
+        elif isinstance(ax, pl.Figure): # Allows an argument of a figure instead of an axes
+            ax = ax.axes[-1]
         handles, labels = ax.get_legend_handles_labels()
     else:
         if labels is None:
             labels = [h.get_label() for h in handles]
         else:
-            assert len(handles) == len(labels), "Number of handles (%d) and labels (%d) must match" % (len(handles),len(labels))
+            assert len(handles) == len(labels), f"Number of handles ({len(handles)}) and labels ({len(labels)}) must match"
+    return ax, handles, labels
+
+
+def separatelegend(ax=None, handles=None, labels=None, reverse=False, figsettings=None, legendsettings=None):
+    ''' Allows the legend of a figure to be rendered in a separate window instead '''
+
+    # Handle settings
+    f_settings = ut.mergedicts({'figsize':(4.0,4.8)}, figsettings) # (6.4,4.8) is the default, so make it a bit narrower
+    l_settings = ut.mergedicts({'loc': 'center', 'bbox_to_anchor': None, 'frameon': False}, legendsettings)
+
+    # Get handles and labels
+    _, handles, labels = _get_legend_handles(ax, handles, labels)
 
     # Set up new plot
     fig = pl.figure(**f_settings)
@@ -1423,6 +1427,45 @@ def separatelegend(ax=None, handles=None, labels=None, reverse=False, figsetting
 
     return fig
 
+
+def orderlegend(order=None, ax=None, handles=None, labels=None, reverse=None, **kwargs):
+    '''
+    Create a legend with a specified order, or change the order of an existing legend.
+    Can either specify an order, or use the reverse argument to simply reverse the order.
+    Note: you do not need to create the legend before calling this function; if you do,
+    you will need to pass any additional keyword arguments to this function since it will
+    override existing settings.
+
+    Args:
+        order (list or array): the new order of the legend, as from e.g. np.argsort()
+        ax (axes): the axes object; if omitted, defaults to current axes
+        handles (list): the legend handles; can be used instead of ax
+        labels (list): the legend labels; can be used instead of ax
+        reverse (bool): if supplied, simply reverse the legend order
+        kwargs (dict): passed to ax.legend()
+
+    **Examples**::
+
+        pl.plot([1,4,3], label='A')
+        pl.plot([5,7,8], label='B')
+        pl.plot([2,5,2], label='C')
+        sc.reorderlegend(reverse=True) # Legend order C, B, A
+        sc.reorderlegend([1,0,2], frameon=False) # Legend order B, A, C with no frame
+        pl.legend() # Restore original legend order A, B, C
+    '''
+
+    # Get handles and labels
+    ax, handles, labels = _get_legend_handles(ax, handles, labels)
+    if order:
+        handles = [handles[o] for o in order]
+        labels = [labels[o] for o in order]
+    if reverse:
+        handles = handles[::-1]
+        labels = labels[::-1]
+
+    ax.legend(handles, labels, **kwargs)
+
+    return
 
 def savemovie(frames, filename=None, fps=None, quality=None, dpi=None, writer=None, bitrate=None, interval=None, repeat=False, repeat_delay=None, blit=False, verbose=True, **kwargs):
     '''
