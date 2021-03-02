@@ -235,7 +235,7 @@ def getfilelist(folder='.', pattern=None, abspath=False, nopath=False, filesonly
         nopath      (bool): whether to return no path
         filesonly   (bool): whether to only return files (not folders)
         foldersonly (bool): whether to only return folders (not files)
-        recursive   (bool): passd to glob()
+        recursive   (bool): passed to glob()
 
     Returns:
         List of files/folders
@@ -258,7 +258,7 @@ def getfilelist(folder='.', pattern=None, abspath=False, nopath=False, filesonly
     elif foldersonly:
         filelist = [f for f in filelist if os.path.isdir(f)]
     if nopath:
-        filelist = [f[len(folder):] for f in filelist]
+        filelist = [os.path.basename(f) for f in filelist]
     return filelist
 
 
@@ -520,23 +520,23 @@ def loadjson(filename=None, folder=None, string=None, fromfile=True, **kwargs):
     Returns:
         output (dict): the JSON object
 
-    **Example**::
+    **Examples**::
 
         json = sc.loadjson('my-file.json')
+        json = sc.loadjson(string='{"a":null, "b":[1,2,3]}')
     '''
-    if fromfile:
-        filename = makefilepath(filename=filename, folder=folder)
-        try:
-            with open(filename) as f:
-                output = json.load(f, **kwargs)
-        except FileNotFoundError as E:
-            print('Warning: file not found. Use fromfile=False if not loading from a file')
-            raise E
-    else:
+    if string is not None or not fromfile:
         if string is None and filename is not None:
             string = filename # Swap arguments
         output = json.loads(string, **kwargs)
-
+    else:
+        filepath = makefilepath(filename=filename, folder=folder)
+        try:
+            with open(filepath) as f:
+                output = json.load(f, **kwargs)
+        except FileNotFoundError as E:
+            errormsg = f'No such file "{filename}". Use fromfile=False if loading a JSON string rather than a file.'
+            raise FileNotFoundError(errormsg) from E
     return output
 
 
@@ -1093,7 +1093,7 @@ class Failed(object):
         pass
 
     def __repr__(self):
-        output = ut.prepr(self) # This does not include failure_info since it's a class attribute
+        output = ut.objrepr(self) # This does not include failure_info since it's a class attribute
         output += self.showfailures(verbose=False, tostring=True)
         return output
 
@@ -1401,3 +1401,7 @@ def _unpickleMethod(im_name, im_self, im_class):
         return bound
 
 cpreg.pickle(types.MethodType, _pickleMethod, _unpickleMethod)
+
+# Legacy support for loading Sciris <1.0 objects; may be removed in future
+pickleMethod = _pickleMethod
+unpickleMethod = _unpickleMethod

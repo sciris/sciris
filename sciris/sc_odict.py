@@ -160,7 +160,7 @@ class odict(OD):
         return None
 
 
-    def __repr__(self, maxlen=None, showmultilines=True, divider=False, dividerthresh=10, numindents=0, recursionlevel=0, sigfigs=None, numformat=None, maxitems=200):
+    def __repr__(self, maxlen=None, showmultilines=True, divider=False, dividerthresh=10, numindents=0, recursionlevel=0, sigfigs=None, numformat=None, maxitems=200, classname='odict()', quote='"', keysep=':'):
         ''' Print a meaningful representation of the odict '''
 
         # Set primitives for display.
@@ -181,9 +181,9 @@ class odict(OD):
         halfmax = int(maxitems/2)
         extraitems = 0
         if nkeys == 0:
-            output = 'odict()'
+            output = classname
         else:
-            output = '' # Initialize the output to nothing.
+            output = ''
             keystrs = [] # Start with an empty list which we'll save key strings in.
             valstrs = [] # Start with an empty list which we'll save value strings in.
             vallinecounts = [] # Start with an empty list which we'll save line counts in.
@@ -202,7 +202,7 @@ class odict(OD):
                         if recursionlevel <= maxrecursion:
                             thisvalstr = ut.flexstr(thisval.__repr__(maxlen=maxlen, showmultilines=showmultilines, divider=divider, dividerthresh=dividerthresh, numindents=numindents, recursionlevel=recursionlevel+1, sigfigs=sigfigs, numformat=numformat))
                         else:
-                            thisvalstr = 'odict() [maximum recursion reached]'
+                            thisvalstr = f'{classname} [maximum recursion reached]'
                     elif ut.isnumber(thisval): # Flexibly print out numbers, since they're largely why we're here
                         if numformat is not None:
                             thisvalstr = numformat % thisval
@@ -213,7 +213,7 @@ class odict(OD):
                     else: # Otherwise, do the normal repr() read.
                         thisvalstr = repr(thisval)
                 except Exception as E:
-                    thisvalstr = '%s read failed: %s' % (ut.objectid(thisval), str(E))
+                    thisvalstr = f'{ut.objectid(thisval)} read failed: {str(E)}'
 
                 # Add information to the lists to retrace afterwards.
                 keystrs.append(thiskeystr)
@@ -250,9 +250,9 @@ class odict(OD):
                 # Create the the text to add, apply the indent, and add to the output
                 spacer = ' '*(maxkeylen-len(keystr))
                 if vallinecount == 1 or not showmultilines:
-                    rawoutput = '#%i: "%s":%s %s\n' % (ind, keystr, spacer, valstr)
+                    rawoutput = f'#{ind:d}: {quote}{keystr}{quote}{keysep}{spacer} {valstr}\n'
                 else:
-                    rawoutput = '#%i: "%s":%s \n%s\n' % (ind, keystr, spacer, valstr)
+                    rawoutput = f'#{ind:d}: {quote}{keystr}{quote}{keysep}{spacer} \n{valstr}\n'
 
                 # Perform the indentation.
                 newoutput = ut.indent(prefix=theprefix, text=rawoutput, width=80)
@@ -277,9 +277,9 @@ class odict(OD):
         return output
 
 
-    def _repr_pretty_(self, p, cycle):
+    def _repr_pretty_(self, p, cycle, *args, **kwargs):
         ''' Function to fix __repr__ in IPython'''
-        print(self.__repr__())
+        print(self.__repr__(*args, **kwargs))
 
 
     def disp(self, maxlen=None, showmultilines=True, divider=False, dividerthresh=10, numindents=0, sigfigs=5, numformat=None):
@@ -863,6 +863,11 @@ class objdict(odict):
     >>> od.keys = 3 # This raises an exception (you can't overwrite the keys() method)
     '''
 
+    def __repr__(self, *args, **kwargs):
+        ''' Use odict repr, but with a custom class name and no quotes '''
+        return super().__repr__(quote='', keysep='.', classname='objdict()', *args, **kwargs)
+
+
     def __getattribute__(self, attr):
         try: # First, try to get the attribute as an attribute
             output = odict.__getattribute__(self, attr)
@@ -886,7 +891,6 @@ class objdict(odict):
         errormsg = '"%s" exists as an attribute, so cannot be set as key; use setattribute() instead' % name
         raise Exception(errormsg)
 
-        return None
 
     def setattribute(self, name, value):
         ''' Set attribute if truly desired '''

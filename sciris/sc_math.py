@@ -19,21 +19,25 @@ from . import sc_utils as ut
 __all__ = ['approx', 'safedivide', 'findinds', 'findfirst', 'findlast', 'findnearest', 'dataindex', 'getvalidinds', 'sanitize', 'getvaliddata', 'isprime']
 
 
-def approx(val1=None, val2=None, eps=None):
+def approx(val1=None, val2=None, eps=None, **kwargs):
     '''
-    Determine whether two scalars approximately match.
+    Determine whether two scalars (or an array and a scalar) approximately match.
+    Alias for np.isclose() and may be removed in future versions.
+
+    Args:
+        val1 (number or array): the first value
+        val2 (number): the second value
+        eps (float): absolute tolerance
+        kwargs (dict): passed to np.isclose()
 
     **Examples**::
 
         sc.approx(2*6, 11.9999999, eps=1e-6) # Returns True
         sc.approx([3,12,11.9], 12) # Returns array([False, True, False], dtype=bool)
-
-    Note: in most cases, np.isclose() is preferable.
     '''
-    if val2 is None: val2 = 0.0
-    if eps  is None: eps = 1e-9
-    if isinstance(val1, list): val1 = np.array(val1) # If it's a list, convert to an array first
-    output = abs(val1-val2)<=eps
+    if eps is not None:
+        kwargs['atol'] = eps # Rename kwarg to match np.isclose()
+    output = np.isclose(a=val1, b=val2, **kwargs)
     return output
 
 
@@ -71,26 +75,27 @@ def safedivide(numerator=None, denominator=None, default=None, eps=None, warn=Fa
     return output
 
 
-def findinds(arr, val=None, eps=1e-6, first=False, last=False):
+def findinds(arr, val=None, eps=1e-6, first=False, last=False, **kwargs):
     '''
     Little function to find matches even if two things aren't eactly equal (eg.
     due to floats vs. ints). If one argument, find nonzero values. With two arguments,
     check for equality using eps. Returns a tuple of arrays if val1 is multidimensional,
-    else returns an array.
+    else returns an array. Similar to calling np.nonzero(np.isclose(arr, val)).
 
     Args:
         arr (array): the array to find values in
         val (float): if provided, the value to match
-        eps (float): the precision for matching (default 1e-6)
+        eps (float): the precision for matching (default 1e-6, equivalent to np.isclose's atol)
         first (bool): whether to return the first matching value
         last (bool): whether to return the last matching value
+        kwargs (dict): passed to np.isclose()
 
     **Examples**::
 
         sc.findinds(rand(10)<0.5) # e.g. array([2, 4, 5, 9])
         sc.findinds([2,3,6,3], 6) # e.g. array([2])
 
-    Version: 2020nov29
+    Version: 2021mar01
     '''
 
     # Handle first or last
@@ -102,6 +107,7 @@ def findinds(arr, val=None, eps=1e-6, first=False, last=False):
         ind = -1
     else:
         ind = None
+    atol = kwargs.pop('atol', eps) # Ensure atol isn't specified twice
 
     # Calculate matches
     arr = np.array(arr)
@@ -111,7 +117,7 @@ def findinds(arr, val=None, eps=1e-6, first=False, last=False):
         if ut.isstring(val):
             output = np.nonzero(arr==val)
         else:
-            output = np.nonzero(abs(arr-val)<eps) # If absolute difference between the two values is less than a certain amount
+            output = np.nonzero(np.isclose(a=arr, b=val, atol=atol, **kwargs)) # If absolute difference between the two values is less than a certain amount
 
     # Process output
     if arr.ndim == 1: # Uni-dimensional

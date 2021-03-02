@@ -363,18 +363,19 @@ def htmlify(string, reverse=False, tostring=False):
     **Examples**::
 
         output = sc.htmlify('foo&\\nbar') # Returns b'foo&amp;<br>bar'
-        output = sc.htmlify('foo&\\nbar', tostring=True) # Returns 'foo&amp;<br>bar'
+        output = sc.htmlify('föö&\\nbar', tostring=True) # Returns 'f&#246;&#246;&amp;&nbsp;&nbsp;&nbsp;&nbsp;bar'
         output = sc.htmlify('foo&amp;<br>bar', reverse=True) # Returns 'foo&\\nbar'
     '''
     import html
     if not reverse: # Convert to HTML
         output = html.escape(string).encode('ascii', 'xmlcharrefreplace') # Replace non-ASCII characters
-        output = output.replace(b'\n',b'<br>') # Replace newlines with <br>
+        output = output.replace(b'\n', b'<br>') # Replace newlines with <br>
+        output = output.replace(b'\t', b'&nbsp;&nbsp;&nbsp;&nbsp;') # Replace tabs with 4 spaces
         if tostring: # Convert from bytestring to unicode
             output = output.decode()
     else: # Convert from HTML
         output = html.unescape(string)
-        output = output.replace('<br>','\n').replace('<BR>','\n')
+        output = output.replace('<br>','\n').replace('<br />','\n').replace('<BR>','\n')
     return output
 
 
@@ -512,7 +513,7 @@ def objrepr(obj, showid=True, showmeth=True, showprop=True, showatt=True, divide
     return output
 
 
-def prepr(obj, maxlen=None, maxitems=None, skip=None, dividerchar='—', dividerlen=60, use_repr=True, maxtime=3):
+def prepr(obj, maxlen=None, maxitems=None, skip=None, dividerchar='—', dividerlen=60, use_repr=True, maxtime=3, die=False):
     '''
     Akin to "pretty print", returns a pretty representation of an object --
     all attributes (except any that are skipped), plust methods and ID. Usually
@@ -528,6 +529,7 @@ def prepr(obj, maxlen=None, maxitems=None, skip=None, dividerchar='—', divider
         divierlen (int): number of divider characters
         use_repr (bool): whether to use repr() or str() to parse the object
         maxtime (float): maximum amount of time to spend on trying to print the object
+        die (bool): whether to raise an exception if an error is encountered
     '''
 
     # Decide how to handle representation function -- repr is dangerous since can lead to recursion
@@ -546,69 +548,84 @@ def prepr(obj, maxlen=None, maxitems=None, skip=None, dividerchar='—', divider
     labels = []
     values = []
 
-    if not (hasattr(obj, '__dict__') or hasattr(obj, '__slots__')):
-        # It's a plain object
-        labels = ['%s' % type(obj)]
-        values = [repr_fn(obj)]
-    else:
-        if hasattr(obj, '__dict__'):
-            labels = sorted(set(obj.__dict__.keys()) - set(skip))  # Get the dict attribute keys
+    # Wrap entire process in a try-except in case it fails
+    try:
+        if not (hasattr(obj, '__dict__') or hasattr(obj, '__slots__')):
+            # It's a plain object
+            labels = ['%s' % type(obj)]
+            values = [repr_fn(obj)]
         else:
-            labels = sorted(set(obj.__slots__) - set(skip))  # Get the slots attribute keys
+            if hasattr(obj, '__dict__'):
+                labels = sorted(set(obj.__dict__.keys()) - set(skip))  # Get the dict attribute keys
+            else:
+                labels = sorted(set(obj.__slots__) - set(skip))  # Get the slots attribute keys
 
-        if len(labels):
-            extraitems = len(labels) - maxitems
-            if extraitems>0:
-                labels = labels[:maxitems]
-            values = []
-            for a,attr in enumerate(labels):
-                if (time.time() - T) < maxtime:
-                    try: value = repr_fn(getattr(obj, attr))
-                    except: value = 'N/A'
-                    values.append(value)
-                else:
-                    labels = labels[:a]
-                    labels.append('etc. (time exceeded)')
-                    values.append(f'{len(labels)-a} entries not shown')
-                    time_exceeded = True
-                    break
-        else:
-            items = dir(obj)
-            extraitems = len(items) - maxitems
-            if extraitems > 0:
-                items = items[:maxitems]
-            for a,attr in enumerate(items):
-                if not attr.startswith('__'):
+            if len(labels):
+                extraitems = len(labels) - maxitems
+                if extraitems>0:
+                    labels = labels[:maxitems]
+                values = []
+                for a,attr in enumerate(labels):
                     if (time.time() - T) < maxtime:
-                        try:    value = repr_fn(getattr(obj, attr))
+                        try: value = repr_fn(getattr(obj, attr))
                         except: value = 'N/A'
-                        labels.append(attr)
                         values.append(value)
                     else:
+                        labels = labels[:a]
                         labels.append('etc. (time exceeded)')
                         values.append(f'{len(labels)-a} entries not shown')
                         time_exceeded = True
-        if extraitems > 0:
-            labels.append('etc. (too many items)')
-            values.append(f'{extraitems} entries not shown')
+                        break
+            else:
+                items = dir(obj)
+                extraitems = len(items) - maxitems
+                if extraitems > 0:
+                    items = items[:maxitems]
+                for a,attr in enumerate(items):
+                    if not attr.startswith('__'):
+                        if (time.time() - T) < maxtime:
+                            try:    value = repr_fn(getattr(obj, attr))
+                            except: value = 'N/A'
+                            labels.append(attr)
+                            values.append(value)
+                        else:
+                            labels.append('etc. (time exceeded)')
+                            values.append(f'{len(labels)-a} entries not shown')
+                            time_exceeded = True
+            if extraitems > 0:
+                labels.append('etc. (too many items)')
+                values.append(f'{extraitems} entries not shown')
 
-    # Decide how to print them
-    maxkeylen = 0
-    if len(labels):
-        maxkeylen = max([len(label) for label in labels]) # Find the maximum length of the attribute keys
-    if maxkeylen<maxlen:
-        maxlen = maxlen - maxkeylen # Shorten the amount of data shown if the keys are long
-    formatstr = '%'+ '%i'%maxkeylen + 's' # Assemble the format string for the keys, e.g. '%21s'
-    output  = objrepr(obj, showatt=False, dividerchar=dividerchar, dividerlen=dividerlen) # Get the methods
-    for label,value in zip(labels,values): # Loop over each attribute
-        if len(value)>maxlen: value = value[:maxlen] + ' [...]' # Shorten it
-        prefix = formatstr%label + ': ' # The format key
-        output += indent(prefix, value)
-    output += divider
-    if time_exceeded:
-        timestr = f'\nNote: the object did not finish printing within maxtime={maxtime} s.\n'
-        timestr += 'To see the full object, call prepr() with increased maxtime.'
-        output += timestr
+        # Decide how to print them
+        maxkeylen = 0
+        if len(labels):
+            maxkeylen = max([len(label) for label in labels]) # Find the maximum length of the attribute keys
+        if maxkeylen<maxlen:
+            maxlen = maxlen - maxkeylen # Shorten the amount of data shown if the keys are long
+        formatstr = '%'+ '%i'%maxkeylen + 's' # Assemble the format string for the keys, e.g. '%21s'
+        output  = objrepr(obj, showatt=False, dividerchar=dividerchar, dividerlen=dividerlen) # Get the methods
+        for label,value in zip(labels,values): # Loop over each attribute
+            if len(value)>maxlen: value = value[:maxlen] + ' [...]' # Shorten it
+            prefix = formatstr%label + ': ' # The format key
+            output += indent(prefix, value)
+        output += divider
+        if time_exceeded:
+            timestr = f'\nNote: the object did not finish printing within maxtime={maxtime} s.\n'
+            timestr += 'To see the full object, call prepr() with increased maxtime.'
+            output += timestr
+
+    # If that failed, try progressively simpler approaches
+    except Exception as E:
+        if die:
+            errormsg = 'Failed to create pretty representation of object'
+            raise RuntimeError(errormsg) from E
+        else:
+            try: # Next try the objrepr, which is the same except doesn't print attribute values
+                output = objrepr(obj, dividerchar=dividerchar, dividerlen=dividerlen)
+                output += f'\nWarning: showing simplified output since full repr failed {str(E)}'
+            except: # If that fails, try just the string representation
+                output = str(obj)
+
     return output
 
 
@@ -1385,9 +1402,11 @@ def promotetolist(obj=None, objtype=None, keepnone=False):
 
 def mergedicts(*args, strict=False, overwrite=True):
     '''
-    Tiny function to merge multiple dicts together. By default, skips things
+    Small function to merge multiple dicts together. By default, skips things
     that are not, dicts (e.g., None), and allows keys to be set multiple times.
-    Similar to dict.update(), except returns a value.
+    Similar to dict.update(), except returns a value. The first dictionary supplied
+    will be used for the output type (e.g. if the first dictionary is an odict,
+    an odict will be returned).
 
     Useful for cases, e.g. function arguments, where the default option is ``None``
     but you will need a dict later on.
@@ -1397,17 +1416,22 @@ def mergedicts(*args, strict=False, overwrite=True):
         overwrite (bool): if False, raise an exception if multiple keys are found
         *args (dict): the sequence of dicts to be merged
 
-
     **Examples**::
 
         d0 = sc.mergedicts(user_args) # Useful if user_args might be None, but d0 is always a dict
         d1 = sc.mergedicts({'a':1}, {'b':2}) # Returns {'a':1, 'b':2}
         d2 = sc.mergedicts({'a':1, 'b':2}, {'b':3, 'c':4}) # Returns {'a':1, 'b':3, 'c':4}
-        d3 = sc.mergedicts({'b':3, 'c':4}, {'a':1, 'b':2}) # Returns {'a':1, 'b':2, 'c':4}
+        d3 = sc.mergedicts(sc.odict({'b':3, 'c':4}), {'a':1, 'b':2}) # Returns sc.odict({'b':2, 'c':4, 'a':1})
         d4 = sc.mergedicts({'b':3, 'c':4}, {'a':1, 'b':2}, overwrite=False) # Raises exception
-
     '''
-    outputdict = {}
+    # Try to get the output type from the first argument, but revert to a standard dict if that fails
+    try:
+        assert isinstance(args[0], dict)
+        outputdict = args[0].__class__() # This creates a new instance of the class
+    except:
+        outputdict = {}
+
+    # Merge over the dictionaries in order
     for arg in args:
         is_dict = isinstance(arg, dict)
         if strict and not is_dict:
@@ -1494,13 +1518,14 @@ def getdate(obj=None, astype='str', dateformat=None):
         return None # Should not be possible to get to this point
 
 
-def readdate(datestr=None, dateformat=None, return_defaults=False):
+def readdate(datestr=None, *args, dateformat=None, return_defaults=False):
     '''
     Convenience function for loading a date from a string. If dateformat is None,
     this function tries a list of standard date types.
 
     Args:
-        datestr (str or list): the string containing the date, or a list of dates
+        datestr (int, float, str or list): the string containing the date, or the timestamp (in seconds), or a list of either
+        args (list): additional dates to convert
         dateformat (str or list): the format for the date, if known; can be a list of options
         return_defaults (bool): don't convert the date, just return the defaults
 
@@ -1510,7 +1535,9 @@ def readdate(datestr=None, dateformat=None, return_defaults=False):
     **Examples**::
 
         dateobj = sc.readdate('2020-03-03') # Standard format, so works
-        dateobjs = sc.readdate(['2020-06', '2020-07'], dateformat='%Y-%m')
+        dateobj = sc.readdate(1611661666) # Can read timestamps as well
+        dateobjs = sc.readdate(['2020-06', '2020-07'], dateformat='%Y-%m') # Can read custom date formats
+        dateobjs = sc.readdate('20200321', 1611661666) # Can mix and match formats
     '''
 
     formats_to_try = {
@@ -1534,35 +1561,32 @@ def readdate(datestr=None, dateformat=None, return_defaults=False):
         for f,fmt in enumerate(format_list):
             formats_to_try[f'User supplied {f}'] = fmt
 
-    # Handle date strings
-    if isstring(datestr):
-        datestrs = [datestr]
-        was_string = True
-    elif isinstance(datestr, list):
-        datestrs = datestr
-        was_string = False
-    else:
-        errormsg = f'Could not recognize type {type(datestr)}: expecting string or list'
-        raise TypeError(errormsg)
-
     # Actually process the dates
+    datestrs = promotetolist(datestr)
+    datestrs.extend(args)
     dateobjs = []
     for datestr in datestrs: # Iterate over them
         dateobj = None
         exceptions = {}
-        for key,fmt in formats_to_try.items():
-            try:
-                dateobj = dt.datetime.strptime(datestr, fmt)
-                break # If we find one that works, we can stop
-            except Exception as E:
-                exceptions[key] = str(E)
-        if dateobj is None:
-            formatstr = '\n'.join([f'Format "{item[1]}" raised exception: {exceptions[item[0]]}' for item in formats_to_try.items()])
-            errormsg = f'Was unable to convert "{datestr}" to a date using the formats:\n{formatstr}'
-            raise ValueError(errormsg)
+        if isinstance(datestr, dt.datetime):
+            dateobj = datestr # Nothing to do
+        elif isnumber(datestr):
+            dateobj = dt.datetime.fromtimestamp(datestr)
+        else:
+            for key,fmt in formats_to_try.items():
+                try:
+                    dateobj = dt.datetime.strptime(datestr, fmt)
+                    break # If we find one that works, we can stop
+                except Exception as E:
+                    exceptions[key] = str(E)
+            if dateobj is None:
+                formatstr = '\n'.join([f'Format "{item[1]}" raised exception: {exceptions[item[0]]}' for item in formats_to_try.items()])
+                errormsg = f'Was unable to convert "{datestr}" to a date using the formats:\n{formatstr}'
+                raise ValueError(errormsg)
         dateobjs.append(dateobj)
 
-    if was_string:
+    # If only a single date was supplied, return just that; else return the list
+    if not isinstance(datestr, list) and not len(args):
         return dateobjs[0]
     else:
         return dateobjs
@@ -1577,8 +1601,8 @@ def date(obj, *args, start_date=None, dateformat=None, as_date=True):
     of sc.date() for an integer input.
 
     Args:
-        obj (str, date, datetime, list, array): the object to convert
-        args (str, date, datetime): additional objects to convert
+        obj (str, int, float, date, datetime, list, array): the object to convert
+        args (str, int, float, date, datetime): additional objects to convert
         start_date (str, date, datetime): the starting date, if an integer is supplied
         dateformat (str): the format to return the date in
         as_date (bool): whether to return as a datetime date instead of a string
@@ -1616,7 +1640,7 @@ def date(obj, *args, start_date=None, dateformat=None, as_date=True):
         try:
             if type(d) == dt.date: # Do not use isinstance, since must be the exact type
                 pass
-            elif isstring(d):
+            elif isstring(d) or isnumber(d):
                 d = readdate(d).date()
             elif isinstance(d, dt.datetime):
                 d = d.date()
@@ -1651,7 +1675,7 @@ def day(obj, *args, start_day=None):
     Args:
         obj (str, date, int, or list): convert any of these objects to a day relative to the start day
         args (list): additional days
-        start_day (str or date): the start day; if none is supplied, return days since (current year)-01-01.
+        start_day (str or date): the start day; if none is supplied, return days since (supplied year)-01-01.
 
     Returns:
         days (int or str): the day(s) in simulation time
@@ -1666,8 +1690,6 @@ def day(obj, *args, start_day=None):
     # Do not process a day if it's not supplied
     if obj is None:
         return None
-    if start_day is None:
-        start_day = f'{now().year}-01-01'
 
     # Convert to list
     if isstring(obj) or isnumber(obj) or isinstance(obj, (dt.date, dt.datetime)):
@@ -1688,7 +1710,11 @@ def day(obj, *args, start_day=None):
                     d = readdate(d).date()
                 elif isinstance(d, dt.datetime):
                     d = d.date()
-                d_day = (d - date(start_day)).days # Heavy lifting -- actually compute the day
+                if start_day:
+                    start_date = date(start_day)
+                else:
+                    start_date = date(f'{d.year}-01-01')
+                d_day = (d - start_date).days # Heavy lifting -- actually compute the day
                 days.append(d_day)
             except Exception as E:
                 errormsg = f'Could not interpret "{d}" as a date: {str(E)}'
@@ -2199,13 +2225,18 @@ def gitinfo(path=None, hashlen=7, die=False, verbose=True):
     Returns:
         Dictionary containing the branch, hash, and commit date
 
-    **Example**::
+    **Examples**::
 
         info = sc.gitinfo() # Get git info for current script repository
+        info = sc.gitinfo(my_package.__file__) # Get git info for a particular Python package
     """
 
     if path is None:
         path = os.getcwd()
+
+    gitbranch = "Branch N/A"
+    githash   = "Hash N/A"
+    gitdate   = "Date N/A"
 
     try:
         # First, get the .git directory
@@ -2247,17 +2278,18 @@ def gitinfo(path=None, hashlen=7, die=False, verbose=True):
                 gitdate = time.strftime("%Y-%m-%d %H:%M:%S UTC", t)
 
     except Exception as E:
-        gitbranch = "Branch N/A"
-        githash   = "Hash N/A"
-        gitdate   = "Date N/A"
         errormsg = 'Could not extract git info; please check paths'
         if die:
             raise Exception(errormsg) from E
         elif verbose:
             print(errormsg + f'\nError: {str(E)}')
 
-    if len(githash)>hashlen: githash = githash[:hashlen] # Trim hash to short length
-    output = {"branch": gitbranch, "hash": githash, "date": gitdate}  # Assemble outupt
+    # Trim the hash, but not if loading failed
+    if len(githash)>hashlen and 'N/A' not in githash:
+        githash = githash[:hashlen]
+
+    # Assemble output
+    output = {"branch": gitbranch, "hash": githash, "date": gitdate}
 
     return output
 
