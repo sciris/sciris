@@ -376,7 +376,6 @@ def htmlify(string, reverse=False, tostring=False):
     else: # Convert from HTML
         output = html.unescape(string)
         output = output.replace('<br>','\n').replace('<br />','\n').replace('<BR>','\n')
-        output = output.replace()
     return output
 
 
