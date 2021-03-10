@@ -6,6 +6,13 @@ All notable changes to this project will be documented in this file.
 By import convention, components of the Sciris library are listed beginning with ``sc.``, e.g. ``sc.odict()``.
 
 
+Version 1.0.2 (2021-03-10)
+---------------------------
+1. Fixed bug (introduced in version 1.0.1) with ``sc.readdate()`` returning only the first element of a list of a dates.
+2. Fixed bug (introduced in version 1.0.1) with ``sc.date()`` treating an integer as a timestamp rather than an integer number of days when a start day is supplied.
+3. Updated ``sc.readdate()``, ``sc.date()``, and ``sc.day()`` to always return consistent output types (e.g. if an array is supplied as an input, an array is supplied as an output).
+
+
 Version 1.0.1 (2021-03-01)
 ---------------------------
 1. Fixed bug with Matplotlib 3.4.0 also defining colormap ``'turbo'``, which caused Sciris to fail to load.
