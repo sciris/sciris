@@ -1531,7 +1531,7 @@ def _sanitize_iterables(obj, *args):
         _sanitize_iterables(np.array([1, 2]), 3) # Returns [1,2,3], True, True
         _sanitize_iterables(np.array([1, 2, 3])) # Returns [1,2,3], False, True
     '''
-    is_list = isinstance(obj, list) or len(args) # If we're given a list of args, treat it like a list
+    is_list = isinstance(obj, list) or len(args)>0 # If we're given a list of args, treat it like a list
     is_array = isinstance(obj, np.ndarray) # Check if it's an array
     if is_array: # If it is, convert it to a list
         obj = obj.tolist()
@@ -1673,7 +1673,7 @@ def date(obj, *args, start_date=None, dateformat=None, as_date=True):
         try:
             if type(d) == dt.date: # Do not use isinstance, since must be the exact type
                 pass
-            elif isstring(d) or isnumber(d):
+            elif isstring(d):
                 d = readdate(d).date()
             elif isinstance(d, dt.datetime):
                 d = d.date()

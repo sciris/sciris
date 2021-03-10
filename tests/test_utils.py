@@ -305,6 +305,13 @@ def test_readdate():
         dateobj = sc.readdate(datestr, dateformat=fmt)
         print(f'{key:15s} {fmt:22s}: {dateobj}')
 
+    # Basic tests
+    assert sc.sc_utils._sanitize_iterables(1)                   == ([1],     False, False)
+    assert sc.sc_utils._sanitize_iterables(1, 2, 3)             == ([1,2,3], True, False)
+    assert sc.sc_utils._sanitize_iterables([1, 2], 3)           == ([1,2,3], True, False)
+    assert sc.sc_utils._sanitize_iterables(np.array([1, 2]), 3) == ([1,2,3], True, True)
+    assert sc.sc_utils._sanitize_iterables(np.array([1, 2, 3])) == ([1,2,3], False, True)
+
     return dateobj0
 
 
@@ -315,7 +322,13 @@ def test_dates():
     print('\nTesting date')
     o.date1 = sc.date('2020-04-05') # Returns datetime.date(2020, 4, 5)
     o.date2 = sc.date('2020-04-14', start_date='2020-04-04', as_date=False) # Returns 10
-    o.date3 = sc.date([35,36,37], as_date=False) # Returns ['2020-02-05', '2020-02-06', '2020-02-07']
+    o.date3 = sc.date([35,36,37], start_date='2020-01-01', as_date=False) # Returns ['2020-02-05', '2020-02-06', '2020-02-07']
+    with pytest.raises(ValueError):
+        sc.date([10,20]) # Can't convert an integer without a start date
+    assert o.date1.month == 4
+    assert o.date2 == 10
+    assert len(o.date3) == 3
+    assert o.date3[0] =='2020-02-05'
 
     print('\nTesting day')
     o.day = sc.day('2020-04-04') # Returns 94
@@ -324,9 +337,11 @@ def test_dates():
     print('\nTesting daydiff')
     o.diff  = sc.daydiff('2020-03-20', '2020-04-05') # Returns 16
     o.diffs = sc.daydiff('2020-03-20', '2020-04-05', '2020-05-01') # Returns [16, 26]
+    assert len(o.diffs) == 2
 
     print('\nTesting daterange')
     o.dates = sc.daterange('2020-03-01', '2020-04-04')
+    assert len(o.dates) == 35
 
     print('\nTesting elapsedtimestr')
     now = sc.now()
