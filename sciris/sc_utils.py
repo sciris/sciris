@@ -1629,11 +1629,9 @@ def readdate(datestr=None, *args, dateformat=None, return_defaults=False):
 
 def date(obj, *args, start_date=None, dateformat=None, as_date=True):
     '''
-    Convert a string or a datetime object to a date object. To convert to an integer
-    from the start day, it is recommended you supply a start date, or use sc.date()
-    instead; otherwise, it will calculate the date counting days from {current-01-01.
-    This means that the output of sc.date() will not necessarily match the output
-    of sc.date() for an integer input.
+    Convert any reasonable object -- a string, integer, or datetime object, or
+    list/array of any of those -- to a date object. To convert an integer to a
+    date, you must supply a start date.
 
     Caution: while this function and readdate() are similar, and indeed this function
     calls readdate() if the input is a string, in this function an integer is treated
