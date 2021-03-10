@@ -1518,6 +1518,42 @@ def getdate(obj=None, astype='str', dateformat=None):
         return None # Should not be possible to get to this point
 
 
+def _sanitize_iterables(obj, *args):
+    '''
+    Take input as a list, array, or non-iterable type, along with one or more
+    arguments, and return a list, along with information on what the input types
+    were.
+
+    **Examples**::
+
+        _sanitize_iterables(1, 2, 3)             # Returns [1,2,3], False, False
+        _sanitize_iterables([1, 2], 3)           # Returns [1,2,3], True, False
+        _sanitize_iterables(np.array([1, 2]), 3) # Returns [1,2,3], True, True
+        _sanitize_iterables(np.array([1, 2, 3])) # Returns [1,2,3], False, True
+    '''
+    is_list = isinstance(obj, list) or len(args) # If we're given a list of args, treat it like a list
+    is_array = isinstance(obj, np.ndarray) # Check if it's an array
+    if is_array: # If it is, convert it to a list
+        obj = obj.tolist()
+    objs = dcp(promotetolist(obj)) # Ensure it's a list, and deepcopy to avoid mutability
+    objs.extend(args) # Add on any arguments
+    return objs, is_list, is_array
+
+
+def _sanitize_output(obj, is_list, is_array, dtype=None):
+    '''
+    The companion to _sanitize_iterables, convert the object back to the original
+    type supplied.
+    '''
+    if is_array:
+        output = np.array(obj, dtype=dtype)
+    elif not is_list and len(obj) == 1:
+        output = obj[0]
+    else:
+        output = obj
+    return output
+
+
 def readdate(datestr=None, *args, dateformat=None, return_defaults=False):
     '''
     Convenience function for loading a date from a string. If dateformat is None,
@@ -1562,12 +1598,7 @@ def readdate(datestr=None, *args, dateformat=None, return_defaults=False):
             formats_to_try[f'User supplied {f}'] = fmt
 
     # Ensure everything is in a consistent format
-    is_array = isinstance(datestr, np.ndarray)
-    is_list = isinstance(datestr, list) or len(args) # If we're given a list of args, treat it like a list
-    if is_array:
-        datestr = datestr.tolist()
-    datestrs = dcp(promotetolist(datestr)) # Need to deepcopy
-    datestrs.extend(args)
+    datestrs, is_list, is_array = _sanitize_iterables(datestr, *args)
 
     # Actually process the dates
     dateobjs = []
@@ -1592,25 +1623,26 @@ def readdate(datestr=None, *args, dateformat=None, return_defaults=False):
         dateobjs.append(dateobj)
 
     # If only a single date was supplied, return just that; else return the list/array
-    if is_array:
-        return np.array(dateobjs, dtype=object)
-    elif not is_list and len(dateobjs) == 1:
-        return dateobjs[0]
-    else:
-        return dateobjs
+    output = _sanitize_output(dateobjs, is_list, is_array, dtype=object)
+    return output
 
 
 def date(obj, *args, start_date=None, dateformat=None, as_date=True):
     '''
     Convert a string or a datetime object to a date object. To convert to an integer
     from the start day, it is recommended you supply a start date, or use sc.date()
-    instead; otherwise, it will calculate the date counting days from 2020-01-01.
+    instead; otherwise, it will calculate the date counting days from {current-01-01.
     This means that the output of sc.date() will not necessarily match the output
     of sc.date() for an integer input.
 
+    Caution: while this function and readdate() are similar, and indeed this function
+    calls readdate() if the input is a string, in this function an integer is treated
+    as a number of days from start_day, while for readdate() it is treated as a
+    timestamp in seconds.
+
     Args:
-        obj (str, int, float, date, datetime, list, array): the object to convert
-        args (str, int, float, date, datetime): additional objects to convert
+        obj (str, int, date, datetime, list, array): the object to convert
+        args (str, int, date, datetime): additional objects to convert
         start_date (str, date, datetime): the starting date, if an integer is supplied
         dateformat (str): the format to return the date in
         as_date (bool): whether to return as a datetime date instead of a string
@@ -1626,19 +1658,12 @@ def date(obj, *args, start_date=None, dateformat=None, as_date=True):
 
     New in version 1.0.0.
     '''
-
+    # Convert to list and handle other inputs
     if obj is None:
         return None
-
-    # Convert to list and handle other inputs
-    if isinstance(obj, np.ndarray):
-        obj = obj.tolist() # If it's an array, convert to a list
-    obj = promotetolist(obj) # Ensure it's iterable
-    obj.extend(args)
     if dateformat is None:
         dateformat = '%Y-%m-%d'
-    if start_date is None:
-        start_date = '2020-01-01'
+    obj, is_list, is_array = _sanitize_iterables(obj, *args)
 
     dates = []
     for d in obj:
@@ -1669,10 +1694,8 @@ def date(obj, *args, start_date=None, dateformat=None, as_date=True):
             raise ValueError(errormsg)
 
     # Return an integer rather than a list if only one provided
-    if len(dates)==1:
-        dates = dates[0]
-
-    return dates
+    output = _sanitize_output(dates, is_list, is_array, dtype=object)
+    return output
 
 
 def day(obj, *args, start_day=None):
@@ -1683,7 +1706,7 @@ def day(obj, *args, start_day=None):
     Args:
         obj (str, date, int, or list): convert any of these objects to a day relative to the start day
         args (list): additional days
-        start_day (str or date): the start day; if none is supplied, return days since (supplied year)-01-01.
+        start_day (str or date): the start day; if none is supplied, return days since (current year)-01-01.
 
     Returns:
         days (int or str): the day(s) in simulation time
@@ -1695,16 +1718,10 @@ def day(obj, *args, start_day=None):
     New in version 1.0.0.
     '''
 
-    # Do not process a day if it's not supplied
+    # Do not process a day if it's not supplied, and ensure it's a list
     if obj is None:
         return None
-
-    # Convert to list
-    if isstring(obj) or isnumber(obj) or isinstance(obj, (dt.date, dt.datetime)):
-        obj = promotetolist(obj) # Ensure it's iterable
-    elif isinstance(obj, np.ndarray):
-        obj = obj.tolist() # Convert to list if it's an array
-    obj.extend(args)
+    obj, is_list, is_array = _sanitize_iterables(obj, *args)
 
     days = []
     for d in obj:
@@ -1729,10 +1746,8 @@ def day(obj, *args, start_day=None):
                 raise ValueError(errormsg)
 
     # Return an integer rather than a list if only one provided
-    if len(days)==1:
-        days = days[0]
-
-    return days
+    output = _sanitize_output(days, is_list, is_array, dtype=object)
+    return output
 
 
 def daydiff(*args):
