@@ -269,24 +269,43 @@ def test_types():
 def test_readdate():
     sc.heading('Test string-to-date conversion')
 
-    string1 = '2020-Mar-21'
-    string2 = '2020-03-21'
-    string3 = 'Sat Mar 21 23:13:56 2020'
+    # Basic tests
+    string0 = '2020-Mar-21'
+    string1 = '2020-03-21'
+    string2 = 'Sat Mar 21 23:13:56 2020'
+    string3 = '2020-04-04'
+    dateobj0 = sc.readdate(string0)
     dateobj1 = sc.readdate(string1)
     dateobj2 = sc.readdate(string2)
-    sc.readdate(string3)
-    assert dateobj1 == dateobj2
+    assert dateobj0 == dateobj1
     with pytest.raises(ValueError):
         sc.readdate('Not a date')
 
-    # Automated tests
+    # Test different formats
+    strlist = [string0, string0, string2]
+    strarr = np.array(strlist)
+    fromlist = sc.readdate(strlist, string3)
+    fromarr = sc.readdate(strarr, string3)
+    assert fromlist[2] == dateobj2
+    assert sc.readdate(*strlist)[2] == dateobj2
+    assert fromarr[2] == dateobj2
+    assert len(fromlist) == len(fromarr) == len(strlist) + 1 == len(strarr) + 1
+    assert isinstance(fromlist, list)
+    assert isinstance(fromarr, np.ndarray)
+
+    # Test timestamps
+    now_datetime = sc.now()
+    now_timestamp = sc.readdate(sc.tic())
+    assert now_timestamp.day == now_datetime.day
+
+    # Format tests
     formats_to_try = sc.readdate(return_defaults=True)
     for key,fmt in formats_to_try.items():
         datestr = sc.getdate(dateformat=fmt)
         dateobj = sc.readdate(datestr, dateformat=fmt)
         print(f'{key:15s} {fmt:22s}: {dateobj}')
 
-    return dateobj1
+    return dateobj0
 
 
 def test_dates():

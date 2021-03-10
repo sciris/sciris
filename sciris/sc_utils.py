@@ -1561,9 +1561,15 @@ def readdate(datestr=None, *args, dateformat=None, return_defaults=False):
         for f,fmt in enumerate(format_list):
             formats_to_try[f'User supplied {f}'] = fmt
 
-    # Actually process the dates
-    datestrs = promotetolist(datestr)
+    # Ensure everything is in a consistent format
+    is_array = isinstance(datestr, np.ndarray)
+    is_list = isinstance(datestr, list) or len(args) # If we're given a list of args, treat it like a list
+    if is_array:
+        datestr = datestr.tolist()
+    datestrs = dcp(promotetolist(datestr)) # Need to deepcopy
     datestrs.extend(args)
+
+    # Actually process the dates
     dateobjs = []
     for datestr in datestrs: # Iterate over them
         dateobj = None
@@ -1585,8 +1591,10 @@ def readdate(datestr=None, *args, dateformat=None, return_defaults=False):
                 raise ValueError(errormsg)
         dateobjs.append(dateobj)
 
-    # If only a single date was supplied, return just that; else return the list
-    if not isinstance(datestr, list) and not len(args):
+    # If only a single date was supplied, return just that; else return the list/array
+    if is_array:
+        return np.array(dateobjs, dtype=object)
+    elif not is_list and len(dateobjs) == 1:
         return dateobjs[0]
     else:
         return dateobjs
