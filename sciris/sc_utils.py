@@ -1644,7 +1644,7 @@ def date(obj, *args, start_date=None, dateformat=None, as_date=True):
         obj (str, int, date, datetime, list, array): the object to convert
         args (str, int, date, datetime): additional objects to convert
         start_date (str, date, datetime): the starting date, if an integer is supplied
-        dateformat (str): the format to return the date in
+        dateformat (str): the format to return the date in, if returning a string
         as_date (bool): whether to return as a datetime date instead of a string
 
     Returns:
@@ -1653,7 +1653,6 @@ def date(obj, *args, start_date=None, dateformat=None, as_date=True):
     **Examples**::
 
         sc.date('2020-04-05') # Returns datetime.date(2020, 4, 5)
-        sc.date('2020-04-14', start_date='2020-04-04', as_date=False) # Returns 10
         sc.date([35,36,37], as_date=False) # Returns ['2020-02-05', '2020-02-06', '2020-02-07']
 
     New in version 1.0.0.
@@ -1673,10 +1672,10 @@ def date(obj, *args, start_date=None, dateformat=None, as_date=True):
         try:
             if type(d) == dt.date: # Do not use isinstance, since must be the exact type
                 pass
-            elif isstring(d):
-                d = readdate(d).date()
             elif isinstance(d, dt.datetime):
                 d = d.date()
+            elif isstring(d):
+                d = readdate(d).date()
             elif isnumber(d):
                 if start_date is None:
                     errormsg = f'To convert the number {d} to a date, you must supply start_date'
@@ -1795,12 +1794,11 @@ def daterange(start_date, end_date, inclusive=True, as_date=False, dateformat=No
 
     New in version 1.0.0.
     '''
-    start_day = day(start_date)
-    end_day = day(end_date)
+    end_day = day(end_date, start_day=start_date)
     if inclusive:
         end_day += 1
-    days = np.arange(start_day, end_day)
-    dates = date(days, as_date=as_date, dateformat=dateformat)
+    days = list(range(end_day))
+    dates = date(days, start_date=start_date, as_date=as_date, dateformat=dateformat)
     return dates
 
 

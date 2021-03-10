@@ -321,12 +321,12 @@ def test_dates():
 
     print('\nTesting date')
     o.date1 = sc.date('2020-04-05') # Returns datetime.date(2020, 4, 5)
-    o.date2 = sc.date('2020-04-14', start_date='2020-04-04', as_date=False) # Returns 10
+    o.date2 = sc.date(sc.readdate('2020-04-14'), as_date=False) # Returns '2020-04-14'
     o.date3 = sc.date([35,36,37], start_date='2020-01-01', as_date=False) # Returns ['2020-02-05', '2020-02-06', '2020-02-07']
     with pytest.raises(ValueError):
         sc.date([10,20]) # Can't convert an integer without a start date
     assert o.date1.month == 4
-    assert o.date2 == 10
+    assert o.date2 == '2020-04-14'
     assert len(o.date3) == 3
     assert o.date3[0] =='2020-02-05'
 
