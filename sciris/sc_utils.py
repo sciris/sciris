@@ -1703,7 +1703,7 @@ def day(obj, *args, start_day=None):
     Args:
         obj (str, date, int, or list): convert any of these objects to a day relative to the start day
         args (list): additional days
-        start_day (str or date): the start day; if none is supplied, return days since (current year)-01-01.
+        start_day (str or date): the start day; if none is supplied, return days since (supplied year)-01-01.
 
     Returns:
         days (int or str): the day(s) in simulation time
