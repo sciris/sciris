@@ -80,7 +80,7 @@ def findinds(arr, val=None, eps=1e-6, first=False, last=False, **kwargs):
     Little function to find matches even if two things aren't eactly equal (eg.
     due to floats vs. ints). If one argument, find nonzero values. With two arguments,
     check for equality using eps. Returns a tuple of arrays if val1 is multidimensional,
-    else returns an array. Similar to calling np.nonzero(np.isclose(arr, val)).
+    else returns an array. Similar to calling np.nonzero(np.isclose(arr, val))[0].
 
     Args:
         arr (array): the array to find values in

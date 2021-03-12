@@ -51,7 +51,7 @@ class odict(OD):
     Version: 2020nov30
     '''
 
-    def __init__(self, *args, **kwargs):
+    def __init__(self, *args, _default=None, **kwargs):
         ''' See collections.py '''
         # Standard OrderedDictionary initialization
         if len(args)==1 and args[0] is None: args = [] # Remove a None argument
@@ -67,9 +67,9 @@ class odict(OD):
         return None
 
 
-    def __isODict_iterable(self, key):
+    def __is_odict_iterable(self, key):
         ''' Check to see whether the "key" is actually an iterable '''
-        output = type(key)==list or type(key)==type(np.array([])) # Do *not* include dict, since that would be recursive
+        output = isinstance(key, (list, np.ndarray))
         return output
 
 
@@ -82,7 +82,6 @@ class odict(OD):
         except:
             output = items # If that fails, just give up and return the list
         return output
-
 
 
     def __getitem__(self, key):
@@ -111,7 +110,7 @@ class odict(OD):
             except:
                 print('Invalid odict slice... returning empty list...')
                 return []
-        elif self.__isODict_iterable(key): # Iterate over items
+        elif self.__is_odict_iterable(key): # Iterate over items
             listvals = [self.__getitem__(item) for item in key]
             if isinstance(key, list): # If the user supplied the keys as a list, assume they want the output as a list
                 output = listvals
@@ -148,7 +147,7 @@ class odict(OD):
             else:
                 for valind,index in enumerator:
                     self.__setitem__(index, value) # e.g. odict[:] = 4
-        elif self.__isODict_iterable(key) and hasattr(value, '__len__'): # Iterate over items
+        elif self.__is_odict_iterable(key) and hasattr(value, '__len__'): # Iterate over items
             if len(key)==len(value):
                 for valind,thiskey in enumerate(key):
                     self.__setitem__(thiskey, value[valind])
@@ -344,7 +343,7 @@ class odict(OD):
             except:
                 print('Invalid odict slice... returning empty list...')
                 return []
-        elif self.__isODict_iterable(key): # Iterate over items
+        elif self.__is_odict_iterable(key): # Iterate over items
             listvals = [self.pop(item, *args, **kwargs) for item in key]
             try: return np.array(listvals)
             except: return listvals
