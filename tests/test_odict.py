@@ -119,6 +119,7 @@ def test_repr():
 
 def test_default():
     sc.heading('Testing default')
+
     o = sc.odict(foo=[1,2,3], defaultdict=list)
     o['bar'].extend([1,2,3])
     assert o[0] == o[1]
@@ -126,6 +127,12 @@ def test_default():
     lam = lambda: 44
     o = sc.odict(defaultdict=lam)
     assert o['anything'] == lam()
+
+    # Testing objdict
+    j = sc.objdict(a=1, b=2, defaultdict='nested')
+    j.c.d.e = 3
+    print(j)
+
     return
 
 
@@ -157,6 +164,7 @@ def test_other():
 
     print('Testing append')
     o.append(239)
+    o.valind(239)
 
     print('Testing sort')
     v = sc.odict(dog=12, cat=8, hamster=244)
@@ -164,6 +172,7 @@ def test_other():
 
     print('Testing reverse')
     o.reverse()
+    o.reversed()
 
     print('Testing promote')
     od = sc.odict.promote(['There','are',4,'keys'])
@@ -178,6 +187,7 @@ def test_other():
 
 
 def test_asobj():
+    sc.heading('Testing objdict/asobj')
     d = dict(foo=1, bar=2)
     d_obj = sc.asobj(d)
     d_obj.foo = 10

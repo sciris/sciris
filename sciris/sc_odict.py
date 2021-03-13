@@ -49,9 +49,12 @@ class odict(OD):
         bar.rename('clam','oyster') # Show rename
         print(bar) # Print results
 
-        # Defaultdict example
+        # Defaultdict examples
         dd = sc.odict(a=[1,2,3], defaultdict=list)
         dd['c'].append(4)
+
+        nested = sc.objdict(a=0, defaultdict='nested') # Create a infinitely nested dictionary
+        nested.b.c.d = 2
 
     New in version 1.0.3: "defaultdict" argument
     '''
@@ -62,6 +65,9 @@ class odict(OD):
         if len(args)==1 and args[0] is None: args = [] # Remove a None argument
         OD.__init__(self, *args, **kwargs) # Standard init
         if defaultdict is not None:
+            if defaultdict == 'nested':
+                nested_factory = lambda: self.__class__(defaultdict=nested_factory)
+                defaultdict = nested_factory
             if not callable(defaultdict): # pragma: no cover
                 errormsg = f'The defaultdict argument must be callable, not {type(defaultdict)}'
                 raise TypeError(errormsg)
@@ -396,9 +402,9 @@ class odict(OD):
                 slicevals = [self.pop(i, *args, **kwargs) for i in range(startind,stopind)] # WARNING, not tested
                 try:
                     return np.array(slicevals) # Try to convert to an array
-                except:
+                except: # pragma: no cover
                     return slicevals
-            except Exception as E:
+            except Exception as E: # pragma: no cover
                 errormsg = 'Invalid odict slice'
                 raise ValueError(errormsg) from E
         elif self._is_odict_iterable(key): # Iterate over items
@@ -407,7 +413,7 @@ class odict(OD):
             listvals = [self.pop(item, *args, **kwargs) for item in poplist]
             try:
                 return np.array(listvals)
-            except:
+            except: # pragma: no cover
                 return listvals
         else: # pragma: no cover # Handle string but also everything else
             try:
@@ -559,7 +565,7 @@ class odict(OD):
             realpos = 0
         if pos is None:
             realpos = 0
-        if realpos>len(self):
+        if realpos>len(self): # pragma: no cover
             errormsg = f'Cannot insert {key} at position {pos} since length of odict is {len(self)}'
             raise ValueError(errormsg)
 
@@ -570,10 +576,11 @@ class odict(OD):
         if not len(originds) or realpos==len(originds): # It's empty or in the final position, just append
             self.__setitem__(realkey, realvalue)
         else: # Main usage case, it's not empty
-            try: insertind = originds.index(realpos) # Figure out which index we're inseting at
-            except:
+            try:
+                insertind = originds.index(realpos) # Figure out which index we're inseting at
+            except Exception as E: # pragma: no cover
                 errormsg = f'Could not insert item at position {realpos} in odict with {len(originds)} items'
-                raise ValueError(errormsg)
+                raise ValueError(errormsg) from E
             keystopop = origkeys[insertind:] # Pop these keys until we get far enough back
             for keytopop in keystopop:
                 tmpdict.__setitem__(keytopop, self.pop(keytopop))
@@ -625,7 +632,7 @@ class odict(OD):
             if sortby == 'values':
                 origvals = self.values()
                 sortby = sorted(range(len(origvals)), key=origvals.__getitem__) # Reset sortby based on https://stackoverflow.com/questions/3382352/equivalent-of-numpy-argsort-in-basic-python
-            if not ut.isiterable(sortby):
+            if not ut.isiterable(sortby): # pragma: no cover
                 raise Exception('Please provide a list to determine the sort order.')
             if all([isinstance(x, ut._stringtypes) for x in sortby]): # Going to sort by keys
                 allkeys = sortby # Assume the user knows what s/he is doing
@@ -634,11 +641,11 @@ class odict(OD):
                 for i,x in enumerate(sortby):
                      if x: allkeys.append(origkeys[i])
             elif all([isinstance(x, ut._numtype) for x in sortby]): # Going to sort by numbers
-                if not set(sortby)==set(range(len(self))):
+                if not set(sortby)==set(range(len(self))): # pragma: no cover
                     warningmsg = f'Warning: list to sort by "{sortby}" has different length than odict "{len(self)}"'
                     if verbose: print(warningmsg)
                 allkeys = [origkeys[ind] for ind in sortby]
-            else:
+            else: # pragma: no cover
                 errormsg = f'Cannot figure out how to sort by "{sortby}"'
                 raise TypeError(errormsg)
         tmpdict = odict()
@@ -697,7 +704,7 @@ class odict(OD):
             keylist = [ut.flexstr(keys)]
         elif isinstance(keys, list): # It's a list: use directly
             keylist = keys
-        else:
+        else: # pragma: no cover
             errormsg = f'Could not understand keys "{keys}": must be number, string, or list'
             raise TypeError(errormsg)
         nkeys = len(keylist)
@@ -711,7 +718,7 @@ class odict(OD):
             vallist = [ut.dcp(vals[0]) for _ in range(nkeys)]
         elif nvals==nkeys: # Lengths match, can use directly
             vallist = vals
-        else:
+        else: # pragma: no cover
             errormsg = f'Must supply either a single value or a list of same length as the keys ({nkeys} keys, {nvals} values supplied)'
             raise ValueError(errormsg)
 
@@ -759,7 +766,7 @@ class odict(OD):
 
                 # Loop over supplied keys
                 for key,keyname in zip(keys,keynames):
-                    try:
+                    try: # pragma: no cover
                         self.__setitem__(str(keyname), source[key])
                     except Exception as E:
                         errormsg = f'Key "{key}" not found: {repr(E)}'
@@ -818,7 +825,7 @@ class odict(OD):
         nkeys = len(self.keys())
         if not(ut.isiterable(val)): # Assume it's meant to be populated in each
             val = [val]*nkeys # Duplicated
-        if len(val)!=nkeys:
+        if len(val)!=nkeys: # pragma: no cover
             errormsg = f'To map values onto each key, they must be the same length ({len(val)} vs. {nkeys})'
             raise ValueError(errormsg)
         for k,key in self.enumkeys():
