@@ -1393,8 +1393,8 @@ def promotetoarray(x, keepnone=False, **kwargs):
     elif x is None and not keepnone:
         x = []
     if kwargs.pop('skipnone') is not None:
-        warnmsg = 'Argument "skipnone" has been deprecated as of v1.0.3; use keepnone instead'
-        warnings.warn(warnmsg, category=DeprecationWarning)
+        warnmsg = 'sc.promotetoarray() argument "skipnone" has been deprecated as of v1.0.3; use keepnone instead'
+        warnings.warn(warnmsg, category=DeprecationWarning, stacklevel=2)
     output = np.array(x, **kwargs)
     return output
 
