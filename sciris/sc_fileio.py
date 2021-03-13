@@ -1148,7 +1148,7 @@ class _RobustUnpickler(pkl.Unpickler):
             module = importlib.import_module(module_name)
             obj = getattr(module, name)
         except Exception as E:
-            if verbose: print(f'Unpickling warning: could not import {module_name}.{name}: {str(E)}'
+            if verbose: print(f'Unpickling warning: could not import {module_name}.{name}: {str(E)}')
             exception = traceback.format_exc() # Grab the trackback stack
             obj = makefailed(module_name=module_name, name=name, error=E, exception=exception)
         return obj

@@ -1756,7 +1756,7 @@ def date(obj, *args, start_date=None, dateformat=None, as_date=True):
         as_date (bool): whether to return as a datetime date instead of a string
 
     Returns:
-        dates (date or list): either a single date object, or a list of them
+        dates (date or list): either a single date object, or a list of them (matching input data type where possible)
 
     **Examples**::
 
@@ -1808,19 +1808,21 @@ def date(obj, *args, start_date=None, dateformat=None, as_date=True):
 def day(obj, *args, start_day=None):
     '''
     Convert a string, date/datetime object, or int to a day (int), the number of
-    days since the start day. See also sc.date() and sc.daydiff().
+    days since the start day. See also sc.date() and sc.daydiff(). If a start day
+    is not supplied, it returns the number of days into the current year.
 
     Args:
-        obj (str, date, int, or list): convert any of these objects to a day relative to the start day
+        obj (str, date, int, list, array): convert any of these objects to a day relative to the start day
         args (list): additional days
         start_day (str or date): the start day; if none is supplied, return days since (supplied year)-01-01.
 
     Returns:
-        days (int or str): the day(s) in simulation time
+        days (int or list): the day(s) in simulation time (matching input data type where possible)
 
-    **Example**::
+    **Examples**::
 
         sc.day(sc.now()) # Returns how many days into the year we are
+        sc.day(['2021-01-21', '2024-04-04'], start_day='2022-02-22') # Days can be positive or negative
 
     New in version 1.0.0.
     '''
@@ -1853,7 +1855,7 @@ def day(obj, *args, start_day=None):
                 raise ValueError(errormsg)
 
     # Return an integer rather than a list if only one provided
-    output = _sanitize_output(days, is_list, is_array, dtype=object)
+    output = _sanitize_output(days, is_list, is_array)
     return output
 
 
