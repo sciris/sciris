@@ -137,6 +137,7 @@ def test_default():
 
 
 def test_other():
+    sc.heading('Testing other')
     o = sc.odict(foo=[1,2,3,4], bar=[5,6,7,8])
 
     print('Testing enumerate')

@@ -53,7 +53,7 @@ class odict(OD):
         dd = sc.odict(a=[1,2,3], defaultdict=list)
         dd['c'].append(4)
 
-        nested = sc.objdict(a=0, defaultdict='nested') # Create a infinitely nested dictionary
+        nested = sc.objdict(a=0, defaultdict='nested') # Create a infinitely nested dictionary (NB: may behave strangely on IPython)
         nested.b.c.d = 2
 
     New in version 1.0.3: "defaultdict" argument
