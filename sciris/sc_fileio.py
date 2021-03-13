@@ -78,7 +78,7 @@ def loadstr(string=None, verbose=False, die=None):
     ''' Like loadobj(), but for a bytes-like string (rarely used) '''
     if string is None:
         errormsg = 'loadstr() error: input received was None, not a string'
-        raise Exception(errormsg)
+        raise TypeError(errormsg)
     with closing(IO(string)) as output: # Open a "fake file" with the Gzip string pickle in it.
         with GzipFile(fileobj=output, mode='rb') as fileobj: # Set a Gzip reader to pull from the "file."
             picklestring = fileobj.read() # Read the string pickle from the "file" (applying Gzip decompression).
@@ -489,7 +489,7 @@ def sanitizejson(obj, verbose=True, die=False, tostring=False, **kwargs):
             output = jsonpickle(obj)
         except Exception as E:
             errormsg = f'Could not sanitize "{obj}" {type(obj)} ({str(E)}), converting to string instead'
-            if die:       raise Exception(errormsg)
+            if die:       raise TypeError(errormsg)
             elif verbose: print(errormsg)
             output = str(obj)
 
@@ -646,7 +646,7 @@ class Blobject(object):
         if source   is None and filename is not None: source   = filename # Reset the source to be the filename, e.g. Spreadsheet(filename='foo.xlsx')
         if filename is None and ut.isstring(source):  filename = source   # Reset the filename to be the source, e.g. Spreadsheet('foo.xlsx')
         if name     is None and filename is not None: name     = os.path.basename(filename) # If not supplied, use the filename
-        if blob is not None and source is not None: raise Exception('Can initialize from either source or blob, but not both')
+        if blob is not None and source is not None: raise ValueError('Can initialize from either source or blob, but not both')
 
         # Define quantities
         self.name      = name # Name of the object
@@ -750,7 +750,7 @@ class Spreadsheet(Blobject):
         try:
             import xlrd # Optional import
         except ModuleNotFoundError as e:
-            raise Exception('The "xlrd" Python package is not available; please install manually') from e
+            raise ModuleNotFoundError('The "xlrd" Python package is not available; please install manually') from e
         book = xlrd.open_workbook(file_contents=self.tofile().read(), *args, **kwargs)
         return book
 
@@ -759,7 +759,7 @@ class Spreadsheet(Blobject):
         try:
             import openpyexcel # Optional import
         except ModuleNotFoundError as e:
-            raise Exception('The "openpyexcel" Python package is not available; please install manually') from e
+            raise ModuleNotFoundError('The "openpyexcel" Python package is not available; please install manually') from e
         self.tofile(output=False)
         book = openpyexcel.load_workbook(self.bytes, *args, **kwargs) # This stream can be passed straight to openpyexcel
         return book
@@ -769,7 +769,7 @@ class Spreadsheet(Blobject):
         try:
             import pandas # Optional import
         except ModuleNotFoundError as e:
-            raise Exception('The "pandas" Python package is not available; please install manually') from e
+            raise ModuleNotFoundError('The "pandas" Python package is not available; please install manually') from e
         self.tofile(output=False)
         book = pandas.ExcelFile(self.bytes, *args, **kwargs)
         return book
@@ -902,7 +902,7 @@ def loadspreadsheet(filename=None, folder=None, fileobj=None, sheetname=None, sh
     try:
         import xlrd # Optional import
     except ModuleNotFoundError as e:
-        raise Exception('The "xlrd" Python package is not available; please install manually') from e
+        raise ModuleNotFoundError('The "xlrd" Python package is not available; please install manually') from e
 
     # Handle inputs
     if asdataframe is None: asdataframe = True
@@ -997,7 +997,7 @@ def savespreadsheet(filename=None, data=None, folder=None, sheetnames=None, clos
     try:
         import xlsxwriter # Optional import
     except ModuleNotFoundError as e:
-            raise Exception('The "xlsxwriter" Python package is not available; please install manually') from e
+            raise ModuleNotFoundError('The "xlsxwriter" Python package is not available; please install manually') from e
     fullpath = makefilepath(filename=filename, folder=folder, default='default.xlsx')
     datadict   = odict()
     formatdict = odict()
@@ -1032,7 +1032,8 @@ def savespreadsheet(filename=None, data=None, folder=None, sheetnames=None, clos
                 errormsg = f'Unable to figure out how to match {len(sheetnames)} sheet names with data of length {len(data)}'
                 raise ValueError(errormsg)
     else:
-        raise Exception('Cannot figure out the format of the data') # This shouldn't happen!
+        errormsg = f'Cannot figure out how to handle data of type: {type(data)}'
+        raise TypeError(errormsg) # This shouldn't happen!
 
     # Create workbook
     if verbose: print(f'Creating file {fullpath}')
@@ -1204,7 +1205,7 @@ def _savedill(fileobj=None, obj=None, *args, **kwargs):
     try:
         import dill # Optional Sciris dependency
     except ModuleNotFoundError as e:
-        raise Exception('The "dill" Python package is not available; please install manually') from e
+        raise ModuleNotFoundError('The "dill" Python package is not available; please install manually') from e
     fileobj.write(dill.dumps(obj, protocol=-1, *args, **kwargs))
     return None
 
@@ -1343,7 +1344,7 @@ def loadobj2to3(filename=None, filestring=None, recursionlimit=None):
                 bytesout = loadintobytes(fileobj)
     else:
         errormsg = 'You must supply either a filename or a filestring for loadobj() or loadstr(), respectively'
-        raise Exception(errormsg)
+        raise ValueError(errormsg)
 
     # Actually do the load, with correct substitution
     recursive_substitute(stringout, bytesout, recursionlevel=0, recursionlimit=recursionlimit)

@@ -71,7 +71,7 @@ def safedivide(numerator=None, denominator=None, default=None, eps=None, warn=Fa
         output[invalid] = default
     else: # Unclear input, raise exception
         errormsg = f'Input type {type(denominator)} not understood: must be number or array'
-        raise Exception(errormsg)
+        raise TypeError(errormsg)
 
     return output
 
@@ -227,7 +227,7 @@ def getvaliddata(data=None, filterdata=None, defaultind=0):
             validdata = np.array([np.array(data)[defaultind]]) # Use the default index; usually either 0 (start) or -1 (end)
         else:
             errormsg = f'Array sizes are mismatched: {len(data)} vs. {len(validindices)}'
-            raise Exception(errormsg)
+            raise ValueError(errormsg)
     else:
         validdata = np.array([]) # No valid data, return an empty array
     return validdata
@@ -267,7 +267,7 @@ def sanitize(data=None, returninds=False, replacenans=None, die=True, defaultval
         except Exception as E:
             if die:
                 errormsg = f'Sanitization failed on array: "{repr(E)}":\n{data}'
-                raise Exception(errormsg)
+                raise RuntimeError(errormsg)
             else:
                 sanitized = data # Give up and just return an empty array
                 inds = []
@@ -419,7 +419,7 @@ def inclusiverange(*args, **kwargs):
         stop = args[1]
         step = args[2]
     else:
-        raise Exception('Too many arguments supplied: inclusiverange() accepts 0-3 arguments')
+        raise ValueError('Too many arguments supplied: inclusiverange() accepts 0-3 arguments')
 
     # Handle kwargs
     start = kwargs.get('start', start)
@@ -461,8 +461,8 @@ def smooth(data, repeats=None):
             for i in range(output.shape[0]): output[i,:] = np.convolve(output[i,:], kernel, mode='same')
             for j in range(output.shape[1]): output[:,j] = np.convolve(output[:,j], kernel, mode='same')
         else:
-            errormsg = 'Simple smooting only implemented for 1D and 2D arrays'
-            raise Exception(errormsg)
+            errormsg = 'Simple smoothing only implemented for 1D and 2D arrays'
+            raise ValueError(errormsg)
     return output
 
 
@@ -494,12 +494,12 @@ def smoothinterp(newx=None, origx=None, origy=None, smoothness=None, growth=None
         newy = np.zeros(newx.shape)+origy[0]
         return newy
 
-    if not(newx.shape): raise Exception('To interpolate, must have at least one new x value to interpolate to')
-    if not(origx.shape): raise Exception('To interpolate, must have at least one original x value to interpolate to')
-    if not(origy.shape): raise Exception('To interpolate, must have at least one original y value to interpolate to')
+    if not(newx.shape): raise ValueError('To interpolate, must have at least one new x value to interpolate to')
+    if not(origx.shape): raise ValueError('To interpolate, must have at least one original x value to interpolate to')
+    if not(origy.shape): raise ValueError('To interpolate, must have at least one original y value to interpolate to')
     if not(origx.shape==origy.shape):
         errormsg = f'To interpolate, original x and y vectors must be same length (x={len(origx)}, y={len(origy)})'
-        raise Exception(errormsg)
+        raise ValueError(errormsg)
 
     # Make sure it's in the correct order
     correctorder = np.argsort(origx)
@@ -527,7 +527,7 @@ def smoothinterp(newx=None, origx=None, origy=None, smoothness=None, growth=None
             newy[i] = finiteorigy[xind] # Copy it
     else:
         errormsg = f'Method "{method}" not found; methods are "linear" or "nearest"'
-        raise Exception(errormsg)
+        raise ValueError(errormsg)
 
     # Perform smoothing
     if smoothness is None: smoothness = np.ceil(len(newx)/len(origx)) # Calculate smoothness: this is consistent smoothing regardless of the size of the arrays

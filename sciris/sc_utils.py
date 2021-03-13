@@ -260,7 +260,7 @@ def dcp(obj, verbose=True, die=False):
     except Exception as E:
         output = cp(obj)
         errormsg = f'Warning: could not perform deep copy, performing shallow instead: {str(E)}'
-        if die: raise Exception(errormsg)
+        if die: raise RuntimeError(errormsg)
         else:   print(errormsg)
     return output
 
@@ -2381,7 +2381,7 @@ def gitinfo(path=None, hashlen=7, die=False, verbose=True):
                 else:
                     curpath = parent
         else:
-            raise Exception("Could not find .git directory")
+            raise RuntimeError("Could not find .git directory")
 
         # Then, get the branch and commit
         with open(os.path.join(gitdir, "HEAD"), "r") as f1:
@@ -2409,7 +2409,7 @@ def gitinfo(path=None, hashlen=7, die=False, verbose=True):
     except Exception as E:
         errormsg = 'Could not extract git info; please check paths'
         if die:
-            raise Exception(errormsg) from E
+            raise RuntimeError(errormsg) from E
         elif verbose:
             print(errormsg + f'\nError: {str(E)}')
 
@@ -2514,7 +2514,7 @@ def suggest(user_input, valid_inputs, n=1, threshold=4, fulloutput=False, die=Fa
     try:
         import jellyfish # To allow as an optional import
     except ModuleNotFoundError as e:
-        raise Exception('The "jellyfish" Python package is not available; please install via "pip install jellyfish"') from e
+        raise ModuleNotFoundError('The "jellyfish" Python package is not available; please install via "pip install jellyfish"') from e
 
     valid_inputs = promotetolist(valid_inputs, objtype='string')
 
@@ -2558,7 +2558,7 @@ def suggest(user_input, valid_inputs, n=1, threshold=4, fulloutput=False, die=Fa
             return None
     elif die:
         errormsg = f'"{user_input} not found - did you mean {suggestionstr}'
-        raise Exception(errormsg)
+        raise ValueError(errormsg)
     else:
         if fulloutput:
             output = dict(zip(suggestions, distance[order]))
@@ -2621,7 +2621,7 @@ def profile(run, follow=None, print_stats=True, *args, **kwargs):
     try:
         from line_profiler import LineProfiler
     except ModuleNotFoundError as e:
-        raise Exception('The "line_profiler" Python package is required to perform profiling') from e
+        raise ModuleNotFoundError('The "line_profiler" Python package is required to perform profiling') from e
 
     if follow is None:
         follow = run
@@ -2855,7 +2855,7 @@ def mergenested(dict1, dict2, die=False, verbose=False, _path=None):
             else:
                 errormsg = f'Warning! Conflict at {keypath}: {a[key]} vs. {b[key]}'
                 if die:
-                    raise Exception(errormsg)
+                    raise ValueError(errormsg)
                 else:
                     a[key] = b[key]
                     if verbose:

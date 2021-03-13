@@ -206,7 +206,7 @@ def vectocolor(vector, cmap=None, asarray=True, reverse=False, minval=None, maxv
             cmap = cm.get_cmap(cmap)
         except:
             choices = "\n".join(sorted(cm.datad.keys()))
-            raise Exception(f'{cmap} is not a valid color map; choices are:\n{choices}')
+            raise ValueError(f'{cmap} is not a valid color map; choices are:\n{choices}')
 
     # If a scalar is supplied, convert it to a vector instead
     if ut.isnumber(vector):
@@ -1116,7 +1116,7 @@ def commaticks(fig=None, ax=None, axis='y'):
         if   axis=='x': thisaxis = ax.xaxis
         elif axis=='y': thisaxis = ax.yaxis
         elif axis=='z': thisaxis = ax.zaxis
-        else: raise Exception('Axis must be x, y, or z')
+        else: raise ValueError('Axis must be x, y, or z')
         thisaxis.set_major_formatter(mpl.ticker.FuncFormatter(lambda x, p: format(int(x), ',')))
     return None
 
@@ -1144,7 +1144,7 @@ def SIticks(fig=None, ax=None, axis='y', fixed=False):
         if   axis=='x': thisaxis = ax.xaxis
         elif axis=='y': thisaxis = ax.yaxis
         elif axis=='z': thisaxis = ax.zaxis
-        else: raise Exception('Axis must be x, y, or z')
+        else: raise ValueError('Axis must be x, y, or z')
         if fixed:
             ticklocs = thisaxis.get_ticklocs()
             ticklabels = []

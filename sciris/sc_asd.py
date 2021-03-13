@@ -98,7 +98,7 @@ def asd(function, x, args=None, stepsize=0.1, sinc=2, sdec=2, pinc=2, pdec=2,
     nparams = len(x) # Number of parameters
     if not nparams:
         errormsg = 'ASD: The length of the input vector cannot be zero'
-        raise Exception(errormsg)
+        raise ValueError(errormsg)
     if sinc<1:
         print('ASD: sinc cannot be less than 1; resetting to 2'); sinc = 2
     if sdec<1:
@@ -115,7 +115,7 @@ def asd(function, x, args=None, stepsize=0.1, sinc=2, sdec=2, pinc=2, pdec=2,
     else:                probabilities = consistentshape(pinitial)
     if not sum(probabilities):
         errormsg = 'ASD: The sum of input probabilities cannot be zero'
-        raise Exception(errormsg)
+        raise ValueError(errormsg)
 
     # Handle step sizes
     if sinitial is None:
@@ -131,7 +131,7 @@ def asd(function, x, args=None, stepsize=0.1, sinc=2, sdec=2, pinc=2, pdec=2,
     # Final input checking
     if sum(np.isnan(x)):
         errormsg = f'ASD: At least one value in the vector of starting points is NaN:\n{x}'
-        raise Exception(errormsg)
+        raise ValueError(errormsg)
     if label is None: label = ''
     if stalliters is None: stalliters = 10 * nparams # By default, try 10 times per parameter on average
     stalliters = int(stalliters)

@@ -195,7 +195,7 @@ def parallelize(func, iterarg=None, iterkwargs=None, args=None, kwargs=None, ncp
     embarrassing = False # Whether or not it's an embarrassingly parallel optimization
     if iterarg is not None and iterkwargs is not None:
         errormsg = 'You can only use one of iterarg or iterkwargs as your iterable, not both'
-        raise Exception(errormsg)
+        raise ValueError(errormsg)
     if iterarg is not None:
         if not(ut.isiterable(iterarg)):
             try:
@@ -203,29 +203,29 @@ def parallelize(func, iterarg=None, iterkwargs=None, args=None, kwargs=None, ncp
                 embarrassing = True
             except Exception as E:
                 errormsg = f'Could not understand iterarg "{iterarg}": not iterable and not an integer: {str(E)}'
-                raise Exception(errormsg)
+                raise TypeError(errormsg)
         niters = len(iterarg)
     if iterkwargs is not None: # Check that iterkwargs has the right format
         if isinstance(iterkwargs, dict): # It's a dict of lists, e.g. {'x':[1,2,3], 'y':[2,3,4]}
             for key,val in iterkwargs.items():
                 if not ut.isiterable(val):
                     errormsg = f'iterkwargs entries must be iterable, not {type(val)}'
-                    raise Exception(errormsg)
+                    raise TypeError(errormsg)
                 if not niters:
                     niters = len(val)
                 else:
                     if len(val) != niters:
                         errormsg = f'All iterkwargs iterables must be the same length, not {niters} vs. {len(val)}'
-                        raise Exception(errormsg)
+                        raise ValueError(errormsg)
         elif isinstance(iterkwargs, list): # It's a list of dicts, e.g. [{'x':1, 'y':2}, {'x':2, 'y':3}, {'x':3, 'y':4}]
             niters = len(iterkwargs)
             for item in iterkwargs:
                 if not isinstance(item, dict):
                     errormsg = f'If iterkwargs is a list, each entry must be a dict, not {type(item)}'
-                    raise Exception(errormsg)
+                    raise TypeError(errormsg)
         else:
             errormsg = f'iterkwargs must be a dict of lists, a list of dicts, or None, not {type(iterkwargs)}'
-            raise Exception(errormsg)
+            raise TypeError(errormsg)
 
     # Construct argument list
     argslist = []
@@ -245,7 +245,7 @@ def parallelize(func, iterarg=None, iterkwargs=None, args=None, kwargs=None, ncp
                 iterdict = iterkwargs[index]
             else: # Should be caught by previous checking, so shouldn't happen
                 errormsg = f'iterkwargs type not understood ({type(iterkwargs)})'
-                raise Exception(errormsg)
+                raise TypeError(errormsg)
         taskargs = TaskArgs(func, index, iterval, iterdict, args, kwargs, maxload, interval, embarrassing)
         argslist.append(taskargs)
 
