@@ -107,12 +107,25 @@ def test_find():
 
 
 def test_repr():
+    sc.heading('Testing repr')
     n_entries = 300
     qq = sc.odict()
     for i in range(n_entries):
         key = f'key{i:03d}'
         qq[key] = i**2
     print(qq)
+    return
+
+
+def test_default():
+    sc.heading('Testing default')
+    o = sc.odict(foo=[1,2,3], defaultdict=list)
+    o['bar'].extend([1,2,3])
+    assert o[0] == o[1]
+
+    lam = lambda: 44
+    o = sc.odict(defaultdict=lam)
+    assert o['anything'] == lam()
     return
 
 
@@ -130,7 +143,14 @@ def test_other():
     o.export()
 
     print('Testing pop')
-    o.pop('foo')
+    o1 = sc.dcp(o)
+    o2 = sc.dcp(o)
+    o3 = sc.dcp(o)
+    o4 = sc.dcp(o)
+    o1.pop('foo')
+    o2.pop(0)
+    o3.pop([0,1])
+    o4.pop(slice(-1))
 
     print('Testing copy')
     o.copy('bar', 'cat')
@@ -147,6 +167,9 @@ def test_other():
 
     print('Testing promote')
     od = sc.odict.promote(['There','are',4,'keys'])
+
+    print('Testing conversion')
+    od.to_OD()
 
     print('Testing clear')
     od.clear()
@@ -173,6 +196,7 @@ if __name__ == '__main__':
     test_each()
     test_find()
     test_repr()
+    test_default()
     test_other()
     test_asobj()
 

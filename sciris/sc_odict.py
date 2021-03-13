@@ -62,7 +62,7 @@ class odict(OD):
         if len(args)==1 and args[0] is None: args = [] # Remove a None argument
         OD.__init__(self, *args, **kwargs) # Standard init
         if defaultdict is not None:
-            if not callable(defaultdict):
+            if not callable(defaultdict): # pragma: no cover
                 errormsg = f'The defaultdict argument must be callable, not {type(defaultdict)}'
                 raise TypeError(errormsg)
         OD.__setattr__(self, '_defaultdict', defaultdict) # Can't use self._defaultdict since setattr() is overridden by sc.objdict()
@@ -92,15 +92,15 @@ class odict(OD):
             try:
                 startind = self._slicekey(key.start, 'start')
                 stopind = self._slicekey(key.stop, 'stop')
-                if stopind<startind:
+                if stopind<startind: # pragma: no cover
                     errormsg = f'Stop index must be >= start index (start={startind}, stop={stopind})'
                     raise ValueError(errormsg)
                 slicevals = [self.__getitem__(i) for i in range(startind,stopind)]
                 output = self._sanitize_items(slicevals)
                 return output
-            except:
-                print('Invalid odict slice... returning empty list...')
-                return []
+            except Exception as E: # pragma: no cover
+                errormsg = 'Invalid odict slice'
+                raise ValueError(errormsg) from E
         elif self._is_odict_iterable(key): # Iterate over items
             listvals = [self.__getitem__(item) for item in key]
             if isinstance(key, list): # If the user supplied the keys as a list, assume they want the output as a list
@@ -122,7 +122,7 @@ class odict(OD):
         elif type(key)==slice:
             startind = self._slicekey(key.start, 'start')
             stopind = self._slicekey(key.stop, 'stop')
-            if stopind<startind:
+            if stopind<startind: # pragma: no cover
                 errormsg = f'Stop index must be >= start index (start={startind}, stop={stopind})'
                 raise ValueError(errormsg)
             slicerange = range(startind,stopind)
@@ -132,7 +132,7 @@ class odict(OD):
                 if len(value)==slicelen:
                     for valind,index in enumerator:
                         self.__setitem__(index, value[valind])  # e.g. odict[:] = arr[:]
-                else:
+                else: # pragma: no cover
                     errormsg = f'Slice "{slicerange}" and values "{value}" have different lengths! ({slicelen}, {len(value)})'
                     raise ValueError(errormsg)
             else:
@@ -142,7 +142,7 @@ class odict(OD):
             if len(key)==len(value):
                 for valind,thiskey in enumerate(key):
                     self.__setitem__(thiskey, value[valind])
-            else:
+            else: # pragma: no cover
                 errormsg = f'Keys "{key}" and values "{value}" have different lengths! ({len(key)}, {len(value)})'
                 raise ValueError(errormsg)
         else:
@@ -202,7 +202,7 @@ class odict(OD):
                             thisvalstr = ut.flexstr(thisval) # To avoid numpy's stupid 0.4999999999945
                     else: # Otherwise, do the normal repr() read.
                         thisvalstr = repr(thisval)
-                except Exception as E:
+                except Exception as E: # pragma: no cover
                     thisvalstr = f'{ut.objectid(thisval)} read failed: {str(E)}'
 
                 # Add information to the lists to retrace afterwards.
@@ -289,14 +289,26 @@ class odict(OD):
 
     def _slicekey(self, key, slice_end):
         ''' Validate a key supplied as a slice object '''
-        shift = int(slice_end=='stop')
-        if isinstance(key, ut._numtype): return key
-        elif type(key) is str: return self.index(key)+shift # +1 since otherwise confusing with names (CK)
-        elif key is None: return (len(self) if shift else 0)
+        if slice_end == 'stop':
+            shift = 1
+            default = len(self)
         else:
+            shift = 0
+            default = 0
+
+        if isinstance(key, ut._numtype):
+            if key < 0:
+                key = len(self) + key
+            output = key
+        elif isinstance(key, str):
+            output = self.index(key) + shift # +1 since otherwise confusing with names (CK)
+        elif key is None:
+            output = default
+        else: # pragma: no cover
             errormsg = f'To use a slice, {slice_end} must be either int or str ({key})'
             raise TypeError(errormsg)
-        return None
+
+        return output
 
 
     @staticmethod
@@ -309,7 +321,7 @@ class odict(OD):
                     return True
         else: # For everything except a tuple, treat it as a string
             if not ut.isstring(key):
-                try:
+                try: # pragma: no cover
                     key = str(key) # Try to cast it to a string
                 except Exception as E:
                     errormsg = f'Could not convert odict key of type {type(key)} to a string: {str(E)}'
@@ -318,7 +330,7 @@ class odict(OD):
             elif method == 'in':         match = pattern in key
             elif method == 'startswith': match = key.startswith(pattern)
             elif method == 'endswith':   match = key.endswith(pattern)
-            else:
+            else: # pragma: no cover
                 errormsg = f'Method "{method}" not found; must be "re", "in", "startswith", or "endswith"'
                 raise ValueError(errormsg)
         return match
@@ -335,7 +347,7 @@ class odict(OD):
             output = np.array(items) # Try standard Numpy array...
             if 'S' in str(output.dtype) or 'U' in str(output.dtype): # ...but instead of converting to string, convert to object array for Python 2 or 3 -- WARNING, fragile!
                 output = np.array(items, dtype=object)
-        except:
+        except: # pragma: no cover
             output = items # If that fails, just give up and return the list
         return output
 
@@ -378,7 +390,7 @@ class odict(OD):
             try:
                 startind = self._slicekey(key.start, 'start')
                 stopind = self._slicekey(key.stop, 'stop')
-                if stopind<startind:
+                if stopind<startind: # pragma: no cover
                     errormsg = f'Stop index must be >= start index (start={startind}, stop={stopind})'
                     raise ValueError(errormsg)
                 slicevals = [self.pop(i, *args, **kwargs) for i in range(startind,stopind)] # WARNING, not tested
@@ -386,16 +398,18 @@ class odict(OD):
                     return np.array(slicevals) # Try to convert to an array
                 except:
                     return slicevals
-            except:
-                print('Invalid odict slice... returning empty list...')
-                return []
+            except Exception as E:
+                errormsg = 'Invalid odict slice'
+                raise ValueError(errormsg) from E
         elif self._is_odict_iterable(key): # Iterate over items
-            listvals = [self.pop(item, *args, **kwargs) for item in key]
+            keys = self.keys()
+            poplist = [keys[int(item)] if isinstance(item, ut._numtype) else item for item in key] # Convert to text keys, because indices change
+            listvals = [self.pop(item, *args, **kwargs) for item in poplist]
             try:
                 return np.array(listvals)
             except:
                 return listvals
-        else: # Handle string but also everything else
+        else: # pragma: no cover # Handle string but also everything else
             try:
                 return OD.pop(self, key, *args, **kwargs)
             except: # Duplicated from __getitem__
