@@ -13,7 +13,7 @@ New functions
 ~~~~~~~~~~~~~
 1. ``sc.mergelists()`` is similar to ``sc.mergedicts()``: it will take a sequence of inputs and attempt to merge them into a list.
 2. ``sc.transposelist()`` will perform a transposition on a list of lists: for example, a list of 10 lists (or tuples) each of length 3 will be transformed into a list of 3 lists each of length 10.
-1. ``sc.strjoin()`` and ``sc.newlinejoin()`` are shortcuts to ``', '.join(items)`` and ``'\n'.join(items)``, respectively. The latter is especially useful inside f-strings since you cannot use the ``\n`` character.
+3. ``sc.strjoin()`` and ``sc.newlinejoin()`` are shortcuts to ``', '.join(items)`` and ``'\n'.join(items)``, respectively. The latter is especially useful inside f-strings since you cannot use the ``\n`` character.
 
 Bugfixes
 ~~~~~~~~
@@ -26,11 +26,11 @@ Improvements
 1. ``sc.loadobj()`` now accepts a ``remapping`` argument, which lets the user load old pickle files even if the modules no longer exist.
 2. Most file functions (e.g. ``sc.makefilepath``, ``sc.getfilelist()`` now accept an ``aspath`` argument, which, if ``True``, will return a ``pathlib.Path`` object instead of a string.
 3. Most array-returning functions, such as ``sc.promotetoarray()`` and ``sc.cat()``, now accept a ``copy`` argument and other keywords; these are passed to ``np.array()``, allowing e.g. the ``dtype`` to be set.
-3. A fallback option for ``sc.findinds()`` has been implemented, even if the input array isn't numeric.
-4. ``sc.odict()`` now has a ``defaultdict`` argument, which lets you use it like a defaultdict as well as an ordered dict.
-5. ``sc.odict()`` has a ``transpose`` argument for methods like ``items()`` and ``enumvalues()``, which will return a tuple of lists instead of a list of tuples.
-6. ``sc.objdict()`` now prints out differently, to distinguish it from an ``sc.odict``.
-7. ``sc.promotetolist()`` has a new ``coerce`` argument, which will convert that data type into a list (instead of wrapping it).
+4. A fallback option for ``sc.findinds()`` has been implemented, even if the input array isn't numeric.
+5. ``sc.odict()`` now has a ``defaultdict`` argument, which lets you use it like a defaultdict as well as an ordered dict.
+6. ``sc.odict()`` has a ``transpose`` argument for methods like ``items()`` and ``enumvalues()``, which will return a tuple of lists instead of a list of tuples.
+7. ``sc.objdict()`` now prints out differently, to distinguish it from an ``sc.odict``.
+8. ``sc.promotetolist()`` has a new ``coerce`` argument, which will convert that data type into a list (instead of wrapping it).
 
 Renamed/removed functions
 ~~~~~~~~~~~~~~~~~~~~~~~~~
