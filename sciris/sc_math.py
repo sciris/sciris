@@ -124,10 +124,11 @@ def findinds(arr, val=None, eps=1e-6, first=False, last=False, **kwargs):
             output = np.nonzero(arr==val)
         try: # Standard usage, use nonzero
             output = np.nonzero(np.isclose(a=arr, b=val, atol=atol, **kwargs)) # If absolute difference between the two values is less than a certain amount
-        except Exception as E: # pragma: no cover # As a  fallback, try simpler comparison
+        except Exception as E: # pragma: no cover # As a fallback, try simpler comparison
             output = np.nonzero(abs(arr-val) < atol)
-            warnmsg = f'{str(E)}\nsc.findinds(): np.isclose() encountered an exception (above), falling back to direct comparison'
-            warnings.warn(warnmsg, category=RuntimeWarning, stacklevel=2)
+            if kwargs: # Raise a warning if and only if special settings were passed
+                warnmsg = f'{str(E)}\nsc.findinds(): np.isclose() encountered an exception (above), falling back to direct comparison'
+                warnings.warn(warnmsg, category=RuntimeWarning, stacklevel=2)
 
     # Process output
     if arr.ndim == 1: # Uni-dimensional
