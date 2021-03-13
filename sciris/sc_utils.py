@@ -1386,9 +1386,7 @@ def promotetoarray(x, keepnone=False, **kwargs):
     New in version 1.0.3: replaced "skipnone" with "keepnone"; allowed passing
     kwargs to ``np.array()``.
     '''
-    if isnumber(x):
-        x = [x]
-    elif isinstance(x, np.ndarray) and not np.shape(x): # e.g. np.array(3)
+    if isnumber(x) or (isinstance(x, np.ndarray) and not np.shape(x)): # e.g. 3 or np.array(3)
         x = [x]
     elif x is None and not keepnone:
         x = []

@@ -80,7 +80,7 @@ def asd(function, x, args=None, stepsize=0.1, sinc=2, sdec=2, pinc=2, pdec=2,
     """
     if randseed is not None:
         nr.seed(int(randseed)) # Don't reset it if not supplied
-        if verbose >= 3: print('ASD: Launching with random seed is %i; sample: %f' % (randseed, nr.random()))
+        if verbose >= 3: print(f'ASD: Launching with random seed is {randseed}; sample: {nr.random()}')
 
     def consistentshape(userinput, origshape=False):
         """
@@ -130,7 +130,7 @@ def asd(function, x, args=None, stepsize=0.1, sinc=2, sdec=2, pinc=2, pdec=2,
 
     # Final input checking
     if sum(np.isnan(x)):
-        errormsg = 'ASD: At least one value in the vector of starting points is NaN:\n%s' % x
+        errormsg = f'ASD: At least one value in the vector of starting points is NaN:\n{x}'
         raise Exception(errormsg)
     if label is None: label = ''
     if stalliters is None: stalliters = 10 * nparams # By default, try 10 times per parameter on average
@@ -160,8 +160,8 @@ def asd(function, x, args=None, stepsize=0.1, sinc=2, sdec=2, pinc=2, pdec=2,
     exitreason = 'Unknown exit reason' # Catch everything else
     while True:
         count += 1 # Increment the count
-        if verbose == 1: print(offset + label + 'Iteration %i; elapsed %0.1f s; objective: %0.3e' % (count, time() - start, fval)) # For more verbose, use other print statement below
-        if verbose >= 4: print('\n\n Count=%i \n x=%s \n probabilities=%s \n stepsizes=%s' % (count, x, probabilities, stepsizes))
+        if verbose == 1: print(offset + label + f'Iteration {count}; elapsed {time()-start:0.1f} s; objective: {fval:0.3e}') # For more verbose, use other print statement below
+        if verbose >= 4: print(f'\n\n Count={count} \n x={x} \n probabilities={probabilities} \n stepsizes={stepsizes}')
 
         # Calculate next parameters
         probabilities = probabilities / sum(probabilities) # Normalize probabilities
@@ -175,7 +175,7 @@ def asd(function, x, args=None, stepsize=0.1, sinc=2, sdec=2, pinc=2, pdec=2,
             if newval<xmin[par]: newval = xmin[par] # Reset to the lower limit
             if newval>xmax[par]: newval = xmax[par] # Reset to the upper limit
             inrange = (newval != x[par])
-            if verbose >= 4: print(offset*2 + 'count=%i r=%s, choice=%s, par=%s, x[par]=%s, pm=%s, step=%s, newval=%s, xmin=%s, xmax=%s, inrange=%s' % (count, r, choice, par, x[par], (-1)**pm, stepsizes[choice], newval, xmin[par], xmax[par], inrange))
+            if verbose >= 4: print(offset*2 + f'count={count} r={r}, choice={choice}, par={par}, x[par]={x[par]}, pm={(-1)**pm}, step={stepsizes[choice]}, newval={newval}, xmin={xmin[par]}, xmax={xmax[par]}, inrange={inrange}')
             if inrange: # Proceed as long as they're not equal
                 break
         if not inrange: # Treat it as a failure if a value in range can't be found
@@ -192,7 +192,7 @@ def asd(function, x, args=None, stepsize=0.1, sinc=2, sdec=2, pinc=2, pdec=2,
         else:                                  ratio = fval/float(fvalnew) # The normal situation: calculate the real ratio
         abserrorhistory[np.mod(count, stalliters)] = max(0, fval-fvalnew) # Keep track of improvements in the error
         relerrorhistory[np.mod(count, stalliters)] = max(0, ratio-1.0) # Keep track of improvements in the error
-        if verbose >= 3: print(offset + 'step=%i choice=%s, par=%s, pm=%s, origval=%s, newval=%s' % (count, choice, par, pm, x[par], xnew[par]))
+        if verbose >= 3: print(offset + f'step={count} choice={choice}, par={par}, pm={pm}, origval={x[par]}, newval={xnew[par]}')
 
         # Check if this step was an improvement
         fvalold = fval # Store old fval
@@ -208,7 +208,9 @@ def asd(function, x, args=None, stepsize=0.1, sinc=2, sdec=2, pinc=2, pdec=2,
             flag = '--' # Marks no change
             if np.isnan(fvalnew):
                 if verbose >= 1: print('ASD: Warning, objective function returned NaN')
-        if verbose >= 2: print(offset + label + ' step %i (%0.1f s) %s (orig: %s | best:%s | new:%s | diff:%s)' % ((count, time() - start, flag) + sigfig([fvalorig, fvalold, fvalnew, fvalnew - fvalold])))
+        if verbose >= 2:
+            orig, best, new, diff = sigfig([fvalorig, fvalold, fvalnew, fvalnew-fvalold])
+            print(offset + label + f' step {count} ({time()-start:0.1f} s) {flag} (orig:{orig} | best:{best} | new:{new} | diff:{diff})')
 
         # Store output information
         fvals[count] = fval # Store objective function evaluations
@@ -232,7 +234,9 @@ def asd(function, x, args=None, stepsize=0.1, sinc=2, sdec=2, pinc=2, pdec=2,
             break
 
     # Return
-    if verbose >= 2: print('=== %s %s (%i steps, orig: %s | best: %s | ratio: %s) ===' % ((label, exitreason, count) + sigfig([fvals[0], fvals[-1], fvals[-1] / fvals[0]])))
+    if verbose >= 2: 
+        orig, best, ratio = sigfig([fvals[0], fvals[-1], fvals[-1]/fvals[0]])
+        print(f'=== {label} {exitreason} ({count} steps, orig: {orig} | best: {best} | ratio: {ratio}) ===')
     output = objdict()
     output['x'] = np.reshape(x, origshape) # Parameters
     output['fval'] = fvals[count]
