@@ -91,12 +91,13 @@ class odict(OD):
             try:
                 output = OD.__getitem__(self, key)
                 return output
-            except Exception as E:
+            except KeyError:
                 if self._default is not None: # Handle defaultdict behavior
                     OD.__setitem__(self, key, self._default())
                 else:
-                    if len(self.keys()): errormsg = '%s\nodict key "%s" not found; available keys are:\n%s' % (str(E), ut.flexstr(key), '\n'.join([ut.flexstr(k) for k in self.keys()]))
-                    else:                errormsg = 'Key "%s" not found since odict is empty'% key
+                    keys = self.keys()
+                    if len(keys): errormsg = f'odict key "{key}" not found; available keys are:\n{ut.newlinejoin(keys)}'
+                    else:         errormsg = f'Key {key} not found since odict is empty'
                     raise ut.KeyNotFoundError(errormsg)
         elif isinstance(key, ut._numtype): # Convert automatically from float...dangerous?
             thiskey = self.keys()[int(key)]
