@@ -1,6 +1,6 @@
 #!/bin/bash
 echo 'Running tests...'
-pytest -v test_*.py --cov-config=.coveragerc --cov=../sciris --durations=0
+pytest -v test_*.py --cov-config=.coveragerc --cov=../sciris --durations=0 --workers=auto
 
 echo 'Creating HTML report...'
 coverage html

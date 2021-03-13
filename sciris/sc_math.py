@@ -69,7 +69,7 @@ def safedivide(numerator=None, denominator=None, default=None, eps=None, warn=Fa
             denominator[invalid] = 1.0 # Replace invalid values with 1
         output = numerator/denominator
         output[invalid] = default
-    else: # Unclear input, raise exception
+    else: # pragma: no cover # Unclear input, raise exception
         errormsg = f'Input type {type(denominator)} not understood: must be number or array'
         raise TypeError(errormsg)
 
@@ -109,7 +109,7 @@ def findinds(arr, val=None, eps=1e-6, first=False, last=False, **kwargs):
 
     # Handle kwargs
     atol = kwargs.pop('atol', eps) # Ensure atol isn't specified twice
-    if 'val1' in kwargs or 'val2' in kwargs:
+    if 'val1' in kwargs or 'val2' in kwargs: # pragma: no cover
         arr = kwargs.pop('val1', arr)
         val = kwargs.pop('val2', val)
         warnmsg = 'sc.findinds() arguments "val1" and "val2" have been deprecated as of v1.0.0; use "arr" and "val" instead'
@@ -124,7 +124,7 @@ def findinds(arr, val=None, eps=1e-6, first=False, last=False, **kwargs):
             output = np.nonzero(arr==val)
         try: # Standard usage, use nonzero
             output = np.nonzero(np.isclose(a=arr, b=val, atol=atol, **kwargs)) # If absolute difference between the two values is less than a certain amount
-        except Exception as E: # As a  fallback, try simpler comparison
+        except Exception as E: # pragma: no cover # As a  fallback, try simpler comparison
             output = np.nonzero(abs(arr-val) < atol)
             warnmsg = f'{str(E)}\nsc.findinds(): np.isclose() encountered an exception (above), falling back to direct comparison'
             warnings.warn(warnmsg, category=RuntimeWarning, stacklevel=2)
@@ -176,8 +176,12 @@ def findnearest(series=None, value=None):
     return output
 
 
-def dataindex(dataarray, index):
-    ''' Take an array of data and return either the first or last (or some other) non-NaN entry. '''
+def dataindex(dataarray, index): # pragma: no cover
+    '''
+    Take an array of data and return either the first or last (or some other) non-NaN entry.
+
+    This function is deprecated.
+    '''
 
     nrows = np.shape(dataarray)[0] # See how many rows need to be filled (either npops, nprogs, or 1).
     output = np.zeros(nrows)       # Create structure
@@ -187,10 +191,12 @@ def dataindex(dataarray, index):
     return output
 
 
-def getvalidinds(data=None, filterdata=None):
+def getvalidinds(data=None, filterdata=None): # pragma: no cover
     '''
     Return the indices that are valid based on the validity of the input data from an arbitrary number
-    of 1-D vector inputs. Warning, closely related to getvaliddata() and somewhat deprecated.
+    of 1-D vector inputs. Warning, closely related to getvaliddata().
+
+    This function is deprecated.
 
     **Example**::
 
@@ -206,10 +212,11 @@ def getvalidinds(data=None, filterdata=None):
     return validindices # Only return indices -- WARNING, not consistent with sanitize()
 
 
-def getvaliddata(data=None, filterdata=None, defaultind=0):
+def getvaliddata(data=None, filterdata=None, defaultind=0): # pragma: no cover
     '''
     Return the data value indices that are valid based on the validity of the input data.
-    Somewhat deprecated.
+
+    This function is deprecated.
 
     **Example**::
 
@@ -261,10 +268,10 @@ def sanitize(data=None, returninds=False, replacenans=None, die=True, defaultval
                     sanitized = defaultval
                 else:
                     sanitized = 0.0
-                    if verbose:
+                    if verbose: # pragma: no cover
                         if label is None: label = 'this parameter'
                         print(f'sc.sanitize(): no data entered for {label}, assuming 0')
-        except Exception as E:
+        except Exception as E: # pragma: no cover
             if die:
                 errormsg = f'Sanitization failed on array: "{repr(E)}":\n{data}'
                 raise RuntimeError(errormsg)
@@ -409,16 +416,16 @@ def inclusiverange(*args, **kwargs):
         start, stop, step = None, None, None
     elif len(args)==1:
         stop = args[0]
-        start, step = None
+        start, step = None, None
     elif len(args)==2:
         start = args[0]
-        stop   = args[1]
-        step = None
+        stop  = args[1]
+        step =  None
     elif len(args)==3:
         start = args[0]
-        stop = args[1]
-        step = args[2]
-    else:
+        stop  = args[1]
+        step  = args[2]
+    else: # pragma: no cover
         raise ValueError('Too many arguments supplied: inclusiverange() accepts 0-3 arguments')
 
     # Handle kwargs
@@ -460,7 +467,7 @@ def smooth(data, repeats=None):
         elif output.ndim == 2:
             for i in range(output.shape[0]): output[i,:] = np.convolve(output[i,:], kernel, mode='same')
             for j in range(output.shape[1]): output[:,j] = np.convolve(output[:,j], kernel, mode='same')
-        else:
+        else: # pragma: no cover
             errormsg = 'Simple smoothing only implemented for 1D and 2D arrays'
             raise ValueError(errormsg)
     return output
@@ -469,6 +476,19 @@ def smooth(data, repeats=None):
 def smoothinterp(newx=None, origx=None, origy=None, smoothness=None, growth=None, ensurefinite=False, keepends=True, method='linear'):
     '''
     Smoothly interpolate over values and keep end points. Same format as numpy.interp().
+
+    Args:
+        newx (arr): the points at which to interpolate
+        origx (arr): the original x coordinates
+        origy (arr): the original y coordinates
+        smoothness (float): how much to smooth
+        growth (float): the growth rate to apply past the ends of the data [deprecated]
+        ensurefinite (bool):  ensure all values are finite
+        keepends (bool): whether to keep the ends [deprecated]
+        method (str): the type of interpolation to use (options are 'linear' or 'nearest')
+
+    Returns:
+        newy (arr): the new y coordinates
 
     **Example**::
 
@@ -494,10 +514,10 @@ def smoothinterp(newx=None, origx=None, origy=None, smoothness=None, growth=None
         newy = np.zeros(newx.shape)+origy[0]
         return newy
 
-    if not(newx.shape): raise ValueError('To interpolate, must have at least one new x value to interpolate to')
-    if not(origx.shape): raise ValueError('To interpolate, must have at least one original x value to interpolate to')
-    if not(origy.shape): raise ValueError('To interpolate, must have at least one original y value to interpolate to')
-    if not(origx.shape==origy.shape):
+    if not(newx.shape):  raise ValueError('To interpolate, must have at least one new x value to interpolate to') # pragma: no cover
+    if not(origx.shape): raise ValueError('To interpolate, must have at least one original x value to interpolate to') # pragma: no cover
+    if not(origy.shape): raise ValueError('To interpolate, must have at least one original y value to interpolate to') # pragma: no cover
+    if not(origx.shape==origy.shape): # pragma: no cover
         errormsg = f'To interpolate, original x and y vectors must be same length (x={len(origx)}, y={len(origy)})'
         raise ValueError(errormsg)
 
@@ -525,7 +545,7 @@ def smoothinterp(newx=None, origx=None, origy=None, smoothness=None, growth=None
         for i,x in enumerate(newx): # Iterate over each point
             xind = np.argmin(abs(finiteorigx-x)) # Find the nearest neighbor
             newy[i] = finiteorigy[xind] # Copy it
-    else:
+    else: # pragma: no cover
         errormsg = f'Method "{method}" not found; methods are "linear" or "nearest"'
         raise ValueError(errormsg)
 
@@ -541,7 +561,7 @@ def smoothinterp(newx=None, origx=None, origy=None, smoothness=None, growth=None
             validy = newy[validinds]
             prepend = validy[0]*np.ones(smoothness)
             postpend = validy[-1]*np.ones(smoothness)
-            if not keepends:
+            if not keepends: # pragma: no cover
                 try: # Try to compute slope, but use original prepend if it doesn't work
                     dyinitial = (validy[0]-validy[1])
                     prepend = validy[0]*np.ones(smoothness) + dyinitial*np.arange(smoothness,0,-1)
@@ -557,7 +577,7 @@ def smoothinterp(newx=None, origx=None, origy=None, smoothness=None, growth=None
             newy[validinds] = validy # Copy back into full vector
 
     # Apply growth if required
-    if growth is not None:
+    if growth is not None: # pragma: no cover
         pastindices = findinds(newx<origx[0])
         futureindices = findinds(newx>origx[-1])
         if len(pastindices): # If there are past data points
@@ -568,7 +588,7 @@ def smoothinterp(newx=None, origx=None, origy=None, smoothness=None, growth=None
             newy[futureindices] = newy[lastpoint] * np.exp((newx[futureindices]-newx[lastpoint])*growth) # Get last 'good' data point and apply growth
 
     # Add infinities back in, if they exist
-    if any(~np.isfinite(origy)): # Infinities exist, need to add them back in manually since interp can only handle nan
+    if any(~np.isfinite(origy)): # pragma: no cover # Infinities exist, need to add them back in manually since interp can only handle nan
         if not ensurefinite: # If not ensuring all entries are finite, put nonfinite entries back in
             orignan      = np.zeros(len(origy)) # Start from scratch
             origplusinf  = np.zeros(len(origy)) # Start from scratch

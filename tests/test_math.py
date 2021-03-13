@@ -26,7 +26,7 @@ def test_utils():
     assert o.safedivide[-1] == -1
 
     print('Testing sc.isprime()')
-    o.isprime = [[i,sc.isprime(i)] for i in range(10)]
+    o.isprime = [[i**2+1,sc.isprime(i**2+1)] for i in range(10)]
 
     print('Testing sc.perturb()')
     o.perturb = sc.perturb(10, 0.3)
@@ -39,13 +39,19 @@ def test_utils():
 
     print('Testing sc.inclusiverange()')
     o.inclusiverange = sc.inclusiverange(3,5,0.2)
+    sc.inclusiverange()
+    sc.inclusiverange(3)
+    sc.inclusiverange(3,5)
     assert o.inclusiverange[-1] == 5
 
     print('Testing sc.randround()')
-    o.randround = sc.randround(np.random.randn(20))
+    base = np.random.randn(20)
+    o.randround = sc.randround(base)
+    sc.randround(base.tolist())
+    sc.randround(base[0])
 
     print('Testing sc.cat()')
-    o.cat = sc.cat(np.array([1,2,3]), [4,5], 6)
+    o.cat = sc.cat(np.array([1,2,3]), [4,5], 6, copy=True)
     assert o.cat[3] == 4
 
     return o
@@ -66,6 +72,7 @@ def test_find():
 
     print('Testing sc.findnearest()')
     found.nearest = sc.findnearest([0,2,5,8], 3)
+    sc.findnearest([0,2,5,8], [3,6])
     assert found.nearest == 1
 
     print('Testing sc.getvalidinds(), sc.getvaliddata()')
@@ -94,7 +101,7 @@ def test_smooth(doplot=doplot):
     n = 20
     x1 = pl.arange(n)
     y1 = pl.randn(n)
-    x2 = pl.linspace(0,n+5,100)
+    x2 = pl.linspace(-5,n+5,100)
     y2 = sc.smoothinterp(x2, x1, y1)
 
     if doplot:
