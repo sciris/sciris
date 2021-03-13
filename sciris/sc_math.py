@@ -106,8 +106,9 @@ def findinds(arr, val=None, eps=1e-6, first=False, last=False, **kwargs):
         ind = -1
     else:
         ind = None
-    atol = kwargs.pop('atol', eps) # Ensure atol isn't specified twice
 
+    # Handle kwargs
+    atol = kwargs.pop('atol', eps) # Ensure atol isn't specified twice
     if 'val1' in kwargs or 'val2' in kwargs:
         arr = kwargs.pop('val1', arr)
         val = kwargs.pop('val2', val)
