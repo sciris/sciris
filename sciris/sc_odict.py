@@ -21,7 +21,8 @@ __all__ = ['odict', 'objdict', 'asobj']
 class odict(OD):
     '''
     An ordered dictionary, like the OrderedDict class, but supports list methods like integer
-    indexing, key slicing, and item inserting.
+    indexing, key slicing, and item inserting. It can also replicate defaultdict behavior
+    via the ``defaultdict`` argument.
 
     **Examples**::
 
@@ -48,41 +49,24 @@ class odict(OD):
         bar.rename('clam','oyster') # Show rename
         print(bar) # Print results
 
-    Version: 2020nov30
+        # Defaultdict example
+        dd = sc.odict(a=[1,2,3], defaultdict=list)
+        dd['c'].append(4)
+
+    New in version 1.0.3: "defaultdict" argument
     '''
 
-    def __init__(self, *args, _default=None, **kwargs):
+    def __init__(self, *args, defaultdict=None, **kwargs):
         ''' See collections.py '''
         # Standard OrderedDictionary initialization
         if len(args)==1 and args[0] is None: args = [] # Remove a None argument
         OD.__init__(self, *args, **kwargs) # Standard init
-        self._default = _default
+        if defaultdict is not None:
+            if not callable(defaultdict):
+                errormsg = f'The defaultdict argument must be callable, not {type(defaultdict)}'
+                raise TypeError(errormsg)
+        self._defaultdict = defaultdict
         return None
-
-    def __slicekey(self, key, slice_end):
-        shift = int(slice_end=='stop')
-        if isinstance(key, ut._numtype): return key
-        elif type(key) is str: return self.index(key)+shift # +1 since otherwise confusing with names (CK)
-        elif key is None: return (len(self) if shift else 0)
-        else: raise Exception('To use a slice, %s must be either int or str (%s)' % (slice_end, key))
-        return None
-
-
-    def __is_odict_iterable(self, key):
-        ''' Check to see whether the "key" is actually an iterable '''
-        output = isinstance(key, (list, np.ndarray))
-        return output
-
-
-    def __sanitize_items(self, items):
-        ''' Try to convert the output of a slice to an array, but give up easily and return a list '''
-        try:
-            output = np.array(items) # Try standard Numpy array...
-            if 'S' in str(output.dtype) or 'U' in str(output.dtype): # ...but instead of converting to string, convert to object array for Python 2 or 3 -- WARNING, fragile!
-                output = np.array(items, dtype=object)
-        except:
-            output = items # If that fails, just give up and return the list
-        return output
 
 
     def __getitem__(self, key):
@@ -92,8 +76,10 @@ class odict(OD):
                 output = OD.__getitem__(self, key)
                 return output
             except KeyError:
-                if self._default is not None: # Handle defaultdict behavior
-                    OD.__setitem__(self, key, self._default())
+                if self._defaultdict is not None: # Handle defaultdict behavior
+                    OD.__setitem__(self, key, self._defaultdict()) # First, set to the default
+                    output = OD.__getitem__(self, key) # Then get the item
+                    return output
                 else:
                     keys = self.keys()
                     if len(keys): errormsg = f'odict key "{key}" not found; available keys are:\n{ut.newlinejoin(keys)}'
@@ -104,23 +90,23 @@ class odict(OD):
             return OD.__getitem__(self,thiskey)
         elif type(key)==slice: # Handle a slice -- complicated
             try:
-                startind = self.__slicekey(key.start, 'start')
-                stopind = self.__slicekey(key.stop, 'stop')
+                startind = self._slicekey(key.start, 'start')
+                stopind = self._slicekey(key.stop, 'stop')
                 if stopind<startind:
                     print('Stop index must be >= start index (start=%i, stop=%i)' % (startind, stopind))
                     raise Exception
                 slicevals = [self.__getitem__(i) for i in range(startind,stopind)]
-                output = self.__sanitize_items(slicevals)
+                output = self._sanitize_items(slicevals)
                 return output
             except:
                 print('Invalid odict slice... returning empty list...')
                 return []
-        elif self.__is_odict_iterable(key): # Iterate over items
+        elif self._is_odict_iterable(key): # Iterate over items
             listvals = [self.__getitem__(item) for item in key]
             if isinstance(key, list): # If the user supplied the keys as a list, assume they want the output as a list
                 output = listvals
             else:
-                output = self.__sanitize_items(listvals) # Otherwise, assume as an array
+                output = self._sanitize_items(listvals) # Otherwise, assume as an array
             return output
         else: # Handle everything else
             return OD.__getitem__(self,key)
@@ -134,8 +120,8 @@ class odict(OD):
             thiskey = self.keys()[int(key)]
             OD.__setitem__(self, thiskey, value)
         elif type(key)==slice:
-            startind = self.__slicekey(key.start, 'start')
-            stopind = self.__slicekey(key.stop, 'stop')
+            startind = self._slicekey(key.start, 'start')
+            stopind = self._slicekey(key.stop, 'stop')
             if stopind<startind:
                 errormsg = 'Stop index must be >= start index (start=%i, stop=%i)' % (startind, stopind)
                 raise Exception(errormsg)
@@ -152,7 +138,7 @@ class odict(OD):
             else:
                 for valind,index in enumerator:
                     self.__setitem__(index, value) # e.g. odict[:] = 4
-        elif self.__is_odict_iterable(key) and hasattr(value, '__len__'): # Iterate over items
+        elif self._is_odict_iterable(key) and hasattr(value, '__len__'): # Iterate over items
             if len(key)==len(value):
                 for valind,thiskey in enumerate(key):
                     self.__setitem__(thiskey, value[valind])
@@ -301,6 +287,57 @@ class odict(OD):
         return None
 
 
+    def _slicekey(self, key, slice_end):
+        ''' Validate a key supplied as a slice object '''
+        shift = int(slice_end=='stop')
+        if isinstance(key, ut._numtype): return key
+        elif type(key) is str: return self.index(key)+shift # +1 since otherwise confusing with names (CK)
+        elif key is None: return (len(self) if shift else 0)
+        else: raise Exception('To use a slice, %s must be either int or str (%s)' % (slice_end, key))
+        return None
+
+
+    @staticmethod
+    def _matchkey(key, pattern, method):
+        ''' Helper function for findkeys '''
+        match = False
+        if isinstance(key, tuple):
+            for item in key:
+                if odict._matchkey(item, pattern, method):
+                    return True
+        else: # For everything except a tuple, treat it as a string
+            if not ut.isstring(key):
+                try:
+                    key = str(key) # Try to cast it to a string
+                except Exception as E:
+                    errormsg = 'Could not convert odict key of type %s to a string: %s' % (type(key), str(E))
+                    raise Exception(E)
+            if   method == 're':         match = bool(re.search(pattern, key))
+            elif method == 'in':         match = pattern in key
+            elif method == 'startswith': match = key.startswith(pattern)
+            elif method == 'endswith':   match = key.endswith(pattern)
+            else:
+                errormsg = 'Method "%s" not found; must be "re", "in", "startswith", or "endswith"' % method
+                raise Exception(errormsg)
+        return match
+
+    def _is_odict_iterable(self, key):
+        ''' Check to see whether the "key" is actually an iterable '''
+        output = isinstance(key, (list, np.ndarray))
+        return output
+
+
+    def _sanitize_items(self, items):
+        ''' Try to convert the output of a slice to an array, but give up easily and return a list '''
+        try:
+            output = np.array(items) # Try standard Numpy array...
+            if 'S' in str(output.dtype) or 'U' in str(output.dtype): # ...but instead of converting to string, convert to object array for Python 2 or 3 -- WARNING, fragile!
+                output = np.array(items, dtype=object)
+        except:
+            output = items # If that fails, just give up and return the list
+        return output
+
+
     def export(self, doprint=True):
         ''' Export the odict in a form that is valid Python code '''
         start = 'odict(['
@@ -337,8 +374,8 @@ class odict(OD):
             return OD.pop(self, thiskey, *args, **kwargs)
         elif type(key)==slice: # Handle a slice -- complicated
             try:
-                startind = self.__slicekey(key.start, 'start')
-                stopind = self.__slicekey(key.stop, 'stop')
+                startind = self._slicekey(key.start, 'start')
+                stopind = self._slicekey(key.stop, 'stop')
                 if stopind<startind:
                     print('Stop index must be >= start index (start=%i, stop=%i)' % (startind, stopind))
                     raise Exception
@@ -348,7 +385,7 @@ class odict(OD):
             except:
                 print('Invalid odict slice... returning empty list...')
                 return []
-        elif self.__is_odict_iterable(key): # Iterate over items
+        elif self._is_odict_iterable(key): # Iterate over items
             listvals = [self.pop(item, *args, **kwargs) for item in key]
             try: return np.array(listvals)
             except: return listvals
@@ -384,31 +421,6 @@ class odict(OD):
     def valind(self, value):
         ''' Return the index of a given value '''
         return self.values().index(value)
-
-
-    @staticmethod
-    def _matchkey(key, pattern, method):
-        ''' Helper function for findkeys '''
-        match = False
-        if isinstance(key, tuple):
-            for item in key:
-                if odict._matchkey(item, pattern, method):
-                    return True
-        else: # For everything except a tuple, treat it as a string
-            if not ut.isstring(key):
-                try:
-                    key = str(key) # Try to cast it to a string
-                except Exception as E:
-                    errormsg = 'Could not convert odict key of type %s to a string: %s' % (type(key), str(E))
-                    raise Exception(E)
-            if   method == 're':         match = bool(re.search(pattern, key))
-            elif method == 'in':         match = pattern in key
-            elif method == 'startswith': match = key.startswith(pattern)
-            elif method == 'endswith':   match = key.endswith(pattern)
-            else:
-                errormsg = 'Method "%s" not found; must be "re", "in", "startswith", or "endswith"' % method
-                raise Exception(errormsg)
-        return match
 
 
     def findkeys(self, pattern=None, method=None, first=None):
@@ -793,24 +805,39 @@ class odict(OD):
         return None
 
 
-    def enumkeys(self):
-        ''' Shortcut for enumerate(odict.keys()) '''
+    def enumkeys(self, transpose=False):
+        '''
+        Shortcut for enumerate(odict.keys()).
+
+        If transpose=True, return a tuple of lists rather than a list of tuples.
+        '''
         iterator = list(enumerate(self.keys()))
+        if transpose: iterator = tuple(ut.transposelist(iterator))
         return iterator
 
 
-    def enumvals(self):
-        ''' Shortcut for enumerate(odict.values()) '''
+    def enumvals(self, transpose=False):
+        '''
+        Shortcut for enumerate(odict.values())
+
+        If transpose=True, return a tuple of lists rather than a list of tuples.
+        '''
         iterator = list(enumerate(self.values()))
+        if transpose: iterator = tuple(ut.transposelist(iterator))
         return iterator
 
 
-    def enumitems(self):
-        ''' Returns tuple of 3 things: index, key, value '''
-        iterator = [] # Would be better to not pre-allocate but what can you do...
+    def enumitems(self, transpose=False):
+        '''
+        Returns tuple of 3 things: index, key, value.
+
+        If transpose=True, return a tuple of lists rather than a list of tuples.
+        '''
+        iterator = []
         for ind,item in enumerate(self.items()):
             thistuple = (ind,)+item # Combine into one tuple
             iterator.append(thistuple)
+        if transpose: iterator = tuple(ut.transposelist(iterator))
         return iterator
 
     @staticmethod

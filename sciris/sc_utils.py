@@ -475,15 +475,14 @@ def newlinejoin(*args):
     return strjoin(*args, sep='\n')
 
 
-
-def createcollist(oldkeys, title, strlen = 18, ncol = 3):
+def createcollist(items, title=None, strlen=18, ncol=3):
     ''' Creates a string for a nice columnated list (e.g. to use in __repr__ method) '''
-    nrow = int(np.ceil(float(len(oldkeys))/ncol))
+    nrow = int(np.ceil(float(len(items))/ncol))
     newkeys = []
     for x in range(nrow):
-        newkeys += oldkeys[x::nrow]
+        newkeys += items[x::nrow]
 
-    attstring = title + ':'
+    attstring = title + ':' if title else ''
     c = 0
     for x in newkeys:
         if c%ncol == 0: attstring += '\n  '
@@ -1219,7 +1218,8 @@ def progressbar(i, maxiters, label='', length=30, empty='—', full='•', newli
 ##############################################################################
 
 __all__ += ['flexstr', 'isiterable', 'checktype', 'isnumber', 'isstring', 'isarray',
-            'promotetoarray', 'promotetolist', 'toarray', 'tolist', 'mergedicts']
+            'promotetoarray', 'promotetolist', 'toarray', 'tolist', 'transposelist',
+            'mergedicts', 'mergelists']
 
 def flexstr(arg, force=True):
     '''
@@ -1384,7 +1384,7 @@ def promotetoarray(x, keepnone=False, **kwargs):
         sc.promotetoarray(None, skipnone=True) # Returns np.array([])
 
     New in version 1.0.3: replaced "skipnone" with "keepnone"; allowed passing
-    keywords to ``np.array()``.
+    kwargs to ``np.array()``.
     '''
     if isnumber(x):
         x = [x]
@@ -1431,7 +1431,7 @@ def promotetolist(obj=None, objtype=None, keepnone=False, coerce=None):
         myfunc(data, keys=['a', 'b']) # Works
         myfunc(data, keys='a') # Still works, equivalent to needing to supply keys=['a'] without promotetolist()
 
-    New in version 1.0.3: convert keyword
+    New in version 1.0.3: "convert" argument
     '''
     if objtype is None: # Don't do type checking
         if isinstance(obj, list):
@@ -1442,7 +1442,7 @@ def promotetolist(obj=None, objtype=None, keepnone=False, coerce=None):
             else:
                 output = [] # Return an empty list, the "none" equivalent for a list
         else:
-            if isinstance(obj, coerce):
+            if coerce is not None and isinstance(obj, coerce):
                 output = list(obj) # Coerce to list
             else:
                 output = [obj] # Main usage case -- listify it
@@ -1474,6 +1474,11 @@ def tolist(*args, **kwargs):
     return promotetolist(*args, **kwargs)
 
 
+def transposelist(obj):
+    ''' Convert e.g. a list of key-value tuples into a list of keys and a list of values '''
+    return list(map(list, zip(*obj)))
+
+
 def mergedicts(*args, strict=False, overwrite=True, copy=False):
     '''
     Small function to merge multiple dicts together. By default, skips things
@@ -1499,7 +1504,7 @@ def mergedicts(*args, strict=False, overwrite=True, copy=False):
         d3 = sc.mergedicts(sc.odict({'b':3, 'c':4}), {'a':1, 'b':2}) # Returns sc.odict({'b':2, 'c':4, 'a':1})
         d4 = sc.mergedicts({'b':3, 'c':4}, {'a':1, 'b':2}, overwrite=False) # Raises exception
 
-    New in version 1.0.3: copy keyword
+    New in version 1.0.3: "copy" argument
     '''
     # Try to get the output type from the first argument, but revert to a standard dict if that fails
     try:
@@ -1526,6 +1531,34 @@ def mergedicts(*args, strict=False, overwrite=True, copy=False):
         outputdict = dcp(outputdict)
     return outputdict
 
+
+def mergelists(*args, copy=False, **kwargs):
+    '''
+    Merge multiple lists together.
+
+    Args:
+        args (any): the lists, or items, to be joined together into a list
+        copy (bool): whether to deepcopy the resultant object
+        kwargs (dict): passed to ``sc.promotetolist()``, which is called on each argument
+
+    **Examples**::
+
+        sc.mergelists(None) # Returns []
+        sc.mergelists([1,2,3], [4,5,6]) # Returns [1, 2, 3, 4, 5, 6]
+        sc.mergelists([1,2,3], 4, 5, 6) # Returns [1, 2, 3, 4, 5, 6]
+        sc.mergelists([(1,2), (3,4)], (5,6)) # Returns [(1, 2), (3, 4), (5, 6)]
+        sc.mergelists((1,2), (3,4), (5,6)) # Returns [(1, 2), (3, 4), (5, 6)]
+        sc.mergelists((1,2), (3,4), (5,6), coerce=tuple) # Returns [1, 2, 3, 4, 5, 6]
+
+    New in version 1.0.3.
+    '''
+    obj = []
+    for arg in args:
+        arg = promotetolist(arg, **kwargs)
+        obj.extend(arg)
+    if copy:
+        obj = dcp(obj)
+    return obj
 
 
 ##############################################################################
