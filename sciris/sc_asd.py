@@ -96,24 +96,26 @@ def asd(function, x, args=None, stepsize=0.1, sinc=2, sdec=2, pinc=2, pdec=2,
     maxrangeiters = 100 # Number of times to try generating a new parameter
     x, origshape = consistentshape(x, origshape=True) # Turn it into a vector but keep the original shape (not necessarily class, though)
     nparams = len(x) # Number of parameters
-    if not nparams:
+    if not nparams: # pragma: no cover
         errormsg = 'ASD: The length of the input vector cannot be zero'
         raise ValueError(errormsg)
-    if sinc<1:
-        print('ASD: sinc cannot be less than 1; resetting to 2'); sinc = 2
-    if sdec<1:
-        print('ASD: sdec cannot be less than 1; resetting to 2'); sdec = 2
-    if pinc<1:
+    if sinc<1: # pragma: no cover
+        print('ASD: sinc cannot be less than 1; resetting to 2')
+        sinc = 2
+    if sdec<1: # pragma: no cover
+        print('ASD: sdec cannot be less than 1; resetting to 2')
+        sdec = 2
+    if pinc<1: # pragma: no cover
         print('ASD: pinc cannot be less than 1; resetting to 2')
         pinc = 2
-    if pdec<1:
+    if pdec<1: # pragma: no cover
         print('ASD: pdec cannot be less than 1; resetting to 2')
         pdec = 2
 
     # Set initial parameter selection probabilities -- uniform by default
     if pinitial is None: probabilities = np.ones(2 * nparams)
     else:                probabilities = consistentshape(pinitial)
-    if not sum(probabilities):
+    if not sum(probabilities): # pragma: no cover
         errormsg = 'ASD: The sum of input probabilities cannot be zero'
         raise ValueError(errormsg)
 
@@ -129,7 +131,7 @@ def asd(function, x, args=None, stepsize=0.1, sinc=2, sdec=2, pinc=2, pdec=2,
     xmax = np.zeros(nparams) + np.inf if xmax is None else consistentshape(xmax)
 
     # Final input checking
-    if sum(np.isnan(x)):
+    if sum(np.isnan(x)): # pragma: no cover
         errormsg = f'ASD: At least one value in the vector of starting points is NaN:\n{x}'
         raise ValueError(errormsg)
     if label is None: label = ''
@@ -234,7 +236,7 @@ def asd(function, x, args=None, stepsize=0.1, sinc=2, sdec=2, pinc=2, pdec=2,
             break
 
     # Return
-    if verbose >= 2: 
+    if verbose >= 2:
         orig, best, ratio = sigfig([fvals[0], fvals[-1], fvals[-1]/fvals[0]])
         print(f'=== {label} {exitreason} ({count} steps, orig: {orig} | best: {best} | ratio: {ratio}) ===')
     output = objdict()

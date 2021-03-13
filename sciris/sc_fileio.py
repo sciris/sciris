@@ -81,7 +81,7 @@ def loadobj(filename=None, folder=None, verbose=False, die=None, remapping=None)
         filename = makefilepath(filename=filename, folder=folder, makedirs=False) # If it is a file, validate the folder (but don't create one if it's missing)
     elif isinstance(filename, io.BytesIO):
         argtype = 'fileobj'
-    else:
+    else: # pragma: no cover
         errormsg = f'First argument to loadobj() must be a string or file object, not {type(filename)}'
         raise TypeError(errormsg)
     kwargs = {'mode': 'rb', argtype: filename}
@@ -89,18 +89,6 @@ def loadobj(filename=None, folder=None, verbose=False, die=None, remapping=None)
         filestr = fileobj.read() # Convert it to a string
         obj = _unpickler(filestr, filename=filename, verbose=verbose, die=die, remapping=remapping) # Actually load it
     if verbose: print(f'Object loaded from "{filename}"')
-    return obj
-
-
-def loadstr(string=None, verbose=False, die=None):
-    ''' Like loadobj(), but for a bytes-like string (rarely used) '''
-    if string is None:
-        errormsg = 'loadstr() error: input received was None, not a string'
-        raise TypeError(errormsg)
-    with closing(IO(string)) as output: # Open a "fake file" with the Gzip string pickle in it.
-        with GzipFile(fileobj=output, mode='rb') as fileobj: # Set a Gzip reader to pull from the "file."
-            picklestring = fileobj.read() # Read the string pickle from the "file" (applying Gzip decompression).
-    obj = _unpickler(picklestring, filestring=string, verbose=verbose, die=die) # Return the object gotten from the string pickle.
     return obj
 
 
@@ -134,20 +122,20 @@ def saveobj(filename=None, obj=None, compresslevel=5, verbose=0, folder=None, me
         bytesobj = None
         filename = makefilepath(filename=filename, folder=folder, default='default.obj', sanitize=True)
 
-    if obj is None:
+    if obj is None: # pragma: no cover
         errormsg = 'No object was supplied to saveobj(), or the object was empty'
         if die: raise ValueError(errormsg)
         else:   print(errormsg)
 
     with GzipFile(filename=filename, fileobj=bytesobj, mode='wb', compresslevel=compresslevel) as fileobj:
-        if method == 'dill': # If dill is requested, use that
+        if method == 'dill': # pragma: no cover # If dill is requested, use that
             if verbose>=2: print('Saving as dill...')
             _savedill(fileobj, obj)
         else: # Otherwise, try pickle
             try:
                 if verbose>=2: print('Saving as pickle...')
                 _savepickle(fileobj, obj, *args, **kwargs) # Use pickle
-            except Exception as E:
+            except Exception as E: # pragma: no cover
                 if verbose>=2: print(f'Exception when saving as pickle ({repr(E)}), saving as dill...')
                 _savedill(fileobj, obj, *args, **kwargs) # ...but use Dill if that fails
 
@@ -156,13 +144,42 @@ def saveobj(filename=None, obj=None, compresslevel=5, verbose=0, folder=None, me
 
     if filename:
         return filename
-    else:
+    else: # pragma: no cover
         bytesobj.seek(0)
         return bytesobj
 
 
+# Aliases to make these core functions even easier to use
+
+def load(*args, **kwargs): # pragma: no cover
+    ''' Alias to loadobj(). New in version 1.0.0. '''
+    return loadobj(*args, **kwargs)
+
+def save(*args, **kwargs): # pragma: no cover
+    ''' Alias to saveobj(). New in version 1.0.0. '''
+    return saveobj(*args, **kwargs)
+
+
+def loadstr(string, verbose=False, die=None, remapping=None):
+    '''
+    Like loadobj(), but for a bytes-like string (rarely used).
+
+    **Example**::
+
+        obj = sc.objdict(a=1, b=2)
+        string1 = sc.dumpstr(obj)
+        string2 = sc.loadstr(string1)
+        assert string1 == string2
+    '''
+    with closing(IO(string)) as output: # Open a "fake file" with the Gzip string pickle in it.
+        with GzipFile(fileobj=output, mode='rb') as fileobj: # Set a Gzip reader to pull from the "file."
+            picklestring = fileobj.read() # Read the string pickle from the "file" (applying Gzip decompression).
+    obj = _unpickler(picklestring, filestring=string, verbose=verbose, die=die, remapping=remapping) # Return the object gotten from the string pickle.
+    return obj
+
+
 def dumpstr(obj=None):
-    ''' Dump an object as a bytes-like string (rarely used) '''
+    ''' Dump an object as a bytes-like string (rarely used); see ``sc.loadstr()`` '''
     with closing(IO()) as output: # Open a "fake file."
         with GzipFile(fileobj=output, mode='wb') as fileobj:  # Open a Gzip-compressing way to write to this "file."
             try:    _savepickle(fileobj, obj) # Use pickle
@@ -170,17 +187,6 @@ def dumpstr(obj=None):
         output.seek(0) # Move the mark to the beginning of the "file."
         result = output.read() # Read all of the content into result.
     return result
-
-
-# Aliases to make these core functions even easier to use
-
-def load(*args, **kwargs):
-    ''' Alias to loadobj(). New in version 1.0.0. '''
-    return loadobj(*args, **kwargs)
-
-def save(*args, **kwargs):
-    ''' Alias to saveobj(). New in version 1.0.0. '''
-    return saveobj(*args, **kwargs)
 
 
 
@@ -348,7 +354,7 @@ def makefilepath(filename=None, folder=None, ext=None, default=None, split=False
         folder = os.path.join(*folder)
 
     # Process filename
-    if filename is None:
+    if filename is None: # pragma: no cover
         defaultnames = ut.promotetolist(default) # Loop over list of default names
         for defaultname in defaultnames:
             if not filename and defaultname: filename = defaultname # Replace empty name with default name
@@ -376,7 +382,7 @@ def makefilepath(filename=None, folder=None, ext=None, default=None, split=False
     if makedirs:
         try:
             os.makedirs(filefolder, exist_ok=True)
-        except Exception as E:
+        except Exception as E: # pragma: no cover
             if die:
                 raise E
             else:
@@ -515,7 +521,7 @@ def sanitizejson(obj, verbose=True, die=False, tostring=False, **kwargs):
     else: # None of the above
         try:
             output = jsonpickle(obj)
-        except Exception as E:
+        except Exception as E: # pragma: no cover
             errormsg = f'Could not sanitize "{obj}" {type(obj)} ({str(E)}), converting to string instead'
             if die:       raise TypeError(errormsg)
             elif verbose: print(errormsg)
@@ -562,14 +568,14 @@ def loadjson(filename=None, folder=None, string=None, fromfile=True, **kwargs):
         try:
             with open(filepath) as f:
                 output = json.load(f, **kwargs)
-        except FileNotFoundError as E:
+        except FileNotFoundError as E: # pragma: no cover
             errormsg = f'No such file "{filename}". Use fromfile=False if loading a JSON string rather than a file.'
             raise FileNotFoundError(errormsg) from E
     return output
 
 
 
-def savejson(filename=None, obj=None, folder=None, die=True, indent=2, **kwargs):
+def savejson(filename=None, obj=None, folder=None, die=True, indent=2, keepnone=False, **kwargs):
     '''
     Convenience function for saving to a JSON file.
 
@@ -579,6 +585,7 @@ def savejson(filename=None, obj=None, folder=None, die=True, indent=2, **kwargs)
         folder (str): folder if not part of the filename
         die (bool): whether or not to raise an exception if saving an empty object
         indent (int): indentation to use for saved JSON
+        keepnone (bool): allow ``sc.savejson(None)`` to return 'null' rather than raising an exception
         kwargs (dict): passed to json.dump()
 
     Returns:
@@ -592,7 +599,7 @@ def savejson(filename=None, obj=None, folder=None, die=True, indent=2, **kwargs)
 
     filename = makefilepath(filename=filename, folder=folder)
 
-    if obj is None:
+    if obj is None and not keepnone: # pragma: no cover
         errormsg = 'No object was supplied to savejson(), or the object was empty'
         if die: raise ValueError(errormsg)
         else:   print(errormsg)
@@ -765,7 +772,7 @@ class Blobject(object):
 
 
 
-class Spreadsheet(Blobject):
+class Spreadsheet(Blobject): # pragma: no cover
     '''
     A class for reading and writing Excel files in binary format. No disk IO needs
     to happen to manipulate the spreadsheets with openpyexcel (or xlrd or pandas).
@@ -923,9 +930,12 @@ class Spreadsheet(Blobject):
         filepath = makefilepath(filename=filename, ext='xlsx')
         super().save(filepath)
 
-def loadspreadsheet(filename=None, folder=None, fileobj=None, sheetname=None, sheetnum=None, asdataframe=None, header=True, cells=None):
+def loadspreadsheet(filename=None, folder=None, fileobj=None, sheetname=None, sheetnum=None, asdataframe=None, header=True, cells=None): # pragma: no cover
     '''
     Load a spreadsheet as a list of lists or as a dataframe. Read from either a filename or a file object.
+
+    Note: this function is deprecated and may be removed in a future version. Use
+    ``pandas.read_excel()`` instead.
     '''
     try:
         import xlrd # Optional import
@@ -978,9 +988,11 @@ def loadspreadsheet(filename=None, folder=None, fileobj=None, sheetname=None, sh
 
 
 
-def savespreadsheet(filename=None, data=None, folder=None, sheetnames=None, close=True, formats=None, formatdata=None, verbose=False):
+def savespreadsheet(filename=None, data=None, folder=None, sheetnames=None, close=True, formats=None, formatdata=None, verbose=False): # pragma: no cover
     '''
-    Not-so-little function to format an output results nicely for Excel.
+    Not-so-little function to format data nicely for Excel.
+
+    Note: this function, while not deprecated, is not actively maintained.
 
     **Examples**::
 
@@ -1024,7 +1036,7 @@ def savespreadsheet(filename=None, data=None, folder=None, sheetnames=None, clos
     '''
     try:
         import xlsxwriter # Optional import
-    except ModuleNotFoundError as e:
+    except ModuleNotFoundError as e: # pragma: no cover
             raise ModuleNotFoundError('The "xlsxwriter" Python package is not available; please install manually') from e
     fullpath = makefilepath(filename=filename, folder=folder, default='default.xlsx')
     datadict   = odict()
@@ -1215,7 +1227,7 @@ def _unpickler(string=None, filename=None, filestring=None, die=None, verbose=Fa
                     try:
                         if verbose: print(f'Dill failed ({str(E3)}), trying robust unpickler...')
                         obj = _RobustUnpickler(io.BytesIO(string), remapping=remapping).load() # And if that trails, throw everything at it
-                    except Exception as E4:
+                    except Exception as E4: # pragma: no cover
                         try:
                             if verbose: print(f'Robust unpickler failed ({str(E4)}), trying Python 2->3 conversion...')
                             obj = loadobj2to3(filename=filename, filestring=filestring)
@@ -1232,15 +1244,15 @@ def _unpickler(string=None, filename=None, filestring=None, die=None, verbose=Fa
 
 
 def _savepickle(fileobj=None, obj=None, protocol=None, *args, **kwargs):
-        ''' Use pickle to do the salty work '''
+        ''' Use pickle to do the salty work. '''
         if protocol is None:
-            protocol = 4
+            protocol = 4 # Use protocol 4 for backwards compatibility
         fileobj.write(pkl.dumps(obj, protocol=protocol, *args, **kwargs))
         return None
 
 
-def _savedill(fileobj=None, obj=None, *args, **kwargs):
-    ''' Use dill to do the sour work '''
+def _savedill(fileobj=None, obj=None, *args, **kwargs): # pragma: no cover
+    ''' Use dill to do the sour work (note: this function is not actively maintained) '''
     try:
         import dill # Optional Sciris dependency
     except ModuleNotFoundError as e:
@@ -1257,7 +1269,7 @@ def _savedill(fileobj=None, obj=None, *args, **kwargs):
 not_string_pickleable = ['datetime', 'BytesIO']
 byte_objects = ['datetime', 'BytesIO', 'odict', 'spreadsheet', 'blobject']
 
-def loadobj2to3(filename=None, filestring=None, recursionlimit=None):
+def loadobj2to3(filename=None, filestring=None, recursionlimit=None): # pragma: no cover
     '''
     Used automatically by loadobj() to load Python2 objects in Python3 if all other
     loading methods fail. Uses a recursive approach, so can set a recursion limit.
@@ -1430,7 +1442,7 @@ def _unpickleMethod(im_name, im_self, im_class):
         return getattr(im_class, im_name)
     try:
         methodFunction = _methodFunction(im_class, im_name)
-    except AttributeError:
+    except AttributeError: # pragma: no cover
         assert im_self is not None, "No recourse: no instance to guess from."
         if im_self.__class__ is im_class:
             raise
