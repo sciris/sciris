@@ -9,6 +9,7 @@ Highlights:
 '''
 
 import numpy as np
+import warnings
 from . import sc_utils as ut
 
 
@@ -94,8 +95,6 @@ def findinds(arr, val=None, eps=1e-6, first=False, last=False, **kwargs):
 
         sc.findinds(rand(10)<0.5) # e.g. array([2, 4, 5, 9])
         sc.findinds([2,3,6,3], 6) # e.g. array([2])
-
-    Version: 2021mar01
     '''
 
     # Handle first or last
@@ -109,6 +108,12 @@ def findinds(arr, val=None, eps=1e-6, first=False, last=False, **kwargs):
         ind = None
     atol = kwargs.pop('atol', eps) # Ensure atol isn't specified twice
 
+    if 'val1' in kwargs or 'val2' in kwargs:
+        arr = kwargs.pop('val1', arr)
+        val = kwargs.pop('val2', val)
+        warnmsg = 'sc.findinds() arguments "val1" and "val2" have been deprecated as of v1.0.0; use "arr" and "val" instead'
+        warnings.warn(warnmsg, category=DeprecationWarning, stacklevel=2)
+
     # Calculate matches
     arr = np.array(arr)
     if val is None: # Check for equality
@@ -116,8 +121,12 @@ def findinds(arr, val=None, eps=1e-6, first=False, last=False, **kwargs):
     else:
         if ut.isstring(val):
             output = np.nonzero(arr==val)
-        else:
+        try: # Standard usage, use nonzero
             output = np.nonzero(np.isclose(a=arr, b=val, atol=atol, **kwargs)) # If absolute difference between the two values is less than a certain amount
+        except Exception as E: # As a  fallback, try simpler comparison
+            output = np.nonzero(abs(arr-val) < atol)
+            warnmsg = f'{str(E)}\nsc.findinds(): np.isclose() encountered an exception (above), falling back to direct comparison'
+            warnings.warn(warnmsg, category=RuntimeWarning, stacklevel=2)
 
     # Process output
     if arr.ndim == 1: # Uni-dimensional
