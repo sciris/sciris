@@ -44,11 +44,14 @@ from .sc_dataframe import dataframe
 __all__ = ['loadobj', 'loadstr', 'saveobj', 'dumpstr', 'load', 'save']
 
 
-def loadobj(filename=None, folder=None, verbose=False, die=None):
+def loadobj(filename=None, folder=None, verbose=False, die=None, remapping=None):
     '''
     Load a file that has been saved as a gzipped pickle file, e.g. by sc.saveobj().
     Accepts either a filename (standard usage) or a file object as the first argument.
     Note that loadobj()/load() are aliases.
+
+    Args:
+        filename (str): the filename to load
 
     **Example**::
 
@@ -224,7 +227,7 @@ def savezip(filename=None, filelist=None, folder=None, basename=True, verbose=Tr
     return fullpath
 
 
-def getfilelist(folder='.', pattern=None, abspath=False, nopath=False, filesonly=False, foldersonly=False, recursive=False):
+def getfilelist(folder='.', pattern=None, abspath=False, nopath=False, filesonly=False, foldersonly=False, recursive=False, aspath=False):
     '''
     A shortcut for using glob.
 
@@ -236,6 +239,7 @@ def getfilelist(folder='.', pattern=None, abspath=False, nopath=False, filesonly
         filesonly   (bool): whether to only return files (not folders)
         foldersonly (bool): whether to only return folders (not files)
         recursive   (bool): passed to glob()
+        aspath      (bool): whether to return Path objects
 
     Returns:
         List of files/folders
@@ -245,6 +249,8 @@ def getfilelist(folder='.', pattern=None, abspath=False, nopath=False, filesonly
         sc.getfilelist() # return all files and folders in current folder
         sc.getfilelist('~/temp', '*.py', abspath=True) # return absolute paths of all Python files in ~/temp folder
         sc.getfilelist('~/temp/*.py') # Like above
+
+    New in version 1.0.3: "aspath" argument
     '''
     folder = os.path.expanduser(folder)
     if abspath:
@@ -259,6 +265,8 @@ def getfilelist(folder='.', pattern=None, abspath=False, nopath=False, filesonly
         filelist = [f for f in filelist if os.path.isdir(f)]
     if nopath:
         filelist = [os.path.basename(f) for f in filelist]
+    if aspath:
+        filelist = [Path(f) for f in filelist]
     return filelist
 
 
@@ -277,7 +285,7 @@ def sanitizefilename(rawfilename):
     return filtername # Return the sanitized file name.
 
 
-def makefilepath(filename=None, folder=None, ext=None, default=None, split=False, abspath=True, makedirs=True, checkexists=None, sanitize=False, die=True, verbose=False):
+def makefilepath(filename=None, folder=None, ext=None, default=None, split=False, aspath=False, abspath=True, makedirs=True, checkexists=None, sanitize=False, die=True, verbose=False):
     '''
     Utility for taking a filename and folder -- or not -- and generating a
     valid path from them. By default, this function will combine a filename and
@@ -285,18 +293,19 @@ def makefilepath(filename=None, folder=None, ext=None, default=None, split=False
     and return the absolute path.
 
     Args:
-        filename (str or Path): the filename, or full file path, to save to -- in which case this utility does nothing
-        folder (str, Path, or list): the name of the folder to be prepended to the filename; if a list, fed to os.path.join()
-        ext (str): the extension to ensure the file has
-        default (str or list): a name or list of names to use if filename is None
-        split (bool): whether to return the path and filename separately
-        makedirs (bool): whether or not to make the folders to save into if they don't exist
-        checkexists (bool): if False/True, raises an exception if the path does/doesn't exist
-        sanitize (bool): whether or not to remove special characters from the path; see sc.sanitizefilename() for details
-        verbose (bool): how much detail to print
+        filename    (str or Path)   : the filename, or full file path, to save to -- in which case this utility does nothing
+        folder      (str/Path/list) : the name of the folder to be prepended to the filename; if a list, fed to ``os.path.join()``
+        ext         (str)           : the extension to ensure the file has
+        default     (str or list)   : a name or list of names to use if filename is None
+        split       (bool)          : whether to return the path and filename separately
+        aspath      (bool)          : whether to return a Path object
+        makedirs    (bool)          : whether or not to make the folders to save into if they don't exist
+        checkexists (bool)          : if False/True, raises an exception if the path does/doesn't exist
+        sanitize    (bool)          : whether or not to remove special characters from the path; see ``sc.sanitizefilename()`` for details
+        verbose     (bool)          : how much detail to print
 
     Returns:
-        filepath (str): the validated path (or the folder and filename if split=True)
+        filepath (str or Path): the validated path (or the folder and filename if split=True)
 
     **Simple example**::
 
@@ -309,7 +318,7 @@ def makefilepath(filename=None, folder=None, ext=None, default=None, split=False
     Assuming project.filename is None and project.name is "recipe" and ./congee
     doesn't exist, this will makes folder ./congee and returns e.g. ('/home/myname/congee', 'recipe.prj')
 
-    Version: 2020apr11
+    New in version 1.0.3: "aspath" argument
     '''
 
     # Initialize
@@ -381,13 +390,15 @@ def makefilepath(filename=None, folder=None, ext=None, default=None, split=False
         print(f'From filename="{filename}", folder="{folder}", made path name "{filepath}"')
     if split:
         output = filefolder, filebasename
+    elif aspath:
+        output = Path(filepath)
     else:
         output = filepath
 
     return output
 
 
-def thisdir(file=None, *args, as_path=False, **kwargs):
+def thisdir(file=None, *args, aspath=False, **kwargs):
     '''
     Tiny helper function to get the folder for a file, usually the current file.
     If not supplied, then use the current file.
@@ -395,7 +406,7 @@ def thisdir(file=None, *args, as_path=False, **kwargs):
     Args:
         file (str): the file to get the directory from; usually __file__
         args (list): passed to os.path.join()
-        as_path (bool): whether to return a Path object instead of a string
+        aspath (bool): whether to return a Path object instead of a string
         kwargs (dict): also passed to os.path.join()
 
     Returns:
@@ -405,12 +416,14 @@ def thisdir(file=None, *args, as_path=False, **kwargs):
 
         thisdir = sc.thisdir()
         file_in_same_dir = sc.thisdir(__file__, 'new_file.txt')
+
+    New in version 1.0.3: "as_path" argument renamed "aspath"
     '''
     if file is None:
          file = str(Path(inspect.stack()[1][1])) # Adopted from Atomica
     folder = os.path.abspath(os.path.dirname(file))
     filepath = os.path.join(folder, *args, **kwargs)
-    if as_path:
+    if aspath:
         filepath = Path(filepath)
     return filepath
 
