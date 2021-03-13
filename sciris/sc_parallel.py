@@ -69,11 +69,11 @@ def loadbalancer(maxload=None, index=None, interval=None, maxtime=None, label=No
         count += 1
         currentload = psutil.cpu_percent(interval=0.1)/100. # If interval is too small, can give very inaccurate readings
         if currentload>maxload:
-            if verbose: print(label+'CPU load too high (%0.2f/%0.2f); process %s queued %i times' % (currentload, maxload, index, count))
+            if verbose: print(label+f'CPU load too high ({currentload:0.2f}/{maxload:0.2f}); process {index} queued {count} times')
             time.sleep(interval*2*np.random.rand()) # Sleeps for an average of refresh seconds, but do it randomly so you don't get locking
         else:
             toohigh = False
-            if verbose: print(label+'CPU load fine (%0.2f/%0.2f), starting process %s after %i tries' % (currentload, maxload, index, count))
+            if verbose: print(label+f'CPU load fine ({currentload:0.2f}/{maxload:0.2f}), starting process {index} after {count} tries')
     return None
 
 
@@ -193,39 +193,39 @@ def parallelize(func, iterarg=None, iterkwargs=None, args=None, kwargs=None, ncp
     # Handle iterarg and iterkwargs
     niters = 0
     embarrassing = False # Whether or not it's an embarrassingly parallel optimization
-    if iterarg is not None and iterkwargs is not None:
+    if iterarg is not None and iterkwargs is not None: # pragma: no cover
         errormsg = 'You can only use one of iterarg or iterkwargs as your iterable, not both'
-        raise Exception(errormsg)
+        raise ValueError(errormsg)
     if iterarg is not None:
         if not(ut.isiterable(iterarg)):
             try:
                 iterarg = np.arange(iterarg)
                 embarrassing = True
-            except Exception as E:
-                errormsg = 'Could not understand iterarg "%s": not iterable and not an integer: %s' % (iterarg, str(E))
-                raise Exception(errormsg)
+            except Exception as E: # pragma: no cover
+                errormsg = f'Could not understand iterarg "{iterarg}": not iterable and not an integer: {str(E)}'
+                raise TypeError(errormsg)
         niters = len(iterarg)
     if iterkwargs is not None: # Check that iterkwargs has the right format
         if isinstance(iterkwargs, dict): # It's a dict of lists, e.g. {'x':[1,2,3], 'y':[2,3,4]}
             for key,val in iterkwargs.items():
-                if not ut.isiterable(val):
-                    errormsg = 'iterkwargs entries must be iterable, not %s' % type(val)
-                    raise Exception(errormsg)
+                if not ut.isiterable(val): # pragma: no cover
+                    errormsg = f'iterkwargs entries must be iterable, not {type(val)}'
+                    raise TypeError(errormsg)
                 if not niters:
                     niters = len(val)
                 else:
-                    if len(val) != niters:
-                        errormsg = 'All iterkwargs iterables must be the same length, not %s vs. %s' % (niters, len(val))
-                        raise Exception(errormsg)
+                    if len(val) != niters: # pragma: no cover
+                        errormsg = f'All iterkwargs iterables must be the same length, not {niters} vs. {len(val)}'
+                        raise ValueError(errormsg)
         elif isinstance(iterkwargs, list): # It's a list of dicts, e.g. [{'x':1, 'y':2}, {'x':2, 'y':3}, {'x':3, 'y':4}]
             niters = len(iterkwargs)
             for item in iterkwargs:
-                if not isinstance(item, dict):
-                    errormsg = 'If iterkwargs is a list, each entry must be a dict, not %s' % type(item)
-                    raise Exception(errormsg)
-        else:
-            errormsg = 'iterkwargs must be a dict of lists, a list of dicts, or None, not %s' % type(iterkwargs)
-            raise Exception(errormsg)
+                if not isinstance(item, dict): # pragma: no cover
+                    errormsg = f'If iterkwargs is a list, each entry must be a dict, not {type(item)}'
+                    raise TypeError(errormsg)
+        else: # pragma: no cover
+            errormsg = f'iterkwargs must be a dict of lists, a list of dicts, or None, not {type(iterkwargs)}'
+            raise TypeError(errormsg)
 
     # Construct argument list
     argslist = []
@@ -243,9 +243,9 @@ def parallelize(func, iterarg=None, iterkwargs=None, args=None, kwargs=None, ncp
                     iterdict[key] = val[index]
             elif isinstance(iterkwargs, list): # List of dicts
                 iterdict = iterkwargs[index]
-            else: # Should be caught by previous checking, so shouldn't happen
-                errormsg = 'iterkwargs type not understood (%s)' % type(iterkwargs)
-                raise Exception(errormsg)
+            else:  # pragma: no cover # Should be caught by previous checking, so shouldn't happen
+                errormsg = f'iterkwargs type not understood ({type(iterkwargs)})'
+                raise TypeError(errormsg)
         taskargs = TaskArgs(func, index, iterval, iterdict, args, kwargs, maxload, interval, embarrassing)
         argslist.append(taskargs)
 
@@ -258,7 +258,7 @@ def parallelize(func, iterarg=None, iterkwargs=None, args=None, kwargs=None, ncp
             multipool.join()
         else: # Use a custom parallelization method
             outputlist = parallelizer(_parallel_task, argslist)
-    except RuntimeError as E: # Handle if run outside of __main__ on Windows
+    except RuntimeError as E: # pragma: no cover # Handle if run outside of __main__ on Windows
         if 'freeze_support' in E.args[0]: # For this error, add additional information
             errormsg = '''
  Uh oh! It appears you are trying to run with multiprocessing on Windows outside
@@ -325,7 +325,7 @@ def parallelcmd(cmd=None, parfor=None, returnval=None, maxload=None, interval=No
     return outputlist
 
 
-def parallel_progress(fcn, inputs, num_workers=None, show_progress=True, initializer=None):
+def parallel_progress(fcn, inputs, num_workers=None, show_progress=True, initializer=None): # pragma: no cover
     """
     Run a function in parallel with a optional single progress bar
 
@@ -346,7 +346,11 @@ def parallel_progress(fcn, inputs, num_workers=None, show_progress=True, initial
     New in version 1.0.0.
     """
     from multiprocess import pool
-    from tqdm import tqdm
+    try:
+        from tqdm import tqdm
+    except ModuleNotFoundError as E:
+        errormsg = 'Module tqdm not found; please install with "pip install tqdm"'
+        raise ModuleNotFoundError(errormsg) from E
 
     pool = pool.Pool(num_workers, initializer=initializer)
 
@@ -438,7 +442,7 @@ def _parallel_task(taskargs, outputqueue=None):
         return output
 
 
-def _parallelcmd_task(_cmd, _parfor, _returnval, _i, _outputqueue, _maxload, _interval, _kwargs):
+def _parallelcmd_task(_cmd, _parfor, _returnval, _i, _outputqueue, _maxload, _interval, _kwargs): # pragma: no cover # No coverage since pickled
     '''
     The task to be executed by parallelcmd(). All internal variables start with
     underscores to avoid possible collisions in the exec() statements. Not to be called
@@ -449,19 +453,19 @@ def _parallelcmd_task(_cmd, _parfor, _returnval, _i, _outputqueue, _maxload, _in
     # Set the loop variables
     for _key in _parfor.keys():
         _thisval = _parfor[_key][_i] # analysis:ignore
-        exec('%s = _thisval' % _key) # Set the value of this variable
+        exec(f'{_key} = _thisval') # Set the value of this variable
 
     # Set the keyword arguments
     for _key in _kwargs.keys():
         _thisval = _kwargs[_key] # analysis:ignore
-        exec('%s = _thisval' % _key) # Set the value of this variable
+        exec(f'{_key} = _thisval') # Set the value of this variable
 
     # Calculate the command
     try:
         exec(_cmd) # The meat of the matter!
     except Exception as E:
-        print('WARNING, parallel task failed:\n%s' % str(E))
-        exec('%s = None' % _returnval)
+        print(f'WARNING, parallel task failed:\n{str(E)}')
+        exec(f'{_returnval} = None')
 
     # Append results
     _outputqueue.put((_i,eval(_returnval)))

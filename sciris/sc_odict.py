@@ -21,7 +21,8 @@ __all__ = ['odict', 'objdict', 'asobj']
 class odict(OD):
     '''
     An ordered dictionary, like the OrderedDict class, but supports list methods like integer
-    indexing, key slicing, and item inserting.
+    indexing, key slicing, and item inserting. It can also replicate defaultdict behavior
+    via the ``defaultdict`` argument.
 
     **Examples**::
 
@@ -48,41 +49,30 @@ class odict(OD):
         bar.rename('clam','oyster') # Show rename
         print(bar) # Print results
 
-    Version: 2020nov30
+        # Defaultdict examples
+        dd = sc.odict(a=[1,2,3], defaultdict=list)
+        dd['c'].append(4)
+
+        nested = sc.objdict(a=0, defaultdict='nested') # Create a infinitely nested dictionary (NB: may behave strangely on IPython)
+        nested.b.c.d = 2
+
+    New in version 1.0.3: "defaultdict" argument
     '''
 
-    def __init__(self, *args, **kwargs):
+    def __init__(self, *args, defaultdict=None, **kwargs):
         ''' See collections.py '''
         # Standard OrderedDictionary initialization
         if len(args)==1 and args[0] is None: args = [] # Remove a None argument
         OD.__init__(self, *args, **kwargs) # Standard init
+        if defaultdict is not None:
+            if defaultdict == 'nested':
+                nested_factory = lambda: self.__class__(defaultdict=nested_factory)
+                defaultdict = nested_factory
+            if not callable(defaultdict): # pragma: no cover
+                errormsg = f'The defaultdict argument must be callable, not {type(defaultdict)}'
+                raise TypeError(errormsg)
+        OD.__setattr__(self, '_defaultdict', defaultdict) # Can't use self._defaultdict since setattr() is overridden by sc.objdict()
         return None
-
-    def __slicekey(self, key, slice_end):
-        shift = int(slice_end=='stop')
-        if isinstance(key, ut._numtype): return key
-        elif type(key) is str: return self.index(key)+shift # +1 since otherwise confusing with names (CK)
-        elif key is None: return (len(self) if shift else 0)
-        else: raise Exception('To use a slice, %s must be either int or str (%s)' % (slice_end, key))
-        return None
-
-
-    def __isODict_iterable(self, key):
-        ''' Check to see whether the "key" is actually an iterable '''
-        output = type(key)==list or type(key)==type(np.array([])) # Do *not* include dict, since that would be recursive
-        return output
-
-
-    def __sanitize_items(self, items):
-        ''' Try to convert the output of a slice to an array, but give up easily and return a list '''
-        try:
-            output = np.array(items) # Try standard Numpy array...
-            if 'S' in str(output.dtype) or 'U' in str(output.dtype): # ...but instead of converting to string, convert to object array for Python 2 or 3 -- WARNING, fragile!
-                output = np.array(items, dtype=object)
-        except:
-            output = items # If that fails, just give up and return the list
-        return output
-
 
 
     def __getitem__(self, key):
@@ -91,32 +81,38 @@ class odict(OD):
             try:
                 output = OD.__getitem__(self, key)
                 return output
-            except Exception as E: # WARNING, should be KeyError, but this can't print newlines!!!
-                if len(self.keys()): errormsg = '%s\nodict key "%s" not found; available keys are:\n%s' % (repr(E), ut.flexstr(key), '\n'.join([ut.flexstr(k) for k in self.keys()]))
-                else:                errormsg = 'Key "%s" not found since odict is empty'% key
-                raise Exception(errormsg)
+            except KeyError:
+                if self._defaultdict is not None: # Handle defaultdict behavior
+                    OD.__setitem__(self, key, self._defaultdict()) # First, set to the default
+                    output = OD.__getitem__(self, key) # Then get the item
+                    return output
+                else:
+                    keys = self.keys()
+                    if len(keys): errormsg = f'odict key "{key}" not found; available keys are:\n{ut.newlinejoin(keys)}'
+                    else:         errormsg = f'Key {key} not found since odict is empty'
+                    raise ut.KeyNotFoundError(errormsg)
         elif isinstance(key, ut._numtype): # Convert automatically from float...dangerous?
             thiskey = self.keys()[int(key)]
             return OD.__getitem__(self,thiskey)
         elif type(key)==slice: # Handle a slice -- complicated
             try:
-                startind = self.__slicekey(key.start, 'start')
-                stopind = self.__slicekey(key.stop, 'stop')
-                if stopind<startind:
-                    print('Stop index must be >= start index (start=%i, stop=%i)' % (startind, stopind))
-                    raise Exception
+                startind = self._slicekey(key.start, 'start')
+                stopind = self._slicekey(key.stop, 'stop')
+                if stopind<startind: # pragma: no cover
+                    errormsg = f'Stop index must be >= start index (start={startind}, stop={stopind})'
+                    raise ValueError(errormsg)
                 slicevals = [self.__getitem__(i) for i in range(startind,stopind)]
-                output = self.__sanitize_items(slicevals)
+                output = self._sanitize_items(slicevals)
                 return output
-            except:
-                print('Invalid odict slice... returning empty list...')
-                return []
-        elif self.__isODict_iterable(key): # Iterate over items
+            except Exception as E: # pragma: no cover
+                errormsg = 'Invalid odict slice'
+                raise ValueError(errormsg) from E
+        elif self._is_odict_iterable(key): # Iterate over items
             listvals = [self.__getitem__(item) for item in key]
             if isinstance(key, list): # If the user supplied the keys as a list, assume they want the output as a list
                 output = listvals
             else:
-                output = self.__sanitize_items(listvals) # Otherwise, assume as an array
+                output = self._sanitize_items(listvals) # Otherwise, assume as an array
             return output
         else: # Handle everything else
             return OD.__getitem__(self,key)
@@ -130,11 +126,11 @@ class odict(OD):
             thiskey = self.keys()[int(key)]
             OD.__setitem__(self, thiskey, value)
         elif type(key)==slice:
-            startind = self.__slicekey(key.start, 'start')
-            stopind = self.__slicekey(key.stop, 'stop')
-            if stopind<startind:
-                errormsg = 'Stop index must be >= start index (start=%i, stop=%i)' % (startind, stopind)
-                raise Exception(errormsg)
+            startind = self._slicekey(key.start, 'start')
+            stopind = self._slicekey(key.stop, 'stop')
+            if stopind<startind: # pragma: no cover
+                errormsg = f'Stop index must be >= start index (start={startind}, stop={stopind})'
+                raise ValueError(errormsg)
             slicerange = range(startind,stopind)
             enumerator = enumerate(slicerange)
             slicelen = len(slicerange)
@@ -142,25 +138,25 @@ class odict(OD):
                 if len(value)==slicelen:
                     for valind,index in enumerator:
                         self.__setitem__(index, value[valind])  # e.g. odict[:] = arr[:]
-                else:
-                    errormsg = 'Slice "%s" and values "%s" have different lengths! (%i, %i)' % (slicerange, value, slicelen, len(value))
-                    raise Exception(errormsg)
+                else: # pragma: no cover
+                    errormsg = f'Slice "{slicerange}" and values "{value}" have different lengths! ({slicelen}, {len(value)})'
+                    raise ValueError(errormsg)
             else:
                 for valind,index in enumerator:
                     self.__setitem__(index, value) # e.g. odict[:] = 4
-        elif self.__isODict_iterable(key) and hasattr(value, '__len__'): # Iterate over items
+        elif self._is_odict_iterable(key) and hasattr(value, '__len__'): # Iterate over items
             if len(key)==len(value):
                 for valind,thiskey in enumerate(key):
                     self.__setitem__(thiskey, value[valind])
-            else:
-                errormsg = 'Keys "%s" and values "%s" have different lengths! (%i, %i)' % (key, value, len(key), len(value))
-                raise Exception(errormsg)
+            else: # pragma: no cover
+                errormsg = f'Keys "{key}" and values "{value}" have different lengths! ({len(key)}, {len(value)})'
+                raise ValueError(errormsg)
         else:
             OD.__setitem__(self, key, value)
         return None
 
 
-    def __repr__(self, maxlen=None, showmultilines=True, divider=False, dividerthresh=10, numindents=0, recursionlevel=0, sigfigs=None, numformat=None, maxitems=200, classname='odict()', quote='"', keysep=':'):
+    def __repr__(self, maxlen=None, showmultilines=True, divider=False, dividerthresh=10, numindents=0, recursionlevel=0, sigfigs=None, numformat=None, maxitems=200, classname='odict()', quote='"', numsep=':', keysep=':'):
         ''' Print a meaningful representation of the odict '''
 
         # Set primitives for display.
@@ -212,7 +208,7 @@ class odict(OD):
                             thisvalstr = ut.flexstr(thisval) # To avoid numpy's stupid 0.4999999999945
                     else: # Otherwise, do the normal repr() read.
                         thisvalstr = repr(thisval)
-                except Exception as E:
+                except Exception as E: # pragma: no cover
                     thisvalstr = f'{ut.objectid(thisval)} read failed: {str(E)}'
 
                 # Add information to the lists to retrace afterwards.
@@ -250,9 +246,9 @@ class odict(OD):
                 # Create the the text to add, apply the indent, and add to the output
                 spacer = ' '*(maxkeylen-len(keystr))
                 if vallinecount == 1 or not showmultilines:
-                    rawoutput = f'#{ind:d}: {quote}{keystr}{quote}{keysep}{spacer} {valstr}\n'
+                    rawoutput = f'#{ind:d}{numsep} {quote}{keystr}{quote}{keysep}{spacer} {valstr}\n'
                 else:
-                    rawoutput = f'#{ind:d}: {quote}{keystr}{quote}{keysep}{spacer} \n{valstr}\n'
+                    rawoutput = f'#{ind:d}{numsep} {quote}{keystr}{quote}{keysep}{spacer} \n{valstr}\n'
 
                 # Perform the indentation.
                 newoutput = ut.indent(prefix=theprefix, text=rawoutput, width=80)
@@ -297,6 +293,71 @@ class odict(OD):
         return None
 
 
+    def _slicekey(self, key, slice_end):
+        ''' Validate a key supplied as a slice object '''
+        if slice_end == 'stop':
+            shift = 1
+            default = len(self)
+        else:
+            shift = 0
+            default = 0
+
+        if isinstance(key, ut._numtype):
+            if key < 0:
+                key = len(self) + key
+            output = key
+        elif isinstance(key, str):
+            output = self.index(key) + shift # +1 since otherwise confusing with names (CK)
+        elif key is None:
+            output = default
+        else: # pragma: no cover
+            errormsg = f'To use a slice, {slice_end} must be either int or str ({key})'
+            raise TypeError(errormsg)
+
+        return output
+
+
+    @staticmethod
+    def _matchkey(key, pattern, method):
+        ''' Helper function for findkeys '''
+        match = False
+        if isinstance(key, tuple):
+            for item in key:
+                if odict._matchkey(item, pattern, method):
+                    return True
+        else: # For everything except a tuple, treat it as a string
+            if not ut.isstring(key):
+                try: # pragma: no cover
+                    key = str(key) # Try to cast it to a string
+                except Exception as E:
+                    errormsg = f'Could not convert odict key of type {type(key)} to a string: {str(E)}'
+                    raise TypeError(E)
+            if   method == 're':         match = bool(re.search(pattern, key))
+            elif method == 'in':         match = pattern in key
+            elif method == 'startswith': match = key.startswith(pattern)
+            elif method == 'endswith':   match = key.endswith(pattern)
+            else: # pragma: no cover
+                errormsg = f'Method "{method}" not found; must be "re", "in", "startswith", or "endswith"'
+                raise ValueError(errormsg)
+        return match
+
+    def _is_odict_iterable(self, key):
+        ''' Check to see whether the "key" is actually an iterable '''
+        output = isinstance(key, (list, np.ndarray))
+        return output
+
+
+    def _sanitize_items(self, items):
+        ''' Try to convert the output of a slice to an array, but give up easily and return a list '''
+        try:
+            output = np.array(items) # Try standard Numpy array...
+            if 'S' in str(output.dtype) or 'U' in str(output.dtype): # ...but instead of converting to string, convert to object array for Python 2 or 3 -- WARNING, fragile!
+                output = np.array(items, dtype=object)
+        except: # pragma: no cover
+            output = items # If that fails, just give up and return the list
+        return output
+
+
     def export(self, doprint=True):
         ''' Export the odict in a form that is valid Python code '''
         start = 'odict(['
@@ -333,30 +394,35 @@ class odict(OD):
             return OD.pop(self, thiskey, *args, **kwargs)
         elif type(key)==slice: # Handle a slice -- complicated
             try:
-                startind = self.__slicekey(key.start, 'start')
-                stopind = self.__slicekey(key.stop, 'stop')
-                if stopind<startind:
-                    print('Stop index must be >= start index (start=%i, stop=%i)' % (startind, stopind))
-                    raise Exception
+                startind = self._slicekey(key.start, 'start')
+                stopind = self._slicekey(key.stop, 'stop')
+                if stopind<startind: # pragma: no cover
+                    errormsg = f'Stop index must be >= start index (start={startind}, stop={stopind})'
+                    raise ValueError(errormsg)
                 slicevals = [self.pop(i, *args, **kwargs) for i in range(startind,stopind)] # WARNING, not tested
-                try: return np.array(slicevals) # Try to convert to an array
-                except: return slicevals
-            except:
-                print('Invalid odict slice... returning empty list...')
-                return []
-        elif self.__isODict_iterable(key): # Iterate over items
-            listvals = [self.pop(item, *args, **kwargs) for item in key]
-            try: return np.array(listvals)
-            except: return listvals
-        else: # Handle string but also everything else
+                try:
+                    return np.array(slicevals) # Try to convert to an array
+                except: # pragma: no cover
+                    return slicevals
+            except Exception as E: # pragma: no cover
+                errormsg = 'Invalid odict slice'
+                raise ValueError(errormsg) from E
+        elif self._is_odict_iterable(key): # Iterate over items
+            keys = self.keys()
+            poplist = [keys[int(item)] if isinstance(item, ut._numtype) else item for item in key] # Convert to text keys, because indices change
+            listvals = [self.pop(item, *args, **kwargs) for item in poplist]
+            try:
+                return np.array(listvals)
+            except: # pragma: no cover
+                return listvals
+        else: # pragma: no cover # Handle string but also everything else
             try:
                 return OD.pop(self, key, *args, **kwargs)
-            except: # WARNING, should be KeyError, but this can't print newlines!!!
-                if len(self.keys()):
-                    errormsg = 'odict key "%s" not found; available keys are:\n%s' % (ut.flexstr(key),
-                        '\n'.join([ut.flexstr(k) for k in self.keys()]))
-                else: errormsg = 'Key "%s" not found since odict is empty'% key
-                raise Exception(errormsg)
+            except: # Duplicated from __getitem__
+                keys = self.keys()
+                if len(keys): errormsg = f'odict key "{key}" not found; available keys are:\n{ut.newlinejoin(keys)}'
+                else:         errormsg = f'Key {key} not found since odict is empty'
+                raise ut.KeyNotFoundError(errormsg)
 
 
     def remove(self, key, *args, **kwargs):
@@ -380,31 +446,6 @@ class odict(OD):
     def valind(self, value):
         ''' Return the index of a given value '''
         return self.values().index(value)
-
-
-    @staticmethod
-    def _matchkey(key, pattern, method):
-        ''' Helper function for findkeys '''
-        match = False
-        if isinstance(key, tuple):
-            for item in key:
-                if odict._matchkey(item, pattern, method):
-                    return True
-        else: # For everything except a tuple, treat it as a string
-            if not ut.isstring(key):
-                try:
-                    key = str(key) # Try to cast it to a string
-                except Exception as E:
-                    errormsg = 'Could not convert odict key of type %s to a string: %s' % (type(key), str(E))
-                    raise Exception(E)
-            if   method == 're':         match = bool(re.search(pattern, key))
-            elif method == 'in':         match = pattern in key
-            elif method == 'startswith': match = key.startswith(pattern)
-            elif method == 'endswith':   match = key.endswith(pattern)
-            else:
-                errormsg = 'Method "%s" not found; must be "re", "in", "startswith", or "endswith"' % method
-                raise Exception(errormsg)
-        return match
 
 
     def findkeys(self, pattern=None, method=None, first=None):
@@ -524,9 +565,9 @@ class odict(OD):
             realpos = 0
         if pos is None:
             realpos = 0
-        if realpos>len(self):
-            errormsg = 'Cannot insert %s at position %i since length of odict is %i ' % (key, pos, len(self))
-            raise Exception(errormsg)
+        if realpos>len(self): # pragma: no cover
+            errormsg = f'Cannot insert {key} at position {pos} since length of odict is {len(self)}'
+            raise ValueError(errormsg)
 
         # Create a temporary dictionary to hold all of the items after the insertion point
         tmpdict = odict()
@@ -535,10 +576,11 @@ class odict(OD):
         if not len(originds) or realpos==len(originds): # It's empty or in the final position, just append
             self.__setitem__(realkey, realvalue)
         else: # Main usage case, it's not empty
-            try: insertind = originds.index(realpos) # Figure out which index we're inseting at
-            except:
-                errormsg = 'Could not insert item at position %i in odict with %i items' % (realpos, len(originds))
-                raise Exception(errormsg)
+            try:
+                insertind = originds.index(realpos) # Figure out which index we're inseting at
+            except Exception as E: # pragma: no cover
+                errormsg = f'Could not insert item at position {realpos} in odict with {len(originds)} items'
+                raise ValueError(errormsg) from E
             keystopop = origkeys[insertind:] # Pop these keys until we get far enough back
             for keytopop in keystopop:
                 tmpdict.__setitem__(keytopop, self.pop(keytopop))
@@ -590,7 +632,7 @@ class odict(OD):
             if sortby == 'values':
                 origvals = self.values()
                 sortby = sorted(range(len(origvals)), key=origvals.__getitem__) # Reset sortby based on https://stackoverflow.com/questions/3382352/equivalent-of-numpy-argsort-in-basic-python
-            if not ut.isiterable(sortby):
+            if not ut.isiterable(sortby): # pragma: no cover
                 raise Exception('Please provide a list to determine the sort order.')
             if all([isinstance(x, ut._stringtypes) for x in sortby]): # Going to sort by keys
                 allkeys = sortby # Assume the user knows what s/he is doing
@@ -599,12 +641,13 @@ class odict(OD):
                 for i,x in enumerate(sortby):
                      if x: allkeys.append(origkeys[i])
             elif all([isinstance(x, ut._numtype) for x in sortby]): # Going to sort by numbers
-                if not set(sortby)==set(range(len(self))):
-                    warningmsg = 'Warning: list to sort by "%s" has different length than odict "%i"' % (sortby, len(self))
+                if not set(sortby)==set(range(len(self))): # pragma: no cover
+                    warningmsg = f'Warning: list to sort by "{sortby}" has different length than odict "{len(self)}"'
                     if verbose: print(warningmsg)
                 allkeys = [origkeys[ind] for ind in sortby]
-            else:
-                raise Exception('Cannot figure out how to sort by "%s"' % sortby)
+            else: # pragma: no cover
+                errormsg = f'Cannot figure out how to sort by "{sortby}"'
+                raise TypeError(errormsg)
         tmpdict = odict()
         if reverse:
             allkeys.reverse() # If requested, reverse order
@@ -661,9 +704,9 @@ class odict(OD):
             keylist = [ut.flexstr(keys)]
         elif isinstance(keys, list): # It's a list: use directly
             keylist = keys
-        else:
-            errormsg = 'Could not understand keys "%s": must be number, string, or list' % keys
-            raise Exception(errormsg)
+        else: # pragma: no cover
+            errormsg = f'Could not understand keys "{keys}": must be number, string, or list'
+            raise TypeError(errormsg)
         nkeys = len(keylist)
 
         # Handle values
@@ -675,9 +718,9 @@ class odict(OD):
             vallist = [ut.dcp(vals[0]) for _ in range(nkeys)]
         elif nvals==nkeys: # Lengths match, can use directly
             vallist = vals
-        else:
-            errormsg = 'Must supply either a single value or a list of same length as the keys (%i keys, %i values supplied)' % (nkeys, nvals)
-            raise Exception(errormsg)
+        else: # pragma: no cover
+            errormsg = f'Must supply either a single value or a list of same length as the keys ({nkeys} keys, {nvals} values supplied)'
+            raise ValueError(errormsg)
 
         # Handle nested keys -- warning, would be better to not hard-code this, but does the brain in as it is!
         if keys2 is not None and keys3 is not None: # Doubly nested
@@ -717,16 +760,17 @@ class odict(OD):
                 if keys is None:
                     if   isinstance(source, (list, tuple)):   keys = range(len(source))
                     elif isinstance(source, dict):            keys = list(source.keys())
-                    else:                                     raise Exception('Unable to guess keys for object of type %s' % type(source))
+                    else:                                     raise TypeError(f'Unable to guess keys for object of type {type(source)}')
                 keys = ut.promotetolist(keys) # Make sure it's a list -- note, does not convert other iterables to a list!
                 if keynames is None: keynames = keys # Use key names
 
                 # Loop over supplied keys
                 for key,keyname in zip(keys,keynames):
-                    try:
+                    try: # pragma: no cover
                         self.__setitem__(str(keyname), source[key])
                     except Exception as E:
-                        raise Exception('Key "%s" not found: %s' % (key, repr(E)))
+                        errormsg = f'Key "{key}" not found: {repr(E)}'
+                        raise ut.KeyNotFoundError(errormsg)
 
         return self # As with make()
 
@@ -781,32 +825,47 @@ class odict(OD):
         nkeys = len(self.keys())
         if not(ut.isiterable(val)): # Assume it's meant to be populated in each
             val = [val]*nkeys # Duplicated
-        if len(val)!=nkeys:
-            errormsg = 'To map values onto each key, they must be the same length (%i vs. %i)' % (len(val), nkeys)
-            raise Exception(errormsg)
+        if len(val)!=nkeys: # pragma: no cover
+            errormsg = f'To map values onto each key, they must be the same length ({len(val)} vs. {nkeys})'
+            raise ValueError(errormsg)
         for k,key in self.enumkeys():
             self.__getitem__(key)[ind] = val[k]
         return None
 
 
-    def enumkeys(self):
-        ''' Shortcut for enumerate(odict.keys()) '''
+    def enumkeys(self, transpose=False):
+        '''
+        Shortcut for enumerate(odict.keys()).
+
+        If transpose=True, return a tuple of lists rather than a list of tuples.
+        '''
         iterator = list(enumerate(self.keys()))
+        if transpose: iterator = tuple(ut.transposelist(iterator))
         return iterator
 
 
-    def enumvals(self):
-        ''' Shortcut for enumerate(odict.values()) '''
+    def enumvals(self, transpose=False):
+        '''
+        Shortcut for enumerate(odict.values())
+
+        If transpose=True, return a tuple of lists rather than a list of tuples.
+        '''
         iterator = list(enumerate(self.values()))
+        if transpose: iterator = tuple(ut.transposelist(iterator))
         return iterator
 
 
-    def enumitems(self):
-        ''' Returns tuple of 3 things: index, key, value '''
-        iterator = [] # Would be better to not pre-allocate but what can you do...
+    def enumitems(self, transpose=False):
+        '''
+        Returns tuple of 3 things: index, key, value.
+
+        If transpose=True, return a tuple of lists rather than a list of tuples.
+        '''
+        iterator = []
         for ind,item in enumerate(self.items()):
             thistuple = (ind,)+item # Combine into one tuple
             iterator.append(thistuple)
+        if transpose: iterator = tuple(ut.transposelist(iterator))
         return iterator
 
     @staticmethod
@@ -840,13 +899,15 @@ class odict(OD):
         """ Return a list of values (as in Python 2). """
         return list(OD.values(self))
 
-    def items(self):
+    def items(self, transpose=False):
         """ Return a list of items, as in Python 2. """
-        return list(OD.items(self))
+        iterator = list(OD.items(self))
+        if transpose: iterator = tuple(ut.transposelist(iterator))
+        return iterator
 
-    def iteritems(self):
+    def iteritems(self, transpose=False):
         """ Alias to items() """
-        return list(OD.items(self))
+        return self.items(transpose=transpose)
 
 
 class objdict(odict):
@@ -865,7 +926,7 @@ class objdict(odict):
 
     def __repr__(self, *args, **kwargs):
         ''' Use odict repr, but with a custom class name and no quotes '''
-        return super().__repr__(quote='', keysep='.', classname='objdict()', *args, **kwargs)
+        return super().__repr__(quote='', numsep='.', classname='objdict()', *args, **kwargs)
 
 
     def __getattribute__(self, attr):
@@ -888,8 +949,8 @@ class objdict(odict):
             return odict.__setitem__(self, name, value) # If so, simply return
 
         # Otherwise, raise an exception
-        errormsg = '"%s" exists as an attribute, so cannot be set as key; use setattribute() instead' % name
-        raise Exception(errormsg)
+        errormsg = f'"{name}" exists as an attribute, so cannot be set as key; use setattribute() instead'
+        raise ValueError(errormsg)
 
 
     def setattribute(self, name, value):
@@ -927,7 +988,7 @@ def asobj(obj, strict=True):
             try: # First, try to get the attribute as an attribute
                 output = objtype.__getattribute__(self, attr)
                 return output
-            except Exception as E: # If that fails, try to get it as a dict item
+            except Exception as E: # pragma: no cover # If that fails, try to get it as a dict item
                 try:
                     output = objtype.__getitem__(self, attr)
                     return output
@@ -936,7 +997,6 @@ def asobj(obj, strict=True):
 
         def __setattr__(self, name, value):
             ''' Set key in dict, not attribute! '''
-
             try:
                 objtype.__getattribute__(self, name) # Try retrieving this as an attribute, expect AttributeError...
             except AttributeError:
@@ -944,9 +1004,9 @@ def asobj(obj, strict=True):
 
             if not strict: # Let the attribute be set anyway
                 objtype.__setattr__(self, name, value)
-            else: # Otherwise, raise an exception
-                errormsg = '"%s" exists as an attribute, so cannot be set as key; use setattribute() instead' % name
-                raise Exception(errormsg)
+            else: # pragma: no cover # Otherwise, raise an exception
+                errormsg = f'"{name}" exists as an attribute, so cannot be set as key; use setattribute() instead'
+                raise ValueError(errormsg)
 
             return
 

@@ -51,6 +51,8 @@ def test_uuid():
     u.u5 = sc.uuid(n=3)
     u.u6 = sc.uuid(which='hex', length=20)
     u.u7 = sc.uuid(which='numeric', length=10, n=5)
+    u.u8 = sc.uuid(sc.uuid())
+    u.u9 = sc.uuid(238)
 
     # Tests
     assert u.u1 != u.u2
@@ -162,6 +164,7 @@ def test_printing():
 
 def test_prepr():
     sc.heading('Test pretty representation of an object')
+
     n_attrs = 500
     myobj = sc.prettyobj()
     for i in range(n_attrs):
@@ -170,13 +173,23 @@ def test_prepr():
     print(myobj)
 
     print('Testing pretty representation of an object using slots')
-    class Foo():
+    class Foo:
         __slots__ = ['bar']
         def __init__(self):
             self.bar = 1
 
     x = Foo()
     print(sc.prepr(x))
+    print(sc.prepr(x, maxtime=0))
+
+    class Bar:
+        def skip(self): pass
+
+    print(sc.prepr(Bar()))
+
+    for tf in [True, False]:
+        sc.objrepr(x, showid=tf, showmeth=tf, showprop=tf, showatt=tf)
+
     return myobj
 
 
@@ -231,7 +244,23 @@ def test_promotetolist():
     print(res3b)
 
     # Check that type checking works
-    sc.promotetolist(ex2, objtype=str)
+    sc.tolist(ex2, objtype=str)
+
+    print('\nTesting transposelist')
+    o = sc.odict(a=1, b=4, c=9, d=16)
+    itemlist = o.enumitems()
+    inds, keys, vals = sc.transposelist(itemlist)
+    assert keys[2] == 'c'
+    assert inds[3] == 3
+    assert vals[1] == 4
+
+    print('\nTesting mergelists')
+    assert sc.mergelists(None, copy=True)                   == []
+    assert sc.mergelists([1,2,3], [4,5,6])                  == [1, 2, 3, 4, 5, 6]
+    assert sc.mergelists([1,2,3], 4, 5, 6)                  == [1, 2, 3, 4, 5, 6]
+    assert sc.mergelists([(1,2), (3,4)], (5,6))             == [(1, 2), (3, 4), (5, 6)]
+    assert sc.mergelists((1,2), (3,4), (5,6))               == [(1, 2), (3, 4), (5, 6)]
+    assert sc.mergelists((1,2), (3,4), (5,6), coerce=tuple) == [1, 2, 3, 4, 5, 6]
 
     return res3b
 
@@ -256,10 +285,10 @@ def test_types():
     o.flexstr = sc.flexstr(b'bytestring')
 
     print('\nTesting promotetoarray')
-    assert not len(sc.promotetoarray(None, skipnone=True))
+    assert not len(sc.promotetoarray(None, keepnone=False))
     assert sc.promotetoarray(np.array(3))[0] == 3
-    with pytest.raises(TypeError):
-        sc.promotetoarray('not convertible')
+    with pytest.raises(ValueError):
+        sc.toarray('not convertible', dtype=float)
 
     return o
 

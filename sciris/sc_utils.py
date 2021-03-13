@@ -15,13 +15,14 @@ Highlights:
     - ``sc.isnumber()``: checks if something is any number type
     - ``sc.promotetolist()``: converts any object to a list, for easy iteration
     - ``sc.promotetoarray()``: tries to convert any object to an array, for easy use with numpy
+    - ``sc.mergedicts()``: merges any set of inputs into a dictionary
     - ``sc.readdate()``: convert strings to dates using common formats
     - ``sc.tic()/sc.toc()``: simple method for timing durations
     - ``sc.runcommand()``: simple way of executing a shell command
 '''
 
 ##############################################################################
-### Imports
+#%% Imports
 ##############################################################################
 
 import os
@@ -44,6 +45,7 @@ import random as rnd
 import datetime as dt
 import uuid as py_uuid
 import tempfile
+import warnings
 import traceback as py_traceback
 from textwrap import fill
 from functools import reduce
@@ -55,7 +57,7 @@ _stringtypes = (str, bytes)
 _numtype    = numbers.Number
 
 # Add Windows support for colors (do this at the module level so that colorama.init() only gets called once)
-if 'win' in sys.platform:
+if 'win' in sys.platform: # pragma: no cover
     try:
         import colorama
         colorama.init()
@@ -68,7 +70,7 @@ else:
 
 
 ##############################################################################
-### Adaptations from other libraries
+#%% Adaptations from other libraries
 ##############################################################################
 
 # Define the modules being loaded
@@ -115,9 +117,8 @@ def fast_uuid(which=None, length=None, n=1, secure=False, forcelist=False, safet
         'ascii':        string.ascii_letters + string.digits,
         }
 
-    if which not in choices:
-        choicekeys = ', '.join(list(choices.keys()))
-        errormsg = f'Choice {which} not found; choices are: {choicekeys}'
+    if which not in choices: # pragma: no cover
+        errormsg = f'Choice {which} not found; choices are: {strjoin(choices.keys())}'
         raise KeyError(errormsg)
     else:
         charlist = choices[which]
@@ -214,10 +215,10 @@ def uuid(uid=None, which=None, die=False, tostring=False, length=None, n=1, **kw
                 output = uid # Use directly
             else: # Convert
                 output = py_uuid.UUID(uid)
-        except Exception as E:
-            errormsg = 'Could not convert "%s" to a UID (%s)' % (uid, repr(E))
+        except Exception as E: # pragma: no cover
+            errormsg = f'Could not convert "{uid}" to a UID ({repr(E)})'
             if die:
-                raise Exception(errormsg)
+                raise TypeError(errormsg)
             else:
                 print(errormsg)
                 uid = None # Just create a new one
@@ -256,10 +257,10 @@ def dcp(obj, verbose=True, die=False):
     '''
     try:
         output = copy.deepcopy(obj)
-    except Exception as E:
+    except Exception as E: # pragma: no cover
         output = cp(obj)
-        errormsg = 'Warning: could not perform deep copy, performing shallow instead: %s' % str(E)
-        if die: raise Exception(errormsg)
+        errormsg = f'Warning: could not perform deep copy, performing shallow instead: {str(E)}'
+        if die: raise RuntimeError(errormsg)
         else:   print(errormsg)
     return output
 
@@ -291,7 +292,7 @@ def pp(obj, jsonify=True, verbose=False, doprint=True, *args, **kwargs):
         try:
             toprint = json.loads(json.dumps(obj)) # This is to handle things like OrderedDicts
         except Exception as E:
-            if verbose: print('Could not jsonify object ("%s"), printing default...' % str(E))
+            if verbose: print(f'Could not jsonify object ("{str(E)}"), printing default...')
             toprint = obj # If problems are encountered, just return the object
     else:
         toprint = obj
@@ -390,10 +391,10 @@ def traceback(*args, **kwargs):
 
 
 ##############################################################################
-### Printing/notification functions
+#%% Printing/notification functions
 ##############################################################################
 
-__all__ += ['printv', 'blank', 'createcollist', 'objectid', 'objatt', 'objmeth', 'objprop', 'objrepr',
+__all__ += ['printv', 'blank', 'strjoin', 'newlinejoin', 'createcollist', 'objectid', 'objatt', 'objmeth', 'objprop', 'objrepr',
             'prepr', 'pr', 'indent', 'sigfig', 'printarr', 'printdata', 'printvars',
             'slacknotification', 'printtologfile', 'colorize', 'heading', 'percentcomplete', 'progressbar']
 
@@ -421,7 +422,7 @@ def printv(string, thisverbose=1, verbose=2, newline=True, indent=True):
 
     Version: 2016jan30
     '''
-    if thisverbose>4 or verbose>4: print('Warning, verbosity should be from 0-4 (this message: %i; current: %i)' % (thisverbose, verbose))
+    if thisverbose>4 or verbose>4: print(f'Warning, verbosity should be from 0-4 (this message: {thisverbose}; current: {verbose})')
     if verbose>=thisverbose: # Only print if sufficiently verbose
         indents = '  '*thisverbose*bool(indent) # Create automatic indenting
         if newline: print(indents+flexstr(string)) # Actually print
@@ -434,14 +435,54 @@ def blank(n=3):
     print('\n'*n)
 
 
-def createcollist(oldkeys, title, strlen = 18, ncol = 3):
+def strjoin(*args, sep=', '):
+    '''
+    Like string ``join()``, but handles more flexible inputs, converts items to
+    strings, and.
+
+    Args:
+        args (list): the list of items to join
+        sep (str): the separator string
+
+    **Example**::
+
+        sc.strjoin([1,2,3], 4, 'five')
+
+    New in version 1.0.3.
+    '''
+    obj = []
+    for arg in args:
+        if isstring(arg):
+            obj.append(arg)
+        elif isiterable(arg):
+            obj.extend([str(item) for item in arg])
+        else:
+            obj.append(str(arg))
+    output = sep.join(obj)
+    return output
+
+
+def newlinejoin(*args):
+    '''
+    Alias to ``strjoin(*args, sep='\\n')``.
+
+    **Example**::
+
+        sc.newlinejoin([1,2,3], 4, 'five')
+
+    New in version 1.0.3.
+    '''
+    return strjoin(*args, sep='\n')
+
+
+def createcollist(items, title=None, strlen=18, ncol=3):
     ''' Creates a string for a nice columnated list (e.g. to use in __repr__ method) '''
-    nrow = int(np.ceil(float(len(oldkeys))/ncol))
+    nrow = int(np.ceil(float(len(items))/ncol))
     newkeys = []
     for x in range(nrow):
-        newkeys += oldkeys[x::nrow]
+        newkeys += items[x::nrow]
 
-    attstring = title + ':'
+    attstring = title + ':' if title else ''
     c = 0
     for x in newkeys:
         if c%ncol == 0: attstring += '\n  '
@@ -454,13 +495,16 @@ def createcollist(oldkeys, title, strlen = 18, ncol = 3):
 
 def objectid(obj):
     ''' Return the object ID as per the default Python __repr__ method '''
-    output = '<%s.%s at %s>\n' % (obj.__class__.__module__, obj.__class__.__name__, hex(id(obj)))
+    c = obj.__class__
+    output = f'<{c.__module__}.{c.__name__} at {hex(id(obj))}>\n'
     return output
 
 
 def objatt(obj, strlen=18, ncol=3):
     ''' Return a sorted string of object attributes for the Python __repr__ method '''
-    oldkeys = sorted(obj.__dict__.keys())
+    if   hasattr(obj, '__dict__'):  oldkeys = sorted(obj.__dict__.keys())
+    elif hasattr(obj, '__slots__'): oldkeys = sorted(obj.__slots__)
+    else:                           oldkeys = []
     if len(oldkeys): output = createcollist(oldkeys, 'Attributes', strlen = 18, ncol = 3)
     else:            output = ''
     return output
@@ -470,7 +514,7 @@ def objmeth(obj, strlen=18, ncol=3):
     ''' Return a sorted string of object methods for the Python __repr__ method '''
     try:
         oldkeys = sorted([method + '()' for method in dir(obj) if callable(getattr(obj, method)) and not method.startswith('__')])
-    except:
+    except: # pragma: no cover
         oldkeys = ['Methods N/A']
     if len(oldkeys): output = createcollist(oldkeys, 'Methods', strlen=strlen, ncol=ncol)
     else:            output = ''
@@ -481,7 +525,7 @@ def objprop(obj, strlen=18, ncol=3):
     ''' Return a sorted string of object properties for the Python __repr__ method '''
     try:
         oldkeys = sorted([prop for prop in dir(obj) if isinstance(getattr(type(obj), prop, None), property) and not prop.startswith('__')])
-    except:
+    except: # pragma: no cover
         oldkeys = ['Properties N/A']
     if len(oldkeys): output = createcollist(oldkeys, 'Properties', strlen=strlen, ncol=ncol)
     else:            output = ''
@@ -552,7 +596,7 @@ def prepr(obj, maxlen=None, maxitems=None, skip=None, dividerchar='—', divider
     try:
         if not (hasattr(obj, '__dict__') or hasattr(obj, '__slots__')):
             # It's a plain object
-            labels = ['%s' % type(obj)]
+            labels = [f'{type(obj)}']
             values = [repr_fn(obj)]
         else:
             if hasattr(obj, '__dict__'):
@@ -615,7 +659,7 @@ def prepr(obj, maxlen=None, maxitems=None, skip=None, dividerchar='—', divider
             output += timestr
 
     # If that failed, try progressively simpler approaches
-    except Exception as E:
+    except Exception as E: # pragma: no cover
         if die:
             errormsg = 'Failed to create pretty representation of object'
             raise RuntimeError(errormsg) from E
@@ -739,7 +783,7 @@ def sigfig(x, sigfigs=5, SI=False, sep=False, keepints=False):
             elif x>(10**sigfigs) and not SI and keepints: # e.g. x = 23432.23, sigfigs=3, output is 23432
                 roundnumber = int(round(x))
                 if sep: string = format(roundnumber, ',')
-                else:   string = '%0.0f' % x
+                else:   string = f'{x:0.0f}'
                 output.append(string)
             else:
                 magnitude = np.floor(np.log10(abs(x)))
@@ -747,7 +791,7 @@ def sigfig(x, sigfigs=5, SI=False, sep=False, keepints=False):
                 x = round(x*factor)/float(factor)
                 digits = int(abs(magnitude) + max(0, sigfigs - max(0,magnitude) - 1) + 1 + (x<0) + (abs(x)<1)) # one because, one for decimal, one for minus
                 decimals = int(max(0,-magnitude+sigfigs-1))
-                strformat = '%' + '%i.%i' % (digits, decimals)  + 'f'
+                strformat = '%' + f'{digits}.{decimals}' + 'f'
                 string = strformat % x
                 if sep: # To insert separators in the right place, have to convert back to a number
                     if decimals>0:  roundnumber = float(string)
@@ -755,7 +799,7 @@ def sigfig(x, sigfigs=5, SI=False, sep=False, keepints=False):
                     string = format(roundnumber, ',') # Allow comma separator
                 string += suffix
                 output.append(string)
-        except:
+        except: # pragma: no cover
             output.append(flexstr(x))
     if islist:
         return tuple(output)
@@ -787,15 +831,17 @@ def printarr(arr, arrformat='%0.2f  '):
             print('='*len(arr[i][0])*len(arrformat % 1))
             for j in range(len(arr[i])):
                 printarr(arr[i][j], arrformat)
-    else:
+    else: # pragma: no cover
         print(arr) # Give up
     return None
 
 
 
-def printdata(data, name='Variable', depth=1, maxlen=40, indent='', level=0, showcontents=False):
+def printdata(data, name='Variable', depth=1, maxlen=40, indent='', level=0, showcontents=False): # pragma: no cover
     '''
     Nicely print a complicated data structure, a la Matlab.
+
+    Note: this function is deprecated.
 
     Args:
       data: the data to display
@@ -808,12 +854,12 @@ def printdata(data, name='Variable', depth=1, maxlen=40, indent='', level=0, sho
     '''
     datatype = type(data)
     def printentry(data):
-        if   datatype==dict:              string = ('dict with %i keys' % len(data.keys()))
-        elif datatype==list:              string = ('list of length %i' % len(data))
-        elif datatype==tuple:             string = ('tuple of length %i' % len(data))
-        elif datatype==np.ndarray:        string = ('array of shape %s' % flexstr(np.shape(data)))
-        elif datatype.__name__=='module': string = ('module with %i components' % len(dir(data)))
-        elif datatype.__name__=='class':  string = ('class with %i components' % len(dir(data)))
+        if   datatype==dict:              string = (f'dict with {len(data.keys())} keys')
+        elif datatype==list:              string = (f'list of length {len(data)}')
+        elif datatype==tuple:             string = (f'tuple of length {len(data)}')
+        elif datatype==np.ndarray:        string = (f'array of shape {np.shape(data)}')
+        elif datatype.__name__=='module': string = (f'module with {len(dir(data))} components')
+        elif datatype.__name__=='class':  string = (f'class with {len(dir(data))} components')
         else: string = datatype.__name__
         if showcontents and maxlen>0:
             datastring = ' | '+flexstr(data)
@@ -874,13 +920,13 @@ def printvars(localvars=None, varlist=None, label=None, divider=True, spaces=1, 
     varlist = promotetolist(varlist) # Make sure it's actually a list
     dividerstr = '-'*40
 
-    if label:  print('Variables for %s:' % label)
+    if label:  print(f'Variables for {label}:')
     if divider: print(dividerstr)
     for varnum,varname in enumerate(varlist):
-        controlstr = '%i. "%s": ' % (varnum, varname) # Basis for the control string -- variable number and name
+        controlstr = f'{varnum}. "{varname}": ' # Basis for the control string -- variable number and name
         if color: controlstr = colorize(color, output=True) + controlstr + colorize('reset', output=True) # Optionally add color
         if spaces>1: controlstr += '\n' # Add a newline if the variables are going to be on different lines
-        try:    controlstr += '%s' % localvars[varname] # The variable to be printed
+        try:    controlstr += f'{localvars[varname]}' # The variable to be printed
         except: controlstr += 'WARNING, could not be printed' # In case something goes wrong
         controlstr += '\n' * spaces # The number of spaces to add between variables
         print(controlstr), # Print it out
@@ -889,7 +935,7 @@ def printvars(localvars=None, varlist=None, label=None, divider=True, spaces=1, 
 
 
 
-def slacknotification(message=None, webhook=None, to=None, fromuser=None, verbose=2, die=False):
+def slacknotification(message=None, webhook=None, to=None, fromuser=None, verbose=2, die=False):  # pragma: no cover
     '''
     Send a Slack notification when something is finished.
 
@@ -922,8 +968,8 @@ def slacknotification(message=None, webhook=None, to=None, fromuser=None, verbos
         from requests import post # Simple way of posting data to a URL
         from json import dumps # For sanitizing the message
     except Exception as E:
-        errormsg = 'Cannot use Slack notification since imports failed: %s' % str(E)
-        if die: raise Exception(errormsg)
+        errormsg = f'Cannot use Slack notification since imports failed: {str(E)}'
+        if die: raise ImportError(errormsg)
         else:   print(errormsg)
 
     # Validate input arguments
@@ -932,7 +978,7 @@ def slacknotification(message=None, webhook=None, to=None, fromuser=None, verbos
     if not to:       to       = '#general'
     if not fromuser: fromuser = 'sciris-bot'
     if not message:  message  = 'This is an automated notification: your notifier is notifying you.'
-    printv('Channel: %s | User: %s | Message: %s' % (to, fromuser, message), 3, verbose) # Print details of what's being sent
+    printv(f'Channel: {to} | User: {fromuser} | Message: {message}', 3, verbose) # Print details of what's being sent
 
     # Try opening webhook as a file
     if webhook.find('hooks.slack.com')>=0: # It seems to be a URL, let's proceed
@@ -943,20 +989,20 @@ def slacknotification(message=None, webhook=None, to=None, fromuser=None, verbos
         slackurl = os.getenv('SLACKURL')
     else:
         slackurl = webhook # It doesn't seemt to be a URL but let's try anyway
-        errormsg = '"%s" does not seem to be a valid webhook string or file' % webhook
-        if die: raise Exception(errormsg)
+        errormsg = f'"{webhook}" does not seem to be a valid webhook string or file'
+        if die: raise ValueError(errormsg)
         else:   print(errormsg)
 
     # Package and post payload
     try:
         payload = '{"text": %s, "channel": %s, "username": %s}' % (dumps(message), dumps(to), dumps(fromuser))
-        printv('Full payload: %s' % payload, 4, verbose)
+        printv(f'Full payload: {payload}', 4, verbose)
         response = post(url=slackurl, data=payload)
         printv(response, 3, verbose) # Optionally print response
         printv('Message sent.', 2, verbose) # We're done
     except Exception as E:
-        errormsg = 'Sending of Slack message failed: %s' % repr(E)
-        if die: raise Exception(errormsg)
+        errormsg = f'Sending of Slack message failed: {repr(E)}'
+        if die: raise RuntimeError(errormsg)
         else:   print(errormsg)
     return None
 
@@ -975,14 +1021,16 @@ def printtologfile(message=None, filename=None):
     if message is None:
         return None # Return immediately if nothing to append
     if filename is None:
-        filename = '/tmp/logfile' # Some generic filename that should work on *nix systems
+        import tempfile
+        tempdir = tempfile.gettempdir()
+        filename = os.path.join(tempdir, 'logfile') # Some generic filename that should work on *nix systems
 
     # Try writing to file
     try:
         with open(filename, 'a') as f:
             f.write('\n'+message+'\n') # Add a newline to the message.
-    except: # Fail gracefully
-        print('WARNING, could not write to logfile %s' % filename)
+    except Exception as E: # pragma: no cover # Fail gracefully
+        print(f'Warning, could not write to logfile {filename}: {str(E)}')
 
     return None
 
@@ -1011,7 +1059,7 @@ def colorize(color=None, string=None, output=False, showhelp=False, enable=True)
     '''
 
     # Handle short-circuit case
-    if not enable:
+    if not enable: # pragma: no cover
         if output:
             return string
         else:
@@ -1043,8 +1091,8 @@ def colorize(color=None, string=None, output=False, showhelp=False, enable=True)
     # Determine what color to use
     colorlist = promotetolist(color)  # Make sure it's a list
     for color in colorlist:
-        if color not in ansicolors.keys():
-            print('Color "%s" is not available, use colorize(showhelp=True) to show options.' % color)
+        if color not in ansicolors.keys(): # pragma: no cover
+            print(f'Color "{color}" is not available, use colorize(showhelp=True) to show options.')
             return None  # Don't proceed if the color isn't found
     ansicolor = ''
     for color in colorlist:
@@ -1173,23 +1221,28 @@ def progressbar(i, maxiters, label='', length=30, empty='—', full='•', newli
 
 
 ##############################################################################
-### Type functions
+#%% Type functions
 ##############################################################################
 
-__all__ += ['flexstr', 'isiterable', 'checktype', 'isnumber', 'isstring', 'isarray', 'promotetoarray', 'promotetolist', 'mergedicts']
+__all__ += ['flexstr', 'isiterable', 'checktype', 'isnumber', 'isstring', 'isarray',
+            'promotetoarray', 'promotetolist', 'toarray', 'tolist', 'transposelist',
+            'mergedicts', 'mergelists']
 
 def flexstr(arg, force=True):
-    ''' Try converting to a "regular" string (i.e. "str" in both Python 2 or 3), but proceed if it fails '''
-    if isstring(arg): # It's a string
-        if isinstance(arg, bytes):
-            try:
-                output = arg.decode() # If it's bytes, decode to unicode
-            except:
-                if force: output = repr(arg) # If that fails, just print its representation
-                else:     output = arg
-        else:
-            output = arg # Otherwise, return as-is
-    else:
+    '''
+    Try converting any object to a "regular" string (i.e. ``str``), but proceed
+    if it fails. Note: this function calls ``repr()`` rather than ``str()`` to
+    ensure a more robust representation of objects.
+    '''
+    if isinstance(arg, str):
+        return arg
+    elif isinstance(arg, bytes):
+        try:
+            output = arg.decode() # If it's bytes, decode to unicode
+        except: # pragma: no cover
+            if force: output = repr(arg) # If that fails, just print its representation
+            else:     output = arg
+    else: # pragma: no cover
         if force: output = repr(arg)
         else:     output = arg # Optionally don't do anything for non-strings
     return output
@@ -1215,20 +1268,22 @@ def checktype(obj=None, objtype=None, subtype=None, die=False):
     '''
     A convenience function for checking instances. If objtype is a type,
     then this function works exactly like isinstance(). But, it can also
-    be a string, e.g. 'array'.
+    be one of the following strings:
 
-    If subtype is not None, then checktype will iterate over obj and check
+        - 'str', 'string': string or bytes object
+        - 'num', 'number': any kind of number
+        - 'arr', 'array': a Numpy array (equivalent to np.ndarray)
+        - 'listlike': a list, tuple, or array
+        - 'arraylike': a list, tuple, or array with numeric entries
+
+    If subtype is not None, then checktype will iterate over the object and check
     recursively that each element matches the subtype.
 
-    Special types are "listlike", which will check for lists, tuples, and
-    arrays; and "arraylike", which is the same as "listlike" but will also
-    check that elements are numeric.
-
     Args:
-        obj:     the object to check the type of
-        objtype: the type to confirm the object belongs to
-        subtype: optionally check the subtype if the object is iterable
-        die:     whether or not to raise an exception if the object is the wrong type
+        obj     (any):         the object to check the type of
+        objtype (str or type): the type to confirm the object belongs to
+        subtype (str or type): optionally check the subtype if the object is iterable
+        die     (bool):        whether or not to raise an exception if the object is the wrong type
 
     **Examples**::
 
@@ -1245,9 +1300,9 @@ def checktype(obj=None, objtype=None, subtype=None, die=False):
     elif objtype in ['listlike', 'arraylike']: objinstance = (list, tuple, np.ndarray) # Anything suitable as a numerical array
     elif type(objtype) == type:                objinstance = objtype  # Don't need to do anything
     elif objtype is None:                      return None # If not supplied, exit
-    else:
-        errormsg = 'Could not understand what type you want to check: should be either a string or a type, not "%s"' % objtype
-        raise Exception(errormsg)
+    else: # pragma: no cover
+        errormsg = f'Could not understand what type you want to check: should be either a string or a type, not "{objtype}"'
+        raise ValueError(errormsg)
 
     # Do first-round checking
     result = isinstance(obj, objinstance)
@@ -1263,7 +1318,7 @@ def checktype(obj=None, objtype=None, subtype=None, die=False):
     # Decide what to do with the information thus gleaned
     if die: # Either raise an exception or do nothing if die is True
         if not result: # It's not an instance
-            errormsg = 'Incorrect type: object is %s, but %s is required' % (type(obj), objtype)
+            errormsg = f'Incorrect type: object is {type(obj)}, but {objtype} is required'
             raise TypeError(errormsg)
         else:
             return None # It's fine, do nothing
@@ -1274,6 +1329,10 @@ def checktype(obj=None, objtype=None, subtype=None, die=False):
 def isnumber(obj, isnan=None):
     '''
     Determine whether or not the input is a number.
+
+    Args:
+        obj (any): the object to check if it's a number
+        isnan (bool): an optional additional check to determine whether the number is/isn't NaN
 
     Almost identical to isinstance(obj, numbers.Number).
     '''
@@ -1314,34 +1373,38 @@ def isarray(obj, dtype=None):
                 return False
 
 
-def promotetoarray(x, skipnone=False):
+def promotetoarray(x, keepnone=False, **kwargs):
     '''
-    Small function to ensure consistent format for things that should be arrays
+    Small function to ensure consistent format for things that should be arrays.
+    Very similar to ``np.array``, with the main difference being that ``sc.promotetoarray(3)``
+    will return ``np.array([3])`` (i.e. a 1-d array that can be iterated over), while
+    ``np.array(3)`` will return a 0-d array that can't be iterated over.
+
+    Args:
+        keepnone (bool): whether ``sc.promotetoarray(None)`` should return ``np.array([])`` or ``np.array([None], dtype=object)``
+        kwargs (dict): passed to ``np.array()``
 
     **Examples**::
 
-        sc.promotetoarray(5) # Returns array([5])
-        sc.promotetoarray([3,5]) # Returns array([3,5])
-        sc.promotetoarray(None, skipnone=True) # Returns array([])
+        sc.promotetoarray(5) # Returns np.array([5])
+        sc.promotetoarray([3,5]) # Returns np.array([3,5])
+        sc.promotetoarray(None, skipnone=True) # Returns np.array([])
+
+    New in version 1.0.3: replaced "skipnone" with "keepnone"; allowed passing
+    kwargs to ``np.array()``.
     '''
-    if x is None and skipnone:
-        return np.array([])
-    elif isnumber(x):
-        return np.array([x]) # e.g. 3
-    elif isinstance(x, (list, tuple)):
-        return np.array(x) # e.g. [3]
-    elif isinstance(x, np.ndarray):
-        if np.shape(x):
-            return x # e.g. array([3])
-        else:
-            return np.array([x]) # e.g. array(3)
-    else: # e.g. 'foo'
-        errormsg = f'Expecting a number/list/tuple/ndarray; got type {type(x)}: "{x}"'
-        raise TypeError(errormsg)
-    return # Should be unreachable
+    if isnumber(x) or (isinstance(x, np.ndarray) and not np.shape(x)): # e.g. 3 or np.array(3)
+        x = [x]
+    elif x is None and not keepnone:
+        x = []
+    if kwargs.pop('skipnone', None) is not None: # pragma: no cover
+        warnmsg = 'sc.promotetoarray() argument "skipnone" has been deprecated as of v1.0.3; use keepnone instead'
+        warnings.warn(warnmsg, category=DeprecationWarning, stacklevel=2)
+    output = np.array(x, **kwargs)
+    return output
 
 
-def promotetolist(obj=None, objtype=None, keepnone=False):
+def promotetolist(obj=None, objtype=None, keepnone=False, coerce=None):
     '''
     Make sure object is always a list.
 
@@ -1352,14 +1415,17 @@ def promotetolist(obj=None, objtype=None, keepnone=False):
 
     Args:
         obj (anything): object to ensure is a list
-        objtype (anything): optional type to check for each element
+        objtype (anything): optional type to check for each element; see ``sc.checktype()`` for details
         keepnone (bool): if ``keepnone`` is false, then ``None`` is converted to ``[]``; else, it's converted to ``[None]``
+        coerce (tuple): optional tuple of additional types to coerce to a list (as opposed to wrapping in a list)
 
     **Examples**::
 
         sc.promotetolist(5) # Returns [5]
         sc.promotetolist(np.array([3,5])) # Returns [np.array([3,5])] -- not [3,5]!
-        sc.promotetoarray(None) # Returns []
+        sc.promotetolist(np.array([3,5]), coerce=np.ndarray) # Returns [3,5], since arrays are coerced to lists
+        sc.promotetolist(None) # Returns []
+        sc.promotetolist(['a', 'b', 'c'], objtype='number') # Raises exception
 
         def myfunc(data, keys):
             keys = sc.promotetolist(keys)
@@ -1370,7 +1436,7 @@ def promotetolist(obj=None, objtype=None, keepnone=False):
         myfunc(data, keys=['a', 'b']) # Works
         myfunc(data, keys='a') # Still works, equivalent to needing to supply keys=['a'] without promotetolist()
 
-    Version: 2019nov10
+    New in version 1.0.3: "coerce" argument
     '''
     if objtype is None: # Don't do type checking
         if isinstance(obj, list):
@@ -1381,7 +1447,10 @@ def promotetolist(obj=None, objtype=None, keepnone=False):
             else:
                 output = [] # Return an empty list, the "none" equivalent for a list
         else:
-            output = [obj] # Main usage case -- listify it
+            if coerce is not None and isinstance(obj, coerce):
+                output = list(obj) # Coerce to list
+            else:
+                output = [obj] # Main usage case -- listify it
     else: # Do type checking
         if checktype(obj=obj, objtype=objtype, die=False):
             output = [obj] # If the object is already of the right type, wrap it in a list
@@ -1395,12 +1464,37 @@ def promotetolist(obj=None, objtype=None, keepnone=False):
                     checktype(obj=item, objtype=objtype, die=True)
                 output = list(iterable_obj) # If all type checking passes, cast to list instead of wrapping
             except TypeError as E:
-                errormsg = 'promotetolist() type mismatch: %s' % str(E)
-                raise TypeError(errormsg).with_traceback(E.__traceback__)
+                errormsg = f'promotetolist(): type mismatch, expecting type {objtype}'
+                raise TypeError(errormsg) from E
     return output
 
 
-def mergedicts(*args, strict=False, overwrite=True):
+def toarray(*args, **kwargs):
+    ''' Alias to sc.promotetoarray(). New in version 1.0.3. '''
+    return promotetoarray(*args, **kwargs)
+
+
+def tolist(*args, **kwargs):
+    ''' Alias to sc.promotetolist(). New in version 1.0.3. '''
+    return promotetolist(*args, **kwargs)
+
+
+def transposelist(obj):
+    '''
+    Convert e.g. a list of key-value tuples into a list of keys and a list of values.
+
+    **Example**::
+
+        o = sc.odict(a=1, b=4, c=9, d=16)
+        itemlist = o.enumitems()
+        inds, keys, vals = sc.transposelist(itemlist)
+
+    New in version 1.0.3.
+    '''
+    return list(map(list, zip(*obj)))
+
+
+def mergedicts(*args, strict=False, overwrite=True, copy=False):
     '''
     Small function to merge multiple dicts together. By default, skips things
     that are not, dicts (e.g., None), and allows keys to be set multiple times.
@@ -1412,9 +1506,10 @@ def mergedicts(*args, strict=False, overwrite=True):
     but you will need a dict later on.
 
     Args:
-        strict (bool): if True, raise an exception if an argument isn't a dict
+        strict    (bool): if True, raise an exception if an argument isn't a dict
         overwrite (bool): if False, raise an exception if multiple keys are found
-        *args (dict): the sequence of dicts to be merged
+        copy      (bool): whether or not to deepcopy the merged dictionary
+        *args     (dict): the sequence of dicts to be merged
 
     **Examples**::
 
@@ -1423,6 +1518,8 @@ def mergedicts(*args, strict=False, overwrite=True):
         d2 = sc.mergedicts({'a':1, 'b':2}, {'b':3, 'c':4}) # Returns {'a':1, 'b':3, 'c':4}
         d3 = sc.mergedicts(sc.odict({'b':3, 'c':4}), {'a':1, 'b':2}) # Returns sc.odict({'b':2, 'c':4, 'a':1})
         d4 = sc.mergedicts({'b':3, 'c':4}, {'a':1, 'b':2}, overwrite=False) # Raises exception
+
+    New in version 1.0.3: "copy" argument
     '''
     # Try to get the output type from the first argument, but revert to a standard dict if that fails
     try:
@@ -1441,16 +1538,45 @@ def mergedicts(*args, strict=False, overwrite=True):
             if not overwrite:
                 intersection = set(outputdict.keys()).intersection(arg.keys())
                 if len(intersection):
-                    keys = ', '.join(intersection)
-                    errormsg = f'Could not merge dicts since keys "{keys}" overlap and overwrite=False'
+                    errormsg = f'Could not merge dicts since keys "{strjoin(intersection)}" overlap and overwrite=False'
                     raise KeyError(errormsg)
             outputdict.update(arg)
+    if copy:
+        outputdict = dcp(outputdict)
     return outputdict
 
 
+def mergelists(*args, copy=False, **kwargs):
+    '''
+    Merge multiple lists together.
+
+    Args:
+        args (any): the lists, or items, to be joined together into a list
+        copy (bool): whether to deepcopy the resultant object
+        kwargs (dict): passed to ``sc.promotetolist()``, which is called on each argument
+
+    **Examples**::
+
+        sc.mergelists(None) # Returns []
+        sc.mergelists([1,2,3], [4,5,6]) # Returns [1, 2, 3, 4, 5, 6]
+        sc.mergelists([1,2,3], 4, 5, 6) # Returns [1, 2, 3, 4, 5, 6]
+        sc.mergelists([(1,2), (3,4)], (5,6)) # Returns [(1, 2), (3, 4), (5, 6)]
+        sc.mergelists((1,2), (3,4), (5,6)) # Returns [(1, 2), (3, 4), (5, 6)]
+        sc.mergelists((1,2), (3,4), (5,6), coerce=tuple) # Returns [1, 2, 3, 4, 5, 6]
+
+    New in version 1.0.3.
+    '''
+    obj = []
+    for arg in args:
+        arg = promotetolist(arg, **kwargs)
+        obj.extend(arg)
+    if copy:
+        obj = dcp(obj)
+    return obj
+
 
 ##############################################################################
-### Time/date functions
+#%% Time/date functions
 ##############################################################################
 
 __all__ += ['now', 'getdate', 'readdate', 'date', 'day', 'daydiff', 'daterange', 'datetoyear',
@@ -1498,24 +1624,21 @@ def getdate(obj=None, astype='str', dateformat=None):
             astype = 'str' # If dateformat is specified, assume type is a string
 
         try:
-            if isstring(obj): return obj # Return directly if it's a string
+            if isstring(obj):
+                return obj # Return directly if it's a string
             obj.timetuple() # Try something that will only work if it's a date object
             dateobj = obj # Test passed: it's a date object
-        except Exception as E: # It's not a date object
-            raise Exception('Getting date failed; date must be a string or a date object: %s' % repr(E))
+        except Exception as E: # pragma: no cover # It's not a date object
+            errormsg = f'Getting date failed; date must be a string or a date object: {repr(E)}'
+            raise TypeError(errormsg)
 
-        if astype=='str':
-            output = dateobj.strftime(dateformat)
-            return output
-        elif astype=='int':
-            output = time.mktime(dateobj.timetuple()) # So ugly!! But it works -- return integer representation of time
-            return output
-        elif astype=='dateobj':
-            return dateobj
-        else:
-            errormsg = '"astype=%s" not understood; must be "str" or "int"' % astype
-            raise Exception(errormsg)
-        return None # Should not be possible to get to this point
+        if   astype == 'str':     output = dateobj.strftime(dateformat)
+        elif astype == 'int':     output = time.mktime(dateobj.timetuple()) # So ugly!! But it works -- return integer representation of time
+        elif astype == 'dateobj': output = dateobj
+        else: # pragma: no cover
+            errormsg = f'"astype={astype}" not understood; must be "str" or "int"'
+            raise ValueError(errormsg)
+        return output
 
 
 def _sanitize_iterables(obj, *args):
@@ -1646,7 +1769,7 @@ def date(obj, *args, start_date=None, dateformat=None, as_date=True):
         as_date (bool): whether to return as a datetime date instead of a string
 
     Returns:
-        dates (date or list): either a single date object, or a list of them
+        dates (date or list): either a single date object, or a list of them (matching input data type where possible)
 
     **Examples**::
 
@@ -1679,7 +1802,7 @@ def date(obj, *args, start_date=None, dateformat=None, as_date=True):
                     errormsg = f'To convert the number {d} to a date, you must supply start_date'
                     raise ValueError(errormsg)
                 d = date(start_date) + dt.timedelta(days=int(d))
-            else:
+            else: # pragma: no cover
                 errormsg = f'Cannot interpret {type(d)} as a date, must be date, datetime, or string'
                 raise TypeError(errormsg)
             if as_date:
@@ -1698,19 +1821,21 @@ def date(obj, *args, start_date=None, dateformat=None, as_date=True):
 def day(obj, *args, start_day=None):
     '''
     Convert a string, date/datetime object, or int to a day (int), the number of
-    days since the start day. See also sc.date() and sc.daydiff().
+    days since the start day. See also sc.date() and sc.daydiff(). If a start day
+    is not supplied, it returns the number of days into the current year.
 
     Args:
-        obj (str, date, int, or list): convert any of these objects to a day relative to the start day
+        obj (str, date, int, list, array): convert any of these objects to a day relative to the start day
         args (list): additional days
         start_day (str or date): the start day; if none is supplied, return days since (supplied year)-01-01.
 
     Returns:
-        days (int or str): the day(s) in simulation time
+        days (int or list): the day(s) in simulation time (matching input data type where possible)
 
-    **Example**::
+    **Examples**::
 
         sc.day(sc.now()) # Returns how many days into the year we are
+        sc.day(['2021-01-21', '2024-04-04'], start_day='2022-02-22') # Days can be positive or negative
 
     New in version 1.0.0.
     '''
@@ -1738,12 +1863,12 @@ def day(obj, *args, start_day=None):
                     start_date = date(f'{d.year}-01-01')
                 d_day = (d - start_date).days # Heavy lifting -- actually compute the day
                 days.append(d_day)
-            except Exception as E:
+            except Exception as E: # pragma: no cover
                 errormsg = f'Could not interpret "{d}" as a date: {str(E)}'
                 raise ValueError(errormsg)
 
     # Return an integer rather than a list if only one provided
-    output = _sanitize_output(days, is_list, is_array, dtype=object)
+    output = _sanitize_output(days, is_list, is_array)
     return output
 
 
@@ -1872,15 +1997,15 @@ def elapsedtimestr(pasttime, maxdays=5, shortmonths=True):
     # If the user passes in a string, try to turn it into a datetime object before continuing
     if isinstance(pasttime, str):
         try:
-            pasttime = dt.datetime.strptime(pasttime, "%Y-%m-%dT%H:%M:%S.%fZ")
-        except ValueError:
-            raise ValueError("User supplied string %s is not in ISO 8601 "
-                             "format." % pasttime)
+            pasttime = readdate(pasttime)
+        except ValueError as E: # pragma: no cover
+            errormsg = f"User supplied string {pasttime} is not in a readable format."
+            raise ValueError(errormsg) from E
     elif isinstance(pasttime, dt.datetime):
         pass
-    else:
-        raise ValueError("User-supplied value %s is neither a datetime object "
-                         "nor an ISO 8601 string." % pasttime)
+    else: # pragma: no cover
+        errormsg = f"User-supplied value {pasttime} is neither a datetime object nor an ISO 8601 string."
+        raise TypeError(errormsg)
 
     # It doesn't make sense to measure time elapsed between now and a future date, so we'll just print the date
     if pasttime > now_time:
@@ -1896,7 +2021,7 @@ def elapsedtimestr(pasttime, maxdays=5, shortmonths=True):
             if elapsed_time.seconds <= 10:
                 time_str = "just now"
             else:
-                time_str = "%d secs ago" % elapsed_time.seconds
+                time_str = f"{elapsed_time.seconds} secs ago"
 
         # Check if the time is within the last hour
         elif elapsed_time < dt.timedelta(seconds=60 * 60):
@@ -1906,7 +2031,7 @@ def elapsedtimestr(pasttime, maxdays=5, shortmonths=True):
             if minutes == 1:
                 time_str = "a minute ago"
             else:
-                time_str = "%d mins ago" % minutes
+                time_str = f"{minutes} mins ago"
 
         # Check if the time is within the last day
         elif elapsed_time < dt.timedelta(seconds=60 * 60 * 24 - 1):
@@ -1916,14 +2041,14 @@ def elapsedtimestr(pasttime, maxdays=5, shortmonths=True):
             if hours == 1:
                 time_str = "1 hour ago"
             else:
-                time_str = "%d hours ago" % hours
+                time_str = f"{hours} hours ago"
 
         # Check if it's within the last N days, where N is a user-supplied argument
         elif elapsed_time < dt.timedelta(days=maxdays):
             if elapsed_time.days == 1:
                 time_str = "yesterday"
             else:
-                time_str = "%d days ago" % elapsed_time.days
+                time_str = f"{elapsed_time.days} days ago"
 
         # If it's not within the last N days, then we're just going to print the date
         else:
@@ -1992,8 +2117,8 @@ def toc(start=None, output=False, label=None, sigfigs=None, filename=None, reset
 
     # Create the message giving the elapsed time.
     if label=='': base = 'Elapsed time: '
-    else:         base = 'Elapsed time for %s: ' % label
-    logmessage = base + '%s s' % sigfig(elapsed, sigfigs=sigfigs)
+    else:         base = f'Elapsed time for {label}: '
+    logmessage = base + f'{sigfig(elapsed, sigfigs=sigfigs)} s'
 
     # Optionally reset the counter
     if reset:
@@ -2053,17 +2178,17 @@ def timedsleep(delay=None, verbose=True):
         remaining = delay-elapsed
         if remaining>0:
             if verbose:
-                print('Pausing for %0.1f s' % remaining)
+                print(f'Pausing for {remaining:0.1f} s')
             time.sleep(remaining)
         else:
             if verbose:
-                print('Warning, delay less than elapsed time (%0.1f vs. %0.1f)' % (delay, elapsed))
+                print(f'Warning, delay less than elapsed time ({delay:0.1f} vs. {elapsed:0.1f})')
     return None
 
 
 
 ##############################################################################
-### Misc. functions
+#%% Misc. functions
 ##############################################################################
 
 __all__ += ['checkmem', 'checkram', 'runcommand', 'gitinfo', 'compareversions',
@@ -2157,7 +2282,7 @@ def checkmem(var, descend=None, alphabetical=False, plot=False, verbose=False):
         varstr = f'Variable "{varnames[i]}"' if varnames[i] else 'Variable'
         print(f'{varstr} is {sizestrs[i]}')
 
-    if plot==True:
+    if plot: # pragma: no cover
         import pylab as pl # Optional import
         pl.axes(aspect=1)
         pl.pie(pl.array(sizes)[inds], labels=pl.array(varnames)[inds], autopct='%0.2f')
@@ -2184,8 +2309,8 @@ def checkram(unit='mb', fmt='0.2f', start=0, to_string=True):
     mapping = {'b':1, 'kb':1e3, 'mb':1e6, 'gb':1e9}
     try:
         factor = mapping[unit.lower()]
-    except KeyError:
-        raise KeyNotFoundError(f'Unit {unit} not found')
+    except KeyError: # pragma: no cover
+        raise KeyNotFoundError(f'Unit {unit} not found among {strjoin(mapping.keys())}')
     mem_use = process.memory_info().rss/factor - start
     if to_string:
         output = f'{mem_use:{fmt}} {unit.upper()}'
@@ -2218,8 +2343,8 @@ def runcommand(command, printinput=False, printoutput=False, wait=True):
             output = stdout + '\n' + stderr if stderr else stdout # Only include the error if it was non-empty
         else:
             output = ''
-    except Exception as E:
-        output = 'runcommand(): shell command failed: %s' % str(E) # This is for a Python error, not a shell error -- those get passed to output
+    except Exception as E: # pragma: no cover
+        output = f'runcommand(): shell command failed: {str(E)}' # This is for a Python error, not a shell error -- those get passed to output
     if printoutput:
         print(output)
     return output
@@ -2264,14 +2389,14 @@ def gitinfo(path=None, hashlen=7, die=False, verbose=True):
             if os.path.exists(os.path.join(curpath, ".git")):
                 gitdir = os.path.join(curpath, ".git")
                 break
-            else:
+            else: # pragma: no cover
                 parent, _ = os.path.split(curpath)
                 if parent == curpath:
                     curpath = None
                 else:
                     curpath = parent
-        else:
-            raise Exception("Could not find .git directory")
+        else: # pragma: no cover
+            raise RuntimeError("Could not find .git directory")
 
         # Then, get the branch and commit
         with open(os.path.join(gitdir, "HEAD"), "r") as f1:
@@ -2281,7 +2406,7 @@ def gitinfo(path=None, hashlen=7, die=False, verbose=True):
                 gitbranch = refdir.replace("refs/heads/", "")  # / is always used (not os.sep)
                 with open(os.path.join(gitdir, refdir), "r") as f2:
                     githash = f2.read().strip()  # The hash of the commit
-            else:
+            else: # pragma: no cover
                 gitbranch = "Detached head (no branch)"
                 githash = ref.strip()
 
@@ -2296,10 +2421,10 @@ def gitinfo(path=None, hashlen=7, die=False, verbose=True):
                 t = time.gmtime(int(epoch))
                 gitdate = time.strftime("%Y-%m-%d %H:%M:%S UTC", t)
 
-    except Exception as E:
+    except Exception as E: # pragma: no cover
         errormsg = 'Could not extract git info; please check paths'
         if die:
-            raise Exception(errormsg) from E
+            raise RuntimeError(errormsg) from E
         elif verbose:
             print(errormsg + f'\nError: {str(E)}')
 
@@ -2363,7 +2488,7 @@ def importbyname(name=None, output=False, die=True):
     try:
         module = importlib.import_module(name)
         globals()[name] = module
-    except Exception as E:
+    except Exception as E: # pragma: no cover
         errormsg = f'Cannot use "{name}" since {name} is not installed.\nPlease install {name} and try again.'
         print(errormsg)
         if die: raise E
@@ -2403,8 +2528,8 @@ def suggest(user_input, valid_inputs, n=1, threshold=4, fulloutput=False, die=Fa
     """
     try:
         import jellyfish # To allow as an optional import
-    except ModuleNotFoundError as e:
-        raise Exception('The "jellyfish" Python package is not available; please install via "pip install jellyfish"') from e
+    except ModuleNotFoundError as e: # pragma: no cover
+        raise ModuleNotFoundError('The "jellyfish" Python package is not available; please install via "pip install jellyfish"') from e
 
     valid_inputs = promotetolist(valid_inputs, objtype='string')
 
@@ -2415,9 +2540,8 @@ def suggest(user_input, valid_inputs, n=1, threshold=4, fulloutput=False, die=Fa
         }
 
     keys = list(mapping.keys())
-    if which not in keys:
-        available = ', '.join(keys)
-        errormsg = f'Method {which} not available; options are {available}'
+    if which not in keys: # pragma: no cover
+        errormsg = f'Method {which} not available; options are {strjoin(keys)}'
         raise NotImplementedError(errormsg)
 
     dist_func = mapping[which]
@@ -2438,15 +2562,17 @@ def suggest(user_input, valid_inputs, n=1, threshold=4, fulloutput=False, die=Fa
     # Order by distance, then pull out the right inputs, then turn them into a list
     order = np.argsort(distance)
     suggestions = [valid_inputs[i] for i in order]
-    suggestionstr = ', '.join(['"' + sugg + '"' for sugg in suggestions[:n]])
+    suggestionstr = strjoin(['"' + sugg + '"' for sugg in suggestions[:n]])
 
     if min(distance) > threshold:
-        if die:
-            raise Exception('"%s" not found' % user_input)
+        if die: # pragma: no cover
+            errormsg = f'"{user_input}" not found'
+            raise ValueError(errormsg)
         else:
             return None
     elif die:
-        raise Exception('"%s" not found - did you mean %s?' % (user_input, suggestionstr))
+        errormsg = f'"{user_input} not found - did you mean {suggestionstr}'
+        raise ValueError(errormsg)
     else:
         if fulloutput:
             output = dict(zip(suggestions, distance[order]))
@@ -2508,8 +2634,8 @@ def profile(run, follow=None, print_stats=True, *args, **kwargs):
 
     try:
         from line_profiler import LineProfiler
-    except ModuleNotFoundError as e:
-        raise Exception('The "line_profiler" Python package is required to perform profiling') from e
+    except ModuleNotFoundError as e: # pragma: no cover
+        raise ModuleNotFoundError('The "line_profiler" Python package is required to perform profiling') from e
 
     if follow is None:
         follow = run
@@ -2522,11 +2648,11 @@ def profile(run, follow=None, print_stats=True, *args, **kwargs):
     lp.enable_by_count()
     wrapper = lp(run)
 
-    if print_stats:
+    if print_stats: # pragma: no cover
         print('Profiling...')
     wrapper(*args, **kwargs)
     run = orig_func
-    if print_stats:
+    if print_stats: # pragma: no cover
         lp.print_stats()
         print('Done.')
     return lp
@@ -2549,7 +2675,7 @@ def mprofile(run, follow=None, show_results=True, *args, **kwargs):
 
     try:
         import memory_profiler as mp
-    except ModuleNotFoundError as e:
+    except ModuleNotFoundError as e: # pragma: no cover
         raise ModuleNotFoundError('The "memory_profiler" Python package is required to perform profiling') from e
 
     if follow is None:
@@ -2562,7 +2688,7 @@ def mprofile(run, follow=None, show_results=True, *args, **kwargs):
     lp.enable_by_count()
     try:
         wrapper = lp(run)
-    except TypeError as e:
+    except TypeError as e: # pragma: no cover
         raise TypeError('Function wrapping failed; are you profiling an already-profiled function?') from e
 
     if show_results:
@@ -2600,7 +2726,7 @@ def getcaller(frame=2, tostring=True):
             output = f'{fname}, line {lineno}'
         else:
             output = {'filename':fname, 'lineno':lineno}
-    except Exception as E:
+    except Exception as E: # pragma: no cover
         if tostring:
             output = f'Calling function information not available ({str(E)})'
         else:
@@ -2610,7 +2736,7 @@ def getcaller(frame=2, tostring=True):
 
 
 ##############################################################################
-### Nested dictionary functions
+#%% Nested dictionary functions
 ##############################################################################
 
 __all__ += ['getnested', 'setnested', 'makenested', 'iternested', 'mergenested',
@@ -2743,7 +2869,7 @@ def mergenested(dict1, dict2, die=False, verbose=False, _path=None):
             else:
                 errormsg = f'Warning! Conflict at {keypath}: {a[key]} vs. {b[key]}'
                 if die:
-                    raise Exception(errormsg)
+                    raise ValueError(errormsg)
                 else:
                     a[key] = b[key]
                     if verbose:
@@ -2886,7 +3012,7 @@ def nestedloop(inputs, loop_order):
 
 
 ##############################################################################
-### Classes
+#%% Classes
 ##############################################################################
 
 __all__ += ['KeyNotFoundError', 'LinkException', 'prettyobj', 'Link', 'Timer']
@@ -2903,7 +3029,7 @@ class KeyNotFoundError(KeyError):
         raise sc.KeyNotFoundError('The key "foo" is not available, but these are: "bar", "cat"')
     '''
 
-    def __str__(self):
+    def __str__(self): # pragma: no cover
         return Exception.__str__(self)
 
 
@@ -2965,11 +3091,10 @@ class prettyobj(object):
 
 class Link(object):
     '''
-    A class to differentiate between an object and a link to an object. Not very
-    useful at the moment, but the idea eventually is that this object would be
-    parsed differently from other objects -- most notably, a recursive method
-    (such as a pickle) would skip over Link objects, and then would fix them up
-    after the other objects had been reinstated.
+    A class to differentiate between an object and a link to an object. The idea
+    is that this object is parsed differently from other objects -- most notably,
+    a recursive method (such as a pickle) would skip over Link objects, and then
+    would fix them up after the other objects had been reinstated.
 
     Version: 2017jan31
     '''
@@ -2979,8 +3104,7 @@ class Link(object):
         try:    self.uid = obj.uid # If the object has a UID, store it separately
         except: self.uid = None # If not, just use None
 
-
-    def __repr__(self):
+    def __repr__(self): # pragma: no cover
         ''' Just use default '''
         output  = prepr(self)
         return output
@@ -2991,7 +3115,7 @@ class Link(object):
             if type(self.obj)==LinkException: # If the link is broken, raise it now
                 raise self.obj
             return self.obj
-        else:
+        else: # pragma: no cover
             self.__init__(obj)
             return None
 
@@ -3008,57 +3132,45 @@ class Timer(object):
     '''
     Simple timer class
 
-    This wraps `tic` and `toc` with the formatting arguments and
+    This wraps ``tic`` and ``toc`` with the formatting arguments and
     the start time (at construction)
-    Use this in a ``with...as``` block to automatically print
+    Use this in a ``with...as`` block to automatically print
     elapsed time when the block finishes.
 
     Implementation based on https://preshing.com/20110924/timing-your-code-using-pythons-with-statement/
 
-    Example making repeated calls to the same Timer:
+    Example making repeated calls to the same Timer::
 
-    >>> timer = Timer()
-    >>> timer.toc()
-    Elapsed time: 2.63 s
-    >>> timer.toc()
-    Elapsed time: 5.00 s
+        >>> timer = Timer()
+        >>> timer.toc()
+        Elapsed time: 2.63 s
+        >>> timer.toc()
+        Elapsed time: 5.00 s
 
-    Example wrapping code using with-as:
+    Example wrapping code using with-as::
 
-    >>> with Timer(label='mylabel') as t:
-    >>>     foo()
+        >>> with Timer(label='mylabel') as t:
+        >>>     foo()
 
     '''
-
     def __init__(self,**kwargs):
         self.tic()
         self.kwargs = kwargs #: Store kwargs to pass to :func:`toc` at the end of the block
+        return
 
     def __enter__(self):
-        '''
-        Reset start time when entering with-as block
-        '''
-
+        ''' Reset start time when entering with-as block '''
         self.tic()
         return self
 
     def __exit__(self, *args):
-        '''
-        Print elapsed time when leaving a with-as block
-        '''
-
+        ''' Print elapsed time when leaving a with-as block '''
         self.toc()
 
     def tic(self):
-        '''
-        Set start time
-        '''
-
+        ''' Set start time '''
         self.start = tic()
 
     def toc(self):
-        '''
-        Print elapsed time
-        '''
-
+        ''' Print elapsed time '''
         toc(self.start,**self.kwargs)

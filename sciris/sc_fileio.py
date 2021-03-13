@@ -44,15 +44,33 @@ from .sc_dataframe import dataframe
 __all__ = ['loadobj', 'loadstr', 'saveobj', 'dumpstr', 'load', 'save']
 
 
-def loadobj(filename=None, folder=None, verbose=False, die=None):
+def loadobj(filename=None, folder=None, verbose=False, die=None, remapping=None):
     '''
-    Load a file that has been saved as a gzipped pickle file, e.g. by sc.saveobj().
+    Load a file that has been saved as a gzipped pickle file, e.g. by ``sc.saveobj()``.
     Accepts either a filename (standard usage) or a file object as the first argument.
-    Note that loadobj()/load() are aliases.
+    Note that ``loadobj()``/``load()`` are aliases of each other.
 
-    **Example**::
+    Note: be careful when loading pickle files, since a malicious pickle can be
+    used to execute arbitrary code.
 
-        obj = sc.loadobj('myfile.obj')
+    When a pickle file is loaded, Python imports any modules that are referenced
+    in it. This is a problem if module has been renamed. In this case, you can
+    use the ``remapping`` argument to point to the new modules or classes.
+
+    Args:
+        filename (str/Path): the filename (or full path) to load
+        folder (str/Path): the folder
+        verbose (bool): print details
+        die (bool): whether to raise an exception if errors are encountered (otherwise, load as much as possible)
+        remapping (dict):
+
+    **Examples**::
+
+        obj = sc.loadobj('myfile.obj') # Standard usage
+        old = sc.loadobj('my-old-file.obj', remapping={'foo.Bar':cat.Mat}) # If loading a saved object containing a reference to foo.Bar that is now cat.Mat
+        old = sc.loadobj('my-old-file.obj', remapping={'foo.Bar':('cat', 'Mat')}) # Equivalent to the above
+
+    New in version 1.0.3: "remapping" argument
     '''
 
     # Handle loading of either filename or file object
@@ -63,26 +81,14 @@ def loadobj(filename=None, folder=None, verbose=False, die=None):
         filename = makefilepath(filename=filename, folder=folder, makedirs=False) # If it is a file, validate the folder (but don't create one if it's missing)
     elif isinstance(filename, io.BytesIO):
         argtype = 'fileobj'
-    else:
-        errormsg = 'First argument to loadobj() must be a string or file object, not %s' % type(filename)
-        raise Exception(errormsg)
+    else: # pragma: no cover
+        errormsg = f'First argument to loadobj() must be a string or file object, not {type(filename)}'
+        raise TypeError(errormsg)
     kwargs = {'mode': 'rb', argtype: filename}
     with GzipFile(**kwargs) as fileobj:
         filestr = fileobj.read() # Convert it to a string
-        obj = _unpickler(filestr, filename=filename, verbose=verbose, die=die) # Actually load it
-    if verbose: print('Object loaded from "%s"' % filename)
-    return obj
-
-
-def loadstr(string=None, verbose=False, die=None):
-    ''' Like loadobj(), but for a bytes-like string (rarely used) '''
-    if string is None:
-        errormsg = 'loadstr() error: input received was None, not a string'
-        raise Exception(errormsg)
-    with closing(IO(string)) as output: # Open a "fake file" with the Gzip string pickle in it.
-        with GzipFile(fileobj=output, mode='rb') as fileobj: # Set a Gzip reader to pull from the "file."
-            picklestring = fileobj.read() # Read the string pickle from the "file" (applying Gzip decompression).
-    obj = _unpickler(picklestring, filestring=string, verbose=verbose, die=die) # Return the object gotten from the string pickle.
+        obj = _unpickler(filestr, filename=filename, verbose=verbose, die=die, remapping=remapping) # Actually load it
+    if verbose: print(f'Object loaded from "{filename}"')
     return obj
 
 
@@ -116,35 +122,64 @@ def saveobj(filename=None, obj=None, compresslevel=5, verbose=0, folder=None, me
         bytesobj = None
         filename = makefilepath(filename=filename, folder=folder, default='default.obj', sanitize=True)
 
-    if obj is None:
+    if obj is None: # pragma: no cover
         errormsg = 'No object was supplied to saveobj(), or the object was empty'
         if die: raise ValueError(errormsg)
         else:   print(errormsg)
 
     with GzipFile(filename=filename, fileobj=bytesobj, mode='wb', compresslevel=compresslevel) as fileobj:
-        if method == 'dill': # If dill is requested, use that
+        if method == 'dill': # pragma: no cover # If dill is requested, use that
             if verbose>=2: print('Saving as dill...')
             _savedill(fileobj, obj)
         else: # Otherwise, try pickle
             try:
                 if verbose>=2: print('Saving as pickle...')
                 _savepickle(fileobj, obj, *args, **kwargs) # Use pickle
-            except Exception as E:
-                if verbose>=2: print('Exception when saving as pickle (%s), saving as dill...' % repr(E))
+            except Exception as E: # pragma: no cover
+                if verbose>=2: print(f'Exception when saving as pickle ({repr(E)}), saving as dill...')
                 _savedill(fileobj, obj, *args, **kwargs) # ...but use Dill if that fails
 
     if verbose and filename:
-        print('Object saved to "%s"' % filename)
+        print(f'Object saved to "{filename}"')
 
     if filename:
         return filename
-    else:
+    else: # pragma: no cover
         bytesobj.seek(0)
         return bytesobj
 
 
+# Aliases to make these core functions even easier to use
+
+def load(*args, **kwargs): # pragma: no cover
+    ''' Alias to loadobj(). New in version 1.0.0. '''
+    return loadobj(*args, **kwargs)
+
+def save(*args, **kwargs): # pragma: no cover
+    ''' Alias to saveobj(). New in version 1.0.0. '''
+    return saveobj(*args, **kwargs)
+
+
+def loadstr(string, verbose=False, die=None, remapping=None):
+    '''
+    Like loadobj(), but for a bytes-like string (rarely used).
+
+    **Example**::
+
+        obj = sc.objdict(a=1, b=2)
+        string1 = sc.dumpstr(obj)
+        string2 = sc.loadstr(string1)
+        assert string1 == string2
+    '''
+    with closing(IO(string)) as output: # Open a "fake file" with the Gzip string pickle in it.
+        with GzipFile(fileobj=output, mode='rb') as fileobj: # Set a Gzip reader to pull from the "file."
+            picklestring = fileobj.read() # Read the string pickle from the "file" (applying Gzip decompression).
+    obj = _unpickler(picklestring, filestring=string, verbose=verbose, die=die, remapping=remapping) # Return the object gotten from the string pickle.
+    return obj
+
+
 def dumpstr(obj=None):
-    ''' Dump an object as a bytes-like string (rarely used) '''
+    ''' Dump an object as a bytes-like string (rarely used); see ``sc.loadstr()`` '''
     with closing(IO()) as output: # Open a "fake file."
         with GzipFile(fileobj=output, mode='wb') as fileobj:  # Open a Gzip-compressing way to write to this "file."
             try:    _savepickle(fileobj, obj) # Use pickle
@@ -152,17 +187,6 @@ def dumpstr(obj=None):
         output.seek(0) # Move the mark to the beginning of the "file."
         result = output.read() # Read all of the content into result.
     return result
-
-
-# Aliases to make these core functions even easier to use
-
-def load(*args, **kwargs):
-    ''' Alias to loadobj(). New in version 1.0.0. '''
-    return loadobj(*args, **kwargs)
-
-def save(*args, **kwargs):
-    ''' Alias to saveobj(). New in version 1.0.0. '''
-    return saveobj(*args, **kwargs)
 
 
 
@@ -220,11 +244,11 @@ def savezip(filename=None, filelist=None, folder=None, basename=True, verbose=Tr
             if basename: thisname = os.path.basename(thispath)
             else:        thisname = thispath
             zf.write(thispath, thisname)
-    if verbose: print('Zip file saved to "%s"' % fullpath)
+    if verbose: print(f'Zip file saved to "{fullpath}"')
     return fullpath
 
 
-def getfilelist(folder='.', pattern=None, abspath=False, nopath=False, filesonly=False, foldersonly=False, recursive=False):
+def getfilelist(folder='.', pattern=None, abspath=False, nopath=False, filesonly=False, foldersonly=False, recursive=False, aspath=False):
     '''
     A shortcut for using glob.
 
@@ -236,6 +260,7 @@ def getfilelist(folder='.', pattern=None, abspath=False, nopath=False, filesonly
         filesonly   (bool): whether to only return files (not folders)
         foldersonly (bool): whether to only return folders (not files)
         recursive   (bool): passed to glob()
+        aspath      (bool): whether to return Path objects
 
     Returns:
         List of files/folders
@@ -245,6 +270,8 @@ def getfilelist(folder='.', pattern=None, abspath=False, nopath=False, filesonly
         sc.getfilelist() # return all files and folders in current folder
         sc.getfilelist('~/temp', '*.py', abspath=True) # return absolute paths of all Python files in ~/temp folder
         sc.getfilelist('~/temp/*.py') # Like above
+
+    New in version 1.0.3: "aspath" argument
     '''
     folder = os.path.expanduser(folder)
     if abspath:
@@ -259,6 +286,8 @@ def getfilelist(folder='.', pattern=None, abspath=False, nopath=False, filesonly
         filelist = [f for f in filelist if os.path.isdir(f)]
     if nopath:
         filelist = [os.path.basename(f) for f in filelist]
+    if aspath:
+        filelist = [Path(f) for f in filelist]
     return filelist
 
 
@@ -277,7 +306,7 @@ def sanitizefilename(rawfilename):
     return filtername # Return the sanitized file name.
 
 
-def makefilepath(filename=None, folder=None, ext=None, default=None, split=False, abspath=True, makedirs=True, checkexists=None, sanitize=False, die=True, verbose=False):
+def makefilepath(filename=None, folder=None, ext=None, default=None, split=False, aspath=False, abspath=True, makedirs=True, checkexists=None, sanitize=False, die=True, verbose=False):
     '''
     Utility for taking a filename and folder -- or not -- and generating a
     valid path from them. By default, this function will combine a filename and
@@ -285,18 +314,19 @@ def makefilepath(filename=None, folder=None, ext=None, default=None, split=False
     and return the absolute path.
 
     Args:
-        filename (str or Path): the filename, or full file path, to save to -- in which case this utility does nothing
-        folder (str, Path, or list): the name of the folder to be prepended to the filename; if a list, fed to os.path.join()
-        ext (str): the extension to ensure the file has
-        default (str or list): a name or list of names to use if filename is None
-        split (bool): whether to return the path and filename separately
-        makedirs (bool): whether or not to make the folders to save into if they don't exist
-        checkexists (bool): if False/True, raises an exception if the path does/doesn't exist
-        sanitize (bool): whether or not to remove special characters from the path; see sc.sanitizefilename() for details
-        verbose (bool): how much detail to print
+        filename    (str or Path)   : the filename, or full file path, to save to -- in which case this utility does nothing
+        folder      (str/Path/list) : the name of the folder to be prepended to the filename; if a list, fed to ``os.path.join()``
+        ext         (str)           : the extension to ensure the file has
+        default     (str or list)   : a name or list of names to use if filename is None
+        split       (bool)          : whether to return the path and filename separately
+        aspath      (bool)          : whether to return a Path object
+        makedirs    (bool)          : whether or not to make the folders to save into if they don't exist
+        checkexists (bool)          : if False/True, raises an exception if the path does/doesn't exist
+        sanitize    (bool)          : whether or not to remove special characters from the path; see ``sc.sanitizefilename()`` for details
+        verbose     (bool)          : how much detail to print
 
     Returns:
-        filepath (str): the validated path (or the folder and filename if split=True)
+        filepath (str or Path): the validated path (or the folder and filename if split=True)
 
     **Simple example**::
 
@@ -309,7 +339,7 @@ def makefilepath(filename=None, folder=None, ext=None, default=None, split=False
     Assuming project.filename is None and project.name is "recipe" and ./congee
     doesn't exist, this will makes folder ./congee and returns e.g. ('/home/myname/congee', 'recipe.prj')
 
-    Version: 2020apr11
+    New in version 1.0.3: "aspath" argument
     '''
 
     # Initialize
@@ -324,7 +354,7 @@ def makefilepath(filename=None, folder=None, ext=None, default=None, split=False
         folder = os.path.join(*folder)
 
     # Process filename
-    if filename is None:
+    if filename is None: # pragma: no cover
         defaultnames = ut.promotetolist(default) # Loop over list of default names
         for defaultname in defaultnames:
             if not filename and defaultname: filename = defaultname # Replace empty name with default name
@@ -337,7 +367,7 @@ def makefilepath(filename=None, folder=None, ext=None, default=None, split=False
     if ext and not filebasename.endswith(ext):
         filebasename += '.'+ext
     if verbose:
-        print('From filename="%s", default="%s", extension="%s", made basename "%s"' % (filename, default, ext, filebasename))
+        print(f'From filename="{filename}", default="{default}", extension="{ext}", made basename "{filebasename}"')
 
     # Sanitize base filename
     if sanitize: filebasename = sanitizefilename(filebasename)
@@ -352,7 +382,7 @@ def makefilepath(filename=None, folder=None, ext=None, default=None, split=False
     if makedirs:
         try:
             os.makedirs(filefolder, exist_ok=True)
-        except Exception as E:
+        except Exception as E: # pragma: no cover
             if die:
                 raise E
             else:
@@ -381,13 +411,15 @@ def makefilepath(filename=None, folder=None, ext=None, default=None, split=False
         print(f'From filename="{filename}", folder="{folder}", made path name "{filepath}"')
     if split:
         output = filefolder, filebasename
+    elif aspath:
+        output = Path(filepath)
     else:
         output = filepath
 
     return output
 
 
-def thisdir(file=None, *args, as_path=False, **kwargs):
+def thisdir(file=None, *args, aspath=False, **kwargs):
     '''
     Tiny helper function to get the folder for a file, usually the current file.
     If not supplied, then use the current file.
@@ -395,7 +427,7 @@ def thisdir(file=None, *args, as_path=False, **kwargs):
     Args:
         file (str): the file to get the directory from; usually __file__
         args (list): passed to os.path.join()
-        as_path (bool): whether to return a Path object instead of a string
+        aspath (bool): whether to return a Path object instead of a string
         kwargs (dict): also passed to os.path.join()
 
     Returns:
@@ -405,12 +437,14 @@ def thisdir(file=None, *args, as_path=False, **kwargs):
 
         thisdir = sc.thisdir()
         file_in_same_dir = sc.thisdir(__file__, 'new_file.txt')
+
+    New in version 1.0.3: "as_path" argument renamed "aspath"
     '''
     if file is None:
          file = str(Path(inspect.stack()[1][1])) # Adopted from Atomica
     folder = os.path.abspath(os.path.dirname(file))
     filepath = os.path.join(folder, *args, **kwargs)
-    if as_path:
+    if aspath:
         filepath = Path(filepath)
     return filepath
 
@@ -487,9 +521,9 @@ def sanitizejson(obj, verbose=True, die=False, tostring=False, **kwargs):
     else: # None of the above
         try:
             output = jsonpickle(obj)
-        except Exception as E:
-            errormsg = 'Could not sanitize "%s" %s (%s), converting to string instead' % (obj, type(obj), str(E))
-            if die:       raise Exception(errormsg)
+        except Exception as E: # pragma: no cover
+            errormsg = f'Could not sanitize "{obj}" {type(obj)} ({str(E)}), converting to string instead'
+            if die:       raise TypeError(errormsg)
             elif verbose: print(errormsg)
             output = str(obj)
 
@@ -534,14 +568,14 @@ def loadjson(filename=None, folder=None, string=None, fromfile=True, **kwargs):
         try:
             with open(filepath) as f:
                 output = json.load(f, **kwargs)
-        except FileNotFoundError as E:
+        except FileNotFoundError as E: # pragma: no cover
             errormsg = f'No such file "{filename}". Use fromfile=False if loading a JSON string rather than a file.'
             raise FileNotFoundError(errormsg) from E
     return output
 
 
 
-def savejson(filename=None, obj=None, folder=None, die=True, indent=2, **kwargs):
+def savejson(filename=None, obj=None, folder=None, die=True, indent=2, keepnone=False, **kwargs):
     '''
     Convenience function for saving to a JSON file.
 
@@ -551,6 +585,7 @@ def savejson(filename=None, obj=None, folder=None, die=True, indent=2, **kwargs)
         folder (str): folder if not part of the filename
         die (bool): whether or not to raise an exception if saving an empty object
         indent (int): indentation to use for saved JSON
+        keepnone (bool): allow ``sc.savejson(None)`` to return 'null' rather than raising an exception
         kwargs (dict): passed to json.dump()
 
     Returns:
@@ -564,7 +599,7 @@ def savejson(filename=None, obj=None, folder=None, die=True, indent=2, **kwargs)
 
     filename = makefilepath(filename=filename, folder=folder)
 
-    if obj is None:
+    if obj is None and not keepnone: # pragma: no cover
         errormsg = 'No object was supplied to savejson(), or the object was empty'
         if die: raise ValueError(errormsg)
         else:   print(errormsg)
@@ -646,7 +681,7 @@ class Blobject(object):
         if source   is None and filename is not None: source   = filename # Reset the source to be the filename, e.g. Spreadsheet(filename='foo.xlsx')
         if filename is None and ut.isstring(source):  filename = source   # Reset the filename to be the source, e.g. Spreadsheet('foo.xlsx')
         if name     is None and filename is not None: name     = os.path.basename(filename) # If not supplied, use the filename
-        if blob is not None and source is not None: raise Exception('Can initialize from either source or blob, but not both')
+        if blob is not None and source is not None: raise ValueError('Can initialize from either source or blob, but not both')
 
         # Define quantities
         self.name      = name # Name of the object
@@ -699,8 +734,8 @@ class Blobject(object):
             elif ut.isstring(source):
                 self.blob = read_file(source)
             else:
-                errormsg = 'Input source must be type string (for a filename) or BytesIO, not %s' % type(source)
-                raise Exception(errormsg)
+                errormsg = f'Input source must be type string (for a filename) or BytesIO, not {type(source)}'
+                raise TypeError(errormsg)
 
         self.modified = ut.now()
         return None
@@ -711,7 +746,7 @@ class Blobject(object):
         with open(filepath, mode='wb') as f:
             f.write(self.blob)
         self.filename = filename
-        print('Object saved to %s.' % filepath)
+        print(f'Object saved to {filepath}.')
         return filepath
 
     def tofile(self, output=True):
@@ -737,7 +772,7 @@ class Blobject(object):
 
 
 
-class Spreadsheet(Blobject):
+class Spreadsheet(Blobject): # pragma: no cover
     '''
     A class for reading and writing Excel files in binary format. No disk IO needs
     to happen to manipulate the spreadsheets with openpyexcel (or xlrd or pandas).
@@ -750,7 +785,7 @@ class Spreadsheet(Blobject):
         try:
             import xlrd # Optional import
         except ModuleNotFoundError as e:
-            raise Exception('The "xlrd" Python package is not available; please install manually') from e
+            raise ModuleNotFoundError('The "xlrd" Python package is not available; please install manually') from e
         book = xlrd.open_workbook(file_contents=self.tofile().read(), *args, **kwargs)
         return book
 
@@ -759,7 +794,7 @@ class Spreadsheet(Blobject):
         try:
             import openpyexcel # Optional import
         except ModuleNotFoundError as e:
-            raise Exception('The "openpyexcel" Python package is not available; please install manually') from e
+            raise ModuleNotFoundError('The "openpyexcel" Python package is not available; please install manually') from e
         self.tofile(output=False)
         book = openpyexcel.load_workbook(self.bytes, *args, **kwargs) # This stream can be passed straight to openpyexcel
         return book
@@ -769,7 +804,7 @@ class Spreadsheet(Blobject):
         try:
             import pandas # Optional import
         except ModuleNotFoundError as e:
-            raise Exception('The "pandas" Python package is not available; please install manually') from e
+            raise ModuleNotFoundError('The "pandas" Python package is not available; please install manually') from e
         self.tofile(output=False)
         book = pandas.ExcelFile(self.bytes, *args, **kwargs)
         return book
@@ -812,8 +847,8 @@ class Spreadsheet(Blobject):
                 for c,val in enumerate(rowdata):
                     sheetoutput[r][c] = rawdata[r][c].value
         else:
-            errormsg = 'Reading method not found; must be one of xlrd, openpyexcel, or pandas, not %s' % method
-            raise Exception(errormsg)
+            errormsg = f'Reading method not found; must be one of xlrd, openpyexcel, or pandas, not {method}'
+            raise ValueError(errormsg)
 
         # Return the appropriate output.
         cells = kwargs.get('cells')
@@ -838,19 +873,19 @@ class Spreadsheet(Blobject):
         # Load workbook
         if wbargs is None: wbargs = {}
         wb = self.openpyexcel(**wbargs)
-        if verbose: print('Workbook loaded: %s' % wb)
+        if verbose: print(f'Workbook loaded: {wb}')
 
         # Get right worksheet
         ws = self._getsheet(book=wb, sheetname=sheetname, sheetnum=sheetnum)
-        if verbose: print('Worksheet loaded: %s' % ws)
+        if verbose: print(f'Worksheet loaded: {ws}')
 
         # Determine the cells
         if cells is not None: # A list of cells is supplied
             cells = ut.promotetolist(cells)
             vals  = ut.promotetolist(vals)
             if len(cells) != len(vals):
-                errormsg = 'If using cells, cells and vals must have the same length (%s vs. %s)' % (len(cells), len(vals))
-                raise Exception(errormsg)
+                errormsg = f'If using cells, cells and vals must have the same length ({len(cells)} vs. {len(vals)})'
+                raise ValueError(errormsg)
             for cell,val in zip(cells,vals):
                 try:
                     if ut.isstring(cell): # Handles e.g. cell='A1'
@@ -858,17 +893,17 @@ class Spreadsheet(Blobject):
                     elif ut.checktype(cell, 'arraylike','number') and len(cell)==2: # Handles e.g. cell=(0,0)
                         cellobj = ws.cell(row=cell[0], column=cell[1])
                     else:
-                        errormsg = 'Cell must be formatted as a label or row-column pair, e.g. "A1" or (3,5); not "%s"' % cell
-                        raise Exception(errormsg)
-                    if verbose: print('  Cell %s = %s' % (cell,val))
+                        errormsg = f'Cell must be formatted as a label or row-column pair, e.g. "A1" or (3,5); not "{cell}"'
+                        raise TypeError(errormsg)
+                    if verbose: print(f'  Cell {cell} = {val}')
                     if isinstance(val,tuple):
                         cellobj.value = val[0]
                         cellobj.cached_value = val[1]
                     else:
                         cellobj.value = val
                 except Exception as E:
-                    errormsg = 'Could not write "%s" to cell "%s": %s' % (val, cell, repr(E))
-                    raise Exception(errormsg)
+                    errormsg = f'Could not write "{val}" to cell "{cell}": {repr(E)}'
+                    raise RuntimeError(errormsg)
         else:# Cells aren't supplied, assume a matrix
             if startrow is None: startrow = 1 # Excel uses 1-based indexing
             if startcol is None: startcol = 1
@@ -878,12 +913,12 @@ class Spreadsheet(Blobject):
                 for j,val in enumerate(rowvals):
                     col = startcol + j
                     try:
-                        key = 'row:%s col:%s' % (row,col)
+                        key = f'row:{row} col:{col}'
                         ws.cell(row=row, column=col, value=val)
-                        if verbose: print('  Cell %s = %s' % (key, val))
+                        if verbose: print(f'  Cell {key} = {val}')
                     except Exception as E:
-                        errormsg = 'Could not write "%s" to %s: %s' % (val, key, repr(E))
-                        raise Exception(errormsg)
+                        errormsg = f'Could not write "{val}" to {key}: {repr(E)}'
+                        raise RuntimeError(errormsg)
 
         # Save
         wb.save(self.freshbytes())
@@ -895,14 +930,17 @@ class Spreadsheet(Blobject):
         filepath = makefilepath(filename=filename, ext='xlsx')
         super().save(filepath)
 
-def loadspreadsheet(filename=None, folder=None, fileobj=None, sheetname=None, sheetnum=None, asdataframe=None, header=True, cells=None):
+def loadspreadsheet(filename=None, folder=None, fileobj=None, sheetname=None, sheetnum=None, asdataframe=None, header=True, cells=None): # pragma: no cover
     '''
     Load a spreadsheet as a list of lists or as a dataframe. Read from either a filename or a file object.
+
+    Note: this function is deprecated and may be removed in a future version. Use
+    ``pandas.read_excel()`` instead.
     '''
     try:
         import xlrd # Optional import
     except ModuleNotFoundError as e:
-        raise Exception('The "xlrd" Python package is not available; please install manually') from e
+        raise ModuleNotFoundError('The "xlrd" Python package is not available; please install manually') from e
 
     # Handle inputs
     if asdataframe is None: asdataframe = True
@@ -924,7 +962,7 @@ def loadspreadsheet(filename=None, folder=None, fileobj=None, sheetname=None, sh
         rawdata.append(odict())
         for colnum in range(sheet.ncols):
             if header: attr = sheet.cell_value(0,colnum)
-            else:      attr = 'Column %s' % colnum
+            else:      attr = f'Column {colnum}'
             attr = ut.uniquename(attr, namelist=rawdata[rownum].keys(), style='(%d)')
             val = sheet.cell_value(rownum+header,colnum)
             try:
@@ -950,9 +988,11 @@ def loadspreadsheet(filename=None, folder=None, fileobj=None, sheetname=None, sh
 
 
 
-def savespreadsheet(filename=None, data=None, folder=None, sheetnames=None, close=True, formats=None, formatdata=None, verbose=False):
+def savespreadsheet(filename=None, data=None, folder=None, sheetnames=None, close=True, formats=None, formatdata=None, verbose=False): # pragma: no cover
     '''
-    Not-so-little function to format an output results nicely for Excel.
+    Not-so-little function to format data nicely for Excel.
+
+    Note: this function, while not deprecated, is not actively maintained.
 
     **Examples**::
 
@@ -996,8 +1036,8 @@ def savespreadsheet(filename=None, data=None, folder=None, sheetnames=None, clos
     '''
     try:
         import xlsxwriter # Optional import
-    except ModuleNotFoundError as e:
-            raise Exception('The "xlsxwriter" Python package is not available; please install manually') from e
+    except ModuleNotFoundError as e: # pragma: no cover
+            raise ModuleNotFoundError('The "xlsxwriter" Python package is not available; please install manually') from e
     fullpath = makefilepath(filename=filename, folder=folder, default='default.xlsx')
     datadict   = odict()
     formatdict = odict()
@@ -1012,8 +1052,8 @@ def savespreadsheet(filename=None, data=None, folder=None, sheetnames=None, clos
     elif isinstance(data, dict) and sheetnames is not None:
         if verbose: print('Data is a dict, taking sheetnames from input')
         if len(sheetnames) != len(data):
-            errormsg = 'If supplying data as a dict as well as sheetnames, length must matc (%s vs %s)' % (len(data), len(sheetnames))
-            raise Exception(errormsg)
+            errormsg = f'If supplying data as a dict as well as sheetnames, length must match ({len(data)} vs {len(sheetnames)})'
+            raise ValueError(errormsg)
         datadict   = odict(data) # Use directly, but keep original sheet names
         if hasformats: formatdict = odict(formatdata)
     elif not isinstance(data, dict):
@@ -1029,18 +1069,19 @@ def savespreadsheet(filename=None, data=None, folder=None, sheetnames=None, clos
                     datadict[sheetname] = data[s] # Assume there's a 1-to-1 mapping
                     if hasformats: formatdict[sheetname] = formatdata[s]
             else:
-                errormsg = 'Unable to figure out how to match %s sheet names with data of length %s' % (len(sheetnames), len(data))
-                raise Exception(errormsg)
+                errormsg = f'Unable to figure out how to match {len(sheetnames)} sheet names with data of length {len(data)}'
+                raise ValueError(errormsg)
     else:
-        raise Exception('Cannot figure out the format of the data') # This shouldn't happen!
+        errormsg = f'Cannot figure out how to handle data of type: {type(data)}'
+        raise TypeError(errormsg) # This shouldn't happen!
 
     # Create workbook
-    if verbose: print('Creating file %s' % fullpath)
+    if verbose: print(f'Creating file {fullpath}')
     workbook = xlsxwriter.Workbook(fullpath)
 
     # Optionally add formats
     if formats is not None:
-        if verbose: print('  Adding %s formats' % len(formats))
+        if verbose: print(f'  Adding {len(formats)} formats')
         workbook_formats = dict()
         for formatkey,formatval in formats.items():
             workbook_formats[formatkey] = workbook.add_format(formatval)
@@ -1049,14 +1090,14 @@ def savespreadsheet(filename=None, data=None, folder=None, sheetnames=None, clos
 
     # Actually write the data
     for sheetname in datadict.keys():
-        if verbose: print('  Creating sheet %s' % sheetname)
+        if verbose: print(f'  Creating sheet {sheetname}')
         sheetdata   = datadict[sheetname]
         if hasformats: sheetformat = formatdict[sheetname]
         worksheet = workbook.add_worksheet(sheetname)
         for r,row_data in enumerate(sheetdata):
-            if verbose: print('    Writing row %s/%s' % (r, len(sheetdata)))
+            if verbose: print(f'    Writing row {r}/{len(sheetdata)}')
             for c,cell_data in enumerate(row_data):
-                if verbose: print('      Writing cell %s/%s' % (c, len(row_data)))
+                if verbose: print(f'      Writing cell {c}/{len(row_data)}')
                 if hasformats:
                     thisformat = workbook_formats[sheetformat[r][c]] # Get the actual format
                 try:
@@ -1064,12 +1105,12 @@ def savespreadsheet(filename=None, data=None, folder=None, sheetnames=None, clos
                         cell_data = str(cell_data) # Convert everything except numbers to strings -- use formatting to handle the rest
                     worksheet.write(r, c, cell_data, thisformat) # Write with or without formatting
                 except Exception as E:
-                    errormsg = 'Could not write cell [%s,%s] data="%s", format="%s": %s' % (r, c, cell_data, thisformat, str(E))
-                    raise Exception(errormsg)
+                    errormsg = f'Could not write cell [{r},{c}] data="{cell_data}", format="{thisformat}": {str(E)}'
+                    raise RuntimeError(errormsg)
 
     # Either close the workbook and write to file, or return it for further working
     if close:
-        if verbose: print('Saving file %s and closing' % filename)
+        if verbose: print(f'Saving file {filename} and closing')
         workbook.close()
         return fullpath
     else:
@@ -1100,10 +1141,10 @@ class Failed(object):
     def showfailures(self, verbose=True, tostring=False):
         output = ''
         for f,failure in self.failure_info.enumvals():
-            output += '\nFailure %s of %s:\n' % (f+1, len(self.failure_info))
-            output += 'Module: %s\n' % failure['module']
-            output += 'Class: %s\n' % failure['class']
-            output += 'Error: %s\n' % failure['error']
+            output += f'\nFailure {f+1} of {len(self.failure_info)}:\n'
+            output += f'Module: {failure["module"]}\n'
+            output += f'Class: {failure["class"]}\n'
+            output += f'Error: {failure["error"]}\n'
             if verbose:
                 output += '\nTraceback:\n'
                 output += failure['exception']
@@ -1127,7 +1168,7 @@ class Empty(object):
 
 def makefailed(module_name=None, name=None, error=None, exception=None):
     ''' Create a class -- not an object! -- that contains the failure info for a pickle that failed to load '''
-    key = 'Failure %s' % (len(Failed.failure_info)+1)
+    key = f'Failure {len(Failed.failure_info)+1}'
     Failed.failure_info[key] = odict()
     Failed.failure_info[key]['module'] = module_name
     Failed.failure_info[key]['class'] = name
@@ -1139,21 +1180,32 @@ def makefailed(module_name=None, name=None, error=None, exception=None):
 class _RobustUnpickler(pkl.Unpickler):
     ''' Try to import an object, and if that fails, return a Failed object rather than crashing '''
 
-    def __init__(self, tmpfile, fix_imports=True, encoding="latin1", errors="ignore"):
-        pkl.Unpickler.__init__(self, tmpfile, fix_imports=fix_imports, encoding=encoding, errors=errors)
+    def __init__(self, bytesio, fix_imports=True, encoding="latin1", errors="ignore", remapping=None):
+        pkl.Unpickler.__init__(self, bytesio, fix_imports=fix_imports, encoding=encoding, errors=errors)
+        self.remapping = remapping if remapping is not None else {}
+        return
 
     def find_class(self, module_name, name, verbose=True):
-        try:
-            module = importlib.import_module(module_name)
-            obj = getattr(module, name)
-        except Exception as E:
-            if verbose: print('Unpickling warning: could not import %s.%s: %s' % (module_name, name, str(E)))
-            exception = traceback.format_exc() # Grab the trackback stack
-            obj = makefailed(module_name=module_name, name=name, error=E, exception=exception)
+        key = f'{module_name}.{name}'
+        obj = self.remapping.get(key) # If the user has supplied the module directly
+        if obj is None or (isinstance(obj, tuple) and len(obj)==2): # Either it's not in the remapping, or it's a tuple
+            try:
+                if obj is None: # Key not in remapping
+                    load_module = module_name
+                    load_name = name
+                else: # It's a tuple of names, process
+                    load_module = obj[0]
+                    load_name = obj[1]
+                module = importlib.import_module(load_module)
+                obj = getattr(module, load_name)
+            except Exception as E:
+                if verbose: print(f'Unpickling warning: could not import {load_module}.{load_name}: {str(E)}')
+                exception = traceback.format_exc() # Grab the trackback stack
+                obj = makefailed(module_name=module_name, name=name, error=E, exception=exception)
         return obj
 
 
-def _unpickler(string=None, filename=None, filestring=None, die=None, verbose=False):
+def _unpickler(string=None, filename=None, filestring=None, die=None, verbose=False, remapping=None):
     ''' Not invoked directly; used as a helper function for saveobj/loadobj '''
 
     if die is None: die = False
@@ -1164,24 +1216,24 @@ def _unpickler(string=None, filename=None, filestring=None, die=None, verbose=Fa
             raise E1
         else:
             try:
-                if verbose: print('Standard unpickling failed (%s), trying encoding...' % str(E1))
+                if verbose: print(f'Standard unpickling failed ({str(E1)}), trying encoding...')
                 obj = pkl.loads(string, encoding='latin1') # Try loading it again with different encoding
             except Exception as E2:
                 try:
-                    if verbose: print('Encoded unpickling failed (%s), trying dill...' % str(E2))
+                    if verbose: print(f'Encoded unpickling failed ({str(E2)}), trying dill...')
                     import dill # Optional Sciris dependency
                     obj = dill.loads(string) # If that fails, try dill
                 except Exception as E3:
                     try:
-                        if verbose: print('Dill failed (%s), trying robust unpickler...' % str(E3))
-                        obj = _RobustUnpickler(io.BytesIO(string)).load() # And if that trails, throw everything at it
-                    except Exception as E4:
+                        if verbose: print(f'Dill failed ({str(E3)}), trying robust unpickler...')
+                        obj = _RobustUnpickler(io.BytesIO(string), remapping=remapping).load() # And if that trails, throw everything at it
+                    except Exception as E4: # pragma: no cover
                         try:
-                            if verbose: print('Robust unpickler failed (%s), trying Python 2->3 conversion...' % str(E4))
+                            if verbose: print(f'Robust unpickler failed ({str(E4)}), trying Python 2->3 conversion...')
                             obj = loadobj2to3(filename=filename, filestring=filestring)
                         except Exception as E5:
-                            if verbose: print('Python 2->3 conversion failed (%s), giving up...' % str(E5))
-                            errormsg = 'All available unpickling methods failed:\n    Standard: %s\n     Encoded: %s\n        Dill: %s\n      Robust: %s\n  Python2->3: %s' % (E1, E2, E3, E4, E5)
+                            if verbose: print(f'Python 2->3 conversion failed ({str(E5)}), giving up...')
+                            errormsg = f'All available unpickling methods failed:\n    Standard: {E1}\n     Encoded: {E2}\n        Dill: {E3}\n      Robust: {E4}\n  Python2->3: {E5}'
                             raise Exception(errormsg)
 
     if isinstance(obj, Failed):
@@ -1192,19 +1244,19 @@ def _unpickler(string=None, filename=None, filestring=None, die=None, verbose=Fa
 
 
 def _savepickle(fileobj=None, obj=None, protocol=None, *args, **kwargs):
-        ''' Use pickle to do the salty work '''
+        ''' Use pickle to do the salty work. '''
         if protocol is None:
-            protocol = 4
+            protocol = 4 # Use protocol 4 for backwards compatibility
         fileobj.write(pkl.dumps(obj, protocol=protocol, *args, **kwargs))
         return None
 
 
-def _savedill(fileobj=None, obj=None, *args, **kwargs):
-    ''' Use dill to do the sour work '''
+def _savedill(fileobj=None, obj=None, *args, **kwargs): # pragma: no cover
+    ''' Use dill to do the sour work (note: this function is not actively maintained) '''
     try:
         import dill # Optional Sciris dependency
     except ModuleNotFoundError as e:
-        raise Exception('The "dill" Python package is not available; please install manually') from e
+        raise ModuleNotFoundError('The "dill" Python package is not available; please install manually') from e
     fileobj.write(dill.dumps(obj, protocol=-1, *args, **kwargs))
     return None
 
@@ -1217,7 +1269,7 @@ def _savedill(fileobj=None, obj=None, *args, **kwargs):
 not_string_pickleable = ['datetime', 'BytesIO']
 byte_objects = ['datetime', 'BytesIO', 'odict', 'spreadsheet', 'blobject']
 
-def loadobj2to3(filename=None, filestring=None, recursionlimit=None):
+def loadobj2to3(filename=None, filestring=None, recursionlimit=None): # pragma: no cover
     '''
     Used automatically by loadobj() to load Python2 objects in Python3 if all other
     loading methods fail. Uses a recursive approach, so can set a recursion limit.
@@ -1238,25 +1290,25 @@ def loadobj2to3(filename=None, filestring=None, recursionlimit=None):
 
     class StringUnpickler(pkl.Unpickler):
         def find_class(self, module, name, verbose=False):
-            if verbose: print('Unpickling string module %s , name %s' % (module, name))
+            if verbose: print(f'Unpickling string module {module}, name {name}')
             if name in not_string_pickleable:
                 return Empty
             else:
                 try:
                     output = pkl.Unpickler.find_class(self,module,name)
                 except Exception as E:
-                    print('Warning, string unpickling could not find module %s, name %s: %s' % (module, name, str(E)))
+                    print(f'Warning, string unpickling could not find module {module}, name {name}: {str(E)}')
                     output = Empty
                 return output
 
     class BytesUnpickler(pkl.Unpickler):
         def find_class(self, module, name, verbose=False):
-            if verbose: print('Unpickling bytes module %s , name %s' % (module, name))
+            if verbose: print(f'Unpickling bytes module {module}, name {name}')
             if name in byte_objects:
                 try:
                     output = pkl.Unpickler.find_class(self,module,name)
                 except Exception as E:
-                    print('Warning, bytes unpickling could not find module %s, name %s: %s' % (module, name, str(E)))
+                    print(f'Warning, bytes unpickling could not find module {module}, name {name}: {str(E)}')
                     output = Placeholder
                 return output
             else:
@@ -1267,7 +1319,7 @@ def loadobj2to3(filename=None, filestring=None, recursionlimit=None):
             recursionlimit = 1000 # Better to die here than hit Python's recursion limit
 
         def recursion_warning(count, obj1, obj2):
-            output = 'Warning, internal recursion depth exceeded, aborting: depth=%s, %s -> %s' % (count, type(obj1), type(obj2))
+            output = f'Warning, internal recursion depth exceeded, aborting: depth={count}, {type(obj1)} -> {type(obj2)}'
             return output
 
         recursionlevel += 1
@@ -1312,7 +1364,7 @@ def loadobj2to3(filename=None, filestring=None, recursionlimit=None):
         try:
             stringout = unpickler1.load()
         except Exception as E:
-            print('Warning, string pickle loading failed: %s' % str(E))
+            print(f'Warning, string pickle loading failed: {str(E)}')
             exception = traceback.format_exc() # Grab the trackback stack
             stringout = makefailed(module_name='String unpickler failed', name='n/a', error=E, exception=exception)
         return stringout
@@ -1322,7 +1374,7 @@ def loadobj2to3(filename=None, filestring=None, recursionlimit=None):
         try:
             bytesout  = unpickler2.load()
         except Exception as E:
-            print('Warning, bytes pickle loading failed: %s' % str(E))
+            print(f'Warning, bytes pickle loading failed: {str(E)}')
             exception = traceback.format_exc() # Grab the trackback stack
             bytesout = makefailed(module_name='Bytes unpickler failed', name='n/a', error=E, exception=exception)
         return bytesout
@@ -1343,7 +1395,7 @@ def loadobj2to3(filename=None, filestring=None, recursionlimit=None):
                 bytesout = loadintobytes(fileobj)
     else:
         errormsg = 'You must supply either a filename or a filestring for loadobj() or loadstr(), respectively'
-        raise Exception(errormsg)
+        raise ValueError(errormsg)
 
     # Actually do the load, with correct substitution
     recursive_substitute(stringout, bytesout, recursionlevel=0, recursionlimit=recursionlimit)
@@ -1390,7 +1442,7 @@ def _unpickleMethod(im_name, im_self, im_class):
         return getattr(im_class, im_name)
     try:
         methodFunction = _methodFunction(im_class, im_name)
-    except AttributeError:
+    except AttributeError: # pragma: no cover
         assert im_self is not None, "No recourse: no instance to guess from."
         if im_self.__class__ is im_class:
             raise

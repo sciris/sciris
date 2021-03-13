@@ -19,7 +19,7 @@ from .sc_odict import odict
 
 __all__ = ['dataframe']
 
-class dataframe(object):
+class dataframe(object): # pragma: no cover
     '''
     A simple data frame, based on simple lists, for simply storing simple data.
     Much less feature-rich than a Pandas data frame, but simpler to use. Note:

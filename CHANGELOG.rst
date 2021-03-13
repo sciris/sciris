@@ -6,15 +6,52 @@ All notable changes to this project will be documented in this file.
 By import convention, components of the Sciris library are listed beginning with ``sc.``, e.g. ``sc.odict()``.
 
 
+Version 1.1.0 (2021-03-12)
+--------------------------
+
+New functions
+~~~~~~~~~~~~~
+1. ``sc.mergelists()`` is similar to ``sc.mergedicts()``: it will take a sequence of inputs and attempt to merge them into a list.
+2. ``sc.transposelist()`` will perform a transposition on a list of lists: for example, a list of 10 lists (or tuples) each of length 3 will be transformed into a list of 3 lists each of length 10.
+3. ``sc.strjoin()`` and ``sc.newlinejoin()`` are shortcuts to ``', '.join(items)`` and ``'\n'.join(items)``, respectively. The latter is especially useful inside f-strings since you cannot use the ``\n`` character.
+
+Bugfixes
+~~~~~~~~
+1. ``sc.day()`` now returns a numeric array when an array of datetime objects is passed to it; a bug which was introduced in version 1.0.2 which meant it returned an object array instead.
+2. Slices with numeric start and stop indices have been fixed for ``sc.odict()``.
+3. ``sc.objatt()`` now correctly handles objects with slots instead of a dict.
+
+Improvements
+~~~~~~~~~~~~
+1. ``sc.loadobj()`` now accepts a ``remapping`` argument, which lets the user load old pickle files even if the modules no longer exist.
+2. Most file functions (e.g. ``sc.makefilepath``, ``sc.getfilelist()`` now accept an ``aspath`` argument, which, if ``True``, will return a ``pathlib.Path`` object instead of a string.
+3. Most array-returning functions, such as ``sc.promotetoarray()`` and ``sc.cat()``, now accept a ``copy`` argument and other keywords; these keywords are passed to ``np.array()``, allowing e.g. the ``dtype`` to be set.
+4. A fallback option for ``sc.findinds()`` has been implemented, allowing it to work even if the input array isn't numeric.
+5. ``sc.odict()`` now has a ``defaultdict`` argument, which lets you use it like a defaultdict as well as an ordered dict.
+6. ``sc.odict()`` has a ``transpose`` argument for methods like ``items()`` and ``enumvalues()``, which will return a tuple of lists instead of a list of tuples.
+7. ``sc.objdict()`` now prints out differently, to distinguish it from an ``sc.odict``.
+8. ``sc.promotetolist()`` has a new ``coerce`` argument, which will convert that data type into a list (instead of wrapping it).
+
+Renamed/removed functions
+~~~~~~~~~~~~~~~~~~~~~~~~~
+1. The functions ``sc.tolist()`` and ``sc.toarray()`` have been added as aliases of ``sc.promotetolist()`` and ``sc.promotetoarray()``, respectively. You may use whichever you prefer.
+2. The ``skipnone`` keyword has been removed from ``sc.promotetoarray()`` and replaced with ``keepnone`` (which does something slightly different).
+
+Other updates
+~~~~~~~~~~~~~
+1. Exceptions have been made more specific (e.g. ``TypeError`` instead of ``Exception``).
+2. Test code coverage has been increased significantly (from 63% to 84%).
+
+
 Version 1.0.2 (2021-03-10)
----------------------------
+--------------------------
 1. Fixed bug (introduced in version 1.0.1) with ``sc.readdate()`` returning only the first element of a list of a dates.
 2. Fixed bug (introduced in version 1.0.1) with ``sc.date()`` treating an integer as a timestamp rather than an integer number of days when a start day is supplied.
 3. Updated ``sc.readdate()``, ``sc.date()``, and ``sc.day()`` to always return consistent output types (e.g. if an array is supplied as an input, an array is supplied as an output).
 
 
 Version 1.0.1 (2021-03-01)
----------------------------
+--------------------------
 1. Fixed bug with Matplotlib 3.4.0 also defining colormap ``'turbo'``, which caused Sciris to fail to load.
 2. Added a new function, ``sc.orderlegend()``, that lets you specify the order you want the legend items to appear.
 3. Fixed bug with paths returned by ``sc.getfilelist(nopath=True)``.

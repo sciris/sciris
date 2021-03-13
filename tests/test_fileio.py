@@ -98,7 +98,9 @@ def test_legacy():
 
     sc.heading('Get files')
     print('Files in current folder:')
-    sc.pp(sc.getfilelist())
+    TF = [True,False]
+    for tf in TF:
+        sc.pp(sc.getfilelist(abspath=tf, filesonly=tf, foldersonly=not(tf), nopath=tf, aspath=tf))
 
     sc.heading('Save zip')
     sc.savezip(files.zip, [files.text, files.excel])
@@ -123,14 +125,23 @@ def test_legacy():
     sc.saveobj('deadclass.obj', deadclass)
     -------------------------------------------------
     '''
+
+    class LiveClass():
+        def __init__(self, x):
+            self.x = x
+
     dead_path = filedir+'deadclass.obj'
     if os.path.exists(dead_path):
         sc.heading('Intentionally loading corrupted file')
+        print('Loading with no remapping...')
         obj = sc.loadobj(dead_path)
-        print('Loading corrupted object succeeded, x=%s' % obj.x)
+        print(f'Loading corrupted object succeeded, x={obj.x}')
+
+        print('Loading with remapping...')
+        obj2 = sc.loadobj(dead_path, remapping={'deadclass.DeadClass':LiveClass})
+        print(f'Loading remapped object succeeded, x={obj2.x}, object: {obj2}')
     else:
         print(f'{dead_path} not found, skipping...')
-
 
     # Tidy up
     if tidyup:
@@ -198,6 +209,14 @@ def test_jsonpickle():
     return jp
 
 
+def test_load_dump_str():
+    sc.heading('Testing load/dump string')
+    obj1 = sc.objdict(a=1, b=2)
+    string = sc.dumpstr(obj1)
+    obj2 = sc.loadstr(string)
+    assert obj1 == obj2
+    return string
+
 
 #%% Run as a script
 if __name__ == '__main__':
@@ -206,6 +225,7 @@ if __name__ == '__main__':
     spread = test_legacy()
     json   = test_json()
     jp     = test_jsonpickle()
+    string = test_load_dump_str()
 
     sc.toc()
     print('Done.')

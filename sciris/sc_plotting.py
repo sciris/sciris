@@ -101,9 +101,9 @@ def rgb2hex(arr):
         hx = sc.rgb2hex([0.53, 0.74, 0.15]) # Returns '#87bc26'
     '''
     arr = np.array(arr)
-    if len(arr) != 3:
-        errormsg = 'Cannot convert "%s" to hex: wrong length' % arr
-        raise Exception(errormsg)
+    if len(arr) != 3: # pragma: no cover
+        errormsg = f'Cannot convert "{arr}" to hex: wrong length'
+        raise ValueError(errormsg)
     if all(arr<=1): arr *= 255. # Convert from 0-1 to 0-255
     hexstr = '#%02x%02x%02x' % (int(arr[0]), int(arr[1]), int(arr[2]))
     return hexstr
@@ -121,9 +121,9 @@ def hex2rgb(string):
         string = string[1:] # Trim leading #, if it exists
     if len(string)==3:
         string = string[0]*2+string[1]*2+string[2]*2 # Convert e.g. '8b2' to '88bb22'
-    if len(string)!=6:
-        errormsg = 'Cannot convert "%s" to an RGB color:must be 3 or 6 characters long' % string
-        raise Exception(errormsg)
+    if len(string)!=6: # pragma: no cover
+        errormsg = f'Cannot convert "{string}" to an RGB color: must be 3 or 6 characters long'
+        raise ValueError(errormsg)
     hexstring = bytes.fromhex(string) # Ensure it's the right type
     rgb = np.array(unpack('BBB',hexstring),dtype=float)/255.
     return rgb
@@ -204,9 +204,9 @@ def vectocolor(vector, cmap=None, asarray=True, reverse=False, minval=None, maxv
     elif type(cmap) == str:
         try:
             cmap = cm.get_cmap(cmap)
-        except:
+        except: # pragma: no cover
             choices = "\n".join(sorted(cm.datad.keys()))
-            raise Exception(f'{cmap} is not a valid color map; choices are:\n{choices}')
+            raise ValueError(f'{cmap} is not a valid color map; choices are:\n{choices}')
 
     # If a scalar is supplied, convert it to a vector instead
     if ut.isnumber(vector):
@@ -546,7 +546,7 @@ def bicolormap(gap=0.1, mingreen=0.2, redbluemix=0.5, epsilon=0.01, demo=False, 
     if apply:
         pl.set_cmap(cmap)
 
-    def demoplot():
+    def demoplot(): # pragma: no cover
         from pylab import figure, subplot, imshow, colorbar, rand, show
 
         maps=[]
@@ -976,7 +976,7 @@ def bar3d(data, fig=None, returnfig=False, cmap='viridis', figkwargs=None, axkwa
     if 'color' not in plotkwargs:
         try:
             plotkwargs['color'] = vectocolor(data.flatten(), cmap=cmap)
-        except Exception as E:
+        except Exception as E: # pragma: no cover
             print(f'bar3d(): Attempt to auto-generate colors failed: {str(E)}')
     for i in range(data.shape[0]):
         for j in range(data.shape[1]):
@@ -1048,8 +1048,8 @@ def setaxislim(which=None, ax=None, data=None):
     if which is None:
         which = 'both'
     if which not in ['x','y','both']:
-        errormsg = 'Setting axis limit for axis %s is not supported' % which
-        raise Exception(errormsg)
+        errormsg = f'Setting axis limit for axis {which} is not supported'
+        raise ValueError(errormsg)
     if which == 'both':
         setaxislim(which='x', ax=ax, data=data)
         setaxislim(which='y', ax=ax, data=data)
@@ -1116,7 +1116,7 @@ def commaticks(fig=None, ax=None, axis='y'):
         if   axis=='x': thisaxis = ax.xaxis
         elif axis=='y': thisaxis = ax.yaxis
         elif axis=='z': thisaxis = ax.zaxis
-        else: raise Exception('Axis must be x, y, or z')
+        else: raise ValueError('Axis must be x, y, or z')
         thisaxis.set_major_formatter(mpl.ticker.FuncFormatter(lambda x, p: format(int(x), ',')))
     return None
 
@@ -1144,7 +1144,7 @@ def SIticks(fig=None, ax=None, axis='y', fixed=False):
         if   axis=='x': thisaxis = ax.xaxis
         elif axis=='y': thisaxis = ax.yaxis
         elif axis=='z': thisaxis = ax.zaxis
-        else: raise Exception('Axis must be x, y, or z')
+        else: raise ValueError('Axis must be x, y, or z')
         if fixed:
             ticklocs = thisaxis.get_ticklocs()
             ticklabels = []
@@ -1198,7 +1198,7 @@ def get_rows_cols(n, nrows=None, ncols=None, ratio=1):
     return nrows,ncols
 
 
-def maximize(fig=None, die=False):
+def maximize(fig=None, die=False):  # pragma: no cover
     '''
     Maximize the current (or supplied) figure. Note: not guaranteed to work for
     all Matplotlib backends (e.g., agg).
@@ -1219,14 +1219,10 @@ def maximize(fig=None, die=False):
         pl.figure(fig.number) # Set the current figure
     try:
         mgr = pl.get_current_fig_manager()
-        if 'qt' in backend:
-            mgr.window.showMaximized()
-        elif 'gtk' in backend:
-            mgr.window.maximize()
-        elif 'wx' in backend:
-            mgr.frame.Maximize(True)
-        elif 'tk' in backend:
-            mgr.resize(*mgr.window.maxsize())
+        if   'qt'  in backend: mgr.window.showMaximized()
+        elif 'gtk' in backend: mgr.window.maximize()
+        elif 'wx'  in backend: mgr.frame.Maximize(True)
+        elif 'tk'  in backend: mgr.resize(*mgr.window.maxsize())
         else:
             errormsg = f'The maximize() function is not supported for the backend "{backend}"; use Qt5Agg if possible'
             raise NotImplementedError(errormsg)
@@ -1292,7 +1288,7 @@ def savefigs(figs=None, filetype=None, filename=None, folder=None, savefigargs=N
         fullpath = fio.makefilepath(filename=filename, folder=folder, default=defaultname, ext='pdf')
         pdf = PdfPages(fullpath)
         filenames.append(fullpath)
-        if verbose: print('PDF saved to %s' % fullpath)
+        if verbose: print(f'PDF saved to {fullpath}')
     for p,item in enumerate(figs.items()):
         key,plt = item
         # Handle filename
@@ -1310,7 +1306,7 @@ def savefigs(figs=None, filetype=None, filename=None, folder=None, savefigargs=N
         if filetype == 'fig':
             fio.saveobj(fullpath, plt)
             filenames.append(fullpath)
-            if verbose: print('Figure object saved to %s' % fullpath)
+            if verbose: print(f'Figure object saved to {fullpath}')
         else:
             reanimateplots(plt)
             if filetype=='singlepdf':
@@ -1318,7 +1314,7 @@ def savefigs(figs=None, filetype=None, filename=None, folder=None, savefigargs=N
             else:
                 plt.savefig(fullpath, **defaultsavefigargs)
                 filenames.append(fullpath)
-                if verbose: print('%s plot saved to %s' % (filetype.upper(),fullpath))
+                if verbose: print(f'{filetype.upper()} plot saved to {fullpath}')
             pl.close(plt)
 
     # Do final tidying
@@ -1355,9 +1351,9 @@ def reanimateplots(plots=None):
     ''' Reconnect plots (actually figures) to the Matplotlib backend. Plots must be an odict of figure objects. '''
     try:
         from matplotlib.backends.backend_agg import new_figure_manager_given_figure as nfmgf # Warning -- assumes user has agg on their system, but should be ok. Use agg since doesn't require an X server
-    except Exception as E:
-        errormsg = 'To reanimate plots requires the "agg" backend, which could not be imported: %s' % repr(E)
-        raise Exception(errormsg)
+    except Exception as E: # pragma: no cover
+        errormsg = f'To reanimate plots requires the "agg" backend, which could not be imported: {repr(E)}'
+        raise ImportError(errormsg) from E
     if len(pl.get_fignums()): fignum = pl.gcf().number # This is the number of the current active figure, if it exists
     else: fignum = 1
     plots = odict.promote(plots) # Convert to an odict
@@ -1452,8 +1448,8 @@ def orderlegend(order=None, ax=None, handles=None, labels=None, reverse=None, **
         pl.plot([1,4,3], label='A')
         pl.plot([5,7,8], label='B')
         pl.plot([2,5,2], label='C')
-        sc.reorderlegend(reverse=True) # Legend order C, B, A
-        sc.reorderlegend([1,0,2], frameon=False) # Legend order B, A, C with no frame
+        sc.orderlegend(reverse=True) # Legend order C, B, A
+        sc.orderlegend([1,0,2], frameon=False) # Legend order B, A, C with no frame
         pl.legend() # Restore original legend order A, B, C
     '''
 
@@ -1531,7 +1527,8 @@ def savemovie(frames, filename=None, fps=None, quality=None, dpi=None, writer=No
     from matplotlib import animation # Place here since specific only to this function
 
     if not isinstance(frames, list):
-        raise Exception('savemovie(): Argument "frames" must be a list, not "%s"' % type(frames))
+        errormsg = f'sc.savemovie(): argument "frames" must be a list, not "{type(frames)}"'
+        raise TypeError(errormsg)
     for f in range(len(frames)):
         if not ut.isiterable(frames[f]):
             frames[f] = (frames[f],) # This must be either a tuple or a list to work with ArtistAnimation
@@ -1546,7 +1543,9 @@ def savemovie(frames, filename=None, fps=None, quality=None, dpi=None, writer=No
     if writer is None:
         if   filename.endswith('mp4'): writer = 'ffmpeg'
         elif filename.endswith('gif'): writer = 'imagemagick'
-        else: raise Exception('savemovie(): Unknown movie extension for file %s' % filename)
+        else:
+            errormsg = f'sc.savemovie(): unknown movie extension for file {filename}'
+            raise ValueError(errormsg)
     if fps is None:
         fps = 10
     if interval is None:
@@ -1560,28 +1559,30 @@ def savemovie(frames, filename=None, fps=None, quality=None, dpi=None, writer=No
         quality = dpi # Interpret dpi arg as a quality command
         dpi = None
     if dpi is not None and quality is not None:
-        print('savemovie() warning: quality is simply a shortcut for dpi; please specify one or the other, not both (dpi=%s, quality=%s)' % (dpi, quality))
+        print(f'sc.savemovie() warning: quality is simply a shortcut for dpi; please specify one or the other, not both (dpi={dpi}, quality={quality})')
     if quality is not None:
         if   quality == 'low':    dpi =  50
         elif quality == 'medium': dpi = 150
         elif quality == 'high':   dpi = 300
-        else: raise Exception('Quality must be high, medium, or low, not "%s"' % quality)
+        else:
+            errormsg = f'Quality must be high, medium, or low, not "{quality}"'
+            raise ValueError(errormsg)
 
     # Optionally print progress
     if verbose:
         start = ut.tic()
-        print('Saving %s frames at %s fps and %s dpi to "%s" using %s...' % (len(frames), fps, dpi, filename, writer))
+        print(f'Saving {len(frames)} frames at {fps} fps and {dpi} dpi to "{filename}" using {writer}...')
 
     # Actually create the animation -- warning, no way to not actually have it render!
     anim = animation.ArtistAnimation(fig, frames, interval=interval, repeat_delay=repeat_delay, repeat=repeat, blit=blit)
     anim.save(filename, writer=writer, fps=fps, dpi=dpi, bitrate=bitrate, **kwargs)
 
     if verbose:
-        print('Done; movie saved to "%s"' % filename)
+        print(f'Done; movie saved to "{filename}"')
         try: # Not essential, so don't try too hard if this doesn't work
             filesize = os.path.getsize(filename)
-            if filesize<1e6: print('File size: %0.0f KB' % (filesize/1e3))
-            else:            print('File size: %0.2f MB' % (filesize/1e6))
+            if filesize<1e6: print(f'File size: {filesize/1e3:0.0f} KB')
+            else:            print(f'File size: {filesize/1e6:0.2f} MB')
         except:
             pass
         ut.toc(start)

@@ -107,6 +107,7 @@ def test_find():
 
 
 def test_repr():
+    sc.heading('Testing repr')
     n_entries = 300
     qq = sc.odict()
     for i in range(n_entries):
@@ -116,7 +117,27 @@ def test_repr():
     return
 
 
+def test_default():
+    sc.heading('Testing default')
+
+    o = sc.odict(foo=[1,2,3], defaultdict=list)
+    o['bar'].extend([1,2,3])
+    assert o[0] == o[1]
+
+    lam = lambda: 44
+    o = sc.odict(defaultdict=lam)
+    assert o['anything'] == lam()
+
+    # Testing objdict
+    j = sc.objdict(a=1, b=2, defaultdict='nested')
+    j.c.d.e = 3
+    print(j)
+
+    return
+
+
 def test_other():
+    sc.heading('Testing other')
     o = sc.odict(foo=[1,2,3,4], bar=[5,6,7,8])
 
     print('Testing enumerate')
@@ -130,13 +151,21 @@ def test_other():
     o.export()
 
     print('Testing pop')
-    o.pop('foo')
+    o1 = sc.dcp(o)
+    o2 = sc.dcp(o)
+    o3 = sc.dcp(o)
+    o4 = sc.dcp(o)
+    o1.pop('foo')
+    o2.pop(0)
+    o3.pop([0,1])
+    o4.pop(slice(-1))
 
     print('Testing copy')
     o.copy('bar', 'cat')
 
     print('Testing append')
     o.append(239)
+    o.valind(239)
 
     print('Testing sort')
     v = sc.odict(dog=12, cat=8, hamster=244)
@@ -144,9 +173,13 @@ def test_other():
 
     print('Testing reverse')
     o.reverse()
+    o.reversed()
 
     print('Testing promote')
     od = sc.odict.promote(['There','are',4,'keys'])
+
+    print('Testing conversion')
+    od.to_OD()
 
     print('Testing clear')
     od.clear()
@@ -155,9 +188,11 @@ def test_other():
 
 
 def test_asobj():
+    sc.heading('Testing objdict/asobj')
     d = dict(foo=1, bar=2)
     d_obj = sc.asobj(d)
     d_obj.foo = 10
+    assert d_obj.bar == 2
     return
 
 
@@ -173,6 +208,7 @@ if __name__ == '__main__':
     test_each()
     test_find()
     test_repr()
+    test_default()
     test_other()
     test_asobj()
 
