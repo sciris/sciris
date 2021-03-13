@@ -70,7 +70,7 @@ def safedivide(numerator=None, denominator=None, default=None, eps=None, warn=Fa
         output = numerator/denominator
         output[invalid] = default
     else: # Unclear input, raise exception
-        errormsg = 'Input type %s not understood: must be number or array' % type(denominator)
+        errormsg = f'Input type {type(denominator)} not understood: must be number or array'
         raise Exception(errormsg)
 
     return output
@@ -226,7 +226,8 @@ def getvaliddata(data=None, filterdata=None, defaultind=0):
         elif len(validindices)==1: # They're different lengths and it has length 1: it's an assumption
             validdata = np.array([np.array(data)[defaultind]]) # Use the default index; usually either 0 (start) or -1 (end)
         else:
-            raise Exception('Array sizes are mismatched: %i vs. %i' % (len(data), len(validindices)))
+            errormsg = f'Array sizes are mismatched: {len(data)} vs. {len(validindices)}'
+            raise Exception(errormsg)
     else:
         validdata = np.array([]) # No valid data, return an empty array
     return validdata
@@ -262,10 +263,11 @@ def sanitize(data=None, returninds=False, replacenans=None, die=True, defaultval
                     sanitized = 0.0
                     if verbose:
                         if label is None: label = 'this parameter'
-                        print('sanitize(): no data entered for %s, assuming 0' % label)
+                        print(f'sc.sanitize(): no data entered for {label}, assuming 0')
         except Exception as E:
             if die:
-                raise Exception('Sanitization failed on array: "%s":\n %s' % (repr(E), data))
+                errormsg = f'Sanitization failed on array: "{repr(E)}":\n{data}'
+                raise Exception(errormsg)
             else:
                 sanitized = data # Give up and just return an empty array
                 inds = []
@@ -305,10 +307,10 @@ def isprime(n, verbose=False):
     f = 5
     while f <= r:
         if n%f == 0:
-            if verbose: print('Not prime: divisible by %s' % f)
+            if verbose: print(f'Not prime: divisible by {f}')
             return False
         if n%(f+2) == 0:
-            if verbose: print('Not prime: divisible by %s' % (f+2))
+            if verbose: print(f'Not prime: divisible by {f+2}')
             return False
         f +=6
     if verbose: print('Is prime!')
@@ -496,7 +498,7 @@ def smoothinterp(newx=None, origx=None, origy=None, smoothness=None, growth=None
     if not(origx.shape): raise Exception('To interpolate, must have at least one original x value to interpolate to')
     if not(origy.shape): raise Exception('To interpolate, must have at least one original y value to interpolate to')
     if not(origx.shape==origy.shape):
-        errormsg = 'To interpolate, original x and y vectors must be same length (x=%i, y=%i)' % (len(origx), len(origy))
+        errormsg = f'To interpolate, original x and y vectors must be same length (x={len(origx)}, y={len(origy)})'
         raise Exception(errormsg)
 
     # Make sure it's in the correct order
@@ -524,7 +526,8 @@ def smoothinterp(newx=None, origx=None, origy=None, smoothness=None, growth=None
             xind = np.argmin(abs(finiteorigx-x)) # Find the nearest neighbor
             newy[i] = finiteorigy[xind] # Copy it
     else:
-        raise Exception('Method "%s" not found; methods are "linear" or "nearest"' % method)
+        errormsg = f'Method "{method}" not found; methods are "linear" or "nearest"'
+        raise Exception(errormsg)
 
     # Perform smoothing
     if smoothness is None: smoothness = np.ceil(len(newx)/len(origx)) # Calculate smoothness: this is consistent smoothing regardless of the size of the arrays

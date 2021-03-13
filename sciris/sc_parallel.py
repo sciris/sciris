@@ -449,19 +449,19 @@ def _parallelcmd_task(_cmd, _parfor, _returnval, _i, _outputqueue, _maxload, _in
     # Set the loop variables
     for _key in _parfor.keys():
         _thisval = _parfor[_key][_i] # analysis:ignore
-        exec('%s = _thisval' % _key) # Set the value of this variable
+        exec(f'{_key} = _thisval') # Set the value of this variable
 
     # Set the keyword arguments
     for _key in _kwargs.keys():
         _thisval = _kwargs[_key] # analysis:ignore
-        exec('%s = _thisval' % _key) # Set the value of this variable
+        exec(f'{_key} = _thisval') # Set the value of this variable
 
     # Calculate the command
     try:
         exec(_cmd) # The meat of the matter!
     except Exception as E:
-        print('WARNING, parallel task failed:\n%s' % str(E))
-        exec('%s = None' % _returnval)
+        print(f'WARNING, parallel task failed:\n{str(E)}')
+        exec(f'{_returnval} = None')
 
     # Append results
     _outputqueue.put((_i,eval(_returnval)))
