@@ -64,13 +64,13 @@ def loadobj(filename=None, folder=None, verbose=False, die=None):
     elif isinstance(filename, io.BytesIO):
         argtype = 'fileobj'
     else:
-        errormsg = 'First argument to loadobj() must be a string or file object, not %s' % type(filename)
-        raise Exception(errormsg)
+        errormsg = f'First argument to loadobj() must be a string or file object, not {type(filename)}'
+        raise TypeError(errormsg)
     kwargs = {'mode': 'rb', argtype: filename}
     with GzipFile(**kwargs) as fileobj:
         filestr = fileobj.read() # Convert it to a string
         obj = _unpickler(filestr, filename=filename, verbose=verbose, die=die) # Actually load it
-    if verbose: print('Object loaded from "%s"' % filename)
+    if verbose: print(f'Object loaded from "{filename}"')
     return obj
 
 
@@ -130,11 +130,11 @@ def saveobj(filename=None, obj=None, compresslevel=5, verbose=0, folder=None, me
                 if verbose>=2: print('Saving as pickle...')
                 _savepickle(fileobj, obj, *args, **kwargs) # Use pickle
             except Exception as E:
-                if verbose>=2: print('Exception when saving as pickle (%s), saving as dill...' % repr(E))
+                if verbose>=2: print(f'Exception when saving as pickle ({repr(E)}), saving as dill...')
                 _savedill(fileobj, obj, *args, **kwargs) # ...but use Dill if that fails
 
     if verbose and filename:
-        print('Object saved to "%s"' % filename)
+        print(f'Object saved to "{filename}"')
 
     if filename:
         return filename
@@ -220,7 +220,7 @@ def savezip(filename=None, filelist=None, folder=None, basename=True, verbose=Tr
             if basename: thisname = os.path.basename(thispath)
             else:        thisname = thispath
             zf.write(thispath, thisname)
-    if verbose: print('Zip file saved to "%s"' % fullpath)
+    if verbose: print(f'Zip file saved to "{fullpath}"')
     return fullpath
 
 
@@ -337,7 +337,7 @@ def makefilepath(filename=None, folder=None, ext=None, default=None, split=False
     if ext and not filebasename.endswith(ext):
         filebasename += '.'+ext
     if verbose:
-        print('From filename="%s", default="%s", extension="%s", made basename "%s"' % (filename, default, ext, filebasename))
+        print(f'From filename="{filename}", default="{default}", extension="{ext}", made basename "{filebasename}"')
 
     # Sanitize base filename
     if sanitize: filebasename = sanitizefilename(filebasename)
@@ -488,7 +488,7 @@ def sanitizejson(obj, verbose=True, die=False, tostring=False, **kwargs):
         try:
             output = jsonpickle(obj)
         except Exception as E:
-            errormsg = 'Could not sanitize "%s" %s (%s), converting to string instead' % (obj, type(obj), str(E))
+            errormsg = f'Could not sanitize "{obj}" {type(obj)} ({str(E)}), converting to string instead'
             if die:       raise Exception(errormsg)
             elif verbose: print(errormsg)
             output = str(obj)
@@ -699,8 +699,8 @@ class Blobject(object):
             elif ut.isstring(source):
                 self.blob = read_file(source)
             else:
-                errormsg = 'Input source must be type string (for a filename) or BytesIO, not %s' % type(source)
-                raise Exception(errormsg)
+                errormsg = f'Input source must be type string (for a filename) or BytesIO, not {type(source)}'
+                raise TypeError(errormsg)
 
         self.modified = ut.now()
         return None
@@ -711,7 +711,7 @@ class Blobject(object):
         with open(filepath, mode='wb') as f:
             f.write(self.blob)
         self.filename = filename
-        print('Object saved to %s.' % filepath)
+        print(f'Object saved to {filepath}.')
         return filepath
 
     def tofile(self, output=True):
@@ -812,8 +812,8 @@ class Spreadsheet(Blobject):
                 for c,val in enumerate(rowdata):
                     sheetoutput[r][c] = rawdata[r][c].value
         else:
-            errormsg = 'Reading method not found; must be one of xlrd, openpyexcel, or pandas, not %s' % method
-            raise Exception(errormsg)
+            errormsg = f'Reading method not found; must be one of xlrd, openpyexcel, or pandas, not {method}'
+            raise ValueError(errormsg)
 
         # Return the appropriate output.
         cells = kwargs.get('cells')
@@ -838,19 +838,19 @@ class Spreadsheet(Blobject):
         # Load workbook
         if wbargs is None: wbargs = {}
         wb = self.openpyexcel(**wbargs)
-        if verbose: print('Workbook loaded: %s' % wb)
+        if verbose: print(f'Workbook loaded: {wb}')
 
         # Get right worksheet
         ws = self._getsheet(book=wb, sheetname=sheetname, sheetnum=sheetnum)
-        if verbose: print('Worksheet loaded: %s' % ws)
+        if verbose: print(f'Worksheet loaded: {ws}')
 
         # Determine the cells
         if cells is not None: # A list of cells is supplied
             cells = ut.promotetolist(cells)
             vals  = ut.promotetolist(vals)
             if len(cells) != len(vals):
-                errormsg = 'If using cells, cells and vals must have the same length (%s vs. %s)' % (len(cells), len(vals))
-                raise Exception(errormsg)
+                errormsg = f'If using cells, cells and vals must have the same length ({len(cells)} vs. {len(vals)})'
+                raise ValueError(errormsg)
             for cell,val in zip(cells,vals):
                 try:
                     if ut.isstring(cell): # Handles e.g. cell='A1'
@@ -858,17 +858,17 @@ class Spreadsheet(Blobject):
                     elif ut.checktype(cell, 'arraylike','number') and len(cell)==2: # Handles e.g. cell=(0,0)
                         cellobj = ws.cell(row=cell[0], column=cell[1])
                     else:
-                        errormsg = 'Cell must be formatted as a label or row-column pair, e.g. "A1" or (3,5); not "%s"' % cell
-                        raise Exception(errormsg)
-                    if verbose: print('  Cell %s = %s' % (cell,val))
+                        errormsg = f'Cell must be formatted as a label or row-column pair, e.g. "A1" or (3,5); not "{cell}"'
+                        raise TypeError(errormsg)
+                    if verbose: print(f'  Cell {cell} = {val}')
                     if isinstance(val,tuple):
                         cellobj.value = val[0]
                         cellobj.cached_value = val[1]
                     else:
                         cellobj.value = val
                 except Exception as E:
-                    errormsg = 'Could not write "%s" to cell "%s": %s' % (val, cell, repr(E))
-                    raise Exception(errormsg)
+                    errormsg = f'Could not write "{val}" to cell "{cell}": {repr(E)}'
+                    raise RuntimeError(errormsg)
         else:# Cells aren't supplied, assume a matrix
             if startrow is None: startrow = 1 # Excel uses 1-based indexing
             if startcol is None: startcol = 1
@@ -878,12 +878,12 @@ class Spreadsheet(Blobject):
                 for j,val in enumerate(rowvals):
                     col = startcol + j
                     try:
-                        key = 'row:%s col:%s' % (row,col)
+                        key = f'row:{row} col:{col}'
                         ws.cell(row=row, column=col, value=val)
-                        if verbose: print('  Cell %s = %s' % (key, val))
+                        if verbose: print(f'  Cell {key} = {val}')
                     except Exception as E:
-                        errormsg = 'Could not write "%s" to %s: %s' % (val, key, repr(E))
-                        raise Exception(errormsg)
+                        errormsg = f'Could not write "{val}" to {key}: {repr(E)}'
+                        raise RuntimeError(errormsg)
 
         # Save
         wb.save(self.freshbytes())
@@ -924,7 +924,7 @@ def loadspreadsheet(filename=None, folder=None, fileobj=None, sheetname=None, sh
         rawdata.append(odict())
         for colnum in range(sheet.ncols):
             if header: attr = sheet.cell_value(0,colnum)
-            else:      attr = 'Column %s' % colnum
+            else:      attr = f'Column {colnum}'
             attr = ut.uniquename(attr, namelist=rawdata[rownum].keys(), style='(%d)')
             val = sheet.cell_value(rownum+header,colnum)
             try:
@@ -1012,8 +1012,8 @@ def savespreadsheet(filename=None, data=None, folder=None, sheetnames=None, clos
     elif isinstance(data, dict) and sheetnames is not None:
         if verbose: print('Data is a dict, taking sheetnames from input')
         if len(sheetnames) != len(data):
-            errormsg = 'If supplying data as a dict as well as sheetnames, length must matc (%s vs %s)' % (len(data), len(sheetnames))
-            raise Exception(errormsg)
+            errormsg = f'If supplying data as a dict as well as sheetnames, length must match ({len(data)} vs {len(sheetnames)})'
+            raise ValueError(errormsg)
         datadict   = odict(data) # Use directly, but keep original sheet names
         if hasformats: formatdict = odict(formatdata)
     elif not isinstance(data, dict):
@@ -1029,18 +1029,18 @@ def savespreadsheet(filename=None, data=None, folder=None, sheetnames=None, clos
                     datadict[sheetname] = data[s] # Assume there's a 1-to-1 mapping
                     if hasformats: formatdict[sheetname] = formatdata[s]
             else:
-                errormsg = 'Unable to figure out how to match %s sheet names with data of length %s' % (len(sheetnames), len(data))
-                raise Exception(errormsg)
+                errormsg = f'Unable to figure out how to match {len(sheetnames)} sheet names with data of length {len(data)}'
+                raise ValueError(errormsg)
     else:
         raise Exception('Cannot figure out the format of the data') # This shouldn't happen!
 
     # Create workbook
-    if verbose: print('Creating file %s' % fullpath)
+    if verbose: print(f'Creating file {fullpath}')
     workbook = xlsxwriter.Workbook(fullpath)
 
     # Optionally add formats
     if formats is not None:
-        if verbose: print('  Adding %s formats' % len(formats))
+        if verbose: print(f'  Adding {len(formats)} formats')
         workbook_formats = dict()
         for formatkey,formatval in formats.items():
             workbook_formats[formatkey] = workbook.add_format(formatval)
@@ -1049,14 +1049,14 @@ def savespreadsheet(filename=None, data=None, folder=None, sheetnames=None, clos
 
     # Actually write the data
     for sheetname in datadict.keys():
-        if verbose: print('  Creating sheet %s' % sheetname)
+        if verbose: print(f'  Creating sheet {sheetname}')
         sheetdata   = datadict[sheetname]
         if hasformats: sheetformat = formatdict[sheetname]
         worksheet = workbook.add_worksheet(sheetname)
         for r,row_data in enumerate(sheetdata):
-            if verbose: print('    Writing row %s/%s' % (r, len(sheetdata)))
+            if verbose: print(f'    Writing row {r}/{len(sheetdata)}')
             for c,cell_data in enumerate(row_data):
-                if verbose: print('      Writing cell %s/%s' % (c, len(row_data)))
+                if verbose: print(f'      Writing cell {c}/{len(row_data)}')
                 if hasformats:
                     thisformat = workbook_formats[sheetformat[r][c]] # Get the actual format
                 try:
@@ -1064,12 +1064,12 @@ def savespreadsheet(filename=None, data=None, folder=None, sheetnames=None, clos
                         cell_data = str(cell_data) # Convert everything except numbers to strings -- use formatting to handle the rest
                     worksheet.write(r, c, cell_data, thisformat) # Write with or without formatting
                 except Exception as E:
-                    errormsg = 'Could not write cell [%s,%s] data="%s", format="%s": %s' % (r, c, cell_data, thisformat, str(E))
-                    raise Exception(errormsg)
+                    errormsg = f'Could not write cell [{r},{c}] data="{cell_data}", format="{thisformat}": {str(E)}'
+                    raise RuntimeError(errormsg)
 
     # Either close the workbook and write to file, or return it for further working
     if close:
-        if verbose: print('Saving file %s and closing' % filename)
+        if verbose: print(f'Saving file {filename} and closing')
         workbook.close()
         return fullpath
     else:
@@ -1100,10 +1100,10 @@ class Failed(object):
     def showfailures(self, verbose=True, tostring=False):
         output = ''
         for f,failure in self.failure_info.enumvals():
-            output += '\nFailure %s of %s:\n' % (f+1, len(self.failure_info))
-            output += 'Module: %s\n' % failure['module']
-            output += 'Class: %s\n' % failure['class']
-            output += 'Error: %s\n' % failure['error']
+            output += f'\nFailure {f+1} of {len(self.failure_info)}:\n'
+            output += f'Module: {failure["module"]}\n'
+            output += f'Class: {failure["class"]}\n'
+            output += f'Error: {failure["error"]}\n'
             if verbose:
                 output += '\nTraceback:\n'
                 output += failure['exception']
@@ -1127,7 +1127,7 @@ class Empty(object):
 
 def makefailed(module_name=None, name=None, error=None, exception=None):
     ''' Create a class -- not an object! -- that contains the failure info for a pickle that failed to load '''
-    key = 'Failure %s' % (len(Failed.failure_info)+1)
+    key = f'Failure {len(Failed.failure_info)+1}'
     Failed.failure_info[key] = odict()
     Failed.failure_info[key]['module'] = module_name
     Failed.failure_info[key]['class'] = name
@@ -1147,7 +1147,7 @@ class _RobustUnpickler(pkl.Unpickler):
             module = importlib.import_module(module_name)
             obj = getattr(module, name)
         except Exception as E:
-            if verbose: print('Unpickling warning: could not import %s.%s: %s' % (module_name, name, str(E)))
+            if verbose: print(f'Unpickling warning: could not import {module_name}.{name}: {str(E)}'
             exception = traceback.format_exc() # Grab the trackback stack
             obj = makefailed(module_name=module_name, name=name, error=E, exception=exception)
         return obj
@@ -1164,24 +1164,24 @@ def _unpickler(string=None, filename=None, filestring=None, die=None, verbose=Fa
             raise E1
         else:
             try:
-                if verbose: print('Standard unpickling failed (%s), trying encoding...' % str(E1))
+                if verbose: print(f'Standard unpickling failed ({str(E1)}), trying encoding...')
                 obj = pkl.loads(string, encoding='latin1') # Try loading it again with different encoding
             except Exception as E2:
                 try:
-                    if verbose: print('Encoded unpickling failed (%s), trying dill...' % str(E2))
+                    if verbose: print(f'Encoded unpickling failed ({str(E2)}), trying dill...')
                     import dill # Optional Sciris dependency
                     obj = dill.loads(string) # If that fails, try dill
                 except Exception as E3:
                     try:
-                        if verbose: print('Dill failed (%s), trying robust unpickler...' % str(E3))
+                        if verbose: print(f'Dill failed ({str(E3)}), trying robust unpickler...')
                         obj = _RobustUnpickler(io.BytesIO(string)).load() # And if that trails, throw everything at it
                     except Exception as E4:
                         try:
-                            if verbose: print('Robust unpickler failed (%s), trying Python 2->3 conversion...' % str(E4))
+                            if verbose: print(f'Robust unpickler failed ({str(E4)}), trying Python 2->3 conversion...')
                             obj = loadobj2to3(filename=filename, filestring=filestring)
                         except Exception as E5:
-                            if verbose: print('Python 2->3 conversion failed (%s), giving up...' % str(E5))
-                            errormsg = 'All available unpickling methods failed:\n    Standard: %s\n     Encoded: %s\n        Dill: %s\n      Robust: %s\n  Python2->3: %s' % (E1, E2, E3, E4, E5)
+                            if verbose: print(f'Python 2->3 conversion failed ({str(E5)}), giving up...')
+                            errormsg = f'All available unpickling methods failed:\n    Standard: {E1}\n     Encoded: {E2}\n        Dill: {E3}\n      Robust: {E4}\n  Python2->3: {E5}'
                             raise Exception(errormsg)
 
     if isinstance(obj, Failed):
@@ -1238,25 +1238,25 @@ def loadobj2to3(filename=None, filestring=None, recursionlimit=None):
 
     class StringUnpickler(pkl.Unpickler):
         def find_class(self, module, name, verbose=False):
-            if verbose: print('Unpickling string module %s , name %s' % (module, name))
+            if verbose: print(f'Unpickling string module {module}, name {name}')
             if name in not_string_pickleable:
                 return Empty
             else:
                 try:
                     output = pkl.Unpickler.find_class(self,module,name)
                 except Exception as E:
-                    print('Warning, string unpickling could not find module %s, name %s: %s' % (module, name, str(E)))
+                    print(f'Warning, string unpickling could not find module {module}, name {name}: {str(E)}')
                     output = Empty
                 return output
 
     class BytesUnpickler(pkl.Unpickler):
         def find_class(self, module, name, verbose=False):
-            if verbose: print('Unpickling bytes module %s , name %s' % (module, name))
+            if verbose: print(f'Unpickling bytes module {module}, name {name}')
             if name in byte_objects:
                 try:
                     output = pkl.Unpickler.find_class(self,module,name)
                 except Exception as E:
-                    print('Warning, bytes unpickling could not find module %s, name %s: %s' % (module, name, str(E)))
+                    print(f'Warning, bytes unpickling could not find module {module}, name {name}: {str(E)}')
                     output = Placeholder
                 return output
             else:
@@ -1267,7 +1267,7 @@ def loadobj2to3(filename=None, filestring=None, recursionlimit=None):
             recursionlimit = 1000 # Better to die here than hit Python's recursion limit
 
         def recursion_warning(count, obj1, obj2):
-            output = 'Warning, internal recursion depth exceeded, aborting: depth=%s, %s -> %s' % (count, type(obj1), type(obj2))
+            output = f'Warning, internal recursion depth exceeded, aborting: depth={count}, {type(obj1)} -> {type(obj2)}'
             return output
 
         recursionlevel += 1
@@ -1312,7 +1312,7 @@ def loadobj2to3(filename=None, filestring=None, recursionlimit=None):
         try:
             stringout = unpickler1.load()
         except Exception as E:
-            print('Warning, string pickle loading failed: %s' % str(E))
+            print(f'Warning, string pickle loading failed: {str(E)}')
             exception = traceback.format_exc() # Grab the trackback stack
             stringout = makefailed(module_name='String unpickler failed', name='n/a', error=E, exception=exception)
         return stringout
@@ -1322,7 +1322,7 @@ def loadobj2to3(filename=None, filestring=None, recursionlimit=None):
         try:
             bytesout  = unpickler2.load()
         except Exception as E:
-            print('Warning, bytes pickle loading failed: %s' % str(E))
+            print(f'Warning, bytes pickle loading failed: {str(E)}')
             exception = traceback.format_exc() # Grab the trackback stack
             bytesout = makefailed(module_name='Bytes unpickler failed', name='n/a', error=E, exception=exception)
         return bytesout
