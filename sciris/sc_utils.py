@@ -216,9 +216,9 @@ def uuid(uid=None, which=None, die=False, tostring=False, length=None, n=1, **kw
             else: # Convert
                 output = py_uuid.UUID(uid)
         except Exception as E:
-            errormsg = 'Could not convert "%s" to a UID (%s)' % (uid, repr(E))
+            errormsg = f'Could not convert "{uid}" to a UID ({repr(E)})'
             if die:
-                raise Exception(errormsg)
+                raise TypeError(errormsg)
             else:
                 print(errormsg)
                 uid = None # Just create a new one
@@ -259,7 +259,7 @@ def dcp(obj, verbose=True, die=False):
         output = copy.deepcopy(obj)
     except Exception as E:
         output = cp(obj)
-        errormsg = 'Warning: could not perform deep copy, performing shallow instead: %s' % str(E)
+        errormsg = f'Warning: could not perform deep copy, performing shallow instead: {str(E)}'
         if die: raise Exception(errormsg)
         else:   print(errormsg)
     return output
@@ -292,7 +292,7 @@ def pp(obj, jsonify=True, verbose=False, doprint=True, *args, **kwargs):
         try:
             toprint = json.loads(json.dumps(obj)) # This is to handle things like OrderedDicts
         except Exception as E:
-            if verbose: print('Could not jsonify object ("%s"), printing default...' % str(E))
+            if verbose: print(f'Could not jsonify object ("{str(E)}"), printing default...')
             toprint = obj # If problems are encountered, just return the object
     else:
         toprint = obj
@@ -422,7 +422,7 @@ def printv(string, thisverbose=1, verbose=2, newline=True, indent=True):
 
     Version: 2016jan30
     '''
-    if thisverbose>4 or verbose>4: print('Warning, verbosity should be from 0-4 (this message: %i; current: %i)' % (thisverbose, verbose))
+    if thisverbose>4 or verbose>4: print(f'Warning, verbosity should be from 0-4 (this message: {thisverbose}; current: {verbose})')
     if verbose>=thisverbose: # Only print if sufficiently verbose
         indents = '  '*thisverbose*bool(indent) # Create automatic indenting
         if newline: print(indents+flexstr(string)) # Actually print
@@ -495,7 +495,8 @@ def createcollist(items, title=None, strlen=18, ncol=3):
 
 def objectid(obj):
     ''' Return the object ID as per the default Python __repr__ method '''
-    output = '<%s.%s at %s>\n' % (obj.__class__.__module__, obj.__class__.__name__, hex(id(obj)))
+    c = obj.__class__
+    output = f'<{c.__module__}.{c.__name__} at {hex(id(obj))}>\n'
     return output
 
 
@@ -593,7 +594,7 @@ def prepr(obj, maxlen=None, maxitems=None, skip=None, dividerchar='—', divider
     try:
         if not (hasattr(obj, '__dict__') or hasattr(obj, '__slots__')):
             # It's a plain object
-            labels = ['%s' % type(obj)]
+            labels = [f'{type(obj)}']
             values = [repr_fn(obj)]
         else:
             if hasattr(obj, '__dict__'):
@@ -780,7 +781,7 @@ def sigfig(x, sigfigs=5, SI=False, sep=False, keepints=False):
             elif x>(10**sigfigs) and not SI and keepints: # e.g. x = 23432.23, sigfigs=3, output is 23432
                 roundnumber = int(round(x))
                 if sep: string = format(roundnumber, ',')
-                else:   string = '%0.0f' % x
+                else:   string = f'{x:0.0f}'
                 output.append(string)
             else:
                 magnitude = np.floor(np.log10(abs(x)))
@@ -788,7 +789,7 @@ def sigfig(x, sigfigs=5, SI=False, sep=False, keepints=False):
                 x = round(x*factor)/float(factor)
                 digits = int(abs(magnitude) + max(0, sigfigs - max(0,magnitude) - 1) + 1 + (x<0) + (abs(x)<1)) # one because, one for decimal, one for minus
                 decimals = int(max(0,-magnitude+sigfigs-1))
-                strformat = '%' + '%i.%i' % (digits, decimals)  + 'f'
+                strformat = '%' + f'{digits}.{decimals}' + 'f'
                 string = strformat % x
                 if sep: # To insert separators in the right place, have to convert back to a number
                     if decimals>0:  roundnumber = float(string)
@@ -849,12 +850,12 @@ def printdata(data, name='Variable', depth=1, maxlen=40, indent='', level=0, sho
     '''
     datatype = type(data)
     def printentry(data):
-        if   datatype==dict:              string = ('dict with %i keys' % len(data.keys()))
-        elif datatype==list:              string = ('list of length %i' % len(data))
-        elif datatype==tuple:             string = ('tuple of length %i' % len(data))
-        elif datatype==np.ndarray:        string = ('array of shape %s' % flexstr(np.shape(data)))
-        elif datatype.__name__=='module': string = ('module with %i components' % len(dir(data)))
-        elif datatype.__name__=='class':  string = ('class with %i components' % len(dir(data)))
+        if   datatype==dict:              string = (f'dict with {len(data.keys())} keys')
+        elif datatype==list:              string = (f'list of length {len(data)}')
+        elif datatype==tuple:             string = (f'tuple of length {len(data)}')
+        elif datatype==np.ndarray:        string = (f'array of shape {np.shape(data)}')
+        elif datatype.__name__=='module': string = (f'module with {len(dir(data))} components')
+        elif datatype.__name__=='class':  string = (f'class with {len(dir(data))} components')
         else: string = datatype.__name__
         if showcontents and maxlen>0:
             datastring = ' | '+flexstr(data)
@@ -915,13 +916,13 @@ def printvars(localvars=None, varlist=None, label=None, divider=True, spaces=1, 
     varlist = promotetolist(varlist) # Make sure it's actually a list
     dividerstr = '-'*40
 
-    if label:  print('Variables for %s:' % label)
+    if label:  print(f'Variables for {label}:')
     if divider: print(dividerstr)
     for varnum,varname in enumerate(varlist):
-        controlstr = '%i. "%s": ' % (varnum, varname) # Basis for the control string -- variable number and name
+        controlstr = f'{varnum}. "{varname}": ' # Basis for the control string -- variable number and name
         if color: controlstr = colorize(color, output=True) + controlstr + colorize('reset', output=True) # Optionally add color
         if spaces>1: controlstr += '\n' # Add a newline if the variables are going to be on different lines
-        try:    controlstr += '%s' % localvars[varname] # The variable to be printed
+        try:    controlstr += f'{localvars[varname]}' # The variable to be printed
         except: controlstr += 'WARNING, could not be printed' # In case something goes wrong
         controlstr += '\n' * spaces # The number of spaces to add between variables
         print(controlstr), # Print it out
@@ -963,8 +964,8 @@ def slacknotification(message=None, webhook=None, to=None, fromuser=None, verbos
         from requests import post # Simple way of posting data to a URL
         from json import dumps # For sanitizing the message
     except Exception as E:
-        errormsg = 'Cannot use Slack notification since imports failed: %s' % str(E)
-        if die: raise Exception(errormsg)
+        errormsg = f'Cannot use Slack notification since imports failed: {str(E)}'
+        if die: raise ImportError(errormsg)
         else:   print(errormsg)
 
     # Validate input arguments
@@ -973,7 +974,7 @@ def slacknotification(message=None, webhook=None, to=None, fromuser=None, verbos
     if not to:       to       = '#general'
     if not fromuser: fromuser = 'sciris-bot'
     if not message:  message  = 'This is an automated notification: your notifier is notifying you.'
-    printv('Channel: %s | User: %s | Message: %s' % (to, fromuser, message), 3, verbose) # Print details of what's being sent
+    printv(f'Channel: {to} | User: {fromuser} | Message: {message}', 3, verbose) # Print details of what's being sent
 
     # Try opening webhook as a file
     if webhook.find('hooks.slack.com')>=0: # It seems to be a URL, let's proceed
@@ -984,20 +985,20 @@ def slacknotification(message=None, webhook=None, to=None, fromuser=None, verbos
         slackurl = os.getenv('SLACKURL')
     else:
         slackurl = webhook # It doesn't seemt to be a URL but let's try anyway
-        errormsg = '"%s" does not seem to be a valid webhook string or file' % webhook
-        if die: raise Exception(errormsg)
+        errormsg = f'"{webhook}" does not seem to be a valid webhook string or file'
+        if die: raise ValueError(errormsg)
         else:   print(errormsg)
 
     # Package and post payload
     try:
         payload = '{"text": %s, "channel": %s, "username": %s}' % (dumps(message), dumps(to), dumps(fromuser))
-        printv('Full payload: %s' % payload, 4, verbose)
+        printv(f'Full payload: {payload}', 4, verbose)
         response = post(url=slackurl, data=payload)
         printv(response, 3, verbose) # Optionally print response
         printv('Message sent.', 2, verbose) # We're done
     except Exception as E:
-        errormsg = 'Sending of Slack message failed: %s' % repr(E)
-        if die: raise Exception(errormsg)
+        errormsg = f'Sending of Slack message failed: {repr(E)}'
+        if die: raise RuntimeError(errormsg)
         else:   print(errormsg)
     return None
 
@@ -1016,14 +1017,16 @@ def printtologfile(message=None, filename=None):
     if message is None:
         return None # Return immediately if nothing to append
     if filename is None:
-        filename = '/tmp/logfile' # Some generic filename that should work on *nix systems
+        import tempfile
+        tempdir = tempfile.gettempdir()
+        filename = os.path.join(tempdir, 'logfile') # Some generic filename that should work on *nix systems
 
     # Try writing to file
     try:
         with open(filename, 'a') as f:
             f.write('\n'+message+'\n') # Add a newline to the message.
-    except: # Fail gracefully
-        print('WARNING, could not write to logfile %s' % filename)
+    except Exception as E: # Fail gracefully
+        print(f'WARNING, could not write to logfile {filename}: {str(E)}')
 
     return None
 
@@ -1085,7 +1088,7 @@ def colorize(color=None, string=None, output=False, showhelp=False, enable=True)
     colorlist = promotetolist(color)  # Make sure it's a list
     for color in colorlist:
         if color not in ansicolors.keys():
-            print('Color "%s" is not available, use colorize(showhelp=True) to show options.' % color)
+            print(f'Color "{color}" is not available, use colorize(showhelp=True) to show options.')
             return None  # Don't proceed if the color isn't found
     ansicolor = ''
     for color in colorlist:
@@ -1311,7 +1314,7 @@ def checktype(obj=None, objtype=None, subtype=None, die=False):
     # Decide what to do with the information thus gleaned
     if die: # Either raise an exception or do nothing if die is True
         if not result: # It's not an instance
-            errormsg = 'Incorrect type: object is %s, but %s is required' % (type(obj), objtype)
+            errormsg = f'Incorrect type: object is {type(obj)}, but {objtype} is required'
             raise TypeError(errormsg)
         else:
             return None # It's fine, do nothing
@@ -1608,24 +1611,21 @@ def getdate(obj=None, astype='str', dateformat=None):
             astype = 'str' # If dateformat is specified, assume type is a string
 
         try:
-            if isstring(obj): return obj # Return directly if it's a string
+            if isstring(obj):
+                return obj # Return directly if it's a string
             obj.timetuple() # Try something that will only work if it's a date object
             dateobj = obj # Test passed: it's a date object
         except Exception as E: # It's not a date object
-            raise Exception('Getting date failed; date must be a string or a date object: %s' % repr(E))
+            errormsg = f'Getting date failed; date must be a string or a date object: {repr(E)}'
+            raise TypeError(errormsg)
 
-        if astype=='str':
-            output = dateobj.strftime(dateformat)
-            return output
-        elif astype=='int':
-            output = time.mktime(dateobj.timetuple()) # So ugly!! But it works -- return integer representation of time
-            return output
-        elif astype=='dateobj':
-            return dateobj
+        if   astype == 'str':     output = dateobj.strftime(dateformat)
+        elif astype == 'int':     output = time.mktime(dateobj.timetuple()) # So ugly!! But it works -- return integer representation of time
+        elif astype == 'dateobj': output = dateobj
         else:
-            errormsg = '"astype=%s" not understood; must be "str" or "int"' % astype
-            raise Exception(errormsg)
-        return None # Should not be possible to get to this point
+            errormsg = f'"astype={astype}" not understood; must be "str" or "int"'
+            raise ValueError(errormsg)
+        return output
 
 
 def _sanitize_iterables(obj, *args):
@@ -1982,15 +1982,15 @@ def elapsedtimestr(pasttime, maxdays=5, shortmonths=True):
     # If the user passes in a string, try to turn it into a datetime object before continuing
     if isinstance(pasttime, str):
         try:
-            pasttime = dt.datetime.strptime(pasttime, "%Y-%m-%dT%H:%M:%S.%fZ")
-        except ValueError:
-            raise ValueError("User supplied string %s is not in ISO 8601 "
-                             "format." % pasttime)
+            pasttime = readdate(pasttime)
+        except ValueError as E:
+            errormsg = f"User supplied string {pasttime} is not in a readable format."
+            raise ValueError(errormsg) from E
     elif isinstance(pasttime, dt.datetime):
         pass
     else:
-        raise ValueError("User-supplied value %s is neither a datetime object "
-                         "nor an ISO 8601 string." % pasttime)
+        errormsg = f"User-supplied value {pasttime} is neither a datetime object nor an ISO 8601 string."
+        raise TypeError(errormsg)
 
     # It doesn't make sense to measure time elapsed between now and a future date, so we'll just print the date
     if pasttime > now_time:
@@ -2006,7 +2006,7 @@ def elapsedtimestr(pasttime, maxdays=5, shortmonths=True):
             if elapsed_time.seconds <= 10:
                 time_str = "just now"
             else:
-                time_str = "%d secs ago" % elapsed_time.seconds
+                time_str = f"{elapsed_time.seconds} secs ago"
 
         # Check if the time is within the last hour
         elif elapsed_time < dt.timedelta(seconds=60 * 60):
@@ -2016,7 +2016,7 @@ def elapsedtimestr(pasttime, maxdays=5, shortmonths=True):
             if minutes == 1:
                 time_str = "a minute ago"
             else:
-                time_str = "%d mins ago" % minutes
+                time_str = f"{minutes} mins ago"
 
         # Check if the time is within the last day
         elif elapsed_time < dt.timedelta(seconds=60 * 60 * 24 - 1):
@@ -2026,14 +2026,14 @@ def elapsedtimestr(pasttime, maxdays=5, shortmonths=True):
             if hours == 1:
                 time_str = "1 hour ago"
             else:
-                time_str = "%d hours ago" % hours
+                time_str = f"{hours} hours ago"
 
         # Check if it's within the last N days, where N is a user-supplied argument
         elif elapsed_time < dt.timedelta(days=maxdays):
             if elapsed_time.days == 1:
                 time_str = "yesterday"
             else:
-                time_str = "%d days ago" % elapsed_time.days
+                time_str = f"{elapsed_time.days} days ago"
 
         # If it's not within the last N days, then we're just going to print the date
         else:
@@ -2102,8 +2102,8 @@ def toc(start=None, output=False, label=None, sigfigs=None, filename=None, reset
 
     # Create the message giving the elapsed time.
     if label=='': base = 'Elapsed time: '
-    else:         base = 'Elapsed time for %s: ' % label
-    logmessage = base + '%s s' % sigfig(elapsed, sigfigs=sigfigs)
+    else:         base = f'Elapsed time for {label}: '
+    logmessage = base + f'{sigfig(elapsed, sigfigs=sigfigs)} s'
 
     # Optionally reset the counter
     if reset:
@@ -2163,11 +2163,11 @@ def timedsleep(delay=None, verbose=True):
         remaining = delay-elapsed
         if remaining>0:
             if verbose:
-                print('Pausing for %0.1f s' % remaining)
+                print(f'Pausing for {remaining:0.1f} s')
             time.sleep(remaining)
         else:
             if verbose:
-                print('Warning, delay less than elapsed time (%0.1f vs. %0.1f)' % (delay, elapsed))
+                print(f'Warning, delay less than elapsed time ({delay:0.1f} vs. {elapsed:0.1f})')
     return None
 
 
@@ -2329,7 +2329,7 @@ def runcommand(command, printinput=False, printoutput=False, wait=True):
         else:
             output = ''
     except Exception as E:
-        output = 'runcommand(): shell command failed: %s' % str(E) # This is for a Python error, not a shell error -- those get passed to output
+        output = f'runcommand(): shell command failed: {str(E)}' # This is for a Python error, not a shell error -- those get passed to output
     if printoutput:
         print(output)
     return output
@@ -2552,11 +2552,13 @@ def suggest(user_input, valid_inputs, n=1, threshold=4, fulloutput=False, die=Fa
 
     if min(distance) > threshold:
         if die:
-            raise Exception('"%s" not found' % user_input)
+            errormsg = f'"{user_input}" not found'
+            raise ValueError(errormsg)
         else:
             return None
     elif die:
-        raise Exception('"%s" not found - did you mean %s?' % (user_input, suggestionstr))
+        errormsg = f'"{user_input} not found - did you mean {suggestionstr}'
+        raise Exception(errormsg)
     else:
         if fulloutput:
             output = dict(zip(suggestions, distance[order]))
