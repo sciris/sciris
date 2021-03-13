@@ -986,7 +986,7 @@ def asobj(obj, strict=True):
             try: # First, try to get the attribute as an attribute
                 output = objtype.__getattribute__(self, attr)
                 return output
-            except Exception as E: # If that fails, try to get it as a dict item
+            except Exception as E: # pragma: no cover # If that fails, try to get it as a dict item
                 try:
                     output = objtype.__getitem__(self, attr)
                     return output
@@ -995,7 +995,6 @@ def asobj(obj, strict=True):
 
         def __setattr__(self, name, value):
             ''' Set key in dict, not attribute! '''
-
             try:
                 objtype.__getattribute__(self, name) # Try retrieving this as an attribute, expect AttributeError...
             except AttributeError:
@@ -1003,7 +1002,7 @@ def asobj(obj, strict=True):
 
             if not strict: # Let the attribute be set anyway
                 objtype.__setattr__(self, name, value)
-            else: # Otherwise, raise an exception
+            else: # pragma: no cover # Otherwise, raise an exception
                 errormsg = f'"{name}" exists as an attribute, so cannot be set as key; use setattribute() instead'
                 raise ValueError(errormsg)
 

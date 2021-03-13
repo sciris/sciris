@@ -101,6 +101,7 @@ def test_other(doplot=doplot):
     nrows,ncols = sc.get_rows_cols(100, ratio=0.5) # Returns 8,13 since rows are prioritized
 
     if doplot:
+        sc.emptyfig()
         o.fig = pl.figure()
 
         pl.subplot(2,1,1)
@@ -113,6 +114,7 @@ def test_other(doplot=doplot):
         pl.subplot(2,1,2)
         pl.plot(data)
         sc.SIticks()
+        pl.title('SI ticks')
 
         try:
             sc.maximize()
@@ -120,6 +122,15 @@ def test_other(doplot=doplot):
             print(f'sc.maximize() failed with {str(E)}:')
             print(sc.traceback())
             print('↑↑↑ Ignoring since sc.maximize() unlikely to work via e.g. automated testing')
+
+        # Test legends
+        pl.figure()
+        pl.plot([1,4,3], label='A')
+        pl.plot([5,7,8], label='B')
+        pl.plot([2,5,2], label='C')
+        sc.orderlegend(reverse=True) # Legend order C, B, A
+        sc.orderlegend([1,0,2], frameon=False) # Legend order B, A, C with no frame
+        sc.separatelegend()
 
     return o
 

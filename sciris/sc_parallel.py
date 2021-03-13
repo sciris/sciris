@@ -193,7 +193,7 @@ def parallelize(func, iterarg=None, iterkwargs=None, args=None, kwargs=None, ncp
     # Handle iterarg and iterkwargs
     niters = 0
     embarrassing = False # Whether or not it's an embarrassingly parallel optimization
-    if iterarg is not None and iterkwargs is not None:
+    if iterarg is not None and iterkwargs is not None: # pragma: no cover
         errormsg = 'You can only use one of iterarg or iterkwargs as your iterable, not both'
         raise ValueError(errormsg)
     if iterarg is not None:
@@ -201,29 +201,29 @@ def parallelize(func, iterarg=None, iterkwargs=None, args=None, kwargs=None, ncp
             try:
                 iterarg = np.arange(iterarg)
                 embarrassing = True
-            except Exception as E:
+            except Exception as E: # pragma: no cover
                 errormsg = f'Could not understand iterarg "{iterarg}": not iterable and not an integer: {str(E)}'
                 raise TypeError(errormsg)
         niters = len(iterarg)
     if iterkwargs is not None: # Check that iterkwargs has the right format
         if isinstance(iterkwargs, dict): # It's a dict of lists, e.g. {'x':[1,2,3], 'y':[2,3,4]}
             for key,val in iterkwargs.items():
-                if not ut.isiterable(val):
+                if not ut.isiterable(val): # pragma: no cover
                     errormsg = f'iterkwargs entries must be iterable, not {type(val)}'
                     raise TypeError(errormsg)
                 if not niters:
                     niters = len(val)
                 else:
-                    if len(val) != niters:
+                    if len(val) != niters: # pragma: no cover
                         errormsg = f'All iterkwargs iterables must be the same length, not {niters} vs. {len(val)}'
                         raise ValueError(errormsg)
         elif isinstance(iterkwargs, list): # It's a list of dicts, e.g. [{'x':1, 'y':2}, {'x':2, 'y':3}, {'x':3, 'y':4}]
             niters = len(iterkwargs)
             for item in iterkwargs:
-                if not isinstance(item, dict):
+                if not isinstance(item, dict): # pragma: no cover
                     errormsg = f'If iterkwargs is a list, each entry must be a dict, not {type(item)}'
                     raise TypeError(errormsg)
-        else:
+        else: # pragma: no cover
             errormsg = f'iterkwargs must be a dict of lists, a list of dicts, or None, not {type(iterkwargs)}'
             raise TypeError(errormsg)
 
@@ -243,7 +243,7 @@ def parallelize(func, iterarg=None, iterkwargs=None, args=None, kwargs=None, ncp
                     iterdict[key] = val[index]
             elif isinstance(iterkwargs, list): # List of dicts
                 iterdict = iterkwargs[index]
-            else: # Should be caught by previous checking, so shouldn't happen
+            else:  # pragma: no cover # Should be caught by previous checking, so shouldn't happen
                 errormsg = f'iterkwargs type not understood ({type(iterkwargs)})'
                 raise TypeError(errormsg)
         taskargs = TaskArgs(func, index, iterval, iterdict, args, kwargs, maxload, interval, embarrassing)
@@ -258,7 +258,7 @@ def parallelize(func, iterarg=None, iterkwargs=None, args=None, kwargs=None, ncp
             multipool.join()
         else: # Use a custom parallelization method
             outputlist = parallelizer(_parallel_task, argslist)
-    except RuntimeError as E: # Handle if run outside of __main__ on Windows
+    except RuntimeError as E: # pragma: no cover # Handle if run outside of __main__ on Windows
         if 'freeze_support' in E.args[0]: # For this error, add additional information
             errormsg = '''
  Uh oh! It appears you are trying to run with multiprocessing on Windows outside
@@ -325,7 +325,7 @@ def parallelcmd(cmd=None, parfor=None, returnval=None, maxload=None, interval=No
     return outputlist
 
 
-def parallel_progress(fcn, inputs, num_workers=None, show_progress=True, initializer=None):
+def parallel_progress(fcn, inputs, num_workers=None, show_progress=True, initializer=None): # pragma: no cover
     """
     Run a function in parallel with a optional single progress bar
 
@@ -346,7 +346,11 @@ def parallel_progress(fcn, inputs, num_workers=None, show_progress=True, initial
     New in version 1.0.0.
     """
     from multiprocess import pool
-    from tqdm import tqdm
+    try:
+        from tqdm import tqdm
+    except ModuleNotFoundError as E:
+        errormsg = 'Module tqdm not found; please install with "pip install tqdm"'
+        raise ModuleNotFoundError(errormsg) from E
 
     pool = pool.Pool(num_workers, initializer=initializer)
 
@@ -438,7 +442,7 @@ def _parallel_task(taskargs, outputqueue=None):
         return output
 
 
-def _parallelcmd_task(_cmd, _parfor, _returnval, _i, _outputqueue, _maxload, _interval, _kwargs):
+def _parallelcmd_task(_cmd, _parfor, _returnval, _i, _outputqueue, _maxload, _interval, _kwargs): # pragma: no cover # No coverage since pickled
     '''
     The task to be executed by parallelcmd(). All internal variables start with
     underscores to avoid possible collisions in the exec() statements. Not to be called

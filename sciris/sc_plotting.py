@@ -101,11 +101,11 @@ def rgb2hex(arr):
         hx = sc.rgb2hex([0.53, 0.74, 0.15]) # Returns '#87bc26'
     '''
     arr = np.array(arr)
-    if len(arr) != 3:
+    if len(arr) != 3: # pragma: no cover
         errormsg = f'Cannot convert "{arr}" to hex: wrong length'
         raise ValueError(errormsg)
     if all(arr<=1): arr *= 255. # Convert from 0-1 to 0-255
-    hexstr = f'#%02x%02x%02x' % (int(arr[0]), int(arr[1]), int(arr[2]))
+    hexstr = '#%02x%02x%02x' % (int(arr[0]), int(arr[1]), int(arr[2]))
     return hexstr
 
 
@@ -121,7 +121,7 @@ def hex2rgb(string):
         string = string[1:] # Trim leading #, if it exists
     if len(string)==3:
         string = string[0]*2+string[1]*2+string[2]*2 # Convert e.g. '8b2' to '88bb22'
-    if len(string)!=6:
+    if len(string)!=6: # pragma: no cover
         errormsg = f'Cannot convert "{string}" to an RGB color: must be 3 or 6 characters long'
         raise ValueError(errormsg)
     hexstring = bytes.fromhex(string) # Ensure it's the right type
@@ -204,7 +204,7 @@ def vectocolor(vector, cmap=None, asarray=True, reverse=False, minval=None, maxv
     elif type(cmap) == str:
         try:
             cmap = cm.get_cmap(cmap)
-        except:
+        except: # pragma: no cover
             choices = "\n".join(sorted(cm.datad.keys()))
             raise ValueError(f'{cmap} is not a valid color map; choices are:\n{choices}')
 
@@ -546,7 +546,7 @@ def bicolormap(gap=0.1, mingreen=0.2, redbluemix=0.5, epsilon=0.01, demo=False, 
     if apply:
         pl.set_cmap(cmap)
 
-    def demoplot():
+    def demoplot(): # pragma: no cover
         from pylab import figure, subplot, imshow, colorbar, rand, show
 
         maps=[]
@@ -976,7 +976,7 @@ def bar3d(data, fig=None, returnfig=False, cmap='viridis', figkwargs=None, axkwa
     if 'color' not in plotkwargs:
         try:
             plotkwargs['color'] = vectocolor(data.flatten(), cmap=cmap)
-        except Exception as E:
+        except Exception as E: # pragma: no cover
             print(f'bar3d(): Attempt to auto-generate colors failed: {str(E)}')
     for i in range(data.shape[0]):
         for j in range(data.shape[1]):
@@ -1198,7 +1198,7 @@ def get_rows_cols(n, nrows=None, ncols=None, ratio=1):
     return nrows,ncols
 
 
-def maximize(fig=None, die=False):
+def maximize(fig=None, die=False):  # pragma: no cover
     '''
     Maximize the current (or supplied) figure. Note: not guaranteed to work for
     all Matplotlib backends (e.g., agg).
@@ -1219,14 +1219,10 @@ def maximize(fig=None, die=False):
         pl.figure(fig.number) # Set the current figure
     try:
         mgr = pl.get_current_fig_manager()
-        if 'qt' in backend:
-            mgr.window.showMaximized()
-        elif 'gtk' in backend:
-            mgr.window.maximize()
-        elif 'wx' in backend:
-            mgr.frame.Maximize(True)
-        elif 'tk' in backend:
-            mgr.resize(*mgr.window.maxsize())
+        if   'qt'  in backend: mgr.window.showMaximized()
+        elif 'gtk' in backend: mgr.window.maximize()
+        elif 'wx'  in backend: mgr.frame.Maximize(True)
+        elif 'tk'  in backend: mgr.resize(*mgr.window.maxsize())
         else:
             errormsg = f'The maximize() function is not supported for the backend "{backend}"; use Qt5Agg if possible'
             raise NotImplementedError(errormsg)
@@ -1355,9 +1351,9 @@ def reanimateplots(plots=None):
     ''' Reconnect plots (actually figures) to the Matplotlib backend. Plots must be an odict of figure objects. '''
     try:
         from matplotlib.backends.backend_agg import new_figure_manager_given_figure as nfmgf # Warning -- assumes user has agg on their system, but should be ok. Use agg since doesn't require an X server
-    except Exception as E:
+    except Exception as E: # pragma: no cover
         errormsg = f'To reanimate plots requires the "agg" backend, which could not be imported: {repr(E)}'
-        raise ImportError(errormsg)
+        raise ImportError(errormsg) from E
     if len(pl.get_fignums()): fignum = pl.gcf().number # This is the number of the current active figure, if it exists
     else: fignum = 1
     plots = odict.promote(plots) # Convert to an odict
@@ -1452,8 +1448,8 @@ def orderlegend(order=None, ax=None, handles=None, labels=None, reverse=None, **
         pl.plot([1,4,3], label='A')
         pl.plot([5,7,8], label='B')
         pl.plot([2,5,2], label='C')
-        sc.reorderlegend(reverse=True) # Legend order C, B, A
-        sc.reorderlegend([1,0,2], frameon=False) # Legend order B, A, C with no frame
+        sc.orderlegend(reverse=True) # Legend order C, B, A
+        sc.orderlegend([1,0,2], frameon=False) # Legend order B, A, C with no frame
         pl.legend() # Restore original legend order A, B, C
     '''
 
@@ -1547,7 +1543,7 @@ def savemovie(frames, filename=None, fps=None, quality=None, dpi=None, writer=No
     if writer is None:
         if   filename.endswith('mp4'): writer = 'ffmpeg'
         elif filename.endswith('gif'): writer = 'imagemagick'
-        else: 
+        else:
             errormsg = f'sc.savemovie(): unknown movie extension for file {filename}'
             raise ValueError(errormsg)
     if fps is None:

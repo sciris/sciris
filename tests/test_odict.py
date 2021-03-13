@@ -192,6 +192,7 @@ def test_asobj():
     d = dict(foo=1, bar=2)
     d_obj = sc.asobj(d)
     d_obj.foo = 10
+    assert d_obj.bar == 2
     return
 
 
