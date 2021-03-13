@@ -21,7 +21,7 @@ Highlights:
 '''
 
 ##############################################################################
-### Imports
+#%% Imports
 ##############################################################################
 
 import os
@@ -44,6 +44,7 @@ import random as rnd
 import datetime as dt
 import uuid as py_uuid
 import tempfile
+import warnings
 import traceback as py_traceback
 from textwrap import fill
 from functools import reduce
@@ -68,7 +69,7 @@ else:
 
 
 ##############################################################################
-### Adaptations from other libraries
+#%% Adaptations from other libraries
 ##############################################################################
 
 # Define the modules being loaded
@@ -390,10 +391,10 @@ def traceback(*args, **kwargs):
 
 
 ##############################################################################
-### Printing/notification functions
+#%% Printing/notification functions
 ##############################################################################
 
-__all__ += ['printv', 'blank', 'createcollist', 'objectid', 'objatt', 'objmeth', 'objprop', 'objrepr',
+__all__ += ['printv', 'blank', 'strjoin', 'newlinejoin', 'createcollist', 'objectid', 'objatt', 'objmeth', 'objprop', 'objrepr',
             'prepr', 'pr', 'indent', 'sigfig', 'printarr', 'printdata', 'printvars',
             'slacknotification', 'printtologfile', 'colorize', 'heading', 'percentcomplete', 'progressbar']
 
@@ -432,6 +433,47 @@ def printv(string, thisverbose=1, verbose=2, newline=True, indent=True):
 def blank(n=3):
     ''' Tiny function to print n blank lines, 3 by default '''
     print('\n'*n)
+
+
+def strjoin(*args, sep=', '):
+    '''
+    Like string ``join()``, but handles more flexible inputs, converts items to
+    strings, and.
+
+    Args:
+        args (list): the list of items to join
+        sep (str): the separator string
+
+    **Example**::
+
+        sc.strjoin([1,2,3], 4, 'five')
+
+    New in version 1.0.3.
+    '''
+    obj = []
+    for arg in args:
+        if isstring(arg):
+            obj.append(arg)
+        elif isiterable(arg):
+            obj.extend([str(item) for item in arg])
+        else:
+            obj.append(str(arg))
+    output = sep.join(obj)
+    return output
+
+
+def newlinejoin(*args):
+    '''
+    Alias to ``strjoin(*args, sep='\n')``.
+
+    **Example**::
+
+        sc.newlinejoin([1,2,3], 4, 'five')
+
+    New in version 1.0.3.
+    '''
+    return strjoin(*args, sep='\n')
+
 
 
 def createcollist(oldkeys, title, strlen = 18, ncol = 3):
@@ -1173,22 +1215,26 @@ def progressbar(i, maxiters, label='', length=30, empty='—', full='•', newli
 
 
 ##############################################################################
-### Type functions
+#%% Type functions
 ##############################################################################
 
-__all__ += ['flexstr', 'isiterable', 'checktype', 'isnumber', 'isstring', 'isarray', 'promotetoarray', 'promotetolist', 'mergedicts']
+__all__ += ['flexstr', 'isiterable', 'checktype', 'isnumber', 'isstring', 'isarray',
+            'promotetoarray', 'promotetolist', 'toarray', 'tolist', 'mergedicts']
 
 def flexstr(arg, force=True):
-    ''' Try converting to a "regular" string (i.e. "str" in both Python 2 or 3), but proceed if it fails '''
-    if isstring(arg): # It's a string
-        if isinstance(arg, bytes):
-            try:
-                output = arg.decode() # If it's bytes, decode to unicode
-            except:
-                if force: output = repr(arg) # If that fails, just print its representation
-                else:     output = arg
-        else:
-            output = arg # Otherwise, return as-is
+    '''
+    Try converting any object to a "regular" string (i.e. ``str``), but proceed
+    if it fails. Note: this function calls ``repr()`` rather than ``str()`` to
+    ensure a more robust representation of objects.
+    '''
+    if isinstance(arg, str):
+        return arg
+    elif isinstance(arg, bytes):
+        try:
+            output = arg.decode() # If it's bytes, decode to unicode
+        except:
+            if force: output = repr(arg) # If that fails, just print its representation
+            else:     output = arg
     else:
         if force: output = repr(arg)
         else:     output = arg # Optionally don't do anything for non-strings
@@ -1215,20 +1261,22 @@ def checktype(obj=None, objtype=None, subtype=None, die=False):
     '''
     A convenience function for checking instances. If objtype is a type,
     then this function works exactly like isinstance(). But, it can also
-    be a string, e.g. 'array'.
+    be one of the following strings:
 
-    If subtype is not None, then checktype will iterate over obj and check
+        - 'str', 'string': string or bytes object
+        - 'num', 'number': any kind of number
+        - 'arr', 'array': a Numpy array (equivalent to np.ndarray)
+        - 'listlike': a list, tuple, or array
+        - 'arraylike': a list, tuple, or array with numeric entries
+
+    If subtype is not None, then checktype will iterate over the object and check
     recursively that each element matches the subtype.
 
-    Special types are "listlike", which will check for lists, tuples, and
-    arrays; and "arraylike", which is the same as "listlike" but will also
-    check that elements are numeric.
-
     Args:
-        obj:     the object to check the type of
-        objtype: the type to confirm the object belongs to
-        subtype: optionally check the subtype if the object is iterable
-        die:     whether or not to raise an exception if the object is the wrong type
+        obj     (any):         the object to check the type of
+        objtype (str or type): the type to confirm the object belongs to
+        subtype (str or type): optionally check the subtype if the object is iterable
+        die     (bool):        whether or not to raise an exception if the object is the wrong type
 
     **Examples**::
 
@@ -1246,8 +1294,8 @@ def checktype(obj=None, objtype=None, subtype=None, die=False):
     elif type(objtype) == type:                objinstance = objtype  # Don't need to do anything
     elif objtype is None:                      return None # If not supplied, exit
     else:
-        errormsg = 'Could not understand what type you want to check: should be either a string or a type, not "%s"' % objtype
-        raise Exception(errormsg)
+        errormsg = f'Could not understand what type you want to check: should be either a string or a type, not "{objtype}"'
+        raise ValueError(errormsg)
 
     # Do first-round checking
     result = isinstance(obj, objinstance)
@@ -1274,6 +1322,10 @@ def checktype(obj=None, objtype=None, subtype=None, die=False):
 def isnumber(obj, isnan=None):
     '''
     Determine whether or not the input is a number.
+
+    Args:
+        obj (any): the object to check if it's a number
+        isnan (bool): an optional additional check to determine whether the number is/isn't NaN
 
     Almost identical to isinstance(obj, numbers.Number).
     '''
@@ -1314,34 +1366,40 @@ def isarray(obj, dtype=None):
                 return False
 
 
-def promotetoarray(x, skipnone=False):
+def promotetoarray(x, keepnone=False, **kwargs):
     '''
-    Small function to ensure consistent format for things that should be arrays
+    Small function to ensure consistent format for things that should be arrays.
+    Very similar to ``np.array``, with the main difference being that ``sc.promotetoarray(3)``
+    will return ``np.array([3])`` (i.e. a 1-d array that can be iterated over), while
+    ``np.array(3)`` will return a 0-d array that can't be iterated over.
+
+    Args:
+        keepnone (bool): whether ``sc.promotetoarray(None)`` should return ``np.array([])`` or ``np.array([None], dtype=object)``
+        kwargs (dict): passed to ``np.array()``
 
     **Examples**::
 
-        sc.promotetoarray(5) # Returns array([5])
-        sc.promotetoarray([3,5]) # Returns array([3,5])
-        sc.promotetoarray(None, skipnone=True) # Returns array([])
+        sc.promotetoarray(5) # Returns np.array([5])
+        sc.promotetoarray([3,5]) # Returns np.array([3,5])
+        sc.promotetoarray(None, skipnone=True) # Returns np.array([])
+
+    New in version 1.0.3: replaced "skipnone" with "keepnone"; allowed passing
+    keywords to ``np.array()``.
     '''
-    if x is None and skipnone:
-        return np.array([])
-    elif isnumber(x):
-        return np.array([x]) # e.g. 3
-    elif isinstance(x, (list, tuple)):
-        return np.array(x) # e.g. [3]
-    elif isinstance(x, np.ndarray):
-        if np.shape(x):
-            return x # e.g. array([3])
-        else:
-            return np.array([x]) # e.g. array(3)
-    else: # e.g. 'foo'
-        errormsg = f'Expecting a number/list/tuple/ndarray; got type {type(x)}: "{x}"'
-        raise TypeError(errormsg)
-    return # Should be unreachable
+    if isnumber(x):
+        x = [x]
+    elif isinstance(x, np.ndarray) and not np.shape(x): # e.g. np.array(3)
+        x = [x]
+    elif x is None and not keepnone:
+        x = []
+    if kwargs.pop('skipnone') is not None:
+        warnmsg = 'Argument "skipnone" has been deprecated as of v1.0.3; use keepnone instead'
+        warnings.warn(warnmsg, category=DeprecationWarning)
+    output = np.array(x, **kwargs)
+    return output
 
 
-def promotetolist(obj=None, objtype=None, keepnone=False):
+def promotetolist(obj=None, objtype=None, keepnone=False, coerce=None):
     '''
     Make sure object is always a list.
 
@@ -1352,14 +1410,17 @@ def promotetolist(obj=None, objtype=None, keepnone=False):
 
     Args:
         obj (anything): object to ensure is a list
-        objtype (anything): optional type to check for each element
+        objtype (anything): optional type to check for each element; see ``sc.checktype()`` for details
         keepnone (bool): if ``keepnone`` is false, then ``None`` is converted to ``[]``; else, it's converted to ``[None]``
+        coerce (tuple): optional tuple of additional types to coerce to a list (as opposed to wrapping in a list)
 
     **Examples**::
 
         sc.promotetolist(5) # Returns [5]
         sc.promotetolist(np.array([3,5])) # Returns [np.array([3,5])] -- not [3,5]!
-        sc.promotetoarray(None) # Returns []
+        sc.promotetolist(np.array([3,5]), coerce=np.ndarray) # Returns [3,5], since arrays are coerced to lists
+        sc.promotetolist(None) # Returns []
+        sc.promotetolist(['a', 'b', 'c'], objtype='number') # Raises exception
 
         def myfunc(data, keys):
             keys = sc.promotetolist(keys)
@@ -1370,7 +1431,7 @@ def promotetolist(obj=None, objtype=None, keepnone=False):
         myfunc(data, keys=['a', 'b']) # Works
         myfunc(data, keys='a') # Still works, equivalent to needing to supply keys=['a'] without promotetolist()
 
-    Version: 2019nov10
+    New in version 1.0.3: convert keyword
     '''
     if objtype is None: # Don't do type checking
         if isinstance(obj, list):
@@ -1381,7 +1442,10 @@ def promotetolist(obj=None, objtype=None, keepnone=False):
             else:
                 output = [] # Return an empty list, the "none" equivalent for a list
         else:
-            output = [obj] # Main usage case -- listify it
+            if isinstance(obj, coerce):
+                output = list(obj) # Coerce to list
+            else:
+                output = [obj] # Main usage case -- listify it
     else: # Do type checking
         if checktype(obj=obj, objtype=objtype, die=False):
             output = [obj] # If the object is already of the right type, wrap it in a list
@@ -1395,12 +1459,22 @@ def promotetolist(obj=None, objtype=None, keepnone=False):
                     checktype(obj=item, objtype=objtype, die=True)
                 output = list(iterable_obj) # If all type checking passes, cast to list instead of wrapping
             except TypeError as E:
-                errormsg = 'promotetolist() type mismatch: %s' % str(E)
-                raise TypeError(errormsg).with_traceback(E.__traceback__)
+                errormsg = f'promotetolist(): type mismatch, expecting type {objtype}'
+                raise TypeError(errormsg) from E
     return output
 
 
-def mergedicts(*args, strict=False, overwrite=True):
+def toarray(*args, **kwargs):
+    ''' Alias to sc.promotetoarray(). New in version 1.0.3. '''
+    return promotetoarray(*args, **kwargs)
+
+
+def tolist(*args, **kwargs):
+    ''' Alias to sc.promotetolist(). New in version 1.0.3. '''
+    return promotetolist(*args, **kwargs)
+
+
+def mergedicts(*args, strict=False, overwrite=True, copy=False):
     '''
     Small function to merge multiple dicts together. By default, skips things
     that are not, dicts (e.g., None), and allows keys to be set multiple times.
@@ -1412,9 +1486,10 @@ def mergedicts(*args, strict=False, overwrite=True):
     but you will need a dict later on.
 
     Args:
-        strict (bool): if True, raise an exception if an argument isn't a dict
+        strict    (bool): if True, raise an exception if an argument isn't a dict
         overwrite (bool): if False, raise an exception if multiple keys are found
-        *args (dict): the sequence of dicts to be merged
+        copy      (bool): whether or not to deepcopy the merged dictionary
+        *args     (dict): the sequence of dicts to be merged
 
     **Examples**::
 
@@ -1423,6 +1498,8 @@ def mergedicts(*args, strict=False, overwrite=True):
         d2 = sc.mergedicts({'a':1, 'b':2}, {'b':3, 'c':4}) # Returns {'a':1, 'b':3, 'c':4}
         d3 = sc.mergedicts(sc.odict({'b':3, 'c':4}), {'a':1, 'b':2}) # Returns sc.odict({'b':2, 'c':4, 'a':1})
         d4 = sc.mergedicts({'b':3, 'c':4}, {'a':1, 'b':2}, overwrite=False) # Raises exception
+
+    New in version 1.0.3: copy keyword
     '''
     # Try to get the output type from the first argument, but revert to a standard dict if that fails
     try:
@@ -1445,12 +1522,14 @@ def mergedicts(*args, strict=False, overwrite=True):
                     errormsg = f'Could not merge dicts since keys "{keys}" overlap and overwrite=False'
                     raise KeyError(errormsg)
             outputdict.update(arg)
+    if copy:
+        outputdict = dcp(outputdict)
     return outputdict
 
 
 
 ##############################################################################
-### Time/date functions
+#%% Time/date functions
 ##############################################################################
 
 __all__ += ['now', 'getdate', 'readdate', 'date', 'day', 'daydiff', 'daterange', 'datetoyear',
@@ -2063,7 +2142,7 @@ def timedsleep(delay=None, verbose=True):
 
 
 ##############################################################################
-### Misc. functions
+#%% Misc. functions
 ##############################################################################
 
 __all__ += ['checkmem', 'checkram', 'runcommand', 'gitinfo', 'compareversions',
@@ -2610,7 +2689,7 @@ def getcaller(frame=2, tostring=True):
 
 
 ##############################################################################
-### Nested dictionary functions
+#%% Nested dictionary functions
 ##############################################################################
 
 __all__ += ['getnested', 'setnested', 'makenested', 'iternested', 'mergenested',
@@ -2886,7 +2965,7 @@ def nestedloop(inputs, loop_order):
 
 
 ##############################################################################
-### Classes
+#%% Classes
 ##############################################################################
 
 __all__ += ['KeyNotFoundError', 'LinkException', 'prettyobj', 'Link', 'Timer']
@@ -2965,11 +3044,10 @@ class prettyobj(object):
 
 class Link(object):
     '''
-    A class to differentiate between an object and a link to an object. Not very
-    useful at the moment, but the idea eventually is that this object would be
-    parsed differently from other objects -- most notably, a recursive method
-    (such as a pickle) would skip over Link objects, and then would fix them up
-    after the other objects had been reinstated.
+    A class to differentiate between an object and a link to an object. The idea
+    is that this object is parsed differently from other objects -- most notably,
+    a recursive method (such as a pickle) would skip over Link objects, and then
+    would fix them up after the other objects had been reinstated.
 
     Version: 2017jan31
     '''
@@ -2978,7 +3056,6 @@ class Link(object):
         self.obj = obj # Store the object -- or rather a reference to it, if it's mutable
         try:    self.uid = obj.uid # If the object has a UID, store it separately
         except: self.uid = None # If not, just use None
-
 
     def __repr__(self):
         ''' Just use default '''
@@ -3008,57 +3085,45 @@ class Timer(object):
     '''
     Simple timer class
 
-    This wraps `tic` and `toc` with the formatting arguments and
+    This wraps ``tic`` and ``toc`` with the formatting arguments and
     the start time (at construction)
-    Use this in a ``with...as``` block to automatically print
+    Use this in a ``with...as`` block to automatically print
     elapsed time when the block finishes.
 
     Implementation based on https://preshing.com/20110924/timing-your-code-using-pythons-with-statement/
 
-    Example making repeated calls to the same Timer:
+    Example making repeated calls to the same Timer::
 
-    >>> timer = Timer()
-    >>> timer.toc()
-    Elapsed time: 2.63 s
-    >>> timer.toc()
-    Elapsed time: 5.00 s
+        >>> timer = Timer()
+        >>> timer.toc()
+        Elapsed time: 2.63 s
+        >>> timer.toc()
+        Elapsed time: 5.00 s
 
-    Example wrapping code using with-as:
+    Example wrapping code using with-as::
 
-    >>> with Timer(label='mylabel') as t:
-    >>>     foo()
+        >>> with Timer(label='mylabel') as t:
+        >>>     foo()
 
     '''
-
     def __init__(self,**kwargs):
         self.tic()
         self.kwargs = kwargs #: Store kwargs to pass to :func:`toc` at the end of the block
+        return
 
     def __enter__(self):
-        '''
-        Reset start time when entering with-as block
-        '''
-
+        ''' Reset start time when entering with-as block '''
         self.tic()
         return self
 
     def __exit__(self, *args):
-        '''
-        Print elapsed time when leaving a with-as block
-        '''
-
+        ''' Print elapsed time when leaving a with-as block '''
         self.toc()
 
     def tic(self):
-        '''
-        Set start time
-        '''
-
+        ''' Set start time '''
         self.start = tic()
 
     def toc(self):
-        '''
-        Print elapsed time
-        '''
-
+        ''' Print elapsed time '''
         toc(self.start,**self.kwargs)

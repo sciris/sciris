@@ -56,6 +56,7 @@ class odict(OD):
         # Standard OrderedDictionary initialization
         if len(args)==1 and args[0] is None: args = [] # Remove a None argument
         OD.__init__(self, *args, **kwargs) # Standard init
+        self._default = _default
         return None
 
     def __slicekey(self, key, slice_end):
@@ -90,10 +91,13 @@ class odict(OD):
             try:
                 output = OD.__getitem__(self, key)
                 return output
-            except Exception as E: # WARNING, should be KeyError, but this can't print newlines!!!
-                if len(self.keys()): errormsg = '%s\nodict key "%s" not found; available keys are:\n%s' % (repr(E), ut.flexstr(key), '\n'.join([ut.flexstr(k) for k in self.keys()]))
-                else:                errormsg = 'Key "%s" not found since odict is empty'% key
-                raise Exception(errormsg)
+            except Exception as E:
+                if self._default is not None: # Handle defaultdict behavior
+                    OD.__setitem__(self, key, self._default())
+                else:
+                    if len(self.keys()): errormsg = '%s\nodict key "%s" not found; available keys are:\n%s' % (str(E), ut.flexstr(key), '\n'.join([ut.flexstr(k) for k in self.keys()]))
+                    else:                errormsg = 'Key "%s" not found since odict is empty'% key
+                    raise ut.KeyNotFoundError(errormsg)
         elif isinstance(key, ut._numtype): # Convert automatically from float...dangerous?
             thiskey = self.keys()[int(key)]
             return OD.__getitem__(self,thiskey)
