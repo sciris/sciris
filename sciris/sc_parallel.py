@@ -69,11 +69,11 @@ def loadbalancer(maxload=None, index=None, interval=None, maxtime=None, label=No
         count += 1
         currentload = psutil.cpu_percent(interval=0.1)/100. # If interval is too small, can give very inaccurate readings
         if currentload>maxload:
-            if verbose: print(label+'CPU load too high (%0.2f/%0.2f); process %s queued %i times' % (currentload, maxload, index, count))
+            if verbose: print(label+f'CPU load too high ({currentload:0.2f}/{maxload:0.2f}); process {index} queued {count} times')
             time.sleep(interval*2*np.random.rand()) # Sleeps for an average of refresh seconds, but do it randomly so you don't get locking
         else:
             toohigh = False
-            if verbose: print(label+'CPU load fine (%0.2f/%0.2f), starting process %s after %i tries' % (currentload, maxload, index, count))
+            if verbose: print(label+f'CPU load fine ({currentload:0.2f}/{maxload:0.2f}), starting process {index} after {count} tries')
     return None
 
 
@@ -202,29 +202,29 @@ def parallelize(func, iterarg=None, iterkwargs=None, args=None, kwargs=None, ncp
                 iterarg = np.arange(iterarg)
                 embarrassing = True
             except Exception as E:
-                errormsg = 'Could not understand iterarg "%s": not iterable and not an integer: %s' % (iterarg, str(E))
+                errormsg = f'Could not understand iterarg "{iterarg}": not iterable and not an integer: {str(E)}'
                 raise Exception(errormsg)
         niters = len(iterarg)
     if iterkwargs is not None: # Check that iterkwargs has the right format
         if isinstance(iterkwargs, dict): # It's a dict of lists, e.g. {'x':[1,2,3], 'y':[2,3,4]}
             for key,val in iterkwargs.items():
                 if not ut.isiterable(val):
-                    errormsg = 'iterkwargs entries must be iterable, not %s' % type(val)
+                    errormsg = f'iterkwargs entries must be iterable, not {type(val)}'
                     raise Exception(errormsg)
                 if not niters:
                     niters = len(val)
                 else:
                     if len(val) != niters:
-                        errormsg = 'All iterkwargs iterables must be the same length, not %s vs. %s' % (niters, len(val))
+                        errormsg = f'All iterkwargs iterables must be the same length, not {niters} vs. {len(val)}'
                         raise Exception(errormsg)
         elif isinstance(iterkwargs, list): # It's a list of dicts, e.g. [{'x':1, 'y':2}, {'x':2, 'y':3}, {'x':3, 'y':4}]
             niters = len(iterkwargs)
             for item in iterkwargs:
                 if not isinstance(item, dict):
-                    errormsg = 'If iterkwargs is a list, each entry must be a dict, not %s' % type(item)
+                    errormsg = f'If iterkwargs is a list, each entry must be a dict, not {type(item)}'
                     raise Exception(errormsg)
         else:
-            errormsg = 'iterkwargs must be a dict of lists, a list of dicts, or None, not %s' % type(iterkwargs)
+            errormsg = f'iterkwargs must be a dict of lists, a list of dicts, or None, not {type(iterkwargs)}'
             raise Exception(errormsg)
 
     # Construct argument list
@@ -244,7 +244,7 @@ def parallelize(func, iterarg=None, iterkwargs=None, args=None, kwargs=None, ncp
             elif isinstance(iterkwargs, list): # List of dicts
                 iterdict = iterkwargs[index]
             else: # Should be caught by previous checking, so shouldn't happen
-                errormsg = 'iterkwargs type not understood (%s)' % type(iterkwargs)
+                errormsg = f'iterkwargs type not understood ({type(iterkwargs)})'
                 raise Exception(errormsg)
         taskargs = TaskArgs(func, index, iterval, iterdict, args, kwargs, maxload, interval, embarrassing)
         argslist.append(taskargs)
