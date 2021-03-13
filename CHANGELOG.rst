@@ -17,16 +17,16 @@ New functions
 
 Bugfixes
 ~~~~~~~~
-1. ``sc.day()`` now returns a numeric array when an array of datetime objects is passed to it; a bug which wsa introduced in version 1.0.2 which meant it returned an object array instead.
-2. Slices with numeric start and stop indices have been fixed for ``sc.odict.pop()``.
+1. ``sc.day()`` now returns a numeric array when an array of datetime objects is passed to it; a bug which was introduced in version 1.0.2 which meant it returned an object array instead.
+2. Slices with numeric start and stop indices have been fixed for ``sc.odict()``.
 3. ``sc.objatt()`` now correctly handles objects with slots instead of a dict.
 
 Improvements
 ~~~~~~~~~~~~
 1. ``sc.loadobj()`` now accepts a ``remapping`` argument, which lets the user load old pickle files even if the modules no longer exist.
 2. Most file functions (e.g. ``sc.makefilepath``, ``sc.getfilelist()`` now accept an ``aspath`` argument, which, if ``True``, will return a ``pathlib.Path`` object instead of a string.
-3. Most array-returning functions, such as ``sc.promotetoarray()`` and ``sc.cat()``, now accept a ``copy`` argument and other keywords; these are passed to ``np.array()``, allowing e.g. the ``dtype`` to be set.
-4. A fallback option for ``sc.findinds()`` has been implemented, even if the input array isn't numeric.
+3. Most array-returning functions, such as ``sc.promotetoarray()`` and ``sc.cat()``, now accept a ``copy`` argument and other keywords; these keywords are passed to ``np.array()``, allowing e.g. the ``dtype`` to be set.
+4. A fallback option for ``sc.findinds()`` has been implemented, allowing it to work even if the input array isn't numeric.
 5. ``sc.odict()`` now has a ``defaultdict`` argument, which lets you use it like a defaultdict as well as an ordered dict.
 6. ``sc.odict()`` has a ``transpose`` argument for methods like ``items()`` and ``enumvalues()``, which will return a tuple of lists instead of a list of tuples.
 7. ``sc.objdict()`` now prints out differently, to distinguish it from an ``sc.odict``.
@@ -35,13 +35,12 @@ Improvements
 Renamed/removed functions
 ~~~~~~~~~~~~~~~~~~~~~~~~~
 1. The functions ``sc.tolist()`` and ``sc.toarray()`` have been added as aliases of ``sc.promotetolist()`` and ``sc.promotetoarray()``, respectively. You may use whichever you prefer.
-2. The ``keepnone`` keyword has been removed from ``sc.promotetoarray()``.
+2. The ``skipnone`` keyword has been removed from ``sc.promotetoarray()`` and replaced with ``keepnone`` (which does something slightly different).
 
 Other updates
 ~~~~~~~~~~~~~
-1. All strings have been updated to f-strings.
-2. Where possible, exceptions have been made specific (e.g. ``TypeError`` instead of ``Exception``).
-3. Test code coverage has been increased significantly (from 63% to 84%).
+1. Exceptions have been made more specific (e.g. ``TypeError`` instead of ``Exception``).
+2. Test code coverage has been increased significantly (from 63% to 84%).
 
 
 Version 1.0.2 (2021-03-10)
