@@ -65,7 +65,7 @@ class odict(OD):
             if not callable(defaultdict):
                 errormsg = f'The defaultdict argument must be callable, not {type(defaultdict)}'
                 raise TypeError(errormsg)
-        self._defaultdict = defaultdict
+        OD.__setattr__(self, '_defaultdict', defaultdict) # Can't use self._defaultdict since setattr() is overridden by sc.objdict()
         return None
 
 
@@ -150,7 +150,7 @@ class odict(OD):
         return None
 
 
-    def __repr__(self, maxlen=None, showmultilines=True, divider=False, dividerthresh=10, numindents=0, recursionlevel=0, sigfigs=None, numformat=None, maxitems=200, classname='odict()', quote='"', keysep=':'):
+    def __repr__(self, maxlen=None, showmultilines=True, divider=False, dividerthresh=10, numindents=0, recursionlevel=0, sigfigs=None, numformat=None, maxitems=200, classname='odict()', quote='"', numsep=':', keysep=':'):
         ''' Print a meaningful representation of the odict '''
 
         # Set primitives for display.
@@ -240,9 +240,9 @@ class odict(OD):
                 # Create the the text to add, apply the indent, and add to the output
                 spacer = ' '*(maxkeylen-len(keystr))
                 if vallinecount == 1 or not showmultilines:
-                    rawoutput = f'#{ind:d}: {quote}{keystr}{quote}{keysep}{spacer} {valstr}\n'
+                    rawoutput = f'#{ind:d}{numsep} {quote}{keystr}{quote}{keysep}{spacer} {valstr}\n'
                 else:
-                    rawoutput = f'#{ind:d}: {quote}{keystr}{quote}{keysep}{spacer} \n{valstr}\n'
+                    rawoutput = f'#{ind:d}{numsep} {quote}{keystr}{quote}{keysep}{spacer} \n{valstr}\n'
 
                 # Perform the indentation.
                 newoutput = ut.indent(prefix=theprefix, text=rawoutput, width=80)
@@ -903,7 +903,7 @@ class objdict(odict):
 
     def __repr__(self, *args, **kwargs):
         ''' Use odict repr, but with a custom class name and no quotes '''
-        return super().__repr__(quote='', keysep='.', classname='objdict()', *args, **kwargs)
+        return super().__repr__(quote='', numsep='.', classname='objdict()', *args, **kwargs)
 
 
     def __getattribute__(self, attr):

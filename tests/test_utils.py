@@ -256,10 +256,10 @@ def test_types():
     o.flexstr = sc.flexstr(b'bytestring')
 
     print('\nTesting promotetoarray')
-    assert not len(sc.promotetoarray(None, skipnone=True))
+    assert not len(sc.promotetoarray(None, keepnone=False))
     assert sc.promotetoarray(np.array(3))[0] == 3
-    with pytest.raises(TypeError):
-        sc.promotetoarray('not convertible')
+    with pytest.raises(ValueError):
+        sc.promotetoarray('not convertible', dtype=float)
 
     return o
 
