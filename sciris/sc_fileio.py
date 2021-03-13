@@ -46,16 +46,31 @@ __all__ = ['loadobj', 'loadstr', 'saveobj', 'dumpstr', 'load', 'save']
 
 def loadobj(filename=None, folder=None, verbose=False, die=None, remapping=None):
     '''
-    Load a file that has been saved as a gzipped pickle file, e.g. by sc.saveobj().
+    Load a file that has been saved as a gzipped pickle file, e.g. by ``sc.saveobj()``.
     Accepts either a filename (standard usage) or a file object as the first argument.
-    Note that loadobj()/load() are aliases.
+    Note that ``loadobj()``/``load()`` are aliases of each other.
+
+    Note: be careful when loading pickle files, since a malicious pickle can be
+    used to execute arbitrary code.
+
+    When a pickle file is loaded, Python imports any modules that are referenced
+    in it. This is a problem if module has been renamed. In this case, you can
+    use the ``remapping`` argument to point to the new modules or classes.
 
     Args:
-        filename (str): the filename to load
+        filename (str/Path): the filename (or full path) to load
+        folder (str/Path): the folder
+        verbose (bool): print details
+        die (bool): whether to raise an exception if errors are encountered (otherwise, load as much as possible)
+        remapping (dict):
 
-    **Example**::
+    **Examples**::
 
-        obj = sc.loadobj('myfile.obj')
+        obj = sc.loadobj('myfile.obj') # Standard usage
+        old = sc.loadobj('my-old-file.obj', remapping={'foo.Bar':cat.Mat}) # If loading a saved object containing a reference to foo.Bar that is now cat.Mat
+        old = sc.loadobj('my-old-file.obj', remapping={'foo.Bar':('cat', 'Mat')}) # Equivalent to the above
+
+    New in version 1.0.3: "remapping" argument
     '''
 
     # Handle loading of either filename or file object
@@ -72,7 +87,7 @@ def loadobj(filename=None, folder=None, verbose=False, die=None, remapping=None)
     kwargs = {'mode': 'rb', argtype: filename}
     with GzipFile(**kwargs) as fileobj:
         filestr = fileobj.read() # Convert it to a string
-        obj = _unpickler(filestr, filename=filename, verbose=verbose, die=die) # Actually load it
+        obj = _unpickler(filestr, filename=filename, verbose=verbose, die=die, remapping=remapping) # Actually load it
     if verbose: print(f'Object loaded from "{filename}"')
     return obj
 
@@ -1153,21 +1168,32 @@ def makefailed(module_name=None, name=None, error=None, exception=None):
 class _RobustUnpickler(pkl.Unpickler):
     ''' Try to import an object, and if that fails, return a Failed object rather than crashing '''
 
-    def __init__(self, tmpfile, fix_imports=True, encoding="latin1", errors="ignore"):
-        pkl.Unpickler.__init__(self, tmpfile, fix_imports=fix_imports, encoding=encoding, errors=errors)
+    def __init__(self, bytesio, fix_imports=True, encoding="latin1", errors="ignore", remapping=None):
+        pkl.Unpickler.__init__(self, bytesio, fix_imports=fix_imports, encoding=encoding, errors=errors)
+        self.remapping = remapping if remapping is not None else {}
+        return
 
     def find_class(self, module_name, name, verbose=True):
-        try:
-            module = importlib.import_module(module_name)
-            obj = getattr(module, name)
-        except Exception as E:
-            if verbose: print(f'Unpickling warning: could not import {module_name}.{name}: {str(E)}')
-            exception = traceback.format_exc() # Grab the trackback stack
-            obj = makefailed(module_name=module_name, name=name, error=E, exception=exception)
+        key = f'{module_name}.{name}'
+        obj = self.remapping.get(key) # If the user has supplied the module directly
+        if obj is None or (isinstance(obj, tuple) and len(obj)==2): # Either it's not in the remapping, or it's a tuple
+            try:
+                if obj is None: # Key not in remapping
+                    load_module = module_name
+                    load_name = name
+                else: # It's a tuple of names, process
+                    load_module = obj[0]
+                    load_name = obj[1]
+                module = importlib.import_module(load_module)
+                obj = getattr(module, load_name)
+            except Exception as E:
+                if verbose: print(f'Unpickling warning: could not import {load_module}.{load_name}: {str(E)}')
+                exception = traceback.format_exc() # Grab the trackback stack
+                obj = makefailed(module_name=module_name, name=name, error=E, exception=exception)
         return obj
 
 
-def _unpickler(string=None, filename=None, filestring=None, die=None, verbose=False):
+def _unpickler(string=None, filename=None, filestring=None, die=None, verbose=False, remapping=None):
     ''' Not invoked directly; used as a helper function for saveobj/loadobj '''
 
     if die is None: die = False
@@ -1188,7 +1214,7 @@ def _unpickler(string=None, filename=None, filestring=None, die=None, verbose=Fa
                 except Exception as E3:
                     try:
                         if verbose: print(f'Dill failed ({str(E3)}), trying robust unpickler...')
-                        obj = _RobustUnpickler(io.BytesIO(string)).load() # And if that trails, throw everything at it
+                        obj = _RobustUnpickler(io.BytesIO(string), remapping=remapping).load() # And if that trails, throw everything at it
                     except Exception as E4:
                         try:
                             if verbose: print(f'Robust unpickler failed ({str(E4)}), trying Python 2->3 conversion...')
