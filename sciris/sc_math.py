@@ -639,16 +639,16 @@ def randround(x):
     return output
 
 
-def cat(*args, axis=None, dtype=None, copy=False):
+def cat(*args, axis=None, copy=False, **kwargs):
     '''
     Like np.concatenate(), but takes anything and returns an array. Useful for
     e.g. appending a single number onto the beginning or end of an array.
 
     Args:
-        args  (any):  items to concatenate into an array
-        axis  (int):  axis along which to concatenate
-        dtype (type): type to conver the final array to
-        copy  (bool): whether or not to deepcopy the result
+        args   (any):  items to concatenate into an array
+        axis   (int):  axis along which to concatenate
+        copy   (bool): whether or not to deepcopy the result
+        kwargs (dict): passed to ``np.array()``
 
     **Examples**::
 
@@ -657,7 +657,7 @@ def cat(*args, axis=None, dtype=None, copy=False):
         arr = sc.cat(np.random.rand(2,4), np.random.rand(2,6), axis=1)
 
     New in version 1.0.0.
-    New in version 1.0.3: "dtype" and "copy" arguments.
+    New in version 1.0.3: "copy" and keyword arguments.
     '''
     if not len(args):
         return np.array([])
@@ -665,7 +665,7 @@ def cat(*args, axis=None, dtype=None, copy=False):
     for arg in args[1:]:
         arg = ut.promotetoarray(arg)
         output = np.concatenate((output, arg), axis=axis)
-    output = np.array(output, dtype=dtype)
+    output = np.array(output, **kwargs)
     if copy:
         output = ut.dcp(output)
     return output

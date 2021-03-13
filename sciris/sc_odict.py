@@ -899,13 +899,15 @@ class odict(OD):
         """ Return a list of values (as in Python 2). """
         return list(OD.values(self))
 
-    def items(self):
+    def items(self, transpose=False):
         """ Return a list of items, as in Python 2. """
-        return list(OD.items(self))
+        iterator = list(OD.items(self))
+        if transpose: iterator = tuple(ut.transposelist(iterator))
+        return iterator
 
-    def iteritems(self):
+    def iteritems(self, transpose=False):
         """ Alias to items() """
-        return list(OD.items(self))
+        return self.items(transpose=transpose)
 
 
 class objdict(odict):

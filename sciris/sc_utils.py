@@ -15,6 +15,7 @@ Highlights:
     - ``sc.isnumber()``: checks if something is any number type
     - ``sc.promotetolist()``: converts any object to a list, for easy iteration
     - ``sc.promotetoarray()``: tries to convert any object to an array, for easy use with numpy
+    - ``sc.mergedicts()``: merges any set of inputs into a dictionary
     - ``sc.readdate()``: convert strings to dates using common formats
     - ``sc.tic()/sc.toc()``: simple method for timing durations
     - ``sc.runcommand()``: simple way of executing a shell command
@@ -463,7 +464,7 @@ def strjoin(*args, sep=', '):
 
 def newlinejoin(*args):
     '''
-    Alias to ``strjoin(*args, sep='\n')``.
+    Alias to ``strjoin(*args, sep='\\n')``.
 
     **Example**::
 
@@ -1435,7 +1436,7 @@ def promotetolist(obj=None, objtype=None, keepnone=False, coerce=None):
         myfunc(data, keys=['a', 'b']) # Works
         myfunc(data, keys='a') # Still works, equivalent to needing to supply keys=['a'] without promotetolist()
 
-    New in version 1.0.3: "convert" argument
+    New in version 1.0.3: "coerce" argument
     '''
     if objtype is None: # Don't do type checking
         if isinstance(obj, list):
