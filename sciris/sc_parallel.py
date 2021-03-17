@@ -250,7 +250,7 @@ def parallelize(func, iterarg=None, iterkwargs=None, args=None, kwargs=None, ncp
     # Run simply using map -- no advantage here to using Process/Queue
     try:
         if serial: # Run in serial
-            outputlist = map(_parallel_task, argslist)
+            outputlist = list(map(_parallel_task, argslist))
         elif parallelizer is None: # Standard usage: use the default map() function
             multipool = mp.Pool(processes=ncpus)
             outputlist = multipool.map(_parallel_task, argslist)
