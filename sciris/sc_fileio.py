@@ -9,7 +9,7 @@ Highlights:
 """
 
 ##############################################################################
-### Imports
+#%% Imports
 ##############################################################################
 
 # Basic imports
@@ -28,17 +28,17 @@ from glob import glob
 from gzip import GzipFile
 from zipfile import ZipFile
 from contextlib import closing
-from pathlib import Path
 from io import BytesIO as IO
-import pickle as pkl
+from pathlib import Path
 import copyreg as cpreg
+import pickle as pkl
 from . import sc_utils as ut
 from .sc_odict import odict
 from .sc_dataframe import dataframe
 
 
 ##############################################################################
-### Pickling functions
+#%% Pickling functions
 ##############################################################################
 
 __all__ = ['loadobj', 'loadstr', 'saveobj', 'dumpstr', 'load', 'save']
@@ -70,7 +70,7 @@ def loadobj(filename=None, folder=None, verbose=False, die=None, remapping=None)
         old = sc.loadobj('my-old-file.obj', remapping={'foo.Bar':cat.Mat}) # If loading a saved object containing a reference to foo.Bar that is now cat.Mat
         old = sc.loadobj('my-old-file.obj', remapping={'foo.Bar':('cat', 'Mat')}) # Equivalent to the above
 
-    New in version 1.0.3: "remapping" argument
+    New in version 1.1.0: "remapping" argument
     '''
 
     # Handle loading of either filename or file object
@@ -113,7 +113,11 @@ def saveobj(filename=None, obj=None, compresslevel=5, verbose=0, folder=None, me
 
         myobj = ['this', 'is', 'a', 'weird', {'object':44}]
         sc.saveobj('myfile.obj', myobj)
+
+    New in version 1.1.1: removed Python 2 support.
     '''
+
+    # Handle path
     if isinstance(filename, Path): # If it's a path object, convert to string
         filename = str(filename)
     if filename is None: # If it doesn't exist, just create a byte stream
@@ -122,11 +126,15 @@ def saveobj(filename=None, obj=None, compresslevel=5, verbose=0, folder=None, me
         bytesobj = None
         filename = makefilepath(filename=filename, folder=folder, default='default.obj', sanitize=True)
 
+    # Handle object
     if obj is None: # pragma: no cover
         errormsg = 'No object was supplied to saveobj(), or the object was empty'
-        if die: raise ValueError(errormsg)
-        else:   print(errormsg)
+        if die:
+            raise ValueError(errormsg)
+        else:
+            print(errormsg)
 
+    # Actually save
     with GzipFile(filename=filename, fileobj=bytesobj, mode='wb', compresslevel=compresslevel) as fileobj:
         if method == 'dill': # pragma: no cover # If dill is requested, use that
             if verbose>=2: print('Saving as dill...')
@@ -191,7 +199,7 @@ def dumpstr(obj=None):
 
 
 ##############################################################################
-### Other file functions
+#%% Other file functions
 ##############################################################################
 
 __all__ += ['loadtext', 'savetext', 'savezip', 'getfilelist', 'sanitizefilename', 'makefilepath', 'thisdir']
@@ -271,7 +279,7 @@ def getfilelist(folder='.', pattern=None, abspath=False, nopath=False, filesonly
         sc.getfilelist('~/temp', '*.py', abspath=True) # return absolute paths of all Python files in ~/temp folder
         sc.getfilelist('~/temp/*.py') # Like above
 
-    New in version 1.0.3: "aspath" argument
+    New in version 1.1.0: "aspath" argument
     '''
     folder = os.path.expanduser(folder)
     if abspath:
@@ -339,7 +347,7 @@ def makefilepath(filename=None, folder=None, ext=None, default=None, split=False
     Assuming project.filename is None and project.name is "recipe" and ./congee
     doesn't exist, this will makes folder ./congee and returns e.g. ('/home/myname/congee', 'recipe.prj')
 
-    New in version 1.0.3: "aspath" argument
+    New in version 1.1.0: "aspath" argument
     '''
 
     # Initialize
@@ -438,7 +446,7 @@ def thisdir(file=None, *args, aspath=False, **kwargs):
         thisdir = sc.thisdir()
         file_in_same_dir = sc.thisdir(__file__, 'new_file.txt')
 
-    New in version 1.0.3: "as_path" argument renamed "aspath"
+    New in version 1.1.0: "as_path" argument renamed "aspath"
     '''
     if file is None:
          file = str(Path(inspect.stack()[1][1])) # Adopted from Atomica
@@ -450,7 +458,7 @@ def thisdir(file=None, *args, aspath=False, **kwargs):
 
 
 ##############################################################################
-### JSON functions
+#%% JSON functions
 ##############################################################################
 
 __all__ += ['sanitizejson', 'jsonify', 'loadjson', 'savejson', 'jsonpickle', 'jsonunpickle']
@@ -656,7 +664,7 @@ def jsonunpickle(json):
 
 
 ##############################################################################
-### Spreadsheet functions
+#%% Spreadsheet functions
 ##############################################################################
 
 __all__ += ['Blobject', 'Spreadsheet', 'loadspreadsheet', 'savespreadsheet']
@@ -864,6 +872,7 @@ class Spreadsheet(Blobject): # pragma: no cover
                 results.append(sheetoutput[rownum][colnum])  # Grab and append the result at the cell.
             return results
 
+
     def writecells(self, cells=None, startrow=None, startcol=None, vals=None, sheetname=None, sheetnum=None, verbose=False, wbargs=None):
         '''
         Specify cells to write. Can supply either a list of cells of the same length
@@ -926,9 +935,11 @@ class Spreadsheet(Blobject): # pragma: no cover
 
         return None
 
+
     def save(self, filename='spreadsheet.xlsx'):
         filepath = makefilepath(filename=filename, ext='xlsx')
-        super().save(filepath)
+        Blobject.save(self, filepath)
+
 
 def loadspreadsheet(filename=None, folder=None, fileobj=None, sheetname=None, sheetnum=None, asdataframe=None, header=True, cells=None): # pragma: no cover
     '''
@@ -985,7 +996,6 @@ def loadspreadsheet(filename=None, folder=None, fileobj=None, sheetname=None, sh
     # Or leave in the original format
     else:
         return rawdata
-
 
 
 def savespreadsheet(filename=None, data=None, folder=None, sheetnames=None, close=True, formats=None, formatdata=None, verbose=False): # pragma: no cover
@@ -1120,7 +1130,7 @@ def savespreadsheet(filename=None, data=None, folder=None, sheetnames=None, clos
 
 
 ##############################################################################
-### Pickling support methods
+#%% Pickling support methods
 ##############################################################################
 
 __all__ += ['Failed', 'Empty']
@@ -1228,13 +1238,8 @@ def _unpickler(string=None, filename=None, filestring=None, die=None, verbose=Fa
                         if verbose: print(f'Dill failed ({str(E3)}), trying robust unpickler...')
                         obj = _RobustUnpickler(io.BytesIO(string), remapping=remapping).load() # And if that trails, throw everything at it
                     except Exception as E4: # pragma: no cover
-                        try:
-                            if verbose: print(f'Robust unpickler failed ({str(E4)}), trying Python 2->3 conversion...')
-                            obj = loadobj2to3(filename=filename, filestring=filestring)
-                        except Exception as E5:
-                            if verbose: print(f'Python 2->3 conversion failed ({str(E5)}), giving up...')
-                            errormsg = f'All available unpickling methods failed:\n    Standard: {E1}\n     Encoded: {E2}\n        Dill: {E3}\n      Robust: {E4}\n  Python2->3: {E5}'
-                            raise Exception(errormsg)
+                        errormsg = f'All available unpickling methods failed:\n    Standard: {E1}\n     Encoded: {E2}\n        Dill: {E3}\n      Robust: {E4}'
+                        raise Exception(errormsg)
 
     if isinstance(obj, Failed):
         print('Warning, the following errors were encountered during unpickling:')
@@ -1263,149 +1268,7 @@ def _savedill(fileobj=None, obj=None, *args, **kwargs): # pragma: no cover
 
 
 ##############################################################################
-### Python 2 legacy support
-##############################################################################
-
-not_string_pickleable = ['datetime', 'BytesIO']
-byte_objects = ['datetime', 'BytesIO', 'odict', 'spreadsheet', 'blobject']
-
-def loadobj2to3(filename=None, filestring=None, recursionlimit=None): # pragma: no cover
-    '''
-    Used automatically by loadobj() to load Python2 objects in Python3 if all other
-    loading methods fail. Uses a recursive approach, so can set a recursion limit.
-    Note that this function, like Python 2, is deprecated.
-    '''
-
-    class Placeholder():
-        ''' Replace these corrupted classes with properly loaded ones '''
-        def __init__(*args):
-            return
-
-        def __setstate__(self, state):
-            if isinstance(state,dict):
-                self.__dict__ = state
-            else:
-                self.state = state
-            return
-
-    class StringUnpickler(pkl.Unpickler):
-        def find_class(self, module, name, verbose=False):
-            if verbose: print(f'Unpickling string module {module}, name {name}')
-            if name in not_string_pickleable:
-                return Empty
-            else:
-                try:
-                    output = pkl.Unpickler.find_class(self,module,name)
-                except Exception as E:
-                    print(f'Warning, string unpickling could not find module {module}, name {name}: {str(E)}')
-                    output = Empty
-                return output
-
-    class BytesUnpickler(pkl.Unpickler):
-        def find_class(self, module, name, verbose=False):
-            if verbose: print(f'Unpickling bytes module {module}, name {name}')
-            if name in byte_objects:
-                try:
-                    output = pkl.Unpickler.find_class(self,module,name)
-                except Exception as E:
-                    print(f'Warning, bytes unpickling could not find module {module}, name {name}: {str(E)}')
-                    output = Placeholder
-                return output
-            else:
-                return Placeholder
-
-    def recursive_substitute(obj1, obj2, track=None, recursionlevel=0, recursionlimit=None):
-        if recursionlimit is None: # Recursion limit
-            recursionlimit = 1000 # Better to die here than hit Python's recursion limit
-
-        def recursion_warning(count, obj1, obj2):
-            output = f'Warning, internal recursion depth exceeded, aborting: depth={count}, {type(obj1)} -> {type(obj2)}'
-            return output
-
-        recursionlevel += 1
-
-        if track is None:
-            track = []
-
-        if isinstance(obj1, Blobject): # Handle blobjects (usually spreadsheets)
-            obj1.blob  = obj2.__dict__[b'blob']
-            obj1.bytes = obj2.__dict__[b'bytes']
-
-        if isinstance(obj2, dict): # Handle dictionaries
-            for k,v in obj2.items():
-                if isinstance(v, dt.datetime):
-                    setattr(obj1, k.decode('latin1'), v)
-                elif isinstance(v, dict) or hasattr(v,'__dict__'):
-                    if isinstance(k, (bytes, bytearray)):
-                        k = k.decode('latin1')
-                    track2 = track.copy()
-                    track2.append(k)
-                    if recursionlevel<=recursionlimit:
-                        recursionlevel = recursive_substitute(obj1[k], v, track2, recursionlevel, recursionlimit)
-                    else:
-                        print(recursion_warning(recursionlevel, obj1, obj2))
-        else:
-            for k,v in obj2.__dict__.items():
-                if isinstance(v,dt.datetime):
-                    setattr(obj1,k.decode('latin1'), v)
-                elif isinstance(v,dict) or hasattr(v,'__dict__'):
-                    if isinstance(k, (bytes, bytearray)):
-                        k = k.decode('latin1')
-                    track2 = track.copy()
-                    track2.append(k)
-                    if recursionlevel<=recursionlimit:
-                        recursionlevel = recursive_substitute(getattr(obj1,k), v, track2, recursionlevel, recursionlimit)
-                    else:
-                        print(recursion_warning(recursionlevel, obj1, obj2))
-        return recursionlevel
-
-    def loadintostring(fileobj):
-        unpickler1 = StringUnpickler(fileobj, encoding='latin1')
-        try:
-            stringout = unpickler1.load()
-        except Exception as E:
-            print(f'Warning, string pickle loading failed: {str(E)}')
-            exception = traceback.format_exc() # Grab the trackback stack
-            stringout = makefailed(module_name='String unpickler failed', name='n/a', error=E, exception=exception)
-        return stringout
-
-    def loadintobytes(fileobj):
-        unpickler2 = BytesUnpickler(fileobj,  encoding='bytes')
-        try:
-            bytesout  = unpickler2.load()
-        except Exception as E:
-            print(f'Warning, bytes pickle loading failed: {str(E)}')
-            exception = traceback.format_exc() # Grab the trackback stack
-            bytesout = makefailed(module_name='Bytes unpickler failed', name='n/a', error=E, exception=exception)
-        return bytesout
-
-    # Load either from file or from string
-    if filename:
-        with GzipFile(filename) as fileobj:
-            stringout = loadintostring(fileobj)
-        with GzipFile(filename) as fileobj:
-            bytesout = loadintobytes(fileobj)
-
-    elif filestring:
-        with closing(IO(filestring)) as output:
-            with GzipFile(fileobj=output, mode='rb') as fileobj:
-                stringout = loadintostring(fileobj)
-        with closing(IO(filestring)) as output:
-            with GzipFile(fileobj=output, mode='rb') as fileobj:
-                bytesout = loadintobytes(fileobj)
-    else:
-        errormsg = 'You must supply either a filename or a filestring for loadobj() or loadstr(), respectively'
-        raise ValueError(errormsg)
-
-    # Actually do the load, with correct substitution
-    recursive_substitute(stringout, bytesout, recursionlevel=0, recursionlimit=recursionlimit)
-    return stringout
-
-
-
-
-##############################################################################
-### Twisted pickling methods
+#%% Twisted pickling methods
 ##############################################################################
 
 # NOTE: The code below is part of the Twisted package, and is included

@@ -21,14 +21,13 @@ requirements = [
         'numpy>=1.10.1',     # Numerical functions
         'pandas',            # Dataframes and spreadsheet input
         'openpyexcel>=2.5',  # Spreadsheet functions -- fork of openpyxl
-        'xlrd==1.2.0',       # Spreadsheet input
+        'xlrd==1.2.0',       # Spreadsheet input -- note, this package is deprecated
         'xlsxwriter',        # Spreadsheet output
         'psutil',            # Load monitoring
         'dill',              # File I/O
         'multiprocess',      # More powerful version of multiprocessing
         'jsonpickle',        # For converting arbitrary objects to JSON
         'gitpython',         # Version information
-        'requests',          # HTTP methods
         'jellyfish',         # For fuzzy string matching
         'line_profiler ;   platform_system == "Linux"',   # For the line profiler -- only install on Linux
         'memory_profiler ; platform_system == "Linux"',   # For the memory profiler -- only install on Linux

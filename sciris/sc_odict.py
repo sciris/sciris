@@ -10,9 +10,9 @@ Highlights:
 ### ODICT CLASS
 ##############################################################################
 
-from collections import OrderedDict as OD
 import re
 import numpy as np
+from collections import OrderedDict as OD
 from . import sc_utils as ut
 
 # Restrict imports to user-facing modules
@@ -56,44 +56,49 @@ class odict(OD):
         nested = sc.objdict(a=0, defaultdict='nested') # Create a infinitely nested dictionary (NB: may behave strangely on IPython)
         nested.b.c.d = 2
 
-    New in version 1.0.3: "defaultdict" argument
+    New in version 1.1.0: "defaultdict" argument
     '''
 
     def __init__(self, *args, defaultdict=None, **kwargs):
-        ''' See collections.py '''
-        # Standard OrderedDictionary initialization
+        ''' Combine the init properties of both OrderedDict and defaultdict '''
         if len(args)==1 and args[0] is None: args = [] # Remove a None argument
         OD.__init__(self, *args, **kwargs) # Standard init
         if defaultdict is not None:
-            if defaultdict == 'nested':
-                nested_factory = lambda: self.__class__(defaultdict=nested_factory)
-                defaultdict = nested_factory
-            if not callable(defaultdict): # pragma: no cover
-                errormsg = f'The defaultdict argument must be callable, not {type(defaultdict)}'
+            if defaultdict != 'nested' and not callable(defaultdict): # pragma: no cover
+                errormsg = f'The defaultdict argument must be either "nested" or callable, not {type(defaultdict)}'
                 raise TypeError(errormsg)
-        OD.__setattr__(self, '_defaultdict', defaultdict) # Can't use self._defaultdict since setattr() is overridden by sc.objdict()
+            OD.__setattr__(self, '_defaultdict', defaultdict) # Use OD.__setattr__() since setattr() is overridden by sc.objdict()
         return None
 
 
-    def __getitem__(self, key):
+    def __getitem__(self, key, allow_default=True):
         ''' Allows getitem to support strings, integers, slices, lists, or arrays '''
-        if isinstance(key, ut._stringtypes) or isinstance(key, tuple):
-            try:
+
+        if isinstance(key, ut._stringtypes) or isinstance(key, tuple): # Normal use case: just use a string key
+            try: # Initially, try just retrieving the key normally
                 output = OD.__getitem__(self, key)
                 return output
             except KeyError:
-                if self._defaultdict is not None: # Handle defaultdict behavior
-                    OD.__setitem__(self, key, self._defaultdict()) # First, set to the default
-                    output = OD.__getitem__(self, key) # Then get the item
-                    return output
+                try: # Handle defaultdict behavior by first checking if it exists
+                    _defaultdict = OD.__getattribute__(self, '_defaultdict')
+                except:
+                    _defaultdict = None
+                if _defaultdict is not None and allow_default: # If it does, use it, then get the key again
+                    if _defaultdict == 'nested':
+                        _defaultdict = lambda: self.__class__(defaultdict=_defaultdict) # Make recursive
+                    dd = _defaultdict() # Create the new object
+                    OD.__setitem__(self, key, dd) # Add it to the dictionary
+                    return dd # Return
                 else:
                     keys = self.keys()
                     if len(keys): errormsg = f'odict key "{key}" not found; available keys are:\n{ut.newlinejoin(keys)}'
                     else:         errormsg = f'Key {key} not found since odict is empty'
                     raise ut.KeyNotFoundError(errormsg)
-        elif isinstance(key, ut._numtype): # Convert automatically from float...dangerous?
+
+        elif isinstance(key, ut._numtype): # Convert automatically from float
             thiskey = self.keys()[int(key)]
-            return OD.__getitem__(self,thiskey)
+            return OD.__getitem__(self, thiskey) # Note that defaultdict behavior isn't supported for non-string lookup
+
         elif type(key)==slice: # Handle a slice -- complicated
             try:
                 startind = self._slicekey(key.start, 'start')
@@ -107,6 +112,7 @@ class odict(OD):
             except Exception as E: # pragma: no cover
                 errormsg = 'Invalid odict slice'
                 raise ValueError(errormsg) from E
+
         elif self._is_odict_iterable(key): # Iterate over items
             listvals = [self.__getitem__(item) for item in key]
             if isinstance(key, list): # If the user supplied the keys as a list, assume they want the output as a list
@@ -114,17 +120,21 @@ class odict(OD):
             else:
                 output = self._sanitize_items(listvals) # Otherwise, assume as an array
             return output
-        else: # Handle everything else
+
+        else: # pragma: no cover # Handle everything else (rare)
             return OD.__getitem__(self,key)
 
 
     def __setitem__(self, key, value):
         ''' Allows setitem to support strings, integers, slices, lists, or arrays '''
+
         if isinstance(key, (str,tuple)):
             OD.__setitem__(self, key, value)
+
         elif isinstance(key, ut._numtype): # Convert automatically from float...dangerous?
             thiskey = self.keys()[int(key)]
             OD.__setitem__(self, thiskey, value)
+
         elif type(key)==slice:
             startind = self._slicekey(key.start, 'start')
             stopind = self._slicekey(key.stop, 'stop')
@@ -144,6 +154,7 @@ class odict(OD):
             else:
                 for valind,index in enumerator:
                     self.__setitem__(index, value) # e.g. odict[:] = 4
+
         elif self._is_odict_iterable(key) and hasattr(value, '__len__'): # Iterate over items
             if len(key)==len(value):
                 for valind,thiskey in enumerate(key):
@@ -151,15 +162,17 @@ class odict(OD):
             else: # pragma: no cover
                 errormsg = f'Keys "{key}" and values "{value}" have different lengths! ({len(key)}, {len(value)})'
                 raise ValueError(errormsg)
-        else:
+
+        else: # pragma: no cover
             OD.__setitem__(self, key, value)
+
         return None
 
 
     def __repr__(self, maxlen=None, showmultilines=True, divider=False, dividerthresh=10, numindents=0, recursionlevel=0, sigfigs=None, numformat=None, maxitems=200, classname='odict()', quote='"', numsep=':', keysep=':'):
         ''' Print a meaningful representation of the odict '''
 
-        # Set primitives for display.
+        # Set non-customizable primitives for display
         toolong      = ' [...]'    # String to display at end of line when maximum value character length is overrun.
         dividerstr   = '*'*40+'\n' # String to use as an inter-item divider.
         indentstr    = '    '      # Create string to use to indent.
@@ -273,12 +286,12 @@ class odict(OD):
         return output
 
 
-    def _repr_pretty_(self, p, cycle, *args, **kwargs):
+    def _repr_pretty_(self, p, cycle, *args, **kwargs): # pragma: no cover
         ''' Function to fix __repr__ in IPython'''
         print(self.__repr__(*args, **kwargs))
 
 
-    def disp(self, maxlen=None, showmultilines=True, divider=False, dividerthresh=10, numindents=0, sigfigs=5, numformat=None):
+    def disp(self, maxlen=None, showmultilines=True, divider=False, dividerthresh=10, numindents=0, sigfigs=5, numformat=None, maxitems=20, **kwargs):
         '''
         Print out flexible representation, short by default.
 
@@ -289,7 +302,8 @@ class odict(OD):
             z.disp(sigfigs=3)
             z.disp(numformat='%0.6f')
         '''
-        print(self.__repr__(maxlen=maxlen, showmultilines=showmultilines, divider=divider, dividerthresh=dividerthresh, numindents=numindents, recursionlevel=0, sigfigs=sigfigs, numformat=None))
+        kwargs = ut.mergedicts(dict(maxlen=maxlen, showmultilines=showmultilines, divider=divider, dividerthresh=dividerthresh, numindents=numindents, recursionlevel=0, sigfigs=sigfigs, numformat=None, maxitems=maxitems), kwargs)
+        print(self.__repr__(**kwargs))
         return None
 
 
@@ -327,9 +341,9 @@ class odict(OD):
                     return True
         else: # For everything except a tuple, treat it as a string
             if not ut.isstring(key):
-                try: # pragma: no cover
+                try:
                     key = str(key) # Try to cast it to a string
-                except Exception as E:
+                except Exception as E: # pragma: no cover
                     errormsg = f'Could not convert odict key of type {type(key)} to a string: {str(E)}'
                     raise TypeError(E)
             if   method == 're':         match = bool(re.search(pattern, key))
@@ -340,6 +354,7 @@ class odict(OD):
                 errormsg = f'Method "{method}" not found; must be "re", "in", "startswith", or "endswith"'
                 raise ValueError(errormsg)
         return match
+
 
     def _is_odict_iterable(self, key):
         ''' Check to see whether the "key" is actually an iterable '''
@@ -622,8 +637,6 @@ class odict(OD):
         If copy is True, then returns a copy (like sorted()).
 
         Note that you can also use this to do filtering.
-
-        Note: slow, do not use for time-limited computations!!
         '''
         origkeys = self.keys()
         if sortby is None or sortby == 'keys':
@@ -766,9 +779,9 @@ class odict(OD):
 
                 # Loop over supplied keys
                 for key,keyname in zip(keys,keynames):
-                    try: # pragma: no cover
+                    try:
                         self.__setitem__(str(keyname), source[key])
-                    except Exception as E:
+                    except Exception as E: # pragma: no cover
                         errormsg = f'Key "{key}" not found: {repr(E)}'
                         raise ut.KeyNotFoundError(errormsg)
 
@@ -877,7 +890,7 @@ class odict(OD):
 
             od = sc.odict.promote(['There','are',4,'keys'])
 
-        Note, in most cases odict(obj) or odict().make(obj) can be used instead.
+        Note, in most cases sc.odict(obj) or sc.odict().make(obj) can be used instead.
         '''
         if isinstance(obj, odict):
             return obj # Don't need to do anything
@@ -922,39 +935,101 @@ class objdict(odict):
     >>> od.bmi = od.mass/od.height**2
     >>> od['bmi'] = od['mass']/od['height']**2 # Vanilla syntax still works
     >>> od.keys = 3 # This raises an exception (you can't overwrite the keys() method)
+
+    Nested logic based in part on addict: https://github.com/mewwts/addict
     '''
+
+    def __init__(self, *args, **kwargs):
+        nested_parent = kwargs.pop('_nested_parent', None)
+        nested_attr  = kwargs.pop('_nested_attr', None)
+        if nested_parent is not None:
+            odict.__setattr__(self, '_nested_parent', nested_parent)
+            odict.__setattr__(self, '_nested_attr', nested_attr)
+        odict.__init__(self, *args, **kwargs) # Standard init
+        return
+
 
     def __repr__(self, *args, **kwargs):
         ''' Use odict repr, but with a custom class name and no quotes '''
-        return super().__repr__(quote='', numsep='.', classname='objdict()', *args, **kwargs)
+        return odict.__repr__(self, quote='', numsep='.', classname='objdict()', *args, **kwargs)
 
 
     def __getattribute__(self, attr):
+        ''' Handle as attributes first, then as dict keys '''
         try: # First, try to get the attribute as an attribute
-            output = odict.__getattribute__(self, attr)
-            return output
-        except Exception as E: # If that fails, try to get it as a dict item
-            try:
-                output = odict.__getitem__(self, attr)
-                return output
-            except: # If that fails, raise the original exception
-                raise E
+            return odict.__getattribute__(self, attr)
+        except Exception as E: # If that fails, try to get it as a dict item, but pass along the original exception
+            return self.__getitem__(attr, exception=E)
+
 
     def __setattr__(self, name, value):
         ''' Set key in dict, not attribute! '''
-
         try:
             odict.__getattribute__(self, name) # Try retrieving this as an attribute, expect AttributeError...
+            errormsg = f'"{name}" exists as an attribute, so cannot be set as key; use setattribute() instead'
+            raise ValueError(errormsg)
         except AttributeError:
-            return odict.__setitem__(self, name, value) # If so, simply return
+            return self.__setitem__(name, value) # If so, simply return
 
-        # Otherwise, raise an exception
-        errormsg = f'"{name}" exists as an attribute, so cannot be set as key; use setattribute() instead'
-        raise ValueError(errormsg)
+
+    def __getitem__(self, attr, exception=None):
+        ''' Handle dict keys, including nested defaultdict logic '''
+        try: # Try retrieving normally
+            return odict.__getitem__(self, attr, allow_default=False) # Do not allow odict to handle default
+        except Exception as E2: # If that fails, raise the original exception
+            try: # Handle defaultdict behavior by first checking if it exists
+                _defaultdict = odict.__getattribute__(self, '_defaultdict')
+            except:
+                _defaultdict = None
+            if _defaultdict is not None: # If it does, use it, then get the key again
+                if _defaultdict == 'nested':
+                    return self.__class__(defaultdict='nested', _nested_parent=self, _nested_attr=attr) # Create a recursive object with links back to the ultimate parent
+                else:
+                    dd = _defaultdict() # Create the new object
+                    self[attr] = dd # Since we don't know what this object is, we can't be clever about recursion
+                    return dd
+            else:
+                if exception:
+                    raise exception
+                else:
+                    raise E2
+
+
+    def __setitem__(self, name, value):
+        ''' Set as a dict item '''
+        odict.__setitem__(self, name, value)
+        try:
+            p = object.__getattribute__(self, '_nested_parent')
+            key = object.__getattribute__(self, '_nested_attr')
+        except AttributeError:
+            p = None
+            key = None
+        if p is not None:
+            p[key] = self
+            object.__delattr__(self, '_nested_parent')
+            object.__delattr__(self, '_nested_attr')
+        return
+
+
+    def __delattr__(self, name):
+        ''' Delete dict key before deleting actual attribute '''
+        try:
+            del self[name]
+        except:
+            odict.__delattr__(self, name)
+        return
+
+
+    def getattribute(self, name):
+        ''' Get attribute if truly desired '''
+        return odict.__getattribute__(self, name)
 
 
     def setattribute(self, name, value):
         ''' Set attribute if truly desired '''
+        if hasattr(self.__class__, name):
+            errormsg = f'objdict attribute "{name}" is read-only'
+            raise AttributeError(errormsg)
         return odict.__setattr__(self, name, value)
 
 
@@ -1009,6 +1084,10 @@ def asobj(obj, strict=True):
                 raise ValueError(errormsg)
 
             return
+
+        def getattribute(self, name):
+            ''' Get attribute if truly desired '''
+            return objtype.__getattribute__(self, name)
 
         def setattribute(self, name, value):
             ''' Set attribute if truly desired '''

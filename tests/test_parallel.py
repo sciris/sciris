@@ -5,7 +5,7 @@ built-in parallelization, and since functions-within-functions can't be pickled.
 
 import sciris as sc
 import pylab as pl
-
+import pytest
 
 if 'doplot' not in locals(): doplot = False
 
@@ -54,7 +54,7 @@ def test_noniterated(doplot=doplot):
         xy = [x+i*pl.randn(100), y+i*pl.randn(100)]
         return xy
 
-    xylist1 = sc.parallelize(myfunc, kwargs={'x':3, 'y':8}, iterarg=range(5), maxload=0.8, interval=0.2) # Use kwargs dict
+    xylist1 = sc.parallelize(myfunc, kwargs={'x':3, 'y':8}, iterarg=range(5), maxload=0.8, interval=0.1) # Use kwargs dict
     xylist2 = sc.parallelize(myfunc, x=5, y=10, iterarg=[5,10,15]) # Supply kwargs directly
 
     if doplot:
@@ -63,6 +63,32 @@ def test_noniterated(doplot=doplot):
             for i,xy in enumerate(reversed(xylist)):
                 pl.scatter(xy[0], xy[1], label='Run %i'%i)
             pl.legend()
+    return
+
+
+def test_exceptions():
+    sc.heading('Test that exceptions are being handled correctly')
+
+    def good_func(x, y):
+        return sum([(i+x*y)**2 for i in range(int(1e3))])
+
+    def bad_func(x=0):
+        raise ValueError('Intentional failure')
+
+    # Should preserve original exception type
+    with pytest.raises(ValueError):
+        sc.parallelize(bad_func, iterarg=5)
+    with pytest.raises(TypeError):
+        sc.parallelize(bad_func, iterarg=5, kwargs=dict(y='bad kwarg'))
+
+    # Test serial (debug) mode
+    n = 10
+    iterkwargs = dict(x=pl.arange(n), y=pl.linspace(0,1,n))
+    res1 = sc.parallelize(good_func, iterkwargs=iterkwargs)
+    res2 = sc.parallelize(good_func, iterkwargs=iterkwargs, serial=True)
+    assert res1 == res2
+    print(res1)
+
     return
 
 
@@ -109,6 +135,7 @@ if __name__ == '__main__':
     test_embarrassing()
     test_multiargs()
     test_noniterated(doplot)
+    test_exceptions()
     test_parallelcmd()
     test_components()
 
