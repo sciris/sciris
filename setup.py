@@ -24,6 +24,7 @@ requirements = [
         'xlrd==1.2.0',       # Spreadsheet input -- note, this package is deprecated
         'xlsxwriter',        # Spreadsheet output
         'psutil',            # Load monitoring
+        'dill',              # File I/O
         'multiprocess',      # More powerful version of multiprocessing
         'jsonpickle',        # For converting arbitrary objects to JSON
         'gitpython',         # Version information
