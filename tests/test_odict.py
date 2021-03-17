@@ -4,6 +4,7 @@ Define a suite of tests for the odict
 
 import numpy as np
 import sciris as sc
+import pytest
 
 
 def printexamples(examples):
@@ -37,10 +38,12 @@ def test_main():
 def test_insert():
     sc.heading('Insert:')
     z = sc.odict()
-    z['foo'] = 1492
-    z.insert(1604)
-    z.insert(0, 'ganges', 1444)
-    z.insert(2, 'midway', 1234)
+    z['foo'] = 11
+    z.insert(1123)
+    z.insert('bar', 112358)
+    z.insert(0, 'cat', 11235813)
+    z.insert(2, 'dog', 1123581321)
+    assert len(z) == 5
     printexamples([z])
     return
 
@@ -113,7 +116,9 @@ def test_repr():
     for i in range(n_entries):
         key = f'key{i:03d}'
         qq[key] = i**2
-    print(qq)
+    qq.disp(maxitems=15)
+    qq[:] = 4
+    assert all([v==4 for v in qq.values()])
     return
 
 
@@ -121,16 +126,21 @@ def test_default():
     sc.heading('Testing default')
 
     o = sc.odict(foo=[1,2,3], defaultdict=list)
+    p = sc.objdict(foo=[1,2,3], defaultdict=list)
     o['bar'].extend([1,2,3])
-    assert o[0] == o[1]
+    p.bar.extend([1,2,3])
+    assert o[0] == o[1] == p.foo == p.bar
 
     lam = lambda: 44
     o = sc.odict(defaultdict=lam)
     assert o['anything'] == lam()
 
-    # Testing objdict
+    # Testing nesting
     j = sc.objdict(a=1, b=2, defaultdict='nested')
-    j.c.d.e = 3
+    j.c.d.e = 12345
+    k = sc.odict(a=1, b=2, defaultdict='nested')
+    k['c']['d']['e'] = 12345
+    assert j['c']['d']['e'] == k['c']['d']['e']
     print(j)
 
     return
@@ -222,6 +232,15 @@ def test_asobj():
     print(myobjdict)
     print(myobjobj)
     repr(myobjdict)
+    del myobjdict.x
+    myobjdict.setattribute('x', 10)
+    assert myobjdict.x == 10
+    assert getattr(myobjdict, 'x') == myobjdict.getattribute('x') ==  10
+
+    with pytest.raises(ValueError):
+        myobjdict.x = 'cannot change actual attribute'
+    with pytest.raises(AttributeError):
+        myobjdict.setattribute('keys', 4)
 
     return
 

@@ -121,7 +121,7 @@ class odict(OD):
                 output = self._sanitize_items(listvals) # Otherwise, assume as an array
             return output
 
-        else: # Handle everything else
+        else: # pragma: no cover # Handle everything else (rare)
             return OD.__getitem__(self,key)
 
 
@@ -163,7 +163,7 @@ class odict(OD):
                 errormsg = f'Keys "{key}" and values "{value}" have different lengths! ({len(key)}, {len(value)})'
                 raise ValueError(errormsg)
 
-        else:
+        else: # pragma: no cover
             OD.__setitem__(self, key, value)
 
         return None
@@ -286,12 +286,12 @@ class odict(OD):
         return output
 
 
-    def _repr_pretty_(self, p, cycle, *args, **kwargs):
+    def _repr_pretty_(self, p, cycle, *args, **kwargs): # pragma: no cover
         ''' Function to fix __repr__ in IPython'''
         print(self.__repr__(*args, **kwargs))
 
 
-    def disp(self, maxlen=None, showmultilines=True, divider=False, dividerthresh=10, numindents=0, sigfigs=5, numformat=None):
+    def disp(self, maxlen=None, showmultilines=True, divider=False, dividerthresh=10, numindents=0, sigfigs=5, numformat=None, maxitems=20, **kwargs):
         '''
         Print out flexible representation, short by default.
 
@@ -302,7 +302,8 @@ class odict(OD):
             z.disp(sigfigs=3)
             z.disp(numformat='%0.6f')
         '''
-        print(self.__repr__(maxlen=maxlen, showmultilines=showmultilines, divider=divider, dividerthresh=dividerthresh, numindents=numindents, recursionlevel=0, sigfigs=sigfigs, numformat=None))
+        kwargs = ut.mergedicts(dict(maxlen=maxlen, showmultilines=showmultilines, divider=divider, dividerthresh=dividerthresh, numindents=numindents, recursionlevel=0, sigfigs=sigfigs, numformat=None, maxitems=maxitems), kwargs)
+        print(self.__repr__(**kwargs))
         return None
 
 
@@ -340,9 +341,9 @@ class odict(OD):
                     return True
         else: # For everything except a tuple, treat it as a string
             if not ut.isstring(key):
-                try: # pragma: no cover
+                try:
                     key = str(key) # Try to cast it to a string
-                except Exception as E:
+                except Exception as E: # pragma: no cover
                     errormsg = f'Could not convert odict key of type {type(key)} to a string: {str(E)}'
                     raise TypeError(E)
             if   method == 're':         match = bool(re.search(pattern, key))
@@ -778,9 +779,9 @@ class odict(OD):
 
                 # Loop over supplied keys
                 for key,keyname in zip(keys,keynames):
-                    try: # pragma: no cover
+                    try:
                         self.__setitem__(str(keyname), source[key])
-                    except Exception as E:
+                    except Exception as E: # pragma: no cover
                         errormsg = f'Key "{key}" not found: {repr(E)}'
                         raise ut.KeyNotFoundError(errormsg)
 
