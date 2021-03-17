@@ -66,6 +66,19 @@ def test_noniterated(doplot=doplot):
     return
 
 
+def test_exceptions():
+    sc.heading('Test that exceptions are being handled correctly')
+
+    def bad_func(x=0):
+        print('ok')
+        raise ValueError('Intentional failure')
+
+    # sc.parallelize(bad_func, iterarg=10)
+    sc.parallelize(bad_func, iterarg=10, kwargs=dict(y='bad value'))
+
+    return
+
+
 def test_parallelcmd():
     sc.heading('Using a string-based command')
 
@@ -105,12 +118,13 @@ if __name__ == '__main__':
 
     doplot = True
 
-    test_simple()
-    test_embarrassing()
-    test_multiargs()
-    test_noniterated(doplot)
-    test_parallelcmd()
-    test_components()
+    # test_simple()
+    # test_embarrassing()
+    # test_multiargs()
+    # test_noniterated(doplot)
+    test_exceptions()
+    # test_parallelcmd()
+    # test_components()
 
     sc.toc()
     print('Done.')

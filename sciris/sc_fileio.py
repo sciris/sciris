@@ -928,7 +928,7 @@ class Spreadsheet(Blobject): # pragma: no cover
 
     def save(self, filename='spreadsheet.xlsx'):
         filepath = makefilepath(filename=filename, ext='xlsx')
-        super().save(filepath)
+        Blobject.save(self, filepath)
 
 def loadspreadsheet(filename=None, folder=None, fileobj=None, sheetname=None, sheetnum=None, asdataframe=None, header=True, cells=None): # pragma: no cover
     '''

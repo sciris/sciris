@@ -2360,6 +2360,9 @@ def gitinfo(path=None, hashlen=7, die=False, verbose=True):
     that directory, it will search parent directories for ``.git`` until it finds one.
     Then, the current information will be parsed.
 
+    Note: if direct directory reading fails, it will attempt to use the gitpython
+    library.
+
     Args:
         path (str): A folder either containing a .git directory, or with a parent that contains a .git directory
         hashlen (int): Length of hash to return (default: 7)
@@ -2422,11 +2425,24 @@ def gitinfo(path=None, hashlen=7, die=False, verbose=True):
                 gitdate = time.strftime("%Y-%m-%d %H:%M:%S UTC", t)
 
     except Exception as E: # pragma: no cover
-        errormsg = 'Could not extract git info; please check paths'
-        if die:
-            raise RuntimeError(errormsg) from E
-        elif verbose:
-            print(errormsg + f'\nError: {str(E)}')
+        try: # Second, try importing gitpython
+            import git
+            rootdir = os.path.abspath(path) # e.g. /user/username/my/folder
+            repo = git.Repo(path=rootdir, search_parent_directories=True)
+            try:
+                gitbranch = str(repo.active_branch.name)  # Just make sure it's a string
+            except TypeError:
+                gitbranch = 'Detached head (no branch)'
+            githash = str(repo.head.object.hexsha)
+            gitdate = str(repo.head.object.authored_datetime.isoformat())
+        except Exception as E2:
+            errormsg = f'''Could not extract git info; please check paths:
+  Method 1 (direct read) error: {str(E)}
+  Method 2 (gitpython) error:   {str(E2)}'''
+            if die:
+                raise RuntimeError(errormsg) from E
+            elif verbose:
+                print(errormsg + f'\nError: {str(E)}')
 
     # Trim the hash, but not if loading failed
     if len(githash)>hashlen and 'N/A' not in githash:
@@ -2631,11 +2647,16 @@ def profile(run, follow=None, print_stats=True, *args, **kwargs):
         f = lambda: Foo()
         sc.profile(run=f, follow=[foo.__init__])
     '''
-
     try:
         from line_profiler import LineProfiler
-    except ModuleNotFoundError as e: # pragma: no cover
-        raise ModuleNotFoundError('The "line_profiler" Python package is required to perform profiling') from e
+    except ModuleNotFoundError as E: # pragma: no cover
+        if 'win' in sys.platform:
+            errormsg = 'The "line_profiler" package is not included by default on Windows;' \
+                        'please install using "pip install line_profiler" (note: you will need a ' \
+                        'C compiler installed, e.g. Microsoft Visual Studio)'
+        else:
+            errormsg = 'The "line_profiler" Python package is required to perform profiling'
+        raise ModuleNotFoundError(errormsg) from E
 
     if follow is None:
         follow = run
@@ -2675,8 +2696,14 @@ def mprofile(run, follow=None, show_results=True, *args, **kwargs):
 
     try:
         import memory_profiler as mp
-    except ModuleNotFoundError as e: # pragma: no cover
-        raise ModuleNotFoundError('The "memory_profiler" Python package is required to perform profiling') from e
+    except ModuleNotFoundError as E: # pragma: no cover
+        if 'win' in sys.platform:
+            errormsg = 'The "memory_profiler" package is not included by default on Windows;' \
+                        'please install using "pip install memory_profiler" (note: you will need a ' \
+                        'C compiler installed, e.g. Microsoft Visual Studio)'
+        else:
+            errormsg = 'The "memory_profiler" Python package is required to perform profiling'
+        raise ModuleNotFoundError(errormsg) from E
 
     if follow is None:
         follow = run

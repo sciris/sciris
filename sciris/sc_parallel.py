@@ -77,7 +77,7 @@ def loadbalancer(maxload=None, index=None, interval=None, maxtime=None, label=No
     return None
 
 
-def parallelize(func, iterarg=None, iterkwargs=None, args=None, kwargs=None, ncpus=None, maxload=None, interval=None, parallelizer=None, **func_kwargs):
+def parallelize(func, iterarg=None, iterkwargs=None, args=None, kwargs=None, ncpus=None, maxload=None, interval=None, parallelizer=None, serial=False, **func_kwargs):
     '''
     Main method for parallelizing a function.
 
@@ -106,6 +106,8 @@ def parallelize(func, iterarg=None, iterkwargs=None, args=None, kwargs=None, ncp
         maxload (float): maximum CPU load to use (not used if ncpus is specified)
         interval (float): number of seconds to pause between starting processes for checking load (not used if ncpus is specified)
         parallelizer (func): alternate parallelization function instead of multiprocess.Pool.map()
+        serial (bool): whether to skip parallelization run in serial (useful for debugging)
+        func_kwargs (dict): merged with kwargs (see above)
 
     Returns:
         List of outputs from each process
@@ -184,11 +186,7 @@ def parallelize(func, iterarg=None, iterkwargs=None, args=None, kwargs=None, ncp
         ncpus = mp.cpu_count()
 
     # Handle kwargs
-    if func_kwargs:
-        if kwargs is None:
-            kwargs = func_kwargs
-        else:
-            kwargs.update(func_kwargs)
+    kwargs = ut.mergedicts(kwargs, func_kwargs)
 
     # Handle iterarg and iterkwargs
     niters = 0
@@ -251,14 +249,16 @@ def parallelize(func, iterarg=None, iterkwargs=None, args=None, kwargs=None, ncp
 
     # Run simply using map -- no advantage here to using Process/Queue
     try:
-        if parallelizer is None: # Standard usage: use the default map() function
+        if serial: # Run in serial
+            outputlist = map(_parallel_task, argslist)
+        elif parallelizer is None: # Standard usage: use the default map() function
             multipool = mp.Pool(processes=ncpus)
             outputlist = multipool.map(_parallel_task, argslist)
             multipool.close()
             multipool.join()
         else: # Use a custom parallelization method
             outputlist = parallelizer(_parallel_task, argslist)
-    except RuntimeError as E: # pragma: no cover # Handle if run outside of __main__ on Windows
+    except Exception as E: # pragma: no cover # Handle if run outside of __main__ on Windows
         if 'freeze_support' in E.args[0]: # For this error, add additional information
             errormsg = '''
  Uh oh! It appears you are trying to run with multiprocessing on Windows outside
@@ -275,7 +275,10 @@ def parallelize(func, iterarg=None, iterkwargs=None, args=None, kwargs=None, ncp
  '''
             raise RuntimeError(errormsg) from E
         else: # For all other runtime errors, raise the original exception
-            raise E
+            errormsg = 'sc.parallelize() encountered an exception:\n\n' \
+                        f'{str(E)}\n\n' \
+                        'If you wish to debug this by temporarily turning off parallelization, set serial=True.'
+            raise type(E)(errormsg) from E # This raises a new exception of the same type
 
     return outputlist
 
