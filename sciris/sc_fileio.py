@@ -32,7 +32,6 @@ from io import BytesIO as IO
 from pathlib import Path
 import copyreg as cpreg
 import pickle as pkl
-import warnings
 from . import sc_utils as ut
 from .sc_odict import odict
 from .sc_dataframe import dataframe
@@ -93,7 +92,7 @@ def loadobj(filename=None, folder=None, verbose=False, die=None, remapping=None)
     return obj
 
 
-def saveobj(filename=None, obj=None, compresslevel=5, verbose=0, folder=None, die=True, *args, **kwargs):
+def saveobj(filename=None, obj=None, compresslevel=5, verbose=0, folder=None, method='pickle', die=True, *args, **kwargs):
     '''
     Save an object to file as a gzipped pickle -- use compression 5 by default,
     since more is much slower but not much smaller. Once saved, can be loaded
@@ -105,6 +104,7 @@ def saveobj(filename=None, obj=None, compresslevel=5, verbose=0, folder=None, di
         compresslevel (int): the level of gzip compression
         verbose (int): detail to print
         folder (str): passed to sc.makefilepath()
+        method (str): whether to use pickle (default) or dill
         die (bool): whether to fail if no object is provided
         args (list): passed to pickle.dumps()
         kwargs (dict): passed to pickle.dumps()
@@ -114,7 +114,7 @@ def saveobj(filename=None, obj=None, compresslevel=5, verbose=0, folder=None, di
         myobj = ['this', 'is', 'a', 'weird', {'object':44}]
         sc.saveobj('myfile.obj', myobj)
 
-    New in version 1.1.1: removed "method" argument, along with dill and Python 2 support.
+    New in version 1.1.1: removed Python 2 support.
     '''
 
     # Handle path
@@ -134,15 +134,18 @@ def saveobj(filename=None, obj=None, compresslevel=5, verbose=0, folder=None, di
         else:
             print(errormsg)
 
-    # Handle deprecation
-    if kwargs.pop('method', None) is not None: # pragma: no cover
-        warnmsg = 'sc.saveobj() argument "method" has been deprecated as of v1.1.1; dill support has been removed'
-        warnings.warn(warnmsg, category=DeprecationWarning, stacklevel=2)
-
     # Actually save
     with GzipFile(filename=filename, fileobj=bytesobj, mode='wb', compresslevel=compresslevel) as fileobj:
-        if verbose>=2: print('Saving as pickle...')
-        _savepickle(fileobj, obj, *args, **kwargs) # Use pickle
+        if method == 'dill': # pragma: no cover # If dill is requested, use that
+            if verbose>=2: print('Saving as dill...')
+            _savedill(fileobj, obj)
+        else: # Otherwise, try pickle
+            try:
+                if verbose>=2: print('Saving as pickle...')
+                _savepickle(fileobj, obj, *args, **kwargs) # Use pickle
+            except Exception as E: # pragma: no cover
+                if verbose>=2: print(f'Exception when saving as pickle ({repr(E)}), saving as dill...')
+                _savedill(fileobj, obj, *args, **kwargs) # ...but use Dill if that fails
 
     if verbose and filename:
         print(f'Object saved to "{filename}"')
@@ -187,7 +190,8 @@ def dumpstr(obj=None):
     ''' Dump an object as a bytes-like string (rarely used); see ``sc.loadstr()`` '''
     with closing(IO()) as output: # Open a "fake file."
         with GzipFile(fileobj=output, mode='wb') as fileobj:  # Open a Gzip-compressing way to write to this "file."
-            _savepickle(fileobj, obj) # Use pickle
+            try:    _savepickle(fileobj, obj) # Use pickle
+            except: _savedill(fileobj, obj) # ...but use Dill if that fails
         output.seek(0) # Move the mark to the beginning of the "file."
         result = output.read() # Read all of the content into result.
     return result
@@ -1226,11 +1230,16 @@ def _unpickler(string=None, filename=None, filestring=None, die=None, verbose=Fa
                 obj = pkl.loads(string, encoding='latin1') # Try loading it again with different encoding
             except Exception as E2:
                 try:
-                    if verbose: print(f'Encoding failed ({str(E2)}), trying robust unpickler...')
-                    obj = _RobustUnpickler(io.BytesIO(string), remapping=remapping).load() # And if that trails, throw everything at it
-                except Exception as E3: # pragma: no cover
-                    errormsg = f'All available unpickling methods failed:\n    Standard: {E1}\n     Encoded: {E2}\n      Robust: {E3}'
-                    raise Exception(errormsg)
+                    if verbose: print(f'Encoded unpickling failed ({str(E2)}), trying dill...')
+                    import dill # Optional Sciris dependency
+                    obj = dill.loads(string) # If that fails, try dill
+                except Exception as E3:
+                    try:
+                        if verbose: print(f'Dill failed ({str(E3)}), trying robust unpickler...')
+                        obj = _RobustUnpickler(io.BytesIO(string), remapping=remapping).load() # And if that trails, throw everything at it
+                    except Exception as E4: # pragma: no cover
+                        errormsg = f'All available unpickling methods failed:\n    Standard: {E1}\n     Encoded: {E2}\n        Dill: {E3}\n      Robust: {E4}'
+                        raise Exception(errormsg)
 
     if isinstance(obj, Failed):
         print('Warning, the following errors were encountered during unpickling:')
@@ -1245,6 +1254,16 @@ def _savepickle(fileobj=None, obj=None, protocol=None, *args, **kwargs):
             protocol = 4 # Use protocol 4 for backwards compatibility
         fileobj.write(pkl.dumps(obj, protocol=protocol, *args, **kwargs))
         return None
+
+
+def _savedill(fileobj=None, obj=None, *args, **kwargs): # pragma: no cover
+    ''' Use dill to do the sour work (note: this function is not actively maintained) '''
+    try:
+        import dill # Optional Sciris dependency
+    except ModuleNotFoundError as e:
+        raise ModuleNotFoundError('The "dill" Python package is not available; please install manually') from e
+    fileobj.write(dill.dumps(obj, protocol=-1, *args, **kwargs))
+    return None
 
 
 
