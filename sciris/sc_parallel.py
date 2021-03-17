@@ -179,7 +179,7 @@ def parallelize(func, iterarg=None, iterkwargs=None, args=None, kwargs=None, ncp
             results = sc.parallelize(func=f, iterarg=[(1,2),(2,3),(3,4)])
             print(results)
 
-    Version: 2020nov30
+    New in version 1.1.1: "serial" argument.
     '''
     # Handle maxload
     if ncpus is None and maxload is None:

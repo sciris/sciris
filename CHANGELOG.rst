@@ -8,7 +8,10 @@ By import convention, components of the Sciris library are listed beginning with
 
 Version 1.1.1 (2021-03-17)
 --------------------------
-1. 
+1. The implementations of ``sc.odict()`` and ``sc.objdict()`` have been updated, to allow for more flexible use of the ``defaultdict`` argument, including better nesting and subclassing.
+2. A new ``serial`` argument has been added to ``sc.parallelize()`` to allow for quick debugging.
+3. Legacy support for ``dill`` and Python 2 has been removed from ``sc.loadobj()`` and ``sc.saveobj()``.
+4. A fallback method for ``sc.gitinfo()`` (based on ``gitpython``) has been added, in case reading from the filesystem fails.
 
 
 Version 1.1.0 (2021-03-12)
