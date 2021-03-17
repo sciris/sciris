@@ -71,7 +71,7 @@ def loadobj(filename=None, folder=None, verbose=False, die=None, remapping=None)
         old = sc.loadobj('my-old-file.obj', remapping={'foo.Bar':cat.Mat}) # If loading a saved object containing a reference to foo.Bar that is now cat.Mat
         old = sc.loadobj('my-old-file.obj', remapping={'foo.Bar':('cat', 'Mat')}) # Equivalent to the above
 
-    New in version 1.0.3: "remapping" argument
+    New in version 1.1.0: "remapping" argument
     '''
 
     # Handle loading of either filename or file object
@@ -275,7 +275,7 @@ def getfilelist(folder='.', pattern=None, abspath=False, nopath=False, filesonly
         sc.getfilelist('~/temp', '*.py', abspath=True) # return absolute paths of all Python files in ~/temp folder
         sc.getfilelist('~/temp/*.py') # Like above
 
-    New in version 1.0.3: "aspath" argument
+    New in version 1.1.0: "aspath" argument
     '''
     folder = os.path.expanduser(folder)
     if abspath:
@@ -343,7 +343,7 @@ def makefilepath(filename=None, folder=None, ext=None, default=None, split=False
     Assuming project.filename is None and project.name is "recipe" and ./congee
     doesn't exist, this will makes folder ./congee and returns e.g. ('/home/myname/congee', 'recipe.prj')
 
-    New in version 1.0.3: "aspath" argument
+    New in version 1.1.0: "aspath" argument
     '''
 
     # Initialize
@@ -442,7 +442,7 @@ def thisdir(file=None, *args, aspath=False, **kwargs):
         thisdir = sc.thisdir()
         file_in_same_dir = sc.thisdir(__file__, 'new_file.txt')
 
-    New in version 1.0.3: "as_path" argument renamed "aspath"
+    New in version 1.1.0: "as_path" argument renamed "aspath"
     '''
     if file is None:
          file = str(Path(inspect.stack()[1][1])) # Adopted from Atomica

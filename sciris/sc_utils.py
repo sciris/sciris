@@ -448,7 +448,7 @@ def strjoin(*args, sep=', '):
 
         sc.strjoin([1,2,3], 4, 'five')
 
-    New in version 1.0.3.
+    New in version 1.1.0.
     '''
     obj = []
     for arg in args:
@@ -470,7 +470,7 @@ def newlinejoin(*args):
 
         sc.newlinejoin([1,2,3], 4, 'five')
 
-    New in version 1.0.3.
+    New in version 1.1.0.
     '''
     return strjoin(*args, sep='\n')
 
@@ -1390,7 +1390,7 @@ def promotetoarray(x, keepnone=False, **kwargs):
         sc.promotetoarray([3,5]) # Returns np.array([3,5])
         sc.promotetoarray(None, skipnone=True) # Returns np.array([])
 
-    New in version 1.0.3: replaced "skipnone" with "keepnone"; allowed passing
+    New in version 1.1.0: replaced "skipnone" with "keepnone"; allowed passing
     kwargs to ``np.array()``.
     '''
     if isnumber(x) or (isinstance(x, np.ndarray) and not np.shape(x)): # e.g. 3 or np.array(3)
@@ -1398,7 +1398,7 @@ def promotetoarray(x, keepnone=False, **kwargs):
     elif x is None and not keepnone:
         x = []
     if kwargs.pop('skipnone', None) is not None: # pragma: no cover
-        warnmsg = 'sc.promotetoarray() argument "skipnone" has been deprecated as of v1.0.3; use keepnone instead'
+        warnmsg = 'sc.promotetoarray() argument "skipnone" has been deprecated as of v1.1.0; use keepnone instead'
         warnings.warn(warnmsg, category=DeprecationWarning, stacklevel=2)
     output = np.array(x, **kwargs)
     return output
@@ -1436,7 +1436,7 @@ def promotetolist(obj=None, objtype=None, keepnone=False, coerce=None):
         myfunc(data, keys=['a', 'b']) # Works
         myfunc(data, keys='a') # Still works, equivalent to needing to supply keys=['a'] without promotetolist()
 
-    New in version 1.0.3: "coerce" argument
+    New in version 1.1.0: "coerce" argument
     '''
     if objtype is None: # Don't do type checking
         if isinstance(obj, list):
@@ -1470,12 +1470,12 @@ def promotetolist(obj=None, objtype=None, keepnone=False, coerce=None):
 
 
 def toarray(*args, **kwargs):
-    ''' Alias to sc.promotetoarray(). New in version 1.0.3. '''
+    ''' Alias to sc.promotetoarray(). New in version 1.1.0. '''
     return promotetoarray(*args, **kwargs)
 
 
 def tolist(*args, **kwargs):
-    ''' Alias to sc.promotetolist(). New in version 1.0.3. '''
+    ''' Alias to sc.promotetolist(). New in version 1.1.0. '''
     return promotetolist(*args, **kwargs)
 
 
@@ -1489,7 +1489,7 @@ def transposelist(obj):
         itemlist = o.enumitems()
         inds, keys, vals = sc.transposelist(itemlist)
 
-    New in version 1.0.3.
+    New in version 1.1.0.
     '''
     return list(map(list, zip(*obj)))
 
@@ -1519,7 +1519,7 @@ def mergedicts(*args, strict=False, overwrite=True, copy=False):
         d3 = sc.mergedicts(sc.odict({'b':3, 'c':4}), {'a':1, 'b':2}) # Returns sc.odict({'b':2, 'c':4, 'a':1})
         d4 = sc.mergedicts({'b':3, 'c':4}, {'a':1, 'b':2}, overwrite=False) # Raises exception
 
-    New in version 1.0.3: "copy" argument
+    New in version 1.1.0: "copy" argument
     '''
     # Try to get the output type from the first argument, but revert to a standard dict if that fails
     try:
@@ -1564,7 +1564,7 @@ def mergelists(*args, copy=False, **kwargs):
         sc.mergelists((1,2), (3,4), (5,6)) # Returns [(1, 2), (3, 4), (5, 6)]
         sc.mergelists((1,2), (3,4), (5,6), coerce=tuple) # Returns [1, 2, 3, 4, 5, 6]
 
-    New in version 1.0.3.
+    New in version 1.1.0.
     '''
     obj = []
     for arg in args:
