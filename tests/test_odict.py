@@ -189,10 +189,40 @@ def test_other():
 
 def test_asobj():
     sc.heading('Testing objdict/asobj')
+
+    # Testing standard usage
     d = dict(foo=1, bar=2)
     d_obj = sc.asobj(d)
     d_obj.foo = 10
     assert d_obj.bar == 2
+
+    print('Testing derived classes')
+    class MyObjDict(sc.objdict):
+        def __init__(self, x):
+            self.x = x
+        def square(self):
+            return self.x**2
+        def __repr__(self):
+            output = sc.objrepr(self)
+            output += sc.objdict.__repr__(self)
+            return output
+
+    class MyObjObj(type(d_obj)):
+        def __init__(self, x):
+            self.x = x
+        def square(self):
+            return self.x**2
+
+    myobjdict = MyObjDict(3)
+    myobjobj = MyObjObj(4)
+    assert myobjdict.x == 3
+    assert myobjobj.x == 4
+    assert myobjdict.square() == 9
+    assert myobjobj.square() == 16
+    print(myobjdict)
+    print(myobjobj)
+    repr(myobjdict)
+
     return
 
 
