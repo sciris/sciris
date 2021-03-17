@@ -949,12 +949,28 @@ class objdict(odict):
 
     def __getattr__(self, attr):
         ''' Get attribute as dict key '''
-        return odict.__getitem__(self, attr)
+        try:
+            return odict.__getitem__(self, attr)
+        except Exception as E:
+            try: # Handle defaultdict behavior by first checking if it exists
+                _defaultdict = odict.__getattribute__(self, '_defaultdict')
+            except:
+                _defaultdict = None
+            if _defaultdict is not None: # If it does, use it, then get the key again
+                if _defaultdict == 'nested':
+                    return self.__class__(defaultdict='nested', __parent=self, __key=attr)
+                else:
+                    dd = _defaultdict()
+                    self[attr] = dd
+                    return dd
+            else:
+                raise E
 
 
     def __setattr__(self, name, value):
         ''' Set key in dict, not attribute! '''
         return self.__setitem__(name, value)
+
 
     def __setitem__(self, name, value):
         odict.__setitem__(self, name, value) # If so, simply return
@@ -969,24 +985,6 @@ class objdict(odict):
             object.__delattr__(self, '__parent')
             object.__delattr__(self, '__key')
         return
-
-
-    def __missing__(self, key):
-        try: # Handle defaultdict behavior by first checking if it exists
-            _defaultdict = odict.__getattribute__(self, '_defaultdict')
-        except:
-            _defaultdict = None
-        if _defaultdict is not None: # If it does, use it, then get the key again
-            if _defaultdict == 'nested':
-                return self.__class__(__parent=self, __key=key)
-            else:
-                self[key] = _defaultdict()
-                return self[key]
-        else:
-            keys = self.keys()
-            if len(keys): errormsg = f'objdict key "{key}" not found; available keys are:\n{ut.newlinejoin(keys)}'
-            else:         errormsg = f'Key {key} not found since objdict is empty'
-            raise ut.KeyNotFoundError(errormsg)
 
 
     def __delattr__(self, name):
