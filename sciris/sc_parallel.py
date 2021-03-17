@@ -258,7 +258,7 @@ def parallelize(func, iterarg=None, iterkwargs=None, args=None, kwargs=None, ncp
             multipool.join()
         else: # Use a custom parallelization method
             outputlist = parallelizer(_parallel_task, argslist)
-    except Exception as E: # pragma: no cover # Handle if run outside of __main__ on Windows
+    except RuntimeError as E: # pragma: no cover # Handle if run outside of __main__ on Windows
         if 'freeze_support' in E.args[0]: # For this error, add additional information
             errormsg = '''
  Uh oh! It appears you are trying to run with multiprocessing on Windows outside
@@ -275,10 +275,7 @@ def parallelize(func, iterarg=None, iterkwargs=None, args=None, kwargs=None, ncp
  '''
             raise RuntimeError(errormsg) from E
         else: # For all other runtime errors, raise the original exception
-            errormsg = 'sc.parallelize() encountered an exception:\n\n' \
-                        f'{str(E)}\n\n' \
-                        'If you wish to debug this by temporarily turning off parallelization, set serial=True.'
-            raise type(E)(errormsg) from E # This raises a new exception of the same type
+            raise E
 
     return outputlist
 
