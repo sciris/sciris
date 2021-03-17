@@ -947,29 +947,59 @@ class objdict(odict):
         return odict.__repr__(self, quote='', numsep='.', classname='objdict()', *args, **kwargs)
 
 
-    def __getattr__(self, attr):
-        ''' Get attribute as dict key '''
-        try:
-            return odict.__getitem__(self, attr)
-        except Exception as E:
-            try: # Handle defaultdict behavior by first checking if it exists
-                _defaultdict = odict.__getattribute__(self, '_defaultdict')
-            except:
-                _defaultdict = None
-            if _defaultdict is not None: # If it does, use it, then get the key again
-                if _defaultdict == 'nested':
-                    return self.__class__(defaultdict='nested', __parent=self, __key=attr)
+    def __getattribute__(self, attr):
+        try: # First, try to get the attribute as an attribute
+            output = odict.__getattribute__(self, attr)
+            return output
+        except Exception as E: # If that fails, try to get it as a dict item
+            try:
+                output = odict.__getitem__(self, attr)
+                return output
+            except: # If that fails, raise the original exception
+                try: # Handle defaultdict behavior by first checking if it exists
+                    _defaultdict = odict.__getattribute__(self, '_defaultdict')
+                except:
+                    _defaultdict = None
+                if _defaultdict is not None: # If it does, use it, then get the key again
+                    if _defaultdict == 'nested':
+                        return self.__class__(defaultdict='nested', __parent=self, __key=attr)
+                    else:
+                        dd = _defaultdict()
+                        self[attr] = dd
+                        return dd
                 else:
-                    dd = _defaultdict()
-                    self[attr] = dd
-                    return dd
-            else:
-                raise E
+                    raise E
+
+    # def __getattr__(self, attr):
+    #     ''' Get attribute as dict key '''
+    #     try:
+    #         return odict.__getitem__(self, attr)
+    #     except Exception as E:
+    #         try: # Handle defaultdict behavior by first checking if it exists
+    #             _defaultdict = odict.__getattribute__(self, '_defaultdict')
+    #         except:
+    #             _defaultdict = None
+    #         if _defaultdict is not None: # If it does, use it, then get the key again
+    #             if _defaultdict == 'nested':
+    #                 return self.__class__(defaultdict='nested', __parent=self, __key=attr)
+    #             else:
+    #                 dd = _defaultdict()
+    #                 self[attr] = dd
+    #                 return dd
+    #         else:
+    #             raise E
 
 
     def __setattr__(self, name, value):
         ''' Set key in dict, not attribute! '''
-        return self.__setitem__(name, value)
+        try:
+            odict.__getattribute__(self, name) # Try retrieving this as an attribute, expect AttributeError...
+        except AttributeError:
+            return odict.__setitem__(self, name, value) # If so, simply return
+
+        # Otherwise, raise an exception
+        errormsg = f'"{name}" exists as an attribute, so cannot be set as key; use setattribute() instead'
+        raise ValueError(errormsg)
 
 
     def __setitem__(self, name, value):
@@ -1035,8 +1065,16 @@ def asobj(obj, strict=True):
 
     class objobj(objtype):
 
-        def __getattr__(self, attr):
-            return objtype.__getitem__(self, attr)
+        def __getattribute__(self, attr):
+            try: # First, try to get the attribute as an attribute
+                output = objtype.__getattribute__(self, attr)
+                return output
+            except Exception as E: # pragma: no cover # If that fails, try to get it as a dict item
+                try:
+                    output = objtype.__getitem__(self, attr)
+                    return output
+                except: # If that fails, raise the original exception
+                    raise E
 
         def __setattr__(self, name, value):
             ''' Set key in dict, not attribute! '''
