@@ -71,7 +71,7 @@ class odict(OD):
         return None
 
 
-    def __getitem__(self, key):
+    def __getitem__(self, key, allow_default=True):
         ''' Allows getitem to support strings, integers, slices, lists, or arrays '''
 
         if isinstance(key, ut._stringtypes) or isinstance(key, tuple): # Normal use case: just use a string key
@@ -83,7 +83,7 @@ class odict(OD):
                     _defaultdict = OD.__getattribute__(self, '_defaultdict')
                 except:
                     _defaultdict = None
-                if _defaultdict is not None: # If it does, use it, then get the key again
+                if _defaultdict is not None and allow_default: # If it does, use it, then get the key again
                     if _defaultdict == 'nested':
                         _defaultdict = lambda: self.__class__(defaultdict=_defaultdict) # Make recursive
                     dd = _defaultdict() # Create the new object
@@ -949,45 +949,9 @@ class objdict(odict):
 
     def __getattribute__(self, attr):
         try: # First, try to get the attribute as an attribute
-            output = odict.__getattribute__(self, attr)
-            return output
+            return odict.__getattribute__(self, attr)
         except Exception as E: # If that fails, try to get it as a dict item
-            try:
-                output = odict.__getitem__(self, attr)
-                return output
-            except: # If that fails, raise the original exception
-                try: # Handle defaultdict behavior by first checking if it exists
-                    _defaultdict = odict.__getattribute__(self, '_defaultdict')
-                except:
-                    _defaultdict = None
-                if _defaultdict is not None: # If it does, use it, then get the key again
-                    if _defaultdict == 'nested':
-                        return self.__class__(defaultdict='nested', __parent=self, __key=attr)
-                    else:
-                        dd = _defaultdict()
-                        self[attr] = dd
-                        return dd
-                else:
-                    raise E
-
-    # def __getattr__(self, attr):
-    #     ''' Get attribute as dict key '''
-    #     try:
-    #         return odict.__getitem__(self, attr)
-    #     except Exception as E:
-    #         try: # Handle defaultdict behavior by first checking if it exists
-    #             _defaultdict = odict.__getattribute__(self, '_defaultdict')
-    #         except:
-    #             _defaultdict = None
-    #         if _defaultdict is not None: # If it does, use it, then get the key again
-    #             if _defaultdict == 'nested':
-    #                 return self.__class__(defaultdict='nested', __parent=self, __key=attr)
-    #             else:
-    #                 dd = _defaultdict()
-    #                 self[attr] = dd
-    #                 return dd
-    #         else:
-    #             raise E
+            return self.__getitem__(attr, exception=E)
 
 
     def __setattr__(self, name, value):
@@ -995,11 +959,33 @@ class objdict(odict):
         try:
             odict.__getattribute__(self, name) # Try retrieving this as an attribute, expect AttributeError...
         except AttributeError:
-            return odict.__setitem__(self, name, value) # If so, simply return
+            return self.__setitem__(name, value) # If so, simply return
 
         # Otherwise, raise an exception
         errormsg = f'"{name}" exists as an attribute, so cannot be set as key; use setattribute() instead'
         raise ValueError(errormsg)
+
+
+    def __getitem__(self, attr, exception=None):
+        try:
+            return odict.__getitem__(self, attr, allow_default=False)
+        except Exception as E2: # If that fails, raise the original exception
+            try: # Handle defaultdict behavior by first checking if it exists
+                _defaultdict = odict.__getattribute__(self, '_defaultdict')
+            except:
+                _defaultdict = None
+            if _defaultdict is not None: # If it does, use it, then get the key again
+                if _defaultdict == 'nested':
+                    return self.__class__(defaultdict='nested', __parent=self, __key=attr)
+                else:
+                    dd = _defaultdict()
+                    self[attr] = dd
+                    return dd
+            else:
+                if exception:
+                    raise exception
+                else:
+                    raise E2
 
 
     def __setitem__(self, name, value):
