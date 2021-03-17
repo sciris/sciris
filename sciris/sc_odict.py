@@ -934,13 +934,19 @@ class objdict(odict):
     >>> od.bmi = od.mass/od.height**2
     >>> od['bmi'] = od['mass']/od['height']**2 # Vanilla syntax still works
     >>> od.keys = 3 # This raises an exception (you can't overwrite the keys() method)
+
+    Nested logic based in part on addict: https://github.com/mewwts/addict
     '''
 
     def __init__(self, *args, **kwargs):
-        odict.__setattr__(self, '__parent', kwargs.pop('__parent', None))
-        odict.__setattr__(self, '__key', kwargs.pop('__key', None))
+        nested_parent = kwargs.pop('_nested_parent', None)
+        nested_attr  = kwargs.pop('_nested_attr', None)
+        if nested_parent is not None:
+            odict.__setattr__(self, '_nested_parent', nested_parent)
+            odict.__setattr__(self, '_nested_attr', nested_attr)
         odict.__init__(self, *args, **kwargs) # Standard init
         return
+
 
     def __repr__(self, *args, **kwargs):
         ''' Use odict repr, but with a custom class name and no quotes '''
@@ -948,9 +954,10 @@ class objdict(odict):
 
 
     def __getattribute__(self, attr):
+        ''' Handle as attributes first, then as dict keys '''
         try: # First, try to get the attribute as an attribute
             return odict.__getattribute__(self, attr)
-        except Exception as E: # If that fails, try to get it as a dict item
+        except Exception as E: # If that fails, try to get it as a dict item, but pass along the original exception
             return self.__getitem__(attr, exception=E)
 
 
@@ -958,17 +965,16 @@ class objdict(odict):
         ''' Set key in dict, not attribute! '''
         try:
             odict.__getattribute__(self, name) # Try retrieving this as an attribute, expect AttributeError...
+            errormsg = f'"{name}" exists as an attribute, so cannot be set as key; use setattribute() instead'
+            raise ValueError(errormsg)
         except AttributeError:
             return self.__setitem__(name, value) # If so, simply return
 
-        # Otherwise, raise an exception
-        errormsg = f'"{name}" exists as an attribute, so cannot be set as key; use setattribute() instead'
-        raise ValueError(errormsg)
-
 
     def __getitem__(self, attr, exception=None):
-        try:
-            return odict.__getitem__(self, attr, allow_default=False)
+        ''' Handle dict keys, including nested defaultdict logic '''
+        try: # Try retrieving normally
+            return odict.__getitem__(self, attr, allow_default=False) # Do not allow odict to handle default
         except Exception as E2: # If that fails, raise the original exception
             try: # Handle defaultdict behavior by first checking if it exists
                 _defaultdict = odict.__getattribute__(self, '_defaultdict')
@@ -976,10 +982,10 @@ class objdict(odict):
                 _defaultdict = None
             if _defaultdict is not None: # If it does, use it, then get the key again
                 if _defaultdict == 'nested':
-                    return self.__class__(defaultdict='nested', __parent=self, __key=attr)
+                    return self.__class__(defaultdict='nested', _nested_parent=self, _nested_attr=attr) # Create a recursive object with links back to the ultimate parent
                 else:
-                    dd = _defaultdict()
-                    self[attr] = dd
+                    dd = _defaultdict() # Create the new object
+                    self[attr] = dd # Since we don't know what this object is, we can't be clever about recursion
                     return dd
             else:
                 if exception:
@@ -989,17 +995,18 @@ class objdict(odict):
 
 
     def __setitem__(self, name, value):
-        odict.__setitem__(self, name, value) # If so, simply return
+        ''' Set as a dict item '''
+        odict.__setitem__(self, name, value)
         try:
-            p = object.__getattribute__(self, '__parent')
-            key = object.__getattribute__(self, '__key')
+            p = object.__getattribute__(self, '_nested_parent')
+            key = object.__getattribute__(self, '_nested_attr')
         except AttributeError:
             p = None
             key = None
         if p is not None:
             p[key] = self
-            object.__delattr__(self, '__parent')
-            object.__delattr__(self, '__key')
+            object.__delattr__(self, '_nested_parent')
+            object.__delattr__(self, '_nested_attr')
         return
 
 
