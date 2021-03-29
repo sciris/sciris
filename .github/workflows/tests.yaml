@@ -20,8 +20,8 @@ jobs:
           architecture: x64
       - name: Install Sciris
         run: |
-          pip install line_profiler
-          python setup.py develop
+          pip install pip --upgrade
+          pip install -e .
       - name: Install tests
         run: pip install pytest
       - name: Run API tests
