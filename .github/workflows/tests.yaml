@@ -19,7 +19,7 @@ jobs:
           python-version: ${{ matrix.python-version }}
           architecture: x64
       - name: Install Sciris
-        run: pip install -e .
+        run: python setup.py develop
       - name: Install tests
         run: pip install pytest
       - name: Run API tests
