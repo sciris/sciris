@@ -2430,15 +2430,16 @@ def gitinfo(path=None, hashlen=7, die=False, verbose=True):
                 githash = ref.strip()
 
         # Now read the time from the commit
-        compressed_contents = open(os.path.join(gitdir, "objects", githash[0:2], githash[2:]), "rb").read()
-        decompressed_contents = zlib.decompress(compressed_contents).decode()
-        for line in decompressed_contents.split("\n"):
-            if line.startswith("author"):
-                _re_actor_epoch = re.compile(r"^.+? (.*) (\d+) ([+-]\d+).*$")
-                m = _re_actor_epoch.search(line)
-                actor, epoch, offset = m.groups()
-                t = time.gmtime(int(epoch))
-                gitdate = time.strftime("%Y-%m-%d %H:%M:%S UTC", t)
+        with open(os.path.join(gitdir, "objects", githash[0:2], githash[2:]), "rb") as f3:
+            compressed_contents = f3.read()
+            decompressed_contents = zlib.decompress(compressed_contents).decode()
+            for line in decompressed_contents.split("\n"):
+                if line.startswith("author"):
+                    _re_actor_epoch = re.compile(r"^.+? (.*) (\d+) ([+-]\d+).*$")
+                    m = _re_actor_epoch.search(line)
+                    actor, epoch, offset = m.groups()
+                    t = time.gmtime(int(epoch))
+                    gitdate = time.strftime("%Y-%m-%d %H:%M:%S UTC", t)
 
     except Exception as E: # pragma: no cover
         try: # Second, try importing gitpython
@@ -2843,7 +2844,7 @@ def makenested(nesteddict, keylist=None, value=None, overwrite=False, generator=
     Version: 2014nov29
     '''
     if generator is None:
-        generator = nesteddict.__class___ # By default, generate new dicts of the same class as the original one
+        generator = nesteddict.__class__ # By default, generate new dicts of the same class as the original one
     currentlevel = nesteddict
     for i,key in enumerate(keylist[:-1]):
         if not(key in currentlevel):
