@@ -289,6 +289,26 @@ class odict(OD):
     def _repr_pretty_(self, p, cycle, *args, **kwargs): # pragma: no cover
         ''' Function to fix __repr__ in IPython'''
         print(self.__repr__(*args, **kwargs))
+        return
+
+
+    def __add__(self, dict2):
+        '''
+        Allow two dictionaries to be added (merged).
+
+        **Example**::
+
+            dict1 = sc.odict(a=3, b=4)
+            dict2 = sc.odict(c=5, d=7)
+            dict3 = dict1 + dict2
+        '''
+        return ut.mergedicts(self, dict2)
+
+
+    def __radd__(self, dict2):
+        ''' Allows sum() to work correctly '''
+        if not dict2: return self
+        else:         return self.__add__(dict2)
 
 
     def disp(self, maxlen=None, showmultilines=True, divider=False, dividerthresh=10, numindents=0, sigfigs=5, numformat=None, maxitems=20, **kwargs):
@@ -297,8 +317,7 @@ class odict(OD):
 
         **Example**::
 
-            import pylab as pl
-            z = odict().make(keys=['a','b','c'], vals=(10*pl.rand(3)).tolist())
+            z = sc.odict().make(keys=['a','b','c'], vals=[4.293487,3,6])
             z.disp(sigfigs=3)
             z.disp(numformat='%0.6f')
         '''

@@ -11,24 +11,25 @@ Version 1.2.0 (2021-07-05)
 
 New functions and methods
 ~~~~~~~~~~~~~~~~~~~~~~~~~
-1. Added ``sc.figlayout()`` as an alias to both ``fig.set_tight_layout(True)`` and ``fig.subplots_adjust()``.
+#. Added ``sc.figlayout()`` as an alias to both ``fig.set_tight_layout(True)`` and ``fig.subplots_adjust()``.
 
 Bugfixes
 ~~~~~~~~
-1. Fixed ``sc.checkmem()`` from failing when an attribute was ``None``.
+#. Fixed ``sc.checkmem()`` from failing when an attribute was ``None``.
 
 Improvements
 ~~~~~~~~~~~~
-1. Updated ``sc.heading()`` to handle arguments the same way as ``print()``, e.g. ``sc.heading([1,2,3], 'is a list')``.
-1. Updated ``sc.commaticks()`` to use locale-aware formatting. 
-1. Removed the ``fig`` argument from ``sc.commaticks()`` and ``sc.SIticks()``; now, the first argument can be an ``Axes`` object, a ``Figure`` object, or a list of axes.
-1. Updated ``sc.suggest()`` to modify the threshold to be based on the length of the input word.
-1. Updated ``sc.get_rows_cols()`` to optionally create subplots, rather than just return the number of rows/columns.
+#. Updated ``sc.heading()`` to handle arguments the same way as ``print()``, e.g. ``sc.heading([1,2,3], 'is a list')``.
+#. Updated ``sc.commaticks()`` to use locale-aware formatting. 
+#. Removed the ``fig`` argument from ``sc.commaticks()`` and ``sc.SIticks()``; now, the first argument can be an ``Axes`` object, a ``Figure`` object, or a list of axes.
+#. Updated ``sc.suggest()`` to modify the threshold to be based on the length of the input word.
+#. Updated ``sc.get_rows_cols()`` to optionally create subplots, rather than just return the number of rows/columns.
 
 Other updates
 ~~~~~~~~~~~~~
-1. Updated nested dictionary functions, and added them as methods to ``sc.odict()`` and derived classes (like ``sc.objdict()``); for example, you can now do ``nestedobj = sc.objdict(); nestedobj.setnested(['a','b','c'], 4)``.
-1. Added ``sc.odict.enumvalues()`` as an alias to ``sc.odict.enumvals()``.
+#. Defined ``+`` for ``sc.odict`` and derived classes; adding two dictionaries is the same as calling ``sc.mergedicts()`` on them. 
+#. Updated nested dictionary functions, and added them as methods to ``sc.odict()`` and derived classes (like ``sc.objdict()``); for example, you can now do ``nestedobj = sc.objdict(); nestedobj.setnested(['a','b','c'], 4)``.
+#. Added ``sc.odict.enumvalues()`` as an alias to ``sc.odict.enumvals()``.
 
 
 Version 1.1.1 (2021-03-17)

@@ -2843,7 +2843,7 @@ def makenested(nesteddict, keylist=None, value=None, overwrite=False, generator=
     Version: 2014nov29
     '''
     if generator is None:
-        generator = type(nesteddict)
+        generator = nesteddict.__class___ # By default, generate new dicts of the same class as the original one
     currentlevel = nesteddict
     for i,key in enumerate(keylist[:-1]):
         if not(key in currentlevel):
