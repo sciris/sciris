@@ -132,6 +132,11 @@ def test_other(doplot=doplot):
         sc.orderlegend([1,0,2], frameon=False) # Legend order B, A, C with no frame
         sc.separatelegend()
 
+        # Test date formatter
+        pl.figure()
+        pl.plot(np.arange(365), pl.rand(365))
+        sc.dateformatter('2021-01-01')
+
     return o
 
 

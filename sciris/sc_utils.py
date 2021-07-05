@@ -57,7 +57,7 @@ _stringtypes = (str, bytes)
 _numtype    = numbers.Number
 
 # Add Windows support for colors (do this at the module level so that colorama.init() only gets called once)
-if 'win' in sys.platform: # pragma: no cover
+if 'win' in sys.platform and sys.platform != 'darwin': # pragma: no cover
     try:
         import colorama
         colorama.init()
@@ -74,7 +74,8 @@ else:
 ##############################################################################
 
 # Define the modules being loaded
-__all__ = ['fast_uuid', 'uuid', 'dcp', 'cp', 'pp', 'sha', 'wget', 'htmlify', 'traceback']
+__all__ = ['fast_uuid', 'uuid', 'dcp', 'cp', 'pp', 'sha', 'wget', 'htmlify', 'traceback',
+           'getplatform', 'iswindows', 'islinux', 'ismac']
 
 
 def fast_uuid(which=None, length=None, n=1, secure=False, forcelist=False, safety=1000, recursion=0, recursion_limit=10, verbose=True):
@@ -389,6 +390,58 @@ def traceback(*args, **kwargs):
     return py_traceback.format_exc(*args, **kwargs)
 
 
+def getplatform(expected=None, die=False):
+    '''
+    Return the name of the current platform: 'linux', 'windows', 'mac', or 'other'.
+    Alias (kind of) to sys.platform.
+
+    Args:
+        expected (str): if not None, check if the current platform is this
+        die (bool): if True and expected is defined, raise an exception
+
+    **Example**::d
+
+        sc.getplatform() # Get current name of platform
+        sc.getplatform('windows', die=True) # Raise an exception if not on Windows
+    '''
+    # Define different aliases for each operating system
+    mapping = dict(
+        linux   = ['linux', 'posix'],
+        windows = ['windows', 'win', 'win32', 'cygwin', 'nt'],
+        mac     = ['mac', 'macos', 'darwin', 'osx']
+    )
+
+    # Check to see what system it is
+    sys_plat = sys.platform
+    plat = 'other'
+    for key,aliases in mapping.items():
+        if sys_plat.lower() in aliases:
+            plat = key
+            break
+
+    # Handle output
+    if expected is not None:
+        output = (expected.lower() in mapping[plat]) # Check if it's as expecte
+        if not output and die:
+            errormsg = f'System is "{plat}", not "{expected}"'
+            raise EnvironmentError(errormsg)
+    else:
+        output = plat
+    return output
+
+
+def iswindows(die=False):
+    ''' Alias to sc.getplatform('windows') '''
+    return getplatform('windows', die=die)
+
+def islinux(die=False):
+    ''' Alias to sc.getplatform('linux') '''
+    return getplatform('linux', die=die)
+
+def ismac(die=False):
+    ''' Alias to sc.getplatform('mac') '''
+    return getplatform('mac', die=die)
+
 
 ##############################################################################
 #%% Printing/notification functions
@@ -438,7 +491,7 @@ def blank(n=3):
 def strjoin(*args, sep=', '):
     '''
     Like string ``join()``, but handles more flexible inputs, converts items to
-    strings, and.
+    strings. By default, join with commas.
 
     Args:
         args (list): the list of items to join
@@ -1122,26 +1175,28 @@ def colorize(color=None, string=None, output=False, showhelp=False, enable=True)
         return None
 
 
-def heading(string=None, color=None, divider=None, spaces=None, minlength=None, maxlength=None, **kwargs):
+def heading(string=None, *args, color=None, divider=None, spaces=None, minlength=None, maxlength=None, sep=' ', output=True, **kwargs):
     '''
-    Shortcut to sc.colorize() to create a heading. If just supplied with a string,
+    Create a colorful heading. If just supplied with a string (or list of inputs like print()),
     create blue text with horizontal lines above and below and 3 spaces above. You
     can customize the color, the divider character, how many spaces appear before
     the heading, and the minimum length of the divider (otherwise will expand to
     match the length of the string, up to a maximum length).
 
     Args:
-        string (str): The string to print as the heading
+        string (str): The string to print as the heading (or object to convert to astring)
+        args (list): Additional strings to print
         color (str): The color to use for the heading (default blue)
         divider (str): The symbol to use for the divider (default em dash)
         spaces (int): The number of spaces to put before the heading
         minlength (int): The minimum length of the divider
         maxlength (int): The maximum length of the divider
+        sep (str): If multiple arguments are supplied, use this separator to join them
+        output (bool): Whether to return the string as output (else, print)
         kwargs (dict): Arguments to pass to sc.colorize()
 
     Returns:
-        None, unless specified to produce the string as output using output=True.
-
+        String, unless output=False.
 
     Examples
     --------
@@ -1156,13 +1211,27 @@ def heading(string=None, color=None, divider=None, spaces=None, minlength=None, 
     if minlength is None: minlength = 30
     if maxlength is None: maxlength = 120
 
+    # Convert to single string
+    args = list(args)
+    if string is not None:
+        args = [string] + args
+    string = sep.join(str(item) for item in args)
+
+    # Add header and footer
     length = int(np.median([minlength, len(string), maxlength]))
     space = '\n'*spaces
     if divider and length: fulldivider = '\n'+divider*length+'\n'
     else:                  fulldivider = ''
     fullstring = space + fulldivider + string + fulldivider
-    output = colorize(color=color, string=fullstring, **kwargs)
-    return output
+
+    # Create output
+    outputstring = colorize(color=color, string=fullstring, **kwargs)
+
+    if output:
+        return outputstring
+    else:
+        print(outputstring)
+        return
 
 
 def percentcomplete(step=None, maxsteps=None, stepsize=1, prefix=None):
@@ -2129,7 +2198,7 @@ def toc(start=None, output=False, label=None, sigfigs=None, filename=None, reset
     else:
         if filename is not None: printtologfile(logmessage, filename) # If we passed in a filename, append the message to that file.
         else: print(logmessage) # Otherwise, print the message.
-        return None
+        return
 
 
 def toctic(returntic=False, returntoc=False, *args, **kwargs):
@@ -2222,7 +2291,7 @@ def checkmem(var, descend=None, alphabetical=False, plot=False, verbose=False):
 
         # Create a temporary file, save the object, check the size, remove it
         filename = tempfile.mktemp()
-        saveobj(filename, variable)
+        saveobj(filename, variable, die=False)
         filesize = os.path.getsize(filename)
         os.remove(filename)
 
@@ -2414,15 +2483,16 @@ def gitinfo(path=None, hashlen=7, die=False, verbose=True):
                 githash = ref.strip()
 
         # Now read the time from the commit
-        compressed_contents = open(os.path.join(gitdir, "objects", githash[0:2], githash[2:]), "rb").read()
-        decompressed_contents = zlib.decompress(compressed_contents).decode()
-        for line in decompressed_contents.split("\n"):
-            if line.startswith("author"):
-                _re_actor_epoch = re.compile(r"^.+? (.*) (\d+) ([+-]\d+).*$")
-                m = _re_actor_epoch.search(line)
-                actor, epoch, offset = m.groups()
-                t = time.gmtime(int(epoch))
-                gitdate = time.strftime("%Y-%m-%d %H:%M:%S UTC", t)
+        with open(os.path.join(gitdir, "objects", githash[0:2], githash[2:]), "rb") as f3:
+            compressed_contents = f3.read()
+            decompressed_contents = zlib.decompress(compressed_contents).decode()
+            for line in decompressed_contents.split("\n"):
+                if line.startswith("author"):
+                    _re_actor_epoch = re.compile(r"^.+? (.*) (\d+) ([+-]\d+).*$")
+                    m = _re_actor_epoch.search(line)
+                    actor, epoch, offset = m.groups()
+                    t = time.gmtime(int(epoch))
+                    gitdate = time.strftime("%Y-%m-%d %H:%M:%S UTC", t)
 
     except Exception as E: # pragma: no cover
         try: # Second, try importing gitpython
@@ -2513,7 +2583,7 @@ def importbyname(name=None, output=False, die=True):
     else:      return True
 
 
-def suggest(user_input, valid_inputs, n=1, threshold=4, fulloutput=False, die=False, which='damerau'):
+def suggest(user_input, valid_inputs, n=1, threshold=None, fulloutput=False, die=False, which='damerau'):
     """
     Return suggested item
 
@@ -2525,7 +2595,7 @@ def suggest(user_input, valid_inputs, n=1, threshold=4, fulloutput=False, die=Fa
         user_input (str): User's input
         valid_inputs (list): List/collection of valid strings
         n (int): Maximum number of suggestions to return
-        threshold (int): Maximum number of edits required for an option to be suggested
+        threshold (int): Maximum number of edits required for an option to be suggested (by default, two-thirds the length of the input; for no threshold, set to -1)
         die (bool): If True, an informative error will be raised (to avoid having to implement this in the calling code)
         which (str): Distance calculation method used; options are "damerau" (default), "levenshtein", or "jaro"
 
@@ -2535,11 +2605,11 @@ def suggest(user_input, valid_inputs, n=1, threshold=4, fulloutput=False, die=Fa
 
     **Examples**::
 
-        >>> suggest('foo',['Foo','Bar'])
+        >>> sc.suggest('foo',['Foo','Bar'])
         'Foo'
-        >>> suggest('foo',['FOO','Foo'])
+        >>> sc.suggest('foo',['FOO','Foo'])
         'Foo'
-        >>> suggest('foo',['Foo ','boo'])
+        >>> sc.suggest('foo',['Foo ','boo'])
         'Foo '
     """
     try:
@@ -2578,8 +2648,15 @@ def suggest(user_input, valid_inputs, n=1, threshold=4, fulloutput=False, die=Fa
     # Order by distance, then pull out the right inputs, then turn them into a list
     order = np.argsort(distance)
     suggestions = [valid_inputs[i] for i in order]
-    suggestionstr = strjoin(['"' + sugg + '"' for sugg in suggestions[:n]])
+    suggestionstr = strjoin([f'"{sugg}"' for sugg in suggestions[:n]])
 
+    # Handle threshold
+    if threshold is None:
+        threshold = np.ceil(len(user_input)*2/3)
+    if threshold < 0:
+        threshold = np.inf
+
+    # Output
     if min(distance) > threshold:
         if die: # pragma: no cover
             errormsg = f'"{user_input}" not found'
@@ -2770,7 +2847,7 @@ __all__ += ['getnested', 'setnested', 'makenested', 'iternested', 'mergenested',
             'flattendict', 'search', 'nestedloop']
 
 
-def makenested(nesteddict, keylist,item=None):
+def makenested(nesteddict, keylist=None, value=None, overwrite=False, generator=None):
     '''
     Little functions to get and set data from nested dictionaries.
 
@@ -2819,12 +2896,23 @@ def makenested(nesteddict, keylist,item=None):
 
     Version: 2014nov29
     '''
+    if generator is None:
+        generator = nesteddict.__class__ # By default, generate new dicts of the same class as the original one
     currentlevel = nesteddict
     for i,key in enumerate(keylist[:-1]):
         if not(key in currentlevel):
-            currentlevel[key] = {}
+            currentlevel[key] = generator() # Create a new dictionary
         currentlevel = currentlevel[key]
-    currentlevel[keylist[-1]] = item
+    lastkey = keylist[-1]
+    if isinstance(currentlevel, dict):
+        if overwrite or lastkey not in currentlevel:
+            currentlevel[lastkey] = value
+        elif not overwrite and value is not None:
+            errormsg = f'Not overwriting entry {keylist} since overwrite=False'
+            raise ValueError(errormsg)
+    elif value is not None:
+        errormsg = f'Cannot set value {value} since entry {keylist} is a {type(currentlevel)}, not a dict'
+        raise TypeError(errormsg)
     return
 
 
@@ -2834,36 +2922,45 @@ def getnested(nesteddict, keylist, safe=False):
 
     >>> sc.getnested(foo, ['a','b'])
 
-    See makenested() for full documentation.
+    See sc.makenested() for full documentation.
     '''
     output = reduce(lambda d, k: d.get(k) if d else None if safe else d[k], keylist, nesteddict)
     return output
 
 
-def setnested(nesteddict, keylist, value):
+def setnested(nesteddict, keylist, value, force=True):
     '''
     Set the value for the given list of keys
 
     >>> sc.setnested(foo, ['a','b'], 3)
 
-    See makenested() for full documentation.
+    See sc.makenested() for full documentation.
     '''
-    getnested(nesteddict, keylist[:-1])[keylist[-1]] = value
+    if force:
+        makenested(nesteddict, keylist, overwrite=False)
+    currentlevel = getnested(nesteddict, keylist[:-1])
+    if not isinstance(currentlevel, dict):
+        errormsg = f'Cannot set {keylist} since parent is a {type(currentlevel)}, not a dict'
+        raise TypeError(errormsg)
+    else:
+        currentlevel[keylist[-1]] = value
     return # Modify nesteddict in place
 
 
-def iternested(nesteddict,previous = []):
+def iternested(nesteddict, previous=None):
     '''
     Return a list of all the twigs in the current dictionary
 
     >>> twigs = sc.iternested(foo)
 
-    See makenested() for full documentation.
+    See sc.makenested() for full documentation.
     '''
+    if previous is None:
+        previous = []
     output = []
     for k in nesteddict.items():
         if isinstance(k[1],dict):
-            output += iternested(k[1],previous+[k[0]]) # Need to add these at the first level
+            output += iternested(k[1], previous+[k[0]]) # Need to add these at the first level
         else:
             output.append(previous+[k[0]])
     return output
@@ -2873,7 +2970,7 @@ def mergenested(dict1, dict2, die=False, verbose=False, _path=None):
     '''
     Merge different nested dictionaries
 
-    See makenested() for full documentation.
+    See sc.makenested() for full documentation.
 
     Adapted from https://stackoverflow.com/questions/7204805/dictionaries-of-dictionaries-merge
     '''
@@ -2906,15 +3003,15 @@ def mergenested(dict1, dict2, die=False, verbose=False, _path=None):
     return a
 
 
-def flattendict(input_dict: dict, sep: str = None, _prefix=None) -> dict:
+def flattendict(nesteddict, sep=None, _prefix=None):
     """
     Flatten nested dictionary
 
     **Example**::
 
-        >>> flattendict({'a':{'b':1,'c':{'d':2,'e':3}}})
+        >>> sc.flattendict({'a':{'b':1,'c':{'d':2,'e':3}}})
         {('a', 'b'): 1, ('a', 'c', 'd'): 2, ('a', 'c', 'e'): 3}
-        >>> flattendict({'a':{'b':1,'c':{'d':2,'e':3}}}, sep='_')
+        >>> sc.flattendict({'a':{'b':1,'c':{'d':2,'e':3}}}, sep='_')
         {'a_b': 1, 'a_c_d': 2, 'a_c_e': 3}
 
     Args:
@@ -2926,7 +3023,7 @@ def flattendict(input_dict: dict, sep: str = None, _prefix=None) -> dict:
         A flat dictionary where no values are dicts
     """
     output_dict = {}
-    for k, v in input_dict.items():
+    for k, v in nesteddict.items():
         if sep is None:
             if _prefix is None:
                 k2 = (k,)
@@ -2939,7 +3036,7 @@ def flattendict(input_dict: dict, sep: str = None, _prefix=None) -> dict:
                 k2 = _prefix + sep + k
 
         if isinstance(v, dict):
-            output_dict.update(flattendict(input_dict[k], sep=sep, _prefix=k2))
+            output_dict.update(flattendict(nesteddict[k], sep=sep, _prefix=k2))
         else:
             output_dict[k2] = v
 

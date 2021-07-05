@@ -116,7 +116,7 @@ def findinds(arr, val=None, eps=1e-6, first=False, last=False, **kwargs):
         warnings.warn(warnmsg, category=DeprecationWarning, stacklevel=2)
 
     # Calculate matches
-    arr = np.array(arr)
+    arr = ut.promotetoarray(arr)
     if val is None: # Check for equality
         output = np.nonzero(arr) # If not, just check the truth condition
     else:

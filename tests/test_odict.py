@@ -8,6 +8,7 @@ import pytest
 
 
 def printexamples(examples):
+    examples = sc.promotetolist(examples)
     for v,val in enumerate(examples):
         print('Example %s:' % (v+1))
         print(val)
@@ -44,7 +45,18 @@ def test_insert():
     z.insert(0, 'cat', 11235813)
     z.insert(2, 'dog', 1123581321)
     assert len(z) == 5
-    printexamples([z])
+    printexamples(z)
+    return
+
+
+def test_add():
+    sc.heading('Add:')
+    dict1 = sc.odict(a=3, b=4)
+    dict2 = sc.odict(c=5, d=7)
+    dict3 = dict1 + dict2
+    assert dict3.keys() == dict1.keys() + dict2.keys()
+    assert dict3.values() == dict1.values() + dict2.values()
+    printexamples(dict3)
     return
 
 
@@ -87,7 +99,7 @@ def test_each():
     z = sc.odict({'a':[1,2,3,4], 'b':[5,6,7,8]})
     z.toeach(2, [10,20])    # z is now sc.odict({'a':[1,2,10,4], 'b':[5,6,20,8]})
     z.toeach(ind=3,val=666) #  z is now sc.odict({'a':[1,2,10,666], 'b':[5,6,20,666]})
-    printexamples([z])
+    printexamples(z)
     return
 
 
@@ -252,6 +264,7 @@ if __name__ == '__main__':
 
     test_main()
     test_insert()
+    test_add()
     test_make()
     test_map()
     test_each()

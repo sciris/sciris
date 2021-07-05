@@ -15,14 +15,14 @@ Highlights:
 '''
 
 ##############################################################################
-### Imports
+#%% Imports
 ##############################################################################
 
 import os
-from struct import unpack
+import struct
+import datetime as dt
 import pylab as pl
 import numpy as np
-from numpy.linalg import norm
 import matplotlib as mpl
 import matplotlib.colors as mplc
 from .sc_odict import odict
@@ -31,7 +31,7 @@ from . import sc_fileio as fio
 
 
 ##############################################################################
-### Color functions
+#%% Color functions
 ##############################################################################
 
 __all__ = ['shifthue', 'rgb2hex', 'hex2rgb', 'rgb2hsv', 'hsv2rgb']
@@ -125,7 +125,7 @@ def hex2rgb(string):
         errormsg = f'Cannot convert "{string}" to an RGB color: must be 3 or 6 characters long'
         raise ValueError(errormsg)
     hexstring = bytes.fromhex(string) # Ensure it's the right type
-    rgb = np.array(unpack('BBB',hexstring),dtype=float)/255.
+    rgb = np.array(struct.unpack('BBB',hexstring),dtype=float)/255.
     return rgb
 
 
@@ -164,13 +164,13 @@ def hsv2rgb(colors=None):
 
 
 ##############################################################################
-### Colormaps
+#%% Colormap-related functions
 ##############################################################################
 
-__all__ += ['vectocolor', 'arraycolors', 'gridcolors', 'colormapdemo', 'alpinecolormap', 'bicolormap', 'parulacolormap', 'turbocolormap', 'bandedcolormap', 'orangebluecolormap']
+__all__ += ['vectocolor', 'arraycolors', 'gridcolors', 'midpointnorm', 'colormapdemo']
 
 
-def vectocolor(vector, cmap=None, asarray=True, reverse=False, minval=None, maxval=None):
+def vectocolor(vector, cmap=None, asarray=True, reverse=False, minval=None, maxval=None, midpoint=None, norm=None):
     """
     This function converts a vector (i.e., 1D array) of N values into an Nx3 matrix
     of color values according to the current colormap. It automatically scales the
@@ -181,6 +181,11 @@ def vectocolor(vector, cmap=None, asarray=True, reverse=False, minval=None, maxv
     Args:
         vector (array): Input vector (or list, it's converted to an array)
         cmap (str): is the colormap (default: current)
+        asarray (bool): whether to return as an array (otherwise, a list of tuples)
+        reverse (bool): whether to reverse the list of colors
+        minval (float): the minimum value to use
+        maxval (float): the maximum value to use
+        midpoint (float): the midpoint value to use
 
     Returns:
         colors (array): Nx4 array of RGB-alpha color values
@@ -193,7 +198,7 @@ def vectocolor(vector, cmap=None, asarray=True, reverse=False, minval=None, maxv
         c = sc.vectocolor(y);
         pl.scatter(x, y, c=c, s=50)
 
-    Version: 2020mar07
+    New in version 1.2.0: midpoint argument.
     """
 
     from numpy import array, zeros
@@ -223,6 +228,9 @@ def vectocolor(vector, cmap=None, asarray=True, reverse=False, minval=None, maxv
 
         vector = vector-minval # Subtract minimum
         vector = vector/float(maxval-minval) # Divide by maximum
+        if midpoint is not None:
+            norm = midpointnorm(vcenter=midpoint, vmin=0, vmax=1)
+            vector = np.array(norm(vector))
         nelements = len(vector) # Count number of elements
         colors = zeros((nelements,4))
         for i in range(nelements):
@@ -347,7 +355,7 @@ def gridcolors(ncolors=10, limits=None, nsteps=20, asarray=False, ashex=False, r
             elif basis == 'kelly':       basiscolors = kellycolors
             for color in basiscolors:
                 rgbdistances = dots - color # Calculate the distance in RGB space
-                totaldistances = norm(rgbdistances,axis=1)
+                totaldistances = np.linalg.norm(rgbdistances,axis=1)
                 closest = np.argmin(totaldistances)
                 indices.append(closest)
         else:
@@ -358,7 +366,7 @@ def gridcolors(ncolors=10, limits=None, nsteps=20, asarray=False, ashex=False, r
             totaldistances = np.inf+np.zeros(ndots) # Initialize distances
             for ind in indices: # Loop over each existing point
                 rgbdistances = dots - dots[ind] # Calculate the distance in RGB space
-                totaldistances = np.minimum(totaldistances, norm(rgbdistances,axis=1)) # Calculate the minimum Euclidean distance
+                totaldistances = np.minimum(totaldistances, np.linalg.norm(rgbdistances,axis=1)) # Calculate the minimum Euclidean distance
             maxindex = np.argmax(totaldistances) # Find the point that maximizes the minimum distance
             indices.append(maxindex) # Append this index
 
@@ -379,6 +387,29 @@ def gridcolors(ncolors=10, limits=None, nsteps=20, asarray=False, ashex=False, r
         ax.set_zlim((0,1))
 
     return output
+
+
+
+def midpointnorm(vcenter=0, vmin=None, vmax=None):
+    '''
+    Alias to Matplotlib's TwoSlopeNorm. Used to place the center of the colormap
+    somewhere other than the center of the data.
+
+    Args:
+        vcenter (float): the center of the colormap (0 by default)
+        vmin (float): the minimum of the colormap
+        vmax (float): the maximum of the colormap
+
+    **Example**::
+
+        data = pl.rand(10,10) - 0.2
+        pl.pcolor(data, cmap='bi', norm=sc.midpointnorm())
+
+    New in version 1.2.0.
+    '''
+    from matplotlib.colors import TwoSlopeNorm
+    norm = TwoSlopeNorm(vcenter=vcenter, vmin=vmin, vmax=vmax)
+    return norm
 
 
 
@@ -441,6 +472,12 @@ def colormapdemo(cmap=None, n=None, smoothing=None, randseed=None, doshow=True):
     return {'2d':fig1, '3d':fig2}
 
 
+
+##############################################################################
+#%% Colormaps
+##############################################################################
+
+__all__ += ['alpinecolormap', 'bicolormap', 'parulacolormap', 'turbocolormap', 'bandedcolormap', 'orangebluecolormap']
 
 def alpinecolormap(apply=False):
     """
@@ -756,7 +793,7 @@ except: # Included since Matplotlib 3.4.0
 
 
 ##############################################################################
-### 3D plotting functions
+#%% 3D plotting functions
 ##############################################################################
 
 __all__ += ['fig3d', 'ax3d', 'plot3d', 'scatter3d', 'surf3d', 'bar3d']
@@ -994,16 +1031,14 @@ def bar3d(data, fig=None, returnfig=False, cmap='viridis', figkwargs=None, axkwa
 
 
 ##############################################################################
-### Other plotting functions
+#%% Other plotting functions
 ##############################################################################
 
-__all__ += ['boxoff', 'setaxislim', 'setxlim', 'setylim', 'commaticks', 'SItickformatter', 'SIticks', 'get_rows_cols', 'maximize']
+__all__ += ['boxoff', 'setaxislim', 'setxlim', 'setylim', 'commaticks', 'SIticks', 'dateformatter', 'get_rows_cols', 'figlayout', 'maximize']
 
 
 def boxoff(ax=None, removeticks=True, flipticks=True):
     '''
-    I don't know why there isn't already a Matplotlib command for this.
-
     Removes the top and right borders of a plot. Also optionally removes
     the tick marks, and flips the remaining ones outside.
 
@@ -1085,6 +1120,7 @@ def setxlim(data=None, ax=None):
     ''' Alias for sc.setaxislim(which='x') '''
     return setaxislim(data=data, ax=ax, which='x')
 
+
 def setylim(data=None, ax=None):
     '''
     Alias for sc.setaxislim(which='y').
@@ -1092,14 +1128,36 @@ def setylim(data=None, ax=None):
     **Example**::
 
         pl.plot([124,146,127])
-        sc.setylim()
+        sc.setylim() # Equivalent to pl.ylim(bottom=0)
     '''
     return setaxislim(data=data, ax=ax, which='y')
 
 
-def commaticks(fig=None, ax=None, axis='y'):
+def _get_axlist(ax):
+    ''' Helper function to turn either a figure, an axes, or a list of axes into a list of axes '''
+
+    if ax is None: # If not supplied, get current axes
+        axlist = [pl.gca()]
+    elif isinstance(ax, pl.Axes): # If it's an axes, turn to a list
+        axlist = [ax]
+    elif isinstance(ax, pl.Figure): # If it's a figure, pull all axes
+        axlist = ax.axes
+    elif isinstance(ax, list): # If it's a list, use directly
+        axlist = ax
+    else:
+        errormsg = f'Could not recognize object {type(ax)}: must be None, Axes, Figure, or list of axes'
+        raise ValueError(errormsg)
+
+    return axlist
+
+
+def commaticks(ax=None, axis='y'):
     '''
     Use commas in formatting the y axis of a figure (e.g., 34,000 instead of 34000)
+
+    Args:
+        ax (any): axes to modify; if None, use current; else can be a single axes object, a figure, or a list of axes
+        axis (str): which axes to change (default 'y')
 
     **Example**::
 
@@ -1109,27 +1167,31 @@ def commaticks(fig=None, ax=None, axis='y'):
 
     See http://stackoverflow.com/questions/25973581/how-to-format-axis-number-format-to-thousands-with-a-comma-in-matplotlib
     '''
-    if   ax  is not None: axlist = ut.promotetolist(ax)
-    elif fig is not None: axlist = fig.axes
-    else:                 axlist = [pl.gca()]
+    def commaformatter(x, pos=None):
+        string = f'{x:,}' # Do the formatting
+        if string[-2:] == '.0': # Trim the end, if it's a float but should be an int
+            string = string[:-2]
+        return string
+
+    axlist = _get_axlist(ax)
     for ax in axlist:
         if   axis=='x': thisaxis = ax.xaxis
         elif axis=='y': thisaxis = ax.yaxis
         elif axis=='z': thisaxis = ax.zaxis
         else: raise ValueError('Axis must be x, y, or z')
-        thisaxis.set_major_formatter(mpl.ticker.FuncFormatter(lambda x, p: format(int(x), ',')))
+        thisaxis.set_major_formatter(mpl.ticker.FuncFormatter(commaformatter))
     return None
 
 
-def SItickformatter(x, pos=None, sigfigs=2, SI=True, *args, **kwargs):  # formatter function takes tick label and tick position
-    ''' Formats axis ticks so that e.g. 34000 becomes 34k -- usually not invoked directly '''
-    output = ut.sigfig(x, sigfigs=sigfigs, SI=SI) # Pretty simple since ut.sigfig() does all the work
-    return output
 
-
-def SIticks(fig=None, ax=None, axis='y', fixed=False):
+def SIticks(ax=None, axis='y', fixed=False):
     '''
     Apply SI tick formatting to one axis of a figure  (e.g., 34k instead of 34000)
+
+    Args:
+        ax (any): axes to modify; if None, use current; else can be a single axes object, a figure, or a list of axes
+        axis (str): which axes to change (default 'y')
+        fixed (bool): use fixed-location tick labels (by default, update them dynamically)
 
     **Example**::
 
@@ -1137,9 +1199,12 @@ def SIticks(fig=None, ax=None, axis='y', fixed=False):
         pl.plot(data)
         sc.SIticks()
     '''
-    if  fig is not None: axlist = fig.axes
-    elif ax is not None: axlist = ut.promotetolist(ax)
-    else:                axlist = [pl.gca()]
+    def SItickformatter(x, pos=None, sigfigs=2, SI=True, *args, **kwargs):  # formatter function takes tick label and tick position
+        ''' Formats axis ticks so that e.g. 34000 becomes 34k -- usually not invoked directly '''
+        output = ut.sigfig(x, sigfigs=sigfigs, SI=SI) # Pretty simple since ut.sigfig() does all the work
+        return output
+
+    axlist = _get_axlist(ax)
     for ax in axlist:
         if   axis=='x': thisaxis = ax.xaxis
         elif axis=='y': thisaxis = ax.yaxis
@@ -1157,18 +1222,88 @@ def SIticks(fig=None, ax=None, axis='y', fixed=False):
 
 
 
-def get_rows_cols(n, nrows=None, ncols=None, ratio=1):
+def dateformatter(start_day=None, dateformat=None, interval=None, start=None, end=None, ax=None):
+    '''
+    Create an automatic date formatter based on a number of days and a start day.
+
+    Wrapper for Matplotlib's date formatter. Note, start_day is not required if the
+    axis uses dates already (otherwise, the mapping will follow Matplotlib's default,
+    i.e. 0 = 1970-01-01). Note: this function is intended to work on the x-axis only.
+
+    Args:
+        start_day (str/date): the start day, either as a string or date object; if none is supplied, treat current data as a date
+        dateformat (str): the date format (default '%Y-%b-%d')
+        interval (int): if supplied, the interval between ticks (must supply an axis also to take effect)
+        start (str/int): if supplied, the lower limit of the axis
+        end (str/int): if supplied, the upper limit of the axis
+        ax (axes): if supplied, automatically set the x-axis formatter for this axis
+
+    **Examples**::
+
+        # Automatically configure the axis with default options
+        pl.plot(np.arange(365), pl.rand(365))
+        sc.dateformatter('2021-01-01')
+
+        # Manually configure
+        ax = pl.subplot(111)
+        ax.plot(np.arange(60), np.random.random(60))
+        formatter = sc.dateformatter(start_day='2020-04-04', interval=7, start='2020-05-01', end=50, dateformat='%m-%d', ax=ax)
+        ax.xaxis.set_major_formatter(formatter)
+
+    New in version 1.2.0.
+    '''
+    if ax is None:
+        ax = pl.gca()
+
+    # Set the default format -- "2021-01-01"
+    if dateformat is None:
+        dateformat = '%Y-%m-%d'
+
+    # Convert to a date object
+    if start_day is None:
+        start_day = pl.num2date(ax.dataLim.x0)
+    start_day = ut.date(start_day)
+
+    @mpl.ticker.FuncFormatter
+    def mpl_formatter(x, pos):
+        return (start_day + dt.timedelta(days=int(x))).strftime(dateformat)
+
+    # Handle limits
+    xmin, xmax = ax.get_xlim()
+    if start:
+        xmin = ut.day(start, start_day=start_day)
+    if end:
+        xmax = ut.day(end, start_day=start_day)
+    ax.set_xlim((xmin, xmax))
+
+    # Set the x-axis intervals
+    if interval:
+        ax.set_xticks(np.arange(xmin, xmax+1, interval))
+
+    # Set the formatter
+    ax.xaxis.set_major_formatter(mpl_formatter)
+
+    return mpl_formatter
+
+
+
+def get_rows_cols(n, nrows=None, ncols=None, ratio=1, make=False, tight=True, remove_extra=True, **kwargs):
     '''
     If you have 37 plots, then how many rows and columns of axes do you know? This
     function convert a number (i.e. of plots) to a number of required rows and columns.
     If nrows or ncols is provided, the other will be calculated. Ties are broken
-    in favor of more rows (i.e. 7x6 is preferred to 6x7).
+    in favor of more rows (i.e. 7x6 is preferred to 6x7). It can also generate
+    the plots, if make=True.
 
     Args:
         n (int): the number (of plots) to accommodate
         nrows (int): if supplied, keep this fixed and calculate the columns
         ncols (int): if supplied, keep this fixed and calculate the rows
         ratio (float): sets the number of rows relative to the number of columns (i.e. for 100 plots, 1 will give 10x10, 4 will give 20x5, etc.).
+        make (bool): if True, generate subplots
+        tight (bool): if True and make is True, then apply tight layout
+        remove_extra (bool): if True and make is True, then remove extra subplots
+        kwargs (dict): passed to pl.subplots()
 
     Returns:
         A tuple of ints for the number of rows and the number of columns (which, of course, you can reverse)
@@ -1179,8 +1314,10 @@ def get_rows_cols(n, nrows=None, ncols=None, ratio=1):
         nrows,ncols = sc.get_rows_cols(37) # Returns 7,6
         nrows,ncols = sc.get_rows_cols(100, ratio=2) # Returns 15,7
         nrows,ncols = sc.get_rows_cols(100, ratio=0.5) # Returns 8,13 since rows are prioritized
+        fig,axs     = sc.get_rows_cols(37, make=True) # Create 7x6 subplots
 
     New in version 1.0.0.
+    New in version 1.2.0: "make", "tight", and "remove_extra" arguments
     '''
 
     # Simple cases -- calculate the one missing
@@ -1195,7 +1332,48 @@ def get_rows_cols(n, nrows=None, ncols=None, ratio=1):
         nrows = int(np.ceil(guess*np.sqrt(ratio)))
         ncols = int(np.ceil(n/nrows)) # Could also call recursively!
 
-    return nrows,ncols
+    # If asked, make subplots
+    if make:
+        fig, axs = pl.subplots(nrows=nrows, ncols=ncols, **kwargs)
+        if remove_extra:
+            for ax in axs.flat[n:]:
+                ax.set_visible(False) # to remove last plot
+        if tight:
+            figlayout(fig, tight=True)
+        return fig,axs
+    else: # Otherwise, just return rows and columns
+        return nrows,ncols
+
+
+def figlayout(fig=None, tight=True, keep=False, **kwargs):
+    '''
+    Alias to both fig.set_tight_layout() and fig.subplots_adjust().
+
+    Args:
+        fig (Figure): the figure (by default, use current)
+        tight (bool, or dict): passed to fig.set_tight_layout(); default True
+        keep (bool): if True, then leave tight layout on; else, turn it back off
+        kwargs (dict): passed to fig.subplots_adjust()
+
+    **Example**::
+
+        fig,axs = sc.get_rows_cols(37, make=True, tight=False) # Create 7x6 subplots, squished together
+        sc.figlayout(bottom=0.3)
+
+    New in version 1.2.0.
+    '''
+    if isinstance(fig, bool):
+        fig = None
+        tight = fig # To allow e.g. sc.figlayout(False)
+    if fig is None:
+        fig = pl.gcf()
+    fig.set_tight_layout(tight)
+    if not keep:
+        pl.pause(0.01) # Force refresh
+        fig.set_tight_layout(False)
+    if len(kwargs):
+        fig.subplots_adjust(**kwargs)
+    return
 
 
 def maximize(fig=None, die=False):  # pragma: no cover
@@ -1237,7 +1415,7 @@ def maximize(fig=None, die=False):  # pragma: no cover
 
 
 ##############################################################################
-### Figure saving
+#%% Figure saving
 ##############################################################################
 
 __all__ += ['savefigs', 'loadfig', 'emptyfig', 'separatelegend', 'orderlegend', 'savemovie']

@@ -289,6 +289,26 @@ class odict(OD):
     def _repr_pretty_(self, p, cycle, *args, **kwargs): # pragma: no cover
         ''' Function to fix __repr__ in IPython'''
         print(self.__repr__(*args, **kwargs))
+        return
+
+
+    def __add__(self, dict2):
+        '''
+        Allow two dictionaries to be added (merged).
+
+        **Example**::
+
+            dict1 = sc.odict(a=3, b=4)
+            dict2 = sc.odict(c=5, d=7)
+            dict3 = dict1 + dict2
+        '''
+        return ut.mergedicts(self, dict2)
+
+
+    def __radd__(self, dict2):
+        ''' Allows sum() to work correctly '''
+        if not dict2: return self
+        else:         return self.__add__(dict2)
 
 
     def disp(self, maxlen=None, showmultilines=True, divider=False, dividerthresh=10, numindents=0, sigfigs=5, numformat=None, maxitems=20, **kwargs):
@@ -297,8 +317,7 @@ class odict(OD):
 
         **Example**::
 
-            import pylab as pl
-            z = odict().make(keys=['a','b','c'], vals=(10*pl.rand(3)).tolist())
+            z = sc.odict().make(keys=['a','b','c'], vals=[4.293487,3,6])
             z.disp(sigfigs=3)
             z.disp(numformat='%0.6f')
         '''
@@ -868,6 +887,11 @@ class odict(OD):
         return iterator
 
 
+    def enumvalues(self, transpose=False):
+        ''' Alias for enumvals(). New in version 1.2.0. '''
+        return self.enumvals(transpose=transpose)
+
+
     def enumitems(self, transpose=False):
         '''
         Returns tuple of 3 things: index, key, value.
@@ -913,7 +937,7 @@ class odict(OD):
         return list(OD.values(self))
 
     def items(self, transpose=False):
-        """ Return a list of items, as in Python 2. """
+        """ Return a list of items (as in Python 2). """
         iterator = list(OD.items(self))
         if transpose: iterator = tuple(ut.transposelist(iterator))
         return iterator
@@ -921,6 +945,22 @@ class odict(OD):
     def iteritems(self, transpose=False):
         """ Alias to items() """
         return self.items(transpose=transpose)
+
+    def makenested(self, *args, **kwargs):
+        ''' Alias to sc.makenested(odict); see sc.makenested() for full documentation. New in version 1.2.0. '''
+        return ut.makenested(self, *args, **kwargs)
+
+    def getnested(self, *args, **kwargs):
+        ''' Alias to sc.getnested(odict); see sc.makenested() for full documentation. New in version 1.2.0. '''
+        return ut.getnested(self, *args, **kwargs)
+
+    def setnested(self, *args, **kwargs):
+        ''' Alias to sc.setnested(odict); see sc.makenested() for full documentation. New in version 1.2.0. '''
+        return ut.setnested(self, *args, **kwargs)
+
+    def iternested(self, *args, **kwargs):
+        ''' Alias to sc.iternested(odict); see sc.makenested() for full documentation. New in version 1.2.0. '''
+        return ut.iternested(self, *args, **kwargs)
 
 
 class objdict(odict):

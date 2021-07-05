@@ -6,6 +6,43 @@ All notable changes to this project will be documented in this file.
 By import convention, components of the Sciris library are listed beginning with ``sc.``, e.g. ``sc.odict()``.
 
 
+Version 1.2.0 (2021-07-05)
+--------------------------
+
+New functions and methods
+~~~~~~~~~~~~~~~~~~~~~~~~~
+#. Added ``sc.figlayout()`` as an alias to both ``fig.set_tight_layout(True)`` and ``fig.subplots_adjust()``.
+#. Added ``sc.midpointnorm()`` as an alias to Matplotlib's ``TwoSlopeNorm``; it can also be used in e.g. ``sc.vectocolor()``.
+#. Added ``sc.dateformatter()``, which will (semi-)automatically format the x-axis using dates.
+#. Added ``sc.getplatform()``, ``sc.iswindows()``, ``sc.islinux()``, and ``sc.ismac()``. These are all shortcuts for checking ``sys.platform`` output directly.
+#. Added ``sc.cpu_count()`` as a simple alias for ``multiprocessing.cpu_count()``.
+
+Bugfixes
+~~~~~~~~
+#. Fixed ``sc.checkmem()`` from failing when an attribute was ``None``.
+#. Fixed a file handle that was being left open by ``sc.gitinfo()``.
+
+``odict`` updates
+~~~~~~~~~~~~~~~~~
+#. Defined ``+`` for ``sc.odict`` and derived classes; adding two dictionaries is the same as calling ``sc.mergedicts()`` on them. 
+#. Updated nested dictionary functions, and added them as methods to ``sc.odict()`` and derived classes (like ``sc.objdict()``); for example, you can now do ``nestedobj = sc.objdict(); nestedobj.setnested(['a','b','c'], 4)``.
+#. Added ``sc.odict.enumvalues()`` as an alias to ``sc.odict.enumvals()``.
+
+Plotting updates
+~~~~~~~~~~~~~~~~
+#. Updated ``sc.commaticks()`` to use better formatting.
+#. Removed the ``fig`` argument from ``sc.commaticks()`` and ``sc.SIticks()``; now, the first argument can be an ``Axes`` object, a ``Figure`` object, or a list of axes.
+#. Updated ``sc.get_rows_cols()`` to optionally create subplots, rather than just return the number of rows/columns.
+#. Removed ``sc.SItickformatter``; use ``sc.SIticks()`` instead.
+
+Other updates
+~~~~~~~~~~~~~
+#. Updated ``sc.heading()`` to handle arguments the same way as ``print()``, e.g. ``sc.heading([1,2,3], 'is a list')``.
+#. Allowed more flexibility with the ``ncpus`` argument of ``sc.parallelize()``: it can now be a fraction, representing a fraction of available CPUs. Also, it will now never exceed the number of tasks to be run.
+#. Updated ``sc.suggest()`` to modify the threshold to be based on the length of the input word.
+
+
+
 Version 1.1.1 (2021-03-17)
 --------------------------
 1. The implementations of ``sc.odict()`` and ``sc.objdict()`` have been updated, to allow for more flexible use of the ``defaultdict`` argument, including better nesting and subclassing.
