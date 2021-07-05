@@ -28,15 +28,18 @@ Bugfixes
 #. Updated nested dictionary functions, and added them as methods to ``sc.odict()`` and derived classes (like ``sc.objdict()``); for example, you can now do ``nestedobj = sc.objdict(); nestedobj.setnested(['a','b','c'], 4)``.
 #. Added ``sc.odict.enumvalues()`` as an alias to ``sc.odict.enumvals()``.
 
-Other improvements
-~~~~~~~~~~~~~~~~~~
-#. Updated ``sc.heading()`` to handle arguments the same way as ``print()``, e.g. ``sc.heading([1,2,3], 'is a list')``.
-#. Updated ``sc.commaticks()`` to use locale-aware formatting. 
+Plotting updates
+~~~~~~~~~~~~~~~~
+#. Updated ``sc.commaticks()`` to use better formatting.
 #. Removed the ``fig`` argument from ``sc.commaticks()`` and ``sc.SIticks()``; now, the first argument can be an ``Axes`` object, a ``Figure`` object, or a list of axes.
-#. Updated ``sc.suggest()`` to modify the threshold to be based on the length of the input word.
 #. Updated ``sc.get_rows_cols()`` to optionally create subplots, rather than just return the number of rows/columns.
-#. Allowed more flexibility with the ``ncpus`` argument of ``sc.parallelize()``: it can now be a fraction, representing a fraction of available CPUs. Also, it will now never exceed the number of tasks to be run.
+#. Removed ``sc.SItickformatter``; use ``sc.SIticks()`` instead.
 
+Other updates
+~~~~~~~~~~~~~
+#. Updated ``sc.heading()`` to handle arguments the same way as ``print()``, e.g. ``sc.heading([1,2,3], 'is a list')``.
+#. Allowed more flexibility with the ``ncpus`` argument of ``sc.parallelize()``: it can now be a fraction, representing a fraction of available CPUs. Also, it will now never exceed the number of tasks to be run.
+#. Updated ``sc.suggest()`` to modify the threshold to be based on the length of the input word.
 
 
 

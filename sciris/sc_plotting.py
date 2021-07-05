@@ -1034,7 +1034,7 @@ def bar3d(data, fig=None, returnfig=False, cmap='viridis', figkwargs=None, axkwa
 #%% Other plotting functions
 ##############################################################################
 
-__all__ += ['boxoff', 'setaxislim', 'setxlim', 'setylim', 'commaticks', 'SItickformatter', 'SIticks', 'dateformatter', 'get_rows_cols', 'figlayout', 'maximize']
+__all__ += ['boxoff', 'setaxislim', 'setxlim', 'setylim', 'commaticks', 'SIticks', 'dateformatter', 'get_rows_cols', 'figlayout', 'maximize']
 
 
 def boxoff(ax=None, removeticks=True, flipticks=True):
@@ -1167,20 +1167,21 @@ def commaticks(ax=None, axis='y'):
 
     See http://stackoverflow.com/questions/25973581/how-to-format-axis-number-format-to-thousands-with-a-comma-in-matplotlib
     '''
+    def commaformatter(x, pos=None):
+        string = f'{x:,}' # Do the formatting
+        if string[-2:] == '.0': # Trim the end, if it's a float but should be an int
+            string = string[:-2]
+        return string
+
     axlist = _get_axlist(ax)
     for ax in axlist:
         if   axis=='x': thisaxis = ax.xaxis
         elif axis=='y': thisaxis = ax.yaxis
         elif axis=='z': thisaxis = ax.zaxis
         else: raise ValueError('Axis must be x, y, or z')
-        thisaxis.set_major_formatter(mpl.ticker.FuncFormatter(lambda x, p: f'{x:n}'))
+        thisaxis.set_major_formatter(mpl.ticker.FuncFormatter(commaformatter))
     return None
 
-
-def SItickformatter(x, pos=None, sigfigs=2, SI=True, *args, **kwargs):  # formatter function takes tick label and tick position
-    ''' Formats axis ticks so that e.g. 34000 becomes 34k -- usually not invoked directly '''
-    output = ut.sigfig(x, sigfigs=sigfigs, SI=SI) # Pretty simple since ut.sigfig() does all the work
-    return output
 
 
 def SIticks(ax=None, axis='y', fixed=False):
@@ -1198,6 +1199,11 @@ def SIticks(ax=None, axis='y', fixed=False):
         pl.plot(data)
         sc.SIticks()
     '''
+    def SItickformatter(x, pos=None, sigfigs=2, SI=True, *args, **kwargs):  # formatter function takes tick label and tick position
+        ''' Formats axis ticks so that e.g. 34000 becomes 34k -- usually not invoked directly '''
+        output = ut.sigfig(x, sigfigs=sigfigs, SI=SI) # Pretty simple since ut.sigfig() does all the work
+        return output
+
     axlist = _get_axlist(ax)
     for ax in axlist:
         if   axis=='x': thisaxis = ax.xaxis
