@@ -997,7 +997,7 @@ def bar3d(data, fig=None, returnfig=False, cmap='viridis', figkwargs=None, axkwa
 ### Other plotting functions
 ##############################################################################
 
-__all__ += ['boxoff', 'setaxislim', 'setxlim', 'setylim', 'commaticks', 'SItickformatter', 'SIticks', 'get_rows_cols', 'tightlayout', 'maximize']
+__all__ += ['boxoff', 'setaxislim', 'setxlim', 'setylim', 'commaticks', 'SItickformatter', 'SIticks', 'get_rows_cols', 'figlayout', 'maximize']
 
 
 def boxoff(ax=None, removeticks=True, flipticks=True):
@@ -1184,7 +1184,8 @@ def get_rows_cols(n, nrows=None, ncols=None, ratio=1, make=False, tight=True, re
     If you have 37 plots, then how many rows and columns of axes do you know? This
     function convert a number (i.e. of plots) to a number of required rows and columns.
     If nrows or ncols is provided, the other will be calculated. Ties are broken
-    in favor of more rows (i.e. 7x6 is preferred to 6x7).
+    in favor of more rows (i.e. 7x6 is preferred to 6x7). It can also generate
+    the plots, if make=True.
 
     Args:
         n (int): the number (of plots) to accommodate
@@ -1206,9 +1207,6 @@ def get_rows_cols(n, nrows=None, ncols=None, ratio=1, make=False, tight=True, re
         nrows,ncols = sc.get_rows_cols(100, ratio=2) # Returns 15,7
         nrows,ncols = sc.get_rows_cols(100, ratio=0.5) # Returns 8,13 since rows are prioritized
         fig,axs     = sc.get_rows_cols(37, make=True) # Create 7x6 subplots
-
-    Note: the sc.tightlayout() command might be helpful after making a large number
-    of subplots.
 
     New in version 1.0.0.
     New in version 1.1.2: "make", "tight", and "remove_extra" arguments
@@ -1233,30 +1231,40 @@ def get_rows_cols(n, nrows=None, ncols=None, ratio=1, make=False, tight=True, re
             for ax in axs.flat[n:]:
                 ax.set_visible(False) # to remove last plot
         if tight:
-            tightlayout(fig)
+            figlayout(fig, tight=True)
         return fig,axs
     else: # Otherwise, just return rows and columns
         return nrows,ncols
 
 
-def tightlayout(fig=None, tight=True):
+def figlayout(fig=None, tight=True, keep=False, **kwargs):
     '''
-    Alias to fig.set_tight_layout().
+    Alias to both fig.set_tight_layout() and fig.subplots_adjust().
 
     Args:
         fig (Figure): the figure (by default, use current)
-        tight (bool, or dict): passed to fig.set_tight_layout()
+        tight (bool, or dict): passed to fig.set_tight_layout(); default True
+        keep (bool): if True, then leave tight layout on; else, turn it back off
+        kwargs (dict): passed to fig.subplots_adjust()
 
     **Example**::
 
-        fig,axs = sc.get_rows_cols(37, make=True) # Create 7x6 subplots
-        sc.tightlayout()
+        fig,axs = sc.get_rows_cols(37, make=True, tight=False) # Create 7x6 subplots, squished together
+        sc.figlayout(bottom=0.3)
 
     New in version 1.1.2.
     '''
+    if isinstance(fig, bool):
+        fig = None
+        tight = fig # To allow e.g. sc.figlayout(False)
     if fig is None:
         fig = pl.gcf()
     fig.set_tight_layout(tight)
+    if not keep:
+        pl.pause(0.01) # Force refresh
+        fig.set_tight_layout(False)
+    if len(kwargs):
+        fig.subplots_adjust(**kwargs)
     return
 
 

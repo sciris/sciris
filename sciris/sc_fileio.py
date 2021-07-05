@@ -131,7 +131,7 @@ def saveobj(filename=None, obj=None, compresslevel=5, verbose=0, folder=None, me
         errormsg = 'No object was supplied to saveobj(), or the object was empty'
         if die:
             raise ValueError(errormsg)
-        else:
+        elif verbose:
             print(errormsg)
 
     # Actually save

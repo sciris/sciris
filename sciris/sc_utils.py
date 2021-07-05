@@ -2145,7 +2145,7 @@ def toc(start=None, output=False, label=None, sigfigs=None, filename=None, reset
     else:
         if filename is not None: printtologfile(logmessage, filename) # If we passed in a filename, append the message to that file.
         else: print(logmessage) # Otherwise, print the message.
-        return None
+        return
 
 
 def toctic(returntic=False, returntoc=False, *args, **kwargs):
@@ -2238,7 +2238,7 @@ def checkmem(var, descend=None, alphabetical=False, plot=False, verbose=False):
 
         # Create a temporary file, save the object, check the size, remove it
         filename = tempfile.mktemp()
-        saveobj(filename, variable)
+        saveobj(filename, variable, die=False)
         filesize = os.path.getsize(filename)
         os.remove(filename)
 
@@ -2793,7 +2793,7 @@ __all__ += ['getnested', 'setnested', 'makenested', 'iternested', 'mergenested',
             'flattendict', 'search', 'nestedloop']
 
 
-def makenested(nesteddict, keylist,item=None):
+def makenested(nesteddict, keylist=None, value=None, overwrite=False, generator=None):
     '''
     Little functions to get and set data from nested dictionaries.
 
@@ -2842,12 +2842,23 @@ def makenested(nesteddict, keylist,item=None):
 
     Version: 2014nov29
     '''
+    if generator is None:
+        generator = type(nesteddict)
     currentlevel = nesteddict
     for i,key in enumerate(keylist[:-1]):
         if not(key in currentlevel):
-            currentlevel[key] = {}
+            currentlevel[key] = generator() # Create a new dictionary
         currentlevel = currentlevel[key]
-    currentlevel[keylist[-1]] = item
+    lastkey = keylist[-1]
+    if isinstance(currentlevel, dict):
+        if overwrite or lastkey not in currentlevel:
+            currentlevel[lastkey] = value
+        elif not overwrite and value is not None:
+            errormsg = f'Not overwriting entry {keylist} since overwrite=False'
+            raise ValueError(errormsg)
+    elif value is not None:
+        errormsg = f'Cannot set value {value} since entry {keylist} is a {type(currentlevel)}, not a dict'
+        raise TypeError(errormsg)
     return
 
 
@@ -2857,36 +2868,45 @@ def getnested(nesteddict, keylist, safe=False):
 
     >>> sc.getnested(foo, ['a','b'])
 
-    See makenested() for full documentation.
+    See sc.makenested() for full documentation.
     '''
     output = reduce(lambda d, k: d.get(k) if d else None if safe else d[k], keylist, nesteddict)
     return output
 
 
-def setnested(nesteddict, keylist, value):
+def setnested(nesteddict, keylist, value, force=True):
     '''
     Set the value for the given list of keys
 
     >>> sc.setnested(foo, ['a','b'], 3)
 
-    See makenested() for full documentation.
+    See sc.makenested() for full documentation.
     '''
-    getnested(nesteddict, keylist[:-1])[keylist[-1]] = value
+    if force:
+        makenested(nesteddict, keylist, overwrite=False)
+    currentlevel = getnested(nesteddict, keylist[:-1])
+    if not isinstance(currentlevel, dict):
+        errormsg = f'Cannot set {keylist} since parent is a {type(currentlevel)}, not a dict'
+        raise TypeError(errormsg)
+    else:
+        currentlevel[keylist[-1]] = value
     return # Modify nesteddict in place
 
 
-def iternested(nesteddict,previous = []):
+def iternested(nesteddict, previous=None):
     '''
     Return a list of all the twigs in the current dictionary
 
     >>> twigs = sc.iternested(foo)
 
-    See makenested() for full documentation.
+    See sc.makenested() for full documentation.
     '''
+    if previous is None:
+        previous = []
     output = []
     for k in nesteddict.items():
         if isinstance(k[1],dict):
-            output += iternested(k[1],previous+[k[0]]) # Need to add these at the first level
+            output += iternested(k[1], previous+[k[0]]) # Need to add these at the first level
         else:
             output.append(previous+[k[0]])
     return output
@@ -2896,7 +2916,7 @@ def mergenested(dict1, dict2, die=False, verbose=False, _path=None):
     '''
     Merge different nested dictionaries
 
-    See makenested() for full documentation.
+    See sc.makenested() for full documentation.
 
     Adapted from https://stackoverflow.com/questions/7204805/dictionaries-of-dictionaries-merge
     '''
@@ -2929,15 +2949,15 @@ def mergenested(dict1, dict2, die=False, verbose=False, _path=None):
     return a
 
 
-def flattendict(input_dict: dict, sep: str = None, _prefix=None) -> dict:
+def flattendict(nesteddict, sep=None, _prefix=None):
     """
     Flatten nested dictionary
 
     **Example**::
 
-        >>> flattendict({'a':{'b':1,'c':{'d':2,'e':3}}})
+        >>> sc.flattendict({'a':{'b':1,'c':{'d':2,'e':3}}})
         {('a', 'b'): 1, ('a', 'c', 'd'): 2, ('a', 'c', 'e'): 3}
-        >>> flattendict({'a':{'b':1,'c':{'d':2,'e':3}}}, sep='_')
+        >>> sc.flattendict({'a':{'b':1,'c':{'d':2,'e':3}}}, sep='_')
         {'a_b': 1, 'a_c_d': 2, 'a_c_e': 3}
 
     Args:
@@ -2949,7 +2969,7 @@ def flattendict(input_dict: dict, sep: str = None, _prefix=None) -> dict:
         A flat dictionary where no values are dicts
     """
     output_dict = {}
-    for k, v in input_dict.items():
+    for k, v in nesteddict.items():
         if sep is None:
             if _prefix is None:
                 k2 = (k,)
@@ -2962,7 +2982,7 @@ def flattendict(input_dict: dict, sep: str = None, _prefix=None) -> dict:
                 k2 = _prefix + sep + k
 
         if isinstance(v, dict):
-            output_dict.update(flattendict(input_dict[k], sep=sep, _prefix=k2))
+            output_dict.update(flattendict(nesteddict[k], sep=sep, _prefix=k2))
         else:
             output_dict[k2] = v
 

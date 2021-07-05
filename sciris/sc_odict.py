@@ -868,6 +868,11 @@ class odict(OD):
         return iterator
 
 
+    def enumvalues(self, transpose=False):
+        ''' Alias for enumvals(). New in version 1.1.2. '''
+        return self.enumvals(transpose=transpose)
+
+
     def enumitems(self, transpose=False):
         '''
         Returns tuple of 3 things: index, key, value.
@@ -913,7 +918,7 @@ class odict(OD):
         return list(OD.values(self))
 
     def items(self, transpose=False):
-        """ Return a list of items, as in Python 2. """
+        """ Return a list of items (as in Python 2). """
         iterator = list(OD.items(self))
         if transpose: iterator = tuple(ut.transposelist(iterator))
         return iterator
@@ -921,6 +926,22 @@ class odict(OD):
     def iteritems(self, transpose=False):
         """ Alias to items() """
         return self.items(transpose=transpose)
+
+    def makenested(self, *args, **kwargs):
+        ''' Alias to sc.makenested(odict); see sc.makenested() for full documentation. New in version 1.1.2. '''
+        return ut.makenested(self, *args, **kwargs)
+
+    def getnested(self, *args, **kwargs):
+        ''' Alias to sc.getnested(odict); see sc.makenested() for full documentation. New in version 1.1.2. '''
+        return ut.getnested(self, *args, **kwargs)
+
+    def setnested(self, *args, **kwargs):
+        ''' Alias to sc.setnested(odict); see sc.makenested() for full documentation. New in version 1.1.2. '''
+        return ut.setnested(self, *args, **kwargs)
+
+    def iternested(self, *args, **kwargs):
+        ''' Alias to sc.iternested(odict); see sc.makenested() for full documentation. New in version 1.1.2. '''
+        return ut.iternested(self, *args, **kwargs)
 
 
 class objdict(odict):

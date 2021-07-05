@@ -12,7 +12,11 @@ Version 1.1.2 (2021-07-05)
 1. Updated ``sc.commaticks()`` to use locale-aware formatting. 
 1. Removed the ``fig`` argument from ``sc.commaticks()`` and ``sc.SIticks()``; now, the first argument can be an ``Axes`` object, a ``Figure`` object, or a list of axes.
 1. Updated ``sc.suggest()`` to modify the threshold to be based on the length of the input word.
-1. Updated ``sc.get_rows_cols()`` to optionally create subplots while it's at it.
+1. Updated ``sc.get_rows_cols()`` to optionally create subplots while it's at it.`
+1. Added ``sc.figlayout()`` as an alias to both ``fig.set_tight_layout(True)`` and ``fig.subplots_adjust()``.
+1. Fixed ``sc.checkmem()`` from failing when an attribute was ``None``.
+1. Updated nested dictionary functions, and added them as methods to ``sc.odict()`` and derived classes (like ``sc.objdict()``); for example, ``nested = sc.objdict(); nested.setnested(['a','b','c'], 4)``.
+1. Added ``sc.odict.enumvalues()`` as an alias to ``sc.odict.enumvals()``.
 
 
 Version 1.1.1 (2021-03-17)
