@@ -19,10 +19,10 @@ Highlights:
 ##############################################################################
 
 import os
-from struct import unpack
+import struct
+import datetime as dt
 import pylab as pl
 import numpy as np
-from numpy.linalg import norm
 import matplotlib as mpl
 import matplotlib.colors as mplc
 from .sc_odict import odict
@@ -125,7 +125,7 @@ def hex2rgb(string):
         errormsg = f'Cannot convert "{string}" to an RGB color: must be 3 or 6 characters long'
         raise ValueError(errormsg)
     hexstring = bytes.fromhex(string) # Ensure it's the right type
-    rgb = np.array(unpack('BBB',hexstring),dtype=float)/255.
+    rgb = np.array(struct.unpack('BBB',hexstring),dtype=float)/255.
     return rgb
 
 
@@ -355,7 +355,7 @@ def gridcolors(ncolors=10, limits=None, nsteps=20, asarray=False, ashex=False, r
             elif basis == 'kelly':       basiscolors = kellycolors
             for color in basiscolors:
                 rgbdistances = dots - color # Calculate the distance in RGB space
-                totaldistances = norm(rgbdistances,axis=1)
+                totaldistances = np.linalg.norm(rgbdistances,axis=1)
                 closest = np.argmin(totaldistances)
                 indices.append(closest)
         else:
@@ -366,7 +366,7 @@ def gridcolors(ncolors=10, limits=None, nsteps=20, asarray=False, ashex=False, r
             totaldistances = np.inf+np.zeros(ndots) # Initialize distances
             for ind in indices: # Loop over each existing point
                 rgbdistances = dots - dots[ind] # Calculate the distance in RGB space
-                totaldistances = np.minimum(totaldistances, norm(rgbdistances,axis=1)) # Calculate the minimum Euclidean distance
+                totaldistances = np.minimum(totaldistances, np.linalg.norm(rgbdistances,axis=1)) # Calculate the minimum Euclidean distance
             maxindex = np.argmax(totaldistances) # Find the point that maximizes the minimum distance
             indices.append(maxindex) # Append this index
 
@@ -1034,7 +1034,7 @@ def bar3d(data, fig=None, returnfig=False, cmap='viridis', figkwargs=None, axkwa
 #%% Other plotting functions
 ##############################################################################
 
-__all__ += ['boxoff', 'setaxislim', 'setxlim', 'setylim', 'commaticks', 'SItickformatter', 'SIticks', 'get_rows_cols', 'figlayout', 'maximize']
+__all__ += ['boxoff', 'setaxislim', 'setxlim', 'setylim', 'commaticks', 'SItickformatter', 'SIticks', 'dateformatter', 'get_rows_cols', 'figlayout', 'maximize']
 
 
 def boxoff(ax=None, removeticks=True, flipticks=True):
@@ -1213,6 +1213,71 @@ def SIticks(ax=None, axis='y', fixed=False):
         else:
             thisaxis.set_major_formatter(mpl.ticker.FuncFormatter(SItickformatter))
     return None
+
+
+
+def dateformatter(start_day=None, dateformat=None, interval=None, start=None, end=None, ax=None):
+    '''
+    Create an automatic date formatter based on a number of days and a start day.
+
+    Wrapper for Matplotlib's date formatter. Note, start_day is not required if the
+    axis uses dates already (otherwise, the mapping will follow Matplotlib's default,
+    i.e. 0 = 1970-01-01). Note: this function is intended to work on the x-axis only.
+
+    Args:
+        start_day (str/date): the start day, either as a string or date object; if none is supplied, treat current data as a date
+        dateformat (str): the date format (default '%Y-%b-%d')
+        interval (int): if supplied, the interval between ticks (must supply an axis also to take effect)
+        start (str/int): if supplied, the lower limit of the axis
+        end (str/int): if supplied, the upper limit of the axis
+        ax (axes): if supplied, automatically set the x-axis formatter for this axis
+
+    **Examples**::
+
+        # Automatically configure the axis with default options
+        pl.plot(np.arange(365), pl.rand(365))
+        sc.dateformatter('2021-01-01')
+
+        # Manually configure
+        ax = pl.subplot(111)
+        ax.plot(np.arange(60), np.random.random(60))
+        formatter = sc.dateformatter(start_day='2020-04-04', interval=7, start='2020-05-01', end=50, dateformat='%m-%d', ax=ax)
+        ax.xaxis.set_major_formatter(formatter)
+
+    New in version 1.2.0.
+    '''
+    if ax is None:
+        ax = pl.gca()
+
+    # Set the default format -- "2021-01-01"
+    if dateformat is None:
+        dateformat = '%Y-%m-%d'
+
+    # Convert to a date object
+    if start_day is None:
+        start_day = pl.num2date(ax.dataLim.x0)
+    start_day = ut.date(start_day)
+
+    @mpl.ticker.FuncFormatter
+    def mpl_formatter(x, pos):
+        return (start_day + dt.timedelta(days=int(x))).strftime(dateformat)
+
+    # Handle limits
+    xmin, xmax = ax.get_xlim()
+    if start:
+        xmin = ut.day(start, start_day=start_day)
+    if end:
+        xmax = ut.day(end, start_day=start_day)
+    ax.set_xlim((xmin, xmax))
+
+    # Set the x-axis intervals
+    if interval:
+        ax.set_xticks(np.arange(xmin, xmax+1, interval))
+
+    # Set the formatter
+    ax.xaxis.set_major_formatter(mpl_formatter)
+
+    return mpl_formatter
 
 
 
