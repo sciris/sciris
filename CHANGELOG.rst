@@ -12,6 +12,7 @@ Version 1.1.2 (2021-07-05)
 1. Updated ``sc.commaticks()`` to use locale-aware formatting. 
 1. Removed the ``fig`` argument from ``sc.commaticks()`` and ``sc.SIticks()``; now, the first argument can be an ``Axes`` object, a ``Figure`` object, or a list of axes.
 1. Updated ``sc.suggest()`` to modify the threshold to be based on the length of the input word.
+1. Updated ``sc.get_rows_cols()`` to optionally create subplots while it's at it.
 
 
 Version 1.1.1 (2021-03-17)

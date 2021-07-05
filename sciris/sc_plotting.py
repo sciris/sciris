@@ -997,13 +997,11 @@ def bar3d(data, fig=None, returnfig=False, cmap='viridis', figkwargs=None, axkwa
 ### Other plotting functions
 ##############################################################################
 
-__all__ += ['boxoff', 'setaxislim', 'setxlim', 'setylim', 'commaticks', 'SItickformatter', 'SIticks', 'get_rows_cols', 'maximize']
+__all__ += ['boxoff', 'setaxislim', 'setxlim', 'setylim', 'commaticks', 'SItickformatter', 'SIticks', 'get_rows_cols', 'tightlayout', 'maximize']
 
 
 def boxoff(ax=None, removeticks=True, flipticks=True):
     '''
-    I don't know why there isn't already a Matplotlib command for this.
-
     Removes the top and right borders of a plot. Also optionally removes
     the tick marks, and flips the remaining ones outside.
 
@@ -1093,7 +1091,7 @@ def setylim(data=None, ax=None):
     **Example**::
 
         pl.plot([124,146,127])
-        sc.setylim()
+        sc.setylim() # Equivalent to pl.ylim(bottom=0)
     '''
     return setaxislim(data=data, ax=ax, which='y')
 
@@ -1181,7 +1179,7 @@ def SIticks(ax=None, axis='y', fixed=False):
 
 
 
-def get_rows_cols(n, nrows=None, ncols=None, ratio=1):
+def get_rows_cols(n, nrows=None, ncols=None, ratio=1, make=False, tight=True, remove_extra=True, **kwargs):
     '''
     If you have 37 plots, then how many rows and columns of axes do you know? This
     function convert a number (i.e. of plots) to a number of required rows and columns.
@@ -1193,6 +1191,10 @@ def get_rows_cols(n, nrows=None, ncols=None, ratio=1):
         nrows (int): if supplied, keep this fixed and calculate the columns
         ncols (int): if supplied, keep this fixed and calculate the rows
         ratio (float): sets the number of rows relative to the number of columns (i.e. for 100 plots, 1 will give 10x10, 4 will give 20x5, etc.).
+        make (bool): if True, generate subplots
+        tight (bool): if True and make is True, then apply tight layout
+        remove_extra (bool): if True and make is True, then remove extra subplots
+        kwargs (dict): passed to pl.subplots()
 
     Returns:
         A tuple of ints for the number of rows and the number of columns (which, of course, you can reverse)
@@ -1203,8 +1205,13 @@ def get_rows_cols(n, nrows=None, ncols=None, ratio=1):
         nrows,ncols = sc.get_rows_cols(37) # Returns 7,6
         nrows,ncols = sc.get_rows_cols(100, ratio=2) # Returns 15,7
         nrows,ncols = sc.get_rows_cols(100, ratio=0.5) # Returns 8,13 since rows are prioritized
+        fig,axs     = sc.get_rows_cols(37, make=True) # Create 7x6 subplots
+
+    Note: the sc.tightlayout() command might be helpful after making a large number
+    of subplots.
 
     New in version 1.0.0.
+    New in version 1.1.2: "make", "tight", and "remove_extra" arguments
     '''
 
     # Simple cases -- calculate the one missing
@@ -1219,7 +1226,38 @@ def get_rows_cols(n, nrows=None, ncols=None, ratio=1):
         nrows = int(np.ceil(guess*np.sqrt(ratio)))
         ncols = int(np.ceil(n/nrows)) # Could also call recursively!
 
-    return nrows,ncols
+    # If asked, make subplots
+    if make:
+        fig, axs = pl.subplots(nrows=nrows, ncols=ncols, **kwargs)
+        if remove_extra:
+            for ax in axs.flat[n:]:
+                ax.set_visible(False) # to remove last plot
+        if tight:
+            tightlayout(fig)
+        return fig,axs
+    else: # Otherwise, just return rows and columns
+        return nrows,ncols
+
+
+def tightlayout(fig=None, tight=True):
+    '''
+    Alias to fig.set_tight_layout().
+
+    Args:
+        fig (Figure): the figure (by default, use current)
+        tight (bool, or dict): passed to fig.set_tight_layout()
+
+    **Example**::
+
+        fig,axs = sc.get_rows_cols(37, make=True) # Create 7x6 subplots
+        sc.tightlayout()
+
+    New in version 1.1.2.
+    '''
+    if fig is None:
+        fig = pl.gcf()
+    fig.set_tight_layout(tight)
+    return
 
 
 def maximize(fig=None, die=False):  # pragma: no cover
