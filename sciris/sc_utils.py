@@ -438,7 +438,7 @@ def blank(n=3):
 def strjoin(*args, sep=', '):
     '''
     Like string ``join()``, but handles more flexible inputs, converts items to
-    strings, and.
+    strings. By default, join with commas.
 
     Args:
         args (list): the list of items to join
