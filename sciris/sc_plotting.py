@@ -1209,7 +1209,7 @@ def get_rows_cols(n, nrows=None, ncols=None, ratio=1, make=False, tight=True, re
         fig,axs     = sc.get_rows_cols(37, make=True) # Create 7x6 subplots
 
     New in version 1.0.0.
-    New in version 1.1.2: "make", "tight", and "remove_extra" arguments
+    New in version 1.2.0: "make", "tight", and "remove_extra" arguments
     '''
 
     # Simple cases -- calculate the one missing
@@ -1252,7 +1252,7 @@ def figlayout(fig=None, tight=True, keep=False, **kwargs):
         fig,axs = sc.get_rows_cols(37, make=True, tight=False) # Create 7x6 subplots, squished together
         sc.figlayout(bottom=0.3)
 
-    New in version 1.1.2.
+    New in version 1.2.0.
     '''
     if isinstance(fig, bool):
         fig = None

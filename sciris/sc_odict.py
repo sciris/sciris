@@ -869,7 +869,7 @@ class odict(OD):
 
 
     def enumvalues(self, transpose=False):
-        ''' Alias for enumvals(). New in version 1.1.2. '''
+        ''' Alias for enumvals(). New in version 1.2.0. '''
         return self.enumvals(transpose=transpose)
 
 
@@ -928,19 +928,19 @@ class odict(OD):
         return self.items(transpose=transpose)
 
     def makenested(self, *args, **kwargs):
-        ''' Alias to sc.makenested(odict); see sc.makenested() for full documentation. New in version 1.1.2. '''
+        ''' Alias to sc.makenested(odict); see sc.makenested() for full documentation. New in version 1.2.0. '''
         return ut.makenested(self, *args, **kwargs)
 
     def getnested(self, *args, **kwargs):
-        ''' Alias to sc.getnested(odict); see sc.makenested() for full documentation. New in version 1.1.2. '''
+        ''' Alias to sc.getnested(odict); see sc.makenested() for full documentation. New in version 1.2.0. '''
         return ut.getnested(self, *args, **kwargs)
 
     def setnested(self, *args, **kwargs):
-        ''' Alias to sc.setnested(odict); see sc.makenested() for full documentation. New in version 1.1.2. '''
+        ''' Alias to sc.setnested(odict); see sc.makenested() for full documentation. New in version 1.2.0. '''
         return ut.setnested(self, *args, **kwargs)
 
     def iternested(self, *args, **kwargs):
-        ''' Alias to sc.iternested(odict); see sc.makenested() for full documentation. New in version 1.1.2. '''
+        ''' Alias to sc.iternested(odict); see sc.makenested() for full documentation. New in version 1.2.0. '''
         return ut.iternested(self, *args, **kwargs)
 
 

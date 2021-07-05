@@ -6,8 +6,22 @@ All notable changes to this project will be documented in this file.
 By import convention, components of the Sciris library are listed beginning with ``sc.``, e.g. ``sc.odict()``.
 
 
-Version 1.1.2 (2021-07-05)
+Version 1.2.0 (2021-07-05)
 --------------------------
+
+New functions and methods
+~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Bugfixes
+~~~~~~~~
+
+Improvements
+~~~~~~~~~~~~
+
+
+Other updates
+~~~~~~~~~~~~~
+
 1. Updated ``sc.heading()`` to handle arguments the same way as ``print()``, e.g. ``sc.heading([1,2,3], 'is a list')``.
 1. Updated ``sc.commaticks()`` to use locale-aware formatting. 
 1. Removed the ``fig`` argument from ``sc.commaticks()`` and ``sc.SIticks()``; now, the first argument can be an ``Axes`` object, a ``Figure`` object, or a list of axes.
