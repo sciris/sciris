@@ -1085,6 +1085,7 @@ def setxlim(data=None, ax=None):
     ''' Alias for sc.setaxislim(which='x') '''
     return setaxislim(data=data, ax=ax, which='x')
 
+
 def setylim(data=None, ax=None):
     '''
     Alias for sc.setaxislim(which='y').
@@ -1097,9 +1098,31 @@ def setylim(data=None, ax=None):
     return setaxislim(data=data, ax=ax, which='y')
 
 
-def commaticks(fig=None, ax=None, axis='y'):
+def _get_axlist(ax):
+    ''' Helper function to turn either a figure, an axes, or a list of axes into a list of axes '''
+
+    if ax is None: # If not supplied, get current axes
+        axlist = [pl.gca()]
+    elif isinstance(ax, pl.Axes): # If it's an axes, turn to a list
+        axlist = [ax]
+    elif isinstance(ax, pl.Figure): # If it's a figure, pull all axes
+        axlist = ax.axes
+    elif isinstance(ax, list): # If it's a list, use directly
+        axlist = ax
+    else:
+        errormsg = f'Could not recognize object {type(ax)}: must be None, Axes, Figure, or list of axes'
+        raise ValueError(errormsg)
+
+    return axlist
+
+
+def commaticks(ax=None, axis='y'):
     '''
     Use commas in formatting the y axis of a figure (e.g., 34,000 instead of 34000)
+
+    Args:
+        ax (any): axes to modify; if None, use current; else can be a single axes object, a figure, or a list of axes
+        axis (str): which axes to change (default 'y')
 
     **Example**::
 
@@ -1109,15 +1132,13 @@ def commaticks(fig=None, ax=None, axis='y'):
 
     See http://stackoverflow.com/questions/25973581/how-to-format-axis-number-format-to-thousands-with-a-comma-in-matplotlib
     '''
-    if   ax  is not None: axlist = ut.promotetolist(ax)
-    elif fig is not None: axlist = fig.axes
-    else:                 axlist = [pl.gca()]
+    axlist = _get_axlist(ax)
     for ax in axlist:
         if   axis=='x': thisaxis = ax.xaxis
         elif axis=='y': thisaxis = ax.yaxis
         elif axis=='z': thisaxis = ax.zaxis
         else: raise ValueError('Axis must be x, y, or z')
-        thisaxis.set_major_formatter(mpl.ticker.FuncFormatter(lambda x, p: format(int(x), ',')))
+        thisaxis.set_major_formatter(mpl.ticker.FuncFormatter(lambda x, p: f'{x:n}'))
     return None
 
 
@@ -1127,9 +1148,14 @@ def SItickformatter(x, pos=None, sigfigs=2, SI=True, *args, **kwargs):  # format
     return output
 
 
-def SIticks(fig=None, ax=None, axis='y', fixed=False):
+def SIticks(ax=None, axis='y', fixed=False):
     '''
     Apply SI tick formatting to one axis of a figure  (e.g., 34k instead of 34000)
+
+    Args:
+        ax (any): axes to modify; if None, use current; else can be a single axes object, a figure, or a list of axes
+        axis (str): which axes to change (default 'y')
+        fixed (bool): use fixed-location tick labels (by default, update them dynamically)
 
     **Example**::
 
@@ -1137,9 +1163,7 @@ def SIticks(fig=None, ax=None, axis='y', fixed=False):
         pl.plot(data)
         sc.SIticks()
     '''
-    if  fig is not None: axlist = fig.axes
-    elif ax is not None: axlist = ut.promotetolist(ax)
-    else:                axlist = [pl.gca()]
+    axlist = _get_axlist(ax)
     for ax in axlist:
         if   axis=='x': thisaxis = ax.xaxis
         elif axis=='y': thisaxis = ax.yaxis
