@@ -1159,7 +1159,10 @@ def heading(string=None, *args, color=None, divider=None, spaces=None, minlength
     if maxlength is None: maxlength = 120
 
     # Convert to single string
-    string = sep.join(str(item) for item in [string] + args)
+    args = list(args)
+    if string is not None:
+        args = [string] + args
+    string = sep.join(str(item) for item in args)
 
     # Add header and footer
     length = int(np.median([minlength, len(string), maxlength]))

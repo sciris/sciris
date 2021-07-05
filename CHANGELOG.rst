@@ -8,7 +8,7 @@ By import convention, components of the Sciris library are listed beginning with
 
 Version 1.1.2 (2021-07-05)
 --------------------------
-1. 
+1. Updated ``sc.heading()`` to handle arguments the same way as ``print()``, e.g. ``sc.heading([1,2,3], 'is a list')``.
 
 
 Version 1.1.1 (2021-03-17)
