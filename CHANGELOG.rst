@@ -12,10 +12,12 @@ Version 1.2.0 (2021-07-05)
 New functions and methods
 ~~~~~~~~~~~~~~~~~~~~~~~~~
 #. Added ``sc.figlayout()`` as an alias to both ``fig.set_tight_layout(True)`` and ``fig.subplots_adjust()``.
+#. Added ``sc.midpointnorm()`` as an alias to Matplotlib's ``TwoSlopeNorm``; it can also be used in e.g. ``sc.vectocolor()``.
 
 Bugfixes
 ~~~~~~~~
 #. Fixed ``sc.checkmem()`` from failing when an attribute was ``None``.
+#. Fixed a file handle being left open by ``sc.gitinfo()``.
 
 Improvements
 ~~~~~~~~~~~~

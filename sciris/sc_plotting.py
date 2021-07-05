@@ -15,7 +15,7 @@ Highlights:
 '''
 
 ##############################################################################
-### Imports
+#%% Imports
 ##############################################################################
 
 import os
@@ -31,7 +31,7 @@ from . import sc_fileio as fio
 
 
 ##############################################################################
-### Color functions
+#%% Color functions
 ##############################################################################
 
 __all__ = ['shifthue', 'rgb2hex', 'hex2rgb', 'rgb2hsv', 'hsv2rgb']
@@ -164,13 +164,13 @@ def hsv2rgb(colors=None):
 
 
 ##############################################################################
-### Colormaps
+#%% Colormap-related functions
 ##############################################################################
 
-__all__ += ['vectocolor', 'arraycolors', 'gridcolors', 'colormapdemo', 'alpinecolormap', 'bicolormap', 'parulacolormap', 'turbocolormap', 'bandedcolormap', 'orangebluecolormap']
+__all__ += ['vectocolor', 'arraycolors', 'gridcolors', 'midpointnorm', 'colormapdemo']
 
 
-def vectocolor(vector, cmap=None, asarray=True, reverse=False, minval=None, maxval=None):
+def vectocolor(vector, cmap=None, asarray=True, reverse=False, minval=None, maxval=None, midpoint=None, norm=None):
     """
     This function converts a vector (i.e., 1D array) of N values into an Nx3 matrix
     of color values according to the current colormap. It automatically scales the
@@ -181,6 +181,11 @@ def vectocolor(vector, cmap=None, asarray=True, reverse=False, minval=None, maxv
     Args:
         vector (array): Input vector (or list, it's converted to an array)
         cmap (str): is the colormap (default: current)
+        asarray (bool): whether to return as an array (otherwise, a list of tuples)
+        reverse (bool): whether to reverse the list of colors
+        minval (float): the minimum value to use
+        maxval (float): the maximum value to use
+        midpoint (float): the midpoint value to use
 
     Returns:
         colors (array): Nx4 array of RGB-alpha color values
@@ -193,7 +198,7 @@ def vectocolor(vector, cmap=None, asarray=True, reverse=False, minval=None, maxv
         c = sc.vectocolor(y);
         pl.scatter(x, y, c=c, s=50)
 
-    Version: 2020mar07
+    New in version 1.2.0: midpoint argument.
     """
 
     from numpy import array, zeros
@@ -223,6 +228,9 @@ def vectocolor(vector, cmap=None, asarray=True, reverse=False, minval=None, maxv
 
         vector = vector-minval # Subtract minimum
         vector = vector/float(maxval-minval) # Divide by maximum
+        if midpoint is not None:
+            norm = midpointnorm(vcenter=midpoint, vmin=0, vmax=1)
+            vector = np.array(norm(vector))
         nelements = len(vector) # Count number of elements
         colors = zeros((nelements,4))
         for i in range(nelements):
@@ -382,6 +390,29 @@ def gridcolors(ncolors=10, limits=None, nsteps=20, asarray=False, ashex=False, r
 
 
 
+def midpointnorm(vcenter=0, vmin=None, vmax=None):
+    '''
+    Alias to Matplotlib's TwoSlopeNorm. Used to place the center of the colormap
+    somewhere other than the center of the data.
+
+    Args:
+        vcenter (float): the center of the colormap (0 by default)
+        vmin (float): the minimum of the colormap
+        vmax (float): the maximum of the colormap
+
+    **Example**::
+
+        data = pl.rand(10,10) - 0.2
+        pl.pcolor(data, cmap='bi', norm=sc.midpointnorm())
+
+    New in version 1.2.0.
+    '''
+    from matplotlib.colors import TwoSlopeNorm
+    norm = TwoSlopeNorm(vcenter=vcenter, vmin=vmin, vmax=vmax)
+    return norm
+
+
+
 def colormapdemo(cmap=None, n=None, smoothing=None, randseed=None, doshow=True):
     '''
     Demonstrate a color map using simulated elevation data, shown in both 2D and
@@ -441,6 +472,12 @@ def colormapdemo(cmap=None, n=None, smoothing=None, randseed=None, doshow=True):
     return {'2d':fig1, '3d':fig2}
 
 
+
+##############################################################################
+#%% Colormaps
+##############################################################################
+
+__all__ += ['alpinecolormap', 'bicolormap', 'parulacolormap', 'turbocolormap', 'bandedcolormap', 'orangebluecolormap']
 
 def alpinecolormap(apply=False):
     """
@@ -756,7 +793,7 @@ except: # Included since Matplotlib 3.4.0
 
 
 ##############################################################################
-### 3D plotting functions
+#%% 3D plotting functions
 ##############################################################################
 
 __all__ += ['fig3d', 'ax3d', 'plot3d', 'scatter3d', 'surf3d', 'bar3d']
@@ -994,7 +1031,7 @@ def bar3d(data, fig=None, returnfig=False, cmap='viridis', figkwargs=None, axkwa
 
 
 ##############################################################################
-### Other plotting functions
+#%% Other plotting functions
 ##############################################################################
 
 __all__ += ['boxoff', 'setaxislim', 'setxlim', 'setylim', 'commaticks', 'SItickformatter', 'SIticks', 'get_rows_cols', 'figlayout', 'maximize']
@@ -1307,7 +1344,7 @@ def maximize(fig=None, die=False):  # pragma: no cover
 
 
 ##############################################################################
-### Figure saving
+#%% Figure saving
 ##############################################################################
 
 __all__ += ['savefigs', 'loadfig', 'emptyfig', 'separatelegend', 'orderlegend', 'savemovie']
