@@ -1122,26 +1122,28 @@ def colorize(color=None, string=None, output=False, showhelp=False, enable=True)
         return None
 
 
-def heading(string=None, color=None, divider=None, spaces=None, minlength=None, maxlength=None, **kwargs):
+def heading(string=None, *args, color=None, divider=None, spaces=None, minlength=None, maxlength=None, sep=' ', output=True, **kwargs):
     '''
-    Shortcut to sc.colorize() to create a heading. If just supplied with a string,
+    Create a colorful heading. If just supplied with a string (or list of inputs like print()),
     create blue text with horizontal lines above and below and 3 spaces above. You
     can customize the color, the divider character, how many spaces appear before
     the heading, and the minimum length of the divider (otherwise will expand to
     match the length of the string, up to a maximum length).
 
     Args:
-        string (str): The string to print as the heading
+        string (str): The string to print as the heading (or object to convert to astring)
+        args (list): Additional strings to print
         color (str): The color to use for the heading (default blue)
         divider (str): The symbol to use for the divider (default em dash)
         spaces (int): The number of spaces to put before the heading
         minlength (int): The minimum length of the divider
         maxlength (int): The maximum length of the divider
+        sep (str): If multiple arguments are supplied, use this separator to join them
+        output (bool): Whether to return the string as output (else, print)
         kwargs (dict): Arguments to pass to sc.colorize()
 
     Returns:
-        None, unless specified to produce the string as output using output=True.
-
+        String, unless output=False.
 
     Examples
     --------
@@ -1156,13 +1158,24 @@ def heading(string=None, color=None, divider=None, spaces=None, minlength=None, 
     if minlength is None: minlength = 30
     if maxlength is None: maxlength = 120
 
+    # Convert to single string
+    string = sep.join(str(item) for item in [string] + args)
+
+    # Add header and footer
     length = int(np.median([minlength, len(string), maxlength]))
     space = '\n'*spaces
     if divider and length: fulldivider = '\n'+divider*length+'\n'
     else:                  fulldivider = ''
     fullstring = space + fulldivider + string + fulldivider
-    output = colorize(color=color, string=fullstring, **kwargs)
-    return output
+
+    # Create output
+    outputstring = colorize(color=color, string=fullstring, **kwargs)
+
+    if output:
+        return outputstring
+    else:
+        print(outputstring)
+        return
 
 
 def percentcomplete(step=None, maxsteps=None, stepsize=1, prefix=None):
