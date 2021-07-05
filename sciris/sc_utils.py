@@ -2529,7 +2529,7 @@ def importbyname(name=None, output=False, die=True):
     else:      return True
 
 
-def suggest(user_input, valid_inputs, n=1, threshold=4, fulloutput=False, die=False, which='damerau'):
+def suggest(user_input, valid_inputs, n=1, threshold=None, fulloutput=False, die=False, which='damerau'):
     """
     Return suggested item
 
@@ -2541,7 +2541,7 @@ def suggest(user_input, valid_inputs, n=1, threshold=4, fulloutput=False, die=Fa
         user_input (str): User's input
         valid_inputs (list): List/collection of valid strings
         n (int): Maximum number of suggestions to return
-        threshold (int): Maximum number of edits required for an option to be suggested
+        threshold (int): Maximum number of edits required for an option to be suggested (by default, two-thirds the length of the input; for no threshold, set to -1)
         die (bool): If True, an informative error will be raised (to avoid having to implement this in the calling code)
         which (str): Distance calculation method used; options are "damerau" (default), "levenshtein", or "jaro"
 
@@ -2551,11 +2551,11 @@ def suggest(user_input, valid_inputs, n=1, threshold=4, fulloutput=False, die=Fa
 
     **Examples**::
 
-        >>> suggest('foo',['Foo','Bar'])
+        >>> sc.suggest('foo',['Foo','Bar'])
         'Foo'
-        >>> suggest('foo',['FOO','Foo'])
+        >>> sc.suggest('foo',['FOO','Foo'])
         'Foo'
-        >>> suggest('foo',['Foo ','boo'])
+        >>> sc.suggest('foo',['Foo ','boo'])
         'Foo '
     """
     try:
@@ -2594,8 +2594,15 @@ def suggest(user_input, valid_inputs, n=1, threshold=4, fulloutput=False, die=Fa
     # Order by distance, then pull out the right inputs, then turn them into a list
     order = np.argsort(distance)
     suggestions = [valid_inputs[i] for i in order]
-    suggestionstr = strjoin(['"' + sugg + '"' for sugg in suggestions[:n]])
+    suggestionstr = strjoin([f'"{sugg}"' for sugg in suggestions[:n]])
 
+    # Handle threshold
+    if threshold is None:
+        threshold = np.ceil(len(user_input)*2/3)
+    if threshold < 0:
+        threshold = np.inf
+
+    # Output
     if min(distance) > threshold:
         if die: # pragma: no cover
             errormsg = f'"{user_input}" not found'
