@@ -57,7 +57,7 @@ _stringtypes = (str, bytes)
 _numtype    = numbers.Number
 
 # Add Windows support for colors (do this at the module level so that colorama.init() only gets called once)
-if 'win' in sys.platform: # pragma: no cover
+if 'win' in sys.platform and sys.platform != 'darwin': # pragma: no cover
     try:
         import colorama
         colorama.init()
@@ -74,7 +74,8 @@ else:
 ##############################################################################
 
 # Define the modules being loaded
-__all__ = ['fast_uuid', 'uuid', 'dcp', 'cp', 'pp', 'sha', 'wget', 'htmlify', 'traceback']
+__all__ = ['fast_uuid', 'uuid', 'dcp', 'cp', 'pp', 'sha', 'wget', 'htmlify', 'traceback',
+           'getplatform', 'iswindows', 'islinux', 'ismac']
 
 
 def fast_uuid(which=None, length=None, n=1, secure=False, forcelist=False, safety=1000, recursion=0, recursion_limit=10, verbose=True):
@@ -388,6 +389,58 @@ def traceback(*args, **kwargs):
     '''
     return py_traceback.format_exc(*args, **kwargs)
 
+
+def getplatform(expected=None, die=False):
+    '''
+    Return the name of the current platform: 'linux', 'windows', 'mac', or 'other'.
+    Alias (kind of) to sys.platform.
+
+    Args:
+        expected (str): if not None, check if the current platform is this
+        die (bool): if True and expected is defined, raise an exception
+
+    **Example**::d
+
+        sc.getplatform() # Get current name of platform
+        sc.getplatform('windows', die=True) # Raise an exception if not on Windows
+    '''
+    # Define different aliases for each operating system
+    mapping = dict(
+        linux   = ['linux', 'posix'],
+        windows = ['windows', 'win', 'win32', 'cygwin', 'nt'],
+        mac     = ['mac', 'macos', 'darwin', 'osx']
+    )
+
+    # Check to see what system it is
+    sys_plat = sys.platform
+    plat = 'other'
+    for key,aliases in mapping.items():
+        if sys_plat.lower() in aliases:
+            plat = key
+            break
+
+    # Handle output
+    if expected is not None:
+        output = (expected.lower() in mapping[plat]) # Check if it's as expecte
+        if not output and die:
+            errormsg = f'System is "{plat}", not "{expected}"'
+            raise EnvironmentError(errormsg)
+    else:
+        output = plat
+    return output
+
+
+def iswindows(die=False):
+    ''' Alias to sc.getplatform('windows') '''
+    return getplatform('windows', die=die)
+
+def islinux(die=False):
+    ''' Alias to sc.getplatform('linux') '''
+    return getplatform('linux', die=die)
+
+def ismac(die=False):
+    ''' Alias to sc.getplatform('mac') '''
+    return getplatform('mac', die=die)
 
 
 ##############################################################################

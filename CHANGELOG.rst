@@ -14,6 +14,7 @@ New functions and methods
 #. Added ``sc.figlayout()`` as an alias to both ``fig.set_tight_layout(True)`` and ``fig.subplots_adjust()``.
 #. Added ``sc.midpointnorm()`` as an alias to Matplotlib's ``TwoSlopeNorm``; it can also be used in e.g. ``sc.vectocolor()``.
 #. Added ``sc.dateformatter()``, which will (semi-)automatically format the x-axis using dates.
+#. Added ``sc.getplatform()``, ``sc.iswindows()``, ``sc.islinux()``, and ``sc.ismac()``. These are all shortcuts for checking ``sys.platform`` output directly.
 
 Bugfixes
 ~~~~~~~~
