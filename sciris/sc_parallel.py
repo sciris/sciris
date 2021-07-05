@@ -21,7 +21,12 @@ from . import sc_utils as ut
 ### Parallelization functions
 ##############################################################################
 
-__all__ = ['loadbalancer', 'parallelize', 'parallelcmd', 'parallel_progress']
+__all__ = ['cpu_count', 'loadbalancer', 'parallelize', 'parallelcmd', 'parallel_progress']
+
+
+def cpu_count():
+    ''' Alias to mp.cpu_count() '''
+    return mp.cpu_count()
 
 
 def loadbalancer(maxload=None, index=None, interval=None, maxtime=None, label=None, verbose=True):
@@ -102,7 +107,7 @@ def parallelize(func, iterarg=None, iterkwargs=None, args=None, kwargs=None, ncp
         iterkwargs (dict): another way of providing variables to each process (see examples below)
         args (list): positional arguments, the same for all processes
         kwargs (dict): keyword arguments, the same for all processes
-        ncpus (int): number of CPUs to use (if None, use loadbalancer)
+        ncpus (int or float): number of CPUs to use (if <1, treat as a fraction of the total available; if None, use loadbalancer)
         maxload (float): maximum CPU load to use (not used if ncpus is specified)
         interval (float): number of seconds to pause between starting processes for checking load (not used if ncpus is specified)
         parallelizer (func): alternate parallelization function instead of multiprocess.Pool.map()
@@ -184,6 +189,8 @@ def parallelize(func, iterarg=None, iterkwargs=None, args=None, kwargs=None, ncp
     # Handle maxload
     if ncpus is None and maxload is None:
         ncpus = mp.cpu_count()
+    if ncpus is not None and ncpus < 1: # Less than one, treat as a fraction of total
+        ncpus = int(mp.cpu_count()*ncpus)
 
     # Handle kwargs
     kwargs = ut.mergedicts(kwargs, func_kwargs)
@@ -252,6 +259,8 @@ def parallelize(func, iterarg=None, iterkwargs=None, args=None, kwargs=None, ncp
         if serial: # Run in serial
             outputlist = list(map(_parallel_task, argslist))
         elif parallelizer is None: # Standard usage: use the default map() function
+            if ncpus is not None:
+                ncpus = min(ncpus, len(argslist)) # Don't use more CPUs than there are things to process
             multipool = mp.Pool(processes=ncpus)
             outputlist = multipool.map(_parallel_task, argslist)
             multipool.close()
