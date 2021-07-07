@@ -395,6 +395,10 @@ def test_dates():
     print('\nTesting datetoyear')
     o.year = sc.datetoyear('2010-07-01')
 
+    print('\nTesting datedelta')
+    o.dd = sc.datedelta('2021-07-07', 3) # Add 3 days
+    assert o.dd == '2021-07-10'
+
     return o
 
 
