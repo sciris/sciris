@@ -25,13 +25,13 @@ import traceback
 import numpy as np
 import datetime as dt
 from glob import glob
-from gzip import GzipFile
 from zipfile import ZipFile
 from contextlib import closing
 from io import BytesIO as IO
 from pathlib import Path
 import copyreg as cpreg
 import pickle as pkl
+import gzip as gz
 from . import sc_utils as ut
 from .sc_odict import odict
 from .sc_dataframe import dataframe
@@ -85,9 +85,41 @@ def loadobj(filename=None, folder=None, verbose=False, die=None, remapping=None)
         errormsg = f'First argument to loadobj() must be a string or file object, not {type(filename)}'
         raise TypeError(errormsg)
     kwargs = {'mode': 'rb', argtype: filename}
-    with GzipFile(**kwargs) as fileobj:
-        filestr = fileobj.read() # Convert it to a string
-        obj = _unpickler(filestr, filename=filename, verbose=verbose, die=die, remapping=remapping) # Actually load it
+    try:
+        with gz.GzipFile(**kwargs) as fileobj:
+            filestr = fileobj.read() # Convert it to a string
+            obj = _unpickler(filestr, filename=filename, verbose=verbose, die=die, remapping=remapping) # Actually load it
+    except Exception as E:
+        exc = type(E) # Figureout what kind of error it is
+        if exc == FileNotFoundError: # This is simple, just raise directly
+            raise E
+        elif exc == gz.BadGzipFile:
+            errormsg = f'''
+Unable to load
+    {filename}
+as a gzipped pickle file. Ensure that it was saved by Sciris; if it is a regular
+(not gzipped) pickle file, try pickle.load() or pandas.read_pickle().
+'''
+            raise exc(errormsg) from E
+        else:
+            errormsg = f'''
+Unable to load
+    {filename}
+as a gzipped pickle file. Loading pickles can fail if Python modules have changed
+since the object was saved. If you are loading a custom class that has failed,
+you can use the remapping argument; see the sc.loadobj() docstring for details.
+Otherwise, you might need to revert to the previous version of that module (e.g.
+in a virtual environment), save in a format other than pickle, reload in a different
+environment with the new version of that module, and then re-save as a pickle.
+
+For general information on unpickling errors, see e.g.:
+https://wiki.python.org/moin/UsingPickle
+https://stackoverflow.com/questions/41554738/how-to-load-an-old-pickle-file
+
+See the stack trace above for more information on this specific error.
+'''
+            raise exc(errormsg) from E
+
     if verbose: print(f'Object loaded from "{filename}"')
     return obj
 
@@ -135,7 +167,7 @@ def saveobj(filename=None, obj=None, compresslevel=5, verbose=0, folder=None, me
             print(errormsg)
 
     # Actually save
-    with GzipFile(filename=filename, fileobj=bytesobj, mode='wb', compresslevel=compresslevel) as fileobj:
+    with gz.GzipFile(filename=filename, fileobj=bytesobj, mode='wb', compresslevel=compresslevel) as fileobj:
         if method == 'dill': # pragma: no cover # If dill is requested, use that
             if verbose>=2: print('Saving as dill...')
             _savedill(fileobj, obj)
@@ -180,7 +212,7 @@ def loadstr(string, verbose=False, die=None, remapping=None):
         assert string1 == string2
     '''
     with closing(IO(string)) as output: # Open a "fake file" with the Gzip string pickle in it.
-        with GzipFile(fileobj=output, mode='rb') as fileobj: # Set a Gzip reader to pull from the "file."
+        with gz.GzipFile(fileobj=output, mode='rb') as fileobj: # Set a Gzip reader to pull from the "file."
             picklestring = fileobj.read() # Read the string pickle from the "file" (applying Gzip decompression).
     obj = _unpickler(picklestring, filestring=string, verbose=verbose, die=die, remapping=remapping) # Return the object gotten from the string pickle.
     return obj
@@ -189,7 +221,7 @@ def loadstr(string, verbose=False, die=None, remapping=None):
 def dumpstr(obj=None):
     ''' Dump an object as a bytes-like string (rarely used); see ``sc.loadstr()`` '''
     with closing(IO()) as output: # Open a "fake file."
-        with GzipFile(fileobj=output, mode='wb') as fileobj:  # Open a Gzip-compressing way to write to this "file."
+        with gz.GzipFile(fileobj=output, mode='wb') as fileobj:  # Open a Gzip-compressing way to write to this "file."
             try:    _savepickle(fileobj, obj) # Use pickle
             except: _savedill(fileobj, obj) # ...but use Dill if that fails
         output.seek(0) # Move the mark to the beginning of the "file."
