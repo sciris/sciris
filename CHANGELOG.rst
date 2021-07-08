@@ -6,6 +6,15 @@ All notable changes to this project will be documented in this file.
 By import convention, components of the Sciris library are listed beginning with ``sc.``, e.g. ``sc.odict()``.
 
 
+Version 1.2.1 (2021-07-07)
+--------------------------
+#. Added ``openpyxl`` as a Sciris dependency, since it was `removed from pandas <https://pandas.pydata.org/pandas-docs/stable/whatsnew/v1.3.0.html>`__.
+#. Added ``sc.datedelta()``, a function that wraps ``datetime.timedelta`` to easily do date operations on strings, e.g. ``sc.datedelta('2021-07-07', days=-3)`` returns ``'2021-07-04'``.
+#. Added additional supported date formats to ``sc.readdate()``, along with new ``'dmy'`` and ``'mdy'`` options to ``dateformat``, to read common day-month-year and month-day-year formats.
+#. Added the ability for ``sc.compareversions()`` to handle ``'<'``, ``'>='``, etc.
+#. Errors loading pickles from ``sc.load()`` are now more informative.
+
+
 Version 1.2.0 (2021-07-05)
 --------------------------
 

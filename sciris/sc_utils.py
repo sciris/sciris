@@ -17,6 +17,8 @@ Highlights:
     - ``sc.promotetoarray()``: tries to convert any object to an array, for easy use with numpy
     - ``sc.mergedicts()``: merges any set of inputs into a dictionary
     - ``sc.readdate()``: convert strings to dates using common formats
+    - ``sc.daterange()``: create a list of dates
+    - ``sc.datedelta()``: perform calculations on date strings
     - ``sc.tic()/sc.toc()``: simple method for timing durations
     - ``sc.runcommand()``: simple way of executing a shell command
 '''
@@ -40,24 +42,24 @@ import subprocess
 import itertools
 import numbers
 import string
+import tempfile
+import warnings
 import numpy as np
 import random as rnd
 import datetime as dt
 import uuid as py_uuid
-import tempfile
-import warnings
 import traceback as py_traceback
 from textwrap import fill
 from functools import reduce
 from collections import OrderedDict as OD
 from distutils.version import LooseVersion
 
-# Handle types and legacy Python 2 compatibility
+# Handle types
 _stringtypes = (str, bytes)
 _numtype    = numbers.Number
 
 # Add Windows support for colors (do this at the module level so that colorama.init() only gets called once)
-if 'win' in sys.platform and sys.platform != 'darwin': # pragma: no cover
+if 'win' in sys.platform and sys.platform != 'darwin': # pragma: no cover # NB: can't use startswith() because of 'cygwin'
     try:
         import colorama
         colorama.init()
@@ -1648,7 +1650,7 @@ def mergelists(*args, copy=False, **kwargs):
 #%% Time/date functions
 ##############################################################################
 
-__all__ += ['now', 'getdate', 'readdate', 'date', 'day', 'daydiff', 'daterange', 'datetoyear',
+__all__ += ['now', 'getdate', 'readdate', 'date', 'day', 'daydiff', 'daterange', 'datedelta', 'datetoyear',
             'elapsedtimestr', 'tic', 'toc', 'toctic', 'timedsleep']
 
 def now(timezone=None, utc=False, die=False, astype='dateobj', tostring=False, dateformat=None):
@@ -1751,10 +1753,14 @@ def readdate(datestr=None, *args, dateformat=None, return_defaults=False):
     Convenience function for loading a date from a string. If dateformat is None,
     this function tries a list of standard date types.
 
+    Caution: If a number is supplied, it is treated as a timestamp in seconds.
+    To convert a Matplotlib date number (which is a number of days from 1970),
+    use ``pl.num2date()``.
+
     Args:
         datestr (int, float, str or list): the string containing the date, or the timestamp (in seconds), or a list of either
         args (list): additional dates to convert
-        dateformat (str or list): the format for the date, if known; can be a list of options
+        dateformat (str or list): the format for the date, if known; if 'dmy' or 'mdy', try as day-month-year or month-day-year formats; can also be a list of options
         return_defaults (bool): don't convert the date, just return the defaults
 
     Returns:
@@ -1762,15 +1768,25 @@ def readdate(datestr=None, *args, dateformat=None, return_defaults=False):
 
     **Examples**::
 
-        dateobj = sc.readdate('2020-03-03') # Standard format, so works
-        dateobj = sc.readdate(1611661666) # Can read timestamps as well
+        dateobj  = sc.readdate('2020-03-03') # Standard format, so works
+        dateobj  = sc.readdate('04-03-2020', dateformat='dmy') # Date is ambiguous, so need to specify day-month-year order
+        dateobj  = sc.readdate(1611661666) # Can read timestamps as well
         dateobjs = sc.readdate(['2020-06', '2020-07'], dateformat='%Y-%m') # Can read custom date formats
         dateobjs = sc.readdate('20200321', 1611661666) # Can mix and match formats
     '''
 
+    # Define default formats
     formats_to_try = {
         'date':           '%Y-%m-%d', # 2020-03-21
+        'date-slash':     '%Y/%m/%d', # 2020/03/21
+        'date-dot':       '%Y.%m.%d', # 2020.03.21
+        'date-space':     '%Y %m %d', # 2020 03 21
         'date-alpha':     '%Y-%b-%d', # 2020-Mar-21
+        'date-alpha-rev': '%d-%b-%Y', # 21-Mar-2020
+        'date-alpha-sp':  '%d %b %Y', # 21 Mar 2020
+        'date-Alpha':     '%Y-%B-%d', # 2020-March-21
+        'date-Alpha-rev': '%d-%B-%Y', # 21-March-2020
+        'date-Alpha-sp':  '%d %B %Y', # 21 March 2020
         'date-numeric':   '%Y%m%d',   # 20200321
         'datetime':       '%Y-%m-%d %H:%M:%S',    # 2020-03-21 14:35:21
         'datetime-alpha': '%Y-%b-%d %H:%M:%S',    # 2020-Mar-21 14:35:21
@@ -1778,16 +1794,37 @@ def readdate(datestr=None, *args, dateformat=None, return_defaults=False):
         'ctime':          '%a %b %d %H:%M:%S %Y', # Sat Mar 21 23:09:29 2020
         }
 
+    # Define day-month-year formats
+    dmy_formats = {
+        'date':           '%d-%m-%Y', # 21-03-2020
+        'date-slash':     '%d/%m/%Y', # 21/03/2020
+        'date-dot':       '%d.%m.%Y', # 21.03.2020
+        'date-space':     '%d %m %Y', # 21 03 2020
+    }
+
+    # Define month-day-year formats
+    mdy_formats = {
+        'date':           '%m-%d-%Y', # 03-21-2020
+        'date-slash':     '%m/%d/%Y', # 03/21/2020
+        'date-dot':       '%m.%d.%Y', # 03.21.2020
+        'date-space':     '%m %d %Y', # 03 21 2020
+    }
+
     # To get the available formats
     if return_defaults:
         return formats_to_try
 
     # Handle date formats
-    if isstring(dateformat):
-        format_list = promotetolist(dateformat)
-        formats_to_try = {}
-        for f,fmt in enumerate(format_list):
-            formats_to_try[f'User supplied {f}'] = fmt
+    if dateformat is not None:
+        if dateformat == 'dmy':
+            formats_to_try = dmy_formats
+        elif dateformat == 'mdy':
+            formats_to_try = mdy_formats
+        else:
+            format_list = promotetolist(dateformat)
+            formats_to_try = {}
+            for f,fmt in enumerate(format_list):
+                formats_to_try[f'User supplied {f}'] = fmt
 
     # Ensure everything is in a consistent format
     datestrs, is_list, is_array = _sanitize_iterables(datestr, *args)
@@ -1809,8 +1846,10 @@ def readdate(datestr=None, *args, dateformat=None, return_defaults=False):
                 except Exception as E:
                     exceptions[key] = str(E)
             if dateobj is None:
-                formatstr = '\n'.join([f'Format "{item[1]}" raised exception: {exceptions[item[0]]}' for item in formats_to_try.items()])
+                formatstr = newlinejoin([f'{item[1]}' for item in formats_to_try.items()])
                 errormsg = f'Was unable to convert "{datestr}" to a date using the formats:\n{formatstr}'
+                if dateformat not in ['dmy', 'mdy']:
+                    errormsg += '\n\nNote: to read day-month-year or month-day-year dates, use dateformat="dmy" or "mdy" respectively.'
                 raise ValueError(errormsg)
         dateobjs.append(dateobj)
 
@@ -1829,6 +1868,8 @@ def date(obj, *args, start_date=None, dateformat=None, as_date=True):
     calls readdate() if the input is a string, in this function an integer is treated
     as a number of days from start_day, while for readdate() it is treated as a
     timestamp in seconds.
+
+    Caution 2: To convert a Matplotlib date from a number, use ``pl.num2date()``.
 
     Args:
         obj (str, int, date, datetime, list, array): the object to convert
@@ -1992,6 +2033,34 @@ def daterange(start_date, end_date, inclusive=True, as_date=False, dateformat=No
     days = list(range(end_day))
     dates = date(days, start_date=start_date, as_date=as_date, dateformat=dateformat)
     return dates
+
+
+def datedelta(datestr, days=0, months=0, years=0, weeks=0, as_date=None, **kwargs):
+    '''
+    Perform calculations on a date string (or date object), returning a string (or a date).
+    Wrapper to dateutil.relativedelta().
+
+    Args:
+        datestr (str/date): the starting date (typically a string)
+        days (int): the number of days (positive or negative) to increment
+        months (int): as above
+        years (int): as above
+        weeks (int): as above
+        as_date (bool): if True, return a date object; otherwise, return as input type
+        kwargs (dict): passed to ``sc.readdate()``
+
+    **Examples**::
+
+        sc.datedelta('2021-07-07', 3) # Add 3 days
+        sc.datedelta('2021-07-07', days=-4) # Subtract 4 days
+        sc.datedelta('2021-07-07', weeks=4, months=-1, as_date=True) # Add 4 weeks but subtract a month, and return a dateobj
+    '''
+    if as_date is None and isinstance(datestr, str): # Typical case
+        as_date = False
+    dateobj = readdate(datestr, **kwargs)
+    newdate = dateobj + dateutil.relativedelta.relativedelta(days=days, months=months, years=years, weeks=weeks)
+    newdate = date(newdate, as_date=as_date)
+    return newdate
 
 
 def datetoyear(dateobj, dateformat=None):
@@ -2527,20 +2596,52 @@ def gitinfo(path=None, hashlen=7, die=False, verbose=True):
 def compareversions(version1, version2):
     '''
     Function to compare versions, expecting both arguments to be a string of the
-    format 1.2.3, but numeric works too.
+    format 1.2.3, but numeric works too. Returns 0 for equality, -1 for v1<v2, and
+    1 for v1>v2.
+
+    If ``version2`` starts with >, >=, <, <=, or ==, the function returns True or
+    False depending on the result of the comparison.
 
     **Examples**::
 
         sc.compareversions('1.2.3', '2.3.4') # returns -1
         sc.compareversions(2, '2') # returns 0
         sc.compareversions('3.1', '2.99') # returns 1
+        sc.compareversions('3.1', '>=2.99') # returns True
+        sc.compareversions(mymodule.__version__, '>=1.0') # common usage pattern
+
+    New in version 1.2.1: relational operators
     '''
-    if LooseVersion(str(version1)) > LooseVersion(str(version2)):
-        return 1
-    elif LooseVersion(str(version1)) == LooseVersion(str(version2)):
-        return 0
+    # Handle inputs
+    v1 = str(version1)
+    v2 = str(version2)
+
+    # Process version2
+    valid = None
+    if   v2.startswith('>'):  valid = [1]
+    elif v2.startswith('>='): valid = [0,1]
+    elif v2.startswith('='):  valid = [0]
+    elif v2.startswith('=='): valid = [0]
+    elif v2.startswith('~='): valid = [-1,1]
+    elif v2.startswith('!='): valid = [-1,1]
+    elif v2.startswith('<='): valid = [0,-1]
+    elif v2.startswith('<'):  valid = [-1]
+    v2 = v2.lstrip('<>=!~')
+
+    # Do comparison
+    if LooseVersion(v1) > LooseVersion(v2):
+        comparison =  1
+    elif LooseVersion(v1) < LooseVersion(v2):
+        comparison =  -1
     else:
-        return -1
+        comparison =  0
+
+    # Return
+    if valid is None:
+        return comparison
+    else:
+        tf = (comparison in valid)
+        return tf
 
 
 def uniquename(name=None, namelist=None, style=None):
