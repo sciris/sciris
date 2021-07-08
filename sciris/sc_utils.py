@@ -2596,20 +2596,52 @@ def gitinfo(path=None, hashlen=7, die=False, verbose=True):
 def compareversions(version1, version2):
     '''
     Function to compare versions, expecting both arguments to be a string of the
-    format 1.2.3, but numeric works too.
+    format 1.2.3, but numeric works too. Returns 0 for equality, -1 for v1<v2, and
+    1 for v1>v2.
+
+    If ``version2`` starts with >, >=, <, <=, or ==, the function returns True or
+    False depending on the result of the comparison.
 
     **Examples**::
 
         sc.compareversions('1.2.3', '2.3.4') # returns -1
         sc.compareversions(2, '2') # returns 0
         sc.compareversions('3.1', '2.99') # returns 1
+        sc.compareversions('3.1', '>=2.99') # returns True
+        sc.compareversions(mymodule.__version__, '>=1.0') # common usage pattern
+
+    New in version 1.2.1: relational operators
     '''
-    if LooseVersion(str(version1)) > LooseVersion(str(version2)):
-        return 1
-    elif LooseVersion(str(version1)) == LooseVersion(str(version2)):
-        return 0
+    # Handle inputs
+    v1 = str(version1)
+    v2 = str(version2)
+
+    # Process version2
+    valid = None
+    if   v2.startswith('>'):  valid = [1]
+    elif v2.startswith('>='): valid = [0,1]
+    elif v2.startswith('='):  valid = [0]
+    elif v2.startswith('=='): valid = [0]
+    elif v2.startswith('~='): valid = [-1,1]
+    elif v2.startswith('!='): valid = [-1,1]
+    elif v2.startswith('<='): valid = [0,-1]
+    elif v2.startswith('<'):  valid = [-1]
+    v2 = v2.lstrip('<>=!~')
+
+    # Do comparison
+    if LooseVersion(v1) > LooseVersion(v2):
+        comparison =  1
+    elif LooseVersion(v1) < LooseVersion(v2):
+        comparison =  -1
     else:
-        return -1
+        comparison =  0
+
+    # Return
+    if valid is None:
+        return comparison
+    else:
+        tf = (comparison in valid)
+        return tf
 
 
 def uniquename(name=None, namelist=None, style=None):
