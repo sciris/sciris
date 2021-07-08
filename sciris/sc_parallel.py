@@ -148,7 +148,7 @@ def parallelize(func, iterarg=None, iterkwargs=None, args=None, kwargs=None, ncp
 
         def myfunc(i, x, y):
             np.random.seed()
-            xy = [x+i*np.random.randn(100), y+i*np.andom.randn(100)]
+            xy = [x+i*np.random.randn(100), y+i*np.random.randn(100)]
             return xy
 
         xylist1 = sc.parallelize(myfunc, kwargs={'x':3, 'y':8}, iterarg=range(5), maxload=0.8, interval=0.2) # Use kwargs dict
