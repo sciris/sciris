@@ -85,24 +85,15 @@ def loadobj(filename=None, folder=None, verbose=False, die=None, remapping=None)
         errormsg = f'First argument to loadobj() must be a string or file object, not {type(filename)}'
         raise TypeError(errormsg)
     kwargs = {'mode': 'rb', argtype: filename}
-    try:
-        with gz.GzipFile(**kwargs) as fileobj:
-            filestr = fileobj.read() # Convert it to a string
-            obj = _unpickler(filestr, filename=filename, verbose=verbose, die=die, remapping=remapping) # Actually load it
-    except Exception as E:
-        exc = type(E) # Figureout what kind of error it is
-        if exc == FileNotFoundError: # This is simple, just raise directly
-            raise E
-        elif exc == gz.BadGzipFile:
-            errormsg = f'''
+
+    # Define common error messages
+    gziperror = f'''
 Unable to load
     {filename}
 as a gzipped pickle file. Ensure that it was saved by Sciris; if it is a regular
 (not gzipped) pickle file, try pickle.load() or pandas.read_pickle().
 '''
-            raise exc(errormsg) from E
-        else:
-            errormsg = f'''
+    unpicklingerror = f'''
 Unable to load
     {filename}
 as a gzipped pickle file. Loading pickles can fail if Python modules have changed
@@ -115,12 +106,30 @@ environment with the new version of that module, and then re-save as a pickle.
 For general information on unpickling errors, see e.g.:
 https://wiki.python.org/moin/UsingPickle
 https://stackoverflow.com/questions/41554738/how-to-load-an-old-pickle-file
-
-See the stack trace above for more information on this specific error.
 '''
+
+    # Actually load it
+    try:
+        with gz.GzipFile(**kwargs) as fileobj:
+            filestr = fileobj.read() # Convert it to a string
+            obj = _unpickler(filestr, filename=filename, verbose=verbose, die=die, remapping=remapping) # Actually load it
+    except Exception as E:
+        exc = type(E) # Figureout what kind of error it is
+        if exc == FileNotFoundError: # This is simple, just raise directly
+            raise E
+        elif exc == gz.BadGzipFile:
+            errormsg = gziperror
+            raise exc(errormsg) from E
+        else:
+            errormsg = unpicklingerror + '\n\nSee the stack trace above for more information on this specific error.'
             raise exc(errormsg) from E
 
-    if verbose: print(f'Object loaded from "{filename}"')
+    # If it loaded but with errors, print them here
+    if isinstance(obj, Failed):
+        print(unpicklingerror)
+    elif verbose:
+        print(f'Object loaded from "{filename}"')
+
     return obj
 
 
@@ -1208,15 +1217,57 @@ class Empty(object):
         pass
 
 
-def makefailed(module_name=None, name=None, error=None, exception=None):
+class UniversalFailed(Failed):
+    ''' A universal failed object class, that preserves as much data as possible '''
+
+    def __init__(self, *args, **kwargs):
+        if args:
+            self.args = args
+        if kwargs:
+            self.kwargs = kwargs
+        self.__set_empty()
+        return
+
+    def __set_empty(self):
+        if not hasattr(self, 'state'):
+            self.state = {}
+        if not hasattr(self, 'dict'):
+            self.dict = {}
+        return
+
+    def __repr__(self):
+        output = ut.objrepr(self) # This does not include failure_info since it's a class attribute
+        return output
+
+    def __setstate__(self, state):
+        self.__set_empty()
+        self.state = state
+        return
+
+    def __len__(self):
+        return len(self.dict)
+
+    def __getitem__(self, key):
+        return self.dict[key]
+
+    def __setitem__(self, key, value):
+        self.dict[key] = value
+        return
+
+    def disp(self, *args, **kwargs):
+        return ut.pr(self, *args, **kwargs)
+
+
+def makefailed(module_name=None, name=None, error=None, exception=None, universal=False):
     ''' Create a class -- not an object! -- that contains the failure info for a pickle that failed to load '''
     key = f'Failure {len(Failed.failure_info)+1}'
-    Failed.failure_info[key] = odict()
-    Failed.failure_info[key]['module'] = module_name
-    Failed.failure_info[key]['class'] = name
-    Failed.failure_info[key]['error'] = error
-    Failed.failure_info[key]['exception'] = exception
-    return Failed
+    base = UniversalFailed if universal else Failed
+    base.failure_info[key] = odict()
+    base.failure_info[key]['module'] = module_name
+    base.failure_info[key]['class'] = name
+    base.failure_info[key]['error'] = error
+    base.failure_info[key]['exception'] = exception
+    return base
 
 
 class _RobustUnpickler(pkl.Unpickler):
@@ -1247,6 +1298,22 @@ class _RobustUnpickler(pkl.Unpickler):
         return obj
 
 
+class _UltraRobustUnpickler(pkl.Unpickler):
+    ''' If all else fails, just make a default object '''
+
+    def __init__(self, bytesio, *args, unpicklingerrors=None, **kwargs):
+        pkl.Unpickler.__init__(self, bytesio, *args, **kwargs)
+        self.unpicklingerrors = unpicklingerrors if unpicklingerrors is not None else []
+        return
+
+    def find_class(self, module_name, name):
+        ''' Ignore all attempts to use the actual class and always make a UniversalFailed class '''
+        error = ut.strjoin(self.unpicklingerrors)
+        exception = self.unpicklingerrors
+        obj = makefailed(module_name=module_name, name=name, error=error, exception=exception, universal=True)
+        return obj
+
+
 def _unpickler(string=None, filename=None, filestring=None, die=None, verbose=False, remapping=None):
     ''' Not invoked directly; used as a helper function for saveobj/loadobj '''
 
@@ -1268,10 +1335,20 @@ def _unpickler(string=None, filename=None, filestring=None, die=None, verbose=Fa
                 except Exception as E3:
                     try:
                         if verbose: print(f'Dill failed ({str(E3)}), trying robust unpickler...')
-                        obj = _RobustUnpickler(io.BytesIO(string), remapping=remapping).load() # And if that trails, throw everything at it
-                    except Exception as E4: # pragma: no cover
-                        errormsg = f'All available unpickling methods failed:\n    Standard: {E1}\n     Encoded: {E2}\n        Dill: {E3}\n      Robust: {E4}'
-                        raise Exception(errormsg)
+                        obj = _RobustUnpickler(io.BytesIO(string), remapping=remapping).load() # And if that fails, throw everything at it
+                    except Exception as E4:
+                        try:
+                            if verbose: print(f'Robust failed ({str(E4)}), trying ultrarobust unpickler...')
+                            obj = _UltraRobustUnpickler(io.BytesIO(string), unpicklingerrors=[E1, E2, E3, E4]).load() # And if that fails, really throw everything at it
+                        except Exception as E5: # pragma: no cover
+                            errormsg = f'''
+All available unpickling methods failed:
+    Standard: {E1}
+     Encoded: {E2}
+        Dill: {E3}
+      Robust: {E4}
+ Ultrarobust: {E5}'''
+                            raise Exception(errormsg)
 
     if isinstance(obj, Failed):
         print('Warning, the following errors were encountered during unpickling:')
