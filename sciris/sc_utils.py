@@ -3305,8 +3305,6 @@ class prettyobj(object):
         a: 4
         b: 6
         ————————————————————————————————————————————————————————————
-
-
     '''
 
     def __repr__(self):
@@ -3321,11 +3319,11 @@ class autolist(list):
 
     **Examples**::
 
-        ls = sc.autolist('a')
+        ls = sc.autolist(3) # Quickly convert a scalar to a list
 
         ls = sc.autolist()
         for i in range(5):
-            ls = ls + i
+            ls += i # No need for ls += [i]
     '''
     def __init__(self, *args):
         arglist = mergelists(*args) # Convert non-iterables to iterables
@@ -3334,8 +3332,8 @@ class autolist(list):
     def __add__(self, obj=None):
         ''' Allows non-lists to be concatenated '''
         obj = promotetolist(obj)
-        self.extend(obj)
-        return self
+        new = super().__add__(obj)
+        return new
 
     def __radd__(self, obj):
         ''' Allows sum() to work correctly '''
@@ -3343,7 +3341,9 @@ class autolist(list):
 
     def __iadd__(self, obj):
         ''' Allows += to work correctly '''
-        return self.__add__(obj)
+        obj = promotetolist(obj)
+        self.extend(obj)
+        return self
 
 
 
