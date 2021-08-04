@@ -44,7 +44,7 @@ from .sc_dataframe import dataframe
 __all__ = ['loadobj', 'loadstr', 'saveobj', 'dumpstr', 'load', 'save']
 
 
-def loadobj(filename=None, folder=None, verbose=False, die=None, remapping=None):
+def loadobj(filename=None, folder=None, verbose=False, die=None, remapping=None, **kwargs):
     '''
     Load a file that has been saved as a gzipped pickle file, e.g. by ``sc.saveobj()``.
     Accepts either a filename (standard usage) or a file object as the first argument.
@@ -58,11 +58,12 @@ def loadobj(filename=None, folder=None, verbose=False, die=None, remapping=None)
     use the ``remapping`` argument to point to the new modules or classes.
 
     Args:
-        filename (str/Path): the filename (or full path) to load
-        folder (str/Path): the folder
-        verbose (bool): print details
-        die (bool): whether to raise an exception if errors are encountered (otherwise, load as much as possible)
-        remapping (dict):
+        filename  (str/Path): the filename (or full path) to load
+        folder    (str/Path): the folder
+        verbose   (bool):     print details
+        die       (bool):     whether to raise an exception if errors are encountered (otherwise, load as much as possible)
+        remapping (dict):     way of mapping old/unavailable module names to new
+        kwargs    (dict):     passed to gz.GzipFile()
 
     **Examples**::
 
@@ -468,14 +469,19 @@ def makefilepath(filename=None, folder=None, ext=None, default=None, split=False
     return output
 
 
-def thisdir(file=None, *args, aspath=False, **kwargs):
+def path(*args, **kwargs):
+    ''' Alias to pathlib.Path() '''
+    return Path(*args, **kwargs)
+
+
+def thisdir(*args, file=None, aspath=False, **kwargs):
     '''
     Tiny helper function to get the folder for a file, usually the current file.
     If not supplied, then use the current file.
 
     Args:
-        file (str): the file to get the directory from; usually __file__
         args (list): passed to os.path.join()
+        file (str): the file to get the directory from; usually __file__
         aspath (bool): whether to return a Path object instead of a string
         kwargs (dict): also passed to os.path.join()
 
@@ -488,8 +494,9 @@ def thisdir(file=None, *args, aspath=False, **kwargs):
         file_in_same_dir = sc.thisdir(__file__, 'new_file.txt')
 
     New in version 1.1.0: "as_path" argument renamed "aspath"
+    New in version 1.2.2: ####
     '''
-    if file is None:
+    if file is None: # THINK ABOUT BACKWARDS COMPATIBILITY
          file = str(Path(inspect.stack()[1][1])) # Adopted from Atomica
     folder = os.path.abspath(os.path.dirname(file))
     filepath = os.path.join(folder, *args, **kwargs)
@@ -1260,12 +1267,12 @@ class UniversalFailed(Failed):
 
 def makefailed(module_name=None, name=None, error=None, exception=None, universal=False):
     ''' Create a class -- not an object! -- that contains the failure info for a pickle that failed to load '''
-    key = f'Failure {len(Failed.failure_info)+1}'
     base = UniversalFailed if universal else Failed
+    key = f'Failure {len(base.failure_info)+1}'
     base.failure_info[key] = odict()
-    base.failure_info[key]['module'] = module_name
-    base.failure_info[key]['class'] = name
-    base.failure_info[key]['error'] = error
+    base.failure_info[key]['module']    = module_name
+    base.failure_info[key]['class']     = name
+    base.failure_info[key]['error']     = error
     base.failure_info[key]['exception'] = exception
     return base
 

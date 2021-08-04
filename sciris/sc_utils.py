@@ -3240,7 +3240,7 @@ def nestedloop(inputs, loop_order):
 #%% Classes
 ##############################################################################
 
-__all__ += ['KeyNotFoundError', 'LinkException', 'prettyobj', 'Link', 'Timer']
+__all__ += ['KeyNotFoundError', 'LinkException', 'prettyobj', 'autolist', 'Link', 'Timer']
 
 
 class KeyNotFoundError(KeyError):
@@ -3312,6 +3312,39 @@ class prettyobj(object):
     def __repr__(self):
         output  = prepr(self)
         return output
+
+
+class autolist(list):
+    '''
+    A simple extension to a list that defines add methods to simplify appending
+    and extension.
+
+    **Examples**::
+
+        ls = sc.autolist('a')
+
+        ls = sc.autolist()
+        for i in range(5):
+            ls = ls + i
+    '''
+    def __init__(self, *args):
+        arglist = mergelists(*args) # Convert non-iterables to iterables
+        return super().__init__(arglist)
+
+    def __add__(self, obj=None):
+        ''' Allows non-lists to be concatenated '''
+        obj = promotetolist(obj)
+        self.extend(obj)
+        return self
+
+    def __radd__(self, obj):
+        ''' Allows sum() to work correctly '''
+        return self.__add__(obj)
+
+    def __iadd__(self, obj):
+        ''' Allows += to work correctly '''
+        return self.__add__(obj)
+
 
 
 class Link(object):
