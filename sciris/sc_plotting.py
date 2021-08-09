@@ -1222,7 +1222,7 @@ def SIticks(ax=None, axis='y', fixed=False):
 
 
 
-def dateformatter(start_day=None, dateformat=None, interval=None, start=None, end=None, ax=None):
+def dateformatter(start_day=None, dateformat=None, interval=None, start=None, end=None, rotation=None, ax=None):
     '''
     Create an automatic date formatter based on a number of days and a start day.
 
@@ -1236,6 +1236,7 @@ def dateformatter(start_day=None, dateformat=None, interval=None, start=None, en
         interval (int): if supplied, the interval between ticks (must supply an axis also to take effect)
         start (str/int): if supplied, the lower limit of the axis
         end (str/int): if supplied, the upper limit of the axis
+        rotation (float): rotation of the labels, in degrees
         ax (axes): if supplied, automatically set the x-axis formatter for this axis
 
     **Examples**::
