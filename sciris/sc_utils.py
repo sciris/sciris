@@ -76,8 +76,27 @@ else:
 ##############################################################################
 
 # Define the modules being loaded
-__all__ = ['fast_uuid', 'uuid', 'dcp', 'cp', 'pp', 'sha', 'wget', 'htmlify', 'traceback',
-           'getplatform', 'iswindows', 'islinux', 'ismac']
+__all__ = ['append_docstring', 'fast_uuid', 'uuid', 'dcp', 'cp', 'pp', 'sha',
+           'wget', 'htmlify', 'traceback', 'getplatform', 'iswindows', 'islinux', 'ismac']
+
+
+def append_docstring(func1, func2, joiner='\n\n'):
+    '''
+    Append the docstring of one function/method to another. Used internally in
+    Sciris for functions that are aliases of each other.
+
+    Args:
+        func1 (function/method): the function whose docstring will be added to
+        func2 (function/method/str): the function whose docstring to add (or if a string, add directly)
+        joiner (str): the character(s) used to join the two (default, two newlines)
+
+    **Example**::
+
+        sc.append_docstring(my_new_func, my_orig_func)
+        sc.append_docstring(my_new_func, 'Something I forgot')
+    '''
+    func1.__doc__ += joiner + func2.__doc__
+    return
 
 
 def fast_uuid(which=None, length=None, n=1, secure=False, forcelist=False, safety=1000, recursion=0, recursion_limit=10, verbose=True):
@@ -1475,7 +1494,7 @@ def promotetoarray(x, keepnone=False, **kwargs):
     return output
 
 
-def promotetolist(obj=None, objtype=None, keepnone=False, coerce=None):
+def promotetolist(obj=None, objtype=None, keepnone=False, coerce='default'):
     '''
     Make sure object is always a list.
 
@@ -1484,11 +1503,18 @@ def promotetolist(obj=None, objtype=None, keepnone=False, coerce=None):
     or a list (e.g., a list of dict keys), this function can be used to do the
     conversion, so it's always safe to iterate over the output.
 
+    While this usually wraps objects in a list rather than converts them to a list,
+    the "coerce" argument can be used to change this behavior. Options are:
+
+    - 'none' or None: do not coerce
+    - 'default': coerce objects that were lists in Python 2 (range, map, dict_keys, dict_values, dict_items)
+    - 'full': all the types in default, plus tuples and arrays
+
     Args:
         obj (anything): object to ensure is a list
         objtype (anything): optional type to check for each element; see ``sc.checktype()`` for details
         keepnone (bool): if ``keepnone`` is false, then ``None`` is converted to ``[]``; else, it's converted to ``[None]``
-        coerce (tuple): optional tuple of additional types to coerce to a list (as opposed to wrapping in a list)
+        coerce (str/tuple):  tuple of additional types to coerce to a list (as opposed to wrapping in a list)
 
     **Examples**::
 
@@ -1496,6 +1522,7 @@ def promotetolist(obj=None, objtype=None, keepnone=False, coerce=None):
         sc.promotetolist(np.array([3,5])) # Returns [np.array([3,5])] -- not [3,5]!
         sc.promotetolist(np.array([3,5]), coerce=np.ndarray) # Returns [3,5], since arrays are coerced to lists
         sc.promotetolist(None) # Returns []
+        sc.promotetolist(range(3)) # Returns [0,1,2] since range is coerced by default
         sc.promotetolist(['a', 'b', 'c'], objtype='number') # Raises exception
 
         def myfunc(data, keys):
@@ -1508,7 +1535,20 @@ def promotetolist(obj=None, objtype=None, keepnone=False, coerce=None):
         myfunc(data, keys='a') # Still works, equivalent to needing to supply keys=['a'] without promotetolist()
 
     New in version 1.1.0: "coerce" argument
+    New in version 1.2.2: default coerce values
     '''
+    # Handle coerce
+    default_coerce = (range, map, type({}.keys()), type({}.values()), type({}.items()))
+    if isinstance(coerce, str):
+        if coerce == 'none':
+            coerce = None
+        elif coerce == 'default':
+            coerce = default_coerce
+        elif coerce == 'full':
+            coerce = default_coerce + (tuple, np.ndarray)
+        else:
+            errormsg = f'Option "{coerce}"; not recognized; must be "none", "default", or "full"'
+
     if objtype is None: # Don't do type checking
         if isinstance(obj, list):
             output = obj # If it's already a list and we're not doing type checking, just return
@@ -1543,11 +1583,13 @@ def promotetolist(obj=None, objtype=None, keepnone=False, coerce=None):
 def toarray(*args, **kwargs):
     ''' Alias to sc.promotetoarray(). New in version 1.1.0. '''
     return promotetoarray(*args, **kwargs)
+append_docstring(toarray, promotetoarray)
 
 
 def tolist(*args, **kwargs):
     ''' Alias to sc.promotetolist(). New in version 1.1.0. '''
     return promotetolist(*args, **kwargs)
+append_docstring(toarray, promotetoarray)
 
 
 def transposelist(obj):
@@ -2330,8 +2372,7 @@ def timedsleep(delay=None, verbose=True):
 ##############################################################################
 
 __all__ += ['checkmem', 'checkram', 'runcommand', 'gitinfo', 'compareversions',
-            'uniquename', 'importbyname', 'suggest', 'profile', 'mprofile',
-            'getcaller', 'append_docstring']
+            'uniquename', 'importbyname', 'suggest', 'profile', 'mprofile', 'getcaller']
 
 
 def checkmem(var, descend=None, alphabetical=False, plot=False, verbose=False):
@@ -2939,23 +2980,6 @@ def getcaller(frame=2, tostring=True):
             output = {'filename':'N/A', 'lineno':'N/A'}
     return output
 
-
-def append_docstring(func1, func2, joiner='\n\n'):
-    '''
-    Append the docstring of one function/method to another.
-
-    Args:
-        func1 (function/method): the function whose docstring will be added to
-        func2 (function/method/str): the function whose docstring to add (or if a string, add directly)
-        joiner (str): the character(s) used to join the two (default, two newlines)
-
-    **Example**::
-
-        sc.append_docstring(my_new_func, my_orig_func)
-        sc.append_docstring(my_new_func, 'Something I forgot')
-    '''
-    func1.__doc__ += joiner + func2.__doc__
-    return
 
 
 ##############################################################################
