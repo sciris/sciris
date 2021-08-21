@@ -44,7 +44,7 @@ from .sc_dataframe import dataframe
 __all__ = ['loadobj', 'loadstr', 'saveobj', 'dumpstr', 'load', 'save']
 
 
-def loadobj(filename=None, folder=None, verbose=False, die=None, remapping=None, **kwargs):
+def loadobj(filename=None, folder=None, verbose=False, die=None, remapping=None, method='pickle', **kwargs):
     '''
     Load a file that has been saved as a gzipped pickle file, e.g. by ``sc.saveobj()``.
     Accepts either a filename (standard usage) or a file object as the first argument.
@@ -63,16 +63,18 @@ def loadobj(filename=None, folder=None, verbose=False, die=None, remapping=None,
         verbose   (bool):     print details
         die       (bool):     whether to raise an exception if errors are encountered (otherwise, load as much as possible)
         remapping (dict):     way of mapping old/unavailable module names to new
-        kwargs    (dict):     passed to gz.GzipFile()
+        method    (str):      method for loading (usually pickle or dill)
+        kwargs    (dict):     passed to pickle.loads()/dill.loads()
 
     **Examples**::
 
         obj = sc.loadobj('myfile.obj') # Standard usage
+        old = sc.loadobj('my-old-file.obj', method='dill', ignore=True) # Load classes from saved files
         old = sc.loadobj('my-old-file.obj', remapping={'foo.Bar':cat.Mat}) # If loading a saved object containing a reference to foo.Bar that is now cat.Mat
         old = sc.loadobj('my-old-file.obj', remapping={'foo.Bar':('cat', 'Mat')}) # Equivalent to the above
 
     New in version 1.1.0: "remapping" argument
-    New in version 1.2.2: ability to load non-gzipped pickles
+    New in version 1.2.2: ability to load non-gzipped pickles; support for dill; arguments passed to loader
     '''
 
     # Handle loading of either filename or file object
@@ -86,7 +88,7 @@ def loadobj(filename=None, folder=None, verbose=False, die=None, remapping=None,
     else: # pragma: no cover
         errormsg = f'First argument to loadobj() must be a string or file object, not {type(filename)}'
         raise TypeError(errormsg)
-    kwargs = {'mode': 'rb', argtype: filename}
+    fileargs = {'mode': 'rb', argtype: filename}
 
     # Define common error messages
     gziperror = f'''
@@ -111,7 +113,7 @@ https://stackoverflow.com/questions/41554738/how-to-load-an-old-pickle-file
 
     # Load the file
     try:
-        with gz.GzipFile(**kwargs) as fileobj:
+        with gz.GzipFile(**fileargs) as fileobj:
             filestr = fileobj.read() # Convert it to a string
     except Exception as E:
         exc = type(E) # Figure out what kind of error it is
@@ -126,7 +128,7 @@ https://stackoverflow.com/questions/41554738/how-to-load-an-old-pickle-file
 
     # Unpickle it
     try:
-        obj = _unpickler(filestr, filename=filename, verbose=verbose, die=die, remapping=remapping) # Actually load it
+        obj = _unpickler(filestr, filename=filename, verbose=verbose, die=die, remapping=remapping, method=method, **kwargs) # Actually load it
     except Exception as E:
         errormsg = unpicklingerror + '\n\nSee the stack trace above for more information on this specific error.'
         raise exc(errormsg) from E
@@ -161,9 +163,10 @@ def saveobj(filename=None, obj=None, compresslevel=5, verbose=0, folder=None, me
 
         myobj = ['this', 'is', 'a', 'weird', {'object':44}]
         sc.saveobj('myfile.obj', myobj)
+        sc.saveobj('myfile.obj', myobj, method='dill') # Use dill instead, to save custom classes as well
 
     New in version 1.1.1: removed Python 2 support.
-    New in version 1.2.2: automatic swapping of arguments if order is incorrect
+    New in version 1.2.2: automatic swapping of arguments if order is incorrect; correct passing of arguments
     '''
 
     # Handle path
@@ -1336,24 +1339,31 @@ class _UltraRobustUnpickler(pkl.Unpickler):
         return obj
 
 
-def _unpickler(string=None, filename=None, filestring=None, die=None, verbose=False, remapping=None):
+def _unpickler(string=None, filename=None, filestring=None, die=None, verbose=False, remapping=None, method='pickle', **kwargs):
     ''' Not invoked directly; used as a helper function for saveobj/loadobj '''
 
     if die is None: die = False
     try: # Try pickle first
-        obj = pkl.loads(string) # Actually load it -- main usage case
+        if method == 'pickle':
+            obj = pkl.loads(string, **kwargs) # Actually load it -- main usage case
+        elif method == 'dill':
+            import dill # Optional Sciris dependency
+            obj = dill.loads(string, **kwargs) # Actually load it, with dill
+        else:
+            errormsg = f'Method "{method}" not recognized, must be pickle or dill'
+            raise ValueError(errormsg)
     except Exception as E1:
         if die:
             raise E1
         else:
             try:
                 if verbose: print(f'Standard unpickling failed ({str(E1)}), trying encoding...')
-                obj = pkl.loads(string, encoding='latin1') # Try loading it again with different encoding
+                obj = pkl.loads(string, encoding='latin1', **kwargs) # Try loading it again with different encoding
             except Exception as E2:
                 try:
                     if verbose: print(f'Encoded unpickling failed ({str(E2)}), trying dill...')
                     import dill # Optional Sciris dependency
-                    obj = dill.loads(string) # If that fails, try dill
+                    obj = dill.loads(string, **kwargs) # If that fails, try dill
                 except Exception as E3:
                     try:
                         if verbose: print(f'Dill failed ({str(E3)}), trying robust unpickler...')

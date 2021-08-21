@@ -39,6 +39,7 @@ import pprint
 import hashlib
 import dateutil
 import subprocess
+import pkg_resources
 import itertools
 import numbers
 import string
@@ -77,8 +78,8 @@ else:
 ##############################################################################
 
 # Define the modules being loaded
-__all__ = ['fast_uuid', 'uuid', 'dcp', 'cp', 'pp', 'sha',
-           'wget', 'htmlify', 'traceback', 'getplatform', 'iswindows', 'islinux', 'ismac']
+__all__ = ['fast_uuid', 'uuid', 'dcp', 'cp', 'pp', 'sha', 'wget', 'htmlify', 'freeze',
+           'traceback', 'getplatform', 'iswindows', 'islinux', 'ismac']
 
 
 def fast_uuid(which=None, length=None, n=1, secure=False, forcelist=False, safety=1000, recursion=0, recursion_limit=10, verbose=True):
@@ -382,6 +383,14 @@ def htmlify(string, reverse=False, tostring=False):
         output = html.unescape(string)
         output = output.replace('<br>','\n').replace('<br />','\n').replace('<BR>','\n')
     return output
+
+
+
+def freeze(*args, **kwargs):
+    ''' Alias for pip freeze. '''
+    raw = dict(tuple(str(ws).split()) for ws in pkg_resources.working_set)
+    data = {k:raw[k] for k in sorted(raw.keys())} # Sort alphabetically
+    return data
 
 
 def traceback(*args, **kwargs):
