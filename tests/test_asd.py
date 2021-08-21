@@ -17,6 +17,16 @@ def test_simple():
     return result
 
 
+def test_args():
+    def my_func(x, scale=1.0, weight=1.0): # Example function with keywords
+        return abs((x[0] - 1)) + abs(x[1] + 2)*scale + abs(x[2] + 3)*weight
+
+    result = sc.asd(my_func, x=[0, 0, 1], args=[0.5, 0.1]) # Option 1 for passing arguments
+    result = sc.asd(my_func, x=[0, 0, 1], args=dict(scale=0.5, weight=0.1)) # Option 1 for passing arguments
+    result = sc.asd(my_func, x=[0, 0, 1], scale=0.5, weight=0.1) # Option 2 for passing arguments
+    return result
+
+
 def test_complex():
 
     def objective(pars):
@@ -75,7 +85,8 @@ if __name__ == '__main__':
     sc.tic()
 
     r1 = test_simple()
-    r2 = test_complex()
+    r2 = test_args)
+    r3 = test_complex()
 
     sc.toc()
     print('Done.')

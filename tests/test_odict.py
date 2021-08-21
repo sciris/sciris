@@ -65,11 +65,12 @@ def test_make():
     a = sc.odict().make(5) # Make an odict of length 5, populated with Nones and default key names
     b = sc.odict().make('foo',34) # Make an odict with a single key 'foo' of value 34
     c = sc.odict().make(['a','b']) # Make an odict with keys 'a' and 'b'
-    d = sc.odict().make(['a','b'],0) # Make an odict with keys 'a' and 'b', initialized to 0
+    d = sc.odict().make(['a','b'], 0) # Make an odict with keys 'a' and 'b', initialized to 0
     e = sc.odict().make(keys=['a','b'], vals=[1,2]) # Make an odict with 'a':1 and 'b':2
-    f = sc.odict({'a':34, 'b':58}).make(['c','d'],[99,45]) # Add extra keys to an exising odict
-    g = sc.odict().make(keys=['a','b','c'], keys2=['A','B','C'], keys3=['x','y','z'], vals=0) # Make a triply nested odict
-    printexamples([a,b,c,d,e,f,g])
+    f = sc.odict().make(keys=['a','b'], vals=np.array([1,2])) # As above, since arrays are coerced into lists
+    g = sc.odict({'a':34, 'b':58}).make(['c','d'],[99,45]) # Add extra keys to an exising odict
+    h = sc.odict().make(keys=['a','b','c'], keys2=['A','B','C'], keys3=['x','y','z'], vals=0) # Make a triply nested odict
+    printexamples([a,b,c,d,e,f,g,h])
 
     sc.heading('Make from:')
     a = 'cat'; b = 'dog'; o = sc.odict().makefrom(source=locals(), keys=['a','b']) # Make use of fact that variables are stored in a dictionary

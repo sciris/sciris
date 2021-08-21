@@ -8,7 +8,7 @@ Kerr et al. (2018).
 import numpy as np
 import numpy.random as nr
 from time import time
-from .sc_utils import dcp, sigfig
+from . import sc_utils as ut
 from .sc_odict import objdict
 
 __all__ = ['asd']
@@ -16,7 +16,7 @@ __all__ = ['asd']
 def asd(function, x, args=None, stepsize=0.1, sinc=2, sdec=2, pinc=2, pdec=2,
     pinitial=None, sinitial=None, xmin=None, xmax=None, maxiters=None, maxtime=None,
     abstol=1e-6, reltol=1e-3, stalliters=None, stoppingfunc=None, randseed=None,
-    label=None, verbose=2, **kwargs):
+    label=None, verbose=1, **kwargs):
     """
     Optimization using adaptive stochastic descent (ASD). Can be used as a faster
     and more powerful alternative to e.g. ``scipy.optimize.minimize()``.
@@ -26,24 +26,28 @@ def asd(function, x, args=None, stepsize=0.1, sinc=2, sdec=2, pinc=2, pdec=2,
     ``x0`` can be a scalar, list, or Numpy array of any size.
 
     Args:
-      stepsize     (0.1):   Initial step size as a fraction of each parameter
-      sinc         (2):     Step size learning rate (increase)
-      sdec         (2):     Step size learning rate (decrease)
-      pinc         (2):     Parameter selection learning rate (increase)
-      pdec         (2):     Parameter selection learning rate (decrease)
-      pinitial     (None):  Set initial parameter selection probabilities
-      sinitial     (None):  Set initial step sizes; if empty, calculated from stepsize instead
-      xmin         (None):  Min value allowed for each parameter
-      xmax         (None):  Max value allowed for each parameter
-      maxiters     (1000):  Maximum number of iterations (1 iteration = 1 function evaluation)
-      maxtime      (3600):  Maximum time allowed, in seconds
-      abstol       (1e-6):  Minimum absolute change in objective function
-      reltol       (1e-3):  Minimum relative change in objective function
-      stalliters   (10*n):  Number of iterations over which to calculate TolFun (n = number of parameters)
-      stoppingfunc (None):  External method that can be used to stop the calculation from the outside.
-      randseed     (None):  The random seed to use
-      verbose      (2):     How much information to print during the run
-      label        (None):  A label to use to annotate the output
+        function     (func):  The function to minimize
+        x            (arr):   The vector of initial parameters
+        args         (any):   List, tuple, or dictionary of additional parameters to be passed to the function
+        kwargs       (dict):  Additional keywords passed to the function
+        stepsize     (0.1):   Initial step size as a fraction of each parameter
+        sinc         (2):     Step size learning rate (increase)
+        sdec         (2):     Step size learning rate (decrease)
+        pinc         (2):     Parameter selection learning rate (increase)
+        pdec         (2):     Parameter selection learning rate (decrease)
+        pinitial     (None):  Set initial parameter selection probabilities
+        sinitial     (None):  Set initial step sizes; if empty, calculated from stepsize instead
+        xmin         (None):  Min value allowed for each parameter
+        xmax         (None):  Max value allowed for each parameter
+        maxiters     (1000):  Maximum number of iterations (1 iteration = 1 function evaluation)
+        maxtime      (3600):  Maximum time allowed, in seconds
+        abstol       (1e-6):  Minimum absolute change in objective function
+        reltol       (1e-3):  Minimum relative change in objective function
+        stalliters   (10*n):  Number of iterations over which to calculate TolFun (n = number of parameters)
+        stoppingfunc (None):  External method that can be used to stop the calculation from the outside.
+        randseed     (None):  The random seed to use
+        verbose      (1):     How much information to print during the run (max 3); less than one will print out once every 1/verbose steps
+        label        (None):  A label to use to annotate the output
 
     Returns:
         objdict (see below)
@@ -63,12 +67,21 @@ def asd(function, x, args=None, stepsize=0.1, sinc=2, sdec=2, pinc=2, pdec=2,
         - ``probabilities`` -- The probability of each step; and
         - ``stepsizes``     -- The size of each step for each parameter.
 
-    **Example**::
+    **Examples**::
 
+        # Basic usage
         import numpy as np
         import sciris as sc
         result = sc.asd(np.linalg.norm, [1, 2, 3])
         print(result.x)
+
+        # With arguments
+        def my_func(x, scale=1.0, weight=1.0): # Example function with keywords
+            return abs((x[0] - 1)) + abs(x[1] + 2)*scale + abs(x[2] + 3)*weight
+
+        result = sc.asd(my_func, x=[0, 0, 1], args=[0.5, 0.1]) # Option 1 for passing arguments
+        result = sc.asd(my_func, x=[0, 0, 1], args=dict(scale=0.5, weight=0.1)) # Option 1 for passing arguments
+        result = sc.asd(my_func, x=[0, 0, 1], scale=0.5, weight=0.1) # Option 2 for passing arguments
 
     Please use the following citation for this method:
 
@@ -80,7 +93,7 @@ def asd(function, x, args=None, stepsize=0.1, sinc=2, sdec=2, pinc=2, pdec=2,
     """
     if randseed is not None:
         nr.seed(int(randseed)) # Don't reset it if not supplied
-        if verbose >= 3: print(f'ASD: Launching with random seed is {randseed}; sample: {nr.random()}')
+        if verbose >= 2: print(f'ASD: Launching with random seed is {randseed}; sample: {nr.random()}')
 
     def consistentshape(userinput, origshape=False):
         """
@@ -142,10 +155,14 @@ def asd(function, x, args=None, stepsize=0.1, sinc=2, sdec=2, pinc=2, pdec=2,
     # Initialization
     if all(stepsizes == 0): stepsizes += stepsize # Handle the case where all step sizes are 0
     if any(stepsizes == 0): stepsizes[stepsizes == 0] = np.mean(stepsizes[stepsizes != 0]) # Replace step sizes of zeros with the mean of non-zero entries
-    if args is None: args = {} # Reset if no function arguments supplied
-    fval = function(x, **args) # Calculate initial value of the objective function
+    if args is None: # Reset if no function arguments supplied
+        args = []
+    elif isinstance(args, dict): # It's actually kwargs supplied
+        kwargs = ut.mergedicts(args, kwargs)
+        args = []
+    fval = function(x, *args, **kwargs) # Calculate initial value of the objective function
     fvalorig = fval # Store the original value of the objective function, since fval is overwritten on each step
-    xorig = dcp(x) # Keep the original x, just in case
+    xorig = ut.dcp(x) # Keep the original x, just in case
 
     # Initialize history
     abserrorhistory = np.zeros(stalliters) # Store previous error changes
@@ -162,8 +179,7 @@ def asd(function, x, args=None, stepsize=0.1, sinc=2, sdec=2, pinc=2, pdec=2,
     exitreason = 'Unknown exit reason' # Catch everything else
     while True:
         count += 1 # Increment the count
-        if verbose == 1: print(offset + label + f'Iteration {count}; elapsed {time()-start:0.1f} s; objective: {fval:0.3e}') # For more verbose, use other print statement below
-        if verbose >= 4: print(f'\n\n Count={count} \n x={x} \n probabilities={probabilities} \n stepsizes={stepsizes}')
+        if verbose >= 3: print(f'\n\n Count={count} \n x={x} \n probabilities={probabilities} \n stepsizes={stepsizes}')
 
         # Calculate next parameters
         probabilities = probabilities / sum(probabilities) # Normalize probabilities
@@ -177,7 +193,7 @@ def asd(function, x, args=None, stepsize=0.1, sinc=2, sdec=2, pinc=2, pdec=2,
             if newval<xmin[par]: newval = xmin[par] # Reset to the lower limit
             if newval>xmax[par]: newval = xmax[par] # Reset to the upper limit
             inrange = (newval != x[par])
-            if verbose >= 4: print(offset*2 + f'count={count} r={r}, choice={choice}, par={par}, x[par]={x[par]}, pm={(-1)**pm}, step={stepsizes[choice]}, newval={newval}, xmin={xmin[par]}, xmax={xmax[par]}, inrange={inrange}')
+            if verbose >= 3: print(offset*2 + f'count={count} r={r}, choice={choice}, par={par}, x[par]={x[par]}, pm={(-1)**pm}, step={stepsizes[choice]}, newval={newval}, xmin={xmin[par]}, xmax={xmax[par]}, inrange={inrange}')
             if inrange: # Proceed as long as they're not equal
                 break
         if not inrange: # Treat it as a failure if a value in range can't be found
@@ -185,16 +201,16 @@ def asd(function, x, args=None, stepsize=0.1, sinc=2, sdec=2, pinc=2, pdec=2,
             stepsizes[choice] = stepsizes[choice] / sdec
 
         # Calculate the new value
-        xnew = dcp(x) # Initialize the new parameter set
+        xnew = ut.dcp(x) # Initialize the new parameter set
         xnew[par] = newval # Update the new parameter set
-        fvalnew = function(xnew, **args) # Calculate the objective function for the new parameter set
+        fvalnew = function(xnew, *args, **kwargs) # Calculate the objective function for the new parameter set
         eps = 1e-12 # Small value to avoid divide-by-zero errors
         if abs(fvalnew)<eps and abs(fval)<eps: ratio = 1 # They're both zero: set the ratio to 1
         elif abs(fvalnew)<eps:                 ratio = 1.0/eps # Only the denominator is zero: reset to the maximum ratio
         else:                                  ratio = fval/float(fvalnew) # The normal situation: calculate the real ratio
         abserrorhistory[np.mod(count, stalliters)] = max(0, fval-fvalnew) # Keep track of improvements in the error
         relerrorhistory[np.mod(count, stalliters)] = max(0, ratio-1.0) # Keep track of improvements in the error
-        if verbose >= 3: print(offset + f'step={count} choice={choice}, par={par}, pm={pm}, origval={x[par]}, newval={xnew[par]}')
+        if verbose >= 2: print(offset + f'step={count} choice={choice}, par={par}, pm={pm}, origval={x[par]}, newval={xnew[par]}')
 
         # Check if this step was an improvement
         fvalold = fval # Store old fval
@@ -210,8 +226,8 @@ def asd(function, x, args=None, stepsize=0.1, sinc=2, sdec=2, pinc=2, pdec=2,
             flag = '--' # Marks no change
             if np.isnan(fvalnew):
                 if verbose >= 1: print('ASD: Warning, objective function returned NaN')
-        if verbose >= 2:
-            orig, best, new, diff = sigfig([fvalorig, fvalold, fvalnew, fvalnew-fvalold])
+        if verbose > 0 and not (count % int(1.0/verbose)): # Print out every 1/verbose steps
+            orig, best, new, diff = ut.sigfig([fvalorig, fvalold, fvalnew, fvalnew-fvalold])
             print(offset + label + f' step {count} ({time()-start:0.1f} s) {flag} (orig:{orig} | best:{best} | new:{new} | diff:{diff})')
 
         # Store output information
@@ -223,21 +239,24 @@ def asd(function, x, args=None, stepsize=0.1, sinc=2, sdec=2, pinc=2, pdec=2,
             exitreason = 'Maximum iterations reached'
             break
         if (time() - start) > maxtime:
-            exitreason = 'Time limit reached (%s > %s)' % sigfig([(time()-start), maxtime])
+            strtime, strmax = ut.sigfig([(time()-start), maxtime])
+            exitreason = f'Time limit reached ({strtime} > {strmax})'
             break
         if (count > stalliters) and (abs(np.mean(abserrorhistory)) < abstol): # Stop if improvement is too small
-            exitreason = 'Absolute improvement too small (%s < %s)' % sigfig([np.mean(abserrorhistory), abstol])
+            strabs, strtol = ut.sigfig([np.mean(abserrorhistory), abstol])
+            exitreason = f'Absolute improvement too small ({strabs} < {strtol})'
             break
         if (count > stalliters) and (sum(relerrorhistory) < reltol): # Stop if improvement is too small
-            exitreason = 'Relative improvement too small (%s < %s)' % sigfig([np.mean(relerrorhistory), reltol])
+            strrel, strtol = ut.sigfig([np.mean(relerrorhistory), reltol])
+            exitreason = f'Relative improvement too small ({strrel} < {strtol})'
             break
         if stoppingfunc and stoppingfunc():
             exitreason = 'Stopping function called'
             break
 
     # Return
-    if verbose >= 2:
-        orig, best, ratio = sigfig([fvals[0], fvals[-1], fvals[-1]/fvals[0]])
+    if verbose > 0:
+        orig, best, ratio = ut.sigfig([fvals[0], fvals[-1], fvals[-1]/fvals[0]])
         print(f'=== {label} {exitreason} ({count} steps, orig: {orig} | best: {best} | ratio: {ratio}) ===')
     output = objdict()
     output['x'] = np.reshape(x, origshape) # Parameters

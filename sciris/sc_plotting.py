@@ -1252,6 +1252,7 @@ def dateformatter(start_day=None, dateformat=None, interval=None, start=None, en
         ax.xaxis.set_major_formatter(formatter)
 
     New in version 1.2.0.
+    New in version 1.2.2: "rotation" argument
     '''
     if ax is None:
         ax = pl.gca()
@@ -1280,6 +1281,10 @@ def dateformatter(start_day=None, dateformat=None, interval=None, start=None, en
     # Set the x-axis intervals
     if interval:
         ax.set_xticks(np.arange(xmin, xmax+1, interval))
+
+    # Set the rotation
+    if rotation:
+        ax.tick_params(axis='x', labelrotation=rotation)
 
     # Set the formatter
     ax.xaxis.set_major_formatter(mpl_formatter)
