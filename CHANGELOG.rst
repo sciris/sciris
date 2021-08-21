@@ -9,6 +9,13 @@ By import convention, components of the Sciris library are listed beginning with
 Version 1.2.2 (2021-08-21)
 --------------------------
 
+New functions and methods
+~~~~~~~~~~~~~~~~~~~~~~~~~
+#. A new class, ``sc.autolist()``, is available to simplify appending to lists.
+#. Added ``sc.freeze()`` as a programmatic equivalent of ``pip freeze``.
+#. Added ``sc.require()`` as a flexible way of checking (or asserting) environment requirements.
+#. Added ``sc.path()`` as an alias to ``pathlib.Path()``.
+
 Improvements
 ~~~~~~~~~~~~
 #. Added an even more robust unpickler, that should be able to recover data even if exceptions are raised when unpickling.
@@ -25,13 +32,6 @@ Backwards-incompatible changes
 #. ``sc.promotetolist()`` now converts (rather than wraps) ranges and dict_keys objects to lists. To restore the previous behavior, use the argument ``coerce='none'``.
 #. The ``start_day`` argument has been renamed ``start_date`` for ``sc.day()`` and ``sc.dateformatter()``.
 #. The ``dateformat`` argument for ``sc.date()`` has been renamed ``outformat``, to differentiate from ``readformat``.
-
-New functions and methods
-~~~~~~~~~~~~~~~~~~~~~~~~~
-#. A new class, ``sc.autolist()``, is available to simplify appending to lists.
-#. Added ``sc.freeze()`` as a programmatic equivalent of ``pip freeze``.
-#. Added ``sc.require()`` as a flexible way of checking (or asserting) environment requirements.
-#. Added ``sc.path()`` as an alias to ``pathlib.Path()``.
 
 
 Version 1.2.1 (2021-07-07)
