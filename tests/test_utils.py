@@ -361,6 +361,7 @@ def test_dates():
     o.date1 = sc.date('2020-04-05') # Returns datetime.date(2020, 4, 5)
     o.date2 = sc.date(sc.readdate('2020-04-14'), as_date=False, dateformat='%Y%m') # Returns '202004'
     o.date3 = sc.date([35,36,37], start_date='2020-01-01', as_date=False) # Returns ['2020-02-05', '2020-02-06', '2020-02-07']
+    o.date4 = sc.date(1923288822, readformat='posix') # Interpret as a POSIX timestamp
     with pytest.raises(ValueError):
         sc.date([10,20]) # Can't convert an integer without a start date
     assert o.date1.month == 4

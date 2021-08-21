@@ -45,6 +45,7 @@ import string
 import tempfile
 import warnings
 import numpy as np
+import pylab as pl
 import random as rnd
 import datetime as dt
 import uuid as py_uuid
@@ -1797,9 +1798,11 @@ def readdate(datestr=None, *args, dateformat=None, return_defaults=False):
     Convenience function for loading a date from a string. If dateformat is None,
     this function tries a list of standard date types.
 
-    Caution: If a number is supplied, it is treated as a timestamp in seconds.
-    To convert a Matplotlib date number (which is a number of days from 1970),
-    use ``pl.num2date()``.
+    By default, a numeric date is treated as a POSIX (Unix) timestamp. This can be changed
+    with the ``dateformat`` argument, specifically:
+
+    - 'posix'/None: treat as a POSIX timestamp, in seconds from 1970
+    - 'ordinal'/'matplotlib': treat as an ordinal number of days from 1970 (Matplotlib default)
 
     Args:
         datestr (int, float, str or list): the string containing the date, or the timestamp (in seconds), or a list of either
@@ -1815,6 +1818,7 @@ def readdate(datestr=None, *args, dateformat=None, return_defaults=False):
         dateobj  = sc.readdate('2020-03-03') # Standard format, so works
         dateobj  = sc.readdate('04-03-2020', dateformat='dmy') # Date is ambiguous, so need to specify day-month-year order
         dateobj  = sc.readdate(1611661666) # Can read timestamps as well
+        dateobj  = sc.readdate(16166, dateformat='ordinal') # Or ordinal numbers of days, as used by Matplotlib
         dateobjs = sc.readdate(['2020-06', '2020-07'], dateformat='%Y-%m') # Can read custom date formats
         dateobjs = sc.readdate('20200321', 1611661666) # Can mix and match formats
     '''
@@ -1881,7 +1885,13 @@ def readdate(datestr=None, *args, dateformat=None, return_defaults=False):
         if isinstance(datestr, dt.datetime):
             dateobj = datestr # Nothing to do
         elif isnumber(datestr):
-            dateobj = dt.datetime.fromtimestamp(datestr)
+            if 'posix' in format_list or None in format_list:
+                dateobj = dt.datetime.fromtimestamp(datestr)
+            elif 'ordinal' in format_list or 'matplotlib' in format_list:
+                dateobj = pl.num2date(datestr)
+            else:
+                errormsg = f'Could not convert numeric date {datestr} using available formats {strjoin(format_list)}; must be "posix" or "ordinal"'
+                raise ValueError(errormsg)
         else:
             for key,fmt in formats_to_try.items():
                 try:
@@ -1902,7 +1912,7 @@ def readdate(datestr=None, *args, dateformat=None, return_defaults=False):
     return output
 
 
-def date(obj, *args, start_date=None, dateformat=None, as_date=True):
+def date(obj, *args, start_date=None, readformat=None, outformat=None, as_date=True, **kwargs):
     '''
     Convert any reasonable object -- a string, integer, or datetime object, or
     list/array of any of those -- to a date object. To convert an integer to a
@@ -1911,15 +1921,14 @@ def date(obj, *args, start_date=None, dateformat=None, as_date=True):
     Caution: while this function and readdate() are similar, and indeed this function
     calls readdate() if the input is a string, in this function an integer is treated
     as a number of days from start_date, while for readdate() it is treated as a
-    timestamp in seconds.
-
-    Caution 2: To convert a Matplotlib date from a number, use ``pl.num2date()``.
+    timestamp in seconds. To change
 
     Args:
         obj (str, int, date, datetime, list, array): the object to convert
         args (str, int, date, datetime): additional objects to convert
         start_date (str, date, datetime): the starting date, if an integer is supplied
-        dateformat (str): the format to return the date in, if returning a string
+        readformat (str/list): the format to read the date in; passed to sc.readdate()
+        outformat (str): the format to output the date in, if returning a string
         as_date (bool): whether to return as a datetime date instead of a string
 
     Returns:
@@ -1928,15 +1937,24 @@ def date(obj, *args, start_date=None, dateformat=None, as_date=True):
     **Examples**::
 
         sc.date('2020-04-05') # Returns datetime.date(2020, 4, 5)
-        sc.date([35,36,37], as_date=False) # Returns ['2020-02-05', '2020-02-06', '2020-02-07']
+        sc.date([35,36,37], start_date='2020-01-01', as_date=False) # Returns ['2020-02-05', '2020-02-06', '2020-02-07']
+        sc.date(1923288822, readformat='posix') # Interpret as a POSIX timestamp
 
     New in version 1.0.0.
+    New in version 1.2.2: "readformat" argument; renamed "dateformat" to "outformat"
     '''
+    # Handle deprecation
+    dateformat = kwargs.pop('dateformat', None)
+    if dateformat is not None: # pragma: no cover
+        outformat = dateformat
+        warnmsg = 'sc.date() argument "dateformat" has been deprecated as of v1.2.2; use "outformat" instead'
+        warnings.warn(warnmsg, category=DeprecationWarning, stacklevel=2)
+
     # Convert to list and handle other inputs
     if obj is None:
         return None
-    if dateformat is None:
-        dateformat = '%Y-%m-%d'
+    if outformat is None:
+        outformat = '%Y-%m-%d'
     obj, is_list, is_array = _sanitize_iterables(obj, *args)
 
     dates = []
@@ -1950,19 +1968,22 @@ def date(obj, *args, start_date=None, dateformat=None, as_date=True):
             elif isinstance(d, dt.datetime):
                 d = d.date()
             elif isstring(d):
-                d = readdate(d).date()
+                d = readdate(d, dateformat=readformat).date()
             elif isnumber(d):
-                if start_date is None:
-                    errormsg = f'To convert the number {d} to a date, you must supply start_date'
-                    raise ValueError(errormsg)
-                d = date(start_date) + dt.timedelta(days=int(d))
+                if readformat is not None:
+                    d = readdate(d, dateformat=readformat).date()
+                else:
+                    if start_date is None:
+                        errormsg = f'To convert the number {d} to a date, you must either specify "posix" or "ordinal" read format, or supply start_date'
+                        raise ValueError(errormsg)
+                    d = date(start_date) + dt.timedelta(days=int(d))
             else: # pragma: no cover
                 errormsg = f'Cannot interpret {type(d)} as a date, must be date, datetime, or string'
                 raise TypeError(errormsg)
             if as_date:
                 dates.append(d)
             else:
-                dates.append(d.strftime(dateformat))
+                dates.append(d.strftime(outformat))
         except Exception as E:
             errormsg = f'Conversion of "{d}" to a date failed: {str(E)}'
             raise ValueError(errormsg)
@@ -2141,7 +2162,7 @@ def datetoyear(dateobj, dateformat=None):
     return dateobj.year + year_part / year_length
 
 
-def elapsedtimestr(pasttime, maxdays=5, shortmonths=True):
+def elapsedtimestr(pasttime, maxdays=5, minseconds=10, shortmonths=True):
     """
     Accepts a datetime object or a string in ISO 8601 format and returns a
     human-readable string explaining when this time was.
@@ -2155,6 +2176,11 @@ def elapsedtimestr(pasttime, maxdays=5, shortmonths=True):
     * If in a different year, print the date with the whole year
 
     These can be configured as options.
+
+    **Examples**::
+
+        yesterday = sc.datedelta(sc.now(), days=-1)
+        sc.elapsedtimestr(yesterday)
     """
 
     # Elapsed time function by Alex Chan
@@ -2208,7 +2234,7 @@ def elapsedtimestr(pasttime, maxdays=5, shortmonths=True):
 
         # Check if the time is within the last minute
         if elapsed_time < dt.timedelta(seconds=60):
-            if elapsed_time.seconds <= 10:
+            if elapsed_time.seconds <= minseconds:
                 time_str = "just now"
             else:
                 time_str = f"{elapsed_time.seconds} secs ago"
