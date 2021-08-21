@@ -2330,7 +2330,8 @@ def timedsleep(delay=None, verbose=True):
 ##############################################################################
 
 __all__ += ['checkmem', 'checkram', 'runcommand', 'gitinfo', 'compareversions',
-            'uniquename', 'importbyname', 'suggest', 'profile', 'mprofile', 'getcaller']
+            'uniquename', 'importbyname', 'suggest', 'profile', 'mprofile',
+            'getcaller', 'append_docstring']
 
 
 def checkmem(var, descend=None, alphabetical=False, plot=False, verbose=False):
@@ -2938,6 +2939,23 @@ def getcaller(frame=2, tostring=True):
             output = {'filename':'N/A', 'lineno':'N/A'}
     return output
 
+
+def append_docstring(func1, func2, joiner='\n\n'):
+    '''
+    Append the docstring of one function/method to another.
+
+    Args:
+        func1 (function/method): the function whose docstring will be added to
+        func2 (function/method/str): the function whose docstring to add (or if a string, add directly)
+        joiner (str): the character(s) used to join the two (default, two newlines)
+
+    **Example**::
+
+        sc.append_docstring(my_new_func, my_orig_func)
+        sc.append_docstring(my_new_func, 'Something I forgot')
+    '''
+    func1.__doc__ += joiner + func2.__doc__
+    return
 
 
 ##############################################################################

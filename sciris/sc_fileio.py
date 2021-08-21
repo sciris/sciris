@@ -204,10 +204,12 @@ def saveobj(filename=None, obj=None, compresslevel=5, verbose=0, folder=None, me
 def load(*args, **kwargs): # pragma: no cover
     ''' Alias to loadobj(). New in version 1.0.0. '''
     return loadobj(*args, **kwargs)
+ut.append_docstring(load, loadobj)
 
 def save(*args, **kwargs): # pragma: no cover
     ''' Alias to saveobj(). New in version 1.0.0. '''
     return saveobj(*args, **kwargs)
+ut.append_docstring(save, saveobj)
 
 
 def loadstr(string, verbose=False, die=None, remapping=None):
@@ -244,7 +246,7 @@ def dumpstr(obj=None):
 #%% Other file functions
 ##############################################################################
 
-__all__ += ['loadtext', 'savetext', 'savezip', 'getfilelist', 'sanitizefilename', 'makefilepath', 'thisdir']
+__all__ += ['loadtext', 'savetext', 'savezip', 'getfilelist', 'sanitizefilename', 'makefilepath', 'path', 'thisdir']
 
 
 def loadtext(filename=None, folder=None, splitlines=False):
@@ -474,18 +476,20 @@ def makefilepath(filename=None, folder=None, ext=None, default=None, split=False
 def path(*args, **kwargs):
     ''' Alias to pathlib.Path(). New in version 1.2.2. '''
     return Path(*args, **kwargs)
+ut.append_docstring(path, Path)
 
 
-def thisdir(*args, file=None, aspath=False, **kwargs):
+def thisdir(file=None, path=None, *args, aspath=False, **kwargs):
     '''
     Tiny helper function to get the folder for a file, usually the current file.
     If not supplied, then use the current file.
 
     Args:
-        args (list): passed to os.path.join()
         file (str): the file to get the directory from; usually __file__
+        path (str/list): additional path to append; passed to os.path.join()
+        args  (list): also passed to os.path.join()
         aspath (bool): whether to return a Path object instead of a string
-        kwargs (dict): also passed to os.path.join()
+        kwargs (dict): passed to Path()
 
     Returns:
         filepath (str): the full path to the folder (or filename if additional arguments are given)
@@ -596,6 +600,7 @@ def sanitizejson(obj, verbose=True, die=False, tostring=False, **kwargs):
 def jsonify(*args, **kwargs):
     ''' Alias to sanitizejson() '''
     return sanitizejson(*args, **kwargs)
+ut.append_docstring(jsonify, sanitizejson)
 
 
 def loadjson(filename=None, folder=None, string=None, fromfile=True, **kwargs):
