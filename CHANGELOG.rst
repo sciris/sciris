@@ -11,9 +11,9 @@ Version 1.2.2 (2021-08-21)
 
 New functions and methods
 ~~~~~~~~~~~~~~~~~~~~~~~~~
-#. A new class, ``sc.autolist()``, is available to simplify appending to lists.
+#. A new class, ``sc.autolist()``, is available to simplify appending to lists, e.g. ``ls = sc.autolist(); ls += 'not a list'``.
 #. Added ``sc.freeze()`` as a programmatic equivalent of ``pip freeze``.
-#. Added ``sc.require()`` as a flexible way of checking (or asserting) environment requirements.
+#. Added ``sc.require()`` as a flexible way of checking (or asserting) environment requirements, e.g. ``sc.require('numpy')``.
 #. Added ``sc.path()`` as an alias to ``pathlib.Path()``.
 
 Improvements
