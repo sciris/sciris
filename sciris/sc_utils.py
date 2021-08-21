@@ -1858,13 +1858,13 @@ def readdate(datestr=None, *args, dateformat=None, return_defaults=False):
         return formats_to_try
 
     # Handle date formats
+    format_list = promotetolist(dateformat, keepnone=True) # Keep none which signifies default
     if dateformat is not None:
         if dateformat == 'dmy':
             formats_to_try = dmy_formats
         elif dateformat == 'mdy':
             formats_to_try = mdy_formats
         else:
-            format_list = promotetolist(dateformat)
             formats_to_try = {}
             for f,fmt in enumerate(format_list):
                 formats_to_try[f'User supplied {f}'] = fmt

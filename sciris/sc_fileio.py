@@ -72,6 +72,7 @@ def loadobj(filename=None, folder=None, verbose=False, die=None, remapping=None,
         old = sc.loadobj('my-old-file.obj', remapping={'foo.Bar':('cat', 'Mat')}) # Equivalent to the above
 
     New in version 1.1.0: "remapping" argument
+    New in version 1.2.2: ability to load non-gzipped pickles
     '''
 
     # Handle loading of either filename or file object
@@ -162,6 +163,7 @@ def saveobj(filename=None, obj=None, compresslevel=5, verbose=0, folder=None, me
         sc.saveobj('myfile.obj', myobj)
 
     New in version 1.1.1: removed Python 2 support.
+    New in version 1.2.2: automatic swapping of arguments if order is incorrect
     '''
 
     # Handle path
