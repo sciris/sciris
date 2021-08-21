@@ -372,7 +372,7 @@ def test_dates():
     o.day = sc.day('2020-04-04') # Returns 94
     assert o.day == 94
     assert sc.day('2020-03-01') > sc.day('2021-03-01') # Because of the leap day
-    assert sc.day('2020-03-01', start_day='2020-01-01') < sc.day('2021-03-01', start_day='2020-01-01') # Because years
+    assert sc.day('2020-03-01', start_date='2020-01-01') < sc.day('2021-03-01', start_date='2020-01-01') # Because years
 
     print('\nTesting daydiff')
     o.diff  = sc.daydiff('2020-03-20', '2020-04-05') # Returns 16

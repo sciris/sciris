@@ -85,7 +85,7 @@ if __name__ == '__main__':
     sc.tic()
 
     r1 = test_simple()
-    r2 = test_args)
+    r2 = test_args()
     r3 = test_complex()
 
     sc.toc()
