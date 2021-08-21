@@ -91,8 +91,7 @@ def loadobj(filename=None, folder=None, verbose=False, die=None, remapping=None,
     gziperror = f'''
 Unable to load
     {filename}
-as a gzipped pickle file. Ensure that it was saved by Sciris; if it is a regular
-(not gzipped) pickle file, try pickle.load() or pandas.read_pickle().
+as either a gzipped or regular pickle file. Ensure that it is actually a pickle file.
 '''
     unpicklingerror = f'''
 Unable to load
@@ -109,21 +108,27 @@ https://wiki.python.org/moin/UsingPickle
 https://stackoverflow.com/questions/41554738/how-to-load-an-old-pickle-file
 '''
 
-    # Actually load it
+    # Load the file
     try:
         with gz.GzipFile(**kwargs) as fileobj:
             filestr = fileobj.read() # Convert it to a string
-            obj = _unpickler(filestr, filename=filename, verbose=verbose, die=die, remapping=remapping) # Actually load it
     except Exception as E:
-        exc = type(E) # Figureout what kind of error it is
+        exc = type(E) # Figure out what kind of error it is
         if exc == FileNotFoundError: # This is simple, just raise directly
             raise E
         elif exc == gz.BadGzipFile:
-            errormsg = gziperror
-            raise exc(errormsg) from E
-        else:
-            errormsg = unpicklingerror + '\n\nSee the stack trace above for more information on this specific error.'
-            raise exc(errormsg) from E
+            try: # If the gzip file failed, first try as a regular object
+                with open(filename, 'rb') as fileobj:
+                    filestr = fileobj.read() # Convert it to a string
+            except:
+                raise exc(gziperror) from E
+
+    # Unpickle it
+    try:
+        obj = _unpickler(filestr, filename=filename, verbose=verbose, die=die, remapping=remapping) # Actually load it
+    except Exception as E:
+        errormsg = unpicklingerror + '\n\nSee the stack trace above for more information on this specific error.'
+        raise exc(errormsg) from E
 
     # If it loaded but with errors, print them here
     if isinstance(obj, Failed):
@@ -138,7 +143,7 @@ def saveobj(filename=None, obj=None, compresslevel=5, verbose=0, folder=None, me
     '''
     Save an object to file as a gzipped pickle -- use compression 5 by default,
     since more is much slower but not much smaller. Once saved, can be loaded
-    with sc.loadobj(). Note that saveobj()/save() are aliases.
+    with sc.loadobj(). Note that saveobj()/save() are identical.
 
     Args:
         filename (str or Path): the filename to save to; if str, passed to sc.makefilepath()
@@ -160,10 +165,20 @@ def saveobj(filename=None, obj=None, compresslevel=5, verbose=0, folder=None, me
     '''
 
     # Handle path
+    filetypes = (str, type(Path()), None)
     if isinstance(filename, Path): # If it's a path object, convert to string
         filename = str(filename)
     if filename is None: # If it doesn't exist, just create a byte stream
         bytesobj = io.BytesIO()
+    if not isinstance(filename, filetypes):
+        if isinstance(obj, filetypes):
+            print(f'Warning: filename was not supplied as a valid type ({type(filename)}) but the object was ({type(obj)}); automatically swapping order')
+            real_obj = filename
+            real_file = obj
+            filename = real_file
+            obj = real_obj
+        else:
+            errormsg = f'Filename type {type(filename)} is not valid: must be one of {filetypes}'
     else: # Normal use case: make a file path
         bytesobj = None
         filename = makefilepath(filename=filename, folder=folder, default='default.obj', sanitize=True)
@@ -200,17 +215,8 @@ def saveobj(filename=None, obj=None, compresslevel=5, verbose=0, folder=None, me
 
 
 # Aliases to make these core functions even easier to use
-
-def load(*args, **kwargs): # pragma: no cover
-    ''' Alias to loadobj(). New in version 1.0.0. '''
-    return loadobj(*args, **kwargs)
-ut.append_docstring(load, loadobj)
-
-def save(*args, **kwargs): # pragma: no cover
-    ''' Alias to saveobj(). New in version 1.0.0. '''
-    return saveobj(*args, **kwargs)
-ut.append_docstring(save, saveobj)
-
+load = loadobj
+save = saveobj
 
 def loadstr(string, verbose=False, die=None, remapping=None):
     '''

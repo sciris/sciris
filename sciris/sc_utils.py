@@ -1466,7 +1466,9 @@ def isarray(obj, dtype=None):
 
 def promotetoarray(x, keepnone=False, **kwargs):
     '''
-    Small function to ensure consistent format for things that should be arrays.
+    Small function to ensure consistent format for things that should be arrays
+    (note: toarray()/promotetoarray() are identical).
+
     Very similar to ``np.array``, with the main difference being that ``sc.promotetoarray(3)``
     will return ``np.array([3])`` (i.e. a 1-d array that can be iterated over), while
     ``np.array(3)`` will return a 0-d array that can't be iterated over.
@@ -1499,7 +1501,7 @@ def promotetoarray(x, keepnone=False, **kwargs):
 
 def promotetolist(obj=None, objtype=None, keepnone=False, coerce='default'):
     '''
-    Make sure object is always a list.
+    Make sure object is always a list (note: tolist()/promotetolist() are identical).
 
     Used so functions can handle inputs like ``'a'``  or ``['a', 'b']``. In other
     words, if an argument can either be a single thing (e.g., a single dict key)
@@ -1583,16 +1585,9 @@ def promotetolist(obj=None, objtype=None, keepnone=False, coerce='default'):
     return output
 
 
-def toarray(*args, **kwargs):
-    ''' Alias to sc.promotetoarray(). New in version 1.1.0. '''
-    return promotetoarray(*args, **kwargs)
-append_docstring(toarray, promotetoarray)
-
-
-def tolist(*args, **kwargs):
-    ''' Alias to sc.promotetolist(). New in version 1.1.0. '''
-    return promotetolist(*args, **kwargs)
-append_docstring(toarray, promotetoarray)
+# Aliases for core functions
+toarray = promotetoarray
+tolist = promotetolist
 
 
 def transposelist(obj):
