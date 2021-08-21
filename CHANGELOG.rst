@@ -6,6 +6,34 @@ All notable changes to this project will be documented in this file.
 By import convention, components of the Sciris library are listed beginning with ``sc.``, e.g. ``sc.odict()``.
 
 
+Version 1.2.2 (2021-08-21)
+--------------------------
+
+Improvements
+~~~~~~~~~~~~
+#. Added an even more robust unpickler, that should be able to recover data even if exceptions are raised when unpickling.
+#. Updated ``sc.loadobj()`` to allow loading standard (not gzipped) pickles and from ``dill``.
+#. Updated ``sc.saveobj()`` to automatically swap arguments if the object is supplied first, then the filename.
+#. Updated ``sc.asd()`` to allow more flexible argument passing to the optimized function; also updated ``verbose`` to allow skipping iterations.
+#. Added a ``path`` argument to ``sc.thisdir()`` to more easily allow subfolders/files.
+#. Instead of being separate function definitions, ``sc.load()``, ``sc.save()``, and ``sc.jsonify()`` are now identical to their aliases (e.g. ``sc.loadobj()``).
+#. ``sc.dateformatter()`` now allows a ``rotation`` argument, since date labels often collide.
+#. ``sc.readdate()`` and ``sc.date()`` can now read additional numeric dates, e.g. ``sc.readdate(16166, dateformat='ordinal')``.
+
+Backwards-incompatible changes
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+#. ``sc.promotetolist()`` now converts (rather than wraps) ranges and dict_keys objects to lists. To restore the previous behavior, use the argument ``coerce='none'``.
+#. The ``start_day`` argument has been renamed ``start_date`` for ``sc.day()`` and ``sc.dateformatter()``.
+#. The ``dateformat`` argument for ``sc.date()`` has been renamed ``outformat``, to differentiate from ``readformat``.
+
+New functions and methods
+~~~~~~~~~~~~~~~~~~~~~~~~~
+#. A new class, ``sc.autolist()``, is available to simplify appending to lists.
+#. Added ``sc.freeze()`` as a programmatic equivalent of ``pip freeze``.
+#. Added ``sc.require()`` as a flexible way of checking (or asserting) environment requirements.
+#. Added ``sc.path()`` as an alias to ``pathlib.Path()``.
+
+
 Version 1.2.1 (2021-07-07)
 --------------------------
 #. Added ``openpyxl`` as a Sciris dependency, since it was `removed from pandas <https://pandas.pydata.org/pandas-docs/stable/whatsnew/v1.3.0.html>`__.

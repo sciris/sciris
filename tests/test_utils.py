@@ -113,10 +113,8 @@ def test_versions():
     sc.require(reqs={'numpy':'1.19.1', 'matplotlib':'3.2.2'})
     sc.require('numpy>=1.19.1', 'matplotlib==3.2.2', die=False)
     data, _ = sc.require(numpy='1.19.1', matplotlib='==4.2.2', die=False, detailed=True)
-    with pytest.raises(ModuleNotFoundError):
-        sc.require('matplotlib==99.23')
-    with pytest.raises(ModuleNotFoundError):
-        sc.require('not_a_valid_module')
+    with pytest.raises(ModuleNotFoundError): sc.require('matplotlib==99.23')
+    with pytest.raises(ModuleNotFoundError): sc.require('not_a_valid_module')
     return data
 
 

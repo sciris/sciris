@@ -402,8 +402,10 @@ def freeze(lower=False):
     raw = dict(tuple(str(ws).split()) for ws in pkgr.working_set)
     keys = sorted(raw.keys())
     if lower:
-        keys = [k.lower() for k in keys]
-    data = {k:raw[k] for k in keys} # Sort alphabetically
+        labels = {k:k.lower() for k in keys}
+    else:
+        labels = {k:k for k in keys}
+    data = {labels[k]:raw[k] for k in keys} # Sort alphabetically
     return data
 
 
