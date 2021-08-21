@@ -6,6 +6,7 @@ import pytest
 import numpy as np
 import sciris as sc
 import datetime as dt
+import pytest
 
 
 ### Adaptations from other libraries
@@ -95,6 +96,28 @@ def test_traceback():
     print(f'Example traceback text:\n{text}')
 
     return text
+
+
+def test_versions():
+    sc.heading('Testing freeze, compareversions, and require')
+
+    # Test freeze
+    assert 'numpy' in sc.freeze()
+
+    # Test compareversions
+    assert sc.compareversions(np, '>1.0')
+
+    # Test require
+    sc.require('numpy')
+    sc.require(numpy='')
+    sc.require(reqs={'numpy':'1.19.1', 'matplotlib':'3.2.2'})
+    sc.require('numpy>=1.19.1', 'matplotlib==3.2.2', die=False)
+    data, _ = sc.require(numpy='1.19.1', matplotlib='==4.2.2', die=False, detailed=True)
+    with pytest.raises(ModuleNotFoundError):
+        sc.require('matplotlib==99.23')
+    with pytest.raises(ModuleNotFoundError):
+        sc.require('not_a_valid_module')
+    return data
 
 
 ### Printing/notification functions
@@ -636,6 +659,7 @@ if __name__ == '__main__':
     adapt     = test_adaptations()
     uid       = test_uuid()
     traceback = test_traceback()
+    versions  = test_versions()
 
     bluearray = test_colorize()
     printing  = test_printing()

@@ -34,12 +34,12 @@ import copy
 import time
 import json
 import zlib
+import types
 import psutil
 import pprint
 import hashlib
 import dateutil
 import subprocess
-import pkg_resources
 import itertools
 import numbers
 import string
@@ -50,6 +50,7 @@ import pylab as pl
 import random as rnd
 import datetime as dt
 import uuid as py_uuid
+import pkg_resources as pkgr
 import traceback as py_traceback
 from textwrap import fill
 from functools import reduce
@@ -78,7 +79,7 @@ else:
 ##############################################################################
 
 # Define the modules being loaded
-__all__ = ['fast_uuid', 'uuid', 'dcp', 'cp', 'pp', 'sha', 'wget', 'htmlify', 'freeze',
+__all__ = ['fast_uuid', 'uuid', 'dcp', 'cp', 'pp', 'sha', 'wget', 'htmlify', 'freeze', 'require',
            'traceback', 'getplatform', 'iswindows', 'islinux', 'ismac']
 
 
@@ -385,12 +386,99 @@ def htmlify(string, reverse=False, tostring=False):
     return output
 
 
+def freeze(lower=False):
+    '''
+    Alias for pip freeze.
 
-def freeze(*args, **kwargs):
-    ''' Alias for pip freeze. '''
-    raw = dict(tuple(str(ws).split()) for ws in pkg_resources.working_set)
-    data = {k:raw[k] for k in sorted(raw.keys())} # Sort alphabetically
+    Args:
+        lower (bool): convert all keys to lowercase
+
+    **Example**::
+
+        assert 'numpy' in sc.freeze() # One way to check for versions
+
+    New in version 1.2.2.
+    '''
+    raw = dict(tuple(str(ws).split()) for ws in pkgr.working_set)
+    keys = sorted(raw.keys())
+    if lower:
+        keys = [k.lower() for k in keys]
+    data = {k:raw[k] for k in keys} # Sort alphabetically
     return data
+
+
+def require(reqs=None, *args, exact=False, detailed=False, die=True, verbose=True, **kwargs):
+    '''
+    Check whether environment requirements are met. Alias to pkg_resources.require().
+
+    Args:
+        reqs (list/dict): a list of strings, or a dict of package names and versions
+        args (list): additional requirements
+        kwargs (dict): additional requirements
+        exact (bool): use '==' instead of '>=' as the default comparison operator if not specified
+        detailed (bool): return a dict of which requirements are/aren't met
+        die (bool): whether to raise an exception if requirements aren't met
+        verbose (bool): print out the exception if it's not being raised
+
+    **Examples**::
+
+        sc.require('numpy')
+        sc.require(numpy='')
+        sc.require(reqs={'numpy':'1.19.1', 'matplotlib':'3.2.2'})
+        sc.require('numpy>=1.19.1', 'matplotlib==3.2.2', die=False)
+        sc.require(numpy='1.19.1', matplotlib='==4.2.2', die=False, detailed=True)
+
+    New in version 1.2.2.
+    '''
+
+    # Handle inputs
+    reqlist = list(args)
+    reqdict = kwargs
+    if isinstance(reqs, dict):
+        reqdict.update(reqs)
+    else:
+        reqlist = mergelists(reqs, reqlist)
+
+    # Turn into a list of strings
+    comparechars = '<>=!~'
+    for k,v in reqdict.items():
+        if not v:
+            entry = k # If no version is provided, entry is just the module name
+        else:
+            compare = '' if v.startswith(tuple(comparechars)) else ('==' if exact else '>=')
+            entry = k + compare + v
+        reqlist.append(entry)
+
+    # Check the requirements
+    data = dict()
+    errs = dict()
+    for entry in reqlist:
+        try:
+            pkgr.require(entry)
+            data[entry] = True
+        except Exception as E:
+            data[entry] = False
+            errs[entry] = E
+
+    # Figure out output
+    met = all([e==True for e in data.values()])
+
+    # Handle exceptions
+    if not met:
+        errormsg = 'The following requirements were not met:'
+        for k,v in data.items():
+            if not v:
+                errormsg += f'\n  {k}: {str(errs[k])}'
+        if die:
+            raise ModuleNotFoundError(errormsg) from errs[k] # Use the last one
+        elif verbose:
+            print(errormsg)
+
+    # Handle output
+    if detailed:
+        return data, errs
+    else:
+        return met
 
 
 def traceback(*args, **kwargs):
@@ -2672,10 +2760,17 @@ def compareversions(version1, version2):
         sc.compareversions('3.1', '2.99') # returns 1
         sc.compareversions('3.1', '>=2.99') # returns True
         sc.compareversions(mymodule.__version__, '>=1.0') # common usage pattern
+        sc.compareversions(mymodule, '>=1.0') # alias to the above
 
     New in version 1.2.1: relational operators
     '''
     # Handle inputs
+    if isinstance(version1, types.ModuleType):
+        try:
+            version1 = version1.__version__
+        except Exception as E:
+            errormsg = f'{version1} is a module, but does not have a __version__ attribute'
+            raise AttributeError(errormsg) from E
     v1 = str(version1)
     v2 = str(version2)
 
