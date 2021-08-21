@@ -223,6 +223,9 @@ def test_promotetolist():
     res2b = sc.promotetolist(ex2, objtype='str')
     res3a = sc.promotetolist(ex3)
     res3b = sc.promotetolist(ex3, objtype='number')
+    res4a = sc.tolist('foo')
+    res4b = sc.tolist('foo', coerce=str)
+    res5 = sc.tolist(range(3))
     with pytest.raises(TypeError):
         sc.promotetolist(ex0, str)
     with pytest.raises(TypeError):
@@ -237,11 +240,17 @@ def test_promotetolist():
     assert sorted(res2b) == ['a', 'b'] # Sets randomize the order...
     assert repr(res3a) == repr([np.array([0,1,2])]) # Direct quality comparison fails due to the array
     assert res3b == [0,1,2]
+    assert len(res4a) == 1
+    assert len(res4b) == 3
+    assert res5[2] == 2
     print(res1)
     print(res2a)
     print(res2b)
     print(res3a)
     print(res3b)
+    print(res4a)
+    print(res4b)
+    print(res5)
 
     # Check that type checking works
     sc.tolist(ex2, objtype=str)
