@@ -1483,13 +1483,15 @@ def promotetoarray(x, keepnone=False, **kwargs):
     New in version 1.1.0: replaced "skipnone" with "keepnone"; allowed passing
     kwargs to ``np.array()``.
     '''
+    skipnone = kwargs.pop('skipnone', None)
+    if skipnone is not None: # pragma: no cover
+        keepnone = not(skipnone)
+        warnmsg = 'sc.promotetoarray() argument "skipnone" has been deprecated as of v1.1.0; use keepnone instead'
+        warnings.warn(warnmsg, category=DeprecationWarning, stacklevel=2)
     if isnumber(x) or (isinstance(x, np.ndarray) and not np.shape(x)): # e.g. 3 or np.array(3)
         x = [x]
     elif x is None and not keepnone:
         x = []
-    if kwargs.pop('skipnone', None) is not None: # pragma: no cover
-        warnmsg = 'sc.promotetoarray() argument "skipnone" has been deprecated as of v1.1.0; use keepnone instead'
-        warnings.warn(warnmsg, category=DeprecationWarning, stacklevel=2)
     output = np.array(x, **kwargs)
     return output
 
@@ -1908,7 +1910,7 @@ def date(obj, *args, start_date=None, dateformat=None, as_date=True):
 
     Caution: while this function and readdate() are similar, and indeed this function
     calls readdate() if the input is a string, in this function an integer is treated
-    as a number of days from start_day, while for readdate() it is treated as a
+    as a number of days from start_date, while for readdate() it is treated as a
     timestamp in seconds.
 
     Caution 2: To convert a Matplotlib date from a number, use ``pl.num2date()``.
@@ -1970,7 +1972,7 @@ def date(obj, *args, start_date=None, dateformat=None, as_date=True):
     return output
 
 
-def day(obj, *args, start_day=None):
+def day(obj, *args, start_date=None, **kwargs):
     '''
     Convert a string, date/datetime object, or int to a day (int), the number of
     days since the start day. See also sc.date() and sc.daydiff(). If a start day
@@ -1979,7 +1981,7 @@ def day(obj, *args, start_day=None):
     Args:
         obj (str, date, int, list, array): convert any of these objects to a day relative to the start day
         args (list): additional days
-        start_day (str or date): the start day; if none is supplied, return days since (supplied year)-01-01.
+        start_date (str or date): the start day; if none is supplied, return days since (supplied year)-01-01.
 
     Returns:
         days (int or list): the day(s) in simulation time (matching input data type where possible)
@@ -1987,10 +1989,18 @@ def day(obj, *args, start_day=None):
     **Examples**::
 
         sc.day(sc.now()) # Returns how many days into the year we are
-        sc.day(['2021-01-21', '2024-04-04'], start_day='2022-02-22') # Days can be positive or negative
+        sc.day(['2021-01-21', '2024-04-04'], start_date='2022-02-22') # Days can be positive or negative
 
     New in version 1.0.0.
+    New in version 1.2.2: renamed "start_day" to "start_date"
     '''
+
+    # Handle deprecation
+    start_day = kwargs.pop('start_day', None)
+    if start_day is not None: # pragma: no cover
+        start_date = start_day
+        warnmsg = 'sc.day() argument "start_day" has been deprecated as of v1.2.2; use "start_date" instead'
+        warnings.warn(warnmsg, category=DeprecationWarning, stacklevel=2)
 
     # Do not process a day if it's not supplied, and ensure it's a list
     if obj is None:
@@ -2009,8 +2019,8 @@ def day(obj, *args, start_day=None):
                     d = readdate(d).date()
                 elif isinstance(d, dt.datetime):
                     d = d.date()
-                if start_day:
-                    start_date = date(start_day)
+                if start_date:
+                    start_date = date(start_date)
                 else:
                     start_date = date(f'{d.year}-01-01')
                 d_day = (d - start_date).days # Heavy lifting -- actually compute the day
@@ -2069,7 +2079,7 @@ def daterange(start_date, end_date, inclusive=True, as_date=False, dateformat=No
 
     New in version 1.0.0.
     '''
-    end_day = day(end_date, start_day=start_date)
+    end_day = day(end_date, start_date=start_date)
     if inclusive:
         end_day += 1
     days = list(range(end_day))
