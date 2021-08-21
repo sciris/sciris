@@ -484,7 +484,7 @@ def makefilepath(filename=None, folder=None, ext=None, default=None, split=False
 def path(*args, **kwargs):
     ''' Alias to pathlib.Path(). New in version 1.2.2. '''
     return Path(*args, **kwargs)
-ut.append_docstring(path, Path)
+path.__doc__ += '\n\n' + Path.__doc__
 
 
 def thisdir(file=None, path=None, *args, aspath=False, **kwargs):
@@ -533,7 +533,7 @@ __all__ += ['sanitizejson', 'jsonify', 'loadjson', 'savejson', 'jsonpickle', 'js
 def sanitizejson(obj, verbose=True, die=False, tostring=False, **kwargs):
     """
     This is the main conversion function for Python data-structures into
-    JSON-compatible data structures.
+    JSON-compatible data structures (note: sanitizejson/jsonify are identical).
 
     Args:
         obj (any): almost any kind of data structure that is a combination of list, numpy.ndarray, odicts, etc.
@@ -607,12 +607,8 @@ def sanitizejson(obj, verbose=True, die=False, tostring=False, **kwargs):
 
     return output
 
-
-
-def jsonify(*args, **kwargs):
-    ''' Alias to sanitizejson() '''
-    return sanitizejson(*args, **kwargs)
-ut.append_docstring(jsonify, sanitizejson)
+# Define alias
+jsonify = sanitizejson
 
 
 def loadjson(filename=None, folder=None, string=None, fromfile=True, **kwargs):

@@ -77,27 +77,8 @@ else:
 ##############################################################################
 
 # Define the modules being loaded
-__all__ = ['append_docstring', 'fast_uuid', 'uuid', 'dcp', 'cp', 'pp', 'sha',
+__all__ = ['fast_uuid', 'uuid', 'dcp', 'cp', 'pp', 'sha',
            'wget', 'htmlify', 'traceback', 'getplatform', 'iswindows', 'islinux', 'ismac']
-
-
-def append_docstring(func1, func2, joiner='\n\n'):
-    '''
-    Append the docstring of one function/method to another. Used internally in
-    Sciris for functions that are aliases of each other.
-
-    Args:
-        func1 (function/method): the function whose docstring will be added to
-        func2 (function/method/str): the function whose docstring to add (or if a string, add directly)
-        joiner (str): the character(s) used to join the two (default, two newlines)
-
-    **Example**::
-
-        sc.append_docstring(my_new_func, my_orig_func)
-        sc.append_docstring(my_new_func, 'Something I forgot')
-    '''
-    func1.__doc__ += joiner + func2.__doc__
-    return
 
 
 def fast_uuid(which=None, length=None, n=1, secure=False, forcelist=False, safety=1000, recursion=0, recursion_limit=10, verbose=True):
