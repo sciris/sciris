@@ -298,7 +298,7 @@ def savezip(filename=None, filelist=None, folder=None, basename=True, verbose=Tr
     return fullpath
 
 
-def getfilelist(folder='.', pattern=None, abspath=False, nopath=False, filesonly=False, foldersonly=False, recursive=False, aspath=False):
+def getfilelist(folder=None, pattern=None, abspath=False, nopath=False, filesonly=False, foldersonly=False, recursive=False, aspath=False):
     '''
     A shortcut for using glob.
 
@@ -323,6 +323,8 @@ def getfilelist(folder='.', pattern=None, abspath=False, nopath=False, filesonly
 
     New in version 1.1.0: "aspath" argument
     '''
+    if folder is None:
+        folder = '.'
     folder = os.path.expanduser(folder)
     if abspath:
         folder = os.path.abspath(folder)
@@ -470,7 +472,7 @@ def makefilepath(filename=None, folder=None, ext=None, default=None, split=False
 
 
 def path(*args, **kwargs):
-    ''' Alias to pathlib.Path() '''
+    ''' Alias to pathlib.Path(). New in version 1.2.2. '''
     return Path(*args, **kwargs)
 
 
