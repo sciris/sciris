@@ -6,6 +6,7 @@ import pytest
 import numpy as np
 import sciris as sc
 import datetime as dt
+import pytest
 
 
 ### Adaptations from other libraries
@@ -95,6 +96,26 @@ def test_traceback():
     print(f'Example traceback text:\n{text}')
 
     return text
+
+
+def test_versions():
+    sc.heading('Testing freeze, compareversions, and require')
+
+    # Test freeze
+    assert 'numpy' in sc.freeze()
+
+    # Test compareversions
+    assert sc.compareversions(np, '>1.0')
+
+    # Test require
+    sc.require('numpy')
+    sc.require(numpy='')
+    sc.require(reqs={'numpy':'1.19.1', 'matplotlib':'3.2.2'})
+    sc.require('numpy>=1.19.1', 'matplotlib==3.2.2', die=False)
+    data, _ = sc.require(numpy='1.19.1', matplotlib='==4.2.2', die=False, detailed=True)
+    with pytest.raises(ModuleNotFoundError): sc.require('matplotlib==99.23')
+    with pytest.raises(ModuleNotFoundError): sc.require('not_a_valid_module')
+    return data
 
 
 ### Printing/notification functions
@@ -223,6 +244,9 @@ def test_promotetolist():
     res2b = sc.promotetolist(ex2, objtype='str')
     res3a = sc.promotetolist(ex3)
     res3b = sc.promotetolist(ex3, objtype='number')
+    res4a = sc.tolist('foo')
+    res4b = sc.tolist('foo', coerce=str)
+    res5 = sc.tolist(range(3))
     with pytest.raises(TypeError):
         sc.promotetolist(ex0, str)
     with pytest.raises(TypeError):
@@ -237,11 +261,17 @@ def test_promotetolist():
     assert sorted(res2b) == ['a', 'b'] # Sets randomize the order...
     assert repr(res3a) == repr([np.array([0,1,2])]) # Direct quality comparison fails due to the array
     assert res3b == [0,1,2]
+    assert len(res4a) == 1
+    assert len(res4b) == 3
+    assert res5[2] == 2
     print(res1)
     print(res2a)
     print(res2b)
     print(res3a)
     print(res3b)
+    print(res4a)
+    print(res4b)
+    print(res5)
 
     # Check that type checking works
     sc.tolist(ex2, objtype=str)
@@ -352,6 +382,7 @@ def test_dates():
     o.date1 = sc.date('2020-04-05') # Returns datetime.date(2020, 4, 5)
     o.date2 = sc.date(sc.readdate('2020-04-14'), as_date=False, dateformat='%Y%m') # Returns '202004'
     o.date3 = sc.date([35,36,37], start_date='2020-01-01', as_date=False) # Returns ['2020-02-05', '2020-02-06', '2020-02-07']
+    o.date4 = sc.date(1923288822, readformat='posix') # Interpret as a POSIX timestamp
     with pytest.raises(ValueError):
         sc.date([10,20]) # Can't convert an integer without a start date
     assert o.date1.month == 4
@@ -363,7 +394,7 @@ def test_dates():
     o.day = sc.day('2020-04-04') # Returns 94
     assert o.day == 94
     assert sc.day('2020-03-01') > sc.day('2021-03-01') # Because of the leap day
-    assert sc.day('2020-03-01', start_day='2020-01-01') < sc.day('2021-03-01', start_day='2020-01-01') # Because years
+    assert sc.day('2020-03-01', start_date='2020-01-01') < sc.day('2021-03-01', start_date='2020-01-01') # Because years
 
     print('\nTesting daydiff')
     o.diff  = sc.daydiff('2020-03-20', '2020-04-05') # Returns 16
@@ -626,6 +657,7 @@ if __name__ == '__main__':
     adapt     = test_adaptations()
     uid       = test_uuid()
     traceback = test_traceback()
+    versions  = test_versions()
 
     bluearray = test_colorize()
     printing  = test_printing()

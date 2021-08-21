@@ -44,7 +44,7 @@ from .sc_dataframe import dataframe
 __all__ = ['loadobj', 'loadstr', 'saveobj', 'dumpstr', 'load', 'save']
 
 
-def loadobj(filename=None, folder=None, verbose=False, die=None, remapping=None):
+def loadobj(filename=None, folder=None, verbose=False, die=None, remapping=None, method='pickle', **kwargs):
     '''
     Load a file that has been saved as a gzipped pickle file, e.g. by ``sc.saveobj()``.
     Accepts either a filename (standard usage) or a file object as the first argument.
@@ -58,19 +58,23 @@ def loadobj(filename=None, folder=None, verbose=False, die=None, remapping=None)
     use the ``remapping`` argument to point to the new modules or classes.
 
     Args:
-        filename (str/Path): the filename (or full path) to load
-        folder (str/Path): the folder
-        verbose (bool): print details
-        die (bool): whether to raise an exception if errors are encountered (otherwise, load as much as possible)
-        remapping (dict):
+        filename  (str/Path): the filename (or full path) to load
+        folder    (str/Path): the folder
+        verbose   (bool):     print details
+        die       (bool):     whether to raise an exception if errors are encountered (otherwise, load as much as possible)
+        remapping (dict):     way of mapping old/unavailable module names to new
+        method    (str):      method for loading (usually pickle or dill)
+        kwargs    (dict):     passed to pickle.loads()/dill.loads()
 
     **Examples**::
 
         obj = sc.loadobj('myfile.obj') # Standard usage
+        old = sc.loadobj('my-old-file.obj', method='dill', ignore=True) # Load classes from saved files
         old = sc.loadobj('my-old-file.obj', remapping={'foo.Bar':cat.Mat}) # If loading a saved object containing a reference to foo.Bar that is now cat.Mat
         old = sc.loadobj('my-old-file.obj', remapping={'foo.Bar':('cat', 'Mat')}) # Equivalent to the above
 
     New in version 1.1.0: "remapping" argument
+    New in version 1.2.2: ability to load non-gzipped pickles; support for dill; arguments passed to loader
     '''
 
     # Handle loading of either filename or file object
@@ -84,25 +88,15 @@ def loadobj(filename=None, folder=None, verbose=False, die=None, remapping=None)
     else: # pragma: no cover
         errormsg = f'First argument to loadobj() must be a string or file object, not {type(filename)}'
         raise TypeError(errormsg)
-    kwargs = {'mode': 'rb', argtype: filename}
-    try:
-        with gz.GzipFile(**kwargs) as fileobj:
-            filestr = fileobj.read() # Convert it to a string
-            obj = _unpickler(filestr, filename=filename, verbose=verbose, die=die, remapping=remapping) # Actually load it
-    except Exception as E:
-        exc = type(E) # Figureout what kind of error it is
-        if exc == FileNotFoundError: # This is simple, just raise directly
-            raise E
-        elif exc == gz.BadGzipFile:
-            errormsg = f'''
+    fileargs = {'mode': 'rb', argtype: filename}
+
+    # Define common error messages
+    gziperror = f'''
 Unable to load
     {filename}
-as a gzipped pickle file. Ensure that it was saved by Sciris; if it is a regular
-(not gzipped) pickle file, try pickle.load() or pandas.read_pickle().
+as either a gzipped or regular pickle file. Ensure that it is actually a pickle file.
 '''
-            raise exc(errormsg) from E
-        else:
-            errormsg = f'''
+    unpicklingerror = f'''
 Unable to load
     {filename}
 as a gzipped pickle file. Loading pickles can fail if Python modules have changed
@@ -115,12 +109,36 @@ environment with the new version of that module, and then re-save as a pickle.
 For general information on unpickling errors, see e.g.:
 https://wiki.python.org/moin/UsingPickle
 https://stackoverflow.com/questions/41554738/how-to-load-an-old-pickle-file
-
-See the stack trace above for more information on this specific error.
 '''
-            raise exc(errormsg) from E
 
-    if verbose: print(f'Object loaded from "{filename}"')
+    # Load the file
+    try:
+        with gz.GzipFile(**fileargs) as fileobj:
+            filestr = fileobj.read() # Convert it to a string
+    except Exception as E:
+        exc = type(E) # Figure out what kind of error it is
+        if exc == FileNotFoundError: # This is simple, just raise directly
+            raise E
+        elif exc == gz.BadGzipFile:
+            try: # If the gzip file failed, first try as a regular object
+                with open(filename, 'rb') as fileobj:
+                    filestr = fileobj.read() # Convert it to a string
+            except:
+                raise exc(gziperror) from E
+
+    # Unpickle it
+    try:
+        obj = _unpickler(filestr, filename=filename, verbose=verbose, die=die, remapping=remapping, method=method, **kwargs) # Actually load it
+    except Exception as E:
+        errormsg = unpicklingerror + '\n\nSee the stack trace above for more information on this specific error.'
+        raise exc(errormsg) from E
+
+    # If it loaded but with errors, print them here
+    if isinstance(obj, Failed):
+        print(unpicklingerror)
+    elif verbose:
+        print(f'Object loaded from "{filename}"')
+
     return obj
 
 
@@ -128,7 +146,7 @@ def saveobj(filename=None, obj=None, compresslevel=5, verbose=0, folder=None, me
     '''
     Save an object to file as a gzipped pickle -- use compression 5 by default,
     since more is much slower but not much smaller. Once saved, can be loaded
-    with sc.loadobj(). Note that saveobj()/save() are aliases.
+    with sc.loadobj(). Note that saveobj()/save() are identical.
 
     Args:
         filename (str or Path): the filename to save to; if str, passed to sc.makefilepath()
@@ -145,15 +163,27 @@ def saveobj(filename=None, obj=None, compresslevel=5, verbose=0, folder=None, me
 
         myobj = ['this', 'is', 'a', 'weird', {'object':44}]
         sc.saveobj('myfile.obj', myobj)
+        sc.saveobj('myfile.obj', myobj, method='dill') # Use dill instead, to save custom classes as well
 
     New in version 1.1.1: removed Python 2 support.
+    New in version 1.2.2: automatic swapping of arguments if order is incorrect; correct passing of arguments
     '''
 
     # Handle path
+    filetypes = (str, type(Path()), None)
     if isinstance(filename, Path): # If it's a path object, convert to string
         filename = str(filename)
     if filename is None: # If it doesn't exist, just create a byte stream
         bytesobj = io.BytesIO()
+    if not isinstance(filename, filetypes):
+        if isinstance(obj, filetypes):
+            print(f'Warning: filename was not supplied as a valid type ({type(filename)}) but the object was ({type(obj)}); automatically swapping order')
+            real_obj = filename
+            real_file = obj
+            filename = real_file
+            obj = real_obj
+        else:
+            errormsg = f'Filename type {type(filename)} is not valid: must be one of {filetypes}'
     else: # Normal use case: make a file path
         bytesobj = None
         filename = makefilepath(filename=filename, folder=folder, default='default.obj', sanitize=True)
@@ -190,15 +220,8 @@ def saveobj(filename=None, obj=None, compresslevel=5, verbose=0, folder=None, me
 
 
 # Aliases to make these core functions even easier to use
-
-def load(*args, **kwargs): # pragma: no cover
-    ''' Alias to loadobj(). New in version 1.0.0. '''
-    return loadobj(*args, **kwargs)
-
-def save(*args, **kwargs): # pragma: no cover
-    ''' Alias to saveobj(). New in version 1.0.0. '''
-    return saveobj(*args, **kwargs)
-
+load = loadobj
+save = saveobj
 
 def loadstr(string, verbose=False, die=None, remapping=None):
     '''
@@ -234,7 +257,7 @@ def dumpstr(obj=None):
 #%% Other file functions
 ##############################################################################
 
-__all__ += ['loadtext', 'savetext', 'savezip', 'getfilelist', 'sanitizefilename', 'makefilepath', 'thisdir']
+__all__ += ['loadtext', 'savetext', 'savezip', 'getfilelist', 'sanitizefilename', 'makefilepath', 'path', 'thisdir']
 
 
 def loadtext(filename=None, folder=None, splitlines=False):
@@ -288,7 +311,7 @@ def savezip(filename=None, filelist=None, folder=None, basename=True, verbose=Tr
     return fullpath
 
 
-def getfilelist(folder='.', pattern=None, abspath=False, nopath=False, filesonly=False, foldersonly=False, recursive=False, aspath=False):
+def getfilelist(folder=None, pattern=None, abspath=False, nopath=False, filesonly=False, foldersonly=False, recursive=False, aspath=False):
     '''
     A shortcut for using glob.
 
@@ -313,6 +336,8 @@ def getfilelist(folder='.', pattern=None, abspath=False, nopath=False, filesonly
 
     New in version 1.1.0: "aspath" argument
     '''
+    if folder is None:
+        folder = '.'
     folder = os.path.expanduser(folder)
     if abspath:
         folder = os.path.abspath(folder)
@@ -459,33 +484,45 @@ def makefilepath(filename=None, folder=None, ext=None, default=None, split=False
     return output
 
 
-def thisdir(file=None, *args, aspath=False, **kwargs):
+def path(*args, **kwargs):
+    ''' Alias to pathlib.Path(). New in version 1.2.2. '''
+    return Path(*args, **kwargs)
+path.__doc__ += '\n\n' + Path.__doc__
+
+
+def thisdir(file=None, path=None, *args, aspath=False, **kwargs):
     '''
     Tiny helper function to get the folder for a file, usually the current file.
     If not supplied, then use the current file.
 
     Args:
         file (str): the file to get the directory from; usually __file__
-        args (list): passed to os.path.join()
+        path (str/list): additional path to append; passed to os.path.join()
+        args  (list): also passed to os.path.join()
         aspath (bool): whether to return a Path object instead of a string
-        kwargs (dict): also passed to os.path.join()
+        kwargs (dict): passed to Path()
 
     Returns:
         filepath (str): the full path to the folder (or filename if additional arguments are given)
 
     **Examples**::
 
-        thisdir = sc.thisdir()
-        file_in_same_dir = sc.thisdir(__file__, 'new_file.txt')
+        thisdir = sc.thisdir() # Get folder of calling file
+        thisdir = sc.thisdir('.') # Ditto (usually)
+        thisdir = sc.thisdir(__file__) # Ditto (usually)
+        file_in_same_dir = sc.thisdir(path='new_file.txt')
+        file_in_sub_dir = sc.thisdir('..', 'tests', 'mytests.py') # Merge parent folder with sufolders and a file
 
     New in version 1.1.0: "as_path" argument renamed "aspath"
+    New in version 1.2.2: "path" argument
     '''
     if file is None:
          file = str(Path(inspect.stack()[1][1])) # Adopted from Atomica
     folder = os.path.abspath(os.path.dirname(file))
-    filepath = os.path.join(folder, *args, **kwargs)
+    path = ut.mergelists(path, *args)
+    filepath = os.path.join(folder, *path)
     if aspath:
-        filepath = Path(filepath)
+        filepath = Path(filepath, **kwargs)
     return filepath
 
 
@@ -499,7 +536,7 @@ __all__ += ['sanitizejson', 'jsonify', 'loadjson', 'savejson', 'jsonpickle', 'js
 def sanitizejson(obj, verbose=True, die=False, tostring=False, **kwargs):
     """
     This is the main conversion function for Python data-structures into
-    JSON-compatible data structures.
+    JSON-compatible data structures (note: sanitizejson/jsonify are identical).
 
     Args:
         obj (any): almost any kind of data structure that is a combination of list, numpy.ndarray, odicts, etc.
@@ -573,11 +610,8 @@ def sanitizejson(obj, verbose=True, die=False, tostring=False, **kwargs):
 
     return output
 
-
-
-def jsonify(*args, **kwargs):
-    ''' Alias to sanitizejson() '''
-    return sanitizejson(*args, **kwargs)
+# Define alias
+jsonify = sanitizejson
 
 
 def loadjson(filename=None, folder=None, string=None, fromfile=True, **kwargs):
@@ -1208,15 +1242,57 @@ class Empty(object):
         pass
 
 
-def makefailed(module_name=None, name=None, error=None, exception=None):
+class UniversalFailed(Failed):
+    ''' A universal failed object class, that preserves as much data as possible '''
+
+    def __init__(self, *args, **kwargs):
+        if args:
+            self.args = args
+        if kwargs:
+            self.kwargs = kwargs
+        self.__set_empty()
+        return
+
+    def __set_empty(self):
+        if not hasattr(self, 'state'):
+            self.state = {}
+        if not hasattr(self, 'dict'):
+            self.dict = {}
+        return
+
+    def __repr__(self):
+        output = ut.objrepr(self) # This does not include failure_info since it's a class attribute
+        return output
+
+    def __setstate__(self, state):
+        self.__set_empty()
+        self.state = state
+        return
+
+    def __len__(self):
+        return len(self.dict)
+
+    def __getitem__(self, key):
+        return self.dict[key]
+
+    def __setitem__(self, key, value):
+        self.dict[key] = value
+        return
+
+    def disp(self, *args, **kwargs):
+        return ut.pr(self, *args, **kwargs)
+
+
+def makefailed(module_name=None, name=None, error=None, exception=None, universal=False):
     ''' Create a class -- not an object! -- that contains the failure info for a pickle that failed to load '''
-    key = f'Failure {len(Failed.failure_info)+1}'
-    Failed.failure_info[key] = odict()
-    Failed.failure_info[key]['module'] = module_name
-    Failed.failure_info[key]['class'] = name
-    Failed.failure_info[key]['error'] = error
-    Failed.failure_info[key]['exception'] = exception
-    return Failed
+    base = UniversalFailed if universal else Failed
+    key = f'Failure {len(base.failure_info)+1}'
+    base.failure_info[key] = odict()
+    base.failure_info[key]['module']    = module_name
+    base.failure_info[key]['class']     = name
+    base.failure_info[key]['error']     = error
+    base.failure_info[key]['exception'] = exception
+    return base
 
 
 class _RobustUnpickler(pkl.Unpickler):
@@ -1247,31 +1323,64 @@ class _RobustUnpickler(pkl.Unpickler):
         return obj
 
 
-def _unpickler(string=None, filename=None, filestring=None, die=None, verbose=False, remapping=None):
+class _UltraRobustUnpickler(pkl.Unpickler):
+    ''' If all else fails, just make a default object '''
+
+    def __init__(self, bytesio, *args, unpicklingerrors=None, **kwargs):
+        pkl.Unpickler.__init__(self, bytesio, *args, **kwargs)
+        self.unpicklingerrors = unpicklingerrors if unpicklingerrors is not None else []
+        return
+
+    def find_class(self, module_name, name):
+        ''' Ignore all attempts to use the actual class and always make a UniversalFailed class '''
+        error = ut.strjoin(self.unpicklingerrors)
+        exception = self.unpicklingerrors
+        obj = makefailed(module_name=module_name, name=name, error=error, exception=exception, universal=True)
+        return obj
+
+
+def _unpickler(string=None, filename=None, filestring=None, die=None, verbose=False, remapping=None, method='pickle', **kwargs):
     ''' Not invoked directly; used as a helper function for saveobj/loadobj '''
 
     if die is None: die = False
     try: # Try pickle first
-        obj = pkl.loads(string) # Actually load it -- main usage case
+        if method == 'pickle':
+            obj = pkl.loads(string, **kwargs) # Actually load it -- main usage case
+        elif method == 'dill':
+            import dill # Optional Sciris dependency
+            obj = dill.loads(string, **kwargs) # Actually load it, with dill
+        else:
+            errormsg = f'Method "{method}" not recognized, must be pickle or dill'
+            raise ValueError(errormsg)
     except Exception as E1:
         if die:
             raise E1
         else:
             try:
                 if verbose: print(f'Standard unpickling failed ({str(E1)}), trying encoding...')
-                obj = pkl.loads(string, encoding='latin1') # Try loading it again with different encoding
+                obj = pkl.loads(string, encoding='latin1', **kwargs) # Try loading it again with different encoding
             except Exception as E2:
                 try:
                     if verbose: print(f'Encoded unpickling failed ({str(E2)}), trying dill...')
                     import dill # Optional Sciris dependency
-                    obj = dill.loads(string) # If that fails, try dill
+                    obj = dill.loads(string, **kwargs) # If that fails, try dill
                 except Exception as E3:
                     try:
                         if verbose: print(f'Dill failed ({str(E3)}), trying robust unpickler...')
-                        obj = _RobustUnpickler(io.BytesIO(string), remapping=remapping).load() # And if that trails, throw everything at it
-                    except Exception as E4: # pragma: no cover
-                        errormsg = f'All available unpickling methods failed:\n    Standard: {E1}\n     Encoded: {E2}\n        Dill: {E3}\n      Robust: {E4}'
-                        raise Exception(errormsg)
+                        obj = _RobustUnpickler(io.BytesIO(string), remapping=remapping).load() # And if that fails, throw everything at it
+                    except Exception as E4:
+                        try:
+                            if verbose: print(f'Robust failed ({str(E4)}), trying ultrarobust unpickler...')
+                            obj = _UltraRobustUnpickler(io.BytesIO(string), unpicklingerrors=[E1, E2, E3, E4]).load() # And if that fails, really throw everything at it
+                        except Exception as E5: # pragma: no cover
+                            errormsg = f'''
+All available unpickling methods failed:
+    Standard: {E1}
+     Encoded: {E2}
+        Dill: {E3}
+      Robust: {E4}
+ Ultrarobust: {E5}'''
+                            raise Exception(errormsg)
 
     if isinstance(obj, Failed):
         print('Warning, the following errors were encountered during unpickling:')

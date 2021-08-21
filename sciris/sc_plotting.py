@@ -20,6 +20,7 @@ Highlights:
 
 import os
 import struct
+import warnings
 import datetime as dt
 import pylab as pl
 import numpy as np
@@ -1222,20 +1223,21 @@ def SIticks(ax=None, axis='y', fixed=False):
 
 
 
-def dateformatter(start_day=None, dateformat=None, interval=None, start=None, end=None, ax=None):
+def dateformatter(start_date=None, dateformat=None, interval=None, start=None, end=None, rotation=None, ax=None, **kwargs):
     '''
     Create an automatic date formatter based on a number of days and a start day.
 
-    Wrapper for Matplotlib's date formatter. Note, start_day is not required if the
+    Wrapper for Matplotlib's date formatter. Note, start_date is not required if the
     axis uses dates already (otherwise, the mapping will follow Matplotlib's default,
     i.e. 0 = 1970-01-01). Note: this function is intended to work on the x-axis only.
 
     Args:
-        start_day (str/date): the start day, either as a string or date object; if none is supplied, treat current data as a date
+        start_date (str/date): the start day, either as a string or date object; if none is supplied, treat current data as a date
         dateformat (str): the date format (default '%Y-%b-%d')
         interval (int): if supplied, the interval between ticks (must supply an axis also to take effect)
         start (str/int): if supplied, the lower limit of the axis
         end (str/int): if supplied, the upper limit of the axis
+        rotation (float): rotation of the labels, in degrees
         ax (axes): if supplied, automatically set the x-axis formatter for this axis
 
     **Examples**::
@@ -1247,11 +1249,21 @@ def dateformatter(start_day=None, dateformat=None, interval=None, start=None, en
         # Manually configure
         ax = pl.subplot(111)
         ax.plot(np.arange(60), np.random.random(60))
-        formatter = sc.dateformatter(start_day='2020-04-04', interval=7, start='2020-05-01', end=50, dateformat='%m-%d', ax=ax)
+        formatter = sc.dateformatter(start_date='2020-04-04', interval=7, start='2020-05-01', end=50, dateformat='%m-%d', ax=ax)
         ax.xaxis.set_major_formatter(formatter)
 
     New in version 1.2.0.
+    New in version 1.2.2: "rotation" argument; renamed "start_day" to "start_date"
     '''
+
+    # Handle deprecation
+    start_day = kwargs.pop('start_day', None)
+    if start_day is not None: # pragma: no cover
+        start_date = start_day
+        warnmsg = 'sc.dateformatter() argument "start_day" has been deprecated as of v1.2.2; use "start_date" instead'
+        warnings.warn(warnmsg, category=DeprecationWarning, stacklevel=2)
+
+    # Handle axis
     if ax is None:
         ax = pl.gca()
 
@@ -1260,25 +1272,29 @@ def dateformatter(start_day=None, dateformat=None, interval=None, start=None, en
         dateformat = '%Y-%m-%d'
 
     # Convert to a date object
-    if start_day is None:
-        start_day = pl.num2date(ax.dataLim.x0)
-    start_day = ut.date(start_day)
+    if start_date is None:
+        start_date = pl.num2date(ax.dataLim.x0)
+    start_date = ut.date(start_date)
 
     @mpl.ticker.FuncFormatter
     def mpl_formatter(x, pos):
-        return (start_day + dt.timedelta(days=int(x))).strftime(dateformat)
+        return (start_date + dt.timedelta(days=int(x))).strftime(dateformat)
 
     # Handle limits
     xmin, xmax = ax.get_xlim()
     if start:
-        xmin = ut.day(start, start_day=start_day)
+        xmin = ut.day(start, start_date=start_date)
     if end:
-        xmax = ut.day(end, start_day=start_day)
+        xmax = ut.day(end, start_date=start_date)
     ax.set_xlim((xmin, xmax))
 
     # Set the x-axis intervals
     if interval:
         ax.set_xticks(np.arange(xmin, xmax+1, interval))
+
+    # Set the rotation
+    if rotation:
+        ax.tick_params(axis='x', labelrotation=rotation)
 
     # Set the formatter
     ax.xaxis.set_major_formatter(mpl_formatter)

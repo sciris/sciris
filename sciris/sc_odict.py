@@ -710,24 +710,34 @@ class odict(OD):
         return self.reverse(copy=True)
 
 
-    def make(self, keys=None, vals=None, keys2=None, keys3=None):
+    def make(self, keys=None, vals=None, keys2=None, keys3=None, coerce='full'):
         '''
         An alternate way of making or adding to an odict.
 
+        Args:
+            keys (list/int): the list of keys to use
+            vals (list/arr): the list of values to use
+            keys2 (list/int): for a second level of nesting
+            keys3 (list/int): for a third level of nesting
+            coerce (str): what types to coerce into being separate dict entries
+
         **Examples**::
 
-            a = odict().make(5) # Make an odict of length 5, populated with Nones and default key names
-            b = odict().make('foo',34) # Make an odict with a single key 'foo' of value 34
-            c = odict().make(['a','b']) # Make an odict with keys 'a' and 'b'
-            d = odict().make(['a','b'],0) # Make an odict with keys 'a' and 'b', initialized to 0
-            e = odict().make(keys=['a','b'], vals=[1,2]) # Make an odict with 'a':1 and 'b':2
-            f = odict({'a':34, 'b':58}).make(['c','d'],[99,45]) # Add extra keys to an exising odict
-            g = odict().make(keys=['a','b','c'], keys2=['A','B','C'], keys3=['x','y','z'], vals=0) # Make a triply nested odict
+            a = sc.odict().make(5) # Make an odict of length 5, populated with Nones and default key names
+            b = sc.odict().make('foo',34) # Make an odict with a single key 'foo' of value 34
+            c = sc.odict().make(['a','b']) # Make an odict with keys 'a' and 'b'
+            d = sc.odict().make(['a','b'], 0) # Make an odict with keys 'a' and 'b', initialized to 0
+            e = sc.odict().make(keys=['a','b'], vals=[1,2]) # Make an odict with 'a':1 and 'b':2
+            f = sc.odict().make(keys=['a','b'], vals=np.array([1,2])) # As above, since arrays are coerced into lists
+            g = sc.odict({'a':34, 'b':58}).make(['c','d'],[99,45]) # Add extra keys to an exising odict
+            h = sc.odict().make(keys=['a','b','c'], keys2=['A','B','C'], keys3=['x','y','z'], vals=0) # Make a triply nested odict
+
+        New in version 1.2.2: "coerce" argument
         '''
         # Handle keys
         keylist = []
         if keys is None and vals is None:
-            return None # Nothing to do if nothing supplied
+            return self # Nothing to do if nothing supplied
         if keys is None and vals is not None:
             keys = len(ut.promotetolist(vals)) # Values are supplied but keys aren't: use default keys
         if isinstance(keys, ut._numtype): # It's a single number: pre-generate
@@ -742,7 +752,7 @@ class odict(OD):
         nkeys = len(keylist)
 
         # Handle values
-        vals = ut.promotetolist(vals)
+        vals = ut.promotetolist(vals, coerce=coerce)
         nvals = len(vals)
         if nvals==0: # Special case: it's an empty list
             vallist = [ut.dcp(vals) for _ in range(nkeys)]
@@ -763,7 +773,7 @@ class odict(OD):
             for key,val in zip(keylist,vallist): # Update odict
                 self.__setitem__(key, val)
 
-        return self # A bit weird, but usually would use this return an odict
+        return self # Return the odict
 
 
     def makefrom(self, source=None, keys=None, keynames=None, *args, **kwargs):

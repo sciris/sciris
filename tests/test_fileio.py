@@ -168,7 +168,7 @@ def test_json():
     notjson = sc.jsonify(not_jsonifiable, die=False) # Will return a string representation
     sc.sanitizejson(not_jsonifiable, die=True) # Will still not die thanks to jsonpickle
 
-    jsonifiable = sc.objdict().make(keys=['a','b'], vals=pl.rand(10))
+    jsonifiable = sc.objdict().make(keys=['a','b'], vals=pl.rand(10), coerce='none')
     json_obj = sc.jsonify(jsonifiable)
     json_str = sc.jsonify(jsonifiable, tostring=True, indent=2) # kwargs are passed to json.dumps()
 

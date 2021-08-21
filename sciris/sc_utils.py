@@ -34,6 +34,7 @@ import copy
 import time
 import json
 import zlib
+import types
 import psutil
 import pprint
 import hashlib
@@ -45,9 +46,11 @@ import string
 import tempfile
 import warnings
 import numpy as np
+import pylab as pl
 import random as rnd
 import datetime as dt
 import uuid as py_uuid
+import pkg_resources as pkgr
 import traceback as py_traceback
 from textwrap import fill
 from functools import reduce
@@ -76,8 +79,8 @@ else:
 ##############################################################################
 
 # Define the modules being loaded
-__all__ = ['fast_uuid', 'uuid', 'dcp', 'cp', 'pp', 'sha', 'wget', 'htmlify', 'traceback',
-           'getplatform', 'iswindows', 'islinux', 'ismac']
+__all__ = ['fast_uuid', 'uuid', 'dcp', 'cp', 'pp', 'sha', 'wget', 'htmlify', 'freeze', 'require',
+           'traceback', 'getplatform', 'iswindows', 'islinux', 'ismac']
 
 
 def fast_uuid(which=None, length=None, n=1, secure=False, forcelist=False, safety=1000, recursion=0, recursion_limit=10, verbose=True):
@@ -381,6 +384,103 @@ def htmlify(string, reverse=False, tostring=False):
         output = html.unescape(string)
         output = output.replace('<br>','\n').replace('<br />','\n').replace('<BR>','\n')
     return output
+
+
+def freeze(lower=False):
+    '''
+    Alias for pip freeze.
+
+    Args:
+        lower (bool): convert all keys to lowercase
+
+    **Example**::
+
+        assert 'numpy' in sc.freeze() # One way to check for versions
+
+    New in version 1.2.2.
+    '''
+    raw = dict(tuple(str(ws).split()) for ws in pkgr.working_set)
+    keys = sorted(raw.keys())
+    if lower:
+        labels = {k:k.lower() for k in keys}
+    else:
+        labels = {k:k for k in keys}
+    data = {labels[k]:raw[k] for k in keys} # Sort alphabetically
+    return data
+
+
+def require(reqs=None, *args, exact=False, detailed=False, die=True, verbose=True, **kwargs):
+    '''
+    Check whether environment requirements are met. Alias to pkg_resources.require().
+
+    Args:
+        reqs (list/dict): a list of strings, or a dict of package names and versions
+        args (list): additional requirements
+        kwargs (dict): additional requirements
+        exact (bool): use '==' instead of '>=' as the default comparison operator if not specified
+        detailed (bool): return a dict of which requirements are/aren't met
+        die (bool): whether to raise an exception if requirements aren't met
+        verbose (bool): print out the exception if it's not being raised
+
+    **Examples**::
+
+        sc.require('numpy')
+        sc.require(numpy='')
+        sc.require(reqs={'numpy':'1.19.1', 'matplotlib':'3.2.2'})
+        sc.require('numpy>=1.19.1', 'matplotlib==3.2.2', die=False)
+        sc.require(numpy='1.19.1', matplotlib='==4.2.2', die=False, detailed=True)
+
+    New in version 1.2.2.
+    '''
+
+    # Handle inputs
+    reqlist = list(args)
+    reqdict = kwargs
+    if isinstance(reqs, dict):
+        reqdict.update(reqs)
+    else:
+        reqlist = mergelists(reqs, reqlist)
+
+    # Turn into a list of strings
+    comparechars = '<>=!~'
+    for k,v in reqdict.items():
+        if not v:
+            entry = k # If no version is provided, entry is just the module name
+        else:
+            compare = '' if v.startswith(tuple(comparechars)) else ('==' if exact else '>=')
+            entry = k + compare + v
+        reqlist.append(entry)
+
+    # Check the requirements
+    data = dict()
+    errs = dict()
+    for entry in reqlist:
+        try:
+            pkgr.require(entry)
+            data[entry] = True
+        except Exception as E:
+            data[entry] = False
+            errs[entry] = E
+
+    # Figure out output
+    met = all([e==True for e in data.values()])
+
+    # Handle exceptions
+    if not met:
+        errormsg = 'The following requirements were not met:'
+        for k,v in data.items():
+            if not v:
+                errormsg += f'\n  {k}: {str(errs[k])}'
+        if die:
+            raise ModuleNotFoundError(errormsg) from errs[k] # Use the last one
+        elif verbose:
+            print(errormsg)
+
+    # Handle output
+    if detailed:
+        return data, errs
+    else:
+        return met
 
 
 def traceback(*args, **kwargs):
@@ -1446,7 +1546,9 @@ def isarray(obj, dtype=None):
 
 def promotetoarray(x, keepnone=False, **kwargs):
     '''
-    Small function to ensure consistent format for things that should be arrays.
+    Small function to ensure consistent format for things that should be arrays
+    (note: toarray()/promotetoarray() are identical).
+
     Very similar to ``np.array``, with the main difference being that ``sc.promotetoarray(3)``
     will return ``np.array([3])`` (i.e. a 1-d array that can be iterated over), while
     ``np.array(3)`` will return a 0-d array that can't be iterated over.
@@ -1464,31 +1566,40 @@ def promotetoarray(x, keepnone=False, **kwargs):
     New in version 1.1.0: replaced "skipnone" with "keepnone"; allowed passing
     kwargs to ``np.array()``.
     '''
+    skipnone = kwargs.pop('skipnone', None)
+    if skipnone is not None: # pragma: no cover
+        keepnone = not(skipnone)
+        warnmsg = 'sc.promotetoarray() argument "skipnone" has been deprecated as of v1.1.0; use keepnone instead'
+        warnings.warn(warnmsg, category=DeprecationWarning, stacklevel=2)
     if isnumber(x) or (isinstance(x, np.ndarray) and not np.shape(x)): # e.g. 3 or np.array(3)
         x = [x]
     elif x is None and not keepnone:
         x = []
-    if kwargs.pop('skipnone', None) is not None: # pragma: no cover
-        warnmsg = 'sc.promotetoarray() argument "skipnone" has been deprecated as of v1.1.0; use keepnone instead'
-        warnings.warn(warnmsg, category=DeprecationWarning, stacklevel=2)
     output = np.array(x, **kwargs)
     return output
 
 
-def promotetolist(obj=None, objtype=None, keepnone=False, coerce=None):
+def promotetolist(obj=None, objtype=None, keepnone=False, coerce='default'):
     '''
-    Make sure object is always a list.
+    Make sure object is always a list (note: tolist()/promotetolist() are identical).
 
     Used so functions can handle inputs like ``'a'``  or ``['a', 'b']``. In other
     words, if an argument can either be a single thing (e.g., a single dict key)
     or a list (e.g., a list of dict keys), this function can be used to do the
     conversion, so it's always safe to iterate over the output.
 
+    While this usually wraps objects in a list rather than converts them to a list,
+    the "coerce" argument can be used to change this behavior. Options are:
+
+    - 'none' or None: do not coerce
+    - 'default': coerce objects that were lists in Python 2 (range, map, dict_keys, dict_values, dict_items)
+    - 'full': all the types in default, plus tuples and arrays
+
     Args:
         obj (anything): object to ensure is a list
         objtype (anything): optional type to check for each element; see ``sc.checktype()`` for details
         keepnone (bool): if ``keepnone`` is false, then ``None`` is converted to ``[]``; else, it's converted to ``[None]``
-        coerce (tuple): optional tuple of additional types to coerce to a list (as opposed to wrapping in a list)
+        coerce (str/tuple):  tuple of additional types to coerce to a list (as opposed to wrapping in a list)
 
     **Examples**::
 
@@ -1496,6 +1607,7 @@ def promotetolist(obj=None, objtype=None, keepnone=False, coerce=None):
         sc.promotetolist(np.array([3,5])) # Returns [np.array([3,5])] -- not [3,5]!
         sc.promotetolist(np.array([3,5]), coerce=np.ndarray) # Returns [3,5], since arrays are coerced to lists
         sc.promotetolist(None) # Returns []
+        sc.promotetolist(range(3)) # Returns [0,1,2] since range is coerced by default
         sc.promotetolist(['a', 'b', 'c'], objtype='number') # Raises exception
 
         def myfunc(data, keys):
@@ -1508,7 +1620,20 @@ def promotetolist(obj=None, objtype=None, keepnone=False, coerce=None):
         myfunc(data, keys='a') # Still works, equivalent to needing to supply keys=['a'] without promotetolist()
 
     New in version 1.1.0: "coerce" argument
+    New in version 1.2.2: default coerce values
     '''
+    # Handle coerce
+    default_coerce = (range, map, type({}.keys()), type({}.values()), type({}.items()))
+    if isinstance(coerce, str):
+        if coerce == 'none':
+            coerce = None
+        elif coerce == 'default':
+            coerce = default_coerce
+        elif coerce == 'full':
+            coerce = default_coerce + (tuple, np.ndarray)
+        else:
+            errormsg = f'Option "{coerce}"; not recognized; must be "none", "default", or "full"'
+
     if objtype is None: # Don't do type checking
         if isinstance(obj, list):
             output = obj # If it's already a list and we're not doing type checking, just return
@@ -1540,14 +1665,9 @@ def promotetolist(obj=None, objtype=None, keepnone=False, coerce=None):
     return output
 
 
-def toarray(*args, **kwargs):
-    ''' Alias to sc.promotetoarray(). New in version 1.1.0. '''
-    return promotetoarray(*args, **kwargs)
-
-
-def tolist(*args, **kwargs):
-    ''' Alias to sc.promotetolist(). New in version 1.1.0. '''
-    return promotetolist(*args, **kwargs)
+# Aliases for core functions
+toarray = promotetoarray
+tolist = promotetolist
 
 
 def transposelist(obj):
@@ -1753,9 +1873,11 @@ def readdate(datestr=None, *args, dateformat=None, return_defaults=False):
     Convenience function for loading a date from a string. If dateformat is None,
     this function tries a list of standard date types.
 
-    Caution: If a number is supplied, it is treated as a timestamp in seconds.
-    To convert a Matplotlib date number (which is a number of days from 1970),
-    use ``pl.num2date()``.
+    By default, a numeric date is treated as a POSIX (Unix) timestamp. This can be changed
+    with the ``dateformat`` argument, specifically:
+
+    - 'posix'/None: treat as a POSIX timestamp, in seconds from 1970
+    - 'ordinal'/'matplotlib': treat as an ordinal number of days from 1970 (Matplotlib default)
 
     Args:
         datestr (int, float, str or list): the string containing the date, or the timestamp (in seconds), or a list of either
@@ -1771,6 +1893,7 @@ def readdate(datestr=None, *args, dateformat=None, return_defaults=False):
         dateobj  = sc.readdate('2020-03-03') # Standard format, so works
         dateobj  = sc.readdate('04-03-2020', dateformat='dmy') # Date is ambiguous, so need to specify day-month-year order
         dateobj  = sc.readdate(1611661666) # Can read timestamps as well
+        dateobj  = sc.readdate(16166, dateformat='ordinal') # Or ordinal numbers of days, as used by Matplotlib
         dateobjs = sc.readdate(['2020-06', '2020-07'], dateformat='%Y-%m') # Can read custom date formats
         dateobjs = sc.readdate('20200321', 1611661666) # Can mix and match formats
     '''
@@ -1815,13 +1938,13 @@ def readdate(datestr=None, *args, dateformat=None, return_defaults=False):
         return formats_to_try
 
     # Handle date formats
+    format_list = promotetolist(dateformat, keepnone=True) # Keep none which signifies default
     if dateformat is not None:
         if dateformat == 'dmy':
             formats_to_try = dmy_formats
         elif dateformat == 'mdy':
             formats_to_try = mdy_formats
         else:
-            format_list = promotetolist(dateformat)
             formats_to_try = {}
             for f,fmt in enumerate(format_list):
                 formats_to_try[f'User supplied {f}'] = fmt
@@ -1837,7 +1960,13 @@ def readdate(datestr=None, *args, dateformat=None, return_defaults=False):
         if isinstance(datestr, dt.datetime):
             dateobj = datestr # Nothing to do
         elif isnumber(datestr):
-            dateobj = dt.datetime.fromtimestamp(datestr)
+            if 'posix' in format_list or None in format_list:
+                dateobj = dt.datetime.fromtimestamp(datestr)
+            elif 'ordinal' in format_list or 'matplotlib' in format_list:
+                dateobj = pl.num2date(datestr)
+            else:
+                errormsg = f'Could not convert numeric date {datestr} using available formats {strjoin(format_list)}; must be "posix" or "ordinal"'
+                raise ValueError(errormsg)
         else:
             for key,fmt in formats_to_try.items():
                 try:
@@ -1858,7 +1987,7 @@ def readdate(datestr=None, *args, dateformat=None, return_defaults=False):
     return output
 
 
-def date(obj, *args, start_date=None, dateformat=None, as_date=True):
+def date(obj, *args, start_date=None, readformat=None, outformat=None, as_date=True, **kwargs):
     '''
     Convert any reasonable object -- a string, integer, or datetime object, or
     list/array of any of those -- to a date object. To convert an integer to a
@@ -1866,16 +1995,15 @@ def date(obj, *args, start_date=None, dateformat=None, as_date=True):
 
     Caution: while this function and readdate() are similar, and indeed this function
     calls readdate() if the input is a string, in this function an integer is treated
-    as a number of days from start_day, while for readdate() it is treated as a
-    timestamp in seconds.
-
-    Caution 2: To convert a Matplotlib date from a number, use ``pl.num2date()``.
+    as a number of days from start_date, while for readdate() it is treated as a
+    timestamp in seconds. To change
 
     Args:
         obj (str, int, date, datetime, list, array): the object to convert
         args (str, int, date, datetime): additional objects to convert
         start_date (str, date, datetime): the starting date, if an integer is supplied
-        dateformat (str): the format to return the date in, if returning a string
+        readformat (str/list): the format to read the date in; passed to sc.readdate()
+        outformat (str): the format to output the date in, if returning a string
         as_date (bool): whether to return as a datetime date instead of a string
 
     Returns:
@@ -1884,15 +2012,24 @@ def date(obj, *args, start_date=None, dateformat=None, as_date=True):
     **Examples**::
 
         sc.date('2020-04-05') # Returns datetime.date(2020, 4, 5)
-        sc.date([35,36,37], as_date=False) # Returns ['2020-02-05', '2020-02-06', '2020-02-07']
+        sc.date([35,36,37], start_date='2020-01-01', as_date=False) # Returns ['2020-02-05', '2020-02-06', '2020-02-07']
+        sc.date(1923288822, readformat='posix') # Interpret as a POSIX timestamp
 
     New in version 1.0.0.
+    New in version 1.2.2: "readformat" argument; renamed "dateformat" to "outformat"
     '''
+    # Handle deprecation
+    dateformat = kwargs.pop('dateformat', None)
+    if dateformat is not None: # pragma: no cover
+        outformat = dateformat
+        warnmsg = 'sc.date() argument "dateformat" has been deprecated as of v1.2.2; use "outformat" instead'
+        warnings.warn(warnmsg, category=DeprecationWarning, stacklevel=2)
+
     # Convert to list and handle other inputs
     if obj is None:
         return None
-    if dateformat is None:
-        dateformat = '%Y-%m-%d'
+    if outformat is None:
+        outformat = '%Y-%m-%d'
     obj, is_list, is_array = _sanitize_iterables(obj, *args)
 
     dates = []
@@ -1906,19 +2043,22 @@ def date(obj, *args, start_date=None, dateformat=None, as_date=True):
             elif isinstance(d, dt.datetime):
                 d = d.date()
             elif isstring(d):
-                d = readdate(d).date()
+                d = readdate(d, dateformat=readformat).date()
             elif isnumber(d):
-                if start_date is None:
-                    errormsg = f'To convert the number {d} to a date, you must supply start_date'
-                    raise ValueError(errormsg)
-                d = date(start_date) + dt.timedelta(days=int(d))
+                if readformat is not None:
+                    d = readdate(d, dateformat=readformat).date()
+                else:
+                    if start_date is None:
+                        errormsg = f'To convert the number {d} to a date, you must either specify "posix" or "ordinal" read format, or supply start_date'
+                        raise ValueError(errormsg)
+                    d = date(start_date) + dt.timedelta(days=int(d))
             else: # pragma: no cover
                 errormsg = f'Cannot interpret {type(d)} as a date, must be date, datetime, or string'
                 raise TypeError(errormsg)
             if as_date:
                 dates.append(d)
             else:
-                dates.append(d.strftime(dateformat))
+                dates.append(d.strftime(outformat))
         except Exception as E:
             errormsg = f'Conversion of "{d}" to a date failed: {str(E)}'
             raise ValueError(errormsg)
@@ -1928,7 +2068,7 @@ def date(obj, *args, start_date=None, dateformat=None, as_date=True):
     return output
 
 
-def day(obj, *args, start_day=None):
+def day(obj, *args, start_date=None, **kwargs):
     '''
     Convert a string, date/datetime object, or int to a day (int), the number of
     days since the start day. See also sc.date() and sc.daydiff(). If a start day
@@ -1937,7 +2077,7 @@ def day(obj, *args, start_day=None):
     Args:
         obj (str, date, int, list, array): convert any of these objects to a day relative to the start day
         args (list): additional days
-        start_day (str or date): the start day; if none is supplied, return days since (supplied year)-01-01.
+        start_date (str or date): the start day; if none is supplied, return days since (supplied year)-01-01.
 
     Returns:
         days (int or list): the day(s) in simulation time (matching input data type where possible)
@@ -1945,10 +2085,18 @@ def day(obj, *args, start_day=None):
     **Examples**::
 
         sc.day(sc.now()) # Returns how many days into the year we are
-        sc.day(['2021-01-21', '2024-04-04'], start_day='2022-02-22') # Days can be positive or negative
+        sc.day(['2021-01-21', '2024-04-04'], start_date='2022-02-22') # Days can be positive or negative
 
     New in version 1.0.0.
+    New in version 1.2.2: renamed "start_day" to "start_date"
     '''
+
+    # Handle deprecation
+    start_day = kwargs.pop('start_day', None)
+    if start_day is not None: # pragma: no cover
+        start_date = start_day
+        warnmsg = 'sc.day() argument "start_day" has been deprecated as of v1.2.2; use "start_date" instead'
+        warnings.warn(warnmsg, category=DeprecationWarning, stacklevel=2)
 
     # Do not process a day if it's not supplied, and ensure it's a list
     if obj is None:
@@ -1967,8 +2115,8 @@ def day(obj, *args, start_day=None):
                     d = readdate(d).date()
                 elif isinstance(d, dt.datetime):
                     d = d.date()
-                if start_day:
-                    start_date = date(start_day)
+                if start_date:
+                    start_date = date(start_date)
                 else:
                     start_date = date(f'{d.year}-01-01')
                 d_day = (d - start_date).days # Heavy lifting -- actually compute the day
@@ -2027,7 +2175,7 @@ def daterange(start_date, end_date, inclusive=True, as_date=False, dateformat=No
 
     New in version 1.0.0.
     '''
-    end_day = day(end_date, start_day=start_date)
+    end_day = day(end_date, start_date=start_date)
     if inclusive:
         end_day += 1
     days = list(range(end_day))
@@ -2089,7 +2237,7 @@ def datetoyear(dateobj, dateformat=None):
     return dateobj.year + year_part / year_length
 
 
-def elapsedtimestr(pasttime, maxdays=5, shortmonths=True):
+def elapsedtimestr(pasttime, maxdays=5, minseconds=10, shortmonths=True):
     """
     Accepts a datetime object or a string in ISO 8601 format and returns a
     human-readable string explaining when this time was.
@@ -2103,6 +2251,11 @@ def elapsedtimestr(pasttime, maxdays=5, shortmonths=True):
     * If in a different year, print the date with the whole year
 
     These can be configured as options.
+
+    **Examples**::
+
+        yesterday = sc.datedelta(sc.now(), days=-1)
+        sc.elapsedtimestr(yesterday)
     """
 
     # Elapsed time function by Alex Chan
@@ -2156,7 +2309,7 @@ def elapsedtimestr(pasttime, maxdays=5, shortmonths=True):
 
         # Check if the time is within the last minute
         if elapsed_time < dt.timedelta(seconds=60):
-            if elapsed_time.seconds <= 10:
+            if elapsed_time.seconds <= minseconds:
                 time_str = "just now"
             else:
                 time_str = f"{elapsed_time.seconds} secs ago"
@@ -2609,10 +2762,17 @@ def compareversions(version1, version2):
         sc.compareversions('3.1', '2.99') # returns 1
         sc.compareversions('3.1', '>=2.99') # returns True
         sc.compareversions(mymodule.__version__, '>=1.0') # common usage pattern
+        sc.compareversions(mymodule, '>=1.0') # alias to the above
 
     New in version 1.2.1: relational operators
     '''
     # Handle inputs
+    if isinstance(version1, types.ModuleType):
+        try:
+            version1 = version1.__version__
+        except Exception as E:
+            errormsg = f'{version1} is a module, but does not have a __version__ attribute'
+            raise AttributeError(errormsg) from E
     v1 = str(version1)
     v2 = str(version2)
 
@@ -3240,7 +3400,7 @@ def nestedloop(inputs, loop_order):
 #%% Classes
 ##############################################################################
 
-__all__ += ['KeyNotFoundError', 'LinkException', 'prettyobj', 'Link', 'Timer']
+__all__ += ['KeyNotFoundError', 'LinkException', 'prettyobj', 'autolist', 'Link', 'Timer']
 
 
 class KeyNotFoundError(KeyError):
@@ -3305,13 +3465,46 @@ class prettyobj(object):
         a: 4
         b: 6
         ————————————————————————————————————————————————————————————
-
-
     '''
 
     def __repr__(self):
         output  = prepr(self)
         return output
+
+
+class autolist(list):
+    '''
+    A simple extension to a list that defines add methods to simplify appending
+    and extension.
+
+    **Examples**::
+
+        ls = sc.autolist(3) # Quickly convert a scalar to a list
+
+        ls = sc.autolist()
+        for i in range(5):
+            ls += i # No need for ls += [i]
+    '''
+    def __init__(self, *args):
+        arglist = mergelists(*args) # Convert non-iterables to iterables
+        return super().__init__(arglist)
+
+    def __add__(self, obj=None):
+        ''' Allows non-lists to be concatenated '''
+        obj = promotetolist(obj)
+        new = super().__add__(obj)
+        return new
+
+    def __radd__(self, obj):
+        ''' Allows sum() to work correctly '''
+        return self.__add__(obj)
+
+    def __iadd__(self, obj):
+        ''' Allows += to work correctly '''
+        obj = promotetolist(obj)
+        self.extend(obj)
+        return self
+
 
 
 class Link(object):
