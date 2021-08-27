@@ -477,10 +477,13 @@ def rolling(data, window=7, operation='mean', **kwargs):
     roll = data.rolling(window=window, **kwargs)
 
     # Handle output
-    if operation in [None, 'none']: output = roll
-    elif operation == 'mean':       output = roll.mean().values
-    elif operation == 'median':     output = roll.median().values
-    elif operation == 'sum':        output = roll.sum().values
+    if   operation in [None, 'none']: output = roll
+    elif operation == 'mean':         output = roll.mean().values
+    elif operation == 'median':       output = roll.median().values
+    elif operation == 'sum':          output = roll.sum().values
+    else:
+        errormsg = f'Operation "{operation}" not recognized; must be mean, median, sum, or none'
+        raise ValueError(errormsg)
 
     return output
 
