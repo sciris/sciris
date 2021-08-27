@@ -6,6 +6,13 @@ All notable changes to this project will be documented in this file.
 By import convention, components of the Sciris library are listed beginning with ``sc.``, e.g. ``sc.odict()``.
 
 
+Version 1.2.3 (2021-08-27)
+--------------------------
+#. Fixed a bug with ``sc.asd()`` failing for ``verbose > 1``. (Thanks to Nick Scott and Romesh Abeysuriya.)
+#. Added ``sc.rolling()`` as a shortcut to pandas' rolling average function.
+#. Added a ``die`` argument to ``sc.findfirst()`` and ``sc.findlast()``, to allow returning no indices without error.
+
+
 Version 1.2.2 (2021-08-21)
 --------------------------
 
