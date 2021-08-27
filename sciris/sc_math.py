@@ -337,7 +337,7 @@ def isprime(n, verbose=False):
 ### Other functions
 ##############################################################################
 
-__all__ += ['perturb', 'normsum', 'normalize', 'inclusiverange', 'smooth', 'smoothinterp', 'randround', 'cat']
+__all__ += ['perturb', 'normsum', 'normalize', 'inclusiverange', 'rolling', 'smooth', 'smoothinterp', 'randround', 'cat']
 
 
 def perturb(n=1, span=0.5, randseed=None, normal=False):
@@ -450,6 +450,39 @@ def inclusiverange(*args, **kwargs):
     x = np.linspace(start, stop, int(round((stop-start)/float(step))+1)) # Can't use arange since handles floating point arithmetic badly, e.g. compare arange(2000, 2020, 0.2) with arange(2000, 2020.2, 0.2)
 
     return x
+
+
+def rolling(data, window=7, operation='mean', **kwargs):
+    '''
+    Alias to Pandas' rolling() (window) method to smooth a series.
+
+    Args:
+        data (list/arr): the 1D or 2D data to be smoothed
+        window (int): the length of the window
+        operation (str): the operation to perform: 'mean' (default), 'median', 'sum', or 'none'
+        kwargs (dict): passed to pd.Series.rolling()
+
+    **Example**::
+
+        data = [5,5,5,0,0,0,0,7,7,7,7,0,0,3,3,3]
+        rolled = sc.rolling(data)
+    '''
+    import pandas as pd # Optional import
+
+    # Handle the data
+    data = np.array(data)
+    data = pd.Series(data) if data.ndim == 1 else pd.DataFrame(data)
+
+    # Perform the roll
+    roll = data.rolling(window=window, **kwargs)
+
+    # Handle output
+    if operation in [None, 'none']: output = roll
+    elif operation == 'mean':       output = roll.mean().values
+    elif operation == 'median':     output = roll.median().values
+    elif operation == 'sum':        output = roll.sum().values
+
+    return output
 
 
 def smooth(data, repeats=None):
