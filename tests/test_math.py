@@ -5,6 +5,7 @@ Test Sciris math functions.
 import numpy as np
 import pylab as pl
 import sciris as sc
+import pytest
 
 
 if 'doplot' not in locals(): doplot = False
@@ -69,6 +70,9 @@ def test_find():
     print('Testing sc.findfirst(), sc.findlast()')
     found.first = sc.findfirst(pl.rand(10))
     found.last = sc.findlast(pl.rand(10))
+    sc.findlast([1,2,3], 4, die=False)
+    with pytest.raises(IndexError):
+        sc.findlast([1,2,3], 4)
 
     print('Testing sc.findnearest()')
     found.nearest = sc.findnearest([0,2,5,8], 3)

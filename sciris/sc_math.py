@@ -76,7 +76,7 @@ def safedivide(numerator=None, denominator=None, default=None, eps=None, warn=Fa
     return output
 
 
-def findinds(arr, val=None, eps=1e-6, first=False, last=False, **kwargs):
+def findinds(arr, val=None, eps=1e-6, first=False, last=False, die=True, **kwargs):
     '''
     Little function to find matches even if two things aren't eactly equal (eg.
     due to floats vs. ints). If one argument, find nonzero values. With two arguments,
@@ -89,23 +89,23 @@ def findinds(arr, val=None, eps=1e-6, first=False, last=False, **kwargs):
         eps (float): the precision for matching (default 1e-6, equivalent to np.isclose's atol)
         first (bool): whether to return the first matching value
         last (bool): whether to return the last matching value
+        die (bool): whether to raise an exception if first or last is true and no matches were found
         kwargs (dict): passed to np.isclose()
 
     **Examples**::
 
-        sc.findinds(rand(10)<0.5) # e.g. array([2, 4, 5, 9])
-        sc.findinds([2,3,6,3], 6) # e.g. array([2])
+        sc.findinds(rand(10)<0.5) # returns e.g. array([2, 4, 5, 9])
+        sc.findinds([2,3,6,3], 3) # returs array([1,3])
+        sc.findinds([2,3,6,3], 3, first=True) # returns 1
+
+    New in version 1.2.3: "die" argument
     '''
 
     # Handle first or last
-    if first and last:
-        raise ValueError('Can use first or last but not both')
-    elif first:
-        ind = 0
-    elif last:
-        ind = -1
-    else:
-        ind = None
+    if first and last: raise ValueError('Can use first or last but not both')
+    elif first: ind = 0
+    elif last:  ind = -1
+    else:       ind = None
 
     # Handle kwargs
     atol = kwargs.pop('atol', eps) # Ensure atol isn't specified twice
@@ -131,13 +131,20 @@ def findinds(arr, val=None, eps=1e-6, first=False, last=False, **kwargs):
                 warnings.warn(warnmsg, category=RuntimeWarning, stacklevel=2)
 
     # Process output
-    if arr.ndim == 1: # Uni-dimensional
-        output = output[0] # Return an array rather than a tuple of arrays if one-dimensional
-        if ind is not None:
-            output = output[ind] # And get the first element
-    else:
-        if ind is not None:
-            output = [output[i][ind] for i in range(arr.ndim)]
+    try:
+        if arr.ndim == 1: # Uni-dimensional
+            output = output[0] # Return an array rather than a tuple of arrays if one-dimensional
+            if ind is not None:
+                output = output[ind] # And get the first element
+        else:
+            if ind is not None:
+                output = [output[i][ind] for i in range(arr.ndim)]
+    except IndexError as E:
+        if die:
+            errormsg = 'No matching values found; use die=False to return None instead of raising an exception'
+            raise IndexError(errormsg) from E
+        else:
+            output = None
 
     return output
 
