@@ -76,7 +76,7 @@ def safedivide(numerator=None, denominator=None, default=None, eps=None, warn=Fa
     return output
 
 
-def findinds(arr, val=None, eps=1e-6, first=False, last=False, **kwargs):
+def findinds(arr, val=None, eps=1e-6, first=False, last=False, die=True, **kwargs):
     '''
     Little function to find matches even if two things aren't eactly equal (eg.
     due to floats vs. ints). If one argument, find nonzero values. With two arguments,
@@ -89,23 +89,23 @@ def findinds(arr, val=None, eps=1e-6, first=False, last=False, **kwargs):
         eps (float): the precision for matching (default 1e-6, equivalent to np.isclose's atol)
         first (bool): whether to return the first matching value
         last (bool): whether to return the last matching value
+        die (bool): whether to raise an exception if first or last is true and no matches were found
         kwargs (dict): passed to np.isclose()
 
     **Examples**::
 
-        sc.findinds(rand(10)<0.5) # e.g. array([2, 4, 5, 9])
-        sc.findinds([2,3,6,3], 6) # e.g. array([2])
+        sc.findinds(rand(10)<0.5) # returns e.g. array([2, 4, 5, 9])
+        sc.findinds([2,3,6,3], 3) # returs array([1,3])
+        sc.findinds([2,3,6,3], 3, first=True) # returns 1
+
+    New in version 1.2.3: "die" argument
     '''
 
     # Handle first or last
-    if first and last:
-        raise ValueError('Can use first or last but not both')
-    elif first:
-        ind = 0
-    elif last:
-        ind = -1
-    else:
-        ind = None
+    if first and last: raise ValueError('Can use first or last but not both')
+    elif first: ind = 0
+    elif last:  ind = -1
+    else:       ind = None
 
     # Handle kwargs
     atol = kwargs.pop('atol', eps) # Ensure atol isn't specified twice
@@ -131,13 +131,20 @@ def findinds(arr, val=None, eps=1e-6, first=False, last=False, **kwargs):
                 warnings.warn(warnmsg, category=RuntimeWarning, stacklevel=2)
 
     # Process output
-    if arr.ndim == 1: # Uni-dimensional
-        output = output[0] # Return an array rather than a tuple of arrays if one-dimensional
-        if ind is not None:
-            output = output[ind] # And get the first element
-    else:
-        if ind is not None:
-            output = [output[i][ind] for i in range(arr.ndim)]
+    try:
+        if arr.ndim == 1: # Uni-dimensional
+            output = output[0] # Return an array rather than a tuple of arrays if one-dimensional
+            if ind is not None:
+                output = output[ind] # And get the first element
+        else:
+            if ind is not None:
+                output = [output[i][ind] for i in range(arr.ndim)]
+    except IndexError as E:
+        if die:
+            errormsg = 'No matching values found; use die=False to return None instead of raising an exception'
+            raise IndexError(errormsg) from E
+        else:
+            output = None
 
     return output
 
@@ -330,7 +337,7 @@ def isprime(n, verbose=False):
 ### Other functions
 ##############################################################################
 
-__all__ += ['perturb', 'normsum', 'normalize', 'inclusiverange', 'smooth', 'smoothinterp', 'randround', 'cat']
+__all__ += ['perturb', 'normsum', 'normalize', 'inclusiverange', 'rolling', 'smooth', 'smoothinterp', 'randround', 'cat']
 
 
 def perturb(n=1, span=0.5, randseed=None, normal=False):
@@ -443,6 +450,42 @@ def inclusiverange(*args, **kwargs):
     x = np.linspace(start, stop, int(round((stop-start)/float(step))+1)) # Can't use arange since handles floating point arithmetic badly, e.g. compare arange(2000, 2020, 0.2) with arange(2000, 2020.2, 0.2)
 
     return x
+
+
+def rolling(data, window=7, operation='mean', **kwargs):
+    '''
+    Alias to Pandas' rolling() (window) method to smooth a series.
+
+    Args:
+        data (list/arr): the 1D or 2D data to be smoothed
+        window (int): the length of the window
+        operation (str): the operation to perform: 'mean' (default), 'median', 'sum', or 'none'
+        kwargs (dict): passed to pd.Series.rolling()
+
+    **Example**::
+
+        data = [5,5,5,0,0,0,0,7,7,7,7,0,0,3,3,3]
+        rolled = sc.rolling(data)
+    '''
+    import pandas as pd # Optional import
+
+    # Handle the data
+    data = np.array(data)
+    data = pd.Series(data) if data.ndim == 1 else pd.DataFrame(data)
+
+    # Perform the roll
+    roll = data.rolling(window=window, **kwargs)
+
+    # Handle output
+    if   operation in [None, 'none']: output = roll
+    elif operation == 'mean':         output = roll.mean().values
+    elif operation == 'median':       output = roll.median().values
+    elif operation == 'sum':          output = roll.sum().values
+    else:
+        errormsg = f'Operation "{operation}" not recognized; must be mean, median, sum, or none'
+        raise ValueError(errormsg)
+
+    return output
 
 
 def smooth(data, repeats=None):

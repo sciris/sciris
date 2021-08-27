@@ -226,7 +226,7 @@ def asd(function, x, args=None, stepsize=0.1, sinc=2, sdec=2, pinc=2, pdec=2,
             flag = '--' # Marks no change
             if np.isnan(fvalnew):
                 if verbose >= 1: print('ASD: Warning, objective function returned NaN')
-        if verbose > 0 and not (count % int(1.0/verbose)): # Print out every 1/verbose steps
+        if verbose > 0 and not (count % max(1, int(1.0/verbose))): # Print out every 1/verbose steps
             orig, best, new, diff = ut.sigfig([fvalorig, fvalold, fvalnew, fvalnew-fvalold])
             print(offset + label + f' step {count} ({time()-start:0.1f} s) {flag} (orig:{orig} | best:{best} | new:{new} | diff:{diff})')
 
