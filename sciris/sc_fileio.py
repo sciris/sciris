@@ -130,6 +130,7 @@ https://stackoverflow.com/questions/41554738/how-to-load-an-old-pickle-file
     try:
         obj = _unpickler(filestr, filename=filename, verbose=verbose, die=die, remapping=remapping, method=method, **kwargs) # Actually load it
     except Exception as E:
+        exc = type(E) # Figure out what kind of error it is
         errormsg = unpicklingerror + '\n\nSee the stack trace above for more information on this specific error.'
         raise exc(errormsg) from E
 
