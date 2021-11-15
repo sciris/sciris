@@ -5,6 +5,10 @@ All notable changes to this project will be documented in this file.
 
 By import convention, components of the Sciris library are listed beginning with ``sc.``, e.g. ``sc.odict()``.
 
+Version 1.2.4 (2021-11-15)
+--------------------------
+#. Fixed a bug with checking types when saving files
+
 
 Version 1.2.3 (2021-08-27)
 --------------------------
