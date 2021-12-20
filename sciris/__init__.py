@@ -16,3 +16,4 @@ from .sc_parallel  import *
 from .sc_fileio    import *
 from .sc_asd       import *
 from .sc_plotting  import *
+from .sc_colors    import *
