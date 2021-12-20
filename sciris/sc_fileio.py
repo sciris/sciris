@@ -130,6 +130,7 @@ https://stackoverflow.com/questions/41554738/how-to-load-an-old-pickle-file
     try:
         obj = _unpickler(filestr, filename=filename, verbose=verbose, die=die, remapping=remapping, method=method, **kwargs) # Actually load it
     except Exception as E:
+        exc = type(E) # Figure out what kind of error it is
         errormsg = unpicklingerror + '\n\nSee the stack trace above for more information on this specific error.'
         exc = type(E)
         raise exc(errormsg) from E
@@ -171,7 +172,7 @@ def saveobj(filename=None, obj=None, compresslevel=5, verbose=0, folder=None, me
     '''
 
     # Handle path
-    filetypes = (str, type(Path()), None)
+    filetypes = (str, type(Path()), type(None))
     if isinstance(filename, Path): # If it's a path object, convert to string
         filename = str(filename)
     if filename is None: # If it doesn't exist, just create a byte stream
