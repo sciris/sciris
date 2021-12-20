@@ -1771,7 +1771,7 @@ def mergelists(*args, copy=False, **kwargs):
 ##############################################################################
 
 __all__ += ['now', 'getdate', 'readdate', 'date', 'day', 'daydiff', 'daterange', 'datedelta', 'datetoyear',
-            'elapsedtimestr', 'tic', 'toc', 'toctic', 'timedsleep']
+            'elapsedtimestr', 'tic', 'toc', 'toctic', 'Timer', 'timer', 'timedsleep']
 
 def now(timezone=None, utc=False, die=False, astype='dateobj', tostring=False, dateformat=None):
     '''
@@ -2476,6 +2476,56 @@ def timedsleep(delay=None, verbose=True):
                 print(f'Warning, delay less than elapsed time ({delay:0.1f} vs. {elapsed:0.1f})')
     return None
 
+
+class Timer(object):
+    '''
+    Simple timer class
+
+    This wraps ``tic`` and ``toc`` with the formatting arguments and
+    the start time (at construction)
+    Use this in a ``with...as`` block to automatically print
+    elapsed time when the block finishes.
+
+    Implementation based on https://preshing.com/20110924/timing-your-code-using-pythons-with-statement/
+
+    Example making repeated calls to the same Timer::
+
+        >>> timer = Timer()
+        >>> timer.toc()
+        Elapsed time: 2.63 s
+        >>> timer.toc()
+        Elapsed time: 5.00 s
+
+    Example wrapping code using with-as::
+
+        >>> with Timer(label='mylabel') as t:
+        >>>     foo()
+
+    '''
+    def __init__(self, label=None, **kwargs):
+        self.tic()
+        self.kwargs = kwargs #: Store kwargs to pass to :func:`toc` at the end of the block
+        self.kwargs['label'] = label
+        return
+
+    def __enter__(self):
+        ''' Reset start time when entering with-as block '''
+        self.tic()
+        return self
+
+    def __exit__(self, *args):
+        ''' Print elapsed time when leaving a with-as block '''
+        self.toc()
+
+    def tic(self):
+        ''' Set start time '''
+        self.start = tic()
+
+    def toc(self):
+        ''' Print elapsed time '''
+        toc(self.start,**self.kwargs)
+
+timer = Timer # Alias
 
 
 ##############################################################################
@@ -3400,7 +3450,7 @@ def nestedloop(inputs, loop_order):
 #%% Classes
 ##############################################################################
 
-__all__ += ['KeyNotFoundError', 'LinkException', 'prettyobj', 'autolist', 'Link', 'Timer']
+__all__ += ['KeyNotFoundError', 'LinkException', 'prettyobj', 'autolist', 'Link']
 
 
 class KeyNotFoundError(KeyError):
@@ -3544,51 +3594,3 @@ class Link(object):
     def __deepcopy__(self, *args, **kwargs):
         ''' Same as copy '''
         return self.__copy__(*args, **kwargs)
-
-
-class Timer(object):
-    '''
-    Simple timer class
-
-    This wraps ``tic`` and ``toc`` with the formatting arguments and
-    the start time (at construction)
-    Use this in a ``with...as`` block to automatically print
-    elapsed time when the block finishes.
-
-    Implementation based on https://preshing.com/20110924/timing-your-code-using-pythons-with-statement/
-
-    Example making repeated calls to the same Timer::
-
-        >>> timer = Timer()
-        >>> timer.toc()
-        Elapsed time: 2.63 s
-        >>> timer.toc()
-        Elapsed time: 5.00 s
-
-    Example wrapping code using with-as::
-
-        >>> with Timer(label='mylabel') as t:
-        >>>     foo()
-
-    '''
-    def __init__(self,**kwargs):
-        self.tic()
-        self.kwargs = kwargs #: Store kwargs to pass to :func:`toc` at the end of the block
-        return
-
-    def __enter__(self):
-        ''' Reset start time when entering with-as block '''
-        self.tic()
-        return self
-
-    def __exit__(self, *args):
-        ''' Print elapsed time when leaving a with-as block '''
-        self.toc()
-
-    def tic(self):
-        ''' Set start time '''
-        self.start = tic()
-
-    def toc(self):
-        ''' Print elapsed time '''
-        toc(self.start,**self.kwargs)
