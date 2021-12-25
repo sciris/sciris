@@ -9,6 +9,8 @@ of ``sc.sc_parallel.parallelize()``.
 # Import everything
 from .sc_version   import *
 from .sc_utils     import *
+from .sc_printing  import *
+from .sc_datetime  import *
 from .sc_math      import *
 from .sc_odict     import *
 from .sc_dataframe import *
