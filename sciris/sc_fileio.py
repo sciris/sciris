@@ -32,9 +32,11 @@ from pathlib import Path
 import copyreg as cpreg
 import pickle as pkl
 import gzip as gz
-from . import sc_utils as ut
-from .sc_odict import odict
-from .sc_dataframe import dataframe
+from . import sc_utils as scu
+from . import sc_printing as scp
+from . import sc_datetime as scd
+from . import sc_odict as sco
+from . import sc_dataframe as scdf
 
 
 ##############################################################################
@@ -80,7 +82,7 @@ def loadobj(filename=None, folder=None, verbose=False, die=None, remapping=None,
     # Handle loading of either filename or file object
     if isinstance(filename, Path):
         filename = str(filename)
-    if ut.isstring(filename):
+    if scu.isstring(filename):
         argtype = 'filename'
         filename = makefilepath(filename=filename, folder=folder, makedirs=False) # If it is a file, validate the folder (but don't create one if it's missing)
     elif isinstance(filename, io.BytesIO):
@@ -284,7 +286,7 @@ def savetext(filename=None, string=None):
         sc.savetext('my-document.txt', text)
     '''
     if isinstance(string, list): string = '\n'.join(string) # Convert from list to string)
-    if not ut.isstring(string):  string = str(string)
+    if not scu.isstring(string):  string = str(string)
     filename = makefilepath(filename=filename)
     with open(filename, 'w') as f: f.write(string)
     return None
@@ -300,7 +302,7 @@ def savezip(filename=None, filelist=None, folder=None, basename=True, verbose=Tr
         sc.savezip('scripts.zip', scripts)
     '''
     fullpath = makefilepath(filename=filename, folder=folder, sanitize=True)
-    filelist = ut.promotetolist(filelist)
+    filelist = scu.promotetolist(filelist)
     with ZipFile(fullpath, 'w') as zf: # Create the zip file
         for thisfile in filelist:
             thispath = makefilepath(filename=thisfile, abspath=False)
@@ -420,7 +422,7 @@ def makefilepath(filename=None, folder=None, ext=None, default=None, split=False
 
     # Process filename
     if filename is None: # pragma: no cover
-        defaultnames = ut.promotetolist(default) # Loop over list of default names
+        defaultnames = scu.promotetolist(default) # Loop over list of default names
         for defaultname in defaultnames:
             if not filename and defaultname: filename = defaultname # Replace empty name with default name
     if filename is not None: # If filename exists by now, use it
@@ -519,7 +521,7 @@ def thisdir(file=None, path=None, *args, aspath=False, **kwargs):
     if file is None:
          file = str(Path(inspect.stack()[1][1])) # Adopted from Atomica
     folder = os.path.abspath(os.path.dirname(file))
-    path = ut.mergelists(path, *args)
+    path = scu.mergelists(path, *args)
     filepath = os.path.join(folder, *path)
     if aspath:
         filepath = Path(filepath, **kwargs)
@@ -556,7 +558,7 @@ def sanitizejson(obj, verbose=True, die=False, tostring=False, **kwargs):
     elif isinstance(obj, (bool, np.bool_)): # It's true/false
         output = bool(obj)
 
-    elif ut.isnumber(obj): # It's a number
+    elif scu.isnumber(obj): # It's a number
         if np.isnan(obj): # It's nan, so return None
             output = None
         else:
@@ -565,7 +567,7 @@ def sanitizejson(obj, verbose=True, die=False, tostring=False, **kwargs):
             else:
                 output = float(obj)# It's something else, treat it as a float
 
-    elif ut.isstring(obj): # It's a string of some kind
+    elif scu.isstring(obj): # It's a string of some kind
         try:    string = str(obj) # Try to convert it to ascii
         except: string = obj # Give up and use original
         output = string
@@ -753,22 +755,24 @@ class Blobject(object):
     def __init__(self, source=None, name=None, filename=None, blob=None):
         # Handle inputs
         if source   is None and filename is not None: source   = filename # Reset the source to be the filename, e.g. Spreadsheet(filename='foo.xlsx')
-        if filename is None and ut.isstring(source):  filename = source   # Reset the filename to be the source, e.g. Spreadsheet('foo.xlsx')
+        if filename is None and scu.isstring(source):  filename = source   # Reset the filename to be the source, e.g. Spreadsheet('foo.xlsx')
         if name     is None and filename is not None: name     = os.path.basename(filename) # If not supplied, use the filename
         if blob is not None and source is not None: raise ValueError('Can initialize from either source or blob, but not both')
 
         # Define quantities
         self.name      = name # Name of the object
         self.filename  = filename # Filename (used as default for load/save)
-        self.created   = ut.now() # When the object was created
-        self.modified  = ut.now() # When it was last modified
+        self.created   = scd.now() # When the object was created
+        self.modified  = scd.now() # When it was last modified
         self.blob  = blob # The binary data
         self.bytes = None # The filestream representation of the binary data
         if source is not None: self.load(source)
         return None
 
+
     def __repr__(self):
-        return ut.prepr(self, skip=['blob','bytes'])
+        return scp.prepr(self, skip=['blob','bytes'])
+
 
     def load(self, source=None):
         '''
@@ -805,14 +809,15 @@ class Blobject(object):
         else:
             if isinstance(source,io.BytesIO):
                 self.blob = read_bin(source)
-            elif ut.isstring(source):
+            elif scu.isstring(source):
                 self.blob = read_file(source)
             else:
                 errormsg = f'Input source must be type string (for a filename) or BytesIO, not {type(source)}'
                 raise TypeError(errormsg)
 
-        self.modified = ut.now()
+        self.modified = scd.now()
         return None
+
 
     def save(self, filename=None):
         ''' This function writes the spreadsheet to a file on disk. '''
@@ -822,6 +827,7 @@ class Blobject(object):
         self.filename = filename
         print(f'Object saved to {filepath}.')
         return filepath
+
 
     def tofile(self, output=True):
         '''
@@ -839,6 +845,7 @@ class Blobject(object):
             self.bytes = bytesblob
             return None
 
+
     def freshbytes(self):
         ''' Refresh the bytes object to accept new data '''
         self.bytes = io.BytesIO()
@@ -851,7 +858,7 @@ class Spreadsheet(Blobject): # pragma: no cover
     A class for reading and writing Excel files in binary format. No disk IO needs
     to happen to manipulate the spreadsheets with openpyexcel (or xlrd or pandas).
 
-    Version: 2018sep03
+    New in version 1.3.0: Changed default from xlrd to openpyexcel.
     '''
 
     def xlrd(self, *args, **kwargs):
@@ -863,15 +870,17 @@ class Spreadsheet(Blobject): # pragma: no cover
         book = xlrd.open_workbook(file_contents=self.tofile().read(), *args, **kwargs)
         return book
 
+
     def openpyexcel(self, *args, **kwargs):
         ''' Return a book as opened by openpyexcel '''
         try:
             import openpyexcel # Optional import
         except ModuleNotFoundError as e:
-            raise ModuleNotFoundError('The "openpyexcel" Python package is not available; please install manually') from e
+            raise ModuleNotFoundError('The "openpyexcel" Python package is not available; please install manually via "pip install openpyexcel" (not to be confused with openpyxl)') from e
         self.tofile(output=False)
         book = openpyexcel.load_workbook(self.bytes, *args, **kwargs) # This stream can be passed straight to openpyexcel
         return book
+
 
     def pandas(self, *args, **kwargs):
         ''' Return a book as opened by pandas '''
@@ -883,12 +892,14 @@ class Spreadsheet(Blobject): # pragma: no cover
         book = pandas.ExcelFile(self.bytes, *args, **kwargs)
         return book
 
+
     def update(self, book):
         ''' Updated the stored spreadsheet with book instead '''
         self.tofile(output=False)
         book.save(self.freshbytes())
         self.load()
         return None
+
 
     @staticmethod
     def _getsheet(book, sheetname=None, sheetnum=None):
@@ -897,20 +908,16 @@ class Spreadsheet(Blobject): # pragma: no cover
         else:                       sheet = book.active
         return sheet
 
+
     def readcells(self, wbargs=None, *args, **kwargs):
         ''' Alias to loadspreadsheet() '''
-        if 'method' in kwargs:
-            method = kwargs['method']
-            kwargs.pop('method')
-        else:
-            method = None
-        if method is None: method = 'xlrd'
+        method = kwargs.pop('method', 'openpyexcel')
         f = self.tofile()
         kwargs['fileobj'] = f
 
         # Read in sheetoutput (sciris dataframe object for xlrd, 2D numpy array for openpyexcel).
         if method == 'xlrd':
-            sheetoutput = loadspreadsheet(*args, **kwargs)  # returns sciris dataframe object
+            sheetoutput = loadspreadsheet(*args, **kwargs, method='xlrd')  # returns sciris dataframe object
         elif method == 'openpyexcel':
             if wbargs is None: wbargs = {}
             book = self.openpyexcel(**wbargs)
@@ -921,10 +928,10 @@ class Spreadsheet(Blobject): # pragma: no cover
                 for c,val in enumerate(rowdata):
                     sheetoutput[r][c] = rawdata[r][c].value
         else:
-            errormsg = f'Reading method not found; must be one of xlrd, openpyexcel, or pandas, not {method}'
+            errormsg = f'Reading method not found; must be openpyexcel or xlrd, not {method}'
             raise ValueError(errormsg)
 
-        # Return the appropriate output.
+        # Return the appropriate output
         cells = kwargs.get('cells')
         if cells is None:  # If no cells specified, return the whole sheet.
             return sheetoutput
@@ -956,16 +963,16 @@ class Spreadsheet(Blobject): # pragma: no cover
 
         # Determine the cells
         if cells is not None: # A list of cells is supplied
-            cells = ut.promotetolist(cells)
-            vals  = ut.promotetolist(vals)
+            cells = scu.promotetolist(cells)
+            vals  = scu.promotetolist(vals)
             if len(cells) != len(vals):
                 errormsg = f'If using cells, cells and vals must have the same length ({len(cells)} vs. {len(vals)})'
                 raise ValueError(errormsg)
             for cell,val in zip(cells,vals):
                 try:
-                    if ut.isstring(cell): # Handles e.g. cell='A1'
+                    if scu.isstring(cell): # Handles e.g. cell='A1'
                         cellobj = ws[cell]
-                    elif ut.checktype(cell, 'arraylike','number') and len(cell)==2: # Handles e.g. cell=(0,0)
+                    elif scu.checktype(cell, 'arraylike','number') and len(cell)==2: # Handles e.g. cell=(0,0)
                         cellobj = ws.cell(row=cell[0], column=cell[1])
                     else:
                         errormsg = f'Cell must be formatted as a label or row-column pair, e.g. "A1" or (3,5); not "{cell}"'
@@ -1007,61 +1014,70 @@ class Spreadsheet(Blobject): # pragma: no cover
         Blobject.save(self, filepath)
 
 
-def loadspreadsheet(filename=None, folder=None, fileobj=None, sheetname=None, sheetnum=None, asdataframe=None, header=True, cells=None): # pragma: no cover
+def loadspreadsheet(filename=None, folder=None, fileobj=None, sheetname=None, sheetnum=None, asdataframe=None, header=True, cells=None, method='pandas'): # pragma: no cover
     '''
     Load a spreadsheet as a list of lists or as a dataframe. Read from either a filename or a file object.
 
     Note: this function is deprecated and may be removed in a future version. Use
     ``pandas.read_excel()`` instead.
+
+    New in version 1.3.0: change default from xlrd to pandas.
     '''
-    try:
-        import xlrd # Optional import
-    except ModuleNotFoundError as e:
-        raise ModuleNotFoundError('The "xlrd" Python package is not available; please install manually') from e
+    if method == 'pandas':
+        ...
 
-    # Handle inputs
-    if asdataframe is None: asdataframe = True
-    if isinstance(filename, io.BytesIO): fileobj = filename # It's actually a fileobj
-    if fileobj is None:
-        fullpath = makefilepath(filename=filename, folder=folder)
-        book = xlrd.open_workbook(fullpath)
-    else:
-        book = xlrd.open_workbook(file_contents=fileobj.read())
-    if sheetname is not None:
-        sheet = book.sheet_by_name(sheetname)
-    else:
-        if sheetnum is None: sheetnum = 0
-        sheet = book.sheet_by_index(sheetnum)
+    elif method == 'openpyexcel':
+        ...
 
-    # Load the raw data
-    rawdata = []
-    for rownum in range(sheet.nrows-header):
-        rawdata.append(odict())
-        for colnum in range(sheet.ncols):
-            if header: attr = sheet.cell_value(0,colnum)
-            else:      attr = f'Column {colnum}'
-            attr = ut.uniquename(attr, namelist=rawdata[rownum].keys(), style='(%d)')
-            val = sheet.cell_value(rownum+header,colnum)
-            try:
-                val = float(val) # Convert it to a number if possible
-            except:
-                try:    val = str(val)  # But give up easily and convert to a string (not Unicode)
-                except: pass # Still no dice? Fine, we tried
-            rawdata[rownum][str(attr)] = val
+    elif method == 'xlrd':
+        try:
+            import xlrd # Optional import
+        except ModuleNotFoundError as e:
+            raise ModuleNotFoundError('The "xlrd" Python package is not available; please install manually') from e
 
-    # Convert to dataframe
-    if asdataframe:
-        cols = rawdata[0].keys()
-        reformatted = []
-        for oldrow in rawdata:
-            newrow = list(oldrow[:])
-            reformatted.append(newrow)
-        dfdata = dataframe(cols=cols, data=reformatted)
-        return dfdata
+        # Handle inputs
+        if asdataframe is None: asdataframe = True
+        if isinstance(filename, io.BytesIO): fileobj = filename # It's actually a fileobj
+        if fileobj is None:
+            fullpath = makefilepath(filename=filename, folder=folder)
+            book = xlrd.open_workbook(fullpath)
+        else:
+            book = xlrd.open_workbook(file_contents=fileobj.read())
+        if sheetname is not None:
+            sheet = book.sheet_by_name(sheetname)
+        else:
+            if sheetnum is None: sheetnum = 0
+            sheet = book.sheet_by_index(sheetnum)
 
-    # Or leave in the original format
-    else:
-        return rawdata
+        # Load the raw data
+        rawdata = []
+        for rownum in range(sheet.nrows-header):
+            rawdata.append(sco.odict())
+            for colnum in range(sheet.ncols):
+                if header: attr = sheet.cell_value(0,colnum)
+                else:      attr = f'Column {colnum}'
+                attr = scu.uniquename(attr, namelist=rawdata[rownum].keys(), style='(%d)')
+                val = sheet.cell_value(rownum+header,colnum)
+                try:
+                    val = float(val) # Convert it to a number if possible
+                except:
+                    try:    val = str(val)  # But give up easily and convert to a string (not Unicode)
+                    except: pass # Still no dice? Fine, we tried
+                rawdata[rownum][str(attr)] = val
+
+        # Convert to dataframe
+        if asdataframe:
+            cols = rawdata[0].keys()
+            reformatted = []
+            for oldrow in rawdata:
+                newrow = list(oldrow[:])
+                reformatted.append(newrow)
+            dfdata = scdf.dataframe(cols=cols, data=reformatted)
+            return dfdata
+
+        # Or leave in the original format
+        else:
+            return rawdata
 
 
 def savespreadsheet(filename=None, data=None, folder=None, sheetnames=None, close=True, formats=None, formatdata=None, verbose=False): # pragma: no cover
@@ -1115,23 +1131,23 @@ def savespreadsheet(filename=None, data=None, folder=None, sheetnames=None, clos
     except ModuleNotFoundError as e: # pragma: no cover
             raise ModuleNotFoundError('The "xlsxwriter" Python package is not available; please install manually') from e
     fullpath = makefilepath(filename=filename, folder=folder, default='default.xlsx')
-    datadict   = odict()
-    formatdict = odict()
+    datadict   = sco.odict()
+    formatdict = sco.odict()
     hasformats = (formats is not None) and (formatdata is not None)
 
     # Handle input arguments
     if isinstance(data, dict) and sheetnames is None:
         if verbose: print('Data is a dict, taking sheetnames from keys')
         sheetnames = data.keys()
-        datadict   = odict(data) # Use directly, converting to odict first
-        if hasformats: formatdict = odict(formatdata) #  NB, might be None but should be ok
+        datadict   = sco.odict(data) # Use directly, converting to odict first
+        if hasformats: formatdict = sco.odict(formatdata) #  NB, might be None but should be ok
     elif isinstance(data, dict) and sheetnames is not None:
         if verbose: print('Data is a dict, taking sheetnames from input')
         if len(sheetnames) != len(data):
             errormsg = f'If supplying data as a dict as well as sheetnames, length must match ({len(data)} vs {len(sheetnames)})'
             raise ValueError(errormsg)
-        datadict   = odict(data) # Use directly, but keep original sheet names
-        if hasformats: formatdict = odict(formatdata)
+        datadict   = sco.odict(data) # Use directly, but keep original sheet names
+        if hasformats: formatdict = sco.odict(formatdata)
     elif not isinstance(data, dict):
         if sheetnames is None:
             if verbose: print('Data is a simple array')
@@ -1177,7 +1193,7 @@ def savespreadsheet(filename=None, data=None, folder=None, sheetnames=None, clos
                 if hasformats:
                     thisformat = workbook_formats[sheetformat[r][c]] # Get the actual format
                 try:
-                    if not ut.isnumber(cell_data):
+                    if not scu.isnumber(cell_data):
                         cell_data = str(cell_data) # Convert everything except numbers to strings -- use formatting to handle the rest
                     worksheet.write(r, c, cell_data, thisformat) # Write with or without formatting
                 except Exception as E:
@@ -1204,13 +1220,13 @@ __all__ += ['Failed', 'Empty']
 
 class Failed(object):
     ''' An empty class to represent a failed object loading '''
-    failure_info = odict()
+    failure_info = sco.odict()
 
     def __init__(self, *args, **kwargs):
         pass
 
     def __repr__(self):
-        output = ut.objrepr(self) # This does not include failure_info since it's a class attribute
+        output = scp.objrepr(self) # This does not include failure_info since it's a class attribute
         output += self.showfailures(verbose=False, tostring=True)
         return output
 
@@ -1261,7 +1277,7 @@ class UniversalFailed(Failed):
         return
 
     def __repr__(self):
-        output = ut.objrepr(self) # This does not include failure_info since it's a class attribute
+        output = scp.objrepr(self) # This does not include failure_info since it's a class attribute
         return output
 
     def __setstate__(self, state):
@@ -1280,14 +1296,14 @@ class UniversalFailed(Failed):
         return
 
     def disp(self, *args, **kwargs):
-        return ut.pr(self, *args, **kwargs)
+        return scu.pr(self, *args, **kwargs)
 
 
 def makefailed(module_name=None, name=None, error=None, exception=None, universal=False):
     ''' Create a class -- not an object! -- that contains the failure info for a pickle that failed to load '''
     base = UniversalFailed if universal else Failed
     key = f'Failure {len(base.failure_info)+1}'
-    base.failure_info[key] = odict()
+    base.failure_info[key] = sco.odict()
     base.failure_info[key]['module']    = module_name
     base.failure_info[key]['class']     = name
     base.failure_info[key]['error']     = error
@@ -1333,7 +1349,7 @@ class _UltraRobustUnpickler(pkl.Unpickler):
 
     def find_class(self, module_name, name):
         ''' Ignore all attempts to use the actual class and always make a UniversalFailed class '''
-        error = ut.strjoin(self.unpicklingerrors)
+        error = scu.strjoin(self.unpicklingerrors)
         exception = self.unpicklingerrors
         obj = makefailed(module_name=module_name, name=name, error=error, exception=exception, universal=True)
         return obj
