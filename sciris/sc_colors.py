@@ -16,7 +16,7 @@ import struct
 import pylab as pl
 import numpy as np
 import matplotlib.colors as mplc
-from . import sc_utils as ut
+from . import sc_utils as scu
 
 
 ##############################################################################
@@ -29,7 +29,7 @@ __all__ = ['shifthue', 'rgb2hex', 'hex2rgb', 'rgb2hsv', 'hsv2rgb']
 def _listify_colors(colors, origndim=None):
     ''' Do standard transformation on colors -- internal helpfer function '''
     if not origndim:
-        colors = ut.dcp(colors) # So we don't overwrite the original
+        colors = scu.dcp(colors) # So we don't overwrite the original
         origndim = np.ndim(colors) # Original dimensionality
         if origndim==1:
             colors = [colors] # Wrap it in another list if needed
@@ -203,11 +203,11 @@ def vectocolor(vector, cmap=None, asarray=True, reverse=False, minval=None, maxv
             raise ValueError(f'{cmap} is not a valid color map; choices are:\n{choices}')
 
     # If a scalar is supplied, convert it to a vector instead
-    if ut.isnumber(vector):
+    if scu.isnumber(vector):
         vector = np.linspace(0, 1, vector)
 
     # Usual situation -- the vector has elements
-    vector = ut.dcp(vector) # To avoid in-place modification
+    vector = scu.dcp(vector) # To avoid in-place modification
     vector = np.array(vector) # Just to be sure
     if len(vector):
         if minval is None:
@@ -258,7 +258,7 @@ def arraycolors(arr, **kwargs):
 
     Version: 2020mar07
     """
-    arr = ut.dcp(arr) # Avoid modifications
+    arr = scu.dcp(arr) # Avoid modifications
     new_shape = arr.shape + (4,) # RGBα
     colors = np.zeros(new_shape)
     colorvec = vectocolor(vector=arr.reshape(-1), **kwargs)

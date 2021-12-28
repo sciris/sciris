@@ -14,7 +14,7 @@ import psutil
 import multiprocess as mp
 import numpy as np
 from functools import partial
-from . import sc_utils as ut
+from . import sc_utils as scu
 
 
 ##############################################################################
@@ -193,7 +193,7 @@ def parallelize(func, iterarg=None, iterkwargs=None, args=None, kwargs=None, ncp
         ncpus = int(mp.cpu_count()*ncpus)
 
     # Handle kwargs
-    kwargs = ut.mergedicts(kwargs, func_kwargs)
+    kwargs = scu.mergedicts(kwargs, func_kwargs)
 
     # Handle iterarg and iterkwargs
     niters = 0
@@ -202,7 +202,7 @@ def parallelize(func, iterarg=None, iterkwargs=None, args=None, kwargs=None, ncp
         errormsg = 'You can only use one of iterarg or iterkwargs as your iterable, not both'
         raise ValueError(errormsg)
     if iterarg is not None:
-        if not(ut.isiterable(iterarg)):
+        if not(scu.isiterable(iterarg)):
             try:
                 iterarg = np.arange(iterarg)
                 embarrassing = True
@@ -213,7 +213,7 @@ def parallelize(func, iterarg=None, iterkwargs=None, args=None, kwargs=None, ncp
     if iterkwargs is not None: # Check that iterkwargs has the right format
         if isinstance(iterkwargs, dict): # It's a dict of lists, e.g. {'x':[1,2,3], 'y':[2,3,4]}
             for key,val in iterkwargs.items():
-                if not ut.isiterable(val): # pragma: no cover
+                if not scu.isiterable(val): # pragma: no cover
                     errormsg = f'iterkwargs entries must be iterable, not {type(val)}'
                     raise TypeError(errormsg)
                 if not niters:
@@ -364,7 +364,7 @@ def parallel_progress(fcn, inputs, num_workers=None, show_progress=True, initial
     pool = pool.Pool(num_workers, initializer=initializer)
 
     results = [None]
-    if ut.isnumber(inputs):
+    if scu.isnumber(inputs):
         results *= inputs
         pbar = tqdm(total=inputs) if show_progress else None
     else:
@@ -376,7 +376,7 @@ def parallel_progress(fcn, inputs, num_workers=None, show_progress=True, initial
         if show_progress:
             pbar.update(1)
 
-    if ut.isnumber(inputs):
+    if scu.isnumber(inputs):
         for i in range(inputs):
             pool.apply_async(fcn, callback=partial(callback, idx=i))
     else:
@@ -397,7 +397,7 @@ def parallel_progress(fcn, inputs, num_workers=None, show_progress=True, initial
 ### Helper functions/classes
 ##############################################################################
 
-class TaskArgs(ut.prettyobj):
+class TaskArgs(scu.prettyobj):
         '''
         A class to hold the arguments for the parallel task -- not to be invoked by the user.
 
@@ -419,7 +419,7 @@ def _parallel_task(taskargs, outputqueue=None):
     ''' Task called by parallelize() -- not to be called directly '''
 
     # Handle inputs
-    taskargs = ut.dcp(taskargs)
+    taskargs = scu.dcp(taskargs)
     func   = taskargs.func
     index  = taskargs.index
     args   = taskargs.args

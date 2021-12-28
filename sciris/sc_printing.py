@@ -15,11 +15,11 @@ import pprint
 import numpy as np
 from textwrap import fill
 from collections import OrderedDict as OD
-from . import sc_utils as ut
+from . import sc_utils as scu
 
 
 # Add Windows support for colors (do this at the module level so that colorama.init() only gets called once)
-if ut.iswindows(): # pragma: no cover # NB: can't use startswith() because of 'cygwin'
+if scu.iswindows(): # pragma: no cover # NB: can't use startswith() because of 'cygwin'
     try:
         import colorama
         colorama.init()
@@ -61,8 +61,8 @@ def printv(string, thisverbose=1, verbose=2, newline=True, indent=True):
     if thisverbose>4 or verbose>4: print(f'Warning, verbosity should be from 0-4 (this message: {thisverbose}; current: {verbose})')
     if verbose>=thisverbose: # Only print if sufficiently verbose
         indents = '  '*thisverbose*bool(indent) # Create automatic indenting
-        if newline: print(indents+ut.flexstr(string)) # Actually print
-        else: print(indents+ut.flexstr(string)), # Actually print
+        if newline: print(indents+scu.flexstr(string)) # Actually print
+        else: print(indents+scu.flexstr(string)), # Actually print
     return None
 
 
@@ -182,7 +182,7 @@ def prepr(obj, maxlen=None, maxitems=None, skip=None, dividerchar='—', divider
     if maxlen   is None: maxlen   = 80
     if maxitems is None: maxitems = 100
     if skip     is None: skip = []
-    else:                skip = ut.promotetolist(skip)
+    else:                skip = scu.promotetolist(skip)
 
     # Initialize things to print out
     labels = []
@@ -311,7 +311,7 @@ def indent(prefix=None, text=None, suffix='\n', n=0, pretty=False, simple=True, 
 
     # Get text in the right format -- i.e. a string
     if pretty: text = pprint.pformat(text)
-    else:      text = ut.flexstr(text)
+    else:      text = scu.flexstr(text)
 
     # If there is no newline in the text, process the output normally.
     if text.find('\n') == -1:
@@ -375,7 +375,7 @@ def sigfig(x, sigfigs=5, SI=False, sep=False, keepints=False):
             if x==0:
                 output.append('0')
             elif sigfigs is None:
-                output.append(ut.flexstr(x)+suffix)
+                output.append(scu.flexstr(x)+suffix)
             elif x>(10**sigfigs) and not SI and keepints: # e.g. x = 23432.23, sigfigs=3, output is 23432
                 roundnumber = int(round(x))
                 if sep: string = format(roundnumber, ',')
@@ -396,7 +396,7 @@ def sigfig(x, sigfigs=5, SI=False, sep=False, keepints=False):
                 string += suffix
                 output.append(string)
         except: # pragma: no cover
-            output.append(ut.flexstr(x))
+            output.append(scu.flexstr(x))
     if islist:
         return tuple(output)
     else:
@@ -458,7 +458,7 @@ def printdata(data, name='Variable', depth=1, maxlen=40, indent='', level=0, sho
         elif datatype.__name__=='class':  string = (f'class with {len(dir(data))} components')
         else: string = datatype.__name__
         if showcontents and maxlen>0:
-            datastring = ' | '+ut.flexstr(data)
+            datastring = ' | '+scu.flexstr(data)
             if len(datastring)>maxlen: datastring = datastring[:maxlen] + ' <etc> ' + datastring[-maxlen:]
         else: datastring=''
         return string+datastring
@@ -513,7 +513,7 @@ def printvars(localvars=None, varlist=None, label=None, divider=True, spaces=1, 
     Version: 2017oct28
     '''
 
-    varlist = ut.promotetolist(varlist) # Make sure it's actually a list
+    varlist = scu.promotetolist(varlist) # Make sure it's actually a list
     dividerstr = '-'*40
 
     if label:  print(f'Variables for {label}:')
@@ -685,7 +685,7 @@ def colorize(color=None, string=None, output=False, showhelp=False, enable=True)
     for key, val in ansicolors.items(): ansicolors[key] = '\033[' + val + 'm'
 
     # Determine what color to use
-    colorlist = ut.promotetolist(color)  # Make sure it's a list
+    colorlist = scu.promotetolist(color)  # Make sure it's a list
     for color in colorlist:
         if color not in ansicolors.keys(): # pragma: no cover
             print(f'Color "{color}" is not available, use colorize(showhelp=True) to show options.')
@@ -791,7 +791,7 @@ def percentcomplete(step=None, maxsteps=None, stepsize=1, prefix=None):
     '''
     if prefix is None:
         prefix = ' '
-    elif ut.isnumber(prefix):
+    elif scu.isnumber(prefix):
         prefix = ' '*prefix
     onepercent = max(stepsize,round(maxsteps/100*stepsize)); # Calculate how big a single step is -- not smaller than 1
     if not step%onepercent: # Does this value lie on a percent

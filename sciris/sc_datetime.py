@@ -11,10 +11,9 @@ Highlights:
 import time
 import dateutil
 import warnings
-import numpy as np
 import pylab as pl
 import datetime as dt
-from . import sc_utils as ut
+from . import sc_utils as scu
 
 
 __all__ = ['now', 'getdate', 'readdate', 'date', 'day', 'daydiff', 'daterange', 'datedelta', 'datetoyear',
@@ -62,7 +61,7 @@ def getdate(obj=None, astype='str', dateformat=None):
             astype = 'str' # If dateformat is specified, assume type is a string
 
         try:
-            if ut.isstring(obj):
+            if scu.isstring(obj):
                 return obj # Return directly if it's a string
             obj.timetuple() # Try something that will only work if it's a date object
             dateobj = obj # Test passed: it's a date object
@@ -77,42 +76,6 @@ def getdate(obj=None, astype='str', dateformat=None):
             errormsg = f'"astype={astype}" not understood; must be "str" or "int"'
             raise ValueError(errormsg)
         return output
-
-
-def _sanitize_iterables(obj, *args):
-    '''
-    Take input as a list, array, or non-iterable type, along with one or more
-    arguments, and return a list, along with information on what the input types
-    were.
-
-    **Examples**::
-
-        _sanitize_iterables(1, 2, 3)             # Returns [1,2,3], False, False
-        _sanitize_iterables([1, 2], 3)           # Returns [1,2,3], True, False
-        _sanitize_iterables(np.array([1, 2]), 3) # Returns [1,2,3], True, True
-        _sanitize_iterables(np.array([1, 2, 3])) # Returns [1,2,3], False, True
-    '''
-    is_list = isinstance(obj, list) or len(args)>0 # If we're given a list of args, treat it like a list
-    is_array = isinstance(obj, np.ndarray) # Check if it's an array
-    if is_array: # If it is, convert it to a list
-        obj = obj.tolist()
-    objs = ut.dcp(ut.promotetolist(obj)) # Ensure it's a list, and deepcopy to avoid mutability
-    objs.extend(args) # Add on any arguments
-    return objs, is_list, is_array
-
-
-def _sanitize_output(obj, is_list, is_array, dtype=None):
-    '''
-    The companion to _sanitize_iterables, convert the object back to the original
-    type supplied.
-    '''
-    if is_array:
-        output = np.array(obj, dtype=dtype)
-    elif not is_list and len(obj) == 1:
-        output = obj[0]
-    else:
-        output = obj
-    return output
 
 
 def readdate(datestr=None, *args, dateformat=None, return_defaults=False):
@@ -185,7 +148,7 @@ def readdate(datestr=None, *args, dateformat=None, return_defaults=False):
         return formats_to_try
 
     # Handle date formats
-    format_list = ut.promotetolist(dateformat, keepnone=True) # Keep none which signifies default
+    format_list = scu.promotetolist(dateformat, keepnone=True) # Keep none which signifies default
     if dateformat is not None:
         if dateformat == 'dmy':
             formats_to_try = dmy_formats
@@ -197,7 +160,7 @@ def readdate(datestr=None, *args, dateformat=None, return_defaults=False):
                 formats_to_try[f'User supplied {f}'] = fmt
 
     # Ensure everything is in a consistent format
-    datestrs, is_list, is_array = _sanitize_iterables(datestr, *args)
+    datestrs, is_list, is_array = scu._sanitize_iterables(datestr, *args)
 
     # Actually process the dates
     dateobjs = []
@@ -206,13 +169,13 @@ def readdate(datestr=None, *args, dateformat=None, return_defaults=False):
         exceptions = {}
         if isinstance(datestr, dt.datetime):
             dateobj = datestr # Nothing to do
-        elif ut.isnumber(datestr):
+        elif scu.isnumber(datestr):
             if 'posix' in format_list or None in format_list:
                 dateobj = dt.datetime.fromtimestamp(datestr)
             elif 'ordinal' in format_list or 'matplotlib' in format_list:
                 dateobj = pl.num2date(datestr)
             else:
-                errormsg = f'Could not convert numeric date {datestr} using available formats {ut.strjoin(format_list)}; must be "posix" or "ordinal"'
+                errormsg = f'Could not convert numeric date {datestr} using available formats {scu.strjoin(format_list)}; must be "posix" or "ordinal"'
                 raise ValueError(errormsg)
         else:
             for key,fmt in formats_to_try.items():
@@ -222,7 +185,7 @@ def readdate(datestr=None, *args, dateformat=None, return_defaults=False):
                 except Exception as E:
                     exceptions[key] = str(E)
             if dateobj is None:
-                formatstr = ut.newlinejoin([f'{item[1]}' for item in formats_to_try.items()])
+                formatstr = scu.newlinejoin([f'{item[1]}' for item in formats_to_try.items()])
                 errormsg = f'Was unable to convert "{datestr}" to a date using the formats:\n{formatstr}'
                 if dateformat not in ['dmy', 'mdy']:
                     errormsg += '\n\nNote: to read day-month-year or month-day-year dates, use dateformat="dmy" or "mdy" respectively.'
@@ -230,7 +193,7 @@ def readdate(datestr=None, *args, dateformat=None, return_defaults=False):
         dateobjs.append(dateobj)
 
     # If only a single date was supplied, return just that; else return the list/array
-    output = _sanitize_output(dateobjs, is_list, is_array, dtype=object)
+    output = scu._sanitize_output(dateobjs, is_list, is_array, dtype=object)
     return output
 
 
@@ -277,7 +240,7 @@ def date(obj, *args, start_date=None, readformat=None, outformat=None, as_date=T
         return None
     if outformat is None:
         outformat = '%Y-%m-%d'
-    obj, is_list, is_array = _sanitize_iterables(obj, *args)
+    obj, is_list, is_array = scu._sanitize_iterables(obj, *args)
 
     dates = []
     for d in obj:
@@ -289,9 +252,9 @@ def date(obj, *args, start_date=None, readformat=None, outformat=None, as_date=T
                 pass
             elif isinstance(d, dt.datetime):
                 d = d.date()
-            elif ut.isstring(d):
+            elif scu.isstring(d):
                 d = readdate(d, dateformat=readformat).date()
-            elif ut.isnumber(d):
+            elif scu.isnumber(d):
                 if readformat is not None:
                     d = readdate(d, dateformat=readformat).date()
                 else:
@@ -311,7 +274,7 @@ def date(obj, *args, start_date=None, readformat=None, outformat=None, as_date=T
             raise ValueError(errormsg)
 
     # Return an integer rather than a list if only one provided
-    output = _sanitize_output(dates, is_list, is_array, dtype=object)
+    output = scu._sanitize_output(dates, is_list, is_array, dtype=object)
     return output
 
 
@@ -348,17 +311,17 @@ def day(obj, *args, start_date=None, **kwargs):
     # Do not process a day if it's not supplied, and ensure it's a list
     if obj is None:
         return None
-    obj, is_list, is_array = _sanitize_iterables(obj, *args)
+    obj, is_list, is_array = scu._sanitize_iterables(obj, *args)
 
     days = []
     for d in obj:
         if d is None:
             days.append(d)
-        elif ut.isnumber(d):
+        elif scu.isnumber(d):
             days.append(int(d)) # Just convert to an integer
         else:
             try:
-                if ut.isstring(d):
+                if scu.isstring(d):
                     d = readdate(d).date()
                 elif isinstance(d, dt.datetime):
                     d = d.date()
@@ -373,7 +336,7 @@ def day(obj, *args, start_date=None, **kwargs):
                 raise ValueError(errormsg)
 
     # Return an integer rather than a list if only one provided
-    output = _sanitize_output(days, is_list, is_array)
+    output = scu._sanitize_output(days, is_list, is_array)
     return output
 
 
@@ -477,7 +440,7 @@ def datetoyear(dateobj, dateformat=None):
 
     New in version 1.0.0.
     """
-    if ut.isstring(dateobj):
+    if scu.isstring(dateobj):
         dateobj = readdate(dateobj, dateformat=dateformat)
     year_part = dateobj - dt.datetime(year=dateobj.year, month=1, day=1)
     year_length = dt.datetime(year=dateobj.year + 1, month=1, day=1) - dt.datetime(year=dateobj.year, month=1, day=1)
@@ -753,7 +716,7 @@ def timedsleep(delay=None, verbose=True):
     return None
 
 
-class Timer(ut.prettyobj):
+class Timer(scu.prettyobj):
     '''
     Simple timer class. Note: sc.timer() and sc.Timer() are aliases.
 

@@ -894,7 +894,40 @@ def mergelists(*args, copy=False, **kwargs):
     return obj
 
 
+def _sanitize_iterables(obj, *args):
+    '''
+    Take input as a list, array, or non-iterable type, along with one or more
+    arguments, and return a list, along with information on what the input types
+    were.
 
+    **Examples**::
+
+        _sanitize_iterables(1, 2, 3)             # Returns [1,2,3], False, False
+        _sanitize_iterables([1, 2], 3)           # Returns [1,2,3], True, False
+        _sanitize_iterables(np.array([1, 2]), 3) # Returns [1,2,3], True, True
+        _sanitize_iterables(np.array([1, 2, 3])) # Returns [1,2,3], False, True
+    '''
+    is_list = isinstance(obj, list) or len(args)>0 # If we're given a list of args, treat it like a list
+    is_array = isinstance(obj, np.ndarray) # Check if it's an array
+    if is_array: # If it is, convert it to a list
+        obj = obj.tolist()
+    objs = dcp(promotetolist(obj)) # Ensure it's a list, and deepcopy to avoid mutability
+    objs.extend(args) # Add on any arguments
+    return objs, is_list, is_array
+
+
+def _sanitize_output(obj, is_list, is_array, dtype=None):
+    '''
+    The companion to _sanitize_iterables, convert the object back to the original
+    type supplied.
+    '''
+    if is_array:
+        output = np.array(obj, dtype=dtype)
+    elif not is_list and len(obj) == 1:
+        output = obj[0]
+    else:
+        output = obj
+    return output
 
 
 ##############################################################################
