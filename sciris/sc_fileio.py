@@ -859,7 +859,8 @@ class Spreadsheet(Blobject): # pragma: no cover
     A class for reading and writing Excel files in binary format. No disk IO needs
     to happen to manipulate the spreadsheets with openpyexcel (or xlrd or pandas).
 
-    New in version 1.3.0: Changed default from xlrd to openpyexcel.
+    New in version 1.3.0: Changed default from xlrd to openpyexcel and added self.wb
+    attribute to avoid the need to reload workbooks.
     '''
 
     def __init__(self, *args, **kwargs):
@@ -921,11 +922,10 @@ class Spreadsheet(Blobject): # pragma: no cover
         return None
 
 
-    @staticmethod
-    def _getsheet(book, sheetname=None, sheetnum=None):
-        if   sheetname is not None: sheet = book[sheetname]
-        elif sheetnum  is not None: sheet = book[book.sheetnames[sheetnum]]
-        else:                       sheet = book.active
+    def _getsheet(self, sheetname=None, sheetnum=None):
+        if   sheetname is not None: sheet = self.wb[sheetname]
+        elif sheetnum  is not None: sheet = self.wb[self.wb.sheetnames[sheetnum]]
+        else:                       sheet = self.wb.active
         return sheet
 
 
@@ -940,8 +940,8 @@ class Spreadsheet(Blobject): # pragma: no cover
             sheetoutput = loadspreadsheet(*args, **kwargs, method='xlrd')  # returns sciris dataframe object
         elif method == 'openpyexcel':
             if wbargs is None: wbargs = {}
-            book = self.openpyexcel(**wbargs)
-            ws = self._getsheet(book=book, sheetname=kwargs.get('sheetname'), sheetnum=kwargs.get('sheetname'))
+            self.openpyexcel(**wbargs)
+            ws = self._getsheet(sheetname=kwargs.get('sheetname'), sheetnum=kwargs.get('sheetname'))
             rawdata = tuple(ws.rows)
             sheetoutput = np.empty(np.shape(rawdata), dtype=object)
             for r,rowdata in enumerate(rawdata):
@@ -986,7 +986,7 @@ class Spreadsheet(Blobject): # pragma: no cover
         if verbose: print(f'Workbook loaded: {wb}')
 
         # Get right worksheet
-        ws = self._getsheet(book=wb, sheetname=sheetname, sheetnum=sheetnum)
+        ws = self._getsheet(sheetname=sheetname, sheetnum=sheetnum)
         if verbose: print(f'Worksheet loaded: {ws}')
 
         # Determine the cells
