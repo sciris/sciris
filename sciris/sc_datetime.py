@@ -610,6 +610,8 @@ def tic():
         T = sc.tic()
         slow_func2()
         sc.toc(T, label='slow_func2')
+
+    See also sc.timer().
     '''
     global _tictime  # The saved time is stored in this global
     _tictime = time.time()  # Store the present time in the global
@@ -617,17 +619,21 @@ def tic():
 
 
 
-def toc(start=None, output=False, label=None, sigfigs=None, filename=None, reset=False, baselabel):
+def toc(start=None, label=None, baselabel=None, sigfigs=None, filename=None, reset=False, output=False, doprint=None, elapsed=None):
     '''
-    With tic(), a little pair of functions to calculate a time difference.
+    With tic(), a little pair of functions to calculate a time difference. See
+    also sc.timer().
 
     Args:
-        start (float): the starting time, as returned by e.g. sc.tic()
-        output (bool): whether to return the output (otherwise print)
-        label (str): optional label to add
-        sigfigs (int): number of significant figures for time estimate
-        filename (str): log file to write results to
-        reset (bool): reset the time; like calling sc.toctic() or sc.tic() again
+        start     (float): the starting time, as returned by e.g. sc.tic()
+        label     (str): optional label to add
+        baselabel (str): optional base label; default is "Elapsed time: "
+        sigfigs   (int): number of significant figures for time estimate
+        filename  (str): log file to write results to (default, do not write to log file)
+        reset     (bool): reset the time; like calling sc.toctic() or sc.tic() again
+        output    (bool): whether to return the output (otherwise print); if output='message', then return the message string; if output='both', then return both
+        doprint   (bool): whether to print (true by default)
+        elapsed   (float): use a pre-calculated elapsed time instead of recalculating (not recommneded)
 
     **Examples**::
 
@@ -638,38 +644,58 @@ def toc(start=None, output=False, label=None, sigfigs=None, filename=None, reset
         T = sc.tic()
         slow_func2()
         sc.toc(T, label='slow_func2')
+
+    New in version 1.3.0: new arguments.
     '''
+    now = time.time() # Get the time as quickly as possible
+
     from . import sc_printing as scp # To avoid circular import
     global _tictime  # The saved time is stored in this global
 
     # Set defaults
-    if label   is None: label = ''
     if sigfigs is None: sigfigs = 3
 
-    # If no start value is passed in, try to grab the global _tictime.
+    # If no start value is passed in, try to grab the global _tictime
     if start is None:
         try:    start = _tictime
         except: start = 0 # This doesn't exist, so just leave start at 0.
 
-    # Get the elapsed time in seconds.
-    elapsed = time.time() - start
+    # Calculate the elapsed time in seconds
+    if elapsed is None:
+        elapsed = now - start
 
-    # Create the message giving the elapsed time.
-    if label=='': base = 'Elapsed time: '
-    else:         base = f'Elapsed time for {label}: '
-    logmessage = base + f'{scp.sigfig(elapsed, sigfigs=sigfigs)} s'
+    # Create the message giving the elapsed time
+    if not label:
+        if baselabel is None:
+            base = 'Elapsed time: '
+    else:
+        if baselabel is None:
+            base = f'Elapsed time for {label}: '
+        else:
+            base = f'{baselabel}{label}'
+    logmessage = f'{base}{scp.sigfig(elapsed, sigfigs=sigfigs)} s'
+
+    # Print if asked, or if no other output
+    if doprint or ((doprint is None) and (not output) and (filename is None)):
+        print(logmessage)
+
+    # Optionally write to logfile
+    if filename is not None:
+        scp.printtologfile(logmessage, filename) # If we passed in a filename, append the message to that file.
 
     # Optionally reset the counter
     if reset:
         _tictime = time.time()  # Store the present time in the global
 
+    # Return elapsed if desired
     if output:
-        return elapsed
-    else:
-        if filename is not None:
-            scp.printtologfile(logmessage, filename) # If we passed in a filename, append the message to that file.
+        if output == 'message':
+            return logmessage
+        elif output == 'both':
+            return (elapsed, logmessage)
         else:
-            print(logmessage) # Otherwise, print the message.
+            return elapsed
+    else:
         return
 
 
@@ -727,9 +753,9 @@ def timedsleep(delay=None, verbose=True):
     return None
 
 
-class Timer(object):
+class Timer(ut.prettyobj):
     '''
-    Simple timer class
+    Simple timer class. Note: sc.timer() and sc.Timer() are aliases.
 
     This wraps ``tic`` and ``toc`` with the formatting arguments and
     the start time (at construction)
@@ -740,22 +766,26 @@ class Timer(object):
 
     Example making repeated calls to the same Timer::
 
-        >>> timer = Timer()
-        >>> timer.toc()
+        >>> T = sc.timer()
+        >>> T.toc()
         Elapsed time: 2.63 s
-        >>> timer.toc()
+        >>> T.toc()
         Elapsed time: 5.00 s
 
     Example wrapping code using with-as::
 
-        >>> with Timer(label='mylabel') as t:
+        >>> with sc.timer('mylabel') as t:
         >>>     foo()
 
+    New in version 1.3.0: sc.timer alias, and allowing the label as first argument.
     '''
     def __init__(self, label=None, **kwargs):
         self.tic()
         self.kwargs = kwargs #: Store kwargs to pass to :func:`toc` at the end of the block
         self.kwargs['label'] = label
+        self._start = None
+        self.elapsed = None
+        self.message = None
         return
 
     def __enter__(self):
@@ -773,19 +803,21 @@ class Timer(object):
         self._start = tic()
         return
 
-    def toc(self):
+    def toc(self, **kwargs):
         ''' Print elapsed time '''
-        toc(self._start, **self.kwargs)
-        return
+        kwargs.update(self.kwargs)
+        orig_output = kwargs.pop('output', None)
+        orig_doprint = kwargs.pop('doprint', None)
+        self.elapsed, self.message = toc(self._start, output='both', doprint=False, **kwargs)
+        output = toc(elapsed=self.elapsed, output=orig_output, doprint=orig_doprint, **kwargs) # Call again to get the correct output
+        return output
 
     def start(self):
         ''' Alias for tic() '''
-        self.tic()
-        return
+        return self.tic()
 
-    def stop(self):
+    def stop(self, **kwargs):
         ''' Alias for toc() '''
-        self.toc()
-        return
+        return self.toc(**kwargs)
 
 timer = Timer # Alias
