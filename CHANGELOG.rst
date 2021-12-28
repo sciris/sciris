@@ -5,6 +5,22 @@ All notable changes to this project will be documented in this file.
 
 By import convention, components of the Sciris library are listed beginning with ``sc.``, e.g. ``sc.odict()``.
 
+Version 1.3.0 (2021-12-20)
+--------------------------
+
+New functions and methods
+~~~~~~~~~~~~~~~~~~~~~~~~~
+#. Added ``sc.loadobj2or3()``, for legacy support for loading Python 2 pickles. (Support had been removed in version 1.1.1.)
+
+Bugfixes
+~~~~~~~~
+#. Fixed a bug with checking types when saving files via ``sc.save()``.
+
+Improvements
+~~~~~~~~~~~~
+
+
+
 
 Version 1.2.3 (2021-08-27)
 --------------------------

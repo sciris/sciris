@@ -12,9 +12,9 @@ better to just use the Pandas one.
 # NB: Pandas is imported later
 import numbers # For numeric type
 import numpy as np
-from . import sc_utils as ut # Note, sc_fileio is also used, but is only imported when required to avoid a circular import
-from . import sc_math as ma
-from .sc_odict import odict
+from . import sc_utils as scu # Note, sc_fileio is also used, but is only imported when required to avoid a circular import
+from . import sc_math as scm
+from . import sc_odict as sco
 
 
 __all__ = ['dataframe']
@@ -65,8 +65,8 @@ class dataframe(object): # pragma: no cover
             return '<empty dataframe>'
 
         else: # Go for it
-            outputlist = odict()
-            outputformats = odict()
+            outputlist = sco.odict()
+            outputformats = sco.odict()
 
             # Gather data
             nrows = self.nrows
@@ -75,7 +75,7 @@ class dataframe(object): # pragma: no cover
                 maxlen = len(col) # Start with length of column name
                 if nrows:
                     for val in self.data[:,c]:
-                        output = ut.flexstr(val)
+                        output = scu.flexstr(val)
                         maxlen = max(maxlen, len(output))
                         outputlist[col].append(output)
                 outputformats[col] = '%'+'%i'%(maxlen+spacing)+'s'
@@ -90,7 +90,7 @@ class dataframe(object): # pragma: no cover
             output += '\n'
 
             for ind in range(nrows): # Loop over rows to print out
-                output += indformat % ut.flexstr(ind)
+                output += indformat % scu.flexstr(ind)
                 for col in self.cols: # Print out data
                     output += outputformats[col] % outputlist[col][ind]
                 if ind<nrows-1: output += '\n'
@@ -124,7 +124,7 @@ class dataframe(object): # pragma: no cover
         ''' Take None or a string and return the index of the column '''
         if col is None:
             output = 0 # If not supplied, assume first column is control
-        elif ut.isstring(col):
+        elif scu.isstring(col):
             try:
                 output = self.cols.index(col) # Convert to index
             except Exception as E:
@@ -134,7 +134,7 @@ class dataframe(object): # pragma: no cover
                 else:
                     print(errormsg)
                     output = None
-        elif ut.isnumber(col):
+        elif scu.isnumber(col):
             output = col
         else:
             errormsg = 'Unrecognized column/column type "%s" %s' % (col, type(col))
@@ -160,26 +160,26 @@ class dataframe(object): # pragma: no cover
 
     def __getitem__(self, key=None, die=True, cast=True):
         ''' Simple method for returning; see self.get() for a version based on col and row '''
-        if ut.isstring(key): # e.g. df['a']
+        if scu.isstring(key): # e.g. df['a']
             colindex = self.cols.index(key)
             output = self.data[:,colindex]
             if cast:
                 output = self._cast(output)
-        elif ut.isnumber(key): # e.g. df[0]
+        elif scu.isnumber(key): # e.g. df[0]
             rowindex = int(key)
             output = self.data[rowindex,:]
             if cast:
                 output = self._cast(output)
-        elif ut.checktype(key, 'arraylike'): # e.g. df[[0,2,4]]
+        elif scu.checktype(key, 'arraylike'): # e.g. df[[0,2,4]]
             rowindices = key
             rowdata = self.data[rowindices,:]
             output = dataframe(cols=self.cols, data=rowdata)
         elif isinstance(key, tuple):
-            if ut.isstring(key[0]) and ut.isnumber(key[1]): # e.g. df['a',0]
+            if scu.isstring(key[0]) and scu.isnumber(key[1]): # e.g. df['a',0]
                 colindex = self.cols.index(key[0])
                 rowindex = int(key[1])
                 output = self.data[rowindex,colindex]
-            elif ut.isstring(key[1]) and ut.isnumber(key[0]): # e.g. df[0,'a']
+            elif scu.isstring(key[1]) and scu.isnumber(key[0]): # e.g. df[0,'a']
                 colindex = self.cols.index(key[1])
                 rowindex = int(key[0])
                 output = self.data[rowindex,colindex]
@@ -210,9 +210,9 @@ class dataframe(object): # pragma: no cover
     def __setitem__(self, key, value=None):
         if value is None:
             value = np.zeros(self.nrows, dtype=object)
-        if ut.isstring(key): # Add column
-            if not ut.isiterable(value):
-                value = ut.promotetolist(value)
+        if scu.isstring(key): # Add column
+            if not scu.isiterable(value):
+                value = scu.promotetolist(value)
             if len(value) != self.nrows:
                 if len(value) == 1:
                     value = [value]*self.nrows # Get it the right length
@@ -231,7 +231,7 @@ class dataframe(object): # pragma: no cover
                 colindex = self.cols.index(key)
                 val_arr = np.reshape(value, (len(value),1))
                 self.data = np.hstack((self.data, np.array(val_arr, dtype=object)))
-        elif ut.isnumber(key):
+        elif scu.isnumber(key):
             value = self._val2row(value) # Make sure it's in the correct format
             if len(value) != self.ncols:
                 errormsg = 'Vector has incorrect length (%i vs. %i)' % (len(value), self.ncols)
@@ -242,7 +242,7 @@ class dataframe(object): # pragma: no cover
             except:
                 self.data = np.vstack((self.data, np.array(value, dtype=object)))
         elif isinstance(key, tuple):
-            if ut.isstring(key[1]) and ut.isnumber(key[0]): # Keys supplied in opposite order
+            if scu.isstring(key[1]) and scu.isnumber(key[0]): # Keys supplied in opposite order
                 key = (key[1], key[0]) # Swap order
             if key[0] not in self.cols:
                 errormsg = 'Column name "%s" not found; available columns are:\n%s' % (key[0], '\n'.join(self.cols))
@@ -259,9 +259,9 @@ class dataframe(object): # pragma: no cover
 
     def __copy__(self, *args, **kwargs):
         ''' Warning, there is a bug in Numpy such that deepcopy(array) != array if array contains lists '''
-        newcols = ut.dcp(self.cols)
+        newcols = scu.dcp(self.cols)
         listdata = self.data.tolist()
-        copied = ut.dcp(listdata)
+        copied = scu.dcp(listdata)
         newdata = np.array(copied, dtype=object)
         return dataframe(cols=newcols, data=newdata)
 
@@ -318,15 +318,15 @@ class dataframe(object): # pragma: no cover
             data = [col for col in cols.values()]
             cols = list(cols.keys())
 
-        elif not ut.checktype(cols, 'listlike'):
+        elif not scu.checktype(cols, 'listlike'):
             errormsg = 'Inputs to dataframe must be list, tuple, or array, not %s' % (type(cols))
             raise Exception(errormsg)
 
         # Handle data
         if data is None:
             if np.ndim(cols)==2 and np.shape(cols)[0]>1: # It's a 2D array with more than one row: treat first as header
-                data = ut.dcp(cols[1:])
-                cols = ut.dcp(cols[0])
+                data = scu.dcp(cols[1:])
+                cols = scu.dcp(cols[0])
             else:
                 data = np.zeros((int(nrows),len(cols)), dtype=object) # Just use default
         data = np.array(data, dtype=object)
@@ -369,7 +369,7 @@ class dataframe(object): # pragma: no cover
             colindices = Ellipsis
         else:
             colindices = []
-            for col in ut.promotetolist(cols):
+            for col in scu.promotetolist(cols):
                 colindices.append(self._sanitizecol(col))
         if rows is None:
             rowindices = Ellipsis
@@ -431,7 +431,7 @@ class dataframe(object): # pragma: no cover
 
     def rmcol(self, key, die=True):
         ''' Remove a column or columns from the data frame '''
-        cols = ut.promotetolist(key)
+        cols = scu.promotetolist(key)
         for col in cols:
             if col not in self.cols:
                 errormsg = 'Dataframe: cannot remove column %s: columns are:\n%s' % (col, '\n'.join(self.cols))
@@ -494,7 +494,7 @@ class dataframe(object): # pragma: no cover
         ''' Replace all of one value in a column with a new value '''
         col = self._sanitizecol(col)
         coldata = self.data[:,col] # Get data for this column
-        inds = ma.findinds(coldata==old)
+        inds = scm.findinds(coldata==old)
         self.data[inds,col] = new
         return None
 
@@ -504,7 +504,7 @@ class dataframe(object): # pragma: no cover
         if len(row)!=len(self.cols):
             errormsg = 'Length mismatch between "%s" and "%s"' % (row, self.cols)
             raise Exception(errormsg)
-        rowdict = odict(zip(self.cols, row))
+        rowdict = sco.odict(zip(self.cols, row))
         return rowdict
 
     def findrow(self, key=None, col=None, default=None, closest=False, die=False, asdict=False):
@@ -557,7 +557,7 @@ class dataframe(object): # pragma: no cover
         ''' Return the indices of all rows matching the given key in a given column. '''
         col = self._sanitizecol(col)
         coldata = self.data[:,col] # Get data for this column
-        indices = ma.findinds(coldata==key)
+        indices = scm.findinds(coldata==key)
         return indices
 
     def _filterrows(self, key=None, col=None, keep=True, verbose=False, copy=None):
@@ -579,8 +579,8 @@ class dataframe(object): # pragma: no cover
     def filtercols(self, cols=None, die=True, copy=None):
         ''' Filter columns keeping only those specified '''
         if copy is None: copy = False
-        if cols is None: cols = ut.dcp(self.cols) # By default, do nothing
-        cols = ut.promotetolist(cols)
+        if cols is None: cols = scu.dcp(self.cols) # By default, do nothing
+        cols = scu.promotetolist(cols)
         order = []
         notfound = []
         for col in cols:
@@ -613,7 +613,7 @@ class dataframe(object): # pragma: no cover
         ''' Sort the data frame by the specified column(s)'''
         if col is None:
             col = 0 # Sort by first column by default
-        cols = list(reversed(ut.promotetolist(col)))
+        cols = list(reversed(scu.promotetolist(col)))
         sortorder = [] # In case there are no columns
         for col in cols:
             col = self._sanitizecol(col)
@@ -640,7 +640,7 @@ class dataframe(object): # pragma: no cover
         if header is None: header = True # Include headers
 
         # Optionally filter columns after making a copy
-        exportdf = ut.dcp(self)
+        exportdf = scu.dcp(self)
         exportdf.filtercols(cols)
 
         # Handle output
@@ -677,7 +677,7 @@ class dataframe(object): # pragma: no cover
     def export(self, filename=None, cols=None, close=True):
         ''' Export to Excel '''
         from . import sc_fileio as io # Optional import
-        exportdf = ut.dcp(self)
+        exportdf = scu.dcp(self)
         exportdf.filtercols(cols)
         exportdata = np.vstack((exportdf.cols, exportdf.data))
         filepath = io.savespreadsheet(filename=filename, data=exportdata, close=close)

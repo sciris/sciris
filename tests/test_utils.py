@@ -2,7 +2,6 @@
 Test Sciris utility/helper functions.
 '''
 
-import pytest
 import numpy as np
 import sciris as sc
 import datetime as dt

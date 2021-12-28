@@ -10,7 +10,7 @@ Highlights:
 
 import numpy as np
 import warnings
-from . import sc_utils as ut
+from . import sc_utils as scu
 
 
 ##############################################################################
@@ -59,12 +59,12 @@ def safedivide(numerator=None, denominator=None, default=None, eps=None, warn=Fa
 
     # Handle the logic
     invalid = approx(denominator, 0.0, eps=eps)
-    if ut.isnumber(denominator): # The denominator is a scalar
+    if scu.isnumber(denominator): # The denominator is a scalar
         if invalid:
             output = default
         else:
             output = numerator/denominator
-    elif ut.checktype(denominator, 'array'):
+    elif scu.checktype(denominator, 'array'):
         if not warn:
             denominator[invalid] = 1.0 # Replace invalid values with 1
         output = numerator/denominator
@@ -116,11 +116,11 @@ def findinds(arr, val=None, eps=1e-6, first=False, last=False, die=True, **kwarg
         warnings.warn(warnmsg, category=DeprecationWarning, stacklevel=2)
 
     # Calculate matches
-    arr = ut.promotetoarray(arr)
+    arr = scu.promotetoarray(arr)
     if val is None: # Check for equality
         output = np.nonzero(arr) # If not, just check the truth condition
     else:
-        if ut.isstring(val):
+        if scu.isstring(val):
             output = np.nonzero(arr==val)
         try: # Standard usage, use nonzero
             output = np.nonzero(np.isclose(a=arr, b=val, atol=atol, **kwargs)) # If absolute difference between the two values is less than a certain amount
@@ -174,13 +174,13 @@ def findnearest(series=None, value=None):
 
     Version: 2017jan07
     '''
-    series = ut.promotetoarray(series)
-    if ut.isnumber(value):
+    series = scu.promotetoarray(series)
+    if scu.isnumber(value):
         output = np.argmin(abs(series-value))
     else:
         output = []
         for val in value: output.append(findnearest(series, val))
-        output = ut.promotetoarray(output)
+        output = scu.promotetoarray(output)
     return output
 
 
@@ -210,9 +210,9 @@ def getvalidinds(data=None, filterdata=None): # pragma: no cover
 
         getvalidinds([3,5,8,13], [2000, nan, nan, 2004]) # Returns array([0,3])
     '''
-    data = ut.promotetoarray(data)
+    data = scu.promotetoarray(data)
     if filterdata is None: filterdata = data # So it can work on a single input -- more or less replicates sanitize() then
-    filterdata = ut.promotetoarray(filterdata)
+    filterdata = scu.promotetoarray(filterdata)
     if filterdata.dtype=='bool': filterindices = filterdata # It's already boolean, so leave it as is
     else:                        filterindices = findinds(~np.isnan(filterdata)) # Else, assume it's nans that need to be removed
     dataindices = findinds(~np.isnan(data)) # Also check validity of data
@@ -269,7 +269,7 @@ def sanitize(data=None, returninds=False, replacenans=None, die=True, defaultval
                     sanitized = smoothinterp(newx, inds, sanitized, method=replacenans, smoothness=0) # Replace nans with interpolated values
                 else:
                     naninds = inds = np.nonzero(np.isnan(data))[0]
-                    sanitized = ut.dcp(data)
+                    sanitized = scu.dcp(data)
                     sanitized[naninds] = replacenans
             if len(sanitized)==0:
                 if defaultval is not None:
@@ -546,9 +546,9 @@ def smoothinterp(newx=None, origx=None, origy=None, smoothness=None, growth=None
     Version: 2018jan24
     '''
     # Ensure arrays and remove NaNs
-    if ut.isnumber(newx):  newx = [newx] # Make sure it has dimension
-    if ut.isnumber(origx): origx = [origx] # Make sure it has dimension
-    if ut.isnumber(origy): origy = [origy] # Make sure it has dimension
+    if scu.isnumber(newx):  newx = [newx] # Make sure it has dimension
+    if scu.isnumber(origx): origx = [origx] # Make sure it has dimension
+    if scu.isnumber(origy): origy = [origy] # Make sure it has dimension
     newx  = np.array(newx, dtype=float)
     origx = np.array(origx, dtype=float)
     origy = np.array(origy, dtype=float)
@@ -705,11 +705,11 @@ def cat(*args, axis=None, copy=False, **kwargs):
     '''
     if not len(args):
         return np.array([])
-    output = ut.promotetoarray(args[0])
+    output = scu.promotetoarray(args[0])
     for arg in args[1:]:
-        arg = ut.promotetoarray(arg)
+        arg = scu.promotetoarray(arg)
         output = np.concatenate((output, arg), axis=axis)
     output = np.array(output, **kwargs)
     if copy:
-        output = ut.dcp(output)
+        output = scu.dcp(output)
     return output
