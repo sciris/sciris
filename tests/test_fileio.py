@@ -10,8 +10,8 @@ import sciris as sc
 
 def test_legacy():
     '''
-    Preserved for completeness, but too fragile to be used in automated unit testing
-    due to reliance on openpyxl (which is not a required Sciris dependency).
+    Preserved for completeness, but fairly fragile since relies on not-well-trodden
+    Excel libraries.
     '''
 
     # Define filenames

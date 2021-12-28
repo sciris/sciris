@@ -32,6 +32,7 @@ from pathlib import Path
 import copyreg as cpreg
 import pickle as pkl
 import gzip as gz
+import pandas as pd
 from . import sc_utils as scu
 from . import sc_printing as scp
 from . import sc_datetime as scd
@@ -1015,70 +1016,123 @@ class Spreadsheet(Blobject): # pragma: no cover
         Blobject.save(self, filepath)
 
 
-def loadspreadsheet(filename=None, folder=None, fileobj=None, sheetname=None, sheetnum=None, asdataframe=None, header=True, cells=None, method='pandas'): # pragma: no cover
+def loadspreadsheet(filename=None, folder=None, fileobj=None, sheet=0, asdataframe=None, header=True, method='pandas', **kwargs): # pragma: no cover
     '''
-    Load a spreadsheet as a list of lists or as a dataframe. Read from either a filename or a file object.
+    Load a spreadsheet as a dataframe or a list of lists.
 
-    Note: this function is deprecated and may be removed in a future version. Use
-    ``pandas.read_excel()`` instead.
+    By default, an alias to ``pandas.read_excel()`` with a header, but also supports loading
+    via openpyexcel or xlrd. Read from either a filename or a file object.
 
-    New in version 1.3.0: change default from xlrd to pandas.
+    Args:
+        filename (str): filename or path to read
+        folder (str): optional folder to use with the filename
+        fileobj (obj): load from file object rather than path
+        sheet (str/int/list): name or number of sheet(s) to use (default 0)
+        asdataframe (bool): whether to return as a pandas/Sciris dataframe (default True)
+        method (str): how to read (default 'pandas', other choices 'openpyexcel' and 'xlrd')
+        kwargs (dict): passed to pd.read_excel(), openpyexcel(), etc.
+
+    **Examples**::
+
+        df = sc.loadspreadsheet('myfile.xlsx') # Alias to pd.read_excel(header=1)
+        wb = sc.loadspreadsheet('myfile.xlsx', method='openpyexcel') # Returns workbook
+        data = sc.loadspreadsheet('myfile.xlsx', method='xlrd', asdataframe=False) # Returns raw data; requires xlrd
+
+    New in version 1.3.0: change default from xlrd to pandas; renamed sheetname and sheetnum arguments to sheet.
     '''
+
+    # Handle path and sheet name/number
+    fullpath = makefilepath(filename=filename, folder=folder)
+    for key in ['sheetname', 'sheetnum', 'sheet_name']:
+        sheet = kwargs.pop('sheetname', sheet)
+
+    # Load using pandas
     if method == 'pandas':
-        ...
+        if fileobj is not None: fullpath = fileobj # Substitute here for reading
+        data = pd.read_excel(fullpath, sheet_name=sheet, **kwargs)
+        if asdataframe is False:
+            pass
+        return data
 
+    # Load using openpyexcel
     elif method == 'openpyexcel':
-        ...
+        spread = Spreadsheet(fullpath)
+        wb = spread.openpyexcel(**kwargs)
+        return wb
 
+    # Legacy method -- xlrd
     elif method == 'xlrd':
         try:
             import xlrd # Optional import
-        except ModuleNotFoundError as e:
-            raise ModuleNotFoundError('The "xlrd" Python package is not available; please install manually') from e
 
-        # Handle inputs
-        if asdataframe is None: asdataframe = True
-        if isinstance(filename, io.BytesIO): fileobj = filename # It's actually a fileobj
-        if fileobj is None:
-            fullpath = makefilepath(filename=filename, folder=folder)
-            book = xlrd.open_workbook(fullpath)
-        else:
-            book = xlrd.open_workbook(file_contents=fileobj.read())
-        if sheetname is not None:
-            sheet = book.sheet_by_name(sheetname)
-        else:
-            if sheetnum is None: sheetnum = 0
-            sheet = book.sheet_by_index(sheetnum)
+            # Handle inputs
+            if asdataframe is None: asdataframe = True
+            if isinstance(filename, io.BytesIO): fileobj = filename # It's actually a fileobj
+            if fileobj is None:
+                book = xlrd.open_workbook(fullpath)
+            else:
+                book = xlrd.open_workbook(file_contents=fileobj.read())
 
-        # Load the raw data
-        rawdata = []
-        for rownum in range(sheet.nrows-header):
-            rawdata.append(sco.odict())
-            for colnum in range(sheet.ncols):
-                if header: attr = sheet.cell_value(0,colnum)
-                else:      attr = f'Column {colnum}'
-                attr = scu.uniquename(attr, namelist=rawdata[rownum].keys(), style='(%d)')
-                val = sheet.cell_value(rownum+header,colnum)
-                try:
-                    val = float(val) # Convert it to a number if possible
-                except:
-                    try:    val = str(val)  # But give up easily and convert to a string (not Unicode)
-                    except: pass # Still no dice? Fine, we tried
-                rawdata[rownum][str(attr)] = val
+            if scu.isnumber(sheet):
+                ws = book.sheet_by_index(sheet)
+            else:
+                ws = book.sheet_by_name(sheet)
 
-        # Convert to dataframe
-        if asdataframe:
-            cols = rawdata[0].keys()
-            reformatted = []
-            for oldrow in rawdata:
-                newrow = list(oldrow[:])
-                reformatted.append(newrow)
-            dfdata = scdf.dataframe(cols=cols, data=reformatted)
-            return dfdata
+            # Load the raw data
+            rawdata = []
+            for rownum in range(ws.nrows-header):
+                rawdata.append(sco.odict())
+                for colnum in range(ws.ncols):
+                    if header: attr = ws.cell_value(0,colnum)
+                    else:      attr = f'Column {colnum}'
+                    attr = scu.uniquename(attr, namelist=rawdata[rownum].keys(), style='(%d)')
+                    val = ws.cell_value(rownum+header,colnum)
+                    try:
+                        val = float(val) # Convert it to a number if possible
+                    except:
+                        try:    val = str(val)  # But give up easily and convert to a string (not Unicode)
+                        except: pass # Still no dice? Fine, we tried
+                    rawdata[rownum][str(attr)] = val
 
-        # Or leave in the original format
-        else:
-            return rawdata
+            # Convert to dataframe
+            if asdataframe:
+                cols = rawdata[0].keys()
+                reformatted = []
+                for oldrow in rawdata:
+                    newrow = list(oldrow[:])
+                    reformatted.append(newrow)
+                dfdata = scdf.dataframe(cols=cols, data=reformatted)
+                return dfdata
+
+            # Or leave in the original format
+            else:
+                return rawdata
+        except Exception as E:
+            if isinstance(E, ModuleNotFoundError):
+                errormsg = 'The "xlrd" Python package is not available; please install manually via "pip install xlrd==1.2.0"'
+                raise ModuleNotFoundError(errormsg) from E
+            elif isinstance(E, AttributeError):
+                errormsg = '''
+Warning! xlrd has been deprecated in Python 3.9 and can no longer read XLSX files.
+If the error you got above is
+
+    "AttributeError: 'ElementTree' object has no attribute 'getiterator'"
+
+then this should fix it:
+
+    import xlrd
+    xlrd.xlsx.ensure_elementtree_imported(False, None)
+    xlrd.xlsx.Element_has_iter = True
+
+Then try again to load your Excel file.
+'''
+                raise AttributeError(errormsg) from E
+            else:
+                raise E
+
+    else:
+        errormsg = f'Method "{method}" not found: must be one of pandas, openpyexcel, or xlrd'
+        raise ValueError(errormsg)
 
 
 def savespreadsheet(filename=None, data=None, folder=None, sheetnames=None, close=True, formats=None, formatdata=None, verbose=False): # pragma: no cover
