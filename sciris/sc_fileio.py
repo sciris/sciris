@@ -32,7 +32,6 @@ from pathlib import Path
 import copyreg as cpreg
 import pickle as pkl
 import gzip as gz
-import pandas as pd
 from . import sc_utils as scu
 from . import sc_printing as scp
 from . import sc_datetime as scd
@@ -863,36 +862,55 @@ class Spreadsheet(Blobject): # pragma: no cover
     New in version 1.3.0: Changed default from xlrd to openpyexcel.
     '''
 
-    def xlrd(self, *args, **kwargs):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.wb = None
+        return
+
+
+    def _reload_wb(self, reload=None):
+        ''' Helper function to check if workbook is already loaded '''
+        output = (not hasattr(self, 'wb')) or (self.wb is None) or reload
+        return output
+
+
+    def xlrd(self, reload=False, **kwargs):
         ''' Return a book as opened by xlrd '''
-        try:
-            import xlrd # Optional import
-        except ModuleNotFoundError as e:
-            raise ModuleNotFoundError('The "xlrd" Python package is not available; please install manually') from e
-        book = xlrd.open_workbook(file_contents=self.tofile().read(), *args, **kwargs)
-        return book
+        if self._reload_wb(reload=reload):
+            try:
+                import xlrd # Optional import
+            except ModuleNotFoundError as e:
+                raise ModuleNotFoundError('The "xlrd" Python package is not available; please install manually') from e
+            self.wb = xlrd.open_workbook(file_contents=self.tofile().read(), **kwargs)
+        return self.wb
 
 
-    def openpyexcel(self, *args, **kwargs):
+    def openpyexcel(self, reload=False, **kwargs):
         ''' Return a book as opened by openpyexcel '''
-        try:
-            import openpyexcel # Optional import
-        except ModuleNotFoundError as e:
-            raise ModuleNotFoundError('The "openpyexcel" Python package is not available; please install manually via "pip install openpyexcel" (not to be confused with openpyxl)') from e
-        self.tofile(output=False)
-        book = openpyexcel.load_workbook(self.bytes, *args, **kwargs) # This stream can be passed straight to openpyexcel
-        return book
+        if self._reload_wb(reload=reload):
+            try:
+                import openpyexcel # Optional import
+            except ModuleNotFoundError as e:
+                raise ModuleNotFoundError('The "openpyexcel" Python package is not available; please install manually via "pip install openpyexcel" (not to be confused with openpyxl)') from e
+            if self.blob is not None:
+                self.tofile(output=False)
+                self.wb = openpyexcel.load_workbook(self.bytes, **kwargs) # This stream can be passed straight to openpyexcel
+            else:
+                self.wb = openpyexcel.Workbook(**kwargs)
+        return self.wb
 
 
-    def pandas(self, *args, **kwargs):
+    def pandas(self, reload=False, **kwargs):
         ''' Return a book as opened by pandas '''
-        try:
-            import pandas # Optional import
-        except ModuleNotFoundError as e:
-            raise ModuleNotFoundError('The "pandas" Python package is not available; please install manually') from e
-        self.tofile(output=False)
-        book = pandas.ExcelFile(self.bytes, *args, **kwargs)
-        return book
+        if self._reload_wb(reload=reload):
+            import pandas as pd # Optional import
+            if self.blob is not None:
+                self.tofile(output=False)
+                self.wb = pd.ExcelFile(self.bytes, **kwargs)
+            else:
+                errormsg = 'For pandas, must load an existing workbook; use openpyexcel to create a new workbook'
+                raise FileNotFoundError(errormsg)
+        return self.wb
 
 
     def update(self, book):
@@ -953,6 +971,14 @@ class Spreadsheet(Blobject): # pragma: no cover
         Specify cells to write. Can supply either a list of cells of the same length
         as the values, or else specify a starting row and column and write the values
         from there.
+
+        **Examples**::
+
+            S = sc.Spreadsheet()
+            S.writecells(cells=['A6','B7'], vals=['Cat','Dog']) # Method 1
+            S.writecells(cells=[np.array([2,3])+i for i in range(2)], vals=['Foo', 'Bar']) # Method 2
+            S.writecells(startrow=14, startcol=1, vals=np.random.rand(3,3)) # Method 3
+            S.save('myfile.xlsx')
         '''
         # Load workbook
         if wbargs is None: wbargs = {}
@@ -1048,6 +1074,7 @@ def loadspreadsheet(filename=None, folder=None, fileobj=None, sheet=0, asdatafra
 
     # Load using pandas
     if method == 'pandas':
+        import pandas as pd # Optional import
         if fileobj is not None: fullpath = fileobj # Substitute here for reading
         data = pd.read_excel(fullpath, sheet_name=sheet, **kwargs)
         if asdataframe is False:

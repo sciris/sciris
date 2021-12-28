@@ -297,7 +297,7 @@ class dataframe(object): # pragma: no cover
             df = sc.dataframe(['a','b','c'], [[1,2,3],[4,5,6]])
             df = sc.dataframe(cols=['a','b','c'], data=[[1,2,3],[4,5,6]])
         '''
-        import pandas as pd
+        import pandas as pd # Optional import
 
         # Handle columns
         if nrows is None:
@@ -660,7 +660,7 @@ class dataframe(object): # pragma: no cover
 
     def pandas(self, df=None):
         ''' Function to export to pandas (if no argument) or import from pandas (with an argument) '''
-        import pandas as pd
+        import pandas as pd # Optional import
 
         if df is None: # Convert
             output = pd.DataFrame(data=self.data, columns=self.cols)
