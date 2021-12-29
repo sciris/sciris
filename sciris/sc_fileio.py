@@ -515,12 +515,16 @@ def thisdir(file=None, path=None, *args, aspath=False, **kwargs):
         thisdir = sc.thisdir(__file__) # Ditto (usually)
         file_in_same_dir = sc.thisdir(path='new_file.txt')
         file_in_sub_dir = sc.thisdir('..', 'tests', 'mytests.py') # Merge parent folder with sufolders and a file
+        np_dir = sc.thisdir(np) # Get the folder that Numpy is loaded from (assuming "import numpy as np")
 
     New in version 1.1.0: "as_path" argument renamed "aspath"
     New in version 1.2.2: "path" argument
+    New in version 1.3.0: allow modules
     '''
-    if file is None:
+    if file is None: # No file: use the current folder
          file = str(Path(inspect.stack()[1][1])) # Adopted from Atomica
+    elif hasattr(file, '__file__'): # It's actually a module
+        file = file.__file__
     folder = os.path.abspath(os.path.dirname(file))
     path = scu.mergelists(path, *args)
     filepath = os.path.join(folder, *path)
