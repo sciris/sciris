@@ -12,7 +12,7 @@ if 'doplot' not in locals(): doplot = False
 
 
 def test_utils():
-    sc.heading('Testing utilities')
+    sc.heading('Testing mathematical utilities')
 
     o = sc.objdict()
 
@@ -121,6 +121,61 @@ def test_smooth(doplot=doplot):
     return smoothdata
 
 
+def test_gauss1d(doplot=doplot):
+    sc.heading('Testing Gaussian 1D smoothing')
+
+    # Setup
+    n = 20
+    x = np.sort(pl.rand(n))
+    y = (x-0.3)**2 + 0.2*pl.rand(n)
+
+    # Smooth
+    yi = sc.gauss1d(x, y)
+    yi2 = sc.gauss1d(x, y, scale=0.3)
+    xi3 = pl.linspace(0, 1, n)
+    yi3 = sc.gauss1d(x, y, xi3)
+
+    # Plot oiginal and interpolated versions
+    if doplot:
+        kw = dict(alpha=0.5, lw=2, marker='o')
+        pl.figure()
+        pl.scatter(x, y,  label='Original')
+        pl.plot(x, yi,    label='Default smoothing', **kw)
+        pl.plot(x, yi2,   label='More smoothing', **kw)
+        pl.plot(xi3, yi3, label='Uniform spacing', **kw)
+        pl.legend()
+        pl.show()
+
+    return yi3
+
+
+def test_gauss2d(doplot=doplot):
+    sc.heading('Testing Gaussian 2D smoothing')
+
+    # Parameters
+    x = pl.rand(40)
+    y = pl.rand(40)
+    z = 1-(x-0.5)**2 + (y-0.5)**2
+
+    # Method 1 -- form grid
+    xi = pl.linspace(0,1,20)
+    yi = pl.linspace(0,1,20)
+    zi = sc.gauss2d(x, y, z, xi, yi, scale=0.1)
+
+    # Method 2 -- use points directly
+    xi2 = pl.rand(400)
+    yi2 = pl.rand(400)
+    zi2 = sc.gauss2d(x, y, z, xi2, yi2, scale=0.1, grid=False)
+
+    if doplot:
+        sc.scatter3d(x, y, z, c=z)
+        sc.surf3d(zi)
+        sc.scatter3d(xi2, yi2, zi2, c=zi2)
+        pl.show()
+
+    return zi
+
+
 #%% Run as a script
 if __name__ == '__main__':
     sc.tic()
@@ -130,6 +185,8 @@ if __name__ == '__main__':
     other = test_utils()
     found = test_find()
     smoothed = test_smooth(doplot)
+    gauss1d = test_gauss1d(doplot)
+    gauss2d = test_gauss2d(doplot)
 
     sc.toc()
     print('Done.')

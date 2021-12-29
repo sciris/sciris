@@ -164,6 +164,7 @@ def test_saving(doplot=doplot):
         os.remove(filename)
         os.remove(moviename)
 
+
     return o
 
 
