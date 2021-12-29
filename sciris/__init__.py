@@ -8,6 +8,7 @@ of ``sc.sc_parallel.parallelize()``.
 
 # Import everything
 from .sc_version   import *
+from .sc_settings  import *
 from .sc_utils     import *
 from .sc_printing  import *
 from .sc_datetime  import *
