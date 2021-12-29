@@ -22,6 +22,7 @@ import pylab as pl
 import numpy as np
 import matplotlib as mpl
 import matplotlib.font_manager as mplfm
+from . import sc_settings as scs
 from . import sc_odict as sco
 from . import sc_utils as scu
 from . import sc_fileio as scf
@@ -392,7 +393,9 @@ def _get_axlist(ax):
 
 def commaticks(ax=None, axis='y'):
     '''
-    Use commas in formatting the y axis of a figure (e.g., 34,000 instead of 34000)
+    Use commas in formatting the y axis of a figure (e.g., 34,000 instead of 34000).
+
+    To use something other than a comma, set the default separator via e.g. ``sc.options(sep='.')``.
 
     Args:
         ax (any): axes to modify; if None, use current; else can be a single axes object, a figure, or a list of axes
@@ -405,9 +408,14 @@ def commaticks(ax=None, axis='y'):
         sc.commaticks()
 
     See http://stackoverflow.com/questions/25973581/how-to-format-axis-number-format-to-thousands-with-a-comma-in-matplotlib
+
+    New in version 1.3.0: ability to use non-comma thousands separator.
     '''
     def commaformatter(x, pos=None):
+        sep = scs.options.sep
         string = f'{x:,}' # Do the formatting
+        if sep != ',':
+            string = string.replace(',', sep)
         if string[-2:] == '.0': # Trim the end, if it's a float but should be an int
             string = string[:-2]
         return string

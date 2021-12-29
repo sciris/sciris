@@ -1,11 +1,13 @@
 '''
-Define options for Sciris. All options should be set using set(), e.g.::
+Define options for Sciris. All options should be set directly or using set(), e.g.::
 
-    sc.options.set(sep='.')
+    sc.options(sep='.')
 
 To reset default options, use::
 
-    sc.options.set('default')
+    sc.options.default()
+
+New in version 1.3.0.
 '''
 
 import os

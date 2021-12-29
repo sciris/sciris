@@ -32,6 +32,7 @@ from pathlib import Path
 import copyreg as cpreg
 import pickle as pkl
 import gzip as gz
+from . import sc_settings as scs
 from . import sc_utils as scu
 from . import sc_printing as scp
 from . import sc_datetime as scd
@@ -314,7 +315,7 @@ def savezip(filename=None, filelist=None, folder=None, basename=True, verbose=Tr
     return fullpath
 
 
-def getfilelist(folder=None, pattern=None, abspath=False, nopath=False, filesonly=False, foldersonly=False, recursive=False, aspath=False):
+def getfilelist(folder=None, pattern=None, abspath=False, nopath=False, filesonly=False, foldersonly=False, recursive=False, aspath=None):
     '''
     A shortcut for using glob.
 
@@ -346,6 +347,7 @@ def getfilelist(folder=None, pattern=None, abspath=False, nopath=False, filesonl
         folder = os.path.abspath(folder)
     if os.path.isdir(folder) and pattern is None:
         pattern = '*'
+    if aspath is None: aspath = scs.options.aspath
     globstr = os.path.join(folder, pattern) if pattern else folder
     filelist = sorted(glob(globstr, recursive=recursive))
     if filesonly:
@@ -374,7 +376,7 @@ def sanitizefilename(rawfilename):
     return filtername # Return the sanitized file name.
 
 
-def makefilepath(filename=None, folder=None, ext=None, default=None, split=False, aspath=False, abspath=True, makedirs=True, checkexists=None, sanitize=False, die=True, verbose=False):
+def makefilepath(filename=None, folder=None, ext=None, default=None, split=False, aspath=None, abspath=True, makedirs=True, checkexists=None, sanitize=False, die=True, verbose=False):
     '''
     Utility for taking a filename and folder -- or not -- and generating a
     valid path from them. By default, this function will combine a filename and
@@ -413,6 +415,7 @@ def makefilepath(filename=None, folder=None, ext=None, default=None, split=False
     # Initialize
     filefolder = '' # The folder the file will be located in
     filebasename = '' # The filename
+    if aspath is None: aspath = scs.options.aspath
 
     if isinstance(filename, Path):
         filename = str(filename)
@@ -493,7 +496,7 @@ def path(*args, **kwargs):
 path.__doc__ += '\n\n' + Path.__doc__
 
 
-def thisdir(file=None, path=None, *args, aspath=False, **kwargs):
+def thisdir(file=None, path=None, *args, aspath=None, **kwargs):
     '''
     Tiny helper function to get the folder for a file, usually the current file.
     If not supplied, then use the current file.
@@ -525,6 +528,7 @@ def thisdir(file=None, path=None, *args, aspath=False, **kwargs):
          file = str(Path(inspect.stack()[1][1])) # Adopted from Atomica
     elif hasattr(file, '__file__'): # It's actually a module
         file = file.__file__
+    if aspath is None: aspath = scs.options.aspath
     folder = os.path.abspath(os.path.dirname(file))
     path = scu.mergelists(path, *args)
     filepath = os.path.join(folder, *path)
