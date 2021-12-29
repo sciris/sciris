@@ -862,7 +862,7 @@ class Blobject(object):
 
 
 
-class Spreadsheet(Blobject): # pragma: no cover
+class Spreadsheet(Blobject):
     '''
     A class for reading and writing Excel files in binary format. No disk IO needs
     to happen to manipulate the spreadsheets with openpyexcel (or xlrd or pandas).
@@ -1050,7 +1050,7 @@ class Spreadsheet(Blobject): # pragma: no cover
         Blobject.save(self, filepath)
 
 
-def loadspreadsheet(filename=None, folder=None, fileobj=None, sheet=0, asdataframe=None, header=True, method='pandas', **kwargs): # pragma: no cover
+def loadspreadsheet(filename=None, folder=None, fileobj=None, sheet=0, asdataframe=None, header=True, method='pandas', **kwargs):
     '''
     Load a spreadsheet as a dataframe or a list of lists.
 
@@ -1170,7 +1170,7 @@ Then try again to load your Excel file.
         raise ValueError(errormsg)
 
 
-def savespreadsheet(filename=None, data=None, folder=None, sheetnames=None, close=True, formats=None, formatdata=None, verbose=False): # pragma: no cover
+def savespreadsheet(filename=None, data=None, folder=None, sheetnames=None, close=True, formats=None, formatdata=None, verbose=False):
     '''
     Not-so-little function to format data nicely for Excel.
 

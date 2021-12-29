@@ -8,7 +8,7 @@ import pandas as pd
 import openpyexcel
 import sciris as sc
 
-def test_legacy():
+def test_spreadsheets():
     '''
     Preserved for completeness, but fairly fragile since relies on not-well-trodden
     Excel libraries.
@@ -220,7 +220,7 @@ def test_load_dump_str():
 if __name__ == '__main__':
     sc.tic()
 
-    spread = test_legacy()
+    spread = test_spreadsheets()
     json   = test_json()
     jp     = test_jsonpickle()
     string = test_load_dump_str()

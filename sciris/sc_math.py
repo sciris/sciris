@@ -4,8 +4,8 @@ Extensions to Numpy, including finding array elements and smoothing data.
 Highlights:
     - ``sc.findinds()``: find indices of an array matching a condition
     - ``sc.findnearest()``: find nearest matching value
+    - ``sc.rolling()``: calculate rolling average
     - ``sc.smooth()``: simple smoothing of 1D or 2D arrays
-    - ``sc.smoothinterp()``: linear interpolation with smoothing
 '''
 
 import numpy as np
@@ -57,6 +57,10 @@ def safedivide(numerator=None, denominator=None, default=None, eps=None, warn=Fa
     if numerator   is None: numerator   = 1.0
     if denominator is None: denominator = 1.0
     if default     is None: default     = 0.0
+
+    # Handle types
+    if isinstance(numerator,   list): numerator   = np.array(numerator)
+    if isinstance(denominator, list): denominator = np.array(denominator)
 
     # Handle the logic
     invalid = approx(denominator, 0.0, eps=eps)
@@ -603,10 +607,9 @@ def convolve(a, v):
     return out
 
 
-
 def smooth(data, repeats=None, kernel=None, legacy=False):
     '''
-    Very simple function to smooth a 2D array.
+    Very simple function to smooth a 1D or 2D array.
 
     See also sc.gauss1d() for simple Gaussian smoothing.
 

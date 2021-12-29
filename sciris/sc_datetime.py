@@ -562,7 +562,7 @@ def elapsedtimestr(pasttime, maxdays=5, minseconds=10, shortmonths=True):
 
 def tic():
     '''
-    With toc(), a little pair of functions to calculate a time difference:
+    With ``sc.toc()``, a little pair of functions to calculate a time difference:
 
     **Examples**::
 
@@ -584,16 +584,16 @@ def tic():
 
 def toc(start=None, label=None, baselabel=None, sigfigs=None, filename=None, reset=False, output=False, doprint=None, elapsed=None):
     '''
-    With tic(), a little pair of functions to calculate a time difference. See
-    also sc.timer().
+    With ``sc.tic()``, a little pair of functions to calculate a time difference. See
+    also ``sc.timer()``.
 
     Args:
-        start     (float): the starting time, as returned by e.g. sc.tic()
+        start     (float): the starting time, as returned by e.g. ``sc.tic()``
         label     (str): optional label to add
         baselabel (str): optional base label; default is "Elapsed time: "
         sigfigs   (int): number of significant figures for time estimate
         filename  (str): log file to write results to (default, do not write to log file)
-        reset     (bool): reset the time; like calling sc.toctic() or sc.tic() again
+        reset     (bool): reset the time; like calling ``sc.toctic()`` or ``sc.tic()`` again
         output    (bool): whether to return the output (otherwise print); if output='message', then return the message string; if output='both', then return both
         doprint   (bool): whether to print (true by default)
         elapsed   (float): use a pre-calculated elapsed time instead of recalculating (not recommneded)
@@ -767,7 +767,7 @@ class Timer(scu.prettyobj):
         return
 
     def toc(self, label=None, **kwargs):
-        ''' Print elapsed time '''
+        ''' Print elapsed time; see ``sc.toc()`` for keyword arguments '''
         kwargs.update(self.kwargs)
         orig_output = kwargs.pop('output', None)
         orig_doprint = kwargs.pop('doprint', None)

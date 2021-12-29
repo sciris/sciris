@@ -8,6 +8,16 @@ import datetime as dt
 import pytest
 
 
+#%% Test options
+
+def test_options():
+    sc.heading('Test options')
+    sc.options.help()
+    sc.options(dpi=150)
+    sc.options.default()
+    return
+
+
 #%% Date/time functions
 
 def test_readdate():
@@ -190,6 +200,9 @@ def test_dicts():
 #%% Run as a script
 if __name__ == '__main__':
     sc.tic()
+
+    # Options
+    test_options()
 
     # Dates
     dateobj   = test_readdate()
