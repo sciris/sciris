@@ -8,8 +8,9 @@ Kerr et al. (2018).
 import numpy as np
 import numpy.random as nr
 from time import time
-from . import sc_utils as ut
-from .sc_odict import objdict
+from . import sc_utils as scu
+from . import sc_printing as scp
+from . import sc_odict as sco
 
 __all__ = ['asd']
 
@@ -158,11 +159,11 @@ def asd(function, x, args=None, stepsize=0.1, sinc=2, sdec=2, pinc=2, pdec=2,
     if args is None: # Reset if no function arguments supplied
         args = []
     elif isinstance(args, dict): # It's actually kwargs supplied
-        kwargs = ut.mergedicts(args, kwargs)
+        kwargs = scu.mergedicts(args, kwargs)
         args = []
     fval = function(x, *args, **kwargs) # Calculate initial value of the objective function
     fvalorig = fval # Store the original value of the objective function, since fval is overwritten on each step
-    xorig = ut.dcp(x) # Keep the original x, just in case
+    xorig = scu.dcp(x) # Keep the original x, just in case
 
     # Initialize history
     abserrorhistory = np.zeros(stalliters) # Store previous error changes
@@ -201,7 +202,7 @@ def asd(function, x, args=None, stepsize=0.1, sinc=2, sdec=2, pinc=2, pdec=2,
             stepsizes[choice] = stepsizes[choice] / sdec
 
         # Calculate the new value
-        xnew = ut.dcp(x) # Initialize the new parameter set
+        xnew = scu.dcp(x) # Initialize the new parameter set
         xnew[par] = newval # Update the new parameter set
         fvalnew = function(xnew, *args, **kwargs) # Calculate the objective function for the new parameter set
         eps = 1e-12 # Small value to avoid divide-by-zero errors
@@ -227,7 +228,7 @@ def asd(function, x, args=None, stepsize=0.1, sinc=2, sdec=2, pinc=2, pdec=2,
             if np.isnan(fvalnew):
                 if verbose >= 1: print('ASD: Warning, objective function returned NaN')
         if verbose > 0 and not (count % max(1, int(1.0/verbose))): # Print out every 1/verbose steps
-            orig, best, new, diff = ut.sigfig([fvalorig, fvalold, fvalnew, fvalnew-fvalold])
+            orig, best, new, diff = scp.sigfig([fvalorig, fvalold, fvalnew, fvalnew-fvalold])
             print(offset + label + f' step {count} ({time()-start:0.1f} s) {flag} (orig:{orig} | best:{best} | new:{new} | diff:{diff})')
 
         # Store output information
@@ -239,15 +240,15 @@ def asd(function, x, args=None, stepsize=0.1, sinc=2, sdec=2, pinc=2, pdec=2,
             exitreason = 'Maximum iterations reached'
             break
         if (time() - start) > maxtime:
-            strtime, strmax = ut.sigfig([(time()-start), maxtime])
+            strtime, strmax = scp.sigfig([(time()-start), maxtime])
             exitreason = f'Time limit reached ({strtime} > {strmax})'
             break
         if (count > stalliters) and (abs(np.mean(abserrorhistory)) < abstol): # Stop if improvement is too small
-            strabs, strtol = ut.sigfig([np.mean(abserrorhistory), abstol])
+            strabs, strtol = scp.sigfig([np.mean(abserrorhistory), abstol])
             exitreason = f'Absolute improvement too small ({strabs} < {strtol})'
             break
         if (count > stalliters) and (sum(relerrorhistory) < reltol): # Stop if improvement is too small
-            strrel, strtol = ut.sigfig([np.mean(relerrorhistory), reltol])
+            strrel, strtol = scp.sigfig([np.mean(relerrorhistory), reltol])
             exitreason = f'Relative improvement too small ({strrel} < {strtol})'
             break
         if stoppingfunc and stoppingfunc():
@@ -256,13 +257,13 @@ def asd(function, x, args=None, stepsize=0.1, sinc=2, sdec=2, pinc=2, pdec=2,
 
     # Return
     if verbose > 0:
-        orig, best, ratio = ut.sigfig([fvals[0], fvals[-1], fvals[-1]/fvals[0]])
+        orig, best, ratio = scp.sigfig([fvals[0], fvals[-1], fvals[-1]/fvals[0]])
         print(f'=== {label} {exitreason} ({count} steps, orig: {orig} | best: {best} | ratio: {ratio}) ===')
-    output = objdict()
+    output = sco.objdict()
     output['x'] = np.reshape(x, origshape) # Parameters
     output['fval'] = fvals[count]
     output['exitreason'] = exitreason
-    output['details'] = objdict()
+    output['details'] = sco.objdict()
     output['details']['fvals'] = fvals[:count+1] # Function evaluations
     output['details']['xvals'] = allsteps[:count+1, :]
     output['details']['probabilities'] = probabilities

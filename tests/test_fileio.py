@@ -10,8 +10,8 @@ import sciris as sc
 
 def test_legacy():
     '''
-    Preserved for completeness, but too fragile to be used in automated unit testing
-    due to reliance on openpyxl (which is not a required Sciris dependency).
+    Preserved for completeness, but fairly fragile since relies on not-well-trodden
+    Excel libraries.
     '''
 
     # Define filenames
@@ -51,10 +51,8 @@ def test_legacy():
     if os.path.exists(excel_path):
         sc.heading('Reading cells')
         wb = sc.Spreadsheet(filename=excel_path) # Load a sample databook to try pulling cells from
-        celltest = wb.readcells(method='xlrd', sheetname='Baseline year population inputs', cells=[[46, 2], [47, 2]]) # Grab cells using xlrd
-        celltest2 = wb.readcells(method='openpyexcel', wbargs={'data_only': True}, sheetname='Baseline year population inputs', cells=[[46, 2], [47, 2]]) # Grab cells using openpyexcel.  You have to set wbargs={'data_only': True} to pull out cached values instead of formula strings
-        print('xlrd output: %s' % celltest)
-        print('openpyxl output: %s' % celltest2)
+        celltest = wb.readcells(method='openpyexcel', wbargs={'data_only': True}, sheetname='Baseline year population inputs', cells=[[46, 2], [47, 2]]) # Grab cells using openpyexcel.  You have to set wbargs={'data_only': True} to pull out cached values instead of formula strings
+        print(f'openpyexcel output: {celltest}')
     else:
         print(f'{excel_path} not found, skipping...')
 

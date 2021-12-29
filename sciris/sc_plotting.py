@@ -20,9 +20,11 @@ import datetime as dt
 import pylab as pl
 import numpy as np
 import matplotlib as mpl
-from .sc_odict import odict
-from . import sc_utils as ut
-from . import sc_fileio as fio
+from . import sc_odict as sco
+from . import sc_utils as scu
+from . import sc_fileio as scf
+from . import sc_printing as scp
+from . import sc_datetime as scd
 
 
 ##############################################################################
@@ -110,8 +112,8 @@ def plot3d(x, y, z, c=None, fig=None, ax=None, returnfig=False, figkwargs=None, 
         sc.plot3d(x, y, z)
     '''
     # Set default arguments
-    plotkwargs = ut.mergedicts({'lw':2, 'c':c}, plotkwargs, kwargs)
-    axkwargs = ut.mergedicts(axkwargs)
+    plotkwargs = scu.mergedicts({'lw':2, 'c':c}, plotkwargs, kwargs)
+    axkwargs = scu.mergedicts(axkwargs)
 
     # Create axis
     fig,ax = ax3d(returnfig=True, fig=fig, ax=ax, figkwargs=figkwargs, **axkwargs)
@@ -147,8 +149,8 @@ def scatter3d(x, y, z, c=None, fig=None, returnfig=False, figkwargs=None, axkwar
         sc.scatter3d(x, y, z, c=z)
     '''
     # Set default arguments
-    plotkwargs = ut.mergedicts({'s':200, 'depthshade':False, 'linewidth':0}, plotkwargs, kwargs)
-    axkwargs = ut.mergedicts(axkwargs)
+    plotkwargs = scu.mergedicts({'s':200, 'depthshade':False, 'linewidth':0}, plotkwargs, kwargs)
+    axkwargs = scu.mergedicts(axkwargs)
 
     # Create figure
     fig,ax = ax3d(returnfig=True, fig=fig, figkwargs=figkwargs, **axkwargs)
@@ -185,8 +187,8 @@ def surf3d(data, x=None, y=None, fig=None, returnfig=False, colorbar=True, figkw
     '''
 
     # Set default arguments
-    plotkwargs = ut.mergedicts({'cmap':'viridis'}, plotkwargs, kwargs)
-    axkwargs = ut.mergedicts(axkwargs)
+    plotkwargs = scu.mergedicts({'cmap':'viridis'}, plotkwargs, kwargs)
+    axkwargs = scu.mergedicts(axkwargs)
 
     # Create figure
     fig,ax = ax3d(returnfig=True, fig=fig, figkwargs=figkwargs, **axkwargs)
@@ -235,8 +237,8 @@ def bar3d(data, fig=None, returnfig=False, cmap='viridis', figkwargs=None, axkwa
     '''
 
     # Set default arguments
-    plotkwargs = ut.mergedicts({'dx':0.8, 'dy':0.8, 'shade':True}, plotkwargs, kwargs)
-    axkwargs = ut.mergedicts(axkwargs)
+    plotkwargs = scu.mergedicts({'dx':0.8, 'dy':0.8, 'shade':True}, plotkwargs, kwargs)
+    axkwargs = scu.mergedicts(axkwargs)
 
     # Create figure
     fig,ax = ax3d(returnfig=True, fig=fig, figkwargs=figkwargs, **axkwargs)
@@ -335,8 +337,8 @@ def setaxislim(which=None, ax=None, data=None):
     # Calculate the lower limit based on all the data
     lowerlim = 0
     upperlim = 0
-    if ut.checktype(data, 'arraylike'): # Ensure it's numeric data (probably just None)
-        flatdata = ut.promotetoarray(data).flatten() # Make sure it's iterable
+    if scu.checktype(data, 'arraylike'): # Ensure it's numeric data (probably just None)
+        flatdata = scu.promotetoarray(data).flatten() # Make sure it's iterable
         lowerlim = min(lowerlim, flatdata.min())
         upperlim = max(upperlim, flatdata.max())
 
@@ -435,7 +437,7 @@ def SIticks(ax=None, axis='y', fixed=False):
     '''
     def SItickformatter(x, pos=None, sigfigs=2, SI=True, *args, **kwargs):  # formatter function takes tick label and tick position
         ''' Formats axis ticks so that e.g. 34000 becomes 34k -- usually not invoked directly '''
-        output = ut.sigfig(x, sigfigs=sigfigs, SI=SI) # Pretty simple since ut.sigfig() does all the work
+        output = scp.sigfig(x, sigfigs=sigfigs, SI=SI) # Pretty simple since scp.sigfig() does all the work
         return output
 
     axlist = _get_axlist(ax)
@@ -507,7 +509,7 @@ def dateformatter(start_date=None, dateformat=None, interval=None, start=None, e
     # Convert to a date object
     if start_date is None:
         start_date = pl.num2date(ax.dataLim.x0)
-    start_date = ut.date(start_date)
+    start_date = scd.date(start_date)
 
     @mpl.ticker.FuncFormatter
     def mpl_formatter(x, pos):
@@ -516,9 +518,9 @@ def dateformatter(start_date=None, dateformat=None, interval=None, start=None, e
     # Handle limits
     xmin, xmax = ax.get_xlim()
     if start:
-        xmin = ut.day(start, start_date=start_date)
+        xmin = scd.day(start, start_date=start_date)
     if end:
-        xmax = ut.day(end, start_date=start_date)
+        xmax = scd.day(end, start_date=start_date)
     ax.set_xlim((xmin, xmax))
 
     # Set the x-axis intervals
@@ -704,7 +706,7 @@ def savefigs(figs=None, filetype=None, filename=None, folder=None, savefigargs=N
     if filetype is None: filetype = 'singlepdf' # This ensures that only one file is created
 
     # Either take supplied plots, or generate them
-    figs = odict.promote(figs)
+    figs = sco.odict.promote(figs)
     nfigs = len(figs)
 
     # Handle file types
@@ -712,7 +714,7 @@ def savefigs(figs=None, filetype=None, filename=None, folder=None, savefigargs=N
     if filetype=='singlepdf': # See http://matplotlib.org/examples/pylab_examples/multipage_pdf.html
         from matplotlib.backends.backend_pdf import PdfPages
         defaultname = 'figures.pdf'
-        fullpath = fio.makefilepath(filename=filename, folder=folder, default=defaultname, ext='pdf')
+        fullpath = scf.makefilepath(filename=filename, folder=folder, default=defaultname, ext='pdf')
         pdf = PdfPages(fullpath)
         filenames.append(fullpath)
         if verbose: print(f'PDF saved to {fullpath}')
@@ -720,18 +722,18 @@ def savefigs(figs=None, filetype=None, filename=None, folder=None, savefigargs=N
         key,plt = item
         # Handle filename
         if filename and nfigs==1: # Single plot, filename supplied -- use it
-            fullpath = fio.makefilepath(filename=filename, folder=folder, default='Figure', ext=filetype) # NB, this filename not used for singlepdf filetype, so it's OK
+            fullpath = scf.makefilepath(filename=filename, folder=folder, default='Figure', ext=filetype) # NB, this filename not used for singlepdf filetype, so it's OK
         else: # Any other case, generate a filename
             keyforfilename = filter(str.isalnum, str(key)) # Strip out non-alphanumeric stuff for key
             defaultname = keyforfilename
-            fullpath = fio.makefilepath(filename=filename, folder=folder, default=defaultname, ext=filetype)
+            fullpath = scf.makefilepath(filename=filename, folder=folder, default=defaultname, ext=filetype)
 
         # Do the saving
         if savefigargs is None: savefigargs = {}
         defaultsavefigargs = {'dpi':200, 'bbox_inches':'tight'} # Specify a higher default DPI and save the figure tightly
         defaultsavefigargs.update(savefigargs) # Update the default arguments with the user-supplied arguments
         if filetype == 'fig':
-            fio.saveobj(fullpath, plt)
+            scf.saveobj(fullpath, plt)
             filenames.append(fullpath)
             if verbose: print(f'Figure object saved to {fullpath}')
         else:
@@ -769,7 +771,7 @@ def loadfig(filename=None):
         example = sc.loadfig('example.fig')
     '''
     pl.ion() # Without this, it doesn't show up
-    fig = fio.loadobj(filename)
+    fig = scf.loadobj(filename)
     reanimateplots(fig)
     return fig
 
@@ -783,7 +785,7 @@ def reanimateplots(plots=None):
         raise ImportError(errormsg) from E
     if len(pl.get_fignums()): fignum = pl.gcf().number # This is the number of the current active figure, if it exists
     else: fignum = 1
-    plots = odict.promote(plots) # Convert to an odict
+    plots = sco.odict.promote(plots) # Convert to an odict
     for plot in plots.values(): nfmgf(fignum, plot) # Make sure each figure object is associated with the figure manager -- WARNING, is it correct to associate the plot with an existing figure?
     return None
 
@@ -820,8 +822,8 @@ def separatelegend(ax=None, handles=None, labels=None, reverse=False, figsetting
     ''' Allows the legend of a figure to be rendered in a separate window instead '''
 
     # Handle settings
-    f_settings = ut.mergedicts({'figsize':(4.0,4.8)}, figsettings) # (6.4,4.8) is the default, so make it a bit narrower
-    l_settings = ut.mergedicts({'loc': 'center', 'bbox_to_anchor': None, 'frameon': False}, legendsettings)
+    f_settings = scu.mergedicts({'figsize':(4.0,4.8)}, figsettings) # (6.4,4.8) is the default, so make it a bit narrower
+    l_settings = scu.mergedicts({'loc': 'center', 'bbox_to_anchor': None, 'frameon': False}, legendsettings)
 
     # Get handles and labels
     _, handles, labels = _get_legend_handles(ax, handles, labels)
@@ -838,7 +840,7 @@ def separatelegend(ax=None, handles=None, labels=None, reverse=False, figsetting
     # to copy the handles, and use the copies to render the legend
     handles2 = []
     for h in handles:
-        h2 = ut.cp(h)
+        h2 = scu.cp(h)
         h2.axes = None
         h2.figure = None
         handles2.append(h2)
@@ -957,7 +959,7 @@ def savemovie(frames, filename=None, fps=None, quality=None, dpi=None, writer=No
         errormsg = f'sc.savemovie(): argument "frames" must be a list, not "{type(frames)}"'
         raise TypeError(errormsg)
     for f in range(len(frames)):
-        if not ut.isiterable(frames[f]):
+        if not scu.isiterable(frames[f]):
             frames[f] = (frames[f],) # This must be either a tuple or a list to work with ArtistAnimation
 
     # Try to get the figure from the frames, else use the current one
@@ -997,7 +999,7 @@ def savemovie(frames, filename=None, fps=None, quality=None, dpi=None, writer=No
 
     # Optionally print progress
     if verbose:
-        start = ut.tic()
+        start = scd.tic()
         print(f'Saving {len(frames)} frames at {fps} fps and {dpi} dpi to "{filename}" using {writer}...')
 
     # Actually create the animation -- warning, no way to not actually have it render!
@@ -1012,6 +1014,6 @@ def savemovie(frames, filename=None, fps=None, quality=None, dpi=None, writer=No
             else:            print(f'File size: {filesize/1e6:0.2f} MB')
         except:
             pass
-        ut.toc(start)
+        scd.toc(start)
 
     return anim

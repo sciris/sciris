@@ -4,7 +4,7 @@ Nested dictionary functions
 
 import itertools
 from functools import reduce
-from . import sc_utils as ut
+from . import sc_utils as scu
 
 
 __all__ = ['getnested', 'setnested', 'makenested', 'iternested', 'mergenested',
@@ -142,7 +142,7 @@ def mergenested(dict1, dict2, die=False, verbose=False, _path=None):
     if _path:
         a = dict1 # If we're being recursive, work in place
     else:
-        a = ut.dcp(dict1) # Otherwise, make a copy
+        a = scu.dcp(dict1) # Otherwise, make a copy
     b = dict2 # Don't need to make a copy
 
     for key in b:

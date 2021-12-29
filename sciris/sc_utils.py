@@ -58,7 +58,8 @@ __all__ = ['fast_uuid', 'uuid', 'dcp', 'cp', 'pp', 'sha', 'wget', 'htmlify', 'fr
 
 def fast_uuid(which=None, length=None, n=1, secure=False, forcelist=False, safety=1000, recursion=0, recursion_limit=10, verbose=True):
     '''
-    Create a fast UID or set of UIDs.
+    Create a fast UID or set of UIDs. Note: for certain applications, sc.uuid()
+    is faster than sc.fast_uuid()!
 
     Args:
         which (str): the set of characters to choose from (default ascii)
@@ -525,7 +526,7 @@ def ismac(die=False):
 
 __all__ += ['flexstr', 'isiterable', 'checktype', 'isnumber', 'isstring', 'isarray',
             'promotetoarray', 'promotetolist', 'toarray', 'tolist', 'transposelist',
-            'mergedicts', 'mergelists']
+            'swapdict', 'mergedicts', 'mergelists']
 
 def flexstr(arg, force=True):
     '''
@@ -813,6 +814,31 @@ def transposelist(obj):
     return list(map(list, zip(*obj)))
 
 
+def swapdict(d):
+    '''
+    Swap the keys and values of a dictionary.
+
+    Args:
+        d (dict): dictionary
+
+    **Example**::
+        d1 = {'a':'foo', 'b':'bar'}
+        d2 = sc.swapdict(d1) # Returns {'foo':'a', 'bar':'b'}
+
+    New in version 1.3.0.
+    '''
+    if not isinstance(d, dict):
+        errormsg = f'Not a dictionary: {type(d)}'
+        raise TypeError(errormsg)
+    try:
+        output = {v:k for k,v in d.items()}
+    except Exception as E:
+        exc = type(E)
+        errormsg = 'Could not swap keys and values: ensure all values are of hashable type'
+        raise exc(errormsg) from E
+    return output
+
+
 def mergedicts(*args, strict=False, overwrite=True, copy=False):
     '''
     Small function to merge multiple dicts together. By default, skips things
@@ -894,7 +920,40 @@ def mergelists(*args, copy=False, **kwargs):
     return obj
 
 
+def _sanitize_iterables(obj, *args):
+    '''
+    Take input as a list, array, or non-iterable type, along with one or more
+    arguments, and return a list, along with information on what the input types
+    were.
 
+    **Examples**::
+
+        _sanitize_iterables(1, 2, 3)             # Returns [1,2,3], False, False
+        _sanitize_iterables([1, 2], 3)           # Returns [1,2,3], True, False
+        _sanitize_iterables(np.array([1, 2]), 3) # Returns [1,2,3], True, True
+        _sanitize_iterables(np.array([1, 2, 3])) # Returns [1,2,3], False, True
+    '''
+    is_list = isinstance(obj, list) or len(args)>0 # If we're given a list of args, treat it like a list
+    is_array = isinstance(obj, np.ndarray) # Check if it's an array
+    if is_array: # If it is, convert it to a list
+        obj = obj.tolist()
+    objs = dcp(promotetolist(obj)) # Ensure it's a list, and deepcopy to avoid mutability
+    objs.extend(args) # Add on any arguments
+    return objs, is_list, is_array
+
+
+def _sanitize_output(obj, is_list, is_array, dtype=None):
+    '''
+    The companion to _sanitize_iterables, convert the object back to the original
+    type supplied.
+    '''
+    if is_array:
+        output = np.array(obj, dtype=dtype)
+    elif not is_list and len(obj) == 1:
+        output = obj[0]
+    else:
+        output = obj
+    return output
 
 
 ##############################################################################
