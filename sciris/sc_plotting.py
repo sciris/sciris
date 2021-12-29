@@ -8,6 +8,7 @@ Highlights:
     - ``sc.SIticks()``: convert labels from "10000" and "1e6" to "10k" and "1m"
     - ``sc.maximize()``: make the figure fill the whole screen
     - ``sc.savemovie()``: save a sequence of figures as an MP4 or other movie
+    - ``sc.fonts()``: list available fonts or add new ones
 '''
 
 ##############################################################################
@@ -20,6 +21,7 @@ import datetime as dt
 import pylab as pl
 import numpy as np
 import matplotlib as mpl
+import matplotlib.font_manager as mplfm
 from . import sc_odict as sco
 from . import sc_utils as scu
 from . import sc_fileio as scf
@@ -270,7 +272,8 @@ def bar3d(data, fig=None, returnfig=False, cmap='viridis', figkwargs=None, axkwa
 #%% Other plotting functions
 ##############################################################################
 
-__all__ += ['boxoff', 'setaxislim', 'setxlim', 'setylim', 'commaticks', 'SIticks', 'dateformatter', 'get_rows_cols', 'figlayout', 'maximize']
+__all__ += ['boxoff', 'setaxislim', 'setxlim', 'setylim', 'commaticks', 'SIticks',
+            'dateformatter', 'get_rows_cols', 'figlayout', 'maximize', 'fonts']
 
 
 def boxoff(ax=None, removeticks=True, flipticks=True):
@@ -595,6 +598,8 @@ def get_rows_cols(n, nrows=None, ncols=None, ratio=1, make=False, tight=True, re
     else: # Otherwise, just return rows and columns
         return nrows,ncols
 
+getrowscols = get_rows_cols # Alias
+
 
 def figlayout(fig=None, tight=True, keep=False, **kwargs):
     '''
@@ -663,6 +668,42 @@ def maximize(fig=None, die=False):  # pragma: no cover
             print(errormsg)
     return
 
+
+def fonts(add=None, use=False, **kwargs):
+    '''
+    List available fonts, or add new ones. Alias to Matplotlib's font manager.
+
+    Args:
+        add (str/list): path of the fonts or folders to add; if none, list available fonts
+        use (bool): set the last-added font as the default font (default: false)
+        kwargs (dict): passed to matplotlib.font_manager.findSystemFonts()
+
+    **Examples**::
+
+        sc.fonts() # List available fonts
+        sc.fonts('myfont.ttf', use=True) # Add this font and immediately set to default
+        sc.fonts(['/folder1', '/folder2']) # Add all fonts in both folders
+    '''
+
+    if add is None:
+        available_fonts = []
+        for f in mplfm.findSystemFonts(**kwargs):
+            try:
+                name = mplfm.get_font(f).family_name
+                available_fonts.append(name)
+            except:
+                pass
+        available_fonts = np.unique(available_fonts).tolist()
+        return available_fonts
+
+    else:
+        paths = scu.promotetolist(add)
+        for font in mplfm.findSystemFonts(paths, **kwargs):
+            mplfm.fontManager.addfont(font)
+        if use: # Set as default font
+            pl.rc('font', family=font.family_name)
+
+    return
 
 
 ##############################################################################
