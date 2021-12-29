@@ -17,10 +17,10 @@ def test_legacy():
     # Define filenames
     filedir = 'files' + os.sep
     files = sc.prettyobj()
-    files.excel  = filedir+'test.xlsx'
-    files.binary = filedir+'test.obj'
-    files.text   = filedir+'text.txt'
-    files.zip    = filedir+'test.zip'
+    files.excel  = filedir + 'test.xlsx'
+    files.binary = filedir + 'test.obj'
+    files.text   = filedir + 'text.txt'
+    files.zip    = filedir + 'test.zip'
     tidyup = True
 
     # Define the test data

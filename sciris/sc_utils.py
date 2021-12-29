@@ -816,7 +816,7 @@ def transposelist(obj):
 
 def swapdict(d):
     '''
-    Swap the keys and values of a dictionary.
+    Swap the keys and values of a dictionary. Equivalent to {v:k for k,v in d.items()}
 
     Args:
         d (dict): dictionary

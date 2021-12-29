@@ -7,6 +7,7 @@ import numpy as np
 import pylab as pl
 import sciris as sc
 
+#%% Functions
 
 if 'doplot' not in locals():
     doplot = True
@@ -166,6 +167,26 @@ def test_saving(doplot=doplot):
     return o
 
 
+def test_fonts(doplot=doplot):
+    sc.heading('Testing font functions')
+
+    # Test getting fonts
+    fonts = sc.fonts()
+
+    # Test setting fonts
+    orig = pl.rcParams['font.family']
+    sc.fonts(add=sc.path('files/examplefont.ttf'), use=True, die=True, verbose=True)
+
+    if doplot:
+        pl.figure()
+        pl.plot([1,2,3], [4,5,6])
+        pl.xlabel('Example label in new font')
+
+    # Reset
+    pl.rcParams['font.family'] = orig
+
+    return fonts
+
 
 #%% Run as a script
 if __name__ == '__main__':
@@ -178,6 +199,7 @@ if __name__ == '__main__':
     threed    = test_3d(doplot)
     other     = test_other(doplot)
     saved     = test_saving(doplot)
+    fonts     = test_fonts(doplot)
 
     if doplot:
         pl.show()

@@ -669,14 +669,17 @@ def maximize(fig=None, die=False):  # pragma: no cover
     return
 
 
-def fonts(add=None, use=False, fullfont=False, **kwargs):
+def fonts(add=None, use=False, output='name', dryrun=False, verbose=False, die=False, **kwargs):
     '''
     List available fonts, or add new ones. Alias to Matplotlib's font manager.
 
     Args:
         add (str/list): path of the fonts or folders to add; if none, list available fonts
-        use (bool): set the last-added font as the default font (default: False)
-        fullfont (bool): if True, return the list of font objects instead of font names (default: False)
+        use (bool): set the last-added font as the default font
+        output (str): what to display the listed fonts as: options are 'name' (list of names, default), 'path' (dict of name:path), or 'font' (dict of name:font object)
+        dryrun (bool): list fonts to be added rather than adding them
+        verbose (bool): print out information on errors
+        die (bool): whether to raise an exception if fonts can't be added
         kwargs (dict): passed to matplotlib.font_manager.findSystemFonts()
 
     **Examples**::
@@ -687,26 +690,79 @@ def fonts(add=None, use=False, fullfont=False, **kwargs):
         sc.fonts(['/folder1', '/folder2']) # Add all fonts in both folders
     '''
 
+    # List available fonts
     if add is None:
-        available_fonts = []
-        for f in mplfm.findSystemFonts(**kwargs):
-            try:
-                font = mplfm.get_font(f)
-                if not fullfont:
-                    font = font.family_name
-                available_fonts.append(font)
-            except:
-                pass
-        if not fullfont:
-            available_fonts = np.unique(available_fonts).tolist()
-        return available_fonts
 
+        # Find fonts
+        f = sco.objdict() # Create a dictionary for holding the results
+        keys = ['names', 'paths', 'objs']
+        for key in keys:
+            f[key] = scu.autolist()
+        for fontpath in mplfm.findSystemFonts(**kwargs):
+            try:
+                fontobj = mplfm.get_font(fontpath)
+                fontname = fontobj.family_name
+                if fontname not in f.names: # Don't allow duplicates
+                    f.names += fontname
+                    f.paths += fontpath
+                    f.objs  += fontobj
+            except Exception as E:
+                if verbose:
+                    print(f'Could not load {fontpath}: {str(E)}')
+
+        # Handle output
+        order = np.argsort(f.names) # Order by name
+        for key in keys:
+            f[key] = [f[key][o] for o in order]
+        if 'name' in output:
+            out = f.names
+        elif 'path' in output:
+            out = dict(zip(f.names, f.paths))
+        elif 'font' in output:
+            out = dict(zip(f.names, f.objs))
+        else:
+            errormsg = f'Output type not recognized: must be "name", "path", or "font", not "{output}"'
+            raise ValueError(errormsg)
+        return out
+
+    # Or, add new fonts
     else:
-        paths = scu.promotetolist(add)
-        for font in mplfm.findSystemFonts(paths, **kwargs):
-            mplfm.fontManager.addfont(font)
-        if use: # Set as default font
-            pl.rc('font', family=font.family_name)
+
+        # Try, but by default don't crash if they can't be added
+        try:
+            fontname = None
+            fontpaths = []
+            paths = scu.promotetolist(add)
+            for path in paths:
+                if os.path.isdir(path):
+                    fps = mplfm.findSystemFonts(path, **kwargs)
+                    fontpaths.extend(fps)
+                else:
+                    fontpaths.append(scf.makefilepath(path))
+            if dryrun:
+                print(fontpaths)
+            else:
+                for path in fontpaths:
+                    mplfm.fontManager.addfont(path)
+                    fontname = mplfm.get_font(path).family_name
+                    if verbose:
+                        print(f'Added "{fontname}"')
+                if verbose and fontname is None:
+                    print('Warning: no fonts were added')
+                if use and fontname: # Set as default font
+                    pl.rc('font', family=fontname)
+
+            if verbose:
+                print(f'Done: added {len(fontpaths)} fonts.')
+
+        # Exception was encountered, quietly print
+        except Exception as E:
+            exc = type(E)
+            errormsg = f'Warning, could not install some fonts:\n{str(E)}'
+            if die:
+                raise exc(errormsg) from E
+            else:
+                print(errormsg)
 
     return
 

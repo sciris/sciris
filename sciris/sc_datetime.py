@@ -766,13 +766,14 @@ class Timer(scu.prettyobj):
         self._start = tic()
         return
 
-    def toc(self, **kwargs):
+    def toc(self, label=None, **kwargs):
         ''' Print elapsed time '''
         kwargs.update(self.kwargs)
         orig_output = kwargs.pop('output', None)
         orig_doprint = kwargs.pop('doprint', None)
-        self.elapsed, self.message = toc(self._start, output='both', doprint=False, **kwargs)
-        output = toc(elapsed=self.elapsed, output=orig_output, doprint=orig_doprint, **kwargs) # Call again to get the correct output
+        kw = scu.mergedicts({'label':label}, kwargs)
+        self.elapsed, self.message = toc(start=self._start, output='both', doprint=False, **kw)
+        output = toc(elapsed=self.elapsed, output=orig_output, doprint=orig_doprint, **kw) # Call again to get the correct output
         return output
 
     def start(self):
