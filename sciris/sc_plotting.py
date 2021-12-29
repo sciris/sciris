@@ -669,18 +669,20 @@ def maximize(fig=None, die=False):  # pragma: no cover
     return
 
 
-def fonts(add=None, use=False, **kwargs):
+def fonts(add=None, use=False, fullfont=False, **kwargs):
     '''
     List available fonts, or add new ones. Alias to Matplotlib's font manager.
 
     Args:
         add (str/list): path of the fonts or folders to add; if none, list available fonts
-        use (bool): set the last-added font as the default font (default: false)
+        use (bool): set the last-added font as the default font (default: False)
+        fullfont (bool): if True, return the list of font objects instead of font names (default: False)
         kwargs (dict): passed to matplotlib.font_manager.findSystemFonts()
 
     **Examples**::
 
-        sc.fonts() # List available fonts
+        sc.fonts() # List available font names
+        sc.fonts(fullfont=True) # List available font objects
         sc.fonts('myfont.ttf', use=True) # Add this font and immediately set to default
         sc.fonts(['/folder1', '/folder2']) # Add all fonts in both folders
     '''
@@ -689,11 +691,14 @@ def fonts(add=None, use=False, **kwargs):
         available_fonts = []
         for f in mplfm.findSystemFonts(**kwargs):
             try:
-                name = mplfm.get_font(f).family_name
-                available_fonts.append(name)
+                font = mplfm.get_font(f)
+                if not fullfont:
+                    font = font.family_name
+                available_fonts.append(font)
             except:
                 pass
-        available_fonts = np.unique(available_fonts).tolist()
+        if not fullfont:
+            available_fonts = np.unique(available_fonts).tolist()
         return available_fonts
 
     else:
