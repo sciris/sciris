@@ -118,7 +118,7 @@ https://stackoverflow.com/questions/41554738/how-to-load-an-old-pickle-file
     try:
         with gz.GzipFile(**fileargs) as fileobj:
             filestr = fileobj.read() # Convert it to a string
-    except Exception as E:
+    except Exception as E: # pragma: no cover
         exc = type(E) # Figure out what kind of error it is
         if exc == FileNotFoundError: # This is simple, just raise directly
             raise E
@@ -132,7 +132,7 @@ https://stackoverflow.com/questions/41554738/how-to-load-an-old-pickle-file
     # Unpickle it
     try:
         obj = _unpickler(filestr, filename=filename, verbose=verbose, die=die, remapping=remapping, method=method, **kwargs) # Actually load it
-    except Exception as E:
+    except Exception as E: # pragma: no cover
         exc = type(E) # Figure out what kind of error it is
         errormsg = unpicklingerror + '\n\nSee the stack trace above for more information on this specific error.'
         raise exc(errormsg) from E
@@ -179,7 +179,7 @@ def saveobj(filename=None, obj=None, compresslevel=5, verbose=0, folder=None, me
         filename = str(filename)
     if filename is None: # If it doesn't exist, just create a byte stream
         bytesobj = io.BytesIO()
-    if not isinstance(filename, filetypes):
+    if not isinstance(filename, filetypes): # pragma: no cover
         if isinstance(obj, filetypes):
             print(f'Warning: filename was not supplied as a valid type ({type(filename)}) but the object was ({type(obj)}); automatically swapping order')
             real_obj = filename
@@ -463,7 +463,7 @@ def makefilepath(filename=None, folder=None, ext=None, default=None, split=False
     filepath = os.path.join(filefolder, filebasename)
 
     # Optionally check if it exists
-    if checkexists is not None:
+    if checkexists is not None: # pragma: no cover
         exists = os.path.exists(filepath)
         errormsg = ''
         if exists and not checkexists:
@@ -883,7 +883,7 @@ class Spreadsheet(Blobject):
         return output
 
 
-    def xlrd(self, reload=False, **kwargs):
+    def xlrd(self, reload=False, **kwargs): # pragma: no cover
         ''' Return a book as opened by xlrd '''
         if self._reload_wb(reload=reload):
             try:
@@ -899,7 +899,7 @@ class Spreadsheet(Blobject):
         if self._reload_wb(reload=reload):
             try:
                 import openpyexcel # Optional import
-            except ModuleNotFoundError as e:
+            except ModuleNotFoundError as e: # pragma: no cover
                 raise ModuleNotFoundError('The "openpyexcel" Python package is not available; please install manually via "pip install openpyexcel" (not to be confused with openpyxl)') from e
             if self.blob is not None:
                 self.tofile(output=False)
@@ -909,7 +909,7 @@ class Spreadsheet(Blobject):
         return self.wb
 
 
-    def pandas(self, reload=False, **kwargs):
+    def pandas(self, reload=False, **kwargs): # pragma: no cover
         ''' Return a book as opened by pandas '''
         if self._reload_wb(reload=reload):
             import pandas as pd # Optional import
@@ -922,7 +922,7 @@ class Spreadsheet(Blobject):
         return self.wb
 
 
-    def update(self, book):
+    def update(self, book): # pragma: no cover
         ''' Updated the stored spreadsheet with book instead '''
         self.tofile(output=False)
         book.save(self.freshbytes())
@@ -944,7 +944,7 @@ class Spreadsheet(Blobject):
         kwargs['fileobj'] = f
 
         # Read in sheetoutput (sciris dataframe object for xlrd, 2D numpy array for openpyexcel).
-        if method == 'xlrd':
+        if method == 'xlrd': # pragma: no cover
             sheetoutput = loadspreadsheet(*args, **kwargs, method='xlrd')  # returns sciris dataframe object
         elif method == 'openpyexcel':
             if wbargs is None: wbargs = {}
@@ -955,7 +955,7 @@ class Spreadsheet(Blobject):
             for r,rowdata in enumerate(rawdata):
                 for c,val in enumerate(rowdata):
                     sheetoutput[r][c] = rawdata[r][c].value
-        else:
+        else: # pragma: no cover
             errormsg = f'Reading method not found; must be openpyexcel or xlrd, not {method}'
             raise ValueError(errormsg)
 
@@ -1001,7 +1001,7 @@ class Spreadsheet(Blobject):
         if cells is not None: # A list of cells is supplied
             cells = scu.promotetolist(cells)
             vals  = scu.promotetolist(vals)
-            if len(cells) != len(vals):
+            if len(cells) != len(vals): # pragma: no cover
                 errormsg = f'If using cells, cells and vals must have the same length ({len(cells)} vs. {len(vals)})'
                 raise ValueError(errormsg)
             for cell,val in zip(cells,vals):
@@ -1019,7 +1019,7 @@ class Spreadsheet(Blobject):
                         cellobj.cached_value = val[1]
                     else:
                         cellobj.value = val
-                except Exception as E:
+                except Exception as E: # pragma: no cover
                     errormsg = f'Could not write "{val}" to cell "{cell}": {repr(E)}'
                     raise RuntimeError(errormsg)
         else:# Cells aren't supplied, assume a matrix
@@ -1034,7 +1034,7 @@ class Spreadsheet(Blobject):
                         key = f'row:{row} col:{col}'
                         ws.cell(row=row, column=col, value=val)
                         if verbose: print(f'  Cell {key} = {val}')
-                    except Exception as E:
+                    except Exception as E: # pragma: no cover
                         errormsg = f'Could not write "{val}" to {key}: {repr(E)}'
                         raise RuntimeError(errormsg)
 
@@ -1048,6 +1048,7 @@ class Spreadsheet(Blobject):
     def save(self, filename='spreadsheet.xlsx'):
         filepath = makefilepath(filename=filename, ext='xlsx')
         Blobject.save(self, filepath)
+
 
 
 def loadspreadsheet(filename=None, folder=None, fileobj=None, sheet=0, asdataframe=None, header=True, method='pandas', **kwargs):
@@ -1090,13 +1091,13 @@ def loadspreadsheet(filename=None, folder=None, fileobj=None, sheet=0, asdatafra
         return data
 
     # Load using openpyexcel
-    elif method == 'openpyexcel':
+    elif method == 'openpyexcel': # pragma: no cover
         spread = Spreadsheet(fullpath)
         wb = spread.openpyexcel(**kwargs)
         return wb
 
     # Legacy method -- xlrd
-    elif method == 'xlrd':
+    elif method == 'xlrd': # pragma: no cover
         try:
             import xlrd # Optional import
 
@@ -1165,7 +1166,7 @@ Then try again to load your Excel file.
             else:
                 raise E
 
-    else:
+    else: # pragma: no cover
         errormsg = f'Method "{method}" not found: must be one of pandas, openpyexcel, or xlrd'
         raise ValueError(errormsg)
 
@@ -1219,7 +1220,7 @@ def savespreadsheet(filename=None, data=None, folder=None, sheetnames=None, clos
     try:
         import xlsxwriter # Optional import
     except ModuleNotFoundError as e: # pragma: no cover
-            raise ModuleNotFoundError('The "xlsxwriter" Python package is not available; please install manually') from e
+        raise ModuleNotFoundError('The "xlsxwriter" Python package is not available; please install manually') from e
     fullpath = makefilepath(filename=filename, folder=folder, default='default.xlsx')
     datadict   = sco.odict()
     formatdict = sco.odict()
@@ -1286,7 +1287,7 @@ def savespreadsheet(filename=None, data=None, folder=None, sheetnames=None, clos
                     if not scu.isnumber(cell_data):
                         cell_data = str(cell_data) # Convert everything except numbers to strings -- use formatting to handle the rest
                     worksheet.write(r, c, cell_data, thisformat) # Write with or without formatting
-                except Exception as E:
+                except Exception as E: # pragma: no cover
                     errormsg = f'Could not write cell [{r},{c}] data="{cell_data}", format="{thisformat}": {str(E)}'
                     raise RuntimeError(errormsg)
 
