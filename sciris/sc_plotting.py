@@ -806,7 +806,7 @@ def dateformatter(style='sciris', start_date=None, dateformat=None, interval=Non
     instead.
 
     Args:
-        style (str): the style to use if the axis already uses dates; options are "sciris", "auto", "concise"
+        style (str): the style to use if the axis already uses dates; options are "sciris", "auto", "concise", or a Formatter object
         start_date (str/date): the start day, either as a string or date object (not needed if x-axis already uses dates)
         dateformat (str): the date format (default ``'%Y-%b-%d'``; not needed if x-axis already uses dates)
         interval (int): if supplied, the interval between ticks (not needed if x-axis already uses dates)
@@ -864,6 +864,8 @@ def dateformatter(style='sciris', start_date=None, dateformat=None, interval=Non
             formatter = mpl.dates.AutoDateFormatter(locator, **kwargs)
         elif style in ['concise', 'brief']:
             formatter = mpl.dates.ConciseDateFormatter(locator, **kwargs)
+        elif isinstance(style, mpl.ticker.Formatter): # If a formatter is provided, use directly
+            formatter = style
         else:
             errormsg = f'Style "{style}" not recognized; must be one of "sciris", "auto", or "concise"'
             raise ValueError(errormsg)
