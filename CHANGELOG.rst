@@ -9,6 +9,7 @@ Version 1.3.0 (2021-12-30)
 --------------------------
 
 This version contains a number of major improvements, including:
+
 #. **Better date plotting**: ``sc.dateformatter()`` has been revamped to provide compact and intuitive date plotting.
 #. **Font support**: ``sc.fonts()`` can both list and add fonts.
 #. **Smoothing and convolution**: The new functions ``sc.convolve()`` and ``sc.gauss1d()``, and the updated ``sc.smooth()``, provide new options for smoothing data.
