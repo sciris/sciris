@@ -9,7 +9,6 @@ Highlights:
 '''
 
 import time
-import dateutil
 import warnings
 import pylab as pl
 import datetime as dt
@@ -34,14 +33,13 @@ def now(timezone=None, utc=False, die=False, astype='dateobj', tostring=False, d
         sc.now(dateformat='%Y-%b-%d') # Return a different date format
     '''
     if isinstance(utc, str): timezone = utc # Assume it's a timezone
-    if timezone is not None: tzinfo = dateutil.tz.gettz(timezone) # Timezone is a string
-    elif utc:                tzinfo = dateutil.tz.tzutc() # UTC has been specified
+    if timezone is not None: tzinfo = du.tz.gettz(timezone) # Timezone is a string
+    elif utc:                tzinfo = du.tz.tzutc() # UTC has been specified
     else:                    tzinfo = None # Otherwise, do nothing
     if tostring: astype = 'str'
     timenow = dt.datetime.now(tzinfo)
     output = getdate(timenow, astype=astype, dateformat=dateformat)
     return output
-
 
 
 def getdate(obj=None, astype='str', dateformat=None):
@@ -399,12 +397,12 @@ def daterange(start_date, end_date, interval=None, inclusive=True, as_date=False
     elif interval == 'month':       interval = dict(months=1)
     elif interval == 'year':        interval = dict(years=1)
     if inclusive:
-        end_date += du.relativedelta.relativedelta(days=1)
+        end_date += datedelta(days=1)
 
     # Calculate dates
     dates = []
     curr_date = start_date
-    delta = du.relativedelta.relativedelta(**interval)
+    delta = datedelta(**interval)
     while curr_date < end_date:
         dates.append(curr_date)
         curr_date += delta
@@ -414,17 +412,20 @@ def daterange(start_date, end_date, interval=None, inclusive=True, as_date=False
     return dates
 
 
-def datedelta(datestr, days=0, months=0, years=0, weeks=0, as_date=None, **kwargs):
+def datedelta(datestr=None, days=0, months=0, years=0, weeks=0, dt1=None, dt2=None, as_date=None, **kwargs):
     '''
     Perform calculations on a date string (or date object), returning a string (or a date).
-    Wrapper to dateutil.relativedelta().
+    Wrapper to ``dateutil.relativedelta.relativedelta()``.
+
+    If ``datestr`` is ``None``, then return the delta object rather than the new date.
 
     Args:
-        datestr (str/date): the starting date (typically a string)
+        datestr (None/str/date): the starting date (typically a string); if None, return the relative delta
         days (int): the number of days (positive or negative) to increment
         months (int): as above
         years (int): as above
         weeks (int): as above
+        dt1, dt2 (dates): if both provided, compute the difference between them
         as_date (bool): if True, return a date object; otherwise, return as input type
         kwargs (dict): passed to ``sc.readdate()``
 
@@ -433,13 +434,19 @@ def datedelta(datestr, days=0, months=0, years=0, weeks=0, as_date=None, **kwarg
         sc.datedelta('2021-07-07', 3) # Add 3 days
         sc.datedelta('2021-07-07', days=-4) # Subtract 4 days
         sc.datedelta('2021-07-07', weeks=4, months=-1, as_date=True) # Add 4 weeks but subtract a month, and return a dateobj
+        sc.datedelta(days=3) # Alias to du.relativedelta.relativedelta(days=3)
     '''
-    if as_date is None and isinstance(datestr, str): # Typical case
-        as_date = False
-    dateobj = readdate(datestr, **kwargs)
-    newdate = dateobj + dateutil.relativedelta.relativedelta(days=days, months=months, years=years, weeks=weeks)
-    newdate = date(newdate, as_date=as_date)
-    return newdate
+    # Calculate the time delta, and return immediately if no date is provided
+    delta = du.relativedelta.relativedelta(days=days, months=months, years=years, weeks=weeks, dt1=dt1, dt2=dt2)
+    if datestr is None:
+        return delta
+    else:
+        if as_date is None and isinstance(datestr, str): # Typical case
+            as_date = False
+        dateobj = readdate(datestr, **kwargs)
+        newdate = dateobj + delta
+        newdate = date(newdate, as_date=as_date)
+        return newdate
 
 
 def datetoyear(dateobj, dateformat=None):
@@ -465,7 +472,8 @@ def datetoyear(dateobj, dateformat=None):
         dateobj = readdate(dateobj, dateformat=dateformat)
     year_part = dateobj - dt.datetime(year=dateobj.year, month=1, day=1)
     year_length = dt.datetime(year=dateobj.year + 1, month=1, day=1) - dt.datetime(year=dateobj.year, month=1, day=1)
-    return dateobj.year + year_part / year_length
+    output = dateobj.year + year_part / year_length
+    return output
 
 
 def elapsedtimestr(pasttime, maxdays=5, minseconds=10, shortmonths=True):
@@ -489,10 +497,10 @@ def elapsedtimestr(pasttime, maxdays=5, minseconds=10, shortmonths=True):
         sc.elapsedtimestr(yesterday)
     """
 
-    # Elapsed time function by Alex Chan
-    # https://gist.github.com/alexwlchan/73933442112f5ae431cc
+    # Elapsed time function by Alex Chan: https://gist.github.com/alexwlchan/73933442112f5ae431cc
     def print_date(date, includeyear=True, shortmonths=True):
-        """Prints a datetime object as a full date, stripping off any leading
+        """
+        Prints a datetime object as a full date, stripping off any leading
         zeroes from the day (strftime() gives the day of the month as a zero-padded
         decimal number).
         """
@@ -514,6 +522,7 @@ def elapsedtimestr(pasttime, maxdays=5, minseconds=10, shortmonths=True):
             date_str = date_str[1:]
 
         return date_str
+
     now_time = dt.datetime.now()
 
     # If the user passes in a string, try to turn it into a datetime object before continuing
