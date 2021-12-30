@@ -59,7 +59,7 @@ CLASSIFIERS = [
     'Programming Language :: Python',
     'Topic :: Software Development :: Libraries :: Python Modules',
     'Development Status :: 5 - Production/Stable',
-    'Programming Language :: Python :: 3.8',
+    'Programming Language :: Python :: 3.9',
 ]
 
 setup(
