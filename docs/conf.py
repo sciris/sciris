@@ -8,11 +8,6 @@
 
 import os
 import sys
-import matplotlib
-
-matplotlib.use("agg") # To ensure figures don't render
-sys.path.insert(0, os.path.abspath("../"))  # Source code dir relative to this file
-
 import sciris as sc
 
 # -- Path setup --------------------------------------------------------------
@@ -43,7 +38,7 @@ release = sc.__version__
 # ones.
 extensions = [
     "sphinx.ext.autodoc",  # Core Sphinx library for auto html doc generation from docstrings
-    "sphinx.ext.autosummary",  # Create neat summary tables for modules/classes/methods etc
+    "sphinx.ext.autosummary",  # Create neat summary tables for modules/classes/methods etc -- causes warnings with Napoleon however
     "sphinx.ext.viewcode",  # Add a link to the Python source code for classes, functions etc.
     "sphinx.ext.napoleon",
     "sphinx.ext.autosectionlabel",
@@ -54,18 +49,10 @@ extensions = [
 autodoc_default_options = {
     'member-order': 'bysource',
     'members': None,
-    "private-members": False,
-    "special-members": False,
 }
 
 autodoc_mock_imports = []
-
-
 napoleon_google_docstring = True
-napoleon_include_special_with_doc = False
-napoleon_use_ivar = True
-napoleon_use_param = True
-napoleon_use_rtype = True
 
 # Configure autosummary
 autosummary_generate = True  # Turn on sphinx.ext.autosummary

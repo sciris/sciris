@@ -748,8 +748,8 @@ def promotetolist(obj=None, objtype=None, keepnone=False, coerce='default'):
         myfunc(data, keys=['a', 'b']) # Works
         myfunc(data, keys='a') # Still works, equivalent to needing to supply keys=['a'] without promotetolist()
 
-    New in version 1.1.0: "coerce" argument
-    New in version 1.2.2: default coerce values
+    | New in version 1.1.0: "coerce" argument
+    | New in version 1.2.2: default coerce values
     '''
     # Handle coerce
     default_coerce = (range, map, type({}.keys()), type({}.values()), type({}.items()))

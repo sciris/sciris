@@ -2,7 +2,7 @@
 Extensions to Matplotlib, including 3D plotting and plot customization.
 
 Highlights:
-    - ``sc.plot3d()``:c.surf3d() # easy way to render 3D plots
+    - ``sc.plot3d()``: easy way to render 3D plots
     - ``sc.boxoff()``: turn off top and right parts of the axes box
     - ``sc.commaticks()``: convert labels from "10000" and "1e6" to "10,000" and "1,000,0000"
     - ``sc.SIticks()``: convert labels from "10000" and "1e6" to "10k" and "1m"
@@ -500,9 +500,9 @@ def get_rows_cols(n, nrows=None, ncols=None, ratio=1, make=False, tight=True, re
         nrows,ncols = sc.get_rows_cols(100, ratio=0.5) # Returns 8,13 since rows are prioritized
         fig,axs     = sc.getrowscols(37, make=True) # Create 7x6 subplots, using the alias
 
-    New in version 1.0.0.
-    New in version 1.2.0: "make", "tight", and "remove_extra" arguments
-    New in version 1.3.0: alias without underscores
+    | New in version 1.0.0.
+    | New in version 1.2.0: "make", "tight", and "remove_extra" arguments
+    | New in version 1.3.0: alias without underscores
     '''
 
     # Simple cases -- calculate the one missing
@@ -840,9 +840,9 @@ def dateformatter(ax=None, style='sciris', start_date=None, dateformat=None, int
         ax.plot(np.arange(60), np.random.random(60))
         formatter = sc.dateformatter(start_date='2020-04-04', interval=7, start='2020-05-01', end=50, dateformat='%m-%d', ax=ax)
 
-    New in version 1.2.0.
-    New in version 1.2.2: "rotation" argument; renamed "start_day" to "start_date"
-    New in version 1.3.0: refactored to use built-in Matplotlib date formatting
+    | New in version 1.2.0.
+    | New in version 1.2.2: "rotation" argument; renamed "start_day" to "start_date"
+    | New in version 1.3.0: refactored to use built-in Matplotlib date formatting
     '''
 
     # Handle deprecation

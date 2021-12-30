@@ -503,8 +503,8 @@ def cat(*args, axis=None, copy=False, **kwargs):
         arr = sc.cat(np.array([1,2,3]), [4,5], 6)
         arr = sc.cat(np.random.rand(2,4), np.random.rand(2,6), axis=1)
 
-    New in version 1.0.0.
-    New in version 1.1.0: "copy" and keyword arguments.
+    | New in version 1.0.0.
+    | New in version 1.1.0: "copy" and keyword arguments.
     '''
     if not len(args):
         return np.array([])

@@ -247,8 +247,8 @@ def date(obj, *args, start_date=None, readformat=None, outformat=None, as_date=T
         sc.date([35,36,37], start_date='2020-01-01', as_date=False) # Returns ['2020-02-05', '2020-02-06', '2020-02-07']
         sc.date(1923288822, readformat='posix') # Interpret as a POSIX timestamp
 
-    New in version 1.0.0.
-    New in version 1.2.2: "readformat" argument; renamed "dateformat" to "outformat"
+    | New in version 1.0.0.
+    | New in version 1.2.2: "readformat" argument; renamed "dateformat" to "outformat"
     '''
     # Handle deprecation
     start_date = kwargs.pop('startdate', start_date) # Handle with or without underscore
@@ -321,8 +321,8 @@ def day(obj, *args, start_date=None, **kwargs):
         sc.day(sc.now()) # Returns how many days into the year we are
         sc.day(['2021-01-21', '2024-04-04'], start_date='2022-02-22') # Days can be positive or negative
 
-    New in version 1.0.0.
-    New in version 1.2.2: renamed "start_day" to "start_date"
+    | New in version 1.0.0.
+    | New in version 1.2.2: renamed "start_day" to "start_date"
     '''
 
     # Handle deprecation
@@ -411,8 +411,8 @@ def daterange(start_date=None, end_date=None, interval=None, inclusive=True, as_
         dates1 = sc.daterange('2020-03-01', '2020-04-04')
         dates2 = sc.daterange('2020-03-01', '2022-05-01', interval=dict(months=2), asdate=True)
 
-    New in version 1.0.0.
-    New in version 1.3.0: "interval" argument
+    | New in version 1.0.0.
+    | New in version 1.3.0: "interval" argument
     '''
 
     # Handle inputs

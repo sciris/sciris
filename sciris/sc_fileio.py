@@ -76,8 +76,8 @@ def loadobj(filename=None, folder=None, verbose=False, die=None, remapping=None,
         old = sc.loadobj('my-old-file.obj', remapping={'foo.Bar':cat.Mat}) # If loading a saved object containing a reference to foo.Bar that is now cat.Mat
         old = sc.loadobj('my-old-file.obj', remapping={'foo.Bar':('cat', 'Mat')}) # Equivalent to the above
 
-    New in version 1.1.0: "remapping" argument
-    New in version 1.2.2: ability to load non-gzipped pickles; support for dill; arguments passed to loader
+    | New in version 1.1.0: "remapping" argument
+    | New in version 1.2.2: ability to load non-gzipped pickles; support for dill; arguments passed to loader
     '''
 
     # Handle loading of either filename or file object
@@ -169,8 +169,8 @@ def saveobj(filename=None, obj=None, compresslevel=5, verbose=0, folder=None, me
         sc.saveobj('myfile.obj', myobj)
         sc.saveobj('myfile.obj', myobj, method='dill') # Use dill instead, to save custom classes as well
 
-    New in version 1.1.1: removed Python 2 support.
-    New in version 1.2.2: automatic swapping of arguments if order is incorrect; correct passing of arguments
+    | New in version 1.1.1: removed Python 2 support.
+    | New in version 1.2.2: automatic swapping of arguments if order is incorrect; correct passing of arguments
     '''
 
     # Handle path
@@ -520,9 +520,9 @@ def thisdir(file=None, path=None, *args, aspath=None, **kwargs):
         file_in_sub_dir = sc.thisdir('..', 'tests', 'mytests.py') # Merge parent folder with sufolders and a file
         np_dir = sc.thisdir(np) # Get the folder that Numpy is loaded from (assuming "import numpy as np")
 
-    New in version 1.1.0: "as_path" argument renamed "aspath"
-    New in version 1.2.2: "path" argument
-    New in version 1.3.0: allow modules
+    | New in version 1.1.0: "as_path" argument renamed "aspath"
+    | New in version 1.2.2: "path" argument
+    | New in version 1.3.0: allow modules
     '''
     if file is None: # No file: use the current folder
          file = str(Path(inspect.stack()[1][1])) # Adopted from Atomica
