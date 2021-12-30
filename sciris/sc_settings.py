@@ -25,6 +25,9 @@ class dictobj(object):
 
     For a dictionary that acts like an object instead, see ``sc.objdict()``.
 
+    Note: ``sc.dictobj()`` is defined in ``sc_settings.py`` rather than ``sc_odict.py``
+    since it's used for the options object, which needs to be the first module loaded.
+
     **Example**::
 
         obj = sc.dictobj()
@@ -47,6 +50,7 @@ class dictobj(object):
     def fromkeys(self, *args, **kwargs):
         return dictobj(self.__dict__.fromkeys(*args, **kwargs))
 
+    # Copy default dictionary methods
     def __getitem__( self, *args, **kwargs): return self.__dict__.__getitem__( *args, **kwargs)
     def __setitem__( self, *args, **kwargs): return self.__dict__.__setitem__( *args, **kwargs)
     def __contains__(self, *args, **kwargs): return self.__dict__.__contains__(*args, **kwargs)
