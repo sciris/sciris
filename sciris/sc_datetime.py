@@ -1,5 +1,5 @@
 '''
-Time/date utilities
+Time/date utilities.
 
 Highlights:
     - ``sc.tic()/sc.toc()/sc.timer()``: simple methods for timing durations

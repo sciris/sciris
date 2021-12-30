@@ -1,5 +1,5 @@
 '''
-Nested dictionary functions
+Nested dictionary functions.
 '''
 
 import itertools

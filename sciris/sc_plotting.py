@@ -1,5 +1,5 @@
 '''
-Extensions to Matplotlib, including colormaps, 3D plotting, and plot manipulations.
+Extensions to Matplotlib, including 3D plotting and plot customization.
 
 Highlights:
     - ``sc.plot3d()``:c.surf3d() # easy way to render 3D plots

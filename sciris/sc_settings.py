@@ -1,5 +1,7 @@
 '''
-Define options for Sciris. All options should be set directly or using set(), e.g.::
+Options for configuring Sciris and Matplotlib.
+
+All options should be set directly or using set(), e.g.::
 
     sc.options(sep='.')
 
