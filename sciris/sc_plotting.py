@@ -467,25 +467,6 @@ def SIticks(ax=None, axis='y', fixed=False):
     return None
 
 
-def _dateaxis(ax=None, axis='x'):
-    ''' Check if the current axes use dates by seeing if the DateConverter is used '''
-
-    # Handle inputs
-    if ax is None:
-        ax = pl.gca()
-    if   axis == 'x': axi = ax.xaxis
-    elif axis == 'y': axi = ax.yaxis
-    elif axis == 'z': axi = ax.zaxis
-    else:
-        errormsg = f'Axis "{axis}" not found: must be x, y, or z'
-        raise ValueError(errormsg)
-
-    # Check
-    output = True if isinstance(axi.converter, mpl.dates.DateConverter) else False
-
-    return output
-
-
 def get_rows_cols(n, nrows=None, ncols=None, ratio=1, make=False, tight=True, remove_extra=True, **kwargs):
     '''
     Get the number of rows and columns needed to plot N figures.
@@ -723,6 +704,25 @@ def fonts(add=None, use=False, output='name', dryrun=False, verbose=False, die=F
 ##############################################################################
 
 __all__ += ['dateformatter']
+
+
+def _dateaxis(ax=None, axis='x'):
+    ''' Check if the current axes use dates by seeing if the DateConverter is used '''
+
+    # Handle inputs
+    if ax is None:
+        ax = pl.gca()
+    if   axis == 'x': axi = ax.xaxis
+    elif axis == 'y': axi = ax.yaxis
+    elif axis == 'z': axi = ax.zaxis
+    else:
+        errormsg = f'Axis "{axis}" not found: must be x, y, or z'
+        raise ValueError(errormsg)
+
+    # Check
+    output = True if isinstance(axi.converter, mpl.dates.DateConverter) else False
+
+    return output
 
 
 class ScirisDateFormatter(mpl.dates.ConciseDateFormatter):

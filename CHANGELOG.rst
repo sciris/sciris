@@ -10,15 +10,36 @@ Version 1.3.0 (2021-12-20)
 
 New functions and methods
 ~~~~~~~~~~~~~~~~~~~~~~~~~
+#. Added a settings module to quickly set both Sciris and Matplotlib options; e.g. ``sc.options(dpi=150)`` is a shortcut for ``pl.rc('figure', dpi=150)``, while e.g. ``sc.options(aspath=True)`` will globally set Sciris functions to return ``Path`` objects instead of strings.
+#. Added ``sc.timer()`` as a simpler and more flexible way of accessing ``sc.tic()``/``sc.toc()`` and ``sc.Timer()``.
+#. Added ``sc.convolve()``, a simple fix to ``np.convolve()`` that avoids edge effects (see update to ``sc.smooth()`` below).
+#. Added ``sc.gauss1d()`` and ``sc.gauss2d()`` as additional (high-performance) smoothing functions.
 #. Added ``sc.loadobj2or3()``, for legacy support for loading Python 2 pickles. (Support had been removed in version 1.1.1.)
 
 Bugfixes
 ~~~~~~~~
-#. Fixed a bug with checking types when saving files via ``sc.save()``.
+#. Fixed edge effects when using ``sc.smooth()`` by using ``sc.convolve()`` instead of ``np.convolve()``.
+#. Fixed a bug with checking types when saving files via ``sc.save()``. (Thanks to Rowan Martin-Hughes.)
+
 
 Improvements
 ~~~~~~~~~~~~
+#. Many functions had small usability improvements, e.g. input arguments are more consistent and more flexible.
+#. ``sc.daterange()`` now accepts an ``interval`` argument.
+#. ``sc.datedelta()`` can now return the actual delta rather than just the date.
+#. ``sc.toc()`` has more flexible printing options.
+#. ``sc.Spreadsheet()`` now keeps a copy of the opened workbook, so there is no need to reopen it for every operation.
+#. ``sc.commaticks()`` can now use non-comma separators. 
 
+Housekeeping
+~~~~~~~~~~~~
+#. ``xlrd`` has been removed as a dependency; ``openpyexcel`` is used instead, with simple spreadsheet loading now done by ``pandas``.
+#. Source files were refactored and split into smaller pieces (e.g. ``sc_utils.py`` was split into ``sc_utils.py``, ``sc_printing.py``, ``sc_datetime.py``, ``sc_nested.py``).
+
+Regression information
+~~~~~~~~~~~~~~~~~~~~~~
+#. To restore previous spreadsheet loading behavior, use ``sc.loadspreadsheet(..., method='xlrd')``.
+#. To use previous smoothing (with edge effects), use ``sc.smooth(..., legacy=True)``
 
 
 
