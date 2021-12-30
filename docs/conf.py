@@ -8,11 +8,6 @@
 
 import os
 import sys
-import matplotlib
-
-matplotlib.use("agg") # To ensure figures don't render
-sys.path.insert(0, os.path.abspath("../"))  # Source code dir relative to this file
-
 import sciris as sc
 
 # -- Path setup --------------------------------------------------------------
@@ -24,8 +19,8 @@ import sciris as sc
 # -- Project information -----------------------------------------------------
 
 project = 'Sciris'
-copyright = f'2020 by the Sciris team (version {sc.__version__}).'
-author = 'Sciris.org'
+copyright = f'2021 by the Sciris Development Team (version {sc.__version__})'
+author = 'Sciris Development Team'
 
 # The short X.Y version
 version = sc.__version__
@@ -43,7 +38,7 @@ release = sc.__version__
 # ones.
 extensions = [
     "sphinx.ext.autodoc",  # Core Sphinx library for auto html doc generation from docstrings
-    "sphinx.ext.autosummary",  # Create neat summary tables for modules/classes/methods etc
+    "sphinx.ext.autosummary",  # Create neat summary tables for modules/classes/methods etc -- causes warnings with Napoleon however
     "sphinx.ext.viewcode",  # Add a link to the Python source code for classes, functions etc.
     "sphinx.ext.napoleon",
     "sphinx.ext.autosectionlabel",
@@ -51,6 +46,12 @@ extensions = [
     "recommonmark",
 ]
 
+autodoc_default_options = {
+    'member-order': 'bysource',
+    'members': None,
+}
+
+autodoc_mock_imports = []
 napoleon_google_docstring = True
 
 # Configure autosummary
@@ -80,11 +81,11 @@ html_logo = "sciris-logo-small.png"
 html_favicon = "favicon.ico"
 html_static_path = ['_static']
 html_context = {
-    'css_files': [
-        '_static/theme_overrides.css'
-    ]
+    'rtd_url': 'https://sciris.readthedocs.io/en/latest/',
+    'theme_vcs_pageview_mode': 'edit'
 }
 
+html_last_updated_fmt = '%Y-%b-%d'
 html_show_sourcelink = True
 html_show_sphinx = False
 htmlhelp_basename = 'Sciris'

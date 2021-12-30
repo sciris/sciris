@@ -13,7 +13,9 @@ Highlights:
 import re
 import numpy as np
 from collections import OrderedDict as OD
-from . import sc_utils as ut
+from . import sc_utils as scu
+from . import sc_printing as scp
+from . import sc_nested as scn
 
 # Restrict imports to user-facing modules
 __all__ = ['odict', 'objdict', 'asobj']
@@ -74,7 +76,7 @@ class odict(OD):
     def __getitem__(self, key, allow_default=True):
         ''' Allows getitem to support strings, integers, slices, lists, or arrays '''
 
-        if isinstance(key, ut._stringtypes) or isinstance(key, tuple): # Normal use case: just use a string key
+        if isinstance(key, scu._stringtypes) or isinstance(key, tuple): # Normal use case: just use a string key
             try: # Initially, try just retrieving the key normally
                 output = OD.__getitem__(self, key)
                 return output
@@ -91,11 +93,11 @@ class odict(OD):
                     return dd # Return
                 else:
                     keys = self.keys()
-                    if len(keys): errormsg = f'odict key "{key}" not found; available keys are:\n{ut.newlinejoin(keys)}'
+                    if len(keys): errormsg = f'odict key "{key}" not found; available keys are:\n{scu.newlinejoin(keys)}'
                     else:         errormsg = f'Key {key} not found since odict is empty'
-                    raise ut.KeyNotFoundError(errormsg)
+                    raise scu.KeyNotFoundError(errormsg)
 
-        elif isinstance(key, ut._numtype): # Convert automatically from float
+        elif isinstance(key, scu._numtype): # Convert automatically from float
             thiskey = self.keys()[int(key)]
             return OD.__getitem__(self, thiskey) # Note that defaultdict behavior isn't supported for non-string lookup
 
@@ -131,7 +133,7 @@ class odict(OD):
         if isinstance(key, (str,tuple)):
             OD.__setitem__(self, key, value)
 
-        elif isinstance(key, ut._numtype): # Convert automatically from float...dangerous?
+        elif isinstance(key, scu._numtype): # Convert automatically from float...dangerous?
             thiskey = self.keys()[int(key)]
             OD.__setitem__(self, thiskey, value)
 
@@ -202,27 +204,27 @@ class odict(OD):
             else:
                 keylist = allkeys[:halfmax] + allkeys[-halfmax:]
             for thiskey in keylist: # Loop over the dictionary values
-                thiskeystr = ut.flexstr(thiskey) # Grab a str representation of the current key.
+                thiskeystr = scu.flexstr(thiskey) # Grab a str representation of the current key.
                 thisval = self.__getitem__(thiskey) # Grab the current value.
 
                 try: # It's rare, but sometimes repr fails
                     # If it's another odict, make a call increasing the recursionlevel and passing the same parameters we received.
                     if isinstance(thisval, odict):
                         if recursionlevel <= maxrecursion:
-                            thisvalstr = ut.flexstr(thisval.__repr__(maxlen=maxlen, showmultilines=showmultilines, divider=divider, dividerthresh=dividerthresh, numindents=numindents, recursionlevel=recursionlevel+1, sigfigs=sigfigs, numformat=numformat))
+                            thisvalstr = scu.flexstr(thisval.__repr__(maxlen=maxlen, showmultilines=showmultilines, divider=divider, dividerthresh=dividerthresh, numindents=numindents, recursionlevel=recursionlevel+1, sigfigs=sigfigs, numformat=numformat))
                         else:
                             thisvalstr = f'{classname} [maximum recursion reached]'
-                    elif ut.isnumber(thisval): # Flexibly print out numbers, since they're largely why we're here
+                    elif scu.isnumber(thisval): # Flexibly print out numbers, since they're largely why we're here
                         if numformat is not None:
                             thisvalstr = numformat % thisval
                         elif sigfigs is not None:
-                            thisvalstr = ut.sigfig(thisval, sigfigs=sigfigs)
+                            thisvalstr = scp.sigfig(thisval, sigfigs=sigfigs)
                         else:
-                            thisvalstr = ut.flexstr(thisval) # To avoid numpy's stupid 0.4999999999945
+                            thisvalstr = scu.flexstr(thisval) # To avoid numpy's stupid 0.4999999999945
                     else: # Otherwise, do the normal repr() read.
                         thisvalstr = repr(thisval)
                 except Exception as E: # pragma: no cover
-                    thisvalstr = f'{ut.objectid(thisval)} read failed: {str(E)}'
+                    thisvalstr = f'{scp.objectid(thisval)} read failed: {str(E)}'
 
                 # Add information to the lists to retrace afterwards.
                 keystrs.append(thiskeystr)
@@ -243,7 +245,7 @@ class odict(OD):
 
                 if (divider or (maxvallinecounts>dividerthresh)) and \
                     showmultilines and recursionlevel==0 and i!=0: # Add a divider line if we should.
-                    newoutput = ut.indent(prefix=theprefix, text=dividerstr, width=80)
+                    newoutput = scp.indent(prefix=theprefix, text=dividerstr, width=80)
                     if newoutput[-1] == '\n':
                         newoutput = newoutput[:-1]
                     output += newoutput
@@ -264,13 +266,13 @@ class odict(OD):
                     rawoutput = f'#{ind:d}{numsep} {quote}{keystr}{quote}{keysep}{spacer} \n{valstr}\n'
 
                 # Perform the indentation.
-                newoutput = ut.indent(prefix=theprefix, text=rawoutput, width=80)
+                newoutput = scp.indent(prefix=theprefix, text=rawoutput, width=80)
 
                 # Strip ot any terminal newline.
                 if newoutput[-1] == '\n':
                     newoutput = newoutput[:-1]
 
-                # Add the new output to the full output.
+                # Add the new output to the full output
                 if extraitems>0 and i == halfmax:
                     output += f'\n[{extraitems} additional odict items not shown]\n\n'
                 output += newoutput
@@ -302,7 +304,7 @@ class odict(OD):
             dict2 = sc.odict(c=5, d=7)
             dict3 = dict1 + dict2
         '''
-        return ut.mergedicts(self, dict2)
+        return scu.mergedicts(self, dict2)
 
 
     def __radd__(self, dict2):
@@ -321,7 +323,7 @@ class odict(OD):
             z.disp(sigfigs=3)
             z.disp(numformat='%0.6f')
         '''
-        kwargs = ut.mergedicts(dict(maxlen=maxlen, showmultilines=showmultilines, divider=divider, dividerthresh=dividerthresh, numindents=numindents, recursionlevel=0, sigfigs=sigfigs, numformat=None, maxitems=maxitems), kwargs)
+        kwargs = scu.mergedicts(dict(maxlen=maxlen, showmultilines=showmultilines, divider=divider, dividerthresh=dividerthresh, numindents=numindents, recursionlevel=0, sigfigs=sigfigs, numformat=None, maxitems=maxitems), kwargs)
         print(self.__repr__(**kwargs))
         return None
 
@@ -335,7 +337,7 @@ class odict(OD):
             shift = 0
             default = 0
 
-        if isinstance(key, ut._numtype):
+        if isinstance(key, scu._numtype):
             if key < 0:
                 key = len(self) + key
             output = key
@@ -359,7 +361,7 @@ class odict(OD):
                 if odict._matchkey(item, pattern, method):
                     return True
         else: # For everything except a tuple, treat it as a string
-            if not ut.isstring(key):
+            if not scu.isstring(key):
                 try:
                     key = str(key) # Try to cast it to a string
                 except Exception as E: # pragma: no cover
@@ -421,9 +423,9 @@ class odict(OD):
 
     def pop(self, key, *args, **kwargs):
         ''' Allows pop to support strings, integers, slices, lists, or arrays '''
-        if isinstance(key, ut._stringtypes):
+        if isinstance(key, scu._stringtypes):
             return OD.pop(self, key, *args, **kwargs)
-        elif isinstance(key, ut._numtype): # Convert automatically from float...dangerous?
+        elif isinstance(key, scu._numtype): # Convert automatically from float...dangerous?
             thiskey = self.keys()[int(key)]
             return OD.pop(self, thiskey, *args, **kwargs)
         elif type(key)==slice: # Handle a slice -- complicated
@@ -443,7 +445,7 @@ class odict(OD):
                 raise ValueError(errormsg) from E
         elif self._is_odict_iterable(key): # Iterate over items
             keys = self.keys()
-            poplist = [keys[int(item)] if isinstance(item, ut._numtype) else item for item in key] # Convert to text keys, because indices change
+            poplist = [keys[int(item)] if isinstance(item, scu._numtype) else item for item in key] # Convert to text keys, because indices change
             listvals = [self.pop(item, *args, **kwargs) for item in poplist]
             try:
                 return np.array(listvals)
@@ -454,9 +456,9 @@ class odict(OD):
                 return OD.pop(self, key, *args, **kwargs)
             except: # Duplicated from __getitem__
                 keys = self.keys()
-                if len(keys): errormsg = f'odict key "{key}" not found; available keys are:\n{ut.newlinejoin(keys)}'
+                if len(keys): errormsg = f'odict key "{key}" not found; available keys are:\n{scu.newlinejoin(keys)}'
                 else:         errormsg = f'Key {key} not found since odict is empty'
-                raise ut.KeyNotFoundError(errormsg)
+                raise scu.KeyNotFoundError(errormsg)
 
 
     def remove(self, key, *args, **kwargs):
@@ -538,7 +540,7 @@ class odict(OD):
         then uses that for matching. If the first argument is a string, then treats as a pattern
         for matching using findkeys(). If exclude=True, then will exclude rather than include matches.
         '''
-        if ut.isstring(keys) and pattern is None: # Assume first argument, transfer
+        if scu.isstring(keys) and pattern is None: # Assume first argument, transfer
             pattern = keys
             keys = None
         filtered = odict()
@@ -567,7 +569,7 @@ class odict(OD):
             value = key
             needkey = True
         if key is None or needkey:
-            keyname = 'key'+ut.flexstr(len(self))  # Define the key just to be the current index
+            keyname = 'key'+scu.flexstr(len(self))  # Define the key just to be the current index
         else:
             keyname = key
         self.__setitem__(keyname, value)
@@ -591,7 +593,7 @@ class odict(OD):
         realpos, realkey, realvalue = pos, key, value
         if key is None and value is None: # Assume it's called like odict.insert(666)
             realvalue = pos
-            realkey = 'key'+ut.flexstr(len(self))
+            realkey = 'key'+scu.flexstr(len(self))
             realpos = 0
         elif value is None: # Assume it's called like odict.insert('devil', 666)
             realvalue = key
@@ -627,7 +629,7 @@ class odict(OD):
 
     def copy(self, oldkey, newkey):
         ''' Make a copy of an item '''
-        newval = ut.dcp(self.__getitem__(oldkey))
+        newval = scu.dcp(self.__getitem__(oldkey))
         self.__setitem__(newkey, newval)
         return None
 
@@ -635,7 +637,7 @@ class odict(OD):
     def rename(self, oldkey, newkey):
         ''' Change a key name -- WARNING, very inefficient! '''
         nkeys = len(self)
-        if isinstance(oldkey, ut._numtype):
+        if isinstance(oldkey, scu._numtype):
             index = oldkey
             keystr = self.keys()[index]
         else: # Forge ahead for strings and anything else!
@@ -664,15 +666,15 @@ class odict(OD):
             if sortby == 'values':
                 origvals = self.values()
                 sortby = sorted(range(len(origvals)), key=origvals.__getitem__) # Reset sortby based on https://stackoverflow.com/questions/3382352/equivalent-of-numpy-argsort-in-basic-python
-            if not ut.isiterable(sortby): # pragma: no cover
+            if not scu.isiterable(sortby): # pragma: no cover
                 raise Exception('Please provide a list to determine the sort order.')
-            if all([isinstance(x, ut._stringtypes) for x in sortby]): # Going to sort by keys
+            if all([isinstance(x, scu._stringtypes) for x in sortby]): # Going to sort by keys
                 allkeys = sortby # Assume the user knows what s/he is doing
             elif all([isinstance(x,bool) for x in sortby]): # Using Boolean values to filter
                 allkeys = []
                 for i,x in enumerate(sortby):
                      if x: allkeys.append(origkeys[i])
-            elif all([isinstance(x, ut._numtype) for x in sortby]): # Going to sort by numbers
+            elif all([isinstance(x, scu._numtype) for x in sortby]): # Going to sort by numbers
                 if not set(sortby)==set(range(len(self))): # pragma: no cover
                     warningmsg = f'Warning: list to sort by "{sortby}" has different length than odict "{len(self)}"'
                     if verbose: print(warningmsg)
@@ -739,11 +741,11 @@ class odict(OD):
         if keys is None and vals is None:
             return self # Nothing to do if nothing supplied
         if keys is None and vals is not None:
-            keys = len(ut.promotetolist(vals)) # Values are supplied but keys aren't: use default keys
-        if isinstance(keys, ut._numtype): # It's a single number: pre-generate
+            keys = len(scu.promotetolist(vals)) # Values are supplied but keys aren't: use default keys
+        if isinstance(keys, scu._numtype): # It's a single number: pre-generate
             keylist = ['%i'%i for i in range(keys)] # Generate keylist
-        elif isinstance(keys, ut._stringtypes): # It's a single string
-            keylist = [ut.flexstr(keys)]
+        elif isinstance(keys, scu._stringtypes): # It's a single string
+            keylist = [scu.flexstr(keys)]
         elif isinstance(keys, list): # It's a list: use directly
             keylist = keys
         else: # pragma: no cover
@@ -752,12 +754,12 @@ class odict(OD):
         nkeys = len(keylist)
 
         # Handle values
-        vals = ut.promotetolist(vals, coerce=coerce)
+        vals = scu.promotetolist(vals, coerce=coerce)
         nvals = len(vals)
         if nvals==0: # Special case: it's an empty list
-            vallist = [ut.dcp(vals) for _ in range(nkeys)]
+            vallist = [scu.dcp(vals) for _ in range(nkeys)]
         elif nvals==1: # Only a single value: duplicate it
-            vallist = [ut.dcp(vals[0]) for _ in range(nkeys)]
+            vallist = [scu.dcp(vals[0]) for _ in range(nkeys)]
         elif nvals==nkeys: # Lengths match, can use directly
             vallist = vals
         else: # pragma: no cover
@@ -790,9 +792,9 @@ class odict(OD):
 
         # Make sure it's iterable
         if source is not None: # Don't do anything if there's nothing there
-            if not(ut.isiterable(source)): # Make sure it's iterable
-                source = ut.promotetolist(source)
-            elif isinstance(source, ut._stringtypes):
+            if not(scu.isiterable(source)): # Make sure it's iterable
+                source = scu.promotetolist(source)
+            elif isinstance(source, scu._stringtypes):
                 source = [source] # Special case -- strings are iterable, but we don't want to
 
             if len(source)==0:
@@ -803,7 +805,7 @@ class odict(OD):
                     if   isinstance(source, (list, tuple)):   keys = range(len(source))
                     elif isinstance(source, dict):            keys = list(source.keys())
                     else:                                     raise TypeError(f'Unable to guess keys for object of type {type(source)}')
-                keys = ut.promotetolist(keys) # Make sure it's a list -- note, does not convert other iterables to a list!
+                keys = scu.promotetolist(keys) # Make sure it's a list -- note, does not convert other iterables to a list!
                 if keynames is None: keynames = keys # Use key names
 
                 # Loop over supplied keys
@@ -812,7 +814,7 @@ class odict(OD):
                         self.__setitem__(str(keyname), source[key])
                     except Exception as E: # pragma: no cover
                         errormsg = f'Key "{key}" not found: {repr(E)}'
-                        raise ut.KeyNotFoundError(errormsg)
+                        raise scu.KeyNotFoundError(errormsg)
 
         return self # As with make()
 
@@ -865,7 +867,7 @@ class odict(OD):
             z.toeach(ind=3,val=666) #  z is now odict({'a':[1,2,10,666], 'b':[5,6,20,666]})
         '''
         nkeys = len(self.keys())
-        if not(ut.isiterable(val)): # Assume it's meant to be populated in each
+        if not(scu.isiterable(val)): # Assume it's meant to be populated in each
             val = [val]*nkeys # Duplicated
         if len(val)!=nkeys: # pragma: no cover
             errormsg = f'To map values onto each key, they must be the same length ({len(val)} vs. {nkeys})'
@@ -882,7 +884,7 @@ class odict(OD):
         If transpose=True, return a tuple of lists rather than a list of tuples.
         '''
         iterator = list(enumerate(self.keys()))
-        if transpose: iterator = tuple(ut.transposelist(iterator))
+        if transpose: iterator = tuple(scu.transposelist(iterator))
         return iterator
 
 
@@ -893,7 +895,7 @@ class odict(OD):
         If transpose=True, return a tuple of lists rather than a list of tuples.
         '''
         iterator = list(enumerate(self.values()))
-        if transpose: iterator = tuple(ut.transposelist(iterator))
+        if transpose: iterator = tuple(scu.transposelist(iterator))
         return iterator
 
 
@@ -912,7 +914,7 @@ class odict(OD):
         for ind,item in enumerate(self.items()):
             thistuple = (ind,)+item # Combine into one tuple
             iterator.append(thistuple)
-        if transpose: iterator = tuple(ut.transposelist(iterator))
+        if transpose: iterator = tuple(scu.transposelist(iterator))
         return iterator
 
     @staticmethod
@@ -949,7 +951,7 @@ class odict(OD):
     def items(self, transpose=False):
         """ Return a list of items (as in Python 2). """
         iterator = list(OD.items(self))
-        if transpose: iterator = tuple(ut.transposelist(iterator))
+        if transpose: iterator = tuple(scu.transposelist(iterator))
         return iterator
 
     def iteritems(self, transpose=False):
@@ -958,19 +960,19 @@ class odict(OD):
 
     def makenested(self, *args, **kwargs):
         ''' Alias to sc.makenested(odict); see sc.makenested() for full documentation. New in version 1.2.0. '''
-        return ut.makenested(self, *args, **kwargs)
+        return scn.makenested(self, *args, **kwargs)
 
     def getnested(self, *args, **kwargs):
         ''' Alias to sc.getnested(odict); see sc.makenested() for full documentation. New in version 1.2.0. '''
-        return ut.getnested(self, *args, **kwargs)
+        return scn.getnested(self, *args, **kwargs)
 
     def setnested(self, *args, **kwargs):
         ''' Alias to sc.setnested(odict); see sc.makenested() for full documentation. New in version 1.2.0. '''
-        return ut.setnested(self, *args, **kwargs)
+        return scn.setnested(self, *args, **kwargs)
 
     def iternested(self, *args, **kwargs):
         ''' Alias to sc.iternested(odict); see sc.makenested() for full documentation. New in version 1.2.0. '''
-        return ut.iternested(self, *args, **kwargs)
+        return scn.iternested(self, *args, **kwargs)
 
 
 class objdict(odict):

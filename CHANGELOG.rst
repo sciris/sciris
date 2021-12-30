@@ -5,6 +5,54 @@ All notable changes to this project will be documented in this file.
 
 By import convention, components of the Sciris library are listed beginning with ``sc.``, e.g. ``sc.odict()``.
 
+Version 1.3.0 (2021-12-30)
+--------------------------
+
+This version contains a number of major improvements, including:
+
+#. **Better date plotting**: ``sc.dateformatter()`` has been revamped to provide compact and intuitive date plotting.
+#. **Better smoothing**: The new functions ``sc.convolve()``/``sc.gauss1d()``/``sc.gauss2d()``, and the updated ``sc.smooth()``, provide new options for smoothing data.
+#. **Simpler fonts**: ``sc.fonts()`` can both list fonts and add new ones.
+#. **Simpler options**: Need a bigger font? Just do ``sc.options(fontsize=18)``.
+
+New functions and methods
+~~~~~~~~~~~~~~~~~~~~~~~~~
+#. Added a settings module to quickly set both Sciris and Matplotlib options; e.g. ``sc.options(dpi=150)`` is a shortcut for ``pl.rc('figure', dpi=150)``, while e.g. ``sc.options(aspath=True)`` will globally set Sciris functions to return ``Path`` objects instead of strings.
+#. Added ``sc.timer()`` as a simpler and more flexible way of accessing ``sc.tic()``/``sc.toc()`` and ``sc.Timer()``.
+#. Added ``sc.convolve()``, a simple fix to ``np.convolve()`` that avoids edge effects (see update to ``sc.smooth()`` below).
+#. Added ``sc.gauss1d()`` and ``sc.gauss2d()`` as additional (high-performance) smoothing functions.
+#. Added ``sc.fonts()``, to easily list or add fonts for use in plotting.
+#. Added ``sc.dictobj()``, the inverse of ``sc.objdict()`` -- an object that acts like a dictionary (instead of a dictionary that acts like an object). Compared to ``sc.objdict()``, ``sc.dictobj()`` is lighter-weight and slightly faster but less powerful.
+#. Added ``sc.swapdict()``, a shortcut for swapping the keys and values of a dictionary.
+#. Added ``sc.loadobj2or3()``, for legacy support for loading Python 2 pickles. (Support had been removed in version 1.1.1.)
+#. Added ``sc.help()``, to quickly allow searching of Sciris' docstrings.
+
+Bugfixes
+~~~~~~~~
+#. Fixed edge effects when using ``sc.smooth()`` by using ``sc.convolve()`` instead of ``np.convolve()``.
+#. Fixed a bug with checking types when saving files via ``sc.save()``. (Thanks to Rowan Martin-Hughes.)
+#. Fixed a bug with ``output=True`` not being passed correctly for ``sc.heading()``.
+
+Improvements
+~~~~~~~~~~~~
+#. ``sc.dateformatter()`` is now an interface to a new formatter for plotting dates (``ScirisDateFormatter``). This formatter is optimized for aesthetics, combining the best aspects of Matplotlib's and Plotly's date formatters. (Thanks to Daniel Klein.)
+#. ``sc.daterange()`` now accepts an ``interval`` argument.
+#. ``sc.datedelta()`` can now return the actual delta rather than just the date.
+#. ``sc.toc()`` has more flexible printing options.
+#. ``sc.Spreadsheet()`` now keeps a copy of the opened workbook, so there is no need to reopen it for every operation.
+#. ``sc.commaticks()`` can now use non-comma separators. 
+#. Many other functions had small usability improvements, e.g. input arguments are more consistent and more flexible.
+
+Housekeeping
+~~~~~~~~~~~~
+#. ``xlrd`` has been removed as a dependency; ``openpyexcel`` is used instead, with simple spreadsheet loading now done by ``pandas``.
+#. Source files were refactored and split into smaller pieces (e.g. ``sc_utils.py`` was split into ``sc_utils.py``, ``sc_printing.py``, ``sc_datetime.py``, ``sc_nested.py``).
+
+Regression information
+~~~~~~~~~~~~~~~~~~~~~~
+#. To restore previous spreadsheet loading behavior, use ``sc.loadspreadsheet(..., method='xlrd')``.
+#. To use previous smoothing (with edge effects), use ``sc.smooth(..., legacy=True)``
+
 
 Version 1.2.3 (2021-08-27)
 --------------------------

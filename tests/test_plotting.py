@@ -7,10 +7,10 @@ import numpy as np
 import pylab as pl
 import sciris as sc
 
+#%% Functions
 
 if 'doplot' not in locals():
     doplot = True
-
 
 def test_colors(doplot=doplot):
     sc.heading('Testing colors')
@@ -166,6 +166,46 @@ def test_saving(doplot=doplot):
     return o
 
 
+def test_dates(doplot=doplot):
+    sc.heading('Testing dates')
+    o = sc.objdict()
+
+    if doplot:
+        x = np.array(sc.daterange('2020-12-24', '2021-01-15', asdate=True))
+        y = sc.smooth(pl.rand(len(x)))
+        o.fig = pl.figure(figsize=(6,6))
+
+        for i,style in enumerate(['auto', 'concise', 'sciris']):
+            pl.subplot(3,1,i+1)
+            pl.plot(x, y)
+            pl.title('Date formatter: ' + style.title())
+            sc.dateformatter(style=style, rotation=1)
+
+        sc.figlayout()
+
+    return o
+
+
+def test_fonts(doplot=doplot):
+    sc.heading('Testing font functions')
+
+    # Test getting fonts
+    fonts = sc.fonts()
+
+    # Test setting fonts
+    orig = pl.rcParams['font.family']
+    sc.fonts(add=sc.path('files/examplefont.ttf'), use=True, die=True, verbose=True)
+
+    if doplot:
+        pl.figure()
+        pl.plot([1,2,3], [4,5,6])
+        pl.xlabel('Example label in new font')
+
+    # Reset
+    pl.rcParams['font.family'] = orig
+
+    return fonts
+
 
 #%% Run as a script
 if __name__ == '__main__':
@@ -178,6 +218,8 @@ if __name__ == '__main__':
     threed    = test_3d(doplot)
     other     = test_other(doplot)
     saved     = test_saving(doplot)
+    dates     = test_dates(doplot)
+    fonts     = test_fonts(doplot)
 
     if doplot:
         pl.show()

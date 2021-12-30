@@ -32,9 +32,12 @@ from pathlib import Path
 import copyreg as cpreg
 import pickle as pkl
 import gzip as gz
-from . import sc_utils as ut
-from .sc_odict import odict
-from .sc_dataframe import dataframe
+from . import sc_settings as scs
+from . import sc_utils as scu
+from . import sc_printing as scp
+from . import sc_datetime as scd
+from . import sc_odict as sco
+from . import sc_dataframe as scdf
 
 
 ##############################################################################
@@ -73,14 +76,14 @@ def loadobj(filename=None, folder=None, verbose=False, die=None, remapping=None,
         old = sc.loadobj('my-old-file.obj', remapping={'foo.Bar':cat.Mat}) # If loading a saved object containing a reference to foo.Bar that is now cat.Mat
         old = sc.loadobj('my-old-file.obj', remapping={'foo.Bar':('cat', 'Mat')}) # Equivalent to the above
 
-    New in version 1.1.0: "remapping" argument
-    New in version 1.2.2: ability to load non-gzipped pickles; support for dill; arguments passed to loader
+    | New in version 1.1.0: "remapping" argument
+    | New in version 1.2.2: ability to load non-gzipped pickles; support for dill; arguments passed to loader
     '''
 
     # Handle loading of either filename or file object
     if isinstance(filename, Path):
         filename = str(filename)
-    if ut.isstring(filename):
+    if scu.isstring(filename):
         argtype = 'filename'
         filename = makefilepath(filename=filename, folder=folder, makedirs=False) # If it is a file, validate the folder (but don't create one if it's missing)
     elif isinstance(filename, io.BytesIO):
@@ -115,7 +118,7 @@ https://stackoverflow.com/questions/41554738/how-to-load-an-old-pickle-file
     try:
         with gz.GzipFile(**fileargs) as fileobj:
             filestr = fileobj.read() # Convert it to a string
-    except Exception as E:
+    except Exception as E: # pragma: no cover
         exc = type(E) # Figure out what kind of error it is
         if exc == FileNotFoundError: # This is simple, just raise directly
             raise E
@@ -129,7 +132,7 @@ https://stackoverflow.com/questions/41554738/how-to-load-an-old-pickle-file
     # Unpickle it
     try:
         obj = _unpickler(filestr, filename=filename, verbose=verbose, die=die, remapping=remapping, method=method, **kwargs) # Actually load it
-    except Exception as E:
+    except Exception as E: # pragma: no cover
         exc = type(E) # Figure out what kind of error it is
         errormsg = unpicklingerror + '\n\nSee the stack trace above for more information on this specific error.'
         raise exc(errormsg) from E
@@ -166,17 +169,17 @@ def saveobj(filename=None, obj=None, compresslevel=5, verbose=0, folder=None, me
         sc.saveobj('myfile.obj', myobj)
         sc.saveobj('myfile.obj', myobj, method='dill') # Use dill instead, to save custom classes as well
 
-    New in version 1.1.1: removed Python 2 support.
-    New in version 1.2.2: automatic swapping of arguments if order is incorrect; correct passing of arguments
+    | New in version 1.1.1: removed Python 2 support.
+    | New in version 1.2.2: automatic swapping of arguments if order is incorrect; correct passing of arguments
     '''
 
     # Handle path
-    filetypes = (str, type(Path()), None)
+    filetypes = (str, type(Path()), type(None))
     if isinstance(filename, Path): # If it's a path object, convert to string
         filename = str(filename)
     if filename is None: # If it doesn't exist, just create a byte stream
         bytesobj = io.BytesIO()
-    if not isinstance(filename, filetypes):
+    if not isinstance(filename, filetypes): # pragma: no cover
         if isinstance(obj, filetypes):
             print(f'Warning: filename was not supplied as a valid type ({type(filename)}) but the object was ({type(obj)}); automatically swapping order')
             real_obj = filename
@@ -285,7 +288,7 @@ def savetext(filename=None, string=None):
         sc.savetext('my-document.txt', text)
     '''
     if isinstance(string, list): string = '\n'.join(string) # Convert from list to string)
-    if not ut.isstring(string):  string = str(string)
+    if not scu.isstring(string):  string = str(string)
     filename = makefilepath(filename=filename)
     with open(filename, 'w') as f: f.write(string)
     return None
@@ -301,7 +304,7 @@ def savezip(filename=None, filelist=None, folder=None, basename=True, verbose=Tr
         sc.savezip('scripts.zip', scripts)
     '''
     fullpath = makefilepath(filename=filename, folder=folder, sanitize=True)
-    filelist = ut.promotetolist(filelist)
+    filelist = scu.promotetolist(filelist)
     with ZipFile(fullpath, 'w') as zf: # Create the zip file
         for thisfile in filelist:
             thispath = makefilepath(filename=thisfile, abspath=False)
@@ -312,7 +315,7 @@ def savezip(filename=None, filelist=None, folder=None, basename=True, verbose=Tr
     return fullpath
 
 
-def getfilelist(folder=None, pattern=None, abspath=False, nopath=False, filesonly=False, foldersonly=False, recursive=False, aspath=False):
+def getfilelist(folder=None, pattern=None, abspath=False, nopath=False, filesonly=False, foldersonly=False, recursive=False, aspath=None):
     '''
     A shortcut for using glob.
 
@@ -344,6 +347,7 @@ def getfilelist(folder=None, pattern=None, abspath=False, nopath=False, filesonl
         folder = os.path.abspath(folder)
     if os.path.isdir(folder) and pattern is None:
         pattern = '*'
+    if aspath is None: aspath = scs.options.aspath
     globstr = os.path.join(folder, pattern) if pattern else folder
     filelist = sorted(glob(globstr, recursive=recursive))
     if filesonly:
@@ -372,7 +376,7 @@ def sanitizefilename(rawfilename):
     return filtername # Return the sanitized file name.
 
 
-def makefilepath(filename=None, folder=None, ext=None, default=None, split=False, aspath=False, abspath=True, makedirs=True, checkexists=None, sanitize=False, die=True, verbose=False):
+def makefilepath(filename=None, folder=None, ext=None, default=None, split=False, aspath=None, abspath=True, makedirs=True, checkexists=None, sanitize=False, die=True, verbose=False):
     '''
     Utility for taking a filename and folder -- or not -- and generating a
     valid path from them. By default, this function will combine a filename and
@@ -411,6 +415,7 @@ def makefilepath(filename=None, folder=None, ext=None, default=None, split=False
     # Initialize
     filefolder = '' # The folder the file will be located in
     filebasename = '' # The filename
+    if aspath is None: aspath = scs.options.aspath
 
     if isinstance(filename, Path):
         filename = str(filename)
@@ -421,7 +426,7 @@ def makefilepath(filename=None, folder=None, ext=None, default=None, split=False
 
     # Process filename
     if filename is None: # pragma: no cover
-        defaultnames = ut.promotetolist(default) # Loop over list of default names
+        defaultnames = scu.promotetolist(default) # Loop over list of default names
         for defaultname in defaultnames:
             if not filename and defaultname: filename = defaultname # Replace empty name with default name
     if filename is not None: # If filename exists by now, use it
@@ -458,7 +463,7 @@ def makefilepath(filename=None, folder=None, ext=None, default=None, split=False
     filepath = os.path.join(filefolder, filebasename)
 
     # Optionally check if it exists
-    if checkexists is not None:
+    if checkexists is not None: # pragma: no cover
         exists = os.path.exists(filepath)
         errormsg = ''
         if exists and not checkexists:
@@ -491,7 +496,7 @@ def path(*args, **kwargs):
 path.__doc__ += '\n\n' + Path.__doc__
 
 
-def thisdir(file=None, path=None, *args, aspath=False, **kwargs):
+def thisdir(file=None, path=None, *args, aspath=None, **kwargs):
     '''
     Tiny helper function to get the folder for a file, usually the current file.
     If not supplied, then use the current file.
@@ -513,14 +518,19 @@ def thisdir(file=None, path=None, *args, aspath=False, **kwargs):
         thisdir = sc.thisdir(__file__) # Ditto (usually)
         file_in_same_dir = sc.thisdir(path='new_file.txt')
         file_in_sub_dir = sc.thisdir('..', 'tests', 'mytests.py') # Merge parent folder with sufolders and a file
+        np_dir = sc.thisdir(np) # Get the folder that Numpy is loaded from (assuming "import numpy as np")
 
-    New in version 1.1.0: "as_path" argument renamed "aspath"
-    New in version 1.2.2: "path" argument
+    | New in version 1.1.0: "as_path" argument renamed "aspath"
+    | New in version 1.2.2: "path" argument
+    | New in version 1.3.0: allow modules
     '''
-    if file is None:
+    if file is None: # No file: use the current folder
          file = str(Path(inspect.stack()[1][1])) # Adopted from Atomica
+    elif hasattr(file, '__file__'): # It's actually a module
+        file = file.__file__
+    if aspath is None: aspath = scs.options.aspath
     folder = os.path.abspath(os.path.dirname(file))
-    path = ut.mergelists(path, *args)
+    path = scu.mergelists(path, *args)
     filepath = os.path.join(folder, *path)
     if aspath:
         filepath = Path(filepath, **kwargs)
@@ -557,7 +567,7 @@ def sanitizejson(obj, verbose=True, die=False, tostring=False, **kwargs):
     elif isinstance(obj, (bool, np.bool_)): # It's true/false
         output = bool(obj)
 
-    elif ut.isnumber(obj): # It's a number
+    elif scu.isnumber(obj): # It's a number
         if np.isnan(obj): # It's nan, so return None
             output = None
         else:
@@ -566,7 +576,7 @@ def sanitizejson(obj, verbose=True, die=False, tostring=False, **kwargs):
             else:
                 output = float(obj)# It's something else, treat it as a float
 
-    elif ut.isstring(obj): # It's a string of some kind
+    elif scu.isstring(obj): # It's a string of some kind
         try:    string = str(obj) # Try to convert it to ascii
         except: string = obj # Give up and use original
         output = string
@@ -754,22 +764,24 @@ class Blobject(object):
     def __init__(self, source=None, name=None, filename=None, blob=None):
         # Handle inputs
         if source   is None and filename is not None: source   = filename # Reset the source to be the filename, e.g. Spreadsheet(filename='foo.xlsx')
-        if filename is None and ut.isstring(source):  filename = source   # Reset the filename to be the source, e.g. Spreadsheet('foo.xlsx')
+        if filename is None and scu.isstring(source):  filename = source   # Reset the filename to be the source, e.g. Spreadsheet('foo.xlsx')
         if name     is None and filename is not None: name     = os.path.basename(filename) # If not supplied, use the filename
         if blob is not None and source is not None: raise ValueError('Can initialize from either source or blob, but not both')
 
         # Define quantities
         self.name      = name # Name of the object
         self.filename  = filename # Filename (used as default for load/save)
-        self.created   = ut.now() # When the object was created
-        self.modified  = ut.now() # When it was last modified
+        self.created   = scd.now() # When the object was created
+        self.modified  = scd.now() # When it was last modified
         self.blob  = blob # The binary data
         self.bytes = None # The filestream representation of the binary data
         if source is not None: self.load(source)
         return None
 
+
     def __repr__(self):
-        return ut.prepr(self, skip=['blob','bytes'])
+        return scp.prepr(self, skip=['blob','bytes'])
+
 
     def load(self, source=None):
         '''
@@ -806,14 +818,15 @@ class Blobject(object):
         else:
             if isinstance(source,io.BytesIO):
                 self.blob = read_bin(source)
-            elif ut.isstring(source):
+            elif scu.isstring(source):
                 self.blob = read_file(source)
             else:
                 errormsg = f'Input source must be type string (for a filename) or BytesIO, not {type(source)}'
                 raise TypeError(errormsg)
 
-        self.modified = ut.now()
+        self.modified = scd.now()
         return None
+
 
     def save(self, filename=None):
         ''' This function writes the spreadsheet to a file on disk. '''
@@ -823,6 +836,7 @@ class Blobject(object):
         self.filename = filename
         print(f'Object saved to {filepath}.')
         return filepath
+
 
     def tofile(self, output=True):
         '''
@@ -840,6 +854,7 @@ class Blobject(object):
             self.bytes = bytesblob
             return None
 
+
     def freshbytes(self):
         ''' Refresh the bytes object to accept new data '''
         self.bytes = io.BytesIO()
@@ -847,85 +862,104 @@ class Blobject(object):
 
 
 
-class Spreadsheet(Blobject): # pragma: no cover
+class Spreadsheet(Blobject):
     '''
     A class for reading and writing Excel files in binary format. No disk IO needs
     to happen to manipulate the spreadsheets with openpyexcel (or xlrd or pandas).
 
-    Version: 2018sep03
+    New in version 1.3.0: Changed default from xlrd to openpyexcel and added self.wb
+    attribute to avoid the need to reload workbooks.
     '''
 
-    def xlrd(self, *args, **kwargs):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.wb = None
+        return
+
+
+    def _reload_wb(self, reload=None):
+        ''' Helper function to check if workbook is already loaded '''
+        output = (not hasattr(self, 'wb')) or (self.wb is None) or reload
+        return output
+
+
+    def xlrd(self, reload=False, **kwargs): # pragma: no cover
         ''' Return a book as opened by xlrd '''
-        try:
-            import xlrd # Optional import
-        except ModuleNotFoundError as e:
-            raise ModuleNotFoundError('The "xlrd" Python package is not available; please install manually') from e
-        book = xlrd.open_workbook(file_contents=self.tofile().read(), *args, **kwargs)
-        return book
+        if self._reload_wb(reload=reload):
+            try:
+                import xlrd # Optional import
+            except ModuleNotFoundError as e:
+                raise ModuleNotFoundError('The "xlrd" Python package is not available; please install manually') from e
+            self.wb = xlrd.open_workbook(file_contents=self.tofile().read(), **kwargs)
+        return self.wb
 
-    def openpyexcel(self, *args, **kwargs):
+
+    def openpyexcel(self, reload=False, **kwargs):
         ''' Return a book as opened by openpyexcel '''
-        try:
-            import openpyexcel # Optional import
-        except ModuleNotFoundError as e:
-            raise ModuleNotFoundError('The "openpyexcel" Python package is not available; please install manually') from e
-        self.tofile(output=False)
-        book = openpyexcel.load_workbook(self.bytes, *args, **kwargs) # This stream can be passed straight to openpyexcel
-        return book
+        if self._reload_wb(reload=reload):
+            try:
+                import openpyexcel # Optional import
+            except ModuleNotFoundError as e: # pragma: no cover
+                raise ModuleNotFoundError('The "openpyexcel" Python package is not available; please install manually via "pip install openpyexcel" (not to be confused with openpyxl)') from e
+            if self.blob is not None:
+                self.tofile(output=False)
+                self.wb = openpyexcel.load_workbook(self.bytes, **kwargs) # This stream can be passed straight to openpyexcel
+            else:
+                self.wb = openpyexcel.Workbook(**kwargs)
+        return self.wb
 
-    def pandas(self, *args, **kwargs):
+
+    def pandas(self, reload=False, **kwargs): # pragma: no cover
         ''' Return a book as opened by pandas '''
-        try:
-            import pandas # Optional import
-        except ModuleNotFoundError as e:
-            raise ModuleNotFoundError('The "pandas" Python package is not available; please install manually') from e
-        self.tofile(output=False)
-        book = pandas.ExcelFile(self.bytes, *args, **kwargs)
-        return book
+        if self._reload_wb(reload=reload):
+            import pandas as pd # Optional import
+            if self.blob is not None:
+                self.tofile(output=False)
+                self.wb = pd.ExcelFile(self.bytes, **kwargs)
+            else:
+                errormsg = 'For pandas, must load an existing workbook; use openpyexcel to create a new workbook'
+                raise FileNotFoundError(errormsg)
+        return self.wb
 
-    def update(self, book):
+
+    def update(self, book): # pragma: no cover
         ''' Updated the stored spreadsheet with book instead '''
         self.tofile(output=False)
         book.save(self.freshbytes())
         self.load()
         return None
 
-    @staticmethod
-    def _getsheet(book, sheetname=None, sheetnum=None):
-        if   sheetname is not None: sheet = book[sheetname]
-        elif sheetnum  is not None: sheet = book[book.sheetnames[sheetnum]]
-        else:                       sheet = book.active
+
+    def _getsheet(self, sheetname=None, sheetnum=None):
+        if   sheetname is not None: sheet = self.wb[sheetname]
+        elif sheetnum  is not None: sheet = self.wb[self.wb.sheetnames[sheetnum]]
+        else:                       sheet = self.wb.active
         return sheet
+
 
     def readcells(self, wbargs=None, *args, **kwargs):
         ''' Alias to loadspreadsheet() '''
-        if 'method' in kwargs:
-            method = kwargs['method']
-            kwargs.pop('method')
-        else:
-            method = None
-        if method is None: method = 'xlrd'
+        method = kwargs.pop('method', 'openpyexcel')
         f = self.tofile()
         kwargs['fileobj'] = f
 
         # Read in sheetoutput (sciris dataframe object for xlrd, 2D numpy array for openpyexcel).
-        if method == 'xlrd':
-            sheetoutput = loadspreadsheet(*args, **kwargs)  # returns sciris dataframe object
+        if method == 'xlrd': # pragma: no cover
+            sheetoutput = loadspreadsheet(*args, **kwargs, method='xlrd')  # returns sciris dataframe object
         elif method == 'openpyexcel':
             if wbargs is None: wbargs = {}
-            book = self.openpyexcel(**wbargs)
-            ws = self._getsheet(book=book, sheetname=kwargs.get('sheetname'), sheetnum=kwargs.get('sheetname'))
+            self.openpyexcel(**wbargs)
+            ws = self._getsheet(sheetname=kwargs.get('sheetname'), sheetnum=kwargs.get('sheetname'))
             rawdata = tuple(ws.rows)
             sheetoutput = np.empty(np.shape(rawdata), dtype=object)
             for r,rowdata in enumerate(rawdata):
                 for c,val in enumerate(rowdata):
                     sheetoutput[r][c] = rawdata[r][c].value
-        else:
-            errormsg = f'Reading method not found; must be one of xlrd, openpyexcel, or pandas, not {method}'
+        else: # pragma: no cover
+            errormsg = f'Reading method not found; must be openpyexcel or xlrd, not {method}'
             raise ValueError(errormsg)
 
-        # Return the appropriate output.
+        # Return the appropriate output
         cells = kwargs.get('cells')
         if cells is None:  # If no cells specified, return the whole sheet.
             return sheetoutput
@@ -945,6 +979,14 @@ class Spreadsheet(Blobject): # pragma: no cover
         Specify cells to write. Can supply either a list of cells of the same length
         as the values, or else specify a starting row and column and write the values
         from there.
+
+        **Examples**::
+
+            S = sc.Spreadsheet()
+            S.writecells(cells=['A6','B7'], vals=['Cat','Dog']) # Method 1
+            S.writecells(cells=[np.array([2,3])+i for i in range(2)], vals=['Foo', 'Bar']) # Method 2
+            S.writecells(startrow=14, startcol=1, vals=np.random.rand(3,3)) # Method 3
+            S.save('myfile.xlsx')
         '''
         # Load workbook
         if wbargs is None: wbargs = {}
@@ -952,21 +994,21 @@ class Spreadsheet(Blobject): # pragma: no cover
         if verbose: print(f'Workbook loaded: {wb}')
 
         # Get right worksheet
-        ws = self._getsheet(book=wb, sheetname=sheetname, sheetnum=sheetnum)
+        ws = self._getsheet(sheetname=sheetname, sheetnum=sheetnum)
         if verbose: print(f'Worksheet loaded: {ws}')
 
         # Determine the cells
         if cells is not None: # A list of cells is supplied
-            cells = ut.promotetolist(cells)
-            vals  = ut.promotetolist(vals)
-            if len(cells) != len(vals):
+            cells = scu.promotetolist(cells)
+            vals  = scu.promotetolist(vals)
+            if len(cells) != len(vals): # pragma: no cover
                 errormsg = f'If using cells, cells and vals must have the same length ({len(cells)} vs. {len(vals)})'
                 raise ValueError(errormsg)
             for cell,val in zip(cells,vals):
                 try:
-                    if ut.isstring(cell): # Handles e.g. cell='A1'
+                    if scu.isstring(cell): # Handles e.g. cell='A1'
                         cellobj = ws[cell]
-                    elif ut.checktype(cell, 'arraylike','number') and len(cell)==2: # Handles e.g. cell=(0,0)
+                    elif scu.checktype(cell, 'arraylike','number') and len(cell)==2: # Handles e.g. cell=(0,0)
                         cellobj = ws.cell(row=cell[0], column=cell[1])
                     else:
                         errormsg = f'Cell must be formatted as a label or row-column pair, e.g. "A1" or (3,5); not "{cell}"'
@@ -977,7 +1019,7 @@ class Spreadsheet(Blobject): # pragma: no cover
                         cellobj.cached_value = val[1]
                     else:
                         cellobj.value = val
-                except Exception as E:
+                except Exception as E: # pragma: no cover
                     errormsg = f'Could not write "{val}" to cell "{cell}": {repr(E)}'
                     raise RuntimeError(errormsg)
         else:# Cells aren't supplied, assume a matrix
@@ -992,7 +1034,7 @@ class Spreadsheet(Blobject): # pragma: no cover
                         key = f'row:{row} col:{col}'
                         ws.cell(row=row, column=col, value=val)
                         if verbose: print(f'  Cell {key} = {val}')
-                    except Exception as E:
+                    except Exception as E: # pragma: no cover
                         errormsg = f'Could not write "{val}" to {key}: {repr(E)}'
                         raise RuntimeError(errormsg)
 
@@ -1008,64 +1050,128 @@ class Spreadsheet(Blobject): # pragma: no cover
         Blobject.save(self, filepath)
 
 
-def loadspreadsheet(filename=None, folder=None, fileobj=None, sheetname=None, sheetnum=None, asdataframe=None, header=True, cells=None): # pragma: no cover
+
+def loadspreadsheet(filename=None, folder=None, fileobj=None, sheet=0, asdataframe=None, header=True, method='pandas', **kwargs):
     '''
-    Load a spreadsheet as a list of lists or as a dataframe. Read from either a filename or a file object.
+    Load a spreadsheet as a dataframe or a list of lists.
 
-    Note: this function is deprecated and may be removed in a future version. Use
-    ``pandas.read_excel()`` instead.
+    By default, an alias to ``pandas.read_excel()`` with a header, but also supports loading
+    via openpyexcel or xlrd. Read from either a filename or a file object.
+
+    Args:
+        filename (str): filename or path to read
+        folder (str): optional folder to use with the filename
+        fileobj (obj): load from file object rather than path
+        sheet (str/int/list): name or number of sheet(s) to use (default 0)
+        asdataframe (bool): whether to return as a pandas/Sciris dataframe (default True)
+        method (str): how to read (default 'pandas', other choices 'openpyexcel' and 'xlrd')
+        kwargs (dict): passed to pd.read_excel(), openpyexcel(), etc.
+
+    **Examples**::
+
+        df = sc.loadspreadsheet('myfile.xlsx') # Alias to pd.read_excel(header=1)
+        wb = sc.loadspreadsheet('myfile.xlsx', method='openpyexcel') # Returns workbook
+        data = sc.loadspreadsheet('myfile.xlsx', method='xlrd', asdataframe=False) # Returns raw data; requires xlrd
+
+    New in version 1.3.0: change default from xlrd to pandas; renamed sheetname and sheetnum arguments to sheet.
     '''
-    try:
-        import xlrd # Optional import
-    except ModuleNotFoundError as e:
-        raise ModuleNotFoundError('The "xlrd" Python package is not available; please install manually') from e
 
-    # Handle inputs
-    if asdataframe is None: asdataframe = True
-    if isinstance(filename, io.BytesIO): fileobj = filename # It's actually a fileobj
-    if fileobj is None:
-        fullpath = makefilepath(filename=filename, folder=folder)
-        book = xlrd.open_workbook(fullpath)
-    else:
-        book = xlrd.open_workbook(file_contents=fileobj.read())
-    if sheetname is not None:
-        sheet = book.sheet_by_name(sheetname)
-    else:
-        if sheetnum is None: sheetnum = 0
-        sheet = book.sheet_by_index(sheetnum)
+    # Handle path and sheet name/number
+    fullpath = makefilepath(filename=filename, folder=folder)
+    for key in ['sheetname', 'sheetnum', 'sheet_name']:
+        sheet = kwargs.pop('sheetname', sheet)
 
-    # Load the raw data
-    rawdata = []
-    for rownum in range(sheet.nrows-header):
-        rawdata.append(odict())
-        for colnum in range(sheet.ncols):
-            if header: attr = sheet.cell_value(0,colnum)
-            else:      attr = f'Column {colnum}'
-            attr = ut.uniquename(attr, namelist=rawdata[rownum].keys(), style='(%d)')
-            val = sheet.cell_value(rownum+header,colnum)
-            try:
-                val = float(val) # Convert it to a number if possible
-            except:
-                try:    val = str(val)  # But give up easily and convert to a string (not Unicode)
-                except: pass # Still no dice? Fine, we tried
-            rawdata[rownum][str(attr)] = val
+    # Load using pandas
+    if method == 'pandas':
+        import pandas as pd # Optional import
+        if fileobj is not None: fullpath = fileobj # Substitute here for reading
+        data = pd.read_excel(fullpath, sheet_name=sheet, **kwargs)
+        if asdataframe is False:
+            pass
+        return data
 
-    # Convert to dataframe
-    if asdataframe:
-        cols = rawdata[0].keys()
-        reformatted = []
-        for oldrow in rawdata:
-            newrow = list(oldrow[:])
-            reformatted.append(newrow)
-        dfdata = dataframe(cols=cols, data=reformatted)
-        return dfdata
+    # Load using openpyexcel
+    elif method == 'openpyexcel': # pragma: no cover
+        spread = Spreadsheet(fullpath)
+        wb = spread.openpyexcel(**kwargs)
+        return wb
 
-    # Or leave in the original format
-    else:
-        return rawdata
+    # Legacy method -- xlrd
+    elif method == 'xlrd': # pragma: no cover
+        try:
+            import xlrd # Optional import
+
+            # Handle inputs
+            if asdataframe is None: asdataframe = True
+            if isinstance(filename, io.BytesIO): fileobj = filename # It's actually a fileobj
+            if fileobj is None:
+                book = xlrd.open_workbook(fullpath)
+            else:
+                book = xlrd.open_workbook(file_contents=fileobj.read())
+
+            if scu.isnumber(sheet):
+                ws = book.sheet_by_index(sheet)
+            else:
+                ws = book.sheet_by_name(sheet)
+
+            # Load the raw data
+            rawdata = []
+            for rownum in range(ws.nrows-header):
+                rawdata.append(sco.odict())
+                for colnum in range(ws.ncols):
+                    if header: attr = ws.cell_value(0,colnum)
+                    else:      attr = f'Column {colnum}'
+                    attr = scu.uniquename(attr, namelist=rawdata[rownum].keys(), style='(%d)')
+                    val = ws.cell_value(rownum+header,colnum)
+                    try:
+                        val = float(val) # Convert it to a number if possible
+                    except:
+                        try:    val = str(val)  # But give up easily and convert to a string (not Unicode)
+                        except: pass # Still no dice? Fine, we tried
+                    rawdata[rownum][str(attr)] = val
+
+            # Convert to dataframe
+            if asdataframe:
+                cols = rawdata[0].keys()
+                reformatted = []
+                for oldrow in rawdata:
+                    newrow = list(oldrow[:])
+                    reformatted.append(newrow)
+                dfdata = scdf.dataframe(cols=cols, data=reformatted)
+                return dfdata
+
+            # Or leave in the original format
+            else:
+                return rawdata
+        except Exception as E:
+            if isinstance(E, ModuleNotFoundError):
+                errormsg = 'The "xlrd" Python package is not available; please install manually via "pip install xlrd==1.2.0"'
+                raise ModuleNotFoundError(errormsg) from E
+            elif isinstance(E, AttributeError):
+                errormsg = '''
+Warning! xlrd has been deprecated in Python 3.9 and can no longer read XLSX files.
+If the error you got above is
+
+    "AttributeError: 'ElementTree' object has no attribute 'getiterator'"
+
+then this should fix it:
+
+    import xlrd
+    xlrd.xlsx.ensure_elementtree_imported(False, None)
+    xlrd.xlsx.Element_has_iter = True
+
+Then try again to load your Excel file.
+'''
+                raise AttributeError(errormsg) from E
+            else:
+                raise E
+
+    else: # pragma: no cover
+        errormsg = f'Method "{method}" not found: must be one of pandas, openpyexcel, or xlrd'
+        raise ValueError(errormsg)
 
 
-def savespreadsheet(filename=None, data=None, folder=None, sheetnames=None, close=True, formats=None, formatdata=None, verbose=False): # pragma: no cover
+def savespreadsheet(filename=None, data=None, folder=None, sheetnames=None, close=True, formats=None, formatdata=None, verbose=False):
     '''
     Not-so-little function to format data nicely for Excel.
 
@@ -1114,25 +1220,25 @@ def savespreadsheet(filename=None, data=None, folder=None, sheetnames=None, clos
     try:
         import xlsxwriter # Optional import
     except ModuleNotFoundError as e: # pragma: no cover
-            raise ModuleNotFoundError('The "xlsxwriter" Python package is not available; please install manually') from e
+        raise ModuleNotFoundError('The "xlsxwriter" Python package is not available; please install manually') from e
     fullpath = makefilepath(filename=filename, folder=folder, default='default.xlsx')
-    datadict   = odict()
-    formatdict = odict()
+    datadict   = sco.odict()
+    formatdict = sco.odict()
     hasformats = (formats is not None) and (formatdata is not None)
 
     # Handle input arguments
     if isinstance(data, dict) and sheetnames is None:
         if verbose: print('Data is a dict, taking sheetnames from keys')
         sheetnames = data.keys()
-        datadict   = odict(data) # Use directly, converting to odict first
-        if hasformats: formatdict = odict(formatdata) #  NB, might be None but should be ok
+        datadict   = sco.odict(data) # Use directly, converting to odict first
+        if hasformats: formatdict = sco.odict(formatdata) #  NB, might be None but should be ok
     elif isinstance(data, dict) and sheetnames is not None:
         if verbose: print('Data is a dict, taking sheetnames from input')
         if len(sheetnames) != len(data):
             errormsg = f'If supplying data as a dict as well as sheetnames, length must match ({len(data)} vs {len(sheetnames)})'
             raise ValueError(errormsg)
-        datadict   = odict(data) # Use directly, but keep original sheet names
-        if hasformats: formatdict = odict(formatdata)
+        datadict   = sco.odict(data) # Use directly, but keep original sheet names
+        if hasformats: formatdict = sco.odict(formatdata)
     elif not isinstance(data, dict):
         if sheetnames is None:
             if verbose: print('Data is a simple array')
@@ -1178,10 +1284,10 @@ def savespreadsheet(filename=None, data=None, folder=None, sheetnames=None, clos
                 if hasformats:
                     thisformat = workbook_formats[sheetformat[r][c]] # Get the actual format
                 try:
-                    if not ut.isnumber(cell_data):
+                    if not scu.isnumber(cell_data):
                         cell_data = str(cell_data) # Convert everything except numbers to strings -- use formatting to handle the rest
                     worksheet.write(r, c, cell_data, thisformat) # Write with or without formatting
-                except Exception as E:
+                except Exception as E: # pragma: no cover
                     errormsg = f'Could not write cell [{r},{c}] data="{cell_data}", format="{thisformat}": {str(E)}'
                     raise RuntimeError(errormsg)
 
@@ -1200,18 +1306,18 @@ def savespreadsheet(filename=None, data=None, folder=None, sheetnames=None, clos
 #%% Pickling support methods
 ##############################################################################
 
-__all__ += ['Failed', 'Empty']
+__all__ += ['Failed', 'Empty', 'loadobj2or3']
 
 
 class Failed(object):
     ''' An empty class to represent a failed object loading '''
-    failure_info = odict()
+    failure_info = sco.odict()
 
     def __init__(self, *args, **kwargs):
         pass
 
     def __repr__(self):
-        output = ut.objrepr(self) # This does not include failure_info since it's a class attribute
+        output = scp.objrepr(self) # This does not include failure_info since it's a class attribute
         output += self.showfailures(verbose=False, tostring=True)
         return output
 
@@ -1262,7 +1368,7 @@ class UniversalFailed(Failed):
         return
 
     def __repr__(self):
-        output = ut.objrepr(self) # This does not include failure_info since it's a class attribute
+        output = scp.objrepr(self) # This does not include failure_info since it's a class attribute
         return output
 
     def __setstate__(self, state):
@@ -1281,14 +1387,14 @@ class UniversalFailed(Failed):
         return
 
     def disp(self, *args, **kwargs):
-        return ut.pr(self, *args, **kwargs)
+        return scu.pr(self, *args, **kwargs)
 
 
 def makefailed(module_name=None, name=None, error=None, exception=None, universal=False):
     ''' Create a class -- not an object! -- that contains the failure info for a pickle that failed to load '''
     base = UniversalFailed if universal else Failed
     key = f'Failure {len(base.failure_info)+1}'
-    base.failure_info[key] = odict()
+    base.failure_info[key] = sco.odict()
     base.failure_info[key]['module']    = module_name
     base.failure_info[key]['class']     = name
     base.failure_info[key]['error']     = error
@@ -1334,7 +1440,7 @@ class _UltraRobustUnpickler(pkl.Unpickler):
 
     def find_class(self, module_name, name):
         ''' Ignore all attempts to use the actual class and always make a UniversalFailed class '''
-        error = ut.strjoin(self.unpicklingerrors)
+        error = scu.strjoin(self.unpicklingerrors)
         exception = self.unpicklingerrors
         obj = makefailed(module_name=module_name, name=name, error=error, exception=exception, universal=True)
         return obj
@@ -1406,6 +1512,166 @@ def _savedill(fileobj=None, obj=None, *args, **kwargs): # pragma: no cover
         raise ModuleNotFoundError('The "dill" Python package is not available; please install manually') from e
     fileobj.write(dill.dumps(obj, protocol=-1, *args, **kwargs))
     return None
+
+
+
+##############################################################################
+#%% Python 2 legacy support
+##############################################################################
+
+not_string_pickleable = ['datetime', 'BytesIO']
+byte_objects = ['datetime', 'BytesIO', 'odict', 'spreadsheet', 'blobject']
+
+
+def loadobj2or3(filename=None, filestring=None, recursionlimit=None, **kwargs):  # pragma: no cover
+    '''
+    Try to load as a (Sciris-saved) Python 3 pickle; if that fails, try to load
+    as a Python 2 pickle. For legacy support only.
+
+    For available keyword arguments, see sc.load().
+
+    Args:
+        filename (str): the name of the file to load
+        filestring (str): alternatively, specify an already-loaded bytestring
+        recursionlimit (int): how deeply to parse objects before failing (default 1000)
+    '''
+    try:
+        output = loadobj(filename=filename, **kwargs)
+    except:
+        output = _loadobj2to3(filename=filename, filestring=filestring, recursionlimit=recursionlimit)
+    return output
+
+
+def _loadobj2to3(filename=None, filestring=None, recursionlimit=None): # pragma: no cover
+    '''
+    Used by loadobj2or3() to load Python2 objects in Python3 if all other
+    loading methods fail. Uses a recursive approach, so can set a recursion limit.
+    '''
+
+    class Placeholder():
+        ''' Replace these corrupted classes with properly loaded ones '''
+        def __init__(*args):
+            return
+
+        def __setstate__(self, state):
+            if isinstance(state,dict):
+                self.__dict__ = state
+            else:
+                self.state = state
+            return
+
+    class StringUnpickler(pkl.Unpickler):
+        def find_class(self, module, name, verbose=False):
+            if verbose: print('Unpickling string module %s , name %s' % (module, name))
+            if name in not_string_pickleable:
+                return Empty
+            else:
+                try:
+                    output = pkl.Unpickler.find_class(self,module,name)
+                except Exception as E:
+                    print('Warning, string unpickling could not find module %s, name %s: %s' % (module, name, str(E)))
+                    output = Empty
+                return output
+
+    class BytesUnpickler(pkl.Unpickler):
+        def find_class(self, module, name, verbose=False):
+            if verbose: print('Unpickling bytes module %s , name %s' % (module, name))
+            if name in byte_objects:
+                try:
+                    output = pkl.Unpickler.find_class(self,module,name)
+                except Exception as E:
+                    print('Warning, bytes unpickling could not find module %s, name %s: %s' % (module, name, str(E)))
+                    output = Placeholder
+                return output
+            else:
+                return Placeholder
+
+    def recursive_substitute(obj1, obj2, track=None, recursionlevel=0, recursionlimit=None):
+        if recursionlimit is None: # Recursion limit
+            recursionlimit = 1000 # Better to die here than hit Python's recursion limit
+
+        def recursion_warning(count, obj1, obj2):
+            output = 'Warning, internal recursion depth exceeded, aborting: depth=%s, %s -> %s' % (count, type(obj1), type(obj2))
+            return output
+
+        recursionlevel += 1
+
+        if track is None:
+            track = []
+
+        if isinstance(obj1, Blobject): # Handle blobjects (usually spreadsheets)
+            obj1.blob  = obj2.__dict__[b'blob']
+            obj1.bytes = obj2.__dict__[b'bytes']
+
+        if isinstance(obj2, dict): # Handle dictionaries
+            for k,v in obj2.items():
+                if isinstance(v, dt.datetime):
+                    setattr(obj1, k.decode('latin1'), v)
+                elif isinstance(v, dict) or hasattr(v,'__dict__'):
+                    if isinstance(k, (bytes, bytearray)):
+                        k = k.decode('latin1')
+                    track2 = track.copy()
+                    track2.append(k)
+                    if recursionlevel<=recursionlimit:
+                        recursionlevel = recursive_substitute(obj1[k], v, track2, recursionlevel, recursionlimit)
+                    else:
+                        print(recursion_warning(recursionlevel, obj1, obj2))
+        else:
+            for k,v in obj2.__dict__.items():
+                if isinstance(v, dt.datetime):
+                    setattr(obj1,k.decode('latin1'), v)
+                elif isinstance(v,dict) or hasattr(v,'__dict__'):
+                    if isinstance(k, (bytes, bytearray)):
+                        k = k.decode('latin1')
+                    track2 = track.copy()
+                    track2.append(k)
+                    if recursionlevel<=recursionlimit:
+                        recursionlevel = recursive_substitute(getattr(obj1,k), v, track2, recursionlevel, recursionlimit)
+                    else:
+                        print(recursion_warning(recursionlevel, obj1, obj2))
+        return recursionlevel
+
+    def loadintostring(fileobj):
+        unpickler1 = StringUnpickler(fileobj, encoding='latin1')
+        try:
+            stringout = unpickler1.load()
+        except Exception as E:
+            print('Warning, string pickle loading failed: %s' % str(E))
+            exception = traceback.format_exc() # Grab the trackback stack
+            stringout = makefailed(module_name='String unpickler failed', name='n/a', error=E, exception=exception)
+        return stringout
+
+    def loadintobytes(fileobj):
+        unpickler2 = BytesUnpickler(fileobj,  encoding='bytes')
+        try:
+            bytesout  = unpickler2.load()
+        except Exception as E:
+            print('Warning, bytes pickle loading failed: %s' % str(E))
+            exception = traceback.format_exc() # Grab the trackback stack
+            bytesout = makefailed(module_name='Bytes unpickler failed', name='n/a', error=E, exception=exception)
+        return bytesout
+
+    # Load either from file or from string
+    if filename:
+        with gz.GzipFile(filename) as fileobj:
+            stringout = loadintostring(fileobj)
+        with gz.GzipFile(filename) as fileobj:
+            bytesout = loadintobytes(fileobj)
+
+    elif filestring:
+        with closing(IO(filestring)) as output:
+            with gz.GzipFile(fileobj=output, mode='rb') as fileobj:
+                stringout = loadintostring(fileobj)
+        with closing(IO(filestring)) as output:
+            with gz.GzipFile(fileobj=output, mode='rb') as fileobj:
+                bytesout = loadintobytes(fileobj)
+    else:
+        errormsg = 'You must supply either a filename or a filestring for loadobj() or loadstr(), respectively'
+        raise Exception(errormsg)
+
+    # Actually do the load, with correct substitution
+    recursive_substitute(stringout, bytesout, recursionlevel=0, recursionlimit=recursionlimit)
+    return stringout
 
 
 

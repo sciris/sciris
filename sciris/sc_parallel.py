@@ -14,11 +14,11 @@ import psutil
 import multiprocess as mp
 import numpy as np
 from functools import partial
-from . import sc_utils as ut
+from . import sc_utils as scu
 
 
 ##############################################################################
-### Parallelization functions
+#%% Parallelization functions
 ##############################################################################
 
 __all__ = ['cpu_count', 'loadbalancer', 'parallelize', 'parallelcmd', 'parallel_progress']
@@ -193,7 +193,7 @@ def parallelize(func, iterarg=None, iterkwargs=None, args=None, kwargs=None, ncp
         ncpus = int(mp.cpu_count()*ncpus)
 
     # Handle kwargs
-    kwargs = ut.mergedicts(kwargs, func_kwargs)
+    kwargs = scu.mergedicts(kwargs, func_kwargs)
 
     # Handle iterarg and iterkwargs
     niters = 0
@@ -202,7 +202,7 @@ def parallelize(func, iterarg=None, iterkwargs=None, args=None, kwargs=None, ncp
         errormsg = 'You can only use one of iterarg or iterkwargs as your iterable, not both'
         raise ValueError(errormsg)
     if iterarg is not None:
-        if not(ut.isiterable(iterarg)):
+        if not(scu.isiterable(iterarg)):
             try:
                 iterarg = np.arange(iterarg)
                 embarrassing = True
@@ -213,7 +213,7 @@ def parallelize(func, iterarg=None, iterkwargs=None, args=None, kwargs=None, ncp
     if iterkwargs is not None: # Check that iterkwargs has the right format
         if isinstance(iterkwargs, dict): # It's a dict of lists, e.g. {'x':[1,2,3], 'y':[2,3,4]}
             for key,val in iterkwargs.items():
-                if not ut.isiterable(val): # pragma: no cover
+                if not scu.isiterable(val): # pragma: no cover
                     errormsg = f'iterkwargs entries must be iterable, not {type(val)}'
                     raise TypeError(errormsg)
                 if not niters:
@@ -299,7 +299,7 @@ def parallelcmd(cmd=None, parfor=None, returnval=None, maxload=None, interval=No
         cmd (str): a string representation of the code to be run in parallel
         parfor (dict): a dictionary of lists of the variables to loop over
         returnval (str): the name of the output variable
-        maxload (float): the maxmium CPU load, used in loadbalancer()
+        maxload (float): the maximum CPU load, used in ``sc.loadbalancer()``
         kwargs (dict): variables to pass into the code
 
     **Example**::
@@ -338,9 +338,9 @@ def parallel_progress(fcn, inputs, num_workers=None, show_progress=True, initial
     """
     Run a function in parallel with a optional single progress bar
 
-    The result is essentially equivalent to
+    The result is essentially equivalent to::
 
-    >>> list(map(fcn, inputs))
+        >>> list(map(fcn, inputs))
 
     But with execution in parallel and with a single progress bar being shown.
 
@@ -364,7 +364,7 @@ def parallel_progress(fcn, inputs, num_workers=None, show_progress=True, initial
     pool = pool.Pool(num_workers, initializer=initializer)
 
     results = [None]
-    if ut.isnumber(inputs):
+    if scu.isnumber(inputs):
         results *= inputs
         pbar = tqdm(total=inputs) if show_progress else None
     else:
@@ -376,7 +376,7 @@ def parallel_progress(fcn, inputs, num_workers=None, show_progress=True, initial
         if show_progress:
             pbar.update(1)
 
-    if ut.isnumber(inputs):
+    if scu.isnumber(inputs):
         for i in range(inputs):
             pool.apply_async(fcn, callback=partial(callback, idx=i))
     else:
@@ -394,14 +394,14 @@ def parallel_progress(fcn, inputs, num_workers=None, show_progress=True, initial
 
 
 ##############################################################################
-### Helper functions/classes
+#%% Helper functions/classes
 ##############################################################################
 
-class TaskArgs(ut.prettyobj):
+class TaskArgs(scu.prettyobj):
         '''
         A class to hold the arguments for the parallel task -- not to be invoked by the user.
 
-        Arguments and ordering must match both parallelize() and _parallel_task() '''
+        Arguments and ordering must match both ``sc.parallelize()`` and ``sc._parallel_task()`` '''
         def __init__(self, func, index, iterval, iterdict, args, kwargs, maxload, interval, embarrassing):
             self.func         = func         # The function being called
             self.index        = index        # The place in the queue
@@ -419,7 +419,7 @@ def _parallel_task(taskargs, outputqueue=None):
     ''' Task called by parallelize() -- not to be called directly '''
 
     # Handle inputs
-    taskargs = ut.dcp(taskargs)
+    taskargs = scu.dcp(taskargs)
     func   = taskargs.func
     index  = taskargs.index
     args   = taskargs.args
@@ -453,8 +453,8 @@ def _parallel_task(taskargs, outputqueue=None):
 
 def _parallelcmd_task(_cmd, _parfor, _returnval, _i, _outputqueue, _maxload, _interval, _kwargs): # pragma: no cover # No coverage since pickled
     '''
-    The task to be executed by parallelcmd(). All internal variables start with
-    underscores to avoid possible collisions in the exec() statements. Not to be called
+    The task to be executed by ``sc.parallelcmd()``. All internal variables start with
+    underscores to avoid possible collisions in the ``exec()`` statements. Not to be called
     directly.
     '''
     loadbalancer(maxload=_maxload, index=_i, interval=_interval)

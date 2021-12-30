@@ -4,20 +4,21 @@ Extensions to Numpy, including finding array elements and smoothing data.
 Highlights:
     - ``sc.findinds()``: find indices of an array matching a condition
     - ``sc.findnearest()``: find nearest matching value
+    - ``sc.rolling()``: calculate rolling average
     - ``sc.smooth()``: simple smoothing of 1D or 2D arrays
-    - ``sc.smoothinterp()``: linear interpolation with smoothing
 '''
 
 import numpy as np
 import warnings
-from . import sc_utils as ut
+from . import sc_utils as scu
 
 
 ##############################################################################
-### Find and approximation functions
+#%% Find and approximation functions
 ##############################################################################
 
-__all__ = ['approx', 'safedivide', 'findinds', 'findfirst', 'findlast', 'findnearest', 'dataindex', 'getvalidinds', 'sanitize', 'getvaliddata', 'isprime']
+__all__ = ['approx', 'safedivide', 'findinds', 'findfirst', 'findlast', 'findnearest',
+           'dataindex', 'getvalidinds', 'sanitize', 'getvaliddata', 'isprime']
 
 
 def approx(val1=None, val2=None, eps=None, **kwargs):
@@ -57,14 +58,18 @@ def safedivide(numerator=None, denominator=None, default=None, eps=None, warn=Fa
     if denominator is None: denominator = 1.0
     if default     is None: default     = 0.0
 
+    # Handle types
+    if isinstance(numerator,   list): numerator   = np.array(numerator)
+    if isinstance(denominator, list): denominator = np.array(denominator)
+
     # Handle the logic
     invalid = approx(denominator, 0.0, eps=eps)
-    if ut.isnumber(denominator): # The denominator is a scalar
+    if scu.isnumber(denominator): # The denominator is a scalar
         if invalid:
             output = default
         else:
             output = numerator/denominator
-    elif ut.checktype(denominator, 'array'):
+    elif scu.checktype(denominator, 'array'):
         if not warn:
             denominator[invalid] = 1.0 # Replace invalid values with 1
         output = numerator/denominator
@@ -116,11 +121,11 @@ def findinds(arr, val=None, eps=1e-6, first=False, last=False, die=True, **kwarg
         warnings.warn(warnmsg, category=DeprecationWarning, stacklevel=2)
 
     # Calculate matches
-    arr = ut.promotetoarray(arr)
+    arr = scu.promotetoarray(arr)
     if val is None: # Check for equality
         output = np.nonzero(arr) # If not, just check the truth condition
     else:
-        if ut.isstring(val):
+        if scu.isstring(val):
             output = np.nonzero(arr==val)
         try: # Standard usage, use nonzero
             output = np.nonzero(np.isclose(a=arr, b=val, atol=atol, **kwargs)) # If absolute difference between the two values is less than a certain amount
@@ -174,13 +179,13 @@ def findnearest(series=None, value=None):
 
     Version: 2017jan07
     '''
-    series = ut.promotetoarray(series)
-    if ut.isnumber(value):
+    series = scu.promotetoarray(series)
+    if scu.isnumber(value):
         output = np.argmin(abs(series-value))
     else:
         output = []
         for val in value: output.append(findnearest(series, val))
-        output = ut.promotetoarray(output)
+        output = scu.promotetoarray(output)
     return output
 
 
@@ -210,9 +215,9 @@ def getvalidinds(data=None, filterdata=None): # pragma: no cover
 
         getvalidinds([3,5,8,13], [2000, nan, nan, 2004]) # Returns array([0,3])
     '''
-    data = ut.promotetoarray(data)
+    data = scu.promotetoarray(data)
     if filterdata is None: filterdata = data # So it can work on a single input -- more or less replicates sanitize() then
-    filterdata = ut.promotetoarray(filterdata)
+    filterdata = scu.promotetoarray(filterdata)
     if filterdata.dtype=='bool': filterindices = filterdata # It's already boolean, so leave it as is
     else:                        filterindices = findinds(~np.isnan(filterdata)) # Else, assume it's nans that need to be removed
     dataindices = findinds(~np.isnan(data)) # Also check validity of data
@@ -269,7 +274,7 @@ def sanitize(data=None, returninds=False, replacenans=None, die=True, defaultval
                     sanitized = smoothinterp(newx, inds, sanitized, method=replacenans, smoothness=0) # Replace nans with interpolated values
                 else:
                     naninds = inds = np.nonzero(np.isnan(data))[0]
-                    sanitized = ut.dcp(data)
+                    sanitized = scu.dcp(data)
                     sanitized[naninds] = replacenans
             if len(sanitized)==0:
                 if defaultval is not None:
@@ -334,10 +339,10 @@ def isprime(n, verbose=False):
 
 
 ##############################################################################
-### Other functions
+#%% Other functions
 ##############################################################################
 
-__all__ += ['perturb', 'normsum', 'normalize', 'inclusiverange', 'rolling', 'smooth', 'smoothinterp', 'randround', 'cat']
+__all__ += ['perturb', 'normsum', 'normalize', 'inclusiverange', 'randround', 'cat']
 
 
 def perturb(n=1, span=0.5, randseed=None, normal=False):
@@ -365,7 +370,7 @@ def perturb(n=1, span=0.5, randseed=None, normal=False):
 def normsum(arr, total=None):
     '''
     Multiply a list or array by some normalizing factor so that its sum is equal
-    to the total. Formerly called sc.scaleratio().
+    to the total. Formerly called ``sc.scaleratio()``.
 
     Args:
         arr (array): array (or list) to normalize
@@ -452,6 +457,76 @@ def inclusiverange(*args, **kwargs):
     return x
 
 
+def randround(x):
+    '''
+    Round a float, list, or array probabilistically to the nearest integer. Works
+    for both positive and negative values.
+
+    Adapted from:
+        https://stackoverflow.com/questions/19045971/random-rounding-to-integer-in-python
+
+    Args:
+        x (int, list, arr): the floating point numbers to probabilistically convert to the nearest integer
+
+    Returns:
+        Array of integers
+
+    **Example**::
+
+        sc.randround(np.random.randn(8)) # Returns e.g. array([-1,  0,  1, -2,  2,  0,  0,  0])
+
+    New in version 1.0.0.
+    '''
+    if isinstance(x, np.ndarray):
+        output = np.array(np.floor(x+np.random.random(x.size)), dtype=int)
+    elif isinstance(x, list):
+        output = [randround(i) for i in x]
+    else:
+        output = int(np.floor(x+np.random.random()))
+    return output
+
+
+def cat(*args, axis=None, copy=False, **kwargs):
+    '''
+    Like np.concatenate(), but takes anything and returns an array. Useful for
+    e.g. appending a single number onto the beginning or end of an array.
+
+    Args:
+        args   (any):  items to concatenate into an array
+        axis   (int):  axis along which to concatenate
+        copy   (bool): whether or not to deepcopy the result
+        kwargs (dict): passed to ``np.array()``
+
+    **Examples**::
+
+        arr = sc.cat(4, np.ones(3))
+        arr = sc.cat(np.array([1,2,3]), [4,5], 6)
+        arr = sc.cat(np.random.rand(2,4), np.random.rand(2,6), axis=1)
+
+    | New in version 1.0.0.
+    | New in version 1.1.0: "copy" and keyword arguments.
+    '''
+    if not len(args):
+        return np.array([])
+    output = scu.promotetoarray(args[0])
+    for arg in args[1:]:
+        arg = scu.promotetoarray(arg)
+        output = np.concatenate((output, arg), axis=axis)
+    output = np.array(output, **kwargs)
+    if copy:
+        output = scu.dcp(output)
+    return output
+
+
+
+##############################################################################
+#%% Smoothing functions
+##############################################################################
+
+
+__all__ += ['rolling', 'convolve', 'smooth', 'smoothinterp', 'gauss1d', 'gauss2d']
+
+
 def rolling(data, window=7, operation='mean', **kwargs):
     '''
     Alias to Pandas' rolling() (window) method to smooth a series.
@@ -488,32 +563,99 @@ def rolling(data, window=7, operation='mean', **kwargs):
     return output
 
 
-def smooth(data, repeats=None):
+def convolve(a, v):
     '''
-    Very simple function to smooth a 2D array -- slow but simple and easy to use.
+    Like ``np.convolve()``, but always returns an array the size of the first array
+    (equivalent to mode='same'), and solves the boundary problem present in ``np.convolve()``
+    by adjusting the edges by the weight of the convolution kernel.
+
+    Args:
+        a (arr): the input array
+        v (arr): the convolution kernel
+
+    **Example**::
+
+        a = np.ones(5)
+        v = np.array([0.3, 0.5, 0.2])
+        c1 = np.convolve(a, v, mode='same') # Returns array([0.8, 1.  , 1.  , 1.  , 0.7])
+        c2 = sc.convolve(a, v)              # Returns array([1., 1., 1., 1., 1.])
+
+    New in version 1.3.0.
+    '''
+
+    # Handle types
+    a = np.array(a)
+    v = np.array(v)
+
+    # Perform standard Numpy convolution
+    out = np.convolve(a, v, mode='same')
+
+    # Handle edge weights
+    len_v = len(v) # Length of kernel
+    vtot = v.sum() # Total kernel weight
+    len_lhs = len_v // 2 # Number of points to re-weight on LHS
+    len_rhs = (len_v-1) // 2 # Ditto
+    if len_lhs:
+        w_lhs = np.cumsum(v)/vtot # Cumulative sum of kernel weights on the LHS, divided by total weight
+        w_lhs = w_lhs[-1-len_lhs:-1] # Trim to the correct length
+        out[:len_lhs] /= w_lhs # Re-weight
+    if len_rhs:
+        w_rhs = (np.cumsum(v[::-1])[::-1]/vtot) # Ditto, reversed for RHS
+        w_rhs = w_rhs[1:len_rhs+1] # Ditto
+        out[-len_rhs:] /= w_rhs # Ditto
+
+    return out
+
+
+def smooth(data, repeats=None, kernel=None, legacy=False):
+    '''
+    Very simple function to smooth a 1D or 2D array.
+
+    See also ``sc.gauss1d()`` for simple Gaussian smoothing.
 
     Args:
         data (arr): 1D or 2D array to smooth
-        repeats (int): number of times to apply smoothing (by default, scale with length of data)
+        repeats (int): number of times to apply smoothing (by default, scale to be 1/5th the length of data)
+        kernel (arr): the smoothing kernel to use (default: ``[0.25, 0.5, 0.25]``)
+        legacy (bool): if True, use the old (pre-1.3.0) method of calculation that doesn't correct for edge effects
 
     **Example**::
 
         data = pl.randn(5,5)
         smoothdata = sc.smooth(data)
+
+    New in version 1.3.0: Fix edge effects.
     '''
     if repeats is None:
         repeats = int(np.floor(len(data)/5))
-    output = np.array(data)
-    kernel = np.array([0.25,0.5,0.25])
-    for r in range(repeats):
-        if output.ndim == 1:
-            output = np.convolve(output, kernel, mode='same')
-        elif output.ndim == 2:
-            for i in range(output.shape[0]): output[i,:] = np.convolve(output[i,:], kernel, mode='same')
-            for j in range(output.shape[1]): output[:,j] = np.convolve(output[:,j], kernel, mode='same')
-        else: # pragma: no cover
-            errormsg = 'Simple smoothing only implemented for 1D and 2D arrays'
-            raise ValueError(errormsg)
+    if kernel is None:
+        kernel = [0.25,0.5,0.25]
+    kernel = np.array(kernel)
+    output = scu.dcp(np.array(data))
+
+    # Only convolve the kernel with itself -- equivalent to doing the full convolution multiple times
+    v = scu.dcp(kernel)
+    for r in range(repeats-1):
+        v = np.convolve(v, kernel, mode='full')
+
+    # Support legacy method of not correcting for edge effects
+    if legacy:
+        conv = np.convolve
+        kw = {'mode':'same'}
+    else:
+        conv = convolve
+        kw = {}
+
+    # Perform the convolution
+    if output.ndim == 1:
+        output = conv(output, v, **kw)
+    elif output.ndim == 2:
+        for i in range(output.shape[0]): output[i,:] = conv(output[i,:], v, **kw)
+        for j in range(output.shape[1]): output[:,j] = conv(output[:,j], v, **kw)
+    else: # pragma: no cover
+        errormsg = 'Simple smoothing only implemented for 1D and 2D arrays'
+        raise ValueError(errormsg)
+
     return output
 
 
@@ -546,9 +688,9 @@ def smoothinterp(newx=None, origx=None, origy=None, smoothness=None, growth=None
     Version: 2018jan24
     '''
     # Ensure arrays and remove NaNs
-    if ut.isnumber(newx):  newx = [newx] # Make sure it has dimension
-    if ut.isnumber(origx): origx = [origx] # Make sure it has dimension
-    if ut.isnumber(origy): origy = [origy] # Make sure it has dimension
+    if scu.isnumber(newx):  newx = [newx] # Make sure it has dimension
+    if scu.isnumber(origx): origx = [origx] # Make sure it has dimension
+    if scu.isnumber(origy): origy = [origy] # Make sure it has dimension
     newx  = np.array(newx, dtype=float)
     origx = np.array(origx, dtype=float)
     origy = np.array(origy, dtype=float)
@@ -654,62 +796,173 @@ def smoothinterp(newx=None, origx=None, origy=None, smoothness=None, growth=None
     return newy
 
 
-def randround(x):
-    '''
-    Round a float, list, or array probabilistically to the nearest integer. Works
-    for both positive and negative values.
+# For Gaussian functions -- doubles the speed to convert to 32 bit, functions faster than lambdas
+def _arr32(arr): return np.array(arr, dtype=np.float32)
+def _f32(x):     return np.float32(x)
 
-    Adapted from:
-        https://stackoverflow.com/questions/19045971/random-rounding-to-integer-in-python
+
+def gauss1d(x=None, y=None, xi=None, scale=None, use32=True):
+    '''
+    Gaussian 1D smoothing kernel.
+
+    Create smooth interpolation of input points at interpolated points. If no points
+    are supplied, use the same as the input points.
 
     Args:
-        x (int, list, arr): the floating point numbers to probabilistically convert to the nearest integer
-
-    Returns:
-        Array of integers
-
-    **Example**::
-
-        sc.randround(np.random.randn(8)) # Returns e.g. array([-1,  0,  1, -2,  2,  0,  0,  0])
-
-    New in version 1.0.0.
-    '''
-    if isinstance(x, np.ndarray):
-        output = np.array(np.floor(x+np.random.random(x.size)), dtype=int)
-    elif isinstance(x, list):
-        output = [randround(i) for i in x]
-    else:
-        output = int(np.floor(x+np.random.random()))
-    return output
-
-
-def cat(*args, axis=None, copy=False, **kwargs):
-    '''
-    Like np.concatenate(), but takes anything and returns an array. Useful for
-    e.g. appending a single number onto the beginning or end of an array.
-
-    Args:
-        args   (any):  items to concatenate into an array
-        axis   (int):  axis along which to concatenate
-        copy   (bool): whether or not to deepcopy the result
-        kwargs (dict): passed to ``np.array()``
+        x (arr): 1D list of x coordinates
+        y (arr): 1D list of y values at each of the x coordinates
+        xi (arr): 1D list of points to calculate the interpolated y
+        scale (float): how much smoothing to apply (by default, width of 5 data points)
+        use32 (bool): convert arrays to 32-bit floats (doubles speed for large arrays)
 
     **Examples**::
 
-        arr = sc.cat(4, np.ones(3))
-        arr = sc.cat(np.array([1,2,3]), [4,5], 6)
-        arr = sc.cat(np.random.rand(2,4), np.random.rand(2,6), axis=1)
+        # Setup
+        import pylab as pl
+        x = pl.rand(40)
+        y = (x-0.3)**2 + 0.2*pl.rand(40)
 
-    New in version 1.0.0.
-    New in version 1.1.0: "copy" and keyword arguments.
+        # Smooth
+        yi = sc.gauss1d(x, y)
+        yi2 = sc.gauss1d(x, y, scale=0.3)
+        xi3 = pl.linspace(0,1)
+        yi3 = sc.gauss1d(x, y, xi)
+
+        # Plot oiginal and interpolated versions
+        pl.scatter(x, y,     label='Original')
+        pl.scatter(x, yi,    label='Default smoothing')
+        pl.scatter(x, yi2,   label='More smoothing')
+        pl.scatter(xi3, yi3, label='Uniform spacing')
+        pl.show()
+
+    New in version 1.3.0.
     '''
-    if not len(args):
-        return np.array([])
-    output = ut.promotetoarray(args[0])
-    for arg in args[1:]:
-        arg = ut.promotetoarray(arg)
-        output = np.concatenate((output, arg), axis=axis)
-    output = np.array(output, **kwargs)
-    if copy:
-        output = ut.dcp(output)
-    return output
+
+    # Swap inputs if x is provided but not y
+    if y is None and y is not None:
+        y = x
+        x = None
+    if x is None:
+        x = np.arange(len(y))
+    if xi is None:
+        xi = x
+
+    # Convert to arrays
+    try:
+        orig_dtype = y.dtype
+    except:
+        orig_dtype = np.float64
+    if use32:
+        x, y, xi, = _arr32(x), _arr32(y), _arr32(xi)
+
+    # Handle scale
+    if scale is None:
+        minmax = np.ptp(x) # Calculate the range of x
+        npts = len(x)
+        scale = 5*minmax/npts
+    scale  = _f32(scale)
+
+    def calc(xi):
+        ''' Calculate the calculation '''
+        dist = (x - xi)/scale
+        weights = np.exp(-dist**2)
+        weights = weights/np.sum(weights)
+        val = np.sum(weights*y)
+        return val
+
+    # Actual computation
+    n = len(xi)
+    yi = np.zeros(n)
+    for i in range(n):
+        yi[i] = calc(xi[i])
+
+    yi = np.array(yi, dtype=orig_dtype) # Convert back
+
+    return yi
+
+
+def gauss2d(x, y, z, xi, yi, scale=1.0, xscale=1.0, yscale=1.0, grid=True, use32=True):
+    '''
+    Gaussian 2D smoothing kernel.
+
+    Create smooth interpolation of input points at interpolated points. By default,
+    if ``xi`` and ``yi`` are 1D vectors, they are converted to a grid.
+
+    Args:
+        x (arr): 1D array of x coordinates
+        y (arr): ditto, for y
+        z (arr): 1D array of z values at each of the (x,y) points
+        xi (arr): 1D array of points to calculate the interpolated Z; if None, same as x
+        yi (arr): ditto, for y
+        scale (float): overall scale factor
+        xscale (float): ditto, just for x
+        yscale (float): ditto, just for y
+        grid (bool): if True, then return Z at a grid of (xi,yi) rather than at points
+        use32 (bool): convert arrays to 32-bit floats (doubles speed for large arrays)
+
+    **Examples**::
+
+        # Setup
+        import pylab as pl
+        x = pl.rand(40)
+        y = pl.rand(40)
+        z = 1-(x-0.5)**2 + (y-0.5)**2 # Make a saddle
+
+        # Method 1 -- form grid
+        xi = pl.linspace(0,1,20)
+        yi = pl.linspace(0,1,20)
+        zi = sc.gauss2d(x, y, z, xi, yi, scale=0.1)
+
+        # Method 2 -- use points directly
+        xi2 = pl.rand(400)
+        yi2 = pl.rand(400)
+        zi2 = sc.gauss2d(x, y, z, xi2, yi2, scale=0.1, grid=False)
+
+        # Plot oiginal and interpolated versions
+        sc.scatter3d(x, y, z, c=z)
+        sc.surf3d(zi)
+        sc.scatter3d(xi2, yi2, zi2, c=zi2)
+        pl.show()
+
+    New in version 1.3.0.
+    '''
+    try:
+        orig_dtype = z.dtype
+    except:
+        orig_dtype = np.float64
+    if xi is None: xi = scu.dcp(x)
+    if yi is None: yi = scu.dcp(y)
+    if use32:
+        x, y, z, xi, yi = _arr32(x), _arr32(y), _arr32(z), _arr32(xi), _arr32(yi)
+        scale, xscale, yscale = _f32(scale), _f32(xscale), _f32(yscale)
+    xsc = xscale*scale
+    ysc = yscale*scale
+
+    def calc(xi, yi):
+        ''' Calculate the calculation '''
+        dist = ((x - xi)/xsc)**2 + ((y - yi)/ysc)**2
+        weights = np.exp(-dist)
+        weights = weights/np.sum(weights)
+        val = np.sum(weights*z)
+        return val
+
+    # Actual computation
+    if grid:
+        nx = len(xi)
+        ny = len(yi)
+        zi = np.zeros((ny, nx))
+        if use32: zi = _arr32(zi)
+        for i in range(nx):
+            for j in range(ny):
+                zi[j,i] = calc(xi[i], yi[j])
+    else:
+        n = len(xi)
+        assert n == len(yi)
+        zi = np.zeros(n)
+        if use32: zi = _arr32(zi)
+        for i in range(n):
+            zi[i] = calc(xi[i], yi[i])
+
+    np.array(zi, dtype=orig_dtype) # Convert back to original dtype
+
+    return zi
