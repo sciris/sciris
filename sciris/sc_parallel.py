@@ -18,7 +18,7 @@ from . import sc_utils as scu
 
 
 ##############################################################################
-### Parallelization functions
+#%% Parallelization functions
 ##############################################################################
 
 __all__ = ['cpu_count', 'loadbalancer', 'parallelize', 'parallelcmd', 'parallel_progress']
@@ -299,7 +299,7 @@ def parallelcmd(cmd=None, parfor=None, returnval=None, maxload=None, interval=No
         cmd (str): a string representation of the code to be run in parallel
         parfor (dict): a dictionary of lists of the variables to loop over
         returnval (str): the name of the output variable
-        maxload (float): the maxmium CPU load, used in loadbalancer()
+        maxload (float): the maximum CPU load, used in ``sc.loadbalancer()``
         kwargs (dict): variables to pass into the code
 
     **Example**::
@@ -338,9 +338,9 @@ def parallel_progress(fcn, inputs, num_workers=None, show_progress=True, initial
     """
     Run a function in parallel with a optional single progress bar
 
-    The result is essentially equivalent to
+    The result is essentially equivalent to::
 
-    >>> list(map(fcn, inputs))
+        >>> list(map(fcn, inputs))
 
     But with execution in parallel and with a single progress bar being shown.
 
@@ -394,14 +394,14 @@ def parallel_progress(fcn, inputs, num_workers=None, show_progress=True, initial
 
 
 ##############################################################################
-### Helper functions/classes
+#%% Helper functions/classes
 ##############################################################################
 
 class TaskArgs(scu.prettyobj):
         '''
         A class to hold the arguments for the parallel task -- not to be invoked by the user.
 
-        Arguments and ordering must match both parallelize() and _parallel_task() '''
+        Arguments and ordering must match both ``sc.parallelize()`` and ``sc._parallel_task()`` '''
         def __init__(self, func, index, iterval, iterdict, args, kwargs, maxload, interval, embarrassing):
             self.func         = func         # The function being called
             self.index        = index        # The place in the queue
@@ -453,8 +453,8 @@ def _parallel_task(taskargs, outputqueue=None):
 
 def _parallelcmd_task(_cmd, _parfor, _returnval, _i, _outputqueue, _maxload, _interval, _kwargs): # pragma: no cover # No coverage since pickled
     '''
-    The task to be executed by parallelcmd(). All internal variables start with
-    underscores to avoid possible collisions in the exec() statements. Not to be called
+    The task to be executed by ``sc.parallelcmd()``. All internal variables start with
+    underscores to avoid possible collisions in the ``exec()`` statements. Not to be called
     directly.
     '''
     loadbalancer(maxload=_maxload, index=_i, interval=_interval)

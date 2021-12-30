@@ -25,11 +25,13 @@ New functions and methods
 #. Added ``sc.dictobj()``, the inverse of ``sc.objdict()`` -- an object that acts like a dictionary (instead of a dictionary that acts like an object). Compared to ``sc.objdict()``, ``sc.dictobj()`` is lighter-weight and slightly faster but less powerful.
 #. Added ``sc.swapdict()``, a shortcut for swapping the keys and values of a dictionary.
 #. Added ``sc.loadobj2or3()``, for legacy support for loading Python 2 pickles. (Support had been removed in version 1.1.1.)
+#. Added ``sc.help()``, to quickly allow searching of Sciris' docstrings.
 
 Bugfixes
 ~~~~~~~~
 #. Fixed edge effects when using ``sc.smooth()`` by using ``sc.convolve()`` instead of ``np.convolve()``.
 #. Fixed a bug with checking types when saving files via ``sc.save()``. (Thanks to Rowan Martin-Hughes.)
+#. Fixed a bug with ``output=True`` not being passed correctly for ``sc.heading()``.
 
 Improvements
 ~~~~~~~~~~~~

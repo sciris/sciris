@@ -718,7 +718,7 @@ def colorize(color=None, string=None, output=False, showhelp=False, enable=True)
         return None
 
 
-def heading(string=None, *args, color=None, divider=None, spaces=None, minlength=None, maxlength=None, sep=' ', output=True, **kwargs):
+def heading(string=None, *args, color=None, divider=None, spaces=None, minlength=None, maxlength=None, sep=' ', output=False, **kwargs):
     '''
     Create a colorful heading. If just supplied with a string (or list of inputs like print()),
     create blue text with horizontal lines above and below and 3 spaces above. You
@@ -748,7 +748,7 @@ def heading(string=None, *args, color=None, divider=None, spaces=None, minlength
     >>> sc.heading(string='This is also a heading', color='red', divider='*', spaces=0, minlength=50)
     '''
     if string    is None: string    = ''
-    if color     is None: color     = 'cyan' # Reasonable defualt for light and dark consoles
+    if color     is None: color     = 'cyan' # Reasonable default for light and dark consoles
     if divider   is None: divider   = '—' # Em dash for a continuous line
     if spaces    is None: spaces    = 2
     if minlength is None: minlength = 30
@@ -768,7 +768,7 @@ def heading(string=None, *args, color=None, divider=None, spaces=None, minlength
     fullstring = space + fulldivider + string + fulldivider
 
     # Create output
-    outputstring = colorize(color=color, string=fullstring, **kwargs)
+    outputstring = colorize(color=color, string=fullstring, output=output, **kwargs)
 
     if output:
         return outputstring

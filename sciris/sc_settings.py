@@ -13,11 +13,13 @@ New in version 1.3.0.
 '''
 
 import os
+import re
+import collections as co
 import copy as cp
 import pylab as pl
 
 
-__all__ = ['dictobj', 'options']
+__all__ = ['dictobj', 'options', 'help']
 
 class dictobj(object):
     '''
@@ -242,3 +244,92 @@ def set_matplotlib_global(key, value):
 options.set = set_option
 options.default = default
 options.help = get_help
+
+
+def help(pattern=None, ignorecase=True, flags=None, context=False, output=False):
+    '''
+    Get help on Sciris in general, or search for a word/expression.
+
+    Args:
+        pattern    (str):  the word, phrase, or regex to search for
+        ignorecase (bool): whether to ignore case (equivalent to ``flags=re.I``)
+        flags      (list): additional flags to pass to ``re.findall()``
+        context    (bool): whether to show the line(s) of matches
+        output     (bool): whether to return the dictionary of matches
+
+    **Examples**::
+
+        sc.help()
+        sc.help('smooth')
+        sc.help('JSON', ignorecase=False, context=True)
+
+    New in version 1.3.0.
+    '''
+    defaultmsg = '''
+For general help using Sciris, the best place to start is the docs:
+
+    http://docs.sciris.org
+
+To search for a keyword/phrase/regex in Sciris' docstrings, use e.g.:
+
+    >>> sc.help('smooth')
+
+See help(sc.help) for more information.
+'''
+    # No pattern is provided, print out default help message
+    if pattern is None:
+        print(defaultmsg)
+
+    else:
+
+        import sciris as sc # Here to avoid circular import
+
+        # Handle inputs
+        flags = sc.promotetolist(flags)
+        if ignorecase:
+            flags.append(re.I)
+
+        # Get available functions/classes
+        funcs = [f for f in dir(sc) if (not f.startswith('_') and not f.startswith('sc_'))] # Skip dunder methods and modules
+
+        # Get docstrings
+        docstrings = dict()
+        for f in funcs:
+            docstrings[f] = getattr(sc, f).__doc__
+
+        # Find matches
+        matches = co.defaultdict(list)
+        for k,docstring in docstrings.items():
+            for line in docstring.splitlines():
+                if re.findall(pattern, line, *flags):
+                    matches[k].append(line)
+
+        # Assemble output
+        if not len(matches):
+            string = f'No matches for "{pattern}" found among {len(docstrings)} available functions.'
+        else:
+            string = f'Found {len(matches)} matches for "{pattern}" among {len(docstrings)} available functions:\n'
+            maxkeylen = 0
+            for k in matches.keys(): maxkeylen = max(len(k), maxkeylen)
+            for k,match in matches.items():
+                if not context:
+                    keystr = f'  {k:>{maxkeylen}s}'
+                else:
+                    keystr = k
+                matchstr = f'{keystr}: {len(match)} matches'
+                if context:
+                    matchstr = sc.heading(matchstr, output=True)
+                else:
+                    matchstr += '\n'
+                string += matchstr
+                if context:
+                    for m in match:
+                        string += f'    {m}\n'
+                    string += '—'*60 + '\n'
+
+        # Print result and return
+        print(string)
+        if output:
+            return string
+        else:
+            return
