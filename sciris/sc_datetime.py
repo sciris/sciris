@@ -228,6 +228,8 @@ def date(obj, *args, start_date=None, readformat=None, outformat=None, as_date=T
     New in version 1.2.2: "readformat" argument; renamed "dateformat" to "outformat"
     '''
     # Handle deprecation
+    start_date = kwargs.pop('startdate', start_date) # Handle with or without underscore
+    as_date    = kwargs.pop('asdate', as_date) # Handle with or without underscore
     dateformat = kwargs.pop('dateformat', None)
     if dateformat is not None: # pragma: no cover
         outformat = dateformat
@@ -301,6 +303,7 @@ def day(obj, *args, start_date=None, **kwargs):
     '''
 
     # Handle deprecation
+    start_date = kwargs.pop('startdate', start_date) # Handle with or without underscore
     start_day = kwargs.pop('start_day', None)
     if start_day is not None: # pragma: no cover
         start_date = start_day
@@ -366,7 +369,7 @@ def daydiff(*args):
     return output
 
 
-def daterange(start_date, end_date, interval=None, inclusive=True, as_date=False, readformat=None, outformat=None):
+def daterange(start_date=None, end_date=None, interval=None, inclusive=True, as_date=False, readformat=None, outformat=None, **kwargs):
     '''
     Return a list of dates from the start date to the end date. To convert a list
     of days (as integers) to dates, use sc.date() instead.
@@ -390,6 +393,12 @@ def daterange(start_date, end_date, interval=None, inclusive=True, as_date=False
     '''
 
     # Handle inputs
+    start_date = kwargs.pop('startdate', start_date) # Handle with or without underscore
+    end_date   = kwargs.pop('enddate',   end_date) # Handle with or without underscore
+    as_date    = kwargs.pop('asdate', as_date) # Handle with or without underscore
+    if len(kwargs):
+        errormsg = f'Unexpected arguments: {scu.strjoin(kwargs.keys())}'
+        raise ValueError(errormsg)
     start_date = date(start_date, readformat=readformat)
     end_date   = date(end_date,   readformat=readformat)
     if   interval in [None, 'day']: interval = dict(days=1)
@@ -436,6 +445,8 @@ def datedelta(datestr=None, days=0, months=0, years=0, weeks=0, dt1=None, dt2=No
         sc.datedelta('2021-07-07', weeks=4, months=-1, as_date=True) # Add 4 weeks but subtract a month, and return a dateobj
         sc.datedelta(days=3) # Alias to du.relativedelta.relativedelta(days=3)
     '''
+    as_date = kwargs.pop('asdate', as_date) # Handle with or without underscore
+
     # Calculate the time delta, and return immediately if no date is provided
     delta = du.relativedelta.relativedelta(days=days, months=months, years=years, weeks=weeks, dt1=dt1, dt2=dt2)
     if datestr is None:
