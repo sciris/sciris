@@ -65,7 +65,7 @@ CLASSIFIERS = [
 setup(
     name='sciris',
     version=version,
-    author='ScirisOrg',
+    author='Sciris Development Team',
     author_email='info@sciris.org',
     description='Scientific tools for Python',
     long_description=long_description,

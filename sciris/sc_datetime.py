@@ -13,6 +13,7 @@ import dateutil
 import warnings
 import pylab as pl
 import datetime as dt
+import dateutil as du
 from . import sc_utils as scu
 
 
@@ -367,7 +368,7 @@ def daydiff(*args):
     return output
 
 
-def daterange(start_date, end_date, inclusive=True, as_date=False, dateformat=None):
+def daterange(start_date, end_date, interval=None, inclusive=True, as_date=False, readformat=None, outformat=None):
     '''
     Return a list of dates from the start date to the end date. To convert a list
     of days (as integers) to dates, use sc.date() instead.
@@ -375,21 +376,41 @@ def daterange(start_date, end_date, inclusive=True, as_date=False, dateformat=No
     Args:
         start_date (int/str/date): the starting date, in any format
         end_date (int/str/date): the end date, in any format
+        interval (int/str/dict): if an int, the number of days; if 'week', 'month', or 'year', one of those; if a dict, passed to ``dt.relativedelta()``
         inclusive (bool): if True (default), return to end_date inclusive; otherwise, stop the day before
         as_date (bool): if True, return a list of datetime.date objects instead of strings
-        dateformat (str): passed to date()
+        readformat (str): passed to date()
+        outformat (str): passed to date()
 
-    **Example**::
+    **Examples**::
 
-        dates = sc.daterange('2020-03-01', '2020-04-04')
+        dates1 = sc.daterange('2020-03-01', '2020-04-04')
+        dates2 = sc.daterange('2020-03-01', '2022-05-01', interval=dict(months=2))
 
     New in version 1.0.0.
+    New in version 1.3.0: "interval" argument
     '''
-    end_day = day(end_date, start_date=start_date)
+
+    # Handle inputs
+    start_date = date(start_date, readformat=readformat)
+    end_date   = date(end_date,   readformat=readformat)
+    if   interval in [None, 'day']: interval = dict(days=1)
+    elif interval == 'week':        interval = dict(weeks=1)
+    elif interval == 'month':       interval = dict(months=1)
+    elif interval == 'year':        interval = dict(years=1)
     if inclusive:
-        end_day += 1
-    days = list(range(end_day))
-    dates = date(days, start_date=start_date, as_date=as_date, dateformat=dateformat)
+        end_date += du.relativedelta.relativedelta(days=1)
+
+    # Calculate dates
+    dates = []
+    curr_date = start_date
+    delta = du.relativedelta.relativedelta(**interval)
+    while curr_date < end_date:
+        dates.append(curr_date)
+        curr_date += delta
+
+    # Convert to final format
+    dates = date(dates, start_date=start_date, as_date=as_date, outformat=outformat)
     return dates
 
 
