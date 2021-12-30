@@ -21,7 +21,6 @@ import datetime as dt
 import pylab as pl
 import numpy as np
 import matplotlib as mpl
-import matplotlib.font_manager as mplfm
 from . import sc_settings as scs
 from . import sc_odict as sco
 from . import sc_utils as scu
@@ -274,7 +273,7 @@ def bar3d(data, fig=None, returnfig=False, cmap='viridis', figkwargs=None, axkwa
 ##############################################################################
 
 __all__ += ['boxoff', 'setaxislim', 'setxlim', 'setylim', 'commaticks', 'SIticks',
-            'dateformatter', 'get_rows_cols', 'figlayout', 'maximize', 'fonts']
+            'get_rows_cols', 'getrowscols', 'figlayout', 'maximize', 'fonts']
 
 
 def boxoff(ax=None, removeticks=True, flipticks=True):
@@ -468,94 +467,36 @@ def SIticks(ax=None, axis='y', fixed=False):
     return None
 
 
+def _dateaxis(ax=None, axis='x'):
+    ''' Check if the current axes use dates by seeing if the DateConverter is used '''
 
-def dateformatter(start_date=None, dateformat=None, interval=None, start=None, end=None, rotation=None, ax=None, **kwargs):
-    '''
-    Create an automatic date formatter based on a number of days and a start day.
-
-    Wrapper for Matplotlib's date formatter. Note, start_date is not required if the
-    axis uses dates already (otherwise, the mapping will follow Matplotlib's default,
-    i.e. 0 = 1970-01-01). Note: this function is intended to work on the x-axis only.
-
-    Args:
-        start_date (str/date): the start day, either as a string or date object; if none is supplied, treat current data as a date
-        dateformat (str): the date format (default '%Y-%b-%d')
-        interval (int): if supplied, the interval between ticks (must supply an axis also to take effect)
-        start (str/int): if supplied, the lower limit of the axis
-        end (str/int): if supplied, the upper limit of the axis
-        rotation (float): rotation of the labels, in degrees
-        ax (axes): if supplied, automatically set the x-axis formatter for this axis
-
-    **Examples**::
-
-        # Automatically configure the axis with default options
-        pl.plot(np.arange(365), pl.rand(365))
-        sc.dateformatter('2021-01-01')
-
-        # Manually configure
-        ax = pl.subplot(111)
-        ax.plot(np.arange(60), np.random.random(60))
-        formatter = sc.dateformatter(start_date='2020-04-04', interval=7, start='2020-05-01', end=50, dateformat='%m-%d', ax=ax)
-        ax.xaxis.set_major_formatter(formatter)
-
-    New in version 1.2.0.
-    New in version 1.2.2: "rotation" argument; renamed "start_day" to "start_date"
-    '''
-
-    # Handle deprecation
-    start_day = kwargs.pop('start_day', None)
-    if start_day is not None: # pragma: no cover
-        start_date = start_day
-        warnmsg = 'sc.dateformatter() argument "start_day" has been deprecated as of v1.2.2; use "start_date" instead'
-        warnings.warn(warnmsg, category=DeprecationWarning, stacklevel=2)
-
-    # Handle axis
+    # Handle inputs
     if ax is None:
         ax = pl.gca()
+    if   axis == 'x': axi = ax.xaxis
+    elif axis == 'y': axi = ax.yaxis
+    elif axis == 'z': axi = ax.zaxis
+    else:
+        errormsg = f'Axis "{axis}" not found: must be x, y, or z'
+        raise ValueError(errormsg)
 
-    # Set the default format -- "2021-01-01"
-    if dateformat is None:
-        dateformat = '%Y-%m-%d'
+    # Check
+    output = True if isinstance(axi.converter, mpl.dates.DateConverter) else False
 
-    # Convert to a date object
-    if start_date is None:
-        start_date = pl.num2date(ax.dataLim.x0)
-    start_date = scd.date(start_date)
-
-    @mpl.ticker.FuncFormatter
-    def mpl_formatter(x, pos):
-        return (start_date + dt.timedelta(days=int(x))).strftime(dateformat)
-
-    # Handle limits
-    xmin, xmax = ax.get_xlim()
-    if start:
-        xmin = scd.day(start, start_date=start_date)
-    if end:
-        xmax = scd.day(end, start_date=start_date)
-    ax.set_xlim((xmin, xmax))
-
-    # Set the x-axis intervals
-    if interval:
-        ax.set_xticks(np.arange(xmin, xmax+1, interval))
-
-    # Set the rotation
-    if rotation:
-        ax.tick_params(axis='x', labelrotation=rotation)
-
-    # Set the formatter
-    ax.xaxis.set_major_formatter(mpl_formatter)
-
-    return mpl_formatter
-
+    return output
 
 
 def get_rows_cols(n, nrows=None, ncols=None, ratio=1, make=False, tight=True, remove_extra=True, **kwargs):
     '''
+    Get the number of rows and columns needed to plot N figures.
+
     If you have 37 plots, then how many rows and columns of axes do you know? This
     function convert a number (i.e. of plots) to a number of required rows and columns.
     If nrows or ncols is provided, the other will be calculated. Ties are broken
     in favor of more rows (i.e. 7x6 is preferred to 6x7). It can also generate
-    the plots, if make=True.
+    the plots, if ``make=True``.
+
+    Note: ``sc.get_rows_cols()`` and ``sc.getrowscols()`` are aliases.
 
     Args:
         n (int): the number (of plots) to accommodate
@@ -576,10 +517,11 @@ def get_rows_cols(n, nrows=None, ncols=None, ratio=1, make=False, tight=True, re
         nrows,ncols = sc.get_rows_cols(37) # Returns 7,6
         nrows,ncols = sc.get_rows_cols(100, ratio=2) # Returns 15,7
         nrows,ncols = sc.get_rows_cols(100, ratio=0.5) # Returns 8,13 since rows are prioritized
-        fig,axs     = sc.get_rows_cols(37, make=True) # Create 7x6 subplots
+        fig,axs     = sc.getrowscols(37, make=True) # Create 7x6 subplots, using the alias
 
     New in version 1.0.0.
     New in version 1.2.0: "make", "tight", and "remove_extra" arguments
+    New in version 1.3.0: alias without underscores
     '''
 
     # Simple cases -- calculate the one missing
@@ -697,6 +639,7 @@ def fonts(add=None, use=False, output='name', dryrun=False, verbose=False, die=F
         sc.fonts('myfont.ttf', use=True) # Add this font and immediately set to default
         sc.fonts(['/folder1', '/folder2']) # Add all fonts in both folders
     '''
+    fm = mpl.font_manager # Shorten
 
     # List available fonts
     if add is None:
@@ -706,9 +649,9 @@ def fonts(add=None, use=False, output='name', dryrun=False, verbose=False, die=F
         keys = ['names', 'paths', 'objs']
         for key in keys:
             f[key] = scu.autolist()
-        for fontpath in mplfm.findSystemFonts(**kwargs):
+        for fontpath in fm.findSystemFonts(**kwargs):
             try:
-                fontobj = mplfm.get_font(fontpath)
+                fontobj = fm.get_font(fontpath)
                 fontname = fontobj.family_name
                 if fontname not in f.names: # Don't allow duplicates
                     f.names += fontname
@@ -743,7 +686,7 @@ def fonts(add=None, use=False, output='name', dryrun=False, verbose=False, die=F
             paths = scu.promotetolist(add)
             for path in paths:
                 if os.path.isdir(path):
-                    fps = mplfm.findSystemFonts(path, **kwargs)
+                    fps = fm.findSystemFonts(path, **kwargs)
                     fontpaths.extend(fps)
                 else:
                     fontpaths.append(scf.makefilepath(path))
@@ -751,8 +694,8 @@ def fonts(add=None, use=False, output='name', dryrun=False, verbose=False, die=F
                 print(fontpaths)
             else:
                 for path in fontpaths:
-                    mplfm.fontManager.addfont(path)
-                    fontname = mplfm.get_font(path).family_name
+                    fm.fontManager.addfont(path)
+                    fontname = fm.get_font(path).family_name
                     if verbose:
                         print(f'Added "{fontname}"')
                 if verbose and fontname is None:
@@ -773,6 +716,195 @@ def fonts(add=None, use=False, output='name', dryrun=False, verbose=False, die=F
                 print(errormsg)
 
     return
+
+
+##############################################################################
+#%% Date plotting
+##############################################################################
+
+__all__ += ['dateformatter']
+
+
+class ScirisDateFormatter(mpl.dates.ConciseDateFormatter):
+    '''
+    An adaptation of Matplotlib's ConciseDateFormatter with a slightly different
+    approach to formatting dates. Specifically:
+
+        - Years are shown below dates, rather than on the RHS
+        - The day and month are always shown.
+        - The cursor shows only the date, not the time
+
+    This formatter is not intended to be called directly -- use ``sc.dateformatter()``
+    instead. It is also optimized for plotting dates, rather than times -- for those,
+    ConciseDateFormatter is better.
+
+    New in version 1.3.0.
+    '''
+
+    def __init__(self, locator, formats=None, zero_formats=None, show_offset=False, **kwargs):
+        if formats is None:
+            formats = [
+                '%Y',    # ticks are mostly years
+                '%b',    # ticks are mostly months
+                '%b-%d', # ticks are mostly days
+                '%H:%M', # hrs
+                '%H:%M', # min
+                '%S.%f', # secs
+                ]
+        if zero_formats is None:
+            zero_formats = [
+                '%Y',    # ticks are mostly years -- no zeros
+                '%b',    # ticks are mostly months
+                '%b-%d', # ticks are mostly days
+                '%b-%d', # hrs
+                '%H:%M', # min
+                '%H:%M', # secs
+                ]
+
+        # Initialize the ConciseDateFormatter with the corrected input
+        super().__init__(locator, formats=formats, zero_formats=zero_formats, show_offset=show_offset, **kwargs)
+
+        return
+
+    def format_data_short(self, value):
+        ''' Show year-month-day, not with hours and seconds '''
+        return pl.num2date(value, tz=self._tz).strftime('%Y-%b-%d')
+
+    def format_ticks(self, values):
+        '''
+        Append the year to the tick label for the first label, or if the year changes.
+        This avoids the need to use offset_text, which is difficult to control.
+        '''
+
+        def addyear(label, year):
+            ''' Add the year to the label if it's not already present '''
+            yearstr = str(year)
+            if label[-len(yearstr):] != yearstr:
+                label += f'\n{yearstr}'
+            return label
+
+        # Get the default labels and years
+        labels = super().format_ticks(values)
+        years = [pl.num2date(v).year for v in values]
+
+        # Add year information to any that require it
+        for i,label in enumerate(labels):
+            year = years[i]
+            if i == 0 or (year != years[i-1]):
+                labels[i] = addyear(label, year)
+
+        return labels
+
+def dateformatter(style='sciris', start_date=None, dateformat=None, interval=None,
+                  start=None, end=None, rotation=None, ax=None, locator=None, **kwargs):
+    '''
+    Format the x-axis to use dates.
+
+    If the x-axis already uses dates, then the "style" argument will be used to
+    configure it (by default, using the Sciris house style). Alternatively, if the
+    x-axis is numeric, the other formatting arguments will be used to create psuedo-dates
+    instead.
+
+    Args:
+        style (str): the style to use if the axis already uses dates; options are "sciris", "auto", "concise"
+        start_date (str/date): the start day, either as a string or date object (not needed if x-axis already uses dates)
+        dateformat (str): the date format (default ``'%Y-%b-%d'``; not needed if x-axis already uses dates)
+        interval (int): if supplied, the interval between ticks (not needed if x-axis already uses dates)
+        start (str/int): if supplied, the lower limit of the axis
+        end (str/int): if supplied, the upper limit of the axis
+        rotation (float): rotation of the labels, in degrees
+        ax (axes): if supplied, use these axes instead of the current one
+        locator (Locator): if supplied, use this instead of the default ``AutoDateLocator`` locator
+        kwargs(dict): passed to the date formatter (e.g., ``ScirisDateFormatter``)
+
+    **Examples**::
+
+        # Automatically configure the axis with default options
+        pl.plot(np.arange(365), pl.rand(365))
+        sc.dateformatter(start_date='2021-01-01')
+
+        # Manually configure
+        ax = pl.subplot(111)
+        ax.plot(np.arange(60), np.random.random(60))
+        formatter = sc.dateformatter(start_date='2020-04-04', interval=7, start='2020-05-01', end=50, dateformat='%m-%d', ax=ax)
+        ax.xaxis.set_major_formatter(formatter)
+
+    New in version 1.2.0.
+    New in version 1.2.2: "rotation" argument; renamed "start_day" to "start_date"
+    New in version 1.3.0: refactored to use built-in Matplotlib date formatting
+    '''
+
+    # Handle deprecation
+    start_day = kwargs.pop('start_day', None)
+    if start_day is not None: # pragma: no cover
+        start_date = start_day
+        warnmsg = 'sc.dateformatter() argument "start_day" has been deprecated as of v1.2.2; use "start_date" instead'
+        warnings.warn(warnmsg, category=DeprecationWarning, stacklevel=2)
+
+    # Handle axis
+    if ax is None:
+        ax = pl.gca()
+
+    # Check if dates are already being used
+    isdate = _dateaxis(ax=ax)
+
+    # Option 1 -- they're already dates
+    if isdate:
+        if locator is None:
+            locator = mpl.dates.AutoDateLocator(minticks=3)
+        style = style.lower()
+        if style in [None, 'sciris', 'house', 'default']:
+            formatter = ScirisDateFormatter(locator, **kwargs)
+        elif style in ['auto', 'matplotlib']:
+            formatter = mpl.dates.AutoDateFormatter(locator, **kwargs)
+        elif style in ['concise', 'brief']:
+            formatter = mpl.dates.ConciseDateFormatter(locator, **kwargs)
+        else:
+            errormsg = f'Style "{style}" not recognized; must be one of "sciris", "auto", or "concise"'
+            raise ValueError(errormsg)
+        ax.xaxis.set_major_locator(locator)
+        ax.xaxis.set_major_formatter(formatter)
+
+        # Handle limits
+        xmin, xmax = ax.get_xlim()
+        if start: xmin = scd.date(start)
+        if end:   xmax = scd.date(end)
+        ax.set_xlim((xmin, xmax))
+
+    # Option 2 -- they need to be converted
+    else:
+
+        # Set the default format -- "2021-01-01"
+        if dateformat is None:
+            dateformat = '%Y-%b-%d'
+
+        # Convert to a date object
+        if start_date is None:
+            start_date = pl.num2date(ax.dataLim.x0)
+        start_date = scd.date(start_date)
+
+        @mpl.ticker.FuncFormatter
+        def formatter(x, pos):
+            return (start_date + dt.timedelta(days=int(x))).strftime(dateformat)
+
+        # Handle limits
+        xmin, xmax = ax.get_xlim()
+        if start: xmin = scd.day(start, start_date=start_date)
+        if end:   xmax = scd.day(end,   start_date=start_date)
+        ax.set_xlim((xmin, xmax))
+
+        # Set the x-axis intervals
+        if interval:
+            ax.set_xticks(np.arange(xmin, xmax+1, interval))
+
+    # Set the rotation
+    if rotation:
+        ax.tick_params(axis='x', labelrotation=rotation)
+
+    # Set the formatter
+    ax.xaxis.set_major_formatter(formatter)
+
+    return formatter
 
 
 ##############################################################################

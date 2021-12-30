@@ -19,24 +19,34 @@ from . import sc_utils as scu
 __all__ = ['now', 'getdate', 'readdate', 'date', 'day', 'daydiff', 'daterange', 'datedelta', 'datetoyear',
            'elapsedtimestr', 'tic', 'toc', 'toctic', 'Timer', 'timer', 'timedsleep']
 
-def now(timezone=None, utc=False, die=False, astype='dateobj', tostring=False, dateformat=None):
+def now(astype='dateobj', timezone=None, utc=False, dateformat=None):
     '''
-    Get the current time, optionally in UTC time.
+    Get the current time as a datetime object, optionally in UTC time.
+
+    ``sc.now()`` is similar to ``sc.getdate()``, but ``sc.now()`` returns a datetime
+    object by default, while ``sc.getdate()`` returns a string by default.
+
+    Args:
+        astype (str): what to return; choices are "dateobj", "str", "float"; see ``sc.getdate()`` for more
+        timezone (str): the timezone to set the itme to
+        utc (bool): whether the time is specified in UTC time
+        dateformat (str): if ``astype`` is ``'str'``, use this output format
 
     **Examples**::
 
         sc.now() # Return current local time, e.g. 2019-03-14 15:09:26
-        sc.now('US/Pacific') # Return the time now in a specific timezone
+        sc.now(timezone='US/Pacific') # Return the time now in a specific timezone
         sc.now(utc=True) # Return the time in UTC
-        sc.now(astype='str') # Return the current time as a string instead of a date object
+        sc.now(astype='str') # Return the current time as a string instead of a date object; use 'int' for seconds
         sc.now(tostring=True) # Backwards-compatible alias for astype='str'
         sc.now(dateformat='%Y-%b-%d') # Return a different date format
+
+    New in version 1.3.0: made "astype" the first argument; removed "tostring" argument
     '''
     if isinstance(utc, str): timezone = utc # Assume it's a timezone
     if timezone is not None: tzinfo = du.tz.gettz(timezone) # Timezone is a string
     elif utc:                tzinfo = du.tz.tzutc() # UTC has been specified
     else:                    tzinfo = None # Otherwise, do nothing
-    if tostring: astype = 'str'
     timenow = dt.datetime.now(tzinfo)
     output = getdate(timenow, astype=astype, dateformat=dateformat)
     return output
@@ -46,10 +56,17 @@ def getdate(obj=None, astype='str', dateformat=None):
         '''
         Alias for converting a date object to a formatted string.
 
+        See also ``sc.now()``.
+
+        Args:
+            obj (datetime): the datetime object to convert
+            astype (str): what to return; choices are "str" (default), "dateobj", "float" (full timestamp), "int" (timestamp to second precision)
+            dateformat (str): if ``astype`` is ``'str'``, use this output format
+
         **Examples**::
 
             sc.getdate() # Returns a string for the current date
-            sc.getdate(sc.now(), astype='int') # Convert today's time to an integer
+            sc.getdate(astype='float') # Convert today's time to a timestamp
         '''
         if obj is None:
             obj = now()
@@ -68,9 +85,12 @@ def getdate(obj=None, astype='str', dateformat=None):
             errormsg = f'Getting date failed; date must be a string or a date object: {repr(E)}'
             raise TypeError(errormsg)
 
+        timestamp = obj.timestamp()
         if   astype == 'str':     output = dateobj.strftime(dateformat)
-        elif astype == 'int':     output = time.mktime(dateobj.timetuple()) # So ugly!! But it works -- return integer representation of time
+        elif astype == 'int':     output = int(timestamp)
         elif astype == 'dateobj': output = dateobj
+        elif astype in  ['float', 'number', 'timestamp']:
+            output = timestamp
         else: # pragma: no cover
             errormsg = f'"astype={astype}" not understood; must be "str" or "int"'
             raise ValueError(errormsg)
@@ -202,16 +222,19 @@ def date(obj, *args, start_date=None, readformat=None, outformat=None, as_date=T
     list/array of any of those -- to a date object. To convert an integer to a
     date, you must supply a start date.
 
-    Caution: while this function and readdate() are similar, and indeed this function
-    calls readdate() if the input is a string, in this function an integer is treated
-    as a number of days from start_date, while for readdate() it is treated as a
-    timestamp in seconds. To change
+    Caution: while this function and ``sc.readdate()`` are similar, and indeed this function
+    calls ``sc.readdate()`` if the input is a string, in this function an integer is treated
+    as a number of days from start_date, while for ``sc.readdate()`` it is treated as a
+    timestamp in seconds.
+
+    Note: in this and other date functions, arguments work either with or without
+    underscores (e.g. ``start_date`` or ``startdate``)
 
     Args:
-        obj (str, int, date, datetime, list, array): the object to convert
-        args (str, int, date, datetime): additional objects to convert
-        start_date (str, date, datetime): the starting date, if an integer is supplied
-        readformat (str/list): the format to read the date in; passed to sc.readdate()
+        obj (str/int/date/datetime/list/array): the object to convert
+        args (str/int/date/datetime): additional objects to convert
+        start_date (str/date/datetime): the starting date, if an integer is supplied
+        readformat (str/list): the format to read the date in; passed to ``sc.readdate()``
         outformat (str): the format to output the date in, if returning a string
         as_date (bool): whether to return as a datetime date instead of a string
 
@@ -379,14 +402,14 @@ def daterange(start_date=None, end_date=None, interval=None, inclusive=True, as_
         end_date (int/str/date): the end date, in any format
         interval (int/str/dict): if an int, the number of days; if 'week', 'month', or 'year', one of those; if a dict, passed to ``dt.relativedelta()``
         inclusive (bool): if True (default), return to end_date inclusive; otherwise, stop the day before
-        as_date (bool): if True, return a list of datetime.date objects instead of strings
+        as_date (bool): if True, return a list of datetime.date objects instead of strings (note: you can also use "asdate" instead of "as_date")
         readformat (str): passed to date()
         outformat (str): passed to date()
 
     **Examples**::
 
         dates1 = sc.daterange('2020-03-01', '2020-04-04')
-        dates2 = sc.daterange('2020-03-01', '2022-05-01', interval=dict(months=2))
+        dates2 = sc.daterange('2020-03-01', '2022-05-01', interval=dict(months=2), asdate=True)
 
     New in version 1.0.0.
     New in version 1.3.0: "interval" argument
@@ -452,8 +475,8 @@ def datedelta(datestr=None, days=0, months=0, years=0, weeks=0, dt1=None, dt2=No
     if datestr is None:
         return delta
     else:
-        if as_date is None and isinstance(datestr, str): # Typical case
-            as_date = False
+        if as_date is None: # Typical case, return the same format as the input
+            as_date = False if isinstance(datestr, str) else True
         dateobj = readdate(datestr, **kwargs)
         newdate = dateobj + delta
         newdate = date(newdate, as_date=as_date)
