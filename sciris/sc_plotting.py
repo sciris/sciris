@@ -356,13 +356,13 @@ def setaxislim(which=None, ax=None, data=None):
 
 
 def setxlim(data=None, ax=None):
-    ''' Alias for sc.setaxislim(which='x') '''
+    ''' Alias for ``sc.setaxislim(which='x')`` '''
     return setaxislim(data=data, ax=ax, which='x')
 
 
 def setylim(data=None, ax=None):
     '''
-    Alias for sc.setaxislim(which='y').
+    Alias for ``sc.setaxislim(which='y')``.
 
     **Example**::
 

@@ -370,7 +370,7 @@ def perturb(n=1, span=0.5, randseed=None, normal=False):
 def normsum(arr, total=None):
     '''
     Multiply a list or array by some normalizing factor so that its sum is equal
-    to the total. Formerly called sc.scaleratio().
+    to the total. Formerly called ``sc.scaleratio()``.
 
     Args:
         arr (array): array (or list) to normalize
@@ -611,7 +611,7 @@ def smooth(data, repeats=None, kernel=None, legacy=False):
     '''
     Very simple function to smooth a 1D or 2D array.
 
-    See also sc.gauss1d() for simple Gaussian smoothing.
+    See also ``sc.gauss1d()`` for simple Gaussian smoothing.
 
     Args:
         data (arr): 1D or 2D array to smooth

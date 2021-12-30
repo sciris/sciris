@@ -305,7 +305,7 @@ def date(obj, *args, start_date=None, readformat=None, outformat=None, as_date=T
 def day(obj, *args, start_date=None, **kwargs):
     '''
     Convert a string, date/datetime object, or int to a day (int), the number of
-    days since the start day. See also sc.date() and sc.daydiff(). If a start day
+    days since the start day. See also ``sc.date()`` and ``sc.daydiff()``. If a start day
     is not supplied, it returns the number of days into the current year.
 
     Args:
@@ -395,7 +395,7 @@ def daydiff(*args):
 def daterange(start_date=None, end_date=None, interval=None, inclusive=True, as_date=False, readformat=None, outformat=None, **kwargs):
     '''
     Return a list of dates from the start date to the end date. To convert a list
-    of days (as integers) to dates, use sc.date() instead.
+    of days (as integers) to dates, use ``sc.date()`` instead.
 
     Args:
         start_date (int/str/date): the starting date, in any format
@@ -638,7 +638,7 @@ def tic():
         slow_func2()
         sc.toc(T, label='slow_func2')
 
-    See also sc.timer().
+    See also ``sc.timer()``.
     '''
     global _tictime  # The saved time is stored in this global
     _tictime = time.time()  # Store the present time in the global
@@ -728,9 +728,9 @@ def toc(start=None, label=None, baselabel=None, sigfigs=None, filename=None, res
 
 def toctic(returntic=False, returntoc=False, *args, **kwargs):
     '''
-    A convenience function for multiple timings. Can return the default output of
-    either tic() or toc() (default neither). Arguments are passed to toc(). Equivalent
-    to sc.toc(reset=True).
+    A convenience fu`ction for multiple timings. Can return the default output of
+    either ``sc.tic()`` or ``sc.toc()`` (default neither). Arguments are passed to ``sc.toc()``.
+    Equivalent to ``sc.toc(reset=True)``.
 
     **Example**::
 
@@ -782,7 +782,7 @@ def timedsleep(delay=None, verbose=True):
 
 class Timer(scu.prettyobj):
     '''
-    Simple timer class. Note: sc.timer() and sc.Timer() are aliases.
+    Simple timer class. Note: ``sc.timer()`` and ``sc.Timer()`` are aliases.
 
     This wraps ``tic`` and ``toc`` with the formatting arguments and
     the start time (at construction)

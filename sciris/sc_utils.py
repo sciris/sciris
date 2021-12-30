@@ -58,8 +58,8 @@ __all__ = ['fast_uuid', 'uuid', 'dcp', 'cp', 'pp', 'sha', 'wget', 'htmlify', 'fr
 
 def fast_uuid(which=None, length=None, n=1, secure=False, forcelist=False, safety=1000, recursion=0, recursion_limit=10, verbose=True):
     '''
-    Create a fast UID or set of UIDs. Note: for certain applications, sc.uuid()
-    is faster than sc.fast_uuid()!
+    Create a fast UID or set of UIDs. Note: for certain applications, ``sc.uuid()``
+    is faster than ``sc.fast_uuid()``!
 
     Args:
         which (str): the set of characters to choose from (default ascii)
@@ -507,15 +507,15 @@ def getplatform(expected=None, die=False):
 
 
 def iswindows(die=False):
-    ''' Alias to sc.getplatform('windows') '''
+    ''' Alias to ``sc.getplatform('windows')`` '''
     return getplatform('windows', die=die)
 
 def islinux(die=False):
-    ''' Alias to sc.getplatform('linux') '''
+    ''' Alias to ``sc.getplatform('linux')`` '''
     return getplatform('linux', die=die)
 
 def ismac(die=False):
-    ''' Alias to sc.getplatform('mac') '''
+    ''' Alias to ``sc.getplatform('mac')`` '''
     return getplatform('mac', die=die)
 
 
