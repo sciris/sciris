@@ -43,7 +43,7 @@ class dictobj(object):
         return output
 
     def fromkeys(self, *args, **kwargs):
-        return dictobj(self.__dict__.fromkeys(   *args, **kwargs))
+        return dictobj(self.__dict__.fromkeys(*args, **kwargs))
 
     def __getitem__( self, *args, **kwargs): return self.__dict__.__getitem__( *args, **kwargs)
     def __setitem__( self, *args, **kwargs): return self.__dict__.__setitem__( *args, **kwargs)
@@ -115,8 +115,8 @@ matplotlib_keys = ['fontsize', 'font', 'dpi', 'backend']
 
 def set_option(key=None, value=None, **kwargs):
     '''
-    Set a parameter or parameters. Use ``sc.options.set('defaults')`` to reset all
-    values to default, or ``sc.options.set(dpi='default')`` to reset one parameter
+    Set a parameter or parameters. Use ``sc.options('defaults')`` to reset all
+    values to default, or ``sc.options(dpi='default')`` to reset one parameter
     to default. See ``sc.options.help()`` for more information.
 
     Args:
@@ -126,25 +126,18 @@ def set_option(key=None, value=None, **kwargs):
 
     Options are (see also ``sc.options.help()``):
 
-        - verbose:        default verbosity for simulations to use
-        - font_size:      the font size used for the plots
-        - font_family:    the font family/face used for the plots
-        - dpi:            the overall DPI for the figure
-        - show:           whether to show figures
-        - close:          whether to close the figures
-        - backend:        which Matplotlib backend to use
-        - interactive:    convenience method to set show, close, and backend
-        - precision:      the arithmetic to use in calculations
-        - numba_parallel: whether to parallelize Numba functions
-        - numba_cache:    whether to cache (precompile) Numba functions
+        - sep:       the thousands separator to use
+        - aspath:    whether to return Path objects instead of strings
+        - fontsize:  the font size used for the plots
+        - font:      the font family/face used for the plots
+        - dpi:       the overall DPI for the figure
+        - backend:   which Matplotlib backend to use
 
     **Examples**::
 
-        sc.options.set('font_size', 18) # Larger font
-        sc.options.set(font_size=18, show=False, backend='agg', precision=64) # Larger font, non-interactive plots, higher precision
-        sc.options.set(interactive=False) # Turn off interactive plots
-        sc.options.set('defaults') # Reset to default options
-        sc.options.set('jupyter') # Defaults for Jupyter
+        sc.options.set('fontsize', 18) # Larger font
+        sc.options(fontsize=18, backend='agg') # Larger font, non-interactive plots
+        sc.options('defaults') # Reset to default options
 
     New in version 1.3.0.
     '''

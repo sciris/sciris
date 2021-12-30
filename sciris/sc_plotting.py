@@ -819,7 +819,13 @@ def dateformatter(style='sciris', start_date=None, dateformat=None, interval=Non
 
     **Examples**::
 
-        # Automatically configure the axis with default options
+        # Reformat date data
+        x = sc.daterange('2021-04-04', '2022-05-05', asdate=True)
+        y = sc.smooth(pl.rand(len(x)))
+        pl.plot(x, y)
+        sc.dateformatter()
+
+        # Automatically configure a non-date axis with default options
         pl.plot(np.arange(365), pl.rand(365))
         sc.dateformatter(start_date='2021-01-01')
 
@@ -827,7 +833,6 @@ def dateformatter(style='sciris', start_date=None, dateformat=None, interval=Non
         ax = pl.subplot(111)
         ax.plot(np.arange(60), np.random.random(60))
         formatter = sc.dateformatter(start_date='2020-04-04', interval=7, start='2020-05-01', end=50, dateformat='%m-%d', ax=ax)
-        ax.xaxis.set_major_formatter(formatter)
 
     New in version 1.2.0.
     New in version 1.2.2: "rotation" argument; renamed "start_day" to "start_date"
