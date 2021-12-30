@@ -738,10 +738,15 @@ class ScirisDateFormatter(mpl.dates.ConciseDateFormatter):
     instead. It is also optimized for plotting dates, rather than times -- for those,
     ConciseDateFormatter is better.
 
+    See ``sc.dateformatter()`` for explanation of arguments.
+
     New in version 1.3.0.
     '''
 
-    def __init__(self, locator, formats=None, zero_formats=None, show_offset=False, **kwargs):
+    def __init__(self, locator, formats=None, zero_formats=None, show_offset=False, show_year=True, **kwargs):
+
+        # Handle inputs
+        self.show_year = show_year
         if formats is None:
             formats = [
                 '%Y',    # ticks are mostly years
@@ -779,7 +784,7 @@ class ScirisDateFormatter(mpl.dates.ConciseDateFormatter):
         def addyear(label, year):
             ''' Add the year to the label if it's not already present '''
             yearstr = str(year)
-            if label[-len(yearstr):] != yearstr:
+            if yearstr not in label: # Be agnostic about where in the label the year string might be present
                 label += f'\n{yearstr}'
             return label
 
@@ -787,16 +792,17 @@ class ScirisDateFormatter(mpl.dates.ConciseDateFormatter):
         labels = super().format_ticks(values)
         years = [pl.num2date(v).year for v in values]
 
-        # Add year information to any that require it
-        for i,label in enumerate(labels):
-            year = years[i]
-            if i == 0 or (year != years[i-1]):
-                labels[i] = addyear(label, year)
+        # Add year information to any labels that require it
+        if self.show_year:
+            for i,label in enumerate(labels):
+                year = years[i]
+                if i == 0 or (year != years[i-1]):
+                    labels[i] = addyear(label, year)
 
         return labels
 
-def dateformatter(style='sciris', start_date=None, dateformat=None, interval=None,
-                  start=None, end=None, rotation=None, ax=None, locator=None, **kwargs):
+def dateformatter(ax=None, style='sciris', start_date=None, dateformat=None, interval=None,
+                  start=None, end=None, rotation=None, locator=None, **kwargs):
     '''
     Format the x-axis to use dates.
 
@@ -806,6 +812,7 @@ def dateformatter(style='sciris', start_date=None, dateformat=None, interval=Non
     instead.
 
     Args:
+        ax (axes): if supplied, use these axes instead of the current one
         style (str): the style to use if the axis already uses dates; options are "sciris", "auto", "concise", or a Formatter object
         start_date (str/date): the start day, either as a string or date object (not needed if x-axis already uses dates)
         dateformat (str): the date format (default ``'%Y-%b-%d'``; not needed if x-axis already uses dates)
@@ -813,7 +820,6 @@ def dateformatter(style='sciris', start_date=None, dateformat=None, interval=Non
         start (str/int): if supplied, the lower limit of the axis
         end (str/int): if supplied, the upper limit of the axis
         rotation (float): rotation of the labels, in degrees
-        ax (axes): if supplied, use these axes instead of the current one
         locator (Locator): if supplied, use this instead of the default ``AutoDateLocator`` locator
         kwargs(dict): passed to the date formatter (e.g., ``ScirisDateFormatter``)
 
@@ -847,6 +853,9 @@ def dateformatter(style='sciris', start_date=None, dateformat=None, interval=Non
         warnings.warn(warnmsg, category=DeprecationWarning, stacklevel=2)
 
     # Handle axis
+    if isinstance(ax, str): # Swap style and axes -- allows sc.dateformatter(ax) or sc.dateformatter('auto')
+        style = ax
+        ax = None
     if ax is None:
         ax = pl.gca()
 
@@ -855,6 +864,19 @@ def dateformatter(style='sciris', start_date=None, dateformat=None, interval=Non
 
     # Option 1 -- they're already dates
     if isdate:
+
+        # Handle dateformat, if provided
+        if dateformat is not None:
+            if isinstance(dateformat, str):
+                kwargs['formats'] = [dateformat]*6
+            elif isinstance(dateformat, list):
+                kwargs['formats'] = dateformat
+            else:
+                errormsg = f'Could not recognize date format {type(dateformat)}: expecting string or list'
+                raise ValueError(errormsg)
+            kwargs['zero_formats'] = kwargs['formats']
+
+        # Handle locator and styles
         if locator is None:
             locator = mpl.dates.AutoDateLocator(minticks=3)
         style = style.lower()
