@@ -273,7 +273,7 @@ def bar3d(data, fig=None, returnfig=False, cmap='viridis', figkwargs=None, axkwa
 ##############################################################################
 
 __all__ += ['boxoff', 'setaxislim', 'setxlim', 'setylim', 'commaticks', 'SIticks',
-            'get_rows_cols', 'getrowscols', 'figlayout', 'maximize', 'fonts']
+            'getrowscols', 'get_rows_cols', 'figlayout', 'maximize', 'fonts']
 
 
 def boxoff(ax=None, removeticks=True, flipticks=True):
@@ -467,7 +467,7 @@ def SIticks(ax=None, axis='y', fixed=False):
     return None
 
 
-def get_rows_cols(n, nrows=None, ncols=None, ratio=1, make=False, tight=True, remove_extra=True, **kwargs):
+def getrowscols(n, nrows=None, ncols=None, ratio=1, make=False, tight=True, remove_extra=True, **kwargs):
     '''
     Get the number of rows and columns needed to plot N figures.
 
@@ -477,7 +477,7 @@ def get_rows_cols(n, nrows=None, ncols=None, ratio=1, make=False, tight=True, re
     in favor of more rows (i.e. 7x6 is preferred to 6x7). It can also generate
     the plots, if ``make=True``.
 
-    Note: ``sc.get_rows_cols()`` and ``sc.getrowscols()`` are aliases.
+    Note: ``sc.getrowscols()`` and ``sc.get_rows_cols()`` are aliases.
 
     Args:
         n (int): the number (of plots) to accommodate
@@ -529,7 +529,7 @@ def get_rows_cols(n, nrows=None, ncols=None, ratio=1, make=False, tight=True, re
     else: # Otherwise, just return rows and columns
         return nrows,ncols
 
-getrowscols = get_rows_cols # Alias
+get_rows_cols = getrowscols  # Alias
 
 
 def figlayout(fig=None, tight=True, keep=False, **kwargs):
