@@ -666,6 +666,7 @@ def fonts(add=None, use=False, output='name', dryrun=False, verbose=False, die=F
             fontpaths = []
             paths = scu.promotetolist(add)
             for path in paths:
+                path = str(path)
                 if os.path.isdir(path):
                     fps = fm.findSystemFonts(path, **kwargs)
                     fontpaths.extend(fps)
