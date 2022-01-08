@@ -13,7 +13,7 @@ Version 1.3.1 (2022-01-08)
 #. Added option to search the source code in ``sc.help()``.
 #. Fixed a bug in ``sc.heading()`` that printed an extraneous ``None``.
 #. Fixed a bug in ``sc.fonts()`` that prevented using a ``Path`` object.
-#. Improved the implementation of ``sc.gauss1d()`` and ``sc.gauss2d()`` to handle different object types and edge cases.
+#. Improved the implementations of ``sc.smooth()``, ``sc.gauss1d()``, and ``sc.gauss2d()`` to handle different object types and edge cases.
 #. Removed the ``openpyexcel`` dependency.
 
 
