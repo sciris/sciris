@@ -844,7 +844,7 @@ class Blobject(object):
 
         This can then be used to open the workbook from memory without writing anything to disk e.g.
 
-            - book = openpyexcel.load_workbook(self.tofile())
+            - book = openpyxl.load_workbook(self.tofile())
             - book = xlrd.open_workbook(file_contents=self.tofile().read())
         '''
         bytesblob = io.BytesIO(self.blob)
@@ -865,9 +865,9 @@ class Blobject(object):
 class Spreadsheet(Blobject):
     '''
     A class for reading and writing Excel files in binary format. No disk IO needs
-    to happen to manipulate the spreadsheets with openpyexcel (or xlrd or pandas).
+    to happen to manipulate the spreadsheets with openpyxl (or xlrd or pandas).
 
-    New in version 1.3.0: Changed default from xlrd to openpyexcel and added self.wb
+    New in version 1.3.0: Changed default from xlrd to openpyxl and added self.wb
     attribute to avoid the need to reload workbooks.
     '''
 
@@ -894,18 +894,15 @@ class Spreadsheet(Blobject):
         return self.wb
 
 
-    def openpyexcel(self, reload=False, **kwargs):
-        ''' Return a book as opened by openpyexcel '''
+    def openpyxl(self, reload=False, **kwargs):
+        ''' Return a book as opened by openpyxl '''
         if self._reload_wb(reload=reload):
-            try:
-                import openpyexcel # Optional import
-            except ModuleNotFoundError as e: # pragma: no cover
-                raise ModuleNotFoundError('The "openpyexcel" Python package is not available; please install manually via "pip install openpyexcel" (not to be confused with openpyxl)') from e
+            import openpyxl # Optional import
             if self.blob is not None:
                 self.tofile(output=False)
-                self.wb = openpyexcel.load_workbook(self.bytes, **kwargs) # This stream can be passed straight to openpyexcel
+                self.wb = openpyxl.load_workbook(self.bytes, **kwargs) # This stream can be passed straight to openpyxl
             else:
-                self.wb = openpyexcel.Workbook(**kwargs)
+                self.wb = openpyxl.Workbook(**kwargs)
         return self.wb
 
 
@@ -917,7 +914,7 @@ class Spreadsheet(Blobject):
                 self.tofile(output=False)
                 self.wb = pd.ExcelFile(self.bytes, **kwargs)
             else:
-                errormsg = 'For pandas, must load an existing workbook; use openpyexcel to create a new workbook'
+                errormsg = 'For pandas, must load an existing workbook; use openpyxl to create a new workbook'
                 raise FileNotFoundError(errormsg)
         return self.wb
 
@@ -939,16 +936,16 @@ class Spreadsheet(Blobject):
 
     def readcells(self, wbargs=None, *args, **kwargs):
         ''' Alias to loadspreadsheet() '''
-        method = kwargs.pop('method', 'openpyexcel')
+        method = kwargs.pop('method', 'openpyxl')
         f = self.tofile()
         kwargs['fileobj'] = f
 
-        # Read in sheetoutput (sciris dataframe object for xlrd, 2D numpy array for openpyexcel).
+        # Read in sheetoutput (sciris dataframe object for xlrd, 2D numpy array for openpyxl).
         if method == 'xlrd': # pragma: no cover
             sheetoutput = loadspreadsheet(*args, **kwargs, method='xlrd')  # returns sciris dataframe object
-        elif method == 'openpyexcel':
+        elif method == 'openpyxl':
             if wbargs is None: wbargs = {}
-            self.openpyexcel(**wbargs)
+            self.openpyxl(**wbargs)
             ws = self._getsheet(sheetname=kwargs.get('sheetname'), sheetnum=kwargs.get('sheetname'))
             rawdata = tuple(ws.rows)
             sheetoutput = np.empty(np.shape(rawdata), dtype=object)
@@ -956,7 +953,7 @@ class Spreadsheet(Blobject):
                 for c,val in enumerate(rowdata):
                     sheetoutput[r][c] = rawdata[r][c].value
         else: # pragma: no cover
-            errormsg = f'Reading method not found; must be openpyexcel or xlrd, not {method}'
+            errormsg = f'Reading method not found; must be openpyxl or xlrd, not {method}'
             raise ValueError(errormsg)
 
         # Return the appropriate output
@@ -990,7 +987,7 @@ class Spreadsheet(Blobject):
         '''
         # Load workbook
         if wbargs is None: wbargs = {}
-        wb = self.openpyexcel(**wbargs)
+        wb = self.openpyxl(**wbargs)
         if verbose: print(f'Workbook loaded: {wb}')
 
         # Get right worksheet
@@ -1056,7 +1053,7 @@ def loadspreadsheet(filename=None, folder=None, fileobj=None, sheet=0, asdatafra
     Load a spreadsheet as a dataframe or a list of lists.
 
     By default, an alias to ``pandas.read_excel()`` with a header, but also supports loading
-    via openpyexcel or xlrd. Read from either a filename or a file object.
+    via openpyxl or xlrd. Read from either a filename or a file object.
 
     Args:
         filename (str): filename or path to read
@@ -1064,13 +1061,13 @@ def loadspreadsheet(filename=None, folder=None, fileobj=None, sheet=0, asdatafra
         fileobj (obj): load from file object rather than path
         sheet (str/int/list): name or number of sheet(s) to use (default 0)
         asdataframe (bool): whether to return as a pandas/Sciris dataframe (default True)
-        method (str): how to read (default 'pandas', other choices 'openpyexcel' and 'xlrd')
-        kwargs (dict): passed to pd.read_excel(), openpyexcel(), etc.
+        method (str): how to read (default 'pandas', other choices 'openpyxl' and 'xlrd')
+        kwargs (dict): passed to pd.read_excel(), openpyxl(), etc.
 
     **Examples**::
 
         df = sc.loadspreadsheet('myfile.xlsx') # Alias to pd.read_excel(header=1)
-        wb = sc.loadspreadsheet('myfile.xlsx', method='openpyexcel') # Returns workbook
+        wb = sc.loadspreadsheet('myfile.xlsx', method='openpyxl') # Returns workbook
         data = sc.loadspreadsheet('myfile.xlsx', method='xlrd', asdataframe=False) # Returns raw data; requires xlrd
 
     New in version 1.3.0: change default from xlrd to pandas; renamed sheetname and sheetnum arguments to sheet.
@@ -1090,10 +1087,10 @@ def loadspreadsheet(filename=None, folder=None, fileobj=None, sheet=0, asdatafra
             pass
         return data
 
-    # Load using openpyexcel
-    elif method == 'openpyexcel': # pragma: no cover
+    # Load using openpyxl
+    elif method == 'openpyxl': # pragma: no cover
         spread = Spreadsheet(fullpath)
-        wb = spread.openpyexcel(**kwargs)
+        wb = spread.openpyxl(**kwargs)
         return wb
 
     # Legacy method -- xlrd
@@ -1167,7 +1164,7 @@ Then try again to load your Excel file.
                 raise E
 
     else: # pragma: no cover
-        errormsg = f'Method "{method}" not found: must be one of pandas, openpyexcel, or xlrd'
+        errormsg = f'Method "{method}" not found: must be one of pandas, openpyxl, or xlrd'
         raise ValueError(errormsg)
 
 

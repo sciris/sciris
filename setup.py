@@ -21,7 +21,6 @@ requirements = [
         'numpy>=1.10.1',     # Numerical functions
         'pandas',            # Dataframes and spreadsheet input
         'openpyxl',          # To read Excel files; removed as a dependency of pandas as of version 1.3
-        'openpyexcel>=2.5',  # Spreadsheet functions -- fork of openpyxl; used for operations not supported by openpyxl
         'xlsxwriter',        # Spreadsheet output
         'psutil',            # Load monitoring
         'dill',              # File I/O
