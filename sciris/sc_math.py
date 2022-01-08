@@ -580,7 +580,8 @@ def convolve(a, v):
         c1 = np.convolve(a, v, mode='same') # Returns array([0.8, 1.  , 1.  , 1.  , 0.7])
         c2 = sc.convolve(a, v)              # Returns array([1., 1., 1., 1., 1.])
 
-    New in version 1.3.0.
+    | New in version 1.3.0.
+    | New in version 1.3.1: handling the case where len(a) < len(v)
     '''
 
     # Handle types
@@ -591,18 +592,26 @@ def convolve(a, v):
     out = np.convolve(a, v, mode='same')
 
     # Handle edge weights
+    len_a = len(a) # Length of input array
     len_v = len(v) # Length of kernel
+    minlen = min(len_a, len_v)
     vtot = v.sum() # Total kernel weight
-    len_lhs = len_v // 2 # Number of points to re-weight on LHS
-    len_rhs = (len_v-1) // 2 # Ditto
+    len_lhs = minlen // 2 # Number of points to re-weight on LHS
+    len_rhs = (minlen-1) // 2 # Ditto
     if len_lhs:
         w_lhs = np.cumsum(v)/vtot # Cumulative sum of kernel weights on the LHS, divided by total weight
         w_lhs = w_lhs[-1-len_lhs:-1] # Trim to the correct length
-        out[:len_lhs] /= w_lhs # Re-weight
+        out[:len_lhs] = out[:len_lhs]/w_lhs # Re-weight
     if len_rhs:
         w_rhs = (np.cumsum(v[::-1])[::-1]/vtot) # Ditto, reversed for RHS
         w_rhs = w_rhs[1:len_rhs+1] # Ditto
-        out[-len_rhs:] /= w_rhs # Ditto
+        out[-len_rhs:] = out[-len_rhs:]/w_rhs # Ditto
+
+    # Handle the case where len(v) > len(a)
+    len_diff = max(0, len_v - len_a)
+    if len_diff:
+        lhs_trim = len_diff // 2
+        out = out[lhs_trim:lhs_trim+len_a]
 
     return out
 
