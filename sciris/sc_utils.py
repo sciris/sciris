@@ -261,12 +261,58 @@ def cp(obj, verbose=True, die=True):
     return output
 
 
-def pp(obj, jsonify=True, verbose=False, doprint=True, *args, **kwargs):
+def _printout(string=None, doprint=None, output=None, silent=False):
     '''
-    Shortcut for pretty-printing the object
+    Short for "print or output string"
 
-    Almost identical to ``pprint.pprint()``
+    Helper function to handle the logic of two boolean flags: by default, print;
+    but if output is requested, return the output and do not print; unless doprint
+    is set to True.
+
+    **Examples**::
+        _printout(doprint=None, output=False, silent=True) # Returns True, False
+        _printout(doprint=None, output=True, silent=True)  # Returns False, True
+        _printout('foo', doprint=None,  output=False) # Does print, doesn't return
+        _printout('foo', doprint=True,  output=False) # Does print, doesn't return
+        _printout('foo', doprint=True,  output=True)  # Does print, does return
+        _printout('foo', doprint=False, output=True)  # Doesn't print, does return
+        _printout('foo', doprint=False, output=False) # Doesn't print, doesn't return
     '''
+    # Default for output is False
+    if output is None: output = False
+
+    # Default for doprint is opposite of output
+    if doprint is None:
+        doprint = not(output)
+
+    if silent:
+        return doprint, output
+    else:
+        if doprint:
+            print(string)
+        if output:
+            return string
+    return
+
+
+def pp(obj, jsonify=True, doprint=None, output=False, verbose=False, **kwargs):
+    '''
+    Shortcut for pretty-printing the object.
+
+    Almost identical to ``pprint.pprint()``, but can also be used as an alias for
+    ``pprint.pformat()``.
+
+    Args:
+        obj     (any):  object to print
+        jsonify (bool): whether to first convert the object to JSON, to handle things like ordered dicts nicely
+        doprint (bool): whether to show output (default true)
+        output  (bool): whether to return output as a string (default false)
+        verbose (bool): whether to show warnings when jsonifying the object
+        kwargs  (dict): passed to ``pprint.pprint()``
+
+    New in version 1.3.1: output argument
+    '''
+
     # Get object
     if jsonify:
         try:
@@ -278,12 +324,8 @@ def pp(obj, jsonify=True, verbose=False, doprint=True, *args, **kwargs):
         toprint = obj
 
     # Decide what to do with object
-    if doprint:
-        pprint.pprint(toprint, *args, **kwargs)
-        return None
-    else:
-        output = pprint.pformat(toprint, *args, **kwargs)
-        return output
+    string = pprint.pformat(toprint, **kwargs)
+    return _printout(string=string, doprint=doprint, output=output)
 
 
 def sha(obj, encoding='utf-8', digest=False):
@@ -1345,6 +1387,11 @@ def uniquename(name=None, namelist=None, style=None):
 def importbyname(name=None, output=False, die=True):
     '''
     A little function to try loading optional imports.
+
+    Args:
+        name (str): name of the module to import
+        output (bool): whether to return the module (else, return True)
+        die (bool): whether to raise an exception if encountered
 
     **Example**::
 

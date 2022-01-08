@@ -29,6 +29,7 @@ requirements = [
         'jsonpickle',        # For converting arbitrary objects to JSON
         'gitpython',         # Version information
         'jellyfish',         # For fuzzy string matching
+        'ansicolors',        # For colored text output
         'line_profiler ;   platform_system == "Linux"',   # For the line profiler -- only install on Linux
         'memory_profiler ; platform_system == "Linux"',   # For the memory profiler -- only install on Linux
         'colorama ;        platform_system == "Windows"', # For colored text output -- only install on Windows
@@ -39,6 +40,8 @@ if 'minimal' in sys.argv:
     print('Performing minimal installation -- some file read/write functions will not work')
     sys.argv.remove('minimal')
     requirements = [
+        'multiprocess',      # Parallel processing
+        'psutil',            # Parallel processing
         'matplotlib>=1.4.2', # Plotting
         'numpy>=1.10.1',     # Numerical functions
     ]
