@@ -261,38 +261,21 @@ def cp(obj, verbose=True, die=True):
     return output
 
 
-def _printout(string=None, doprint=None, output=None, silent=False):
+def _printout(string=None, doprint=None, output=False):
     '''
-    Short for "print or output string"
+    Short for "print or output string". Not for public use.
 
-    Helper function to handle the logic of two boolean flags: by default, print;
+    Private helper function to handle the logic of two boolean flags: by default, print;
     but if output is requested, return the output and do not print; unless doprint
     is set to True.
-
-    **Examples**::
-        _printout(doprint=None, output=False, silent=True) # Returns True, False
-        _printout(doprint=None, output=True, silent=True)  # Returns False, True
-        _printout('foo', doprint=None,  output=False) # Does print, doesn't return
-        _printout('foo', doprint=True,  output=False) # Does print, doesn't return
-        _printout('foo', doprint=True,  output=True)  # Does print, does return
-        _printout('foo', doprint=False, output=True)  # Doesn't print, does return
-        _printout('foo', doprint=False, output=False) # Doesn't print, doesn't return
     '''
-    # Default for output is False
-    if output is None: output = False
-
     # Default for doprint is opposite of output
-    if doprint is None:
-        doprint = not(output)
+    if doprint is None: doprint = not(output)
 
-    if silent:
-        return doprint, output
-    else:
-        if doprint:
-            print(string)
-        if output:
-            return string
-    return
+    # Handle actions/output
+    if doprint: print(string)
+    if output: return string
+    else:      return
 
 
 def pp(obj, jsonify=True, doprint=None, output=False, verbose=False, **kwargs):
