@@ -906,6 +906,11 @@ class Spreadsheet(Blobject):
         return self.wb
 
 
+    def openpyexcel(self, *args, **kwargs):
+        ''' Legacy name for openpyxl() '''
+        return self.openpyxl(*args, **kwargs)
+
+
     def pandas(self, reload=False, **kwargs): # pragma: no cover
         ''' Return a book as opened by pandas '''
         if self._reload_wb(reload=reload):
