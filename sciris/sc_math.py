@@ -941,8 +941,8 @@ def gauss2d(x=None, y=None, z=None, xi=None, yi=None, scale=1.0, xscale=1.0, ysc
             errormsg = f'If the x and y axes are not provided, then z must be 2D, not {z.ndim}D'
             raise ValueError(errormsg)
         else:
-            x = np.arange(z.shape[0])
-            y = np.arange(z.shape[1])
+            x = np.arange(z.shape[1]) # It's counterintuitive, but x is the 1st dimension, not the 0th
+            y = np.arange(z.shape[0])
 
     # Handle shapes
     if z.ndim == 2 and (x.ndim == 1) and (y.ndim == 1):
@@ -953,9 +953,10 @@ def gauss2d(x=None, y=None, z=None, xi=None, yi=None, scale=1.0, xscale=1.0, ysc
             errormsg = f'Shape mismatch: (y, x) = {(len(y), len(x))}, but z = {z.shape}'
             raise ValueError(errormsg)
 
-        # Convert to full arrays, then flatten
+        # If checks pass, convert to full arrays
         x, y = np.meshgrid(x, y)
 
+    # Handle data types
     orig_dtype = z.dtype
     if xi is None: xi = scu.dcp(x)
     if yi is None: yi = scu.dcp(y)
@@ -972,18 +973,19 @@ def gauss2d(x=None, y=None, z=None, xi=None, yi=None, scale=1.0, xscale=1.0, ysc
         errormsg = f'Output arrays must have same shape, but xi = {xi.shape} and yi = {yi.shape}'
         raise ValueError(errormsg)
 
-    # Get the output shape
-    orig_shape = xi.shape
-
     # Flatten everything and check sizes
-    x = x.flatten()
-    y = y.flatten()
-    z = z.flatten()
+    orig_shape = xi.shape
+    x  = x.flatten()
+    y  = y.flatten()
+    z  = z.flatten()
     xi = xi.flatten()
     yi = yi.flatten()
     ni = len(xi)
     if len(x) != len(y) != len(z):
         errormsg = f'Input arrays do not have the same number of elements: x = {len(x)}, y = {len(y)}, z = {len(z)}'
+        raise ValueError(errormsg)
+    if len(xi) != len(yi):
+        errormsg = f'Output arrays do not have the same number of elements: xi = {len(xi)}, yi = {len(yi)}'
         raise ValueError(errormsg)
 
     def calc(xi, yi):
