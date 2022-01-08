@@ -5,6 +5,18 @@ All notable changes to this project will be documented in this file.
 
 By import convention, components of the Sciris library are listed beginning with ``sc.``, e.g. ``sc.odict()``.
 
+
+Version 1.3.1 (2022-01-08)
+--------------------------
+#. Updated ``sc.commaticks()`` to use a more thoughtful number of significant figures.
+#. Updated ``sc.colorize()`` to wrap the ``ansicolors`` module, allowing more flexible inputs such as ``sc.colorize('cat', fg='orange')``.
+#. Added option to search the source code in ``sc.help()``.
+#. Fixed a bug in ``sc.heading()`` that printed an extraneous ``None``.
+#. Fixed a bug in ``sc.fonts()`` that prevented using a ``Path`` object.
+#. Improved the implementation of ``sc.gauss1d()`` and ``sc.gauss2d()`` to handle different object types and edge cases.
+#. Removed the ``openpyexcel`` dependency.
+
+
 Version 1.3.0 (2021-12-30)
 --------------------------
 
