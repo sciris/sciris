@@ -390,7 +390,7 @@ def _get_axlist(ax):
     return axlist
 
 
-def commaticks(ax=None, axis='y'):
+def commaticks(ax=None, axis='y', precision=2, cursor_precision=0):
     '''
     Use commas in formatting the y axis of a figure (e.g., 34,000 instead of 34000).
 
@@ -399,6 +399,8 @@ def commaticks(ax=None, axis='y'):
     Args:
         ax (any): axes to modify; if None, use current; else can be a single axes object, a figure, or a list of axes
         axis (str): which axes to change (default 'y')
+        precision (int): shift how many decimal places to show for small numbers (+ve = more, -ve = fewer)
+        cursor_precision (int): ditto, for cursor
 
     **Example**::
 
@@ -408,17 +410,23 @@ def commaticks(ax=None, axis='y'):
 
     See http://stackoverflow.com/questions/25973581/how-to-format-axis-number-format-to-thousands-with-a-comma-in-matplotlib
 
-    New in version 1.3.0: ability to use non-comma thousands separator.
+    | New in version 1.3.0: ability to use non-comma thousands separator
+    | New in version 1.3.1: added "precision" argument
     '''
     def commaformatter(x, pos=None):
-        sep = scs.options.sep
-        string = f'{x:,}' # Do the formatting
-        if sep != ',':
+        interval = thisaxis.get_view_interval()
+        prec = precision+cursor_precision if pos is None else precision # Use higher precision for cursor
+        decimals = int(max(0, prec-np.floor(np.log10(np.ptp(interval)))))
+        string = f'{x:0,.{decimals}f}' # Do the formatting
+        if pos is not None and '.' in string: # Remove trailing decimal zeros from axis labels
+            string = string.rstrip('0')
+            if string[-1] == '.': # If we trimmed 0.0 to 0., trim the remaining period
+                string = string[:-1]
+        if sep != ',': # Use custom separator if desired
             string = string.replace(',', sep)
-        if string[-2:] == '.0': # Trim the end, if it's a float but should be an int
-            string = string[:-2]
         return string
 
+    sep = scs.options.sep
     axlist = _get_axlist(ax)
     for ax in axlist:
         if   axis=='x': thisaxis = ax.xaxis
