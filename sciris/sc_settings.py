@@ -14,6 +14,7 @@ New in version 1.3.0.
 
 import os
 import re
+import inspect
 import collections as co
 import copy as cp
 import pylab as pl
