@@ -672,6 +672,7 @@ def fonts(add=None, use=False, output='name', dryrun=False, verbose=False, die=F
                     fontpaths.extend(fps)
                 else:
                     fontpaths.append(scf.makefilepath(path))
+
             if dryrun:
                 print(fontpaths)
             else:
