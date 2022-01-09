@@ -298,7 +298,7 @@ See help(sc.help) for more information.
             excludes = [
                 f.startswith('_'),
                 f.startswith('sc_'),
-                f in ['options'],
+                f in ['help', 'options'],
             ]
             ok = not(any(excludes))
             return ok
@@ -316,9 +316,12 @@ See help(sc.help) for more information.
 
         # Find matches
         matches = co.defaultdict(list)
+        linenos = co.defaultdict(list)
+
         for k,docstring in docstrings.items():
-            for line in docstring.splitlines():
+            for l,line in enumerate(docstring.splitlines()):
                 if re.findall(pattern, line, *flags):
+                    linenos[k].append(str(l))
                     matches[k].append(line)
 
         # Assemble output
@@ -340,8 +343,11 @@ See help(sc.help) for more information.
                     matchstr += '\n'
                 string += matchstr
                 if context:
-                    for m in match:
-                        string += f'    {m}\n'
+                    lineno = linenos[k]
+                    maxlnolen = max([len(l) for l in lineno])
+                    for l,m in zip(lineno, match):
+                        string += sc.colorize(string=f'  {l:>{maxlnolen}s}: ', fg='cyan', output=True)
+                        string += f'{m}\n'
                     string += '—'*60 + '\n'
 
         # Print result and return
