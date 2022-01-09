@@ -190,7 +190,6 @@ def default(key=None, reset=True):
     return
 
 
-
 def get_help(output=False):
     '''
     Print information about options.
