@@ -12,13 +12,14 @@ Highlights:
 
 import re
 import numpy as np
-from collections import OrderedDict as OD
+from collections import OrderedDict as OD, defaultdict as ddict
 from . import sc_utils as scu
 from . import sc_printing as scp
 from . import sc_nested as scn
 
 # Restrict imports to user-facing modules
-__all__ = ['odict', 'objdict', 'asobj']
+__all__ = ['ddict', 'odict', 'objdict', 'asobj']
+
 
 class odict(OD):
     '''
@@ -1018,8 +1019,11 @@ class objdict(odict):
         ''' Set key in dict, not attribute! '''
         try:
             odict.__getattribute__(self, name) # Try retrieving this as an attribute, expect AttributeError...
-            errormsg = f'"{name}" exists as an attribute, so cannot be set as key; use setattribute() instead'
-            raise ValueError(errormsg)
+            if name[:2] == '__': # If it starts with a double underscore, it's almost certainly an attribute, not a key
+                odict.__setattr__(self, name, value)
+            else:
+                errormsg = f'"{name}" exists as an attribute, so cannot be set as key; use setattribute() instead'
+                raise ValueError(errormsg)
         except AttributeError:
             return self.__setitem__(name, value) # If so, simply return
 
@@ -1077,12 +1081,21 @@ class objdict(odict):
         return odict.__getattribute__(self, name)
 
 
-    def setattribute(self, name, value):
+    def setattribute(self, name, value, force=False):
         ''' Set attribute if truly desired '''
-        if hasattr(self.__class__, name):
+        if hasattr(self.__class__, name) and not force:
             errormsg = f'objdict attribute "{name}" is read-only'
             raise AttributeError(errormsg)
         return odict.__setattr__(self, name, value)
+
+
+    def delattribute(self, name):
+        ''' Delete attribute if truly desired '''
+        try:
+            del self[name]
+        except:
+            odict.__delattr__(self, name)
+        return
 
 
 def asobj(obj, strict=True):
