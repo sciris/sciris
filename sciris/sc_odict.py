@@ -62,10 +62,15 @@ class odict(OD):
         nested = sc.odict(a=0, defaultdict='nested') # Create a infinitely nested dictionary (NB: may behave strangely on IPython)
         nested['b']['c']['d'] = 2
 
-    Note: by default, integers are used as
+    Note: by default, integers are used as an alias to string keys, so cannot be used
+    as keys directly. However, you can force regular-dict behavior using ``setitem()``,
+    and you can convert a dictionary with integer keys to an odict using ``sc.odict.makefrom()``.
+    If an odict has integer keys and the keys do not match the key positions, then the
+    key itself will take precedence (e.g., ``od[3]`` is equivalent to ``dict(od)[3]``,
+    not ``dict(od)[od.keys()[3]]``). This usage is discouraged.
 
     | New in version 1.1.0: "defaultdict" argument
-    | New in version 1.3.1: allow integer keys via ``makefrom()``; remove ``to_OD``
+    | New in version 1.3.1: allow integer keys via ``makefrom()``; removed ``to_OD``
     '''
 
     def __init__(self, *args, defaultdict=None, **kwargs):
@@ -110,7 +115,7 @@ class odict(OD):
                     raise E
 
             elif isinstance(key, scu._numtype): # Convert automatically from float
-                thiskey = self.keys()[int(key)]
+                thiskey = self._ikey(key)
                 return OD.__getitem__(self, thiskey) # Note that defaultdict behavior isn't supported for non-string lookup
 
             elif type(key)==slice: # Handle a slice -- complicated
@@ -146,7 +151,7 @@ class odict(OD):
             OD.__setitem__(self, key, value)
 
         elif isinstance(key, scu._numtype): # Convert automatically from float...dangerous?
-            thiskey = self.keys()[int(key)]
+            thiskey = self._ikey(key)
             OD.__setitem__(self, thiskey, value)
 
         elif type(key)==slice:
@@ -345,6 +350,11 @@ class odict(OD):
         return None
 
 
+    def _ikey(self, key):
+        ''' Handle an integer key '''
+        return self.keys()[int(key)]
+
+
     def _slicekey(self, key, slice_end):
         ''' Validate a key supplied as a slice object '''
         if slice_end == 'stop':
@@ -438,7 +448,7 @@ class odict(OD):
         if isinstance(key, scu._stringtypes):
             return OD.pop(self, key, *args, **kwargs)
         elif isinstance(key, scu._numtype): # Convert automatically from float...dangerous?
-            thiskey = self.keys()[int(key)]
+            thiskey = self._ikey(key)
             return OD.pop(self, thiskey, *args, **kwargs)
         elif type(key)==slice: # Handle a slice -- complicated
             try:
@@ -791,7 +801,7 @@ class odict(OD):
 
 
     @staticmethod
-    def makefrom(source=None, include=None, keynames=None, force=False, *args, **kwargs):
+    def makefrom(source=None, include=None, keynames=None, force=True, *args, **kwargs):
         '''
         Create an odict from entries in another dictionary. If keys is None, then
         use all keys from the current dictionary.
@@ -811,7 +821,10 @@ class odict(OD):
             d = {'a':'cat', 'b':'dog'}
             o = sc.odict.makefrom(d) # Same as odict(d)
             l = ['cat', 'monkey', 'dog']
-            o = odict().makefrom(source=l, include=[0,2], keynames=['a','b'])
+            o = sc.odict.makefrom(source=l, include=[0,2], keynames=['a','b'])
+
+            d = {12:'monkeys', 3:'musketeers'}
+            o = sc.odict.makefrom(d)
         '''
         # Initialize new odict
         out = odict()
