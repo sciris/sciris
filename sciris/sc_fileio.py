@@ -22,6 +22,7 @@ import types
 import inspect
 import importlib
 import traceback
+import warnings
 import numpy as np
 import datetime as dt
 from glob import glob
@@ -883,45 +884,65 @@ class Spreadsheet(Blobject):
         return output
 
 
-    def xlrd(self, reload=False, **kwargs): # pragma: no cover
+    def xlrd(self, reload=False, store=True, **kwargs): # pragma: no cover
         ''' Return a book as opened by xlrd '''
+        wb = self.wb
         if self._reload_wb(reload=reload):
             try:
                 import xlrd # Optional import
             except ModuleNotFoundError as e:
                 raise ModuleNotFoundError('The "xlrd" Python package is not available; please install manually') from e
-            self.wb = xlrd.open_workbook(file_contents=self.tofile().read(), **kwargs)
-        return self.wb
+            wb = xlrd.open_workbook(file_contents=self.tofile().read(), **kwargs)
+        if store:
+            self.wb = wb
+        return wb
 
 
-    def openpyxl(self, reload=False, **kwargs):
+    def openpyxl(self, reload=False, store=True, **kwargs):
         ''' Return a book as opened by openpyxl '''
+        wb = self.wb
         if self._reload_wb(reload=reload):
             import openpyxl # Optional import
             if self.blob is not None:
                 self.tofile(output=False)
-                self.wb = openpyxl.load_workbook(self.bytes, **kwargs) # This stream can be passed straight to openpyxl
+                wb = openpyxl.load_workbook(self.bytes, **kwargs) # This stream can be passed straight to openpyxl
             else:
-                self.wb = openpyxl.Workbook(**kwargs)
-        return self.wb
+                wb = openpyxl.Workbook(**kwargs)
+        if store:
+            self.wb = wb
+        return wb
 
 
     def openpyexcel(self, *args, **kwargs):
         ''' Legacy name for openpyxl() '''
+        warnmsg = '''
+Spreadsheet() no longer supports openpyexcel as of v1.3.1. To load using it anyway, you can manually do:
+
+    %pip install openpyexcel
+    import openpyexcel
+    spreadsheet = sc.Spreadsheet()
+    spreadsheet.wb = openpyexcel.Workbook(...)
+
+Falling back to openpyxl, which is identical except for how cached cell values are handled.
+'''
+        warnings.warn(warnmsg, category=DeprecationWarning, stacklevel=2)
         return self.openpyxl(*args, **kwargs)
 
 
-    def pandas(self, reload=False, **kwargs): # pragma: no cover
+    def pandas(self, reload=False, store=True, **kwargs): # pragma: no cover
         ''' Return a book as opened by pandas '''
+        wb = self.wb
         if self._reload_wb(reload=reload):
             import pandas as pd # Optional import
             if self.blob is not None:
                 self.tofile(output=False)
-                self.wb = pd.ExcelFile(self.bytes, **kwargs)
+                wb = pd.ExcelFile(self.bytes, **kwargs)
             else:
                 errormsg = 'For pandas, must load an existing workbook; use openpyxl to create a new workbook'
                 raise FileNotFoundError(errormsg)
-        return self.wb
+        if store:
+            self.wb = wb
+        return wb
 
 
     def update(self, book): # pragma: no cover
@@ -942,15 +963,16 @@ class Spreadsheet(Blobject):
     def readcells(self, wbargs=None, *args, **kwargs):
         ''' Alias to loadspreadsheet() '''
         method = kwargs.pop('method', 'openpyxl')
+        wbargs = scu.mergedicts(wbargs)
         f = self.tofile()
         kwargs['fileobj'] = f
 
         # Read in sheetoutput (sciris dataframe object for xlrd, 2D numpy array for openpyxl).
         if method == 'xlrd': # pragma: no cover
             sheetoutput = loadspreadsheet(*args, **kwargs, method='xlrd')  # returns sciris dataframe object
-        elif method == 'openpyxl':
-            if wbargs is None: wbargs = {}
-            self.openpyxl(**wbargs)
+        elif method in ['openpyxl', 'openpyexcel']:
+            wb_reader = self.openpyxl if method == 'openpyxl' else self.openpyexcel
+            wb_reader(**wbargs)
             ws = self._getsheet(sheetname=kwargs.get('sheetname'), sheetnum=kwargs.get('sheetname'))
             rawdata = tuple(ws.rows)
             sheetoutput = np.empty(np.shape(rawdata), dtype=object)
@@ -1087,7 +1109,8 @@ def loadspreadsheet(filename=None, folder=None, fileobj=None, sheet=0, asdatafra
     if method == 'pandas':
         import pandas as pd # Optional import
         if fileobj is not None: fullpath = fileobj # Substitute here for reading
-        data = pd.read_excel(fullpath, sheet_name=sheet, **kwargs)
+        if header  is not None: header = np.arange(header)
+        data = pd.read_excel(fullpath, sheet_name=sheet, header=header, **kwargs)
         if asdataframe is False:
             pass
         return data

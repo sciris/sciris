@@ -81,7 +81,7 @@ def safedivide(numerator=None, denominator=None, default=None, eps=None, warn=Fa
     return output
 
 
-def findinds(arr, val=None, eps=1e-6, first=False, last=False, die=True, **kwargs):
+def findinds(arr=None, val=None, eps=1e-6, first=False, last=False, die=True, **kwargs):
     '''
     Little function to find matches even if two things aren't eactly equal (eg.
     due to floats vs. ints). If one argument, find nonzero values. With two arguments,
@@ -342,7 +342,7 @@ def isprime(n, verbose=False):
 #%% Other functions
 ##############################################################################
 
-__all__ += ['perturb', 'normsum', 'normalize', 'inclusiverange', 'randround', 'cat']
+__all__ += ['perturb', 'normsum', 'normalize', 'ra', 'inclusiverange', 'randround', 'cat']
 
 
 def perturb(n=1, span=0.5, randseed=None, normal=False):
@@ -412,6 +412,37 @@ def normalize(arr, minval=0.0, maxval=1.0):
     return out
 
 
+def ra(*args, **kwargs):
+    '''
+    Identical to ``np.arange()``, except handle sized objects.
+
+    Takes roughly 1 μs longer than ``np.arange()``, which is double the time for
+    small arrays but negligible for larger arrays.
+
+    **Examples**::
+
+        sc.ra(3) # Shortcut to np.arange(3)
+
+        labels = ['a', 'b', 'c', 'd']
+        for i in sc.ra(labels): # Shortcut to np.arange(len(labels))
+            print(i, labels[i])
+    '''
+    # Sanitize inputs
+    args = list(args)
+    for i,arg in enumerate(args):
+        if hasattr(arg, '__len__'):
+            args[i] = len(arg)
+
+    for k in ['start', 'stop', 'step']:
+        if k in kwargs:
+            kwarg = kwargs[k]
+            if hasattr(kwarg, '__len__'):
+                kwargs[k] = len(kwarg)
+
+    output = np.arange(*args, **kwargs)
+    return output
+
+
 def inclusiverange(*args, **kwargs):
     '''
     Like arange/linspace, but includes the start and stop points.
@@ -419,11 +450,11 @@ def inclusiverange(*args, **kwargs):
 
     **Examples**::
 
+        x = sc.inclusiverange(10)
         x = sc.inclusiverange(3,5,0.2)
         x = sc.inclusiverange(stop=5)
         x = sc.inclusiverange(6, step=2)
     '''
-
     # Handle args
     if len(args)==0:
         start, stop, step = None, None, None
@@ -442,9 +473,9 @@ def inclusiverange(*args, **kwargs):
         raise ValueError('Too many arguments supplied: inclusiverange() accepts 0-3 arguments')
 
     # Handle kwargs
-    start = kwargs.get('start', start)
-    stop  = kwargs.get('stop',  stop)
-    step  = kwargs.get('step',  step)
+    start = kwargs.pop('start', start)
+    stop  = kwargs.pop('stop',  stop)
+    step  = kwargs.pop('step',  step)
 
     # Finalize defaults
     if start is None: start = 0
@@ -452,7 +483,7 @@ def inclusiverange(*args, **kwargs):
     if step  is None: step  = 1
 
     # OK, actually generate
-    x = np.linspace(start, stop, int(round((stop-start)/float(step))+1)) # Can't use arange since handles floating point arithmetic badly, e.g. compare arange(2000, 2020, 0.2) with arange(2000, 2020.2, 0.2)
+    x = np.linspace(start, stop, int(round((stop-start)/float(step))+1), **kwargs) # Can't use arange since handles floating point arithmetic badly, e.g. compare arange(2000, 2020, 0.2) with arange(2000, 2020.2, 0.2)
 
     return x
 
