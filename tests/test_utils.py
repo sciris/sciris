@@ -24,7 +24,7 @@ def test_adaptations():
         o.sha3 = sc.dcp(o.sha)
 
     print('\nTesting wget')
-    o.wget = sc.wget('http://sciris.org/')
+    o.wget = sc.wget('http://wikipedia.org/')
 
     print('\nTesting htmlify')
     o.html = sc.htmlify('foo&\nbar') # Returns b'foo&amp;<br>bar'
