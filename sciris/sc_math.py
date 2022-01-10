@@ -81,7 +81,7 @@ def safedivide(numerator=None, denominator=None, default=None, eps=None, warn=Fa
     return output
 
 
-def findinds(arr, val=None, eps=1e-6, first=False, last=False, die=True, **kwargs):
+def findinds(arr=None, val=None, eps=1e-6, first=False, last=False, die=True, **kwargs):
     '''
     Little function to find matches even if two things aren't eactly equal (eg.
     due to floats vs. ints). If one argument, find nonzero values. With two arguments,

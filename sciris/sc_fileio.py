@@ -884,54 +884,65 @@ class Spreadsheet(Blobject):
         return output
 
 
-    def xlrd(self, reload=False, **kwargs): # pragma: no cover
+    def xlrd(self, reload=False, store=True, **kwargs): # pragma: no cover
         ''' Return a book as opened by xlrd '''
+        wb = self.wb
         if self._reload_wb(reload=reload):
             try:
                 import xlrd # Optional import
             except ModuleNotFoundError as e:
                 raise ModuleNotFoundError('The "xlrd" Python package is not available; please install manually') from e
-            self.wb = xlrd.open_workbook(file_contents=self.tofile().read(), **kwargs)
-        return self.wb
+            wb = xlrd.open_workbook(file_contents=self.tofile().read(), **kwargs)
+        if store:
+            self.wb = wb
+        return wb
 
 
-    def openpyxl(self, reload=False, **kwargs):
+    def openpyxl(self, reload=False, store=True, **kwargs):
         ''' Return a book as opened by openpyxl '''
+        wb = self.wb
         if self._reload_wb(reload=reload):
             import openpyxl # Optional import
             if self.blob is not None:
                 self.tofile(output=False)
-                self.wb = openpyxl.load_workbook(self.bytes, **kwargs) # This stream can be passed straight to openpyxl
+                wb = openpyxl.load_workbook(self.bytes, **kwargs) # This stream can be passed straight to openpyxl
             else:
-                self.wb = openpyxl.Workbook(**kwargs)
-        return self.wb
+                wb = openpyxl.Workbook(**kwargs)
+        if store:
+            self.wb = wb
+        return wb
 
 
     def openpyexcel(self, *args, **kwargs):
         ''' Legacy name for openpyxl() '''
         warnmsg = '''
-Spreadsheet() no longer supports openpyexcel. To load using it anyway, you can manually do:
+Spreadsheet() no longer supports openpyexcel as of v1.3.1. To load using it anyway, you can manually do:
 
+    %pip install openpyexcel
+    import openpyexcel
     spreadsheet = sc.Spreadsheet()
     spreadsheet.wb = openpyexcel.Workbook(...)
 
-Falling back to openpyxl...
+Falling back to openpyxl, which is identical except for how cached cell values are handled.
 '''
         warnings.warn(warnmsg, category=DeprecationWarning, stacklevel=2)
         return self.openpyxl(*args, **kwargs)
 
 
-    def pandas(self, reload=False, **kwargs): # pragma: no cover
+    def pandas(self, reload=False, store=True, **kwargs): # pragma: no cover
         ''' Return a book as opened by pandas '''
+        wb = self.wb
         if self._reload_wb(reload=reload):
             import pandas as pd # Optional import
             if self.blob is not None:
                 self.tofile(output=False)
-                self.wb = pd.ExcelFile(self.bytes, **kwargs)
+                wb = pd.ExcelFile(self.bytes, **kwargs)
             else:
                 errormsg = 'For pandas, must load an existing workbook; use openpyxl to create a new workbook'
                 raise FileNotFoundError(errormsg)
-        return self.wb
+        if store:
+            self.wb = wb
+        return wb
 
 
     def update(self, book): # pragma: no cover
