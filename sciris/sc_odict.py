@@ -82,7 +82,13 @@ class odict(OD):
                 errormsg = f'The defaultdict argument must be either "nested" or callable, not {type(defaultdict)}'
                 raise TypeError(errormsg)
             OD.__setattr__(self, '_defaultdict', defaultdict) # Use OD.__setattr__() since setattr() is overridden by sc.objdict()
+        self._stale = True
         return None
+
+    def _cache_keys(self):
+        self._cached_keys = self.keys()
+        self._stale = False
+        return
 
 
     def __getitem__(self, key, allow_default=True):
@@ -185,12 +191,16 @@ class odict(OD):
         else: # pragma: no cover
             OD.__setitem__(self, key, value)
 
-        return None
+        self._stale = True
+
+        return
 
 
     def setitem(self, key, value):
         ''' Use regular dictionary ``setitem``, rather than odict's '''
-        return OD.__setitem__(self, key, value)
+        OD.__setitem__(self, key, value)
+        self._stale = True
+        return
 
 
     def __repr__(self, maxlen=None, showmultilines=True, divider=False, dividerthresh=10, numindents=0, recursionlevel=0, sigfigs=None, numformat=None, maxitems=200, classname='odict()', quote='', numleft='#', numsep=':', keysep=':', dividerchar='—'):
@@ -352,7 +362,11 @@ class odict(OD):
 
     def _ikey(self, key):
         ''' Handle an integer key '''
-        return self.keys()[int(key)]
+        if self._stale:
+            self._cache_keys()
+        return self._cached_keys[key]
+        # return self.keys()[int(key)]
+        # return self.keys()[key]
 
 
     def _slicekey(self, key, slice_end):
