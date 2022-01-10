@@ -201,9 +201,6 @@ def test_other():
     print('Testing promote')
     od = sc.odict.promote(['There','are',4,'keys'])
 
-    print('Testing conversion')
-    od.to_OD()
-
     print('Testing clear')
     od.clear()
 
