@@ -1109,7 +1109,8 @@ def loadspreadsheet(filename=None, folder=None, fileobj=None, sheet=0, asdatafra
     if method == 'pandas':
         import pandas as pd # Optional import
         if fileobj is not None: fullpath = fileobj # Substitute here for reading
-        data = pd.read_excel(fullpath, sheet_name=sheet, **kwargs)
+        if header  is not None: header = np.arange(header)
+        data = pd.read_excel(fullpath, sheet_name=sheet, header=header, **kwargs)
         if asdataframe is False:
             pass
         return data
