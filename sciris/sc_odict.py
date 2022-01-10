@@ -82,7 +82,7 @@ class odict(OD):
                 errormsg = f'The defaultdict argument must be either "nested" or callable, not {type(defaultdict)}'
                 raise TypeError(errormsg)
             OD.__setattr__(self, '_defaultdict', defaultdict) # Use OD.__setattr__() since setattr() is overridden by sc.objdict()
-        self._stale = True
+        self._cache_keys()
         return None
 
     def _cache_keys(self):
@@ -111,6 +111,7 @@ class odict(OD):
                             _defaultdict = lambda: self.__class__(defaultdict=_defaultdict) # Make recursive
                         dd = _defaultdict() # Create the new object
                         OD.__setitem__(self, key, dd) # Add it to the dictionary
+                        self._stale = True # Flag to refresh the cached keys
                         return dd # Return
                     else:
                         keys = self.keys()
@@ -153,6 +154,8 @@ class odict(OD):
     def __setitem__(self, key, value):
         ''' Allows setitem to support strings, integers, slices, lists, or arrays '''
 
+        self._stale = True # Flag to refresh the cached keys
+
         if isinstance(key, (str,tuple)):
             OD.__setitem__(self, key, value)
 
@@ -191,15 +194,13 @@ class odict(OD):
         else: # pragma: no cover
             OD.__setitem__(self, key, value)
 
-        self._stale = True
-
         return
 
 
     def setitem(self, key, value):
         ''' Use regular dictionary ``setitem``, rather than odict's '''
+        self._stale = True # Flag to refresh the cached keys
         OD.__setitem__(self, key, value)
-        self._stale = True
         return
 
 
@@ -345,6 +346,12 @@ class odict(OD):
         else:         return self.__add__(dict2)
 
 
+    def __delitem__(self, *args, **kwargs):
+        ''' Default delitem, except set stale to true '''
+        self._stale = True
+        return OD.__delitem__(self, *args, **kwargs)
+
+
     def disp(self, maxlen=None, showmultilines=True, divider=False, dividerthresh=10, numindents=0, sigfigs=5, numformat=None, maxitems=20, **kwargs):
         '''
         Print out flexible representation, short by default.
@@ -364,9 +371,11 @@ class odict(OD):
         ''' Handle an integer key '''
         if self._stale:
             self._cache_keys()
-        return self._cached_keys[key]
-        # return self.keys()[int(key)]
-        # return self.keys()[key]
+        try:
+            return self._cached_keys[key]
+        except IndexError:
+            errormsg = f'index {key} out of range for dict of length {len(self)}'
+            raise IndexError(errormsg) from None # Don't show the traceback
 
 
     def _slicekey(self, key, slice_end):
@@ -459,6 +468,7 @@ class odict(OD):
 
     def pop(self, key, *args, **kwargs):
         ''' Allows pop to support strings, integers, slices, lists, or arrays '''
+        self._stale = True # Flag to refresh the cache
         if isinstance(key, scu._stringtypes):
             return OD.pop(self, key, *args, **kwargs)
         elif isinstance(key, scu._numtype): # Convert automatically from float...dangerous?

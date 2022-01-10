@@ -1741,12 +1741,12 @@ class autolist(list):
     '''
     def __init__(self, *args):
         arglist = mergelists(*args) # Convert non-iterables to iterables
-        return super().__init__(arglist)
+        return list.__init__(arglist)
 
     def __add__(self, obj=None):
         ''' Allows non-lists to be concatenated '''
         obj = promotetolist(obj)
-        new = super().__add__(obj)
+        new = list.__add__(obj)
         return new
 
     def __radd__(self, obj):
@@ -1759,6 +1759,12 @@ class autolist(list):
         self.extend(obj)
         return self
 
+    def __getitem__(self, key):
+        try:
+            return list.__getitem__(self, key)
+        except IndexError:
+            errormsg = f'list index {key} is out of range for list of length {len(self)}'
+            raise IndexError(errormsg) from None # Don't show the traceback
 
 
 class Link(object):
