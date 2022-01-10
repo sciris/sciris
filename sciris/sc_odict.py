@@ -23,6 +23,9 @@ __all__ = ['ddict', 'odict', 'objdict', 'asobj']
 
 class odict(OD):
     '''
+    Ordered dictionary with integer indexing
+
+
     An ordered dictionary, like the OrderedDict class, but supports list methods like integer
     indexing, key slicing, and item inserting. It can also replicate defaultdict behavior
     via the ``defaultdict`` argument.
@@ -56,10 +59,13 @@ class odict(OD):
         dd = sc.odict(a=[1,2,3], defaultdict=list)
         dd['c'].append(4)
 
-        nested = sc.objdict(a=0, defaultdict='nested') # Create a infinitely nested dictionary (NB: may behave strangely on IPython)
-        nested.b.c.d = 2
+        nested = sc.odict(a=0, defaultdict='nested') # Create a infinitely nested dictionary (NB: may behave strangely on IPython)
+        nested['b']['c']['d'] = 2
 
-    New in version 1.1.0: "defaultdict" argument
+    Note: by default, integers are used as
+
+    | New in version 1.1.0: "defaultdict" argument
+    | New in version 1.3.1: allow integer keys via ``makefrom()``; remove ``to_OD``
     '''
 
     def __init__(self, *args, defaultdict=None, **kwargs):
@@ -77,55 +83,60 @@ class odict(OD):
     def __getitem__(self, key, allow_default=True):
         ''' Allows getitem to support strings, integers, slices, lists, or arrays '''
 
-        if isinstance(key, scu._stringtypes) or isinstance(key, tuple): # Normal use case: just use a string key
-            try: # Initially, try just retrieving the key normally
-                output = OD.__getitem__(self, key)
-                return output
-            except KeyError:
-                try: # Handle defaultdict behavior by first checking if it exists
-                    _defaultdict = OD.__getattribute__(self, '_defaultdict')
-                except:
-                    _defaultdict = None
-                if _defaultdict is not None and allow_default: # If it does, use it, then get the key again
-                    if _defaultdict == 'nested':
-                        _defaultdict = lambda: self.__class__(defaultdict=_defaultdict) # Make recursive
-                    dd = _defaultdict() # Create the new object
-                    OD.__setitem__(self, key, dd) # Add it to the dictionary
-                    return dd # Return
-                else:
-                    keys = self.keys()
-                    if len(keys): errormsg = f'odict key "{key}" not found; available keys are:\n{scu.newlinejoin(keys)}'
-                    else:         errormsg = f'Key {key} not found since odict is empty'
-                    raise scu.KeyNotFoundError(errormsg)
-
-        elif isinstance(key, scu._numtype): # Convert automatically from float
-            thiskey = self.keys()[int(key)]
-            return OD.__getitem__(self, thiskey) # Note that defaultdict behavior isn't supported for non-string lookup
-
-        elif type(key)==slice: # Handle a slice -- complicated
-            try:
-                startind = self._slicekey(key.start, 'start')
-                stopind = self._slicekey(key.stop, 'stop')
-                if stopind<startind: # pragma: no cover
-                    errormsg = f'Stop index must be >= start index (start={startind}, stop={stopind})'
-                    raise ValueError(errormsg)
-                slicevals = [self.__getitem__(i) for i in range(startind,stopind)]
-                output = self._sanitize_items(slicevals)
-                return output
-            except Exception as E: # pragma: no cover
-                errormsg = 'Invalid odict slice'
-                raise ValueError(errormsg) from E
-
-        elif self._is_odict_iterable(key): # Iterate over items
-            listvals = [self.__getitem__(item) for item in key]
-            if isinstance(key, list): # If the user supplied the keys as a list, assume they want the output as a list
-                output = listvals
-            else:
-                output = self._sanitize_items(listvals) # Otherwise, assume as an array
+        # First, try just getting the item
+        try:
+            output = OD.__getitem__(self, key)
             return output
+        except Exception as E:
 
-        else: # pragma: no cover # Handle everything else (rare)
-            return OD.__getitem__(self,key)
+            if isinstance(key, scu._stringtypes) or isinstance(key, tuple): # Normal use case: just use a string key
+                if isinstance(E, KeyError): # We already encountered an exception, usually a KeyError
+                    try: # Handle defaultdict behavior by first checking if it exists
+                        _defaultdict = OD.__getattribute__(self, '_defaultdict')
+                    except:
+                        _defaultdict = None
+                    if _defaultdict is not None and allow_default: # If it does, use it, then get the key again
+                        if _defaultdict == 'nested':
+                            _defaultdict = lambda: self.__class__(defaultdict=_defaultdict) # Make recursive
+                        dd = _defaultdict() # Create the new object
+                        OD.__setitem__(self, key, dd) # Add it to the dictionary
+                        return dd # Return
+                    else:
+                        keys = self.keys()
+                        if len(keys): errormsg = f'odict key "{key}" not found; available keys are:\n{scu.newlinejoin(keys)}'
+                        else:         errormsg = f'Key {key} not found since odict is empty'
+                        raise scu.KeyNotFoundError(errormsg)
+                else: # Exception raised wasn't a key error -- just raise it again
+                    raise E
+
+            elif isinstance(key, scu._numtype): # Convert automatically from float
+                thiskey = self.keys()[int(key)]
+                return OD.__getitem__(self, thiskey) # Note that defaultdict behavior isn't supported for non-string lookup
+
+            elif type(key)==slice: # Handle a slice -- complicated
+                try:
+                    startind = self._slicekey(key.start, 'start')
+                    stopind = self._slicekey(key.stop, 'stop')
+                    if stopind<startind: # pragma: no cover
+                        errormsg = f'Stop index must be >= start index (start={startind}, stop={stopind})'
+                        raise ValueError(errormsg)
+                    slicevals = [self.__getitem__(i) for i in range(startind,stopind)]
+                    output = self._sanitize_items(slicevals)
+                    return output
+                except Exception as E: # pragma: no cover
+                    errormsg = 'Invalid odict slice'
+                    raise ValueError(errormsg) from E
+
+            elif self._is_odict_iterable(key): # Iterate over items
+                listvals = [self.__getitem__(item) for item in key]
+                if isinstance(key, list): # If the user supplied the keys as a list, assume they want the output as a list
+                    output = listvals
+                else:
+                    output = self._sanitize_items(listvals) # Otherwise, assume as an array
+                return output
+
+            else: # pragma: no cover # Handle everything else (rare)
+                return OD.__getitem__(self,key)
 
 
     def __setitem__(self, key, value):
@@ -172,12 +183,17 @@ class odict(OD):
         return None
 
 
-    def __repr__(self, maxlen=None, showmultilines=True, divider=False, dividerthresh=10, numindents=0, recursionlevel=0, sigfigs=None, numformat=None, maxitems=200, classname='odict()', quote='"', numsep=':', keysep=':'):
+    def setitem(self, key, value):
+        ''' Use regular dictionary ``setitem``, rather than odict's '''
+        return OD.__setitem__(self, key, value)
+
+
+    def __repr__(self, maxlen=None, showmultilines=True, divider=False, dividerthresh=10, numindents=0, recursionlevel=0, sigfigs=None, numformat=None, maxitems=200, classname='odict()', quote='', numleft='#', numsep=':', keysep=':', dividerchar='—'):
         ''' Print a meaningful representation of the odict '''
 
         # Set non-customizable primitives for display
         toolong      = ' [...]'    # String to display at end of line when maximum value character length is overrun.
-        dividerstr   = '*'*40+'\n' # String to use as an inter-item divider.
+        dividerstr   = dividerchar*40+'\n' # String to use as an inter-item divider.
         indentstr    = '    '      # Create string to use to indent.
         maxrecursion = 5           # It's a repr, no one could want more than that
 
@@ -205,7 +221,7 @@ class odict(OD):
             else:
                 keylist = allkeys[:halfmax] + allkeys[-halfmax:]
             for thiskey in keylist: # Loop over the dictionary values
-                thiskeystr = scu.flexstr(thiskey) # Grab a str representation of the current key.
+                thiskeystr = repr(thiskey) # Grab a str representation of the current key.
                 thisval = self.__getitem__(thiskey) # Grab the current value.
 
                 try: # It's rare, but sometimes repr fails
@@ -262,9 +278,9 @@ class odict(OD):
                 # Create the the text to add, apply the indent, and add to the output
                 spacer = ' '*(maxkeylen-len(keystr))
                 if vallinecount == 1 or not showmultilines:
-                    rawoutput = f'#{ind:d}{numsep} {quote}{keystr}{quote}{keysep}{spacer} {valstr}\n'
+                    rawoutput = f'{numleft}{ind:d}{numsep} {quote}{keystr}{quote}{keysep}{spacer} {valstr}\n'
                 else:
-                    rawoutput = f'#{ind:d}{numsep} {quote}{keystr}{quote}{keysep}{spacer} \n{valstr}\n'
+                    rawoutput = f'{numleft}{ind:d}{numsep} {quote}{keystr}{quote}{keysep}{spacer} \n{valstr}\n'
 
                 # Perform the indentation.
                 newoutput = scp.indent(prefix=theprefix, text=rawoutput, width=80)
@@ -774,17 +790,31 @@ class odict(OD):
         return self # Return the odict
 
 
-    def makefrom(self, source=None, keys=None, keynames=None, *args, **kwargs):
+    @staticmethod
+    def makefrom(source=None, include=None, keynames=None, force=False, *args, **kwargs):
         '''
         Create an odict from entries in another dictionary. If keys is None, then
         use all keys from the current dictionary.
 
+        Args:
+            source (dict/list/etc): the item(s) to convert to an odict
+            include (list): list of keys to include from the source dict in the odict (default: all)
+            keynames (list): names of keys if source is not a dict
+            force (bool): whether to force conversion to an odict even if e.g. the source has numeric keys
+
         **Examples**::
 
-            a = 'cat'; b = 'dog'; o = odict().makefrom(source=locals(), keys=['a','b']) # Make use of fact that variables are stored in a dictionary
-            d = {'a':'cat', 'b':'dog'}; o = odict().makefrom(d) # Same as odict(d)
-            l = ['cat', 'monkey', 'dog']; o = odict().makefrom(source=l, keys=[0,2], keynames=['a','b'])
+            a = 'cat'
+            b = 'dog'
+            o = sc.odict.makefrom(source=locals(), include=['a','b']) # Make use of fact that variables are stored in a dictionary
+
+            d = {'a':'cat', 'b':'dog'}
+            o = sc.odict.makefrom(d) # Same as odict(d)
+            l = ['cat', 'monkey', 'dog']
+            o = odict().makefrom(source=l, include=[0,2], keynames=['a','b'])
         '''
+        # Initialize new odict
+        out = odict()
 
         # Make sure it's iterable
         if source is not None: # Don't do anything if there's nothing there
@@ -794,25 +824,30 @@ class odict(OD):
                 source = [source] # Special case -- strings are iterable, but we don't want to
 
             if len(source)==0:
-                return self # Nothing to do here
+                return out # Nothing to do here
             else:
                 # Handle cases where keys or keynames are not supplied
-                if keys is None:
-                    if   isinstance(source, (list, tuple)):   keys = range(len(source))
-                    elif isinstance(source, dict):            keys = list(source.keys())
+                if include is None:
+                    if   isinstance(source, (list, tuple)):   include = range(len(source))
+                    elif isinstance(source, dict):            include = list(source.keys())
                     else:                                     raise TypeError(f'Unable to guess keys for object of type {type(source)}')
-                keys = scu.promotetolist(keys) # Make sure it's a list -- note, does not convert other iterables to a list!
-                if keynames is None: keynames = keys # Use key names
+                include = scu.promotetolist(include) # Make sure it's a list -- note, does not convert other iterables to a list!
+                if keynames is None: keynames = include # Use key names
 
-                # Loop over supplied keys
-                for key,keyname in zip(keys,keynames):
+                # Loop over supplied keys -- source keys and output keys
+                for skey,okey in zip(include,keynames):
                     try:
-                        self.__setitem__(str(keyname), source[key])
+                        v = source[skey]
+                        if force:
+                            out.setitem(okey, v)
+                        else:
+                            okey = str(okey)
+                            out.__setitem__(okey, v)
                     except Exception as E: # pragma: no cover
-                        errormsg = f'Key "{key}" not found: {repr(E)}'
-                        raise scu.KeyNotFoundError(errormsg)
+                        errormsg = f'Key "{skey}" not found: {repr(E)}'
+                        raise scu.KeyNotFoundError(errormsg) from E
 
-        return self # As with make()
+        return out # As with make()
 
 
     def map(self, func=None):
@@ -973,6 +1008,9 @@ class odict(OD):
 
 class objdict(odict):
     '''
+    An odict that acts like an object -- allow keys to be set/retrieved by object
+    notation.
+
     Exactly the same as an odict, but allows keys to be set/retrieved by object
     notation.
 
@@ -985,6 +1023,8 @@ class objdict(odict):
     >>> od.keys = 3 # This raises an exception (you can't overwrite the keys() method)
 
     Nested logic based in part on addict: https://github.com/mewwts/addict
+
+    See also ``sc.dictobj`` (an)
     '''
 
     def __init__(self, *args, **kwargs):
