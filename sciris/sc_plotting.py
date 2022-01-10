@@ -608,15 +608,19 @@ def maximize(fig=None, die=False):  # pragma: no cover
     return
 
 
-def fonts(add=None, use=False, output='name', dryrun=False, verbose=False, die=False, **kwargs):
+def fonts(add=None, use=False, output='name', dryrun=False, rebuild=False, verbose=False, die=False, **kwargs):
     '''
     List available fonts, or add new ones. Alias to Matplotlib's font manager.
+
+    Note: if the font is not available after adding it, set rebuild=True. However,
+    note that this can be very slow.
 
     Args:
         add (str/list): path of the fonts or folders to add; if none, list available fonts
         use (bool): set the last-added font as the default font
         output (str): what to display the listed fonts as: options are 'name' (list of names, default), 'path' (dict of name:path), or 'font' (dict of name:font object)
         dryrun (bool): list fonts to be added rather than adding them
+        rebuild (bool): whether to rebuild Matplotlib's font cache (slow)
         verbose (bool): print out information on errors
         die (bool): whether to raise an exception if fonts can't be added
         kwargs (dict): passed to matplotlib.font_manager.findSystemFonts()
@@ -627,11 +631,12 @@ def fonts(add=None, use=False, output='name', dryrun=False, verbose=False, die=F
         sc.fonts(fullfont=True) # List available font objects
         sc.fonts('myfont.ttf', use=True) # Add this font and immediately set to default
         sc.fonts(['/folder1', '/folder2']) # Add all fonts in both folders
+        sc.fonts(rebuild=True) # Run this if added fonts aren't appearing
     '''
     fm = mpl.font_manager # Shorten
 
     # List available fonts
-    if add is None:
+    if add is None and not rebuild:
 
         # Find fonts
         f = sco.objdict() # Create a dictionary for holding the results
@@ -693,6 +698,16 @@ def fonts(add=None, use=False, output='name', dryrun=False, verbose=False, die=F
                     print('Warning: no fonts were added')
                 if use and fontname: # Set as default font
                     pl.rc('font', family=fontname)
+
+            if rebuild:
+                print('Rebuilding font cache, please be patient...')
+                try:
+                    fm._load_fontmanager(try_read_cache=False) # This used to be fm._rebuild(), but this was removed; this works as of Matplotlib 3.4.3
+                    print(f'Font cache rebuilt in folder: {mpl.get_cachedir()}')
+                except Exception as E:
+                    exc = type(E)
+                    errormsg = f'Rebuilding font cache failed:\n{str(E)}'
+                    raise exc(errormsg) from E
 
             if verbose:
                 print(f'Done: added {len(fontpaths)} fonts.')

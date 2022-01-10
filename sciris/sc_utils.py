@@ -38,7 +38,6 @@ import warnings
 import numpy as np
 import random as rnd
 import uuid as py_uuid
-import pkg_resources as pkgr
 import traceback as py_traceback
 from distutils.version import LooseVersion
 
@@ -398,6 +397,7 @@ def freeze(lower=False):
 
     New in version 1.2.2.
     '''
+    import pkg_resources as pkgr # Imported here since slow (>0.1 s)
     raw = dict(tuple(str(ws).split()) for ws in pkgr.working_set)
     keys = sorted(raw.keys())
     if lower:
@@ -431,6 +431,7 @@ def require(reqs=None, *args, exact=False, detailed=False, die=True, verbose=Tru
 
     New in version 1.2.2.
     '''
+    import pkg_resources as pkgr # Imported here since slow (>0.1 s)
 
     # Handle inputs
     reqlist = list(args)
@@ -1777,7 +1778,8 @@ class Link(object):
 
     def __repr__(self): # pragma: no cover
         ''' Just use default '''
-        output  = prepr(self)
+        from . import sc_printing as scp # To avoid circular import
+        output  = scp.prepr(self)
         return output
 
     def __call__(self, obj=None):
