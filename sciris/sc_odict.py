@@ -81,15 +81,26 @@ class odict(OD):
             if defaultdict != 'nested' and not callable(defaultdict): # pragma: no cover
                 errormsg = f'The defaultdict argument must be either "nested" or callable, not {type(defaultdict)}'
                 raise TypeError(errormsg)
-            OD.__setattr__(self, '_defaultdict', defaultdict) # Use OD.__setattr__() since setattr() is overridden by sc.objdict()
+            self._setattr('_defaultdict', defaultdict) # Use OD.__setattr__() since setattr() is overridden by sc.objdict()
         self._cache_keys()
         return None
 
+
     def _cache_keys(self):
         ''' Store a copy of the keys as a list so integer lookup doesn't have to regenerate it each time '''
-        self._cached_keys = self.keys()
-        self._stale = False
+        self._setattr('_cached_keys', self.keys())
+        self._setattr('_stale', False)
         return
+
+
+    def _setattr(self, key, value):
+        ''' Shortcut to OrderedDict method '''
+        return OD.__setattr__(self, key, value)
+
+
+    def _setitem(self, key, value):
+        ''' Shortcut to OrderedDict method '''
+        return OD.__setitem__(self, key, value)
 
 
     def __getitem__(self, key, allow_default=True):
@@ -111,8 +122,8 @@ class odict(OD):
                         if _defaultdict == 'nested':
                             _defaultdict = lambda: self.__class__(defaultdict=_defaultdict) # Make recursive
                         dd = _defaultdict() # Create the new object
-                        OD.__setitem__(self, key, dd) # Add it to the dictionary
-                        self._stale = True # Flag to refresh the cached keys
+                        self._setitem(key, dd) # Add it to the dictionary
+                        self._setattr('_stale', True) # Flag to refresh the cached keys
                         return dd # Return
                     else:
                         keys = self.keys()
@@ -155,14 +166,14 @@ class odict(OD):
     def __setitem__(self, key, value):
         ''' Allows setitem to support strings, integers, slices, lists, or arrays '''
 
-        self._stale = True # Flag to refresh the cached keys
+        self._setattr('_stale', True) # Flag to refresh the cached keys
 
         if isinstance(key, (str,tuple)):
-            OD.__setitem__(self, key, value)
+            self._setitem(key, value)
 
         elif isinstance(key, scu._numtype): # Convert automatically from float...dangerous?
             thiskey = self._ikey(key)
-            OD.__setitem__(self, thiskey, value)
+            self._setitem(thiskey, value)
 
         elif type(key)==slice:
             startind = self._slicekey(key.start, 'start')
@@ -193,15 +204,15 @@ class odict(OD):
                 raise ValueError(errormsg)
 
         else: # pragma: no cover
-            OD.__setitem__(self, key, value)
+            self._setitem(key, value)
 
         return
 
 
     def setitem(self, key, value):
         ''' Use regular dictionary ``setitem``, rather than odict's '''
-        self._stale = True # Flag to refresh the cached keys
-        OD.__setitem__(self, key, value)
+        self._setattr('_stale', True) # Flag to refresh the cached keys
+        self._setitem(key, value)
         return
 
 
@@ -349,7 +360,7 @@ class odict(OD):
 
     def __delitem__(self, *args, **kwargs):
         ''' Default delitem, except set stale to true '''
-        self._stale = True
+        self._setattr('_stale', True) # Flag to refresh the cached keys
         return OD.__delitem__(self, *args, **kwargs)
 
 
@@ -469,7 +480,7 @@ class odict(OD):
 
     def pop(self, key, *args, **kwargs):
         ''' Allows pop to support strings, integers, slices, lists, or arrays '''
-        self._stale = True # Flag to refresh the cache
+        self._setattr('_stale', True) # Flag to refresh the cached keys
         if isinstance(key, scu._stringtypes):
             return OD.pop(self, key, *args, **kwargs)
         elif isinstance(key, scu._numtype): # Convert automatically from float...dangerous?
