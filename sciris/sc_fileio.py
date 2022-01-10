@@ -22,6 +22,7 @@ import types
 import inspect
 import importlib
 import traceback
+import warnings
 import numpy as np
 import datetime as dt
 from glob import glob
@@ -908,6 +909,15 @@ class Spreadsheet(Blobject):
 
     def openpyexcel(self, *args, **kwargs):
         ''' Legacy name for openpyxl() '''
+        warnmsg = '''
+Spreadsheet() no longer supports openpyexcel. To load using it anyway, you can manually do:
+
+    spreadsheet = sc.Spreadsheet()
+    spreadsheet.wb = openpyexcel.Workbook(...)
+
+Falling back to openpyxl...
+'''
+        warnings.warn(warnmsg, category=DeprecationWarning, stacklevel=2)
         return self.openpyxl(*args, **kwargs)
 
 
@@ -942,15 +952,16 @@ class Spreadsheet(Blobject):
     def readcells(self, wbargs=None, *args, **kwargs):
         ''' Alias to loadspreadsheet() '''
         method = kwargs.pop('method', 'openpyxl')
+        wbargs = scu.mergedicts(wbargs)
         f = self.tofile()
         kwargs['fileobj'] = f
 
         # Read in sheetoutput (sciris dataframe object for xlrd, 2D numpy array for openpyxl).
         if method == 'xlrd': # pragma: no cover
             sheetoutput = loadspreadsheet(*args, **kwargs, method='xlrd')  # returns sciris dataframe object
-        elif method == 'openpyxl':
-            if wbargs is None: wbargs = {}
-            self.openpyxl(**wbargs)
+        elif method in ['openpyxl', 'openpyexcel']:
+            wb_reader = self.openpyxl if method == 'openpyxl' else self.openpyexcel
+            wb_reader(**wbargs)
             ws = self._getsheet(sheetname=kwargs.get('sheetname'), sheetnum=kwargs.get('sheetname'))
             rawdata = tuple(ws.rows)
             sheetoutput = np.empty(np.shape(rawdata), dtype=object)
