@@ -70,7 +70,7 @@ class odict(OD):
     not ``dict(od)[od.keys()[3]]``). This usage is discouraged.
 
     | New in version 1.1.0: "defaultdict" argument
-    | New in version 1.3.1: allow integer keys via ``makefrom()``; removed ``to_OD``
+    | New in version 1.3.1: allow integer keys via ``makefrom()``; removed ``to_OD``; performance improvements
     '''
 
     def __init__(self, *args, defaultdict=None, **kwargs):
@@ -86,6 +86,7 @@ class odict(OD):
         return None
 
     def _cache_keys(self):
+        ''' Store a copy of the keys as a list so integer lookup doesn't have to regenerate it each time '''
         self._cached_keys = self.keys()
         self._stale = False
         return
@@ -1045,10 +1046,7 @@ class odict(OD):
 
 class objdict(odict):
     '''
-    An odict that acts like an object -- allow keys to be set/retrieved by object
-    notation.
-
-    Exactly the same as an odict, but allows keys to be set/retrieved by object
+    An ``odict`` that acts like an object -- allow keys to be set/retrieved by object
     notation.
 
     Example
@@ -1061,7 +1059,8 @@ class objdict(odict):
 
     Nested logic based in part on addict: https://github.com/mewwts/addict
 
-    See also ``sc.dictobj`` (an)
+    For a lighter-weight equivalent (based on ``dict`` instead of ``odict``), see
+    ``sc.dictobj()``.
     '''
 
     def __init__(self, *args, **kwargs):

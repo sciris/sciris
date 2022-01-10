@@ -22,14 +22,9 @@ import pylab as pl
 
 __all__ = ['dictobj', 'options', 'help']
 
-class dictobj(object):
+class dictobj(dict):
     '''
     Lightweight class to create an object that can also act like a dictionary.
-
-    For a dictionary that acts like an object instead, see ``sc.objdict()``.
-
-    Note: ``sc.dictobj()`` is defined in ``sc_settings.py`` rather than ``sc_odict.py``
-    since it's used for the options object, which needs to be the first module loaded.
 
     **Example**::
 
@@ -38,7 +33,13 @@ class dictobj(object):
         obj['b'] = 10
         print(obj.items())
 
-    New in version 1.3.0.
+    For a more powerful alternative, see ``sc.objdict()``.
+
+    (Note: ``sc.dictobj()`` is defined in ``sc_settings.py`` rather than ``sc_odict.py``
+    since it's used for the options object, which needs to be the first module loaded.)
+
+    | New in version 1.3.0.
+    | New in version 1.3.1: inherit from dict
     '''
 
     def __init__(self, **kwargs):
