@@ -14,6 +14,7 @@ New in version 1.3.0.
 
 import os
 import re
+import inspect
 import collections as co
 import copy as cp
 import pylab as pl
@@ -21,14 +22,9 @@ import pylab as pl
 
 __all__ = ['dictobj', 'options', 'help']
 
-class dictobj(object):
+class dictobj(dict):
     '''
     Lightweight class to create an object that can also act like a dictionary.
-
-    For a dictionary that acts like an object instead, see ``sc.objdict()``.
-
-    Note: ``sc.dictobj()`` is defined in ``sc_settings.py`` rather than ``sc_odict.py``
-    since it's used for the options object, which needs to be the first module loaded.
 
     **Example**::
 
@@ -37,7 +33,13 @@ class dictobj(object):
         obj['b'] = 10
         print(obj.items())
 
-    New in version 1.3.0.
+    For a more powerful alternative, see ``sc.objdict()``.
+
+    (Note: ``sc.dictobj()`` is defined in ``sc_settings.py`` rather than ``sc_odict.py``
+    since it's used for the options object, which needs to be the first module loaded.)
+
+    | New in version 1.3.0.
+    | New in version 1.3.1: inherit from dict
     '''
 
     def __init__(self, **kwargs):
@@ -189,7 +191,6 @@ def default(key=None, reset=True):
     return
 
 
-
 def get_help(output=False):
     '''
     Print information about options.
@@ -246,12 +247,13 @@ options.default = default
 options.help = get_help
 
 
-def help(pattern=None, ignorecase=True, flags=None, context=False, output=False):
+def help(pattern=None, source=False, ignorecase=True, flags=None, context=False, output=False):
     '''
     Get help on Sciris in general, or search for a word/expression.
 
     Args:
         pattern    (str):  the word, phrase, or regex to search for
+        source     (bool): whether to search source code instead of docstrings for matches
         ignorecase (bool): whether to ignore case (equivalent to ``flags=re.I``)
         flags      (list): additional flags to pass to ``re.findall()``
         context    (bool): whether to show the line(s) of matches
@@ -262,8 +264,10 @@ def help(pattern=None, ignorecase=True, flags=None, context=False, output=False)
         sc.help()
         sc.help('smooth')
         sc.help('JSON', ignorecase=False, context=True)
+        sc.help('pickle', source=True, context=True)
 
-    New in version 1.3.0.
+    | New in version 1.3.0.
+    | New in version 1.3.1: "source" argument
     '''
     defaultmsg = '''
 For general help using Sciris, the best place to start is the docs:
@@ -289,19 +293,35 @@ See help(sc.help) for more information.
         if ignorecase:
             flags.append(re.I)
 
-        # Get available functions/classes
-        funcs = [f for f in dir(sc) if (not f.startswith('_') and not f.startswith('sc_'))] # Skip dunder methods and modules
+        def func_ok(f):
+            ''' Skip certain functions '''
+            excludes = [
+                f.startswith('_'),
+                f.startswith('sc_'),
+                f in ['help', 'options'],
+            ]
+            ok = not(any(excludes))
+            return ok
 
-        # Get docstrings
+        # Get available functions/classes
+        funcs = [f for f in dir(sc) if func_ok(f)] # Skip dunder methods and modules
+
+        # Get docstrings or full source code
         docstrings = dict()
-        for f in funcs:
-            docstrings[f] = getattr(sc, f).__doc__
+        for funcname in funcs:
+            f = getattr(sc, funcname)
+            if source: string = inspect.getsource(f)
+            else:      string = f.__doc__
+            docstrings[funcname] = string
 
         # Find matches
         matches = co.defaultdict(list)
+        linenos = co.defaultdict(list)
+
         for k,docstring in docstrings.items():
-            for line in docstring.splitlines():
+            for l,line in enumerate(docstring.splitlines()):
                 if re.findall(pattern, line, *flags):
+                    linenos[k].append(str(l))
                     matches[k].append(line)
 
         # Assemble output
@@ -323,8 +343,11 @@ See help(sc.help) for more information.
                     matchstr += '\n'
                 string += matchstr
                 if context:
-                    for m in match:
-                        string += f'    {m}\n'
+                    lineno = linenos[k]
+                    maxlnolen = max([len(l) for l in lineno])
+                    for l,m in zip(lineno, match):
+                        string += sc.colorize(string=f'  {l:>{maxlnolen}s}: ', fg='cyan', output=True)
+                        string += f'{m}\n'
                     string += '—'*60 + '\n'
 
         # Print result and return

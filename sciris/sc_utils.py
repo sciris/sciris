@@ -38,7 +38,6 @@ import warnings
 import numpy as np
 import random as rnd
 import uuid as py_uuid
-import pkg_resources as pkgr
 import traceback as py_traceback
 from distutils.version import LooseVersion
 
@@ -261,12 +260,41 @@ def cp(obj, verbose=True, die=True):
     return output
 
 
-def pp(obj, jsonify=True, verbose=False, doprint=True, *args, **kwargs):
+def _printout(string=None, doprint=None, output=False):
     '''
-    Shortcut for pretty-printing the object
+    Short for "print or output string". Not for public use.
 
-    Almost identical to ``pprint.pprint()``
+    Private helper function to handle the logic of two boolean flags: by default, print;
+    but if output is requested, return the output and do not print; unless doprint
+    is set to True.
     '''
+    # Default for doprint is opposite of output
+    if doprint is None: doprint = not(output)
+
+    # Handle actions/output
+    if doprint: print(string)
+    if output: return string
+    else:      return
+
+
+def pp(obj, jsonify=True, doprint=None, output=False, verbose=False, **kwargs):
+    '''
+    Shortcut for pretty-printing the object.
+
+    Almost identical to ``pprint.pprint()``, but can also be used as an alias for
+    ``pprint.pformat()``.
+
+    Args:
+        obj     (any):  object to print
+        jsonify (bool): whether to first convert the object to JSON, to handle things like ordered dicts nicely
+        doprint (bool): whether to show output (default true)
+        output  (bool): whether to return output as a string (default false)
+        verbose (bool): whether to show warnings when jsonifying the object
+        kwargs  (dict): passed to ``pprint.pprint()``
+
+    New in version 1.3.1: output argument
+    '''
+
     # Get object
     if jsonify:
         try:
@@ -278,12 +306,8 @@ def pp(obj, jsonify=True, verbose=False, doprint=True, *args, **kwargs):
         toprint = obj
 
     # Decide what to do with object
-    if doprint:
-        pprint.pprint(toprint, *args, **kwargs)
-        return None
-    else:
-        output = pprint.pformat(toprint, *args, **kwargs)
-        return output
+    string = pprint.pformat(toprint, **kwargs)
+    return _printout(string=string, doprint=doprint, output=output)
 
 
 def sha(obj, encoding='utf-8', digest=False):
@@ -373,6 +397,7 @@ def freeze(lower=False):
 
     New in version 1.2.2.
     '''
+    import pkg_resources as pkgr # Imported here since slow (>0.1 s)
     raw = dict(tuple(str(ws).split()) for ws in pkgr.working_set)
     keys = sorted(raw.keys())
     if lower:
@@ -406,6 +431,7 @@ def require(reqs=None, *args, exact=False, detailed=False, die=True, verbose=Tru
 
     New in version 1.2.2.
     '''
+    import pkg_resources as pkgr # Imported here since slow (>0.1 s)
 
     # Handle inputs
     reqlist = list(args)
@@ -1346,6 +1372,11 @@ def importbyname(name=None, output=False, die=True):
     '''
     A little function to try loading optional imports.
 
+    Args:
+        name (str): name of the module to import
+        output (bool): whether to return the module (else, return True)
+        die (bool): whether to raise an exception if encountered
+
     **Example**::
 
         np = sc.importbyname('numpy')
@@ -1710,12 +1741,12 @@ class autolist(list):
     '''
     def __init__(self, *args):
         arglist = mergelists(*args) # Convert non-iterables to iterables
-        return super().__init__(arglist)
+        return list.__init__(arglist)
 
     def __add__(self, obj=None):
         ''' Allows non-lists to be concatenated '''
         obj = promotetolist(obj)
-        new = super().__add__(obj)
+        new = list.__add__(obj)
         return new
 
     def __radd__(self, obj):
@@ -1728,6 +1759,12 @@ class autolist(list):
         self.extend(obj)
         return self
 
+    def __getitem__(self, key):
+        try:
+            return list.__getitem__(self, key)
+        except IndexError:
+            errormsg = f'list index {key} is out of range for list of length {len(self)}'
+            raise IndexError(errormsg) from None # Don't show the traceback
 
 
 class Link(object):
@@ -1747,7 +1784,8 @@ class Link(object):
 
     def __repr__(self): # pragma: no cover
         ''' Just use default '''
-        output  = prepr(self)
+        from . import sc_printing as scp # To avoid circular import
+        output  = scp.prepr(self)
         return output
 
     def __call__(self, obj=None):

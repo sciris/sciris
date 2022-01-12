@@ -5,7 +5,7 @@ Test Sciris file I/O functions.
 import os
 import pylab as pl
 import pandas as pd
-import openpyexcel
+import openpyxl
 import sciris as sc
 
 def test_spreadsheets():
@@ -51,8 +51,8 @@ def test_spreadsheets():
     if os.path.exists(excel_path):
         sc.heading('Reading cells')
         wb = sc.Spreadsheet(filename=excel_path) # Load a sample databook to try pulling cells from
-        celltest = wb.readcells(method='openpyexcel', wbargs={'data_only': True}, sheetname='Baseline year population inputs', cells=[[46, 2], [47, 2]]) # Grab cells using openpyexcel.  You have to set wbargs={'data_only': True} to pull out cached values instead of formula strings
-        print(f'openpyexcel output: {celltest}')
+        celltest = wb.readcells(method='openpyxl', wbargs={'data_only': True}, sheetname='Baseline year population inputs', cells=[[46, 2], [47, 2]]) # Grab cells using openpyxl.  You have to set wbargs={'data_only': True} to pull out cached values instead of formula strings
+        print(f'openpyxl output: {celltest}')
     else:
         print(f'{excel_path} not found, skipping...')
 
@@ -60,7 +60,7 @@ def test_spreadsheets():
     sc.heading('Loading a blobject')
     blob = sc.Blobject(files.excel)
     f = blob.tofile()
-    wb = openpyexcel.load_workbook(f)
+    wb = openpyxl.load_workbook(f)
     ws = wb.active
     ws['B7'] = 'Hi!     '
     wb.save(f)

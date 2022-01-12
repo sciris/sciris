@@ -81,7 +81,7 @@ def safedivide(numerator=None, denominator=None, default=None, eps=None, warn=Fa
     return output
 
 
-def findinds(arr, val=None, eps=1e-6, first=False, last=False, die=True, **kwargs):
+def findinds(arr=None, val=None, eps=1e-6, first=False, last=False, die=True, **kwargs):
     '''
     Little function to find matches even if two things aren't eactly equal (eg.
     due to floats vs. ints). If one argument, find nonzero values. With two arguments,
@@ -414,16 +414,24 @@ def normalize(arr, minval=0.0, maxval=1.0):
 
 def inclusiverange(*args, **kwargs):
     '''
-    Like arange/linspace, but includes the start and stop points.
+    Like ``np.arange()``/``np.linspace()``, but includes the start and stop points.
     Accepts 0-3 args, or the kwargs start, stop, step.
+
+    In most cases, equivalent to ``np.linspace(start, stop, int((stop-start)/step)+1)``.
+
+    Args:
+        start (float): value to start at
+        stop (float): value to stop at
+        step (float): step size
+        kwargs (dict): passed to ``np.linspace()``
 
     **Examples**::
 
-        x = sc.inclusiverange(3,5,0.2)
-        x = sc.inclusiverange(stop=5)
-        x = sc.inclusiverange(6, step=2)
+        x = sc.inclusiverange(10)        # Like np.arange(11)
+        x = sc.inclusiverange(3,5,0.2)   # Like np.linspace(3, 5, int((5-3)/0.2+1))
+        x = sc.inclusiverange(stop=5)    # Like np.arange(6)
+        x = sc.inclusiverange(6, step=2) # Like np.arange(0, 7, 2)
     '''
-
     # Handle args
     if len(args)==0:
         start, stop, step = None, None, None
@@ -442,18 +450,17 @@ def inclusiverange(*args, **kwargs):
         raise ValueError('Too many arguments supplied: inclusiverange() accepts 0-3 arguments')
 
     # Handle kwargs
-    start = kwargs.get('start', start)
-    stop  = kwargs.get('stop',  stop)
-    step  = kwargs.get('step',  step)
+    start = kwargs.pop('start', start)
+    stop  = kwargs.pop('stop',  stop)
+    step  = kwargs.pop('step',  step)
 
     # Finalize defaults
     if start is None: start = 0
     if stop  is None: stop  = 1
     if step  is None: step  = 1
 
-    # OK, actually generate
-    x = np.linspace(start, stop, int(round((stop-start)/float(step))+1)) # Can't use arange since handles floating point arithmetic badly, e.g. compare arange(2000, 2020, 0.2) with arange(2000, 2020.2, 0.2)
-
+    # OK, actually generate -- can't use arange since handles floating point arithmetic badly, e.g. compare arange(2000, 2020, 0.2) with arange(2000, 2020.2, 0.2)
+    x = np.linspace(start, stop, int(round((stop-start)/float(step))+1), **kwargs)
     return x
 
 
@@ -580,7 +587,8 @@ def convolve(a, v):
         c1 = np.convolve(a, v, mode='same') # Returns array([0.8, 1.  , 1.  , 1.  , 0.7])
         c2 = sc.convolve(a, v)              # Returns array([1., 1., 1., 1., 1.])
 
-    New in version 1.3.0.
+    | New in version 1.3.0.
+    | New in version 1.3.1: handling the case where len(a) < len(v)
     '''
 
     # Handle types
@@ -591,18 +599,26 @@ def convolve(a, v):
     out = np.convolve(a, v, mode='same')
 
     # Handle edge weights
+    len_a = len(a) # Length of input array
     len_v = len(v) # Length of kernel
+    minlen = min(len_a, len_v)
     vtot = v.sum() # Total kernel weight
-    len_lhs = len_v // 2 # Number of points to re-weight on LHS
-    len_rhs = (len_v-1) // 2 # Ditto
+    len_lhs = minlen // 2 # Number of points to re-weight on LHS
+    len_rhs = (minlen-1) // 2 # Ditto
     if len_lhs:
         w_lhs = np.cumsum(v)/vtot # Cumulative sum of kernel weights on the LHS, divided by total weight
         w_lhs = w_lhs[-1-len_lhs:-1] # Trim to the correct length
-        out[:len_lhs] /= w_lhs # Re-weight
+        out[:len_lhs] = out[:len_lhs]/w_lhs # Re-weight
     if len_rhs:
         w_rhs = (np.cumsum(v[::-1])[::-1]/vtot) # Ditto, reversed for RHS
         w_rhs = w_rhs[1:len_rhs+1] # Ditto
-        out[-len_rhs:] /= w_rhs # Ditto
+        out[-len_rhs:] = out[-len_rhs:]/w_rhs # Ditto
+
+    # Handle the case where len(v) > len(a)
+    len_diff = max(0, len_v - len_a)
+    if len_diff:
+        lhs_trim = len_diff // 2
+        out = out[lhs_trim:lhs_trim+len_a]
 
     return out
 
@@ -835,13 +851,15 @@ def gauss1d(x=None, y=None, xi=None, scale=None, use32=True):
         pl.scatter(xi3, yi3, label='Uniform spacing')
         pl.show()
 
+        # Simple usage
+        sc.gauss1d(y)
+
     New in version 1.3.0.
     '''
 
     # Swap inputs if x is provided but not y
-    if y is None and y is not None:
-        y = x
-        x = None
+    if y is None and x is not None:
+        y,x = x,y
     if x is None:
         x = np.arange(len(y))
     if xi is None:
@@ -881,18 +899,18 @@ def gauss1d(x=None, y=None, xi=None, scale=None, use32=True):
     return yi
 
 
-def gauss2d(x, y, z, xi, yi, scale=1.0, xscale=1.0, yscale=1.0, grid=True, use32=True):
+def gauss2d(x=None, y=None, z=None, xi=None, yi=None, scale=1.0, xscale=1.0, yscale=1.0, grid=False, use32=True):
     '''
     Gaussian 2D smoothing kernel.
 
-    Create smooth interpolation of input points at interpolated points. By default,
-    if ``xi`` and ``yi`` are 1D vectors, they are converted to a grid.
+    Create smooth interpolation of input points at interpolated points. Can handle
+    either 1D or 2D inputs.
 
     Args:
-        x (arr): 1D array of x coordinates
+        x (arr): 1D or 2D array of x coordinates (if None, take from z)
         y (arr): ditto, for y
-        z (arr): 1D array of z values at each of the (x,y) points
-        xi (arr): 1D array of points to calculate the interpolated Z; if None, same as x
+        z (arr): 1D or 2D array of z values at each of the (x,y) points
+        xi (arr): 1D or 2D array of points to calculate the interpolated Z; if None, same as x
         yi (arr): ditto, for y
         scale (float): overall scale factor
         xscale (float): ditto, just for x
@@ -908,15 +926,19 @@ def gauss2d(x, y, z, xi, yi, scale=1.0, xscale=1.0, yscale=1.0, grid=True, use32
         y = pl.rand(40)
         z = 1-(x-0.5)**2 + (y-0.5)**2 # Make a saddle
 
+        # Simple usage -- only works if z is 2D
+        zi0 = sc.gauss2d(pl.rand(10,10))
+        sc.surf3d(zi0)
+
         # Method 1 -- form grid
         xi = pl.linspace(0,1,20)
         yi = pl.linspace(0,1,20)
-        zi = sc.gauss2d(x, y, z, xi, yi, scale=0.1)
+        zi = sc.gauss2d(x, y, z, xi, yi, scale=0.1, grid=True)
 
         # Method 2 -- use points directly
         xi2 = pl.rand(400)
         yi2 = pl.rand(400)
-        zi2 = sc.gauss2d(x, y, z, xi2, yi2, scale=0.1, grid=False)
+        zi2 = sc.gauss2d(x, y, z, xi2, yi2, scale=0.1)
 
         # Plot oiginal and interpolated versions
         sc.scatter3d(x, y, z, c=z)
@@ -924,12 +946,34 @@ def gauss2d(x, y, z, xi, yi, scale=1.0, xscale=1.0, yscale=1.0, grid=True, use32
         sc.scatter3d(xi2, yi2, zi2, c=zi2)
         pl.show()
 
-    New in version 1.3.0.
+    | New in version 1.3.0.
+    | New in version 1.3.1: default arguments; support for 2D inputs
     '''
-    try:
-        orig_dtype = z.dtype
-    except:
-        orig_dtype = np.float64
+    # Swap variables if needed
+    if z is None and x is not None:
+        z,x = x,z
+    if x is None or y is None:
+        if z.ndim != 2:
+            errormsg = f'If the x and y axes are not provided, then z must be 2D, not {z.ndim}D'
+            raise ValueError(errormsg)
+        else:
+            x = np.arange(z.shape[1]) # It's counterintuitive, but x is the 1st dimension, not the 0th
+            y = np.arange(z.shape[0])
+
+    # Handle shapes
+    if z.ndim == 2 and (x.ndim == 1) and (y.ndim == 1):
+        if (z.shape[0] != z.shape[1]) and (len(x) == z.shape[0]) and (len(y) == z.shape[1]):
+            print(f'sc.gauss2d() warning: the length of x (={len(x)}) and y (={len(y)}) match the wrong dimensions of z; transposing')
+            z = z.transpose()
+        if len(x) != z.shape[1] or len(y) != z.shape[0]:
+            errormsg = f'Shape mismatch: (y, x) = {(len(y), len(x))}, but z = {z.shape}'
+            raise ValueError(errormsg)
+
+        # If checks pass, convert to full arrays
+        x, y = np.meshgrid(x, y)
+
+    # Handle data types
+    orig_dtype = z.dtype
     if xi is None: xi = scu.dcp(x)
     if yi is None: yi = scu.dcp(y)
     if use32:
@@ -937,6 +981,28 @@ def gauss2d(x, y, z, xi, yi, scale=1.0, xscale=1.0, yscale=1.0, grid=True, use32
         scale, xscale, yscale = _f32(scale), _f32(xscale), _f32(yscale)
     xsc = xscale*scale
     ysc = yscale*scale
+
+    # Now that we have xi and yi, handle more 1D vs 2D logic
+    if xi.ndim == 1 and yi.ndim == 1 and grid:
+        xi, yi = np.meshgrid(xi, yi)
+    if xi.shape != yi.shape:
+        errormsg = f'Output arrays must have same shape, but xi = {xi.shape} and yi = {yi.shape}'
+        raise ValueError(errormsg)
+
+    # Flatten everything and check sizes
+    orig_shape = xi.shape
+    x  = x.flatten()
+    y  = y.flatten()
+    z  = z.flatten()
+    xi = xi.flatten()
+    yi = yi.flatten()
+    ni = len(xi)
+    if len(x) != len(y) != len(z):
+        errormsg = f'Input arrays do not have the same number of elements: x = {len(x)}, y = {len(y)}, z = {len(z)}'
+        raise ValueError(errormsg)
+    if len(xi) != len(yi):
+        errormsg = f'Output arrays do not have the same number of elements: xi = {len(xi)}, yi = {len(yi)}'
+        raise ValueError(errormsg)
 
     def calc(xi, yi):
         ''' Calculate the calculation '''
@@ -947,22 +1013,12 @@ def gauss2d(x, y, z, xi, yi, scale=1.0, xscale=1.0, yscale=1.0, grid=True, use32
         return val
 
     # Actual computation
-    if grid:
-        nx = len(xi)
-        ny = len(yi)
-        zi = np.zeros((ny, nx))
-        if use32: zi = _arr32(zi)
-        for i in range(nx):
-            for j in range(ny):
-                zi[j,i] = calc(xi[i], yi[j])
-    else:
-        n = len(xi)
-        assert n == len(yi)
-        zi = np.zeros(n)
-        if use32: zi = _arr32(zi)
-        for i in range(n):
-            zi[i] = calc(xi[i], yi[i])
+    zi = np.zeros(ni)
+    if use32: zi = _arr32(zi)
+    for i in range(ni):
+        zi[i] = calc(xi[i], yi[i])
 
-    np.array(zi, dtype=orig_dtype) # Convert back to original dtype
+    # Convert back to original size and dtype
+    zi = np.array(zi.reshape(orig_shape), dtype=orig_dtype)
 
     return zi

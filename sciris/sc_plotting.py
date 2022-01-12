@@ -390,7 +390,7 @@ def _get_axlist(ax):
     return axlist
 
 
-def commaticks(ax=None, axis='y'):
+def commaticks(ax=None, axis='y', precision=2, cursor_precision=0):
     '''
     Use commas in formatting the y axis of a figure (e.g., 34,000 instead of 34000).
 
@@ -399,6 +399,8 @@ def commaticks(ax=None, axis='y'):
     Args:
         ax (any): axes to modify; if None, use current; else can be a single axes object, a figure, or a list of axes
         axis (str): which axes to change (default 'y')
+        precision (int): shift how many decimal places to show for small numbers (+ve = more, -ve = fewer)
+        cursor_precision (int): ditto, for cursor
 
     **Example**::
 
@@ -408,17 +410,23 @@ def commaticks(ax=None, axis='y'):
 
     See http://stackoverflow.com/questions/25973581/how-to-format-axis-number-format-to-thousands-with-a-comma-in-matplotlib
 
-    New in version 1.3.0: ability to use non-comma thousands separator.
+    | New in version 1.3.0: ability to use non-comma thousands separator
+    | New in version 1.3.1: added "precision" argument
     '''
     def commaformatter(x, pos=None):
-        sep = scs.options.sep
-        string = f'{x:,}' # Do the formatting
-        if sep != ',':
+        interval = thisaxis.get_view_interval()
+        prec = precision+cursor_precision if pos is None else precision # Use higher precision for cursor
+        decimals = int(max(0, prec-np.floor(np.log10(np.ptp(interval)))))
+        string = f'{x:0,.{decimals}f}' # Do the formatting
+        if pos is not None and '.' in string: # Remove trailing decimal zeros from axis labels
+            string = string.rstrip('0')
+            if string[-1] == '.': # If we trimmed 0.0 to 0., trim the remaining period
+                string = string[:-1]
+        if sep != ',': # Use custom separator if desired
             string = string.replace(',', sep)
-        if string[-2:] == '.0': # Trim the end, if it's a float but should be an int
-            string = string[:-2]
         return string
 
+    sep = scs.options.sep
     axlist = _get_axlist(ax)
     for ax in axlist:
         if   axis=='x': thisaxis = ax.xaxis
@@ -600,15 +608,19 @@ def maximize(fig=None, die=False):  # pragma: no cover
     return
 
 
-def fonts(add=None, use=False, output='name', dryrun=False, verbose=False, die=False, **kwargs):
+def fonts(add=None, use=False, output='name', dryrun=False, rebuild=False, verbose=False, die=False, **kwargs):
     '''
     List available fonts, or add new ones. Alias to Matplotlib's font manager.
+
+    Note: if the font is not available after adding it, set rebuild=True. However,
+    note that this can be very slow.
 
     Args:
         add (str/list): path of the fonts or folders to add; if none, list available fonts
         use (bool): set the last-added font as the default font
         output (str): what to display the listed fonts as: options are 'name' (list of names, default), 'path' (dict of name:path), or 'font' (dict of name:font object)
         dryrun (bool): list fonts to be added rather than adding them
+        rebuild (bool): whether to rebuild Matplotlib's font cache (slow)
         verbose (bool): print out information on errors
         die (bool): whether to raise an exception if fonts can't be added
         kwargs (dict): passed to matplotlib.font_manager.findSystemFonts()
@@ -619,11 +631,12 @@ def fonts(add=None, use=False, output='name', dryrun=False, verbose=False, die=F
         sc.fonts(fullfont=True) # List available font objects
         sc.fonts('myfont.ttf', use=True) # Add this font and immediately set to default
         sc.fonts(['/folder1', '/folder2']) # Add all fonts in both folders
+        sc.fonts(rebuild=True) # Run this if added fonts aren't appearing
     '''
     fm = mpl.font_manager # Shorten
 
     # List available fonts
-    if add is None:
+    if add is None and not rebuild:
 
         # Find fonts
         f = sco.objdict() # Create a dictionary for holding the results
@@ -666,11 +679,13 @@ def fonts(add=None, use=False, output='name', dryrun=False, verbose=False, die=F
             fontpaths = []
             paths = scu.promotetolist(add)
             for path in paths:
+                path = str(path)
                 if os.path.isdir(path):
                     fps = fm.findSystemFonts(path, **kwargs)
                     fontpaths.extend(fps)
                 else:
                     fontpaths.append(scf.makefilepath(path))
+
             if dryrun:
                 print(fontpaths)
             else:
@@ -683,6 +698,16 @@ def fonts(add=None, use=False, output='name', dryrun=False, verbose=False, die=F
                     print('Warning: no fonts were added')
                 if use and fontname: # Set as default font
                     pl.rc('font', family=fontname)
+
+            if rebuild:
+                print('Rebuilding font cache, please be patient...')
+                try:
+                    fm._load_fontmanager(try_read_cache=False) # This used to be fm._rebuild(), but this was removed; this works as of Matplotlib 3.4.3
+                    print(f'Font cache rebuilt in folder: {mpl.get_cachedir()}')
+                except Exception as E:
+                    exc = type(E)
+                    errormsg = f'Rebuilding font cache failed:\n{str(E)}'
+                    raise exc(errormsg) from E
 
             if verbose:
                 print(f'Done: added {len(fontpaths)} fonts.')

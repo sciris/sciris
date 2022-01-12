@@ -589,7 +589,7 @@ def toc(start=None, label=None, baselabel=None, sigfigs=None, filename=None, res
         elapsed = now - start
 
     # Create the message giving the elapsed time
-    if not label:
+    if label is None:
         if baselabel is None:
             base = 'Elapsed time: '
     else:

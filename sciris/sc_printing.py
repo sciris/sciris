@@ -6,15 +6,16 @@ Highlights:
     - ``sc.heading()``: print text as a 'large' heading
     - ``sc.colorize()``: print text in a certain color
     - ``sc.sigfigs()``: truncate a number to a certain number of significant figures
-
+    - ``sc.progressbar()``: show a (text-based) progress bar
 '''
 
 import os
 import time
+import colors
 import pprint
 import numpy as np
+import collections as co
 from textwrap import fill
-from collections import OrderedDict as OD
 from . import sc_utils as scu
 
 
@@ -284,30 +285,36 @@ def pr(obj, *args, **kwargs):
     return None
 
 
-def indent(prefix=None, text=None, suffix='\n', n=0, pretty=False, simple=True, width=70, **kwargs):
+def indent(prefix=None, text=None, suffix='\n', n=0, pretty=False, width=70, **kwargs):
     '''
     Small wrapper to make textwrap more user friendly.
 
     Args:
-        prefix: text to begin with (optional)
-        text: text to wrap
-        suffix: what to put on the end (by default, a newline)
-        n: if prefix is not specified, the size of the indent
-        prettify: whether to use pprint to format the text
-        kwargs: anything to pass to textwrap.fill() (e.g., linewidth)
+        prefix (str): text to begin with (optional)
+        text (str): text to wrap
+        suffix (str): what to put on the end (by default, a newline)
+        n (int): if prefix is not specified, the size of the indent
+        pretty (bool): whether to use pprint to format the text
+        width (int): maximum width before wrapping (if None, don't wrap)
+        kwargs (dict): passed to ``textwrap.fill()``
 
     **Examples**::
 
-        prefix = 'and then they said:'
+        prefix = 'and then they said: '
         text = 'blah '*100
-        print(indent(prefix, text))
+        print(sc.indent(prefix, text))
 
-        print('my fave is: ' + indent(text=rand(100), n=14))
+        print('my fave is: ' + sc.indent(text=rand(100), n=12))
 
-    Version: 2017feb20
+    New in version 1.3.1: more flexibility in arguments
     '''
-    # Handle no prefix
+    # If "prefix" is given but text isn't, swap them
+    if text is None and prefix is not None:
+        text, prefix = prefix, text
+
+    # Handle prefix and width
     if prefix is None: prefix = ' '*n
+    if width  is None: width = 999_999
 
     # Get text in the right format -- i.e. a string
     if pretty: text = pprint.pformat(text)
@@ -530,7 +537,6 @@ def printvars(localvars=None, varlist=None, label=None, divider=True, spaces=1, 
     return None
 
 
-
 def slacknotification(message=None, webhook=None, to=None, fromuser=None, verbose=2, die=False):  # pragma: no cover
     '''
     Send a Slack notification when something is finished.
@@ -631,15 +637,17 @@ def printtologfile(message=None, filename=None):
     return None
 
 
-def colorize(color=None, string=None, output=False, showhelp=False, enable=True):
+def colorize(color=None, string=None, doprint=None, output=False, enable=True, showhelp=False, fg=None, bg=None, style=None):
     '''
     Colorize output text.
 
     Args:
-        color: the color you want (use 'bg' with background colors, e.g. 'bgblue')
-        string: the text to be colored
-        output: whether to return the modified version of the string
-        enable: switch to allow colorize() to be easily turned off
+        color (str): the color you want (use 'bg' with background colors, e.g. 'bgblue'); alternatively, use fg, bg, and style
+        string (str): the text to be colored
+        doprint (bool): whether to print the string (default true unless output)
+        output (bool): whether to return the modified version of the string (default false)
+        enable (bool): switch to allow ``sc.colorize()`` to be easily turned off without converting to a ``print()`` statement
+        showhelp (bool): show help rather than changing colors
 
     **Examples**::
 
@@ -648,10 +656,11 @@ def colorize(color=None, string=None, output=False, showhelp=False, enable=True)
         bluearray = sc.colorize(color='blue', string=str(range(5)), output=True); print("c'est bleu: " + bluearray)
         sc.colorize('magenta') # Now type in magenta for a while
         sc.colorize() # Stop typing in magenta
+        sc.colorize('cat in the hat', fg='#ffa044', bg='blue', style='italic+underline') # Alternate usage example
 
     To get available colors, type ``sc.colorize(showhelp=True)``.
 
-    Version: 2018sep09
+    | New in version 1.3.1: "doprint" argument; ansicolors shortcut
     '''
 
     # Handle short-circuit case
@@ -662,42 +671,62 @@ def colorize(color=None, string=None, output=False, showhelp=False, enable=True)
             print(string)
             return None
 
-    # Define ANSI colors
-    ansicolors = OD([
-        ('black', '30'),
-        ('red', '31'),
-        ('green', '32'),
-        ('yellow', '33'),
-        ('blue', '34'),
-        ('magenta', '35'),
-        ('cyan', '36'),
-        ('gray', '37'),
-        ('bgblack', '40'),
-        ('bgred', '41'),
-        ('bggreen', '42'),
-        ('bgyellow', '43'),
-        ('bgblue', '44'),
-        ('bgmagenta', '45'),
-        ('bgcyan', '46'),
-        ('bggray', '47'),
-        ('reset', '0'),
-    ])
-    for key, val in ansicolors.items(): ansicolors[key] = '\033[' + val + 'm'
+    # Decide which path we'll be taking
+    ansistring = ''
+    alt_usage = (fg is not None) or (bg is not None) or (style is not None)
 
-    # Determine what color to use
-    colorlist = scu.promotetolist(color)  # Make sure it's a list
-    for color in colorlist:
-        if color not in ansicolors.keys(): # pragma: no cover
-            print(f'Color "{color}" is not available, use colorize(showhelp=True) to show options.')
-            return None  # Don't proceed if the color isn't found
-    ansicolor = ''
-    for color in colorlist:
-        ansicolor += ansicolors[color]
+    # Handle alternate usage pattern -- string as first argument rather than color, so swap
+    if alt_usage:
+        if string is None and color is not None:
+            string, color = color, string
+        if color is not None:
+            errormsg = 'You can supply either color or fg, but not both'
+            raise ValueError(errormsg)
 
-    # Modify string, if supplied
-    if string is None: ansistring = ansicolor # Just return the color
-    else:              ansistring = ansicolor + str(string) + ansicolors['reset'] # Add to start and end of the string
-    if not ansi_support: ansistring = str(string) # To avoid garbling output on unsupported systems
+        if ansi_support: ansistring = colors.color(s=string, fg=fg, bg=bg, style=style) # Actually apply color
+        else:            ansistring = str(string) # Otherwise, just return the string
+
+    # Original use case
+    else:
+
+        # Define ANSI colors
+        ansicolors = co.OrderedDict([
+            ('black', '30'),
+            ('red', '31'),
+            ('green', '32'),
+            ('yellow', '33'),
+            ('blue', '34'),
+            ('magenta', '35'),
+            ('cyan', '36'),
+            ('gray', '37'),
+            ('bgblack', '40'),
+            ('bgred', '41'),
+            ('bggreen', '42'),
+            ('bgyellow', '43'),
+            ('bgblue', '44'),
+            ('bgmagenta', '45'),
+            ('bgcyan', '46'),
+            ('bggray', '47'),
+            ('reset', '0'),
+        ])
+        for key, val in ansicolors.items():
+            ansicolors[key] = '\033[' + val + 'm'
+
+        # Determine what color to use
+        colorlist = scu.promotetolist(color)  # Make sure it's a list
+        for color in colorlist:
+            if color not in ansicolors.keys(): # pragma: no cover
+                print(f'Color "{color}" is not available, use colorize(showhelp=True) to show options.')
+                return None  # Don't proceed if the color isn't found
+        ansicolor = ''
+        for color in colorlist:
+            ansicolor += ansicolors[color]
+
+        # Modify string, if supplied
+        if string is None: ansistring = ansicolor # Just return the color
+        else:              ansistring = ansicolor + str(string) + ansicolors['reset'] # Add to start and end of the string
+        if not ansi_support:
+            ansistring = str(string) # To avoid garbling output on unsupported systems
 
     if showhelp:
         print('Available colors are:')
@@ -710,15 +739,11 @@ def colorize(color=None, string=None, output=False, showhelp=False, enable=True)
             else:
                 helpcolor = key
             colorize(helpcolor, '  ' + key)
-    elif output:
-        return ansistring  # Return the modified string
-    else:
-        try:    print(ansistring) # Content, so print with newline
-        except: print(string) # If that fails, just go with plain version
-        return None
+
+    return scu._printout(string=ansistring, doprint=doprint, output=output)
 
 
-def heading(string=None, *args, color=None, divider=None, spaces=None, minlength=None, maxlength=None, sep=' ', output=False, **kwargs):
+def heading(string=None, *args, color=None, divider=None, spaces=None, spacesafter=None, minlength=None, maxlength=None, sep=' ', doprint=None, output=False, **kwargs):
     '''
     Create a colorful heading. If just supplied with a string (or list of inputs like print()),
     create blue text with horizontal lines above and below and 3 spaces above. You
@@ -727,54 +752,51 @@ def heading(string=None, *args, color=None, divider=None, spaces=None, minlength
     match the length of the string, up to a maximum length).
 
     Args:
-        string (str): The string to print as the heading (or object to convert to astring)
-        args (list): Additional strings to print
-        color (str): The color to use for the heading (default blue)
-        divider (str): The symbol to use for the divider (default em dash)
-        spaces (int): The number of spaces to put before the heading
-        minlength (int): The minimum length of the divider
-        maxlength (int): The maximum length of the divider
-        sep (str): If multiple arguments are supplied, use this separator to join them
-        output (bool): Whether to return the string as output (else, print)
-        kwargs (dict): Arguments to pass to sc.colorize()
+        string      (str):  the string to print as the heading (or object to convert to a string)
+        args        (list): additional strings to print
+        color       (str):  color to use for the heading (default cyan)
+        divider     (str):  symbol to use for the divider (default '—')
+        spaces      (int):  number of spaces to put before the heading (default 3)
+        spacesafter (int):  number of spaces to put after the heading (default 1)
+        minlength   (int):  minimum length of the divider (default 30)
+        maxlength   (int):  maximum length of the divider (default 120)
+        sep         (str):  if multiple arguments are supplied, use this separator to join them
+        doprint     (bool): whether to print the string (default true if no output)
+        output      (bool): whether to return the string as output (else, print)
+        kwargs      (dict): passed to ``sc.colorize()``
 
     Returns:
-        String, unless output=False.
+        Formatted string if ``output=True``
 
-    Examples
-    --------
-    >>> import sciris as sc
-    >>> sc.heading('This is a heading')
-    >>> sc.heading(string='This is also a heading', color='red', divider='*', spaces=0, minlength=50)
+    **Examples**::
+        sc.heading('This is a heading')
+        sc.heading(string='This is also a heading', color='red', divider='*', spaces=0, minlength=50)
+
+    | New in version 1.3.1.: "spacesafter"
     '''
-    if string    is None: string    = ''
-    if color     is None: color     = 'cyan' # Reasonable default for light and dark consoles
-    if divider   is None: divider   = '—' # Em dash for a continuous line
-    if spaces    is None: spaces    = 2
-    if minlength is None: minlength = 30
-    if maxlength is None: maxlength = 120
+    if string      is None: string      = ''
+    if color       is None: color       = 'cyan' # Reasonable default for light and dark consoles
+    if divider     is None: divider     = '—' # Em dash for a continuous line
+    if spaces      is None: spaces      = 3
+    if spacesafter is None: spacesafter = 1
+    if minlength   is None: minlength   = 30
+    if maxlength   is None: maxlength   = 120
 
     # Convert to single string
-    args = list(args)
-    if string is not None:
-        args = [string] + args
-    string = sep.join(str(item) for item in args)
+    args = scu.mergelists(string, list(args))
+    string = sep.join([str(item) for item in args])
 
     # Add header and footer
-    length = int(np.median([minlength, len(string), maxlength]))
-    space = '\n'*spaces
-    if divider and length: fulldivider = '\n'+divider*length+'\n'
-    else:                  fulldivider = ''
-    fullstring = space + fulldivider + string + fulldivider
+    length      = int(np.median([minlength, len(string), maxlength]))
+    space       = '\n'*spaces
+    spaceafter  = '\n'*spacesafter
+    fulldivider = divider*length
+    if fulldivider:
+        string = scu.newlinejoin(fulldivider, string, fulldivider)
+    fullstring = space + string + spaceafter
 
     # Create output
-    outputstring = colorize(color=color, string=fullstring, output=output, **kwargs)
-
-    if output:
-        return outputstring
-    else:
-        print(outputstring)
-        return
+    return colorize(color=color, string=fullstring, doprint=doprint, output=output, **kwargs)
 
 
 def percentcomplete(step=None, maxsteps=None, stepsize=1, prefix=None):
