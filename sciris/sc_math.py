@@ -342,7 +342,7 @@ def isprime(n, verbose=False):
 #%% Other functions
 ##############################################################################
 
-__all__ += ['perturb', 'normsum', 'normalize', 'ra', 'inclusiverange', 'randround', 'cat']
+__all__ += ['perturb', 'normsum', 'normalize', 'inclusiverange', 'randround', 'cat']
 
 
 def perturb(n=1, span=0.5, randseed=None, normal=False):
@@ -410,37 +410,6 @@ def normalize(arr, minval=0.0, maxval=1.0):
     out += minval
     if isinstance(arr, list): out = out.tolist() # Preserve type
     return out
-
-
-def ra(*args, **kwargs):
-    '''
-    Identical to ``np.arange()``, except handle sized objects.
-
-    Takes roughly 1 μs longer than ``np.arange()``, which is double the time for
-    small arrays but negligible for larger arrays.
-
-    **Examples**::
-
-        sc.ra(3) # Shortcut to np.arange(3)
-
-        labels = ['a', 'b', 'c', 'd']
-        for i in sc.ra(labels): # Shortcut to np.arange(len(labels))
-            print(i, labels[i])
-    '''
-    # Sanitize inputs
-    args = list(args)
-    for i,arg in enumerate(args):
-        if hasattr(arg, '__len__'):
-            args[i] = len(arg)
-
-    for k in ['start', 'stop', 'step']:
-        if k in kwargs:
-            kwarg = kwargs[k]
-            if hasattr(kwarg, '__len__'):
-                kwargs[k] = len(kwarg)
-
-    output = np.arange(*args, **kwargs)
-    return output
 
 
 def inclusiverange(*args, **kwargs):
