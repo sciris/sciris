@@ -6,18 +6,17 @@ All notable changes to this project will be documented in this file.
 By import convention, components of the Sciris library are listed beginning with ``sc.``, e.g. ``sc.odict()``.
 
 
-Version 1.3.1 (2022-01-08)
+Version 1.3.1 (2022-01-11)
 --------------------------
 
 Changes to odict and objdict
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 #. Major improvements to ``sc.odict()`` performance: key lookup (e.g. ``my_odict['key']``) is ~30% faster, nearly identical to native ``dict()``; integer lookup (``my_odict[3]``) is now 10-100x faster. This was achieved by caching the keys rather than looking them up each time.
 #. Allow dicts with integer keys to be converted to odicts via the ``makefrom()`` method, e.g. ``sc.odict.makefrom({0:'foo', 1:'bar'})``. If an odict has integer keys, then these take precedence.
+#. Added ``force`` option to ``objdict.setattribute()`` to allow attributes to be set even if they already exist. Added ``objdict.delattribute()`` to delete attributes.
 #. Removed the ``to_OD()`` method (since dicts preserve order, ``dict(my_odict)`` is now much more common).
-#. Added ``force`` option to ``objdict.setattribute()`` to allow attributes to be set even if they already exist.
-#. Added ``objdict.delattribute()`` to delete attributes.
 #. Made ``sc.dictobj()`` a subclass of ``dict``, so ``isinstance(my_dictobj, dict)`` is now ``True``.
-#. Added ``sc.ddict()`` as an alias to ``collections.defaultdict``.
+#. Added ``sc.ddict()`` as an alias to ``collections.defaultdict()``.
 
 Plotting
 ~~~~~~~~
