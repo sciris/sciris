@@ -414,15 +414,23 @@ def normalize(arr, minval=0.0, maxval=1.0):
 
 def inclusiverange(*args, **kwargs):
     '''
-    Like arange/linspace, but includes the start and stop points.
+    Like ``np.arange()``/``np.linspace()``, but includes the start and stop points.
     Accepts 0-3 args, or the kwargs start, stop, step.
+
+    In most cases, equivalent to ``np.linspace(start, stop, int((stop-start)/step)+1)``.
+
+    Args:
+        start (float): value to start at
+        stop (float): value to stop at
+        step (float): step size
+        kwargs (dict): passed to ``np.linspace()``
 
     **Examples**::
 
-        x = sc.inclusiverange(10)
-        x = sc.inclusiverange(3,5,0.2)
-        x = sc.inclusiverange(stop=5)
-        x = sc.inclusiverange(6, step=2)
+        x = sc.inclusiverange(10)        # Like np.arange(11)
+        x = sc.inclusiverange(3,5,0.2)   # Like np.linspace(3, 5, int((5-3)/0.2+1))
+        x = sc.inclusiverange(stop=5)    # Like np.arange(6)
+        x = sc.inclusiverange(6, step=2) # Like np.arange(0, 7, 2)
     '''
     # Handle args
     if len(args)==0:
@@ -451,9 +459,8 @@ def inclusiverange(*args, **kwargs):
     if stop  is None: stop  = 1
     if step  is None: step  = 1
 
-    # OK, actually generate
-    x = np.linspace(start, stop, int(round((stop-start)/float(step))+1), **kwargs) # Can't use arange since handles floating point arithmetic badly, e.g. compare arange(2000, 2020, 0.2) with arange(2000, 2020.2, 0.2)
-
+    # OK, actually generate -- can't use arange since handles floating point arithmetic badly, e.g. compare arange(2000, 2020, 0.2) with arange(2000, 2020.2, 0.2)
+    x = np.linspace(start, stop, int(round((stop-start)/float(step))+1), **kwargs)
     return x
 
 
