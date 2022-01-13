@@ -83,7 +83,7 @@ class odict(OD):
                 raise TypeError(errormsg)
             self._setattr('_defaultdict', defaultdict) # Use OD.__setattr__() since setattr() is overridden by sc.objdict()
         self._cache_keys()
-        return None
+        return
 
 
     def _cache_keys(self):
@@ -376,7 +376,7 @@ class odict(OD):
         '''
         kwargs = scu.mergedicts(dict(maxlen=maxlen, showmultilines=showmultilines, divider=divider, dividerthresh=dividerthresh, numindents=numindents, recursionlevel=0, sigfigs=sigfigs, numformat=None, maxitems=maxitems), kwargs)
         print(self.__repr__(**kwargs))
-        return None
+        return
 
 
     def _ikey(self, key):
@@ -473,7 +473,7 @@ class odict(OD):
         output += end
         if doprint:
             print(output)
-            return None
+            return
         else:
             return output
 
@@ -522,14 +522,14 @@ class odict(OD):
     def remove(self, key, *args, **kwargs):
         ''' Remove an item by key and do not return it '''
         self.pop(key, *args, **kwargs)
-        return None
+        return
 
 
     def clear(self):
         ''' Reset to an empty odict '''
         for key in self.keys():
             self.remove(key)
-        return None
+        return
 
 
     def index(self, value):
@@ -631,7 +631,7 @@ class odict(OD):
         else:
             keyname = key
         self.__setitem__(keyname, value)
-        return None
+        return
 
 
     def insert(self, pos=None, key=None, value=None):
@@ -682,14 +682,14 @@ class odict(OD):
             for keytopop in keystopop: # Insert popped items back in
                 self.__setitem__(keytopop, tmpdict.pop(keytopop))
 
-        return None
+        return
 
 
     def copy(self, oldkey, newkey):
         ''' Make a copy of an item '''
         newval = scu.dcp(self.__getitem__(oldkey))
         self.__setitem__(newkey, newval)
-        return None
+        return
 
 
     def rename(self, oldkey, newkey):
@@ -707,7 +707,7 @@ class odict(OD):
                 key = self.keys()[index]
                 value = self.pop(key)
                 self.__setitem__(key, value)
-        return None
+        return
 
 
     def sort(self, sortby=None, reverse=False, copy=False, verbose=True):
@@ -749,7 +749,7 @@ class odict(OD):
         else:
             for key in allkeys: tmpdict.__setitem__(key, self.pop(key))
             for key in allkeys: self.__setitem__(key, tmpdict.pop(key))
-            return None
+            return
 
 
     def sorted(self, sortby=None, reverse=False):
@@ -954,7 +954,7 @@ class odict(OD):
             raise ValueError(errormsg)
         for k,key in self.enumkeys():
             self.__getitem__(key)[ind] = val[k]
-        return None
+        return
 
 
     def enumkeys(self, transpose=False):

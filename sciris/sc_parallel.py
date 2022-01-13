@@ -62,7 +62,7 @@ def loadbalancer(maxload=None, index=None, interval=None, maxtime=None, label=No
         pause = index*interval
     if maxload>1: maxload/100. # If it's >1, assume it was given as a percent
     if not maxload>0:
-        return None # Return immediately if no max load
+        return # Return immediately if no max load
     else:
         time.sleep(pause) # Give it time to asynchronize
 
@@ -79,7 +79,7 @@ def loadbalancer(maxload=None, index=None, interval=None, maxtime=None, label=No
         else:
             toohigh = False
             if verbose: print(label+f'CPU load fine ({currentload:0.2f}/{maxload:0.2f}), starting process {index} after {count} tries')
-    return None
+    return
 
 
 def parallelize(func, iterarg=None, iterkwargs=None, args=None, kwargs=None, ncpus=None, maxload=None, interval=None, parallelizer=None, serial=False, **func_kwargs):
@@ -412,7 +412,7 @@ class TaskArgs(scu.prettyobj):
             self.maxload      = maxload      # Maximum CPU load (ignored if ncpus is not None in parallelize()
             self.interval     = interval     # Interval to check load (only used with maxload)
             self.embarrassing = embarrassing # Whether or not to pass the iterarg to the function (no if it's embarrassing)
-            return None
+            return
 
 
 def _parallel_task(taskargs, outputqueue=None):
@@ -446,7 +446,7 @@ def _parallel_task(taskargs, outputqueue=None):
     # Handle output
     if outputqueue:
         outputqueue.put((index,output))
-        return None
+        return
     else:
         return output
 
@@ -479,4 +479,4 @@ def _parallelcmd_task(_cmd, _parfor, _returnval, _i, _outputqueue, _maxload, _in
     # Append results
     _outputqueue.put((_i,eval(_returnval)))
 
-    return None
+    return

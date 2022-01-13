@@ -1,3 +1,4 @@
+
 '''
 Extensions to Matplotlib, including 3D plotting and plot customization.
 
@@ -327,7 +328,7 @@ def setaxislim(which=None, ax=None, data=None):
     if which == 'both':
         setaxislim(which='x', ax=ax, data=data)
         setaxislim(which='y', ax=ax, data=data)
-        return None
+        return
 
     # Ensure axis exists
     if ax is None:
@@ -434,7 +435,7 @@ def commaticks(ax=None, axis='y', precision=2, cursor_precision=0):
         elif axis=='z': thisaxis = ax.zaxis
         else: raise ValueError('Axis must be x, y, or z')
         thisaxis.set_major_formatter(mpl.ticker.FuncFormatter(commaformatter))
-    return None
+    return
 
 
 
@@ -472,7 +473,7 @@ def SIticks(ax=None, axis='y', fixed=False):
             thisaxis.set_major_formatter(mpl.ticker.FixedFormatter(ticklabels))
         else:
             thisaxis.set_major_formatter(mpl.ticker.FuncFormatter(SItickformatter))
-    return None
+    return
 
 
 def getrowscols(n, nrows=None, ncols=None, ratio=1, make=False, tight=True, remove_extra=True, **kwargs):
@@ -1092,7 +1093,7 @@ def reanimateplots(plots=None):
     else: fignum = 1
     plots = sco.odict.promote(plots) # Convert to an odict
     for plot in plots.values(): nfmgf(fignum, plot) # Make sure each figure object is associated with the figure manager -- WARNING, is it correct to associate the plot with an existing figure?
-    return None
+    return
 
 
 def emptyfig():

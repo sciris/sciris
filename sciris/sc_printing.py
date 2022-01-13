@@ -64,7 +64,7 @@ def printv(string, thisverbose=1, verbose=2, newline=True, indent=True):
         indents = '  '*thisverbose*bool(indent) # Create automatic indenting
         if newline: print(indents+scu.flexstr(string)) # Actually print
         else: print(indents+scu.flexstr(string)), # Actually print
-    return None
+    return
 
 
 def blank(n=3):
@@ -282,7 +282,7 @@ def pr(obj, *args, **kwargs):
         sc.pr(df) # See all the methods too
     '''
     print(prepr(obj, *args, **kwargs))
-    return None
+    return
 
 
 def indent(prefix=None, text=None, suffix='\n', n=0, pretty=False, width=70, **kwargs):
@@ -436,7 +436,7 @@ def printarr(arr, arrformat='%0.2f  '):
                 printarr(arr[i][j], arrformat)
     else: # pragma: no cover
         print(arr) # Give up
-    return None
+    return
 
 
 
@@ -492,7 +492,7 @@ def printdata(data, name='Variable', depth=1, maxlen=40, indent='', level=0, sho
                     thisindent = ' '*(maxkeylen-len(key))
                     printdata(getattr(data,key), name=key, depth=depth-1, indent=indent+thisindent, level=level)
         print('\n')
-    return None
+    return
 
 
 def printvars(localvars=None, varlist=None, label=None, divider=True, spaces=1, color=None):
@@ -534,7 +534,7 @@ def printvars(localvars=None, varlist=None, label=None, divider=True, spaces=1, 
         controlstr += '\n' * spaces # The number of spaces to add between variables
         print(controlstr), # Print it out
     if divider: print(dividerstr) # If necessary, print the divider again
-    return None
+    return
 
 
 def slacknotification(message=None, webhook=None, to=None, fromuser=None, verbose=2, die=False):  # pragma: no cover
@@ -606,24 +606,20 @@ def slacknotification(message=None, webhook=None, to=None, fromuser=None, verbos
         errormsg = f'Sending of Slack message failed: {repr(E)}'
         if die: raise RuntimeError(errormsg)
         else:   print(errormsg)
-    return None
+    return
 
 
 def printtologfile(message=None, filename=None):
     '''
-    Append a message string to a file specified by a filename name/path.  This
-    is especially useful for capturing information from spawned processes not
-    so handily captured through print statements.
+    Append a message string to a file specified by a filename name/path.
 
-    Warning 1: If you pass a file in, existing or not, it will try to append
-    text to it!
-
-    Warning 2:
+    Note: in almost all cases, you are better off using Python's built-in logging
+    system rather than this function.
     '''
 
     # Set defaults
     if message is None:
-        return None # Return immediately if nothing to append
+        return # Return immediately if nothing to append
     if filename is None:
         import tempfile
         tempdir = tempfile.gettempdir()
@@ -636,7 +632,7 @@ def printtologfile(message=None, filename=None):
     except Exception as E: # pragma: no cover # Fail gracefully
         print(f'Warning, could not write to logfile {filename}: {str(E)}')
 
-    return None
+    return
 
 
 def colorize(color=None, string=None, doprint=None, output=False, enable=True, showhelp=False, fg=None, bg=None, style=None):
@@ -671,7 +667,7 @@ def colorize(color=None, string=None, doprint=None, output=False, enable=True, s
             return string
         else:
             print(string)
-            return None
+            return
 
     # Decide which path we'll be taking
     ansistring = ''
@@ -719,7 +715,7 @@ def colorize(color=None, string=None, doprint=None, output=False, enable=True, s
         for color in colorlist:
             if color not in ansicolors.keys(): # pragma: no cover
                 print(f'Color "{color}" is not available, use colorize(showhelp=True) to show options.')
-                return None  # Don't proceed if the color isn't found
+                return  # Don't proceed if the color isn't found
         ansicolor = ''
         for color in colorlist:
             ansicolor += ansicolors[color]
@@ -821,7 +817,7 @@ def percentcomplete(step=None, maxsteps=None, stepsize=1, prefix=None):
     if not step%onepercent: # Does this value lie on a percent
         thispercent = round(step/maxsteps*100) # Calculate what percent it is
         print(prefix + '%i%%'% thispercent) # Display the output
-    return None
+    return
 
 
 def progressbar(i, maxiters, label='', length=30, empty='—', full='•', newline=False):

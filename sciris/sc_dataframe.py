@@ -56,7 +56,7 @@ class dataframe(object): # pragma: no cover
         self.cols = None
         self.data = None
         self.make(cols=cols, data=data, nrows=nrows)
-        return None
+        return
 
 
     def __repr__(self, spacing=2):
@@ -254,7 +254,7 @@ class dataframe(object): # pragma: no cover
             except Exception as E:
                 errormsg = 'Could not insert element (%s,%s) in dataframe of shape %s: %s' % (key[0], key[1], self.data.shape, str(E))
                 raise Exception(errormsg)
-        return None
+        return
 
 
     def __copy__(self, *args, **kwargs):
@@ -311,7 +311,7 @@ class dataframe(object): # pragma: no cover
 
         if isinstance(cols, pd.DataFrame): # It's actually a Pandas dataframe
             self.pandas(df=cols)
-            return None # We're done
+            return # We're done
 
         # A dictionary is supplied: assume keys are columns, and the rest is the data
         if isinstance(cols, dict):
@@ -353,7 +353,7 @@ class dataframe(object): # pragma: no cover
         # Store it
         self.cols = list(cols)
         self.data = data
-        return None
+        return
 
 
     def get(self, cols=None, rows=None, asarray=True, cast=True):
@@ -392,14 +392,14 @@ class dataframe(object): # pragma: no cover
         thisrow = self.data[rowindex,:]
         self.data = np.vstack((self.data[:rowindex,:], self.data[rowindex+1:,:]))
         if returnval: return thisrow
-        else:         return None
+        else:         return
 
 
     def append(self, value):
         ''' Add a row to the end of the data frame '''
         value = self._val2row(value) # Make sure it's in the correct format
         self.data = np.vstack((self.data, np.array(value, dtype=object)))
-        return None
+        return
 
 
     @property
@@ -441,7 +441,7 @@ class dataframe(object): # pragma: no cover
                 colindex = self.cols.index(col)
                 self.cols.pop(colindex) # Remove from list of columns
                 self.data = np.hstack((self.data[:,:colindex], self.data[:,colindex+1:])) # Remove from data
-        return None
+        return
 
     def addrow(self, value=None, overwrite=True, col=None, reverse=False):
         ''' Like append, but removes duplicates in the first column and resorts '''
@@ -451,7 +451,7 @@ class dataframe(object): # pragma: no cover
         if index is None or not overwrite: self.append(value)
         else: self.data[index,:] = value # If it exists already, just replace it
         self.sort(col=col, reverse=reverse) # Sort
-        return None
+        return
 
     def _rowindex(self, key=None, col=None, die=False):
         ''' Get the sanitized row index for a given key and column '''
@@ -461,14 +461,14 @@ class dataframe(object): # pragma: no cover
         try:    index = coldata.tolist().index(key) # Try to find duplicates
         except:
             if die: raise Exception('Item %s not found; choices are: %s' % (key, coldata))
-            else:   return None
+            else:   return
         return index
 
     def rmrow(self, key=None, col=None, returnval=False, die=True):
         ''' Like pop, but removes by matching the first column instead of the index -- WARNING, messy '''
         index = self._rowindex(key=key, col=col, die=die)
         if index is not None: self.pop(index, returnval=returnval)
-        return None
+        return
 
     def _diffindices(self, indices=None):
         ''' For a given set of indices, get the inverse, in set-speak '''
@@ -488,7 +488,7 @@ class dataframe(object): # pragma: no cover
             return output
         else:
             self.data = keep_data
-            return None
+            return
 
     def replace(self, col=None, old=None, new=None):
         ''' Replace all of one value in a column with a new value '''
@@ -496,7 +496,7 @@ class dataframe(object): # pragma: no cover
         coldata = self.data[:,col] # Get data for this column
         inds = scm.findinds(coldata==old)
         self.data[inds,col] = new
-        return None
+        return
 
 
     def _todict(self, row):
@@ -600,14 +600,14 @@ class dataframe(object): # pragma: no cover
         else:
             self.cols = cols # These should be in the correct order
             self.data = ordered_data
-            return None
+            return
 
     def insert(self, row=0, value=None):
         ''' Insert a row at the specified location '''
         rowindex = int(row)
         value = self._val2row(value) # Make sure it's in the correct format
         self.data = np.vstack((self.data[:rowindex,:], value, self.data[rowindex:,:]))
-        return None
+        return
 
     def sort(self, col=None, reverse=False):
         ''' Sort the data frame by the specified column(s)'''
@@ -671,7 +671,7 @@ class dataframe(object): # pragma: no cover
                 raise Exception(errormsg)
             self.cols = list(df.columns)
             self.data = np.array(df, dtype=object)
-            return None
+            return
 
 
     def export(self, filename=None, cols=None, close=True):

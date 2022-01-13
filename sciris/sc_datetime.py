@@ -265,7 +265,7 @@ def date(obj, *args, start_date=None, readformat=None, outformat=None, as_date=T
 
     # Convert to list and handle other inputs
     if obj is None:
-        return None
+        return
     if outformat is None:
         outformat = '%Y-%m-%d'
     obj, is_list, is_array = scu._sanitize_iterables(obj, *args)
@@ -339,7 +339,7 @@ def day(obj, *args, start_date=None, **kwargs):
 
     # Do not process a day if it's not supplied, and ensure it's a list
     if obj is None:
-        return None
+        return
     obj, is_list, is_array = scu._sanitize_iterables(obj, *args)
 
     days = []
@@ -641,7 +641,7 @@ def toctic(returntic=False, returntoc=False, *args, **kwargs):
     ticout = tic()
     if   returntic: return ticout
     elif returntoc: return tocout
-    else:           return None
+    else:           return
 
 
 class timer(scu.prettyobj):
@@ -912,4 +912,4 @@ def timedsleep(delay=None, verbose=True):
         else:
             if verbose:
                 print(f'Warning, delay less than elapsed time ({delay:0.1f} vs. {elapsed:0.1f})')
-    return None
+    return
