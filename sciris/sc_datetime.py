@@ -728,9 +728,14 @@ class timer(scu.prettyobj):
 
         # Handle the count and labels
         countstr= f'({self.count:d})'
-        labelstr = ' '+kwargs['label'] if kwargs['label'] else ''
-        countlabel = f'{countstr}{labelstr}'
-        timingslabel = countlabel if (self.auto or labelstr in self.timings) else labelstr
+        if kwargs['label']:
+            labelstr = kwargs['label']
+            sep = ' '
+        else:
+            labelstr = ''
+            sep = ''
+        countlabel = f'{countstr}{sep}{labelstr}'
+        timingslabel = countlabel if (self.auto or not(labelstr) or (labelstr in self.timings)) else labelstr # Use labelstr if it's a valid key, else include count information
         self.timings[timingslabel] = self.elapsed
         self.count += 1
         if self.auto:
