@@ -8,7 +8,8 @@ By import convention, components of the Sciris library are listed beginning with
 
 Version 1.3.2 (2022-01-13)
 --------------------------
-#. Additional flexibility in ``sc.timer()``; it now stores a list of times. A bug preventing the label from being passed in ``timer.toc()`` has also been fixed.
+#. Additional flexibility in ``sc.timer()``: it now stores a list of times (``timer.timings``), allows auto-generated labels (``sc.timer(auto=True)``, and has a new method ``timer.tt()`` (short for ``toctic``) that will restart the timer (i.e. time diff rather than cumulative time).
+#. Fixed a bug preventing the label from being passed in ``timer.toc()``.
 #. Fixed a bug blocking ``style=None`` in ``sc.dateformatter()``.
 
 
