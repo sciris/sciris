@@ -292,7 +292,7 @@ def savetext(filename=None, string=None):
     if not scu.isstring(string):  string = str(string)
     filename = makefilepath(filename=filename)
     with open(filename, 'w') as f: f.write(string)
-    return None
+    return
 
 
 def savezip(filename=None, filelist=None, folder=None, basename=True, verbose=True):
@@ -777,7 +777,7 @@ class Blobject(object):
         self.blob  = blob # The binary data
         self.bytes = None # The filestream representation of the binary data
         if source is not None: self.load(source)
-        return None
+        return
 
 
     def __repr__(self):
@@ -826,7 +826,7 @@ class Blobject(object):
                 raise TypeError(errormsg)
 
         self.modified = scd.now()
-        return None
+        return
 
 
     def save(self, filename=None):
@@ -853,7 +853,7 @@ class Blobject(object):
             return bytesblob
         else:
             self.bytes = bytesblob
-            return None
+            return
 
 
     def freshbytes(self):
@@ -950,7 +950,7 @@ Falling back to openpyxl, which is identical except for how cached cell values a
         self.tofile(output=False)
         book.save(self.freshbytes())
         self.load()
-        return None
+        return
 
 
     def _getsheet(self, sheetname=None, sheetnum=None):
@@ -1066,7 +1066,7 @@ Falling back to openpyxl, which is identical except for how cached cell values a
         wb.save(self.freshbytes())
         self.load()
 
-        return None
+        return
 
 
     def save(self, filename='spreadsheet.xlsx'):
@@ -1361,7 +1361,7 @@ class Failed(object):
             return output
         else:
             print(output)
-            return None
+            return
 
 
 class Empty(object):
@@ -1526,7 +1526,7 @@ def _savepickle(fileobj=None, obj=None, protocol=None, *args, **kwargs):
         if protocol is None:
             protocol = 4 # Use protocol 4 for backwards compatibility
         fileobj.write(pkl.dumps(obj, protocol=protocol, *args, **kwargs))
-        return None
+        return
 
 
 def _savedill(fileobj=None, obj=None, *args, **kwargs): # pragma: no cover
@@ -1536,7 +1536,7 @@ def _savedill(fileobj=None, obj=None, *args, **kwargs): # pragma: no cover
     except ModuleNotFoundError as e:
         raise ModuleNotFoundError('The "dill" Python package is not available; please install manually') from e
     fileobj.write(dill.dumps(obj, protocol=-1, *args, **kwargs))
-    return None
+    return
 
 
 

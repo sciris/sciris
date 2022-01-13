@@ -625,7 +625,7 @@ def checktype(obj=None, objtype=None, subtype=None, die=False):
     elif objtype in ['arr', 'array']:          objinstance = np.ndarray
     elif objtype in ['listlike', 'arraylike']: objinstance = (list, tuple, np.ndarray) # Anything suitable as a numerical array
     elif type(objtype) == type:                objinstance = objtype  # Don't need to do anything
-    elif objtype is None:                      return None # If not supplied, exit
+    elif objtype is None:                      return # If not supplied, exit
     else: # pragma: no cover
         errormsg = f'Could not understand what type you want to check: should be either a string or a type, not "{objtype}"'
         raise ValueError(errormsg)
@@ -647,7 +647,7 @@ def checktype(obj=None, objtype=None, subtype=None, die=False):
             errormsg = f'Incorrect type: object is {type(obj)}, but {objtype} is required'
             raise TypeError(errormsg)
         else:
-            return None # It's fine, do nothing
+            return # It's fine, do nothing
     else: # Return the result of the comparison
         return result
 
@@ -1123,7 +1123,7 @@ def checkmem(var, descend=None, alphabetical=False, plot=False, verbose=False):
         pl.axes(aspect=1)
         pl.pie(pl.array(sizes)[inds], labels=pl.array(varnames)[inds], autopct='%0.2f')
 
-    return None
+    return
 
 
 def checkram(unit='mb', fmt='0.2f', start=0, to_string=True):
@@ -1473,7 +1473,7 @@ def suggest(user_input, valid_inputs, n=1, threshold=None, fulloutput=False, die
             errormsg = f'"{user_input}" not found'
             raise ValueError(errormsg)
         else:
-            return None
+            return
     elif die:
         errormsg = f'"{user_input} not found - did you mean {suggestionstr}'
         raise ValueError(errormsg)
@@ -1796,7 +1796,7 @@ class Link(object):
             return self.obj
         else: # pragma: no cover
             self.__init__(obj)
-            return None
+            return
 
     def __copy__(self, *args, **kwargs):
         ''' Do NOT automatically copy link objects!! '''
