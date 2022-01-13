@@ -672,7 +672,7 @@ class timer(scu.prettyobj):
         >>> with sc.timer('mylabel'):
         >>>     sc.timedsleep(0.5)
 
-    Example using a timer to collect, using ``tt()`` as an alias for ``toctic()``
+    Example using a timer to collect data, using ``tt()`` as an alias for ``toctic()``
     to reset the time::
 
         T = sc.timer(doprint=False)
@@ -684,7 +684,7 @@ class timer(scu.prettyobj):
     Implementation based on https://preshing.com/20110924/timing-your-code-using-pythons-with-statement/
 
     | New in version 1.3.0: ``sc.timer()`` alias, and allowing the label as first argument.
-    | New in version 1.3.2: ``toc()`` passes label correctly; ``toctic()`` and ``tt()`` methods
+    | New in version 1.3.2: ``toc()`` passes label correctly; ``tt()`` method; ``auto`` argument
     '''
     def __init__(self, label=None, auto=False, **kwargs):
         from . import sc_odict as sco # Here to avoid circular import
