@@ -543,7 +543,7 @@ def tic():
 
 
 
-def toc(start=None, label=None, baselabel=None, sigfigs=None, filename=None, reset=False, output=False, doprint=None, elapsed=None):
+def toc(start=None, label=None, baselabel=None, sigfigs=None, reset=False, output=False, doprint=None, elapsed=None):
     '''
     With ``sc.tic()``, a little pair of functions to calculate a time difference. See
     also ``sc.timer()``.
@@ -553,7 +553,6 @@ def toc(start=None, label=None, baselabel=None, sigfigs=None, filename=None, res
         label     (str): optional label to add
         baselabel (str): optional base label; default is "Elapsed time: "
         sigfigs   (int): number of significant figures for time estimate
-        filename  (str): log file to write results to (default, do not write to log file)
         reset     (bool): reset the time; like calling ``sc.toctic()`` or ``sc.tic()`` again
         output    (bool): whether to return the output (otherwise print); if output='message', then return the message string; if output='both', then return both
         doprint   (bool): whether to print (true by default)
@@ -594,18 +593,17 @@ def toc(start=None, label=None, baselabel=None, sigfigs=None, filename=None, res
             base = 'Elapsed time: '
     else:
         if baselabel is None:
-            base = f'Elapsed time for {label}: '
+            if label:
+                base = f'Elapsed time for {label}: '
+            else: # Handles case toc(label='')
+                base = ''
         else:
             base = f'{baselabel}{label}'
     logmessage = f'{base}{scp.sigfig(elapsed, sigfigs=sigfigs)} s'
 
     # Print if asked, or if no other output
-    if doprint or ((doprint is None) and (not output) and (filename is None)):
+    if doprint or ((doprint is None) and (not output)):
         print(logmessage)
-
-    # Optionally write to logfile
-    if filename is not None:
-        scp.printtologfile(logmessage, filename) # If we passed in a filename, append the message to that file.
 
     # Optionally reset the counter
     if reset:
@@ -653,33 +651,52 @@ class timer(scu.prettyobj):
     This wraps ``tic`` and ``toc`` with the formatting arguments and the start time
     (at construction).
 
-    Use this in a ``with...as`` block to automatically print elapsed time when
+    Use this in a ``with`` block to automatically print elapsed time when
     the block finishes.
 
-    Example making repeated calls to the same Timer::
+    Args:
+        label (str): label identifying this timer
+        auto (bool): whether to automatically increment the label
 
-        >>> T = sc.timer()
+
+    Example making repeated calls to the same timer, using ``auto`` to keep track::
+
+        >>> T = sc.timer(auto=True)
         >>> T.toc()
-        Elapsed time: 2.63 s
+        Elapsed time for (0): 2.63 s
         >>> T.toc()
-        Elapsed time: 5.00 s
+        Elapsed time for (1): 5.00 s
 
     Example wrapping code using with-as::
 
-        >>> with sc.timer('mylabel') as t:
-        >>>     foo()
+        >>> with sc.timer('mylabel'):
+        >>>     sc.timedsleep(0.5)
+
+    Example using a timer to collect, using ``tt()`` as an alias for ``toctic()``
+    to reset the time::
+
+        T = sc.timer(doprint=False)
+        for key in 'abcde':
+            sc.timedsleep(pl.rand())
+            T.tt(key)
+        print(T.timings)
 
     Implementation based on https://preshing.com/20110924/timing-your-code-using-pythons-with-statement/
 
-    New in version 1.3.0: ``sc.timer()`` alias, and allowing the label as first argument.
+    | New in version 1.3.0: ``sc.timer()`` alias, and allowing the label as first argument.
+    | New in version 1.3.2: ``toc()`` passes label correctly; ``toctic()`` and ``tt()`` methods
     '''
-    def __init__(self, label=None, **kwargs):
+    def __init__(self, label=None, auto=False, **kwargs):
+        from . import sc_odict as sco # Here to avoid circular import
         self.tic()
-        self.kwargs = kwargs #: Store kwargs to pass to :func:`toc` at the end of the block
+        self.kwargs = kwargs # Store kwargs to pass to toc() at the end of the block
         self.kwargs['label'] = label
-        self._start = None
+        self.auto = auto
+        self.start = None
         self.elapsed = None
         self.message = None
+        self.count = 0
+        self.timings = sco.odict()
         return
 
     def __enter__(self):
@@ -694,26 +711,54 @@ class timer(scu.prettyobj):
 
     def tic(self):
         ''' Set start time '''
-        self._start = tic()
+        self.start = tic()
         return
 
     def toc(self, label=None, **kwargs):
         ''' Print elapsed time; see ``sc.toc()`` for keyword arguments '''
-        kwargs.update(self.kwargs)
-        orig_output = kwargs.pop('output', None)
-        orig_doprint = kwargs.pop('doprint', None)
-        kw = scu.mergedicts({'label':label}, kwargs)
-        self.elapsed, self.message = toc(start=self._start, output='both', doprint=False, **kw)
-        output = toc(elapsed=self.elapsed, output=orig_output, doprint=orig_doprint, **kw) # Call again to get the correct output
+
+        # Get the time
+        self.elapsed, self.message = toc(start=self.start, output='both', doprint=False) # Get time as quickly as possible
+
+        # Update the kwargs, including the label
+        kwargs['label'] = label
+        for k,v in self.kwargs.items():
+            if k not in kwargs:
+                kwargs[k] = v
+
+        # Handle the count and labels
+        countstr= f'({self.count:d})'
+        labelstr = ' '+kwargs['label'] if kwargs['label'] is not None else ''
+        countlabel = f'{countstr}{labelstr}'
+        timingslabel = countlabel if (self.auto or labelstr in self.timings) else labelstr
+        self.timings[timingslabel] = self.elapsed
+        self.count += 1
+        if self.auto:
+            kwargs['label'] = countlabel
+
+        # Call again to get the correct output
+        output = toc(elapsed=self.elapsed, **kwargs)
         return output
 
     def start(self):
         ''' Alias for tic() '''
         return self.tic()
 
-    def stop(self, **kwargs):
+    def stop(self, *args, **kwargs):
         ''' Alias for toc() '''
-        return self.toc(**kwargs)
+        return self.toc(*args, **kwargs)
+
+    def toctic(self, *args, **kwargs):
+        ''' Reset time between timings '''
+        kwargs['reset'] = True
+        return self.toc(*args, **kwargs)
+
+    def tt(self, *args, **kwargs):
+        ''' Alias for toctic() '''
+        return self.toctic(*args, **kwargs)
+
+
+
 
 Timer = timer # Alias
 
@@ -850,6 +895,7 @@ def timedsleep(delay=None, verbose=True):
                 tmp = pl.rand()
             sc.timedsleep(1) # Wait for one second including computation time
     '''
+    self_time = 0.00012 # Roughly how long this function itself takes to run -- slightly underestimate
     global _delaytime
     if delay is None or delay=='start':
         _delaytime = time.time()  # Store the present time in the global.
@@ -858,11 +904,11 @@ def timedsleep(delay=None, verbose=True):
         try:    start = _delaytime
         except: start = time.time()
         elapsed = time.time() - start
-        remaining = delay-elapsed
+        remaining = delay - elapsed
         if remaining>0:
             if verbose:
                 print(f'Pausing for {remaining:0.1f} s')
-            time.sleep(remaining)
+            time.sleep(remaining - self_time)
         else:
             if verbose:
                 print(f'Warning, delay less than elapsed time ({delay:0.1f} vs. {elapsed:0.1f})')

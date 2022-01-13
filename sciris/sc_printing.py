@@ -585,7 +585,7 @@ def slacknotification(message=None, webhook=None, to=None, fromuser=None, verbos
     # Try opening webhook as a file
     if webhook.find('hooks.slack.com')>=0: # It seems to be a URL, let's proceed
         slackurl = webhook
-    elif os.path.exists(os.path.expanduser(webhook)): # If not, look for it sa a file
+    elif os.path.exists(os.path.expanduser(webhook)): # If not, look for it as a file
         with open(os.path.expanduser(webhook)) as f: slackurl = f.read()
     elif os.getenv('SLACKURL'): # See if it's set in the user's environment variables
         slackurl = os.getenv('SLACKURL')
@@ -615,8 +615,10 @@ def printtologfile(message=None, filename=None):
     is especially useful for capturing information from spawned processes not
     so handily captured through print statements.
 
-    Warning: If you pass a file in, existing or not, it will try to append
+    Warning 1: If you pass a file in, existing or not, it will try to append
     text to it!
+
+    Warning 2:
     '''
 
     # Set defaults
