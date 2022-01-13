@@ -598,7 +598,7 @@ def toc(start=None, label=None, baselabel=None, sigfigs=None, reset=False, outpu
             else: # Handles case toc(label='')
                 base = ''
         else:
-            base = f'{baselabel}{label}'
+            base = f'{baselabel}{label}: '
     logmessage = f'{base}{scp.sigfig(elapsed, sigfigs=sigfigs)} s'
 
     # Print if asked, or if no other output
@@ -728,7 +728,7 @@ class timer(scu.prettyobj):
 
         # Handle the count and labels
         countstr= f'({self.count:d})'
-        labelstr = ' '+kwargs['label'] if kwargs['label'] is not None else ''
+        labelstr = ' '+kwargs['label'] if kwargs['label'] else ''
         countlabel = f'{countstr}{labelstr}'
         timingslabel = countlabel if (self.auto or labelstr in self.timings) else labelstr
         self.timings[timingslabel] = self.elapsed
