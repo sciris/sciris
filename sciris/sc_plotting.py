@@ -827,7 +827,7 @@ class ScirisDateFormatter(mpl.dates.ConciseDateFormatter):
         return labels
 
 def dateformatter(ax=None, style='sciris', start_date=None, dateformat=None, interval=None,
-                  start=None, end=None, rotation=None, locator=None, **kwargs):
+                  start=None, end=None, rotation=None, locator=None, axis='x', **kwargs):
     '''
     Format the x-axis to use dates.
 
@@ -846,6 +846,7 @@ def dateformatter(ax=None, style='sciris', start_date=None, dateformat=None, int
         end (str/int): if supplied, the upper limit of the axis
         rotation (float): rotation of the labels, in degrees
         locator (Locator): if supplied, use this instead of the default ``AutoDateLocator`` locator
+        axis (str): which axis to apply to the formatter to (default 'x')
         kwargs(dict): passed to the date formatter (e.g., ``ScirisDateFormatter``)
 
     **Examples**::
@@ -868,6 +869,7 @@ def dateformatter(ax=None, style='sciris', start_date=None, dateformat=None, int
     | New in version 1.2.0.
     | New in version 1.2.2: "rotation" argument; renamed "start_day" to "start_date"
     | New in version 1.3.0: refactored to use built-in Matplotlib date formatting
+    | New in version 1.3.2: "axis" argument
     '''
 
     # Handle deprecation
@@ -876,6 +878,7 @@ def dateformatter(ax=None, style='sciris', start_date=None, dateformat=None, int
         start_date = start_day
         warnmsg = 'sc.dateformatter() argument "start_day" has been deprecated as of v1.2.2; use "start_date" instead'
         warnings.warn(warnmsg, category=DeprecationWarning, stacklevel=2)
+    style = kwargs.pop('dateformatter', style) # Allow this as an alias
 
     # Handle axis
     if isinstance(ax, str): # Swap style and axes -- allows sc.dateformatter(ax) or sc.dateformatter('auto')
@@ -904,8 +907,8 @@ def dateformatter(ax=None, style='sciris', start_date=None, dateformat=None, int
         # Handle locator and styles
         if locator is None:
             locator = mpl.dates.AutoDateLocator(minticks=3)
-        style = style.lower()
-        if style in [None, 'sciris', 'house', 'default']:
+        style = str(style).lower()
+        if style in ['none', 'sciris', 'house', 'default']:
             formatter = ScirisDateFormatter(locator, **kwargs)
         elif style in ['auto', 'matplotlib']:
             formatter = mpl.dates.AutoDateFormatter(locator, **kwargs)
@@ -916,8 +919,14 @@ def dateformatter(ax=None, style='sciris', start_date=None, dateformat=None, int
         else:
             errormsg = f'Style "{style}" not recognized; must be one of "sciris", "auto", or "concise"'
             raise ValueError(errormsg)
-        ax.xaxis.set_major_locator(locator)
-        ax.xaxis.set_major_formatter(formatter)
+
+        # Handle axis and set the locator and formatter
+        if axis == 'x':
+            axis = ax.xaxis
+        elif axis == 'y': # If it's not x or y (!), assume it's an axis object
+            axis = ax.yaxis
+        axis.set_major_locator(locator)
+        axis.set_major_formatter(formatter)
 
         # Handle limits
         xmin, xmax = ax.get_xlim()
