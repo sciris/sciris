@@ -6,6 +6,12 @@ All notable changes to this project will be documented in this file.
 By import convention, components of the Sciris library are listed beginning with ``sc.``, e.g. ``sc.odict()``.
 
 
+Version 1.3.2 (2022-01-13)
+--------------------------
+#. Additional flexibility in ``sc.timer()``; it now stores a list of times. A bug preventing the label from being passed in ``timer.toc()`` has also been fixed.
+#. Fixed a bug blocking ``style=None`` in ``sc.dateformatter()``.
+
+
 Version 1.3.1 (2022-01-11)
 --------------------------
 
