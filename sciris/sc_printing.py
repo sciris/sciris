@@ -2,20 +2,24 @@
 Printing/notification functions.
 
 Highlights:
-    - ``sc.pr()``: print full representation of an object, including methods and each attribute
     - ``sc.heading()``: print text as a 'large' heading
     - ``sc.colorize()``: print text in a certain color
+    - ``sc.pr()``: print full representation of an object, including methods and each attribute
     - ``sc.sigfigs()``: truncate a number to a certain number of significant figures
     - ``sc.progressbar()``: show a (text-based) progress bar
+    - ``sc.capture()``: capture text output (e.g., stdout) as a variable
 '''
 
+import io
 import os
 import time
 import colors
 import pprint
 import numpy as np
 import collections as co
+import contextlib as cl
 from textwrap import fill
+from collections import UserString
 from . import sc_utils as scu
 
 
@@ -31,45 +35,11 @@ else:
     ansi_support = True
 
 
-__all__ = ['printv', 'blank', 'createcollist', 'objectid', 'objatt', 'objmeth', 'objprop', 'objrepr',
-            'prepr', 'pr', 'indent', 'sigfig', 'printarr', 'printdata', 'printvars',
-            'slacknotification', 'printtologfile', 'colorize', 'heading', 'percentcomplete', 'progressbar']
-
-def printv(string, thisverbose=1, verbose=2, newline=True, indent=True):
-    '''
-    Optionally print a message and automatically indent. The idea is that
-    a global or shared "verbose" variable is defined, which is passed to
-    subfunctions, determining how much detail to print out.
-
-    The general idea is that verbose is an integer from 0-4 as follows:
-
-    * 0 = no printout whatsoever
-    * 1 = only essential warnings, e.g. suppressed exceptions
-    * 2 = standard printout
-    * 3 = extra debugging detail (e.g., printout on each iteration)
-    * 4 = everything possible (e.g., printout on each timestep)
-
-    Thus a very important statement might be e.g.
-
-    >>> sc.printv('WARNING, everything is wrong', 1, verbose)
-
-    whereas a much less important message might be
-
-    >>> sc.printv(f'This is timestep {i}', 4, verbose)
-
-    Version: 2016jan30
-    '''
-    if thisverbose>4 or verbose>4: print(f'Warning, verbosity should be from 0-4 (this message: {thisverbose}; current: {verbose})')
-    if verbose>=thisverbose: # Only print if sufficiently verbose
-        indents = '  '*thisverbose*bool(indent) # Create automatic indenting
-        if newline: print(indents+scu.flexstr(string)) # Actually print
-        else: print(indents+scu.flexstr(string)), # Actually print
-    return
 
 
-def blank(n=3):
-    ''' Tiny function to print n blank lines, 3 by default '''
-    print('\n'*n)
+#%% Object display functions
+
+__all__ = ['createcollist', 'objectid', 'objatt', 'objmeth', 'objprop', 'objrepr', 'prepr', 'pr']
 
 
 def createcollist(items, title=None, strlen=18, ncol=3):
@@ -285,6 +255,16 @@ def pr(obj, *args, **kwargs):
     return
 
 
+#%% Spacing functions
+
+__all__ += ['blank', 'indent']
+
+
+def blank(n=3):
+    ''' Tiny function to print n blank lines, 3 by default '''
+    print('\n'*n)
+
+
 def indent(prefix=None, text=None, suffix='\n', n=0, pretty=False, width=70, **kwargs):
     '''
     Small wrapper to make textwrap more user friendly.
@@ -337,6 +317,11 @@ def indent(prefix=None, text=None, suffix='\n', n=0, pretty=False, width=70, **k
     if n: output = output[n:] # Need to remove the fake prefix
     return output
 
+
+
+#%% Data representation functions
+
+__all__ += ['sigfig', 'printarr', 'printdata', 'printvars']
 
 
 def sigfig(x, sigfigs=5, SI=False, sep=False, keepints=False):
@@ -537,102 +522,10 @@ def printvars(localvars=None, varlist=None, label=None, divider=True, spaces=1, 
     return
 
 
-def slacknotification(message=None, webhook=None, to=None, fromuser=None, verbose=2, die=False):  # pragma: no cover
-    '''
-    Send a Slack notification when something is finished.
 
-    The webhook is either a string containing the webhook itself, or a plain text file containing
-    a single line which is the Slack webhook. By default it will look for the file
-    ".slackurl" in the user's home folder. The webhook needs to look something like
-    "https://hooks.slack.com/services/af7d8w7f/sfd7df9sb/lkcpfj6kf93ds3gj". Webhooks are
-    effectively passwords and must be kept secure! Alternatively, you can specify the webhook
-    in the environment variable SLACKURL.
+#%% Color functions
 
-    Args:
-        message (str): The message to be posted.
-        webhook (str): See above
-        to (str): The Slack channel or user to post to. Channels begin with #, while users begin with @ (note: ignored by new-style webhooks)
-        fromuser (str): The pseudo-user the message will appear from (note: ignored by new-style webhooks)
-        verbose (bool): How much detail to display.
-        die (bool): If false, prints warnings. If true, raises exceptions.
-
-    **Example**::
-
-        sc.slacknotification('Long process is finished')
-        sc.slacknotification(webhook='/.slackurl', channel='@username', message='Hi, how are you going?')
-
-    What's the point? Add this to the end of a very long-running script to notify
-    your loved ones that the script has finished.
-
-    Version: 2018sep25
-    '''
-    try:
-        from requests import post # Simple way of posting data to a URL
-        from json import dumps # For sanitizing the message
-    except Exception as E:
-        errormsg = f'Cannot use Slack notification since imports failed: {str(E)}'
-        if die: raise ImportError(errormsg)
-        else:   print(errormsg)
-
-    # Validate input arguments
-    printv('Sending Slack message', 1, verbose)
-    if not webhook:  webhook    = os.path.expanduser('~/.slackurl')
-    if not to:       to       = '#general'
-    if not fromuser: fromuser = 'sciris-bot'
-    if not message:  message  = 'This is an automated notification: your notifier is notifying you.'
-    printv(f'Channel: {to} | User: {fromuser} | Message: {message}', 3, verbose) # Print details of what's being sent
-
-    # Try opening webhook as a file
-    if webhook.find('hooks.slack.com')>=0: # It seems to be a URL, let's proceed
-        slackurl = webhook
-    elif os.path.exists(os.path.expanduser(webhook)): # If not, look for it as a file
-        with open(os.path.expanduser(webhook)) as f: slackurl = f.read()
-    elif os.getenv('SLACKURL'): # See if it's set in the user's environment variables
-        slackurl = os.getenv('SLACKURL')
-    else:
-        slackurl = webhook # It doesn't seemt to be a URL but let's try anyway
-        errormsg = f'"{webhook}" does not seem to be a valid webhook string or file'
-        if die: raise ValueError(errormsg)
-        else:   print(errormsg)
-
-    # Package and post payload
-    try:
-        payload = '{"text": %s, "channel": %s, "username": %s}' % (dumps(message), dumps(to), dumps(fromuser))
-        printv(f'Full payload: {payload}', 4, verbose)
-        response = post(url=slackurl, data=payload)
-        printv(response, 3, verbose) # Optionally print response
-        printv('Message sent.', 2, verbose) # We're done
-    except Exception as E:
-        errormsg = f'Sending of Slack message failed: {repr(E)}'
-        if die: raise RuntimeError(errormsg)
-        else:   print(errormsg)
-    return
-
-
-def printtologfile(message=None, filename=None):
-    '''
-    Append a message string to a file specified by a filename name/path.
-
-    Note: in almost all cases, you are better off using Python's built-in logging
-    system rather than this function.
-    '''
-
-    # Set defaults
-    if message is None:
-        return # Return immediately if nothing to append
-    if filename is None:
-        import tempfile
-        tempdir = tempfile.gettempdir()
-        filename = os.path.join(tempdir, 'logfile') # Some generic filename that should work on *nix systems
-
-    # Try writing to file
-    try:
-        with open(filename, 'a') as f:
-            f.write('\n'+message+'\n') # Add a newline to the message.
-    except Exception as E: # pragma: no cover # Fail gracefully
-        print(f'Warning, could not write to logfile {filename}: {str(E)}')
-
-    return
+__all__ += ['colorize', 'heading']
 
 
 def colorize(color=None, string=None, doprint=None, output=False, enable=True, showhelp=False, fg=None, bg=None, style=None):
@@ -797,6 +690,152 @@ def heading(string=None, *args, color=None, divider=None, spaces=None, spacesaft
     return colorize(color=color, string=fullstring, doprint=doprint, output=output, **kwargs)
 
 
+
+#%% Other
+
+__all__ += ['printv', 'slacknotification', 'printtologfile', 'percentcomplete', 'progressbar', 'capture']
+
+
+def printv(string, thisverbose=1, verbose=2, newline=True, indent=True):
+    '''
+    Optionally print a message and automatically indent. The idea is that
+    a global or shared "verbose" variable is defined, which is passed to
+    subfunctions, determining how much detail to print out.
+
+    The general idea is that verbose is an integer from 0-4 as follows:
+
+    * 0 = no printout whatsoever
+    * 1 = only essential warnings, e.g. suppressed exceptions
+    * 2 = standard printout
+    * 3 = extra debugging detail (e.g., printout on each iteration)
+    * 4 = everything possible (e.g., printout on each timestep)
+
+    Thus a very important statement might be e.g.
+
+    >>> sc.printv('WARNING, everything is wrong', 1, verbose)
+
+    whereas a much less important message might be
+
+    >>> sc.printv(f'This is timestep {i}', 4, verbose)
+
+    Version: 2016jan30
+    '''
+    if thisverbose>4 or verbose>4: print(f'Warning, verbosity should be from 0-4 (this message: {thisverbose}; current: {verbose})')
+    if verbose>=thisverbose: # Only print if sufficiently verbose
+        indents = '  '*thisverbose*bool(indent) # Create automatic indenting
+        if newline: print(indents+scu.flexstr(string)) # Actually print
+        else: print(indents+scu.flexstr(string)), # Actually print
+    return
+
+
+
+
+
+
+
+
+
+def slacknotification(message=None, webhook=None, to=None, fromuser=None, verbose=2, die=False):  # pragma: no cover
+    '''
+    Send a Slack notification when something is finished.
+
+    The webhook is either a string containing the webhook itself, or a plain text file containing
+    a single line which is the Slack webhook. By default it will look for the file
+    ".slackurl" in the user's home folder. The webhook needs to look something like
+    "https://hooks.slack.com/services/af7d8w7f/sfd7df9sb/lkcpfj6kf93ds3gj". Webhooks are
+    effectively passwords and must be kept secure! Alternatively, you can specify the webhook
+    in the environment variable SLACKURL.
+
+    Args:
+        message (str): The message to be posted.
+        webhook (str): See above
+        to (str): The Slack channel or user to post to. Channels begin with #, while users begin with @ (note: ignored by new-style webhooks)
+        fromuser (str): The pseudo-user the message will appear from (note: ignored by new-style webhooks)
+        verbose (bool): How much detail to display.
+        die (bool): If false, prints warnings. If true, raises exceptions.
+
+    **Example**::
+
+        sc.slacknotification('Long process is finished')
+        sc.slacknotification(webhook='/.slackurl', channel='@username', message='Hi, how are you going?')
+
+    What's the point? Add this to the end of a very long-running script to notify
+    your loved ones that the script has finished.
+
+    Version: 2018sep25
+    '''
+    try:
+        from requests import post # Simple way of posting data to a URL
+        from json import dumps # For sanitizing the message
+    except Exception as E:
+        errormsg = f'Cannot use Slack notification since imports failed: {str(E)}'
+        if die: raise ImportError(errormsg)
+        else:   print(errormsg)
+
+    # Validate input arguments
+    printv('Sending Slack message', 1, verbose)
+    if not webhook:  webhook    = os.path.expanduser('~/.slackurl')
+    if not to:       to       = '#general'
+    if not fromuser: fromuser = 'sciris-bot'
+    if not message:  message  = 'This is an automated notification: your notifier is notifying you.'
+    printv(f'Channel: {to} | User: {fromuser} | Message: {message}', 3, verbose) # Print details of what's being sent
+
+    # Try opening webhook as a file
+    if webhook.find('hooks.slack.com')>=0: # It seems to be a URL, let's proceed
+        slackurl = webhook
+    elif os.path.exists(os.path.expanduser(webhook)): # If not, look for it as a file
+        with open(os.path.expanduser(webhook)) as f: slackurl = f.read()
+    elif os.getenv('SLACKURL'): # See if it's set in the user's environment variables
+        slackurl = os.getenv('SLACKURL')
+    else:
+        slackurl = webhook # It doesn't seemt to be a URL but let's try anyway
+        errormsg = f'"{webhook}" does not seem to be a valid webhook string or file'
+        if die: raise ValueError(errormsg)
+        else:   print(errormsg)
+
+    # Package and post payload
+    try:
+        payload = '{"text": %s, "channel": %s, "username": %s}' % (dumps(message), dumps(to), dumps(fromuser))
+        printv(f'Full payload: {payload}', 4, verbose)
+        response = post(url=slackurl, data=payload)
+        printv(response, 3, verbose) # Optionally print response
+        printv('Message sent.', 2, verbose) # We're done
+    except Exception as E:
+        errormsg = f'Sending of Slack message failed: {repr(E)}'
+        if die: raise RuntimeError(errormsg)
+        else:   print(errormsg)
+    return
+
+
+def printtologfile(message=None, filename=None):
+    '''
+    Append a message string to a file specified by a filename name/path.
+
+    Note: in almost all cases, you are better off using Python's built-in logging
+    system rather than this function.
+    '''
+
+    # Set defaults
+    if message is None:
+        return # Return immediately if nothing to append
+    if filename is None:
+        import tempfile
+        tempdir = tempfile.gettempdir()
+        filename = os.path.join(tempdir, 'logfile') # Some generic filename that should work on *nix systems
+
+    # Try writing to file
+    try:
+        with open(filename, 'a') as f:
+            f.write('\n'+message+'\n') # Add a newline to the message.
+    except Exception as E: # pragma: no cover # Fail gracefully
+        print(f'Warning, could not write to logfile {filename}: {str(E)}')
+
+    return
+
+
+
+
+
 def percentcomplete(step=None, maxsteps=None, stepsize=1, prefix=None):
     '''
     Display progress.
@@ -849,3 +888,56 @@ def progressbar(i, maxiters, label='', length=30, empty='—', full='•', newli
     print(f'\r{label} {bar} {percent}', end=ending)
     if i == maxiters: print()
     return
+
+
+class capture(UserString, str, cl.redirect_stdout):
+    '''
+    Captures stdout (e.g., from ``print()``) as a variable.
+
+    Based on ``contextlib.redirect_stdout``, but saves the user the trouble of
+    defining and reading from an IO stream.
+
+    **Examples**::
+
+        # Using with...as
+        with sc.capture() as txt1:
+            print('Assign these lines')
+            print('to a variable')
+
+        # Using start()...stop()
+        txt2 = sc.capture()
+        txt2.start()
+        print('This works')
+        print('the same way')
+        txt2.stop()
+
+        print('txt1:')
+        print(txt1)
+        print('txt2:')
+        print(txt2)
+
+    New in version 1.3.3.
+    '''
+
+    def __init__(self):
+        self._io = io.StringIO()
+        UserString.__init__(self, '')
+        redirect_stdout.__init__(self, self._io)
+        return
+
+    def __enter__(self, *args, **kwargs):
+        redirect_stdout.__enter__(self, *args, **kwargs)
+        return self
+
+    def __exit__(self, *args, **kwargs):
+        self.data += self._io.getvalue()
+        redirect_stdout.__exit__(self, *args, **kwargs)
+        return
+
+    def start(self):
+        self.__enter__()
+        return
+
+    def stop(self):
+        self.__exit__(None, None, None)
+        return
