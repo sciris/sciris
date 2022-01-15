@@ -277,27 +277,55 @@ __all__ += ['boxoff', 'setaxislim', 'setxlim', 'setylim', 'commaticks', 'SIticks
             'getrowscols', 'get_rows_cols', 'figlayout', 'maximize', 'fonts']
 
 
-def boxoff(ax=None, removeticks=True, flipticks=True):
+def boxoff(ax=None, which=None, removeticks=True):
     '''
-    Removes the top and right borders of a plot. Also optionally removes
-    the tick marks, and flips the remaining ones outside.
+    Removes the top and right borders ("spines") of a plot.
 
-    **Example**::
+    Also optionally removes the tick marks, and flips the remaining ones outside.
+    Can be used as an alias to ``pl.axis('off')`` if ``which='all'``.
 
+    Args:
+        ax (Axes): the axes to remove the spines from (if None, use current)
+        which (str/list): a list or comma-separated string of spines: 'top', 'bottom', 'left', 'right', or 'all' (default top & right)
+        removeticks (bool): whether to also remove the ticks from these spines
+        flipticks (bool): whether to flip remaining ticks out
+
+    **Examples**::
+
+        pl.figure()
         pl.plot([2,5,3])
         sc.boxoff()
 
-    Version: 2017may22
+        fig, ax = pl.subplots()
+        pl.plot([1,4,1,4])
+        sc.boxoff(ax=ax, which='all')
+
+        fig = pl.figure()
+        pl.scatter(np.arange(100), pl.rand(100))
+        sc.boxoff('top, bottom')
+
+    New in version 1.3.3: ability to turn off multiple spines; removed "flipticks" arguments
     '''
-    from pylab import gca
-    if ax is None: ax = gca()
-    ax.spines['top'].set_visible(False)
-    ax.spines['right'].set_visible(False)
-    if removeticks:
-        ax.xaxis.set_ticks_position('bottom')
-        ax.yaxis.set_ticks_position('left')
-    if flipticks:
-        ax.tick_params(direction='out', pad=5)
+    # Handle axes
+    if isinstance(ax, (str, list)): # Swap input arguments
+        ax,which = which,ax
+    if ax is None: ax = pl.gca()
+
+    # Handle which
+    if not isinstance(which, list):
+        if which is None:
+            which = 'top, right'
+        if which == 'all':
+            which = 'top, bottom, right, left'
+        if isinstance(which, str):
+            which = which.split(',')
+            which = [w.rstrip().lstrip() for w in which]
+
+    for spine in which: # E.g. ['top', 'right']
+        ax.spines[spine].set_visible(False)
+        if removeticks:
+            ax.tick_params(**{spine:False, f'label{spine}':False})
+
     return ax
 
 
