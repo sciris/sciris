@@ -66,6 +66,20 @@ def test_printing():
     print('\nTesting sigfig')
     sc.sigfig(np.random.rand(10), SI=True, sep='.')
 
+    print('\nTesting capture')
+    str1 = 'I am string 1'
+    str2 = 'I am string 2'
+    with sc.capture() as txt1:
+        print(str1)
+
+    txt2 = sc.capture().start()
+    print(str2)
+    txt2.stop()
+
+    # print() appends a newline character which we have to remove for the comparison
+    assert txt1.rstrip() == str1
+    assert txt2.rstrip() == str2
+
     return o
 
 

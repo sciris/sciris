@@ -895,7 +895,8 @@ class capture(UserString, str, redirect_stdout):
     Captures stdout (e.g., from ``print()``) as a variable.
 
     Based on ``contextlib.redirect_stdout``, but saves the user the trouble of
-    defining and reading from an IO stream.
+    defining and reading from an IO stream. Useful for testing the output of functions
+    that are supposed to print certain output.
 
     **Examples**::
 
@@ -905,8 +906,7 @@ class capture(UserString, str, redirect_stdout):
             print('to a variable')
 
         # Using start()...stop()
-        txt2 = sc.capture()
-        txt2.start()
+        txt2 = sc.capture().start()
         print('This works')
         print('the same way')
         txt2.stop()
@@ -919,9 +919,9 @@ class capture(UserString, str, redirect_stdout):
     New in version 1.3.3.
     '''
 
-    def __init__(self):
+    def __init__(self, seq='', *args, **kwargs):
         self._io = io.StringIO()
-        UserString.__init__(self, '')
+        UserString.__init__(self, seq=seq, *args, **kwargs)
         redirect_stdout.__init__(self, self._io)
         return
 
@@ -936,7 +936,7 @@ class capture(UserString, str, redirect_stdout):
 
     def start(self):
         self.__enter__()
-        return
+        return self
 
     def stop(self):
         self.__exit__(None, None, None)
