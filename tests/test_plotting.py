@@ -207,9 +207,27 @@ def test_fonts(doplot=doplot):
     return fonts
 
 
+def test_saveload(doplot=doplot):
+    sc.heading('Testing figure save/load')
+
+    fig = pl.figure()
+    pl.plot([1,3,7])
+
+    sc.savefig('example1.png')
+    md1 = sc.loadmetadata('example1.png')
+
+    sc.savefig('example2.png', fig=fig, comments='My figure', freeze=True)
+    md2 = sc.loadmetadata('example2.png')
+
+    with pytest.raises(ValueError):
+        sc.savefig('example1.jpg')
+
+    return md2
+
+
 #%% Run as a script
 if __name__ == '__main__':
-    sc.tic()
+    T = sc.timer()
 
     doplot = True
 
@@ -220,9 +238,10 @@ if __name__ == '__main__':
     saved     = test_saving(doplot)
     dates     = test_dates(doplot)
     fonts     = test_fonts(doplot)
+    metadata  = test_saveload(doplot)
 
     if doplot:
         pl.show()
 
-    sc.toc()
+    T.toc()
     print('Done.')
