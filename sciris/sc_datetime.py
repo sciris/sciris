@@ -699,6 +699,7 @@ class timer(scu.prettyobj):
         self.message = None
         self.count = 0
         self.timings = sco.odict()
+        self.tic() # Start counting
         return
 
     def __enter__(self):
@@ -713,7 +714,7 @@ class timer(scu.prettyobj):
 
     def tic(self):
         ''' Set start time '''
-        self._start = tic()
+        self._start = time.time()  # Store the present time locally
         return
 
     def toc(self, label=None, **kwargs):
@@ -746,6 +747,11 @@ class timer(scu.prettyobj):
 
         # Call again to get the correct output
         output = toc(elapsed=self.elapsed, **kwargs)
+
+        # If reset was used, apply it
+        if kwargs.get('reset'):
+            self.tic()
+
         return output
 
     def start(self):

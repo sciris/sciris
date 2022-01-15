@@ -122,8 +122,8 @@ def test_tictoc():
     sc.heading('Testing tic, toc, and timer')
 
     t = 0.01
-    def nap():
-        sc.timedsleep(t, verbose=False)
+    def nap(n=1):
+        sc.timedsleep(t*n, verbose=False)
         return
 
     print('Testing tic/toc...')
@@ -144,6 +144,7 @@ def test_tictoc():
 
     print('Testing timer...')
 
+    # Check label handling
     with sc.capture() as txt3:
         T = sc.timer(baselabel='mybase: ', label='mylabel')
         T.tic()
@@ -153,6 +154,7 @@ def test_tictoc():
     assert 'mybase' in txt3
     assert 'mylabel' in txt3
 
+    # Check timer labels
     with sc.capture() as txt4:
         T = sc.timer()
         T.start()
@@ -161,6 +163,29 @@ def test_tictoc():
     print(txt4)
     assert 'newlabel' in txt4
 
+    # Check relative timings
+    T = sc.timer()
+    T.start()
+    nap()
+    T.tt()
+    nap(2)
+    T.tt()
+    print(T.timings)
+    assert T.timings[0] < T.timings[1]
+
+    # Check toc vs toctic
+    T = sc.timer()
+    nap(3)
+    T.toc('a') # ≈3
+    nap()
+    T.toctic('b') # ≈4
+    nap()
+    T.toctic('c') # ≈1
+    nap(2)
+    T.tt('d') # ≈2
+    assert T.timings['c'] < T.timings['d'] < T.timings['a'] < T.timings['b']
+
+    # Check auto naming
     T = sc.timer(auto=True, doprint=False)
     with sc.capture() as txt5:
         n = 5
