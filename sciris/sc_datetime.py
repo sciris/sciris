@@ -579,6 +579,8 @@ def toc(start=None, label=None, baselabel=None, sigfigs=None, reset=False, outpu
     if sigfigs is None: sigfigs = 3
 
     # If no start value is passed in, try to grab the global _tictime
+    if isinstance(start, str): # Start and label are probably swapped
+        start,label = label,start
     if start is None:
         try:    start = _tictime
         except: start = 0 # This doesn't exist, so just leave start at 0.
