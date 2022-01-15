@@ -1018,8 +1018,8 @@ def savefig(filename, fig=None, comments=None, freeze=False, frame=2, die=True, 
     function. Additional comments can be added to the saved file as well. These
     can be retrieved via ``sc.loadmetadata()``.
 
-    Metadata can be stored and retrieved for PNG, SVG, or TIF. Metadata can be
-    stored for PDF, but cannot be automatically retrieved.
+    Metadata can be stored and retrieved for PNG or SVG. Metadata
+    can be stored for PDF, but cannot be automatically retrieved.
 
     Args:
         filename (str):    name of the file to save to
@@ -1074,21 +1074,22 @@ def savefig(filename, fig=None, comments=None, freeze=False, frame=2, die=True, 
 
     # Handle different formats
     lcfn = filename.lower() # Lowercase filename
-    is_bitmap = any([lcfn.endswith(k) for k in ['png', 'tif', 'tiff']])
-    is_vector = any([lcfn.endswith(k) for k in ['svg', 'ps', 'eps', 'pdf']])
-    if is_bitmap:
+    if lcfn.endswith('png'):
         metadata = {_metadataflag:jsonstr}
-    elif is_vector:
+    elif lcfn.endswith('svg') or lcfn.endswith('pdf'):
         metadata = dict(Keywords=f'{_metadataflag}={jsonstr}')
     else:
-        errormsg = f'Warning: filename "{filename}" has unsupported type. Please use pl.savefig() instead.'
+        errormsg = f'Warning: filename "{filename}" has unsupported type: must be png, svg, or pdf. Please use pl.savefig() instead.'
         if die:
             raise ValueError(errormsg)
         else:
+            metadata = None
             print(errormsg)
 
     # Save the figure
-    fig.savefig(filename, dpi=dpi, metadata=metadata, **kwargs)
+    if metadata is not None:
+        kwargs['metadata'] = metadata # To avoid warnings for unsupported filenames
+    fig.savefig(filename, dpi=dpi, **kwargs)
     return filename
 
 
@@ -1116,9 +1117,7 @@ def loadmetadata(filename, die=True):
     lcfn = filename.lower() # Lowercase filename
 
     # Handle bitmaps
-    is_bitmap = any([lcfn.endswith(k) for k in ['png', 'tif', 'tiff']])
-    is_vector = any([lcfn.endswith(k) for k in ['svg']])
-    if is_bitmap:
+    if lcfn.endswith('png'):
         try:
             import PIL
         except ImportError as E: # pragma: no cover
@@ -1143,7 +1142,7 @@ def loadmetadata(filename, die=True):
 
 
     # Handle SVG
-    elif is_vector:
+    elif lcfn.endswith('svg'):
 
         # Load SVG as text and parse it
         svg = scf.loadtext(filename).splitlines()

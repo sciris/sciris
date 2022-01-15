@@ -6,6 +6,7 @@ import os
 import numpy as np
 import pylab as pl
 import sciris as sc
+import pytest
 
 #%% Functions
 
@@ -212,15 +213,43 @@ def test_saveload(doplot=doplot):
 
     fig = pl.figure()
     pl.plot([1,3,7])
+    fn = sc.objdict()
+    fn.png1 = 'example1.png'
+    fn.png2 = 'example2.png'
+    fn.jpg  = 'example.jpg'
 
-    sc.savefig('example1.png')
-    md1 = sc.loadmetadata('example1.png')
 
-    sc.savefig('example2.png', fig=fig, comments='My figure', freeze=True)
-    md2 = sc.loadmetadata('example2.png')
+    # Basic usage
+    sc.savefig(fn.png1)
+    md1 = sc.loadmetadata(fn.png1)
+    sc.pp(md1)
+
+    # Complex usage
+    comments = 'My figure'
+    sc.savefig(fn.png2, fig=fig, comments=comments, freeze=True)
+    md2 = sc.loadmetadata(fn.png2)
+    assert md2['modules']['numpy'] == np.__version__ # Check version information was stored correctly
+    assert md2['comments'] == comments
+
+    # Should print a warning
+    with sc.capture() as txt:
+        sc.savefig(fn.jpg, die=False)
+    assert 'Warning' in txt
 
     with pytest.raises(ValueError):
-        sc.savefig('example1.jpg')
+        sc.savefig(fn.jpg)
+
+    with pytest.raises(ValueError):
+        sc.loadmetadata(fn.jpg)
+
+    # Tidy up
+    pl.close(fig)
+    for f in fn.values():
+        try:
+            os.remove(f)
+            print(f'Removed temporary file {f}')
+        except Exception as E:
+            print(f'Could not remove {f}: {E}')
 
     return md2
 
