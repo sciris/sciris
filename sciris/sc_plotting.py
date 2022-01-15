@@ -1229,6 +1229,27 @@ def orderlegend(order=None, ax=None, handles=None, labels=None, reverse=None, **
 
     return
 
+
+class animation(scu.prettyobj):
+    '''
+    A class for storing and saving a Matplotlib animation.
+
+    **Examples**::
+
+        anim = sc.animation()
+        fig = pl.figure()
+        for i in range(50):
+            scale = 1/sqrt(i+1)
+            x = scale*pl.rand(10)
+            y = scale*pl.rand(10)
+            label = str(i) if i %% 10 else None
+            pl.scatter(x, y, label=label)
+            pl.legend()
+
+    '''
+    pass
+
+
 def savemovie(frames, filename=None, fps=None, quality=None, dpi=None, writer=None, bitrate=None, interval=None, repeat=False, repeat_delay=None, blit=False, verbose=True, **kwargs):
     '''
     Save a set of Matplotlib artists as a movie.
@@ -1287,8 +1308,6 @@ def savemovie(frames, filename=None, fps=None, quality=None, dpi=None, writer=No
     Version: 2019aug21
     '''
 
-    from matplotlib import animation # Place here since specific only to this function
-
     if not isinstance(frames, list):
         errormsg = f'sc.savemovie(): argument "frames" must be a list, not "{type(frames)}"'
         raise TypeError(errormsg)
@@ -1337,7 +1356,7 @@ def savemovie(frames, filename=None, fps=None, quality=None, dpi=None, writer=No
         print(f'Saving {len(frames)} frames at {fps} fps and {dpi} dpi to "{filename}" using {writer}...')
 
     # Actually create the animation -- warning, no way to not actually have it render!
-    anim = animation.ArtistAnimation(fig, frames, interval=interval, repeat_delay=repeat_delay, repeat=repeat, blit=blit)
+    anim = mpl.animation.ArtistAnimation(fig, frames, interval=interval, repeat_delay=repeat_delay, repeat=repeat, blit=blit)
     anim.save(filename, writer=writer, fps=fps, dpi=dpi, bitrate=bitrate, **kwargs)
 
     if verbose:
@@ -1348,6 +1367,6 @@ def savemovie(frames, filename=None, fps=None, quality=None, dpi=None, writer=No
             else:            print(f'File size: {filesize/1e6:0.2f} MB')
         except:
             pass
-        scd.toc(start)
+        scd.toc(start, label='saving movie')
 
     return anim

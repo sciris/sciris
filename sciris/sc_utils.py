@@ -1615,32 +1615,52 @@ def mprofile(run, follow=None, show_results=True, *args, **kwargs):
     return lp
 
 
-def getcaller(frame=2, tostring=True):
+def getcaller(frame=2, tostring=True, includelineno=False, includeline=False):
     '''
     Try to get information on the calling function, but fail gracefully.
 
-    Frame 1 is the current file (this one), so not very useful. Frame 2 is
-    the default assuming it is being called directly. Frame 3 is used if
+    Frame 1 is the file calling this function, so not very useful. Frame 2 is
+    the default assuming, it is being called directly. Frame 3 is used if
     another function is calling this function internally.
 
     Args:
-        frame (int): how many frames to descend (e.g. the caller of the caller of the...)
-        tostring (bool): whether to return a string instead of a dict
+        frame (int): how many frames to descend (e.g. the caller of the caller of the...), default 2
+        tostring (bool): whether to return a string instead of a dict with filename and line number
+        includelineno (bool): if ``tostring``, whether to also include the line number
+        includeline (bool): if not ``tostring``, also store the line contents
 
     Returns:
-        output (str/dict): the filename and line number of the calling function, either as a string or dict
+        output (str/dict): the filename (and line number) of the calling function, either as a string or dict
 
-    New in version 1.0.0.
+    **Examples**::
+
+        sc.getcaller()
+        sc.getcaller(tostring=False)['filename'] # Equivalent to sc.getcaller()
+        sc.getcaller(frame=3) # Descend one level deeper than usual
+        sc.getcaller(frame=1, tostring=False, includeline=True) # See the line that called sc.getcaller()
+
+    | New in version 1.0.0.
+    | New in version 1.3.3: do not include line by default
     '''
     try:
         import inspect
         result = inspect.getouterframes(inspect.currentframe(), 2)
         fname = str(result[frame][1])
-        lineno = str(result[frame][2])
+        lineno = result[frame][2]
         if tostring:
-            output = f'{fname}, line {lineno}'
+            output = f'{fname}'
+            if includelineno:
+                output += f', line {lineno}'
         else:
             output = {'filename':fname, 'lineno':lineno}
+            if includeline:
+                try:
+                    with open(fname) as f:
+                        lines = f.read().splitlines()
+                        line = lines[lineno-1] # -1 since line numbers start at 1
+                    output['line'] = line
+                except: # Fail silently
+                    output['line'] = 'N/A'
     except Exception as E: # pragma: no cover
         if tostring:
             output = f'Calling function information not available ({str(E)})'
