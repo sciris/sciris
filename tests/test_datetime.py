@@ -118,13 +118,74 @@ def test_dates():
     return o
 
 
+def test_tictoc():
+    sc.heading('Testing tic, toc, and timer')
+
+    t = 0.01
+    def nap():
+        sc.timedsleep(t, verbose=False)
+        return
+
+    print('Testing tic/toc...')
+
+    # Test basic usage
+    with sc.capture() as txt1:
+        sc.tic(); nap(); sc.toc()
+    print(txt1)
+    assert 'Elapsed' in txt1
+
+    # Test advanced usage
+    with sc.capture() as txt2:
+        T = sc.tic()
+        nap()
+        sc.toc(T, label='slow_func2')
+    print(txt2)
+    assert 'slow_func2' in txt2
+
+    print('Testing timer...')
+
+    with sc.capture() as txt3:
+        T = sc.timer(baselabel='mybase: ', label='mylabel')
+        T.tic()
+        nap()
+        T.toc()
+    print(txt3)
+    assert 'mybase' in txt3
+    assert 'mylabel' in txt3
+
+    with sc.capture() as txt4:
+        T = sc.timer()
+        T.start()
+        nap()
+        T.stop('newlabel')
+    print(txt4)
+    assert 'newlabel' in txt4
+
+    T = sc.timer(auto=True, doprint=False)
+    with sc.capture() as txt5:
+        n = 5
+        for i in range(n):
+            nap()
+            T.tt()
+    assert txt5 == ''
+    lbound = n*t/2
+    ubound = n*t*2
+    assert lbound < T.timings[:].sum() < ubound
+    assert '(4)' in T.timings.keys()[4]
+
+    return T.timings
+
+
+
 #%% Run as a script
 if __name__ == '__main__':
-    sc.tic()
+    T = sc.tic()
 
     # Dates
     dateobj   = test_readdate()
     dates     = test_dates()
+    times     = test_tictoc()
 
-    sc.toc()
+    sc.blank()
+    sc.toc(T)
     print('Done.')

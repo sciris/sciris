@@ -591,6 +591,8 @@ def toc(start=None, label=None, baselabel=None, sigfigs=None, reset=False, outpu
     if label is None:
         if baselabel is None:
             base = 'Elapsed time: '
+        else:
+            base = baselabel
     else:
         if baselabel is None:
             if label:
@@ -692,7 +694,7 @@ class timer(scu.prettyobj):
         self.kwargs = kwargs # Store kwargs to pass to toc() at the end of the block
         self.kwargs['label'] = label
         self.auto = auto
-        self.start = None
+        self._start = None
         self.elapsed = None
         self.message = None
         self.count = 0
@@ -711,17 +713,18 @@ class timer(scu.prettyobj):
 
     def tic(self):
         ''' Set start time '''
-        self.start = tic()
+        self._start = tic()
         return
 
     def toc(self, label=None, **kwargs):
         ''' Print elapsed time; see ``sc.toc()`` for keyword arguments '''
 
         # Get the time
-        self.elapsed, self.message = toc(start=self.start, output='both', doprint=False) # Get time as quickly as possible
+        self.elapsed, self.message = toc(start=self._start, output='both', doprint=False) # Get time as quickly as possible
 
         # Update the kwargs, including the label
-        kwargs['label'] = label
+        if label is not None:
+            kwargs['label'] = label
         for k,v in self.kwargs.items():
             if k not in kwargs:
                 kwargs[k] = v
@@ -888,9 +891,14 @@ def elapsedtimestr(pasttime, maxdays=5, minseconds=10, shortmonths=True):
     return time_str
 
 
-def timedsleep(delay=None, verbose=True):
+def timedsleep(delay=None, start=None, verbose=True):
     '''
     Delay for a certain amount of time, to ensure accurate timing.
+
+    Args:
+        delay (float): time, in seconds, to wait for
+        start (float): if provided, the start time
+        verbose (bool): whether to print activity
 
     **Example**::
 
@@ -906,14 +914,17 @@ def timedsleep(delay=None, verbose=True):
         _delaytime = time.time()  # Store the present time in the global.
         return _delaytime         # Return the same stored number.
     else:
-        try:    start = _delaytime
-        except: start = time.time()
+        if start is None:
+            try:    start = _delaytime
+            except: start = time.time()
         elapsed = time.time() - start
         remaining = delay - elapsed
         if remaining>0:
             if verbose:
                 print(f'Pausing for {remaining:0.1f} s')
             time.sleep(remaining - self_time)
+            try:    del _delaytime # After it's been used, we can't use it again
+            except: pass
         else:
             if verbose:
                 print(f'Warning, delay less than elapsed time ({delay:0.1f} vs. {elapsed:0.1f})')
