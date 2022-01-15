@@ -17,9 +17,9 @@ import colors
 import pprint
 import numpy as np
 import collections as co
-import contextlib as cl
 from textwrap import fill
 from collections import UserString
+from contextlib import redirect_stdout
 from . import sc_utils as scu
 
 
@@ -890,7 +890,7 @@ def progressbar(i, maxiters, label='', length=30, empty='—', full='•', newli
     return
 
 
-class capture(UserString, cl.redirect_stdout, str):
+class capture(UserString, str, redirect_stdout):
     '''
     Captures stdout (e.g., from ``print()``) as a variable.
 
@@ -921,27 +921,17 @@ class capture(UserString, cl.redirect_stdout, str):
 
     def __init__(self):
         self._io = io.StringIO()
-        self._redirects = []
-        all_keys = [None, 'all', 'both']
-        which = 'stdout'
-        if which in all_keys + ['stdout']:
-            self._redirects.append(cl.redirect_stdout)
-        if which in all_keys + ['stderr']:
-            self._redirects.append(cl.redirect_stderr)
         UserString.__init__(self, '')
-        for redirect in self._redirects:
-            redirect.__init__(self, self._io)
+        redirect_stdout.__init__(self, self._io)
         return
 
     def __enter__(self, *args, **kwargs):
-        for redirect in self._redirects:
-            redirect.__enter__(self, *args, **kwargs)
+        redirect_stdout.__enter__(self, *args, **kwargs)
         return self
 
     def __exit__(self, *args, **kwargs):
         self.data += self._io.getvalue()
-        for redirect in self._redirects:
-            redirect.__exit__(self, *args, **kwargs)
+        redirect_stdout.__exit__(self, *args, **kwargs)
         return
 
     def start(self):
