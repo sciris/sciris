@@ -1477,6 +1477,7 @@ def savemovie(frames, filename=None, fps=None, quality=None, dpi=None, writer=No
 
     Version: 2019aug21
     '''
+    import matplotlib.animation as mpl_anim # Sometimes fails if not imported directly
 
     if not isinstance(frames, list):
         errormsg = f'sc.savemovie(): argument "frames" must be a list, not "{type(frames)}"'
@@ -1526,7 +1527,7 @@ def savemovie(frames, filename=None, fps=None, quality=None, dpi=None, writer=No
         print(f'Saving {len(frames)} frames at {fps} fps and {dpi} dpi to "{filename}" using {writer}...')
 
     # Actually create the animation -- warning, no way to not actually have it render!
-    anim = mpl.animation.ArtistAnimation(fig, frames, interval=interval, repeat_delay=repeat_delay, repeat=repeat, blit=blit)
+    anim = mpl_anim.ArtistAnimation(fig, frames, interval=interval, repeat_delay=repeat_delay, repeat=repeat, blit=blit)
     anim.save(filename, writer=writer, fps=fps, dpi=dpi, bitrate=bitrate, **kwargs)
 
     if verbose:
