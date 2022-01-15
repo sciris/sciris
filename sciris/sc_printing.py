@@ -525,7 +525,8 @@ def printvars(localvars=None, varlist=None, label=None, divider=True, spaces=1, 
 
 #%% Color functions
 
-__all__ += ['colorize', 'heading']
+__all__ += ['colorize', 'heading', 'printred', 'printyellow', 'printgreen',
+            'printcyan', 'printblue', 'printmagenta']
 
 
 def colorize(color=None, string=None, doprint=None, output=False, enable=True, showhelp=False, fg=None, bg=None, style=None):
@@ -632,6 +633,32 @@ def colorize(color=None, string=None, doprint=None, output=False, enable=True, s
             colorize(helpcolor, '  ' + key)
 
     return scu._printout(string=ansistring, doprint=doprint, output=output)
+
+
+# Alias certain colors functions -- not including white and black since poor practice on light/dark terminals
+def printred(s, **kwargs):
+    ''' Alias to print(colors.red(s)) '''
+    return print(colors.red(s, **kwargs))
+
+def printyellow(s, **kwargs):
+    ''' Alias to print(colors.yellow(s)) '''
+    return print(colors.yellow(s, **kwargs))
+
+def printgreen(s, **kwargs):
+    ''' Alias to print(colors.green(s)) '''
+    return print(colors.green(s, **kwargs))
+
+def printcyan(s, **kwargs):
+    ''' Alias to print(colors.cyan(s)) '''
+    return print(colors.cyan(s, **kwargs))
+
+def printblue(s, **kwargs):
+    ''' Alias to print(colors.blue(s)) '''
+    return print(colors.blue(s, **kwargs))
+
+def printmagenta(s, **kwargs):
+    ''' Alias to print(colors.magenta(s)) '''
+    return print(colors.magenta(s, **kwargs))
 
 
 def heading(string=None, *args, color=None, divider=None, spaces=None, spacesafter=None, minlength=None, maxlength=None, sep=' ', doprint=None, output=False, **kwargs):

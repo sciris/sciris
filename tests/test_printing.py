@@ -18,7 +18,16 @@ def test_colorize():
     sc.colorize('reset') # Colorize all output in between
     bluearray = sc.colorize(color='blue', string=str(range(5)), output=True)
     print("This should be blue: " + bluearray)
+
+    print('This should be a rainbow:')
+    sc.printred(    'This should be red')
+    sc.printyellow( 'This should be yellow')
+    sc.printgreen(  'This should be green')
+    sc.printcyan(   'This should be cyan')
+    sc.printblue(   'This should be blue')
+    sc.printmagenta('This should be magenta')
     return
+
 
 
 def test_printing():
