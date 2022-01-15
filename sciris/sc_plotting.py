@@ -1009,7 +1009,7 @@ __all__ += ['savefig', 'loadmetadata', 'savefigs', 'loadfig', 'emptyfig', 'separ
 
 _metadataflag = 'sciris_metadata' # Key name used to identify metadata saved in a figure
 
-def savefig(filename, fig=None, comments=None, freeze=False, frame=2, die=True, **kwargs):
+def savefig(filename, fig=None, dpi=None, comments=None, freeze=False, frame=2, die=True, **kwargs):
     '''
     Save a figure, including metadata
 
@@ -1024,6 +1024,7 @@ def savefig(filename, fig=None, comments=None, freeze=False, frame=2, die=True, 
     Args:
         filename (str):    name of the file to save to
         fig      (Figure): the figure to save (if None, use current)
+        dpi      (int):    resolution of the figure to save (default 200 or current default, whichever is higher)
         comments (str):    additional metadata to save to the figure
         freeze   (bool):   whether to store the contents of ``pip freeze`` in the metadata (warning, slow)
         frame    (int):    which calling file to try to store information from (default, the file calling ``sc.savefig()``)
@@ -1048,11 +1049,11 @@ def savefig(filename, fig=None, comments=None, freeze=False, frame=2, die=True, 
         fig = pl.gcf()
 
     # Handle DPI
-    dpi = kwargs.pop('dpi', 150)
-    mpl_dpi = pl.rcParams['savefig.dpi']
-    if mpl_dpi == 'figure':
-        mpl_dpi = pl.rcParams['figure.dpi']
-    dpi = max(mpl_dpi, dpi) # Don't downgrade DPI
+    if dpi is None:
+        mpl_dpi = pl.rcParams['savefig.dpi']
+        if mpl_dpi == 'figure':
+            mpl_dpi = pl.rcParams['figure.dpi']
+        dpi = max(mpl_dpi, 200) # Don't downgrade DPI
 
     # Get caller and git info
     caller = scu.getcaller(frame=frame, tostring=False)
