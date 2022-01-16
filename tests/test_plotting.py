@@ -53,7 +53,7 @@ def test_colormaps(doplot=doplot):
     y = pl.rand(n)
     colors = sc.arraycolors(arr)
     if doplot:
-        pl.figure(figsize=(20,16))
+        pl.figure('Array colors', figsize=(20,16))
         for c in range(ncols):
             pl.scatter(x+c, y, s=50, c=colors[:,c])
     o.arraycolors = colors
@@ -76,19 +76,19 @@ def test_3d(doplot=doplot):
 
     print('Testing surf3d')
     if doplot:
-        o.fig = sc.fig3d()
+        o.fig = sc.fig3d(num='Blank 3D')
 
     print('Testing surf3d')
     data = pl.randn(50,50)
     smoothdata = sc.smooth(data,20)
     if doplot:
-        sc.surf3d(smoothdata)
+        sc.surf3d(smoothdata, figkwargs=dict(num='surf3d'))
 
     print('Testing bar3d')
     data = pl.rand(20,20)
     smoothdata = sc.smooth(data)
     if doplot:
-        sc.bar3d(smoothdata)
+        sc.bar3d(smoothdata, figkwargs=dict(num='bar3d'))
 
     return o
 
@@ -103,7 +103,7 @@ def test_other(doplot=doplot):
 
     if doplot:
         sc.emptyfig()
-        o.fig = pl.figure()
+        o.fig = pl.figure('Limits')
 
         pl.subplot(2,1,1)
         pl.plot(data)
@@ -125,18 +125,13 @@ def test_other(doplot=doplot):
             print('↑↑↑ Ignoring since sc.maximize() unlikely to work via e.g. automated testing')
 
         # Test legends
-        pl.figure()
+        pl.figure('Legends')
         pl.plot([1,4,3], label='A')
         pl.plot([5,7,8], label='B')
         pl.plot([2,5,2], label='C')
         sc.orderlegend(reverse=True) # Legend order C, B, A
         sc.orderlegend([1,0,2], frameon=False) # Legend order B, A, C with no frame
         sc.separatelegend()
-
-        # Test date formatter
-        pl.figure()
-        pl.plot(np.arange(365), pl.rand(365))
-        sc.dateformatter('2021-01-01')
 
     return o
 
@@ -153,7 +148,7 @@ def test_saving(doplot=doplot):
     if doplot:
 
         print('Testing save figs')
-        o.fig = pl.figure()
+        o.fig = pl.figure('Save figs')
         pl.plot(pl.rand(10))
 
         sc.savefigs(o.fig, filetype='fig', filename=fn.fig)
@@ -165,7 +160,7 @@ def test_saving(doplot=doplot):
 
         print('Testing animation')
         anim = sc.animation(filename=fn.anim)
-        pl.figure()
+        pl.figure('Animation')
         for i in range(3):
             pl.plot(pl.cumsum(pl.randn(100)))
             anim.addframe()
@@ -185,7 +180,7 @@ def test_dates(doplot=doplot):
     if doplot:
         x = np.array(sc.daterange('2020-12-24', '2021-01-15', asdate=True))
         y = sc.smooth(pl.rand(len(x)))
-        o.fig = pl.figure(figsize=(6,6))
+        o.fig = pl.figure('Date formatters', figsize=(6,6))
 
         for i,style in enumerate(['auto', 'concise', 'sciris']):
             pl.subplot(3,1,i+1)
@@ -194,6 +189,10 @@ def test_dates(doplot=doplot):
             sc.dateformatter(style=style, rotation=1)
 
         sc.figlayout()
+
+        pl.figure('Datenum formatter')
+        pl.plot(np.arange(500), pl.randn(500))
+        sc.datenumformatter(start_date='2021-01-01')
 
     return o
 
@@ -209,7 +208,7 @@ def test_fonts(doplot=doplot):
     sc.fonts(add=sc.path('files/examplefont.ttf'), use=True, die=True, verbose=True)
 
     if doplot:
-        pl.figure()
+        pl.figure('Fonts')
         pl.plot([1,2,3], [4,5,6])
         pl.xlabel('Example label in new font')
 
@@ -222,13 +221,12 @@ def test_fonts(doplot=doplot):
 def test_saveload(doplot=doplot):
     sc.heading('Testing figure save/load')
 
-    fig = pl.figure()
+    fig = pl.figure('Save/load')
     pl.plot([1,3,7])
     fn = sc.objdict()
     fn.png1 = 'example1.png'
     fn.png2 = 'example2.png'
     fn.jpg  = 'example.jpg'
-
 
     # Basic usage
     sc.savefig(fn.png1)

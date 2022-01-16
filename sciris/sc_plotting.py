@@ -19,7 +19,6 @@ Highlights:
 import os
 import sys
 import tempfile
-import warnings
 import datetime as dt
 import pylab as pl
 import numpy as np
@@ -39,16 +38,14 @@ from . import sc_datetime as scd
 __all__ = ['fig3d', 'ax3d', 'plot3d', 'scatter3d', 'surf3d', 'bar3d']
 
 
-def fig3d(returnax=False, figkwargs=None, axkwargs=None, **kwargs):
+def fig3d(num=None, returnax=False, figkwargs=None, axkwargs=None, **kwargs):
     '''
     Shortcut for creating a figure with 3D axes.
 
     Usually not invoked directly; kwargs are passed to figure()
     '''
-
-    if figkwargs is None: figkwargs = {}
-    if axkwargs is None: axkwargs = {}
-    figkwargs.update(kwargs)
+    figkwargs = scu.mergedicts(figkwargs, kwargs, num=num)
+    axkwargs = scu.mergedicts(axkwargs)
 
     fig,ax = ax3d(returnfig=True, figkwargs=figkwargs, **axkwargs)
     if returnax:
@@ -65,9 +62,8 @@ def ax3d(fig=None, ax=None, returnfig=False, silent=False, elev=None, azim=None,
     '''
     from mpl_toolkits.mplot3d import Axes3D # analysis:ignore
 
-    if figkwargs is None: figkwargs = {}
-    if axkwargs is None: axkwargs = {}
-    axkwargs.update(kwargs)
+    figkwargs = scu.mergedicts(figkwargs)
+    axkwargs = scu.mergedicts(axkwargs, kwargs)
     nrows = axkwargs.pop('nrows', 1) # Since fig.add_subplot() can't handle kwargs...
     ncols = axkwargs.pop('ncols', 1)
     index = axkwargs.pop('index', 1)
@@ -759,7 +755,7 @@ def fonts(add=None, use=False, output='name', dryrun=False, rebuild=False, verbo
 #%% Date plotting
 ##############################################################################
 
-__all__ += ['dateformatter']
+__all__ += ['ScirisDateFormatter', 'dateformatter', 'datenumformatter']
 
 
 class ScirisDateFormatter(mpl.dates.ConciseDateFormatter):
@@ -838,63 +834,51 @@ class ScirisDateFormatter(mpl.dates.ConciseDateFormatter):
 
         return labels
 
-def dateformatter(ax=None, style='sciris', startdate=None, dateformat=None, interval=None,
-                  start=None, end=None, rotation=None, locator=None, axis='x', asdates=True, **kwargs):
+
+def dateformatter(ax=None, style='sciris', dateformat=None, start=None, end=None,
+                  rotation=None, locator=None, axis='x', **kwargs):
     '''
-    Format the x-axis to use dates.
+    Format the x-axis to use a given date formatter.
 
-    If the x-axis already uses dates, then the "style" argument will be used to
-    configure it (by default, using the Sciris house style). Alternatively, if the
-    x-axis is numeric, the other formatting arguments will be used to create psuedo-dates
-    instead.
+    By default, this will apply the Sciris date formatter to the current x-axis.
+    This formatter is a combination of Matplotlib's Concise date formatter, and
+    Plotly's date formatter.
 
-    While primary usage is to configure a single axis, the formatter can also be
-    registered as the global formatter via ``sc.dateformatter(setglobal=True)``.
+    See also ``sc.datenumformatter()`` to convert a numeric axis to date labels.
 
     Args:
         ax         (axes)     : if supplied, use these axes instead of the current one
         style      (str)      : the style to use if the axis already uses dates; options are "sciris", "auto", "concise", or a Formatter object
-        start_date (str/date) : the start day, either as a string or date object (not needed if x-axis already uses dates)
         dateformat (str)      : the date format (default ``'%Y-%b-%d'``; not needed if x-axis already uses dates)
-        interval   (int)      : if supplied, the interval between ticks (not needed if x-axis already uses dates)
         start      (str/int)  : if supplied, the lower limit of the axis
         end        (str/int)  : if supplied, the upper limit of the axis
         rotation   (float)    : rotation of the labels, in degrees
         locator    (Locator)  : if supplied, use this instead of the default ``AutoDateLocator`` locator
         axis       (str)      : which axis to apply to the formatter to (default 'x')
-        asdates    (bool)     : whether the axis uses ``datetime`` objects (if False, interpret as integer days)
         kwargs     (dict)     : passed to the date formatter (e.g., ``ScirisDateFormatter``)
 
     **Examples**::
 
         # Reformat date data
+        pl.figure()
         x = sc.daterange('2021-04-04', '2022-05-05', asdate=True)
         y = sc.smooth(pl.rand(len(x)))
         pl.plot(x, y)
         sc.dateformatter()
 
-        # Automatically configure a non-date axis with default options
-        pl.plot(np.arange(365), pl.rand(365))
-        sc.dateformatter(start_date='2021-01-01')
-
-        # Manually configure
-        ax = pl.subplot(111)
-        ax.plot(np.arange(60), np.random.random(60))
-        formatter = sc.dateformatter(start_date='2020-04-04', interval=7, start='2020-05-01', end=50, dateformat='%m-%d', ax=ax)
+        # Configure with Matplotlib's Concise formatter
+        fig,ax = pl.subplots()
+        pl.plot(sc.date(np.arange(365), start_date='2022-01-01'), pl.randn(365))
+        sc.dateformatter(ax=ax, style='concise')
 
     | New in version 1.2.0.
     | New in version 1.2.2: "rotation" argument; renamed "start_day" to "start_date"
     | New in version 1.3.0: refactored to use built-in Matplotlib date formatting
     | New in version 1.3.2: "axis" argument
-    | New in version 1.3.3: assume asdates=True (required for Matplotlib 3.5.0 support)
+    | New in version 1.3.3: split ``sc.dateformatter()`` from ``sc.datenumformatter()``
     '''
 
     # Handle deprecation
-    start_day = kwargs.pop('start_day', None)
-    if start_day is not None: # pragma: no cover
-        start_date = start_day
-        warnmsg = 'sc.dateformatter() argument "start_day" has been deprecated as of v1.2.2; use "start_date" instead'
-        warnings.warn(warnmsg, category=DeprecationWarning, stacklevel=2)
     style = kwargs.pop('dateformatter', style) # Allow this as an alias
 
     # Handle axis
@@ -904,75 +888,118 @@ def dateformatter(ax=None, style='sciris', startdate=None, dateformat=None, inte
     if ax is None:
         ax = pl.gca()
 
-    # Option 1 -- they're already dates
-    if asdates:
-
-        # Handle dateformat, if provided
-        if dateformat is not None:
-            if isinstance(dateformat, str):
-                kwargs['formats'] = [dateformat]*6
-            elif isinstance(dateformat, list):
-                kwargs['formats'] = dateformat
-            else:
-                errormsg = f'Could not recognize date format {type(dateformat)}: expecting string or list'
-                raise ValueError(errormsg)
-            kwargs['zero_formats'] = kwargs['formats']
-
-        # Handle locator and styles
-        if locator is None:
-            locator = mpl.dates.AutoDateLocator(minticks=3)
-        style = str(style).lower()
-        if style in ['none', 'sciris', 'house', 'default']:
-            formatter = ScirisDateFormatter(locator, **kwargs)
-        elif style in ['auto', 'matplotlib']:
-            formatter = mpl.dates.AutoDateFormatter(locator, **kwargs)
-        elif style in ['concise', 'brief']:
-            formatter = mpl.dates.ConciseDateFormatter(locator, **kwargs)
-        elif isinstance(style, mpl.ticker.Formatter): # If a formatter is provided, use directly
-            formatter = style
+    # Handle dateformat, if provided
+    if dateformat is not None:
+        if isinstance(dateformat, str):
+            kwargs['formats'] = [dateformat]*6
+        elif isinstance(dateformat, list):
+            kwargs['formats'] = dateformat
         else:
-            errormsg = f'Style "{style}" not recognized; must be one of "sciris", "auto", or "concise"'
+            errormsg = f'Could not recognize date format {type(dateformat)}: expecting string or list'
             raise ValueError(errormsg)
+        kwargs['zero_formats'] = kwargs['formats']
 
-        # Handle axis and set the locator and formatter
-        if axis == 'x':
-            axis = ax.xaxis
-        elif axis == 'y': # If it's not x or y (!), assume it's an axis object
-            axis = ax.yaxis
-        axis.set_major_locator(locator)
-        axis.set_major_formatter(formatter)
-
-        # Handle limits
-        xmin, xmax = ax.get_xlim()
-        if start: xmin = scd.date(start)
-        if end:   xmax = scd.date(end)
-        ax.set_xlim((xmin, xmax))
-
-    # Option 2 -- they need to be converted
+    # Handle locator and styles
+    if locator is None:
+        locator = mpl.dates.AutoDateLocator(minticks=3)
+    style = str(style).lower()
+    if style in ['none', 'sciris', 'house', 'default']:
+        formatter = ScirisDateFormatter(locator, **kwargs)
+    elif style in ['auto', 'matplotlib']:
+        formatter = mpl.dates.AutoDateFormatter(locator, **kwargs)
+    elif style in ['concise', 'brief']:
+        formatter = mpl.dates.ConciseDateFormatter(locator, **kwargs)
+    elif isinstance(style, mpl.ticker.Formatter): # If a formatter is provided, use directly
+        formatter = style
     else:
+        errormsg = f'Style "{style}" not recognized; must be one of "sciris", "auto", or "concise"'
+        raise ValueError(errormsg)
 
-        # Set the default format -- "2021-01-01"
-        if dateformat is None:
-            dateformat = '%Y-%b-%d'
+    # Handle axis and set the locator and formatter
+    if axis == 'x':
+        axis = ax.xaxis
+    elif axis == 'y': # If it's not x or y (!), assume it's an axis object
+        axis = ax.yaxis
+    axis.set_major_locator(locator)
+    axis.set_major_formatter(formatter)
 
-        # Convert to a date object
-        if start_date is None:
-            start_date = pl.num2date(ax.dataLim.x0)
-        start_date = scd.date(start_date)
+    # Handle limits
+    xmin, xmax = ax.get_xlim()
+    if start: xmin = scd.date(start)
+    if end:   xmax = scd.date(end)
+    ax.set_xlim((xmin, xmax))
 
-        @mpl.ticker.FuncFormatter
-        def formatter(x, pos):
-            return (start_date + dt.timedelta(days=int(x))).strftime(dateformat)
+    # Set the rotation
+    if rotation:
+        ax.tick_params(axis='x', labelrotation=rotation)
 
-        # Handle limits
-        xmin, xmax = ax.get_xlim()
-        if start: xmin = scd.day(start, start_date=start_date)
-        if end:   xmax = scd.day(end,   start_date=start_date)
-        ax.set_xlim((xmin, xmax))
+    # Set the formatter
+    ax.xaxis.set_major_formatter(formatter)
 
-        # Set the x-axis intervals
-        if interval:
-            ax.set_xticks(np.arange(xmin, xmax+1, interval))
+    return formatter
+
+
+def datenumformatter(ax=None, start_date=None, dateformat=None, interval=None, start=None,
+                     end=None, rotation=None, axis='x'):
+    '''
+    Format a numeric x-axis to use dates.
+
+    See also ``sc.dateformatter()``, which is intended for use when the axis already
+    has date data.
+
+    Args:
+        ax         (axes)     : if supplied, use these axes instead of the current one
+        start_date (str/date) : the start day, either as a string or date object (not needed if x-axis already uses dates)
+        dateformat (str)      : the date format (default ``'%Y-%b-%d'``; not needed if x-axis already uses dates)
+        interval   (int)      : if supplied, the interval between ticks (not needed if x-axis already uses dates)
+        start      (str/int)  : if supplied, the lower limit of the axis
+        end        (str/int)  : if supplied, the upper limit of the axis
+        rotation   (float)    : rotation of the labels, in degrees
+
+    **Examples**::
+
+        # Automatically configure a non-date axis with default options
+        pl.plot(np.arange(365), pl.rand(365))
+        sc.datenumformatter(start_date='2021-01-01')
+
+        # Manually configure
+        fig,ax = pl.subplots()
+        ax.plot(np.arange(60), np.random.random(60))
+        formatter = sc.datenumformatter(start_date='2020-04-04', interval=7, start='2020-05-01', end=50, dateformat='%m-%d', ax=ax)
+
+    | New in version 1.2.0.
+    | New in version 1.2.2: "rotation" argument; renamed "start_day" to "start_date"
+    | New in version 1.3.3: renamed from ``sc.dateformatter()`` to  ``sc.datenumformatter()``
+    '''
+
+    # Handle axis
+    if isinstance(ax, str): # Swap inputs
+        ax, start_date = start_date, ax
+    if ax is None:
+        ax = pl.gca()
+
+    # Set the default format -- "2021-01-01"
+    if dateformat is None:
+        dateformat = '%Y-%b-%d'
+
+    # Convert to a date object
+    if start_date is None:
+        start_date = pl.num2date(ax.dataLim.x0)
+    start_date = scd.date(start_date)
+
+    @mpl.ticker.FuncFormatter
+    def formatter(x, pos):
+        return (start_date + dt.timedelta(days=int(x))).strftime(dateformat)
+
+    # Handle limits
+    xmin, xmax = ax.get_xlim()
+    if start: xmin = scd.day(start, start_date=start_date)
+    if end:   xmax = scd.day(end,   start_date=start_date)
+    ax.set_xlim((xmin, xmax))
+
+    # Set the x-axis intervals
+    if interval:
+        ax.set_xticks(np.arange(xmin, xmax+1, interval))
 
     # Set the rotation
     if rotation:
@@ -1286,9 +1313,9 @@ def reanimateplots(plots=None):
     return
 
 
-def emptyfig():
+def emptyfig(*args, **kwargs):
     ''' The emptiest figure possible '''
-    fig = pl.Figure(facecolor='None')
+    fig = pl.Figure(facecolor='None', *args, **kwargs)
     return fig
 
 

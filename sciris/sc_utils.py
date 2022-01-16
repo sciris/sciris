@@ -865,22 +865,27 @@ def swapdict(d):
     return output
 
 
-def mergedicts(*args, strict=False, overwrite=True, copy=False):
+def mergedicts(*args, _strict=False, _overwrite=True, _copy=False, **kwargs):
     '''
-    Small function to merge multiple dicts together. By default, skips things
-    that are not, dicts (e.g., None), and allows keys to be set multiple times.
-    Similar to dict.update(), except returns a value. The first dictionary supplied
-    will be used for the output type (e.g. if the first dictionary is an odict,
-    an odict will be returned).
+    Small function to merge multiple dicts together.
+
+    By default, skips things that are not, dicts (e.g., None), and allows keys
+    to be set multiple times. Similar to dict.update(), except returns a value.
+    The first dictionary supplied will be used for the output type (e.g. if the
+    first dictionary is an odict, an odict will be returned).
+
+    Note that arguments start with underscores to avoid possible collisions with
+    keywords (e.g. ``sc.mergedicts(dict(loose=True, strict=True), strict=False, _strict=True)``).
 
     Useful for cases, e.g. function arguments, where the default option is ``None``
     but you will need a dict later on.
 
     Args:
-        strict    (bool): if True, raise an exception if an argument isn't a dict
-        overwrite (bool): if False, raise an exception if multiple keys are found
-        copy      (bool): whether or not to deepcopy the merged dictionary
+        _strict    (bool): if True, raise an exception if an argument isn't a dict
+        _overwrite (bool): if False, raise an exception if multiple keys are found
+        _copy      (bool): whether or not to deepcopy the merged dictionary
         *args     (dict): the sequence of dicts to be merged
+        **kwargs  (dict): merge these into the dict as well
 
     **Examples**::
 
@@ -888,10 +893,17 @@ def mergedicts(*args, strict=False, overwrite=True, copy=False):
         d1 = sc.mergedicts({'a':1}, {'b':2}) # Returns {'a':1, 'b':2}
         d2 = sc.mergedicts({'a':1, 'b':2}, {'b':3, 'c':4}) # Returns {'a':1, 'b':3, 'c':4}
         d3 = sc.mergedicts(sc.odict({'b':3, 'c':4}), {'a':1, 'b':2}) # Returns sc.odict({'b':2, 'c':4, 'a':1})
-        d4 = sc.mergedicts({'b':3, 'c':4}, {'a':1, 'b':2}, overwrite=False) # Raises exception
+        d4 = sc.mergedicts({'b':3, 'c':4}, {'a':1, 'b':2}, _overwrite=False) # Raises exception
 
     New in version 1.1.0: "copy" argument
+    New in version 1.3.3: keywords allowed
     '''
+    # Warn about deprecated keys
+    renamed = ['strict', 'overwrite', 'copy']
+    if any([k in kwargs for k in renamed]):
+            warnmsg = f'sc.mergedicts() arguments "{strjoin(renamed)}" have been renamed with underscores as of v1.3.3; using these as keywords is undesirable'
+            warnings.warn(warnmsg, category=DeprecationWarning, stacklevel=2)
+
     # Try to get the output type from the first argument, but revert to a standard dict if that fails
     try:
         assert isinstance(args[0], dict)
@@ -902,11 +914,11 @@ def mergedicts(*args, strict=False, overwrite=True, copy=False):
     # Merge over the dictionaries in order
     for arg in args:
         is_dict = isinstance(arg, dict)
-        if strict and not is_dict:
+        if _strict and not is_dict:
             errormsg = f'Argument of "{type(arg)}" found; must be dict since strict=True'
             raise TypeError(errormsg)
         if is_dict:
-            if not overwrite:
+            if not _overwrite:
                 intersection = set(outputdict.keys()).intersection(arg.keys())
                 if len(intersection):
                     errormsg = f'Could not merge dicts since keys "{strjoin(intersection)}" overlap and overwrite=False'
