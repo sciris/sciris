@@ -148,7 +148,7 @@ def test_saving(doplot=doplot):
     fn = sc.objdict()
     fn.fig = 'testfig.fig'
     fn.movie = 'testmovie.gif'
-    fn.anim = 'testanim.mp4'
+    fn.anim = 'testanim.gif' # mp4 only available if ffmpeg is installed
 
     if doplot:
 
