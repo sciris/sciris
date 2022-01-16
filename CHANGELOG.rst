@@ -18,10 +18,10 @@ Plotting
 
 Other changes
 ~~~~~~~~~~~~~
-#. Added ``sc.capture()``, which will redirect ``stdout`` to a string, e.g. ``with sc.capture() as txt: print('This will be stored in "txt"')``.
+#. Added ``sc.capture()``, which will redirect ``stdout`` to a string, e.g. ``with sc.capture() as txt: print('This will be stored in "txt"')``. This is very useful for writing tests against text that is supposed to be printed out.
 #. Added quick aliases for ``sc.colorize()``, e.g. ``sc.printgreen('This is like print(), but green')``. Colors available are red, green, blue, cyan, yellow, magenta.
 #. Added an ``every`` argument to ``sc.progressbar()``, to not update on every step.
-#. Fixed bugs in several corner cases for ``sc.timer()``.
+#. Fixed labeling bugs in several corner cases for ``sc.timer()``.
 #. Added an explicit ``start`` argument to ``sc.timedsleep()``.
 #. Added additional flexibility to ``sc.getcaller()``, including storing the code of the calling line.
 
