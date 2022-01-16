@@ -6,6 +6,28 @@ All notable changes to this project will be documented in this file.
 By import convention, components of the Sciris library are listed beginning with ``sc.``, e.g. ``sc.odict()``.
 
 
+Version 1.3.3 (2022-01-16)
+--------------------------
+
+Plotting
+~~~~~~~~
+#. Added ``sc.savefig()``, which is like ``pl.savefig()`` but stores additional metadata in the figure -- the file that created the figure, git hash, even the entire contents of ``pip freeze`` if desired. Useful for making figures more reproducible.
+#. Likewise, ``sc.loadmetadata()`` will load the metadata from a PNG/SVG file saved with ``sc.savefig()``.
+#. Added ``sc.animation()`` as a more flexible alternative to ``sc.savemovie()``. While ``sc.savemovie()`` works directly with Matplotlib artists, ``sc.animation()`` works with entire figure objects so if you can plot it, you can animate it.
+#. Split ``sc.dateformatter()`` into two: ``sc.dateformatter()`` reformats axes that already use dates (e.g. ``pl.plot(sc.daterange('2022-01-01', '2022-01-31'), pl.rand(31))``), while ``sc.datenumformatter()`` reformats axes that use numbers (e.g. ``pl.plot(np.arange(31), pl.rand(31))``).
+#. Added flexibility for ``sc.boxoff()`` to turn off any sides of the box.
+
+Other changes
+~~~~~~~~~~~~~
+#. Added ``sc.capture()``, which will redirect ``stdout`` to a string, e.g. ``with sc.capture() as txt: print('This will be stored in "txt"')``. This is very useful for writing tests against text that is supposed to be printed out.
+#. Added quick aliases for ``sc.colorize()``, e.g. ``sc.printgreen('This is like print(), but green')``. Colors available are red, green, blue, cyan, yellow, magenta.
+#. Keyword arguments are now allowed for ``sc.mergedicts()``, e.g. ``sc.mergedicts({'a':1}, b=2)``. Existing keywords have been renamed to start with an underscore, e.g. ``_strict``.
+#. Added an ``every`` argument to ``sc.progressbar()``, to not update on every step.
+#. Fixed labeling bugs in several corner cases for ``sc.timer()``.
+#. Added an explicit ``start`` argument to ``sc.timedsleep()``.
+#. Added additional flexibility to ``sc.getcaller()``, including storing the code of the calling line.
+
+
 Version 1.3.2 (2022-01-13)
 --------------------------
 #. Additional flexibility in ``sc.timer()``: it now stores a list of times (``timer.timings``), allows auto-generated labels (``sc.timer(auto=True)``, and has a new method ``timer.tt()`` (short for ``toctic``) that will restart the timer (i.e. time diff rather than cumulative time).

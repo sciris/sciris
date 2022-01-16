@@ -191,13 +191,6 @@ def test_types():
     assert not sc.isarray([1,2,3])
     assert not sc.isarray(np.array([1,2,3]), dtype=float)
 
-    print('\nTesting mergedicts')
-    o.dicts1 = sc.mergedicts({'a':4, 'b':5}, {'b':8, 'c':8})
-    with pytest.raises(TypeError):
-        sc.mergedicts({'a':4, 'b':5}, 3, strict=True)
-    with pytest.raises(KeyError):
-        sc.mergedicts({'a':4, 'b':5}, {'b':8, 'c':8}, overwrite=False)
-
     print('\nTesting flexstr')
     o.flexstr = sc.flexstr(b'bytestring')
 

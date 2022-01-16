@@ -17,7 +17,8 @@ Highlights:
 ##############################################################################
 
 import os
-import warnings
+import sys
+import tempfile
 import datetime as dt
 import pylab as pl
 import numpy as np
@@ -37,16 +38,14 @@ from . import sc_datetime as scd
 __all__ = ['fig3d', 'ax3d', 'plot3d', 'scatter3d', 'surf3d', 'bar3d']
 
 
-def fig3d(returnax=False, figkwargs=None, axkwargs=None, **kwargs):
+def fig3d(num=None, returnax=False, figkwargs=None, axkwargs=None, **kwargs):
     '''
     Shortcut for creating a figure with 3D axes.
 
-    Usually not invoked directly; kwargs are passed to figure()
+    Usually not invoked directly; kwargs are passed to ``pl.figure()``
     '''
-
-    if figkwargs is None: figkwargs = {}
-    if axkwargs is None: axkwargs = {}
-    figkwargs.update(kwargs)
+    figkwargs = scu.mergedicts(figkwargs, kwargs, num=num)
+    axkwargs = scu.mergedicts(axkwargs)
 
     fig,ax = ax3d(returnfig=True, figkwargs=figkwargs, **axkwargs)
     if returnax:
@@ -63,9 +62,8 @@ def ax3d(fig=None, ax=None, returnfig=False, silent=False, elev=None, azim=None,
     '''
     from mpl_toolkits.mplot3d import Axes3D # analysis:ignore
 
-    if figkwargs is None: figkwargs = {}
-    if axkwargs is None: axkwargs = {}
-    axkwargs.update(kwargs)
+    figkwargs = scu.mergedicts(figkwargs)
+    axkwargs = scu.mergedicts(axkwargs, kwargs)
     nrows = axkwargs.pop('nrows', 1) # Since fig.add_subplot() can't handle kwargs...
     ncols = axkwargs.pop('ncols', 1)
     index = axkwargs.pop('index', 1)
@@ -277,27 +275,55 @@ __all__ += ['boxoff', 'setaxislim', 'setxlim', 'setylim', 'commaticks', 'SIticks
             'getrowscols', 'get_rows_cols', 'figlayout', 'maximize', 'fonts']
 
 
-def boxoff(ax=None, removeticks=True, flipticks=True):
+def boxoff(ax=None, which=None, removeticks=True):
     '''
-    Removes the top and right borders of a plot. Also optionally removes
-    the tick marks, and flips the remaining ones outside.
+    Removes the top and right borders ("spines") of a plot.
 
-    **Example**::
+    Also optionally removes the tick marks, and flips the remaining ones outside.
+    Can be used as an alias to ``pl.axis('off')`` if ``which='all'``.
 
+    Args:
+        ax (Axes): the axes to remove the spines from (if None, use current)
+        which (str/list): a list or comma-separated string of spines: 'top', 'bottom', 'left', 'right', or 'all' (default top & right)
+        removeticks (bool): whether to also remove the ticks from these spines
+        flipticks (bool): whether to flip remaining ticks out
+
+    **Examples**::
+
+        pl.figure()
         pl.plot([2,5,3])
         sc.boxoff()
 
-    Version: 2017may22
+        fig, ax = pl.subplots()
+        pl.plot([1,4,1,4])
+        sc.boxoff(ax=ax, which='all')
+
+        fig = pl.figure()
+        pl.scatter(np.arange(100), pl.rand(100))
+        sc.boxoff('top, bottom')
+
+    New in version 1.3.3: ability to turn off multiple spines; removed "flipticks" arguments
     '''
-    from pylab import gca
-    if ax is None: ax = gca()
-    ax.spines['top'].set_visible(False)
-    ax.spines['right'].set_visible(False)
-    if removeticks:
-        ax.xaxis.set_ticks_position('bottom')
-        ax.yaxis.set_ticks_position('left')
-    if flipticks:
-        ax.tick_params(direction='out', pad=5)
+    # Handle axes
+    if isinstance(ax, (str, list)): # Swap input arguments
+        ax,which = which,ax
+    if ax is None: ax = pl.gca()
+
+    # Handle which
+    if not isinstance(which, list):
+        if which is None:
+            which = 'top, right'
+        if which == 'all':
+            which = 'top, bottom, right, left'
+        if isinstance(which, str):
+            which = which.split(',')
+            which = [w.rstrip().lstrip() for w in which]
+
+    for spine in which: # E.g. ['top', 'right']
+        ax.spines[spine].set_visible(False)
+        if removeticks:
+            ax.tick_params(**{spine:False, f'label{spine}':False})
+
     return ax
 
 
@@ -729,26 +755,7 @@ def fonts(add=None, use=False, output='name', dryrun=False, rebuild=False, verbo
 #%% Date plotting
 ##############################################################################
 
-__all__ += ['dateformatter']
-
-
-def _dateaxis(ax=None, axis='x'):
-    ''' Check if the current axes use dates by seeing if the DateConverter is used '''
-
-    # Handle inputs
-    if ax is None:
-        ax = pl.gca()
-    if   axis == 'x': axi = ax.xaxis
-    elif axis == 'y': axi = ax.yaxis
-    elif axis == 'z': axi = ax.zaxis
-    else:
-        errormsg = f'Axis "{axis}" not found: must be x, y, or z'
-        raise ValueError(errormsg)
-
-    # Check
-    output = True if isinstance(axi.converter, mpl.dates.DateConverter) else False
-
-    return output
+__all__ += ['ScirisDateFormatter', 'dateformatter', 'datenumformatter']
 
 
 class ScirisDateFormatter(mpl.dates.ConciseDateFormatter):
@@ -827,58 +834,51 @@ class ScirisDateFormatter(mpl.dates.ConciseDateFormatter):
 
         return labels
 
-def dateformatter(ax=None, style='sciris', start_date=None, dateformat=None, interval=None,
-                  start=None, end=None, rotation=None, locator=None, axis='x', **kwargs):
-    '''
-    Format the x-axis to use dates.
 
-    If the x-axis already uses dates, then the "style" argument will be used to
-    configure it (by default, using the Sciris house style). Alternatively, if the
-    x-axis is numeric, the other formatting arguments will be used to create psuedo-dates
-    instead.
+def dateformatter(ax=None, style='sciris', dateformat=None, start=None, end=None,
+                  rotation=None, locator=None, axis='x', **kwargs):
+    '''
+    Format the x-axis to use a given date formatter.
+
+    By default, this will apply the Sciris date formatter to the current x-axis.
+    This formatter is a combination of Matplotlib's Concise date formatter, and
+    Plotly's date formatter.
+
+    See also ``sc.datenumformatter()`` to convert a numeric axis to date labels.
 
     Args:
-        ax (axes): if supplied, use these axes instead of the current one
-        style (str): the style to use if the axis already uses dates; options are "sciris", "auto", "concise", or a Formatter object
-        start_date (str/date): the start day, either as a string or date object (not needed if x-axis already uses dates)
-        dateformat (str): the date format (default ``'%Y-%b-%d'``; not needed if x-axis already uses dates)
-        interval (int): if supplied, the interval between ticks (not needed if x-axis already uses dates)
-        start (str/int): if supplied, the lower limit of the axis
-        end (str/int): if supplied, the upper limit of the axis
-        rotation (float): rotation of the labels, in degrees
-        locator (Locator): if supplied, use this instead of the default ``AutoDateLocator`` locator
-        axis (str): which axis to apply to the formatter to (default 'x')
-        kwargs(dict): passed to the date formatter (e.g., ``ScirisDateFormatter``)
+        ax         (axes)     : if supplied, use these axes instead of the current one
+        style      (str)      : the style to use if the axis already uses dates; options are "sciris", "auto", "concise", or a Formatter object
+        dateformat (str)      : the date format (default ``'%Y-%b-%d'``; not needed if x-axis already uses dates)
+        start      (str/int)  : if supplied, the lower limit of the axis
+        end        (str/int)  : if supplied, the upper limit of the axis
+        rotation   (float)    : rotation of the labels, in degrees
+        locator    (Locator)  : if supplied, use this instead of the default ``AutoDateLocator`` locator
+        axis       (str)      : which axis to apply to the formatter to (default 'x')
+        kwargs     (dict)     : passed to the date formatter (e.g., ``ScirisDateFormatter``)
 
     **Examples**::
 
         # Reformat date data
+        pl.figure()
         x = sc.daterange('2021-04-04', '2022-05-05', asdate=True)
         y = sc.smooth(pl.rand(len(x)))
         pl.plot(x, y)
         sc.dateformatter()
 
-        # Automatically configure a non-date axis with default options
-        pl.plot(np.arange(365), pl.rand(365))
-        sc.dateformatter(start_date='2021-01-01')
-
-        # Manually configure
-        ax = pl.subplot(111)
-        ax.plot(np.arange(60), np.random.random(60))
-        formatter = sc.dateformatter(start_date='2020-04-04', interval=7, start='2020-05-01', end=50, dateformat='%m-%d', ax=ax)
+        # Configure with Matplotlib's Concise formatter
+        fig,ax = pl.subplots()
+        pl.plot(sc.date(np.arange(365), start_date='2022-01-01'), pl.randn(365))
+        sc.dateformatter(ax=ax, style='concise')
 
     | New in version 1.2.0.
     | New in version 1.2.2: "rotation" argument; renamed "start_day" to "start_date"
     | New in version 1.3.0: refactored to use built-in Matplotlib date formatting
     | New in version 1.3.2: "axis" argument
+    | New in version 1.3.3: split ``sc.dateformatter()`` from ``sc.datenumformatter()``
     '''
 
     # Handle deprecation
-    start_day = kwargs.pop('start_day', None)
-    if start_day is not None: # pragma: no cover
-        start_date = start_day
-        warnmsg = 'sc.dateformatter() argument "start_day" has been deprecated as of v1.2.2; use "start_date" instead'
-        warnings.warn(warnmsg, category=DeprecationWarning, stacklevel=2)
     style = kwargs.pop('dateformatter', style) # Allow this as an alias
 
     # Handle axis
@@ -888,78 +888,118 @@ def dateformatter(ax=None, style='sciris', start_date=None, dateformat=None, int
     if ax is None:
         ax = pl.gca()
 
-    # Check if dates are already being used
-    isdate = _dateaxis(ax=ax)
-
-    # Option 1 -- they're already dates
-    if isdate:
-
-        # Handle dateformat, if provided
-        if dateformat is not None:
-            if isinstance(dateformat, str):
-                kwargs['formats'] = [dateformat]*6
-            elif isinstance(dateformat, list):
-                kwargs['formats'] = dateformat
-            else:
-                errormsg = f'Could not recognize date format {type(dateformat)}: expecting string or list'
-                raise ValueError(errormsg)
-            kwargs['zero_formats'] = kwargs['formats']
-
-        # Handle locator and styles
-        if locator is None:
-            locator = mpl.dates.AutoDateLocator(minticks=3)
-        style = str(style).lower()
-        if style in ['none', 'sciris', 'house', 'default']:
-            formatter = ScirisDateFormatter(locator, **kwargs)
-        elif style in ['auto', 'matplotlib']:
-            formatter = mpl.dates.AutoDateFormatter(locator, **kwargs)
-        elif style in ['concise', 'brief']:
-            formatter = mpl.dates.ConciseDateFormatter(locator, **kwargs)
-        elif isinstance(style, mpl.ticker.Formatter): # If a formatter is provided, use directly
-            formatter = style
+    # Handle dateformat, if provided
+    if dateformat is not None:
+        if isinstance(dateformat, str):
+            kwargs['formats'] = [dateformat]*6
+        elif isinstance(dateformat, list):
+            kwargs['formats'] = dateformat
         else:
-            errormsg = f'Style "{style}" not recognized; must be one of "sciris", "auto", or "concise"'
+            errormsg = f'Could not recognize date format {type(dateformat)}: expecting string or list'
             raise ValueError(errormsg)
+        kwargs['zero_formats'] = kwargs['formats']
 
-        # Handle axis and set the locator and formatter
-        if axis == 'x':
-            axis = ax.xaxis
-        elif axis == 'y': # If it's not x or y (!), assume it's an axis object
-            axis = ax.yaxis
-        axis.set_major_locator(locator)
-        axis.set_major_formatter(formatter)
-
-        # Handle limits
-        xmin, xmax = ax.get_xlim()
-        if start: xmin = scd.date(start)
-        if end:   xmax = scd.date(end)
-        ax.set_xlim((xmin, xmax))
-
-    # Option 2 -- they need to be converted
+    # Handle locator and styles
+    if locator is None:
+        locator = mpl.dates.AutoDateLocator(minticks=3)
+    style = str(style).lower()
+    if style in ['none', 'sciris', 'house', 'default']:
+        formatter = ScirisDateFormatter(locator, **kwargs)
+    elif style in ['auto', 'matplotlib']:
+        formatter = mpl.dates.AutoDateFormatter(locator, **kwargs)
+    elif style in ['concise', 'brief']:
+        formatter = mpl.dates.ConciseDateFormatter(locator, **kwargs)
+    elif isinstance(style, mpl.ticker.Formatter): # If a formatter is provided, use directly
+        formatter = style
     else:
+        errormsg = f'Style "{style}" not recognized; must be one of "sciris", "auto", or "concise"'
+        raise ValueError(errormsg)
 
-        # Set the default format -- "2021-01-01"
-        if dateformat is None:
-            dateformat = '%Y-%b-%d'
+    # Handle axis and set the locator and formatter
+    if axis == 'x':
+        axis = ax.xaxis
+    elif axis == 'y': # If it's not x or y (!), assume it's an axis object
+        axis = ax.yaxis
+    axis.set_major_locator(locator)
+    axis.set_major_formatter(formatter)
 
-        # Convert to a date object
-        if start_date is None:
-            start_date = pl.num2date(ax.dataLim.x0)
-        start_date = scd.date(start_date)
+    # Handle limits
+    xmin, xmax = ax.get_xlim()
+    if start: xmin = scd.date(start)
+    if end:   xmax = scd.date(end)
+    ax.set_xlim((xmin, xmax))
 
-        @mpl.ticker.FuncFormatter
-        def formatter(x, pos):
-            return (start_date + dt.timedelta(days=int(x))).strftime(dateformat)
+    # Set the rotation
+    if rotation:
+        ax.tick_params(axis='x', labelrotation=rotation)
 
-        # Handle limits
-        xmin, xmax = ax.get_xlim()
-        if start: xmin = scd.day(start, start_date=start_date)
-        if end:   xmax = scd.day(end,   start_date=start_date)
-        ax.set_xlim((xmin, xmax))
+    # Set the formatter
+    ax.xaxis.set_major_formatter(formatter)
 
-        # Set the x-axis intervals
-        if interval:
-            ax.set_xticks(np.arange(xmin, xmax+1, interval))
+    return formatter
+
+
+def datenumformatter(ax=None, start_date=None, dateformat=None, interval=None, start=None,
+                     end=None, rotation=None, axis='x'):
+    '''
+    Format a numeric x-axis to use dates.
+
+    See also ``sc.dateformatter()``, which is intended for use when the axis already
+    has date data.
+
+    Args:
+        ax         (axes)     : if supplied, use these axes instead of the current one
+        start_date (str/date) : the start day, either as a string or date object (not needed if x-axis already uses dates)
+        dateformat (str)      : the date format (default ``'%Y-%b-%d'``; not needed if x-axis already uses dates)
+        interval   (int)      : if supplied, the interval between ticks (not needed if x-axis already uses dates)
+        start      (str/int)  : if supplied, the lower limit of the axis
+        end        (str/int)  : if supplied, the upper limit of the axis
+        rotation   (float)    : rotation of the labels, in degrees
+
+    **Examples**::
+
+        # Automatically configure a non-date axis with default options
+        pl.plot(np.arange(365), pl.rand(365))
+        sc.datenumformatter(start_date='2021-01-01')
+
+        # Manually configure
+        fig,ax = pl.subplots()
+        ax.plot(np.arange(60), np.random.random(60))
+        formatter = sc.datenumformatter(start_date='2020-04-04', interval=7, start='2020-05-01', end=50, dateformat='%m-%d', ax=ax)
+
+    | New in version 1.2.0.
+    | New in version 1.2.2: "rotation" argument; renamed "start_day" to "start_date"
+    | New in version 1.3.3: renamed from ``sc.dateformatter()`` to  ``sc.datenumformatter()``
+    '''
+
+    # Handle axis
+    if isinstance(ax, str): # Swap inputs
+        ax, start_date = start_date, ax
+    if ax is None:
+        ax = pl.gca()
+
+    # Set the default format -- "2021-01-01"
+    if dateformat is None:
+        dateformat = '%Y-%b-%d'
+
+    # Convert to a date object
+    if start_date is None:
+        start_date = pl.num2date(ax.dataLim.x0)
+    start_date = scd.date(start_date)
+
+    @mpl.ticker.FuncFormatter
+    def formatter(x, pos):
+        return (start_date + dt.timedelta(days=int(x))).strftime(dateformat)
+
+    # Handle limits
+    xmin, xmax = ax.get_xlim()
+    if start: xmin = scd.day(start, start_date=start_date)
+    if end:   xmax = scd.day(end,   start_date=start_date)
+    ax.set_xlim((xmin, xmax))
+
+    # Set the x-axis intervals
+    if interval:
+        ax.set_xticks(np.arange(xmin, xmax+1, interval))
 
     # Set the rotation
     if rotation:
@@ -975,7 +1015,184 @@ def dateformatter(ax=None, style='sciris', start_date=None, dateformat=None, int
 #%% Figure saving
 ##############################################################################
 
-__all__ += ['savefigs', 'loadfig', 'emptyfig', 'separatelegend', 'orderlegend', 'savemovie']
+__all__ += ['savefig', 'loadmetadata', 'savefigs', 'loadfig', 'emptyfig', 'separatelegend', 'orderlegend']
+
+
+_metadataflag = 'sciris_metadata' # Key name used to identify metadata saved in a figure
+
+
+def _get_dpi(dpi=None, min_dpi=200):
+    ''' Helper function to choose DPI for saving figures '''
+    if dpi is None:
+        mpl_dpi = pl.rcParams['savefig.dpi']
+        if mpl_dpi == 'figure':
+            mpl_dpi = pl.rcParams['figure.dpi']
+        dpi = max(mpl_dpi, min_dpi) # Don't downgrade DPI
+    return dpi
+
+
+def savefig(filename, fig=None, dpi=None, comments=None, freeze=False, frame=2, die=True, **kwargs):
+    '''
+    Save a figure, including metadata
+
+    Wrapper for Matplotlib's ``savefig()`` function which automatically stores
+    metadata in the figure. By default, it saves (git) information from the calling
+    function. Additional comments can be added to the saved file as well. These
+    can be retrieved via ``sc.loadmetadata()``.
+
+    Metadata can be stored and retrieved for PNG or SVG. Metadata
+    can be stored for PDF, but cannot be automatically retrieved.
+
+    Args:
+        filename (str):    name of the file to save to
+        fig      (Figure): the figure to save (if None, use current)
+        dpi      (int):    resolution of the figure to save (default 200 or current default, whichever is higher)
+        comments (str):    additional metadata to save to the figure
+        freeze   (bool):   whether to store the contents of ``pip freeze`` in the metadata (warning, slow)
+        frame    (int):    which calling file to try to store information from (default, the file calling ``sc.savefig()``)
+        die      (bool):   whether to raise an exception if metadata can't be saved
+        kwargs   (dict):   passed to ``fig.save()``
+
+    **Examples**::
+
+        pl.plot([1,3,7])
+
+        sc.savefig('example1.png')
+        print(sc.loadmetadata('example1.png'))
+
+        sc.savefig('example2.png', comments='My figure', freeze=True)
+        sc.pp(sc.loadmetadata('example2.png'))
+
+    New in version 1.3.3.
+    '''
+
+    # Handle figure
+    if fig is None:
+        fig = pl.gcf()
+
+    # Handle DPI
+    dpi = _get_dpi(dpi)
+
+    # Get caller and git info
+    caller = scu.getcaller(frame=frame, tostring=False)
+    gitinfo = scu.gitinfo(caller['filename'], die=False, verbose=False) # Don't print any git errors
+
+    # Construct metadata
+    metadata = kwargs.pop('metadata', {})
+    metadata['timestamp'] = scd.getdate()
+    metadata['calling_file'] = caller
+    metadata['git_info'] = gitinfo
+    if comments:
+        metadata['comments'] = comments
+    if freeze:
+        metadata['python'] = dict(platform=sys.platform, executable=sys.executable, version=sys.version)
+        metadata['modules'] = scu.freeze()
+
+    # Convert to a string
+    jsonstr = scf.jsonify(metadata, tostring=True) # PDF and SVG doesn't support storing a dict
+
+    # Handle different formats
+    lcfn = filename.lower() # Lowercase filename
+    if lcfn.endswith('png'):
+        metadata = {_metadataflag:jsonstr}
+    elif lcfn.endswith('svg') or lcfn.endswith('pdf'):
+        metadata = dict(Keywords=f'{_metadataflag}={jsonstr}')
+    else:
+        errormsg = f'Warning: filename "{filename}" has unsupported type: must be png, svg, or pdf. Please use pl.savefig() instead.'
+        if die:
+            raise ValueError(errormsg)
+        else:
+            metadata = None
+            print(errormsg)
+
+    # Save the figure
+    if metadata is not None:
+        kwargs['metadata'] = metadata # To avoid warnings for unsupported filenames
+    fig.savefig(filename, dpi=dpi, **kwargs)
+    return filename
+
+
+def loadmetadata(filename, die=True):
+    '''
+    Read metadata from a saved image; currently only PNG and SVG are supported.
+
+    Only for use with images saved with ``sc.savefig()``. Metadata retrieval for PDF
+    is not currently supported.
+
+    Args:
+        filename (str): the name of the file to load the data from
+        output (bool): whether to return loaded metadata (else, print)
+        die (bool): whether to raise an exception if the metadata can't be found
+
+    **Example**::
+
+        cv.Sim().run(do_plot=True)
+        cv.savefig('covasim.png')
+        cv.get_png_metadata('covasim.png')
+    '''
+
+    # Initialize
+    metadata = {}
+    lcfn = filename.lower() # Lowercase filename
+
+    # Handle bitmaps
+    if lcfn.endswith('png'):
+        try:
+            import PIL
+        except ImportError as E: # pragma: no cover
+            errormsg = f'Pillow import failed ({str(E)}), please install first (pip install pillow)'
+            raise ImportError(errormsg) from E
+        im = PIL.Image.open(filename)
+        keys = im.info.keys()
+
+        # Usual case, can find metadata
+        if _metadataflag in keys:
+            jsonstr = im.info[_metadataflag]
+            metadata = scf.loadjson(string=jsonstr)
+
+        # Can't find metadata
+        else:
+            errormsg = f'Could not find "{_metadataflag}": metadata can only be extracted from figures saved with sc.savefig().\nAvailable keys are: {scu.strjoin(keys)}'
+            if die:
+                raise ValueError(errormsg)
+            else:
+                print(errormsg)
+                metadata = im.info
+
+
+    # Handle SVG
+    elif lcfn.endswith('svg'):
+
+        # Load SVG as text and parse it
+        svg = scf.loadtext(filename).splitlines()
+        flag = _metadataflag + '=' # Start of the line
+        end = '</'
+
+        found = False
+        for line in svg:
+            if flag in line:
+                found = True
+                break
+
+        # Usual case, can find metadata
+        if found:
+            jsonstr = line[line.find(flag)+len(flag):line.find(end)]
+            metadata = scf.loadjson(string=jsonstr)
+
+        # Can't find metadata
+        else:
+            errormsg = f'Could not find the string "{_metadataflag}" anywhere in "{filename}": metadata can only be extracted from figures saved with sc.savefig()'
+            if die:
+                raise ValueError(errormsg)
+            else:
+                print(errormsg)
+
+    # Other formats not supported
+    else:
+        errormsg = f'Filename "{filename}" has unsupported type: must be png or svg (pdf is not supported)'
+        raise ValueError(errormsg)
+
+    return metadata
 
 
 def savefigs(figs=None, filetype=None, filename=None, folder=None, savefigargs=None, aslist=False, verbose=False, **kwargs):
@@ -1096,9 +1313,9 @@ def reanimateplots(plots=None):
     return
 
 
-def emptyfig():
+def emptyfig(*args, **kwargs):
     ''' The emptiest figure possible '''
-    fig = pl.Figure(facecolor='None')
+    fig = pl.Figure(facecolor='None', *args, **kwargs)
     return fig
 
 
@@ -1201,9 +1418,312 @@ def orderlegend(order=None, ax=None, handles=None, labels=None, reverse=None, **
 
     return
 
-def savemovie(frames, filename=None, fps=None, quality=None, dpi=None, writer=None, bitrate=None, interval=None, repeat=False, repeat_delay=None, blit=False, verbose=True, **kwargs):
+
+#%% Animation
+
+__all__ += ['animation', 'savemovie']
+
+
+class animation(scu.prettyobj):
+    '''
+    A class for storing and saving a Matplotlib animation.
+
+    See also ``sc.savemovie()``, which works directly with Matplotlib artists rather
+    than an entire figure. Depending on your use case, one is likely easier to use
+    than the other. Use ``sc.animation()`` if you want to animate a complex figure
+    including non-artist objects (e.g., titles and legends); use ``sc.savemovie()``
+    if you just want to animate a set of artists (e.g., lines).
+
+    This class works by saving snapshots of the figure to disk as image files, then
+    reloading them as a Matplotlib animation. While (slightly) slower than working
+    with artists directly, it means that anything that can be rendered to a figure
+    can be animated.
+
+    Note: the terms "animation" and "movie" are used interchangeably here.
+
+    Args:
+        fig          (fig):  the Matplotlib figure to animate (if none, use current)
+        filename     (str):  the name of the output animation (default: animation.mp4)
+        dpi          (int):  the resolution to save the animation at
+        fps          (int):  frames per second for the animation
+        imageformat  (str):  file type for temporary image files, e.g. 'jpg'
+        basename     (str):  name for temporary image files, e.g. 'myanimation'
+        nametemplate (str):  as an alternative to imageformat and basename, specify the full name template, e.g. 'myanimation%004d.jpg'
+        imagefolder  (str):  location to store temporary image files; default current folder, or use 'tempfile' to create a temporary folder
+        anim_args    (dict): passed to ``matplotlib.animation.ArtistAnimation()``
+        save_args    (dict): passed to ``matplotlib.animation.save()``
+        tidy         (bool): whether to delete temporary files
+        verbose      (bool): whether to print progress
+        kwargs       (dict): also passed to ``matplotlib.animation.save()``
+
+    **Example**::
+
+        anim = sc.animation()
+
+        pl.figure()
+        pl.seed(1)
+        repeats = 21
+        colors = sc.vectocolor(repeats, cmap='turbo')
+        for i in range(repeats):
+            scale = 1/np.sqrt(i+1)
+            x = scale*pl.randn(10)
+            y = scale*pl.randn(10)
+            label = str(i) if not(i%5) else None
+            pl.scatter(x, y, c=[colors[i]], label=label)
+            pl.title(f'Scale = 1/√{i}')
+            pl.legend()
+            sc.boxoff('all')
+            anim.addframe()
+
+        anim.save('dots.mp4')
+
+    New in version 1.3.3.
+    '''
+    def __init__(self, fig=None, filename=None, dpi=200, fps=10, imageformat='png', basename='animation', nametemplate=None,
+                 imagefolder=None, anim_args=None, save_args=None, frames=None, tidy=True, verbose=True, **kwargs):
+        self.fig          = fig
+        self.filename     = filename
+        self.dpi          = dpi
+        self.fps          = fps
+        self.imageformat  = imageformat
+        self.basename     = basename
+        self.nametemplate = nametemplate
+        self.imagefolder  = imagefolder
+        self.anim_args    = anim_args
+        self.save_args    = scu.mergedicts(save_args, kwargs)
+        self.tidy         = tidy
+        self.verbose      = verbose
+        self.filenames    = scu.autolist()
+        self.frames       = frames if frames else []
+        self.fig_size     = None
+        self.fig_dpi      = None
+        self.anim         = None
+        self.initialize()
+        return
+
+
+    def initialize(self):
+        ''' Handle additional initialization of variables '''
+
+        # Handle folder
+        if self.imagefolder == 'tempfile':
+            self.imagefolder = tempfile.gettempdir()
+        if self.imagefolder is None:
+            self.imagefolder = os.getcwd()
+        self.imagefolder = scf.path(self.imagefolder)
+
+        # Handle name template
+        if self.nametemplate is None:
+            self.nametemplate = f'{self.basename}_%04d.{self.imageformat}' # ADD name template
+
+        # Handle dpi
+        self.dpi = _get_dpi(self.dpi)
+
+        return
+
+
+    def _getfig(self, fig=None):
+        ''' Get the Matplotlib figure to save the animation from '''
+        if fig is None:
+            if self.fig is not None:
+                fig = self.fig
+            else:
+                try:    fig = self.frames[0][0].get_figure()
+                except: fig = pl.gcf()
+        return fig
+
+
+    def _getfilename(self, path=True):
+        ''' Generate a filename for the next image file to save '''
+        try:
+            name = self.nametemplate % self.n_files
+        except TypeError as E:
+            errormsg = f'Name template "{self.nametemplate}" does not seem valid for inserting current file number {self.n_files} into: should contain the string "%04d" or similar'
+            raise TypeError(errormsg) from E
+        if path:
+            name = self.imagefolder / name
+        return name
+
+
+    def __add__(self, *args, **kwargs):
+        ''' Allow anim += fig '''
+        self.addframe(*args, **kwargs)
+        return self
+
+    def __radd__(self, *args, **kwargs):
+        ''' Allow anim += fig '''
+        self.addframe(self, *args, **kwargs)
+        return self
+
+    @property
+    def n_files(self):
+        return len(self.filenames)
+
+    @property
+    def n_frames(self):
+        return len(self.frames)
+
+    def __len__(self):
+        ''' Since we can have either files or frames, need to check both  '''
+        return max(self.n_files, self.n_frames)
+
+
+    def addframe(self, fig=None, *args, **kwargs):
+        ''' Add a frame to the animation -- typically a figure object, but can also be an artist or list of artists '''
+
+        # If a figure is supplied but it's not a figure, add it to the frames directly
+        if fig is not None and isinstance(fig, (list, mpl.artist.Artist)):
+            self.frames.append(fig)
+
+        # Typical case: add a figure
+        else:
+            if self.verbose and self.n_files == 0: # First frame
+                print('Adding frames...')
+
+            # Get the figure, name, and save
+            fig = self._getfig(fig)
+            filename = self._getfilename()
+            fig.savefig(filename, dpi=self.dpi)
+            self.filenames += filename
+
+            # Check figure properties
+            fig_size = fig.get_size_inches()
+            fig_dpi = fig.get_dpi()
+
+            if self.fig_size is None:
+                self.fig_size = fig_size
+            else:
+                if not np.allclose(self.fig_size, fig_size):
+                    warnmsg = f'Note: current figure size {fig_size} does not match saved {self.fig_size}, unexpected results may occur!'
+                    print(warnmsg)
+
+            if self.fig_dpi is None:
+                self.fig_dpi = fig_dpi
+            else:
+                if self.fig_dpi != fig_dpi:
+                    warnmsg = f'Note: current figure DPI {fig_dpi} does not match saved {self.fig_dpi}, unexpected results may occur!'
+                    print(warnmsg)
+
+            if self.verbose:
+                print(f'  Added frame {self.n_files}: {self._getfilename(path=False)}')
+
+        return
+
+
+    def loadframes(self):
+        ''' Load saved images as artists '''
+        animfig = pl.figure(figsize=self.fig_size, dpi=self.dpi)
+        ax = animfig.add_axes([0,0,1,1])
+        if self.verbose:
+            print('Preprocessing frames...')
+        for f,filename in enumerate(self.filenames):
+            if self.verbose:
+                scp.progressbar(f+1, self.filenames)
+            im = pl.imread(filename)
+            self.frames.append(ax.imshow(im))
+        pl.close(animfig)
+        return
+
+
+    def __enter__(self, *args, **kwargs):
+        ''' To allow with...as '''
+        return self
+
+
+    def __exit__(self, *args, **kwargs):
+        ''' Save on exist from a with...as block '''
+        return self.save()
+
+
+    def rmfiles(self):
+        ''' Remove temporary image files '''
+        succeeded = 0
+        failed = scu.autolist()
+        for filename in self.filenames:
+            if os.path.exists(filename):
+                try:
+                    os.remove(filename)
+                    succeeded += 1
+                except Exception as E:
+                    failed += f'{filename} ({E})'
+        if self.verbose:
+            if succeeded:
+                print(f'Removed {succeeded} temporary files')
+        if failed:
+            print(f'Failed to remove the following temporary files:\n{scu.newlinejoin(failed)}')
+
+
+    def save(self, filename=None, fps=None, dpi=None, anim_args=None, save_args=None, frames=None, tidy=None, verbose=True, **kwargs):
+        ''' Save the animation -- arguments the same as ``sc.animation()`` and ``sc.savemovie()``, and are described there '''
+
+        import matplotlib.animation as mpl_anim # Sometimes fails if not imported directly
+
+        # Handle dictionary args
+        anim_args = scu.mergedicts(self.anim_args, anim_args)
+        save_args = scu.mergedicts(self.save_args, save_args)
+
+        # Handle filename
+        if filename is None:
+            if self.filename is None:
+                self.filename = f'{self.basename}.mp4'
+            filename = self.filename
+
+        # Load and sanitize frames
+        if frames is None:
+            if not self.n_frames:
+                self.loadframes()
+            if self.n_files and (self.n_frames != self.n_files):
+                errormsg = f'Number of files ({self.n_files}) does not match number of frames ({self.n_frames}): please do not mix and match adding figures and adding artists as frames!'
+                raise RuntimeError(errormsg)
+            frames = self.frames
+
+        for f in range(len(frames)):
+            if not scu.isiterable(frames[f]):
+                frames[f] = (frames[f],) # This must be either a tuple or a list to work with ArtistAnimation
+
+        # Try to get the figure from the frames, else use the current one
+        fig = self._getfig()
+
+        # Set parameters
+        if fps  is None: fps  = save_args.pop('fps', self.fps)
+        if dpi  is None: dpi  = save_args.pop('dpi', self.dpi)
+        if tidy is None: tidy = self.tidy
+
+        # Optionally print progress
+        if verbose:
+            T = scd.timer()
+            print(f'Saving {len(frames)} frames at {fps} fps and {dpi} dpi to "{filename}"...')
+            callback = lambda i,n: scp.progressbar(i+1, len(frames)) # Default callback
+            callback = save_args.pop('progress_callback', callback) # if provided as an argument
+        else:
+            callback = None
+
+        # Actually create the animation -- warning, no way to not actually have it render!
+        anim = mpl_anim.ArtistAnimation(fig, frames, **anim_args)
+        anim.save(filename, fps=fps, dpi=dpi, progress_callback=callback, **save_args)
+
+        if tidy:
+            self.rmfiles()
+
+        if verbose:
+            print(f'Done; movie saved to "{filename}"')
+            try: # Not essential, so don't try too hard if this doesn't work
+                filesize = os.path.getsize(filename)
+                if filesize<1e6: print(f'File size: {filesize/1e3:0.0f} KB')
+                else:            print(f'File size: {filesize/1e6:0.1f} MB')
+            except:
+                pass
+            T.toc(label='saving movie')
+
+        return
+
+
+def savemovie(frames, filename=None, fps=None, quality=None, dpi=None, writer=None, bitrate=None,
+              interval=None, repeat=False, repeat_delay=None, blit=False, verbose=True, **kwargs):
     '''
     Save a set of Matplotlib artists as a movie.
+
+    Note: in most cases, it is preferable to use ``sc.animation()``.
 
     Args:
         frames (list): The list of frames to animate
@@ -1218,7 +1738,7 @@ def savemovie(frames, filename=None, fps=None, quality=None, dpi=None, writer=No
         repeat_delay (bool): Delay between repeats, if repeat=True (default None)
         blit (bool): Whether or not to "blit" the frames (default False, since otherwise does not detect changes )
         verbose (bool): Whether to print statistics on finishing.
-        kwargs (dict): Passed to matplotlib.animation.save()
+        kwargs (dict): Passed to ``matplotlib.animation.save()``
 
     Returns:
         A Matplotlib animation object
@@ -1229,10 +1749,12 @@ def savemovie(frames, filename=None, fps=None, quality=None, dpi=None, writer=No
         import sciris as sc
 
         # Simple example (takes ~5 s)
+        pl.figure()
         frames = [pl.plot(pl.cumsum(pl.randn(100))) for i in range(20)] # Create frames
         sc.savemovie(frames, 'dancing_lines.gif') # Save movie as medium-quality gif
 
         # Complicated example (takes ~15 s)
+        pl.figure()
         nframes = 100 # Set the number of frames
         ndots = 100 # Set the number of dots
         axislim = 5*pl.sqrt(nframes) # Pick axis limits
@@ -1258,8 +1780,7 @@ def savemovie(frames, filename=None, fps=None, quality=None, dpi=None, writer=No
 
     Version: 2019aug21
     '''
-
-    from matplotlib import animation # Place here since specific only to this function
+    from matplotlib import animation as mpl_anim # Place here since specific only to this function
 
     if not isinstance(frames, list):
         errormsg = f'sc.savemovie(): argument "frames" must be a list, not "{type(frames)}"'
@@ -1309,7 +1830,7 @@ def savemovie(frames, filename=None, fps=None, quality=None, dpi=None, writer=No
         print(f'Saving {len(frames)} frames at {fps} fps and {dpi} dpi to "{filename}" using {writer}...')
 
     # Actually create the animation -- warning, no way to not actually have it render!
-    anim = animation.ArtistAnimation(fig, frames, interval=interval, repeat_delay=repeat_delay, repeat=repeat, blit=blit)
+    anim = mpl_anim.ArtistAnimation(fig, frames, interval=interval, repeat_delay=repeat_delay, repeat=repeat, blit=blit)
     anim.save(filename, writer=writer, fps=fps, dpi=dpi, bitrate=bitrate, **kwargs)
 
     if verbose:

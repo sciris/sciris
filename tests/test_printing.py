@@ -18,7 +18,16 @@ def test_colorize():
     sc.colorize('reset') # Colorize all output in between
     bluearray = sc.colorize(color='blue', string=str(range(5)), output=True)
     print("This should be blue: " + bluearray)
+
+    print('This should be a rainbow:')
+    sc.printred(    'This should be red')
+    sc.printyellow( 'This should be yellow')
+    sc.printgreen(  'This should be green')
+    sc.printcyan(   'This should be cyan')
+    sc.printblue(   'This should be blue')
+    sc.printmagenta('This should be magenta')
     return
+
 
 
 def test_printing():
@@ -65,6 +74,20 @@ def test_printing():
 
     print('\nTesting sigfig')
     sc.sigfig(np.random.rand(10), SI=True, sep='.')
+
+    print('\nTesting capture')
+    str1 = 'I am string 1'
+    str2 = 'I am string 2'
+    with sc.capture() as txt1:
+        print(str1)
+
+    txt2 = sc.capture().start()
+    print(str2)
+    txt2.stop()
+
+    # print() appends a newline character which we have to remove for the comparison
+    assert txt1.rstrip() == str1
+    assert txt2.rstrip() == str2
 
     return o
 
