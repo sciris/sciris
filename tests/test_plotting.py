@@ -145,8 +145,10 @@ def test_saving(doplot=doplot):
     sc.heading('Testing saving')
     o = sc.objdict()
 
-    filename = 'testfig.fig'
-    moviename = 'testmovie.gif'
+    fn = sc.objdict()
+    fn.fig = 'testfig.fig'
+    fn.movie = 'testmovie.gif'
+    fn.anim = 'testanim.mp4'
 
     if doplot:
 
@@ -154,15 +156,24 @@ def test_saving(doplot=doplot):
         o.fig = pl.figure()
         pl.plot(pl.rand(10))
 
-        sc.savefigs(o.fig, filetype='fig', filename=filename)
-        sc.loadfig(filename)
+        sc.savefigs(o.fig, filetype='fig', filename=fn.fig)
+        sc.loadfig(fn.fig)
 
         print('Testing save movie')
         frames = [pl.plot(pl.cumsum(pl.randn(100))) for i in range(3)] # Create frames
-        sc.savemovie(frames, moviename) # Save movie as medium-quality gif
+        sc.savemovie(frames, fn.movie) # Save movie as medium-quality gif
 
-        os.remove(filename)
-        os.remove(moviename)
+        print('Testing animation')
+        anim = sc.animation(filename=fn.anim)
+        pl.figure()
+        for i in range(3):
+            pl.plot(pl.cumsum(pl.randn(100)))
+            anim.addframe()
+        anim.save()
+
+        print('Tidying...')
+        for f in fn.values():
+            os.remove(f)
 
     return o
 

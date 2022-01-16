@@ -1418,6 +1418,34 @@ class animation(scu.prettyobj):
     '''
     A class for storing and saving a Matplotlib animation.
 
+    See also ``sc.savemovie()``, which works directly with Matplotlib artists rather
+    than an entire figure. Depending on your use case, one is likely easier to use
+    than the other. Use ``sc.animation()`` if you want to animate a complex figure
+    including non-artist objects (e.g., titles and legends); use ``sc.savemovie()``
+    if you just want to animate a set of artists (e.g., lines).
+
+    This class works by saving snapshots of the figure to disk as image files, then
+    reloading them as a Matplotlib animation. While (slightly) slower than working
+    with artists directly, it means that anything that can be rendered to a figure
+    can be animated.
+
+    Note: the terms "animation" and "movie" are used interchangeably here.
+
+    Args:
+        fig          (fig):  the Matplotlib figure to animate (if none, use current)
+        filename     (str):  the name of the output animation (default: animation.mp4)
+        dpi          (int):  the resolution to save the animation at
+        fps          (int):  frames per second for the animation
+        imageformat  (str):  file type for temporary image files, e.g. 'jpg'
+        basename     (str):  name for temporary image files, e.g. 'myanimation'
+        nametemplate (str):  as an alternative to imageformat and basename, specify the full name template, e.g. 'myanimation%004d.jpg'
+        imagefolder  (str):  location to store temporary image files; default current folder, or use 'tempfile' to create a temporary folder
+        anim_args    (dict): passed to ``matplotlib.animation.ArtistAnimation()``
+        save_args    (dict): passed to ``matplotlib.animation.save()``
+        tidy         (bool): whether to delete temporary files
+        verbose      (bool): whether to print progress
+        kwargs       (dict): also passed to ``matplotlib.animation.save()``
+
     **Example**::
 
         anim = sc.animation()
@@ -1439,36 +1467,33 @@ class animation(scu.prettyobj):
 
         anim.save('dots.mp4')
 
+    New in version 1.3.3.
     '''
-    def __init__(self, fig=None, filename=None, dpi=200, fps=10, imageformat='png', basename=None, nametemplate=None,
+    def __init__(self, fig=None, filename=None, dpi=200, fps=10, imageformat='png', basename='animation', nametemplate=None,
                  imagefolder=None, anim_args=None, save_args=None, frames=None, tidy=True, verbose=True, **kwargs):
-        self.fig = fig
-        self.filename = filename
-        self.dpi = dpi
-        self.fps = fps
-        self.imageformat = imageformat
-        self.basename = basename
+        self.fig          = fig
+        self.filename     = filename
+        self.dpi          = dpi
+        self.fps          = fps
+        self.imageformat  = imageformat
+        self.basename     = basename
         self.nametemplate = nametemplate
-        self.imagefolder = imagefolder
-        self.anim_args = anim_args
-        self.save_args = save_args
-        self.tidy = tidy
-        self.verbose = verbose
-        self.kwargs = kwargs
-        self.filenames = scu.autolist()
-        self.frames = frames if frames else scu.autolist()
-        self.fig_size = None
-        self.fig_dpi = None
-        self.anim = None
+        self.imagefolder  = imagefolder
+        self.anim_args    = anim_args
+        self.save_args    = scu.mergedicts(save_args, kwargs)
+        self.tidy         = tidy
+        self.verbose      = verbose
+        self.filenames    = scu.autolist()
+        self.frames       = frames if frames else []
+        self.fig_size     = None
+        self.fig_dpi      = None
+        self.anim         = None
         self.initialize()
         return
 
 
     def initialize(self):
-
-        # Handle basename
-        if self.basename is None:
-            self.basename = 'animation'
+        ''' Handle additional initialization of variables '''
 
         # Handle folder
         if self.imagefolder == 'tempfile':
@@ -1488,6 +1513,7 @@ class animation(scu.prettyobj):
 
 
     def _getfig(self, fig=None):
+        ''' Get the Matplotlib figure to save the animation from '''
         if fig is None:
             if self.fig is not None:
                 fig = self.fig
@@ -1498,10 +1524,11 @@ class animation(scu.prettyobj):
 
 
     def _getfilename(self, path=True):
+        ''' Generate a filename for the next image file to save '''
         try:
-            name = self.nametemplate % len(self)
+            name = self.nametemplate % self.n_files
         except TypeError as E:
-            errormsg = f'Name template "{self.nametemplate}" does not seem valid for inserting current frane number {len(self)} into: should contain the string "%04d" or similar'
+            errormsg = f'Name template "{self.nametemplate}" does not seem valid for inserting current file number {self.n_files} into: should contain the string "%04d" or similar'
             raise TypeError(errormsg) from E
         if path:
             name = self.imagefolder / name
@@ -1509,53 +1536,72 @@ class animation(scu.prettyobj):
 
 
     def __add__(self, *args, **kwargs):
-        return self.addframe(*args, **kwargs)
-
+        ''' Allow anim += fig '''
+        self.addframe(*args, **kwargs)
+        return self
 
     def __radd__(self, *args, **kwargs):
-        return self.addframe(self, *args, **kwargs)
+        ''' Allow anim += fig '''
+        self.addframe(self, *args, **kwargs)
+        return self
 
+    @property
+    def n_files(self):
+        return len(self.filenames)
+
+    @property
+    def n_frames(self):
+        return len(self.frames)
 
     def __len__(self):
-        return len(self.filenames)
+        ''' Since we can have either files or frames, need to check both  '''
+        return max(self.n_files, self.n_frames)
 
 
     def addframe(self, fig=None, *args, **kwargs):
+        ''' Add a frame to the animation -- typically a figure object, but can also be an artist or list of artists '''
 
-        if self.verbose and len(self) == 0: # First frame
-            print('Adding frames...')
+        # If a figure is supplied but it's not a figure, add it to the frames directly
+        if fig is not None and isinstance(fig, (list, mpl.artist.Artist)):
+            self.frames.append(fig)
 
-        # Get the figure, name, and save
-        fig = self._getfig(fig)
-        filename = self._getfilename()
-        fig.savefig(filename, dpi=self.dpi)
-        self.filenames += filename
-
-        # Check figure properties
-        fig_size = fig.get_size_inches()
-        fig_dpi = fig.get_dpi()
-
-        if self.fig_size is None:
-            self.fig_size = fig_size
+        # Typical case: add a figure
         else:
-            if not np.allclose(self.fig_size, fig_size):
-                warnmsg = f'Note: current figure size {fig_size} does not match saved {self.fig_size}, unexpected results may occur!'
-                print(warnmsg)
+            if self.verbose and self.n_files == 0: # First frame
+                print('Adding frames...')
 
-        if self.fig_dpi is None:
-            self.fig_dpi = fig_dpi
-        else:
-            if self.fig_dpi != fig_dpi:
-                warnmsg = f'Note: current figure DPI {fig_dpi} does not match saved {self.fig_dpi}, unexpected results may occur!'
-                print(warnmsg)
+            # Get the figure, name, and save
+            fig = self._getfig(fig)
+            filename = self._getfilename()
+            fig.savefig(filename, dpi=self.dpi)
+            self.filenames += filename
 
-        if self.verbose:
-            print(f'  Added frame {len(self)}: {self._getfilename(path=False)}')
+            # Check figure properties
+            fig_size = fig.get_size_inches()
+            fig_dpi = fig.get_dpi()
+
+            if self.fig_size is None:
+                self.fig_size = fig_size
+            else:
+                if not np.allclose(self.fig_size, fig_size):
+                    warnmsg = f'Note: current figure size {fig_size} does not match saved {self.fig_size}, unexpected results may occur!'
+                    print(warnmsg)
+
+            if self.fig_dpi is None:
+                self.fig_dpi = fig_dpi
+            else:
+                if self.fig_dpi != fig_dpi:
+                    warnmsg = f'Note: current figure DPI {fig_dpi} does not match saved {self.fig_dpi}, unexpected results may occur!'
+                    print(warnmsg)
+
+            if self.verbose:
+                print(f'  Added frame {self.n_files}: {self._getfilename(path=False)}')
 
         return
 
 
     def loadframes(self):
+        ''' Load saved images as artists '''
         animfig = pl.figure(figsize=self.fig_size, dpi=self.dpi)
         ax = animfig.add_axes([0,0,1,1])
         if self.verbose:
@@ -1564,20 +1610,23 @@ class animation(scu.prettyobj):
             if self.verbose:
                 scp.progressbar(f+1, self.filenames)
             im = pl.imread(filename)
-            self.frames += ax.imshow(im)
+            self.frames.append(ax.imshow(im))
         pl.close(animfig)
         return
 
 
     def __enter__(self, *args, **kwargs):
+        ''' To allow with...as '''
         return self
 
 
     def __exit__(self, *args, **kwargs):
+        ''' Save on exist from a with...as block '''
         return self.save()
 
 
     def rmfiles(self):
+        ''' Remove temporary image files '''
         succeeded = 0
         failed = scu.autolist()
         for filename in self.filenames:
@@ -1595,6 +1644,7 @@ class animation(scu.prettyobj):
 
 
     def save(self, filename=None, fps=None, dpi=None, anim_args=None, save_args=None, frames=None, tidy=None, verbose=True, **kwargs):
+        ''' Save the animation -- arguments the same as ``sc.animation()`` and ``sc.savemovie()``, and are described there '''
 
         import matplotlib.animation as mpl_anim # Sometimes fails if not imported directly
 
@@ -1610,8 +1660,11 @@ class animation(scu.prettyobj):
 
         # Load and sanitize frames
         if frames is None:
-            if not len(self.frames):
+            if not self.n_frames:
                 self.loadframes()
+            if self.n_files and (self.n_frames != self.n_files):
+                errormsg = f'Number of files ({self.n_files}) does not match number of frames ({self.n_frames}): please do not mix and match adding figures and adding artists as frames!'
+                raise RuntimeError(errormsg)
             frames = self.frames
 
         for f in range(len(frames)):
@@ -1639,6 +1692,9 @@ class animation(scu.prettyobj):
         anim = mpl_anim.ArtistAnimation(fig, frames, **anim_args)
         anim.save(filename, fps=fps, dpi=dpi, progress_callback=callback, **save_args)
 
+        if tidy:
+            self.rmfiles()
+
         if verbose:
             print(f'Done; movie saved to "{filename}"')
             try: # Not essential, so don't try too hard if this doesn't work
@@ -1649,13 +1705,11 @@ class animation(scu.prettyobj):
                 pass
             T.toc(label='saving movie')
 
-        if tidy:
-            self.rmfiles()
-
         return
 
 
-def savemovie(frames, filename=None, fps=None, quality=None, dpi=None, writer=None, bitrate=None, interval=None, repeat=False, repeat_delay=None, blit=False, verbose=True, **kwargs):
+def savemovie(frames, filename=None, fps=None, quality=None, dpi=None, writer=None, bitrate=None,
+              interval=None, repeat=False, repeat_delay=None, blit=False, verbose=True, **kwargs):
     '''
     Save a set of Matplotlib artists as a movie.
 
@@ -1674,7 +1728,7 @@ def savemovie(frames, filename=None, fps=None, quality=None, dpi=None, writer=No
         repeat_delay (bool): Delay between repeats, if repeat=True (default None)
         blit (bool): Whether or not to "blit" the frames (default False, since otherwise does not detect changes )
         verbose (bool): Whether to print statistics on finishing.
-        kwargs (dict): Passed to matplotlib.animation.save()
+        kwargs (dict): Passed to ``matplotlib.animation.save()``
 
     Returns:
         A Matplotlib animation object
@@ -1685,10 +1739,12 @@ def savemovie(frames, filename=None, fps=None, quality=None, dpi=None, writer=No
         import sciris as sc
 
         # Simple example (takes ~5 s)
+        pl.figure()
         frames = [pl.plot(pl.cumsum(pl.randn(100))) for i in range(20)] # Create frames
         sc.savemovie(frames, 'dancing_lines.gif') # Save movie as medium-quality gif
 
         # Complicated example (takes ~15 s)
+        pl.figure()
         nframes = 100 # Set the number of frames
         ndots = 100 # Set the number of dots
         axislim = 5*pl.sqrt(nframes) # Pick axis limits
@@ -1714,8 +1770,7 @@ def savemovie(frames, filename=None, fps=None, quality=None, dpi=None, writer=No
 
     Version: 2019aug21
     '''
-
-    from matplotlib import animation # Place here since specific only to this function
+    from matplotlib import animation as mpl_anim # Place here since specific only to this function
 
     if not isinstance(frames, list):
         errormsg = f'sc.savemovie(): argument "frames" must be a list, not "{type(frames)}"'
@@ -1765,7 +1820,7 @@ def savemovie(frames, filename=None, fps=None, quality=None, dpi=None, writer=No
         print(f'Saving {len(frames)} frames at {fps} fps and {dpi} dpi to "{filename}" using {writer}...')
 
     # Actually create the animation -- warning, no way to not actually have it render!
-    anim = animation.ArtistAnimation(fig, frames, interval=interval, repeat_delay=repeat_delay, repeat=repeat, blit=blit)
+    anim = mpl_anim.ArtistAnimation(fig, frames, interval=interval, repeat_delay=repeat_delay, repeat=repeat, blit=blit)
     anim.save(filename, writer=writer, fps=fps, dpi=dpi, bitrate=bitrate, **kwargs)
 
     if verbose:
