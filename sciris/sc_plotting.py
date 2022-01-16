@@ -42,7 +42,7 @@ def fig3d(num=None, returnax=False, figkwargs=None, axkwargs=None, **kwargs):
     '''
     Shortcut for creating a figure with 3D axes.
 
-    Usually not invoked directly; kwargs are passed to figure()
+    Usually not invoked directly; kwargs are passed to ``pl.figure()``
     '''
     figkwargs = scu.mergedicts(figkwargs, kwargs, num=num)
     axkwargs = scu.mergedicts(axkwargs)
