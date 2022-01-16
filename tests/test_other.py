@@ -61,9 +61,9 @@ def test_dicts():
     sc.mergedicts({'a':1, 'b':2}, {'b':3, 'c':4}) # Returns {'a':1, 'b':3, 'c':4}
     sc.mergedicts({'b':3, 'c':4}, {'a':1, 'b':2}) # Returns {'a':1, 'b':2, 'c':4}
     with pytest.raises(KeyError):
-        sc.mergedicts({'b':3, 'c':4}, {'a':1, 'b':2}, overwrite=False) # Raises exception
+        sc.mergedicts({'b':3, 'c':4}, {'a':1, 'b':2}, _overwrite=False) # Raises exception
     with pytest.raises(TypeError):
-        sc.mergedicts({'b':3, 'c':4}, None, strict=True) # Raises exception
+        sc.mergedicts({'b':3, 'c':4}, None, _strict=True) # Raises exception
 
     print('\nTesting nested dictionaries')
     dict1 = {'key1':{'a':'A'},  'key2':{'b':'B'}}

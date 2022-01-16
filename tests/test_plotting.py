@@ -124,6 +124,9 @@ def test_other(doplot=doplot):
             print(sc.traceback())
             print('↑↑↑ Ignoring since sc.maximize() unlikely to work via e.g. automated testing')
 
+        # Need keep=True to avoid refresh which crashes when run via pytest-parallel
+        sc.figlayout(keep=True)
+
         # Test legends
         pl.figure('Legends')
         pl.plot([1,4,3], label='A')
@@ -187,8 +190,6 @@ def test_dates(doplot=doplot):
             pl.plot(x, y)
             pl.title('Date formatter: ' + style.title())
             sc.dateformatter(style=style, rotation=1)
-
-        sc.figlayout()
 
         pl.figure('Datenum formatter')
         pl.plot(np.arange(500), pl.randn(500))
