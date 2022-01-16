@@ -640,21 +640,21 @@ def printred(s, **kwargs):
     ''' Alias to print(colors.red(s)) '''
     return print(colors.red(s, **kwargs))
 
-def printyellow(s, **kwargs):
-    ''' Alias to print(colors.yellow(s)) '''
-    return print(colors.yellow(s, **kwargs))
-
 def printgreen(s, **kwargs):
     ''' Alias to print(colors.green(s)) '''
     return print(colors.green(s, **kwargs))
+
+def printblue(s, **kwargs):
+    ''' Alias to print(colors.blue(s)) '''
+    return print(colors.blue(s, **kwargs))
 
 def printcyan(s, **kwargs):
     ''' Alias to print(colors.cyan(s)) '''
     return print(colors.cyan(s, **kwargs))
 
-def printblue(s, **kwargs):
-    ''' Alias to print(colors.blue(s)) '''
-    return print(colors.blue(s, **kwargs))
+def printyellow(s, **kwargs):
+    ''' Alias to print(colors.yellow(s)) '''
+    return print(colors.yellow(s, **kwargs))
 
 def printmagenta(s, **kwargs):
     ''' Alias to print(colors.magenta(s)) '''

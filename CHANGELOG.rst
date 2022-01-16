@@ -6,6 +6,24 @@ All notable changes to this project will be documented in this file.
 By import convention, components of the Sciris library are listed beginning with ``sc.``, e.g. ``sc.odict()``.
 
 
+Version 1.3.3 (2022-01-15)
+--------------------------
+
+Plotting
+~~~~~~~~
+#. Added ``sc.savefig()``, which is like ``pl.savefig()`` but stores additional metadata in the figure -- the file that created the figure, git hash, even the entire contents of ``pip freeze`` if desired. Useful for making figures more reproducible.
+#. Likewise, ``sc.loadmetadata()`` will load the metadata from a PNG/SVG file saved with ``sc.savefig()``.
+#. Added ``sc.animation()`` as a more flexible alternative to ``sc.savemovie()``. While ``sc.savemovie()`` works directly with Matplotlib artists, ``sc.animation()`` works with entire figure objects so if you can plot it, you can animate it.
+#. Added flexibility for ``sc.boxoff()`` to turn off any sides of the box.
+
+Other changes
+~~~~~~~~~~~~~
+#. Added quick aliases for ``sc.colorize()``, e.g. ``sc.printgreen('This is like print(), but green')``.
+#. Fixed bugs in several corner cases for ``sc.timer()``.
+#. Added an explicit ``start`` argument to ``sc.timedsleep()``.
+#. 
+
+
 Version 1.3.2 (2022-01-13)
 --------------------------
 #. Additional flexibility in ``sc.timer()``: it now stores a list of times (``timer.timings``), allows auto-generated labels (``sc.timer(auto=True)``, and has a new method ``timer.tt()`` (short for ``toctic``) that will restart the timer (i.e. time diff rather than cumulative time).
