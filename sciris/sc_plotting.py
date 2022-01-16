@@ -1441,7 +1441,7 @@ class animation(scu.prettyobj):
 
     '''
     def __init__(self, fig=None, filename=None, dpi=200, fps=10, imageformat='png', basename=None, nametemplate=None,
-                 imagefolder=None, anim_args=None, save_args=None, tidy=True, verbose=True, **kwargs):
+                 imagefolder=None, anim_args=None, save_args=None, frames=None, tidy=True, verbose=True, **kwargs):
         self.fig = fig
         self.filename = filename
         self.dpi = dpi
@@ -1456,7 +1456,7 @@ class animation(scu.prettyobj):
         self.verbose = verbose
         self.kwargs = kwargs
         self.filenames = scu.autolist()
-        self.frames = scu.autolist()
+        self.frames = frames if frames else scu.autolist()
         self.fig_size = None
         self.fig_dpi = None
         self.anim = None
@@ -1630,7 +1630,7 @@ class animation(scu.prettyobj):
         if verbose:
             T = scd.timer()
             print(f'Saving {len(frames)} frames at {fps} fps and {dpi} dpi to "{filename}"...')
-            callback = lambda i,n: scp.progressbar(i+1, len(self)) # Default callback
+            callback = lambda i,n: scp.progressbar(i+1, len(frames)) # Default callback
             callback = save_args.pop('progress_callback', callback) # if provided as an argument
         else:
             callback = None
@@ -1655,12 +1655,11 @@ class animation(scu.prettyobj):
         return
 
 
-def savemovie(frames, filename=None, fps=None, quality=None, dpi=None, writer=None, bitrate=None,
-              interval=200, repeat=False, repeat_delay=None, blit=False, verbose=True, **kwargs):
+def savemovie(frames, filename=None, fps=None, quality=None, dpi=None, writer=None, bitrate=None, interval=None, repeat=False, repeat_delay=None, blit=False, verbose=True, **kwargs):
     '''
     Save a set of Matplotlib artists as a movie.
 
-    Note: in most cases, ``sc.animation()`` is preferable to use directly.
+    Note: in most cases, it is preferable to use ``sc.animation()``.
 
     Args:
         frames (list): The list of frames to animate
@@ -1713,9 +1712,45 @@ def savemovie(frames, filename=None, fps=None, quality=None, dpi=None, writer=No
             old_dots = pl.vstack([old_dots, dots]) # Store the new dots as old dots
         sc.savemovie(frames, 'fleeing_dots.mp4', fps=20, quality='high') # Save movie as a high-quality mp4
 
-    New in version 1.3.3: refactor with ``sc.animation()``
+    Version: 2019aug21
     '''
-    # Handle quality
+
+    from matplotlib import animation # Place here since specific only to this function
+
+    if not isinstance(frames, list):
+        errormsg = f'sc.savemovie(): argument "frames" must be a list, not "{type(frames)}"'
+        raise TypeError(errormsg)
+    for f in range(len(frames)):
+        if not scu.isiterable(frames[f]):
+            frames[f] = (frames[f],) # This must be either a tuple or a list to work with ArtistAnimation
+
+    # Try to get the figure from the frames, else use the current one
+    try:    fig = frames[0][0].get_figure()
+    except: fig = pl.gcf()
+
+    # Set parameters
+    if filename is None:
+        filename = 'movie.mp4'
+    if writer is None:
+        if   filename.endswith('mp4'): writer = 'ffmpeg'
+        elif filename.endswith('gif'): writer = 'imagemagick'
+        else:
+            errormsg = f'sc.savemovie(): unknown movie extension for file {filename}'
+            raise ValueError(errormsg)
+    if fps is None:
+        fps = 10
+    if interval is None:
+        interval = 1000./fps
+        fps = 1000./interval # To ensure it's correct
+
+    # Handle dpi/quality
+    if dpi is None and quality is None:
+        quality = 'medium' # Make it medium quailty by default
+    if isinstance(dpi, str):
+        quality = dpi # Interpret dpi arg as a quality command
+        dpi = None
+    if dpi is not None and quality is not None:
+        print(f'sc.savemovie() warning: quality is simply a shortcut for dpi; please specify one or the other, not both (dpi={dpi}, quality={quality})')
     if quality is not None:
         if   quality == 'low':    dpi =  50
         elif quality == 'medium': dpi = 150
@@ -1724,8 +1759,23 @@ def savemovie(frames, filename=None, fps=None, quality=None, dpi=None, writer=No
             errormsg = f'Quality must be high, medium, or low, not "{quality}"'
             raise ValueError(errormsg)
 
-    anim_args = dict(interval=interval, repeat_delay=repeat_delay, repeat=repeat, blit=blit)
-    save_args = scu.mergedicts(dict(writer=writer, fps=fps, dpi=dpi, bitrate=bitrate), kwargs)
-    anim = animation(frames=frames, filename=filename, dpi=dpi, fps=fps, anim_args=anim_args, save_args=save_args)
-    anim.save()
+    # Optionally print progress
+    if verbose:
+        start = scd.tic()
+        print(f'Saving {len(frames)} frames at {fps} fps and {dpi} dpi to "{filename}" using {writer}...')
+
+    # Actually create the animation -- warning, no way to not actually have it render!
+    anim = animation.ArtistAnimation(fig, frames, interval=interval, repeat_delay=repeat_delay, repeat=repeat, blit=blit)
+    anim.save(filename, writer=writer, fps=fps, dpi=dpi, bitrate=bitrate, **kwargs)
+
+    if verbose:
+        print(f'Done; movie saved to "{filename}"')
+        try: # Not essential, so don't try too hard if this doesn't work
+            filesize = os.path.getsize(filename)
+            if filesize<1e6: print(f'File size: {filesize/1e3:0.0f} KB')
+            else:            print(f'File size: {filesize/1e6:0.2f} MB')
+        except:
+            pass
+        scd.toc(start)
+
     return anim
