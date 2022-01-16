@@ -838,8 +838,8 @@ class ScirisDateFormatter(mpl.dates.ConciseDateFormatter):
 
         return labels
 
-def dateformatter(ax=None, style='sciris', startdate=None, dateformat=None, interval=None, start=None,
-                  end=None, rotation=None, locator=None, axis='x', asdates=True, setglobal=False, **kwargs):
+def dateformatter(ax=None, style='sciris', startdate=None, dateformat=None, interval=None,
+                  start=None, end=None, rotation=None, locator=None, axis='x', asdates=True, **kwargs):
     '''
     Format the x-axis to use dates.
 
@@ -852,19 +852,18 @@ def dateformatter(ax=None, style='sciris', startdate=None, dateformat=None, inte
     registered as the global formatter via ``sc.dateformatter(setglobal=True)``.
 
     Args:
-        ax (axes): if supplied, use these axes instead of the current one
-        style (str): the style to use if the axis already uses dates; options are "sciris", "auto", "concise", or a Formatter object
-        start_date (str/date): the start day, either as a string or date object (not needed if x-axis already uses dates)
-        dateformat (str): the date format (default ``'%Y-%b-%d'``; not needed if x-axis already uses dates)
-        interval (int): if supplied, the interval between ticks (not needed if x-axis already uses dates)
-        start (str/int): if supplied, the lower limit of the axis
-        end (str/int): if supplied, the upper limit of the axis
-        rotation (float): rotation of the labels, in degrees
-        locator (Locator): if supplied, use this instead of the default ``AutoDateLocator`` locator
-        axis (str): which axis to apply to the formatter to (default 'x')
-        asdates (bool): whether the axis uses ``datetime`` objects (if False, interpret as integer days)
-        setglobal (bool): if true, set this as the global Matplotlib date formatter (and then exit)
-        kwargs(dict): passed to the date formatter (e.g., ``ScirisDateFormatter``)
+        ax         (axes)     : if supplied, use these axes instead of the current one
+        style      (str)      : the style to use if the axis already uses dates; options are "sciris", "auto", "concise", or a Formatter object
+        start_date (str/date) : the start day, either as a string or date object (not needed if x-axis already uses dates)
+        dateformat (str)      : the date format (default ``'%Y-%b-%d'``; not needed if x-axis already uses dates)
+        interval   (int)      : if supplied, the interval between ticks (not needed if x-axis already uses dates)
+        start      (str/int)  : if supplied, the lower limit of the axis
+        end        (str/int)  : if supplied, the upper limit of the axis
+        rotation   (float)    : rotation of the labels, in degrees
+        locator    (Locator)  : if supplied, use this instead of the default ``AutoDateLocator`` locator
+        axis       (str)      : which axis to apply to the formatter to (default 'x')
+        asdates    (bool)     : whether the axis uses ``datetime`` objects (if False, interpret as integer days)
+        kwargs     (dict)     : passed to the date formatter (e.g., ``ScirisDateFormatter``)
 
     **Examples**::
 
@@ -887,16 +886,8 @@ def dateformatter(ax=None, style='sciris', startdate=None, dateformat=None, inte
     | New in version 1.2.2: "rotation" argument; renamed "start_day" to "start_date"
     | New in version 1.3.0: refactored to use built-in Matplotlib date formatting
     | New in version 1.3.2: "axis" argument
+    | New in version 1.3.3: assume asdates=True (required for Matplotlib 3.5.0 support)
     '''
-
-    # Handle global setting
-    if setglobal:
-        import matplotlib.units as munits
-        converter = ScirisDateFormatter(**kwargs)
-        munits.registry[np.datetime64] = converter
-        munits.registry[dt.date]       = converter
-        munits.registry[dt.datetime]   = converter
-        return
 
     # Handle deprecation
     start_day = kwargs.pop('start_day', None)
