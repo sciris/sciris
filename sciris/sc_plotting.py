@@ -762,25 +762,6 @@ def fonts(add=None, use=False, output='name', dryrun=False, rebuild=False, verbo
 __all__ += ['dateformatter']
 
 
-def _dateaxis(ax=None, axis='x'):
-    ''' Check if the current axes use dates by seeing if the DateConverter is used '''
-
-    # Handle inputs
-    if ax is None:
-        ax = pl.gca()
-    if   axis == 'x': axi = ax.xaxis
-    elif axis == 'y': axi = ax.yaxis
-    elif axis == 'z': axi = ax.zaxis
-    else:
-        errormsg = f'Axis "{axis}" not found: must be x, y, or z'
-        raise ValueError(errormsg)
-
-    # Check
-    output = True if isinstance(axi.converter, mpl.dates.DateConverter) else False
-
-    return output
-
-
 class ScirisDateFormatter(mpl.dates.ConciseDateFormatter):
     '''
     An adaptation of Matplotlib's ConciseDateFormatter with a slightly different
@@ -857,8 +838,8 @@ class ScirisDateFormatter(mpl.dates.ConciseDateFormatter):
 
         return labels
 
-def dateformatter(ax=None, style='sciris', start_date=None, dateformat=None, interval=None,
-                  start=None, end=None, rotation=None, locator=None, axis='x', **kwargs):
+def dateformatter(ax=None, style='sciris', startdate=None, dateformat=None, interval=None, start=None,
+                  end=None, rotation=None, locator=None, axis='x', asdates=True, setglobal=False, **kwargs):
     '''
     Format the x-axis to use dates.
 
@@ -866,6 +847,9 @@ def dateformatter(ax=None, style='sciris', start_date=None, dateformat=None, int
     configure it (by default, using the Sciris house style). Alternatively, if the
     x-axis is numeric, the other formatting arguments will be used to create psuedo-dates
     instead.
+
+    While primary usage is to configure a single axis, the formatter can also be
+    registered as the global formatter via ``sc.dateformatter(setglobal=True)``.
 
     Args:
         ax (axes): if supplied, use these axes instead of the current one
@@ -878,6 +862,8 @@ def dateformatter(ax=None, style='sciris', start_date=None, dateformat=None, int
         rotation (float): rotation of the labels, in degrees
         locator (Locator): if supplied, use this instead of the default ``AutoDateLocator`` locator
         axis (str): which axis to apply to the formatter to (default 'x')
+        asdates (bool): whether the axis uses ``datetime`` objects (if False, interpret as integer days)
+        setglobal (bool): if true, set this as the global Matplotlib date formatter (and then exit)
         kwargs(dict): passed to the date formatter (e.g., ``ScirisDateFormatter``)
 
     **Examples**::
@@ -903,6 +889,15 @@ def dateformatter(ax=None, style='sciris', start_date=None, dateformat=None, int
     | New in version 1.3.2: "axis" argument
     '''
 
+    # Handle global setting
+    if setglobal:
+        import matplotlib.units as munits
+        converter = ScirisDateFormatter(**kwargs)
+        munits.registry[np.datetime64] = converter
+        munits.registry[dt.date]       = converter
+        munits.registry[dt.datetime]   = converter
+        return
+
     # Handle deprecation
     start_day = kwargs.pop('start_day', None)
     if start_day is not None: # pragma: no cover
@@ -918,11 +913,8 @@ def dateformatter(ax=None, style='sciris', start_date=None, dateformat=None, int
     if ax is None:
         ax = pl.gca()
 
-    # Check if dates are already being used
-    isdate = _dateaxis(ax=ax)
-
     # Option 1 -- they're already dates
-    if isdate:
+    if asdates:
 
         # Handle dateformat, if provided
         if dateformat is not None:
