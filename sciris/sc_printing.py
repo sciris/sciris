@@ -886,34 +886,62 @@ def percentcomplete(step=None, maxsteps=None, stepsize=1, prefix=None):
     return
 
 
-def progressbar(i, maxiters, label='', length=30, empty='—', full='•', newline=False):
+def progressbar(i, maxiters, label='', every=1, length=30, empty='—', full='•', newline=False):
     '''
     Call in a loop to create terminal progress bar.
 
     Args:
-        i (int): current iteration
-        maxiters (int): maximum number of iterations
-        label (str): initial label to print
-        length (int): length of progress bar
-        empty (str): character for empty steps
-        full (str): character for empty steps
+        i        (int): current iteration
+        maxiters (int): maximum number of iterations (can also use an object with length)
+        label    (str): initial label to print
+        every    (int/float): if int, print every "every"th iteration (if 1, print all); if float and <1, print every maxiters*every iteration
+        length   (int): length of progress bar
+        empty    (str): character for not-yet-completed steps
+        full     (str): character for completed steps
+        newline  (str): character to print at the end of the line (default none)
 
-    **Example**::
+    **Examples**::
 
-        import pylab as pl
-        for i in range(100):
-            progressbar(i+1, 100)
+        for i in range(20):
+            sc.progressbar(i+1, 20)
             pl.pause(0.05)
 
+        x = np.arange(100)
+        for i in x:
+            sc.progressbar(i+1, x, every=0.1)
+            pl.pause(0.01)
+
     Adapted from example by Greenstick (https://stackoverflow.com/questions/3173320/text-progress-bar-in-the-console)
+
+    New in version 1.3.3: "every" argument
     '''
+    # Handle inputs
+    if hasattr(maxiters, '__len__'):
+        maxiters = len(maxiters)
     ending = None if newline else '\r'
-    pct = i/maxiters*100
+    if every < 1:
+        every = max(1, int(every*maxiters)) # Don't let it go below 1
+
+    # Calculate percent and handle zero case
+    if maxiters > 0:
+        pct = i/maxiters*100
+    else:
+        i = 1
+        maxiters = 1
+        pct = 100
     percent = f'{pct:0.0f}%'
+
+    # Assemble string
     filled = int(length*i//maxiters)
     bar = full*filled + empty*(length-filled)
-    print(f'\r{label} {bar} {percent}', end=ending)
-    if i == maxiters: print()
+
+    # Print
+    lastiter = (i == maxiters)
+    if not(i%every) or lastiter:
+        print(f'\r{label} {bar} {percent}', end=ending)
+        if lastiter:
+            print() # Newline at the end
+
     return
 
 

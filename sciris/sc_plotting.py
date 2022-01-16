@@ -18,6 +18,7 @@ Highlights:
 
 import os
 import sys
+import tempfile
 import warnings
 import datetime as dt
 import pylab as pl
@@ -1004,10 +1005,21 @@ def dateformatter(ax=None, style='sciris', start_date=None, dateformat=None, int
 #%% Figure saving
 ##############################################################################
 
-__all__ += ['savefig', 'loadmetadata', 'savefigs', 'loadfig', 'emptyfig', 'separatelegend', 'orderlegend', 'savemovie']
+__all__ += ['savefig', 'loadmetadata', 'savefigs', 'loadfig', 'emptyfig', 'separatelegend', 'orderlegend']
 
 
 _metadataflag = 'sciris_metadata' # Key name used to identify metadata saved in a figure
+
+
+def _get_dpi(dpi=None, min_dpi=200):
+    ''' Helper function to choose DPI for saving figures '''
+    if dpi is None:
+        mpl_dpi = pl.rcParams['savefig.dpi']
+        if mpl_dpi == 'figure':
+            mpl_dpi = pl.rcParams['figure.dpi']
+        dpi = max(mpl_dpi, min_dpi) # Don't downgrade DPI
+    return dpi
+
 
 def savefig(filename, fig=None, dpi=None, comments=None, freeze=False, frame=2, die=True, **kwargs):
     '''
@@ -1049,11 +1061,7 @@ def savefig(filename, fig=None, dpi=None, comments=None, freeze=False, frame=2, 
         fig = pl.gcf()
 
     # Handle DPI
-    if dpi is None:
-        mpl_dpi = pl.rcParams['savefig.dpi']
-        if mpl_dpi == 'figure':
-            mpl_dpi = pl.rcParams['figure.dpi']
-        dpi = max(mpl_dpi, 200) # Don't downgrade DPI
+    dpi = _get_dpi(dpi)
 
     # Get caller and git info
     caller = scu.getcaller(frame=frame, tostring=False)
@@ -1401,29 +1409,258 @@ def orderlegend(order=None, ax=None, handles=None, labels=None, reverse=None, **
     return
 
 
+#%% Animation
+
+__all__ += ['animation', 'savemovie']
+
+
 class animation(scu.prettyobj):
     '''
     A class for storing and saving a Matplotlib animation.
 
-    **Examples**::
+    **Example**::
 
         anim = sc.animation()
-        fig = pl.figure()
-        for i in range(50):
-            scale = 1/sqrt(i+1)
-            x = scale*pl.rand(10)
-            y = scale*pl.rand(10)
-            label = str(i) if i %% 10 else None
-            pl.scatter(x, y, label=label)
+
+        pl.figure()
+        pl.seed(1)
+        repeats = 21
+        colors = sc.vectocolor(repeats, cmap='turbo')
+        for i in range(repeats):
+            scale = 1/np.sqrt(i+1)
+            x = scale*pl.randn(10)
+            y = scale*pl.randn(10)
+            label = str(i) if not(i%5) else None
+            pl.scatter(x, y, c=[colors[i]], label=label)
+            pl.title(f'Scale = 1/√{i}')
             pl.legend()
+            sc.boxoff('all')
+            anim.addframe()
+
+        anim.save('dots.mp4')
 
     '''
-    pass
+    def __init__(self, fig=None, filename=None, dpi=200, fps=10, imageformat='png', basename=None, nametemplate=None,
+                 imagefolder=None, anim_args=None, save_args=None, tidy=True, verbose=True, **kwargs):
+        self.fig = fig
+        self.filename = filename
+        self.dpi = dpi
+        self.fps = fps
+        self.imageformat = imageformat
+        self.basename = basename
+        self.nametemplate = nametemplate
+        self.imagefolder = imagefolder
+        self.anim_args = anim_args
+        self.save_args = save_args
+        self.tidy = tidy
+        self.verbose = verbose
+        self.kwargs = kwargs
+        self.filenames = scu.autolist()
+        self.frames = scu.autolist()
+        self.fig_size = None
+        self.fig_dpi = None
+        self.anim = None
+        self.initialize()
+        return
 
 
-def savemovie(frames, filename=None, fps=None, quality=None, dpi=None, writer=None, bitrate=None, interval=None, repeat=False, repeat_delay=None, blit=False, verbose=True, **kwargs):
+    def initialize(self):
+
+        # Handle basename
+        if self.basename is None:
+            self.basename = 'animation'
+
+        # Handle folder
+        if self.imagefolder == 'tempfile':
+            self.imagefolder = tempfile.gettempdir()
+        if self.imagefolder is None:
+            self.imagefolder = os.getcwd()
+        self.imagefolder = scf.path(self.imagefolder)
+
+        # Handle name template
+        if self.nametemplate is None:
+            self.nametemplate = f'{self.basename}_%04d.{self.imageformat}' # ADD name template
+
+        # Handle dpi
+        self.dpi = _get_dpi(self.dpi)
+
+        return
+
+
+    def _getfig(self, fig=None):
+        if fig is None:
+            if self.fig is not None:
+                fig = self.fig
+            else:
+                try:    fig = self.frames[0][0].get_figure()
+                except: fig = pl.gcf()
+        return fig
+
+
+    def _getfilename(self, path=True):
+        try:
+            name = self.nametemplate % len(self)
+        except TypeError as E:
+            errormsg = f'Name template "{self.nametemplate}" does not seem valid for inserting current frane number {len(self)} into: should contain the string "%04d" or similar'
+            raise TypeError(errormsg) from E
+        if path:
+            name = self.imagefolder / name
+        return name
+
+
+    def __add__(self, *args, **kwargs):
+        return self.addframe(*args, **kwargs)
+
+
+    def __radd__(self, *args, **kwargs):
+        return self.addframe(self, *args, **kwargs)
+
+
+    def __len__(self):
+        return len(self.filenames)
+
+
+    def addframe(self, fig=None, *args, **kwargs):
+
+        if self.verbose and len(self) == 0: # First frame
+            print('Adding frames...')
+
+        # Get the figure, name, and save
+        fig = self._getfig(fig)
+        filename = self._getfilename()
+        fig.savefig(filename, dpi=self.dpi)
+        self.filenames += filename
+
+        # Check figure properties
+        fig_size = fig.get_size_inches()
+        fig_dpi = fig.get_dpi()
+
+        if self.fig_size is None:
+            self.fig_size = fig_size
+        else:
+            if not np.allclose(self.fig_size, fig_size):
+                warnmsg = f'Note: current figure size {fig_size} does not match saved {self.fig_size}, unexpected results may occur!'
+                print(warnmsg)
+
+        if self.fig_dpi is None:
+            self.fig_dpi = fig_dpi
+        else:
+            if self.fig_dpi != fig_dpi:
+                warnmsg = f'Note: current figure DPI {fig_dpi} does not match saved {self.fig_dpi}, unexpected results may occur!'
+                print(warnmsg)
+
+        if self.verbose:
+            print(f'  Added frame {len(self)}: {self._getfilename(path=False)}')
+
+        return
+
+
+    def loadframes(self):
+        animfig = pl.figure(figsize=self.fig_size, dpi=self.dpi)
+        ax = animfig.add_axes([0,0,1,1])
+        if self.verbose:
+            print('Preprocessing frames...')
+        for f,filename in enumerate(self.filenames):
+            if self.verbose:
+                scp.progressbar(f+1, self.filenames)
+            im = pl.imread(filename)
+            self.frames += ax.imshow(im)
+        pl.close(animfig)
+        return
+
+
+    def __enter__(self, *args, **kwargs):
+        return self
+
+
+    def __exit__(self, *args, **kwargs):
+        return self.save()
+
+
+    def rmfiles(self):
+        succeeded = 0
+        failed = scu.autolist()
+        for filename in self.filenames:
+            if os.path.exists(filename):
+                try:
+                    os.remove(filename)
+                    succeeded += 1
+                except Exception as E:
+                    failed += f'{filename} ({E})'
+        if self.verbose:
+            if succeeded:
+                print(f'Removed {succeeded} temporary files')
+        if failed:
+            print(f'Failed to remove the following temporary files:\n{scu.newlinejoin(failed)}')
+
+
+    def save(self, filename=None, fps=None, dpi=None, anim_args=None, save_args=None, frames=None, tidy=None, verbose=True, **kwargs):
+
+        import matplotlib.animation as mpl_anim # Sometimes fails if not imported directly
+
+        # Handle dictionary args
+        anim_args = scu.mergedicts(self.anim_args, anim_args)
+        save_args = scu.mergedicts(self.save_args, save_args)
+
+        # Handle filename
+        if filename is None:
+            if self.filename is None:
+                self.filename = f'{self.basename}.mp4'
+            filename = self.filename
+
+        # Load and sanitize frames
+        if frames is None:
+            if not len(self.frames):
+                self.loadframes()
+            frames = self.frames
+
+        for f in range(len(frames)):
+            if not scu.isiterable(frames[f]):
+                frames[f] = (frames[f],) # This must be either a tuple or a list to work with ArtistAnimation
+
+        # Try to get the figure from the frames, else use the current one
+        fig = self._getfig()
+
+        # Set parameters
+        if fps  is None: fps  = save_args.pop('fps', self.fps)
+        if dpi  is None: dpi  = save_args.pop('dpi', self.dpi)
+        if tidy is None: tidy = self.tidy
+
+        # Optionally print progress
+        if verbose:
+            T = scd.timer()
+            print(f'Saving {len(frames)} frames at {fps} fps and {dpi} dpi to "{filename}"...')
+            callback = lambda i,n: scp.progressbar(i+1, len(self)) # Default callback
+            callback = save_args.pop('progress_callback', callback) # if provided as an argument
+        else:
+            callback = None
+
+        # Actually create the animation -- warning, no way to not actually have it render!
+        anim = mpl_anim.ArtistAnimation(fig, frames, **anim_args)
+        anim.save(filename, fps=fps, dpi=dpi, progress_callback=callback, **save_args)
+
+        if verbose:
+            print(f'Done; movie saved to "{filename}"')
+            try: # Not essential, so don't try too hard if this doesn't work
+                filesize = os.path.getsize(filename)
+                if filesize<1e6: print(f'File size: {filesize/1e3:0.0f} KB')
+                else:            print(f'File size: {filesize/1e6:0.1f} MB')
+            except:
+                pass
+            T.toc(label='saving movie')
+
+        if tidy:
+            self.rmfiles()
+
+        return
+
+
+def savemovie(frames, filename=None, fps=None, quality=None, dpi=None, writer=None, bitrate=None,
+              interval=200, repeat=False, repeat_delay=None, blit=False, verbose=True, **kwargs):
     '''
     Save a set of Matplotlib artists as a movie.
+
+    Note: in most cases, ``sc.animation()`` is preferable to use directly.
 
     Args:
         frames (list): The list of frames to animate
@@ -1476,44 +1713,9 @@ def savemovie(frames, filename=None, fps=None, quality=None, dpi=None, writer=No
             old_dots = pl.vstack([old_dots, dots]) # Store the new dots as old dots
         sc.savemovie(frames, 'fleeing_dots.mp4', fps=20, quality='high') # Save movie as a high-quality mp4
 
-    Version: 2019aug21
+    New in version 1.3.3: refactor with ``sc.animation()``
     '''
-    import matplotlib.animation as mpl_anim # Sometimes fails if not imported directly
-
-    if not isinstance(frames, list):
-        errormsg = f'sc.savemovie(): argument "frames" must be a list, not "{type(frames)}"'
-        raise TypeError(errormsg)
-    for f in range(len(frames)):
-        if not scu.isiterable(frames[f]):
-            frames[f] = (frames[f],) # This must be either a tuple or a list to work with ArtistAnimation
-
-    # Try to get the figure from the frames, else use the current one
-    try:    fig = frames[0][0].get_figure()
-    except: fig = pl.gcf()
-
-    # Set parameters
-    if filename is None:
-        filename = 'movie.mp4'
-    if writer is None:
-        if   filename.endswith('mp4'): writer = 'ffmpeg'
-        elif filename.endswith('gif'): writer = 'imagemagick'
-        else:
-            errormsg = f'sc.savemovie(): unknown movie extension for file {filename}'
-            raise ValueError(errormsg)
-    if fps is None:
-        fps = 10
-    if interval is None:
-        interval = 1000./fps
-        fps = 1000./interval # To ensure it's correct
-
-    # Handle dpi/quality
-    if dpi is None and quality is None:
-        quality = 'medium' # Make it medium quailty by default
-    if isinstance(dpi, str):
-        quality = dpi # Interpret dpi arg as a quality command
-        dpi = None
-    if dpi is not None and quality is not None:
-        print(f'sc.savemovie() warning: quality is simply a shortcut for dpi; please specify one or the other, not both (dpi={dpi}, quality={quality})')
+    # Handle quality
     if quality is not None:
         if   quality == 'low':    dpi =  50
         elif quality == 'medium': dpi = 150
@@ -1522,23 +1724,8 @@ def savemovie(frames, filename=None, fps=None, quality=None, dpi=None, writer=No
             errormsg = f'Quality must be high, medium, or low, not "{quality}"'
             raise ValueError(errormsg)
 
-    # Optionally print progress
-    if verbose:
-        start = scd.tic()
-        print(f'Saving {len(frames)} frames at {fps} fps and {dpi} dpi to "{filename}" using {writer}...')
-
-    # Actually create the animation -- warning, no way to not actually have it render!
-    anim = mpl_anim.ArtistAnimation(fig, frames, interval=interval, repeat_delay=repeat_delay, repeat=repeat, blit=blit)
-    anim.save(filename, writer=writer, fps=fps, dpi=dpi, bitrate=bitrate, **kwargs)
-
-    if verbose:
-        print(f'Done; movie saved to "{filename}"')
-        try: # Not essential, so don't try too hard if this doesn't work
-            filesize = os.path.getsize(filename)
-            if filesize<1e6: print(f'File size: {filesize/1e3:0.0f} KB')
-            else:            print(f'File size: {filesize/1e6:0.2f} MB')
-        except:
-            pass
-        scd.toc(start, label='saving movie')
-
+    anim_args = dict(interval=interval, repeat_delay=repeat_delay, repeat=repeat, blit=blit)
+    save_args = scu.mergedicts(dict(writer=writer, fps=fps, dpi=dpi, bitrate=bitrate), kwargs)
+    anim = animation(frames=frames, filename=filename, dpi=dpi, fps=fps, anim_args=anim_args, save_args=save_args)
+    anim.save()
     return anim
