@@ -925,7 +925,7 @@ Spreadsheet() no longer supports openpyexcel as of v1.3.1. To load using it anyw
 
 Falling back to openpyxl, which is identical except for how cached cell values are handled.
 '''
-        warnings.warn(warnmsg, category=DeprecationWarning, stacklevel=2)
+        warnings.warn(warnmsg, category=FutureWarning, stacklevel=2)
         return self.openpyxl(*args, **kwargs)
 
 

@@ -118,7 +118,7 @@ def findinds(arr=None, val=None, eps=1e-6, first=False, last=False, die=True, **
         arr = kwargs.pop('val1', arr)
         val = kwargs.pop('val2', val)
         warnmsg = 'sc.findinds() arguments "val1" and "val2" have been deprecated as of v1.0.0; use "arr" and "val" instead'
-        warnings.warn(warnmsg, category=DeprecationWarning, stacklevel=2)
+        warnings.warn(warnmsg, category=FutureWarning, stacklevel=2)
 
     # Calculate matches
     arr = scu.promotetoarray(arr)

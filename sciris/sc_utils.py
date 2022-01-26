@@ -238,6 +238,8 @@ def dcp(obj, die=True, verbose=True):
     Args:
         die (bool): if False, fall back to copy()
         verbose (bool): if die is False, then print a warning if deepcopy() fails
+
+    New in version 1.4.0: default die=True instead of False
     '''
     try:
         output = copy.deepcopy(obj)
@@ -730,7 +732,7 @@ def promotetoarray(x, keepnone=False, **kwargs):
     if skipnone is not None: # pragma: no cover
         keepnone = not(skipnone)
         warnmsg = 'sc.promotetoarray() argument "skipnone" has been deprecated as of v1.1.0; use keepnone instead'
-        warnings.warn(warnmsg, category=DeprecationWarning, stacklevel=2)
+        warnings.warn(warnmsg, category=FutureWarning, stacklevel=2)
     if isnumber(x) or (isinstance(x, np.ndarray) and not np.shape(x)): # e.g. 3 or np.array(3)
         x = [x]
     elif x is None and not keepnone:
@@ -906,8 +908,8 @@ def mergedicts(*args, _strict=False, _overwrite=True, _copy=False, **kwargs):
     # Warn about deprecated keys
     renamed = ['strict', 'overwrite', 'copy']
     if any([k in kwargs for k in renamed]):
-            warnmsg = f'sc.mergedicts() arguments "{strjoin(renamed)}" have been renamed with underscores as of v1.3.3; using these as keywords is undesirable'
-            warnings.warn(warnmsg, category=DeprecationWarning, stacklevel=2)
+        warnmsg = f'sc.mergedicts() arguments "{strjoin(renamed)}" have been renamed with underscores as of v1.3.3; using these as keywords is undesirable'
+        warnings.warn(warnmsg, category=FutureWarning, stacklevel=2)
 
     # Try to get the output type from the first argument, but revert to a standard dict if that fails
     try:
