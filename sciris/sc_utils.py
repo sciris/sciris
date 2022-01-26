@@ -228,35 +228,40 @@ def uuid(uid=None, which=None, die=False, tostring=False, length=None, n=1, **kw
     return output
 
 
-def dcp(obj, verbose=True, die=False):
+def dcp(obj, die=True, verbose=True):
     '''
     Shortcut to perform a deep copy operation
 
-    Almost identical to ``copy.deepcopy()``
+    Almost identical to ``copy.deepcopy()``, but optionally fall back to copy()
+    if deepcopy fails.
+
+    Args:
+        die (bool): if False, fall back to copy()
+        verbose (bool): if die is False, then print a warning if deepcopy() fails
     '''
     try:
         output = copy.deepcopy(obj)
     except Exception as E: # pragma: no cover
         output = cp(obj)
-        errormsg = f'Warning: could not perform deep copy, performing shallow instead: {str(E)}'
+        errormsg = f'Warning: could not perform deep copy: {str(E)}'
         if die: raise RuntimeError(errormsg)
-        else:   print(errormsg)
+        else:   print(errormsg + '\nPerforming shallow copy instead...')
     return output
 
 
-def cp(obj, verbose=True, die=True):
+def cp(obj, die=True, verbose=True):
     '''
     Shortcut to perform a shallow copy operation
 
-    Almost identical to ``copy.copy()``
+    Almost identical to ``copy.copy()``, but optionally allow failures
     '''
     try:
         output = copy.copy(obj)
     except Exception as E:
         output = obj
-        errormsg = 'Could not perform shallow copy, returning original object'
+        errormsg = 'Could not perform shallow copy'
         if die: raise ValueError(errormsg) from E
-        else:   print(errormsg)
+        else:   print(errormsg + '\nReturning original object...')
     return output
 
 
