@@ -474,12 +474,16 @@ def require(reqs=None, *args, exact=False, detailed=False, die=True, verbose=Tru
 
     # Handle exceptions
     if not met:
-        errormsg = 'The following requirements were not met:'
+        errkeys = list(errs.keys())
+        errormsg = '\nThe following requirements were not met:'
         for k,v in data.items():
             if not v:
                 errormsg += f'\n  {k}: {str(errs[k])}'
+        errormsg += f'''\n\nYou might want to try "pip install {strjoin(errkeys, sep=' ')} --upgrade".'''
         if die:
-            raise ModuleNotFoundError(errormsg) from errs[k] # Use the last one
+            err = errs[errkeys[0]]
+            exc = type(err)
+            raise exc(errormsg) from err
         elif verbose:
             print(errormsg)
 
@@ -1005,7 +1009,7 @@ def _sanitize_output(obj, is_list, is_array, dtype=None):
 #%% Misc. functions
 ##############################################################################
 
-__all__ += ['strjoin', 'newlinejoin', 'checkmem', 'checkram', 'runcommand', 'gitinfo',
+__all__ += ['strjoin', 'newlinejoin', 'strsplit', 'checkmem', 'checkram', 'runcommand', 'gitinfo',
             'compareversions', 'uniquename', 'importbyname', 'suggest', 'profile', 'mprofile',
             'getcaller']
 
@@ -1048,6 +1052,53 @@ def newlinejoin(*args):
     New in version 1.1.0.
     '''
     return strjoin(*args, sep='\n')
+
+
+def strsplit(string, sep=None, skipempty=True, lstrip=True, rstrip=True):
+    '''
+    Convenience function to split common types of strings.
+
+    Note: to use regular expressions, use ``re.split()`` instead.
+
+    Args:
+        string    (str):      the string to split
+        sep       (str/list): the types of separator to accept (default space or comma, i.e. [' ', ','])
+        skipempty (bool):     whether to skip empty entries (i.e. from consecutive delimiters)
+        lstrip    (bool):     whether to strip any extra spaces on the left
+        rstrip    (bool):     whether to strip any extra spaces on the right
+
+    Examples:
+
+        sc.strsplit('a b c') # Returns ['a', 'b', 'c']
+        sc.strsplit('a,b,c') # Returns ['a', 'b', 'c']
+        sc.strsplit('a, b, c') # Returns ['a', 'b', 'c']
+        sc.strsplit('  foo_bar  ', sep='_') # Returns ['foo', 'bar']
+
+    New in version 1.4.0.
+    '''
+    strlist = []
+    if sep is None:
+        sep = [' ', ',']
+
+    # Generate a character sequence that isn't in the string
+    special = '∙' # Pick an obscure character
+    while special in string: # If it exists in the string nonetheless, keep going until it doesn't
+        special += special
+
+    # Convert all separators to the special character
+    for s in sep:
+        string = string.replace(s, special)
+
+    # Split the string, filter, and trim
+    strlist = string.split(special)
+    if lstrip:
+        strlist = [s.lstrip() for s in strlist]
+    if rstrip:
+        strlist = [s.rstrip() for s in strlist]
+    if skipempty:
+        strlist = [s for s in strlist if s != '']
+
+    return strlist
 
 
 def checkmem(var, descend=None, alphabetical=False, plot=False, verbose=False):
