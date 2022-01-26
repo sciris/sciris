@@ -598,7 +598,7 @@ def toc(start=None, label=None, baselabel=None, sigfigs=None, reset=False, outpu
     else:
         if baselabel is None:
             if label:
-                base = f'Elapsed time for {label}: '
+                base = f'{label}: '
             else: # Handles case toc(label='')
                 base = ''
         else:
