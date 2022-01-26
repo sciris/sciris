@@ -885,14 +885,16 @@ class Spreadsheet(Blobject):
 
 
     def xlrd(self, reload=False, store=True, **kwargs): # pragma: no cover
-        ''' Return a book as opened by xlrd '''
-        wb = self.wb
+        ''' Legacy method to load from xlrd '''
         if self._reload_wb(reload=reload):
             try:
                 import xlrd # Optional import
             except ModuleNotFoundError as e:
                 raise ModuleNotFoundError('The "xlrd" Python package is not available; please install manually') from e
             wb = xlrd.open_workbook(file_contents=self.tofile().read(), **kwargs)
+        else:
+            wb = self.wb
+
         if store:
             self.wb = wb
         return wb
@@ -900,7 +902,6 @@ class Spreadsheet(Blobject):
 
     def openpyxl(self, reload=False, store=True, **kwargs):
         ''' Return a book as opened by openpyxl '''
-        wb = self.wb
         if self._reload_wb(reload=reload):
             import openpyxl # Optional import
             if self.blob is not None:
@@ -908,6 +909,9 @@ class Spreadsheet(Blobject):
                 wb = openpyxl.load_workbook(self.bytes, **kwargs) # This stream can be passed straight to openpyxl
             else:
                 wb = openpyxl.Workbook(**kwargs)
+        else:
+            wb = self.wb
+
         if store:
             self.wb = wb
         return wb
@@ -931,15 +935,18 @@ Falling back to openpyxl, which is identical except for how cached cell values a
 
     def pandas(self, reload=False, store=True, **kwargs): # pragma: no cover
         ''' Return a book as opened by pandas '''
-        wb = self.wb
+
         if self._reload_wb(reload=reload):
-            import pandas as pd # Optional import
+            import pandas as pd # Optional (slow) import
             if self.blob is not None:
                 self.tofile(output=False)
                 wb = pd.ExcelFile(self.bytes, **kwargs)
             else:
                 errormsg = 'For pandas, must load an existing workbook; use openpyxl to create a new workbook'
                 raise FileNotFoundError(errormsg)
+        else:
+            wb = self.wb
+
         if store:
             self.wb = wb
         return wb
