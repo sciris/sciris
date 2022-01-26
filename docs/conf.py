@@ -19,7 +19,7 @@ import sciris as sc
 # -- Project information -----------------------------------------------------
 
 project = 'Sciris'
-copyright = f'2021 by the Sciris Development Team (version {sc.__version__})'
+copyright = f'2014–2022 by the Sciris Development Team (version {sc.__version__})'
 author = 'Sciris Development Team'
 
 # The short X.Y version
