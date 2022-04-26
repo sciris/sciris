@@ -12,6 +12,7 @@ Highlights:
 
 import io
 import os
+import sys
 import time
 import colors
 import pprint
@@ -976,6 +977,7 @@ class capture(UserString, str, redirect_stdout):
 
     def __init__(self, seq='', *args, **kwargs):
         self._io = io.StringIO()
+        self.stdout = sys.stdout
         UserString.__init__(self, seq=seq, *args, **kwargs)
         redirect_stdout.__init__(self, self._io)
         return
