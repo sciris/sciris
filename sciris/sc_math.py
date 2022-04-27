@@ -256,8 +256,12 @@ def getvaliddata(data=None, filterdata=None, defaultind=0): # pragma: no cover
 def sanitize(data=None, returninds=False, replacenans=None, die=True, defaultval=None, label=None, verbose=True):
         '''
         Sanitize input to remove NaNs. Warning, does not work on multidimensional data!!
+        Returns an array with the sanitized data. If replacenans=True, the sanitized array is
+        of the same length/size as data. If replacenans=False, the sanitized array
+        may be shorter than data.   
 
         **Examples**::
+
 
             sanitized,inds = sanitize(array([3,4,nan,8,2,nan,nan,nan,8]), returninds=True)
             sanitized = sanitize(array([3,4,nan,8,2,nan,nan,nan,8]), replacenans=True)
