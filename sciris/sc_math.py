@@ -295,8 +295,8 @@ def sanitize(data=None, returninds=False, replacenans=None, die=True, defaultval
                 else:
                     sanitized = 0.0
                     if verbose: # pragma: no cover
-                        if label is None: label = 'this parameter'
-                        print(f'sc.sanitize(): no data entered for {label}, assuming 0')
+                        if label is None: label = 'these input data'
+                        print(f'sc.sanitize(): no valid values found for {label}. Returning 0.')
         except Exception as E: # pragma: no cover
             if die:
                 errormsg = f'Sanitization failed on array: "{repr(E)}":\n{data}'
