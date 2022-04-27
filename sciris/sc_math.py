@@ -260,6 +260,15 @@ def sanitize(data=None, returninds=False, replacenans=None, die=True, defaultval
         of the same length/size as data. If replacenans=False, the sanitized array
         may be shorter than data.   
 
+
+        Args:
+        data (array/list): the array with data to be sanitized 
+        returninds (bool): whether to return the indices of the non-NaN values in data 
+        replacenans (bool): whether to replace the NaNs using interpolation sc.smoothinterp() 
+        defaultval (float/int): value to return if the sanitized array is empty. 
+        label (str): human readable label for data       
+        die (bool): whether to raise an exception if first or last is true and no matches were found
+
         **Examples**::
 
 
