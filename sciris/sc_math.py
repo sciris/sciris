@@ -267,7 +267,7 @@ def sanitize(data=None, returninds=False, replacenans=None, die=True, defaultval
         replacenans (bool): whether to replace the NaNs using interpolation sc.smoothinterp() 
         defaultval (float/int): value to return if the sanitized array is empty. 
         label (str): human readable label for data       
-        die (bool): whether to raise an exception if first or last is true and no matches were found
+        die (bool): whether to raise an exception if sanitization fails. 
 
         **Examples**::
 
