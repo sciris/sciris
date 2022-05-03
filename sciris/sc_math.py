@@ -365,6 +365,7 @@ def perturb(n=1, span=0.5, randseed=None, normal=False):
     Args:
         n (int): number of points
         span (float): width of distribution on either side of 1
+        randseed (int): seed passed to the reseed numpy's legacy MT19937 BitGenerator
         normal (bool):  whether to use a normal distribution instead of uniform
 
     **Example**::
