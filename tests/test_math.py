@@ -160,7 +160,7 @@ def test_gauss2d(doplot=doplot):
     # Method 1 -- form grid
     xi = pl.linspace(0,1,20)
     yi = pl.linspace(0,1,20)
-    zi = sc.gauss2d(x, y, z, xi, yi, scale=0.1)
+    zi = sc.gauss2d(x, y, z, xi, yi, scale=0.1, grid=True)
 
     # Method 2 -- use points directly
     xi2 = pl.rand(400)
