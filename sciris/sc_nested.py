@@ -179,7 +179,7 @@ def flattendict(nesteddict, sep=None, _prefix=None):
         {'a_b': 1, 'a_c_d': 2, 'a_c_e': 3}
 
     Args:
-        d: Input dictionary potentially containing dicts as values
+        nesteddict: Input dictionary potentially containing dicts as values
         sep: Concatenate keys using string separator. If ``None`` the returned dictionary will have tuples as keys
         _prefix: Internal argument for recursively accumulating the nested keys
 
