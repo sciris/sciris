@@ -18,7 +18,7 @@ from . import sc_utils as scu
 ##############################################################################
 
 __all__ = ['approx', 'safedivide', 'findinds', 'findfirst', 'findlast', 'findnearest',
-           'dataindex', 'getvalidinds', 'sanitize', 'getvaliddata', 'isprime', 'numdigits']
+           'dataindex', 'getvalidinds', 'sanitize', 'getvaliddata', 'isprime', 'numdigits', 'findnumdigits']
 
 
 def approx(val1=None, val2=None, eps=None, **kwargs):
