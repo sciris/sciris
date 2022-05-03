@@ -307,6 +307,19 @@ def sanitize(data=None, returninds=False, replacenans=None, die=True, defaultval
         else:          return sanitized
 
 
+def rmnans(*args, **kwargs):
+    """
+    Alias for sanitize(...) with default values. New in version 1.4.0. '''
+    """
+    return sanitize(*args, **kwargs)
+
+
+def fillnans(*args, **kwargs):
+    """
+    Alias for sanitize(..., replacenans=True) with nearest interpolatino. New in version 1.4.0. '''
+    """
+    return sanitize(*args, **kwargs, replacenans=True)
+
 def isprime(n, verbose=False):
     '''
     Determine if a number is prime.
