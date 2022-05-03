@@ -91,6 +91,12 @@ def test_find():
     sanitized      = sc.sanitize(np.array([3, 4, np.nan, 8, 2, np.nan, np.nan, np.nan, 8]), replacenans=0)
     found.sanitized = sanitized
 
+    print('Testing sc.numdigits()')
+    found.numdigits = sc.numdigits(1234)
+    found.numdigits_max = sc.findnumdigits([10, 200, 30000], aggregate_fun=max)
+    assert found.numdigits == 4
+    assert found.numdigits_max == 5
+
     return found
 
 
@@ -161,7 +167,6 @@ def test_gauss2d(doplot=doplot):
     xi = pl.linspace(0,1,20)
     yi = pl.linspace(0,1,20)
     zi = sc.gauss2d(x, y, z, xi, yi, scale=0.1)
-
     # Method 2 -- use points directly
     xi2 = pl.rand(400)
     yi2 = pl.rand(400)
