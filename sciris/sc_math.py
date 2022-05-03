@@ -18,7 +18,7 @@ from . import sc_utils as scu
 ##############################################################################
 
 __all__ = ['approx', 'safedivide', 'findinds', 'findfirst', 'findlast', 'findnearest',
-           'dataindex', 'getvalidinds', 'sanitize', 'getvaliddata', 'isprime']
+           'dataindex', 'getvalidinds', 'sanitize', 'getvaliddata', 'isprime', 'numdigits']
 
 
 def approx(val1=None, val2=None, eps=None, **kwargs):
@@ -337,6 +337,42 @@ def isprime(n, verbose=False):
     return True
 
 
+def numdigits(n, count_minus=False, verbose=False):
+    """
+    Count the number of digits in an integer number n
+
+    Referencce: https://stackoverflow.com/questions/22656345/how-to-count-the-number-of-digits-in-python
+
+    Args:
+    n (int): signed integer
+    count_minus (bool): whether to count the minus sign as a digit
+    verbose (bool): whether to show progress
+
+    **Examples**::
+
+        sc.numdigits(12345) # Returns 5
+        sc.numdigits(0) # Returns 1
+        sc.numdigits(-12345) # Returns 5
+        sc.numdigits(-12345, count_minus=True) # Returns 6
+
+    """
+
+    n_digits = 0
+    if n == 0:
+        n_digits = 1
+        return n_digits
+    elif n < 0:
+        n = abs(n)
+        if count_minus:
+            n_digits +=2
+        else:
+            n_digits +=1
+    else:
+        n_digits +=1
+
+    n_digits += int(np.log10(n))
+
+    return n_digits
 
 ##############################################################################
 #%% Other functions
