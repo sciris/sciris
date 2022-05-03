@@ -138,7 +138,7 @@ def prepr(obj, maxlen=None, maxitems=None, skip=None, dividerchar='—', divider
         maxitems (int): maximum number of items to show in the object
         skip (list): any properties to skip
         dividerchar (str): divider for methods, attributes, etc.
-        divierlen (int): number of divider characters
+        dividerlen (int): number of divider characters
         use_repr (bool): whether to use repr() or str() to parse the object
         maxtime (float): maximum amount of time to spend on trying to print the object
         die (bool): whether to raise an exception if an error is encountered
@@ -541,6 +541,9 @@ def colorize(color=None, string=None, doprint=None, output=False, enable=True, s
         output (bool): whether to return the modified version of the string (default false)
         enable (bool): switch to allow ``sc.colorize()`` to be easily turned off without converting to a ``print()`` statement
         showhelp (bool): show help rather than changing colors
+        fg (str): foreground colour
+        bg (str): background colour
+        style (str): font style (eg, italic, underline, bold)
 
     **Examples**::
 
