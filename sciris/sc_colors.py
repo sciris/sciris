@@ -159,7 +159,7 @@ def hsv2rgb(colors=None):
 __all__ += ['vectocolor', 'arraycolors', 'gridcolors', 'midpointnorm', 'colormapdemo']
 
 
-def vectocolor(vector, cmap=None, asarray=True, reverse=False, minval=None, maxval=None, midpoint=None, norm=None):
+def vectocolor(vector, cmap=None, asarray=True, reverse=False, minval=None, maxval=None, midpoint=None):
     """
     This function converts a vector (i.e., 1D array) of N values into an Nx3 matrix
     of color values according to the current colormap. It automatically scales the
