@@ -273,6 +273,8 @@ def sanitize(data=None, returninds=False, replacenans=None, die=True, defaultval
         '''
         try:
             data = np.array(data, dtype=float) # Make sure it's an array of float type
+            if data.ndim > 1:
+               data = data.flatten()
             inds = np.nonzero(~np.isnan(data))[0] # WARNING, nonzero returns tuple :(
             sanitized = data[inds] # Trim data
             if replacenans is not None:
@@ -288,8 +290,9 @@ def sanitize(data=None, returninds=False, replacenans=None, die=True, defaultval
                 if defaultval is not None:
                     sanitized = defaultval
                 else:
-                    sanitized = 0.0
-
+                    sanitized = data
+                    inds = []
+                    
                     if verbose: # pragma: no cover
                         if label is None: label = 'this parameter'
                         print(f'sc.sanitize(): no data entered for {label}, assuming 0')
