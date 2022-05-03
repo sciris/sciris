@@ -552,9 +552,9 @@ def bicolormap(gap=0.1, mingreen=0.2, redbluemix=0.5, epsilon=0.01, demo=False, 
 
     Version: 2013sep13
     """
-    mng=mingreen; # Minimum amount of green to add into the colors
-    mix=redbluemix; # How much red to mix with the blue an vice versa
-    eps=epsilon; # How much of the center of the colormap to make gray
+    mng=mingreen # Minimum amount of green to add into the colors
+    mix=redbluemix # How much red to mix with the blue an vice versa
+    eps=epsilon # How much of the center of the colormap to make gray
     omg=1-gap # omg = one minus gap
 
     cdict = {'red': ((0.00000, 0.0, 0.0),
@@ -592,7 +592,7 @@ def bicolormap(gap=0.1, mingreen=0.2, redbluemix=0.5, epsilon=0.01, demo=False, 
         figure(figsize=(5*nexamples,4))
         for m in range(nexamples):
             subplot(1,nexamples,m+1)
-            imshow(rand(20,20),cmap=maps[m],interpolation='none');
+            imshow(rand(20,20),cmap=maps[m],interpolation='none')
             colorbar()
         show()
 
