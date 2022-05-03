@@ -277,6 +277,7 @@ def gridcolors(ncolors=10, limits=None, nsteps=20, asarray=False, ashex=False, r
         ncolors: the number of colors to create
         limits: how close to the edges of the cube to make colors (to avoid white and black)
         nsteps: the discretization of the color cube (e.g. 10 = 10 units per side = 1000 points total)
+        ashex: whether to return colors in hexadecimal representation
         asarray: whether to return the colors as an array instead of as a list of tuples
         doplot: whether or not to plot the color cube itself
         basis: what basis to use -- options are 'colorbrewer', 'kelly', 'default', or 'none'
