@@ -280,7 +280,8 @@ def gridcolors(ncolors=10, limits=None, nsteps=20, asarray=False, ashex=False, r
         ashex: whether to return colors in hexadecimal representation
         asarray: whether to return the colors as an array instead of as a list of tuples
         reverse: whether to reverse the list of colors
-        doplot: whether or not to plot the color cube itself
+        hueshift: whether to shift the hue (hueshift > 0 and <=1) or not (0)
+        demo: whether or not to plot the color cube itself
         basis: what basis to use -- options are 'colorbrewer', 'kelly', 'default', or 'none'
 
     **Example**::
