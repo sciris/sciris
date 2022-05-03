@@ -541,6 +541,8 @@ def bicolormap(gap=0.1, mingreen=0.2, redbluemix=0.5, epsilon=0.01, demo=False, 
       mingreen: how much green to include at the extremes of the red-blue color scale
       redbluemix: how much red to mix with the blue and vice versa at the extremes of the scale
       epsilon: what fraction of the colormap to make gray in the middle
+      demo: whether to plot a demo bicolormap or not
+      apply: whether to apply this colormap to the current figure
 
     **Examples**::
 
