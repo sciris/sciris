@@ -883,7 +883,7 @@ def percentcomplete(step=None, maxsteps=None, stepsize=1, prefix=None):
         prefix = ' '
     elif scu.isnumber(prefix):
         prefix = ' '*prefix
-    onepercent = max(stepsize,round(maxsteps/100*stepsize)); # Calculate how big a single step is -- not smaller than 1
+    onepercent = max(stepsize,round(maxsteps/100*stepsize)) # Calculate how big a single step is -- not smaller than 1
     if not step%onepercent: # Does this value lie on a percent
         thispercent = round(step/maxsteps*100) # Calculate what percent it is
         print(prefix + '%i%%'% thispercent) # Display the output
