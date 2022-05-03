@@ -257,6 +257,14 @@ def sanitize(data=None, returninds=False, replacenans=None, die=True, defaultval
         '''
         Sanitize input to remove NaNs. Warning, does not work on multidimensional data!!
 
+        Args:
+        data (array): array or list with numbers
+        returninds (bool): whether to return indices of non-nan/valid  elements, indices are with respect the shape of data
+        die (bool): whether to raise an exception if the sanitization failed (otherwise return an empty array)
+        defaultval (float): if not valid data are found in data, return defaultval. If defaultval=None (default), returns 0
+        label (str): human readable label to describe data
+        verbose (bool): whether to report progress
+
         **Examples**::
 
             sanitized,inds = sanitize(array([3,4,nan,8,2,nan,nan,nan,8]), returninds=True)
@@ -264,7 +272,7 @@ def sanitize(data=None, returninds=False, replacenans=None, die=True, defaultval
             sanitized = sanitize(array([3,4,nan,8,2,nan,nan,nan,8]), replacenans=0)
         '''
         try:
-            data = np.array(data,dtype=float) # Make sure it's an array of float type
+            data = np.array(data, dtype=float) # Make sure it's an array of float type
             inds = np.nonzero(~np.isnan(data))[0] # WARNING, nonzero returns tuple :(
             sanitized = data[inds] # Trim data
             if replacenans is not None:
@@ -281,6 +289,7 @@ def sanitize(data=None, returninds=False, replacenans=None, die=True, defaultval
                     sanitized = defaultval
                 else:
                     sanitized = 0.0
+
                     if verbose: # pragma: no cover
                         if label is None: label = 'this parameter'
                         print(f'sc.sanitize(): no data entered for {label}, assuming 0')
