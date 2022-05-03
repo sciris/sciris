@@ -360,13 +360,17 @@ def numdigits(n, count_minus=False, verbose=False):
     n_digits = 0
     if n == 0:
         n_digits = 1
+        if verbose: print('n == 0')
         return n_digits
     elif n < 0:
         n = abs(n)
+        if verbose: print('n < 0')
         if count_minus:
             n_digits +=2
+            if verbose: print('count minus sign as additional digit')
         else:
             n_digits +=1
+            if verbose: print('n > 0')
     else:
         n_digits +=1
 
