@@ -378,6 +378,17 @@ def numdigits(n, count_minus=False, verbose=False):
 
     return n_digits
 
+
+def findnumdigits(inputs, aggregate_fun=max, **kwargs):
+    ''' Alias for numdigits(max(inputs)) 
+
+    inputs: array-like
+    method: define operation to aaply on inputs before calling numdigits (eg, min, max, sum, len)
+    '''
+    n = aggregate_fun(inputs)
+    return numdigits(n, **kwargs)
+
+
 ##############################################################################
 #%% Other functions
 ##############################################################################
