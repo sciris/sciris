@@ -279,6 +279,7 @@ def gridcolors(ncolors=10, limits=None, nsteps=20, asarray=False, ashex=False, r
         nsteps: the discretization of the color cube (e.g. 10 = 10 units per side = 1000 points total)
         ashex: whether to return colors in hexadecimal representation
         asarray: whether to return the colors as an array instead of as a list of tuples
+        reverse: whether to reverse the list of colors
         doplot: whether or not to plot the color cube itself
         basis: what basis to use -- options are 'colorbrewer', 'kelly', 'default', or 'none'
 
