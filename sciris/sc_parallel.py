@@ -14,6 +14,8 @@ import psutil
 import multiprocess as mp
 import numpy as np
 from functools import partial
+
+import sciris
 from . import sc_utils as scu
 
 
@@ -21,7 +23,7 @@ from . import sc_utils as scu
 #%% Parallelization functions
 ##############################################################################
 
-__all__ = ['cpu_count', 'loadbalancer', 'parallelize', 'parallelcmd', 'parallel_progress']
+__all__ = ['cpu_count', 'loadbalancer', 'resourcelimit', 'parallelize', 'parallelcmd', 'parallel_progress']
 
 
 def cpu_count():
@@ -79,6 +81,63 @@ def loadbalancer(maxload=None, index=None, interval=None, maxtime=None, label=No
         else:
             toohigh = False
             if verbose: print(label+f'CPU load fine ({currentload:0.2f}/{maxload:0.2f}), starting process {index} after {count} tries')
+    return
+
+
+def resourcelimit(maxmem=None, die=True, interval=None, maxtime=None, label=None, index=None, die_callback=None, verbose=True, **callback_kwargs): # pragma: no cover
+    """
+    Check if we are using more than maxmem, die if true and post to slack
+
+    Args:
+        maxmem:  the maximum memory that a task can use
+
+
+    Returns:
+
+    """
+
+    if maxmem is None: maxmem = 0.8
+    if interval is None: interval = 1.0
+    if maxtime  is None: maxtime = 36000
+    if label is None:
+        label = ''
+    else:
+        label += ': '
+    if index is not None:
+        pause = index*interval
+    else:
+        pause = np.random.rand()*interval
+        index = ''
+    if maxmem>1: maxmem/100. # If it's >1, assume it was given as a percent
+
+    #What to do if we stop execution
+    if die_callback is None:
+        callback = die_callback
+    else:
+        callback = die_callback(**callback_kwargs)
+    if not maxmem>0:
+        return # Return immediately if no max load
+    else:
+        time.sleep(pause) # Give it time to asynchronize
+
+    # Loop until load is OK
+    toohigh = True  # Assume too high
+    count = 0
+    maxcount = maxtime / float(interval)
+
+    while toohigh and count < maxcount:
+        count += 1
+        currentmem = psutil.virtual_memory().percent / 100.0
+        if currentmem > maxmem:
+            if verbose: print(label + f'Memory usage too high ({currentmem:0.2f}/{maxmem:0.2f}).')
+            if die:
+                errormsg = f'Error: Stopping process {index}. Using more memory than requested ({currentmem:0.2f}/{maxmem:0.2f}). Callback to {callback}'
+                raise RuntimeError(errormsg)# Do something
+            else:
+                time.sleep(interval * 2 * np.random.rand())  # Sleeps for an average of refresh seconds, but do it randomly so you don't get locking
+        else:
+            toohigh = False
+            if verbose: print(label + f'Memory usage is fine ({currentmem:0.2f}/{maxmem:0.2f}), starting process {index} after {count} tries')
     return
 
 
