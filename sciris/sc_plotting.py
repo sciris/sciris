@@ -1706,7 +1706,7 @@ class animation(scu.prettyobj):
 
         # Actually create the animation -- warning, no way to not actually have it render!
         anim = mpl_anim.ArtistAnimation(fig, frames, **anim_args)
-        anim.save(filename, fps=fps, dpi=dpi, progress_callback=callback, **save_args)
+        anim.save(filename, fps=fps, dpi=dpi, progress_callback=callback, **save_args, **kwargs)
 
         if tidy:
             self.rmfiles()
