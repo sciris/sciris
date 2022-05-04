@@ -1031,7 +1031,7 @@ def _get_dpi(dpi=None, min_dpi=200):
     return dpi
 
 
-def savefig(filename, fig=None, dpi=None, comments=None, freeze=False, frame=2, die=True, **kwargs):
+def savefig(filename, folder=None, fig=None, dpi=None, comments=None, freeze=False, frame=2, die=True, **kwargs):
     '''
     Save a figure, including metadata
 
@@ -1045,6 +1045,7 @@ def savefig(filename, fig=None, dpi=None, comments=None, freeze=False, frame=2, 
 
     Args:
         filename (str):    name of the file to save to
+        folder(str):       the folder to save the file in
         fig      (Figure): the figure to save (if None, use current)
         dpi      (int):    resolution of the figure to save (default 200 or current default, whichever is higher)
         comments (str):    additional metadata to save to the figure
@@ -1108,6 +1109,11 @@ def savefig(filename, fig=None, dpi=None, comments=None, freeze=False, frame=2, 
     # Save the figure
     if metadata is not None:
         kwargs['metadata'] = metadata # To avoid warnings for unsupported filenames
+
+    # Allow savefig to make directories
+    if folder is not None:
+        filename = scf.makefilepath(filename=filename, folder=folder)
+
     fig.savefig(filename, dpi=dpi, **kwargs)
     return filename
 
