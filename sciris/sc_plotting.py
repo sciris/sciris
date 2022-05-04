@@ -1045,7 +1045,7 @@ def savefig(filename, folder=None, fig=None, dpi=None, comments=None, freeze=Fal
 
     Args:
         filename (str):    name of the file to save to
-        folder(str):       the folder to save the file in
+        folder   (str/Path):   the folder to save the file in
         fig      (Figure): the figure to save (if None, use current)
         dpi      (int):    resolution of the figure to save (default 200 or current default, whichever is higher)
         comments (str):    additional metadata to save to the figure
