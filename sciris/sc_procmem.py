@@ -23,11 +23,11 @@ from . import sc_utils as scu
 ##############################################################################
 
 
-__all__ = ['resourcelimit', 'limit_malloc', 'async_limit_memory']
+__all__ = ['resourcelimit', 'limit_memory', 'limit_malloc', 'async_limit_memory']
 
 
 @contextlib.contextmanager
-def limit_malloc(max_size=0.5, die=True, verbose=True):
+def limit_memory(max_size=0.5, die=True, verbose=True):
     """
 
     :param max_size:
@@ -36,12 +36,6 @@ def limit_malloc(max_size=0.5, die=True, verbose=True):
     :return:
     """
     # Exclusion file patterns
-    TRACE_FILTERS = (
-        tracemalloc.Filter(False, __file__),
-        tracemalloc.Filter(False, tracemalloc.__file__),
-        tracemalloc.Filter(False, '<unknown>'),
-    )
-
     # start
     snapshot1 = _take_snapshot()
 
@@ -165,6 +159,56 @@ def resourcelimit(maxmem=None, die=True, interval=None, maxtime=None, label=None
     return
 
 
+
+import contextlib
+import logging
+import tracemalloc
+
+
+LOG = logging.getLogger(__name__)
+
+TRACE_FILTERS = (
+    tracemalloc.Filter(False, '<frozen importlib._bootstrap>'),
+    tracemalloc.Filter(False, '<frozen importlib._bootstrap_external>'),
+    tracemalloc.Filter(False, __file__),
+    tracemalloc.Filter(False, tracemalloc.__file__),
+    tracemalloc.Filter(False, '<unknown>'),
+)
+
+
+@contextlib.contextmanager
+def limit_malloc(size):
+    """
+    https://gist.github.com/adalekin/2b4219808ac72cafda6cff896739a11d
+    """
+    TRACE_FILTERS = (
+        tracemalloc.Filter(False, __file__),
+        tracemalloc.Filter(False, tracemalloc.__file__),
+        tracemalloc.Filter(False, '<unknown>'),
+    )
+
+    if not tracemalloc.is_tracing():
+        tracemalloc.start()
+
+    snapshot1 = tracemalloc.take_snapshot()
+
+    yield
+
+    snapshot2 = tracemalloc.take_snapshot().filter_traces(TRACE_FILTERS)
+    snapshot1 = snapshot1.filter_traces(TRACE_FILTERS)
+
+    snapshot = snapshot2.compare_to(snapshot1, 'lineno')
+
+    try:
+        current_size = sum(stat.size_diff for stat in snapshot)
+
+        if current_size > size:
+            for stat in snapshot[]:
+                print(stat)
+            raise AttributeError(f'Memory usage exceeded the threshold: '
+                                 f'{current_size} > size')
+    finally:
+        tracemalloc.stop()
 
 ##############################################################################
 # %% Helper functions/classes
