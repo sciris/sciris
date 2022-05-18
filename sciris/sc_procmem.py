@@ -120,26 +120,29 @@ def change_resource_limit(percentage):
     resource.setrlimit(resource.RLIMIT_AS, (get_free_memory() * 1024 * percentage, hard))
 
 
-def memory(percentage=0.8):
+def memory(percentage=0.8, verbose=True):
     """
-
     Arguments:
         percentage: a float between 0 and 1
 
-    @memory(percentage=0.8)
-    def main():
-        print('My memory is limited to 80% of free memory.')
+    @sc.memory(0.05)
+    def function_that_needs_a_lot_of_ram():
+       l1 = []
+       for i in range(2000):
+           l1.append(x for x in range(1000000))
+       return l1
+
+    function_that_needs_a_lot_of_ram()
     """
     def decorator(function):
         def wrapper(*args, **kwargs):
-            change_resource_limit(percentage)
-            try:
-                return function(*args, **kwargs)
-            except MemoryError:
-                mem = get_free_memory() / 1024 / 1024
-                print('Remain: %.2f GB' % mem)
-                sys.stderr.write('\n\nERROR: Memory Exception\n')
-                sys.exit(1)
+            with ResourceLimit(percentage_limit=percentage, verbose=verbose):
+                try:
+                    return function(*args, **kwargs)
+                except MemoryError:
+                    if verbose:
+                        print("Aborting. Memory limit reached.")
+                    return
         return wrapper
     return decorator
 
