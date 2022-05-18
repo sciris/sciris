@@ -23,7 +23,7 @@ from . import sc_utils as scu
 #%% Parallelization functions
 ##############################################################################
 
-__all__ = ['cpu_count', 'loadbalancer', 'resourcelimit', 'parallelize', 'parallelcmd', 'parallel_progress']
+__all__ = ['cpu_count', 'loadbalancer', 'parallelize', 'parallelcmd', 'parallel_progress']
 
 
 def cpu_count():
