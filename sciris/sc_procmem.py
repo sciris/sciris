@@ -4,7 +4,7 @@ Memory monitoring functions
 
 import contextlib
 import psutil
-import multiprocess
+from multiprocess import Process
 import tracemalloc
 import resource
 
@@ -15,8 +15,6 @@ import resource
 
 
 __all__ = ['limit_malloc', 'memory', 'ResourceLimit', 'MemoryMonitor']
-__all__ += ['ResourceLimit']
-
 
 class ResourceLimit:
     """
@@ -66,11 +64,11 @@ class ResourceLimit:
             limit = "max"
         else:
             unit = "GB"
-            limit = limit >> 30
+            limit >>= 30
         return limit, unit
 
 
-class MemoryMonitor(multiprocess.Process):
+class MemoryMonitor(Process):
     """
     DOCME
 
@@ -94,7 +92,7 @@ class MemoryMonitor(multiprocess.Process):
 
     """
     def __init__(self, max_mem, verbose=True, verbose_monitor=False):
-        multiprocess.Process.__init__(self, name='MemoryLimiter')
+        Process.__init__(self, name='MemoryLimiter')
         self.max_mem = max_mem
         self.current_mem = take_mem_snapshot()
         self.daemon = True # Make this a deamon process
@@ -103,7 +101,7 @@ class MemoryMonitor(multiprocess.Process):
         self.verbose_monitor = verbose_monitor # To be removed, just for debugging
 
     def run(self):
-        while not(self.reached_memory_limit):
+        while not self.reached_memory_limit:
             # TODO: add interval attr
             # time.sleep(1)
             self.current_mem = take_mem_snapshot()
@@ -160,7 +158,7 @@ def memory(percentage=0.8, verbose=True):
     """
     Arguments:
         percentage: a float between 0 and 1
-
+        verbose: whether to print more info
     @sc.memory(0.05)
     def function_that_needs_a_lot_of_ram():
        l1 = []
