@@ -10,6 +10,7 @@ import multiprocess
 import tracemalloc
 import sys
 import resource
+
 from . import sc_utils as scu
 
 ##############################################################################
@@ -22,22 +23,55 @@ __all__ += ['ResourceLimit']
 
 
 class ResourceLimit:
-    def __init__(self, percentage_limit):
+    """
+    DOCME
+    """
+    def __init__(self, percentage_limit, verbose=False):
         self.percentage_limit = percentage_limit
-
+        self.verbose = verbose
+        self.LIMITS = [('RLIMIT_DATA', 'heap size'),
+                       ('RLIMIT_AS', 'address size'),
+]
     def __enter__(self):
-        self.old_heap_limit = resource.getrlimit(resource.RLIMIT_DATA)
-        self.old_address_limit = resource.getrlimit(resource.RLIMIT_AS)
+        # New soft limit
+        totalmem = psutil.virtual_memory().available
+        new_soft = int(round(totalmem * self.percentage_limit))
 
-        for rsrc in (resource.RLIMIT_DATA, resource.RLIMIT_DATA):
-            totalmem = psutil.virtual_memory().available
-            hard = int(round(totalmem * 0.8))
-            soft = hard
-            resource.setrlimit(rsrc, (soft, hard))  # limit to 80% of total memory
+        self.old_softie = []
+        self.old_hardie = []
 
-    def __exit__(self, type, value, tb):
-        resource.setrlimit(resource.RLIMIT_DATA, self.old_heap_limit)
-        resource.setrlimit(resource.RLIMIT_AS, self.old_address_limit)
+        for name, description in self.LIMITS:
+            limit_num = getattr(resource, name)
+            soft, hard = resource.getrlimit(limit_num)
+            self.old_softie.append(soft)
+            self.old_hardie.append(hard)
+            resource.setrlimit(limit_num, (new_soft, hard))
+            if self.verbose:
+                sl, unit_sl = self.human_readable(new_soft)
+                hl, unit_hl = self.human_readable(hard)
+                print('Setting {:<23} {:<23} {:6} {}{}/{}{}'.format(name, description, "to", sl, unit_sl, hl, unit_hl))
+
+    def __exit__(self, exc_type, exc_value, exc_tb):
+        # TODO: Deal with exceptions here
+        for (name, description), soft, hard in zip(self.LIMITS, self.old_softie, self.old_hardie):
+            limit_num = getattr(resource, name)
+            resource.setrlimit(limit_num, (soft, hard))
+            if self.verbose:
+                sl, unit_sl = self.human_readable(soft)
+                hl, unit_hl = self.human_readable(hard)
+                print('Resetting {:<23} {:<23} {:6} {}{}/{}{}'.format(name, description, "to", sl, unit_sl, hl, unit_hl))
+
+    def human_readable(self, limit):
+        """
+        Deal with limits that are -1, implies unlimited
+        """
+        if limit < 0:
+            unit = ""
+            limit = "max"
+        else:
+            unit = "GB"
+            limit = limit >> 30
+        return limit, unit
 
 
 def take_mem_snapshot():
@@ -49,7 +83,6 @@ def take_mem_snapshot():
     """
     snapshot = psutil.virtual_memory().percent / 100.0
     return snapshot
-
 
 
 def get_free_memory():
@@ -66,20 +99,20 @@ def get_free_memory():
         free_memory = 0
         for i in mem:
             sline = i.split()
-            if str(sline[0]) in ('MemTotal:'):
+            if str(sline[0]) in 'MemTotal:':
                 free_memory += int(sline[1])
-        return free_memory # expressed in kB
+        return free_memory  # expressed in kB
 
 
 def change_resource_limit(percentage):
     """
-    Helper function to change the the limit of address memory (resource.RLIMIT_AS)
-    as a fraction of current limit.
+    Helper function to change the the (soft) limit of address memory (resource.RLIMIT_AS)
+    as a fraction of current available free memory.
 
     TODO: to generalise to any resource?
 
     Arguments:
-        percentage: a float between 0 and 1 -- though could be higher than 1 if we had previosuly decreased the limit
+        percentage: a float between 0 and 1
     """
     if scu.iswindows():
         return
@@ -88,13 +121,22 @@ def change_resource_limit(percentage):
 
 
 def memory(percentage=0.8):
+    """
+
+    Arguments:
+        percentage: a float between 0 and 1
+
+    @memory(percentage=0.8)
+    def main():
+        print('My memory is limited to 80% of free memory.')
+    """
     def decorator(function):
         def wrapper(*args, **kwargs):
             change_resource_limit(percentage)
             try:
                 return function(*args, **kwargs)
             except MemoryError:
-                mem = get_free_memory() / 1024 /1024
+                mem = get_free_memory() / 1024 / 1024
                 print('Remain: %.2f GB' % mem)
                 sys.stderr.write('\n\nERROR: Memory Exception\n')
                 sys.exit(1)
@@ -150,4 +192,3 @@ def limit_malloc(size):
                                  f'{current_size} > {size}')
     finally:
         tracemalloc.stop()
-
