@@ -8,17 +8,15 @@ import contextlib
 import psutil
 import multiprocess
 import tracemalloc
-import sys
 import resource
 
-from . import sc_utils as scu
 
 ##############################################################################
 # %% Memory managment functions
 ##############################################################################
 
 
-__all__ = ['limit_malloc', 'get_free_memory', 'change_resource_limit', 'memory']
+__all__ = ['limit_malloc', 'memory']
 __all__ += ['ResourceLimit']
 
 
@@ -83,41 +81,6 @@ def take_mem_snapshot():
     """
     snapshot = psutil.virtual_memory().percent / 100.0
     return snapshot
-
-
-def get_free_memory():
-    """
-    Helper function to get amount of free memory
-
-    Returns:
-        Free memmory expressed in kb
-    """
-    if not(scu.islinux()):
-        return
-
-    with open('/proc/meminfo', 'r') as mem:
-        free_memory = 0
-        for i in mem:
-            sline = i.split()
-            if str(sline[0]) in 'MemTotal:':
-                free_memory += int(sline[1])
-        return free_memory  # expressed in kB
-
-
-def change_resource_limit(percentage):
-    """
-    Helper function to change the the (soft) limit of address memory (resource.RLIMIT_AS)
-    as a fraction of current available free memory.
-
-    TODO: to generalise to any resource?
-
-    Arguments:
-        percentage: a float between 0 and 1
-    """
-    if scu.iswindows():
-        return
-    soft, hard = resource.getrlimit(resource.RLIMIT_AS)
-    resource.setrlimit(resource.RLIMIT_AS, (get_free_memory() * 1024 * percentage, hard))
 
 
 def memory(percentage=0.8, verbose=True):
