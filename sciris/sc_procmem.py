@@ -17,7 +17,7 @@ from . import sc_utils as scu
 ##############################################################################
 
 
-__all__ = ['limit_malloc', 'get_free_memory', 'memory_limit', 'memory']
+__all__ = ['limit_malloc', 'get_free_memory', 'change_resource_limit', 'memory']
 __all__ += ['ResourceLimit']
 
 
@@ -42,7 +42,7 @@ class ResourceLimit:
 
 def take_mem_snapshot():
     """
-    Takes a snapshot of current memory usage (in %) via psuti
+    Take a snapshot of current memory usage (in %) via psuti
     Arguments: None
 
     Returns: a float between 0-1 representing the fraction of psutil.virtuak memory currently used.
@@ -105,7 +105,22 @@ def memory(percentage=0.8):
 @contextlib.contextmanager
 def limit_malloc(size):
     """
+    Context manager to trace memory block allocation.
+    Useful for debuggin purposes.
+
+    Argument:
+       size (in B)
+
+    Example:
+
+    import sciris as sc
+    with sc.limit_malloc(500):
+       l1 = []
+       l1.append(x for x in range(200000))
+
+    Source:
     https://gist.github.com/adalekin/2b4219808ac72cafda6cff896739a11d
+    https://docs.python.org/3.9/library/tracemalloc.html
     """
     TRACE_FILTERS = (
         tracemalloc.Filter(False, __file__),
@@ -132,7 +147,7 @@ def limit_malloc(size):
             for stat in snapshot:
                 print(stat)
             raise AttributeError(f'Memory usage exceeded the threshold: '
-                                 f'{current_size} > size')
+                                 f'{current_size} > {size}')
     finally:
         tracemalloc.stop()
 
