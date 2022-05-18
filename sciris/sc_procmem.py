@@ -1,9 +1,7 @@
-'''
+"""
 Memory monitoring functions
-NB: Uses ``multiprocess`` instead of ``multiprocessing`` under the hood for
-broadest support  across platforms (e.g. Jupyter notebooks).
+"""
 
-'''
 import contextlib
 import psutil
 import multiprocess
@@ -16,7 +14,7 @@ import resource
 ##############################################################################
 
 
-__all__ = ['limit_malloc', 'memory']
+__all__ = ['limit_malloc', 'memory', 'ResourceLimit', 'MemoryMonitor']
 __all__ += ['ResourceLimit']
 
 
@@ -70,6 +68,81 @@ class ResourceLimit:
             unit = "GB"
             limit = limit >> 30
         return limit, unit
+
+
+class MemoryMonitor(multiprocess.Process):
+    """
+    DOCME
+
+    def function_that_needs_a_lot_of_ram():
+       l1 = []
+       for i in range(2000):
+           l1.append(x for x in range(1000000))
+       return l1
+
+    with sc.MemoryMonitor(max_mem=0.35) as monitor:
+       # Start operation of interest
+        ptask = multiprocess.Process(target=function_that_needs_a_lot_of_ram)
+        ptask.start()
+      # Let the memory monitor track the process of interest
+        monitor.task_id(ptask.pid)
+      # Start monitoring memory
+        monitor.start()
+      # If the process of interest finished, stop monitoring
+        monitor.stop(ptask.join())
+
+
+    """
+    def __init__(self, max_mem, verbose=True, verbose_monitor=False):
+        multiprocess.Process.__init__(self, name='MemoryLimiter')
+        self.max_mem = max_mem
+        self.current_mem = take_mem_snapshot()
+        self.daemon = True # Make this a deamon process
+        self.reached_memory_limit = False
+        self.verbose = verbose
+        self.verbose_monitor = verbose_monitor # To be removed, just for debugging
+
+    def run(self):
+        while not(self.reached_memory_limit):
+            # TODO: add interval attr
+            # time.sleep(1)
+            self.current_mem = take_mem_snapshot()
+            if self.current_mem > self.max_mem:
+                self.reached_memory_limit = True
+            if self.verbose_monitor:
+                print(f"Measuring memory: {self.current_mem:.3f}")
+
+        # Terminate task
+        self.reached_memory_limit = True
+        self.stop_task()
+
+    def stop(self, join_output):
+        if join_output is None:
+            if self.verbose:
+                print("Terminate memory monitoring")
+            self.terminate()
+
+    def task_id(self, pid):
+        """
+        Track the process of interest
+        """
+        self.task_id = pid
+        self.p = psutil.Process(pid)
+
+    def stop_task(self):
+        """
+        Terminate the process of interest
+        """
+        if self.verbose:
+            print(f"Terminating task because reached max memory limit: {self.current_mem:.3f}/{self.max_mem:.3f}")
+        self.p.terminate()
+
+    def __enter__(self):
+        return self
+
+    def __exit__(self, exc_type, exc_val, exc_tb):
+        self.join()
+        return
 
 
 def take_mem_snapshot():
