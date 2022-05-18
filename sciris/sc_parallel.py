@@ -31,6 +31,17 @@ def cpu_count():
     return mp.cpu_count()
 
 
+def take_mem_snapshot():
+    """
+    Takes a snapshot of current memory usage (in %) via psuti
+    Arguments: None
+
+    Returns: a float between 0-1 representing the fraction of psutil.virtuak memory currently used.
+    """
+    snapshot = psutil.virtual_memory().percent / 100.0
+    return snapshot
+
+
 def loadbalancer(maxload=None, index=None, interval=None, maxtime=None, label=None, verbose=True):
     '''
     A little function to delay execution while CPU load is too high -- a very simple load balancer.
