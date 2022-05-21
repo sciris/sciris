@@ -565,8 +565,8 @@ def rmpath(filename=None, folder=None, abspath=True, die=True, verbose=False):
        sc.rmpath('myobj.obj', verbose=True)
        sc.rmpath(['myobj1.obj', 'myobj2.obj', 'myobj3.obj', verbose=True])
        sc.rmpath('myobj.obj', 'tests', verbose=True) # assumes there is a folder tests/
-       sc.rmapth(folder='tests/', verbose=True)
-       sc.rmapth(sc.getfilelist(sc.getfilelist('tests/*.obj')))
+       sc.rmpath(folder='tests/', verbose=True)
+       sc.rmpath(sc.getfilelist('tests/*.obj'))
 
     #TODO: return error if anything failed?
     #TODO: if only one filename is passed, make it a list to remove IF islist blocks
