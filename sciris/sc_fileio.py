@@ -17,6 +17,7 @@ import io
 import os
 import re
 import json
+import shutil
 import uuid
 import types
 import inspect
@@ -547,7 +548,7 @@ def thisdir(file=None, path=None, *args, aspath=None, **kwargs):
     return filepath
 
 
-def rmpath(filename=None, folder=None, abspath=True, warnme=False,  die=True, verbose=False):
+def rmpath(filename=None, folder=None, abspath=True, die=True, verbose=False):
     """
 
     Arguments:
@@ -561,9 +562,13 @@ def rmpath(filename=None, folder=None, abspath=True, warnme=False,  die=True, ve
 
     Returns:
     """
+    # Initialize
+    filefolder = '' # The folder the file will be located in
+    filenameislist = False
     if isinstance(filename, Path):
         filename = str(filename)
     if isinstance(filename, list):
+        fnameisalist = True
         filename_list = []
         for this_file in filename:
             if ispath(this_file) or isinstance(this_file, str):
@@ -573,39 +578,45 @@ def rmpath(filename=None, folder=None, abspath=True, warnme=False,  die=True, ve
     if isinstance(folder, list): # It's a list, join together
         folder = os.path.join(*folder)
 
-    # Remove a file or a each file in a list
+    # Process folder
+    if folder is not None: # Replace with specified folder, if defined
+        filefolder = folder
+    if abspath: # Convert to absolute path
+        filefolder = os.path.abspath(os.path.expanduser(filefolder))
+
+    # Remove a file or each file in a list, no folder given
     if filename is not None and folder is None:
-        if not isinstance(filename, list):
+        if not filenameislist:
             os.remove(filename)
         else:
-            for this_file in filename_list:
+            for this_file in filenameislist:
+                os.remove(this_file) # if an empty string is passed, there will be an FileNotFounderror from os.remove
                 if verbose:
-                    print(f'Removing "{this_file}" ')
-                os.remove(this_file)
+                    print(f'Removed "{this_file}" ')
 
-    # if abspath:  # Convert to absolute path
-    #     filefolder = os.path.abspath(os.path.expanduser(folder))
-    #     # Process filename
-    #     if filename is None:  # pragma: no cover
-    #         defaultnames = scu.promotetolist(default)  # Loop over list of default names
-    #         for defaultname in defaultnames:
-    #             if not filename and defaultname: filename = defaultname  # Replace empty name with default name
-    #     if filename is not None:  # If filename exists by now, use it
-    #         filebasename = os.path.basename(filename)
-    #         filefolder = os.path.dirname(filename)
-    #     if not filebasename: filebasename = 'default'  # If all else fails
+    # Remove a folder, and no filename was given
+    if filename is None and folder is not None:
+        shutil.rmtree(filefolder)
+        if verbose:
+            print(f'Removed "{folder}" ')
 
-    #
-    #
-    #
-    # cleanup = {db_file:os.remove, db_folder:shutil.rmtree}
-    # for fn,func in cleanup.items():
-    #     try:
-    #         func(fn)
-    #         print('Removed %s' % fn)
-    #     except:
-    #         pass
-    return
+    # Remove a file or list of files in a given folder
+    if filename is not None and folder is not None:
+        if fnameisalist:
+            for this_file in filename_list:
+                filenamepath = os.path.join(folder, this_file)
+                os.remove(filenamepath)
+                if verbose:
+                    print(f'Removed "{filenamepath}" ')
+
+    # Nothing was passed
+    if filename is None and folder is None:
+        errormsg = 'No objects (fielname and folder) were supplied to rmpath'
+        if die:
+           raise ValueError(errormsg)
+        else:
+           print(errormsg)
+
 ##############################################################################
 #%% JSON functions
 ##############################################################################
