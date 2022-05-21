@@ -23,7 +23,7 @@ from . import sc_utils as scu
 __all__ = ['now', 'getdate', 'readdate', 'date', 'day', 'daydiff', 'daterange', 'datedelta', 'datetoyear']
 
 
-def now(astype='dateobj', timezone=None, utc=False, dateformat=None):
+def now(astype='dateobj', timezone=None, utc=False, tostring=False, dateformat=None):
     '''
     Get the current time as a datetime object, optionally in UTC time.
 
@@ -51,6 +51,7 @@ def now(astype='dateobj', timezone=None, utc=False, dateformat=None):
     if timezone is not None: tzinfo = du.tz.gettz(timezone) # Timezone is a string
     elif utc:                tzinfo = du.tz.tzutc() # UTC has been specified
     else:                    tzinfo = None # Otherwise, do nothing
+    if tostring: astype='str'
     timenow = dt.datetime.now(tzinfo)
     output = getdate(timenow, astype=astype, dateformat=dateformat)
     return output
