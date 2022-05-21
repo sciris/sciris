@@ -23,6 +23,7 @@ import datetime as dt
 import pylab as pl
 import numpy as np
 import matplotlib as mpl
+from pathlib import Path
 from . import sc_settings as scs
 from . import sc_odict as sco
 from . import sc_utils as scu
@@ -1091,6 +1092,10 @@ def savefig(filename, folder=None, fig=None, dpi=None, comments=None, freeze=Fal
 
     # Convert to a string
     jsonstr = scf.jsonify(metadata, tostring=True) # PDF and SVG doesn't support storing a dict
+
+    if isinstance(filename, (os.path, Path)):
+        # Convert path to string
+        filename = str(filename)
 
     # Handle different formats
     lcfn = filename.lower() # Lowercase filename
