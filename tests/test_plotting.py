@@ -225,14 +225,18 @@ def test_saveload(doplot=doplot):
     fig = pl.figure('Save/load')
     pl.plot([1,3,7])
     fn = sc.objdict()
-    fn.png1 = 'example1.png'
+    fn.png1a = 'example1.png'
+    fn.png1b = os.path.abspath('example1.png')
     fn.png2 = 'example2.png'
     fn.jpg  = 'example.jpg'
 
     # Basic usage
-    sc.savefig(fn.png1)
-    md1 = sc.loadmetadata(fn.png1)
-    sc.pp(md1)
+    sc.savefig(fn.png1a)
+    sc.savefig(fn.png1b)
+    md1a = sc.loadmetadata(fn.png1a)
+    md1b = sc.loadmetadata(fn.png1b)
+    sc.pp(md1a)
+    sc.pp(md1b)
 
     # Complex usage
     comments = 'My figure'
