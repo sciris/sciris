@@ -555,12 +555,22 @@ def rmpath(filename=None, folder=None, abspath=True, die=True, verbose=False):
         filename    (str or Path, or list with str or Path)   : the filename, or full file path, to remove
         folder      (str/Path/list) : the name of the folder to be remov ed
         abspath     (bool)          : whether to conver to absolute path
-        warnme      (bool)          : whwther to pring a warning message remindin the user the 'path' is going to be removed
         die         (bool)          : whether or not to raise an exception if cannot remove (otherwise, return a string)
         verbose     (bool)          : how much detail to print
 
-
     Returns:
+        None
+
+    Example::
+       sc.rmpath('myobj.obj', verbose=True)
+       sc.rmpath(['myobj1.obj', 'myobj2.obj', 'myobj3.obj', verbose=True])
+       sc.rmpath('myobj.obj', 'tests', verbose=True) # assumes there is a folder tests/
+       sc.rmapth(folder='tests/', verbose=True)
+
+    #TODO: return error if anything failed?
+    #TODO: if only one filename is passed, make it a list to remove IF islist blocks
+    #TODO: handle case rmpath('*.txt', 'myfolder')
+
     """
     # Initialize
     filefolder = '' # The folder the file will be located in
@@ -568,7 +578,7 @@ def rmpath(filename=None, folder=None, abspath=True, die=True, verbose=False):
     if isinstance(filename, Path):
         filename = str(filename)
     if isinstance(filename, list):
-        fnameisalist = True
+        filenameislist = True
         filename_list = []
         for this_file in filename:
             if ispath(this_file) or isinstance(this_file, str):
@@ -589,7 +599,7 @@ def rmpath(filename=None, folder=None, abspath=True, die=True, verbose=False):
         if not filenameislist:
             os.remove(filename)
         else:
-            for this_file in filenameislist:
+            for this_file in filename_list:
                 os.remove(this_file) # if an empty string is passed, there will be an FileNotFounderror from os.remove
                 if verbose:
                     print(f'Removed "{this_file}" ')
@@ -598,16 +608,21 @@ def rmpath(filename=None, folder=None, abspath=True, die=True, verbose=False):
     if filename is None and folder is not None:
         shutil.rmtree(filefolder)
         if verbose:
-            print(f'Removed "{folder}" ')
+            print(f'Removed "{filefolder}" ')
 
     # Remove a file or list of files in a given folder
     if filename is not None and folder is not None:
-        if fnameisalist:
+        if filenameislist:
             for this_file in filename_list:
-                filenamepath = os.path.join(folder, this_file)
+                filenamepath = os.path.join(filefolder, this_file)
                 os.remove(filenamepath)
                 if verbose:
                     print(f'Removed "{filenamepath}" ')
+        else:
+            filenamepath = os.path.join(filefolder, this_file)
+            os.remove(filenamepath)
+            if verbose:
+                print(f'Removed "{filenamepath}" ')
 
     # Nothing was passed
     if filename is None and folder is None:
