@@ -45,7 +45,7 @@ from . import sc_dataframe as scdf
 #%% Pickling functions
 ##############################################################################
 
-__all__ = ['loadobj', 'loadstr', 'saveobj', 'dumpstr', 'load', 'save']
+__all__ = ['loadobj', 'loadstr', 'saveobj', 'dumpstr', 'load', 'save', 'rmpath']
 
 
 def loadobj(filename=None, folder=None, verbose=False, die=None, remapping=None, method='pickle', **kwargs):
@@ -391,9 +391,11 @@ def makefilepath(filename=None, folder=None, ext=None, default=None, split=False
         default     (str or list)   : a name or list of names to use if filename is None
         split       (bool)          : whether to return the path and filename separately
         aspath      (bool)          : whether to return a Path object
+        abspath     (bool)          : whether to conver to absolute path
         makedirs    (bool)          : whether or not to make the folders to save into if they don't exist
         checkexists (bool)          : if False/True, raises an exception if the path does/doesn't exist
         sanitize    (bool)          : whether or not to remove special characters from the path; see ``sc.sanitizefilename()`` for details
+        die         (bool)          : whether or not to raise an exception if cannot create directory failed (otherwise, return a string)
         verbose     (bool)          : how much detail to print
 
     Returns:
@@ -497,6 +499,13 @@ def path(*args, **kwargs):
 path.__doc__ += '\n\n' + Path.__doc__
 
 
+def ispath(obj):
+    ''' Alias to isinstance(obj, Path()) '''
+    if not isinstance(obj, Path):
+        return False
+    return True
+
+
 def thisdir(file=None, path=None, *args, aspath=None, **kwargs):
     '''
     Tiny helper function to get the folder for a file, usually the current file.
@@ -538,6 +547,65 @@ def thisdir(file=None, path=None, *args, aspath=None, **kwargs):
     return filepath
 
 
+def rmpath(filename=None, folder=None, abspath=True, warnme=False,  die=True, verbose=False):
+    """
+
+    Arguments:
+        filename    (str or Path, or list with str or Path)   : the filename, or full file path, to remove
+        folder      (str/Path/list) : the name of the folder to be remov ed
+        abspath     (bool)          : whether to conver to absolute path
+        warnme      (bool)          : whwther to pring a warning message remindin the user the 'path' is going to be removed
+        die         (bool)          : whether or not to raise an exception if cannot remove (otherwise, return a string)
+        verbose     (bool)          : how much detail to print
+
+
+    Returns:
+    """
+    if isinstance(filename, Path):
+        filename = str(filename)
+    if isinstance(filename, list):
+        filename_list = []
+        for this_file in filename:
+            if ispath(this_file) or isinstance(this_file, str):
+                filename_list.append(str(this_file))
+    if isinstance(folder, Path): # If it's a path object, convert to string
+        folder = str(folder)
+    if isinstance(folder, list): # It's a list, join together
+        folder = os.path.join(*folder)
+
+    # Remove a file or a each file in a list
+    if filename is not None and folder is None:
+        if not isinstance(filename, list):
+            os.remove(filename)
+        else:
+            for this_file in filename_list:
+                if verbose:
+                    print(f'Removing "{this_file}" ')
+                os.remove(this_file)
+
+    # if abspath:  # Convert to absolute path
+    #     filefolder = os.path.abspath(os.path.expanduser(folder))
+    #     # Process filename
+    #     if filename is None:  # pragma: no cover
+    #         defaultnames = scu.promotetolist(default)  # Loop over list of default names
+    #         for defaultname in defaultnames:
+    #             if not filename and defaultname: filename = defaultname  # Replace empty name with default name
+    #     if filename is not None:  # If filename exists by now, use it
+    #         filebasename = os.path.basename(filename)
+    #         filefolder = os.path.dirname(filename)
+    #     if not filebasename: filebasename = 'default'  # If all else fails
+
+    #
+    #
+    #
+    # cleanup = {db_file:os.remove, db_folder:shutil.rmtree}
+    # for fn,func in cleanup.items():
+    #     try:
+    #         func(fn)
+    #         print('Removed %s' % fn)
+    #     except:
+    #         pass
+    return
 ##############################################################################
 #%% JSON functions
 ##############################################################################
@@ -1088,6 +1156,7 @@ def loadspreadsheet(filename=None, folder=None, fileobj=None, sheet=0, asdatafra
         fileobj (obj): load from file object rather than path
         sheet (str/int/list): name or number of sheet(s) to use (default 0)
         asdataframe (bool): whether to return as a pandas/Sciris dataframe (default True)
+        header (bool): whether the 0-th row is to be read as the header
         method (str): how to read (default 'pandas', other choices 'openpyxl' and 'xlrd')
         kwargs (dict): passed to pd.read_excel(), openpyxl(), etc.
 
