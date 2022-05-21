@@ -51,7 +51,10 @@ def now(astype='dateobj', timezone=None, utc=False, tostring=False, dateformat=N
     if timezone is not None: tzinfo = du.tz.gettz(timezone) # Timezone is a string
     elif utc:                tzinfo = du.tz.tzutc() # UTC has been specified
     else:                    tzinfo = None # Otherwise, do nothing
-    if tostring: astype='str'
+    if tostring:
+        warnmsg = 'sc.now() argument "tostring" will be deprecated soon'
+        warnings.warn(warnmsg, category=FutureWarning, stacklevel=2)
+        astype='str'
     timenow = dt.datetime.now(tzinfo)
     output = getdate(timenow, astype=astype, dateformat=dateformat)
     return output
