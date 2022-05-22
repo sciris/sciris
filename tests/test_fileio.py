@@ -51,8 +51,15 @@ def test_spreadsheets():
     if os.path.exists(excel_path):
         sc.heading('Reading cells')
         wb = sc.Spreadsheet(filename=excel_path) # Load a sample databook to try pulling cells from
-        celltest = wb.readcells(method='openpyxl', wbargs={'data_only': True}, sheetname='Baseline year population inputs', cells=[[46, 2], [47, 2]]) # Grab cells using openpyxl.  You have to set wbargs={'data_only': True} to pull out cached values instead of formula strings
-        print(f'openpyxl output: {celltest}')
+        celltest_opyxl = wb.readcells(method='openpyxl', wbargs={'data_only': True}, sheetname='Baseline year population inputs', cells=[[46, 2], [47, 2]]) # Grab cells using openpyxl.  You have to set wbargs={'data_only': True} to pull out cached values instead of formula strings
+        print(f'openpyxl output: {celltest_opyxl}')
+
+        celltest_pd = wb.readcells(method='openpyxl',
+                                  sheetname='Baseline year population inputs', cells=[[46, 2], [47,2]])  # Grab cells using pandas
+        print(f'pandas output: {celltest_pd}')
+
+        assert celltest_opyxl == celltest_pd
+
     else:
         print(f'{excel_path} not found, skipping...')
 
