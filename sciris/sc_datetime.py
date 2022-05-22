@@ -13,6 +13,8 @@ import warnings
 import pylab as pl
 import datetime as dt
 import dateutil as du
+
+import sciris
 from . import sc_utils as scu
 
 
@@ -773,7 +775,60 @@ class timer(scu.prettyobj):
         ''' Alias for toctic() '''
         return self.toctic(*args, **kwargs)
 
+    def plot(self, fig=None, ax=None, modality='individual', returnfig=False, figkwargs=None, axkwargs=None, **kwargs):
+        """
+        Create a plot of Timer.timings
 
+        Arguments:
+            fig (fig): an existing figure to draw the plot in
+            ax (axes): an existing axes to draw the plot in
+            modality (str): how self.timings will be presented, 'individual' or 'cumulative'
+            returnfig (bool): whether to return the figure, or just the axes
+            figkwargs (dict): passed to figure()
+            axkwargs (dict): passed to axes()
+            kwargs (dict): passed to plot()
+
+        Returns:
+            fig and ax
+            ax
+        """
+
+        figkwargs = scu.mergedicts(figkwargs)
+        axkwargs = scu.mergedicts(axkwargs)
+        nrows = axkwargs.pop('nrows', 1)  # Since fig.add_subplot() can't handle kwargs...
+        ncols = axkwargs.pop('ncols', 1)
+        index = axkwargs.pop('index', 1)
+
+        # Handle the figure
+        if fig is None:
+            if ax is None:
+                fig = pl.figure(**figkwargs)  # It's necessary to have an open figure or else the commands won't work
+            else:
+                fig = ax.figure
+
+        #  Create and initialize the axis
+        if ax is None:
+           ax = fig.add_subplot(nrows, ncols, index, **axkwargs)
+
+        # plot times
+        if len(self.timings) > 0:
+            if modality in ['individual', 'indiv', 'single']:
+                ax.plot(self.timings.keys(), self.timings.values(), **kwargs)
+                ax.set_xlabel('Individual timings [s]')
+            elif modality in ['cumulative', 'cum', 'cumul']:
+                ax.plot(self.timings.keys(), pl.cumsum(self.timings.values()), **kwargs)
+                ax.set_xlabel('Cumulative timings [s]')
+            else:
+                errormsg = f"Unknown modality {modality}. Must be either 'individual' or 'cumulative'"
+                raise ValueError(errormsg)
+        else:
+            errormsg = f"Looks like nothing has been timed. Forgot to do T.start() and T.stop()??'"
+            raise RuntimeWarning(errormsg)
+
+        if returnfig:
+            return fig, ax
+        else:
+            return ax
 
 
 Timer = timer # Alias
