@@ -1061,9 +1061,17 @@ Falling back to openpyxl, which is identical except for how cached cell values a
         f = self.tofile()
         kwargs['fileobj'] = f
 
+        # Return the appropriate output
+        cells = kwargs.get('cells')
+
         # Read in sheetoutput (sciris dataframe object for xlrd, 2D numpy array for openpyxl).
         if method == 'xlrd': # pragma: no cover
             sheetoutput = loadspreadsheet(*args, **kwargs, method='xlrd')  # returns sciris dataframe object
+        elif method == 'pandas':
+            if cells is not None:
+                _ = kwargs.pop('cells', cells)
+            pandas_sheet = loadspreadsheet(*args, **kwargs, method='pandas')
+            sheetoutput = pandas_sheet.values
         elif method in ['openpyxl', 'openpyexcel']:
             wb_reader = self.openpyxl if method == 'openpyxl' else self.openpyexcel
             wb_reader(**wbargs)
@@ -1077,8 +1085,6 @@ Falling back to openpyxl, which is identical except for how cached cell values a
             errormsg = f'Reading method not found; must be openpyxl or xlrd, not {method}'
             raise ValueError(errormsg)
 
-        # Return the appropriate output
-        cells = kwargs.get('cells')
         if cells is None:  # If no cells specified, return the whole sheet.
             return sheetoutput
         else:
@@ -1086,7 +1092,7 @@ Falling back to openpyxl, which is identical except for how cached cell values a
             for cell in cells:  # Loop over all cells
                 rownum = cell[0]
                 colnum = cell[1]
-                if method == 'xlrd':  # If we're using xlrd, reduce the row number by 1.
+                if method in ['xlrd', 'pandas']:  # If we're using xlrd, reduce the row number by 1.
                     rownum -= 1
                 results.append(sheetoutput[rownum][colnum])  # Grab and append the result at the cell.
             return results
