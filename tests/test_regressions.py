@@ -107,10 +107,11 @@ def myfunc(mylist):
 
 
 def test_map(data_regression):
-
+    import pyaml
     cat = sc.odict({'a':[1, 2], 'b':[3, 4]})
     dog = cat.map(myfunc) # Returns sc.odict({'a':[1, 4], 'b':[9, 16]})
-    data_dict = {'cat': cat, 'dog': dog}
+    # TODO: fix the line below, just converts to string and uses pyaml
+    data_dict = {'cat': pyaml.dump(cat), 'dog': pyaml.dump(dog)}
     data_regression.check(data_dict)
 
 
