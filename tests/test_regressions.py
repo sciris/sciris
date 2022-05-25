@@ -8,6 +8,15 @@ Test math functions that are widely used in covasim
 
 import sciris as sc
 import numpy as np
+import yaml
+
+
+# Need to add custom representers and then add them to SafeDumper -- used by pytest-regressions
+def _represent_sc_odict(self, data):
+    if isinstance(data, sc.odict):
+        return self.represent_mapping('tag:yaml.org,2002:map', data.items())
+
+yaml.SafeDumper.add_representer(sc.odict, _represent_sc_odict)
 
 
 def test_default_settings(data_regression):
@@ -107,11 +116,13 @@ def myfunc(mylist):
 
 
 def test_map(data_regression):
-    import pyaml
     cat = sc.odict({'a':[1, 2], 'b':[3, 4]})
     dog = cat.map(myfunc) # Returns sc.odict({'a':[1, 4], 'b':[9, 16]})
-    # TODO: fix the line below, just converts to string and uses pyaml
-    data_dict = {'cat': pyaml.dump(cat), 'dog': pyaml.dump(dog)}
+    data_dict = {'cat': cat, 'dog': dog}
     data_regression.check(data_dict)
 
 
+def test_odict(data_regression):
+    cat = sc.odict({'a':[1, 2], 'b':[3, 4]})
+    data_dict = {'cat': cat}
+    data_regression.check(data_dict)
