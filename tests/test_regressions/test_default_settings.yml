@@ -1,0 +1,7 @@
+aspath: false
+backend: QtAgg
+dpi: 100
+font:
+- sans-serif
+fontsize: 10
+sep: ','
