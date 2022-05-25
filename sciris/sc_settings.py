@@ -20,7 +20,7 @@ import copy as cp
 import pylab as pl
 
 
-__all__ = ['dictobj', 'options', 'help']
+__all__ = ['dictobj', 'options', 'help', '_set_default_options']
 
 class dictobj(dict):
     '''
@@ -84,7 +84,7 @@ class Options(dictobj):
         return output
 
 
-def set_default_options():
+def _set_default_options():
     '''
     Set the default options for Sciris -- not to be called by the user, use
     ``sc.options.set('defaults')`` instead.
@@ -116,7 +116,7 @@ def set_default_options():
 
 
 # Actually set the options
-options, optdesc = set_default_options()
+options, optdesc = _set_default_options()
 orig_options = cp.deepcopy(options) # Make a copy for referring back to later
 
 # Specify which keys require a reload
