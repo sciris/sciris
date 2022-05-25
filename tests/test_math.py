@@ -86,10 +86,12 @@ def test_find():
     assert found.data[-1] == 13
 
     print('Testing sc.sanitize()')
-    sanitized,inds = sc.sanitize(np.array([3, 4, np.nan, 8, 2, np.nan, np.nan, np.nan, 8]), returninds=True)
-    sanitized      = sc.sanitize(np.array([3, 4, np.nan, 8, 2, np.nan, np.nan, np.nan, 8]), replacenans=True)
-    sanitized      = sc.sanitize(np.array([3, 4, np.nan, 8, 2, np.nan, np.nan, np.nan, 8]), replacenans=0)
-    found.sanitized = sanitized
+    sanitized1,inds = sc.sanitize(np.array([3, 4, np.nan, 8, 2, np.nan, np.nan, np.nan, 8]), returninds=True)
+    sanitized2      = sc.sanitize(np.array([3, 4, np.nan, 8, 2, np.nan, np.nan, np.nan, 8]), replacenans=True)
+    sanitized3      = sc.sanitize(np.array([3, 4, np.nan, 8, 2, np.nan, np.nan, np.nan, 8]), replacenans=0)
+    found.sanitized1 = sanitized1
+    found.sanitized2 = sanitized2
+    found.sanitized3 = sanitized3
 
     return found
 
