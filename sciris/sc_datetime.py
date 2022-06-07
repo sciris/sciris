@@ -400,7 +400,7 @@ def daydiff(*args):
     return output
 
 
-def daterange(start_date=None, end_date=None, interval=None, inclusive=True, as_date=False, readformat=None, outformat=None, **kwargs):
+def daterange(start_date=None, end_date=None, interval=None, inclusive=True, as_date=False, readformat=None, outformat=None, days=None, **kwargs):
     '''
     Return a list of dates from the start date to the end date. To convert a list
     of days (as integers) to dates, use ``sc.date()`` instead.
@@ -430,8 +430,11 @@ def daterange(start_date=None, end_date=None, interval=None, inclusive=True, as_
     if len(kwargs):
         errormsg = f'Unexpected arguments: {scu.strjoin(kwargs.keys())}'
         raise ValueError(errormsg)
+    if days is not None:
+        end_date = datedelta(start_date, days=days)
     start_date = date(start_date, readformat=readformat)
-    end_date   = date(end_date,   readformat=readformat)
+    end_date = date(end_date, readformat=readformat)
+
     if   interval in [None, 'day']: interval = dict(days=1)
     elif interval == 'week':        interval = dict(weeks=1)
     elif interval == 'month':       interval = dict(months=1)
