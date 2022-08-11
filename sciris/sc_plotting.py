@@ -193,7 +193,7 @@ def surf3d(data, x=None, y=None, fig=None, returnfig=False, colorbar=True, figkw
 
     # Create figure
     fig,ax = ax3d(returnfig=True, fig=fig, figkwargs=figkwargs, **axkwargs)
-    ny,nx = pl.array(data).shape
+    ny,nx = np.array(data).shape
 
     if x is None:
         x = np.arange(nx)

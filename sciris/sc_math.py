@@ -17,8 +17,8 @@ from . import sc_utils as scu
 #%% Find and approximation functions
 ##############################################################################
 
-__all__ = ['approx', 'safedivide', 'findinds', 'findfirst', 'findlast', 'findnearest',
-           'count', 'dataindex', 'getvalidinds', 'sanitize', 'getvaliddata', 'isprime']
+__all__ = ['approx', 'safedivide', 'findinds', 'findfirst', 'findlast', 'findnearest', 'count',
+           'dataindex', 'getvalidinds', 'sanitize', 'getvaliddata', 'isprime', 'numdigits']
 
 
 def approx(val1=None, val2=None, eps=None, **kwargs):
@@ -363,6 +363,65 @@ def isprime(n, verbose=False):
         f +=6
     if verbose: print('Is prime!')
     return True
+
+
+def numdigits(n, *args, count_minus=False, count_decimal=False):
+    """
+    Count the number of digits in a number (or list of numbers).
+
+    Useful for e.g. knowing how long a string needs to be to fit a given number.
+
+    If a number is less than 1, return the number of digits until the decimal
+    place.
+
+    Reference: https://stackoverflow.com/questions/22656345/how-to-count-the-number-of-digits-in-python
+
+    Args:
+        n (int/float/list/array): number or list of numbers
+        args (list): additional numbers
+        count_minus (bool): whether to count the minus sign as a digit
+        count_decimal (bool): whether to count the decimal point as a digit
+
+    **Examples**::
+
+        sc.numdigits(12345) # Returns 5
+        sc.numdigits(12345.5) # Returns 5
+        sc.numdigits(0) # Returns 1
+        sc.numdigits(-12345) # Returns 5
+        sc.numdigits(-12345, count_minus=True) # Returns 6
+        sc.numdigits(12, 123, 12345) # Returns [2, 3, 5]
+        sc.numdigits(0.01) # Returns -2
+        sc.numdigits(0.01, count_decimal=True) # Returns -4
+
+    New in version 2.0.0.
+    """
+    is_scalar = True if scu.isnumber(n) and len(args) == 0 else False
+
+    vals = cat(n, *args)
+
+    output = []
+    for n in vals:
+        abs_n = abs(n)
+        is_decimal = 0 < abs_n < 1
+        n_digits = 1
+        if n < 0 and count_minus:
+            n_digits += 1
+        if is_decimal:
+            if count_decimal:
+                n_digits += 1
+            else:
+                n_digits -= 1
+
+        if abs_n > 0:
+            if is_decimal:
+                n_digits = -n_digits
+            n_digits += int(np.floor(np.log10(abs_n)))
+        output.append(n_digits)
+    output = np.array(output)
+    if is_scalar:
+        output = output[0]
+
+    return output
 
 
 

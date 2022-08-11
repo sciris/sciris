@@ -67,6 +67,10 @@ def test_find():
     found.vals = sc.findinds([2,3,6,3], 6)
     assert found.vals[0] == 2
 
+    print('Testing sc.count()')
+    found.count = sc.count([1,2,2,3], 2.0)
+    assert found.count == 2
+
     print('Testing sc.findfirst(), sc.findlast()')
     found.first = sc.findfirst(pl.rand(10))
     found.last = sc.findlast(pl.rand(10))
@@ -90,6 +94,14 @@ def test_find():
     sanitized      = sc.sanitize(np.array([3, 4, np.nan, 8, 2, np.nan, np.nan, np.nan, 8]), replacenans=True)
     sanitized      = sc.sanitize(np.array([3, 4, np.nan, 8, 2, np.nan, np.nan, np.nan, 8]), replacenans=0)
     found.sanitized = sanitized
+
+    print('Testing sc.numdigits()')
+    found.numdigits = sc.numdigits(1234)
+    found.numdigits_max = max(sc.numdigits([10, 200, 30000]))
+    found.numdigits_dec = sc.numdigits(0.01)
+    assert found.numdigits == 4
+    assert found.numdigits_max == 5
+    assert found.numdigits_dec == -2
 
     return found
 
@@ -153,18 +165,18 @@ def test_gauss2d(doplot=doplot):
     sc.heading('Testing Gaussian 2D smoothing')
 
     # Parameters
-    x = pl.rand(40)
-    y = pl.rand(40)
+    x = np.random.rand(40)
+    y = np.random.rand(40)
     z = 1-(x-0.5)**2 + (y-0.5)**2
 
     # Method 1 -- form grid
-    xi = pl.linspace(0,1,20)
-    yi = pl.linspace(0,1,20)
-    zi = sc.gauss2d(x, y, z, xi, yi, scale=0.1)
+    xi = np.linspace(0,1,20)
+    yi = np.linspace(0,1,20)
+    zi = sc.gauss2d(x, y, z, xi, yi, scale=0.1, grid=True)
 
     # Method 2 -- use points directly
-    xi2 = pl.rand(400)
-    yi2 = pl.rand(400)
+    xi2 = np.random.rand(400)
+    yi2 = np.random.rand(400)
     zi2 = sc.gauss2d(x, y, z, xi2, yi2, scale=0.1, grid=False)
 
     if doplot:
