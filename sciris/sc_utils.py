@@ -716,14 +716,14 @@ def isarray(obj, dtype=None):
 def promotetoarray(x, keepnone=False, **kwargs):
     '''
     Small function to ensure consistent format for things that should be arrays
-    (note: toarray()/promotetoarray() are identical).
+    (note: ``toarray()`` and ``promotetoarray()`` are identical).
 
     Very similar to ``np.array``, with the main difference being that ``sc.promotetoarray(3)``
     will return ``np.array([3])`` (i.e. a 1-d array that can be iterated over), while
     ``np.array(3)`` will return a 0-d array that can't be iterated over.
 
     Args:
-        x: a number or list of numbers
+        x (any): a number or list of numbers
         keepnone (bool): whether ``sc.promotetoarray(None)`` should return ``np.array([])`` or ``np.array([None], dtype=object)``
         kwargs (dict): passed to ``np.array()``
 
