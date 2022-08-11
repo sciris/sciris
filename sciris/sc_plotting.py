@@ -1033,7 +1033,7 @@ def _get_dpi(dpi=None, min_dpi=200):
     return dpi
 
 
-def savefig(filename, fig=None, dpi=None, comments=None, freeze=False, frame=2, folder=None, makedirs=True, die=True, **kwargs):
+def savefig(filename, fig=None, dpi=None, comments=None, freeze=False, frame=2, folder=None, makedirs=True, die=True, verbose=True, **kwargs):
     '''
     Save a figure, including metadata
 
@@ -1055,6 +1055,7 @@ def savefig(filename, fig=None, dpi=None, comments=None, freeze=False, frame=2, 
         folder   (str/Path) : optional folder to save to (can also be provided as part of the filename)
         makedirs (bool)     : whether to create folders if they don't already exist
         die      (bool)     : whether to raise an exception if metadata can't be saved
+        verbose  (bool)     : if die is False, print a warning if metadata can't be saved
         kwargs   (dict)     : passed to ``fig.save()``
 
     **Examples**::
@@ -1103,12 +1104,13 @@ def savefig(filename, fig=None, dpi=None, comments=None, freeze=False, frame=2, 
     elif lcfn.endswith('svg') or lcfn.endswith('pdf'):
         metadata = dict(Keywords=f'{_metadataflag}={jsonstr}')
     else:
-        errormsg = f'Warning: filename "{filename}" has unsupported type: must be png, svg, or pdf. Please use pl.savefig() instead.'
+        errormsg = f'Warning: filename "{filename}" has unsupported type for metadata: must be PNG, SVG, or PDF. For JPG, use the separate exif library. To silence this message, set die=False and verbose=False.'
         if die:
             raise ValueError(errormsg)
         else:
             metadata = None
-            print(errormsg)
+            if verbose:
+                print(errormsg)
 
     # Save the figure
     if metadata is not None:
