@@ -17,6 +17,7 @@ New functions and methods
 ~~~~~~~~~~~~~~~~~~~~~~~~~
 #. ``sc.count()`` counts the number of matching elements in an array (similar to ``np.count_nonzero()``, but more flexible with e.g. float vs. int mismatches).
 #. ``sc.strsplit()`` will automatically split common types of delimited strings (e.g. ``sc.strsplit('a b c')``).
+#. ``sc.rmnans()`` and ``sc.fillnans()`` have been added as aliases of ``sc.sanitize()`` with default options.
 
 Bugfixes
 ~~~~~~~~
