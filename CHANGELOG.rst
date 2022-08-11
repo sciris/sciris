@@ -26,10 +26,11 @@ Bugfixes
 Improvements
 ~~~~~~~~~~~~
 #. If a copy/deepcopy is not possible, ``sc.cp()``/``sc.dcp()`` now raise an exception by default (previously, they silenced it).
+#. ``sc.daterange()`` now accepts ``datedelta`` arguments, e.g. ``sc.daterange('2022-02-22', weeks=2)``.
 
 Housekeeping
 ~~~~~~~~~~~~
-#. ``DeprecationWarning``s have been changed to ``FutureWarning``s.
+#. Most ``DeprecationWarning``s have been changed to ``FutureWarning``s.
 
 Regression information
 ~~~~~~~~~~~~~~~~~~~~~~

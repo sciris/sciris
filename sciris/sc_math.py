@@ -284,12 +284,24 @@ def getvaliddata(data=None, filterdata=None, defaultind=0): # pragma: no cover
 def sanitize(data=None, returninds=False, replacenans=None, die=True, defaultval=None, label=None, verbose=True):
         '''
         Sanitize input to remove NaNs. Warning, does not work on multidimensional data!!
+        Returns an array with the sanitized data. If replacenans=True, the sanitized array is
+        of the same length/size as data. If replacenans=False, the sanitized array
+        may be shorter than data.
+
+        Args:
+            data        (arr/list)   : the array with data to be sanitized
+            returninds  (bool)       : whether to return the indices of the non-NaN values in data
+            replacenans (bool/float) : whether to replace the NaNs with a value, or using interpolation ``sc.smoothinterp()``
+            defaultval  (float/int)  : value to return if the sanitized array is empty.
+            label       (str)        : human readable label for data
+            die         (bool)       : whether to raise an exception if sanitization fails.
 
         **Examples**::
 
-            sanitized,inds = sanitize(array([3,4,nan,8,2,nan,nan,nan,8]), returninds=True)
-            sanitized = sanitize(array([3,4,nan,8,2,nan,nan,nan,8]), replacenans=True)
-            sanitized = sanitize(array([3,4,nan,8,2,nan,nan,nan,8]), replacenans=0)
+            data = [3, 4, np.nan, 8, 2, np.nan, np.nan, 8]
+            sanitized1, inds = sc.sanitize(data, returninds=True)
+            sanitized2 = sc.sanitize(data, replacenans=True)
+            sanitized3 = sc.sanitize(data, replacenans=0)
         '''
         try:
             data = np.array(data,dtype=float) # Make sure it's an array of float type
@@ -310,8 +322,8 @@ def sanitize(data=None, returninds=False, replacenans=None, die=True, defaultval
                 else:
                     sanitized = 0.0
                     if verbose: # pragma: no cover
-                        if label is None: label = 'this parameter'
-                        print(f'sc.sanitize(): no data entered for {label}, assuming 0')
+                        if label is None: label = 'these input data'
+                        print(f'sc.sanitize(): no valid values found for {label}. Returning 0.')
         except Exception as E: # pragma: no cover
             if die:
                 errormsg = f'Sanitization failed on array: "{repr(E)}":\n{data}'
@@ -439,6 +451,7 @@ def perturb(n=1, span=0.5, randseed=None, normal=False):
     Args:
         n (int): number of points
         span (float): width of distribution on either side of 1
+        randseed (int): seed passed to the reseed numpy's legacy MT19937 BitGenerator
         normal (bool):  whether to use a normal distribution instead of uniform
 
     **Example**::

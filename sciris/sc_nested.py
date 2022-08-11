@@ -186,7 +186,7 @@ def flattendict(nesteddict, sep=None, _prefix=None):
     Returns:
         A flat dictionary where no values are dicts
 
-    New in version 1.4.0: handle non-string keys.
+    New in version 2.0.0: handle non-string keys.
     """
     output_dict = {}
     for k, v in nesteddict.items():

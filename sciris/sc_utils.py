@@ -43,7 +43,7 @@ from distutils.version import LooseVersion
 
 # Handle types
 _stringtypes = (str, bytes)
-_numtype    = numbers.Number
+_numtype     = numbers.Number
 
 
 ##############################################################################
@@ -64,10 +64,12 @@ def fast_uuid(which=None, length=None, n=1, secure=False, forcelist=False, safet
         which (str): the set of characters to choose from (default ascii)
         length (int): length of UID (default 6)
         n (int): number of UIDs to generate
+        secure (bool): whether to generate random numbers from sources provided by the operating system
         forcelist (bool): whether or not to return a list even for a single UID (used for recursive calls)
         safety (float): ensure that the space of possible UIDs is at least this much larger than the number requested
         recursion (int): the recursion level of the call (since the function calls itself if not all UIDs are unique)
-        recursion_limit (int): # Maximum number of times to try regeneraring keys
+        recursion_limit (int): Maximum number of times to try regeneraring keys
+        verbose (bool): whether to show progress
 
     Returns:
         uid (str or list): a string UID, or a list of string UIDs
@@ -714,13 +716,14 @@ def isarray(obj, dtype=None):
 def promotetoarray(x, keepnone=False, **kwargs):
     '''
     Small function to ensure consistent format for things that should be arrays
-    (note: toarray()/promotetoarray() are identical).
+    (note: ``toarray()`` and ``promotetoarray()`` are identical).
 
     Very similar to ``np.array``, with the main difference being that ``sc.promotetoarray(3)``
     will return ``np.array([3])`` (i.e. a 1-d array that can be iterated over), while
     ``np.array(3)`` will return a 0-d array that can't be iterated over.
 
     Args:
+        x (any): a number or list of numbers
         keepnone (bool): whether ``sc.promotetoarray(None)`` should return ``np.array([])`` or ``np.array([None], dtype=object)``
         kwargs (dict): passed to ``np.array()``
 
@@ -1478,6 +1481,7 @@ def suggest(user_input, valid_inputs, n=1, threshold=None, fulloutput=False, die
         valid_inputs (list): List/collection of valid strings
         n (int): Maximum number of suggestions to return
         threshold (int): Maximum number of edits required for an option to be suggested (by default, two-thirds the length of the input; for no threshold, set to -1)
+        fulloutput (bool): Whether to return suggestions and distances.
         die (bool): If True, an informative error will be raised (to avoid having to implement this in the calling code)
         which (str): Distance calculation method used; options are "damerau" (default), "levenshtein", or "jaro"
 
