@@ -31,10 +31,10 @@ def now(astype='dateobj', timezone=None, utc=False, tostring=False, dateformat=N
     object by default, while ``sc.getdate()`` returns a string by default.
 
     Args:
-        astype (str): what to return; choices are "dateobj", "str", "float"; see ``sc.getdate()`` for more
-        timezone (str): the timezone to set the itme to
-        utc (bool): whether the time is specified in UTC time
-        dateformat (str): if ``astype`` is ``'str'``, use this output format
+        astype     (str)  : what to return; choices are "dateobj", "str", "float"; see ``sc.getdate()`` for more
+        timezone   (str)  : the timezone to set the itme to
+        utc        (bool) : whether the time is specified in UTC time
+        dateformat (str)  : if ``astype`` is ``'str'``, use this output format
 
     **Examples**::
 
@@ -400,27 +400,34 @@ def daydiff(*args):
     return output
 
 
-def daterange(start_date=None, end_date=None, interval=None, inclusive=True, as_date=False, readformat=None, outformat=None, days=None, **kwargs):
+def daterange(start_date=None, end_date=None, interval=None, inclusive=True, as_date=False,
+              readformat=None, outformat=None, **kwargs):
     '''
     Return a list of dates from the start date to the end date. To convert a list
     of days (as integers) to dates, use ``sc.date()`` instead.
 
+    Note: instead of an end date, can also pass one or more of days, months, weeks,
+    or years, which will be added on to the start date via ``sc.datedelta()``.
+
     Args:
-        start_date (int/str/date): the starting date, in any format
-        end_date (int/str/date): the end date, in any format
-        interval (int/str/dict): if an int, the number of days; if 'week', 'month', or 'year', one of those; if a dict, passed to ``dt.relativedelta()``
-        inclusive (bool): if True (default), return to end_date inclusive; otherwise, stop the day before
-        as_date (bool): if True, return a list of datetime.date objects instead of strings (note: you can also use "asdate" instead of "as_date")
-        readformat (str): passed to date()
-        outformat (str): passed to date()
+        start_date (int/str/date) : the starting date, in any format
+        end_date   (int/str/date) : the end date, in any format
+        interval   (int/str/dict) : if an int, the number of days; if 'week', 'month', or 'year', one of those; if a dict, passed to ``dt.relativedelta()``
+        inclusive  (bool)         : if True (default), return to end_date inclusive; otherwise, stop the day before
+        as_date    (bool)         : if True, return a list of datetime.date objects instead of strings (note: you can also use "asdate" instead of "as_date")
+        readformat (str)          : passed to date()
+        outformat  (str)          : passed to date()
+        days       (int)          : optional
 
     **Examples**::
 
         dates1 = sc.daterange('2020-03-01', '2020-04-04')
         dates2 = sc.daterange('2020-03-01', '2022-05-01', interval=dict(months=2), asdate=True)
+        dates3 = sc.daterange('2020-03-01', weeks=5)
 
     | New in version 1.0.0.
     | New in version 1.3.0: "interval" argument
+    | New in version 2.0.0: ``sc.datedelta()`` arguments
     '''
 
     # Handle inputs
@@ -428,10 +435,7 @@ def daterange(start_date=None, end_date=None, interval=None, inclusive=True, as_
     end_date   = kwargs.pop('enddate',   end_date) # Handle with or without underscore
     as_date    = kwargs.pop('asdate', as_date) # Handle with or without underscore
     if len(kwargs):
-        errormsg = f'Unexpected arguments: {scu.strjoin(kwargs.keys())}'
-        raise ValueError(errormsg)
-    if days is not None:
-        end_date = datedelta(start_date, days=days)
+        end_date = datedelta(start_date, **kwargs)
     start_date = date(start_date, readformat=readformat)
     end_date = date(end_date, readformat=readformat)
 
