@@ -242,6 +242,10 @@ def arraycolors(arr, **kwargs):
     of vectocolor() for multidimensional arrays; see that function for additional
     arguments.
 
+    Args:
+        arr (array): a multidimensional array to be converted to an array of colors
+        kwargs(dict): passed to ``sc.vectocolor()``
+
     **Example**::
 
         n = 1000
@@ -269,32 +273,35 @@ def arraycolors(arr, **kwargs):
 
 def gridcolors(ncolors=10, limits=None, nsteps=20, asarray=False, ashex=False, reverse=False, hueshift=0, basis='default', demo=False):
     """
-    Create a qualitative "color map" by assigning points according to the maximum pairwise distance in the
-    color cube. Basically, the algorithm generates n points that are maximally uniformly spaced in the
-    [R, G, B] color cube.
+    Create a qualitative "color map" by assigning points according to the maximum
+    pairwise distance in the color cube. Basically, the algorithm generates n points
+    that are maximally uniformly spaced in the [R, G, B] color cube.
 
-    Arguments:
-        ncolors: the number of colors to create
-        limits: how close to the edges of the cube to make colors (to avoid white and black)
-        nsteps: the discretization of the color cube (e.g. 10 = 10 units per side = 1000 points total)
-        ashex: whether to return colors in hexadecimal representation
-        asarray: whether to return the colors as an array instead of as a list of tuples
-        reverse: whether to reverse the list of colors
-        hueshift: whether to shift the hue (hueshift > 0 and <=1) or not (0)
-        demo: whether or not to plot the color cube itself
-        basis: what basis to use -- options are 'colorbrewer', 'kelly', 'default', or 'none'
+    By default, if there are <=9 colors, use Colorbrewer colors; if there are
+    10-19 colors, use Kelly's colors; if there are >=20 colors, use uniformly
+    spaced grid colors.
+
+    Args:
+        ncolors  (int)   : the number of colors to create
+        limits   (float) : how close to the edges of the cube to make colors (to avoid white and black)
+        nsteps   (int)   : the discretization of the color cube (e.g. 10 = 10 units per side = 1000 points total)
+        ashex    (bool)  : whether to return colors in hexadecimal representation
+        asarray  (bool)  : whether to return the colors as an array instead of as a list of tuples
+        reverse  (bool)  : whether to reverse the list of colors
+        hueshift (float) : whether to shift the hue (hueshift > 0 and <=1) or not (0)
+        demo     (bool)  : whether or not to plot the color cube itself
+        basis    (str)   : what basis to use -- options are 'colorbrewer', 'kelly', 'default', or 'none'
 
     **Example**::
 
-        from pylab import *
-        from sciris import gridcolors
+        import pylab as pl
+        import sciris as sc
         ncolors = 10
-        piedata = rand(ncolors)
-        colors = gridcolors(ncolors)
-        figure()
-        pie(piedata, colors=colors)
-        gridcolors(ncolors, demo=True)
-        show()
+        piedata = pl.rand(ncolors)
+        colors = sc.gridcolors(ncolors)
+        pl.pie(piedata, colors=colors)
+        sc.gridcolors(ncolors, demo=True)
+        pl.show()
 
     Version: 2018oct30
     """
