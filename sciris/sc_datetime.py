@@ -265,7 +265,7 @@ def date(obj, *args, start_date=None, readformat=None, outformat=None, as_date=T
     if dateformat is not None: # pragma: no cover
         outformat = dateformat
         warnmsg = 'sc.date() argument "dateformat" has been deprecated as of v1.2.2; use "outformat" instead'
-        warnings.warn(warnmsg, category=DeprecationWarning, stacklevel=2)
+        warnings.warn(warnmsg, category=FutureWarning, stacklevel=2)
 
     # Convert to list and handle other inputs
     if obj is None:
@@ -339,7 +339,7 @@ def day(obj, *args, start_date=None, **kwargs):
     if start_day is not None: # pragma: no cover
         start_date = start_day
         warnmsg = 'sc.day() argument "start_day" has been deprecated as of v1.2.2; use "start_date" instead'
-        warnings.warn(warnmsg, category=DeprecationWarning, stacklevel=2)
+        warnings.warn(warnmsg, category=FutureWarning, stacklevel=2)
 
     # Do not process a day if it's not supplied, and ensure it's a list
     if obj is None:
@@ -605,7 +605,7 @@ def toc(start=None, label=None, baselabel=None, sigfigs=None, reset=False, outpu
     else:
         if baselabel is None:
             if label:
-                base = f'Elapsed time for {label}: '
+                base = f'{label}: '
             else: # Handles case toc(label='')
                 base = ''
         else:

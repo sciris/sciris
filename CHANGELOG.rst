@@ -6,6 +6,36 @@ All notable changes to this project will be documented in this file.
 By import convention, components of the Sciris library are listed beginning with ``sc.``, e.g. ``sc.odict()``.
 
 
+Version 2.0.0 (2022-08-12)
+--------------------------
+
+This version contains a number of major improvements, including:
+
+#. **TBC**
+
+New functions and methods
+~~~~~~~~~~~~~~~~~~~~~~~~~
+#. ``sc.count()`` counts the number of matching elements in an array (similar to ``np.count_nonzero()``, but more flexible with e.g. float vs. int mismatches).
+#. ``sc.strsplit()`` will automatically split common types of delimited strings (e.g. ``sc.strsplit('a b c')``).
+
+Bugfixes
+~~~~~~~~
+#. ``Spreadsheet`` objects no longer pickle the binary spreadsheet (in some cases reducing size by 50%).
+#. ``sc.loadspreadsheet()`` has been updated to match current ``pd.read_excel()`` syntax.
+
+Improvements
+~~~~~~~~~~~~
+#. If a copy/deepcopy is not possible, ``sc.cp()``/``sc.dcp()`` now raise an exception by default (previously, they silenced it).
+
+Housekeeping
+~~~~~~~~~~~~
+#. ``DeprecationWarning``s have been changed to ``FutureWarning``s.
+
+Regression information
+~~~~~~~~~~~~~~~~~~~~~~
+#. The default for ``sc.cp()`` and ``sc.dcp()`` changed from ``die=False`` to ``die=True``, which may cause previously caught exceptions to be uncaught. For previous behavior, use ``sc.dcp(..., die=False)``.
+
+
 Version 1.3.3 (2022-01-16)
 --------------------------
 
