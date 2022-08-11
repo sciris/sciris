@@ -1201,13 +1201,13 @@ def savefigs(figs=None, filetype=None, filename=None, folder=None, savefigargs=N
     Save the requested plots to disk.
 
     Args:
-        figs:        the figure objects to save
-        filetype:    the file type; can be 'fig', 'singlepdf' (default), or anything supported by savefig()
-        filename:    the file to save to (only uses path if multiple files)
-        folder:      the folder to save the file(s) in
-        savefigargs: dictionary of arguments passed to savefig()
-        aslist:      whether or not return a list even for a single file
-        varbose (bool): whether to print progress
+        figs        (list) : the figure objects to save
+        filetype    (str)  : the file type; can be 'fig', 'singlepdf' (default), or anything supported by savefig()
+        filename    (str)  : the file to save to (only uses path if multiple files)
+        folder      (str)  : the folder to save the file(s) in
+        savefigargs (dict) : arguments passed to savefig()
+        aslist      (bool) : whether or not return a list even for a single file
+        varbose     (bool) : whether to print progress
 
     **Examples**::
 
