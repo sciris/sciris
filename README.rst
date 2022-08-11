@@ -367,5 +367,5 @@ A very simple test case of Sciris. In the ``examples/helloworld`` folder, type `
 
 See the directions `here <https://github.com/sciris/scirisweb/tree/develop/examples/helloworld>`__ on how to install and run this example.
 
-.. |Sciris showcase| image:: docs/sciris-showcase-code.png
-.. |Sciris output| image:: docs/sciris-showcase-output.png
+.. |Sciris showcase| image:: https://github.com/sciris/sciris/raw/develop/docs/sciris-showcase-code.png
+.. |Sciris output| image:: https://github.com/sciris/sciris/raw/develop/docs/sciris-showcase-output.png

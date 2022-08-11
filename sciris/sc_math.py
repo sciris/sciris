@@ -17,8 +17,8 @@ from . import sc_utils as scu
 #%% Find and approximation functions
 ##############################################################################
 
-__all__ = ['approx', 'safedivide', 'findinds', 'findfirst', 'findlast', 'findnearest',
-           'dataindex', 'getvalidinds', 'sanitize', 'getvaliddata', 'isprime']
+__all__ = ['approx', 'safedivide', 'findinds', 'findfirst', 'findlast', 'findnearest', 'count',
+           'dataindex', 'getvalidinds', 'sanitize', 'getvaliddata', 'isprime', 'numdigits']
 
 
 def approx(val1=None, val2=None, eps=None, **kwargs):
@@ -83,19 +83,20 @@ def safedivide(numerator=None, denominator=None, default=None, eps=None, warn=Fa
 
 def findinds(arr=None, val=None, eps=1e-6, first=False, last=False, die=True, **kwargs):
     '''
-    Little function to find matches even if two things aren't eactly equal (eg.
-    due to floats vs. ints). If one argument, find nonzero values. With two arguments,
-    check for equality using eps. Returns a tuple of arrays if val1 is multidimensional,
-    else returns an array. Similar to calling np.nonzero(np.isclose(arr, val))[0].
+    Find matches even if two things aren't eactly equal (e.g. floats vs. ints).
+
+    If one argument, find nonzero values. With two arguments, check for equality
+    using eps. Returns a tuple of arrays if val1 is multidimensional, else returns
+    an array. Similar to calling ``np.nonzero(np.isclose(arr, val))[0]``.
 
     Args:
-        arr (array): the array to find values in
-        val (float): if provided, the value to match
-        eps (float): the precision for matching (default 1e-6, equivalent to np.isclose's atol)
-        first (bool): whether to return the first matching value
-        last (bool): whether to return the last matching value
-        die (bool): whether to raise an exception if first or last is true and no matches were found
-        kwargs (dict): passed to np.isclose()
+        arr    (array): the array to find values in
+        val    (float): if provided, the value to match
+        eps    (float): the precision for matching (default 1e-6, equivalent to ``np.isclose()``'s atol)
+        first  (bool):  whether to return the first matching value
+        last   (bool):  whether to return the last matching value
+        die    (bool):  whether to raise an exception if first or last is true and no matches were found
+        kwargs (dict):  passed to ``np.isclose()``
 
     **Examples**::
 
@@ -103,7 +104,8 @@ def findinds(arr=None, val=None, eps=1e-6, first=False, last=False, die=True, **
         sc.findinds([2,3,6,3], 3) # returs array([1,3])
         sc.findinds([2,3,6,3], 3, first=True) # returns 1
 
-    New in version 1.2.3: "die" argument
+    | New in version 1.2.3: "die" argument
+    | New in version 2.0.0: fix string matching
     '''
 
     # Handle first or last
@@ -118,7 +120,7 @@ def findinds(arr=None, val=None, eps=1e-6, first=False, last=False, die=True, **
         arr = kwargs.pop('val1', arr)
         val = kwargs.pop('val2', val)
         warnmsg = 'sc.findinds() arguments "val1" and "val2" have been deprecated as of v1.0.0; use "arr" and "val" instead'
-        warnings.warn(warnmsg, category=DeprecationWarning, stacklevel=2)
+        warnings.warn(warnmsg, category=FutureWarning, stacklevel=2)
 
     # Calculate matches
     arr = scu.promotetoarray(arr)
@@ -127,13 +129,14 @@ def findinds(arr=None, val=None, eps=1e-6, first=False, last=False, die=True, **
     else:
         if scu.isstring(val):
             output = np.nonzero(arr==val)
-        try: # Standard usage, use nonzero
-            output = np.nonzero(np.isclose(a=arr, b=val, atol=atol, **kwargs)) # If absolute difference between the two values is less than a certain amount
-        except Exception as E: # pragma: no cover # As a fallback, try simpler comparison
-            output = np.nonzero(abs(arr-val) < atol)
-            if kwargs: # Raise a warning if and only if special settings were passed
-                warnmsg = f'{str(E)}\nsc.findinds(): np.isclose() encountered an exception (above), falling back to direct comparison'
-                warnings.warn(warnmsg, category=RuntimeWarning, stacklevel=2)
+        else:
+            try: # Standard usage, use nonzero
+                output = np.nonzero(np.isclose(a=arr, b=val, atol=atol, **kwargs)) # If absolute difference between the two values is less than a certain amount
+            except Exception as E: # pragma: no cover # As a fallback, try simpler comparison
+                output = np.nonzero(abs(arr-val) < atol)
+                if kwargs: # Raise a warning if and only if special settings were passed
+                    warnmsg = f'{str(E)}\nsc.findinds(): np.isclose() encountered an exception (above), falling back to direct comparison'
+                    warnings.warn(warnmsg, category=RuntimeWarning, stacklevel=2)
 
     # Process output
     try:
@@ -187,6 +190,31 @@ def findnearest(series=None, value=None):
         for val in value: output.append(findnearest(series, val))
         output = scu.promotetoarray(output)
     return output
+
+
+def count(arr=None, val=None, eps=1e-6, **kwargs):
+    '''
+    Count the number of matching elements.
+
+    Similar to ``np.count_nonzero()``, but allows for slight mismatches (e.g.,
+    floats vs. ints). Equivalent to ``len(sc.findinds())``.
+
+    Args:
+        arr (array): the array to find values in
+        val (float): if provided, the value to match
+        eps (float): the precision for matching (default 1e-6, equivalent to np.isclose's atol)
+        kwargs (dict): passed to ``np.isclose()``
+
+    **Examples**::
+
+        sc.count(rand(10)<0.5) # returns e.g. 4
+        sc.count([2,3,6,3], 3) # returs 2
+
+    New in version 1.4.0.
+    '''
+    output = len(findinds(arr=arr, val=val, eps=eps, **kwargs))
+    return output
+
 
 
 def dataindex(dataarray, index): # pragma: no cover
@@ -256,6 +284,17 @@ def getvaliddata(data=None, filterdata=None, defaultind=0): # pragma: no cover
 def sanitize(data=None, returninds=False, replacenans=None, die=True, defaultval=None, label=None, verbose=True):
         '''
         Sanitize input to remove NaNs. Warning, does not work on multidimensional data!!
+        Returns an array with the sanitized data. If replacenans=True, the sanitized array is
+        of the same length/size as data. If replacenans=False, the sanitized array
+        may be shorter than data.
+
+        Args:
+            data        (arr/list)   : the array with data to be sanitized
+            returninds  (bool)       : whether to return the indices of the non-NaN values in data
+            replacenans (bool/float) : whether to replace the NaNs with a value, or using interpolation ``sc.smoothinterp()``
+            defaultval  (float/int)  : value to return if the sanitized array is empty.
+            label       (str)        : human readable label for data
+            die         (bool)       : whether to raise an exception if sanitization fails.
 
         Args:
         data (array): array or list with numbers
@@ -267,9 +306,10 @@ def sanitize(data=None, returninds=False, replacenans=None, die=True, defaultval
 
         **Examples**::
 
-            sanitized,inds = sanitize(array([3,4,nan,8,2,nan,nan,nan,8]), returninds=True)
-            sanitized = sanitize(array([3,4,nan,8,2,nan,nan,nan,8]), replacenans=True)
-            sanitized = sanitize(array([3,4,nan,8,2,nan,nan,nan,8]), replacenans=0)
+            data = [3, 4, np.nan, 8, 2, np.nan, np.nan, 8]
+            sanitized1, inds = sc.sanitize(data, returninds=True)
+            sanitized2 = sc.sanitize(data, replacenans=True)
+            sanitized3 = sc.sanitize(data, replacenans=0)
         '''
         try:
             data = np.array(data, dtype=float) # Make sure it's an array of float type
@@ -294,8 +334,8 @@ def sanitize(data=None, returninds=False, replacenans=None, die=True, defaultval
                     inds = []
                     
                     if verbose: # pragma: no cover
-                        if label is None: label = 'this parameter'
-                        print(f'sc.sanitize(): no data entered for {label}, assuming 0')
+                        if label is None: label = 'these input data'
+                        print(f'sc.sanitize(): no valid values found for {label}. Returning 0.')
         except Exception as E: # pragma: no cover
             if die:
                 errormsg = f'Sanitization failed on array: "{repr(E)}":\n{data}'
@@ -362,6 +402,65 @@ def isprime(n, verbose=False):
     return True
 
 
+def numdigits(n, *args, count_minus=False, count_decimal=False):
+    """
+    Count the number of digits in a number (or list of numbers).
+
+    Useful for e.g. knowing how long a string needs to be to fit a given number.
+
+    If a number is less than 1, return the number of digits until the decimal
+    place.
+
+    Reference: https://stackoverflow.com/questions/22656345/how-to-count-the-number-of-digits-in-python
+
+    Args:
+        n (int/float/list/array): number or list of numbers
+        args (list): additional numbers
+        count_minus (bool): whether to count the minus sign as a digit
+        count_decimal (bool): whether to count the decimal point as a digit
+
+    **Examples**::
+
+        sc.numdigits(12345) # Returns 5
+        sc.numdigits(12345.5) # Returns 5
+        sc.numdigits(0) # Returns 1
+        sc.numdigits(-12345) # Returns 5
+        sc.numdigits(-12345, count_minus=True) # Returns 6
+        sc.numdigits(12, 123, 12345) # Returns [2, 3, 5]
+        sc.numdigits(0.01) # Returns -2
+        sc.numdigits(0.01, count_decimal=True) # Returns -4
+
+    New in version 2.0.0.
+    """
+    is_scalar = True if scu.isnumber(n) and len(args) == 0 else False
+
+    vals = cat(n, *args)
+
+    output = []
+    for n in vals:
+        abs_n = abs(n)
+        is_decimal = 0 < abs_n < 1
+        n_digits = 1
+        if n < 0 and count_minus:
+            n_digits += 1
+        if is_decimal:
+            if count_decimal:
+                n_digits += 1
+            else:
+                n_digits -= 1
+
+        if abs_n > 0:
+            if is_decimal:
+                n_digits = -n_digits
+            n_digits += int(np.floor(np.log10(abs_n)))
+        output.append(n_digits)
+    output = np.array(output)
+    if is_scalar:
+        output = output[0]
+
+    return output
+
+
 
 ##############################################################################
 #%% Other functions
@@ -377,6 +476,7 @@ def perturb(n=1, span=0.5, randseed=None, normal=False):
     Args:
         n (int): number of points
         span (float): width of distribution on either side of 1
+        randseed (int): seed passed to the reseed numpy's legacy MT19937 BitGenerator
         normal (bool):  whether to use a normal distribution instead of uniform
 
     **Example**::

@@ -391,9 +391,11 @@ def makefilepath(filename=None, folder=None, ext=None, default=None, split=False
         default     (str or list)   : a name or list of names to use if filename is None
         split       (bool)          : whether to return the path and filename separately
         aspath      (bool)          : whether to return a Path object
+        abspath     (bool)          : whether to conver to absolute path
         makedirs    (bool)          : whether or not to make the folders to save into if they don't exist
         checkexists (bool)          : if False/True, raises an exception if the path does/doesn't exist
         sanitize    (bool)          : whether or not to remove special characters from the path; see ``sc.sanitizefilename()`` for details
+        die         (bool)          : whether or not to raise an exception if cannot create directory failed (otherwise, return a string)
         verbose     (bool)          : how much detail to print
 
     Returns:
@@ -877,6 +879,10 @@ class Spreadsheet(Blobject):
         self.wb = None
         return
 
+    def __getstate__(self):
+        d = self.__dict__.copy() # Shallow copy
+        d['wb'] = None
+        return d
 
     def _reload_wb(self, reload=None):
         ''' Helper function to check if workbook is already loaded '''
@@ -885,14 +891,16 @@ class Spreadsheet(Blobject):
 
 
     def xlrd(self, reload=False, store=True, **kwargs): # pragma: no cover
-        ''' Return a book as opened by xlrd '''
-        wb = self.wb
+        ''' Legacy method to load from xlrd '''
         if self._reload_wb(reload=reload):
             try:
                 import xlrd # Optional import
             except ModuleNotFoundError as e:
                 raise ModuleNotFoundError('The "xlrd" Python package is not available; please install manually') from e
             wb = xlrd.open_workbook(file_contents=self.tofile().read(), **kwargs)
+        else:
+            wb = self.wb
+
         if store:
             self.wb = wb
         return wb
@@ -900,7 +908,6 @@ class Spreadsheet(Blobject):
 
     def openpyxl(self, reload=False, store=True, **kwargs):
         ''' Return a book as opened by openpyxl '''
-        wb = self.wb
         if self._reload_wb(reload=reload):
             import openpyxl # Optional import
             if self.blob is not None:
@@ -908,6 +915,9 @@ class Spreadsheet(Blobject):
                 wb = openpyxl.load_workbook(self.bytes, **kwargs) # This stream can be passed straight to openpyxl
             else:
                 wb = openpyxl.Workbook(**kwargs)
+        else:
+            wb = self.wb
+
         if store:
             self.wb = wb
         return wb
@@ -925,21 +935,24 @@ Spreadsheet() no longer supports openpyexcel as of v1.3.1. To load using it anyw
 
 Falling back to openpyxl, which is identical except for how cached cell values are handled.
 '''
-        warnings.warn(warnmsg, category=DeprecationWarning, stacklevel=2)
+        warnings.warn(warnmsg, category=FutureWarning, stacklevel=2)
         return self.openpyxl(*args, **kwargs)
 
 
     def pandas(self, reload=False, store=True, **kwargs): # pragma: no cover
         ''' Return a book as opened by pandas '''
-        wb = self.wb
+
         if self._reload_wb(reload=reload):
-            import pandas as pd # Optional import
+            import pandas as pd # Optional (slow) import
             if self.blob is not None:
                 self.tofile(output=False)
                 wb = pd.ExcelFile(self.bytes, **kwargs)
             else:
                 errormsg = 'For pandas, must load an existing workbook; use openpyxl to create a new workbook'
                 raise FileNotFoundError(errormsg)
+        else:
+            wb = self.wb
+
         if store:
             self.wb = wb
         return wb
@@ -1075,7 +1088,7 @@ Falling back to openpyxl, which is identical except for how cached cell values a
 
 
 
-def loadspreadsheet(filename=None, folder=None, fileobj=None, sheet=0, asdataframe=None, header=True, method='pandas', **kwargs):
+def loadspreadsheet(filename=None, folder=None, fileobj=None, sheet=0, header=1, asdataframe=None, method='pandas', **kwargs):
     '''
     Load a spreadsheet as a dataframe or a list of lists.
 
@@ -1088,6 +1101,7 @@ def loadspreadsheet(filename=None, folder=None, fileobj=None, sheet=0, asdatafra
         fileobj (obj): load from file object rather than path
         sheet (str/int/list): name or number of sheet(s) to use (default 0)
         asdataframe (bool): whether to return as a pandas/Sciris dataframe (default True)
+        header (bool): whether the 0-th row is to be read as the header
         method (str): how to read (default 'pandas', other choices 'openpyxl' and 'xlrd')
         kwargs (dict): passed to pd.read_excel(), openpyxl(), etc.
 
@@ -1107,12 +1121,9 @@ def loadspreadsheet(filename=None, folder=None, fileobj=None, sheet=0, asdatafra
 
     # Load using pandas
     if method == 'pandas':
-        import pandas as pd # Optional import
+        import pandas as pd # Optional import, here for loading speed
         if fileobj is not None: fullpath = fileobj # Substitute here for reading
-        if header  is not None: header = np.arange(header)
         data = pd.read_excel(fullpath, sheet_name=sheet, header=header, **kwargs)
-        if asdataframe is False:
-            pass
         return data
 
     # Load using openpyxl
