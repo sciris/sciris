@@ -253,9 +253,6 @@ def test_saveload(doplot=doplot):
     with pytest.raises(ValueError):
         sc.savefig(fn.jpg)
 
-    with pytest.raises(ValueError):
-        sc.loadmetadata(fn.jpg)
-
     # Tidy up
     pl.close(fig)
     for f in fn.values():
