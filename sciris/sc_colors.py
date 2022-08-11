@@ -544,18 +544,18 @@ def bicolormap(gap=0.1, mingreen=0.2, redbluemix=0.5, epsilon=0.01, demo=False, 
     of a color gap there is between the red scale and the blue one.
 
     Args:
-      gap: sets how big of a gap between red and blue color scales there is (0=no gap; 1=pure red and pure blue)
-      mingreen: how much green to include at the extremes of the red-blue color scale
-      redbluemix: how much red to mix with the blue and vice versa at the extremes of the scale
-      epsilon: what fraction of the colormap to make gray in the middle
-      demo: whether to plot a demo bicolormap or not
-      apply: whether to apply this colormap to the current figure
+      gap        (float): sets how big of a gap between red and blue color scales there is (0=no gap; 1=pure red and pure blue)
+      mingreen   (float): how much green to include at the extremes of the red-blue color scale
+      redbluemix (float): how much red to mix with the blue and vice versa at the extremes of the scale
+      epsilon    (float): what fraction of the colormap to make gray in the middle
+      demo       (bool):  whether to plot a demo bicolormap or not
+      apply      (bool):  whether to apply this colormap to the current figure
 
     **Examples**::
 
-        bicolormap(gap=0,mingreen=0,redbluemix=1,epsilon=0) # From pure red to pure blue with white in the middle
-        bicolormap(gap=0,mingreen=0,redbluemix=0,epsilon=0.1) # Red -> yellow -> gray -> turquoise -> blue
-        bicolormap(gap=0.3,mingreen=0.2,redbluemix=0,epsilon=0.01) # Red and blue with a sharp distinction between
+        sc.bicolormap(gap=0, mingreen=0, redbluemix=1, epsilon=0) # From pure red to pure blue with white in the middle
+        sc.bicolormap(gap=0, mingreen=0, redbluemix=0, epsilon=0.1) # Red -> yellow -> gray -> turquoise -> blue
+        sc.bicolormap(gap=0.3, mingreen=0.2, redbluemix=0, epsilon=0.01) # Red and blue with a sharp distinction between
 
     Version: 2013sep13
     """
