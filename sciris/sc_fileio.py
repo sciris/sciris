@@ -1082,7 +1082,7 @@ Falling back to openpyxl, which is identical except for how cached cell values a
 
 
 
-def loadspreadsheet(filename=None, folder=None, fileobj=None, sheet=0, asdataframe=None, header=True, method='pandas', **kwargs):
+def loadspreadsheet(filename=None, folder=None, fileobj=None, sheet=0, header=1, asdataframe=None, method='pandas', **kwargs):
     '''
     Load a spreadsheet as a dataframe or a list of lists.
 
@@ -1114,12 +1114,9 @@ def loadspreadsheet(filename=None, folder=None, fileobj=None, sheet=0, asdatafra
 
     # Load using pandas
     if method == 'pandas':
-        import pandas as pd # Optional import
+        import pandas as pd # Optional import, here for loading speed
         if fileobj is not None: fullpath = fileobj # Substitute here for reading
-        if header  is not None: header = np.arange(header)
         data = pd.read_excel(fullpath, sheet_name=sheet, header=header, **kwargs)
-        if asdataframe is False:
-            pass
         return data
 
     # Load using openpyxl
