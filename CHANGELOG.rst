@@ -28,6 +28,7 @@ Improvements
 ~~~~~~~~~~~~
 #. If a copy/deepcopy is not possible, ``sc.cp()``/``sc.dcp()`` now raise an exception by default (previously, they silenced it).
 #. ``sc.daterange()`` now accepts ``datedelta`` arguments, e.g. ``sc.daterange('2022-02-22', weeks=2)``.
+#. ``sc.sanitize()`` can now handle multidimensional arrays.
 
 Housekeeping
 ~~~~~~~~~~~~
