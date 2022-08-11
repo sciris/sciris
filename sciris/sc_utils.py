@@ -475,15 +475,16 @@ def require(reqs=None, *args, exact=False, detailed=False, die=True, verbose=Tru
     # Handle exceptions
     if not met:
         errkeys = list(errs.keys())
-        errormsg = '\nThe following requirements were not met:'
+        errormsg = '\nThe following requirement(s) were not met:'
+        count = 0
         for k,v in data.items():
             if not v:
-                errormsg += f'\n  {k}: {str(errs[k])}'
-        errormsg += f'''\n\nYou might want to try "pip install {strjoin(errkeys, sep=' ')} --upgrade".'''
+                count += 1
+                errormsg += f'\n• "{k}": {str(errs[k])}'
+        errormsg += f'''\n\nIf this is a valid module, you might want to try "pip install {strjoin(errkeys, sep=' ')} --upgrade".'''
         if die:
-            err = errs[errkeys[0]]
-            exc = type(err)
-            raise exc(errormsg) from err
+            err = errs[errkeys[-1]]
+            raise ModuleNotFoundError(errormsg) from err
         elif verbose:
             print(errormsg)
 
