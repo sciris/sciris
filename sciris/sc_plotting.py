@@ -100,6 +100,7 @@ def plot3d(x, y, z, c=None, fig=None, ax=None, returnfig=False, figkwargs=None, 
         x (arr): x coordinate data
         y (arr): y coordinate data
         z (arr): z coordinate data
+        c (str/tuple): color, can be any of the types accepted by matplotlib's plot()
         fig (fig): an existing figure to draw the plot in
         ax (axes): an existing axes to draw the plot in
         returnfig (bool): whether to return the figure, or just the axes
@@ -194,7 +195,7 @@ def surf3d(data, x=None, y=None, fig=None, returnfig=False, colorbar=True, figkw
 
     # Create figure
     fig,ax = ax3d(returnfig=True, fig=fig, figkwargs=figkwargs, **axkwargs)
-    ny,nx = pl.array(data).shape
+    ny,nx = np.array(data).shape
 
     if x is None:
         x = np.arange(nx)
@@ -224,6 +225,7 @@ def bar3d(data, fig=None, returnfig=False, cmap='viridis', figkwargs=None, axkwa
     Args:
         data (arr): 2D data
         fig (fig): an existing figure to draw the plot in
+        cmap (str): colormap name
         ax (axes): an existing axes to draw the plot in
         returnfig (bool): whether to return the figure, or just the axes
         colorbar (bool): whether to plot a colorbar
@@ -941,7 +943,7 @@ def dateformatter(ax=None, style='sciris', dateformat=None, start=None, end=None
 
 
 def datenumformatter(ax=None, start_date=None, dateformat=None, interval=None, start=None,
-                     end=None, rotation=None, axis='x'):
+                     end=None, rotation=None):
     '''
     Format a numeric x-axis to use dates.
 
@@ -1132,7 +1134,6 @@ def loadmetadata(filename, die=True):
 
     Args:
         filename (str): the name of the file to load the data from
-        output (bool): whether to return loaded metadata (else, print)
         die (bool): whether to raise an exception if the metadata can't be found
 
     **Example**::
@@ -1211,12 +1212,13 @@ def savefigs(figs=None, filetype=None, filename=None, folder=None, savefigargs=N
     Save the requested plots to disk.
 
     Args:
-        figs:        the figure objects to save
-        filetype:    the file type; can be 'fig', 'singlepdf' (default), or anything supported by savefig()
-        filename:    the file to save to (only uses path if multiple files)
-        folder:      the folder to save the file(s) in
-        savefigargs: dictionary of arguments passed to savefig()
-        aslist:      whether or not return a list even for a single file
+        figs        (list) : the figure objects to save
+        filetype    (str)  : the file type; can be 'fig', 'singlepdf' (default), or anything supported by savefig()
+        filename    (str)  : the file to save to (only uses path if multiple files)
+        folder      (str)  : the folder to save the file(s) in
+        savefigargs (dict) : arguments passed to savefig()
+        aslist      (bool) : whether or not return a list even for a single file
+        varbose     (bool) : whether to print progress
 
     **Examples**::
 
