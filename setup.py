@@ -17,18 +17,18 @@ cwd = os.path.abspath(os.path.dirname(__file__))
 
 # Define the requirements for core functionality
 requirements = [
-        'matplotlib>=2.2.2', # Plotting
-        'numpy>=1.10.1',     # Numerical functions
-        'pandas',            # Dataframes and spreadsheet input
-        'openpyxl',          # To read Excel files; removed as a dependency of pandas as of version 1.3
-        'xlsxwriter',        # Spreadsheet output
-        'psutil',            # Load monitoring
-        'dill',              # File I/O
-        'multiprocess',      # More powerful version of multiprocessing
-        'jsonpickle',        # For converting arbitrary objects to JSON
-        'gitpython',         # Version information
-        'jellyfish',         # For fuzzy string matching
-        'ansicolors',        # For colored text output
+        'matplotlib>',  # Plotting
+        'numpy',        # Numerical functions
+        'pandas',       # Dataframes and spreadsheet input
+        'openpyxl',     # To read Excel files; removed as a dependency of pandas as of version 1.3
+        'xlsxwriter',   # Spreadsheet output
+        'psutil',       # Load monitoring
+        'dill',         # File I/O
+        'multiprocess', # More flexible version of multiprocessing
+        'jsonpickle',   # For converting arbitrary objects to JSON
+        'gitpython',    # Version information
+        'jellyfish',    # For fuzzy string matching
+        'ansicolors',   # For colored text output
         'line_profiler ;   platform_system == "Linux"',   # For the line profiler -- only install on Linux
         'memory_profiler ; platform_system == "Linux"',   # For the memory profiler -- only install on Linux
         'colorama ;        platform_system == "Windows"', # For colored text output -- only install on Windows
@@ -39,10 +39,10 @@ if 'minimal' in sys.argv:
     print('Performing minimal installation -- some file read/write functions will not work')
     sys.argv.remove('minimal')
     requirements = [
-        'multiprocess',      # Parallel processing
-        'psutil',            # Parallel processing
-        'matplotlib>=1.4.2', # Plotting
-        'numpy>=1.10.1',     # Numerical functions
+        'multiprocess', # Parallel processing
+        'psutil',       # Parallel processing
+        'matplotlib',   # Plotting
+        'numpy',        # Numerical functions
     ]
 
 # Get version

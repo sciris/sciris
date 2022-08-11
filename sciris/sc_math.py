@@ -18,7 +18,7 @@ from . import sc_utils as scu
 ##############################################################################
 
 __all__ = ['approx', 'safedivide', 'findinds', 'findfirst', 'findlast', 'findnearest',
-           'dataindex', 'getvalidinds', 'sanitize', 'getvaliddata', 'isprime']
+           'count', 'dataindex', 'getvalidinds', 'sanitize', 'getvaliddata', 'isprime']
 
 
 def approx(val1=None, val2=None, eps=None, **kwargs):
@@ -83,19 +83,20 @@ def safedivide(numerator=None, denominator=None, default=None, eps=None, warn=Fa
 
 def findinds(arr=None, val=None, eps=1e-6, first=False, last=False, die=True, **kwargs):
     '''
-    Little function to find matches even if two things aren't eactly equal (eg.
-    due to floats vs. ints). If one argument, find nonzero values. With two arguments,
-    check for equality using eps. Returns a tuple of arrays if val1 is multidimensional,
-    else returns an array. Similar to calling np.nonzero(np.isclose(arr, val))[0].
+    Find matches even if two things aren't eactly equal (e.g. floats vs. ints).
+
+    If one argument, find nonzero values. With two arguments, check for equality
+    using eps. Returns a tuple of arrays if val1 is multidimensional, else returns
+    an array. Similar to calling ``np.nonzero(np.isclose(arr, val))[0]``.
 
     Args:
-        arr (array): the array to find values in
-        val (float): if provided, the value to match
-        eps (float): the precision for matching (default 1e-6, equivalent to np.isclose's atol)
-        first (bool): whether to return the first matching value
-        last (bool): whether to return the last matching value
-        die (bool): whether to raise an exception if first or last is true and no matches were found
-        kwargs (dict): passed to np.isclose()
+        arr    (array): the array to find values in
+        val    (float): if provided, the value to match
+        eps    (float): the precision for matching (default 1e-6, equivalent to ``np.isclose()``'s atol)
+        first  (bool):  whether to return the first matching value
+        last   (bool):  whether to return the last matching value
+        die    (bool):  whether to raise an exception if first or last is true and no matches were found
+        kwargs (dict):  passed to ``np.isclose()``
 
     **Examples**::
 
@@ -103,7 +104,8 @@ def findinds(arr=None, val=None, eps=1e-6, first=False, last=False, die=True, **
         sc.findinds([2,3,6,3], 3) # returs array([1,3])
         sc.findinds([2,3,6,3], 3, first=True) # returns 1
 
-    New in version 1.2.3: "die" argument
+    | New in version 1.2.3: "die" argument
+    | New in version 2.0.0: fix string matching
     '''
 
     # Handle first or last
@@ -118,7 +120,7 @@ def findinds(arr=None, val=None, eps=1e-6, first=False, last=False, die=True, **
         arr = kwargs.pop('val1', arr)
         val = kwargs.pop('val2', val)
         warnmsg = 'sc.findinds() arguments "val1" and "val2" have been deprecated as of v1.0.0; use "arr" and "val" instead'
-        warnings.warn(warnmsg, category=DeprecationWarning, stacklevel=2)
+        warnings.warn(warnmsg, category=FutureWarning, stacklevel=2)
 
     # Calculate matches
     arr = scu.promotetoarray(arr)
@@ -127,13 +129,14 @@ def findinds(arr=None, val=None, eps=1e-6, first=False, last=False, die=True, **
     else:
         if scu.isstring(val):
             output = np.nonzero(arr==val)
-        try: # Standard usage, use nonzero
-            output = np.nonzero(np.isclose(a=arr, b=val, atol=atol, **kwargs)) # If absolute difference between the two values is less than a certain amount
-        except Exception as E: # pragma: no cover # As a fallback, try simpler comparison
-            output = np.nonzero(abs(arr-val) < atol)
-            if kwargs: # Raise a warning if and only if special settings were passed
-                warnmsg = f'{str(E)}\nsc.findinds(): np.isclose() encountered an exception (above), falling back to direct comparison'
-                warnings.warn(warnmsg, category=RuntimeWarning, stacklevel=2)
+        else:
+            try: # Standard usage, use nonzero
+                output = np.nonzero(np.isclose(a=arr, b=val, atol=atol, **kwargs)) # If absolute difference between the two values is less than a certain amount
+            except Exception as E: # pragma: no cover # As a fallback, try simpler comparison
+                output = np.nonzero(abs(arr-val) < atol)
+                if kwargs: # Raise a warning if and only if special settings were passed
+                    warnmsg = f'{str(E)}\nsc.findinds(): np.isclose() encountered an exception (above), falling back to direct comparison'
+                    warnings.warn(warnmsg, category=RuntimeWarning, stacklevel=2)
 
     # Process output
     try:
@@ -187,6 +190,31 @@ def findnearest(series=None, value=None):
         for val in value: output.append(findnearest(series, val))
         output = scu.promotetoarray(output)
     return output
+
+
+def count(arr=None, val=None, eps=1e-6, **kwargs):
+    '''
+    Count the number of matching elements.
+
+    Similar to ``np.count_nonzero()``, but allows for slight mismatches (e.g.,
+    floats vs. ints). Equivalent to ``len(sc.findinds())``.
+
+    Args:
+        arr (array): the array to find values in
+        val (float): if provided, the value to match
+        eps (float): the precision for matching (default 1e-6, equivalent to np.isclose's atol)
+        kwargs (dict): passed to ``np.isclose()``
+
+    **Examples**::
+
+        sc.count(rand(10)<0.5) # returns e.g. 4
+        sc.count([2,3,6,3], 3) # returs 2
+
+    New in version 1.4.0.
+    '''
+    output = len(findinds(arr=arr, val=val, eps=eps, **kwargs))
+    return output
+
 
 
 def dataindex(dataarray, index): # pragma: no cover

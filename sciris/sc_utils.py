@@ -228,35 +228,42 @@ def uuid(uid=None, which=None, die=False, tostring=False, length=None, n=1, **kw
     return output
 
 
-def dcp(obj, verbose=True, die=False):
+def dcp(obj, die=True, verbose=True):
     '''
     Shortcut to perform a deep copy operation
 
-    Almost identical to ``copy.deepcopy()``
+    Almost identical to ``copy.deepcopy()``, but optionally fall back to copy()
+    if deepcopy fails.
+
+    Args:
+        die (bool): if False, fall back to copy()
+        verbose (bool): if die is False, then print a warning if deepcopy() fails
+
+    New in version 1.4.0: default die=True instead of False
     '''
     try:
         output = copy.deepcopy(obj)
     except Exception as E: # pragma: no cover
         output = cp(obj)
-        errormsg = f'Warning: could not perform deep copy, performing shallow instead: {str(E)}'
+        errormsg = f'Warning: could not perform deep copy: {str(E)}'
         if die: raise RuntimeError(errormsg)
-        else:   print(errormsg)
+        else:   print(errormsg + '\nPerforming shallow copy instead...')
     return output
 
 
-def cp(obj, verbose=True, die=True):
+def cp(obj, die=True, verbose=True):
     '''
     Shortcut to perform a shallow copy operation
 
-    Almost identical to ``copy.copy()``
+    Almost identical to ``copy.copy()``, but optionally allow failures
     '''
     try:
         output = copy.copy(obj)
     except Exception as E:
         output = obj
-        errormsg = 'Could not perform shallow copy, returning original object'
+        errormsg = 'Could not perform shallow copy'
         if die: raise ValueError(errormsg) from E
-        else:   print(errormsg)
+        else:   print(errormsg + '\nReturning original object...')
     return output
 
 
@@ -467,12 +474,17 @@ def require(reqs=None, *args, exact=False, detailed=False, die=True, verbose=Tru
 
     # Handle exceptions
     if not met:
-        errormsg = 'The following requirements were not met:'
+        errkeys = list(errs.keys())
+        errormsg = '\nThe following requirement(s) were not met:'
+        count = 0
         for k,v in data.items():
             if not v:
-                errormsg += f'\n  {k}: {str(errs[k])}'
+                count += 1
+                errormsg += f'\n• "{k}": {str(errs[k])}'
+        errormsg += f'''\n\nIf this is a valid module, you might want to try "pip install {strjoin(errkeys, sep=' ')} --upgrade".'''
         if die:
-            raise ModuleNotFoundError(errormsg) from errs[k] # Use the last one
+            err = errs[errkeys[-1]]
+            raise ModuleNotFoundError(errormsg) from err
         elif verbose:
             print(errormsg)
 
@@ -725,7 +737,7 @@ def promotetoarray(x, keepnone=False, **kwargs):
     if skipnone is not None: # pragma: no cover
         keepnone = not(skipnone)
         warnmsg = 'sc.promotetoarray() argument "skipnone" has been deprecated as of v1.1.0; use keepnone instead'
-        warnings.warn(warnmsg, category=DeprecationWarning, stacklevel=2)
+        warnings.warn(warnmsg, category=FutureWarning, stacklevel=2)
     if isnumber(x) or (isinstance(x, np.ndarray) and not np.shape(x)): # e.g. 3 or np.array(3)
         x = [x]
     elif x is None and not keepnone:
@@ -901,8 +913,8 @@ def mergedicts(*args, _strict=False, _overwrite=True, _copy=False, **kwargs):
     # Warn about deprecated keys
     renamed = ['strict', 'overwrite', 'copy']
     if any([k in kwargs for k in renamed]):
-            warnmsg = f'sc.mergedicts() arguments "{strjoin(renamed)}" have been renamed with underscores as of v1.3.3; using these as keywords is undesirable'
-            warnings.warn(warnmsg, category=DeprecationWarning, stacklevel=2)
+        warnmsg = f'sc.mergedicts() arguments "{strjoin(renamed)}" have been renamed with underscores as of v1.3.3; using these as keywords is undesirable'
+        warnings.warn(warnmsg, category=FutureWarning, stacklevel=2)
 
     # Try to get the output type from the first argument, but revert to a standard dict if that fails
     try:
@@ -998,7 +1010,7 @@ def _sanitize_output(obj, is_list, is_array, dtype=None):
 #%% Misc. functions
 ##############################################################################
 
-__all__ += ['strjoin', 'newlinejoin', 'checkmem', 'checkram', 'runcommand', 'gitinfo',
+__all__ += ['strjoin', 'newlinejoin', 'strsplit', 'checkmem', 'checkram', 'runcommand', 'gitinfo',
             'compareversions', 'uniquename', 'importbyname', 'suggest', 'profile', 'mprofile',
             'getcaller']
 
@@ -1041,6 +1053,53 @@ def newlinejoin(*args):
     New in version 1.1.0.
     '''
     return strjoin(*args, sep='\n')
+
+
+def strsplit(string, sep=None, skipempty=True, lstrip=True, rstrip=True):
+    '''
+    Convenience function to split common types of strings.
+
+    Note: to use regular expressions, use ``re.split()`` instead.
+
+    Args:
+        string    (str):      the string to split
+        sep       (str/list): the types of separator to accept (default space or comma, i.e. [' ', ','])
+        skipempty (bool):     whether to skip empty entries (i.e. from consecutive delimiters)
+        lstrip    (bool):     whether to strip any extra spaces on the left
+        rstrip    (bool):     whether to strip any extra spaces on the right
+
+    Examples:
+
+        sc.strsplit('a b c') # Returns ['a', 'b', 'c']
+        sc.strsplit('a,b,c') # Returns ['a', 'b', 'c']
+        sc.strsplit('a, b, c') # Returns ['a', 'b', 'c']
+        sc.strsplit('  foo_bar  ', sep='_') # Returns ['foo', 'bar']
+
+    New in version 2.0.0.
+    '''
+    strlist = []
+    if sep is None:
+        sep = [' ', ',']
+
+    # Generate a character sequence that isn't in the string
+    special = '∙' # Pick an obscure character
+    while special in string: # If it exists in the string nonetheless, keep going until it doesn't
+        special += special
+
+    # Convert all separators to the special character
+    for s in sep:
+        string = string.replace(s, special)
+
+    # Split the string, filter, and trim
+    strlist = string.split(special)
+    if lstrip:
+        strlist = [s.lstrip() for s in strlist]
+    if rstrip:
+        strlist = [s.rstrip() for s in strlist]
+    if skipempty:
+        strlist = [s for s in strlist if s != '']
+
+    return strlist
 
 
 def checkmem(var, descend=None, alphabetical=False, plot=False, verbose=False):
