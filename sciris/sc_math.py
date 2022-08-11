@@ -365,56 +365,51 @@ def isprime(n, verbose=False):
     return True
 
 
-def numdigits(n, count_minus=False, verbose=False):
+def numdigits(n, *args, count_minus=False):
     """
-    Count the number of digits in an integer number n
+    Count the number of digits in a number (or list of numbers).
 
-    Referencce: https://stackoverflow.com/questions/22656345/how-to-count-the-number-of-digits-in-python
+    Useful for e.g. knowing how long a string needs to be to fit a given number.
+
+    Reference: https://stackoverflow.com/questions/22656345/how-to-count-the-number-of-digits-in-python
 
     Args:
-    n (int): signed integer
-    count_minus (bool): whether to count the minus sign as a digit
-    verbose (bool): whether to show progress
+        n (int/float/list/array): number or list of numbers
+        args (list): additional numbers
+        count_minus (bool): whether to count the minus sign as a digit
 
     **Examples**::
 
         sc.numdigits(12345) # Returns 5
+        sc.numdigits(12345.5) # Returns 5
         sc.numdigits(0) # Returns 1
         sc.numdigits(-12345) # Returns 5
         sc.numdigits(-12345, count_minus=True) # Returns 6
+        sc.numdigits(12, 123, 12345) # Returns [2, 3, 5]
 
+    New in version 2.0.0.
     """
+    is_scalar = True if scu.isnumber(n) and len(args) == 0 else False
 
-    n_digits = 0
-    if n == 0:
-        n_digits = 1
-        if verbose: print('n == 0')
-        return n_digits
-    elif n < 0:
-        n = abs(n)
-        if verbose: print('n < 0')
-        if count_minus:
-            n_digits +=2
-            if verbose: print('count minus sign as additional digit')
+    vals = cat(n, *args)
+
+    output = []
+    for n in vals:
+        if n == 0:
+            n_digits = 1
         else:
-            n_digits +=1
-            if verbose: print('n > 0')
-    else:
-        n_digits +=1
+            if n < 0 and count_minus:
+                n_digits = 2
+            else:
+                n_digits = 1
+            n_digits += int(np.log10(abs(n)))
+        output.append(n_digits)
+    output = np.array(output)
+    if is_scalar:
+        output = output[0]
 
-    n_digits += int(np.log10(n))
+    return output
 
-    return n_digits
-
-
-def findnumdigits(inputs, aggregate_fun=max, **kwargs):
-    ''' Alias for numdigits(max(inputs)) 
-
-    inputs: array-like
-    method: define operation to aaply on inputs before calling numdigits (eg, min, max, sum, len)
-    '''
-    n = aggregate_fun(inputs)
-    return numdigits(n, **kwargs)
 
 
 ##############################################################################
