@@ -23,7 +23,6 @@ import datetime as dt
 import pylab as pl
 import numpy as np
 import matplotlib as mpl
-from pathlib import PurePath
 from . import sc_settings as scs
 from . import sc_odict as sco
 from . import sc_utils as scu
@@ -1034,7 +1033,7 @@ def _get_dpi(dpi=None, min_dpi=200):
     return dpi
 
 
-def savefig(filename, folder=None, fig=None, dpi=None, comments=None, freeze=False, frame=2, die=True, **kwargs):
+def savefig(filename, fig=None, dpi=None, comments=None, freeze=False, frame=2, folder=None, makedirs=True, die=True, **kwargs):
     '''
     Save a figure, including metadata
 
@@ -1047,15 +1046,16 @@ def savefig(filename, folder=None, fig=None, dpi=None, comments=None, freeze=Fal
     can be stored for PDF, but cannot be automatically retrieved.
 
     Args:
-        filename (str):    name of the file to save to
-        folder   (str/Path):   the folder to save the file in
-        fig      (Figure): the figure to save (if None, use current)
-        dpi      (int):    resolution of the figure to save (default 200 or current default, whichever is higher)
-        comments (str):    additional metadata to save to the figure
-        freeze   (bool):   whether to store the contents of ``pip freeze`` in the metadata (warning, slow)
-        frame    (int):    which calling file to try to store information from (default, the file calling ``sc.savefig()``)
-        die      (bool):   whether to raise an exception if metadata can't be saved
-        kwargs   (dict):   passed to ``fig.save()``
+        filename (str/Path) : name of the file to save to
+        fig      (Figure)   : the figure to save (if None, use current)
+        dpi      (int)      : resolution of the figure to save (default 200 or current default, whichever is higher)
+        comments (str)      : additional metadata to save to the figure
+        freeze   (bool)     : whether to store the contents of ``pip freeze`` in the metadata (warning, slow)
+        frame    (int)      : which calling file to try to store information from (default, the file calling ``sc.savefig()``)
+        folder   (str/Path) : optional folder to save to (can also be provided as part of the filename)
+        makedirs (bool)     : whether to create folders if they don't already exist
+        die      (bool)     : whether to raise an exception if metadata can't be saved
+        kwargs   (dict)     : passed to ``fig.save()``
 
     **Examples**::
 
@@ -1095,11 +1095,8 @@ def savefig(filename, folder=None, fig=None, dpi=None, comments=None, freeze=Fal
     # Convert to a string
     jsonstr = scf.jsonify(metadata, tostring=True) # PDF and SVG doesn't support storing a dict
 
-    if isinstance(filename, (PurePath)):
-        # Convert path to string
-        filename = str(filename)
-
     # Handle different formats
+    filename = str(filename)
     lcfn = filename.lower() # Lowercase filename
     if lcfn.endswith('png'):
         metadata = {_metadataflag:jsonstr}
@@ -1118,10 +1115,8 @@ def savefig(filename, folder=None, fig=None, dpi=None, comments=None, freeze=Fal
         kwargs['metadata'] = metadata # To avoid warnings for unsupported filenames
 
     # Allow savefig to make directories
-    if folder is not None:
-        filename = scf.makefilepath(filename=filename, folder=folder)
-
-    fig.savefig(filename, dpi=dpi, **kwargs)
+    filepath = scf.makefilepath(filename=filename, folder=folder, makedirs=makedirs)
+    fig.savefig(filepath, dpi=dpi, **kwargs)
     return filename
 
 
