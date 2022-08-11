@@ -1033,7 +1033,7 @@ def _get_dpi(dpi=None, min_dpi=200):
     return dpi
 
 
-def savefig(filename, fig=None, dpi=None, comments=None, freeze=False, frame=2, die=True, **kwargs):
+def savefig(filename, fig=None, dpi=None, comments=None, freeze=False, frame=2, folder=None, makedirs=True, die=True, verbose=True, **kwargs):
     '''
     Save a figure, including metadata
 
@@ -1046,14 +1046,17 @@ def savefig(filename, fig=None, dpi=None, comments=None, freeze=False, frame=2, 
     can be stored for PDF, but cannot be automatically retrieved.
 
     Args:
-        filename (str):    name of the file to save to
-        fig      (Figure): the figure to save (if None, use current)
-        dpi      (int):    resolution of the figure to save (default 200 or current default, whichever is higher)
-        comments (str):    additional metadata to save to the figure
-        freeze   (bool):   whether to store the contents of ``pip freeze`` in the metadata (warning, slow)
-        frame    (int):    which calling file to try to store information from (default, the file calling ``sc.savefig()``)
-        die      (bool):   whether to raise an exception if metadata can't be saved
-        kwargs   (dict):   passed to ``fig.save()``
+        filename (str/Path) : name of the file to save to
+        fig      (Figure)   : the figure to save (if None, use current)
+        dpi      (int)      : resolution of the figure to save (default 200 or current default, whichever is higher)
+        comments (str)      : additional metadata to save to the figure
+        freeze   (bool)     : whether to store the contents of ``pip freeze`` in the metadata (warning, slow)
+        frame    (int)      : which calling file to try to store information from (default, the file calling ``sc.savefig()``)
+        folder   (str/Path) : optional folder to save to (can also be provided as part of the filename)
+        makedirs (bool)     : whether to create folders if they don't already exist
+        die      (bool)     : whether to raise an exception if metadata can't be saved
+        verbose  (bool)     : if die is False, print a warning if metadata can't be saved
+        kwargs   (dict)     : passed to ``fig.save()``
 
     **Examples**::
 
@@ -1094,27 +1097,32 @@ def savefig(filename, fig=None, dpi=None, comments=None, freeze=False, frame=2, 
     jsonstr = scf.jsonify(metadata, tostring=True) # PDF and SVG doesn't support storing a dict
 
     # Handle different formats
+    filename = str(filename)
     lcfn = filename.lower() # Lowercase filename
     if lcfn.endswith('png'):
         metadata = {_metadataflag:jsonstr}
     elif lcfn.endswith('svg') or lcfn.endswith('pdf'):
         metadata = dict(Keywords=f'{_metadataflag}={jsonstr}')
     else:
-        errormsg = f'Warning: filename "{filename}" has unsupported type: must be png, svg, or pdf. Please use pl.savefig() instead.'
+        errormsg = f'Warning: filename "{filename}" has unsupported type for metadata: must be PNG, SVG, or PDF. For JPG, use the separate exif library. To silence this message, set die=False and verbose=False.'
         if die:
             raise ValueError(errormsg)
         else:
             metadata = None
-            print(errormsg)
+            if verbose:
+                print(errormsg)
 
     # Save the figure
     if metadata is not None:
         kwargs['metadata'] = metadata # To avoid warnings for unsupported filenames
-    fig.savefig(filename, dpi=dpi, **kwargs)
+
+    # Allow savefig to make directories
+    filepath = scf.makefilepath(filename=filename, folder=folder, makedirs=makedirs)
+    fig.savefig(filepath, dpi=dpi, **kwargs)
     return filename
 
 
-def loadmetadata(filename, die=True):
+def loadmetadata(filename, load_all=False, die=True):
     '''
     Read metadata from a saved image; currently only PNG and SVG are supported.
 
@@ -1123,21 +1131,24 @@ def loadmetadata(filename, die=True):
 
     Args:
         filename (str): the name of the file to load the data from
+        load_all (bool): whether to load all metadata available in an image (else, just load what was saved by Sciris)
         die (bool): whether to raise an exception if the metadata can't be found
 
     **Example**::
 
-        cv.Sim().run(do_plot=True)
-        cv.savefig('covasim.png')
-        cv.get_png_metadata('covasim.png')
+        pl.plot([1,2,3], [4,2,6])
+        sc.savefig('example.png')
+        sc.loadmetadata('example.png')
     '''
 
     # Initialize
     metadata = {}
-    lcfn = filename.lower() # Lowercase filename
+    lcfn = str(filename).lower() # Lowercase filename
 
     # Handle bitmaps
-    if lcfn.endswith('png'):
+    is_png = lcfn.endswith('png')
+    is_jpg = lcfn.endswith('jpg') or lcfn.endswith('jpeg')
+    if is_png or is_jpg:
         try:
             import PIL
         except ImportError as E: # pragma: no cover
@@ -1146,10 +1157,24 @@ def loadmetadata(filename, die=True):
         im = PIL.Image.open(filename)
         keys = im.info.keys()
 
-        # Usual case, can find metadata
-        if _metadataflag in keys:
-            jsonstr = im.info[_metadataflag]
-            metadata = scf.loadjson(string=jsonstr)
+        # Usual case, can find metadata and is PNG
+        if is_png and (load_all or _metadataflag in keys):
+            if load_all:
+                metadata = im.info
+            else:
+                jsonstr = im.info[_metadataflag]
+                metadata = scf.loadjson(string=jsonstr)
+
+        # JPG -- from https://www.thepythoncode.com/article/extracting-image-metadata-in-python
+        elif is_jpg:
+            from PIL.ExifTags import TAGS # Must be imported directly
+            exifdata = im.getexif()
+            for tag_id in exifdata:
+                tag = TAGS.get(tag_id, tag_id)
+                data = exifdata.get(tag_id)
+                if isinstance(data, bytes):
+                    data = data.decode()
+                metadata[tag] = data
 
         # Can't find metadata
         else:
@@ -1190,7 +1215,7 @@ def loadmetadata(filename, die=True):
 
     # Other formats not supported
     else:
-        errormsg = f'Filename "{filename}" has unsupported type: must be png or svg (pdf is not supported)'
+        errormsg = f'Filename "{filename}" has unsupported type: must be PNG, JPG, or SVG (PDF is not supported)'
         raise ValueError(errormsg)
 
     return metadata
@@ -1702,7 +1727,7 @@ class animation(scu.prettyobj):
 
         # Actually create the animation -- warning, no way to not actually have it render!
         anim = mpl_anim.ArtistAnimation(fig, frames, **anim_args)
-        anim.save(filename, fps=fps, dpi=dpi, progress_callback=callback, **save_args)
+        anim.save(filename, fps=fps, dpi=dpi, progress_callback=callback, **save_args, **kwargs)
 
         if tidy:
             self.rmfiles()
