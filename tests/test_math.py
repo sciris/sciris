@@ -67,6 +67,10 @@ def test_find():
     found.vals = sc.findinds([2,3,6,3], 6)
     assert found.vals[0] == 2
 
+    print('Testing sc.count()')
+    found.count = sc.count([1,2,2,3], 2.0)
+    assert found.count == 2
+
     print('Testing sc.findfirst(), sc.findlast()')
     found.first = sc.findfirst(pl.rand(10))
     found.last = sc.findlast(pl.rand(10))
@@ -93,7 +97,7 @@ def test_find():
 
     print('Testing sc.numdigits()')
     found.numdigits = sc.numdigits(1234)
-    found.numdigits_max = sc.findnumdigits([10, 200, 30000], aggregate_fun=max)
+    found.numdigits_max = max(sc.numdigits([10, 200, 30000]))
     assert found.numdigits == 4
     assert found.numdigits_max == 5
 
@@ -166,7 +170,8 @@ def test_gauss2d(doplot=doplot):
     # Method 1 -- form grid
     xi = pl.linspace(0,1,20)
     yi = pl.linspace(0,1,20)
-    zi = sc.gauss2d(x, y, z, xi, yi, scale=0.1)
+    zi = sc.gauss2d(x, y, z, xi, yi, scale=0.1, grid=True)
+
     # Method 2 -- use points directly
     xi2 = pl.rand(400)
     yi2 = pl.rand(400)
