@@ -582,28 +582,28 @@ def bicolormap(gap=0.1, mingreen=0.2, redbluemix=0.5, epsilon=0.01, demo=False, 
                      (0.5+eps, omg, mix),
                      (1.00000, 0.0, 0.0))}
 
-    cmap = mplc.LinearSegmentedColormap('bi',cdict,256)
+    cmap = mplc.LinearSegmentedColormap('bi', cdict, 256)
     if apply:
         pl.set_cmap(cmap)
 
     def demoplot(): # pragma: no cover
-        from pylab import figure, subplot, imshow, colorbar, rand, show
 
-        maps=[]
+        maps = []
         maps.append(bicolormap()) # Default ,should work for most things
         maps.append(bicolormap(gap=0,mingreen=0,redbluemix=1,epsilon=0)) # From pure red to pure blue with white in the middle
         maps.append(bicolormap(gap=0,mingreen=0,redbluemix=0,epsilon=0.1)) # Red -> yellow -> gray -> turquoise -> blue
         maps.append(bicolormap(gap=0.3,mingreen=0.2,redbluemix=0,epsilon=0.01)) # Red and blue with a sharp distinction between
         nexamples=len(maps)
 
-        figure(figsize=(5*nexamples,4))
+        pl.figure(figsize=(5*nexamples, 4))
         for m in range(nexamples):
-            subplot(1,nexamples,m+1)
-            imshow(rand(20,20),cmap=maps[m],interpolation='none')
-            colorbar()
-        show()
+            pl.subplot(1, nexamples, m+1)
+            pl.imshow(np.random.rand(20,20), cmap=maps[m], interpolation='none')
+            pl.colorbar()
+        pl.show()
 
-    if demo: demoplot()
+    if demo:
+        demoplot()
 
     return cmap
 
