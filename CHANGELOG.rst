@@ -17,6 +17,7 @@ New functions and methods
 ~~~~~~~~~~~~~~~~~~~~~~~~~
 #. ``sc.count()`` counts the number of matching elements in an array (similar to ``np.count_nonzero()``, but more flexible with e.g. float vs. int mismatches).
 #. ``sc.strsplit()`` will automatically split common types of delimited strings (e.g. ``sc.strsplit('a b c')``).
+#. ``sc.rmnans()`` and ``sc.fillnans()`` have been added as aliases of ``sc.sanitize()`` with default options.
 
 Bugfixes
 ~~~~~~~~
@@ -27,6 +28,7 @@ Improvements
 ~~~~~~~~~~~~
 #. If a copy/deepcopy is not possible, ``sc.cp()``/``sc.dcp()`` now raise an exception by default (previously, they silenced it).
 #. ``sc.daterange()`` now accepts ``datedelta`` arguments, e.g. ``sc.daterange('2022-02-22', weeks=2)``.
+#. ``sc.sanitize()`` can now handle multidimensional arrays.
 
 Housekeeping
 ~~~~~~~~~~~~

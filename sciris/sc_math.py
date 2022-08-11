@@ -18,7 +18,7 @@ from . import sc_utils as scu
 ##############################################################################
 
 __all__ = ['approx', 'safedivide', 'findinds', 'findfirst', 'findlast', 'findnearest', 'count',
-           'dataindex', 'getvalidinds', 'sanitize', 'getvaliddata', 'isprime', 'numdigits']
+           'dataindex', 'getvalidinds', 'sanitize', 'rmnans','fillnans', 'getvaliddata', 'isprime', 'numdigits']
 
 
 def approx(val1=None, val2=None, eps=None, **kwargs):
@@ -281,58 +281,93 @@ def getvaliddata(data=None, filterdata=None, defaultind=0): # pragma: no cover
     return validdata
 
 
-def sanitize(data=None, returninds=False, replacenans=None, die=True, defaultval=None, label=None, verbose=True):
+def sanitize(data=None, returninds=False, replacenans=None, defaultval=None, die=True, verbose=False, label=None):
         '''
-        Sanitize input to remove NaNs. Warning, does not work on multidimensional data!!
-        Returns an array with the sanitized data. If replacenans=True, the sanitized array is
-        of the same length/size as data. If replacenans=False, the sanitized array
-        may be shorter than data.
+        Sanitize input to remove NaNs. (NB: ``sc.sanitize()`` and ``sc.rmnans()`` are aliases.)
+
+        Returns an array with the sanitized data. If ``replacenans=True``, the sanitized
+        array is of the same length/size as data. If ``replacenans=False``, the sanitized
+        array may be shorter than data.
 
         Args:
-            data        (arr/list)   : the array with data to be sanitized
-            returninds  (bool)       : whether to return the indices of the non-NaN values in data
-            replacenans (bool/float) : whether to replace the NaNs with a value, or using interpolation ``sc.smoothinterp()``
-            defaultval  (float/int)  : value to return if the sanitized array is empty.
-            label       (str)        : human readable label for data
-            die         (bool)       : whether to raise an exception if sanitization fails.
+            data        (arr/list)   : array or list with numbers to be sanitized
+            returninds  (bool)       : whether to return indices of non-nan/valid elements, indices are with respect the shape of data
+            replacenans (float/str)  : whether to replace the NaNs with the specified value, or if ``True`` or a string, using interpolation
+            defaultval  (float)      : value to return if the sanitized array is empty
+            die         (bool)       : whether to raise an exception if the sanitization failed (otherwise return an empty array)
+            verbose     (bool)       : whether to print out a warning if no valid values are found
+            label       (str)        : human readable label for data (for use with verbose mode only)
 
         **Examples**::
 
             data = [3, 4, np.nan, 8, 2, np.nan, np.nan, 8]
-            sanitized1, inds = sc.sanitize(data, returninds=True)
-            sanitized2 = sc.sanitize(data, replacenans=True)
-            sanitized3 = sc.sanitize(data, replacenans=0)
+            sanitized1, inds = sc.sanitize(data, returninds=True) # Remove NaNs
+            sanitized2 = sc.sanitize(data, replacenans=True) # Replace NaNs using nearest neighbor interpolation
+            sanitized3 = sc.sanitize(data, replacenans='nearest') # Eequivalent to replacenans=True
+            sanitized4 = sc.sanitize(data, replacenans='linear') # Replace NaNs using linear interpolation
+            sanitized5 = sc.sanitize(data, replacenans=0) # Replace NaNs with 0
+
+        New in version 2.0.0: handle multidimensional arrays
         '''
         try:
-            data = np.array(data,dtype=float) # Make sure it's an array of float type
-            inds = np.nonzero(~np.isnan(data))[0] # WARNING, nonzero returns tuple :(
-            sanitized = data[inds] # Trim data
+            data = np.array(data, dtype=float) # Make sure it's an array of float type
+            is_multidim = data.ndim > 1
+            if is_multidim:
+                if not replacenans:
+                    errormsg = 'For multidimensional data, NaNs cannot be removed. Set replacenans=<value>, or flatten data before use.'
+                    raise ValueError(errormsg)
+            inds = np.nonzero(~np.isnan(data))
+            if not is_multidim:
+                inds = inds[0] # Since np.nonzero() returns a tuple
+                sanitized = data[inds] # Trim data
+
             if replacenans is not None:
-                newx = range(len(data)) # Create a new x array the size of the original array
-                if replacenans==True: replacenans = 'nearest'
-                if replacenans in ['nearest','linear']:
-                    sanitized = smoothinterp(newx, inds, sanitized, method=replacenans, smoothness=0) # Replace nans with interpolated values
+                if replacenans is True:
+                    replacenans = 'nearest'
+                if scu.isstring(replacenans):
+                    if replacenans in ['nearest','linear']:
+                        if is_multidim:
+                            errormsg = 'Cannot perform interpolation on multidimensional data; use replacenans=<value> instead'
+                            raise NotImplementedError(errormsg)
+                        newx = range(len(data)) # Create a new x array the size of the original array
+                        sanitized = smoothinterp(newx, inds, sanitized, method=replacenans, smoothness=0) # Replace nans with interpolated values
+                    else:
+                        errormsg = f'Interpolation method "{replacenans}" not found: must be "nearest" or "linear"'
+                        raise ValueError(errormsg)
                 else:
-                    naninds = inds = np.nonzero(np.isnan(data))[0]
-                    sanitized = scu.dcp(data)
+                    naninds = np.nonzero(np.isnan(data))
+                    sanitized = data.copy() # To avoid overwriting original array
                     sanitized[naninds] = replacenans
+
             if len(sanitized)==0:
                 if defaultval is not None:
                     sanitized = defaultval
                 else:
-                    sanitized = 0.0
+                    sanitized = data
+                    inds = []
+
                     if verbose: # pragma: no cover
                         if label is None: label = 'these input data'
                         print(f'sc.sanitize(): no valid values found for {label}. Returning 0.')
         except Exception as E: # pragma: no cover
             if die:
-                errormsg = f'Sanitization failed on array: "{repr(E)}":\n{data}'
-                raise RuntimeError(errormsg)
+                raise E
             else:
                 sanitized = data # Give up and just return an empty array
                 inds = []
         if returninds: return sanitized, inds
         else:          return sanitized
+
+
+def fillnans(data=None, replacenans=True, **kwargs):
+    """
+    Alias for ``sc.sanitize(..., replacenans=True) with nearest interpolation (or a specified value).
+    """
+    return sanitize(data=data, replacenans=replacenans, **kwargs)
+fillnans.__doc__ += '\n\n' + sanitize.__doc__
+
+# Define as an alias
+rmnans = sanitize
 
 
 def isprime(n, verbose=False):

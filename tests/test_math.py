@@ -90,10 +90,23 @@ def test_find():
     assert found.data[-1] == 13
 
     print('Testing sc.sanitize()')
-    sanitized,inds = sc.sanitize(np.array([3, 4, np.nan, 8, 2, np.nan, np.nan, np.nan, 8]), returninds=True)
-    sanitized      = sc.sanitize(np.array([3, 4, np.nan, 8, 2, np.nan, np.nan, np.nan, 8]), replacenans=True)
-    sanitized      = sc.sanitize(np.array([3, 4, np.nan, 8, 2, np.nan, np.nan, np.nan, 8]), replacenans=0)
+    data = [3, 4, np.nan, 8, 2, np.nan, np.nan, 8]
+    sanitized, inds = sc.sanitize(data, returninds=True) # Remove NaNs
+    sc.sanitize(data, replacenans=True) # Replace NaNs using nearest neighbor interpolation
+    sc.sanitize(data, replacenans='nearest') # Eequivalent to replacenans=True
+    sc.sanitize(data, replacenans='linear') # Replace NaNs using linear interpolation
+    sc.sanitize(data, replacenans=0) # Replace NaNs with 0
+    data2d = np.random.rand(3,3)
+    data2d[1,1] = np.nan
+    data2d[2,2] = np.nan
+    with pytest.raises(ValueError):
+        sc.rmnans(data2d)
+    with pytest.raises(NotImplementedError):
+        sc.fillnans(data2d, replacenans='nearest')
+    filled = sc.fillnans(data2d, 100)
+    assert 200 < filled.sum() < 207
     found.sanitized = sanitized
+    found.filled = filled
 
     print('Testing sc.numdigits()')
     found.numdigits = sc.numdigits(1234)
