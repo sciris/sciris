@@ -30,6 +30,7 @@ Improvements
 #. ``sc.daterange()`` now accepts ``datedelta`` arguments, e.g. ``sc.daterange('2022-02-22', weeks=2)``.
 #. ``sc.sanitize()`` can now handle multidimensional arrays.
 #. ``sc.savefig()`` by default now creates folders if they don't exist.
+#. ``sc.loadmetadata()`` can now read metadata from JPG files.
 
 Housekeeping
 ~~~~~~~~~~~~
