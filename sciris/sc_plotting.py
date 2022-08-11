@@ -1122,7 +1122,7 @@ def savefig(filename, fig=None, dpi=None, comments=None, freeze=False, frame=2, 
     return filename
 
 
-def loadmetadata(filename, die=True):
+def loadmetadata(filename, load_all=False, die=True):
     '''
     Read metadata from a saved image; currently only PNG and SVG are supported.
 
@@ -1131,21 +1131,24 @@ def loadmetadata(filename, die=True):
 
     Args:
         filename (str): the name of the file to load the data from
+        load_all (bool): whether to load all metadata available in an image (else, just load what was saved by Sciris)
         die (bool): whether to raise an exception if the metadata can't be found
 
     **Example**::
 
-        cv.Sim().run(do_plot=True)
-        cv.savefig('covasim.png')
-        cv.get_png_metadata('covasim.png')
+        pl.plot([1,2,3], [4,2,6])
+        sc.savefig('example.png')
+        sc.loadmetadata('example.png')
     '''
 
     # Initialize
     metadata = {}
-    lcfn = filename.lower() # Lowercase filename
+    lcfn = str(filename).lower() # Lowercase filename
 
     # Handle bitmaps
-    if lcfn.endswith('png'):
+    is_png = lcfn.endswith('png')
+    is_jpg = lcfn.endswith('jpg') or lcfn.endswith('jpeg')
+    if is_png or is_jpg:
         try:
             import PIL
         except ImportError as E: # pragma: no cover
@@ -1154,10 +1157,24 @@ def loadmetadata(filename, die=True):
         im = PIL.Image.open(filename)
         keys = im.info.keys()
 
-        # Usual case, can find metadata
-        if _metadataflag in keys:
-            jsonstr = im.info[_metadataflag]
-            metadata = scf.loadjson(string=jsonstr)
+        # Usual case, can find metadata and is PNG
+        if is_png and (load_all or _metadataflag in keys):
+            if load_all:
+                metadata = im.info
+            else:
+                jsonstr = im.info[_metadataflag]
+                metadata = scf.loadjson(string=jsonstr)
+
+        # JPG -- from https://www.thepythoncode.com/article/extracting-image-metadata-in-python
+        elif is_jpg:
+            from PIL.ExifTags import TAGS # Must be imported directly
+            exifdata = im.getexif()
+            for tag_id in exifdata:
+                tag = TAGS.get(tag_id, tag_id)
+                data = exifdata.get(tag_id)
+                if isinstance(data, bytes):
+                    data = data.decode()
+                metadata[tag] = data
 
         # Can't find metadata
         else:
@@ -1198,7 +1215,7 @@ def loadmetadata(filename, die=True):
 
     # Other formats not supported
     else:
-        errormsg = f'Filename "{filename}" has unsupported type: must be png or svg (pdf is not supported)'
+        errormsg = f'Filename "{filename}" has unsupported type: must be PNG, JPG, or SVG (PDF is not supported)'
         raise ValueError(errormsg)
 
     return metadata
