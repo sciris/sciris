@@ -98,8 +98,10 @@ def test_find():
     print('Testing sc.numdigits()')
     found.numdigits = sc.numdigits(1234)
     found.numdigits_max = max(sc.numdigits([10, 200, 30000]))
+    found.numdigits_dec = sc.numdigits(0.01)
     assert found.numdigits == 4
     assert found.numdigits_max == 5
+    assert found.numdigits_dec == -2
 
     return found
 
@@ -163,18 +165,18 @@ def test_gauss2d(doplot=doplot):
     sc.heading('Testing Gaussian 2D smoothing')
 
     # Parameters
-    x = pl.rand(40)
-    y = pl.rand(40)
+    x = np.random.rand(40)
+    y = np.random.rand(40)
     z = 1-(x-0.5)**2 + (y-0.5)**2
 
     # Method 1 -- form grid
-    xi = pl.linspace(0,1,20)
-    yi = pl.linspace(0,1,20)
+    xi = np.linspace(0,1,20)
+    yi = np.linspace(0,1,20)
     zi = sc.gauss2d(x, y, z, xi, yi, scale=0.1, grid=True)
 
     # Method 2 -- use points directly
-    xi2 = pl.rand(400)
-    yi2 = pl.rand(400)
+    xi2 = np.random.rand(400)
+    yi2 = np.random.rand(400)
     zi2 = sc.gauss2d(x, y, z, xi2, yi2, scale=0.1, grid=False)
 
     if doplot:
