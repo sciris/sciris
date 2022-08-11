@@ -1075,7 +1075,7 @@ def strsplit(string, sep=None, skipempty=True, lstrip=True, rstrip=True):
         sc.strsplit('a, b, c') # Returns ['a', 'b', 'c']
         sc.strsplit('  foo_bar  ', sep='_') # Returns ['foo', 'bar']
 
-    New in version 1.4.0.
+    New in version 2.0.0.
     '''
     strlist = []
     if sep is None:

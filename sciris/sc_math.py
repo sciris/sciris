@@ -105,7 +105,7 @@ def findinds(arr=None, val=None, eps=1e-6, first=False, last=False, die=True, **
         sc.findinds([2,3,6,3], 3, first=True) # returns 1
 
     | New in version 1.2.3: "die" argument
-    | New in version 1.4.0: fix string matching
+    | New in version 2.0.0: fix string matching
     '''
 
     # Handle first or last
