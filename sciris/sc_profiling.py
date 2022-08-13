@@ -451,7 +451,7 @@ class resourcelimit(scu.prettyobj):
         self.running = True
         self.thread = threading.Thread(target=self.monitor, args=('foo'), daemon=True)
         self.thread.start()
-        self.thread.join()
+        # self.thread.join()
         print('WHEN CALLED')
         if self.exception:
             raise self.exception
@@ -486,28 +486,28 @@ class resourcelimit(scu.prettyobj):
                 # _thread.interrupt_main()
                 self.running = False
                 self.exception = Exception('MEMORY PROBLEM')
-                print('i have done my duty')
-                self.kill_procs()
-                raise self.exception
+                # print('i have done my duty')
+                # self.kill_procs()
+                # raise self.exception
             time.sleep(self.interval)
-            print(f"Thread {name} count {count}: finishing")
+            # print(f"Thread {name} count {count}: finishing")
         return
 
 
-    def kill_procs(self, kill_parent=False, verbose=True):
-        if verbose: print('Killing processes...')
-        parent = psutil.Process(self.parent_pid)
-        children = parent.children(recursive=True)
+    # def kill_procs(self, kill_parent=False, verbose=True):
+    #     if verbose: print('Killing processes...')
+    #     parent = psutil.Process(self.parent_pid)
+    #     children = parent.children(recursive=True)
 
-        for c,child in enumerate(children):
-            if verbose: print(f'Killing child {c+1} of {len(children)}...')
-            child.kill()
+    #     for c,child in enumerate(children):
+    #         if verbose: print(f'Killing child {c+1} of {len(children)}...')
+    #         child.kill()
 
-        if kill_parent:
-            if verbose: print(f'Killing parent (PID={self.parent_pid})')
-            parent.kill()
+    #     if kill_parent:
+    #         if verbose: print(f'Killing parent (PID={self.parent_pid})')
+    #         parent.kill()
 
-        return
+    #     return
 
 
 
