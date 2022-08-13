@@ -51,9 +51,10 @@ def test_spreadsheets():
     if os.path.exists(excel_path):
         sc.heading('Reading cells')
         wb = sc.Spreadsheet(filename=excel_path) # Load a sample databook to try pulling cells from
-        celltest_opyxl = wb.readcells(method='openpyxl', wbargs={'data_only': True}, sheetname='Baseline year population inputs', cells=[[46, 2], [47, 2]]) # Grab cells using openpyxl.  You have to set wbargs={'data_only': True} to pull out cached values instead of formula strings
+        kw = dict(sheetname='Baseline year population inputs', cells=[[46, 2], [47, 2]])
+        celltest_opyxl = wb.readcells(method='openpyxl', **kw, wbargs={'data_only': True}) # Grab cells using openpyxl.  You have to set wbargs={'data_only': True} to pull out cached values instead of formula strings
+        celltest_pd    = wb.readcells(method='pandas',   **kw)  # Grab cells using pandas
         print(f'openpyxl output: {celltest_opyxl}')
-        celltest_pd = wb.readcells(method='openpyxl', sheetname='Baseline year population inputs', cells=[[46, 2], [47,2]])  # Grab cells using pandas
         print(f'pandas output: {celltest_pd}')
         assert celltest_opyxl == celltest_pd
     else:
@@ -113,7 +114,7 @@ def test_fileio():
         sc.pp(sc.getfilelist(abspath=tf, filesonly=tf, foldersonly=not(tf), nopath=tf, aspath=tf))
 
     sc.heading('Save zip')
-    sc.savezip(files.zip, [files.text])
+    sc.savezip(files.zip, [files.text, files.binary])
 
 
     '''

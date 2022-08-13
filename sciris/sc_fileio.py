@@ -1048,15 +1048,14 @@ Falling back to openpyxl, which is identical except for how cached cell values a
         kwargs['fileobj'] = f
 
         # Return the appropriate output
-        cells = kwargs.get('cells')
+        cells = kwargs.pop('cells', None)
 
         # Read in sheetoutput (sciris dataframe object for xlrd, 2D numpy array for openpyxl).
+        load_args = scu.mergedicts(dict(header=None), kwargs)
         if method == 'xlrd': # pragma: no cover
-            sheetoutput = loadspreadsheet(*args, **kwargs, method='xlrd')  # returns sciris dataframe object
+            sheetoutput = loadspreadsheet(*args, **load_args, method='xlrd')  # returns sciris dataframe object
         elif method == 'pandas':
-            if cells is not None:
-                _ = kwargs.pop('cells', cells)
-            pandas_sheet = loadspreadsheet(*args, **kwargs, method='pandas')
+            pandas_sheet = loadspreadsheet(*args, **load_args, method='pandas')
             sheetoutput = pandas_sheet.values
         elif method in ['openpyxl', 'openpyexcel']:
             wb_reader = self.openpyxl if method == 'openpyxl' else self.openpyexcel
@@ -1078,7 +1077,7 @@ Falling back to openpyxl, which is identical except for how cached cell values a
             for cell in cells:  # Loop over all cells
                 rownum = cell[0]
                 colnum = cell[1]
-                if method in ['xlrd', 'pandas']:  # If we're using xlrd, reduce the row number by 1.
+                if method in ['xlrd']:  # If we're using xlrd/pandas, reduce the row number by 1.
                     rownum -= 1
                 results.append(sheetoutput[rownum][colnum])  # Grab and append the result at the cell.
             return results
