@@ -2,10 +2,12 @@
 Functions for reading/writing to files, including pickles, JSONs, and Excel.
 
 Highlights:
-    -  ``sc.saveobj()/sc.loadobj()``: efficiently save/load any Python object (via pickling)
-    -  ``sc.savejson()/sc.loadjson()``: likewise, for JSONs
-    -  ``sc.thisdir()``: get current folder
-    -  ``sc.getfilelist()``: easy way to access glob
+    - ``sc.save()/sc.load()``: efficiently save/load any Python object (via pickling)
+    - ``sc.savejson()/sc.loadjson()``: likewise, for JSONs
+    - ``sc.savetext()/sc.loadtext()``: likewise, for text
+    - ``sc.thisdir()``: get current folder
+    - ``sc.getfilelist()``: easy way to access glob
+    - ``sc.rmpath()``: remove files and folders
 """
 
 ##############################################################################
@@ -17,6 +19,7 @@ import io
 import os
 import re
 import json
+import shutil
 import uuid
 import types
 import inspect
@@ -45,7 +48,7 @@ from . import sc_dataframe as scdf
 #%% Pickling functions
 ##############################################################################
 
-__all__ = ['loadobj', 'loadstr', 'saveobj', 'dumpstr', 'load', 'save']
+__all__ = ['loadobj', 'loadstr', 'saveobj', 'dumpstr', 'load', 'save', 'rmpath']
 
 
 def loadobj(filename=None, folder=None, verbose=False, die=None, remapping=None, method='pickle', **kwargs):
@@ -262,7 +265,7 @@ def dumpstr(obj=None):
 #%% Other file functions
 ##############################################################################
 
-__all__ += ['loadtext', 'savetext', 'savezip', 'getfilelist', 'sanitizefilename', 'makefilepath', 'path', 'thisdir']
+__all__ += ['loadtext', 'savetext', 'savezip', 'getfilelist', 'sanitizefilename', 'makefilepath', 'path', 'ispath', 'thisdir']
 
 
 def loadtext(filename=None, folder=None, splitlines=False):
@@ -499,6 +502,11 @@ def path(*args, **kwargs):
 path.__doc__ += '\n\n' + Path.__doc__
 
 
+def ispath(obj):
+    ''' Alias to isinstance(obj, Path) '''
+    return isinstance(obj, Path)
+
+
 def thisdir(file=None, path=None, *args, aspath=None, **kwargs):
     '''
     Tiny helper function to get the folder for a file, usually the current file.
@@ -540,6 +548,67 @@ def thisdir(file=None, path=None, *args, aspath=None, **kwargs):
     return filepath
 
 
+def rmpath(path=None, *args, die=True, verbose=True, interactive=False, **kwargs):
+    """
+    Remove file(s) and folder(s). Alias to ``os.remove()`` (for files) and ``shutil.rmtree()``
+    (for folders).
+
+    Arguments:
+        path (str/Path/list): file, folder, or list to remove
+        args (list): additional paths to remove
+        die (bool): whether or not to raise an exception if cannot remove
+        verbose (bool): how much detail to print
+        interactive (bool): whether to confirm prior to each deletion
+        kwargs (dict): passed to ``os.remove()``/``shutil.rmtree()``
+
+    **Examples**::
+
+       sc.rmpath('myobj.obj') # Remove a single file
+       sc.rmpath('myobj1.obj', 'myobj2.obj', 'myobj3.obj') # Remove multiple files
+       sc.rmpath(['myobj.obj', 'tests']) # Remove a file and a folder interactively
+       sc.rmpath(sc.getfilelist('tests/*.obj')) # Example of removing multiple files
+    """
+
+    paths = scu.mergelists(path, *args)
+    for path in paths:
+        if not os.path.exists(path):
+            errormsg = f'Path "{path}" does not exist'
+            if die:
+                raise FileNotFoundError(errormsg)
+            elif verbose:
+                print(errormsg)
+        else:
+            if os.path.isfile(path):
+                rm_func = os.remove
+            elif os.path.isdir(path):
+                rm_func = shutil.rmtree
+            else:
+                errormsg = f'Path "{path}" exists, but is neither a file nor a folder: unable to remove'
+                if die:
+                    raise FileNotFoundError(errormsg)
+                elif verbose:
+                    print(errormsg)
+
+        if interactive:
+            ans = input(f'Remove "{path}"? (y/[n]) ')
+            if ans != 'y':
+                print(f'  Skipping "{path}"')
+                continue
+
+        try:
+            rm_func(path)
+            if verbose or interactive:
+                print(f'Removed "{path}"')
+        except Exception as E:
+            if die:
+                raise E
+            elif verbose:
+                errormsg = f'Could not remove "{path}": {str(E)}'
+                print(errormsg)
+
+    return
+
+
 ##############################################################################
 #%% JSON functions
 ##############################################################################
@@ -549,15 +618,15 @@ __all__ += ['sanitizejson', 'jsonify', 'loadjson', 'savejson', 'jsonpickle', 'js
 
 def sanitizejson(obj, verbose=True, die=False, tostring=False, **kwargs):
     """
-    This is the main conversion function for Python data-structures into
-    JSON-compatible data structures (note: sanitizejson/jsonify are identical).
+    This is the main conversion function for Python data-structures into JSON-compatible
+    data structures (note: ``sc.sanitizejson()/sc.jsonify()`` are identical).
 
     Args:
-        obj (any): almost any kind of data structure that is a combination of list, numpy.ndarray, odicts, etc.
-        verbose (bool): level of detail to print
-        die (bool): whether or not to raise an exception if conversion failed (otherwise, return a string)
+        obj      (any):  almost any kind of data structure that is a combination of list, numpy.ndarray, odicts, etc.
+        verbose  (bool): level of detail to print
+        die      (bool): whether or not to raise an exception if conversion failed (otherwise, return a string)
         tostring (bool): whether to return a string representation of the sanitized object instead of the object itself
-        kwargs (dict): passed to json.dumps() if tostring=True
+        kwargs   (dict): passed to json.dumps() if tostring=True
 
     Returns:
         object (any or str): the converted object that should be JSON compatible, or its representation as a string if tostring=True
@@ -980,9 +1049,16 @@ Falling back to openpyxl, which is identical except for how cached cell values a
         f = self.tofile()
         kwargs['fileobj'] = f
 
+        # Return the appropriate output
+        cells = kwargs.pop('cells', None)
+
         # Read in sheetoutput (sciris dataframe object for xlrd, 2D numpy array for openpyxl).
+        load_args = scu.mergedicts(dict(header=None), kwargs)
         if method == 'xlrd': # pragma: no cover
-            sheetoutput = loadspreadsheet(*args, **kwargs, method='xlrd')  # returns sciris dataframe object
+            sheetoutput = loadspreadsheet(*args, **load_args, method='xlrd')  # returns sciris dataframe object
+        elif method == 'pandas':
+            pandas_sheet = loadspreadsheet(*args, **load_args, method='pandas')
+            sheetoutput = pandas_sheet.values
         elif method in ['openpyxl', 'openpyexcel']:
             wb_reader = self.openpyxl if method == 'openpyxl' else self.openpyexcel
             wb_reader(**wbargs)
@@ -996,8 +1072,6 @@ Falling back to openpyxl, which is identical except for how cached cell values a
             errormsg = f'Reading method not found; must be openpyxl or xlrd, not {method}'
             raise ValueError(errormsg)
 
-        # Return the appropriate output
-        cells = kwargs.get('cells')
         if cells is None:  # If no cells specified, return the whole sheet.
             return sheetoutput
         else:
@@ -1005,7 +1079,7 @@ Falling back to openpyxl, which is identical except for how cached cell values a
             for cell in cells:  # Loop over all cells
                 rownum = cell[0]
                 colnum = cell[1]
-                if method == 'xlrd':  # If we're using xlrd, reduce the row number by 1.
+                if method in ['xlrd']:  # If we're using xlrd/pandas, reduce the row number by 1.
                     rownum -= 1
                 results.append(sheetoutput[rownum][colnum])  # Grab and append the result at the cell.
             return results
