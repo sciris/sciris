@@ -33,6 +33,7 @@ Improvements
 #. ``sc.sanitize()`` can now handle multidimensional arrays.
 #. ``sc.savefig()`` by default now creates folders if they don't exist.
 #. ``sc.loadmetadata()`` can now read metadata from JPG files.
+#. ``sc.timer()`` now has a ``plot()`` method.
 
 Housekeeping
 ~~~~~~~~~~~~
