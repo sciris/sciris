@@ -430,7 +430,7 @@ class resourcelimit(scu.prettyobj):
     **Examples**::
         sc.resourcelimit(mem=0.8, die=True, callback=post_to_slack)
     """
-    def __init__(self, mem=0.9, cpu=None, time=None, interval=1.0, start=True, die=True, callback=None, verbose=False, pool=None):
+    def __init__(self, mem=0.9, cpu=None, time=None, interval=1.0, start=True, die=True, callback=None, verbose=False):
         self.mem = mem if mem else 1.0
         self.cpu = cpu if cpu else 1.0
         self.time = time if time else np.inf
@@ -441,7 +441,7 @@ class resourcelimit(scu.prettyobj):
         self.running = False
         self.thread = None
         self.parent_pid = os.getpid()
-        self.pool = pool
+        self.exception = None
         if start:
             self.start()
         return
@@ -509,9 +509,6 @@ class resourcelimit(scu.prettyobj):
         if kill_parent:
             if verbose: print(f'Killing parent (PID={self.parent_pid})')
             parent.kill()
-
-        if self.exception:
-            raise self.exception
 
         return
 
