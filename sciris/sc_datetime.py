@@ -10,6 +10,7 @@ Highlights:
 
 import time
 import warnings
+import numpy as np
 import pylab as pl
 import datetime as dt
 import dateutil as du
@@ -700,6 +701,7 @@ class timer(scu.prettyobj):
 
     | New in version 1.3.0: ``sc.timer()`` alias, and allowing the label as first argument.
     | New in version 1.3.2: ``toc()`` passes label correctly; ``tt()`` method; ``auto`` argument
+    | New in version 2.0.0: ``plot()`` method
     '''
     def __init__(self, label=None, auto=False, **kwargs):
         from . import sc_odict as sco # Here to avoid circular import
@@ -784,7 +786,53 @@ class timer(scu.prettyobj):
         ''' Alias for toctic() '''
         return self.toctic(*args, **kwargs)
 
+    def plot(self, fig=None, figkwargs=None, grid=True, **kwargs):
+        """
+        Create a plot of Timer.timings
 
+        Arguments:
+            cumulative (bool): how the timings will be presented, individual or cumulative
+            fig (fig): an existing figure to draw the plot in
+            figkwargs (dict): passed to ``pl.figure()``
+            grid (bool): whether to show a grid
+            kwargs (dict): passed to ``pl.bar()``
+
+        New in version 2.0.0.
+        """
+        from . import sc_plotting as scp # Here to avoid circular import
+
+        figkwargs = scu.mergedicts(figkwargs)
+
+        # Handle the figure
+        if fig is None:
+            fig = pl.figure(**figkwargs)  # It's necessary to have an open figure or else the commands won't work
+
+        # plot times
+        if len(self.timings) > 0:
+            keys = self.timings.keys()
+            vals = self.timings[:]
+            ax1 = pl.subplot(2,1,1)
+            pl.barh(keys, vals, **kwargs)
+            pl.title('Individual timings')
+            pl.ylabel('Label')
+            pl.xlabel('Individual timings (s)')
+
+            ax2 = pl.subplot(2,1,2)
+            pl.barh(keys, np.cumsum(vals), **kwargs)
+            pl.title('Cumulative timings')
+            pl.ylabel('Label')
+            pl.xlabel('Cumulative timings (s)')
+
+            for ax in [ax1, ax2]:
+                ax.invert_yaxis()
+                ax.grid(grid)
+
+            scp.figlayout()
+        else:
+            errormsg = "Looks like nothing has been timed. Forgot to do T.start() and T.stop()??'"
+            raise RuntimeWarning(errormsg)
+
+        return fig
 
 
 Timer = timer # Alias
