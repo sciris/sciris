@@ -769,6 +769,7 @@ class timer(scu.prettyobj):
 
         return output
 
+
     def start(self):
         ''' Alias for tic() '''
         return self.tic()
@@ -785,6 +786,7 @@ class timer(scu.prettyobj):
     def tt(self, *args, **kwargs):
         ''' Alias for toctic() '''
         return self.toctic(*args, **kwargs)
+
 
     def plot(self, fig=None, figkwargs=None, grid=True, **kwargs):
         """
