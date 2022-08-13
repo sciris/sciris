@@ -448,9 +448,26 @@ class resourcelimit(scu.prettyobj):
 
 
     def start(self):
+
+        import signal, time
+
+        def handler(signum, frame):
+            print('I just clicked on CTRL-C ')
+
+        signal.signal(signal.SIGINT, handler)
+
+        import sys
+        def my_except_hook(exctype, value, traceback):
+            if exctype == KeyboardInterrupt:
+                print("Handler code goes here")
+            else:
+                sys.__excepthook__(exctype, value, traceback)
+        sys.excepthook = my_except_hook
+
         self.running = True
         self.thread = threading.Thread(target=self.monitor, args=('foo'), daemon=True)
         self.thread.start()
+
         # while not self.event.is_set():
         #     self.event.wait(1)
         # # self.thread.join()
@@ -461,6 +478,7 @@ class resourcelimit(scu.prettyobj):
 
 
     def stop(self):
+        sys.excepthook = sys.__excepthook__
         self.running = False
         if self.exception is not None:
             raise self.Exception
