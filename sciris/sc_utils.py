@@ -27,13 +27,11 @@ import time
 import json
 import zlib
 import types
-import psutil
 import pprint
 import hashlib
 import subprocess
 import numbers
 import string
-import tempfile
 import warnings
 import numpy as np
 import random as rnd
@@ -1013,9 +1011,8 @@ def _sanitize_output(obj, is_list, is_array, dtype=None):
 #%% Misc. functions
 ##############################################################################
 
-__all__ += ['strjoin', 'newlinejoin', 'strsplit', 'checkmem', 'checkram', 'runcommand', 'gitinfo',
-            'compareversions', 'uniquename', 'importbyname', 'suggest', 'profile', 'mprofile',
-            'getcaller']
+__all__ += ['strjoin', 'newlinejoin', 'strsplit', 'runcommand', 'gitinfo', 'compareversions',
+            'uniquename', 'importbyname', 'suggest', 'getcaller']
 
 
 def strjoin(*args, sep=', '):
@@ -1103,130 +1100,6 @@ def strsplit(string, sep=None, skipempty=True, lstrip=True, rstrip=True):
         strlist = [s for s in strlist if s != '']
 
     return strlist
-
-
-def checkmem(var, descend=None, alphabetical=False, plot=False, verbose=False):
-    '''
-    Checks how much memory the variable or variables in question use by dumping
-    them to file. See also checkram().
-
-    Args:
-        var (any): the variable being checked
-        descend (bool): whether or not to descend one level into the object
-        alphabetical (bool): if descending into a dict or object, whether to list items by name rather than size
-        plot (bool): if descending, show the results as a pie chart
-        verbose (bool or int): detail to print, if >1, print repr of objects along the way
-
-    **Example**::
-
-        import sciris as sc
-        sc.checkmem(['spiffy',rand(2483,589)], descend=True)
-    '''
-    from .sc_fileio import saveobj # Here to avoid recursion
-
-    def check_one_object(variable):
-        ''' Check the size of one variable '''
-
-        if verbose>1:
-            print(f'  Checking size of {variable}...')
-
-        # Create a temporary file, save the object, check the size, remove it
-        filename = tempfile.mktemp()
-        saveobj(filename, variable, die=False)
-        filesize = os.path.getsize(filename)
-        os.remove(filename)
-
-        # Convert to string
-        factor = 1
-        label = 'B'
-        labels = ['KB','MB','GB']
-        for i,f in enumerate([3,6,9]):
-            if filesize>10**f:
-                factor = 10**f
-                label = labels[i]
-        humansize = float(filesize/float(factor))
-        sizestr = f'{humansize:0.3f} {label}'
-        return filesize, sizestr
-
-    # Initialize
-    varnames  = []
-    variables = []
-    sizes     = []
-    sizestrs  = []
-
-    # Create the object(s) to check the size(s) of
-    varnames = [''] # Set defaults
-    variables = [var]
-    if descend or descend is None:
-        if hasattr(var, '__dict__'): # It's an object
-            if verbose>1: print('Iterating over object')
-            varnames = sorted(list(var.__dict__.keys()))
-            variables = [getattr(var, attr) for attr in varnames]
-        elif np.iterable(var): # Handle dicts and lists
-            if isinstance(var, dict): # Handle dicts
-                if verbose>1: print('Iterating over dict')
-                varnames = list(var.keys())
-                variables = var.values()
-            else: # Handle lists and other things
-                if verbose>1: print('Iterating over list')
-                varnames = [f'item {i}' for i in range(len(var))]
-                variables = var
-        else:
-            if descend: # Could also be None
-                print('Object is not iterable: cannot descend') # Print warning and use default
-
-    # Compute the sizes
-    for v,variable in enumerate(variables):
-        if verbose:
-            print(f'Processing variable {v} of {len(variables)}')
-        filesize, sizestr = check_one_object(variable)
-        sizes.append(filesize)
-        sizestrs.append(sizestr)
-
-    if alphabetical:
-        inds = np.argsort(varnames)
-    else:
-        inds = np.argsort(sizes)[::-1]
-
-    for i in inds:
-        varstr = f'Variable "{varnames[i]}"' if varnames[i] else 'Variable'
-        print(f'{varstr} is {sizestrs[i]}')
-
-    if plot: # pragma: no cover
-        import pylab as pl # Optional import
-        pl.axes(aspect=1)
-        pl.pie(pl.array(sizes)[inds], labels=pl.array(varnames)[inds], autopct='%0.2f')
-
-    return
-
-
-def checkram(unit='mb', fmt='0.2f', start=0, to_string=True):
-    '''
-    Unlike checkmem(), checkram() looks at actual memory usage, typically at different
-    points throughout execution.
-
-    **Example**::
-
-        import sciris as sc
-        import numpy as np
-        start = sc.checkram(to_string=False)
-        a = np.random.random((1_000, 10_000))
-        print(sc.checkram(start=start))
-
-    New in version 1.0.0.
-    '''
-    process = psutil.Process(os.getpid())
-    mapping = {'b':1, 'kb':1e3, 'mb':1e6, 'gb':1e9}
-    try:
-        factor = mapping[unit.lower()]
-    except KeyError: # pragma: no cover
-        raise KeyNotFoundError(f'Unit {unit} not found among {strjoin(mapping.keys())}')
-    mem_use = process.memory_info().rss/factor - start
-    if to_string:
-        output = f'{mem_use:{fmt}} {unit.upper()}'
-    else:
-        output = mem_use
-    return output
 
 
 def runcommand(command, printinput=False, printoutput=False, wait=True):
@@ -1561,133 +1434,6 @@ def suggest(user_input, valid_inputs, n=1, threshold=None, fulloutput=False, die
                 return suggestions[0]
             else:
                 return suggestions[:n]
-
-
-def profile(run, follow=None, print_stats=True, *args, **kwargs):
-    '''
-    Profile the line-by-line time required by a function.
-
-    Args:
-        run (function): The function to be run
-        follow (function): The function or list of functions to be followed in the profiler; if None, defaults to the run function
-        print_stats (bool): whether to print the statistics of the profile to stdout
-        args, kwargs: Passed to the function to be run
-
-    Returns:
-        LineProfiler (by default, the profile output is also printed to stdout)
-
-    **Example**::
-
-        def slow_fn():
-            n = 10000
-            int_list = []
-            int_dict = {}
-            for i in range(n):
-                int_list.append(i)
-                int_dict[i] = i
-            return
-
-        class Foo:
-            def __init__(self):
-                self.a = 0
-                return
-
-            def outer(self):
-                for i in range(100):
-                    self.inner()
-                return
-
-            def inner(self):
-                for i in range(1000):
-                    self.a += 1
-                return
-
-        foo = Foo()
-        sc.profile(run=foo.outer, follow=[foo.outer, foo.inner])
-        sc.profile(slow_fn)
-
-        # Profile the constructor for Foo
-        f = lambda: Foo()
-        sc.profile(run=f, follow=[foo.__init__])
-    '''
-    try:
-        from line_profiler import LineProfiler
-    except ModuleNotFoundError as E: # pragma: no cover
-        if 'win' in sys.platform:
-            errormsg = 'The "line_profiler" package is not included by default on Windows;' \
-                        'please install using "pip install line_profiler" (note: you will need a ' \
-                        'C compiler installed, e.g. Microsoft Visual Studio)'
-        else:
-            errormsg = 'The "line_profiler" Python package is required to perform profiling'
-        raise ModuleNotFoundError(errormsg) from E
-
-    if follow is None:
-        follow = run
-    orig_func = run
-
-    lp = LineProfiler()
-    follow = promotetolist(follow)
-    for f in follow:
-        lp.add_function(f)
-    lp.enable_by_count()
-    wrapper = lp(run)
-
-    if print_stats: # pragma: no cover
-        print('Profiling...')
-    wrapper(*args, **kwargs)
-    run = orig_func
-    if print_stats: # pragma: no cover
-        lp.print_stats()
-        print('Done.')
-    return lp
-
-
-def mprofile(run, follow=None, show_results=True, *args, **kwargs):
-    '''
-    Profile the line-by-line memory required by a function. See profile() for a
-    usage example.
-
-    Args:
-        run (function): The function to be run
-        follow (function): The function or list of functions to be followed in the profiler; if None, defaults to the run function
-        show_results (bool): whether to print the statistics of the profile to stdout
-        args, kwargs: Passed to the function to be run
-
-    Returns:
-        LineProfiler (by default, the profile output is also printed to stdout)
-    '''
-
-    try:
-        import memory_profiler as mp
-    except ModuleNotFoundError as E: # pragma: no cover
-        if 'win' in sys.platform:
-            errormsg = 'The "memory_profiler" package is not included by default on Windows;' \
-                        'please install using "pip install memory_profiler" (note: you will need a ' \
-                        'C compiler installed, e.g. Microsoft Visual Studio)'
-        else:
-            errormsg = 'The "memory_profiler" Python package is required to perform profiling'
-        raise ModuleNotFoundError(errormsg) from E
-
-    if follow is None:
-        follow = run
-
-    lp = mp.LineProfiler()
-    follow = promotetolist(follow)
-    for f in follow:
-        lp.add_function(f)
-    lp.enable_by_count()
-    try:
-        wrapper = lp(run)
-    except TypeError as e: # pragma: no cover
-        raise TypeError('Function wrapping failed; are you profiling an already-profiled function?') from e
-
-    if show_results:
-        print('Profiling...')
-    wrapper(*args, **kwargs)
-    if show_results:
-        mp.show_results(lp)
-        print('Done.')
-    return lp
 
 
 def getcaller(frame=2, tostring=True, includelineno=False, includeline=False):

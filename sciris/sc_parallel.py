@@ -6,138 +6,20 @@ broadest support  across platforms (e.g. Jupyter notebooks).
 
 Highlights:
     - ``sc.parallelize()``: as-easy-as-possible parallelization
-    - ``sc.loadbalancer()``: very basic load balancer
 '''
 
-import time
-import psutil
-import multiprocess as mp
 import numpy as np
+import multiprocess as mp
 from functools import partial
 from . import sc_utils as scu
+from . import sc_profiling as scp
 
 
 ##############################################################################
 #%% Parallelization functions
 ##############################################################################
 
-__all__ = ['cpu_count', 'loadbalancer', 'parallelize', 'parallelcmd', 'parallel_progress']
-
-
-def cpu_count():
-    ''' Alias to mp.cpu_count() '''
-    return mp.cpu_count()
-
-
-def take_mem_snapshot():
-    """
-    Takes a snapshot of current memory usage (in %) via psuti
-    Arguments: None
-
-    Returns: a float between 0-1 representing the fraction of psutil.virtuak memory currently used.
-    """
-    snapshot = psutil.virtual_memory().percent / 100.0
-    return snapshot
-
-
-def loadbalancer(maxload=None, index=None, interval=None, maxtime=None, label=None, verbose=True):
-    '''
-    A little function to delay execution while CPU load is too high -- a very simple load balancer.
-
-    Arguments:
-        maxload:  the maximum load to allow for the task to still start (default 0.5)
-        index:    the index of the task -- used to start processes asynchronously (default None)
-        interval: the time delay to poll to see if CPU load is OK (default 5 seconds)
-        maxtime:  maximum amount of time to wait to start the task (default 36000 seconds (10 hours))
-        label:    the label to print out when outputting information about task delay or start (default None)
-        verbose:  whether or not to print information about task delay or start (default True)
-
-    **Examples**::
-
-        loadbalancer() # Simplest usage -- delay while load is >80%
-        for nproc in processlist: loadbalancer(maxload=0.9, index=nproc) # Use a maximum load of 90%, and stagger the start by process number
-
-    Version: 2018nov01
-    '''
-
-    # Set up processes to start asynchronously
-    if maxload  is None: maxload = 0.8
-    if interval is None: interval = 1.0
-    if maxtime  is None: maxtime = 36000
-    if label    is None: label = ''
-    else: label += ': '
-    if index is None:
-        pause = np.random.rand()*interval
-        index = ''
-    else:
-        pause = index*interval
-    if maxload>1: maxload/100. # If it's >1, assume it was given as a percent
-    if not maxload>0:
-        return # Return immediately if no max load
-    else:
-        time.sleep(pause) # Give it time to asynchronize
-
-    # Loop until load is OK
-    toohigh = True # Assume too high
-    count = 0
-    maxcount = maxtime/float(interval)
-    while toohigh and count<maxcount:
-        count += 1
-        currentload = psutil.cpu_percent(interval=0.1)/100. # If interval is too small, can give very inaccurate readings
-        if currentload>maxload:
-            if verbose: print(label+f'CPU load too high ({currentload:0.2f}/{maxload:0.2f}); process {index} queued {count} times')
-            time.sleep(interval*2*np.random.rand()) # Sleeps for an average of refresh seconds, but do it randomly so you don't get locking
-        else:
-            toohigh = False
-            if verbose: print(label+f'CPU load fine ({currentload:0.2f}/{maxload:0.2f}), starting process {index} after {count} tries')
-    return
-
-
-def membalancer(maxmem=None, die=True, interval=None, maxtime=None, label=None, index=None,  verbose=True): # pragma: no cover
-    """
-    Like loadbalancer, but delays execution if the memoery usages is too high (expressed in %)
-    Args:
-        maxmem:  the maximum memory that a task can use
-
-
-    Returns:
-
-    """
-
-    if maxmem is None: maxmem = 0.8
-    if interval is None: interval = 1.0
-    if maxtime  is None: maxtime = 36000
-    if label is None:
-        label = ''
-    else:
-        label += ': '
-    if index is not None:
-        pause = index*interval
-    else:
-        pause = np.random.rand()*interval
-        index = ''
-    if maxmem>1: maxmem/100. # If it's >1, assume it was given as a percent
-
-    if not maxmem>0:
-        return # Return immediately if no max load
-    else:
-        time.sleep(pause) # Give it time to synchronize
-
-    # Loop until load is OK
-    toohigh = True  # Assume too high
-    count = 0
-    maxcount = maxtime / float(interval)
-
-    while toohigh and count < maxcount:
-        count += 1
-        currentmem = psutil.virtual_memory().percent / 100.0
-        if currentmem > maxmem:
-            if verbose: print(label + f'Memory usage too high ({currentmem:0.2f}/{maxmem:0.2f}).')
-            time.sleep(interval * 2 * np.random.rand())  # Sleeps for an average of refresh seconds, but do it randomly so you don't get locking
-        else:
-            toohigh = False
-            if verbose: print(label + f'Memory usage is fine ({currentmem:0.2f}/{maxmem:0.2f}), starting process {index} after {count} tries')
-    return
+__all__ = ['parallelize', 'parallelcmd', 'parallel_progress']
 
 
 def parallelize(func, iterarg=None, iterkwargs=None, args=None, kwargs=None, ncpus=None, maxload=None, interval=None, parallelizer=None, serial=False, **func_kwargs):
@@ -499,7 +381,7 @@ def _parallel_task(taskargs, outputqueue=None):
     # Handle load balancing
     maxload = taskargs.maxload
     if maxload:
-        loadbalancer(maxload=maxload, index=index, interval=taskargs.interval)
+        scp.loadbalancer(maxload=maxload, index=index, interval=taskargs.interval)
 
     # Call the function
     output = func(*args, **kwargs)
@@ -518,7 +400,7 @@ def _parallelcmd_task(_cmd, _parfor, _returnval, _i, _outputqueue, _maxload, _in
     underscores to avoid possible collisions in the ``exec()`` statements. Not to be called
     directly.
     '''
-    loadbalancer(maxload=_maxload, index=_i, interval=_interval)
+    scp.loadbalancer(maxload=_maxload, index=_i, interval=_interval)
 
     # Set the loop variables
     for _key in _parfor.keys():
