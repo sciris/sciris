@@ -263,7 +263,7 @@ def dumpstr(obj=None):
 #%% Other file functions
 ##############################################################################
 
-__all__ += ['loadtext', 'savetext', 'savezip', 'getfilelist', 'sanitizefilename', 'makefilepath', 'path', 'thisdir']
+__all__ += ['loadtext', 'savetext', 'savezip', 'getfilelist', 'sanitizefilename', 'makefilepath', 'path', 'ispath', 'thisdir']
 
 
 def loadtext(filename=None, folder=None, splitlines=False):
@@ -501,10 +501,8 @@ path.__doc__ += '\n\n' + Path.__doc__
 
 
 def ispath(obj):
-    ''' Alias to isinstance(obj, Path()) '''
-    if not isinstance(obj, Path):
-        return False
-    return True
+    ''' Alias to isinstance(obj, Path) '''
+    return isinstance(obj, Path)
 
 
 def thisdir(file=None, path=None, *args, aspath=None, **kwargs):
@@ -548,89 +546,66 @@ def thisdir(file=None, path=None, *args, aspath=None, **kwargs):
     return filepath
 
 
-def rmpath(filename=None, folder=None, abspath=True, die=True, verbose=False):
+def rmpath(path=None, *args, die=True, verbose=True, interactive=False, **kwargs):
     """
+    Remove file(s) and folder(s). Alias to ``os.remove()`` (for files) and ``shutil.rmtree()``
+    (for folders).
 
     Arguments:
-        filename    (str or Path, or list with str or Path)   : the filename, or full file path, to remove
-        folder      (str/Path/list) : the name of the folder to be remov ed
-        abspath     (bool)          : whether to conver to absolute path
-        die         (bool)          : whether or not to raise an exception if cannot remove (otherwise, return a string)
-        verbose     (bool)          : how much detail to print
+        path (str/Path/list): file, folder, or list to remove
+        args (list): additional paths to remove
+        die (bool): whether or not to raise an exception if cannot remove
+        verbose (bool): how much detail to print
+        interactive (bool): whether to confirm prior to each deletion
+        kwargs (dict): passed to ``os.remove()``/``shutil.rmtree()``
 
-    Returns:
-        None
+    **Examples**::
 
-    Example::
-       sc.rmpath('myobj.obj', verbose=True)
-       sc.rmpath(['myobj1.obj', 'myobj2.obj', 'myobj3.obj', verbose=True])
-       sc.rmpath('myobj.obj', 'tests', verbose=True) # assumes there is a folder tests/
-       sc.rmpath(folder='tests/', verbose=True)
-       sc.rmpath(sc.getfilelist('tests/*.obj'))
-
-    #TODO: return error if anything failed?
-    #TODO: if only one filename is passed, make it a list to remove IF islist blocks
-
+       sc.rmpath('myobj.obj') # Remove a single file
+       sc.rmpath('myobj1.obj', 'myobj2.obj', 'myobj3.obj') # Remove multiple files
+       sc.rmpath(['myobj.obj', 'tests']) # Remove a file and a folder interactively
+       sc.rmpath(sc.getfilelist('tests/*.obj')) # Example of removing multiple files
     """
-    # Initialize
-    filefolder = '' # The folder the file will be located in
-    filenameislist = False
-    if isinstance(filename, Path):
-        filename = str(filename)
-    if isinstance(filename, list):
-        filenameislist = True
-        filename_list = []
-        for this_file in filename:
-            if ispath(this_file) or isinstance(this_file, str):
-                filename_list.append(str(this_file))
-    if isinstance(folder, Path): # If it's a path object, convert to string
-        folder = str(folder)
-    if isinstance(folder, list): # It's a list, join together
-        folder = os.path.join(*folder)
 
-    # Process folder
-    if folder is not None: # Replace with specified folder, if defined
-        filefolder = folder
-    if abspath: # Convert to absolute path
-        filefolder = os.path.abspath(os.path.expanduser(filefolder))
-
-    # Remove a file or each file in a list, no folder given
-    if filename is not None and folder is None:
-        if not filenameislist:
-            os.remove(filename)
+    paths = scu.mergelists(path, *args)
+    for path in paths:
+        if not os.path.exists(path):
+            errormsg = f'Path "{path}" does not exist'
+            if die:
+                raise FileNotFoundError(errormsg)
+            elif verbose:
+                print(errormsg)
         else:
-            for this_file in filename_list:
-                os.remove(this_file) # if an empty string is passed, there will be an FileNotFounderror from os.remove
-                if verbose:
-                    print(f'Removed "{this_file}" ')
+            if os.path.isfile(path):
+                rm_func = os.remove
+            elif os.path.isdir(path):
+                rm_func = shutil.rmtree
+            else:
+                errormsg = f'Path "{path}" exists, but is neither a file nor a folder: unable to remove'
+                if die:
+                    raise FileNotFoundError(errormsg)
+                elif verbose:
+                    print(errormsg)
 
-    # Remove a folder, and no filename was given
-    if filename is None and folder is not None:
-        shutil.rmtree(filefolder)
-        if verbose:
-            print(f'Removed "{filefolder}" ')
+        if interactive:
+            ans = input(f'Remove "{path}"? (y/[n]) ')
+            if ans != 'y':
+                print(f'  Skipping "{path}"')
+                continue
 
-    # Remove a file or list of files in a given folder
-    if filename is not None and folder is not None:
-        if filenameislist:
-            for this_file in filename_list:
-                filenamepath = os.path.join(filefolder, this_file)
-                os.remove(filenamepath)
-                if verbose:
-                    print(f'Removed "{filenamepath}" ')
-        else:
-            filenamepath = os.path.join(filefolder, this_file)
-            os.remove(filenamepath)
-            if verbose:
-                print(f'Removed "{filenamepath}" ')
+        try:
+            rm_func(path)
+            if verbose or interactive:
+                print(f'Removed "{path}"')
+        except Exception as E:
+            if die:
+                raise E
+            elif verbose:
+                errormsg = f'Could not remove "{path}": {str(E)}'
+                print(errormsg)
 
-    # Nothing was passed
-    if filename is None and folder is None:
-        errormsg = 'No objects (fielname and folder) were supplied to rmpath'
-        if die:
-           raise ValueError(errormsg)
-        else:
-           print(errormsg)
+    return
+
 
 ##############################################################################
 #%% JSON functions
