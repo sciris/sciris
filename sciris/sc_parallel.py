@@ -14,8 +14,6 @@ import psutil
 import multiprocess as mp
 import numpy as np
 from functools import partial
-
-import sciris
 from . import sc_utils as scu
 
 

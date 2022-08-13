@@ -20,8 +20,8 @@ class ResourceLimit:
     """
     DOCME
     """
-    def __init__(self, percentage_limit, verbose=False):
-        self.percentage_limit = percentage_limit
+    def __init__(self, limit, verbose=False):
+        self.percentage_limit = limit
         self.verbose = verbose
         self.LIMITS = [('RLIMIT_DATA', 'heap size'),
                        ('RLIMIT_AS', 'address size'),
@@ -145,7 +145,7 @@ class MemoryMonitor(Process):
 
 def take_mem_snapshot():
     """
-    Take a snapshot of current memory usage (in %) via psuti
+    Take a snapshot of current memory usage (in %) via psutil
     Arguments: None
 
     Returns: a float between 0-1 representing the fraction of psutil.virtuak memory currently used.
@@ -225,7 +225,6 @@ def limit_malloc(size):
         if current_size > size:
             for stat in snapshot:
                 print(stat)
-            raise AttributeError(f'Memory usage exceeded the threshold: '
-                                 f'{current_size} > {size}')
+            raise RuntimeError(f'Memory usage exceeded the threshold: {current_size} > {size}')
     finally:
         tracemalloc.stop()
