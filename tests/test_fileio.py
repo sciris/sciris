@@ -8,27 +8,28 @@ import pandas as pd
 import openpyxl
 import sciris as sc
 
+# Define filenames
+filedir = 'files' + os.sep
+files = sc.prettyobj()
+files.excel  = filedir + 'test.xlsx'
+files.binary = filedir + 'test.obj'
+files.text   = filedir + 'text.txt'
+files.zip    = filedir + 'test.zip'
+tidyup = True
+
+# Define the test data
+nrows = 15
+ncols = 3
+testdata   = pl.zeros((nrows+1, ncols), dtype=object) # Includes header row
+testdata[0,:] = ['A', 'B', 'C'] # Create header
+testdata[1:,:] = pl.rand(nrows,ncols) # Create data
+
+
 def test_spreadsheets():
     '''
     Preserved for completeness, but fairly fragile since relies on not-well-trodden
     Excel libraries.
     '''
-
-    # Define filenames
-    filedir = 'files' + os.sep
-    files = sc.prettyobj()
-    files.excel  = filedir + 'test.xlsx'
-    files.binary = filedir + 'test.obj'
-    files.text   = filedir + 'text.txt'
-    files.zip    = filedir + 'test.zip'
-    tidyup = True
-
-    # Define the test data
-    nrows = 15
-    ncols = 3
-    testdata   = pl.zeros((nrows+1, ncols), dtype=object) # Includes header row
-    testdata[0,:] = ['A', 'B', 'C'] # Create header
-    testdata[1:,:] = pl.rand(nrows,ncols) # Create data
 
     # Test spreadsheet writing, and create the file for later
     formats = {
@@ -41,7 +42,6 @@ def test_spreadsheets():
     formatdata[0,:] = 'header' # Format header
     sc.savespreadsheet(filename=files.excel, data=testdata, formats=formats, formatdata=formatdata)
 
-
     # Test loading
     sc.heading('Loading spreadsheet')
     data = sc.loadspreadsheet(files.excel)
@@ -51,11 +51,14 @@ def test_spreadsheets():
     if os.path.exists(excel_path):
         sc.heading('Reading cells')
         wb = sc.Spreadsheet(filename=excel_path) # Load a sample databook to try pulling cells from
-        celltest = wb.readcells(method='openpyxl', wbargs={'data_only': True}, sheetname='Baseline year population inputs', cells=[[46, 2], [47, 2]]) # Grab cells using openpyxl.  You have to set wbargs={'data_only': True} to pull out cached values instead of formula strings
-        print(f'openpyxl output: {celltest}')
+        kw = dict(sheetname='Baseline year population inputs', cells=[[46, 2], [47, 2]])
+        celltest_opyxl = wb.readcells(method='openpyxl', **kw, wbargs={'data_only': True}) # Grab cells using openpyxl.  You have to set wbargs={'data_only': True} to pull out cached values instead of formula strings
+        celltest_pd    = wb.readcells(method='pandas',   **kw)  # Grab cells using pandas
+        print(f'openpyxl output: {celltest_opyxl}')
+        print(f'pandas output: {celltest_pd}')
+        assert celltest_opyxl == celltest_pd
     else:
         print(f'{excel_path} not found, skipping...')
-
 
     sc.heading('Loading a blobject')
     blob = sc.Blobject(files.excel)
@@ -82,6 +85,16 @@ def test_spreadsheets():
     print(S)
     sc.pp(data)
 
+    if tidyup:
+        sc.rmpath(files.excel)
+
+    return S
+
+
+def test_fileio():
+    '''
+    Test other file I/O functions
+    '''
     sc.heading('Saveobj/loadobj')
     sc.saveobj(files.binary, testdata)
 
@@ -101,7 +114,7 @@ def test_spreadsheets():
         sc.pp(sc.getfilelist(abspath=tf, filesonly=tf, foldersonly=not(tf), nopath=tf, aspath=tf))
 
     sc.heading('Save zip')
-    sc.savezip(files.zip, [files.text, files.excel])
+    sc.savezip(files.zip, [files.text, files.binary])
 
 
     '''
@@ -145,16 +158,9 @@ def test_spreadsheets():
     if tidyup:
         sc.blank()
         sc.heading('Tidying up')
-        for fn in [files.excel, files.binary, files.text, files.zip, 'spreadsheet.xlsx']:
-            try:
-                os.remove(fn)
-                print('Removed %s' % fn)
-            except:
-                pass
+        sc.rmpath([files.binary, files.text, files.zip, 'spreadsheet.xlsx'], die=False)
 
-    print('Done, all fileio tests succeeded')
-
-    return S
+    return obj
 
 
 def test_json():
@@ -221,6 +227,7 @@ if __name__ == '__main__':
     sc.tic()
 
     spread = test_spreadsheets()
+    fileio = test_fileio()
     json   = test_json()
     jp     = test_jsonpickle()
     string = test_load_dump_str()
