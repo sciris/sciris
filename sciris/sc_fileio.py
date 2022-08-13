@@ -2,10 +2,12 @@
 Functions for reading/writing to files, including pickles, JSONs, and Excel.
 
 Highlights:
-    -  ``sc.saveobj()/sc.loadobj()``: efficiently save/load any Python object (via pickling)
-    -  ``sc.savejson()/sc.loadjson()``: likewise, for JSONs
-    -  ``sc.thisdir()``: get current folder
-    -  ``sc.getfilelist()``: easy way to access glob
+    - ``sc.save()/sc.load()``: efficiently save/load any Python object (via pickling)
+    - ``sc.savejson()/sc.loadjson()``: likewise, for JSONs
+    - ``sc.savetext()/sc.loadtext()``: likewise, for text
+    - ``sc.thisdir()``: get current folder
+    - ``sc.getfilelist()``: easy way to access glob
+    - ``sc.rmpath()``: remove files and folders
 """
 
 ##############################################################################
@@ -616,15 +618,15 @@ __all__ += ['sanitizejson', 'jsonify', 'loadjson', 'savejson', 'jsonpickle', 'js
 
 def sanitizejson(obj, verbose=True, die=False, tostring=False, **kwargs):
     """
-    This is the main conversion function for Python data-structures into
-    JSON-compatible data structures (note: sanitizejson/jsonify are identical).
+    This is the main conversion function for Python data-structures into JSON-compatible
+    data structures (note: ``sc.sanitizejson()/sc.jsonify()`` are identical).
 
     Args:
-        obj (any): almost any kind of data structure that is a combination of list, numpy.ndarray, odicts, etc.
-        verbose (bool): level of detail to print
-        die (bool): whether or not to raise an exception if conversion failed (otherwise, return a string)
+        obj      (any):  almost any kind of data structure that is a combination of list, numpy.ndarray, odicts, etc.
+        verbose  (bool): level of detail to print
+        die      (bool): whether or not to raise an exception if conversion failed (otherwise, return a string)
         tostring (bool): whether to return a string representation of the sanitized object instead of the object itself
-        kwargs (dict): passed to json.dumps() if tostring=True
+        kwargs   (dict): passed to json.dumps() if tostring=True
 
     Returns:
         object (any or str): the converted object that should be JSON compatible, or its representation as a string if tostring=True
