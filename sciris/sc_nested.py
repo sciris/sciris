@@ -179,25 +179,27 @@ def flattendict(nesteddict, sep=None, _prefix=None):
         {'a_b': 1, 'a_c_d': 2, 'a_c_e': 3}
 
     Args:
-        d: Input dictionary potentially containing dicts as values
-        sep: Concatenate keys using string separator. If ``None`` the returned dictionary will have tuples as keys
+        nesteddict (dict): Input dictionary potentially containing dicts as values
+        sep        (str): Concatenate keys using string separator. If ``None`` the returned dictionary will have tuples as keys
         _prefix: Internal argument for recursively accumulating the nested keys
 
     Returns:
         A flat dictionary where no values are dicts
+
+    New in version 2.0.0: handle non-string keys.
     """
     output_dict = {}
     for k, v in nesteddict.items():
-        if sep is None:
+        if sep is None: # Create tuples
             if _prefix is None:
                 k2 = (k,)
             else:
                 k2 = _prefix + (k,)
-        else:
+        else: # Create strings
             if _prefix is None:
                 k2 = k
             else:
-                k2 = _prefix + sep + k
+                k2 = str(_prefix) + str(sep) + str(k)
 
         if isinstance(v, dict):
             output_dict.update(flattendict(nesteddict[k], sep=sep, _prefix=k2))

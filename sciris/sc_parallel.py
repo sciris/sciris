@@ -360,6 +360,7 @@ def parallelcmd(cmd=None, parfor=None, returnval=None, maxload=None, interval=No
         parfor (dict): a dictionary of lists of the variables to loop over
         returnval (str): the name of the output variable
         maxload (float): the maximum CPU load, used in ``sc.loadbalancer()``
+        interval (float): the time delay to poll to see if CPU load is OK,  used in ``sc.loadbalancer()``
         kwargs (dict): variables to pass into the code
 
     **Example**::
@@ -408,6 +409,8 @@ def parallel_progress(fcn, inputs, num_workers=None, show_progress=True, initial
         fcn (function): Function object to call, accepting one argument, OR a function with zero arguments in which case inputs should be an integer
         inputs (list): A collection of inputs that will each be passed to the function OR a number, if the fcn() has no input arguments
         num_workers (int): Number of processes, defaults to the number of CPUs
+        show_progress (bool): Whether to show a progress bar
+        initializer (func): A function that each worker process will call when it starts
 
     Returns:
         A list of outputs
