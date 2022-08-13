@@ -10,11 +10,10 @@ Highlights:
 
 import time
 import warnings
+import numpy as np
 import pylab as pl
 import datetime as dt
 import dateutil as du
-
-import sciris
 from . import sc_utils as scu
 
 
@@ -702,6 +701,7 @@ class timer(scu.prettyobj):
 
     | New in version 1.3.0: ``sc.timer()`` alias, and allowing the label as first argument.
     | New in version 1.3.2: ``toc()`` passes label correctly; ``tt()`` method; ``auto`` argument
+    | New in version 2.0.0: ``plot()`` method
     '''
     def __init__(self, label=None, auto=False, **kwargs):
         from . import sc_odict as sco # Here to avoid circular import
@@ -786,60 +786,53 @@ class timer(scu.prettyobj):
         ''' Alias for toctic() '''
         return self.toctic(*args, **kwargs)
 
-    def plot(self, fig=None, ax=None, modality='individual', returnfig=False, figkwargs=None, axkwargs=None, **kwargs):
+    def plot(self, fig=None, figkwargs=None, grid=True, **kwargs):
         """
         Create a plot of Timer.timings
 
         Arguments:
+            cumulative (bool): how the timings will be presented, individual or cumulative
             fig (fig): an existing figure to draw the plot in
-            ax (axes): an existing axes to draw the plot in
-            modality (str): how self.timings will be presented, 'individual' or 'cumulative'
-            returnfig (bool): whether to return the figure, or just the axes
-            figkwargs (dict): passed to figure()
-            axkwargs (dict): passed to axes()
-            kwargs (dict): passed to plot()
+            figkwargs (dict): passed to ``pl.figure()``
+            grid (bool): whether to show a grid
+            kwargs (dict): passed to ``pl.bar()``
 
-        Returns:
-            fig and ax
-            ax
+        New in version 2.0.0.
         """
+        from . import sc_plotting as scp # Here to avoid circular import
 
         figkwargs = scu.mergedicts(figkwargs)
-        axkwargs = scu.mergedicts(axkwargs)
-        nrows = axkwargs.pop('nrows', 1)  # Since fig.add_subplot() can't handle kwargs...
-        ncols = axkwargs.pop('ncols', 1)
-        index = axkwargs.pop('index', 1)
 
         # Handle the figure
         if fig is None:
-            if ax is None:
-                fig = pl.figure(**figkwargs)  # It's necessary to have an open figure or else the commands won't work
-            else:
-                fig = ax.figure
-
-        #  Create and initialize the axis
-        if ax is None:
-           ax = fig.add_subplot(nrows, ncols, index, **axkwargs)
+            fig = pl.figure(**figkwargs)  # It's necessary to have an open figure or else the commands won't work
 
         # plot times
         if len(self.timings) > 0:
-            if modality in ['individual', 'indiv', 'single']:
-                ax.plot(self.timings.keys(), self.timings.values(), **kwargs)
-                ax.set_xlabel('Individual timings [s]')
-            elif modality in ['cumulative', 'cum', 'cumul']:
-                ax.plot(self.timings.keys(), pl.cumsum(self.timings.values()), **kwargs)
-                ax.set_xlabel('Cumulative timings [s]')
-            else:
-                errormsg = f"Unknown modality {modality}. Must be either 'individual' or 'cumulative'"
-                raise ValueError(errormsg)
+            keys = self.timings.keys()
+            vals = self.timings[:]
+            ax1 = pl.subplot(2,1,1)
+            pl.barh(keys, vals, **kwargs)
+            pl.title('Individual timings')
+            pl.ylabel('Label')
+            pl.xlabel('Individual timings (s)')
+
+            ax2 = pl.subplot(2,1,2)
+            pl.barh(keys, np.cumsum(vals), **kwargs)
+            pl.title('Cumulative timings')
+            pl.ylabel('Label')
+            pl.xlabel('Cumulative timings (s)')
+
+            for ax in [ax1, ax2]:
+                ax.invert_yaxis()
+                ax.grid(grid)
+
+            scp.figlayout()
         else:
-            errormsg = f"Looks like nothing has been timed. Forgot to do T.start() and T.stop()??'"
+            errormsg = "Looks like nothing has been timed. Forgot to do T.start() and T.stop()??'"
             raise RuntimeWarning(errormsg)
 
-        if returnfig:
-            return fig, ax
-        else:
-            return ax
+        return fig
 
 
 Timer = timer # Alias

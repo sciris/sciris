@@ -503,7 +503,7 @@ path.__doc__ += '\n\n' + Path.__doc__
 
 
 def ispath(obj):
-    ''' Alias to isinstance(obj, Path) '''
+    ''' Alias to isinstance(obj, Path). New in version 2.0.0. '''
     return isinstance(obj, Path)
 
 
@@ -563,10 +563,12 @@ def rmpath(path=None, *args, die=True, verbose=True, interactive=False, **kwargs
 
     **Examples**::
 
-       sc.rmpath('myobj.obj') # Remove a single file
-       sc.rmpath('myobj1.obj', 'myobj2.obj', 'myobj3.obj') # Remove multiple files
-       sc.rmpath(['myobj.obj', 'tests']) # Remove a file and a folder interactively
-       sc.rmpath(sc.getfilelist('tests/*.obj')) # Example of removing multiple files
+        sc.rmpath('myobj.obj') # Remove a single file
+        sc.rmpath('myobj1.obj', 'myobj2.obj', 'myobj3.obj') # Remove multiple files
+        sc.rmpath(['myobj.obj', 'tests']) # Remove a file and a folder interactively
+        sc.rmpath(sc.getfilelist('tests/*.obj')) # Example of removing multiple files
+
+    New in version 2.0.0.
     """
 
     paths = scu.mergelists(path, *args)
