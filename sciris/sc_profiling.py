@@ -430,7 +430,7 @@ class resourcelimit(scu.prettyobj):
     **Examples**::
         sc.resourcelimit(mem=0.8, die=True, callback=post_to_slack)
     """
-    def __init__(self, mem=0.9, cpu=None, time=None, interval=1.0, start=True, die=True, callback=None, verbose=False):
+    def __init__(self, mem=0.9, cpu=None, time=None, interval=1.0, start=True, die=True, callback=None, verbose=False, pool=None):
         self.mem = mem if mem else 1.0
         self.cpu = cpu if cpu else 1.0
         self.time = time if time else np.inf
@@ -440,6 +440,8 @@ class resourcelimit(scu.prettyobj):
         self.verbose = verbose
         self.running = False
         self.thread = None
+        self.parent_pid = os.getpid()
+        self.pool = pool
         if start:
             self.start()
         return
@@ -475,13 +477,49 @@ class resourcelimit(scu.prettyobj):
         while self.running:
             count += 1
             print(f"Thread {name} count {count}: starting")
-            if count > 3:
+            if count > 2:
                 _thread.interrupt_main()
-                raise Exception('MEMORY PROBLEM')
                 self.running = False
                 print('i have done my duty')
+                self.kill_procs()
+                raise Exception('MEMORY PROBLEM')
             time.sleep(self.interval)
             print(f"Thread {name} count {count}: finishing")
+        return
+
+
+    def kill_procs(self, kill_parent=True, timeout=5, verbose=True):
+        if verbose: print('Killing processes...')
+        # if self.pool:
+        #     self.pool.terminate()
+        #     self.pool.close()
+        #     self.pool.join()
+        # else:
+        #     print('NO POOL')
+        parent = psutil.Process(self.parent_pid)
+        children = parent.children(recursive=True)
+
+        # active = mp.active_children()
+        # print(len(active))
+
+        # import sciris as sc
+        # sc.pr(active[0])
+
+
+        # import sciris as sc
+        # sc.pr(parent)
+
+        for c,child in enumerate(children):
+            if verbose: print(f'Killing child {c+1} of {len(children)}...')
+            child.kill()
+        psutil.wait_procs(children, timeout=timeout)
+        parent.wait(timeout)
+
+        if kill_parent:
+            if verbose: print(f'Killing parent (PID={self.parent_pid})')
+            parent.kill()
+            parent.wait(timeout)
+
         return
 
 
