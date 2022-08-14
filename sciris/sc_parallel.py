@@ -24,7 +24,7 @@ __all__ = ['parallelize', 'parallelcmd', 'parallel_progress']
 
 
 def parallelize(func, iterarg=None, iterkwargs=None, args=None, kwargs=None, ncpus=None, maxcpu=None, maxmem=None,
-                interval=None, parallelizer='default', serial=False, returnpool=False, **func_kwargs):
+                interval=None, parallelizer='concurrent.futures', serial=False, returnpool=False, **func_kwargs):
     '''
     Execute a function in parallel.
 
@@ -113,9 +113,7 @@ def parallelize(func, iterarg=None, iterkwargs=None, args=None, kwargs=None, ncp
 
         import multiprocessing as mp
         pool = mp.Pool(processes=2)
-        results = sc.parallelize(f, iterkwargs=dict(x=[1,2,3], y=[4,5,6]), parallelizer=pool.map)
-        pool.close() # NB, in this case, close and join are not strictly required
-        pool.join()
+        results = sc.parallelize(f, iterkwargs=dict(x=[1,2,3], y=[4,5,6]), parallelizer=pool.map) # Note: parallelizer is pool.map, not pool
 
 
     **Note**: to use on Windows, parallel calls must contained with an ``if __name__ == '__main__'`` block.
@@ -229,7 +227,7 @@ def parallelize(func, iterarg=None, iterkwargs=None, args=None, kwargs=None, ncp
                 parallelizer = 'concurrent.futures'
             if parallelizer == 'concurrent.futures': # Main use case
                 with cf.ProcessPoolExecutor(max_workers=ncpus) as pool:
-                    outputlist = pool.map(_parallel_task, argslist)
+                    outputlist = list(pool.map(_parallel_task, argslist))
             elif parallelizer in ['multiprocessing', 'multiprocess']: # Previous default (multiprocess)
                 if parallelizer == 'multiprocessing':
                     import multiprocessing as mp
