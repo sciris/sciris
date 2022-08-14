@@ -5,7 +5,7 @@ Highlights:
     - ``sc.cpuload()``: alias to ``psutil.cpu_percent()``
     - ``sc.loadbalancer()``: very basic load balancer
     - ``sc.profile()``: a line profiler
-    - ``sc.resourcelimit()``: a monitor to kill processes that exceed memory or other limits
+    - ``sc.resourcemonitor()``: a monitor to kill processes that exceed memory or other limits
 """
 
 import os
@@ -13,16 +13,17 @@ import sys
 import time
 import psutil
 import signal
-# import contextlib
-import threading
 import _thread
-# import tracemalloc
-# import resource
+import threading
 import tempfile
 import warnings
 import numpy as np
+import pylab as pl
 import multiprocessing as mp
 from . import sc_utils as scu
+from . import sc_odict as sco
+from . import sc_fileio as scf
+from . import sc_nested as scn
 
 
 ##############################################################################
@@ -54,13 +55,153 @@ def memload():
     """
     Takes a snapshot of current fraction of memory usage via ``psutil``
 
+    Note on the different functions:
+
+        - ``sc.memload()`` checks current total system memory consumption
+        - ``sc.checkram()`` checks RAM (virtual memory) used by the current Python process
+        - ``sc.checkmem()`` checks memory consumption by a given object
+
     Returns:
         a float between 0-1 representing the fraction of ``psutil.virtual_memory()`` currently used.
     """
     return psutil.virtual_memory().percent / 100
 
 
-def loadbalancer(maxcpu=0.8, maxmem=0.8, index=None, interval=1.0, cpu_interval=0.1, maxtime=36000, label=None, verbose=True, **kwargs):
+
+def checkmem(var, descend=None, alphabetical=False, plot=False, doprint=True, verbose=False):
+    '''
+    Checks how much memory the variable or variables in question use by dumping
+    them to file.
+
+    Note on the different functions:
+
+        - ``sc.memload()`` checks current total system memory consumption
+        - ``sc.checkram()`` checks RAM (virtual memory) used by the current Python process
+        - ``sc.checkmem()`` checks memory consumption by a given object
+
+    Args:
+        var (any): the variable being checked
+        descend (bool): whether or not to descend one level into the object
+        alphabetical (bool): if descending into a dict or object, whether to list items by name rather than size
+        plot (bool): if descending, show the results as a pie chart
+        doprint (bool): whether to print out results
+        verbose (bool or int): detail to print, if >1, print repr of objects along the way
+
+    **Example**::
+
+        import sciris as sc
+        sc.checkmem(['spiffy',rand(2483,589)], descend=True)
+    '''
+
+    def check_one_object(variable):
+        ''' Check the size of one variable '''
+
+        if verbose>1:
+            print(f'  Checking size of {variable}...')
+
+        # Create a temporary file, save the object, check the size, remove it
+        filename = tempfile.mktemp()
+        scf.saveobj(filename, variable, die=False)
+        filesize = os.path.getsize(filename)
+        os.remove(filename)
+
+        # Convert to string
+        factor = 1
+        label = 'B'
+        labels = ['KB','MB','GB']
+        for i,f in enumerate([3,6,9]):
+            if filesize>10**f:
+                factor = 10**f
+                label = labels[i]
+        humansize = float(filesize/float(factor))
+        sizestr = f'{humansize:0.3f} {label}'
+        return filesize, sizestr
+
+    # Initialize
+    varnames  = []
+    variables = []
+    sizes     = []
+    sizestrs  = []
+
+    # Create the object(s) to check the size(s) of
+    varnames = ['Variable'] # Set defaults
+    variables = [var]
+    if descend or descend is None:
+        if hasattr(var, '__dict__'): # It's an object
+            if verbose>1: print('Iterating over object')
+            varnames = sorted(list(var.__dict__.keys()))
+            variables = [getattr(var, attr) for attr in varnames]
+        elif np.iterable(var): # Handle dicts and lists
+            if isinstance(var, dict): # Handle dicts
+                if verbose>1: print('Iterating over dict')
+                varnames = list(var.keys())
+                variables = var.values()
+            else: # Handle lists and other things
+                if verbose>1: print('Iterating over list')
+                varnames = [f'item {i}' for i in range(len(var))]
+                variables = var
+        else:
+            if descend: # Could also be None
+                print('Object is not iterable: cannot descend') # Print warning and use default
+
+    # Compute the sizes
+    for v,variable in enumerate(variables):
+        if verbose:
+            print(f'Processing variable {v} of {len(variables)}')
+        filesize, sizestr = check_one_object(variable)
+        sizes.append(filesize)
+        sizestrs.append(sizestr)
+
+    if alphabetical:
+        inds = np.argsort(varnames)
+    else:
+        inds = np.argsort(sizes)[::-1]
+
+    data = sco.objdict({varnames[i]:[sizes[i], sizestrs[i]] for i in inds})
+
+    if plot: # pragma: no cover
+        pl.axes(aspect=1)
+        pl.pie(np.array(sizes)[inds], labels=np.array(varnames)[inds], autopct='%0.2f')
+
+    return data
+
+
+def checkram(unit='mb', fmt='0.2f', start=0, to_string=True):
+    '''
+    Measure actual memory usage, typically at different points throughout execution.
+
+    Note on the different functions:
+
+        - ``sc.memload()`` checks current total system memory consumption
+        - ``sc.checkram()`` checks RAM (virtual memory) used by the current Python process
+        - ``sc.checkmem()`` checks memory consumption by a given object
+
+    **Example**::
+
+        import sciris as sc
+        import numpy as np
+        start = sc.checkram(to_string=False)
+        a = np.random.random((1_000, 10_000))
+        print(sc.checkram(start=start))
+
+    New in version 1.0.0.
+    '''
+    process = psutil.Process(os.getpid())
+    mapping = {'b':1, 'kb':1e3, 'mb':1e6, 'gb':1e9}
+    try:
+        factor = mapping[unit.lower()]
+    except KeyError: # pragma: no cover
+        raise scu.KeyNotFoundError(f'Unit {unit} not found among {scu.strjoin(mapping.keys())}')
+    mem_use = process.memory_info().rss/factor - start
+    if to_string:
+        output = f'{mem_use:{fmt}} {unit.upper()}'
+    else:
+        output = mem_use
+    return output
+
+
+def loadbalancer(maxcpu=0.8, maxmem=0.8, index=None, interval=0.5, cpu_interval=0.1,
+                 maxtime=36000, label=None, verbose=True, **kwargs):
     '''
     Delay execution while CPU load is too high -- a very simple load balancer.
 
@@ -68,7 +209,7 @@ def loadbalancer(maxcpu=0.8, maxmem=0.8, index=None, interval=1.0, cpu_interval=
         maxcpu       (float) : the maximum CPU load to allow for the task to still start
         maxmem       (float) : the maximum memory usage to allow for the task to still start
         index        (int)   : the index of the task -- used to start processes asynchronously (default None)
-        interval     (float) : the time delay to poll to see if CPU load is OK (default 1 second)
+        interval     (float) : the time delay to poll to see if CPU load is OK (default 0.5 seconds)
         cpu_interval (float) : number of seconds over which to estimate CPU load (default 0.1; to small gives inaccurate readings)
         maxtime      (float) : maximum amount of time to wait to start the task (default 36000 seconds (10 hours))
         label        (str)   : the label to print out when outputting information about task delay or start (default None)
@@ -86,13 +227,6 @@ def loadbalancer(maxcpu=0.8, maxmem=0.8, index=None, interval=1.0, cpu_interval=
     | New in version 2.0.0: ``maxmem`` argument; ``maxload`` renamed ``maxcpu``
     '''
 
-    def sleep(interval=None, pause=None):
-        ''' Sleeps for an average of ``interval`` seconds, but do it randomly so you don't get locking '''
-        if interval:
-            pause = interval*2*np.random.rand()
-        time.sleep(pause)
-        return
-
     # Handle deprecation
     maxload = kwargs.pop('maxload', None)
     if maxload is not None: # pragma: no cover
@@ -105,10 +239,6 @@ def loadbalancer(maxcpu=0.8, maxmem=0.8, index=None, interval=1.0, cpu_interval=
     if maxmem   is None or maxmem  is False: maxmem  = 1.0
     if maxtime  is None or maxtime is False: maxtime = 36000
     if interval is None: interval = 0
-
-    # If not limits, immediately return
-    if maxcpu == 1.0 and maxmem == 1.0:
-        return
 
     if label is None:
         label = ''
@@ -126,12 +256,13 @@ def loadbalancer(maxcpu=0.8, maxmem=0.8, index=None, interval=1.0, cpu_interval=
     if (not 0 < maxcpu < 1) and (not 0 < maxmem < 1):
         return # Return immediately if no max load
     else:
-        sleep(pause=pause) # Give it time to asynchronize
+        time.sleep(pause) # Give it time to asynchronize, with a predefined delay
 
     # Loop until load is OK
     toohigh = True # Assume too high
     count = 0
     maxcount = maxtime/float(interval)
+    string = ''
     while toohigh and count<maxcount:
         count += 1
         cpu_current = cpuload(interval=cpu_interval) # If interval is too small, can give very inaccurate readings
@@ -144,17 +275,17 @@ def loadbalancer(maxcpu=0.8, maxmem=0.8, index=None, interval=1.0, cpu_interval=
         mem_str = f'{mem_current:0.2f}{mem_compare}{maxmem:0.2f}'
         process_str = f'process {index}' if index else 'process'
         if cpu_toohigh:
-            if verbose:
-                print(label+f'CPU load too high ({cpu_str}); {process_str} queued {count} times')
-            sleep(interval=interval)
+            string = label+f'CPU load too high ({cpu_str}); {process_str} queued {count} times'
+            scu.randsleep(interval)
         elif mem_toohigh:
-            if verbose:
-                print(label+f'Memory load too high ({mem_str}); {process_str} queued {count} times')
-            sleep(interval=interval)
+            string = label+f'Memory load too high ({mem_str}); {process_str} queued {count} times'
+            scu.randsleep(interval)
         else:
             toohigh = False
-            if verbose: print(label+f'CPU & memory fine ({cpu_str} & {mem_str}), starting {process_str} after {count} tries')
-    return
+            string = label+f'CPU & memory fine ({cpu_str} & {mem_str}), starting {process_str} after {count} tries'
+        if verbose:
+            print(string)
+    return string
 
 
 
@@ -293,473 +424,234 @@ def mprofile(run, follow=None, show_results=True, *args, **kwargs):
 
 
 ##############################################################################
-#%% Memory management
+#%% Resource monitor
 ##############################################################################
 
-__all__ += ['checkmem', 'checkram', 'resourcelimit']
+__all__ += ['LimitExceeded', 'resourcemonitor']
 
 
-def checkmem(var, descend=None, alphabetical=False, plot=False, verbose=False):
+
+class LimitExceeded(MemoryError, KeyboardInterrupt):
     '''
-    Checks how much memory the variable or variables in question use by dumping
-    them to file. See also checkram().
+    Custom exception for use with the ``sc.resourcemonitor()`` monitor.
 
-    Args:
-        var (any): the variable being checked
-        descend (bool): whether or not to descend one level into the object
-        alphabetical (bool): if descending into a dict or object, whether to list items by name rather than size
-        plot (bool): if descending, show the results as a pie chart
-        verbose (bool or int): detail to print, if >1, print repr of objects along the way
-
-    **Example**::
-
-        import sciris as sc
-        sc.checkmem(['spiffy',rand(2483,589)], descend=True)
+    It inherits from ``MemoryError`` since this is the most similar built-in Python
+    except, and it inherits from ``KeyboardInterrupt`` since this is the means by
+    which the monitor interrupts the main Python thread.
     '''
-    from .sc_fileio import saveobj # Here to avoid recursion
-
-    def check_one_object(variable):
-        ''' Check the size of one variable '''
-
-        if verbose>1:
-            print(f'  Checking size of {variable}...')
-
-        # Create a temporary file, save the object, check the size, remove it
-        filename = tempfile.mktemp()
-        saveobj(filename, variable, die=False)
-        filesize = os.path.getsize(filename)
-        os.remove(filename)
-
-        # Convert to string
-        factor = 1
-        label = 'B'
-        labels = ['KB','MB','GB']
-        for i,f in enumerate([3,6,9]):
-            if filesize>10**f:
-                factor = 10**f
-                label = labels[i]
-        humansize = float(filesize/float(factor))
-        sizestr = f'{humansize:0.3f} {label}'
-        return filesize, sizestr
-
-    # Initialize
-    varnames  = []
-    variables = []
-    sizes     = []
-    sizestrs  = []
-
-    # Create the object(s) to check the size(s) of
-    varnames = [''] # Set defaults
-    variables = [var]
-    if descend or descend is None:
-        if hasattr(var, '__dict__'): # It's an object
-            if verbose>1: print('Iterating over object')
-            varnames = sorted(list(var.__dict__.keys()))
-            variables = [getattr(var, attr) for attr in varnames]
-        elif np.iterable(var): # Handle dicts and lists
-            if isinstance(var, dict): # Handle dicts
-                if verbose>1: print('Iterating over dict')
-                varnames = list(var.keys())
-                variables = var.values()
-            else: # Handle lists and other things
-                if verbose>1: print('Iterating over list')
-                varnames = [f'item {i}' for i in range(len(var))]
-                variables = var
-        else:
-            if descend: # Could also be None
-                print('Object is not iterable: cannot descend') # Print warning and use default
-
-    # Compute the sizes
-    for v,variable in enumerate(variables):
-        if verbose:
-            print(f'Processing variable {v} of {len(variables)}')
-        filesize, sizestr = check_one_object(variable)
-        sizes.append(filesize)
-        sizestrs.append(sizestr)
-
-    if alphabetical:
-        inds = np.argsort(varnames)
-    else:
-        inds = np.argsort(sizes)[::-1]
-
-    for i in inds:
-        varstr = f'Variable "{varnames[i]}"' if varnames[i] else 'Variable'
-        print(f'{varstr} is {sizestrs[i]}')
-
-    if plot: # pragma: no cover
-        import pylab as pl # Optional import
-        pl.axes(aspect=1)
-        pl.pie(pl.array(sizes)[inds], labels=pl.array(varnames)[inds], autopct='%0.2f')
-
-    return
+    pass
 
 
-def checkram(unit='mb', fmt='0.2f', start=0, to_string=True):
-    '''
-    Unlike ``sc.checkmem()``, ``sc.checkram()`` looks at actual memory usage, typically at different
-    points throughout execution.
-
-    **Example**::
-
-        import sciris as sc
-        import numpy as np
-        start = sc.checkram(to_string=False)
-        a = np.random.random((1_000, 10_000))
-        print(sc.checkram(start=start))
-
-    New in version 1.0.0.
-    '''
-    process = psutil.Process(os.getpid())
-    mapping = {'b':1, 'kb':1e3, 'mb':1e6, 'gb':1e9}
-    try:
-        factor = mapping[unit.lower()]
-    except KeyError: # pragma: no cover
-        raise scu.KeyNotFoundError(f'Unit {unit} not found among {scu.strjoin(mapping.keys())}')
-    mem_use = process.memory_info().rss/factor - start
-    if to_string:
-        output = f'{mem_use:{fmt}} {unit.upper()}'
-    else:
-        output = mem_use
-    return output
-
-
-class resourcelimit(scu.prettyobj):
+class resourcemonitor(scu.prettyobj):
     """
     Asynchronously monitor resource (e.g. memory) usage and terminate the process
-    if the threshold is exceeded.
+    if the specified threshold is exceeded.
 
     Args:
-        mem (float): maximum memory allowed
+        mem (float): maximum virtual memory allowed (as a fraction of total RAM)
+        cpu (float): maximum CPU usage (NB: included for completeness only; typically one would not terminate a process just due to high CPU usage)
+        time (float): maximum time limit in seconds
+        interval (float): how frequently to check memory/CPU usage (in seconds)
+        label (str): an optional label to use while printing out progress
+        start (bool): whether to start the resource monitor on initialization (else call ``start()``)
+        die (bool): whether to raise an exception if the resource limit is exceeded
+        callback (func): optional callback if the resource limit is exceeded
+        verbose (bool): detail to print out (default: if exceeded; True: every step; False: no output)
 
     **Examples**::
-        sc.resourcelimit(mem=0.8, die=True, callback=post_to_slack)
+        sc.resourcemonitor(mem=0.8)
+        memory_heavy_job()
+
+        sc.resourcemonitor(mem=0.95, cpu=0.9, time=3600, label='Load checker', die=False, callback=post_to_slack)
+        long_cpu_heavy_job()
+        ,
     """
-    def __init__(self, mem=0.9, cpu=None, time=None, interval=1.0, start=True, die=True, callback=None, verbose=False):
-        self.mem = mem if mem else 1.0
-        self.cpu = cpu if cpu else 1.0
-        self.time = time if time else np.inf
-        self.interval = interval
-        self.die = die
-        self.callback = callback
-        self.verbose = verbose
-        self.running = False
-        self.thread = None
-        self.parent_pid = os.getpid()
-        self.exception = None
+    def __init__(self, mem=0.9, cpu=None, time=None, interval=1.0, label=None, start=True, die=True, callback=None, verbose=None):
+        self.mem        = mem  if mem  else 1.0    # Memory limit
+        self.cpu        = cpu  if cpu  else 1.0    # CPU limit
+        self.time       = time if time else np.inf # Time limit
+        self.interval   = interval
+        self.label      = label if label else 'Monitor'
+        self.die        = die
+        self.callback   = callback
+        self.verbose    = verbose
+        self.running    = False # Whether the monitor is running
+        self.count      = 0 # Count number of iterations the monitor has been running for
+        self.start_time = 0 # When the monitor started running
+        self.elapsed    = 0 # How long the monitor has been running for
+        self.log        = [] # Log of output
+        self.parent     = os.getpid() # ID of the current process (parent of thread)
+        self.thread     = None # Store the separate thread that will be running the monitor
+        self.exception  = None # Store the exception if raised
+        self._orig_sigint = signal.getsignal(signal.SIGINT)
         if start:
             self.start()
         return
 
 
-    def start(self):
+    def start(self, label=None):
+        '''
+        Start the monitor running
+
+        Args:
+            label (str): optional label for printing progress
+        '''
 
         def handler(signum, frame):
-            print('I just clicked on CTRL-C ')
-            raise MemoryError from KeyboardInterrupt
+            ''' Custom exception handler '''
+            if self.exception is not None:
+                raise self.exception
+            else:
+                return self._orig_sigint()
 
-        self.orig_sigint = signal.getsignal(signal.SIGINT)
-        signal.signal(signal.SIGINT, handler)
+        if not self.running:
 
-        # import sys
-        # def my_except_hook(exctype, value, traceback):
-        #     if exctype == KeyboardInterrupt:
-        #         print("Handler code goes here")
-        #     else:
-        #         sys.__excepthook__(exctype, value, traceback)
-        # sys.excepthook = my_except_hook
+            # Overwrite default KeyboardInterrupt handling when we start
+            signal.signal(signal.SIGINT, handler)
 
-        self.running = True
-        self.thread = threading.Thread(target=self.monitor, args=('foo'), daemon=True)
-        self.thread.start()
+            # Create a thread and start running
+            self.start_time = time.time()
+            self.running = True
+            self.thread = threading.Thread(target=self.monitor, daemon=True)
+            self.thread.start()
 
-        # while not self.event.is_set():
-        #     self.event.wait(1)
-        # # self.thread.join()
-        # print('WHEN CALLED')
-        # if self.exception:
-        #     raise self.exception
-        return
+        return self
 
 
     def stop(self):
-        signal.signal(signal.SIGINT, self.orig_sigint)
-        # sys.excepthook = sys.__excepthook__
+        ''' Stop the monitor from running '''
+        if self.verbose:
+            print(f'{self.label}: done')
         self.running = False
-        if self.exception is not None:
-            raise self.Exception
-        return
+        signal.signal(signal.SIGINT, self._orig_sigint) # Restore original KeyboardInterrupt handling
+        if self.exception is not None: # This exception has likely already been raised, but if not, raise it now
+            raise self.exception
+        return self
 
 
-    def __enter__(self):
-        if not self.started:
-            self.start()
-        return
+    def __enter__(self, *args, **kwargs):
+        ''' For use in a context block '''
+        return self.start()
 
 
-    def __exit__(self):
-        self.stop()
-        return
+    def __exit__(self, *args, **kwargs):
+        ''' For use in a context block '''
+        return self.stop()
 
 
-    def monitor(self, *args, **kwargs):
-        name = 'faj'
-        count = 0
+    def monitor(self, label=None, *args, **kwargs):
+        ''' Actually run the resource monitor '''
         while self.running:
-            count += 1
-            print(f"Thread {name} count {count}: starting")
-            if count > 2:
-                _thread.interrupt_main()
+            self.count += 1
+            is_ok, checkdata, checkstr = self.check()
+            if self.verbose:
+                updatestr = f"{self.label} step {self.count}: {checkstr}"
+                print(updatestr)
+                if self.callback:
+                    self.callback(checkdata, updatestr)
+            if not is_ok:
                 self.running = False
-                self.exception = Exception('MEMORY PROBLEM')
-                # self.event.set()
-                # print('i have done my duty')
-                self.kill_procs()
-                # raise self.exception
+                self.exception = LimitExceeded(checkstr)
+                if self.callback:
+                    self.callback(checkdata, checkstr)
+                if self.die:
+                    self.kill()
             time.sleep(self.interval)
-            # print(f"Thread {name} count {count}: finishing")
+
         return
 
 
-    def kill_procs(self, kill_parent=False, verbose=True):
-        if verbose: print('Killing processes...')
+    def check(self):
+        ''' Check if any limits have been exceeded '''
+        time_now = time.time()
+        self.elapsed = time_now - self.start_time
+
+        # Define the limits
+        lim = sco.objdict(
+            cpu  = self.cpu,
+            mem  = self.mem,
+            time = self.time,
+        )
+
+        # Check current load
+        now = sco.objdict(
+            cpu  = cpuload(),
+            mem  = memload(),
+            time = self.elapsed,
+        )
+
+        # Check if limits are OK, and the ratios
+        ok    = sco.objdict()
+        ratio = sco.objdict()
+        for k in lim.keys():
+            ok[k]    = now[k] <= lim[k]
+            ratio[k] = now[k] / lim[k]
+        is_ok = ok[:].all()
+
+        # Gather into output form
+        checkdata = sco.objdict(
+            count    = self.count,
+            elapsed  = self.elapsed,
+            is_ok    = is_ok,
+            load     = now,
+            limit    = lim,
+            limit_ok = ok,
+            ratio    = ratio
+        )
+        self.log.append(checkdata)
+
+        # Convert to string
+        prefix = 'Limits OK' if is_ok else 'Limits exceeded'
+        datalist = scu.autolist()
+        if self.cpu < 1:
+            datalist += f'CPU: {now.cpu:0.2f} vs {lim.cpu:0.2f}'
+        if self.mem < 1:
+            datalist += f'Memory: {now.mem:0.2f} vs {lim.mem:0.2f}'
+        if np.isfinite(self.time):
+            datalist += f'Time: {now.time:n} vs {lim.time:n}'
+        datastr = '; '.join(datalist)
+        checkstr = f'{prefix}: {datastr}'
+
+        return is_ok, checkdata, checkstr
+
+
+    def kill(self, kill_parent=False):
+        '''
+        Kill all processes
+
+        Args:
+            kill_parent (bool): whether to kill the parent process as well (usually unrecoverable)
+        '''
+        kill_verbose = self.verbose is not False # Print if self.verbose is True or None (just not False)
+        if kill_verbose:
+            print('Killing processes...')
+
         parent = psutil.Process(self.parent_pid)
         children = parent.children(recursive=True)
 
         for c,child in enumerate(children):
-            if verbose: print(f'Killing child {c+1} of {len(children)}...')
+            if kill_verbose:
+                print(f'Killing child {c+1} of {len(children)}...')
             child.kill()
 
         if kill_parent:
-            if verbose: print(f'Killing parent (PID={self.parent_pid})')
+            if kill_verbose:
+                print(f'Killing parent (PID={self.parent_pid})')
             parent.kill()
+
+        # Finally, interrupt the main thread -- usually not recoverable, but the only way to interrupt it
+        _thread.interrupt_main()
 
         return
 
 
+    def to_df(self):
+        ''' Convert the log into a pandas dataframe '''
+        import pandas as pd # Slow import
+        entries = []
+        for entry in self.log:
+            flat = scn.flattendict(entry, sep='_')
+            entries.append(flat)
+        self.df = pd.DataFrame(entries)
+        return self.df
 
-
-
-
-
-
-
-
-
-
-
-# __all__ += ['limit_malloc', 'memory', 'ResourceLimit', 'MemoryMonitor']
-
-# class ResourceLimit:
-#     """
-#     DOCME
-#     """
-#     def __init__(self, limit, verbose=False):
-#         self.percentage_limit = limit
-#         self.verbose = verbose
-#         self.LIMITS = [('RLIMIT_DATA', 'heap size'),
-#                        ('RLIMIT_AS', 'address size'),
-# ]
-#     def __enter__(self):
-#         # New soft limit
-#         totalmem = psutil.virtual_memory().available
-#         new_soft = int(round(totalmem * self.percentage_limit))
-
-#         self.old_softie = []
-#         self.old_hardie = []
-
-#         for name, description in self.LIMITS:
-#             limit_num = getattr(resource, name)
-#             soft, hard = resource.getrlimit(limit_num)
-#             self.old_softie.append(soft)
-#             self.old_hardie.append(hard)
-#             resource.setrlimit(limit_num, (new_soft, hard))
-#             if self.verbose:
-#                 sl, unit_sl = self.human_readable(new_soft)
-#                 hl, unit_hl = self.human_readable(hard)
-#                 print('Setting {:<23} {:<23} {:6} {}{}/{}{}'.format(name, description, "to", sl, unit_sl, hl, unit_hl))
-
-#     def __exit__(self, exc_type, exc_value, exc_tb):
-#         # TODO: Deal with exceptions here
-#         for (name, description), soft, hard in zip(self.LIMITS, self.old_softie, self.old_hardie):
-#             limit_num = getattr(resource, name)
-#             resource.setrlimit(limit_num, (soft, hard))
-#             if self.verbose:
-#                 sl, unit_sl = self.human_readable(soft)
-#                 hl, unit_hl = self.human_readable(hard)
-#                 print('Resetting {:<23} {:<23} {:6} {}{}/{}{}'.format(name, description, "to", sl, unit_sl, hl, unit_hl))
-
-#     def human_readable(self, limit):
-#         """
-#         Deal with limits that are -1, implies unlimited
-#         """
-#         if limit < 0:
-#             unit = ""
-#             limit = "max"
-#         else:
-#             unit = "GB"
-#             limit >>= 30
-#         return limit, unit
-
-
-# class MemoryMonitor(mp.Process):
-#     """
-#     DOCME
-
-#     def function_that_needs_a_lot_of_ram():
-#        l1 = []
-#        for i in range(2000):
-#            l1.append(x for x in range(1000000))
-#        return l1
-
-#     with sc.MemoryMonitor(max_mem=0.35) as monitor:
-#        # Start operation of interest
-#         ptask = multiprocess.Process(target=function_that_needs_a_lot_of_ram)
-#         ptask.start()
-#       # Let the memory monitor track the process of interest
-#         monitor.task_id(ptask.pid)
-#       # Start monitoring memory
-#         monitor.start()
-#       # If the process of interest finished, stop monitoring
-#         monitor.stop(ptask.join())
-
-
-#     """
-#     def __init__(self, max_mem, verbose=True, verbose_monitor=False):
-#         mp.Process.__init__(self, name='MemoryLimiter')
-#         self.max_mem = max_mem
-#         self.current_mem = take_mem_snapshot()
-#         self.daemon = True # Make this a deamon process
-#         self.reached_memory_limit = False
-#         self.verbose = verbose
-#         self.verbose_monitor = verbose_monitor # To be removed, just for debugging
-
-#     def run(self):
-#         while not self.reached_memory_limit:
-#             # TODO: add interval attr
-#             # time.sleep(1)
-#             self.current_mem = take_mem_snapshot()
-#             if self.current_mem > self.max_mem:
-#                 self.reached_memory_limit = True
-#             if self.verbose_monitor:
-#                 print(f"Measuring memory: {self.current_mem:.3f}")
-
-#         # Terminate task
-#         self.reached_memory_limit = True
-#         self.stop_task()
-
-#     def stop(self, join_output):
-#         if join_output is None:
-#             if self.verbose:
-#                 print("Terminate memory monitoring")
-#             self.terminate()
-
-#     def task_id(self, pid):
-#         """
-#         Track the process of interest
-#         """
-#         self.task_id = pid
-#         self.p = psutil.Process(pid)
-
-#     def stop_task(self):
-#         """
-#         Terminate the process of interest
-#         """
-#         if self.verbose:
-#             print(f"Terminating task because reached max memory limit: {self.current_mem:.3f}/{self.max_mem:.3f}")
-#         self.p.terminate()
-
-#     def __enter__(self):
-#         return self
-
-#     def __exit__(self, exc_type, exc_val, exc_tb):
-#         self.join()
-#         return
-
-
-# def take_mem_snapshot():
-#     """
-#     Take a snapshot of current memory usage (in %) via psutil
-#     Arguments: None
-
-#     Returns: a float between 0-1 representing the fraction of psutil.virtuak memory currently used.
-#     """
-#     snapshot = psutil.virtual_memory().percent / 100.0
-#     return snapshot
-
-
-# def memory(percentage=0.8, verbose=True):
-#     """
-#     Arguments:
-#         percentage: a float between 0 and 1
-#         verbose: whether to print more info
-#     @sc.memory(0.05)
-#     def function_that_needs_a_lot_of_ram():
-#        l1 = []
-#        for i in range(2000):
-#            l1.append(x for x in range(1000000))
-#        return l1
-
-#     function_that_needs_a_lot_of_ram()
-#     """
-#     def decorator(function):
-#         def wrapper(*args, **kwargs):
-#             with ResourceLimit(percentage_limit=percentage, verbose=verbose):
-#                 try:
-#                     return function(*args, **kwargs)
-#                 except MemoryError:
-#                     if verbose:
-#                         print("Aborting. Memory limit reached.")
-#                     return
-#         return wrapper
-#     return decorator
-
-
-# @contextlib.contextmanager
-# def limit_malloc(size):
-#     """
-#     Context manager to trace memory block allocation.
-#     Useful for debuggin purposes.
-
-#     Argument:
-#        size (in B)
-
-#     **Example**::
-
-#         import sciris as sc
-#         with sc.limit_malloc(500):
-#            l1 = []
-#            for x in range(200000):
-#                # print(x)
-#                l1.append(x)
-
-#     Source:
-#     https://gist.github.com/adalekin/2b4219808ac72cafda6cff896739a11d
-#     https://docs.python.org/3.9/library/tracemalloc.html
-#     """
-#     TRACE_FILTERS = (
-#         tracemalloc.Filter(False, __file__),
-#         tracemalloc.Filter(False, tracemalloc.__file__),
-#         tracemalloc.Filter(False, '<unknown>'),
-#     )
-
-#     if not tracemalloc.is_tracing():
-#         tracemalloc.start()
-
-#     snapshot1 = tracemalloc.take_snapshot()
-
-#     yield
-
-#     snapshot2 = tracemalloc.take_snapshot().filter_traces(TRACE_FILTERS)
-#     snapshot1 = snapshot1.filter_traces(TRACE_FILTERS)
-
-#     snapshot = snapshot2.compare_to(snapshot1, 'lineno')
-
-#     try:
-#         current_size = sum(stat.size_diff for stat in snapshot)
-
-#         if current_size > size:
-#             for stat in snapshot:
-#                 print(stat)
-#             raise RuntimeError(f'Memory usage exceeded the threshold: {current_size} > {size}')
-#     finally:
-#         tracemalloc.stop()

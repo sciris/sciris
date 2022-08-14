@@ -321,7 +321,7 @@ def parallelcmd(cmd=None, parfor=None, returnval=None, maxcpu=None, maxmem=None,
         """
         results = sc.parallelcmd(cmd=cmd, parfor=parfor, returnval=returnval, const=const)
 
-    New in version 2.0.0: replaced ``maxload`` with ``maxcpu``/``maxmem``
+    New in version 2.0.0: replaced ``maxload`` with ``maxcpu``/``maxmem``; automatically de-indent the command
     '''
 
     # Handle maxload

@@ -109,12 +109,9 @@ def test_parallelcmd():
 
 def test_components():
     sc.heading('Testing subcomponents directly')
-    sc.loadbalancer()
-
-    def empty(): pass
 
     args = [0]*10
-    args[0] = empty
+    args[0] = lambda: None
     args[3] = None # Set iterdict to None
     args[4] = None # Set args to empty list
     args[5] = None # Set kwargs to empty dict

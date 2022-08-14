@@ -205,53 +205,6 @@ def test_types():
 
 #%% Misc. functions
 
-def test_profile():
-    sc.heading('Test profiling functions')
-
-    def slow_fn():
-        n = 10000
-        int_list = []
-        int_dict = {}
-        for i in range(n):
-            int_list.append(i)
-            int_dict[i] = i
-        return
-
-    def big_fn():
-        n = 1000
-        int_list = []
-        int_dict = {}
-        for i in range(n):
-            int_list.append([i]*n)
-            int_dict[i] = [i]*n
-        return
-
-    class Foo:
-        def __init__(self):
-            self.a = 0
-            return
-
-        def outer(self):
-            for i in range(100):
-                self.inner()
-            return
-
-        def inner(self):
-            for i in range(1000):
-                self.a += 1
-            return
-
-    foo = Foo()
-    try:
-        sc.mprofile(big_fn) # NB, cannot re-profile the same function at the same time
-    except TypeError as E: # This happens when re-running this script
-        print(f'Unable to re-profile memory function; this is usually not cause for concern ({E})')
-    sc.profile(run=foo.outer, follow=[foo.outer, foo.inner])
-    lp = sc.profile(slow_fn)
-
-    return lp
-
-
 def test_suggest():
     sc.heading('test_suggest()')
     string = 'foo'
@@ -287,13 +240,6 @@ def test_misc():
     sc.heading('Testing miscellaneous functions')
     o = sc.objdict()
 
-    print('\nTesting checkmem')
-    sc.checkmem(['spiffy',np.random.rand(243,589)], descend=True)
-
-    print('\nTesting checkram')
-    o.ram = sc.checkram()
-    print(o.ram)
-
     print('\nTesting runcommand')
     sc.runcommand('command_probably_not_found')
 
@@ -326,7 +272,6 @@ def test_misc():
 
 #%% Classes
 
-
 def test_links():
     sc.heading('Testing links')
     o = sc.objdict()
@@ -335,10 +280,10 @@ def test_links():
         raise sc.KeyNotFoundError('Example')
 
     obj = sc.objdict()
-    obj.uid = sc.uuid()
+    obj.uid  = sc.uuid()
     obj.data = np.random.rand(5)
-    o.obj = obj
-    o.link = sc.Link(obj)
+    o.obj    = obj
+    o.link   = sc.Link(obj)
     o.o_copy = sc.dcp(o)
 
     assert np.all(o.link()['data'] == o.obj['data'])
@@ -365,7 +310,6 @@ if __name__ == '__main__':
     types     = test_types()
 
     # Miscellaneous
-    lp        = test_profile()
     dists     = test_suggest()
     misc      = test_misc()
 

@@ -513,7 +513,7 @@ def getplatform(expected=None, die=False):
         expected (str): if not None, check if the current platform is this
         die (bool): if True and expected is defined, raise an exception
 
-    **Example**::d
+    **Example**::
 
         sc.getplatform() # Get current name of platform
         sc.getplatform('windows', die=True) # Raise an exception if not on Windows

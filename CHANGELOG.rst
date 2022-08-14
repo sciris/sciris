@@ -20,6 +20,7 @@ New functions and methods
 #. ``sc.rmnans()`` and ``sc.fillnans()`` have been added as aliases of ``sc.sanitize()`` with default options.
 #. ``sc.rmpath()`` removes both files and folders, with an optional interactive mode.
 #. ``sc.ispath()`` is an alias for ``isinstance(obj, pathlib.Path)``.
+#. ``sc.randsleep()`` sleeps for a nondeterministic period of time
 
 Bugfixes
 ~~~~~~~~
@@ -30,11 +31,12 @@ Improvements
 ~~~~~~~~~~~~
 #. If a copy/deepcopy is not possible, ``sc.cp()``/``sc.dcp()`` now raise an exception by default (previously, they silenced it).
 #. ``sc.timer()`` now has a ``plot()`` method.
-#. ``sc.parallelize()`` now supports additional parallelization options, e.g. ``concurrent.futures``.
+#. ``sc.parallelize()`` now supports additional parallelization options, e.g. ``concurrent.futures``, and new ``maxcpu``/``maxmem`` arguments.
 #. ``sc.daterange()`` now accepts ``datedelta`` arguments, e.g. ``sc.daterange('2022-02-22', weeks=2)``.
 #. ``sc.savefig()`` by default now creates folders if they don't exist.
 #. ``sc.sanitize()`` can now handle multidimensional arrays.
 #. ``sc.loadmetadata()`` can now read metadata from JPG files.
+#. ``sc.checkmem()`` now returns a dictionary of sizes rather than print to screen.
 
 Housekeeping
 ~~~~~~~~~~~~
