@@ -99,8 +99,8 @@ def test_parallelcmd():
     parfor = {'val':[3,5,9]}
     returnval = 'result'
     cmd = """
-newval = val+const # Note that this can't be indented
-result = newval**2
+    newval = val+const
+    result = newval**2
     """
     results = sc.parallelcmd(cmd=cmd, parfor=parfor, returnval=returnval, const=const, maxload=0)
     print(results)

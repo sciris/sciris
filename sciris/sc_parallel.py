@@ -13,6 +13,7 @@ import multiprocess as mp
 import multiprocessing as mpi
 import concurrent.futures as cf
 from functools import partial
+import textwrap
 import warnings
 from . import sc_utils as scu
 from . import sc_profiling as scp
@@ -55,19 +56,19 @@ def parallelize(func, iterarg=None, iterkwargs=None, args=None, kwargs=None, ncp
     the parallelizer.
 
     Args:
-        func (function): the function to parallelize
-        iterarg (list): the variable(s) to provide to each process (see examples below)
-        iterkwargs (dict): another way of providing variables to each process (see examples below)
-        args (list): positional arguments for each process, the same for all processes
-        kwargs (dict): keyword arguments for each process, the same for all processes
-        ncpus (int or float): number of CPUs to use (if <1, treat as a fraction of the total available; if None, use loadbalancer)
-        maxcpu (float): maximum CPU load; otherwise, delay the start of the next process (not used if ``ncpus`` is specified)
-        maxmem (float): maximum fraction of virtual memory (RAM); otherwise, delay the start of the next process
-        interval (float): number of seconds to pause between starting processes for checking load
-        parallelizer (str/func): parallelization function; default 'multiprocess' (other choices are 'concurrent.futures', 'multiprocessing', or user-supplied; see example below)
-        serial (bool): whether to skip parallelization run in serial (useful for debugging)
-        returnpool (bool): whether to return the process pool as well as the results
-        func_kwargs (dict): merged with kwargs (see above)
+        func         (func)      : the function to parallelize
+        iterarg      (list)      : the variable(s) to provide to each process (see examples below)
+        iterkwargs   (dict)      : another way of providing variables to each process (see examples below)
+        args         (list)      : positional arguments for each process, the same for all processes
+        kwargs       (dict)      : keyword arguments for each process, the same for all processes
+        ncpus        (int/float) : number of CPUs to use (if <1, treat as a fraction of the total available; if None, use loadbalancer)
+        maxcpu       (float)     : maximum CPU load; otherwise, delay the start of the next process (not used if ``ncpus`` is specified)
+        maxmem       (float)     : maximum fraction of virtual memory (RAM); otherwise, delay the start of the next process
+        interval     (float)     : number of seconds to pause between starting processes for checking load
+        parallelizer (str/func)  : parallelization function; default 'multiprocess' (other choices are 'concurrent.futures', 'multiprocessing', or user-supplied; see example below)
+        serial       (bool)      : whether to skip parallelization run in serial (useful for debugging)
+        returnpool   (bool)      : whether to return the process pool as well as the results
+        func_kwargs  (dict)      : merged with kwargs (see above)
 
     Returns:
         List of outputs from each process
@@ -140,7 +141,8 @@ def parallelize(func, iterarg=None, iterkwargs=None, args=None, kwargs=None, ncp
             print(results)
 
     | New in version 1.1.1: "serial" argument.
-    | New in version 2.0.0: changed default parallelizer from ``multiprocess.Pool`` to ``concurrent.futures.ProcessPoolExecutor``; replaced ``maxload`` with ``maxcpu``/``maxmem``
+    | New in version 2.0.0: changed default parallelizer from ``multiprocess.Pool`` to ``concurrent.futures.ProcessPoolExecutor``;
+    replaced ``maxload`` with ``maxcpu``/``maxmem``; added ``returnpool`` argument
     '''
     # Handle maxload
     maxload = func_kwargs.pop('maxload', None)
@@ -232,6 +234,7 @@ def parallelize(func, iterarg=None, iterkwargs=None, args=None, kwargs=None, ncp
          # Standard usage: use the default map() function
         elif parallelizer is None or scu.isstring(parallelizer):
 
+            # Map parallelizer to consistent choices
             default = 'multiprocess'
             mapping = {
                 None: default,
@@ -248,18 +251,16 @@ def parallelize(func, iterarg=None, iterkwargs=None, args=None, kwargs=None, ncp
                 raise scu.KeyNotFoundError(errormsg)
 
             # Choose which parallelizer to use
-            if parallelizer in [None, 'default']:
-                parallelizer = 'concurrent.futures'
-            if parallelizer == 'concurrent.futures': # Main use case
-                with cf.ProcessPoolExecutor(max_workers=ncpus) as pool:
-                    outputlist = list(pool.map(_parallel_task, argslist))
-            elif parallelizer == 'multiprocess':
+            if parallelizer == 'multiprocess': # Main use case
                 with mp.Pool(processes=ncpus) as pool:
                     outputlist = pool.map(_parallel_task, argslist)
             elif parallelizer == 'multiprocessing':
                 with mpi.Pool(processes=ncpus) as pool:
                     outputlist = pool.map(_parallel_task, argslist)
-            else: # Should be unreachable
+            elif parallelizer == 'concurrent.futures':
+                with cf.ProcessPoolExecutor(max_workers=ncpus) as pool:
+                    outputlist = list(pool.map(_parallel_task, argslist))
+            else: # Should be unreachable; exception should have already been caught
                 errormsg = f'Invalid parallelizer "{parallelizer}"'
                 raise ValueError(errormsg)
 
@@ -301,13 +302,13 @@ def parallelcmd(cmd=None, parfor=None, returnval=None, maxcpu=None, maxmem=None,
     code.
 
     Args:
-        cmd (str): a string representation of the code to be run in parallel
-        parfor (dict): a dictionary of lists of the variables to loop over
-        returnval (str): the name of the output variable
-        maxcpu (float): maximum CPU load; used by ``sc.loadbalancer()``
-        maxmem (float): maximum fraction of virtual memory (RAM); used by ``sc.loadbalancer()``
-        interval (float): the time delay to poll to see if load is OK,  used in ``sc.loadbalancer()``
-        kwargs (dict): variables to pass into the code
+        cmd       (str):   a string representation of the code to be run in parallel
+        parfor    (dict):  a dictionary of lists of the variables to loop over
+        returnval (str):   the name of the output variable
+        maxcpu    (float): maximum CPU load; used by ``sc.loadbalancer()``
+        maxmem    (float): maximum fraction of virtual memory (RAM); used by ``sc.loadbalancer()``
+        interval  (float): the time delay to poll to see if load is OK,  used in ``sc.loadbalancer()``
+        kwargs    (dict):  variables to pass into the code
 
     **Example**::
 
@@ -329,6 +330,9 @@ def parallelcmd(cmd=None, parfor=None, returnval=None, maxcpu=None, maxmem=None,
         maxcpu = maxload
         warnmsg = 'sc.loadbalancer() argument "maxload" has been renamed "maxcpu" as of v2.0.0'
         warnings.warn(warnmsg, category=FutureWarning, stacklevel=2)
+
+    # Deindent the command
+    cmd = textwrap.dedent(cmd)
 
     # Create queue
     nfor = len(list(parfor.values())[0])

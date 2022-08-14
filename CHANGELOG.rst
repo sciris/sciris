@@ -29,20 +29,23 @@ Bugfixes
 Improvements
 ~~~~~~~~~~~~
 #. If a copy/deepcopy is not possible, ``sc.cp()``/``sc.dcp()`` now raise an exception by default (previously, they silenced it).
-#. ``sc.daterange()`` now accepts ``datedelta`` arguments, e.g. ``sc.daterange('2022-02-22', weeks=2)``.
-#. ``sc.sanitize()`` can now handle multidimensional arrays.
-#. ``sc.savefig()`` by default now creates folders if they don't exist.
-#. ``sc.loadmetadata()`` can now read metadata from JPG files.
 #. ``sc.timer()`` now has a ``plot()`` method.
+#. ``sc.parallelize()`` now supports additional parallelization options, e.g. ``concurrent.futures``.
+#. ``sc.daterange()`` now accepts ``datedelta`` arguments, e.g. ``sc.daterange('2022-02-22', weeks=2)``.
+#. ``sc.savefig()`` by default now creates folders if they don't exist.
+#. ``sc.sanitize()`` can now handle multidimensional arrays.
+#. ``sc.loadmetadata()`` can now read metadata from JPG files.
 
 Housekeeping
 ~~~~~~~~~~~~
+#. Profiling and load balancing functions have beem moved from ``sc.sc_utils`` and ``sc.sc_parallel`` to a new submodule, ``sc.sc_profiling``.
 #. Most ``DeprecationWarning``s have been changed to ``FutureWarning``s.
 
 Regression information
 ~~~~~~~~~~~~~~~~~~~~~~
 #. The default for ``sc.cp()`` and ``sc.dcp()`` changed from ``die=False`` to ``die=True``, which may cause previously caught exceptions to be uncaught. For previous behavior, use ``sc.dcp(..., die=False)``.
-#. Previously a ``sc.loadbalancer(maxload=None)`` was interpreted as a default load limit (0.8); it is now interpreted as no limit.
+#. The argument ``maxload`` (in ``sc.loadbalancer()``, ``sc.parallelize()``, etc.) has been renamed ``maxcpu`` (for consistency with the new ``maxmem`` argument).
+#. Previously ``sc.loadbalancer(maxload=None)`` was interpreted as a default load limit (0.8); ``None`` is now interpreted as no limit.
 
 
 Version 1.3.3 (2022-01-16)
