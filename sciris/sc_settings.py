@@ -103,11 +103,11 @@ def set_default_options():
     optdesc.backend = 'Set the Matplotlib backend (use "agg" for non-interactive)'
     options.backend = os.getenv('SCIRIS_BACKEND', pl.get_backend())
 
-    optdesc.interactive = 'Convenience method to set figure backend'
-    options.interactive = os.getenv('SCIRIS_INTERACTIVE', True)
+    # optdesc.interactive = 'Convenience method to set figure backend'
+    # options.interactive = os.getenv('SCIRIS_INTERACTIVE', True)
 
-    optdesc.jupyter = 'Plotting settings for Jupyter notebooks: shortcut to set backend to "widget" (default) or "retina"'
-    options.jupyter = os.getenv('SCIRIS_JUPYTER', False)
+    # optdesc.jupyter = 'Plotting settings for Jupyter notebooks: shortcut to set backend to "widget" (default) or "retina"'
+    # options.jupyter = os.getenv('SCIRIS_JUPYTER', False)
 
     optdesc.dpi = 'Set the default DPI -- the larger this is, the larger the figures will be'
     options.dpi = int(os.getenv('SCIRIS_DPI', pl.rcParams['figure.dpi']))
