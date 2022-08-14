@@ -1,28 +1,27 @@
 """
 Profiling and CPU/memory management functions.
 
-NB: Uses ``multiprocess`` instead of ``multiprocessing`` under the hood for
-broadest support  across platforms (e.g. Jupyter notebooks).
-
 Highlights:
     - ``sc.cpuload()``: alias to ``psutil.cpu_percent()``
     - ``sc.loadbalancer()``: very basic load balancer
     - ``sc.profile()``: a line profiler
+    - ``sc.resourcelimit()``: a monitor to kill processes that exceed memory or other limits
 """
 
 import os
 import sys
 import time
 import psutil
-import contextlib
+import signal
+# import contextlib
 import threading
 import _thread
 # import tracemalloc
-import resource
+# import resource
 import tempfile
 import warnings
 import numpy as np
-import multiprocess as mp
+import multiprocessing as mp
 from . import sc_utils as scu
 
 
@@ -34,13 +33,13 @@ __all__ = ['cpu_count', 'cpuload', 'memload', 'loadbalancer']
 
 
 def cpu_count():
-    ''' Alias to mp.cpu_count() '''
+    ''' Alias to ``mp.cpu_count()`` '''
     return mp.cpu_count()
 
 
 def cpuload(interval=0.1):
     """
-    Takes a snapshot of current CPU usage via psutil
+    Takes a snapshot of current CPU usage via ``psutil``
 
     Args:
         interval (float): number of seconds over which to estimate CPU load
@@ -53,7 +52,7 @@ def cpuload(interval=0.1):
 
 def memload():
     """
-    Takes a snapshot of current fraction of memory usage via psutil
+    Takes a snapshot of current fraction of memory usage via ``psutil``
 
     Returns:
         a float between 0-1 representing the fraction of ``psutil.virtual_memory()`` currently used.
@@ -105,6 +104,11 @@ def loadbalancer(maxcpu=0.8, maxmem=0.8, index=None, interval=1.0, cpu_interval=
     if maxcpu   is None or maxcpu  is False: maxcpu  = 1.0
     if maxmem   is None or maxmem  is False: maxmem  = 1.0
     if maxtime  is None or maxtime is False: maxtime = 36000
+    if interval is None: interval = 0
+
+    # If not limits, immediately return
+    if maxcpu == 1.0 and maxmem == 1.0:
+        return
 
     if label is None:
         label = ''
@@ -392,7 +396,7 @@ def checkmem(var, descend=None, alphabetical=False, plot=False, verbose=False):
 
 def checkram(unit='mb', fmt='0.2f', start=0, to_string=True):
     '''
-    Unlike checkmem(), checkram() looks at actual memory usage, typically at different
+    Unlike ``sc.checkmem()``, ``sc.checkram()`` looks at actual memory usage, typically at different
     points throughout execution.
 
     **Example**::
@@ -449,20 +453,20 @@ class resourcelimit(scu.prettyobj):
 
     def start(self):
 
-        import signal, time
-
         def handler(signum, frame):
             print('I just clicked on CTRL-C ')
+            raise MemoryError from KeyboardInterrupt
 
+        self.orig_sigint = signal.getsignal(signal.SIGINT)
         signal.signal(signal.SIGINT, handler)
 
-        import sys
-        def my_except_hook(exctype, value, traceback):
-            if exctype == KeyboardInterrupt:
-                print("Handler code goes here")
-            else:
-                sys.__excepthook__(exctype, value, traceback)
-        sys.excepthook = my_except_hook
+        # import sys
+        # def my_except_hook(exctype, value, traceback):
+        #     if exctype == KeyboardInterrupt:
+        #         print("Handler code goes here")
+        #     else:
+        #         sys.__excepthook__(exctype, value, traceback)
+        # sys.excepthook = my_except_hook
 
         self.running = True
         self.thread = threading.Thread(target=self.monitor, args=('foo'), daemon=True)
@@ -478,7 +482,8 @@ class resourcelimit(scu.prettyobj):
 
 
     def stop(self):
-        sys.excepthook = sys.__excepthook__
+        signal.signal(signal.SIGINT, self.orig_sigint)
+        # sys.excepthook = sys.__excepthook__
         self.running = False
         if self.exception is not None:
             raise self.Exception

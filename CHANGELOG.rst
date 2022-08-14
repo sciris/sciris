@@ -42,6 +42,7 @@ Housekeeping
 Regression information
 ~~~~~~~~~~~~~~~~~~~~~~
 #. The default for ``sc.cp()`` and ``sc.dcp()`` changed from ``die=False`` to ``die=True``, which may cause previously caught exceptions to be uncaught. For previous behavior, use ``sc.dcp(..., die=False)``.
+#. Previously a ``sc.loadbalancer(maxload=None)`` was interpreted as a default load limit (0.8); it is now interpreted as no limit.
 
 
 Version 1.3.3 (2022-01-16)
