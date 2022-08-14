@@ -96,9 +96,10 @@ def test_resourcemonitor():
         return
 
     with pytest.raises(sc.LimitExceeded):
-        with sc.resourcemonitor(mem=0.001, interval=0.2, kill_children=False) as resmon:
+        with sc.resourcemonitor(mem=0.001, interval=0.2, die=False) as resmon:
             print('Effectively zero memory limit')
             sc.timedsleep(0.5)
+        raise resmon.exception
     o.resmon_died = resmon
 
     # As a standalone (don't forget to call stop!)

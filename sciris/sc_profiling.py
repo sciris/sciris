@@ -21,6 +21,7 @@ import numpy as np
 import pylab as pl
 import multiprocessing as mp
 from . import sc_utils as scu
+from . import sc_datetime as scd
 from . import sc_odict as sco
 from . import sc_fileio as scf
 from . import sc_nested as scn
@@ -276,10 +277,10 @@ def loadbalancer(maxcpu=0.8, maxmem=0.8, index=None, interval=0.5, cpu_interval=
         process_str = f'process {index}' if index else 'process'
         if cpu_toohigh:
             string = label+f'CPU load too high ({cpu_str}); {process_str} queued {count} times'
-            scu.randsleep(interval)
+            scd.randsleep(interval)
         elif mem_toohigh:
             string = label+f'Memory load too high ({mem_str}); {process_str} queued {count} times'
-            scu.randsleep(interval)
+            scd.randsleep(interval)
         else:
             toohigh = False
             string = label+f'CPU & memory fine ({cpu_str} & {mem_str}), starting {process_str} after {count} tries'
@@ -517,7 +518,11 @@ class resourcemonitor(scu.prettyobj):
         if not self.running:
 
             # Overwrite default KeyboardInterrupt handling when we start
-            signal.signal(signal.SIGINT, handler)
+            try:
+                signal.signal(signal.SIGINT, handler)
+            except ValueError:
+                errormsg = 'Could not set signal, probably not calling from main thread'
+                print(errormsg)
 
             # Create a thread and start running
             self.start_time = time.time()
@@ -533,7 +538,11 @@ class resourcemonitor(scu.prettyobj):
         if self.verbose:
             print(f'{self.label}: done')
         self.running = False
-        signal.signal(signal.SIGINT, self._orig_sigint) # Restore original KeyboardInterrupt handling
+        try:
+            signal.signal(signal.SIGINT, self._orig_sigint) # Restore original KeyboardInterrupt handling
+        except ValueError:
+            errormsg = 'Could not reset signal, probably not calling from main thread'
+            print(errormsg)
         if self.exception is not None and self.die: # This exception has likely already been raised, but if not, raise it now
             raise self.exception
         return self
@@ -637,7 +646,7 @@ class resourcemonitor(scu.prettyobj):
             print(self.exception)
             print('Killing processes...')
 
-        parent = psutil.Process(self.parent)
+        parent   = psutil.Process(self.parent)
         children = parent.children(recursive=True)
 
         if self.kill_children:
