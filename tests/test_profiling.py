@@ -83,6 +83,33 @@ def test_profile():
     return lp
 
 
+def test_resourcemonitor():
+    sc.heading('Testing resource monitor')
+
+    o = sc.objdict()
+    o.callback = []
+
+    def callback(checkdata, checkstr):
+        ''' Small function to test that callbacks work '''
+        print('Callback was executed')
+        o.callback.append(checkdata)
+        return
+
+    with pytest.raises(sc.LimitExceeded):
+        with sc.resourcemonitor(mem=0.001, interval=0.2, kill_children=False) as resmon:
+            print('Effectively zero memory limit')
+            sc.timedsleep(0.5)
+    o.resmon_died = resmon
+
+    # As a standalone (don't forget to call stop!)
+    resmon = sc.resourcemonitor(mem=0.95, cpu=0.9, time=0.5, interval=0.1, label='Load checker', die=False, callback=callback, verbose=True)
+    sc.timedsleep(1)
+    resmon.stop()
+    print(resmon.to_df())
+
+    o.resmon = resmon
+
+    return o
 
 
 #%% Run as a script
@@ -92,6 +119,7 @@ if __name__ == '__main__':
     lb = test_loadbalancer()
     mc = test_memchecks()
     lp = test_profile()
+    rm = test_resourcemonitor()
 
     sc.toc()
     print('Done.')

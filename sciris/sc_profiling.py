@@ -455,24 +455,34 @@ class resourcemonitor(scu.prettyobj):
         label (str): an optional label to use while printing out progress
         start (bool): whether to start the resource monitor on initialization (else call ``start()``)
         die (bool): whether to raise an exception if the resource limit is exceeded
+        kill_children (bool): whether to kill child processes (if False, will not work with multiprocessing)
+        kill_parent (bool): whether to also kill the parent process (will usually exit Python interpreter in the process)
         callback (func): optional callback if the resource limit is exceeded
         verbose (bool): detail to print out (default: if exceeded; True: every step; False: no output)
 
     **Examples**::
-        sc.resourcemonitor(mem=0.8)
-        memory_heavy_job()
 
-        sc.resourcemonitor(mem=0.95, cpu=0.9, time=3600, label='Load checker', die=False, callback=post_to_slack)
+        # Using with-as:
+        with sc.resourcemonitor(mem=0.8) as resmon:
+            memory_heavy_job()
+
+        # As a standalone (don't forget to call stop!)
+        resmon = sc.resourcemonitor(mem=0.95, cpu=0.9, time=3600, label='Load checker', die=False, callback=post_to_slack)
         long_cpu_heavy_job()
+        resmon.stop()
+        print(resmon.to_df())
         ,
     """
-    def __init__(self, mem=0.9, cpu=None, time=None, interval=1.0, label=None, start=True, die=True, callback=None, verbose=None):
-        self.mem        = mem  if mem  else 1.0    # Memory limit
-        self.cpu        = cpu  if cpu  else 1.0    # CPU limit
-        self.time       = time if time else np.inf # Time limit
-        self.interval   = interval
-        self.label      = label if label else 'Monitor'
-        self.die        = die
+    def __init__(self, mem=0.9, cpu=None, time=None, interval=1.0, label=None, start=True,
+                 die=True, kill_children=True, kill_parent=False, callback=None, verbose=None):
+        self.mem  = mem  if mem  else 1.0    # Memory limit
+        self.cpu  = cpu  if cpu  else 1.0    # CPU limit
+        self.time = time if time else np.inf # Time limit
+        self.interval = interval
+        self.label    = label if label else 'Monitor'
+        self.die      = die
+        self.kill_children = kill_children
+        self.kill_parent   = kill_parent
         self.callback   = callback
         self.verbose    = verbose
         self.running    = False # Whether the monitor is running
@@ -524,7 +534,7 @@ class resourcemonitor(scu.prettyobj):
             print(f'{self.label}: done')
         self.running = False
         signal.signal(signal.SIGINT, self._orig_sigint) # Restore original KeyboardInterrupt handling
-        if self.exception is not None: # This exception has likely already been raised, but if not, raise it now
+        if self.exception is not None and self.die: # This exception has likely already been raised, but if not, raise it now
             raise self.exception
         return self
 
@@ -615,7 +625,7 @@ class resourcemonitor(scu.prettyobj):
         return is_ok, checkdata, checkstr
 
 
-    def kill(self, kill_parent=False):
+    def kill(self):
         '''
         Kill all processes
 
@@ -624,17 +634,19 @@ class resourcemonitor(scu.prettyobj):
         '''
         kill_verbose = self.verbose is not False # Print if self.verbose is True or None (just not False)
         if kill_verbose:
+            print(self.exception)
             print('Killing processes...')
 
-        parent = psutil.Process(self.parent_pid)
+        parent = psutil.Process(self.parent)
         children = parent.children(recursive=True)
 
-        for c,child in enumerate(children):
-            if kill_verbose:
-                print(f'Killing child {c+1} of {len(children)}...')
-            child.kill()
+        if self.kill_children:
+            for c,child in enumerate(children):
+                if kill_verbose:
+                    print(f'Killing child {c+1} of {len(children)}...')
+                child.kill()
 
-        if kill_parent:
+        if self.kill_parent:
             if kill_verbose:
                 print(f'Killing parent (PID={self.parent_pid})')
             parent.kill()
