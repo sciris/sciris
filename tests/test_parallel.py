@@ -113,12 +113,12 @@ def test_components():
 
     def empty(): pass
 
-    args = [0]*9
+    args = [0]*10
     args[0] = empty
     args[3] = None # Set iterdict to None
     args[4] = None # Set args to empty list
     args[5] = None # Set kwargs to empty dict
-    args[8] = True # Set embarrassing
+    args[9] = True # Set embarrassing
     taskargs = sc.sc_parallel.TaskArgs(*args)
     task = sc.sc_parallel._parallel_task(taskargs)
     return task

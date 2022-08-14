@@ -9,6 +9,8 @@ Highlights:
 '''
 
 import numpy as np
+import multiprocess as mp
+import multiprocessing as mpi
 import concurrent.futures as cf
 from functools import partial
 import warnings
@@ -24,25 +26,33 @@ __all__ = ['parallelize', 'parallelcmd', 'parallel_progress']
 
 
 def parallelize(func, iterarg=None, iterkwargs=None, args=None, kwargs=None, ncpus=None, maxcpu=None, maxmem=None,
-                interval=None, parallelizer='concurrent.futures', serial=False, returnpool=False, **func_kwargs):
+                interval=None, parallelizer='multiprocess', serial=False, returnpool=False, **func_kwargs):
     '''
     Execute a function in parallel.
 
-    Most simply, ``sc.parallelize()`` acts as an shortcut for using ``concurrent.futures.ProcessPoolExecutor()``.
+    Most simply, ``sc.parallelize()`` acts as an shortcut for using ``multiprocess.Pool()``.
     However, it also provides flexibility in how arguments are passed to the function,
     load balancing, etc.
 
-    Either or both of ``iterarg`` or ``iterkwargs`` can be used. ``iterarg`` can be an iterable or an integer;
-    if the latter, it will run the function that number of times and not pass the argument to the
-    function (which may be useful for running "embarrassingly parallel" simulations). ``iterkwargs``
-    is a dict of iterables; each iterable must be the same length (and the same length of ``iterarg``,
-    if it exists), and each dict key will be used as a kwarg to the called function. Any other kwargs
-    passed to ``sc.parallelize()`` will also be passed to the function.
+    Either or both of ``iterarg`` or ``iterkwargs`` can be used. ``iterarg`` can
+    be an iterable or an integer; if the latter, it will run the function that number
+    of times and not pass the argument to the function (which may be useful for
+    running "embarrassingly parallel" simulations). ``iterkwargs`` is a dict of
+    iterables; each iterable must be the same length (and the same length of ``iterarg``,
+    if it exists), and each dict key will be used as a kwarg to the called function.
+    Any other kwargs passed to ``sc.parallelize()`` will also be passed to the function.
 
-    This function can either use a fixed number of CPUs or allocate dynamically based
-    on load. If ``ncpus`` is ``None`` and ``maxcpu`` is ``None``, then it will use the number of CPUs
-    returned by ``multiprocessing``; if ``ncpus`` is not ``None``, it will use the specified number of CPUs;
-    if ``ncpus`` is ``None`` and maxcpu is not None, it will allocate the number of CPUs dynamically.
+    This function can either use a fixed number of CPUs or allocate dynamically
+    based on load. If ``ncpus`` is ``None`` and ``maxcpu`` is ``None``, then it
+    will use the number of CPUs returned by ``multiprocessing``; if ``ncpus`` is
+    not ``None``, it will use the specified number of CPUs; if ``ncpus`` is ``None``
+    and ``maxcpu`` is not ``None``, it will allocate the number of CPUs dynamically.
+
+    Note: the default parallelizer ``"multiprocess"`` uses ``dill`` for pickling, so
+    is the most versatile (e.g., it can pickle non-top-level functions). However,
+    it is also the slowest for passing large amounts of data. If you don't need
+    ``dill``, you might get better performance using ``"concurrent.futures"`` as
+    the parallelizer.
 
     Args:
         func (function): the function to parallelize
@@ -54,7 +64,7 @@ def parallelize(func, iterarg=None, iterkwargs=None, args=None, kwargs=None, ncp
         maxcpu (float): maximum CPU load; otherwise, delay the start of the next process (not used if ``ncpus`` is specified)
         maxmem (float): maximum fraction of virtual memory (RAM); otherwise, delay the start of the next process
         interval (float): number of seconds to pause between starting processes for checking load
-        parallelizer (str/func): parallelization function; default 'concurrent.futures' (other choices are 'multiprocessing', 'multiprocess', or user-supplied; see example below)
+        parallelizer (str/func): parallelization function; default 'multiprocess' (other choices are 'concurrent.futures', 'multiprocessing', or user-supplied; see example below)
         serial (bool): whether to skip parallelization run in serial (useful for debugging)
         returnpool (bool): whether to return the process pool as well as the results
         func_kwargs (dict): merged with kwargs (see above)
@@ -222,21 +232,35 @@ def parallelize(func, iterarg=None, iterkwargs=None, args=None, kwargs=None, ncp
          # Standard usage: use the default map() function
         elif parallelizer is None or scu.isstring(parallelizer):
 
+            default = 'multiprocess'
+            mapping = {
+                None: default,
+                'default': default,
+                'multiprocess': 'multiprocess',
+                'multiprocessing': 'multiprocessing',
+                'concurrent.futures': 'concurrent.futures',
+                'concurrent': 'concurrent.futures',
+            }
+            try:
+                parallelizer = mapping[parallelizer]
+            except:
+                errormsg = f'Parallelizer "{parallelizer}" not found: must be one of {scu.strjoin(mapping.keys())}'
+                raise scu.KeyNotFoundError(errormsg)
+
             # Choose which parallelizer to use
             if parallelizer in [None, 'default']:
                 parallelizer = 'concurrent.futures'
             if parallelizer == 'concurrent.futures': # Main use case
                 with cf.ProcessPoolExecutor(max_workers=ncpus) as pool:
                     outputlist = list(pool.map(_parallel_task, argslist))
-            elif parallelizer in ['multiprocessing', 'multiprocess']: # Previous default (multiprocess)
-                if parallelizer == 'multiprocessing':
-                    import multiprocessing as mp
-                else:
-                    import multiprocess as mp
+            elif parallelizer == 'multiprocess':
                 with mp.Pool(processes=ncpus) as pool:
                     outputlist = pool.map(_parallel_task, argslist)
-            else:
-                errormsg = f'Parallelizer "{parallelizer}" not found: must be one of "concurrent.futures", "multiprocessing", or "multiprocess"'
+            elif parallelizer == 'multiprocessing':
+                with mpi.Pool(processes=ncpus) as pool:
+                    outputlist = pool.map(_parallel_task, argslist)
+            else: # Should be unreachable
+                errormsg = f'Invalid parallelizer "{parallelizer}"'
                 raise ValueError(errormsg)
 
         # Use a custom parallelization method
