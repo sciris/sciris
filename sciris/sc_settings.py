@@ -155,7 +155,8 @@ def set_option(key=None, value=None, **kwargs):
         sc.options(fontsize=18, backend='agg') # Larger font, non-interactive plots
         sc.options('defaults') # Reset to default options
 
-    New in version 1.3.0.
+    | New in version 1.3.0.
+    | New in version 2.0.0: ``interactive`` and ``jupyter`` options.
     '''
 
     # Reset to defaults
