@@ -17,6 +17,7 @@ Contents
 
    overview
    whatsnew
+   style_guide
    code_of_conduct
 
 .. autosummary::
