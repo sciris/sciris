@@ -770,6 +770,10 @@ class timer(scu.prettyobj):
         return output
 
 
+    def tocout(self, label=None, output=True, **kwargs):
+        ''' Alias to ``sc.timer.toc()``, with output=True '''
+        return self.toc(label=label, output=output, **kwargs)
+
     def start(self):
         ''' Alias for tic() '''
         return self.tic()
@@ -778,14 +782,17 @@ class timer(scu.prettyobj):
         ''' Alias for toc() '''
         return self.toc(*args, **kwargs)
 
-    def toctic(self, *args, **kwargs):
-        ''' Reset time between timings '''
-        kwargs['reset'] = True
-        return self.toc(*args, **kwargs)
+    def toctic(self, *args, reset=True, **kwargs):
+        ''' Like toc, but reset time between timings '''
+        return self.toc(*args, reset=reset, **kwargs)
 
     def tt(self, *args, **kwargs):
         ''' Alias for toctic() '''
         return self.toctic(*args, **kwargs)
+
+    def ttout(self, *args, reset=True, output=True, **kwargs):
+        ''' Alias for toctic() with output '''
+        return self.toctic(*args, reset=reset, output=output, **kwargs)
 
 
     def plot(self, fig=None, figkwargs=None, grid=True, **kwargs):
