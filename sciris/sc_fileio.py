@@ -554,8 +554,30 @@ def makefilepath(filename=None, folder=None, ext=None, default=None, split=False
 
 
 def path(*args, **kwargs):
-    ''' Alias to pathlib.Path(). New in version 1.2.2. '''
-    return Path(*args, **kwargs)
+    '''
+    Alias to ``pathlib.Path()`` with some additional input sanitization:
+
+        - ``None`` entries are removed
+        - a list of arguments is converted to separate arguments
+
+    | New in version 1.2.2.
+    | New in version 2.0.0: handle None or list arguments
+    '''
+
+    # Handle inputs
+    new_args = []
+    for arg in args:
+        if isinstance(arg, list):
+            new_args.extend(arg)
+        else:
+            new_args.append(arg)
+    new_args = [arg for arg in new_args if arg is not None]
+
+    # Create the path
+    output = Path(*new_args, **kwargs)
+
+    return output
+
 path.__doc__ += '\n\n' + Path.__doc__
 
 

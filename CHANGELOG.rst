@@ -43,6 +43,7 @@ Improvements
 #. ``sc.timer()`` now has new methods ``tocout()`` and ``ttout()``, which return output by default (rather than print a string).
 #. ``sc.savezip()`` can save now save data to zip files (instead of just compressing files).
 #. ``sc.savespreadsheet()`` now allows NaNs to be saved.
+#. ``sc.path()`` is more flexible, including handling ``None`` inputs.
 
 Housekeeping
 ~~~~~~~~~~~~
