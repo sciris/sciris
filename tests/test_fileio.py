@@ -95,17 +95,19 @@ def test_fileio():
     '''
     Test other file I/O functions
     '''
+    o = sc.objdict()
+
     sc.heading('Saveobj/loadobj')
     sc.saveobj(files.binary, testdata)
 
-    obj = sc.loadobj(files.binary)
-    print(obj)
+    o.obj1 = sc.loadobj(files.binary)
+    print(o.obj1)
 
     sc.heading('Savetext/loadtext')
     sc.savetext(files.text, testdata)
 
-    obj = sc.loadtext(files.text)
-    print(obj)
+    o.obj2 = sc.loadtext(files.text)
+    print(o.obj2)
 
     sc.heading('Get files')
     print('Files in current folder:')
@@ -113,8 +115,10 @@ def test_fileio():
     for tf in TF:
         sc.pp(sc.getfilelist(abspath=tf, filesonly=tf, foldersonly=not(tf), nopath=tf, aspath=tf))
 
-    sc.heading('Save zip')
+    sc.heading('Save/load zip')
     sc.savezip(files.zip, [files.text, files.binary])
+    sc.savezip(files.zip, data=dict(data=testdata))
+    o.zip = sc.loadzip(files.zip, extract=False)
 
 
     '''
@@ -145,12 +149,12 @@ def test_fileio():
     if os.path.exists(dead_path):
         sc.heading('Intentionally loading corrupted file')
         print('Loading with no remapping...')
-        obj = sc.loadobj(dead_path)
-        print(f'Loading corrupted object succeeded, x={obj.x}')
+        o.obj3 = sc.loadobj(dead_path)
+        print(f'Loading corrupted object succeeded, x={o.obj3.x}')
 
         print('Loading with remapping...')
-        obj2 = sc.loadobj(dead_path, remapping={'deadclass.DeadClass':LiveClass})
-        print(f'Loading remapped object succeeded, x={obj2.x}, object: {obj2}')
+        o.obj4 = sc.loadobj(dead_path, remapping={'deadclass.DeadClass':LiveClass})
+        print(f'Loading remapped object succeeded, x={o.obj4.x}, object: {o.obj4}')
     else:
         print(f'{dead_path} not found, skipping...')
 
@@ -160,7 +164,7 @@ def test_fileio():
         sc.heading('Tidying up')
         sc.rmpath([files.binary, files.text, files.zip, 'spreadsheet.xlsx'], die=False)
 
-    return obj
+    return o
 
 
 def test_json():

@@ -41,7 +41,8 @@ from distutils.version import LooseVersion
 
 # Handle types
 _stringtypes = (str, bytes)
-_numtype     = numbers.Number
+_numtype     = (numbers.Number,)
+_booltypes   = (bool, np.bool_)
 
 
 ##############################################################################
@@ -634,9 +635,11 @@ def checktype(obj=None, objtype=None, subtype=None, die=False):
     # Handle "objtype" input
     if   objtype in ['str','string']:          objinstance = _stringtypes
     elif objtype in ['num', 'number']:         objinstance = _numtype
+    elif objtype in ['bool', 'boolean']:       objinstance = _booltypes
     elif objtype in ['arr', 'array']:          objinstance = np.ndarray
     elif objtype in ['listlike', 'arraylike']: objinstance = (list, tuple, np.ndarray) # Anything suitable as a numerical array
-    elif type(objtype) == type:                objinstance = objtype  # Don't need to do anything
+    elif type(objtype) == type:                objinstance = objtype # Don't need to do anything
+    elif isinstance(objtype, tuple):           objinstance = objtype # Ditto
     elif objtype is None:                      return # If not supplied, exit
     else: # pragma: no cover
         errormsg = f'Could not understand what type you want to check: should be either a string or a type, not "{objtype}"'
@@ -648,7 +651,7 @@ def checktype(obj=None, objtype=None, subtype=None, die=False):
     # Do second round checking
     if result and objtype in ['listlike', 'arraylike']: # Special case for handling arrays which may be multi-dimensional
         obj = promotetoarray(obj).flatten() # Flatten all elements
-        if objtype == 'arraylike' and subtype is None: subtype = 'number'
+        if objtype == 'arraylike' and subtype is None: subtype = _numtype + _booltypes
     if isiterable(obj) and subtype is not None:
         for item in obj:
             result = result and checktype(item, subtype)
@@ -908,8 +911,9 @@ def mergedicts(*args, _strict=False, _overwrite=True, _copy=False, **kwargs):
         d3 = sc.mergedicts(sc.odict({'b':3, 'c':4}), {'a':1, 'b':2}) # Returns sc.odict({'b':2, 'c':4, 'a':1})
         d4 = sc.mergedicts({'b':3, 'c':4}, {'a':1, 'b':2}, _overwrite=False) # Raises exception
 
-    New in version 1.1.0: "copy" argument
-    New in version 1.3.3: keywords allowed
+    | New in version 1.1.0: "copy" argument
+    | New in version 1.3.3: keywords allowed
+    | New in version 2.0.0: keywords fully enabled
     '''
     # Warn about deprecated keys
     renamed = ['strict', 'overwrite', 'copy']
@@ -925,6 +929,8 @@ def mergedicts(*args, _strict=False, _overwrite=True, _copy=False, **kwargs):
         outputdict = {}
 
     # Merge over the dictionaries in order
+    args = list(args)
+    args.append(kwargs) # Include any kwargs as the final dict
     for arg in args:
         is_dict = isinstance(arg, dict)
         if _strict and not is_dict:

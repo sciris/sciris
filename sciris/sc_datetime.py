@@ -770,22 +770,31 @@ class timer(scu.prettyobj):
         return output
 
 
+    # Alias/shortcut methods
+
     def start(self):
-        ''' Alias for tic() '''
+        ''' Alias for ``tic()`` '''
         return self.tic()
 
     def stop(self, *args, **kwargs):
-        ''' Alias for toc() '''
+        ''' Alias for ``toc()`` '''
         return self.toc(*args, **kwargs)
 
-    def toctic(self, *args, **kwargs):
-        ''' Reset time between timings '''
-        kwargs['reset'] = True
-        return self.toc(*args, **kwargs)
+    def tocout(self, label=None, output=True, **kwargs):
+        ''' Alias for ``toc()`` with output=True '''
+        return self.toc(label=label, output=output, **kwargs)
+
+    def toctic(self, *args, reset=True, **kwargs):
+        ''' Like toc, but reset time between timings '''
+        return self.toc(*args, reset=reset, **kwargs)
 
     def tt(self, *args, **kwargs):
-        ''' Alias for toctic() '''
+        ''' Alias for ``toctic()`` '''
         return self.toctic(*args, **kwargs)
+
+    def tto(self, *args, output=True, **kwargs):
+        ''' Alias for ``toctic()`` with output=True '''
+        return self.toctic(*args, output=output, **kwargs)
 
 
     def plot(self, fig=None, figkwargs=None, grid=True, **kwargs):
@@ -1015,6 +1024,8 @@ def randsleep(delay=1.0, var=1.0, low=None, high=None):
         sc.randsleep(2, 0.1) # Sleep for 1.8-2.2 s (average 2.0)
         sc.randsleep([0.5, 1.5]) # Sleep for 0.5-1.5 s
         sc.randsleeep(low=0.5, high=1.5) # Ditto
+
+    New in version 2.0.0.
     '''
     if low is None or high is None:
         if scu.isnumber(delay):

@@ -265,7 +265,7 @@ def dumpstr(obj=None):
 #%% Other file functions
 ##############################################################################
 
-__all__ += ['loadtext', 'savetext', 'savezip', 'getfilelist', 'sanitizefilename', 'makefilepath', 'path', 'ispath', 'thisdir']
+__all__ += ['loadtext', 'savetext', 'loadzip', 'savezip', 'getfilelist', 'sanitizefilename', 'makefilepath', 'path', 'ispath', 'thisdir']
 
 
 def loadtext(filename=None, folder=None, splitlines=False):
@@ -277,8 +277,10 @@ def loadtext(filename=None, folder=None, splitlines=False):
         mytext = sc.loadtext('my-document.txt')
     '''
     filename = makefilepath(filename=filename, folder=folder)
-    with open(filename) as f: output = f.read()
-    if splitlines: output = output.splitlines()
+    with open(filename) as f:
+        output = f.read()
+    if splitlines:
+        output = output.splitlines()
     return output
 
 
@@ -298,23 +300,82 @@ def savetext(filename=None, string=None):
     return
 
 
-def savezip(filename=None, filelist=None, folder=None, basename=True, verbose=True):
+def loadzip(filename=None, outfolder='.', folder=None, extract=True):
     '''
-    Create a zip file from the supplied list of files
+    Convenience function for reading a zip file
 
-    **Example**::
+    Args:
+        filename (str/path): the name of the zip file to write to
+        outfolder (str/path): the path location to extract the files to (default: current folder)
+        folder (str): optional additional folder for the filename
+        extract (bool): whether to extract the compressed files; otherwise, load data
+
+    **Examples**::
+
+        sc.loadzip('my-files.zip')
+        data = sc.loadzip('mydata.zip', extract=False)
+
+    New in version 2.0.0.
+    '''
+    filename = makefilepath(filename=filename, folder=folder)
+    output = None
+    with ZipFile(filename, 'r') as zf: # Create the zip file
+        if extract:
+            zf.extractall(outfolder)
+        else:
+            output = dict()
+            names = zf.namelist()
+            for name in names:
+                val = zf.read(name)
+                try:
+                    val = loadstr(val)
+                except:
+                    pass
+                output[name] = val
+    return output
+
+
+def savezip(filename=None, filelist=None, data=None, folder=None, basename=True, verbose=True):
+    '''
+    Create a zip file from the supplied list of files (or less commonly, supplied data)
+
+    Args:
+        filename (str/path): the name of the zip file to write to
+        filelist (list): the list of files to compress
+        data (dict): if supplied, instead of files, write this data instead (must be a dictionary of filename keys and data values)
+        folder (str): optional additional folder for the filename
+        basename (bool): whether to use only the file's basename as the name inside the zip file
+        verbose (bool): whether to print progress
+
+    **Examples**::
 
         scripts = sc.getfilelist('./code/*.py')
         sc.savezip('scripts.zip', scripts)
+
+        sc.savezip('mydata.zip', data=dict(var1='test', var2=np.random.rand(3)))
+
+    New in version 2.0.0: saving data
     '''
+
+    # Handle inpus
     fullpath = makefilepath(filename=filename, folder=folder, sanitize=True)
     filelist = scu.promotetolist(filelist)
+    if data is not None:
+        if not isinstance(data, dict):
+            errormsg = 'Data has invalid format: must be a dictionary of filename keys and data values'
+            raise ValueError(errormsg)
+
+    # Write zip file
     with ZipFile(fullpath, 'w') as zf: # Create the zip file
-        for thisfile in filelist:
-            thispath = makefilepath(filename=thisfile, abspath=False)
-            if basename: thisname = os.path.basename(thispath)
-            else:        thisname = thispath
-            zf.write(thispath, thisname)
+        if data is not None:
+            for key,val in data.items():
+                zf.writestr(key, dumpstr(val))
+        else: # Main use case
+            for thisfile in filelist:
+                thispath = makefilepath(filename=thisfile, abspath=False)
+                if basename: thisname = os.path.basename(thispath)
+                else:        thisname = thispath
+                zf.write(thispath, thisname)
     if verbose: print(f'Zip file saved to "{fullpath}"')
     return fullpath
 
@@ -497,13 +558,39 @@ def makefilepath(filename=None, folder=None, ext=None, default=None, split=False
 
 
 def path(*args, **kwargs):
-    ''' Alias to pathlib.Path(). New in version 1.2.2. '''
-    return Path(*args, **kwargs)
+    '''
+    Alias to ``pathlib.Path()`` with some additional input sanitization:
+
+        - ``None`` entries are removed
+        - a list of arguments is converted to separate arguments
+
+    | New in version 1.2.2.
+    | New in version 2.0.0: handle None or list arguments
+    '''
+
+    # Handle inputs
+    new_args = []
+    for arg in args:
+        if isinstance(arg, list):
+            new_args.extend(arg)
+        else:
+            new_args.append(arg)
+    new_args = [arg for arg in new_args if arg is not None]
+
+    # Create the path
+    output = Path(*new_args, **kwargs)
+
+    return output
+
 path.__doc__ += '\n\n' + Path.__doc__
 
 
 def ispath(obj):
-    ''' Alias to isinstance(obj, Path). New in version 2.0.0. '''
+    '''
+    Alias to isinstance(obj, Path).
+
+    New in version 2.0.0.
+    '''
     return isinstance(obj, Path)
 
 
@@ -1283,11 +1370,21 @@ Then try again to load your Excel file.
         raise ValueError(errormsg)
 
 
-def savespreadsheet(filename=None, data=None, folder=None, sheetnames=None, close=True, formats=None, formatdata=None, verbose=False):
+def savespreadsheet(filename=None, data=None, folder=None, sheetnames=None, close=True,
+                    workbook_args=None, formats=None, formatdata=None, verbose=False):
     '''
-    Not-so-little function to format data nicely for Excel.
+    Semi-simple function to save data nicely to Excel.
 
-    Note: this function, while not deprecated, is not actively maintained.
+    Args:
+        filename (str): Excel file to save to
+        data (list/array): data to write to the spreadsheet
+        folder (str): if supplied, merge with the filename to make a path
+        sheetnames (list): if data is supplied as a list of arrays, save each entry to a different sheet
+        close (bool): whether to close the workbook after saving
+        workbook_args (dict): arguments passed to ``xlxwriter.Workbook()``
+        formats (dict): a definition of different types of formatting (see examples below)
+        formatdata (array): an array of which formats go where
+        verbose (bool): whether to print progress
 
     **Examples**::
 
@@ -1295,23 +1392,23 @@ def savespreadsheet(filename=None, data=None, folder=None, sheetnames=None, clos
         import pylab as pl
 
         # Simple example
-        testdata1 = pl.rand(8,3)
+        testdata1 = np.random.rand(8,3)
         sc.savespreadsheet(filename='test1.xlsx', data=testdata1)
 
         # Include column headers
-        test2headers = [['A','B','C']] # Need double to get right shape
-        test2values = pl.rand(8,3).tolist()
+        test2headers = [['A','B','C']] # Need double brackets to get right shape
+        test2values = np.random.rand(8,3).tolist()
         testdata2 = test2headers + test2values
         sc.savespreadsheet(filename='test2.xlsx', data=testdata2)
 
         # Multiple sheets
-        testdata3 = [pl.rand(10,10), pl.rand(20,5)]
+        testdata3 = [np.random.rand(10,10), np.random.rand(20,5)]
         sheetnames = ['Ten by ten', 'Twenty by five']
         sc.savespreadsheet(filename='test3.xlsx', data=testdata3, sheetnames=sheetnames)
 
         # Supply data as an odict
-        testdata4 = sc.odict([('First sheet', pl.rand(6,2)), ('Second sheet', pl.rand(3,3))])
-        sc.savespreadsheet(filename='test4.xlsx', data=testdata4, sheetnames=sheetnames)
+        testdata4 = sc.odict([('First sheet', np.random.rand(6,2)), ('Second sheet', np.random.rand(3,3))])
+        sc.savespreadsheet(filename='test4.xlsx', data=testdata4)
 
         # Include formatting
         nrows = 15
@@ -1319,16 +1416,20 @@ def savespreadsheet(filename=None, data=None, folder=None, sheetnames=None, clos
         formats = {
             'header':{'bold':True, 'bg_color':'#3c7d3e', 'color':'#ffffff'},
             'plain': {},
-            'big':   {'bg_color':'#ffcccc'}}
-        testdata5  = pl.zeros((nrows+1, ncols), dtype=object) # Includes header row
-        formatdata = pl.zeros((nrows+1, ncols), dtype=object) # Format data needs to be the same size
+            'big':   {'bg_color':'#ffcccc'}
+        }
+        testdata5  = np.zeros((nrows+1, ncols), dtype=object) # Includes header row
+        formatdata = np.zeros((nrows+1, ncols), dtype=object) # Format data needs to be the same size
         testdata5[0,:] = ['A', 'B', 'C'] # Create header
-        testdata5[1:,:] = pl.rand(nrows,ncols) # Create data
+        testdata5[1:,:] = np.random.rand(nrows,ncols) # Create data
         formatdata[1:,:] = 'plain' # Format data
         formatdata[testdata5>0.7] = 'big' # Find "big" numbers and format them differently
         formatdata[0,:] = 'header' # Format header
         sc.savespreadsheet(filename='test5.xlsx', data=testdata5, formats=formats, formatdata=formatdata)
+
+    New in version 2.0.0: allow arguments to be passed to the ``Workbook``.
     '''
+    workbook_args = scu.mergedicts({'nan_inf_to_errors': True}, workbook_args)
     try:
         import xlsxwriter # Optional import
     except ModuleNotFoundError as e: # pragma: no cover
@@ -1372,7 +1473,7 @@ def savespreadsheet(filename=None, data=None, folder=None, sheetnames=None, clos
 
     # Create workbook
     if verbose: print(f'Creating file {fullpath}')
-    workbook = xlsxwriter.Workbook(fullpath)
+    workbook = xlsxwriter.Workbook(fullpath, workbook_args)
 
     # Optionally add formats
     if formats is not None:

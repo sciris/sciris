@@ -16,14 +16,15 @@ This version contains a number of major improvements, including:
 New functions and methods
 ~~~~~~~~~~~~~~~~~~~~~~~~~
 #. ``sc.count()`` counts the number of matching elements in an array (similar to ``np.count_nonzero()``, but more flexible with e.g. float vs. int mismatches).
-#. ``sc.strsplit()`` will automatically split common types of delimited strings (e.g. ``sc.strsplit('a b c')``).
 #. ``sc.rmnans()`` and ``sc.fillnans()`` have been added as aliases of ``sc.sanitize()`` with default options.
 #. ``sc.rmpath()`` removes both files and folders, with an optional interactive mode.
 #. ``sc.ispath()`` is an alias for ``isinstance(obj, pathlib.Path)``.
 #. ``sc.randsleep()`` sleeps for a nondeterministic period of time
+#. ``sc.loadzip()`` extracts (or reads data from) zip files
 
 Bugfixes
 ~~~~~~~~
+#. ``sc.mergedicts()`` now handles keyword arguments (previously they were silently ignored).
 #. ``Spreadsheet`` objects no longer pickle the binary spreadsheet (in some cases reducing size by 50%).
 #. ``sc.loadspreadsheet()`` has been updated to match current ``pd.read_excel()`` syntax.
 
@@ -31,12 +32,20 @@ Improvements
 ~~~~~~~~~~~~
 #. If a copy/deepcopy is not possible, ``sc.cp()``/``sc.dcp()`` now raise an exception by default (previously, they silenced it).
 #. ``sc.timer()`` now has a ``plot()`` method.
+#. ``sc.strsplit()`` will automatically split common types of delimited strings (e.g. ``sc.strsplit('a b c')``).
 #. ``sc.parallelize()`` now supports additional parallelization options, e.g. ``concurrent.futures``, and new ``maxcpu``/``maxmem`` arguments.
 #. ``sc.daterange()`` now accepts ``datedelta`` arguments, e.g. ``sc.daterange('2022-02-22', weeks=2)``.
 #. ``sc.savefig()`` by default now creates folders if they don't exist.
 #. ``sc.sanitize()`` can now handle multidimensional arrays.
 #. ``sc.loadmetadata()`` can now read metadata from JPG files.
 #. ``sc.checkmem()`` now returns a dictionary of sizes rather than print to screen.
+#. ``sc.commaticks()`` can now set both ``x`` and ``y`` axes in a single call.
+#. ``sc.timer()`` now has new methods ``tocout()`` and ``ttout()``, which return output by default (rather than print a string).
+#. ``sc.savezip()`` can save now save data to zip files (instead of just compressing files).
+#. ``sc.savespreadsheet()`` now allows NaNs to be saved.
+#. ``sc.path()`` is more flexible, including handling ``None`` inputs.
+#. ``sc.findinds()`` can now handle multiple inputs, e.g. ``sc.findinds(data>0.1, data<0.5)``.
+#. ``sc.checktype()`` now includes boolean arrays as being ``arraylike``, and has a new ``'bool'`` option.
 
 Housekeeping
 ~~~~~~~~~~~~
