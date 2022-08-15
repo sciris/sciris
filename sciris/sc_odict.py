@@ -1185,11 +1185,7 @@ class objdict(odict):
 
     def delattribute(self, name):
         ''' Delete attribute if truly desired '''
-        try:
-            del self[name]
-        except:
-            odict.__delattr__(self, name)
-        return
+        return odict.__delattr__(self, name)
 
 
 def asobj(obj, strict=True):

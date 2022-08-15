@@ -71,40 +71,6 @@ class dictobj(dict):
     def values(      self, *args, **kwargs): return self.__dict__.values(      *args, **kwargs)
 
 
-# class Options(dictobj):
-#     ''' Small derived class for the options itself '''
-#     def __call__(self, *args, **kwargs):
-#         return self.set(*args, **kwargs)
-
-#     def __repr__(self):
-#         output = 'Sciris options:\n'
-#         for k,v in self.items():
-#             if k not in ['set', 'default', 'help']:
-#                 output += f'  {k:>8s}: {repr(v)}\n'
-#         return output
-
-
-
-
-
-
-
-
-
-
-
-# import os
-# import pylab as pl
-# import sciris as sc
-# import matplotlib.font_manager as fm
-
-# # Only the class instance is public
-# __all__ = ['options']
-
-
-#%% General settings
-
-
 # Define simple plotting options -- similar to Matplotlib default
 rc_simple = {
     'axes.axisbelow':    True, # So grids show up behind
@@ -161,7 +127,7 @@ class Options(dictobj):
         sc.options(jupyter=True) # Defaults for Jupyter
         sc.options('defaults') # Reset to default options
 
-    | New in version 3.1.1: Jupyter defaults
+    | New in version 1.3.0.
     | New in version 2.0.0: revamed with additional options ``interactive`` and ``jupyter``, plus styles
     '''
 
@@ -169,8 +135,8 @@ class Options(dictobj):
         super().__init__()
         optdesc, options = self.get_orig_options() # Get the options
         self.update(options) # Update this object with them
-        self.setattribute('optdesc', optdesc) # Set the description as an attribute, not a dict entry
-        self.setattribute('orig_options', cp.deepcopy(options)) # Copy the default options
+        self.optdesc = optdesc # Set the description as an attribute, not a dict entry
+        self.orig_options = cp.deepcopy(options) # Copy the default options
         return
 
 
@@ -239,8 +205,11 @@ class Options(dictobj):
         optdesc = dictobj() # Help for the options
         options = dictobj() # The options
 
-        optdesc.verbose = 'Set default level of verbosity (i.e. logging detail): e.g., 0.1 is an update every 10 simulated days'
-        options.verbose = float(os.getenv('SCIRIS_VERBOSE', 0.1))
+        optdesc.sep = 'Set thousands seperator'
+        options.sep = str(os.getenv('SCIRIS_SEP', ','))
+
+        optdesc.aspath = 'Set whether to return Path objects instead of strings by default'
+        options.aspath = bool(os.getenv('SCIRIS_ASPATH', False))
 
         optdesc.style = 'Set the default plotting style -- options are "simple" and "fancy" plus those in pl.style.available; see also options.rc'
         options.style = os.getenv('SCIRIS_STYLE', 'simple')
@@ -254,41 +223,17 @@ class Options(dictobj):
         optdesc.fontsize = 'Set the default font size'
         options.fontsize = int(os.getenv('SCIRIS_FONT_SIZE', pl.rcParams['font.size']))
 
-        optdesc.interactive = 'Convenience method to set figure backend, showing, and closing behavior'
+        optdesc.interactive = 'Convenience method to set figure backend'
         options.interactive = os.getenv('SCIRIS_INTERACTIVE', True)
 
         optdesc.jupyter = 'Convenience method to set common settings for Jupyter notebooks: set to "retina" or "widget" (default) to set backend'
         options.jupyter = os.getenv('SCIRIS_JUPYTER', False)
-
-        optdesc.show = 'Set whether or not to show figures (i.e. call pl.show() automatically)'
-        options.show = int(os.getenv('SCIRIS_SHOW', True))
-
-        optdesc.close = 'Set whether or not to close figures (i.e. call pl.close() automatically)'
-        options.close = int(os.getenv('SCIRIS_CLOSE', False))
-
-        optdesc.returnfig = 'Set whether or not to return figures from plotting functions'
-        options.returnfig = int(os.getenv('SCIRIS_RETURNFIG', True))
 
         optdesc.backend = 'Set the Matplotlib backend (use "agg" for non-interactive)'
         options.backend = os.getenv('SCIRIS_BACKEND', pl.get_backend())
 
         optdesc.rc = 'Matplotlib rc (run control) style parameters used during plotting -- usually set automatically by "style" option'
         options.rc = cp.deepcopy(rc_simple)
-
-        optdesc.warnings = 'How warnings are handled: options are "warn" (default), "print", and "error"'
-        options.warnings = str(os.getenv('SCIRIS_WARNINGS', 'warn'))
-
-        optdesc.sep = 'Set thousands seperator for text output'
-        options.sep = str(os.getenv('SCIRIS_SEP', ','))
-
-        optdesc.precision = 'Set arithmetic precision for Numba -- 32-bit by default for efficiency'
-        options.precision = int(os.getenv('SCIRIS_PRECISION', 32))
-
-        optdesc.numba_parallel = 'Set Numba multithreading -- none, safe, full; full multithreading is ~20% faster, but results become nondeterministic'
-        options.numba_parallel = str(os.getenv('SCIRIS_NUMBA_PARALLEL', 'none'))
-
-        optdesc.numba_cache = 'Set Numba caching -- saves on compilation time; disabling is not recommended'
-        options.numba_cache = bool(int(os.getenv('SCIRIS_NUMBA_CACHE', 1)))
 
         return optdesc, options
 
@@ -318,18 +263,16 @@ class Options(dictobj):
         # Handle Jupyter
         if 'jupyter' in kwargs.keys() and kwargs['jupyter']:
             jupyter = kwargs['jupyter']
-            kwargs['returnfig'] = False # We almost never want to return figs from Jupyter, since then they appear twice
             try: # This makes plots much nicer, but isn't available on all systems
-                if not os.environ.get('SPHINX_BUILD'): # Custom check implemented in conf.py to skip this if we're inside Sphinx
-                    try: # First try interactive
-                        assert jupyter not in ['default', 'retina'] # Hack to intentionally go to the other part of the loop
-                        from IPython import get_ipython
-                        magic = get_ipython().magic
-                        magic('%matplotlib widget')
-                    except: # Then try retina
-                        assert jupyter != 'default'
-                        import matplotlib_inline
-                        matplotlib_inline.backend_inline.set_matplotlib_formats('retina')
+                try: # First try interactive
+                    assert jupyter not in ['default', 'retina'] # Hack to intentionally go to the other part of the loop
+                    from IPython import get_ipython
+                    magic = get_ipython().magic
+                    magic('%matplotlib widget')
+                except: # Then try retina
+                    assert jupyter != 'default'
+                    import matplotlib_inline
+                    matplotlib_inline.backend_inline.set_matplotlib_formats('retina')
             except:
                 pass
 
@@ -339,11 +282,8 @@ class Options(dictobj):
             if interactive in [None, 'default']:
                 interactive = self.orig_options['interactive']
             if interactive:
-                kwargs['show'] = True
-                kwargs['close'] = False
                 kwargs['backend'] = self.orig_options['backend']
             else:
-                kwargs['show'] = False
                 kwargs['backend'] = 'agg'
 
         # Reset options
@@ -593,220 +533,11 @@ class Options(dictobj):
         return self.with_style(use=True, **kwargs)
 
 
-# Create the options on module load, and load the fonts
+# Create the options on module load
 options = Options()
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-# def set_default_options():
-#     '''
-#     Set the default options for Sciris -- not to be called by the user, use
-#     ``sc.options.set('defaults')`` instead.
-#     '''
-
-#     # Options acts like a class, but is actually a dictobj for ease of manipulation
-#     optdesc = dictobj() # Help for the options
-#     options = Options() # The options
-
-#     optdesc.sep = 'Set thousands seperator'
-#     options.sep = str(os.getenv('SCIRIS_SEP', ','))
-
-#     optdesc.aspath = 'Set whether to return Path objects instead of strings by default'
-#     options.aspath = bool(os.getenv('SCIRIS_ASPATH', False))
-
-#     optdesc.backend = 'Set the Matplotlib backend (use "agg" for non-interactive)'
-#     options.backend = os.getenv('SCIRIS_BACKEND', pl.get_backend())
-
-#     # optdesc.interactive = 'Convenience method to set figure backend'
-#     # options.interactive = os.getenv('SCIRIS_INTERACTIVE', True)
-
-#     # optdesc.jupyter = 'Plotting settings for Jupyter notebooks: shortcut to set backend to "widget" (default) or "retina"'
-#     # options.jupyter = os.getenv('SCIRIS_JUPYTER', False)
-
-#     optdesc.dpi = 'Set the default DPI -- the larger this is, the larger the figures will be'
-#     options.dpi = int(os.getenv('SCIRIS_DPI', pl.rcParams['figure.dpi']))
-
-#     optdesc.fontsize = 'Set the default font size'
-#     options.fontsize = int(os.getenv('SCIRIS_FONTSIZE', pl.rcParams['font.size']))
-
-#     optdesc.font = 'Set the default font family (e.g., Arial)'
-#     options.font = os.getenv('SCIRIS_FONT', pl.rcParams['font.family'])
-
-#     return options, optdesc
-
-
-# # Actually set the options
-# options, optdesc = set_default_options()
-# orig_options = cp.deepcopy(options) # Make a copy for referring back to later
-
-# # Specify which keys require a reload
-# matplotlib_keys = ['fontsize', 'font', 'dpi', 'backend']
-
-
-# def set_option(key=None, value=None, **kwargs):
-#     '''
-#     Set a parameter or parameters. Use ``sc.options('defaults')`` to reset all
-#     values to default, or ``sc.options(dpi='default')`` to reset one parameter
-#     to default. See ``sc.options.help()`` for more information.
-
-#     Args:
-#         key    (str):    the parameter to modify, or 'defaults' to reset everything to default values
-#         value  (varies): the value to specify; use None or 'default' to reset to default
-#         kwargs (dict):   if supplied, set multiple key-value pairs
-
-#     Options are (see also ``sc.options.help()``):
-
-#         - sep:       the thousands separator to use
-#         - aspath:    whether to return Path objects instead of strings
-#         - fontsize:  the font size used for the plots
-#         - font:      the font family/face used for the plots
-#         - dpi:       the overall DPI for the figure
-#         - backend:   which Matplotlib backend to use
-
-#     **Examples**::
-
-#         sc.options.set('fontsize', 18) # Larger font
-#         sc.options(fontsize=18, backend='agg') # Larger font, non-interactive plots
-#         sc.options('defaults') # Reset to default options
-
-#     | New in version 1.3.0.
-#     | New in version 2.0.0: ``interactive`` and ``jupyter`` options.
-#     '''
-
-#     # Reset to defaults
-#     if key in ['default', 'defaults']:
-#         kwargs = orig_options # Reset everything to default
-
-#     # Handle other keys
-#     elif key is not None:
-#         kwargs.update({key:value})
-
-#     # Reset options
-#     for key,value in kwargs.items():
-#         if key not in options:
-#             keylist = orig_options.keys()
-#             keys = ', '.join(keylist)
-#             errormsg = f'Option "{key}" not recognized; options are "defaults" or: {keys}. See help(sc.options.set) for more information.'
-#             raise KeyError(errormsg)
-#         else:
-#             if value in [None, 'default']:
-#                 value = orig_options[key]
-#             options[key] = value
-#             if key in matplotlib_keys:
-#                 set_matplotlib_global(key, value)
-#     return
-
-
-# def default(key=None, reset=True):
-#     ''' Helper function to set the original default options '''
-#     if key is not None:
-#         value = orig_options[key]
-#         if reset:
-#             options.set(key=key, value=value)
-#         return value
-#     else:
-#         if not reset:
-#             return orig_options
-#         else:
-#             options.set('defaults')
-#     return
-
-
-# def get_help(output=False):
-#     '''
-#     Print information about options.
-
-#     Args:
-#         output (bool): whether to return a list of the options
-
-#     **Example**::
-
-#         sc.options.help()
-#     '''
-
-#     optdict = dictobj()
-#     for key in orig_options.keys():
-#         entry = dictobj()
-#         entry.key = key
-#         entry.current = options[key]
-#         entry.default = orig_options[key]
-#         entry.variable = f'SCIRIS_{key.upper()}' # NB, hard-coded above!
-#         entry.desc = optdesc[key]
-#         optdict[key] = entry
-
-#     # Convert to a dataframe for nice printing
-#     print('Sciris global options ("Environment" = name of corresponding environment variable):')
-#     for key,entry in optdict.items():
-#         print(f'\n{key}')
-#         changestr = '' if entry.current == entry.default else ' (modified)'
-#         print(f'      Current: {entry.current}{changestr}')
-#         print(f'      Default: {entry.default}')
-#         print(f'  Environment: {entry.variable}')
-#         print(f'  Description: {entry.desc}')
-
-#     if output:
-#         return optdict
-#     else:
-#         return
-
-
-# def set_matplotlib_global(key, value):
-#     ''' Set a global option for Matplotlib -- not for users '''
-#     import pylab as pl # In some cases re-import is needed
-#     if value: # Don't try to reset any of these to a None value
-#         if   key == 'fontsize': pl.rcParams['font.size']   = value
-#         elif key == 'font':     pl.rcParams['font.family'] = value
-#         elif key == 'dpi':      pl.rcParams['figure.dpi']  = value
-#         elif key == 'backend':  pl.switch_backend(value)
-#         else: raise KeyError(f'Key {key} not found')
-#     return
-
-
-# # Add these here to be more accessible to the user
-# options.set = set_option
-# options.default = default
-# options.help = get_help
-
-
-
-
-
-
-
-
-
-
+#%% Module help
 
 def help(pattern=None, source=False, ignorecase=True, flags=None, context=False, output=False):
     '''
