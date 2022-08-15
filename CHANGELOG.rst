@@ -53,8 +53,8 @@ Housekeeping
 ~~~~~~~~~~~~
 #. ``pyyaml`` has been added as a dependency.
 #. Profiling and load balancing functions have beem moved from ``sc.sc_utils`` and ``sc.sc_parallel`` to a new submodule, ``sc.sc_profiling``.
-#. Most ``DeprecationWarning``s have been changed to ``FutureWarning``s.
-#. Added a style and contributing guides.
+#. Most instances of ``DeprecationWarning`` have been changed to ``FutureWarning``.
+#. Added style and contributing guides.
 
 Regression information
 ~~~~~~~~~~~~~~~~~~~~~~
