@@ -21,6 +21,7 @@ New functions and methods
 #. ``sc.rmpath()`` removes both files and folders, with an optional interactive mode.
 #. ``sc.ispath()`` is an alias for ``isinstance(obj, pathlib.Path)``.
 #. ``sc.randsleep()`` sleeps for a nondeterministic period of time
+#. ``sc.loadzip()`` extracts (or reads data from) zip viles
 
 Bugfixes
 ~~~~~~~~
@@ -39,6 +40,7 @@ Improvements
 #. ``sc.checkmem()`` now returns a dictionary of sizes rather than print to screen.
 #. ``sc.commaticks()`` can now set both ``x`` and ``y`` axes in a single call.
 #. ``sc.timer()`` now has new methods ``tocout()`` and ``ttout()``, which return output by default (rather than print a string).
+#. ``sc.savezip()`` can save now save data to zip files (instead of just compressing files).
 
 Housekeeping
 ~~~~~~~~~~~~

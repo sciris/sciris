@@ -265,7 +265,7 @@ def dumpstr(obj=None):
 #%% Other file functions
 ##############################################################################
 
-__all__ += ['loadtext', 'savetext', 'savezip', 'getfilelist', 'sanitizefilename', 'makefilepath', 'path', 'ispath', 'thisdir']
+__all__ += ['loadtext', 'savetext', 'loadzip', 'savezip', 'getfilelist', 'sanitizefilename', 'makefilepath', 'path', 'ispath', 'thisdir']
 
 
 def loadtext(filename=None, folder=None, splitlines=False):
@@ -277,8 +277,10 @@ def loadtext(filename=None, folder=None, splitlines=False):
         mytext = sc.loadtext('my-document.txt')
     '''
     filename = makefilepath(filename=filename, folder=folder)
-    with open(filename) as f: output = f.read()
-    if splitlines: output = output.splitlines()
+    with open(filename) as f:
+        output = f.read()
+    if splitlines:
+        output = output.splitlines()
     return output
 
 
@@ -298,23 +300,78 @@ def savetext(filename=None, string=None):
     return
 
 
-def savezip(filename=None, filelist=None, folder=None, basename=True, verbose=True):
+def loadzip(filename=None, outfolder='.', folder=None, extract=True):
     '''
-    Create a zip file from the supplied list of files
+    Convenience function for reading a zip file
 
-    **Example**::
+    Args:
+        filename (str/path): the name of the zip file to write to
+        outfolder (str/path): the path location to extract the files to (default: current folder)
+        folder (str): optional additional folder for the filename
+        extract (bool): whether to extract the compressed files; otherwise, load data
+
+    **Examples**::
+
+        sc.loadzip('my-files.zip')
+        data = sc.loadzip('mydata.zip', extract=False)
+    '''
+    filename = makefilepath(filename=filename, folder=folder)
+    output = None
+    with ZipFile(filename, 'r') as zf: # Create the zip file
+        if extract:
+            zf.extractall(outfolder)
+        else:
+            output = dict()
+            names = zf.namelist()
+            for name in names:
+                val = zf.read(name)
+                try:
+                    val = loadstr(val)
+                except:
+                    pass
+                output[name] = val
+    return output
+
+
+def savezip(filename=None, filelist=None, data=None, folder=None, basename=True, verbose=True):
+    '''
+    Create a zip file from the supplied list of files (or less commonly, supplied data)
+
+    Args:
+        filename (str/path): the name of the zip file to write to
+        filelist (list): the list of files to compress
+        data (dict): if supplied, instead of files, write this data instead (must be a dictionary of filename keys and data values)
+        folder (str): optional additional folder for the filename
+        basename (bool): whether to use only the file's basename as the name inside the zip file
+        verbose (bool): whether to print progress
+
+    **Examples**::
 
         scripts = sc.getfilelist('./code/*.py')
         sc.savezip('scripts.zip', scripts)
+
+        sc.savezip('mydata.zip', data=dict(var1='test', var2=np.random.rand(3)))
     '''
+
+    # Handle inpus
     fullpath = makefilepath(filename=filename, folder=folder, sanitize=True)
     filelist = scu.promotetolist(filelist)
+    if data is not None:
+        if not isinstance(data, dict):
+            errormsg = 'Data has invalid format: must be a dictionary of filename keys and data values'
+            raise ValueError(errormsg)
+
+    # Write zip file
     with ZipFile(fullpath, 'w') as zf: # Create the zip file
-        for thisfile in filelist:
-            thispath = makefilepath(filename=thisfile, abspath=False)
-            if basename: thisname = os.path.basename(thispath)
-            else:        thisname = thispath
-            zf.write(thispath, thisname)
+        if data is not None:
+            for key,val in data.items():
+                zf.writestr(key, dumpstr(val))
+        else: # Main use case
+            for thisfile in filelist:
+                thispath = makefilepath(filename=thisfile, abspath=False)
+                if basename: thisname = os.path.basename(thispath)
+                else:        thisname = thispath
+                zf.write(thispath, thisname)
     if verbose: print(f'Zip file saved to "{fullpath}"')
     return fullpath
 
