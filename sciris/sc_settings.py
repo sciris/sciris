@@ -18,57 +18,12 @@ import inspect
 import collections as co
 import copy as cp
 import pylab as pl
+from . import sc_utils as scu
+from . import sc_odict as sco
+from . import sc_printing as scp
 
 
-__all__ = ['dictobj', 'options', 'help']
-
-class dictobj(dict):
-    '''
-    Lightweight class to create an object that can also act like a dictionary.
-
-    **Example**::
-
-        obj = sc.dictobj()
-        obj.a = 5
-        obj['b'] = 10
-        print(obj.items())
-
-    For a more powerful alternative, see ``sc.objdict()``.
-
-    (Note: ``sc.dictobj()`` is defined in ``sc_settings.py`` rather than ``sc_odict.py``
-    since it's used for the options object, which needs to be the first module loaded.)
-
-    | New in version 1.3.0.
-    | New in version 1.3.1: inherit from dict
-    '''
-
-    def __init__(self, **kwargs):
-        for k,v in kwargs.items():
-            self.__dict__[k] = v
-        return
-
-    def __repr__(self):
-        output = 'dictobj(' + self.__dict__.__repr__() + ')'
-        return output
-
-    def fromkeys(self, *args, **kwargs):
-        return dictobj(self.__dict__.fromkeys(*args, **kwargs))
-
-    # Copy default dictionary methods
-    def __getitem__( self, *args, **kwargs): return self.__dict__.__getitem__( *args, **kwargs)
-    def __setitem__( self, *args, **kwargs): return self.__dict__.__setitem__( *args, **kwargs)
-    def __contains__(self, *args, **kwargs): return self.__dict__.__contains__(*args, **kwargs)
-    def __len__(     self, *args, **kwargs): return self.__dict__.__len__(     *args, **kwargs)
-    def clear(       self, *args, **kwargs): return self.__dict__.clear(       *args, **kwargs)
-    def copy(        self, *args, **kwargs): return self.__dict__.copy(        *args, **kwargs)
-    def get(         self, *args, **kwargs): return self.__dict__.get(         *args, **kwargs)
-    def items(       self, *args, **kwargs): return self.__dict__.items(       *args, **kwargs)
-    def keys(        self, *args, **kwargs): return self.__dict__.keys(        *args, **kwargs)
-    def pop(         self, *args, **kwargs): return self.__dict__.pop(         *args, **kwargs)
-    def popitem(     self, *args, **kwargs): return self.__dict__.popitem(     *args, **kwargs)
-    def setdefault(  self, *args, **kwargs): return self.__dict__.setdefault(  *args, **kwargs)
-    def update(      self, *args, **kwargs): return self.__dict__.update(      *args, **kwargs)
-    def values(      self, *args, **kwargs): return self.__dict__.values(      *args, **kwargs)
+__all__ = ['options', 'help']
 
 
 # Define simple plotting options -- similar to Matplotlib default
@@ -93,7 +48,7 @@ rc_fancy.update({
 
 #%% Define the options class
 
-class Options(dictobj):
+class Options(sco.objdict):
     '''
     Set options for Sciris.
 
@@ -152,8 +107,6 @@ class Options(dictobj):
 
     def __repr__(self):
         ''' Brief representation '''
-        from . import sc_utils as scu # To avoid circular import
-        from . import sc_printing as scp
         output = scu.objectid(self)
         output += 'Sciris options (see also sc.options.disp()):\n'
         output += scp.pp(self.to_dict(), output=True)
@@ -182,7 +135,6 @@ class Options(dictobj):
 
     def disp(self):
         ''' Detailed representation '''
-        from . import sc_printing as scp # To avoid circular import
         output = 'Sciris options (see also sc.options.help()):\n'
         keylen = 14 # Maximum key length  -- "numba_parallel"
         for k,v in self.items():
@@ -202,8 +154,8 @@ class Options(dictobj):
         '''
 
         # Options acts like a class, but is actually an objdict for simplicity
-        optdesc = dictobj() # Help for the options
-        options = dictobj() # The options
+        optdesc = sco.objdict() # Help for the options
+        options = sco.objdict() # The options
 
         optdesc.sep = 'Set thousands seperator'
         options.sep = str(os.getenv('SCIRIS_SEP', ','))
@@ -335,8 +287,6 @@ class Options(dictobj):
 
             sc.options.help(detailed=True)
         '''
-        from . import sc_odict as sco # To avoid circular import
-        from . import sc_printing as scp # To avoid circular import
 
         # If not detailed, just print the docstring for sc.options
         if not detailed:
@@ -420,7 +370,6 @@ class Options(dictobj):
 
     def _handle_style(self, style=None, reset=False, copy=True):
         ''' Helper function to handle logic for different styles '''
-        from . import sc_utils as scu # To avoid circular import
         rc = self.rc # By default, use current
         if isinstance(style, dict): # If an rc-like object is supplied directly
             rc = scu.dcp(style)
@@ -468,7 +417,6 @@ class Options(dictobj):
             with sc.options.with_style(dpi=300): # Use default options, but higher DPI
                 pl.plot([1,3,6])
         '''
-        from . import sc_utils as scu # To avoid circular import
 
         # Handle inputs
         rc = scu.dcp(self.rc) # Make a local copy of the currently used settings

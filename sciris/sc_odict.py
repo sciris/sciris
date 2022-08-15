@@ -18,7 +18,7 @@ from . import sc_printing as scp
 from . import sc_nested as scn
 
 # Restrict imports to user-facing modules
-__all__ = ['ddict', 'odict', 'objdict', 'asobj']
+__all__ = ['ddict', 'odict', 'objdict', 'dictobj', 'asobj']
 
 
 class odict(OD):
@@ -1072,6 +1072,8 @@ class objdict(odict):
     An ``odict`` that acts like an object -- allow keys to be set/retrieved by object
     notation.
 
+    For a lighter-weight example, see ``sc.dictobj()``.
+
     Example
     -------
     >>> import sciris as sc
@@ -1186,6 +1188,52 @@ class objdict(odict):
     def delattribute(self, name):
         ''' Delete attribute if truly desired '''
         return odict.__delattr__(self, name)
+
+
+class dictobj(dict):
+    '''
+    Lightweight class to create an object that can also act like a dictionary.
+
+    **Example**::
+
+        obj = sc.dictobj()
+        obj.a = 5
+        obj['b'] = 10
+        print(obj.items())
+
+    For a more powerful alternative, see ``sc.objdict()``.
+
+    | New in version 1.3.0.
+    | New in version 1.3.1: inherit from dict
+    '''
+
+    def __init__(self, **kwargs):
+        for k,v in kwargs.items():
+            self.__dict__[k] = v
+        return
+
+    def __repr__(self):
+        output = 'dictobj(' + self.__dict__.__repr__() + ')'
+        return output
+
+    def fromkeys(self, *args, **kwargs):
+        return dictobj(self.__dict__.fromkeys(*args, **kwargs))
+
+    # Copy default dictionary methods
+    def __getitem__( self, *args, **kwargs): return self.__dict__.__getitem__( *args, **kwargs)
+    def __setitem__( self, *args, **kwargs): return self.__dict__.__setitem__( *args, **kwargs)
+    def __contains__(self, *args, **kwargs): return self.__dict__.__contains__(*args, **kwargs)
+    def __len__(     self, *args, **kwargs): return self.__dict__.__len__(     *args, **kwargs)
+    def clear(       self, *args, **kwargs): return self.__dict__.clear(       *args, **kwargs)
+    def copy(        self, *args, **kwargs): return self.__dict__.copy(        *args, **kwargs)
+    def get(         self, *args, **kwargs): return self.__dict__.get(         *args, **kwargs)
+    def items(       self, *args, **kwargs): return self.__dict__.items(       *args, **kwargs)
+    def keys(        self, *args, **kwargs): return self.__dict__.keys(        *args, **kwargs)
+    def pop(         self, *args, **kwargs): return self.__dict__.pop(         *args, **kwargs)
+    def popitem(     self, *args, **kwargs): return self.__dict__.popitem(     *args, **kwargs)
+    def setdefault(  self, *args, **kwargs): return self.__dict__.setdefault(  *args, **kwargs)
+    def update(      self, *args, **kwargs): return self.__dict__.update(      *args, **kwargs)
+    def values(      self, *args, **kwargs): return self.__dict__.values(      *args, **kwargs)
 
 
 def asobj(obj, strict=True):
