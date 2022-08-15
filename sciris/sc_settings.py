@@ -295,7 +295,7 @@ class Options(dictobj):
                 oldkey = key
                 key = rename[oldkey]
 
-            if key not in self:
+            if key not in self.keys():
                 keylist = self.orig_options.keys()
                 keys = '\n'.join(keylist)
                 errormsg = f'Option "{key}" not recognized; options are "defaults" or:\n{keys}\n\nSee help(sc.options.set) for more information.'
