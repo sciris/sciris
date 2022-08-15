@@ -314,6 +314,8 @@ def loadzip(filename=None, outfolder='.', folder=None, extract=True):
 
         sc.loadzip('my-files.zip')
         data = sc.loadzip('mydata.zip', extract=False)
+
+    New in version 2.0.0.
     '''
     filename = makefilepath(filename=filename, folder=folder)
     output = None
@@ -351,6 +353,8 @@ def savezip(filename=None, filelist=None, data=None, folder=None, basename=True,
         sc.savezip('scripts.zip', scripts)
 
         sc.savezip('mydata.zip', data=dict(var1='test', var2=np.random.rand(3)))
+
+    New in version 2.0.0: saving data
     '''
 
     # Handle inpus
@@ -582,7 +586,11 @@ path.__doc__ += '\n\n' + Path.__doc__
 
 
 def ispath(obj):
-    ''' Alias to isinstance(obj, Path). New in version 2.0.0. '''
+    '''
+    Alias to isinstance(obj, Path).
+
+    New in version 2.0.0.
+    '''
     return isinstance(obj, Path)
 
 

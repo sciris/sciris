@@ -1024,6 +1024,8 @@ def randsleep(delay=1.0, var=1.0, low=None, high=None):
         sc.randsleep(2, 0.1) # Sleep for 1.8-2.2 s (average 2.0)
         sc.randsleep([0.5, 1.5]) # Sleep for 0.5-1.5 s
         sc.randsleeep(low=0.5, high=1.5) # Ditto
+
+    New in version 2.0.0.
     '''
     if low is None or high is None:
         if scu.isnumber(delay):

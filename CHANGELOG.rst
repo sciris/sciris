@@ -16,12 +16,11 @@ This version contains a number of major improvements, including:
 New functions and methods
 ~~~~~~~~~~~~~~~~~~~~~~~~~
 #. ``sc.count()`` counts the number of matching elements in an array (similar to ``np.count_nonzero()``, but more flexible with e.g. float vs. int mismatches).
-#. ``sc.strsplit()`` will automatically split common types of delimited strings (e.g. ``sc.strsplit('a b c')``).
 #. ``sc.rmnans()`` and ``sc.fillnans()`` have been added as aliases of ``sc.sanitize()`` with default options.
 #. ``sc.rmpath()`` removes both files and folders, with an optional interactive mode.
 #. ``sc.ispath()`` is an alias for ``isinstance(obj, pathlib.Path)``.
 #. ``sc.randsleep()`` sleeps for a nondeterministic period of time
-#. ``sc.loadzip()`` extracts (or reads data from) zip viles
+#. ``sc.loadzip()`` extracts (or reads data from) zip files
 
 Bugfixes
 ~~~~~~~~
@@ -33,6 +32,7 @@ Improvements
 ~~~~~~~~~~~~
 #. If a copy/deepcopy is not possible, ``sc.cp()``/``sc.dcp()`` now raise an exception by default (previously, they silenced it).
 #. ``sc.timer()`` now has a ``plot()`` method.
+#. ``sc.strsplit()`` will automatically split common types of delimited strings (e.g. ``sc.strsplit('a b c')``).
 #. ``sc.parallelize()`` now supports additional parallelization options, e.g. ``concurrent.futures``, and new ``maxcpu``/``maxmem`` arguments.
 #. ``sc.daterange()`` now accepts ``datedelta`` arguments, e.g. ``sc.daterange('2022-02-22', weeks=2)``.
 #. ``sc.savefig()`` by default now creates folders if they don't exist.

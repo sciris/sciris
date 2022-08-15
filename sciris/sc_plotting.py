@@ -459,8 +459,8 @@ def commaticks(ax=None, axis='y', precision=2, cursor_precision=0):
     sep = scs.options.sep
     axlist = _get_axlist(ax)
     axislist = scu.promotetolist(axis)
-    for axis in axislist:
-        for ax in axlist:
+    for ax in axlist:
+        for axis in axislist:
             if   axis=='x': thisaxis = ax.xaxis
             elif axis=='y': thisaxis = ax.yaxis
             elif axis=='z': thisaxis = ax.zaxis

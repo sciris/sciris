@@ -225,7 +225,7 @@ def count(arr=None, val=None, eps=1e-6, **kwargs):
         sc.count(rand(10)<0.5) # returns e.g. 4
         sc.count([2,3,6,3], 3) # returs 2
 
-    New in version 1.4.0.
+    New in version 2.0.0.
     '''
     output = len(findinds(arr=arr, val=val, eps=eps, **kwargs))
     return output
@@ -377,6 +377,8 @@ def sanitize(data=None, returninds=False, replacenans=None, defaultval=None, die
 def fillnans(data=None, replacenans=True, **kwargs):
     """
     Alias for ``sc.sanitize(..., replacenans=True) with nearest interpolation (or a specified value).
+
+    New in version 2.0.0.
     """
     return sanitize(data=data, replacenans=replacenans, **kwargs)
 fillnans.__doc__ += '\n\n' + sanitize.__doc__
