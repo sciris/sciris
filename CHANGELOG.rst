@@ -37,6 +37,7 @@ Improvements
 #. ``sc.sanitize()`` can now handle multidimensional arrays.
 #. ``sc.loadmetadata()`` can now read metadata from JPG files.
 #. ``sc.checkmem()`` now returns a dictionary of sizes rather than print to screen.
+#. ``sc.commaticks()`` can now set both ``x`` and ``y`` axes in a single call.
 
 Housekeeping
 ~~~~~~~~~~~~

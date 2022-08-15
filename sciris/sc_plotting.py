@@ -427,7 +427,7 @@ def commaticks(ax=None, axis='y', precision=2, cursor_precision=0):
 
     Args:
         ax (any): axes to modify; if None, use current; else can be a single axes object, a figure, or a list of axes
-        axis (str): which axes to change (default 'y')
+        axis (str/list): which axis to change (default 'y'; can accept a list)
         precision (int): shift how many decimal places to show for small numbers (+ve = more, -ve = fewer)
         cursor_precision (int): ditto, for cursor
 
@@ -441,10 +441,11 @@ def commaticks(ax=None, axis='y', precision=2, cursor_precision=0):
 
     | New in version 1.3.0: ability to use non-comma thousands separator
     | New in version 1.3.1: added "precision" argument
+    | New in version 2.0.0: ability to set x and y axes simultaneously
     '''
     def commaformatter(x, pos=None):
         interval = thisaxis.get_view_interval()
-        prec = precision+cursor_precision if pos is None else precision # Use higher precision for cursor
+        prec = precision + cursor_precision if pos is None else precision # Use higher precision for cursor
         decimals = int(max(0, prec-np.floor(np.log10(np.ptp(interval)))))
         string = f'{x:0,.{decimals}f}' # Do the formatting
         if pos is not None and '.' in string: # Remove trailing decimal zeros from axis labels
@@ -457,12 +458,14 @@ def commaticks(ax=None, axis='y', precision=2, cursor_precision=0):
 
     sep = scs.options.sep
     axlist = _get_axlist(ax)
-    for ax in axlist:
-        if   axis=='x': thisaxis = ax.xaxis
-        elif axis=='y': thisaxis = ax.yaxis
-        elif axis=='z': thisaxis = ax.zaxis
-        else: raise ValueError('Axis must be x, y, or z')
-        thisaxis.set_major_formatter(mpl.ticker.FuncFormatter(commaformatter))
+    axislist = scu.promotetolist(axis)
+    for axis in axislist:
+        for ax in axlist:
+            if   axis=='x': thisaxis = ax.xaxis
+            elif axis=='y': thisaxis = ax.yaxis
+            elif axis=='z': thisaxis = ax.zaxis
+            else: raise ValueError('Axis must be x, y, or z')
+            thisaxis.set_major_formatter(mpl.ticker.FuncFormatter(commaformatter))
     return
 
 
