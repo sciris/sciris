@@ -881,7 +881,7 @@ def swapdict(d):
     return output
 
 
-def mergedicts(*args, _strict=False, _overwrite=True, _copy=False, **kwargs):
+def mergedicts(*args, _strict=False, _overwrite=True, _copy=False, _sameclass=True, **kwargs):
     '''
     Small function to merge multiple dicts together.
 
@@ -922,11 +922,15 @@ def mergedicts(*args, _strict=False, _overwrite=True, _copy=False, **kwargs):
         warnings.warn(warnmsg, category=FutureWarning, stacklevel=2)
 
     # Try to get the output type from the first argument, but revert to a standard dict if that fails
+    outputdict = {}
     try:
-        assert isinstance(args[0], dict)
-        outputdict = args[0].__class__() # This creates a new instance of the class
-    except:
-        outputdict = {}
+        if _sameclass:
+            assert isinstance(args[0], dict)
+            outputdict = args[0].__class__() # This creates a new instance of the class
+    except Exception as E:
+        errormsg = f'Warning: encountered error getting dict type from first argument ({str(E)}); set _sameclass=False to turn off this warning'
+        print(errormsg)
+
 
     # Merge over the dictionaries in order
     args = list(args)
