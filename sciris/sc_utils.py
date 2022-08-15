@@ -922,16 +922,17 @@ def mergedicts(*args, _strict=False, _overwrite=True, _copy=False, _sameclass=Tr
         warnmsg = f'sc.mergedicts() arguments "{strjoin(renamed)}" have been renamed with underscores as of v1.3.3; using these as keywords is undesirable'
         warnings.warn(warnmsg, category=FutureWarning, stacklevel=2)
 
-    # Try to get the output type from the first argument, but revert to a standard dict if that fails
+    # Try to get the output type from the arguments, but revert to a standard dict if that fails
     outputdict = {}
-    try:
-        if _sameclass and len(args):
-            assert isinstance(args[0], dict)
-            outputdict = args[0].__class__() # This creates a new instance of the class
-    except Exception as E:
-        errormsg = f'Could not create new dict of {type(args[0])} from first argument ({str(E)}); set _sameclass=False if this is OK'
-        raise TypeError(errormsg) from E
-
+    if _sameclass:
+        for arg in args:
+            if isinstance(arg, dict):
+                try:
+                    outputdict = arg.__class__() # This creates a new instance of the class
+                    break
+                except Exception as E:
+                    errormsg = f'Could not create new dict of {type(args[0])} from first argument ({str(E)}); set _sameclass=False if this is OK'
+                    raise TypeError(errormsg) from E
 
     # Merge over the dictionaries in order
     args = list(args)
