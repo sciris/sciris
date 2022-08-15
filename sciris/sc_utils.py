@@ -881,7 +881,7 @@ def swapdict(d):
     return output
 
 
-def mergedicts(*args, _strict=False, _overwrite=True, _copy=False, _sameclass=True, **kwargs):
+def mergedicts(*args, _strict=False, _overwrite=True, _copy=False, _sameclass=True, _die=True, **kwargs):
     '''
     Small function to merge multiple dicts together.
 
@@ -901,6 +901,7 @@ def mergedicts(*args, _strict=False, _overwrite=True, _copy=False, _sameclass=Tr
         _overwrite (bool): if False, raise an exception if multiple keys are found
         _copy      (bool): whether or not to deepcopy the merged dictionary
         _sameclass (bool): whether to ensure the output has the same type as the first dictionary merged
+        _die       (bool): whether to raise an exception if something goes wrong
         *args      (list): the sequence of dicts to be merged
         **kwargs   (dict): merge these into the dict as well
 
@@ -932,23 +933,29 @@ def mergedicts(*args, _strict=False, _overwrite=True, _copy=False, _sameclass=Tr
                     break
                 except Exception as E:
                     errormsg = f'Could not create new dict of {type(args[0])} from first argument ({str(E)}); set _sameclass=False if this is OK'
-                    raise TypeError(errormsg) from E
+                    if _die: raise TypeError(errormsg) from E
+                    else:    print(errormsg)
 
     # Merge over the dictionaries in order
     args = list(args)
     args.append(kwargs) # Include any kwargs as the final dict
-    for arg in args:
+    for a,arg in enumerate(args):
         is_dict = isinstance(arg, dict)
         if _strict and not is_dict:
-            errormsg = f'Argument of "{type(arg)}" found; must be dict since strict=True'
+            errormsg = f'Argument {a} has {type(arg)}; must be dict since _strict=True'
             raise TypeError(errormsg)
         if is_dict:
             if not _overwrite:
                 intersection = set(outputdict.keys()).intersection(arg.keys())
                 if len(intersection):
-                    errormsg = f'Could not merge dicts since keys "{strjoin(intersection)}" overlap and overwrite=False'
+                    errormsg = f'Could not merge dicts since keys "{strjoin(intersection)}" overlap and _overwrite=False'
                     raise KeyError(errormsg)
             outputdict.update(arg)
+        else:
+            if arg is not None and _die:
+                errormsg = f'Could not handle argument {a} of {type(arg)}: expecting dict or None'
+                raise TypeError(errormsg)
+
     if copy:
         outputdict = dcp(outputdict)
     return outputdict
