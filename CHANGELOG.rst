@@ -25,7 +25,7 @@ New functions and methods
 
 Bugfixes
 ~~~~~~~~
-#. ``sc.mergedicts()`` now handles keyword arguments (previously they were silently ignored).
+#. ``sc.mergedicts()`` now handles keyword arguments (previously they were silently ignored). Non-dict inputs also now raise an error by default rather than being silently ignored (except for ``None``).
 #. ``Spreadsheet`` objects no longer pickle the binary spreadsheet (in some cases reducing size by 50%).
 #. ``sc.loadspreadsheet()`` has been updated to match current ``pd.read_excel()`` syntax.
 
