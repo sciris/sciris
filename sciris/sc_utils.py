@@ -908,8 +908,9 @@ def mergedicts(*args, _strict=False, _overwrite=True, _copy=False, **kwargs):
         d3 = sc.mergedicts(sc.odict({'b':3, 'c':4}), {'a':1, 'b':2}) # Returns sc.odict({'b':2, 'c':4, 'a':1})
         d4 = sc.mergedicts({'b':3, 'c':4}, {'a':1, 'b':2}, _overwrite=False) # Raises exception
 
-    New in version 1.1.0: "copy" argument
-    New in version 1.3.3: keywords allowed
+    | New in version 1.1.0: "copy" argument
+    | New in version 1.3.3: keywords allowed
+    | New in version 2.0.0: keywords fully enabled
     '''
     # Warn about deprecated keys
     renamed = ['strict', 'overwrite', 'copy']
@@ -925,6 +926,8 @@ def mergedicts(*args, _strict=False, _overwrite=True, _copy=False, **kwargs):
         outputdict = {}
 
     # Merge over the dictionaries in order
+    args = list(args)
+    args.append(kwargs) # Include any kwargs as the final dict
     for arg in args:
         is_dict = isinstance(arg, dict)
         if _strict and not is_dict:
