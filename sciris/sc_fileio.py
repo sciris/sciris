@@ -3,8 +3,9 @@ Functions for reading/writing to files, including pickles, JSONs, and Excel.
 
 Highlights:
     - ``sc.save()/sc.load()``: efficiently save/load any Python object (via pickling)
-    - ``sc.savejson()/sc.loadjson()``: likewise, for JSONs
     - ``sc.savetext()/sc.loadtext()``: likewise, for text
+    - ``sc.savejson()/sc.loadjson()``: likewise, for JSONs
+    - ``sc.saveyaml()/sc.saveyaml()``: likewise, for YAML
     - ``sc.thisdir()``: get current folder
     - ``sc.getfilelist()``: easy way to access glob
     - ``sc.rmpath()``: remove files and folders
@@ -21,7 +22,6 @@ import re
 import json
 import shutil
 import uuid
-import types
 import inspect
 import importlib
 import traceback
@@ -33,7 +33,6 @@ from zipfile import ZipFile
 from contextlib import closing
 from io import BytesIO as IO
 from pathlib import Path
-import copyreg as cpreg
 import pickle as pkl
 import gzip as gz
 from . import sc_settings as scs
@@ -48,14 +47,14 @@ from . import sc_dataframe as scdf
 #%% Pickling functions
 ##############################################################################
 
-__all__ = ['loadobj', 'loadstr', 'saveobj', 'dumpstr', 'load', 'save', 'rmpath']
+__all__ = ['load', 'save', 'loadobj', 'saveobj', 'loadstr', 'dumpstr', 'rmpath']
 
 
-def loadobj(filename=None, folder=None, verbose=False, die=None, remapping=None, method='pickle', **kwargs):
+def load(filename=None, folder=None, verbose=False, die=None, remapping=None, method='pickle', **kwargs):
     '''
-    Load a file that has been saved as a gzipped pickle file, e.g. by ``sc.saveobj()``.
+    Load a file that has been saved as a gzipped pickle file, e.g. by ``sc.save()``.
     Accepts either a filename (standard usage) or a file object as the first argument.
-    Note that ``loadobj()``/``load()`` are aliases of each other.
+    Note that ``sc.load()``/``sc.loadobj()`` are aliases of each other.
 
     Note: be careful when loading pickle files, since a malicious pickle can be
     used to execute arbitrary code.
@@ -71,7 +70,7 @@ def loadobj(filename=None, folder=None, verbose=False, die=None, remapping=None,
         die       (bool):     whether to raise an exception if errors are encountered (otherwise, load as much as possible)
         remapping (dict):     way of mapping old/unavailable module names to new
         method    (str):      method for loading (usually pickle or dill)
-        kwargs    (dict):     passed to pickle.loads()/dill.loads()
+        kwargs    (dict):     passed to ``pickle.loads()``/``dill.loads()``
 
     **Examples**::
 
@@ -150,28 +149,30 @@ https://stackoverflow.com/questions/41554738/how-to-load-an-old-pickle-file
     return obj
 
 
-def saveobj(filename=None, obj=None, compresslevel=5, verbose=0, folder=None, method='pickle', die=True, *args, **kwargs):
+def save(filename=None, obj=None, compresslevel=5, verbose=0, folder=None, method='pickle',
+         sanitizepath=True, die=True, *args, **kwargs):
     '''
     Save an object to file as a gzipped pickle -- use compression 5 by default,
     since more is much slower but not much smaller. Once saved, can be loaded
-    with sc.loadobj(). Note that saveobj()/save() are identical.
+    with ``sc.load()``. Note that ``sc.save()``/``sc.saveobj()`` are identical.
 
     Args:
-        filename (str or Path): the filename to save to; if str, passed to sc.makefilepath()
-        obj (literally anything): the object to save
-        compresslevel (int): the level of gzip compression
-        verbose (int): detail to print
-        folder (str): passed to sc.makefilepath()
-        method (str): whether to use pickle (default) or dill
-        die (bool): whether to fail if no object is provided
-        args (list): passed to pickle.dumps()
-        kwargs (dict): passed to pickle.dumps()
+        filename      (str/Path) : the filename to save to; if str, passed to ``sc.makefilepath()``
+        obj           (anything) : the object to save
+        compresslevel (int)      : the level of gzip compression
+        verbose       (int)      : detail to print
+        folder        (str)      : passed to ``sc.makefilepath()``
+        method        (str)      : whether to use pickle (default) or dill
+        die           (bool)     : whether to fail if no object is provided
+        sanitizepath  (bool)     : whether to sanitize the path prior to saving
+        args          (list)     : passed to ``pickle.dumps()``
+        kwargs        (dict)     : passed to ``pickle.dumps()``
 
     **Example**::
 
         myobj = ['this', 'is', 'a', 'weird', {'object':44}]
-        sc.saveobj('myfile.obj', myobj)
-        sc.saveobj('myfile.obj', myobj, method='dill') # Use dill instead, to save custom classes as well
+        sc.save('myfile.obj', myobj)
+        sc.save('myfile.obj', myobj, method='dill') # Use dill instead, to save custom classes as well
 
     | New in version 1.1.1: removed Python 2 support.
     | New in version 1.2.2: automatic swapping of arguments if order is incorrect; correct passing of arguments
@@ -194,7 +195,7 @@ def saveobj(filename=None, obj=None, compresslevel=5, verbose=0, folder=None, me
             errormsg = f'Filename type {type(filename)} is not valid: must be one of {filetypes}'
     else: # Normal use case: make a file path
         bytesobj = None
-        filename = makefilepath(filename=filename, folder=folder, default='default.obj', sanitize=True)
+        filename = makefilepath(filename=filename, folder=folder, default='default.obj', sanitize=sanitizepath)
 
     # Handle object
     if obj is None: # pragma: no cover
@@ -228,8 +229,8 @@ def saveobj(filename=None, obj=None, compresslevel=5, verbose=0, folder=None, me
 
 
 # Aliases to make these core functions even easier to use
-load = loadobj
-save = saveobj
+loadobj = load
+saveobj = save
 
 def loadstr(string, verbose=False, die=None, remapping=None):
     '''
@@ -335,7 +336,7 @@ def loadzip(filename=None, outfolder='.', folder=None, extract=True):
     return output
 
 
-def savezip(filename=None, filelist=None, data=None, folder=None, basename=True, verbose=True):
+def savezip(filename=None, filelist=None, data=None, folder=None, basename=True, sanitizepath=True, verbose=True):
     '''
     Create a zip file from the supplied list of files (or less commonly, supplied data)
 
@@ -345,6 +346,7 @@ def savezip(filename=None, filelist=None, data=None, folder=None, basename=True,
         data (dict): if supplied, instead of files, write this data instead (must be a dictionary of filename keys and data values)
         folder (str): optional additional folder for the filename
         basename (bool): whether to use only the file's basename as the name inside the zip file
+        sanitizepath (bool): whether to sanitize the path prior to saving
         verbose (bool): whether to print progress
 
     **Examples**::
@@ -358,7 +360,7 @@ def savezip(filename=None, filelist=None, data=None, folder=None, basename=True,
     '''
 
     # Handle inpus
-    fullpath = makefilepath(filename=filename, folder=folder, sanitize=True)
+    fullpath = makefilepath(filename=filename, folder=folder, sanitize=sanitizepath)
     filelist = scu.promotetolist(filelist)
     if data is not None:
         if not isinstance(data, dict):
@@ -702,7 +704,7 @@ def rmpath(path=None, *args, die=True, verbose=True, interactive=False, **kwargs
 #%% JSON functions
 ##############################################################################
 
-__all__ += ['sanitizejson', 'jsonify', 'loadjson', 'savejson', 'jsonpickle', 'jsonunpickle']
+__all__ += ['sanitizejson', 'jsonify', 'loadjson', 'savejson', 'loadyaml', 'saveyaml', 'jsonpickle', 'jsonunpickle']
 
 
 def sanitizejson(obj, verbose=True, die=False, tostring=False, **kwargs):
@@ -820,8 +822,7 @@ def loadjson(filename=None, folder=None, string=None, fromfile=True, **kwargs):
     return output
 
 
-
-def savejson(filename=None, obj=None, folder=None, die=True, indent=2, keepnone=False, **kwargs):
+def savejson(filename=None, obj=None, folder=None, die=True, indent=2, keepnone=False, sanitizepath=True, **kwargs):
     '''
     Convenience function for saving to a JSON file.
 
@@ -832,10 +833,11 @@ def savejson(filename=None, obj=None, folder=None, die=True, indent=2, keepnone=
         die (bool): whether or not to raise an exception if saving an empty object
         indent (int): indentation to use for saved JSON
         keepnone (bool): allow ``sc.savejson(None)`` to return 'null' rather than raising an exception
-        kwargs (dict): passed to json.dump()
+        sanitizepath (bool): whether to sanitize the path prior to saving
+        kwargs (dict): passed to ``json.dump()``
 
     Returns:
-        None
+        The filename saved to
 
     **Example**::
 
@@ -843,7 +845,7 @@ def savejson(filename=None, obj=None, folder=None, die=True, indent=2, keepnone=
         sc.savejson('my-file.json', json)
     '''
 
-    filename = makefilepath(filename=filename, folder=folder)
+    filename = makefilepath(filename=filename, folder=folder, sanitize=sanitizepath)
 
     if obj is None and not keepnone: # pragma: no cover
         errormsg = 'No object was supplied to savejson(), or the object was empty'
@@ -853,7 +855,104 @@ def savejson(filename=None, obj=None, folder=None, die=True, indent=2, keepnone=
     with open(filename, 'w') as f:
         json.dump(sanitizejson(obj), f, indent=indent, **kwargs)
 
-    return
+    return filename
+
+
+def loadyaml(filename=None, folder=None, string=None, fromfile=True, safe=False, loader=None):
+    '''
+    Convenience function for reading a YAML file (or string).
+
+    Args:
+        filename (str): the file to load, or the YAML object if using positional arguments
+        folder (str): folder if not part of the filename
+        string (str): if not loading from a file, a string representation of the YAML
+        fromfile (bool): whether or not to load from file
+        safe (bool): whether to use the safe loader
+        loader (Loader): custom YAML loader (takes precedence over ``safe``)
+
+    Returns:
+        output (dict): the YAML object
+
+    **Examples**::
+
+        yaml = sc.loadyaml('my-file.yaml')
+        yaml = sc.loadyaml(string='{"a":null, "b":[1,2,3]}')
+    '''
+    import yaml # Optional import
+
+    if loader is None:
+        if safe: loader = yaml.loader.SafeLoader
+        else:    loader = yaml.loader.UnsafeLoader
+
+    if string is not None or not fromfile:
+        if string is None and filename is not None:
+            string = filename # Swap arguments
+        output = yaml.load_all(string, loader)
+        output = list(output)
+    else:
+        filepath = makefilepath(filename=filename, folder=folder)
+        try:
+            with open(filepath) as f:
+                output = yaml.load_all(f, loader)
+                output = list(output)
+        except FileNotFoundError as E: # pragma: no cover
+            errormsg = f'No such file "{filename}". Use fromfile=False if loading a YAML string rather than a file.'
+            raise FileNotFoundError(errormsg) from E
+
+    # If only a single page, return it directly
+    if len(output) == 1:
+        output = output[0]
+
+    return output
+
+
+def saveyaml(filename=None, obj=None, folder=None, die=True, keepnone=False, dumpall=False, sanitizepath=True, **kwargs):
+    '''
+    Convenience function for saving to a YAML file.
+
+    Args:
+        filename (str): the file to save (if empty, return string representation of the YAML instead)
+        obj (anything): the object to save
+        folder (str): folder if not part of the filename
+        die (bool): whether or not to raise an exception if saving an empty object
+        indent (int): indentation to use for saved YAML
+        keepnone (bool): allow ``sc.saveyaml(None)`` to return 'null' rather than raising an exception
+        dumpall (bool): if True, treat a list input as separate YAML pages
+        sanitizepath (bool): whether to sanitize the path prior to saving
+        kwargs (dict): passed to ``yaml.dump()``
+
+    Returns:
+        The filename saved to
+
+    **Examples**::
+
+        yaml = {'foo':'bar', 'data':[1,2,3]}
+        sc.saveyaml('my-file.yaml', yaml) # Save to file
+
+        string = sc.saveyaml(obj=yaml) # Export to string
+    '''
+    import yaml # Optional import
+
+    if dumpall: dump_func = yaml.dump_all
+    else:       dump_func = yaml.dump
+
+    if obj is None and not keepnone: # pragma: no cover
+        errormsg = 'No object was supplied to saveyaml(), or the object was empty'
+        if die: raise ValueError(errormsg)
+        else:   print(errormsg)
+
+    # Standard usage: dump to file
+    if filename is not None:
+        filename = makefilepath(filename=filename, folder=folder, sanitize=sanitizepath)
+        output = filename
+        with open(filename, 'w') as f:
+            dump_func(obj, f, **kwargs)
+
+    # Alternate usage:
+    else:
+        output = dump_func(obj, **kwargs)
+
+    return output
 
 
 def jsonpickle(obj, tostring=False):
@@ -869,7 +968,7 @@ def jsonpickle(obj, tostring=False):
 
     Wrapper for the jsonpickle library: https://jsonpickle.github.io/
     '''
-    import jsonpickle as jp
+    import jsonpickle as jp # Optional import
     import jsonpickle.ext.numpy as jsonpickle_numpy
     import jsonpickle.ext.pandas as jsonpickle_pandas
     jsonpickle_numpy.register_handlers()
@@ -1519,7 +1618,7 @@ def savespreadsheet(filename=None, data=None, folder=None, sheetnames=None, clos
 #%% Pickling support methods
 ##############################################################################
 
-__all__ += ['Failed', 'Empty', 'loadobj2or3']
+__all__ += ['Failed', 'Empty']
 
 
 class Failed(object):
@@ -1725,219 +1824,3 @@ def _savedill(fileobj=None, obj=None, *args, **kwargs): # pragma: no cover
         raise ModuleNotFoundError('The "dill" Python package is not available; please install manually') from e
     fileobj.write(dill.dumps(obj, protocol=-1, *args, **kwargs))
     return
-
-
-
-##############################################################################
-#%% Python 2 legacy support
-##############################################################################
-
-not_string_pickleable = ['datetime', 'BytesIO']
-byte_objects = ['datetime', 'BytesIO', 'odict', 'spreadsheet', 'blobject']
-
-
-def loadobj2or3(filename=None, filestring=None, recursionlimit=None, **kwargs):  # pragma: no cover
-    '''
-    Try to load as a (Sciris-saved) Python 3 pickle; if that fails, try to load
-    as a Python 2 pickle. For legacy support only.
-
-    For available keyword arguments, see sc.load().
-
-    Args:
-        filename (str): the name of the file to load
-        filestring (str): alternatively, specify an already-loaded bytestring
-        recursionlimit (int): how deeply to parse objects before failing (default 1000)
-    '''
-    try:
-        output = loadobj(filename=filename, **kwargs)
-    except:
-        output = _loadobj2to3(filename=filename, filestring=filestring, recursionlimit=recursionlimit)
-    return output
-
-
-def _loadobj2to3(filename=None, filestring=None, recursionlimit=None): # pragma: no cover
-    '''
-    Used by loadobj2or3() to load Python2 objects in Python3 if all other
-    loading methods fail. Uses a recursive approach, so can set a recursion limit.
-    '''
-
-    class Placeholder():
-        ''' Replace these corrupted classes with properly loaded ones '''
-        def __init__(*args):
-            return
-
-        def __setstate__(self, state):
-            if isinstance(state,dict):
-                self.__dict__ = state
-            else:
-                self.state = state
-            return
-
-    class StringUnpickler(pkl.Unpickler):
-        def find_class(self, module, name, verbose=False):
-            if verbose: print('Unpickling string module %s , name %s' % (module, name))
-            if name in not_string_pickleable:
-                return Empty
-            else:
-                try:
-                    output = pkl.Unpickler.find_class(self,module,name)
-                except Exception as E:
-                    print('Warning, string unpickling could not find module %s, name %s: %s' % (module, name, str(E)))
-                    output = Empty
-                return output
-
-    class BytesUnpickler(pkl.Unpickler):
-        def find_class(self, module, name, verbose=False):
-            if verbose: print('Unpickling bytes module %s , name %s' % (module, name))
-            if name in byte_objects:
-                try:
-                    output = pkl.Unpickler.find_class(self,module,name)
-                except Exception as E:
-                    print('Warning, bytes unpickling could not find module %s, name %s: %s' % (module, name, str(E)))
-                    output = Placeholder
-                return output
-            else:
-                return Placeholder
-
-    def recursive_substitute(obj1, obj2, track=None, recursionlevel=0, recursionlimit=None):
-        if recursionlimit is None: # Recursion limit
-            recursionlimit = 1000 # Better to die here than hit Python's recursion limit
-
-        def recursion_warning(count, obj1, obj2):
-            output = 'Warning, internal recursion depth exceeded, aborting: depth=%s, %s -> %s' % (count, type(obj1), type(obj2))
-            return output
-
-        recursionlevel += 1
-
-        if track is None:
-            track = []
-
-        if isinstance(obj1, Blobject): # Handle blobjects (usually spreadsheets)
-            obj1.blob  = obj2.__dict__[b'blob']
-            obj1.bytes = obj2.__dict__[b'bytes']
-
-        if isinstance(obj2, dict): # Handle dictionaries
-            for k,v in obj2.items():
-                if isinstance(v, dt.datetime):
-                    setattr(obj1, k.decode('latin1'), v)
-                elif isinstance(v, dict) or hasattr(v,'__dict__'):
-                    if isinstance(k, (bytes, bytearray)):
-                        k = k.decode('latin1')
-                    track2 = track.copy()
-                    track2.append(k)
-                    if recursionlevel<=recursionlimit:
-                        recursionlevel = recursive_substitute(obj1[k], v, track2, recursionlevel, recursionlimit)
-                    else:
-                        print(recursion_warning(recursionlevel, obj1, obj2))
-        else:
-            for k,v in obj2.__dict__.items():
-                if isinstance(v, dt.datetime):
-                    setattr(obj1,k.decode('latin1'), v)
-                elif isinstance(v,dict) or hasattr(v,'__dict__'):
-                    if isinstance(k, (bytes, bytearray)):
-                        k = k.decode('latin1')
-                    track2 = track.copy()
-                    track2.append(k)
-                    if recursionlevel<=recursionlimit:
-                        recursionlevel = recursive_substitute(getattr(obj1,k), v, track2, recursionlevel, recursionlimit)
-                    else:
-                        print(recursion_warning(recursionlevel, obj1, obj2))
-        return recursionlevel
-
-    def loadintostring(fileobj):
-        unpickler1 = StringUnpickler(fileobj, encoding='latin1')
-        try:
-            stringout = unpickler1.load()
-        except Exception as E:
-            print('Warning, string pickle loading failed: %s' % str(E))
-            exception = traceback.format_exc() # Grab the trackback stack
-            stringout = makefailed(module_name='String unpickler failed', name='n/a', error=E, exception=exception)
-        return stringout
-
-    def loadintobytes(fileobj):
-        unpickler2 = BytesUnpickler(fileobj,  encoding='bytes')
-        try:
-            bytesout  = unpickler2.load()
-        except Exception as E:
-            print('Warning, bytes pickle loading failed: %s' % str(E))
-            exception = traceback.format_exc() # Grab the trackback stack
-            bytesout = makefailed(module_name='Bytes unpickler failed', name='n/a', error=E, exception=exception)
-        return bytesout
-
-    # Load either from file or from string
-    if filename:
-        with gz.GzipFile(filename) as fileobj:
-            stringout = loadintostring(fileobj)
-        with gz.GzipFile(filename) as fileobj:
-            bytesout = loadintobytes(fileobj)
-
-    elif filestring:
-        with closing(IO(filestring)) as output:
-            with gz.GzipFile(fileobj=output, mode='rb') as fileobj:
-                stringout = loadintostring(fileobj)
-        with closing(IO(filestring)) as output:
-            with gz.GzipFile(fileobj=output, mode='rb') as fileobj:
-                bytesout = loadintobytes(fileobj)
-    else:
-        errormsg = 'You must supply either a filename or a filestring for loadobj() or loadstr(), respectively'
-        raise Exception(errormsg)
-
-    # Actually do the load, with correct substitution
-    recursive_substitute(stringout, bytesout, recursionlevel=0, recursionlimit=recursionlimit)
-    return stringout
-
-
-
-##############################################################################
-#%% Twisted pickling methods
-##############################################################################
-
-# NOTE: The code below is part of the Twisted package, and is included
-# here to allow functools.partial() objects (among other things) to be
-# pickled; they are not for public consumption. --CK
-
-# From: twisted/persisted/styles.py
-# -*- test-case-name: twisted.test.test_persisted -*-
-# Copyright (c) Twisted Matrix Laboratories.
-# See LICENSE for details.
-
-# Permission is hereby granted, free of charge, to any person obtaining
-# a copy of this software and associated documentation files (the
-# "Software"), to deal in the Software without restriction, including
-# without limitation the rights to use, copy, modify, merge, publish,
-# distribute, sublicense, and/or sell copies of the Software, and to
-# permit persons to whom the Software is furnished to do so, subject to
-# the following conditions:
-#
-# The above copyright notice and this permission notice shall be
-# included in all copies or substantial portions of the Software.
-
-_UniversalPicklingError = pkl.PicklingError
-
-def _pickleMethod(method):
-    return (_unpickleMethod, (method.__name__,         method.__self__, method.__self__.__class__))
-
-def _methodFunction(classObject, methodName):
-    methodObject = getattr(classObject, methodName)
-    return methodObject
-
-def _unpickleMethod(im_name, im_self, im_class):
-    if im_self is None:
-        return getattr(im_class, im_name)
-    try:
-        methodFunction = _methodFunction(im_class, im_name)
-    except AttributeError: # pragma: no cover
-        assert im_self is not None, "No recourse: no instance to guess from."
-        if im_self.__class__ is im_class:
-            raise
-        return _unpickleMethod(im_name, im_self, im_self.__class__)
-    else:
-        maybeClass = ()
-        bound = types.MethodType(methodFunction, im_self, *maybeClass)
-        return bound
-
-cpreg.pickle(types.MethodType, _pickleMethod, _unpickleMethod)
-
-# Legacy support for loading Sciris <1.0 objects; may be removed in future
-pickleMethod = _pickleMethod
-unpickleMethod = _unpickleMethod

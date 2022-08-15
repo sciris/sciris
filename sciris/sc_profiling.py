@@ -635,12 +635,7 @@ class resourcemonitor(scu.prettyobj):
 
 
     def kill(self):
-        '''
-        Kill all processes
-
-        Args:
-            kill_parent (bool): whether to kill the parent process as well (usually unrecoverable)
-        '''
+        ''' Kill all processes '''
         kill_verbose = self.verbose is not False # Print if self.verbose is True or None (just not False)
         if kill_verbose:
             print(self.exception)

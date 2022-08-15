@@ -17,15 +17,16 @@ cwd = os.path.abspath(os.path.dirname(__file__))
 
 # Define the requirements for core functionality
 requirements = [
-        'matplotlib>',  # Plotting
+        'matplotlib',   # Plotting
         'numpy',        # Numerical functions
         'pandas',       # Dataframes and spreadsheet input
         'openpyxl',     # To read Excel files; removed as a dependency of pandas as of version 1.3
         'xlsxwriter',   # Spreadsheet output
         'psutil',       # Load monitoring
-        'dill',         # File I/O
+        'dill',         # For pickling more complex object types
         'multiprocess', # More flexible version of multiprocessing
         'jsonpickle',   # For converting arbitrary objects to JSON
+        'pyyaml',       # For loading/saving YAML
         'gitpython',    # Version information
         'jellyfish',    # For fuzzy string matching
         'ansicolors',   # For colored text output
