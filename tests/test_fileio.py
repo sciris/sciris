@@ -3,8 +3,9 @@ Test Sciris file I/O functions.
 '''
 
 import os
-import pylab as pl
+import numpy as np
 import pandas as pd
+import pylab as pl
 import openpyxl
 import sciris as sc
 
@@ -22,7 +23,7 @@ nrows = 15
 ncols = 3
 testdata   = pl.zeros((nrows+1, ncols), dtype=object) # Includes header row
 testdata[0,:] = ['A', 'B', 'C'] # Create header
-testdata[1:,:] = pl.rand(nrows,ncols) # Create data
+testdata[1:,:] = np.random.rand(nrows,ncols) # Create data
 
 
 def test_spreadsheets():
@@ -78,7 +79,7 @@ def test_spreadsheets():
     S = sc.Spreadsheet(files.excel)
     S.writecells(cells=['A6','B7','C8','D9'], vals=['This','is','a','test']) # Method 1
     S.writecells(cells=[pl.array([7,1])+i for i in range(4)], vals=['And','so','is','this']) # Method 2
-    newdata = (pl.rand(3,3)*100).round()
+    newdata = (np.random.rand(3,3)*100).round()
     S.writecells(startrow=14, startcol=1, vals=newdata, verbose=True) # Method 3
     S.save()
     data = S.readcells(header=False)
@@ -97,10 +98,13 @@ def test_fileio():
     '''
     o = sc.objdict()
 
-    sc.heading('Saveobj/loadobj')
-    sc.saveobj(files.binary, testdata)
+    # Test thisdir
+    sc.thisdir() # Just put this here for testing
 
-    o.obj1 = sc.loadobj(files.binary)
+    sc.heading('Save/load')
+    sc.save(files.binary, testdata)
+
+    o.obj1 = sc.load(files.binary)
     print(o.obj1)
 
     sc.heading('Savetext/loadtext')
@@ -172,11 +176,11 @@ def test_json():
 
     not_jsonifiable = sc.Blobject() # Create an object that can't be JSON serialized
 
-    print('Testing jsonifying a NON-jsonifiable object:')
+    print('Testing jsonifying a NON-jsonifiable object')
     notjson = sc.jsonify(not_jsonifiable, die=False) # Will return a string representation
     sc.sanitizejson(not_jsonifiable, die=True) # Will still not die thanks to jsonpickle
 
-    jsonifiable = sc.objdict().make(keys=['a','b'], vals=pl.rand(10), coerce='none')
+    jsonifiable = sc.objdict().make(keys=['a','b'], vals=np.random.rand(10), coerce='none')
     json_obj = sc.jsonify(jsonifiable)
     json_str = sc.jsonify(jsonifiable, tostring=True, indent=2) # kwargs are passed to json.dumps()
 
@@ -188,19 +192,27 @@ def test_json():
     print(json_str)
 
     # Test JSON load/save
-    sc.thisdir() # Just put this here for testing
+    print('Testing JSON load/save...')
     jsonfile = 'test.json'
-    testdata = {'key1':pl.rand(5,5).tolist(), 'key2':['test1', None]}
+    testdata = {'key1':np.random.rand(5,5).tolist(), 'key2':['test1', None]}
     sc.savejson(jsonfile, testdata)
     testdata2 = sc.loadjson(jsonfile)
     assert testdata == testdata2
     os.remove(jsonfile)
 
+    # Test YAML load/save
+    print('Testing YAML load/save...')
+    yamlfile = 'test.yaml'
+    sc.saveyaml(yamlfile, testdata)
+    testdata2 = sc.loadyaml(yamlfile)
+    assert testdata == testdata2
+    os.remove(yamlfile)
+
     return json_str
 
 
 def test_jsonpickle():
-    sc.heading('Testing JSON read/write functions')
+    sc.heading('Testing jsonpickle functions')
 
     myobj = sc.prettyobj()
     myobj.a = 3

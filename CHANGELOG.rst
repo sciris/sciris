@@ -21,6 +21,7 @@ New functions and methods
 #. ``sc.ispath()`` is an alias for ``isinstance(obj, pathlib.Path)``.
 #. ``sc.randsleep()`` sleeps for a nondeterministic period of time
 #. ``sc.loadzip()`` extracts (or reads data from) zip files
+#. ``sc.loadyaml()`` and ``sc.saveyaml()`` load and save YAML files, respectively.
 
 Bugfixes
 ~~~~~~~~
