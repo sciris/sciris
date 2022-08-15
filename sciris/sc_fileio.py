@@ -47,14 +47,14 @@ from . import sc_dataframe as scdf
 #%% Pickling functions
 ##############################################################################
 
-__all__ = ['loadobj', 'loadstr', 'saveobj', 'dumpstr', 'load', 'save', 'rmpath']
+__all__ = ['load', 'save', 'loadobj', 'saveobj', 'loadstr', 'dumpstr', 'rmpath']
 
 
-def loadobj(filename=None, folder=None, verbose=False, die=None, remapping=None, method='pickle', **kwargs):
+def load(filename=None, folder=None, verbose=False, die=None, remapping=None, method='pickle', **kwargs):
     '''
-    Load a file that has been saved as a gzipped pickle file, e.g. by ``sc.saveobj()``.
+    Load a file that has been saved as a gzipped pickle file, e.g. by ``sc.save()``.
     Accepts either a filename (standard usage) or a file object as the first argument.
-    Note that ``loadobj()``/``load()`` are aliases of each other.
+    Note that ``sc.load()``/``sc.loadobj()`` are aliases of each other.
 
     Note: be careful when loading pickle files, since a malicious pickle can be
     used to execute arbitrary code.
@@ -70,7 +70,7 @@ def loadobj(filename=None, folder=None, verbose=False, die=None, remapping=None,
         die       (bool):     whether to raise an exception if errors are encountered (otherwise, load as much as possible)
         remapping (dict):     way of mapping old/unavailable module names to new
         method    (str):      method for loading (usually pickle or dill)
-        kwargs    (dict):     passed to pickle.loads()/dill.loads()
+        kwargs    (dict):     passed to ``pickle.loads()``/``dill.loads()``
 
     **Examples**::
 
@@ -149,28 +149,30 @@ https://stackoverflow.com/questions/41554738/how-to-load-an-old-pickle-file
     return obj
 
 
-def saveobj(filename=None, obj=None, compresslevel=5, verbose=0, folder=None, method='pickle', die=True, *args, **kwargs):
+def save(filename=None, obj=None, compresslevel=5, verbose=0, folder=None, method='pickle',
+         sanitizepath=True, die=True, *args, **kwargs):
     '''
     Save an object to file as a gzipped pickle -- use compression 5 by default,
     since more is much slower but not much smaller. Once saved, can be loaded
-    with sc.loadobj(). Note that saveobj()/save() are identical.
+    with ``sc.load()``. Note that ``sc.save()``/``sc.saveobj()`` are identical.
 
     Args:
-        filename (str or Path): the filename to save to; if str, passed to sc.makefilepath()
-        obj (literally anything): the object to save
-        compresslevel (int): the level of gzip compression
-        verbose (int): detail to print
-        folder (str): passed to sc.makefilepath()
-        method (str): whether to use pickle (default) or dill
-        die (bool): whether to fail if no object is provided
-        args (list): passed to pickle.dumps()
-        kwargs (dict): passed to pickle.dumps()
+        filename      (str/Path) : the filename to save to; if str, passed to ``sc.makefilepath()``
+        obj           (anything) : the object to save
+        compresslevel (int)      : the level of gzip compression
+        verbose       (int)      : detail to print
+        folder        (str)      : passed to ``sc.makefilepath()``
+        method        (str)      : whether to use pickle (default) or dill
+        die           (bool)     : whether to fail if no object is provided
+        sanitizepath  (bool)     : whether to sanitize the path prior to saving
+        args          (list)     : passed to ``pickle.dumps()``
+        kwargs        (dict)     : passed to ``pickle.dumps()``
 
     **Example**::
 
         myobj = ['this', 'is', 'a', 'weird', {'object':44}]
-        sc.saveobj('myfile.obj', myobj)
-        sc.saveobj('myfile.obj', myobj, method='dill') # Use dill instead, to save custom classes as well
+        sc.save('myfile.obj', myobj)
+        sc.save('myfile.obj', myobj, method='dill') # Use dill instead, to save custom classes as well
 
     | New in version 1.1.1: removed Python 2 support.
     | New in version 1.2.2: automatic swapping of arguments if order is incorrect; correct passing of arguments
@@ -193,7 +195,7 @@ def saveobj(filename=None, obj=None, compresslevel=5, verbose=0, folder=None, me
             errormsg = f'Filename type {type(filename)} is not valid: must be one of {filetypes}'
     else: # Normal use case: make a file path
         bytesobj = None
-        filename = makefilepath(filename=filename, folder=folder, default='default.obj', sanitize=True)
+        filename = makefilepath(filename=filename, folder=folder, default='default.obj', sanitize=sanitizepath)
 
     # Handle object
     if obj is None: # pragma: no cover
@@ -227,8 +229,8 @@ def saveobj(filename=None, obj=None, compresslevel=5, verbose=0, folder=None, me
 
 
 # Aliases to make these core functions even easier to use
-load = loadobj
-save = saveobj
+loadobj = load
+saveobj = save
 
 def loadstr(string, verbose=False, die=None, remapping=None):
     '''
@@ -334,7 +336,7 @@ def loadzip(filename=None, outfolder='.', folder=None, extract=True):
     return output
 
 
-def savezip(filename=None, filelist=None, data=None, folder=None, basename=True, verbose=True):
+def savezip(filename=None, filelist=None, data=None, folder=None, basename=True, sanitizepath=True, verbose=True):
     '''
     Create a zip file from the supplied list of files (or less commonly, supplied data)
 
@@ -344,6 +346,7 @@ def savezip(filename=None, filelist=None, data=None, folder=None, basename=True,
         data (dict): if supplied, instead of files, write this data instead (must be a dictionary of filename keys and data values)
         folder (str): optional additional folder for the filename
         basename (bool): whether to use only the file's basename as the name inside the zip file
+        sanitizepath (bool): whether to sanitize the path prior to saving
         verbose (bool): whether to print progress
 
     **Examples**::
@@ -357,7 +360,7 @@ def savezip(filename=None, filelist=None, data=None, folder=None, basename=True,
     '''
 
     # Handle inpus
-    fullpath = makefilepath(filename=filename, folder=folder, sanitize=True)
+    fullpath = makefilepath(filename=filename, folder=folder, sanitize=sanitizepath)
     filelist = scu.promotetolist(filelist)
     if data is not None:
         if not isinstance(data, dict):
@@ -819,7 +822,7 @@ def loadjson(filename=None, folder=None, string=None, fromfile=True, **kwargs):
     return output
 
 
-def savejson(filename=None, obj=None, folder=None, die=True, indent=2, keepnone=False, **kwargs):
+def savejson(filename=None, obj=None, folder=None, die=True, indent=2, keepnone=False, sanitizepath=True, **kwargs):
     '''
     Convenience function for saving to a JSON file.
 
@@ -830,10 +833,11 @@ def savejson(filename=None, obj=None, folder=None, die=True, indent=2, keepnone=
         die (bool): whether or not to raise an exception if saving an empty object
         indent (int): indentation to use for saved JSON
         keepnone (bool): allow ``sc.savejson(None)`` to return 'null' rather than raising an exception
-        kwargs (dict): passed to json.dump()
+        sanitizepath (bool): whether to sanitize the path prior to saving
+        kwargs (dict): passed to ``json.dump()``
 
     Returns:
-        None
+        The filename saved to
 
     **Example**::
 
@@ -841,7 +845,7 @@ def savejson(filename=None, obj=None, folder=None, die=True, indent=2, keepnone=
         sc.savejson('my-file.json', json)
     '''
 
-    filename = makefilepath(filename=filename, folder=folder)
+    filename = makefilepath(filename=filename, folder=folder, sanitize=sanitizepath)
 
     if obj is None and not keepnone: # pragma: no cover
         errormsg = 'No object was supplied to savejson(), or the object was empty'
@@ -851,10 +855,10 @@ def savejson(filename=None, obj=None, folder=None, die=True, indent=2, keepnone=
     with open(filename, 'w') as f:
         json.dump(sanitizejson(obj), f, indent=indent, **kwargs)
 
-    return
+    return filename
 
 
-def loadyaml(filename=None, folder=None, string=None, fromfile=True, **kwargs):
+def loadyaml(filename=None, folder=None, string=None, fromfile=True, safe=False, loader=None):
     '''
     Convenience function for reading a YAML file (or string).
 
@@ -863,64 +867,90 @@ def loadyaml(filename=None, folder=None, string=None, fromfile=True, **kwargs):
         folder (str): folder if not part of the filename
         string (str): if not loading from a file, a string representation of the YAML
         fromfile (bool): whether or not to load from file
-        kwargs (dict): passed to json.load()
+        safe (bool): whether to use the safe loader
+        loader (Loader): custom YAML loader (takes precedence over ``safe``)
 
     Returns:
-        output (dict): the JSON object
+        output (dict): the YAML object
 
     **Examples**::
 
-        json = sc.loadjson('my-file.json')
-        json = sc.loadjson(string='{"a":null, "b":[1,2,3]}')
+        yaml = sc.loadyaml('my-file.yaml')
+        yaml = sc.loadyaml(string='{"a":null, "b":[1,2,3]}')
     '''
+    import yaml # Optional import
+
+    if loader is None:
+        if safe: loader = yaml.loader.SafeLoader
+        else:    loader = yaml.loader.UnsafeLoader
+
     if string is not None or not fromfile:
         if string is None and filename is not None:
             string = filename # Swap arguments
-        output = json.loads(string, **kwargs)
+        output = yaml.load_all(string, loader)
+        output = list(output)
     else:
         filepath = makefilepath(filename=filename, folder=folder)
         try:
             with open(filepath) as f:
-                output = json.load(f, **kwargs)
+                output = yaml.load_all(f, loader)
+                output = list(output)
         except FileNotFoundError as E: # pragma: no cover
-            errormsg = f'No such file "{filename}". Use fromfile=False if loading a JSON string rather than a file.'
+            errormsg = f'No such file "{filename}". Use fromfile=False if loading a YAML string rather than a file.'
             raise FileNotFoundError(errormsg) from E
+
+    # If only a single page, return it directly
+    if len(output) == 1:
+        output = output[0]
+
     return output
 
 
-def saveyaml(filename=None, obj=None, folder=None, die=True, indent=2, keepnone=False, **kwargs):
+def saveyaml(filename=None, obj=None, folder=None, die=True, keepnone=False, dumpall=False, sanitizepath=True, **kwargs):
     '''
     Convenience function for saving to a JSON file.
 
     Args:
-        filename (str): the file to save
-        obj (anything): the object to save; if not already in JSON format, conversion will be attempted
+        filename (str): the file to save (if empty, return string representation instead)
+        obj (anything): the object to save
         folder (str): folder if not part of the filename
         die (bool): whether or not to raise an exception if saving an empty object
-        indent (int): indentation to use for saved JSON
-        keepnone (bool): allow ``sc.savejson(None)`` to return 'null' rather than raising an exception
-        kwargs (dict): passed to json.dump()
+        indent (int): indentation to use for saved YAML
+        keepnone (bool): allow ``sc.saveyaml(None)`` to return 'null' rather than raising an exception
+        dumpall (bool): if True, treat a list input as separate YAML pages
+        sanitizepath (bool): whether to sanitize the path prior to saving
+        kwargs (dict): passed to ``yaml.dump()``
 
     Returns:
-        None
+        The filename saved to
 
     **Example**::
 
-        json = {'foo':'bar', 'data':[1,2,3]}
-        sc.savejson('my-file.json', json)
+        yaml = {'foo':'bar', 'data':[1,2,3]}
+        sc.saveyaml('my-file.yaml', yaml)
     '''
+    import yaml # Optional import
 
-    filename = makefilepath(filename=filename, folder=folder)
+    if dumpall: dump_func = yaml.dump_all
+    else:       dump_func = yaml.dump
 
     if obj is None and not keepnone: # pragma: no cover
-        errormsg = 'No object was supplied to savejson(), or the object was empty'
+        errormsg = 'No object was supplied to saveyaml(), or the object was empty'
         if die: raise ValueError(errormsg)
         else:   print(errormsg)
 
-    with open(filename, 'w') as f:
-        json.dump(sanitizejson(obj), f, indent=indent, **kwargs)
+    # Standard usage: dump to file
+    if filename is not None:
+        filename = makefilepath(filename=filename, folder=folder, sanitize=sanitizepath)
+        output = filename
+        with open(filename, 'w') as f:
+            dump_func(obj, f, **kwargs)
 
-    return
+    # Alternate usage:
+    else:
+        output = dump_func(obj, **kwargs)
+
+    return output
 
 
 def jsonpickle(obj, tostring=False):
@@ -936,7 +966,7 @@ def jsonpickle(obj, tostring=False):
 
     Wrapper for the jsonpickle library: https://jsonpickle.github.io/
     '''
-    import jsonpickle as jp
+    import jsonpickle as jp # Optional import
     import jsonpickle.ext.numpy as jsonpickle_numpy
     import jsonpickle.ext.pandas as jsonpickle_pandas
     jsonpickle_numpy.register_handlers()
