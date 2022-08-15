@@ -57,6 +57,7 @@ Housekeeping
 #. Most instances of ``DeprecationWarning`` have been changed to ``FutureWarning``.
 #. Python 2 compatibility functions (e.g. ``sc.loadobj2or3()``) have been moved to a separate module, ``sc.sc_legacy``, which is no longer imported by default.
 #. Added style and contributing guides.
+#. Added official support for Python 3.7-3.10.
 
 Regression information
 ~~~~~~~~~~~~~~~~~~~~~~
