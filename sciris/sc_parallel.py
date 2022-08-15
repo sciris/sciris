@@ -6,116 +6,73 @@ broadest support  across platforms (e.g. Jupyter notebooks).
 
 Highlights:
     - ``sc.parallelize()``: as-easy-as-possible parallelization
-    - ``sc.loadbalancer()``: very basic load balancer
 '''
 
-import time
-import psutil
-import multiprocess as mp
 import numpy as np
+import multiprocess as mp
+import multiprocessing as mpi
+import concurrent.futures as cf
 from functools import partial
+import textwrap
+import warnings
 from . import sc_utils as scu
+from . import sc_profiling as scp
 
 
 ##############################################################################
 #%% Parallelization functions
 ##############################################################################
 
-__all__ = ['cpu_count', 'loadbalancer', 'parallelize', 'parallelcmd', 'parallel_progress']
+__all__ = ['parallelize', 'parallelcmd', 'parallel_progress']
 
 
-def cpu_count():
-    ''' Alias to mp.cpu_count() '''
-    return mp.cpu_count()
-
-
-def loadbalancer(maxload=None, index=None, interval=None, maxtime=None, label=None, verbose=True):
+def parallelize(func, iterarg=None, iterkwargs=None, args=None, kwargs=None, ncpus=None, maxcpu=None, maxmem=None,
+                interval=None, parallelizer='multiprocess', serial=False, returnpool=False, **func_kwargs):
     '''
-    A little function to delay execution while CPU load is too high -- a very simple load balancer.
+    Execute a function in parallel.
 
-    Arguments:
-        maxload:  the maximum load to allow for the task to still start (default 0.5)
-        index:    the index of the task -- used to start processes asynchronously (default None)
-        interval: the time delay to poll to see if CPU load is OK (default 5 seconds)
-        maxtime:  maximum amount of time to wait to start the task (default 36000 seconds (10 hours))
-        label:    the label to print out when outputting information about task delay or start (default None)
-        verbose:  whether or not to print information about task delay or start (default True)
+    Most simply, ``sc.parallelize()`` acts as an shortcut for using ``multiprocess.Pool()``.
+    However, it also provides flexibility in how arguments are passed to the function,
+    load balancing, etc.
 
-    **Examples**::
+    Either or both of ``iterarg`` or ``iterkwargs`` can be used. ``iterarg`` can
+    be an iterable or an integer; if the latter, it will run the function that number
+    of times and not pass the argument to the function (which may be useful for
+    running "embarrassingly parallel" simulations). ``iterkwargs`` is a dict of
+    iterables; each iterable must be the same length (and the same length of ``iterarg``,
+    if it exists), and each dict key will be used as a kwarg to the called function.
+    Any other kwargs passed to ``sc.parallelize()`` will also be passed to the function.
 
-        loadbalancer() # Simplest usage -- delay while load is >80%
-        for nproc in processlist: loadbalancer(maxload=0.9, index=nproc) # Use a maximum load of 90%, and stagger the start by process number
+    This function can either use a fixed number of CPUs or allocate dynamically
+    based on load. If ``ncpus`` is ``None`` and ``maxcpu`` is ``None``, then it
+    will use the number of CPUs returned by ``multiprocessing``; if ``ncpus`` is
+    not ``None``, it will use the specified number of CPUs; if ``ncpus`` is ``None``
+    and ``maxcpu`` is not ``None``, it will allocate the number of CPUs dynamically.
 
-    Version: 2018nov01
-    '''
-
-    # Set up processes to start asynchronously
-    if maxload  is None: maxload = 0.8
-    if interval is None: interval = 1.0
-    if maxtime  is None: maxtime = 36000
-    if label    is None: label = ''
-    else: label += ': '
-    if index is None:
-        pause = np.random.rand()*interval
-        index = ''
-    else:
-        pause = index*interval
-    if maxload>1: maxload/100. # If it's >1, assume it was given as a percent
-    if not maxload>0:
-        return # Return immediately if no max load
-    else:
-        time.sleep(pause) # Give it time to asynchronize
-
-    # Loop until load is OK
-    toohigh = True # Assume too high
-    count = 0
-    maxcount = maxtime/float(interval)
-    while toohigh and count<maxcount:
-        count += 1
-        currentload = psutil.cpu_percent(interval=0.1)/100. # If interval is too small, can give very inaccurate readings
-        if currentload>maxload:
-            if verbose: print(label+f'CPU load too high ({currentload:0.2f}/{maxload:0.2f}); process {index} queued {count} times')
-            time.sleep(interval*2*np.random.rand()) # Sleeps for an average of refresh seconds, but do it randomly so you don't get locking
-        else:
-            toohigh = False
-            if verbose: print(label+f'CPU load fine ({currentload:0.2f}/{maxload:0.2f}), starting process {index} after {count} tries')
-    return
-
-
-def parallelize(func, iterarg=None, iterkwargs=None, args=None, kwargs=None, ncpus=None, maxload=None, interval=None, parallelizer=None, serial=False, **func_kwargs):
-    '''
-    Main method for parallelizing a function.
-
-    Most simply, acts as an shortcut for using multiprocess.Pool(). However, this
-    function can also iterate over more complex arguments.
-
-    Either or both of iterarg or iterkwargs can be used. iterarg can be an iterable or an integer;
-    if the latter, it will run the function that number of times and not pass the argument to the
-    function (which may be useful for running "embarrassingly parallel" simulations). iterkwargs
-    is a dict of iterables; each iterable must be the same length (and the same length of iterarg,
-    if it exists), and each dict key will be used as a kwarg to the called function. Any other kwargs
-    passed to parallelize() will also be passed to the function.
-
-    This function can either use a fixed number of CPUs or allocate dynamically based
-    on load. If ncpus is None and maxload is None, then it will use the number of CPUs
-    returned by multiprocessing; if ncpus is not None, it will use the specified number of CPUs;
-    if ncpus is None and maxload is not None, it will allocate the number of CPUs dynamically.
+    Note: the default parallelizer ``"multiprocess"`` uses ``dill`` for pickling, so
+    is the most versatile (e.g., it can pickle non-top-level functions). However,
+    it is also the slowest for passing large amounts of data. If you don't need
+    ``dill``, you might get better performance using ``"concurrent.futures"`` as
+    the parallelizer.
 
     Args:
-        func (function): the function to parallelize
-        iterarg (list): the variable(s) to provide to each process (see examples below)
-        iterkwargs (dict): another way of providing variables to each process (see examples below)
-        args (list): positional arguments, the same for all processes
-        kwargs (dict): keyword arguments, the same for all processes
-        ncpus (int or float): number of CPUs to use (if <1, treat as a fraction of the total available; if None, use loadbalancer)
-        maxload (float): maximum CPU load to use (not used if ncpus is specified)
-        interval (float): number of seconds to pause between starting processes for checking load (not used if ncpus is specified)
-        parallelizer (func): alternate parallelization function instead of multiprocess.Pool.map()
-        serial (bool): whether to skip parallelization run in serial (useful for debugging)
-        func_kwargs (dict): merged with kwargs (see above)
+        func         (func)      : the function to parallelize
+        iterarg      (list)      : the variable(s) to provide to each process (see examples below)
+        iterkwargs   (dict)      : another way of providing variables to each process (see examples below)
+        args         (list)      : positional arguments for each process, the same for all processes
+        kwargs       (dict)      : keyword arguments for each process, the same for all processes
+        ncpus        (int/float) : number of CPUs to use (if <1, treat as a fraction of the total available; if None, use loadbalancer)
+        maxcpu       (float)     : maximum CPU load; otherwise, delay the start of the next process (not used if ``ncpus`` is specified)
+        maxmem       (float)     : maximum fraction of virtual memory (RAM); otherwise, delay the start of the next process
+        interval     (float)     : number of seconds to pause between starting processes for checking load
+        parallelizer (str/func)  : parallelization function; default 'multiprocess' (other choices are 'concurrent.futures', 'multiprocessing', or user-supplied; see example below)
+        serial       (bool)      : whether to skip parallelization run in serial (useful for debugging)
+        returnpool   (bool)      : whether to return the process pool as well as the results
+        func_kwargs  (dict)      : merged with kwargs (see above)
 
     Returns:
         List of outputs from each process
+
 
     **Example 1 -- simple usage as a shortcut to multiprocessing.map()**::
 
@@ -151,8 +108,8 @@ def parallelize(func, iterarg=None, iterkwargs=None, args=None, kwargs=None, ncp
             xy = [x+i*np.random.randn(100), y+i*np.random.randn(100)]
             return xy
 
-        xylist1 = sc.parallelize(myfunc, kwargs={'x':3, 'y':8}, iterarg=range(5), maxload=0.8, interval=0.2) # Use kwargs dict
-        xylist2 = sc.parallelize(myfunc, x=5, y=10, iterarg=[0,1,2]) # Supply kwargs directly
+        xylist1 = sc.parallelize(myfunc, kwargs={'x':3, 'y':8}, iterarg=range(5), maxcpu=0.8, interval=0.2) # Use kwargs dict
+        xylist2 = sc.parallelize(myfunc, x=5, y=10, iterarg=[0,1,2], parallelizer='multiprocessing') # Supply kwargs directly and use a different parallelizer
 
         for p,xylist in enumerate([xylist1, xylist2]):
             pl.subplot(2,1,p+1)
@@ -166,10 +123,9 @@ def parallelize(func, iterarg=None, iterkwargs=None, args=None, kwargs=None, ncp
             return [x]*y
 
         import multiprocessing as mp
-        multipool = mp.Pool(processes=2)
-        results = sc.parallelize(f, iterkwargs=dict(x=[1,2,3], y=[4,5,6]), parallelizer=multipool.map)
-        multipool.close() # NB, in this case, close and join are not strictly required
-        multipool.join()
+        pool = mp.Pool(processes=2)
+        results = sc.parallelize(f, iterkwargs=dict(x=[1,2,3], y=[4,5,6]), parallelizer=pool.map) # Note: parallelizer is pool.map, not pool
+
 
     **Note**: to use on Windows, parallel calls must contained with an ``if __name__ == '__main__'`` block.
 
@@ -184,13 +140,20 @@ def parallelize(func, iterarg=None, iterkwargs=None, args=None, kwargs=None, ncp
             results = sc.parallelize(func=f, iterarg=[(1,2),(2,3),(3,4)])
             print(results)
 
-    New in version 1.1.1: "serial" argument.
+    | New in version 1.1.1: "serial" argument.
+    | New in version 2.0.0: changed default parallelizer from ``multiprocess.Pool`` to ``concurrent.futures.ProcessPoolExecutor``;
+    replaced ``maxload`` with ``maxcpu``/``maxmem``; added ``returnpool`` argument
     '''
     # Handle maxload
-    if ncpus is None and maxload is None:
-        ncpus = mp.cpu_count()
+    maxload = func_kwargs.pop('maxload', None)
+    if maxload is not None: # pragma: no cover
+        maxcpu = maxload
+        warnmsg = 'sc.loadbalancer() argument "maxload" has been renamed "maxcpu" as of v2.0.0'
+        warnings.warn(warnmsg, category=FutureWarning, stacklevel=2)
+    if ncpus is None and maxcpu is None:
+        ncpus = scp.cpu_count()
     if ncpus is not None and ncpus < 1: # Less than one, treat as a fraction of total
-        ncpus = int(mp.cpu_count()*ncpus)
+        ncpus = int(scp.cpu_count()*ncpus)
 
     # Handle kwargs
     kwargs = scu.mergedicts(kwargs, func_kwargs)
@@ -251,23 +214,62 @@ def parallelize(func, iterarg=None, iterkwargs=None, args=None, kwargs=None, ncp
             else:  # pragma: no cover # Should be caught by previous checking, so shouldn't happen
                 errormsg = f'iterkwargs type not understood ({type(iterkwargs)})'
                 raise TypeError(errormsg)
-        taskargs = TaskArgs(func, index, iterval, iterdict, args, kwargs, maxload, interval, embarrassing)
+        taskargs = TaskArgs(func=func, index=index, iterval=iterval, iterdict=iterdict,
+                            args=args, kwargs=kwargs, maxcpu=maxcpu, maxmem=maxmem,
+                            interval=interval, embarrassing=embarrassing)
         argslist.append(taskargs)
 
-    # Run simply using map -- no advantage here to using Process/Queue
+    # Actually run the parallelization
     try:
-        if serial: # Run in serial
+
+        # Set up the run
+        pool = None
+        if ncpus is not None:
+            ncpus = min(ncpus, len(argslist)) # Don't use more CPUs than there are things to process
+
+        # Run in serial for debugging
+        if serial:
             outputlist = list(map(_parallel_task, argslist))
-        elif parallelizer is None: # Standard usage: use the default map() function
-            if ncpus is not None:
-                ncpus = min(ncpus, len(argslist)) # Don't use more CPUs than there are things to process
-            multipool = mp.Pool(processes=ncpus)
-            outputlist = multipool.map(_parallel_task, argslist)
-            multipool.close()
-            multipool.join()
-        else: # Use a custom parallelization method
+
+         # Standard usage: use the default map() function
+        elif parallelizer is None or scu.isstring(parallelizer):
+
+            # Map parallelizer to consistent choices
+            default = 'multiprocess'
+            mapping = {
+                None: default,
+                'default': default,
+                'multiprocess': 'multiprocess',
+                'multiprocessing': 'multiprocessing',
+                'concurrent.futures': 'concurrent.futures',
+                'concurrent': 'concurrent.futures',
+            }
+            try:
+                parallelizer = mapping[parallelizer]
+            except:
+                errormsg = f'Parallelizer "{parallelizer}" not found: must be one of {scu.strjoin(mapping.keys())}'
+                raise scu.KeyNotFoundError(errormsg)
+
+            # Choose which parallelizer to use
+            if parallelizer == 'multiprocess': # Main use case
+                with mp.Pool(processes=ncpus) as pool:
+                    outputlist = pool.map(_parallel_task, argslist)
+            elif parallelizer == 'multiprocessing':
+                with mpi.Pool(processes=ncpus) as pool:
+                    outputlist = pool.map(_parallel_task, argslist)
+            elif parallelizer == 'concurrent.futures':
+                with cf.ProcessPoolExecutor(max_workers=ncpus) as pool:
+                    outputlist = list(pool.map(_parallel_task, argslist))
+            else: # Should be unreachable; exception should have already been caught
+                errormsg = f'Invalid parallelizer "{parallelizer}"'
+                raise ValueError(errormsg)
+
+        # Use a custom parallelization method
+        else:
             outputlist = parallelizer(_parallel_task, argslist)
-    except RuntimeError as E: # pragma: no cover # Handle if run outside of __main__ on Windows
+
+    # Handle if run outside of __main__ on Windows
+    except RuntimeError as E: # pragma: no cover
         if 'freeze_support' in E.args[0]: # For this error, add additional information
             errormsg = '''
  Uh oh! It appears you are trying to run with multiprocessing on Windows outside
@@ -286,42 +288,60 @@ def parallelize(func, iterarg=None, iterkwargs=None, args=None, kwargs=None, ncp
         else: # For all other runtime errors, raise the original exception
             raise E
 
-    return outputlist
+    # Tidy up
+    if returnpool:
+        return pool, outputlist
+    else:
+        return outputlist
 
 
-def parallelcmd(cmd=None, parfor=None, returnval=None, maxload=None, interval=None, **kwargs):
+def parallelcmd(cmd=None, parfor=None, returnval=None, maxcpu=None, maxmem=None, interval=None, **kwargs):
     '''
     A function to parallelize any block of code. Note: this is intended for quick
     prototyping; since it uses exec(), it is not recommended for use in production
     code.
 
     Args:
-        cmd (str): a string representation of the code to be run in parallel
-        parfor (dict): a dictionary of lists of the variables to loop over
-        returnval (str): the name of the output variable
-        maxload (float): the maximum CPU load, used in ``sc.loadbalancer()``
-        interval (float): the time delay to poll to see if CPU load is OK,  used in ``sc.loadbalancer()``
-        kwargs (dict): variables to pass into the code
+        cmd       (str):   a string representation of the code to be run in parallel
+        parfor    (dict):  a dictionary of lists of the variables to loop over
+        returnval (str):   the name of the output variable
+        maxcpu    (float): maximum CPU load; used by ``sc.loadbalancer()``
+        maxmem    (float): maximum fraction of virtual memory (RAM); used by ``sc.loadbalancer()``
+        interval  (float): the time delay to poll to see if load is OK,  used in ``sc.loadbalancer()``
+        kwargs    (dict):  variables to pass into the code
 
     **Example**::
 
         const = 4
         parfor = {'val':[3,5,9]}
         returnval = 'result'
-        cmd = """newval = val+const # Note that this can't be indented
+        cmd = """
+        newval = val+const
         result = newval**2
         """
         results = sc.parallelcmd(cmd=cmd, parfor=parfor, returnval=returnval, const=const)
 
-    Version: 2018nov01
+    New in version 2.0.0: replaced ``maxload`` with ``maxcpu``/``maxmem``; automatically de-indent the command
     '''
 
+    # Handle maxload
+    maxload = kwargs.pop('maxload', None)
+    if maxload is not None: # pragma: no cover
+        maxcpu = maxload
+        warnmsg = 'sc.loadbalancer() argument "maxload" has been renamed "maxcpu" as of v2.0.0'
+        warnings.warn(warnmsg, category=FutureWarning, stacklevel=2)
+
+    # Deindent the command
+    cmd = textwrap.dedent(cmd)
+
+    # Create queue
     nfor = len(list(parfor.values())[0])
     outputqueue = mp.Queue()
     outputlist = np.empty(nfor, dtype=object)
     processes = []
     for i in range(nfor):
-        prc = mp.Process(target=_parallelcmd_task, args=(cmd, parfor, returnval, i, outputqueue, maxload, interval, kwargs))
+        args = (cmd, parfor, returnval, i, outputqueue, maxcpu, maxmem, interval, kwargs)
+        prc = mp.Process(target=_parallelcmd_task, args=args)
         prc.start()
         processes.append(prc)
     for i in range(nfor):
@@ -405,15 +425,16 @@ class TaskArgs(scu.prettyobj):
         A class to hold the arguments for the parallel task -- not to be invoked by the user.
 
         Arguments and ordering must match both ``sc.parallelize()`` and ``sc._parallel_task()`` '''
-        def __init__(self, func, index, iterval, iterdict, args, kwargs, maxload, interval, embarrassing):
+        def __init__(self, func, index, iterval, iterdict, args, kwargs, maxcpu, maxmem, interval, embarrassing):
             self.func         = func         # The function being called
             self.index        = index        # The place in the queue
             self.iterval      = iterval      # The value being iterated (may be None if iterdict is not None)
             self.iterdict     = iterdict     # A dictionary of values being iterated (may be None if iterval is not None)
             self.args         = args         # Arguments passed directly to the function
             self.kwargs       = kwargs       # Keyword arguments passed directly to the function
-            self.maxload      = maxload      # Maximum CPU load (ignored if ncpus is not None in parallelize()
-            self.interval     = interval     # Interval to check load (only used with maxload)
+            self.maxcpu       = maxcpu       # Maximum CPU load (ignored if ncpus is not None in sc.parallelize())
+            self.maxmem       = maxmem       # Maximum memory
+            self.interval     = interval     # Interval to check load (only used with maxcpu/maxmem)
             self.embarrassing = embarrassing # Whether or not to pass the iterarg to the function (no if it's embarrassing)
             return
 
@@ -439,9 +460,10 @@ def _parallel_task(taskargs, outputqueue=None):
             kwargs[key] = val # Otherwise, include it in kwargs
 
     # Handle load balancing
-    maxload = taskargs.maxload
-    if maxload:
-        loadbalancer(maxload=maxload, index=index, interval=taskargs.interval)
+    maxcpu = taskargs.maxcpu
+    maxmem = taskargs.maxmem
+    if maxcpu or maxmem:
+        scp.loadbalancer(maxcpu=maxcpu, maxmem=maxmem, index=index, interval=taskargs.interval)
 
     # Call the function
     output = func(*args, **kwargs)
@@ -454,13 +476,14 @@ def _parallel_task(taskargs, outputqueue=None):
         return output
 
 
-def _parallelcmd_task(_cmd, _parfor, _returnval, _i, _outputqueue, _maxload, _interval, _kwargs): # pragma: no cover # No coverage since pickled
+def _parallelcmd_task(_cmd, _parfor, _returnval, _i, _outputqueue, _maxcpu, _maxmem, _interval, _kwargs): # pragma: no cover # No coverage since pickled
     '''
     The task to be executed by ``sc.parallelcmd()``. All internal variables start with
     underscores to avoid possible collisions in the ``exec()`` statements. Not to be called
     directly.
     '''
-    loadbalancer(maxload=_maxload, index=_i, interval=_interval)
+    if _maxcpu or _maxmem:
+        scp.loadbalancer(maxcpu=_maxcpu, maxmem=_maxmem, index=_i, interval=_interval)
 
     # Set the loop variables
     for _key in _parfor.keys():

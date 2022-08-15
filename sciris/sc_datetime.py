@@ -769,6 +769,7 @@ class timer(scu.prettyobj):
 
         return output
 
+
     def start(self):
         ''' Alias for tic() '''
         return self.tic()
@@ -785,6 +786,7 @@ class timer(scu.prettyobj):
     def tt(self, *args, **kwargs):
         ''' Alias for toctic() '''
         return self.toctic(*args, **kwargs)
+
 
     def plot(self, fig=None, figkwargs=None, grid=True, **kwargs):
         """
@@ -842,7 +844,7 @@ Timer = timer # Alias
 #%% Other functions
 ###############################################################################
 
-__all__ += ['elapsedtimestr', 'timedsleep']
+__all__ += ['elapsedtimestr', 'timedsleep', 'randsleep']
 
 
 def elapsedtimestr(pasttime, maxdays=5, minseconds=10, shortmonths=True):
@@ -996,3 +998,32 @@ def timedsleep(delay=None, start=None, verbose=True):
             if verbose:
                 print(f'Warning, delay less than elapsed time ({delay:0.1f} vs. {elapsed:0.1f})')
     return
+
+
+def randsleep(delay=1.0, var=1.0, low=None, high=None):
+    '''
+    Sleep for a nondeterminate period of time (useful for desynchronizing tasks)
+
+    Args:
+        delay (float/list): average duration in seconds to sleep for; if a pair of values, treat as low and high
+        var   (float):      how much variability to have (default, 1.0, i.e. from 0 to 2*interval)
+        low   (float):      optionally define lower bound of sleep
+        high  (float):      optionally define upper bound of sleep
+
+    **Examples**::
+        sc.randsleep(1) # Sleep for 0-2 s (average 1.0)
+        sc.randsleep(2, 0.1) # Sleep for 1.8-2.2 s (average 2.0)
+        sc.randsleep([0.5, 1.5]) # Sleep for 0.5-1.5 s
+        sc.randsleeep(low=0.5, high=1.5) # Ditto
+    '''
+    if low is None or high is None:
+        if scu.isnumber(delay):
+            low  = delay*(1-var)
+            high = delay*(1+var)
+        else:
+            low, high = delay[0], delay[1]
+
+    dur = np.random.uniform(low, high)
+    time.sleep(dur)
+
+    return dur

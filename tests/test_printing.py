@@ -30,7 +30,7 @@ def test_colorize():
 
 
 
-def test_printing():
+def test_printing(test_slack=False):
     sc.heading('Test printing functions')
 
     example = sc.prettyobj()
@@ -65,9 +65,10 @@ def test_printing():
     b = 'example'
     sc.printvars(locals(), ['a','b'], color='green')
 
-    print('\nTesting slacknotification')
-    sc.slacknotification(webhook='http://invalid.hooks.slack.com.test', message='Test notification to nowhere')
-    print('↑↑↑ Will raise a error since not a valid webhook, this is OK')
+    if test_slack:
+        print('\nTesting slacknotification')
+        sc.slacknotification(webhook='http://invalid.hooks.slack.com.test', message='Test notification to nowhere')
+        print('↑↑↑ Will raise a error since not a valid webhook, this is OK')
 
     print('\nTesting printtologfile')
     sc.printtologfile('Test message')

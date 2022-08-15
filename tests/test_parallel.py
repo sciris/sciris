@@ -99,8 +99,8 @@ def test_parallelcmd():
     parfor = {'val':[3,5,9]}
     returnval = 'result'
     cmd = """
-newval = val+const # Note that this can't be indented
-result = newval**2
+    newval = val+const
+    result = newval**2
     """
     results = sc.parallelcmd(cmd=cmd, parfor=parfor, returnval=returnval, const=const, maxload=0)
     print(results)
@@ -109,16 +109,13 @@ result = newval**2
 
 def test_components():
     sc.heading('Testing subcomponents directly')
-    sc.loadbalancer()
 
-    def empty(): pass
-
-    args = [0]*9
-    args[0] = empty
+    args = [0]*10
+    args[0] = lambda: None
     args[3] = None # Set iterdict to None
     args[4] = None # Set args to empty list
     args[5] = None # Set kwargs to empty dict
-    args[8] = True # Set embarrassing
+    args[9] = True # Set embarrassing
     taskargs = sc.sc_parallel.TaskArgs(*args)
     task = sc.sc_parallel._parallel_task(taskargs)
     return task
