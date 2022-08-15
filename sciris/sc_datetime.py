@@ -770,29 +770,31 @@ class timer(scu.prettyobj):
         return output
 
 
-    def tocout(self, label=None, output=True, **kwargs):
-        ''' Alias to ``sc.timer.toc()``, with output=True '''
-        return self.toc(label=label, output=output, **kwargs)
+    # Alias/shortcut methods
 
     def start(self):
-        ''' Alias for tic() '''
+        ''' Alias for ``tic()`` '''
         return self.tic()
 
     def stop(self, *args, **kwargs):
-        ''' Alias for toc() '''
+        ''' Alias for ``toc()`` '''
         return self.toc(*args, **kwargs)
+
+    def tocout(self, label=None, output=True, **kwargs):
+        ''' Alias for ``toc()`` with output=True '''
+        return self.toc(label=label, output=output, **kwargs)
 
     def toctic(self, *args, reset=True, **kwargs):
         ''' Like toc, but reset time between timings '''
         return self.toc(*args, reset=reset, **kwargs)
 
     def tt(self, *args, **kwargs):
-        ''' Alias for toctic() '''
+        ''' Alias for ``toctic()`` '''
         return self.toctic(*args, **kwargs)
 
-    def ttout(self, *args, reset=True, output=True, **kwargs):
-        ''' Alias for toctic() with output '''
-        return self.toctic(*args, reset=reset, output=output, **kwargs)
+    def tto(self, *args, output=True, **kwargs):
+        ''' Alias for ``toctic()`` with output=True '''
+        return self.toctic(*args, output=output, **kwargs)
 
 
     def plot(self, fig=None, figkwargs=None, grid=True, **kwargs):
