@@ -45,6 +45,7 @@ Improvements
 #. ``sc.savespreadsheet()`` now allows NaNs to be saved.
 #. ``sc.path()`` is more flexible, including handling ``None`` inputs.
 #. ``sc.findinds()`` can now handle multiple inputs, e.g. ``sc.findinds(data>0.1, data<0.5)``.
+#. ``sc.checktype()`` now includes boolean arrays as being ``arraylike``, and has a new ``'bool'`` option.
 
 Housekeeping
 ~~~~~~~~~~~~
