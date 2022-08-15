@@ -521,22 +521,19 @@ class Options(dictobj):
         from . import sc_utils as scu # To avoid circular import
         rc = self.rc # By default, use current
         if isinstance(style, dict): # If an rc-like object is supplied directly
-            rc = cp.deepcopy(style)
+            rc = scu.dcp(style)
         elif style is not None: # Usual use case
             stylestr = str(style).lower()
-            if stylestr in ['fancy', 'covasim']:
-                rc = cp.deepcopy(rc_fancy)
-            elif stylestr in ['simple', 'default']:
-                rc = cp.deepcopy(rc_simple)
-            elif style in pl.style.library:
-                rc = cp.deepcopy(pl.style.library[style])
+            if   stylestr in ['fancy', 'covasim']:  rc = scu.dcp(rc_fancy)
+            elif stylestr in ['simple', 'default']: rc = scu.dcp(rc_simple)
+            elif style in pl.style.library:         rc = scu.dcp(pl.style.library[style])
             else:
                 errormsg = f'Style "{style}"; not found; options are "simple" (default), "fancy", plus:\n{scu.newlinejoin(pl.style.available)}'
                 raise ValueError(errormsg)
         if reset:
             self.rc = rc
         if copy:
-            rc = cp.deepcopy(rc)
+            rc = scu.dcp(rc)
         return rc
 
 
@@ -613,9 +610,9 @@ class Options(dictobj):
 
         # Tidy up
         if use:
-            return pl.style.use(cp.deepcopy(rc))
+            return pl.style.use(scu.dcp(rc))
         else:
-            return pl.style.context(cp.deepcopy(rc))
+            return pl.style.context(scu.dcp(rc))
 
 
     def use_style(self, **kwargs):
