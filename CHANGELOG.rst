@@ -31,7 +31,7 @@ Bugfixes
 Improvements
 ~~~~~~~~~~~~
 #. If a copy/deepcopy is not possible, ``sc.cp()``/``sc.dcp()`` now raise an exception by default (previously, they silenced it).
-#. ``sc.timer()`` now has a ``plot()`` method.
+#. ``sc.timer()`` now has ``plot()`` and ``total()`` methods, as well as ``indivtimings`` and ``cumtimings`` properties.
 #. ``sc.strsplit()`` will automatically split common types of delimited strings (e.g. ``sc.strsplit('a b c')``).
 #. ``sc.parallelize()`` now supports additional parallelization options, e.g. ``concurrent.futures``, and new ``maxcpu``/``maxmem`` arguments.
 #. ``sc.daterange()`` now accepts ``datedelta`` arguments, e.g. ``sc.daterange('2022-02-22', weeks=2)``.
@@ -49,6 +49,7 @@ Improvements
 
 Housekeeping
 ~~~~~~~~~~~~
+#. ``pyyaml`` has been added as a dependency.
 #. Profiling and load balancing functions have beem moved from ``sc.sc_utils`` and ``sc.sc_parallel`` to a new submodule, ``sc.sc_profiling``.
 #. Most ``DeprecationWarning``s have been changed to ``FutureWarning``s.
 

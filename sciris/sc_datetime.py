@@ -15,6 +15,7 @@ import pylab as pl
 import datetime as dt
 import dateutil as du
 from . import sc_utils as scu
+from . import sc_math as scm
 
 
 ###############################################################################
@@ -673,15 +674,17 @@ class timer(scu.prettyobj):
     Args:
         label (str): label identifying this timer
         auto (bool): whether to automatically increment the label
+        start (bool): whether to start timing from object creation (else, call ``timer.tic()`` explicitly)
+        kwargs (dict): passed to ``toc()`` when invoked
 
 
     Example making repeated calls to the same timer, using ``auto`` to keep track::
 
         >>> T = sc.timer(auto=True)
         >>> T.toc()
-        Elapsed time for (0): 2.63 s
+        (0): 2.63 s
         >>> T.toc()
-        Elapsed time for (1): 5.00 s
+        (1): 5.00 s
 
     Example wrapping code using with-as::
 
@@ -701,42 +704,51 @@ class timer(scu.prettyobj):
 
     | New in version 1.3.0: ``sc.timer()`` alias, and allowing the label as first argument.
     | New in version 1.3.2: ``toc()`` passes label correctly; ``tt()`` method; ``auto`` argument
-    | New in version 2.0.0: ``plot()`` method
+    | New in version 2.0.0: ``plot()`` method; ``total()`` method
     '''
-    def __init__(self, label=None, auto=False, **kwargs):
+    def __init__(self, label=None, auto=False, start=True, **kwargs):
         from . import sc_odict as sco # Here to avoid circular import
-        self.tic()
         self.kwargs = kwargs # Store kwargs to pass to toc() at the end of the block
         self.kwargs['label'] = label
         self.auto = auto
         self._start = None
+        self._tics = []
+        self._tocs = []
         self.elapsed = None
         self.message = None
         self.count = 0
         self.timings = sco.odict()
-        self.tic() # Start counting
+        if start:
+            self.tic() # Start counting
         return
+
 
     def __enter__(self):
         ''' Reset start time when entering with-as block '''
         self.tic()
         return self
 
+
     def __exit__(self, *args):
         ''' Print elapsed time when leaving a with-as block '''
         self.toc()
         return
 
+
     def tic(self):
         ''' Set start time '''
-        self._start = time.time()  # Store the present time locally
+        now = time.time()  # Store the present time locally
+        self._start = now
+        self._tics.append(now) # Store when this tic was invoked
         return
+
 
     def toc(self, label=None, **kwargs):
         ''' Print elapsed time; see ``sc.toc()`` for keyword arguments '''
 
         # Get the time
         self.elapsed, self.message = toc(start=self._start, output='both', doprint=False) # Get time as quickly as possible
+        self._tocs.append(time.time()) # Store when this toc was invoked
 
         # Update the kwargs, including the label
         if label is not None:
@@ -770,6 +782,26 @@ class timer(scu.prettyobj):
         return output
 
 
+    def total(self):
+        ''' Calculate total time '''
+
+        # If the timer hasn't been started, return 0
+        if not len(self._tics):
+            return 0
+        else:
+            start = self._tics[0]
+
+        # If the timer hasn't been finished, use the current time; else the latest
+        if not len(self._tocs):
+            end = time.time()
+        else:
+            end = self._tocs[-1]
+
+        elapsed = end - start
+
+        return elapsed
+
+
     # Alias/shortcut methods
 
     def start(self):
@@ -796,6 +828,20 @@ class timer(scu.prettyobj):
         ''' Alias for ``toctic()`` with output=True '''
         return self.toctic(*args, output=output, **kwargs)
 
+    @property
+    def indivtimings(self):
+        from . import sc_odict as sco # Here to avoid circular import
+        vals = np.diff(scm.cat(self._tics[0], self._tocs))
+        output = sco.odict(zip(self.timings.keys(), vals))
+        return output
+
+    @property
+    def cumtimings(self):
+        from . import sc_odict as sco # Here to avoid circular import
+        vals = np.array(self._tocs) - self._tics[0]
+        output = sco.odict(zip(self.timings.keys(), vals))
+        return output
+
 
     def plot(self, fig=None, figkwargs=None, grid=True, **kwargs):
         """
@@ -821,18 +867,18 @@ class timer(scu.prettyobj):
         # plot times
         if len(self.timings) > 0:
             keys = self.timings.keys()
-            vals = self.timings[:]
+            vals = self.indivtimings[:]
             ax1 = pl.subplot(2,1,1)
             pl.barh(keys, vals, **kwargs)
             pl.title('Individual timings')
             pl.ylabel('Label')
-            pl.xlabel('Individual timings (s)')
+            pl.xlabel('Elapsed time (s)')
 
             ax2 = pl.subplot(2,1,2)
             pl.barh(keys, np.cumsum(vals), **kwargs)
             pl.title('Cumulative timings')
             pl.ylabel('Label')
-            pl.xlabel('Cumulative timings (s)')
+            pl.xlabel('Elapsed time (s)')
 
             for ax in [ax1, ax2]:
                 ax.invert_yaxis()
