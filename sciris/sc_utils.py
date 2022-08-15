@@ -41,7 +41,7 @@ from distutils.version import LooseVersion
 
 # Handle types
 _stringtypes = (str, bytes)
-_numtypes    = (numbers.Number,)
+_numtype     = (numbers.Number,)
 _booltypes   = (bool, np.bool_)
 
 
@@ -634,7 +634,7 @@ def checktype(obj=None, objtype=None, subtype=None, die=False):
 
     # Handle "objtype" input
     if   objtype in ['str','string']:          objinstance = _stringtypes
-    elif objtype in ['num', 'number']:         objinstance = _numtypes
+    elif objtype in ['num', 'number']:         objinstance = _numtype
     elif objtype in ['bool', 'boolean']:       objinstance = _booltypes
     elif objtype in ['arr', 'array']:          objinstance = np.ndarray
     elif objtype in ['listlike', 'arraylike']: objinstance = (list, tuple, np.ndarray) # Anything suitable as a numerical array
@@ -651,7 +651,7 @@ def checktype(obj=None, objtype=None, subtype=None, die=False):
     # Do second round checking
     if result and objtype in ['listlike', 'arraylike']: # Special case for handling arrays which may be multi-dimensional
         obj = promotetoarray(obj).flatten() # Flatten all elements
-        if objtype == 'arraylike' and subtype is None: subtype = _numtypes + _booltypes
+        if objtype == 'arraylike' and subtype is None: subtype = _numtype + _booltypes
     if isiterable(obj) and subtype is not None:
         for item in obj:
             result = result and checktype(item, subtype)
