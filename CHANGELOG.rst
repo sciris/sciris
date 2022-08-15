@@ -48,12 +48,14 @@ Improvements
 #. ``sc.findinds()`` can now handle multiple inputs, e.g. ``sc.findinds(data>0.1, data<0.5)``.
 #. ``sc.checktype()`` now includes boolean arrays as being ``arraylike``, and has a new ``'bool'`` option.
 #. Added ``dict_keys()``, ``dict_values()``, and ``dict_items()`` methods for ``sc.odict()``.
+#. File-saving functions now have a ``sanitizepath`` argument (previously, some used file path sanitization and others didn't). They also now return the full path of the saved file.
 
 Housekeeping
 ~~~~~~~~~~~~
 #. ``pyyaml`` has been added as a dependency.
 #. Profiling and load balancing functions have beem moved from ``sc.sc_utils`` and ``sc.sc_parallel`` to a new submodule, ``sc.sc_profiling``.
 #. Most instances of ``DeprecationWarning`` have been changed to ``FutureWarning``.
+#. Python 2 compatibility functions (e.g. ``sc.loadobj2or3()``) have been moved to a separate module, ``sc.sc_legacy``, which is no longer imported by default.
 #. Added style and contributing guides.
 
 Regression information
@@ -61,6 +63,7 @@ Regression information
 #. The default for ``sc.cp()`` and ``sc.dcp()`` changed from ``die=False`` to ``die=True``, which may cause previously caught exceptions to be uncaught. For previous behavior, use ``sc.dcp(..., die=False)``.
 #. The argument ``maxload`` (in ``sc.loadbalancer()``, ``sc.parallelize()``, etc.) has been renamed ``maxcpu`` (for consistency with the new ``maxmem`` argument).
 #. Previously ``sc.loadbalancer(maxload=None)`` was interpreted as a default load limit (0.8); ``None`` is now interpreted as no limit.
+#. Legacy load functions have been moved to a separate module and must be used from there, e.g. ``sc.sc_legacy.loadobj2or3()``.
 
 
 Version 1.3.3 (2022-01-16)

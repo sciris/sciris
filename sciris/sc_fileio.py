@@ -908,10 +908,10 @@ def loadyaml(filename=None, folder=None, string=None, fromfile=True, safe=False,
 
 def saveyaml(filename=None, obj=None, folder=None, die=True, keepnone=False, dumpall=False, sanitizepath=True, **kwargs):
     '''
-    Convenience function for saving to a JSON file.
+    Convenience function for saving to a YAML file.
 
     Args:
-        filename (str): the file to save (if empty, return string representation instead)
+        filename (str): the file to save (if empty, return string representation of the YAML instead)
         obj (anything): the object to save
         folder (str): folder if not part of the filename
         die (bool): whether or not to raise an exception if saving an empty object
@@ -924,10 +924,12 @@ def saveyaml(filename=None, obj=None, folder=None, die=True, keepnone=False, dum
     Returns:
         The filename saved to
 
-    **Example**::
+    **Examples**::
 
         yaml = {'foo':'bar', 'data':[1,2,3]}
-        sc.saveyaml('my-file.yaml', yaml)
+        sc.saveyaml('my-file.yaml', yaml) # Save to file
+
+        string = sc.saveyaml(obj=yaml) # Export to string
     '''
     import yaml # Optional import
 

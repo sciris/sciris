@@ -704,7 +704,7 @@ class timer(scu.prettyobj):
 
     | New in version 1.3.0: ``sc.timer()`` alias, and allowing the label as first argument.
     | New in version 1.3.2: ``toc()`` passes label correctly; ``tt()`` method; ``auto`` argument
-    | New in version 2.0.0: ``plot()`` method; ``total()`` method
+    | New in version 2.0.0: ``plot()`` method; ``total()`` method; ``indivtimings`` and ``cumtimings`` properties
     '''
     def __init__(self, label=None, auto=False, start=True, **kwargs):
         from . import sc_odict as sco # Here to avoid circular import

@@ -900,8 +900,9 @@ def mergedicts(*args, _strict=False, _overwrite=True, _copy=False, _sameclass=Tr
         _strict    (bool): if True, raise an exception if an argument isn't a dict
         _overwrite (bool): if False, raise an exception if multiple keys are found
         _copy      (bool): whether or not to deepcopy the merged dictionary
-        *args     (dict): the sequence of dicts to be merged
-        **kwargs  (dict): merge these into the dict as well
+        _sameclass (bool): whether to ensure the output has the same type as the first dictionary merged
+        *args      (list): the sequence of dicts to be merged
+        **kwargs   (dict): merge these into the dict as well
 
     **Examples**::
 
@@ -913,7 +914,7 @@ def mergedicts(*args, _strict=False, _overwrite=True, _copy=False, _sameclass=Tr
 
     | New in version 1.1.0: "copy" argument
     | New in version 1.3.3: keywords allowed
-    | New in version 2.0.0: keywords fully enabled
+    | New in version 2.0.0: keywords fully enabled; "_sameclass" argument
     '''
     # Warn about deprecated keys
     renamed = ['strict', 'overwrite', 'copy']
@@ -924,12 +925,12 @@ def mergedicts(*args, _strict=False, _overwrite=True, _copy=False, _sameclass=Tr
     # Try to get the output type from the first argument, but revert to a standard dict if that fails
     outputdict = {}
     try:
-        if _sameclass:
+        if _sameclass and len(args):
             assert isinstance(args[0], dict)
             outputdict = args[0].__class__() # This creates a new instance of the class
     except Exception as E:
-        errormsg = f'Warning: encountered error getting dict type from first argument ({str(E)}); set _sameclass=False to turn off this warning'
-        print(errormsg)
+        errormsg = f'Could not create new dict of {type(args[0])} from first argument ({str(E)}); set _sameclass=False if this is OK'
+        raise TypeError(errormsg) from E
 
 
     # Merge over the dictionaries in order
