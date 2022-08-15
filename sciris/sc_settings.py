@@ -129,17 +129,16 @@ rc_fancy.update({
 
 class Options(dictobj):
     '''
-    Set options for Covasim.
+    Set options for Sciris.
 
-    Use ``cv.options.set('defaults')`` to reset all values to default, or ``cv.options.set(dpi='default')``
-    to reset one parameter to default. See ``cv.options.help(detailed=True)`` for
+    Use ``sc.options.set('defaults')`` to reset all values to default, or ``sc.options.set(dpi='default')``
+    to reset one parameter to default. See ``sc.options.help(detailed=True)`` for
     more information.
 
-    Options can also be saved and loaded using ``cv.options.save()`` and ``cv.options.load()``.
-    See ``cv.options.context()`` and ``cv.options.with_style()`` to set options
-    temporarily.
+    Options can also be saved and loaded using ``sc.options.save()`` and ``sc.options.load()``.
+    See ``sc.options.with_style()`` to set options temporarily.
 
-    Common options are (see also ``cv.options.help(detailed=True)``):
+    Common options are (see also ``sc.options.help(detailed=True)``):
 
         - verbose:        default verbosity for simulations to use
         - style:          the plotting style to use
@@ -155,15 +154,15 @@ class Options(dictobj):
 
     **Examples**::
 
-        cv.options(dpi=150) # Larger size
-        cv.options(style='simple', font='Rosario') # Change to the "simple" Covasim style with a custom font
-        cv.options.set(fontsize=18, show=False, backend='agg', precision=64) # Multiple changes
-        cv.options(interactive=False) # Turn off interactive plots
-        cv.options(jupyter=True) # Defaults for Jupyter
-        cv.options('defaults') # Reset to default options
+        sc.options(dpi=150) # Larger size
+        sc.options(style='simple', font='Rosario') # Change to the "simple" Sciris style with a custom font
+        sc.options.set(fontsize=18, show=False, backend='agg', precision=64) # Multiple changes
+        sc.options(interactive=False) # Turn off interactive plots
+        sc.options(jupyter=True) # Defaults for Jupyter
+        sc.options('defaults') # Reset to default options
 
     | New in version 3.1.1: Jupyter defaults
-    | New in version 3.1.2: Updated plotting styles; refactored options as a class
+    | New in version 2.0.0: revamed with additional options ``interactive`` and ``jupyter``, plus styles
     '''
 
     def __init__(self):
@@ -176,7 +175,7 @@ class Options(dictobj):
 
 
     def __call__(self, *args, **kwargs):
-        '''Allow ``cv.options(dpi=150)`` instead of ``cv.options.set(dpi=150)`` '''
+        '''Allow ``sc.options(dpi=150)`` instead of ``sc.options.set(dpi=150)`` '''
         return self.set(*args, **kwargs)
 
 
@@ -190,7 +189,7 @@ class Options(dictobj):
         from . import sc_utils as scu # To avoid circular import
         from . import sc_printing as scp
         output = scu.objectid(self)
-        output += 'Covasim options (see also cv.options.disp()):\n'
+        output += 'Sciris options (see also sc.options.disp()):\n'
         output += scp.pp(self.to_dict(), output=True)
         return output
 
@@ -210,7 +209,7 @@ class Options(dictobj):
             self.set(**reset)
             self.delattribute('on_entry')
         except AttributeError as E:
-            errormsg = 'Please use cv.options.context() if using a with block'
+            errormsg = 'Please use sc.options.context() if using a with block'
             raise AttributeError(errormsg) from E
         return
 
@@ -218,7 +217,7 @@ class Options(dictobj):
     def disp(self):
         ''' Detailed representation '''
         from . import sc_printing as scp # To avoid circular import
-        output = 'Covasim options (see also cv.options.help()):\n'
+        output = 'Sciris options (see also sc.options.help()):\n'
         keylen = 14 # Maximum key length  -- "numba_parallel"
         for k,v in self.items():
             keystr = scp.colorize(f'  {k:>{keylen}s}: ', fg='cyan', output=True)
@@ -232,8 +231,8 @@ class Options(dictobj):
     @staticmethod
     def get_orig_options():
         '''
-        Set the default options for Covasim -- not to be called by the user, use
-        ``cv.options.set('defaults')`` instead.
+        Set the default options for Sciris -- not to be called by the user, use
+        ``sc.options.set('defaults')`` instead.
         '''
 
         # Options acts like a class, but is actually an objdict for simplicity
@@ -241,62 +240,62 @@ class Options(dictobj):
         options = dictobj() # The options
 
         optdesc.verbose = 'Set default level of verbosity (i.e. logging detail): e.g., 0.1 is an update every 10 simulated days'
-        options.verbose = float(os.getenv('COVASIM_VERBOSE', 0.1))
+        options.verbose = float(os.getenv('SCIRIS_VERBOSE', 0.1))
 
-        optdesc.style = 'Set the default plotting style -- options are "covasim" and "simple" plus those in pl.style.available; see also options.rc'
-        options.style = os.getenv('COVASIM_STYLE', 'covasim')
+        optdesc.style = 'Set the default plotting style -- options are "simple" and "fancy" plus those in pl.style.available; see also options.rc'
+        options.style = os.getenv('SCIRIS_STYLE', 'simple')
 
         optdesc.dpi = 'Set the default DPI -- the larger this is, the larger the figures will be'
-        options.dpi = int(os.getenv('COVASIM_DPI', pl.rcParams['figure.dpi']))
+        options.dpi = int(os.getenv('SCIRIS_DPI', pl.rcParams['figure.dpi']))
 
         optdesc.font = 'Set the default font family (e.g., sans-serif or Arial)'
-        options.font = os.getenv('COVASIM_FONT', pl.rcParams['font.family'])
+        options.font = os.getenv('SCIRIS_FONT', pl.rcParams['font.family'])
 
         optdesc.fontsize = 'Set the default font size'
-        options.fontsize = int(os.getenv('COVASIM_FONT_SIZE', pl.rcParams['font.size']))
+        options.fontsize = int(os.getenv('SCIRIS_FONT_SIZE', pl.rcParams['font.size']))
 
         optdesc.interactive = 'Convenience method to set figure backend, showing, and closing behavior'
-        options.interactive = os.getenv('COVASIM_INTERACTIVE', True)
+        options.interactive = os.getenv('SCIRIS_INTERACTIVE', True)
 
         optdesc.jupyter = 'Convenience method to set common settings for Jupyter notebooks: set to "retina" or "widget" (default) to set backend'
-        options.jupyter = os.getenv('COVASIM_JUPYTER', False)
+        options.jupyter = os.getenv('SCIRIS_JUPYTER', False)
 
         optdesc.show = 'Set whether or not to show figures (i.e. call pl.show() automatically)'
-        options.show = int(os.getenv('COVASIM_SHOW', True))
+        options.show = int(os.getenv('SCIRIS_SHOW', True))
 
         optdesc.close = 'Set whether or not to close figures (i.e. call pl.close() automatically)'
-        options.close = int(os.getenv('COVASIM_CLOSE', False))
+        options.close = int(os.getenv('SCIRIS_CLOSE', False))
 
         optdesc.returnfig = 'Set whether or not to return figures from plotting functions'
-        options.returnfig = int(os.getenv('COVASIM_RETURNFIG', True))
+        options.returnfig = int(os.getenv('SCIRIS_RETURNFIG', True))
 
         optdesc.backend = 'Set the Matplotlib backend (use "agg" for non-interactive)'
-        options.backend = os.getenv('COVASIM_BACKEND', pl.get_backend())
+        options.backend = os.getenv('SCIRIS_BACKEND', pl.get_backend())
 
         optdesc.rc = 'Matplotlib rc (run control) style parameters used during plotting -- usually set automatically by "style" option'
         options.rc = cp.deepcopy(rc_simple)
 
         optdesc.warnings = 'How warnings are handled: options are "warn" (default), "print", and "error"'
-        options.warnings = str(os.getenv('COVASIM_WARNINGS', 'warn'))
+        options.warnings = str(os.getenv('SCIRIS_WARNINGS', 'warn'))
 
         optdesc.sep = 'Set thousands seperator for text output'
-        options.sep = str(os.getenv('COVASIM_SEP', ','))
+        options.sep = str(os.getenv('SCIRIS_SEP', ','))
 
         optdesc.precision = 'Set arithmetic precision for Numba -- 32-bit by default for efficiency'
-        options.precision = int(os.getenv('COVASIM_PRECISION', 32))
+        options.precision = int(os.getenv('SCIRIS_PRECISION', 32))
 
         optdesc.numba_parallel = 'Set Numba multithreading -- none, safe, full; full multithreading is ~20% faster, but results become nondeterministic'
-        options.numba_parallel = str(os.getenv('COVASIM_NUMBA_PARALLEL', 'none'))
+        options.numba_parallel = str(os.getenv('SCIRIS_NUMBA_PARALLEL', 'none'))
 
         optdesc.numba_cache = 'Set Numba caching -- saves on compilation time; disabling is not recommended'
-        options.numba_cache = bool(int(os.getenv('COVASIM_NUMBA_CACHE', 1)))
+        options.numba_cache = bool(int(os.getenv('SCIRIS_NUMBA_CACHE', 1)))
 
         return optdesc, options
 
 
     def set(self, key=None, value=None, **kwargs):
         '''
-        Actually change the style. See ``cv.options.help()`` for more information.
+        Actually change the style. See ``sc.options.help()`` for more information.
 
         Args:
             key    (str):    the parameter to modify, or 'defaults' to reset everything to default values
@@ -305,7 +304,7 @@ class Options(dictobj):
 
         **Example**::
 
-            cv.options.set(dpi=50) # Equivalent to cv.options(dpi=50)
+            sc.options.set(dpi=50) # Equivalent to sc.options(dpi=50)
         '''
 
         # Reset to defaults
@@ -353,16 +352,13 @@ class Options(dictobj):
             # Handle deprecations
             rename = {'font_size': 'fontsize', 'font_family':'font'}
             if key in rename.keys():
-                from . import misc as cvm # Here to avoid circular import
                 oldkey = key
                 key = rename[oldkey]
-                warnmsg = f'Key "{oldkey}" is deprecated, please use "{key}" instead'
-                cvm.warn(warnmsg, FutureWarning)
 
             if key not in self:
                 keylist = self.orig_options.keys()
                 keys = '\n'.join(keylist)
-                errormsg = f'Option "{key}" not recognized; options are "defaults" or:\n{keys}\n\nSee help(cv.options.set) for more information.'
+                errormsg = f'Option "{key}" not recognized; options are "defaults" or:\n{keys}\n\nSee help(sc.options.set) for more information.'
                 raise ValueError(errormsg) from KeyError(key) # Can't use sc.KeyNotFoundError since would be a circular import
             else:
                 if value in [None, 'default']:
@@ -372,40 +368,6 @@ class Options(dictobj):
                     pl.switch_backend(value)
 
         return
-
-
-    def context(self, **kwargs):
-        '''
-        Alias to set() for non-plotting options, for use in a "with" block.
-
-        Note: for plotting options, use ``cv.options.with_style()``, which is linked
-        to Matplotlib's context manager. If you set plotting options with this,
-        they won't have any effect.
-
-        **Examples**::
-
-            # Silence all output
-            with cv.options.context(verbose=0):
-                cv.Sim().run()
-
-            # Convert warnings to errors
-            with cv.options.context(warnings='error'):
-                cv.Sim(location='not a location').initialize()
-
-            # Use with_style(), not context(), for plotting options
-            with cv.options.with_style(dpi=50):
-                cv.Sim().run().plot()
-
-        New in version 3.1.2.
-        '''
-
-        # Store current settings
-        on_entry = {k:self[k] for k in kwargs.keys()}
-        self.setattribute('on_entry', on_entry)
-
-        # Make changes
-        self.set(**kwargs)
-        return self
 
 
     def get_default(self, key):
@@ -431,12 +393,12 @@ class Options(dictobj):
 
         **Example**::
 
-            cv.options.help(detailed=True)
+            sc.options.help(detailed=True)
         '''
         from . import sc_odict as sco # To avoid circular import
         from . import sc_printing as scp # To avoid circular import
 
-        # If not detailed, just print the docstring for cv.options
+        # If not detailed, just print the docstring for sc.options
         if not detailed:
             print(self.__doc__)
             return
@@ -449,14 +411,14 @@ class Options(dictobj):
             entry.current = scp.indent(n=n, width=None, text=scp.pp(self[key], output=True)).rstrip()
             entry.default = scp.indent(n=n, width=None, text=scp.pp(self.orig_options[key], output=True)).rstrip()
             if not key.startswith('rc'):
-                entry.variable = f'COVASIM_{key.upper()}' # NB, hard-coded above!
+                entry.variable = f'SCIRIS_{key.upper()}' # NB, hard-coded above!
             else:
                 entry.variable = 'No environment variable'
             entry.desc = scp.indent(n=n, text=self.optdesc[key])
             optdict[key] = entry
 
         # Convert to a dataframe for nice printing
-        print('Covasim global options ("Environment" = name of corresponding environment variable):')
+        print('Sciris global options ("Environment" = name of corresponding environment variable):')
         for k, key, entry in optdict.enumitems():
             scp.heading(f'{k}. {key}', spaces=0, spacesafter=0)
             changestr = '' if entry.current == entry.default else ' (modified)'
@@ -468,14 +430,14 @@ class Options(dictobj):
 
         scp.heading('Methods:', spacesafter=0)
         print('''
-    cv.options(key=value) -- set key to value
-    cv.options[key] -- get or set key
-    cv.options.set() -- set option(s)
-    cv.options.get_default() -- get default setting(s)
-    cv.options.load() -- load settings from file
-    cv.options.save() -- save settings to file
-    cv.options.to_dict() -- convert to dictionary
-    cv.options.style() -- create style context for plotting
+    sc.options(key=value) -- set key to value
+    sc.options[key] -- get or set key
+    sc.options.set() -- set option(s)
+    sc.options.get_default() -- get default setting(s)
+    sc.options.load() -- load settings from file
+    sc.options.save() -- save settings to file
+    sc.options.to_dict() -- convert to dictionary
+    sc.options.style() -- create style context for plotting
 ''')
 
         if output:
@@ -524,8 +486,8 @@ class Options(dictobj):
             rc = scu.dcp(style)
         elif style is not None: # Usual use case
             stylestr = str(style).lower()
-            if   stylestr in ['fancy', 'covasim']:  rc = scu.dcp(rc_fancy)
-            elif stylestr in ['simple', 'default']: rc = scu.dcp(rc_simple)
+            if   stylestr in ['simple', 'default']: rc = scu.dcp(rc_simple)
+            elif stylestr in ['fancy', 'covasim']:  rc = scu.dcp(rc_fancy)
             elif style in pl.style.library:         rc = scu.dcp(pl.style.library[style])
             else:
                 errormsg = f'Style "{style}"; not found; options are "simple" (default), "fancy", plus:\n{scu.newlinejoin(pl.style.available)}'
@@ -542,11 +504,10 @@ class Options(dictobj):
         Combine all Matplotlib style information, and either apply it directly
         or create a style context.
 
-        To set globally, use ``cv.options.use_style()``. Otherwise, use ``cv.options.with_style()``
+        To set globally, use ``sc.options.use_style()``. Otherwise, use ``sc.options.with_style()``
         as part of a ``with`` block to set the style just for that block (using
         this function outsde of a with block and with ``use=False`` has no effect, so
-        don't do that!). To set non-style options (e.g. warnings, verbosity) as
-        a context, see ``cv.options.context()``.
+        don't do that!).
 
         Args:
             style_args (dict): a dictionary of style arguments
@@ -564,7 +525,7 @@ class Options(dictobj):
 
         **Examples**::
 
-            with cv.options.with_style(dpi=300): # Use default options, but higher DPI
+            with sc.options.with_style(dpi=300): # Use default options, but higher DPI
                 pl.plot([1,3,6])
         '''
         from . import sc_utils as scu # To avoid circular import
@@ -603,7 +564,7 @@ class Options(dictobj):
         # Handle other keywords
         for key,value in kwargs.items():
             if key not in pl.rcParams:
-                errormsg = f'Key "{key}" does not match any value in Covasim options or pl.rcParams'
+                errormsg = f'Key "{key}" does not match any value in Sciris options or pl.rcParams'
                 raise KeyError(errormsg)
             elif value is not None:
                 rc[key] = value
@@ -617,11 +578,11 @@ class Options(dictobj):
 
     def use_style(self, **kwargs):
         '''
-        Shortcut to set Covasim's current style as the global default.
+        Shortcut to set Sciris's current style as the global default.
 
         **Example**::
 
-            cv.options.use_style() # Set Covasim options as default
+            sc.options.use_style() # Set Sciris options as default
             pl.figure()
             pl.plot([1,3,7])
 
