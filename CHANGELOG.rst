@@ -46,6 +46,7 @@ Improvements
 #. ``sc.path()`` is more flexible, including handling ``None`` inputs.
 #. ``sc.findinds()`` can now handle multiple inputs, e.g. ``sc.findinds(data>0.1, data<0.5)``.
 #. ``sc.checktype()`` now includes boolean arrays as being ``arraylike``, and has a new ``'bool'`` option.
+#. Added ``dict_keys()``, ``dict_values()``, and ``dict_items()`` methods for ``sc.odict()``.
 
 Housekeeping
 ~~~~~~~~~~~~

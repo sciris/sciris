@@ -1034,6 +1034,18 @@ class odict(OD):
         if transpose: iterator = tuple(scu.transposelist(iterator))
         return iterator
 
+    def dict_keys(self):
+        """ Return an iterator (not a list) over keys (as in Python 2). """
+        return OD.keys(self)
+
+    def dict_values(self):
+        """ Return an iterator (not a list) over values (as in Python 2). """
+        return OD.values(self)
+
+    def dict_items(self):
+        """ Return an iterator (not a list) over items (as in Python 2). """
+        return OD.items(self)
+
     def iteritems(self, transpose=False):
         """ Alias to items() """
         return self.items(transpose=transpose)
