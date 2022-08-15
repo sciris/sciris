@@ -81,7 +81,7 @@ def safedivide(numerator=None, denominator=None, default=None, eps=None, warn=Fa
     return output
 
 
-def findinds(arr=None, val=None, eps=1e-6, first=False, last=False, die=True, **kwargs):
+def findinds(arr=None, val=None, *args, eps=1e-6, first=False, last=False, ind=None, die=True, **kwargs):
     '''
     Find matches even if two things aren't eactly equal (e.g. floats vs. ints).
 
@@ -92,27 +92,31 @@ def findinds(arr=None, val=None, eps=1e-6, first=False, last=False, die=True, **
     Args:
         arr    (array): the array to find values in
         val    (float): if provided, the value to match
+        args   (list):  if provided, additional boolean arrays
         eps    (float): the precision for matching (default 1e-6, equivalent to ``np.isclose()``'s atol)
-        first  (bool):  whether to return the first matching value
-        last   (bool):  whether to return the last matching value
+        first  (bool):  whether to return the first matching value (equivalent to ind=0)
+        last   (bool):  whether to return the last matching value (equivalent to ind=-1)
+        ind    (int):   index of match to retrieve
         die    (bool):  whether to raise an exception if first or last is true and no matches were found
         kwargs (dict):  passed to ``np.isclose()``
 
     **Examples**::
 
-        sc.findinds(rand(10)<0.5) # returns e.g. array([2, 4, 5, 9])
-        sc.findinds([2,3,6,3], 3) # returs array([1,3])
-        sc.findinds([2,3,6,3], 3, first=True) # returns 1
+        data = np.random.rand(10)
+        sc.findinds(data<0.5) # Standard usage; returns e.g. array([2, 4, 5, 9])
+        sc.findinds(data>0.1, data<0.5) # Multiple arguments
+
+        sc.findinds([2,3,6,3], 3) # Returs array([1,3])
+        sc.findinds([2,3,6,3], 3, first=True) # Returns 1
 
     | New in version 1.2.3: "die" argument
-    | New in version 2.0.0: fix string matching
+    | New in version 2.0.0: fix string matching; allow multiple arguments
     '''
 
     # Handle first or last
     if first and last: raise ValueError('Can use first or last but not both')
     elif first: ind = 0
     elif last:  ind = -1
-    else:       ind = None
 
     # Handle kwargs
     atol = kwargs.pop('atol', eps) # Ensure atol isn't specified twice
@@ -124,19 +128,30 @@ def findinds(arr=None, val=None, eps=1e-6, first=False, last=False, die=True, **
 
     # Calculate matches
     arr = scu.promotetoarray(arr)
+    arglist = list(args)
     if val is None: # Check for equality
-        output = np.nonzero(arr) # If not, just check the truth condition
+        boolarr = arr # If not, just check the truth condition
     else:
-        if scu.isstring(val):
-            output = np.nonzero(arr==val)
+        if scu.isstring(val): # A string only matches itself
+            boolarr = (arr == val)
         else:
-            try: # Standard usage, use nonzero
-                output = np.nonzero(np.isclose(a=arr, b=val, atol=atol, **kwargs)) # If absolute difference between the two values is less than a certain amount
-            except Exception as E: # pragma: no cover # As a fallback, try simpler comparison
-                output = np.nonzero(abs(arr-val) < atol)
-                if kwargs: # Raise a warning if and only if special settings were passed
-                    warnmsg = f'{str(E)}\nsc.findinds(): np.isclose() encountered an exception (above), falling back to direct comparison'
-                    warnings.warn(warnmsg, category=RuntimeWarning, stacklevel=2)
+            if scu.isnumber(val): # Standard usage, use nonzero
+                boolarr = np.isclose(a=arr, b=val, atol=atol, **kwargs) # If absolute difference between the two values is less than a certain amount
+            elif scu.checktype(val, 'arraylike'): # It's not actually a value, it's another array
+                boolarr = arr
+                arglist.append(val)
+            else:
+                raise Exception
+
+    # Handle any additional inputs
+    for arg in arglist:
+        if arg.shape != boolarr.shape:
+            errormsg = f'Could not handle inputs with shapes {boolarr.shape} vs {arg.shape}'
+            raise ValueError(errormsg)
+        boolarr *= arg
+
+    # Actually find indices
+    output = np.nonzero(boolarr)
 
     # Process output
     try:

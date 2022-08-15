@@ -44,6 +44,7 @@ Improvements
 #. ``sc.savezip()`` can save now save data to zip files (instead of just compressing files).
 #. ``sc.savespreadsheet()`` now allows NaNs to be saved.
 #. ``sc.path()`` is more flexible, including handling ``None`` inputs.
+#. ``sc.findinds()`` can now handle multiple inputs, e.g. ``sc.findinds(data>0.1, data<0.5)``.
 
 Housekeeping
 ~~~~~~~~~~~~
