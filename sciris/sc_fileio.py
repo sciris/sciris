@@ -1129,6 +1129,10 @@ class Spreadsheet(Blobject):
 
     New in version 1.3.0: Changed default from xlrd to openpyxl and added self.wb
     attribute to avoid the need to reload workbooks.
+
+    **Examples**::
+
+
     '''
 
     def __init__(self, *args, **kwargs):
@@ -1136,15 +1140,24 @@ class Spreadsheet(Blobject):
         self.wb = None
         return
 
+
     def __getstate__(self):
         d = self.__dict__.copy() # Shallow copy
         d['wb'] = None
         return d
 
+
     def _reload_wb(self, reload=None):
         ''' Helper function to check if workbook is already loaded '''
         output = (not hasattr(self, 'wb')) or (self.wb is None) or reload
         return output
+
+
+    def new(self, **kwargs):
+        ''' Shortcut method to create a new openpyxl workbook '''
+        import openpyxl # Optional import
+        self.wb = openpyxl.Workbook(**kwargs)
+        return self.wb
 
 
     def xlrd(self, reload=False, store=True, **kwargs): # pragma: no cover
@@ -1212,6 +1225,7 @@ Falling back to openpyxl, which is identical except for how cached cell values a
 
         if store:
             self.wb = wb
+
         return wb
 
 
