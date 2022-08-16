@@ -36,8 +36,8 @@ import warnings
 import numpy as np
 import random as rnd
 import uuid as py_uuid
+import packaging as pkg
 import traceback as py_traceback
-from distutils.version import LooseVersion
 
 # Handle types
 _stringtypes = (str, bytes)
@@ -1300,9 +1300,9 @@ def compareversions(version1, version2):
     v2 = v2.lstrip('<>=!~')
 
     # Do comparison
-    if LooseVersion(v1) > LooseVersion(v2):
+    if pkg.version.parse(v1) > pkg.version.parse(v2):
         comparison =  1
-    elif LooseVersion(v1) < LooseVersion(v2):
+    elif pkg.version.parse(v1) < pkg.version.parse(v2):
         comparison =  -1
     else:
         comparison =  0

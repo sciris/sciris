@@ -54,7 +54,7 @@ def test_noniterated(doplot=doplot):
         xy = [x+i*pl.randn(100), y+i*pl.randn(100)]
         return xy
 
-    xylist1 = sc.parallelize(myfunc, kwargs={'x':3, 'y':8}, iterarg=range(5), maxload=0.8, interval=0.1) # Use kwargs dict
+    xylist1 = sc.parallelize(myfunc, kwargs={'x':3, 'y':8}, iterarg=range(5), maxcpu=0.8, interval=0.1) # Use kwargs dict
     xylist2 = sc.parallelize(myfunc, x=5, y=10, iterarg=[5,10,15]) # Supply kwargs directly
 
     if doplot:
@@ -102,7 +102,7 @@ def test_parallelcmd():
     newval = val+const
     result = newval**2
     """
-    results = sc.parallelcmd(cmd=cmd, parfor=parfor, returnval=returnval, const=const, maxload=0)
+    results = sc.parallelcmd(cmd=cmd, parfor=parfor, returnval=returnval, const=const, maxcpu=0)
     print(results)
     return
 
