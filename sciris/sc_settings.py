@@ -190,13 +190,14 @@ class Options(sco.objdict):
         return optdesc, options
 
 
-    def set(self, key=None, value=None, **kwargs):
+    def set(self, key=None, value=None, use=True, **kwargs):
         '''
         Actually change the style. See ``sc.options.help()`` for more information.
 
         Args:
             key    (str):    the parameter to modify, or 'defaults' to reset everything to default values
             value  (varies): the value to specify; use None or 'default' to reset to default
+            use    (bool):   whether to immediately apply the change (to Matplotlib)
             kwargs (dict):   if supplied, set multiple key-value pairs
 
         **Example**::
@@ -226,6 +227,7 @@ class Options(sco.objdict):
                     import matplotlib_inline
                     matplotlib_inline.backend_inline.set_matplotlib_formats('retina')
             except:
+                print('ADD ERROR MESSAGE')
                 pass
 
         # Handle interactivity
@@ -256,9 +258,24 @@ class Options(sco.objdict):
                 if value in [None, 'default']:
                     value = self.orig_options[key]
                 self[key] = value
-                if key in 'backend':
-                    pl.switch_backend(value)
+                matplotlib_keys = ['fontsize', 'font', 'dpi', 'backend']
+                if key in matplotlib_keys:
+                    self.set_matplotlib_global(key, value)
 
+        if use:
+            self.use_style()
+
+        return
+
+
+    def set_matplotlib_global(self, key, value):
+        ''' Set a global option for Matplotlib -- not for users '''
+        if value: # Don't try to reset any of these to a None value
+            if   key == 'fontsize': pl.rcParams['font.size']   = value
+            elif key == 'font':     pl.rcParams['font.family'] = value
+            elif key == 'dpi':      pl.rcParams['figure.dpi']  = value
+            elif key == 'backend':  pl.switch_backend(value)
+            else: raise KeyError(f'Key {key} not found')
         return
 
 
