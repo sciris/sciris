@@ -22,6 +22,7 @@ New functions and methods
 #. ``sc.randsleep()`` sleeps for a nondeterministic period of time
 #. ``sc.loadzip()`` extracts (or reads data from) zip files
 #. ``sc.loadyaml()`` and ``sc.saveyaml()`` load and save YAML files, respectively.
+#. ``sc.download()`` downloads multiple files in parallel.
 
 Bugfixes
 ~~~~~~~~
@@ -52,6 +53,7 @@ Improvements
 #. ``sc.Spreadsheet()`` now has a ``new()`` method that creates a blank workbook.
 #. ``sc.animation()`` now defaults to ``ffmpeg`` for saving.
 #. ``sc.date()`` can now read ``np.datetime64`` objects.
+#. ``sc.wget()`` can now save to files.
 
 Housekeeping
 ~~~~~~~~~~~~

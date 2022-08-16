@@ -352,7 +352,7 @@ def sha(obj, encoding='utf-8', digest=False):
     return output
 
 
-def wget(url, filename=None, convert=True, verbose=False):
+def wget(url, filename=None, save=False, convert=True, die=False, verbose=False):
     '''
     Download a URL; see also ``sc.download()``
 
@@ -360,8 +360,10 @@ def wget(url, filename=None, convert=True, verbose=False):
 
     Args:
         url (str): the URL to download from
-        filename (str): if supplied, save to file
+        filename (str): if supplied, save to file instead of returning output
+        save (bool): if supplied instead of ``filename``, then use the default filename
         convert (bool): whether to convert from bytes to string
+        die (bool): whether to raise an exception if converting to text failed
         verbose (bool): whether to print progress
 
     **Example**::
@@ -373,10 +375,24 @@ def wget(url, filename=None, convert=True, verbose=False):
     from urllib import request # Bizarrely, urllib.request sometimes fails
     from . import sc_fileio as scf # To avoid circular import
 
-    if verbose: print(f'Download {url}...')
-    output = request.urlopen(url).read()
+    if verbose: print(f'Downloading {url}...')
+    response = request.urlopen(url)
+    output = response.read()
     if convert:
-        output = output.decode()
+        try:
+            output = output.decode()
+        except Exception as E:
+            if die:
+                raise E
+
+    # From https://stackoverflow.com/questions/31804799/how-to-get-pdf-filename-with-python-requests
+    if filename is None and save:
+        headers = dict(response.getheaders())
+        string = "Content-Disposition"
+        if string in headers.keys():
+            filename = re.findall("filename=(.+)", headers[string])[0]
+        else:
+            filename = url.split("/")[-1]
 
     if filename is not None:
         scf.savetext(filename=filename, string=output)
@@ -385,7 +401,7 @@ def wget(url, filename=None, convert=True, verbose=False):
         return output
 
 
-def download(url, *args, filename=None, convert=True, verbose=True):
+def download(url, *args, filename=None, save=False, convert=True, die=False, verbose=True):
     '''
     Download one or more URLs in parallel and return output or save them to disk.
 
@@ -394,8 +410,10 @@ def download(url, *args, filename=None, convert=True, verbose=True):
     Args:
         url (str/list/dict): either a single URL, a list of URLs, or a dict of URL:filename pairs
         *args (list): additional URLs to download
-        filename (str/list): either a string or a list of the same length as ``url``
+        filename (str/list): either a string or a list of the same length as ``url`` (if not supplied, return output)
+        save (bool): if supplied instead of ``filename``, then use the default filename
         convert (bool): whether to convert from bytes to string
+        die (bool): whether to raise an exception if converting to text failed
         verbose (bool): whether to print progress
 
     **Examples**::
@@ -434,7 +452,8 @@ def download(url, *args, filename=None, convert=True, verbose=True):
 
     # Get results in parallel
     iterkwargs = dict(url=urls, filename=filenames)
-    output = scp.parallelize(wget, iterkwargs=iterkwargs, kwargs=dict(verbose=verbose), parallelizer='thread')
+    kwargs = dict(save=save, convert=convert, die=die, verbose=verbose)
+    output = scp.parallelize(wget, iterkwargs=iterkwargs, kwargs=kwargs, parallelizer='thread')
 
     if verbose:
         T.toc(f'Time to download {n_urls} URLs')
