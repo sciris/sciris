@@ -1683,10 +1683,23 @@ class animation(scu.prettyobj):
             print(f'Failed to remove the following temporary files:\n{scu.newlinejoin(failed)}')
 
 
-    def save(self, filename=None, fps=None, dpi=None, anim_args=None, save_args=None, frames=None, tidy=None, verbose=True, **kwargs):
+    def save(self, filename=None, fps=None, dpi=None, engine='ffmpeg', anim_args=None, save_args=None, frames=None, tidy=None, verbose=True, **kwargs):
         ''' Save the animation -- arguments the same as ``sc.animation()`` and ``sc.savemovie()``, and are described there '''
 
-        import matplotlib.animation as mpl_anim # Sometimes fails if not imported directly
+        # Handle engine
+        if engine == 'ffmpeg':
+            try:
+                import ffmpeg
+            except:
+                print('Warning: engine ffmpeg not available; falling back to Matplotlib')
+                engine = 'matplotlib'
+        engines = ['ffmpeg', 'matplotlib']
+        if engine not in engines:
+            errormsg = f'Could not understand engine "{engine}": must be one of {scu.strjoin(engines)}'
+            raise ValueError(errormsg)
+
+        if engine == 'matplotlib':
+            import matplotlib.animation as mpl_anim # Sometimes fails if not imported directly
 
         # Handle dictionary args
         anim_args = scu.mergedicts(self.anim_args, anim_args)
@@ -1697,6 +1710,38 @@ class animation(scu.prettyobj):
             if self.filename is None:
                 self.filename = f'{self.basename}.mp4'
             filename = self.filename
+
+        # Set parameters
+        if fps  is None: fps  = save_args.pop('fps', self.fps)
+        if dpi  is None: dpi  = save_args.pop('dpi', self.dpi)
+        if tidy is None: tidy = self.tidy
+
+        T = scd.timer()
+
+        if engine == 'ffmpeg':
+            pass
+
+
+        elif engine == 'matplotlib':
+            self.save_matplotlib(frames, verbose)
+
+        if tidy:
+            self.rmfiles()
+
+        if verbose:
+            print(f'Done; movie saved to "{filename}"')
+            try: # Not essential, so don't try too hard if this doesn't work
+                filesize = os.path.getsize(filename)
+                if filesize<1e6: print(f'File size: {filesize/1e3:0.0f} KB')
+                else:            print(f'File size: {filesize/1e6:0.1f} MB')
+            except:
+                pass
+            T.toc(label='Time saving movie')
+
+        return
+
+
+    def save_matplotlib(self, frames=None, verbose=True, fps=None, dpi=None, filename=None, save_args=None, callback=None):
 
         # Load and sanitize frames
         if frames is None:
@@ -1714,14 +1759,8 @@ class animation(scu.prettyobj):
         # Try to get the figure from the frames, else use the current one
         fig = self._getfig()
 
-        # Set parameters
-        if fps  is None: fps  = save_args.pop('fps', self.fps)
-        if dpi  is None: dpi  = save_args.pop('dpi', self.dpi)
-        if tidy is None: tidy = self.tidy
-
         # Optionally print progress
         if verbose:
-            T = scd.timer()
             print(f'Saving {len(frames)} frames at {fps} fps and {dpi} dpi to "{filename}"...')
             callback = lambda i,n: scp.progressbar(i+1, len(frames)) # Default callback
             callback = save_args.pop('progress_callback', callback) # if provided as an argument
@@ -1732,20 +1771,9 @@ class animation(scu.prettyobj):
         anim = mpl_anim.ArtistAnimation(fig, frames, **anim_args)
         anim.save(filename, fps=fps, dpi=dpi, progress_callback=callback, **save_args, **kwargs)
 
-        if tidy:
-            self.rmfiles()
-
-        if verbose:
-            print(f'Done; movie saved to "{filename}"')
-            try: # Not essential, so don't try too hard if this doesn't work
-                filesize = os.path.getsize(filename)
-                if filesize<1e6: print(f'File size: {filesize/1e3:0.0f} KB')
-                else:            print(f'File size: {filesize/1e6:0.1f} MB')
-            except:
-                pass
-            T.toc(label='saving movie')
-
         return
+
+
 
 
 def savemovie(frames, filename=None, fps=None, quality=None, dpi=None, writer=None, bitrate=None,
