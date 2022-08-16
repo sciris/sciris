@@ -52,8 +52,8 @@ _booltypes   = (bool, np.bool_)
 ##############################################################################
 
 # Define the modules being loaded
-__all__ = ['fast_uuid', 'uuid', 'dcp', 'cp', 'pp', 'sha', 'wget', 'download', 'htmlify',
-           'freeze', 'require', 'traceback', 'getplatform', 'iswindows', 'islinux', 'ismac']
+__all__ = ['fast_uuid', 'uuid', 'dcp', 'cp', 'pp', 'sha', 'freeze', 'require',
+           'traceback', 'getplatform', 'iswindows', 'islinux', 'ismac']
 
 
 def fast_uuid(which=None, length=None, n=1, secure=False, forcelist=False, safety=1000, recursion=0, recursion_limit=10, verbose=True):
@@ -352,140 +352,6 @@ def sha(obj, encoding='utf-8', digest=False):
     return output
 
 
-def wget(url, filename=None, save=False, convert=True, die=False, verbose=False):
-    '''
-    Download a URL; see also ``sc.download()``
-
-    Alias to ``urllib.request.urlopen(url).read()``.
-
-    Args:
-        url (str): the URL to download from
-        filename (str): if supplied, save to file instead of returning output
-        save (bool): if supplied instead of ``filename``, then use the default filename
-        convert (bool): whether to convert from bytes to string
-        die (bool): whether to raise an exception if converting to text failed
-        verbose (bool): whether to print progress
-
-    **Example**::
-
-        html = sc.wget('http://sciris.org')
-
-    New in version 2.0.0: filename
-    '''
-    from urllib import request # Bizarrely, urllib.request sometimes fails
-    from . import sc_fileio as scf # To avoid circular import
-
-    if verbose: print(f'Downloading {url}...')
-    response = request.urlopen(url)
-    output = response.read()
-    if convert:
-        try:
-            output = output.decode()
-        except Exception as E:
-            if die:
-                raise E
-
-    # From https://stackoverflow.com/questions/31804799/how-to-get-pdf-filename-with-python-requests
-    if filename is None and save:
-        headers = dict(response.getheaders())
-        string = "Content-Disposition"
-        if string in headers.keys():
-            filename = re.findall("filename=(.+)", headers[string])[0]
-        else:
-            filename = url.split("/")[-1]
-
-    if filename is not None:
-        scf.savetext(filename=filename, string=output)
-        return filename
-    else:
-        return output
-
-
-def download(url, *args, filename=None, save=False, convert=True, die=False, verbose=True):
-    '''
-    Download one or more URLs in parallel and return output or save them to disk.
-
-    More complex version of ``sc.wget()``.
-
-    Args:
-        url (str/list/dict): either a single URL, a list of URLs, or a dict of URL:filename pairs
-        *args (list): additional URLs to download
-        filename (str/list): either a string or a list of the same length as ``url`` (if not supplied, return output)
-        save (bool): if supplied instead of ``filename``, then use the default filename
-        convert (bool): whether to convert from bytes to string
-        die (bool): whether to raise an exception if converting to text failed
-        verbose (bool): whether to print progress
-
-    **Examples**::
-
-        html = sc.download('http://sciris.org') # Download a single URL
-        data = sc.download('http://sciris.org', 'http://covasim.org') # Download two in parallel
-        sc.download({'http://sciris.org':'sciris.html', 'http://covasim.org':'covasim.html'}) # Downlaod two and save to disk
-        sc.download(['http://sciris.org', 'http://covasim.org'], filename=['sciris.html', 'covasim.html']) # Ditto
-
-    New in version 2.0.0.
-    '''
-    from . import sc_parallel as scp # To avoid circular import
-    from . import sc_datetime as scd
-
-    T = scd.timer()
-
-    # Parse arguments
-    if isinstance(url, dict):
-        urls = list(url.keys())
-        filenames = list(url.values())
-    else:
-        urls = mergelists(url, *args)
-        filenames = mergelists(filename)
-
-    # Ensure consistency
-    n_urls = len(urls)
-    n_filenames = len(filenames)
-    if not n_filenames:
-        filenames = [None]*n_urls
-    elif n_filenames != n_urls:
-        errormsg = f'Cannot process {n_urls} URLs and {n_filenames} filenames'
-        raise ValueError(errormsg)
-
-    if verbose:
-        print(f'Downloading {n_urls} URLs...')
-
-    # Get results in parallel
-    iterkwargs = dict(url=urls, filename=filenames)
-    kwargs = dict(save=save, convert=convert, die=die, verbose=verbose)
-    output = scp.parallelize(wget, iterkwargs=iterkwargs, kwargs=kwargs, parallelizer='thread')
-
-    if verbose:
-        T.toc(f'Time to download {n_urls} URLs')
-
-    return output
-
-
-def htmlify(string, reverse=False, tostring=False):
-    '''
-    Convert a string to its HTML representation by converting unicode characters,
-    characters that need to be escaped, and newlines. If reverse=True, will convert
-    HTML to string. If tostring=True, will convert the bytestring back to Unicode.
-
-    **Examples**::
-
-        output = sc.htmlify('foo&\\nbar') # Returns b'foo&amp;<br>bar'
-        output = sc.htmlify('föö&\\nbar', tostring=True) # Returns 'f&#246;&#246;&amp;&nbsp;&nbsp;&nbsp;&nbsp;bar'
-        output = sc.htmlify('foo&amp;<br>bar', reverse=True) # Returns 'foo&\\nbar'
-    '''
-    import html
-    if not reverse: # Convert to HTML
-        output = html.escape(string).encode('ascii', 'xmlcharrefreplace') # Replace non-ASCII characters
-        output = output.replace(b'\n', b'<br>') # Replace newlines with <br>
-        output = output.replace(b'\t', b'&nbsp;&nbsp;&nbsp;&nbsp;') # Replace tabs with 4 spaces
-        if tostring: # Convert from bytestring to unicode
-            output = output.decode()
-    else: # Convert from HTML
-        output = html.unescape(string)
-        output = output.replace('<br>','\n').replace('<br />','\n').replace('<BR>','\n')
-    return output
-
-
 def freeze(lower=False):
     '''
     Alias for pip freeze.
@@ -651,6 +517,197 @@ def ismac(die=False):
     ''' Alias to ``sc.getplatform('mac')`` '''
     return getplatform('mac', die=die)
 
+
+##############################################################################
+#%% Web/HTML functions
+##############################################################################
+
+__all__ += ['urlopen', 'wget', 'download', 'htmlify']
+
+def urlopen(url, filename=None, save=False, headers=None, params=None, data=None,
+            convert=True, die=False, return_response=False, verbose=False):
+    '''
+    Download a single URL.
+
+    Alias to ``urllib.request.urlopen(url).read()``. See also ``sc.download()``
+    for download multiple URLs. Note: ``sc.urlopen()``/``sc.wget()`` are aliases.
+
+    Args:
+        url (str): the URL to open, either as GET or POST
+        filename (str): if supplied, save to file instead of returning output
+        save (bool): if supplied instead of ``filename``, then use the default filename
+        headers (dict): a dictionary of headers to pass
+        params (dict): a dictionary of parameters to pass to the GET request
+        data (dict) a dictionary of parameters to pass to a POST request
+        convert (bool): whether to convert from bytes to string
+        die (bool): whether to raise an exception if converting to text failed
+        return_response (bool): whether to return the response object instead of the output
+        verbose (bool): whether to print progress
+
+    **Examples**::
+
+        html = sc.urlopen('http://sciris.org') # Retrieve into variable html
+        sc.urlopen('http://sciris.org', filename='sciris.html') # Save to file sciris.html
+        sc.urlopen('http://sciris.org', save=True, headers={'User-Agent':'Custom agent'}) # Save to the default filename (here, sciris.org), with headers
+
+    New in version 2.0.0: renamed from ``wget`` to ``urlopen``; new arguments
+    '''
+    from urllib import request as ur # Need to import these directly, not via urllib
+    from urllib import parse as up
+    from . import sc_datetime as scd  # To avoid circular import
+
+    T = scd.timer()
+
+    # Handle headers
+    default_headers = {
+        'User-Agent': 'Python/Sciris', # Some URLs require this
+        'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,image/apng,*/*;q=0.8', # Default Chrome/Safari header
+    }
+    headers = mergedicts(default_headers, headers)
+
+    # Handle parameters and data
+    full_url = url
+    if params is not None:
+        full_url = url + '?' + up.urlencode(params)
+    if data is not None:
+        data = up.urlencode(data).encode(encoding='utf-8', errors='ignore')
+
+    if verbose: print(f'Downloading {url}...')
+    request = ur.Request(full_url, headers=headers, data=data)
+    response = ur.urlopen(request)
+    output = response.read()
+    if convert:
+        if verbose: print('Converting from bytes to text...')
+        try:
+            output = output.decode()
+        except Exception as E:
+            if die:
+                raise E
+            elif verbose:
+                errormsg = f'Could not decode to text: {str(E)}'
+                print(errormsg)
+
+    # Set filename -- from https://stackoverflow.com/questions/31804799/how-to-get-pdf-filename-with-python-requests
+    if filename is None and save:
+        headers = dict(response.getheaders())
+        string = "Content-Disposition"
+        if string in headers.keys():
+            filename = re.findall("filename=(.+)", headers[string])[0]
+        else:
+            filename = url.split("/")[-1]
+
+    if filename is not None:
+        if verbose: print(f'Saving to {filename}...')
+        if isinstance(output, bytes):
+            with open(filename, 'wb') as f:
+                f.write(output)
+        else:
+            with open(filename, 'w') as f:
+                f.write(output)
+        output = filename
+
+    if verbose:
+        T.toc(f'Time to download {url}')
+    if return_response:
+        output = response
+
+    return output
+
+# Alias for backwards compatibility
+wget = urlopen
+
+def download(url, *args, filename=None, save=True, parallel=True, verbose=True, **kwargs):
+    '''
+    Download one or more URLs in parallel and return output or save them to disk.
+
+    A wrapper for ``sc.urlopen()``, except with ``save=True`` by default.
+
+    Args:
+        url (str/list/dict): either a single URL, a list of URLs, or a dict of URL:filename pairs
+        *args (list): additional URLs to download
+        filename (str/list): either a string or a list of the same length as ``url`` (if not supplied, return output)
+        save (bool): if supplied instead of ``filename``, then use the default filename
+        parallel (bool): whether to download multiple URLs in parallel
+        verbose (bool): whether to print progress (if verbose=2, print extra detail on each downloaded URL)
+        **kwargs (dict): passed to ``sc.urlopen()``
+
+    **Examples**::
+
+        html = sc.download('http://sciris.org') # Download a single URL
+        data = sc.download('http://sciris.org', 'http://covasim.org') # Download two in parallel
+        sc.download({'http://sciris.org':'sciris.html', 'http://covasim.org':'covasim.html'}) # Downlaod two and save to disk
+        sc.download(['http://sciris.org', 'http://covasim.org'], filename=['sciris.html', 'covasim.html']) # Ditto
+
+    New in version 2.0.0.
+    '''
+    from . import sc_parallel as scp # To avoid circular import
+    from . import sc_datetime as scd
+
+    T = scd.timer()
+
+    # Parse arguments
+    if isinstance(url, dict):
+        urls = list(url.keys())
+        filenames = list(url.values())
+    else:
+        urls = mergelists(url, *args)
+        filenames = mergelists(filename)
+
+    # Ensure consistency
+    n_urls = len(urls)
+    n_filenames = len(filenames)
+    if not n_filenames:
+        filenames = [None]*n_urls
+    elif n_filenames != n_urls:
+        errormsg = f'Cannot process {n_urls} URLs and {n_filenames} filenames'
+        raise ValueError(errormsg)
+
+    if verbose:
+        print(f'Downloading {n_urls} URLs...')
+
+    # Get results in parallel
+    wget_verbose = (verbose>1) or (verbose and n_urls == 1) # By default, don't print progress on each download
+    iterkwargs = dict(url=urls, filename=filenames)
+    func_kwargs = mergedicts(dict(save=save, verbose=wget_verbose), kwargs)
+    if n_urls > 1 and parallel:
+        outputs = scp.parallelize(urlopen, iterkwargs=iterkwargs, kwargs=func_kwargs, parallelizer='thread')
+    else:
+        outputs = []
+        for url,filename in zip(urls, filenames):
+            output = urlopen(url=url, filename=filename, **func_kwargs)
+            outputs.append(output)
+
+    if verbose:
+        T.toc(f'Time to download {n_urls} URLs')
+    if n_urls == 1:
+        outputs = outputs[0]
+
+    return outputs
+
+
+def htmlify(string, reverse=False, tostring=False):
+    '''
+    Convert a string to its HTML representation by converting unicode characters,
+    characters that need to be escaped, and newlines. If reverse=True, will convert
+    HTML to string. If tostring=True, will convert the bytestring back to Unicode.
+
+    **Examples**::
+
+        output = sc.htmlify('foo&\\nbar') # Returns b'foo&amp;<br>bar'
+        output = sc.htmlify('föö&\\nbar', tostring=True) # Returns 'f&#246;&#246;&amp;&nbsp;&nbsp;&nbsp;&nbsp;bar'
+        output = sc.htmlify('foo&amp;<br>bar', reverse=True) # Returns 'foo&\\nbar'
+    '''
+    import html
+    if not reverse: # Convert to HTML
+        output = html.escape(string).encode('ascii', 'xmlcharrefreplace') # Replace non-ASCII characters
+        output = output.replace(b'\n', b'<br>') # Replace newlines with <br>
+        output = output.replace(b'\t', b'&nbsp;&nbsp;&nbsp;&nbsp;') # Replace tabs with 4 spaces
+        if tostring: # Convert from bytestring to unicode
+            output = output.decode()
+    else: # Convert from HTML
+        output = html.unescape(string)
+        output = output.replace('<br>','\n').replace('<br />','\n').replace('<BR>','\n')
+    return output
 
 
 ##############################################################################
@@ -1126,7 +1183,7 @@ def _sanitize_output(obj, is_list, is_array, dtype=None):
 ##############################################################################
 
 __all__ += ['strjoin', 'newlinejoin', 'strsplit', 'runcommand', 'gitinfo', 'compareversions',
-            'uniquename', 'importbyname', 'suggest', 'getcaller']
+            'uniquename', 'suggest', 'getcaller', 'importbyname']
 
 
 def strjoin(*args, sep=', '):
@@ -1429,32 +1486,6 @@ def uniquename(name=None, namelist=None, style=None):
     return unique_name # Return the found name.
 
 
-def importbyname(name=None, output=False, die=True):
-    '''
-    A little function to try loading optional imports.
-
-    Args:
-        name (str): name of the module to import
-        output (bool): whether to return the module (else, return True)
-        die (bool): whether to raise an exception if encountered
-
-    **Example**::
-
-        np = sc.importbyname('numpy')
-    '''
-    import importlib
-    try:
-        module = importlib.import_module(name)
-        globals()[name] = module
-    except Exception as E: # pragma: no cover
-        errormsg = f'Cannot use "{name}" since {name} is not installed.\nPlease install {name} and try again.'
-        print(errormsg)
-        if die: raise E
-        else:   return False
-    if output: return module
-    else:      return True
-
-
 def suggest(user_input, valid_inputs, n=1, threshold=None, fulloutput=False, die=False, which='damerau'):
     """
     Return suggested item
@@ -1604,12 +1635,55 @@ def getcaller(frame=2, tostring=True, includelineno=False, includeline=False):
     return output
 
 
+def importbyname(module=None, variable=None, lazy=False, die=True, **kwargs):
+    '''
+    A little function to try loading optional imports.
+
+    Args:
+        module (str): name of the module to import
+        die (bool): whether to raise an exception if encountered
+        **kwargs (dict): additional modules to import
+
+    **Examples**::
+
+        np = sc.importbyname('numpy')
+        pd = sc.importbyname(pd='pandas')
+    '''
+    import importlib
+    if variable is None:
+        variable = module
+    mapping = {}
+    if module is not None:
+        mapping[variable] = module
+    mapping.update(kwargs)
+    libs = []
+    for variable,module in mapping.items():
+        if lazy:
+            lib = LazyModule(module=module, variable=variable)
+        else:
+            try:
+                lib = importlib.import_module(module)
+            except Exception as E: # pragma: no cover
+                errormsg = f'Cannot import "{module}" since {module} is not installed. Please install {module} and try again.'
+                print(errormsg)
+                lib = None
+                if die: raise E
+                else:   return False
+        globals()[variable] = lib
+        libs.append(lib)
+
+    if len(libs) == 1:
+        libs = libs[0]
+
+    return libs
+
+
 
 ##############################################################################
 #%% Classes
 ##############################################################################
 
-__all__ += ['KeyNotFoundError', 'LinkException', 'prettyobj', 'autolist', 'Link']
+__all__ += ['KeyNotFoundError', 'LinkException', 'prettyobj', 'autolist', 'Link', 'LazyModule']
 
 
 class KeyNotFoundError(KeyError):
@@ -1760,3 +1834,41 @@ class Link(object):
     def __deepcopy__(self, *args, **kwargs):
         ''' Same as copy '''
         return self.__copy__(*args, **kwargs)
+
+
+obj_getattr = object.__getattribute__
+
+class LazyModule:
+    '''
+    Create a "lazy" module that is loaded if and only if an attribute is called
+    '''
+
+    def __init__(self, module, variable):
+        self._variable = variable
+        self._module = module
+        return
+
+    def __repr__(self):
+        output = f"<sc.LazyModule({self._variable}='{self._module}') at {hex(id(self))}>"
+        return output
+
+    def __getattr__(self, attr):
+        _builtin_keys = ['_variable', '_module', '_replace']
+        if attr in _builtin_keys:
+            obj = obj_getattr(self, attr)
+        else:
+            obj = self._replace(attr)
+            # print('set', var, lib)
+        return obj
+
+    def _replace(self, attr=None):
+        import importlib
+        module = obj_getattr(self, '_module')
+        var    = obj_getattr(self, '_variable')
+        lib    = importlib.import_module(module)
+        globals()[var] = lib
+        if attr:
+            obj = getattr(lib, attr)
+        else:
+            obj = lib
+        return obj
