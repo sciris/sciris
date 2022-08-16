@@ -29,7 +29,6 @@ requirements = [
         'pyyaml',       # For loading/saving YAML
         'gitpython',    # Version information
         'jellyfish',    # For fuzzy string matching
-        'ansicolors',   # For colored text output
         'line_profiler ;   platform_system == "Linux"',   # For the line profiler -- only install on Linux
         'memory_profiler ; platform_system == "Linux"',   # For the memory profiler -- only install on Linux
         'colorama ;        platform_system == "Windows"', # For colored text output -- only install on Windows
