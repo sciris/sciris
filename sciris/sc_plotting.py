@@ -1465,9 +1465,9 @@ class animation(scu.prettyobj):
     if you just want to animate a set of artists (e.g., lines).
 
     This class works by saving snapshots of the figure to disk as image files, then
-    reloading them as a Matplotlib animation. While (slightly) slower than working
-    with artists directly, it means that anything that can be rendered to a figure
-    can be animated.
+    reloading them either via ``ffmpeg`` or as a Matplotlib animation. While (slightly)
+    slower than working with artists directly, it means that anything that can be
+    rendered to a figure can be animated.
 
     Note: the terms "animation" and "movie" are used interchangeably here.
 
@@ -1480,8 +1480,8 @@ class animation(scu.prettyobj):
         basename     (str):  name for temporary image files, e.g. 'myanimation'
         nametemplate (str):  as an alternative to imageformat and basename, specify the full name template, e.g. 'myanimation%004d.jpg'
         imagefolder  (str):  location to store temporary image files; default current folder, or use 'tempfile' to create a temporary folder
-        anim_args    (dict): passed to ``matplotlib.animation.ArtistAnimation()``
-        save_args    (dict): passed to ``matplotlib.animation.save()``
+        anim_args    (dict): passed to ``matplotlib.animation.ArtistAnimation()`` or ``ffmpeg.input()``
+        save_args    (dict): passed to ``matplotlib.animation.save()`` or ``ffmpeg.run()``
         tidy         (bool): whether to delete temporary files
         verbose      (bool): whether to print progress
         kwargs       (dict): also passed to ``matplotlib.animation.save()``
@@ -1507,7 +1507,8 @@ class animation(scu.prettyobj):
 
         anim.save('dots.mp4')
 
-    New in version 1.3.3.
+    | New in version 1.3.3.
+    | New in version 2.0.0: ``ffmpeg`` option.
     '''
     def __init__(self, fig=None, filename=None, dpi=200, fps=10, imageformat='png', basename='animation', nametemplate=None,
                  imagefolder=None, anim_args=None, save_args=None, frames=None, tidy=True, verbose=True, **kwargs):
@@ -1683,7 +1684,8 @@ class animation(scu.prettyobj):
             print(f'Failed to remove the following temporary files:\n{scu.newlinejoin(failed)}')
 
 
-    def save(self, filename=None, fps=None, dpi=None, engine='ffmpeg', anim_args=None, save_args=None, frames=None, tidy=None, verbose=True, **kwargs):
+    def save(self, filename=None, fps=None, dpi=None, engine='ffmpeg', anim_args=None,
+             save_args=None, frames=None, tidy=None, verbose=True, **kwargs):
         ''' Save the animation -- arguments the same as ``sc.animation()`` and ``sc.savemovie()``, and are described there '''
 
         # Handle engine
@@ -1691,7 +1693,7 @@ class animation(scu.prettyobj):
             try:
                 import ffmpeg
             except:
-                print('Warning: engine ffmpeg not available; falling back to Matplotlib')
+                print('Warning: engine ffmpeg not available; falling back to Matplotlib. Run "pip install ffmpeg-python" to use in future.')
                 engine = 'matplotlib'
         engines = ['ffmpeg', 'matplotlib']
         if engine not in engines:
@@ -1716,9 +1718,14 @@ class animation(scu.prettyobj):
         if dpi  is None: dpi  = save_args.pop('dpi', self.dpi)
         if tidy is None: tidy = self.tidy
 
-        if engine == 'ffmpeg':
-            pass
+        # Start timing
+        T = scd.timer()
 
+        if engine == 'ffmpeg':
+            save_args = scu.mergedicts(dict(overwrite_output=True, quiet=True), save_args)
+            stream = ffmpeg.input(self.nametemplate, framerate=fps, **anim_args)
+            stream = stream.output(filename)
+            stream.run(**save_args, **kwargs)
 
         elif engine == 'matplotlib':
 
@@ -1740,7 +1747,6 @@ class animation(scu.prettyobj):
 
             # Optionally print progress
             if verbose:
-                T = scd.timer()
                 print(f'Saving {len(frames)} frames at {fps} fps and {dpi} dpi to "{filename}"...')
                 callback = lambda i,n: scp.progressbar(i+1, len(frames)) # Default callback
                 callback = save_args.pop('progress_callback', callback) # if provided as an argument
