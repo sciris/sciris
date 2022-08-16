@@ -215,20 +215,41 @@ class Options(sco.objdict):
 
         # Handle Jupyter
         if 'jupyter' in kwargs.keys() and kwargs['jupyter']:
+
+            # Handle import
+            matplotlib_inline = None
+            try:
+                from IPython import get_ipython
+                import matplotlib_inline
+                magic = get_ipython().magic
+            except Exception as E:
+                errormsg = f'Could not import IPython and matplotlib_inline; not attempting to set Jupyter ({str(E)})'
+                print(errormsg)
+
+            # Handle options
+            widget_opts  = [True, 'widget', 'matplotlib', 'interactive']
+            default_opts = [False, 'default']
+            format_opts  = ['retina', 'pdf','png','png2x','svg','jpg']
+
             jupyter = kwargs['jupyter']
-            try: # This makes plots much nicer, but isn't available on all systems
-                try: # First try interactive
-                    assert jupyter not in ['default', 'retina'] # Hack to intentionally go to the other part of the loop
-                    from IPython import get_ipython
-                    magic = get_ipython().magic
-                    magic('%matplotlib widget')
-                except: # Then try retina
-                    assert jupyter != 'default'
-                    import matplotlib_inline
-                    matplotlib_inline.backend_inline.set_matplotlib_formats('retina')
-            except:
-                print('ADD ERROR MESSAGE')
-                pass
+            if jupyter in widget_opts:
+                jupyter = 'widget'
+            elif jupyter in default_opts:
+                jupyter = 'png'
+
+            if matplotlib_inline:
+                if jupyter == 'widget':
+                    try: # First try interactive
+                        magic('%matplotlib widget')
+                    except Exception as E:
+                        errormsg = 'Could not set backend to "widget"; try "pip install ipympl" or try "retina" instead'
+                        raise RuntimeError(errormsg) from E
+                elif jupyter in format_opts:
+                    magic('%matplotlib inline')
+                    matplotlib_inline.backend_inline.set_matplotlib_formats(jupyter)
+                else:
+                    errormsg = f'Could not understand Jupyter option "{jupyter}": options are widget, {scu.strjoin(format_opts)}'
+                    raise ValueError(errormsg)
 
         # Handle interactivity
         if 'interactive' in kwargs.keys():
