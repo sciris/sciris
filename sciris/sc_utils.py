@@ -1003,9 +1003,11 @@ def _sanitize_iterables(obj, *args):
         _sanitize_iterables(np.array([1, 2]), 3) # Returns [1,2,3], True, True
         _sanitize_iterables(np.array([1, 2, 3])) # Returns [1,2,3], False, True
     '''
-    is_list = isinstance(obj, list) or len(args)>0 # If we're given a list of args, treat it like a list
-    is_array = isinstance(obj, np.ndarray) # Check if it's an array
-    if is_array: # If it is, convert it to a list
+    import pandas as pd # Optional import
+    is_list   = isinstance(obj, list) or len(args)>0 # If we're given a list of args, treat it like a list
+    is_array  = isinstance(obj, np.ndarray) # Check if it's an array
+    is_pandas = isinstance(obj, pd.Series)
+    if is_array or is_pandas: # If it is, convert it to a list
         obj = obj.tolist()
     objs = dcp(promotetolist(obj)) # Ensure it's a list, and deepcopy to avoid mutability
     objs.extend(args) # Add on any arguments

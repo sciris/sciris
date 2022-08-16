@@ -51,6 +51,7 @@ Improvements
 #. File-saving functions now have a ``sanitizepath`` argument (previously, some used file path sanitization and others didn't). They also now return the full path of the saved file.
 #. ``sc.Spreadsheet()`` now has a ``new()`` method that creates a blank workbook.
 #. ``sc.animation()`` now defaults to ``ffmpeg`` for saving.
+#. ``sc.date()`` can now read ``np.datetime64`` objects.
 
 Housekeeping
 ~~~~~~~~~~~~
