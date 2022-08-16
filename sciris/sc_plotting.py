@@ -1700,9 +1700,6 @@ class animation(scu.prettyobj):
             errormsg = f'Could not understand engine "{engine}": must be one of {scu.strjoin(engines)}'
             raise ValueError(errormsg)
 
-        if engine == 'matplotlib':
-            import matplotlib.animation as mpl_anim # Sometimes fails if not imported directly
-
         # Handle dictionary args
         anim_args = scu.mergedicts(self.anim_args, anim_args)
         save_args = scu.mergedicts(self.save_args, save_args)
@@ -1728,6 +1725,7 @@ class animation(scu.prettyobj):
             stream.run(**save_args, **kwargs)
 
         elif engine == 'matplotlib':
+            import matplotlib.animation as mpl_anim
 
             # Load and sanitize frames
             if frames is None:
