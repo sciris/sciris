@@ -1716,14 +1716,40 @@ class animation(scu.prettyobj):
         if dpi  is None: dpi  = save_args.pop('dpi', self.dpi)
         if tidy is None: tidy = self.tidy
 
-        T = scd.timer()
-
         if engine == 'ffmpeg':
             pass
 
 
         elif engine == 'matplotlib':
-            self.save_matplotlib(frames, verbose)
+
+            # Load and sanitize frames
+            if frames is None:
+                if not self.n_frames:
+                    self.loadframes()
+                if self.n_files and (self.n_frames != self.n_files):
+                    errormsg = f'Number of files ({self.n_files}) does not match number of frames ({self.n_frames}): please do not mix and match adding figures and adding artists as frames!'
+                    raise RuntimeError(errormsg)
+                frames = self.frames
+
+            for f in range(len(frames)):
+                if not scu.isiterable(frames[f]):
+                    frames[f] = (frames[f],) # This must be either a tuple or a list to work with ArtistAnimation
+
+            # Try to get the figure from the frames, else use the current one
+            fig = self._getfig()
+
+            # Optionally print progress
+            if verbose:
+                T = scd.timer()
+                print(f'Saving {len(frames)} frames at {fps} fps and {dpi} dpi to "{filename}"...')
+                callback = lambda i,n: scp.progressbar(i+1, len(frames)) # Default callback
+                callback = save_args.pop('progress_callback', callback) # if provided as an argument
+            else:
+                callback = None
+
+            # Actually create the animation -- warning, no way to not actually have it render!
+            anim = mpl_anim.ArtistAnimation(fig, frames, **anim_args)
+            anim.save(filename, fps=fps, dpi=dpi, progress_callback=callback, **save_args, **kwargs)
 
         if tidy:
             self.rmfiles()
@@ -1739,41 +1765,6 @@ class animation(scu.prettyobj):
             T.toc(label='Time saving movie')
 
         return
-
-
-    def save_matplotlib(self, frames=None, verbose=True, fps=None, dpi=None, filename=None, save_args=None, callback=None):
-
-        # Load and sanitize frames
-        if frames is None:
-            if not self.n_frames:
-                self.loadframes()
-            if self.n_files and (self.n_frames != self.n_files):
-                errormsg = f'Number of files ({self.n_files}) does not match number of frames ({self.n_frames}): please do not mix and match adding figures and adding artists as frames!'
-                raise RuntimeError(errormsg)
-            frames = self.frames
-
-        for f in range(len(frames)):
-            if not scu.isiterable(frames[f]):
-                frames[f] = (frames[f],) # This must be either a tuple or a list to work with ArtistAnimation
-
-        # Try to get the figure from the frames, else use the current one
-        fig = self._getfig()
-
-        # Optionally print progress
-        if verbose:
-            print(f'Saving {len(frames)} frames at {fps} fps and {dpi} dpi to "{filename}"...')
-            callback = lambda i,n: scp.progressbar(i+1, len(frames)) # Default callback
-            callback = save_args.pop('progress_callback', callback) # if provided as an argument
-        else:
-            callback = None
-
-        # Actually create the animation -- warning, no way to not actually have it render!
-        anim = mpl_anim.ArtistAnimation(fig, frames, **anim_args)
-        anim.save(filename, fps=fps, dpi=dpi, progress_callback=callback, **save_args, **kwargs)
-
-        return
-
-
 
 
 def savemovie(frames, filename=None, fps=None, quality=None, dpi=None, writer=None, bitrate=None,
