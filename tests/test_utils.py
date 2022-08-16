@@ -23,8 +23,9 @@ def test_adaptations():
     with pytest.raises(ValueError):
         o.sha3 = sc.dcp(o.sha)
 
-    print('\nTesting wget')
+    print('\nTesting wget and download')
     o.wget = sc.wget('http://wikipedia.org/')
+    o.download = sc.download('http://wikipedia.org/', 'http://covasim.org/')
 
     print('\nTesting htmlify')
     o.html = sc.htmlify('foo&\nbar') # Returns b'foo&amp;<br>bar'

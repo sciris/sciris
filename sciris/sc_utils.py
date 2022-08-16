@@ -9,10 +9,12 @@ Highlights:
     - ``sc.dcp()``: shortcut to ``copy.deepcopy()``
     - ``sc.pp()``: shortcut to ``pprint.pprint()``
     - ``sc.isnumber()``: checks if something is any number type
-    - ``sc.promotetolist()``: converts any object to a list, for easy iteration
-    - ``sc.promotetoarray()``: tries to convert any object to an array, for easy use with numpy
+    - ``sc.tolist()``: converts any object to a list, for easy iteration
+    - ``sc.toarray()``: tries to convert any object to an array, for easy use with numpy
     - ``sc.mergedicts()``: merges any set of inputs into a dictionary
+    - ``sc.mergelists()``: merges any set of inputs into a list
     - ``sc.runcommand()``: simple way of executing a shell command
+    - ``sc.download()``: download multiple URLs in parallel
 '''
 
 ##############################################################################
@@ -50,8 +52,8 @@ _booltypes   = (bool, np.bool_)
 ##############################################################################
 
 # Define the modules being loaded
-__all__ = ['fast_uuid', 'uuid', 'dcp', 'cp', 'pp', 'sha', 'wget', 'htmlify', 'freeze', 'require',
-           'traceback', 'getplatform', 'iswindows', 'islinux', 'ismac']
+__all__ = ['fast_uuid', 'uuid', 'dcp', 'cp', 'pp', 'sha', 'wget', 'download', 'htmlify',
+           'freeze', 'require', 'traceback', 'getplatform', 'iswindows', 'islinux', 'ismac']
 
 
 def fast_uuid(which=None, length=None, n=1, secure=False, forcelist=False, safety=1000, recursion=0, recursion_limit=10, verbose=True):
@@ -350,20 +352,93 @@ def sha(obj, encoding='utf-8', digest=False):
     return output
 
 
-def wget(url, convert=True):
+def wget(url, filename=None, convert=True, verbose=False):
     '''
-    Download a URL
+    Download a URL; see also ``sc.download()``
 
-    Alias to urllib.request.urlopen(url).read()
+    Alias to ``urllib.request.urlopen(url).read()``.
+
+    Args:
+        url (str): the URL to download from
+        filename (str): if supplied, save to file
+        convert (bool): whether to convert from bytes to string
+        verbose (bool): whether to print progress
 
     **Example**::
 
         html = sc.wget('http://sciris.org')
+
+    New in version 2.0.0: filename
     '''
     from urllib import request # Bizarrely, urllib.request sometimes fails
+    from . import sc_fileio as scf # To avoid circular import
+
+    if verbose: print(f'Download {url}...')
     output = request.urlopen(url).read()
     if convert:
         output = output.decode()
+
+    if filename is not None:
+        scf.savetext(filename=filename, string=output)
+        return filename
+    else:
+        return output
+
+
+def download(url, *args, filename=None, convert=True, verbose=True):
+    '''
+    Download one or more URLs in parallel and return output or save them to disk.
+
+    More complex version of ``sc.wget()``.
+
+    Args:
+        url (str/list/dict): either a single URL, a list of URLs, or a dict of URL:filename pairs
+        *args (list): additional URLs to download
+        filename (str/list): either a string or a list of the same length as ``url``
+        convert (bool): whether to convert from bytes to string
+        verbose (bool): whether to print progress
+
+    **Examples**::
+
+        html = sc.download('http://sciris.org') # Download a single URL
+        data = sc.download('http://sciris.org', 'http://covasim.org') # Download two in parallel
+        sc.download({'http://sciris.org':'sciris.html', 'http://covasim.org':'covasim.html'}) # Downlaod two and save to disk
+        sc.download(['http://sciris.org', 'http://covasim.org'], filename=['sciris.html', 'covasim.html']) # Ditto
+
+    New in version 2.0.0.
+    '''
+    from . import sc_parallel as scp # To avoid circular import
+    from . import sc_datetime as scd
+
+    T = scd.timer()
+
+    # Parse arguments
+    if isinstance(url, dict):
+        urls = list(url.keys())
+        filenames = list(url.values())
+    else:
+        urls = mergelists(url, *args)
+        filenames = mergelists(filename)
+
+    # Ensure consistency
+    n_urls = len(urls)
+    n_filenames = len(filenames)
+    if not n_filenames:
+        filenames = [None]*n_urls
+    elif n_filenames != n_urls:
+        errormsg = f'Cannot process {n_urls} URLs and {n_filenames} filenames'
+        raise ValueError(errormsg)
+
+    if verbose:
+        print(f'Downloading {n_urls} URLs...')
+
+    # Get results in parallel
+    iterkwargs = dict(url=urls, filename=filenames)
+    output = scp.parallelize(wget, iterkwargs=iterkwargs, kwargs=dict(verbose=verbose), parallelizer='thread')
+
+    if verbose:
+        T.toc(f'Time to download {n_urls} URLs')
+
     return output
 
 
