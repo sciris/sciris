@@ -594,7 +594,7 @@ def urlopen(url, filename=None, save=False, headers=None, params=None, data=None
         if string in headers.keys():
             filename = re.findall("filename=(.+)", headers[string])[0]
         else:
-            filename = url.split("/")[-1]
+            filename = url.rstrip('/').split('/')[-1] # Remove trailing /, then pull out the last chunk
 
     if filename is not None:
         if verbose: print(f'Saving to {filename}...')

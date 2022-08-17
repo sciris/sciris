@@ -25,7 +25,7 @@ def test_adaptations():
 
     print('\nTesting wget and download')
     o.wget = sc.wget('http://wikipedia.org/')
-    o.download = sc.download('http://wikipedia.org/', 'http://covasim.org/')
+    o.download = sc.download('http://wikipedia.org/', 'http://covasim.org/', save=False)
 
     print('\nTesting htmlify')
     o.html = sc.htmlify('foo&\nbar') # Returns b'foo&amp;<br>bar'
