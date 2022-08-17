@@ -71,7 +71,7 @@ class dataframe(pd.DataFrame): # pragma: no cover
         return self.columns.tolist()
 
 
-    def _val2row(self, value=None):
+    def _val2row(self, value=None, to2d=True):
         ''' Convert a list, array, or dictionary to the right format for appending to a dataframe '''
         if isinstance(value, dict):
             output = np.zeros(self.ncols, dtype=object)
@@ -79,7 +79,7 @@ class dataframe(pd.DataFrame): # pragma: no cover
                 try:
                     output[c] = value[col]
                 except:
-                    errormsg = 'Entry for column %s not found; keys you supplied are: %s' % (col, value.keys())
+                    errormsg = f'Entry for column {col} not found; keys you supplied are: {scu.strjoin(value.keys())}'
                     raise Exception(errormsg)
         elif value is None:
             output = np.empty(self.ncols)
@@ -91,10 +91,14 @@ class dataframe(pd.DataFrame): # pragma: no cover
 
         # Validation
         if output.ndim == 1: # Convert from 1D to 2D
-            output = np.array([output])
-        if output.shape[1] != self.ncols:
-            errormsg = 'Row has wrong length (%s supplied, %s expected)' % (len(value), self.ncols)
-            raise Exception(errormsg)
+            shape = output.shape[0]
+            if to2d:
+                output = np.array([output])
+        else:
+            shape = output.shape[1]
+        if shape != self.ncols:
+            errormsg = f'Row has wrong length ({shape} supplied, {self.ncols} expected)'
+            raise IndexError(errormsg)
 
         # Try to convert back to default type, but don't worry if not
         try:
@@ -155,7 +159,7 @@ class dataframe(pd.DataFrame): # pragma: no cover
                     output = self._cast(output)
             elif scu.isnumber(key): # e.g. df[0]
                 rowindex = int(key)
-                output = self.iloc[rowindex,:]
+                output = self.iloc[rowindex,:].values
                 if cast:
                     output = self._cast(output)
             elif scu.checktype(key, 'arraylike'): # e.g. df[[0,2,4]]
@@ -224,13 +228,13 @@ class dataframe(pd.DataFrame): # pragma: no cover
                     val_arr = np.reshape(value, (len(value),1))
                     self.iloc[:,:] = np.hstack((self.data, np.array(val_arr, dtype=object)))
             elif scu.isnumber(key):
-                value = self._val2row(value) # Make sure it's in the correct format
-                if len(value) != self.ncols:
-                    errormsg = 'Vector has incorrect length (%i vs. %i)' % (len(value), self.ncols)
+                newrow = self._val2row(value, to2d=False) # Make sure it's in the correct format
+                if len(newrow) != self.ncols:
+                    errormsg = f'Vector has incorrect length ({len(newrow)} vs. {self.ncols})'
                     raise Exception(errormsg)
                 rowindex = int(key)
                 try:
-                    self.iloc[rowindex,:] = value
+                    self.iloc[rowindex,:] = newrow
                 except:
                     self.appendrow(value)
             elif isinstance(key, tuple):
@@ -410,7 +414,7 @@ class dataframe(pd.DataFrame): # pragma: no cover
         '''
         rowindex = int(row)
         newrow = self._val2row(value) # Make sure it's in the correct format
-        newdata = np.vstack((self.data[:rowindex,:], newrow, self.data[rowindex:,:]))
+        newdata = np.vstack((self.iloc[:rowindex,:], newrow, self.iloc[rowindex:,:]))
         return self.replacedata(newdata=newdata, reset_index=reset_index, inplace=inplace)
 
 
@@ -510,7 +514,7 @@ class dataframe(pd.DataFrame): # pragma: no cover
             return output
         else:
             self.data = keep_data
-            return
+            return self
 
 
     def replace(self, col=None, old=None, new=None):
@@ -628,31 +632,39 @@ class dataframe(pd.DataFrame): # pragma: no cover
         else:
             self.cols = cols # These should be in the correct order
             self.data = ordered_data
-            return
+            return self
 
 
-    def sort(self, col=None, reverse=False):
-        ''' Sort the data frame by the specified column(s)'''
+    def sortrows(self, col=None, reverse=False, returninds=False):
+        ''' Sort the dataframe rows in place by the specified column(s)'''
         if col is None:
             col = 0 # Sort by first column by default
-        cols = list(reversed(scu.promotetolist(col)))
+        cols = scu.promotetolist(col)[::-1] # Ensure it's a list and reverse order
         sortorder = [] # In case there are no columns
         for col in cols:
             col = self._sanitizecol(col)
-            sortorder = np.argsort(self.data[:,col], kind='mergesort') # To preserve order
-            if reverse: sortorder = np.array(list(reversed(sortorder)))
-            self.data = self.data[sortorder,:]
-        return sortorder
+            sortorder = np.argsort(self.iloc[:,col], kind='mergesort') # To preserve order
+            if reverse:
+                sortorder = sortorder[::-1]
+            self.iloc[:,:] = self.iloc[sortorder,:]
+        if returninds:
+            return sortorder
+        else:
+            return self
 
 
-    def sortcols(self, sortorder=None, reverse=False):
-        ''' Like sort, but rows by column instead '''
+    def sortcols(self, sortorder=None, reverse=False, returninds=False):
+        ''' Like sortrows(), but change column order (in place instead '''
         if sortorder is None:
             sortorder = np.argsort(self.cols, kind='mergesort')
-            if reverse: sortorder = np.array(list(reversed(sortorder)))
+            if reverse:
+                sortorder = sortorder[::-1]
         self.cols = list(np.array(self.cols)[sortorder])
-        self.data = self.data[:,sortorder]
-        return sortorder
+        self.iloc[:,:] = self.iloc[:,sortorder]
+        if returninds:
+            return sortorder
+        else:
+            return self
 
 
     def to_pandas(self, df=None):
