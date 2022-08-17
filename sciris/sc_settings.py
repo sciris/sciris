@@ -145,9 +145,9 @@ class Options(sco.objdict):
 
     def __repr__(self):
         ''' Brief representation '''
-        output = scu.objectid(self)
+        output = scp.objectid(self)
         output += 'Sciris options (see also sc.options.disp()):\n'
-        output += scp.pp(self.to_dict(), output=True)
+        output += scu.pp(self.to_dict(), output=True)
         return output
 
 
@@ -164,7 +164,7 @@ class Options(sco.objdict):
                 if self[k] != v: # Only reset settings that have changed
                     reset[k] = v
             self.set(**reset)
-            self.delattribute('on_entry')
+            del self.on_entry
         except AttributeError as E:
             errormsg = 'Please use sc.options.context() if using a with block'
             raise AttributeError(errormsg) from E
@@ -177,7 +177,7 @@ class Options(sco.objdict):
         keylen = 14 # Maximum key length  -- "numba_parallel"
         for k,v in self.items():
             keystr = scp.colorize(f'  {k:>{keylen}s}: ', fg='cyan', output=True)
-            reprstr = scp.pp(v, output=True)
+            reprstr = scu.pp(v, output=True)
             reprstr = scp.indent(n=keylen+4, text=reprstr, width=None)
             output += f'{keystr}{reprstr}'
         print(output)
@@ -252,7 +252,7 @@ class Options(sco.objdict):
             kwargs.update({key:value})
 
         # Handle Jupyter
-        if 'jupyter' in kwargs.keys() and kwargs['jupyter']:
+        if 'jupyter' in kwargs.keys() and kwargs['jupyter']: # pragma: no cover
 
             # Handle import
             matplotlib_inline = None
@@ -304,11 +304,11 @@ class Options(sco.objdict):
 
             # Handle deprecations
             rename = {'font_size': 'fontsize', 'font_family':'font'}
-            if key in rename.keys():
+            if key in rename.keys(): # pragma: no cover
                 oldkey = key
                 key = rename[oldkey]
 
-            if key not in self.keys():
+            if key not in self.keys(): # pragma: no cover
                 keylist = self.orig_options.keys()
                 keys = '\n'.join(keylist)
                 errormsg = f'Option "{key}" not recognized; options are "defaults" or:\n{keys}\n\nSee help(sc.options.set) for more information.'
@@ -325,6 +325,22 @@ class Options(sco.objdict):
             self.use_style()
 
         return
+
+
+    def context(self, **kwargs):
+        '''
+        Alias to set() for non-plotting options, for use in a "with" block.
+
+        Note: for plotting options, use ``sc.options.with_style()``, which is linked
+        to Matplotlib's context manager. If you set plotting options with this,
+        they won't have any effect.
+        '''
+        # Store current settings
+        self.on_entry = {k:self[k] for k in kwargs.keys()}
+
+        # Make changes
+        self.set(**kwargs)
+        return self
 
 
     def set_matplotlib_global(self, key, value):
@@ -374,8 +390,8 @@ class Options(sco.objdict):
         for key in self.orig_options.keys():
             entry = sco.objdict()
             entry.key = key
-            entry.current = scp.indent(n=n, width=None, text=scp.pp(self[key], output=True)).rstrip()
-            entry.default = scp.indent(n=n, width=None, text=scp.pp(self.orig_options[key], output=True)).rstrip()
+            entry.current = scp.indent(n=n, width=None, text=scu.pp(self[key], output=True)).rstrip()
+            entry.default = scp.indent(n=n, width=None, text=scu.pp(self.orig_options[key], output=True)).rstrip()
             if not key.startswith('rc'):
                 entry.variable = f'SCIRIS_{key.upper()}' # NB, hard-coded above!
             else:
@@ -625,10 +641,13 @@ See help(sc.help) for more information.
         # Get docstrings or full source code
         docstrings = dict()
         for funcname in funcs:
-            f = getattr(sc, funcname)
-            if source: string = inspect.getsource(f)
-            else:      string = f.__doc__
-            docstrings[funcname] = string
+            try:
+                f = getattr(sc, funcname)
+                if source: string = inspect.getsource(f)
+                else:      string = f.__doc__
+                docstrings[funcname] = string
+            except OSError: # Happens for built-ins, e.g. defaultdict
+                pass
 
         # Find matches
         matches = co.defaultdict(list)
