@@ -27,6 +27,7 @@ import importlib
 import traceback
 import warnings
 import numpy as np
+import pandas as pd
 import datetime as dt
 from glob import glob
 from zipfile import ZipFile
@@ -1213,7 +1214,6 @@ Falling back to openpyxl, which is identical except for how cached cell values a
         ''' Return a book as opened by pandas '''
 
         if self._reload_wb(reload=reload):
-            import pandas as pd # Optional (slow) import
             if self.blob is not None:
                 self.tofile(output=False)
                 wb = pd.ExcelFile(self.bytes, **kwargs)
@@ -1397,7 +1397,6 @@ def loadspreadsheet(filename=None, folder=None, fileobj=None, sheet=0, header=1,
 
     # Load using pandas
     if method == 'pandas':
-        import pandas as pd # Optional import, here for loading speed
         if fileobj is not None: fullpath = fileobj # Substitute here for reading
         data = pd.read_excel(fullpath, sheet_name=sheet, header=header, **kwargs)
         return data

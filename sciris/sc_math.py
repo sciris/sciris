@@ -9,6 +9,7 @@ Highlights:
 '''
 
 import numpy as np
+import pandas as pd
 import warnings
 from . import sc_utils as scu
 
@@ -688,7 +689,7 @@ __all__ += ['rolling', 'convolve', 'smooth', 'smoothinterp', 'gauss1d', 'gauss2d
 
 def rolling(data, window=7, operation='mean', **kwargs):
     '''
-    Alias to Pandas' rolling() (window) method to smooth a series.
+    Alias to pandas' rolling() (window) method to smooth a series.
 
     Args:
         data (list/arr): the 1D or 2D data to be smoothed
@@ -701,8 +702,6 @@ def rolling(data, window=7, operation='mean', **kwargs):
         data = [5,5,5,0,0,0,0,7,7,7,7,0,0,3,3,3]
         rolled = sc.rolling(data)
     '''
-    import pandas as pd # Optional import
-
     # Handle the data
     data = np.array(data)
     data = pd.Series(data) if data.ndim == 1 else pd.DataFrame(data)

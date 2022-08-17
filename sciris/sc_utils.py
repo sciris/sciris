@@ -36,6 +36,7 @@ import numbers
 import string
 import warnings
 import numpy as np
+import pandas as pd
 import random as rnd
 import uuid as py_uuid
 import packaging as pkg
@@ -1154,7 +1155,6 @@ def _sanitize_iterables(obj, *args):
         _sanitize_iterables(np.array([1, 2]), 3) # Returns [1,2,3], True, True
         _sanitize_iterables(np.array([1, 2, 3])) # Returns [1,2,3], False, True
     '''
-    import pandas as pd # Optional import
     is_list   = isinstance(obj, list) or len(args)>0 # If we're given a list of args, treat it like a list
     is_array  = isinstance(obj, (np.ndarray, pd.Series)) # Check if it's an array
     if is_array: # If it is, convert it to a list

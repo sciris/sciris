@@ -18,6 +18,7 @@ import threading
 import tempfile
 import warnings
 import numpy as np
+import pandas as pd
 import pylab as pl
 import multiprocessing as mp
 from . import sc_utils as scu
@@ -663,7 +664,6 @@ class resourcemonitor(scu.prettyobj):
 
     def to_df(self):
         ''' Convert the log into a pandas dataframe '''
-        import pandas as pd # Slow import
         entries = []
         for entry in self.log:
             flat = scn.flattendict(entry, sep='_')
