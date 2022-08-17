@@ -67,7 +67,7 @@ Housekeeping
 #. Added style and contributing guides.
 #. Added official support for Python 3.7-3.10.
 #. ``sc.wget()`` was renamed ``sc.urlopen()``.
-#. Sciris now has a "lazy loading" option, which does not import submodules, meaning loading is effectively instant. To use, set the environment variable ``SCIRIS_LAZY=1``.
+#. Sciris now has a "lazy loading" option, which does not import submodules, meaning loading is effectively instant. To use, set the environment variable ``SCIRIS_LAZY=1``, then load submodules via e.g. ``from sciris import sc_odict as sco``.
 
 Regression information
 ~~~~~~~~~~~~~~~~~~~~~~

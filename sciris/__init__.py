@@ -10,7 +10,7 @@ of ``sc.sc_parallel.parallelize()``.
 import os as _os
 _lazy = _os.getenv('SCIRIS_LAZY', False)
 
-# Import everything
+# Otherwise, import everything
 if not _lazy:
     from .sc_version   import *
     from .sc_utils     import *
@@ -27,3 +27,5 @@ if not _lazy:
     from .sc_asd       import *
     from .sc_plotting  import *
     from .sc_colors    import *
+
+del _os, _lazy
