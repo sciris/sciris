@@ -382,14 +382,13 @@ def parallel_progress(fcn, inputs, num_workers=None, show_progress=True, initial
 
     New in version 1.0.0.
     """
-    from multiprocess import pool
     try:
         from tqdm import tqdm
     except ModuleNotFoundError as E:
         errormsg = 'Module tqdm not found; please install with "pip install tqdm"'
         raise ModuleNotFoundError(errormsg) from E
 
-    pool = pool.Pool(num_workers, initializer=initializer)
+    pool = mp.pool.Pool(num_workers, initializer=initializer)
 
     results = [None]
     if scu.isnumber(inputs):
