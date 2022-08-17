@@ -75,10 +75,10 @@ def load(filename=None, folder=None, verbose=False, die=None, remapping=None, me
 
     **Examples**::
 
-        obj = sc.loadobj('myfile.obj') # Standard usage
-        old = sc.loadobj('my-old-file.obj', method='dill', ignore=True) # Load classes from saved files
-        old = sc.loadobj('my-old-file.obj', remapping={'foo.Bar':cat.Mat}) # If loading a saved object containing a reference to foo.Bar that is now cat.Mat
-        old = sc.loadobj('my-old-file.obj', remapping={'foo.Bar':('cat', 'Mat')}) # Equivalent to the above
+        obj = sc.load('myfile.obj') # Standard usage
+        old = sc.load('my-old-file.obj', method='dill', ignore=True) # Load classes from saved files
+        old = sc.load('my-old-file.obj', remapping={'foo.Bar':cat.Mat}) # If loading a saved object containing a reference to foo.Bar that is now cat.Mat
+        old = sc.load('my-old-file.obj', remapping={'foo.Bar':('cat', 'Mat')}) # Equivalent to the above
 
     | New in version 1.1.0: "remapping" argument
     | New in version 1.2.2: ability to load non-gzipped pickles; support for dill; arguments passed to loader

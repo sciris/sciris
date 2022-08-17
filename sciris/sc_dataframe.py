@@ -12,7 +12,8 @@ better to just use the Pandas one.
 # NB: Pandas is imported later
 import numbers # For numeric type
 import numpy as np
-from . import sc_utils as scu # Note, sc_fileio is also used, but is only imported when required to avoid a circular import
+import pandas as pd
+from . import sc_utils as scu
 from . import sc_math as scm
 from . import sc_odict as sco
 
