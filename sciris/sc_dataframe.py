@@ -52,15 +52,16 @@ class dataframe(pd.DataFrame): # pragma: no cover
     '''
 
     def __init__(self, data=None, columns=None, nrows=None, **kwargs):
+
+        # Handle inputs
         if 'cols' in kwargs:
             columns = kwargs.pop('cols')
         if nrows and data is None:
             ncols = len(columns)
             data = np.zeros((nrows, ncols))
+
+        # Create the dataframe
         super().__init__(data=data, columns=columns, **kwargs)
-        # self.cols = None
-        # self.data = None
-        # self.make(cols=cols, data=data, nrows=nrows)
         return
 
 
@@ -132,128 +133,108 @@ class dataframe(pd.DataFrame): # pragma: no cover
 
     def __getitem__(self, key=None, die=True, cast=True):
         ''' Simple method for returning; see self.get() for a version based on col and row '''
-        if scu.isstring(key): # e.g. df['a']
-            colindex = self.cols.index(key)
-            output = self.data[:,colindex]
-            if cast:
-                output = self._cast(output)
-        elif scu.isnumber(key): # e.g. df[0]
-            rowindex = int(key)
-            output = self.data[rowindex,:]
-            if cast:
-                output = self._cast(output)
-        elif scu.checktype(key, 'arraylike'): # e.g. df[[0,2,4]]
-            rowindices = key
-            rowdata = self.data[rowindices,:]
-            output = dataframe(cols=self.cols, data=rowdata)
-        elif isinstance(key, tuple):
-            if scu.isstring(key[0]) and scu.isnumber(key[1]): # e.g. df['a',0]
-                colindex = self.cols.index(key[0])
-                rowindex = int(key[1])
-                output = self.data[rowindex,colindex]
-            elif scu.isstring(key[1]) and scu.isnumber(key[0]): # e.g. df[0,'a']
-                colindex = self.cols.index(key[1])
-                rowindex = int(key[0])
-                output = self.data[rowindex,colindex]
-            elif isinstance(key[0], slice) or isinstance(key[1], slice): # e.g. df[0,:] or df[:,0]
-                if not isinstance(key[0], slice):
-                    rowindices = key[0]
-                elif not isinstance(key[1], slice):
-                    rowindices = key[1]
-                else:
-                    errormsg = "When using a tuple with a slice as an index, both values can't be slices"
-                    raise Exception(errormsg)
+        try:
+            output = super().__getitem__(key)
+        except:
+            if scu.isstring(key): # e.g. df['a']
+                colindex = self.cols.index(key)
+                output = self.iloc[:,colindex].values
+                if cast:
+                    output = self._cast(output)
+            elif scu.isnumber(key): # e.g. df[0]
+                rowindex = int(key)
+                output = self.data[rowindex,:]
+                if cast:
+                    output = self._cast(output)
+            elif scu.checktype(key, 'arraylike'): # e.g. df[[0,2,4]]
+                rowindices = key
                 rowdata = self.data[rowindices,:]
                 output = dataframe(cols=self.cols, data=rowdata)
-        elif isinstance(key, slice):
-            rowslice = key
-            slicedata = self.data[rowslice,:]
-            output = dataframe(cols=self.cols, data=slicedata)
-        else:
-            errormsg = 'Unrecognized dataframe key "%s"' % key
-            if die:
-                raise Exception(errormsg)
+            elif isinstance(key, tuple):
+                if scu.isstring(key[0]) and scu.isnumber(key[1]): # e.g. df['a',0]
+                    colindex = self.cols.index(key[0])
+                    rowindex = int(key[1])
+                    output = self.data[rowindex,colindex]
+                elif scu.isstring(key[1]) and scu.isnumber(key[0]): # e.g. df[0,'a']
+                    colindex = self.cols.index(key[1])
+                    rowindex = int(key[0])
+                    output = self.data[rowindex,colindex]
+                elif isinstance(key[0], slice) or isinstance(key[1], slice): # e.g. df[0,:] or df[:,0]
+                    if not isinstance(key[0], slice):
+                        rowindices = key[0]
+                    elif not isinstance(key[1], slice):
+                        rowindices = key[1]
+                    else:
+                        errormsg = "When using a tuple with a slice as an index, both values can't be slices"
+                        raise Exception(errormsg)
+                    rowdata = self.data[rowindices,:]
+                    output = dataframe(cols=self.cols, data=rowdata)
+            elif isinstance(key, slice):
+                rowslice = key
+                slicedata = self.data[rowslice,:]
+                output = dataframe(cols=self.cols, data=slicedata)
             else:
-                print(errormsg)
-                output = None
+                errormsg = 'Unrecognized dataframe key "%s"' % key
+                if die:
+                    raise Exception(errormsg)
+                else:
+                    print(errormsg)
+                    output = None
+
         return output
 
 
     def __setitem__(self, key, value=None):
-        if value is None:
-            value = np.zeros(self.nrows, dtype=object)
-        if scu.isstring(key): # Add column
-            if not scu.isiterable(value):
-                value = scu.promotetolist(value)
-            if len(value) != self.nrows:
-                if len(value) == 1:
-                    value = [value]*self.nrows # Get it the right length
-                else:
-                    if self.ncols==0:
-                        self.data = np.zeros((len(value),0), dtype=object) # Prepare data for writing
+        try:
+            super().__setitem__(key, value)
+        except:
+            if value is None:
+                value = np.zeros(self.nrows, dtype=object)
+            if scu.isstring(key): # Add column
+                if not scu.isiterable(value):
+                    value = scu.promotetolist(value)
+                if len(value) != self.nrows:
+                    if len(value) == 1:
+                        value = [value]*self.nrows # Get it the right length
                     else:
-                        errormsg = 'Cannot add column %s with value %s: incorrect length (%s vs. %s)' % (key, value, len(value), self.nrows)
-                        raise Exception(errormsg)
-            try:
-                colindex = self.cols.index(key)
-                val_arr = np.reshape(value, (len(value),))
-                self.data[:,colindex] = val_arr
-            except:
-                self.cols.append(key)
-                colindex = self.cols.index(key)
-                val_arr = np.reshape(value, (len(value),1))
-                self.data = np.hstack((self.data, np.array(val_arr, dtype=object)))
-        elif scu.isnumber(key):
-            value = self._val2row(value) # Make sure it's in the correct format
-            if len(value) != self.ncols:
-                errormsg = 'Vector has incorrect length (%i vs. %i)' % (len(value), self.ncols)
-                raise Exception(errormsg)
-            rowindex = int(key)
-            try:
-                self.data[rowindex,:] = value
-            except:
-                self.data = np.vstack((self.data, np.array(value, dtype=object)))
-        elif isinstance(key, tuple):
-            if scu.isstring(key[1]) and scu.isnumber(key[0]): # Keys supplied in opposite order
-                key = (key[1], key[0]) # Swap order
-            if key[0] not in self.cols:
-                errormsg = 'Column name "%s" not found; available columns are:\n%s' % (key[0], '\n'.join(self.cols))
-                raise Exception(errormsg)
-            try:
-                colindex = self.cols.index(key[0])
-                rowindex = int(key[1])
-                self.data[rowindex,colindex] = value
-            except Exception as E:
-                errormsg = 'Could not insert element (%s,%s) in dataframe of shape %s: %s' % (key[0], key[1], self.data.shape, str(E))
-                raise Exception(errormsg)
+                        if self.ncols==0:
+                            self.data = np.zeros((len(value),0), dtype=object) # Prepare data for writing
+                        else:
+                            errormsg = 'Cannot add column %s with value %s: incorrect length (%s vs. %s)' % (key, value, len(value), self.nrows)
+                            raise Exception(errormsg)
+                try:
+                    colindex = self.cols.index(key)
+                    val_arr = np.reshape(value, (len(value),))
+                    self.data[:,colindex] = val_arr
+                except:
+                    self.cols.append(key)
+                    colindex = self.cols.index(key)
+                    val_arr = np.reshape(value, (len(value),1))
+                    self.data = np.hstack((self.data, np.array(val_arr, dtype=object)))
+            elif scu.isnumber(key):
+                value = self._val2row(value) # Make sure it's in the correct format
+                if len(value) != self.ncols:
+                    errormsg = 'Vector has incorrect length (%i vs. %i)' % (len(value), self.ncols)
+                    raise Exception(errormsg)
+                rowindex = int(key)
+                try:
+                    self.data[rowindex,:] = value
+                except:
+                    self.data = np.vstack((self.data, np.array(value, dtype=object)))
+            elif isinstance(key, tuple):
+                if scu.isstring(key[1]) and scu.isnumber(key[0]): # Keys supplied in opposite order
+                    key = (key[1], key[0]) # Swap order
+                if key[0] not in self.cols:
+                    errormsg = 'Column name "%s" not found; available columns are:\n%s' % (key[0], '\n'.join(self.cols))
+                    raise Exception(errormsg)
+                try:
+                    colindex = self.cols.index(key[0])
+                    rowindex = int(key[1])
+                    self.data[rowindex,colindex] = value
+                except Exception as E:
+                    errormsg = 'Could not insert element (%s,%s) in dataframe of shape %s: %s' % (key[0], key[1], self.data.shape, str(E))
+                    raise Exception(errormsg)
         return
-
-
-    def __copy__(self, *args, **kwargs):
-        ''' Warning, there is a bug in Numpy such that deepcopy(array) != array if array contains lists '''
-        newcols = scu.dcp(self.cols)
-        listdata = self.data.tolist()
-        copied = scu.dcp(listdata)
-        newdata = np.array(copied, dtype=object)
-        return dataframe(cols=newcols, data=newdata)
-
-
-    def __deepcopy__(self, *args, **kwargs):
-        ''' As above '''
-        return self.__copy__(*args, **kwargs)
-
-
-    def __eq__(self, other):
-        ''' If columns and data match, the dataframes match '''
-        if not isinstance(other, dataframe): return False
-        if  self.cols != other.cols:         return False
-        if (self.data != other.data).any():  return False
-        return True
-
-
-    def __len__(self):
-        ''' Return the number of rows in the dataframe '''
-        return self.nrows
 
 
     def make(self, cols=None, data=None, nrows=None):
@@ -328,7 +309,7 @@ class dataframe(pd.DataFrame): # pragma: no cover
         return
 
 
-    def get(self, cols=None, rows=None, asarray=True, cast=True):
+    def get(self, cols=None, rows=None, asarray=True, cast=True, default=None):
         '''
         More complicated way of getting data from a dataframe.
 
@@ -337,28 +318,31 @@ class dataframe(pd.DataFrame): # pragma: no cover
             df = dataframe(cols=['x','y','z'],data=[[1238,2,-1],[384,5,-2],[666,7,-3]]) # Create data frame
             df.get(cols=['x','z'], rows=[0,2])
         '''
-        if cols is None:
-            colindices = Ellipsis
-        else:
-            colindices = []
-            for col in scu.promotetolist(cols):
-                colindices.append(self._sanitizecol(col))
-        if rows is None:
-            rowindices = Ellipsis
-        else:
-            rowindices = rows
+        try:
+            super().get(cols, default=default)
+        except:
+            if cols is None:
+                colindices = Ellipsis
+            else:
+                colindices = []
+                for col in scu.promotetolist(cols):
+                    colindices.append(self._sanitizecol(col))
+            if rows is None:
+                rowindices = Ellipsis
+            else:
+                rowindices = rows
 
-        output = self.data[:,colindices][rowindices,:] # Split up so can handle non-consecutive entries in either
-        if output.size == 1: output = output[0] # If it's a single element, return the value rather than the array
-        if asarray:
-            if cast:
-                output = self._cast(output)
-            return output
-        else:
-            df = dataframe(cols=np.array(self.cols)[colindices].tolist(), data=output)
-            return df
+            output = self.data[:,colindices][rowindices,:] # Split up so can handle non-consecutive entries in either
+            if output.size == 1: output = output[0] # If it's a single element, return the value rather than the array
+            if asarray:
+                if cast:
+                    output = self._cast(output)
+                return output
+            else:
+                df = dataframe(cols=np.array(self.cols)[colindices].tolist(), data=output)
+                return df
 
-    def pop(self, key, returnval=True):
+    def poprow(self, key, returnval=True):
         ''' Remove a row from the data frame '''
         rowindex = int(key)
         thisrow = self.data[rowindex,:]
@@ -367,8 +351,8 @@ class dataframe(pd.DataFrame): # pragma: no cover
         else:         return
 
 
-    def append(self, value):
-        ''' Add a row to the end of the data frame '''
+    def appendrow(self, value):
+        ''' Add a row to the end of the dataframe '''
         value = self._val2row(value) # Make sure it's in the correct format
         self.data = np.vstack((self.data, np.array(value, dtype=object)))
         return
@@ -376,30 +360,20 @@ class dataframe(pd.DataFrame): # pragma: no cover
 
     @property
     def ncols(self):
-        ''' Get the number of columns in the data frame '''
-        ncols = len(self.cols)
-        ncols2 = self.data.shape[1]
-        if ncols != ncols2:
-            errormsg = 'Dataframe corrupted: %s columns specified but %s in data' % (ncols, ncols2)
-            raise Exception(errormsg)
-        return ncols
+        ''' Get the number of columns in the dataframe '''
+        return len(self.columns)
 
 
     @property
     def nrows(self):
-        ''' Get the number of rows in the data frame '''
-        try:    return self.data.shape[0]
-        except: return 0 # If it didn't work, probably because it's empty
+        ''' Get the number of rows in the dataframe '''
+        return len(self)
 
-
-    @property
-    def shape(self):
-        ''' Equivalent to the shape of the data array, minus the headers '''
-        return (self.nrows, self.ncols)
 
     def addcol(self, key=None, value=None):
         ''' Add a new column to the data frame -- for consistency only '''
         self.__setitem__(key, value)
+
 
     def rmcol(self, key, die=True):
         ''' Remove a column or columns from the data frame '''
@@ -415,15 +389,6 @@ class dataframe(pd.DataFrame): # pragma: no cover
                 self.data = np.hstack((self.data[:,:colindex], self.data[:,colindex+1:])) # Remove from data
         return
 
-    def addrow(self, value=None, overwrite=True, col=None, reverse=False):
-        ''' Like append, but removes duplicates in the first column and resorts '''
-        value = self._val2row(value) # Make sure it's in the correct format
-        col   = self._sanitizecol(col)
-        index = self._rowindex(key=value[col], col=col, die=False) # Return None if not found
-        if index is None or not overwrite: self.append(value)
-        else: self.data[index,:] = value # If it exists already, just replace it
-        self.sort(col=col, reverse=reverse) # Sort
-        return
 
     def _rowindex(self, key=None, col=None, die=False):
         ''' Get the sanitized row index for a given key and column '''
@@ -436,11 +401,13 @@ class dataframe(pd.DataFrame): # pragma: no cover
             else:   return
         return index
 
+
     def rmrow(self, key=None, col=None, returnval=False, die=True):
-        ''' Like pop, but removes by matching the first column instead of the index -- WARNING, messy '''
+        ''' Like pop, but removes by matching the first column instead of the index '''
         index = self._rowindex(key=key, col=col, die=die)
         if index is not None: self.pop(index, returnval=returnval)
         return
+
 
     def _diffindices(self, indices=None):
         ''' For a given set of indices, get the inverse, in set-speak '''
@@ -450,17 +417,18 @@ class dataframe(pd.DataFrame): # pragma: no cover
         diff_set = np.array(list(all_set - ind_set))
         return diff_set
 
-    def rmrows(self, indices=None, copy=None):
-        ''' Remove rows by index -- WARNING, messy '''
-        if copy is None: copy = False
+
+    def rmrows(self, indices=None, inplace=True):
+        ''' Remove rows by index '''
         keep_set = self._diffindices(indices)
         keep_data = self.data[keep_set,:]
-        if copy:
-            output = dataframe(cols=self.cols, data=keep_data)
+        if not inplace:
+            output = dataframe(data=keep_data, cols=self.cols)
             return output
         else:
             self.data = keep_data
             return
+
 
     def replace(self, col=None, old=None, new=None):
         ''' Replace all of one value in a column with a new value '''
@@ -478,6 +446,7 @@ class dataframe(pd.DataFrame): # pragma: no cover
             raise Exception(errormsg)
         rowdict = sco.odict(zip(self.cols, row))
         return rowdict
+
 
     def findrow(self, key=None, col=None, default=None, closest=False, die=False, asdict=False):
         '''
@@ -532,6 +501,7 @@ class dataframe(pd.DataFrame): # pragma: no cover
         indices = scm.findinds(coldata==key)
         return indices
 
+
     def _filterrows(self, key=None, col=None, keep=True, verbose=False, copy=None):
         ''' Filter rows and either keep the ones matching, or discard them '''
         indices = self.rowindex(key=key, col=col)
@@ -540,13 +510,16 @@ class dataframe(pd.DataFrame): # pragma: no cover
         output = self.rmrows(indices=indices, copy=copy)
         return output
 
+
     def filter_in(self, key=None, col=None, verbose=False, copy=None):
         '''Keep only rows matching a criterion (in place) '''
         return self._filterrows(key=key, col=col, keep=True, verbose=verbose, copy=copy)
 
+
     def filter_out(self, key=None, col=None, verbose=False, copy=None):
         '''Remove rows matching a criterion (in place) '''
         return self._filterrows(key=key, col=col, keep=False, verbose=verbose, copy=copy)
+
 
     def filtercols(self, cols=None, die=True, copy=None):
         ''' Filter columns keeping only those specified '''
@@ -574,12 +547,14 @@ class dataframe(pd.DataFrame): # pragma: no cover
             self.data = ordered_data
             return
 
+
     def insert(self, row=0, value=None):
         ''' Insert a row at the specified location '''
         rowindex = int(row)
         value = self._val2row(value) # Make sure it's in the correct format
         self.data = np.vstack((self.data[:rowindex,:], value, self.data[rowindex:,:]))
         return
+
 
     def sort(self, col=None, reverse=False):
         ''' Sort the data frame by the specified column(s)'''
@@ -594,6 +569,7 @@ class dataframe(pd.DataFrame): # pragma: no cover
             self.data = self.data[sortorder,:]
         return sortorder
 
+
     def sortcols(self, sortorder=None, reverse=False):
         ''' Like sort, but rows by column instead '''
         if sortorder is None:
@@ -603,54 +579,7 @@ class dataframe(pd.DataFrame): # pragma: no cover
         self.data = self.data[:,sortorder]
         return sortorder
 
-    def jsonify(self, cols=None, rows=None, header=None, die=True):
-        ''' Export the dataframe to a JSON-compatible format '''
 
-        # Handle input arguments
-        if cols   is None: cols   = self.cols # Use all columns by default
-        if rows   is None: rows   = list(range(self.nrows)) # Use all rows by default
-        if header is None: header = True # Include headers
-
-        # Optionally filter columns after making a copy
-        exportdf = scu.dcp(self)
-        exportdf.filtercols(cols)
-
-        # Handle output
-        output = []
-        if header: output.append(exportdf.cols)
-        for r in rows:
-            thisrow = []
-            for col in exportdf.cols:
-                try:
-                    datum = exportdf.get(cols=col,rows=r)
-                    thisrow.append(datum)
-                except:
-                    pass # This has already been handled by the validation above
-            output.append(thisrow)
-        return output
-
-
-    def pandas(self, df=None):
-        ''' Function to export to pandas (if no argument) or import from pandas (with an argument) '''
-        import pandas as pd # Optional import
-
-        if df is None: # Convert
-            output = pd.DataFrame(data=self.data, columns=self.cols)
-            return output
-        else:
-            if type(df) != pd.DataFrame:
-                errormsg = 'Can only read pandas dataframes, not %s' % type(df)
-                raise Exception(errormsg)
-            self.cols = list(df.columns)
-            self.data = np.array(df, dtype=object)
-            return
-
-
-    def export(self, filename=None, cols=None, close=True):
-        ''' Export to Excel '''
-        from . import sc_fileio as io # Optional import
-        exportdf = scu.dcp(self)
-        exportdf.filtercols(cols)
-        exportdata = np.vstack((exportdf.cols, exportdf.data))
-        filepath = io.savespreadsheet(filename=filename, data=exportdata, close=close)
-        return filepath
+    def to_pandas(self, df=None):
+        ''' Convert to a plain pandas dataframe '''
+        return pd.DataFrame(data=self.values, columns=self.cols)
