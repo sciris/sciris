@@ -244,7 +244,8 @@ class legacy_dataframe(object): # pragma: no cover
     **Example**::
 
         import sciris as sc
-        remapping = {'sciris.sc_dataframe.dataframe':sc.sc_legacy.legacy_dataframe}
+        from sciris import sc_legacy as scl
+        remapping = {'sciris.sc_dataframe.dataframe':scl.legacy_dataframe}
         old = sc.load('my-old-file.obj', remapping=remapping)
 
     | Version: 2020nov29
@@ -295,6 +296,30 @@ class legacy_dataframe(object): # pragma: no cover
                 if ind<nrows-1: output += '\n'
 
             return output
+
+
+    @property
+    def ncols(self):
+        ''' Get the number of columns in the data frame '''
+        ncols = len(self.cols)
+        ncols2 = self.data.shape[1]
+        if ncols != ncols2:
+            errormsg = 'Dataframe corrupted: %s columns specified but %s in data' % (ncols, ncols2)
+            raise Exception(errormsg)
+        return ncols
+
+
+    @property
+    def nrows(self):
+        ''' Get the number of rows in the data frame '''
+        try:    return self.data.shape[0]
+        except: return 0 # If it didn't work, probably because it's empty
+
+
+    @property
+    def shape(self):
+        ''' Equivalent to the shape of the data array, minus the headers '''
+        return (self.nrows, self.ncols)
 
 
     def make(self, cols=None, data=None, nrows=None):

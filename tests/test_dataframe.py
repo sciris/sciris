@@ -3,6 +3,7 @@ Version: 2020apr27
 """
 
 import sciris as sc
+from sciris import sc_legacy as scl
 
 def test_dataframe():
 
@@ -12,7 +13,7 @@ def test_dataframe():
         return None
 
     print('Testing dataframe:')
-    a = sc.dataframe(cols=['x','y'],data=[[1238,2],[384,5],[666,7]]); dfprint('Create dataframe', a)
+    a = scl.legacy_dataframe(cols=['x','y'],data=[[1238,2],[384,5],[666,7]]); dfprint('Create dataframe', a)
     # dfprint('Print out a column', a['x'])
     # dfprint('Print out a row', a[0])
     # dfprint('Print out an element', a['x',0])
