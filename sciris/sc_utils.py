@@ -1635,31 +1635,55 @@ def getcaller(frame=2, tostring=True, includelineno=False, includeline=False):
     return output
 
 
-def importbyname(module=None, variable=None, lazy=False, die=True, **kwargs):
+def _assign_to_namespace(var, obj, namespace=None, overwrite=True):
+    ''' Helper function to assign an object to the global namespace '''
+    if namespace is None:
+        namespace = globals()
+    if var in namespace and not overwrite:
+        errormsg = f'Cannot assign to variable "{var}" since it already exists and overwrite=False'
+        raise NameError(errormsg)
+    namespace[var] = obj
+    return
+
+
+def importbyname(module=None, variable=None, namespace=None, lazy=False, overwrite=True, die=True, **kwargs):
     '''
-    A little function to try loading optional imports.
+    Import modules by name.
+
+    See https://peps.python.org/pep-0690/ for a proposal for incorporating something
+    similar into Python by default.
 
     Args:
         module (str): name of the module to import
+        variable (str): the name of the variable to assign the module to (by default, the module's name)
+        namespace (dict): the namespace to load the modules into (by default, globals)
+        lazy (bool): whether to create a LazyModule object instead of load the actual module
+        overwrite (bool): whether to allow overwriting an existing variable (by default, yes)
         die (bool): whether to raise an exception if encountered
-        **kwargs (dict): additional modules to import
+        **kwargs (dict): additional variable:modules pairs to import (see examples below)
 
     **Examples**::
 
         np = sc.importbyname('numpy')
-        pd = sc.importbyname(pd='pandas')
+        sc.importbyname(pd='pandas', np='numpy')
+        pl = sc.importbyname(pl='matplotlib.pyplot', lazy=True) # Won't actually import until e.g. pl.figure() is called
     '''
+    # Initialize
     import importlib
     if variable is None:
         variable = module
+
+    # Map modules to variables
     mapping = {}
     if module is not None:
         mapping[variable] = module
     mapping.update(kwargs)
+
+    # Load modules
     libs = []
     for variable,module in mapping.items():
         if lazy:
-            lib = LazyModule(module=module, variable=variable)
+            lib = LazyModule(module=module, variable=variable, namespace=namespace)
         else:
             try:
                 lib = importlib.import_module(module)
@@ -1669,7 +1693,10 @@ def importbyname(module=None, variable=None, lazy=False, die=True, **kwargs):
                 lib = None
                 if die: raise E
                 else:   return False
-        globals()[variable] = lib
+
+        _assign_to_namespace(var=variable, obj=lib, namespace=namespace, overwrite=overwrite)
+        if namespace:
+            namespace[variable] = lib
         libs.append(lib)
 
     if len(libs) == 1:
@@ -1836,37 +1863,55 @@ class Link(object):
         return self.__copy__(*args, **kwargs)
 
 
-obj_getattr = object.__getattribute__
-
 class LazyModule:
     '''
-    Create a "lazy" module that is loaded if and only if an attribute is called
+    Create a "lazy" module that is loaded if and only if an attribute is called.
+
+    Typically not for use by the user, but is used by ``sc.importbyname()``.
+
+    Args:
+        module (str): name of the module to (not) load
+        variable (str): variable name to assign the module to
+        namespace (dict): the namespace to use (if not supplied, globals())
+        overwrite (bool): whether to allow overwriting an existing variable (by default, yes)
+
+    **Example**::
+
+        pd = sc.LazyModule('pandas', 'pd') # pd is a LazyModule, not actually pandas
+        df = pd.DataFrame() # Not only does this work, but pd is now actually pandas
+
+    New in version 2.0.0.
     '''
 
-    def __init__(self, module, variable):
-        self._variable = variable
-        self._module = module
+    def __init__(self, module, variable, namespace=None, overwrite=True):
+        self._variable  = variable
+        self._module    = module
+        self._namespace = namespace
+        self._overwrite = overwrite
         return
+
 
     def __repr__(self):
         output = f"<sc.LazyModule({self._variable}='{self._module}') at {hex(id(self))}>"
         return output
 
+
     def __getattr__(self, attr):
-        _builtin_keys = ['_variable', '_module', '_replace']
+        ''' In most cases, when an attribute is retrieved we want to replace this module with the actual one '''
+        _builtin_keys = ['_variable', '_module', '_namespace', '_overwrite', '_load']
         if attr in _builtin_keys:
-            obj = obj_getattr(self, attr)
+            obj = object.__getattribute__(self, attr)
         else:
-            obj = self._replace(attr)
-            # print('set', var, lib)
+            obj = self._load(attr)
         return obj
 
-    def _replace(self, attr=None):
+
+    def _load(self, attr=None):
+        ''' Stop being lazy and load the module '''
         import importlib
-        module = obj_getattr(self, '_module')
-        var    = obj_getattr(self, '_variable')
-        lib    = importlib.import_module(module)
-        globals()[var] = lib
+        var = self._variable
+        lib = importlib.import_module(self._module)
+        _assign_to_namespace(var, lib, namespace=self._namespace, overwrite=self._overwrite)
         if attr:
             obj = getattr(lib, attr)
         else:

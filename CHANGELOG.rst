@@ -23,6 +23,7 @@ New functions and methods
 #. ``sc.loadzip()`` extracts (or reads data from) zip files
 #. ``sc.loadyaml()`` and ``sc.saveyaml()`` load and save YAML files, respectively.
 #. ``sc.download()`` downloads multiple files in parallel.
+#. ``sc.LazyModule()`` handles lazily loaded modules (see ``sc.importbyname()`` for usage).
 
 Bugfixes
 ~~~~~~~~
@@ -54,6 +55,7 @@ Improvements
 #. ``sc.animation()`` now defaults to ``ffmpeg`` for saving.
 #. ``sc.date()`` can now read ``np.datetime64`` objects.
 #. ``sc.wget()`` can now save to files.
+#. ``sc.importbyname()`` can now load multiple modules, and load them lazily.
 
 Housekeeping
 ~~~~~~~~~~~~
