@@ -51,51 +51,23 @@ class dataframe(pd.DataFrame): # pragma: no cover
     | New in version 2.0.0: subclass pandas DataFrame
     '''
 
-    def __init__(self, data=None, cols=None, nrows=None, **kwargs):
-        super().__init__(data=data, columns=cols)
-        self.cols = None
-        self.data = None
+    def __init__(self, data=None, columns=None, nrows=None, **kwargs):
+        if 'cols' in kwargs:
+            columns = kwargs.pop('cols')
+        if nrows and data is None:
+            ncols = len(columns)
+            data = np.zeros((nrows, ncols))
+        super().__init__(data=data, columns=columns, **kwargs)
+        # self.cols = None
+        # self.data = None
         # self.make(cols=cols, data=data, nrows=nrows)
         return
 
 
-    def __repr__(self, spacing=2):
-        ''' spacing = space between columns '''
-        if not self.cols: # No keys, give up
-            return '<empty dataframe>'
-
-        else: # Go for it
-            outputlist = sco.odict()
-            outputformats = sco.odict()
-
-            # Gather data
-            nrows = self.nrows
-            for c,col in enumerate(self.cols):
-                outputlist[col] = list()
-                maxlen = len(col) # Start with length of column name
-                if nrows:
-                    for val in self.data[:,c]:
-                        output = scu.flexstr(val)
-                        maxlen = max(maxlen, len(output))
-                        outputlist[col].append(output)
-                outputformats[col] = '%'+'%i'%(maxlen+spacing)+'s'
-
-            ndigits = (np.floor(np.log10(max(1,nrows)))+1) # Don't allow 0 rows
-            indformat = '%%%is' % ndigits # Choose the right number of digits to print
-
-            # Assemble output
-            output = indformat % '' # Empty column for index
-            for col in self.cols: # Print out header
-                output += outputformats[col] % col
-            output += '\n'
-
-            for ind in range(nrows): # Loop over rows to print out
-                output += indformat % scu.flexstr(ind)
-                for col in self.cols: # Print out data
-                    output += outputformats[col] % outputlist[col][ind]
-                if ind<nrows-1: output += '\n'
-
-            return output
+    @property
+    def cols(self):
+        ''' Get columns as a list '''
+        return self.columns.tolist()
 
 
     def _val2row(self, value=None):
