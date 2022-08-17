@@ -71,6 +71,15 @@ class dataframe(pd.DataFrame): # pragma: no cover
         return self.columns.tolist()
 
 
+    def _to_array(self, arr):
+        ''' Try to conver to the current data type, or else use an object '''
+        try: # Try to use current type
+            output = np.array(arr, dtype=self.values.dtype)
+        except: # This is to e.g. not force conversion to strings
+            output = np.array(arr, dtype=object)
+        return output
+
+
     def _val2row(self, value=None, to2d=True):
         ''' Convert a list, array, or dictionary to the right format for appending to a dataframe '''
         if isinstance(value, dict):
@@ -84,10 +93,7 @@ class dataframe(pd.DataFrame): # pragma: no cover
         elif value is None:
             output = np.empty(self.ncols)
         else: # Not sure what it is, just make it an array
-            try:
-                output = np.array(value, dtype=self.values.dtype)
-            except: # This is to e.g. not force conversion to strings
-                output = np.array(value, dtype=object)
+            output = self._to_array(value)
 
         # Validation
         if output.ndim == 1: # Convert from 1D to 2D
@@ -148,7 +154,7 @@ class dataframe(pd.DataFrame): # pragma: no cover
 
 
     def __getitem__(self, key=None, die=True, cast=True):
-        ''' Simple method for returning; see self.get() for a version based on col and row '''
+        ''' Simple method for returning; see self.flexget() for a version based on col and row '''
         try:
             output = super().__getitem__(key)
         except:
@@ -165,7 +171,7 @@ class dataframe(pd.DataFrame): # pragma: no cover
             elif scu.checktype(key, 'arraylike'): # e.g. df[[0,2,4]]
                 rowindices = key
                 rowdata = self.iloc[rowindices,:]
-                output = dataframe(cols=self.cols, data=rowdata)
+                output = dataframe(cols=self.cols, data=rowdata).values
             elif isinstance(key, tuple):
                 if scu.isstring(key[0]) and scu.isnumber(key[1]): # e.g. df['a',0]
                     colindex = self.cols.index(key[0])
@@ -184,11 +190,11 @@ class dataframe(pd.DataFrame): # pragma: no cover
                         errormsg = "When using a tuple with a slice as an index, both values can't be slices"
                         raise Exception(errormsg)
                     rowdata = self.iloc[rowindices,:]
-                    output = dataframe(cols=self.cols, data=rowdata)
+                    output = dataframe(cols=self.cols, data=rowdata).values
             elif isinstance(key, slice):
                 rowslice = key
                 slicedata = self.iloc[rowslice,:]
-                output = dataframe(cols=self.cols, data=slicedata)
+                output = dataframe(cols=self.cols, data=slicedata).values
             else:
                 errormsg = 'Unrecognized dataframe key "%s"' % key
                 if die:
@@ -223,10 +229,11 @@ class dataframe(pd.DataFrame): # pragma: no cover
                     val_arr = np.reshape(value, (len(value),))
                     self.iloc[:,colindex] = val_arr
                 except:
-                    self.cols.append(key)
-                    colindex = self.cols.index(key)
-                    val_arr = np.reshape(value, (len(value),1))
-                    self.iloc[:,:] = np.hstack((self.data, np.array(val_arr, dtype=object)))
+                    newcols = self.cols + [key]
+                    newcol = self._to_array(val_arr)
+                    newdata = np.hstack((self.values, newcol))
+                    newdf = dataframe(data=newdata, columns=newcols)
+                    self.replacedata(newdf=newdf, reset_index=False, inplace=True)
             elif scu.isnumber(key):
                 newrow = self._val2row(value, to2d=False) # Make sure it's in the correct format
                 if len(newrow) != self.ncols:
@@ -325,38 +332,45 @@ class dataframe(pd.DataFrame): # pragma: no cover
         return
 
 
-    def get(self, cols=None, rows=None, asarray=True, cast=True, default=None):
+    def flexget(self, cols=None, rows=None, asarray=False, cast=True, default=None):
         '''
-        More complicated way of getting data from a dataframe.
+        More complicated way of getting data from a dataframe. While getting directly
+        by key usually returns the array data directly, this usually returns another
+        dataframe.
+
+        Args:
+            cols (str/list): the column(s) to get
+            rows (int/list): the row(s) to get
+            asarray (bool): whether to return an array (otherwise, return a dataframe)
+            cast (bool): attempt to cast to an all-numeric array
+            default (any): the value to return if the column(s)/row(s) can't be found
 
         **Example**::
 
-            df = dataframe(cols=['x','y','z'],data=[[1238,2,-1],[384,5,-2],[666,7,-3]]) # Create data frame
+            df = sc.dataframe(cols=['x','y','z'],data=[[1238,2,-1],[384,5,-2],[666,7,-3]]) # Create data frame
             df.get(cols=['x','z'], rows=[0,2])
         '''
-        try:
-            super().get(cols, default=default)
-        except:
-            if cols is None:
-                colindices = Ellipsis
-            else:
-                colindices = []
-                for col in scu.promotetolist(cols):
-                    colindices.append(self._sanitizecol(col))
-            if rows is None:
-                rowindices = Ellipsis
-            else:
-                rowindices = rows
+        if cols is None:
+            colindices = Ellipsis
+        else:
+            colindices = []
+            for col in scu.promotetolist(cols):
+                colindices.append(self._sanitizecol(col))
+        if rows is None:
+            rowindices = Ellipsis
+        else:
+            rowindices = rows
 
-            output = self.iloc[rowindices,colindices] # Split up so can handle non-consecutive entries in either
-            if output.size == 1: output = output[0] # If it's a single element, return the value rather than the array
-            if asarray:
-                if cast:
-                    output = self._cast(output)
-                return output
-            else:
-                df = dataframe(cols=np.array(self.cols)[colindices].tolist(), data=output)
-                return df
+        output = self.iloc[rowindices,colindices] # Split up so can handle non-consecutive entries in either
+        if output.size == 1: output = output[0] # If it's a single element, return the value rather than the array
+        if asarray:
+            if cast:
+                output = self._cast(output)
+            return output
+        else:
+            output = dataframe(cols=np.array(self.cols)[colindices].tolist(), data=output)
+
+        return output
 
     def poprow(self, key, returnval=True):
         ''' Remove a row from the data frame '''
@@ -383,7 +397,7 @@ class dataframe(pd.DataFrame): # pragma: no cover
             newdf.reset_index(drop=True, inplace=True)
         if inplace:
             self.__dict__ = newdf.__dict__ # Hack to copy in-place
-            return
+            return self
         else:
             return newdf
 
@@ -474,26 +488,30 @@ class dataframe(pd.DataFrame): # pragma: no cover
                 else:   print(errormsg)
             else:
                 self.pop(col)
-        return
+        return self
 
 
-    def _rowindex(self, key=None, col=None, die=False):
-        ''' Get the sanitized row index for a given key and column '''
+    def _rowindex(self, value=None, col=None, die=False):
+        ''' Get the sanitized row index for a given value and column '''
         col = self._sanitizecol(col)
-        coldata = self.data[:,col] # Get data for this column
-        if key is None: key = coldata[-1] # If not supplied, pick the last element
-        try:    index = coldata.tolist().index(key) # Try to find duplicates
+        coldata = self.iloc[:,col].values # Get data for this column
+        if value is None: value = coldata[-1] # If not supplied, pick the last element
+        try:
+            index = coldata.tolist().index(value) # Try to find duplicates
         except:
-            if die: raise Exception('Item %s not found; choices are: %s' % (key, coldata))
-            else:   return
+            if die:
+                errormsg = f'Item {value} not found; choices are: {coldata}'
+                raise Exception(errormsg)
+            else:
+                return
         return index
 
 
-    def rmrow(self, key=None, col=None, returnval=False, die=True):
-        ''' Like pop, but removes by matching the first column instead of the index '''
-        index = self._rowindex(key=key, col=col, die=die)
-        if index is not None: self.pop(index, returnval=returnval)
-        return
+    def rmrow(self, value=None, col=None, returnval=False, die=True):
+        ''' Like pop, but removes by matching the value in the given column instead of the index '''
+        index = self._rowindex(value=value, col=col, die=die)
+        if index is not None: self.poprow(index, returnval=returnval)
+        return self
 
 
     def _diffindices(self, indices=None):
@@ -505,28 +523,24 @@ class dataframe(pd.DataFrame): # pragma: no cover
         return diff_set
 
 
-    def rmrows(self, indices=None, inplace=True):
+    def rmrows(self, indices=None, reset_index=True, inplace=True):
         ''' Remove rows by index '''
         keep_set = self._diffindices(indices)
-        keep_data = self.data[keep_set,:]
-        if not inplace:
-            output = dataframe(data=keep_data, cols=self.cols)
-            return output
-        else:
-            self.data = keep_data
-            return self
+        keep_data = self.iloc[keep_set,:]
+        newdf = dataframe(data=keep_data, cols=self.cols)
+        return self.replacedata(newdf=newdf, reset_index=reset_index, inplace=inplace)
 
 
-    def replace(self, col=None, old=None, new=None):
+    def replace_in_col(self, col=None, old=None, new=None):
         ''' Replace all of one value in a column with a new value '''
         col = self._sanitizecol(col)
         coldata = self.data[:,col] # Get data for this column
-        inds = scm.findinds(coldata==old)
-        self.data[inds,col] = new
-        return
+        inds = scm.findinds(arr=coldata, val=old)
+        self.iloc[inds,col] = new
+        return self
 
 
-    def _todict(self, row):
+    def to_odict(self, row):
         ''' Return row as a dict rather than as an array '''
         if len(row)!=len(self.cols):
             errormsg = 'Length mismatch between "%s" and "%s"' % (row, self.cols)
@@ -535,12 +549,12 @@ class dataframe(pd.DataFrame): # pragma: no cover
         return rowdict
 
 
-    def findrow(self, key=None, col=None, default=None, closest=False, die=False, asdict=False):
+    def findrow(self, value=None, col=None, default=None, closest=False, die=False, asdict=False):
         '''
         Return a row by searching for a matching value.
 
         Args:
-            key: the value to look for
+            value: the value to look for
             col: the column to look for this value in
             default: the value to return if key is not found (overrides die)
             closest: whether or not to return the closest row (overrides default and die)
@@ -556,15 +570,15 @@ class dataframe(pd.DataFrame): # pragma: no cover
             df.findrow(2016, asdict=True) # returns {'year':2016, 'val':0.3}
         '''
         if not closest: # Usual case, get
-            index = self._rowindex(key=key, col=col, die=(die and default is None))
+            index = self._rowindex(value=value, col=col, die=(die and default is None))
         else:
             col = self._sanitizecol(col)
-            coldata = self.data[:,col] # Get data for this column
-            index = np.argmin(abs(coldata-key)) # Find the closest match to the key
+            coldata = self.iloc[:,col] # Get data for this column
+            index = np.argmin(abs(coldata-value)) # Find the closest match to the key
         if index is not None:
-            thisrow = self.data[index,:]
+            thisrow = self.iloc[index,:].values
             if asdict:
-                thisrow = self._todict(thisrow)
+                thisrow = self.to_odict(thisrow)
         else:
             thisrow = default # If not found, return as default
         return thisrow
@@ -573,7 +587,7 @@ class dataframe(pd.DataFrame): # pragma: no cover
     def findrows(self, key=None, col=None, asarray=False):
         ''' A method like get() or indexing, but returns a dataframe by default -- WARNING, redundant? '''
         indices = self.rowindex(key=key, col=col)
-        arr = self.get(rows=indices)
+        arr = self.flexget(rows=indices)
         if asarray:
             return arr
         else:
@@ -584,7 +598,7 @@ class dataframe(pd.DataFrame): # pragma: no cover
     def rowindex(self, key=None, col=None):
         ''' Return the indices of all rows matching the given key in a given column. '''
         col = self._sanitizecol(col)
-        coldata = self.data[:,col] # Get data for this column
+        coldata = self.iloc[:,col] # Get data for this column
         indices = scm.findinds(coldata==key)
         return indices
 
@@ -608,9 +622,8 @@ class dataframe(pd.DataFrame): # pragma: no cover
         return self._filterrows(key=key, col=col, keep=False, verbose=verbose, copy=copy)
 
 
-    def filtercols(self, cols=None, die=True, copy=None):
-        ''' Filter columns keeping only those specified '''
-        if copy is None: copy = False
+    def filtercols(self, cols=None, die=True, reset_index=True, inplace=False):
+        ''' Filter columns keeping only those specified -- note, by default, do not perform in place '''
         if cols is None: cols = scu.dcp(self.cols) # By default, do nothing
         cols = scu.promotetolist(cols)
         order = []
@@ -625,14 +638,9 @@ class dataframe(pd.DataFrame): # pragma: no cover
             errormsg = 'sc.dataframe(): could not find the following column(s): %s\nChoices are: %s' % (notfound, self.cols)
             if die: raise Exception(errormsg)
             else:   print(errormsg)
-        ordered_data = self.data[:,order] # Resort and filter the data
-        if copy:
-            output = dataframe(cols=cols, data=ordered_data)
-            return output
-        else:
-            self.cols = cols # These should be in the correct order
-            self.data = ordered_data
-            return self
+        ordered_data = self.iloc[:,order] # Resort and filter the data
+        newdf = dataframe(cols=cols, data=ordered_data)
+        return self.replacedata(newdf=newdf, reset_index=reset_index, inplace=inplace)
 
 
     def sortrows(self, col=None, reverse=False, returninds=False):

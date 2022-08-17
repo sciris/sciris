@@ -1,6 +1,6 @@
-"""
-Version: 2020apr27
-"""
+'''
+Test the Sciris dataframe
+'''
 
 import sciris as sc
 
@@ -26,17 +26,12 @@ def test_dataframe():
     a.concat([[1,2,3],[4,5,6]], [9,9,9]); dfprint('Concatenate', a)
     a.insertrow(0, [660,3,-2]); dfprint('Insert a new row', a)
     a.sortrows(); dfprint('Sort by the first column', a)
-    # a.sort('y'); dfprint('Sort by the second column', a)
-    # a.addrow([770,4,-1]); dfprint('Replace the previous row and sort', a)
-    # dfprint('Return the row starting with value "555"', a.findrow(555))
-    # a.rmrow(); dfprint('Remove last row', a)
-    # a.rmrow(123); dfprint('Remove the row starting with element "123"', a)
-    # p = a.pandas(); dfprint('Convert to pandas', p)
-    # q = p.add(p); dfprint('Do a pandas operation', q)
-    # a.pandas(q); dfprint('Convert back', a)
-
-    # a.filtercols(['m','x']); dfprint('Filter to columns m and x', a)
-    # b = sc.dcp(a); dfprint('Dataframe copying:', a==b)
+    a.sortrows('y'); dfprint('Sort by the second column', a)
+    dfprint('Return the row starting with value "555"', a.findrow(555))
+    a.rmrow(); dfprint('Remove last row', a)
+    a.rmrow(value=666); dfprint('Remove the row starting with element "666"', a)
+    p = a.to_pandas(); dfprint('Convert to pandas', p)
+    b = a.filtercols(['m','x']); dfprint('Filter to columns m and x', b)
     return a
 
 
