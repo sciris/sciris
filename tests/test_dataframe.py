@@ -3,7 +3,6 @@ Version: 2020apr27
 """
 
 import sciris as sc
-from sciris import sc_legacy as scl
 
 def test_dataframe():
 
@@ -13,18 +12,19 @@ def test_dataframe():
         return None
 
     print('Testing dataframe:')
-    a = sc.dataframe(cols=['x','y'],data=[[1238,2],[384,5],[666,7]]); dfprint('Create dataframe', a)
-    # dfprint('Print out a column', a['x'])
-    # dfprint('Print out a row', a[0])
-    # dfprint('Print out an element', a['x',0])
-    # a[0] = [123,6]; dfprint('Set values for a whole row', a)
-    # a['y'] = [8,5,0]; dfprint('Set values for a whole column', a)
-    # a['z'] = [14,14,14]; dfprint('Add new column', a)
-    # a.addcol('m', [14,15,16]); dfprint('Alternate way to add new column', a)
-    # a.rmcol('z'); dfprint('Remove a column', a)
-    # a.pop(1); dfprint('Remove a row', a)
-    # a.append([555,2,-1]); dfprint('Append a new row', a)
-    # a.insert(1,[660,3,-1]); dfprint('Insert a new row', a)
+    a = sc.dataframe(cols=['x','y'], data=[[1238,2],[384,5],[666,7]]); dfprint('Create dataframe', a)
+    dfprint('Print out a column', a['x'])
+    dfprint('Print out a row', a[0])
+    dfprint('Print out an element', a['x',0])
+    a[0] = [123,6]; dfprint('Set values for a whole row', a)
+    a['y'] = [8,5,0]; dfprint('Set values for a whole column', a)
+    a['z'] = [14,14,14]; dfprint('Add new column', a)
+    a.addcol('m', [14,15,16]); dfprint('Alternate way to add new column', a)
+    a.rmcol('z'); dfprint('Remove a column', a)
+    a.poprow(1); dfprint('Remove a row', a)
+    a.appendrow([555,2,-1]); dfprint('Append a new row', a)
+    a.concat([[1,2,3],[4,5,6]], [9,9,9]); dfprint('Concatenate', a)
+    a.insertrow(1,[660,3,-2]); dfprint('Insert a new row', a)
     # a.sort(); dfprint('Sort by the first column', a)
     # a.sort('y'); dfprint('Sort by the second column', a)
     # a.addrow([770,4,-1]); dfprint('Replace the previous row and sort', a)
