@@ -20,7 +20,7 @@ from . import sc_odict as sco
 
 __all__ = ['dataframe']
 
-class dataframe(pd.DataFrame): # pragma: no cover
+class dataframe(pd.DataFrame):
     '''
     An extension of the pandas dataframe with additional convenience methods for
     accessing rows and columns and performing other operations.
