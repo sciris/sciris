@@ -35,6 +35,7 @@ Bugfixes
 Improvements
 ~~~~~~~~~~~~
 #. If a copy/deepcopy is not possible, ``sc.cp()``/``sc.dcp()`` now raise an exception by default (previously, they silenced it).
+#. ``sc.dataframe()`` has been completely revamped, and is now a backwards-compatible extension of ``pd.DataFrame()``.
 #. ``sc.timer()`` now has ``plot()`` and ``total()`` methods, as well as ``indivtimings`` and ``cumtimings`` properties.
 #. ``sc.strsplit()`` will automatically split common types of delimited strings (e.g. ``sc.strsplit('a b c')``).
 #. ``sc.parallelize()`` now supports additional parallelization options, e.g. ``concurrent.futures``, and new ``maxcpu``/``maxmem`` arguments.
