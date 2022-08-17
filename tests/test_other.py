@@ -12,7 +12,7 @@ def test_options():
     sc.heading('Test options')
     sc.options.help()
     sc.options(dpi=150)
-    sc.options.default()
+    sc.options('default')
     return
 
 

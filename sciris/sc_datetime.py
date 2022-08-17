@@ -107,7 +107,7 @@ def getdate(obj=None, astype='str', dateformat=None):
         return output
 
 
-def readdate(datestr=None, *args, dateformat=None, return_defaults=False):
+def readdate(datestr=None, *args, dateformat=None, return_defaults=False, verbose=False):
     '''
     Convenience function for loading a date from a string. If dateformat is None,
     this function tries a list of standard date types.
@@ -123,6 +123,7 @@ def readdate(datestr=None, *args, dateformat=None, return_defaults=False):
         args (list): additional dates to convert
         dateformat (str or list): the format for the date, if known; if 'dmy' or 'mdy', try as day-month-year or month-day-year formats; can also be a list of options
         return_defaults (bool): don't convert the date, just return the defaults
+        verbose (bool): return detailed error messages
 
     Returns:
         dateobj (date): a datetime object
@@ -153,6 +154,7 @@ def readdate(datestr=None, *args, dateformat=None, return_defaults=False):
         'datetime':       '%Y-%m-%d %H:%M:%S',    # 2020-03-21 14:35:21
         'datetime-alpha': '%Y-%b-%d %H:%M:%S',    # 2020-Mar-21 14:35:21
         'default':        '%Y-%m-%d %H:%M:%S.%f', # 2020-03-21 14:35:21.23483
+        'default2':       '%Y-%m-%dT%H:%M:%S.%f', # 2020-03-21T14:35:21.23483
         'ctime':          '%a %b %d %H:%M:%S %Y', # Sat Mar 21 23:09:29 2020
         }
 
@@ -218,6 +220,9 @@ def readdate(datestr=None, *args, dateformat=None, return_defaults=False):
                 errormsg = f'Was unable to convert "{datestr}" to a date using the formats:\n{formatstr}'
                 if dateformat not in ['dmy', 'mdy']:
                     errormsg += '\n\nNote: to read day-month-year or month-day-year dates, use dateformat="dmy" or "mdy" respectively.'
+                    if verbose:
+                        for key,val in exceptions.items():
+                            errormsg += f'\n {key}: {val}'
                 raise ValueError(errormsg)
         dateobjs.append(dateobj)
 
@@ -259,7 +264,10 @@ def date(obj, *args, start_date=None, readformat=None, outformat=None, as_date=T
 
     | New in version 1.0.0.
     | New in version 1.2.2: "readformat" argument; renamed "dateformat" to "outformat"
+    | New in version 2.0.0: support for ``np.datetime64`` objects
     '''
+    import pandas as pd # Optional import
+
     # Handle deprecation
     start_date = kwargs.pop('startdate', start_date) # Handle with or without underscore
     as_date    = kwargs.pop('asdate', as_date) # Handle with or without underscore
@@ -288,6 +296,8 @@ def date(obj, *args, start_date=None, readformat=None, outformat=None, as_date=T
                 d = d.date()
             elif scu.isstring(d):
                 d = readdate(d, dateformat=readformat).date()
+            elif isinstance(d, np.datetime64):
+                d = pd.Timestamp(d).date()
             elif scu.isnumber(d):
                 if readformat is not None:
                     d = readdate(d, dateformat=readformat).date()
@@ -304,8 +314,8 @@ def date(obj, *args, start_date=None, readformat=None, outformat=None, as_date=T
             else:
                 dates.append(d.strftime(outformat))
         except Exception as E:
-            errormsg = f'Conversion of "{d}" to a date failed: {str(E)}'
-            raise ValueError(errormsg)
+            errormsg = f'Conversion of "{d}" to a date failed'
+            raise ValueError(errormsg) from E
 
     # Return an integer rather than a list if only one provided
     output = scu._sanitize_output(dates, is_list, is_array, dtype=object)

@@ -22,6 +22,8 @@ New functions and methods
 #. ``sc.randsleep()`` sleeps for a nondeterministic period of time
 #. ``sc.loadzip()`` extracts (or reads data from) zip files
 #. ``sc.loadyaml()`` and ``sc.saveyaml()`` load and save YAML files, respectively.
+#. ``sc.download()`` downloads multiple files in parallel.
+#. ``sc.LazyModule()`` handles lazily loaded modules (see ``sc.importbyname()`` for usage).
 
 Bugfixes
 ~~~~~~~~
@@ -49,6 +51,11 @@ Improvements
 #. ``sc.checktype()`` now includes boolean arrays as being ``arraylike``, and has a new ``'bool'`` option.
 #. Added ``dict_keys()``, ``dict_values()``, and ``dict_items()`` methods for ``sc.odict()``.
 #. File-saving functions now have a ``sanitizepath`` argument (previously, some used file path sanitization and others didn't). They also now return the full path of the saved file.
+#. ``sc.Spreadsheet()`` now has a ``new()`` method that creates a blank workbook.
+#. ``sc.animation()`` now defaults to ``ffmpeg`` for saving.
+#. ``sc.date()`` can now read ``np.datetime64`` objects.
+#. ``sc.wget()`` can now save to files.
+#. ``sc.importbyname()`` can now load multiple modules, and load them lazily.
 
 Housekeeping
 ~~~~~~~~~~~~
@@ -57,6 +64,8 @@ Housekeeping
 #. Most instances of ``DeprecationWarning`` have been changed to ``FutureWarning``.
 #. Python 2 compatibility functions (e.g. ``sc.loadobj2or3()``) have been moved to a separate module, ``sc.sc_legacy``, which is no longer imported by default.
 #. Added style and contributing guides.
+#. Added official support for Python 3.7-3.10.
+#. ``sc.wget()`` was renamed ``sc.urlopen()``.
 
 Regression information
 ~~~~~~~~~~~~~~~~~~~~~~

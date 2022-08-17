@@ -88,6 +88,7 @@ def test_spreadsheets():
 
     if tidyup:
         sc.rmpath(files.excel)
+        sc.rmpath('spreadsheet.xlsx')
 
     return S
 
@@ -166,7 +167,7 @@ def test_fileio():
     if tidyup:
         sc.blank()
         sc.heading('Tidying up')
-        sc.rmpath([files.binary, files.text, files.zip, 'spreadsheet.xlsx'], die=False)
+        sc.rmpath([files.binary, files.text, files.zip], die=False)
 
     return o
 

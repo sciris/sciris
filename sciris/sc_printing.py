@@ -14,7 +14,6 @@ import io
 import os
 import sys
 import time
-import colors
 import pprint
 import numpy as np
 import collections as co
@@ -22,6 +21,7 @@ from textwrap import fill
 from collections import UserString
 from contextlib import redirect_stdout
 from . import sc_utils as scu
+from . import ansicolors as ac
 
 
 # Add Windows support for colors (do this at the module level so that colorama.init() only gets called once)
@@ -579,7 +579,7 @@ def colorize(color=None, string=None, doprint=None, output=False, enable=True, s
             errormsg = 'You can supply either color or fg, but not both'
             raise ValueError(errormsg)
 
-        if ansi_support: ansistring = colors.color(s=string, fg=fg, bg=bg, style=style) # Actually apply color
+        if ansi_support: ansistring = ac.color(s=string, fg=fg, bg=bg, style=style) # Actually apply color
         else:            ansistring = str(string) # Otherwise, just return the string
 
     # Original use case
@@ -642,27 +642,27 @@ def colorize(color=None, string=None, doprint=None, output=False, enable=True, s
 # Alias certain colors functions -- not including white and black since poor practice on light/dark terminals
 def printred(s, **kwargs):
     ''' Alias to print(colors.red(s)) '''
-    return print(colors.red(s, **kwargs))
+    return print(ac.red(s, **kwargs))
 
 def printgreen(s, **kwargs):
     ''' Alias to print(colors.green(s)) '''
-    return print(colors.green(s, **kwargs))
+    return print(ac.green(s, **kwargs))
 
 def printblue(s, **kwargs):
     ''' Alias to print(colors.blue(s)) '''
-    return print(colors.blue(s, **kwargs))
+    return print(ac.blue(s, **kwargs))
 
 def printcyan(s, **kwargs):
     ''' Alias to print(colors.cyan(s)) '''
-    return print(colors.cyan(s, **kwargs))
+    return print(ac.cyan(s, **kwargs))
 
 def printyellow(s, **kwargs):
     ''' Alias to print(colors.yellow(s)) '''
-    return print(colors.yellow(s, **kwargs))
+    return print(ac.yellow(s, **kwargs))
 
 def printmagenta(s, **kwargs):
     ''' Alias to print(colors.magenta(s)) '''
-    return print(colors.magenta(s, **kwargs))
+    return print(ac.magenta(s, **kwargs))
 
 
 def heading(string=None, *args, color=None, divider=None, spaces=None, spacesafter=None, minlength=None, maxlength=None, sep=' ', doprint=None, output=False, **kwargs):

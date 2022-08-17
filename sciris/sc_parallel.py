@@ -243,6 +243,8 @@ def parallelize(func, iterarg=None, iterkwargs=None, args=None, kwargs=None, ncp
                 'multiprocessing': 'multiprocessing',
                 'concurrent.futures': 'concurrent.futures',
                 'concurrent': 'concurrent.futures',
+                'thread': 'thread',
+                'threadpool': 'thread',
             }
             try:
                 parallelizer = mapping[parallelizer]
@@ -259,6 +261,9 @@ def parallelize(func, iterarg=None, iterkwargs=None, args=None, kwargs=None, ncp
                     outputlist = pool.map(_parallel_task, argslist)
             elif parallelizer == 'concurrent.futures':
                 with cf.ProcessPoolExecutor(max_workers=ncpus) as pool:
+                    outputlist = list(pool.map(_parallel_task, argslist))
+            elif parallelizer == 'thread':
+                with cf.ThreadPoolExecutor(max_workers=ncpus) as pool:
                     outputlist = list(pool.map(_parallel_task, argslist))
             else: # Should be unreachable; exception should have already been caught
                 errormsg = f'Invalid parallelizer "{parallelizer}"'
@@ -377,14 +382,13 @@ def parallel_progress(fcn, inputs, num_workers=None, show_progress=True, initial
 
     New in version 1.0.0.
     """
-    from multiprocess import pool
     try:
         from tqdm import tqdm
     except ModuleNotFoundError as E:
         errormsg = 'Module tqdm not found; please install with "pip install tqdm"'
         raise ModuleNotFoundError(errormsg) from E
 
-    pool = pool.Pool(num_workers, initializer=initializer)
+    pool = mp.pool.Pool(num_workers, initializer=initializer)
 
     results = [None]
     if scu.isnumber(inputs):

@@ -1465,9 +1465,9 @@ class animation(scu.prettyobj):
     if you just want to animate a set of artists (e.g., lines).
 
     This class works by saving snapshots of the figure to disk as image files, then
-    reloading them as a Matplotlib animation. While (slightly) slower than working
-    with artists directly, it means that anything that can be rendered to a figure
-    can be animated.
+    reloading them either via ``ffmpeg`` or as a Matplotlib animation. While (slightly)
+    slower than working with artists directly, it means that anything that can be
+    rendered to a figure can be animated.
 
     Note: the terms "animation" and "movie" are used interchangeably here.
 
@@ -1480,8 +1480,8 @@ class animation(scu.prettyobj):
         basename     (str):  name for temporary image files, e.g. 'myanimation'
         nametemplate (str):  as an alternative to imageformat and basename, specify the full name template, e.g. 'myanimation%004d.jpg'
         imagefolder  (str):  location to store temporary image files; default current folder, or use 'tempfile' to create a temporary folder
-        anim_args    (dict): passed to ``matplotlib.animation.ArtistAnimation()``
-        save_args    (dict): passed to ``matplotlib.animation.save()``
+        anim_args    (dict): passed to ``matplotlib.animation.ArtistAnimation()`` or ``ffmpeg.input()``
+        save_args    (dict): passed to ``matplotlib.animation.save()`` or ``ffmpeg.run()``
         tidy         (bool): whether to delete temporary files
         verbose      (bool): whether to print progress
         kwargs       (dict): also passed to ``matplotlib.animation.save()``
@@ -1507,7 +1507,8 @@ class animation(scu.prettyobj):
 
         anim.save('dots.mp4')
 
-    New in version 1.3.3.
+    | New in version 1.3.3.
+    | New in version 2.0.0: ``ffmpeg`` option.
     '''
     def __init__(self, fig=None, filename=None, dpi=200, fps=10, imageformat='png', basename='animation', nametemplate=None,
                  imagefolder=None, anim_args=None, save_args=None, frames=None, tidy=True, verbose=True, **kwargs):
@@ -1683,10 +1684,21 @@ class animation(scu.prettyobj):
             print(f'Failed to remove the following temporary files:\n{scu.newlinejoin(failed)}')
 
 
-    def save(self, filename=None, fps=None, dpi=None, anim_args=None, save_args=None, frames=None, tidy=None, verbose=True, **kwargs):
+    def save(self, filename=None, fps=None, dpi=None, engine='ffmpeg', anim_args=None,
+             save_args=None, frames=None, tidy=None, verbose=True, **kwargs):
         ''' Save the animation -- arguments the same as ``sc.animation()`` and ``sc.savemovie()``, and are described there '''
 
-        import matplotlib.animation as mpl_anim # Sometimes fails if not imported directly
+        # Handle engine
+        if engine == 'ffmpeg':
+            try:
+                import ffmpeg
+            except:
+                print('Warning: engine ffmpeg not available; falling back to Matplotlib. Run "pip install ffmpeg-python" to use in future.')
+                engine = 'matplotlib'
+        engines = ['ffmpeg', 'matplotlib']
+        if engine not in engines:
+            errormsg = f'Could not understand engine "{engine}": must be one of {scu.strjoin(engines)}'
+            raise ValueError(errormsg)
 
         # Handle dictionary args
         anim_args = scu.mergedicts(self.anim_args, anim_args)
@@ -1698,39 +1710,50 @@ class animation(scu.prettyobj):
                 self.filename = f'{self.basename}.mp4'
             filename = self.filename
 
-        # Load and sanitize frames
-        if frames is None:
-            if not self.n_frames:
-                self.loadframes()
-            if self.n_files and (self.n_frames != self.n_files):
-                errormsg = f'Number of files ({self.n_files}) does not match number of frames ({self.n_frames}): please do not mix and match adding figures and adding artists as frames!'
-                raise RuntimeError(errormsg)
-            frames = self.frames
-
-        for f in range(len(frames)):
-            if not scu.isiterable(frames[f]):
-                frames[f] = (frames[f],) # This must be either a tuple or a list to work with ArtistAnimation
-
-        # Try to get the figure from the frames, else use the current one
-        fig = self._getfig()
-
         # Set parameters
         if fps  is None: fps  = save_args.pop('fps', self.fps)
         if dpi  is None: dpi  = save_args.pop('dpi', self.dpi)
         if tidy is None: tidy = self.tidy
 
-        # Optionally print progress
-        if verbose:
-            T = scd.timer()
-            print(f'Saving {len(frames)} frames at {fps} fps and {dpi} dpi to "{filename}"...')
-            callback = lambda i,n: scp.progressbar(i+1, len(frames)) # Default callback
-            callback = save_args.pop('progress_callback', callback) # if provided as an argument
-        else:
-            callback = None
+        # Start timing
+        T = scd.timer()
 
-        # Actually create the animation -- warning, no way to not actually have it render!
-        anim = mpl_anim.ArtistAnimation(fig, frames, **anim_args)
-        anim.save(filename, fps=fps, dpi=dpi, progress_callback=callback, **save_args, **kwargs)
+        if engine == 'ffmpeg':
+            save_args = scu.mergedicts(dict(overwrite_output=True, quiet=True), save_args)
+            stream = ffmpeg.input(self.nametemplate, framerate=fps, **anim_args)
+            stream = stream.output(filename)
+            stream.run(**save_args, **kwargs)
+
+        elif engine == 'matplotlib':
+            import matplotlib.animation as mpl_anim
+
+            # Load and sanitize frames
+            if frames is None:
+                if not self.n_frames:
+                    self.loadframes()
+                if self.n_files and (self.n_frames != self.n_files):
+                    errormsg = f'Number of files ({self.n_files}) does not match number of frames ({self.n_frames}): please do not mix and match adding figures and adding artists as frames!'
+                    raise RuntimeError(errormsg)
+                frames = self.frames
+
+            for f in range(len(frames)):
+                if not scu.isiterable(frames[f]):
+                    frames[f] = (frames[f],) # This must be either a tuple or a list to work with ArtistAnimation
+
+            # Try to get the figure from the frames, else use the current one
+            fig = self._getfig()
+
+            # Optionally print progress
+            if verbose:
+                print(f'Saving {len(frames)} frames at {fps} fps and {dpi} dpi to "{filename}"...')
+                callback = lambda i,n: scp.progressbar(i+1, len(frames)) # Default callback
+                callback = save_args.pop('progress_callback', callback) # if provided as an argument
+            else:
+                callback = None
+
+            # Actually create the animation -- warning, no way to not actually have it render!
+            anim = mpl_anim.ArtistAnimation(fig, frames, **anim_args)
+            anim.save(filename, fps=fps, dpi=dpi, progress_callback=callback, **save_args, **kwargs)
 
         if tidy:
             self.rmfiles()
@@ -1743,7 +1766,7 @@ class animation(scu.prettyobj):
                 else:            print(f'File size: {filesize/1e6:0.1f} MB')
             except:
                 pass
-            T.toc(label='saving movie')
+            T.toc(label='Time saving movie')
 
         return
 

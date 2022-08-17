@@ -23,8 +23,9 @@ def test_adaptations():
     with pytest.raises(ValueError):
         o.sha3 = sc.dcp(o.sha)
 
-    print('\nTesting wget')
+    print('\nTesting wget and download')
     o.wget = sc.wget('http://wikipedia.org/')
+    o.download = sc.download('http://wikipedia.org/', 'http://covasim.org/', save=False)
 
     print('\nTesting htmlify')
     o.html = sc.htmlify('foo&\nbar') # Returns b'foo&amp;<br>bar'
@@ -113,6 +114,9 @@ def test_versions():
     data, _ = sc.require(numpy='1.19.1', matplotlib='==4.2.2', die=False, detailed=True)
     with pytest.raises(ModuleNotFoundError): sc.require('matplotlib==99.23')
     with pytest.raises(ModuleNotFoundError): sc.require('not_a_valid_module')
+
+    print('↑↑↑ Will print warnings')
+
     return data
 
 

@@ -29,7 +29,6 @@ requirements = [
         'pyyaml',       # For loading/saving YAML
         'gitpython',    # Version information
         'jellyfish',    # For fuzzy string matching
-        'ansicolors',   # For colored text output
         'line_profiler ;   platform_system == "Linux"',   # For the line profiler -- only install on Linux
         'memory_profiler ; platform_system == "Linux"',   # For the memory profiler -- only install on Linux
         'colorama ;        platform_system == "Windows"', # For colored text output -- only install on Windows
@@ -55,14 +54,18 @@ with open(os.path.join(cwd, 'README.rst'), "r") as fh:
     long_description = fh.read()
 
 CLASSIFIERS = [
-    'Environment :: Console',
+    'Development Status :: 5 - Production/Stable',
     'Intended Audience :: Science/Research',
     'License :: OSI Approved :: MIT License',
     'Operating System :: OS Independent',
     'Programming Language :: Python',
-    'Topic :: Software Development :: Libraries :: Python Modules',
-    'Development Status :: 5 - Production/Stable',
+    'Programming Language :: Python :: 3',
+    'Programming Language :: Python :: 3.7',
+    'Programming Language :: Python :: 3.8',
     'Programming Language :: Python :: 3.9',
+    'Programming Language :: Python :: 3.10',
+    'Topic :: Software Development',
+    'Topic :: Scientific/Engineering',
 ]
 
 setup(
