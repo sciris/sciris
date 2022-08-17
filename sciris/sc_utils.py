@@ -837,9 +837,9 @@ def isnumber(obj, isnan=None):
 
 def isstring(obj):
     '''
-    Determine whether or not the input is a string (i.e., str or bytes).
+    Determine whether or not the input is string-like (i.e., str or bytes).
 
-    Equivalent to isinstance(obj, (str, bytes))
+    Equivalent to ``isinstance(obj, (str, bytes))``
     '''
     return checktype(obj, 'string')
 

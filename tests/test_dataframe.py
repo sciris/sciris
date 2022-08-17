@@ -13,7 +13,7 @@ def test_dataframe():
         return None
 
     print('Testing dataframe:')
-    a = scl.legacy_dataframe(cols=['x','y'],data=[[1238,2],[384,5],[666,7]]); dfprint('Create dataframe', a)
+    a = sc.dataframe(cols=['x','y'],data=[[1238,2],[384,5],[666,7]]); dfprint('Create dataframe', a)
     # dfprint('Print out a column', a['x'])
     # dfprint('Print out a row', a[0])
     # dfprint('Print out an element', a['x',0])

@@ -16,14 +16,13 @@ import os
 import re
 import inspect
 import collections as co
-import copy as cp
 import pylab as pl
 from . import sc_utils as scu
 from . import sc_odict as sco
 from . import sc_printing as scp
 
 
-__all__ = ['options', 'help']
+__all__ = ['parse_env', 'options', 'help']
 
 
 # Define simple plotting options -- similar to Matplotlib default
@@ -37,13 +36,52 @@ rc_simple = {
 }
 
 # Define default plotting options -- based on Seaborn
-rc_fancy = cp.deepcopy(rc_simple)
+rc_fancy = scu.dcp(rc_simple)
 rc_fancy.update({
     'axes.facecolor': '#f2f2ff',
     'axes.grid':      True,
     'grid.color':     'white',
     'grid.linewidth': 1,
 })
+
+
+def parse_env(var, default=None, which='str'):
+    '''
+    Simple function to parse environment variables
+
+    Args:
+        var (str): name of the environment variable to get
+        default (any): default value
+        which (str): what type to convert to (if None, don't convert)
+
+    New in version 2.0.0.
+    '''
+    val = os.getenv(var, default)
+    if which is None:
+        return val
+    elif which in ['str', 'string']:
+        if val: out = str(val)
+        else:   out = ''
+    elif which == 'int':
+        if val: out = int(val)
+        else:   out = 0
+    elif which == 'float':
+        if val: out = float(val)
+        else:   out = 0.0
+    elif which == 'bool':
+        if val:
+            if isinstance(val, str):
+                if val.lower() in ['false', 'f', '0', '']:
+                    val = False
+                else:
+                    val = True
+            out = bool(val)
+        else:
+            out = False
+    else:
+        errormsg = f'Could not understand type "{which}": must be None, str, int, float, or bool'
+        raise ValueError(errormsg)
+    return out
 
 
 #%% Define the options class
@@ -61,17 +99,17 @@ class Options(sco.objdict):
 
     Common options are (see also ``sc.options.help(detailed=True)``):
 
-        - verbose:        default verbosity for simulations to use
-        - style:          the plotting style to use
         - dpi:            the overall DPI (i.e. size) of the figures
         - font:           the font family/face used for the plots
         - fontsize:       the font size used for the plots
-        - interactive:    convenience method to set show, close, and backend
-        - jupyter:        defaults for Jupyter (change backend and figure close/return)
-        - show:           whether to show figures
-        - close:          whether to close the figures
         - backend:        which Matplotlib backend to use
-        - warnings:       how to handle warnings (e.g. print, raise as errors, ignore)
+        - interactive:    convenience method to set backend
+        - jupyter:        defaults for Jupyter (change backend)
+        - style:          the plotting style to use
+
+    Each setting can also be set with an environment variable, e.g. SCIRIS_DPI.
+    Note also the environment variable SCIRIS_LAZY, which imports Sciris lazily
+    (i.e. does not import submodules).
 
     **Examples**::
 
@@ -91,7 +129,7 @@ class Options(sco.objdict):
         optdesc, options = self.get_orig_options() # Get the options
         self.update(options) # Update this object with them
         self.optdesc = optdesc # Set the description as an attribute, not a dict entry
-        self.orig_options = cp.deepcopy(options) # Copy the default options
+        self.orig_options = scu.dcp(options) # Copy the default options
         return
 
 
@@ -158,34 +196,34 @@ class Options(sco.objdict):
         options = sco.objdict() # The options
 
         optdesc.sep = 'Set thousands seperator'
-        options.sep = str(os.getenv('SCIRIS_SEP', ','))
+        options.sep = parse_env('SCIRIS_SEP', ',', 'str')
 
         optdesc.aspath = 'Set whether to return Path objects instead of strings by default'
-        options.aspath = bool(os.getenv('SCIRIS_ASPATH', False))
+        options.aspath = parse_env('SCIRIS_ASPATH', False, 'bool')
 
         optdesc.style = 'Set the default plotting style -- options are "simple" and "fancy" plus those in pl.style.available; see also options.rc'
-        options.style = os.getenv('SCIRIS_STYLE', 'simple')
+        options.style = parse_env('SCIRIS_STYLE', 'simple', 'str')
 
         optdesc.dpi = 'Set the default DPI -- the larger this is, the larger the figures will be'
-        options.dpi = int(os.getenv('SCIRIS_DPI', pl.rcParams['figure.dpi']))
+        options.dpi = parse_env('SCIRIS_DPI', pl.rcParams['figure.dpi'], 'int')
 
         optdesc.font = 'Set the default font family (e.g., sans-serif or Arial)'
-        options.font = os.getenv('SCIRIS_FONT', pl.rcParams['font.family'])
+        options.font = parse_env('SCIRIS_FONT', pl.rcParams['font.family'], 'str')
 
         optdesc.fontsize = 'Set the default font size'
-        options.fontsize = int(os.getenv('SCIRIS_FONT_SIZE', pl.rcParams['font.size']))
+        options.fontsize = parse_env('SCIRIS_FONT_SIZE', pl.rcParams['font.size'], 'str')
 
         optdesc.interactive = 'Convenience method to set figure backend'
-        options.interactive = os.getenv('SCIRIS_INTERACTIVE', True)
+        options.interactive = parse_env('SCIRIS_INTERACTIVE', True, 'bool')
 
         optdesc.jupyter = 'Convenience method to set common settings for Jupyter notebooks: set to "retina" or "widget" (default) to set backend'
-        options.jupyter = os.getenv('SCIRIS_JUPYTER', False)
+        options.jupyter = parse_env('SCIRIS_JUPYTER', False, 'bool')
 
         optdesc.backend = 'Set the Matplotlib backend (use "agg" for non-interactive)'
-        options.backend = os.getenv('SCIRIS_BACKEND', pl.get_backend())
+        options.backend = parse_env('SCIRIS_BACKEND', pl.get_backend(), 'str')
 
         optdesc.rc = 'Matplotlib rc (run control) style parameters used during plotting -- usually set automatically by "style" option'
-        options.rc = cp.deepcopy(rc_simple)
+        options.rc = scu.dcp(rc_simple)
 
         return optdesc, options
 

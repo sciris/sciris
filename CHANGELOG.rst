@@ -24,6 +24,7 @@ New functions and methods
 #. ``sc.loadyaml()`` and ``sc.saveyaml()`` load and save YAML files, respectively.
 #. ``sc.download()`` downloads multiple files in parallel.
 #. ``sc.LazyModule()`` handles lazily loaded modules (see ``sc.importbyname()`` for usage).
+#. ``sc.parse_env()`` parses environment variables into common types (e.g., will interpret ``'False'`` as ``False``).
 
 Bugfixes
 ~~~~~~~~
@@ -66,6 +67,7 @@ Housekeeping
 #. Added style and contributing guides.
 #. Added official support for Python 3.7-3.10.
 #. ``sc.wget()`` was renamed ``sc.urlopen()``.
+#. Sciris now has a "lazy loading" option, which does not import submodules, meaning loading is effectively instant. To use, set the environment variable ``SCIRIS_LAZY=1``.
 
 Regression information
 ~~~~~~~~~~~~~~~~~~~~~~

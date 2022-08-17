@@ -20,12 +20,10 @@ from . import sc_odict as sco
 
 __all__ = ['dataframe']
 
-class dataframe(object): # pragma: no cover
+class dataframe(pd.DataFrame): # pragma: no cover
     '''
-    A simple data frame, based on simple lists, for simply storing simple data.
-    Much less feature-rich than a Pandas data frame, but simpler to use. Note:
-    this class is semi-deprecated; use at your own risk. To be honest, Pandas
-    is a much better solution better most of the time.
+    An extension of the pandas dataframe with additional convenience methods for
+    accessing rows and columns and performing other operations.
 
     **Example**::
 
@@ -50,13 +48,14 @@ class dataframe(object): # pragma: no cover
 
     The dataframe can be used for both numeric and non-numeric data.
 
-    Version: 2020nov29
+    | New in version 2.0.0: subclass pandas DataFrame
     '''
 
-    def __init__(self, cols=None, data=None, nrows=None):
+    def __init__(self, data=None, cols=None, nrows=None, **kwargs):
+        super().__init__(data=data, columns=cols)
         self.cols = None
         self.data = None
-        self.make(cols=cols, data=data, nrows=nrows)
+        # self.make(cols=cols, data=data, nrows=nrows)
         return
 
 
