@@ -1,5 +1,5 @@
 '''
-Legacy methods for handling old pickles (e.g. Python 2 pickles). Included for backwards
+Legacy methods for handling old pickles (eg Python 2 pickles). Included for backwards
 compatibility, but not imported into Sciris by default.
 '''
 

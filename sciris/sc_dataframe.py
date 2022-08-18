@@ -1,8 +1,6 @@
 '''
-Simple alternative to the Pandas DataFrame.
-
-This class is rarely used and not well maintained; in most cases, it is probably
-better to just use the Pandas one.
+Extension of the pandas dataframe to be more flexible, especially with filtering
+rows/columns and concatenating data.
 '''
 
 ##############################################################################

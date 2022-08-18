@@ -2,10 +2,10 @@
 Extensions to Numpy, including finding array elements and smoothing data.
 
 Highlights:
-    - ``sc.findinds()``: find indices of an array matching a condition
-    - ``sc.findnearest()``: find nearest matching value
-    - ``sc.rolling()``: calculate rolling average
-    - ``sc.smooth()``: simple smoothing of 1D or 2D arrays
+    - :func:`findinds`: find indices of an array matching a condition
+    - :func:`findnearest`: find nearest matching value
+    - :func:`rolling`: calculate rolling average
+    - :func:`smooth`: simple smoothing of 1D or 2D arrays
 '''
 
 import numpy as np

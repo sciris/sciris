@@ -2,12 +2,12 @@
 The 'odict' class, combining features from an OrderedDict and a list/array.
 
 Highlights:
-    - ``sc.odict()``: flexible container representing the best-of-all-worlds across lists, dicts, and arrays
-    - ``sc.objdict()``: like an odict, but allows get/set via e.g. ``foo.bar`` instead of ``foo['bar']``
+    - :class:`odict`: flexible container representing the best-of-all-worlds across lists, dicts, and arrays
+    - :class:`objdict`: like an odict, but allows get/set via e.g. ``foo.bar`` instead of ``foo['bar']``
 '''
 
 ##############################################################################
-### ODICT CLASS
+#%% odict class
 ##############################################################################
 
 import re
@@ -693,7 +693,7 @@ class odict(OD):
 
 
     def rename(self, oldkey, newkey):
-        ''' Change a key name -- WARNING, very inefficient! '''
+        ''' Change a key name (note: not optimized for speed) '''
         nkeys = len(self)
         if isinstance(oldkey, scu._numtype):
             index = oldkey

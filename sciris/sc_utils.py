@@ -6,15 +6,15 @@ ignore a function that you don't need than write one from scratch that you
 do need.
 
 Highlights:
-    - ``sc.dcp()``: shortcut to ``copy.deepcopy()``
-    - ``sc.pp()``: shortcut to ``pprint.pprint()``
-    - ``sc.isnumber()``: checks if something is any number type
-    - ``sc.tolist()``: converts any object to a list, for easy iteration
-    - ``sc.toarray()``: tries to convert any object to an array, for easy use with numpy
-    - ``sc.mergedicts()``: merges any set of inputs into a dictionary
-    - ``sc.mergelists()``: merges any set of inputs into a list
-    - ``sc.runcommand()``: simple way of executing a shell command
-    - ``sc.download()``: download multiple URLs in parallel
+    - :func:`dcp`: shortcut to ``copy.deepcopy()``
+    - :func:`pp`: shortcut to ``pprint.pprint()``
+    - :func:`isnumber`: checks if something is any number type
+    - :func:`tolist`: converts any object to a list, for easy iteration
+    - :func:`toarray`: tries to convert any object to an array, for easy use with numpy
+    - :func:`mergedicts`: merges any set of inputs into a dictionary
+    - :func:`mergelists`: merges any set of inputs into a list
+    - :func:`runcommand`: simple way of executing a shell command
+    - :func:`download`: download multiple URLs in parallel
 '''
 
 ##############################################################################

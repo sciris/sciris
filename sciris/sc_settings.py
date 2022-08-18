@@ -1,6 +1,7 @@
 '''
-Define options for Sciris, mostly plotting options. All options should be set using
-``set()`` or directly, e.g.::
+Define options for Sciris, mostly plotting options.
+
+All options should be set using ``set()`` or directly, e.g.::
 
     sc.options(font_size=18)
 

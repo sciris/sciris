@@ -2,10 +2,10 @@
 Profiling and CPU/memory management functions.
 
 Highlights:
-    - ``sc.cpuload()``: alias to ``psutil.cpu_percent()``
-    - ``sc.loadbalancer()``: very basic load balancer
-    - ``sc.profile()``: a line profiler
-    - ``sc.resourcemonitor()``: a monitor to kill processes that exceed memory or other limits
+    - :func:`cpuload`: alias to ``psutil.cpu_percent()``
+    - :func:`loadbalancer`: very basic load balancer
+    - :func:`profile`: a line profiler
+    - :func:`resourcemonitor`: a monitor to kill processes that exceed memory or other limits
 """
 
 import os

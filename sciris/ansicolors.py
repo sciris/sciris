@@ -1,6 +1,6 @@
 '''
 Copy of Jonathan Eunice and Georgios Verigakis' ansicolors Python module:
-    https://pypi.org/project/ansicolors/
+https://pypi.org/project/ansicolors/
 
 Included here to avoid an additional dependency.
 

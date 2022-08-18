@@ -3,13 +3,13 @@
 Extensions to Matplotlib, including 3D plotting and plot customization.
 
 Highlights:
-    - ``sc.plot3d()``: easy way to render 3D plots
-    - ``sc.boxoff()``: turn off top and right parts of the axes box
-    - ``sc.commaticks()``: convert labels from "10000" and "1e6" to "10,000" and "1,000,0000"
-    - ``sc.SIticks()``: convert labels from "10000" and "1e6" to "10k" and "1m"
-    - ``sc.maximize()``: make the figure fill the whole screen
-    - ``sc.savemovie()``: save a sequence of figures as an MP4 or other movie
-    - ``sc.fonts()``: list available fonts or add new ones
+    - :func:`plot3d`: easy way to render 3D plots
+    - :func:`boxoff`: turn off top and right parts of the axes box
+    - :func:`commaticks`: convert labels from "10000" and "1e6" to "10,000" and "1,000,0000"
+    - :func:`SIticks`: convert labels from "10000" and "1e6" to "10k" and "1m"
+    - :func:`maximize`: make the figure fill the whole screen
+    - :func:`savemovie`: save a sequence of figures as an MP4 or other movie
+    - :func:`fonts`: list available fonts or add new ones
 '''
 
 ##############################################################################

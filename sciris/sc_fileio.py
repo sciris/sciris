@@ -2,13 +2,13 @@
 Functions for reading/writing to files, including pickles, JSONs, and Excel.
 
 Highlights:
-    - ``sc.save()/sc.load()``: efficiently save/load any Python object (via pickling)
-    - ``sc.savetext()/sc.loadtext()``: likewise, for text
-    - ``sc.savejson()/sc.loadjson()``: likewise, for JSONs
-    - ``sc.saveyaml()/sc.saveyaml()``: likewise, for YAML
-    - ``sc.thisdir()``: get current folder
-    - ``sc.getfilelist()``: easy way to access glob
-    - ``sc.rmpath()``: remove files and folders
+    - :func:`save` / :func:`load`: efficiently save/load any Python object (via pickling)
+    - :func:`savetext` / :func:`loadtext`: likewise, for text
+    - :func:`savejson` / :func:`loadjson`: likewise, for JSONs
+    - :func:`saveyaml` / :func:`saveyaml`: likewise, for YAML
+    - :func:`thisdir`: get current folder
+    - :func:`getfilelist`: easy way to access glob
+    - :func:`rmpath`: remove files and folders
 """
 
 ##############################################################################
