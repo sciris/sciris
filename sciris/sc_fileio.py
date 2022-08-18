@@ -681,7 +681,7 @@ def rmpath(path=None, *args, die=True, verbose=True, interactive=False, **kwargs
                 elif verbose:
                     print(errormsg)
 
-        if interactive:
+        if interactive: # pragma: no cover
             ans = input(f'Remove "{path}"? (y/[n]) ')
             if ans != 'y':
                 print(f'  Skipping "{path}"')
@@ -691,7 +691,7 @@ def rmpath(path=None, *args, die=True, verbose=True, interactive=False, **kwargs
             rm_func(path)
             if verbose or interactive:
                 print(f'Removed "{path}"')
-        except Exception as E:
+        except Exception as E: # pragma: no cover
             if die:
                 raise E
             elif verbose:
@@ -1177,7 +1177,7 @@ class Spreadsheet(Blobject):
         return wb
 
 
-    def openpyxl(self, reload=False, store=True, **kwargs):
+    def openpyxl(self, reload=False, store=True, **kwargs): # pragma: no cover
         ''' Return a book as opened by openpyxl '''
         if self._reload_wb(reload=reload):
             import openpyxl # Optional import
@@ -1323,7 +1323,7 @@ Falling back to openpyxl, which is identical except for how cached cell values a
                         cellobj = ws[cell]
                     elif scu.checktype(cell, 'arraylike','number') and len(cell)==2: # Handles e.g. cell=(0,0)
                         cellobj = ws.cell(row=cell[0], column=cell[1])
-                    else:
+                    else: # pragma: no cover
                         errormsg = f'Cell must be formatted as a label or row-column pair, e.g. "A1" or (3,5); not "{cell}"'
                         raise TypeError(errormsg)
                     if verbose: print(f'  Cell {cell} = {val}')
@@ -1674,7 +1674,7 @@ class Empty(object):
         pass
 
 
-class UniversalFailed(Failed):
+class UniversalFailed(Failed): # pragma: no cover
     ''' A universal failed object class, that preserves as much data as possible '''
 
     def __init__(self, *args, **kwargs):
@@ -1755,7 +1755,7 @@ class _RobustUnpickler(pkl.Unpickler):
         return obj
 
 
-class _UltraRobustUnpickler(pkl.Unpickler):
+class _UltraRobustUnpickler(pkl.Unpickler): # pragma: no cover
     ''' If all else fails, just make a default object '''
 
     def __init__(self, bytesio, *args, unpicklingerrors=None, **kwargs):

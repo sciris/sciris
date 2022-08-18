@@ -581,7 +581,7 @@ def urlopen(url, filename=None, save=False, headers=None, params=None, data=None
         if verbose: print('Converting from bytes to text...')
         try:
             output = output.decode()
-        except Exception as E:
+        except Exception as E: # pragma: no cover
             if die:
                 raise E
             elif verbose:
@@ -659,7 +659,7 @@ def download(url, *args, filename=None, save=True, parallel=True, verbose=True, 
     n_filenames = len(filenames)
     if not n_filenames:
         filenames = [None]*n_urls
-    elif n_filenames != n_urls:
+    elif n_filenames != n_urls: # pragma: no cover
         errormsg = f'Cannot process {n_urls} URLs and {n_filenames} filenames'
         raise ValueError(errormsg)
 
