@@ -2,18 +2,21 @@
 Time/date utilities.
 
 Highlights:
-    - ``sc.tic()/sc.toc()/sc.timer()``: simple methods for timing durations
-    - ``sc.readdate()``: convert strings to dates using common formats
-    - ``sc.daterange()``: create a list of dates
-    - ``sc.datedelta()``: perform calculations on date strings
+    - :func:`tic` / :func:`toc` / :func:`timer`: simple methods for timing durations
+    - :func:`readdate`: convert strings to dates using common formats
+    - :func:`daterange`: create a list of dates
+    - :func:`datedelta`: perform calculations on date strings
 '''
 
 import time
 import warnings
+import numpy as np
+import pandas as pd
 import pylab as pl
 import datetime as dt
 import dateutil as du
 from . import sc_utils as scu
+from . import sc_math as scm
 
 
 ###############################################################################
@@ -23,7 +26,7 @@ from . import sc_utils as scu
 __all__ = ['now', 'getdate', 'readdate', 'date', 'day', 'daydiff', 'daterange', 'datedelta', 'datetoyear']
 
 
-def now(astype='dateobj', timezone=None, utc=False, dateformat=None):
+def now(astype='dateobj', timezone=None, utc=False, tostring=False, dateformat=None):
     '''
     Get the current time as a datetime object, optionally in UTC time.
 
@@ -31,10 +34,10 @@ def now(astype='dateobj', timezone=None, utc=False, dateformat=None):
     object by default, while ``sc.getdate()`` returns a string by default.
 
     Args:
-        astype (str): what to return; choices are "dateobj", "str", "float"; see ``sc.getdate()`` for more
-        timezone (str): the timezone to set the itme to
-        utc (bool): whether the time is specified in UTC time
-        dateformat (str): if ``astype`` is ``'str'``, use this output format
+        astype     (str)  : what to return; choices are "dateobj", "str", "float"; see ``sc.getdate()`` for more
+        timezone   (str)  : the timezone to set the itme to
+        utc        (bool) : whether the time is specified in UTC time
+        dateformat (str)  : if ``astype`` is ``'str'``, use this output format
 
     **Examples**::
 
@@ -51,6 +54,10 @@ def now(astype='dateobj', timezone=None, utc=False, dateformat=None):
     if timezone is not None: tzinfo = du.tz.gettz(timezone) # Timezone is a string
     elif utc:                tzinfo = du.tz.tzutc() # UTC has been specified
     else:                    tzinfo = None # Otherwise, do nothing
+    if tostring:
+        warnmsg = 'sc.now() argument "tostring" will be deprecated soon'
+        warnings.warn(warnmsg, category=FutureWarning, stacklevel=2)
+        astype='str'
     timenow = dt.datetime.now(tzinfo)
     output = getdate(timenow, astype=astype, dateformat=dateformat)
     return output
@@ -101,7 +108,7 @@ def getdate(obj=None, astype='str', dateformat=None):
         return output
 
 
-def readdate(datestr=None, *args, dateformat=None, return_defaults=False):
+def readdate(datestr=None, *args, dateformat=None, return_defaults=False, verbose=False):
     '''
     Convenience function for loading a date from a string. If dateformat is None,
     this function tries a list of standard date types.
@@ -117,6 +124,7 @@ def readdate(datestr=None, *args, dateformat=None, return_defaults=False):
         args (list): additional dates to convert
         dateformat (str or list): the format for the date, if known; if 'dmy' or 'mdy', try as day-month-year or month-day-year formats; can also be a list of options
         return_defaults (bool): don't convert the date, just return the defaults
+        verbose (bool): return detailed error messages
 
     Returns:
         dateobj (date): a datetime object
@@ -147,6 +155,7 @@ def readdate(datestr=None, *args, dateformat=None, return_defaults=False):
         'datetime':       '%Y-%m-%d %H:%M:%S',    # 2020-03-21 14:35:21
         'datetime-alpha': '%Y-%b-%d %H:%M:%S',    # 2020-Mar-21 14:35:21
         'default':        '%Y-%m-%d %H:%M:%S.%f', # 2020-03-21 14:35:21.23483
+        'default2':       '%Y-%m-%dT%H:%M:%S.%f', # 2020-03-21T14:35:21.23483
         'ctime':          '%a %b %d %H:%M:%S %Y', # Sat Mar 21 23:09:29 2020
         }
 
@@ -212,6 +221,9 @@ def readdate(datestr=None, *args, dateformat=None, return_defaults=False):
                 errormsg = f'Was unable to convert "{datestr}" to a date using the formats:\n{formatstr}'
                 if dateformat not in ['dmy', 'mdy']:
                     errormsg += '\n\nNote: to read day-month-year or month-day-year dates, use dateformat="dmy" or "mdy" respectively.'
+                    if verbose:
+                        for key,val in exceptions.items():
+                            errormsg += f'\n {key}: {val}'
                 raise ValueError(errormsg)
         dateobjs.append(dateobj)
 
@@ -253,7 +265,9 @@ def date(obj, *args, start_date=None, readformat=None, outformat=None, as_date=T
 
     | New in version 1.0.0.
     | New in version 1.2.2: "readformat" argument; renamed "dateformat" to "outformat"
+    | New in version 2.0.0: support for ``np.datetime64`` objects
     '''
+
     # Handle deprecation
     start_date = kwargs.pop('startdate', start_date) # Handle with or without underscore
     as_date    = kwargs.pop('asdate', as_date) # Handle with or without underscore
@@ -261,7 +275,7 @@ def date(obj, *args, start_date=None, readformat=None, outformat=None, as_date=T
     if dateformat is not None: # pragma: no cover
         outformat = dateformat
         warnmsg = 'sc.date() argument "dateformat" has been deprecated as of v1.2.2; use "outformat" instead'
-        warnings.warn(warnmsg, category=DeprecationWarning, stacklevel=2)
+        warnings.warn(warnmsg, category=FutureWarning, stacklevel=2)
 
     # Convert to list and handle other inputs
     if obj is None:
@@ -282,6 +296,8 @@ def date(obj, *args, start_date=None, readformat=None, outformat=None, as_date=T
                 d = d.date()
             elif scu.isstring(d):
                 d = readdate(d, dateformat=readformat).date()
+            elif isinstance(d, np.datetime64):
+                d = pd.Timestamp(d).date()
             elif scu.isnumber(d):
                 if readformat is not None:
                     d = readdate(d, dateformat=readformat).date()
@@ -298,8 +314,8 @@ def date(obj, *args, start_date=None, readformat=None, outformat=None, as_date=T
             else:
                 dates.append(d.strftime(outformat))
         except Exception as E:
-            errormsg = f'Conversion of "{d}" to a date failed: {str(E)}'
-            raise ValueError(errormsg)
+            errormsg = f'Conversion of "{d}" to a date failed'
+            raise ValueError(errormsg) from E
 
     # Return an integer rather than a list if only one provided
     output = scu._sanitize_output(dates, is_list, is_array, dtype=object)
@@ -335,7 +351,7 @@ def day(obj, *args, start_date=None, **kwargs):
     if start_day is not None: # pragma: no cover
         start_date = start_day
         warnmsg = 'sc.day() argument "start_day" has been deprecated as of v1.2.2; use "start_date" instead'
-        warnings.warn(warnmsg, category=DeprecationWarning, stacklevel=2)
+        warnings.warn(warnmsg, category=FutureWarning, stacklevel=2)
 
     # Do not process a day if it's not supplied, and ensure it's a list
     if obj is None:
@@ -396,27 +412,34 @@ def daydiff(*args):
     return output
 
 
-def daterange(start_date=None, end_date=None, interval=None, inclusive=True, as_date=False, readformat=None, outformat=None, **kwargs):
+def daterange(start_date=None, end_date=None, interval=None, inclusive=True, as_date=False,
+              readformat=None, outformat=None, **kwargs):
     '''
     Return a list of dates from the start date to the end date. To convert a list
     of days (as integers) to dates, use ``sc.date()`` instead.
 
+    Note: instead of an end date, can also pass one or more of days, months, weeks,
+    or years, which will be added on to the start date via ``sc.datedelta()``.
+
     Args:
-        start_date (int/str/date): the starting date, in any format
-        end_date (int/str/date): the end date, in any format
-        interval (int/str/dict): if an int, the number of days; if 'week', 'month', or 'year', one of those; if a dict, passed to ``dt.relativedelta()``
-        inclusive (bool): if True (default), return to end_date inclusive; otherwise, stop the day before
-        as_date (bool): if True, return a list of datetime.date objects instead of strings (note: you can also use "asdate" instead of "as_date")
-        readformat (str): passed to date()
-        outformat (str): passed to date()
+        start_date (int/str/date) : the starting date, in any format
+        end_date   (int/str/date) : the end date, in any format
+        interval   (int/str/dict) : if an int, the number of days; if 'week', 'month', or 'year', one of those; if a dict, passed to ``dt.relativedelta()``
+        inclusive  (bool)         : if True (default), return to end_date inclusive; otherwise, stop the day before
+        as_date    (bool)         : if True, return a list of datetime.date objects instead of strings (note: you can also use "asdate" instead of "as_date")
+        readformat (str)          : passed to date()
+        outformat  (str)          : passed to date()
+        days       (int)          : optional
 
     **Examples**::
 
         dates1 = sc.daterange('2020-03-01', '2020-04-04')
         dates2 = sc.daterange('2020-03-01', '2022-05-01', interval=dict(months=2), asdate=True)
+        dates3 = sc.daterange('2020-03-01', weeks=5)
 
     | New in version 1.0.0.
     | New in version 1.3.0: "interval" argument
+    | New in version 2.0.0: ``sc.datedelta()`` arguments
     '''
 
     # Handle inputs
@@ -424,10 +447,10 @@ def daterange(start_date=None, end_date=None, interval=None, inclusive=True, as_
     end_date   = kwargs.pop('enddate',   end_date) # Handle with or without underscore
     as_date    = kwargs.pop('asdate', as_date) # Handle with or without underscore
     if len(kwargs):
-        errormsg = f'Unexpected arguments: {scu.strjoin(kwargs.keys())}'
-        raise ValueError(errormsg)
+        end_date = datedelta(start_date, **kwargs)
     start_date = date(start_date, readformat=readformat)
-    end_date   = date(end_date,   readformat=readformat)
+    end_date = date(end_date, readformat=readformat)
+
     if   interval in [None, 'day']: interval = dict(days=1)
     elif interval == 'week':        interval = dict(weeks=1)
     elif interval == 'month':       interval = dict(months=1)
@@ -598,7 +621,7 @@ def toc(start=None, label=None, baselabel=None, sigfigs=None, reset=False, outpu
     else:
         if baselabel is None:
             if label:
-                base = f'Elapsed time for {label}: '
+                base = f'{label}: '
             else: # Handles case toc(label='')
                 base = ''
         else:
@@ -661,15 +684,17 @@ class timer(scu.prettyobj):
     Args:
         label (str): label identifying this timer
         auto (bool): whether to automatically increment the label
+        start (bool): whether to start timing from object creation (else, call ``timer.tic()`` explicitly)
+        kwargs (dict): passed to ``toc()`` when invoked
 
 
     Example making repeated calls to the same timer, using ``auto`` to keep track::
 
         >>> T = sc.timer(auto=True)
         >>> T.toc()
-        Elapsed time for (0): 2.63 s
+        (0): 2.63 s
         >>> T.toc()
-        Elapsed time for (1): 5.00 s
+        (1): 5.00 s
 
     Example wrapping code using with-as::
 
@@ -689,41 +714,51 @@ class timer(scu.prettyobj):
 
     | New in version 1.3.0: ``sc.timer()`` alias, and allowing the label as first argument.
     | New in version 1.3.2: ``toc()`` passes label correctly; ``tt()`` method; ``auto`` argument
+    | New in version 2.0.0: ``plot()`` method; ``total()`` method; ``indivtimings`` and ``cumtimings`` properties
     '''
-    def __init__(self, label=None, auto=False, **kwargs):
+    def __init__(self, label=None, auto=False, start=True, **kwargs):
         from . import sc_odict as sco # Here to avoid circular import
-        self.tic()
         self.kwargs = kwargs # Store kwargs to pass to toc() at the end of the block
         self.kwargs['label'] = label
         self.auto = auto
         self._start = None
+        self._tics = []
+        self._tocs = []
         self.elapsed = None
         self.message = None
         self.count = 0
         self.timings = sco.odict()
-        self.tic() # Start counting
+        if start:
+            self.tic() # Start counting
         return
+
 
     def __enter__(self):
         ''' Reset start time when entering with-as block '''
         self.tic()
         return self
 
+
     def __exit__(self, *args):
         ''' Print elapsed time when leaving a with-as block '''
         self.toc()
         return
 
+
     def tic(self):
         ''' Set start time '''
-        self._start = time.time()  # Store the present time locally
+        now = time.time()  # Store the present time locally
+        self._start = now
+        self._tics.append(now) # Store when this tic was invoked
         return
+
 
     def toc(self, label=None, **kwargs):
         ''' Print elapsed time; see ``sc.toc()`` for keyword arguments '''
 
         # Get the time
         self.elapsed, self.message = toc(start=self._start, output='both', doprint=False) # Get time as quickly as possible
+        self._tocs.append(time.time()) # Store when this toc was invoked
 
         # Update the kwargs, including the label
         if label is not None:
@@ -756,24 +791,115 @@ class timer(scu.prettyobj):
 
         return output
 
+
+    def total(self):
+        ''' Calculate total time '''
+
+        # If the timer hasn't been started, return 0
+        if not len(self._tics):
+            return 0
+        else:
+            start = self._tics[0]
+
+        # If the timer hasn't been finished, use the current time; else the latest
+        if not len(self._tocs):
+            end = time.time()
+        else:
+            end = self._tocs[-1]
+
+        elapsed = end - start
+
+        return elapsed
+
+
+    # Alias/shortcut methods
+
     def start(self):
-        ''' Alias for tic() '''
+        ''' Alias for ``tic()`` '''
         return self.tic()
 
     def stop(self, *args, **kwargs):
-        ''' Alias for toc() '''
+        ''' Alias for ``toc()`` '''
         return self.toc(*args, **kwargs)
 
-    def toctic(self, *args, **kwargs):
-        ''' Reset time between timings '''
-        kwargs['reset'] = True
-        return self.toc(*args, **kwargs)
+    def tocout(self, label=None, output=True, **kwargs):
+        ''' Alias for ``toc()`` with output=True '''
+        return self.toc(label=label, output=output, **kwargs)
+
+    def toctic(self, *args, reset=True, **kwargs):
+        ''' Like toc, but reset time between timings '''
+        return self.toc(*args, reset=reset, **kwargs)
 
     def tt(self, *args, **kwargs):
-        ''' Alias for toctic() '''
+        ''' Alias for ``toctic()`` '''
         return self.toctic(*args, **kwargs)
 
+    def tto(self, *args, output=True, **kwargs):
+        ''' Alias for ``toctic()`` with output=True '''
+        return self.toctic(*args, output=output, **kwargs)
 
+    @property
+    def indivtimings(self):
+        from . import sc_odict as sco # Here to avoid circular import
+        vals = np.diff(scm.cat(self._tics[0], self._tocs))
+        output = sco.odict(zip(self.timings.keys(), vals))
+        return output
+
+    @property
+    def cumtimings(self):
+        from . import sc_odict as sco # Here to avoid circular import
+        vals = np.array(self._tocs) - self._tics[0]
+        output = sco.odict(zip(self.timings.keys(), vals))
+        return output
+
+
+    def plot(self, fig=None, figkwargs=None, grid=True, **kwargs):
+        """
+        Create a plot of Timer.timings
+
+        Arguments:
+            cumulative (bool): how the timings will be presented, individual or cumulative
+            fig (fig): an existing figure to draw the plot in
+            figkwargs (dict): passed to ``pl.figure()``
+            grid (bool): whether to show a grid
+            kwargs (dict): passed to ``pl.bar()``
+
+        New in version 2.0.0.
+        """
+        from . import sc_plotting as scp # Here to avoid circular import
+
+        figkwargs = scu.mergedicts(figkwargs)
+
+        # Handle the figure
+        if fig is None:
+            fig = pl.figure(**figkwargs)  # It's necessary to have an open figure or else the commands won't work
+
+        # plot times
+        if len(self.timings) > 0:
+            keys = self.timings.keys()
+            vals = self.indivtimings[:]
+            ax1 = pl.subplot(2,1,1)
+            pl.barh(keys, vals, **kwargs)
+            pl.title('Individual timings')
+            pl.ylabel('Label')
+            pl.xlabel('Elapsed time (s)')
+
+            ax2 = pl.subplot(2,1,2)
+            pl.barh(keys, np.cumsum(vals), **kwargs)
+            pl.title('Cumulative timings')
+            pl.ylabel('Label')
+            pl.xlabel('Elapsed time (s)')
+
+            for ax in [ax1, ax2]:
+                ax.invert_yaxis()
+                ax.grid(grid)
+
+            scp.figlayout()
+        else:
+            errormsg = "Looks like nothing has been timed. Forgot to do T.start() and T.stop()??'"
+            raise RuntimeWarning(errormsg)
+
+        return fig
 
 
 Timer = timer # Alias
@@ -783,7 +909,7 @@ Timer = timer # Alias
 #%% Other functions
 ###############################################################################
 
-__all__ += ['elapsedtimestr', 'timedsleep']
+__all__ += ['elapsedtimestr', 'timedsleep', 'randsleep']
 
 
 def elapsedtimestr(pasttime, maxdays=5, minseconds=10, shortmonths=True):
@@ -937,3 +1063,34 @@ def timedsleep(delay=None, start=None, verbose=True):
             if verbose:
                 print(f'Warning, delay less than elapsed time ({delay:0.1f} vs. {elapsed:0.1f})')
     return
+
+
+def randsleep(delay=1.0, var=1.0, low=None, high=None):
+    '''
+    Sleep for a nondeterminate period of time (useful for desynchronizing tasks)
+
+    Args:
+        delay (float/list): average duration in seconds to sleep for; if a pair of values, treat as low and high
+        var   (float):      how much variability to have (default, 1.0, i.e. from 0 to 2*interval)
+        low   (float):      optionally define lower bound of sleep
+        high  (float):      optionally define upper bound of sleep
+
+    **Examples**::
+        sc.randsleep(1) # Sleep for 0-2 s (average 1.0)
+        sc.randsleep(2, 0.1) # Sleep for 1.8-2.2 s (average 2.0)
+        sc.randsleep([0.5, 1.5]) # Sleep for 0.5-1.5 s
+        sc.randsleeep(low=0.5, high=1.5) # Ditto
+
+    New in version 2.0.0.
+    '''
+    if low is None or high is None:
+        if scu.isnumber(delay):
+            low  = delay*(1-var)
+            high = delay*(1+var)
+        else:
+            low, high = delay[0], delay[1]
+
+    dur = np.random.uniform(low, high)
+    time.sleep(dur)
+
+    return dur

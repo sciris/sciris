@@ -54,7 +54,7 @@ def test_noniterated(doplot=doplot):
         xy = [x+i*pl.randn(100), y+i*pl.randn(100)]
         return xy
 
-    xylist1 = sc.parallelize(myfunc, kwargs={'x':3, 'y':8}, iterarg=range(5), maxload=0.8, interval=0.1) # Use kwargs dict
+    xylist1 = sc.parallelize(myfunc, kwargs={'x':3, 'y':8}, iterarg=range(5), maxcpu=0.8, interval=0.1) # Use kwargs dict
     xylist2 = sc.parallelize(myfunc, x=5, y=10, iterarg=[5,10,15]) # Supply kwargs directly
 
     if doplot:
@@ -99,26 +99,23 @@ def test_parallelcmd():
     parfor = {'val':[3,5,9]}
     returnval = 'result'
     cmd = """
-newval = val+const # Note that this can't be indented
-result = newval**2
+    newval = val+const
+    result = newval**2
     """
-    results = sc.parallelcmd(cmd=cmd, parfor=parfor, returnval=returnval, const=const, maxload=0)
+    results = sc.parallelcmd(cmd=cmd, parfor=parfor, returnval=returnval, const=const, maxcpu=0)
     print(results)
     return
 
 
 def test_components():
     sc.heading('Testing subcomponents directly')
-    sc.loadbalancer()
 
-    def empty(): pass
-
-    args = [0]*9
-    args[0] = empty
+    args = [0]*10
+    args[0] = lambda: None
     args[3] = None # Set iterdict to None
     args[4] = None # Set args to empty list
     args[5] = None # Set kwargs to empty dict
-    args[8] = True # Set embarrassing
+    args[9] = True # Set embarrassing
     taskargs = sc.sc_parallel.TaskArgs(*args)
     task = sc.sc_parallel._parallel_task(taskargs)
     return task

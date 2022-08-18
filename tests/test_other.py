@@ -2,6 +2,7 @@
 Test Sciris miscellaneous utility/helper functions.
 '''
 
+import os
 import sciris as sc
 import pytest
 
@@ -10,9 +11,37 @@ import pytest
 
 def test_options():
     sc.heading('Test options')
-    sc.options.help()
+
+    print('Testing options')
+    sc.options.help(detailed=True)
+    sc.options.disp()
+    print(sc.options)
+    with sc.options.context(aspath=True):
+        pass
     sc.options(dpi=150)
-    sc.options.default()
+    sc.options('default')
+
+    fn = 'options.json'
+    sc.options.save(fn)
+    sc.options.load(fn)
+    sc.rmpath(fn)
+
+    print('Testing sc.parse_env()')
+    os.environ['TMP_STR'] = 'test'
+    os.environ['TMP_INT'] = '4'
+    os.environ['TMP_FLOAT'] = '2.3'
+    os.environ['TMP_BOOL'] = 'False'
+    assert sc.parse_env('TMP_STR',   which='str')   == 'test'
+    assert sc.parse_env('TMP_INT',   which='int')   == 4
+    assert sc.parse_env('TMP_FLOAT', which='float') == 2.3
+    assert sc.parse_env('TMP_BOOL',  which='bool')  == False
+
+    print('Testing help')
+    sc.help()
+    sc.help('smooth')
+    sc.help('JSON', ignorecase=False, context=True)
+    sc.help('pickle', source=True, context=True)
+
     return
 
 
@@ -57,9 +86,10 @@ def test_dicts():
     o.flat = sc.flattendict({'a': {'b': 1, 'c': {'d': 2, 'e': 3}}}, sep='_')
 
     print('Testing merging dictionaries')
-    o.md = sc.mergedicts({'a':1}, {'b':2}) # Returns {'a':1, 'b':2}
-    sc.mergedicts({'a':1, 'b':2}, {'b':3, 'c':4}) # Returns {'a':1, 'b':3, 'c':4}
-    sc.mergedicts({'b':3, 'c':4}, {'a':1, 'b':2}) # Returns {'a':1, 'b':2, 'c':4}
+    o.md1 = sc.mergedicts({'a':1}, {'b':2}) # Returns {'a':1, 'b':2}
+    o.md2 = sc.mergedicts({'a':1, 'b':2}, {'b':3, 'c':4}) # Returns {'a':1, 'b':3, 'c':4}
+    o.md3 = sc.mergedicts({'b':3, 'c':4}, a=1, b=2) # Returns {'a':1, 'b':2, 'c':4}
+    assert o.md3 == {'a':1, 'b':2, 'c':4}
     with pytest.raises(KeyError):
         sc.mergedicts({'b':3, 'c':4}, {'a':1, 'b':2}, _overwrite=False) # Raises exception
     with pytest.raises(TypeError):

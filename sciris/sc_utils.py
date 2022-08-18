@@ -6,13 +6,15 @@ ignore a function that you don't need than write one from scratch that you
 do need.
 
 Highlights:
-    - ``sc.dcp()``: shortcut to ``copy.deepcopy()``
-    - ``sc.pp()``: shortcut to ``pprint.pprint()``
-    - ``sc.isnumber()``: checks if something is any number type
-    - ``sc.promotetolist()``: converts any object to a list, for easy iteration
-    - ``sc.promotetoarray()``: tries to convert any object to an array, for easy use with numpy
-    - ``sc.mergedicts()``: merges any set of inputs into a dictionary
-    - ``sc.runcommand()``: simple way of executing a shell command
+    - :func:`dcp`: shortcut to ``copy.deepcopy()``
+    - :func:`pp`: shortcut to ``pprint.pprint()``
+    - :func:`isnumber`: checks if something is any number type
+    - :func:`tolist`: converts any object to a list, for easy iteration
+    - :func:`toarray`: tries to convert any object to an array, for easy use with numpy
+    - :func:`mergedicts`: merges any set of inputs into a dictionary
+    - :func:`mergelists`: merges any set of inputs into a list
+    - :func:`runcommand`: simple way of executing a shell command
+    - :func:`download`: download multiple URLs in parallel
 '''
 
 ##############################################################################
@@ -27,23 +29,23 @@ import time
 import json
 import zlib
 import types
-import psutil
 import pprint
 import hashlib
 import subprocess
 import numbers
 import string
-import tempfile
 import warnings
 import numpy as np
+import pandas as pd
 import random as rnd
 import uuid as py_uuid
+import packaging as pkg
 import traceback as py_traceback
-from distutils.version import LooseVersion
 
 # Handle types
 _stringtypes = (str, bytes)
-_numtype    = numbers.Number
+_numtype     = (numbers.Number,)
+_booltypes   = (bool, np.bool_)
 
 
 ##############################################################################
@@ -51,7 +53,7 @@ _numtype    = numbers.Number
 ##############################################################################
 
 # Define the modules being loaded
-__all__ = ['fast_uuid', 'uuid', 'dcp', 'cp', 'pp', 'sha', 'wget', 'htmlify', 'freeze', 'require',
+__all__ = ['fast_uuid', 'uuid', 'dcp', 'cp', 'pp', 'sha', 'freeze', 'require',
            'traceback', 'getplatform', 'iswindows', 'islinux', 'ismac']
 
 
@@ -64,10 +66,12 @@ def fast_uuid(which=None, length=None, n=1, secure=False, forcelist=False, safet
         which (str): the set of characters to choose from (default ascii)
         length (int): length of UID (default 6)
         n (int): number of UIDs to generate
+        secure (bool): whether to generate random numbers from sources provided by the operating system
         forcelist (bool): whether or not to return a list even for a single UID (used for recursive calls)
         safety (float): ensure that the space of possible UIDs is at least this much larger than the number requested
         recursion (int): the recursion level of the call (since the function calls itself if not all UIDs are unique)
-        recursion_limit (int): # Maximum number of times to try regeneraring keys
+        recursion_limit (int): Maximum number of times to try regeneraring keys
+        verbose (bool): whether to show progress
 
     Returns:
         uid (str or list): a string UID, or a list of string UIDs
@@ -228,35 +232,44 @@ def uuid(uid=None, which=None, die=False, tostring=False, length=None, n=1, **kw
     return output
 
 
-def dcp(obj, verbose=True, die=False):
+def dcp(obj, die=True, verbose=True):
     '''
     Shortcut to perform a deep copy operation
 
-    Almost identical to ``copy.deepcopy()``
+    Almost identical to ``copy.deepcopy()``, but optionally fall back to copy()
+    if deepcopy fails.
+
+    Args:
+        die (bool): if False, fall back to copy()
+        verbose (bool): if die is False, then print a warning if deepcopy() fails
+
+    New in version 2.0.0: default die=True instead of False
     '''
     try:
         output = copy.deepcopy(obj)
     except Exception as E: # pragma: no cover
         output = cp(obj)
-        errormsg = f'Warning: could not perform deep copy, performing shallow instead: {str(E)}'
+        errormsg = f'Warning: could not perform deep copy: {str(E)}'
         if die: raise RuntimeError(errormsg)
-        else:   print(errormsg)
+        else:   print(errormsg + '\nPerforming shallow copy instead...')
     return output
 
 
-def cp(obj, verbose=True, die=True):
+def cp(obj, die=True, verbose=True):
     '''
     Shortcut to perform a shallow copy operation
 
-    Almost identical to ``copy.copy()``
+    Almost identical to ``copy.copy()``, but optionally allow failures
+
+    New in version 2.0.0: default die=True instead of False
     '''
     try:
         output = copy.copy(obj)
     except Exception as E:
         output = obj
-        errormsg = 'Could not perform shallow copy, returning original object'
+        errormsg = 'Could not perform shallow copy'
         if die: raise ValueError(errormsg) from E
-        else:   print(errormsg)
+        else:   print(errormsg + '\nReturning original object...')
     return output
 
 
@@ -339,48 +352,6 @@ def sha(obj, encoding='utf-8', digest=False):
     output = hashlib.sha224(string)
     if digest:
         output = output.hexdigest()
-    return output
-
-
-def wget(url, convert=True):
-    '''
-    Download a URL
-
-    Alias to urllib.request.urlopen(url).read()
-
-    **Example**::
-
-        html = sc.wget('http://sciris.org')
-    '''
-    from urllib import request # Bizarrely, urllib.request sometimes fails
-    output = request.urlopen(url).read()
-    if convert:
-        output = output.decode()
-    return output
-
-
-def htmlify(string, reverse=False, tostring=False):
-    '''
-    Convert a string to its HTML representation by converting unicode characters,
-    characters that need to be escaped, and newlines. If reverse=True, will convert
-    HTML to string. If tostring=True, will convert the bytestring back to Unicode.
-
-    **Examples**::
-
-        output = sc.htmlify('foo&\\nbar') # Returns b'foo&amp;<br>bar'
-        output = sc.htmlify('föö&\\nbar', tostring=True) # Returns 'f&#246;&#246;&amp;&nbsp;&nbsp;&nbsp;&nbsp;bar'
-        output = sc.htmlify('foo&amp;<br>bar', reverse=True) # Returns 'foo&\\nbar'
-    '''
-    import html
-    if not reverse: # Convert to HTML
-        output = html.escape(string).encode('ascii', 'xmlcharrefreplace') # Replace non-ASCII characters
-        output = output.replace(b'\n', b'<br>') # Replace newlines with <br>
-        output = output.replace(b'\t', b'&nbsp;&nbsp;&nbsp;&nbsp;') # Replace tabs with 4 spaces
-        if tostring: # Convert from bytestring to unicode
-            output = output.decode()
-    else: # Convert from HTML
-        output = html.unescape(string)
-        output = output.replace('<br>','\n').replace('<br />','\n').replace('<BR>','\n')
     return output
 
 
@@ -467,12 +438,17 @@ def require(reqs=None, *args, exact=False, detailed=False, die=True, verbose=Tru
 
     # Handle exceptions
     if not met:
-        errormsg = 'The following requirements were not met:'
+        errkeys = list(errs.keys())
+        errormsg = '\nThe following requirement(s) were not met:'
+        count = 0
         for k,v in data.items():
             if not v:
-                errormsg += f'\n  {k}: {str(errs[k])}'
+                count += 1
+                errormsg += f'\n• "{k}": {str(errs[k])}'
+        errormsg += f'''\n\nIf this is a valid module, you might want to try "pip install {strjoin(errkeys, sep=' ')} --upgrade".'''
         if die:
-            raise ModuleNotFoundError(errormsg) from errs[k] # Use the last one
+            err = errs[errkeys[-1]]
+            raise ModuleNotFoundError(errormsg) from err
         elif verbose:
             print(errormsg)
 
@@ -501,7 +477,7 @@ def getplatform(expected=None, die=False):
         expected (str): if not None, check if the current platform is this
         die (bool): if True and expected is defined, raise an exception
 
-    **Example**::d
+    **Example**::
 
         sc.getplatform() # Get current name of platform
         sc.getplatform('windows', die=True) # Raise an exception if not on Windows
@@ -544,6 +520,197 @@ def ismac(die=False):
     ''' Alias to ``sc.getplatform('mac')`` '''
     return getplatform('mac', die=die)
 
+
+##############################################################################
+#%% Web/HTML functions
+##############################################################################
+
+__all__ += ['urlopen', 'wget', 'download', 'htmlify']
+
+def urlopen(url, filename=None, save=False, headers=None, params=None, data=None,
+            convert=True, die=False, return_response=False, verbose=False):
+    '''
+    Download a single URL.
+
+    Alias to ``urllib.request.urlopen(url).read()``. See also ``sc.download()``
+    for download multiple URLs. Note: ``sc.urlopen()``/``sc.wget()`` are aliases.
+
+    Args:
+        url (str): the URL to open, either as GET or POST
+        filename (str): if supplied, save to file instead of returning output
+        save (bool): if supplied instead of ``filename``, then use the default filename
+        headers (dict): a dictionary of headers to pass
+        params (dict): a dictionary of parameters to pass to the GET request
+        data (dict) a dictionary of parameters to pass to a POST request
+        convert (bool): whether to convert from bytes to string
+        die (bool): whether to raise an exception if converting to text failed
+        return_response (bool): whether to return the response object instead of the output
+        verbose (bool): whether to print progress
+
+    **Examples**::
+
+        html = sc.urlopen('http://sciris.org') # Retrieve into variable html
+        sc.urlopen('http://sciris.org', filename='sciris.html') # Save to file sciris.html
+        sc.urlopen('http://sciris.org', save=True, headers={'User-Agent':'Custom agent'}) # Save to the default filename (here, sciris.org), with headers
+
+    New in version 2.0.0: renamed from ``wget`` to ``urlopen``; new arguments
+    '''
+    from urllib import request as ur # Need to import these directly, not via urllib
+    from urllib import parse as up
+    from . import sc_datetime as scd  # To avoid circular import
+
+    T = scd.timer()
+
+    # Handle headers
+    default_headers = {
+        'User-Agent': 'Python/Sciris', # Some URLs require this
+        'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,image/apng,*/*;q=0.8', # Default Chrome/Safari header
+    }
+    headers = mergedicts(default_headers, headers)
+
+    # Handle parameters and data
+    full_url = url
+    if params is not None:
+        full_url = url + '?' + up.urlencode(params)
+    if data is not None:
+        data = up.urlencode(data).encode(encoding='utf-8', errors='ignore')
+
+    if verbose: print(f'Downloading {url}...')
+    request = ur.Request(full_url, headers=headers, data=data)
+    response = ur.urlopen(request)
+    output = response.read()
+    if convert:
+        if verbose: print('Converting from bytes to text...')
+        try:
+            output = output.decode()
+        except Exception as E: # pragma: no cover
+            if die:
+                raise E
+            elif verbose:
+                errormsg = f'Could not decode to text: {str(E)}'
+                print(errormsg)
+
+    # Set filename -- from https://stackoverflow.com/questions/31804799/how-to-get-pdf-filename-with-python-requests
+    if filename is None and save:
+        headers = dict(response.getheaders())
+        string = "Content-Disposition"
+        if string in headers.keys():
+            filename = re.findall("filename=(.+)", headers[string])[0]
+        else:
+            filename = url.rstrip('/').split('/')[-1] # Remove trailing /, then pull out the last chunk
+
+    if filename is not None:
+        if verbose: print(f'Saving to {filename}...')
+        if isinstance(output, bytes):
+            with open(filename, 'wb') as f:
+                f.write(output)
+        else:
+            with open(filename, 'w') as f:
+                f.write(output)
+        output = filename
+
+    if verbose:
+        T.toc(f'Time to download {url}')
+    if return_response:
+        output = response
+
+    return output
+
+# Alias for backwards compatibility
+wget = urlopen
+
+def download(url, *args, filename=None, save=True, parallel=True, verbose=True, **kwargs):
+    '''
+    Download one or more URLs in parallel and return output or save them to disk.
+
+    A wrapper for ``sc.urlopen()``, except with ``save=True`` by default.
+
+    Args:
+        url (str/list/dict): either a single URL, a list of URLs, or a dict of URL:filename pairs
+        *args (list): additional URLs to download
+        filename (str/list): either a string or a list of the same length as ``url`` (if not supplied, return output)
+        save (bool): if supplied instead of ``filename``, then use the default filename
+        parallel (bool): whether to download multiple URLs in parallel
+        verbose (bool): whether to print progress (if verbose=2, print extra detail on each downloaded URL)
+        **kwargs (dict): passed to ``sc.urlopen()``
+
+    **Examples**::
+
+        html = sc.download('http://sciris.org') # Download a single URL
+        data = sc.download('http://sciris.org', 'http://covasim.org') # Download two in parallel
+        sc.download({'http://sciris.org':'sciris.html', 'http://covasim.org':'covasim.html'}) # Downlaod two and save to disk
+        sc.download(['http://sciris.org', 'http://covasim.org'], filename=['sciris.html', 'covasim.html']) # Ditto
+
+    New in version 2.0.0.
+    '''
+    from . import sc_parallel as scp # To avoid circular import
+    from . import sc_datetime as scd
+
+    T = scd.timer()
+
+    # Parse arguments
+    if isinstance(url, dict):
+        urls = list(url.keys())
+        filenames = list(url.values())
+    else:
+        urls = mergelists(url, *args)
+        filenames = mergelists(filename)
+
+    # Ensure consistency
+    n_urls = len(urls)
+    n_filenames = len(filenames)
+    if not n_filenames:
+        filenames = [None]*n_urls
+    elif n_filenames != n_urls: # pragma: no cover
+        errormsg = f'Cannot process {n_urls} URLs and {n_filenames} filenames'
+        raise ValueError(errormsg)
+
+    if verbose:
+        print(f'Downloading {n_urls} URLs...')
+
+    # Get results in parallel
+    wget_verbose = (verbose>1) or (verbose and n_urls == 1) # By default, don't print progress on each download
+    iterkwargs = dict(url=urls, filename=filenames)
+    func_kwargs = mergedicts(dict(save=save, verbose=wget_verbose), kwargs)
+    if n_urls > 1 and parallel:
+        outputs = scp.parallelize(urlopen, iterkwargs=iterkwargs, kwargs=func_kwargs, parallelizer='thread')
+    else:
+        outputs = []
+        for url,filename in zip(urls, filenames):
+            output = urlopen(url=url, filename=filename, **func_kwargs)
+            outputs.append(output)
+
+    if verbose:
+        T.toc(f'Time to download {n_urls} URLs')
+    if n_urls == 1:
+        outputs = outputs[0]
+
+    return outputs
+
+
+def htmlify(string, reverse=False, tostring=False):
+    '''
+    Convert a string to its HTML representation by converting unicode characters,
+    characters that need to be escaped, and newlines. If reverse=True, will convert
+    HTML to string. If tostring=True, will convert the bytestring back to Unicode.
+
+    **Examples**::
+
+        output = sc.htmlify('foo&\\nbar') # Returns b'foo&amp;<br>bar'
+        output = sc.htmlify('föö&\\nbar', tostring=True) # Returns 'f&#246;&#246;&amp;&nbsp;&nbsp;&nbsp;&nbsp;bar'
+        output = sc.htmlify('foo&amp;<br>bar', reverse=True) # Returns 'foo&\\nbar'
+    '''
+    import html
+    if not reverse: # Convert to HTML
+        output = html.escape(string).encode('ascii', 'xmlcharrefreplace') # Replace non-ASCII characters
+        output = output.replace(b'\n', b'<br>') # Replace newlines with <br>
+        output = output.replace(b'\t', b'&nbsp;&nbsp;&nbsp;&nbsp;') # Replace tabs with 4 spaces
+        if tostring: # Convert from bytestring to unicode
+            output = output.decode()
+    else: # Convert from HTML
+        output = html.unescape(string)
+        output = output.replace('<br>','\n').replace('<br />','\n').replace('<BR>','\n')
+    return output
 
 
 ##############################################################################
@@ -622,9 +789,11 @@ def checktype(obj=None, objtype=None, subtype=None, die=False):
     # Handle "objtype" input
     if   objtype in ['str','string']:          objinstance = _stringtypes
     elif objtype in ['num', 'number']:         objinstance = _numtype
+    elif objtype in ['bool', 'boolean']:       objinstance = _booltypes
     elif objtype in ['arr', 'array']:          objinstance = np.ndarray
     elif objtype in ['listlike', 'arraylike']: objinstance = (list, tuple, np.ndarray) # Anything suitable as a numerical array
-    elif type(objtype) == type:                objinstance = objtype  # Don't need to do anything
+    elif type(objtype) == type:                objinstance = objtype # Don't need to do anything
+    elif isinstance(objtype, tuple):           objinstance = objtype # Ditto
     elif objtype is None:                      return # If not supplied, exit
     else: # pragma: no cover
         errormsg = f'Could not understand what type you want to check: should be either a string or a type, not "{objtype}"'
@@ -636,7 +805,7 @@ def checktype(obj=None, objtype=None, subtype=None, die=False):
     # Do second round checking
     if result and objtype in ['listlike', 'arraylike']: # Special case for handling arrays which may be multi-dimensional
         obj = promotetoarray(obj).flatten() # Flatten all elements
-        if objtype == 'arraylike' and subtype is None: subtype = 'number'
+        if objtype == 'arraylike' and subtype is None: subtype = _numtype + _booltypes
     if isiterable(obj) and subtype is not None:
         for item in obj:
             result = result and checktype(item, subtype)
@@ -670,9 +839,9 @@ def isnumber(obj, isnan=None):
 
 def isstring(obj):
     '''
-    Determine whether or not the input is a string (i.e., str or bytes).
+    Determine whether or not the input is string-like (i.e., str or bytes).
 
-    Equivalent to isinstance(obj, (str, bytes))
+    Equivalent to ``isinstance(obj, (str, bytes))``
     '''
     return checktype(obj, 'string')
 
@@ -702,13 +871,14 @@ def isarray(obj, dtype=None):
 def promotetoarray(x, keepnone=False, **kwargs):
     '''
     Small function to ensure consistent format for things that should be arrays
-    (note: toarray()/promotetoarray() are identical).
+    (note: ``toarray()`` and ``promotetoarray()`` are identical).
 
     Very similar to ``np.array``, with the main difference being that ``sc.promotetoarray(3)``
     will return ``np.array([3])`` (i.e. a 1-d array that can be iterated over), while
     ``np.array(3)`` will return a 0-d array that can't be iterated over.
 
     Args:
+        x (any): a number or list of numbers
         keepnone (bool): whether ``sc.promotetoarray(None)`` should return ``np.array([])`` or ``np.array([None], dtype=object)``
         kwargs (dict): passed to ``np.array()``
 
@@ -725,7 +895,7 @@ def promotetoarray(x, keepnone=False, **kwargs):
     if skipnone is not None: # pragma: no cover
         keepnone = not(skipnone)
         warnmsg = 'sc.promotetoarray() argument "skipnone" has been deprecated as of v1.1.0; use keepnone instead'
-        warnings.warn(warnmsg, category=DeprecationWarning, stacklevel=2)
+        warnings.warn(warnmsg, category=FutureWarning, stacklevel=2)
     if isnumber(x) or (isinstance(x, np.ndarray) and not np.shape(x)): # e.g. 3 or np.array(3)
         x = [x]
     elif x is None and not keepnone:
@@ -865,7 +1035,7 @@ def swapdict(d):
     return output
 
 
-def mergedicts(*args, _strict=False, _overwrite=True, _copy=False, **kwargs):
+def mergedicts(*args, _strict=False, _overwrite=True, _copy=False, _sameclass=True, _die=True, **kwargs):
     '''
     Small function to merge multiple dicts together.
 
@@ -884,8 +1054,10 @@ def mergedicts(*args, _strict=False, _overwrite=True, _copy=False, **kwargs):
         _strict    (bool): if True, raise an exception if an argument isn't a dict
         _overwrite (bool): if False, raise an exception if multiple keys are found
         _copy      (bool): whether or not to deepcopy the merged dictionary
-        *args     (dict): the sequence of dicts to be merged
-        **kwargs  (dict): merge these into the dict as well
+        _sameclass (bool): whether to ensure the output has the same type as the first dictionary merged
+        _die       (bool): whether to raise an exception if something goes wrong
+        *args      (list): the sequence of dicts to be merged
+        **kwargs   (dict): merge these into the dict as well
 
     **Examples**::
 
@@ -895,35 +1067,49 @@ def mergedicts(*args, _strict=False, _overwrite=True, _copy=False, **kwargs):
         d3 = sc.mergedicts(sc.odict({'b':3, 'c':4}), {'a':1, 'b':2}) # Returns sc.odict({'b':2, 'c':4, 'a':1})
         d4 = sc.mergedicts({'b':3, 'c':4}, {'a':1, 'b':2}, _overwrite=False) # Raises exception
 
-    New in version 1.1.0: "copy" argument
-    New in version 1.3.3: keywords allowed
+    | New in version 1.1.0: "copy" argument
+    | New in version 1.3.3: keywords allowed
+    | New in version 2.0.0: keywords fully enabled; "_sameclass" argument
     '''
     # Warn about deprecated keys
     renamed = ['strict', 'overwrite', 'copy']
     if any([k in kwargs for k in renamed]):
-            warnmsg = f'sc.mergedicts() arguments "{strjoin(renamed)}" have been renamed with underscores as of v1.3.3; using these as keywords is undesirable'
-            warnings.warn(warnmsg, category=DeprecationWarning, stacklevel=2)
+        warnmsg = f'sc.mergedicts() arguments "{strjoin(renamed)}" have been renamed with underscores as of v1.3.3; using these as keywords is undesirable'
+        warnings.warn(warnmsg, category=FutureWarning, stacklevel=2)
 
-    # Try to get the output type from the first argument, but revert to a standard dict if that fails
-    try:
-        assert isinstance(args[0], dict)
-        outputdict = args[0].__class__() # This creates a new instance of the class
-    except:
-        outputdict = {}
+    # Try to get the output type from the arguments, but revert to a standard dict if that fails
+    outputdict = {}
+    if _sameclass:
+        for arg in args:
+            if isinstance(arg, dict):
+                try:
+                    outputdict = arg.__class__() # This creates a new instance of the class
+                    break
+                except Exception as E:
+                    errormsg = f'Could not create new dict of {type(args[0])} from first argument ({str(E)}); set _sameclass=False if this is OK'
+                    if _die: raise TypeError(errormsg) from E
+                    else:    print(errormsg)
 
     # Merge over the dictionaries in order
-    for arg in args:
+    args = list(args)
+    args.append(kwargs) # Include any kwargs as the final dict
+    for a,arg in enumerate(args):
         is_dict = isinstance(arg, dict)
         if _strict and not is_dict:
-            errormsg = f'Argument of "{type(arg)}" found; must be dict since strict=True'
+            errormsg = f'Argument {a} has {type(arg)}; must be dict since _strict=True'
             raise TypeError(errormsg)
         if is_dict:
             if not _overwrite:
                 intersection = set(outputdict.keys()).intersection(arg.keys())
                 if len(intersection):
-                    errormsg = f'Could not merge dicts since keys "{strjoin(intersection)}" overlap and overwrite=False'
+                    errormsg = f'Could not merge dicts since keys "{strjoin(intersection)}" overlap and _overwrite=False'
                     raise KeyError(errormsg)
             outputdict.update(arg)
+        else:
+            if arg is not None and _die:
+                errormsg = f'Could not handle argument {a} of {type(arg)}: expecting dict or None'
+                raise TypeError(errormsg)
+
     if copy:
         outputdict = dcp(outputdict)
     return outputdict
@@ -960,9 +1146,9 @@ def mergelists(*args, copy=False, **kwargs):
 
 def _sanitize_iterables(obj, *args):
     '''
-    Take input as a list, array, or non-iterable type, along with one or more
-    arguments, and return a list, along with information on what the input types
-    were.
+    Take input as a list, array, pandas Series, or non-iterable type, along with
+    one or more arguments, and return a list, along with information on what the
+    input types were.
 
     **Examples**::
 
@@ -971,8 +1157,8 @@ def _sanitize_iterables(obj, *args):
         _sanitize_iterables(np.array([1, 2]), 3) # Returns [1,2,3], True, True
         _sanitize_iterables(np.array([1, 2, 3])) # Returns [1,2,3], False, True
     '''
-    is_list = isinstance(obj, list) or len(args)>0 # If we're given a list of args, treat it like a list
-    is_array = isinstance(obj, np.ndarray) # Check if it's an array
+    is_list   = isinstance(obj, list) or len(args)>0 # If we're given a list of args, treat it like a list
+    is_array  = isinstance(obj, (np.ndarray, pd.Series)) # Check if it's an array
     if is_array: # If it is, convert it to a list
         obj = obj.tolist()
     objs = dcp(promotetolist(obj)) # Ensure it's a list, and deepcopy to avoid mutability
@@ -998,9 +1184,8 @@ def _sanitize_output(obj, is_list, is_array, dtype=None):
 #%% Misc. functions
 ##############################################################################
 
-__all__ += ['strjoin', 'newlinejoin', 'checkmem', 'checkram', 'runcommand', 'gitinfo',
-            'compareversions', 'uniquename', 'importbyname', 'suggest', 'profile', 'mprofile',
-            'getcaller']
+__all__ += ['strjoin', 'newlinejoin', 'strsplit', 'runcommand', 'gitinfo', 'compareversions',
+            'uniquename', 'suggest', 'getcaller', 'importbyname']
 
 
 def strjoin(*args, sep=', '):
@@ -1043,128 +1228,51 @@ def newlinejoin(*args):
     return strjoin(*args, sep='\n')
 
 
-def checkmem(var, descend=None, alphabetical=False, plot=False, verbose=False):
+def strsplit(string, sep=None, skipempty=True, lstrip=True, rstrip=True):
     '''
-    Checks how much memory the variable or variables in question use by dumping
-    them to file. See also checkram().
+    Convenience function to split common types of strings.
+
+    Note: to use regular expressions, use ``re.split()`` instead.
 
     Args:
-        var (any): the variable being checked
-        descend (bool): whether or not to descend one level into the object
-        alphabetical (bool): if descending into a dict or object, whether to list items by name rather than size
-        plot (bool): if descending, show the results as a pie chart
-        verbose (bool or int): detail to print, if >1, print repr of objects along the way
+        string    (str):      the string to split
+        sep       (str/list): the types of separator to accept (default space or comma, i.e. [' ', ','])
+        skipempty (bool):     whether to skip empty entries (i.e. from consecutive delimiters)
+        lstrip    (bool):     whether to strip any extra spaces on the left
+        rstrip    (bool):     whether to strip any extra spaces on the right
 
-    **Example**::
+    Examples:
 
-        import sciris as sc
-        sc.checkmem(['spiffy',rand(2483,589)], descend=True)
+        sc.strsplit('a b c') # Returns ['a', 'b', 'c']
+        sc.strsplit('a,b,c') # Returns ['a', 'b', 'c']
+        sc.strsplit('a, b, c') # Returns ['a', 'b', 'c']
+        sc.strsplit('  foo_bar  ', sep='_') # Returns ['foo', 'bar']
+
+    New in version 2.0.0.
     '''
-    from .sc_fileio import saveobj # Here to avoid recursion
+    strlist = []
+    if sep is None:
+        sep = [' ', ',']
 
-    def check_one_object(variable):
-        ''' Check the size of one variable '''
+    # Generate a character sequence that isn't in the string
+    special = '∙' # Pick an obscure character
+    while special in string: # If it exists in the string nonetheless, keep going until it doesn't
+        special += special
 
-        if verbose>1:
-            print(f'  Checking size of {variable}...')
+    # Convert all separators to the special character
+    for s in sep:
+        string = string.replace(s, special)
 
-        # Create a temporary file, save the object, check the size, remove it
-        filename = tempfile.mktemp()
-        saveobj(filename, variable, die=False)
-        filesize = os.path.getsize(filename)
-        os.remove(filename)
+    # Split the string, filter, and trim
+    strlist = string.split(special)
+    if lstrip:
+        strlist = [s.lstrip() for s in strlist]
+    if rstrip:
+        strlist = [s.rstrip() for s in strlist]
+    if skipempty:
+        strlist = [s for s in strlist if s != '']
 
-        # Convert to string
-        factor = 1
-        label = 'B'
-        labels = ['KB','MB','GB']
-        for i,f in enumerate([3,6,9]):
-            if filesize>10**f:
-                factor = 10**f
-                label = labels[i]
-        humansize = float(filesize/float(factor))
-        sizestr = f'{humansize:0.3f} {label}'
-        return filesize, sizestr
-
-    # Initialize
-    varnames  = []
-    variables = []
-    sizes     = []
-    sizestrs  = []
-
-    # Create the object(s) to check the size(s) of
-    varnames = [''] # Set defaults
-    variables = [var]
-    if descend or descend is None:
-        if hasattr(var, '__dict__'): # It's an object
-            if verbose>1: print('Iterating over object')
-            varnames = sorted(list(var.__dict__.keys()))
-            variables = [getattr(var, attr) for attr in varnames]
-        elif np.iterable(var): # Handle dicts and lists
-            if isinstance(var, dict): # Handle dicts
-                if verbose>1: print('Iterating over dict')
-                varnames = list(var.keys())
-                variables = var.values()
-            else: # Handle lists and other things
-                if verbose>1: print('Iterating over list')
-                varnames = [f'item {i}' for i in range(len(var))]
-                variables = var
-        else:
-            if descend: # Could also be None
-                print('Object is not iterable: cannot descend') # Print warning and use default
-
-    # Compute the sizes
-    for v,variable in enumerate(variables):
-        if verbose:
-            print(f'Processing variable {v} of {len(variables)}')
-        filesize, sizestr = check_one_object(variable)
-        sizes.append(filesize)
-        sizestrs.append(sizestr)
-
-    if alphabetical:
-        inds = np.argsort(varnames)
-    else:
-        inds = np.argsort(sizes)[::-1]
-
-    for i in inds:
-        varstr = f'Variable "{varnames[i]}"' if varnames[i] else 'Variable'
-        print(f'{varstr} is {sizestrs[i]}')
-
-    if plot: # pragma: no cover
-        import pylab as pl # Optional import
-        pl.axes(aspect=1)
-        pl.pie(pl.array(sizes)[inds], labels=pl.array(varnames)[inds], autopct='%0.2f')
-
-    return
-
-
-def checkram(unit='mb', fmt='0.2f', start=0, to_string=True):
-    '''
-    Unlike checkmem(), checkram() looks at actual memory usage, typically at different
-    points throughout execution.
-
-    **Example**::
-
-        import sciris as sc
-        import numpy as np
-        start = sc.checkram(to_string=False)
-        a = np.random.random((1_000, 10_000))
-        print(sc.checkram(start=start))
-
-    New in version 1.0.0.
-    '''
-    process = psutil.Process(os.getpid())
-    mapping = {'b':1, 'kb':1e3, 'mb':1e6, 'gb':1e9}
-    try:
-        factor = mapping[unit.lower()]
-    except KeyError: # pragma: no cover
-        raise KeyNotFoundError(f'Unit {unit} not found among {strjoin(mapping.keys())}')
-    mem_use = process.memory_info().rss/factor - start
-    if to_string:
-        output = f'{mem_use:{fmt}} {unit.upper()}'
-    else:
-        output = mem_use
-    return output
+    return strlist
 
 
 def runcommand(command, printinput=False, printoutput=False, wait=True):
@@ -1346,9 +1454,9 @@ def compareversions(version1, version2):
     v2 = v2.lstrip('<>=!~')
 
     # Do comparison
-    if LooseVersion(v1) > LooseVersion(v2):
+    if pkg.version.parse(v1) > pkg.version.parse(v2):
         comparison =  1
-    elif LooseVersion(v1) < LooseVersion(v2):
+    elif pkg.version.parse(v1) < pkg.version.parse(v2):
         comparison =  -1
     else:
         comparison =  0
@@ -1380,32 +1488,6 @@ def uniquename(name=None, namelist=None, style=None):
     return unique_name # Return the found name.
 
 
-def importbyname(name=None, output=False, die=True):
-    '''
-    A little function to try loading optional imports.
-
-    Args:
-        name (str): name of the module to import
-        output (bool): whether to return the module (else, return True)
-        die (bool): whether to raise an exception if encountered
-
-    **Example**::
-
-        np = sc.importbyname('numpy')
-    '''
-    import importlib
-    try:
-        module = importlib.import_module(name)
-        globals()[name] = module
-    except Exception as E: # pragma: no cover
-        errormsg = f'Cannot use "{name}" since {name} is not installed.\nPlease install {name} and try again.'
-        print(errormsg)
-        if die: raise E
-        else:   return False
-    if output: return module
-    else:      return True
-
-
 def suggest(user_input, valid_inputs, n=1, threshold=None, fulloutput=False, die=False, which='damerau'):
     """
     Return suggested item
@@ -1419,6 +1501,7 @@ def suggest(user_input, valid_inputs, n=1, threshold=None, fulloutput=False, die
         valid_inputs (list): List/collection of valid strings
         n (int): Maximum number of suggestions to return
         threshold (int): Maximum number of edits required for an option to be suggested (by default, two-thirds the length of the input; for no threshold, set to -1)
+        fulloutput (bool): Whether to return suggestions and distances.
         die (bool): If True, an informative error will be raised (to avoid having to implement this in the calling code)
         which (str): Distance calculation method used; options are "damerau" (default), "levenshtein", or "jaro"
 
@@ -1500,133 +1583,6 @@ def suggest(user_input, valid_inputs, n=1, threshold=None, fulloutput=False, die
                 return suggestions[:n]
 
 
-def profile(run, follow=None, print_stats=True, *args, **kwargs):
-    '''
-    Profile the line-by-line time required by a function.
-
-    Args:
-        run (function): The function to be run
-        follow (function): The function or list of functions to be followed in the profiler; if None, defaults to the run function
-        print_stats (bool): whether to print the statistics of the profile to stdout
-        args, kwargs: Passed to the function to be run
-
-    Returns:
-        LineProfiler (by default, the profile output is also printed to stdout)
-
-    **Example**::
-
-        def slow_fn():
-            n = 10000
-            int_list = []
-            int_dict = {}
-            for i in range(n):
-                int_list.append(i)
-                int_dict[i] = i
-            return
-
-        class Foo:
-            def __init__(self):
-                self.a = 0
-                return
-
-            def outer(self):
-                for i in range(100):
-                    self.inner()
-                return
-
-            def inner(self):
-                for i in range(1000):
-                    self.a += 1
-                return
-
-        foo = Foo()
-        sc.profile(run=foo.outer, follow=[foo.outer, foo.inner])
-        sc.profile(slow_fn)
-
-        # Profile the constructor for Foo
-        f = lambda: Foo()
-        sc.profile(run=f, follow=[foo.__init__])
-    '''
-    try:
-        from line_profiler import LineProfiler
-    except ModuleNotFoundError as E: # pragma: no cover
-        if 'win' in sys.platform:
-            errormsg = 'The "line_profiler" package is not included by default on Windows;' \
-                        'please install using "pip install line_profiler" (note: you will need a ' \
-                        'C compiler installed, e.g. Microsoft Visual Studio)'
-        else:
-            errormsg = 'The "line_profiler" Python package is required to perform profiling'
-        raise ModuleNotFoundError(errormsg) from E
-
-    if follow is None:
-        follow = run
-    orig_func = run
-
-    lp = LineProfiler()
-    follow = promotetolist(follow)
-    for f in follow:
-        lp.add_function(f)
-    lp.enable_by_count()
-    wrapper = lp(run)
-
-    if print_stats: # pragma: no cover
-        print('Profiling...')
-    wrapper(*args, **kwargs)
-    run = orig_func
-    if print_stats: # pragma: no cover
-        lp.print_stats()
-        print('Done.')
-    return lp
-
-
-def mprofile(run, follow=None, show_results=True, *args, **kwargs):
-    '''
-    Profile the line-by-line memory required by a function. See profile() for a
-    usage example.
-
-    Args:
-        run (function): The function to be run
-        follow (function): The function or list of functions to be followed in the profiler; if None, defaults to the run function
-        show_results (bool): whether to print the statistics of the profile to stdout
-        args, kwargs: Passed to the function to be run
-
-    Returns:
-        LineProfiler (by default, the profile output is also printed to stdout)
-    '''
-
-    try:
-        import memory_profiler as mp
-    except ModuleNotFoundError as E: # pragma: no cover
-        if 'win' in sys.platform:
-            errormsg = 'The "memory_profiler" package is not included by default on Windows;' \
-                        'please install using "pip install memory_profiler" (note: you will need a ' \
-                        'C compiler installed, e.g. Microsoft Visual Studio)'
-        else:
-            errormsg = 'The "memory_profiler" Python package is required to perform profiling'
-        raise ModuleNotFoundError(errormsg) from E
-
-    if follow is None:
-        follow = run
-
-    lp = mp.LineProfiler()
-    follow = promotetolist(follow)
-    for f in follow:
-        lp.add_function(f)
-    lp.enable_by_count()
-    try:
-        wrapper = lp(run)
-    except TypeError as e: # pragma: no cover
-        raise TypeError('Function wrapping failed; are you profiling an already-profiled function?') from e
-
-    if show_results:
-        print('Profiling...')
-    wrapper(*args, **kwargs)
-    if show_results:
-        mp.show_results(lp)
-        print('Done.')
-    return lp
-
-
 def getcaller(frame=2, tostring=True, includelineno=False, includeline=False):
     '''
     Try to get information on the calling function, but fail gracefully.
@@ -1681,12 +1637,82 @@ def getcaller(frame=2, tostring=True, includelineno=False, includeline=False):
     return output
 
 
+def _assign_to_namespace(var, obj, namespace=None, overwrite=True):
+    ''' Helper function to assign an object to the global namespace '''
+    if namespace is None:
+        namespace = globals()
+    if var in namespace and not overwrite:
+        errormsg = f'Cannot assign to variable "{var}" since it already exists and overwrite=False'
+        raise NameError(errormsg)
+    namespace[var] = obj
+    return
+
+
+def importbyname(module=None, variable=None, namespace=None, lazy=False, overwrite=True, die=True, **kwargs):
+    '''
+    Import modules by name.
+
+    See https://peps.python.org/pep-0690/ for a proposal for incorporating something
+    similar into Python by default.
+
+    Args:
+        module (str): name of the module to import
+        variable (str): the name of the variable to assign the module to (by default, the module's name)
+        namespace (dict): the namespace to load the modules into (by default, globals)
+        lazy (bool): whether to create a LazyModule object instead of load the actual module
+        overwrite (bool): whether to allow overwriting an existing variable (by default, yes)
+        die (bool): whether to raise an exception if encountered
+        **kwargs (dict): additional variable:modules pairs to import (see examples below)
+
+    **Examples**::
+
+        np = sc.importbyname('numpy')
+        sc.importbyname(pd='pandas', np='numpy')
+        pl = sc.importbyname(pl='matplotlib.pyplot', lazy=True) # Won't actually import until e.g. pl.figure() is called
+    '''
+    # Initialize
+    import importlib
+    if variable is None:
+        variable = module
+
+    # Map modules to variables
+    mapping = {}
+    if module is not None:
+        mapping[variable] = module
+    mapping.update(kwargs)
+
+    # Load modules
+    libs = []
+    for variable,module in mapping.items():
+        if lazy:
+            lib = LazyModule(module=module, variable=variable, namespace=namespace)
+        else:
+            try:
+                lib = importlib.import_module(module)
+            except Exception as E: # pragma: no cover
+                errormsg = f'Cannot import "{module}" since {module} is not installed. Please install {module} and try again.'
+                print(errormsg)
+                lib = None
+                if die: raise E
+                else:   return False
+
+        _assign_to_namespace(var=variable, obj=lib, namespace=namespace, overwrite=overwrite)
+        if namespace:
+            namespace[variable] = lib
+        libs.append(lib)
+
+    if len(libs) == 1:
+        libs = libs[0]
+
+    return libs
+
+
 
 ##############################################################################
 #%% Classes
 ##############################################################################
 
-__all__ += ['KeyNotFoundError', 'LinkException', 'prettyobj', 'autolist', 'Link']
+__all__ += ['KeyNotFoundError', 'LinkException', 'prettyobj', 'autolist', 'Link', 'LazyModule']
 
 
 class KeyNotFoundError(KeyError):
@@ -1751,7 +1777,17 @@ class prettyobj(object):
         a: 4
         b: 6
         ————————————————————————————————————————————————————————————
+
+    | New in version 2.0.0: allow positional arguments
     '''
+
+    def __init__(self, *args, **kwargs):
+        kwargs = mergedicts(*args, kwargs)
+        for k,v in kwargs.items():
+            self.__dict__[k] = v
+        return
+
+
     def __repr__(self):
         from . import sc_printing as scp # To avoid circular import
         output  = scp.prepr(self)
@@ -1794,7 +1830,7 @@ class autolist(list):
     def __getitem__(self, key):
         try:
             return list.__getitem__(self, key)
-        except IndexError:
+        except IndexError: # pragma: no cover
             errormsg = f'list index {key} is out of range for list of length {len(self)}'
             raise IndexError(errormsg) from None # Don't show the traceback
 
@@ -1837,3 +1873,59 @@ class Link(object):
     def __deepcopy__(self, *args, **kwargs):
         ''' Same as copy '''
         return self.__copy__(*args, **kwargs)
+
+
+class LazyModule:
+    '''
+    Create a "lazy" module that is loaded if and only if an attribute is called.
+
+    Typically not for use by the user, but is used by ``sc.importbyname()``.
+
+    Args:
+        module (str): name of the module to (not) load
+        variable (str): variable name to assign the module to
+        namespace (dict): the namespace to use (if not supplied, globals())
+        overwrite (bool): whether to allow overwriting an existing variable (by default, yes)
+
+    **Example**::
+
+        pd = sc.LazyModule('pandas', 'pd') # pd is a LazyModule, not actually pandas
+        df = pd.DataFrame() # Not only does this work, but pd is now actually pandas
+
+    New in version 2.0.0.
+    '''
+
+    def __init__(self, module, variable, namespace=None, overwrite=True):
+        self._variable  = variable
+        self._module    = module
+        self._namespace = namespace
+        self._overwrite = overwrite
+        return
+
+
+    def __repr__(self):
+        output = f"<sc.LazyModule({self._variable}='{self._module}') at {hex(id(self))}>"
+        return output
+
+
+    def __getattr__(self, attr):
+        ''' In most cases, when an attribute is retrieved we want to replace this module with the actual one '''
+        _builtin_keys = ['_variable', '_module', '_namespace', '_overwrite', '_load']
+        if attr in _builtin_keys:
+            obj = object.__getattribute__(self, attr)
+        else:
+            obj = self._load(attr)
+        return obj
+
+
+    def _load(self, attr=None):
+        ''' Stop being lazy and load the module '''
+        import importlib
+        var = self._variable
+        lib = importlib.import_module(self._module)
+        _assign_to_namespace(var, lib, namespace=self._namespace, overwrite=self._overwrite)
+        if attr:
+            obj = getattr(lib, attr)
+        else:
+            obj = lib
+        return obj

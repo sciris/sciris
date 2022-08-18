@@ -23,8 +23,14 @@ def test_adaptations():
     with pytest.raises(ValueError):
         o.sha3 = sc.dcp(o.sha)
 
-    print('\nTesting wget')
-    o.wget = sc.wget('http://wikipedia.org/')
+    print('\nTesting wget and download')
+    url1 = 'http://wikipedia.org/'
+    url2 = 'http://covasim.org/'
+    o.wget = sc.wget(url1)
+    o.download = sc.download(url1, url2, save=False)
+    fn = 'temp.html'
+    sc.download({url1:fn})
+    sc.rmpath(fn)
 
     print('\nTesting htmlify')
     o.html = sc.htmlify('foo&\nbar') # Returns b'foo&amp;<br>bar'
@@ -113,6 +119,9 @@ def test_versions():
     data, _ = sc.require(numpy='1.19.1', matplotlib='==4.2.2', die=False, detailed=True)
     with pytest.raises(ModuleNotFoundError): sc.require('matplotlib==99.23')
     with pytest.raises(ModuleNotFoundError): sc.require('not_a_valid_module')
+
+    print('↑↑↑ Will print warnings')
+
     return data
 
 
@@ -205,53 +214,6 @@ def test_types():
 
 #%% Misc. functions
 
-def test_profile():
-    sc.heading('Test profiling functions')
-
-    def slow_fn():
-        n = 10000
-        int_list = []
-        int_dict = {}
-        for i in range(n):
-            int_list.append(i)
-            int_dict[i] = i
-        return
-
-    def big_fn():
-        n = 1000
-        int_list = []
-        int_dict = {}
-        for i in range(n):
-            int_list.append([i]*n)
-            int_dict[i] = [i]*n
-        return
-
-    class Foo:
-        def __init__(self):
-            self.a = 0
-            return
-
-        def outer(self):
-            for i in range(100):
-                self.inner()
-            return
-
-        def inner(self):
-            for i in range(1000):
-                self.a += 1
-            return
-
-    foo = Foo()
-    try:
-        sc.mprofile(big_fn) # NB, cannot re-profile the same function at the same time
-    except TypeError as E: # This happens when re-running this script
-        print(f'Unable to re-profile memory function; this is usually not cause for concern ({E})')
-    sc.profile(run=foo.outer, follow=[foo.outer, foo.inner])
-    lp = sc.profile(slow_fn)
-
-    return lp
-
-
 def test_suggest():
     sc.heading('test_suggest()')
     string = 'foo'
@@ -287,13 +249,6 @@ def test_misc():
     sc.heading('Testing miscellaneous functions')
     o = sc.objdict()
 
-    print('\nTesting checkmem')
-    sc.checkmem(['spiffy',np.random.rand(243,589)], descend=True)
-
-    print('\nTesting checkram')
-    o.ram = sc.checkram()
-    print(o.ram)
-
     print('\nTesting runcommand')
     sc.runcommand('command_probably_not_found')
 
@@ -311,21 +266,40 @@ def test_misc():
     assert o.unique not in namelist
 
     print('\nTesting importbyname')
-    sc.importbyname('numpy')
+    global lazynp
+    sc.importbyname(lazynp='numpy', lazy=True, namespace=globals())
+    print(lazynp)
+    assert isinstance(lazynp, sc.LazyModule)
+    lazynp.array(0)
+    assert not isinstance(lazynp, sc.LazyModule)
 
     print('\nTesting get_caller()')
-    o.caller = sc.getcaller()
+    o.caller = sc.getcaller(includeline=True)
     print(o.caller)
 
     print('\nTesting nestedloop')
     o.nested = list(sc.nestedloop([['a','b'],[1,2]],[0,1]))
+
+    print('\nTesting strsplit')
+    target = ['a', 'b', 'c']
+    s1 = sc.strsplit('a b c') # Returns ['a', 'b', 'c']
+    s2 = sc.strsplit('a,b,c') # Returns ['a', 'b', 'c']
+    s3 = sc.strsplit('a, b, c') # Returns ['a', 'b', 'c']
+    s4 = sc.strsplit('  foo_bar  ', sep='_') # Returns ['foo', 'bar']
+    assert s1 == s2 == s3 == target
+    assert s4 == ['foo', 'bar']
+
+    print('\nTesting autolist')
+    ls = sc.autolist()
+    ls += 'a'
+    ls += [3, 'b']
+    assert ls ==  ['a', 3, 'b']
 
     return o
 
 
 
 #%% Classes
-
 
 def test_links():
     sc.heading('Testing links')
@@ -335,10 +309,10 @@ def test_links():
         raise sc.KeyNotFoundError('Example')
 
     obj = sc.objdict()
-    obj.uid = sc.uuid()
+    obj.uid  = sc.uuid()
     obj.data = np.random.rand(5)
-    o.obj = obj
-    o.link = sc.Link(obj)
+    o.obj    = obj
+    o.link   = sc.Link(obj)
     o.o_copy = sc.dcp(o)
 
     assert np.all(o.link()['data'] == o.obj['data'])
@@ -365,7 +339,6 @@ if __name__ == '__main__':
     types     = test_types()
 
     # Miscellaneous
-    lp        = test_profile()
     dists     = test_suggest()
     misc      = test_misc()
 
