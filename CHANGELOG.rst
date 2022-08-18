@@ -1,7 +1,7 @@
 What's new
 ==========
 
-All notable changes to this project will be documented in this file.
+All major updates to Sciris are documented here.
 
 By import convention, components of the Sciris library are listed beginning with ``sc.``, e.g. ``sc.odict()``.
 
