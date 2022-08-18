@@ -5,7 +5,7 @@ NB: Uses ``multiprocess`` instead of ``multiprocessing`` under the hood for
 broadest support  across platforms (e.g. Jupyter notebooks).
 
 Highlights:
-    - ``sc.parallelize()``: as-easy-as-possible parallelization
+    - :func:`parallelize`: as-easy-as-possible parallelization
 '''
 
 import numpy as np

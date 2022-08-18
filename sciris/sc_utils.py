@@ -6,15 +6,15 @@ ignore a function that you don't need than write one from scratch that you
 do need.
 
 Highlights:
-    - ``sc.dcp()``: shortcut to ``copy.deepcopy()``
-    - ``sc.pp()``: shortcut to ``pprint.pprint()``
-    - ``sc.isnumber()``: checks if something is any number type
-    - ``sc.tolist()``: converts any object to a list, for easy iteration
-    - ``sc.toarray()``: tries to convert any object to an array, for easy use with numpy
-    - ``sc.mergedicts()``: merges any set of inputs into a dictionary
-    - ``sc.mergelists()``: merges any set of inputs into a list
-    - ``sc.runcommand()``: simple way of executing a shell command
-    - ``sc.download()``: download multiple URLs in parallel
+    - :func:`dcp`: shortcut to ``copy.deepcopy()``
+    - :func:`pp`: shortcut to ``pprint.pprint()``
+    - :func:`isnumber`: checks if something is any number type
+    - :func:`tolist`: converts any object to a list, for easy iteration
+    - :func:`toarray`: tries to convert any object to an array, for easy use with numpy
+    - :func:`mergedicts`: merges any set of inputs into a dictionary
+    - :func:`mergelists`: merges any set of inputs into a list
+    - :func:`runcommand`: simple way of executing a shell command
+    - :func:`download`: download multiple URLs in parallel
 '''
 
 ##############################################################################
@@ -36,6 +36,7 @@ import numbers
 import string
 import warnings
 import numpy as np
+import pandas as pd
 import random as rnd
 import uuid as py_uuid
 import packaging as pkg
@@ -242,7 +243,7 @@ def dcp(obj, die=True, verbose=True):
         die (bool): if False, fall back to copy()
         verbose (bool): if die is False, then print a warning if deepcopy() fails
 
-    New in version 1.4.0: default die=True instead of False
+    New in version 2.0.0: default die=True instead of False
     '''
     try:
         output = copy.deepcopy(obj)
@@ -259,6 +260,8 @@ def cp(obj, die=True, verbose=True):
     Shortcut to perform a shallow copy operation
 
     Almost identical to ``copy.copy()``, but optionally allow failures
+
+    New in version 2.0.0: default die=True instead of False
     '''
     try:
         output = copy.copy(obj)
@@ -580,7 +583,7 @@ def urlopen(url, filename=None, save=False, headers=None, params=None, data=None
         if verbose: print('Converting from bytes to text...')
         try:
             output = output.decode()
-        except Exception as E:
+        except Exception as E: # pragma: no cover
             if die:
                 raise E
             elif verbose:
@@ -658,7 +661,7 @@ def download(url, *args, filename=None, save=True, parallel=True, verbose=True, 
     n_filenames = len(filenames)
     if not n_filenames:
         filenames = [None]*n_urls
-    elif n_filenames != n_urls:
+    elif n_filenames != n_urls: # pragma: no cover
         errormsg = f'Cannot process {n_urls} URLs and {n_filenames} filenames'
         raise ValueError(errormsg)
 
@@ -836,9 +839,9 @@ def isnumber(obj, isnan=None):
 
 def isstring(obj):
     '''
-    Determine whether or not the input is a string (i.e., str or bytes).
+    Determine whether or not the input is string-like (i.e., str or bytes).
 
-    Equivalent to isinstance(obj, (str, bytes))
+    Equivalent to ``isinstance(obj, (str, bytes))``
     '''
     return checktype(obj, 'string')
 
@@ -1154,7 +1157,6 @@ def _sanitize_iterables(obj, *args):
         _sanitize_iterables(np.array([1, 2]), 3) # Returns [1,2,3], True, True
         _sanitize_iterables(np.array([1, 2, 3])) # Returns [1,2,3], False, True
     '''
-    import pandas as pd # Optional import
     is_list   = isinstance(obj, list) or len(args)>0 # If we're given a list of args, treat it like a list
     is_array  = isinstance(obj, (np.ndarray, pd.Series)) # Check if it's an array
     if is_array: # If it is, convert it to a list
@@ -1775,7 +1777,17 @@ class prettyobj(object):
         a: 4
         b: 6
         ————————————————————————————————————————————————————————————
+
+    | New in version 2.0.0: allow positional arguments
     '''
+
+    def __init__(self, *args, **kwargs):
+        kwargs = mergedicts(*args, kwargs)
+        for k,v in kwargs.items():
+            self.__dict__[k] = v
+        return
+
+
     def __repr__(self):
         from . import sc_printing as scp # To avoid circular import
         output  = scp.prepr(self)
@@ -1818,7 +1830,7 @@ class autolist(list):
     def __getitem__(self, key):
         try:
             return list.__getitem__(self, key)
-        except IndexError:
+        except IndexError: # pragma: no cover
             errormsg = f'list index {key} is out of range for list of length {len(self)}'
             raise IndexError(errormsg) from None # Don't show the traceback
 

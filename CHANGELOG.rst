@@ -24,6 +24,7 @@ New functions and methods
 #. ``sc.loadyaml()`` and ``sc.saveyaml()`` load and save YAML files, respectively.
 #. ``sc.download()`` downloads multiple files in parallel.
 #. ``sc.LazyModule()`` handles lazily loaded modules (see ``sc.importbyname()`` for usage).
+#. ``sc.parse_env()`` parses environment variables into common types (e.g., will interpret ``'False'`` as ``False``).
 
 Bugfixes
 ~~~~~~~~
@@ -34,6 +35,7 @@ Bugfixes
 Improvements
 ~~~~~~~~~~~~
 #. If a copy/deepcopy is not possible, ``sc.cp()``/``sc.dcp()`` now raise an exception by default (previously, they silenced it).
+#. ``sc.dataframe()`` has been completely revamped, and is now a backwards-compatible extension of ``pd.DataFrame()``.
 #. ``sc.timer()`` now has ``plot()`` and ``total()`` methods, as well as ``indivtimings`` and ``cumtimings`` properties.
 #. ``sc.strsplit()`` will automatically split common types of delimited strings (e.g. ``sc.strsplit('a b c')``).
 #. ``sc.parallelize()`` now supports additional parallelization options, e.g. ``concurrent.futures``, and new ``maxcpu``/``maxmem`` arguments.
@@ -56,6 +58,7 @@ Improvements
 #. ``sc.date()`` can now read ``np.datetime64`` objects.
 #. ``sc.wget()`` can now save to files.
 #. ``sc.importbyname()`` can now load multiple modules, and load them lazily.
+#. ``sc.prettyobj()`` and ``sc.dictobj()`` now both take either positional or keyword arguments, e.g. ``sc.prettyobj(a=3)`` or ``sc.dictobj({'a':3})``.
 
 Housekeeping
 ~~~~~~~~~~~~
@@ -66,6 +69,7 @@ Housekeeping
 #. Added style and contributing guides.
 #. Added official support for Python 3.7-3.10.
 #. ``sc.wget()`` was renamed ``sc.urlopen()``.
+#. Sciris now has a "lazy loading" option, which does not import submodules, meaning loading is effectively instant. To use, set the environment variable ``SCIRIS_LAZY=1``, then load submodules via e.g. ``from sciris import sc_odict as sco``.
 
 Regression information
 ~~~~~~~~~~~~~~~~~~~~~~

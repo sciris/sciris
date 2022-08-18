@@ -1,17 +1,20 @@
 '''
-Legacy methods for handling old pickles (e.g. Python 2 pickles). Included for backwards
+Legacy methods for handling old pickles (eg Python 2 pickles). Included for backwards
 compatibility, but not imported into Sciris by default.
 '''
 
 import types
 import traceback
 import gzip as gz
+import numpy as np
 import pickle as pkl
 import datetime as dt
 import copyreg as cpreg
 from io import BytesIO as IO
 from contextlib import closing
 from . import sc_fileio as scf
+from . import sc_utils as scu
+from . import sc_odict as sco
 
 
 ##############################################################################
@@ -227,3 +230,165 @@ cpreg.pickle(types.MethodType, _pickleMethod, _unpickleMethod)
 # Legacy support for loading Sciris <1.0 objects; may be removed in future
 pickleMethod = _pickleMethod
 unpickleMethod = _unpickleMethod
+
+
+
+##############################################################################
+#%% Legacy data frame class
+##############################################################################
+
+class legacy_dataframe(object): # pragma: no cover
+    '''
+    This legacy dataframe is maintained solely to allow loading old files.
+
+    **Example**::
+
+        import sciris as sc
+        from sciris import sc_legacy as scl
+        remapping = {'sciris.sc_dataframe.dataframe':scl.legacy_dataframe}
+        old = sc.load('my-old-file.obj', remapping=remapping)
+
+    | Version: 2020nov29
+    | Migrated to ``sc_legacy`` in version 2.0.0.
+    '''
+
+    def __init__(self, cols=None, data=None, nrows=None):
+        self.cols = None
+        self.data = None
+        self.make(cols=cols, data=data, nrows=nrows)
+        return
+
+
+    def __repr__(self, spacing=2):
+        ''' spacing = space between columns '''
+        if not self.cols: # No keys, give up
+            return '<empty dataframe>'
+
+        else: # Go for it
+            outputlist = sco.odict()
+            outputformats = sco.odict()
+
+            # Gather data
+            nrows = self.nrows
+            for c,col in enumerate(self.cols):
+                outputlist[col] = list()
+                maxlen = len(col) # Start with length of column name
+                if nrows:
+                    for val in self.data[:,c]:
+                        output = scu.flexstr(val)
+                        maxlen = max(maxlen, len(output))
+                        outputlist[col].append(output)
+                outputformats[col] = '%'+'%i'%(maxlen+spacing)+'s'
+
+            ndigits = (np.floor(np.log10(max(1,nrows)))+1) # Don't allow 0 rows
+            indformat = '%%%is' % ndigits # Choose the right number of digits to print
+
+            # Assemble output
+            output = indformat % '' # Empty column for index
+            for col in self.cols: # Print out header
+                output += outputformats[col] % col
+            output += '\n'
+
+            for ind in range(nrows): # Loop over rows to print out
+                output += indformat % scu.flexstr(ind)
+                for col in self.cols: # Print out data
+                    output += outputformats[col] % outputlist[col][ind]
+                if ind<nrows-1: output += '\n'
+
+            return output
+
+
+    @property
+    def ncols(self):
+        ''' Get the number of columns in the data frame '''
+        ncols = len(self.cols)
+        ncols2 = self.data.shape[1]
+        if ncols != ncols2:
+            errormsg = 'Dataframe corrupted: %s columns specified but %s in data' % (ncols, ncols2)
+            raise Exception(errormsg)
+        return ncols
+
+
+    @property
+    def nrows(self):
+        ''' Get the number of rows in the data frame '''
+        try:    return self.data.shape[0]
+        except: return 0 # If it didn't work, probably because it's empty
+
+
+    @property
+    def shape(self):
+        ''' Equivalent to the shape of the data array, minus the headers '''
+        return (self.nrows, self.ncols)
+
+
+    def make(self, cols=None, data=None, nrows=None):
+        '''
+        Creates a dataframe from the supplied input data.
+
+        **Usage examples**::
+
+            df = sc.dataframe()
+            df = sc.dataframe(['a','b','c'])
+            df = sc.dataframe(['a','b','c'], nrows=2)
+            df = sc.dataframe([['a','b','c'],[1,2,3],[4,5,6]])
+            df = sc.dataframe(['a','b','c'], [[1,2,3],[4,5,6]])
+            df = sc.dataframe(cols=['a','b','c'], data=[[1,2,3],[4,5,6]])
+        '''
+        import pandas as pd # Optional import
+
+        # Handle columns
+        if nrows is None:
+            nrows = 0
+        if cols is None and data is None:
+            cols = list()
+            data = np.zeros((int(nrows), 0), dtype=object) # Object allows more than just numbers to be stored
+        elif cols is None and data is not None: # Shouldn't happen, but if it does, swap inputs
+            cols = data
+            data = None
+
+        if isinstance(cols, pd.DataFrame): # It's actually a Pandas dataframe
+            self.pandas(df=cols)
+            return # We're done
+
+        # A dictionary is supplied: assume keys are columns, and the rest is the data
+        if isinstance(cols, dict):
+            data = [col for col in cols.values()]
+            cols = list(cols.keys())
+
+        elif not scu.checktype(cols, 'listlike'):
+            errormsg = 'Inputs to dataframe must be list, tuple, or array, not %s' % (type(cols))
+            raise Exception(errormsg)
+
+        # Handle data
+        if data is None:
+            if np.ndim(cols)==2 and np.shape(cols)[0]>1: # It's a 2D array with more than one row: treat first as header
+                data = scu.dcp(cols[1:])
+                cols = scu.dcp(cols[0])
+            else:
+                data = np.zeros((int(nrows),len(cols)), dtype=object) # Just use default
+        data = np.array(data, dtype=object)
+        if data.ndim != 2:
+            if data.ndim == 1:
+                if len(cols)==1: # A single column, use the data to populate the rows
+                    data = np.reshape(data, (len(data),1))
+                elif len(data)==len(cols): # A single row, use the data to populate the columns
+                    data = np.reshape(data, (1,len(data)))
+                else:
+                    errormsg = 'Dimension of data can only be 1 if there is 1 column, not %s' % len(cols)
+                    raise Exception(errormsg)
+            else:
+                errormsg = 'Dimension of data must be 1 or 2, not %s' % data.ndim
+                raise Exception(errormsg)
+        if data.shape[1]==len(cols):
+            pass
+        elif data.shape[0]==len(cols):
+            data = data.transpose()
+        else:
+            errormsg = 'Number of columns (%s) does not match array shape (%s)' % (len(cols), data.shape)
+            raise Exception(errormsg)
+
+        # Store it
+        self.cols = list(cols)
+        self.data = data
+        return

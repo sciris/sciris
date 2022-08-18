@@ -43,6 +43,7 @@ if 'minimal' in sys.argv:
         'psutil',       # Parallel processing
         'matplotlib',   # Plotting
         'numpy',        # Numerical functions
+        'pandas',       # Dataframes and spreadsheet input
     ]
 
 # Get version

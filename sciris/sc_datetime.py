@@ -2,15 +2,16 @@
 Time/date utilities.
 
 Highlights:
-    - ``sc.tic()/sc.toc()/sc.timer()``: simple methods for timing durations
-    - ``sc.readdate()``: convert strings to dates using common formats
-    - ``sc.daterange()``: create a list of dates
-    - ``sc.datedelta()``: perform calculations on date strings
+    - :func:`tic` / :func:`toc` / :func:`timer`: simple methods for timing durations
+    - :func:`readdate`: convert strings to dates using common formats
+    - :func:`daterange`: create a list of dates
+    - :func:`datedelta`: perform calculations on date strings
 '''
 
 import time
 import warnings
 import numpy as np
+import pandas as pd
 import pylab as pl
 import datetime as dt
 import dateutil as du
@@ -266,7 +267,6 @@ def date(obj, *args, start_date=None, readformat=None, outformat=None, as_date=T
     | New in version 1.2.2: "readformat" argument; renamed "dateformat" to "outformat"
     | New in version 2.0.0: support for ``np.datetime64`` objects
     '''
-    import pandas as pd # Optional import
 
     # Handle deprecation
     start_date = kwargs.pop('startdate', start_date) # Handle with or without underscore

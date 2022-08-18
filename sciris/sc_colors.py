@@ -2,10 +2,10 @@
 Handle colors and colormaps.
 
 Highlights:
-    - Adds colormaps including 'turbo', 'parula', and 'orangeblue'
-    - ``sc.hex2grb()/sc.rgb2hex()``: convert between different color conventions
-    - ``sc.vectocolor()``: map a list of sequential values onto a list of colors
-    - ``sc.gridcolors()``: map a list of qualitative categories onto a list of colors
+    - Adds colormaps including ``'turbo'``, ``'parula'``, and ``'orangeblue'``
+    - :func:`hex2rgb`/:func:`rgb2hex`: convert between different color conventions
+    - :func:`vectocolor`: map a list of sequential values onto a list of colors
+    - :func:`gridcolors`: map a list of qualitative categories onto a list of colors
 '''
 
 ##############################################################################

@@ -2,10 +2,10 @@
 Profiling and CPU/memory management functions.
 
 Highlights:
-    - ``sc.cpuload()``: alias to ``psutil.cpu_percent()``
-    - ``sc.loadbalancer()``: very basic load balancer
-    - ``sc.profile()``: a line profiler
-    - ``sc.resourcemonitor()``: a monitor to kill processes that exceed memory or other limits
+    - :func:`cpuload`: alias to ``psutil.cpu_percent()``
+    - :func:`loadbalancer`: very basic load balancer
+    - :func:`profile`: a line profiler
+    - :func:`resourcemonitor`: a monitor to kill processes that exceed memory or other limits
 """
 
 import os
@@ -18,6 +18,7 @@ import threading
 import tempfile
 import warnings
 import numpy as np
+import pandas as pd
 import pylab as pl
 import multiprocessing as mp
 from . import sc_utils as scu
@@ -663,7 +664,6 @@ class resourcemonitor(scu.prettyobj):
 
     def to_df(self):
         ''' Convert the log into a pandas dataframe '''
-        import pandas as pd # Slow import
         entries = []
         for entry in self.log:
             flat = scn.flattendict(entry, sep='_')

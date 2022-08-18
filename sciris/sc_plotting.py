@@ -3,13 +3,13 @@
 Extensions to Matplotlib, including 3D plotting and plot customization.
 
 Highlights:
-    - ``sc.plot3d()``: easy way to render 3D plots
-    - ``sc.boxoff()``: turn off top and right parts of the axes box
-    - ``sc.commaticks()``: convert labels from "10000" and "1e6" to "10,000" and "1,000,0000"
-    - ``sc.SIticks()``: convert labels from "10000" and "1e6" to "10k" and "1m"
-    - ``sc.maximize()``: make the figure fill the whole screen
-    - ``sc.savemovie()``: save a sequence of figures as an MP4 or other movie
-    - ``sc.fonts()``: list available fonts or add new ones
+    - :func:`plot3d`: easy way to render 3D plots
+    - :func:`boxoff`: turn off top and right parts of the axes box
+    - :func:`commaticks`: convert labels from "10000" and "1e6" to "10,000" and "1,000,0000"
+    - :func:`SIticks`: convert labels from "10000" and "1e6" to "10k" and "1m"
+    - :func:`maximize`: make the figure fill the whole screen
+    - :func:`savemovie`: save a sequence of figures as an MP4 or other movie
+    - :func:`fonts`: list available fonts or add new ones
 '''
 
 ##############################################################################
@@ -443,7 +443,7 @@ def commaticks(ax=None, axis='y', precision=2, cursor_precision=0):
     | New in version 1.3.1: added "precision" argument
     | New in version 2.0.0: ability to set x and y axes simultaneously
     '''
-    def commaformatter(x, pos=None):
+    def commaformatter(x, pos=None): # pragma: no cover
         interval = thisaxis.get_view_interval()
         prec = precision + cursor_precision if pos is None else precision # Use higher precision for cursor
         decimals = int(max(0, prec-np.floor(np.log10(np.ptp(interval)))))
@@ -496,7 +496,7 @@ def SIticks(ax=None, axis='y', fixed=False):
         elif axis=='y': thisaxis = ax.yaxis
         elif axis=='z': thisaxis = ax.zaxis
         else: raise ValueError('Axis must be x, y, or z')
-        if fixed:
+        if fixed: # pragma: no cover
             ticklocs = thisaxis.get_ticklocs()
             ticklabels = []
             for tickloc in ticklocs:
@@ -558,7 +558,7 @@ def getrowscols(n, nrows=None, ncols=None, ratio=1, make=False, tight=True, remo
         ncols = int(np.ceil(n/nrows)) # Could also call recursively!
 
     # If asked, make subplots
-    if make:
+    if make: # pragma: no cover
         fig, axs = pl.subplots(nrows=nrows, ncols=ncols, **kwargs)
         if remove_extra:
             for ax in axs.flat[n:]:
@@ -731,7 +731,7 @@ def fonts(add=None, use=False, output='name', dryrun=False, rebuild=False, verbo
                 if use and fontname: # Set as default font
                     pl.rc('font', family=fontname)
 
-            if rebuild:
+            if rebuild: # pragma: no cover
                 print('Rebuilding font cache, please be patient...')
                 try:
                     fm._load_fontmanager(try_read_cache=False) # This used to be fm._rebuild(), but this was removed; this works as of Matplotlib 3.4.3
@@ -745,7 +745,7 @@ def fonts(add=None, use=False, output='name', dryrun=False, rebuild=False, verbo
                 print(f'Done: added {len(fontpaths)} fonts.')
 
         # Exception was encountered, quietly print
-        except Exception as E:
+        except Exception as E: # pragma: no cover
             exc = type(E)
             errormsg = f'Warning, could not install some fonts:\n{str(E)}'
             if die:
@@ -809,11 +809,11 @@ class ScirisDateFormatter(mpl.dates.ConciseDateFormatter):
 
         return
 
-    def format_data_short(self, value):
+    def format_data_short(self, value): # pragma: no cover
         ''' Show year-month-day, not with hours and seconds '''
         return pl.num2date(value, tz=self._tz).strftime('%Y-%b-%d')
 
-    def format_ticks(self, values):
+    def format_ticks(self, values): # pragma: no cover
         '''
         Append the year to the tick label for the first label, or if the year changes.
         This avoids the need to use offset_text, which is difficult to control.
@@ -894,7 +894,7 @@ def dateformatter(ax=None, style='sciris', dateformat=None, start=None, end=None
         ax = pl.gca()
 
     # Handle dateformat, if provided
-    if dateformat is not None:
+    if dateformat is not None: # pragma: no cover
         if isinstance(dateformat, str):
             kwargs['formats'] = [dateformat]*6
         elif isinstance(dateformat, list):
@@ -1169,7 +1169,7 @@ def loadmetadata(filename, load_all=False, die=True):
                 metadata = scf.loadjson(string=jsonstr)
 
         # JPG -- from https://www.thepythoncode.com/article/extracting-image-metadata-in-python
-        elif is_jpg:
+        elif is_jpg: # pragma: no cover
             from PIL.ExifTags import TAGS # Must be imported directly
             exifdata = im.getexif()
             for tag_id in exifdata:
@@ -1180,7 +1180,7 @@ def loadmetadata(filename, load_all=False, die=True):
                 metadata[tag] = data
 
         # Can't find metadata
-        else:
+        else: # pragma: no cover
             errormsg = f'Could not find "{_metadataflag}": metadata can only be extracted from figures saved with sc.savefig().\nAvailable keys are: {scu.strjoin(keys)}'
             if die:
                 raise ValueError(errormsg)
@@ -1190,7 +1190,7 @@ def loadmetadata(filename, load_all=False, die=True):
 
 
     # Handle SVG
-    elif lcfn.endswith('svg'):
+    elif lcfn.endswith('svg'): # pragma: no cover
 
         # Load SVG as text and parse it
         svg = scf.loadtext(filename).splitlines()
@@ -1217,7 +1217,7 @@ def loadmetadata(filename, load_all=False, die=True):
                 print(errormsg)
 
     # Other formats not supported
-    else:
+    else: # pragma: no cover
         errormsg = f'Filename "{filename}" has unsupported type: must be PNG, JPG, or SVG (PDF is not supported)'
         raise ValueError(errormsg)
 
@@ -1264,7 +1264,7 @@ def savefigs(figs=None, filetype=None, filename=None, folder=None, savefigargs=N
 
     # Handle file types
     filenames = []
-    if filetype=='singlepdf': # See http://matplotlib.org/examples/pylab_examples/multipage_pdf.html
+    if filetype=='singlepdf': # See http://matplotlib.org/examples/pylab_examples/multipage_pdf.html  # pragma: no cover
         from matplotlib.backends.backend_pdf import PdfPages
         defaultname = 'figures.pdf'
         fullpath = scf.makefilepath(filename=filename, folder=folder, default=defaultname, ext='pdf')
@@ -1276,7 +1276,7 @@ def savefigs(figs=None, filetype=None, filename=None, folder=None, savefigargs=N
         # Handle filename
         if filename and nfigs==1: # Single plot, filename supplied -- use it
             fullpath = scf.makefilepath(filename=filename, folder=folder, default='Figure', ext=filetype) # NB, this filename not used for singlepdf filetype, so it's OK
-        else: # Any other case, generate a filename
+        else: # Any other case, generate a filename # pragma: no cover
             keyforfilename = filter(str.isalnum, str(key)) # Strip out non-alphanumeric stuff for key
             defaultname = keyforfilename
             fullpath = scf.makefilepath(filename=filename, folder=folder, default=defaultname, ext=filetype)
@@ -1289,7 +1289,7 @@ def savefigs(figs=None, filetype=None, filename=None, folder=None, savefigargs=N
             scf.saveobj(fullpath, plt)
             filenames.append(fullpath)
             if verbose: print(f'Figure object saved to {fullpath}')
-        else:
+        else: # pragma: no cover
             reanimateplots(plt)
             if filetype=='singlepdf':
                 pdf.savefig(figure=plt, **defaultsavefigargs) # It's confusing, but defaultsavefigargs is correct, since we updated it from the user version
@@ -1352,10 +1352,11 @@ def emptyfig(*args, **kwargs):
 def _get_legend_handles(ax, handles, labels):
     '''
     Construct handle and label list, from one of:
-     - A list of handles and a list of labels
-     - A list of handles, where each handle contains the label
-     - An axis object, containing the objects that should appear in the legend
-     - A figure object, from which the first axis will be used
+
+         - A list of handles and a list of labels
+         - A list of handles, where each handle contains the label
+         - An axis object, containing the objects that should appear in the legend
+         - A figure object, from which the first axis will be used
     '''
     if handles is None:
         if ax is None:
@@ -1363,7 +1364,7 @@ def _get_legend_handles(ax, handles, labels):
         elif isinstance(ax, pl.Figure): # Allows an argument of a figure instead of an axes
             ax = ax.axes[-1]
         handles, labels = ax.get_legend_handles_labels()
-    else:
+    else: # pragma: no cover
         if labels is None:
             labels = [h.get_label() for h in handles]
         else:
@@ -1399,7 +1400,7 @@ def separatelegend(ax=None, handles=None, labels=None, reverse=False, figsetting
         handles2.append(h2)
 
     # Reverse order, e.g. for stacked plots
-    if reverse:
+    if reverse: # pragma: no cover
         handles2 = handles2[::-1]
         labels   = labels[::-1]
 
@@ -1568,7 +1569,7 @@ class animation(scu.prettyobj):
         ''' Generate a filename for the next image file to save '''
         try:
             name = self.nametemplate % self.n_files
-        except TypeError as E:
+        except TypeError as E: # pragma: no cover
             errormsg = f'Name template "{self.nametemplate}" does not seem valid for inserting current file number {self.n_files} into: should contain the string "%04d" or similar'
             raise TypeError(errormsg) from E
         if path:
@@ -1641,7 +1642,7 @@ class animation(scu.prettyobj):
         return
 
 
-    def loadframes(self):
+    def loadframes(self): # pragma: no cover
         ''' Load saved images as artists '''
         animfig = pl.figure(figsize=self.fig_size, dpi=self.dpi)
         ax = animfig.add_axes([0,0,1,1])
@@ -1718,13 +1719,13 @@ class animation(scu.prettyobj):
         # Start timing
         T = scd.timer()
 
-        if engine == 'ffmpeg':
+        if engine == 'ffmpeg': # pragma: no cover
             save_args = scu.mergedicts(dict(overwrite_output=True, quiet=True), save_args)
             stream = ffmpeg.input(self.nametemplate, framerate=fps, **anim_args)
             stream = stream.output(filename)
             stream.run(**save_args, **kwargs)
 
-        elif engine == 'matplotlib':
+        elif engine == 'matplotlib': # pragma: no cover
             import matplotlib.animation as mpl_anim
 
             # Load and sanitize frames

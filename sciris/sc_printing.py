@@ -2,12 +2,12 @@
 Printing/notification functions.
 
 Highlights:
-    - ``sc.heading()``: print text as a 'large' heading
-    - ``sc.colorize()``: print text in a certain color
-    - ``sc.pr()``: print full representation of an object, including methods and each attribute
-    - ``sc.sigfigs()``: truncate a number to a certain number of significant figures
-    - ``sc.progressbar()``: show a (text-based) progress bar
-    - ``sc.capture()``: capture text output (e.g., stdout) as a variable
+    - :func:`heading`: print text as a 'large' heading
+    - :func:`colorize`: print text in a certain color
+    - :func:`pr`: print full representation of an object, including methods and each attribute
+    - :func:`sigfigs`: truncate a number to a certain number of significant figures
+    - :func:`progressbar`: show a (text-based) progress bar
+    - :func:`capture`: capture text output (e.g., stdout) as a variable
 '''
 
 import io

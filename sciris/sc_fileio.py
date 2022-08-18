@@ -2,13 +2,13 @@
 Functions for reading/writing to files, including pickles, JSONs, and Excel.
 
 Highlights:
-    - ``sc.save()/sc.load()``: efficiently save/load any Python object (via pickling)
-    - ``sc.savetext()/sc.loadtext()``: likewise, for text
-    - ``sc.savejson()/sc.loadjson()``: likewise, for JSONs
-    - ``sc.saveyaml()/sc.saveyaml()``: likewise, for YAML
-    - ``sc.thisdir()``: get current folder
-    - ``sc.getfilelist()``: easy way to access glob
-    - ``sc.rmpath()``: remove files and folders
+    - :func:`save` / :func:`load`: efficiently save/load any Python object (via pickling)
+    - :func:`savetext` / :func:`loadtext`: likewise, for text
+    - :func:`savejson` / :func:`loadjson`: likewise, for JSONs
+    - :func:`saveyaml` / :func:`saveyaml`: likewise, for YAML
+    - :func:`thisdir`: get current folder
+    - :func:`getfilelist`: easy way to access glob
+    - :func:`rmpath`: remove files and folders
 """
 
 ##############################################################################
@@ -27,6 +27,7 @@ import importlib
 import traceback
 import warnings
 import numpy as np
+import pandas as pd
 import datetime as dt
 from glob import glob
 from zipfile import ZipFile
@@ -74,10 +75,10 @@ def load(filename=None, folder=None, verbose=False, die=None, remapping=None, me
 
     **Examples**::
 
-        obj = sc.loadobj('myfile.obj') # Standard usage
-        old = sc.loadobj('my-old-file.obj', method='dill', ignore=True) # Load classes from saved files
-        old = sc.loadobj('my-old-file.obj', remapping={'foo.Bar':cat.Mat}) # If loading a saved object containing a reference to foo.Bar that is now cat.Mat
-        old = sc.loadobj('my-old-file.obj', remapping={'foo.Bar':('cat', 'Mat')}) # Equivalent to the above
+        obj = sc.load('myfile.obj') # Standard usage
+        old = sc.load('my-old-file.obj', method='dill', ignore=True) # Load classes from saved files
+        old = sc.load('my-old-file.obj', remapping={'foo.Bar':cat.Mat}) # If loading a saved object containing a reference to foo.Bar that is now cat.Mat
+        old = sc.load('my-old-file.obj', remapping={'foo.Bar':('cat', 'Mat')}) # Equivalent to the above
 
     | New in version 1.1.0: "remapping" argument
     | New in version 1.2.2: ability to load non-gzipped pickles; support for dill; arguments passed to loader
@@ -680,7 +681,7 @@ def rmpath(path=None, *args, die=True, verbose=True, interactive=False, **kwargs
                 elif verbose:
                     print(errormsg)
 
-        if interactive:
+        if interactive: # pragma: no cover
             ans = input(f'Remove "{path}"? (y/[n]) ')
             if ans != 'y':
                 print(f'  Skipping "{path}"')
@@ -690,7 +691,7 @@ def rmpath(path=None, *args, die=True, verbose=True, interactive=False, **kwargs
             rm_func(path)
             if verbose or interactive:
                 print(f'Removed "{path}"')
-        except Exception as E:
+        except Exception as E: # pragma: no cover
             if die:
                 raise E
             elif verbose:
@@ -1176,7 +1177,7 @@ class Spreadsheet(Blobject):
         return wb
 
 
-    def openpyxl(self, reload=False, store=True, **kwargs):
+    def openpyxl(self, reload=False, store=True, **kwargs): # pragma: no cover
         ''' Return a book as opened by openpyxl '''
         if self._reload_wb(reload=reload):
             import openpyxl # Optional import
@@ -1213,7 +1214,6 @@ Falling back to openpyxl, which is identical except for how cached cell values a
         ''' Return a book as opened by pandas '''
 
         if self._reload_wb(reload=reload):
-            import pandas as pd # Optional (slow) import
             if self.blob is not None:
                 self.tofile(output=False)
                 wb = pd.ExcelFile(self.bytes, **kwargs)
@@ -1323,7 +1323,7 @@ Falling back to openpyxl, which is identical except for how cached cell values a
                         cellobj = ws[cell]
                     elif scu.checktype(cell, 'arraylike','number') and len(cell)==2: # Handles e.g. cell=(0,0)
                         cellobj = ws.cell(row=cell[0], column=cell[1])
-                    else:
+                    else: # pragma: no cover
                         errormsg = f'Cell must be formatted as a label or row-column pair, e.g. "A1" or (3,5); not "{cell}"'
                         raise TypeError(errormsg)
                     if verbose: print(f'  Cell {cell} = {val}')
@@ -1397,7 +1397,6 @@ def loadspreadsheet(filename=None, folder=None, fileobj=None, sheet=0, header=1,
 
     # Load using pandas
     if method == 'pandas':
-        import pandas as pd # Optional import, here for loading speed
         if fileobj is not None: fullpath = fileobj # Substitute here for reading
         data = pd.read_excel(fullpath, sheet_name=sheet, header=header, **kwargs)
         return data
@@ -1675,7 +1674,7 @@ class Empty(object):
         pass
 
 
-class UniversalFailed(Failed):
+class UniversalFailed(Failed): # pragma: no cover
     ''' A universal failed object class, that preserves as much data as possible '''
 
     def __init__(self, *args, **kwargs):
@@ -1756,7 +1755,7 @@ class _RobustUnpickler(pkl.Unpickler):
         return obj
 
 
-class _UltraRobustUnpickler(pkl.Unpickler):
+class _UltraRobustUnpickler(pkl.Unpickler): # pragma: no cover
     ''' If all else fails, just make a default object '''
 
     def __init__(self, bytesio, *args, unpicklingerrors=None, **kwargs):

@@ -76,6 +76,7 @@ def test_spreadsheets():
 
     # Test spreadsheet saving
     sc.heading('Using a Spreadsheet')
+    wb = sc.Spreadsheet().new()
     S = sc.Spreadsheet(files.excel)
     S.writecells(cells=['A6','B7','C8','D9'], vals=['This','is','a','test']) # Method 1
     S.writecells(cells=[pl.array([7,1])+i for i in range(4)], vals=['And','so','is','this']) # Method 2
@@ -155,6 +156,7 @@ def test_fileio():
         sc.heading('Intentionally loading corrupted file')
         print('Loading with no remapping...')
         o.obj3 = sc.loadobj(dead_path)
+        print(o.obj3)
         print(f'Loading corrupted object succeeded, x={o.obj3.x}')
 
         print('Loading with remapping...')

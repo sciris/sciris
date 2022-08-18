@@ -1,7 +1,12 @@
 '''
-Copy of the ansicolors Python module. Included here to avoid an additional dependency.
+Copy of Jonathan Eunice and Georgios Verigakis' ansicolors Python module:
+https://pypi.org/project/ansicolors/
+
+Included here to avoid an additional dependency.
 
 Functions here are not intended for direct use by the user, but of course they can be.
+
+New in version 2.0.0.
 '''
 
 # Copyright (c) 2012 Giorgos Verigakis <verigak@gmail.com>
@@ -20,7 +25,6 @@ Functions here are not intended for direct use by the user, but of course they c
 
 import re
 from functools import partial
-from . import sc_utils as scu
 
 # ANSI color names. There is also a "default"
 COLORS = ('black', 'red', 'green', 'yellow', 'blue', 'magenta', 'cyan', 'white')
@@ -48,16 +52,15 @@ def _color_code(spec, base):
     try looking up look CSS color names or parsing CSS hex and rgb color
     specifications.
 
-    :param str|int|tuple|list spec: Unparsed color specification
-    :param int base: Either 30 or 40, signifying the base value
-        for color encoding (foreground and background respectively).
-        Low values are added directly to the base. Higher values use `
-        base + 8` (i.e. 38 or 48) then extended codes.
-    :returns: Discovered ANSI color encoding.
-    :rtype: str
-    :raises: ValueError if cannot parse the color spec.
+    "Base" is either 30 or 40, signifying the base value for color encoding
+    (foreground and background respectively). Low values are added directly
+    to the base. Higher values use ``base + 8`` (i.e. 38 or 48) then extended codes.
+
+    Args:
+        spec (str|int|tuple|list): Unparsed color specification
+        base (int): see above
     """
-    if scu.isstring(spec):
+    if isinstance(spec, str):
         spec = spec.strip().lower()
 
     if spec == 'default':
@@ -305,6 +308,7 @@ css_colors = {
 
 
 def parse_rgb(s):
+    ''' Convert string to an RGB color '''
     if not isinstance(s, str):
         raise ValueError(f"Could not parse color '{s}'")
     s = s.strip().replace(' ', '').lower()
