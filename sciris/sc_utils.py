@@ -1828,7 +1828,7 @@ class autolist(list):
     def __getitem__(self, key):
         try:
             return list.__getitem__(self, key)
-        except IndexError:
+        except IndexError: # pragma: no cover
             errormsg = f'list index {key} is out of range for list of length {len(self)}'
             raise IndexError(errormsg) from None # Don't show the traceback
 

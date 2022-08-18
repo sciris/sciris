@@ -266,10 +266,15 @@ def test_misc():
     assert o.unique not in namelist
 
     print('\nTesting importbyname')
-    sc.importbyname('numpy')
+    global lazynp
+    sc.importbyname(lazynp='numpy', lazy=True, namespace=globals())
+    print(lazynp)
+    assert isinstance(lazynp, sc.LazyModule)
+    lazynp.array(0)
+    assert not isinstance(lazynp, sc.LazyModule)
 
     print('\nTesting get_caller()')
-    o.caller = sc.getcaller()
+    o.caller = sc.getcaller(includeline=True)
     print(o.caller)
 
     print('\nTesting nestedloop')
@@ -283,6 +288,12 @@ def test_misc():
     s4 = sc.strsplit('  foo_bar  ', sep='_') # Returns ['foo', 'bar']
     assert s1 == s2 == s3 == target
     assert s4 == ['foo', 'bar']
+
+    print('\nTesting autolist')
+    ls = sc.autolist()
+    ls += 'a'
+    ls += [3, 'b']
+    assert ls ==  ['a', 3, 'b']
 
     return o
 
