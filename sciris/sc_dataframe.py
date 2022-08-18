@@ -186,35 +186,17 @@ class dataframe(pd.DataFrame):
         return output
 
 
+    def set(self, key, value=None):
+        ''' Alias to pandas __setitem__ method '''
+        return super().__setitem__(key, value)
+
+
     def __setitem__(self, key, value=None):
         try:
+            assert isinstance(key, str) or key in self.cols # Don't create new non-text columns, only set existing ones
             super().__setitem__(key, value)
         except:
-            if value is None:
-                value = np.zeros(self.nrows, dtype=object)
-            if scu.isstring(key): # Add column
-                if not scu.isiterable(value):
-                    value = scu.promotetolist(value)
-                if len(value) != self.nrows:
-                    if len(value) == 1:
-                        value = [value]*self.nrows # Get it the right length
-                    else:
-                        if self.ncols==0:
-                            self.iloc[:,:] = np.zeros((len(value),0), dtype=object) # Prepare data for writing
-                        else:
-                            errormsg = 'Cannot add column %s with value %s: incorrect length (%s vs. %s)' % (key, value, len(value), self.nrows)
-                            raise Exception(errormsg)
-                try:
-                    colindex = self.cols.index(key)
-                    val_arr = np.reshape(value, (len(value),))
-                    self.iloc[:,colindex] = val_arr
-                except:
-                    newcols = self.cols + [key]
-                    newcol = self._to_array(val_arr)
-                    newdata = np.hstack((self.values, newcol))
-                    newdf = dataframe(data=newdata, columns=newcols)
-                    self.replacedata(newdf=newdf, reset_index=False, inplace=True)
-            elif scu.isnumber(key):
+            if scu.isnumber(key):
                 newrow = self._val2row(value, to2d=False) # Make sure it's in the correct format
                 if len(newrow) != self.ncols:
                     errormsg = f'Vector has incorrect length ({len(newrow)} vs. {self.ncols})'
@@ -225,90 +207,13 @@ class dataframe(pd.DataFrame):
                 except:
                     self.appendrow(value)
             elif isinstance(key, tuple):
-                if scu.isstring(key[1]) and scu.isnumber(key[0]): # Keys supplied in opposite order
-                    key = (key[1], key[0]) # Swap order
-                if key[0] not in self.cols:
-                    errormsg = f'Column name "{key[0]}" not found; available columns are:\n{scu.newlinejoin(self.columns)}'
-                    raise Exception(errormsg)
-                try:
-                    colindex = self.cols.index(key[0])
-                    rowindex = int(key[1])
-                    self.iloc[rowindex,colindex] = value
-                except Exception as E:
-                    errormsg = 'Could not insert element (%s,%s) in dataframe of shape %s: %s' % (key[0], key[1], self.data.shape, str(E))
-                    raise Exception(errormsg)
-        return
-
-
-    def make(self, cols=None, data=None, nrows=None):
-        '''
-        Creates a dataframe from the supplied input data.
-
-        **Usage examples**::
-
-            df = sc.dataframe()
-            df = sc.dataframe(['a','b','c'])
-            df = sc.dataframe(['a','b','c'], nrows=2)
-            df = sc.dataframe([['a','b','c'],[1,2,3],[4,5,6]])
-            df = sc.dataframe(['a','b','c'], [[1,2,3],[4,5,6]])
-            df = sc.dataframe(cols=['a','b','c'], data=[[1,2,3],[4,5,6]])
-        '''
-        import pandas as pd # Optional import
-
-        # Handle columns
-        if nrows is None:
-            nrows = 0
-        if cols is None and data is None:
-            cols = list()
-            data = np.zeros((int(nrows), 0), dtype=object) # Object allows more than just numbers to be stored
-        elif cols is None and data is not None: # Shouldn't happen, but if it does, swap inputs
-            cols = data
-            data = None
-
-        if isinstance(cols, pd.DataFrame): # It's actually a Pandas dataframe
-            self.pandas(df=cols)
-            return # We're done
-
-        # A dictionary is supplied: assume keys are columns, and the rest is the data
-        if isinstance(cols, dict):
-            data = [col for col in cols.values()]
-            cols = list(cols.keys())
-
-        elif not scu.checktype(cols, 'listlike'):
-            errormsg = 'Inputs to dataframe must be list, tuple, or array, not %s' % (type(cols))
-            raise Exception(errormsg)
-
-        # Handle data
-        if data is None:
-            if np.ndim(cols)==2 and np.shape(cols)[0]>1: # It's a 2D array with more than one row: treat first as header
-                data = scu.dcp(cols[1:])
-                cols = scu.dcp(cols[0])
-            else:
-                data = np.zeros((int(nrows),len(cols)), dtype=object) # Just use default
-        data = np.array(data, dtype=object)
-        if data.ndim != 2:
-            if data.ndim == 1:
-                if len(cols)==1: # A single column, use the data to populate the rows
-                    data = np.reshape(data, (len(data),1))
-                elif len(data)==len(cols): # A single row, use the data to populate the columns
-                    data = np.reshape(data, (1,len(data)))
-                else:
-                    errormsg = 'Dimension of data can only be 1 if there is 1 column, not %s' % len(cols)
-                    raise Exception(errormsg)
-            else:
-                errormsg = 'Dimension of data must be 1 or 2, not %s' % data.ndim
-                raise Exception(errormsg)
-        if data.shape[1]==len(cols):
-            pass
-        elif data.shape[0]==len(cols):
-            data = data.transpose()
-        else:
-            errormsg = 'Number of columns (%s) does not match array shape (%s)' % (len(cols), data.shape)
-            raise Exception(errormsg)
-
-        # Store it
-        self.cols = list(cols)
-        self.data = data
+                rowindex = key[0]
+                colindex = key[1]
+                if scu.isstring(rowindex) and not scu.isstring(colindex): # Swap order if one's a string and the other isn't
+                    rowindex, colindex = colindex, rowindex
+                if scu.isstring(colindex): # e.g. df['a',0]
+                    colindex = self.cols.index(colindex)
+                self.iloc[rowindex,colindex] = value
         return
 
 
@@ -328,7 +233,7 @@ class dataframe(pd.DataFrame):
         **Example**::
 
             df = sc.dataframe(cols=['x','y','z'],data=[[1238,2,-1],[384,5,-2],[666,7,-3]]) # Create data frame
-            df.get(cols=['x','z'], rows=[0,2])
+            df.flexget(cols=['x','z'], rows=[0,2])
         '''
         if cols is None:
             colindices = Ellipsis

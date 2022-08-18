@@ -50,7 +50,7 @@ def test_methods():
     with pytest.raises(IndexError):
         df.appendrow([1,2,3])
 
-    # Get/set
+    # Get
     dfprint('Key get', df['a'])
     dfprint('Array get', df[[0,2]])
     dfprint('Tuple get 1', df[0,'a'])
@@ -63,6 +63,14 @@ def test_methods():
     with pytest.raises(sc.KeyNotFoundError):
         df[sc.prettyobj({'wrong':'type'})]
 
+    # Set
+    df['c'] = np.random.randn(df.nrows); dfprint('Set column', df)
+    df[2] = [17,15,13]; dfprint('Insert row', df)
+    df[0,'a'] = 300; dfprint('Tuple set 1', df)
+    df[1,1]   = 400; dfprint('Tuple set 2', df)
+    out = df.flexget(cols=['a','c'], rows=[0,2]); dfprint('Flexget', out)
+
+
     return df
 
 
@@ -71,8 +79,8 @@ def test_methods():
 if __name__ == '__main__':
     sc.tic()
 
-    df = test_dataframe()
-    df2 = test_methods()
+    a  = test_dataframe()
+    df = test_methods()
 
     sc.toc()
     print('Done.')
