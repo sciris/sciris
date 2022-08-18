@@ -157,9 +157,13 @@ class dataframe(pd.DataFrame):
         try:
             output = super().__getitem__(key)
         except:
-            if scu.isstring(key): # e.g. df['a']
+            if scu.isstring(key): # e.g. df['a'] -- usually handled by pandas # pragma: no cover
                 rowindex = slice(None)
-                colindex = self.cols.index(key)
+                try:
+                    colindex = self.cols.index(key)
+                except ValueError:
+                    errormsg = f'Key "{key}" is not a valid column; choices are: {scu.strjoin(self.cols)}'
+                    raise scu.KeyNotFoundError(errormsg)
             elif isinstance(key, (numbers.Number, list, np.ndarray, slice)): # e.g. df[0], df[[0,2]], df[:4]
                 rowindex = key
                 colindex = slice(None)
@@ -170,8 +174,8 @@ class dataframe(pd.DataFrame):
                     rowindex, colindex = colindex, rowindex
                 if scu.isstring(colindex): # e.g. df['a',0]
                     colindex = self.cols.index(colindex)
-            else:
-                errormsg = f'Unrecognized dataframe key "{key}": must be numeric for a row or a valid column'
+            else: # pragma: no cover
+                errormsg = f'Unrecognized dataframe key of {type(key)}: must be str, numeric, or tuple'
                 if die:
                     raise scu.KeyNotFoundError(errormsg)
                 else:

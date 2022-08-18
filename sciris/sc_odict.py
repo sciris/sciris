@@ -1205,9 +1205,11 @@ class dictobj(dict):
 
     | New in version 1.3.0.
     | New in version 1.3.1: inherit from dict
+    | New in version 2.0.0: allow positional arguments
     '''
 
-    def __init__(self, **kwargs):
+    def __init__(self, *args, **kwargs):
+        kwargs = scu.mergedicts(*args, kwargs)
         for k,v in kwargs.items():
             self.__dict__[k] = v
         return

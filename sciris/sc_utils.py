@@ -1775,7 +1775,17 @@ class prettyobj(object):
         a: 4
         b: 6
         ————————————————————————————————————————————————————————————
+
+    | New in version 2.0.0: allow positional arguments
     '''
+
+    def __init__(self, *args, **kwargs):
+        kwargs = mergedicts(*args, kwargs)
+        for k,v in kwargs.items():
+            self.__dict__[k] = v
+        return
+
+
     def __repr__(self):
         from . import sc_printing as scp # To avoid circular import
         output  = scp.prepr(self)

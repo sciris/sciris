@@ -58,6 +58,7 @@ Improvements
 #. ``sc.date()`` can now read ``np.datetime64`` objects.
 #. ``sc.wget()`` can now save to files.
 #. ``sc.importbyname()`` can now load multiple modules, and load them lazily.
+#. ``sc.prettyobj()`` and ``sc.dictobj()`` now both take either positional or keyword arguments, e.g. ``sc.prettyobj(a=3)`` or ``sc.dictobj({'a':3})``.
 
 Housekeeping
 ~~~~~~~~~~~~

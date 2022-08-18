@@ -58,6 +58,10 @@ def test_methods():
     dfprint('Slice get 1', df[0,:])
     dfprint('Slice get 2', df[:,'a'])
     dfprint('Slice get 3', df[:,:])
+    with pytest.raises(sc.KeyNotFoundError):
+        df['not_a_column']
+    with pytest.raises(sc.KeyNotFoundError):
+        df[sc.prettyobj({'wrong':'type'})]
 
     return df
 
