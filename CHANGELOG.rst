@@ -6,57 +6,77 @@ All notable changes to this project will be documented in this file.
 By import convention, components of the Sciris library are listed beginning with ``sc.``, e.g. ``sc.odict()``.
 
 
-Version 2.0.0 (2022-08-12)
+Version 2.0.0 (2022-08-18)
 --------------------------
 
 This version contains a number of major improvements, including:
 
-#. **TBC**
+#. **New functions**: new functions for downloading (``sc.download()``), paths (``sc.rmpath()``), and data handling (``sc.loadyaml()``) have been added.
+#. **Better parallelization**: ``sc.parallel()`` now allows more flexibility in choosing the pool, including ``concurrent.futures``. There's a new ``sc.resourcemonitor()`` for monitoring or limiting resources during big runs.
+#. **Improved dataframe**: ``sc.dataframe()`` is now implemented as an extension of a pandas DataFrame.
 
-New functions and methods
-~~~~~~~~~~~~~~~~~~~~~~~~~
-#. ``sc.count()`` counts the number of matching elements in an array (similar to ``np.count_nonzero()``, but more flexible with e.g. float vs. int mismatches).
-#. ``sc.rmnans()`` and ``sc.fillnans()`` have been added as aliases of ``sc.sanitize()`` with default options.
+New features
+~~~~~~~~~~~~
+#. ``sc.resourcemonitor()`` provides memory or CPU limits, as well as monitors running processes.
+#. ``sc.download()`` downloads multiple files in parallel.
 #. ``sc.rmpath()`` removes both files and folders, with an optional interactive mode.
 #. ``sc.ispath()`` is an alias for ``isinstance(obj, pathlib.Path)``.
-#. ``sc.randsleep()`` sleeps for a nondeterministic period of time
-#. ``sc.loadzip()`` extracts (or reads data from) zip files
 #. ``sc.loadyaml()`` and ``sc.saveyaml()`` load and save YAML files, respectively.
-#. ``sc.download()`` downloads multiple files in parallel.
-#. ``sc.LazyModule()`` handles lazily loaded modules (see ``sc.importbyname()`` for usage).
+#. ``sc.loadzip()`` extracts (or reads data from) zip files
+#. ``sc.count()`` counts the number of matching elements in an array (similar to ``np.count_nonzero()``, but more flexible with e.g. float vs. int mismatches).
+#. ``sc.rmnans()`` and ``sc.fillnans()`` have been added as aliases of ``sc.sanitize()`` with default options.
+#. ``sc.strsplit()`` will automatically split common types of delimited strings (e.g. ``sc.strsplit('a b c')``).
 #. ``sc.parse_env()`` parses environment variables into common types (e.g., will interpret ``'False'`` as ``False``).
+#. ``sc.LazyModule()`` handles lazily loaded modules (see ``sc.importbyname()`` for usage).
+#. ``sc.randsleep()`` sleeps for a nondeterministic period of time
 
 Bugfixes
 ~~~~~~~~
 #. ``sc.mergedicts()`` now handles keyword arguments (previously they were silently ignored). Non-dict inputs also now raise an error by default rather than being silently ignored (except for ``None``).
-#. ``Spreadsheet`` objects no longer pickle the binary spreadsheet (in some cases reducing size by 50%).
+#. ``sc.savespreadsheet()`` now allows NaNs to be saved.
 #. ``sc.loadspreadsheet()`` has been updated to match current ``pd.read_excel()`` syntax.
+#. ``Spreadsheet`` objects no longer pickle the binary spreadsheet (in some cases reducing size by 50%).
+#. File-saving functions now have a ``sanitizepath`` argument (previously, some used file path sanitization and others didn't). They also now return the full path of the saved file.
 
 Improvements
 ~~~~~~~~~~~~
+
+Major
+^^^^^
 #. If a copy/deepcopy is not possible, ``sc.cp()``/``sc.dcp()`` now raise an exception by default (previously, they silenced it).
 #. ``sc.dataframe()`` has been completely revamped, and is now a backwards-compatible extension of ``pd.DataFrame()``.
-#. ``sc.timer()`` now has ``plot()`` and ``total()`` methods, as well as ``indivtimings`` and ``cumtimings`` properties.
-#. ``sc.strsplit()`` will automatically split common types of delimited strings (e.g. ``sc.strsplit('a b c')``).
 #. ``sc.parallelize()`` now supports additional parallelization options, e.g. ``concurrent.futures``, and new ``maxcpu``/``maxmem`` arguments.
+
+Time/date
+^^^^^^^^^
+#. ``sc.timer()`` now has ``plot()`` and ``total()`` methods, as well as ``indivtimings`` and ``cumtimings`` properties. It also has new methods ``tocout()`` and ``ttout()``, which return output by default (rather than print a string).
 #. ``sc.daterange()`` now accepts ``datedelta`` arguments, e.g. ``sc.daterange('2022-02-22', weeks=2)``.
-#. ``sc.savefig()`` by default now creates folders if they don't exist.
-#. ``sc.sanitize()`` can now handle multidimensional arrays.
-#. ``sc.loadmetadata()`` can now read metadata from JPG files.
-#. ``sc.checkmem()`` now returns a dictionary of sizes rather than print to screen.
+#. ``sc.date()`` can now read ``np.datetime64`` objects.
+
+Plotting
+^^^^^^^^
+#. ``sc.animation()`` now defaults to ``ffmpeg`` for saving.
 #. ``sc.commaticks()`` can now set both ``x`` and ``y`` axes in a single call.
-#. ``sc.timer()`` now has new methods ``tocout()`` and ``ttout()``, which return output by default (rather than print a string).
-#. ``sc.savezip()`` can save now save data to zip files (instead of just compressing files).
-#. ``sc.savespreadsheet()`` now allows NaNs to be saved.
-#. ``sc.path()`` is more flexible, including handling ``None`` inputs.
+#. ``sc.savefig()`` by default now creates folders if they don't exist.
+#. ``sc.loadmetadata()`` can now read metadata from JPG files.
+
+Math
+^^^^
 #. ``sc.findinds()`` can now handle multiple inputs, e.g. ``sc.findinds(data>0.1, data<0.5)``.
 #. ``sc.checktype()`` now includes boolean arrays as being ``arraylike``, and has a new ``'bool'`` option.
-#. Added ``dict_keys()``, ``dict_values()``, and ``dict_items()`` methods for ``sc.odict()``.
-#. File-saving functions now have a ``sanitizepath`` argument (previously, some used file path sanitization and others didn't). They also now return the full path of the saved file.
+#. ``sc.sanitize()`` can now handle multidimensional arrays.
+
+Files
+^^^^^
+#. ``sc.urlopen()`` can now save to files.
+#. ``sc.savezip()`` can save now save data to zip files (instead of just compressing files).
+#. ``sc.path()`` is more flexible, including handling ``None`` inputs.
 #. ``sc.Spreadsheet()`` now has a ``new()`` method that creates a blank workbook.
-#. ``sc.animation()`` now defaults to ``ffmpeg`` for saving.
-#. ``sc.date()`` can now read ``np.datetime64`` objects.
-#. ``sc.wget()`` can now save to files.
+
+Other
+^^^^^
+#. Added ``dict_keys()``, ``dict_values()``, and ``dict_items()`` methods for ``sc.odict()``.
+#. ``sc.checkmem()`` now returns a dictionary of sizes rather than prints to screen.
 #. ``sc.importbyname()`` can now load multiple modules, and load them lazily.
 #. ``sc.prettyobj()`` and ``sc.dictobj()`` now both take either positional or keyword arguments, e.g. ``sc.prettyobj(a=3)`` or ``sc.dictobj({'a':3})``.
 
