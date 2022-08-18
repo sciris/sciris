@@ -70,6 +70,20 @@ def test_methods():
     df[1,1]   = 400; dfprint('Tuple set 2', df)
     out = df.flexget(cols=['a','c'], rows=[0,2]); dfprint('Flexget', out)
 
+    # Other
+    df.rmrows([1,3]); dfprint('Removing rows', df)
+    df.replacecol('a', 300, 333); dfprint('Replacing 300→333', df)
+    od = df.to_odict(); dfprint('To dict', od)
+    df.appendrow(np.random.rand(2,3)); dfprint('Adding more rows', df)
+    df2 = df.filterin([0,1]);     dfprint('Filtering in 0-1', df2)
+    df3 = df.filterout([0,1]);    dfprint('Filtering out 0-1', df3)
+    df4 = df.filterin(value=17);  dfprint('Filtering in 17', df4)
+    df5 = df.filterout(value=17); dfprint('Filtering out 17', df5)
+    assert df4[0,0] == 17
+    assert df5[0,0] != 17
+    df.insert(0, 'f', np.random.rand(df.nrows)); dfprint('Inserting column', df)
+    df.sortcols(reverse=True); dfprint('Sorting columns', df)
+    assert df.cols[-1] == 'a'
 
     return df
 

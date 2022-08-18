@@ -367,7 +367,7 @@ class dataframe(pd.DataFrame):
         ''' Remove a column or columns from the data frame '''
         cols = scu.promotetolist(key)
         for col in cols:
-            if col not in self.cols:
+            if col not in self.cols: # pragma: no cover
                 errormsg = 'sc.dataframe(): cannot remove column %s: columns are:\n%s' % (col, '\n'.join(self.cols))
                 if die: raise Exception(errormsg)
                 else:   print(errormsg)
@@ -383,10 +383,10 @@ class dataframe(pd.DataFrame):
         if value is None: value = coldata[-1] # If not supplied, pick the last element
         try:
             index = coldata.tolist().index(value) # Try to find duplicates
-        except:
+        except: # pragma: no cover
             if die:
                 errormsg = f'Item {value} not found; choices are: {coldata}'
-                raise Exception(errormsg)
+                raise IndexError(errormsg)
             else:
                 return
         return index
@@ -399,39 +399,45 @@ class dataframe(pd.DataFrame):
         return self
 
 
-    def _diffindices(self, indices=None):
+    def _diffinds(self, inds=None):
         ''' For a given set of indices, get the inverse, in set-speak '''
-        if indices is None: indices = []
-        ind_set = set(np.array(indices))
+        if inds is None: inds = []
+        ind_set = set(np.array(inds))
         all_set = set(np.arange(self.nrows))
         diff_set = np.array(list(all_set - ind_set))
         return diff_set
 
 
-    def rmrows(self, indices=None, reset_index=True, inplace=True):
+    def rmrows(self, inds=None, reset_index=True, inplace=True):
         ''' Remove rows by index '''
-        keep_set = self._diffindices(indices)
+        keep_set = self._diffinds(inds)
         keep_data = self.iloc[keep_set,:]
         newdf = dataframe(data=keep_data, cols=self.cols)
         return self.replacedata(newdf=newdf, reset_index=reset_index, inplace=inplace)
 
 
-    def replace_in_col(self, col=None, old=None, new=None):
+    def replacecol(self, col=None, old=None, new=None):
         ''' Replace all of one value in a column with a new value '''
         col = self._sanitizecol(col)
-        coldata = self.data[:,col] # Get data for this column
+        coldata = self.iloc[:,col] # Get data for this column
         inds = scm.findinds(arr=coldata, val=old)
         self.iloc[inds,col] = new
         return self
 
 
-    def to_odict(self, row):
-        ''' Return row as a dict rather than as an array '''
-        if len(row)!=len(self.cols):
-            errormsg = 'Length mismatch between "%s" and "%s"' % (row, self.cols)
-            raise Exception(errormsg)
-        rowdict = sco.odict(zip(self.cols, row))
-        return rowdict
+    def to_odict(self, row=None):
+        '''
+        Convert dataframe to a dict of columns, optionally specifying certain rows.
+
+        Args:
+            row (int/list): the rows to include
+        '''
+        if row is None:
+            row = slice(None)
+        data = self.iloc[row,:].values
+        datadict = {col:data[:,c] for c,col in enumerate(self.cols)}
+        output = sco.odict(datadict)
+        return output
 
 
     def findrow(self, value=None, col=None, default=None, closest=False, die=False, asdict=False):
@@ -469,42 +475,32 @@ class dataframe(pd.DataFrame):
         return thisrow
 
 
-    def findrows(self, key=None, col=None, asarray=False):
-        ''' A method like get() or indexing, but returns a dataframe by default -- WARNING, redundant? '''
-        indices = self.rowindex(key=key, col=col)
-        arr = self.flexget(rows=indices)
-        if asarray:
-            return arr
-        else:
-            df = dataframe(cols=self.cols, data=arr)
-            return df
-
-
-    def rowindex(self, key=None, col=None):
+    def findinds(self, value=None, col=None):
         ''' Return the indices of all rows matching the given key in a given column. '''
         col = self._sanitizecol(col)
-        coldata = self.iloc[:,col] # Get data for this column
-        indices = scm.findinds(coldata==key)
-        return indices
+        coldata = self.iloc[:,col].values # Get data for this column
+        inds = scm.findinds(arr=coldata, val=value)
+        return inds
 
 
-    def _filterrows(self, key=None, col=None, keep=True, verbose=False, copy=None):
+    def _filterrows(self, inds=None, value=None, col=None, keep=True, verbose=False, reset_index=True, inplace=False):
         ''' Filter rows and either keep the ones matching, or discard them '''
-        indices = self.rowindex(key=key, col=col)
-        if keep: indices = self._diffindices(indices)
-        if verbose: print('Dataframe filtering: %s rows removed based on key="%s", column="%s"' % (len(indices), key, col))
-        output = self.rmrows(indices=indices, copy=copy)
+        if inds is None:
+            inds = self.findinds(value=value, col=col)
+        if keep: inds = self._diffinds(inds)
+        if verbose: print(f'Dataframe filtering: {len(inds)} rows removed based on key="{inds}", column="{col}"')
+        output = self.rmrows(inds=inds, reset_index=reset_index, inplace=inplace)
         return output
 
 
-    def filter_in(self, key=None, col=None, verbose=False, copy=None):
-        '''Keep only rows matching a criterion (in place) '''
-        return self._filterrows(key=key, col=col, keep=True, verbose=verbose, copy=copy)
+    def filterin(self, inds=None, value=None, col=None, verbose=False, reset_index=True, inplace=False):
+        '''Keep only rows matching a criterion '''
+        return self._filterrows(inds=inds, value=value, col=col, keep=True, verbose=verbose, reset_index=reset_index, inplace=inplace)
 
 
-    def filter_out(self, key=None, col=None, verbose=False, copy=None):
+    def filterout(self, inds=None, value=None, col=None, verbose=False, reset_index=True, inplace=False):
         '''Remove rows matching a criterion (in place) '''
-        return self._filterrows(key=key, col=col, keep=False, verbose=verbose, copy=copy)
+        return self._filterrows(inds=inds, value=value, col=col, keep=False, verbose=verbose, reset_index=reset_index, inplace=inplace)
 
 
     def filtercols(self, cols=None, die=True, reset_index=True, inplace=False):
@@ -519,7 +515,7 @@ class dataframe(pd.DataFrame):
             else:
                 cols.remove(col)
                 notfound.append(col)
-        if len(notfound):
+        if len(notfound): # pragma: no cover
             errormsg = 'sc.dataframe(): could not find the following column(s): %s\nChoices are: %s' % (notfound, self.cols)
             if die: raise Exception(errormsg)
             else:   print(errormsg)
@@ -547,12 +543,13 @@ class dataframe(pd.DataFrame):
 
 
     def sortcols(self, sortorder=None, reverse=False, returninds=False):
-        ''' Like sortrows(), but change column order (in place instead '''
+        ''' Like sortrows(), but change column order (in place) instead '''
         if sortorder is None:
             sortorder = np.argsort(self.cols, kind='mergesort')
             if reverse:
                 sortorder = sortorder[::-1]
-        self.cols = list(np.array(self.cols)[sortorder])
+        newcols = list(np.array(self.cols)[sortorder])
+        self.rename(columns={old:new for old,new in zip(self.cols, newcols)}, inplace=True)
         self.iloc[:,:] = self.iloc[:,sortorder]
         if returninds:
             return sortorder
