@@ -243,7 +243,7 @@ def dcp(obj, die=True, verbose=True):
         die (bool): if False, fall back to copy()
         verbose (bool): if die is False, then print a warning if deepcopy() fails
 
-    New in version 1.4.0: default die=True instead of False
+    New in version 2.0.0: default die=True instead of False
     '''
     try:
         output = copy.deepcopy(obj)
@@ -260,6 +260,8 @@ def cp(obj, die=True, verbose=True):
     Shortcut to perform a shallow copy operation
 
     Almost identical to ``copy.copy()``, but optionally allow failures
+
+    New in version 2.0.0: default die=True instead of False
     '''
     try:
         output = copy.copy(obj)
