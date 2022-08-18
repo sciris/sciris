@@ -5,13 +5,14 @@ Test the Sciris dataframe
 import sciris as sc
 
 def test_dataframe():
+    sc.heading('Testing dataframe')
 
     def dfprint(label, val):
         sc.colorize('cyan', f'\n{label}')
         print(val)
         return None
 
-    print('Testing dataframe:')
+
     a = sc.dataframe(cols=['x','y'], data=[[1238,2],[384,5],[666,7]]); dfprint('Create dataframe', a)
     dfprint('Print out a column', a['x'])
     dfprint('Print out a row', a[0])
@@ -35,11 +36,20 @@ def test_dataframe():
     return a
 
 
+def test_methods():
+    sc.heading('Testing dataframe methods')
+    df = sc.dataframe(cols=['a', 'b', 'c'], nrows=8)
+    assert df.shape == (8,3)
+    return df
+
+
+
 #%% Run as a script
 if __name__ == '__main__':
     sc.tic()
 
     df = test_dataframe()
+    df2 = test_methods()
 
     sc.toc()
     print('Done.')
