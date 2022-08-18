@@ -6,10 +6,9 @@ better to just use the Pandas one.
 '''
 
 ##############################################################################
-### DATA FRAME CLASS
+#%% Dataframe
 ##############################################################################
 
-# NB: Pandas is imported later
 import numbers # For numeric type
 import numpy as np
 import pandas as pd
@@ -75,7 +74,7 @@ class dataframe(pd.DataFrame):
         ''' Try to conver to the current data type, or else use an object '''
         try: # Try to use current type
             output = np.array(arr, dtype=self.values.dtype)
-        except: # This is to e.g. not force conversion to strings
+        except: # This is to e.g. not force conversion to strings # pragma: no cover
             output = np.array(arr, dtype=object)
         return output
 
@@ -109,7 +108,7 @@ class dataframe(pd.DataFrame):
         # Try to convert back to default type, but don't worry if not
         try:
             output = np.array(output, dtype=self.values.dtype)
-        except:
+        except: # pragma: no cover
             pass
 
         return output
@@ -122,19 +121,19 @@ class dataframe(pd.DataFrame):
         elif scu.isstring(col):
             try:
                 output = self.cols.index(col) # Convert to index
-            except Exception as E:
+            except Exception as E: # pragma: no cover
                 errormsg = 'Could not get index of column "%s"; columns are:\n%s\n%s' % (col, '\n'.join(self.cols), str(E))
                 if die:
-                    raise Exception(errormsg)
+                    raise scu.KeyNotFoundError(errormsg)
                 else:
                     print(errormsg)
                     output = None
         elif scu.isnumber(col):
             output = col
-        else:
-            errormsg = 'Unrecognized column/column type "%s" %s' % (col, type(col))
+        else: # pragma: no cover
+            errormsg = f'Unrecognized column/column type "{col}" {type(col)}'
             if die:
-                raise Exception(errormsg)
+                raise ValueError(errormsg)
             else:
                 print(errormsg)
                 output = None
@@ -148,7 +147,7 @@ class dataframe(pd.DataFrame):
         if isinstance(arr, np.ndarray) and np.can_cast(arr, numbers.Number, casting='same_kind'): # Check that everything is a number before trying to cast to an array
             try: # If it is, try to cast the whole array to the type of the first element
                 output = np.array(arr, dtype=type(arr[0]))
-            except: # If anything goes wrong, do nothing
+            except: # If anything goes wrong, do nothing # pragma: no cover
                 pass
         return output
 
@@ -159,49 +158,26 @@ class dataframe(pd.DataFrame):
             output = super().__getitem__(key)
         except:
             if scu.isstring(key): # e.g. df['a']
+                rowindex = slice(None)
                 colindex = self.cols.index(key)
-                output = self.iloc[:,colindex].values
-                if cast:
-                    output = self._cast(output)
-            elif scu.isnumber(key): # e.g. df[0]
-                rowindex = int(key)
-                output = self.iloc[rowindex,:].values
-                if cast:
-                    output = self._cast(output)
-            elif scu.checktype(key, 'arraylike'): # e.g. df[[0,2,4]]
-                rowindices = key
-                rowdata = self.iloc[rowindices,:]
-                output = dataframe(cols=self.cols, data=rowdata).values
+            elif isinstance(key, (numbers.Number, list, np.ndarray, slice)): # e.g. df[0], df[[0,2]], df[:4]
+                rowindex = key
+                colindex = slice(None)
             elif isinstance(key, tuple):
-                if scu.isstring(key[0]) and scu.isnumber(key[1]): # e.g. df['a',0]
-                    colindex = self.cols.index(key[0])
-                    rowindex = int(key[1])
-                    output = self.iloc[rowindex,colindex]
-                elif scu.isstring(key[1]) and scu.isnumber(key[0]): # e.g. df[0,'a']
-                    colindex = self.cols.index(key[1])
-                    rowindex = int(key[0])
-                    output = self.iloc[rowindex,colindex]
-                elif isinstance(key[0], slice) or isinstance(key[1], slice): # e.g. df[0,:] or df[:,0]
-                    if not isinstance(key[0], slice):
-                        rowindices = key[0]
-                    elif not isinstance(key[1], slice):
-                        rowindices = key[1]
-                    else:
-                        errormsg = "When using a tuple with a slice as an index, both values can't be slices"
-                        raise Exception(errormsg)
-                    rowdata = self.iloc[rowindices,:]
-                    output = dataframe(cols=self.cols, data=rowdata).values
-            elif isinstance(key, slice):
-                rowslice = key
-                slicedata = self.iloc[rowslice,:]
-                output = dataframe(cols=self.cols, data=slicedata).values
+                rowindex = key[0]
+                colindex = key[1]
+                if scu.isstring(rowindex) and not scu.isstring(colindex): # Swap order if one's a string and the other isn't
+                    rowindex, colindex = colindex, rowindex
+                if scu.isstring(colindex): # e.g. df['a',0]
+                    colindex = self.cols.index(colindex)
             else:
-                errormsg = 'Unrecognized dataframe key "%s"' % key
+                errormsg = f'Unrecognized dataframe key "{key}": must be numeric for a row or a valid column'
                 if die:
-                    raise Exception(errormsg)
+                    raise scu.KeyNotFoundError(errormsg)
                 else:
                     print(errormsg)
                     output = None
+            output = self.iloc[rowindex,colindex]
 
         return output
 

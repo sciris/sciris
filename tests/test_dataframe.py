@@ -2,15 +2,17 @@
 Test the Sciris dataframe
 '''
 
+import numpy as np
 import sciris as sc
+import pytest
+
+def dfprint(label, val):
+    sc.colorize('cyan', f'\n{label}')
+    print(val)
+    return None
 
 def test_dataframe():
     sc.heading('Testing dataframe')
-
-    def dfprint(label, val):
-        sc.colorize('cyan', f'\n{label}')
-        print(val)
-        return None
 
 
     a = sc.dataframe(cols=['x','y'], data=[[1238,2],[384,5],[666,7]]); dfprint('Create dataframe', a)
@@ -38,8 +40,25 @@ def test_dataframe():
 
 def test_methods():
     sc.heading('Testing dataframe methods')
-    df = sc.dataframe(cols=['a', 'b', 'c'], nrows=8)
-    assert df.shape == (8,3)
+    df = sc.dataframe(cols=['a', 'b'], nrows=3)
+    assert df.shape == (3,2)
+    df += np.random.random(df.shape)
+    dfprint('To start', df)
+
+    # Append row
+    df.appendrow(dict(a=4, b=4)); dfprint('Append row as dict', df)
+    with pytest.raises(IndexError):
+        df.appendrow([1,2,3])
+
+    # Get/set
+    dfprint('Key get', df['a'])
+    dfprint('Array get', df[[0,2]])
+    dfprint('Tuple get 1', df[0,'a'])
+    dfprint('Tuple get 2', df[0,1])
+    dfprint('Slice get 1', df[0,:])
+    dfprint('Slice get 2', df[:,'a'])
+    dfprint('Slice get 3', df[:,:])
+
     return df
 
 
