@@ -22,13 +22,13 @@ New features
 #. ``sc.rmpath()`` removes both files and folders, with an optional interactive mode.
 #. ``sc.ispath()`` is an alias for ``isinstance(obj, pathlib.Path)``.
 #. ``sc.loadyaml()`` and ``sc.saveyaml()`` load and save YAML files, respectively.
-#. ``sc.loadzip()`` extracts (or reads data from) zip files
+#. ``sc.loadzip()`` extracts (or reads data from) zip files.
 #. ``sc.count()`` counts the number of matching elements in an array (similar to ``np.count_nonzero()``, but more flexible with e.g. float vs. int mismatches).
 #. ``sc.rmnans()`` and ``sc.fillnans()`` have been added as aliases of ``sc.sanitize()`` with default options.
 #. ``sc.strsplit()`` will automatically split common types of delimited strings (e.g. ``sc.strsplit('a b c')``).
 #. ``sc.parse_env()`` parses environment variables into common types (e.g., will interpret ``'False'`` as ``False``).
 #. ``sc.LazyModule()`` handles lazily loaded modules (see ``sc.importbyname()`` for usage).
-#. ``sc.randsleep()`` sleeps for a nondeterministic period of time
+#. ``sc.randsleep()`` sleeps for a nondeterministic period of time.
 
 Bugfixes
 ~~~~~~~~
@@ -69,7 +69,7 @@ Math
 Files
 ^^^^^
 #. ``sc.urlopen()`` can now save to files.
-#. ``sc.savezip()`` can save now save data to zip files (instead of just compressing files).
+#. ``sc.savezip()`` can now save data to zip files (instead of just compressing files).
 #. ``sc.path()`` is more flexible, including handling ``None`` inputs.
 #. ``sc.Spreadsheet()`` now has a ``new()`` method that creates a blank workbook.
 
