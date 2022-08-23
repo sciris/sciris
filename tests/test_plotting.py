@@ -11,7 +11,8 @@ import pytest
 #%% Functions
 
 if 'doplot' not in locals():
-    doplot = True
+    doplot = False
+    pl.switch_backend('agg')
 
 def test_colors(doplot=doplot):
     sc.heading('Testing colors')
@@ -52,20 +53,21 @@ def test_colormaps(doplot=doplot):
     x = pl.rand(n)
     y = pl.rand(n)
     colors = sc.arraycolors(arr)
-    if doplot:
-        pl.figure('Array colors', figsize=(20,16))
-        for c in range(ncols):
-            pl.scatter(x+c, y, s=50, c=colors[:,c])
+    pl.figure('Array colors', figsize=(20,16))
+    for c in range(ncols):
+        pl.scatter(x+c, y, s=50, c=colors[:,c])
     o.arraycolors = colors
 
     print('Testing gridcolors')
-    o.gridcolors = sc.gridcolors(ncolors=8,  demo=doplot)
-    sc.gridcolors(ncolors=28, demo=doplot)
+    o.gridcolors = sc.gridcolors(ncolors=8,  demo=True)
+    sc.gridcolors(ncolors=28, demo=True)
     print('\n8 colors:', o.gridcolors)
 
     print('Testing colormapdemo')
-    if doplot:
-        sc.colormapdemo('parula', doshow=False)
+    sc.colormapdemo('parula', doshow=False)
+
+    if not doplot:
+        pl.close('all')
 
     return o
 
@@ -75,20 +77,20 @@ def test_3d(doplot=doplot):
     o = sc.objdict()
 
     print('Testing surf3d')
-    if doplot:
-        o.fig = sc.fig3d(num='Blank 3D')
+    o.fig = sc.fig3d(num='Blank 3D')
 
     print('Testing surf3d')
     data = pl.randn(50,50)
     smoothdata = sc.smooth(data,20)
-    if doplot:
-        sc.surf3d(smoothdata, figkwargs=dict(num='surf3d'))
+    sc.surf3d(smoothdata, figkwargs=dict(num='surf3d'))
 
     print('Testing bar3d')
     data = pl.rand(20,20)
     smoothdata = sc.smooth(data)
-    if doplot:
-        sc.bar3d(smoothdata, figkwargs=dict(num='bar3d'))
+    sc.bar3d(smoothdata, figkwargs=dict(num='bar3d'))
+
+    if not doplot:
+        pl.close('all')
 
     return o
 
@@ -101,40 +103,42 @@ def test_other(doplot=doplot):
 
     nrows,ncols = sc.get_rows_cols(100, ratio=0.5) # Returns 8,13 since rows are prioritized
 
-    if doplot:
-        sc.emptyfig()
-        o.fig = pl.figure('Limits')
+    sc.emptyfig()
+    o.fig = pl.figure('Limits')
 
-        pl.subplot(2,1,1)
-        pl.plot(data)
-        sc.boxoff()
-        sc.setxlim()
-        sc.setylim()
-        sc.commaticks()
+    pl.subplot(2,1,1)
+    pl.plot(data)
+    sc.boxoff()
+    sc.setxlim()
+    sc.setylim()
+    sc.commaticks()
 
-        pl.subplot(2,1,2)
-        pl.plot(data)
-        sc.SIticks()
-        pl.title('SI ticks')
+    pl.subplot(2,1,2)
+    pl.plot(data)
+    sc.SIticks()
+    pl.title('SI ticks')
 
-        try:
-            sc.maximize()
-        except Exception as E:
-            print(f'sc.maximize() failed with {str(E)}:')
-            print(sc.traceback())
-            print('↑↑↑ Ignoring since sc.maximize() unlikely to work via e.g. automated testing')
+    try:
+        sc.maximize()
+    except Exception as E:
+        print(f'sc.maximize() failed with {str(E)}:')
+        print(sc.traceback())
+        print('↑↑↑ Ignoring since sc.maximize() unlikely to work via e.g. automated testing')
 
-        # Need keep=True to avoid refresh which crashes when run via pytest-parallel
-        sc.figlayout(keep=True)
+    # Need keep=True to avoid refresh which crashes when run via pytest-parallel
+    sc.figlayout(keep=True)
 
-        # Test legends
-        pl.figure('Legends')
-        pl.plot([1,4,3], label='A')
-        pl.plot([5,7,8], label='B')
-        pl.plot([2,5,2], label='C')
-        sc.orderlegend(reverse=True) # Legend order C, B, A
-        sc.orderlegend([1,0,2], frameon=False) # Legend order B, A, C with no frame
-        sc.separatelegend()
+    # Test legends
+    pl.figure('Legends')
+    pl.plot([1,4,3], label='A')
+    pl.plot([5,7,8], label='B')
+    pl.plot([2,5,2], label='C')
+    sc.orderlegend(reverse=True) # Legend order C, B, A
+    sc.orderlegend([1,0,2], frameon=False) # Legend order B, A, C with no frame
+    sc.separatelegend()
+
+    if not doplot:
+        pl.close('all')
 
     return o
 
@@ -148,30 +152,31 @@ def test_saving(doplot=doplot):
     fn.movie = 'testmovie.gif'
     fn.anim  = 'testanim.gif' # mp4 only available if ffmpeg is installed
 
-    if doplot:
+    print('Testing save figs')
+    o.fig = pl.figure('Save figs')
+    pl.plot(pl.rand(10))
 
-        print('Testing save figs')
-        o.fig = pl.figure('Save figs')
-        pl.plot(pl.rand(10))
+    sc.savefigs(o.fig, filetype='fig', filename=fn.fig)
+    sc.loadfig(fn.fig)
 
-        sc.savefigs(o.fig, filetype='fig', filename=fn.fig)
-        sc.loadfig(fn.fig)
+    print('Testing save movie')
+    frames = [pl.plot(pl.cumsum(pl.randn(100))) for i in range(3)] # Create frames
+    sc.savemovie(frames, fn.movie) # Save movie as medium-quality gif
 
-        print('Testing save movie')
-        frames = [pl.plot(pl.cumsum(pl.randn(100))) for i in range(3)] # Create frames
-        sc.savemovie(frames, fn.movie) # Save movie as medium-quality gif
+    print('Testing animation')
+    anim = sc.animation(filename=fn.anim)
+    pl.figure('Animation')
+    for i in range(3):
+        pl.plot(pl.cumsum(pl.randn(100)))
+        anim.addframe()
+    anim.save()
 
-        print('Testing animation')
-        anim = sc.animation(filename=fn.anim)
-        pl.figure('Animation')
-        for i in range(3):
-            pl.plot(pl.cumsum(pl.randn(100)))
-            anim.addframe()
-        anim.save()
+    print('Tidying...')
+    for f in fn.values():
+        os.remove(f)
 
-        print('Tidying...')
-        for f in fn.values():
-            os.remove(f)
+    if not doplot:
+        pl.close('all')
 
     return o
 
@@ -180,20 +185,22 @@ def test_dates(doplot=doplot):
     sc.heading('Testing dates')
     o = sc.objdict()
 
-    if doplot:
-        x = np.array(sc.daterange('2020-12-24', '2021-01-15', asdate=True))
-        y = sc.smooth(pl.rand(len(x)))
-        o.fig = pl.figure('Date formatters', figsize=(6,6))
+    x = np.array(sc.daterange('2020-12-24', '2021-01-15', asdate=True))
+    y = sc.smooth(pl.rand(len(x)))
+    o.fig = pl.figure('Date formatters', figsize=(6,6))
 
-        for i,style in enumerate(['auto', 'concise', 'sciris']):
-            pl.subplot(3,1,i+1)
-            pl.plot(x, y)
-            pl.title('Date formatter: ' + style.title())
-            sc.dateformatter(style=style, rotation=1)
+    for i,style in enumerate(['auto', 'concise', 'sciris']):
+        pl.subplot(3,1,i+1)
+        pl.plot(x, y)
+        pl.title('Date formatter: ' + style.title())
+        sc.dateformatter(style=style, rotation=1)
 
-        pl.figure('Datenum formatter')
-        pl.plot(np.arange(500), pl.randn(500))
-        sc.datenumformatter(start_date='2021-01-01')
+    pl.figure('Datenum formatter')
+    pl.plot(np.arange(500), pl.randn(500))
+    sc.datenumformatter(start_date='2021-01-01')
+
+    if not doplot:
+        pl.close('all')
 
     return o
 
@@ -208,13 +215,15 @@ def test_fonts(doplot=doplot):
     orig = pl.rcParams['font.family']
     sc.fonts(add=sc.path('files/examplefont.ttf'), use=True, die=True, verbose=True)
 
-    if doplot:
-        pl.figure('Fonts')
-        pl.plot([1,2,3], [4,5,6])
-        pl.xlabel('Example label in new font')
+    pl.figure('Fonts')
+    pl.plot([1,2,3], [4,5,6])
+    pl.xlabel('Example label in new font')
 
     # Reset
     pl.rcParams['font.family'] = orig
+
+    if not doplot:
+        pl.close('all')
 
     return fonts
 
@@ -225,14 +234,18 @@ def test_saveload(doplot=doplot):
     fig = pl.figure('Save/load')
     pl.plot([1,3,7])
     fn = sc.objdict()
-    fn.png1 = 'example1.png'
+    fn.png1a = 'example1.png'
+    fn.png1b = os.path.abspath('example1.png')
     fn.png2 = 'example2.png'
     fn.jpg  = 'example.jpg'
 
     # Basic usage
-    sc.savefig(fn.png1)
-    md1 = sc.loadmetadata(fn.png1)
-    sc.pp(md1)
+    sc.savefig(fn.png1a)
+    sc.savefig(fn.png1b)
+    md1a = sc.loadmetadata(fn.png1a)
+    md1b = sc.loadmetadata(fn.png1b)
+    sc.pp(md1a)
+    sc.pp(md1b)
 
     # Complex usage
     comments = 'My figure'
@@ -249,17 +262,16 @@ def test_saveload(doplot=doplot):
     with pytest.raises(ValueError):
         sc.savefig(fn.jpg)
 
-    with pytest.raises(ValueError):
-        sc.loadmetadata(fn.jpg)
-
     # Tidy up
-    pl.close(fig)
     for f in fn.values():
         try:
             os.remove(f)
             print(f'Removed temporary file {f}')
         except Exception as E:
             print(f'Could not remove {f}: {E}')
+
+    if not doplot:
+        pl.close('all')
 
     return md2
 
@@ -269,6 +281,7 @@ if __name__ == '__main__':
     T = sc.timer()
 
     doplot = True
+    pl.switch
 
     colors    = test_colors(doplot)
     colormaps = test_colormaps(doplot)

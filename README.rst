@@ -71,14 +71,14 @@ Array operations
 
 File I/O
 ~~~~~~~~
--  ``sc.saveobj()/sc.loadobj()``: efficiently save/load any Python object (via pickling)
+-  ``sc.save()/sc.load()``: efficiently save/load any Python object (via pickling)
 -  ``sc.savejson()/sc.loadjson()``: likewise, for JSONs
 -  ``sc.thisdir()``: get current folder
 -  ``sc.getfilelist()``: easy way to access glob
 
 Plotting
 ~~~~~~~~
--  ``sc.hex2grb()/sc.rgb2hex()``: convert between different color conventions
+-  ``sc.hex2rgb()/sc.rgb2hex()``: convert between different color conventions
 -  ``sc.vectocolor()``: map a list of sequential values onto a list of colors
 -  ``sc.gridcolors()``: map a list of qualitative categories onto a list of colors
 -  ``sc.plot3d()/sc.surf3d()``: easy way to render 3D plots
@@ -117,12 +117,12 @@ Installation and run instructions
 2. Use Sciris: ``import sciris as sc``
 
 
-20-second quick start guide
-~~~~~~~~~~~~~~~~~~~~~~~~~~~
+20-second quick start guide (for ScirisWeb)
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 1. Download ScirisWeb (e.g. ``git clone http://github.com/sciris/scirisweb``)
 
-2. Install ScirisWeb (which will install Sciris as well): ``cd scirisweb; python setup.py develop``
+2. Install ScirisWeb (which will install Sciris as well): ``cd scirisweb; pip install -e .``
 
 3. Change to the Hello World folder: ``cd examples/helloworld``
 
@@ -367,5 +367,5 @@ A very simple test case of Sciris. In the ``examples/helloworld`` folder, type `
 
 See the directions `here <https://github.com/sciris/scirisweb/tree/develop/examples/helloworld>`__ on how to install and run this example.
 
-.. |Sciris showcase| image:: docs/sciris-showcase-code.png
-.. |Sciris output| image:: docs/sciris-showcase-output.png
+.. |Sciris showcase| image:: https://github.com/sciris/sciris/raw/develop/docs/sciris-showcase-code.png
+.. |Sciris output| image:: https://github.com/sciris/sciris/raw/develop/docs/sciris-showcase-output.png

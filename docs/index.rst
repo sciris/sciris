@@ -17,7 +17,9 @@ Contents
 
    overview
    whatsnew
+   contributing
    code_of_conduct
+   style_guide
 
 .. autosummary::
    :toctree: _autosummary

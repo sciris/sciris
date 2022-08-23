@@ -2,18 +2,18 @@
 Printing/notification functions.
 
 Highlights:
-    - ``sc.heading()``: print text as a 'large' heading
-    - ``sc.colorize()``: print text in a certain color
-    - ``sc.pr()``: print full representation of an object, including methods and each attribute
-    - ``sc.sigfigs()``: truncate a number to a certain number of significant figures
-    - ``sc.progressbar()``: show a (text-based) progress bar
-    - ``sc.capture()``: capture text output (e.g., stdout) as a variable
+    - :func:`heading`: print text as a 'large' heading
+    - :func:`colorize`: print text in a certain color
+    - :func:`pr`: print full representation of an object, including methods and each attribute
+    - :func:`sigfigs`: truncate a number to a certain number of significant figures
+    - :func:`progressbar`: show a (text-based) progress bar
+    - :func:`capture`: capture text output (e.g., stdout) as a variable
 '''
 
 import io
 import os
+import sys
 import time
-import colors
 import pprint
 import numpy as np
 import collections as co
@@ -21,6 +21,7 @@ from textwrap import fill
 from collections import UserString
 from contextlib import redirect_stdout
 from . import sc_utils as scu
+from . import ansicolors as ac
 
 
 # Add Windows support for colors (do this at the module level so that colorama.init() only gets called once)
@@ -137,7 +138,7 @@ def prepr(obj, maxlen=None, maxitems=None, skip=None, dividerchar='—', divider
         maxitems (int): maximum number of items to show in the object
         skip (list): any properties to skip
         dividerchar (str): divider for methods, attributes, etc.
-        divierlen (int): number of divider characters
+        dividerlen (int): number of divider characters
         use_repr (bool): whether to use repr() or str() to parse the object
         maxtime (float): maximum amount of time to spend on trying to print the object
         die (bool): whether to raise an exception if an error is encountered
@@ -540,6 +541,9 @@ def colorize(color=None, string=None, doprint=None, output=False, enable=True, s
         output (bool): whether to return the modified version of the string (default false)
         enable (bool): switch to allow ``sc.colorize()`` to be easily turned off without converting to a ``print()`` statement
         showhelp (bool): show help rather than changing colors
+        fg (str): foreground colour
+        bg (str): background colour
+        style (str): font style (eg, italic, underline, bold)
 
     **Examples**::
 
@@ -575,7 +579,7 @@ def colorize(color=None, string=None, doprint=None, output=False, enable=True, s
             errormsg = 'You can supply either color or fg, but not both'
             raise ValueError(errormsg)
 
-        if ansi_support: ansistring = colors.color(s=string, fg=fg, bg=bg, style=style) # Actually apply color
+        if ansi_support: ansistring = ac.color(s=string, fg=fg, bg=bg, style=style) # Actually apply color
         else:            ansistring = str(string) # Otherwise, just return the string
 
     # Original use case
@@ -638,27 +642,27 @@ def colorize(color=None, string=None, doprint=None, output=False, enable=True, s
 # Alias certain colors functions -- not including white and black since poor practice on light/dark terminals
 def printred(s, **kwargs):
     ''' Alias to print(colors.red(s)) '''
-    return print(colors.red(s, **kwargs))
+    return print(ac.red(s, **kwargs))
 
 def printgreen(s, **kwargs):
     ''' Alias to print(colors.green(s)) '''
-    return print(colors.green(s, **kwargs))
+    return print(ac.green(s, **kwargs))
 
 def printblue(s, **kwargs):
     ''' Alias to print(colors.blue(s)) '''
-    return print(colors.blue(s, **kwargs))
+    return print(ac.blue(s, **kwargs))
 
 def printcyan(s, **kwargs):
     ''' Alias to print(colors.cyan(s)) '''
-    return print(colors.cyan(s, **kwargs))
+    return print(ac.cyan(s, **kwargs))
 
 def printyellow(s, **kwargs):
     ''' Alias to print(colors.yellow(s)) '''
-    return print(colors.yellow(s, **kwargs))
+    return print(ac.yellow(s, **kwargs))
 
 def printmagenta(s, **kwargs):
     ''' Alias to print(colors.magenta(s)) '''
-    return print(colors.magenta(s, **kwargs))
+    return print(ac.magenta(s, **kwargs))
 
 
 def heading(string=None, *args, color=None, divider=None, spaces=None, spacesafter=None, minlength=None, maxlength=None, sep=' ', doprint=None, output=False, **kwargs):
@@ -879,7 +883,7 @@ def percentcomplete(step=None, maxsteps=None, stepsize=1, prefix=None):
         prefix = ' '
     elif scu.isnumber(prefix):
         prefix = ' '*prefix
-    onepercent = max(stepsize,round(maxsteps/100*stepsize)); # Calculate how big a single step is -- not smaller than 1
+    onepercent = max(stepsize,round(maxsteps/100*stepsize)) # Calculate how big a single step is -- not smaller than 1
     if not step%onepercent: # Does this value lie on a percent
         thispercent = round(step/maxsteps*100) # Calculate what percent it is
         print(prefix + '%i%%'% thispercent) # Display the output
@@ -976,6 +980,7 @@ class capture(UserString, str, redirect_stdout):
 
     def __init__(self, seq='', *args, **kwargs):
         self._io = io.StringIO()
+        self.stdout = sys.stdout
         UserString.__init__(self, seq=seq, *args, **kwargs)
         redirect_stdout.__init__(self, self._io)
         return

@@ -2,7 +2,7 @@
 Adaptive stochastic descent optimization algorithm, building on scipy.optimize.
 
 This algorithm is published as "Optimization by adaptive stochastic descent" by
-Kerr et al. (2018).
+Kerr et al. (2018) (DOI: https://doi.org/10.1371/journal.pone.0192944).
 '''
 
 import numpy as np

@@ -2,10 +2,10 @@
 Handle colors and colormaps.
 
 Highlights:
-    - Adds colormaps including 'turbo', 'parula', and 'orangeblue'
-    - ``sc.hex2grb()/sc.rgb2hex()``: convert between different color conventions
-    - ``sc.vectocolor()``: map a list of sequential values onto a list of colors
-    - ``sc.gridcolors()``: map a list of qualitative categories onto a list of colors
+    - Adds colormaps including ``'turbo'``, ``'parula'``, and ``'orangeblue'``
+    - :func:`hex2rgb`/:func:`rgb2hex`: convert between different color conventions
+    - :func:`vectocolor`: map a list of sequential values onto a list of colors
+    - :func:`gridcolors`: map a list of qualitative categories onto a list of colors
 '''
 
 ##############################################################################
@@ -159,7 +159,7 @@ def hsv2rgb(colors=None):
 __all__ += ['vectocolor', 'arraycolors', 'gridcolors', 'midpointnorm', 'colormapdemo']
 
 
-def vectocolor(vector, cmap=None, asarray=True, reverse=False, minval=None, maxval=None, midpoint=None, norm=None):
+def vectocolor(vector, cmap=None, asarray=True, reverse=False, minval=None, maxval=None, midpoint=None):
     """
     This function converts a vector (i.e., 1D array) of N values into an Nx3 matrix
     of color values according to the current colormap. It automatically scales the
@@ -242,6 +242,10 @@ def arraycolors(arr, **kwargs):
     of vectocolor() for multidimensional arrays; see that function for additional
     arguments.
 
+    Args:
+        arr (array): a multidimensional array to be converted to an array of colors
+        kwargs(dict): passed to ``sc.vectocolor()``
+
     **Example**::
 
         n = 1000
@@ -269,29 +273,35 @@ def arraycolors(arr, **kwargs):
 
 def gridcolors(ncolors=10, limits=None, nsteps=20, asarray=False, ashex=False, reverse=False, hueshift=0, basis='default', demo=False):
     """
-    Create a qualitative "color map" by assigning points according to the maximum pairwise distance in the
-    color cube. Basically, the algorithm generates n points that are maximally uniformly spaced in the
-    [R, G, B] color cube.
+    Create a qualitative "color map" by assigning points according to the maximum
+    pairwise distance in the color cube. Basically, the algorithm generates n points
+    that are maximally uniformly spaced in the [R, G, B] color cube.
 
-    Arguments:
-        ncolors: the number of colors to create
-        limits: how close to the edges of the cube to make colors (to avoid white and black)
-        nsteps: the discretization of the color cube (e.g. 10 = 10 units per side = 1000 points total)
-        asarray: whether to return the colors as an array instead of as a list of tuples
-        doplot: whether or not to plot the color cube itself
-        basis: what basis to use -- options are 'colorbrewer', 'kelly', 'default', or 'none'
+    By default, if there are <=9 colors, use Colorbrewer colors; if there are
+    10-19 colors, use Kelly's colors; if there are >=20 colors, use uniformly
+    spaced grid colors.
+
+    Args:
+        ncolors  (int)   : the number of colors to create
+        limits   (float) : how close to the edges of the cube to make colors (to avoid white and black)
+        nsteps   (int)   : the discretization of the color cube (e.g. 10 = 10 units per side = 1000 points total)
+        ashex    (bool)  : whether to return colors in hexadecimal representation
+        asarray  (bool)  : whether to return the colors as an array instead of as a list of tuples
+        reverse  (bool)  : whether to reverse the list of colors
+        hueshift (float) : whether to shift the hue (hueshift > 0 and <=1) or not (0)
+        demo     (bool)  : whether or not to plot the color cube itself
+        basis    (str)   : what basis to use -- options are 'colorbrewer', 'kelly', 'default', or 'none'
 
     **Example**::
 
-        from pylab import *
-        from sciris import gridcolors
+        import pylab as pl
+        import sciris as sc
         ncolors = 10
-        piedata = rand(ncolors)
-        colors = gridcolors(ncolors)
-        figure()
-        pie(piedata, colors=colors)
-        gridcolors(ncolors, demo=True)
-        show()
+        piedata = pl.rand(ncolors)
+        colors = sc.gridcolors(ncolors)
+        pl.pie(piedata, colors=colors)
+        sc.gridcolors(ncolors, demo=True)
+        pl.show()
 
     Version: 2018oct30
     """
@@ -534,23 +544,25 @@ def bicolormap(gap=0.1, mingreen=0.2, redbluemix=0.5, epsilon=0.01, demo=False, 
     of a color gap there is between the red scale and the blue one.
 
     Args:
-      gap: sets how big of a gap between red and blue color scales there is (0=no gap; 1=pure red and pure blue)
-      mingreen: how much green to include at the extremes of the red-blue color scale
-      redbluemix: how much red to mix with the blue and vice versa at the extremes of the scale
-      epsilon: what fraction of the colormap to make gray in the middle
+      gap        (float): sets how big of a gap between red and blue color scales there is (0=no gap; 1=pure red and pure blue)
+      mingreen   (float): how much green to include at the extremes of the red-blue color scale
+      redbluemix (float): how much red to mix with the blue and vice versa at the extremes of the scale
+      epsilon    (float): what fraction of the colormap to make gray in the middle
+      demo       (bool):  whether to plot a demo bicolormap or not
+      apply      (bool):  whether to apply this colormap to the current figure
 
     **Examples**::
 
-        bicolormap(gap=0,mingreen=0,redbluemix=1,epsilon=0) # From pure red to pure blue with white in the middle
-        bicolormap(gap=0,mingreen=0,redbluemix=0,epsilon=0.1) # Red -> yellow -> gray -> turquoise -> blue
-        bicolormap(gap=0.3,mingreen=0.2,redbluemix=0,epsilon=0.01) # Red and blue with a sharp distinction between
+        sc.bicolormap(gap=0, mingreen=0, redbluemix=1, epsilon=0) # From pure red to pure blue with white in the middle
+        sc.bicolormap(gap=0, mingreen=0, redbluemix=0, epsilon=0.1) # Red -> yellow -> gray -> turquoise -> blue
+        sc.bicolormap(gap=0.3, mingreen=0.2, redbluemix=0, epsilon=0.01) # Red and blue with a sharp distinction between
 
     Version: 2013sep13
     """
-    mng=mingreen; # Minimum amount of green to add into the colors
-    mix=redbluemix; # How much red to mix with the blue an vice versa
-    eps=epsilon; # How much of the center of the colormap to make gray
-    omg=1-gap # omg = one minus gap
+    mng = mingreen   # Minimum amount of green to add into the colors
+    mix = redbluemix # How much red to mix with the blue an vice versa
+    eps = epsilon    # How much of the center of the colormap to make gray
+    omg = 1-gap      # omg = one minus gap
 
     cdict = {'red': ((0.00000, 0.0, 0.0),
                      (0.5-eps, mix, omg),
@@ -570,28 +582,28 @@ def bicolormap(gap=0.1, mingreen=0.2, redbluemix=0.5, epsilon=0.01, demo=False, 
                      (0.5+eps, omg, mix),
                      (1.00000, 0.0, 0.0))}
 
-    cmap = mplc.LinearSegmentedColormap('bi',cdict,256)
+    cmap = mplc.LinearSegmentedColormap('bi', cdict, 256)
     if apply:
         pl.set_cmap(cmap)
 
     def demoplot(): # pragma: no cover
-        from pylab import figure, subplot, imshow, colorbar, rand, show
 
-        maps=[]
+        maps = []
         maps.append(bicolormap()) # Default ,should work for most things
         maps.append(bicolormap(gap=0,mingreen=0,redbluemix=1,epsilon=0)) # From pure red to pure blue with white in the middle
         maps.append(bicolormap(gap=0,mingreen=0,redbluemix=0,epsilon=0.1)) # Red -> yellow -> gray -> turquoise -> blue
         maps.append(bicolormap(gap=0.3,mingreen=0.2,redbluemix=0,epsilon=0.01)) # Red and blue with a sharp distinction between
         nexamples=len(maps)
 
-        figure(figsize=(5*nexamples,4))
+        pl.figure(figsize=(5*nexamples, 4))
         for m in range(nexamples):
-            subplot(1,nexamples,m+1)
-            imshow(rand(20,20),cmap=maps[m],interpolation='none');
-            colorbar()
-        show()
+            pl.subplot(1, nexamples, m+1)
+            pl.imshow(np.random.rand(20,20), cmap=maps[m], interpolation='none')
+            pl.colorbar()
+        pl.show()
 
-    if demo: demoplot()
+    if demo:
+        demoplot()
 
     return cmap
 
