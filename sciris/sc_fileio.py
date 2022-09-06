@@ -1141,10 +1141,6 @@ class Spreadsheet(Blobject):
         self.wb = None
         return
 
-    def __getstate__(self):
-        d = self.__dict__.copy() # Shallow copy
-        d['wb'] = None
-        return d
 
     def __getstate__(self):
         d = self.__dict__.copy() # Shallow copy
