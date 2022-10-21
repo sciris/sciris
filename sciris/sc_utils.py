@@ -712,8 +712,6 @@ def htmlify(string, reverse=False, tostring=False):
         if tostring: # Convert from bytestring to unicode
             output = output.decode()
     else: # Convert from HTML
-        # if isinstance(string, bytes):
-        #     string = string.decode()
         output = html.unescape(string)
         output = output.replace('<br>','\n').replace('<br />','\n').replace('<BR>','\n')
     return output

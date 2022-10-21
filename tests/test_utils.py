@@ -24,9 +24,8 @@ def test_adaptations():
         o.sha3 = sc.dcp(o.sha)
 
     print('\nTesting wget and download')
-    url1 = 'http://google.com/'
-    url2 = 'http://wikipedia.org/'
-    o.wget = sc.wget(url1)
+    url1 = 'http://wikipedia.org/'
+    url2 = 'http://google.com/'
     o.download = sc.download(url1, url2, save=False)
     fn = 'temp.html'
     sc.download({url1:fn})
@@ -35,7 +34,7 @@ def test_adaptations():
     print('\nTesting htmlify')
     o.html = sc.htmlify('foo&\nbar')
     assert o.html == b'foo&amp;<br>bar'
-    o.nothtml = sc.htmlify(o.wget, reverse=True)
+    o.nothtml = sc.htmlify(o.download[0], reverse=True)
 
     print('\nTesting traceback')
     o.traceback = sc.traceback()
