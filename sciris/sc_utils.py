@@ -1039,16 +1039,16 @@ def mergedicts(*args, _strict=False, _overwrite=True, _copy=False, _sameclass=Tr
     '''
     Small function to merge multiple dicts together.
 
-    By default, skips things that are not, dicts (e.g., None), and allows keys
-    to be set multiple times. Similar to dict.update(), except returns a value.
+    By default, skips any input arguments that are ``None``, and allows keys to be set 
+    multiple times. This function is similar to dict.update(), except it returns a value.
     The first dictionary supplied will be used for the output type (e.g. if the
     first dictionary is an odict, an odict will be returned).
 
     Note that arguments start with underscores to avoid possible collisions with
     keywords (e.g. ``sc.mergedicts(dict(loose=True, strict=True), strict=False, _strict=True)``).
 
-    Useful for cases, e.g. function arguments, where the default option is ``None``
-    but you will need a dict later on.
+    This function is useful for cases, e.g. function arguments, where the default 
+    option is ``None`` but you will need a dict later on.
 
     Args:
         _strict    (bool): if True, raise an exception if an argument isn't a dict
@@ -1063,13 +1063,14 @@ def mergedicts(*args, _strict=False, _overwrite=True, _copy=False, _sameclass=Tr
 
         d0 = sc.mergedicts(user_args) # Useful if user_args might be None, but d0 is always a dict
         d1 = sc.mergedicts({'a':1}, {'b':2}) # Returns {'a':1, 'b':2}
-        d2 = sc.mergedicts({'a':1, 'b':2}, {'b':3, 'c':4}) # Returns {'a':1, 'b':3, 'c':4}
+        d2 = sc.mergedicts({'a':1, 'b':2}, {'b':3, 'c':4}, None) # Returns {'a':1, 'b':3, 'c':4}
         d3 = sc.mergedicts(sc.odict({'b':3, 'c':4}), {'a':1, 'b':2}) # Returns sc.odict({'b':2, 'c':4, 'a':1})
         d4 = sc.mergedicts({'b':3, 'c':4}, {'a':1, 'b':2}, _overwrite=False) # Raises exception
 
     | New in version 1.1.0: "copy" argument
     | New in version 1.3.3: keywords allowed
     | New in version 2.0.0: keywords fully enabled; "_sameclass" argument
+    | New in version 2.0.1: fixed bug with "_copy" argument
     '''
     # Warn about deprecated keys
     renamed = ['strict', 'overwrite', 'copy']
@@ -1110,8 +1111,8 @@ def mergedicts(*args, _strict=False, _overwrite=True, _copy=False, _sameclass=Tr
                 errormsg = f'Could not handle argument {a} of {type(arg)}: expecting dict or None'
                 raise TypeError(errormsg)
 
-    if copy:
-        outputdict = dcp(outputdict)
+    if _copy:
+        outputdict = dcp(outputdict, die=_die)
     return outputdict
 
 
