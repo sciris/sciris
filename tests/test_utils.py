@@ -24,9 +24,8 @@ def test_adaptations():
         o.sha3 = sc.dcp(o.sha)
 
     print('\nTesting wget and download')
-    url1 = 'http://wikipedia.org/'
-    url2 = 'http://covasim.org/'
-    o.wget = sc.wget(url1)
+    url1 = 'http://google.com/'
+    url2 = 'http://wikipedia.org/'
     o.download = sc.download(url1, url2, save=False)
     fn = 'temp.html'
     sc.download({url1:fn})

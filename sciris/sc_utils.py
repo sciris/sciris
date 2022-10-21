@@ -1819,7 +1819,7 @@ class autolist(list):
     def __add__(self, obj=None):
         ''' Allows non-lists to be concatenated '''
         obj = promotetolist(obj)
-        new = list.__add__(obj)
+        new = list.__add__(self, obj)
         return new
 
     def __radd__(self, obj):
@@ -1827,7 +1827,7 @@ class autolist(list):
         return self.__add__(obj)
 
     def __iadd__(self, obj):
-        ''' Allows += to work correctly '''
+        ''' Allows += to work correctly -- key feature of autolist '''
         obj = promotetolist(obj)
         self.extend(obj)
         return self

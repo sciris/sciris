@@ -286,24 +286,30 @@ def loadtext(filename=None, folder=None, splitlines=False):
     return output
 
 
-def savetext(filename=None, string=None):
+def savetext(filename=None, string=None, **kwargs):
     '''
     Convenience function for saving a text file -- accepts a string or list of strings;
     can also save an arbitrary object, in which case it will first convert to a string.
+    
+    Args:
+        filename (str): the filename to save to
+        string (str): the string (or object) to save
+        kwargs (dict): passed to ``np.savetxt()`` if saving an array
 
     **Example**::
 
         text = ['Here', 'is', 'a', 'poem']
         sc.savetext('my-poem.txt', text)
     '''
-    is_array = scu.issarray(string)
+    is_array = scu.isarray(string)
     if isinstance(string, list):
         string = '\n'.join(string) # Convert from list to string)
     elif not is_array and not scu.isstring(string):
         string = str(string)
     filename = makefilepath(filename=filename)
-    if is_array: # Shortcut to Numpy for saving arrays
-        np.savetxt(filename, string)
+    if is_array: # Shortcut to Numpy for saving arrays -- basic CSV
+        kw = scu.mergedicts(dict(fmt='%s', delimiter=', '), kwargs)
+        np.savetxt(filename, string, **kw)
     else: # Main use case: save text
         with open(filename, 'w') as f:
             f.write(string)
