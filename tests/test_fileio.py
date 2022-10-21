@@ -21,7 +21,7 @@ tidyup = True
 # Define the test data
 nrows = 15
 ncols = 3
-testdata   = pl.zeros((nrows+1, ncols), dtype=object) # Includes header row
+testdata   = np.zeros((nrows+1, ncols), dtype=object) # Includes header row
 testdata[0,:] = ['A', 'B', 'C'] # Create header
 testdata[1:,:] = np.random.rand(nrows,ncols) # Create data
 
