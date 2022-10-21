@@ -788,6 +788,8 @@ def checktype(obj=None, objtype=None, subtype=None, die=False):
         sc.checktype(['a','b','c'], 'listlike') # Returns True
         sc.checktype(['a','b','c'], 'arraylike') # Returns False
         sc.checktype([{'a':3}], list, dict) # Returns True
+    
+    New in version 2.0.1: ``pd.Series`` considered 'array-like'
     '''
 
     # Handle "objtype" input
@@ -795,7 +797,7 @@ def checktype(obj=None, objtype=None, subtype=None, die=False):
     elif objtype in ['num', 'number']:         objinstance = _numtype
     elif objtype in ['bool', 'boolean']:       objinstance = _booltypes
     elif objtype in ['arr', 'array']:          objinstance = np.ndarray
-    elif objtype in ['listlike', 'arraylike']: objinstance = (list, tuple, np.ndarray) # Anything suitable as a numerical array
+    elif objtype in ['listlike', 'arraylike']: objinstance = (list, tuple, np.ndarray, pd.Series) # Anything suitable as a numerical array
     elif type(objtype) == type:                objinstance = objtype # Don't need to do anything
     elif isinstance(objtype, tuple):           objinstance = objtype # Ditto
     elif objtype is None:                      return # If not supplied, exit
@@ -809,7 +811,8 @@ def checktype(obj=None, objtype=None, subtype=None, die=False):
     # Do second round checking
     if result and objtype in ['listlike', 'arraylike']: # Special case for handling arrays which may be multi-dimensional
         obj = promotetoarray(obj).flatten() # Flatten all elements
-        if objtype == 'arraylike' and subtype is None: subtype = _numtype + _booltypes
+        if objtype == 'arraylike' and subtype is None: # Add additional check for numeric entries
+            subtype = _numtype + _booltypes
     if isiterable(obj) and subtype is not None:
         for item in obj:
             result = result and checktype(item, subtype)
@@ -892,8 +895,9 @@ def promotetoarray(x, keepnone=False, **kwargs):
         sc.promotetoarray([3,5]) # Returns np.array([3,5])
         sc.promotetoarray(None, skipnone=True) # Returns np.array([])
 
-    New in version 1.1.0: replaced "skipnone" with "keepnone"; allowed passing
+    | New in version 1.1.0: replaced "skipnone" with "keepnone"; allowed passing
     kwargs to ``np.array()``.
+    | New in version 2.0.1: added support for pandas Series and DataFrame
     '''
     skipnone = kwargs.pop('skipnone', None)
     if skipnone is not None: # pragma: no cover
@@ -902,6 +906,8 @@ def promotetoarray(x, keepnone=False, **kwargs):
         warnings.warn(warnmsg, category=FutureWarning, stacklevel=2)
     if isnumber(x) or (isinstance(x, np.ndarray) and not np.shape(x)): # e.g. 3 or np.array(3)
         x = [x]
+    elif isinstance(x, (pd.DataFrame, pd.Series)):
+        x = x.values
     elif x is None and not keepnone:
         x = []
     output = np.array(x, **kwargs)
