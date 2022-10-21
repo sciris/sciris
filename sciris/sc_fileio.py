@@ -460,6 +460,8 @@ def sanitizefilename(filename, sub='_', allowspaces=False, asciify=True, strict=
 
         bad = 'Nöt*a   file&name?!.doc'
         good = sc.sanitizefilename(bad)
+        
+    New in version 2.0.1: arguments "sub", "allowspaces", "asciify", "strict", and "disallowed"
     '''
     
     # Handle options
