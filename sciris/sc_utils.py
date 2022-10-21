@@ -39,7 +39,7 @@ import numpy as np
 import pandas as pd
 import random as rnd
 import uuid as py_uuid
-import packaging as pkg
+import packaging.version
 import traceback as py_traceback
 
 # Handle types
@@ -1454,9 +1454,9 @@ def compareversions(version1, version2):
     v2 = v2.lstrip('<>=!~')
 
     # Do comparison
-    if pkg.version.parse(v1) > pkg.version.parse(v2):
+    if packaging.version.parse(v1) > packaging.version.parse(v2):
         comparison =  1
-    elif pkg.version.parse(v1) < pkg.version.parse(v2):
+    elif packaging.version.parse(v1) < packaging.version.parse(v2):
         comparison =  -1
     else:
         comparison =  0
