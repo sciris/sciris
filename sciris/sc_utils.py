@@ -533,7 +533,7 @@ def urlopen(url, filename=None, save=False, headers=None, params=None, data=None
     Download a single URL.
 
     Alias to ``urllib.request.urlopen(url).read()``. See also ``sc.download()``
-    for download multiple URLs. Note: ``sc.urlopen()``/``sc.wget()`` are aliases.
+    for downloading multiple URLs. Note: ``sc.urlopen()``/``sc.wget()`` are aliases.
 
     Args:
         url (str): the URL to open, either as GET or POST
@@ -553,11 +553,13 @@ def urlopen(url, filename=None, save=False, headers=None, params=None, data=None
         sc.urlopen('http://sciris.org', filename='sciris.html') # Save to file sciris.html
         sc.urlopen('http://sciris.org', save=True, headers={'User-Agent':'Custom agent'}) # Save to the default filename (here, sciris.org), with headers
 
-    New in version 2.0.0: renamed from ``wget`` to ``urlopen``; new arguments
+    | New in version 2.0.0: renamed from ``wget`` to ``urlopen``; new arguments
+    | New in version 2.0.1: creates folders by default if they do not exist
     '''
     from urllib import request as ur # Need to import these directly, not via urllib
     from urllib import parse as up
     from . import sc_datetime as scd  # To avoid circular import
+    from . import sc_fileio as scf # To avoid circular import
 
     T = scd.timer()
 
@@ -601,6 +603,7 @@ def urlopen(url, filename=None, save=False, headers=None, params=None, data=None
 
     if filename is not None:
         if verbose: print(f'Saving to {filename}...')
+        filename = scf.makefilepath(filename)
         if isinstance(output, bytes):
             with open(filename, 'wb') as f:
                 f.write(output)
@@ -618,6 +621,7 @@ def urlopen(url, filename=None, save=False, headers=None, params=None, data=None
 
 # Alias for backwards compatibility
 wget = urlopen
+
 
 def download(url, *args, filename=None, save=True, parallel=True, verbose=True, **kwargs):
     '''
@@ -666,7 +670,7 @@ def download(url, *args, filename=None, save=True, parallel=True, verbose=True, 
         raise ValueError(errormsg)
 
     if verbose:
-        print(f'Downloading {n_urls} URLs...')
+        print(f'Downloading {n_urls} URL(s)...')
 
     # Get results in parallel
     wget_verbose = (verbose>1) or (verbose and n_urls == 1) # By default, don't print progress on each download
