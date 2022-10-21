@@ -29,12 +29,13 @@ import time
 import json
 import zlib
 import types
+import string
+import numbers
 import pprint
 import hashlib
-import subprocess
-import numbers
-import string
 import warnings
+import subprocess
+import unicodedata
 import numpy as np
 import pandas as pd
 import random as rnd
@@ -54,7 +55,7 @@ _booltypes   = (bool, np.bool_)
 
 # Define the modules being loaded
 __all__ = ['fast_uuid', 'uuid', 'dcp', 'cp', 'pp', 'sha', 'freeze', 'require',
-           'traceback', 'getplatform', 'iswindows', 'islinux', 'ismac']
+           'traceback', 'getplatform', 'iswindows', 'islinux', 'ismac', 'asciify']
 
 
 def fast_uuid(which=None, length=None, n=1, secure=False, forcelist=False, safety=1000, recursion=0, recursion_limit=10, verbose=True):
@@ -520,6 +521,21 @@ def ismac(die=False):
     ''' Alias to ``sc.getplatform('mac')`` '''
     return getplatform('mac', die=die)
 
+
+def asciify(string, form='NFKD', encoding='ascii', errors='ignore'):
+    '''
+    Convert an arbitrary Unicode string to ASCII.
+    
+    Args:
+        form (str): the type of Unicode normalization to use
+        encoding (str): the output string to encode to
+        errors (str): how to handle errors
+    
+    **Example**:
+        sc.asciify('föö→λ ∈ ℝ') # Returns 'foo  R'
+        
+    '''
+    return unicodedata.normalize(form, string).encode(encoding, errors).decode()
 
 ##############################################################################
 #%% Web/HTML functions
