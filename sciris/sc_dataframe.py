@@ -255,6 +255,29 @@ class dataframe(pd.DataFrame):
 
         return output
 
+
+    def disp(self, maxrows=None, maxcols=None, precision=4, **kwargs):
+        '''
+        Flexible display of a dataframe.
+        
+        By default, show all rows and columns.
+        
+        Args:
+            maxrows (int): maximum number of rows to show (default: all)
+            maxcols (int): maximum number of columns to show (default: all)
+            precision (int): number of decimal places to show (default: 4)
+            kwargs (dict): passed to ``pd.option_context()``
+        
+        **Examples**::
+            
+            df = sc.dataframe(data=np.random.rand(100,10))
+            df.disp()
+            df.disp(precision=1, maxcols=5)
+        
+        New in version 2.0.1.
+        '''
+
+
     def poprow(self, key, returnval=True):
         ''' Remove a row from the data frame '''
         rowindex = int(key)

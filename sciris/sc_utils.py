@@ -522,7 +522,7 @@ def ismac(die=False):
     return getplatform('mac', die=die)
 
 
-def asciify(string, form='NFKD', encoding='ascii', errors='ignore'):
+def asciify(string, form='NFKD', encoding='ascii', errors='ignore', **kwargs):
     '''
     Convert an arbitrary Unicode string to ASCII.
     
@@ -530,12 +530,17 @@ def asciify(string, form='NFKD', encoding='ascii', errors='ignore'):
         form (str): the type of Unicode normalization to use
         encoding (str): the output string to encode to
         errors (str): how to handle errors
+        kwargs (dict): passed to ``string.decode()``
     
     **Example**:
         sc.asciify('föö→λ ∈ ℝ') # Returns 'foo  R'
-        
+    
+    New in version 2.0.1.
     '''
-    return unicodedata.normalize(form, string).encode(encoding, errors).decode()
+    normalized = unicodedata.normalize(form, string) # First, normalize Unicode encoding
+    encoded = normalized.encode(encoding, errors) # Then, convert to ASCII
+    decoded = encoded.decode(**kwargs) # Finally, decode back to utf-8
+    return decoded
 
 ##############################################################################
 #%% Web/HTML functions
