@@ -256,15 +256,14 @@ class dataframe(pd.DataFrame):
         return output
 
 
-    def disp(self, maxrows=None, maxcols=None, precision=4, **kwargs):
+    def disp(self, nrows=None, ncols=None, width=999, precision=4, options=None):
         '''
-        Flexible display of a dataframe.
-        
-        By default, show all rows and columns.
+        Flexible display of a dataframe, showing all rows/columns by default.
         
         Args:
-            maxrows (int): maximum number of rows to show (default: all)
-            maxcols (int): maximum number of columns to show (default: all)
+            nrows (int): maximum number of rows to show (default: all)
+            ncols (int): maximum number of columns to show (default: all)
+            width (int): maximum screen width (default: 999)
             precision (int): number of decimal places to show (default: 4)
             kwargs (dict): passed to ``pd.option_context()``
         
@@ -272,10 +271,21 @@ class dataframe(pd.DataFrame):
             
             df = sc.dataframe(data=np.random.rand(100,10))
             df.disp()
-            df.disp(precision=1, maxcols=5)
+            df.disp(precision=1, ncols=5, options={'display.colheader_justify': 'left'})
         
         New in version 2.0.1.
         '''
+        opts = scu.mergedicts({
+            'display.max_rows': nrows,
+            'display.max_columns': ncols,
+            'display.width': width,
+            'display.precision': precision,
+            }, options
+        )
+        optslist = [item for pair in opts.items() for item in pair] # Convert from dict to list
+        with pd.option_context(*optslist):
+            print(self)
+        return
 
 
     def poprow(self, key, returnval=True):
