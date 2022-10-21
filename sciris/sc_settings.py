@@ -202,8 +202,8 @@ class Options(sco.objdict):
         optdesc.aspath = 'Set whether to return Path objects instead of strings by default'
         options.aspath = parse_env('SCIRIS_ASPATH', False, 'bool')
 
-        optdesc.style = 'Set the default plotting style -- options are "simple" and "fancy" plus those in pl.style.available; see also options.rc'
-        options.style = parse_env('SCIRIS_STYLE', 'simple', 'str')
+        optdesc.style = 'Set the default plotting style -- options are "default", "simple", and "fancy", plus those in pl.style.available; see also options.rc'
+        options.style = parse_env('SCIRIS_STYLE', 'default', 'str')
 
         optdesc.dpi = 'Set the default DPI -- the larger this is, the larger the figures will be'
         options.dpi = parse_env('SCIRIS_DPI', pl.rcParams['figure.dpi'], 'int')
@@ -224,7 +224,7 @@ class Options(sco.objdict):
         options.backend = parse_env('SCIRIS_BACKEND', pl.get_backend(), 'str')
 
         optdesc.rc = 'Matplotlib rc (run control) style parameters used during plotting -- usually set automatically by "style" option'
-        options.rc = scu.dcp(rc_simple)
+        options.rc = {}
 
         return optdesc, options
 
@@ -468,11 +468,17 @@ class Options(sco.objdict):
             rc = scu.dcp(style)
         elif style is not None: # Usual use case
             stylestr = str(style).lower()
-            if   stylestr in ['simple', 'default']: rc = scu.dcp(rc_simple)
-            elif stylestr in ['fancy', 'covasim']:  rc = scu.dcp(rc_fancy)
-            elif style in pl.style.library:         rc = scu.dcp(pl.style.library[style])
+            if stylestr in ['default', 'matplotlib', 'reset']:
+                pl.style.use('default') # Need special handling here since not in pl.style.library...ugh
+                rc = {}
+            elif stylestr in ['simple', 'sciris']:
+                rc = scu.dcp(rc_simple)
+            elif stylestr in ['fancy', 'covasim']:
+                rc = scu.dcp(rc_fancy)
+            elif style in pl.style.library:
+                rc = scu.dcp(pl.style.library[style])
             else:
-                errormsg = f'Style "{style}"; not found; options are "simple" (default), "fancy", plus:\n{scu.newlinejoin(pl.style.available)}'
+                errormsg = f'Style "{style}"; not found; options are "default", "simple", "fancy", plus:\n{scu.newlinejoin(pl.style.available)}'
                 raise ValueError(errormsg)
         if reset:
             self.rc = rc
@@ -516,7 +522,7 @@ class Options(sco.objdict):
         kwargs = scu.mergedicts(style_args, kwargs)
 
         # Handle style, overwiting existing
-        style = kwargs.pop('style', None)
+        style = kwargs.pop('style', self.style)
         rc = self._handle_style(style, reset=False)
 
         def pop_keywords(sourcekeys, rckey):
