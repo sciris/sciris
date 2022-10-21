@@ -18,10 +18,10 @@ Highlights:
 # Basic imports
 import io
 import os
-import re
 import json
 import shutil
 import uuid
+import string
 import inspect
 import importlib
 import traceback
@@ -443,19 +443,46 @@ def getfilelist(folder=None, pattern=None, abspath=False, nopath=False, filesonl
     return filelist
 
 
-def sanitizefilename(rawfilename):
+def sanitizefilename(filename, sub='_', allowspaces=False, asciify=True, strict=False, disallowed=None):
     '''
     Takes a potentially Linux- and Windows-unfriendly candidate file name, and
     returns a "sanitized" version that is more usable.
+    
+    Args:
+        filename (str): the filename to sanitize
+        sub (str): the character to substitute unsafe input characters with
+        allowspaces (bool): whether to allow spaces in the filename
+        asciify (bool): whether to convert the string from Unicode to ASCII
+        strict (bool): whether to remove (almost) all non-alphanumeric characters
+        disallowed (str): optionally supply a custom list of disallowed characters
 
     **Example**::
 
-        bad_name = 'How*is*this*even*a*filename?!.doc'
-        good_name = sc.sanitizefilename(bad_name) # Returns 'How_is_this_even_a_filename.doc'
+        bad = 'Nöt*a   file&name?!.doc'
+        good = sc.sanitizefilename(bad)
     '''
-    filtername = re.sub(r'[\!\?\"\'<>]', '', rawfilename) # Erase certain characters we don't want at all: !, ?, ", ', <, >
-    filtername = re.sub(r'[:/\\\*\|,]', '_', filtername) # Change certain characters that might be being used as separators from what they were to underscores: space, :, /, \, *, |, comma
-    return filtername # Return the sanitized file name.
+    
+    # Handle options
+    if asciify:
+        filename = scu.asciify(filename) # Ensure it's ASCII compatible
+    if disallowed is None:
+        if strict:
+            disallowed = '''!"#$%&\'()*+,/:;<=>?@[\\]^`{|}~\t\n\r\x0b\x0c'''
+        else:
+            disallowed = '''\\/:*?!"'<>|'''
+    if not allowspaces:
+        disallowed += ' '
+    
+    # Create the filename
+    sanitized = ''
+    for letter in filename:
+        if letter in string.printable or not asciify:
+            if letter in disallowed:
+                sanitized += sub
+            else:
+                sanitized += letter
+
+    return sanitized # Return the sanitized file name.
 
 
 def makefilepath(filename=None, folder=None, ext=None, default=None, split=False, aspath=None, abspath=True, makedirs=True, checkexists=None, sanitize=False, die=True, verbose=False):
