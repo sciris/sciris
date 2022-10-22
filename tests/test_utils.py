@@ -25,16 +25,20 @@ def test_adaptations():
 
     print('\nTesting wget and download')
     url1 = 'http://wikipedia.org/'
-    url2 = 'http://covasim.org/'
-    o.wget = sc.wget(url1)
+    url2 = 'http://google.com/'
     o.download = sc.download(url1, url2, save=False)
     fn = 'temp.html'
     sc.download({url1:fn})
     sc.rmpath(fn)
 
     print('\nTesting htmlify')
-    o.html = sc.htmlify('foo&\nbar') # Returns b'foo&amp;<br>bar'
-    o.nothtml = sc.htmlify(o.wget, reverse=True)
+    o.html = sc.htmlify('foo&\nbar')
+    assert o.html == b'foo&amp;<br>bar'
+    o.nothtml = sc.htmlify(o.download[0], reverse=True)
+    
+    print('Testing asciify')
+    o.ascii = sc.asciify('föö→λ ∈ ℝ')
+    assert o.ascii == 'foo  R'
 
     print('\nTesting traceback')
     o.traceback = sc.traceback()

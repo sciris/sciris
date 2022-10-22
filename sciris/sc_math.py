@@ -140,9 +140,10 @@ def findinds(arr=None, val=None, *args, eps=1e-6, first=False, last=False, ind=N
                 boolarr = np.isclose(a=arr, b=val, atol=atol, **kwargs) # If absolute difference between the two values is less than a certain amount
             elif scu.checktype(val, 'arraylike'): # It's not actually a value, it's another array
                 boolarr = arr
-                arglist.append(val)
+                arglist.append(scu.promotetoarray(val))
             else:
-                raise Exception
+                errormsg = f'Cannot understand input {type(val)}: must be number or array-like'
+                raise TypeError(errormsg)
 
     # Handle any additional inputs
     for arg in arglist:

@@ -6,6 +6,34 @@ All major updates to Sciris are documented here.
 By import convention, components of the Sciris library are listed beginning with ``sc.``, e.g. ``sc.odict()``.
 
 
+Version 2.0.1 (2022-10-21)
+--------------------------
+
+New features
+~~~~~~~~~~~~
+#. ``sc.asciify()`` converts a Unicode input string to the closest ASCII equivalent.
+#. ``sc.dataframe().disp()`` flexibly prints a dataframe (by default, all rows/columns).
+
+Improvements
+~~~~~~~~~~~~
+#. ``sc.findinds()`` now allows a wider variety of numeric-but-non-array inputs.
+#. ``sc.sanitizefilename()`` now handles more characters, including Unicode, and has many new options.
+#. ``sc.odict()`` now allows you to delete by index instead of key.
+#. ``sc.download()`` now creates folders if they do not already exist.
+#. ``sc.checktype(obj, 'arraylike')`` now returns ``True`` for pandas ``Series`` objects.
+#. ``sc.promotetoarray()`` now converts pandas ``Series`` or ``DataFrame`` objects into arrays.
+#. ``sc.savetext()`` can now save arrays (like ``np.savetxt()``).
+
+Bugfixes
+~~~~~~~~
+#. Fixed a bug with addition (concatenation) for ``sc.autolist()``.
+#. Fixed a bug with the ``_copy`` argument for ``sc.mergedicts()`` being ignored.
+#. ``sc.checkmem()`` no longer uses compression, giving more accurate estimates.
+#. Fixed a bug with ``sc.options()`` setting the plot style automatically; a ``'default'`` style was also added that restores Matplotlib defaults (which is now the Sciris default as well; use ``'sciris'`` or ``'simple'`` for the Sciris style).
+#. Fixed a bug with ``packaging.version`` not being found on some systems.
+#. Fixed an issue with colormaps attempting to be re-registered, which caused warnings.
+
+
 Version 2.0.0 (2022-08-18)
 --------------------------
 
@@ -22,13 +50,13 @@ New features
 #. ``sc.rmpath()`` removes both files and folders, with an optional interactive mode.
 #. ``sc.ispath()`` is an alias for ``isinstance(obj, pathlib.Path)``.
 #. ``sc.loadyaml()`` and ``sc.saveyaml()`` load and save YAML files, respectively.
-#. ``sc.loadzip()`` extracts (or reads data from) zip files
+#. ``sc.loadzip()`` extracts (or reads data from) zip files.
 #. ``sc.count()`` counts the number of matching elements in an array (similar to ``np.count_nonzero()``, but more flexible with e.g. float vs. int mismatches).
 #. ``sc.rmnans()`` and ``sc.fillnans()`` have been added as aliases of ``sc.sanitize()`` with default options.
 #. ``sc.strsplit()`` will automatically split common types of delimited strings (e.g. ``sc.strsplit('a b c')``).
 #. ``sc.parse_env()`` parses environment variables into common types (e.g., will interpret ``'False'`` as ``False``).
 #. ``sc.LazyModule()`` handles lazily loaded modules (see ``sc.importbyname()`` for usage).
-#. ``sc.randsleep()`` sleeps for a nondeterministic period of time
+#. ``sc.randsleep()`` sleeps for a nondeterministic period of time.
 
 Bugfixes
 ~~~~~~~~
@@ -69,7 +97,7 @@ Math
 Files
 ^^^^^
 #. ``sc.urlopen()`` can now save to files.
-#. ``sc.savezip()`` can save now save data to zip files (instead of just compressing files).
+#. ``sc.savezip()`` can now save data to zip files (instead of just compressing files).
 #. ``sc.path()`` is more flexible, including handling ``None`` inputs.
 #. ``sc.Spreadsheet()`` now has a ``new()`` method that creates a blank workbook.
 

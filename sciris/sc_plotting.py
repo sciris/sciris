@@ -1286,7 +1286,7 @@ def savefigs(figs=None, filetype=None, filename=None, folder=None, savefigargs=N
         defaultsavefigargs = {'dpi':200, 'bbox_inches':'tight'} # Specify a higher default DPI and save the figure tightly
         defaultsavefigargs.update(savefigargs) # Update the default arguments with the user-supplied arguments
         if filetype == 'fig':
-            scf.saveobj(fullpath, plt)
+            scf.save(fullpath, plt)
             filenames.append(fullpath)
             if verbose: print(f'Figure object saved to {fullpath}')
         else: # pragma: no cover

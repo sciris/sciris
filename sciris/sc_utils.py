@@ -29,17 +29,18 @@ import time
 import json
 import zlib
 import types
+import string
+import numbers
 import pprint
 import hashlib
-import subprocess
-import numbers
-import string
 import warnings
+import subprocess
+import unicodedata
 import numpy as np
 import pandas as pd
 import random as rnd
 import uuid as py_uuid
-import packaging as pkg
+import packaging.version
 import traceback as py_traceback
 
 # Handle types
@@ -54,7 +55,7 @@ _booltypes   = (bool, np.bool_)
 
 # Define the modules being loaded
 __all__ = ['fast_uuid', 'uuid', 'dcp', 'cp', 'pp', 'sha', 'freeze', 'require',
-           'traceback', 'getplatform', 'iswindows', 'islinux', 'ismac']
+           'traceback', 'getplatform', 'iswindows', 'islinux', 'ismac', 'asciify']
 
 
 def fast_uuid(which=None, length=None, n=1, secure=False, forcelist=False, safety=1000, recursion=0, recursion_limit=10, verbose=True):
@@ -521,6 +522,26 @@ def ismac(die=False):
     return getplatform('mac', die=die)
 
 
+def asciify(string, form='NFKD', encoding='ascii', errors='ignore', **kwargs):
+    '''
+    Convert an arbitrary Unicode string to ASCII.
+    
+    Args:
+        form (str): the type of Unicode normalization to use
+        encoding (str): the output string to encode to
+        errors (str): how to handle errors
+        kwargs (dict): passed to ``string.decode()``
+    
+    **Example**:
+        sc.asciify('föö→λ ∈ ℝ') # Returns 'foo  R'
+    
+    New in version 2.0.1.
+    '''
+    normalized = unicodedata.normalize(form, string) # First, normalize Unicode encoding
+    encoded = normalized.encode(encoding, errors) # Then, convert to ASCII
+    decoded = encoded.decode(**kwargs) # Finally, decode back to utf-8
+    return decoded
+
 ##############################################################################
 #%% Web/HTML functions
 ##############################################################################
@@ -533,7 +554,7 @@ def urlopen(url, filename=None, save=False, headers=None, params=None, data=None
     Download a single URL.
 
     Alias to ``urllib.request.urlopen(url).read()``. See also ``sc.download()``
-    for download multiple URLs. Note: ``sc.urlopen()``/``sc.wget()`` are aliases.
+    for downloading multiple URLs. Note: ``sc.urlopen()``/``sc.wget()`` are aliases.
 
     Args:
         url (str): the URL to open, either as GET or POST
@@ -553,11 +574,13 @@ def urlopen(url, filename=None, save=False, headers=None, params=None, data=None
         sc.urlopen('http://sciris.org', filename='sciris.html') # Save to file sciris.html
         sc.urlopen('http://sciris.org', save=True, headers={'User-Agent':'Custom agent'}) # Save to the default filename (here, sciris.org), with headers
 
-    New in version 2.0.0: renamed from ``wget`` to ``urlopen``; new arguments
+    | New in version 2.0.0: renamed from ``wget`` to ``urlopen``; new arguments
+    | New in version 2.0.1: creates folders by default if they do not exist
     '''
     from urllib import request as ur # Need to import these directly, not via urllib
     from urllib import parse as up
     from . import sc_datetime as scd  # To avoid circular import
+    from . import sc_fileio as scf # To avoid circular import
 
     T = scd.timer()
 
@@ -601,6 +624,7 @@ def urlopen(url, filename=None, save=False, headers=None, params=None, data=None
 
     if filename is not None:
         if verbose: print(f'Saving to {filename}...')
+        filename = scf.makefilepath(filename)
         if isinstance(output, bytes):
             with open(filename, 'wb') as f:
                 f.write(output)
@@ -618,6 +642,7 @@ def urlopen(url, filename=None, save=False, headers=None, params=None, data=None
 
 # Alias for backwards compatibility
 wget = urlopen
+
 
 def download(url, *args, filename=None, save=True, parallel=True, verbose=True, **kwargs):
     '''
@@ -666,7 +691,7 @@ def download(url, *args, filename=None, save=True, parallel=True, verbose=True, 
         raise ValueError(errormsg)
 
     if verbose:
-        print(f'Downloading {n_urls} URLs...')
+        print(f'Downloading {n_urls} URL(s)...')
 
     # Get results in parallel
     wget_verbose = (verbose>1) or (verbose and n_urls == 1) # By default, don't print progress on each download
@@ -784,6 +809,8 @@ def checktype(obj=None, objtype=None, subtype=None, die=False):
         sc.checktype(['a','b','c'], 'listlike') # Returns True
         sc.checktype(['a','b','c'], 'arraylike') # Returns False
         sc.checktype([{'a':3}], list, dict) # Returns True
+    
+    New in version 2.0.1: ``pd.Series`` considered 'array-like'
     '''
 
     # Handle "objtype" input
@@ -791,7 +818,7 @@ def checktype(obj=None, objtype=None, subtype=None, die=False):
     elif objtype in ['num', 'number']:         objinstance = _numtype
     elif objtype in ['bool', 'boolean']:       objinstance = _booltypes
     elif objtype in ['arr', 'array']:          objinstance = np.ndarray
-    elif objtype in ['listlike', 'arraylike']: objinstance = (list, tuple, np.ndarray) # Anything suitable as a numerical array
+    elif objtype in ['listlike', 'arraylike']: objinstance = (list, tuple, np.ndarray, pd.Series) # Anything suitable as a numerical array
     elif type(objtype) == type:                objinstance = objtype # Don't need to do anything
     elif isinstance(objtype, tuple):           objinstance = objtype # Ditto
     elif objtype is None:                      return # If not supplied, exit
@@ -805,7 +832,8 @@ def checktype(obj=None, objtype=None, subtype=None, die=False):
     # Do second round checking
     if result and objtype in ['listlike', 'arraylike']: # Special case for handling arrays which may be multi-dimensional
         obj = promotetoarray(obj).flatten() # Flatten all elements
-        if objtype == 'arraylike' and subtype is None: subtype = _numtype + _booltypes
+        if objtype == 'arraylike' and subtype is None: # Add additional check for numeric entries
+            subtype = _numtype + _booltypes
     if isiterable(obj) and subtype is not None:
         for item in obj:
             result = result and checktype(item, subtype)
@@ -888,8 +916,9 @@ def promotetoarray(x, keepnone=False, **kwargs):
         sc.promotetoarray([3,5]) # Returns np.array([3,5])
         sc.promotetoarray(None, skipnone=True) # Returns np.array([])
 
-    New in version 1.1.0: replaced "skipnone" with "keepnone"; allowed passing
+    | New in version 1.1.0: replaced "skipnone" with "keepnone"; allowed passing
     kwargs to ``np.array()``.
+    | New in version 2.0.1: added support for pandas Series and DataFrame
     '''
     skipnone = kwargs.pop('skipnone', None)
     if skipnone is not None: # pragma: no cover
@@ -898,6 +927,8 @@ def promotetoarray(x, keepnone=False, **kwargs):
         warnings.warn(warnmsg, category=FutureWarning, stacklevel=2)
     if isnumber(x) or (isinstance(x, np.ndarray) and not np.shape(x)): # e.g. 3 or np.array(3)
         x = [x]
+    elif isinstance(x, (pd.DataFrame, pd.Series)):
+        x = x.values
     elif x is None and not keepnone:
         x = []
     output = np.array(x, **kwargs)
@@ -1039,16 +1070,16 @@ def mergedicts(*args, _strict=False, _overwrite=True, _copy=False, _sameclass=Tr
     '''
     Small function to merge multiple dicts together.
 
-    By default, skips things that are not, dicts (e.g., None), and allows keys
-    to be set multiple times. Similar to dict.update(), except returns a value.
+    By default, skips any input arguments that are ``None``, and allows keys to be set 
+    multiple times. This function is similar to dict.update(), except it returns a value.
     The first dictionary supplied will be used for the output type (e.g. if the
     first dictionary is an odict, an odict will be returned).
 
     Note that arguments start with underscores to avoid possible collisions with
     keywords (e.g. ``sc.mergedicts(dict(loose=True, strict=True), strict=False, _strict=True)``).
 
-    Useful for cases, e.g. function arguments, where the default option is ``None``
-    but you will need a dict later on.
+    This function is useful for cases, e.g. function arguments, where the default 
+    option is ``None`` but you will need a dict later on.
 
     Args:
         _strict    (bool): if True, raise an exception if an argument isn't a dict
@@ -1063,13 +1094,14 @@ def mergedicts(*args, _strict=False, _overwrite=True, _copy=False, _sameclass=Tr
 
         d0 = sc.mergedicts(user_args) # Useful if user_args might be None, but d0 is always a dict
         d1 = sc.mergedicts({'a':1}, {'b':2}) # Returns {'a':1, 'b':2}
-        d2 = sc.mergedicts({'a':1, 'b':2}, {'b':3, 'c':4}) # Returns {'a':1, 'b':3, 'c':4}
+        d2 = sc.mergedicts({'a':1, 'b':2}, {'b':3, 'c':4}, None) # Returns {'a':1, 'b':3, 'c':4}
         d3 = sc.mergedicts(sc.odict({'b':3, 'c':4}), {'a':1, 'b':2}) # Returns sc.odict({'b':2, 'c':4, 'a':1})
         d4 = sc.mergedicts({'b':3, 'c':4}, {'a':1, 'b':2}, _overwrite=False) # Raises exception
 
     | New in version 1.1.0: "copy" argument
     | New in version 1.3.3: keywords allowed
     | New in version 2.0.0: keywords fully enabled; "_sameclass" argument
+    | New in version 2.0.1: fixed bug with "_copy" argument
     '''
     # Warn about deprecated keys
     renamed = ['strict', 'overwrite', 'copy']
@@ -1110,8 +1142,8 @@ def mergedicts(*args, _strict=False, _overwrite=True, _copy=False, _sameclass=Tr
                 errormsg = f'Could not handle argument {a} of {type(arg)}: expecting dict or None'
                 raise TypeError(errormsg)
 
-    if copy:
-        outputdict = dcp(outputdict)
+    if _copy:
+        outputdict = dcp(outputdict, die=_die)
     return outputdict
 
 
@@ -1454,9 +1486,9 @@ def compareversions(version1, version2):
     v2 = v2.lstrip('<>=!~')
 
     # Do comparison
-    if pkg.version.parse(v1) > pkg.version.parse(v2):
+    if packaging.version.parse(v1) > packaging.version.parse(v2):
         comparison =  1
-    elif pkg.version.parse(v1) < pkg.version.parse(v2):
+    elif packaging.version.parse(v1) < packaging.version.parse(v2):
         comparison =  -1
     else:
         comparison =  0
@@ -1814,7 +1846,7 @@ class autolist(list):
     def __add__(self, obj=None):
         ''' Allows non-lists to be concatenated '''
         obj = promotetolist(obj)
-        new = list.__add__(obj)
+        new = list.__add__(self, obj)
         return new
 
     def __radd__(self, obj):
@@ -1822,7 +1854,7 @@ class autolist(list):
         return self.__add__(obj)
 
     def __iadd__(self, obj):
-        ''' Allows += to work correctly '''
+        ''' Allows += to work correctly -- key feature of autolist '''
         obj = promotetolist(obj)
         self.extend(obj)
         return self
