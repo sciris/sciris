@@ -21,7 +21,7 @@ Improvements
 #. ``sc.odict()`` now allows you to delete by index instead of key.
 #. ``sc.download()`` now creates folders if they do not already exist.
 #. ``sc.checktype(obj, 'arraylike')`` now returns ``True`` for pandas ``Series`` objects.
-#. ``sc.promotetoarray()`` now converts pandas ``Series`` or ``DataFrame`` objects into an arrays.
+#. ``sc.promotetoarray()`` now converts pandas ``Series`` or ``DataFrame`` objects into arrays.
 #. ``sc.savetext()`` can now save arrays (like ``np.savetxt()``).
 
 Bugfixes
@@ -29,9 +29,9 @@ Bugfixes
 #. Fixed a bug with addition (concatenation) for ``sc.autolist()``.
 #. Fixed a bug with the ``_copy`` argument for ``sc.mergedicts()`` being ignored.
 #. ``sc.checkmem()`` no longer uses compression, giving more accurate estimates.
-#. Fixed bug with ``sc.options()`` setting the plot style; also added a ``'default'`` style that restores Matplotlib defaults (which is now the Sciris default as well; use ``'sciris'`` or ``'simple'`` for the Sciris style).
-#. Fixed issue with colormaps attempting to be re-registered.
+#. Fixed a bug with ``sc.options()`` setting the plot style automatically; a ``'default'`` style was also added that restores Matplotlib defaults (which is now the Sciris default as well; use ``'sciris'`` or ``'simple'`` for the Sciris style).
 #. Fixed a bug with ``packaging.version`` not being found on some systems.
+#. Fixed an issue with colormaps attempting to be re-registered, which caused warnings.
 
 
 Version 2.0.0 (2022-08-18)
