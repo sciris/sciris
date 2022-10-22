@@ -71,6 +71,7 @@ class odict(OD):
 
     | New in version 1.1.0: "defaultdict" argument
     | New in version 1.3.1: allow integer keys via ``makefrom()``; removed ``to_OD``; performance improvements
+    | New in version 2.0.1: allow deletion by index
     '''
 
     def __init__(self, *args, defaultdict=None, **kwargs):
@@ -160,7 +161,7 @@ class odict(OD):
                 return output
 
             else: # pragma: no cover # Handle everything else (rare)
-                return OD.__getitem__(self,key)
+                return OD.__getitem__(self, key)
 
 
     def __setitem__(self, key, value):
@@ -358,10 +359,17 @@ class odict(OD):
         else:         return self.__add__(dict2)
 
 
-    def __delitem__(self, *args, **kwargs):
-        ''' Default delitem, except set stale to true '''
+    def __delitem__(self, key):
+        ''' Default delitem, except set stale to true and allow numeric values; slices etc are not supported '''
         self._setattr('_stale', True) # Flag to refresh the cached keys
-        return OD.__delitem__(self, *args, **kwargs)
+        try:
+            return OD.__delitem__(self, key)
+        except Exception as E:
+            if isinstance(key, scu._numtype): # If it's a number, use that
+                thiskey = self._ikey(key)
+                return OD.__delitem__(self, thiskey) # Note that defaultdict behavior isn't supported for non-string lookup
+            else:
+                raise E
 
 
     def disp(self, maxlen=None, showmultilines=True, divider=False, dividerthresh=10, numindents=0, sigfigs=5, numformat=None, maxitems=20, **kwargs):

@@ -70,7 +70,7 @@ def memload():
 
 
 
-def checkmem(var, descend=None, alphabetical=False, plot=False, doprint=True, verbose=False):
+def checkmem(var, descend=True, alphabetical=False, compresslevel=0, plot=False, verbose=False, **kwargs):
     '''
     Checks how much memory the variable or variables in question use by dumping
     them to file.
@@ -85,14 +85,16 @@ def checkmem(var, descend=None, alphabetical=False, plot=False, doprint=True, ve
         var (any): the variable being checked
         descend (bool): whether or not to descend one level into the object
         alphabetical (bool): if descending into a dict or object, whether to list items by name rather than size
+        compresslevel (int): level of compression to use when saving to file (typically 0)
         plot (bool): if descending, show the results as a pie chart
-        doprint (bool): whether to print out results
         verbose (bool or int): detail to print, if >1, print repr of objects along the way
+        **kwargs (dict): passed to :func:`load`
 
     **Example**::
 
+        import numpy as np
         import sciris as sc
-        sc.checkmem(['spiffy',rand(2483,589)], descend=True)
+        sc.checkmem(['spiffy', np.random.rand(2483,589)])
     '''
 
     def check_one_object(variable):
@@ -103,7 +105,7 @@ def checkmem(var, descend=None, alphabetical=False, plot=False, doprint=True, ve
 
         # Create a temporary file, save the object, check the size, remove it
         filename = tempfile.mktemp()
-        scf.saveobj(filename, variable, die=False)
+        scf.save(filename, variable, die=False, compresslevel=compresslevel)
         filesize = os.path.getsize(filename)
         os.remove(filename)
 

@@ -6,9 +6,10 @@ import numpy as np
 import sciris as sc
 import pytest
 
-def dfprint(label, val):
+def dfprint(label, val=None):
     sc.colorize('cyan', f'\n{label}')
-    print(val)
+    if val is not None:
+        print(val)
     return None
 
 def test_dataframe():
@@ -84,6 +85,11 @@ def test_methods():
     df.insert(0, 'f', np.random.rand(df.nrows)); dfprint('Inserting column', df)
     df.sortcols(reverse=True); dfprint('Sorting columns', df)
     assert df.cols[-1] == 'a'
+    
+    # Printing
+    dfprint('Custom display')
+    df2 = sc.dataframe(data=np.random.rand(100,10))
+    df2.disp(precision=2, ncols=5, nrows=5, options={'display.colheader_justify': 'left'})
 
     return df
 
