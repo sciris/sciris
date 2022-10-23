@@ -294,10 +294,10 @@ def test_misc():
     assert s4 == ['foo', 'bar']
 
     print('\nTesting autolist')
-    ls = sc.autolist()
+    ls = sc.autolist('test')
     ls += 'a'
     ls += [3, 'b']
-    assert ls ==  ['a', 3, 'b']
+    assert ls ==  ['test', 'a', 3, 'b']
 
     return o
 
