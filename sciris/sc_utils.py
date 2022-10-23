@@ -949,6 +949,7 @@ def promotetolist(obj=None, objtype=None, keepnone=False, coerce='default'):
 
     - 'none' or None: do not coerce
     - 'default': coerce objects that were lists in Python 2 (range, map, dict_keys, dict_values, dict_items)
+    - 'tuple': all the types in default, plus tuples
     - 'full': all the types in default, plus tuples and arrays
 
     Args:
@@ -977,6 +978,7 @@ def promotetolist(obj=None, objtype=None, keepnone=False, coerce='default'):
 
     | New in version 1.1.0: "coerce" argument
     | New in version 1.2.2: default coerce values
+    | New in version 2.0.2: tuple coersion
     '''
     # Handle coerce
     default_coerce = (range, map, type({}.keys()), type({}.values()), type({}.items()))
@@ -985,6 +987,8 @@ def promotetolist(obj=None, objtype=None, keepnone=False, coerce='default'):
             coerce = None
         elif coerce == 'default':
             coerce = default_coerce
+        elif coerce == 'tuple':
+            coerce = default_coerce + (tuple,)
         elif coerce == 'full':
             coerce = default_coerce + (tuple, np.ndarray)
         else:
