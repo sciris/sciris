@@ -1841,17 +1841,14 @@ class autolist(list):
     '''
     def __init__(self, *args):
         arglist = mergelists(*args) # Convert non-iterables to iterables
-        return list.__init__(arglist)
+        list.__init__(self, arglist)
+        return 
 
     def __add__(self, obj=None):
         ''' Allows non-lists to be concatenated '''
         obj = promotetolist(obj)
-        new = list.__add__(self, obj)
+        new = autolist(list.__add__(self, obj)) # Ensure it returns an autolist
         return new
-
-    def __radd__(self, obj):
-        ''' Allows sum() to work correctly '''
-        return self.__add__(obj)
 
     def __iadd__(self, obj):
         ''' Allows += to work correctly -- key feature of autolist '''
