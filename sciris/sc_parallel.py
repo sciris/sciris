@@ -447,7 +447,6 @@ def _parallel_task(taskargs, outputqueue=None):
     ''' Task called by parallelize() -- not to be called directly '''
 
     # Handle inputs
-    taskargs = scu.dcp(taskargs)
     func   = taskargs.func
     index  = taskargs.index
     args   = taskargs.args
