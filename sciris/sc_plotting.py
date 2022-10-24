@@ -595,10 +595,16 @@ def figlayout(fig=None, tight=True, keep=False, **kwargs):
     if fig is None:
         fig = pl.gcf()
     layout = ['none', 'tight'][tight]
-    fig.set_layout_engine(layout)
+    try: # Matplotlib >=3.6
+        fig.set_layout_engine(layout)
+    except: # Earlier versions
+        fig.set_tight_layout(tight)
     if not keep:
         pl.pause(0.01) # Force refresh
-        fig.set_layout_engine('none')
+        try:
+            fig.set_layout_engine('none')
+        except:
+            fig.set_tight_layout(False)
     if len(kwargs):
         fig.subplots_adjust(**kwargs)
     return
