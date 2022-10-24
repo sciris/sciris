@@ -33,7 +33,7 @@ def parallelize(func, iterarg=None, iterkwargs=None, args=None, kwargs=None, ncp
     '''
     Execute a function in parallel.
 
-    Most simply, ``sc.parallelize()`` acts as an shortcut for using ``multiprocess.Pool()``.
+    Most simply, ``sc.parallelize()`` acts as an shortcut for using ``ProcessPoolExecutor()``.
     However, it also provides flexibility in how arguments are passed to the function,
     load balancing, etc.
 
@@ -51,11 +51,10 @@ def parallelize(func, iterarg=None, iterkwargs=None, args=None, kwargs=None, ncp
     not ``None``, it will use the specified number of CPUs; if ``ncpus`` is ``None``
     and ``maxcpu`` is not ``None``, it will allocate the number of CPUs dynamically.
 
-    Note: the default parallelizer ``"multiprocess"`` uses ``dill`` for pickling, so
+    Note: the parallelizer ``"multiprocess"`` uses ``dill`` for pickling, so
     is the most versatile (e.g., it can pickle non-top-level functions). However,
-    it is also the slowest for passing large amounts of data. If you don't need
-    ``dill``, you might get better performance using ``"concurrent.futures"`` as
-    the parallelizer.
+    it is also the slowest for passing large amounts of data. For this reason,
+    as of Sciris v2.0.2, the default paralellizer is ``"concurrent.futures"``.
 
     Args:
         func         (func)      : the function to parallelize
@@ -145,6 +144,7 @@ def parallelize(func, iterarg=None, iterkwargs=None, args=None, kwargs=None, ncp
     | New in version 1.1.1: "serial" argument.
     | New in version 2.0.0: changed default parallelizer from ``multiprocess.Pool`` to ``concurrent.futures.ProcessPoolExecutor``;
     replaced ``maxload`` with ``maxcpu``/``maxmem``; added ``returnpool`` argument
+    | New in version 2.0.2: default parallelizer 'concurrent.futures'
     '''
     # Handle maxload
     maxload = func_kwargs.pop('maxload', None)

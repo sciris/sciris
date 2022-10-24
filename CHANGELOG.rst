@@ -12,12 +12,13 @@ Version 2.0.2 (2022-10-22)
 Parallelization
 ~~~~~~~~~~~~~~~
 #. The default parallelizer has been changed from ``multiprocess`` to ``concurrent.futures``. The latter is faster, but less robust (e.g., it can't parallelize lambda functions). If an error is encountered, it will automatically fall back to the former.
+#. For debugging, instead of ``sc.parallelize(..., serial=True)``, you can also now use ``sc.parallelize(..., parallelizer='serial')``.
 #. Arguments to ``sc.parallelize()`` are now no longer usually deepcopied, since usually they are automatically during the pickling/unpickling process. However, deepcopying has been retained for ``serial`` and ``thread`` parallelizers; to *not* deepcopy, use e.g. ``parallelizer='thread-nocopy'``.
 
 Bugfixes
 ~~~~~~~~
 #. ``sc.autolist()`` now correctly handles input arguments, and can be added on to other objects. (Previously, if an object was added to an ``sc.autolist``, it would itself become an ``sc.autolist``.)
-#. ``sc.cat()`` now has the same default behavior as ``np.concatenate()`` for 2D arrays (i.e., concatenating rows).
+#. ``sc.cat()`` now has the same default behavior as ``np.concatenate()`` for 2D arrays (i.e., concatenating rows). Use ``sc.cat(.., axis=None)`` for the previous behavior.
 #. ``sc.dataframe.from_dict()`` and ``sc.dataframe.from_records()`` now return an ``sc.dataframe`` object (previously they returned a ``pd.DataFrame`` object).
 
 Other changes
