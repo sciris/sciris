@@ -10,7 +10,7 @@ Version 2.0.3 (2022-10-24)
 --------------------------
 #. Added ``sc.linregress()`` as a simple way to perform linear regression (fit a line of best fit).
 #. Improved ``sc.printarr()`` formatting.
-#. Fixed incompatibility with earlier Matplotlib versions introduced in version 2.0.2.
+#. Reverted incompatibility with older Matplotlib versions introduced in version 2.0.2.
 
 
 Version 2.0.2 (2022-10-22)
