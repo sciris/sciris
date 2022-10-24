@@ -8,11 +8,13 @@ Highlights:
     - :func:`parallelize`: as-easy-as-possible parallelization
 '''
 
+
 import numpy as np
 import multiprocess as mp
 import multiprocessing as mpi
 import concurrent.futures as cf
 from functools import partial
+import pickle as pkl
 import textwrap
 import warnings
 from . import sc_utils as scu
@@ -219,59 +221,91 @@ def parallelize(func, iterarg=None, iterkwargs=None, args=None, kwargs=None, ncp
                             interval=interval, embarrassing=embarrassing)
         argslist.append(taskargs)
 
+    # Set up the run
+    pool = None # Defined here so it can be returned
+    if ncpus is not None:
+        ncpus = min(ncpus, len(argslist)) # Don't use more CPUs than there are things to process
+    if serial: # This is a separate keyword argument, but make it consistent
+        parallelizer = 'serial'
+        
+    # Handle the  hoice of parallelizer
+    default = 'concurrent.futures'
+    robust = 'multiprocess'
+    if parallelizer is None or scu.isstring(parallelizer):
+
+        # Map parallelizer to consistent choices
+        mapping = {
+            None                 : default,
+            'default'            : default,
+            'serial'             : 'serial',
+            'serial-nocopy'      : 'serial',
+            'concurrent.futures' : 'concurrent.futures',
+            'concurrent'         : 'concurrent.futures',
+            'robust'             : robust,
+            'multiprocess'       : 'multiprocess',
+            'multiprocessing'    : 'multiprocessing',
+            'thread'             : 'thread',
+            'threadpool'         : 'thread',
+            'thread-nocopy'      : 'thread',
+        }
+        try:
+            pname = mapping[parallelizer]
+        except:
+            errormsg = f'Parallelizer "{parallelizer}" not found: must be one of {scu.strjoin(mapping.keys())}'
+            raise scu.KeyNotFoundError(errormsg)
+    else:
+        pname = 'custom' # If a custom parallelizer is provided
+        
+    
+    def run_parallel(pname, parallelizer, argslist):
+        ''' Choose how to run in parallel '''
+        
+        # Choose which parallelizer to use
+        if pname == 'serial':
+            if not 'nocopy' in parallelizer: # Niche use case of running without deepcopying
+                argslist = scu.dcp(argslist) # Need to deepcopy here, since effectively deecopied by other parallelization methods
+            outputlist = list(map(_parallel_task, argslist))
+        
+        elif pname == 'multiprocess': # Main use case
+            with mp.Pool(processes=ncpus) as pool:
+                outputlist = pool.map(_parallel_task, argslist)
+        
+        elif pname == 'multiprocessing':
+            with mpi.Pool(processes=ncpus) as pool:
+                outputlist = pool.map(_parallel_task, argslist)
+        
+        elif pname == 'concurrent.futures':
+            with cf.ProcessPoolExecutor(max_workers=ncpus) as pool:
+                outputlist = list(pool.map(_parallel_task, argslist))
+        
+        elif pname == 'thread':
+            if not 'nocopy' in parallelizer: # Niche use case of running without deepcopying
+                argslist = scu.dcp(argslist) # Also need to deepcopy here
+            with cf.ThreadPoolExecutor(max_workers=ncpus) as pool:
+                outputlist = list(pool.map(_parallel_task, argslist))
+        
+        elif pname == 'custom':
+            outputlist = parallelizer(_parallel_task, argslist)
+            
+        else: # Should be unreachable; exception should have already been caught
+            errormsg = f'Invalid parallelizer "{parallelizer}"'
+            raise ValueError(errormsg)
+        
+        return outputlist
+
     # Actually run the parallelization
     try:
-
-        # Set up the run
-        pool = None
-        if ncpus is not None:
-            ncpus = min(ncpus, len(argslist)) # Don't use more CPUs than there are things to process
-
-        # Run in serial for debugging
-        if serial:
-            outputlist = list(map(_parallel_task, argslist))
-
-         # Standard usage: use the default map() function
-        elif parallelizer is None or scu.isstring(parallelizer):
-
-            # Map parallelizer to consistent choices
-            default = 'multiprocess'
-            mapping = {
-                None: default,
-                'default': default,
-                'multiprocess': 'multiprocess',
-                'multiprocessing': 'multiprocessing',
-                'concurrent.futures': 'concurrent.futures',
-                'concurrent': 'concurrent.futures',
-                'thread': 'thread',
-                'threadpool': 'thread',
-            }
-            try:
-                parallelizer = mapping[parallelizer]
-            except:
-                errormsg = f'Parallelizer "{parallelizer}" not found: must be one of {scu.strjoin(mapping.keys())}'
-                raise scu.KeyNotFoundError(errormsg)
-
-            # Choose which parallelizer to use
-            if parallelizer == 'multiprocess': # Main use case
-                with mp.Pool(processes=ncpus) as pool:
-                    outputlist = pool.map(_parallel_task, argslist)
-            elif parallelizer == 'multiprocessing':
-                with mpi.Pool(processes=ncpus) as pool:
-                    outputlist = pool.map(_parallel_task, argslist)
-            elif parallelizer == 'concurrent.futures':
-                with cf.ProcessPoolExecutor(max_workers=ncpus) as pool:
-                    outputlist = list(pool.map(_parallel_task, argslist))
-            elif parallelizer == 'thread':
-                with cf.ThreadPoolExecutor(max_workers=ncpus) as pool:
-                    outputlist = list(pool.map(_parallel_task, argslist))
-            else: # Should be unreachable; exception should have already been caught
-                errormsg = f'Invalid parallelizer "{parallelizer}"'
-                raise ValueError(errormsg)
-
-        # Use a custom parallelization method
+        outputlist = run_parallel(pname, parallelizer, argslist)
+        
+    # Handle not being able to pickle via default parallelizer
+    except pkl.PicklingError as E:
+        if parallelizer is None:
+            warnmsg = f"sc.parallelize() failed with parallelizer={parallelizer}:\n{str(E)}\nAutomatically switching to more robust parallelizer 'multiprocess'. To silence this warning, set parallelizer='multiprocess'."
+            warnings.warn(warnmsg, category=RuntimeWarning, stacklevel=2)
+            outputlist = run_parallel(pname=robust, parallelizer=robust, argslist=argslist) # Attempt to re-run the parallelization
         else:
-            outputlist = parallelizer(_parallel_task, argslist)
+            errormsg = 'Parallel run failed due to a pickling error: this is usually due to including a lambda function or other complex object'
+            raise pkl.PicklingError(errormsg) from E
 
     # Handle if run outside of __main__ on Windows
     except RuntimeError as E: # pragma: no cover
