@@ -26,6 +26,7 @@ Other changes
 #. ``sc.dataframe.cat()`` will concatenate multiple objects (dataframes, arrays, etc.) into a single dataframe.
 #. ``sc.dataframe().concat()`` now by default does *not* modify in-place.
 #. Colormaps are now also available with a ``sciris-`` prefix, e.g. ``sciris-alpine``, as well as their original names (to avoid possible name collisions).
+#. Added ``packaging`` as a dependency and removed the (deprecated) ``minimal`` install option.
 
 
 Version 2.0.1 (2022-10-21)
