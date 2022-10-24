@@ -594,10 +594,11 @@ def figlayout(fig=None, tight=True, keep=False, **kwargs):
         tight = fig # To allow e.g. sc.figlayout(False)
     if fig is None:
         fig = pl.gcf()
-    fig.set_tight_layout(tight)
+    layout = ['none', 'tight'][tight]
+    fig.set_layout_engine(layout)
     if not keep:
         pl.pause(0.01) # Force refresh
-        fig.set_tight_layout(False)
+        fig.set_layout_engine('none')
     if len(kwargs):
         fig.subplots_adjust(**kwargs)
     return

@@ -45,9 +45,9 @@ Development of Sciris began in 2014 to support development of the `Optima <http:
 To give a based-on-a-true-story example, let's say you have a dictionary of results for multiple runs of your model, called ``results``. The output of each model run is itself a dictionary, with keys such as ``name`` and ``data``. Now let's say you want to access the data from the first model run. Using plain Python dictionaries, this would be ``results[list(results.keys())[0]]['data']``. Using a Sciris ``objdict``, this is ``results[0].data`` – almost 3x shorter.
 
 
-Is Sciris ready yet?
-~~~~~~~~~~~~~~~~~~~~
-**Yes.** Sciris is currently used by a number of scientific computing libraries, including `Atomica <http://atomica.tools>`__ and `Covasim <http://covasim.org>`__. ScirisWeb provides the backend for webapps such as the `Cascade Analysis Tool <http://cascade.tools>`__, `HIPtool <http://hiptool.org>`__, and `Covasim <http://app.covasim.org>`__. Note that Sciris is still undergoing rapid development, and ScirisWeb, while functional, is still in beta development.
+Where has Sciris been used?
+~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Sciris is currently used by a number of scientific computing libraries, including `Atomica <http://atomica.tools>`__ and `Covasim <http://covasim.org>`__. ScirisWeb provides the backend for webapps such as the `Cascade Analysis Tool <http://cascade.tools>`__, `HIPtool <http://hiptool.org>`__, and `Covasim <http://app.covasim.org>`__.
 
 
 Features

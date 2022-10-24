@@ -15,7 +15,8 @@ Highlights:
 import struct
 import pylab as pl
 import numpy as np
-import matplotlib.colors as mplc
+from matplotlib import colors as mplc
+from matplotlib import colormaps as mplcm
 from . import sc_utils as scu
 
 
@@ -191,15 +192,14 @@ def vectocolor(vector, cmap=None, asarray=True, reverse=False, minval=None, maxv
     """
 
     from numpy import array, zeros
-    from pylab import cm
 
     if cmap is None:
         cmap = pl.get_cmap() # Get current colormap
     elif type(cmap) == str:
         try:
-            cmap = cm.get_cmap(cmap)
+            cmap = mplcm.get_cmap(cmap)
         except: # pragma: no cover
-            choices = "\n".join(sorted(cm.datad.keys()))
+            choices = scu.newlinejoin(pl.colormaps())
             raise ValueError(f'{cmap} is not a valid color map; choices are:\n{choices}')
 
     # If a scalar is supplied, convert it to a vector instead
@@ -770,8 +770,8 @@ def orangebluecolormap(apply=False):
 
     New in version 1.0.0.
     '''
-    bottom = pl.cm.get_cmap('Oranges', 128)
-    top = pl.cm.get_cmap('Blues_r', 128)
+    bottom = mplcm.get_cmap('Oranges').resampled(128)
+    top = mplcm.get_cmap('Blues_r').resampled(128)
     x = np.linspace(0, 1, 128)
     data = np.vstack((top(x), bottom(x)))
 
@@ -792,6 +792,8 @@ colormap_map = dict(
     orangeblue = orangebluecolormap(),
     turbo      = turbocolormap(),
 )
-for name,cmap in colormap_map.items():
-    if name not in existing:
-        pl.cm.register_cmap(name, cmap)
+for origname,cmap in colormap_map.items():
+    newname = f'sciris-{origname}'
+    for name in [origname, newname]:
+        if name not in existing: # Avoid re-registering already registered colormaps
+            mplcm.register(name=name, cmap=cmap)

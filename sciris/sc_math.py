@@ -647,16 +647,14 @@ def randround(x):
     return output
 
 
-def cat(*args, axis=None, copy=False, **kwargs):
+def cat(*args, copy=False, **kwargs):
     '''
     Like np.concatenate(), but takes anything and returns an array. Useful for
     e.g. appending a single number onto the beginning or end of an array.
 
     Args:
         args   (any):  items to concatenate into an array
-        axis   (int):  axis along which to concatenate
-        copy   (bool): whether or not to deepcopy the result
-        kwargs (dict): passed to ``np.array()``
+        kwargs (dict): passed to ``np.concatenate()``
 
     **Examples**::
 
@@ -666,16 +664,12 @@ def cat(*args, axis=None, copy=False, **kwargs):
 
     | New in version 1.0.0.
     | New in version 1.1.0: "copy" and keyword arguments.
+    | New in version 2.0.2: removed "copy" argument; changed default axis of 0; arguments passed to ``np.concatenate()``
     '''
     if not len(args):
         return np.array([])
-    output = scu.promotetoarray(args[0])
-    for arg in args[1:]:
-        arg = scu.promotetoarray(arg)
-        output = np.concatenate((output, arg), axis=axis)
-    output = np.array(output, **kwargs)
-    if copy:
-        output = scu.dcp(output)
+    arrs = [scu.promotetoarray(arg) for arg in args] # Key step: convert everything to an array
+    output = np.concatenate(arrs, **kwargs)
     return output
 
 
@@ -799,10 +793,10 @@ def smooth(data, repeats=None, kernel=None, legacy=False):
     if kernel is None:
         kernel = [0.25,0.5,0.25]
     kernel = np.array(kernel)
-    output = scu.dcp(np.array(data))
+    output = np.array(data).copy()
 
     # Only convolve the kernel with itself -- equivalent to doing the full convolution multiple times
-    v = scu.dcp(kernel)
+    v = kernel.copy()
     for r in range(repeats-1):
         v = np.convolve(v, kernel, mode='full')
 

@@ -21,8 +21,14 @@ class dataframe(pd.DataFrame):
     '''
     An extension of the pandas dataframe with additional convenience methods for
     accessing rows and columns and performing other operations.
+    
+    Args:
+        data (dict/array/dataframe): the data to use
+        columns (list): column labels
+        nrows (int): the number of arrows to preallocate (default 0)
+        kwargs (dict): passed to ``pd.DataFrame()``
 
-    **Example**::
+    **Examples**::
 
         a = sc.dataframe(cols=['x','y'],data=[[1238,2],[384,5],[666,7]]) # Create data frame
         a['x'] # Print out a column
@@ -348,9 +354,9 @@ class dataframe(pd.DataFrame):
         return self.replacedata(newdata=newdata, reset_index=reset_index, inplace=inplace)
 
 
-    def concat(self, data, *args, columns=None, reset_index=True, inplace=True, **kwargs):
+    def concat(self, data, *args, columns=None, reset_index=True, inplace=False, dfargs=None, **kwargs):
         '''
-        Concatenate additional data onto the current dataframe. See also ``appendrow()``
+        Concatenate additional data onto the current dataframe. See also ```appendrow()``
         and ``insertrow()``.
 
         Args:
@@ -359,23 +365,53 @@ class dataframe(pd.DataFrame):
             columns (list): if supplied, columns to go with the data
             reset_index (bool): update the index
             inplace (bool): whether to append in place
+            dfargs (dict): arguments passed to construct each dataframe
             **kwargs (dict): passed to ``pd.concat()``
+        
+        | New in version 2.0.2: "inplace" defaults to False
         '''
+        dfargs = scu.mergedicts(dfargs)
         dfs = [self]
         if columns is None:
             columns = self.columns
-        for arg in [data] + list(args):
+        for arg in scu.promotetolist(data, coerce='tuple') + list(args):
             if isinstance(arg, pd.DataFrame):
                 df = arg
             else:
                 arg = np.array(arg)
                 if arg.shape == (self.ncols,): # It's a single row: make 2D
                     arg = np.array([arg])
-                df = dataframe(data=arg, columns=columns)
+                df = dataframe(data=arg, columns=columns, **dfargs)
             dfs.append(df)
-        newdf = pd.concat(dfs)
+        newdf = pd.concat(dfs, **kwargs)
         return self.replacedata(newdf=newdf, reset_index=reset_index, inplace=inplace)
 
+
+    @staticmethod
+    def cat(data, *args, dfargs=None, **kwargs):
+        '''
+        Convenience method for concatenating multiple dataframes.
+        
+        Args:
+            data (dataframe/array): the dataframe/data to use as the basis of the new dataframe
+            args (list): additional dataframes (or object that can be converted to dataframes) to concatenate
+            dfargs (dict): arguments passed to construct each dataframe
+            kwargs (dict): passed to ``sc.dataframe.concat()``
+        
+        **Example**::
+            
+            arr1 = np.random.rand(6,3)
+            df2 = pd.DataFrame(np.random.rand(4,3))
+            df3 = sc.dataframe.cat(arr1, df2)
+        
+        New in version 2.0.2.
+        '''
+        dfargs = scu.mergedicts(dfargs)
+        df = dataframe(data, **dfargs)
+        if len(args):
+            df = df.concat(*args, dfargs=dfargs, **kwargs)
+        return df
+            
 
     @property
     def ncols(self):
@@ -588,6 +624,14 @@ class dataframe(pd.DataFrame):
             return self
 
 
-    def to_pandas(self, df=None):
+    @staticmethod
+    def from_dict(*args, **kwargs):
+        return dataframe(super().from_dict(*args, **kwargs))
+
+    @staticmethod
+    def from_records(*args, **kwargs):
+        return dataframe(super().from_records(*args, **kwargs))
+
+    def to_pandas(self, **kwargs):
         ''' Convert to a plain pandas dataframe '''
-        return pd.DataFrame(data=self.values, columns=self.cols)
+        return pd.DataFrame(data=self.values, columns=self.cols, **kwargs)

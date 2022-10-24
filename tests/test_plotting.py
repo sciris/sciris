@@ -12,7 +12,8 @@ import pytest
 
 if 'doplot' not in locals():
     doplot = False
-    pl.switch_backend('agg')
+    sc.options(interactive=doplot)
+
 
 def test_colors(doplot=doplot):
     sc.heading('Testing colors')
@@ -281,7 +282,7 @@ if __name__ == '__main__':
     T = sc.timer()
 
     doplot = True
-    pl.switch
+    sc.options(interactive=True)
 
     colors    = test_colors(doplot)
     colormaps = test_colormaps(doplot)
