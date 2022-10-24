@@ -192,15 +192,14 @@ def vectocolor(vector, cmap=None, asarray=True, reverse=False, minval=None, maxv
     """
 
     from numpy import array, zeros
-    from pylab import cm
 
     if cmap is None:
         cmap = pl.get_cmap() # Get current colormap
     elif type(cmap) == str:
         try:
-            cmap = cm.get_cmap(cmap)
+            cmap = mplcm.get_cmap(cmap)
         except: # pragma: no cover
-            choices = "\n".join(sorted(cm.datad.keys()))
+            choices = scu.newlinejoin(pl.colormaps())
             raise ValueError(f'{cmap} is not a valid color map; choices are:\n{choices}')
 
     # If a scalar is supplied, convert it to a vector instead
