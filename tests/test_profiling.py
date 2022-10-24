@@ -91,7 +91,7 @@ def test_resourcemonitor():
 
     def callback(checkdata, checkstr):
         ''' Small function to test that callbacks work '''
-        print('Callback was executed')
+        print('Callback works as intended')
         o.callback.append(checkdata)
         return
 
@@ -103,8 +103,8 @@ def test_resourcemonitor():
     o.resmon_died = resmon
 
     # As a standalone (don't forget to call stop!)
-    resmon = sc.resourcemonitor(mem=0.95, cpu=0.9, time=0.3, interval=0.1, label='Load checker', die=False, callback=callback, verbose=True)
-    sc.timedsleep(0.5)
+    resmon = sc.resourcemonitor(mem=0.95, cpu=0.99, time=0.2, interval=0.1, label='Load checker', die=False, callback=callback, verbose=True)
+    sc.timedsleep(0.3)
     resmon.stop()
     print(resmon.to_df())
 
