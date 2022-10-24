@@ -163,7 +163,7 @@ def asd(function, x, args=None, stepsize=0.1, sinc=2, sdec=2, pinc=2, pdec=2,
         args = []
     fval = function(x, *args, **kwargs) # Calculate initial value of the objective function
     fvalorig = fval # Store the original value of the objective function, since fval is overwritten on each step
-    xorig = scu.dcp(x) # Keep the original x, just in case
+    xorig = x.copy() # Keep the original x, just in case
 
     # Initialize history
     abserrorhistory = np.zeros(stalliters) # Store previous error changes
@@ -202,7 +202,7 @@ def asd(function, x, args=None, stepsize=0.1, sinc=2, sdec=2, pinc=2, pdec=2,
             stepsizes[choice] = stepsizes[choice] / sdec
 
         # Calculate the new value
-        xnew = scu.dcp(x) # Initialize the new parameter set
+        xnew = x.copy() # Initialize the new parameter set
         xnew[par] = newval # Update the new parameter set
         fvalnew = function(xnew, *args, **kwargs) # Calculate the objective function for the new parameter set
         eps = 1e-12 # Small value to avoid divide-by-zero errors

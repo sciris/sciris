@@ -793,10 +793,10 @@ def smooth(data, repeats=None, kernel=None, legacy=False):
     if kernel is None:
         kernel = [0.25,0.5,0.25]
     kernel = np.array(kernel)
-    output = scu.dcp(np.array(data))
+    output = np.array(data).copy()
 
     # Only convolve the kernel with itself -- equivalent to doing the full convolution multiple times
-    v = scu.dcp(kernel)
+    v = kernel.copy()
     for r in range(repeats-1):
         v = np.convolve(v, kernel, mode='full')
 
