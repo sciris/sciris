@@ -368,7 +368,7 @@ class dataframe(pd.DataFrame):
             dfargs (dict): arguments passed to construct each dataframe
             **kwargs (dict): passed to ``pd.concat()``
         
-        | New in version 2.0.2: "inplace" defaults to False; use ``appenddf()`` instead for True
+        | New in version 2.0.2: "inplace" defaults to False
         '''
         dfargs = scu.mergedicts(dfargs)
         dfs = [self]
