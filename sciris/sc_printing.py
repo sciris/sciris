@@ -397,30 +397,42 @@ def sigfig(x, sigfigs=5, SI=False, sep=False, keepints=False):
 
 
 
-def printarr(arr, arrformat='%0.2f  '):
+def printarr(arr, fmt='%0.2f', colsep='  ', vsep='—'):
     '''
     Print a numpy array nicely.
+    
+    Args:
+        arr (array): the array to print
+        fmt (str): the formatting string to use
+        colsep (str): the separator between columns of values
+        vsep (str): the vertical separator between 2D slices
 
     **Example**::
 
         sc.printarr(pl.rand(3,7,4))
 
-    Version: 2014dec01
+    New in version 2.0.3: "fmt", "colsep", and "vsep" arguments
     '''
+    arr = scu.promotetoarray(arr)
     if np.ndim(arr)==1:
         string = ''
         for i in range(len(arr)):
-            string += arrformat % arr[i]
+            string += fmt % arr[i] + colsep
         print(string)
     elif np.ndim(arr)==2:
         for i in range(len(arr)):
-            printarr(arr[i], arrformat)
+            printarr(arr[i], fmt, colsep)
     elif np.ndim(arr)==3:
         for i in range(len(arr)):
-            print('='*len(arr[i][0])*len(arrformat % 1))
+            ncols  = len(arr[i][0])
+            vlen   = len(fmt % arr.flatten()[0])
+            seplen = len(colsep)
+            n = ncols*(vlen + seplen) - seplen
+            print(vsep*n)
             for j in range(len(arr[i])):
-                printarr(arr[i][j], arrformat)
+                printarr(arr[i][j], fmt, colsep)
     else: # pragma: no cover
+        print('Dimensions higher than 3 are not supported')
         print(arr) # Give up
     return
 
