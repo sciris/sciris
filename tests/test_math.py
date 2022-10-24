@@ -54,6 +54,12 @@ def test_utils():
     print('Testing sc.cat()')
     o.cat = sc.cat(np.array([1,2,3]), [4,5], 6, copy=True)
     assert o.cat[3] == 4
+    
+    print('Testing sc.linregress()')
+    x = range(10)
+    y = sorted(2*np.random.rand(10) + 1)
+    o.out = sc.linregress(x, y, full=True) # Has out.m, out.b, out.x, out.y, out.corr, etc.
+    assert o.out.r2 > 0
 
     return o
 

@@ -496,7 +496,7 @@ def numdigits(n, *args, count_minus=False, count_decimal=False):
 #%% Other functions
 ##############################################################################
 
-__all__ += ['perturb', 'normsum', 'normalize', 'inclusiverange', 'randround', 'cat', 'bestfit']
+__all__ += ['perturb', 'normsum', 'normalize', 'inclusiverange', 'randround', 'cat', 'linregress']
 
 
 def perturb(n=1, span=0.5, randseed=None, normal=False):
@@ -675,25 +675,27 @@ def cat(*args, copy=False, **kwargs):
     return output
 
 
-def bestfit(x, y, full=False, **kwargs):
+def linregress(x, y, full=False, **kwargs):
     '''
-    Simple linear regression returning the line of best fit and R value.
+    Simple linear regression returning the line of best fit and R value. Similar
+    to ``scipy.stats.linregress`` but simpler.
     
     Args:
         x (array): the x coordinates
-        y (array) the y coordinates
+        y (array): the y coordinates
         full (bool): whether to return a full data structure
         kwargs (dict): passed to ``np.polyfit()``
     
     **Examples**::
         
-        x = np.arange(10)
+        x = range(10)
         y = sorted(2*np.random.rand(10) + 1)
-        m,b = sc.bestfit(x, y) # Simple usage
-        out = sc.bestfit(x, y, full=True) # Has out.m, out.b, out.x, out.y, out.corr, etc.
+        m,b = sc.linregress(x, y) # Simple usage
+        out = sc.linregress(x, y, full=True) # Has out.m, out.b, out.x, out.y, out.corr, etc.
         pl.scatter(x, y)
         pl.plot(x, m*x+b)
         pl.bar(x, out.residuals)
+        pl.title(f'R² = {out.r2}')
     '''
     x = scu.promotetoarray(x)
     y = scu.promotetoarray(y)
