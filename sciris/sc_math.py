@@ -12,6 +12,7 @@ import numpy as np
 import pandas as pd
 import warnings
 from . import sc_utils as scu
+from . import sc_odict as sco
 
 
 ##############################################################################
@@ -495,7 +496,7 @@ def numdigits(n, *args, count_minus=False, count_decimal=False):
 #%% Other functions
 ##############################################################################
 
-__all__ += ['perturb', 'normsum', 'normalize', 'inclusiverange', 'randround', 'cat']
+__all__ += ['perturb', 'normsum', 'normalize', 'inclusiverange', 'randround', 'cat', 'bestfit']
 
 
 def perturb(n=1, span=0.5, randseed=None, normal=False):
@@ -666,11 +667,50 @@ def cat(*args, copy=False, **kwargs):
     | New in version 1.1.0: "copy" and keyword arguments.
     | New in version 2.0.2: removed "copy" argument; changed default axis of 0; arguments passed to ``np.concatenate()``
     '''
+    
     if not len(args):
         return np.array([])
     arrs = [scu.promotetoarray(arg) for arg in args] # Key step: convert everything to an array
     output = np.concatenate(arrs, **kwargs)
     return output
+
+
+def bestfit(x, y, full=False, **kwargs):
+    '''
+    Simple linear regression returning the line of best fit and R value.
+    
+    Args:
+        x (array): the x coordinates
+        y (array) the y coordinates
+        full (bool): whether to return a full data structure
+        kwargs (dict): passed to ``np.polyfit()``
+    
+    **Examples**::
+        
+        x = np.arange(10)
+        y = sorted(2*np.random.rand(10) + 1)
+        m,b = sc.bestfit(x, y) # Simple usage
+        out = sc.bestfit(x, y, full=True) # Has out.m, out.b, out.x, out.y, out.corr, etc.
+        pl.scatter(x, y)
+        pl.plot(x, m*x+b)
+        pl.bar(x, out.residuals)
+    '''
+    x = scu.promotetoarray(x)
+    y = scu.promotetoarray(y)
+    fit = np.polyfit(x, y, deg=1, **kwargs) # Do the fit
+    if not full:
+        return fit
+    else:
+        out = sco.objdict()
+        out.m = fit[0] # Slope
+        out.b = fit[-1] # Intercept
+        out.coeffs = fit
+        out.corr = np.corrcoef(x, y)[0,1]
+        out.r2 = out.corr**2
+        out.x = x
+        out.y = out.m*x + out.b
+        out.residuals = y - out.y
+        return out
 
 
 
