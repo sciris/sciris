@@ -166,9 +166,9 @@ def test_tictoc():
     # Check relative timings
     T = sc.timer()
     T.start()
-    nap()
+    nap(1)
     T.tt()
-    nap(2)
+    nap(5)
     T.tt()
     print(T.timings)
     assert T.timings[0] < T.timings[1]

@@ -595,10 +595,16 @@ def figlayout(fig=None, tight=True, keep=False, **kwargs):
     if fig is None:
         fig = pl.gcf()
     layout = ['none', 'tight'][tight]
-    fig.set_layout_engine(layout)
+    try: # Matplotlib >=3.6
+        fig.set_layout_engine(layout)
+    except: # Earlier versions
+        fig.set_tight_layout(tight)
     if not keep:
         pl.pause(0.01) # Force refresh
-        fig.set_layout_engine('none')
+        try:
+            fig.set_layout_engine('none')
+        except:
+            fig.set_tight_layout(False)
     if len(kwargs):
         fig.subplots_adjust(**kwargs)
     return
@@ -1325,8 +1331,14 @@ def loadfig(filename=None):
         example = sc.loadfig('example.fig')
     '''
     pl.ion() # Without this, it doesn't show up
-    fig = scf.loadobj(filename)
+    try:
+        fig = scf.loadobj(filename)
+    except Exception as E:
+        errormsg = f'Unable to open file "{filename}": are you sure it was saved as a .fig file (not an image)?'
+        raise type(E)(errormsg) from E
+    
     reanimateplots(fig)
+    
     return fig
 
 
@@ -1337,10 +1349,16 @@ def reanimateplots(plots=None):
     except Exception as E: # pragma: no cover
         errormsg = f'To reanimate plots requires the "agg" backend, which could not be imported: {repr(E)}'
         raise ImportError(errormsg) from E
-    if len(pl.get_fignums()): fignum = pl.gcf().number # This is the number of the current active figure, if it exists
-    else: fignum = 1
-    plots = sco.odict.promote(plots) # Convert to an odict
-    for plot in plots.values(): nfmgf(fignum, plot) # Make sure each figure object is associated with the figure manager -- WARNING, is it correct to associate the plot with an existing figure?
+    
+    if len(pl.get_fignums()):
+        fignum = pl.gcf().number # This is the number of the current active figure, if it exists
+    else:
+        fignum = 1
+        
+    plots = scu.mergelists(plots) # Convert to an odict
+    for plot in plots:
+        nfmgf(fignum, plot) # Make sure each figure object is associated with the figure manager -- WARNING, is it correct to associate the plot with an existing figure?
+    
     return
 
 

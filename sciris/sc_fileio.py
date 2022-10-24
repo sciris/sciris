@@ -104,8 +104,7 @@ Unable to load
 as either a gzipped or regular pickle file. Ensure that it is actually a pickle file.
 '''
     unpicklingerror = f'''
-Unable to load
-    {filename}
+Unable to load file: "{filename}"
 as a gzipped pickle file. Loading pickles can fail if Python modules have changed
 since the object was saved. If you are loading a custom class that has failed,
 you can use the remapping argument; see the sc.loadobj() docstring for details.

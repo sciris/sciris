@@ -6,6 +6,13 @@ All major updates to Sciris are documented here.
 By import convention, components of the Sciris library are listed beginning with ``sc.``, e.g. ``sc.odict()``.
 
 
+Version 2.0.3 (2022-10-24)
+--------------------------
+#. Added ``sc.linregress()`` as a simple way to perform linear regression (fit a line of best fit).
+#. Improved ``sc.printarr()`` formatting.
+#. Reverted incompatibility with older Matplotlib versions introduced in version 2.0.2.
+
+
 Version 2.0.2 (2022-10-22)
 --------------------------
 
