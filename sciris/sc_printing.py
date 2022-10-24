@@ -396,8 +396,7 @@ def sigfig(x, sigfigs=5, SI=False, sep=False, keepints=False):
         return output[0]
 
 
-
-def printarr(arr, fmt='%0.2f', colsep='  ', vsep='—'):
+def printarr(arr, fmt=None, colsep='  ', vsep='—', decimals=2, dtype=None):
     '''
     Print a numpy array nicely.
     
@@ -407,13 +406,27 @@ def printarr(arr, fmt='%0.2f', colsep='  ', vsep='—'):
         colsep (str): the separator between columns of values
         vsep (str): the vertical separator between 2D slices
 
-    **Example**::
+    **Examples**::
 
-        sc.printarr(pl.rand(3,7,4))
+        numeric = pl.randn(3,7,4)**10
+        mixed = np.array([['cat', 'nudibranch'], [23, 2423482]], dtype=object)
+        sc.printarr(numeric)
+        sc.printarr(mixed)
 
-    New in version 2.0.3: "fmt", "colsep", and "vsep" arguments
+    New in version 2.0.3: "fmt", "colsep", "vsep", "decimals", and "dtype" arguments
     '''
-    arr = scu.promotetoarray(arr)
+    from . import sc_math as scm # To avoid circular import
+    arr = scu.promotetoarray(arr, dtype=dtype)
+    if fmt is None:
+        if arr.dtype == object:
+            maxdigits = max([len(str(v)) for v in arr.flatten()])
+            fmt = f'%{maxdigits}s'
+        else:
+            maxdigits = scm.numdigits(arr.max())
+            if arr.dtype == float:
+                fmt = f'%{maxdigits+decimals+1}.{decimals}f'
+            else:
+                fmt = f'%{maxdigits}.0f'
     if np.ndim(arr)==1:
         string = ''
         for i in range(len(arr)):
