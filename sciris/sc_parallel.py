@@ -14,7 +14,6 @@ import multiprocess as mp
 import multiprocessing as mpi
 import concurrent.futures as cf
 from functools import partial
-import pickle as pkl
 import textwrap
 import warnings
 from . import sc_utils as scu
@@ -29,7 +28,7 @@ __all__ = ['parallelize', 'parallelcmd', 'parallel_progress']
 
 
 def parallelize(func, iterarg=None, iterkwargs=None, args=None, kwargs=None, ncpus=None, maxcpu=None, maxmem=None,
-                interval=None, parallelizer=None, serial=False, returnpool=False, **func_kwargs):
+                interval=None, parallelizer=None, serial=False, returnpool=False, die=False, **func_kwargs):
     '''
     Execute a function in parallel.
 
@@ -69,6 +68,7 @@ def parallelize(func, iterarg=None, iterkwargs=None, args=None, kwargs=None, ncp
         parallelizer (str/func)  : parallelization function; default 'multiprocess' (other choices are 'concurrent.futures', 'multiprocessing', or user-supplied; see example below)
         serial       (bool)      : whether to skip parallelization run in serial (useful for debugging)
         returnpool   (bool)      : whether to return the process pool as well as the results
+        die          (bool)      : whether to stop immediately if an exception is encountered (otherwise, try 'multiprocess')
         func_kwargs  (dict)      : merged with kwargs (see above)
 
     Returns:
@@ -197,6 +197,10 @@ def parallelize(func, iterarg=None, iterkwargs=None, args=None, kwargs=None, ncp
             errormsg = f'iterkwargs must be a dict of lists, a list of dicts, or None, not {type(iterkwargs)}'
             raise TypeError(errormsg)
 
+    if niters == 0:
+        errormsg = 'Nothing found to parallelize: please supply an iterarg, iterkwargs, or both'
+        raise ValueError(errormsg)
+
     # Construct argument list
     argslist = []
     for index in range(niters):
@@ -220,7 +224,7 @@ def parallelize(func, iterarg=None, iterkwargs=None, args=None, kwargs=None, ncp
                             args=args, kwargs=kwargs, maxcpu=maxcpu, maxmem=maxmem,
                             interval=interval, embarrassing=embarrassing)
         argslist.append(taskargs)
-
+    
     # Set up the run
     pool = None # Defined here so it can be returned
     if ncpus is not None:
@@ -297,16 +301,6 @@ def parallelize(func, iterarg=None, iterkwargs=None, args=None, kwargs=None, ncp
     try:
         outputlist = run_parallel(pname, parallelizer, argslist)
         
-    # Handle not being able to pickle via default parallelizer
-    except pkl.PicklingError as E:
-        if parallelizer is None:
-            warnmsg = f"sc.parallelize() failed with parallelizer={parallelizer}:\n{str(E)}\nAutomatically switching to more robust parallelizer 'multiprocess'. To silence this warning, set parallelizer='multiprocess'."
-            warnings.warn(warnmsg, category=RuntimeWarning, stacklevel=2)
-            outputlist = run_parallel(pname=robust, parallelizer=robust, argslist=argslist) # Attempt to re-run the parallelization
-        else:
-            errormsg = 'Parallel run failed due to a pickling error: this is usually due to including a lambda function or other complex object'
-            raise pkl.PicklingError(errormsg) from E
-
     # Handle if run outside of __main__ on Windows
     except RuntimeError as E: # pragma: no cover
         if 'freeze_support' in E.args[0]: # For this error, add additional information
@@ -325,6 +319,15 @@ def parallelize(func, iterarg=None, iterkwargs=None, args=None, kwargs=None, ncp
  '''
             raise RuntimeError(errormsg) from E
         else: # For all other runtime errors, raise the original exception
+            raise E
+
+    # Handle other exceptions, such as not being able to pickle via default parallelizer
+    except Exception as E:
+        if not die and parallelizer != robust:
+            warnmsg = f"sc.parallelize() failed with parallelizer={parallelizer}:\n{str(E)}\nAutomatically switching to more robust parallelizer '{robust}'. To silence this warning, set parallelizer='{robust}'."
+            warnings.warn(warnmsg, category=RuntimeWarning, stacklevel=2)
+            outputlist = run_parallel(pname=robust, parallelizer=robust, argslist=argslist) # Attempt to re-run the parallelization
+        else: # All other exceptions
             raise E
 
     # Tidy up
