@@ -29,7 +29,7 @@ __all__ = ['parallelize', 'parallelcmd', 'parallel_progress']
 
 
 def parallelize(func, iterarg=None, iterkwargs=None, args=None, kwargs=None, ncpus=None, maxcpu=None, maxmem=None,
-                interval=None, parallelizer='multiprocess', serial=False, returnpool=False, **func_kwargs):
+                interval=None, parallelizer=None, serial=False, returnpool=False, **func_kwargs):
     '''
     Execute a function in parallel.
 
