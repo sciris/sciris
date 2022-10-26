@@ -50,10 +50,11 @@ def parallelize(func, iterarg=None, iterkwargs=None, args=None, kwargs=None, ncp
     not ``None``, it will use the specified number of CPUs; if ``ncpus`` is ``None``
     and ``maxcpu`` is not ``None``, it will allocate the number of CPUs dynamically.
 
-    Note: the parallelizer ``"multiprocess"`` uses ``dill`` for pickling, so
+    Note: the default parallelizer ``"multiprocess"`` uses ``dill`` for pickling, so
     is the most versatile (e.g., it can pickle non-top-level functions). However,
-    it is also the slowest for passing large amounts of data. For this reason,
-    as of Sciris v2.0.2, the default paralellizer is ``"concurrent.futures"``.
+    it is also the slowest for passing large amounts of data. You can switch between
+    these with ``parallelizer='fast'`` (``concurrent.futures``) and ``parallelizer='robust'``
+    (``multiprocess``).
 
     Args:
         func         (func)      : the function to parallelize
@@ -144,7 +145,7 @@ def parallelize(func, iterarg=None, iterkwargs=None, args=None, kwargs=None, ncp
     | New in version 1.1.1: "serial" argument.
     | New in version 2.0.0: changed default parallelizer from ``multiprocess.Pool`` to ``concurrent.futures.ProcessPoolExecutor``;
     replaced ``maxload`` with ``maxcpu``/``maxmem``; added ``returnpool`` argument
-    | New in version 2.0.2: default parallelizer 'concurrent.futures'
+    | New in version 2.0.4: added "die" argument; changed exception handling
     '''
     # Handle maxload
     maxload = func_kwargs.pop('maxload', None)
@@ -232,20 +233,21 @@ def parallelize(func, iterarg=None, iterkwargs=None, args=None, kwargs=None, ncp
     if serial: # This is a separate keyword argument, but make it consistent
         parallelizer = 'serial'
         
-    # Handle the  hoice of parallelizer
-    default = 'concurrent.futures'
+    # Handle the choice of parallelizer
+    fast   = 'concurrent.futures'
     robust = 'multiprocess'
     if parallelizer is None or scu.isstring(parallelizer):
 
         # Map parallelizer to consistent choices
         mapping = {
-            None                 : default,
-            'default'            : default,
+            None                 : robust,
+            'default'            : robust,
+            'robust'             : robust,
+            'fast'               : fast,
             'serial'             : 'serial',
             'serial-nocopy'      : 'serial',
             'concurrent.futures' : 'concurrent.futures',
             'concurrent'         : 'concurrent.futures',
-            'robust'             : robust,
             'multiprocess'       : 'multiprocess',
             'multiprocessing'    : 'multiprocessing',
             'thread'             : 'thread',

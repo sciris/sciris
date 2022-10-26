@@ -150,7 +150,7 @@ https://stackoverflow.com/questions/41554738/how-to-load-an-old-pickle-file
 
 
 def save(filename=None, obj=None, compresslevel=5, verbose=0, folder=None, method='pickle',
-         sanitizepath=True, die=True, *args, **kwargs):
+         sanitizepath=True, die=False, *args, **kwargs):
     '''
     Save an object to file as a gzipped pickle -- use compression 5 by default,
     since more is much slower but not much smaller. Once saved, can be loaded
@@ -163,7 +163,7 @@ def save(filename=None, obj=None, compresslevel=5, verbose=0, folder=None, metho
         verbose       (int)      : detail to print
         folder        (str)      : passed to ``sc.makefilepath()``
         method        (str)      : whether to use pickle (default) or dill
-        die           (bool)     : whether to fail if no object is provided
+        die           (bool)     : whether to fail if the object can't be pickled (else, try dill)
         sanitizepath  (bool)     : whether to sanitize the path prior to saving
         args          (list)     : passed to ``pickle.dumps()``
         kwargs        (dict)     : passed to ``pickle.dumps()``
@@ -176,6 +176,7 @@ def save(filename=None, obj=None, compresslevel=5, verbose=0, folder=None, metho
 
     | New in version 1.1.1: removed Python 2 support.
     | New in version 1.2.2: automatic swapping of arguments if order is incorrect; correct passing of arguments
+    | New in version 2.0.4: "die" argument for saving as dill
     '''
 
     # Handle path
@@ -199,24 +200,30 @@ def save(filename=None, obj=None, compresslevel=5, verbose=0, folder=None, metho
 
     # Handle object
     if obj is None: # pragma: no cover
-        errormsg = 'No object was supplied to saveobj(), or the object was empty'
-        if die:
+        errormsg = "No object was supplied to saveobj(), or the object was empty; if this is intentional, set die='never'"
+        if die != 'never':
             raise ValueError(errormsg)
-        elif verbose:
-            print(errormsg)
 
     # Actually save
     with gz.GzipFile(filename=filename, fileobj=bytesobj, mode='wb', compresslevel=compresslevel) as fileobj:
-        if method == 'dill': # pragma: no cover # If dill is requested, use that
-            if verbose>=2: print('Saving as dill...')
-            _savedill(fileobj, obj)
-        else: # Otherwise, try pickle
+        success = False
+        
+        # Try pickle first
+        if method == 'pickle':
             try:
                 if verbose>=2: print('Saving as pickle...')
                 _savepickle(fileobj, obj, *args, **kwargs) # Use pickle
+                success = True
             except Exception as E: # pragma: no cover
-                if verbose>=2: print(f'Exception when saving as pickle ({repr(E)}), saving as dill...')
-                _savedill(fileobj, obj, *args, **kwargs) # ...but use Dill if that fails
+                if die:
+                    raise E
+                else:
+                    if verbose>=2: print(f'Exception when saving as pickle ({repr(E)}), saving as dill...')
+                    
+        # If dill is requested or pickle failed, use dill
+        if not success: # pragma: no cover 
+            if verbose>=2: print('Saving as dill...')
+            _savedill(fileobj, obj, *args, **kwargs)
 
     if verbose and filename:
         print(f'Object saved to "{filename}"')
