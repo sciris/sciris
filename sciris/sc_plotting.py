@@ -26,7 +26,6 @@ import matplotlib as mpl
 from . import sc_settings as scs
 from . import sc_odict as sco
 from . import sc_utils as scu
-from . import sc_math as scm
 from . import sc_fileio as scf
 from . import sc_printing as scp
 from . import sc_datetime as scd
@@ -331,7 +330,7 @@ def stackedbar(x=None, values=None, colors=None, labels=None, transpose=False,
         
     if not cum: # pragma: nocover
         values = values.cumsum(axis=0)
-    values = scm.cat(np.zeros((1,npts)), values)
+    values = np.concatenate([np.zeros((1,npts)), values])
 
     # Handle labels and colors
     if labels is not None: # pragma: nocover

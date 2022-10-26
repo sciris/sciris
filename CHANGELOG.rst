@@ -8,6 +8,7 @@ By import convention, components of the Sciris library are listed beginning with
 
 Version 2.0.4 (2022-10-25)
 --------------------------
+#. ``sc.stackedbar()`` will automatically plot a 2D array as a stacked bar chart.
 #. ``sc.parallelize()`` now always tries ``multiprocess`` if an exception is encountered and ``die=False`` (unless ``parallelizer`` already was ``'multiprocess'``).
 #. Added a ``die`` argument to ``sc.save()``.
 
