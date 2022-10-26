@@ -9,6 +9,9 @@ import pytest
 
 #%% Adaptations from other libraries
 
+url1 = 'wikipedia.org'
+url2 = 'http://google.com/'
+
 def test_adaptations():
     sc.heading('Test function adaptations')
     o = sc.objdict()
@@ -23,19 +26,6 @@ def test_adaptations():
     with pytest.raises(ValueError):
         o.sha3 = sc.dcp(o.sha)
 
-    print('\nTesting wget and download')
-    url1 = 'http://wikipedia.org/'
-    url2 = 'http://google.com/'
-    o.download = sc.download(url1, url2, save=False)
-    fn = 'temp.html'
-    sc.download({url1:fn})
-    sc.rmpath(fn)
-
-    print('\nTesting htmlify')
-    o.html = sc.htmlify('foo&\nbar')
-    assert o.html == b'foo&amp;<br>bar'
-    o.nothtml = sc.htmlify(o.download[0], reverse=True)
-    
     print('Testing asciify')
     o.ascii = sc.asciify('föö→λ ∈ ℝ')
     assert o.ascii == 'foo  R'
@@ -44,6 +34,26 @@ def test_adaptations():
     o.traceback = sc.traceback()
 
     return o
+
+
+def test_download():
+    print('\nTesting download')
+    o = sc.objdict()
+    o.download = sc.download(url1, url2, save=False)
+
+    print('\nTesting htmlify')
+    o.html = sc.htmlify('foo&\nbar')
+    assert o.html == b'foo&amp;<br>bar'
+    o.nothtml = sc.htmlify(o.download[0], reverse=True)
+    return o
+
+
+def test_download_save(): # Split up to take advantage of parallelization
+    print('\nTesting download and saving')
+    fn = 'temp.html'
+    sc.download({url1:fn})
+    sc.rmpath(fn)
+    return fn
 
 
 def test_uuid():
@@ -334,6 +344,8 @@ if __name__ == '__main__':
 
     # Adaptations
     adapt     = test_adaptations()
+    download  = test_download()
+    filename  = test_download_save()
     uid       = test_uuid()
     traceback = test_traceback()
     versions  = test_versions()

@@ -96,6 +96,20 @@ def test_3d(doplot=doplot):
     return o
 
 
+def test_stackedbar(doplot=doplot):
+    sc.heading('Testing stacked bar')
+    
+    pl.figure(num='Stacked bar')
+    values = pl.rand(3,5)
+    artists = sc.stackedbar(values, labels=['bottom','middle','top'])
+    pl.legend()
+    
+    if not doplot:
+        pl.close('all')
+        
+    return artists
+
+
 def test_other(doplot=doplot):
     sc.heading('Testing other')
     o = sc.objdict()
@@ -287,6 +301,7 @@ if __name__ == '__main__':
     colors    = test_colors(doplot)
     colormaps = test_colormaps(doplot)
     threed    = test_3d(doplot)
+    artists   = test_stackedbar(doplot)
     other     = test_other(doplot)
     saved     = test_saving(doplot)
     dates     = test_dates(doplot)

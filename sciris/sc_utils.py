@@ -549,7 +549,7 @@ def asciify(string, form='NFKD', encoding='ascii', errors='ignore', **kwargs):
 __all__ += ['urlopen', 'wget', 'download', 'htmlify']
 
 def urlopen(url, filename=None, save=False, headers=None, params=None, data=None,
-            convert=True, die=False, return_response=False, verbose=False):
+            prefix='http', convert=True, die=False, return_response=False, verbose=False):
     '''
     Download a single URL.
 
@@ -563,6 +563,7 @@ def urlopen(url, filename=None, save=False, headers=None, params=None, data=None
         headers (dict): a dictionary of headers to pass
         params (dict): a dictionary of parameters to pass to the GET request
         data (dict) a dictionary of parameters to pass to a POST request
+        prefix (str): the string to ensure the URL starts with (else, add it)
         convert (bool): whether to convert from bytes to string
         die (bool): whether to raise an exception if converting to text failed
         return_response (bool): whether to return the response object instead of the output
@@ -570,12 +571,13 @@ def urlopen(url, filename=None, save=False, headers=None, params=None, data=None
 
     **Examples**::
 
-        html = sc.urlopen('http://sciris.org') # Retrieve into variable html
+        html = sc.urlopen('sciris.org') # Retrieve into variable html
         sc.urlopen('http://sciris.org', filename='sciris.html') # Save to file sciris.html
         sc.urlopen('http://sciris.org', save=True, headers={'User-Agent':'Custom agent'}) # Save to the default filename (here, sciris.org), with headers
 
     | New in version 2.0.0: renamed from ``wget`` to ``urlopen``; new arguments
     | New in version 2.0.1: creates folders by default if they do not exist
+    | New in version 2.0.4: "prefix" argument, e.g. prepend "http://" if not present
     '''
     from urllib import request as ur # Need to import these directly, not via urllib
     from urllib import parse as up
@@ -593,8 +595,11 @@ def urlopen(url, filename=None, save=False, headers=None, params=None, data=None
 
     # Handle parameters and data
     full_url = url
+    if prefix is not None:
+        if not full_url.startswith(prefix):
+            full_url = prefix + '://' + full_url # Leaves https alone, but adds http:// otherwise
     if params is not None:
-        full_url = url + '?' + up.urlencode(params)
+        full_url = full_url + '?' + up.urlencode(params)
     if data is not None:
         data = up.urlencode(data).encode(encoding='utf-8', errors='ignore')
 

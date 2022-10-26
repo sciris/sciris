@@ -6,6 +6,14 @@ All major updates to Sciris are documented here.
 By import convention, components of the Sciris library are listed beginning with ``sc.``, e.g. ``sc.odict()``.
 
 
+Version 2.0.4 (2022-10-25)
+--------------------------
+#. ``sc.stackedbar()`` will automatically plot a 2D array as a stacked bar chart.
+#. ``sc.parallelize()`` now always tries ``multiprocess`` if an exception is encountered and ``die=False`` (unless ``parallelizer`` already was ``'multiprocess'``).
+#. Added a ``die`` argument to ``sc.save()``.
+#. Added a ``prefix`` argument to ``sc.urlopen()``, allowing e.g. ``http://`` to be omitted from the URL.
+
+
 Version 2.0.3 (2022-10-24)
 --------------------------
 #. Added ``sc.linregress()`` as a simple way to perform linear regression (fit a line of best fit).

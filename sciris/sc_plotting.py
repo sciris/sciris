@@ -273,8 +273,98 @@ def bar3d(data, fig=None, returnfig=False, cmap='viridis', figkwargs=None, axkwa
 #%% Other plotting functions
 ##############################################################################
 
-__all__ += ['boxoff', 'setaxislim', 'setxlim', 'setylim', 'commaticks', 'SIticks',
+__all__ += ['stackedbar', 'boxoff', 'setaxislim', 'setxlim', 'setylim', 'commaticks', 'SIticks',
             'getrowscols', 'get_rows_cols', 'figlayout', 'maximize', 'fonts']
+
+
+def stackedbar(x=None, values=None, colors=None, labels=None, transpose=False, 
+               flipud=False, cum=False, barh=False, **kwargs):
+    '''
+    Create a stacked bar chart.
+    
+    Args:
+        x         (array)    : the x coordinates of the values
+        values    (array)    : the 2D array of values to plot as stacked bars
+        colors    (list/arr) : the color of each set of bars
+        labels    (list)     : the label for each set of bars
+        transpose (bool)     : whether to transpose the array prior to plotting
+        flipud    (bool)     : whether to flip the array upside down prior to plotting
+        cum       (bool)     : whether the array is already a cumulative sum
+        barh      (bool)     : whether to plot as a horizontal instead of vertical bar
+        kwargs    (dict)     : passed to ``pl.bar()``
+    
+    **Example**::
+        
+        values = pl.rand(3,5)
+        sc.stackedbar(values, labels=['bottom','middle','top'])
+        pl.legend()
+    
+    New in version 2.0.4.
+    '''
+    from . import sc_colors as scc # To avoid circular import
+    
+    # Handle inputs
+    if x is not None and values is None:
+        values = x
+        x = None
+    
+    if values is None: # pragma: nocover
+        errormsg = 'Must supply values to plot, typically as a 2D array'
+        raise ValueError(errormsg)
+    
+    values = scu.promotetoarray(values)
+    if values.ndim == 1: # pragma: nocover
+        values = values[None,:] # Convert to a 2D array
+    
+    if transpose: # pragma: nocover
+        values = values.T
+    
+    if flipud: # pragma: nocover
+        values = values[::-1,:]
+    
+    nstack = values.shape[0]
+    npts = values.shape[1]
+    
+    if x is None:
+        x = np.arange(npts)
+        
+    if not cum: # pragma: nocover
+        values = values.cumsum(axis=0)
+    values = np.concatenate([np.zeros((1,npts)), values])
+
+    # Handle labels and colors
+    if labels is not None: # pragma: nocover
+        nlabels = len(labels)
+        if nlabels != nstack:
+            errormsg = f'Expected {nstack} labels, got {nlabels}'
+            raise ValueError(errormsg)
+    
+    if colors is not None: # pragma: nocover
+        ncolors = len(colors)
+        if ncolors != nstack:
+            errormsg = f'Expected {nstack} colors, got {ncolors}'
+            raise ValueError(errormsg)
+    else:
+        colors = scc.gridcolors(nstack)
+        
+    # Actually plot
+    artists = []
+    for i in range(nstack):
+        if labels is not None:
+            label = labels[i]
+        else:
+            label = None
+        
+        h = values[i+1,:]
+        b = values[i,:]
+        kw = dict(facecolor=colors[i], label=label, **kwargs)
+        if not barh:
+            artist = pl.bar(x=x, height=h, bottom=b, **kw)
+        else:
+            artist = pl.barh(y=x, width=h, left=b, **kw)
+        artists.append(artist)
+    
+    return artists
 
 
 def boxoff(ax=None, which=None, removeticks=True):
