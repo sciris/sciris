@@ -1,9 +1,9 @@
 """
 Script to benchmark mostly speed of saving objects using zstandard compression instead of gzip
-TODO: reading/decompression test
+TODO: reading/decompression benchmark
 TODO: - split gzip/zstd benchmarks to automate estimation of ratios
-      - append iteration number to filename, to avoid overwriting the same file
-      - log timing and other resources (via resourcemonitor?) information into a pandas dataframe
+      - append iteration number, compressor, etc to filename, to avoid overwriting the same file
+      - check other resources (via resourcemonitor?) to the log pandas dataframe
 
 Benchamrks:
 4x type of objects of different levels of complexity:
@@ -13,7 +13,7 @@ Benchamrks:
        - 2x simulation lengths
     - covasim multisim object (generated from devtests)
        - 2x values of repetitions
-    - pregenerated multisim from ICMR project?
+    - pregenerated multisim from ICMR project? (gets a bit complicated because of dependencies to load obj)
 
 2x drives:
     - M.2 PCIe NVMe SSD (Samsung 970 EVO)
@@ -25,6 +25,9 @@ import numpy as np
 import pandas as pd
 import sciris as sc
 import covasim as cv
+
+from sciris import sc_odict as sco
+from sciris import sc_nested as scn
 
 
 def generate_simple_numpy_array():
@@ -116,14 +119,28 @@ def generate_covasim_msim_obj_many():
 #     return msim
 
 
-def run_benchmark(benchmark_params, filename, obj):
+def to_df(log):
+    ''' Convert the log into a pandas dataframe '''
+    entries = []
+    for entry in log:
+        flat = scn.flattendict(entry, sep='_')
+        entries.append(flat)
+    df = pd.DataFrame(entries)
+    return df
+
+
+def run_benchmark(benchmark_params, filename, obj, log=None):
     '''
-    Quick-ish and dirty assessment of running times
-    :param benchmark_params: pretty object w
+     Quick-ish assessment of running times of sc.save() using different compressors
+    :param benchmark_params: pretty object
     :param filename: base filename where to store results
     :param obj: the object to be saved
     :return: None
     '''
+
+    if log is None:
+        log = []
+
     for cmp_lib in benchmark_params.compression_lib:
         for clevel in benchmark_params.compression_lvl:
             timings = []
@@ -135,8 +152,16 @@ def run_benchmark(benchmark_params, filename, obj):
             # Cure estimation of average duration
             avg_duration = sum(timings) / benchmark_params.n_iterations
             print(f'{cmp_lib} | {clevel} : On average (mean | nreps {benchmark_params.n_iterations}) it took {avg_duration} seconds')
-
-    return None
+            # Gather into output form
+            benchdata = sco.objdict(
+                filename=filename,
+                duration=avg_duration,
+                nreps=benchmark_params.n_iterations,
+                compressor=cmp_lib,
+                compression=clevel,
+            )
+            log.append(benchdata)
+    return log
 
 #%% Run as a script
 if __name__ == '__main__':
@@ -144,7 +169,7 @@ if __name__ == '__main__':
     benchmark_params = sc.prettyobj
     benchmark_params.compression_lib = ['gzip', 'zstd']
     benchmark_params.compression_lvl = [1, 5, 9]
-    benchmark_params.n_iterations = 5
+    benchmark_params.n_iterations = 50
 
     # Files to benchmark
     filedir = 'files' + os.sep
@@ -155,25 +180,35 @@ if __name__ == '__main__':
     files.covsim_sim_long   = filedir + 'bmk_covsim_sim_default_2x.obj'  # Defaults covasim 2x length
     files.covsim_msim_few   = filedir + 'bmk_msim_default_nrep_010.obj'  # Defaults covasim 10x reps
     files.covsim_msim_many  = filedir + 'bmk_msim_default_nrep_100.obj'  # Defaults covasim 100x reps
-    files.covsim_msim_icmr  = filedir + 'bmk_msim_icmr.obj'              #
+    #files.covsim_msim_icmr  = filedir + 'bmk_msim_icmr.obj'              #
 
     sc.heading('Benchmarking simple numpy array')
     testdata = generate_simple_numpy_array()
-    run_benchmark(benchmark_params, files.numpy_array_obj, testdata)
+    log = run_benchmark(benchmark_params, files.numpy_array_obj, testdata)
 
     sc.heading('Benchmarking simple pandas data frame')
     testdata = generate_simple_pandas_df()
-    run_benchmark(benchmark_params, files.pandas_data_frame, testdata)
+    log = run_benchmark(benchmark_params, files.pandas_data_frame, testdata, log=log)
 
     sc.heading('Benchmarking covasim default sim')
     testdata = generate_covasim_sim_obj_short()
-    run_benchmark(benchmark_params, files.covsim_sim_short, testdata)
+    log = run_benchmark(benchmark_params, files.covsim_sim_short, testdata, log=log)
 
     sc.heading('Benchmarking covasim default sim, 2x long')
     testdata = generate_covasim_sim_obj_long()
-    run_benchmark(benchmark_params, files.covsim_sim_long, testdata)
+    log = run_benchmark(benchmark_params, files.covsim_sim_long, testdata, log=log)
 
     sc.heading('Benchmarking covasim msim, with default base sim, 10 reps')
     testdata = generate_covasim_msim_obj_few()
-    run_benchmark(benchmark_params, files.covsim_msim_few, testdata)
+    log = run_benchmark(benchmark_params, files.covsim_msim_few, testdata, log=log)
+
+    sc.heading('Benchmarking covasim msim, with default base sim, 100 reps')
+    testdata = generate_covasim_msim_obj_many()
+    log = run_benchmark(benchmark_params, files.covsim_msim_many, testdata, log=log)
+
+    df_log = to_df(log)
+
+    drive = 'hdd'
+    benchmark_filepath = f'{filedir}benchmark_{drive}_nreps_{benchmark_params.n_iterations:02d}.csv'
+    df_log.to_csv(benchmark_filepath)
 
