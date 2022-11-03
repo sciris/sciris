@@ -1,6 +1,9 @@
 """
 Script to benchmark mostly speed of saving objects using zstandard compression instead of gzip
 TODO: reading/decompression test
+TODO: - split gzip/zstd benchmarks to automate estimation of ratios
+      - append iteration number to filename, to avoid overwriting the same file
+      - log timing (or other via resourcemonitor) information into a pandas dataframe
 
 Benchamrks:
 4x type of objects of different levels of complexity:
@@ -21,7 +24,6 @@ import os
 import numpy as np
 import pandas as pd
 import sciris as sc
-import timeit
 
 def generate_simple_numpy_array():
     '''
@@ -84,8 +86,9 @@ def run_benchmark(benchmark_params, filename, obj):
                 sc.save(filename, obj, compression=cmp_lib, compresslevel=clevel)
                 tt = sc.toc(output=True)
                 timings.append(tt)
-                avg_duration = sum(timing) / benchmark_params.n_iterations
-                print(f'On average (mean) it took {avg_duration} seconds')
+            # Cure estimation of average duration
+            avg_duration = sum(timings) / benchmark_params.n_iterations
+            print(f'{cmp_lib} | {clevel} : On average (mean | nreps {benchmark_params.n_iterations}) it took {avg_duration} seconds')
     return None
 
 #%% Run as a script
@@ -108,6 +111,10 @@ if __name__ == '__main__':
     files.covsim_msim_many = filedir + 'bmk_msim_default_nrep_100.obj'  # Defaults covasim 100x reps
     # files.covsim_msim_many  = filedir + 'bmk_msim_icmr.obj'              # Defaults covasim 100x reps
 
+    sc.heading('Benchmarking simple numpy array')
     testdata = generate_simple_numpy_array()
-
     run_benchmark(benchmark_params, files.numpy_array_obj, testdata)
+
+    sc.heading('Benchmarking simple pandas data frame')
+    testdata = generate_simple_pandas_df()
+    run_benchmark(benchmark_params, files.pandas_data_frame, testdata)
