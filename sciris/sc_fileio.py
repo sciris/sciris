@@ -36,6 +36,7 @@ from io import BytesIO as IO
 from pathlib import Path
 import pickle as pkl
 import gzip as gz
+import zstandard as zstd
 from . import sc_settings as scs
 from . import sc_utils as scu
 from . import sc_printing as scp
@@ -149,8 +150,8 @@ https://stackoverflow.com/questions/41554738/how-to-load-an-old-pickle-file
     return obj
 
 
-def save(filename=None, obj=None, compresslevel=5, verbose=0, folder=None, method='pickle',
-         sanitizepath=True, die=False, *args, **kwargs):
+def save(filename=None, obj=None, compression='gzip', compresslevel=5, verbose=0, folder=None, method='pickle',
+         num_threads=0, sanitizepath=True, die=False, *args, **kwargs):
     '''
     Save an object to file as a gzipped pickle -- use compression 5 by default,
     since more is much slower but not much smaller. Once saved, can be loaded
@@ -159,12 +160,13 @@ def save(filename=None, obj=None, compresslevel=5, verbose=0, folder=None, metho
     Args:
         filename      (str/Path) : the filename to save to; if str, passed to ``sc.makefilepath()``
         obj           (anything) : the object to save
-        compresslevel (int)      : the level of gzip compression
+        compresslevel (int)      : the level of gzip/zstd compression {1...9}
         verbose       (int)      : detail to print
         folder        (str)      : passed to ``sc.makefilepath()``
         method        (str)      : whether to use pickle (default) or dill
         die           (bool)     : whether to fail if the object can't be pickled (else, try dill)
         sanitizepath  (bool)     : whether to sanitize the path prior to saving
+        num_threads   (int)      : used by zstd compressor. 0: disable multithread, -1: use all logical cpus
         args          (list)     : passed to ``pickle.dumps()``
         kwargs        (dict)     : passed to ``pickle.dumps()``
 
@@ -205,25 +207,33 @@ def save(filename=None, obj=None, compresslevel=5, verbose=0, folder=None, metho
             raise ValueError(errormsg)
 
     # Actually save
-    with gz.GzipFile(filename=filename, fileobj=bytesobj, mode='wb', compresslevel=compresslevel) as fileobj:
-        success = False
-        
-        # Try pickle first
-        if method == 'pickle':
-            try:
-                if verbose>=2: print('Saving as pickle...')
-                _savepickle(fileobj, obj, *args, **kwargs) # Use pickle
-                success = True
-            except Exception as E: # pragma: no cover
-                if die:
-                    raise E
-                else:
-                    if verbose>=2: print(f'Exception when saving as pickle ({repr(E)}), saving as dill...')
-                    
-        # If dill is requested or pickle failed, use dill
-        if not success: # pragma: no cover 
-            if verbose>=2: print('Saving as dill...')
-            _savedill(fileobj, obj, *args, **kwargs)
+    if compression == 'gzip':
+        with gz.GzipFile(filename=filename, fileobj=bytesobj, mode='wb', compresslevel=compresslevel) as fileobj:
+            success = False
+
+            # Try pickle first
+            if method == 'pickle':
+                try:
+                    if verbose>=2: print('Saving as pickle...')
+                    _savepickle(fileobj, obj, *args, **kwargs) # Use pickle
+                    success = True
+                except Exception as E: # pragma: no cover
+                    if die:
+                        raise E
+                    else:
+                        if verbose>=2: print(f'Exception when saving as pickle ({repr(E)}), saving as dill...')
+
+            # If dill is requested or pickle failed, use dill
+            if not success: # pragma: no cover
+                if verbose>=2: print('Saving as dill...')
+                _savedill(fileobj, obj, *args, **kwargs)
+    elif compression == 'zstd':
+        with open(filename, 'wb') as fh:
+            zcompressor = zstd.ZstdCompressor(level=compresslevel, threads=num_threads)
+            with zcompressor.stream_writer(fh) as fileobj:
+                _savepickle(fileobj, obj, *args, **kwargs)  # Use pickle
+    else:
+        raise NotImplementedError
 
     if verbose and filename:
         print(f'Object saved to "{filename}"')
