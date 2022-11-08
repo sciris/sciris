@@ -102,7 +102,7 @@ def load(filename=None, folder=None, verbose=False, die=None, remapping=None, me
     gziperror = f'''
 Unable to load
     {filename}
-as either a gzipped or regular pickle file. Ensure that it is actually a pickle file.
+as either a gzipped, zstandard or regular pickle file. Ensure that it is actually a pickle file.
 '''
     unpicklingerror = f'''
 Unable to load file: "{filename}"
@@ -127,11 +127,17 @@ https://stackoverflow.com/questions/41554738/how-to-load-an-old-pickle-file
         if exc == FileNotFoundError: # This is simple, just raise directly
             raise E
         elif exc == gz.BadGzipFile:
-            try: # If the gzip file failed, first try as a regular object
-                with open(filename, 'rb') as fileobj:
-                    filestr = fileobj.read() # Convert it to a string
-            except:
-                raise exc(gziperror) from E
+            try: # If the gzip file failed, first try as a zstd compressed object
+                with open(filename, 'rb') as fh:
+                    zdcompressor = zstd.ZstdDecompressor()
+                    with zdcompressor.stream_reader(fh) as fileobj:
+                        filestr = fileobj.read()
+            except: # If that fails
+                try: # Try as a regular object
+                    with open(filename, 'rb') as fileobj:
+                        filestr = fileobj.read() # Convert it to a string
+                except:
+                    raise exc(gziperror) from E
 
     # Unpickle it
     try:
