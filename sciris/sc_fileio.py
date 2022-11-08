@@ -207,34 +207,38 @@ def save(filename=None, obj=None, compression='gzip', compresslevel=5, verbose=0
         if die != 'never':
             raise ValueError(errormsg)
 
-    # Actually save
+    def serialize(fileobj, obj, success, *args, **kwargs):
+        # Try pickle first
+        if method == 'pickle':
+            try:
+                if verbose>=2: print('Saving as pickle...')
+                _savepickle(fileobj, obj, *args, **kwargs) # Use pickle
+                success = True
+            except Exception as E: # pragma: no cover
+                if die:
+                    raise E
+                else:
+                    if verbose>=2: print(f'Exception when saving as pickle ({repr(E)}), saving as dill...')
+
+        # If dill is requested or pickle failed, use dill
+        if not success: # pragma: no cover
+            if verbose>=2: print('Saving as dill...')
+            _savedill(fileobj, obj, *args, **kwargs)
+
+
+    # Compress and actually save
+    success = False
     if compression == 'gzip':
         with gz.GzipFile(filename=filename, fileobj=bytesobj, mode='wb', compresslevel=compresslevel) as fileobj:
-            success = False
-
-            # Try pickle first
-            if method == 'pickle':
-                try:
-                    if verbose>=2: print('Saving as pickle...')
-                    _savepickle(fileobj, obj, *args, **kwargs) # Use pickle
-                    success = True
-                except Exception as E: # pragma: no cover
-                    if die:
-                        raise E
-                    else:
-                        if verbose>=2: print(f'Exception when saving as pickle ({repr(E)}), saving as dill...')
-
-            # If dill is requested or pickle failed, use dill
-            if not success: # pragma: no cover
-                if verbose>=2: print('Saving as dill...')
-                _savedill(fileobj, obj, *args, **kwargs)
+            serialize(fileobj, obj, success, *args, **kwargs)
     elif compression == 'zstd':
         with open(filename, 'wb') as fh:
             zcompressor = zstd.ZstdCompressor(level=compresslevel, threads=num_threads)
             with zcompressor.stream_writer(fh) as fileobj:
-                _savepickle(fileobj, obj, *args, **kwargs)  # Use pickle
+                serialize(fileobj, obj, success, *args, **kwargs)
     else:
-        raise NotImplementedError
+        errormsg = 'Invalid compression format: must be a either gzip or zstd'
+        raise ValueError(errormsg)
 
     if verbose and filename:
         print(f'Object saved to "{filename}"')
