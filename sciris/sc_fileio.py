@@ -200,7 +200,7 @@ def save(filename=None, obj=None, compression='gzip', compresslevel=5, verbose=0
     if isinstance(filename, Path): # If it's a path object, convert to string
         filename = str(filename)
     if filename is None: # If it doesn't exist, just create a byte stream
-        bytesobj = io.BytesIO()
+        bytesobj = io.BytesIO() # PSL: If filename is None, bytesobj is redefined as None in line 216
     if not isinstance(filename, filetypes): # pragma: no cover
         if isinstance(obj, filetypes):
             print(f'Warning: filename was not supplied as a valid type ({type(filename)}) but the object was ({type(obj)}); automatically swapping order')
