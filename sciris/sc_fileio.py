@@ -196,6 +196,7 @@ def save(filename=None, obj=None, compression='gzip', compresslevel=5, verbose=0
             obj = real_obj
         else:
             errormsg = f'Filename type {type(filename)} is not valid: must be one of {filetypes}'
+            print(errormsg)
     else: # Normal use case: make a file path
         bytesobj = None
         filename = makefilepath(filename=filename, folder=folder, default='default.obj', sanitize=sanitizepath)
