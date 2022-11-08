@@ -184,9 +184,9 @@ def save(filename=None, obj=None, compression='gzip', compresslevel=5, verbose=0
 
     # Handle file extension depending on compression algorithm
     if compression == 'gzip':
-        file_ext = '.gz'
+        file_ext = 'gz'
     elif compression == 'zstd':
-        file_ext  = '.zst'
+        file_ext  = 'zst'
     else:
         file_ext = ''
         errormsg = f"Invalid compression format: must be a either 'gzip' or 'zstd'"
@@ -215,8 +215,7 @@ def save(filename=None, obj=None, compression='gzip', compresslevel=5, verbose=0
     else: # Normal use case: make a file path
         bytesobj = None
         # default name reflects default compression algorithm which is gzip
-        if filename is not None: filename += file_ext
-        filename = makefilepath(filename=filename, folder=folder, default='default.obj'+file_ext, sanitize=sanitizepath)
+        filename = makefilepath(filename=filename, folder=folder, default='default.obj', ext=file_ext, sanitize=sanitizepath)
 
 
     # Handle object
