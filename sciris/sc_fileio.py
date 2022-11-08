@@ -160,6 +160,7 @@ def save(filename=None, obj=None, compression='gzip', compresslevel=5, verbose=0
     Args:
         filename      (str/Path) : the filename to save to; if str, passed to ``sc.makefilepath()``
         obj           (anything) : the object to save
+        compression   (str)      : whether to use gzip or zstd to compress data
         compresslevel (int)      : the level of gzip/zstd compression {1...9}
         verbose       (int)      : detail to print
         folder        (str)      : passed to ``sc.makefilepath()``
@@ -181,6 +182,19 @@ def save(filename=None, obj=None, compression='gzip', compresslevel=5, verbose=0
     | New in version 2.0.4: "die" argument for saving as dill
     '''
 
+    # Handle file extension depending on compression algorithm
+    if compression == 'gzip':
+        file_ext = '.gz'
+    elif compression == 'zstd':
+        file_ext  = '.zst'
+    else:
+        file_ext = ''
+        errormsg = f"Invalid compression format: must be a either 'gzip' or 'zstd'"
+        if die:
+            raise ValueError(errormsg)
+        else:
+            print(errormsg)
+
     # Handle path
     filetypes = (str, type(Path()), type(None))
     if isinstance(filename, Path): # If it's a path object, convert to string
@@ -199,7 +213,10 @@ def save(filename=None, obj=None, compression='gzip', compresslevel=5, verbose=0
             print(errormsg)
     else: # Normal use case: make a file path
         bytesobj = None
-        filename = makefilepath(filename=filename, folder=folder, default='default.obj', sanitize=sanitizepath)
+        # default name reflects default compression algorithm which is gzip
+        if filename is not None: filename += filename + file_ext
+        filename = makefilepath(filename=filename, folder=folder, default='default.obj'+file_ext, sanitize=sanitizepath)
+
 
     # Handle object
     if obj is None: # pragma: no cover
@@ -229,15 +246,18 @@ def save(filename=None, obj=None, compression='gzip', compresslevel=5, verbose=0
     # Compress and actually save
     success = False
     if compression == 'gzip':
+        # File extension is .gz
         with gz.GzipFile(filename=filename, fileobj=bytesobj, mode='wb', compresslevel=compresslevel) as fileobj:
             serialize(fileobj, obj, success, *args, **kwargs)
     elif compression == 'zstd':
+        # File extension is .zst
         with open(filename, 'wb') as fh:
             zcompressor = zstd.ZstdCompressor(level=compresslevel, threads=num_threads)
             with zcompressor.stream_writer(fh) as fileobj:
                 serialize(fileobj, obj, success, *args, **kwargs)
     else:
-        errormsg = 'Invalid compression format: must be a either gzip or zstd'
+        #NOTE-PSL: Maybe default to save with gzip?
+        errormsg = f"Invalid compression format: must be a either 'gzip' or 'zstd'"
         raise ValueError(errormsg)
 
     if verbose and filename:
