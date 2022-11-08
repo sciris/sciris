@@ -215,7 +215,7 @@ def save(filename=None, obj=None, compression='gzip', compresslevel=5, verbose=0
     else: # Normal use case: make a file path
         bytesobj = None
         # default name reflects default compression algorithm which is gzip
-        if filename is not None: filename += filename + file_ext
+        if filename is not None: filename += file_ext
         filename = makefilepath(filename=filename, folder=folder, default='default.obj'+file_ext, sanitize=sanitizepath)
 
 
