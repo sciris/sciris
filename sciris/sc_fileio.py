@@ -215,7 +215,7 @@ def save(filename=None, obj=None, compresslevel=5, verbose=0, folder=None, metho
                 _savepickle(fileobj, obj, *args, **kwargs) # Use pickle
                 success = True
             except Exception as E: # pragma: no cover
-                if die:
+                if die is True:
                     raise E
                 else:
                     if verbose>=2: print(f'Exception when saving as pickle ({repr(E)}), saving as dill...')
