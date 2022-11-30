@@ -149,7 +149,7 @@ https://stackoverflow.com/questions/41554738/how-to-load-an-old-pickle-file
     return obj
 
 
-def save(filename=None, obj=None, compresslevel=5, verbose=0, folder=None, method='pickle',
+def save(filename='default.obj', obj=None, compresslevel=5, verbose=0, folder=None, method='pickle',
          sanitizepath=True, die=False, *args, **kwargs):
     '''
     Save an object to file as a gzipped pickle -- use compression 5 by default,
@@ -157,7 +157,8 @@ def save(filename=None, obj=None, compresslevel=5, verbose=0, folder=None, metho
     with ``sc.load()``. Note that ``sc.save()``/``sc.saveobj()`` are identical.
 
     Args:
-        filename      (str/Path) : the filename to save to; if str, passed to ``sc.makefilepath()``
+        filename      (str/Path) : the filename to save to; if str, passed to ``sc.makefilepath()``.
+                                  If None, return a io.BytesIO filestream instead of saving to disk
         obj           (anything) : the object to save
         compresslevel (int)      : the level of gzip compression
         verbose       (int)      : detail to print
@@ -180,23 +181,28 @@ def save(filename=None, obj=None, compresslevel=5, verbose=0, folder=None, metho
     '''
 
     # Handle path
-    filetypes = (str, type(Path()), type(None))
-    if isinstance(filename, Path): # If it's a path object, convert to string
-        filename = str(filename)
-    if filename is None: # If it doesn't exist, just create a byte stream
+    if filename is None: # If the user explicitly specifies None as the file, create a byte stream instead
         bytesobj = io.BytesIO()
-    if not isinstance(filename, filetypes): # pragma: no cover
-        if isinstance(obj, filetypes):
-            print(f'Warning: filename was not supplied as a valid type ({type(filename)}) but the object was ({type(obj)}); automatically swapping order')
-            real_obj = filename
-            real_file = obj
-            filename = real_file
-            obj = real_obj
-        else:
-            errormsg = f'Filename type {type(filename)} is not valid: must be one of {filetypes}'
-    else: # Normal use case: make a file path
+    else:
         bytesobj = None
-        filename = makefilepath(filename=filename, folder=folder, default='default.obj', sanitize=sanitizepath)
+
+        # Process and sanitize the filename passed in by the user
+        filetypes = (str, type(Path()), type(None))
+        if isinstance(filename, Path): # If it's a path object, convert to string
+            filename = str(filename)
+
+        if not isinstance(filename, filetypes): # pragma: no cover
+            if isinstance(obj, filetypes):
+                print(f'Warning: filename was not supplied as a valid type ({type(filename)}) but the object was ({type(obj)}); automatically swapping order')
+                real_obj = filename
+                real_file = obj
+                filename = real_file
+                obj = real_obj
+            else:
+                errormsg = f'Filename type {type(filename)} is not valid: must be one of {filetypes}'
+                raise Exception(errormsg)
+
+        filename = makefilepath(filename=filename, folder=folder, sanitize=sanitizepath)
 
     # Handle object
     if obj is None: # pragma: no cover
