@@ -504,8 +504,6 @@ def _parallel_task(taskargs, outputqueue=None):
     # Handle load balancing
     maxcpu = taskargs.maxcpu
     maxmem = taskargs.maxmem
-    print('dofidofuid')
-    # print(maxcpu, maxmem)
     if maxcpu or maxmem:
         scp.loadbalancer(maxcpu=maxcpu, maxmem=maxmem, index=index, interval=taskargs.interval)
 
