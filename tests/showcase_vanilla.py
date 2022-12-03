@@ -59,4 +59,3 @@ fig.colorbar(surf)
 # Print elapsed time
 elapsed = time.time() - start
 print(f'Elapsed time: {elapsed:0.1f} s')
-

@@ -22,11 +22,11 @@ sc.tic()
 output = sc.parallelize(randwave, noisevals)
 
 # Save to files
-filenames = []
+filenames = sc.autolist()
 for n,noiseval in enumerate(noisevals):
     filename = f'noise{noiseval:0.1f}.obj'
     sc.saveobj(filename, output[n])
-    filenames.append(filename)
+    filenames += filename
 
 # Create dict from files
 data = sc.odict({filename:sc.loadobj(filename) for filename in filenames})
@@ -36,4 +36,3 @@ sc.surf3d(data[:])
 
 # Print elapsed time
 sc.toc()
-
