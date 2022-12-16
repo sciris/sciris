@@ -414,7 +414,7 @@ def getfilelist(folder=None, pattern=None, abspath=False, nopath=False, filesonl
         nopath      (bool): whether to return no path
         filesonly   (bool): whether to only return files (not folders)
         foldersonly (bool): whether to only return folders (not files)
-        recursive   (bool): passed to glob()
+        recursive   (bool): passed to glob() (note: ** is required as the pattern to match all subfolders)
         aspath      (bool): whether to return Path objects
 
     Returns:
@@ -427,6 +427,7 @@ def getfilelist(folder=None, pattern=None, abspath=False, nopath=False, filesonl
         sc.getfilelist('~/temp/*.py') # Like above
 
     New in version 1.1.0: "aspath" argument
+    New in version 2.1.0: default pattern of "**"
     '''
     if folder is None:
         folder = '.'
@@ -434,7 +435,7 @@ def getfilelist(folder=None, pattern=None, abspath=False, nopath=False, filesonl
     if abspath:
         folder = os.path.abspath(folder)
     if os.path.isdir(folder) and pattern is None:
-        pattern = '*'
+        pattern = '**'
     if aspath is None: aspath = scs.options.aspath
     globstr = os.path.join(folder, pattern) if pattern else folder
     filelist = sorted(glob(globstr, recursive=recursive))
@@ -609,6 +610,17 @@ def makefilepath(filename=None, folder=None, ext=None, default=None, split=False
     return output
 
 
+def getfilepaths(*args, aspath=True, **kwargs):
+    '''
+    Alias for :func:`getfilelist` that returns paths by default instead of strings.
+    
+    New in version 2.1.0.
+    '''
+    return getfilelist(*args, **kwargs, aspath=True)
+
+getfilepaths.__doc__ += '\n\n' + getfilelist.__doc__
+
+
 def path(*args, **kwargs):
     '''
     Alias to ``pathlib.Path()`` with some additional input sanitization:
@@ -685,6 +697,17 @@ def thisdir(file=None, path=None, *args, aspath=None, **kwargs):
     if aspath:
         filepath = Path(filepath, **kwargs)
     return filepath
+
+
+def thispath(*args, aspath=True, **kwargs):
+    '''
+    Alias for :func:`thisdir` that returns paths by default instead of strings.
+    
+    New in version 2.1.0.
+    '''
+    return thisdir(*args, **kwargs, aspath=True)
+
+thispath.__doc__ += '\n\n' + thisdir.__doc__
 
 
 def rmpath(path=None, *args, die=True, verbose=True, interactive=False, **kwargs):
