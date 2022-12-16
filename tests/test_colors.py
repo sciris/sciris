@@ -5,6 +5,7 @@ Test color and plotting functions -- warning, opens up many windows!
 import numpy as np
 import pylab as pl
 import sciris as sc
+import pytest
 
 
 #%% Functions
@@ -32,6 +33,16 @@ def test_colors(doplot=doplot):
     o.hsv = sc.rgb2hsv(rgb)
     o.rgb2 = sc.hsv2rgb(o.hsv)
     assert np.all(np.isclose(rgb, o.rgb2))
+    
+    print('Testing sanitizecolors')
+    o.green1 = sc.sanitizecolor('g')
+    o.green2 = sc.sanitizecolor('tab:green')
+    o.crimson1 = sc.sanitizecolor('crimson')
+    o.crimson2 = sc.sanitizecolor((220, 20, 60))
+    assert o.crimson1 == o.crimson2
+    o.midgrey = sc.sanitizecolor(0.5)
+    with pytest.raises(ValueError):
+        sc.sanitizecolor('not-a-color')
 
     return o
 
@@ -41,8 +52,12 @@ def test_colormaps(doplot=doplot):
     o = sc.objdict()
 
     print('Testing vectocolor')
+    nanpos = 5
+    nancolor = 'sienna'
     x = np.random.rand(10)
-    o.veccolors = sc.vectocolor(x, cmap='turbo')
+    x[nanpos] = np.nan
+    o.veccolors = sc.vectocolor(x, nancolor=nancolor, cmap='turbo')
+    assert (o.veccolors[nanpos,:] == sc.sanitizecolor(nancolor, asarray=True, alpha=1)).all()
 
     print('Testing arraycolors')
     n = 1000
