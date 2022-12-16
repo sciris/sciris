@@ -1626,10 +1626,11 @@ def suggest(user_input, valid_inputs, n=1, threshold=None, fulloutput=False, die
 
 def getcaller(frame=2, tostring=True, includelineno=False, includeline=False):
     '''
-    Try to get information on the calling function, but fail gracefully.
+    Try to get information on the calling function, but fail gracefully. See also
+    :func:`thisfile.
 
     Frame 1 is the file calling this function, so not very useful. Frame 2 is
-    the default assuming, it is being called directly. Frame 3 is used if
+    the default assuming it is being called directly. Frame 3 is used if
     another function is calling this function internally.
 
     Args:

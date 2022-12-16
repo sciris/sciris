@@ -274,7 +274,7 @@ def dumpstr(obj=None):
 #%% Other file functions
 ##############################################################################
 
-__all__ += ['loadtext', 'savetext', 'loadzip', 'savezip', 'path', 'ispath', 'thisdir', 'thispath',
+__all__ += ['loadtext', 'savetext', 'loadzip', 'savezip', 'path', 'ispath', 'thisfile', 'thisdir', 'thispath',
             'getfilelist', 'getfilepaths', 'sanitizefilename', 'sanitizepath', 'makefilepath', 'makepath', 'rmpath']
 
 
@@ -442,7 +442,29 @@ def ispath(obj):
     return isinstance(obj, Path)
 
 
-def thisdir(file=None, path=None, *args, aspath=None, **kwargs):
+def thisfile(frame=1, aspath=None):
+    '''
+    Return the full path of the current file.
+    
+    Args:
+        frame (int): which frame to pull the filename from (default 1, the file that calls this function)
+        aspath (bool): whether to return a Path object
+    
+    **Examples**::
+        
+        my_script_name = sc.thisfile() # Get the name of the current file
+        calling_script = sc.thisfile(frame=2) # Get the name of the script that called this script
+
+    New in verison 2.1.0.
+    '''
+    if aspath is None: aspath = scs.options.aspath
+    file = inspect.stack()[frame][1] # Adopted from Atomica
+    if aspath:
+        file = Path(file)
+    return file
+
+
+def thisdir(file=None, path=None, *args, frame=1, aspath=None, **kwargs):
     '''
     Tiny helper function to get the folder for a file, usually the current file.
     If not supplied, then use the current file.
@@ -451,6 +473,7 @@ def thisdir(file=None, path=None, *args, aspath=None, **kwargs):
         file (str): the file to get the directory from; usually __file__
         path (str/list): additional path to append; passed to os.path.join()
         args  (list): also passed to os.path.join()
+        frame (int): if file is None, which frame to pull the folder from (default 1, the file that calls this function)
         aspath (bool): whether to return a Path object instead of a string
         kwargs (dict): passed to Path()
 
@@ -469,9 +492,10 @@ def thisdir(file=None, path=None, *args, aspath=None, **kwargs):
     | New in version 1.1.0: "as_path" argument renamed "aspath"
     | New in version 1.2.2: "path" argument
     | New in version 1.3.0: allow modules
+    | New in version 2.1.0: frame argument
     '''
     if file is None: # No file: use the current folder
-         file = str(Path(inspect.stack()[1][1])) # Adopted from Atomica
+         file = thisfile(frame=frame+1) # Need +1 since want the calling script
     elif hasattr(file, '__file__'): # It's actually a module
         file = file.__file__
     if aspath is None: aspath = scs.options.aspath
@@ -483,13 +507,13 @@ def thisdir(file=None, path=None, *args, aspath=None, **kwargs):
     return filepath
 
 
-def thispath(*args, aspath=True, **kwargs):
+def thispath(*args, frame=1, aspath=True, **kwargs):
     '''
     Alias for :func:`thisdir` that returns a path by default instead of a string.
     
     New in version 2.1.0.
     '''
-    return thisdir(*args, **kwargs, aspath=aspath)
+    return thisdir(*args, frame=frame+1, aspath=aspath, **kwargs)
 
 thispath.__doc__ += '\n\n' + thisdir.__doc__
 
