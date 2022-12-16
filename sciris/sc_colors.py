@@ -17,17 +17,18 @@ import pylab as pl
 import numpy as np
 from matplotlib import colors as mplc
 from . import sc_utils as scu
+from . import sc_math as scm
 
 
 ##############################################################################
 #%% Color functions
 ##############################################################################
 
-__all__ = ['shifthue', 'rgb2hex', 'hex2rgb', 'rgb2hsv', 'hsv2rgb']
+__all__ = ['sanitizecolor', 'shifthue', 'rgb2hex', 'hex2rgb', 'rgb2hsv', 'hsv2rgb']
 
 
 def _listify_colors(colors, origndim=None):
-    ''' Do standard transformation on colors -- internal helpfer function '''
+    ''' Do standard transformation on colors -- internal helper function '''
     if not origndim:
         colors = scu.dcp(colors) # So we don't overwrite the original
         origndim = np.ndim(colors) # Original dimensionality
@@ -39,6 +40,46 @@ def _listify_colors(colors, origndim=None):
         if origndim==1:
             colors = colors[0] # Pull it out again
         return colors
+
+
+def sanitizecolor(color, asarray=False, alpha=None, normalize=True):
+    '''
+    Alias to ``matplotlib.colors.to_rgb``, but also handles numeric inputs.
+    
+    Arg:
+        color (str/list/etc): the input color to sanitize into an RGB tuple (or array)
+        asarray (bool): whether to return an array instead of a tuple
+        alpha (float): if not None, include the alpha channel with this value
+        normalize (bool): whether to divide by 255 if any values are greater than 1
+    
+    **Examples**::
+        
+        green1 = sc.sanitizecolor('g')
+        green2 = sc.sanitizecolor('tab:green')
+        crimson1 = sc.sanitizecolor('crimson')
+        crimson2 = sc.sanitizecolor((220, 20, 60))
+        midgrey = sc.sanitizecolor(0.5)
+    '''
+    if isinstance(color, str):
+        try:
+            color = mplc.to_rgb(color)
+        except ValueError as E:
+            errormsg = f'Could not understand "{color}" as a valid color: must be a standard Matplotlib color string'
+            raise ValueError(errormsg) from E
+    elif isinstance(color, float):
+        color = [color]*3 # Consider it grey
+            
+    color = scu.toarray(color).astype(float) # Get it into consistent format for further operations
+    if len(color) not in [3,4]:
+        errormsg = f'Cannot parse {color} as a color: expecting length 3 (RGB) or 4 (RGBA)'
+        raise ValueError(errormsg)
+    if normalize and color.max()>1:
+        color /= 255
+    if alpha is not None and len(color) == 3:
+        color = scm.cat(color, float(alpha))
+    if not asarray:
+        color = tuple(color) # Convert back to tuple if desired
+    return color
 
 
 def _processcolors(colors=None, asarray=False, ashex=False, reverse=False):
@@ -159,7 +200,7 @@ def hsv2rgb(colors=None):
 __all__ += ['vectocolor', 'arraycolors', 'gridcolors', 'midpointnorm', 'colormapdemo']
 
 
-def vectocolor(vector, cmap=None, asarray=True, reverse=False, minval=None, maxval=None, midpoint=None):
+def vectocolor(vector, cmap=None, asarray=True, reverse=False, minval=None, maxval=None, midpoint=None, nancolor=None):
     """
     This function converts a vector (i.e., 1D array) of N values into an Nx3 matrix
     of color values according to the current colormap. It automatically scales the
@@ -175,6 +216,7 @@ def vectocolor(vector, cmap=None, asarray=True, reverse=False, minval=None, maxv
         minval (float): the minimum value to use
         maxval (float): the maximum value to use
         midpoint (float): the midpoint value to use
+        nancolor (color): if supplied, use this color for NaN entries
 
     Returns:
         colors (array): Nx4 array of RGB-alpha color values
@@ -182,19 +224,20 @@ def vectocolor(vector, cmap=None, asarray=True, reverse=False, minval=None, maxv
     **Example**::
 
         n = 1000
-        x = randn(n,1);
-        y = randn(n,1);
+        x = pl.randn(n,1);
+        y = pl.randn(n,1);
         c = sc.vectocolor(y);
         pl.scatter(x, y, c=c, s=50)
 
-    New in version 1.2.0: midpoint argument.
+    | New in version 1.2.0: midpoint argument.
+    | New in version 2.1.0: nancolor argument and remove nans by default
     """
 
     from numpy import array, zeros
 
     if cmap is None:
         cmap = pl.get_cmap() # Get current colormap
-    elif type(cmap) == str:
+    elif isinstance(cmap, str):
         try:
             cmap = pl.get_cmap(cmap)
         except: # pragma: no cover
@@ -210,9 +253,9 @@ def vectocolor(vector, cmap=None, asarray=True, reverse=False, minval=None, maxv
     vector = np.array(vector) # Just to be sure
     if len(vector):
         if minval is None:
-            minval = vector.min()
+            minval = np.nanmin(vector)
         if maxval is None:
-            maxval = vector.max()
+            maxval = np.nanmax(vector)
 
         vector = vector-minval # Subtract minimum
         vector = vector/float(maxval-minval) # Divide by maximum
@@ -222,11 +265,16 @@ def vectocolor(vector, cmap=None, asarray=True, reverse=False, minval=None, maxv
         nelements = len(vector) # Count number of elements
         colors = zeros((nelements,4))
         for i in range(nelements):
-            colors[i,:] = array(cmap(vector[i]))
+            point = vector[i]
+            if np.isnan(point) and nancolor is not None:
+                color = sanitizecolor(nancolor, alpha=True) # If it's NaN
+            else:
+                color = array(cmap(point)) # Main use case
+            colors[i,:] = color
 
     # It doesn't; just return black
     else:
-        colors=(0,0,0,1)
+        colors = (0,0,0,1)
 
     # Process output
     output = _processcolors(colors=colors, asarray=asarray, reverse=reverse)
