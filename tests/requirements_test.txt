@@ -1,4 +1,3 @@
 pytest
 pytest-cov
 pytest-parallel
-line_profiler==3.5.1
