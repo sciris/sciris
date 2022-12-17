@@ -118,7 +118,7 @@ def test_dates():
     return o
 
 
-def test_tictoc():
+def test_timer():
     sc.heading('Testing tic, toc, and timer')
 
     t = 0.01
@@ -197,6 +197,7 @@ def test_tictoc():
     ubound = n*t*2
     assert lbound < T.timings[:].sum() < ubound
     assert '(4)' in T.timings.keys()[4]
+    assert T.cumtimings[-1] == T.total
 
     return T.timings
 
@@ -209,7 +210,7 @@ if __name__ == '__main__':
     # Dates
     dateobj   = test_readdate()
     dates     = test_dates()
-    times     = test_tictoc()
+    times     = test_timer()
 
     sc.blank()
     sc.toc(T)

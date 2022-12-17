@@ -323,15 +323,6 @@ def parallelize(func, iterarg=None, iterkwargs=None, args=None, kwargs=None, ncp
         else: # For all other runtime errors, raise the original exception
             raise E
 
-    # Handle other exceptions, such as not being able to pickle via default parallelizer
-    except Exception as E:
-        if not die and parallelizer != robust:
-            warnmsg = f"sc.parallelize() failed with parallelizer={parallelizer}:\n{str(E)}\nAutomatically switching to more robust parallelizer '{robust}'. To silence this warning, set parallelizer='{robust}'."
-            warnings.warn(warnmsg, category=RuntimeWarning, stacklevel=2)
-            outputlist = run_parallel(pname=robust, parallelizer=robust, argslist=argslist) # Attempt to re-run the parallelization
-        else: # All other exceptions
-            raise E
-
     # Tidy up
     if returnpool:
         return pool, outputlist

@@ -29,13 +29,14 @@ import warnings
 import numpy as np
 import pandas as pd
 import datetime as dt
-from glob import glob
+import gzip as gz
+import pickle as pkl
 from zipfile import ZipFile
 from contextlib import closing
 from io import BytesIO as IO
 from pathlib import Path
-import pickle as pkl
-import gzip as gz
+from glob import glob
+import fnmatch as fnm
 import zstandard as zstd
 from . import sc_settings as scs
 from . import sc_utils as scu
@@ -156,7 +157,7 @@ https://stackoverflow.com/questions/41554738/how-to-load-an-old-pickle-file
     return obj
 
 
-def save(filename=None, obj=None, compression='gzip', compresslevel=5, verbose=0, folder=None, method='pickle',
+def save(filename='default.obj', obj=None, compression='gzip', compresslevel=5, verbose=0, folder=None, method='pickle',
          num_threads=0, sanitizepath=True, die=False, *args, **kwargs):
     '''
     Save an object to file as a gzipped pickle -- use compression 5 by default,
@@ -164,7 +165,8 @@ def save(filename=None, obj=None, compression='gzip', compresslevel=5, verbose=0
     with ``sc.load()``. Note that ``sc.save()``/``sc.saveobj()`` are identical.
 
     Args:
-        filename      (str/Path) : the filename to save to; if str, passed to ``sc.makefilepath()``
+        filename      (str/Path) : the filename to save to; if str, passed to ``sc.makefilepath()``.
+                                  If None, return a io.BytesIO filestream instead of saving to disk
         obj           (anything) : the object to save
         compression   (str)      : whether to use gzip or zstd to compress data
         compresslevel (int)      : the level of gzip/zstd compression {1...9}
@@ -202,27 +204,28 @@ def save(filename=None, obj=None, compression='gzip', compresslevel=5, verbose=0
             print(errormsg)
 
     # Handle path
-    filetypes = (str, type(Path()), type(None))
-    if isinstance(filename, Path): # If it's a path object, convert to string
-        filename = str(filename)
-    if filename is None: # If it doesn't exist, just create a byte stream
-        bytesobj = io.BytesIO() # PSL: If filename is None, bytesobj is redefined as None in line 216
-    if not isinstance(filename, filetypes): # pragma: no cover
-        if isinstance(obj, filetypes):
-            print(f'Warning: filename was not supplied as a valid type ({type(filename)}) but the object was ({type(obj)}); automatically swapping order')
-            real_obj = filename
-            real_file = obj
-            filename = real_file
-            obj = real_obj
-            bytesobj = None
-        else:
-            errormsg = f'Filename type {type(filename)} is not valid: must be one of {filetypes}'
-            print(errormsg)
-    else: # Normal use case: make a file path
+    if filename is None: # If the user explicitly specifies None as the file, create a byte stream instead
+        bytesobj = io.BytesIO()
+    else:
         bytesobj = None
-        # default name reflects default compression algorithm which is gzip
-        filename = makefilepath(filename=filename, folder=folder, default='default.obj', ext=file_ext, sanitize=sanitizepath)
 
+        # Process and sanitize the filename passed in by the user
+        filetypes = (str, type(Path()), type(None))
+        if isinstance(filename, Path): # If it's a path object, convert to string
+            filename = str(filename)
+
+        if not isinstance(filename, filetypes): # pragma: no cover
+            if isinstance(obj, filetypes):
+                print(f'Warning: filename was not supplied as a valid type ({type(filename)}) but the object was ({type(obj)}); automatically swapping order')
+                real_obj = filename
+                real_file = obj
+                filename = real_file
+                obj = real_obj
+            else:
+                errormsg = f'Filename type {type(filename)} is not valid: must be one of {filetypes}'
+                raise Exception(errormsg)
+
+        filename = makefilepath(filename=filename, folder=folder, sanitize=sanitizepath)
 
     # Handle object
     if obj is None: # pragma: no cover
@@ -238,7 +241,7 @@ def save(filename=None, obj=None, compression='gzip', compresslevel=5, verbose=0
                 _savepickle(fileobj, obj, *args, **kwargs) # Use pickle
                 success = True
             except Exception as E: # pragma: no cover
-                if die:
+                if die is True:
                     raise E
                 else:
                     if verbose>=2: print(f'Exception when saving as pickle ({repr(E)}), saving as dill...')
@@ -314,7 +317,8 @@ def dumpstr(obj=None):
 #%% Other file functions
 ##############################################################################
 
-__all__ += ['loadtext', 'savetext', 'loadzip', 'savezip', 'getfilelist', 'sanitizefilename', 'makefilepath', 'path', 'ispath', 'thisdir']
+__all__ += ['loadtext', 'savetext', 'loadzip', 'savezip', 'path', 'ispath', 'thisfile', 'thisdir', 'thispath',
+            'getfilelist', 'getfilepaths', 'sanitizefilename', 'sanitizepath', 'makefilepath', 'makepath', 'rmpath']
 
 
 def loadtext(filename=None, folder=None, splitlines=False):
@@ -444,20 +448,135 @@ def savezip(filename=None, filelist=None, data=None, folder=None, basename=True,
     return fullpath
 
 
-def getfilelist(folder=None, pattern=None, abspath=False, nopath=False, filesonly=False, foldersonly=False, recursive=False, aspath=None):
+def path(*args, **kwargs):
+    '''
+    Alias to ``pathlib.Path()`` with some additional input sanitization:
+
+        - ``None`` entries are removed
+        - a list of arguments is converted to separate arguments
+
+    | New in version 1.2.2.
+    | New in version 2.0.0: handle None or list arguments
+    '''
+
+    # Handle inputs
+    new_args = []
+    for arg in args:
+        if isinstance(arg, list):
+            new_args.extend(arg)
+        else:
+            new_args.append(arg)
+    new_args = [arg for arg in new_args if arg is not None]
+
+    # Create the path
+    output = Path(*new_args, **kwargs)
+
+    return output
+
+path.__doc__ += '\n\n' + Path.__doc__
+
+
+def ispath(obj):
+    '''
+    Alias to isinstance(obj, Path).
+
+    New in version 2.0.0.
+    '''
+    return isinstance(obj, Path)
+
+
+def thisfile(frame=1, aspath=None):
+    '''
+    Return the full path of the current file.
+    
+    Args:
+        frame (int): which frame to pull the filename from (default 1, the file that calls this function)
+        aspath (bool): whether to return a Path object
+    
+    **Examples**::
+        
+        my_script_name = sc.thisfile() # Get the name of the current file
+        calling_script = sc.thisfile(frame=2) # Get the name of the script that called this script
+
+    New in verison 2.1.0.
+    '''
+    if aspath is None: aspath = scs.options.aspath
+    file = inspect.stack()[frame][1] # Adopted from Atomica
+    if aspath:
+        file = Path(file)
+    return file
+
+
+def thisdir(file=None, path=None, *args, frame=1, aspath=None, **kwargs):
+    '''
+    Tiny helper function to get the folder for a file, usually the current file.
+    If not supplied, then use the current file.
+
+    Args:
+        file (str): the file to get the directory from; usually __file__
+        path (str/list): additional path to append; passed to os.path.join()
+        args  (list): also passed to os.path.join()
+        frame (int): if file is None, which frame to pull the folder from (default 1, the file that calls this function)
+        aspath (bool): whether to return a Path object instead of a string
+        kwargs (dict): passed to Path()
+
+    Returns:
+        filepath (str): the full path to the folder (or filename if additional arguments are given)
+
+    **Examples**::
+
+        thisdir = sc.thisdir() # Get folder of calling file
+        thisdir = sc.thisdir('.') # Ditto (usually)
+        thisdir = sc.thisdir(__file__) # Ditto (usually)
+        file_in_same_dir = sc.thisdir(path='new_file.txt')
+        file_in_sub_dir = sc.thisdir('..', 'tests', 'mytests.py') # Merge parent folder with sufolders and a file
+        np_dir = sc.thisdir(np) # Get the folder that Numpy is loaded from (assuming "import numpy as np")
+
+    | New in version 1.1.0: "as_path" argument renamed "aspath"
+    | New in version 1.2.2: "path" argument
+    | New in version 1.3.0: allow modules
+    | New in version 2.1.0: frame argument
+    '''
+    if file is None: # No file: use the current folder
+         file = thisfile(frame=frame+1) # Need +1 since want the calling script
+    elif hasattr(file, '__file__'): # It's actually a module
+        file = file.__file__
+    if aspath is None: aspath = scs.options.aspath
+    folder = os.path.abspath(os.path.dirname(file))
+    path = scu.mergelists(path, *args)
+    filepath = os.path.join(folder, *path)
+    if aspath:
+        filepath = Path(filepath, **kwargs)
+    return filepath
+
+
+def thispath(*args, frame=1, aspath=True, **kwargs):
+    '''
+    Alias for :func:`thisdir` that returns a path by default instead of a string.
+    
+    New in version 2.1.0.
+    '''
+    return thisdir(*args, frame=frame+1, aspath=aspath, **kwargs)
+
+thispath.__doc__ += '\n\n' + thisdir.__doc__
+
+
+def getfilelist(folder=None, pattern=None, fnmatch=None, abspath=False, nopath=False, 
+                filesonly=False, foldersonly=False, recursive=True, aspath=None):
     '''
     A shortcut for using glob.
 
     Args:
         folder      (str):  the folder to find files in (default, current)
         pattern     (str):  the pattern to match (default, wildcard); can be excluded if part of the folder
+        fnmatch     (str):  optional additional string to filter results by
         abspath     (bool): whether to return the full path
         nopath      (bool): whether to return no path
         filesonly   (bool): whether to only return files (not folders)
         foldersonly (bool): whether to only return folders (not files)
-        recursive   (bool): passed to glob()
+        recursive   (bool): passed to glob() (note: ** is required as the pattern to match all subfolders)
         aspath      (bool): whether to return Path objects
-
+        
     Returns:
         List of files/folders
 
@@ -466,8 +585,10 @@ def getfilelist(folder=None, pattern=None, abspath=False, nopath=False, filesonl
         sc.getfilelist() # return all files and folders in current folder
         sc.getfilelist('~/temp', '*.py', abspath=True) # return absolute paths of all Python files in ~/temp folder
         sc.getfilelist('~/temp/*.py') # Like above
+        sc.getfilelist(fnmatch='*.py') # Recursively find all files ending in .py
 
     New in version 1.1.0: "aspath" argument
+    New in version 2.1.0: default pattern of "**"; "fnmatch" argument; default recursive=True
     '''
     if folder is None:
         folder = '.'
@@ -475,8 +596,9 @@ def getfilelist(folder=None, pattern=None, abspath=False, nopath=False, filesonl
     if abspath:
         folder = os.path.abspath(folder)
     if os.path.isdir(folder) and pattern is None:
-        pattern = '*'
-    if aspath is None: aspath = scs.options.aspath
+        pattern = '**'
+    if aspath is None: 
+        aspath = scs.options.aspath
     globstr = os.path.join(folder, pattern) if pattern else folder
     filelist = sorted(glob(globstr, recursive=recursive))
     if filesonly:
@@ -485,12 +607,25 @@ def getfilelist(folder=None, pattern=None, abspath=False, nopath=False, filesonl
         filelist = [f for f in filelist if os.path.isdir(f)]
     if nopath:
         filelist = [os.path.basename(f) for f in filelist]
+    if fnmatch:
+        filelist = [f for f in filelist if fnm.fnmatch(f, fnm)]
     if aspath:
         filelist = [Path(f) for f in filelist]
     return filelist
 
 
-def sanitizefilename(filename, sub='_', allowspaces=False, asciify=True, strict=False, disallowed=None):
+def getfilepaths(*args, aspath=True, **kwargs):
+    '''
+    Alias for :func:`getfilelist` that returns paths by default instead of strings.
+    
+    New in version 2.1.0.
+    '''
+    return getfilelist(*args, aspath=True, **kwargs)
+
+getfilepaths.__doc__ += '\n\n' + getfilelist.__doc__
+
+
+def sanitizefilename(filename, sub='_', allowspaces=False, asciify=True, strict=False, disallowed=None, aspath=False):
     '''
     Takes a potentially Linux- and Windows-unfriendly candidate file name, and
     returns a "sanitized" version that is more usable.
@@ -502,6 +637,7 @@ def sanitizefilename(filename, sub='_', allowspaces=False, asciify=True, strict=
         asciify (bool): whether to convert the string from Unicode to ASCII
         strict (bool): whether to remove (almost) all non-alphanumeric characters
         disallowed (str): optionally supply a custom list of disallowed characters
+        aspath (bool): whether to return a Path object
 
     **Example**::
 
@@ -530,8 +666,25 @@ def sanitizefilename(filename, sub='_', allowspaces=False, asciify=True, strict=
                 sanitized += sub
             else:
                 sanitized += letter
+    
+    if aspath is None: 
+        aspath = scs.options.aspath
+    if aspath:
+        sanitized = Path(sanitized)
 
     return sanitized # Return the sanitized file name.
+
+
+def sanitizepath(*args, aspath=True, **kwargs):
+    '''
+    Alias for :func:`sanitizefilename` that returns a path by default instead of a string.
+    
+    New in version 2.1.0.
+    '''
+    return sanitizefilename(*args, aspath=True, **kwargs)
+
+sanitizepath.__doc__ += '\n\n' + sanitizefilename.__doc__
+
 
 
 def makefilepath(filename=None, folder=None, ext=None, default=None, split=False, aspath=None, abspath=True, makedirs=True, checkexists=None, sanitize=False, die=True, verbose=False):
@@ -650,82 +803,16 @@ def makefilepath(filename=None, folder=None, ext=None, default=None, split=False
     return output
 
 
-def path(*args, **kwargs):
+def makepath(*args, aspath=True, **kwargs):
     '''
-    Alias to ``pathlib.Path()`` with some additional input sanitization:
-
-        - ``None`` entries are removed
-        - a list of arguments is converted to separate arguments
-
-    | New in version 1.2.2.
-    | New in version 2.0.0: handle None or list arguments
+    Alias for :func:`makefilepath` that returns a path by default instead of a string
+    (with apologies for the confusing terminology, kept for backwards compatibility).
+    
+    New in version 2.1.0.
     '''
+    return makefilepath(*args, **kwargs, aspath=True)
 
-    # Handle inputs
-    new_args = []
-    for arg in args:
-        if isinstance(arg, list):
-            new_args.extend(arg)
-        else:
-            new_args.append(arg)
-    new_args = [arg for arg in new_args if arg is not None]
-
-    # Create the path
-    output = Path(*new_args, **kwargs)
-
-    return output
-
-path.__doc__ += '\n\n' + Path.__doc__
-
-
-def ispath(obj):
-    '''
-    Alias to isinstance(obj, Path).
-
-    New in version 2.0.0.
-    '''
-    return isinstance(obj, Path)
-
-
-def thisdir(file=None, path=None, *args, aspath=None, **kwargs):
-    '''
-    Tiny helper function to get the folder for a file, usually the current file.
-    If not supplied, then use the current file.
-
-    Args:
-        file (str): the file to get the directory from; usually __file__
-        path (str/list): additional path to append; passed to os.path.join()
-        args  (list): also passed to os.path.join()
-        aspath (bool): whether to return a Path object instead of a string
-        kwargs (dict): passed to Path()
-
-    Returns:
-        filepath (str): the full path to the folder (or filename if additional arguments are given)
-
-    **Examples**::
-
-        thisdir = sc.thisdir() # Get folder of calling file
-        thisdir = sc.thisdir('.') # Ditto (usually)
-        thisdir = sc.thisdir(__file__) # Ditto (usually)
-        file_in_same_dir = sc.thisdir(path='new_file.txt')
-        file_in_sub_dir = sc.thisdir('..', 'tests', 'mytests.py') # Merge parent folder with sufolders and a file
-        np_dir = sc.thisdir(np) # Get the folder that Numpy is loaded from (assuming "import numpy as np")
-
-    | New in version 1.1.0: "as_path" argument renamed "aspath"
-    | New in version 1.2.2: "path" argument
-    | New in version 1.3.0: allow modules
-    '''
-    if file is None: # No file: use the current folder
-         file = str(Path(inspect.stack()[1][1])) # Adopted from Atomica
-    elif hasattr(file, '__file__'): # It's actually a module
-        file = file.__file__
-    if aspath is None: aspath = scs.options.aspath
-    folder = os.path.abspath(os.path.dirname(file))
-    path = scu.mergelists(path, *args)
-    filepath = os.path.join(folder, *path)
-    if aspath:
-        filepath = Path(filepath, **kwargs)
-    return filepath
+makepath.__doc__ += '\n\n' + makefilepath.__doc__
 
 
 def rmpath(path=None, *args, die=True, verbose=True, interactive=False, **kwargs):

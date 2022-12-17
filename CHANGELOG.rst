@@ -5,6 +5,10 @@ All major updates to Sciris are documented here.
 
 By import convention, components of the Sciris library are listed beginning with ``sc.``, e.g. ``sc.odict()``.
 
+Version 2.0.5 (2022-11-30)
+--------------------------
+#. Fixed bug where `sc.save(filename=None, )` would incorrectly result in creation of a file on disk in addition to returning a ``io.BytesIO`` stream
+
 
 Version 2.0.4 (2022-10-25)
 --------------------------

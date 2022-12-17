@@ -105,7 +105,7 @@ def checkmem(var, descend=True, alphabetical=False, compresslevel=0, plot=False,
 
         # Create a temporary file, save the object, check the size, remove it
         filename = tempfile.mktemp()
-        scf.save(filename, variable, die=False, compresslevel=compresslevel)
+        scf.save(filename, variable, die='never', compresslevel=compresslevel)
         filesize = os.path.getsize(filename)
         os.remove(filename)
 
@@ -242,7 +242,7 @@ def loadbalancer(maxcpu=0.8, maxmem=0.8, index=None, interval=0.5, cpu_interval=
     if maxcpu   is None or maxcpu  is False: maxcpu  = 1.0
     if maxmem   is None or maxmem  is False: maxmem  = 1.0
     if maxtime  is None or maxtime is False: maxtime = 36000
-    if interval is None: interval = 0
+    if interval is None: interval = 0.5
 
     if label is None:
         label = ''
