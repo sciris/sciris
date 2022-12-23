@@ -672,7 +672,7 @@ def toctic(returntic=False, returntoc=False, *args, **kwargs):
     else:           return
 
 
-class timer(scu.prettyobj):
+class timer:
     '''
     Simple timer class. Note: ``sc.timer()`` and ``sc.Timer()`` are aliases.
 

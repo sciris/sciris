@@ -41,6 +41,7 @@ import pandas as pd
 import random as rnd
 import uuid as py_uuid
 import packaging.version
+import contextlib as cl
 import traceback as py_traceback
 
 # Handle types
@@ -1757,7 +1758,7 @@ def importbyname(module=None, variable=None, namespace=None, lazy=False, overwri
 #%% Classes
 ##############################################################################
 
-__all__ += ['KeyNotFoundError', 'LinkException', 'prettyobj', 'autolist', 'Link', 'LazyModule']
+__all__ += ['KeyNotFoundError', 'LinkException', 'prettyobj', 'autolist', 'Link', 'LazyModule', 'tryexcept']
 
 
 class KeyNotFoundError(KeyError):
@@ -1971,3 +1972,121 @@ class LazyModule:
         else:
             obj = lib
         return obj
+    
+
+class tryexcept(cl.suppress):
+    '''
+    Simple class to catch exceptions in a single line -- effectively an alias to
+    contextlib.suppress.
+    
+    By default, all errors are caught. If ``catch`` is not None, then by default 
+    raise all other exceptions; if ``die`` is an exception (list of exceptions, 
+    then by default suppress all other exceptions.
+    
+    Due to Python's fundamental architecture, exceptions can only be caught inside
+    a with statement, and the with block will exit immediately as soon as the first
+    exception is encountered.
+    
+    Args:
+        die (bool/exception): default behavior of whether to raise caught exceptions
+        catch (exception): one or more exceptions to catch regardless of "die"
+        verbose (bool): whether to print caught exceptions (0 = silent, 1 = error type, 2 = full error information)
+        history (list/tryexcept): a ``tryexcept`` object, or a list of exceptions, to keep the history (see example below)
+    
+    **Examples**::
+
+        # Basic usage
+        values = [0,1]
+        with sc.tryexcept(): # Equivalent to contextlib.suppress(Exception)
+            values[2]
+            
+        # Raise only certain errors
+        with sc.tryexcept(die=IndexError): # Catch everything except IndexError
+            values[2]
+
+        # Catch (do not raise) only certain errors, and print full error information
+        with sc.tryexcept(catch=IndexError, verbose=2): # Raise everything except IndexError
+            values[2]
+            
+        # Storing the history of multiple exceptions
+        tryexc = None
+        for i in range(5):
+            with sc.tryexcept(history=tryexc) as tryexc:
+                print(values[i])
+        tryexc.print()
+            
+    New in version 2.1.0
+    '''
+
+    def __init__(self, die=None, catch=None, verbose=1, history=None):
+        
+        # Handle defaults
+        dietypes   = []
+        catchtypes = []
+        if die is None and catch is None: # Default: do not die
+            self.defaultdie = False
+        elif die in [True, False, 0, 1]: # It's truthy: use it directly
+            self.defaultdie = die
+        elif die is None and catch is not None: # We're asked to catch some things, so die otherwise
+            self.defaultdie = True
+            catchtypes = promotetolist(catch)
+        elif die is not None and catch is None: # Vice versa
+            self.defaultdie = False
+            dietypes = promotetolist(die)
+        else:
+            errormsg = 'Unexpected input to "die" and "catch": typically only one or the other should be provided'
+            raise ValueError(errormsg)
+        
+        # Finish initialization
+        self.dietypes   = tuple(dietypes)
+        self.catchtypes = tuple(catchtypes)
+        self.verbose    = verbose
+        self.exceptions = []
+        if history is not None:
+            if isinstance(history, (list, tuple)):
+                self.exceptions.extend(list(history))
+            elif isinstance(history, tryexcept):
+                self.exceptions.extend(history.exceptions)
+            else:
+                errormsg = f'Could not understand supplied history: must be a list or a tryexcept object, not {type(history)}'
+                raise TypeError(errormsg)
+        return
+    
+    
+    def __repr__(self):
+        from . import sc_printing as scp # To avoid circular import
+        return scp.prepr(self)
+
+
+    def __enter__(self):
+        return self
+    
+    
+    def __exit__(self, exc_type, exc_val, traceback):
+        ''' If a context manager returns True from exit, the exception is caught '''
+        if exc_type is not None:
+            self.exceptions.append([exc_type, exc_val, traceback])
+            die = (self.defaultdie or issubclass(exc_type, self.dietypes))
+            live = issubclass(exc_type, self.catchtypes)
+            if die and not live:
+                return
+            else:
+                if self.verbose > 1: # Print everything
+                    self.print()
+                elif self.verbose: # Just print the exception type
+                    print(exc_type, exc_val)
+                return True
+
+    
+    def print(self, which=-1):
+        ''' Print the exception (usually the last) '''
+        if len(self.exceptions):
+            py_traceback.print_exception(*self.exceptions[which])
+        else:
+            print('No exceptions were encountered; nothing to trace')
+        return
+    
+    
+    @property
+    def died(self):
+        return len(self.exceptions) > 0
