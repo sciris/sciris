@@ -286,7 +286,7 @@ def loadbalancer(maxcpu=0.8, maxmem=0.8, index=None, interval=0.5, cpu_interval=
             scd.randsleep(interval)
         else:
             toohigh = False
-            string = label+f'CPU & memory fine ({cpu_str} & {mem_str}), starting {process_str} after {count} tries'
+            string = label+f'CPU ✓ ({cpu_str}), memory ✓ ({mem_str}): starting {process_str} after {count} tries'
         if verbose:
             print(string)
     return string
