@@ -37,13 +37,13 @@ from io import BytesIO as IO
 from pathlib import Path
 from glob import glob
 import fnmatch as fnm
-import zstandard as zstd
 from . import sc_settings as scs
 from . import sc_utils as scu
 from . import sc_printing as scp
 from . import sc_datetime as scd
 from . import sc_odict as sco
 from . import sc_dataframe as scdf
+zstd = scu.importbyname('zstandard', die=False, verbose=False) # Optional import
 
 
 ##############################################################################
@@ -55,9 +55,9 @@ __all__ = ['load', 'save', 'loadobj', 'saveobj', 'loadstr', 'dumpstr', 'rmpath']
 
 def load(filename=None, folder=None, verbose=False, die=None, remapping=None, method='pickle', **kwargs):
     '''
-    Load a file that has been saved as a gzipped pickle file, e.g. by ``sc.save()``.
+    Load a file that has been saved as a gzipped pickle file, e.g. by :func:`sc.save()`.
     Accepts either a filename (standard usage) or a file object as the first argument.
-    Note that ``sc.load()``/``sc.loadobj()`` are aliases of each other.
+    Note that `:func:`load()`/:func:`loadobj()` are aliases of each other.
 
     Note: be careful when loading pickle files, since a malicious pickle can be
     used to execute arbitrary code.
@@ -133,11 +133,12 @@ https://stackoverflow.com/questions/41554738/how-to-load-an-old-pickle-file
                     zdcompressor = zstd.ZstdDecompressor()
                     with zdcompressor.stream_reader(fh) as fileobj:
                         filestr = fileobj.read()
-            except: # If that fails
+            except Exception as E2: # If that fails
                 try: # Try as a regular object
                     with open(filename, 'rb') as fileobj:
                         filestr = fileobj.read() # Convert it to a string
-                except:
+                except Exception as E3:
+                    gziperror += f'\nAdditional errors encountered:\n{str(E2)}\n{str(E3)}'
                     raise exc(gziperror) from E
 
     # Unpickle it
@@ -157,18 +158,17 @@ https://stackoverflow.com/questions/41554738/how-to-load-an-old-pickle-file
     return obj
 
 
-def save(filename='default.obj', obj=None, compression='gzip', compresslevel=5, verbose=0, folder=None, method='pickle',
-         num_threads=0, sanitizepath=True, die=False, *args, **kwargs):
+def save(filename='default.obj', obj=None, folder=None, compression='gzip', compresslevel=5, 
+         verbose=0, method='pickle', sanitizepath=True, die=False, *args, **kwargs):
     '''
     Save an object to file as a gzipped pickle -- use compression 5 by default,
     since more is much slower but not much smaller. Once saved, can be loaded
     with ``sc.load()``. Note that ``sc.save()``/``sc.saveobj()`` are identical.
 
     Args:
-        filename      (str/Path) : the filename to save to; if str, passed to ``sc.makefilepath()``.
-                                  If None, return a io.BytesIO filestream instead of saving to disk
+        filename      (str/Path) : the filename or path to save to; if None, return an io.BytesIO filestream instead of saving to disk
         obj           (anything) : the object to save
-        compression   (str)      : whether to use gzip or zstd to compress data
+        compression   (str)      : type of compression to use: 'gzip' (default), 'zstd' (zstandard), or 'none' (no compression)
         compresslevel (int)      : the level of gzip/zstd compression {1...9}
         verbose       (int)      : detail to print
         folder        (str)      : passed to ``sc.makefilepath()``
@@ -188,21 +188,30 @@ def save(filename='default.obj', obj=None, compression='gzip', compresslevel=5, 
     | New in version 1.1.1: removed Python 2 support.
     | New in version 1.2.2: automatic swapping of arguments if order is incorrect; correct passing of arguments
     | New in version 2.0.4: "die" argument for saving as dill
+    | New in version 2.1.0: "zstandard" compression method
     '''
 
-    # Handle file extension depending on compression algorithm
-    if compression == 'gzip':
-        file_ext = 'gz'
-    elif compression == 'zstd':
-        file_ext  = 'zst'
-    else:
-        file_ext = ''
-        errormsg = f"Invalid compression format: must be a either 'gzip' or 'zstd'"
-        if die:
-            raise ValueError(errormsg)
-        else:
-            print(errormsg)
+    def serialize(fileobj, obj, success, *args, **kwargs):
+        ''' Actually write a serial bytestream to disk '''
+        # Try pickle first
+        if method == 'pickle':
+            try:
+                if verbose>=2: print('Saving as pickle...')
+                _savepickle(fileobj, obj, *args, **kwargs) # Use pickle
+                success = True
+            except Exception as E: # pragma: no cover
+                if die is True:
+                    raise E
+                else:
+                    if verbose>=2: print(f'Exception when saving as pickle ({repr(E)}), saving as dill...')
 
+        # If dill is requested or pickle failed, use dill
+        if not success: # pragma: no cover
+            if verbose>=2: print('Saving as dill...')
+            _savedill(fileobj, obj, *args, **kwargs)
+        
+        return
+    
     # Handle path
     if filename is None: # If the user explicitly specifies None as the file, create a byte stream instead
         bytesobj = io.BytesIO()
@@ -233,40 +242,23 @@ def save(filename='default.obj', obj=None, compression='gzip', compresslevel=5, 
         if die != 'never':
             raise ValueError(errormsg)
 
-    def serialize(fileobj, obj, success, *args, **kwargs):
-        # Try pickle first
-        if method == 'pickle':
-            try:
-                if verbose>=2: print('Saving as pickle...')
-                _savepickle(fileobj, obj, *args, **kwargs) # Use pickle
-                success = True
-            except Exception as E: # pragma: no cover
-                if die is True:
-                    raise E
-                else:
-                    if verbose>=2: print(f'Exception when saving as pickle ({repr(E)}), saving as dill...')
-
-        # If dill is requested or pickle failed, use dill
-        if not success: # pragma: no cover
-            if verbose>=2: print('Saving as dill...')
-            _savedill(fileobj, obj, *args, **kwargs)
-
-
     # Compress and actually save
     success = False
-    if compression == 'gzip':
+    if compression in ['gz', 'gzip']:
         # File extension is .gz
         with gz.GzipFile(filename=filename, fileobj=bytesobj, mode='wb', compresslevel=compresslevel) as fileobj:
             serialize(fileobj, obj, success, *args, **kwargs)
-    elif compression == 'zstd':
+    elif compression in ['zst', 'zstd', 'zstandard']:
         # File extension is .zst
         with open(filename, 'wb') as fh:
-            zcompressor = zstd.ZstdCompressor(level=compresslevel, threads=num_threads)
+            zcompressor = zstd.ZstdCompressor(level=compresslevel)
             with zcompressor.stream_writer(fh) as fileobj:
                 serialize(fileobj, obj, success, *args, **kwargs)
+    elif compression in ['none']:
+        with open(filename, 'wb') as fileobj:
+            serialize(fileobj, obj, success, *args, **kwargs)
     else:
-        #NOTE-PSL: Maybe default to save with gzip?
-        errormsg = f"Invalid compression format: must be a either 'gzip' or 'zstd'"
+        errormsg = f"Invalid compression format '{compression}': must be 'gzip', 'zstd', or 'none'"
         raise ValueError(errormsg)
 
     if verbose and filename:
@@ -279,13 +271,14 @@ def save(filename='default.obj', obj=None, compression='gzip', compresslevel=5, 
         return bytesobj
 
 
-# Aliases to make these core functions even easier to use
+# Backwards compatibility for core functions
 loadobj = load
 saveobj = save
 
+
 def loadstr(string, verbose=False, die=None, remapping=None):
     '''
-    Like loadobj(), but for a bytes-like string (rarely used).
+    Like :func:`load()`, but for a bytes-like string (rarely used).
 
     **Example**::
 
@@ -302,7 +295,7 @@ def loadstr(string, verbose=False, die=None, remapping=None):
 
 
 def dumpstr(obj=None):
-    ''' Dump an object as a bytes-like string (rarely used); see ``sc.loadstr()`` '''
+    ''' Dump an object as a bytes-like string (rarely used); see :func:`loadstr()` '''
     with closing(IO()) as output: # Open a "fake file."
         with gz.GzipFile(fileobj=output, mode='wb') as fileobj:  # Open a Gzip-compressing way to write to this "file."
             try:    _savepickle(fileobj, obj) # Use pickle

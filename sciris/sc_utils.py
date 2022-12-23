@@ -921,8 +921,7 @@ def promotetoarray(x, keepnone=False, **kwargs):
         sc.promotetoarray([3,5]) # Returns np.array([3,5])
         sc.promotetoarray(None, skipnone=True) # Returns np.array([])
 
-    | New in version 1.1.0: replaced "skipnone" with "keepnone"; allowed passing
-    kwargs to ``np.array()``.
+    | New in version 1.1.0: replaced "skipnone" with "keepnone"; allowed passing kwargs to ``np.array()``.
     | New in version 2.0.1: added support for pandas Series and DataFrame
     '''
     skipnone = kwargs.pop('skipnone', None)
@@ -1690,7 +1689,7 @@ def _assign_to_namespace(var, obj, namespace=None, overwrite=True):
     return
 
 
-def importbyname(module=None, variable=None, namespace=None, lazy=False, overwrite=True, die=True, **kwargs):
+def importbyname(module=None, variable=None, namespace=None, lazy=False, overwrite=True, die=True, verbose=True, **kwargs):
     '''
     Import modules by name.
 
@@ -1704,6 +1703,7 @@ def importbyname(module=None, variable=None, namespace=None, lazy=False, overwri
         lazy (bool): whether to create a LazyModule object instead of load the actual module
         overwrite (bool): whether to allow overwriting an existing variable (by default, yes)
         die (bool): whether to raise an exception if encountered
+        verbose (bool): whether to print a warning if an module can't be imported
         **kwargs (dict): additional variable:modules pairs to import (see examples below)
 
     **Examples**::
@@ -1711,6 +1711,8 @@ def importbyname(module=None, variable=None, namespace=None, lazy=False, overwri
         np = sc.importbyname('numpy')
         sc.importbyname(pd='pandas', np='numpy')
         pl = sc.importbyname(pl='matplotlib.pyplot', lazy=True) # Won't actually import until e.g. pl.figure() is called
+
+    New in version 2.1.0: "verbose" argument
     '''
     # Initialize
     import importlib
@@ -1733,7 +1735,8 @@ def importbyname(module=None, variable=None, namespace=None, lazy=False, overwri
                 lib = importlib.import_module(module)
             except Exception as E: # pragma: no cover
                 errormsg = f'Cannot import "{module}" since {module} is not installed. Please install {module} and try again.'
-                print(errormsg)
+                if verbose and not die:
+                    print(errormsg)
                 lib = None
                 if die: raise E
                 else:   return False
