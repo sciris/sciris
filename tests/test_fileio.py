@@ -105,6 +105,13 @@ def test_load_save():
     o.obj1 = sc.load(files.binary)
     print(o.obj1)
     
+    sc.heading('Testing other load/save options')
+    sc.save(files.binary, testdata, compresslevel=9)
+    sc.save(files.binary, testdata, compression='none')
+    sc.zsave(files.binary, testdata)
+    zobj = sc.load(files.binary)
+    assert np.all(o.obj1 == zobj)
+    
     sc.heading('Savetext/loadtext')
     sc.savetext(files.text, testdata)
     o.obj2 = sc.loadtext(files.text)

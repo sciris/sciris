@@ -24,6 +24,7 @@ requirements = [
         'xlsxwriter',   # Spreadsheet output
         'psutil',       # Load monitoring
         'dill',         # For pickling more complex object types
+        'zstandard',    # For a more efficient compression algorithm
         'multiprocess', # More flexible version of multiprocessing
         'jsonpickle',   # For converting arbitrary objects to JSON
         'pyyaml',       # For loading/saving YAML
