@@ -50,7 +50,7 @@ zstd = scu.importbyname('zstandard', die=False, verbose=False) # Optional import
 #%% Pickling functions
 ##############################################################################
 
-__all__ = ['load', 'save', 'loadobj', 'saveobj', 'loadstr', 'dumpstr', 'rmpath']
+__all__ = ['load', 'save', 'loadobj', 'saveobj', 'zsave', 'loadstr', 'dumpstr', 'rmpath']
 
 
 def load(filename=None, folder=None, verbose=False, die=None, remapping=None, method='pickle', **kwargs):
@@ -168,14 +168,13 @@ def save(filename='default.obj', obj=None, folder=None, compression='gzip', comp
     Args:
         filename      (str/Path) : the filename or path to save to; if None, return an io.BytesIO filestream instead of saving to disk
         obj           (anything) : the object to save
+        folder        (str)      : passed to :func:`sc.makepath()`
         compression   (str)      : type of compression to use: 'gzip' (default), 'zstd' (zstandard), or 'none' (no compression)
-        compresslevel (int)      : the level of gzip/zstd compression {1...9}
+        compresslevel (int)      : the level of gzip/zstd compression (1 to 9 for gzip, -7 to 22 for zstandard, default 5)
         verbose       (int)      : detail to print
-        folder        (str)      : passed to ``sc.makefilepath()``
-        method        (str)      : whether to use pickle (default) or dill
+        method        (str)      : whether to use 'pickle' (default) or 'dill'
         die           (bool)     : whether to fail if the object can't be pickled (else, try dill)
         sanitizepath  (bool)     : whether to sanitize the path prior to saving
-        num_threads   (int)      : used by zstd compressor. 0: disable multithread, -1: use all logical cpus
         args          (list)     : passed to ``pickle.dumps()``
         kwargs        (dict)     : passed to ``pickle.dumps()``
 
@@ -287,8 +286,8 @@ def loadstr(string, verbose=False, die=None, remapping=None):
         string2 = sc.loadstr(string1)
         assert string1 == string2
     '''
-    with closing(IO(string)) as output: # Open a "fake file" with the Gzip string pickle in it.
-        with gz.GzipFile(fileobj=output, mode='rb') as fileobj: # Set a Gzip reader to pull from the "file."
+    with closing(IO(string)) as output: # Open a "fake file" with the Gzip string pickle in it
+        with gz.GzipFile(fileobj=output, mode='rb') as fileobj: # Set a Gzip reader to pull from the "file"
             picklestring = fileobj.read() # Read the string pickle from the "file" (applying Gzip decompression).
     obj = _unpickler(picklestring, filestring=string, verbose=verbose, die=die, remapping=remapping) # Return the object gotten from the string pickle.
     return obj
@@ -296,14 +295,26 @@ def loadstr(string, verbose=False, die=None, remapping=None):
 
 def dumpstr(obj=None):
     ''' Dump an object as a bytes-like string (rarely used); see :func:`loadstr()` '''
-    with closing(IO()) as output: # Open a "fake file."
-        with gz.GzipFile(fileobj=output, mode='wb') as fileobj:  # Open a Gzip-compressing way to write to this "file."
+    with closing(IO()) as output: # Open a "fake file"
+        with gz.GzipFile(fileobj=output, mode='wb') as fileobj:  # Open a Gzip-compressing way to write to this "file"
             try:    _savepickle(fileobj, obj) # Use pickle
             except: _savedill(fileobj, obj) # ...but use Dill if that fails
         output.seek(0) # Move the mark to the beginning of the "file."
         result = output.read() # Read all of the content into result.
     return result
 
+
+def zsave(*args, compression='zstd', **kwargs):
+    '''
+    Save a file using zstandard (instead of gzip) compression. This is an alias
+    for ``sc.save(..., compression='zstd')``; see :func:`save()` for details.
+    
+    Note: there is no matching function ``sc.zload()`` since :func:`load()` will
+    automatically try loading
+    
+    New in version 2.1.0.    
+    '''
+    return save(*args, compression=compression, **kwargs)
 
 
 ##############################################################################
