@@ -46,10 +46,10 @@ extensions = [
     "recommonmark",
 ]
 
-autodoc_default_options = {
-    'member-order': 'bysource',
-    'members': None,
-}
+# autodoc_default_options = {
+#     'member-order': 'bysource',
+#     'members': None,
+# }
 
 autodoc_mock_imports = []
 napoleon_google_docstring = True
@@ -58,8 +58,8 @@ napoleon_google_docstring = True
 autosummary_generate = True  # Turn on sphinx.ext.autosummary
 autoclass_content = "init"  # Add __init__ doc (ie. params) to class summaries
 html_show_sourcelink = False  # Remove 'view source code' from top of page (for html, not python)
-autodoc_member_order = 'bysource' # Keep original ordering
-add_module_names = False  # NB, does not work
+# autodoc_member_order = 'bysource' # Keep original ordering
+# add_module_names = False  # NB, does not work
 autodoc_inherit_docstrings = False # Stops sublcasses from including docs from parent classes
 
 # Add any paths that contain templates here, relative to this directory.
