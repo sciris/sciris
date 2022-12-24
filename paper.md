@@ -34,7 +34,7 @@ authors:
     orcid: 0000-0002-3724-2412
     affiliation: 3
   - name: Sherrie L. Kelly
-    orcid: Sherrie Kelly
+    orcid: 0000-0002-6232-5586
     affiliation: 3
   - name: Jamie A. Cohen
     orcid: 0000-0002-8479-1860
