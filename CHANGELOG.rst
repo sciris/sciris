@@ -29,6 +29,7 @@ Other changes
 #. ``sc.thisdir()`` now takes a ``frame`` argument, in case the folder of a file *other* than the calling script is desired.
 #. ``sc.getfilelist()`` now has a ``fnmatch`` argument, which allows for Unix-style file matching via the [fnmatch](https://docs.python.org/3/library/fnmatch.html) module.
 #. ``sc.importbyname()`` now has a ``verbose`` argument.
+#. ``sc.promotetolist()`` and ``sc.promotetoarray()`` are now aliases of ``sc.tolist()`` and ``sc.toarray()``, rather than vice versa.
 
 
 Version 2.0.4 (2022-10-25)
