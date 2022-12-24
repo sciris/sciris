@@ -1,0 +1,19 @@
+#!/bin/bash
+# Docker command for compiling the paper locally -- needs to be run with sudo access.
+# For details, see: https://joss.readthedocs.io/en/latest/submitting.html 
+
+start=$SECONDS
+
+rm -v paper.jats paper.pdf
+
+sudo docker run --rm \
+    --volume $PWD:/data \
+    --user $(id -u):$(id -g) \
+    --env JOURNAL=joss \
+    openjournals/inara
+
+sudo chown -R $USER:$USER ./media paper.jats paper.pdf
+
+duration=$(( SECONDS - start ))
+
+echo "Done: compiled after $duration s"

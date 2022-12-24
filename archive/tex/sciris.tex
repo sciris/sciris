@@ -1,0 +1,103 @@
+% SCIRIS PAPER
+
+% Repo: https://github.com/sciris/sciris_paper
+
+\documentclass[10pt]{not-pnas}
+\templatetype{not-pnas} % Choose template 
+% Use the lineno option to display guide line numbers if required.
+
+% Additional customizations
+\usepackage{parskip} % Use spaces between paragraphs, not indents
+\usepackage{natbib} % Optional author-year citation
+\bibliographystyle{vancouver-authoryear} % Optional author-year citation
+\usepackage{fontspec}
+\setmainfont[Path=fonts/, Ligatures=TeX, BoldFont=lin-biolinum-bold.ttf, ItalicFont=lin-biolinum-italic.ttf]{lin-biolinum.ttf}
+
+
+\title{Sciris: a Python library to simplify scientific computing}
+
+% Use letters for affiliations, numbers to show equal authorship (if applicable) and to indicate the corresponding author
+\author[a,1]{Cliff C. Kerr}
+\author[b]{Romesh G. Abeysuriya}
+\author[b]{Vlad-Ștefan Harbuz}
+\author[b]{George L. Chadderdon}
+\author[b]{Parham Saidi}
+\author[b]{Paula Sanz-Leon}
+\author[b]{James Jansson}
+\author[b]{Maria del Mar Quiroga}
+\author[b]{Rowan Martin-Hughes}
+\author[b]{Sherrie Kelly}
+\author[b]{Jamie Cohen}
+\author[b]{Robyn M. Stuart}
+\author[b]{Anna Nachesa}
+
+\affil[a]{Institute for Disease Modeling, Global Health Division, Bill \& Melinda Gates Foundation, Seattle, USA}
+\affil[b]{Affiliations TBC}
+
+% Give the surname of the lead author for the running footer
+\leadauthor{Kerr}
+
+% Please include corresponding author, author contribution and author declaration information
+\authorcontributions{Contributions TBC}
+
+%\equalauthors{\textsuperscript{1}A.O.(Author One) contributed equally to this work with A.T. (Author Two) (remove if not applicable).}
+\correspondingauthor{\textsuperscript{1}Corresponding author: \href{mailto:info@sciris.org}{info@sciris.org}}
+
+\keywords{Scientific computing | Plotting | Parallelization | Data structures | NumPy | Matplotlib} 
+
+\begin{abstract}
+Sciris is a library of tools that make it faster and more pleasant to write scientific Python code. Built on top of NumPy and Matplotlib, Sciris provides functions covering a wide range of common array and plotting operations. This means you can get more done with less code, and spend less time looking things up on StackOverflow. ScirisWeb is an extension of Sciris that allows you to build Python webapps without reinventing the wheel – kind of like Shiny for Python. In contrast to Plotly Dash and Streamlit, which have limited options for customization, ScirisWeb is completely modular, so you have control over which tools to use for which aspects of the project. Out of the box, ScirisWeb provides a ``just works'' solution using Vuejs for the frontend, Flask as the web framework, Redis for the (optional) database, and Matplotlib for plotting. But if you want a React frontend linked to an SQL database with Plotly figures, ScirisWeb can serve as the glue holding all of that together.
+
+\end{abstract}
+
+% \dates{\normalsize{\textit{7 June 2021}}}
+
+\begin{document}
+
+\maketitle
+\thispagestyle{firststyle}
+\ifthenelse{\boolean{shortarticle}}{\ifthenelse{\boolean{singlecolumn}}{\abscontentformatted}{\abscontent}}{}
+
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% =========================== Intro ===========================
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\section{Introduction}
+
+TBC
+
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% =========================== Methods ===========================
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\section{Methods}
+
+TBC
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% =========================== Results ===========================
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\section{Results}
+
+TBC
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% =========================== Discussion ===========================
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\section{Discussion}
+
+TBC
+
+
+
+% Bibliography
+
+\bibliography{references}
+
+\end{document}
