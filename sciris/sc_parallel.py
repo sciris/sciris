@@ -143,8 +143,7 @@ def parallelize(func, iterarg=None, iterkwargs=None, args=None, kwargs=None, ncp
             print(results)
 
     | New in version 1.1.1: "serial" argument.
-    | New in version 2.0.0: changed default parallelizer from ``multiprocess.Pool`` to ``concurrent.futures.ProcessPoolExecutor``;
-    replaced ``maxload`` with ``maxcpu``/``maxmem``; added ``returnpool`` argument
+    | New in version 2.0.0: changed default parallelizer from ``multiprocess.Pool`` to ``concurrent.futures.ProcessPoolExecutor``; replaced ``maxload`` with ``maxcpu``/``maxmem``; added ``returnpool`` argument
     | New in version 2.0.4: added "die" argument; changed exception handling
     '''
     # Handle maxload

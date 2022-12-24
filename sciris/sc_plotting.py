@@ -869,11 +869,11 @@ class ScirisDateFormatter(mpl.dates.ConciseDateFormatter):
         - The day and month are always shown.
         - The cursor shows only the date, not the time
 
-    This formatter is not intended to be called directly -- use ``sc.dateformatter()``
+    This formatter is not intended to be called directly -- use :func:`dateformatter`
     instead. It is also optimized for plotting dates, rather than times -- for those,
     ConciseDateFormatter is better.
 
-    See ``sc.dateformatter()`` for explanation of arguments.
+    See :func:`dateformatter` for explanation of arguments.
 
     New in version 1.3.0.
     '''
