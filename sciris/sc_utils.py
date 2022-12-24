@@ -41,6 +41,7 @@ import pandas as pd
 import random as rnd
 import uuid as py_uuid
 import packaging.version
+import contextlib as cl
 import traceback as py_traceback
 
 # Handle types
@@ -60,8 +61,8 @@ __all__ = ['fast_uuid', 'uuid', 'dcp', 'cp', 'pp', 'sha', 'freeze', 'require',
 
 def fast_uuid(which=None, length=None, n=1, secure=False, forcelist=False, safety=1000, recursion=0, recursion_limit=10, verbose=True):
     '''
-    Create a fast UID or set of UIDs. Note: for certain applications, ``sc.uuid()``
-    is faster than ``sc.fast_uuid()``!
+    Create a fast UID or set of UIDs. Note: for certain applications, :func:`uuid`
+    is faster than :func:`fast_uuid`!
 
     Args:
         which (str): the set of characters to choose from (default ascii)
@@ -553,7 +554,7 @@ def urlopen(url, filename=None, save=False, headers=None, params=None, data=None
     '''
     Download a single URL.
 
-    Alias to ``urllib.request.urlopen(url).read()``. See also ``sc.download()``
+    Alias to ``urllib.request.urlopen(url).read()``. See also :func:`download`
     for downloading multiple URLs. Note: ``sc.urlopen()``/``sc.wget()`` are aliases.
 
     Args:
@@ -653,7 +654,7 @@ def download(url, *args, filename=None, save=True, parallel=True, verbose=True, 
     '''
     Download one or more URLs in parallel and return output or save them to disk.
 
-    A wrapper for ``sc.urlopen()``, except with ``save=True`` by default.
+    A wrapper for :func:`urlopen`, except with ``save=True`` by default.
 
     Args:
         url (str/list/dict): either a single URL, a list of URLs, or a dict of URL:filename pairs
@@ -662,7 +663,7 @@ def download(url, *args, filename=None, save=True, parallel=True, verbose=True, 
         save (bool): if supplied instead of ``filename``, then use the default filename
         parallel (bool): whether to download multiple URLs in parallel
         verbose (bool): whether to print progress (if verbose=2, print extra detail on each downloaded URL)
-        **kwargs (dict): passed to ``sc.urlopen()``
+        **kwargs (dict): passed to :func:`urlopen`
 
     **Examples**::
 
@@ -748,7 +749,7 @@ def htmlify(string, reverse=False, tostring=False):
 ##############################################################################
 
 __all__ += ['flexstr', 'isiterable', 'checktype', 'isnumber', 'isstring', 'isarray',
-            'promotetoarray', 'promotetolist', 'toarray', 'tolist', 'transposelist',
+            'toarray', 'tolist', 'promotetoarray', 'promotetolist', 'transposelist',
             'swapdict', 'mergedicts', 'mergelists']
 
 def flexstr(arg, force=True):
@@ -836,7 +837,7 @@ def checktype(obj=None, objtype=None, subtype=None, die=False):
 
     # Do second round checking
     if result and objtype in ['listlike', 'arraylike']: # Special case for handling arrays which may be multi-dimensional
-        obj = promotetoarray(obj).flatten() # Flatten all elements
+        obj = toarray(obj).flatten() # Flatten all elements
         if objtype == 'arraylike' and subtype is None: # Add additional check for numeric entries
             subtype = _numtype + _booltypes
     if isiterable(obj) and subtype is not None:
@@ -901,34 +902,33 @@ def isarray(obj, dtype=None):
                 return False
 
 
-def promotetoarray(x, keepnone=False, **kwargs):
+def toarray(x, keepnone=False, **kwargs):
     '''
     Small function to ensure consistent format for things that should be arrays
-    (note: ``toarray()`` and ``promotetoarray()`` are identical).
+    (note: :func:`toarray()` and :func:`promotetoarray()` are identical).
 
-    Very similar to ``np.array``, with the main difference being that ``sc.promotetoarray(3)``
+    Very similar to ``np.array``, with the main difference being that ``sc.toarray(3)``
     will return ``np.array([3])`` (i.e. a 1-d array that can be iterated over), while
     ``np.array(3)`` will return a 0-d array that can't be iterated over.
 
     Args:
         x (any): a number or list of numbers
-        keepnone (bool): whether ``sc.promotetoarray(None)`` should return ``np.array([])`` or ``np.array([None], dtype=object)``
+        keepnone (bool): whether ``sc.toarray(None)`` should return ``np.array([])`` or ``np.array([None], dtype=object)``
         kwargs (dict): passed to ``np.array()``
 
     **Examples**::
 
-        sc.promotetoarray(5) # Returns np.array([5])
-        sc.promotetoarray([3,5]) # Returns np.array([3,5])
-        sc.promotetoarray(None, skipnone=True) # Returns np.array([])
+        sc.toarray(5) # Returns np.array([5])
+        sc.toarray([3,5]) # Returns np.array([3,5])
+        sc.toarray(None, skipnone=True) # Returns np.array([])
 
-    | New in version 1.1.0: replaced "skipnone" with "keepnone"; allowed passing
-    kwargs to ``np.array()``.
+    | New in version 1.1.0: replaced "skipnone" with "keepnone"; allowed passing kwargs to ``np.array()``.
     | New in version 2.0.1: added support for pandas Series and DataFrame
     '''
     skipnone = kwargs.pop('skipnone', None)
     if skipnone is not None: # pragma: no cover
         keepnone = not(skipnone)
-        warnmsg = 'sc.promotetoarray() argument "skipnone" has been deprecated as of v1.1.0; use keepnone instead'
+        warnmsg = 'sc.toarray() argument "skipnone" has been deprecated as of v1.1.0; use keepnone instead'
         warnings.warn(warnmsg, category=FutureWarning, stacklevel=2)
     if isnumber(x) or (isinstance(x, np.ndarray) and not np.shape(x)): # e.g. 3 or np.array(3)
         x = [x]
@@ -940,9 +940,9 @@ def promotetoarray(x, keepnone=False, **kwargs):
     return output
 
 
-def promotetolist(obj=None, objtype=None, keepnone=False, coerce='default'):
+def tolist(obj=None, objtype=None, keepnone=False, coerce='default'):
     '''
-    Make sure object is always a list (note: tolist()/promotetolist() are identical).
+    Make sure object is always a list (note: :func:`tolist`/:func:`promotetolist` are identical).
 
     Used so functions can handle inputs like ``'a'``  or ``['a', 'b']``. In other
     words, if an argument can either be a single thing (e.g., a single dict key)
@@ -959,27 +959,27 @@ def promotetolist(obj=None, objtype=None, keepnone=False, coerce='default'):
 
     Args:
         obj (anything): object to ensure is a list
-        objtype (anything): optional type to check for each element; see ``sc.checktype()`` for details
+        objtype (anything): optional type to check for each element; see :func:`checktype` for details
         keepnone (bool): if ``keepnone`` is false, then ``None`` is converted to ``[]``; else, it's converted to ``[None]``
         coerce (str/tuple):  tuple of additional types to coerce to a list (as opposed to wrapping in a list)
 
     **Examples**::
 
-        sc.promotetolist(5) # Returns [5]
-        sc.promotetolist(np.array([3,5])) # Returns [np.array([3,5])] -- not [3,5]!
-        sc.promotetolist(np.array([3,5]), coerce=np.ndarray) # Returns [3,5], since arrays are coerced to lists
-        sc.promotetolist(None) # Returns []
-        sc.promotetolist(range(3)) # Returns [0,1,2] since range is coerced by default
-        sc.promotetolist(['a', 'b', 'c'], objtype='number') # Raises exception
+        sc.tolist(5) # Returns [5]
+        sc.tolist(np.array([3,5])) # Returns [np.array([3,5])] -- not [3,5]!
+        sc.tolist(np.array([3,5]), coerce=np.ndarray) # Returns [3,5], since arrays are coerced to lists
+        sc.tolist(None) # Returns []
+        sc.tolist(range(3)) # Returns [0,1,2] since range is coerced by default
+        sc.tolist(['a', 'b', 'c'], objtype='number') # Raises exception
 
         def myfunc(data, keys):
-            keys = sc.promotetolist(keys)
+            keys = sc.tolist(keys)
             for key in keys:
                 print(data[key])
 
         data = {'a':[1,2,3], 'b':[4,5,6]}
         myfunc(data, keys=['a', 'b']) # Works
-        myfunc(data, keys='a') # Still works, equivalent to needing to supply keys=['a'] without promotetolist()
+        myfunc(data, keys='a') # Still works, equivalent to needing to supply keys=['a'] without tolist()
 
     | New in version 1.1.0: "coerce" argument
     | New in version 1.2.2: default coerce values
@@ -1025,14 +1025,14 @@ def promotetolist(obj=None, objtype=None, keepnone=False, coerce='default'):
                     checktype(obj=item, objtype=objtype, die=True)
                 output = list(iterable_obj) # If all type checking passes, cast to list instead of wrapping
             except TypeError as E:
-                errormsg = f'promotetolist(): type mismatch, expecting type {objtype}'
+                errormsg = f'tolist(): type mismatch, expecting type {objtype}'
                 raise TypeError(errormsg) from E
     return output
 
 
 # Aliases for core functions
-toarray = promotetoarray
-tolist = promotetolist
+promotetoarray = toarray
+promotetolist = tolist
 
 
 def transposelist(obj):
@@ -1163,7 +1163,7 @@ def mergelists(*args, copy=False, **kwargs):
     Args:
         args (any): the lists, or items, to be joined together into a list
         copy (bool): whether to deepcopy the resultant object
-        kwargs (dict): passed to ``sc.promotetolist()``, which is called on each argument
+        kwargs (dict): passed to :func:`tolist`, which is called on each argument
 
     **Examples**::
 
@@ -1178,7 +1178,7 @@ def mergelists(*args, copy=False, **kwargs):
     '''
     obj = []
     for arg in args:
-        arg = promotetolist(arg, **kwargs)
+        arg = tolist(arg, **kwargs)
         obj.extend(arg)
     if copy:
         obj = dcp(obj)
@@ -1202,7 +1202,7 @@ def _sanitize_iterables(obj, *args):
     is_array  = isinstance(obj, (np.ndarray, pd.Series)) # Check if it's an array
     if is_array: # If it is, convert it to a list
         obj = obj.tolist()
-    objs = dcp(promotetolist(obj)) # Ensure it's a list, and deepcopy to avoid mutability
+    objs = dcp(tolist(obj)) # Ensure it's a list, and deepcopy to avoid mutability
     objs.extend(args) # Add on any arguments
     return objs, is_list, is_array
 
@@ -1520,7 +1520,7 @@ def uniquename(name=None, namelist=None, style=None):
         name = sc.uniquename(name='file', namelist=['file', 'file (1)', 'file (2)'])
     """
     if style is None: style = ' (%d)'
-    namelist = promotetolist(namelist)
+    namelist = tolist(namelist)
     unique_name = str(name) # Start with the passed in name.
     i = 0 # Reset the counter
     while unique_name in namelist: # Try adding an index (i) to the name until we find one that's unique
@@ -1564,7 +1564,7 @@ def suggest(user_input, valid_inputs, n=1, threshold=None, fulloutput=False, die
     except ModuleNotFoundError as e: # pragma: no cover
         raise ModuleNotFoundError('The "jellyfish" Python package is not available; please install via "pip install jellyfish"') from e
 
-    valid_inputs = promotetolist(valid_inputs, objtype='string')
+    valid_inputs = tolist(valid_inputs, objtype='string')
 
     mapping = {
         'damerau':     jellyfish.damerau_levenshtein_distance,
@@ -1626,10 +1626,11 @@ def suggest(user_input, valid_inputs, n=1, threshold=None, fulloutput=False, die
 
 def getcaller(frame=2, tostring=True, includelineno=False, includeline=False):
     '''
-    Try to get information on the calling function, but fail gracefully.
+    Try to get information on the calling function, but fail gracefully. See also
+    :func:`thisfile`.
 
     Frame 1 is the file calling this function, so not very useful. Frame 2 is
-    the default assuming, it is being called directly. Frame 3 is used if
+    the default assuming it is being called directly. Frame 3 is used if
     another function is calling this function internally.
 
     Args:
@@ -1689,7 +1690,7 @@ def _assign_to_namespace(var, obj, namespace=None, overwrite=True):
     return
 
 
-def importbyname(module=None, variable=None, namespace=None, lazy=False, overwrite=True, die=True, **kwargs):
+def importbyname(module=None, variable=None, namespace=None, lazy=False, overwrite=True, die=True, verbose=True, **kwargs):
     '''
     Import modules by name.
 
@@ -1703,6 +1704,7 @@ def importbyname(module=None, variable=None, namespace=None, lazy=False, overwri
         lazy (bool): whether to create a LazyModule object instead of load the actual module
         overwrite (bool): whether to allow overwriting an existing variable (by default, yes)
         die (bool): whether to raise an exception if encountered
+        verbose (bool): whether to print a warning if an module can't be imported
         **kwargs (dict): additional variable:modules pairs to import (see examples below)
 
     **Examples**::
@@ -1710,6 +1712,8 @@ def importbyname(module=None, variable=None, namespace=None, lazy=False, overwri
         np = sc.importbyname('numpy')
         sc.importbyname(pd='pandas', np='numpy')
         pl = sc.importbyname(pl='matplotlib.pyplot', lazy=True) # Won't actually import until e.g. pl.figure() is called
+
+    New in version 2.1.0: "verbose" argument
     '''
     # Initialize
     import importlib
@@ -1732,7 +1736,8 @@ def importbyname(module=None, variable=None, namespace=None, lazy=False, overwri
                 lib = importlib.import_module(module)
             except Exception as E: # pragma: no cover
                 errormsg = f'Cannot import "{module}" since {module} is not installed. Please install {module} and try again.'
-                print(errormsg)
+                if verbose and not die:
+                    print(errormsg)
                 lib = None
                 if die: raise E
                 else:   return False
@@ -1753,7 +1758,7 @@ def importbyname(module=None, variable=None, namespace=None, lazy=False, overwri
 #%% Classes
 ##############################################################################
 
-__all__ += ['KeyNotFoundError', 'LinkException', 'prettyobj', 'autolist', 'Link', 'LazyModule']
+__all__ += ['KeyNotFoundError', 'LinkException', 'prettyobj', 'autolist', 'Link', 'LazyModule', 'tryexcept']
 
 
 class KeyNotFoundError(KeyError):
@@ -1855,13 +1860,13 @@ class autolist(list):
 
     def __add__(self, obj=None):
         ''' Allows non-lists to be concatenated '''
-        obj = promotetolist(obj)
+        obj = tolist(obj)
         new = autolist(list.__add__(self, obj)) # Ensure it returns an autolist
         return new
 
     def __iadd__(self, obj):
         ''' Allows += to work correctly -- key feature of autolist '''
-        obj = promotetolist(obj)
+        obj = tolist(obj)
         self.extend(obj)
         return self
 
@@ -1917,7 +1922,7 @@ class LazyModule:
     '''
     Create a "lazy" module that is loaded if and only if an attribute is called.
 
-    Typically not for use by the user, but is used by ``sc.importbyname()``.
+    Typically not for use by the user, but is used by :func:`importbyname`.
 
     Args:
         module (str): name of the module to (not) load
@@ -1967,3 +1972,121 @@ class LazyModule:
         else:
             obj = lib
         return obj
+    
+
+class tryexcept(cl.suppress):
+    '''
+    Simple class to catch exceptions in a single line -- effectively an alias to
+    contextlib.suppress.
+    
+    By default, all errors are caught. If ``catch`` is not None, then by default 
+    raise all other exceptions; if ``die`` is an exception (list of exceptions, 
+    then by default suppress all other exceptions.
+    
+    Due to Python's fundamental architecture, exceptions can only be caught inside
+    a with statement, and the with block will exit immediately as soon as the first
+    exception is encountered.
+    
+    Args:
+        die (bool/exception): default behavior of whether to raise caught exceptions
+        catch (exception): one or more exceptions to catch regardless of "die"
+        verbose (bool): whether to print caught exceptions (0 = silent, 1 = error type, 2 = full error information)
+        history (list/tryexcept): a ``tryexcept`` object, or a list of exceptions, to keep the history (see example below)
+    
+    **Examples**::
+
+        # Basic usage
+        values = [0,1]
+        with sc.tryexcept(): # Equivalent to contextlib.suppress(Exception)
+            values[2]
+            
+        # Raise only certain errors
+        with sc.tryexcept(die=IndexError): # Catch everything except IndexError
+            values[2]
+
+        # Catch (do not raise) only certain errors, and print full error information
+        with sc.tryexcept(catch=IndexError, verbose=2): # Raise everything except IndexError
+            values[2]
+            
+        # Storing the history of multiple exceptions
+        tryexc = None
+        for i in range(5):
+            with sc.tryexcept(history=tryexc) as tryexc:
+                print(values[i])
+        tryexc.print()
+            
+    New in version 2.1.0.
+    '''
+
+    def __init__(self, die=None, catch=None, verbose=1, history=None):
+        
+        # Handle defaults
+        dietypes   = []
+        catchtypes = []
+        if die is None and catch is None: # Default: do not die
+            self.defaultdie = False
+        elif die in [True, False, 0, 1]: # It's truthy: use it directly
+            self.defaultdie = die
+        elif die is None and catch is not None: # We're asked to catch some things, so die otherwise
+            self.defaultdie = True
+            catchtypes = tolist(catch)
+        elif die is not None and catch is None: # Vice versa
+            self.defaultdie = False
+            dietypes = tolist(die)
+        else:
+            errormsg = 'Unexpected input to "die" and "catch": typically only one or the other should be provided'
+            raise ValueError(errormsg)
+        
+        # Finish initialization
+        self.dietypes   = tuple(dietypes)
+        self.catchtypes = tuple(catchtypes)
+        self.verbose    = verbose
+        self.exceptions = []
+        if history is not None:
+            if isinstance(history, (list, tuple)):
+                self.exceptions.extend(list(history))
+            elif isinstance(history, tryexcept):
+                self.exceptions.extend(history.exceptions)
+            else:
+                errormsg = f'Could not understand supplied history: must be a list or a tryexcept object, not {type(history)}'
+                raise TypeError(errormsg)
+        return
+    
+    
+    def __repr__(self):
+        from . import sc_printing as scp # To avoid circular import
+        return scp.prepr(self)
+
+
+    def __enter__(self):
+        return self
+    
+    
+    def __exit__(self, exc_type, exc_val, traceback):
+        ''' If a context manager returns True from exit, the exception is caught '''
+        if exc_type is not None:
+            self.exceptions.append([exc_type, exc_val, traceback])
+            die = (self.defaultdie or issubclass(exc_type, self.dietypes))
+            live = issubclass(exc_type, self.catchtypes)
+            if die and not live:
+                return
+            else:
+                if self.verbose > 1: # Print everything
+                    self.print()
+                elif self.verbose: # Just print the exception type
+                    print(exc_type, exc_val)
+                return True
+
+    
+    def print(self, which=-1):
+        ''' Print the exception (usually the last) '''
+        if len(self.exceptions):
+            py_traceback.print_exception(*self.exceptions[which])
+        else:
+            print('No exceptions were encountered; nothing to trace')
+        return
+    
+    
+    @property
+    def died(self):
+        return len(self.exceptions) > 0

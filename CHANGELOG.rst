@@ -5,11 +5,37 @@ All major updates to Sciris are documented here.
 
 By import convention, components of the Sciris library are listed beginning with ``sc.``, e.g. ``sc.odict()``.
 
+Version 2.1.0 (2022-12-23)
+--------------------------
+
+New features
+~~~~~~~~~~~~
+#. ``sc.save()``/``sc.load()`` now allow files to be saved/loaded in `zstandard <https://github.com/indygreg/python-zstandard>`_ (instead of ``gzip``) format, since the former is usually faster for the same level of compression. ``sc.save()`` still uses ``gzip`` by default; the equivalent ``sc.zsave()`` uses ``zstandard`` by default. ``sc.save()`` also now has the option of not using any compression via ``sc.save(..., compression='none')``. (Thanks to `Fabio Mazza <https://github.com/fabmazz>`_ for the suggestion.)
+#. Functions that returned paths as strings by default -- ``sc.thisdir()``, ``sc.getfilelist()``, ``sc.makefilepath()``, ``sc.sanitizefilename()`` -- now all have aliases that return ``Path`` objects by default: ``sc.thispath()``, ``sc.getfilepaths()``, ``sc.makepath()``, and ``sc.sanitizepath()``.
+#. ``sc.thisfile()`` gets the path of the current file.
+#. ``sc.sanitizecolor()`` will convert any form of color specification (e.g. ``'g'``, ``'crimson'``) into an RGB tuple.
+#. ``sc.tryexcept()`` silences all (or some) exceptions in a ``with`` block.
+
+Bugfixes
+~~~~~~~~
+#. Fixed bug where ``sc.save(filename=None)`` would incorrectly result in creation of a file on disk in addition to returning a ``io.BytesIO`` stream.
+#. Fixed bug where ``sc.checkmem()`` would sometimes raise an exception when saving a ``None`` object to check its size.
+#. Fixed bug where ``sc.loadbalancer()`` would sometimes fail if ``interval`` was 0 (it is now required to be at least 1 ms).
+
+Other changes
+~~~~~~~~~~~~~
+#. ``sc.vectocolor()`` now has a ``nancolor`` argument to handle NaN values; NaNs are also now handled correctly.
+#. ``sc.timer()`` now has a more compact default string representation; use ``timer.disp()`` to display the full object. In addition, ``timer.total`` is now a property instead of a function.
+#. ``sc.thisdir()`` now takes a ``frame`` argument, in case the folder of a file *other* than the calling script is desired.
+#. ``sc.getfilelist()`` now has a ``fnmatch`` argument, which allows for Unix-style file matching via the `fnmatch <https://docs.python.org/3/library/fnmatch.html>`_ module.
+#. ``sc.importbyname()`` now has a ``verbose`` argument.
+#. ``sc.promotetolist()`` and ``sc.promotetoarray()`` are now aliases of ``sc.tolist()`` and ``sc.toarray()``, rather than vice versa.
+
 
 Version 2.0.4 (2022-10-25)
 --------------------------
 #. ``sc.stackedbar()`` will automatically plot a 2D array as a stacked bar chart.
-#. ``sc.parallelize()`` now always tries ``multiprocess`` if an exception is encountered and ``die=False`` (unless ``parallelizer`` already was ``'multiprocess'``).
+#. ``sc.parallelize()`` now uses ``multiprocess`` again by default (due to issues with ``concurrent.futures``).
 #. Added a ``die`` argument to ``sc.save()``.
 #. Added a ``prefix`` argument to ``sc.urlopen()``, allowing e.g. ``http://`` to be omitted from the URL.
 

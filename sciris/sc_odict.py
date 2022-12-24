@@ -807,7 +807,7 @@ class odict(OD):
         if keys is None and vals is None:
             return self # Nothing to do if nothing supplied
         if keys is None and vals is not None:
-            keys = len(scu.promotetolist(vals)) # Values are supplied but keys aren't: use default keys
+            keys = len(scu.tolist(vals)) # Values are supplied but keys aren't: use default keys
         if isinstance(keys, scu._numtype): # It's a single number: pre-generate
             keylist = ['%i'%i for i in range(keys)] # Generate keylist
         elif isinstance(keys, scu._stringtypes): # It's a single string
@@ -820,7 +820,7 @@ class odict(OD):
         nkeys = len(keylist)
 
         # Handle values
-        vals = scu.promotetolist(vals, coerce=coerce)
+        vals = scu.tolist(vals, coerce=coerce)
         nvals = len(vals)
         if nvals==0: # Special case: it's an empty list
             vallist = [scu.dcp(vals) for _ in range(nkeys)]
@@ -876,7 +876,7 @@ class odict(OD):
         # Make sure it's iterable
         if source is not None: # Don't do anything if there's nothing there
             if not(scu.isiterable(source)): # Make sure it's iterable
-                source = scu.promotetolist(source)
+                source = scu.tolist(source)
             elif isinstance(source, scu._stringtypes):
                 source = [source] # Special case -- strings are iterable, but we don't want to
 
@@ -888,7 +888,7 @@ class odict(OD):
                     if   isinstance(source, (list, tuple)):   include = range(len(source))
                     elif isinstance(source, dict):            include = list(source.keys())
                     else:                                     raise TypeError(f'Unable to guess keys for object of type {type(source)}')
-                include = scu.promotetolist(include) # Make sure it's a list -- note, does not convert other iterables to a list!
+                include = scu.tolist(include) # Make sure it's a list -- note, does not convert other iterables to a list!
                 if keynames is None: keynames = include # Use key names
 
                 # Loop over supplied keys -- source keys and output keys

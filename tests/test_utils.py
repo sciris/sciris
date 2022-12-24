@@ -116,6 +116,36 @@ def test_traceback():
     return text
 
 
+def test_tryexcept():    
+    sc.heading('Testing tryexcept')
+    
+    print('NOTE: This will print some exception text; this is expected\n')
+    
+    values = [0,1]
+    with sc.tryexcept(): # Equivalent to contextlib.suppress(Exception)
+        values[2]
+        
+    # Raise only certain errors
+    with pytest.raises(IndexError):
+        with sc.tryexcept(die=IndexError): # Catch everything except IndexError
+            values[2]
+
+    # Catch (do not raise) only certain errors
+    with sc.tryexcept(catch=IndexError): # Raise everything except IndexError
+        values[2]
+        
+    # Storing the history of multiple exceptions
+    tryexc = None
+    repeats = 5
+    for i in range(repeats):
+        with sc.tryexcept(history=tryexc) as tryexc:
+            values[i]
+    assert len(tryexc.exceptions) == repeats - len(values)
+    assert tryexc.died
+    
+    return tryexc
+
+
 def test_versions():
     sc.heading('Testing freeze, compareversions, and require')
 
@@ -348,6 +378,7 @@ if __name__ == '__main__':
     filename  = test_download_save()
     uid       = test_uuid()
     traceback = test_traceback()
+    tryexc    = test_tryexcept()
     versions  = test_versions()
 
     # Type

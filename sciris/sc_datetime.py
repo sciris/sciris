@@ -17,6 +17,7 @@ import datetime as dt
 import dateutil as du
 from . import sc_utils as scu
 from . import sc_math as scm
+from . import sc_printing as scp
 
 
 ###############################################################################
@@ -180,7 +181,7 @@ def readdate(datestr=None, *args, dateformat=None, return_defaults=False, verbos
         return formats_to_try
 
     # Handle date formats
-    format_list = scu.promotetolist(dateformat, keepnone=True) # Keep none which signifies default
+    format_list = scu.tolist(dateformat, keepnone=True) # Keep none which signifies default
     if dateformat is not None:
         if dateformat == 'dmy':
             formats_to_try = dmy_formats
@@ -671,7 +672,7 @@ def toctic(returntic=False, returntoc=False, *args, **kwargs):
     else:           return
 
 
-class timer(scu.prettyobj):
+class timer:
     '''
     Simple timer class. Note: ``sc.timer()`` and ``sc.Timer()`` are aliases.
 
@@ -715,6 +716,7 @@ class timer(scu.prettyobj):
     | New in version 1.3.0: ``sc.timer()`` alias, and allowing the label as first argument.
     | New in version 1.3.2: ``toc()`` passes label correctly; ``tt()`` method; ``auto`` argument
     | New in version 2.0.0: ``plot()`` method; ``total()`` method; ``indivtimings`` and ``cumtimings`` properties
+    | New in version 2.1.0: ``total`` as property instead of method; updated repr; added disp() method
     '''
     def __init__(self, label=None, auto=False, start=True, **kwargs):
         from . import sc_odict as sco # Here to avoid circular import
@@ -743,6 +745,18 @@ class timer(scu.prettyobj):
         ''' Print elapsed time when leaving a with-as block '''
         self.toc()
         return
+    
+    def __repr__(self):
+        string = scp.objectid(self)
+        string += 'Timings:\n'
+        string += str(self.timings)
+        string += f'\nTotal time: {self.total:n} s'
+        return string
+    
+    
+    def disp(self):
+        ''' Display the full representation of the object '''
+        return scp.pr(self)
 
 
     def tic(self):
@@ -792,6 +806,7 @@ class timer(scu.prettyobj):
         return output
 
 
+    @property
     def total(self):
         ''' Calculate total time '''
 

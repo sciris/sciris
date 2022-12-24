@@ -21,7 +21,8 @@ jobs:
       - name: Install Sciris
         run: pip install -e .
       - name: Install tests
-        run: pip install pytest
+        working-directory: ./tests
+        run: pip install -r requirements_test.txt
       - name: Run API tests
         working-directory: ./tests
         run: pytest test_*.py --durations=0 --junitxml=test-results.xml # Run actual tests

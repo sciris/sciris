@@ -94,39 +94,48 @@ def test_spreadsheets():
     return S
 
 
-def test_fileio():
+def test_load_save():
     '''
-    Test other file I/O functions
+    Test file loading and saving
     '''
     o = sc.objdict()
-
-    # Test thisdir
-    sc.thisdir() # Just put this here for testing
-
+    
     sc.heading('Save/load')
     sc.save(files.binary, testdata)
-
     o.obj1 = sc.load(files.binary)
     print(o.obj1)
-
+    
+    sc.heading('Testing other load/save options')
+    sc.save(files.binary, testdata, compresslevel=9)
+    sc.save(files.binary, testdata, compression='none')
+    sc.zsave(files.binary, testdata)
+    zobj = sc.load(files.binary)
+    assert np.all(o.obj1 == zobj)
+    
     sc.heading('Savetext/loadtext')
     sc.savetext(files.text, testdata)
-
     o.obj2 = sc.loadtext(files.text)
     print(o.obj2)
-
-    sc.heading('Get files')
-    print('Files in current folder:')
-    TF = [True,False]
-    for tf in TF:
-        sc.pp(sc.getfilelist(abspath=tf, filesonly=tf, foldersonly=not(tf), nopath=tf, aspath=tf))
-
+    
     sc.heading('Save/load zip')
     sc.savezip(files.zip, [files.text, files.binary])
     sc.savezip(files.zip, data=dict(data=testdata))
     o.zip = sc.loadzip(files.zip, extract=False)
+    
+    # Tidy up
+    if tidyup:
+        sc.blank()
+        sc.heading('Tidying up')
+        sc.rmpath([files.binary, files.text, files.zip], die=False)
+    
+    return o
 
 
+def test_load_corrupted():
+    '''
+    Test that loading a corrupted object still works
+    '''
+    
     '''
     Check that loading an object with a non-existent class works. The file
     deadclass.obj was created with:
@@ -146,6 +155,8 @@ def test_fileio():
     sc.saveobj('deadclass.obj', deadclass)
     -------------------------------------------------
     '''
+    
+    o = sc.objdict()
 
     class LiveClass():
         def __init__(self, x):
@@ -164,12 +175,40 @@ def test_fileio():
         print(f'Loading remapped object succeeded, x={o.obj4.x}, object: {o.obj4}')
     else:
         print(f'{dead_path} not found, skipping...')
+    
+    return o
 
-    # Tidy up
-    if tidyup:
-        sc.blank()
-        sc.heading('Tidying up')
-        sc.rmpath([files.binary, files.text, files.zip], die=False)
+
+def test_fileio():
+    '''
+    Test other file I/O functions
+    '''
+    o = sc.objdict()
+
+    # Test thisdir
+    sc.heading('Testing thisdir')
+    a = sc.thisdir() # Just put this here for testing
+    b = sc.thispath() # Ditto
+    assert a == str(b)
+    assert 'sciris' in a
+    assert 'tests' in a
+    o.thisdir = a
+
+    sc.heading('Get files')
+    print('Files in current folder:')
+    TF = [True,False]
+    for tf in TF:
+        sc.pp(sc.getfilepaths(abspath=tf, filesonly=tf, foldersonly=not(tf), nopath=tf, aspath=tf))
+    o.filelist = sc.getfilelist(fnmatch='*.py', nopath=True) # Test alias
+    assert all(['py' in f for f in o.filelist])
+    assert 'test_fileio.py' in o.filelist
+    
+    
+    sc.heading('Sanitizing filenames')
+    bad = 'Nöt*a   file&name?!.doc'
+    good = sc.sanitizefilename(bad)
+    assert str(sc.sanitizepath(bad)) == good
+    o.sanitized = good
 
     return o
 
@@ -201,15 +240,16 @@ def test_json():
     sc.savejson(jsonfile, testdata)
     testdata2 = sc.loadjson(jsonfile)
     assert testdata == testdata2
-    os.remove(jsonfile)
-
+    
     # Test YAML load/save
     print('Testing YAML load/save...')
     yamlfile = 'test.yaml'
     sc.saveyaml(yamlfile, testdata)
     testdata2 = sc.loadyaml(yamlfile)
     assert testdata == testdata2
-    os.remove(yamlfile)
+    
+    # Tidy up
+    sc.rmpath(jsonfile, yamlfile)
 
     return json_str
 
@@ -245,11 +285,13 @@ def test_load_dump_str():
 if __name__ == '__main__':
     sc.tic()
 
-    spread = test_spreadsheets()
-    fileio = test_fileio()
-    json   = test_json()
-    jp     = test_jsonpickle()
-    string = test_load_dump_str()
+    spread  = test_spreadsheets()
+    ls      = test_load_save()
+    corrupt = test_load_corrupted()
+    fileio  = test_fileio()
+    json    = test_json()
+    jp      = test_jsonpickle()
+    string  = test_load_dump_str()
 
     sc.toc()
     print('Done.')
