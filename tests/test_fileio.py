@@ -198,8 +198,11 @@ def test_fileio():
     print('Files in current folder:')
     TF = [True,False]
     for tf in TF:
-        sc.pp(sc.getfilelist(abspath=tf, filesonly=tf, foldersonly=not(tf), nopath=tf, aspath=tf))
-    o.filelist = sc.getfilepaths() # Test alias
+        sc.pp(sc.getfilepaths(abspath=tf, filesonly=tf, foldersonly=not(tf), nopath=tf, aspath=tf))
+    o.filelist = sc.getfilelist(fnmatch='*.py', nopath=True) # Test alias
+    assert all(['py' in f for f in o.filelist])
+    assert 'test_fileio.py' in o.filelist
+    
     
     sc.heading('Sanitizing filenames')
     bad = 'Nöt*a   file&name?!.doc'

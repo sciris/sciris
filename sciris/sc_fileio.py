@@ -612,7 +612,7 @@ def getfilelist(folder=None, pattern=None, fnmatch=None, abspath=False, nopath=F
     if nopath:
         filelist = [os.path.basename(f) for f in filelist]
     if fnmatch:
-        filelist = [f for f in filelist if fnm.fnmatch(f, fnm)]
+        filelist = [f for f in filelist if fnm.fnmatch(f, fnmatch)]
     if aspath:
         filelist = [Path(f) for f in filelist]
     return filelist
