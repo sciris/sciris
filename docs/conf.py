@@ -56,7 +56,7 @@ napoleon_google_docstring = True
 
 # Configure autosummary
 autosummary_generate = True  # Turn on sphinx.ext.autosummary
-autoclass_content = "both"  # Add __init__ doc (ie. params) to class summaries
+autoclass_content = "init"  # Add __init__ doc (ie. params) to class summaries
 html_show_sourcelink = False  # Remove 'view source code' from top of page (for html, not python)
 autodoc_member_order = 'bysource' # Keep original ordering
 add_module_names = False  # NB, does not work
