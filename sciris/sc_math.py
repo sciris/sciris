@@ -130,7 +130,7 @@ def findinds(arr=None, val=None, *args, eps=1e-6, first=False, last=False, ind=N
         warnings.warn(warnmsg, category=FutureWarning, stacklevel=2)
 
     # Calculate matches
-    arr = scu.promotetoarray(arr)
+    arr = scu.toarray(arr)
     arglist = list(args)
     if val is None: # Check for equality
         boolarr = arr # If not, just check the truth condition
@@ -142,7 +142,7 @@ def findinds(arr=None, val=None, *args, eps=1e-6, first=False, last=False, ind=N
                 boolarr = np.isclose(a=arr, b=val, atol=atol, **kwargs) # If absolute difference between the two values is less than a certain amount
             elif scu.checktype(val, 'arraylike'): # It's not actually a value, it's another array
                 boolarr = arr
-                arglist.append(scu.promotetoarray(val))
+                arglist.append(scu.toarray(val))
             else:
                 errormsg = f'Cannot understand input {type(val)}: must be number or array-like'
                 raise TypeError(errormsg)
@@ -201,13 +201,13 @@ def findnearest(series=None, value=None):
 
     Version: 2017jan07
     '''
-    series = scu.promotetoarray(series)
+    series = scu.toarray(series)
     if scu.isnumber(value):
         output = np.argmin(abs(series-value))
     else:
         output = []
         for val in value: output.append(findnearest(series, val))
-        output = scu.promotetoarray(output)
+        output = scu.toarray(output)
     return output
 
 
@@ -262,9 +262,9 @@ def getvalidinds(data=None, filterdata=None): # pragma: no cover
 
         getvalidinds([3,5,8,13], [2000, nan, nan, 2004]) # Returns array([0,3])
     '''
-    data = scu.promotetoarray(data)
+    data = scu.toarray(data)
     if filterdata is None: filterdata = data # So it can work on a single input -- more or less replicates sanitize() then
-    filterdata = scu.promotetoarray(filterdata)
+    filterdata = scu.toarray(filterdata)
     if filterdata.dtype=='bool': filterindices = filterdata # It's already boolean, so leave it as is
     else:                        filterindices = findinds(~np.isnan(filterdata)) # Else, assume it's nans that need to be removed
     dataindices = findinds(~np.isnan(data)) # Also check validity of data
@@ -671,7 +671,7 @@ def cat(*args, copy=False, **kwargs):
     
     if not len(args):
         return np.array([])
-    arrs = [scu.promotetoarray(arg) for arg in args] # Key step: convert everything to an array
+    arrs = [scu.toarray(arg) for arg in args] # Key step: convert everything to an array
     output = np.concatenate(arrs, **kwargs)
     return output
 
@@ -698,8 +698,8 @@ def linregress(x, y, full=False, **kwargs):
         pl.bar(x, out.residuals)
         pl.title(f'R² = {out.r2}')
     '''
-    x = scu.promotetoarray(x)
-    y = scu.promotetoarray(y)
+    x = scu.toarray(x)
+    y = scu.toarray(y)
     fit = np.polyfit(x, y, deg=1, **kwargs) # Do the fit
     if not full:
         return fit

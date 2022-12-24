@@ -181,7 +181,7 @@ def readdate(datestr=None, *args, dateformat=None, return_defaults=False, verbos
         return formats_to_try
 
     # Handle date formats
-    format_list = scu.promotetolist(dateformat, keepnone=True) # Keep none which signifies default
+    format_list = scu.tolist(dateformat, keepnone=True) # Keep none which signifies default
     if dateformat is not None:
         if dateformat == 'dmy':
             formats_to_try = dmy_formats

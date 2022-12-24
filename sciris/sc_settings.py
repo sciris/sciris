@@ -628,7 +628,7 @@ See help(sc.help) for more information.
         import sciris as sc # Here to avoid circular import
 
         # Handle inputs
-        flags = sc.promotetolist(flags)
+        flags = sc.tolist(flags)
         if ignorecase:
             flags.append(re.I)
 

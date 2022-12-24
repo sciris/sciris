@@ -312,7 +312,7 @@ def stackedbar(x=None, values=None, colors=None, labels=None, transpose=False,
         errormsg = 'Must supply values to plot, typically as a 2D array'
         raise ValueError(errormsg)
     
-    values = scu.promotetoarray(values)
+    values = scu.toarray(values)
     if values.ndim == 1: # pragma: nocover
         values = values[None,:] # Convert to a 2D array
     
@@ -460,7 +460,7 @@ def setaxislim(which=None, ax=None, data=None):
     lowerlim = 0
     upperlim = 0
     if scu.checktype(data, 'arraylike'): # Ensure it's numeric data (probably just None)
-        flatdata = scu.promotetoarray(data).flatten() # Make sure it's iterable
+        flatdata = scu.toarray(data).flatten() # Make sure it's iterable
         lowerlim = min(lowerlim, flatdata.min())
         upperlim = max(upperlim, flatdata.max())
 
@@ -548,7 +548,7 @@ def commaticks(ax=None, axis='y', precision=2, cursor_precision=0):
 
     sep = scs.options.sep
     axlist = _get_axlist(ax)
-    axislist = scu.promotetolist(axis)
+    axislist = scu.tolist(axis)
     for ax in axlist:
         for axis in axislist:
             if   axis=='x': thisaxis = ax.xaxis
@@ -806,7 +806,7 @@ def fonts(add=None, use=False, output='name', dryrun=False, rebuild=False, verbo
         try:
             fontname = None
             fontpaths = []
-            paths = scu.promotetolist(add)
+            paths = scu.tolist(add)
             for path in paths:
                 path = str(path)
                 if os.path.isdir(path):

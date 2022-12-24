@@ -243,7 +243,7 @@ class dataframe(pd.DataFrame):
             colindices = Ellipsis
         else:
             colindices = []
-            for col in scu.promotetolist(cols):
+            for col in scu.tolist(cols):
                 colindices.append(self._sanitizecol(col))
         if rows is None:
             rowindices = Ellipsis
@@ -374,7 +374,7 @@ class dataframe(pd.DataFrame):
         dfs = [self]
         if columns is None:
             columns = self.columns
-        for arg in scu.promotetolist(data, coerce='tuple') + list(args):
+        for arg in scu.tolist(data, coerce='tuple') + list(args):
             if isinstance(arg, pd.DataFrame):
                 df = arg
             else:
@@ -432,7 +432,7 @@ class dataframe(pd.DataFrame):
 
     def rmcol(self, key, die=True):
         ''' Remove a column or columns from the data frame '''
-        cols = scu.promotetolist(key)
+        cols = scu.tolist(key)
         for col in cols:
             if col not in self.cols: # pragma: no cover
                 errormsg = 'sc.dataframe(): cannot remove column %s: columns are:\n%s' % (col, '\n'.join(self.cols))
@@ -573,7 +573,7 @@ class dataframe(pd.DataFrame):
     def filtercols(self, cols=None, die=True, reset_index=True, inplace=False):
         ''' Filter columns keeping only those specified -- note, by default, do not perform in place '''
         if cols is None: cols = scu.dcp(self.cols) # By default, do nothing
-        cols = scu.promotetolist(cols)
+        cols = scu.tolist(cols)
         order = []
         notfound = []
         for col in cols:
@@ -595,7 +595,7 @@ class dataframe(pd.DataFrame):
         ''' Sort the dataframe rows in place by the specified column(s)'''
         if col is None:
             col = 0 # Sort by first column by default
-        cols = scu.promotetolist(col)[::-1] # Ensure it's a list and reverse order
+        cols = scu.tolist(col)[::-1] # Ensure it's a list and reverse order
         sortorder = [] # In case there are no columns
         for col in cols:
             col = self._sanitizecol(col)

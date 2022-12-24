@@ -14,7 +14,7 @@ New features
 #. Functions that returned paths as strings by default -- ``sc.thisdir()``, ``sc.getfilelist()``, ``sc.makefilepath()``, ``sc.sanitizefilename()`` -- now all have aliases that return ``Path`` objects by default: ``sc.thispath()``, ``sc.getfilepaths()``, ``sc.makepath()``, and ``sc.sanitizepath()``.
 #. ``sc.thisfile()`` gets the path of the current file.
 #. ``sc.sanitizecolor()`` will convert any form of color specification (e.g. ``'g'``, ``'crimson'``) into an RGB tuple.
-#. 
+#. ``sc.tryexcept()`` silences all (or some) exceptions in a ``with`` block.
 
 Bugfixes
 ~~~~~~~~
@@ -28,6 +28,7 @@ Other changes
 #. ``sc.timer()`` now has a more compact default string representation; use ``timer.disp()`` to display the full object. In addition, ``timer.total`` is now a property instead of a function.
 #. ``sc.thisdir()`` now takes a ``frame`` argument, in case the folder of a file *other* than the calling script is desired.
 #. ``sc.getfilelist()`` now has a ``fnmatch`` argument, which allows for Unix-style file matching via the [fnmatch](https://docs.python.org/3/library/fnmatch.html) module.
+#. ``sc.importbyname()`` now has a ``verbose`` argument.
 
 
 Version 2.0.4 (2022-10-25)

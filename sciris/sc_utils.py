@@ -749,7 +749,7 @@ def htmlify(string, reverse=False, tostring=False):
 ##############################################################################
 
 __all__ += ['flexstr', 'isiterable', 'checktype', 'isnumber', 'isstring', 'isarray',
-            'promotetoarray', 'promotetolist', 'toarray', 'tolist', 'transposelist',
+            'toarray', 'tolist', 'promotetoarray', 'promotetolist', 'transposelist',
             'swapdict', 'mergedicts', 'mergelists']
 
 def flexstr(arg, force=True):
@@ -837,7 +837,7 @@ def checktype(obj=None, objtype=None, subtype=None, die=False):
 
     # Do second round checking
     if result and objtype in ['listlike', 'arraylike']: # Special case for handling arrays which may be multi-dimensional
-        obj = promotetoarray(obj).flatten() # Flatten all elements
+        obj = toarray(obj).flatten() # Flatten all elements
         if objtype == 'arraylike' and subtype is None: # Add additional check for numeric entries
             subtype = _numtype + _booltypes
     if isiterable(obj) and subtype is not None:
@@ -902,25 +902,25 @@ def isarray(obj, dtype=None):
                 return False
 
 
-def promotetoarray(x, keepnone=False, **kwargs):
+def toarray(x, keepnone=False, **kwargs):
     '''
     Small function to ensure consistent format for things that should be arrays
-    (note: ``toarray()`` and ``promotetoarray()`` are identical).
+    (note: :func:`toarray()` and :func:`promotetoarray()` are identical).
 
-    Very similar to ``np.array``, with the main difference being that ``sc.promotetoarray(3)``
+    Very similar to ``np.array``, with the main difference being that ``sc.toarray(3)``
     will return ``np.array([3])`` (i.e. a 1-d array that can be iterated over), while
     ``np.array(3)`` will return a 0-d array that can't be iterated over.
 
     Args:
         x (any): a number or list of numbers
-        keepnone (bool): whether ``sc.promotetoarray(None)`` should return ``np.array([])`` or ``np.array([None], dtype=object)``
+        keepnone (bool): whether ``sc.toarray(None)`` should return ``np.array([])`` or ``np.array([None], dtype=object)``
         kwargs (dict): passed to ``np.array()``
 
     **Examples**::
 
-        sc.promotetoarray(5) # Returns np.array([5])
-        sc.promotetoarray([3,5]) # Returns np.array([3,5])
-        sc.promotetoarray(None, skipnone=True) # Returns np.array([])
+        sc.toarray(5) # Returns np.array([5])
+        sc.toarray([3,5]) # Returns np.array([3,5])
+        sc.toarray(None, skipnone=True) # Returns np.array([])
 
     | New in version 1.1.0: replaced "skipnone" with "keepnone"; allowed passing kwargs to ``np.array()``.
     | New in version 2.0.1: added support for pandas Series and DataFrame
@@ -928,7 +928,7 @@ def promotetoarray(x, keepnone=False, **kwargs):
     skipnone = kwargs.pop('skipnone', None)
     if skipnone is not None: # pragma: no cover
         keepnone = not(skipnone)
-        warnmsg = 'sc.promotetoarray() argument "skipnone" has been deprecated as of v1.1.0; use keepnone instead'
+        warnmsg = 'sc.toarray() argument "skipnone" has been deprecated as of v1.1.0; use keepnone instead'
         warnings.warn(warnmsg, category=FutureWarning, stacklevel=2)
     if isnumber(x) or (isinstance(x, np.ndarray) and not np.shape(x)): # e.g. 3 or np.array(3)
         x = [x]
@@ -940,9 +940,9 @@ def promotetoarray(x, keepnone=False, **kwargs):
     return output
 
 
-def promotetolist(obj=None, objtype=None, keepnone=False, coerce='default'):
+def tolist(obj=None, objtype=None, keepnone=False, coerce='default'):
     '''
-    Make sure object is always a list (note: tolist()/promotetolist() are identical).
+    Make sure object is always a list (note: :func:`tolist`/:func:`promotetolist` are identical).
 
     Used so functions can handle inputs like ``'a'``  or ``['a', 'b']``. In other
     words, if an argument can either be a single thing (e.g., a single dict key)
@@ -965,21 +965,21 @@ def promotetolist(obj=None, objtype=None, keepnone=False, coerce='default'):
 
     **Examples**::
 
-        sc.promotetolist(5) # Returns [5]
-        sc.promotetolist(np.array([3,5])) # Returns [np.array([3,5])] -- not [3,5]!
-        sc.promotetolist(np.array([3,5]), coerce=np.ndarray) # Returns [3,5], since arrays are coerced to lists
-        sc.promotetolist(None) # Returns []
-        sc.promotetolist(range(3)) # Returns [0,1,2] since range is coerced by default
-        sc.promotetolist(['a', 'b', 'c'], objtype='number') # Raises exception
+        sc.tolist(5) # Returns [5]
+        sc.tolist(np.array([3,5])) # Returns [np.array([3,5])] -- not [3,5]!
+        sc.tolist(np.array([3,5]), coerce=np.ndarray) # Returns [3,5], since arrays are coerced to lists
+        sc.tolist(None) # Returns []
+        sc.tolist(range(3)) # Returns [0,1,2] since range is coerced by default
+        sc.tolist(['a', 'b', 'c'], objtype='number') # Raises exception
 
         def myfunc(data, keys):
-            keys = sc.promotetolist(keys)
+            keys = sc.tolist(keys)
             for key in keys:
                 print(data[key])
 
         data = {'a':[1,2,3], 'b':[4,5,6]}
         myfunc(data, keys=['a', 'b']) # Works
-        myfunc(data, keys='a') # Still works, equivalent to needing to supply keys=['a'] without promotetolist()
+        myfunc(data, keys='a') # Still works, equivalent to needing to supply keys=['a'] without tolist()
 
     | New in version 1.1.0: "coerce" argument
     | New in version 1.2.2: default coerce values
@@ -1025,14 +1025,14 @@ def promotetolist(obj=None, objtype=None, keepnone=False, coerce='default'):
                     checktype(obj=item, objtype=objtype, die=True)
                 output = list(iterable_obj) # If all type checking passes, cast to list instead of wrapping
             except TypeError as E:
-                errormsg = f'promotetolist(): type mismatch, expecting type {objtype}'
+                errormsg = f'tolist(): type mismatch, expecting type {objtype}'
                 raise TypeError(errormsg) from E
     return output
 
 
 # Aliases for core functions
-toarray = promotetoarray
-tolist = promotetolist
+promotetoarray = toarray
+promotetolist = tolist
 
 
 def transposelist(obj):
@@ -1163,7 +1163,7 @@ def mergelists(*args, copy=False, **kwargs):
     Args:
         args (any): the lists, or items, to be joined together into a list
         copy (bool): whether to deepcopy the resultant object
-        kwargs (dict): passed to ``sc.promotetolist()``, which is called on each argument
+        kwargs (dict): passed to ``sc.tolist()``, which is called on each argument
 
     **Examples**::
 
@@ -1178,7 +1178,7 @@ def mergelists(*args, copy=False, **kwargs):
     '''
     obj = []
     for arg in args:
-        arg = promotetolist(arg, **kwargs)
+        arg = tolist(arg, **kwargs)
         obj.extend(arg)
     if copy:
         obj = dcp(obj)
@@ -1202,7 +1202,7 @@ def _sanitize_iterables(obj, *args):
     is_array  = isinstance(obj, (np.ndarray, pd.Series)) # Check if it's an array
     if is_array: # If it is, convert it to a list
         obj = obj.tolist()
-    objs = dcp(promotetolist(obj)) # Ensure it's a list, and deepcopy to avoid mutability
+    objs = dcp(tolist(obj)) # Ensure it's a list, and deepcopy to avoid mutability
     objs.extend(args) # Add on any arguments
     return objs, is_list, is_array
 
@@ -1520,7 +1520,7 @@ def uniquename(name=None, namelist=None, style=None):
         name = sc.uniquename(name='file', namelist=['file', 'file (1)', 'file (2)'])
     """
     if style is None: style = ' (%d)'
-    namelist = promotetolist(namelist)
+    namelist = tolist(namelist)
     unique_name = str(name) # Start with the passed in name.
     i = 0 # Reset the counter
     while unique_name in namelist: # Try adding an index (i) to the name until we find one that's unique
@@ -1564,7 +1564,7 @@ def suggest(user_input, valid_inputs, n=1, threshold=None, fulloutput=False, die
     except ModuleNotFoundError as e: # pragma: no cover
         raise ModuleNotFoundError('The "jellyfish" Python package is not available; please install via "pip install jellyfish"') from e
 
-    valid_inputs = promotetolist(valid_inputs, objtype='string')
+    valid_inputs = tolist(valid_inputs, objtype='string')
 
     mapping = {
         'damerau':     jellyfish.damerau_levenshtein_distance,
@@ -1860,13 +1860,13 @@ class autolist(list):
 
     def __add__(self, obj=None):
         ''' Allows non-lists to be concatenated '''
-        obj = promotetolist(obj)
+        obj = tolist(obj)
         new = autolist(list.__add__(self, obj)) # Ensure it returns an autolist
         return new
 
     def __iadd__(self, obj):
         ''' Allows += to work correctly -- key feature of autolist '''
-        obj = promotetolist(obj)
+        obj = tolist(obj)
         self.extend(obj)
         return self
 
@@ -2015,7 +2015,7 @@ class tryexcept(cl.suppress):
                 print(values[i])
         tryexc.print()
             
-    New in version 2.1.0
+    New in version 2.1.0.
     '''
 
     def __init__(self, die=None, catch=None, verbose=1, history=None):
@@ -2029,10 +2029,10 @@ class tryexcept(cl.suppress):
             self.defaultdie = die
         elif die is None and catch is not None: # We're asked to catch some things, so die otherwise
             self.defaultdie = True
-            catchtypes = promotetolist(catch)
+            catchtypes = tolist(catch)
         elif die is not None and catch is None: # Vice versa
             self.defaultdie = False
-            dietypes = promotetolist(die)
+            dietypes = tolist(die)
         else:
             errormsg = 'Unexpected input to "die" and "catch": typically only one or the other should be provided'
             raise ValueError(errormsg)

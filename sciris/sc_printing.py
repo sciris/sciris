@@ -154,7 +154,7 @@ def prepr(obj, maxlen=None, maxitems=None, skip=None, dividerchar='—', divider
     if maxlen   is None: maxlen   = 80
     if maxitems is None: maxitems = 100
     if skip     is None: skip = []
-    else:                skip = scu.promotetolist(skip)
+    else:                skip = scu.tolist(skip)
 
     # Initialize things to print out
     labels = []
@@ -416,7 +416,7 @@ def printarr(arr, fmt=None, colsep='  ', vsep='—', decimals=2, dtype=None):
     New in version 2.0.3: "fmt", "colsep", "vsep", "decimals", and "dtype" arguments
     '''
     from . import sc_math as scm # To avoid circular import
-    arr = scu.promotetoarray(arr, dtype=dtype)
+    arr = scu.toarray(arr, dtype=dtype)
     if fmt is None:
         if arr.dtype == object:
             maxdigits = max([len(str(v)) for v in arr.flatten()])
@@ -531,7 +531,7 @@ def printvars(localvars=None, varlist=None, label=None, divider=True, spaces=1, 
     Version: 2017oct28
     '''
 
-    varlist = scu.promotetolist(varlist) # Make sure it's actually a list
+    varlist = scu.tolist(varlist) # Make sure it's actually a list
     dividerstr = '-'*40
 
     if label:  print(f'Variables for {label}:')
@@ -634,7 +634,7 @@ def colorize(color=None, string=None, doprint=None, output=False, enable=True, s
             ansicolors[key] = '\033[' + val + 'm'
 
         # Determine what color to use
-        colorlist = scu.promotetolist(color)  # Make sure it's a list
+        colorlist = scu.tolist(color)  # Make sure it's a list
         for color in colorlist:
             if color not in ansicolors.keys(): # pragma: no cover
                 print(f'Color "{color}" is not available, use colorize(showhelp=True) to show options.')

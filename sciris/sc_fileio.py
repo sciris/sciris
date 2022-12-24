@@ -431,7 +431,7 @@ def savezip(filename=None, filelist=None, data=None, folder=None, basename=True,
 
     # Handle inpus
     fullpath = makefilepath(filename=filename, folder=folder, sanitize=sanitizepath)
-    filelist = scu.promotetolist(filelist)
+    filelist = scu.tolist(filelist)
     if data is not None:
         if not isinstance(data, dict):
             errormsg = 'Data has invalid format: must be a dictionary of filename keys and data values'
@@ -743,7 +743,7 @@ def makefilepath(filename=None, folder=None, ext=None, default=None, split=False
 
     # Process filename
     if filename is None: # pragma: no cover
-        defaultnames = scu.promotetolist(default) # Loop over list of default names
+        defaultnames = scu.tolist(default) # Loop over list of default names
         for defaultname in defaultnames:
             if not filename and defaultname: filename = defaultname # Replace empty name with default name
     if filename is not None: # If filename exists by now, use it
@@ -1493,8 +1493,8 @@ Falling back to openpyxl, which is identical except for how cached cell values a
 
         # Determine the cells
         if cells is not None: # A list of cells is supplied
-            cells = scu.promotetolist(cells)
-            vals  = scu.promotetolist(vals)
+            cells = scu.tolist(cells)
+            vals  = scu.tolist(vals)
             if len(cells) != len(vals): # pragma: no cover
                 errormsg = f'If using cells, cells and vals must have the same length ({len(cells)} vs. {len(vals)})'
                 raise ValueError(errormsg)

@@ -372,7 +372,7 @@ def profile(run, follow=None, print_stats=True, *args, **kwargs):
     orig_func = run
 
     lp = LineProfiler()
-    follow = scu.promotetolist(follow)
+    follow = scu.tolist(follow)
     for f in follow:
         lp.add_function(f)
     lp.enable_by_count()
@@ -418,7 +418,7 @@ def mprofile(run, follow=None, show_results=True, *args, **kwargs):
         follow = run
 
     lp = mp.LineProfiler()
-    follow = scu.promotetolist(follow)
+    follow = scu.tolist(follow)
     for f in follow:
         lp.add_function(f)
     lp.enable_by_count()
