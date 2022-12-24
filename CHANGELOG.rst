@@ -11,8 +11,7 @@ Version 2.1.0 (2022-12-23)
 New features
 ~~~~~~~~~~~~
 #. ``sc.save()``/``sc.load()`` now allow files to be saved/loaded in [zstandard[(https://github.com/indygreg/python-zstandard) (instead of ``gzip``) format, since the former is usually faster for the same level of compression. ``sc.save()`` still uses ``gzip`` by default; the equivalent ``sc.zsave()`` uses ``zstandard`` by default. (Thanks to [Fabio Mazza](https://github.com/fabmazz) for the suggestion.) ``sc.save()`` also now has the option of not using any compression (``sc.save(..., compression='none')``).
-#. Functions that returned paths as strings by default -- ``sc.thisdir()``, ``sc.getfilelist()``, and ``sc.makefilepath()`` -- now all have aliases that return ``Path`` objects by default: ``sc.thispath()``, ``sc.getfilepaths()``, 
-#. ``sc.ispath()`` checks if an object is a ``Path``.
+#. Functions that returned paths as strings by default -- ``sc.thisdir()``, ``sc.getfilelist()``, ``sc.makefilepath()``, ``sc.sanitizefilename()`` -- now all have aliases that return ``Path`` objects by default: ``sc.thispath()``, ``sc.getfilepaths()``, ``sc.makepath()``, and ``sc.sanitizepath()``.
 #. ``sc.thisfile()`` gets the path of the current file.
 #. ``sc.sanitizecolor()`` will convert any form of color specification (e.g. ``'g'``, ``'crimson'``) into an RGB tuple.
 #. 
@@ -20,6 +19,8 @@ New features
 Bugfixes
 ~~~~~~~~
 #. Fixed bug where ``sc.save(filename=None)`` would incorrectly result in creation of a file on disk in addition to returning a ``io.BytesIO`` stream.
+#. Fixed bug where ``sc.checkmem()`` would sometimes raise an exception when saving a ``None`` object to check its size.
+#. Fixed bug where ``sc.loadbalancer()`` would sometimes fail if ``interval`` was 0 (it is now required to be at least 1 ms).
 
 Other changes
 ~~~~~~~~~~~~~

@@ -204,7 +204,7 @@ def checkram(unit='mb', fmt='0.2f', start=0, to_string=True):
     return output
 
 
-def loadbalancer(maxcpu=0.8, maxmem=0.8, index=None, interval=0.5, cpu_interval=0.1,
+def loadbalancer(maxcpu=0.8, maxmem=0.8, index=None, interval=None, cpu_interval=0.1,
                  maxtime=36000, label=None, verbose=True, **kwargs):
     '''
     Delay execution while CPU load is too high -- a very simple load balancer.
@@ -214,7 +214,7 @@ def loadbalancer(maxcpu=0.8, maxmem=0.8, index=None, interval=0.5, cpu_interval=
         maxmem       (float) : the maximum memory usage to allow for the task to still start
         index        (int)   : the index of the task -- used to start processes asynchronously (default None)
         interval     (float) : the time delay to poll to see if CPU load is OK (default 0.5 seconds)
-        cpu_interval (float) : number of seconds over which to estimate CPU load (default 0.1; to small gives inaccurate readings)
+        cpu_interval (float) : number of seconds over which to estimate CPU load (default 0.1; too small gives inaccurate readings)
         maxtime      (float) : maximum amount of time to wait to start the task (default 36000 seconds (10 hours))
         label        (str)   : the label to print out when outputting information about task delay or start (default None)
         verbose      (bool)  : whether or not to print information about task delay or start (default True)
@@ -242,7 +242,16 @@ def loadbalancer(maxcpu=0.8, maxmem=0.8, index=None, interval=0.5, cpu_interval=
     if maxcpu   is None or maxcpu  is False: maxcpu  = 1.0
     if maxmem   is None or maxmem  is False: maxmem  = 1.0
     if maxtime  is None or maxtime is False: maxtime = 36000
-    if interval is None: interval = 0.5
+    
+    # Handle the interval
+    default_interval = 0.5
+    min_interval = 1e-3 # Don't allow intervals of less than 1 ms
+    if interval is None:
+        interval = default_interval
+    if interval < min_interval:
+        interval = min_interval
+        warnmsg = f'sc.loadbalancer() "interval" should not be less than {min_interval} s'
+        warnings.warn(warnmsg, category=UserWarning, stacklevel=2)
 
     if label is None:
         label = ''
