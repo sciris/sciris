@@ -10,7 +10,7 @@ Version 2.1.0 (2022-12-23)
 
 New features
 ~~~~~~~~~~~~
-#. ``sc.save()``/``sc.load()`` now allow files to be saved/loaded in [zstandard[(https://github.com/indygreg/python-zstandard) (instead of ``gzip``) format, since the former is usually faster for the same level of compression. ``sc.save()`` still uses ``gzip`` by default; the equivalent ``sc.zsave()`` uses ``zstandard`` by default. (Thanks to [Fabio Mazza](https://github.com/fabmazz) for the suggestion.) ``sc.save()`` also now has the option of not using any compression (``sc.save(..., compression='none')``).
+#. ``sc.save()``/``sc.load()`` now allow files to be saved/loaded in `zstandard <https://github.com/indygreg/python-zstandard>`_ (instead of ``gzip``) format, since the former is usually faster for the same level of compression. ``sc.save()`` still uses ``gzip`` by default; the equivalent ``sc.zsave()`` uses ``zstandard`` by default. (Thanks to `Fabio Mazza <https://github.com/fabmazz>`_ for the suggestion.) ``sc.save()`` also now has the option of not using any compression (``sc.save(..., compression='none')``).
 #. Functions that returned paths as strings by default -- ``sc.thisdir()``, ``sc.getfilelist()``, ``sc.makefilepath()``, ``sc.sanitizefilename()`` -- now all have aliases that return ``Path`` objects by default: ``sc.thispath()``, ``sc.getfilepaths()``, ``sc.makepath()``, and ``sc.sanitizepath()``.
 #. ``sc.thisfile()`` gets the path of the current file.
 #. ``sc.sanitizecolor()`` will convert any form of color specification (e.g. ``'g'``, ``'crimson'``) into an RGB tuple.
@@ -27,7 +27,7 @@ Other changes
 #. ``sc.vectocolor()`` now has a ``nancolor`` argument to handle NaN values; NaNs are also now handled correctly.
 #. ``sc.timer()`` now has a more compact default string representation; use ``timer.disp()`` to display the full object. In addition, ``timer.total`` is now a property instead of a function.
 #. ``sc.thisdir()`` now takes a ``frame`` argument, in case the folder of a file *other* than the calling script is desired.
-#. ``sc.getfilelist()`` now has a ``fnmatch`` argument, which allows for Unix-style file matching via the [fnmatch](https://docs.python.org/3/library/fnmatch.html) module.
+#. ``sc.getfilelist()`` now has a ``fnmatch`` argument, which allows for Unix-style file matching via the `fnmatch <https://docs.python.org/3/library/fnmatch.html>`_ module.
 #. ``sc.importbyname()`` now has a ``verbose`` argument.
 #. ``sc.promotetolist()`` and ``sc.promotetoarray()`` are now aliases of ``sc.tolist()`` and ``sc.toarray()``, rather than vice versa.
 
