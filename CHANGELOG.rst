@@ -10,7 +10,7 @@ Version 2.1.0 (2022-12-23)
 
 New features
 ~~~~~~~~~~~~
-#. ``sc.save()``/``sc.load()`` now allow files to be saved/loaded in `zstandard <https://github.com/indygreg/python-zstandard>`_ (instead of ``gzip``) format, since the former is usually faster for the same level of compression. ``sc.save()`` still uses ``gzip`` by default; the equivalent ``sc.zsave()`` uses ``zstandard`` by default. (Thanks to `Fabio Mazza <https://github.com/fabmazz>`_ for the suggestion.) ``sc.save()`` also now has the option of not using any compression (``sc.save(..., compression='none')``).
+#. ``sc.save()``/``sc.load()`` now allow files to be saved/loaded in `zstandard <https://github.com/indygreg/python-zstandard>`_ (instead of ``gzip``) format, since the former is usually faster for the same level of compression. ``sc.save()`` still uses ``gzip`` by default; the equivalent ``sc.zsave()`` uses ``zstandard`` by default. ``sc.save()`` also now has the option of not using any compression via ``sc.save(..., compression='none')``. (Thanks to `Fabio Mazza <https://github.com/fabmazz>`_ for the suggestion.)
 #. Functions that returned paths as strings by default -- ``sc.thisdir()``, ``sc.getfilelist()``, ``sc.makefilepath()``, ``sc.sanitizefilename()`` -- now all have aliases that return ``Path`` objects by default: ``sc.thispath()``, ``sc.getfilepaths()``, ``sc.makepath()``, and ``sc.sanitizepath()``.
 #. ``sc.thisfile()`` gets the path of the current file.
 #. ``sc.sanitizecolor()`` will convert any form of color specification (e.g. ``'g'``, ``'crimson'``) into an RGB tuple.
