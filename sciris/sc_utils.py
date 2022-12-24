@@ -61,8 +61,8 @@ __all__ = ['fast_uuid', 'uuid', 'dcp', 'cp', 'pp', 'sha', 'freeze', 'require',
 
 def fast_uuid(which=None, length=None, n=1, secure=False, forcelist=False, safety=1000, recursion=0, recursion_limit=10, verbose=True):
     '''
-    Create a fast UID or set of UIDs. Note: for certain applications, ``sc.uuid()``
-    is faster than ``sc.fast_uuid()``!
+    Create a fast UID or set of UIDs. Note: for certain applications, :func:`uuid`
+    is faster than :func:`fast_uuid`!
 
     Args:
         which (str): the set of characters to choose from (default ascii)
@@ -554,7 +554,7 @@ def urlopen(url, filename=None, save=False, headers=None, params=None, data=None
     '''
     Download a single URL.
 
-    Alias to ``urllib.request.urlopen(url).read()``. See also ``sc.download()``
+    Alias to ``urllib.request.urlopen(url).read()``. See also :func:`download`
     for downloading multiple URLs. Note: ``sc.urlopen()``/``sc.wget()`` are aliases.
 
     Args:
@@ -654,7 +654,7 @@ def download(url, *args, filename=None, save=True, parallel=True, verbose=True, 
     '''
     Download one or more URLs in parallel and return output or save them to disk.
 
-    A wrapper for ``sc.urlopen()``, except with ``save=True`` by default.
+    A wrapper for :func:`urlopen`, except with ``save=True`` by default.
 
     Args:
         url (str/list/dict): either a single URL, a list of URLs, or a dict of URL:filename pairs
@@ -663,7 +663,7 @@ def download(url, *args, filename=None, save=True, parallel=True, verbose=True, 
         save (bool): if supplied instead of ``filename``, then use the default filename
         parallel (bool): whether to download multiple URLs in parallel
         verbose (bool): whether to print progress (if verbose=2, print extra detail on each downloaded URL)
-        **kwargs (dict): passed to ``sc.urlopen()``
+        **kwargs (dict): passed to :func:`urlopen`
 
     **Examples**::
 
@@ -959,7 +959,7 @@ def tolist(obj=None, objtype=None, keepnone=False, coerce='default'):
 
     Args:
         obj (anything): object to ensure is a list
-        objtype (anything): optional type to check for each element; see ``sc.checktype()`` for details
+        objtype (anything): optional type to check for each element; see :func:`checktype` for details
         keepnone (bool): if ``keepnone`` is false, then ``None`` is converted to ``[]``; else, it's converted to ``[None]``
         coerce (str/tuple):  tuple of additional types to coerce to a list (as opposed to wrapping in a list)
 
@@ -1163,7 +1163,7 @@ def mergelists(*args, copy=False, **kwargs):
     Args:
         args (any): the lists, or items, to be joined together into a list
         copy (bool): whether to deepcopy the resultant object
-        kwargs (dict): passed to ``sc.tolist()``, which is called on each argument
+        kwargs (dict): passed to :func:`tolist`, which is called on each argument
 
     **Examples**::
 
@@ -1922,7 +1922,7 @@ class LazyModule:
     '''
     Create a "lazy" module that is loaded if and only if an attribute is called.
 
-    Typically not for use by the user, but is used by ``sc.importbyname()``.
+    Typically not for use by the user, but is used by :func:`importbyname`.
 
     Args:
         module (str): name of the module to (not) load

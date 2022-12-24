@@ -55,9 +55,9 @@ __all__ = ['load', 'save', 'loadobj', 'saveobj', 'zsave', 'loadstr', 'dumpstr', 
 
 def load(filename=None, folder=None, verbose=False, die=None, remapping=None, method='pickle', **kwargs):
     '''
-    Load a file that has been saved as a gzipped pickle file, e.g. by :func:`sc.save()`.
+    Load a file that has been saved as a gzipped pickle file, e.g. by :func:`save`.
     Accepts either a filename (standard usage) or a file object as the first argument.
-    Note that `:func:`load()`/:func:`loadobj()` are aliases of each other.
+    Note that `:func:`load`/:func:`loadobj` are aliases of each other.
 
     Note: be careful when loading pickle files, since a malicious pickle can be
     used to execute arbitrary code.
@@ -163,12 +163,12 @@ def save(filename='default.obj', obj=None, folder=None, compression='gzip', comp
     '''
     Save an object to file as a gzipped pickle -- use compression 5 by default,
     since more is much slower but not much smaller. Once saved, can be loaded
-    with ``sc.load()``. Note that ``sc.save()``/``sc.saveobj()`` are identical.
+    with :func:`load`. Note that :func:`save`/:func:`saveobj` are identical.
 
     Args:
         filename      (str/Path) : the filename or path to save to; if None, return an io.BytesIO filestream instead of saving to disk
         obj           (anything) : the object to save
-        folder        (str)      : passed to :func:`sc.makepath()`
+        folder        (str)      : passed to :func:`makepath`
         compression   (str)      : type of compression to use: 'gzip' (default), 'zstd' (zstandard), or 'none' (no compression)
         compresslevel (int)      : the level of gzip/zstd compression (1 to 9 for gzip, -7 to 22 for zstandard, default 5)
         verbose       (int)      : detail to print
@@ -708,7 +708,7 @@ def makefilepath(filename=None, folder=None, ext=None, default=None, split=False
         abspath     (bool)          : whether to conver to absolute path
         makedirs    (bool)          : whether or not to make the folders to save into if they don't exist
         checkexists (bool)          : if False/True, raises an exception if the path does/doesn't exist
-        sanitize    (bool)          : whether or not to remove special characters from the path; see ``sc.sanitizefilename()`` for details
+        sanitize    (bool)          : whether or not to remove special characters from the path; see :func:`sanitizepath` for details
         die         (bool)          : whether or not to raise an exception if cannot create directory failed (otherwise, return a string)
         verbose     (bool)          : how much detail to print
 
@@ -892,7 +892,7 @@ __all__ += ['sanitizejson', 'jsonify', 'loadjson', 'savejson', 'loadyaml', 'save
 def sanitizejson(obj, verbose=True, die=False, tostring=False, **kwargs):
     """
     This is the main conversion function for Python data-structures into JSON-compatible
-    data structures (note: ``sc.sanitizejson()/sc.jsonify()`` are identical).
+    data structures (note: :func:`sanitizejson`/:func:`jsonify` are identical).
 
     Args:
         obj      (any):  almost any kind of data structure that is a combination of list, numpy.ndarray, odicts, etc.
