@@ -29,18 +29,18 @@ Some highlights of ScirisWeb (``import scirisweb as sw``):
 
 I'm not convinced.
 ~~~~~~~~~~~~~~~~~~
-That's OK. Perhaps you'd be interested in seeing what a script that performs tasks like parallelization, saving and loading files, and 3D plotting looks like when written in "`vanilla Python <https://github.com/sciris/sciris/blob/develop/tests/showcase_vanilla.py>`__" (left) compared to `using Sciris <https://github.com/sciris/sciris/blob/develop/tests/showcase.py>`__ (right):
+That's OK. Perhaps you'd be interested in seeing what a script that performs tasks like parallelization, saving and loading files, and 3D plotting looks like when written in "`vanilla Python <https://github.com/sciris/sciris/blob/main/tests/showcase_vanilla.py>`__" (left) compared to `using Sciris <https://github.com/sciris/sciris/blob/main/tests/showcase_sciris.py>`__ (right):
 
 |Sciris showcase|
 
-Both of these do the same thing, but the plain Python version requires 50% more lines of code to produce the same graph:
+Both of these do the same thing, but the plain Python version (left) requires 50% more lines of code to produce the same graph as Sciris (right):
 
 |Sciris output|
 
 
 Where did Sciris come from?
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~
-Development of Sciris began in 2014 to support development of the `Optima <http://optimamodel.com>`__ suite of models. We kept encounting the same issues and inconveniences over and over while building scientific webapps, and began collecting the tools we used to overcome these issues into a shared library. This library evolved into Sciris. (Note: while "Sciris" doesn't mean anything, "iris" means "rainbow" in Greek, and the name was loosely inspired by the wide spectrum of scientific computing features included in Sciris.)
+Development of Sciris began in 2014 to support development of the `Optima <http://optimamodel.com>`__ suite of models. We kept encountering the same issues and inconveniences over and over while building scientific webapps, and began collecting the tools we used to overcome these issues into a shared library. This library evolved into Sciris. (Note: while "Sciris" doesn't mean anything, "iris" means "rainbow" in Greek, and the name was loosely inspired by the wide spectrum of scientific computing features included in Sciris.)
 
 To give a based-on-a-true-story example, let's say you have a dictionary of results for multiple runs of your model, called ``results``. The output of each model run is itself a dictionary, with keys such as ``name`` and ``data``. Now let's say you want to access the data from the first model run. Using plain Python dictionaries, this would be ``results[list(results.keys())[0]]['data']``. Using a Sciris ``objdict``, this is ``results[0].data`` – almost 3x shorter.
 
