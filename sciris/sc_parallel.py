@@ -1,5 +1,5 @@
 '''
-Parallelization functions, allowing multiprocessing to be used simply.
+Functions to allow parallelization to be performed easily.
 
 NB: Uses ``multiprocess`` instead of ``multiprocessing`` under the hood for
 broadest support  across platforms (e.g. Jupyter notebooks).
@@ -76,7 +76,7 @@ def parallelize(func, iterarg=None, iterkwargs=None, args=None, kwargs=None, ncp
         List of outputs from each process
 
 
-    **Example 1 -- simple usage as a shortcut to multiprocessing.map()**::
+    **Example 1 -- simple usage as a shortcut to multiprocess.map()**::
 
         def f(x):
             return x*x
