@@ -1,24 +1,14 @@
 Welcome to Sciris
 =================
 
-.. image:: https://badgen.net/pypi/v/sciris/?color=yellow
+.. image:: https://badgen.net/pypi/v/sciris/?color=blue
  :target: https://pypi.com/project/sciris
+
+.. image:: https://static.pepy.tech/personalized-badge/sciris?period=total&units=international_system&left_color=black&right_color=yellow&left_text=Downloads
+ :target: https://pepy.tech/project/sciris
 
 .. image:: https://github.com/sciris/sciris/actions/workflows/tests.yaml/badge.svg
  :target: https://github.com/sciris/sciris/actions/workflows/tests.yaml?query=workflow
-
-.. image:: https://static.pepy.tech/personalized-badge/sciris?period=total&units=international_system&left_color=black&right_color=red&left_text=Downloads
- :target: https://pepy.tech/project/sciris
-
-
-.. image:: https://img.shields.io/pypi/v/sciris?style=for-the-badge
-   :alt: PyPI
-
-.. image:: https://img.shields.io/pypi/dm/sciris?style=for-the-badge
-   :alt: PyPI - Downloads
-
-.. image:: https://img.shields.io/github/contributors/sciris/sciris
-   :alt: GitHub contributors
 
 
 What is Sciris?
