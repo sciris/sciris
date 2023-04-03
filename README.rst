@@ -1,3 +1,5 @@
+[![Downloads](https://static.pepy.tech/badge/sciris)](https://pepy.tech/project/sciris)
+
 Welcome to Sciris
 =================
 
