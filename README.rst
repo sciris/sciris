@@ -1,8 +1,15 @@
-.. image:: https://static.pepy.tech/personalized-badge/sciris?period=total&units=international_system&left_color=black&right_color=blue&left_text=Downloads
- :target: https://pepy.tech/project/sciris
- 
 Welcome to Sciris
 =================
+
+.. image:: https://badgen.net/pypi/v/sciris/
+ :target: https://pypi.com/project/sciris
+
+.. image:: https://static.pepy.tech/personalized-badge/sciris?period=total&units=international_system&left_color=black&right_color=blue&left_text=Downloads
+ :target: https://pepy.tech/project/sciris
+
+.. image:: https://github.com/github/docs/actions/workflows/tests.yml/badge.svg
+ :target: https://github.com/sciris/sciris
+
 
 What is Sciris?
 ---------------
