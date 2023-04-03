@@ -1,5 +1,6 @@
-[![Downloads](https://static.pepy.tech/badge/sciris)](https://pepy.tech/project/sciris)
-
+.. image:: https://static.pepy.tech/personalized-badge/sciris?period=total&units=international_system&left_color=black&right_color=blue&left_text=Downloads
+ :target: https://pepy.tech/project/sciris
+ 
 Welcome to Sciris
 =================
 
