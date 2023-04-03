@@ -117,5 +117,5 @@ Installation and run instructions
 3. Do science (left as an exercise to the reader).
 
 
-.. |Sciris showcase| image:: https://github.com/sciris/sciris/raw/develop/docs/sciris-showcase-code.png
-.. |Sciris output| image:: https://github.com/sciris/sciris/raw/develop/docs/sciris-showcase-output.png
+.. |Sciris showcase| image:: https://github.com/sciris/sciris/raw/main/docs/sciris-showcase-code.png
+.. |Sciris output| image:: https://github.com/sciris/sciris/raw/main/docs/sciris-showcase-output.png
