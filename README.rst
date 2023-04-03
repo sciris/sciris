@@ -4,7 +4,7 @@ Welcome to Sciris
 .. image:: https://badgen.net/pypi/v/sciris/?color=blue
  :target: https://pypi.com/project/sciris
 
-.. image:: https://static.pepy.tech/personalized-badge/sciris?period=total&units=international_system&left_color=black&right_color=yellow&left_text=Downloads
+.. image:: https://static.pepy.tech/personalized-badge/sciris?period=total&units=international_system&left_color=grey&right_color=yellow&left_text=Downloads
  :target: https://pepy.tech/project/sciris
 
 .. image:: https://github.com/sciris/sciris/actions/workflows/tests.yaml/badge.svg
