@@ -27,8 +27,9 @@ from . import sc_profiling as scp
 __all__ = ['parallelize', 'parallelcmd', 'parallel_progress']
 
 
-def parallelize(func, iterarg=None, iterkwargs=None, args=None, kwargs=None, ncpus=None, maxcpu=None, maxmem=None,
-                interval=None, parallelizer=None, serial=False, returnpool=False, die=True, **func_kwargs):
+def parallelize(func, iterarg=None, iterkwargs=None, args=None, kwargs=None, ncpus=None, 
+                maxcpu=None, maxmem=None, interval=None, parallelizer=None, serial=False, 
+                returnpool=False, progress=False, callback=None, die=True, **func_kwargs):
     '''
     Execute a function in parallel.
 
@@ -69,6 +70,8 @@ def parallelize(func, iterarg=None, iterkwargs=None, args=None, kwargs=None, ncp
         parallelizer (str/func)  : parallelization function; default 'multiprocess' (see below for details)
         serial       (bool)      : whether to skip parallelization and run in serial (useful for debugging; equivalent to ``parallelizer='serial'``)
         returnpool   (bool)      : whether to return the process pool as well as the results
+        progress     (bool)      : whether to show a progress bar
+        callback     (func)      : an optional function to call from each worker
         die          (bool)      : whether to stop immediately if an exception is encountered (otherwise, store the exception as the result)
         func_kwargs  (dict)      : merged with kwargs (see above)
 
@@ -247,9 +250,10 @@ def parallelize(func, iterarg=None, iterkwargs=None, args=None, kwargs=None, ncp
             else:  # pragma: no cover # Should be caught by previous checking, so shouldn't happen
                 errormsg = f'iterkwargs type not understood ({type(iterkwargs)})'
                 raise TypeError(errormsg)
-        taskargs = TaskArgs(func=func, index=index, iterval=iterval, iterdict=iterdict,
+        taskargs = TaskArgs(func=func, index=index, niters=niters, iterval=iterval, iterdict=iterdict,
                             args=args, kwargs=kwargs, maxcpu=maxcpu, maxmem=maxmem,
-                            interval=interval, embarrassing=embarrassing, die=die)
+                            interval=interval, embarrassing=embarrassing, callback=callback,
+                            die=die)
         argslist.append(taskargs)
     
     # Set up the run
@@ -300,7 +304,7 @@ def parallelize(func, iterarg=None, iterkwargs=None, args=None, kwargs=None, ncp
         
         elif pname == 'multiprocess': # Main use case
             with mp.Pool(processes=ncpus) as pool:
-                outputlist = pool.map(_parallel_task, argslist)
+                outputlist = list(pool.imap(_parallel_task, argslist))
         
         elif pname == 'multiprocessing':
             with mpi.Pool(processes=ncpus) as pool:
@@ -446,7 +450,7 @@ def parallel_progress(fcn, inputs, num_workers=None, show_progress=True, initial
         errormsg = 'Module tqdm not found; please install with "pip install tqdm"'
         raise ModuleNotFoundError(errormsg) from E
 
-    pool = mp.pool.Pool(num_workers, initializer=initializer)
+    pool = mp.Pool(num_workers, initializer=initializer)
 
     results = [None]
     if scu.isnumber(inputs):
@@ -487,9 +491,11 @@ class TaskArgs(scu.prettyobj):
         A class to hold the arguments for the parallel task -- not to be invoked by the user.
 
         Arguments and ordering must match both ``sc.parallelize()`` and ``sc._parallel_task()`` '''
-        def __init__(self, func, index, iterval, iterdict, args, kwargs, maxcpu, maxmem, interval, embarrassing, die=True):
+        def __init__(self, func, index, niters, iterval, iterdict, args, kwargs, 
+                     maxcpu, maxmem, interval, embarrassing, callback=None, die=True):
             self.func         = func         # The function being called
             self.index        = index        # The place in the queue
+            self.niters       = niters       # The total number of iterations
             self.iterval      = iterval      # The value being iterated (may be None if iterdict is not None)
             self.iterdict     = iterdict     # A dictionary of values being iterated (may be None if iterval is not None)
             self.args         = args         # Arguments passed directly to the function
@@ -498,6 +504,7 @@ class TaskArgs(scu.prettyobj):
             self.maxmem       = maxmem       # Maximum memory
             self.interval     = interval     # Interval to check load (only used with maxcpu/maxmem)
             self.embarrassing = embarrassing # Whether or not to pass the iterarg to the function (no if it's embarrassing)
+            self.callback     = callback     # A function to call after each task finishes
             self.die          = die          # Whether to raise an exception if the child task encounters one
             return
 
@@ -537,6 +544,11 @@ def _parallel_task(taskargs, outputqueue=None):
             warnmsg = f'sc.parallelize(): Task {index} failed, but die=False so continuing.\n{scu.traceback()}'
             warnings.warn(warnmsg, category=RuntimeWarning, stacklevel=2)
             output = E
+    
+    # Handle callback, if present
+    if taskargs.callback:
+        data = dict(index=index, niters=taskargs.niters, args=args, kwargs=kwargs, output=output)
+        taskargs.callback(data)
 
     # Handle output
     if outputqueue:
