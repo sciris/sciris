@@ -28,7 +28,7 @@ __all__ = ['parallelize', 'parallelcmd', 'parallel_progress']
 
 
 def parallelize(func, iterarg=None, iterkwargs=None, args=None, kwargs=None, ncpus=None, maxcpu=None, maxmem=None,
-                interval=None, parallelizer=None, serial=False, returnpool=False, die=False, **func_kwargs):
+                interval=None, parallelizer=None, serial=False, returnpool=False, die=True, **func_kwargs):
     '''
     Execute a function in parallel.
 
@@ -66,10 +66,10 @@ def parallelize(func, iterarg=None, iterkwargs=None, args=None, kwargs=None, ncp
         maxcpu       (float)     : maximum CPU load; otherwise, delay the start of the next process (not used if ``ncpus`` is specified)
         maxmem       (float)     : maximum fraction of virtual memory (RAM); otherwise, delay the start of the next process
         interval     (float)     : number of seconds to pause between starting processes for checking load
-        parallelizer (str/func)  : parallelization function; default 'multiprocess' (other choices are 'concurrent.futures', 'multiprocessing', or user-supplied; see example below)
-        serial       (bool)      : whether to skip parallelization run in serial (useful for debugging)
+        parallelizer (str/func)  : parallelization function; default 'multiprocess' (see below for details)
+        serial       (bool)      : whether to skip parallelization and run in serial (useful for debugging; equivalent to ``parallelizer='serial'``)
         returnpool   (bool)      : whether to return the process pool as well as the results
-        die          (bool)      : whether to stop immediately if an exception is encountered (otherwise, try 'multiprocess')
+        die          (bool)      : whether to stop immediately if an exception is encountered (otherwise, store the exception as the result)
         func_kwargs  (dict)      : merged with kwargs (see above)
 
     Returns:
@@ -129,6 +129,32 @@ def parallelize(func, iterarg=None, iterkwargs=None, args=None, kwargs=None, ncp
         results = sc.parallelize(f, iterkwargs=dict(x=[1,2,3], y=[4,5,6]), parallelizer=pool.map) # Note: parallelizer is pool.map, not pool
 
 
+    **Example 6 -- using Sciris as an interface to Dask**::
+    
+        def f(x,y):
+            return [x]*y
+    
+        def dask_map(task, argslist):
+            import dask
+            queued = [dask.delayed(task)(args) for args in argslist]
+            return list(dask.compute(*queued))
+    
+        results = sc.parallelize(f, iterkwargs=dict(x=[1,2,3], y=[4,5,6]), parallelizer=dask_map)
+
+
+    The ``parallelizer`` argument allows a wide range of different parallelizers
+    (including different aliases for each), and also supports user-supplied ones.
+    Note that in most cases, the default parallelizer will suffice. However, the
+    full list of options is:
+        
+        - ``None``, ``'default'``, ``'robust'``, ``'multiprocess'``: the slow but robust dill-based parallelizer ``multiprocess``
+        - ``'fast'``, ``'concurrent'``, ``'concurrent.futures'``: the faster but more fragile pickle-based Python-default parallelizer ``concurrent.futures``
+        - ``'multiprocessing'``: the previous pickle-based Python default parallelizer, ``multiprocessing``
+        - ``'serial'``, ``'serial-nocopy'``: no parallelization (single-threaded); with "-nocopy", do not force pickling
+        - ``'thread'``', ``'threadpool'``', ``'thread-nocopy'``': thread- rather than process-based parallelization ("-nocopy" as above)
+        - User supplied: any ``map()``-like function that takes in a function and an argument list
+
+
     **Note**: to use on Windows, parallel calls must contained with an ``if __name__ == '__main__'`` block.
 
     For example::
@@ -145,6 +171,7 @@ def parallelize(func, iterarg=None, iterkwargs=None, args=None, kwargs=None, ncp
     | New in version 1.1.1: "serial" argument.
     | New in version 2.0.0: changed default parallelizer from ``multiprocess.Pool`` to ``concurrent.futures.ProcessPoolExecutor``; replaced ``maxload`` with ``maxcpu``/``maxmem``; added ``returnpool`` argument
     | New in version 2.0.4: added "die" argument; changed exception handling
+    | New in version 2.2.0: propagated "die" to tasks
     '''
     # Handle maxload
     maxload = func_kwargs.pop('maxload', None)
@@ -222,7 +249,7 @@ def parallelize(func, iterarg=None, iterkwargs=None, args=None, kwargs=None, ncp
                 raise TypeError(errormsg)
         taskargs = TaskArgs(func=func, index=index, iterval=iterval, iterdict=iterdict,
                             args=args, kwargs=kwargs, maxcpu=maxcpu, maxmem=maxmem,
-                            interval=interval, embarrassing=embarrassing)
+                            interval=interval, embarrassing=embarrassing, die=die)
         argslist.append(taskargs)
     
     # Set up the run
@@ -329,10 +356,10 @@ def parallelize(func, iterarg=None, iterkwargs=None, args=None, kwargs=None, ncp
         return outputlist
 
 
-def parallelcmd(cmd=None, parfor=None, returnval=None, maxcpu=None, maxmem=None, interval=None, **kwargs):
+def parallelcmd(cmd=None, parfor=None, returnval=None, maxcpu=None, maxmem=None, interval=None, die=True, **kwargs):
     '''
     A function to parallelize any block of code. Note: this is intended for quick
-    prototyping; since it uses exec(), it is not recommended for use in production
+    prototyping only; since it uses exec(), it is not recommended for use in production
     code.
 
     Args:
@@ -342,6 +369,7 @@ def parallelcmd(cmd=None, parfor=None, returnval=None, maxcpu=None, maxmem=None,
         maxcpu    (float): maximum CPU load; used by ``sc.loadbalancer()``
         maxmem    (float): maximum fraction of virtual memory (RAM); used by ``sc.loadbalancer()``
         interval  (float): the time delay to poll to see if load is OK,  used in ``sc.loadbalancer()``
+        die       (bool):  whether to stop immediately if an exception is encountered (otherwise, store the exception as the result)
         kwargs    (dict):  variables to pass into the code
 
     **Example**::
@@ -355,7 +383,8 @@ def parallelcmd(cmd=None, parfor=None, returnval=None, maxcpu=None, maxmem=None,
         """
         results = sc.parallelcmd(cmd=cmd, parfor=parfor, returnval=returnval, const=const)
 
-    New in version 2.0.0: replaced ``maxload`` with ``maxcpu``/``maxmem``; automatically de-indent the command
+    | New in version 2.0.0: replaced ``maxload`` with ``maxcpu``/``maxmem``; automatically de-indent the command
+    | New in version 2.2.0: added "die" argument
     '''
 
     # Handle maxload
@@ -374,7 +403,7 @@ def parallelcmd(cmd=None, parfor=None, returnval=None, maxcpu=None, maxmem=None,
     outputlist = np.empty(nfor, dtype=object)
     processes = []
     for i in range(nfor):
-        args = (cmd, parfor, returnval, i, outputqueue, maxcpu, maxmem, interval, kwargs)
+        args = (cmd, parfor, returnval, i, outputqueue, maxcpu, maxmem, interval, die, kwargs)
         prc = mp.Process(target=_parallelcmd_task, args=args)
         prc.start()
         processes.append(prc)
@@ -458,7 +487,7 @@ class TaskArgs(scu.prettyobj):
         A class to hold the arguments for the parallel task -- not to be invoked by the user.
 
         Arguments and ordering must match both ``sc.parallelize()`` and ``sc._parallel_task()`` '''
-        def __init__(self, func, index, iterval, iterdict, args, kwargs, maxcpu, maxmem, interval, embarrassing):
+        def __init__(self, func, index, iterval, iterdict, args, kwargs, maxcpu, maxmem, interval, embarrassing, die=True):
             self.func         = func         # The function being called
             self.index        = index        # The place in the queue
             self.iterval      = iterval      # The value being iterated (may be None if iterdict is not None)
@@ -469,6 +498,7 @@ class TaskArgs(scu.prettyobj):
             self.maxmem       = maxmem       # Maximum memory
             self.interval     = interval     # Interval to check load (only used with maxcpu/maxmem)
             self.embarrassing = embarrassing # Whether or not to pass the iterarg to the function (no if it's embarrassing)
+            self.die          = die          # Whether to raise an exception if the child task encounters one
             return
 
 
@@ -497,8 +527,16 @@ def _parallel_task(taskargs, outputqueue=None):
     if maxcpu or maxmem:
         scp.loadbalancer(maxcpu=maxcpu, maxmem=maxmem, index=index, interval=taskargs.interval)
 
-    # Call the function
-    output = func(*args, **kwargs)
+    # Call the function!
+    try:
+        output = func(*args, **kwargs)
+    except Exception as E:
+        if taskargs.die: # Usual case, raise an exception and stop
+            raise E
+        else: # Alternatively, keep going and just let this trial fail
+            warnmsg = f'sc.parallelize(): Task {index} failed, but die=False so continuing.\n{scu.traceback()}'
+            warnings.warn(warnmsg, category=RuntimeWarning, stacklevel=2)
+            output = E
 
     # Handle output
     if outputqueue:
@@ -508,7 +546,7 @@ def _parallel_task(taskargs, outputqueue=None):
         return output
 
 
-def _parallelcmd_task(_cmd, _parfor, _returnval, _i, _outputqueue, _maxcpu, _maxmem, _interval, _kwargs): # pragma: no cover # No coverage since pickled
+def _parallelcmd_task(_cmd, _parfor, _returnval, _i, _outputqueue, _maxcpu, _maxmem, _interval, _die, _kwargs): # pragma: no cover # No coverage since pickled
     '''
     The task to be executed by ``sc.parallelcmd()``. All internal variables start with
     underscores to avoid possible collisions in the ``exec()`` statements. Not to be called
@@ -527,12 +565,16 @@ def _parallelcmd_task(_cmd, _parfor, _returnval, _i, _outputqueue, _maxcpu, _max
         _thisval = _kwargs[_key] # analysis:ignore
         exec(f'{_key} = _thisval') # Set the value of this variable
 
-    # Calculate the command
+    # Run the command
     try:
         exec(_cmd) # The meat of the matter!
-    except Exception as E:
-        print(f'WARNING, parallel task failed:\n{str(E)}')
-        exec(f'{_returnval} = None')
+    except Exception:
+        if _die:
+            raise Exception
+        else:
+            warnmsg = f'sc.parallelcmd(): Task {_i} failed, but die=False so continuing.\n{scu.traceback()}'
+            warnings.warn(warnmsg, category=RuntimeWarning, stacklevel=2)
+            exec(f'{_returnval} = None')
 
     # Append results
     _outputqueue.put((_i,eval(_returnval)))
