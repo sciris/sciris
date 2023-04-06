@@ -33,7 +33,6 @@ import gzip as gz
 import pickle as pkl
 from zipfile import ZipFile
 from contextlib import closing
-from io import BytesIO as IO
 from pathlib import Path
 from glob import glob
 import fnmatch as fnm
@@ -286,7 +285,7 @@ def loadstr(string, verbose=False, die=None, remapping=None):
         string2 = sc.loadstr(string1)
         assert string1 == string2
     '''
-    with closing(IO(string)) as output: # Open a "fake file" with the Gzip string pickle in it
+    with closing(io.BytesIO(string)) as output: # Open a "fake file" with the Gzip string pickle in it
         with gz.GzipFile(fileobj=output, mode='rb') as fileobj: # Set a Gzip reader to pull from the "file"
             picklestring = fileobj.read() # Read the string pickle from the "file" (applying Gzip decompression).
     obj = _unpickler(picklestring, filestring=string, verbose=verbose, die=die, remapping=remapping) # Return the object gotten from the string pickle.
@@ -295,7 +294,7 @@ def loadstr(string, verbose=False, die=None, remapping=None):
 
 def dumpstr(obj=None):
     ''' Dump an object as a bytes-like string (rarely used); see :func:`loadstr()` '''
-    with closing(IO()) as output: # Open a "fake file"
+    with closing(io.BytesIO()) as output: # Open a "fake file"
         with gz.GzipFile(fileobj=output, mode='wb') as fileobj:  # Open a Gzip-compressing way to write to this "file"
             try:    _savepickle(fileobj, obj) # Use pickle
             except: _savedill(fileobj, obj) # ...but use Dill if that fails
