@@ -110,12 +110,12 @@ def test_parallelcmd():
 def test_components():
     sc.heading('Testing subcomponents directly')
 
-    args = [0]*10
+    args = [0]*11
     args[0] = lambda: None
     args[3] = None # Set iterdict to None
     args[4] = None # Set args to empty list
     args[5] = None # Set kwargs to empty dict
-    args[9] = True # Set embarrassing
+    args[10] = True # Set embarrassing
     taskargs = sc.sc_parallel.TaskArgs(*args)
     task = sc.sc_parallel._parallel_task(taskargs)
     return task
