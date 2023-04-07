@@ -650,7 +650,7 @@ def urlopen(url, filename=None, save=False, headers=None, params=None, data=None
 wget = urlopen
 
 
-def download(url, *args, filename=None, save=True, parallel=True, verbose=True, **kwargs):
+def download(url, *args, filename=None, save=True, parallel=True, die=True, verbose=True, **kwargs):
     '''
     Download one or more URLs in parallel and return output or save them to disk.
 
@@ -662,6 +662,7 @@ def download(url, *args, filename=None, save=True, parallel=True, verbose=True, 
         filename (str/list): either a string or a list of the same length as ``url`` (if not supplied, return output)
         save (bool): if supplied instead of ``filename``, then use the default filename
         parallel (bool): whether to download multiple URLs in parallel
+        die (bool): whether to raise an exception if a URL can't be retrieved (default true)
         verbose (bool): whether to print progress (if verbose=2, print extra detail on each downloaded URL)
         **kwargs (dict): passed to :func:`urlopen`
 
@@ -672,7 +673,8 @@ def download(url, *args, filename=None, save=True, parallel=True, verbose=True, 
         sc.download({'http://sciris.org':'sciris.html', 'http://covasim.org':'covasim.html'}) # Downlaod two and save to disk
         sc.download(['http://sciris.org', 'http://covasim.org'], filename=['sciris.html', 'covasim.html']) # Ditto
 
-    New in version 2.0.0.
+    | New in version 2.0.0.
+    | New in version 2.2.0: "die" argument
     '''
     from . import sc_parallel as scp # To avoid circular import
     from . import sc_datetime as scd
@@ -704,11 +706,20 @@ def download(url, *args, filename=None, save=True, parallel=True, verbose=True, 
     iterkwargs = dict(url=urls, filename=filenames)
     func_kwargs = mergedicts(dict(save=save, verbose=wget_verbose), kwargs)
     if n_urls > 1 and parallel:
-        outputs = scp.parallelize(urlopen, iterkwargs=iterkwargs, kwargs=func_kwargs, parallelizer='thread')
+        outputs = scp.parallelize(urlopen, iterkwargs=iterkwargs, kwargs=func_kwargs, parallelizer='thread', die=die)
     else:
         outputs = []
         for url,filename in zip(urls, filenames):
-            output = urlopen(url=url, filename=filename, **func_kwargs)
+            try:
+                output = urlopen(url=url, filename=filename, **func_kwargs)
+            except Exception as E:
+                if die:
+                    raise E
+                else:
+                    warnmsg = f'Could not download {url}: {E}'
+                    warnings.warn(warnmsg, category=RuntimeWarning, stacklevel=2)
+                    output = E
+                    
             outputs.append(output)
 
     if verbose:
