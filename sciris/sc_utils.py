@@ -783,20 +783,65 @@ def flexstr(arg, force=True):
     return output
 
 
-def isiterable(obj):
+def isiterable(obj, *args, exclude=None, minlen=None):
     '''
-    Simply determine whether or not the input is iterable.
-
-    Works by trying to iterate via iter(), and if that raises an exception, it's
-    not iterable.
-
-    From http://stackoverflow.com/questions/1952464/in-python-how-do-i-determine-if-an-object-is-iterable
+    Determine whether or not the input is iterable, with optional types to exclude.
+    
+    Args:
+        obj (any): object to check for iterability
+        args (any): additional objects to check for iterability
+        exclude (list): list of iterable objects to exclude (e.g., strings)
+        minlen (int): if not None, check that an object has a defined length as well
+    
+    **Examples**::
+        
+        obj1 = [1,2,3]
+        obj2 = 'abc'
+        obj3 = set()
+        
+        sc.isiterable(obj1) # Returns True
+        sc.isiterable(obj1, obj2, obj3, exclude=str, minlen=1) # returns [False, True, False]
+        
+    
+    See also ``np.iterable()`` for a simpler version.
+    
+    New in version 2.2.0: "exclude" and "minlen" args; support multiple arguments
     '''
-    try:
-        iter(obj)
-        return True
-    except:
-        return False
+    
+    # Handle arguments
+    objlist = [obj]
+    n_args = len(args)
+    exclude = tuple(tolist(exclude))
+    if n_args:
+        objlist.extend(args)
+        
+    # Determine iterability
+    output = []
+    for obj in objlist:
+        
+        # Basic test of iterability
+        tf = np.iterable(obj)
+        
+        # Additional checks
+        if tf:
+            
+            # Explicitly exclude types
+            if exclude and checktype(obj, exclude): 
+                tf = False
+            
+            # Check length
+            if minlen is not None:
+                try:
+                    assert len(obj) >= minlen
+                except:
+                    tf = False
+                    
+        output.append(tf)
+    
+    if not n_args:
+        output = output[0]
+    
+    return output
 
 
 def checktype(obj=None, objtype=None, subtype=None, die=False):
@@ -810,6 +855,7 @@ def checktype(obj=None, objtype=None, subtype=None, die=False):
         - 'arr', 'array': a Numpy array (equivalent to np.ndarray)
         - 'listlike': a list, tuple, or array
         - 'arraylike': a list, tuple, or array with numeric entries
+        - 'none': a None object
 
     If subtype is not None, then checktype will iterate over the object and check
     recursively that each element matches the subtype.
@@ -827,18 +873,25 @@ def checktype(obj=None, objtype=None, subtype=None, die=False):
         sc.checktype(['a','b','c'], 'arraylike') # Returns False
         sc.checktype([{'a':3}], list, dict) # Returns True
     
-    New in version 2.0.1: ``pd.Series`` considered 'array-like'
+    | New in version 2.0.1: ``pd.Series`` considered 'array-like'
+    | New in version 2.2.0: allow list (in addition to tuple) of types; allow checking for NoneType
     '''
 
     # Handle "objtype" input
-    if   objtype in ['str','string']:          objinstance = _stringtypes
+    if isinstance(objtype, str): # Ensure it's lowercase (e.g. 'None' → 'none')
+        objtype = objtype.lower() 
+    if   objtype in ['none']:                  objinstance = type(None) # NoneType not available in Python <3.10
+    elif objtype in ['str','string']:          objinstance = _stringtypes
     elif objtype in ['num', 'number']:         objinstance = _numtype
     elif objtype in ['bool', 'boolean']:       objinstance = _booltypes
     elif objtype in ['arr', 'array']:          objinstance = np.ndarray
     elif objtype in ['listlike', 'arraylike']: objinstance = (list, tuple, np.ndarray, pd.Series) # Anything suitable as a numerical array
     elif type(objtype) == type:                objinstance = objtype # Don't need to do anything
     elif isinstance(objtype, tuple):           objinstance = objtype # Ditto
-    elif objtype is None:                      return # If not supplied, exit
+    elif isinstance(objtype, list):            objinstance = tuple(objtype) # Convert from a list to a tuple
+    elif objtype is None:
+        errormsg = "No object type was supplied; did you mean to use objtype='none' instead?"
+        raise ValueError(errormsg)
     else: # pragma: no cover
         errormsg = f'Could not understand what type you want to check: should be either a string or a type, not "{objtype}"'
         raise ValueError(errormsg)

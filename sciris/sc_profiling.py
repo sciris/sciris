@@ -72,7 +72,7 @@ def memload():
 
 
 def checkmem(var, descend=1, order='size', compresslevel=0, maxitems=1000, 
-             plot=False, verbose=False, **kwargs):
+             subtotals=True, plot=False, verbose=False, **kwargs):
     '''
     Checks how much memory the variable or variables in question use by dumping
     them to file.
@@ -89,15 +89,34 @@ def checkmem(var, descend=1, order='size', compresslevel=0, maxitems=1000,
         order (str): order in which to list items: "size" (default), "alphabetical", or "none"
         compresslevel (int): level of compression to use when saving to file (typically 0)
         maxitems (int): the maximum number of separate entries to check the size of
+        subtotals (bool): whether to include subtotals for different levels of depth
         plot (bool): if descending, show the results as a pie chart
         verbose (bool or int): detail to print, if >1, print repr of objects along the way
         **kwargs (dict): passed to :func:`load`
 
-    **Example**::
+    **Examples**::
 
         import numpy as np
         import sciris as sc
-        sc.checkmem(['spiffy', np.random.rand(2483,589)])
+        
+        list_obj = ['label', np.random.rand(2483,589)])
+        sc.checkmem(list_obj)
+        
+        
+        nested_dict = dict(
+            foo = dict(
+                a = np.random.rand(5,10),
+                b = np.random.rand(5,20),
+                c = np.random.rand(5,50),
+            ),
+            bar = [
+                np.random.rand(5,100),
+                np.random.rand(5,200),
+                np.random.rand(5,500),
+            ],
+            cat = np.random.rand(5,10),
+        )
+        sc.checkmem(nested_dict)
     
     New in version 2.2.0: descend multiple levels; dataframe output; "alphabetical" renamed "order"
     '''
