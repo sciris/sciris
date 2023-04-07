@@ -49,7 +49,76 @@ zstd = scu.importbyname('zstandard', die=False, verbose=False) # Optional import
 #%% Pickling functions
 ##############################################################################
 
-__all__ = ['load', 'save', 'loadobj', 'saveobj', 'zsave', 'loadstr', 'dumpstr', 'rmpath']
+__all__ = ['load', 'save', 'loadobj', 'saveobj', 'zsave', 'loadstr', 'dumpstr']
+
+
+# Define common error messages
+def _gziperror(filename):
+    ''' Base error message when a file couldn't be opened '''
+    return f'''
+Unable to load
+    {filename}
+as either a gzipped, zstandard or regular pickle file. Ensure that it is actually a pickle file.
+'''
+
+def _unpicklingerror(filename):
+    ''' Base error message when a file couldn't be loaded '''
+    return f'''
+Unable to load file: "{filename}"
+as a gzipped pickle file. Loading pickles can fail if Python modules have changed
+since the object was saved. If you are loading a custom class that has failed,
+you can use the remapping argument; see the sc.load() docstring for details.
+Otherwise, you might need to revert to the previous version of that module (e.g.
+in a virtual environment), save in a format other than pickle, reload in a different
+environment with the new version of that module, and then re-save as a pickle.
+
+For general information on unpickling errors, see e.g.:
+https://wiki.python.org/moin/UsingPickle
+https://stackoverflow.com/questions/41554738/how-to-load-an-old-pickle-file
+'''
+
+
+def _load_filestr(filename, folder):
+    ''' Try different options for loading a file on disk into a string -- not for external use '''
+    
+    # Handle loading of either filename or file object
+    if isinstance(filename, Path):
+        filename = str(filename)
+    if scu.isstring(filename):
+        argtype = 'filename'
+        filename = makefilepath(filename=filename, folder=folder, makedirs=False) # If it is a file, validate the folder (but don't create one if it's missing)
+    elif isinstance(filename, io.BytesIO):
+        argtype = 'fileobj'
+    else: # pragma: no cover
+        errormsg = f'First argument to sc.load() must be a string or file object, not {type(filename)}; see also sc.loadstr()'
+        raise TypeError(errormsg)
+    fileargs = {'mode': 'rb', argtype: filename}
+    
+    try:
+        with gz.GzipFile(**fileargs) as fileobj:
+            filestr = fileobj.read() # Convert it to a string
+    except Exception as E: # pragma: no cover
+        exc = type(E) # Figure out what kind of error it is
+        if exc == FileNotFoundError: # This is simple, just raise directly
+            raise E
+        elif exc == gz.BadGzipFile:
+            try: # If the gzip file failed, first try as a zstd compressed object
+                with open(filename, 'rb') as fh:
+                    zdcompressor = zstd.ZstdDecompressor()
+                    with zdcompressor.stream_reader(fh) as fileobj:
+                        filestr = fileobj.read()
+            except Exception as E2: # If that fails...
+                try: # Try as a regular binary object
+                    with open(filename, 'rb') as fileobj:
+                        filestr = fileobj.read() # Convert it to a string
+                except Exception as E3:
+                    try: # And finally as a regular object
+                        with open(filename, 'r') as fileobj:
+                            filestr = fileobj.read() # Convert it to a string
+                    except Exception as E4:
+                        gziperror = _gziperror(filename) + f'\nAdditional errors encountered:\n{str(E2)}\n{str(E3)}\n{str(E4)}'
+                        raise exc(gziperror) from E
+    return filestr
 
 
 def load(filename=None, folder=None, verbose=False, die=None, remapping=None, method='pickle', **kwargs):
@@ -85,72 +154,21 @@ def load(filename=None, folder=None, verbose=False, die=None, remapping=None, me
     | New in version 1.2.2: ability to load non-gzipped pickles; support for dill; arguments passed to loader
     '''
 
-    # Handle loading of either filename or file object
-    if isinstance(filename, Path):
-        filename = str(filename)
-    if scu.isstring(filename):
-        argtype = 'filename'
-        filename = makefilepath(filename=filename, folder=folder, makedirs=False) # If it is a file, validate the folder (but don't create one if it's missing)
-    elif isinstance(filename, io.BytesIO):
-        argtype = 'fileobj'
-    else: # pragma: no cover
-        errormsg = f'First argument to loadobj() must be a string or file object, not {type(filename)}'
-        raise TypeError(errormsg)
-    fileargs = {'mode': 'rb', argtype: filename}
-
-    # Define common error messages
-    gziperror = f'''
-Unable to load
-    {filename}
-as either a gzipped, zstandard or regular pickle file. Ensure that it is actually a pickle file.
-'''
-    unpicklingerror = f'''
-Unable to load file: "{filename}"
-as a gzipped pickle file. Loading pickles can fail if Python modules have changed
-since the object was saved. If you are loading a custom class that has failed,
-you can use the remapping argument; see the sc.loadobj() docstring for details.
-Otherwise, you might need to revert to the previous version of that module (e.g.
-in a virtual environment), save in a format other than pickle, reload in a different
-environment with the new version of that module, and then re-save as a pickle.
-
-For general information on unpickling errors, see e.g.:
-https://wiki.python.org/moin/UsingPickle
-https://stackoverflow.com/questions/41554738/how-to-load-an-old-pickle-file
-'''
-
     # Load the file
-    try:
-        with gz.GzipFile(**fileargs) as fileobj:
-            filestr = fileobj.read() # Convert it to a string
-    except Exception as E: # pragma: no cover
-        exc = type(E) # Figure out what kind of error it is
-        if exc == FileNotFoundError: # This is simple, just raise directly
-            raise E
-        elif exc == gz.BadGzipFile:
-            try: # If the gzip file failed, first try as a zstd compressed object
-                with open(filename, 'rb') as fh:
-                    zdcompressor = zstd.ZstdDecompressor()
-                    with zdcompressor.stream_reader(fh) as fileobj:
-                        filestr = fileobj.read()
-            except Exception as E2: # If that fails
-                try: # Try as a regular object
-                    with open(filename, 'rb') as fileobj:
-                        filestr = fileobj.read() # Convert it to a string
-                except Exception as E3:
-                    gziperror += f'\nAdditional errors encountered:\n{str(E2)}\n{str(E3)}'
-                    raise exc(gziperror) from E
+    filestr = _load_filestr(filename, folder)
+    
 
     # Unpickle it
     try:
         obj = _unpickler(filestr, filename=filename, verbose=verbose, die=die, remapping=remapping, method=method, **kwargs) # Actually load it
     except Exception as E: # pragma: no cover
         exc = type(E) # Figure out what kind of error it is
-        errormsg = unpicklingerror + '\n\nSee the stack trace above for more information on this specific error.'
+        errormsg = _unpicklingerror(filename) + '\n\nSee the stack trace above for more information on this specific error.'
         raise exc(errormsg) from E
 
     # If it loaded but with errors, print them here
     if isinstance(obj, Failed):
-        print(unpicklingerror)
+        print(_unpicklingerror(filename))
     elif verbose:
         print(f'Object loaded from "{filename}"')
 
@@ -274,54 +292,60 @@ loadobj = load
 saveobj = save
 
 
-def loadstr(string, verbose=False, die=None, remapping=None):
-    '''
-    Like :func:`load()`, but for a bytes-like string (rarely used).
-
-    **Example**::
-
-        obj = sc.objdict(a=1, b=2)
-        string1 = sc.dumpstr(obj)
-        string2 = sc.loadstr(string1)
-        assert string1 == string2
-    '''
-    with closing(io.BytesIO(string)) as output: # Open a "fake file" with the Gzip string pickle in it
-        with gz.GzipFile(fileobj=output, mode='rb') as fileobj: # Set a Gzip reader to pull from the "file"
-            picklestring = fileobj.read() # Read the string pickle from the "file" (applying Gzip decompression).
-    obj = _unpickler(picklestring, filestring=string, verbose=verbose, die=die, remapping=remapping) # Return the object gotten from the string pickle.
-    return obj
-
-
-def dumpstr(obj=None):
-    ''' Dump an object as a bytes-like string (rarely used); see :func:`loadstr()` '''
-    with closing(io.BytesIO()) as output: # Open a "fake file"
-        with gz.GzipFile(fileobj=output, mode='wb') as fileobj:  # Open a Gzip-compressing way to write to this "file"
-            try:    _savepickle(fileobj, obj) # Use pickle
-            except: _savedill(fileobj, obj) # ...but use Dill if that fails
-        output.seek(0) # Move the mark to the beginning of the "file."
-        result = output.read() # Read all of the content into result.
-    return result
-
-
 def zsave(*args, compression='zstd', **kwargs):
     '''
     Save a file using zstandard (instead of gzip) compression. This is an alias
     for ``sc.save(..., compression='zstd')``; see :func:`save()` for details.
     
     Note: there is no matching function ``sc.zload()`` since :func:`load()` will
-    automatically try loading
+    automatically try loading zstandard.
     
     New in version 2.1.0.    
     '''
     return save(*args, compression=compression, **kwargs)
 
 
+def loadstr(string, **kwargs):
+    '''
+    Like :func:`load()`, but for a bytes-like string (rarely used).
+    
+    Args:
+        string (str): the bytes-like string to load
+        kwargs (dict): passed to :func:`load()`
+
+    **Example**::
+
+        obj = sc.objdict(a=1, b=2)
+        bytestring = sc.dumpstr(obj)
+        obj2 = sc.loadstr(bytestring)
+        assert obj == obj2
+    
+    | New in version 2.2.0: uses ``sc.load()`` for more robustness
+    '''
+    with closing(io.BytesIO(string)) as bytestring: # Open a "fake file" with the Gzip string pickle in it
+        obj = load(bytestring, **kwargs)
+    return obj
+
+
+def dumpstr(obj=None):
+    ''' Dump an object as a bytes-like string (rarely used); see :func:`load()` '''
+    with closing(io.BytesIO()) as output: # Open a "fake file"
+        with gz.GzipFile(fileobj=output, mode='wb') as fileobj:  # Open a Gzip-compressing way to write to this "file"
+            try:    _savepickle(fileobj, obj) # Use pickle
+            except: _savedill(fileobj, obj) # ...but use Dill if that fails
+        output.seek(0) # Move the mark to the beginning of the "file"
+        result = output.read() # Read all of the content into result
+    return result
+
+
+
 ##############################################################################
 #%% Other file functions
 ##############################################################################
 
-__all__ += ['loadtext', 'savetext', 'loadzip', 'savezip', 'path', 'ispath', 'thisfile', 'thisdir', 'thispath',
-            'getfilelist', 'getfilepaths', 'sanitizefilename', 'sanitizepath', 'makefilepath', 'makepath', 'rmpath']
+__all__ += ['loadtext', 'savetext', 'loadzip', 'unzip', 'savezip', 'path', 'ispath', 
+            'thisfile', 'thisdir', 'thispath', 'getfilelist', 'getfilepaths', 
+            'sanitizefilename', 'sanitizepath', 'makefilepath', 'makepath', 'rmpath']
 
 
 def loadtext(filename=None, folder=None, splitlines=False):
@@ -370,7 +394,39 @@ def savetext(filename=None, string=None, **kwargs):
     return
 
 
-def loadzip(filename=None, outfolder='.', folder=None, extract=True):
+def loadzip(filename=None, folder=None):
+    '''
+    Load the contents of a zip file into a variable
+
+    Args:
+        filename (str/path): the name of the zip file to write to
+        folder (str): optional additional folder for the filename
+    
+    Returns:
+        dict with each file loaded as a key
+
+    **Example**::
+
+        data = sc.loadzip('my-files.zip')
+
+    | New in version 2.0.0.
+    | New in version 2.2.0: load into memory instead of extracting to disk; see :func:`unzip` for extracting
+    '''
+    filename = makefilepath(filename=filename, folder=folder)
+    output = dict()
+    with ZipFile(filename, 'r') as zf: # Create the zip file
+        names = zf.namelist()
+        for name in names:
+            val = zf.read(name)
+            try:
+                val = loadstr(val) # Try to load as a pickle or some kind of valid file
+            except:
+                pass # Otherwise, just return the raw value
+            output[name] = val
+    return output
+
+
+def unzip(filename=None, outfolder='.', folder=None, extract=True):
     '''
     Convenience function for reading a zip file
 
@@ -380,29 +436,14 @@ def loadzip(filename=None, outfolder='.', folder=None, extract=True):
         folder (str): optional additional folder for the filename
         extract (bool): whether to extract the compressed files; otherwise, load data
 
-    **Examples**::
+    **Example**::
 
-        sc.loadzip('my-files.zip')
-        data = sc.loadzip('mydata.zip', extract=False)
+        sc.unzip('my-files.zip', outfolder='my_data') # extracts 
 
-    New in version 2.0.0.
+    | New in version 2.0.0.
+    | New in version 2.2.0: defaults to "extract=False"; see :func:`unzip` for "extract=True"
     '''
-    filename = makefilepath(filename=filename, folder=folder)
-    output = None
-    with ZipFile(filename, 'r') as zf: # Create the zip file
-        if extract:
-            zf.extractall(outfolder)
-        else:
-            output = dict()
-            names = zf.namelist()
-            for name in names:
-                val = zf.read(name)
-                try:
-                    val = loadstr(val)
-                except:
-                    pass
-                output[name] = val
-    return output
+
 
 
 def savezip(filename=None, filelist=None, data=None, folder=None, basename=True, sanitizepath=True, verbose=True):
