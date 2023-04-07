@@ -26,6 +26,7 @@ from . import sc_datetime as scd
 from . import sc_odict as sco
 from . import sc_fileio as scf
 from . import sc_nested as scn
+from . import sc_dataframe as scdf
 
 
 ##############################################################################
@@ -70,7 +71,8 @@ def memload():
 
 
 
-def checkmem(var, descend=True, alphabetical=False, compresslevel=0, plot=False, verbose=False, **kwargs):
+def checkmem(var, descend=1, alphabetical=False, compresslevel=0, maxitems=1000, 
+             plot=False, verbose=False, **kwargs):
     '''
     Checks how much memory the variable or variables in question use by dumping
     them to file.
@@ -86,6 +88,7 @@ def checkmem(var, descend=True, alphabetical=False, compresslevel=0, plot=False,
         descend (bool): whether or not to descend one level into the object
         alphabetical (bool): if descending into a dict or object, whether to list items by name rather than size
         compresslevel (int): level of compression to use when saving to file (typically 0)
+        maxitems (int): the maximum number of separate entries to check the size of
         plot (bool): if descending, show the results as a pie chart
         verbose (bool or int): detail to print, if >1, print repr of objects along the way
         **kwargs (dict): passed to :func:`load`
@@ -95,7 +98,14 @@ def checkmem(var, descend=True, alphabetical=False, compresslevel=0, plot=False,
         import numpy as np
         import sciris as sc
         sc.checkmem(['spiffy', np.random.rand(2483,589)])
+    
+    New in version 2.2.0: descend multiple levels; dataframe output
     '''
+    
+    # Handle input arguments -- used for recursion
+    _depth  = kwargs.pop('_depth', 0)
+    _prefix = kwargs.pop('_prefix', '')
+    _join   = kwargs.pop('_join', '→')
 
     def check_one_object(variable):
         ''' Check the size of one variable '''
@@ -105,7 +115,7 @@ def checkmem(var, descend=True, alphabetical=False, compresslevel=0, plot=False,
 
         # Create a temporary file, save the object, check the size, remove it
         filename = tempfile.mktemp()
-        scf.save(filename, variable, die='never', compresslevel=compresslevel)
+        scf.save(filename, variable, allow_empty=True, compresslevel=compresslevel)
         filesize = os.path.getsize(filename)
         os.remove(filename)
 
@@ -125,49 +135,56 @@ def checkmem(var, descend=True, alphabetical=False, compresslevel=0, plot=False,
     varnames  = []
     variables = []
     sizes     = []
-    sizestrs  = []
+    df = scdf.dataframe(columns=['variable', 'bytesize', 'human_readable'])
 
     # Create the object(s) to check the size(s) of
-    varnames = ['Variable'] # Set defaults
-    variables = [var]
-    if descend or descend is None:
-        if hasattr(var, '__dict__'): # It's an object
-            if verbose>1: print('Iterating over object')
+    if not descend:
+        varname = _prefix if _prefix else 'Variable'
+        bytesize, sizestr = check_one_object(var)
+        df.appendrow(dict(variable=varname, bytesize=bytesize, human_readable=sizestr))
+    else:
+        if isinstance(var, dict): # Handle dicts
+            if verbose>1: print('Iterating over dict')
+            varnames = list(var.keys())
+            variables = var.values()
+        elif np.iterable(var): # Handle dicts and lists
+            if verbose>1: print('Iterating over list-like object')
+            varnames = [f'item {i}' for i in range(len(var))]
+            variables = var
+        elif hasattr(var, '__dict__'): # It's an object
+            if verbose>1: print('Iterating over class-like object')
             varnames = sorted(list(var.__dict__.keys()))
             variables = [getattr(var, attr) for attr in varnames]
-        elif np.iterable(var): # Handle dicts and lists
-            if isinstance(var, dict): # Handle dicts
-                if verbose>1: print('Iterating over dict')
-                varnames = list(var.keys())
-                variables = var.values()
-            else: # Handle lists and other things
-                if verbose>1: print('Iterating over list')
-                varnames = [f'item {i}' for i in range(len(var))]
-                variables = var
         else:
             if descend: # Could also be None
                 print('Object is not iterable: cannot descend') # Print warning and use default
 
-    # Compute the sizes
-    for v,variable in enumerate(variables):
-        if verbose:
-            print(f'Processing variable {v} of {len(variables)}')
-        filesize, sizestr = check_one_object(variable)
-        sizes.append(filesize)
-        sizestrs.append(sizestr)
-
-    if alphabetical:
-        inds = np.argsort(varnames)
-    else:
-        inds = np.argsort(sizes)[::-1]
-
-    data = sco.objdict({varnames[i]:[sizes[i], sizestrs[i]] for i in inds})
+        # Error checking
+        n_variables = len(variables)
+        if n_variables > maxitems:
+            errormsg = f'Cannot compute the sizes of {n_variables} items since maxitems is set to {maxitems}'
+            raise RuntimeError(errormsg)
+    
+        # Compute the sizes
+        for v,variable in enumerate(variables):
+            if verbose:
+                print(f'Processing variable {v} of {len(variables)}')
+            label = _join.join(_prefix, v)
+            this_df = checkmem(variable, descend=descend-1, compresslevel=compresslevel, maxitems=maxitems, plot=False, verbose=False, _prefix=label, _depth=_depth+1)
+            df.concat(this_df, inplace=True)
+    
+    # Only sort if we're at the highest level
+    if _depth == 0 and len(df) > 1:
+        if alphabetical:
+            inds = np.argsort(df.variable.values)
+        else:
+            inds = np.argsort(df.bytesize.values)[::-1]
 
     if plot: # pragma: no cover
         pl.axes(aspect=1)
         pl.pie(np.array(sizes)[inds], labels=np.array(varnames)[inds], autopct='%0.2f')
 
-    return data
+    return df
 
 
 def checkram(unit='mb', fmt='0.2f', start=0, to_string=True):

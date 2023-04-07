@@ -191,19 +191,21 @@ def findnearest(series=None, value=None):
     Return the index of the nearest match in series to value -- like findinds, but
     always returns an object with the same type as value (i.e. findnearest with
     a number returns a number, findnearest with an array returns an array).
+    
+    Args:
+        series (array): the array of numbers to look for nearest matches in
+        value (scalar or array): the number or numbers to compare against
 
     **Examples**::
 
-        findnearest(rand(10), 0.5) # returns whichever index is closest to 0.5
-        findnearest([2,3,6,3], 6) # returns 2
-        findnearest([2,3,6,3], 6) # returns 2
-        findnearest([0,2,4,6,8,10], [3, 4, 5]) # returns array([1, 2, 2])
-
-    Version: 2017jan07
+        sc.findnearest(rand(10), 0.5) # returns whichever index is closest to 0.5
+        sc.findnearest([2,3,6,3], 6) # returns 2
+        sc.findnearest([2,3,6,3], 6) # returns 2
+        sc.findnearest([0,2,4,6,8,10], [3, 4, 5]) # returns array([1, 2, 2])
     '''
     series = scu.toarray(series)
     if scu.isnumber(value):
-        output = np.argmin(abs(series-value))
+        output = np.argmin(np.abs(series-value))
     else:
         output = []
         for val in value: output.append(findnearest(series, val))

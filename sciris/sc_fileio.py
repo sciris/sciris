@@ -176,7 +176,7 @@ def load(filename=None, folder=None, verbose=False, die=None, remapping=None, me
 
 
 def save(filename='default.obj', obj=None, folder=None, compression='gzip', compresslevel=5, 
-         verbose=0, method='pickle', sanitizepath=True, die=False, *args, **kwargs):
+         verbose=0, method='pickle', sanitizepath=True, die=False, allow_empty=False, **kwargs):
     '''
     Save an object to file as a gzipped pickle -- use compression 5 by default,
     since more is much slower but not much smaller. Once saved, can be loaded
@@ -190,9 +190,9 @@ def save(filename='default.obj', obj=None, folder=None, compression='gzip', comp
         compresslevel (int)      : the level of gzip/zstd compression (1 to 9 for gzip, -7 to 22 for zstandard, default 5)
         verbose       (int)      : detail to print
         method        (str)      : whether to use 'pickle' (default) or 'dill'
-        die           (bool)     : whether to fail if the object can't be pickled (else, try dill)
         sanitizepath  (bool)     : whether to sanitize the path prior to saving
-        args          (list)     : passed to ``pickle.dumps()``
+        die           (bool)     : whether to fail if the object can't be pickled (else, try dill); if die is 'never'
+        allow_empty   (bool)     : whether or not to allow "None" to be saved (usually treated as an error)
         kwargs        (dict)     : passed to ``pickle.dumps()``
 
     **Example**::
@@ -205,15 +205,16 @@ def save(filename='default.obj', obj=None, folder=None, compression='gzip', comp
     | New in version 1.2.2: automatic swapping of arguments if order is incorrect; correct passing of arguments
     | New in version 2.0.4: "die" argument for saving as dill
     | New in version 2.1.0: "zstandard" compression method
+    | New in version 2.2.0: "allow_empty" argument; removed "args"
     '''
 
-    def serialize(fileobj, obj, success, *args, **kwargs):
+    def serialize(fileobj, obj, success, **kwargs):
         ''' Actually write a serial bytestream to disk '''
         # Try pickle first
         if method == 'pickle':
             try:
                 if verbose>=2: print('Saving as pickle...')
-                _savepickle(fileobj, obj, *args, **kwargs) # Use pickle
+                _savepickle(fileobj, obj, **kwargs) # Use pickle
                 success = True
             except Exception as E: # pragma: no cover
                 if die is True:
@@ -224,7 +225,7 @@ def save(filename='default.obj', obj=None, folder=None, compression='gzip', comp
         # If dill is requested or pickle failed, use dill
         if not success: # pragma: no cover
             if verbose>=2: print('Saving as dill...')
-            _savedill(fileobj, obj, *args, **kwargs)
+            _savedill(fileobj, obj, **kwargs)
         
         return
     
@@ -263,16 +264,16 @@ def save(filename='default.obj', obj=None, folder=None, compression='gzip', comp
     if compression in ['gz', 'gzip']:
         # File extension is .gz
         with gz.GzipFile(filename=filename, fileobj=bytesobj, mode='wb', compresslevel=compresslevel) as fileobj:
-            serialize(fileobj, obj, success, *args, **kwargs)
+            serialize(fileobj, obj, success, **kwargs)
     elif compression in ['zst', 'zstd', 'zstandard']:
         # File extension is .zst
         with open(filename, 'wb') as fh:
             zcompressor = zstd.ZstdCompressor(level=compresslevel)
             with zcompressor.stream_writer(fh) as fileobj:
-                serialize(fileobj, obj, success, *args, **kwargs)
+                serialize(fileobj, obj, success, **kwargs)
     elif compression in ['none']:
         with open(filename, 'wb') as fileobj:
-            serialize(fileobj, obj, success, *args, **kwargs)
+            serialize(fileobj, obj, success, **kwargs)
     else:
         errormsg = f"Invalid compression format '{compression}': must be 'gzip', 'zstd', or 'none'"
         raise ValueError(errormsg)
@@ -2050,19 +2051,19 @@ All available unpickling methods failed:
     return obj
 
 
-def _savepickle(fileobj=None, obj=None, protocol=None, *args, **kwargs):
+def _savepickle(fileobj=None, obj=None, protocol=None, **kwargs):
         ''' Use pickle to do the salty work. '''
         if protocol is None:
             protocol = 4 # Use protocol 4 for backwards compatibility
-        fileobj.write(pkl.dumps(obj, protocol=protocol, *args, **kwargs))
+        fileobj.write(pkl.dumps(obj, protocol=protocol, **kwargs))
         return
 
 
-def _savedill(fileobj=None, obj=None, *args, **kwargs): # pragma: no cover
+def _savedill(fileobj=None, obj=None, **kwargs): # pragma: no cover
     ''' Use dill to do the sour work (note: this function is not actively maintained) '''
     try:
         import dill # Optional Sciris dependency
     except ModuleNotFoundError as e:
         raise ModuleNotFoundError('The "dill" Python package is not available; please install manually') from e
-    fileobj.write(dill.dumps(obj, protocol=-1, *args, **kwargs))
+    fileobj.write(dill.dumps(obj, protocol=-1, **kwargs))
     return
