@@ -426,7 +426,7 @@ def loadzip(filename=None, folder=None):
     return output
 
 
-def unzip(filename=None, outfolder='.', folder=None, extract=True):
+def unzip(filename=None, outfolder='.', folder=None, members=None):
     '''
     Convenience function for reading a zip file
 
@@ -434,16 +434,24 @@ def unzip(filename=None, outfolder='.', folder=None, extract=True):
         filename (str/path): the name of the zip file to write to
         outfolder (str/path): the path location to extract the files to (default: current folder)
         folder (str): optional additional folder for the filename
-        extract (bool): whether to extract the compressed files; otherwise, load data
+        members (list): optional list of members
+    
+    Returns:
+        list of the names of the unzipped files
 
     **Example**::
 
-        sc.unzip('my-files.zip', outfolder='my_data') # extracts 
+        sc.unzip('my-files.zip', outfolder='my_data') # extracts all files 
 
-    | New in version 2.0.0.
-    | New in version 2.2.0: defaults to "extract=False"; see :func:`unzip` for "extract=True"
+    | New in version 2.2.0 (equivalent to sc.loadzip(..., extract=True) previously)
     '''
-
+    filename = makefilepath(filename=filename, folder=folder)
+    with ZipFile(filename, 'r') as zf: # Load the zip file
+        names = zf.namelist()
+        zf.extractall(outfolder, members=members)
+    
+    output = [makefilepath(filename=name, folder=outfolder) for name in names]
+    return output
 
 
 def savezip(filename=None, filelist=None, data=None, folder=None, basename=True, sanitizepath=True, verbose=True):

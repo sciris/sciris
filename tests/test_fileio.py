@@ -120,7 +120,8 @@ def test_load_save():
     sc.heading('Save/load zip')
     sc.savezip(files.zip, [files.text, files.binary])
     sc.savezip(files.zip, data=dict(data=testdata))
-    o.zip = sc.loadzip(files.zip, extract=False)
+    o.zip = sc.unzip(files.zip)
+    sc.loadzip(files.zip)
     
     # Tidy up
     if tidyup:
