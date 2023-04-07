@@ -800,9 +800,8 @@ def isiterable(obj, *args, exclude=None, minlen=None):
         obj3 = set()
         
         sc.isiterable(obj1) # Returns True
-        sc.isiterable(obj1, obj2, obj3, exclude=str, minlen=1) # returns [False, True, False]
+        sc.isiterable(obj1, obj2, obj3, exclude=str, minlen=1) # returns [True, False, False]
         
-    
     See also ``np.iterable()`` for a simpler version.
     
     New in version 2.2.0: "exclude" and "minlen" args; support multiple arguments

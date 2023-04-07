@@ -24,8 +24,9 @@ class dataframe(pd.DataFrame):
     
     Args:
         data (dict/array/dataframe): the data to use
-        columns (list): column labels
+        columns (list): column labels (if a dict is supplied, the value sets the dtype)
         nrows (int): the number of arrows to preallocate (default 0)
+        dtypes (list): optional list of data types to set each column to
         kwargs (dict): passed to ``pd.DataFrame()``
 
     **Examples**::
@@ -52,9 +53,10 @@ class dataframe(pd.DataFrame):
     The dataframe can be used for both numeric and non-numeric data.
 
     | New in version 2.0.0: subclass pandas DataFrame
+    | New in version 2.2.0: "dtypes" argument
     '''
 
-    def __init__(self, data=None, columns=None, nrows=None, **kwargs):
+    def __init__(self, data=None, columns=None, nrows=None, dtypes=None, **kwargs):
 
         # Handle inputs
         if 'cols' in kwargs:
@@ -62,9 +64,22 @@ class dataframe(pd.DataFrame):
         if nrows and data is None:
             ncols = len(columns)
             data = np.zeros((nrows, ncols))
+        
+        # Handle columns and dtypes
+        if isinstance(columns, dict):
+            if dtypes is not None:
+                errormsg = 'You can supply dtypes as a separate argument or as part of a columns dict, but not both'
+                raise ValueError(errormsg)
+            dtypes = columns # Already in the right format
+            columns = list(columns.keys())
 
         # Create the dataframe
         super().__init__(data=data, columns=columns, **kwargs)
+        
+        # Optionally set dtypes
+        if dtypes is not None:
+            self.set_dtypes(dtypes)
+        
         return
 
 
@@ -72,6 +87,16 @@ class dataframe(pd.DataFrame):
     def cols(self):
         ''' Get columns as a list '''
         return self.columns.tolist()
+
+
+    def set_dtypes(self, dtypes):
+        ''' Set dtypes in-place (see pandas ``df.astype()`` for the user-facing version) '''
+        if not isinstance(dtypes, dict):
+            dtypes = {col:dtype for col,dtype in zip(self.columns, dtypes)}
+        for col,dtype in dtypes.items(): # NB: "self.astype(dtypes, copy=False)" does not modify in place
+            self[col] = self[col].astype(dtype)
+        self.astype(dtypes, copy=False)
+        return
 
 
     def _to_array(self, arr):

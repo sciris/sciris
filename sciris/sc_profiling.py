@@ -26,6 +26,7 @@ from . import sc_datetime as scd
 from . import sc_odict as sco
 from . import sc_fileio as scf
 from . import sc_nested as scn
+from . import sc_printing as scp
 from . import sc_dataframe as scdf
 
 
@@ -68,7 +69,6 @@ def memload():
         a float between 0-1 representing the fraction of ``psutil.virtual_memory()`` currently used.
     """
     return psutil.virtual_memory().percent / 100
-
 
 
 def checkmem(var, descend=1, order='size', compresslevel=0, maxitems=1000, 
@@ -138,22 +138,20 @@ def checkmem(var, descend=1, order='size', compresslevel=0, maxitems=1000,
         filesize = os.path.getsize(filename)
         os.remove(filename)
 
-        # Convert to string
-        factor = 1
-        label = 'B'
-        labels = ['KB','MB','GB']
-        for i,f in enumerate([3,6,9]):
-            if filesize>10**f:
-                factor = 10**f
-                label = labels[i]
-        humansize = float(filesize/float(factor))
-        sizestr = f'{humansize:0.3f} {label}'
+        sizestr = scp.humanize_bytes(filesize)
         return filesize, sizestr
 
     # Initialize
     varnames  = []
     variables = []
-    df = scdf.dataframe(columns=['variable', 'bytesize', 'human_readable'])
+    columns=dict(
+        variable  = object,
+        humansize = object,
+        bytesize  = int,
+        depth     = bool,
+        is_total  = bool,
+    )
+    df = scdf.dataframe(columns=columns)
     
     if descend:
         if isinstance(var, dict): # Handle dicts
@@ -164,7 +162,7 @@ def checkmem(var, descend=1, order='size', compresslevel=0, maxitems=1000,
             if verbose>1: print('Iterating over class-like object')
             varnames = sorted(list(var.__dict__.keys()))
             variables = [getattr(var, attr) for attr in varnames]
-        elif np.iterable(var): # Handle dicts and lists
+        elif scu.isiterable(var, exclude=str): # Handle lists, and be sure to skip strings
             if verbose>1: print('Iterating over list-like object')
             varnames = [f'item {i}' for i in range(len(var))]
             variables = var
@@ -175,7 +173,7 @@ def checkmem(var, descend=1, order='size', compresslevel=0, maxitems=1000,
     if not descend:
         varname = _prefix if _prefix else 'Variable'
         bytesize, sizestr = check_one_object(var)
-        df.appendrow(dict(variable=varname, bytesize=bytesize, human_readable=sizestr))
+        df.appendrow(dict(variable=varname, humansize=sizestr, bytesize=bytesize, depth=_depth, is_total=False))
     
     else:
         # Error checking
@@ -192,8 +190,17 @@ def checkmem(var, descend=1, order='size', compresslevel=0, maxitems=1000,
             this_df = checkmem(variable, descend=descend-1, compresslevel=compresslevel, maxitems=maxitems, plot=False, verbose=False, _prefix=label, _depth=_depth+1)
             df.concat(this_df, inplace=True)
     
+    # Handle subtotals
+    if subtotals and len(df) > 1:
+        total_label = _prefix + ' (total)' if _prefix else 'Total'
+        total = df[~df.is_total].bytesize.sum()
+        human_total = scp.humanize_bytes(total)
+        df.appendrow(dict(variable=total_label, humansize=human_total, bytesize=total, depth=_depth, is_total=True))
+    
     # Only sort if we're at the highest level
     if _depth == 0 and len(df) > 1:
+        # if subtotals:
+            
         if order == 'alphabetical':
             df.sortrows(col='variable')
         elif order == 'size':

@@ -322,7 +322,7 @@ def indent(prefix=None, text=None, suffix='\n', n=0, pretty=False, width=70, **k
 
 #%% Data representation functions
 
-__all__ += ['sigfig', 'printarr', 'printdata', 'printvars']
+__all__ += ['sigfig', 'humanize_bytes', 'printarr', 'printdata', 'printvars']
 
 
 def sigfig(x, sigfigs=5, SI=False, sep=False, keepints=False):
@@ -394,6 +394,38 @@ def sigfig(x, sigfigs=5, SI=False, sep=False, keepints=False):
         return tuple(output)
     else:
         return output[0]
+
+
+def humanize_bytes(bytesize, decimals=3):
+    '''
+    Convert a number of bytes into a human-readable total.
+    
+    Args:
+        bytesize (int): the number of bytes
+        decimals (int): the number of decimal places to show
+    
+    **Example**::
+        
+        sc.humansize(2.3423887e6, decimals=2) # Returns '2.34 MB'
+        
+    See the humansize library for more flexibility.
+    
+    New in version 2.2.0.
+    '''
+    # Convert to string
+    factor = 1
+    label = 'B'
+    labels = ['KB','MB','GB']
+    for i,f in enumerate([3,6,9]):
+        if bytesize >= 10**f:
+            factor = 10**f
+            label = labels[i]
+    if factor == 1:
+        decimals = 0 # Do not show decimals for bytes
+    humansize = float(bytesize/float(factor))
+    string = f'{humansize:0.{decimals}f} {label}'
+    return string
+
 
 
 def printarr(arr, fmt=None, colsep='  ', vsep='—', decimals=2, dtype=None):
