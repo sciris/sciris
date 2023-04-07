@@ -602,9 +602,19 @@ class odict(OD):
 
     def filter(self, keys=None, pattern=None, method=None, exclude=False):
         '''
+        Find matching keys in the odict, and return a new odict
+        
         Filter the odict keys and return a new odict which is a subset. If keys is a list,
         then uses that for matching. If the first argument is a string, then treats as a pattern
-        for matching using findkeys(). If exclude=True, then will exclude rather than include matches.
+        for matching using ``findkeys()``.
+        
+        Args:
+            keys (list): the list of keys to keep (or exclude)
+            pattern (str): the pattern by which to match keys; see ``findkeys()`` for details
+            method (str): the method by which to match keys; see ``findkeys()`` for details
+            exclude (bool): if exclude=True, then exclude rather than include matches
+            
+        See also :method:`sort()`, which includes filtering by position.
         '''
         if scu.isstring(keys) and pattern is None: # Assume first argument, transfer
             pattern = keys
@@ -718,12 +728,27 @@ class odict(OD):
         return
 
 
-    def sort(self, sortby=None, reverse=False, copy=False, verbose=True):
+    def sort(self, sortby=None, reverse=False, copy=False):
         '''
-        Create a sorted version of the odict. Sorts by order of sortby, if provided, otherwise alphabetical.
-        If copy is True, then returns a copy (like sorted()).
-
-        Note that you can also use this to do filtering.
+        Create a sorted version of the odict. 
+        
+        By default, this method sorts alphabetically by key, but many other options 
+        are possible:
+            
+            - 'keys' sorts alphabetically by key
+            - 'values' sorts in ascending order by value
+            - if a list of keys is provided, sort by that order (any keys not provided will be omitted from the sorted dict!)
+            - if a list of numbers is provided, treat these as indices and sort by that order
+            - if a list of boolean values is provided, then omit False entries
+        
+        Args:
+            sortby (str or list): what to sort by; see above for options
+            reverse (bool): whether to return results in reverse order
+            copy (bool): whether to return a copy (same as ``sorted()``)
+        
+        For filtering by string matching on keys, see :method:`filter()`.
+        
+        | New in version 2.2.0: removed "verbose" argument
         '''
         origkeys = self.keys()
         if sortby is None or sortby == 'keys':
@@ -737,13 +762,8 @@ class odict(OD):
             if all([isinstance(x, scu._stringtypes) for x in sortby]): # Going to sort by keys
                 allkeys = sortby # Assume the user knows what s/he is doing
             elif all([isinstance(x,bool) for x in sortby]): # Using Boolean values to filter
-                allkeys = []
-                for i,x in enumerate(sortby):
-                     if x: allkeys.append(origkeys[i])
+                allkeys = [origkeys[i] for i,tf in enumerate(sortby) if tf]
             elif all([isinstance(x, scu._numtype) for x in sortby]): # Going to sort by numbers
-                if not set(sortby)==set(range(len(self))): # pragma: no cover
-                    warningmsg = f'Warning: list to sort by "{sortby}" has different length than odict "{len(self)}"'
-                    if verbose: print(warningmsg)
                 allkeys = [origkeys[ind] for ind in sortby]
             else: # pragma: no cover
                 errormsg = f'Cannot figure out how to sort by "{sortby}"'
