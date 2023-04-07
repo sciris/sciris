@@ -71,7 +71,7 @@ def memload():
 
 
 
-def checkmem(var, descend=1, alphabetical=False, compresslevel=0, maxitems=1000, 
+def checkmem(var, descend=1, order='size', compresslevel=0, maxitems=1000, 
              plot=False, verbose=False, **kwargs):
     '''
     Checks how much memory the variable or variables in question use by dumping
@@ -86,7 +86,7 @@ def checkmem(var, descend=1, alphabetical=False, compresslevel=0, maxitems=1000,
     Args:
         var (any): the variable being checked
         descend (bool): whether or not to descend one level into the object
-        alphabetical (bool): if descending into a dict or object, whether to list items by name rather than size
+        order (str): order in which to list items: "size" (default), "alphabetical", or "none"
         compresslevel (int): level of compression to use when saving to file (typically 0)
         maxitems (int): the maximum number of separate entries to check the size of
         plot (bool): if descending, show the results as a pie chart
@@ -99,7 +99,7 @@ def checkmem(var, descend=1, alphabetical=False, compresslevel=0, maxitems=1000,
         import sciris as sc
         sc.checkmem(['spiffy', np.random.rand(2483,589)])
     
-    New in version 2.2.0: descend multiple levels; dataframe output
+    New in version 2.2.0: descend multiple levels; dataframe output; "alphabetical" renamed "order"
     '''
     
     # Handle input arguments -- used for recursion
@@ -134,55 +134,55 @@ def checkmem(var, descend=1, alphabetical=False, compresslevel=0, maxitems=1000,
     # Initialize
     varnames  = []
     variables = []
-    sizes     = []
     df = scdf.dataframe(columns=['variable', 'bytesize', 'human_readable'])
+    
+    if descend:
+        if isinstance(var, dict): # Handle dicts
+            if verbose>1: print('Iterating over dict')
+            varnames = list(var.keys())
+            variables = var.values()
+        elif hasattr(var, '__dict__'): # It's an object
+            if verbose>1: print('Iterating over class-like object')
+            varnames = sorted(list(var.__dict__.keys()))
+            variables = [getattr(var, attr) for attr in varnames]
+        elif np.iterable(var): # Handle dicts and lists
+            if verbose>1: print('Iterating over list-like object')
+            varnames = [f'item {i}' for i in range(len(var))]
+            variables = var
+        else:
+            descend = 0 # Can't descend
 
     # Create the object(s) to check the size(s) of
     if not descend:
         varname = _prefix if _prefix else 'Variable'
         bytesize, sizestr = check_one_object(var)
         df.appendrow(dict(variable=varname, bytesize=bytesize, human_readable=sizestr))
+    
     else:
-        if isinstance(var, dict): # Handle dicts
-            if verbose>1: print('Iterating over dict')
-            varnames = list(var.keys())
-            variables = var.values()
-        elif np.iterable(var): # Handle dicts and lists
-            if verbose>1: print('Iterating over list-like object')
-            varnames = [f'item {i}' for i in range(len(var))]
-            variables = var
-        elif hasattr(var, '__dict__'): # It's an object
-            if verbose>1: print('Iterating over class-like object')
-            varnames = sorted(list(var.__dict__.keys()))
-            variables = [getattr(var, attr) for attr in varnames]
-        else:
-            if descend: # Could also be None
-                print('Object is not iterable: cannot descend') # Print warning and use default
-
         # Error checking
         n_variables = len(variables)
         if n_variables > maxitems:
             errormsg = f'Cannot compute the sizes of {n_variables} items since maxitems is set to {maxitems}'
             raise RuntimeError(errormsg)
     
-        # Compute the sizes
-        for v,variable in enumerate(variables):
+        # Compute the sizes recursively
+        for v,(varname,variable) in enumerate(zip(varnames, variables)):
             if verbose:
                 print(f'Processing variable {v} of {len(variables)}')
-            label = _join.join(_prefix, v)
+            label = _join.join([_prefix, varname]) if _prefix else varname
             this_df = checkmem(variable, descend=descend-1, compresslevel=compresslevel, maxitems=maxitems, plot=False, verbose=False, _prefix=label, _depth=_depth+1)
             df.concat(this_df, inplace=True)
     
     # Only sort if we're at the highest level
     if _depth == 0 and len(df) > 1:
-        if alphabetical:
-            inds = np.argsort(df.variable.values)
-        else:
-            inds = np.argsort(df.bytesize.values)[::-1]
+        if order == 'alphabetical':
+            df.sortrows(col='variable')
+        elif order == 'size':
+            df.sortrows(col='bytesize', reverse=True)
 
     if plot: # pragma: no cover
         pl.axes(aspect=1)
-        pl.pie(np.array(sizes)[inds], labels=np.array(varnames)[inds], autopct='%0.2f')
+        pl.pie(df.bytesize, labels=df.variable, autopct='%0.2f')
 
     return df
 

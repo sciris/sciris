@@ -256,7 +256,7 @@ def save(filename='default.obj', obj=None, folder=None, compression='gzip', comp
     # Handle object
     if obj is None: # pragma: no cover
         errormsg = "No object was supplied to saveobj(), or the object was empty; if this is intentional, set die='never'"
-        if die != 'never':
+        if not allow_empty and die != 'never': # die = 'never' is kept for backwards compatibility
             raise ValueError(errormsg)
 
     # Compress and actually save
