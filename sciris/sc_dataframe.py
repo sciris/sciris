@@ -516,7 +516,7 @@ class dataframe(pd.DataFrame):
         return self
 
 
-    def row_index(self, value, col=None, closest=False, die=True):
+    def row_index(self, value=None, col=None, closest=False, die=True):
         '''
         Get the row index for a given value and column.
         
@@ -525,7 +525,7 @@ class dataframe(pd.DataFrame):
         equivalent.
         
         Args:
-            value (any): the value to look for
+            value (any): the value to look for (default: return last row index)
             col (str): the column to look in (default: first)
             closest (bool): if true, return the closest match if an exact match is not found
             die (bool): whether to raise an exception if the value is not found (otherwise, return None)
@@ -541,6 +541,8 @@ class dataframe(pd.DataFrame):
         '''
         col = self.col_index(col)
         coldata = self.iloc[:,col].values # Get data for this column
+        if value is None: 
+            return len(coldata)-1 # If not supplied, pick the last element
         if closest:
             index = np.argmin(abs(coldata-value)) # Find the closest match to the key
         else:

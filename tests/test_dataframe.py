@@ -15,7 +15,6 @@ def dfprint(label, val=None):
 def test_dataframe():
     sc.heading('Testing dataframe')
 
-
     a = sc.dataframe(cols=['x','y'], data=[[1238,2],[384,5],[666,7]]); dfprint('Create dataframe', a)
     dfprint('Print out a column', a['x'])
     dfprint('Print out a row', a[0])
@@ -48,7 +47,7 @@ def test_methods():
 
     # Append row
     df.appendrow(dict(a=4, b=4)); dfprint('Append row as dict', df)
-    with pytest.raises(IndexError):
+    with pytest.raises(ValueError):
         df.appendrow([1,2,3])
 
     # Get
