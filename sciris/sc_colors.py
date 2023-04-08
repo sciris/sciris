@@ -15,7 +15,7 @@ Highlights:
 import struct
 import pylab as pl
 import numpy as np
-from matplotlib import colors as mplc
+from matplotlib import colors as mplc, colormaps as mplcm
 from . import sc_utils as scu
 from . import sc_math as scm
 
@@ -843,4 +843,10 @@ for origname,cmap in colormap_map.items():
     newname = f'sciris-{origname}'
     for name in [origname, newname]:
         if name not in existing: # Avoid re-registering already registered colormaps
-            pl.register_cmap(name=name, cmap=cmap)
+            mplcm.register(cmap=cmap, name=name)
+            # try:
+            #     mplcm.register(cmap=cmap, name=name, force=True)
+            # except Exception as E:
+            #     errormsg = f'Note: not all colormaps could be imported ({E})'
+            #     print(errormsg) # Don't worry about not being able to register colormaps
+                
