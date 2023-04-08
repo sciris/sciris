@@ -6,8 +6,19 @@ usage is to call the functions directly, e.g. ``sc.parallelize()`` instead
 of ``sc.sc_parallel.parallelize()``.
 """
 
-# Optionally allow lazy loading
+# Handle threadcount -- may require Sciris to be imported before Numpy; see https://stackoverflow.com/questions/17053671/how-do-you-stop-numpy-from-multithreading
 import os as _os
+_threads = _os.getenv('SCIRIS_NUM_THREADS', '')
+if _threads:
+  _os.environ.update(
+      OMP_NUM_THREADS        = _threads,
+      OPENBLAS_NUM_THREADS   = _threads,
+      NUMEXPR_NUM_THREADS    = _threads,
+      MKL_NUM_THREADS        = _threads,
+      VECLIB_MAXIMUM_THREADS = _threads,
+)
+
+# Optionally allow lazy loading
 _lazy = _os.getenv('SCIRIS_LAZY', False)
 
 # Otherwise, import everything
@@ -28,4 +39,4 @@ if not _lazy:
     from .sc_plotting  import *
     from .sc_colors    import *
 
-del _os, _lazy
+del _os, _lazy, _threads
