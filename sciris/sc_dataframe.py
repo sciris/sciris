@@ -251,15 +251,11 @@ class dataframe(pd.DataFrame):
             super().__setitem__(key, value)
         except Exception as E:
             if scu.isnumber(key):
-                newrow = self._val2row(value, to2d=False) # Make sure it's in the correct format
-                if len(newrow) != self.ncols:
-                    errormsg = f'Vector has incorrect length ({len(newrow)} vs. {self.ncols})'
-                    raise Exception(errormsg)
-                rowindex = int(key)
                 try:
-                    self.iloc[rowindex,:] = newrow
+                    self.iloc[key,:] = value # If it's already in the right format, use regular pandas
                 except:
-                    self.appendrow(value)
+                    newdf = self._sanitize_df(value) # Otherwise, try to sanitize it
+                    self.iloc[key,:] = newdf
             elif isinstance(key, tuple):
                 rowindex = key[0]
                 colindex = key[1]
@@ -425,15 +421,16 @@ class dataframe(pd.DataFrame):
         return self.concat(row, reset_index=reset_index, inplace=inplace)
 
 
-    def insertrow(self, row=0, value=None, reset_index=True, inplace=True):
+    def insertrow(self, index=0, value=None, reset_index=True, inplace=True, **kwargs):
         '''
         Insert row(s) at the specified location. See also ``concat()`` and ``appendrow()``.
 
         Args:
-            row (int): index at which to insert new row(s)
+            index (int): index at which to insert new row(s)
             value (array): the row(s) to insert
             reset_index (bool): update the index
             inplace (bool): whether to modify in-place
+            kwargs (dict): passed to ``df.concat()``
         
         Warning: modifying dataframes in-place is quite inefficient. For highest
         performance, construct the data in large chunks and then add to the dataframe
@@ -451,17 +448,35 @@ class dataframe(pd.DataFrame):
             ))
             df.insertrow(1, ['bar', 2, 0.2])           # Insert a list
             df.insertrow(0, dict(a='rat', b=0, c=0.7)) # Insert a dict
+        
+        New in version 2.2.0: renamed "row" to "index"
         '''
-        rowindex = int(row)
-        newrow = self._val2row(value) # Make sure it's in the correct format
-        newdata = np.vstack((self.iloc[:rowindex,:], newrow, self.iloc[rowindex:,:]))
-        return self.replacedata(newdata=newdata, reset_index=reset_index, inplace=inplace)
+        before = self.iloc[:index,:]
+        after  = self.iloc[index:,:]
+        return self.concat(before, value, after, reset_index=reset_index, inplace=inplace, **kwargs)
+
+
+    def _sanitize_df(self, arg, columns=None, **kwargs):
+        ''' Helper function to sanitize input into the correct format for constructing a new dataframe '''
+        if isinstance(arg, pd.DataFrame):
+            df = arg
+        else:
+            if isinstance(arg, dict):
+                columns = list(arg.keys())
+                arg = list(arg.values())
+            argarray = np.array(arg)
+            if argarray.shape == (self.ncols,): # It's a single row: make 2D
+                arg = [arg]
+            df = dataframe(data=arg, columns=columns, **kwargs)
+        return df
 
 
     def concat(self, data, *args, columns=None, reset_index=True, inplace=False, dfargs=None, keep_dtypes=True, **kwargs):
         '''
-        Concatenate additional data onto the current dataframe. See also ```appendrow()``
-        and ``insertrow()``.
+        Concatenate additional data onto the current dataframe. 
+        
+        Similar to ```appendrow()`` and ``insertrow()``; see also ``sc.dataframe.cat()`` 
+        for the equivalent class method.
 
         Args:
             data (dataframe/array): the data to concatenate
@@ -481,25 +496,17 @@ class dataframe(pd.DataFrame):
         if columns is None:
             columns = self.columns
         for arg in [data] + list(args):
-            if isinstance(arg, pd.DataFrame):
-                df = arg
-            else:
-                if isinstance(arg, dict):
-                    columns = list(arg.keys())
-                    arg = list(arg.values())
-                argarray = np.array(arg)
-                if argarray.shape == (self.ncols,): # It's a single row: make 2D
-                    arg = [arg]
-                df = dataframe(data=arg, columns=columns, **dfargs)
+            df = self._sanitize_df(arg, columns=columns, **dfargs)
             dfs.append(df)
-        newdf = dataframe(pd.concat(dfs, **kwargs))
+        newdf = dataframe(pd.concat(dfs, **kwargs), **dfargs)
         return self.replacedata(newdf=newdf, reset_index=reset_index, inplace=inplace, keep_dtypes=keep_dtypes)
 
 
     @staticmethod
     def cat(data, *args, dfargs=None, **kwargs):
         '''
-        Convenience method for concatenating multiple dataframes.
+        Convenience method for concatenating multiple dataframes. See ``df.concat()``
+        for the equivalent instance method.
         
         Args:
             data (dataframe/array): the dataframe/data to use as the basis of the new dataframe
@@ -557,7 +564,8 @@ class dataframe(pd.DataFrame):
         Get the row index for a given value and column.
         
         See ``df.findrow()`` for the equivalent to return the row itself
-        rather than the index of the row.
+        rather than the index of the row. See ``df.col_index()`` for the column
+        equivalent.
         
         Args:
             value (any): the value to look for
@@ -569,8 +577,8 @@ class dataframe(pd.DataFrame):
             
             df = dataframe(data=[[2016,0.3],[2017,0.5]], columns=['year','val'])
             df.row_index(2016) # returns 0
-            df.findrow(2013) # returns None, or exception if die is True
-            df.findrow(2013, closest=True) # returns 0
+            df.row_index(2013) # returns None, or exception if die is True
+            df.row_index(2013, closest=True) # returns 0
         
         New in version 2.2.0: renamed from "_rowindex"
         '''
@@ -691,12 +699,12 @@ class dataframe(pd.DataFrame):
 
 
     def filterin(self, inds=None, value=None, col=None, verbose=False, reset_index=True, inplace=False):
-        '''Keep only rows matching a criterion '''
+        '''Keep only rows matching a criterion; see also ``df.filterout()`` '''
         return self._filterrows(inds=inds, value=value, col=col, keep=True, verbose=verbose, reset_index=reset_index, inplace=inplace)
 
 
     def filterout(self, inds=None, value=None, col=None, verbose=False, reset_index=True, inplace=False):
-        '''Remove rows matching a criterion (in place) '''
+        '''Remove rows matching a criterion (in place); see also ``df.filterin()`` '''
         return self._filterrows(inds=inds, value=value, col=col, keep=False, verbose=verbose, reset_index=reset_index, inplace=inplace)
 
 
