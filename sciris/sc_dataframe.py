@@ -738,14 +738,12 @@ class dataframe(pd.DataFrame):
         return self.replacedata(newdf=newdf, inplace=inplace)
 
 
-    @staticmethod
-    def from_dict(*args, **kwargs):
-        return dataframe(pd.DataFrame.from_dict(*args, **kwargs))
-
-    @staticmethod
-    def from_records(*args, **kwargs):
-        return dataframe(pd.DataFrame.from_records(*args, **kwargs))
-
     def to_pandas(self, **kwargs):
         ''' Convert to a plain pandas dataframe '''
         return pd.DataFrame(self)
+
+
+    @property
+    def _constructor(self):
+        ''' Overload pandas method to ensure correct type '''
+        return dataframe
