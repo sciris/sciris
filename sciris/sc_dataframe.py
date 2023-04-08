@@ -418,8 +418,8 @@ class dataframe(pd.DataFrame):
             if isinstance(arg, dict):
                 columns = list(arg.keys())
                 arg = list(arg.values())
-            argarray = np.array(arg)
-            if argarray.shape == (self.ncols,): # It's a single row: make 2D
+            argarray = arg if isinstance(arg, np.ndarray) else np.array(arg) # Solely for checking the shape
+            if argarray.shape == (self.ncols,): # If it's a single row with the right number of columns, make 2D
                 arg = [arg]
             df = dataframe(data=arg, columns=columns, **kwargs)
         return df
