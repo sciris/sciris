@@ -829,7 +829,7 @@ def orangebluecolormap(apply=False):
     return cmap
 
 
-# Register colormaps
+# Register colormaps -- under their original names as well as with the "sciris-" prefix
 existing = pl.colormaps()
 colormap_map = dict(
     alpine     = alpinecolormap(),
@@ -843,10 +843,4 @@ for origname,cmap in colormap_map.items():
     newname = f'sciris-{origname}'
     for name in [origname, newname]:
         if name not in existing: # Avoid re-registering already registered colormaps
-            mplcm.register(cmap=cmap, name=name)
-            # try:
-            #     mplcm.register(cmap=cmap, name=name, force=True)
-            # except Exception as E:
-            #     errormsg = f'Note: not all colormaps could be imported ({E})'
-            #     print(errormsg) # Don't worry about not being able to register colormaps
-                
+            mplcm.register(cmap=cmap, name=name)                
