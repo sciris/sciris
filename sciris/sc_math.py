@@ -640,10 +640,11 @@ def randround(x):
 
         sc.randround(np.random.randn(8)) # Returns e.g. array([-1,  0,  1, -2,  2,  0,  0,  0])
 
-    New in version 1.0.0.
+    | New in version 1.0.0.
+    | New in version 2.2.0: allow arrays of arbitrary shape
     '''
     if isinstance(x, np.ndarray):
-        output = np.array(np.floor(x+np.random.random(x.size)), dtype=int)
+        output = np.array(np.floor(x+np.random.random(x.shape)), dtype=int)
     elif isinstance(x, list):
         output = [randround(i) for i in x]
     else:
