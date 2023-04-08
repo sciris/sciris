@@ -149,7 +149,7 @@ def checkmem(var, descend=1, order='size', compresslevel=0, maxitems=1000,
         humansize = object,
         bytesize  = int,
         depth     = int,
-        is_total  = int,
+        is_total  = bool,
     )
     df = scdf.dataframe(columns=columns)
     
@@ -191,11 +191,11 @@ def checkmem(var, descend=1, order='size', compresslevel=0, maxitems=1000,
             df.concat(this_df, inplace=True)
     
     # Handle subtotals
-    # if subtotals and len(df) > 1:
-    #     total_label = _prefix + ' (total)' if _prefix else 'Total'
-    #     total = df[~df.is_total].bytesize.sum()
-    #     human_total = scp.humanize_bytes(total)
-    #     df.appendrow(dict(variable=total_label, humansize=human_total, bytesize=total, depth=_depth, is_total=True))
+    if subtotals and len(df) > 1:
+        total_label = _prefix + ' (total)' if _prefix else 'Total'
+        total = df[np.logical_not(df.is_total)].bytesize.sum()
+        human_total = scp.humanize_bytes(total)
+        df.appendrow(dict(variable=total_label, humansize=human_total, bytesize=total, depth=_depth, is_total=True))
     
     # Only sort if we're at the highest level
     if _depth == 0 and len(df) > 1:
