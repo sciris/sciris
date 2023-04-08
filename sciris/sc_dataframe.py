@@ -331,7 +331,7 @@ class dataframe(pd.DataFrame):
         if reset_index:
             newdf.reset_index(drop=True, inplace=True)
         if inplace:
-            self.__dict__ = newdf.__dict__ # Hack to copy in-place
+            self._update_inplace(newdf, verify_is_copy=False)
             return self
         else:
             return newdf
