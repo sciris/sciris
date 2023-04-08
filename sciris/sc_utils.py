@@ -34,6 +34,7 @@ import numbers
 import pprint
 import hashlib
 import warnings
+import importlib
 import subprocess
 import unicodedata
 import numpy as np
@@ -1289,7 +1290,7 @@ def _sanitize_output(obj, is_list, is_array, dtype=None):
 ##############################################################################
 
 __all__ += ['strjoin', 'newlinejoin', 'strsplit', 'runcommand', 'gitinfo', 'compareversions',
-            'uniquename', 'suggest', 'getcaller', 'importbyname']
+            'uniquename', 'suggest', 'getcaller', 'importbyname', 'importbypath']
 
 
 def strjoin(*args, sep=', '):
@@ -1753,7 +1754,7 @@ def _assign_to_namespace(var, obj, namespace=None, overwrite=True):
     return
 
 
-def importbyname(module=None, variable=None, namespace=None, lazy=False, overwrite=True, die=True, verbose=True, **kwargs):
+def importbyname(module=None, variable=None, path=None, namespace=None, lazy=False, overwrite=True, die=True, verbose=True, **kwargs):
     '''
     Import modules by name.
 
@@ -1763,6 +1764,7 @@ def importbyname(module=None, variable=None, namespace=None, lazy=False, overwri
     Args:
         module (str): name of the module to import
         variable (str): the name of the variable to assign the module to (by default, the module's name)
+        path (str/path): optionally load from path instead of by name
         namespace (dict): the namespace to load the modules into (by default, globals)
         lazy (bool): whether to create a LazyModule object instead of load the actual module
         overwrite (bool): whether to allow overwriting an existing variable (by default, yes)
@@ -1772,14 +1774,17 @@ def importbyname(module=None, variable=None, namespace=None, lazy=False, overwri
 
     **Examples**::
 
-        np = sc.importbyname('numpy')
-        sc.importbyname(pd='pandas', np='numpy')
-        pl = sc.importbyname(pl='matplotlib.pyplot', lazy=True) # Won't actually import until e.g. pl.figure() is called
+        np = sc.importbyname('numpy') # Standard usage
+        sc.importbyname(pd='pandas', np='numpy') # Use dictionary syntax to assign to namespace
+        plt = sc.importbyname(plt='matplotlib.pyplot', lazy=True) # Won't actually import until e.g. pl.figure() is called
+        mymod = sc.importbyname(path='/path/to/mymod') # Import by path rather than name
+    
+    See also :func:`importbypath()`.
 
-    New in version 2.1.0: "verbose" argument
+    | New in version 2.1.0: "verbose" argument
+    | New in version 2.2.0: "path" argument
     '''
     # Initialize
-    import importlib
     if variable is None:
         variable = module
 
@@ -1796,7 +1801,10 @@ def importbyname(module=None, variable=None, namespace=None, lazy=False, overwri
             lib = LazyModule(module=module, variable=variable, namespace=namespace)
         else:
             try:
-                lib = importlib.import_module(module)
+                if path is not None:
+                    lib = importbypath(path, variable)
+                else:
+                    lib = importlib.import_module(module)
             except Exception as E: # pragma: no cover
                 errormsg = f'Cannot import "{module}" since {module} is not installed. Please install {module} and try again.'
                 if verbose and not die:
@@ -1815,6 +1823,42 @@ def importbyname(module=None, variable=None, namespace=None, lazy=False, overwri
 
     return libs
 
+
+def importbypath(path, name=None, file='__init__.py'):
+    '''
+    Import a module by path.
+    
+    Useful for importing multiple versions of the same module for comparison purposes.
+    
+    Args:
+        path (str/path): the path to load the module from (with or without __init__.py)
+        name (str): the name of the loaded module (by default, the folder name from the path)
+        file (str): the file to look for at the end of the path
+    
+    **Example**::
+        
+        old = sc.importbypath('/path/to/old/lib', name='oldlib')
+        new = sc.importbypath('/path/to/new/lib', name='newlib')
+    
+    See also :func:`importbyname()`.
+
+    New in version 2.2.0.
+    '''
+    # Sanitize the path and filename
+    path = path(path)
+    parts = list(path.parts)
+    if file and parts[-1] != file:
+        path = path / file
+    if name is None:
+        parts = list(path.parts)
+        name = parts[-2]
+    
+    # From https://docs.python.org/3/library/importlib.html#importing-a-source-file-directly
+    spec = importlib.util.spec_from_file_location(name, path)
+    module = importlib.util.module_from_spec(spec)
+    sys.modules[name] = module
+    spec.loader.exec_module(module)
+    return module
 
 
 ##############################################################################
@@ -2026,7 +2070,6 @@ class LazyModule:
 
     def _load(self, attr=None):
         ''' Stop being lazy and load the module '''
-        import importlib
         var = self._variable
         lib = importlib.import_module(self._module)
         _assign_to_namespace(var, lib, namespace=self._namespace, overwrite=self._overwrite)
