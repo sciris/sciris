@@ -20,7 +20,7 @@ __all__ = ['dataframe']
 class dataframe(pd.DataFrame):
     '''
     An extension of the pandas dataframe with additional convenience methods for
-    accessing rows and columns and performing other operations.
+    accessing rows and columns and performing other operations, such as adding rows.
     
     Args:
         data (dict/array/dataframe): the data to use
@@ -31,7 +31,7 @@ class dataframe(pd.DataFrame):
 
     **Examples**::
 
-        a = sc.dataframe(cols=['x','y'],data=[[1238,2],[384,5],[666,7]]) # Create data frame
+        a = sc.dataframe(cols=['x','y'], data=[[1238,2],[384,5],[666,7]]) # Create data frame
         a['x'] # Print out a column
         a[0] # Print out a row
         a['x',0] # Print out an element
@@ -109,70 +109,84 @@ class dataframe(pd.DataFrame):
         return
 
 
-    def _to_array(self, arr):
-        ''' Try to conver to the current data type, or else use an object '''
-        try: # Try to use current type
-            output = np.array(arr, dtype=self.values.dtype)
-        except: # This is to e.g. not force conversion to strings # pragma: no cover
-            output = np.array(arr, dtype=object)
-        return output
+    # def _to_array(self, arr):
+    #     ''' Try to conver to the current data type, or else use an object '''
+    #     try: # Try to use current type
+    #         output = np.array(arr, dtype=self.values.dtype)
+    #     except: # This is to e.g. not force conversion to strings # pragma: no cover
+    #         output = np.array(arr, dtype=object)
+    #     return output
 
 
-    def _val2row(self, value=None, to2d=True):
-        ''' Convert a list, array, or dictionary to the right format for appending to a dataframe '''
-        if isinstance(value, dict):
-            output = np.zeros(self.ncols, dtype=object)
-            for c,col in enumerate(self.cols):
-                try:
-                    output[c] = value[col]
-                except:
-                    errormsg = f'Entry for column {col} not found; keys you supplied are: {scu.strjoin(value.keys())}'
-                    raise Exception(errormsg)
-        elif value is None:
-            output = np.empty(self.ncols)
-        else: # Not sure what it is, just make it an array
-            output = self._to_array(value)
+    # def _val2row(self, value=None, to2d=True):
+    #     ''' Convert a list, array, or dictionary to the right format for appending to a dataframe '''
+    #     if isinstance(value, dict):
+    #         output = np.zeros(self.ncols, dtype=object)
+    #         for c,col in enumerate(self.cols):
+    #             try:
+    #                 output[c] = value[col]
+    #             except:
+    #                 errormsg = f'Entry for column {col} not found; keys you supplied are: {scu.strjoin(value.keys())}'
+    #                 raise Exception(errormsg)
+    #     elif value is None:
+    #         output = np.empty(self.ncols)
+    #     else: # Not sure what it is, just make it an array
+    #         output = self._to_array(value)
 
-        # Validation
-        if output.ndim == 1: # Convert from 1D to 2D
-            shape = output.shape[0]
-            if to2d:
-                output = np.array([output])
-        else:
-            shape = output.shape[1]
-        if shape != self.ncols:
-            errormsg = f'Row has wrong length ({shape} supplied, {self.ncols} expected)'
-            raise IndexError(errormsg)
+    #     # Validation
+    #     if output.ndim == 1: # Convert from 1D to 2D
+    #         shape = output.shape[0]
+    #         if to2d:
+    #             output = np.array([output])
+    #     else:
+    #         shape = output.shape[1]
+    #     if shape != self.ncols:
+    #         errormsg = f'Row has wrong length ({shape} supplied, {self.ncols} expected)'
+    #         raise IndexError(errormsg)
 
-        # Try to convert back to default type, but don't worry if not
-        try:
-            output = np.array(output, dtype=self.values.dtype)
-        except: # pragma: no cover
-            pass
+    #     # Try to convert back to default type, but don't worry if not
+    #     try:
+    #         output = np.array(output, dtype=self.values.dtype)
+    #     except: # pragma: no cover
+    #         pass
 
-        return output
+    #     return output
 
 
-    def _sanitizecol(self, col, die=True):
-        ''' Take None or a string and return the index of the column '''
+    def col_index(self, col, die=True):
+        '''
+        Get the index of the specified column.
+        
+        Args:
+            col (str): the column to get the index of (return 0 if None)
+            die (bool): whether to raise an exception if the column could not be found (else, return NOne)
+        
+        New in version 2.2.0: renamed from "_sanitizecols"
+        '''
+        cols = self.cols
         if col is None:
             output = 0 # If not supplied, assume first column is intended
         elif scu.isstring(col):
             try:
-                output = self.cols.index(col) # Convert to index
+                output = cols.index(col) # Convert to index
             except Exception as E: # pragma: no cover
-                errormsg = 'Could not get index of column "%s"; columns are:\n%s\n%s' % (col, '\n'.join(self.cols), str(E))
+                errormsg = f'Could not get index of column "{col}"; columns are:\n{scu.newlinejoin(cols)}\n{E}'
                 if die:
-                    raise scu.KeyNotFoundError(errormsg)
+                    raise scu.KeyNotFoundError(errormsg) from E
                 else:
                     print(errormsg)
                     output = None
         elif scu.isnumber(col):
+            try:
+                cols[col]
+            except Exception as E:
+                errormsg = f'Column "{col}" is not a valid index'
+                raise IndexError(errormsg) from E
             output = col
         else: # pragma: no cover
             errormsg = f'Unrecognized column/column type "{col}" {type(col)}'
             if die:
-                raise ValueError(errormsg)
+                raise TypeError(errormsg)
             else:
                 print(errormsg)
                 output = None
@@ -193,9 +207,9 @@ class dataframe(pd.DataFrame):
 
     def __getitem__(self, key=None, die=True, cast=True):
         ''' Simple method for returning; see self.flexget() for a version based on col and row '''
-        try:
+        try: # Default to the pandas version
             output = super().__getitem__(key)
-        except:
+        except: # ...but handle a wider variety of keys
             if scu.isstring(key): # e.g. df['a'] -- usually handled by pandas # pragma: no cover
                 rowindex = slice(None)
                 try:
@@ -232,9 +246,10 @@ class dataframe(pd.DataFrame):
 
     def __setitem__(self, key, value=None):
         try:
-            assert isinstance(key, str) or key in self.cols # Don't create new non-text columns, only set existing ones
+            # Don't create new non-text columns, only set existing ones; otherwise use regular pandas
+            assert isinstance(key, str) or key in self.columns
             super().__setitem__(key, value)
-        except:
+        except Exception as E:
             if scu.isnumber(key):
                 newrow = self._val2row(value, to2d=False) # Make sure it's in the correct format
                 if len(newrow) != self.ncols:
@@ -253,6 +268,10 @@ class dataframe(pd.DataFrame):
                 if scu.isstring(colindex): # e.g. df['a',0]
                     colindex = self.cols.index(colindex)
                 self.iloc[rowindex,colindex] = value
+            else:
+                exc = type(E)
+                errormsg = f'Could not understand key {key}: {E}'
+                raise exc(errormsg) from E
         return
 
 
@@ -279,7 +298,7 @@ class dataframe(pd.DataFrame):
         else:
             colindices = []
             for col in scu.tolist(cols):
-                colindices.append(self._sanitizecol(col))
+                colindices.append(self.col_index(col))
         if rows is None:
             rowindices = Ellipsis
         else:
@@ -292,7 +311,7 @@ class dataframe(pd.DataFrame):
                 output = self._cast(output)
             return output
         else:
-            output = dataframe(cols=np.array(self.cols)[colindices].tolist(), data=output)
+            output = dataframe(data=output, columns=np.array(self.cols)[colindices].tolist())
 
         return output
 
@@ -517,15 +536,15 @@ class dataframe(pd.DataFrame):
 
     def addcol(self, key=None, value=None):
         ''' Add a new column to the data frame -- for consistency only '''
-        self.__setitem__(key, value)
+        return self.__setitem__(key, value)
 
 
     def rmcol(self, key, die=True):
         ''' Remove a column or columns from the data frame '''
         cols = scu.tolist(key)
         for col in cols:
-            if col not in self.cols: # pragma: no cover
-                errormsg = 'sc.dataframe(): cannot remove column %s: columns are:\n%s' % (col, '\n'.join(self.cols))
+            if col not in self.columns: # pragma: no cover
+                errormsg = f'sc.dataframe(): cannot remove column {col}: columns are:\n{scu.newlinejoin(self.cols)}'
                 if die: raise Exception(errormsg)
                 else:   print(errormsg)
             else:
@@ -533,25 +552,47 @@ class dataframe(pd.DataFrame):
         return self
 
 
-    def _rowindex(self, value=None, col=None, die=False):
-        ''' Get the sanitized row index for a given value and column '''
-        col = self._sanitizecol(col)
+    def row_index(self, value, col=None, closest=False, die=True):
+        '''
+        Get the row index for a given value and column.
+        
+        See ``df.findrow()`` for the equivalent to return the row itself
+        rather than the index of the row.
+        
+        Args:
+            value (any): the value to look for
+            col (str): the column to look in (default: first)
+            closest (bool): if true, return the closest match if an exact match is not found
+            die (bool): whether to raise an exception if the value is not found (otherwise, return None)
+        
+        **Example**::
+            
+            df = dataframe(data=[[2016,0.3],[2017,0.5]], columns=['year','val'])
+            df.row_index(2016) # returns 0
+            df.findrow(2013) # returns None, or exception if die is True
+            df.findrow(2013, closest=True) # returns 0
+        
+        New in version 2.2.0: renamed from "_rowindex"
+        '''
+        col = self.col_index(col)
         coldata = self.iloc[:,col].values # Get data for this column
-        if value is None: value = coldata[-1] # If not supplied, pick the last element
-        try:
-            index = coldata.tolist().index(value) # Try to find duplicates
-        except: # pragma: no cover
-            if die:
-                errormsg = f'Item {value} not found; choices are: {coldata}'
-                raise IndexError(errormsg)
-            else:
-                return
+        if closest:
+            index = np.argmin(abs(coldata-value)) # Find the closest match to the key
+        else:
+            try:
+                index = coldata.tolist().index(value) # Try to find duplicates
+            except: # pragma: no cover
+                if die:
+                    errormsg = f'Item {value} not found; choices are: {coldata}'
+                    raise IndexError(errormsg)
+                else:
+                    return
         return index
 
 
     def rmrow(self, value=None, col=None, returnval=False, die=True):
         ''' Like pop, but removes by matching the value in the given column instead of the index '''
-        index = self._rowindex(value=value, col=col, die=die)
+        index = self.row_index(value=value, col=col, die=die)
         if index is not None: self.poprow(index, returnval=returnval)
         return self
 
@@ -566,7 +607,7 @@ class dataframe(pd.DataFrame):
 
 
     def rmrows(self, inds=None, reset_index=True, inplace=True):
-        ''' Remove rows by index '''
+        ''' Remove multiple rows by index '''
         keep_set = self._diffinds(inds)
         keep_data = self.iloc[keep_set,:]
         newdf = dataframe(data=keep_data, cols=self.cols)
@@ -575,7 +616,7 @@ class dataframe(pd.DataFrame):
 
     def replacecol(self, col=None, old=None, new=None):
         ''' Replace all of one value in a column with a new value '''
-        col = self._sanitizecol(col)
+        col = self.col_index(col)
         coldata = self.iloc[:,col] # Get data for this column
         inds = scm.findinds(arr=coldata, val=old)
         self.iloc[inds,col] = new
@@ -597,19 +638,23 @@ class dataframe(pd.DataFrame):
         return output
 
 
-    def findrow(self, value=None, col=None, default=None, closest=False, die=False, asdict=False):
+    def findrow(self, value=None, col=None, default=None, closest=False, asdict=False, die=False):
         '''
         Return a row by searching for a matching value.
+        
+        See ``df.row_index()`` for the equivalent to return the index of the row
+        rather than the row itself.
 
         Args:
-            value: the value to look for
-            col: the column to look for this value in
-            default: the value to return if key is not found (overrides die)
-            closest: whether or not to return the closest row (overrides default and die)
-            die: whether to raise an exception if the value is not found
-            asdict: whether to return results as dict rather than list
+            value (any): the value to look for
+            col (str): the column to look for this value in
+            default (any): the value to return if key is not found (overrides die)
+            closest (bool): whether or not to return the closest row (overrides default and die)
+            returnind (bool): return the index of the row rather than the row itself
+            asdict (bool): whether to return results as dict rather than list
+            die (bool): whether to raise an exception if the value is not found
 
-        **Example**::
+        **Examples**::
 
             df = dataframe(cols=['year','val'],data=[[2016,0.3],[2017,0.5]])
             df.findrow(2016) # returns array([2016, 0.3], dtype=object)
@@ -617,12 +662,7 @@ class dataframe(pd.DataFrame):
             df.findrow(2013, closest=True) # returns array([2016, 0.3], dtype=object)
             df.findrow(2016, asdict=True) # returns {'year':2016, 'val':0.3}
         '''
-        if not closest: # Usual case, get
-            index = self._rowindex(value=value, col=col, die=(die and default is None))
-        else:
-            col = self._sanitizecol(col)
-            coldata = self.iloc[:,col] # Get data for this column
-            index = np.argmin(abs(coldata-value)) # Find the closest match to the key
+        index = self.row_index(value=value, col=col, die=(die and default is None), closest=closest)
         if index is not None:
             thisrow = self.iloc[index,:].values
             if asdict:
@@ -634,7 +674,7 @@ class dataframe(pd.DataFrame):
 
     def findinds(self, value=None, col=None):
         ''' Return the indices of all rows matching the given key in a given column. '''
-        col = self._sanitizecol(col)
+        col = self.col_index(col)
         coldata = self.iloc[:,col].values # Get data for this column
         inds = scm.findinds(arr=coldata, val=value)
         return inds
