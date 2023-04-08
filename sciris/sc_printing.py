@@ -322,7 +322,7 @@ def indent(prefix=None, text=None, suffix='\n', n=0, pretty=False, width=70, **k
 
 #%% Data representation functions
 
-__all__ += ['sigfig', 'printmean', 'humanize_bytes', 'printarr', 'printdata', 'printvars']
+__all__ += ['sigfig', 'printmean', 'printmedian', 'humanize_bytes', 'printarr', 'printdata', 'printvars']
 
 
 def sigfig(x, sigfigs=4, SI=False, sep=False, keepints=False):
@@ -395,49 +395,7 @@ def sigfig(x, sigfigs=4, SI=False, sep=False, keepints=False):
         return output[0]
 
 
-def _printstats(which, arr, stds=2, quantiles=None, val_sf=None, err_sf=None, doprint=True, **kwargs):
-    ''' Helper function -- see ``sc.printmean()`` and ``sc.printstats()`` '''
-    vsf = val_sf
-    esf = err_sf if err_sf is not None else 2
-    arr = scu.toarray(arr)
-    ismean = (which == 'mean')
-    if ismean:
-        val = arr.mean()
-        err = arr.std()*stds
-    else:
-        if quantiles is None:
-            quantiles = 95
-        elif quantiles == 'iqr':
-            quantiles = 50
-        if isinstance(quantiles, int):
-            x = quantiles/100/2
-            quantiles = [0.5-x, 0.5+x]
-        else:
-            errormsg = f'Could not understand quantiles "{quantiles}"'
-            raise ValueError(errormsg)
-                
-        val = np.quantile(arr, 0.5)
-        err = np.qunatile(arr, quantiles)
-    
-    relsize = np.floor(np.log10(abs(mean))) - np.floor(np.log10(abs(std)))
-    if vsf is None:
-        vsf = esf + relsize
-    elif msf is not None and err_sigfigs is None:
-        esf = min(msf, msf - relsize)
-        
-    meanstr = sigfig(mean, msf)
-    stdstr  = sigfig(std, esf)
-    string = f'{meanstr} ± {stdstr}'
-    
-    if doprint:
-        print(string)
-    else:
-        return string
-    
-    
-
-
-def printmean(arr, stds=2, mean_sf=None, err_sf=None, doprint=True, **kwargs):
+def printmean(data, stds=2, mean_sf=None, err_sf=None, doprint=True, **kwargs):
     '''
     Quickly print the mean and standard deviation of an array.
     
@@ -445,9 +403,9 @@ def printmean(arr, stds=2, mean_sf=None, err_sf=None, doprint=True, **kwargs):
     the deviation.
     
     Args:
-        arr (array): the data to summarize
+        data (array): the data to summarize
         stds (int): the number of multiples of the standard deviation to show (default 2; can also use 1)
-        mean_sf (int): if provided, use this rather than the auto-calculated number of significant figures
+        mean_sf (int): if provided, use this number of significant figures rather than the auto-calculated
         err_sf (int): ditto, but for the error (standard deviation)
         doprint (bool): whether to print (else, return the string)
         kwargs (dict): passed to ``sc.sigfig()``
@@ -459,7 +417,79 @@ def printmean(arr, stds=2, mean_sf=None, err_sf=None, doprint=True, **kwargs):
     
     New in version 2.2.0.
     '''
-    return _printstats(which='mean', stds=stds, mean_sf=mean_sf, err_sf=err_sf, doprint=doprint, **kwargs)
+    vsf = mean_sf
+    esf = err_sf if err_sf is not None else 2
+    data = scu.toarray(data)
+    val = data.mean()
+    err = data.std()*stds
+    
+    relsize = np.floor(np.log10(abs(val))) - np.floor(np.log10(abs(err)))
+    if vsf is None:
+        vsf = esf + relsize
+    elif vsf is not None and err_sf is None:
+        esf = min(vsf, vsf - relsize)
+        
+    valstr = sigfig(val, vsf, **kwargs)
+    errstr = sigfig(err, esf, **kwargs)
+    string = f'{valstr} ± {errstr}'
+    
+    if doprint:
+        print(string)
+    else:
+        return string
+
+
+def printmedian(data, ci=95, sf=3, doprint=True, **kwargs):
+    '''
+    Quickly print the median and confidence interval of an array.
+    
+    Args:
+        data (array): the data to summarize
+        ci (int): the confidence interval to use to use (integers are treated as a percentile range, default 95% CI)
+        sf (int): number of significant figures to use
+        doprint (bool): whether to print (else, return the string)
+        kwargs (dict): passed to ``sc.sigfig()``
+    
+    **Examples**::
+        
+        data = [1210, 1072, 1722, 1229, 1902]
+        sc.printmedian(data, 50) # Returns 1430 ± 320
+    
+    New in version 2.2.0.
+    '''
+    # Handle quantiles
+    if ci is None:
+        ci = 95
+    elif ci == 'iqr':
+        ci = 50
+    if isinstance(ci, int):
+        x = ci/100/2
+        quantiles = [0.5-x, 0.5+x]
+    else:
+        errormsg = f'Could not understand confidence interval "{ci}"'
+        raise ValueError(errormsg)
+    
+    # Do calculations
+    data = scu.toarray(data)
+    median = np.quantile(data, 0.5)
+    bounds = np.quantile(data, quantiles)
+    
+    relsize = np.floor(np.log10(abs(median))) - np.floor(np.log10(np.abs(bounds)))
+        
+    valstr  = sigfig(median, sf, **kwargs)
+    lowstr  = sigfig(bounds[0], sf-relsize[0], **kwargs)
+    highstr = sigfig(bounds[1], sf-relsize[1], **kwargs)
+    if ci == 50:
+        cistr = 'IQR'
+    else:
+        cistr = f'{ci}% CI'
+    string = f'{valstr} ({cistr}: {lowstr}, {highstr})'
+    
+    if doprint:
+        print(string)
+    else:
+        return string
+
 
 
 def humanize_bytes(bytesize, decimals=3):
