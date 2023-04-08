@@ -109,50 +109,6 @@ class dataframe(pd.DataFrame):
         return
 
 
-    # def _to_array(self, arr):
-    #     ''' Try to conver to the current data type, or else use an object '''
-    #     try: # Try to use current type
-    #         output = np.array(arr, dtype=self.values.dtype)
-    #     except: # This is to e.g. not force conversion to strings # pragma: no cover
-    #         output = np.array(arr, dtype=object)
-    #     return output
-
-
-    # def _val2row(self, value=None, to2d=True):
-    #     ''' Convert a list, array, or dictionary to the right format for appending to a dataframe '''
-    #     if isinstance(value, dict):
-    #         output = np.zeros(self.ncols, dtype=object)
-    #         for c,col in enumerate(self.cols):
-    #             try:
-    #                 output[c] = value[col]
-    #             except:
-    #                 errormsg = f'Entry for column {col} not found; keys you supplied are: {scu.strjoin(value.keys())}'
-    #                 raise Exception(errormsg)
-    #     elif value is None:
-    #         output = np.empty(self.ncols)
-    #     else: # Not sure what it is, just make it an array
-    #         output = self._to_array(value)
-
-    #     # Validation
-    #     if output.ndim == 1: # Convert from 1D to 2D
-    #         shape = output.shape[0]
-    #         if to2d:
-    #             output = np.array([output])
-    #     else:
-    #         shape = output.shape[1]
-    #     if shape != self.ncols:
-    #         errormsg = f'Row has wrong length ({shape} supplied, {self.ncols} expected)'
-    #         raise IndexError(errormsg)
-
-    #     # Try to convert back to default type, but don't worry if not
-    #     try:
-    #         output = np.array(output, dtype=self.values.dtype)
-    #     except: # pragma: no cover
-    #         pass
-
-    #     return output
-
-
     def col_index(self, col, die=True):
         '''
         Get the index of the specified column.
@@ -453,7 +409,8 @@ class dataframe(pd.DataFrame):
         '''
         before = self.iloc[:index,:]
         after  = self.iloc[index:,:]
-        return self.concat(before, value, after, reset_index=reset_index, inplace=inplace, **kwargs)
+        newdf = dataframe.cat(before, value, after, **kwargs)
+        return self.replacedata(newdf=newdf, reset_index=reset_index, inplace=inplace)
 
 
     def _sanitize_df(self, arg, columns=None, **kwargs):
