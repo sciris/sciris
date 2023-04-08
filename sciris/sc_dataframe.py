@@ -744,12 +744,12 @@ class dataframe(pd.DataFrame):
 
     @staticmethod
     def from_dict(*args, **kwargs):
-        return dataframe(super().from_dict(*args, **kwargs))
+        return dataframe(pd.DataFrame.from_dict(*args, **kwargs))
 
     @staticmethod
     def from_records(*args, **kwargs):
-        return dataframe(super().from_records(*args, **kwargs))
+        return dataframe(pd.DataFrame.from_records(*args, **kwargs))
 
     def to_pandas(self, **kwargs):
         ''' Convert to a plain pandas dataframe '''
-        return pd.DataFrame(data=self.values, columns=self.cols, **kwargs)
+        return pd.DataFrame(self)
