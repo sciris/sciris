@@ -209,13 +209,14 @@ def flattendict(nesteddict, sep=None, _prefix=None):
     return output_dict
 
 
-def search(obj, attribute, _trace=''):
+# Define a custom "None" value to allow searching for actual None values
+_None = 'sc.search() placeholder'
+def search(obj, key=_None, value=_None, _trace=''):
     """
-    Find a key or attribute within a dictionary or object.
+    Find a key/attribute or value within a list, dictionary or object.
 
     This function facilitates finding nested key(s) or attributes within an object,
     by searching recursively through keys or attributes.
-
 
     Args:
         obj: A dict or class with __dict__ attribute
@@ -230,28 +231,39 @@ def search(obj, attribute, _trace=''):
 
         nested = {'a':{'foo':1, 'bar':2}, 'b':{'bar':3, 'cat':4}}
         matches = sc.search(nested, 'bar') # Returns ['["a"]["bar"]', '["b"]["bar"]']
+        matches = sc.search(nested, value=4) # Returns ['["b"]["cat"]']
+    
+    New in version 2.2.0: ability to search for values as well as keys/attributes
     """
 
     matches = []
 
     if isinstance(obj, dict):
-        d = obj
+        o = obj
+    elif isinstance(obj, list):
+        o = {k:v for k,v in zip(list(range(len(obj))), obj)}
     elif hasattr(obj, '__dict__'):
-        d = obj.__dict__
+        o = obj.__dict__
     else:
         return matches
 
-    for attr in d:
+    for k,v in o.items():
 
         if isinstance(obj, dict):
-            s = _trace + f'["{attr}"]'
+            s = _trace + f'["{k}"]'
+        elif isinstance(obj, list):
+            s = _trace + f'[{k}]'
         else:
-            s = _trace + f'.{attr}'
+            s = _trace + f'.{k}'
 
-        if attribute in attr:
-            matches.append(s)
+        if key != _None:
+            if key in k:
+                matches.append(s)
+        if value != _None:
+            if value == v:
+                matches.append(s)
 
-        matches += search(d[attr], attribute, s)
+        matches += search(o[k], key, value, s)
 
     return matches
 
