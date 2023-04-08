@@ -313,28 +313,25 @@ class dataframe(pd.DataFrame):
         else:         return
 
 
-    def replacedata(self, newdata=None, newdf=None, reset_index=True, inplace=True, keep_dtypes=True):
+    def replacedata(self, newdata=None, newdf=None, reset_index=True, inplace=True):
         '''
-        Replace data in the dataframe with other data
+        Replace data in the dataframe with other data; usually not used directly
+        by the user, but used as part of e.g. ``df.concat()``.
 
         Args:
             newdata (array): replace the dataframe's data with these data
             newdf (dataframe): substitute the current dataframe with this one
             reset_index (bool): update the index
             inplace (bool): whether to modify in-place
-            keep_dtypes (bool): whether to keep original dtypes
         
-        New in version 2.2.0: "keep_dtypes" argument
+        New in version 2.2.0: improved dtype handling
         '''
-        dtypes = self.dtypes if keep_dtypes else None
         if newdf is None:
-            newdf = dataframe(data=newdata, columns=self.columns, dtypes=dtypes)
+            newdf = dataframe(data=newdata, columns=self.columns)
         if reset_index:
             newdf.reset_index(drop=True, inplace=True)
         if inplace:
             self.__dict__ = newdf.__dict__ # Hack to copy in-place
-            if keep_dtypes:
-                self.set_dtypes(dtypes)
             return self
         else:
             return newdf
@@ -428,7 +425,7 @@ class dataframe(pd.DataFrame):
         return df
 
 
-    def concat(self, data, *args, columns=None, reset_index=True, inplace=False, dfargs=None, keep_dtypes=True, **kwargs):
+    def concat(self, data, *args, columns=None, reset_index=True, inplace=False, dfargs=None, **kwargs):
         '''
         Concatenate additional data onto the current dataframe. 
         
@@ -441,7 +438,6 @@ class dataframe(pd.DataFrame):
             columns (list): if supplied, columns to go with the data
             reset_index (bool): update the index
             inplace (bool): whether to append in place
-            keep_dtypes (bool): whether to preserve original dtypes
             dfargs (dict): arguments passed to construct each dataframe
             **kwargs (dict): passed to ``pd.concat()``
         
@@ -456,7 +452,7 @@ class dataframe(pd.DataFrame):
             df = self._sanitize_df(arg, columns=columns, **dfargs)
             dfs.append(df)
         newdf = dataframe(pd.concat(dfs, **kwargs), **dfargs)
-        return self.replacedata(newdf=newdf, reset_index=reset_index, inplace=inplace, keep_dtypes=keep_dtypes)
+        return self.replacedata(newdf=newdf, reset_index=reset_index, inplace=inplace)
 
 
     @staticmethod
