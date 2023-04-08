@@ -72,6 +72,13 @@ class dataframe(pd.DataFrame):
                 raise ValueError(errormsg)
             dtypes = columns # Already in the right format
             columns = list(columns.keys())
+        if isinstance(data, dict):
+            if columns is not None:
+                colset = sorted(set(columns))
+                dataset = sorted(set(data.keys()))
+                if colset != dataset:
+                    errormsg = f'Incompatible column names provided:\nColumns: {colset}\n   Data: {dataset}'
+                    raise ValueError(errormsg)
 
         # Create the dataframe
         super().__init__(data=data, columns=columns, **kwargs)
@@ -90,12 +97,15 @@ class dataframe(pd.DataFrame):
 
 
     def set_dtypes(self, dtypes):
-        ''' Set dtypes in-place (see pandas ``df.astype()`` for the user-facing version) '''
+        '''
+        Set dtypes in-place (see pandas ``df.astype()`` for the user-facing version)
+        
+        New in version 2.2.0.
+        '''
         if not isinstance(dtypes, dict):
             dtypes = {col:dtype for col,dtype in zip(self.columns, dtypes)}
         for col,dtype in dtypes.items(): # NB: "self.astype(dtypes, copy=False)" does not modify in place
             self[col] = self[col].astype(dtype)
-        self.astype(dtypes, copy=False)
         return
 
 
@@ -146,7 +156,7 @@ class dataframe(pd.DataFrame):
     def _sanitizecol(self, col, die=True):
         ''' Take None or a string and return the index of the column '''
         if col is None:
-            output = 0 # If not supplied, assume first column is control
+            output = 0 # If not supplied, assume first column is intended
         elif scu.isstring(col):
             try:
                 output = self.cols.index(col) # Convert to index
@@ -320,7 +330,11 @@ class dataframe(pd.DataFrame):
 
 
     def poprow(self, key, returnval=True):
-        ''' Remove a row from the data frame '''
+        '''
+        Remove a row from the data frame.
+        
+        To pop a column, see ``df.pop()``.        
+        '''
         rowindex = int(key)
         thisrow = self.iloc[rowindex,:]
         self.drop(rowindex, inplace=True)
@@ -328,7 +342,7 @@ class dataframe(pd.DataFrame):
         else:         return
 
 
-    def replacedata(self, newdata=None, newdf=None, reset_index=True, inplace=True):
+    def replacedata(self, newdata=None, newdf=None, reset_index=True, inplace=True, keep_dtypes=True):
         '''
         Replace data in the dataframe with other data
 
@@ -337,41 +351,87 @@ class dataframe(pd.DataFrame):
             newdf (dataframe): substitute the current dataframe with this one
             reset_index (bool): update the index
             inplace (bool): whether to modify in-place
+            keep_dtypes (bool): whether to keep original dtypes
+        
+        New in version 2.2.0: "keep_dtypes" argument
         '''
+        dtypes = self.dtypes if keep_dtypes else None
         if newdf is None:
-            newdf = dataframe(data=newdata, columns=self.columns)
+            newdf = dataframe(data=newdata, columns=self.columns, dtypes=dtypes)
         if reset_index:
             newdf.reset_index(drop=True, inplace=True)
         if inplace:
             self.__dict__ = newdf.__dict__ # Hack to copy in-place
+            if keep_dtypes:
+                self.set_dtypes(dtypes)
             return self
         else:
             return newdf
 
 
-    def appendrow(self, value, reset_index=True, inplace=True):
+    def appendrow(self, row, reset_index=True, inplace=True):
         '''
-        Add a row to the end of the dataframe. See also ``concat()`` and ``insertrow()``.
+        Add row(s) to the end of the dataframe. 
+        
+        See also ``concat()`` and ``insertrow()``. Similar to the pandas operation
+        ``df.iloc[-1] = ...``, but faster and provides additional type checking.
 
         Args:
             value (array): the row(s) to append
             reset_index (bool): update the index
             inplace (bool): whether to modify in-place
+        
+        Note: "appendrow" and "concat" are equivalent, except appendrow() defaults
+        to modifying in-place and "concat" defaults to returning a new dataframe.
+        
+        Warning: modifying dataframes in-place is quite inefficient. For highest
+        performance, construct the data in large chunks and then add to the dataframe
+        all at once, rather than adding row by row.
+        
+        **Example**::
+            
+            import sciris as sc
+            import numpy as np
+
+            df = sc.dataframe(dict(
+                a = ['foo','bar'], 
+                b = [1,2], 
+                c = np.random.rand(2)
+            ))
+            df.appendrow(['cat', 3, 0.3])           # Append a list
+            df.appendrow(dict(a='dog', b=4, c=0.7)) # Append a dict
+            
+        New in version 2.2.0: renamed "value" to "row"; improved performance
         '''
-        newrow = self._val2row(value) # Make sure it's in the correct format
-        newdata = np.vstack((self.values, newrow))
-        return self.replacedata(newdata=newdata, reset_index=reset_index, inplace=inplace)
+        return self.concat(row, reset_index=reset_index, inplace=inplace)
 
 
     def insertrow(self, row=0, value=None, reset_index=True, inplace=True):
         '''
-        Insert a row at the specified location. See also ``concat()`` and ``appendrow()``.
+        Insert row(s) at the specified location. See also ``concat()`` and ``appendrow()``.
 
         Args:
             row (int): index at which to insert new row(s)
             value (array): the row(s) to insert
             reset_index (bool): update the index
             inplace (bool): whether to modify in-place
+        
+        Warning: modifying dataframes in-place is quite inefficient. For highest
+        performance, construct the data in large chunks and then add to the dataframe
+        all at once, rather than adding row by row.
+        
+        **Example**::
+            
+            import sciris as sc
+            import numpy as np
+
+            df = sc.dataframe(dict(
+                a = ['foo','cat'], 
+                b = [1,3], 
+                c = np.random.rand(2)
+            ))
+            df.insertrow(1, ['bar', 2, 0.2])           # Insert a list
+            df.insertrow(0, dict(a='rat', b=0, c=0.7)) # Insert a dict
         '''
         rowindex = int(row)
         newrow = self._val2row(value) # Make sure it's in the correct format
@@ -379,7 +439,7 @@ class dataframe(pd.DataFrame):
         return self.replacedata(newdata=newdata, reset_index=reset_index, inplace=inplace)
 
 
-    def concat(self, data, *args, columns=None, reset_index=True, inplace=False, dfargs=None, **kwargs):
+    def concat(self, data, *args, columns=None, reset_index=True, inplace=False, dfargs=None, keep_dtypes=True, **kwargs):
         '''
         Concatenate additional data onto the current dataframe. See also ```appendrow()``
         and ``insertrow()``.
@@ -390,26 +450,31 @@ class dataframe(pd.DataFrame):
             columns (list): if supplied, columns to go with the data
             reset_index (bool): update the index
             inplace (bool): whether to append in place
+            keep_dtypes (bool): whether to preserve original dtypes
             dfargs (dict): arguments passed to construct each dataframe
             **kwargs (dict): passed to ``pd.concat()``
         
         | New in version 2.0.2: "inplace" defaults to False
+        | New in version 2.2.0: improved type handling
         '''
         dfargs = scu.mergedicts(dfargs)
         dfs = [self]
         if columns is None:
             columns = self.columns
-        for arg in scu.tolist(data, coerce='tuple') + list(args):
+        for arg in [data] + list(args):
             if isinstance(arg, pd.DataFrame):
                 df = arg
             else:
-                arg = np.array(arg)
-                if arg.shape == (self.ncols,): # It's a single row: make 2D
-                    arg = np.array([arg])
+                if isinstance(arg, dict):
+                    columns = list(arg.keys())
+                    arg = list(arg.values())
+                argarray = np.array(arg)
+                if argarray.shape == (self.ncols,): # It's a single row: make 2D
+                    arg = [arg]
                 df = dataframe(data=arg, columns=columns, **dfargs)
             dfs.append(df)
-        newdf = pd.concat(dfs, **kwargs)
-        return self.replacedata(newdf=newdf, reset_index=reset_index, inplace=inplace)
+        newdf = dataframe(pd.concat(dfs, **kwargs))
+        return self.replacedata(newdf=newdf, reset_index=reset_index, inplace=inplace, keep_dtypes=keep_dtypes)
 
 
     @staticmethod
@@ -616,37 +681,58 @@ class dataframe(pd.DataFrame):
         return self.replacedata(newdf=newdf, reset_index=reset_index, inplace=inplace)
 
 
-    def sortrows(self, col=None, reverse=False, returninds=False):
-        ''' Sort the dataframe rows in place by the specified column(s)'''
-        if col is None:
-            col = 0 # Sort by first column by default
-        cols = scu.tolist(col)[::-1] # Ensure it's a list and reverse order
-        sortorder = [] # In case there are no columns
-        for col in cols:
-            col = self._sanitizecol(col)
-            sortorder = np.argsort(self.iloc[:,col], kind='mergesort') # To preserve order
-            if reverse:
-                sortorder = sortorder[::-1]
-            self.iloc[:,:] = self.iloc[sortorder,:]
+    def sortrows(self, by=None, reverse=False, returninds=False, inplace=True, **kwargs):
+        '''
+        Sort the dataframe rows in place by the specified column(s).
+        
+        Similar to ``df.sort_values()``, except defaults to sorting in place, and
+        optionally returns the indices used for sorting (like ``np.argsort()``).
+        
+        Args:
+            col (str or int): column to sort by (default, first column)
+            reverse (bool): whether to reverse the sort order (i.e., ascending=False)
+            returninds (bool): whether to return the indices used to sort instead of the dataframe
+            inplace (bool): whether to modify the dataframe in-place
+            kwargs (dict): passed to ``df.sort_values()``
+        
+        New in version 2.2.0: "inplace" argument; "col" argument renamed "by"
+        '''
+        by = kwargs.pop('col', by) # Handle deprecation
+        ascending = kwargs.pop('ascending', not(reverse))
+        if by is None:
+            by = 0 # Sort by first column by default
+        if isinstance(by, int):
+            by = self.columns[by]
+        if returninds:
+            sortorder = np.argsort(self[by].values, kind='mergesort') # To preserve order
+        df = self.sort_values(by=by, ascending=ascending, inplace=inplace, **kwargs)
         if returninds:
             return sortorder
         else:
-            return self
+            if inplace:
+                return self
+            else:
+                return df
 
 
-    def sortcols(self, sortorder=None, reverse=False, returninds=False):
-        ''' Like sortrows(), but change column order (in place) instead '''
+    def sortcols(self, sortorder=None, reverse=False, inplace=True):
+        '''
+        Like sortrows(), but change column order (usually in place) instead.
+        
+        Args:
+            sortorder (list): the list of indices to resort the columns by (if none, then alphabetical)
+            reverse (bool): whether to reverse the order
+            inplace (bool): whether to modify the dataframe in-place
+        
+        New in version 2.2.0: Ensure dtypes are preserved; "inplace" argument; "returninds" argument removed
+        '''
         if sortorder is None:
             sortorder = np.argsort(self.cols, kind='mergesort')
             if reverse:
                 sortorder = sortorder[::-1]
         newcols = list(np.array(self.cols)[sortorder])
-        self.rename(columns={old:new for old,new in zip(self.cols, newcols)}, inplace=True)
-        self.iloc[:,:] = self.iloc[:,sortorder]
-        if returninds:
-            return sortorder
-        else:
-            return self
+        newdf = dataframe({k:self[k] for k in newcols})
+        return self.replacedata(newdf=newdf, inplace=inplace)
 
 
     @staticmethod
