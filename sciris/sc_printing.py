@@ -325,51 +325,48 @@ def indent(prefix=None, text=None, suffix='\n', n=0, pretty=False, width=70, **k
 __all__ += ['sigfig', 'humanize_bytes', 'printarr', 'printdata', 'printvars']
 
 
-def sigfig(x, sigfigs=5, SI=False, sep=False, keepints=False):
+def sigfig(x, sigfigs=4, SI=False, sep=False, keepints=False):
     '''
     Return a string representation of variable x with sigfigs number of significant figures
 
     Args:
-        x (int/float/arr): the number(s) to round
+        x (int/float/list/arr): the number(s) to round
         sigfigs (int): number of significant figures to round to
-        SI (bool): whether to use SI notation
+        SI (bool): whether to use SI notation (only for numbers >1)
         sep (bool/str): if provided, use as thousands separator
         keepints (bool): never round ints
 
-    **Examples**::
+    **Examples**:
 
-        x = 32433.3842
-        sc.sigfig(x, SI=True) # Returns 32.433k
-        sc.sigfig(x, sep=True) # Returns 32,433
+        x = 3432.3842
+        sc.sigfig(x, SI=True) # Returns 3.432k
+        sc.sigfig(x, sep=True) # Returns 3,432
+        
+        vals = np.random.rand(5)
+        sc.sigfig(vals, sigfigs=3)
+    
+    New in version 2.2.0: changed default number of significant figures from 5 to 4; return list rather than tuple
     '''
     output = []
 
-    try:
-        n=len(x)
-        X = x
-        islist = True
-    except:
-        X = [x]
-        n = 1
-        islist = False
-    for i in range(n):
-        x = X[i]
-
+    islist = scu.isiterable(x)
+    xlist = x if islist else scu.tolist(x)
+    for x in xlist:
         suffix = ''
         formats = [(1e18,'e18'), (1e15,'e15'), (1e12,'t'), (1e9,'b'), (1e6,'m'), (1e3,'k')]
         if SI:
             for val,suff in formats:
-                if abs(x)>=val:
+                if abs(x) >= val:
                     x = x/val
                     suffix = suff
                     break # Find at most one match
 
         try:
-            if x==0:
+            if x == 0:
                 output.append('0')
             elif sigfigs is None:
                 output.append(scu.flexstr(x)+suffix)
-            elif x>(10**sigfigs) and not SI and keepints: # e.g. x = 23432.23, sigfigs=3, output is 23432
+            elif x > (10**sigfigs) and not SI and keepints: # e.g. x = 23432.23, sigfigs=3, output is 23432
                 roundnumber = int(round(x))
                 if sep: string = format(roundnumber, ',')
                 else:   string = f'{x:0.0f}'
@@ -391,7 +388,9 @@ def sigfig(x, sigfigs=5, SI=False, sep=False, keepints=False):
         except: # pragma: no cover
             output.append(scu.flexstr(x))
     if islist:
-        return tuple(output)
+        if isinstance(x, tuple):
+            output = tuple(output)
+        return output
     else:
         return output[0]
 
