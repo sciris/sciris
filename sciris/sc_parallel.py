@@ -33,7 +33,7 @@ def parallelize(func, iterarg=None, iterkwargs=None, args=None, kwargs=None, ncp
     '''
     Execute a function in parallel.
 
-    Most simply, ``sc.parallelize()`` acts as an shortcut for using ``ProcessPoolExecutor()``.
+    Most simply, ``sc.parallelize()`` acts as an shortcut for using ``Pool.map()``.
     However, it also provides flexibility in how arguments are passed to the function,
     load balancing, etc.
 
@@ -50,12 +50,6 @@ def parallelize(func, iterarg=None, iterkwargs=None, args=None, kwargs=None, ncp
     will use the number of CPUs returned by ``multiprocessing``; if ``ncpus`` is
     not ``None``, it will use the specified number of CPUs; if ``ncpus`` is ``None``
     and ``maxcpu`` is not ``None``, it will allocate the number of CPUs dynamically.
-
-    Note: the default parallelizer ``"multiprocess"`` uses ``dill`` for pickling, so
-    is the most versatile (e.g., it can pickle non-top-level functions). However,
-    it is also the slowest for passing large amounts of data. You can switch between
-    these with ``parallelizer='fast'`` (``concurrent.futures``) and ``parallelizer='robust'``
-    (``multiprocess``).
 
     Args:
         func         (func)      : the function to parallelize
@@ -145,6 +139,12 @@ def parallelize(func, iterarg=None, iterkwargs=None, args=None, kwargs=None, ncp
         results = sc.parallelize(f, iterkwargs=dict(x=[1,2,3], y=[4,5,6]), parallelizer=dask_map)
 
 
+    **Note 1**: the default parallelizer ``"multiprocess"`` uses ``dill`` for pickling, so
+    is the most versatile (e.g., it can pickle non-top-level functions). However,
+    it is also the slowest for passing large amounts of data. You can switch between
+    these with ``parallelizer='fast'`` (``concurrent.futures``) and ``parallelizer='robust'``
+    (``multiprocess``).
+
     The ``parallelizer`` argument allows a wide range of different parallelizers
     (including different aliases for each), and also supports user-supplied ones.
     Note that in most cases, the default parallelizer will suffice. However, the
@@ -158,7 +158,13 @@ def parallelize(func, iterarg=None, iterkwargs=None, args=None, kwargs=None, ncp
         - User supplied: any ``map()``-like function that takes in a function and an argument list
 
 
-    **Note**: to use on Windows, parallel calls must contained with an ``if __name__ == '__main__'`` block.
+    **Note 2**: If parallelizing figure generation, use a non-interactive backend,
+    or make sure (a) figure is closed inside the function call, and (b) the figure
+    object is not returned. Otherwise, parallelization won't increase speed (and
+    might even be slower than serial!).
+
+    
+    **Note 3**: to use on Windows, parallel calls must contained with an ``if __name__ == '__main__'`` block.
 
     For example::
 
@@ -304,7 +310,7 @@ def parallelize(func, iterarg=None, iterkwargs=None, args=None, kwargs=None, ncp
         
         elif pname == 'multiprocess': # Main use case
             with mp.Pool(processes=ncpus) as pool:
-                outputlist = list(pool.imap(_parallel_task, argslist))
+                outputlist = list(pool.map(_parallel_task, argslist))
         
         elif pname == 'multiprocessing':
             with mpi.Pool(processes=ncpus) as pool:
@@ -319,6 +325,10 @@ def parallelize(func, iterarg=None, iterkwargs=None, args=None, kwargs=None, ncp
                 argslist = scu.dcp(argslist) # Also need to deepcopy here
             with cf.ThreadPoolExecutor(max_workers=ncpus) as pool:
                 outputlist = list(pool.map(_parallel_task, argslist))
+        
+        elif pname == 'process':
+            with mpi.Pool(processes=ncpus) as pool:
+                outputlist = pool.map(_parallel_task, argslist)
         
         elif pname == 'custom':
             outputlist = parallelizer(_parallel_task, argslist)
