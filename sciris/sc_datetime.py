@@ -233,11 +233,11 @@ def readdate(datestr=None, *args, dateformat=None, return_defaults=False, verbos
     return output
 
 
-def date(obj, *args, start_date=None, readformat=None, outformat=None, as_date=True, **kwargs):
+def date(obj, *args, start_date=None, readformat=None, to='date', as_date=None, outformat=None, **kwargs):
     '''
     Convert any reasonable object -- a string, integer, or datetime object, or
-    list/array of any of those -- to a date object. To convert an integer to a
-    date, you must supply a start date.
+    list/array of any of those -- to a date object (or string, pandas, or numpy
+    date). To convert an integer to a date, you must supply a start date.
 
     Caution: while this function and ``sc.readdate()`` are similar, and indeed this function
     calls ``sc.readdate()`` if the input is a string, in this function an integer is treated
@@ -252,8 +252,10 @@ def date(obj, *args, start_date=None, readformat=None, outformat=None, as_date=T
         args (str/int/date/datetime): additional objects to convert
         start_date (str/date/datetime): the starting date, if an integer is supplied
         readformat (str/list): the format to read the date in; passed to ``sc.readdate()``
+        to (str): the output format: 'date' (default), 'str' (or 'string'), 'pandas', or 'numpy'
+        as_date (bool): alternate method of choosing between  output format of 'date' (True) or 'str' (False); if None, use "to" instead
         outformat (str): the format to output the date in, if returning a string
-        as_date (bool): whether to return as a datetime date instead of a string
+        kwargs (dict): only used for deprecated argument aliases
 
     Returns:
         dates (date or list): either a single date object, or a list of them (matching input data type where possible)
@@ -261,12 +263,13 @@ def date(obj, *args, start_date=None, readformat=None, outformat=None, as_date=T
     **Examples**::
 
         sc.date('2020-04-05') # Returns datetime.date(2020, 4, 5)
-        sc.date([35,36,37], start_date='2020-01-01', as_date=False) # Returns ['2020-02-05', '2020-02-06', '2020-02-07']
+        sc.date([35,36,37], start_date='2020-01-01', to='str') # Returns ['2020-02-05', '2020-02-06', '2020-02-07']
         sc.date(1923288822, readformat='posix') # Interpret as a POSIX timestamp
 
     | New in version 1.0.0.
     | New in version 1.2.2: "readformat" argument; renamed "dateformat" to "outformat"
     | New in version 2.0.0: support for ``np.datetime64`` objects
+    | New in version 2.2.0: added "to" argument, and support for ``pd.Timestamp`` and ``np.datetime64`` output
     '''
 
     # Handle deprecation
@@ -277,6 +280,8 @@ def date(obj, *args, start_date=None, readformat=None, outformat=None, as_date=T
         outformat = dateformat
         warnmsg = 'sc.date() argument "dateformat" has been deprecated as of v1.2.2; use "outformat" instead'
         warnings.warn(warnmsg, category=FutureWarning, stacklevel=2)
+    if as_date is not None: # pragma: no cover
+        to = 'date' if as_date else 'str' # Legacy support for as_date boolean
 
     # Convert to list and handle other inputs
     if obj is None:
@@ -293,7 +298,7 @@ def date(obj, *args, start_date=None, readformat=None, outformat=None, as_date=T
         try:
             if type(d) == dt.date: # Do not use isinstance, since must be the exact type
                 pass
-            elif isinstance(d, dt.datetime):
+            elif isinstance(d, dt.datetime): # This includes pd.Timestamp
                 d = d.date()
             elif scu.isstring(d):
                 d = readdate(d, dateformat=readformat).date()
@@ -310,15 +315,25 @@ def date(obj, *args, start_date=None, readformat=None, outformat=None, as_date=T
             else: # pragma: no cover
                 errormsg = f'Cannot interpret {type(d)} as a date, must be date, datetime, or string'
                 raise TypeError(errormsg)
-            if as_date:
-                dates.append(d)
+            
+            # Handle output
+            
+            if to == 'date':
+                out = d
+            elif to in ['str', 'string']:
+                out = d.strftime(outformat)
+            elif to == 'pandas':
+                out = pd.Timestamp(d)
+            elif to == 'numpy':
+                out = np.datetime64(d)
             else:
-                dates.append(d.strftime(outformat))
+                errormsg = f'Could not understand to="{to}": must be date, str, pandas, or numpy'
+            dates.append(out)
         except Exception as E:
             errormsg = f'Conversion of "{d}" to a date failed'
             raise ValueError(errormsg) from E
 
-    # Return an integer rather than a list if only one provided
+    # Return a scalar rather than a list if only one provided
     output = scu._sanitize_output(dates, is_list, is_array, dtype=object)
     return output
 
