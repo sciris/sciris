@@ -1132,7 +1132,7 @@ def _get_dpi(dpi=None, min_dpi=200):
     return dpi
 
 
-def savefig(filename, fig=None, dpi=None, comments=None, pipfreeze=False, frame=2, 
+def savefig(filename, fig=None, dpi=None, comments=None, pipfreeze=False, relframe=0, 
             folder=None, makedirs=True, die=True, verbose=True, **kwargs):
     '''
     Save a figure, including metadata
@@ -1151,7 +1151,7 @@ def savefig(filename, fig=None, dpi=None, comments=None, pipfreeze=False, frame=
         dpi       (int)      : resolution of the figure to save (default 200 or current default, whichever is higher)
         comments  (str)      : additional metadata to save to the figure
         pipfreeze (bool)     : whether to store the contents of ``pip freeze`` in the metadata
-        frame     (int)      : which calling file to try to store information from (default, the file calling ``sc.savefig()``)
+        relframe  (int)      : which calling file to try to store information from (default 0, the file calling ``sc.savefig()``)
         folder    (str/Path) : optional folder to save to (can also be provided as part of the filename)
         makedirs  (bool)     : whether to create folders if they don't already exist
         die       (bool)     : whether to raise an exception if metadata can't be saved
@@ -1169,9 +1169,14 @@ def savefig(filename, fig=None, dpi=None, comments=None, pipfreeze=False, frame=
         sc.pp(sc.loadmetadata('example2.png'))
     
     | New in version 1.3.3.
-    | New in version 2.2.0: "freeze" renamed "pipfreeze"; replaced metadata with ``sc.metadata()``
+    | New in version 2.2.0: "freeze" renamed "pipfreeze"; "frame" replaced with "relframe"; replaced metadata with ``sc.metadata()``
     '''
-    pipfreeze = kwargs.pop('freeze', pipfreeze) # Handle deprecation
+    # Handle deprecation
+    orig_metadata = kwargs.pop('metadata', {}) # In case metadata is supplied, as it can be for fig.save()
+    pipfreeze     = kwargs.pop('freeze', pipfreeze) 
+    frame         = kwargs.pop('frame', None)
+    if frame is not None:
+        relframe = frame - 2
     
     # Handle figure
     if fig is None:
@@ -1181,22 +1186,7 @@ def savefig(filename, fig=None, dpi=None, comments=None, pipfreeze=False, frame=
     dpi = _get_dpi(dpi)
 
     # Get caller and git info
-    caller = scu.getcaller(frame=frame, tostring=False)
-    gitinfo = scu.gitinfo(caller['filename'], die=False, verbose=False) # Don't print any git errors
-
-    # Construct metadata
-    metadata = kwargs.pop('metadata', {})
-    metadata['timestamp'] = scd.getdate()
-    metadata['calling_file'] = caller
-    metadata['git_info'] = gitinfo
-    if comments:
-        metadata['comments'] = comments
-    if freeze:
-        metadata['python'] = dict(platform=sys.platform, executable=sys.executable, version=sys.version)
-        metadata['modules'] = scu.freeze()
-
-    # Convert to a string
-    jsonstr = scf.jsonify(metadata, tostring=True) # PDF and SVG doesn't support storing a dict
+    jsonstr = scv.metadata(relframe=relframe+1, pipfreeze=pipfreeze, comments=comments, tostring=True, **orig_metadata)
 
     # Handle different formats
     filename = str(filename)

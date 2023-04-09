@@ -20,10 +20,11 @@ import packaging.version
 from zipfile import ZipFile
 from . import sc_utils as scu
 from . import sc_fileio as scf
+from . import sc_odict as sco
 from . import sc_datetime as scd
 
 __all__ = ['freeze', 'require', 'gitinfo', 'compareversions', 'getcaller', 
-           'storemetadata', 'loadmetadata', 'savewithmetadata', 'loadwithmetadata']
+           'metadata', 'loadmetadata', 'savewithmetadata', 'loadwithmetadata']
 
 
 # Define shared variables
@@ -360,71 +361,85 @@ def getcaller(frame=2, tostring=True, includelineno=False, includeline=False, re
     return output
 
 
-def storemetadata(paths=True, caller=True, git=True, pipfreeze=True, comments=None, outfile=None, relframe=0, **kwargs):
+def metadata(outfile=None, comments=None, pipfreeze=True, user=True, caller=True, 
+             git=True, asdict=False, tostring=False, relframe=0, **kwargs):
     '''
-    Store common metadata: useful for exactly recreating (or remembering) the environment
+    Collect common metadata: useful for exactly recreating (or remembering) the environment
     at a moment in time.
     
     Args:
-        paths (bool): store the path to the calling file and Python executable (may include sensitive information)
-        caller (bool): store info on the calling file
-        git (bool): store git information on the calling file
-        pipfreeze (bool): store the current Python environment, equivalent to "pip freeze"
-        comments (str/dict): any other metadata to store
         outfile (str): if not None, then save as JSON to this filename
+        comments (str/dict): additional comments on the to store
+        pipfreeze (bool): store the current Python environment, equivalent to "pip freeze"
+        user (bool): store the username
+        caller (bool): store info on the calling file
+        git (bool): store git information on the calling file (branch, hash, etc.)
+        asdict (bool): construct as a dict instead of an objdict
+        tostring (bool): return a string rather than a dict
         relframe (int): how far to descend into the calling stack (if used directly, use 0; if called by another function, use 1; etc)
-        kwargs (dict): additional data to store
+        kwargs (dict): any additional data to store (can be anything JSON-compatible)
         
     Returns:
         A dictionary with information on the date, plateform, executable, versions
         of key libraries (Sciris, Numpy, pandas, and Matplotlib), and the Python environment
         
-    **Example**::
+    **Examples**::
         
-        metadata = sc.getmetadata()
-        sc.compareversions(metadata['pandas_version'], '1.5.0')
+        metadata = sc.metadata()
+        sc.compareversions(metadata.versions.pandas, '1.5.0')
+        
+        sc.metadata('my-metadata.json')
     
     New in version 2.2.0.
     '''
     
     # Additional imports
+    import sys
+    import platform
     import numpy as np
     import pandas as pd
     import matplotlib as mpl
-    import sys
-    from . import sc_version as scver
+    from .sc_version import __version__
     
-    # Store key metadata
-    md = dict()
-    md['date']       = scd.getdate()
-    md['platform']   = scu.getplatform()
-    md['executable'] = sys.executable if paths else None # NB, will likely include username info
-    md['comments']   = comments
+    # Handle type
+    dict_fn = dict if asdict else sco.objdict
     
-    # Store key version info
-    md['python_version']     = sys.version
-    md['sciris_version']     = scver.__version__
-    md['numpy_version']      = np.__version__
-    md['pandas_version']     = pd.__version__
-    md['matplotlib_version'] = mpl.__version__
+    # Get calling info
+    calling_info = dict_fn(getcaller(relframe=relframe+1, tostring=False))
     
-    # Store optional metadata
-    caller = scu.getcaller(relframe=relframe+1, tostring=False)
-    if caller and paths:
-        md['calling_info'] = caller
-    if git:
-        md['git_info'] = scu.gitinfo(caller['filename'], die=False, verbose=False)
-    if pipfreeze:
-        md['pipfreeze'] = scu.freeze()
-        
+    # Store metadata
+    metadata = dict_fn(
+        timestamp = scd.getdate(),
+        user      = scu.getuser() if user else None,
+        system = dict_fn(
+            platform   = platform.platform(),
+            executable = sys.executable,
+            version    = sys.version,
+        ),
+        versions = dict_fn(
+            python     = platform.python_version(),
+            sciris     = __version__,
+            numpy      = np.__version__,
+            pandas     = pd.__version__,
+            matplotlib = mpl.__version__,
+        ),
+        calling_info = calling_info if caller else None,
+        git_info     = dict_fn(gitinfo(calling_info['filename'], die=False, verbose=False)) if git else None,
+        pip_freeze   = freeze() if pipfreeze else None,
+        comments     = comments,
+    )
+    
     # Store any additional data
-    md.update(kwargs)
+    metadata.update(kwargs)
     
     if outfile is not None:
         outfile = scf.makefilepath(outfile)
-        scf.savejson(outfile, md)
+        scf.savejson(outfile, metadata)
     
-    return md
+    if tostring:
+        metadata = scf.jsonify(metadata, tostring=True, indent=2)
+    
+    return metadata
 
 
 def loadmetadata(filename, load_all=False, die=True):

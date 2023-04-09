@@ -29,6 +29,7 @@ import string
 import numbers
 import pprint
 import hashlib
+import getpass
 import warnings
 import importlib
 import subprocess
@@ -362,10 +363,23 @@ def traceback(*args, **kwargs):
     return py_traceback.format_exc(*args, **kwargs)
 
 
+def getuser():
+    '''
+    Get the current username 
+    
+    Alias to ``getpass.getuser()`` -- see https://docs.python.org/3/library/getpass.html#getpass.getuser
+    
+    New in version 2.2.0.
+    '''
+    return getpass.getuser()
+
+
 def getplatform(expected=None, platform=None, die=False):
     '''
-    Return the name of the current "main" platform: 'linux', 'windows', 'mac', or 'other'.
-    Alias (kind of) to sys.platform.
+    Return the name of the current "main" platform (e.g. 'mac')
+    
+    Alias to sys.platform, except maps entries onto one of 'linux', 'windows', 
+    'mac', or 'other'.
 
     Args:
         expected (str): if not None, check if the current platform is this
