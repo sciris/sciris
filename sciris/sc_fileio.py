@@ -119,7 +119,9 @@ def _load_filestr(filename, folder):
                         gziperror = _gziperror(filename) + f'\nAdditional errors encountered:\n{str(E2)}\n{str(E3)}\n{str(E4)}'
                         raise exc(gziperror) from E
         else:
-            raise E # TODO: combine with FileNotFoundError?
+            exc = type(E)
+            errormsg = 'sc.load(): Could not open the file string for an unknown reason; see error above for details'
+            raise exc(errormsg) from E
     return filestr
 
 
@@ -348,6 +350,10 @@ def dumpstr(obj=None):
 __all__ += ['getmetadata', 'saveversioned', 'loadversioned']
 
 
+# Default filenames for metadata and data
+_mdata_fn = 'metadata.json'
+_data_fn  = 'data.obj'
+
 
 def getmetadata(paths=True, caller=True, git=True, pip=True, frame=2, comments=None):
     
@@ -381,12 +387,8 @@ def getmetadata(paths=True, caller=True, git=True, pip=True, frame=2, comments=N
     return md
 
 
-# Default filenames for 
-_mdata_fn = 'metadata.json'
-_data_fn  = 'data.obj'
-
-def saveversioned(filename, data, paths=True, caller=True, git=True, pip=True, 
-                  mdata_fn=_mdata_fn,  data_fn=_data_fn, comments=None, **kwargs):
+def saveversioned(filename, data, paths=True, caller=True, git=True, pip=True, comments=None,
+                  mdata_fn=_mdata_fn, data_fn=_data_fn, compression='zstd', **kwargs):
 
     # Get the metadata
     metadata = getmetadata(paths=paths, caller=caller, git=git, pip=pip, comments=comments, frame=3)
@@ -401,7 +403,9 @@ def saveversioned(filename, data, paths=True, caller=True, git=True, pip=True,
     return savezip(filename=filename, data=datadict, tobytes=False, **kwargs)
     
 
-def loadversioned(filename, folder=None, return_metadata=False, mdata_fn=_mdata_fn, data_fn=_data_fn, **kwargs):
+def loadversioned(filename, folder=None, return_metadata=False, mdata_fn=_mdata_fn, 
+                  data_fn=_data_fn, **kwargs):
+    
     filename = makefilepath(filename=filename, folder=folder)
    
     with ZipFile(filename, 'r') as zf: # Create the zip file
