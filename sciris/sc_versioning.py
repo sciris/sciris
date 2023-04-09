@@ -1,4 +1,14 @@
+'''
+Functions for checking and saving versioning information, such as Python package
+versions, git versions, etc.
 
+Highlights:
+    - :func:`freeze`: programatically store "pip freeze" output
+    - :func:`require`: require a specific version of a package
+    - :func:`gitinfo`: gets the git information (if available) of a given file
+    - :func:`compareversions`: easy way to compare version numbers
+    - :func:`storemetadata`: collects relevant metadata into a dictionary
+'''
 
 import os
 import re
@@ -280,7 +290,7 @@ def compareversions(version1, version2):
         return tf
 
 
-def getcaller(frame=2, tostring=True, includelineno=False, includeline=False):
+def getcaller(frame=2, tostring=True, includelineno=False, includeline=False, relframe=0, die=False):
     '''
     Try to get information on the calling function, but fail gracefully. See also
     :func:`thisfile`.
@@ -294,6 +304,8 @@ def getcaller(frame=2, tostring=True, includelineno=False, includeline=False):
         tostring (bool): whether to return a string instead of a dict with filename and line number
         includelineno (bool): if ``tostring``, whether to also include the line number
         includeline (bool): if not ``tostring``, also store the line contents
+        relframe (int): relative frame -- another way of specifying the frame; added to "frame"
+        die (bool): whether to raise an exception if calling information cannot be retrieved
 
     Returns:
         output (str/dict): the filename (and line number) of the calling function, either as a string or dict
@@ -307,9 +319,11 @@ def getcaller(frame=2, tostring=True, includelineno=False, includeline=False):
 
     | New in version 1.0.0.
     | New in version 1.3.3: do not include line by default
+    | New in version 2.2.0: "relframe" argument; "die" argument
     '''
     try:
         import inspect
+        frame = frame + relframe
         result = inspect.getouterframes(inspect.currentframe(), 2)
         fname = str(result[frame][1])
         lineno = result[frame][2]
@@ -328,14 +342,17 @@ def getcaller(frame=2, tostring=True, includelineno=False, includeline=False):
                 except: # Fail silently
                     output['line'] = 'N/A'
     except Exception as E: # pragma: no cover
-        if tostring:
-            output = f'Calling function information not available ({str(E)})'
+        if die:
+            raise E
         else:
-            output = {'filename':'N/A', 'lineno':'N/A'}
+            if tostring:
+                output = f'Calling function information not available ({str(E)})'
+            else:
+                output = {'filename':'N/A', 'lineno':'N/A'}
     return output
 
 
-def storemetadata(paths=True, caller=True, git=True, pip=True, comments=None, filename=None, frame=2):
+def storemetadata(paths=True, caller=True, git=True, pip=True, comments=None, filename=None, relframe=2, **kwargs):
     '''
     Store common metadata: useful for exactly recreating (or remembering) the environment
     at a moment in time.
@@ -347,8 +364,8 @@ def storemetadata(paths=True, caller=True, git=True, pip=True, comments=None, fi
         pip (bool): store the current Python environment, equivalent to "pip freeze"
         comments (str/dict): any other metadata to store
         filename (str): if not None, then save as JSON to this filename
-        frame (int): how far to descend into the calling stack (if used directly, use 2; if called by another function, use 3; etc)
-        
+        relframe (int): how far to descend into the calling stack (if used directly, use 0; if called by another function, use 1; etc)
+        kwargs
         
     Returns:
         A dictionary with information on the date, plateform, executable, versions
@@ -386,7 +403,7 @@ def storemetadata(paths=True, caller=True, git=True, pip=True, comments=None, fi
     md['matplotlib_version'] = mpl.__version__
     
     # Store optional metadata
-    caller = scu.getcaller(frame=frame, tostring=False)
+    caller = scu.getcaller(relframe=relframe, tostring=False)
     if caller and paths:
         md['called_by'] = caller
     if git:
