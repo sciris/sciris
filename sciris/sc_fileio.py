@@ -43,6 +43,7 @@ from . import sc_printing as scp
 from . import sc_datetime as scd
 from . import sc_odict as sco
 from . import sc_dataframe as scdf
+from . import sc_versioning as scv
 
 
 ##############################################################################
@@ -157,10 +158,8 @@ def load(filename=None, folder=None, verbose=False, die=None, remapping=None, me
     | New in version 1.1.0: "remapping" argument
     | New in version 1.2.2: ability to load non-gzipped pickles; support for dill; arguments passed to loader
     '''
-
     # Load the file
     filestr = _load_filestr(filename, folder)
-    
 
     # Unpickle it
     try:
@@ -235,9 +234,11 @@ def save(filename='default.obj', obj=None, folder=None, compression='gzip', comp
     
     # Handle path
     if filename is None: # If the user explicitly specifies None as the file, create a byte stream instead
-        bytesobj = io.BytesIO()
+        tobytes = True
+        bytestream = io.BytesIO()
     else:
-        bytesobj = None
+        tobytes = False
+        bytestream = None
 
         # Process and sanitize the filename passed in by the user
         filetypes = (str, type(Path()), type(None))
@@ -265,22 +266,31 @@ def save(filename='default.obj', obj=None, folder=None, compression='gzip', comp
 
     # Compress and actually save
     success = False
-    if compression in ['gz', 'gzip']:
+    
+    if compression in ['gz', 'gzip']:  # Main use case
         # File extension is .gz
-        with gz.GzipFile(filename=filename, fileobj=bytesobj, mode='wb', compresslevel=compresslevel) as fileobj:
+        with gz.GzipFile(filename=filename, fileobj=bytestream, mode='wb', compresslevel=compresslevel) as fileobj:
             serialize(fileobj, obj, success, **kwargs)
-    elif compression in ['zst', 'zstd', 'zstandard']:
-        # File extension is .zst
-        with open(filename, 'wb') as fh:
-            zcompressor = zstd.ZstdCompressor(level=compresslevel)
-            with zcompressor.stream_writer(fh) as fileobj:
-                serialize(fileobj, obj, success, **kwargs)
-    elif compression in ['none']:
-        with open(filename, 'wb') as fileobj:
-            serialize(fileobj, obj, success, **kwargs)
+    
     else:
-        errormsg = f"Invalid compression format '{compression}': must be 'gzip', 'zstd', or 'none'"
-        raise ValueError(errormsg)
+        if tobytes:
+            filecontext = closing(bytestream)
+        else:
+            filecontext = open(filename, 'wb')
+        
+        if compression in ['zst', 'zstd', 'zstandard']:
+            # File extension is .zst
+            with filecontext as fh:
+                zcompressor = zstd.ZstdCompressor(level=compresslevel)
+                with zcompressor.stream_writer(fh) as fileobj:
+                    serialize(fileobj, obj, success, **kwargs)
+        elif compression in ['none']:
+            # File extension can be anything
+            with filecontext as fileobj:
+                serialize(fileobj, obj, success, **kwargs)
+        else:
+            errormsg = f"Invalid compression format '{compression}': must be 'gzip', 'zstd', or 'none'"
+            raise ValueError(errormsg)
 
     if verbose and filename:
         print(f'Object saved to "{filename}"')
@@ -288,8 +298,8 @@ def save(filename='default.obj', obj=None, folder=None, compression='gzip', comp
     if filename:
         return filename
     else: # pragma: no cover
-        bytesobj.seek(0)
-        return bytesobj
+        bytestream.seek(0)
+        return bytestream
 
 
 # Backwards compatibility for core functions
@@ -327,19 +337,24 @@ def loadstr(string, **kwargs):
     
     | New in version 2.2.0: uses ``sc.load()`` for more robustness
     '''
-    with closing(io.BytesIO(string)) as bytestring: # Open a "fake file" with the Gzip string pickle in it
-        obj = load(bytestring, **kwargs)
+    with closing(io.BytesIO(string)) as bytestream: # Open a "fake file" with the Gzip string pickle in it
+        obj = load(bytestream, **kwargs)
     return obj
 
 
-def dumpstr(obj=None):
-    ''' Dump an object as a bytes-like string (rarely used); see :func:`load()` '''
-    with closing(io.BytesIO()) as output: # Open a "fake file"
-        with gz.GzipFile(fileobj=output, mode='wb') as fileobj:  # Open a Gzip-compressing way to write to this "file"
-            try:    _savepickle(fileobj, obj) # Use pickle
-            except: _savedill(fileobj, obj) # ...but use Dill if that fails
-        output.seek(0) # Move the mark to the beginning of the "file"
-        result = output.read() # Read all of the content into result
+def dumpstr(obj=None, **kwargs):
+    '''
+    Dump an object to a bytes-like string (rarely used by the user); see :func:`save()`
+    instead.
+    
+    Args:
+        obj (any): the object to convert
+        kwargs (dict): passed to :func:`save()`
+    
+    New in version 2.2.0: uses ``sc.save()`` for more robustness
+    '''
+    bytesobj = save(filename=None, obj=obj, **kwargs)
+    result = bytesobj.read() # Read all of the content into result
     return result
 
 
@@ -347,7 +362,7 @@ def dumpstr(obj=None):
 #%% Versioned pickling functions
 ##############################################################################
 
-__all__ += ['getmetadata', 'saveversioned', 'loadversioned']
+__all__ += ['saveversioned', 'loadversioned']
 
 
 # Default filenames for metadata and data
@@ -355,56 +370,23 @@ _mdata_fn = 'metadata.json'
 _data_fn  = 'data.obj'
 
 
-def getmetadata(paths=True, caller=True, git=True, pip=True, frame=2, comments=None):
-    
-    # Additional imports
-    import sys
-    from .sc_version import __version__
-    import matplotlib as mpl
-    
-    # Store key metadata
-    md = dict()
-    md['date']       = scd.now()
-    md['platform']   = scu.getplatform()
-    md['executable'] = sys.executable if paths else None # NB, will likely include username info
-    md['comments']   = comments
-    
-    # Store key version info
-    md['python_version']     = sys.version
-    md['sciris_version']     = __version__
-    md['numpy_version']      = np.__version__
-    md['pandas_version']     = pd.__version__
-    md['matplotlib_version'] = mpl.__version__
-    
-    # Store optional metadata
-    if caller and paths:
-        md['called_by'] = scu.getcaller(frame=frame, tostring=False)
-    if git:
-        md['git'] = scu.gitinfo()
-    if pip:
-        md['pip'] = scu.freeze()
-    
-    return md
-
-
 def saveversioned(filename, data, paths=True, caller=True, git=True, pip=True, comments=None,
-                  mdata_fn=_mdata_fn, data_fn=_data_fn, compression='zstd', **kwargs):
+                  mdata_fn=_mdata_fn, data_fn=_data_fn, **kwargs):
 
     # Get the metadata
-    metadata = getmetadata(paths=paths, caller=caller, git=git, pip=pip, comments=comments, frame=3)
+    metadata = scv.storemetadata(paths=paths, caller=caller, git=git, pip=pip, comments=comments, frame=3)
     
     # Convert both to strings
     metadatastr = jsonify(metadata, tostring=True, indent=2)
     datastr     = dumpstr(data)
     
     # Construct output
-    datadict = dict(mdata_fn=metadatastr, data_fn=datastr)
+    datadict = {mdata_fn:metadatastr, data_fn:datastr}
     
     return savezip(filename=filename, data=datadict, tobytes=False, **kwargs)
     
 
-def loadversioned(filename, folder=None, return_metadata=False, mdata_fn=_mdata_fn, 
-                  data_fn=_data_fn, **kwargs):
+def loadversioned(filename, folder=None, loadmetadata=False, mdata_fn=_mdata_fn, data_fn=_data_fn, **kwargs):
     
     filename = makefilepath(filename=filename, folder=folder)
    
@@ -422,7 +404,7 @@ def loadversioned(filename, folder=None, return_metadata=False, mdata_fn=_mdata_
         metadata = loadjson(string=metadatastr)
         data = loadstr(datastr, **kwargs)
 
-    if return_metadata:
+    if loadmetadata:
         output = dict(metadata=metadata, data=data)
         return output
     else:
@@ -2105,6 +2087,14 @@ class _UltraRobustUnpickler(pkl.Unpickler): # pragma: no cover
 
 def _unpickler(string=None, filename=None, filestring=None, die=None, verbose=False, remapping=None, method='pickle', **kwargs):
     ''' Not invoked directly; used as a helper function for saveobj/loadobj '''
+    
+    # Sanitize kwargs, since wrapped in try-except statements otherwise
+    if kwargs:
+        valid_kwargs = ['fix_imports', 'encoding', 'errors', 'buffers', 'ignore']
+        for k in kwargs:
+            if k not in valid_kwargs:
+                errormsg = f'Keyword "{k}" is not a valid keyword: {scu.strjoin(valid_kwargs)}'
+                raise ValueError(errormsg)
 
     if die is None: die = False
     try: # Try pickle first

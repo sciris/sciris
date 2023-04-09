@@ -29,6 +29,7 @@ from . import sc_utils as scu
 from . import sc_fileio as scf
 from . import sc_printing as scp
 from . import sc_datetime as scd
+from . import sc_versioning as scv
 
 
 ##############################################################################
@@ -1117,10 +1118,8 @@ def datenumformatter(ax=None, start_date=None, dateformat=None, interval=None, s
 #%% Figure saving
 ##############################################################################
 
-__all__ += ['savefig', 'loadmetadata', 'savefigs', 'loadfig', 'emptyfig', 'separatelegend', 'orderlegend']
+__all__ += ['savefig', 'savefigs', 'loadfig', 'emptyfig', 'separatelegend', 'orderlegend']
 
-
-_metadataflag = 'sciris_metadata' # Key name used to identify metadata saved in a figure
 
 
 def _get_dpi(dpi=None, min_dpi=200):
@@ -1150,7 +1149,7 @@ def savefig(filename, fig=None, dpi=None, comments=None, freeze=False, frame=2, 
         fig      (Figure)   : the figure to save (if None, use current)
         dpi      (int)      : resolution of the figure to save (default 200 or current default, whichever is higher)
         comments (str)      : additional metadata to save to the figure
-        freeze   (bool)     : whether to store the contents of ``pip freeze`` in the metadata (warning, slow)
+        freeze   (bool)     : whether to store the contents of ``pip freeze`` in the metadata
         frame    (int)      : which calling file to try to store information from (default, the file calling ``sc.savefig()``)
         folder   (str/Path) : optional folder to save to (can also be provided as part of the filename)
         makedirs (bool)     : whether to create folders if they don't already exist
@@ -1167,6 +1166,8 @@ def savefig(filename, fig=None, dpi=None, comments=None, freeze=False, frame=2, 
 
         sc.savefig('example2.png', comments='My figure', freeze=True)
         sc.pp(sc.loadmetadata('example2.png'))
+    
+    See also ``sc.storemetadata()`` for 
 
     New in version 1.3.3.
     '''
@@ -1200,9 +1201,9 @@ def savefig(filename, fig=None, dpi=None, comments=None, freeze=False, frame=2, 
     filename = str(filename)
     lcfn = filename.lower() # Lowercase filename
     if lcfn.endswith('png'):
-        metadata = {_metadataflag:jsonstr}
+        metadata = {scv._metadataflag:jsonstr}
     elif lcfn.endswith('svg') or lcfn.endswith('pdf'):
-        metadata = dict(Keywords=f'{_metadataflag}={jsonstr}')
+        metadata = dict(Keywords=f'{scv._metadataflag}={jsonstr}')
     else:
         errormsg = f'Warning: filename "{filename}" has unsupported type for metadata: must be PNG, SVG, or PDF. For JPG, use the separate exif library. To silence this message, set die=False and verbose=False.'
         if die:
@@ -1220,105 +1221,6 @@ def savefig(filename, fig=None, dpi=None, comments=None, freeze=False, frame=2, 
     filepath = scf.makefilepath(filename=filename, folder=folder, makedirs=makedirs)
     fig.savefig(filepath, dpi=dpi, **kwargs)
     return filename
-
-
-def loadmetadata(filename, load_all=False, die=True):
-    '''
-    Read metadata from a saved image; currently only PNG and SVG are supported.
-
-    Only for use with images saved with ``sc.savefig()``. Metadata retrieval for PDF
-    is not currently supported.
-
-    Args:
-        filename (str): the name of the file to load the data from
-        load_all (bool): whether to load all metadata available in an image (else, just load what was saved by Sciris)
-        die (bool): whether to raise an exception if the metadata can't be found
-
-    **Example**::
-
-        pl.plot([1,2,3], [4,2,6])
-        sc.savefig('example.png')
-        sc.loadmetadata('example.png')
-    '''
-
-    # Initialize
-    metadata = {}
-    lcfn = str(filename).lower() # Lowercase filename
-
-    # Handle bitmaps
-    is_png = lcfn.endswith('png')
-    is_jpg = lcfn.endswith('jpg') or lcfn.endswith('jpeg')
-    if is_png or is_jpg:
-        try:
-            import PIL
-        except ImportError as E: # pragma: no cover
-            errormsg = f'Pillow import failed ({str(E)}), please install first (pip install pillow)'
-            raise ImportError(errormsg) from E
-        im = PIL.Image.open(filename)
-        keys = im.info.keys()
-
-        # Usual case, can find metadata and is PNG
-        if is_png and (load_all or _metadataflag in keys):
-            if load_all:
-                metadata = im.info
-            else:
-                jsonstr = im.info[_metadataflag]
-                metadata = scf.loadjson(string=jsonstr)
-
-        # JPG -- from https://www.thepythoncode.com/article/extracting-image-metadata-in-python
-        elif is_jpg: # pragma: no cover
-            from PIL.ExifTags import TAGS # Must be imported directly
-            exifdata = im.getexif()
-            for tag_id in exifdata:
-                tag = TAGS.get(tag_id, tag_id)
-                data = exifdata.get(tag_id)
-                if isinstance(data, bytes):
-                    data = data.decode()
-                metadata[tag] = data
-
-        # Can't find metadata
-        else: # pragma: no cover
-            errormsg = f'Could not find "{_metadataflag}": metadata can only be extracted from figures saved with sc.savefig().\nAvailable keys are: {scu.strjoin(keys)}'
-            if die:
-                raise ValueError(errormsg)
-            else:
-                print(errormsg)
-                metadata = im.info
-
-
-    # Handle SVG
-    elif lcfn.endswith('svg'): # pragma: no cover
-
-        # Load SVG as text and parse it
-        svg = scf.loadtext(filename).splitlines()
-        flag = _metadataflag + '=' # Start of the line
-        end = '</'
-
-        found = False
-        for line in svg:
-            if flag in line:
-                found = True
-                break
-
-        # Usual case, can find metadata
-        if found:
-            jsonstr = line[line.find(flag)+len(flag):line.find(end)]
-            metadata = scf.loadjson(string=jsonstr)
-
-        # Can't find metadata
-        else:
-            errormsg = f'Could not find the string "{_metadataflag}" anywhere in "{filename}": metadata can only be extracted from figures saved with sc.savefig()'
-            if die:
-                raise ValueError(errormsg)
-            else:
-                print(errormsg)
-
-    # Other formats not supported
-    else: # pragma: no cover
-        errormsg = f'Filename "{filename}" has unsupported type: must be PNG, JPG, or SVG (PDF is not supported)'
-        raise ValueError(errormsg)
-
-    return metadata
 
 
 def savefigs(figs=None, filetype=None, filename=None, folder=None, savefigargs=None, aslist=False, verbose=False, **kwargs):

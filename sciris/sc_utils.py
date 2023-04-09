@@ -21,14 +21,10 @@ Highlights:
 #%% Imports
 ##############################################################################
 
-import os
 import re
 import sys
 import copy
-import time
 import json
-import zlib
-import types
 import string
 import numbers
 import pprint
@@ -41,7 +37,6 @@ import numpy as np
 import pandas as pd
 import random as rnd
 import uuid as py_uuid
-import packaging.version
 import contextlib as cl
 import traceback as py_traceback
 
@@ -56,8 +51,8 @@ _booltypes   = (bool, np.bool_)
 ##############################################################################
 
 # Define the modules being loaded
-__all__ = ['fast_uuid', 'uuid', 'dcp', 'cp', 'pp', 'sha', 'freeze', 'require',
-           'traceback', 'getplatform', 'iswindows', 'islinux', 'ismac', 'asciify']
+__all__ = ['fast_uuid', 'uuid', 'dcp', 'cp', 'pp', 'sha', 'traceback', 
+           'getplatform', 'iswindows', 'islinux', 'ismac', 'asciify']
 
 
 def fast_uuid(which=None, length=None, n=1, secure=False, forcelist=False, safety=1000, recursion=0, recursion_limit=10, verbose=True):
@@ -356,110 +351,6 @@ def sha(obj, encoding='utf-8', digest=False):
     if digest:
         output = output.hexdigest()
     return output
-
-
-def freeze(lower=False):
-    '''
-    Alias for pip freeze.
-
-    Args:
-        lower (bool): convert all keys to lowercase
-
-    **Example**::
-
-        assert 'numpy' in sc.freeze() # One way to check for versions
-
-    New in version 1.2.2.
-    '''
-    import pkg_resources as pkgr # Imported here since slow (>0.1 s)
-    raw = dict(tuple(str(ws).split()) for ws in pkgr.working_set)
-    keys = sorted(raw.keys())
-    if lower:
-        labels = {k:k.lower() for k in keys}
-    else:
-        labels = {k:k for k in keys}
-    data = {labels[k]:raw[k] for k in keys} # Sort alphabetically
-    return data
-
-
-def require(reqs=None, *args, exact=False, detailed=False, die=True, verbose=True, **kwargs):
-    '''
-    Check whether environment requirements are met. Alias to pkg_resources.require().
-
-    Args:
-        reqs (list/dict): a list of strings, or a dict of package names and versions
-        args (list): additional requirements
-        kwargs (dict): additional requirements
-        exact (bool): use '==' instead of '>=' as the default comparison operator if not specified
-        detailed (bool): return a dict of which requirements are/aren't met
-        die (bool): whether to raise an exception if requirements aren't met
-        verbose (bool): print out the exception if it's not being raised
-
-    **Examples**::
-
-        sc.require('numpy')
-        sc.require(numpy='')
-        sc.require(reqs={'numpy':'1.19.1', 'matplotlib':'3.2.2'})
-        sc.require('numpy>=1.19.1', 'matplotlib==3.2.2', die=False)
-        sc.require(numpy='1.19.1', matplotlib='==4.2.2', die=False, detailed=True)
-
-    New in version 1.2.2.
-    '''
-    import pkg_resources as pkgr # Imported here since slow (>0.1 s)
-
-    # Handle inputs
-    reqlist = list(args)
-    reqdict = kwargs
-    if isinstance(reqs, dict):
-        reqdict.update(reqs)
-    else:
-        reqlist = mergelists(reqs, reqlist)
-
-    # Turn into a list of strings
-    comparechars = '<>=!~'
-    for k,v in reqdict.items():
-        if not v:
-            entry = k # If no version is provided, entry is just the module name
-        else:
-            compare = '' if v.startswith(tuple(comparechars)) else ('==' if exact else '>=')
-            entry = k + compare + v
-        reqlist.append(entry)
-
-    # Check the requirements
-    data = dict()
-    errs = dict()
-    for entry in reqlist:
-        try:
-            pkgr.require(entry)
-            data[entry] = True
-        except Exception as E:
-            data[entry] = False
-            errs[entry] = E
-
-    # Figure out output
-    met = all([e==True for e in data.values()])
-
-    # Handle exceptions
-    if not met:
-        errkeys = list(errs.keys())
-        errormsg = '\nThe following requirement(s) were not met:'
-        count = 0
-        for k,v in data.items():
-            if not v:
-                count += 1
-                errormsg += f'\n• "{k}": {str(errs[k])}'
-        errormsg += f'''\n\nIf this is a valid module, you might want to try "pip install {strjoin(errkeys, sep=' ')} --upgrade".'''
-        if die:
-            err = errs[errkeys[-1]]
-            raise ModuleNotFoundError(errormsg) from err
-        elif verbose:
-            print(errormsg)
-
-    # Handle output
-    if detailed:
-        return data, errs
-    else:
-        return met
 
 
 def traceback(*args, **kwargs):
@@ -1289,8 +1180,8 @@ def _sanitize_output(obj, is_list, is_array, dtype=None):
 #%% Misc. functions
 ##############################################################################
 
-__all__ += ['strjoin', 'newlinejoin', 'strsplit', 'runcommand', 'gitinfo', 'compareversions',
-            'uniquename', 'suggest', 'getcaller', 'importbyname', 'importbypath']
+__all__ += ['strjoin', 'newlinejoin', 'strsplit', 'runcommand', 'uniquename', 
+            'suggest', 'importbyname', 'importbypath']
 
 
 def strjoin(*args, sep=', '):
@@ -1412,166 +1303,6 @@ def runcommand(command, printinput=False, printoutput=False, wait=True):
 
 
 
-def gitinfo(path=None, hashlen=7, die=False, verbose=True):
-    """
-    Retrieve git info
-
-    This function reads git branch and commit information from a .git directory.
-    Given a path, it will check for a ``.git`` directory. If the path doesn't contain
-    that directory, it will search parent directories for ``.git`` until it finds one.
-    Then, the current information will be parsed.
-
-    Note: if direct directory reading fails, it will attempt to use the gitpython
-    library.
-
-    Args:
-        path (str): A folder either containing a .git directory, or with a parent that contains a .git directory
-        hashlen (int): Length of hash to return (default: 7)
-        die (bool): whether to raise an exception if git information can't be retrieved (default: no)
-        verbose (bool): if not dying, whether to print information about the exception
-
-    Returns:
-        Dictionary containing the branch, hash, and commit date
-
-    **Examples**::
-
-        info = sc.gitinfo() # Get git info for current script repository
-        info = sc.gitinfo(my_package.__file__) # Get git info for a particular Python package
-    """
-
-    if path is None:
-        path = os.getcwd()
-
-    gitbranch = "Branch N/A"
-    githash   = "Hash N/A"
-    gitdate   = "Date N/A"
-
-    try:
-        # First, get the .git directory
-        curpath = os.path.dirname(os.path.abspath(path))
-        while curpath:
-            if os.path.exists(os.path.join(curpath, ".git")):
-                gitdir = os.path.join(curpath, ".git")
-                break
-            else: # pragma: no cover
-                parent, _ = os.path.split(curpath)
-                if parent == curpath:
-                    curpath = None
-                else:
-                    curpath = parent
-        else: # pragma: no cover
-            raise RuntimeError("Could not find .git directory")
-
-        # Then, get the branch and commit
-        with open(os.path.join(gitdir, "HEAD"), "r") as f1:
-            ref = f1.read()
-            if ref.startswith("ref:"):
-                refdir = ref.split(" ")[1].strip()  # The path to the file with the commit
-                gitbranch = refdir.replace("refs/heads/", "")  # / is always used (not os.sep)
-                with open(os.path.join(gitdir, refdir), "r") as f2:
-                    githash = f2.read().strip()  # The hash of the commit
-            else: # pragma: no cover
-                gitbranch = "Detached head (no branch)"
-                githash = ref.strip()
-
-        # Now read the time from the commit
-        with open(os.path.join(gitdir, "objects", githash[0:2], githash[2:]), "rb") as f3:
-            compressed_contents = f3.read()
-            decompressed_contents = zlib.decompress(compressed_contents).decode()
-            for line in decompressed_contents.split("\n"):
-                if line.startswith("author"):
-                    _re_actor_epoch = re.compile(r"^.+? (.*) (\d+) ([+-]\d+).*$")
-                    m = _re_actor_epoch.search(line)
-                    actor, epoch, offset = m.groups()
-                    t = time.gmtime(int(epoch))
-                    gitdate = time.strftime("%Y-%m-%d %H:%M:%S UTC", t)
-
-    except Exception as E: # pragma: no cover
-        try: # Second, try importing gitpython
-            import git
-            rootdir = os.path.abspath(path) # e.g. /user/username/my/folder
-            repo = git.Repo(path=rootdir, search_parent_directories=True)
-            try:
-                gitbranch = str(repo.active_branch.name)  # Just make sure it's a string
-            except TypeError:
-                gitbranch = 'Detached head (no branch)'
-            githash = str(repo.head.object.hexsha)
-            gitdate = str(repo.head.object.authored_datetime.isoformat())
-        except Exception as E2:
-            errormsg = f'''Could not extract git info; please check paths:
-  Method 1 (direct read) error: {str(E)}
-  Method 2 (gitpython) error:   {str(E2)}'''
-            if die:
-                raise RuntimeError(errormsg) from E
-            elif verbose:
-                print(errormsg + f'\nError: {str(E)}')
-
-    # Trim the hash, but not if loading failed
-    if len(githash)>hashlen and 'N/A' not in githash:
-        githash = githash[:hashlen]
-
-    # Assemble output
-    output = {"branch": gitbranch, "hash": githash, "date": gitdate}
-
-    return output
-
-
-def compareversions(version1, version2):
-    '''
-    Function to compare versions, expecting both arguments to be a string of the
-    format 1.2.3, but numeric works too. Returns 0 for equality, -1 for v1<v2, and
-    1 for v1>v2.
-
-    If ``version2`` starts with >, >=, <, <=, or ==, the function returns True or
-    False depending on the result of the comparison.
-
-    **Examples**::
-
-        sc.compareversions('1.2.3', '2.3.4') # returns -1
-        sc.compareversions(2, '2') # returns 0
-        sc.compareversions('3.1', '2.99') # returns 1
-        sc.compareversions('3.1', '>=2.99') # returns True
-        sc.compareversions(mymodule.__version__, '>=1.0') # common usage pattern
-        sc.compareversions(mymodule, '>=1.0') # alias to the above
-
-    New in version 1.2.1: relational operators
-    '''
-    # Handle inputs
-    if isinstance(version1, types.ModuleType):
-        try:
-            version1 = version1.__version__
-        except Exception as E:
-            errormsg = f'{version1} is a module, but does not have a __version__ attribute'
-            raise AttributeError(errormsg) from E
-    v1 = str(version1)
-    v2 = str(version2)
-
-    # Process version2
-    valid = None
-    if   v2.startswith('>'):  valid = [1]
-    elif v2.startswith('>='): valid = [0,1]
-    elif v2.startswith('='):  valid = [0]
-    elif v2.startswith('=='): valid = [0]
-    elif v2.startswith('~='): valid = [-1,1]
-    elif v2.startswith('!='): valid = [-1,1]
-    elif v2.startswith('<='): valid = [0,-1]
-    elif v2.startswith('<'):  valid = [-1]
-    v2 = v2.lstrip('<>=!~')
-
-    # Do comparison
-    if packaging.version.parse(v1) > packaging.version.parse(v2):
-        comparison =  1
-    elif packaging.version.parse(v1) < packaging.version.parse(v2):
-        comparison =  -1
-    else:
-        comparison =  0
-
-    # Return
-    if valid is None:
-        return comparison
-    else:
-        tf = (comparison in valid)
-        return tf
 
 
 def uniquename(name=None, namelist=None, style=None):
@@ -1686,61 +1417,6 @@ def suggest(user_input, valid_inputs, n=1, threshold=None, fulloutput=False, die
                 return suggestions[0]
             else:
                 return suggestions[:n]
-
-
-def getcaller(frame=2, tostring=True, includelineno=False, includeline=False):
-    '''
-    Try to get information on the calling function, but fail gracefully. See also
-    :func:`thisfile`.
-
-    Frame 1 is the file calling this function, so not very useful. Frame 2 is
-    the default assuming it is being called directly. Frame 3 is used if
-    another function is calling this function internally.
-
-    Args:
-        frame (int): how many frames to descend (e.g. the caller of the caller of the...), default 2
-        tostring (bool): whether to return a string instead of a dict with filename and line number
-        includelineno (bool): if ``tostring``, whether to also include the line number
-        includeline (bool): if not ``tostring``, also store the line contents
-
-    Returns:
-        output (str/dict): the filename (and line number) of the calling function, either as a string or dict
-
-    **Examples**::
-
-        sc.getcaller()
-        sc.getcaller(tostring=False)['filename'] # Equivalent to sc.getcaller()
-        sc.getcaller(frame=3) # Descend one level deeper than usual
-        sc.getcaller(frame=1, tostring=False, includeline=True) # See the line that called sc.getcaller()
-
-    | New in version 1.0.0.
-    | New in version 1.3.3: do not include line by default
-    '''
-    try:
-        import inspect
-        result = inspect.getouterframes(inspect.currentframe(), 2)
-        fname = str(result[frame][1])
-        lineno = result[frame][2]
-        if tostring:
-            output = f'{fname}'
-            if includelineno:
-                output += f', line {lineno}'
-        else:
-            output = {'filename':fname, 'lineno':lineno}
-            if includeline:
-                try:
-                    with open(fname) as f:
-                        lines = f.read().splitlines()
-                        line = lines[lineno-1] # -1 since line numbers start at 1
-                    output['line'] = line
-                except: # Fail silently
-                    output['line'] = 'N/A'
-    except Exception as E: # pragma: no cover
-        if tostring:
-            output = f'Calling function information not available ({str(E)})'
-        else:
-            output = {'filename':'N/A', 'lineno':'N/A'}
-    return output
 
 
 def _assign_to_namespace(var, obj, namespace=None, overwrite=True):
