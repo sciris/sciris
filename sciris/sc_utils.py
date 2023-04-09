@@ -541,7 +541,7 @@ def urlopen(url, filename=None, save=False, headers=None, params=None, data=None
 
     if filename is not None:
         if verbose: print(f'Saving to {filename}...')
-        filename = scf.makefilepath(filename)
+        filename = scf.makefilepath(filename, makedirs=True)
         if isinstance(output, bytes):
             with open(filename, 'wb') as f:
                 f.write(output)

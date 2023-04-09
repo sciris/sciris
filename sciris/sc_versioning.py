@@ -28,9 +28,9 @@ __all__ = ['freeze', 'require', 'gitinfo', 'compareversions', 'getcaller',
 
 
 # Define shared variables
-_metadataflag = 'sciris_metadata' # Key name used to identify metadata saved in a figure
-_mdata_fn = 'metadata.json' # Default filenames for metadata and data
-_data_fn  = 'data.obj'
+_metadataflag      = 'sciris_metadata' # Key name used to identify metadata saved in a figure
+_metadata_filename = 'metadata.json' # Default filenames for metadata and data
+_obj_filename      = 'sciris_pickle.obj'
 
 
 def freeze(lower=False):
@@ -408,7 +408,7 @@ def metadata(outfile=None, comments=None, pipfreeze=True, user=True, caller=True
     calling_info = dict_fn(getcaller(relframe=relframe+1, tostring=False))
     
     # Store metadata
-    metadata = dict_fn(
+    md = dict_fn(
         timestamp = scd.getdate(),
         user      = scu.getuser() if user else None,
         system = dict_fn(
@@ -430,16 +430,16 @@ def metadata(outfile=None, comments=None, pipfreeze=True, user=True, caller=True
     )
     
     # Store any additional data
-    metadata.update(kwargs)
+    md.update(kwargs)
     
     if outfile is not None:
-        outfile = scf.makefilepath(outfile)
-        scf.savejson(outfile, metadata)
+        outfile = scf.makefilepath(outfile, makedirs=True)
+        scf.savejson(outfile, md)
     
     if tostring:
-        metadata = scf.jsonify(metadata, tostring=True, indent=2)
+        md = scf.jsonify(md, tostring=True, indent=2)
     
-    return metadata
+    return md
 
 
 def loadmetadata(filename, load_all=False, die=True):
@@ -447,8 +447,9 @@ def loadmetadata(filename, load_all=False, die=True):
     Read metadata from a saved image; currently only PNG and SVG are supported.
 
     Only for use with images saved with ``sc.savefig()``. Metadata retrieval for PDF
-    is not currently supported. To load metadata saved with ``sc.getmetadata()``, 
-    use ``sc.loadjson()`` instead.
+    is not currently supported. To load metadata saved with ``sc.metadata()``, 
+    you can also use ``sc.loadjson()`` instead. To load metadata saved with ``sc.savewithmetadata()``,
+    use ``sc.loadwithmetadata()`` instead.
 
     Args:
         filename (str): the name of the file to load the data from
@@ -464,7 +465,7 @@ def loadmetadata(filename, load_all=False, die=True):
     from . import sc_fileio as scf # To avoid circular import
 
     # Initialize
-    metadata = {}
+    md = {}
     lcfn = str(filename).lower() # Lowercase filename
 
     # Handle bitmaps
@@ -482,10 +483,10 @@ def loadmetadata(filename, load_all=False, die=True):
         # Usual case, can find metadata and is PNG
         if is_png and (load_all or _metadataflag in keys):
             if load_all:
-                metadata = im.info
+                md = im.info
             else:
                 jsonstr = im.info[_metadataflag]
-                metadata = scf.loadjson(string=jsonstr)
+                md = scf.loadjson(string=jsonstr)
 
         # JPG -- from https://www.thepythoncode.com/article/extracting-image-metadata-in-python
         elif is_jpg: # pragma: no cover
@@ -496,7 +497,7 @@ def loadmetadata(filename, load_all=False, die=True):
                 data = exifdata.get(tag_id)
                 if isinstance(data, bytes):
                     data = data.decode()
-                metadata[tag] = data
+                md[tag] = data
 
         # Can't find metadata
         else: # pragma: no cover
@@ -505,7 +506,7 @@ def loadmetadata(filename, load_all=False, die=True):
                 raise ValueError(errormsg)
             else:
                 print(errormsg)
-                metadata = im.info
+                md = im.info
 
 
     # Handle SVG
@@ -525,7 +526,7 @@ def loadmetadata(filename, load_all=False, die=True):
         # Usual case, can find metadata
         if found:
             jsonstr = line[line.find(flag)+len(flag):line.find(end)]
-            metadata = scf.loadjson(string=jsonstr)
+            md = scf.loadjson(string=jsonstr)
 
         # Can't find metadata
         else:
@@ -535,57 +536,155 @@ def loadmetadata(filename, load_all=False, die=True):
             else:
                 print(errormsg)
     
+    # Load metadata saved with sc.metadata()
     elif lcfn.endswith('json'):
-        metadata = scf.loadjson(filename) # Overkill, but ok
+        md = scf.loadjson(filename) # Overkill, but ok
+    
+    # Load metadata saved with sc.savewithmetadata()
+    elif lcfn.endswith('zip'):
+        md = loadwithmetadata(filename, loadmetadata=True)['metadata']
 
     # Other formats not supported
     else: # pragma: no cover
         errormsg = f'Filename "{filename}" has unsupported type: must be PNG, JPG, or SVG (PDF is not supported)'
         raise ValueError(errormsg)
 
-    return metadata
+    return md
 
 
 
-__all__ += ['savewithmetadata', 'loadwithmetadata']
-
-
-def savewithmetadata(filename, data, paths=True, caller=True, git=True, pip=True, comments=None,
-                  mdata_fn=_mdata_fn, data_fn=_data_fn, **kwargs):
+def savewithmetadata(filename, obj, folder=None, user=True, caller=True, git=True, 
+                     pipfreeze=True, comments=None, allow_nonzip=False, **kwargs):
+    '''
+    Save any object as a pickled zip file, including metadata as a separate JSON file.
+    
+    Pickles are usually not good for long-term data storage, since they rely on
+    importing the libraries that were used to create the pickled object. This function
+    partly addresses that by storing metadata along with the saved pickle. While
+    there may still be issues opening the pickle, the metadata should give enough 
+    information to figure out how to reconstruct the original environment (allowing
+    the pickle to be loaded, and then re-saved in a more persistent format if desired).
+    
+    Note: Since this function relies on pickle, it can potentially execute arbitrary
+    code, so you should only use it with sources you trust. For more information, see:
+        https://docs.python.org/3/library/pickle.html
+    
+    Args:
+        filename (str/path): the file to save to (must end in .zip)
+        obj (any): the object to save
+        caller (bool): store information on the current user in the metadata (see ``sc.metadata()``)
+        caller (bool): store information on the calling file in the metadata (see ``sc.metadata()``)
+        git (bool): store the git version in the metadata (see ``sc.metadata()``)
+        pipfreeze (bool): store the output of "pip freeze" in the metadata (see ``sc.metadata()``)
+        comments (str/dict): other comments/information to store in the metadata (must be JSON-compatible)
+        allow_nonzip (bool): whether to permit extensions other than .zip (note, may cause problems!)
+    
+    **Example**::
+        
+        obj = MyClass() # Create an arbitrary object
+        sc.savewithmetadata('my-class.zip', obj)
+        
+        # Much later...
+        obj = sc.loadwithmetadata('my-class.zip')
+    
+    New in version 2.2.0.
+    '''
+    filename = scf.makepath(filename=filename, folder=folder, makedirs=True)
+    
+    # Check filename
+    if not allow_nonzip:
+        if filename.suffix != '.zip':
+            errormsg = f'Your filename ends with "{filename.suffix}" rather than ".zip". If you are sure you want to do this, set allow_nonzip=True.'
+            raise ValueError(errormsg)
 
     # Get the metadata
-    metadata = storemetadata(paths=paths, caller=caller, git=git, pip=pip, comments=comments, frame=3)
+    md = metadata(caller=caller, git=git, pipfreeze=pipfreeze, comments=comments, frame=3)
     
     # Convert both to strings
-    metadatastr = scf.jsonify(metadata, tostring=True, indent=2)
-    datastr     = scf.dumpstr(data)
+    metadatastr = scf.jsonify(md, tostring=True, indent=2)
+    datastr     = scf.dumpstr(obj)
     
     # Construct output
-    datadict = {mdata_fn:metadatastr, data_fn:datastr}
+    datadict = {_metadata_filename:metadatastr, _obj_filename:datastr}
     
     return scf.savezip(filename=filename, data=datadict, tobytes=False, **kwargs)
     
 
-def loadwithmetadata(filename, folder=None, loadmetadata=False, mdata_fn=_mdata_fn, data_fn=_data_fn, **kwargs):
+def loadwithmetadata(filename, folder=None, loadmetadata=False, die=True, **kwargs):
+    '''
+    Load a zip file saved with :func:`savewithmetadata()`.
     
-    filename = scf.makefilepath(filename=filename, folder=folder)
+    **Note**: Since this function relies on pickle, it can potentially execute arbitrary
+    code, so you should only use it with sources you trust. For more information, see:
+        https://docs.python.org/3/library/pickle.html
+    
+    Args:
+        filename (str/path): the file load to (usually ends in .zip)
+        folder (str): optional additional folder to load from
+        loadmetadata (bool): whether to load the metadata as well, returning a dict of both (else, just return the object)
+        die (bool): whether to fail if an exception is raised (else, just return the metadata)
+        kwargs (dict): passed to ``sc.load()``
+    
+    **Example**::
+        
+        obj = MyClass() # Create an arbitrary object
+        sc.savewithmetadata('my-class.zip', obj)
+        
+        # Much later...
+        data = sc.loadwithmetadata('my-class.zip', loadmetadata=True)
+        metadata, obj = data['metadata'], data['obj']
+    
+    Note: This function expects the zip file to contain two files in it, one called 
+    "metadata.json" and one called "sciris_pickle.obj". If you need to change these,
+    you can manually modify ``sc.sc_versioning._metadata_filename`` and 
+    ``sc.sc_versioning._obj_filename``, respectively. However, you almost certainly
+    should not do so!
+    
+    New in version 2.2.0.
+    '''
+    filename = scf.makefilepath(filename=filename, folder=folder, makedirs=False)
+    
+    try:
+        zf = ZipFile(filename, 'r')  # Create the zip file
+    except Exception as E:
+        exc = type(E)
+        errormsg = 'Could not open zip file: ensure the filename is correct and of the right type; see error above for details'
+        raise exc(errormsg) from E
    
-    with ZipFile(filename, 'r') as zf: # Create the zip file
+    with zf:
+    
+        # !!! try known remappings
         
         # Read in the strings
         try:
-            metadatastr = zf.read(mdata_fn)
-            datastr     = zf.read(data_fn)
+            metadatastr = zf.read(_metadata_filename)
         except Exception as E:
-            errormsg = f'Could not load metadata file "{mdata_fn}" and/or data file "{data_fn}": are you sure this is a Sciris-versioned data zipfile?'
-            raise FileNotFoundError(errormsg) from E
+            exc = type(E)
+            errormsg = f'Could not load metadata file "{_metadata_filename}": are you sure this is a Sciris-versioned data zipfile?'
+            raise exc(errormsg) from E
+        
+        # Load the metadata first
+        try:
+            md = scf.loadjson(string=metadatastr)
+        except Exception as E:
+            errormsg = 'Could not parse the metadata as a JSON file; see error above for details'
+            raise ValueError(errormsg) from E
+            
+        # Now try loading the actual data
+        try:
+            datastr = zf.read(_obj_filename)
+        except Exception as E:
+            exc = type(E)
+            errormsg = f'Could not load object file "{_obj_filename}": are you sure this is a Sciris-versioned data zipfile?'
+            raise exc(errormsg) from E
+            
         
         # Convert into Python objects
-        metadata = scf.loadjson(string=metadatastr)
-        data     = scf.loadstr(datastr, **kwargs)
+        
+        obj = scf.loadstr(datastr, **kwargs)
 
     if loadmetadata:
-        output = dict(metadata=metadata, data=data)
+        output = dict(metadata=md, obj=obj)
         return output
     else:
-        return data
+        return obj

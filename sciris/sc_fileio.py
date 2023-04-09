@@ -131,12 +131,15 @@ def load(filename=None, folder=None, verbose=False, die=None, remapping=None, me
     Accepts either a filename (standard usage) or a file object as the first argument.
     Note that `:func:`load`/:func:`loadobj` are aliases of each other.
 
-    Note: be careful when loading pickle files, since a malicious pickle can be
-    used to execute arbitrary code.
+    **Note 1**: Since this function relies on pickle, it can potentially execute arbitrary
+    code, so you should only use it with sources you trust. For more information, see:
+        https://docs.python.org/3/library/pickle.html
 
-    When a pickle file is loaded, Python imports any modules that are referenced
+    **Note 2**: When a pickle file is loaded, Python imports any modules that are referenced
     in it. This is a problem if module has been renamed. In this case, you can
-    use the ``remapping`` argument to point to the new modules or classes.
+    use the ``remapping`` argument to point to the new modules or classes. For
+    more robustness, use the :func:`savewithmetadata`/:func:`loadwithmetadata`
+    functions.
 
     Args:
         filename  (str/Path): the filename (or full path) to load
@@ -183,6 +186,15 @@ def save(filename='default.obj', obj=None, folder=None, compression='gzip', comp
     Save an object to file as a gzipped pickle -- use compression 5 by default,
     since more is much slower but not much smaller. Once saved, can be loaded
     with :func:`load`. Note that :func:`save`/:func:`saveobj` are identical.
+    
+    **Note 1**: Since this function relies on pickle, it can potentially execute arbitrary
+    code, so you should only use it with sources you trust. For more information, see:
+        https://docs.python.org/3/library/pickle.html
+    
+    **Note 2**: When a pickle file is loaded, Python imports any modules that are referenced
+    in it. This is a problem if module has been renamed (in which case the pickle
+    usually can't be opened). For more robustness, use the :func:`savewithmetadata`/
+    :func:`loadwithmetadata` functions.
 
     Args:
         filename      (str/Path) : the filename or path to save to; if None, return an io.BytesIO filestream instead of saving to disk
@@ -255,7 +267,7 @@ def save(filename='default.obj', obj=None, folder=None, compression='gzip', comp
                 errormsg = f'Filename type {type(filename)} is not valid: must be one of {filetypes}'
                 raise Exception(errormsg)
 
-        filename = makefilepath(filename=filename, folder=folder, sanitize=sanitizepath)
+        filename = makefilepath(filename=filename, folder=folder, sanitize=sanitizepath, makedirs=True)
 
     # Handle object
     if obj is None: # pragma: no cover
@@ -402,7 +414,7 @@ def savetext(filename=None, string=None, **kwargs):
         string = '\n'.join(string) # Convert from list to string)
     elif not is_array and not scu.isstring(string):
         string = str(string)
-    filename = makefilepath(filename=filename)
+    filename = makefilepath(filename=filename, makedirs=True)
     if is_array: # Shortcut to Numpy for saving arrays -- basic CSV
         kw = scu.mergedicts(dict(fmt='%s', delimiter=', '), kwargs)
         np.savetxt(filename, string, **kw)
@@ -469,7 +481,7 @@ def unzip(filename=None, outfolder='.', folder=None, members=None):
         names = zf.namelist()
         zf.extractall(outfolder, members=members)
     
-    output = [makefilepath(filename=name, folder=outfolder) for name in names]
+    output = [makefilepath(filename=name, folder=outfolder, makedirs=True) for name in names]
     return output
 
 
@@ -501,7 +513,7 @@ def savezip(filename=None, filelist=None, data=None, folder=None, basename=True,
     '''
 
     # Handle inputs
-    fullpath = makefilepath(filename=filename, folder=folder, sanitize=sanitizepath)
+    fullpath = makefilepath(filename=filename, folder=folder, sanitize=sanitizepath, makedirs=True)
     filelist = scu.tolist(filelist)
     if data is not None:
         if not isinstance(data, dict):
@@ -517,7 +529,7 @@ def savezip(filename=None, filelist=None, data=None, folder=None, basename=True,
                 zf.writestr(key, val)
         else: # Main use case
             for thisfile in filelist:
-                thispath = makefilepath(filename=thisfile, abspath=False)
+                thispath = makefilepath(filename=thisfile, abspath=False, makedirs=True)
                 if basename: thisname = os.path.basename(thispath)
                 else:        thisname = thispath
                 zf.write(thispath, thisname)
@@ -764,7 +776,7 @@ sanitizepath.__doc__ += '\n\n' + sanitizefilename.__doc__
 
 
 
-def makefilepath(filename=None, folder=None, ext=None, default=None, split=False, aspath=None, abspath=True, makedirs=True, checkexists=None, sanitize=False, die=True, verbose=False):
+def makefilepath(filename=None, folder=None, ext=None, default=None, split=False, aspath=None, abspath=True, makedirs=False, checkexists=None, sanitize=False, die=True, verbose=False):
     '''
     Utility for taking a filename and folder -- or not -- and generating a
     valid path from them. By default, this function will combine a filename and
@@ -777,7 +789,7 @@ def makefilepath(filename=None, folder=None, ext=None, default=None, split=False
         ext         (str)           : the extension to ensure the file has
         default     (str or list)   : a name or list of names to use if filename is None
         split       (bool)          : whether to return the path and filename separately
-        aspath      (bool)          : whether to return a Path object
+        aspath      (bool)          : whether to return a Path object (default: set by ``sc.options.aspath``)
         abspath     (bool)          : whether to conver to absolute path
         makedirs    (bool)          : whether or not to make the folders to save into if they don't exist
         checkexists (bool)          : if False/True, raises an exception if the path does/doesn't exist
@@ -800,6 +812,7 @@ def makefilepath(filename=None, folder=None, ext=None, default=None, split=False
     doesn't exist, this will makes folder ./congee and returns e.g. ('/home/myname/congee', 'recipe.prj')
 
     New in version 1.1.0: "aspath" argument
+    New in version 2.2.0: "makedirs" defaults to False
     '''
 
     # Initialize
@@ -1106,7 +1119,7 @@ def savejson(filename=None, obj=None, folder=None, die=True, indent=2, keepnone=
     See also :func:`jsonify()`.
     '''
 
-    filename = makefilepath(filename=filename, folder=folder, sanitize=sanitizepath)
+    filename = makefilepath(filename=filename, folder=folder, sanitize=sanitizepath, makedirs=True)
 
     if obj is None and not keepnone: # pragma: no cover
         errormsg = 'No object was supplied to savejson(), or the object was empty'
@@ -1204,7 +1217,7 @@ def saveyaml(filename=None, obj=None, folder=None, die=True, keepnone=False, dum
 
     # Standard usage: dump to file
     if filename is not None:
-        filename = makefilepath(filename=filename, folder=folder, sanitize=sanitizepath)
+        filename = makefilepath(filename=filename, folder=folder, sanitize=sanitizepath, makedirs=True)
         output = filename
         with open(filename, 'w') as f:
             dump_func(obj, f, **kwargs)
@@ -1351,7 +1364,7 @@ class Blobject(object):
 
     def save(self, filename=None):
         ''' This function writes the spreadsheet to a file on disk. '''
-        filepath = makefilepath(filename=filename)
+        filepath = makefilepath(filename=filename, makedirs=True)
         with open(filepath, mode='wb') as f:
             f.write(self.blob)
         self.filename = filename
@@ -1619,7 +1632,7 @@ Falling back to openpyxl, which is identical except for how cached cell values a
 
 
     def save(self, filename='spreadsheet.xlsx'):
-        filepath = makefilepath(filename=filename, ext='xlsx')
+        filepath = makefilepath(filename=filename, ext='xlsx', makedirs=True)
         Blobject.save(self, filepath)
 
 
@@ -1806,7 +1819,7 @@ def savespreadsheet(filename=None, data=None, folder=None, sheetnames=None, clos
         import xlsxwriter # Optional import
     except ModuleNotFoundError as e: # pragma: no cover
         raise ModuleNotFoundError('The "xlsxwriter" Python package is not available; please install manually') from e
-    fullpath = makefilepath(filename=filename, folder=folder, default='default.xlsx')
+    fullpath = makefilepath(filename=filename, folder=folder, default='default.xlsx', makedirs=True)
     datadict   = sco.odict()
     formatdict = sco.odict()
     hasformats = (formats is not None) and (formatdata is not None)

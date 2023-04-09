@@ -17,7 +17,6 @@ Highlights:
 ##############################################################################
 
 import os
-import sys
 import tempfile
 import datetime as dt
 import pylab as pl
@@ -1257,7 +1256,7 @@ def savefigs(figs=None, filetype=None, filename=None, folder=None, savefigargs=N
     if filetype=='singlepdf': # See http://matplotlib.org/examples/pylab_examples/multipage_pdf.html  # pragma: no cover
         from matplotlib.backends.backend_pdf import PdfPages
         defaultname = 'figures.pdf'
-        fullpath = scf.makefilepath(filename=filename, folder=folder, default=defaultname, ext='pdf')
+        fullpath = scf.makefilepath(filename=filename, folder=folder, default=defaultname, ext='pdf', makedirs=True)
         pdf = PdfPages(fullpath)
         filenames.append(fullpath)
         if verbose: print(f'PDF saved to {fullpath}')
@@ -1265,11 +1264,11 @@ def savefigs(figs=None, filetype=None, filename=None, folder=None, savefigargs=N
         key,plt = item
         # Handle filename
         if filename and nfigs==1: # Single plot, filename supplied -- use it
-            fullpath = scf.makefilepath(filename=filename, folder=folder, default='Figure', ext=filetype) # NB, this filename not used for singlepdf filetype, so it's OK
+            fullpath = scf.makefilepath(filename=filename, folder=folder, default='Figure', ext=filetype, makedirs=True) # NB, this filename not used for singlepdf filetype, so it's OK
         else: # Any other case, generate a filename # pragma: no cover
             keyforfilename = filter(str.isalnum, str(key)) # Strip out non-alphanumeric stuff for key
             defaultname = keyforfilename
-            fullpath = scf.makefilepath(filename=filename, folder=folder, default=defaultname, ext=filetype)
+            fullpath = scf.makefilepath(filename=filename, folder=folder, default=defaultname, ext=filetype, makedirs=True)
 
         # Do the saving
         if savefigargs is None: savefigargs = {}
