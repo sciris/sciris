@@ -43,7 +43,6 @@ from . import sc_printing as scp
 from . import sc_datetime as scd
 from . import sc_odict as sco
 from . import sc_dataframe as scdf
-from . import sc_versioning as scv
 
 
 ##############################################################################
@@ -356,59 +355,6 @@ def dumpstr(obj=None, **kwargs):
     bytesobj = save(filename=None, obj=obj, **kwargs)
     result = bytesobj.read() # Read all of the content into result
     return result
-
-
-##############################################################################
-#%% Versioned pickling functions
-##############################################################################
-
-__all__ += ['saveversioned', 'loadversioned']
-
-
-# Default filenames for metadata and data
-_mdata_fn = 'metadata.json'
-_data_fn  = 'data.obj'
-
-
-def saveversioned(filename, data, paths=True, caller=True, git=True, pip=True, comments=None,
-                  mdata_fn=_mdata_fn, data_fn=_data_fn, **kwargs):
-
-    # Get the metadata
-    metadata = scv.storemetadata(paths=paths, caller=caller, git=git, pip=pip, comments=comments, frame=3)
-    
-    # Convert both to strings
-    metadatastr = jsonify(metadata, tostring=True, indent=2)
-    datastr     = dumpstr(data)
-    
-    # Construct output
-    datadict = {mdata_fn:metadatastr, data_fn:datastr}
-    
-    return savezip(filename=filename, data=datadict, tobytes=False, **kwargs)
-    
-
-def loadversioned(filename, folder=None, loadmetadata=False, mdata_fn=_mdata_fn, data_fn=_data_fn, **kwargs):
-    
-    filename = makefilepath(filename=filename, folder=folder)
-   
-    with ZipFile(filename, 'r') as zf: # Create the zip file
-        
-        # Read in the strings
-        try:
-            metadatastr = zf.read(mdata_fn)
-            datastr     = zf.read(data_fn)
-        except Exception as E:
-            errormsg = f'Could not load metadata file "{mdata_fn}" and/or data file "{data_fn}": are you sure this is a Sciris-versioned data zipfile?'
-            raise FileNotFoundError(errormsg) from E
-        
-        # Convert into Python objects
-        metadata = loadjson(string=metadatastr)
-        data = loadstr(datastr, **kwargs)
-
-    if loadmetadata:
-        output = dict(metadata=metadata, data=data)
-        return output
-    else:
-        return data
 
 
 ##############################################################################

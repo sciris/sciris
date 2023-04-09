@@ -362,19 +362,24 @@ def traceback(*args, **kwargs):
     return py_traceback.format_exc(*args, **kwargs)
 
 
-def getplatform(expected=None, die=False):
+def getplatform(expected=None, platform=None, die=False):
     '''
-    Return the name of the current platform: 'linux', 'windows', 'mac', or 'other'.
+    Return the name of the current "main" platform: 'linux', 'windows', 'mac', or 'other'.
     Alias (kind of) to sys.platform.
 
     Args:
         expected (str): if not None, check if the current platform is this
+        platform (str): if supplied, map this onto one of the "main" platforms, rather than determine it
         die (bool): if True and expected is defined, raise an exception
+    
+    Returns:
+        String, one of: 'linux', 'windows', 'mac', or 'other'
 
-    **Example**::
+    **Examples**::
 
         sc.getplatform() # Get current name of platform
         sc.getplatform('windows', die=True) # Raise an exception if not on Windows
+        sc.getplatform(platform='darwin') # Normalize to 'mac'
     '''
     # Define different aliases for each operating system
     mapping = dict(
@@ -384,7 +389,7 @@ def getplatform(expected=None, die=False):
     )
 
     # Check to see what system it is
-    sys_plat = sys.platform
+    sys_plat = sys.platform if platform is None else platform
     plat = 'other'
     for key,aliases in mapping.items():
         if sys_plat.lower() in aliases:

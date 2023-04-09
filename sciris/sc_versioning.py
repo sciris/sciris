@@ -8,6 +8,7 @@ Highlights:
     - :func:`gitinfo`: gets the git information (if available) of a given file
     - :func:`compareversions`: easy way to compare version numbers
     - :func:`storemetadata`: collects relevant metadata into a dictionary
+    - :func:`savewithmetadata`: saves data as a zip file including versioning metadata
 '''
 
 import os
@@ -16,12 +17,19 @@ import time
 import zlib
 import types
 import packaging.version
+from zipfile import ZipFile
 from . import sc_utils as scu
+from . import sc_fileio as scf
+from . import sc_datetime as scd
 
-__all__ = ['freeze', 'require', 'gitinfo', 'compareversions', 'getcaller', 'storemetadata', 'loadmetadata']
+__all__ = ['freeze', 'require', 'gitinfo', 'compareversions', 'getcaller', 
+           'storemetadata', 'loadmetadata', 'savewithmetadata', 'loadwithmetadata']
 
 
+# Define shared variables
 _metadataflag = 'sciris_metadata' # Key name used to identify metadata saved in a figure
+_mdata_fn = 'metadata.json' # Default filenames for metadata and data
+_data_fn  = 'data.obj'
 
 
 def freeze(lower=False):
@@ -352,7 +360,7 @@ def getcaller(frame=2, tostring=True, includelineno=False, includeline=False, re
     return output
 
 
-def storemetadata(paths=True, caller=True, git=True, pip=True, comments=None, filename=None, relframe=2, **kwargs):
+def storemetadata(paths=True, caller=True, git=True, pipfreeze=True, comments=None, outfile=None, relframe=0, **kwargs):
     '''
     Store common metadata: useful for exactly recreating (or remembering) the environment
     at a moment in time.
@@ -361,11 +369,11 @@ def storemetadata(paths=True, caller=True, git=True, pip=True, comments=None, fi
         paths (bool): store the path to the calling file and Python executable (may include sensitive information)
         caller (bool): store info on the calling file
         git (bool): store git information on the calling file
-        pip (bool): store the current Python environment, equivalent to "pip freeze"
+        pipfreeze (bool): store the current Python environment, equivalent to "pip freeze"
         comments (str/dict): any other metadata to store
-        filename (str): if not None, then save as JSON to this filename
+        outfile (str): if not None, then save as JSON to this filename
         relframe (int): how far to descend into the calling stack (if used directly, use 0; if called by another function, use 1; etc)
-        kwargs
+        kwargs (dict): additional data to store
         
     Returns:
         A dictionary with information on the date, plateform, executable, versions
@@ -384,8 +392,6 @@ def storemetadata(paths=True, caller=True, git=True, pip=True, comments=None, fi
     import pandas as pd
     import matplotlib as mpl
     import sys
-    from . import sc_datetime as scd # Here to avoid circular import
-    from . import sc_fileio as scf # Here to avoid circular import
     from . import sc_version as scver
     
     # Store key metadata
@@ -403,17 +409,20 @@ def storemetadata(paths=True, caller=True, git=True, pip=True, comments=None, fi
     md['matplotlib_version'] = mpl.__version__
     
     # Store optional metadata
-    caller = scu.getcaller(relframe=relframe, tostring=False)
+    caller = scu.getcaller(relframe=relframe+1, tostring=False)
     if caller and paths:
-        md['called_by'] = caller
+        md['calling_info'] = caller
     if git:
-        md['git'] = scu.gitinfo(caller['filename'], die=False, verbose=False)
-    if pip:
-        md['pip'] = scu.freeze()
+        md['git_info'] = scu.gitinfo(caller['filename'], die=False, verbose=False)
+    if pipfreeze:
+        md['pipfreeze'] = scu.freeze()
+        
+    # Store any additional data
+    md.update(kwargs)
     
-    if filename is not None:
-        filename = scf.makefilepath(filename)
-        scf.savejson(filename, md)
+    if outfile is not None:
+        outfile = scf.makefilepath(outfile)
+        scf.savejson(outfile, md)
     
     return md
 
@@ -520,3 +529,48 @@ def loadmetadata(filename, load_all=False, die=True):
         raise ValueError(errormsg)
 
     return metadata
+
+
+
+__all__ += ['savewithmetadata', 'loadwithmetadata']
+
+
+def savewithmetadata(filename, data, paths=True, caller=True, git=True, pip=True, comments=None,
+                  mdata_fn=_mdata_fn, data_fn=_data_fn, **kwargs):
+
+    # Get the metadata
+    metadata = storemetadata(paths=paths, caller=caller, git=git, pip=pip, comments=comments, frame=3)
+    
+    # Convert both to strings
+    metadatastr = scf.jsonify(metadata, tostring=True, indent=2)
+    datastr     = scf.dumpstr(data)
+    
+    # Construct output
+    datadict = {mdata_fn:metadatastr, data_fn:datastr}
+    
+    return scf.savezip(filename=filename, data=datadict, tobytes=False, **kwargs)
+    
+
+def loadwithmetadata(filename, folder=None, loadmetadata=False, mdata_fn=_mdata_fn, data_fn=_data_fn, **kwargs):
+    
+    filename = scf.makefilepath(filename=filename, folder=folder)
+   
+    with ZipFile(filename, 'r') as zf: # Create the zip file
+        
+        # Read in the strings
+        try:
+            metadatastr = zf.read(mdata_fn)
+            datastr     = zf.read(data_fn)
+        except Exception as E:
+            errormsg = f'Could not load metadata file "{mdata_fn}" and/or data file "{data_fn}": are you sure this is a Sciris-versioned data zipfile?'
+            raise FileNotFoundError(errormsg) from E
+        
+        # Convert into Python objects
+        metadata = scf.loadjson(string=metadatastr)
+        data     = scf.loadstr(datastr, **kwargs)
+
+    if loadmetadata:
+        output = dict(metadata=metadata, data=data)
+        return output
+    else:
+        return data

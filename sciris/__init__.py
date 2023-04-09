@@ -31,9 +31,9 @@ if not _lazy:
     from .sc_settings   import *
     from .sc_datetime   import *
     from .sc_math       import *
-    from .sc_versioning import *
     from .sc_dataframe  import *
     from .sc_fileio     import *
+    from .sc_versioning import *
     from .sc_profiling  import *
     from .sc_parallel   import *
     from .sc_asd        import *

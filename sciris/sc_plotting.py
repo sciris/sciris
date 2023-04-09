@@ -1132,7 +1132,8 @@ def _get_dpi(dpi=None, min_dpi=200):
     return dpi
 
 
-def savefig(filename, fig=None, dpi=None, comments=None, freeze=False, frame=2, folder=None, makedirs=True, die=True, verbose=True, **kwargs):
+def savefig(filename, fig=None, dpi=None, comments=None, pipfreeze=False, frame=2, 
+            folder=None, makedirs=True, die=True, verbose=True, **kwargs):
     '''
     Save a figure, including metadata
 
@@ -1145,17 +1146,17 @@ def savefig(filename, fig=None, dpi=None, comments=None, freeze=False, frame=2, 
     can be stored for PDF, but cannot be automatically retrieved.
 
     Args:
-        filename (str/Path) : name of the file to save to
-        fig      (Figure)   : the figure to save (if None, use current)
-        dpi      (int)      : resolution of the figure to save (default 200 or current default, whichever is higher)
-        comments (str)      : additional metadata to save to the figure
-        freeze   (bool)     : whether to store the contents of ``pip freeze`` in the metadata
-        frame    (int)      : which calling file to try to store information from (default, the file calling ``sc.savefig()``)
-        folder   (str/Path) : optional folder to save to (can also be provided as part of the filename)
-        makedirs (bool)     : whether to create folders if they don't already exist
-        die      (bool)     : whether to raise an exception if metadata can't be saved
-        verbose  (bool)     : if die is False, print a warning if metadata can't be saved
-        kwargs   (dict)     : passed to ``fig.save()``
+        filename  (str/Path) : name of the file to save to
+        fig       (Figure)   : the figure to save (if None, use current)
+        dpi       (int)      : resolution of the figure to save (default 200 or current default, whichever is higher)
+        comments  (str)      : additional metadata to save to the figure
+        pipfreeze (bool)     : whether to store the contents of ``pip freeze`` in the metadata
+        frame     (int)      : which calling file to try to store information from (default, the file calling ``sc.savefig()``)
+        folder    (str/Path) : optional folder to save to (can also be provided as part of the filename)
+        makedirs  (bool)     : whether to create folders if they don't already exist
+        die       (bool)     : whether to raise an exception if metadata can't be saved
+        verbose   (bool)     : if die is False, print a warning if metadata can't be saved
+        kwargs    (dict)     : passed to ``fig.save()``
 
     **Examples**::
 
@@ -1167,11 +1168,11 @@ def savefig(filename, fig=None, dpi=None, comments=None, freeze=False, frame=2, 
         sc.savefig('example2.png', comments='My figure', freeze=True)
         sc.pp(sc.loadmetadata('example2.png'))
     
-    See also ``sc.storemetadata()`` for 
-
-    New in version 1.3.3.
+    | New in version 1.3.3.
+    | New in version 2.2.0: "freeze" renamed "pipfreeze"; replaced metadata with ``sc.metadata()``
     '''
-
+    pipfreeze = kwargs.pop('freeze', pipfreeze) # Handle deprecation
+    
     # Handle figure
     if fig is None:
         fig = pl.gcf()
