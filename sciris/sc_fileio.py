@@ -31,6 +31,7 @@ import pandas as pd
 import datetime as dt
 import gzip as gz
 import pickle as pkl
+import zstandard as zstd
 from zipfile import ZipFile
 from contextlib import closing
 from pathlib import Path
@@ -42,7 +43,6 @@ from . import sc_printing as scp
 from . import sc_datetime as scd
 from . import sc_odict as sco
 from . import sc_dataframe as scdf
-zstd = scu.importbyname('zstandard', die=False, verbose=False) # Optional import
 
 
 ##############################################################################
@@ -118,6 +118,8 @@ def _load_filestr(filename, folder):
                     except Exception as E4:
                         gziperror = _gziperror(filename) + f'\nAdditional errors encountered:\n{str(E2)}\n{str(E3)}\n{str(E4)}'
                         raise exc(gziperror) from E
+        else:
+            raise E # TODO: combine with FileNotFoundError?
     return filestr
 
 
@@ -339,6 +341,89 @@ def dumpstr(obj=None):
     return result
 
 
+##############################################################################
+#%% Versioned pickling functions
+##############################################################################
+
+__all__ += ['getmetadata', 'saveversioned', 'loadversioned']
+
+
+
+def getmetadata(paths=True, caller=True, git=True, pip=True, frame=2, comments=None):
+    
+    # Additional imports
+    import sys
+    from .sc_version import __version__
+    import matplotlib as mpl
+    
+    # Store key metadata
+    md = dict()
+    md['date']       = scd.now()
+    md['platform']   = scu.getplatform()
+    md['executable'] = sys.executable if paths else None # NB, will likely include username info
+    md['comments']   = comments
+    
+    # Store key version info
+    md['python_version']     = sys.version
+    md['sciris_version']     = __version__
+    md['numpy_version']      = np.__version__
+    md['pandas_version']     = pd.__version__
+    md['matplotlib_version'] = mpl.__version__
+    
+    # Store optional metadata
+    if caller and paths:
+        md['called_by'] = scu.getcaller(frame=frame, tostring=False)
+    if git:
+        md['git'] = scu.gitinfo()
+    if pip:
+        md['pip'] = scu.freeze()
+    
+    return md
+
+
+# Default filenames for 
+_mdata_fn = 'metadata.json'
+_data_fn  = 'data.obj'
+
+def saveversioned(filename, data, paths=True, caller=True, git=True, pip=True, 
+                  mdata_fn=_mdata_fn,  data_fn=_data_fn, comments=None, **kwargs):
+
+    # Get the metadata
+    metadata = getmetadata(paths=paths, caller=caller, git=git, pip=pip, comments=comments, frame=3)
+    
+    # Convert both to strings
+    metadatastr = jsonify(metadata, tostring=True, indent=2)
+    datastr     = dumpstr(data)
+    
+    # Construct output
+    datadict = dict(mdata_fn=metadatastr, data_fn=datastr)
+    
+    return savezip(filename=filename, data=datadict, tobytes=False, **kwargs)
+    
+
+def loadversioned(filename, folder=None, return_metadata=False, mdata_fn=_mdata_fn, data_fn=_data_fn, **kwargs):
+    filename = makefilepath(filename=filename, folder=folder)
+   
+    with ZipFile(filename, 'r') as zf: # Create the zip file
+        
+        # Read in the strings
+        try:
+            metadatastr = zf.read(mdata_fn)
+            datastr     = zf.read(data_fn)
+        except Exception as E:
+            errormsg = f'Could not load metadata file "{mdata_fn}" and/or data file "{data_fn}": are you sure this is a Sciris-versioned data zipfile?'
+            raise FileNotFoundError(errormsg) from E
+        
+        # Convert into Python objects
+        metadata = loadjson(string=metadatastr)
+        data = loadstr(datastr, **kwargs)
+
+    if return_metadata:
+        output = dict(metadata=metadata, data=data)
+        return output
+    else:
+        return data
+
 
 ##############################################################################
 #%% Other file functions
@@ -395,13 +480,14 @@ def savetext(filename=None, string=None, **kwargs):
     return
 
 
-def loadzip(filename=None, folder=None):
+def loadzip(filename=None, folder=None, **kwargs):
     '''
     Load the contents of a zip file into a variable
 
     Args:
         filename (str/path): the name of the zip file to write to
         folder (str): optional additional folder for the filename
+        kwargs (dict): passed to :func:`load()`
     
     Returns:
         dict with each file loaded as a key
@@ -420,7 +506,7 @@ def loadzip(filename=None, folder=None):
         for name in names:
             val = zf.read(name)
             try:
-                val = loadstr(val) # Try to load as a pickle or some kind of valid file
+                val = loadstr(val, **kwargs) # Try to load as a pickle or some kind of valid file
             except:
                 pass # Otherwise, just return the raw value
             output[name] = val
@@ -455,7 +541,8 @@ def unzip(filename=None, outfolder='.', folder=None, members=None):
     return output
 
 
-def savezip(filename=None, filelist=None, data=None, folder=None, basename=True, sanitizepath=True, verbose=True):
+def savezip(filename=None, filelist=None, data=None, folder=None, basename=True, 
+            sanitizepath=True, tobytes=True, verbose=True, **kwargs):
     '''
     Create a zip file from the supplied list of files (or less commonly, supplied data)
 
@@ -466,7 +553,9 @@ def savezip(filename=None, filelist=None, data=None, folder=None, basename=True,
         folder (str): optional additional folder for the filename
         basename (bool): whether to use only the file's basename as the name inside the zip file
         sanitizepath (bool): whether to sanitize the path prior to saving
+        tobytes (bool): if data is provided, convert it automatically to bytes (otherwise, up to the user)
         verbose (bool): whether to print progress
+        kwargs (dict): passed to ``sc.save()``
 
     **Examples**::
 
@@ -476,9 +565,10 @@ def savezip(filename=None, filelist=None, data=None, folder=None, basename=True,
         sc.savezip('mydata.zip', data=dict(var1='test', var2=np.random.rand(3)))
 
     New in version 2.0.0: saving data
+    New in version 2.2.0: "tobytes" argument and kwargs
     '''
 
-    # Handle inpus
+    # Handle inputs
     fullpath = makefilepath(filename=filename, folder=folder, sanitize=sanitizepath)
     filelist = scu.tolist(filelist)
     if data is not None:
@@ -490,7 +580,9 @@ def savezip(filename=None, filelist=None, data=None, folder=None, basename=True,
     with ZipFile(fullpath, 'w') as zf: # Create the zip file
         if data is not None:
             for key,val in data.items():
-                zf.writestr(key, dumpstr(val))
+                if tobytes:
+                    val = dumpstr(val, **kwargs)
+                zf.writestr(key, val)
         else: # Main use case
             for thisfile in filelist:
                 thispath = makefilepath(filename=thisfile, abspath=False)
@@ -938,7 +1030,7 @@ def rmpath(path=None, *args, die=True, verbose=True, interactive=False, **kwargs
 __all__ += ['sanitizejson', 'jsonify', 'loadjson', 'savejson', 'loadyaml', 'saveyaml', 'jsonpickle', 'jsonunpickle']
 
 
-def sanitizejson(obj, verbose=True, die=False, tostring=False, **kwargs):
+def jsonify(obj, verbose=True, die=False, tostring=False, **kwargs):
     """
     This is the main conversion function for Python data-structures into JSON-compatible
     data structures (note: :func:`sanitizejson`/:func:`jsonify` are identical).
@@ -953,7 +1045,11 @@ def sanitizejson(obj, verbose=True, die=False, tostring=False, **kwargs):
     Returns:
         object (any or str): the converted object that should be JSON compatible, or its representation as a string if tostring=True
 
-    Version: 2020apr11
+    **Example**::
+        
+        data = dict(a=np.random.rand(3), b=dict(foo='cat', bar='dog'))
+        json = sc.jsonify(data)
+        jsonstr = sc.jsonify(data, tostring=True, indent=2)
     """
     if obj is None: # Return None unchanged
         output = None
@@ -1016,7 +1112,7 @@ def sanitizejson(obj, verbose=True, die=False, tostring=False, **kwargs):
     return output
 
 # Define alias
-jsonify = sanitizejson
+sanitizejson = jsonify
 
 
 def loadjson(filename=None, folder=None, string=None, fromfile=True, **kwargs):
@@ -1048,7 +1144,7 @@ def loadjson(filename=None, folder=None, string=None, fromfile=True, **kwargs):
             with open(filepath) as f:
                 output = json.load(f, **kwargs)
         except FileNotFoundError as E: # pragma: no cover
-            errormsg = f'No such file "{filename}". Use fromfile=False if loading a JSON string rather than a file.'
+            errormsg = f'No such file "{filename}". Use "string" argument or "fromfile=False" if loading a JSON string rather than a file.'
             raise FileNotFoundError(errormsg) from E
     return output
 
@@ -1074,6 +1170,8 @@ def savejson(filename=None, obj=None, folder=None, die=True, indent=2, keepnone=
 
         json = {'foo':'bar', 'data':[1,2,3]}
         sc.savejson('my-file.json', json)
+    
+    See also :func:`jsonify()`.
     '''
 
     filename = makefilepath(filename=filename, folder=folder, sanitize=sanitizepath)
