@@ -1061,8 +1061,7 @@ def elapsedtimestr(pasttime, maxdays=5, minseconds=10, shortmonths=True):
 _start = time.time()
 time.sleep(1e-12)
 _end = time.time()
-_sleep_overhead = (_end - _start)*3
-print(_sleep_overhead)
+_sleep_overhead = (_end - _start)*3 # In a for loop context, *3 gives the most accurate results
 del _start, _end
 
 def timedsleep(delay=None, start=None, verbose=False):
@@ -1072,7 +1071,9 @@ def timedsleep(delay=None, start=None, verbose=False):
     
     This function is usually used in a loop; it works like ``time.sleep()``, but 
     subtracts time taken by the other operations in the loop so that each loop
-    iteration takes exactly ``delay`` amount of time.
+    iteration takes exactly ``delay`` amount of time. Note: since ``time.sleep()`` 
+    has a minimum overhead (about 2e-4 seconds), below this duration, no pause
+    will occur.
 
     Args:
         delay (float): time, in seconds, to wait for
@@ -1093,17 +1094,17 @@ def timedsleep(delay=None, start=None, verbose=False):
         
         # Example illustrating more accurate timing
         import time
-        n = 10000
+        n = 1000
 
         with sc.timer():
             for i in range(n):
                 sc.timedsleep(1/n)
-        # Elapsed time: 1.04 s
+        # Elapsed time: 1.01 s
 
         with sc.timer():
             for i in range(n):
                 time.sleep(1/n)
-        # Elapsed time: 1.59 s
+        # Elapsed time: 1.21 s
     
     New in version 2.2.0: "verbose" False by default; more accurate overhead calculation
     '''
@@ -1119,12 +1120,12 @@ def timedsleep(delay=None, start=None, verbose=False):
         remaining = delay - elapsed - _sleep_overhead
         if remaining > 0:
             if verbose:
-                print(f'Pausing for {remaining:0.1f} s')
+                print(f'Pausing for {remaining:n} s')
             time.sleep(remaining)
             try:    del _delaytime # After it's been used, we can't use it again
             except: pass
         elif verbose:
-            print(f'Warning, delay less than elapsed time ({delay:0.1f} vs. {elapsed:0.1f})')
+            print(f'Warning, delay less than elapsed time ({delay:n} vs. {elapsed:n})')
     return
 
 
