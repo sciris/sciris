@@ -1973,8 +1973,11 @@ class UniversalFailed(Failed): # pragma: no cover
         return output
 
     def __setstate__(self, state):
-        self.__set_empty()
-        self.state = state
+        try:
+            self.__dict__.update(state) # NB, does not support slots
+        except:
+            self.__set_empty()
+            self.state = state
         return
 
     def __len__(self):
