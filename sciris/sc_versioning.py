@@ -16,6 +16,7 @@ import re
 import time
 import zlib
 import types
+import warnings
 import packaging.version
 from zipfile import ZipFile
 from . import sc_utils as scu
@@ -608,9 +609,52 @@ def savewithmetadata(filename, obj, folder=None, user=True, caller=True, git=Tru
     datadict = {_metadata_filename:metadatastr, _obj_filename:datastr}
     
     return scf.savezip(filename=filename, data=datadict, tobytes=False, **kwargs)
-    
 
-def loadwithmetadata(filename, folder=None, loadmetadata=False, die=True, **kwargs):
+
+def known_remappings(metadata=None):
+    '''
+    List of known remappings between modules following deprecations.
+    
+    Usually invoked by ``sc.loadwithmetadata()``, rather than directly.
+    
+    Args:
+        metadata (dict): metadata for the saved object, as produced by ``sc.metadata()``
+        remapping (dict): any other remappings to include
+        show_known (bool): rather than doing the remapping, show all known remappings
+    
+    New in version 2.2.0.
+    '''
+    
+    # List known remappings here
+    known = {
+        "No module named 'pandas.core.indexes.numeric'":
+            dict(module = 'pandas',
+                 pickled_version = '<2.0',
+                 current_version = '>=2.0',
+                 fix = {'pandas.core.indexes.numeric.Int64Index':'pandas.core.indexes.api.Index'},
+        ),
+    }
+    if metadata is None:
+        return known
+    
+    
+    remap = {}
+    
+    curr = freeze()
+    try:
+        orig = metadata['pip_freeze']
+    except Exception as E:
+        errormsg = f'Could not open metadata'
+        raise ValueError(errormsg) from E
+    
+    # Start populating the known remappings
+    
+    # remap = scu.mergedicts(remap, remapping) # Merge in any others
+    
+    return remap
+
+
+def loadwithmetadata(filename, folder=None, loadmetadata=False, remapping=None, die=True, **kwargs):
     '''
     Load a zip file saved with :func:`savewithmetadata()`.
     
@@ -622,6 +666,7 @@ def loadwithmetadata(filename, folder=None, loadmetadata=False, die=True, **kwar
         filename (str/path): the file load to (usually ends in .zip)
         folder (str): optional additional folder to load from
         loadmetadata (bool): whether to load the metadata as well, returning a dict of both (else, just return the object)
+        remapping (dict): any known module remappings between the saved pickle version and the current libraries (see ``sc.known_remappings()`` for examples)
         die (bool): whether to fail if an exception is raised (else, just return the metadata)
         kwargs (dict): passed to ``sc.load()``
     
@@ -675,13 +720,27 @@ def loadwithmetadata(filename, folder=None, loadmetadata=False, die=True, **kwar
             datastr = zf.read(_obj_filename)
         except Exception as E:
             exc = type(E)
-            errormsg = f'Could not load object file "{_obj_filename}": are you sure this is a Sciris-versioned data zipfile?'
-            raise exc(errormsg) from E
+            errormsg = f'Could not load object file "{_obj_filename}": are you sure this is a Sciris-versioned data zipfile? To debug using metadata, set die=False'
+            if die:
+                raise exc(errormsg) from E
+            else:
+                warnmsg = 'Exception encountered opening the object, returning metadata only'
+                warnings.warn(warnmsg, category=UserWarning, stacklevel=2)
+                return md
             
-        
-        # Convert into Python objects
-        
-        obj = scf.loadstr(datastr, **kwargs)
+        # Convert into Python objects -- the most likely step where this can go wrong
+        remapping = known_remappings(remapping)
+        try:
+            obj = scf.loadstr(datastr, remapping=remapping, **kwargs)
+        except Exception as E:
+            exc = type(E)
+            errormsg = 'Could not unpickle the object: to debug using metadata, set die=False'
+            if die:
+                raise exc(errormsg) from E
+            else:
+                warnmsg = 'Exception encountered unpickling the object, returning metadata only'
+                warnings.warn(warnmsg, category=UserWarning, stacklevel=2)
+                return md
 
     if loadmetadata:
         output = dict(metadata=md, obj=obj)

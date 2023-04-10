@@ -125,7 +125,8 @@ def _load_filestr(filename, folder):
     return filestr
 
 
-def load(filename=None, folder=None, verbose=False, die=None, remapping=None, method='pickle', **kwargs):
+def load(filename=None, folder=None, verbose=False, die=None, remapping=None, 
+         method='pickle', auto_remap=True, **kwargs):
     '''
     Load a file that has been saved as a gzipped pickle file, e.g. by :func:`save`.
     Accepts either a filename (standard usage) or a file object as the first argument.
@@ -142,13 +143,14 @@ def load(filename=None, folder=None, verbose=False, die=None, remapping=None, me
     functions.
 
     Args:
-        filename  (str/Path): the filename (or full path) to load
-        folder    (str/Path): the folder
-        verbose   (bool):     print details
-        die       (bool):     whether to raise an exception if errors are encountered (otherwise, load as much as possible)
-        remapping (dict):     way of mapping old/unavailable module names to new
-        method    (str):      method for loading (usually pickle or dill)
-        kwargs    (dict):     passed to ``pickle.loads()``/``dill.loads()``
+        filename   (str/Path): the filename (or full path) to load
+        folder     (str/Path): the folder
+        verbose    (bool):     print details
+        die        (bool):     whether to raise an exception if errors are encountered (otherwise, load as much as possible)
+        remapping  (dict):     way of mapping old/unavailable module names to new
+        method     (str):      method for loading (usually pickle or dill)
+        auto_remap (bool):     whether to use known deprecations to load failed pickles
+        kwargs     (dict):     passed to ``pickle.loads()``/``dill.loads()``
 
     **Examples**::
 
@@ -165,7 +167,8 @@ def load(filename=None, folder=None, verbose=False, die=None, remapping=None, me
 
     # Unpickle it
     try:
-        obj = _unpickler(filestr, filename=filename, verbose=verbose, die=die, remapping=remapping, method=method, **kwargs) # Actually load it
+        kw = dict(filename=filename, verbose=verbose, die=die, remapping=remapping, method=method, auto_remap=auto_remap)
+        obj = _unpickler(filestr, **kw, **kwargs) # Actually load it
     except Exception as E: # pragma: no cover
         exc = type(E) # Figure out what kind of error it is
         errormsg = _unpicklingerror(filename) + '\n\nSee the stack trace above for more information on this specific error.'
@@ -1928,7 +1931,7 @@ class Failed(object):
             output += f'Error: {failure["error"]}\n'
             if verbose:
                 output += '\nTraceback:\n'
-                output += failure['exception']
+                output += f"\n{failure['exception']}"
                 output += '\n\n'
         if tostring:
             return output
@@ -1985,7 +1988,7 @@ class UniversalFailed(Failed): # pragma: no cover
         return
 
     def disp(self, *args, **kwargs):
-        return scu.pr(self, *args, **kwargs)
+        return scp.pr(self, *args, **kwargs)
 
 
 def makefailed(module_name=None, name=None, error=None, exception=None, universal=False):
@@ -2012,19 +2015,19 @@ class _RobustUnpickler(pkl.Unpickler):
         key = f'{module_name}.{name}'
         obj = self.remapping.get(key) # If the user has supplied the module directly
         if obj is None or (isinstance(obj, tuple) and len(obj)==2): # Either it's not in the remapping, or it's a tuple
-            try:
-                if obj is None: # Key not in remapping
-                    load_module = module_name
-                    load_name = name
-                else: # It's a tuple of names, process
-                    load_module = obj[0]
-                    load_name = obj[1]
-                module = importlib.import_module(load_module)
-                obj = getattr(module, load_name)
-            except Exception as E:
-                if verbose: print(f'Unpickling warning: could not import {load_module}.{load_name}: {str(E)}')
-                exception = traceback.format_exc() # Grab the trackback stack
-                obj = makefailed(module_name=module_name, name=name, error=E, exception=exception)
+            # try:
+            if obj is None: # Key not in remapping
+                load_module = module_name
+                load_name = name
+            else: # It's a tuple of names, process
+                load_module = obj[0]
+                load_name = obj[1]
+            module = importlib.import_module(load_module)
+            obj = getattr(module, load_name)
+            # except Exception as E:
+            #     if verbose: print(f'Unpickling warning: could not import {load_module}.{load_name}: {str(E)}')
+            #     exception = traceback.format_exc() # Grab the trackback stack
+            #     obj = makefailed(module_name=module_name, name=name, error=E, exception=exception)
         return obj
 
 
@@ -2044,7 +2047,7 @@ class _UltraRobustUnpickler(pkl.Unpickler): # pragma: no cover
         return obj
 
 
-def _unpickler(string=None, filename=None, filestring=None, die=None, verbose=False, remapping=None, method='pickle', **kwargs):
+def _unpickler(string=None, filename=None, filestring=None, die=None, verbose=False, remapping=None, method='pickle', auto_remap=True, **kwargs):
     ''' Not invoked directly; used as a helper function for saveobj/loadobj '''
     
     # Sanitize kwargs, since wrapped in try-except statements otherwise
@@ -2066,6 +2069,7 @@ def _unpickler(string=None, filename=None, filestring=None, die=None, verbose=Fa
             errormsg = f'Method "{method}" not recognized, must be pickle or dill'
             raise ValueError(errormsg)
     except Exception as E1:
+        print('HIIIII', E1)
         if die:
             raise E1
         else:
@@ -2079,8 +2083,22 @@ def _unpickler(string=None, filename=None, filestring=None, die=None, verbose=Fa
                     obj = dill.loads(string, **kwargs) # If that fails, try dill
                 except Exception as E3:
                     try:
-                        if verbose: print(f'Dill failed ({str(E3)}), trying robust unpickler...')
-                        obj = _RobustUnpickler(io.BytesIO(string), remapping=remapping).load() # And if that fails, throw everything at it
+                        if verbose: print(f'Dill failed ({str(E3)}), trying robust unpickler with remapping...')
+                        loaded = False
+                        while not loaded:
+                            try:
+                                obj = _RobustUnpickler(io.BytesIO(string), remapping=remapping).load() # And if that fails, throw everything at it
+                                loaded = True
+                            except Exception as E3b:
+                                from . import sc_versioning as scv # Here to avoid circular import
+                                remapping = scu.mergedicts(remapping)
+                                known = scv.known_remappings()
+                                errstr = str(E3b)
+                                if errstr in known and auto_remap:
+                                    print(f'Note: fixing known unpickling error "{errstr}"...')
+                                    remapping.update(known[errstr]['fix'])
+                                else:
+                                    raise E3b
                     except Exception as E4:
                         try:
                             if verbose: print(f'Robust failed ({str(E4)}), trying ultrarobust unpickler...')
