@@ -1061,7 +1061,7 @@ def progressbar(i=None, maxiters=None, label='', every=1, length=30, empty='—'
         empty    (str): character for not-yet-completed steps
         full     (str): character for completed steps
         newline  (str): character to print at the end of the line (default none)
-        kwargs   (dict): passed to ``tqdm.tqdm()``
+        kwargs   (dict): passed to ``tqdm.tqdm()``; see its documentation for full options
 
     **Examples**::
 
