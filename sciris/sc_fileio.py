@@ -168,7 +168,7 @@ def load(filename=None, folder=None, verbose=False, die=None, remapping=None,
     # Unpickle it
     try:
         kw = dict(filename=filename, verbose=verbose, die=die, remapping=remapping, method=method, auto_remap=auto_remap)
-        obj = _unpickler(filestr, **kw, **kwargs) # Actually load it
+        obj = _unpickler(filestr, **kw, **kwargs) # Unpickle the data
     except Exception as E: # pragma: no cover
         exc = type(E) # Figure out what kind of error it is
         errormsg = _unpicklingerror(filename) + '\n\nSee the stack trace above for more information on this specific error.'
@@ -2003,47 +2003,56 @@ def makefailed(module_name=None, name=None, error=None, exception=None, universa
     return base
 
 
+def _remap_module(remapping, module_name, name):
+    ''' Use a remapping dictionary to try to load a module from a different location ''' 
+    key = f'{module_name}.{name}'
+    obj = remapping.get(key) # If the user has supplied the module directly
+    if isinstance(obj, str): # Split a string into a tuple, e.g. 'foo.bar.Cat' to ('foo.bar', 'Cat')
+        obj = tuple(obj.rsplit('.', 1))
+    if obj is None or (isinstance(obj, tuple) and len(obj)==2): # Either it's not in the remapping, or it's a tuple
+        if obj is None: # Key not in remapping, just use regular
+            load_module = module_name
+            load_name = name
+        else: # It's a tuple of names, process
+            load_module = obj[0]
+            load_name = obj[1]
+        module = importlib.import_module(load_module)
+        obj = getattr(module, load_name)
+    return obj
+
+
 class _RobustUnpickler(pkl.Unpickler):
     ''' Try to import an object, and if that fails, return a Failed object rather than crashing '''
 
     def __init__(self, bytesio, fix_imports=True, encoding="latin1", errors="ignore", remapping=None):
         pkl.Unpickler.__init__(self, bytesio, fix_imports=fix_imports, encoding=encoding, errors=errors)
-        self.remapping = remapping if remapping is not None else {}
+        self.remapping = scu.mergedicts(remapping)
         return
 
     def find_class(self, module_name, name, verbose=True):
-        key = f'{module_name}.{name}'
-        obj = self.remapping.get(key) # If the user has supplied the module directly
-        if obj is None or (isinstance(obj, tuple) and len(obj)==2): # Either it's not in the remapping, or it's a tuple
-            # try:
-            if obj is None: # Key not in remapping
-                load_module = module_name
-                load_name = name
-            else: # It's a tuple of names, process
-                load_module = obj[0]
-                load_name = obj[1]
-            module = importlib.import_module(load_module)
-            obj = getattr(module, load_name)
-            # except Exception as E:
-            #     if verbose: print(f'Unpickling warning: could not import {load_module}.{load_name}: {str(E)}')
-            #     exception = traceback.format_exc() # Grab the trackback stack
-            #     obj = makefailed(module_name=module_name, name=name, error=E, exception=exception)
+        obj = _remap_module(self.remapping, module_name, name)
         return obj
 
 
 class _UltraRobustUnpickler(pkl.Unpickler): # pragma: no cover
     ''' If all else fails, just make a default object '''
 
-    def __init__(self, bytesio, *args, unpicklingerrors=None, **kwargs):
-        pkl.Unpickler.__init__(self, bytesio, *args, **kwargs)
+    def __init__(self, bytesio, *args, fix_imports=True, encoding="latin1", errors="ignore", 
+                 remapping=None, unpicklingerrors=None):
+        pkl.Unpickler.__init__(self, bytesio, fix_imports=fix_imports, encoding=encoding, errors=errors)
+        self.remapping = scu.mergedicts(remapping)
         self.unpicklingerrors = unpicklingerrors if unpicklingerrors is not None else []
         return
 
-    def find_class(self, module_name, name):
+    def find_class(self, module_name, name, verbose=True):
         ''' Ignore all attempts to use the actual class and always make a UniversalFailed class '''
-        error = scu.strjoin(self.unpicklingerrors)
-        exception = self.unpicklingerrors
-        obj = makefailed(module_name=module_name, name=name, error=error, exception=exception, universal=True)
+        try:
+            obj = _remap_module(self.remapping, module_name, name)
+        except Exception as E:
+            if verbose: print(f'Unpickling warning: could not import {module_name}.{name}: {str(E)}')
+            error = scu.strjoin(self.unpicklingerrors)
+            exception = self.unpicklingerrors
+            obj = makefailed(module_name=module_name, name=name, error=error, exception=exception, universal=True)
         return obj
 
 
@@ -2069,7 +2078,6 @@ def _unpickler(string=None, filename=None, filestring=None, die=None, verbose=Fa
             errormsg = f'Method "{method}" not recognized, must be pickle or dill'
             raise ValueError(errormsg)
     except Exception as E1:
-        print('HIIIII', E1)
         if die:
             raise E1
         else:
@@ -2095,8 +2103,9 @@ def _unpickler(string=None, filename=None, filestring=None, die=None, verbose=Fa
                                 known = scv.known_remappings()
                                 errstr = str(E3b)
                                 if errstr in known and auto_remap:
-                                    print(f'Note: fixing known unpickling error "{errstr}"...')
                                     remapping.update(known[errstr]['fix'])
+                                    warnmsg = f'Fixing known unpickling deprecation "{errstr}"'
+                                    warnings.warn(warnmsg, category=UserWarning, stacklevel=2)
                                 else:
                                     raise E3b
                     except Exception as E4:
