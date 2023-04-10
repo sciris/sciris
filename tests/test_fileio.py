@@ -173,6 +173,7 @@ def test_load_corrupted():
 
         print('Loading with remapping...')
         o.obj4 = sc.loadobj(dead_path, remapping={'deadclass.DeadClass':LiveClass})
+        assert isinstance(o.obj4, LiveClass)
         print(f'Loading remapped object succeeded, x={o.obj4.x}, object: {o.obj4}')
     else:
         print(f'{dead_path} not found, skipping...')

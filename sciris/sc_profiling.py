@@ -31,44 +31,10 @@ from . import sc_dataframe as scdf
 
 
 ##############################################################################
-#%% Load balancing functions
+#%% Basic performance functions
 ##############################################################################
 
-__all__ = ['cpu_count', 'cpuload', 'memload', 'loadbalancer']
-
-
-def cpu_count():
-    ''' Alias to ``mp.cpu_count()`` '''
-    return mp.cpu_count()
-
-
-def cpuload(interval=0.1):
-    """
-    Takes a snapshot of current CPU usage via ``psutil``
-
-    Args:
-        interval (float): number of seconds over which to estimate CPU load
-
-    Returns:
-        a float between 0-1 representing the fraction of ``psutil.cpu_percent()`` currently used.
-    """
-    return psutil.cpu_percent(interval=interval)/100
-
-
-def memload():
-    """
-    Takes a snapshot of current fraction of memory usage via ``psutil``
-
-    Note on the different functions:
-
-        - ``sc.memload()`` checks current total system memory consumption
-        - ``sc.checkram()`` checks RAM (virtual memory) used by the current Python process
-        - ``sc.checkmem()`` checks memory consumption by a given object
-
-    Returns:
-        a float between 0-1 representing the fraction of ``psutil.virtual_memory()`` currently used.
-    """
-    return psutil.virtual_memory().percent / 100
+__all__ = ['checkmem', 'checkram', 'benchmark']
 
 
 def checkmem(var, descend=1, order='size', compresslevel=0, maxitems=1000, 
@@ -247,6 +213,139 @@ def checkram(unit='mb', fmt='0.2f', start=0, to_string=True):
     return output
 
 
+def benchmark(repeats=5, scale=1, verbose=False, python=True, numpy=True, return_timers=False):
+    '''
+    Benchmark Python performance
+    
+    Performs a set of standard operations in both Python and Numpy and times how
+    long they take. Results are returned in terms of millions of operations per second (MOPS).
+    With default settings, this function should take very approximately 0.1 s to 
+    run (depending on the machine, of course!).
+    
+    For Python, these operations are: for loops, list append/indexing, dict set/get,
+    and arithmetic. For Numpy, these operations are: random floats, random ints,
+    addition, and multiplication.
+    
+    Args:
+        repeats (int): the number of times to repeat each test
+        scale (float): the scale factor to use for the size of the loops/arrays
+        verbose (bool): print out the results after each repeat
+        python (bool): whether to run the Python tests
+        numpy (bool): whether to run the Numpy tests
+        return_timers (bool): if True, return the timer objects instead of the "MOPS" results
+        
+    Returns:
+        An objdict with keys "python" and "numpy" for the number of MOPS for each
+    
+    **Examples**:
+        
+        sc.benchmark() # Returns e.g. {'python': 11.43, 'numpy': 236.595}
+        
+        numpy_mops = sc.benchmark(python=False).numpy
+        if numpy_mops < 100:
+            print('Your computer is slow')
+        elif numpy_mops > 400: 
+            print('Your computer is fast')
+        else:
+            print('Your computer is normal')
+    
+    New in version 2.2.0.
+    '''
+    
+    P = scd.timer(verbose=verbose)
+    N = scd.timer(verbose=verbose)
+    
+    py_outer = 10
+    py_inner = scale*5e2
+    
+    np_outer = 1
+    np_inner = scale*5e5
+    
+    py_ops = (py_outer * py_inner * 18)/1e6
+    np_ops = (np_outer * np_inner * 4)/1e6
+    
+    # Benchmark plain Python
+    if python:
+        for r in range(repeats):
+            l = list()
+            d = dict()
+            result = 0
+            P.tic()
+            for i in range(py_outer):
+                for j in range(int(py_inner)):
+                    l.append([i,j]) # Operation 1: list append
+                    d[str((i,j))] = [i,j] # Operations 2-3: convert to string and dict assign
+                    v1 = l[-1][0] + l[-1][0] # Operations 4-8: list get (x4) and sum
+                    v2 = d[str((i,j))][0] + d[str((i,j))][1] # Operations 9-16: convert to string (x2), list get (x2), dict get (x2), sum
+                    result += v1 + v2 # Operations 17-18: sum (x2)
+            P.toc(f'Python, {py_ops}m operations')
+                 
+    # Benchmark Numpy
+    if numpy:
+        for r in range(repeats):
+            N.tic()
+            for i in range(np_outer):
+                a = np.random.random(int(np_inner)) # Operation 1: random floats
+                b = np.random.randint(10, size=int(np_inner)) # Operation 2: random integers
+                a + b # Operation 3: addition
+                a*b # Operation 4: multiplication
+            N.toc(f'Numpy, {np_ops}m operations')
+    
+    # Handle output
+    if return_timers:
+        out = sco.objdict(python=P, numpy=N)
+    else:
+        pymops = py_ops/P.mean() if len(P) else None # Handle if one or the other isn't run
+        npmops = np_ops/N.mean() if len(N) else None
+        out = sco.objdict(python=pymops, numpy=npmops)
+        
+    return out
+
+
+##############################################################################
+#%% Load balancing functions
+##############################################################################
+
+__all__ += ['cpu_count', 'cpuload', 'memload', 'loadbalancer']
+
+
+def cpu_count():
+    ''' Alias to ``mp.cpu_count()`` '''
+    return mp.cpu_count()
+
+
+def cpuload(interval=0.1):
+    """
+    Takes a snapshot of current CPU usage via ``psutil``
+
+    Args:
+        interval (float): number of seconds over which to estimate CPU load
+
+    Returns:
+        a float between 0-1 representing the fraction of ``psutil.cpu_percent()`` currently used.
+    """
+    return psutil.cpu_percent(interval=interval)/100
+
+
+def memload():
+    """
+    Takes a snapshot of current fraction of memory usage via ``psutil``
+
+    Note on the different functions:
+
+        - ``sc.memload()`` checks current total system memory consumption
+        - ``sc.checkram()`` checks RAM (virtual memory) used by the current Python process
+        - ``sc.checkmem()`` checks memory consumption by a given object
+
+    Returns:
+        a float between 0-1 representing the fraction of ``psutil.virtual_memory()`` currently used.
+    """
+    return psutil.virtual_memory().percent / 100
+
+
+
+
+
 def loadbalancer(maxcpu=0.8, maxmem=0.8, index=None, interval=None, cpu_interval=0.1,
                  maxtime=36000, label=None, verbose=True, **kwargs):
     '''
@@ -349,7 +448,7 @@ def loadbalancer(maxcpu=0.8, maxmem=0.8, index=None, interval=None, cpu_interval
 #%% Profiling functions
 ##############################################################################
 
-__all__ += ['profile', 'mprofile', 'checkmem', 'checkram']
+__all__ += ['profile', 'mprofile']
 
 
 def profile(run, follow=None, print_stats=True, *args, **kwargs):

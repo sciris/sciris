@@ -761,7 +761,6 @@ class timer:
         self.tic()
         return self
 
-
     def __exit__(self, *args):
         ''' Print elapsed time when leaving a with-as block '''
         self.toc()
@@ -773,6 +772,9 @@ class timer:
         string += str(self.timings)
         string += f'\nTotal time: {self.total:n} s'
         return string
+    
+    def __len__(self):
+        return len(self._tocs)
     
     
     def disp(self):

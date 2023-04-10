@@ -554,8 +554,8 @@ def loadmetadata(filename, load_all=False, die=True):
 
 
 
-def savewithmetadata(filename, obj, folder=None, user=True, caller=True, git=True, 
-                     pipfreeze=True, comments=None, allow_nonzip=False, **kwargs):
+def savewithmetadata(filename, obj, folder=None, user=True, caller=True, git=True, pipfreeze=True, 
+                     comments=None, method='dill', allow_nonzip=False, dumpargs=None, **kwargs):
     '''
     Save any object as a pickled zip file, including metadata as a separate JSON file.
     
@@ -578,7 +578,10 @@ def savewithmetadata(filename, obj, folder=None, user=True, caller=True, git=Tru
         git (bool): store the git version in the metadata (see ``sc.metadata()``)
         pipfreeze (bool): store the output of "pip freeze" in the metadata (see ``sc.metadata()``)
         comments (str/dict): other comments/information to store in the metadata (must be JSON-compatible)
+        method (str): the method to use saving the data; default "dill" for more robustness, but "pickle" is faster
         allow_nonzip (bool): whether to permit extensions other than .zip (note, may cause problems!)
+        dumpargs (dict): passed to :func:`dumpstr()`
+        kwargs (dict): passed to :func:`savezip()`
     
     **Example**::
         
@@ -600,10 +603,12 @@ def savewithmetadata(filename, obj, folder=None, user=True, caller=True, git=Tru
 
     # Get the metadata
     md = metadata(caller=caller, git=git, pipfreeze=pipfreeze, comments=comments, frame=3)
+    md['method'] = method # Store the method used to save the data (dill or pickle)
     
     # Convert both to strings
+    dumpargs = scu.mergedicts({'method':method}, dumpargs)
     metadatastr = scf.jsonify(md, tostring=True, indent=2)
-    datastr     = scf.dumpstr(obj)
+    datastr     = scf.dumpstr(obj, **dumpargs)
     
     # Construct output
     datadict = {_metadata_filename:metadatastr, _obj_filename:datastr}
@@ -728,7 +733,8 @@ def loadwithmetadata(filename, folder=None, loadobj=True, loadmetadata=False, re
                 
             # Convert into Python objects -- the most likely step where this can go wrong
             try:
-                obj = scf.loadstr(datastr, remapping=remapping, **kwargs) # Load with original remappings
+                method = md.get('method', None)
+                obj = scf.loadstr(datastr, method=method, remapping=remapping, **kwargs) # Load with original remappings
             except:
                 try:
                     remapping = scu.mergedicts(remapping, known_deprecations(as_map=True))

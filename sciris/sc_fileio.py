@@ -19,12 +19,12 @@ Highlights:
 import io
 import os
 import json
-import shutil
 import uuid
+import dill
+import shutil
 import string
 import inspect
 import importlib
-import traceback
 import warnings
 import numpy as np
 import pandas as pd
@@ -183,40 +183,69 @@ def load(filename=None, folder=None, verbose=False, die=None, remapping=None,
     return obj
 
 
-def save(filename='default.obj', obj=None, folder=None, compression='gzip', compresslevel=5, 
-         verbose=0, method='pickle', sanitizepath=True, die=False, allow_empty=False, **kwargs):
+def save(filename='default.obj', obj=None, folder=None, method='pickle', compression='gzip', 
+         compresslevel=5, verbose=0, sanitizepath=True, die=False, allow_empty=False, **kwargs):
     '''
-    Save an object to file as a gzipped pickle -- use compression 5 by default,
-    since more is much slower but not much smaller. Once saved, can be loaded
-    with :func:`load`. Note that :func:`save`/:func:`saveobj` are identical.
+    Save any object to disk
+    
+    This function is similar to ``pickle.dump()`` in that it serializes the object
+    to a file. Key differences include:
+        
+        - It takes care of opening/closing the file for writing
+        - It compresses the data by default
+        - It supports different serialization methods (e.g. pickle or dill)
+    
+    Once an object is saved, it can be loaded with :func:`load`. Note that 
+    :func:`save()`/:func:`saveobj()` are identical.
     
     **Note 1**: Since this function relies on pickle, it can potentially execute arbitrary
     code, so you should only use it with sources you trust. For more information, see:
         https://docs.python.org/3/library/pickle.html
-    
+        
     **Note 2**: When a pickle file is loaded, Python imports any modules that are referenced
     in it. This is a problem if module has been renamed (in which case the pickle
-    usually can't be opened). For more robustness, use the :func:`savewithmetadata`/
-    :func:`loadwithmetadata` functions.
+    usually can't be opened). For more robustness (e.g. to pickle custom classes), use 
+    ``method='dill'`` and/or the :func:`savewithmetadata()` / :func:`loadwithmetadata()` 
+    functions.
+    
+    If you do not need to save arbitrary Python and just need to save data, consider
+    saving the data in a standard format, e.g. JSON (``sc.savejson()``). For large
+    amounts of tabular data, also consider formats like HDF5 or PyArrow.
 
     Args:
-        filename      (str/Path) : the filename or path to save to; if None, return an io.BytesIO filestream instead of saving to disk
+        filename      (str/path) : the filename or path to save to; if None, return an io.BytesIO filestream instead of saving to disk
         obj           (anything) : the object to save
-        folder        (str)      : passed to :func:`makepath`
+        folder        (str)      : optional additional folder, passed to :func:`makepath`
+        method        (str)      : whether to use 'pickle' (default) or 'dill'
         compression   (str)      : type of compression to use: 'gzip' (default), 'zstd' (zstandard), or 'none' (no compression)
         compresslevel (int)      : the level of gzip/zstd compression (1 to 9 for gzip, -7 to 22 for zstandard, default 5)
-        verbose       (int)      : detail to print
-        method        (str)      : whether to use 'pickle' (default) or 'dill'
+        verbose       (int)      : level of detail to print
         sanitizepath  (bool)     : whether to sanitize the path prior to saving
         die           (bool)     : whether to fail if the object can't be pickled (else, try dill); if die is 'never'
         allow_empty   (bool)     : whether or not to allow "None" to be saved (usually treated as an error)
-        kwargs        (dict)     : passed to ``pickle.dumps()``
+        kwargs        (dict)     : passed to ``pickle.dumps()`` (or ``dill.dumps``)
 
-    **Example**::
+    **Examples**::
 
-        myobj = ['this', 'is', 'a', 'weird', {'object':44}]
-        sc.save('myfile.obj', myobj)
-        sc.save('myfile.obj', myobj, method='dill') # Use dill instead, to save custom classes as well
+        # Standard usage
+        my_obj = ['this', 'is', 'my', 'custom', {'object':44}]
+        sc.save('myfile.obj', my_obj)
+        loaded = sc.load('myfile.obj')
+        assert loaded == my_obj
+        
+        # Use dill instead, to save custom classes as well
+        class MyClass:
+            def __init__(self, x):
+                self.data = np.random.rand(100) + x
+            def sum(self):
+                return self.data.sum()
+        my_class = MyClass(10)
+        
+        sc.save('my_class.obj', my_class, method='dill', compression='zstd')
+        loaded = sc.load('my_class.obj') # With dill, can be loaded anywhere, not just in the same script
+        assert loaded.sum() == my_class.sum()
+    
+    See also :func:`zsave()` (identical except defaults to zstandard compression).
 
     | New in version 1.1.1: removed Python 2 support.
     | New in version 1.2.2: automatic swapping of arguments if order is incorrect; correct passing of arguments
@@ -2024,11 +2053,11 @@ def _remap_module(remapping, module_name, name):
     return obj
 
 
-class _RobustUnpickler(pkl.Unpickler):
+class _RobustUnpickler(dill.Unpickler):
     ''' Try to import an object, and if that fails, return a Failed object rather than crashing '''
 
     def __init__(self, bytesio, fix_imports=True, encoding="latin1", errors="ignore", remapping=None):
-        pkl.Unpickler.__init__(self, bytesio, fix_imports=fix_imports, encoding=encoding, errors=errors)
+        super().__init__(bytesio, fix_imports=fix_imports, encoding=encoding, errors=errors)
         self.remapping = scu.mergedicts(remapping)
         return
 
@@ -2037,33 +2066,25 @@ class _RobustUnpickler(pkl.Unpickler):
         return obj
 
 
-class _UltraRobustUnpickler(pkl.Unpickler): # pragma: no cover
+class _UltraRobustUnpickler(dill.Unpickler): # pragma: no cover
     ''' If all else fails, just make a default object '''
 
     def __init__(self, bytesio, *args, fix_imports=True, encoding="latin1", errors="ignore", 
                  remapping=None, unpicklingerrors=None):
-        pkl.Unpickler.__init__(self, bytesio, fix_imports=fix_imports, encoding=encoding, errors=errors)
+        super().__init__(bytesio, fix_imports=fix_imports, encoding=encoding, errors=errors)
         self.remapping = scu.mergedicts(remapping)
         self.unpicklingerrors = unpicklingerrors if unpicklingerrors is not None else []
         return
 
     def find_class(self, module_name, name):
         ''' Ignore all attempts to use the actual class and always make a UniversalFailed class '''
-        error = scu.strjoin(self.unpicklingerrors)
-        exception = self.unpicklingerrors
-        obj = makefailed(module_name=module_name, name=name, error=error, exception=exception, universal=True)
+        try:
+            obj = _remap_module(self.remapping, module_name, name)
+        except:
+            error = scu.strjoin(self.unpicklingerrors)
+            exception = self.unpicklingerrors
+            obj = makefailed(module_name=module_name, name=name, error=error, exception=exception, universal=True)
         return obj
-
-    # def find_class(self, module_name, name, verbose=True):
-    #     ''' Ignore all attempts to use the actual class and always make a UniversalFailed class '''
-    #     try:
-    #         obj = _remap_module(self.remapping, module_name, name)
-    #     except Exception as E:
-    #         if verbose: print(f'Unpickling warning: could not import {module_name}.{name}: {str(E)}')
-    #         error = scu.strjoin(self.unpicklingerrors)
-    #         exception = self.unpicklingerrors
-    #         obj = makefailed(module_name=module_name, name=name, error=error, exception=exception, universal=True)
-    #     return obj
 
 
 def _unpickler(string=None, filename=None, filestring=None, die=None, verbose=False, remapping=None, method='pickle', auto_remap=True, **kwargs):
@@ -2082,7 +2103,6 @@ def _unpickler(string=None, filename=None, filestring=None, die=None, verbose=Fa
         if method == 'pickle':
             obj = pkl.loads(string, **kwargs) # Actually load it -- main usage case
         elif method == 'dill':
-            import dill # Optional Sciris dependency
             obj = dill.loads(string, **kwargs) # Actually load it, with dill
         else:
             errormsg = f'Method "{method}" not recognized, must be pickle or dill'
@@ -2110,7 +2130,7 @@ def _unpickler(string=None, filename=None, filestring=None, die=None, verbose=Fa
                             except Exception as E3b:
                                 from . import sc_versioning as scv # Here to avoid circular import
                                 remapping = scu.mergedicts(remapping)
-                                known = scv.known_remappings()
+                                known = scv.known_deprecations()
                                 errstr = str(E3b)
                                 if errstr in known and auto_remap:
                                     remapping.update(known[errstr]['fix'])
@@ -2149,9 +2169,5 @@ def _savepickle(fileobj=None, obj=None, protocol=None, **kwargs):
 
 def _savedill(fileobj=None, obj=None, **kwargs): # pragma: no cover
     ''' Use dill to do the sour work (note: this function is not actively maintained) '''
-    try:
-        import dill # Optional Sciris dependency
-    except ModuleNotFoundError as e:
-        raise ModuleNotFoundError('The "dill" Python package is not available; please install manually') from e
     fileobj.write(dill.dumps(obj, protocol=-1, **kwargs))
     return
