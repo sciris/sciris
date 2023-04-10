@@ -1057,25 +1057,56 @@ def elapsedtimestr(pasttime, maxdays=5, minseconds=10, shortmonths=True):
 
     return time_str
 
+# Calculate how much overhead there is for a single call to time.sleep() on this machine
+_start = time.time()
+time.sleep(1e-12)
+_end = time.time()
+_sleep_overhead = (_end - _start)*3
+print(_sleep_overhead)
+del _start, _end
 
-def timedsleep(delay=None, start=None, verbose=True):
+def timedsleep(delay=None, start=None, verbose=False):
     '''
-    Delay for a certain amount of time, to ensure accurate timing.
+    Pause for the specified amount of time, taking into account how long other
+    operations take.
+    
+    This function is usually used in a loop; it works like ``time.sleep()``, but 
+    subtracts time taken by the other operations in the loop so that each loop
+    iteration takes exactly ``delay`` amount of time.
 
     Args:
         delay (float): time, in seconds, to wait for
         start (float): if provided, the start time
-        verbose (bool): whether to print activity
+        verbose (bool): whether to print details
 
-    **Example**::
+    **Examples**::
 
+        # Example for a long(ish) computation
+        import numpy as np
         for i in range(10):
             sc.timedsleep('start') # Initialize
-            for j in range(int(1e6)):
-                tmp = pl.rand()
-            sc.timedsleep(1) # Wait for one second including computation time
+            n = int(2*np.random.rand()*1e6) # Variable computation time
+            for j in range(n):
+                tmp = np.random.rand()
+            sc.timedsleep(1, verbose=True) # Wait for one second per iteration including computation time
+        
+        
+        # Example illustrating more accurate timing
+        import time
+        n = 10000
+
+        with sc.timer():
+            for i in range(n):
+                sc.timedsleep(1/n)
+        # Elapsed time: 1.04 s
+
+        with sc.timer():
+            for i in range(n):
+                time.sleep(1/n)
+        # Elapsed time: 1.59 s
+    
+    New in version 2.2.0: "verbose" False by default; more accurate overhead calculation
     '''
-    self_time = 0.00012 # Roughly how long this function itself takes to run -- slightly underestimate
     global _delaytime
     if delay is None or delay=='start':
         _delaytime = time.time()  # Store the present time in the global.
@@ -1085,16 +1116,15 @@ def timedsleep(delay=None, start=None, verbose=True):
             try:    start = _delaytime
             except: start = time.time()
         elapsed = time.time() - start
-        remaining = delay - elapsed
-        if remaining>0:
+        remaining = delay - elapsed - _sleep_overhead
+        if remaining > 0:
             if verbose:
                 print(f'Pausing for {remaining:0.1f} s')
-            time.sleep(remaining - self_time)
+            time.sleep(remaining)
             try:    del _delaytime # After it's been used, we can't use it again
             except: pass
-        else:
-            if verbose:
-                print(f'Warning, delay less than elapsed time ({delay:0.1f} vs. {elapsed:0.1f})')
+        elif verbose:
+            print(f'Warning, delay less than elapsed time ({delay:0.1f} vs. {elapsed:0.1f})')
     return
 
 

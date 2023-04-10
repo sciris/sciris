@@ -14,6 +14,7 @@ import io
 import os
 import sys
 import time
+import tqdm
 import pprint
 import numpy as np
 import collections as co
@@ -1043,12 +1044,16 @@ def percentcomplete(step=None, maxsteps=None, stepsize=1, prefix=None):
     return
 
 
-def progressbar(i, maxiters, label='', every=1, length=30, empty='—', full='•', newline=False):
+def progressbar(i, maxiters=None, label='', every=1, length=30, empty='—', full='•', newline=False, **kwargs):
     '''
-    Call in a loop to create terminal progress bar.
+    Show a progress bar for a for loop.
+    
+    It can be called manually inside each iteration of the loop, or it can be used 
+    to wrap the object being iterated. In the latter case, it acts as an alias 
+    for ``tqdm.tqdm()``.
 
     Args:
-        i        (int): current iteration
+        i        (int/iterable): current iteration, or iterable object
         maxiters (int): maximum number of iterations (can also use an object with length)
         label    (str): initial label to print
         every    (int/float): if int, print every "every"th iteration (if 1, print all); if float and <1, print every maxiters*every iteration
@@ -1056,22 +1061,33 @@ def progressbar(i, maxiters, label='', every=1, length=30, empty='—', full='�
         empty    (str): character for not-yet-completed steps
         full     (str): character for completed steps
         newline  (str): character to print at the end of the line (default none)
+        kwargs   (dict): passed to ``tqdm.tqdm()``
 
     **Examples**::
 
+        # Direct usage inside a loop
         for i in range(20):
             sc.progressbar(i+1, 20)
-            pl.pause(0.05)
+            sc.timedsleep(0.05)
+        
+        # Direct usage inside a loop with custom formatting
+        for i in range(2000):
+            sc.progressbar(i+1, 2000)
+            sc.timedsleep(0.001)
 
+        # Used to wrap an iterable
         x = np.arange(100)
-        for i in x:
-            sc.progressbar(i+1, x, every=0.1)
+        for i in sc.progressbar(x):
             pl.pause(0.01)
 
     Adapted from example by Greenstick (https://stackoverflow.com/questions/3173320/text-progress-bar-in-the-console)
 
-    New in version 1.3.3: "every" argument
+    | New in version 1.3.3: "every" argument
+    | New in version 2.2.0: wrapper for tqdm
     '''
+    if scu.isiterable(i):
+        return tqdm(i, **kwargs)
+    
     # Handle inputs
     if hasattr(maxiters, '__len__'):
         maxiters = len(maxiters)
