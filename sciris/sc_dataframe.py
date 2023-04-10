@@ -745,5 +745,5 @@ class dataframe(pd.DataFrame):
 
     @property
     def _constructor(self):
-        ''' Overload pandas method to ensure correct type '''
-        return dataframe
+        ''' Overload pandas method to ensure correct type; was ``pd.DataFrame()`` '''
+        return self.__class__ # To allow subclassing
