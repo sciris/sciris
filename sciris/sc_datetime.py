@@ -704,6 +704,7 @@ class timer:
         label (str): label identifying this timer
         auto (bool): whether to automatically increment the label
         start (bool): whether to start timing from object creation (else, call ``timer.tic()`` explicitly)
+        verbose (bool): whether to print output on each timing
         kwargs (dict): passed to ``toc()`` when invoked
 
 
@@ -735,12 +736,14 @@ class timer:
     | New in version 1.3.2: ``toc()`` passes label correctly; ``tt()`` method; ``auto`` argument
     | New in version 2.0.0: ``plot()`` method; ``total()`` method; ``indivtimings`` and ``cumtimings`` properties
     | New in version 2.1.0: ``total`` as property instead of method; updated repr; added disp() method
+    | New in version 2.2.0: ``verbose`` argument; ``sum, min, max, mean, std`` methods; ``rawtimings`` property
     '''
-    def __init__(self, label=None, auto=False, start=True, **kwargs):
+    def __init__(self, label=None, auto=False, start=True, verbose=True, **kwargs):
         from . import sc_odict as sco # Here to avoid circular import
         self.kwargs = kwargs # Store kwargs to pass to toc() at the end of the block
         self.kwargs['label'] = label
         self.auto = auto
+        self.verbose = verbose
         self._start = None
         self._tics = []
         self._tocs = []
@@ -815,7 +818,8 @@ class timer:
             kwargs['label'] = countlabel
 
         # Call again to get the correct output
-        output = toc(elapsed=self.elapsed, **kwargs)
+        doprint = kwargs.pop('doprint', self.verbose)
+        output = toc(elapsed=self.elapsed, doprint=doprint, **kwargs)
 
         # If reset was used, apply it
         if kwargs.get('reset'):
@@ -870,9 +874,15 @@ class timer:
     def tto(self, *args, output=True, **kwargs):
         ''' Alias for ``toctic()`` with output=True '''
         return self.toctic(*args, output=output, **kwargs)
+    
+    @property
+    def rawtimings(self):
+        ''' Return an array of timings '''
+        return self.timings[:]
 
     @property
     def indivtimings(self):
+        ''' Compute the individual time between each timing '''
         from . import sc_odict as sco # Here to avoid circular import
         vals = np.diff(scm.cat(self._tics[0], self._tocs))
         output = sco.odict(zip(self.timings.keys(), vals))
@@ -880,11 +890,51 @@ class timer:
 
     @property
     def cumtimings(self):
+        ''' Compute the cumulative time for each timing '''
         from . import sc_odict as sco # Here to avoid circular import
         vals = np.array(self._tocs) - self._tics[0]
         output = sco.odict(zip(self.timings.keys(), vals))
         return output
 
+    def sum(self):
+        '''
+        Sum of timings; similar to ``timer.total``
+        
+        New in version 2.2.0.
+        '''
+        return self.rawtimings.sum()
+    
+    def min(self):
+        '''
+        Minimum of timings
+        
+        New in version 2.2.0.
+        '''
+        return self.rawtimings.min()
+    
+    def max(self):
+        ''' 
+        Maximum of timings
+        
+        New in version 2.2.0.
+        '''
+        return self.rawtimings.max()
+    
+    def mean(self):
+        ''' 
+        Mean of timings
+        
+        New in version 2.2.0.
+        '''
+        return self.rawtimings.mean()
+    
+    def std(self):
+        ''' 
+        Standard deviation of timings
+        
+        New in version 2.2.0.
+        '''
+        return self.rawtimings.std()
 
     def plot(self, fig=None, figkwargs=None, grid=True, **kwargs):
         """
