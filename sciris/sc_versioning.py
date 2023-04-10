@@ -611,16 +611,16 @@ def savewithmetadata(filename, obj, folder=None, user=True, caller=True, git=Tru
     return scf.savezip(filename=filename, data=datadict, tobytes=False, **kwargs)
 
 
-def known_remappings(metadata=None):
+def known_deprecations(as_map=False):
     '''
-    List of known remappings between modules following deprecations.
+    Return a dictionary of known deprecations between module versions.
     
-    Usually invoked by ``sc.loadwithmetadata()``, rather than directly.
+    New deprecations will be added as they arise.
+    
+    Rarely used directly; invoked automatically by ``sc.load()`` if ``auto_remap=True``.
     
     Args:
-        metadata (dict): metadata for the saved object, as produced by ``sc.metadata()``
-        remapping (dict): any other remappings to include
-        show_known (bool): rather than doing the remapping, show all known remappings
+        as_map (bool): if True, return all known remappings without additional version data
     
     New in version 2.2.0.
     '''
@@ -634,27 +634,17 @@ def known_remappings(metadata=None):
                  fix = {'pandas.core.indexes.numeric.Int64Index':'pandas.core.indexes.api.Index'},
         ),
     }
-    if metadata is None:
+    if as_map:
+        remap = dict()
+        for entry in known.values():
+            remap.update(entry['fix'])
+        return remap
+    else:
         return known
-    
-    
-    remap = {}
-    
-    curr = freeze()
-    try:
-        orig = metadata['pipfreeze']
-    except Exception as E:
-        errormsg = f'Could not open metadata'
-        raise ValueError(errormsg) from E
-    
-    # Start populating the known remappings
-    
-    # remap = scu.mergedicts(remap, remapping) # Merge in any others
-    
-    return remap
 
 
-def loadwithmetadata(filename, folder=None, loadmetadata=False, remapping=None, die=True, **kwargs):
+
+def loadwithmetadata(filename, folder=None, loadobj=True, loadmetadata=False, remapping=None, die=True, **kwargs):
     '''
     Load a zip file saved with :func:`savewithmetadata()`.
     
@@ -665,10 +655,16 @@ def loadwithmetadata(filename, folder=None, loadmetadata=False, remapping=None, 
     Args:
         filename (str/path): the file load to (usually ends in .zip)
         folder (str): optional additional folder to load from
-        loadmetadata (bool): whether to load the metadata as well, returning a dict of both (else, just return the object)
+        loadobj (bool): whether to load the saved object
+        loadmetadata (bool): whether to load the metadata as well
         remapping (dict): any known module remappings between the saved pickle version and the current libraries (see ``sc.known_remappings()`` for examples)
         die (bool): whether to fail if an exception is raised (else, just return the metadata)
         kwargs (dict): passed to ``sc.load()``
+    
+    Returns:
+        If loadobj=True and loadmetadata=False, return the object;
+        If loadobj=False and loadmetadata=True, return the metadata
+        If loadobj=True and loadmetadata=True, return a dictionary of both
     
     **Example**::
         
@@ -689,6 +685,7 @@ def loadwithmetadata(filename, folder=None, loadmetadata=False, remapping=None, 
     '''
     filename = scf.makefilepath(filename=filename, folder=folder, makedirs=False)
     
+    # Open the zip file
     try:
         zf = ZipFile(filename, 'r')  # Create the zip file
     except Exception as E:
@@ -696,10 +693,10 @@ def loadwithmetadata(filename, folder=None, loadmetadata=False, remapping=None, 
         errormsg = 'Could not open zip file: ensure the filename is correct and of the right type; see error above for details'
         raise exc(errormsg) from E
    
+    # Read the zip file
+    obj = None
     with zf:
     
-        # !!! try known remappings
-        
         # Read in the strings
         try:
             metadatastr = zf.read(_metadata_filename)
@@ -716,34 +713,43 @@ def loadwithmetadata(filename, folder=None, loadmetadata=False, remapping=None, 
             raise ValueError(errormsg) from E
             
         # Now try loading the actual data
-        try:
-            datastr = zf.read(_obj_filename)
-        except Exception as E:
-            exc = type(E)
-            errormsg = f'Could not load object file "{_obj_filename}": are you sure this is a Sciris-versioned data zipfile? To debug using metadata, set die=False'
-            if die:
-                raise exc(errormsg) from E
-            else:
-                warnmsg = 'Exception encountered opening the object, returning metadata only'
-                warnings.warn(warnmsg, category=UserWarning, stacklevel=2)
-                return md
-            
-        # Convert into Python objects -- the most likely step where this can go wrong
-        remapping = known_remappings(remapping)
-        try:
-            obj = scf.loadstr(datastr, remapping=remapping, **kwargs)
-        except Exception as E:
-            exc = type(E)
-            errormsg = 'Could not unpickle the object: to debug using metadata, set die=False'
-            if die:
-                raise exc(errormsg) from E
-            else:
-                warnmsg = 'Exception encountered unpickling the object, returning metadata only'
-                warnings.warn(warnmsg, category=UserWarning, stacklevel=2)
-                return md
+        if loadobj:
+            try:
+                datastr = zf.read(_obj_filename)
+            except Exception as E:
+                exc = type(E)
+                errormsg = f'Could not load object file "{_obj_filename}": are you sure this is a Sciris-versioned data zipfile? To debug using metadata, set die=False'
+                if die:
+                    raise exc(errormsg) from E
+                else:
+                    warnmsg = 'Exception encountered opening the object, returning metadata only'
+                    warnings.warn(warnmsg, category=UserWarning, stacklevel=2)
+                    return md
+                
+            # Convert into Python objects -- the most likely step where this can go wrong
+            try:
+                obj = scf.loadstr(datastr, remapping=remapping, **kwargs) # Load with original remappings
+            except:
+                try:
+                    remapping = scu.mergedicts(remapping, known_deprecations(as_map=True))
+                    obj = scf.loadstr(datastr, remapping=remapping, **kwargs) # Load with all remappings
+                except Exception as E:
+                    exc = type(E)
+                    errormsg = 'Could not unpickle the object: to debug using metadata, set die=False'
+                    if die:
+                        raise exc(errormsg) from E
+                    else:
+                        warnmsg = 'Exception encountered unpickling the object, returning metadata only'
+                        warnings.warn(warnmsg, category=UserWarning, stacklevel=2)
+                        return md
 
-    if loadmetadata:
-        output = dict(metadata=md, obj=obj)
-        return output
-    else:
+    # Handle output
+    if loadobj and not loadmetadata:
         return obj
+    elif loadmetadata and not loadobj:
+        return md
+    elif loadmetadata and loadobj:
+        return dict(metadata=md, obj=obj)
+    else:
+        errormsg = 'No return value specified; you must load the object, metadata, or both'
+        raise ValueError(errormsg)
