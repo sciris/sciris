@@ -2044,16 +2044,23 @@ class _UltraRobustUnpickler(pkl.Unpickler): # pragma: no cover
         self.unpicklingerrors = unpicklingerrors if unpicklingerrors is not None else []
         return
 
-    def find_class(self, module_name, name, verbose=True):
+    def find_class(self, module_name, name):
         ''' Ignore all attempts to use the actual class and always make a UniversalFailed class '''
-        try:
-            obj = _remap_module(self.remapping, module_name, name)
-        except Exception as E:
-            if verbose: print(f'Unpickling warning: could not import {module_name}.{name}: {str(E)}')
-            error = scu.strjoin(self.unpicklingerrors)
-            exception = self.unpicklingerrors
-            obj = makefailed(module_name=module_name, name=name, error=error, exception=exception, universal=True)
+        error = scu.strjoin(self.unpicklingerrors)
+        exception = self.unpicklingerrors
+        obj = makefailed(module_name=module_name, name=name, error=error, exception=exception, universal=True)
         return obj
+
+    # def find_class(self, module_name, name, verbose=True):
+    #     ''' Ignore all attempts to use the actual class and always make a UniversalFailed class '''
+    #     try:
+    #         obj = _remap_module(self.remapping, module_name, name)
+    #     except Exception as E:
+    #         if verbose: print(f'Unpickling warning: could not import {module_name}.{name}: {str(E)}')
+    #         error = scu.strjoin(self.unpicklingerrors)
+    #         exception = self.unpicklingerrors
+    #         obj = makefailed(module_name=module_name, name=name, error=error, exception=exception, universal=True)
+    #     return obj
 
 
 def _unpickler(string=None, filename=None, filestring=None, die=None, verbose=False, remapping=None, method='pickle', auto_remap=True, **kwargs):

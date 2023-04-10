@@ -208,7 +208,7 @@ def test_saveload(doplot=doplot):
     comments = 'My figure'
     sc.savefig(fn.png2, fig=fig, comments=comments, freeze=True)
     md2 = sc.loadmetadata(fn.png2)
-    assert md2['modules']['numpy'] == np.__version__ # Check version information was stored correctly
+    assert md2['pipfreeze']['numpy'] == np.__version__ # Check version information was stored correctly
     assert md2['comments'] == comments
 
     # Should print a warning

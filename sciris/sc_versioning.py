@@ -426,7 +426,7 @@ def metadata(outfile=None, comments=None, pipfreeze=True, user=True, caller=True
         ),
         calling_info = calling_info if caller else None,
         git_info     = dict_fn(gitinfo(calling_info['filename'], die=False, verbose=False)) if git else None,
-        pip_freeze   = freeze() if pipfreeze else None,
+        pipfreeze    = freeze() if pipfreeze else None,
         comments     = comments,
     )
     
@@ -642,7 +642,7 @@ def known_remappings(metadata=None):
     
     curr = freeze()
     try:
-        orig = metadata['pip_freeze']
+        orig = metadata['pipfreeze']
     except Exception as E:
         errormsg = f'Could not open metadata'
         raise ValueError(errormsg) from E
