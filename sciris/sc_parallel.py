@@ -106,8 +106,8 @@ class Parallel:
     
     def __repr__(self):
         ''' Brief representation of the object '''
-        labelstr = f'"{self.label}"' if self.label else '<no label>'
-        string   = f'Parallel({labelstr}; njobs={self.njobs}; ncpus={self.ncpus}; method={self.method}; run={self.already_run})'
+        labelstr = f'"{self.label}; "' if self.label else ''
+        string   = f'Parallel({labelstr}njobs={self.njobs}; ncpus={self.ncpus}; method={self.method}; run={self.already_run})'
         return string
     
     
@@ -326,8 +326,16 @@ class Parallel:
         # Create the pool and initialize results
         self.make_pool()
         
+        # def f(*args, **kwargs):
+        #     return 'foo'
+        # al = [1,2,3]
+        
         # Standard use case: the pool exists
+        # print(argslist)
         if self.pool:
+            # self.jobs = self.pool.map_async(_task, argslist)
+            # self.jobs = self.pool.map_async(f, al)
+            # self.jobs = self.pool.map_async(f, argslist)
             self.jobs = self.pool.map_async(_task, argslist)
         
         # Handle serial or custom parallelizers
@@ -343,15 +351,15 @@ class Parallel:
         # Store the pool; do not store the output list here
         self.already_run = True
         
-        return self
+        return
 
 
     def get(self):
         ''' Get results from the jobs '''
         if hasattr(self.jobs, 'get'):
-            if self.pool:
-                with self.pool:
-                    self.results = list(self.jobs.get())
+            self.results = list(self.jobs.get())
+        if self.pool:
+            self.pool.terminate()
         return
     
     
@@ -610,8 +618,11 @@ def _task(taskargs, outputqueue=None):
         taskargs.callback(data)
 
     # Handle output
+    print('zzz', output)
     if outputqueue:
         outputqueue.put((index,output))
         return
     else:
         return output
+    
+    # return 'foo'
