@@ -50,7 +50,8 @@ class Parallel:
     '''
     def __init__(self, func, iterarg=None, iterkwargs=None, args=None, kwargs=None, ncpus=None, 
                  maxcpu=None, maxmem=None, interval=None, parallelizer=None, serial=False, 
-                 returnpool=False, progress=False, callback=None, die=True, **func_kwargs):
+                 returnpool=False, progress=False, callback=None, label=None, use_async=True,
+                 die=True, **func_kwargs):
         
         # Store input arguments
         self.func         = func
@@ -67,10 +68,12 @@ class Parallel:
         self.returnpool   = returnpool
         self.progress     = progress
         self.callback     = callback
+        self.label        = label
+        self.use_async    = use_async
         self.die          = die
         
         # Pre-allocate other results
-        self.niters       = None
+        self.njobs       = None
         self.embarrassing = None
         self.argslist     = None
         self.outputlist   = None
@@ -82,11 +85,16 @@ class Parallel:
     
     
     def __repr__(self):
+        # Set label string
+        labelstr = f'"{self.label}"' if self.label else '<no label>'
+        string   = f'Parallel({labelstr}; {start} to {end}; pop: {pop_size:n} {pop_type}; epi: {results})'
+
         return 'TODO'
     
     
     def disp(self):
-        return scp.prepr(self)
+        ''' Display the full representation of the object '''
+        return scp.pr(self)
         
     
     def configure(self):
@@ -146,7 +154,7 @@ class Parallel:
         ''' Handle iterarg and iterkwargs '''
         iterarg = self.iterarg
         iterkwargs = self.iterkwargs
-        niters = 0
+        njobs = 0
         embarrassing = False # Whether or not it's an embarrassingly parallel optimization
         
         # Check that only one was provided
@@ -163,7 +171,7 @@ class Parallel:
                 except Exception as E: # pragma: no cover
                     errormsg = f'Could not understand iterarg "{iterarg}": not iterable and not an integer: {str(E)}'
                     raise TypeError(errormsg)
-            niters = len(iterarg)
+            njobs = len(iterarg)
             
         # Validate iterkwargs
         if iterkwargs is not None: 
@@ -173,15 +181,15 @@ class Parallel:
                     if not scu.isiterable(val): # pragma: no cover
                         errormsg = f'iterkwargs entries must be iterable, not {type(val)}'
                         raise TypeError(errormsg)
-                    if not niters:
-                        niters = len(val)
+                    if not njobs:
+                        njobs = len(val)
                     else:
-                        if len(val) != niters: # pragma: no cover
-                            errormsg = f'All iterkwargs iterables must be the same length, not {niters} vs. {len(val)}'
+                        if len(val) != njobs: # pragma: no cover
+                            errormsg = f'All iterkwargs iterables must be the same length, not {njobs} vs. {len(val)}'
                             raise ValueError(errormsg)
             
             elif isinstance(iterkwargs, list): # It's a list of dicts, e.g. [{'x':1, 'y':2}, {'x':2, 'y':3}, {'x':3, 'y':4}]
-                niters = len(iterkwargs)
+                njobs = len(iterkwargs)
                 for item in iterkwargs:
                     if not isinstance(item, dict): # pragma: no cover
                         errormsg = f'If iterkwargs is a list, each entry must be a dict, not {type(item)}'
@@ -192,11 +200,11 @@ class Parallel:
                 raise TypeError(errormsg)
     
         # Final error checking
-        if niters == 0:
+        if njobs == 0:
             errormsg = 'Nothing found to parallelize: please supply an iterarg, iterkwargs, or both'
             raise ValueError(errormsg)
         else:
-            self.niters = niters
+            self.njobs = njobs
             self.embarrassing = embarrassing
             
         return
@@ -207,7 +215,7 @@ class Parallel:
         iterarg = self.iterarg
         iterkwargs = self.iterkwargs
         argslist = []
-        for index in range(self.niters):
+        for index in range(self.njobs):
             if iterarg is None:
                 iterval = None
             else:
@@ -224,7 +232,7 @@ class Parallel:
                 else:  # pragma: no cover # Should be caught by previous checking, so shouldn't happen
                     errormsg = f'iterkwargs type not understood ({type(iterkwargs)})'
                     raise TypeError(errormsg)
-            taskargs = TaskArgs(func=self.func, index=index, niters=self.niters, iterval=iterval, iterdict=iterdict,
+            taskargs = TaskArgs(func=self.func, index=index, njobs=self.njobs, iterval=iterval, iterdict=iterdict,
                                 args=self.args, kwargs=self.kwargs, maxcpu=self.maxcpu, maxmem=self.maxmem,
                                 interval=self.interval, embarrassing=self.embarrassing, callback=self.callback, 
                                 die=self.die)
@@ -263,28 +271,28 @@ class Parallel:
         if pname == 'serial':
             if 'copy' in parallelizer: # Niche use case of running without deepcopying
                 argslist = scu.dcp(argslist) # Need to deepcopy here, since effectively deecopied by other parallelization methods
-            outputlist = list(map(_parallel_task, argslist))
+            outputlist = list(map(_task, argslist))
         
         elif pname == 'multiprocess': # Main use case
             with mp.Pool(processes=ncpus) as pool:
-                outputlist = list(pool.map(_parallel_task, argslist))
+                outputlist = list(pool.map(_task, argslist))
         
         elif pname == 'multiprocessing':
             with mpi.Pool(processes=ncpus) as pool:
-                outputlist = pool.map(_parallel_task, argslist)
+                outputlist = pool.map(_task, argslist)
         
         elif pname == 'concurrent.futures':
             with cf.ProcessPoolExecutor(max_workers=ncpus) as pool:
-                outputlist = list(pool.map(_parallel_task, argslist))
+                outputlist = list(pool.map(_task, argslist))
         
         elif pname == 'thread':
             if 'copy' in parallelizer: # Niche use case of running without deepcopying
                 argslist = scu.dcp(argslist) # Also need to deepcopy here
             with cf.ThreadPoolExecutor(max_workers=ncpus) as pool:
-                outputlist = list(pool.map(_parallel_task, argslist))
+                outputlist = list(pool.map(_task, argslist))
 
         elif pname == 'custom':
-            outputlist = parallelizer(_parallel_task, argslist)
+            outputlist = parallelizer(_task, argslist)
             
         else: # Should be unreachable; exception should have already been caught
             errormsg = f'Invalid parallelizer "{parallelizer}"'
@@ -488,12 +496,13 @@ class TaskArgs(scu.prettyobj):
         '''
         A class to hold the arguments for the parallel task -- not to be invoked by the user.
 
-        Arguments and ordering must match both ``sc.parallelize()`` and ``sc._parallel_task()`` '''
-        def __init__(self, func, index, niters, iterval, iterdict, args, kwargs, 
+        Arguments must match both ``sc.parallelize()`` and ``sc._task()``
+        '''
+        def __init__(self, func, index, njobs, iterval, iterdict, args, kwargs, 
                      maxcpu, maxmem, interval, embarrassing, callback=None, die=True):
             self.func         = func         # The function being called
             self.index        = index        # The place in the queue
-            self.niters       = niters       # The total number of iterations
+            self.njobs        = njobs        # The total number of iterations
             self.iterval      = iterval      # The value being iterated (may be None if iterdict is not None)
             self.iterdict     = iterdict     # A dictionary of values being iterated (may be None if iterval is not None)
             self.args         = args         # Arguments passed directly to the function
@@ -507,7 +516,7 @@ class TaskArgs(scu.prettyobj):
             return
 
 
-def _parallel_task(taskargs, outputqueue=None):
+def _task(taskargs, outputqueue=None):
     ''' Task called by parallelize() -- not to be called directly '''
 
     # Handle inputs
@@ -545,7 +554,7 @@ def _parallel_task(taskargs, outputqueue=None):
     
     # Handle callback, if present
     if taskargs.callback:
-        data = dict(index=index, niters=taskargs.niters, args=args, kwargs=kwargs, output=output)
+        data = dict(index=index, njobs=taskargs.njobs, args=args, kwargs=kwargs, output=output)
         taskargs.callback(data)
 
     # Handle output
