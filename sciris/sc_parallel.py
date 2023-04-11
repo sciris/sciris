@@ -59,7 +59,7 @@ class Parallel:
         self.iterkwargs   = iterkwargs
         self.args         = args
         self.kwargs       = scu.mergedicts(kwargs, func_kwargs)
-        self.ncpus        = ncpus
+        self._ncpus       = ncpus # With a prefix since dynamically calculated later
         self.maxcpu       = maxcpu
         self.maxmem       = maxmem
         self.interval     = interval
@@ -72,40 +72,48 @@ class Parallel:
         self.use_async    = use_async
         self.die          = die
         
-        # Pre-allocate other results
-        self.njobs       = None
+        # Additional initialization
+        self.init()
+        return
+    
+    
+    def init(self):
+        '''
+        Perform all remaining initialization steps; this can safely be called after object creation
+        '''
+        self.reset()
+        self.set_defaults()
+        self.validate_args()
+        self.make_argslist()
+        self.set_ncpus()
+        self.set_method()
+        return
+    
+    
+    def reset(self):
+        ''' Reset to the pre-run state '''
+        self.ncpus        = None
+        self.njobs        = None
         self.embarrassing = None
         self.argslist     = None
+        self.method       = None
+        self.pool         = None
         self.outputlist   = None
         self.already_run  = False
-        
-        # Additional setup
-        self.configure()
         return
     
     
     def __repr__(self):
-        # Set label string
+        ''' Brief representation of the object '''
         labelstr = f'"{self.label}"' if self.label else '<no label>'
-        string   = f'Parallel({labelstr}; {start} to {end}; pop: {pop_size:n} {pop_type}; epi: {results})'
-
-        return 'TODO'
+        string   = f'Parallel({labelstr}; njobs={self.njobs}; ncpus={self.ncpus}; method={self.method}; run={self.already_run})'
+        return string
     
     
     def disp(self):
         ''' Display the full representation of the object '''
         return scp.pr(self)
         
-    
-    def configure(self):
-        '''
-        Perform all configuration steps; this can safely be called after initialization
-        '''
-        self.set_defaults()
-        self.set_balancer()
-        self.validate_iterable()
-        self.make_argslist()
-        return
     
     
     def set_defaults(self):
@@ -136,22 +144,8 @@ class Parallel:
         return
     
     
-    def set_balancer(self):
-        ''' Configure load balancer settings '''
-        maxload = self.kwargs.pop('maxload', None)
-        if maxload is not None: # pragma: no cover
-            self.maxcpu = maxload
-            warnmsg = 'sc.loadbalancer() argument "maxload" has been renamed "maxcpu" as of v2.0.0'
-            warnings.warn(warnmsg, category=FutureWarning, stacklevel=2)
-        if self.ncpus is None and self.maxcpu is None:
-            self.ncpus = scpro.cpu_count()
-        if self.ncpus is not None and self.ncpus < 1: # Less than one, treat as a fraction of total
-            self.ncpus = int(scpro.cpu_count()*self.ncpus)
-        return
-    
-    
-    def validate_iterable(self):
-        ''' Handle iterarg and iterkwargs '''
+    def validate_args(self):
+        ''' Validate iterarg and iterkwargs '''
         iterarg = self.iterarg
         iterkwargs = self.iterkwargs
         njobs = 0
@@ -241,57 +235,89 @@ class Parallel:
         self.argslist = argslist
         return
     
+    
+    def set_ncpus(self):
+        ''' Configure number of CPUs '''
+        
+        # Handle maxload deprecation
+        maxload = self.kwargs.pop('maxload', None)
+        if maxload is not None: # pragma: no cover
+            self.maxcpu = maxload
+            warnmsg = 'sc.loadbalancer() argument "maxload" has been renamed "maxcpu" as of v2.0.0'
+            warnings.warn(warnmsg, category=FutureWarning, stacklevel=2)
+        
+        # Handle number of CPUs
+        ncpus = self._ncpus # Copy, then process
+        sys_cpus = scpro.cpu_count()
+        if not ncpus: # Nothing is supplied (None or 0), calculate dynamically
+            ncpus = sys_cpus
+        elif ncpus < 1: # Less than one, treat as a fraction of total
+            ncpus = int(np.ceil(sys_cpus*ncpus))
+        ncpus = min(ncpus, self.njobs) # Don't use more CPUs than there are things to process
+        
+        # Check and set CPUs
+        if not ncpus:
+            errormsg = f'No CPUs to run on with inputs ncpus={self._ncpus}, system CPUs={sys_cpus}, number of jobs={self.njobs}'
+            raise ValueError(errormsg)
+        self.ncpus = ncpus
+        return
+    
+    
+    def set_method(self):
+        ''' Choose which method to use for parallelization '''
+        
+        # Handle the choice of parallelizer
+        parallelizer = self.parallelizer
+        if self.serial: # This is a separate keyword argument, but make it consistent
+            parallelizer = 'serial'
+        
+        if parallelizer is None or scu.isstring(parallelizer):
+            try:
+                self.method = self.defaults.mapping[parallelizer]
+            except:
+                errormsg = f'Parallelizer "{parallelizer}" not found: must be one of {scu.strjoin(self.defaults.mapping.keys())}'
+                raise scu.KeyNotFoundError(errormsg)
+        else:
+            self.method = 'custom' # If a custom parallelizer is provided
+        
+        return
+    
         
     def run_parallel(self):
         ''' Choose how to run in parallel, and do it '''
         
-        # Shorten common variables
+        # Shorten variables
         ncpus = self.ncpus
+        method = self.method
         parallelizer = self.parallelizer
         argslist = self.argslist
         
-        # Handle number of CPUs
-        if ncpus is not None:
-            ncpus = min(ncpus, len(self.argslist)) # Don't use more CPUs than there are things to process
-        if self.serial: # This is a separate keyword argument, but make it consistent
-            self.parallelizer = 'serial'
-            
-        # Handle the choice of parallelizer
-        if self.parallelizer is None or scu.isstring(self.parallelizer):
-            try:
-                pname = self.defaults.mapping[self.parallelizer]
-            except:
-                errormsg = f'Parallelizer "{self.parallelizer}" not found: must be one of {scu.strjoin(self.defaults.mapping.keys())}'
-                raise scu.KeyNotFoundError(errormsg)
-        else:
-            pname = 'custom' # If a custom parallelizer is provided
-        
         # Choose which parallelizer to use
         pool = None
-        if pname == 'serial':
+        if method == 'serial':
             if 'copy' in parallelizer: # Niche use case of running without deepcopying
                 argslist = scu.dcp(argslist) # Need to deepcopy here, since effectively deecopied by other parallelization methods
             outputlist = list(map(_task, argslist))
         
-        elif pname == 'multiprocess': # Main use case
+        elif method == 'multiprocess': # Main use case
             with mp.Pool(processes=ncpus) as pool:
                 outputlist = list(pool.map(_task, argslist))
         
-        elif pname == 'multiprocessing':
+        elif method == 'multiprocessing':
             with mpi.Pool(processes=ncpus) as pool:
                 outputlist = pool.map(_task, argslist)
         
-        elif pname == 'concurrent.futures':
+        elif method == 'concurrent.futures':
             with cf.ProcessPoolExecutor(max_workers=ncpus) as pool:
                 outputlist = list(pool.map(_task, argslist))
         
-        elif pname == 'thread':
+        elif method == 'thread':
             if 'copy' in parallelizer: # Niche use case of running without deepcopying
                 argslist = scu.dcp(argslist) # Also need to deepcopy here
             with cf.ThreadPoolExecutor(max_workers=ncpus) as pool:
                 outputlist = list(pool.map(_task, argslist))
 
-        elif pname == 'custom':
+        elif method == 'custom':
             outputlist = parallelizer(_task, argslist)
             
         else: # Should be unreachable; exception should have already been caught
@@ -300,6 +326,7 @@ class Parallel:
         
         # Store the pool; do not store the output list here
         self.pool = pool
+        self.already_run = True
         
         return outputlist
     
@@ -318,6 +345,7 @@ class Parallel:
     
         # Tidy up
         return self.outputlist
+    
     
 
 
@@ -340,10 +368,9 @@ def parallelize(func, iterarg=None, iterkwargs=None, args=None, kwargs=None, ncp
     Any other kwargs passed to ``sc.parallelize()`` will also be passed to the function.
 
     This function can either use a fixed number of CPUs or allocate dynamically
-    based on load. If ``ncpus`` is ``None`` and ``maxcpu`` is ``None``, then it
-    will use the number of CPUs returned by ``multiprocessing``; if ``ncpus`` is
-    not ``None``, it will use the specified number of CPUs; if ``ncpus`` is ``None``
-    and ``maxcpu`` is not ``None``, it will allocate the number of CPUs dynamically.
+    based on load. If ``ncpus`` is ``None``, then it will allocate the number of 
+    CPUs dynamically. Memory (``maxmem``) and CPU load (``maxcpu``) limits can also
+    be specified.
 
     Args:
         func         (func)      : the function to parallelize
