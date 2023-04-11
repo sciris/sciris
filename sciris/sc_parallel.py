@@ -353,16 +353,10 @@ class Parallel:
         
         # Standard use case: the pool exists
         try:
-            # if self.pool: # Act as if we're in a with block
-            #     self.pool.__enter__()
             self._running = True
             output = self.map_func(_task, argslist)
         except Exception as E:
             raise E
-        # finally:
-        #     self._running = False
-        #     if self.pool: # Act as if we're in a with block
-        #         self.pool.__exit__(None, None, None)
         
         # Store the pool; do not store the output list here
         if self.is_async:
