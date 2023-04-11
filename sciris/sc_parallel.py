@@ -19,6 +19,11 @@ from . import sc_printing as scp
 from . import sc_profiling as scpro
 
 
+def f(*args, **kwargs):
+    return 'bar'
+
+
+
 ##############################################################################
 #%% Parallelization class
 ##############################################################################
@@ -327,9 +332,6 @@ class Parallel:
                     raise ValueError(errormsg)
         self.is_async = is_async
         
-        def f(*args, **kwargs):
-            return 'bar'
-        
         _task = f
         argslist  = [1,2,3,4]
             
@@ -340,13 +342,17 @@ class Parallel:
         
         elif method == 'multiprocess': # Main use case
             with mp.Pool(processes=ncpus) as pool:
-                map_func = pool.map_async if is_async else pool.map
-                output = map_func(_task, argslist)
+                if is_async:
+                    output = pool.map_async(_task, argslist)
+                else:
+                    output = pool.map(_task, argslist)
         
         elif method == 'multiprocessing':
             with mpi.Pool(processes=ncpus) as pool:
-                map_func = pool.map_async if is_async else pool.map
-                output = map_func(_task, argslist)
+                if is_async:
+                    output = pool.map_async(_task, argslist)
+                else:
+                    output = pool.map(_task, argslist)
         
         elif method == 'concurrent.futures':
             with cf.ProcessPoolExecutor(max_workers=ncpus) as pool:
@@ -354,8 +360,7 @@ class Parallel:
         
         elif method == 'thread':
             with cf.ThreadPoolExecutor(max_workers=ncpus) as pool:
-                map_func = pool.map_async if is_async else pool.map
-                output = map_func(_task, argslist)
+                output = pool.map(_task, argslist)
         
         elif method == 'custom':
             pool = None
