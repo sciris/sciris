@@ -50,7 +50,7 @@ class Parallel:
     '''
     def __init__(self, func, iterarg=None, iterkwargs=None, args=None, kwargs=None, ncpus=None, 
                  maxcpu=None, maxmem=None, interval=None, parallelizer=None, serial=False, 
-                 returnpool=False, progress=False, callback=None, label=None, use_async=True,
+                 returnpool=False, progress=False, callback=None, label=None, use_async=False,
                  die=True, **func_kwargs):
         
         # Store input arguments
@@ -98,7 +98,8 @@ class Parallel:
         self.argslist     = None
         self.method       = None
         self.pool         = None
-        self.outputlist   = None
+        self.jobs         = None
+        self.results      = None
         self.already_run  = False
         return
     
@@ -266,11 +267,12 @@ class Parallel:
     def set_method(self):
         ''' Choose which method to use for parallelization '''
         
-        # Handle the choice of parallelizer
-        parallelizer = self.parallelizer
-        if self.serial: # This is a separate keyword argument, but make it consistent
+        # This is a separate keyword argument for convenience, but is equivalent to paralellizer='serial'
+        if self.serial: 
             parallelizer = 'serial'
         
+        # Handle the choice of parallelizer
+        parallelizer = self.parallelizer
         if parallelizer is None or scu.isstring(parallelizer):
             try:
                 self.method = self.defaults.mapping[parallelizer]
@@ -282,59 +284,82 @@ class Parallel:
         
         return
     
-        
-    def run_parallel(self):
-        ''' Choose how to run in parallel, and do it '''
+    
+    def make_pool(self):
+        ''' Make the pool '''
         
         # Shorten variables
         ncpus = self.ncpus
         method = self.method
-        parallelizer = self.parallelizer
-        argslist = self.argslist
-        
-        # Choose which parallelizer to use
         pool = None
-        if method == 'serial':
-            if 'copy' in parallelizer: # Niche use case of running without deepcopying
-                argslist = scu.dcp(argslist) # Need to deepcopy here, since effectively deecopied by other parallelization methods
-            outputlist = list(map(_task, argslist))
         
-        elif method == 'multiprocess': # Main use case
-            with mp.Pool(processes=ncpus) as pool:
-                outputlist = list(pool.map(_task, argslist))
+        if method == 'multiprocess': # Main use case
+            pool = mp.Pool(processes=ncpus)
         
         elif method == 'multiprocessing':
-            with mpi.Pool(processes=ncpus) as pool:
-                outputlist = pool.map(_task, argslist)
+            pool = mpi.Pool(processes=ncpus)
         
         elif method == 'concurrent.futures':
-            with cf.ProcessPoolExecutor(max_workers=ncpus) as pool:
-                outputlist = list(pool.map(_task, argslist))
+            pool = cf.ProcessPoolExecutor(max_workers=ncpus)
         
         elif method == 'thread':
-            if 'copy' in parallelizer: # Niche use case of running without deepcopying
-                argslist = scu.dcp(argslist) # Also need to deepcopy here
-            with cf.ThreadPoolExecutor(max_workers=ncpus) as pool:
-                outputlist = list(pool.map(_task, argslist))
-
-        elif method == 'custom':
-            outputlist = parallelizer(_task, argslist)
-            
-        else: # Should be unreachable; exception should have already been caught
-            errormsg = f'Invalid parallelizer "{parallelizer}"'
-            raise ValueError(errormsg)
+            pool = cf.ThreadPoolExecutor(max_workers=ncpus)
+        
+        # Reset
+        self.pool    = pool
+        self.jobs    = None
+        self.results = None
+        
+        return
+        
+    
+    
+    def run_async(self):
+        ''' Choose how to run in parallel, and do it '''
+        
+        # Force deepcopying for serial or thread arguments
+        if scu.isstring(self.parallelizer) and 'copy' in self.parallelizer: 
+            argslist = scu.dcp(self.argslist, die=self.die)
+        else:
+            argslist = self.argslist
+        
+        # Create the pool and initialize results
+        self.make_pool()
+        
+        # Standard use case: the pool exists
+        if self.pool:
+            self.jobs = self.pool.map_async(_task, argslist)
+        
+        # Handle serial or custom parallelizers
+        else:
+            if self.method == 'serial':
+                self.results = list(map(_task, argslist))
+            elif self.method == 'custom':
+                self.results = self.parallelizer(_task, argslist)
+            else: # Should be unreachable; exception should have already been caught
+                errormsg = f'Invalid parallelizer "{self.parallelizer}"'
+                raise ValueError(errormsg)
         
         # Store the pool; do not store the output list here
-        self.pool = pool
         self.already_run = True
         
-        return outputlist
+        return self
+
+
+    def get(self):
+        ''' Get results from the jobs '''
+        if hasattr(self.jobs, 'get'):
+            if self.pool:
+                with self.pool:
+                    self.results = list(self.jobs.get())
+        return
     
     
     def run(self):
         ''' Actually run the parallelization '''
         try:
-            self.outputlist = self.run_parallel()
+            self.run_async()
+            self.get()
             
         # Handle if run outside of __main__ on Windows
         except RuntimeError as E: # pragma: no cover
@@ -344,7 +369,7 @@ class Parallel:
                 raise E
     
         # Tidy up
-        return self.outputlist
+        return self
     
     
 
@@ -510,8 +535,8 @@ def parallelize(func, iterarg=None, iterkwargs=None, args=None, kwargs=None, ncp
                  progress=progress, callback=callback, die=die, **func_kwargs)
     
     # Run it
-    output = P.run()
-    return output
+    P.run()
+    return P.results
 
 
 
