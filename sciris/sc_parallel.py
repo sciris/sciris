@@ -14,7 +14,8 @@ import multiprocess as mp
 import multiprocessing as mpi
 import concurrent.futures as cf
 from . import sc_utils as scu
-from . import sc_profiling as scp
+from . import sc_printing as scp
+from . import sc_profiling as scpro
 
 
 ##############################################################################
@@ -67,12 +68,64 @@ class Parallel:
         self.callback     = callback
         self.die          = die
         
+        # Pre-allocate other results
+        self.niters       = None
+        self.embarrassing = None
+        self.argslist     = None
+        self.outputlist   = None
+        self.already_run  = False
+        
         # Additional setup
+        self.configure()
+        return
+    
+    
+    def __repr__(self):
+        return 'TODO'
+    
+    
+    def disp(self):
+        return scp.prepr(self)
+        
+    
+    def configure(self):
+        '''
+        Perform all configuration steps; this can safely be called after initialization
+        '''
+        self.set_defaults()
         self.set_balancer()
-        self.set_iterargs()
+        self.validate_iterable()
+        self.make_argslist()
+        return
+    
+    
+    def set_defaults(self):
+        ''' Define defaults for parallelization '''
+        self.defaults = scu.objdict()
+        
+        # Define default parallelizers
+        self.defaults.fast   = 'concurrent.futures'
+        self.defaults.robust = 'multiprocess'
+        
+        # Map parallelizer to consistent choices
+        self.defaults.mapping = {
+            None                 : self.defaults.robust,
+            'default'            : self.defaults.robust,
+            'robust'             : self.defaults.robust,
+            'fast'               : self.defaults.fast,
+            'serial'             : 'serial',
+            'serial-copy'        : 'serial',
+            'concurrent.futures' : 'concurrent.futures',
+            'concurrent'         : 'concurrent.futures',
+            'multiprocess'       : 'multiprocess',
+            'multiprocessing'    : 'multiprocessing',
+            'thread'             : 'thread',
+            'threadpool'         : 'thread',
+            'thread-copy'        : 'thread',
+        }
         
         return
-        
+    
     
     def set_balancer(self):
         ''' Configure load balancer settings '''
@@ -82,19 +135,25 @@ class Parallel:
             warnmsg = 'sc.loadbalancer() argument "maxload" has been renamed "maxcpu" as of v2.0.0'
             warnings.warn(warnmsg, category=FutureWarning, stacklevel=2)
         if self.ncpus is None and self.maxcpu is None:
-            self.ncpus = scp.cpu_count()
+            self.ncpus = scpro.cpu_count()
         if self.ncpus is not None and self.ncpus < 1: # Less than one, treat as a fraction of total
-            self.ncpus = int(scp.cpu_count()*self.ncpus)
+            self.ncpus = int(scpro.cpu_count()*self.ncpus)
         return
     
     
-    def set_iterargs(self):
+    def validate_iterable(self):
         ''' Handle iterarg and iterkwargs '''
+        iterarg = self.iterarg
+        iterkwargs = self.iterkwargs
         niters = 0
         embarrassing = False # Whether or not it's an embarrassingly parallel optimization
+        
+        # Check that only one was provided
         if iterarg is not None and iterkwargs is not None: # pragma: no cover
             errormsg = 'You can only use one of iterarg or iterkwargs as your iterable, not both'
             raise ValueError(errormsg)
+        
+        # Validate iterarg
         if iterarg is not None:
             if not(scu.isiterable(iterarg)):
                 try:
@@ -104,7 +163,10 @@ class Parallel:
                     errormsg = f'Could not understand iterarg "{iterarg}": not iterable and not an integer: {str(E)}'
                     raise TypeError(errormsg)
             niters = len(iterarg)
-        if iterkwargs is not None: # Check that iterkwargs has the right format
+            
+        # Validate iterkwargs
+        if iterkwargs is not None: 
+            
             if isinstance(iterkwargs, dict): # It's a dict of lists, e.g. {'x':[1,2,3], 'y':[2,3,4]}
                 for key,val in iterkwargs.items():
                     if not scu.isiterable(val): # pragma: no cover
@@ -116,28 +178,35 @@ class Parallel:
                         if len(val) != niters: # pragma: no cover
                             errormsg = f'All iterkwargs iterables must be the same length, not {niters} vs. {len(val)}'
                             raise ValueError(errormsg)
+            
             elif isinstance(iterkwargs, list): # It's a list of dicts, e.g. [{'x':1, 'y':2}, {'x':2, 'y':3}, {'x':3, 'y':4}]
                 niters = len(iterkwargs)
                 for item in iterkwargs:
                     if not isinstance(item, dict): # pragma: no cover
                         errormsg = f'If iterkwargs is a list, each entry must be a dict, not {type(item)}'
                         raise TypeError(errormsg)
+            
             else: # pragma: no cover
                 errormsg = f'iterkwargs must be a dict of lists, a list of dicts, or None, not {type(iterkwargs)}'
                 raise TypeError(errormsg)
     
+        # Final error checking
         if niters == 0:
             errormsg = 'Nothing found to parallelize: please supply an iterarg, iterkwargs, or both'
             raise ValueError(errormsg)
         else:
             self.niters = niters
             self.embarrassing = embarrassing
+            
         return
     
     
-        # Construct argument list
+    def make_argslist(self):
+        ''' Construct argument list '''
+        iterarg = self.iterarg
+        iterkwargs = self.iterkwargs
         argslist = []
-        for index in range(niters):
+        for index in range(self.niters):
             if iterarg is None:
                 iterval = None
             else:
@@ -154,90 +223,73 @@ class Parallel:
                 else:  # pragma: no cover # Should be caught by previous checking, so shouldn't happen
                     errormsg = f'iterkwargs type not understood ({type(iterkwargs)})'
                     raise TypeError(errormsg)
-            taskargs = TaskArgs(func=func, index=index, niters=niters, iterval=iterval, iterdict=iterdict,
-                                args=args, kwargs=kwargs, maxcpu=maxcpu, maxmem=maxmem,
-                                interval=interval, embarrassing=embarrassing, callback=callback,
-                                die=die)
+            taskargs = TaskArgs(func=self.func, index=index, niters=self.niters, iterval=iterval, iterdict=iterdict,
+                                args=self.args, kwargs=self.kwargs, maxcpu=self.maxcpu, maxmem=self.maxmem,
+                                interval=self.interval, embarrassing=self.embarrassing, callback=self.callback, 
+                                die=self.die)
             argslist.append(taskargs)
         
-        # Set up the run
-        pool = None # Defined here so it can be returned
+        self.argslist = argslist
+        return
+    
+        
+    def run_parallel(self, pname, parallelizer, argslist):
+        ''' Choose how to run in parallel, and do it '''
+        
+        # Handle number of CPUs
+        ncpus = self.ncpus
         if ncpus is not None:
-            ncpus = min(ncpus, len(argslist)) # Don't use more CPUs than there are things to process
-        if serial: # This is a separate keyword argument, but make it consistent
-            parallelizer = 'serial'
+            ncpus = min(ncpus, len(self.argslist)) # Don't use more CPUs than there are things to process
+        if self.serial: # This is a separate keyword argument, but make it consistent
+            self.parallelizer = 'serial'
             
         # Handle the choice of parallelizer
-        fast   = 'concurrent.futures'
-        robust = 'multiprocess'
-        if parallelizer is None or scu.isstring(parallelizer):
-    
-            # Map parallelizer to consistent choices
-            mapping = {
-                None                 : robust,
-                'default'            : robust,
-                'robust'             : robust,
-                'fast'               : fast,
-                'serial'             : 'serial',
-                'serial-nocopy'      : 'serial',
-                'concurrent.futures' : 'concurrent.futures',
-                'concurrent'         : 'concurrent.futures',
-                'multiprocess'       : 'multiprocess',
-                'multiprocessing'    : 'multiprocessing',
-                'thread'             : 'thread',
-                'threadpool'         : 'thread',
-                'thread-nocopy'      : 'thread',
-            }
+        if self.parallelizer is None or scu.isstring(self.parallelizer):
             try:
-                pname = mapping[parallelizer]
+                pname = self.defaults.mapping[self.parallelizer]
             except:
-                errormsg = f'Parallelizer "{parallelizer}" not found: must be one of {scu.strjoin(mapping.keys())}'
+                errormsg = f'Parallelizer "{self.parallelizer}" not found: must be one of {scu.strjoin(self.defaults.mapping.keys())}'
                 raise scu.KeyNotFoundError(errormsg)
         else:
             pname = 'custom' # If a custom parallelizer is provided
-            
         
-        def run_parallel(self, pname, parallelizer, argslist):
-            ''' Choose how to run in parallel '''
+        # Choose which parallelizer to use
+        pool = None
+        if pname == 'serial':
+            if 'copy' in parallelizer: # Niche use case of running without deepcopying
+                argslist = scu.dcp(argslist) # Need to deepcopy here, since effectively deecopied by other parallelization methods
+            outputlist = list(map(_parallel_task, argslist))
+        
+        elif pname == 'multiprocess': # Main use case
+            with mp.Pool(processes=ncpus) as pool:
+                outputlist = list(pool.map(_parallel_task, argslist))
+        
+        elif pname == 'multiprocessing':
+            with mpi.Pool(processes=ncpus) as pool:
+                outputlist = pool.map(_parallel_task, argslist)
+        
+        elif pname == 'concurrent.futures':
+            with cf.ProcessPoolExecutor(max_workers=ncpus) as pool:
+                outputlist = list(pool.map(_parallel_task, argslist))
+        
+        elif pname == 'thread':
+            if 'copy' in parallelizer: # Niche use case of running without deepcopying
+                argslist = scu.dcp(argslist) # Also need to deepcopy here
+            with cf.ThreadPoolExecutor(max_workers=ncpus) as pool:
+                outputlist = list(pool.map(_parallel_task, argslist))
+
+        elif pname == 'custom':
+            outputlist = parallelizer(_parallel_task, argslist)
             
-            # Choose which parallelizer to use
-            if pname == 'serial':
-                if not 'nocopy' in parallelizer: # Niche use case of running without deepcopying
-                    argslist = scu.dcp(argslist) # Need to deepcopy here, since effectively deecopied by other parallelization methods
-                outputlist = list(map(_parallel_task, argslist))
-            
-            elif pname == 'multiprocess': # Main use case
-                with mp.Pool(processes=ncpus) as pool:
-                    outputlist = list(pool.map(_parallel_task, argslist))
-            
-            elif pname == 'multiprocessing':
-                with mpi.Pool(processes=ncpus) as pool:
-                    outputlist = pool.map(_parallel_task, argslist)
-            
-            elif pname == 'concurrent.futures':
-                with cf.ProcessPoolExecutor(max_workers=ncpus) as pool:
-                    outputlist = list(pool.map(_parallel_task, argslist))
-            
-            elif pname == 'thread':
-                if not 'nocopy' in parallelizer: # Niche use case of running without deepcopying
-                    argslist = scu.dcp(argslist) # Also need to deepcopy here
-                with cf.ThreadPoolExecutor(max_workers=ncpus) as pool:
-                    outputlist = list(pool.map(_parallel_task, argslist))
+        else: # Should be unreachable; exception should have already been caught
+            errormsg = f'Invalid parallelizer "{parallelizer}"'
+            raise ValueError(errormsg)
+        
+        # Store the pool; do not store the output list here
+        self.pool = pool
+        
+        return outputlist
     
-            elif pname == 'custom':
-                outputlist = parallelizer(_parallel_task, argslist)
-                
-            else: # Should be unreachable; exception should have already been caught
-                errormsg = f'Invalid parallelizer "{parallelizer}"'
-                raise ValueError(errormsg)
-            
-            return outputlist
-    
-    def __repr__(self):
-        pass
-    
-    def disp(self):
-        pass
     
     def run(self):
         ''' Actually run the parallelization '''
@@ -382,8 +434,8 @@ def parallelize(func, iterarg=None, iterkwargs=None, args=None, kwargs=None, ncp
         - ``None``, ``'default'``, ``'robust'``, ``'multiprocess'``: the slow but robust dill-based parallelizer ``multiprocess``
         - ``'fast'``, ``'concurrent'``, ``'concurrent.futures'``: the faster but more fragile pickle-based Python-default parallelizer ``concurrent.futures``
         - ``'multiprocessing'``: the previous pickle-based Python default parallelizer, ``multiprocessing``
-        - ``'serial'``, ``'serial-nocopy'``: no parallelization (single-threaded); with "-nocopy", do not force pickling
-        - ``'thread'``', ``'threadpool'``', ``'thread-nocopy'``': thread- rather than process-based parallelization ("-nocopy" as above)
+        - ``'serial'``, ``'serial-copy'``: no parallelization (single-threaded); with "-copy", force pickling
+        - ``'thread'``', ``'threadpool'``', ``'thread-copy'``': thread- rather than process-based parallelization ("-copy" as above)
         - User supplied: any ``map()``-like function that takes in a function and an argument list
 
 
@@ -476,7 +528,7 @@ def _parallel_task(taskargs, outputqueue=None):
     maxcpu = taskargs.maxcpu
     maxmem = taskargs.maxmem
     if maxcpu or maxmem:
-        scp.loadbalancer(maxcpu=maxcpu, maxmem=maxmem, index=index, interval=taskargs.interval)
+        scpro.loadbalancer(maxcpu=maxcpu, maxmem=maxmem, index=index, interval=taskargs.interval)
 
     # Call the function!
     try:
