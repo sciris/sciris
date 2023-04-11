@@ -319,34 +319,35 @@ class Parallel:
         
     #     return
     
-    def make_pool(self):
-        print('starting pool', flush=True)
-        sleep(1)
-        print('ok', flush=True)
-        self.pool = mp.Pool()
-        return
+    # def make_pool(self):
+    #     print('starting pool', flush=True)
+    #     sleep(1)
+    #     print('ok', flush=True)
+    #     self.pool = mp.Pool()
+    #     return
  
     def run_jobs(self):
         print('starting tasks', flush=True)
         sleep(1)
         print('ok', flush=True)
-        self.jobs = self.pool.map_async(task, range(10))
+        with mp.Pool() as pool:
+            self.jobs = pool.map_async(task, range(10))
         return
     
-    def get_results(self):
-        print('getting jobs', flush=True)
-        sleep(1)
-        print('ok', flush=True)
-        self.results = list(self.jobs.get())
-        return
+    # def get_results(self):
+    #     print('getting jobs', flush=True)
+    #     sleep(1)
+    #     print('ok', flush=True)
+    #     self.results = list(self.jobs.get())
+    #     return
     
-    def close(self):
-        print('results')
-        sleep(1)
-        print('ok', flush=True)
-        print(self.results)
-        self.pool.terminate()
-        return
+    # def close(self):
+    #     print('results')
+    #     sleep(1)
+    #     print('ok', flush=True)
+    #     print(self.results)
+    #     self.pool.terminate()
+    #     return
     
     # def run_async(self):
     #     ''' Choose how to run in parallel, and do it '''
