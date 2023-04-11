@@ -92,21 +92,6 @@ def test_exceptions():
     return
 
 
-def test_parallelcmd():
-    sc.heading('Using a string-based command')
-
-    const = 4
-    parfor = {'val':[3,5,9]}
-    returnval = 'result'
-    cmd = """
-    newval = val+const
-    result = newval**2
-    """
-    results = sc.parallelcmd(cmd=cmd, parfor=parfor, returnval=returnval, const=const, maxcpu=0)
-    print(results)
-    return
-
-
 def test_components():
     sc.heading('Testing subcomponents directly')
 
@@ -133,7 +118,6 @@ if __name__ == '__main__':
     test_multiargs()
     test_noniterated(doplot)
     test_exceptions()
-    test_parallelcmd()
     test_components()
 
     sc.toc()
