@@ -98,8 +98,11 @@ class Parallel:
         self.argslist     = None
         self.method       = None
         self.pool         = None
+        self.map_func     = None
+        self.is_async     = None
         self.jobs         = None
         self.results      = None
+        self._running     = False # Used interally; see self.running for the dynamically updated property
         self.already_run  = False
         return
     
@@ -107,7 +110,7 @@ class Parallel:
     def __repr__(self):
         ''' Brief representation of the object '''
         labelstr = f'"{self.label}; "' if self.label else ''
-        string   = f'Parallel({labelstr}njobs={self.njobs}; ncpus={self.ncpus}; method={self.method}; run={self.already_run})'
+        string   = f'Parallel({labelstr}jobs={self.njobs}; cpus={self.ncpus}; method={self.method}; status={self.status})'
         return string
     
     
@@ -286,33 +289,55 @@ class Parallel:
     
     
     def make_pool(self):
-        ''' Make the pool '''
+        ''' Make the pool and map function '''
         
         # Shorten variables
         ncpus = self.ncpus
         method = self.method
-        pool = None
         
-        if method == 'multiprocess': # Main use case
+        if method == 'serial':
+            pool = None
+            map_func = lambda task,argslist: list(map(task, argslist))
+            is_async = False
+        
+        elif method == 'multiprocess': # Main use case
             pool = mp.Pool(processes=ncpus)
+            map_func = pool.map_async
+            is_async = True
         
         elif method == 'multiprocessing':
             pool = mpi.Pool(processes=ncpus)
+            map_func = pool.map_async
+            is_async = True
         
         elif method == 'concurrent.futures':
             pool = cf.ProcessPoolExecutor(max_workers=ncpus)
+            map_func = pool.map
+            is_async = False
         
         elif method == 'thread':
             pool = cf.ThreadPoolExecutor(max_workers=ncpus)
+            map_func = pool.map_async
+            is_async = True
         
+        elif method == 'custom':
+            pool = None
+            map_func = self.parallelizer
+            is_async = False
+        
+        else: # Should be unreachable; exception should have already been caught
+            errormsg = f'Invalid parallelizer "{self.parallelizer}"'
+            raise ValueError(errormsg)
+            
         # Reset
-        self.pool    = pool
-        self.jobs    = None
-        self.results = None
+        self.pool     = pool
+        self.map_func = map_func
+        self.is_async = is_async
+        self.jobs     = None
+        self.results  = None
         
         return
         
-    
     
     def run_async(self):
         ''' Choose how to run in parallel, and do it '''
@@ -326,32 +351,49 @@ class Parallel:
         # Create the pool and initialize results
         self.make_pool()
         
-        # def f(*args, **kwargs):
-        #     return 'foo'
-        # al = [1,2,3]
-        
         # Standard use case: the pool exists
-        # print(argslist)
-        if self.pool:
-            # self.jobs = self.pool.map_async(_task, argslist)
-            # self.jobs = self.pool.map_async(f, al)
-            # self.jobs = self.pool.map_async(f, argslist)
-            self.jobs = self.pool.map_async(_task, argslist)
-        
-        # Handle serial or custom parallelizers
-        else:
-            if self.method == 'serial':
-                self.results = list(map(_task, argslist))
-            elif self.method == 'custom':
-                self.results = self.parallelizer(_task, argslist)
-            else: # Should be unreachable; exception should have already been caught
-                errormsg = f'Invalid parallelizer "{self.parallelizer}"'
-                raise ValueError(errormsg)
+        try:
+            if self.pool: # Act as if we're in a with block
+                self.pool.__enter__()
+            self._running = True
+            output = self.map_func(_task, argslist)
+        except Exception as E:
+            raise E
+        finally:
+            self._running = False
+            if self.pool: # Act as if we're in a with block
+                self.pool.__exit__(None, None, None)
         
         # Store the pool; do not store the output list here
+        if self.is_async:
+            self.jobs = output
+        else:
+            
+            self.results = output
+            
         self.already_run = True
         
         return
+    
+    @property
+    def running(self):
+        if not self.is_async:
+            return self._running
+        else:
+            if self.jobs is not None and not self.jobs.ready():
+                running = True
+            else:
+                running = False
+            return running
+    
+    @property
+    def status(self):
+        output = 'not run'
+        if self.running:
+            output = 'running'
+        elif self.already_run:
+            output = 'done'
+        return output
 
 
     def get(self):
@@ -576,7 +618,7 @@ class TaskArgs(scu.prettyobj):
             return
 
 
-def _task(taskargs, outputqueue=None):
+def _task(taskargs):
     ''' Task called by parallelize() -- not to be called directly '''
 
     # Handle inputs
@@ -618,11 +660,4 @@ def _task(taskargs, outputqueue=None):
         taskargs.callback(data)
 
     # Handle output
-    print('zzz', output)
-    if outputqueue:
-        outputqueue.put((index,output))
-        return
-    else:
-        return output
-    
-    # return 'foo'
+    return output
