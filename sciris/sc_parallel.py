@@ -391,8 +391,8 @@ class Parallel:
         
         # Shorten variables
         ncpus = self.ncpus
-        method = 'multiprocess'#self.method
-        is_async = True#False
+        method = self.method
+        is_async = False
         needs_copy = ['serial', 'thread', 'custom']
         supports_async = ['multiprocess', 'multiprocessing', 'thread']
         
@@ -429,12 +429,12 @@ class Parallel:
                 # with mp.Pool(processes=ncpus) as pool:
                 if is_async:
                     print('I AM ASYNC')
-                    # output = pool.map_async(_task, argslist)
-                    output = self.pool.map_async(task, range(10))
+                    output = self.pool.map_async(_task, argslist)
+                    # output = self.pool.map_async(task, range(10))
                 else:
                     print('I AM SYNC')
-                    output = self.pool.map(task, range(10))
-                    # output = pool.map(_task, argslist)
+                    # output = self.pool.map(task, range(10))
+                    output = self.pool.map(_task, argslist)
             
             elif method == 'multiprocessing':
                 with mpi.Pool(processes=ncpus) as pool:
