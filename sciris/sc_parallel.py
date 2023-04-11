@@ -372,6 +372,7 @@ class Parallel:
         
         return
     
+    
     @property
     def running(self):
         if not self.is_async:
@@ -384,6 +385,21 @@ class Parallel:
             return running
     
     @property
+    def ready(self):
+        if not self.is_async:
+            ready = self.results is not None
+        else:
+            if self.jobs is None:
+                ready = False
+            else:
+                if self.jobs.ready():
+                    ready = True
+                else:
+                    ready = False
+        return ready
+    
+    
+    @property
     def status(self):
         output = 'not run'
         if self.running:
@@ -393,10 +409,16 @@ class Parallel:
         return output
 
 
-    def get(self):
-        ''' Get results from the jobs '''
-        if hasattr(self.jobs, 'get'):
+    def finalize(self, get_results=True, close_pool=True):
+        ''' Get results from the jobs and close the pool '''
+        if get_results and self.jobs:
             self.results = list(self.jobs.get())
+        if close_pool and self.pool:
+            try:
+                self.pool.__exit__(None, None, None) # Handle as if in a with block
+            except Exception as E:
+                warnmsg = f'Could not close pool {self.pool}, please close manually: {str(E)}'
+                warnings.warn(warnmsg, category=RuntimeWarning, stacklevel=2)
         return
     
     
@@ -404,7 +426,7 @@ class Parallel:
         ''' Actually run the parallelization '''
         try:
             self.run_async()
-            self.get()
+            self.finalize()
             
         # Handle if run outside of __main__ on Windows
         except RuntimeError as E: # pragma: no cover
