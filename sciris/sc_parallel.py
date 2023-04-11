@@ -310,14 +310,48 @@ class Parallel:
     def make_pool(self):
         ''' Make the pool and map function '''
         
+        # Shorten variables
         ncpus = self.ncpus
+        method = self.method
         
-        self.pool = mp.Pool(processes=ncpus)
+        if method == 'serial':
+            pool = None
+            map_func = lambda task,argslist: list(map(task, argslist))
+            is_async = False
         
+        elif method == 'multiprocess': # Main use case
+            pool = mp.Pool(processes=ncpus)
+            map_func = pool.map_async
+            is_async = True
+        
+        elif method == 'multiprocessing':
+            pool = mpi.Pool(processes=ncpus)
+            map_func = pool.map_async
+            is_async = True
+        
+        elif method == 'concurrent.futures':
+            pool = cf.ProcessPoolExecutor(max_workers=ncpus)
+            map_func = pool.map
+            is_async = False
+        
+        elif method == 'thread':
+            pool = cf.ThreadPoolExecutor(max_workers=ncpus)
+            map_func = pool.map_async
+            is_async = True
+        
+        elif method == 'custom':
+            pool = None
+            map_func = self.parallelizer
+            is_async = False
+        
+        else: # Should be unreachable; exception should have already been caught
+            errormsg = f'Invalid parallelizer "{self.parallelizer}"'
+            raise ValueError(errormsg)
+            
         # Reset
-        # self.pool     = pool
-        # self.map_func = map_func
-        # self.is_async = is_async
+        self.pool     = pool
+        self.map_func = map_func
+        self.is_async = is_async
         self.jobs     = None
         self.results  = None
         
