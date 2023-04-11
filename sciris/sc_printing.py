@@ -126,7 +126,8 @@ def objrepr(obj, showid=True, showmeth=True, showprop=True, showatt=True, divide
     return output
 
 
-def prepr(obj, maxlen=None, maxitems=None, skip=None, dividerchar='—', dividerlen=60, use_repr=True, maxtime=3, die=False):
+def prepr(obj, maxlen=None, maxitems=None, skip=None, dividerchar='—', dividerlen=60, 
+          use_repr=True, maxtime=3, die=False, debug=False):
     '''
     Akin to "pretty print", returns a pretty representation of an object --
     all attributes (except any that are skipped), plust methods and ID. Usually
@@ -143,6 +144,9 @@ def prepr(obj, maxlen=None, maxitems=None, skip=None, dividerchar='—', divider
         use_repr (bool): whether to use repr() or str() to parse the object
         maxtime (float): maximum amount of time to spend on trying to print the object
         die (bool): whether to raise an exception if an error is encountered
+        debug (bool): print out detail during string construction
+    
+    New in version 2.2.0: "debug" argument
     '''
 
     # Decide how to handle representation function -- repr is dangerous since can lead to recursion
@@ -172,13 +176,17 @@ def prepr(obj, maxlen=None, maxitems=None, skip=None, dividerchar='—', divider
                 labels = sorted(set(obj.__dict__.keys()) - set(skip))  # Get the dict attribute keys
             else:
                 labels = sorted(set(obj.__slots__) - set(skip))  # Get the slots attribute keys
+            if debug:
+                print(f'Working on {len(labels)} entries...')
 
             if len(labels):
-                extraitems = len(labels) - maxitems
-                if extraitems>0:
+                extraitems = max(0, len(labels) - maxitems)
+                if extraitems > 0:
                     labels = labels[:maxitems]
                 values = []
                 for a,attr in enumerate(labels):
+                    if debug:
+                        print(f'  Working on attribute {a}: {attr}...')
                     if (time.time() - T) < maxtime:
                         try: value = repr_fn(getattr(obj, attr))
                         except: value = 'N/A'
@@ -190,21 +198,8 @@ def prepr(obj, maxlen=None, maxitems=None, skip=None, dividerchar='—', divider
                         time_exceeded = True
                         break
             else:
-                items = dir(obj)
-                extraitems = len(items) - maxitems
-                if extraitems > 0:
-                    items = items[:maxitems]
-                for a,attr in enumerate(items):
-                    if not attr.startswith('__'):
-                        if (time.time() - T) < maxtime:
-                            try:    value = repr_fn(getattr(obj, attr))
-                            except: value = 'N/A'
-                            labels.append(attr)
-                            values.append(value)
-                        else:
-                            labels.append('etc. (time exceeded)')
-                            values.append(f'{len(labels)-a} entries not shown')
-                            time_exceeded = True
+                extraitems = 0
+                
             if extraitems > 0:
                 labels.append('etc. (too many items)')
                 values.append(f'{extraitems} entries not shown')
@@ -221,6 +216,8 @@ def prepr(obj, maxlen=None, maxitems=None, skip=None, dividerchar='—', divider
             if len(value)>maxlen: value = value[:maxlen] + ' [...]' # Shorten it
             prefix = formatstr%label + ': ' # The format key
             output += indent(prefix, value)
+        if not len(labels):
+            output += 'No attributes\n'
         output += divider
         if time_exceeded:
             timestr = f'\nNote: the object did not finish printing within maxtime={maxtime} s.\n'
@@ -237,7 +234,10 @@ def prepr(obj, maxlen=None, maxitems=None, skip=None, dividerchar='—', divider
                 output = objrepr(obj, dividerchar=dividerchar, dividerlen=dividerlen)
                 output += f'\nWarning: showing simplified output since full repr failed {str(E)}'
             except: # If that fails, try just the string representation
-                output = str(obj)
+                try:
+                    output = str(obj)
+                except: # And if that fails, try the most basic object representation
+                    output = object.__repr__(obj)
 
     return output
 
