@@ -14,6 +14,7 @@ import multiprocess as mp
 import multiprocessing as mpi
 import concurrent.futures as cf
 from . import sc_utils as scu
+from . import sc_odict as sco
 from . import sc_printing as scp
 from . import sc_profiling as scpro
 
@@ -101,7 +102,7 @@ class Parallel:
     
     def set_defaults(self):
         ''' Define defaults for parallelization '''
-        self.defaults = scu.objdict()
+        self.defaults = sco.objdict()
         
         # Define default parallelizers
         self.defaults.fast   = 'concurrent.futures'
@@ -233,11 +234,15 @@ class Parallel:
         return
     
         
-    def run_parallel(self, pname, parallelizer, argslist):
+    def run_parallel(self):
         ''' Choose how to run in parallel, and do it '''
         
-        # Handle number of CPUs
+        # Shorten common variables
         ncpus = self.ncpus
+        parallelizer = self.parallelizer
+        argslist = self.argslist
+        
+        # Handle number of CPUs
         if ncpus is not None:
             ncpus = min(ncpus, len(self.argslist)) # Don't use more CPUs than there are things to process
         if self.serial: # This is a separate keyword argument, but make it consistent
@@ -294,7 +299,7 @@ class Parallel:
     def run(self):
         ''' Actually run the parallelization '''
         try:
-            self.outputlist = self.run_parallel(self.pname, self.parallelizer, self.argslist)
+            self.outputlist = self.run_parallel()
             
         # Handle if run outside of __main__ on Windows
         except RuntimeError as E: # pragma: no cover
@@ -470,10 +475,7 @@ def parallelize(func, iterarg=None, iterkwargs=None, args=None, kwargs=None, ncp
                  progress=progress, callback=callback, die=die, **func_kwargs)
     
     # Run it
-    P.run()
-    
-    # Return output
-    output = P.get()
+    output = P.run()
     return output
 
 
