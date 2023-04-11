@@ -1777,8 +1777,10 @@ class LazyModule:
 
 class tryexcept(cl.suppress):
     '''
-    Simple class to catch exceptions in a single line -- effectively an alias to
-    contextlib.suppress.
+    Simple class to catch exceptions in a single line
+    
+    Effectively an alias to ``contextlib.suppress()``, which itself is a programmatic
+    equivalent to using try-except blocks.
     
     By default, all errors are caught. If ``catch`` is not None, then by default 
     raise all other exceptions; if ``die`` is an exception (list of exceptions, 

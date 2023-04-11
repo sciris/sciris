@@ -18,10 +18,242 @@ from . import sc_profiling as scp
 
 
 ##############################################################################
-#%% Parallelization functions
+#%% Parallelization class
 ##############################################################################
 
-__all__ = ['parallelize']
+__all__ = ['Parallel', 'parallelize']
+
+# Define a common error message
+freeze_support_error = '''
+Uh oh! It appears you are trying to run with multiprocessing on Windows outside
+of the __main__ block; please see https://docs.python.org/3/library/multiprocessing.html
+for more information. The correct syntax to use is e.g.
+
+import sciris as sc
+
+def my_func(x):
+    return
+
+if __name__ == '__main__':
+    sc.parallelize(my_func)
+'''
+
+
+class Parallel:
+    '''
+    Parallelization manager
+    
+    # TODO!!!!!
+    
+    '''
+    def __init__(self, func, iterarg=None, iterkwargs=None, args=None, kwargs=None, ncpus=None, 
+                 maxcpu=None, maxmem=None, interval=None, parallelizer=None, serial=False, 
+                 returnpool=False, progress=False, callback=None, die=True, **func_kwargs):
+        
+        # Store input arguments
+        self.func         = func
+        self.iterarg      = iterarg
+        self.iterkwargs   = iterkwargs
+        self.args         = args
+        self.kwargs       = scu.mergedicts(kwargs, func_kwargs)
+        self.ncpus        = ncpus
+        self.maxcpu       = maxcpu
+        self.maxmem       = maxmem
+        self.interval     = interval
+        self.parallelizer = parallelizer
+        self.serial       = serial
+        self.returnpool   = returnpool
+        self.progress     = progress
+        self.callback     = callback
+        self.die          = die
+        
+        # Additional setup
+        self.set_balancer()
+        self.set_iterargs()
+        
+        return
+        
+    
+    def set_balancer(self):
+        ''' Configure load balancer settings '''
+        maxload = self.kwargs.pop('maxload', None)
+        if maxload is not None: # pragma: no cover
+            self.maxcpu = maxload
+            warnmsg = 'sc.loadbalancer() argument "maxload" has been renamed "maxcpu" as of v2.0.0'
+            warnings.warn(warnmsg, category=FutureWarning, stacklevel=2)
+        if self.ncpus is None and self.maxcpu is None:
+            self.ncpus = scp.cpu_count()
+        if self.ncpus is not None and self.ncpus < 1: # Less than one, treat as a fraction of total
+            self.ncpus = int(scp.cpu_count()*self.ncpus)
+        return
+    
+    
+    def set_iterargs(self):
+        ''' Handle iterarg and iterkwargs '''
+        niters = 0
+        embarrassing = False # Whether or not it's an embarrassingly parallel optimization
+        if iterarg is not None and iterkwargs is not None: # pragma: no cover
+            errormsg = 'You can only use one of iterarg or iterkwargs as your iterable, not both'
+            raise ValueError(errormsg)
+        if iterarg is not None:
+            if not(scu.isiterable(iterarg)):
+                try:
+                    iterarg = np.arange(iterarg)
+                    embarrassing = True
+                except Exception as E: # pragma: no cover
+                    errormsg = f'Could not understand iterarg "{iterarg}": not iterable and not an integer: {str(E)}'
+                    raise TypeError(errormsg)
+            niters = len(iterarg)
+        if iterkwargs is not None: # Check that iterkwargs has the right format
+            if isinstance(iterkwargs, dict): # It's a dict of lists, e.g. {'x':[1,2,3], 'y':[2,3,4]}
+                for key,val in iterkwargs.items():
+                    if not scu.isiterable(val): # pragma: no cover
+                        errormsg = f'iterkwargs entries must be iterable, not {type(val)}'
+                        raise TypeError(errormsg)
+                    if not niters:
+                        niters = len(val)
+                    else:
+                        if len(val) != niters: # pragma: no cover
+                            errormsg = f'All iterkwargs iterables must be the same length, not {niters} vs. {len(val)}'
+                            raise ValueError(errormsg)
+            elif isinstance(iterkwargs, list): # It's a list of dicts, e.g. [{'x':1, 'y':2}, {'x':2, 'y':3}, {'x':3, 'y':4}]
+                niters = len(iterkwargs)
+                for item in iterkwargs:
+                    if not isinstance(item, dict): # pragma: no cover
+                        errormsg = f'If iterkwargs is a list, each entry must be a dict, not {type(item)}'
+                        raise TypeError(errormsg)
+            else: # pragma: no cover
+                errormsg = f'iterkwargs must be a dict of lists, a list of dicts, or None, not {type(iterkwargs)}'
+                raise TypeError(errormsg)
+    
+        if niters == 0:
+            errormsg = 'Nothing found to parallelize: please supply an iterarg, iterkwargs, or both'
+            raise ValueError(errormsg)
+        else:
+            self.niters = niters
+            self.embarrassing = embarrassing
+        return
+    
+    
+        # Construct argument list
+        argslist = []
+        for index in range(niters):
+            if iterarg is None:
+                iterval = None
+            else:
+                iterval = iterarg[index]
+            if iterkwargs is None:
+                iterdict = None
+            else:
+                if isinstance(iterkwargs, dict): # Dict of lists
+                    iterdict = {}
+                    for key,val in iterkwargs.items():
+                        iterdict[key] = val[index]
+                elif isinstance(iterkwargs, list): # List of dicts
+                    iterdict = iterkwargs[index]
+                else:  # pragma: no cover # Should be caught by previous checking, so shouldn't happen
+                    errormsg = f'iterkwargs type not understood ({type(iterkwargs)})'
+                    raise TypeError(errormsg)
+            taskargs = TaskArgs(func=func, index=index, niters=niters, iterval=iterval, iterdict=iterdict,
+                                args=args, kwargs=kwargs, maxcpu=maxcpu, maxmem=maxmem,
+                                interval=interval, embarrassing=embarrassing, callback=callback,
+                                die=die)
+            argslist.append(taskargs)
+        
+        # Set up the run
+        pool = None # Defined here so it can be returned
+        if ncpus is not None:
+            ncpus = min(ncpus, len(argslist)) # Don't use more CPUs than there are things to process
+        if serial: # This is a separate keyword argument, but make it consistent
+            parallelizer = 'serial'
+            
+        # Handle the choice of parallelizer
+        fast   = 'concurrent.futures'
+        robust = 'multiprocess'
+        if parallelizer is None or scu.isstring(parallelizer):
+    
+            # Map parallelizer to consistent choices
+            mapping = {
+                None                 : robust,
+                'default'            : robust,
+                'robust'             : robust,
+                'fast'               : fast,
+                'serial'             : 'serial',
+                'serial-nocopy'      : 'serial',
+                'concurrent.futures' : 'concurrent.futures',
+                'concurrent'         : 'concurrent.futures',
+                'multiprocess'       : 'multiprocess',
+                'multiprocessing'    : 'multiprocessing',
+                'thread'             : 'thread',
+                'threadpool'         : 'thread',
+                'thread-nocopy'      : 'thread',
+            }
+            try:
+                pname = mapping[parallelizer]
+            except:
+                errormsg = f'Parallelizer "{parallelizer}" not found: must be one of {scu.strjoin(mapping.keys())}'
+                raise scu.KeyNotFoundError(errormsg)
+        else:
+            pname = 'custom' # If a custom parallelizer is provided
+            
+        
+        def run_parallel(self, pname, parallelizer, argslist):
+            ''' Choose how to run in parallel '''
+            
+            # Choose which parallelizer to use
+            if pname == 'serial':
+                if not 'nocopy' in parallelizer: # Niche use case of running without deepcopying
+                    argslist = scu.dcp(argslist) # Need to deepcopy here, since effectively deecopied by other parallelization methods
+                outputlist = list(map(_parallel_task, argslist))
+            
+            elif pname == 'multiprocess': # Main use case
+                with mp.Pool(processes=ncpus) as pool:
+                    outputlist = list(pool.map(_parallel_task, argslist))
+            
+            elif pname == 'multiprocessing':
+                with mpi.Pool(processes=ncpus) as pool:
+                    outputlist = pool.map(_parallel_task, argslist)
+            
+            elif pname == 'concurrent.futures':
+                with cf.ProcessPoolExecutor(max_workers=ncpus) as pool:
+                    outputlist = list(pool.map(_parallel_task, argslist))
+            
+            elif pname == 'thread':
+                if not 'nocopy' in parallelizer: # Niche use case of running without deepcopying
+                    argslist = scu.dcp(argslist) # Also need to deepcopy here
+                with cf.ThreadPoolExecutor(max_workers=ncpus) as pool:
+                    outputlist = list(pool.map(_parallel_task, argslist))
+    
+            elif pname == 'custom':
+                outputlist = parallelizer(_parallel_task, argslist)
+                
+            else: # Should be unreachable; exception should have already been caught
+                errormsg = f'Invalid parallelizer "{parallelizer}"'
+                raise ValueError(errormsg)
+            
+            return outputlist
+    
+    def __repr__(self):
+        pass
+    
+    def disp(self):
+        pass
+    
+    def run(self):
+        ''' Actually run the parallelization '''
+        try:
+            self.outputlist = self.run_parallel(self.pname, self.parallelizer, self.argslist)
+            
+        # Handle if run outside of __main__ on Windows
+        except RuntimeError as E: # pragma: no cover
+            if 'freeze_support' in E.args[0]: # For this error, add additional information
+                raise RuntimeError(freeze_support_error) from E
+            else: # For all other runtime errors, raise the original exception
+                raise E
+    
+        # Tidy up
+        return self.outputlist
+    
 
 
 def parallelize(func, iterarg=None, iterkwargs=None, args=None, kwargs=None, ncpus=None, 
@@ -177,190 +409,21 @@ def parallelize(func, iterarg=None, iterkwargs=None, args=None, kwargs=None, ncp
     | New in version 1.1.1: "serial" argument.
     | New in version 2.0.0: changed default parallelizer from ``multiprocess.Pool`` to ``concurrent.futures.ProcessPoolExecutor``; replaced ``maxload`` with ``maxcpu``/``maxmem``; added ``returnpool`` argument
     | New in version 2.0.4: added "die" argument; changed exception handling
-    | New in version 2.2.0: propagated "die" to tasks
+    | New in version 2.2.0: new Parallel class; propagated "die" to tasks
     '''
-    # Handle maxload
-    maxload = func_kwargs.pop('maxload', None)
-    if maxload is not None: # pragma: no cover
-        maxcpu = maxload
-        warnmsg = 'sc.loadbalancer() argument "maxload" has been renamed "maxcpu" as of v2.0.0'
-        warnings.warn(warnmsg, category=FutureWarning, stacklevel=2)
-    if ncpus is None and maxcpu is None:
-        ncpus = scp.cpu_count()
-    if ncpus is not None and ncpus < 1: # Less than one, treat as a fraction of total
-        ncpus = int(scp.cpu_count()*ncpus)
-
-    # Handle kwargs
-    kwargs = scu.mergedicts(kwargs, func_kwargs)
-
-    # Handle iterarg and iterkwargs
-    niters = 0
-    embarrassing = False # Whether or not it's an embarrassingly parallel optimization
-    if iterarg is not None and iterkwargs is not None: # pragma: no cover
-        errormsg = 'You can only use one of iterarg or iterkwargs as your iterable, not both'
-        raise ValueError(errormsg)
-    if iterarg is not None:
-        if not(scu.isiterable(iterarg)):
-            try:
-                iterarg = np.arange(iterarg)
-                embarrassing = True
-            except Exception as E: # pragma: no cover
-                errormsg = f'Could not understand iterarg "{iterarg}": not iterable and not an integer: {str(E)}'
-                raise TypeError(errormsg)
-        niters = len(iterarg)
-    if iterkwargs is not None: # Check that iterkwargs has the right format
-        if isinstance(iterkwargs, dict): # It's a dict of lists, e.g. {'x':[1,2,3], 'y':[2,3,4]}
-            for key,val in iterkwargs.items():
-                if not scu.isiterable(val): # pragma: no cover
-                    errormsg = f'iterkwargs entries must be iterable, not {type(val)}'
-                    raise TypeError(errormsg)
-                if not niters:
-                    niters = len(val)
-                else:
-                    if len(val) != niters: # pragma: no cover
-                        errormsg = f'All iterkwargs iterables must be the same length, not {niters} vs. {len(val)}'
-                        raise ValueError(errormsg)
-        elif isinstance(iterkwargs, list): # It's a list of dicts, e.g. [{'x':1, 'y':2}, {'x':2, 'y':3}, {'x':3, 'y':4}]
-            niters = len(iterkwargs)
-            for item in iterkwargs:
-                if not isinstance(item, dict): # pragma: no cover
-                    errormsg = f'If iterkwargs is a list, each entry must be a dict, not {type(item)}'
-                    raise TypeError(errormsg)
-        else: # pragma: no cover
-            errormsg = f'iterkwargs must be a dict of lists, a list of dicts, or None, not {type(iterkwargs)}'
-            raise TypeError(errormsg)
-
-    if niters == 0:
-        errormsg = 'Nothing found to parallelize: please supply an iterarg, iterkwargs, or both'
-        raise ValueError(errormsg)
-
-    # Construct argument list
-    argslist = []
-    for index in range(niters):
-        if iterarg is None:
-            iterval = None
-        else:
-            iterval = iterarg[index]
-        if iterkwargs is None:
-            iterdict = None
-        else:
-            if isinstance(iterkwargs, dict): # Dict of lists
-                iterdict = {}
-                for key,val in iterkwargs.items():
-                    iterdict[key] = val[index]
-            elif isinstance(iterkwargs, list): # List of dicts
-                iterdict = iterkwargs[index]
-            else:  # pragma: no cover # Should be caught by previous checking, so shouldn't happen
-                errormsg = f'iterkwargs type not understood ({type(iterkwargs)})'
-                raise TypeError(errormsg)
-        taskargs = TaskArgs(func=func, index=index, niters=niters, iterval=iterval, iterdict=iterdict,
-                            args=args, kwargs=kwargs, maxcpu=maxcpu, maxmem=maxmem,
-                            interval=interval, embarrassing=embarrassing, callback=callback,
-                            die=die)
-        argslist.append(taskargs)
+    # Create the parallel instance
+    P = Parallel(func, iterarg=iterarg, iterkwargs=iterkwargs, args=args, kwargs=kwargs, 
+                 ncpus=ncpus, maxcpu=maxcpu, maxmem=maxmem, interval=interval, 
+                 parallelizer=parallelizer, serial=serial, returnpool=returnpool, 
+                 progress=progress, callback=callback, die=die, **func_kwargs)
     
-    # Set up the run
-    pool = None # Defined here so it can be returned
-    if ncpus is not None:
-        ncpus = min(ncpus, len(argslist)) # Don't use more CPUs than there are things to process
-    if serial: # This is a separate keyword argument, but make it consistent
-        parallelizer = 'serial'
-        
-    # Handle the choice of parallelizer
-    fast   = 'concurrent.futures'
-    robust = 'multiprocess'
-    if parallelizer is None or scu.isstring(parallelizer):
-
-        # Map parallelizer to consistent choices
-        mapping = {
-            None                 : robust,
-            'default'            : robust,
-            'robust'             : robust,
-            'fast'               : fast,
-            'serial'             : 'serial',
-            'serial-nocopy'      : 'serial',
-            'concurrent.futures' : 'concurrent.futures',
-            'concurrent'         : 'concurrent.futures',
-            'multiprocess'       : 'multiprocess',
-            'multiprocessing'    : 'multiprocessing',
-            'thread'             : 'thread',
-            'threadpool'         : 'thread',
-            'thread-nocopy'      : 'thread',
-        }
-        try:
-            pname = mapping[parallelizer]
-        except:
-            errormsg = f'Parallelizer "{parallelizer}" not found: must be one of {scu.strjoin(mapping.keys())}'
-            raise scu.KeyNotFoundError(errormsg)
-    else:
-        pname = 'custom' # If a custom parallelizer is provided
-        
+    # Run it
+    P.run()
     
-    def run_parallel(pname, parallelizer, argslist):
-        ''' Choose how to run in parallel '''
-        
-        # Choose which parallelizer to use
-        if pname == 'serial':
-            if not 'nocopy' in parallelizer: # Niche use case of running without deepcopying
-                argslist = scu.dcp(argslist) # Need to deepcopy here, since effectively deecopied by other parallelization methods
-            outputlist = list(map(_parallel_task, argslist))
-        
-        elif pname == 'multiprocess': # Main use case
-            with mp.Pool(processes=ncpus) as pool:
-                outputlist = list(pool.map(_parallel_task, argslist))
-        
-        elif pname == 'multiprocessing':
-            with mpi.Pool(processes=ncpus) as pool:
-                outputlist = pool.map(_parallel_task, argslist)
-        
-        elif pname == 'concurrent.futures':
-            with cf.ProcessPoolExecutor(max_workers=ncpus) as pool:
-                outputlist = list(pool.map(_parallel_task, argslist))
-        
-        elif pname == 'thread':
-            if not 'nocopy' in parallelizer: # Niche use case of running without deepcopying
-                argslist = scu.dcp(argslist) # Also need to deepcopy here
-            with cf.ThreadPoolExecutor(max_workers=ncpus) as pool:
-                outputlist = list(pool.map(_parallel_task, argslist))
+    # Return output
+    output = P.get()
+    return output
 
-        elif pname == 'custom':
-            outputlist = parallelizer(_parallel_task, argslist)
-            
-        else: # Should be unreachable; exception should have already been caught
-            errormsg = f'Invalid parallelizer "{parallelizer}"'
-            raise ValueError(errormsg)
-        
-        return outputlist
-
-    # Actually run the parallelization
-    try:
-        outputlist = run_parallel(pname, parallelizer, argslist)
-        
-    # Handle if run outside of __main__ on Windows
-    except RuntimeError as E: # pragma: no cover
-        if 'freeze_support' in E.args[0]: # For this error, add additional information
-            errormsg = '''
- Uh oh! It appears you are trying to run with multiprocessing on Windows outside
- of the __main__ block; please see https://docs.python.org/3/library/multiprocessing.html
- for more information. The correct syntax to use is e.g.
-
- import sciris as sc
-
- def my_func(x):
-     return
-
- if __name__ == '__main__':
-     sc.parallelize(my_func)
- '''
-            raise RuntimeError(errormsg) from E
-        else: # For all other runtime errors, raise the original exception
-            raise E
-
-    # Tidy up
-    if returnpool:
-        return pool, outputlist
-    else:
-        return outputlist
 
 
 ##############################################################################
