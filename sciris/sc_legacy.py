@@ -1,20 +1,25 @@
 '''
-Legacy methods for handling old pickles (eg Python 2 pickles). Included for backwards
-compatibility, but not imported into Sciris by default.
+This is the graveyard for old Sciris functions that are no longer used. It is preserved
+for backwards compatibility, but is not imported into Sciris by default.
 '''
 
 import types
+import warnings
+import textwrap
 import traceback
 import gzip as gz
 import numpy as np
 import pickle as pkl
 import datetime as dt
 import copyreg as cpreg
+import multiprocess as mp
 from io import BytesIO as IO
+from functools import partial
 from contextlib import closing
-from . import sc_fileio as scf
 from . import sc_utils as scu
 from . import sc_odict as sco
+from . import sc_fileio as scf
+from . import sc_profiling as scp
 
 
 ##############################################################################
@@ -392,3 +397,169 @@ class legacy_dataframe(object): # pragma: no cover
         self.cols = list(cols)
         self.data = data
         return
+    
+
+
+##############################################################################
+#%% Parallelization
+##############################################################################
+
+
+def parallelcmd(cmd=None, parfor=None, returnval=None, maxcpu=None, maxmem=None, interval=None, die=True, **kwargs):
+    '''
+    A function to parallelize any block of code. Note: this is intended for quick
+    prototyping only; since it uses exec(), it is not recommended for use in production
+    code.
+
+    Args:
+        cmd       (str):   a string representation of the code to be run in parallel
+        parfor    (dict):  a dictionary of lists of the variables to loop over
+        returnval (str):   the name of the output variable
+        maxcpu    (float): maximum CPU load; used by ``sc.loadbalancer()``
+        maxmem    (float): maximum fraction of virtual memory (RAM); used by ``sc.loadbalancer()``
+        interval  (float): the time delay to poll to see if load is OK,  used in ``sc.loadbalancer()``
+        die       (bool):  whether to stop immediately if an exception is encountered (otherwise, store the exception as the result)
+        kwargs    (dict):  variables to pass into the code
+
+    **Example**::
+
+        const = 4
+        parfor = {'val':[3,5,9]}
+        returnval = 'result'
+        cmd = """
+        newval = val+const
+        result = newval**2
+        """
+        results = sc.parallelcmd(cmd=cmd, parfor=parfor, returnval=returnval, const=const)
+
+    | New in version 2.0.0: replaced ``maxload`` with ``maxcpu``/``maxmem``; automatically de-indent the command
+    | Migrated to ``sc_legacy`` in version 2.2.0.
+    '''
+
+    # Handle maxload
+    maxload = kwargs.pop('maxload', None)
+    if maxload is not None: # pragma: no cover
+        maxcpu = maxload
+        warnmsg = 'sc.loadbalancer() argument "maxload" has been renamed "maxcpu" as of v2.0.0'
+        warnings.warn(warnmsg, category=FutureWarning, stacklevel=2)
+
+    # Deindent the command
+    cmd = textwrap.dedent(cmd)
+
+    # Create queue
+    nfor = len(list(parfor.values())[0])
+    outputqueue = mp.Queue()
+    outputlist = np.empty(nfor, dtype=object)
+    processes = []
+    for i in range(nfor):
+        args = (cmd, parfor, returnval, i, outputqueue, maxcpu, maxmem, interval, die, kwargs)
+        prc = mp.Process(target=_parallelcmd_task, args=args)
+        prc.start()
+        processes.append(prc)
+    for i in range(nfor):
+        _i,returnval = outputqueue.get()
+        outputlist[_i] = returnval
+    for prc in processes:
+        prc.join() # Wait for them to finish
+
+    outputlist = outputlist.tolist()
+
+    return outputlist
+
+
+def parallel_progress(fcn, inputs, num_workers=None, show_progress=True, initializer=None): # pragma: no cover
+    """
+    Run a function in parallel with a optional single progress bar
+
+    The result is essentially equivalent to::
+
+        >>> list(map(fcn, inputs))
+
+    But with execution in parallel and with a single progress bar being shown.
+
+    Args:
+        fcn (function): Function object to call, accepting one argument, OR a function with zero arguments in which case inputs should be an integer
+        inputs (list): A collection of inputs that will each be passed to the function OR a number, if the fcn() has no input arguments
+        num_workers (int): Number of processes, defaults to the number of CPUs
+        show_progress (bool): Whether to show a progress bar
+        initializer (func): A function that each worker process will call when it starts
+
+    Returns:
+        A list of outputs
+
+    | New in version 1.0.0.
+    | Migrated to ``sc_legacy`` in version 2.2.0.
+    """
+    try:
+        from tqdm import tqdm
+    except ModuleNotFoundError as E:
+        errormsg = 'Module tqdm not found; please install with "pip install tqdm"'
+        raise ModuleNotFoundError(errormsg) from E
+
+    pool = mp.Pool(num_workers, initializer=initializer)
+
+    results = [None]
+    if scu.isnumber(inputs):
+        results *= inputs
+        pbar = tqdm(total=inputs) if show_progress else None
+    else:
+        results *= len(inputs)
+        pbar = tqdm(total=len(inputs)) if show_progress else None
+
+    def callback(result, idx):
+        results[idx] = result
+        if show_progress:
+            pbar.update(1)
+
+    if scu.isnumber(inputs):
+        for i in range(inputs):
+            pool.apply_async(fcn, callback=partial(callback, idx=i))
+    else:
+        for i, x in enumerate(inputs):
+            pool.apply_async(fcn, args=(x,), callback=partial(callback, idx=i))
+
+    pool.close()
+    pool.join()
+
+    if show_progress:
+        pbar.close()
+
+    return results
+
+
+def _parallelcmd_task(_cmd, _parfor, _returnval, _i, _outputqueue, _maxcpu, _maxmem, _interval, _die, _kwargs): # pragma: no cover # No coverage since pickled
+    '''
+    The task to be executed by ``sc.parallelcmd()``. All internal variables start with
+    underscores to avoid possible collisions in the ``exec()`` statements. Not to be called
+    directly.
+    
+    Migrated to ``sc_legacy`` in version 2.2.0.
+    '''
+    if _maxcpu or _maxmem:
+        scp.loadbalancer(maxcpu=_maxcpu, maxmem=_maxmem, index=_i, interval=_interval)
+
+    # Set the loop variables
+    for _key in _parfor.keys():
+        _thisval = _parfor[_key][_i] # analysis:ignore
+        exec(f'{_key} = _thisval') # Set the value of this variable
+
+    # Set the keyword arguments
+    for _key in _kwargs.keys():
+        _thisval = _kwargs[_key] # analysis:ignore
+        exec(f'{_key} = _thisval') # Set the value of this variable
+
+    # Run the command
+    try:
+        exec(_cmd) # The meat of the matter!
+    except Exception:
+        if _die:
+            raise Exception
+        else:
+            warnmsg = f'sc.parallelcmd(): Task {_i} failed, but die=False so continuing.\n{scu.traceback()}'
+            warnings.warn(warnmsg, category=RuntimeWarning, stacklevel=2)
+            exec(f'{_returnval} = None')
+
+    # Append results
+    _outputqueue.put((_i,eval(_returnval)))
+
+    return
