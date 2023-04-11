@@ -19,25 +19,6 @@ from . import sc_printing as scp
 from . import sc_profiling as scpro
 
 
-from time import sleep
-
-def f(*args, **kwargs):
-    return 'bar'
-
-# task executed in a worker process
-def task(identifier):
-    from random import random
-    # generate a value
-    value = 2+random()
-    # report a message
-    # print(f'Task {identifier} executing with {value}', flush=True)
-    # block for a moment
-    sleep(value)
-    print(f'Task {identifier} executed with {value}', flush=True)
-    # return the generated value
-    return (identifier, value)
-
-
 ##############################################################################
 #%% Parallelization class
 ##############################################################################
@@ -356,35 +337,7 @@ class Parallel:
         self.results  = None
         
         return
-    
-    # def make_pool(self):
-    #     print('starting pool', flush=True)
-    #     sleep(1)
-    #     print('ok', flush=True)
-    #     self.pool = mp.Pool()
-    #     return
- 
-    def run_jobs(self):
-        print('starting tasks', flush=True)
-        sleep(1)
-        print('ok', flush=True)
-        self.jobs = self.pool.map_async(task, range(10))
-        return
-    
-    # def get_results(self):
-    #     print('getting jobs', flush=True)
-    #     sleep(1)
-    #     print('ok', flush=True)
-    #     self.results = list(self.jobs.get())
-    #     return
-    
-    def close(self):
-        print('results')
-        sleep(1)
-        print('ok', flush=True)
-        print(self.results)
-        self.pool.terminate()
-        return
+
     
     def run_async(self):
         ''' Choose how to run in parallel, and do it '''
@@ -413,17 +366,12 @@ class Parallel:
                     raise ValueError(errormsg)
         self.is_async = is_async
         
-        # _task = f
-        # argslist  = [1,2,3,4]
-            
         # Choose the actual parallelization method and run it
         if method == 'serial':
             pool = None
             output = map(_task, argslist)
             
         if self.pool:
-            
-            # pool = self.pool
         
             if method == 'multiprocess': # Main use case
                 # with mp.Pool(processes=ncpus) as pool:
@@ -713,8 +661,6 @@ class TaskArgs(scu.prettyobj):
 def _task(taskargs):
     ''' Task called by parallelize() -- not to be called directly '''
     
-    print('HI i am task')
-
     # Handle inputs
     func   = taskargs.func
     index  = taskargs.index
@@ -752,8 +698,6 @@ def _task(taskargs):
     if taskargs.callback:
         data = dict(index=index, njobs=taskargs.njobs, args=args, kwargs=kwargs, output=output)
         taskargs.callback(data)
-        
-    print('BYE i am task')
 
     # Handle output
     return output
