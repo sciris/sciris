@@ -347,51 +347,20 @@ class Parallel:
         ''' Choose how to run in parallel, and do it '''
         
         # Shorten variables
-        ncpus = self.ncpus
         method = self.method
         needs_copy = ['serial', 'thread', 'custom']
         
-        # Handle additional options
-        if scu.isstring(self.parallelizer):
-            
-            # Handle deepcopying
-            if '-copy' in self.parallelizer and method in needs_copy: # Don't deepcopy if we're going to pickle anyway
-                argslist = scu.dcp(self.argslist, die=self.die)
-            else:
-                argslist = self.argslist
-            
-        # Choose the actual parallelization method and run it
-        if method == 'serial':
-            pool = None
-            output = map(_task, argslist)
-            
-        if self.pool:
+        # Make the pool
+        self.make_pool()
         
-            if method == 'multiprocess': # Main use case
-                output = self.map_func(_task, argslist)
-            
-            # elif method == 'multiprocessing':
-            #     with mpi.Pool(processes=ncpus) as pool:
-            #         if is_async:
-            #             output = pool.map_async(_task, argslist)
-            #         else:
-            #             output = pool.map(_task, argslist)
-            
-            # elif method == 'concurrent.futures':
-            #     with cf.ProcessPoolExecutor(max_workers=ncpus) as pool:
-            #         output = pool.map(_task, argslist)
-            
-            # elif method == 'thread':
-            #     with cf.ThreadPoolExecutor(max_workers=ncpus) as pool:
-            #         output = pool.map(_task, argslist)
-            
-            # elif method == 'custom':
-            #     pool = None
-            #     output = self.parallelizer(_task, argslist)
-            
-            else: # Should be unreachable; exception should have already been caught
-                errormsg = f'Invalid parallelizer "{self.parallelizer}"'
-                raise ValueError(errormsg)
+        # Handle optional deepcopy
+        if scu.isstring(self.parallelizer) and '-copy' in self.parallelizer and method in needs_copy: # Don't deepcopy if we're going to pickle anyway
+            argslist = scu.dcp(self.argslist, die=self.die)
+        else:
+            argslist = self.argslist
+        
+        # Run it!
+        output = self.map_func(_task, argslist)
         
         # Store the pool; do not store the output list here
         if self.is_async:
