@@ -1596,8 +1596,7 @@ class prettyobj(object):
 
     **Examples**
 
-        >>> myobj = sc.prettyobj()
-        >>> myobj.a = 3
+        >>> myobj = sc.prettyobj(a=3)
         >>> myobj.b = {'a':6}
         >>> print(myobj)
         <sciris.sc_utils.prettyobj at 0x7ffa1e243910>
@@ -1629,14 +1628,15 @@ class prettyobj(object):
     | New in version 2.0.0: allow positional arguments
     '''
 
-    # def __init__(self, *args, **kwargs):
-    #     kwargs = mergedicts(*args, kwargs)
-    #     for k,v in kwargs.items():
-    #         self.__dict__[k] = v
-    #     return
+    def __init__(self, **kwargs):
+        ''' Simple initialization '''
+        for k,v in kwargs.items():
+            self.__dict__[k] = v
+        return
 
 
     def __repr__(self):
+        ''' The point of this class: use a more detailed repr by default '''
         from . import sc_printing as scp # To avoid circular import
         output  = scp.prepr(self)
         return output

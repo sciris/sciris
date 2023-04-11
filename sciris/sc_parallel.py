@@ -326,6 +326,12 @@ class Parallel:
                     errormsg = f'You have specified to use async with "{method}", but async is only supported for: {scu.strjoin(supports_async)}.'
                     raise ValueError(errormsg)
         self.is_async = is_async
+        
+        def f(*args, **kwargs):
+            return 'bar'
+        
+        _task = f
+        argslist  = [1,2,3,4]
             
         # Choose the actual parallelization method and run it
         if method == 'serial':
@@ -612,6 +618,8 @@ class TaskArgs(scu.prettyobj):
 
 def _task(taskargs):
     ''' Task called by parallelize() -- not to be called directly '''
+    
+    print('HI i am task')
 
     # Handle inputs
     func   = taskargs.func
@@ -650,6 +658,8 @@ def _task(taskargs):
     if taskargs.callback:
         data = dict(index=index, njobs=taskargs.njobs, args=args, kwargs=kwargs, output=output)
         taskargs.callback(data)
+        
+    print('BYE i am task')
 
     # Handle output
     return output
