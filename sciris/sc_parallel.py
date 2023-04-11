@@ -413,8 +413,8 @@ class Parallel:
                     raise ValueError(errormsg)
         self.is_async = is_async
         
-        _task = f
-        argslist  = [1,2,3,4]
+        # _task = f
+        # argslist  = [1,2,3,4]
             
         # Choose the actual parallelization method and run it
         if method == 'serial':
