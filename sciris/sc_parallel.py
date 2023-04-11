@@ -295,35 +295,39 @@ class Parallel:
         ncpus = self.ncpus
         method = self.method
         
+        is_async = False
+        supports_async = ['multiprocess', 'multiprocessing']
+        if scu.isstring(self.parallelizer) and '-async' in self.parallelizer:
+            if method in supports_async:
+                is_async = True
+            else:
+                errormsg = f'You have specified to use async with "{method}", but async is only supported for: {scu.strjoin(supports_async)}.'
+                raise ValueError(errormsg)
+        
+        # Choose parallelizer and map function
         if method == 'serial':
             pool = None
             map_func = lambda task,argslist: list(map(task, argslist))
-            is_async = False
         
         elif method == 'multiprocess': # Main use case
             pool = mp.Pool(processes=ncpus)
-            map_func = pool.map_async
-            is_async = True
+            map_func = pool.map_async if is_async else pool.map
         
         elif method == 'multiprocessing':
             pool = mpi.Pool(processes=ncpus)
-            map_func = pool.map_async
-            is_async = True
+            map_func = pool.map_async if is_async else pool.map
         
         elif method == 'concurrent.futures':
             pool = cf.ProcessPoolExecutor(max_workers=ncpus)
             map_func = pool.map
-            is_async = False
         
         elif method == 'thread':
             pool = cf.ThreadPoolExecutor(max_workers=ncpus)
             map_func = pool.map_async
-            is_async = True
         
         elif method == 'custom':
             pool = None
             map_func = self.parallelizer
-            is_async = False
         
         else: # Should be unreachable; exception should have already been caught
             errormsg = f'Invalid parallelizer "{self.parallelizer}"'
@@ -345,9 +349,7 @@ class Parallel:
         # Shorten variables
         ncpus = self.ncpus
         method = self.method
-        is_async = False
         needs_copy = ['serial', 'thread', 'custom']
-        supports_async = ['multiprocess', 'multiprocessing', 'thread']
         
         # Handle additional options
         if scu.isstring(self.parallelizer):
@@ -358,14 +360,6 @@ class Parallel:
             else:
                 argslist = self.argslist
             
-            if '-async' in self.parallelizer:
-                if method in supports_async:
-                    is_async = True
-                else:
-                    errormsg = f'You have specified to use async with "{method}", but async is only supported for: {scu.strjoin(supports_async)}.'
-                    raise ValueError(errormsg)
-        self.is_async = is_async
-        
         # Choose the actual parallelization method and run it
         if method == 'serial':
             pool = None
@@ -374,34 +368,26 @@ class Parallel:
         if self.pool:
         
             if method == 'multiprocess': # Main use case
-                # with mp.Pool(processes=ncpus) as pool:
-                if is_async:
-                    print('I AM ASYNC')
-                    output = self.pool.map_async(_task, argslist)
-                    # output = self.pool.map_async(task, range(10))
-                else:
-                    print('I AM SYNC')
-                    # output = self.pool.map(task, range(10))
-                    output = self.pool.map(_task, argslist)
+                output = self.map_func(_task, argslist)
             
-            elif method == 'multiprocessing':
-                with mpi.Pool(processes=ncpus) as pool:
-                    if is_async:
-                        output = pool.map_async(_task, argslist)
-                    else:
-                        output = pool.map(_task, argslist)
+            # elif method == 'multiprocessing':
+            #     with mpi.Pool(processes=ncpus) as pool:
+            #         if is_async:
+            #             output = pool.map_async(_task, argslist)
+            #         else:
+            #             output = pool.map(_task, argslist)
             
-            elif method == 'concurrent.futures':
-                with cf.ProcessPoolExecutor(max_workers=ncpus) as pool:
-                    output = pool.map(_task, argslist)
+            # elif method == 'concurrent.futures':
+            #     with cf.ProcessPoolExecutor(max_workers=ncpus) as pool:
+            #         output = pool.map(_task, argslist)
             
-            elif method == 'thread':
-                with cf.ThreadPoolExecutor(max_workers=ncpus) as pool:
-                    output = pool.map(_task, argslist)
+            # elif method == 'thread':
+            #     with cf.ThreadPoolExecutor(max_workers=ncpus) as pool:
+            #         output = pool.map(_task, argslist)
             
-            elif method == 'custom':
-                pool = None
-                output = self.parallelizer(_task, argslist)
+            # elif method == 'custom':
+            #     pool = None
+            #     output = self.parallelizer(_task, argslist)
             
             else: # Should be unreachable; exception should have already been caught
                 errormsg = f'Invalid parallelizer "{self.parallelizer}"'
