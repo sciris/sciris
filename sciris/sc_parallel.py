@@ -13,9 +13,11 @@ import numpy as np
 import multiprocess as mp
 import multiprocessing as mpi
 import concurrent.futures as cf
+from functools import partial
 from . import sc_utils as scu
 from . import sc_odict as sco
 from . import sc_printing as scp
+from . import sc_datetime as scd
 from . import sc_profiling as scpro
 
 
@@ -102,6 +104,7 @@ class Parallel:
         self.is_async     = None
         self.jobs         = None
         self.results      = None
+        self.times        = sco.objdict(started=None, finished=None, duration=None, tasks=[])
         self._running     = False # Used interally; see self.running for the dynamically updated property
         self.already_run  = False
         return
@@ -303,6 +306,13 @@ class Parallel:
             else:
                 errormsg = f'You have specified to use async with "{method}", but async is only supported for: {scu.strjoin(supports_async)}.'
                 raise ValueError(errormsg)
+                
+        def make_async_func(pool):
+            if is_async:
+                map_func = partial(pool.map_async, callback=self.finalize)
+            else:
+                map_func = pool.map
+            return map_func
         
         # Choose parallelizer and map function
         if method == 'serial':
@@ -311,11 +321,11 @@ class Parallel:
         
         elif method == 'multiprocess': # Main use case
             pool = mp.Pool(processes=ncpus)
-            map_func = pool.map_async if is_async else pool.map
+            map_func = make_async_func(pool)
         
         elif method == 'multiprocessing':
             pool = mpi.Pool(processes=ncpus)
-            map_func = pool.map_async if is_async else pool.map
+            map_func = make_async_func(pool)
         
         elif method == 'concurrent.futures':
             pool = cf.ProcessPoolExecutor(max_workers=ncpus)
@@ -323,7 +333,7 @@ class Parallel:
         
         elif method == 'thread':
             pool = cf.ThreadPoolExecutor(max_workers=ncpus)
-            map_func = pool.map_async
+            map_func = pool.map
         
         elif method == 'custom':
             pool = None
@@ -360,6 +370,7 @@ class Parallel:
             argslist = self.argslist
         
         # Run it!
+        self.times.started = scd.now()
         output = self.map_func(_task, argslist)
         
         # Store the pool; do not store the output list here
@@ -367,6 +378,7 @@ class Parallel:
             self.jobs = output
         else:
             self.results = list(output)
+            self.times.finished = scd.now()
             
         self.already_run = True
         
