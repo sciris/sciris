@@ -95,12 +95,13 @@ def test_exceptions():
 def test_components():
     sc.heading('Testing subcomponents directly')
 
-    args = [0]*11
+    args = [0]*15
     args[0] = lambda: None
     args[4] = None # Set iterdict to None
     args[5] = None # Set args to empty list
     args[6] = None # Set kwargs to empty dict
     args[10] = True # Set embarrassing
+    args[13] = dict() # Set globaldict
     taskargs = sc.sc_parallel.TaskArgs(*args)
     task = sc.sc_parallel._task(taskargs)
     return task

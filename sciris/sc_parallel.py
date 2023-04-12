@@ -451,7 +451,7 @@ class Parallel:
         while self.running or final_iter:
             if not self.running and final_iter:
                 final_iter = False
-            _progressbar(globaldict, njobs, **kwargs)
+            _progressbar(self.globaldict, self.njobs, **kwargs)
             scd.timedsleep(interval)
         return
     

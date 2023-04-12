@@ -750,7 +750,7 @@ class timer:
     | New in version 2.1.0: ``total`` as property instead of method; updated repr; added disp() method
     | New in version 2.2.0: ``verbose`` argument; ``sum, min, max, mean, std`` methods; ``rawtimings`` property
     '''
-    def __init__(self, label=None, auto=False, start=True, verbose=True, **kwargs):
+    def __init__(self, label=None, auto=False, start=True, verbose=None, **kwargs):
         from . import sc_odict as sco # Here to avoid circular import
         self.kwargs = kwargs # Store kwargs to pass to toc() at the end of the block
         self.kwargs['label'] = label
