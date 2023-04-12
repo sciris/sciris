@@ -9,7 +9,7 @@ of ``sc.sc_parallel.parallelize()``.
 # Handle threadcount -- may require Sciris to be imported before Numpy; see https://stackoverflow.com/questions/17053671/how-do-you-stop-numpy-from-multithreading
 import os as _os
 _threads = _os.getenv('SCIRIS_NUM_THREADS', '')
-if _threads: # pragma: nocover
+if _threads: # pragma: no cover
   _os.environ.update(
       OMP_NUM_THREADS        = _threads,
       OPENBLAS_NUM_THREADS   = _threads,

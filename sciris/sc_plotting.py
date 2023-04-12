@@ -308,18 +308,18 @@ def stackedbar(x=None, values=None, colors=None, labels=None, transpose=False,
         values = x
         x = None
     
-    if values is None: # pragma: nocover
+    if values is None: # pragma: no cover
         errormsg = 'Must supply values to plot, typically as a 2D array'
         raise ValueError(errormsg)
     
     values = scu.toarray(values)
-    if values.ndim == 1: # pragma: nocover
+    if values.ndim == 1: # pragma: no cover
         values = values[None,:] # Convert to a 2D array
     
-    if transpose: # pragma: nocover
+    if transpose: # pragma: no cover
         values = values.T
     
-    if flipud: # pragma: nocover
+    if flipud: # pragma: no cover
         values = values[::-1,:]
     
     nstack = values.shape[0]
@@ -328,18 +328,18 @@ def stackedbar(x=None, values=None, colors=None, labels=None, transpose=False,
     if x is None:
         x = np.arange(npts)
         
-    if not cum: # pragma: nocover
+    if not cum: # pragma: no cover
         values = values.cumsum(axis=0)
     values = np.concatenate([np.zeros((1,npts)), values])
 
     # Handle labels and colors
-    if labels is not None: # pragma: nocover
+    if labels is not None: # pragma: no cover
         nlabels = len(labels)
         if nlabels != nstack:
             errormsg = f'Expected {nstack} labels, got {nlabels}'
             raise ValueError(errormsg)
     
-    if colors is not None: # pragma: nocover
+    if colors is not None: # pragma: no cover
         ncolors = len(colors)
         if ncolors != nstack:
             errormsg = f'Expected {nstack} colors, got {ncolors}'
