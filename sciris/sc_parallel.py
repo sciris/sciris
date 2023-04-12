@@ -104,7 +104,7 @@ class Parallel:
         self.is_async     = None
         self.jobs         = None
         self.results      = None
-        self.times        = sco.objdict(started=None, finished=None, duration=None, tasks=[])
+        self.times        = sco.objdict(started=None, finished=None, elapsed=None, tasks=[])
         self._running     = False # Used interally; see self.running for the dynamically updated property
         self.already_run  = False
         return
@@ -309,7 +309,9 @@ class Parallel:
                 
         def make_async_func(pool):
             if is_async:
-                map_func = partial(pool.map_async, callback=self.finalize)
+                # callback = partial(self.finalize, get_results=False, close_pool=False)
+                map_func = partial(pool.map_async, callback=self.time_finished)
+                # map_func = pool.map_async#partial(pool.map_async, callback=self.finalize)
             else:
                 map_func = pool.map
             return map_func
@@ -322,10 +324,11 @@ class Parallel:
         elif method == 'multiprocess': # Main use case
             pool = mp.Pool(processes=ncpus)
             map_func = make_async_func(pool)
+            # map_func = pool.map_async if is_async else pool.map
         
         elif method == 'multiprocessing':
             pool = mpi.Pool(processes=ncpus)
-            map_func = make_async_func(pool)
+            map_func = pool.map_async if is_async else pool.map
         
         elif method == 'concurrent.futures':
             pool = cf.ProcessPoolExecutor(max_workers=ncpus)
@@ -378,6 +381,7 @@ class Parallel:
             self.jobs = output
         else:
             self.results = list(output)
+            self.time_finished()
             self.times.finished = scd.now()
             
         self.already_run = True
@@ -419,6 +423,12 @@ class Parallel:
         elif self.already_run:
             output = 'done'
         return output
+    
+    
+    def time_finished(self, *args, **kwargs):
+        self.times.finished = scd.now()
+        self.times.elapsed = (self.times.finished - self.times.started).total_seconds()
+        return
 
 
     def finalize(self, get_results=True, close_pool=True):
