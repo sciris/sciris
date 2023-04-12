@@ -878,7 +878,8 @@ def heading(string=None, *args, color=None, divider=None, spaces=None, spacesaft
 
 #%% Other
 
-__all__ += ['printv', 'slacknotification', 'printtologfile', 'percentcomplete', 'progressbar', 'capture']
+__all__ += ['printv', 'slacknotification', 'printtologfile', 'percentcomplete', 
+            'progressbar', 'progressbars', 'capture']
 
 
 def printv(string, thisverbose=1, verbose=2, newline=True, indent=True):
@@ -1117,6 +1118,118 @@ def progressbar(i=None, maxiters=None, label='', every=1, length=30, empty='—'
             print() # Newline at the end
 
     return
+
+
+class tqdm_pickle(tqdm.tqdm):
+    '''
+    Simple subclass of tqdm that allows pickling
+    
+    Usually not used directly by the user; used via :func:`progressbars()` instead.
+    Pickling is required for passing ``tqdm`` instances between processes.
+    
+    New in version 2.2.0.    
+    '''
+    
+    def __getstate__(self):
+        d = {k:v for k,v in self.__dict__.items() if k not in ['sp', 'fp']}
+        return d
+     
+    def __setstate__(self, d):
+        self.__dict__ = d
+        self.__dict__['fp'] = tqdm.utils.DisableOnWriteError(sys.stderr, tqdm_instance=self)
+        self.__dict__['sp'] = self.status_printer(self.fp)
+        return
+
+
+class progressbars(scu.prettyobj):
+    '''
+    Create multiple progress bars
+    
+    Useful for tracking the progress of multiple long-running tasks. Unlike regular
+    ``tqdm`` instances, this uses a pickable version so it can be used directly
+    in multiprocessing instances.
+    
+    Args:
+        n (int): number of progress bars to create
+        total (float): length of the progress bars
+        label (str/list): an optional prefix for the progress bar, or list of all labels
+        leave (bool): whether to remove the progress bars when they're done
+        kwargs (dict): passed to ``tqdm.tqdm()``
+    
+    **Note**: bars are supposed to update in-place, but may appear on separate lines
+    instead if not run in the terminal (e.g. if run in IPython environments like 
+    Spyder or Jupyter).
+    
+    **Example**::
+        
+        import sciris as sc
+        import random
+
+        def run_sim(index, ndays, pbs):
+            for i in range(ndays):
+                val = random.random()
+                sc.timedsleep(val*5/ndays)
+                pbs.update(index) # Update this progress bar based on the index
+            return
+
+        nsims = 5
+        ndays = 365
+
+        # Create progress bars
+        pbs = sc.progressbars(nsims, total=ndays, label='Sim')
+
+        # Run tasks
+        sc.parallelize(run_sim, iterarg=range(nsims), ndays=ndays, pbs=pbs)
+        
+        # Produces output like:
+        # Sim 0:  39%|███████████████████████████▊           | 143/365 [00:01<00:01, 137.17it/s]
+        # Sim 1:  42%|████████████████████████████▉          | 154/365 [00:01<00:01, 148.70it/s]
+        # Sim 2:  45%|████████████████████████████████       | 165/365 [00:01<00:01, 144.19it/s]
+        # Sim 3:  44%|███████████████████████████████        | 160/365 [00:01<00:01, 151.22it/s]
+        # Sim 4:  42%|████████████████████████████▏          | 145/365 [00:01<00:01, 136.75it/s]
+
+    New in version 2.2.0.
+    '''
+    
+    def __init__(self, n=1, total=1, label=None, leave=False, **kwargs):
+        self.n      = n
+        self.total  = total
+        self.leave  = leave
+        self.desc   = kwargs.pop('desc', label)
+        self.kwargs = kwargs
+        self.bars   = []
+        self.make()
+        return
+
+    def make(self):
+        for i in range(self.n):
+            total = self.total
+            if scu.isiterable(total):
+                total = total[i]
+            desc = self.desc
+            if scu.isiterable(desc, exclude=str):
+                desc = desc[i]
+            else:
+                if desc is None:
+                    desc = f'{i}'
+                else:
+                    desc += f' {i}'
+            bar = tqdm_pickle(total=total, position=i, desc=desc, leave=self.leave, **self.kwargs)
+            self.bars.append(bar)
+        return
+    
+    def __getitem__(self, key):
+        return self.bars[key]
+    
+    def __setitem__(self, key, value):
+        self.bars[key] = value
+        return
+    
+    def update(self, index=0, amount=1):
+        self.bars[index].update(amount)
+        # self.bars[index].display()
+        return
+
 
 
 class capture(UserString, str, redirect_stdout):
