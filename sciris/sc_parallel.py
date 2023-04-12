@@ -42,6 +42,12 @@ if __name__ == '__main__':
     sc.parallelize(my_func)
 '''
 
+def _progressbar(globaldict, njobs, **kwargs):
+    ''' Define a progress bar, available to both '''
+    done = sum(globaldict.values())
+    scp.progressbar(done, njobs, label=f'Job {done}/{njobs}', **kwargs)
+    return
+
 
 class Parallel:
     '''
@@ -241,7 +247,7 @@ class Parallel:
             taskargs = TaskArgs(func=self.func, index=index, njobs=self.njobs, iterval=iterval, iterdict=iterdict,
                                 args=self.args, kwargs=self.kwargs, maxcpu=self.maxcpu, maxmem=self.maxmem,
                                 interval=self.interval, embarrassing=self.embarrassing, callback=self.callback, 
-                                globaldict=self.globaldict, die=self.die)
+                                progress=self.progress, globaldict=self.globaldict, die=self.die)
             argslist.append(taskargs)
         
         self.argslist = argslist
@@ -445,9 +451,7 @@ class Parallel:
         while self.running or final_iter:
             if not self.running and final_iter:
                 final_iter = False
-            done = sum(self.globaldict.values())
-            total = self.njobs
-            scp.progressbar(done, total, label=f'Job {done}/{total}', **kwargs)
+            _progressbar(globaldict, njobs, **kwargs)
             scd.timedsleep(interval)
         return
     
@@ -684,7 +688,7 @@ class TaskArgs(scu.prettyobj):
         Arguments must match both ``sc.parallelize()`` and ``sc._task()``
         '''
         def __init__(self, func, index, njobs, iterval, iterdict, args, kwargs, maxcpu, 
-                     maxmem, interval, embarrassing, callback, globaldict, die=True):
+                     maxmem, interval, embarrassing, callback, progress, globaldict, die=True):
             self.func         = func         # The function being called
             self.index        = index        # The place in the queue
             self.njobs        = njobs        # The total number of iterations
@@ -697,6 +701,7 @@ class TaskArgs(scu.prettyobj):
             self.interval     = interval     # Interval to check load (only used with maxcpu/maxmem)
             self.embarrassing = embarrassing # Whether or not to pass the iterarg to the function (no if it's embarrassing)
             self.callback     = callback     # A function to call after each task finishes
+            self.progress     = progress     # Whether to print progress after each job
             self.globaldict   = globaldict   # A global dictionary for sharing progress on each task 
             self.die          = die          # Whether to raise an exception if the child task encounters one
             return
@@ -753,6 +758,9 @@ def _task(taskargs):
             exception = E
     end = scd.time()
     elapsed = end - start
+    
+    if taskargs.progress:
+        _progressbar(globaldict, taskargs.njobs)
     
     # Handle callback, if present
     if taskargs.callback:
