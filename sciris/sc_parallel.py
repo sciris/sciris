@@ -52,7 +52,7 @@ class Parallel:
     '''
     def __init__(self, func, iterarg=None, iterkwargs=None, args=None, kwargs=None, ncpus=None, 
                  maxcpu=None, maxmem=None, interval=None, parallelizer=None, serial=False, 
-                 progress=False, callback=None, label=None, use_async=False, die=True, **func_kwargs):
+                 progress=True, callback=None, label=None, use_async=False, die=True, **func_kwargs):
         
         # Store input arguments
         self.func         = func
@@ -98,6 +98,8 @@ class Parallel:
         self.argslist     = None
         self.method       = None
         self.pool         = None
+        self.manager      = mpi.Manager() # Create a manager for sharing resources across jobs
+        self.progress     = self.manager.dict() # Create a dict for sharing progress of each job
         self.map_func     = None
         self.is_async     = None
         self.jobs         = None
@@ -239,7 +241,7 @@ class Parallel:
             taskargs = TaskArgs(func=self.func, index=index, njobs=self.njobs, iterval=iterval, iterdict=iterdict,
                                 args=self.args, kwargs=self.kwargs, maxcpu=self.maxcpu, maxmem=self.maxmem,
                                 interval=self.interval, embarrassing=self.embarrassing, callback=self.callback, 
-                                die=self.die)
+                                progress=self.progress, die=self.die)
             argslist.append(taskargs)
         
         self.argslist = argslist
@@ -434,6 +436,19 @@ class Parallel:
             
         self.already_run = True
         
+        return
+    
+    
+    def monitor(self, interval=0.1, **kwargs):
+        ''' Monitor progress -- only usable with async '''
+        final_iter = True
+        while self.running or final_iter:
+            if not self.running and final_iter:
+                final_iter = False
+            done = sum(self.progress.values())
+            total = self.njobs
+            scp.progressbar(done, total, label=f'Job {done}/{total}', **kwargs)
+            scd.timedsleep(interval)
         return
     
 
@@ -641,7 +656,7 @@ def parallelize(func, iterarg=None, iterkwargs=None, args=None, kwargs=None, ncp
             results = sc.parallelize(func=f, iterarg=[(1,2),(2,3),(3,4)])
             print(results)
 
-    | New in version 1.1.1: "serial" argument.
+    | New in version 1.1.1: "serial" argument
     | New in version 2.0.0: changed default parallelizer from ``multiprocess.Pool`` to ``concurrent.futures.ProcessPoolExecutor``; replaced ``maxload`` with ``maxcpu``/``maxmem``; added ``returnpool`` argument
     | New in version 2.0.4: added "die" argument; changed exception handling
     | New in version 2.2.0: new Parallel class; propagated "die" to jobs
@@ -668,8 +683,8 @@ class TaskArgs(scu.prettyobj):
 
         Arguments must match both ``sc.parallelize()`` and ``sc._task()``
         '''
-        def __init__(self, func, index, njobs, iterval, iterdict, args, kwargs, 
-                     maxcpu, maxmem, interval, embarrassing, callback=None, die=True):
+        def __init__(self, func, index, njobs, iterval, iterdict, args, kwargs, maxcpu, 
+                     maxmem, interval, embarrassing, callback, progress, die=True):
             self.func         = func         # The function being called
             self.index        = index        # The place in the queue
             self.njobs        = njobs        # The total number of iterations
@@ -682,6 +697,7 @@ class TaskArgs(scu.prettyobj):
             self.interval     = interval     # Interval to check load (only used with maxcpu/maxmem)
             self.embarrassing = embarrassing # Whether or not to pass the iterarg to the function (no if it's embarrassing)
             self.callback     = callback     # A function to call after each task finishes
+            self.progress     = progress     # A global dictionary for sharing progress on each task 
             self.die          = die          # Whether to raise an exception if the child task encounters one
             return
 
@@ -716,13 +732,16 @@ def _task(taskargs):
         scpro.loadbalancer(maxcpu=maxcpu, maxmem=maxmem, index=index, interval=taskargs.interval)
 
     # Call the function!
+    progress = taskargs.progress
     start     = scd.time()
     result    = None
     success   = False
     exception = None
+    progress[index] = 0
     try:
         result = func(*args, **kwargs) # Call the function!
         success = True
+        progress[index] = 1
     except Exception as E:
         if taskargs.die: # Usual case, raise an exception and stop
             errormsg = f'Task {index} failed: set die=False to keep going instead; see above for error details'
