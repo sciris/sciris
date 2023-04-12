@@ -310,7 +310,7 @@ class Parallel:
         def make_async_func(pool):
             if is_async:
                 # callback = partial(self.finalize, get_results=False, close_pool=False)
-                map_func = partial(pool.map_async, callback=self.time_finished)
+                map_func = partial(pool.map_async, callback=self._time_finished)
                 # map_func = pool.map_async#partial(pool.map_async, callback=self.finalize)
             else:
                 map_func = pool.map
@@ -356,39 +356,6 @@ class Parallel:
         return
 
     
-    def run_async(self):
-        ''' Choose how to run in parallel, and do it '''
-        
-        # Shorten variables
-        method = self.method
-        needs_copy = ['serial', 'thread', 'custom']
-        
-        # Make the pool
-        self.make_pool()
-        
-        # Handle optional deepcopy
-        if scu.isstring(self.parallelizer) and '-copy' in self.parallelizer and method in needs_copy: # Don't deepcopy if we're going to pickle anyway
-            argslist = scu.dcp(self.argslist, die=self.die)
-        else:
-            argslist = self.argslist
-        
-        # Run it!
-        self.times.started = scd.now()
-        output = self.map_func(_task, argslist)
-        
-        # Store the pool; do not store the output list here
-        if self.is_async:
-            self.jobs = output
-        else:
-            self.results = list(output)
-            self.time_finished()
-            self.times.finished = scd.now()
-            
-        self.already_run = True
-        
-        return
-    
-    
     @property
     def running(self):
         if not self.is_async:
@@ -425,11 +392,43 @@ class Parallel:
         return output
     
     
-    def time_finished(self, *args, **kwargs):
+    def _time_finished(self, *args, **kwargs):
         self.times.finished = scd.now()
         self.times.elapsed = (self.times.finished - self.times.started).total_seconds()
         return
 
+
+    def run_async(self):
+        ''' Choose how to run in parallel, and do it '''
+        
+        # Shorten variables
+        method = self.method
+        needs_copy = ['serial', 'thread', 'custom']
+        
+        # Make the pool
+        self.make_pool()
+        
+        # Handle optional deepcopy
+        if scu.isstring(self.parallelizer) and '-copy' in self.parallelizer and method in needs_copy: # Don't deepcopy if we're going to pickle anyway
+            argslist = scu.dcp(self.argslist, die=self.die)
+        else:
+            argslist = self.argslist
+        
+        # Run it!
+        self.times.started = scd.now()
+        output = self.map_func(_task, argslist)
+        
+        # Store the pool; do not store the output list here
+        if self.is_async:
+            self.jobs = output
+        else:
+            self.results = list(output)
+            self._time_finished()
+            
+        self.already_run = True
+        
+        return
+    
 
     def finalize(self, get_results=True, close_pool=True):
         ''' Get results from the jobs and close the pool '''
