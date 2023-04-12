@@ -1127,6 +1127,8 @@ class tqdm_pickle(tqdm.tqdm):
     Usually not used directly by the user; used via :func:`progressbars()` instead.
     Pickling is required for passing ``tqdm`` instances between processes.
     
+    Based on ``tqdm`` 4.65.0; may become deprecated in future ``tqdm`` releases.
+    
     New in version 2.2.0.    
     '''
     
