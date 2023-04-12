@@ -52,8 +52,7 @@ class Parallel:
     '''
     def __init__(self, func, iterarg=None, iterkwargs=None, args=None, kwargs=None, ncpus=None, 
                  maxcpu=None, maxmem=None, interval=None, parallelizer=None, serial=False, 
-                 returnpool=False, progress=False, callback=None, label=None, use_async=False,
-                 die=True, **func_kwargs):
+                 progress=False, callback=None, label=None, use_async=False, die=True, **func_kwargs):
         
         # Store input arguments
         self.func         = func
@@ -67,7 +66,6 @@ class Parallel:
         self.interval     = interval
         self.parallelizer = parallelizer
         self.serial       = serial
-        self.returnpool   = returnpool
         self.progress     = progress
         self.callback     = callback
         self.label        = label
@@ -497,7 +495,7 @@ class Parallel:
 
 def parallelize(func, iterarg=None, iterkwargs=None, args=None, kwargs=None, ncpus=None, 
                 maxcpu=None, maxmem=None, interval=None, parallelizer=None, serial=False, 
-                returnpool=False, progress=False, callback=None, die=True, **func_kwargs):
+                progress=False, callback=None, die=True, **func_kwargs):
     '''
     Execute a function in parallel.
 
@@ -530,7 +528,6 @@ def parallelize(func, iterarg=None, iterkwargs=None, args=None, kwargs=None, ncp
         interval     (float)     : number of seconds to pause between starting processes for checking load
         parallelizer (str/func)  : parallelization function; default 'multiprocess' (see below for details)
         serial       (bool)      : whether to skip parallelization and run in serial (useful for debugging; equivalent to ``parallelizer='serial'``)
-        returnpool   (bool)      : whether to return the process pool as well as the results
         progress     (bool)      : whether to show a progress bar
         callback     (func)      : an optional function to call from each worker
         die          (bool)      : whether to stop immediately if an exception is encountered (otherwise, store the exception as the result)
@@ -652,8 +649,8 @@ def parallelize(func, iterarg=None, iterkwargs=None, args=None, kwargs=None, ncp
     # Create the parallel instance
     P = Parallel(func, iterarg=iterarg, iterkwargs=iterkwargs, args=args, kwargs=kwargs, 
                  ncpus=ncpus, maxcpu=maxcpu, maxmem=maxmem, interval=interval, 
-                 parallelizer=parallelizer, serial=serial, returnpool=returnpool, 
-                 progress=progress, callback=callback, die=die, **func_kwargs)
+                 parallelizer=parallelizer, serial=serial, progress=progress, 
+                 callback=callback, die=die, **func_kwargs)
     
     # Run it
     P.run()
