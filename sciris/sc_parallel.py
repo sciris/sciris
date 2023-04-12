@@ -155,7 +155,6 @@ class Parallel:
         iterarg = self.iterarg
         iterkwargs = self.iterkwargs
         njobs = 0
-        embarrassing = False # Whether or not it's an embarrassingly parallel optimization
         
         # Check that only one was provided
         if iterarg is not None and iterkwargs is not None: # pragma: no cover
@@ -166,8 +165,8 @@ class Parallel:
         if iterarg is not None:
             if not(scu.isiterable(iterarg)):
                 try:
-                    iterarg = np.arange(iterarg)
-                    embarrassing = True
+                    iterarg = np.arange(iterarg) # This is duplicated in make_argslist, but kept here so as to not modify user inputs
+                    self.embarrassing = True
                 except Exception as E: # pragma: no cover
                     errormsg = f'Could not understand iterarg "{iterarg}": not iterable and not an integer: {str(E)}'
                     raise TypeError(errormsg)
@@ -205,16 +204,23 @@ class Parallel:
             raise ValueError(errormsg)
         else:
             self.njobs = njobs
-            self.embarrassing = embarrassing
             
         return
     
     
     def make_argslist(self):
         ''' Construct argument list '''
-        iterarg = self.iterarg
+
+        # Initialize
+        iterarg    = self.iterarg
         iterkwargs = self.iterkwargs
-        argslist = []
+        argslist   = []
+        
+        # Check for embarrassingly parallel run -- should already be validated
+        if self.embarrassing:
+            iterarg = np.arange(iterarg)
+        
+        # Construct the argument list for each job
         for index in range(self.njobs):
             if iterarg is None:
                 iterval = None
@@ -684,7 +690,11 @@ class TaskArgs(scu.prettyobj):
 
 
 def _task(taskargs):
-    ''' Task called by parallelize() -- not to be called directly '''
+    '''
+    Task called by parallelize() -- not to be called directly.
+    
+    New in version 2.2.0: renamed from "_parallel_task" to "_task"; return output dict with metadata
+    '''
     
     # Handle inputs
     func   = taskargs.func
@@ -709,12 +719,12 @@ def _task(taskargs):
         scpro.loadbalancer(maxcpu=maxcpu, maxmem=maxmem, index=index, interval=taskargs.interval)
 
     # Call the function!
-    start = scd.time()
-    result = None
-    success = False
+    start     = scd.time()
+    result    = None
+    success   = False
     exception = None
     try:
-        result = func(*args, **kwargs)
+        result = func(*args, **kwargs) # Call the function!
         success = True
     except Exception as E:
         if taskargs.die: # Usual case, raise an exception and stop

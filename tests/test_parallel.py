@@ -102,7 +102,7 @@ def test_components():
     args[6] = None # Set kwargs to empty dict
     args[10] = True # Set embarrassing
     taskargs = sc.sc_parallel.TaskArgs(*args)
-    task = sc.sc_parallel._parallel_task(taskargs)
+    task = sc.sc_parallel._task(taskargs)
     return task
 
 
