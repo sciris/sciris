@@ -695,9 +695,13 @@ def flexstr(arg, force=True):
     return output
 
 
-def sanitizestr(string=None, alphanumeric=False, nospaces=False, asciify=False, lower=False, spacechar='_', symchar='?'):
+def sanitizestr(string=None, alphanumeric=False, nospaces=False, asciify=False, 
+                lower=False, validvariable=False, spacechar='_', symchar='?'):
     '''
-    Remove all non-printable characters from a string
+    Remove all non-"standard" characters from a string
+    
+    Can be used to e.g. generate a valid variable name from arbitrary input, remove
+    non-ASCII characters (replacing with equivalent ASCII ones if possible), etc.
     
     Args:
         string (str): the string to sanitize
@@ -705,6 +709,7 @@ def sanitizestr(string=None, alphanumeric=False, nospaces=False, asciify=False, 
         nospaces (bool): remove spaces
         asciify (bool): remove non-ASCII characters
         lower (bool): convert uppercase characters to lowercase
+        validvariable (bool): convert to a valid Python variable name (similar to alphanumeric=True, nospaces=True; uses spacechar to substitute)
         spacechar (str): if nospaces is True, character to replace spaces with (can be blank)
         symchar (str): character to replace non-alphanumeric characters with (can be blank)
     
@@ -718,6 +723,9 @@ def sanitizestr(string=None, alphanumeric=False, nospaces=False, asciify=False, 
         
         string3 = '"Ψ scattering", María said, "at ≤5 μm?"'
         sc.sanitizestr(string3, asciify=True, alphanumeric=True, nospaces=True, spacechar='') # Returns '??scattering??Mariasaid??at?5?m??'
+    
+        string4 = '4 path/names/to variable!'
+        sc.sanitizestr(string4, validvariable=True, spacechar='') # Returns '_4pathnamestovariable'
     
     New in version 2.2.0.
     '''
@@ -736,7 +744,11 @@ def sanitizestr(string=None, alphanumeric=False, nospaces=False, asciify=False, 
         string = string.lower()
     if alphanumeric:
         space = spacechar if nospaces else ' '
-        string = re.sub(f'[^0-9a-zA-Z{space}]', symchar, string)
+        string = re.sub(f'[^0-9a-zA-Z{space}]', symchar, string) # If not for the space string, could use /w
+    if validvariable:
+        string = re.sub('\W', spacechar, string) # /W matches an non-alphanumeric character
+        if str.isdecimal(string[0]): # Don't allow leading decimals: here in case spacechar is None
+            string = '_' + string
     return string
 
 
@@ -1601,7 +1613,7 @@ def importbypath(path, name=None):
     # Construct the name from either the filename or the folder name
     if name is None:
         basename = parts[-1].removesuffix('.py')
-        name = sanitizestr(basename, asciify=True, nospaces=True) # Convert directory name to a string
+        name = sanitizestr(basename, validvariable=True) # Convert directory name to a string
     
     # From https://docs.python.org/3/library/importlib.html#importing-a-source-file-directly
     spec = importlib.util.spec_from_file_location(name, filepath)
