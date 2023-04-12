@@ -319,10 +319,10 @@ class odict(OD):
                 else:
                     rawoutput = f'{numleft}{ind:d}{numsep} {quote}{keystr}{quote}{keysep}{spacer} \n{valstr}\n'
 
-                # Perform the indentation.
+                # Perform the indentation
                 newoutput = scp.indent(prefix=theprefix, text=rawoutput, width=80)
 
-                # Strip ot any terminal newline.
+                # Strip out any terminal newline
                 if newoutput[-1] == '\n':
                     newoutput = newoutput[:-1]
 
@@ -372,7 +372,7 @@ class odict(OD):
         self._setattr('_stale', True) # Flag to refresh the cached keys
         try:
             return OD.__delitem__(self, key)
-        except Exception as E:
+        except Exception as E: # pragma: no cover
             if isinstance(key, scu._numtype): # If it's a number, use that
                 thiskey = self._ikey(key)
                 return OD.__delitem__(self, thiskey) # Note that defaultdict behavior isn't supported for non-string lookup
@@ -401,7 +401,7 @@ class odict(OD):
             self._cache_keys()
         try:
             return self._cached_keys[key]
-        except IndexError:
+        except IndexError: # pragma: no cover
             errormsg = f'index {key} out of range for dict of length {len(self)}'
             raise IndexError(errormsg) from None # Don't show the traceback
 
@@ -439,7 +439,7 @@ class odict(OD):
                 if odict._matchkey(item, pattern, method):
                     return True
         else: # For everything except a tuple, treat it as a string
-            if not scu.isstring(key):
+            if not scu.isstring(key): # pragma: no cover
                 try:
                     key = str(key) # Try to cast it to a string
                 except Exception as E: # pragma: no cover
@@ -590,9 +590,9 @@ class odict(OD):
 
         **Example**::
 
-            z = odict({'dog':[2,3], 'cat':[4,6], 'mongoose':[4,6]})
-            z.findvals([4,6]) # returns 'cat'
-            z.findvals([4,6], first=False) # returns ['cat', 'mongoose']
+            z = sc.odict({'dog':[2,3], 'cat':[4,6], 'mongoose':[4,6]})
+            z.findbyval([4,6]) # returns 'cat'
+            z.findbyval([4,6], first=False) # returns ['cat', 'mongoose']
         '''
         keys = []
         for key,val in self.items():
@@ -654,7 +654,7 @@ class odict(OD):
             needkey = True
         if key is None or needkey:
             keyname = 'key'+scu.flexstr(len(self))  # Define the key just to be the current index
-        else:
+        else: # pragma: no cover
             keyname = key
         self.__setitem__(keyname, value)
         return
@@ -694,7 +694,7 @@ class odict(OD):
         origkeys = self.keys()
         originds = range(len(origkeys))
         if not len(originds) or realpos==len(originds): # It's empty or in the final position, just append
-            self.__setitem__(realkey, realvalue)
+            self.__setitem__(realkey, realvalue) # pragma: no cover
         else: # Main usage case, it's not empty
             try:
                 insertind = originds.index(realpos) # Figure out which index we're inseting at
@@ -721,7 +721,7 @@ class odict(OD):
     def rename(self, oldkey, newkey):
         ''' Change a key name (note: not optimized for speed) '''
         nkeys = len(self)
-        if isinstance(oldkey, scu._numtype):
+        if isinstance(oldkey, scu._numtype): # pragma: no cover
             index = oldkey
             keystr = self.keys()[index]
         else: # Forge ahead for strings and anything else!
@@ -832,9 +832,9 @@ class odict(OD):
         '''
         # Handle keys
         keylist = []
-        if keys is None and vals is None:
+        if keys is None and vals is None: # pragma: no cover
             return self # Nothing to do if nothing supplied
-        if keys is None and vals is not None:
+        if keys is None and vals is not None: # pragma: no cover
             keys = len(scu.tolist(vals)) # Values are supplied but keys aren't: use default keys
         if isinstance(keys, scu._numtype): # It's a single number: pre-generate
             keylist = ['%i'%i for i in range(keys)] # Generate keylist
@@ -863,7 +863,7 @@ class odict(OD):
         # Handle nested keys -- warning, would be better to not hard-code this, but does the brain in as it is!
         if keys2 is not None and keys3 is not None: # Doubly nested
             self.make(keys=keys, vals=self._new().make(keys=keys2, vals=self._new().make(keys=keys3, vals=vals)))
-        elif keys2 is not None: # Singly nested
+        elif keys2 is not None: # Singly nested # pragma: no cover
             self.make(keys=keys, vals=self._new().make(keys=keys2, vals=vals))
         else: # Not nested -- normal case of making an odict
             for key,val in zip(keylist,vallist): # Update odict
@@ -902,7 +902,7 @@ class odict(OD):
         out = cls()
 
         # Make sure it's iterable
-        if source is not None: # Don't do anything if there's nothing there
+        if source is not None: # Don't do anything if there's nothing there # pragma: no cover
             if not(scu.isiterable(source)): # Make sure it's iterable
                 source = scu.tolist(source)
             elif isinstance(source, scu._stringtypes):
@@ -1015,7 +1015,7 @@ class odict(OD):
         return iterator
 
 
-    def enumvalues(self, transpose=False):
+    def enumvalues(self, transpose=False): # pragma: no cover
         ''' Alias for enumvals(). New in version 1.2.0. '''
         return self.enumvals(transpose=transpose)
 
@@ -1073,15 +1073,15 @@ class odict(OD):
 
     def dict_keys(self):
         """ Return an iterator (not a list) over keys (as in Python 2). """
-        return OD.keys(self)
+        return dict.keys(self)
 
     def dict_values(self):
         """ Return an iterator (not a list) over values (as in Python 2). """
-        return OD.values(self)
+        return dict.values(self)
 
     def dict_items(self):
         """ Return an iterator (not a list) over items (as in Python 2). """
-        return OD.items(self)
+        return dict.items(self)
 
     def iteritems(self, transpose=False):
         """ Alias to items() """
@@ -1108,17 +1108,27 @@ class objdict(odict):
     '''
     An ``odict`` that acts like an object -- allow keys to be set/retrieved by object
     notation.
+    
+    In general, operations that would normally act on attributes (e.g. ``obj.x = 3``)
+    instead act on dict keys (e.g. ``obj['x'] = 3``). If you want to actually get/set
+    an attribute, use ``obj.getattribute()``/``obj.setattribute()``.
 
-    For a lighter-weight example, see ``sc.dictobj()``.
+    For a lighter-weight example (an object that acts like a dict), see ``sc.dictobj()``.
 
-    Example
-    -------
-    >>> import sciris as sc
-    >>> od = sc.objdict({'height':1.65, 'mass':59})
-    >>> od.bmi = od.mass/od.height**2
-    >>> od['bmi'] = od['mass']/od['height']**2 # Vanilla syntax still works
-    >>> od.keys = 3 # This raises an exception (you can't overwrite the keys() method)
+   **Examples**::
 
+        import sciris as sc
+        
+        obj = sc.objdict(foo=3, bar=2)
+        obj.foo + obj.bar # Gives 5
+        for key in obj.keys(): # It's still a dict
+            obj[key] = 10
+        
+        od = sc.objdict({'height':1.65, 'mass':59})
+        od.bmi = od.mass/od.height**2
+        od['bmi'] = od['mass']/od['height']**2 # Vanilla syntax still works
+        od.keys = 3 # This raises an exception (you can't overwrite the keys() method)
+        
     Nested logic based in part on addict: https://github.com/mewwts/addict
 
     For a lighter-weight equivalent (based on ``dict`` instead of ``odict``), see
@@ -1204,7 +1214,7 @@ class objdict(odict):
         ''' Delete dict key before deleting actual attribute '''
         try:
             del self[name]
-        except:
+        except: # pragma: no cover
             odict.__delattr__(self, name)
         return
 
