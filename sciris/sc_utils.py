@@ -670,7 +670,7 @@ def htmlify(string, reverse=False, tostring=False):
 #%% Type functions
 ##############################################################################
 
-__all__ += ['flexstr', 'isiterable', 'checktype', 'isnumber', 'isstring', 'isarray',
+__all__ += ['flexstr', 'sanitizestr', 'isiterable', 'checktype', 'isnumber', 'isstring', 'isarray',
             'toarray', 'tolist', 'promotetoarray', 'promotetolist', 'transposelist',
             'swapdict', 'mergedicts', 'mergelists']
 
@@ -692,6 +692,51 @@ def flexstr(arg, force=True):
         if force: output = repr(arg)
         else:     output = arg # Optionally don't do anything for non-strings
     return output
+
+
+def sanitizestr(string=None, alphanumeric=False, nospaces=False, asciify=False, lower=False, spacechar='_', symchar='?'):
+    '''
+    Remove all non-printable characters from a string
+    
+    Args:
+        string (str): the string to sanitize
+        alphanumeric (bool): allow only alphanumeric characters
+        nospaces (bool): remove spaces
+        asciify (bool): remove non-ASCII characters
+        lower (bool): convert uppercase characters to lowercase
+        spacechar (str): if nospaces is True, character to replace spaces with (can be blank)
+        symchar (str): character to replace non-alphanumeric characters with (can be blank)
+    
+    **Examples**::
+        
+        string1 = 'This Is a String'
+        sc.sanitizestr(string1, lower=True) # Returns 'this is a string'
+        
+        string2 = 'Lukáš wanted €500‽'
+        sc.sanitizestr(string2, asciify=True, nospaces=True, symchar='*') # Returns 'Lukas_wanted_*500*'
+        
+        string3 = '"Ψ scattering", María said, "at ≤5 μm?"'
+        sc.sanitizestr(string3, asciify=True, alphanumeric=True, nospaces=True, spacechar='') # Returns '??scattering??Mariasaid??at?5?m??'
+    
+    New in version 2.2.0.
+    '''
+    string = flexstr(string)
+    if asciify:
+        newstr = ''
+        for char in string:
+            newchar = unicodedata.normalize('NFKD', char).encode('ascii', 'ignore').decode()
+            if not len(newchar):
+                newchar = symchar
+            newstr += newchar
+        string = newstr
+    if nospaces:
+        string = string.replace(' ', spacechar)
+    if lower:
+        string = string.lower()
+    if alphanumeric:
+        space = spacechar if nospaces else ' '
+        string = re.sub(f'[^0-9a-zA-Z{space}]', symchar, string)
+    return string
 
 
 def isiterable(obj, *args, exclude=None, minlen=None):
