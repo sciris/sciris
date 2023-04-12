@@ -40,6 +40,7 @@ import random as rnd
 import uuid as py_uuid
 import contextlib as cl
 import traceback as py_traceback
+from pathlib import Path
 
 # Handle types
 _stringtypes = (str, bytes)
@@ -1564,7 +1565,7 @@ def importbyname(module=None, variable=None, path=None, namespace=None, lazy=Fal
     return libs
 
 
-def importbypath(path, name=None, file='__init__.py'):
+def importbypath(path, name=None):
     '''
     Import a module by path.
     
@@ -1572,11 +1573,14 @@ def importbypath(path, name=None, file='__init__.py'):
     
     Args:
         path (str/path): the path to load the module from (with or without __init__.py)
-        name (str): the name of the loaded module (by default, the folder name from the path)
-        file (str): the file to look for at the end of the path
+        name (str): the name of the loaded module (by default, the file or folder name from the path)
     
-    **Example**::
+    **Examples**::
         
+        # Load a module that isn't importable otherwise
+        mymod = sc.importbypath('my file with spaces.py')
+        
+        # Load two versions of the same folder
         old = sc.importbypath('/path/to/old/lib', name='oldlib')
         new = sc.importbypath('/path/to/new/lib', name='newlib')
     
@@ -1585,16 +1589,22 @@ def importbypath(path, name=None, file='__init__.py'):
     New in version 2.2.0.
     '''
     # Sanitize the path and filename
-    path = path(path)
-    parts = list(path.parts)
-    if file and parts[-1] != file:
-        path = path / file
+    default_file='__init__.py'
+    filepath = Path(path)
+    parts = list(filepath.parts)
+    if filepath.is_dir():
+        filepath = filepath / default_file # Append default filename
+    elif not filepath.is_file():
+        errormsg = f'Could not import {filepath}: is not a valid file or folder'
+        raise FileNotFoundError(errormsg)
+    
+    # Construct the name from either the filename or the folder name
     if name is None:
-        parts = list(path.parts)
-        name = parts[-2]
+        basename = parts[-1].removesuffix('.py')
+        name = sanitizestr(basename, asciify=True, nospaces=True) # Convert directory name to a string
     
     # From https://docs.python.org/3/library/importlib.html#importing-a-source-file-directly
-    spec = importlib.util.spec_from_file_location(name, path)
+    spec = importlib.util.spec_from_file_location(name, filepath)
     module = importlib.util.module_from_spec(spec)
     sys.modules[name] = module
     spec.loader.exec_module(module)
