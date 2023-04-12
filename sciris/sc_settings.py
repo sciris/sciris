@@ -72,14 +72,14 @@ def parse_env(var, default=None, which='str'):
     elif which == 'bool':
         if val:
             if isinstance(val, str):
-                if val.lower() in ['false', 'f', '0', '']:
+                if val.lower() in ['false', 'f', '0', '', 'none']:
                     val = False
                 else:
                     val = True
             out = bool(val)
         else:
             out = False
-    else:
+    else: # pragma: no cover
         errormsg = f'Could not understand type "{which}": must be None, str, int, float, or bool'
         raise ValueError(errormsg)
     return out
@@ -166,7 +166,7 @@ class Options(sco.objdict):
                     reset[k] = v
             self.set(**reset)
             del self.on_entry
-        except AttributeError as E:
+        except AttributeError as E: # pragma: no cover
             errormsg = 'Please use sc.options.context() if using a with block'
             raise AttributeError(errormsg) from E
         return
@@ -420,7 +420,7 @@ class Options(sco.objdict):
     sc.options.load() -- load settings from file
     sc.options.save() -- save settings to file
     sc.options.to_dict() -- convert to dictionary
-    sc.options.style() -- create style context for plotting
+    sc.options.with_style() -- create style context for plotting
 ''')
 
         if output:
@@ -487,7 +487,7 @@ class Options(sco.objdict):
         return rc
 
 
-    def with_style(self, style_args=None, use=False, **kwargs):
+    def with_style(self, style=None, use=False, **kwargs):
         '''
         Combine all Matplotlib style information, and either apply it directly
         or create a style context.
@@ -519,6 +519,12 @@ class Options(sco.objdict):
 
         # Handle inputs
         rc = scu.dcp(self.rc) # Make a local copy of the currently used settings
+        if isinstance(style, dict): # pragma: no cover
+            style_args = style
+            style = None
+        else:
+            kwargs['style'] = style # Store here to be used just below
+            style_args = None
         kwargs = scu.mergedicts(style_args, kwargs)
 
         # Handle style, overwiting existing
