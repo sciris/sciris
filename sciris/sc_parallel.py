@@ -99,7 +99,7 @@ class Parallel:
         self.method       = None
         self.pool         = None
         self.manager      = mpi.Manager() # Create a manager for sharing resources across jobs
-        self.progress     = self.manager.dict() # Create a dict for sharing progress of each job
+        self.globaldict   = self.manager.dict() # Create a dict for sharing progress of each job
         self.map_func     = None
         self.is_async     = None
         self.jobs         = None
@@ -241,7 +241,7 @@ class Parallel:
             taskargs = TaskArgs(func=self.func, index=index, njobs=self.njobs, iterval=iterval, iterdict=iterdict,
                                 args=self.args, kwargs=self.kwargs, maxcpu=self.maxcpu, maxmem=self.maxmem,
                                 interval=self.interval, embarrassing=self.embarrassing, callback=self.callback, 
-                                progress=self.progress, die=self.die)
+                                globaldict=self.globaldict, die=self.die)
             argslist.append(taskargs)
         
         self.argslist = argslist
@@ -445,7 +445,7 @@ class Parallel:
         while self.running or final_iter:
             if not self.running and final_iter:
                 final_iter = False
-            done = sum(self.progress.values())
+            done = sum(self.globaldict.values())
             total = self.njobs
             scp.progressbar(done, total, label=f'Job {done}/{total}', **kwargs)
             scd.timedsleep(interval)
@@ -684,7 +684,7 @@ class TaskArgs(scu.prettyobj):
         Arguments must match both ``sc.parallelize()`` and ``sc._task()``
         '''
         def __init__(self, func, index, njobs, iterval, iterdict, args, kwargs, maxcpu, 
-                     maxmem, interval, embarrassing, callback, progress, die=True):
+                     maxmem, interval, embarrassing, callback, globaldict, die=True):
             self.func         = func         # The function being called
             self.index        = index        # The place in the queue
             self.njobs        = njobs        # The total number of iterations
@@ -697,7 +697,7 @@ class TaskArgs(scu.prettyobj):
             self.interval     = interval     # Interval to check load (only used with maxcpu/maxmem)
             self.embarrassing = embarrassing # Whether or not to pass the iterarg to the function (no if it's embarrassing)
             self.callback     = callback     # A function to call after each task finishes
-            self.progress     = progress     # A global dictionary for sharing progress on each task 
+            self.globaldict   = globaldict   # A global dictionary for sharing progress on each task 
             self.die          = die          # Whether to raise an exception if the child task encounters one
             return
 
@@ -732,16 +732,16 @@ def _task(taskargs):
         scpro.loadbalancer(maxcpu=maxcpu, maxmem=maxmem, index=index, interval=taskargs.interval)
 
     # Call the function!
-    progress = taskargs.progress
-    start     = scd.time()
-    result    = None
-    success   = False
-    exception = None
-    progress[index] = 0
+    globaldict = taskargs.globaldict
+    start      = scd.time()
+    result     = None
+    success    = False
+    exception  = None
+    globaldict[index] = 0
     try:
         result = func(*args, **kwargs) # Call the function!
         success = True
-        progress[index] = 1
+        globaldict[index] = 1
     except Exception as E:
         if taskargs.die: # Usual case, raise an exception and stop
             errormsg = f'Task {index} failed: set die=False to keep going instead; see above for error details'
