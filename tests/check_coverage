@@ -1,6 +1,12 @@
 #!/bin/bash
+
+export SCIRIS_BACKEND='agg' # Don't open up figures
+
+# To use pytest-xdist (more robust), use -n auto; to use pytest-parallel (faster), use --workers=auto
 echo 'Running tests...'
-pytest -v test_*.py --cov-config=.coveragerc --cov=../sciris --durations=0 --workers=auto
+# parallelstr=' -n auto'
+parallelstr='--workers=auto'
+pytest -v test_*.py --cov-config=.coveragerc --cov=../sciris --durations=0 $parallelstr
 
 echo 'Creating HTML report...'
 coverage html

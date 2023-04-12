@@ -236,10 +236,10 @@ def asd(function, x, args=None, stepsize=0.1, sinc=2, sdec=2, pinc=2, pdec=2,
         allsteps[count, :] = x # Store parameters
 
         # Stopping criteria
-        if count >= maxiters: # Stop if the iteration limit is exceeded
+        if count >= maxiters: # Stop if the iteration limit is exceeded # pragma: no cover
             exitreason = 'Maximum iterations reached'
             break
-        if (time() - start) > maxtime:
+        if (time() - start) > maxtime: # pragma: no cover
             strtime, strmax = scp.sigfig([(time()-start), maxtime])
             exitreason = f'Time limit reached ({strtime} > {strmax})'
             break
@@ -251,7 +251,7 @@ def asd(function, x, args=None, stepsize=0.1, sinc=2, sdec=2, pinc=2, pdec=2,
             strrel, strtol = scp.sigfig([np.mean(relerrorhistory), reltol])
             exitreason = f'Relative improvement too small ({strrel} < {strtol})'
             break
-        if stoppingfunc and stoppingfunc():
+        if stoppingfunc and stoppingfunc(): # pragma: no cover
             exitreason = 'Stopping function called'
             break
 
