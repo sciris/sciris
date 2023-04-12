@@ -104,7 +104,9 @@ class Parallel:
         self.is_async     = None
         self.jobs         = None
         self.results      = None
-        self.times        = sco.objdict(started=None, finished=None, elapsed=None, tasks=[])
+        self.success      = None
+        self.exceptions   = None
+        self.times        = sco.objdict(started=None, finished=None, elapsed=None, jobs=None)
         self._running     = False # Used interally; see self.running for the dynamically updated property
         self.already_run  = False
         return
@@ -347,11 +349,12 @@ class Parallel:
             raise ValueError(errormsg)
             
         # Reset
-        self.pool     = pool
-        self.map_func = map_func
-        self.is_async = is_async
-        self.jobs     = None
-        self.results  = None
+        self.pool       = pool
+        self.map_func   = map_func
+        self.is_async   = is_async
+        self.jobs       = None
+        self.rawresults = None
+        self.results    = None
         
         return
 
@@ -422,7 +425,7 @@ class Parallel:
         if self.is_async:
             self.jobs = output
         else:
-            self.results = list(output)
+            self.rawresults = list(output)
             self._time_finished()
             
         self.already_run = True
@@ -430,15 +433,39 @@ class Parallel:
         return
     
 
-    def finalize(self, get_results=True, close_pool=True):
+    def finalize(self, get_results=True, close_pool=True, process_results=True):
         ''' Get results from the jobs and close the pool '''
         if get_results and self.jobs:
-            self.results = list(self.jobs.get())
+            self.rawresults = list(self.jobs.get())
         if close_pool and self.pool:
             try:
                 self.pool.__exit__(None, None, None) # Handle as if in a with block
             except Exception as E:
                 warnmsg = f'Could not close pool {self.pool}, please close manually: {str(E)}'
+                warnings.warn(warnmsg, category=RuntimeWarning, stacklevel=2)
+        if process_results:
+            self.process_results()
+        return
+    
+    
+    def process_results(self):
+        ''' Parse the returned results dict into separate lists '''
+        if self.rawresults is None:
+            errormsg = 'Cannot process results: results not ready yet'
+            raise ValueError(errormsg)
+        else:
+            self.results = list()
+            self.success = list()
+            self.exceptions = list()
+            self.times.jobs = list()
+            for raw in self.rawresults:
+                self.results.append(raw['result'])
+                self.success.append(raw['success'])
+                self.exceptions.append(raw['exception'])
+                self.times.jobs.append(raw['elapsed'])
+            
+            if not all(self.success):
+                warnmsg = f'Only {sum(self.success)} of {len(self.success)} jobs succeeded; see exceptions attribute for details'
                 warnings.warn(warnmsg, category=RuntimeWarning, stacklevel=2)
         return
     
@@ -614,7 +641,7 @@ def parallelize(func, iterarg=None, iterkwargs=None, args=None, kwargs=None, ncp
     | New in version 1.1.1: "serial" argument.
     | New in version 2.0.0: changed default parallelizer from ``multiprocess.Pool`` to ``concurrent.futures.ProcessPoolExecutor``; replaced ``maxload`` with ``maxcpu``/``maxmem``; added ``returnpool`` argument
     | New in version 2.0.4: added "die" argument; changed exception handling
-    | New in version 2.2.0: new Parallel class; propagated "die" to tasks
+    | New in version 2.2.0: new Parallel class; propagated "die" to jobs
     '''
     # Create the parallel instance
     P = Parallel(func, iterarg=iterarg, iterkwargs=iterkwargs, args=args, kwargs=kwargs, 
@@ -682,20 +709,37 @@ def _task(taskargs):
         scpro.loadbalancer(maxcpu=maxcpu, maxmem=maxmem, index=index, interval=taskargs.interval)
 
     # Call the function!
+    start = scd.time()
+    result = None
+    success = False
+    exception = None
     try:
-        output = func(*args, **kwargs)
+        result = func(*args, **kwargs)
+        success = True
     except Exception as E:
         if taskargs.die: # Usual case, raise an exception and stop
-            raise E
+            errormsg = f'Task {index} failed: set die=False to keep going instead; see above for error details'
+            exc = type(E)
+            raise exc(errormsg) from E
         else: # Alternatively, keep going and just let this trial fail
             warnmsg = f'sc.parallelize(): Task {index} failed, but die=False so continuing.\n{scu.traceback()}'
             warnings.warn(warnmsg, category=RuntimeWarning, stacklevel=2)
-            output = E
+            exception = E
+    end = scd.time()
+    elapsed = end - start
     
     # Handle callback, if present
     if taskargs.callback:
-        data = dict(index=index, njobs=taskargs.njobs, args=args, kwargs=kwargs, output=output)
+        data = dict(index=index, njobs=taskargs.njobs, args=args, kwargs=kwargs, result=result)
         taskargs.callback(data)
+    
+    # Generate output
+    outdict = dict(
+        result = result,
+        success = success,
+        exception = exception,
+        elapsed = elapsed,
+    )
 
     # Handle output
-    return output
+    return outdict

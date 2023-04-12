@@ -8,7 +8,7 @@ Highlights:
     - :func:`datedelta`: perform calculations on date strings
 '''
 
-import time
+import time as pytime
 import warnings
 import numpy as np
 import pandas as pd
@@ -24,8 +24,20 @@ from . import sc_printing as scp
 #%% Date functions
 ###############################################################################
 
-__all__ = ['now', 'getdate', 'readdate', 'date', 'day', 'daydiff', 'daterange', 'datedelta', 'datetoyear']
+__all__ = ['time', 'now', 'getdate', 'readdate', 'date', 'day', 'daydiff', 'daterange', 'datedelta', 'datetoyear']
 
+
+def time():
+    '''
+    Get current time in seconds -- alias to time.time()
+    
+    See also :func:`now()` to return a datetime object, and :func:`getdate()` to 
+    return a string.
+    
+    New in version 2.2.0.
+    '''
+    return pytime.time()
+    
 
 def now(astype='dateobj', timezone=None, utc=False, tostring=False, dateformat=None):
     '''
@@ -233,7 +245,7 @@ def readdate(datestr=None, *args, dateformat=None, return_defaults=False, verbos
     return output
 
 
-def date(obj, *args, start_date=None, readformat=None, to='date', as_date=None, outformat=None, **kwargs):
+def date(obj=None, *args, start_date=None, readformat=None, to='date', as_date=None, outformat=None, **kwargs):
     '''
     Convert any reasonable object -- a string, integer, or datetime object, or
     list/array of any of those -- to a date object (or string, pandas, or numpy
@@ -248,7 +260,7 @@ def date(obj, *args, start_date=None, readformat=None, to='date', as_date=None, 
     underscores (e.g. ``start_date`` or ``startdate``)
 
     Args:
-        obj (str/int/date/datetime/list/array): the object to convert
+        obj (str/int/date/datetime/list/array): the object to convert; if None, return current date
         args (str/int/date/datetime): additional objects to convert
         start_date (str/date/datetime): the starting date, if an integer is supplied
         readformat (str/list): the format to read the date in; passed to ``sc.readdate()``
@@ -269,7 +281,7 @@ def date(obj, *args, start_date=None, readformat=None, to='date', as_date=None, 
     | New in version 1.0.0.
     | New in version 1.2.2: "readformat" argument; renamed "dateformat" to "outformat"
     | New in version 2.0.0: support for ``np.datetime64`` objects
-    | New in version 2.2.0: added "to" argument, and support for ``pd.Timestamp`` and ``np.datetime64`` output
+    | New in version 2.2.0: added "to" argument, and support for ``pd.Timestamp`` and ``np.datetime64`` output; allow None
     '''
 
     # Handle deprecation
@@ -285,7 +297,7 @@ def date(obj, *args, start_date=None, readformat=None, to='date', as_date=None, 
 
     # Convert to list and handle other inputs
     if obj is None:
-        return
+        obj = dt.datetime.now().date()
     if outformat is None:
         outformat = '%Y-%m-%d'
     obj, is_list, is_array = scu._sanitize_iterables(obj, *args)
@@ -580,7 +592,7 @@ def tic():
     See also ``sc.timer()``.
     '''
     global _tictime  # The saved time is stored in this global
-    _tictime = time.time()  # Store the present time in the global
+    _tictime = pytime.time()  # Store the present time in the global
     return _tictime    # Return the same stored number
 
 
@@ -612,7 +624,7 @@ def toc(start=None, label=None, baselabel=None, sigfigs=None, reset=False, outpu
 
     New in version 1.3.0: new arguments.
     '''
-    now = time.time() # Get the time as quickly as possible
+    now = pytime.time() # Get the time as quickly as possible
 
     from . import sc_printing as scp # To avoid circular import
     global _tictime  # The saved time is stored in this global
@@ -653,7 +665,7 @@ def toc(start=None, label=None, baselabel=None, sigfigs=None, reset=False, outpu
 
     # Optionally reset the counter
     if reset:
-        _tictime = time.time()  # Store the present time in the global
+        _tictime = pytime.time()  # Store the present time in the global
 
     # Return elapsed if desired
     if output:
@@ -784,7 +796,7 @@ class timer:
 
     def tic(self):
         ''' Set start time '''
-        now = time.time()  # Store the present time locally
+        now = pytime.time()  # Store the present time locally
         self._start = now
         self._tics.append(now) # Store when this tic was invoked
         return
@@ -795,7 +807,7 @@ class timer:
 
         # Get the time
         self.elapsed, self.message = toc(start=self._start, output='both', doprint=False) # Get time as quickly as possible
-        self._tocs.append(time.time()) # Store when this toc was invoked
+        self._tocs.append(pytime.time()) # Store when this toc was invoked
 
         # Update the kwargs, including the label
         if label is not None:
@@ -842,7 +854,7 @@ class timer:
 
         # If the timer hasn't been finished, use the current time; else the latest
         if not len(self._tocs):
-            end = time.time()
+            end = pytime.time()
         else:
             end = self._tocs[-1]
 
@@ -1109,10 +1121,10 @@ def elapsedtimestr(pasttime, maxdays=5, minseconds=10, shortmonths=True):
 
     return time_str
 
-# Calculate how much overhead there is for a single call to time.sleep() on this machine
-_start = time.time()
-time.sleep(1e-12)
-_end = time.time()
+# Calculate how much overhead there is for a single call to pytime.sleep() on this machine
+_start = pytime.time()
+pytime.sleep(1e-12)
+_end = pytime.time()
 _sleep_overhead = (_end - _start)*3 # In a for loop context, *3 gives the most accurate results
 del _start, _end
 
@@ -1162,18 +1174,18 @@ def timedsleep(delay=None, start=None, verbose=False):
     '''
     global _delaytime
     if delay is None or delay=='start':
-        _delaytime = time.time()  # Store the present time in the global.
+        _delaytime = pytime.time()  # Store the present time in the global.
         return _delaytime         # Return the same stored number.
     else:
         if start is None:
             try:    start = _delaytime
-            except: start = time.time()
-        elapsed = time.time() - start
+            except: start = pytime.time()
+        elapsed = pytime.time() - start
         remaining = delay - elapsed - _sleep_overhead
         if remaining > 0:
             if verbose:
                 print(f'Pausing for {remaining:n} s')
-            time.sleep(remaining)
+            pytime.sleep(remaining)
             try:    del _delaytime # After it's been used, we can't use it again
             except: pass
         elif verbose:
@@ -1207,6 +1219,6 @@ def randsleep(delay=1.0, var=1.0, low=None, high=None):
             low, high = delay[0], delay[1]
 
     dur = np.random.uniform(low, high)
-    time.sleep(dur)
+    pytime.sleep(dur)
 
     return dur
