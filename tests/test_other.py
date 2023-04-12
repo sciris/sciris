@@ -105,12 +105,44 @@ def test_dicts():
     print(f'Dict3: {dict3}')
     assert dict3 == {'key1': {'a': 'A*'}, 'key2': {'b': 'B', 'b+': 'B+'}, 'key3': {'c': 'C'}}
     o.dict3 = dict3
+    
+    return o
 
-    print('\nTesting search')
-    nested = {'a':{'foo':1, 'bar':2}, 'b':{'bar':3, 'cat':4}}
-    matches = sc.search(nested, 'bar') # Returns ['["a"]["bar"]', '["b"]["bar"]']
-    print(matches)
-    o.matches = matches
+    
+
+
+def test_search():
+    sc.heading('Testing search')
+    o = sc.objdict()
+    
+    # Define th enested object
+    nested = {
+        'a': {
+             'foo':1,
+             'bar':2,
+        },
+        'b':{
+            'bar':3,
+            'cat':sc.prettyobj(hat=[1,2,4,8]),
+        }
+    }
+    
+    print('\nTesting search by key')
+    key = 'bar'
+    keymatches = sc.search(nested, key) # Returns ['["a"]["bar"]', '["b"]["bar"]']
+    o.keymatches = keymatches
+    print(keymatches)
+    assert len(keymatches) == 2
+    for keymatch in keymatches:
+        assert key in keymatch
+        
+    print('\nTesting search by value')
+    val = 8
+    valmatches = sc.search(nested, value=val, aslist=True) # Returns ['["a"]["bar"]', '["b"]["bar"]']
+    o.valmatches = valmatches
+    print(valmatches)
+    assert len(valmatches) == 1
+    assert sc.getnested(nested, valmatches[0]) == val # Get from the original nested object
 
     return o
 
@@ -125,6 +157,7 @@ if __name__ == '__main__':
     # Nested
     nested    = test_nested()
     dicts     = test_dicts()
+    search    = test_search()
 
     sc.toc()
     print('Done.')
