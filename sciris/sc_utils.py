@@ -1593,43 +1593,69 @@ class prettyobj(object):
     Use pretty repr for objects, instead of just showing the type and memory pointer
     (the Python default for objects). Can also be used as the base class for custom
     classes.
+    
+    Args:
+        args (dict): dictionaries which are used to assign attributes
+        kwargs (any): can also be used to assign attributes
 
-    **Examples**
+    **Example 1**::
 
-        >>> myobj = sc.prettyobj(a=3)
-        >>> myobj.b = {'a':6}
-        >>> print(myobj)
-        <sciris.sc_utils.prettyobj at 0x7ffa1e243910>
-        ————————————————————————————————————————————————————————————
-        a: 3
-        b: {'a': 6}
-        ————————————————————————————————————————————————————————————
+        myobj = sc.prettyobj(a=3)
+        print(myobj)
+        
+        # <sciris.sc_utils.prettyobj at 0x7fbba4a97f40>
+        # ————————————————————————————————————————————————————————————
+        # Methods:
+        #   Methods N/A         
+        # ————————————————————————————————————————————————————————————
+        # a: 3
+        # ————————————————————————————————————————————————————————————
 
-        >>> class MyObj(sc.prettyobj):
-        >>>
-        >>>     def __init__(self, a, b):
-        >>>         self.a = a
-        >>>         self.b = b
-        >>>
-        >>>     def mult(self):
-        >>>         return self.a * self.b
-        >>>
-        >>> myobj = MyObj(a=4, b=6)
-        >>> print(myobj)
-        <__main__.MyObj at 0x7fd9acd96c10>
-        ————————————————————————————————————————————————————————————
-        Methods:
-          mult()
-        ————————————————————————————————————————————————————————————
-        a: 4
-        b: 6
-        ————————————————————————————————————————————————————————————
+    **Example 2**::
+
+        myobj = sc.prettyobj(a=3)
+        myobj.b = {'a':6}
+        print(myobj)
+        
+        # <sciris.sc_utils.prettyobj at 0x7ffa1e243910>
+        # ————————————————————————————————————————————————————————————
+        # Methods:
+        #   Methods N/A         
+        # ————————————————————————————————————————————————————————————
+        # a: 3
+        # b: {'a': 6}
+        # ————————————————————————————————————————————————————————————
+
+
+    **Example 3**::
+        
+        class MyObj(sc.prettyobj):
+       
+            def __init__(self, a, b):
+                self.a = a
+                self.b = b
+       
+            def mult(self):
+                return self.a * self.b
+       
+        myobj = MyObj(a=4, b=6)
+        print(myobj)
+        
+        # <__main__.MyObj at 0x7fd9acd96c10>
+        # ————————————————————————————————————————————————————————————
+        # Methods:
+        #   mult()
+        # ————————————————————————————————————————————————————————————
+        # a: 4
+        # b: 6
+        # ————————————————————————————————————————————————————————————
 
     | New in version 2.0.0: allow positional arguments
     '''
 
-    def __init__(self, **kwargs):
+    def __init__(self, *args, **kwargs):
         ''' Simple initialization '''
+        kwargs = mergedicts(*args, kwargs)
         for k,v in kwargs.items():
             self.__dict__[k] = v
         return
