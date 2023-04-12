@@ -149,18 +149,6 @@ class dataframe(pd.DataFrame):
         return output
 
 
-    @staticmethod
-    def _cast(arr):
-        ''' Attempt to cast an array to different data types, to avoid having completely numeric arrays of object type '''
-        output = arr
-        if isinstance(arr, np.ndarray) and np.can_cast(arr, numbers.Number, casting='same_kind'): # Check that everything is a number before trying to cast to an array
-            try: # If it is, try to cast the whole array to the type of the first element
-                output = np.array(arr, dtype=type(arr[0]))
-            except: # If anything goes wrong, do nothing # pragma: no cover
-                pass
-        return output
-
-
     def __getitem__(self, key=None, die=True, cast=True):
         ''' Simple method for returning; see self.flexget() for a version based on col and row '''
         try: # Default to the pandas version
@@ -209,7 +197,7 @@ class dataframe(pd.DataFrame):
             if scu.isnumber(key):
                 try:
                     self.iloc[key,:] = value # If it's already in the right format, use regular pandas
-                except:
+                except: # pragma: no cover
                     newdf = self._sanitize_df(value) # Otherwise, try to sanitize it
                     self.iloc[key,:] = newdf
             elif isinstance(key, tuple):
@@ -257,10 +245,9 @@ class dataframe(pd.DataFrame):
             rowindices = rows
 
         output = self.iloc[rowindices,colindices] # Split up so can handle non-consecutive entries in either
-        if output.size == 1: output = output[0] # If it's a single element, return the value rather than the array
+        if output.size == 1:
+            output = output.flatten()[0] # If it's a single element, return the value rather than the array
         if asarray:
-            if cast:
-                output = self._cast(output)
             return output
         else:
             output = dataframe(data=output, columns=np.array(self.cols)[colindices].tolist())
