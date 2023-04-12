@@ -70,7 +70,7 @@ def sanitizecolor(color, asarray=False, alpha=None, normalize=True):
         color = [color]*3 # Consider it grey
             
     color = scu.toarray(color).astype(float) # Get it into consistent format for further operations
-    if len(color) not in [3,4]:
+    if len(color) not in [3,4]: # pragma: no cover
         errormsg = f'Cannot parse {color} as a color: expecting length 3 (RGB) or 4 (RGBA)'
         raise ValueError(errormsg)
     if normalize and color.max()>1:
@@ -95,9 +95,9 @@ def _processcolors(colors=None, asarray=False, ashex=False, reverse=False):
         output = []
         for c in colors: # Gather output
             output.append(tuple(c))
-        if reverse: # Reverse the list
+        if reverse: # Reverse the list # pragma: no cover
             output.reverse()
-        if ashex:
+        if ashex: # pragma: no cover
             for c,color in enumerate(output):
                 output[c] = rgb2hex(color)
     return output
@@ -149,9 +149,9 @@ def hex2rgb(string):
     '''
     if string[0] == '#':
         string = string[1:] # Trim leading #, if it exists
-    if len(string)==3:
-        string = string[0]*2+string[1]*2+string[2]*2 # Convert e.g. '8b2' to '88bb22'
-    if len(string)!=6: # pragma: no cover
+    if len(string) == 3:
+        string = string[0]*2 + string[1]*2 + string[2]*2 # Convert e.g. '8b2' to '88bb22'
+    if len(string) != 6: # pragma: no cover
         errormsg = f'Cannot convert "{string}" to an RGB color: must be 3 or 6 characters long'
         raise ValueError(errormsg)
     hexstring = bytes.fromhex(string) # Ensure it's the right type
@@ -231,6 +231,7 @@ def vectocolor(vector, cmap=None, asarray=True, reverse=False, minval=None, maxv
 
     | New in version 1.2.0: midpoint argument.
     | New in version 2.1.0: nancolor argument and remove nans by default
+    | New in version 2.2.0: correct "midpoint" argument
     """
 
     from numpy import array, zeros
@@ -257,9 +258,10 @@ def vectocolor(vector, cmap=None, asarray=True, reverse=False, minval=None, maxv
         if maxval is None:
             maxval = np.nanmax(vector)
 
-        vector = vector-minval # Subtract minimum
-        vector = vector/float(maxval-minval) # Divide by maximum
+        diff = maxval - minval
+        vector = (vector - minval)/diff # Normalize vector
         if midpoint is not None:
+            midpoint = (midpoint - minval)/diff
             norm = midpointnorm(vcenter=midpoint, vmin=0, vmax=1)
             vector = np.array(norm(vector))
         nelements = len(vector) # Count number of elements
