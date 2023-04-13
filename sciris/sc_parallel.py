@@ -268,13 +268,13 @@ class Parallel:
         sys_cpus = scpro.cpu_count()
         if not ncpus: # Nothing is supplied (None or 0), calculate dynamically
             ncpus = sys_cpus
-        elif ncpus < 1: # Less than one, treat as a fraction of total
+        elif 0 < ncpus < 1: # Less than one, treat as a fraction of total
             ncpus = int(np.ceil(sys_cpus*ncpus))
         ncpus = min(ncpus, self.njobs) # Don't use more CPUs than there are things to process
         
         # Check and set CPUs
-        if not ncpus:
-            errormsg = f'No CPUs to run on with inputs ncpus={self._ncpus}, system CPUs={sys_cpus}, number of jobs={self.njobs}'
+        if not ncpus > 0: # pragma: no cover
+            errormsg = f'No CPUs to run on with inputs ncpus={ncpus}, system CPUs={sys_cpus}, and/or number of jobs={self.njobs}'
             raise ValueError(errormsg)
         self.ncpus = ncpus
         return
@@ -298,8 +298,19 @@ class Parallel:
             except:
                 errormsg = f'Parallelizer "{parallelizer}" not found: must be one of {scu.strjoin(self.defaults.mapping.keys())}'
                 raise scu.KeyNotFoundError(errormsg)
-        else:
+        else: # pragma: no cover
             self.method = 'custom' # If a custom parallelizer is provided
+        
+        # Handle async
+        is_async = False
+        supports_async = ['multiprocess', 'multiprocessing']
+        if scu.isstring(self.parallelizer) and '-async' in self.parallelizer:
+            if self.method in supports_async:
+                is_async = True
+            else:
+                errormsg = f'You have specified to use async with "{self.method}", but async is only supported for: {scu.strjoin(supports_async)}.'
+                raise ValueError(errormsg)
+        self.is_async = is_async
         
         return
     
@@ -308,23 +319,13 @@ class Parallel:
         ''' Make the pool and map function '''
         
         # Shorten variables
-        ncpus = self.ncpus
-        method = self.method
+        ncpus    = self.ncpus
+        method   = self.method
+        is_async = self.is_async
         
-        is_async = False
-        supports_async = ['multiprocess', 'multiprocessing']
-        if scu.isstring(self.parallelizer) and '-async' in self.parallelizer:
-            if method in supports_async:
-                is_async = True
-            else:
-                errormsg = f'You have specified to use async with "{method}", but async is only supported for: {scu.strjoin(supports_async)}.'
-                raise ValueError(errormsg)
-                
         def make_async_func(pool):
             if is_async:
-                # callback = partial(self.finalize, get_results=False, close_pool=False)
                 map_func = partial(pool.map_async, callback=self._time_finished)
-                # map_func = pool.map_async#partial(pool.map_async, callback=self.finalize)
             else:
                 map_func = pool.map
             return map_func
@@ -337,11 +338,10 @@ class Parallel:
         elif method == 'multiprocess': # Main use case
             pool = mp.Pool(processes=ncpus)
             map_func = make_async_func(pool)
-            # map_func = pool.map_async if is_async else pool.map
         
         elif method == 'multiprocessing':
             pool = mpi.Pool(processes=ncpus)
-            map_func = pool.map_async if is_async else pool.map
+            map_func = make_async_func(pool)
         
         elif method == 'concurrent.futures':
             pool = cf.ProcessPoolExecutor(max_workers=ncpus)
@@ -355,7 +355,7 @@ class Parallel:
             pool = None
             map_func = self.parallelizer
         
-        else: # Should be unreachable; exception should have already been caught
+        else: # Should be unreachable; exception should have already been caught # pragma: no cover
             errormsg = f'Invalid parallelizer "{self.parallelizer}"'
             raise ValueError(errormsg)
             
