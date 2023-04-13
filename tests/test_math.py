@@ -9,6 +9,7 @@ import pytest
 
 
 if 'doplot' not in locals(): doplot = False
+np.random.seed(1) # Ensure reproducibility
 
 
 def test_utils():
@@ -72,6 +73,16 @@ def test_find():
     print('Testing sc.findinds()')
     found.vals = sc.findinds([2,3,6,3], 6)
     assert found.vals[0] == 2
+    
+    data = np.random.rand(1000) 
+    f1 = sc.findinds(data<0.5) # Standard usage; returns e.g. array([2, 4, 5, 9]) 
+    f2 = sc.findinds(data>0.3, data<0.5) # Multiple arguments 
+    assert len(f2) < len(f1)
+    
+    maxval = 0.1
+    tabdata = np.random.rand(20,20)
+    loc = sc.findinds(tabdata<maxval, ind=3)
+    assert tabdata[loc] < maxval
 
     print('Testing sc.count()')
     found.count = sc.count([1,2,2,3], 2.0)

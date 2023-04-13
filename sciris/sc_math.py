@@ -69,7 +69,7 @@ def safedivide(numerator=None, denominator=None, default=None, eps=None, warn=Fa
     if scu.isnumber(denominator): # The denominator is a scalar
         if invalid:
             output = default
-        else:
+        else: # pragma: no cover
             output = numerator/denominator
     elif scu.checktype(denominator, 'array'):
         if not warn:
@@ -165,7 +165,7 @@ def findinds(arr=None, val=None, *args, eps=1e-6, first=False, last=False, ind=N
                 output = output[ind] # And get the first element
         else:
             if ind is not None:
-                output = [output[i][ind] for i in range(arr.ndim)]
+                output = tuple([output[i][ind] for i in range(arr.ndim)])
     except IndexError as E:
         if die:
             errormsg = 'No matching values found; use die=False to return None instead of raising an exception'
