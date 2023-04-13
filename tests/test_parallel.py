@@ -117,6 +117,9 @@ def test_class():
     
     subheading('Running asynchronously and monitoring')
     P.run_async()
+    print(P.running)
+    print(P.ready)
+    print(P.status)
     P.monitor(interval=0.05)
     P.finalize()
     
@@ -125,8 +128,8 @@ def test_class():
     
     iterarg = np.arange(4)
     
-    print('Checking serial with copy')
-    r1 = sc.parallelize(f, iterarg, parallelizer='serial-copy')
+    print('Checking serial with copy and with progress')
+    r1 = sc.parallelize(f, iterarg, parallelizer='serial-copy', progress=True)
     
     print('Checking multiprocessing')
     r2 = sc.parallelize(f, iterarg, parallelizer='multiprocessing')

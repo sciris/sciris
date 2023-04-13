@@ -462,7 +462,7 @@ class Parallel:
         if close_pool and self.pool:
             try:
                 self.pool.__exit__(None, None, None) # Handle as if in a with block
-            except Exception as E:
+            except Exception as E: # pragma: no cover
                 warnmsg = f'Could not close pool {self.pool}, please close manually: {str(E)}'
                 warnings.warn(warnmsg, category=RuntimeWarning, stacklevel=2)
         if process_results:
@@ -472,21 +472,26 @@ class Parallel:
     
     def process_results(self):
         ''' Parse the returned results dict into separate lists '''
-        if self.rawresults is None:
+        
+        # Do not proceed if no results
+        if self.rawresults is None: # pragma: no cover
             errormsg = 'Cannot process results: results not ready yet'
             raise ValueError(errormsg)
+        
+        # Otherwise, process results
         else:
-            self.results = list()
-            self.success = list()
+            self.results    = list()
+            self.success    = list()
             self.exceptions = list()
             self.times.jobs = list()
+            
             for raw in self.rawresults:
                 self.results.append(raw['result'])
                 self.success.append(raw['success'])
                 self.exceptions.append(raw['exception'])
                 self.times.jobs.append(raw['elapsed'])
             
-            if not all(self.success):
+            if not all(self.success): # pragma: no cover
                 warnmsg = f'Only {sum(self.success)} of {len(self.success)} jobs succeeded; see exceptions attribute for details'
                 warnings.warn(warnmsg, category=RuntimeWarning, stacklevel=2)
         return
@@ -746,7 +751,7 @@ def _task(taskargs):
         result = func(*args, **kwargs) # Call the function!
         success = True
         globaldict[index] = 1
-    except Exception as E:
+    except Exception as E: # pragma: no cover
         if taskargs.die: # Usual case, raise an exception and stop
             errormsg = f'Task {index} failed: set die=False to keep going instead; see above for error details'
             exc = type(E)
@@ -762,7 +767,7 @@ def _task(taskargs):
         _progressbar(globaldict, taskargs.njobs)
     
     # Handle callback, if present
-    if taskargs.callback:
+    if taskargs.callback: # pragma: no cover
         data = dict(index=index, njobs=taskargs.njobs, args=args, kwargs=kwargs, result=result)
         taskargs.callback(data)
     
