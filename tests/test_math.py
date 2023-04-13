@@ -9,11 +9,11 @@ import pytest
 
 
 if 'doplot' not in locals(): doplot = False
-np.random.seed(1) # Ensure reproducibility
 
 
 def test_utils():
     sc.heading('Testing mathematical utilities')
+    np.random.seed(1) # Ensure reproducibility
 
     o = sc.objdict()
 
@@ -29,10 +29,21 @@ def test_utils():
 
     print('Testing sc.isprime()')
     o.isprime = [[i**2+1,sc.isprime(i**2+1)] for i in range(10)]
+    assert sc.isprime(3) == True
+    assert sc.isprime(9) == False
+    assert sc.isprime(49) == False
 
     print('Testing sc.perturb()')
     o.perturb = sc.perturb(10, 0.3)
-
+    δ = 0.1
+    x = sc.perturb(1000, δ, randseed=1)
+    assert np.all(x>1-δ)
+    assert np.all(x<1+δ)
+    assert abs(x.mean() - 1) < δ
+    y = sc.perturb(1000, δ, normal=True)
+    assert y.min() < x.min()
+    assert y.max() > x.max()
+    
     print('Testing sc.normsum() and sc.normalize()')
     o.normsum   = sc.normsum([2,5,3,6,2,6,7,2,3,4], 100) # Scale so sum equals 100
     o.normalize = sc.normalize([2,3,7,27])
@@ -55,6 +66,7 @@ def test_utils():
     print('Testing sc.cat()')
     o.cat = sc.cat(np.array([1,2,3]), [4,5], 6, copy=True)
     assert o.cat[3] == 4
+    assert len(sc.cat()) == 0
     
     print('Testing sc.linregress()')
     x = range(10)
@@ -67,6 +79,7 @@ def test_utils():
 
 def test_find():
     sc.heading('Testing find functions')
+    np.random.seed(1) # Ensure reproducibility
 
     found = sc.objdict()
 
@@ -109,10 +122,22 @@ def test_find():
     print('Testing sc.sanitize()')
     data = [3, 4, np.nan, 8, 2, np.nan, np.nan, 8]
     sanitized, inds = sc.sanitize(data, returninds=True) # Remove NaNs
-    sc.sanitize(data, replacenans=True) # Replace NaNs using nearest neighbor interpolation
-    sc.sanitize(data, replacenans='nearest') # Eequivalent to replacenans=True
-    sc.sanitize(data, replacenans='linear') # Replace NaNs using linear interpolation
-    sc.sanitize(data, replacenans=0) # Replace NaNs with 0
+    assert len(sanitized) == 5
+    assert 1 in inds
+    
+    s2 = sc.sanitize(data, replacenans=True) # Replace NaNs using nearest neighbor interpolation
+    s3 = sc.sanitize(data, replacenans='nearest') # Eequivalent to replacenans=True
+    s4 = sc.sanitize(data, replacenans='linear') # Replace NaNs using linear interpolation
+    s5 = sc.sanitize(data, replacenans=0) # Replace NaNs with 0
+    assert s2[2] == 4
+    assert s3[2] == 4
+    assert s4[2] == 6
+    assert s5[2] == 0
+    
+    allnans = np.full(5, np.nan)
+    assert len(sc.sanitize(allnans)) == 0
+    assert sc.sanitize(allnans, defaultval=7) == 7
+    
     data2d = np.random.rand(3,3)
     data2d[1,1] = np.nan
     data2d[2,2] = np.nan
@@ -132,35 +157,54 @@ def test_find():
     assert found.numdigits == 4
     assert found.numdigits_max == 5
     assert found.numdigits_dec == -2
+    assert sc.numdigits(-1, count_minus=True) == 2
+    assert sc.numdigits(0.02, count_decimal=True) == -4
 
     return found
 
 
 def test_smooth(doplot=doplot):
     sc.heading('Testing smoothing')
+    np.random.seed(1) # Ensure reproducibility
+    
+    o = sc.objdict()
 
     print('Testing sc.smooth()')
     data = pl.randn(200,100)
-    smoothdata = sc.smooth(data,10)
+    o.smoothdata = sc.smooth(data,10)
 
     print('Testing sc.smoothinterp()')
-    n = 20
+    n = 50
     x1 = pl.arange(n)
     y1 = pl.randn(n)
+    y1[10] = np.nan
     x2 = pl.linspace(-5,n+5,100)
-    y2 = sc.smoothinterp(x2, x1, y1)
-
+    o.smoothinterp = sc.smoothinterp(x2, x1, y1)
+    assert np.isnan(o.smoothinterp).sum() == 0
+    assert np.nanmin(y1) < o.smoothinterp.min()
+    assert np.nanmax(y1) > o.smoothinterp.max()
+    
+    si = sc.smoothinterp(x2, x1, y1, ensurefinite=False)
+    assert np.isnan(si).sum() > 0
+    
+    print('Testing sc.rolling()')
+    d = pl.randn(365)
+    o.r = sc.rolling(d, replacenans=False)
+    assert sum(abs(np.diff(d))) > sum(abs(np.diff(o.r))) # Rolling should make the diffs smaller
+    for op in ['none', 'median', 'sum']:
+        sc.rolling(d, operation=op)
+    
     if doplot:
         pl.subplot(3,1,1)
         pl.pcolor(data)
         pl.subplot(3,1,2)
-        pl.pcolor(smoothdata)
+        pl.pcolor(o.smoothdata)
         pl.subplot(3,1,3)
         pl.scatter(x1, y1)
-        pl.plot(x2, y2)
+        pl.plot(x2, o.smoothinterp)
         pl.show()
 
-    return smoothdata
+    return o
 
 
 def test_gauss1d(doplot=doplot):
