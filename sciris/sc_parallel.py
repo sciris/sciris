@@ -53,8 +53,45 @@ class Parallel:
     '''
     Parallelization manager
     
-    # TODO!!!!!
+    For arguments and usage documentation, see :func:`parallelize()`. Briefly,
+    this class validates input arguments, sets the number of CPUs, creates a
+    process (or thread) pool, starts the jobs running, retrieves the results from
+    each job, and processes them into outputs.
     
+    Useful methods:
+        reset(): reset the Parallel object to its initial pre-run state
+        run_async(): the method that actually executes the parallelization (NB, used with every method, not only async ones)
+        monitor(): monitor the progress of an asynchronous run
+        finalize(): get the results from each job and process it
+        run(): shortcut to calling run_async() followed by finalize()
+
+    Useful attributes and properties:
+        running (bool): whether or not the jobs are running
+        ready (bool): whether or not the jobs are ready
+        status (str): a string description of the current state (not run, running, or done)
+        jobs (list): a list of jobs to run or being run (empty prior to run)
+        results (list): list of all results (the output from the jobs; empty prior to run)
+        success (list): whether each job completed successfully (true/false)
+        exceptions (list): if not, store the exceptions that were raised
+        times (dict): timing information on when the jobs were started, when they finished, and how long each job took
+    
+    **Example**::
+        
+        import sciris as sc
+        import numpy as np
+
+        def slowfunc(i):
+            np.random.seed(i)
+            sc.timedsleep(np.random.rand())
+            return i**2
+
+        P = sc.Parallel(slowfunc, iterarg=range(10), parallelizer='multiprocess-async')
+        P.run_async()
+        P.monitor()
+        P.finalize()
+        print(P.times)
+        
+    New in version 2.2.0.    
     '''
     def __init__(self, func, iterarg=None, iterkwargs=None, args=None, kwargs=None, ncpus=None, 
                  maxcpu=None, maxmem=None, interval=None, parallelizer=None, serial=False, 

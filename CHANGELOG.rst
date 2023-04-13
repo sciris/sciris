@@ -5,6 +5,91 @@ All major updates to Sciris are documented here.
 
 By import convention, components of the Sciris library are listed beginning with ``sc.``, e.g. ``sc.odict()``.
 
+
+Version 2.2.0 (2023-04-14)
+--------------------------
+
+This version's major changes include:
+
+#. **New Parallel class**: A new ``sc.Parallel()`` class allows finer-grained managing of parallel processes, including automatic progress bars, better exception handling, and asynchronous running.
+#. **Better documentation**: A comprehensive set of tutorials has been added to the documentation, and the documentation has been rewritten in a new style.
+
+
+
+
+Improvements and new features
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Major
+^^^^^
+#. TBC
+
+Parallelization
+^^^^^^^^^^^^^^^
+#. TBC
+
+Dataframe
+^^^^^^^^^
+#. Better handling of (and preservation) of ``dtypes`` for dataframe columns, including a new ``df.set_dtypes()`` method.
+#. Better implementation of underlying logic, leading to significant performance increases in some cases (e.g., iteratively appending rows).
+
+Time/date
+^^^^^^^^^
+#. New ``sc.time()`` alias for ``time.time()``.
+#. Support for ``pandas`` and ``Numpy`` datetime objects.
+#. New ``sc.timer`` attributes and methods: ``rawtimings``, ``sum()``, ``min()``, ``max()``, ``mean()``, ``std()``.
+#. More accurate computation of self-time in ``sc.timedsleep()``.
+
+Files
+^^^^^
+#. A new function ``sc.unzip()`` extracts zip files to disk, while ``sc.loadzip()`` now defaults to loading the zip file contents to memory.
+#. If a saved file can't be unpickled, ``sc.load()`` now defaults to using ``dill``, and has more robust error handling (see also "versioning" updates below).
+#. ``sc.makefilepaths()`` now defaults to ``makedirs=False``.
+#. File save functions now make new subfolders by default.
+#. ``sc.save()`` now has an ``allow_empty`` argument (instead of ``die='never'``).
+
+
+Versioning
+~~~~~~~~~~
+#. A new versioning module has been added.
+#. Known regressions from older library versions are now automatically handled by ``sc.load()`` (e.g., ``pandas`` v2.0 dataframes cannot be loaded in v1.5, and vice versa).
+
+Plotting
+^^^^^^^^
+#. TBC
+
+Math
+^^^^
+#. ``sc.randround()`` now works with multidimensional arrays. (Thanks to `Jamie Cohen <https://github.com/jamiecohen>`_ for the suggestion.)
+#. ``sc.smoothinterp()`` now defaults to ``ensurefinite=True``.
+
+
+
+Other
+^^^^^
+#. A new environment variable, ``SCIRIS_NUM_THREADS``, will set the number of threads Numpy uses (if Sciris is imported first). In some cases, more threads results in *slower* processing (and of course uses way more CPU time).
+#. Nested "dictionary" operations can now act on other types of object, including lists and regular objects.
+#. ``sc.search()`` now works on values as well as keys/attributes.
+#. ``sc.dictobj.fromkeys()`` is now a static method.
+
+
+Bugfixes
+~~~~~~~~
+#. Fixed the implementation of the ``midpoint`` argument in ``sc.vectocolor()``.
+#. Fixed corner cases where some ``sc.dataframe`` methods returned ``pd.DataFrame`` objects instead.
+#. Fixed corner cases where some ``sc.objdict`` methods returned ``sc.odict`` objects instead.
+#. ``sc.findinds()`` now returns a tuple for multidimensional arrays, allowing it to be used directly for indexing.
+#. ``sc.rmnans()`` now returns a zero-length array if all input is NaNs.
+#. Fixed ``sc.daydiff()`` with one argument computing the number of days from Jan. 1st of the *current* year (instead of Jan. 1st of the provided year).
+
+
+Regression information
+~~~~~~~~~~~~~~~~~~~~~~
+#. ``sc.parallel_progress()`` has been moved to ``sc.sc_legacy()``. Please use ``sc.parallelize(..., progress=True)`` instead.
+#. ``sc.parallelcmd()`` has been moved to ``sc.sc_legacy()``. Please do not use this function :)
+
+
+
 Version 2.1.0 (2022-12-23)
 --------------------------
 

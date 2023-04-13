@@ -114,7 +114,7 @@ def findinds(arr=None, val=None, *args, eps=1e-6, first=False, last=False, ind=N
 
     | New in version 1.2.3: "die" argument
     | New in version 2.0.0: fix string matching; allow multiple arguments
-    | New in version 2.2.0: 
+    | New in version 2.2.0: multidimensional arrays now return a list of tuples
     '''
 
     # Handle first or last
@@ -206,7 +206,7 @@ def findnearest(series=None, value=None):
     '''
     series = scu.toarray(series)
     if scu.isnumber(value):
-        output = np.argmin(np.abs(series-value))
+        output = np.argmin(abs(series-value))
     else:
         output = []
         for val in value: output.append(findnearest(series, val))
