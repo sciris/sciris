@@ -25,9 +25,17 @@ def test_memchecks():
     sc.heading('Testing memory checks')
 
     o = sc.objdict()
+    
+    complexobj = sc.prettyobj(
+        a = sc.objdict(
+            a_dict = {'foo':'bar'},
+            a_arr = np.random.rand(243,589),
+            ),
+        b = [0,1,2,[3,4,'foo']]
+    )
 
     print('\nTesting checkmem')
-    o.mem = sc.checkmem(['small string', np.random.rand(243,589)], descend=True)
+    o.mem = sc.checkmem(complexobj, descend=2)
 
     print('\nTesting checkram')
     o.ram = sc.checkram()
@@ -38,6 +46,13 @@ def test_memchecks():
 
 def test_profile():
     sc.heading('Test profiling functions')
+    
+    print('Benchmarking:')
+    bm = sc.benchmark()
+    print(bm)
+    assert bm.numpy > bm.python
+    
+    print('Profiling:')
 
     def slow_fn():
         n = 10000
@@ -79,7 +94,7 @@ def test_profile():
         print(f'Unable to re-profile memory function; this is usually not cause for concern ({E})')
     sc.profile(run=foo.outer, follow=[foo.outer, foo.inner])
     lp = sc.profile(slow_fn)
-
+    
     return lp
 
 

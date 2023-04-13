@@ -95,7 +95,7 @@ def checkmem(var, descend=1, order='size', compresslevel=0, maxitems=1000,
     def check_one_object(variable):
         ''' Check the size of one variable '''
 
-        if verbose>1:
+        if verbose>1: # pragma: no cover
             print(f'  Checking size of {variable}...')
 
         # Create a temporary file, save the object, check the size, remove it
@@ -144,13 +144,13 @@ def checkmem(var, descend=1, order='size', compresslevel=0, maxitems=1000,
     else:
         # Error checking
         n_variables = len(variables)
-        if n_variables > maxitems:
+        if n_variables > maxitems: # pragma: no cover
             errormsg = f'Cannot compute the sizes of {n_variables} items since maxitems is set to {maxitems}'
             raise RuntimeError(errormsg)
     
         # Compute the sizes recursively
         for v,(varname,variable) in enumerate(zip(varnames, variables)):
-            if verbose:
+            if verbose: # pragma: no cover
                 print(f'Processing variable {v} of {len(variables)}')
             label = _join.join([_prefix, varname]) if _prefix else varname
             this_df = checkmem(variable, descend=descend-1, compresslevel=compresslevel, maxitems=maxitems, plot=False, verbose=False, _prefix=label, _depth=_depth+1)
@@ -167,7 +167,7 @@ def checkmem(var, descend=1, order='size', compresslevel=0, maxitems=1000,
     if _depth == 0 and len(df) > 1:
         # if subtotals:
             
-        if order == 'alphabetical':
+        if order == 'alphabetical': # pragma: no cover
             df.sortrows(col='variable')
         elif order == 'size':
             df.sortrows(col='bytesize', reverse=True)
@@ -208,7 +208,7 @@ def checkram(unit='mb', fmt='0.2f', start=0, to_string=True):
     mem_use = process.memory_info().rss/factor - start
     if to_string:
         output = f'{mem_use:{fmt}} {unit.upper()}'
-    else:
+    else: # pragma: no cover
         output = mem_use
     return output
 
@@ -292,7 +292,7 @@ def benchmark(repeats=5, scale=1, verbose=False, python=True, numpy=True, return
             N.toc(f'Numpy, {np_ops}m operations')
     
     # Handle output
-    if return_timers:
+    if return_timers: # pragma: no cover
         out = sco.objdict(python=P, numpy=N)
     else:
         pymops = py_ops/P.mean() if len(P) else None # Handle if one or the other isn't run
@@ -388,27 +388,27 @@ def loadbalancer(maxcpu=0.8, maxmem=0.8, index=None, interval=None, cpu_interval
     # Handle the interval
     default_interval = 0.5
     min_interval = 1e-3 # Don't allow intervals of less than 1 ms
-    if interval is None:
+    if interval is None: # pragma: no cover
         interval = default_interval
-    if interval < min_interval:
+    if interval < min_interval: # pragma: no cover
         interval = min_interval
         warnmsg = f'sc.loadbalancer() "interval" should not be less than {min_interval} s'
         warnings.warn(warnmsg, category=UserWarning, stacklevel=2)
 
     if label is None:
         label = ''
-    else:
+    else: # pragma: no cover
         label += ': '
 
     if index is None:
         pause = interval*2*np.random.rand()
         index = ''
-    else:
+    else: # pragma: no cover
         pause = index*interval
 
     if maxcpu>1: maxcpu = maxcpu/100 # If it's >1, assume it was given as a percent
     if maxmem>1: maxmem = maxmem/100
-    if (not 0 < maxcpu < 1) and (not 0 < maxmem < 1):
+    if (not 0 < maxcpu < 1) and (not 0 < maxmem < 1): # pragma: no cover
         return # Return immediately if no max load
     else:
         time.sleep(pause) # Give it time to asynchronize, with a predefined delay
@@ -429,10 +429,10 @@ def loadbalancer(maxcpu=0.8, maxmem=0.8, index=None, interval=None, cpu_interval
         cpu_str = f'{cpu_current:0.2f}{cpu_compare}{maxcpu:0.2f}'
         mem_str = f'{mem_current:0.2f}{mem_compare}{maxmem:0.2f}'
         process_str = f'process {index}' if index else 'process'
-        if cpu_toohigh:
+        if cpu_toohigh: # pragma: no cover
             string = label+f'CPU load too high ({cpu_str}); {process_str} queued {count} times'
             scd.randsleep(interval)
-        elif mem_toohigh:
+        elif mem_toohigh: # pragma: no cover
             string = label+f'Memory load too high ({mem_str}); {process_str} queued {count} times'
             scd.randsleep(interval)
         else:
@@ -509,7 +509,7 @@ def profile(run, follow=None, print_stats=True, *args, **kwargs):
             errormsg = 'The "line_profiler" Python package is required to perform profiling'
         raise ModuleNotFoundError(errormsg) from E
 
-    if follow is None:
+    if follow is None: # pragma: no cover
         follow = run
     orig_func = run
 
@@ -518,16 +518,16 @@ def profile(run, follow=None, print_stats=True, *args, **kwargs):
     for f in follow:
         lp.add_function(f)
     lp.enable_by_count()
-    wrapper = lp(run)
+    wrapper = lp(run) # pragma: no cover
 
     if print_stats: # pragma: no cover
         print('Profiling...')
-    wrapper(*args, **kwargs)
-    run = orig_func
+    wrapper(*args, **kwargs) # pragma: no cover
+    run = orig_func # pragma: no cover
     if print_stats: # pragma: no cover
         lp.print_stats()
         print('Done.')
-    return lp
+    return lp # pragma: no cover
 
 
 def mprofile(run, follow=None, show_results=True, *args, **kwargs):
@@ -556,7 +556,7 @@ def mprofile(run, follow=None, show_results=True, *args, **kwargs):
             errormsg = 'The "memory_profiler" Python package is required to perform profiling'
         raise ModuleNotFoundError(errormsg) from E
 
-    if follow is None:
+    if follow is None: # pragma: no cover
         follow = run
 
     lp = mp.LineProfiler()
@@ -662,7 +662,7 @@ class resourcemonitor(scu.prettyobj):
             label (str): optional label for printing progress
         '''
 
-        def handler(signum, frame):
+        def handler(signum, frame): # pragma: no cover
             ''' Custom exception handler '''
             if self.exception is not None:
                 raise self.exception
@@ -698,7 +698,7 @@ class resourcemonitor(scu.prettyobj):
             errormsg = 'Could not reset signal, probably not calling from main thread'
             print(errormsg)
         if self.exception is not None and self.die: # This exception has likely already been raised, but if not, raise it now
-            raise self.exception
+            raise self.exception # pragma: no cover
         return self
 
 
@@ -727,7 +727,7 @@ class resourcemonitor(scu.prettyobj):
                 self.exception = LimitExceeded(checkstr)
                 if self.callback:
                     self.callback(checkdata, checkstr)
-                if self.die:
+                if self.die: # pragma: no cover
                     self.kill()
             time.sleep(self.interval)
 
@@ -788,7 +788,7 @@ class resourcemonitor(scu.prettyobj):
         return is_ok, checkdata, checkstr
 
 
-    def kill(self):
+    def kill(self): # pragma: no cover
         ''' Kill all processes '''
         kill_verbose = self.verbose is not False # Print if self.verbose is True or None (just not False)
         if kill_verbose:
