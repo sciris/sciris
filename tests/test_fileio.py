@@ -10,12 +10,12 @@ import openpyxl
 import sciris as sc
 
 # Define filenames
-filedir = 'files' + os.sep
+filedir = sc.path('files')
 files = sc.prettyobj()
-files.excel  = filedir + 'test.xlsx'
-files.binary = filedir + 'test.obj'
-files.text   = filedir + 'text.txt'
-files.zip    = filedir + 'test.zip'
+files.excel  = filedir / 'test.xlsx'
+files.binary = filedir / 'test.obj'
+files.text   = filedir / 'text.txt'
+files.zip    = filedir / 'test.zip'
 tidyup = True
 
 # Define the test data
@@ -48,7 +48,7 @@ def test_spreadsheets():
     data = sc.loadspreadsheet(files.excel)
     print(data)
 
-    excel_path = filedir+'exampledata.xlsx'
+    excel_path = filedir / 'exampledata.xlsx'
     if os.path.exists(excel_path):
         sc.heading('Reading cells')
         wb = sc.Spreadsheet(filename=excel_path) # Load a sample databook to try pulling cells from
@@ -134,27 +134,9 @@ def test_load_save():
 
 def test_load_corrupted():
     '''
-    Test that loading a corrupted object still works
-    '''
-    
-    '''
-    Check that loading an object with a non-existent class works. The file
-    deadclass.obj was created with:
-
-    deadclass.py:
-    -------------------------------------------------
-    class DeadClass():
-        def __init__(self, x):
-            self.x = x
-    -------------------------------------------------
-
-    then:
-    -------------------------------------------------
-    import deadclass as dc
-    import sciris as sc
-    deadclass = dc.DeadClass(238473)
-    sc.saveobj('deadclass.obj', deadclass)
-    -------------------------------------------------
+    Test that loading a corrupted object still works -- specifically, one with
+    a no-longer-existant class. See the ``files`` folder for the scripts used
+    to create this file.
     '''
     
     o = sc.objdict()
@@ -163,7 +145,7 @@ def test_load_corrupted():
         def __init__(self, x):
             self.x = x
 
-    dead_path = filedir+'deadclass.obj'
+    dead_path = sc.path(filedir / 'deadclass.obj')
     if os.path.exists(dead_path):
         sc.heading('Intentionally loading corrupted file')
         print('Loading with no remapping...')

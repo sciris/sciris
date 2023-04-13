@@ -50,7 +50,7 @@ def freeze(lower=False):
     import pkg_resources as pkgr # Imported here since slow (>0.1 s)
     raw = dict(tuple(str(ws).split()) for ws in pkgr.working_set)
     keys = sorted(raw.keys())
-    if lower:
+    if lower: # pragma: no cover
         labels = {k:k.lower() for k in keys}
     else:
         labels = {k:k for k in keys}
@@ -266,22 +266,27 @@ def compareversions(version1, version2):
     if isinstance(version1, types.ModuleType):
         try:
             version1 = version1.__version__
-        except Exception as E:
+        except Exception as E: # pragma: no cover
             errormsg = f'{version1} is a module, but does not have a __version__ attribute'
             raise AttributeError(errormsg) from E
     v1 = str(version1)
     v2 = str(version2)
 
-    # Process version2
+    # Process version2 -- note that order matters, and two-char prefixes have to be handled first
     valid = None
-    if   v2.startswith('>'):  valid = [1]
+    if   v2.startswith('<='): valid = [0,-1]
     elif v2.startswith('>='): valid = [0,1]
-    elif v2.startswith('='):  valid = [0]
     elif v2.startswith('=='): valid = [0]
     elif v2.startswith('~='): valid = [-1,1]
     elif v2.startswith('!='): valid = [-1,1]
-    elif v2.startswith('<='): valid = [0,-1]
     elif v2.startswith('<'):  valid = [-1]
+    elif v2.startswith('>'):  valid = [1]
+    elif v2.startswith('='):  valid = [0]
+    elif v2.startswith('!'):  valid = [-1,1]
+    elif v2.startswith('~'): # pragma: no cover
+        errormsg = 'Loose version pinning is not supported; for not, use "~="'
+        raise ValueError(errormsg)
+    
     v2 = v2.lstrip('<>=!~')
 
     # Do comparison
@@ -339,11 +344,11 @@ def getcaller(frame=2, tostring=True, includelineno=False, includeline=False, re
         lineno = result[frame][2]
         if tostring:
             output = f'{fname}'
-            if includelineno:
+            if includelineno: # pragma: no cover
                 output += f', line {lineno}'
         else:
             output = {'filename':fname, 'lineno':lineno}
-            if includeline:
+            if includeline: # pragma: no cover
                 try:
                     with open(fname) as f:
                         lines = f.read().splitlines()
@@ -434,7 +439,7 @@ def metadata(outfile=None, comments=None, pipfreeze=True, user=True, caller=True
     md.update(kwargs)
     
     if outfile is not None:
-        outfile = scf.makefilepath(outfile, makedirs=True)
+        outfile = scf.makepath(outfile, makedirs=True)
         scf.savejson(outfile, md)
     
     if tostring:
@@ -442,6 +447,15 @@ def metadata(outfile=None, comments=None, pipfreeze=True, user=True, caller=True
     
     return md
 
+
+def _metadata_to_objdict(md):
+    ''' Convert a metadata dictionary into an objdict -- descend two levels but no deeper '''
+    md = sco.objdict(md)
+    for k,v in md.items():
+        if isinstance(v, dict):
+            md[k] = sco.objdict(v)
+    return md
+        
 
 def loadmetadata(filename, load_all=False, die=True):
     '''
@@ -483,7 +497,7 @@ def loadmetadata(filename, load_all=False, die=True):
 
         # Usual case, can find metadata and is PNG
         if is_png and (load_all or _metadataflag in keys):
-            if load_all:
+            if load_all: # pragma: no cover
                 md = im.info
             else:
                 jsonstr = im.info[_metadataflag]
@@ -537,13 +551,13 @@ def loadmetadata(filename, load_all=False, die=True):
             else:
                 print(errormsg)
     
-    # Load metadata saved with sc.metadata()
+    # Load metadata saved with sc.metadata(), and convert it from dict to objdict
     elif lcfn.endswith('json'):
-        md = scf.loadjson(filename) # Overkill, but ok
+        md = _metadata_to_objdict(scf.loadjson(filename))
     
     # Load metadata saved with sc.savewithmetadata()
     elif lcfn.endswith('zip'):
-        md = loadwithmetadata(filename, loadmetadata=True)['metadata']
+        md = loadwithmetadata(filename, loadobj=False, loadmetadata=True)
 
     # Other formats not supported
     else: # pragma: no cover
@@ -596,7 +610,7 @@ def savewithmetadata(filename, obj, folder=None, user=True, caller=True, git=Tru
     filename = scf.makepath(filename=filename, folder=folder, makedirs=True)
     
     # Check filename
-    if not allow_nonzip:
+    if not allow_nonzip: # pragma: no cover
         if filename.suffix != '.zip':
             errormsg = f'Your filename ends with "{filename.suffix}" rather than ".zip". If you are sure you want to do this, set allow_nonzip=True.'
             raise ValueError(errormsg)
@@ -639,7 +653,7 @@ def known_deprecations(as_map=False):
                  fix = {'pandas.core.indexes.numeric.Int64Index':'pandas.core.indexes.api.Index'},
         ),
     }
-    if as_map:
+    if as_map: # pragma: no cover
         remap = dict()
         for entry in known.values():
             remap.update(entry['fix'])
@@ -649,7 +663,8 @@ def known_deprecations(as_map=False):
 
 
 
-def loadwithmetadata(filename, folder=None, loadobj=True, loadmetadata=False, remapping=None, die=True, **kwargs):
+def loadwithmetadata(filename, folder=None, loadobj=True, loadmetadata=False, 
+                     remapping=None, die=True, **kwargs):
     '''
     Load a zip file saved with :func:`savewithmetadata()`.
     
@@ -693,7 +708,7 @@ def loadwithmetadata(filename, folder=None, loadobj=True, loadmetadata=False, re
     # Open the zip file
     try:
         zf = ZipFile(filename, 'r')  # Create the zip file
-    except Exception as E:
+    except Exception as E: # pragma: no cover
         exc = type(E)
         errormsg = 'Could not open zip file: ensure the filename is correct and of the right type; see error above for details'
         raise exc(errormsg) from E
@@ -705,15 +720,15 @@ def loadwithmetadata(filename, folder=None, loadobj=True, loadmetadata=False, re
         # Read in the strings
         try:
             metadatastr = zf.read(_metadata_filename)
-        except Exception as E:
+        except Exception as E: # pragma: no cover
             exc = type(E)
             errormsg = f'Could not load metadata file "{_metadata_filename}": are you sure this is a Sciris-versioned data zipfile?'
             raise exc(errormsg) from E
         
         # Load the metadata first
         try:
-            md = scf.loadjson(string=metadatastr)
-        except Exception as E:
+            md = _metadata_to_objdict(scf.loadjson(string=metadatastr))
+        except Exception as E: # pragma: no cover
             errormsg = 'Could not parse the metadata as a JSON file; see error above for details'
             raise ValueError(errormsg) from E
             
@@ -721,7 +736,7 @@ def loadwithmetadata(filename, folder=None, loadobj=True, loadmetadata=False, re
         if loadobj:
             try:
                 datastr = zf.read(_obj_filename)
-            except Exception as E:
+            except Exception as E: # pragma: no cover
                 exc = type(E)
                 errormsg = f'Could not load object file "{_obj_filename}": are you sure this is a Sciris-versioned data zipfile? To debug using metadata, set die=False'
                 if die:
@@ -735,7 +750,7 @@ def loadwithmetadata(filename, folder=None, loadobj=True, loadmetadata=False, re
             try:
                 method = md.get('method', None)
                 obj = scf.loadstr(datastr, method=method, remapping=remapping, **kwargs) # Load with original remappings
-            except:
+            except: # pragma: no cover
                 try:
                     remapping = scu.mergedicts(remapping, known_deprecations(as_map=True))
                     obj = scf.loadstr(datastr, remapping=remapping, **kwargs) # Load with all remappings
@@ -756,6 +771,6 @@ def loadwithmetadata(filename, folder=None, loadobj=True, loadmetadata=False, re
         return md
     elif loadmetadata and loadobj:
         return dict(metadata=md, obj=obj)
-    else:
+    else: # pragma: no cover
         errormsg = 'No return value specified; you must load the object, metadata, or both'
         raise ValueError(errormsg)
