@@ -73,9 +73,9 @@ def objatt(obj, strlen=18, ncol=3):
     ''' Return a sorted string of object attributes for the Python __repr__ method '''
     if   hasattr(obj, '__dict__'):  oldkeys = sorted(obj.__dict__.keys())
     elif hasattr(obj, '__slots__'): oldkeys = sorted(obj.__slots__)
-    else:                           oldkeys = []
+    else:                           oldkeys = [] # pragma: no cover
     if len(oldkeys): output = createcollist(oldkeys, 'Attributes', strlen = 18, ncol = 3)
-    else:            output = ''
+    else:            output = '' # pragma: no cover
     return output
 
 
@@ -167,7 +167,7 @@ def prepr(obj, maxlen=None, maxitems=None, skip=None, dividerchar='—', divider
 
     # Wrap entire process in a try-except in case it fails
     try:
-        if not (hasattr(obj, '__dict__') or hasattr(obj, '__slots__')):
+        if not (hasattr(obj, '__dict__') or hasattr(obj, '__slots__')): # pragma: no cover
             # It's a plain object
             labels = [f'{type(obj)}']
             values = [repr_fn(obj)]
@@ -176,7 +176,7 @@ def prepr(obj, maxlen=None, maxitems=None, skip=None, dividerchar='—', divider
                 labels = sorted(set(obj.__dict__.keys()) - set(skip))  # Get the dict attribute keys
             else:
                 labels = sorted(set(obj.__slots__) - set(skip))  # Get the slots attribute keys
-            if debug:
+            if debug: # pragma: no cover
                 print(f'Working on {len(labels)} entries...')
 
             if len(labels):
@@ -185,11 +185,11 @@ def prepr(obj, maxlen=None, maxitems=None, skip=None, dividerchar='—', divider
                     labels = labels[:maxitems]
                 values = []
                 for a,attr in enumerate(labels):
-                    if debug:
+                    if debug: # pragma: no cover
                         print(f'  Working on attribute {a}: {attr}...')
                     if (time.time() - T) < maxtime:
                         try: value = repr_fn(getattr(obj, attr))
-                        except: value = 'N/A'
+                        except: value = 'N/A' # pragma: no cover
                         values.append(value)
                     else:
                         labels = labels[:a]
@@ -291,7 +291,7 @@ def indent(prefix=None, text=None, suffix='\n', n=0, pretty=False, width=70, **k
     New in version 1.3.1: more flexibility in arguments
     '''
     # If "prefix" is given but text isn't, swap them
-    if text is None and prefix is not None:
+    if text is None and prefix is not None: # pragma: no cover
         text, prefix = prefix, text
 
     # Handle prefix and width
@@ -351,6 +351,7 @@ def sigfig(x, sigfigs=4, SI=False, sep=False, keepints=False):
     output = []
 
     islist = scu.isiterable(x)
+    istuple = isinstance(x, tuple)
     xlist = x if islist else scu.tolist(x)
     for x in xlist:
         suffix = ''
@@ -389,7 +390,7 @@ def sigfig(x, sigfigs=4, SI=False, sep=False, keepints=False):
         except: # pragma: no cover
             output.append(scu.flexstr(x))
     if islist:
-        if isinstance(x, tuple):
+        if istuple:
             output = tuple(output)
         return output
     else:
@@ -406,7 +407,7 @@ def printmean(data, stds=2, mean_sf=None, err_sf=None, doprint=True, **kwargs):
     Args:
         data (array): the data to summarize
         stds (int): the number of multiples of the standard deviation to show (default 2; can also use 1)
-        mean_sf (int): if provided, use this number of significant figures rather than the auto-calculated
+        mean_sf (int): if provided, use this number of significant figures for the mean rather than the auto-calculated
         err_sf (int): ditto, but for the error (standard deviation)
         doprint (bool): whether to print (else, return the string)
         kwargs (dict): passed to ``sc.sigfig()``
@@ -418,7 +419,7 @@ def printmean(data, stds=2, mean_sf=None, err_sf=None, doprint=True, **kwargs):
     
     New in version 2.2.0.
     '''
-    vsf = mean_sf
+    vsf = mean_sf # vsf = "value significant figures"
     esf = err_sf if err_sf is not None else 2
     data = scu.toarray(data)
     val = data.mean()
@@ -444,9 +445,16 @@ def printmedian(data, ci=95, sf=3, doprint=True, **kwargs):
     '''
     Quickly print the median and confidence interval of an array.
     
+    The confidence interval defaults to 95%. If an integer is supplied, this is
+    treated as a percentile (e.g. 95=95% CI). If a float is supplied, it's treated
+    as a quantile (e.g. 0.95=95% CI). If a pair of ints or floats is provided, these are
+    treated as upper and lower percentiles/quantiles. If 'iqr' is provided, then
+    print the interquartile range (equivalent to 50% CI). If 'range' is provided
+    then print the full range (equivalent to 100% CI).
+    
     Args:
         data (array): the data to summarize
-        ci (int): the confidence interval to use to use (integers are treated as a percentile range, default 95% CI)
+        ci (int/float/list/str): the confidence interval to use to use (see above for details)
         sf (int): number of significant figures to use
         doprint (bool): whether to print (else, return the string)
         kwargs (dict): passed to ``sc.sigfig()``
@@ -454,36 +462,53 @@ def printmedian(data, ci=95, sf=3, doprint=True, **kwargs):
     **Examples**::
         
         data = [1210, 1072, 1722, 1229, 1902]
-        sc.printmedian(data, 50) # Returns 1430 ± 320
+        sc.printmedian(data, 80) # Returns '1230 (80.0% CI: 1130, 1830)'
     
     New in version 2.2.0.
     '''
     # Handle quantiles
-    if ci is None:
+    if ci is None: # pragma: no cover
         ci = 95
-    elif ci == 'iqr':
+    elif str(ci).lower() == 'iqr':
         ci = 50
-    if isinstance(ci, int):
-        x = ci/100/2
+    elif str(ci).lower() in ['range', 'minmax']:
+        ci = 100
+        
+    if scu.isnumber(ci):
+        if isinstance(ci, int):
+            x = ci/100/2
+        elif isinstance(ci, float):
+            x = ci/2
         quantiles = [0.5-x, 0.5+x]
-    else:
+        if x == 0.25:
+            cistr = 'IQR'
+        elif x == 0.5:
+            cistr = 'min, max'
+        else:
+            cistr = f'{x*100*2:n}% CI'
+    elif scu.isiterable(ci):
+        if len(ci) != 2: # pragma: no cover
+            errormsg = f'If providing a list of quantiles, must provide 2, not {len(ci)}'
+            raise ValueError(errormsg)
+        quantiles = ci
+        for i,q in enumerate(quantiles):
+            if isinstance(q, int):
+                quantiles[i] = q/100
+        cistr = f'{quantiles[0]*100:n}%, {quantiles[1]*100:n}%'
+    else: # pragma: no cover
         errormsg = f'Could not understand confidence interval "{ci}"'
         raise ValueError(errormsg)
     
     # Do calculations
-    data = scu.toarray(data)
-    median = np.quantile(data, 0.5)
-    bounds = np.quantile(data, quantiles)
-    
+    data    = scu.toarray(data)
+    median  = np.quantile(data, 0.5)
+    bounds  = np.quantile(data, quantiles)
     relsize = np.floor(np.log10(abs(median))) - np.floor(np.log10(np.abs(bounds)))
         
+    # Assemble string
     valstr  = sigfig(median, sf, **kwargs)
     lowstr  = sigfig(bounds[0], sf-relsize[0], **kwargs)
     highstr = sigfig(bounds[1], sf-relsize[1], **kwargs)
-    if ci == 50:
-        cistr = 'IQR'
-    else:
-        cistr = f'{ci}% CI'
     string = f'{valstr} ({cistr}: {lowstr}, {highstr})'
     
     if doprint:
@@ -547,14 +572,14 @@ def printarr(arr, fmt=None, colsep='  ', vsep='—', decimals=2, dtype=None):
     from . import sc_math as scm # To avoid circular import
     arr = scu.toarray(arr, dtype=dtype)
     if fmt is None:
-        if arr.dtype == object:
+        if arr.dtype == object: # pragma: no cover
             maxdigits = max([len(str(v)) for v in arr.flatten()])
             fmt = f'%{maxdigits}s'
         else:
             maxdigits = scm.numdigits(arr.max())
             if arr.dtype == float:
                 fmt = f'%{maxdigits+decimals+1}.{decimals}f'
-            else:
+            else: # pragma: no cover
                 fmt = f'%{maxdigits}.0f'
     if np.ndim(arr)==1:
         string = ''
@@ -670,7 +695,7 @@ def printvars(localvars=None, varlist=None, label=None, divider=True, spaces=1, 
         if color: controlstr = colorize(color, output=True) + controlstr + colorize('reset', output=True) # Optionally add color
         if spaces>1: controlstr += '\n' # Add a newline if the variables are going to be on different lines
         try:    controlstr += f'{localvars[varname]}' # The variable to be printed
-        except: controlstr += 'WARNING, could not be printed' # In case something goes wrong
+        except: controlstr += 'Warning, could not be printed' # In case something goes wrong # pragma: no cover
         controlstr += '\n' * spaces # The number of spaces to add between variables
         print(controlstr), # Print it out
     if divider: print(dividerstr) # If necessary, print the divider again
@@ -729,12 +754,12 @@ def colorize(color=None, string=None, doprint=None, output=False, enable=True, s
     if alt_usage:
         if string is None and color is not None:
             string, color = color, string
-        if color is not None:
+        if color is not None: # pragma: no cover
             errormsg = 'You can supply either color or fg, but not both'
             raise ValueError(errormsg)
 
         if ansi_support: ansistring = ac.color(s=string, fg=fg, bg=bg, style=style) # Actually apply color
-        else:            ansistring = str(string) # Otherwise, just return the string
+        else:            ansistring = str(string) # Otherwise, just return the string # pragma: no cover
 
     # Original use case
     else:
@@ -775,7 +800,7 @@ def colorize(color=None, string=None, doprint=None, output=False, enable=True, s
         # Modify string, if supplied
         if string is None: ansistring = ansicolor # Just return the color
         else:              ansistring = ansicolor + str(string) + ansicolors['reset'] # Add to start and end of the string
-        if not ansi_support:
+        if not ansi_support: # pragma: no cover
             ansistring = str(string) # To avoid garbling output on unsupported systems
 
     if showhelp:
@@ -882,7 +907,7 @@ __all__ += ['printv', 'slacknotification', 'printtologfile', 'percentcomplete',
             'progressbar', 'progressbars', 'capture']
 
 
-def printv(string, thisverbose=1, verbose=2, newline=True, indent=True):
+def printv(string, thisverbose=1, verbose=2, indent=2, **kwargs):
     '''
     Optionally print a message and automatically indent. The idea is that
     a global or shared "verbose" variable is defined, which is passed to
@@ -903,22 +928,20 @@ def printv(string, thisverbose=1, verbose=2, newline=True, indent=True):
     whereas a much less important message might be
 
     >>> sc.printv(f'This is timestep {i}', 4, verbose)
-
-    Version: 2016jan30
+    
+    Args:
+        string (str): string to print
+        thisverbose (int): level of verbosity at which to print this message
+        verbose (int): global verbose variable
+        indent (int): amount by which to indent based on verbosity level
+        kwargs (dict): passed to ``print()``
+        
+    New in version 2.2.0: "kwargs" argument; removed "newline" argument
     '''
-    if thisverbose>4 or verbose>4: print(f'Warning, verbosity should be from 0-4 (this message: {thisverbose}; current: {verbose})')
-    if verbose>=thisverbose: # Only print if sufficiently verbose
-        indents = '  '*thisverbose*bool(indent) # Create automatic indenting
-        if newline: print(indents+scu.flexstr(string)) # Actually print
-        else: print(indents+scu.flexstr(string)), # Actually print
+    if verbose >= thisverbose: # Only print if sufficiently verbose
+        indents = ' '*thisverbose*indent # Create automatic indenting
+        print(indents+scu.flexstr(string), **kwargs) # Actually print
     return
-
-
-
-
-
-
-
 
 
 def slacknotification(message=None, webhook=None, to=None, fromuser=None, verbose=2, die=False):  # pragma: no cover
@@ -1002,7 +1025,7 @@ def printtologfile(message=None, filename=None):
     '''
 
     # Set defaults
-    if message is None:
+    if message is None: # pragma: no cover
         return # Return immediately if nothing to append
     if filename is None:
         import tempfile
@@ -1019,24 +1042,31 @@ def printtologfile(message=None, filename=None):
     return
 
 
-
-
-
 def percentcomplete(step=None, maxsteps=None, stepsize=1, prefix=None):
     '''
-    Display progress.
+    Display progress as a percentage.
 
-    **Example**::
+    **Examples**::
 
         maxiters = 500
+        
+        # Will print on every 5th iteration
         for i in range(maxiters):
-            sc.percentcomplete(i, maxiters) # will print on every 5th iteration
-            sc.percentcomplete(i, maxiters, stepsize=10) # will print on every 50th iteration
-            sc.percentcomplete(i, maxiters, prefix='Completeness: ') # will print e.g. 'Completeness: 1%'
+            sc.percentcomplete(i, maxiters) 
+        
+        # Will print on every 50th iteration
+        for i in range(maxiters):
+            sc.percentcomplete(i, maxiters, stepsize=10)
+        
+        # Will print e.g. 'Completeness: 1%'
+        for i in range(maxiters):
+            sc.percentcomplete(i, maxiters, prefix='Completeness: ') 
+    
+    See also :func:`progressbar()` for a progress bar.
     '''
     if prefix is None:
         prefix = ' '
-    elif scu.isnumber(prefix):
+    elif scu.isnumber(prefix): # pragma: no cover
         prefix = ' '*prefix
     onepercent = max(stepsize,round(maxsteps/100*stepsize)) # Calculate how big a single step is -- not smaller than 1
     if not step%onepercent: # Does this value lie on a percent
@@ -1094,13 +1124,13 @@ def progressbar(i=None, maxiters=None, label='', every=1, length=30, empty='—'
     if hasattr(maxiters, '__len__'):
         maxiters = len(maxiters)
     ending = None if newline else '\r'
-    if every < 1:
+    if every < 1: # pragma: no cover
         every = max(1, int(every*maxiters)) # Don't let it go below 1
 
     # Calculate percent and handle zero case
     if maxiters > 0:
         pct = i/maxiters*100
-    else:
+    else: # pragma: no cover
         i = 1
         maxiters = 1
         pct = 100
@@ -1136,7 +1166,7 @@ class tqdm_pickle(tqdm.tqdm):
         d = {k:v for k,v in self.__dict__.items() if k not in ['sp', 'fp']}
         return d
      
-    def __setstate__(self, d):
+    def __setstate__(self, d): # pragma: no cover
         self.__dict__ = d
         self.__dict__['fp'] = tqdm.utils.DisableOnWriteError(sys.stderr, tqdm_instance=self)
         self.__dict__['sp'] = self.status_printer(self.fp)
@@ -1220,16 +1250,15 @@ class progressbars(scu.prettyobj):
             self.bars.append(bar)
         return
     
-    def __getitem__(self, key):
+    def __getitem__(self, key): # pragma: no cover
         return self.bars[key]
     
-    def __setitem__(self, key, value):
+    def __setitem__(self, key, value): # pragma: no cover
         self.bars[key] = value
         return
     
-    def update(self, index=0, amount=1):
+    def update(self, index=0, amount=1): # pragma: no cover
         self.bars[index].update(amount)
-        # self.bars[index].display()
         return
 
 
