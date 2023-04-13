@@ -12,21 +12,19 @@ Version 2.2.0 (2023-04-14)
 This version's major changes include:
 
 #. **New Parallel class**: A new ``sc.Parallel()`` class allows finer-grained managing of parallel processes, including automatic progress bars, better exception handling, and asynchronous running.
+#. **Better versioning**: New functions ``sc.metadata()``, ``sc.savewithmetadata()``, and ``sc.loadwithmetadata()`` make it easier to store and save metadata along with objects.
+#. **Easier imports**: ``sc.importbypath()`` lets you load a module into Python by providing the folder or filename (useful for loading one-off scripts, or two versions of the same library).
 #. **Better documentation**: A comprehensive set of tutorials has been added to the documentation, and the documentation has been rewritten in a new style.
-
-
 
 
 Improvements and new features
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-Major
-^^^^^
-#. TBC
-
 Parallelization
 ^^^^^^^^^^^^^^^
-#. TBC
+#. There is a new ``sc.Parallel`` class, which is used to implement the (more or less unchanged) ``sc.parallelize()`` function.
+#. ``sc.parallelize()`` now has a ``progress`` argument that will show a progress bar; the ``returnpool`` argument has been removed (use ``sc.Parallel`` instead).
+
 
 Dataframe
 ^^^^^^^^^
@@ -48,43 +46,62 @@ Files
 #. File save functions now make new subfolders by default.
 #. ``sc.save()`` now has an ``allow_empty`` argument (instead of ``die='never'``).
 
+Printing
+^^^^^^^^
+#. ``sc.progressbar()`` can now be used to wrap an iterable, in which case it acts as an alias to ``tqdm.tqdm()``.
+#. The new ``sc.progressbars()`` class will create and manage multiple progress bars, which can be useful for monitoring multiple parallel long-running jobs.
+#. New functions ``sc.printmean()`` and ``sc.printmedian()`` can be used to quickly summarize an array.
+#. ``sc.humanize_bytes()`` will convert a number of bytes into a human-readable number (e.g. ``32975281`` to ``32.975 MB``).
+#. ``sc.printarr()`` now has configurable decimal places (``decimals`` argument) and can return a string instead of printing (``doprint=False``).
+
+Profiling
+^^^^^^^^^
+#. The new ``sc.benchmark()`` function runs tests on both regular Python and Numpy operations and reports the performance of the current machine.
+#. ``sc.checkmem()`` now returns a dataframe, can descend multiple levels through an object, reports subtotals, and has an ``order`` argument instead of ``alphabetical``.
 
 Versioning
 ~~~~~~~~~~
 #. A new versioning module has been added.
+#. A new function ``sc.metadata()`` gathers all relevant metadata and returns a dict that can be used for versioning.
 #. Known regressions from older library versions are now automatically handled by ``sc.load()`` (e.g., ``pandas`` v2.0 dataframes cannot be loaded in v1.5, and vice versa).
-
-Plotting
-^^^^^^^^
-#. TBC
+#. A pair of new functions ``sc.savewithmetadata()`` and ``sc.loadwithmetadata()``, provide a way to automatically save metadata along with an object for better versioning.
 
 Math
 ^^^^
 #. ``sc.randround()`` now works with multidimensional arrays. (Thanks to `Jamie Cohen <https://github.com/jamiecohen>`_ for the suggestion.)
 #. ``sc.smoothinterp()`` now defaults to ``ensurefinite=True``.
 
-
-
 Other
 ^^^^^
+#. The new function ``sc.importbypath()`` will import a module by path, as an alternative to standard ``import``. ``sc.importbyname()`` also now accepts a ``path`` argument.
+#. The new function ``sc.getuser()`` will return the current username (as an alias to ``getpass.getuser()``).
+#. The new function ``sc.sanitizestr()`` will sanitize an input string to e.g. ASCII-only or a valid variable name.
+#. ``sc.download()`` now handles exceptions gracefully with ``die=False``.
+#. ``sc.isiterable()`` now has optional ``exclude`` and ``minlen`` arguments.
 #. A new environment variable, ``SCIRIS_NUM_THREADS``, will set the number of threads Numpy uses (if Sciris is imported first). In some cases, more threads results in *slower* processing (and of course uses way more CPU time).
 #. Nested "dictionary" operations can now act on other types of object, including lists and regular objects.
+#. The ``freeze`` argument of ``sc.savefig()`` has been renamed ``pipfreeze``, and ``frame`` has been replaced with ``relframe``.
 #. ``sc.search()`` now works on values as well as keys/attributes.
 #. ``sc.dictobj.fromkeys()`` is now a static method.
 
-
 Bugfixes
 ~~~~~~~~
+#. Fixed ``<=`` comparison in ``sc.compareversions()`` not handling equality.
 #. Fixed the implementation of the ``midpoint`` argument in ``sc.vectocolor()``.
 #. Fixed corner cases where some ``sc.dataframe`` methods returned ``pd.DataFrame`` objects instead.
 #. Fixed corner cases where some ``sc.objdict`` methods returned ``sc.odict`` objects instead.
 #. ``sc.findinds()`` now returns a tuple for multidimensional arrays, allowing it to be used directly for indexing.
 #. ``sc.rmnans()`` now returns a zero-length array if all input is NaNs.
+#. ``sc.options.with_style(style)`` now correctly applies the style.
 #. Fixed ``sc.daydiff()`` with one argument computing the number of days from Jan. 1st of the *current* year (instead of Jan. 1st of the provided year).
-
 
 Regression information
 ~~~~~~~~~~~~~~~~~~~~~~
+#. ``tqdm`` is now a required dependency.
+#. The ``returnpool`` argument of ``sc.parallelize()`` has been removed.
+#. Calls to ``sc.makepath()`` and ``sc.makefilepath()`` now need to specify ``makedirs=True``.
+#. For ``sc.savefig()``, ``freeze`` should be renamed ``pipfreeze``, and ``frame`` should be replaced with ``relframe`` with an offset of 2 (e.g. ``frame=2 → relframe=0``).
+#. ``sc.checkmem(..., alphabetical=True)`` has been replaced with ``sc.checkmem(..., order='alphabetical')``
 #. ``sc.parallel_progress()`` has been moved to ``sc.sc_legacy()``. Please use ``sc.parallelize(..., progress=True)`` instead.
 #. ``sc.parallelcmd()`` has been moved to ``sc.sc_legacy()``. Please do not use this function :)
 

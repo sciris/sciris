@@ -367,7 +367,7 @@ def getcaller(frame=2, tostring=True, includelineno=False, includeline=False, re
     return output
 
 
-def metadata(outfile=None, comments=None, pipfreeze=True, user=True, caller=True, 
+def metadata(outfile=None, version=None, comments=None, pipfreeze=True, user=True, caller=True, 
              git=True, asdict=False, tostring=False, relframe=0, **kwargs):
     '''
     Collect common metadata: useful for exactly recreating (or remembering) the environment
@@ -375,7 +375,8 @@ def metadata(outfile=None, comments=None, pipfreeze=True, user=True, caller=True
     
     Args:
         outfile (str): if not None, then save as JSON to this filename
-        comments (str/dict): additional comments on the to store
+        version (str): if supplied, the user-supplied version of the data being stored
+        comments (str/dict): additional comments on the data to store
         pipfreeze (bool): store the current Python environment, equivalent to "pip freeze"
         user (bool): store the username
         caller (bool): store info on the calling file
@@ -415,6 +416,7 @@ def metadata(outfile=None, comments=None, pipfreeze=True, user=True, caller=True
     
     # Store metadata
     md = dict_fn(
+        version   = version,
         timestamp = scd.getdate(),
         user      = scu.getuser() if user else None,
         system = dict_fn(
@@ -576,9 +578,10 @@ def savewithmetadata(filename, obj, folder=None, user=True, caller=True, git=Tru
     Pickles are usually not good for long-term data storage, since they rely on
     importing the libraries that were used to create the pickled object. This function
     partly addresses that by storing metadata along with the saved pickle. While
-    there may still be issues opening the pickle, the metadata should give enough 
-    information to figure out how to reconstruct the original environment (allowing
-    the pickle to be loaded, and then re-saved in a more persistent format if desired).
+    there may still be issues opening the pickle, the metadata (which is stored separately)
+    should give enough information to figure out how to reconstruct the original 
+    environment (allowing the pickle to be loaded, and then re-saved in a more persistent 
+    format if desired).
     
     Note: Since this function relies on pickle, it can potentially execute arbitrary
     code, so you should only use it with sources you trust. For more information, see:
