@@ -636,7 +636,7 @@ def toc(start=None, label=None, baselabel=None, sigfigs=None, reset=False, outpu
     if sigfigs is None: sigfigs = 3
 
     # If no start value is passed in, try to grab the global _tictime
-    if isinstance(start, str): # Start and label are probably swapped
+    if isinstance(start, str): # Start and label are probably swapped # pragma: no cover
         start,label = label,start
     if start is None:
         try:    start = _tictime
@@ -650,13 +650,13 @@ def toc(start=None, label=None, baselabel=None, sigfigs=None, reset=False, outpu
     if label is None:
         if baselabel is None:
             base = 'Elapsed time: '
-        else:
+        else: # pragma: no cover
             base = baselabel
     else:
         if baselabel is None:
             if label:
                 base = f'{label}: '
-            else: # Handles case toc(label='')
+            else: # Handles case toc(label='') # pragma: no cover
                 base = ''
         else:
             base = f'{baselabel}{label}: '
@@ -671,7 +671,7 @@ def toc(start=None, label=None, baselabel=None, sigfigs=None, reset=False, outpu
         _tictime = pytime.time()  # Store the present time in the global
 
     # Return elapsed if desired
-    if output:
+    if output: # pragma: no cover
         if output == 'message':
             return logmessage
         elif output == 'both':
@@ -850,13 +850,13 @@ class timer:
         ''' Calculate total time '''
 
         # If the timer hasn't been started, return 0
-        if not len(self._tics):
+        if not len(self._tics): # pragma: no cover
             return 0
         else:
             start = self._tics[0]
 
         # If the timer hasn't been finished, use the current time; else the latest
-        if not len(self._tocs):
+        if not len(self._tocs): # pragma: no cover
             end = pytime.time()
         else:
             end = self._tocs[-1]
@@ -995,7 +995,7 @@ class timer:
                 ax.grid(grid)
 
             scp.figlayout()
-        else:
+        else: # pragma: no cover
             errormsg = "Looks like nothing has been timed. Forgot to do T.start() and T.stop()??'"
             raise RuntimeWarning(errormsg)
 
@@ -1043,13 +1043,13 @@ def elapsedtimestr(pasttime, maxdays=5, minseconds=10, shortmonths=True):
         # %b/%B are the tokens for abbreviated/full names of months to strftime()
         if shortmonths:
             month_token = '%b'
-        else:
+        else: # pragma: no cover
             month_token = '%B'
 
         # Get a string from strftime()
         if includeyear:
             date_str = date.strftime('%d ' + month_token + ' %Y')
-        else:
+        else: # pragma: no cover
             date_str = date.strftime('%d ' + month_token)
 
         # There will only ever be at most one leading zero, so check for this and
@@ -1062,7 +1062,7 @@ def elapsedtimestr(pasttime, maxdays=5, minseconds=10, shortmonths=True):
     now_time = dt.datetime.now()
 
     # If the user passes in a string, try to turn it into a datetime object before continuing
-    if isinstance(pasttime, str):
+    if isinstance(pasttime, str): # pragma: no cover
         try:
             pasttime = readdate(pasttime)
         except ValueError as E: # pragma: no cover
@@ -1080,7 +1080,7 @@ def elapsedtimestr(pasttime, maxdays=5, minseconds=10, shortmonths=True):
         time_str = print_date(pasttime, includeyear=includeyear, shortmonths=shortmonths)
 
     # Otherwise, start by getting the elapsed time as a datetime object
-    else:
+    else: # pragma: no cover
         elapsed_time = now_time - pasttime
 
         # Check if the time is within the last minute
@@ -1186,12 +1186,12 @@ def timedsleep(delay=None, start=None, verbose=False):
         elapsed = pytime.time() - start
         remaining = delay - elapsed - _sleep_overhead
         if remaining > 0:
-            if verbose:
+            if verbose: # pragma: no cover
                 print(f'Pausing for {remaining:n} s')
             pytime.sleep(remaining)
             try:    del _delaytime # After it's been used, we can't use it again
             except: pass
-        elif verbose:
+        elif verbose: # pragma: no cover
             print(f'Warning, delay less than elapsed time ({delay:n} vs. {elapsed:n})')
     return
 

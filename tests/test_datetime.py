@@ -86,7 +86,7 @@ def test_dates():
     assert o.date3[0] =='2020-02-05'
 
     print('\nTesting day')
-    assert sc.day() is None
+    assert sc.day(None) is None
     o.day = sc.day('2020-04-04') # Returns 94
     assert o.day == 94
     assert sc.day('2020-03-01') > sc.day('2021-03-01') # Because of the leap day
@@ -102,6 +102,14 @@ def test_dates():
     print('\nTesting daterange')
     o.dates = sc.daterange('2020-03-01', '2020-04-04')
     assert len(o.dates) == 35
+    ndays = 40
+    r2 = sc.daterange('2020-03-01', days=ndays)
+    assert len(r2) == ndays + 1 # Since inclusive
+    
+    dr = sc.objdict()
+    for interval in ['day', 'week', 'month', 'year']:
+        dr[interval] = sc.daterange('2020-01-01', '2023-01-01', interval=interval)
+    assert len(dr.day) > len(dr.week) > len(dr.month) > len(dr.year)
 
     print('\nTesting elapsedtimestr')
     now = sc.now()
@@ -115,11 +123,15 @@ def test_dates():
 
     print('\nTesting tictoc and timedsleep')
     sc.tic()
-    sc.timedsleep(0.2)
+    sc.timedsleep(0.1)
     sc.toctic()
     sc.timedsleep('start')
     with sc.Timer():
-        sc.timedsleep(0.1)
+        sc.timedsleep(0.05)
+    
+    sc.randsleep(0.1)
+    sc.randsleep([0.05, 0.15])
+    
 
     print('\nTesting datetoyear')
     o.year = sc.datetoyear('2010-07-01')
@@ -163,6 +175,8 @@ def test_timer():
         T.tic()
         nap()
         T.toc()
+        print(T)
+        T.disp()
     print(txt3)
     assert 'mybase' in txt3
     assert 'mylabel' in txt3
@@ -211,8 +225,21 @@ def test_timer():
     assert lbound < T.timings[:].sum() < ubound
     assert '(4)' in T.timings.keys()[4]
     assert T.cumtimings[-1] == T.total
+    
+    # Check other things
+    T.tocout()
+    T.tto()
+    T.sum()
+    T.mean()
+    T.std()
+    T.min()
+    T.max()
+    print(T.indivtimings)
+    
+    # Check plotting
+    T.plot()
 
-    return T.timings
+    return T
 
 
 
