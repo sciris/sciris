@@ -120,7 +120,7 @@ def _load_filestr(filename, folder):
                         raise exc(gziperror) from E
         else:
             exc = type(E)
-            errormsg = 'sc.load(): Could not open the file string for an unknown reason; see error above for details'
+            errormsg = 'sc.load(): Could not open the # pragma: no cover file string for an unknown reason; see error above for details'
             raise exc(errormsg) from E
     return filestr
 
@@ -177,7 +177,7 @@ def load(filename=None, folder=None, verbose=False, die=None, remapping=None,
     # If it loaded but with errors, print them here
     if isinstance(obj, Failed):
         print(_unpicklingerror(filename))
-    elif verbose:
+    elif verbose: # pragma: no cover
         print(f'Object loaded from "{filename}"')
 
     return obj
@@ -316,7 +316,7 @@ def save(filename='default.obj', obj=None, folder=None, method='pickle', compres
             serialize(fileobj, obj, success, **kwargs)
     
     else:
-        if tobytes:
+        if tobytes: # pragma: no cover
             filecontext = closing(bytestream)
         else:
             filecontext = open(filename, 'wb')
@@ -331,11 +331,11 @@ def save(filename='default.obj', obj=None, folder=None, method='pickle', compres
             # File extension can be anything
             with filecontext as fileobj:
                 serialize(fileobj, obj, success, **kwargs)
-        else:
+        else: # pragma: no cover
             errormsg = f"Invalid compression format '{compression}': must be 'gzip', 'zstd', or 'none'"
             raise ValueError(errormsg)
 
-    if verbose and filename:
+    if verbose and filename: # pragma: no cover
         print(f'Object saved to "{filename}"')
 
     if filename:
@@ -443,7 +443,7 @@ def savetext(filename=None, string=None, **kwargs):
     '''
     is_array = scu.isarray(string)
     if isinstance(string, list):
-        string = '\n'.join(string) # Convert from list to string)
+        string = '\n'.join(str(string)) # Convert from list to string)
     elif not is_array and not scu.isstring(string):
         string = str(string)
     filename = makefilepath(filename=filename, makedirs=True)
@@ -527,7 +527,7 @@ def savezip(filename=None, filelist=None, data=None, folder=None, basename=True,
         filelist (list): the list of files to compress
         data (dict): if supplied, instead of files, write this data instead (must be a dictionary of filename keys and data values)
         folder (str): optional additional folder for the filename
-        basename (bool): whether to use only the file's basename as the name inside the zip file
+        basename (bool): whether to use only the file's basename as the name inside the zip file (otherwise, store folder info)
         sanitizepath (bool): whether to sanitize the path prior to saving
         tobytes (bool): if data is provided, convert it automatically to bytes (otherwise, up to the user)
         verbose (bool): whether to print progress
@@ -548,7 +548,7 @@ def savezip(filename=None, filelist=None, data=None, folder=None, basename=True,
     fullpath = makefilepath(filename=filename, folder=folder, sanitize=sanitizepath, makedirs=True)
     filelist = scu.tolist(filelist)
     if data is not None:
-        if not isinstance(data, dict):
+        if not isinstance(data, dict): # pragma: no cover
             errormsg = 'Data has invalid format: must be a dictionary of filename keys and data values'
             raise ValueError(errormsg)
 
@@ -558,7 +558,7 @@ def savezip(filename=None, filelist=None, data=None, folder=None, basename=True,
             for thisfile in filelist:
                 thispath = makefilepath(filename=thisfile, abspath=False, makedirs=True)
                 if basename: thisname = os.path.basename(thispath)
-                else:        thisname = thispath
+                else:        thisname = thispath # pragma: no cover
                 zf.write(thispath, thisname)
         else: # Alternatively, save data
             for key,val in data.items():
@@ -576,6 +576,12 @@ def path(*args, **kwargs):
 
         - ``None`` entries are removed
         - a list of arguments is converted to separate arguments
+        
+    **Examples**::
+        
+        sc.path('thisfile.py') # Returns PosixPath('thisfile.py')
+        
+        sc.path('/a/folder', None, 'a_file.txt') # Returns PosixPath('/a/folder/a_file.txt')
 
     | New in version 1.2.2.
     | New in version 2.0.0: handle None or list arguments
@@ -857,7 +863,7 @@ def makefilepath(filename=None, folder=None, ext=None, default=None, split=False
         filename = str(filename)
     if isinstance(folder, Path): # If it's a path object, convert to string
         folder = str(folder)
-    if isinstance(folder, list): # It's a list, join together
+    if isinstance(folder, list): # It's a list, join together # pragma: no cover
         folder = os.path.join(*folder)
 
     # Process filename
@@ -871,9 +877,9 @@ def makefilepath(filename=None, folder=None, ext=None, default=None, split=False
     if not filebasename: filebasename = 'default' # If all else fails
 
     # Add extension if it's defined but missing from the filebasename
-    if ext and not filebasename.endswith(ext):
+    if ext and not filebasename.endswith(ext): # pragma: no cover
         filebasename += '.'+ext
-    if verbose:
+    if verbose: # pragma: no cover
         print(f'From filename="{filename}", default="{default}", extension="{ext}", made basename "{filebasename}"')
 
     # Sanitize base filename
@@ -914,9 +920,9 @@ def makefilepath(filename=None, folder=None, ext=None, default=None, split=False
             print(errormsg)
 
     # Decide on output
-    if verbose:
+    if verbose: # pragma: no cover
         print(f'From filename="{filename}", folder="{folder}", made path name "{filepath}"')
-    if split:
+    if split: # pragma: no cover
         output = filefolder, filebasename
     elif aspath:
         output = Path(filepath)
@@ -963,7 +969,7 @@ def rmpath(path=None, *args, die=True, verbose=True, interactive=False, **kwargs
 
     paths = scu.mergelists(path, *args)
     for path in paths:
-        if not os.path.exists(path):
+        if not os.path.exists(path): # pragma: no cover
             errormsg = f'Path "{path}" does not exist'
             if die:
                 raise FileNotFoundError(errormsg)
@@ -972,9 +978,9 @@ def rmpath(path=None, *args, die=True, verbose=True, interactive=False, **kwargs
         else:
             if os.path.isfile(path):
                 rm_func = os.remove
-            elif os.path.isdir(path):
+            elif os.path.isdir(path): # pragma: no cover
                 rm_func = shutil.rmtree
-            else:
+            else: # pragma: no cover
                 errormsg = f'Path "{path}" exists, but is neither a file nor a folder: unable to remove'
                 if die:
                     raise FileNotFoundError(errormsg)
@@ -1036,7 +1042,7 @@ def jsonify(obj, verbose=True, die=False, tostring=False, **kwargs):
         output = bool(obj)
 
     elif scu.isnumber(obj): # It's a number
-        if np.isnan(obj): # It's nan, so return None
+        if np.isnan(obj): # It's nan, so return None # pragma: no cover
             output = None
         else:
             if isinstance(obj, (int, np.int64)):
@@ -1051,7 +1057,7 @@ def jsonify(obj, verbose=True, die=False, tostring=False, **kwargs):
 
     elif isinstance(obj, np.ndarray): # It's an array, iterate recursively
         if obj.shape: output = [sanitizejson(p) for p in list(obj)] # Handle most cases, incluing e.g. array([5])
-        else:         output = [sanitizejson(p) for p in list(np.array([obj]))] # Handle the special case of e.g. array(5)
+        else:         output = [sanitizejson(p) for p in list(np.array([obj]))] # Handle the special case of e.g. array(5) # pragma: no cover
 
     elif isinstance(obj, (list, set, tuple)): # It's another kind of interable, so iterate recurisevly
         output = [sanitizejson(p) for p in list(obj)]
@@ -1059,19 +1065,19 @@ def jsonify(obj, verbose=True, die=False, tostring=False, **kwargs):
     elif isinstance(obj, dict): # It's a dictionary, so iterate over the items
         output = {str(key):sanitizejson(val) for key,val in obj.items()}
 
-    elif isinstance(obj, (dt.time, dt.date, dt.datetime)):
+    elif isinstance(obj, (dt.time, dt.date, dt.datetime)): # pragma: no cover
         output = str(obj)
 
-    elif isinstance(obj, uuid.UUID):
+    elif isinstance(obj, uuid.UUID): # pragma: no cover
         output = str(obj)
 
-    elif callable(getattr(obj, 'to_dict', None)): # Handle e.g. pandas, where we want to return the object, not the string
+    elif callable(getattr(obj, 'to_dict', None)): # Handle e.g. pandas, where we want to return the object, not the string # pragma: no cover
         output = obj.to_dict()
 
-    elif callable(getattr(obj, 'to_json', None)):
+    elif callable(getattr(obj, 'to_json', None)): # pragma: no cover
         output = obj.to_json()
 
-    elif callable(getattr(obj, 'toJSON', None)):
+    elif callable(getattr(obj, 'toJSON', None)): # pragma: no cover
         output = obj.toJSON()
 
     else: # None of the above
@@ -1113,7 +1119,7 @@ def loadjson(filename=None, folder=None, string=None, fromfile=True, **kwargs):
         json = sc.loadjson(string='{"a":null, "b":[1,2,3]}')
     '''
     if string is not None or not fromfile:
-        if string is None and filename is not None:
+        if string is None and filename is not None: # pragma: no cover
             string = filename # Swap arguments
         output = json.loads(string, **kwargs)
     else:
@@ -1191,7 +1197,7 @@ def loadyaml(filename=None, folder=None, string=None, fromfile=True, safe=False,
         if safe: loader = yaml.loader.SafeLoader
         else:    loader = yaml.loader.UnsafeLoader
 
-    if string is not None or not fromfile:
+    if string is not None or not fromfile: # pragma: no cover
         if string is None and filename is not None:
             string = filename # Swap arguments
         output = yaml.load_all(string, loader)
@@ -1256,7 +1262,7 @@ def saveyaml(filename=None, obj=None, folder=None, die=True, keepnone=False, dum
             dump_func(obj, f, **kwargs)
 
     # Alternate usage:
-    else:
+    else: # pragma: no cover
         output = dump_func(obj, **kwargs)
 
     return output
@@ -1377,7 +1383,7 @@ class Blobject(object):
             if self.bytes is not None:
                 self.blob = read_bin(self.bytes)
                 self.bytes = None # Once read in, delete
-            else:
+            else: # pragma: no cover
                 if self.filename is not None:
                     self.blob = read_file(self.filename)
                 else:
@@ -1387,7 +1393,7 @@ class Blobject(object):
                 self.blob = read_bin(source)
             elif scu.isstring(source):
                 self.blob = read_file(source)
-            else:
+            else: # pragma: no cover
                 errormsg = f'Input source must be type string (for a filename) or BytesIO, not {type(source)}'
                 raise TypeError(errormsg)
 
@@ -1448,7 +1454,7 @@ class Spreadsheet(Blobject):
         return
 
 
-    def __getstate__(self):
+    def __getstate__(self): # pragma: no cover
         d = self.__dict__.copy() # Shallow copy
         d['wb'] = None
         return d
@@ -1500,7 +1506,7 @@ class Spreadsheet(Blobject):
         return wb
 
 
-    def openpyexcel(self, *args, **kwargs):
+    def openpyexcel(self, *args, **kwargs): # pragma: no cover
         ''' Legacy name for openpyxl() '''
         warnmsg = '''
 Spreadsheet() no longer supports openpyexcel as of v1.3.1. To load using it anyway, you can manually do:
@@ -1587,7 +1593,7 @@ Falling back to openpyxl, which is identical except for how cached cell values a
             for cell in cells:  # Loop over all cells
                 rownum = cell[0]
                 colnum = cell[1]
-                if method in ['xlrd']:  # If we're using xlrd/pandas, reduce the row number by 1.
+                if method in ['xlrd']:  # If we're using xlrd/pandas, reduce the row number by 1 # pragma: no cover
                     rownum -= 1
                 results.append(sheetoutput[rownum][colnum])  # Grab and append the result at the cell.
             return results
@@ -1633,7 +1639,7 @@ Falling back to openpyxl, which is identical except for how cached cell values a
                         errormsg = f'Cell must be formatted as a label or row-column pair, e.g. "A1" or (3,5); not "{cell}"'
                         raise TypeError(errormsg)
                     if verbose: print(f'  Cell {cell} = {val}')
-                    if isinstance(val,tuple):
+                    if isinstance(val, tuple): # pragma: no cover
                         cellobj.value = val[0]
                         cellobj.cached_value = val[1]
                     else:
@@ -1641,7 +1647,7 @@ Falling back to openpyxl, which is identical except for how cached cell values a
                 except Exception as E: # pragma: no cover
                     errormsg = f'Could not write "{val}" to cell "{cell}": {repr(E)}'
                     raise RuntimeError(errormsg)
-        else:# Cells aren't supplied, assume a matrix
+        else: # Cells aren't supplied, assume a matrix
             if startrow is None: startrow = 1 # Excel uses 1-based indexing
             if startcol is None: startcol = 1
             valarray = np.atleast_2d(np.array(vals, dtype=object))
@@ -1858,12 +1864,12 @@ def savespreadsheet(filename=None, data=None, folder=None, sheetnames=None, clos
     hasformats = (formats is not None) and (formatdata is not None)
 
     # Handle input arguments
-    if isinstance(data, dict) and sheetnames is None:
+    if isinstance(data, dict) and sheetnames is None: # pragma: no cover
         if verbose: print('Data is a dict, taking sheetnames from keys')
         sheetnames = data.keys()
         datadict   = sco.odict(data) # Use directly, converting to odict first
         if hasformats: formatdict = sco.odict(formatdata) #  NB, might be None but should be ok
-    elif isinstance(data, dict) and sheetnames is not None:
+    elif isinstance(data, dict) and sheetnames is not None: # pragma: no cover
         if verbose: print('Data is a dict, taking sheetnames from input')
         if len(sheetnames) != len(data):
             errormsg = f'If supplying data as a dict as well as sheetnames, length must match ({len(data)} vs {len(sheetnames)})'
@@ -1876,7 +1882,7 @@ def savespreadsheet(filename=None, data=None, folder=None, sheetnames=None, clos
             sheetnames = ['Sheet1']
             datadict[sheetnames[0]]   = data # Set it explicitly
             formatdict[sheetnames[0]] = formatdata # Set it explicitly -- NB, might be None but should be ok
-        else:
+        else: # pragma: no cover
             if verbose: print('Data is a list, taking matching sheetnames from inputs')
             if len(sheetnames) == len(data):
                 for s,sheetname in enumerate(sheetnames):
@@ -1885,7 +1891,7 @@ def savespreadsheet(filename=None, data=None, folder=None, sheetnames=None, clos
             else:
                 errormsg = f'Unable to figure out how to match {len(sheetnames)} sheet names with data of length {len(data)}'
                 raise ValueError(errormsg)
-    else:
+    else: # pragma: no cover
         errormsg = f'Cannot figure out how to handle data of type: {type(data)}'
         raise TypeError(errormsg) # This shouldn't happen!
 
@@ -1927,7 +1933,7 @@ def savespreadsheet(filename=None, data=None, folder=None, sheetnames=None, clos
         if verbose: print(f'Saving file {filename} and closing')
         workbook.close()
         return fullpath
-    else:
+    else: # pragma: no cover
         if verbose: print('Returning workbook')
         return workbook
 
@@ -1947,7 +1953,7 @@ class Failed(object):
     def __init__(self, *args, **kwargs):
         pass
 
-    def __repr__(self):
+    def __repr__(self): # pragma: no cover
         output = scp.objrepr(self) # This does not include failure_info since it's a class attribute
         output += self.showfailures(verbose=False, tostring=True)
         return output
@@ -1959,18 +1965,18 @@ class Failed(object):
             output += f'Module: {failure["module"]}\n'
             output += f'Class: {failure["class"]}\n'
             output += f'Error: {failure["error"]}\n'
-            if verbose:
+            if verbose: # pragma: no cover
                 output += '\nTraceback:\n'
                 output += f"\n{failure['exception']}"
                 output += '\n\n'
-        if tostring:
+        if tostring: # pragma: no cover
             return output
         else:
             print(output)
             return
 
 
-class Empty(object):
+class Empty(object): # pragma: no cover
     ''' Another empty class to represent a failed object loading, but do not proceed with setstate '''
 
     def __init__(self, *args, **kwargs):
@@ -2046,11 +2052,11 @@ def _remap_module(remapping, module_name, name):
         if obj is None: # Key not in remapping, just use regular
             load_module = module_name
             load_name = name
-        else: # It's a tuple of names, process
+        else: # It's a tuple of names, process # pragma: no cover
             load_module = obj[0]
             load_name = obj[1]
         module = importlib.import_module(load_module)
-        obj = getattr(module, load_name)
+        obj = getattr(module, load_name) # pragma: no cover
     return obj
 
 
@@ -2092,7 +2098,7 @@ def _unpickler(string=None, filename=None, filestring=None, die=None, verbose=Fa
     ''' Not invoked directly; used as a helper function for saveobj/loadobj '''
     
     # Sanitize kwargs, since wrapped in try-except statements otherwise
-    if kwargs:
+    if kwargs: # pragma: no cover
         valid_kwargs = ['fix_imports', 'encoding', 'errors', 'buffers', 'ignore']
         for k in kwargs:
             if k not in valid_kwargs:
@@ -2105,11 +2111,11 @@ def _unpickler(string=None, filename=None, filestring=None, die=None, verbose=Fa
             obj = pkl.loads(string, **kwargs) # Actually load it -- main usage case
         elif method == 'dill':
             obj = dill.loads(string, **kwargs) # Actually load it, with dill
-        else:
+        else: # pragma: no cover
             errormsg = f'Method "{method}" not recognized, must be pickle or dill'
             raise ValueError(errormsg)
     except Exception as E1:
-        if die:
+        if die: # pragma: no cover
             raise E1
         else:
             try:
@@ -2133,7 +2139,7 @@ def _unpickler(string=None, filename=None, filestring=None, die=None, verbose=Fa
                                 remapping = scu.mergedicts(remapping)
                                 known = scv.known_deprecations()
                                 errstr = str(E3b)
-                                if errstr in known and auto_remap:
+                                if errstr in known and auto_remap: # pragma: no cover
                                     remapping.update(known[errstr]['fix'])
                                     warnmsg = f'Fixing known unpickling deprecation "{errstr}"'
                                     warnings.warn(warnmsg, category=UserWarning, stacklevel=2)

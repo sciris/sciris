@@ -262,6 +262,14 @@ def test_asobj():
         myobjdict.x = 'cannot change actual attribute'
     with pytest.raises(AttributeError):
         myobjdict.setattribute('keys', 4)
+        
+    print('Testing dictobj')
+    obj = sc.dictobj(x=4, y=6)
+    obj.a = 5 
+    obj['b'] = 10 
+    print(obj)
+    fk = sc.dictobj.fromkeys(['foo', 'bar'])
+    assert fk.foo is None
 
     return
 

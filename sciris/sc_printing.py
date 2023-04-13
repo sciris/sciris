@@ -550,7 +550,7 @@ def humanize_bytes(bytesize, decimals=3):
 
 
 
-def printarr(arr, fmt=None, colsep='  ', vsep='—', decimals=2, dtype=None):
+def printarr(arr, fmt=None, colsep='  ', vsep='—', decimals=2, doprint=True, dtype=None):
     '''
     Print a numpy array nicely.
     
@@ -559,6 +559,8 @@ def printarr(arr, fmt=None, colsep='  ', vsep='—', decimals=2, dtype=None):
         fmt (str): the formatting string to use
         colsep (str): the separator between columns of values
         vsep (str): the vertical separator between 2D slices
+        decimals (int): number of decimal places to print
+        doprint (bool): whether to print (else, return the string)
 
     **Examples**::
 
@@ -568,8 +570,11 @@ def printarr(arr, fmt=None, colsep='  ', vsep='—', decimals=2, dtype=None):
         sc.printarr(mixed)
 
     New in version 2.0.3: "fmt", "colsep", "vsep", "decimals", and "dtype" arguments
+    New in version 2.2.0: "doprint" argument
     '''
     from . import sc_math as scm # To avoid circular import
+    
+    string = ''
     arr = scu.toarray(arr, dtype=dtype)
     if fmt is None:
         if arr.dtype == object: # pragma: no cover
@@ -582,26 +587,29 @@ def printarr(arr, fmt=None, colsep='  ', vsep='—', decimals=2, dtype=None):
             else: # pragma: no cover
                 fmt = f'%{maxdigits}.0f'
     if np.ndim(arr)==1:
-        string = ''
         for i in range(len(arr)):
             string += fmt % arr[i] + colsep
-        print(string)
+        string += '\n'
     elif np.ndim(arr)==2:
         for i in range(len(arr)):
-            printarr(arr[i], fmt, colsep)
+            string += printarr(arr[i], fmt, colsep, doprint=False) + '\n'
     elif np.ndim(arr)==3:
         for i in range(len(arr)):
             ncols  = len(arr[i][0])
             vlen   = len(fmt % arr.flatten()[0])
             seplen = len(colsep)
             n = ncols*(vlen + seplen) - seplen
-            print(vsep*n)
+            string += vsep*n + '\n'
             for j in range(len(arr[i])):
-                printarr(arr[i][j], fmt, colsep)
+                string += printarr(arr[i][j], fmt, colsep, doprint=False)
     else: # pragma: no cover
         print('Dimensions higher than 3 are not supported')
-        print(arr) # Give up
-    return
+        string = str(arr) # Give up
+    
+    if doprint:
+        print(string)
+    else:
+        return string
 
 
 

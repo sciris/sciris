@@ -114,7 +114,9 @@ def test_load_save():
     
     sc.heading('Savetext/loadtext')
     sc.savetext(files.text, testdata)
+    sc.savetext(files.text, testdata.tolist())
     o.obj2 = sc.loadtext(files.text)
+    sc.loadtext(files.text, splitlines=True)
     print(o.obj2)
     
     sc.heading('Save/load zip')
@@ -145,7 +147,7 @@ def test_load_corrupted():
         def __init__(self, x):
             self.x = x
 
-    dead_path = sc.path(filedir / 'deadclass.obj')
+    dead_path = filedir / 'deadclass.obj'
     if os.path.exists(dead_path):
         sc.heading('Intentionally loading corrupted file')
         print('Loading with no remapping...')
@@ -171,11 +173,12 @@ def test_fileio():
 
     # Test thisdir
     sc.heading('Testing thisdir')
-    a = sc.thisdir() # Just put this here for testing
-    b = sc.thispath() # Ditto
+    a = sc.thisdir()
+    b = sc.thispath()
     assert a == str(b)
     assert 'sciris' in a
     assert 'tests' in a
+    sc.thisdir(sc) # Test with a module
     o.thisdir = a
 
     sc.heading('Get files')
@@ -192,7 +195,15 @@ def test_fileio():
     bad = 'Nöt*a   file&name?!.doc'
     good = sc.sanitizefilename(bad)
     assert str(sc.sanitizepath(bad)) == good
+    sc.sanitizefilename(bad, strict=True, aspath=None)
     o.sanitized = good
+    
+    sc.heading('Testing other')
+    path1 = sc.path('/a/folder', 'a_file.txt')
+    path2 = sc.path('/a/folder', None, 'a_file.txt')
+    assert str(path1) == str(path2) == '/a/folder/a_file.txt' # NB: Test may fail on Windows
+    assert sc.ispath(path1)
+    o.thisfile = sc.thisfile(aspath=True)
 
     return o
 

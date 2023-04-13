@@ -1253,6 +1253,7 @@ class dictobj(dict):
     | New in version 1.3.0.
     | New in version 1.3.1: inherit from dict
     | New in version 2.0.0: allow positional arguments
+    | New in version 2.2.0: "fromkeys" now a static method
     '''
 
     def __init__(self, *args, **kwargs):
@@ -1265,8 +1266,9 @@ class dictobj(dict):
         output = 'dictobj(' + self.__dict__.__repr__() + ')'
         return output
 
-    def fromkeys(self, *args, **kwargs):
-        return dictobj(self.__dict__.fromkeys(*args, **kwargs))
+    @staticmethod
+    def fromkeys(*args, **kwargs):
+        return dictobj(dict.fromkeys(*args, **kwargs))
 
     # Copy default dictionary methods
     def __getitem__( self, *args, **kwargs): return self.__dict__.__getitem__( *args, **kwargs)
