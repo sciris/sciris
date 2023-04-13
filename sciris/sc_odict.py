@@ -1312,6 +1312,7 @@ def asobj(obj, strict=True):
     objtype = type(obj)
 
     class objobj(objtype):
+        ''' Define the "objobj" "type": convert any object to, well, an object. '''
 
         def __getattribute__(self, attr):
             try: # First, try to get the attribute as an attribute
@@ -1331,13 +1332,11 @@ def asobj(obj, strict=True):
             except AttributeError:
                 return objtype.__setitem__(self, name, value) # If so, simply return
 
-            if not strict: # Let the attribute be set anyway
-                objtype.__setattr__(self, name, value)
+            if not strict: # Let the attribute be set anyway # pragma: no cover
+                return objtype.__setattr__(self, name, value)
             else: # pragma: no cover # Otherwise, raise an exception
                 errormsg = f'"{name}" exists as an attribute, so cannot be set as key; use setattribute() instead'
                 raise ValueError(errormsg)
-
-            return
 
         def getattribute(self, name):
             ''' Get attribute if truly desired '''
@@ -1346,5 +1345,6 @@ def asobj(obj, strict=True):
         def setattribute(self, name, value):
             ''' Set attribute if truly desired '''
             return objtype.__setattr__(self, name, value)
+
 
     return objobj(obj)
