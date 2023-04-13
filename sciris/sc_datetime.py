@@ -67,8 +67,8 @@ def now(astype='dateobj', timezone=None, utc=False, tostring=False, dateformat=N
     if timezone is not None: tzinfo = du.tz.gettz(timezone) # Timezone is a string
     elif utc:                tzinfo = du.tz.tzutc() # UTC has been specified
     else:                    tzinfo = None # Otherwise, do nothing
-    if tostring:
-        warnmsg = 'sc.now() argument "tostring" will be deprecated soon'
+    if tostring: # pragma: no cover
+        warnmsg = 'sc.now() argument "tostring" is deprecated; use astype="str" instead'
         warnings.warn(warnmsg, category=FutureWarning, stacklevel=2)
         astype='str'
     timenow = dt.datetime.now(tzinfo)
@@ -101,7 +101,7 @@ def getdate(obj=None, astype='str', dateformat=None):
             astype = 'str' # If dateformat is specified, assume type is a string
 
         try:
-            if scu.isstring(obj):
+            if scu.isstring(obj): # pragma: no cover
                 return obj # Return directly if it's a string
             obj.timetuple() # Try something that will only work if it's a date object
             dateobj = obj # Test passed: it's a date object
@@ -113,7 +113,7 @@ def getdate(obj=None, astype='str', dateformat=None):
         if   astype == 'str':     output = dateobj.strftime(dateformat)
         elif astype == 'int':     output = int(timestamp)
         elif astype == 'dateobj': output = dateobj
-        elif astype in  ['float', 'number', 'timestamp']:
+        elif astype in  ['float', 'number', 'timestamp']: # pragma: no cover
             output = timestamp
         else: # pragma: no cover
             errormsg = f'"astype={astype}" not understood; must be "str" or "int"'
@@ -214,7 +214,7 @@ def readdate(datestr=None, *args, dateformat=None, return_defaults=False, verbos
         exceptions = {}
         if isinstance(datestr, dt.datetime):
             dateobj = datestr # Nothing to do
-        elif scu.isnumber(datestr):
+        elif scu.isnumber(datestr): # pragma: no cover
             if 'posix' in format_list or None in format_list:
                 dateobj = dt.datetime.fromtimestamp(datestr)
             elif 'ordinal' in format_list or 'matplotlib' in format_list:
@@ -234,7 +234,7 @@ def readdate(datestr=None, *args, dateformat=None, return_defaults=False, verbos
                 errormsg = f'Was unable to convert "{datestr}" to a date using the formats:\n{formatstr}'
                 if dateformat not in ['dmy', 'mdy']:
                     errormsg += '\n\nNote: to read day-month-year or month-day-year dates, use dateformat="dmy" or "mdy" respectively.'
-                    if verbose:
+                    if verbose: # pragma: no cover
                         for key,val in exceptions.items():
                             errormsg += f'\n {key}: {val}'
                 raise ValueError(errormsg)
@@ -304,7 +304,7 @@ def date(obj=None, *args, start_date=None, readformat=None, to='date', as_date=N
 
     dates = []
     for d in obj:
-        if d is None:
+        if d is None: # pragma: no cover
             dates.append(d)
             continue
         try:
@@ -329,7 +329,6 @@ def date(obj=None, *args, start_date=None, readformat=None, to='date', as_date=N
                 raise TypeError(errormsg)
             
             # Handle output
-            
             if to == 'date':
                 out = d
             elif to in ['str', 'string']:
@@ -339,7 +338,8 @@ def date(obj=None, *args, start_date=None, readformat=None, to='date', as_date=N
             elif to == 'numpy':
                 out = np.datetime64(d)
             else:
-                errormsg = f'Could not understand to="{to}": must be date, str, pandas, or numpy'
+                errormsg = f'Could not understand to="{to}": must be "date", "str", "pandas", or "numpy"'
+                raise ValueError(errormsg)
             dates.append(out)
         except Exception as E:
             errormsg = f'Conversion of "{d}" to a date failed'
@@ -416,18 +416,21 @@ def day(obj, *args, start_date=None, **kwargs):
 def daydiff(*args):
     '''
     Convenience function to find the difference between two or more days. With
-    only one argument, calculate days since 2020-01-01.
+    only one argument, calculate days since Jan. 1st.
 
     **Examples**::
 
         diff  = sc.daydiff('2020-03-20', '2020-04-05') # Returns 16
         diffs = sc.daydiff('2020-03-20', '2020-04-05', '2020-05-01') # Returns [16, 26]
+        
+        doy = sc.daydiff('2022-03-20') # Returns 79, the number of days since 2022-01-01
 
-    New in version 1.0.0.
+    | New in version 1.0.0.
+    | New in version 2.2.0: Calculated relative days with one argument
     '''
     days = [date(day) for day in args]
     if len(days) == 1:
-        days.insert(0, date(f'{now().year}-01-01')) # With one date, return days since Jan. 1st
+        days.insert(0, date(f'{days[0].year}-01-01')) # With one date, return days since Jan. 1st
 
     output = []
     for i in range(len(days)-1):

@@ -554,17 +554,18 @@ def savezip(filename=None, filelist=None, data=None, folder=None, basename=True,
 
     # Write zip file
     with ZipFile(fullpath, 'w') as zf: # Create the zip file
-        if data is not None:
-            for key,val in data.items():
-                if tobytes:
-                    val = dumpstr(val, **kwargs)
-                zf.writestr(key, val)
-        else: # Main use case
+        if data is None: # Main use case, save files
             for thisfile in filelist:
                 thispath = makefilepath(filename=thisfile, abspath=False, makedirs=True)
                 if basename: thisname = os.path.basename(thispath)
                 else:        thisname = thispath
                 zf.write(thispath, thisname)
+        else: # Alternatively, save data
+            for key,val in data.items():
+                if tobytes:
+                    val = dumpstr(val, **kwargs)
+                zf.writestr(key, val)
+        
     if verbose: print(f'Zip file saved to "{fullpath}"')
     return fullpath
 

@@ -2,8 +2,9 @@
 Test Sciris miscellaneous utility/helper functions.
 '''
 
-import numpy as np
 import sciris as sc
+import numpy as np
+import pandas as pd
 import datetime as dt
 import pytest
 
@@ -36,6 +37,11 @@ def test_readdate():
     assert len(fromlist) == len(fromarr) == len(strlist) + 1 == len(strarr) + 1
     assert isinstance(fromlist, list)
     assert isinstance(fromarr, np.ndarray)
+    
+    # And more format testing
+    dmy = '18-09-2020'
+    mdy = '09-18-2020'
+    assert sc.readdate(dmy, dateformat='dmy') == sc.readdate(mdy, dateformat='mdy')
 
     # Test timestamps
     now_datetime = sc.now()
@@ -64,10 +70,14 @@ def test_dates():
     o = sc.objdict()
 
     print('\nTesting date')
+    o.date0 = sc.date()
     o.date1 = sc.date('2020-04-05') # Returns datetime.date(2020, 4, 5)
     o.date2 = sc.date(sc.readdate('2020-04-14'), as_date=False, outformat='%Y%m') # Returns '202004'
     o.date3 = sc.date([35,36,37], start_date='2020-01-01', as_date=False) # Returns ['2020-02-05', '2020-02-06', '2020-02-07']
-    o.date4 = sc.date(1923288822, readformat='posix') # Interpret as a POSIX timestamp
+    o.date4 = sc.date(1923288822, readformat='posix', to='pandas') # Interpret as a POSIX timestamp
+    o.date5 = sc.date(pd.Timestamp(year=2020, month=9, day=18), to='numpy')
+    with pytest.raises(ValueError):
+        sc.date(to='invalid_format')
     with pytest.raises(ValueError):
         sc.date([10,20]) # Can't convert an integer without a start date
     assert o.date1.month == 4
@@ -76,10 +86,13 @@ def test_dates():
     assert o.date3[0] =='2020-02-05'
 
     print('\nTesting day')
+    assert sc.day() is None
     o.day = sc.day('2020-04-04') # Returns 94
     assert o.day == 94
     assert sc.day('2020-03-01') > sc.day('2021-03-01') # Because of the leap day
     assert sc.day('2020-03-01', start_date='2020-01-01') < sc.day('2021-03-01', start_date='2020-01-01') # Because years
+    out = sc.day([1000, None, sc.now()], start_date='2020-04-04')
+    assert out[2] > out[0] # More than 1000 days from April 2020
 
     print('\nTesting daydiff')
     o.diff  = sc.daydiff('2020-03-20', '2020-04-05') # Returns 16
