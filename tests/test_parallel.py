@@ -4,6 +4,7 @@ built-in parallelization, and since functions-within-functions can't be pickled.
 '''
 
 import sciris as sc
+import numpy as np
 import pylab as pl
 import pytest
 
@@ -92,9 +93,32 @@ def test_exceptions():
     return
 
 
+def test_class():
+    sc.heading('Testing sc.Parallel class')
+    
+    def f(i):
+        print(f'Running {i}')
+        np.random.seed(i)
+        sc.timedsleep(1*np.random.rand())
+        return i**2
+        
+    
+    P = sc.Parallel(f, iterarg=range(100), parallelizer='multiprocessing-async', ncpus=2)
+    print(P)
+    P.disp()
+    
+    sc.timedsleep(1)
+    P.run_async()
+    P.monitor()
+    
+    return P
+
+
+
 def test_components():
     sc.heading('Testing subcomponents directly')
 
+    print('Testing TaskArgs and _task')
     args = [0]*15
     args[0] = lambda: None
     args[4] = None # Set iterdict to None
@@ -104,6 +128,11 @@ def test_components():
     args[13] = dict() # Set globaldict
     taskargs = sc.sc_parallel.TaskArgs(*args)
     task = sc.sc_parallel._task(taskargs)
+    
+    print('Testing progress bar')
+    globaldict = {0:1, 1:1, 2:0, 3:0, 4:0}
+    njobs = 5
+    sc.sc_parallel._progressbar(globaldict, njobs)
     return task
 
 
@@ -114,12 +143,13 @@ if __name__ == '__main__':
 
     doplot = True
 
-    test_simple()
-    test_embarrassing()
-    test_multiargs()
-    test_noniterated(doplot)
-    test_exceptions()
-    test_components()
+    # test_simple()
+    # test_embarrassing()
+    # test_multiargs()
+    # test_noniterated(doplot)
+    # test_exceptions()
+    P = test_class()
+    # test_components()
 
     sc.toc()
     print('Done.')

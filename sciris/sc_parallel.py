@@ -58,7 +58,7 @@ class Parallel:
     '''
     def __init__(self, func, iterarg=None, iterkwargs=None, args=None, kwargs=None, ncpus=None, 
                  maxcpu=None, maxmem=None, interval=None, parallelizer=None, serial=False, 
-                 progress=True, callback=None, label=None, use_async=False, die=True, **func_kwargs):
+                 progress=True, callback=None, label=None, die=True, **func_kwargs):
         
         # Store input arguments
         self.func         = func
@@ -75,7 +75,6 @@ class Parallel:
         self.progress     = progress
         self.callback     = callback
         self.label        = label
-        self.use_async    = use_async
         self.die          = die
         
         # Additional initialization
