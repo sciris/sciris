@@ -659,7 +659,7 @@ class dataframe(pd.DataFrame):
         for col in cols:
             if col in self.cols:
                 order.append(self.cols.index(col))
-            else:
+            else: # pragma: no cover
                 cols.remove(col)
                 notfound.append(col)
         if len(notfound): # pragma: no cover

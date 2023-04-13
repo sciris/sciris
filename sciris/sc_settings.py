@@ -464,7 +464,7 @@ class Options(sco.objdict):
     def _handle_style(self, style=None, reset=False, copy=True):
         ''' Helper function to handle logic for different styles '''
         rc = self.rc # By default, use current
-        if isinstance(style, dict): # If an rc-like object is supplied directly
+        if isinstance(style, dict): # If an rc-like object is supplied directly # pragma: no cover
             rc = scu.dcp(style)
         elif style is not None: # Usual use case
             stylestr = str(style).lower()
@@ -477,10 +477,10 @@ class Options(sco.objdict):
                 rc = scu.dcp(rc_fancy)
             elif style in pl.style.library:
                 rc = scu.dcp(pl.style.library[style])
-            else:
+            else: # pragma: no cover
                 errormsg = f'Style "{style}"; not found; options are "default", "simple", "fancy", plus:\n{scu.newlinejoin(pl.style.available)}'
                 raise ValueError(errormsg)
-        if reset:
+        if reset: # pragma: no cover
             self.rc = rc
         if copy:
             rc = scu.dcp(rc)
@@ -673,7 +673,7 @@ See help(sc.help) for more information.
                     matches[k].append(line)
 
         # Assemble output
-        if not len(matches):
+        if not len(matches): # pragma: no cover
             string = f'No matches for "{pattern}" found among {len(docstrings)} available functions.'
         else:
             string = f'Found {len(matches)} matches for "{pattern}" among {len(docstrings)} available functions:\n'
