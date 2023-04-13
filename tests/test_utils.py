@@ -32,6 +32,10 @@ def test_adaptations():
 
     print('\nTesting traceback')
     o.traceback = sc.traceback()
+    
+    print('\nTesting platforms')
+    sc.getplatform()
+    assert sc.iswindows() + sc.ismac() + sc.islinux() == 1
 
     return o
 
@@ -142,6 +146,7 @@ def test_tryexcept():
             values[i]
     assert len(tryexc.exceptions) == repeats - len(values)
     assert tryexc.died
+    tryexc.disp()
     
     return tryexc
 
@@ -164,6 +169,7 @@ def test_promotetolist():
     res3b = sc.promotetolist(ex3, objtype='number')
     res4a = sc.tolist('foo')
     res4b = sc.tolist('foo', coerce=str)
+    res4c = sc.tolist(('foo', 'bar'), coerce=tuple)
     res5 = sc.tolist(range(3))
     with pytest.raises(TypeError):
         sc.promotetolist(ex0, str)
@@ -181,6 +187,7 @@ def test_promotetolist():
     assert res3b == [0,1,2]
     assert len(res4a) == 1
     assert len(res4b) == 3
+    assert len(res4c) == 2
     assert res5[2] == 2
     print(res1)
     print(res2a)
@@ -194,13 +201,17 @@ def test_promotetolist():
     # Check that type checking works
     sc.tolist(ex2, objtype=str)
 
-    print('\nTesting transposelist')
+    print('\nTesting transposelist and swapdict')
     o = sc.odict(a=1, b=4, c=9, d=16)
     itemlist = o.enumitems()
     inds, keys, vals = sc.transposelist(itemlist)
     assert keys[2] == 'c'
     assert inds[3] == 3
     assert vals[1] == 4
+    
+    d1 = {'a':'foo', 'b':'bar'} 
+    d2 = sc.swapdict(d1)
+    assert d2 == {'foo':'a', 'bar':'b'} 
 
     print('\nTesting mergelists')
     assert sc.mergelists(None, copy=True)                   == []
@@ -209,7 +220,14 @@ def test_promotetolist():
     assert sc.mergelists([(1,2), (3,4)], (5,6))             == [(1, 2), (3, 4), (5, 6)]
     assert sc.mergelists((1,2), (3,4), (5,6))               == [(1, 2), (3, 4), (5, 6)]
     assert sc.mergelists((1,2), (3,4), (5,6), coerce=tuple) == [1, 2, 3, 4, 5, 6]
-
+    
+    print('\nTesting mergedicts')
+    assert sc.mergedicts(None) == {}
+    assert sc.mergedicts({'a':1}, {'b':2}, _copy=True) == {'a':1, 'b':2}
+    assert sc.mergedicts({'a':1, 'b':2}, {'b':3, 'c':4}, None) == {'a':1, 'b':3, 'c':4}
+    assert sc.mergedicts(sc.odict({'b':3, 'c':4}), {'a':1, 'b':2}) == sc.odict({'b':2, 'c':4, 'a':1})
+    with pytest.raises(KeyError):
+        assert sc.mergedicts({'b':3, 'c':4}, {'a':1, 'b':2}, _overwrite=False)
     return res3b
 
 
@@ -224,6 +242,12 @@ def test_types():
 
     print('\nTesting flexstr')
     o.flexstr = sc.flexstr(b'bytestring')
+    
+    print('\nTesting sanitizestr')
+    assert sc.sanitizestr('This Is a String', lower=True) == 'this is a string'
+    assert sc.sanitizestr('Lukáš wanted €500‽', asciify=True, nospaces=True, symchar='*') == 'Lukas_wanted_*500*'
+    assert sc.sanitizestr('"Ψ scattering", María said, "at ≤5 μm?"', asciify=True, alphanumeric=True, nospaces=True, spacechar='') == '??scattering??Mariasaid??at?5?m??'
+    assert sc.sanitizestr('4 path/names/to variable!', validvariable=True, spacechar='') == '_4pathnamestovariable'
 
     print('\nTesting promotetoarray')
     assert not len(sc.promotetoarray(None, keepnone=False))
@@ -272,7 +296,7 @@ def test_misc():
     o = sc.objdict()
 
     print('\nTesting runcommand')
-    sc.runcommand('command_probably_not_found')
+    sc.runcommand('command_probably_not_found', printinput=True, printoutput=True)
 
     print('\nTesting gitinfo functions')
     o.gitinfo = sc.gitinfo()
@@ -287,13 +311,17 @@ def test_misc():
     o.unique = sc.uniquename(name='file', namelist=namelist)
     assert o.unique not in namelist
 
-    print('\nTesting importbyname')
+    print('\nTesting importbyname and importbypath')
     global lazynp
     sc.importbyname(lazynp='numpy', lazy=True, namespace=globals())
     print(lazynp)
     assert isinstance(lazynp, sc.LazyModule)
     lazynp.array(0)
     assert not isinstance(lazynp, sc.LazyModule)
+    test_other = sc.importbyname(path='./test_other.py', variable='test_other')
+    assert 'test_options' in dir(test_other)
+    test_other2 = sc.importbypath(path='./test_other.py')
+    assert 'test_options' in dir(test_other2)
 
     print('\nTesting get_caller()')
     o.caller = sc.getcaller(includeline=True)
@@ -316,6 +344,9 @@ def test_misc():
     ls += 'a'
     ls += [3, 'b']
     assert ls ==  ['test', 'a', 3, 'b']
+    ls2 = sc.autolist('x', 'y')
+    ls3 = ls + ls2
+    assert ls3 == ['test', 'a', 3, 'b', 'x', 'y']
 
     return o
 

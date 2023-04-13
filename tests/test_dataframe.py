@@ -75,12 +75,14 @@ def test_methods():
     with pytest.raises(sc.KeyNotFoundError):
         df[sc.prettyobj({'wrong':'type'})]
 
-    subheading('Set')
+    subheading('Set and flexget')
     df['c'] = np.random.randn(df.nrows); dfprint('Set column', df)
     df[2] = [17,15,13]; dfprint('Insert row', df)
     df[0,'a'] = 300; dfprint('Tuple set 1', df)
     df[1,1]   = 400; dfprint('Tuple set 2', df)
     out = df.flexget(cols=['a','c'], rows=[0,2]); dfprint('Flexget', out)
+    out2 = df.flexget('c', 2)
+    assert isinstance(out2, float)
 
     subheading('Other')
     df.rmrows([1,3]); dfprint('Removing rows', df)
@@ -119,20 +121,27 @@ def test_errors():
     
     df = sc.dataframe(cols=['x','y'], data=[['a',2],['b',5],['c',7]])
     
-    print('Duplicate dtype definitions')
+    print('Duplicate dtype definitions ✓')
+    data = [
+        ['a',1],
+        ['b',2]
+    ]
+    columns = {'str':str,'int':int}
+    dtypes = [str, int]
+    dd = sc.dataframe(data=data, columns=columns) # dtypes are ok
+    sc.dataframe(data=data, columns=columns.keys(), dtypes=dtypes) # dtypes are ok
+    sc.dataframe(data=data, columns=columns.keys()) # dtypes are ok
+    dd.set_dtypes(dtypes)
     with pytest.raises(ValueError):
-        data = [['a','b'],[1,2]]
-        columns = {'str':str,'int':int}
-        dtypes = [str, int]
-        sc.dataframe(data=data, columns=columns, dtypes=dtypes)
+        sc.dataframe(data=data, columns=columns, dtypes=dtypes) # duplicate dtypes
         
-    print('Incompatible columns')
+    print('Incompatible columns ✓')
     with pytest.raises(ValueError):
         data = {'str':['a','b'], 'int':[1,2]}
         columns = ['wrong', 'name']
         sc.dataframe(data=data, columns=columns)
         
-    print('Invalid key')
+    print('Invalid key ✓')
     with pytest.raises(TypeError):
         df[dict(not_a='key')] = 4
         
@@ -148,5 +157,6 @@ if __name__ == '__main__':
     df = test_methods()
     e  = test_errors()
 
+    print('\n\n')
     sc.toc()
     print('Done.')

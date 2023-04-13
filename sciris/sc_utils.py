@@ -115,7 +115,7 @@ def fast_uuid(which=None, length=None, n=1, secure=False, forcelist=False, safet
             raise ValueError(errormsg)
 
     # Secure uses system random which is secure, but >10x slower
-    if secure:
+    if secure: # pragma: no cover
         choices_func = rnd.SystemRandom().choices
     else:
         choices_func = rnd.choices
@@ -315,7 +315,7 @@ def pp(obj, jsonify=True, doprint=None, output=False, verbose=False, **kwargs):
         except Exception as E:
             if verbose: print(f'Could not jsonify object ("{str(E)}"), printing default...')
             toprint = obj # If problems are encountered, just return the object
-    else:
+    else: # pragma: no cover
         toprint = obj
 
     # Decide what to do with object
@@ -344,13 +344,13 @@ def sha(obj, encoding='utf-8', digest=False):
     '''
     if not isstring(obj): # Ensure it's actually a string
         string = repr(obj)
-    else:
+    else: # pragma: no cover
         string = obj
     needsencoding = isinstance(string, str)
     if needsencoding: # If it's unicode, encode it to bytes first
         string = string.encode(encoding)
     output = hashlib.sha224(string)
-    if digest:
+    if digest: # pragma: no cover
         output = output.hexdigest()
     return output
 
@@ -414,10 +414,10 @@ def getplatform(expected=None, platform=None, die=False):
     # Handle output
     if expected is not None:
         output = (expected.lower() in mapping[plat]) # Check if it's as expecte
-        if not output and die:
+        if not output and die: # pragma: no cover
             errormsg = f'System is "{plat}", not "{expected}"'
             raise EnvironmentError(errormsg)
-    else:
+    else: # pragma: no cover
         output = plat
     return output
 
@@ -511,9 +511,9 @@ def urlopen(url, filename=None, save=False, headers=None, params=None, data=None
     if prefix is not None:
         if not full_url.startswith(prefix):
             full_url = prefix + '://' + full_url # Leaves https alone, but adds http:// otherwise
-    if params is not None:
+    if params is not None: # pragma: no cover
         full_url = full_url + '?' + up.urlencode(params)
-    if data is not None:
+    if data is not None: # pragma: no cover
         data = up.urlencode(data).encode(encoding='utf-8', errors='ignore')
 
     if verbose: print(f'Downloading {url}...')
@@ -532,7 +532,7 @@ def urlopen(url, filename=None, save=False, headers=None, params=None, data=None
                 print(errormsg)
 
     # Set filename -- from https://stackoverflow.com/questions/31804799/how-to-get-pdf-filename-with-python-requests
-    if filename is None and save:
+    if filename is None and save: # pragma: no cover
         headers = dict(response.getheaders())
         string = "Content-Disposition"
         if string in headers.keys():
@@ -544,7 +544,7 @@ def urlopen(url, filename=None, save=False, headers=None, params=None, data=None
         if verbose: print(f'Saving to {filename}...')
         filename = scf.makefilepath(filename, makedirs=True)
         if isinstance(output, bytes):
-            with open(filename, 'wb') as f:
+            with open(filename, 'wb') as f: # pragma: no cover
                 f.write(output)
         else:
             with open(filename, 'w') as f:
@@ -553,7 +553,7 @@ def urlopen(url, filename=None, save=False, headers=None, params=None, data=None
 
     if verbose:
         T.toc(f'Time to download {url}')
-    if return_response:
+    if return_response: # pragma: no cover
         output = response
 
     return output
@@ -624,7 +624,7 @@ def download(url, *args, filename=None, save=True, parallel=True, die=True, verb
         for url,filename in zip(urls, filenames):
             try:
                 output = urlopen(url=url, filename=filename, **func_kwargs)
-            except Exception as E:
+            except Exception as E: # pragma: no cover
                 if die:
                     raise E
                 else:
@@ -659,7 +659,7 @@ def htmlify(string, reverse=False, tostring=False):
         output = html.escape(string).encode('ascii', 'xmlcharrefreplace') # Replace non-ASCII characters
         output = output.replace(b'\n', b'<br>') # Replace newlines with <br>
         output = output.replace(b'\t', b'&nbsp;&nbsp;&nbsp;&nbsp;') # Replace tabs with 4 spaces
-        if tostring: # Convert from bytestring to unicode
+        if tostring: # Convert from bytestring to unicode # pragma: no cover
             output = output.decode()
     else: # Convert from HTML
         output = html.unescape(string)
@@ -780,7 +780,7 @@ def isiterable(obj, *args, exclude=None, minlen=None):
     objlist = [obj]
     n_args = len(args)
     exclude = tuple(tolist(exclude))
-    if n_args:
+    if n_args: # pragma: no cover
         objlist.extend(args)
         
     # Determine iterability
@@ -798,7 +798,7 @@ def isiterable(obj, *args, exclude=None, minlen=None):
                 tf = False
             
             # Check length
-            if minlen is not None:
+            if minlen is not None: # pragma: no cover
                 try:
                     assert len(obj) >= minlen
                 except:
@@ -856,8 +856,8 @@ def checktype(obj=None, objtype=None, subtype=None, die=False):
     elif objtype in ['listlike', 'arraylike']: objinstance = (list, tuple, np.ndarray, pd.Series) # Anything suitable as a numerical array
     elif type(objtype) == type:                objinstance = objtype # Don't need to do anything
     elif isinstance(objtype, tuple):           objinstance = objtype # Ditto
-    elif isinstance(objtype, list):            objinstance = tuple(objtype) # Convert from a list to a tuple
-    elif objtype is None:
+    elif isinstance(objtype, list):            objinstance = tuple(objtype) # Convert from a list to a tuple # pragma: no cover
+    elif objtype is None: # pragma: no cover
         errormsg = "No object type was supplied; did you mean to use objtype='none' instead?"
         raise ValueError(errormsg)
     else: # pragma: no cover
@@ -898,7 +898,7 @@ def isnumber(obj, isnan=None):
     Almost identical to isinstance(obj, numbers.Number).
     '''
     output = checktype(obj, 'number')
-    if output and isnan is not None: # It is a number, so can check for nan
+    if output and isnan is not None: # It is a number, so can check for nan # pragma: no cover
         output = (np.isnan(obj) == isnan) # See if they match
     return output
 
@@ -928,7 +928,7 @@ def isarray(obj, dtype=None):
         if dtype is None:
             return True
         else:
-            if obj.dtype == dtype:
+            if obj.dtype == dtype: # pragma: no cover
                 return True
             else:
                 return False
@@ -1024,12 +1024,12 @@ def tolist(obj=None, objtype=None, keepnone=False, coerce='default'):
             coerce = None
         elif coerce == 'default':
             coerce = default_coerce
-        elif coerce == 'tuple':
+        elif coerce == 'tuple': # pragma: no cover
             coerce = default_coerce + (tuple,)
         elif coerce == 'full':
             coerce = default_coerce + (tuple, np.ndarray)
-        else:
-            errormsg = f'Option "{coerce}"; not recognized; must be "none", "default", or "full"'
+        else: # pragma: no cover
+            errormsg = f'Option "{coerce}"; not recognized; must be "none", "default", "tuple", or "full"'
 
     if objtype is None: # Don't do type checking
         if isinstance(obj, list):
@@ -1146,7 +1146,7 @@ def mergedicts(*args, _strict=False, _overwrite=True, _copy=False, _sameclass=Tr
     '''
     # Warn about deprecated keys
     renamed = ['strict', 'overwrite', 'copy']
-    if any([k in kwargs for k in renamed]):
+    if any([k in kwargs for k in renamed]): # pragma: no cover
         warnmsg = f'sc.mergedicts() arguments "{strjoin(renamed)}" have been renamed with underscores as of v1.3.3; using these as keywords is undesirable'
         warnings.warn(warnmsg, category=FutureWarning, stacklevel=2)
 
@@ -1158,7 +1158,7 @@ def mergedicts(*args, _strict=False, _overwrite=True, _copy=False, _sameclass=Tr
                 try:
                     outputdict = arg.__class__() # This creates a new instance of the class
                     break
-                except Exception as E:
+                except Exception as E: # pragma: no cover
                     errormsg = f'Could not create new dict of {type(args[0])} from first argument ({str(E)}); set _sameclass=False if this is OK'
                     if _die: raise TypeError(errormsg) from E
                     else:    print(errormsg)
@@ -1179,7 +1179,7 @@ def mergedicts(*args, _strict=False, _overwrite=True, _copy=False, _sameclass=Tr
                     raise KeyError(errormsg)
             outputdict.update(arg)
         else:
-            if arg is not None and _die:
+            if arg is not None and _die: # pragma: no cover
                 errormsg = f'Could not handle argument {a} of {type(arg)}: expecting dict or None'
                 raise TypeError(errormsg)
 
@@ -1282,7 +1282,7 @@ def strjoin(*args, sep=', '):
             obj.append(arg)
         elif isiterable(arg):
             obj.extend([str(item) for item in arg])
-        else:
+        else: # pragma: no cover
             obj.append(str(arg))
     output = sep.join(obj)
     return output
@@ -1328,8 +1328,8 @@ def strsplit(string, sep=None, skipempty=True, lstrip=True, rstrip=True):
         sep = [' ', ',']
 
     # Generate a character sequence that isn't in the string
-    special = '∙' # Pick an obscure character
-    while special in string: # If it exists in the string nonetheless, keep going until it doesn't
+    special = '∙' # Pick an obscure Unicode character
+    while special in string: # If it exists in the string nonetheless, keep going until it doesn't # pragma: no cover
         special += special
 
     # Convert all separators to the special character
@@ -1370,7 +1370,7 @@ def runcommand(command, printinput=False, printoutput=False, wait=True):
             stderr = p.stdout.read().decode("utf-8") # Somewhat confusingly, send stderr to stdout
             stdout = p.communicate()[0].decode("utf-8") # ...and then stdout to the pipe
             output = stdout + '\n' + stderr if stderr else stdout # Only include the error if it was non-empty
-        else:
+        else: # pragma: no cover
             output = ''
     except Exception as E: # pragma: no cover
         output = f'runcommand(): shell command failed: {str(E)}' # This is for a Python error, not a shell error -- those get passed to output
@@ -1472,7 +1472,7 @@ def suggest(user_input, valid_inputs, n=1, threshold=None, fulloutput=False, die
     # Handle threshold
     if threshold is None:
         threshold = np.ceil(len(user_input)*2/3)
-    if threshold < 0:
+    if threshold < 0: # pragma: no cover
         threshold = np.inf
 
     # Output
@@ -1496,7 +1496,7 @@ def suggest(user_input, valid_inputs, n=1, threshold=None, fulloutput=False, die
                 return suggestions[:n]
 
 
-def _assign_to_namespace(var, obj, namespace=None, overwrite=True):
+def _assign_to_namespace(var, obj, namespace=None, overwrite=True): # pragma: no cover
     ''' Helper function to assign an object to the global namespace '''
     if namespace is None:
         namespace = globals()
@@ -1543,8 +1543,8 @@ def importbyname(module=None, variable=None, path=None, namespace=None, lazy=Fal
 
     # Map modules to variables
     mapping = {}
-    if module is not None:
-        mapping[variable] = module
+    if module is not None or path is not None:
+        mapping[variable] = (path or module) # In this order so path takes precedence
     mapping.update(kwargs)
 
     # Load modules
@@ -1645,7 +1645,7 @@ class KeyNotFoundError(KeyError):
         return Exception.__str__(self)
 
 
-class LinkException(Exception):
+class LinkException(Exception): # pragma: no cover
     '''
     An exception to raise when links are broken, for exclusive use with the Link
     class.
@@ -1756,7 +1756,7 @@ class autolist(list):
     def __add__(self, obj=None):
         ''' Allows non-lists to be concatenated '''
         obj = tolist(obj)
-        new = autolist(list.__add__(self, obj)) # Ensure it returns an autolist
+        new = self.__class__(list.__add__(self, obj)) # Ensure it returns an autolist
         return new
 
     def __iadd__(self, obj):
@@ -1849,7 +1849,7 @@ class LazyModule:
     def __getattr__(self, attr):
         ''' In most cases, when an attribute is retrieved we want to replace this module with the actual one '''
         _builtin_keys = ['_variable', '_module', '_namespace', '_overwrite', '_load']
-        if attr in _builtin_keys:
+        if attr in _builtin_keys: # pragma: no cover
             obj = object.__getattribute__(self, attr)
         else:
             obj = self._load(attr)
@@ -1863,7 +1863,7 @@ class LazyModule:
         _assign_to_namespace(var, lib, namespace=self._namespace, overwrite=self._overwrite)
         if attr:
             obj = getattr(lib, attr)
-        else:
+        else: # pragma: no cover
             obj = lib
         return obj
     
@@ -1911,7 +1911,8 @@ class tryexcept(cl.suppress):
                 print(values[i])
         tryexc.print()
             
-    New in version 2.1.0.
+    | New in version 2.1.0.
+    | New in version 2.2.0: renamed "print" to "disp"
     '''
 
     def __init__(self, die=None, catch=None, verbose=1, history=None):
@@ -1921,7 +1922,7 @@ class tryexcept(cl.suppress):
         catchtypes = []
         if die is None and catch is None: # Default: do not die
             self.defaultdie = False
-        elif die in [True, False, 0, 1]: # It's truthy: use it directly
+        elif die in [True, False, 0, 1]: # It's truthy: use it directly # pragma: no cover
             self.defaultdie = die
         elif die is None and catch is not None: # We're asked to catch some things, so die otherwise
             self.defaultdie = True
@@ -1929,7 +1930,7 @@ class tryexcept(cl.suppress):
         elif die is not None and catch is None: # Vice versa
             self.defaultdie = False
             dietypes = tolist(die)
-        else:
+        else: # pragma: no cover
             errormsg = 'Unexpected input to "die" and "catch": typically only one or the other should be provided'
             raise ValueError(errormsg)
         
@@ -1939,11 +1940,11 @@ class tryexcept(cl.suppress):
         self.verbose    = verbose
         self.exceptions = []
         if history is not None:
-            if isinstance(history, (list, tuple)):
+            if isinstance(history, (list, tuple)): # pragma: no cover
                 self.exceptions.extend(list(history))
             elif isinstance(history, tryexcept):
                 self.exceptions.extend(history.exceptions)
-            else:
+            else: # pragma: no cover
                 errormsg = f'Could not understand supplied history: must be a list or a tryexcept object, not {type(history)}'
                 raise TypeError(errormsg)
         return
@@ -1967,18 +1968,18 @@ class tryexcept(cl.suppress):
             if die and not live:
                 return
             else:
-                if self.verbose > 1: # Print everything
+                if self.verbose > 1: # Print everything # pragma: no cover
                     self.print()
                 elif self.verbose: # Just print the exception type
                     print(exc_type, exc_val)
                 return True
 
     
-    def print(self, which=-1):
+    def disp(self, which=-1):
         ''' Print the exception (usually the last) '''
         if len(self.exceptions):
             py_traceback.print_exception(*self.exceptions[which])
-        else:
+        else: # pragma: no cover
             print('No exceptions were encountered; nothing to trace')
         return
     

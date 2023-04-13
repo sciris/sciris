@@ -135,7 +135,7 @@ class dataframe(pd.DataFrame):
         elif scu.isnumber(col):
             try:
                 cols[col]
-            except Exception as E:
+            except Exception as E: # pragma: no cover
                 errormsg = f'Column "{col}" is not a valid index'
                 raise IndexError(errormsg) from E
             output = col
@@ -233,22 +233,22 @@ class dataframe(pd.DataFrame):
             df = sc.dataframe(cols=['x','y','z'],data=[[1238,2,-1],[384,5,-2],[666,7,-3]]) # Create data frame
             df.flexget(cols=['x','z'], rows=[0,2])
         '''
-        if cols is None:
+        if cols is None: # pragma: no cover
             colindices = Ellipsis
         else:
             colindices = []
             for col in scu.tolist(cols):
                 colindices.append(self.col_index(col))
-        if rows is None:
+        if rows is None: # pragma: no cover
             rowindices = Ellipsis
         else:
             rowindices = rows
 
         output = self.iloc[rowindices,colindices] # Split up so can handle non-consecutive entries in either
         if output.size == 1:
-            output = output.flatten()[0] # If it's a single element, return the value rather than the array
-        if asarray:
-            return output
+            output = np.array(output).flatten()[0] # If it's a single element, return the value rather than the array
+        elif asarray:
+            output = np.array(output)
         else:
             output = dataframe(data=output, columns=np.array(self.cols)[colindices].tolist())
 
