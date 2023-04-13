@@ -690,7 +690,7 @@ def figlayout(fig=None, tight=True, keep=False, **kwargs):
     except: # Earlier versions # pragma: no cover
         fig.set_tight_layout(tight)
     if not keep:
-        pl.pause(0.01) # Force refresh
+        pl.pause(0.01) # Force refresh -- may raise a warning with a noninteractive backend; this can be ignored
         try:
             fig.set_layout_engine('none')
         except: # pragma: no cover

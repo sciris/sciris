@@ -346,8 +346,8 @@ def memload():
 
 
 
-def loadbalancer(maxcpu=0.8, maxmem=0.8, index=None, interval=None, cpu_interval=0.1,
-                 maxtime=36000, label=None, verbose=True, **kwargs):
+def loadbalancer(maxcpu=0.9, maxmem=0.9, index=None, interval=None, cpu_interval=0.1,
+                 maxtime=36_000, label=None, verbose=True, **kwargs):
     '''
     Delay execution while CPU load is too high -- a very simple load balancer.
 
@@ -368,9 +368,10 @@ def loadbalancer(maxcpu=0.8, maxmem=0.8, index=None, interval=None, cpu_interval
 
         # Use a maximum CPU load of 50%, maximum memory of 90%, and stagger the start by process number
         for nproc in processlist:
-            sc.loadbalancer(maxload=0.5, maxmem=0.9, index=nproc)
+            sc.loadbalancer(maxload=0.5, maxmem=0.8, index=nproc)
 
     | New in version 2.0.0: ``maxmem`` argument; ``maxload`` renamed ``maxcpu``
+    | New in version 2.2.0: ``maxcpu`` and ``maxmem`` set to 0.9 by default
     '''
 
     # Handle deprecation

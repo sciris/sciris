@@ -120,5 +120,11 @@ Installation and run instructions
 3. Do science (left as an exercise to the reader).
 
 
+Tests
+-----
+
+Sciris comes with an automated test suite covering all functions. You almost certainly don't need to run this, but if you want to, go to the ``tests`` folder and run ``pytest``. See the readme in that folder for more information.
+
+
 .. |Sciris showcase| image:: https://github.com/sciris/sciris/raw/main/docs/sciris-showcase-code.png
 .. |Sciris output| image:: https://github.com/sciris/sciris/raw/main/docs/sciris-showcase-output.png
