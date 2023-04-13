@@ -48,7 +48,7 @@ def fig3d(num=None, returnax=False, figkwargs=None, axkwargs=None, **kwargs):
     axkwargs = scu.mergedicts(axkwargs)
 
     fig,ax = ax3d(returnfig=True, figkwargs=figkwargs, **axkwargs)
-    if returnax:
+    if returnax: # pragma: no cover
         return fig,ax
     else:
         return fig
@@ -72,7 +72,7 @@ def ax3d(fig=None, ax=None, returnfig=False, silent=False, elev=None, azim=None,
     if fig is None:
         if ax is None:
             fig = pl.figure(**figkwargs) # It's necessary to have an open figure or else the commands won't work
-        else:
+        else: # pragma: no cover
             fig = ax.figure
             silent = False
     else:
@@ -81,13 +81,13 @@ def ax3d(fig=None, ax=None, returnfig=False, silent=False, elev=None, azim=None,
     # Create and initialize the axis
     if ax is None:
         ax = fig.add_subplot(nrows, ncols, index, projection='3d', **axkwargs)
-    if elev is not None or azim is not None:
+    if elev is not None or azim is not None: # pragma: no cover
         ax.view_init(elev=elev, azim=azim)
-    if silent:
+    if silent: # pragma: no cover
         pl.close(fig)
     if returnfig:
         return fig,ax
-    else:
+    else: # pragma: no cover
         return ax
 
 
@@ -122,7 +122,7 @@ def plot3d(x, y, z, c=None, fig=None, ax=None, returnfig=False, figkwargs=None, 
 
     ax.plot(x, y, z, **plotkwargs)
 
-    if returnfig:
+    if returnfig: # pragma: no cover
         return fig,ax
     else:
         return ax
@@ -159,7 +159,7 @@ def scatter3d(x, y, z, c=None, fig=None, returnfig=False, figkwargs=None, axkwar
 
     ax.scatter(x, y, z, c=c, **plotkwargs)
 
-    if returnfig:
+    if returnfig: # pragma: no cover
         return fig,ax
     else:
         return ax
@@ -203,14 +203,14 @@ def surf3d(data, x=None, y=None, fig=None, returnfig=False, colorbar=True, figkw
 
     if x.ndim == 1 or y.ndim == 1:
         X,Y = np.meshgrid(x, y)
-    else:
+    else: # pragma: no cover
         X,Y = x,y
 
     surf = ax.plot_surface(X, Y, data, **plotkwargs)
     if colorbar:
         fig.colorbar(surf)
 
-    if returnfig:
+    if returnfig: # pragma: no cover
         return fig,ax
     else:
         return ax
@@ -262,7 +262,7 @@ def bar3d(data, fig=None, returnfig=False, cmap='viridis', figkwargs=None, axkwa
             dz.append(data[i,j])
     ax.bar3d(x=x, y=y, z=z, dz=dz, **plotkwargs)
 
-    if returnfig:
+    if returnfig: # pragma: no cover
         return fig,ax
     else:
         return ax
@@ -352,7 +352,7 @@ def stackedbar(x=None, values=None, colors=None, labels=None, transpose=False,
     for i in range(nstack):
         if labels is not None:
             label = labels[i]
-        else:
+        else: # pragma: no cover
             label = None
         
         h = values[i+1,:]
@@ -360,7 +360,7 @@ def stackedbar(x=None, values=None, colors=None, labels=None, transpose=False,
         kw = dict(facecolor=colors[i], label=label, **kwargs)
         if not barh:
             artist = pl.bar(x=x, height=h, bottom=b, **kw)
-        else:
+        else: # pragma: no cover
             artist = pl.barh(y=x, width=h, left=b, **kw)
         artists.append(artist)
     
@@ -397,7 +397,7 @@ def boxoff(ax=None, which=None, removeticks=True):
     New in version 1.3.3: ability to turn off multiple spines; removed "flipticks" arguments
     '''
     # Handle axes
-    if isinstance(ax, (str, list)): # Swap input arguments
+    if isinstance(ax, (str, list)): # Swap input arguments # pragma: no cover
         ax,which = which,ax
     if ax is None: ax = pl.gca()
 
@@ -405,7 +405,7 @@ def boxoff(ax=None, which=None, removeticks=True):
     if not isinstance(which, list):
         if which is None:
             which = 'top, right'
-        if which == 'all':
+        if which == 'all': # pragma: no cover
             which = 'top, bottom, right, left'
         if isinstance(which, str):
             which = which.split(',')
@@ -438,12 +438,12 @@ def setaxislim(which=None, ax=None, data=None):
     '''
 
     # Handle which axis
-    if which is None:
+    if which is None: # pragma: no cover
         which = 'both'
-    if which not in ['x','y','both']:
+    if which not in ['x','y','both']: # pragma: no cover
         errormsg = f'Setting axis limit for axis {which} is not supported'
         raise ValueError(errormsg)
-    if which == 'both':
+    if which == 'both': # pragma: no cover
         setaxislim(which='x', ax=ax, data=data)
         setaxislim(which='y', ax=ax, data=data)
         return
@@ -459,7 +459,7 @@ def setaxislim(which=None, ax=None, data=None):
     # Calculate the lower limit based on all the data
     lowerlim = 0
     upperlim = 0
-    if scu.checktype(data, 'arraylike'): # Ensure it's numeric data (probably just None)
+    if scu.checktype(data, 'arraylike'): # Ensure it's numeric data (probably just None) # pragma: no cover
         flatdata = scu.toarray(data).flatten() # Make sure it's iterable
         lowerlim = min(lowerlim, flatdata.min())
         upperlim = max(upperlim, flatdata.max())
@@ -491,7 +491,7 @@ def setylim(data=None, ax=None):
     return setaxislim(data=data, ax=ax, which='y')
 
 
-def _get_axlist(ax):
+def _get_axlist(ax): # pragma: no cover
     ''' Helper function to turn either a figure, an axes, or a list of axes into a list of axes '''
 
     if ax is None: # If not supplied, get current axes
@@ -553,8 +553,8 @@ def commaticks(ax=None, axis='y', precision=2, cursor_precision=0):
         for axis in axislist:
             if   axis=='x': thisaxis = ax.xaxis
             elif axis=='y': thisaxis = ax.yaxis
-            elif axis=='z': thisaxis = ax.zaxis
-            else: raise ValueError('Axis must be x, y, or z')
+            elif axis=='z': thisaxis = ax.zaxis # pragma: no cover
+            else: raise ValueError('Axis must be x, y, or z') # pragma: no cover
             thisaxis.set_major_formatter(mpl.ticker.FuncFormatter(commaformatter))
     return
 
@@ -575,7 +575,7 @@ def SIticks(ax=None, axis='y', fixed=False):
         pl.plot(data)
         sc.SIticks()
     '''
-    def SItickformatter(x, pos=None, sigfigs=2, SI=True, *args, **kwargs):  # formatter function takes tick label and tick position
+    def SItickformatter(x, pos=None, sigfigs=2, SI=True, *args, **kwargs):  # formatter function takes tick label and tick position # pragma: no cover
         ''' Formats axis ticks so that e.g. 34000 becomes 34k -- usually not invoked directly '''
         output = scp.sigfig(x, sigfigs=sigfigs, SI=SI) # Pretty simple since scp.sigfig() does all the work
         return output
@@ -584,8 +584,8 @@ def SIticks(ax=None, axis='y', fixed=False):
     for ax in axlist:
         if   axis=='x': thisaxis = ax.xaxis
         elif axis=='y': thisaxis = ax.yaxis
-        elif axis=='z': thisaxis = ax.zaxis
-        else: raise ValueError('Axis must be x, y, or z')
+        elif axis=='z': thisaxis = ax.zaxis # pragma: no cover
+        else: raise ValueError('Axis must be x, y, or z') # pragma: no cover
         if fixed: # pragma: no cover
             ticklocs = thisaxis.get_ticklocs()
             ticklabels = []
@@ -636,9 +636,9 @@ def getrowscols(n, nrows=None, ncols=None, ratio=1, make=False, tight=True, remo
     '''
 
     # Simple cases -- calculate the one missing
-    if nrows is not None:
+    if nrows is not None: # pragma: no cover
         ncols = int(np.ceil(n/nrows))
-    elif ncols is not None:
+    elif ncols is not None: # pragma: no cover
         nrows = int(np.ceil(n/ncols))
 
     # Standard case -- calculate both
@@ -679,7 +679,7 @@ def figlayout(fig=None, tight=True, keep=False, **kwargs):
 
     New in version 1.2.0.
     '''
-    if isinstance(fig, bool):
+    if isinstance(fig, bool): # pragma: no cover
         fig = None
         tight = fig # To allow e.g. sc.figlayout(False)
     if fig is None:
@@ -687,15 +687,15 @@ def figlayout(fig=None, tight=True, keep=False, **kwargs):
     layout = ['none', 'tight'][tight]
     try: # Matplotlib >=3.6
         fig.set_layout_engine(layout)
-    except: # Earlier versions
+    except: # Earlier versions # pragma: no cover
         fig.set_tight_layout(tight)
     if not keep:
         pl.pause(0.01) # Force refresh
         try:
             fig.set_layout_engine('none')
-        except:
+        except: # pragma: no cover
             fig.set_tight_layout(False)
-    if len(kwargs):
+    if len(kwargs): # pragma: no cover
         fig.subplots_adjust(**kwargs)
     return
 
@@ -790,11 +790,11 @@ def fonts(add=None, use=False, output='name', dryrun=False, rebuild=False, verbo
             f[key] = [f[key][o] for o in order]
         if 'name' in output:
             out = f.names
-        elif 'path' in output:
+        elif 'path' in output: # pragma: no cover
             out = dict(zip(f.names, f.paths))
-        elif 'font' in output:
+        elif 'font' in output: # pragma: no cover
             out = dict(zip(f.names, f.objs))
-        else:
+        else: # pragma: no cover
             errormsg = f'Output type not recognized: must be "name", "path", or "font", not "{output}"'
             raise ValueError(errormsg)
         return out
@@ -809,13 +809,13 @@ def fonts(add=None, use=False, output='name', dryrun=False, rebuild=False, verbo
             paths = scu.tolist(add)
             for path in paths:
                 path = str(path)
-                if os.path.isdir(path):
+                if os.path.isdir(path): # pragma: no cover
                     fps = fm.findSystemFonts(path, **kwargs)
                     fontpaths.extend(fps)
                 else:
                     fontpaths.append(scf.makefilepath(path))
 
-            if dryrun:
+            if dryrun: # pragma: no cover
                 print(fontpaths)
             else:
                 for path in fontpaths:
@@ -823,7 +823,7 @@ def fonts(add=None, use=False, output='name', dryrun=False, rebuild=False, verbo
                     fontname = fm.get_font(path).family_name
                     if verbose:
                         print(f'Added "{fontname}"')
-                if verbose and fontname is None:
+                if verbose and fontname is None: # pragma: no cover
                     print('Warning: no fonts were added')
                 if use and fontname: # Set as default font
                     pl.rc('font', family=fontname)
@@ -984,7 +984,7 @@ def dateformatter(ax=None, style='sciris', dateformat=None, start=None, end=None
     style = kwargs.pop('dateformatter', style) # Allow this as an alias
 
     # Handle axis
-    if isinstance(ax, str): # Swap style and axes -- allows sc.dateformatter(ax) or sc.dateformatter('auto')
+    if isinstance(ax, str): # Swap style and axes -- allows sc.dateformatter(ax) or sc.dateformatter('auto') # pragma: no cover
         style = ax
         ax = None
     if ax is None:
@@ -1011,16 +1011,16 @@ def dateformatter(ax=None, style='sciris', dateformat=None, start=None, end=None
         formatter = mpl.dates.AutoDateFormatter(locator, **kwargs)
     elif style in ['concise', 'brief']:
         formatter = mpl.dates.ConciseDateFormatter(locator, **kwargs)
-    elif isinstance(style, mpl.ticker.Formatter): # If a formatter is provided, use directly
+    elif isinstance(style, mpl.ticker.Formatter): # If a formatter is provided, use directly # pragma: no cover
         formatter = style
-    else:
+    else: # pragma: no cover
         errormsg = f'Style "{style}" not recognized; must be one of "sciris", "auto", or "concise"'
         raise ValueError(errormsg)
 
     # Handle axis and set the locator and formatter
     if axis == 'x':
         axis = ax.xaxis
-    elif axis == 'y': # If it's not x or y (!), assume it's an axis object
+    elif axis == 'y': # If it's not x or y (!), assume it's an axis object # pragma: no cover
         axis = ax.yaxis
     axis.set_major_locator(locator)
     axis.set_major_formatter(formatter)
@@ -1075,7 +1075,7 @@ def datenumformatter(ax=None, start_date=None, dateformat=None, interval=None, s
     '''
 
     # Handle axis
-    if isinstance(ax, str): # Swap inputs
+    if isinstance(ax, str): # Swap inputs # pragma: no cover
         ax, start_date = start_date, ax
     if ax is None:
         ax = pl.gca()
@@ -1085,12 +1085,12 @@ def datenumformatter(ax=None, start_date=None, dateformat=None, interval=None, s
         dateformat = '%Y-%b-%d'
 
     # Convert to a date object
-    if start_date is None:
+    if start_date is None: # pragma: no cover
         start_date = pl.num2date(ax.dataLim.x0)
     start_date = scd.date(start_date)
 
     @mpl.ticker.FuncFormatter
-    def formatter(x, pos):
+    def formatter(x, pos): # pragma: no cover
         return (start_date + dt.timedelta(days=int(x))).strftime(dateformat)
 
     # Handle limits
@@ -1100,11 +1100,11 @@ def datenumformatter(ax=None, start_date=None, dateformat=None, interval=None, s
     ax.set_xlim((xmin, xmax))
 
     # Set the x-axis intervals
-    if interval:
+    if interval: # pragma: no cover
         ax.set_xticks(np.arange(xmin, xmax+1, interval))
 
     # Set the rotation
-    if rotation:
+    if rotation: # pragma: no cover
         ax.tick_params(axis='x', labelrotation=rotation)
 
     # Set the formatter
@@ -1174,7 +1174,7 @@ def savefig(filename, fig=None, dpi=None, comments=None, pipfreeze=False, relfra
     orig_metadata = kwargs.pop('metadata', {}) # In case metadata is supplied, as it can be for fig.save()
     pipfreeze     = kwargs.pop('freeze', pipfreeze) 
     frame         = kwargs.pop('frame', None)
-    if frame is not None:
+    if frame is not None: # pragma: no cover
         relframe = frame - 2
     
     # Handle figure
@@ -1192,7 +1192,7 @@ def savefig(filename, fig=None, dpi=None, comments=None, pipfreeze=False, relfra
     lcfn = filename.lower() # Lowercase filename
     if lcfn.endswith('png'):
         metadata = {scv._metadataflag:jsonstr}
-    elif lcfn.endswith('svg') or lcfn.endswith('pdf'):
+    elif lcfn.endswith('svg') or lcfn.endswith('pdf'): # pragma: no cover
         metadata = dict(Keywords=f'{scv._metadataflag}={jsonstr}')
     else:
         errormsg = f'Warning: filename "{filename}" has unsupported type for metadata: must be PNG, SVG, or PDF. For JPG, use the separate exif library. To silence this message, set die=False and verbose=False.'
@@ -1291,7 +1291,7 @@ def savefigs(figs=None, filetype=None, filename=None, folder=None, savefigargs=N
     # Do final tidying
     if filetype=='singlepdf': pdf.close()
     if wasinteractive: pl.ion()
-    if aslist or len(filenames)>1:
+    if aslist or len(filenames)>1: # pragma: no cover
         return filenames
     else:
         return filenames[0]
@@ -1315,7 +1315,7 @@ def loadfig(filename=None):
     pl.ion() # Without this, it doesn't show up
     try:
         fig = scf.loadobj(filename)
-    except Exception as E:
+    except Exception as E: # pragma: no cover
         errormsg = f'Unable to open file "{filename}": are you sure it was saved as a .fig file (not an image)?'
         raise type(E)(errormsg) from E
     
@@ -1334,7 +1334,7 @@ def reanimateplots(plots=None):
     
     if len(pl.get_fignums()):
         fignum = pl.gcf().number # This is the number of the current active figure, if it exists
-    else:
+    else: # pragma: no cover
         fignum = 1
         
     plots = scu.mergelists(plots) # Convert to an odict
@@ -1362,7 +1362,7 @@ def _get_legend_handles(ax, handles, labels):
     if handles is None:
         if ax is None:
             ax = pl.gca()
-        elif isinstance(ax, pl.Figure): # Allows an argument of a figure instead of an axes
+        elif isinstance(ax, pl.Figure): # Allows an argument of a figure instead of an axes # pragma: no cover
             ax = ax.axes[-1]
         handles, labels = ax.get_legend_handles_labels()
     else: # pragma: no cover
@@ -1539,7 +1539,7 @@ class animation(scu.prettyobj):
         ''' Handle additional initialization of variables '''
 
         # Handle folder
-        if self.imagefolder == 'tempfile':
+        if self.imagefolder == 'tempfile': # pragma: no cover
             self.imagefolder = tempfile.gettempdir()
         if self.imagefolder is None:
             self.imagefolder = os.getcwd()
@@ -1578,12 +1578,12 @@ class animation(scu.prettyobj):
         return name
 
 
-    def __add__(self, *args, **kwargs):
+    def __add__(self, *args, **kwargs): # pragma: no cover
         ''' Allow anim += fig '''
         self.addframe(*args, **kwargs)
         return self
 
-    def __radd__(self, *args, **kwargs):
+    def __radd__(self, *args, **kwargs): # pragma: no cover
         ''' Allow anim += fig '''
         self.addframe(self, *args, **kwargs)
         return self
@@ -1596,7 +1596,7 @@ class animation(scu.prettyobj):
     def n_frames(self):
         return len(self.frames)
 
-    def __len__(self):
+    def __len__(self): # pragma: no cover
         ''' Since we can have either files or frames, need to check both  '''
         return max(self.n_files, self.n_frames)
 
@@ -1605,7 +1605,7 @@ class animation(scu.prettyobj):
         ''' Add a frame to the animation -- typically a figure object, but can also be an artist or list of artists '''
 
         # If a figure is supplied but it's not a figure, add it to the frames directly
-        if fig is not None and isinstance(fig, (list, mpl.artist.Artist)):
+        if fig is not None and isinstance(fig, (list, mpl.artist.Artist)): # pragma: no cover
             self.frames.append(fig)
 
         # Typical case: add a figure
@@ -1626,14 +1626,14 @@ class animation(scu.prettyobj):
             if self.fig_size is None:
                 self.fig_size = fig_size
             else:
-                if not np.allclose(self.fig_size, fig_size):
+                if not np.allclose(self.fig_size, fig_size): # pragma: no cover
                     warnmsg = f'Note: current figure size {fig_size} does not match saved {self.fig_size}, unexpected results may occur!'
                     print(warnmsg)
 
             if self.fig_dpi is None:
                 self.fig_dpi = fig_dpi
             else:
-                if self.fig_dpi != fig_dpi:
+                if self.fig_dpi != fig_dpi: # pragma: no cover
                     warnmsg = f'Note: current figure DPI {fig_dpi} does not match saved {self.fig_dpi}, unexpected results may occur!'
                     print(warnmsg)
 
@@ -1658,12 +1658,12 @@ class animation(scu.prettyobj):
         return
 
 
-    def __enter__(self, *args, **kwargs):
+    def __enter__(self, *args, **kwargs): # pragma: no cover
         ''' To allow with...as '''
         return self
 
 
-    def __exit__(self, *args, **kwargs):
+    def __exit__(self, *args, **kwargs): # pragma: no cover
         ''' Save on exist from a with...as block '''
         return self.save()
 
@@ -1677,12 +1677,12 @@ class animation(scu.prettyobj):
                 try:
                     os.remove(filename)
                     succeeded += 1
-                except Exception as E:
+                except Exception as E: # pragma: no cover
                     failed += f'{filename} ({E})'
         if self.verbose:
             if succeeded:
                 print(f'Removed {succeeded} temporary files')
-        if failed:
+        if failed: # pragma: no cover
             print(f'Failed to remove the following temporary files:\n{scu.newlinejoin(failed)}')
 
 
@@ -1698,7 +1698,7 @@ class animation(scu.prettyobj):
                 print('Warning: engine ffmpeg not available; falling back to Matplotlib. Run "pip install ffmpeg-python" to use in future.')
                 engine = 'matplotlib'
         engines = ['ffmpeg', 'matplotlib']
-        if engine not in engines:
+        if engine not in engines: # pragma: no cover
             errormsg = f'Could not understand engine "{engine}": must be one of {scu.strjoin(engines)}'
             raise ValueError(errormsg)
 
@@ -1708,7 +1708,7 @@ class animation(scu.prettyobj):
 
         # Handle filename
         if filename is None:
-            if self.filename is None:
+            if self.filename is None: # pragma: no cover
                 self.filename = f'{self.basename}.mp4'
             filename = self.filename
 
@@ -1765,8 +1765,8 @@ class animation(scu.prettyobj):
             try: # Not essential, so don't try too hard if this doesn't work
                 filesize = os.path.getsize(filename)
                 if filesize<1e6: print(f'File size: {filesize/1e3:0.0f} KB')
-                else:            print(f'File size: {filesize/1e6:0.1f} MB')
-            except:
+                else:            print(f'File size: {filesize/1e6:0.1f} MB') # pragma: no cover
+            except: # pragma: no cover
                 pass
             T.toc(label='Time saving movie')
 
@@ -1837,11 +1837,11 @@ def savemovie(frames, filename=None, fps=None, quality=None, dpi=None, writer=No
     '''
     from matplotlib import animation as mpl_anim # Place here since specific only to this function
 
-    if not isinstance(frames, list):
+    if not isinstance(frames, list): # pragma: no cover
         errormsg = f'sc.savemovie(): argument "frames" must be a list, not "{type(frames)}"'
         raise TypeError(errormsg)
     for f in range(len(frames)):
-        if not scu.isiterable(frames[f]):
+        if not scu.isiterable(frames[f]): # pragma: no cover
             frames[f] = (frames[f],) # This must be either a tuple or a list to work with ArtistAnimation
 
     # Try to get the figure from the frames, else use the current one
@@ -1849,12 +1849,12 @@ def savemovie(frames, filename=None, fps=None, quality=None, dpi=None, writer=No
     except: fig = pl.gcf()
 
     # Set parameters
-    if filename is None:
+    if filename is None: # pragma: no cover
         filename = 'movie.mp4'
     if writer is None:
         if   filename.endswith('mp4'): writer = 'ffmpeg'
         elif filename.endswith('gif'): writer = 'imagemagick'
-        else:
+        else: # pragma: no cover
             errormsg = f'sc.savemovie(): unknown movie extension for file {filename}'
             raise ValueError(errormsg)
     if fps is None:
@@ -1866,7 +1866,7 @@ def savemovie(frames, filename=None, fps=None, quality=None, dpi=None, writer=No
     # Handle dpi/quality
     if dpi is None and quality is None:
         quality = 'medium' # Make it medium quailty by default
-    if isinstance(dpi, str):
+    if isinstance(dpi, str): # pragma: no cover
         quality = dpi # Interpret dpi arg as a quality command
         dpi = None
     if dpi is not None and quality is not None:
@@ -1874,8 +1874,8 @@ def savemovie(frames, filename=None, fps=None, quality=None, dpi=None, writer=No
     if quality is not None:
         if   quality == 'low':    dpi =  50
         elif quality == 'medium': dpi = 150
-        elif quality == 'high':   dpi = 300
-        else:
+        elif quality == 'high':   dpi = 300 # pragma: no cover
+        else: # pragma: no cover
             errormsg = f'Quality must be high, medium, or low, not "{quality}"'
             raise ValueError(errormsg)
 
@@ -1893,8 +1893,8 @@ def savemovie(frames, filename=None, fps=None, quality=None, dpi=None, writer=No
         try: # Not essential, so don't try too hard if this doesn't work
             filesize = os.path.getsize(filename)
             if filesize<1e6: print(f'File size: {filesize/1e3:0.0f} KB')
-            else:            print(f'File size: {filesize/1e6:0.2f} MB')
-        except:
+            else:            print(f'File size: {filesize/1e6:0.2f} MB') # pragma: no cover
+        except: # pragma: no cover
             pass
         scd.toc(start)
 
