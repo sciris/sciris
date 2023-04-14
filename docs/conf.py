@@ -63,7 +63,7 @@ suppress_warnings = ['autosectionlabel.*']
 html_theme = "pydata_sphinx_theme"
 html_theme_options = {
     "collapse_navigation": False,
-    "navigation_depth": 2,
+    "navigation_depth": 3,
     "show_prev_next": False,
     "icon_links": [
         {"name": "Web", "url": "https://sciris.org", "icon": "fas fa-home"},
