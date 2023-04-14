@@ -217,7 +217,7 @@ def flattendict(nesteddict, sep=None, _prefix=None):
     Returns:
         A flat dictionary where no values are dicts
 
-    New in version 2.0.0: handle non-string keys.
+    *New in version 2.0.0:* handle non-string keys.
     """
     output_dict = {}
     for k, v in nesteddict.items():
@@ -274,7 +274,7 @@ def search(obj, key=_None, value=_None, aslist=False, _trace=None):
         valmatches = sc.search(nested, value=val, aslist=True) # Returns  [['b', 'cat', 2]]
         assert sc.getnested(nested, valmatches[0]) == val # Get from the original nested object
     
-    New in version 2.2.0: ability to search for values as well as keys/attributes; "aslist" argument
+    *New in version 2.2.0:* ability to search for values as well as keys/attributes; "aslist" argument
     """
 
     matches = []
@@ -351,7 +351,7 @@ def nestedloop(inputs, loop_order):
 
     From Atomica by Romesh Abeysuriya.
 
-    New in version 1.0.0.
+    *New in version 1.0.0.*
     """
     loop_order = list(loop_order)  # Convert to list, in case loop order was passed in as a generator e.g. from map()
     inputs = [inputs[i] for i in loop_order]
