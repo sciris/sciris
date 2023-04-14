@@ -907,7 +907,9 @@ class ScirisDateFormatter(mpl.dates.ConciseDateFormatter):
         return
 
     def format_data_short(self, value): # pragma: no cover
-        ''' Show year-month-day, not with hours and seconds '''
+        '''
+        Show year-month-day, not with hours and seconds
+        '''
         return pl.num2date(value, tz=self._tz).strftime('%Y-%b-%d')
 
     def format_ticks(self, values): # pragma: no cover

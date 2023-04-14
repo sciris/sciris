@@ -237,7 +237,7 @@ def benchmark(repeats=5, scale=1, verbose=False, python=True, numpy=True, return
     Returns:
         An objdict with keys "python" and "numpy" for the number of MOPS for each
     
-    **Examples**:
+    **Examples**::
         
         sc.benchmark() # Returns e.g. {'python': 11.43, 'numpy': 236.595}
         

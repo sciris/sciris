@@ -585,7 +585,7 @@ def savewithmetadata(filename, obj, folder=None, user=True, caller=True, git=Tru
     
     Note: Since this function relies on pickle, it can potentially execute arbitrary
     code, so you should only use it with sources you trust. For more information, see:
-        https://docs.python.org/3/library/pickle.html
+    https://docs.python.org/3/library/pickle.html
     
     Args:
         filename (str/path): the file to save to (must end in .zip)
@@ -673,7 +673,7 @@ def loadwithmetadata(filename, folder=None, loadobj=True, loadmetadata=False,
     
     **Note**: Since this function relies on pickle, it can potentially execute arbitrary
     code, so you should only use it with sources you trust. For more information, see:
-        https://docs.python.org/3/library/pickle.html
+    https://docs.python.org/3/library/pickle.html
     
     Args:
         filename (str/path): the file load to (usually ends in .zip)

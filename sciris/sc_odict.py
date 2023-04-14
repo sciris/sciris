@@ -622,7 +622,7 @@ class odict(OD):
             method (str): the method by which to match keys; see ``findkeys()`` for details
             exclude (bool): if exclude=True, then exclude rather than include matches
             
-        See also :method:`sort()`, which includes filtering by position.
+        See also :meth:`sort()`, which includes filtering by position.
         '''
         if scu.isstring(keys) and pattern is None: # Assume first argument, transfer
             pattern = keys
@@ -754,7 +754,7 @@ class odict(OD):
             reverse (bool): whether to return results in reverse order
             copy (bool): whether to return a copy (same as ``sorted()``)
         
-        For filtering by string matching on keys, see :method:`filter()`.
+        For filtering by string matching on keys, see :meth:`filter()`.
         
         | New in version 2.2.0: removed "verbose" argument
         '''

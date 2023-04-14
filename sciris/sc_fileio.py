@@ -134,7 +134,7 @@ def load(filename=None, folder=None, verbose=False, die=None, remapping=None,
 
     **Note 1**: Since this function relies on pickle, it can potentially execute arbitrary
     code, so you should only use it with sources you trust. For more information, see:
-        https://docs.python.org/3/library/pickle.html
+    https://docs.python.org/3/library/pickle.html
 
     **Note 2**: When a pickle file is loaded, Python imports any modules that are referenced
     in it. This is a problem if module has been renamed. In this case, you can
@@ -200,7 +200,7 @@ def save(filename='default.obj', obj=None, folder=None, method='pickle', compres
     
     **Note 1**: Since this function relies on pickle, it can potentially execute arbitrary
     code, so you should only use it with sources you trust. For more information, see:
-        https://docs.python.org/3/library/pickle.html
+    https://docs.python.org/3/library/pickle.html
         
     **Note 2**: When a pickle file is loaded, Python imports any modules that are referenced
     in it. This is a problem if module has been renamed (in which case the pickle
