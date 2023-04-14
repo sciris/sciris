@@ -381,17 +381,19 @@ def sanitize(data=None, returninds=False, replacenans=None, defaultval=None, die
         else:          return sanitized
 
 
+# Define as an alias
+rmnans = sanitize
+
 def fillnans(data=None, replacenans=True, **kwargs):
     """
-    Alias for ``sc.sanitize(..., replacenans=True)`` with nearest interpolation (or a specified value).
+    Alias for :func:`sc.sanitize(..., replacenans=True) <sanitize>` with nearest interpolation 
+    (or a specified value).
 
     New in version 2.0.0.
     """
     return sanitize(data=data, replacenans=replacenans, **kwargs)
-fillnans.__doc__ += '\n\n' + sanitize.__doc__
 
-# Define as an alias
-rmnans = sanitize
+
 
 
 def isprime(n, verbose=False):
