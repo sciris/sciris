@@ -2,10 +2,10 @@
 Profiling and CPU/memory management functions.
 
 Highlights:
-    - :func:`cpuload`: alias to ``psutil.cpu_percent()``
-    - :func:`loadbalancer`: very basic load balancer
-    - :func:`profile`: a line profiler
-    - :func:`resourcemonitor`: a monitor to kill processes that exceed memory or other limits
+    - :func:`sc.cpuload() <cpuload>`: alias to :func:`psutil.cpu_percent()`
+    - :func:`sc.loadbalancer() <loadbalancer>`: very basic load balancer
+    - :func:`sc.profile() <profile>`: a line profiler
+    - :func:`sc.resourcemonitor() <resourcemonitor>`: a monitor to kill processes that exceed memory or other limits
 """
 
 import os
@@ -45,9 +45,9 @@ def checkmem(var, descend=1, order='size', compresslevel=0, maxitems=1000,
 
     Note on the different functions:
 
-        - ``sc.memload()`` checks current total system memory consumption
-        - ``sc.checkram()`` checks RAM (virtual memory) used by the current Python process
-        - ``sc.checkmem()`` checks memory consumption by a given object
+        - :func:`sc.memload() <memload>` checks current total system memory consumption
+        - :func:`sc.checkram() <checkram>` checks RAM (virtual memory) used by the current Python process
+        - :func:`sc.checkmem() <checkmem>` checks memory consumption by a given object
 
     Args:
         var (any): the variable being checked
@@ -58,7 +58,7 @@ def checkmem(var, descend=1, order='size', compresslevel=0, maxitems=1000,
         subtotals (bool): whether to include subtotals for different levels of depth
         plot (bool): if descending, show the results as a pie chart
         verbose (bool or int): detail to print, if >1, print repr of objects along the way
-        **kwargs (dict): passed to :func:`load`
+        **kwargs (dict): passed to :func:`sc.load() <load>`
 
     **Examples**::
 
@@ -185,9 +185,9 @@ def checkram(unit='mb', fmt='0.2f', start=0, to_string=True):
 
     Note on the different functions:
 
-        - ``sc.memload()`` checks current total system memory consumption
-        - ``sc.checkram()`` checks RAM (virtual memory) used by the current Python process
-        - ``sc.checkmem()`` checks memory consumption by a given object
+        - :func:`sc.memload() <memload>` checks current total system memory consumption
+        - :func:`sc.checkram() <checkram>` checks RAM (virtual memory) used by the current Python process
+        - :func:`sc.checkmem() <checkmem>` checks memory consumption by a given object
 
     **Example**::
 
@@ -310,35 +310,35 @@ __all__ += ['cpu_count', 'cpuload', 'memload', 'loadbalancer']
 
 
 def cpu_count():
-    ''' Alias to ``mp.cpu_count()`` '''
+    ''' Alias to :func:`multiprocessing.cpu_count()` '''
     return mp.cpu_count()
 
 
 def cpuload(interval=0.1):
     """
-    Takes a snapshot of current CPU usage via ``psutil``
+    Takes a snapshot of current CPU usage via :mod:`psutil`
 
     Args:
         interval (float): number of seconds over which to estimate CPU load
 
     Returns:
-        a float between 0-1 representing the fraction of ``psutil.cpu_percent()`` currently used.
+        a float between 0-1 representing the fraction of :func:`psutil.cpu_percent()` currently used.
     """
     return psutil.cpu_percent(interval=interval)/100
 
 
 def memload():
     """
-    Takes a snapshot of current fraction of memory usage via ``psutil``
+    Takes a snapshot of current fraction of memory usage via :mod:`psutil`
 
     Note on the different functions:
 
-        - ``sc.memload()`` checks current total system memory consumption
-        - ``sc.checkram()`` checks RAM (virtual memory) used by the current Python process
-        - ``sc.checkmem()`` checks memory consumption by a given object
+        - :func:`sc.memload() <memload>` checks current total system memory consumption
+        - :func:`sc.checkram() <checkram>` checks RAM (virtual memory) used by the current Python process
+        - :func:`sc.checkmem() <checkmem>` checks memory consumption by a given object
 
     Returns:
-        a float between 0-1 representing the fraction of ``psutil.virtual_memory()`` currently used.
+        a float between 0-1 representing the fraction of :func:`psutil.virtual_memory()` currently used.
     """
     return psutil.virtual_memory().percent / 100
 
@@ -589,10 +589,10 @@ __all__ += ['LimitExceeded', 'resourcemonitor']
 
 class LimitExceeded(MemoryError, KeyboardInterrupt):
     '''
-    Custom exception for use with the ``sc.resourcemonitor()`` monitor.
+    Custom exception for use with the :func:`sc.resourcemonitor() <resourcemonitor>` monitor.
 
-    It inherits from ``MemoryError`` since this is the most similar built-in Python
-    except, and it inherits from ``KeyboardInterrupt`` since this is the means by
+    It inherits from :obj:`MemoryError` since this is the most similar built-in Python
+    except, and it inherits from :obj:`KeyboardInterrupt` since this is the means by
     which the monitor interrupts the main Python thread.
     '''
     pass
@@ -609,7 +609,7 @@ class resourcemonitor(scu.prettyobj):
         time (float): maximum time limit in seconds
         interval (float): how frequently to check memory/CPU usage (in seconds)
         label (str): an optional label to use while printing out progress
-        start (bool): whether to start the resource monitor on initialization (else call ``start()``)
+        start (bool): whether to start the resource monitor on initialization (else call :meth:`start() <resourcemonitor.start>`)
         die (bool): whether to raise an exception if the resource limit is exceeded
         kill_children (bool): whether to kill child processes (if False, will not work with multiprocessing)
         kill_parent (bool): whether to also kill the parent process (will usually exit Python interpreter in the process)
@@ -824,4 +824,3 @@ class resourcemonitor(scu.prettyobj):
             entries.append(flat)
         self.df = pd.DataFrame(entries)
         return self.df
-
