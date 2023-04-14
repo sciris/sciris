@@ -112,9 +112,9 @@ def findinds(arr=None, val=None, *args, eps=1e-6, first=False, last=False, ind=N
         sc.findinds([2,3,6,3], 3) # Returs array([1,3])
         sc.findinds([2,3,6,3], 3, first=True) # Returns 1
 
-    | New in version 1.2.3: "die" argument
-    | New in version 2.0.0: fix string matching; allow multiple arguments
-    | New in version 2.2.0: multidimensional arrays now return a list of tuples
+    | *New in version 1.2.3:* "die" argument
+    | *New in version 2.0.0:* fix string matching; allow multiple arguments
+    | *New in version 2.2.0:* multidimensional arrays now return a list of tuples
     '''
 
     # Handle first or last
@@ -178,12 +178,12 @@ def findinds(arr=None, val=None, *args, eps=1e-6, first=False, last=False, ind=N
 
 
 def findfirst(*args, **kwargs):
-    ''' Alias for findinds(..., first=True). New in version 1.0.0. '''
+    ''' Alias for findinds(..., first=True). *New in version 1.0.0.* '''
     return findinds(*args, **kwargs, first=True)
 
 
 def findlast(*args, **kwargs):
-    ''' Alias for findinds(..., last=True). New in version 1.0.0. '''
+    ''' Alias for findinds(..., last=True). *New in version 1.0.0.* '''
     return findinds(*args, **kwargs, last=True)
 
 
@@ -232,7 +232,7 @@ def count(arr=None, val=None, eps=1e-6, **kwargs):
         sc.count(rand(10)<0.5) # returns e.g. 4
         sc.count([2,3,6,3], 3) # returs 2
 
-    New in version 2.0.0.
+    *New in version 2.0.0.*
     '''
     output = len(findinds(arr=arr, val=val, eps=eps, **kwargs))
     return output
@@ -329,8 +329,8 @@ def sanitize(data=None, returninds=False, replacenans=None, defaultval=None, die
             sanitized4 = sc.sanitize(data, replacenans='linear') # Replace NaNs using linear interpolation
             sanitized5 = sc.sanitize(data, replacenans=0) # Replace NaNs with 0
 
-        | New in version 2.0.0: handle multidimensional arrays
-        | New in version 2.2.0: return zero-length arrays if all NaN
+        | *New in version 2.0.0:* handle multidimensional arrays
+        | *New in version 2.2.0:* return zero-length arrays if all NaN
         '''
         try:
             data = np.array(data, dtype=float) # Make sure it's an array of float type, otherwise nan operations fail
@@ -389,7 +389,7 @@ def fillnans(data=None, replacenans=True, **kwargs):
     Alias for :func:`sc.sanitize(..., replacenans=True) <sanitize>` with nearest interpolation 
     (or a specified value).
 
-    New in version 2.0.0.
+    *New in version 2.0.0.*
     """
     return sanitize(data=data, replacenans=replacenans, **kwargs)
 
@@ -466,7 +466,7 @@ def numdigits(n, *args, count_minus=False, count_decimal=False):
         sc.numdigits(0.01) # Returns -2
         sc.numdigits(0.01, count_decimal=True) # Returns -4
 
-    New in version 2.0.0.
+    *New in version 2.0.0.*
     """
     is_scalar = True if scu.isnumber(n) and len(args) == 0 else False
 
@@ -643,8 +643,8 @@ def randround(x):
 
         sc.randround(np.random.randn(8)) # Returns e.g. array([-1,  0,  1, -2,  2,  0,  0,  0])
 
-    | New in version 1.0.0.
-    | New in version 2.2.0: allow arrays of arbitrary shape
+    | *New in version 1.0.0.*
+    | *New in version 2.2.0:* allow arrays of arbitrary shape
     '''
     if isinstance(x, np.ndarray):
         output = np.array(np.floor(x+np.random.random(x.shape)), dtype=int)
@@ -670,9 +670,9 @@ def cat(*args, copy=False, **kwargs):
         arr = sc.cat(np.array([1,2,3]), [4,5], 6)
         arr = sc.cat(np.random.rand(2,4), np.random.rand(2,6), axis=1)
 
-    | New in version 1.0.0.
-    | New in version 1.1.0: "copy" and keyword arguments.
-    | New in version 2.0.2: removed "copy" argument; changed default axis of 0; arguments passed to ``np.concatenate()``
+    | *New in version 1.0.0.*
+    | *New in version 1.1.0:* "copy" and keyword arguments.
+    | *New in version 2.0.2:* removed "copy" argument; changed default axis of 0; arguments passed to ``np.concatenate()``
     '''
     
     if not len(args):
@@ -788,8 +788,8 @@ def convolve(a, v):
         c1 = np.convolve(a, v, mode='same') # Returns array([0.8, 1.  , 1.  , 1.  , 0.7])
         c2 = sc.convolve(a, v)              # Returns array([1., 1., 1., 1., 1.])
 
-    | New in version 1.3.0.
-    | New in version 1.3.1: handling the case where len(a) < len(v)
+    | *New in version 1.3.0.*
+    | *New in version 1.3.1:* handling the case where len(a) < len(v)
     '''
 
     # Handle types
@@ -841,7 +841,7 @@ def smooth(data, repeats=None, kernel=None, legacy=False):
         data = pl.randn(5,5)
         smoothdata = sc.smooth(data)
 
-    New in version 1.3.0: Fix edge effects.
+    *New in version 1.3.0:* Fix edge effects.
     '''
     if repeats is None:
         repeats = int(np.floor(len(data)/5))
@@ -904,7 +904,7 @@ def smoothinterp(newx=None, origx=None, origy=None, smoothness=None, growth=None
         pl.plot(newx,newy)
         pl.scatter(origx,origy)
 
-    | New in verison 2.2.0: "ensurefinite" now defaults to True
+    | *New in verison 2.2.0:* "ensurefinite" now defaults to True
     '''
     # Ensure arrays and remove NaNs
     if scu.isnumber(newx):  newx = [newx] # Make sure it has dimension
@@ -1057,7 +1057,7 @@ def gauss1d(x=None, y=None, xi=None, scale=None, use32=True):
         # Simple usage
         sc.gauss1d(y)
 
-    New in version 1.3.0.
+    *New in version 1.3.0.*
     '''
 
     # Swap inputs if x is provided but not y
@@ -1149,8 +1149,8 @@ def gauss2d(x=None, y=None, z=None, xi=None, yi=None, scale=1.0, xscale=1.0, ysc
         sc.scatter3d(xi2, yi2, zi2, c=zi2)
         pl.show()
 
-    | New in version 1.3.0.
-    | New in version 1.3.1: default arguments; support for 2D inputs
+    | *New in version 1.3.0.*
+    | *New in version 1.3.1:* default arguments; support for 2D inputs
     '''
     # Swap variables if needed
     if z is None and x is not None: # pragma: no cover
