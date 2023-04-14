@@ -45,7 +45,7 @@ def freeze(lower=False):
 
         assert 'numpy' in sc.freeze() # One way to check for versions
 
-    New in version 1.2.2.
+    *New in version 1.2.2.*
     '''
     import pkg_resources as pkgr # Imported here since slow (>0.1 s)
     raw = dict(tuple(str(ws).split()) for ws in pkgr.working_set)
@@ -79,7 +79,7 @@ def require(reqs=None, *args, exact=False, detailed=False, die=True, verbose=Tru
         sc.require('numpy>=1.19.1', 'matplotlib==3.2.2', die=False)
         sc.require(numpy='1.19.1', matplotlib='==4.2.2', die=False, detailed=True)
 
-    New in version 1.2.2.
+    *New in version 1.2.2.*
     '''
     import pkg_resources as pkgr # Imported here since slow (>0.1 s)
 
@@ -260,7 +260,7 @@ def compareversions(version1, version2):
         sc.compareversions(mymodule.__version__, '>=1.0') # common usage pattern
         sc.compareversions(mymodule, '>=1.0') # alias to the above
 
-    New in version 1.2.1: relational operators
+    *New in version 1.2.1:* relational operators
     '''
     # Handle inputs
     if isinstance(version1, types.ModuleType):
@@ -332,9 +332,9 @@ def getcaller(frame=2, tostring=True, includelineno=False, includeline=False, re
         sc.getcaller(frame=3) # Descend one level deeper than usual
         sc.getcaller(frame=1, tostring=False, includeline=True) # See the line that called sc.getcaller()
 
-    | New in version 1.0.0.
-    | New in version 1.3.3: do not include line by default
-    | New in version 2.2.0: "relframe" argument; "die" argument
+    | *New in version 1.0.0.*
+    | *New in version 1.3.3:* do not include line by default
+    | *New in version 2.2.0:* "relframe" argument; "die" argument
     '''
     try:
         import inspect
@@ -397,7 +397,7 @@ def metadata(outfile=None, version=None, comments=None, pipfreeze=True, user=Tru
         
         sc.metadata('my-metadata.json')
     
-    New in version 2.2.0.
+    *New in version 2.2.0.*
     '''
     
     # Additional imports
@@ -608,7 +608,7 @@ def savewithmetadata(filename, obj, folder=None, user=True, caller=True, git=Tru
         # Much later...
         obj = sc.loadwithmetadata('my-class.zip')
     
-    New in version 2.2.0.
+    *New in version 2.2.0.*
     '''
     filename = scf.makepath(filename=filename, folder=folder, makedirs=True)
     
@@ -644,7 +644,7 @@ def known_deprecations(as_map=False):
     Args:
         as_map (bool): if True, return all known remappings without additional version data
     
-    New in version 2.2.0.
+    *New in version 2.2.0.*
     '''
     
     # List known remappings here
@@ -704,7 +704,7 @@ def loadwithmetadata(filename, folder=None, loadobj=True, loadmetadata=False,
     ``sc.sc_versioning._obj_filename``, respectively. However, you almost certainly
     should not do so!
     
-    New in version 2.2.0.
+    *New in version 2.2.0.*
     '''
     filename = scf.makefilepath(filename=filename, folder=folder, makedirs=False)
     
