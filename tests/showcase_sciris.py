@@ -23,7 +23,7 @@ filenames = [sc.save(f'wave{i}.obj', wave) for i,wave in enumerate(waves)]
 data = sc.odict({fname:sc.load(fname) for fname in filenames})
 
 # Create 3D plot
-sc.surf3d(data[:], plotkwargs=dict(cmap='orangeblue'))
+sc.surf3d(data[:], cmap='orangeblue')
 
 # Print elapsed time
 T.toc()
