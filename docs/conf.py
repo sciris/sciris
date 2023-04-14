@@ -6,12 +6,6 @@ import os
 import sys
 import sciris as sc
 
-# -- Path setup --------------------------------------------------------------
-
-# If extensions (or modules to document with autodoc) are in another directory,
-# add these directories to sys.path here. If the directory is relative to the
-# documentation root, use os.path.abspath to make it absolute, like shown here.
-#
 # -- Project information -----------------------------------------------------
 
 project = 'Sciris'
@@ -20,18 +14,14 @@ author = 'Sciris Development Team'
 
 # The short X.Y version
 version = sc.__version__
+
 # The full version, including alpha/beta/rc tags
 release = sc.__version__
 
 
 # -- General configuration ---------------------------------------------------
 
-# If your documentation needs a minimal Sphinx version, state it here.
-# needs_sphinx = '3.0'
-
-# Add any Sphinx extension module names here, as strings. They can be
-# extensions coming with Sphinx (named 'sphinx.ext.*') or your custom
-# ones.
+# Add any Sphinx extension module names here
 extensions = [
     "sphinx.ext.autodoc",  # Core Sphinx library for auto html doc generation from docstrings
     "sphinx.ext.autosummary",  # Create neat summary tables for modules/classes/methods etc -- causes warnings with Napoleon however
@@ -47,11 +37,11 @@ napoleon_google_docstring = True
 
 # Configure autosummary
 autosummary_generate = True  # Turn on sphinx.ext.autosummary
-# autoclass_content = "init"  # Add __init__ doc (ie. params) to class summaries
-# html_show_sourcelink = False  # Remove 'view source code' from top of page (for html, not python)
 autodoc_member_order = 'bysource' # Keep original ordering
 add_module_names = False  # NB, does not work
-# autodoc_inherit_docstrings = False # Stops subclasses from including docs from parent classes
+# autoclass_content = "init"  # Add __init__ doc (ie. params) to class summaries
+# html_show_sourcelink = False  # Remove 'view source code' from top of page (for html, not python)
+# autodoc_inherit_docstrings = False # Stops subclasses from including docs from parent classes -- NB, does not work
 
 # Add any paths that contain templates here, relative to this directory.
 templates_path = ["_templates"]
@@ -60,19 +50,18 @@ templates_path = ["_templates"]
 pygments_style = "sphinx"
 modindex_common_prefix = ["sciris."]
 
-# List of patterns, relative to source directory, that match files and
-# directories to ignore when looking for source files.
-# This pattern also affects html_static_path and html_extra_path.
-exclude_patterns = ["_build", "Thumbs.db", ".DS_Store", "**.ipynb_checkpoints", "ansicolors.py"]
+# List of patterns, relative to source directory, to exclude
+exclude_patterns = ["_build", "Thumbs.db", ".DS_Store", "**.ipynb_checkpoints"]
 
 # Suppress certain warnings
 suppress_warnings = ['autosectionlabel.*']
+
 
 # -- Options for HTML output -------------------------------------------------
 
 html_theme = "pydata_sphinx_theme"
 html_theme_options = {
-    "collapse_navigation": True,
+    "collapse_navigation": False,
     "navigation_depth": 2,
     "show_prev_next": False,
     "icon_links": [
@@ -101,7 +90,12 @@ html_static_path = ['_static']
 html_baseurl = "https://sciris.readthedocs.io/en/latest/"
 html_context = {
     'rtd_url': 'https://sciris.readthedocs.io/en/latest/',
-    'theme_vcs_pageview_mode': 'edit'
+    # 'theme_vcs_pageview_mode': 'edit',
+    "versions_dropdown": {
+        "latest": "devel (latest)",
+        "stable": "current (stable)",
+    },
+    "default_mode": "light",
 }
 
 html_last_updated_fmt = '%Y-%b-%d'
@@ -109,3 +103,16 @@ html_show_sourcelink = True
 html_show_sphinx = False
 html_copy_source = False
 htmlhelp_basename = 'Sciris'
+
+# Intersphinx mapping
+intersphinx_mapping = {
+    "python": ("https://docs.python.org/3/", None),
+    "numpy": ("https://numpy.org/doc/stable/", None),
+    "pandas": ("https://pandas.pydata.org/pandas-docs/stable/", None),
+    "scipy": ("https://docs.scipy.org/doc/scipy/", None),
+    "matplotlib": ("https://matplotlib.org/stable/", None),
+}
+
+def setup(app):
+    app.add_css_file("custom.css")
+    app.add_js_file("copybutton.js")
