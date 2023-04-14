@@ -69,9 +69,9 @@ class odict(OD):
     key itself will take precedence (e.g., ``od[3]`` is equivalent to ``dict(od)[3]``,
     not ``dict(od)[od.keys()[3]]``). This usage is discouraged.
 
-    | New in version 1.1.0: "defaultdict" argument
-    | New in version 1.3.1: allow integer keys via ``makefrom()``; removed ``to_OD``; performance improvements
-    | New in version 2.0.1: allow deletion by index
+    | *New in version 1.1.0:* "defaultdict" argument
+    | *New in version 1.3.1:* allow integer keys via ``makefrom()``; removed ``to_OD``; performance improvements
+    | *New in version 2.0.1:* allow deletion by index
     '''
 
     def __init__(self, *args, defaultdict=None, **kwargs):
@@ -756,7 +756,7 @@ class odict(OD):
         
         For filtering by string matching on keys, see :meth:`filter()`.
         
-        | New in version 2.2.0: removed "verbose" argument
+        | *New in version 2.2.0:* removed "verbose" argument
         '''
         origkeys = self.keys()
         if sortby is None or sortby == 'keys':
@@ -828,7 +828,7 @@ class odict(OD):
             g = sc.odict({'a':34, 'b':58}).make(['c','d'],[99,45]) # Add extra keys to an exising odict
             h = sc.odict().make(keys=['a','b','c'], keys2=['A','B','C'], keys3=['x','y','z'], vals=0) # Make a triply nested odict
 
-        New in version 1.2.2: "coerce" argument
+        *New in version 1.2.2:* "coerce" argument
         '''
         # Handle keys
         keylist = []
@@ -1016,7 +1016,7 @@ class odict(OD):
 
 
     def enumvalues(self, transpose=False): # pragma: no cover
-        ''' Alias for enumvals(). New in version 1.2.0. '''
+        ''' Alias for enumvals(). *New in version 1.2.0.* '''
         return self.enumvals(transpose=transpose)
 
 
@@ -1088,19 +1088,19 @@ class odict(OD):
         return self.items(transpose=transpose)
 
     def makenested(self, *args, **kwargs):
-        ''' Alias to sc.makenested(odict); see sc.makenested() for full documentation. New in version 1.2.0. '''
+        ''' Alias to sc.makenested(odict); see sc.makenested() for full documentation. *New in version 1.2.0.* '''
         return scn.makenested(self, *args, **kwargs)
 
     def getnested(self, *args, **kwargs):
-        ''' Alias to sc.getnested(odict); see sc.makenested() for full documentation. New in version 1.2.0. '''
+        ''' Alias to sc.getnested(odict); see sc.makenested() for full documentation. *New in version 1.2.0.* '''
         return scn.getnested(self, *args, **kwargs)
 
     def setnested(self, *args, **kwargs):
-        ''' Alias to sc.setnested(odict); see sc.makenested() for full documentation. New in version 1.2.0. '''
+        ''' Alias to sc.setnested(odict); see sc.makenested() for full documentation. *New in version 1.2.0.* '''
         return scn.setnested(self, *args, **kwargs)
 
     def iternested(self, *args, **kwargs):
-        ''' Alias to sc.iternested(odict); see sc.makenested() for full documentation. New in version 1.2.0. '''
+        ''' Alias to sc.iternested(odict); see sc.makenested() for full documentation. *New in version 1.2.0.* '''
         return scn.iternested(self, *args, **kwargs)
 
 
@@ -1250,10 +1250,10 @@ class dictobj(dict):
 
     For a more powerful alternative, see ``sc.objdict()``.
 
-    | New in version 1.3.0.
-    | New in version 1.3.1: inherit from dict
-    | New in version 2.0.0: allow positional arguments
-    | New in version 2.2.0: "fromkeys" now a static method
+    | *New in version 1.3.0.*
+    | *New in version 1.3.1:* inherit from dict
+    | *New in version 2.0.0:* allow positional arguments
+    | *New in version 2.2.0:* "fromkeys" now a static method
     '''
 
     def __init__(self, *args, **kwargs):
