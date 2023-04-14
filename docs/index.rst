@@ -20,4 +20,4 @@ Contents
    contributing
    code_of_conduct
    style_guide
-   api_reference  
+   api/index  
