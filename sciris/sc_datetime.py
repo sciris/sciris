@@ -34,7 +34,7 @@ def time():
     See also :func:`now()` to return a datetime object, and :func:`getdate()` to 
     return a string.
     
-    New in version 2.2.0.
+    *New in version 2.2.0.*
     '''
     return pytime.time()
     
@@ -61,7 +61,7 @@ def now(astype='dateobj', timezone=None, utc=False, tostring=False, dateformat=N
         sc.now(tostring=True) # Backwards-compatible alias for astype='str'
         sc.now(dateformat='%Y-%b-%d') # Return a different date format
 
-    New in version 1.3.0: made "astype" the first argument; removed "tostring" argument
+    *New in version 1.3.0:* made "astype" the first argument; removed "tostring" argument
     '''
     if isinstance(utc, str): timezone = utc # Assume it's a timezone
     if timezone is not None: tzinfo = du.tz.gettz(timezone) # Timezone is a string
@@ -278,10 +278,10 @@ def date(obj=None, *args, start_date=None, readformat=None, to='date', as_date=N
         sc.date([35,36,37], start_date='2020-01-01', to='str') # Returns ['2020-02-05', '2020-02-06', '2020-02-07']
         sc.date(1923288822, readformat='posix') # Interpret as a POSIX timestamp
 
-    | New in version 1.0.0.
-    | New in version 1.2.2: "readformat" argument; renamed "dateformat" to "outformat"
-    | New in version 2.0.0: support for ``np.datetime64`` objects
-    | New in version 2.2.0: added "to" argument, and support for ``pd.Timestamp`` and ``np.datetime64`` output; allow None
+    | *New in version 1.0.0.*
+    | *New in version 1.2.2:* "readformat" argument; renamed "dateformat" to "outformat"
+    | *New in version 2.0.0:* support for ``np.datetime64`` objects
+    | *New in version 2.2.0:* added "to" argument, and support for ``pd.Timestamp`` and ``np.datetime64`` output; allow None
     '''
 
     # Handle deprecation
@@ -369,8 +369,8 @@ def day(obj, *args, start_date=None, **kwargs):
         sc.day(sc.now()) # Returns how many days into the year we are
         sc.day(['2021-01-21', '2024-04-04'], start_date='2022-02-22') # Days can be positive or negative
 
-    | New in version 1.0.0.
-    | New in version 1.2.2: renamed "start_day" to "start_date"
+    | *New in version 1.0.0.*
+    | *New in version 1.2.2:* renamed "start_day" to "start_date"
     '''
 
     # Handle deprecation
@@ -425,8 +425,8 @@ def daydiff(*args):
         
         doy = sc.daydiff('2022-03-20') # Returns 79, the number of days since 2022-01-01
 
-    | New in version 1.0.0.
-    | New in version 2.2.0: Calculated relative days with one argument
+    | *New in version 1.0.0.*
+    | *New in version 2.2.0:* Calculated relative days with one argument
     '''
     days = [date(day) for day in args]
     if len(days) == 1:
@@ -468,10 +468,10 @@ def daterange(start_date=None, end_date=None, interval=None, inclusive=True, as_
         dates2 = sc.daterange('2020-03-01', '2022-05-01', interval=dict(months=2), asdate=True)
         dates3 = sc.daterange('2020-03-01', weeks=5)
 
-    | New in version 1.0.0.
-    | New in version 1.3.0: "interval" argument
-    | New in version 2.0.0: ``sc.datedelta()`` arguments
-    | New in version 2.2.0: preserve input type
+    | *New in version 1.0.0.*
+    | *New in version 1.3.0:* "interval" argument
+    | *New in version 2.0.0:* ``sc.datedelta()`` arguments
+    | *New in version 2.2.0:* preserve input type
     '''
 
     # Handle inputs
@@ -561,7 +561,7 @@ def datetoyear(dateobj, dateformat=None):
 
     By Luke Davis from https://stackoverflow.com/a/42424261, adapted by Romesh Abeysuriya.
 
-    New in version 1.0.0.
+    *New in version 1.0.0.*
     """
     if scu.isstring(dateobj):
         dateobj = readdate(dateobj, dateformat=dateformat)
@@ -625,7 +625,7 @@ def toc(start=None, label=None, baselabel=None, sigfigs=None, reset=False, outpu
         slow_func2()
         sc.toc(T, label='slow_func2')
 
-    New in version 1.3.0: new arguments.
+    *New in version 1.3.0:* new arguments.
     '''
     now = pytime.time() # Get the time as quickly as possible
 
@@ -696,7 +696,7 @@ def toctic(returntic=False, returntoc=False, *args, **kwargs):
         slow_operation_2()
         sc.toc()
 
-    New in version 1.0.0.
+    *New in version 1.0.0.*
     '''
     tocout = toc(*args, **kwargs)
     ticout = tic()
@@ -747,11 +747,11 @@ class timer:
 
     Implementation based on https://preshing.com/20110924/timing-your-code-using-pythons-with-statement/
 
-    | New in version 1.3.0: ``sc.timer()`` alias, and allowing the label as first argument.
-    | New in version 1.3.2: ``toc()`` passes label correctly; ``tt()`` method; ``auto`` argument
-    | New in version 2.0.0: ``plot()`` method; ``total()`` method; ``indivtimings`` and ``cumtimings`` properties
-    | New in version 2.1.0: ``total`` as property instead of method; updated repr; added disp() method
-    | New in version 2.2.0: ``verbose`` argument; ``sum, min, max, mean, std`` methods; ``rawtimings`` property
+    | *New in version 1.3.0:* ``sc.timer()`` alias, and allowing the label as first argument.
+    | *New in version 1.3.2:* ``toc()`` passes label correctly; ``tt()`` method; ``auto`` argument
+    | *New in version 2.0.0:* ``plot()`` method; ``total()`` method; ``indivtimings`` and ``cumtimings`` properties
+    | *New in version 2.1.0:* ``total`` as property instead of method; updated repr; added disp() method
+    | *New in version 2.2.0:* ``verbose`` argument; ``sum, min, max, mean, std`` methods; ``rawtimings`` property
     '''
     def __init__(self, label=None, auto=False, start=True, verbose=None, **kwargs):
         from . import sc_odict as sco # Here to avoid circular import
@@ -917,7 +917,7 @@ class timer:
         '''
         Sum of timings; similar to ``timer.total``
         
-        New in version 2.2.0.
+        *New in version 2.2.0.*
         '''
         return self.rawtimings.sum()
     
@@ -925,7 +925,7 @@ class timer:
         '''
         Minimum of timings
         
-        New in version 2.2.0.
+        *New in version 2.2.0.*
         '''
         return self.rawtimings.min()
     
@@ -933,7 +933,7 @@ class timer:
         ''' 
         Maximum of timings
         
-        New in version 2.2.0.
+        *New in version 2.2.0.*
         '''
         return self.rawtimings.max()
     
@@ -941,7 +941,7 @@ class timer:
         ''' 
         Mean of timings
         
-        New in version 2.2.0.
+        *New in version 2.2.0.*
         '''
         return self.rawtimings.mean()
     
@@ -949,7 +949,7 @@ class timer:
         ''' 
         Standard deviation of timings
         
-        New in version 2.2.0.
+        *New in version 2.2.0.*
         '''
         return self.rawtimings.std()
 
@@ -964,7 +964,7 @@ class timer:
             grid (bool): whether to show a grid
             kwargs (dict): passed to ``pl.bar()``
 
-        New in version 2.0.0.
+        *New in version 2.0.0.*
         """
         from . import sc_plotting as scp # Here to avoid circular import
 
@@ -1173,7 +1173,7 @@ def timedsleep(delay=None, start=None, verbose=False):
                 time.sleep(1/n)
         # Elapsed time: 1.21 s
     
-    New in version 2.2.0: "verbose" False by default; more accurate overhead calculation
+    *New in version 2.2.0:* "verbose" False by default; more accurate overhead calculation
     '''
     global _delaytime
     if delay is None or delay=='start':
@@ -1212,7 +1212,7 @@ def randsleep(delay=1.0, var=1.0, low=None, high=None):
         sc.randsleep([0.5, 1.5]) # Sleep for 0.5-1.5 s
         sc.randsleeep(low=0.5, high=1.5) # Ditto
 
-    New in version 2.0.0.
+    *New in version 2.0.0.*
     '''
     if low is None or high is None:
         if scu.isnumber(delay):
