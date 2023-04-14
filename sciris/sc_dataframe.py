@@ -52,8 +52,8 @@ class dataframe(pd.DataFrame):
 
     The dataframe can be used for both numeric and non-numeric data.
 
-    | New in version 2.0.0: subclass pandas DataFrame
-    | New in version 2.2.0: "dtypes" argument
+    | *New in version 2.0.0:* subclass pandas DataFrame
+    | *New in version 2.2.0:* "dtypes" argument
     '''
 
     def __init__(self, data=None, columns=None, nrows=None, dtypes=None, **kwargs):
@@ -100,7 +100,7 @@ class dataframe(pd.DataFrame):
         '''
         Set dtypes in-place (see pandas ``df.astype()`` for the user-facing version)
         
-        New in version 2.2.0.
+        *New in version 2.2.0.*
         '''
         if not isinstance(dtypes, dict):
             dtypes = {col:dtype for col,dtype in zip(self.columns, dtypes)}
@@ -117,7 +117,7 @@ class dataframe(pd.DataFrame):
             col (str): the column to get the index of (return 0 if None)
             die (bool): whether to raise an exception if the column could not be found (else, return NOne)
         
-        New in version 2.2.0: renamed from "_sanitizecols"
+        *New in version 2.2.0:* renamed from "_sanitizecols"
         '''
         cols = self.cols
         if col is None:
@@ -272,7 +272,7 @@ class dataframe(pd.DataFrame):
             df.disp()
             df.disp(precision=1, ncols=5, options={'display.colheader_justify': 'left'})
         
-        New in version 2.0.1.
+        *New in version 2.0.1.*
         '''
         opts = scu.mergedicts({
             'display.max_rows': nrows,
@@ -311,7 +311,7 @@ class dataframe(pd.DataFrame):
             reset_index (bool): update the index
             inplace (bool): whether to modify in-place
         
-        New in version 2.2.0: improved dtype handling
+        *New in version 2.2.0:* improved dtype handling
         '''
         if newdf is None:
             newdf = dataframe(data=newdata, columns=self.columns)
@@ -356,7 +356,7 @@ class dataframe(pd.DataFrame):
             df.appendrow(['cat', 3, 0.3])           # Append a list
             df.appendrow(dict(a='dog', b=4, c=0.7)) # Append a dict
             
-        New in version 2.2.0: renamed "value" to "row"; improved performance
+        *New in version 2.2.0:* renamed "value" to "row"; improved performance
         '''
         return self.concat(row, reset_index=reset_index, inplace=inplace)
 
@@ -389,7 +389,7 @@ class dataframe(pd.DataFrame):
             df.insertrow(1, ['bar', 2, 0.2])           # Insert a list
             df.insertrow(0, dict(a='rat', b=0, c=0.7)) # Insert a dict
         
-        New in version 2.2.0: renamed "row" to "index"
+        *New in version 2.2.0:* renamed "row" to "index"
         '''
         before = self.iloc[:index,:]
         after  = self.iloc[index:,:]
@@ -428,8 +428,8 @@ class dataframe(pd.DataFrame):
             dfargs (dict): arguments passed to construct each dataframe
             **kwargs (dict): passed to ``pd.concat()``
         
-        | New in version 2.0.2: "inplace" defaults to False
-        | New in version 2.2.0: improved type handling
+        | *New in version 2.0.2:* "inplace" defaults to False
+        | *New in version 2.2.0:* improved type handling
         '''
         dfargs = scu.mergedicts(dfargs)
         dfs = [self]
@@ -460,7 +460,7 @@ class dataframe(pd.DataFrame):
             df2 = pd.DataFrame(np.random.rand(4,3))
             df3 = sc.dataframe.cat(arr1, df2)
         
-        New in version 2.0.2.
+        *New in version 2.0.2.*
         '''
         dfargs = scu.mergedicts(dfargs)
         df = dataframe(data, **dfargs)
@@ -520,7 +520,7 @@ class dataframe(pd.DataFrame):
             df.row_index(2013) # returns None, or exception if die is True
             df.row_index(2013, closest=True) # returns 0
         
-        New in version 2.2.0: renamed from "_rowindex"
+        *New in version 2.2.0:* renamed from "_rowindex"
         '''
         col = self.col_index(col)
         coldata = self.iloc[:,col].values # Get data for this column
@@ -685,7 +685,7 @@ class dataframe(pd.DataFrame):
             inplace (bool): whether to modify the dataframe in-place
             kwargs (dict): passed to ``df.sort_values()``
         
-        New in version 2.2.0: "inplace" argument; "col" argument renamed "by"
+        *New in version 2.2.0:* "inplace" argument; "col" argument renamed "by"
         '''
         by = kwargs.pop('col', by) # Handle deprecation
         ascending = kwargs.pop('ascending', not(reverse))
@@ -714,7 +714,7 @@ class dataframe(pd.DataFrame):
             reverse (bool): whether to reverse the order
             inplace (bool): whether to modify the dataframe in-place
         
-        New in version 2.2.0: Ensure dtypes are preserved; "inplace" argument; "returninds" argument removed
+        *New in version 2.2.0:* Ensure dtypes are preserved; "inplace" argument; "returninds" argument removed
         '''
         if sortorder is None:
             sortorder = np.argsort(self.cols, kind='mergesort')
