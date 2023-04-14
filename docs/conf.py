@@ -1,10 +1,6 @@
 # -*- coding: utf-8 -*-
 #
 # Configuration file for the Sphinx documentation builder.
-#
-# This file does only contain a selection of the most common options. For a
-# full list see the documentation:
-# http://www.sphinx-doc.org/en/master/config
 
 import os
 import sys
@@ -39,7 +35,8 @@ release = sc.__version__
 extensions = [
     "sphinx.ext.autodoc",  # Core Sphinx library for auto html doc generation from docstrings
     "sphinx.ext.autosummary",  # Create neat summary tables for modules/classes/methods etc -- causes warnings with Napoleon however
-    # "sphinx.ext.viewcode",  # Add a link to the Python source code for classes, functions etc.
+    "sphinx.ext.intersphinx",
+    "sphinx.ext.viewcode",  # Add a link to the Python source code for classes, functions etc.
     "sphinx.ext.napoleon",
     "sphinx.ext.autosectionlabel",
     "sphinx_autodoc_typehints",  # Automatically document param types (less noise in class signature)
@@ -58,11 +55,11 @@ napoleon_google_docstring = True
 
 # Configure autosummary
 autosummary_generate = True  # Turn on sphinx.ext.autosummary
-autoclass_content = "init"  # Add __init__ doc (ie. params) to class summaries
-html_show_sourcelink = False  # Remove 'view source code' from top of page (for html, not python)
-autodoc_member_order = 'bysource' # Keep original ordering
-# add_module_names = False  # NB, does not work
-autodoc_inherit_docstrings = False # Stops subclasses from including docs from parent classes
+# autoclass_content = "init"  # Add __init__ doc (ie. params) to class summaries
+# html_show_sourcelink = False  # Remove 'view source code' from top of page (for html, not python)
+# autodoc_member_order = 'bysource' # Keep original ordering
+add_module_names = False  # NB, does not work
+# autodoc_inherit_docstrings = False # Stops subclasses from including docs from parent classes
 
 # Add any paths that contain templates here, relative to this directory.
 templates_path = ["_templates"]
