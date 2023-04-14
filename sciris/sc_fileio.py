@@ -830,7 +830,7 @@ def makefilepath(filename=None, folder=None, ext=None, default=None, split=False
         ext         (str)           : the extension to ensure the file has
         default     (str or list)   : a name or list of names to use if filename is None
         split       (bool)          : whether to return the path and filename separately
-        aspath      (bool)          : whether to return a Path object (default: set by :meth:`sc.options.aspath <options.aspath>`)
+        aspath      (bool)          : whether to return a Path object (default: set by ``sc.options.aspath``)
         abspath     (bool)          : whether to conver to absolute path
         makedirs    (bool)          : whether or not to make the folders to save into if they don't exist
         checkexists (bool)          : if False/True, raises an exception if the path does/doesn't exist
@@ -948,7 +948,7 @@ makepath.__doc__ += '\n\n' + makefilepath.__doc__
 
 def rmpath(path=None, *args, die=True, verbose=True, interactive=False, **kwargs):
     """
-    Remove file(s) and folder(s). Alias to ``os.remove()`` (for files) and ``shutil.rmtree()`` # auto_docfix
+    Remove file(s) and folder(s). Alias to :func:`os.remove()` (for files) and :func:`shutil.rmtree()`
     (for folders).
 
     Arguments:
@@ -957,7 +957,7 @@ def rmpath(path=None, *args, die=True, verbose=True, interactive=False, **kwargs
         die (bool): whether or not to raise an exception if cannot remove
         verbose (bool): how much detail to print
         interactive (bool): whether to confirm prior to each deletion
-        kwargs (dict): passed to ``os.remove()``/``shutil.rmtree()`` # auto_docfix
+        kwargs (dict): passed to :func:`os.remove()`/:func:`shutil.rmtree()`
 
     **Examples**::
 
@@ -1019,10 +1019,10 @@ __all__ += ['sanitizejson', 'jsonify', 'loadjson', 'savejson', 'loadyaml', 'save
 def jsonify(obj, verbose=True, die=False, tostring=False, **kwargs):
     """
     This is the main conversion function for Python data-structures into JSON-compatible
-    data structures (note: :func:`sanitizejson`/:func:`jsonify` are identical). # auto_docfix
+    data structures (note: :func:`sc.sanitizejson() <sanitizejson>`/:func:`sc.jsonify() <jsonify>` are identical).
 
     Args:
-        obj      (any):  almost any kind of data structure that is a combination of list, numpy.ndarray, odicts, etc.
+        obj      (any):  almost any kind of data structure that is a combination of list, :obj:`numpy.ndarray`, odicts, etc.
         verbose  (bool): level of detail to print
         die      (bool): whether or not to raise an exception if conversion failed (otherwise, return a string)
         tostring (bool): whether to return a string representation of the sanitized object instead of the object itself
@@ -1147,7 +1147,7 @@ def savejson(filename=None, obj=None, folder=None, die=True, indent=2, keepnone=
         indent (int): indentation to use for saved JSON
         keepnone (bool): allow :func:`sc.savejson(None) <savejson(None>` to return 'null' rather than raising an exception
         sanitizepath (bool): whether to sanitize the path prior to saving
-        kwargs (dict): passed to ``json.dump()`` # auto_docfix
+        kwargs (dict): passed to :func:`json.dump()`
 
     Returns:
         The filename saved to
@@ -1231,7 +1231,7 @@ def saveyaml(filename=None, obj=None, folder=None, die=True, keepnone=False, dum
         folder (str): folder if not part of the filename
         die (bool): whether or not to raise an exception if saving an empty object
         indent (int): indentation to use for saved YAML
-        keepnone (bool): allow :func:`sc.saveyaml(None) <saveyaml(None>` to return 'null' rather than raising an exception # manual_docfix
+        keepnone (bool): allow :func:`sc.saveyaml(None) <saveyaml>` to return 'null' rather than raising an exception
         dumpall (bool): if True, treat a list input as separate YAML pages
         sanitizepath (bool): whether to sanitize the path prior to saving
         kwargs (dict): passed to ``yaml.dump()``
@@ -1682,7 +1682,7 @@ def loadspreadsheet(filename=None, folder=None, fileobj=None, sheet=0, header=1,
     '''
     Load a spreadsheet as a dataframe or a list of lists.
 
-    By default, an alias to ``pandas.read_excel()`` with a header, but also supports loading # auto_docfix
+    By default, an alias to :func:`pandas.read_excel()` with a header, but also supports loading
     via openpyxl or xlrd. Read from either a filename or a file object.
 
     Args:
