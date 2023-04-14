@@ -22,5 +22,4 @@ API reference
    sciris.sc_profiling
    sciris.sc_settings
    sciris.sc_utils
-   sciris.sc_version
    sciris.sc_versioning
