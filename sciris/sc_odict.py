@@ -25,7 +25,6 @@ class odict(OD):
     '''
     Ordered dictionary with integer indexing
 
-
     An ordered dictionary, like the OrderedDict class, but supports list methods like integer
     indexing, key slicing, and item inserting. It can also replicate defaultdict behavior
     via the ``defaultdict`` argument.
