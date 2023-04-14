@@ -1,7 +1,7 @@
 .. title:: Sciris
 
-.. image:: docs/sciris-logo.png
-    :scale: 40%
+.. image:: sciris-logo-grey.png
+    :scale: 20%
     :align: center
 
 `Sciris <http://sciris.org>`__ is library of functions for scientific computing that provide additional flexibility and ease-of-use on top of Numpy, Scipy, and Matplotlib.
@@ -13,7 +13,7 @@ Contents
 ========
 
 .. toctree::
-   :maxdepth: 4
+   :maxdepth: 1
 
    overview
    whatsnew

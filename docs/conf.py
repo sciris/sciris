@@ -84,7 +84,7 @@ html_sidebars = {
     "tutorial": [],
     "auto_examples/index": [],
 }
-html_logo = "sciris-logo-small.png"
+html_logo = "sciris-logo-grey-small.png"
 html_favicon = "favicon.ico"
 html_static_path = ['_static']
 html_baseurl = "https://sciris.readthedocs.io/en/latest/"
