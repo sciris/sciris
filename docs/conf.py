@@ -74,11 +74,12 @@ html_theme_options = {
     ],
     # "external_links": [{"name": "Guides", "url": "https://networkx.org/nx-guides/"}],
     # "navbar_end": ["theme-switcher", "navbar-icon-links", "version"],
-    "secondary_sidebar_items": ["search-field", "page-toc", "edit-this-page"],
+    "navbar_end": ["theme-switcher", "navbar-icon-links", "search-field"],
+    "secondary_sidebar_items": ["page-toc", "edit-this-page"],
     "header_links_before_dropdown": 7,
 }
 html_sidebars = {
-    "**": ["sidebar-nav-bs", "sidebar-ethical-ads"],
+    # "**": ["sidebar-nav-bs", "sidebar-ethical-ads"],
     "index": [],
     "install": [],
     "tutorial": [],
