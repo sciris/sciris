@@ -2,7 +2,7 @@
 The 'odict' class, combining features from an OrderedDict and a list/array.
 
 Highlights:
-    - :class:`odict`: flexible container representing the best-of-all-worlds across lists, dicts, and arrays
+    - :class:`sc.odict() <odict>`: flexible container representing the best-of-all-worlds across lists, dicts, and arrays
     - :class:`objdict`: like an odict, but allows get/set via e.g. ``foo.bar`` instead of ``foo['bar']``
 '''
 
@@ -63,8 +63,8 @@ class odict(OD):
         nested['b']['c']['d'] = 2
 
     Note: by default, integers are used as an alias to string keys, so cannot be used
-    as keys directly. However, you can force regular-dict behavior using ``setitem()``,
-    and you can convert a dictionary with integer keys to an odict using ``sc.odict.makefrom()``.
+    as keys directly. However, you can force regular-dict behavior using :meth:`setitem() <odict.setitem>`,
+    and you can convert a dictionary with integer keys to an odict using :meth:`sc.odict.makefrom() <odict.makefrom>`.
     If an odict has integer keys and the keys do not match the key positions, then the
     key itself will take precedence (e.g., ``od[3]`` is equivalent to ``dict(od)[3]``,
     not ``dict(od)[od.keys()[3]]``). This usage is discouraged.
@@ -614,15 +614,15 @@ class odict(OD):
         
         Filter the odict keys and return a new odict which is a subset. If keys is a list,
         then uses that for matching. If the first argument is a string, then treats as a pattern
-        for matching using ``findkeys()``.
+        for matching using :meth:`findkeys() <odict.findkeys`.
         
         Args:
             keys (list): the list of keys to keep (or exclude)
-            pattern (str): the pattern by which to match keys; see ``findkeys()`` for details
-            method (str): the method by which to match keys; see ``findkeys()`` for details
+            pattern (str): the pattern by which to match keys; see :meth:`findkeys() <odict.findkeys` for details
+            method (str): the method by which to match keys; see :meth:`findkeys() <odict.findkeys` for details
             exclude (bool): if exclude=True, then exclude rather than include matches
             
-        See also :meth:`sort()`, which includes filtering by position.
+        See also :meth:`sort() <odict.sort>`, which includes filtering by position.
         '''
         if scu.isstring(keys) and pattern is None: # Assume first argument, transfer
             pattern = keys
@@ -752,9 +752,9 @@ class odict(OD):
         Args:
             sortby (str or list): what to sort by; see above for options
             reverse (bool): whether to return results in reverse order
-            copy (bool): whether to return a copy (same as ``sorted()``)
+            copy (bool): whether to return a copy (same as :meth:`sorted() <odict.sorted>`)
         
-        For filtering by string matching on keys, see :meth:`filter()`.
+        For filtering by string matching on keys, see :meth:`filter() <odict.filter>`.
         
         | *New in version 2.2.0:* removed "verbose" argument
         '''
@@ -789,7 +789,7 @@ class odict(OD):
 
 
     def sorted(self, sortby=None, reverse=False):
-        ''' Shortcut for making a copy of the sorted odict -- see sort() for options '''
+        ''' Shortcut for making a copy of the sorted odict -- see :meth:`sort() <odict.sort>` for options '''
         return self.sort(sortby=sortby, copy=True, reverse=reverse)
 
 
@@ -1113,7 +1113,7 @@ class objdict(odict):
     instead act on dict keys (e.g. ``obj['x'] = 3``). If you want to actually get/set
     an attribute, use ``obj.getattribute()``/``obj.setattribute()``.
 
-    For a lighter-weight example (an object that acts like a dict), see ``sc.dictobj()``.
+    For a lighter-weight example (an object that acts like a dict), see :func:`sc.dictobj() <dictobj>`.
 
    **Examples**::
 
@@ -1131,8 +1131,8 @@ class objdict(odict):
         
     Nested logic based in part on addict: https://github.com/mewwts/addict
 
-    For a lighter-weight equivalent (based on ``dict`` instead of ``odict``), see
-    ``sc.dictobj()``.
+    For a lighter-weight equivalent (based on ``dict`` instead of :class:`odict`), see
+    :func:`sc.dictobj() <dictobj>`.
     '''
 
     def __init__(self, *args, **kwargs):
@@ -1248,7 +1248,7 @@ class dictobj(dict):
         obj['b'] = 10
         print(obj.items())
 
-    For a more powerful alternative, see ``sc.objdict()``.
+    For a more powerful alternative, see :class:`sc.objdict() <objdict>`.
 
     | *New in version 1.3.0.*
     | *New in version 1.3.1:* inherit from dict
