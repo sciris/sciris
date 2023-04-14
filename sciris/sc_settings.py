@@ -95,13 +95,13 @@ class ScirisOptions(sco.objdict):
     which is the accessible via ``sc.options``.
 
     Use ``sc.options.set('defaults')`` to reset all values to default, or ``sc.options.set(dpi='default')``
-    to reset one parameter to default. See ``sc.options.help(detailed=True)`` for
+    to reset one parameter to default. See :meth:`sc.options.help(detailed=True) <ScirisOptions.help` for
     more information.
 
-    Options can also be saved and loaded using ``sc.options.save()`` and ``sc.options.load()``.
-    See ``sc.options.with_style()`` to set options temporarily.
+    Options can also be saved and loaded using :meth:`sc.options.save() <ScirsOptions.save>` and :meth:`sc.options.load() <ScirsOptions.load>`.
+    See :meth:`sc.options.with_style() <ScirisOptionsptions.with_style>` to set options temporarily.
 
-    Common options are (see also ``sc.options.help(detailed=True)``):
+    Common options are (see also :meth:`sc.options.help(detailed=True) <ScirisOptions.help>`):
 
         - dpi:            the overall DPI (i.e. size) of the figures
         - font:           the font family/face used for the plots
@@ -193,7 +193,7 @@ class ScirisOptions(sco.objdict):
     def get_orig_options():
         '''
         Set the default options for Sciris -- not to be called by the user, use
-        ``sc.options.set('defaults')`` instead.
+        :meth:`sc.options.set('defaults') <ScirisOptions.set>` instead.
         '''
 
         # Options acts like a class, but is actually an objdict for simplicity
@@ -235,7 +235,7 @@ class ScirisOptions(sco.objdict):
 
     def set(self, key=None, value=None, use=True, **kwargs):
         '''
-        Actually change the style. See ``sc.options.help()`` for more information.
+        Actually change the style. See :meth:`sc.options.help() <ScirisOptions.help>` for more information.
 
         Args:
             key    (str):    the parameter to modify, or 'defaults' to reset everything to default values
@@ -336,7 +336,7 @@ class ScirisOptions(sco.objdict):
         '''
         Alias to set() for non-plotting options, for use in a "with" block.
 
-        Note: for plotting options, use ``sc.options.with_style()``, which is linked
+        Note: for plotting options, use :meth:`sc.options.with_style() <ScirisOptions.with_style>`, which is linked
         to Matplotlib's context manager. If you set plotting options with this,
         they won't have any effect.
         '''
@@ -439,7 +439,7 @@ class ScirisOptions(sco.objdict):
 
         Args:
             filename (str): file to load
-            kwargs (dict): passed to ``sc.loadjson()``
+            kwargs (dict): passed to :func:`sc.loadjson() <loadjson>`
         '''
         from . import sc_fileio as scf # To avoid circular import
         json = scf.loadjson(filename=filename, **kwargs)
@@ -456,7 +456,7 @@ class ScirisOptions(sco.objdict):
 
         Args:
             filename (str): file to save to
-            kwargs (dict): passed to ``sc.savejson()``
+            kwargs (dict): passed to :func:`sc.savejson() <savejson>`
         '''
         from . import sc_fileio as scf # To avoid circular import
         json = self.to_dict()
@@ -496,7 +496,7 @@ class ScirisOptions(sco.objdict):
         Combine all Matplotlib style information, and either apply it directly
         or create a style context.
 
-        To set globally, use ``sc.options.use_style()``. Otherwise, use ``sc.options.with_style()``
+        To set globally, use :meth:`sc.options.use_style() <ScirisOptions.use_style>`. Otherwise, use :meth:`sc.options.with_style() <ScirisOptions.with_style>`
         as part of a ``with`` block to set the style just for that block (using
         this function outsde of a with block and with ``use=False`` has no effect, so
         don't do that!).
@@ -513,7 +513,7 @@ class ScirisOptions(sco.objdict):
             - ``fontsize``:  font size
             - ``grid``:      whether or not to plot gridlines
             - ``facecolor``: color of the axes behind the plot
-            - any of the entries in ``pl.rParams``
+            - any of the entries in :class:`pl.rcParams <matplotlib.RcParams>`
 
         **Examples**::
 
@@ -604,7 +604,7 @@ def help(pattern=None, source=False, ignorecase=True, flags=None, context=False,
         pattern    (str):  the word, phrase, or regex to search for
         source     (bool): whether to search source code instead of docstrings for matches
         ignorecase (bool): whether to ignore case (equivalent to ``flags=re.I``)
-        flags      (list): additional flags to pass to ``re.findall()``
+        flags      (list): additional flags to pass to :func:`re.findall()`
         context    (bool): whether to show the line(s) of matches
         output     (bool): whether to return the dictionary of matches
 
