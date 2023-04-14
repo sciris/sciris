@@ -91,7 +91,7 @@ class Parallel:
         P.finalize()
         print(P.times)
         
-    New in version 2.2.0.    
+    *New in version 2.2.0.*
     '''
     def __init__(self, func, iterarg=None, iterkwargs=None, args=None, kwargs=None, ncpus=None, 
                  maxcpu=None, maxmem=None, interval=None, parallelizer=None, serial=False, 
@@ -701,10 +701,10 @@ def parallelize(func, iterarg=None, iterkwargs=None, args=None, kwargs=None, ncp
             results = sc.parallelize(func=f, iterarg=[(1,2),(2,3),(3,4)])
             print(results)
 
-    | New in version 1.1.1: "serial" argument
-    | New in version 2.0.0: changed default parallelizer from ``multiprocess.Pool`` to ``concurrent.futures.ProcessPoolExecutor``; replaced ``maxload`` with ``maxcpu``/``maxmem``; added ``returnpool`` argument
-    | New in version 2.0.4: added "die" argument; changed exception handling
-    | New in version 2.2.0: new Parallel class; propagated "die" to jobs
+    | *New in version 1.1.1:* "serial" argument
+    | *New in version 2.0.0:* changed default parallelizer from ``multiprocess.Pool`` to ``concurrent.futures.ProcessPoolExecutor``; replaced ``maxload`` with ``maxcpu``/``maxmem``; added ``returnpool`` argument
+    | *New in version 2.0.4:* added "die" argument; changed exception handling
+    | *New in version 2.2.0:* new Parallel class; propagated "die" to jobs
     '''
     # Create the parallel instance
     P = Parallel(func, iterarg=iterarg, iterkwargs=iterkwargs, args=args, kwargs=kwargs, 
@@ -752,7 +752,7 @@ def _task(taskargs):
     '''
     Task called by parallelize() -- not to be called directly.
     
-    New in version 2.2.0: renamed from "_parallel_task" to "_task"; return output dict with metadata
+    *New in version 2.2.0:* renamed from "_parallel_task" to "_task"; return output dict with metadata
     '''
     
     # Handle inputs
