@@ -23,7 +23,7 @@ from . import sc_odict as sco
 from . import sc_printing as scp
 
 
-__all__ = ['parse_env', 'options', 'help']
+__all__ = ['ScirisOptions', 'options', 'parse_env', 'help']
 
 
 # Define simple plotting options -- similar to Matplotlib default
@@ -87,9 +87,12 @@ def parse_env(var, default=None, which='str'):
 
 #%% Define the options class
 
-class Options(sco.objdict):
+class ScirisOptions(sco.objdict):
     '''
     Set options for Sciris.
+
+    Note: this class should not be invoked directly. An instance is created automatically,
+    which is the accessible via ``sc.options``.
 
     Use ``sc.options.set('defaults')`` to reset all values to default, or ``sc.options.set(dpi='default')``
     to reset one parameter to default. See ``sc.options.help(detailed=True)`` for
@@ -122,7 +125,8 @@ class Options(sco.objdict):
         sc.options('defaults') # Reset to default options
 
     | *New in version 1.3.0.*
-    | *New in version 2.0.0:* revamed with additional options ``interactive`` and ``jupyter``, plus styles
+    | *New in version 2.0.0:* revamped with additional options ``interactive`` and ``jupyter``, plus styles
+    | *New in version 2.2.0:* renamed from Options to ScirisOptions to avoid potential confusion with ``sc.options``
     '''
 
     def __init__(self):
@@ -587,7 +591,7 @@ class Options(sco.objdict):
 
 
 # Create the options on module load
-options = Options()
+options = ScirisOptions()
 
 
 #%% Module help
