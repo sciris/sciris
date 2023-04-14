@@ -2,9 +2,9 @@
 Profiling and CPU/memory management functions.
 
 Highlights:
-    - :func:`sc.cpuload() <cpuload>`: alias to :func:`psutil.cpu_percent()`
-    - :func:`sc.loadbalancer() <loadbalancer>`: very basic load balancer
     - :func:`sc.profile() <profile>`: a line profiler
+    - :func:`sc.benchmark() <benchmark>`: quickly check your computer's performance
+    - :func:`sc.loadbalancer() <loadbalancer>`: very basic load balancer
     - :func:`sc.resourcemonitor() <resourcemonitor>`: a monitor to kill processes that exceed memory or other limits
 """
 
