@@ -55,7 +55,7 @@ def parse_env(var, default=None, which='str'):
         default (any): default value
         which (str): what type to convert to (if None, don't convert)
 
-    New in version 2.0.0.
+    *New in version 2.0.0.*
     '''
     val = os.getenv(var, default)
     if which is None:
@@ -121,8 +121,8 @@ class Options(sco.objdict):
         sc.options(jupyter=True) # Defaults for Jupyter
         sc.options('defaults') # Reset to default options
 
-    | New in version 1.3.0.
-    | New in version 2.0.0: revamed with additional options ``interactive`` and ``jupyter``, plus styles
+    | *New in version 1.3.0.*
+    | *New in version 2.0.0:* revamed with additional options ``interactive`` and ``jupyter``, plus styles
     '''
 
     def __init__(self):
@@ -611,8 +611,8 @@ def help(pattern=None, source=False, ignorecase=True, flags=None, context=False,
         sc.help('JSON', ignorecase=False, context=True)
         sc.help('pickle', source=True, context=True)
 
-    | New in version 1.3.0.
-    | New in version 1.3.1: "source" argument
+    | *New in version 1.3.0.*
+    | *New in version 1.3.1:* "source" argument
     '''
     defaultmsg = '''
 For general help using Sciris, the best place to start is the docs:
