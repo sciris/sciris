@@ -3,13 +3,13 @@
 Extensions to Matplotlib, including 3D plotting and plot customization.
 
 Highlights:
-    - :func:`plot3d`: easy way to render 3D plots
-    - :func:`boxoff`: turn off top and right parts of the axes box
-    - :func:`commaticks`: convert labels from "10000" and "1e6" to "10,000" and "1,000,0000"
-    - :func:`SIticks`: convert labels from "10000" and "1e6" to "10k" and "1m"
-    - :func:`maximize`: make the figure fill the whole screen
-    - :func:`savemovie`: save a sequence of figures as an MP4 or other movie
-    - :func:`fonts`: list available fonts or add new ones
+    - :func:`sc.plot3d() <plot3d>`: easy way to render 3D plots
+    - :func:`sc.boxoff() <boxoff>`: turn off top and right parts of the axes box
+    - :func:`sc.commaticks() <commaticks>`: convert labels from "10000" and "1e6" to "10,000" and "1,000,0000"
+    - :func:`sc.SIticks() <SIticks>`: convert labels from "10000" and "1e6" to "10k" and "1m"
+    - :func:`sc.maximize() <maximize>`: make the figure fill the whole screen
+    - :func:`sc.savemovie() <savemovie>`: save a sequence of figures as an MP4 or other movie
+    - :func:`sc.fonts() <fonts>`: list available fonts or add new ones
 '''
 
 ##############################################################################
@@ -42,7 +42,7 @@ def fig3d(num=None, returnax=False, figkwargs=None, axkwargs=None, **kwargs):
     '''
     Shortcut for creating a figure with 3D axes.
 
-    Usually not invoked directly; kwargs are passed to ``pl.figure()``
+    Usually not invoked directly; kwargs are passed to ``pl.figure()`` # auto_docfix
     '''
     figkwargs = scu.mergedicts(figkwargs, kwargs, num=num)
     axkwargs = scu.mergedicts(axkwargs)
@@ -291,7 +291,7 @@ def stackedbar(x=None, values=None, colors=None, labels=None, transpose=False,
         flipud    (bool)     : whether to flip the array upside down prior to plotting
         cum       (bool)     : whether the array is already a cumulative sum
         barh      (bool)     : whether to plot as a horizontal instead of vertical bar
-        kwargs    (dict)     : passed to ``pl.bar()``
+        kwargs    (dict)     : passed to ``pl.bar()`` # auto_docfix
     
     **Example**::
         
@@ -475,13 +475,13 @@ def setaxislim(which=None, ax=None, data=None):
 
 
 def setxlim(data=None, ax=None):
-    ''' Alias for ``sc.setaxislim(which='x')`` '''
+    ''' Alias for :func:`sc.setaxislim(which='x') <setaxislim>` '''
     return setaxislim(data=data, ax=ax, which='x')
 
 
 def setylim(data=None, ax=None):
     '''
-    Alias for ``sc.setaxislim(which='y')``.
+    Alias for :func:`sc.setaxislim(which='y') <setaxislim>`.
 
     **Example**::
 
@@ -513,7 +513,7 @@ def commaticks(ax=None, axis='y', precision=2, cursor_precision=0):
     '''
     Use commas in formatting the y axis of a figure (e.g., 34,000 instead of 34000).
 
-    To use something other than a comma, set the default separator via e.g. ``sc.options(sep='.')``.
+    To use something other than a comma, set the default separator via e.g. :class:`sc.options(sep='.') <ScirisOptions>`.
 
     Args:
         ax (any): axes to modify; if None, use current; else can be a single axes object, a figure, or a list of axes
@@ -607,7 +607,7 @@ def getrowscols(n, nrows=None, ncols=None, ratio=1, make=False, tight=True, remo
     in favor of more rows (i.e. 7x6 is preferred to 6x7). It can also generate
     the plots, if ``make=True``.
 
-    Note: ``sc.getrowscols()`` and ``sc.get_rows_cols()`` are aliases.
+    Note: :func:`sc.getrowscols() <getrowscols>` and :func:`sc.get_rows_cols() <get_rows_cols>` are aliases.
 
     Args:
         n (int): the number (of plots) to accommodate
@@ -869,11 +869,11 @@ class ScirisDateFormatter(mpl.dates.ConciseDateFormatter):
         - The day and month are always shown.
         - The cursor shows only the date, not the time
 
-    This formatter is not intended to be called directly -- use :func:`dateformatter`
+    This formatter is not intended to be called directly -- use :func:`sc.dateformatter() <dateformatter>`
     instead. It is also optimized for plotting dates, rather than times -- for those,
     ConciseDateFormatter is better.
 
-    See :func:`dateformatter` for explanation of arguments.
+    See :func:`sc.dateformatter() <dateformatter>` for explanation of arguments.
 
     *New in version 1.3.0.*
     '''
@@ -948,7 +948,7 @@ def dateformatter(ax=None, style='sciris', dateformat=None, start=None, end=None
     This formatter is a combination of Matplotlib's Concise date formatter, and
     Plotly's date formatter.
 
-    See also ``sc.datenumformatter()`` to convert a numeric axis to date labels.
+    See also :func:`sc.datenumformatter() <datenumformatter>` to convert a numeric axis to date labels.
 
     Args:
         ax         (axes)     : if supplied, use these axes instead of the current one
@@ -959,7 +959,7 @@ def dateformatter(ax=None, style='sciris', dateformat=None, start=None, end=None
         rotation   (float)    : rotation of the labels, in degrees
         locator    (Locator)  : if supplied, use this instead of the default ``AutoDateLocator`` locator
         axis       (str)      : which axis to apply to the formatter to (default 'x')
-        kwargs     (dict)     : passed to the date formatter (e.g., ``ScirisDateFormatter``)
+        kwargs     (dict)     : passed to the date formatter (e.g., :class:`ScirisDateFormatter`)
 
     **Examples**::
 
@@ -1048,7 +1048,7 @@ def datenumformatter(ax=None, start_date=None, dateformat=None, interval=None, s
     '''
     Format a numeric x-axis to use dates.
 
-    See also ``sc.dateformatter()``, which is intended for use when the axis already
+    See also :func:`sc.dateformatter() <dateformatter>`, which is intended for use when the axis already
     has date data.
 
     Args:
@@ -1138,10 +1138,10 @@ def savefig(filename, fig=None, dpi=None, comments=None, pipfreeze=False, relfra
     '''
     Save a figure, including metadata
 
-    Wrapper for Matplotlib's ``savefig()`` function which automatically stores
+    Wrapper for Matplotlib's :func:`pl.savefig() <matplotlib.pyplot.savefig>` function which automatically stores
     metadata in the figure. By default, it saves (git) information from the calling
     function. Additional comments can be added to the saved file as well. These
-    can be retrieved via ``sc.loadmetadata()``.
+    can be retrieved via :func:`sc.loadmetadata() <loadmetadata>`.
 
     Metadata can be stored and retrieved for PNG or SVG. Metadata
     can be stored for PDF, but cannot be automatically retrieved.
@@ -1152,7 +1152,7 @@ def savefig(filename, fig=None, dpi=None, comments=None, pipfreeze=False, relfra
         dpi       (int)      : resolution of the figure to save (default 200 or current default, whichever is higher)
         comments  (str)      : additional metadata to save to the figure
         pipfreeze (bool)     : whether to store the contents of ``pip freeze`` in the metadata
-        relframe  (int)      : which calling file to try to store information from (default 0, the file calling ``sc.savefig()``)
+        relframe  (int)      : which calling file to try to store information from (default 0, the file calling :func:`sc.savefig() <savefig>`)
         folder    (str/Path) : optional folder to save to (can also be provided as part of the filename)
         makedirs  (bool)     : whether to create folders if they don't already exist
         die       (bool)     : whether to raise an exception if metadata can't be saved
@@ -1462,10 +1462,10 @@ class animation(scu.prettyobj):
     '''
     A class for storing and saving a Matplotlib animation.
 
-    See also ``sc.savemovie()``, which works directly with Matplotlib artists rather
+    See also :func:`sc.savemovie() <savemovie>`, which works directly with Matplotlib artists rather
     than an entire figure. Depending on your use case, one is likely easier to use
-    than the other. Use ``sc.animation()`` if you want to animate a complex figure
-    including non-artist objects (e.g., titles and legends); use ``sc.savemovie()``
+    than the other. Use :func:`sc.animation() <animation>` if you want to animate a complex figure
+    including non-artist objects (e.g., titles and legends); use :func:`sc.savemovie() <savemovie>`
     if you just want to animate a set of artists (e.g., lines).
 
     This class works by saving snapshots of the figure to disk as image files, then
@@ -1484,11 +1484,11 @@ class animation(scu.prettyobj):
         basename     (str):  name for temporary image files, e.g. 'myanimation'
         nametemplate (str):  as an alternative to imageformat and basename, specify the full name template, e.g. 'myanimation%004d.jpg'
         imagefolder  (str):  location to store temporary image files; default current folder, or use 'tempfile' to create a temporary folder
-        anim_args    (dict): passed to ``matplotlib.animation.ArtistAnimation()`` or ``ffmpeg.input()``
-        save_args    (dict): passed to ``matplotlib.animation.save()`` or ``ffmpeg.run()``
+        anim_args    (dict): passed to :obj:`matplotlib.animation.ArtistAnimation` or ``ffmpeg.input()``
+        save_args    (dict): passed to :meth:`animation.save() <matplotlib.animation.Animation.save>` or ``ffmpeg.run()``
         tidy         (bool): whether to delete temporary files
         verbose      (bool): whether to print progress
-        kwargs       (dict): also passed to ``matplotlib.animation.save()``
+        kwargs       (dict): also passed to :meth:`animation.save() <matplotlib.animation.Animation.save>`
 
     **Example**::
 
@@ -1690,7 +1690,7 @@ class animation(scu.prettyobj):
 
     def save(self, filename=None, fps=None, dpi=None, engine='ffmpeg', anim_args=None,
              save_args=None, frames=None, tidy=None, verbose=True, **kwargs):
-        ''' Save the animation -- arguments the same as ``sc.animation()`` and ``sc.savemovie()``, and are described there '''
+        ''' Save the animation -- arguments the same as :func:`sc.animation() <animation>` and :func:`sc.savemovie() <savemovie>`, and are described there '''
 
         # Handle engine
         if engine == 'ffmpeg':
@@ -1780,7 +1780,7 @@ def savemovie(frames, filename=None, fps=None, quality=None, dpi=None, writer=No
     '''
     Save a set of Matplotlib artists as a movie.
 
-    Note: in most cases, it is preferable to use ``sc.animation()``.
+    Note: in most cases, it is preferable to use :func:`sc.animation() <animation>`.
 
     Args:
         frames (list): The list of frames to animate
@@ -1788,14 +1788,14 @@ def savemovie(frames, filename=None, fps=None, quality=None, dpi=None, writer=No
         fps (int): The number of frames per second (default 10)
         quality (string): The quality of the movie, in terms of dpi (default "high" = 300 dpi)
         dpi (int): Instead of using quality, set an exact dpi
-        writer (str or object): Specify the writer to be passed to matplotlib.animation.save() (default "ffmpeg")
+        writer (str or object): Specify the writer to be passed to :meth:`animation.save() <matplotlib.animation.Animation.save>` (default "ffmpeg")
         bitrate (int): The bitrate. Note, may be ignored; best to specify in a writer and to pass in the writer as an argument
         interval (int): The interval between frames; alternative to using fps
         repeat (bool): Whether or not to loop the animation (default False)
         repeat_delay (bool): Delay between repeats, if repeat=True (default None)
         blit (bool): Whether or not to "blit" the frames (default False, since otherwise does not detect changes )
         verbose (bool): Whether to print statistics on finishing.
-        kwargs (dict): Passed to ``matplotlib.animation.save()``
+        kwargs (dict): Passed to :meth:`animation.save() <matplotlib.animation.Animation.save>`
 
     Returns:
         A Matplotlib animation object
