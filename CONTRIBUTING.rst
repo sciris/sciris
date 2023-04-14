@@ -1,8 +1,8 @@
-======================
-Contributing to Sciris
-======================
+============
+Contributing
+============
 
-Welcome! We are thrilled you are interested in contributing to Sciris. This document will help you get started.
+Welcome! We are thrilled you are interested in contributing to Sciris. (No, seriously.) This document will help you get started.
 
 - The Sciris community follows a `code of conduct`_. By participating in this project, you agree to abide by its terms.
 - Take a look at our house `style guide`_. Sciris more or less follows Google's Python style guide, but with some exceptions. 

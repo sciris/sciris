@@ -39,11 +39,10 @@ release = sc.__version__
 extensions = [
     "sphinx.ext.autodoc",  # Core Sphinx library for auto html doc generation from docstrings
     "sphinx.ext.autosummary",  # Create neat summary tables for modules/classes/methods etc -- causes warnings with Napoleon however
-    "sphinx.ext.viewcode",  # Add a link to the Python source code for classes, functions etc.
-    "sphinx.ext.napoleon",
-    "sphinx.ext.autosectionlabel",
-    "sphinx_autodoc_typehints",  # Automatically document param types (less noise in class signature)
-    "recommonmark",
+    # "sphinx.ext.viewcode",  # Add a link to the Python source code for classes, functions etc.
+    # "sphinx.ext.napoleon",
+    # "sphinx.ext.autosectionlabel",
+    # "sphinx_autodoc_typehints",  # Automatically document param types (less noise in class signature)
 ]
 
 # autodoc_default_options = {
