@@ -3,9 +3,9 @@ Handle colors and colormaps.
 
 Highlights:
     - Adds colormaps including ``'turbo'``, ``'parula'``, and ``'orangeblue'``
-    - :func:`hex2rgb`/:func:`rgb2hex`: convert between different color conventions
-    - :func:`vectocolor`: map a list of sequential values onto a list of colors
-    - :func:`gridcolors`: map a list of qualitative categories onto a list of colors
+    - :func:`sc.hex2rgb() <hex2rgb>`/:func:`sc.rgb2hex() <rgb2hex>`: convert between different color conventions
+    - :func:`sc.vectocolor() <vectocolor>`: map a list of sequential values onto a list of colors
+    - :func:`sc.gridcolors() <gridcolors>`: map a list of qualitative categories onto a list of colors
 '''
 
 ##############################################################################
@@ -44,7 +44,7 @@ def _listify_colors(colors, origndim=None):
 
 def sanitizecolor(color, asarray=False, alpha=None, normalize=True):
     '''
-    Alias to ``matplotlib.colors.to_rgb``, but also handles numeric inputs.
+    Alias to :func:`matplotlib.colors.to_rgb`, but also handles numeric inputs.
     
     Arg:
         color (str/list/etc): the input color to sanitize into an RGB tuple (or array)
@@ -293,7 +293,7 @@ def arraycolors(arr, **kwargs):
 
     Args:
         arr (array): a multidimensional array to be converted to an array of colors
-        kwargs(dict): passed to ``sc.vectocolor()``
+        kwargs(dict): passed to :func:`sc.vectocolor() <vectocolor>`
 
     **Example**::
 
