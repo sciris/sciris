@@ -2,12 +2,12 @@
 Printing/notification functions.
 
 Highlights:
-    - :func:`heading`: print text as a 'large' heading
-    - :func:`colorize`: print text in a certain color
-    - :func:`pr`: print full representation of an object, including methods and each attribute
-    - :func:`sigfig`: truncate a number to a certain number of significant figures
-    - :func:`progressbar`: show a (text-based) progress bar
-    - :func:`capture`: capture text output (e.g., stdout) as a variable
+    - :func:`sc.heading() <heading>`: print text as a 'large' heading
+    - :func:`sc.colorize() <colorize>`: print text in a certain color
+    - :func:`sc.pr() <pr>`: print full representation of an object, including methods and each attribute
+    - :func:`sc.sigfig() <sigfig>`: truncate a number to a certain number of significant figures
+    - :func:`sc.progressbar() <progressbar>`: show a (text-based) progress bar
+    - :func:`sc.capture() <capture>`: capture text output (e.g., stdout) as a variable
 '''
 
 import io
@@ -278,7 +278,7 @@ def indent(prefix=None, text=None, suffix='\n', n=0, pretty=False, width=70, **k
         n (int): if prefix is not specified, the size of the indent
         pretty (bool): whether to use pprint to format the text
         width (int): maximum width before wrapping (if None, don't wrap)
-        kwargs (dict): passed to ``textwrap.fill()``
+        kwargs (dict): passed to :func:`textwrap.fill()`
 
     **Examples**::
 
@@ -410,7 +410,7 @@ def printmean(data, stds=2, mean_sf=None, err_sf=None, doprint=True, **kwargs):
         mean_sf (int): if provided, use this number of significant figures for the mean rather than the auto-calculated
         err_sf (int): ditto, but for the error (standard deviation)
         doprint (bool): whether to print (else, return the string)
-        kwargs (dict): passed to ``sc.sigfig()``
+        kwargs (dict): passed to :func:`sc.sigfig() <sigfig>`
     
     **Example**::
         
@@ -457,7 +457,7 @@ def printmedian(data, ci=95, sf=3, doprint=True, **kwargs):
         ci (int/float/list/str): the confidence interval to use to use (see above for details)
         sf (int): number of significant figures to use
         doprint (bool): whether to print (else, return the string)
-        kwargs (dict): passed to ``sc.sigfig()``
+        kwargs (dict): passed to :func:`sc.sigfig() <sigfig>`
     
     **Examples**::
         
@@ -726,7 +726,7 @@ def colorize(color=None, string=None, doprint=None, output=False, enable=True, s
         string (str): the text to be colored
         doprint (bool): whether to print the string (default true unless output)
         output (bool): whether to return the modified version of the string (default false)
-        enable (bool): switch to allow ``sc.colorize()`` to be easily turned off without converting to a ``print()`` statement
+        enable (bool): switch to allow :func:`sc.colorize() <colorize>` to be easily turned off without converting to a :func:`print()` statement
         showhelp (bool): show help rather than changing colors
         fg (str): foreground colour
         bg (str): background colour
@@ -741,7 +741,7 @@ def colorize(color=None, string=None, doprint=None, output=False, enable=True, s
         sc.colorize() # Stop typing in magenta
         sc.colorize('cat in the hat', fg='#ffa044', bg='blue', style='italic+underline') # Alternate usage example
 
-    To get available colors, type ``sc.colorize(showhelp=True)``.
+    To get available colors, type :func:`sc.colorize(showhelp=True) <colorize>`.
 
     | *New in version 1.3.1:* "doprint" argument; ansicolors shortcut
     '''
@@ -872,7 +872,7 @@ def heading(string=None, *args, color=None, divider=None, spaces=None, spacesaft
         sep         (str):  if multiple arguments are supplied, use this separator to join them
         doprint     (bool): whether to print the string (default true if no output)
         output      (bool): whether to return the string as output (else, print)
-        kwargs      (dict): passed to ``sc.colorize()``
+        kwargs      (dict): passed to :func:`sc.colorize() <colorize>`
 
     Returns:
         Formatted string if ``output=True``
@@ -942,7 +942,7 @@ def printv(string, thisverbose=1, verbose=2, indent=2, **kwargs):
         thisverbose (int): level of verbosity at which to print this message
         verbose (int): global verbose variable
         indent (int): amount by which to indent based on verbosity level
-        kwargs (dict): passed to ``print()``
+        kwargs (dict): passed to :func:`print()`
         
     *New in version 2.2.0:* "kwargs" argument; removed "newline" argument
     '''
@@ -1070,7 +1070,7 @@ def percentcomplete(step=None, maxsteps=None, stepsize=1, prefix=None):
         for i in range(maxiters):
             sc.percentcomplete(i, maxiters, prefix='Completeness: ') 
     
-    See also :func:`progressbar()` for a progress bar.
+    See also :func:`sc.progressbar() <progressbar>` for a progress bar.
     '''
     if prefix is None:
         prefix = ' '
@@ -1162,7 +1162,7 @@ class tqdm_pickle(tqdm.tqdm):
     '''
     Simple subclass of tqdm that allows pickling
     
-    Usually not used directly by the user; used via :func:`progressbars()` instead.
+    Usually not used directly by the user; used via :func:`sc.progressbars() <progressbars>` instead.
     Pickling is required for passing ``tqdm`` instances between processes.
     
     Based on ``tqdm`` 4.65.0; may become deprecated in future ``tqdm`` releases.
@@ -1275,9 +1275,9 @@ class progressbars(scu.prettyobj):
 
 class capture(UserString, str, redirect_stdout):
     '''
-    Captures stdout (e.g., from ``print()``) as a variable.
+    Captures stdout (e.g., from :func:`print()`) as a variable.
 
-    Based on ``contextlib.redirect_stdout``, but saves the user the trouble of
+    Based on :obj:`contextlib.redirect_stdout`, but saves the user the trouble of
     defining and reading from an IO stream. Useful for testing the output of functions
     that are supposed to print certain output.
 
