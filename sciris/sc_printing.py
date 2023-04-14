@@ -131,7 +131,7 @@ def prepr(obj, maxlen=None, maxitems=None, skip=None, dividerchar='—', divider
     '''
     Akin to "pretty print", returns a pretty representation of an object --
     all attributes (except any that are skipped), plust methods and ID. Usually
-    used via the interactive sc.pr() (which prints), rather than this (which returns
+    used via the interactive :func:`sc.pr() <pr>` (which prints), rather than this (which returns
     a string).
 
     Args:
@@ -244,7 +244,9 @@ def prepr(obj, maxlen=None, maxitems=None, skip=None, dividerchar='—', divider
 
 def pr(obj, *args, **kwargs):
     '''
-    Shortcut for printing the pretty repr for an object -- similar to prettyprint
+    Pretty-print the detailed representation of an object.
+
+    See :func:`sc.prepr() <prepr>` for options.
 
     **Example**::
 
