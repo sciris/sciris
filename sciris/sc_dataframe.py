@@ -27,7 +27,7 @@ class dataframe(pd.DataFrame):
         columns (list): column labels (if a dict is supplied, the value sets the dtype)
         nrows (int): the number of arrows to preallocate (default 0)
         dtypes (list): optional list of data types to set each column to
-        kwargs (dict): passed to ``pd.DataFrame()``
+        kwargs (dict): passed to :class:`pd.DataFrame() <pandas.DataFrame>`
 
     **Examples**::
 
@@ -98,7 +98,7 @@ class dataframe(pd.DataFrame):
 
     def set_dtypes(self, dtypes):
         '''
-        Set dtypes in-place (see pandas ``df.astype()`` for the user-facing version)
+        Set dtypes in-place (see :meth:`df.astype() <pandas.DataFrame.astype>` for the user-facing version)
         
         *New in version 2.2.0.*
         '''
@@ -115,7 +115,7 @@ class dataframe(pd.DataFrame):
         
         Args:
             col (str): the column to get the index of (return 0 if None)
-            die (bool): whether to raise an exception if the column could not be found (else, return NOne)
+            die (bool): whether to raise an exception if the column could not be found (else, return None)
         
         *New in version 2.2.0:* renamed from "_sanitizecols"
         '''
@@ -264,7 +264,7 @@ class dataframe(pd.DataFrame):
             ncols (int): maximum number of columns to show (default: all)
             width (int): maximum screen width (default: 999)
             precision (int): number of decimal places to show (default: 4)
-            kwargs (dict): passed to ``pd.option_context()``
+            kwargs (dict): passed to :class:`pd.option_context() <pandas.option_context>`
         
         **Examples**::
             
@@ -291,7 +291,7 @@ class dataframe(pd.DataFrame):
         '''
         Remove a row from the data frame.
         
-        To pop a column, see ``df.pop()``.        
+        To pop a column, see :meth:`df.pop() <pandas.DataFrame.pop>`
         '''
         rowindex = int(key)
         thisrow = self.iloc[rowindex,:]
@@ -303,7 +303,7 @@ class dataframe(pd.DataFrame):
     def replacedata(self, newdata=None, newdf=None, reset_index=True, inplace=True):
         '''
         Replace data in the dataframe with other data; usually not used directly
-        by the user, but used as part of e.g. ``df.concat()``.
+        by the user, but used as part of e.g. :meth:`df.concat() <dataframe.concat>`.
 
         Args:
             newdata (array): replace the dataframe's data with these data
@@ -328,7 +328,7 @@ class dataframe(pd.DataFrame):
         '''
         Add row(s) to the end of the dataframe. 
         
-        See also ``concat()`` and ``insertrow()``. Similar to the pandas operation
+        See also :meth:`df.concat() <dataframe.concat>` and :meth:`df.insertrow() <dataframe.insertrow>`. Similar to the pandas operation
         ``df.iloc[-1] = ...``, but faster and provides additional type checking.
 
         Args:
@@ -363,14 +363,15 @@ class dataframe(pd.DataFrame):
 
     def insertrow(self, index=0, value=None, reset_index=True, inplace=True, **kwargs):
         '''
-        Insert row(s) at the specified location. See also ``concat()`` and ``appendrow()``.
+        Insert row(s) at the specified location. See also :meth:`df.concat() <dataframe.concat>`
+        and :meth:`df.appendrow() <dataframe.appendrow>`.
 
         Args:
             index (int): index at which to insert new row(s)
             value (array): the row(s) to insert
             reset_index (bool): update the index
             inplace (bool): whether to modify in-place
-            kwargs (dict): passed to ``df.concat()``
+            kwargs (dict): passed to `:meth:`df.concat() <dataframe.concat>`
         
         Warning: modifying dataframes in-place is quite inefficient. For highest
         performance, construct the data in large chunks and then add to the dataframe
@@ -416,9 +417,9 @@ class dataframe(pd.DataFrame):
         '''
         Concatenate additional data onto the current dataframe. 
         
-        Similar to ```appendrow()`` and ``insertrow()``; see also ``sc.dataframe.cat()`` 
-        for the equivalent class method.
-
+        Similar to :meth:`df.appendrow() <dataframe.appendrow>` and :meth:`df.insertrow() <dataframe.insertrow>`;
+        see also :meth:`df.cat() <dataframe.cat>` for the equivalent class method.
+        
         Args:
             data (dataframe/array): the data to concatenate
             *args (dataframe/array): additional data to concatenate
@@ -426,7 +427,7 @@ class dataframe(pd.DataFrame):
             reset_index (bool): update the index
             inplace (bool): whether to append in place
             dfargs (dict): arguments passed to construct each dataframe
-            **kwargs (dict): passed to ``pd.concat()``
+            **kwargs (dict): passed to :func:`pd.concat() <pandas.concat`
         
         | *New in version 2.0.2:* "inplace" defaults to False
         | *New in version 2.2.0:* improved type handling
@@ -445,14 +446,14 @@ class dataframe(pd.DataFrame):
     @staticmethod
     def cat(data, *args, dfargs=None, **kwargs):
         '''
-        Convenience method for concatenating multiple dataframes. See ``df.concat()``
+        Convenience method for concatenating multiple dataframes. See :meth:`df.concat() <dataframe.concat>`
         for the equivalent instance method.
         
         Args:
             data (dataframe/array): the dataframe/data to use as the basis of the new dataframe
             args (list): additional dataframes (or object that can be converted to dataframes) to concatenate
             dfargs (dict): arguments passed to construct each dataframe
-            kwargs (dict): passed to ``sc.dataframe.concat()``
+            kwargs (dict): passed to :func:`df.concat() <dataframe.concat>`
         
         **Example**::
             
@@ -503,8 +504,8 @@ class dataframe(pd.DataFrame):
         '''
         Get the row index for a given value and column.
         
-        See ``df.findrow()`` for the equivalent to return the row itself
-        rather than the index of the row. See ``df.col_index()`` for the column
+        See :meth:`df.findrow() <dataframe.findrow>` for the equivalent to return the row itself
+        rather than the index of the row. See :meth:`df.col_index() <dataframe.col_index>` for the column
         equivalent.
         
         Args:
@@ -592,8 +593,9 @@ class dataframe(pd.DataFrame):
         '''
         Return a row by searching for a matching value.
         
-        See ``df.row_index()`` for the equivalent to return the index of the row
+        See :meth:`df.row_index() <dataframe.row_index>` for the equivalent to return the index of the row
         rather than the row itself.
+
 
         Args:
             value (any): the value to look for
@@ -641,12 +643,13 @@ class dataframe(pd.DataFrame):
 
 
     def filterin(self, inds=None, value=None, col=None, verbose=False, reset_index=True, inplace=False):
-        '''Keep only rows matching a criterion; see also ``df.filterout()`` '''
+        '''
+        Keep only rows matching a criterion; see also :meth:`df.filterout() <dataframe.filterout>` '''
         return self._filterrows(inds=inds, value=value, col=col, keep=True, verbose=verbose, reset_index=reset_index, inplace=inplace)
 
 
     def filterout(self, inds=None, value=None, col=None, verbose=False, reset_index=True, inplace=False):
-        '''Remove rows matching a criterion (in place); see also ``df.filterin()`` '''
+        '''Remove rows matching a criterion (in place); see also :meth:`df.filterin() <dataframe.filterin>` '''
         return self._filterrows(inds=inds, value=value, col=col, keep=False, verbose=verbose, reset_index=reset_index, inplace=inplace)
 
 
@@ -675,15 +678,15 @@ class dataframe(pd.DataFrame):
         '''
         Sort the dataframe rows in place by the specified column(s).
         
-        Similar to ``df.sort_values()``, except defaults to sorting in place, and
-        optionally returns the indices used for sorting (like ``np.argsort()``).
+        Similar to :meth:`df.sort_values() <pandas.DataFrame.sort_values>`, except defaults to sorting in place, and
+        optionally returns the indices used for sorting (like :func:`np.argsort() <numpy.argsort>`).
         
         Args:
             col (str or int): column to sort by (default, first column)
             reverse (bool): whether to reverse the sort order (i.e., ascending=False)
             returninds (bool): whether to return the indices used to sort instead of the dataframe
             inplace (bool): whether to modify the dataframe in-place
-            kwargs (dict): passed to ``df.sort_values()``
+            kwargs (dict): passed to :meth:`df.sort_values() <pandas.DataFrame.sort_values>`
         
         *New in version 2.2.0:* "inplace" argument; "col" argument renamed "by"
         '''
@@ -732,5 +735,5 @@ class dataframe(pd.DataFrame):
 
     @property
     def _constructor(self):
-        ''' Overload pandas method to ensure correct type; was ``pd.DataFrame()`` '''
+        ''' Overload pandas method to ensure correct type; replaces :class:`pd.DataFrame() <pandas.DataFrame>` '''
         return self.__class__ # To allow subclassing
