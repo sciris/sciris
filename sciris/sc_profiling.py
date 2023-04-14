@@ -84,7 +84,7 @@ def checkmem(var, descend=1, order='size', compresslevel=0, maxitems=1000,
         )
         sc.checkmem(nested_dict)
     
-    New in version 2.2.0: descend multiple levels; dataframe output; "alphabetical" renamed "order"
+    *New in version 2.2.0:* descend multiple levels; dataframe output; "alphabetical" renamed "order"
     '''
     
     # Handle input arguments -- used for recursion
@@ -197,7 +197,7 @@ def checkram(unit='mb', fmt='0.2f', start=0, to_string=True):
         a = np.random.random((1_000, 10_000))
         print(sc.checkram(start=start))
 
-    New in version 1.0.0.
+    *New in version 1.0.0.*
     '''
     process = psutil.Process(os.getpid())
     mapping = {'b':1, 'kb':1e3, 'mb':1e6, 'gb':1e9}
@@ -249,7 +249,7 @@ def benchmark(repeats=5, scale=1, verbose=False, python=True, numpy=True, return
         else:
             print('Your computer is normal')
     
-    New in version 2.2.0.
+    *New in version 2.2.0.*
     '''
     
     P = scd.timer(verbose=verbose)
@@ -370,8 +370,8 @@ def loadbalancer(maxcpu=0.9, maxmem=0.9, index=None, interval=None, cpu_interval
         for nproc in processlist:
             sc.loadbalancer(maxload=0.5, maxmem=0.8, index=nproc)
 
-    | New in version 2.0.0: ``maxmem`` argument; ``maxload`` renamed ``maxcpu``
-    | New in version 2.2.0: ``maxcpu`` and ``maxmem`` set to 0.9 by default
+    | *New in version 2.0.0:* ``maxmem`` argument; ``maxload`` renamed ``maxcpu``
+    | *New in version 2.2.0:* ``maxcpu`` and ``maxmem`` set to 0.9 by default
     '''
 
     # Handle deprecation
