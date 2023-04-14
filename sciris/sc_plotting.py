@@ -42,7 +42,7 @@ def fig3d(num=None, returnax=False, figkwargs=None, axkwargs=None, **kwargs):
     '''
     Shortcut for creating a figure with 3D axes.
 
-    Usually not invoked directly; kwargs are passed to ``pl.figure()`` # auto_docfix
+    Usually not invoked directly; kwargs are passed to :func:`pl.figure() <matplotlib.pyplot.figure>`
     '''
     figkwargs = scu.mergedicts(figkwargs, kwargs, num=num)
     axkwargs = scu.mergedicts(axkwargs)
@@ -291,7 +291,7 @@ def stackedbar(x=None, values=None, colors=None, labels=None, transpose=False,
         flipud    (bool)     : whether to flip the array upside down prior to plotting
         cum       (bool)     : whether the array is already a cumulative sum
         barh      (bool)     : whether to plot as a horizontal instead of vertical bar
-        kwargs    (dict)     : passed to ``pl.bar()`` # auto_docfix
+        kwargs    (dict)     : passed to :func:`pl.bar() <matplotlib.pyplot.bar>`
     
     **Example**::
         

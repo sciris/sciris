@@ -3,12 +3,12 @@ Functions for checking and saving versioning information, such as Python package
 versions, git versions, etc.
 
 Highlights:
-    - :func:`freeze`: programatically store "pip freeze" output
-    - :func:`require`: require a specific version of a package
-    - :func:`gitinfo`: gets the git information (if available) of a given file
-    - :func:`compareversions`: easy way to compare version numbers
-    - :func:`storemetadata`: collects relevant metadata into a dictionary
-    - :func:`savewithmetadata`: saves data as a zip file including versioning metadata
+    - :func:`sc.freeze() <freeze>`: programmatically store "pip freeze" output
+    - :func:`sc.require() <require>`: require a specific version of a package
+    - :func:`sc.gitinfo() <gitinfo>`: gets the git information (if available) of a given file
+    - :func:`sc.compareversions() <compareversions>`: easy way to compare version numbers
+    - :func:`sc.metadata() <metadata>`: collects relevant metadata into a dictionary
+    - :func:`sc.savewithmetadata() <savewithmetadata>`: saves data as a zip file including versioning metadata
 '''
 
 import os
@@ -308,7 +308,7 @@ def compareversions(version1, version2):
 def getcaller(frame=2, tostring=True, includelineno=False, includeline=False, relframe=0, die=False):
     '''
     Try to get information on the calling function, but fail gracefully. See also
-    :func:`thisfile`.
+    :func:`sc.thisfile() <thisfile>`.
 
     Frame 1 is the file calling this function, so not very useful. Frame 2 is
     the default assuming it is being called directly. Frame 3 is used if
@@ -463,10 +463,10 @@ def loadmetadata(filename, load_all=False, die=True):
     '''
     Read metadata from a saved image; currently only PNG and SVG are supported.
 
-    Only for use with images saved with ``sc.savefig()``. Metadata retrieval for PDF
-    is not currently supported. To load metadata saved with ``sc.metadata()``, 
-    you can also use ``sc.loadjson()`` instead. To load metadata saved with ``sc.savewithmetadata()``,
-    use ``sc.loadwithmetadata()`` instead.
+    Only for use with images saved with :func:`sc.savefig() <savefig>`. Metadata retrieval for PDF
+    is not currently supported. To load metadata saved with :func:`sc.metadata() <metadata>`, 
+    you can also use :func:`sc.loadjson() <loadjson>` instead. To load metadata saved with :func:`sc.savewithmetadata() <savewithmetadata>`,
+    use :func:`sc.loadwithmetadata() <loadwithmetadata>` instead.
 
     Args:
         filename (str): the name of the file to load the data from
@@ -590,15 +590,15 @@ def savewithmetadata(filename, obj, folder=None, user=True, caller=True, git=Tru
     Args:
         filename (str/path): the file to save to (must end in .zip)
         obj (any): the object to save
-        caller (bool): store information on the current user in the metadata (see ``sc.metadata()``)
-        caller (bool): store information on the calling file in the metadata (see ``sc.metadata()``)
-        git (bool): store the git version in the metadata (see ``sc.metadata()``)
-        pipfreeze (bool): store the output of "pip freeze" in the metadata (see ``sc.metadata()``)
+        caller (bool): store information on the current user in the metadata (see :func:`sc.metadata() <metadata>`)
+        caller (bool): store information on the calling file in the metadata (see :func:`sc.metadata() <metadata>`)
+        git (bool): store the git version in the metadata (see :func:`sc.metadata() <metadata>`)
+        pipfreeze (bool): store the output of "pip freeze" in the metadata (see :func:`sc.metadata() <metadata>`)
         comments (str/dict): other comments/information to store in the metadata (must be JSON-compatible)
         method (str): the method to use saving the data; default "dill" for more robustness, but "pickle" is faster
         allow_nonzip (bool): whether to permit extensions other than .zip (note, may cause problems!)
-        dumpargs (dict): passed to :func:`dumpstr()`
-        kwargs (dict): passed to :func:`savezip()`
+        dumpargs (dict): passed to :func:`sc.dumpstr() <dumpstr>`
+        kwargs (dict): passed to :func:`sc.savezip() <savezip>`
     
     **Example**::
         
@@ -639,7 +639,7 @@ def known_deprecations(as_map=False):
     
     New deprecations will be added as they arise.
     
-    Rarely used directly; invoked automatically by ``sc.load()`` if ``auto_remap=True``.
+    Rarely used directly; invoked automatically by :func:`sc.load() <load>` if ``auto_remap=True``.
     
     Args:
         as_map (bool): if True, return all known remappings without additional version data
@@ -669,7 +669,7 @@ def known_deprecations(as_map=False):
 def loadwithmetadata(filename, folder=None, loadobj=True, loadmetadata=False, 
                      remapping=None, die=True, **kwargs):
     '''
-    Load a zip file saved with :func:`savewithmetadata()`.
+    Load a zip file saved with :func:`sc.savewithmetadata() <savewithmetadata>`.
     
     **Note**: Since this function relies on pickle, it can potentially execute arbitrary
     code, so you should only use it with sources you trust. For more information, see:
@@ -680,9 +680,9 @@ def loadwithmetadata(filename, folder=None, loadobj=True, loadmetadata=False,
         folder (str): optional additional folder to load from
         loadobj (bool): whether to load the saved object
         loadmetadata (bool): whether to load the metadata as well
-        remapping (dict): any known module remappings between the saved pickle version and the current libraries (see ``sc.known_remappings()`` for examples)
+        remapping (dict): any known module remappings between the saved pickle version and the current libraries (see :func:`sc.known_remappings() <known_remappings>` for examples)
         die (bool): whether to fail if an exception is raised (else, just return the metadata)
-        kwargs (dict): passed to ``sc.load()``
+        kwargs (dict): passed to :func:`sc.load() <load>`
     
     Returns:
         If loadobj=True and loadmetadata=False, return the object;
