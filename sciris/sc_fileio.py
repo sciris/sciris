@@ -746,7 +746,7 @@ def getfilepaths(*args, aspath=True, **kwargs):
     '''
     Alias for :func:`getfilelist` that returns paths by default instead of strings.
     
-    *New version 2.1.0.
+    *New version 2.1.0.*
     '''
     return getfilelist(*args, aspath=True, **kwargs)
 
@@ -772,7 +772,7 @@ def sanitizefilename(filename, sub='_', allowspaces=False, asciify=True, strict=
         bad = 'Nöt*a   file&name?!.doc'
         good = sc.sanitizefilename(bad)
         
-    *New version 2.0.1: arguments "sub", "allowspaces", "asciify", "strict", and "disallowed"
+    *New version 2.0.1:* arguments "sub", "allowspaces", "asciify", "strict", and "disallowed"
     '''
     
     # Handle options
@@ -807,7 +807,7 @@ def sanitizepath(*args, aspath=True, **kwargs):
     '''
     Alias for :func:`sanitizefilename` that returns a path by default instead of a string.
     
-    *New version 2.1.0.
+    *New version 2.1.0.*
     '''
     return sanitizefilename(*args, aspath=True, **kwargs)
 
@@ -937,7 +937,7 @@ def makepath(*args, aspath=True, **kwargs):
     Alias for :func:`makefilepath` that returns a path by default instead of a string
     (with apologies for the confusing terminology, kept for backwards compatibility).
     
-    *New version 2.1.0.
+    *New version 2.1.0.*
     '''
     return makefilepath(*args, **kwargs, aspath=True)
 
@@ -964,7 +964,7 @@ def rmpath(path=None, *args, die=True, verbose=True, interactive=False, **kwargs
         sc.rmpath(['myobj.obj', 'tests']) # Remove a file and a folder interactively
         sc.rmpath(sc.getfilelist('tests/*.obj')) # Example of removing multiple files
 
-    *New version 2.0.0.
+    *New version 2.0.0.*
     """
 
     paths = scu.mergelists(path, *args)
@@ -1440,7 +1440,7 @@ class Spreadsheet(Blobject):
     A class for reading and writing Excel files in binary format. No disk IO needs
     to happen to manipulate the spreadsheets with openpyxl (or xlrd or pandas).
 
-    *New version 1.3.0: Changed default from xlrd to openpyxl and added self.wb
+    *New version 1.3.0:* Changed default from xlrd to openpyxl and added self.wb
     attribute to avoid the need to reload workbooks.
 
     **Examples**::
@@ -1699,7 +1699,7 @@ def loadspreadsheet(filename=None, folder=None, fileobj=None, sheet=0, header=1,
         wb = sc.loadspreadsheet('myfile.xlsx', method='openpyxl') # Returns workbook
         data = sc.loadspreadsheet('myfile.xlsx', method='xlrd', asdataframe=False) # Returns raw data; requires xlrd
 
-    *New version 1.3.0: change default from xlrd to pandas; renamed sheetname and sheetnum arguments to sheet.
+    *New version 1.3.0:* change default from xlrd to pandas; renamed sheetname and sheetnum arguments to sheet.
     '''
 
     # Handle path and sheet name/number
@@ -1851,7 +1851,7 @@ def savespreadsheet(filename=None, data=None, folder=None, sheetnames=None, clos
         formatdata[0,:] = 'header' # Format header
         sc.savespreadsheet(filename='test5.xlsx', data=testdata5, formats=formats, formatdata=formatdata)
 
-    *New version 2.0.0: allow arguments to be passed to the ``Workbook``.
+    *New version 2.0.0:* allow arguments to be passed to the ``Workbook``.
     '''
     workbook_args = scu.mergedicts({'nan_inf_to_errors': True}, workbook_args)
     try:

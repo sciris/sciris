@@ -20,7 +20,7 @@ def asd(function, x, args=None, stepsize=0.1, sinc=2, sdec=2, pinc=2, pdec=2,
     label=None, verbose=1, **kwargs):
     """
     Optimization using adaptive stochastic descent (ASD). Can be used as a faster
-    and more powerful alternative to e.g. ``scipy.optimize.minimize()``.
+    and more powerful alternative to e.g. :func:`scipy.optimize.minimize()`.
 
     ASD starts at ``x0`` and attempts to find a local minimizer ``x`` of the function ``func()``.
     ``func()`` accepts input ``x`` and returns a scalar function value evaluated at ``x``.
