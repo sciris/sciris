@@ -42,15 +42,7 @@ extensions = [
     "sphinx_autodoc_typehints",  # Automatically document param types (less noise in class signature)
 ]
 
-# autodoc_default_options = {
-#     'member-order': 'bysource',
-#     'members': None,
-# }
-
-# Actually use this to skip modules! Confusing...
-autodoc_mock_imports = [
-    'ansicolors',
-]
+# Use Google docstrings
 napoleon_google_docstring = True
 
 # Configure autosummary
@@ -64,6 +56,10 @@ add_module_names = False  # NB, does not work
 # Add any paths that contain templates here, relative to this directory.
 templates_path = ["_templates"]
 
+# Syntax highlighting style
+pygments_style = "sphinx"
+modindex_common_prefix = ["sciris."]
+
 # List of patterns, relative to source directory, that match files and
 # directories to ignore when looking for source files.
 # This pattern also affects html_static_path and html_extra_path.
@@ -75,9 +71,34 @@ suppress_warnings = ['autosectionlabel.*']
 # -- Options for HTML output -------------------------------------------------
 
 html_theme = "pydata_sphinx_theme"
+html_theme_options = {
+    "collapse_navigation": True,
+    "navigation_depth": 2,
+    "show_prev_next": False,
+    "icon_links": [
+        {"name": "Web", "url": "https://sciris.org", "icon": "fas fa-home"},
+        {
+            "name": "GitHub",
+            "url": "https://github.com/sciris/sciris",
+            "icon": "fab fa-github-square",
+        },
+    ],
+    # "external_links": [{"name": "Guides", "url": "https://networkx.org/nx-guides/"}],
+    # "navbar_end": ["theme-switcher", "navbar-icon-links", "version"],
+    "secondary_sidebar_items": ["search-field", "page-toc", "edit-this-page"],
+    "header_links_before_dropdown": 7,
+}
+html_sidebars = {
+    "**": ["sidebar-nav-bs", "sidebar-ethical-ads"],
+    "index": [],
+    "install": [],
+    "tutorial": [],
+    "auto_examples/index": [],
+}
 html_logo = "sciris-logo-small.png"
 html_favicon = "favicon.ico"
 html_static_path = ['_static']
+html_baseurl = "https://sciris.readthedocs.io/en/latest/"
 html_context = {
     'rtd_url': 'https://sciris.readthedocs.io/en/latest/',
     'theme_vcs_pageview_mode': 'edit'
@@ -86,4 +107,5 @@ html_context = {
 html_last_updated_fmt = '%Y-%b-%d'
 html_show_sourcelink = True
 html_show_sphinx = False
+html_copy_source = False
 htmlhelp_basename = 'Sciris'
