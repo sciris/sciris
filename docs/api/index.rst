@@ -10,5 +10,5 @@ API reference
    parallel
    printing
    math
-   other
+   utils
 
