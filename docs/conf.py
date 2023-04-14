@@ -19,7 +19,7 @@ import sciris as sc
 # -- Project information -----------------------------------------------------
 
 project = 'Sciris'
-copyright = f'2014–2022 by the Sciris Development Team (version {sc.__version__})'
+copyright = f'2014–2023 by the Sciris Development Team (version {sc.__version__})'
 author = 'Sciris Development Team'
 
 # The short X.Y version
@@ -73,10 +73,7 @@ exclude_patterns = ["_build", "Thumbs.db", ".DS_Store", "**.ipynb_checkpoints"]
 
 # -- Options for HTML output -------------------------------------------------
 
-# Use RTD
-import sphinx_rtd_theme
-html_theme = "sphinx_rtd_theme"
-html_theme_path = [sphinx_rtd_theme.get_html_theme_path()]
+html_theme = "pydata_sphinx_theme"
 html_logo = "sciris-logo-small.png"
 html_favicon = "favicon.ico"
 html_static_path = ['_static']
