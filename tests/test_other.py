@@ -13,13 +13,22 @@ def test_options():
     sc.heading('Test options')
 
     print('Testing options')
+    sc.options.help()
     sc.options.help(detailed=True)
     sc.options.disp()
     print(sc.options)
-    with sc.options.context(aspath=True):
-        pass
     sc.options(dpi=150)
     sc.options('default')
+    with sc.options.context(aspath=True):
+        pass
+    for style in ['default', 'simple', 'fancy', 'fivethirtyeight']:
+        with sc.options.with_style(style):
+            pass
+    with sc.options.with_style({'xtick.alignment':'left'}):
+        pass
+    with pytest.raises(KeyError):
+        with sc.options.with_style(invalid_key=100):
+            pass
 
     fn = 'options.json'
     sc.options.save(fn)
@@ -27,14 +36,17 @@ def test_options():
     sc.rmpath(fn)
 
     print('Testing sc.parse_env()')
-    os.environ['TMP_STR'] = 'test'
-    os.environ['TMP_INT'] = '4'
-    os.environ['TMP_FLOAT'] = '2.3'
-    os.environ['TMP_BOOL'] = 'False'
-    assert sc.parse_env('TMP_STR',   which='str')   == 'test'
-    assert sc.parse_env('TMP_INT',   which='int')   == 4
-    assert sc.parse_env('TMP_FLOAT', which='float') == 2.3
-    assert sc.parse_env('TMP_BOOL',  which='bool')  == False
+    mapping = [
+        sc.objdict(to='str',   key='TMP_STR',   val='test',  expected='test', nullexpected=''),
+        sc.objdict(to='int',   key='TMP_INT',   val='4',     expected=4,      nullexpected=0),
+        sc.objdict(to='float', key='TMP_FLOAT', val='2.3',   expected=2.3,    nullexpected=0.0),
+        sc.objdict(to='bool',  key='TMP_BOOL',  val='False', expected=False,  nullexpected=False),
+    ]
+    for e in mapping:
+        os.environ[e.key] = e.val
+        assert sc.parse_env(e.key, which=e.to) == e.expected
+        del os.environ[e.key]
+        assert sc.parse_env(e.key, which=e.to) == e.nullexpected
 
     print('Testing help')
     sc.help()
@@ -105,12 +117,44 @@ def test_dicts():
     print(f'Dict3: {dict3}')
     assert dict3 == {'key1': {'a': 'A*'}, 'key2': {'b': 'B', 'b+': 'B+'}, 'key3': {'c': 'C'}}
     o.dict3 = dict3
+    
+    return o
 
-    print('\nTesting search')
-    nested = {'a':{'foo':1, 'bar':2}, 'b':{'bar':3, 'cat':4}}
-    matches = sc.search(nested, 'bar') # Returns ['["a"]["bar"]', '["b"]["bar"]']
-    print(matches)
-    o.matches = matches
+    
+
+
+def test_search():
+    sc.heading('Testing search')
+    o = sc.objdict()
+    
+    # Define th enested object
+    nested = {
+        'a': {
+             'foo':1,
+             'bar':2,
+        },
+        'b':{
+            'bar':3,
+            'cat':sc.prettyobj(hat=[1,2,4,8]),
+        }
+    }
+    
+    print('\nTesting search by key')
+    key = 'bar'
+    keymatches = sc.search(nested, key) # Returns ['["a"]["bar"]', '["b"]["bar"]']
+    o.keymatches = keymatches
+    print(keymatches)
+    assert len(keymatches) == 2
+    for keymatch in keymatches:
+        assert key in keymatch
+        
+    print('\nTesting search by value')
+    val = 8
+    valmatches = sc.search(nested, value=val, aslist=True) # Returns ['["a"]["bar"]', '["b"]["bar"]']
+    o.valmatches = valmatches
+    print(valmatches)
+    assert len(valmatches) == 1
+    assert sc.getnested(nested, valmatches[0]) == val # Get from the original nested object
 
     return o
 
@@ -125,6 +169,7 @@ if __name__ == '__main__':
     # Nested
     nested    = test_nested()
     dicts     = test_dicts()
+    search    = test_search()
 
     sc.toc()
     print('Done.')

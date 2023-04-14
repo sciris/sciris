@@ -26,13 +26,287 @@ from . import sc_datetime as scd
 from . import sc_odict as sco
 from . import sc_fileio as scf
 from . import sc_nested as scn
+from . import sc_printing as scp
+from . import sc_dataframe as scdf
+
+
+##############################################################################
+#%% Basic performance functions
+##############################################################################
+
+__all__ = ['checkmem', 'checkram', 'benchmark']
+
+
+def checkmem(var, descend=1, order='size', compresslevel=0, maxitems=1000, 
+             subtotals=True, plot=False, verbose=False, **kwargs):
+    '''
+    Checks how much memory the variable or variables in question use by dumping
+    them to file.
+
+    Note on the different functions:
+
+        - ``sc.memload()`` checks current total system memory consumption
+        - ``sc.checkram()`` checks RAM (virtual memory) used by the current Python process
+        - ``sc.checkmem()`` checks memory consumption by a given object
+
+    Args:
+        var (any): the variable being checked
+        descend (bool): whether or not to descend one level into the object
+        order (str): order in which to list items: "size" (default), "alphabetical", or "none"
+        compresslevel (int): level of compression to use when saving to file (typically 0)
+        maxitems (int): the maximum number of separate entries to check the size of
+        subtotals (bool): whether to include subtotals for different levels of depth
+        plot (bool): if descending, show the results as a pie chart
+        verbose (bool or int): detail to print, if >1, print repr of objects along the way
+        **kwargs (dict): passed to :func:`load`
+
+    **Examples**::
+
+        import numpy as np
+        import sciris as sc
+        
+        list_obj = ['label', np.random.rand(2483,589)])
+        sc.checkmem(list_obj)
+        
+        
+        nested_dict = dict(
+            foo = dict(
+                a = np.random.rand(5,10),
+                b = np.random.rand(5,20),
+                c = np.random.rand(5,50),
+            ),
+            bar = [
+                np.random.rand(5,100),
+                np.random.rand(5,200),
+                np.random.rand(5,500),
+            ],
+            cat = np.random.rand(5,10),
+        )
+        sc.checkmem(nested_dict)
+    
+    New in version 2.2.0: descend multiple levels; dataframe output; "alphabetical" renamed "order"
+    '''
+    
+    # Handle input arguments -- used for recursion
+    _depth  = kwargs.pop('_depth', 0)
+    _prefix = kwargs.pop('_prefix', '')
+    _join   = kwargs.pop('_join', '→')
+
+    def check_one_object(variable):
+        ''' Check the size of one variable '''
+
+        if verbose>1: # pragma: no cover
+            print(f'  Checking size of {variable}...')
+
+        # Create a temporary file, save the object, check the size, remove it
+        filename = tempfile.mktemp()
+        scf.save(filename, variable, allow_empty=True, compresslevel=compresslevel)
+        filesize = os.path.getsize(filename)
+        os.remove(filename)
+
+        sizestr = scp.humanize_bytes(filesize)
+        return filesize, sizestr
+
+    # Initialize
+    varnames  = []
+    variables = []
+    columns=dict(
+        variable  = object,
+        humansize = object,
+        bytesize  = int,
+        depth     = int,
+        is_total  = bool,
+    )
+    df = scdf.dataframe(columns=columns)
+    
+    if descend:
+        if isinstance(var, dict): # Handle dicts
+            if verbose>1: print('Iterating over dict')
+            varnames = list(var.keys())
+            variables = var.values()
+        elif hasattr(var, '__dict__'): # It's an object
+            if verbose>1: print('Iterating over class-like object')
+            varnames = sorted(list(var.__dict__.keys()))
+            variables = [getattr(var, attr) for attr in varnames]
+        elif scu.isiterable(var, exclude=str): # Handle lists, and be sure to skip strings
+            if verbose>1: print('Iterating over list-like object')
+            varnames = [f'item {i}' for i in range(len(var))]
+            variables = var
+        else:
+            descend = 0 # Can't descend
+
+    # Create the object(s) to check the size(s) of
+    if not descend:
+        varname = _prefix if _prefix else 'Variable'
+        bytesize, sizestr = check_one_object(var)
+        df.appendrow(dict(variable=varname, humansize=sizestr, bytesize=bytesize, depth=_depth, is_total=False))
+    
+    else:
+        # Error checking
+        n_variables = len(variables)
+        if n_variables > maxitems: # pragma: no cover
+            errormsg = f'Cannot compute the sizes of {n_variables} items since maxitems is set to {maxitems}'
+            raise RuntimeError(errormsg)
+    
+        # Compute the sizes recursively
+        for v,(varname,variable) in enumerate(zip(varnames, variables)):
+            if verbose: # pragma: no cover
+                print(f'Processing variable {v} of {len(variables)}')
+            label = _join.join([_prefix, varname]) if _prefix else varname
+            this_df = checkmem(variable, descend=descend-1, compresslevel=compresslevel, maxitems=maxitems, plot=False, verbose=False, _prefix=label, _depth=_depth+1)
+            df.concat(this_df, inplace=True)
+    
+    # Handle subtotals
+    if subtotals and len(df) > 1:
+        total_label = _prefix + ' (total)' if _prefix else 'Total'
+        total = df[np.logical_not(df.is_total)].bytesize.sum()
+        human_total = scp.humanize_bytes(total)
+        df.appendrow(dict(variable=total_label, humansize=human_total, bytesize=total, depth=_depth, is_total=True))
+    
+    # Only sort if we're at the highest level
+    if _depth == 0 and len(df) > 1:
+        # if subtotals:
+            
+        if order == 'alphabetical': # pragma: no cover
+            df.sortrows(col='variable')
+        elif order == 'size':
+            df.sortrows(col='bytesize', reverse=True)
+
+    if plot: # pragma: no cover
+        pl.axes(aspect=1)
+        pl.pie(df.bytesize, labels=df.variable, autopct='%0.2f')
+
+    return df
+
+
+def checkram(unit='mb', fmt='0.2f', start=0, to_string=True):
+    '''
+    Measure actual memory usage, typically at different points throughout execution.
+
+    Note on the different functions:
+
+        - ``sc.memload()`` checks current total system memory consumption
+        - ``sc.checkram()`` checks RAM (virtual memory) used by the current Python process
+        - ``sc.checkmem()`` checks memory consumption by a given object
+
+    **Example**::
+
+        import sciris as sc
+        import numpy as np
+        start = sc.checkram(to_string=False)
+        a = np.random.random((1_000, 10_000))
+        print(sc.checkram(start=start))
+
+    New in version 1.0.0.
+    '''
+    process = psutil.Process(os.getpid())
+    mapping = {'b':1, 'kb':1e3, 'mb':1e6, 'gb':1e9}
+    try:
+        factor = mapping[unit.lower()]
+    except KeyError: # pragma: no cover
+        raise scu.KeyNotFoundError(f'Unit {unit} not found among {scu.strjoin(mapping.keys())}')
+    mem_use = process.memory_info().rss/factor - start
+    if to_string:
+        output = f'{mem_use:{fmt}} {unit.upper()}'
+    else: # pragma: no cover
+        output = mem_use
+    return output
+
+
+def benchmark(repeats=5, scale=1, verbose=False, python=True, numpy=True, return_timers=False):
+    '''
+    Benchmark Python performance
+    
+    Performs a set of standard operations in both Python and Numpy and times how
+    long they take. Results are returned in terms of millions of operations per second (MOPS).
+    With default settings, this function should take very approximately 0.1 s to 
+    run (depending on the machine, of course!).
+    
+    For Python, these operations are: for loops, list append/indexing, dict set/get,
+    and arithmetic. For Numpy, these operations are: random floats, random ints,
+    addition, and multiplication.
+    
+    Args:
+        repeats (int): the number of times to repeat each test
+        scale (float): the scale factor to use for the size of the loops/arrays
+        verbose (bool): print out the results after each repeat
+        python (bool): whether to run the Python tests
+        numpy (bool): whether to run the Numpy tests
+        return_timers (bool): if True, return the timer objects instead of the "MOPS" results
+        
+    Returns:
+        An objdict with keys "python" and "numpy" for the number of MOPS for each
+    
+    **Examples**:
+        
+        sc.benchmark() # Returns e.g. {'python': 11.43, 'numpy': 236.595}
+        
+        numpy_mops = sc.benchmark(python=False).numpy
+        if numpy_mops < 100:
+            print('Your computer is slow')
+        elif numpy_mops > 400: 
+            print('Your computer is fast')
+        else:
+            print('Your computer is normal')
+    
+    New in version 2.2.0.
+    '''
+    
+    P = scd.timer(verbose=verbose)
+    N = scd.timer(verbose=verbose)
+    
+    py_outer = 10
+    py_inner = scale*5e2
+    
+    np_outer = 1
+    np_inner = scale*5e5
+    
+    py_ops = (py_outer * py_inner * 18)/1e6
+    np_ops = (np_outer * np_inner * 4)/1e6
+    
+    # Benchmark plain Python
+    if python:
+        for r in range(repeats):
+            l = list()
+            d = dict()
+            result = 0
+            P.tic()
+            for i in range(py_outer):
+                for j in range(int(py_inner)):
+                    l.append([i,j]) # Operation 1: list append
+                    d[str((i,j))] = [i,j] # Operations 2-3: convert to string and dict assign
+                    v1 = l[-1][0] + l[-1][0] # Operations 4-8: list get (x4) and sum
+                    v2 = d[str((i,j))][0] + d[str((i,j))][1] # Operations 9-16: convert to string (x2), list get (x2), dict get (x2), sum
+                    result += v1 + v2 # Operations 17-18: sum (x2)
+            P.toc(f'Python, {py_ops}m operations')
+                 
+    # Benchmark Numpy
+    if numpy:
+        for r in range(repeats):
+            N.tic()
+            for i in range(np_outer):
+                a = np.random.random(int(np_inner)) # Operation 1: random floats
+                b = np.random.randint(10, size=int(np_inner)) # Operation 2: random integers
+                a + b # Operation 3: addition
+                a*b # Operation 4: multiplication
+            N.toc(f'Numpy, {np_ops}m operations')
+    
+    # Handle output
+    if return_timers: # pragma: no cover
+        out = sco.objdict(python=P, numpy=N)
+    else:
+        pymops = py_ops/P.mean() if len(P) else None # Handle if one or the other isn't run
+        npmops = np_ops/N.mean() if len(N) else None
+        out = sco.objdict(python=pymops, numpy=npmops)
+        
+    return out
 
 
 ##############################################################################
 #%% Load balancing functions
 ##############################################################################
 
-__all__ = ['cpu_count', 'cpuload', 'memload', 'loadbalancer']
+__all__ += ['cpu_count', 'cpuload', 'memload', 'loadbalancer']
 
 
 def cpu_count():
@@ -70,142 +344,10 @@ def memload():
 
 
 
-def checkmem(var, descend=True, alphabetical=False, compresslevel=0, plot=False, verbose=False, **kwargs):
-    '''
-    Checks how much memory the variable or variables in question use by dumping
-    them to file.
-
-    Note on the different functions:
-
-        - ``sc.memload()`` checks current total system memory consumption
-        - ``sc.checkram()`` checks RAM (virtual memory) used by the current Python process
-        - ``sc.checkmem()`` checks memory consumption by a given object
-
-    Args:
-        var (any): the variable being checked
-        descend (bool): whether or not to descend one level into the object
-        alphabetical (bool): if descending into a dict or object, whether to list items by name rather than size
-        compresslevel (int): level of compression to use when saving to file (typically 0)
-        plot (bool): if descending, show the results as a pie chart
-        verbose (bool or int): detail to print, if >1, print repr of objects along the way
-        **kwargs (dict): passed to :func:`load`
-
-    **Example**::
-
-        import numpy as np
-        import sciris as sc
-        sc.checkmem(['spiffy', np.random.rand(2483,589)])
-    '''
-
-    def check_one_object(variable):
-        ''' Check the size of one variable '''
-
-        if verbose>1:
-            print(f'  Checking size of {variable}...')
-
-        # Create a temporary file, save the object, check the size, remove it
-        filename = tempfile.mktemp()
-        scf.save(filename, variable, die='never', compresslevel=compresslevel)
-        filesize = os.path.getsize(filename)
-        os.remove(filename)
-
-        # Convert to string
-        factor = 1
-        label = 'B'
-        labels = ['KB','MB','GB']
-        for i,f in enumerate([3,6,9]):
-            if filesize>10**f:
-                factor = 10**f
-                label = labels[i]
-        humansize = float(filesize/float(factor))
-        sizestr = f'{humansize:0.3f} {label}'
-        return filesize, sizestr
-
-    # Initialize
-    varnames  = []
-    variables = []
-    sizes     = []
-    sizestrs  = []
-
-    # Create the object(s) to check the size(s) of
-    varnames = ['Variable'] # Set defaults
-    variables = [var]
-    if descend or descend is None:
-        if hasattr(var, '__dict__'): # It's an object
-            if verbose>1: print('Iterating over object')
-            varnames = sorted(list(var.__dict__.keys()))
-            variables = [getattr(var, attr) for attr in varnames]
-        elif np.iterable(var): # Handle dicts and lists
-            if isinstance(var, dict): # Handle dicts
-                if verbose>1: print('Iterating over dict')
-                varnames = list(var.keys())
-                variables = var.values()
-            else: # Handle lists and other things
-                if verbose>1: print('Iterating over list')
-                varnames = [f'item {i}' for i in range(len(var))]
-                variables = var
-        else:
-            if descend: # Could also be None
-                print('Object is not iterable: cannot descend') # Print warning and use default
-
-    # Compute the sizes
-    for v,variable in enumerate(variables):
-        if verbose:
-            print(f'Processing variable {v} of {len(variables)}')
-        filesize, sizestr = check_one_object(variable)
-        sizes.append(filesize)
-        sizestrs.append(sizestr)
-
-    if alphabetical:
-        inds = np.argsort(varnames)
-    else:
-        inds = np.argsort(sizes)[::-1]
-
-    data = sco.objdict({varnames[i]:[sizes[i], sizestrs[i]] for i in inds})
-
-    if plot: # pragma: no cover
-        pl.axes(aspect=1)
-        pl.pie(np.array(sizes)[inds], labels=np.array(varnames)[inds], autopct='%0.2f')
-
-    return data
 
 
-def checkram(unit='mb', fmt='0.2f', start=0, to_string=True):
-    '''
-    Measure actual memory usage, typically at different points throughout execution.
-
-    Note on the different functions:
-
-        - ``sc.memload()`` checks current total system memory consumption
-        - ``sc.checkram()`` checks RAM (virtual memory) used by the current Python process
-        - ``sc.checkmem()`` checks memory consumption by a given object
-
-    **Example**::
-
-        import sciris as sc
-        import numpy as np
-        start = sc.checkram(to_string=False)
-        a = np.random.random((1_000, 10_000))
-        print(sc.checkram(start=start))
-
-    New in version 1.0.0.
-    '''
-    process = psutil.Process(os.getpid())
-    mapping = {'b':1, 'kb':1e3, 'mb':1e6, 'gb':1e9}
-    try:
-        factor = mapping[unit.lower()]
-    except KeyError: # pragma: no cover
-        raise scu.KeyNotFoundError(f'Unit {unit} not found among {scu.strjoin(mapping.keys())}')
-    mem_use = process.memory_info().rss/factor - start
-    if to_string:
-        output = f'{mem_use:{fmt}} {unit.upper()}'
-    else:
-        output = mem_use
-    return output
-
-
-def loadbalancer(maxcpu=0.8, maxmem=0.8, index=None, interval=None, cpu_interval=0.1,
-                 maxtime=36000, label=None, verbose=True, **kwargs):
+def loadbalancer(maxcpu=0.9, maxmem=0.9, index=None, interval=None, cpu_interval=0.1,
+                 maxtime=36_000, label=None, verbose=True, **kwargs):
     '''
     Delay execution while CPU load is too high -- a very simple load balancer.
 
@@ -226,9 +368,10 @@ def loadbalancer(maxcpu=0.8, maxmem=0.8, index=None, interval=None, cpu_interval
 
         # Use a maximum CPU load of 50%, maximum memory of 90%, and stagger the start by process number
         for nproc in processlist:
-            sc.loadbalancer(maxload=0.5, maxmem=0.9, index=nproc)
+            sc.loadbalancer(maxload=0.5, maxmem=0.8, index=nproc)
 
     | New in version 2.0.0: ``maxmem`` argument; ``maxload`` renamed ``maxcpu``
+    | New in version 2.2.0: ``maxcpu`` and ``maxmem`` set to 0.9 by default
     '''
 
     # Handle deprecation
@@ -246,27 +389,27 @@ def loadbalancer(maxcpu=0.8, maxmem=0.8, index=None, interval=None, cpu_interval
     # Handle the interval
     default_interval = 0.5
     min_interval = 1e-3 # Don't allow intervals of less than 1 ms
-    if interval is None:
+    if interval is None: # pragma: no cover
         interval = default_interval
-    if interval < min_interval:
+    if interval < min_interval: # pragma: no cover
         interval = min_interval
         warnmsg = f'sc.loadbalancer() "interval" should not be less than {min_interval} s'
         warnings.warn(warnmsg, category=UserWarning, stacklevel=2)
 
     if label is None:
         label = ''
-    else:
+    else: # pragma: no cover
         label += ': '
 
     if index is None:
         pause = interval*2*np.random.rand()
         index = ''
-    else:
+    else: # pragma: no cover
         pause = index*interval
 
     if maxcpu>1: maxcpu = maxcpu/100 # If it's >1, assume it was given as a percent
     if maxmem>1: maxmem = maxmem/100
-    if (not 0 < maxcpu < 1) and (not 0 < maxmem < 1):
+    if (not 0 < maxcpu < 1) and (not 0 < maxmem < 1): # pragma: no cover
         return # Return immediately if no max load
     else:
         time.sleep(pause) # Give it time to asynchronize, with a predefined delay
@@ -287,10 +430,10 @@ def loadbalancer(maxcpu=0.8, maxmem=0.8, index=None, interval=None, cpu_interval
         cpu_str = f'{cpu_current:0.2f}{cpu_compare}{maxcpu:0.2f}'
         mem_str = f'{mem_current:0.2f}{mem_compare}{maxmem:0.2f}'
         process_str = f'process {index}' if index else 'process'
-        if cpu_toohigh:
+        if cpu_toohigh: # pragma: no cover
             string = label+f'CPU load too high ({cpu_str}); {process_str} queued {count} times'
             scd.randsleep(interval)
-        elif mem_toohigh:
+        elif mem_toohigh: # pragma: no cover
             string = label+f'Memory load too high ({mem_str}); {process_str} queued {count} times'
             scd.randsleep(interval)
         else:
@@ -306,7 +449,7 @@ def loadbalancer(maxcpu=0.8, maxmem=0.8, index=None, interval=None, cpu_interval
 #%% Profiling functions
 ##############################################################################
 
-__all__ += ['profile', 'mprofile', 'checkmem', 'checkram']
+__all__ += ['profile', 'mprofile']
 
 
 def profile(run, follow=None, print_stats=True, *args, **kwargs):
@@ -367,7 +510,7 @@ def profile(run, follow=None, print_stats=True, *args, **kwargs):
             errormsg = 'The "line_profiler" Python package is required to perform profiling'
         raise ModuleNotFoundError(errormsg) from E
 
-    if follow is None:
+    if follow is None: # pragma: no cover
         follow = run
     orig_func = run
 
@@ -376,16 +519,16 @@ def profile(run, follow=None, print_stats=True, *args, **kwargs):
     for f in follow:
         lp.add_function(f)
     lp.enable_by_count()
-    wrapper = lp(run)
+    wrapper = lp(run) # pragma: no cover
 
     if print_stats: # pragma: no cover
         print('Profiling...')
-    wrapper(*args, **kwargs)
-    run = orig_func
+    wrapper(*args, **kwargs) # pragma: no cover
+    run = orig_func # pragma: no cover
     if print_stats: # pragma: no cover
         lp.print_stats()
         print('Done.')
-    return lp
+    return lp # pragma: no cover
 
 
 def mprofile(run, follow=None, show_results=True, *args, **kwargs):
@@ -414,7 +557,7 @@ def mprofile(run, follow=None, show_results=True, *args, **kwargs):
             errormsg = 'The "memory_profiler" Python package is required to perform profiling'
         raise ModuleNotFoundError(errormsg) from E
 
-    if follow is None:
+    if follow is None: # pragma: no cover
         follow = run
 
     lp = mp.LineProfiler()
@@ -520,7 +663,7 @@ class resourcemonitor(scu.prettyobj):
             label (str): optional label for printing progress
         '''
 
-        def handler(signum, frame):
+        def handler(signum, frame): # pragma: no cover
             ''' Custom exception handler '''
             if self.exception is not None:
                 raise self.exception
@@ -556,7 +699,7 @@ class resourcemonitor(scu.prettyobj):
             errormsg = 'Could not reset signal, probably not calling from main thread'
             print(errormsg)
         if self.exception is not None and self.die: # This exception has likely already been raised, but if not, raise it now
-            raise self.exception
+            raise self.exception # pragma: no cover
         return self
 
 
@@ -585,7 +728,7 @@ class resourcemonitor(scu.prettyobj):
                 self.exception = LimitExceeded(checkstr)
                 if self.callback:
                     self.callback(checkdata, checkstr)
-                if self.die:
+                if self.die: # pragma: no cover
                     self.kill()
             time.sleep(self.interval)
 
@@ -646,7 +789,7 @@ class resourcemonitor(scu.prettyobj):
         return is_ok, checkdata, checkstr
 
 
-    def kill(self):
+    def kill(self): # pragma: no cover
         ''' Kill all processes '''
         kill_verbose = self.verbose is not False # Print if self.verbose is True or None (just not False)
         if kill_verbose:

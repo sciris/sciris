@@ -1,5 +1,5 @@
 '''
-Parallelization functions, allowing multiprocessing to be used simply.
+Functions to allow parallelization to be performed easily.
 
 NB: Uses ``multiprocess`` instead of ``multiprocessing`` under the hood for
 broadest support  across platforms (e.g. Jupyter notebooks).
@@ -8,31 +8,558 @@ Highlights:
     - :func:`parallelize`: as-easy-as-possible parallelization
 '''
 
-
+import warnings
 import numpy as np
 import multiprocess as mp
 import multiprocessing as mpi
 import concurrent.futures as cf
 from functools import partial
-import textwrap
-import warnings
 from . import sc_utils as scu
-from . import sc_profiling as scp
+from . import sc_odict as sco
+from . import sc_printing as scp
+from . import sc_datetime as scd
+from . import sc_profiling as scpro
 
 
 ##############################################################################
-#%% Parallelization functions
+#%% Parallelization class
 ##############################################################################
 
-__all__ = ['parallelize', 'parallelcmd', 'parallel_progress']
+__all__ = ['Parallel', 'parallelize']
+
+# Define a common error message
+freeze_support_error = '''
+Uh oh! It appears you are trying to run with multiprocessing on Windows outside
+of the __main__ block; please see https://docs.python.org/3/library/multiprocessing.html
+for more information. The correct syntax to use is e.g.
+
+import sciris as sc
+
+def my_func(x):
+    return
+
+if __name__ == '__main__':
+    sc.parallelize(my_func)
+'''
+
+def _progressbar(globaldict, njobs, **kwargs):
+    ''' Define a progress bar, available to both '''
+    done = sum(globaldict.values())
+    scp.progressbar(done, njobs, label=f'Job {done}/{njobs}', **kwargs)
+    return
 
 
-def parallelize(func, iterarg=None, iterkwargs=None, args=None, kwargs=None, ncpus=None, maxcpu=None, maxmem=None,
-                interval=None, parallelizer=None, serial=False, returnpool=False, die=False, **func_kwargs):
+class Parallel:
+    '''
+    Parallelization manager
+    
+    For arguments and usage documentation, see :func:`parallelize()`. Briefly,
+    this class validates input arguments, sets the number of CPUs, creates a
+    process (or thread) pool, starts the jobs running, retrieves the results from
+    each job, and processes them into outputs.
+    
+    Useful methods:
+        reset(): reset the Parallel object to its initial pre-run state
+        run_async(): the method that actually executes the parallelization (NB, used with every method, not only async ones)
+        monitor(): monitor the progress of an asynchronous run
+        finalize(): get the results from each job and process it
+        run(): shortcut to calling run_async() followed by finalize()
+
+    Useful attributes and properties:
+        running (bool): whether or not the jobs are running
+        ready (bool): whether or not the jobs are ready
+        status (str): a string description of the current state (not run, running, or done)
+        jobs (list): a list of jobs to run or being run (empty prior to run)
+        results (list): list of all results (the output from the jobs; empty prior to run)
+        success (list): whether each job completed successfully (true/false)
+        exceptions (list): if not, store the exceptions that were raised
+        times (dict): timing information on when the jobs were started, when they finished, and how long each job took
+    
+    **Example**::
+        
+        import sciris as sc
+        import numpy as np
+
+        def slowfunc(i):
+            np.random.seed(i)
+            sc.timedsleep(np.random.rand())
+            return i**2
+
+        P = sc.Parallel(slowfunc, iterarg=range(10), parallelizer='multiprocess-async')
+        P.run_async()
+        P.monitor()
+        P.finalize()
+        print(P.times)
+        
+    New in version 2.2.0.    
+    '''
+    def __init__(self, func, iterarg=None, iterkwargs=None, args=None, kwargs=None, ncpus=None, 
+                 maxcpu=None, maxmem=None, interval=None, parallelizer=None, serial=False, 
+                 progress=True, callback=None, label=None, die=True, **func_kwargs):
+        
+        # Store input arguments
+        self.func         = func
+        self.iterarg      = iterarg
+        self.iterkwargs   = iterkwargs
+        self.args         = args
+        self.kwargs       = scu.mergedicts(kwargs, func_kwargs)
+        self._ncpus       = ncpus # With a prefix since dynamically calculated later
+        self.maxcpu       = maxcpu
+        self.maxmem       = maxmem
+        self.interval     = interval
+        self.parallelizer = parallelizer
+        self.serial       = serial
+        self.progress     = progress
+        self.callback     = callback
+        self.label        = label
+        self.die          = die
+        
+        # Additional initialization
+        self.init()
+        return
+    
+    
+    def init(self):
+        '''
+        Perform all remaining initialization steps; this can safely be called after object creation
+        '''
+        self.reset()
+        self.set_defaults()
+        self.validate_args()
+        self.make_argslist()
+        self.set_ncpus()
+        self.set_method()
+        return
+    
+    
+    def reset(self):
+        ''' Reset to the pre-run state '''
+        self.ncpus        = None
+        self.njobs        = None
+        self.embarrassing = None
+        self.argslist     = None
+        self.method       = None
+        self.pool         = None
+        self.manager      = mpi.Manager() # Create a manager for sharing resources across jobs
+        self.globaldict   = self.manager.dict() # Create a dict for sharing progress of each job
+        self.map_func     = None
+        self.is_async     = None
+        self.jobs         = None
+        self.results      = None
+        self.success      = None
+        self.exceptions   = None
+        self.times        = sco.objdict(started=None, finished=None, elapsed=None, jobs=None)
+        self._running     = False # Used interally; see self.running for the dynamically updated property
+        self.already_run  = False
+        return
+    
+    
+    def __repr__(self):
+        ''' Brief representation of the object '''
+        labelstr = f'"{self.label}; "' if self.label else ''
+        string   = f'Parallel({labelstr}jobs={self.njobs}; cpus={self.ncpus}; method={self.method}; status={self.status})'
+        return string
+    
+    
+    def disp(self):
+        ''' Display the full representation of the object '''
+        return scp.pr(self)
+    
+    
+    def set_defaults(self):
+        ''' Define defaults for parallelization '''
+        self.defaults = sco.objdict()
+        
+        # Define default parallelizers
+        self.defaults.fast   = 'concurrent.futures'
+        self.defaults.robust = 'multiprocess'
+        
+        # Map parallelizer to consistent choices
+        self.defaults.mapping = {
+            'default'            : self.defaults.robust,
+            'robust'             : self.defaults.robust,
+            'fast'               : self.defaults.fast,
+            'serial'             : 'serial',
+            'concurrent.futures' : 'concurrent.futures',
+            'concurrent'         : 'concurrent.futures',
+            'futures'            : 'concurrent.futures',
+            'multiprocess'       : 'multiprocess',
+            'multiprocessing'    : 'multiprocessing',
+            'thread'             : 'thread',
+            'threadpool'         : 'thread',
+        }
+        
+        return
+    
+    
+    def validate_args(self):
+        ''' Validate iterarg and iterkwargs '''
+        iterarg = self.iterarg
+        iterkwargs = self.iterkwargs
+        njobs = 0
+        
+        # Check that only one was provided
+        if iterarg is not None and iterkwargs is not None: # pragma: no cover
+            errormsg = 'You can only use one of iterarg or iterkwargs as your iterable, not both'
+            raise ValueError(errormsg)
+        
+        # Validate iterarg
+        if iterarg is not None:
+            if not(scu.isiterable(iterarg)):
+                try:
+                    iterarg = np.arange(iterarg) # This is duplicated in make_argslist, but kept here so as to not modify user inputs
+                    self.embarrassing = True
+                except Exception as E: # pragma: no cover
+                    errormsg = f'Could not understand iterarg "{iterarg}": not iterable and not an integer: {str(E)}'
+                    raise TypeError(errormsg)
+            njobs = len(iterarg)
+            
+        # Validate iterkwargs
+        if iterkwargs is not None: 
+            
+            if isinstance(iterkwargs, dict): # It's a dict of lists, e.g. {'x':[1,2,3], 'y':[2,3,4]}
+                for key,val in iterkwargs.items():
+                    if not scu.isiterable(val): # pragma: no cover
+                        errormsg = f'iterkwargs entries must be iterable, not {type(val)}'
+                        raise TypeError(errormsg)
+                    if not njobs:
+                        njobs = len(val)
+                    else:
+                        if len(val) != njobs: # pragma: no cover
+                            errormsg = f'All iterkwargs iterables must be the same length, not {njobs} vs. {len(val)}'
+                            raise ValueError(errormsg)
+            
+            elif isinstance(iterkwargs, list): # It's a list of dicts, e.g. [{'x':1, 'y':2}, {'x':2, 'y':3}, {'x':3, 'y':4}]
+                njobs = len(iterkwargs)
+                for item in iterkwargs:
+                    if not isinstance(item, dict): # pragma: no cover
+                        errormsg = f'If iterkwargs is a list, each entry must be a dict, not {type(item)}'
+                        raise TypeError(errormsg)
+            
+            else: # pragma: no cover
+                errormsg = f'iterkwargs must be a dict of lists, a list of dicts, or None, not {type(iterkwargs)}'
+                raise TypeError(errormsg)
+    
+        # Final error checking
+        if njobs == 0:
+            errormsg = 'Nothing found to parallelize: please supply an iterarg, iterkwargs, or both'
+            raise ValueError(errormsg)
+        else:
+            self.njobs = njobs
+            
+        return
+    
+    
+    def make_argslist(self):
+        ''' Construct argument list '''
+
+        # Initialize
+        iterarg    = self.iterarg
+        iterkwargs = self.iterkwargs
+        argslist   = []
+        
+        # Check for embarrassingly parallel run -- should already be validated
+        if self.embarrassing:
+            iterarg = np.arange(iterarg)
+        
+        # Construct the argument list for each job
+        for index in range(self.njobs):
+            if iterarg is None:
+                iterval = None
+            else:
+                iterval = iterarg[index]
+            if iterkwargs is None:
+                iterdict = None
+            else:
+                if isinstance(iterkwargs, dict): # Dict of lists
+                    iterdict = {}
+                    for key,val in iterkwargs.items():
+                        iterdict[key] = val[index]
+                elif isinstance(iterkwargs, list): # List of dicts
+                    iterdict = iterkwargs[index]
+                else:  # pragma: no cover # Should be caught by previous checking, so shouldn't happen
+                    errormsg = f'iterkwargs type not understood ({type(iterkwargs)})'
+                    raise TypeError(errormsg)
+            taskargs = TaskArgs(func=self.func, index=index, njobs=self.njobs, iterval=iterval, iterdict=iterdict,
+                                args=self.args, kwargs=self.kwargs, maxcpu=self.maxcpu, maxmem=self.maxmem,
+                                interval=self.interval, embarrassing=self.embarrassing, callback=self.callback, 
+                                progress=self.progress, globaldict=self.globaldict, die=self.die)
+            argslist.append(taskargs)
+        
+        self.argslist = argslist
+        return
+    
+    
+    def set_ncpus(self):
+        ''' Configure number of CPUs '''
+        
+        # Handle maxload deprecation
+        maxload = self.kwargs.pop('maxload', None)
+        if maxload is not None: # pragma: no cover
+            self.maxcpu = maxload
+            warnmsg = 'sc.loadbalancer() argument "maxload" has been renamed "maxcpu" as of v2.0.0'
+            warnings.warn(warnmsg, category=FutureWarning, stacklevel=2)
+        
+        # Handle number of CPUs
+        ncpus = self._ncpus # Copy, then process
+        sys_cpus = scpro.cpu_count()
+        if not ncpus: # Nothing is supplied (None or 0), calculate dynamically
+            ncpus = sys_cpus
+        elif 0 < ncpus < 1: # Less than one, treat as a fraction of total
+            ncpus = int(np.ceil(sys_cpus*ncpus))
+        ncpus = min(ncpus, self.njobs) # Don't use more CPUs than there are things to process
+        
+        # Check and set CPUs
+        if not ncpus > 0: # pragma: no cover
+            errormsg = f'No CPUs to run on with inputs ncpus={ncpus}, system CPUs={sys_cpus}, and/or number of jobs={self.njobs}'
+            raise ValueError(errormsg)
+        self.ncpus = ncpus
+        return
+    
+    
+    def set_method(self):
+        ''' Choose which method to use for parallelization '''
+        
+        # Handle defaults for the parallelizer
+        parallelizer = self.parallelizer
+        if parallelizer is None:
+            parallelizer = 'default'
+        if self.serial: 
+            parallelizer = 'serial'
+        
+        # Handle the choice of parallelizer
+        if scu.isstring(parallelizer):
+            parallelizer = parallelizer.replace('-copy', '').replace('-async', '')
+            try:
+                self.method = self.defaults.mapping[parallelizer]
+            except:
+                errormsg = f'Parallelizer "{parallelizer}" not found: must be one of {scu.strjoin(self.defaults.mapping.keys())}'
+                raise scu.KeyNotFoundError(errormsg)
+        else: # pragma: no cover
+            self.method = 'custom' # If a custom parallelizer is provided
+        
+        # Handle async
+        is_async = False
+        supports_async = ['multiprocess', 'multiprocessing']
+        if scu.isstring(self.parallelizer) and '-async' in self.parallelizer:
+            if self.method in supports_async:
+                is_async = True
+            else:
+                errormsg = f'You have specified to use async with "{self.method}", but async is only supported for: {scu.strjoin(supports_async)}.'
+                raise ValueError(errormsg)
+        self.is_async = is_async
+        
+        return
+    
+    
+    def make_pool(self):
+        ''' Make the pool and map function '''
+        
+        # Shorten variables
+        ncpus    = self.ncpus
+        method   = self.method
+        is_async = self.is_async
+        
+        def make_async_func(pool):
+            if is_async:
+                map_func = partial(pool.map_async, callback=self._time_finished)
+            else:
+                map_func = pool.map
+            return map_func
+        
+        # Choose parallelizer and map function
+        if method == 'serial':
+            pool = None
+            map_func = lambda task,argslist: list(map(task, argslist))
+        
+        elif method == 'multiprocess': # Main use case
+            pool = mp.Pool(processes=ncpus)
+            map_func = make_async_func(pool)
+        
+        elif method == 'multiprocessing':
+            pool = mpi.Pool(processes=ncpus)
+            map_func = make_async_func(pool)
+        
+        elif method == 'concurrent.futures':
+            pool = cf.ProcessPoolExecutor(max_workers=ncpus)
+            map_func = pool.map
+        
+        elif method == 'thread':
+            pool = cf.ThreadPoolExecutor(max_workers=ncpus)
+            map_func = pool.map
+        
+        elif method == 'custom':
+            pool = None
+            map_func = self.parallelizer
+        
+        else: # Should be unreachable; exception should have already been caught # pragma: no cover
+            errormsg = f'Invalid parallelizer "{self.parallelizer}"'
+            raise ValueError(errormsg)
+            
+        # Reset
+        self.pool       = pool
+        self.map_func   = map_func
+        self.is_async   = is_async
+        self.jobs       = None
+        self.rawresults = None
+        self.results    = None
+        
+        return
+
+    
+    @property
+    def running(self):
+        if not self.is_async:
+            return self._running
+        else:
+            if self.jobs is not None and not self.jobs.ready():
+                running = True
+            else:
+                running = False
+            return running
+    
+    @property
+    def ready(self):
+        if not self.is_async:
+            ready = self.results is not None
+        else:
+            if self.jobs is None:
+                ready = False
+            else:
+                if self.jobs.ready():
+                    ready = True
+                else:
+                    ready = False
+        return ready
+    
+    
+    @property
+    def status(self):
+        output = 'not run'
+        if self.running:
+            output = 'running'
+        elif self.already_run:
+            output = 'done'
+        return output
+    
+    
+    def _time_finished(self, *args, **kwargs):
+        self.times.finished = scd.now()
+        self.times.elapsed = (self.times.finished - self.times.started).total_seconds()
+        return
+
+
+    def run_async(self):
+        ''' Choose how to run in parallel, and do it '''
+        
+        # Shorten variables
+        method = self.method
+        needs_copy = ['serial', 'thread', 'custom']
+        
+        # Make the pool
+        self.make_pool()
+        
+        # Handle optional deepcopy
+        if scu.isstring(self.parallelizer) and '-copy' in self.parallelizer and method in needs_copy: # Don't deepcopy if we're going to pickle anyway
+            argslist = scu.dcp(self.argslist, die=self.die)
+        else:
+            argslist = self.argslist
+        
+        # Run it!
+        self.times.started = scd.now()
+        output = self.map_func(_task, argslist)
+        
+        # Store the pool; do not store the output list here
+        if self.is_async:
+            self.jobs = output
+        else:
+            self.rawresults = list(output)
+            self._time_finished()
+            
+        self.already_run = True
+        
+        return
+    
+    
+    def monitor(self, interval=0.1, **kwargs):
+        ''' Monitor progress -- only usable with async '''
+        final_iter = True
+        while self.running or final_iter:
+            if not self.running and final_iter:
+                final_iter = False
+            _progressbar(self.globaldict, self.njobs, **kwargs)
+            scd.timedsleep(interval)
+        return
+    
+
+    def finalize(self, get_results=True, close_pool=True, process_results=True):
+        ''' Get results from the jobs and close the pool '''
+        if get_results and self.jobs:
+            self.rawresults = list(self.jobs.get())
+        if close_pool and self.pool:
+            try:
+                self.pool.__exit__(None, None, None) # Handle as if in a with block
+            except Exception as E: # pragma: no cover
+                warnmsg = f'Could not close pool {self.pool}, please close manually: {str(E)}'
+                warnings.warn(warnmsg, category=RuntimeWarning, stacklevel=2)
+        if process_results:
+            self.process_results()
+        return
+    
+    
+    def process_results(self):
+        ''' Parse the returned results dict into separate lists '''
+        
+        # Do not proceed if no results
+        if self.rawresults is None: # pragma: no cover
+            errormsg = 'Cannot process results: results not ready yet'
+            raise ValueError(errormsg)
+        
+        # Otherwise, process results
+        else:
+            self.results    = list()
+            self.success    = list()
+            self.exceptions = list()
+            self.times.jobs = list()
+            
+            for raw in self.rawresults:
+                self.results.append(raw['result'])
+                self.success.append(raw['success'])
+                self.exceptions.append(raw['exception'])
+                self.times.jobs.append(raw['elapsed'])
+            
+            if not all(self.success): # pragma: no cover
+                warnmsg = f'Only {sum(self.success)} of {len(self.success)} jobs succeeded; see exceptions attribute for details'
+                warnings.warn(warnmsg, category=RuntimeWarning, stacklevel=2)
+        return
+    
+    
+    def run(self):
+        ''' Actually run the parallelization '''
+        try:
+            self.run_async()
+            self.finalize()
+            
+        # Handle if run outside of __main__ on Windows
+        except RuntimeError as E: # pragma: no cover
+            if 'freeze_support' in E.args[0]: # For this error, add additional information
+                raise RuntimeError(freeze_support_error) from E
+            else: # For all other runtime errors, raise the original exception
+                raise E
+    
+        # Tidy up
+        return self
+    
+    
+
+
+def parallelize(func, iterarg=None, iterkwargs=None, args=None, kwargs=None, ncpus=None, 
+                maxcpu=None, maxmem=None, interval=None, parallelizer=None, serial=False, 
+                progress=False, callback=None, die=True, **func_kwargs):
     '''
     Execute a function in parallel.
 
-    Most simply, ``sc.parallelize()`` acts as an shortcut for using ``ProcessPoolExecutor()``.
+    Most simply, ``sc.parallelize()`` acts as an shortcut for using ``Pool.map()``.
     However, it also provides flexibility in how arguments are passed to the function,
     load balancing, etc.
 
@@ -45,16 +572,9 @@ def parallelize(func, iterarg=None, iterkwargs=None, args=None, kwargs=None, ncp
     Any other kwargs passed to ``sc.parallelize()`` will also be passed to the function.
 
     This function can either use a fixed number of CPUs or allocate dynamically
-    based on load. If ``ncpus`` is ``None`` and ``maxcpu`` is ``None``, then it
-    will use the number of CPUs returned by ``multiprocessing``; if ``ncpus`` is
-    not ``None``, it will use the specified number of CPUs; if ``ncpus`` is ``None``
-    and ``maxcpu`` is not ``None``, it will allocate the number of CPUs dynamically.
-
-    Note: the default parallelizer ``"multiprocess"`` uses ``dill`` for pickling, so
-    is the most versatile (e.g., it can pickle non-top-level functions). However,
-    it is also the slowest for passing large amounts of data. You can switch between
-    these with ``parallelizer='fast'`` (``concurrent.futures``) and ``parallelizer='robust'``
-    (``multiprocess``).
+    based on load. If ``ncpus`` is ``None``, then it will allocate the number of 
+    CPUs dynamically. Memory (``maxmem``) and CPU load (``maxcpu``) limits can also
+    be specified.
 
     Args:
         func         (func)      : the function to parallelize
@@ -66,17 +586,18 @@ def parallelize(func, iterarg=None, iterkwargs=None, args=None, kwargs=None, ncp
         maxcpu       (float)     : maximum CPU load; otherwise, delay the start of the next process (not used if ``ncpus`` is specified)
         maxmem       (float)     : maximum fraction of virtual memory (RAM); otherwise, delay the start of the next process
         interval     (float)     : number of seconds to pause between starting processes for checking load
-        parallelizer (str/func)  : parallelization function; default 'multiprocess' (other choices are 'concurrent.futures', 'multiprocessing', or user-supplied; see example below)
-        serial       (bool)      : whether to skip parallelization run in serial (useful for debugging)
-        returnpool   (bool)      : whether to return the process pool as well as the results
-        die          (bool)      : whether to stop immediately if an exception is encountered (otherwise, try 'multiprocess')
+        parallelizer (str/func)  : parallelization function; default 'multiprocess' (see below for details)
+        serial       (bool)      : whether to skip parallelization and run in serial (useful for debugging; equivalent to ``parallelizer='serial'``)
+        progress     (bool)      : whether to show a progress bar
+        callback     (func)      : an optional function to call from each worker
+        die          (bool)      : whether to stop immediately if an exception is encountered (otherwise, store the exception as the result)
         func_kwargs  (dict)      : merged with kwargs (see above)
 
     Returns:
         List of outputs from each process
 
 
-    **Example 1 -- simple usage as a shortcut to multiprocessing.map()**::
+    **Example 1 -- simple usage as a shortcut to multiprocess.map()**::
 
         def f(x):
             return x*x
@@ -129,7 +650,45 @@ def parallelize(func, iterarg=None, iterkwargs=None, args=None, kwargs=None, ncp
         results = sc.parallelize(f, iterkwargs=dict(x=[1,2,3], y=[4,5,6]), parallelizer=pool.map) # Note: parallelizer is pool.map, not pool
 
 
-    **Note**: to use on Windows, parallel calls must contained with an ``if __name__ == '__main__'`` block.
+    **Example 6 -- using Sciris as an interface to Dask**::
+    
+        def f(x,y):
+            return [x]*y
+    
+        def dask_map(task, argslist):
+            import dask
+            queued = [dask.delayed(task)(args) for args in argslist]
+            return list(dask.compute(*queued))
+    
+        results = sc.parallelize(f, iterkwargs=dict(x=[1,2,3], y=[4,5,6]), parallelizer=dask_map)
+
+
+    **Note 1**: the default parallelizer ``"multiprocess"`` uses ``dill`` for pickling, so
+    is the most versatile (e.g., it can pickle non-top-level functions). However,
+    it is also the slowest for passing large amounts of data. You can switch between
+    these with ``parallelizer='fast'`` (``concurrent.futures``) and ``parallelizer='robust'``
+    (``multiprocess``).
+
+    The ``parallelizer`` argument allows a wide range of different parallelizers
+    (including different aliases for each), and also supports user-supplied ones.
+    Note that in most cases, the default parallelizer will suffice. However, the
+    full list of options is:
+        
+        - ``None``, ``'default'``, ``'robust'``, ``'multiprocess'``: the slow but robust dill-based parallelizer ``multiprocess``
+        - ``'fast'``, ``'concurrent'``, ``'concurrent.futures'``: the faster but more fragile pickle-based Python-default parallelizer ``concurrent.futures``
+        - ``'multiprocessing'``: the previous pickle-based Python default parallelizer, ``multiprocessing``
+        - ``'serial'``, ``'serial-copy'``: no parallelization (single-threaded); with "-copy", force pickling
+        - ``'thread'``', ``'threadpool'``', ``'thread-copy'``': thread- rather than process-based parallelization ("-copy" as above)
+        - User supplied: any ``map()``-like function that takes in a function and an argument list
+
+
+    **Note 2**: If parallelizing figure generation, use a non-interactive backend,
+    or make sure (a) figure is closed inside the function call, and (b) the figure
+    object is not returned. Otherwise, parallelization won't increase speed (and
+    might even be slower than serial!).
+
+    
+    **Note 3**: to use on Windows, parallel calls must contained with an ``if __name__ == '__main__'`` block.
 
     For example::
 
@@ -142,310 +701,20 @@ def parallelize(func, iterarg=None, iterkwargs=None, args=None, kwargs=None, ncp
             results = sc.parallelize(func=f, iterarg=[(1,2),(2,3),(3,4)])
             print(results)
 
-    | New in version 1.1.1: "serial" argument.
+    | New in version 1.1.1: "serial" argument
     | New in version 2.0.0: changed default parallelizer from ``multiprocess.Pool`` to ``concurrent.futures.ProcessPoolExecutor``; replaced ``maxload`` with ``maxcpu``/``maxmem``; added ``returnpool`` argument
     | New in version 2.0.4: added "die" argument; changed exception handling
+    | New in version 2.2.0: new Parallel class; propagated "die" to jobs
     '''
-    # Handle maxload
-    maxload = func_kwargs.pop('maxload', None)
-    if maxload is not None: # pragma: no cover
-        maxcpu = maxload
-        warnmsg = 'sc.loadbalancer() argument "maxload" has been renamed "maxcpu" as of v2.0.0'
-        warnings.warn(warnmsg, category=FutureWarning, stacklevel=2)
-    if ncpus is None and maxcpu is None:
-        ncpus = scp.cpu_count()
-    if ncpus is not None and ncpus < 1: # Less than one, treat as a fraction of total
-        ncpus = int(scp.cpu_count()*ncpus)
-
-    # Handle kwargs
-    kwargs = scu.mergedicts(kwargs, func_kwargs)
-
-    # Handle iterarg and iterkwargs
-    niters = 0
-    embarrassing = False # Whether or not it's an embarrassingly parallel optimization
-    if iterarg is not None and iterkwargs is not None: # pragma: no cover
-        errormsg = 'You can only use one of iterarg or iterkwargs as your iterable, not both'
-        raise ValueError(errormsg)
-    if iterarg is not None:
-        if not(scu.isiterable(iterarg)):
-            try:
-                iterarg = np.arange(iterarg)
-                embarrassing = True
-            except Exception as E: # pragma: no cover
-                errormsg = f'Could not understand iterarg "{iterarg}": not iterable and not an integer: {str(E)}'
-                raise TypeError(errormsg)
-        niters = len(iterarg)
-    if iterkwargs is not None: # Check that iterkwargs has the right format
-        if isinstance(iterkwargs, dict): # It's a dict of lists, e.g. {'x':[1,2,3], 'y':[2,3,4]}
-            for key,val in iterkwargs.items():
-                if not scu.isiterable(val): # pragma: no cover
-                    errormsg = f'iterkwargs entries must be iterable, not {type(val)}'
-                    raise TypeError(errormsg)
-                if not niters:
-                    niters = len(val)
-                else:
-                    if len(val) != niters: # pragma: no cover
-                        errormsg = f'All iterkwargs iterables must be the same length, not {niters} vs. {len(val)}'
-                        raise ValueError(errormsg)
-        elif isinstance(iterkwargs, list): # It's a list of dicts, e.g. [{'x':1, 'y':2}, {'x':2, 'y':3}, {'x':3, 'y':4}]
-            niters = len(iterkwargs)
-            for item in iterkwargs:
-                if not isinstance(item, dict): # pragma: no cover
-                    errormsg = f'If iterkwargs is a list, each entry must be a dict, not {type(item)}'
-                    raise TypeError(errormsg)
-        else: # pragma: no cover
-            errormsg = f'iterkwargs must be a dict of lists, a list of dicts, or None, not {type(iterkwargs)}'
-            raise TypeError(errormsg)
-
-    if niters == 0:
-        errormsg = 'Nothing found to parallelize: please supply an iterarg, iterkwargs, or both'
-        raise ValueError(errormsg)
-
-    # Construct argument list
-    argslist = []
-    for index in range(niters):
-        if iterarg is None:
-            iterval = None
-        else:
-            iterval = iterarg[index]
-        if iterkwargs is None:
-            iterdict = None
-        else:
-            if isinstance(iterkwargs, dict): # Dict of lists
-                iterdict = {}
-                for key,val in iterkwargs.items():
-                    iterdict[key] = val[index]
-            elif isinstance(iterkwargs, list): # List of dicts
-                iterdict = iterkwargs[index]
-            else:  # pragma: no cover # Should be caught by previous checking, so shouldn't happen
-                errormsg = f'iterkwargs type not understood ({type(iterkwargs)})'
-                raise TypeError(errormsg)
-        taskargs = TaskArgs(func=func, index=index, iterval=iterval, iterdict=iterdict,
-                            args=args, kwargs=kwargs, maxcpu=maxcpu, maxmem=maxmem,
-                            interval=interval, embarrassing=embarrassing)
-        argslist.append(taskargs)
+    # Create the parallel instance
+    P = Parallel(func, iterarg=iterarg, iterkwargs=iterkwargs, args=args, kwargs=kwargs, 
+                 ncpus=ncpus, maxcpu=maxcpu, maxmem=maxmem, interval=interval, 
+                 parallelizer=parallelizer, serial=serial, progress=progress, 
+                 callback=callback, die=die, **func_kwargs)
     
-    # Set up the run
-    pool = None # Defined here so it can be returned
-    if ncpus is not None:
-        ncpus = min(ncpus, len(argslist)) # Don't use more CPUs than there are things to process
-    if serial: # This is a separate keyword argument, but make it consistent
-        parallelizer = 'serial'
-        
-    # Handle the choice of parallelizer
-    fast   = 'concurrent.futures'
-    robust = 'multiprocess'
-    if parallelizer is None or scu.isstring(parallelizer):
-
-        # Map parallelizer to consistent choices
-        mapping = {
-            None                 : robust,
-            'default'            : robust,
-            'robust'             : robust,
-            'fast'               : fast,
-            'serial'             : 'serial',
-            'serial-nocopy'      : 'serial',
-            'concurrent.futures' : 'concurrent.futures',
-            'concurrent'         : 'concurrent.futures',
-            'multiprocess'       : 'multiprocess',
-            'multiprocessing'    : 'multiprocessing',
-            'thread'             : 'thread',
-            'threadpool'         : 'thread',
-            'thread-nocopy'      : 'thread',
-        }
-        try:
-            pname = mapping[parallelizer]
-        except:
-            errormsg = f'Parallelizer "{parallelizer}" not found: must be one of {scu.strjoin(mapping.keys())}'
-            raise scu.KeyNotFoundError(errormsg)
-    else:
-        pname = 'custom' # If a custom parallelizer is provided
-        
-    
-    def run_parallel(pname, parallelizer, argslist):
-        ''' Choose how to run in parallel '''
-        
-        # Choose which parallelizer to use
-        if pname == 'serial':
-            if not 'nocopy' in parallelizer: # Niche use case of running without deepcopying
-                argslist = scu.dcp(argslist) # Need to deepcopy here, since effectively deecopied by other parallelization methods
-            outputlist = list(map(_parallel_task, argslist))
-        
-        elif pname == 'multiprocess': # Main use case
-            with mp.Pool(processes=ncpus) as pool:
-                outputlist = pool.map(_parallel_task, argslist)
-        
-        elif pname == 'multiprocessing':
-            with mpi.Pool(processes=ncpus) as pool:
-                outputlist = pool.map(_parallel_task, argslist)
-        
-        elif pname == 'concurrent.futures':
-            with cf.ProcessPoolExecutor(max_workers=ncpus) as pool:
-                outputlist = list(pool.map(_parallel_task, argslist))
-        
-        elif pname == 'thread':
-            if not 'nocopy' in parallelizer: # Niche use case of running without deepcopying
-                argslist = scu.dcp(argslist) # Also need to deepcopy here
-            with cf.ThreadPoolExecutor(max_workers=ncpus) as pool:
-                outputlist = list(pool.map(_parallel_task, argslist))
-        
-        elif pname == 'custom':
-            outputlist = parallelizer(_parallel_task, argslist)
-            
-        else: # Should be unreachable; exception should have already been caught
-            errormsg = f'Invalid parallelizer "{parallelizer}"'
-            raise ValueError(errormsg)
-        
-        return outputlist
-
-    # Actually run the parallelization
-    try:
-        outputlist = run_parallel(pname, parallelizer, argslist)
-        
-    # Handle if run outside of __main__ on Windows
-    except RuntimeError as E: # pragma: no cover
-        if 'freeze_support' in E.args[0]: # For this error, add additional information
-            errormsg = '''
- Uh oh! It appears you are trying to run with multiprocessing on Windows outside
- of the __main__ block; please see https://docs.python.org/3/library/multiprocessing.html
- for more information. The correct syntax to use is e.g.
-
- import sciris as sc
-
- def my_func(x):
-     return
-
- if __name__ == '__main__':
-     sc.parallelize(my_func)
- '''
-            raise RuntimeError(errormsg) from E
-        else: # For all other runtime errors, raise the original exception
-            raise E
-
-    # Tidy up
-    if returnpool:
-        return pool, outputlist
-    else:
-        return outputlist
-
-
-def parallelcmd(cmd=None, parfor=None, returnval=None, maxcpu=None, maxmem=None, interval=None, **kwargs):
-    '''
-    A function to parallelize any block of code. Note: this is intended for quick
-    prototyping; since it uses exec(), it is not recommended for use in production
-    code.
-
-    Args:
-        cmd       (str):   a string representation of the code to be run in parallel
-        parfor    (dict):  a dictionary of lists of the variables to loop over
-        returnval (str):   the name of the output variable
-        maxcpu    (float): maximum CPU load; used by ``sc.loadbalancer()``
-        maxmem    (float): maximum fraction of virtual memory (RAM); used by ``sc.loadbalancer()``
-        interval  (float): the time delay to poll to see if load is OK,  used in ``sc.loadbalancer()``
-        kwargs    (dict):  variables to pass into the code
-
-    **Example**::
-
-        const = 4
-        parfor = {'val':[3,5,9]}
-        returnval = 'result'
-        cmd = """
-        newval = val+const
-        result = newval**2
-        """
-        results = sc.parallelcmd(cmd=cmd, parfor=parfor, returnval=returnval, const=const)
-
-    New in version 2.0.0: replaced ``maxload`` with ``maxcpu``/``maxmem``; automatically de-indent the command
-    '''
-
-    # Handle maxload
-    maxload = kwargs.pop('maxload', None)
-    if maxload is not None: # pragma: no cover
-        maxcpu = maxload
-        warnmsg = 'sc.loadbalancer() argument "maxload" has been renamed "maxcpu" as of v2.0.0'
-        warnings.warn(warnmsg, category=FutureWarning, stacklevel=2)
-
-    # Deindent the command
-    cmd = textwrap.dedent(cmd)
-
-    # Create queue
-    nfor = len(list(parfor.values())[0])
-    outputqueue = mp.Queue()
-    outputlist = np.empty(nfor, dtype=object)
-    processes = []
-    for i in range(nfor):
-        args = (cmd, parfor, returnval, i, outputqueue, maxcpu, maxmem, interval, kwargs)
-        prc = mp.Process(target=_parallelcmd_task, args=args)
-        prc.start()
-        processes.append(prc)
-    for i in range(nfor):
-        _i,returnval = outputqueue.get()
-        outputlist[_i] = returnval
-    for prc in processes:
-        prc.join() # Wait for them to finish
-
-    outputlist = outputlist.tolist()
-
-    return outputlist
-
-
-def parallel_progress(fcn, inputs, num_workers=None, show_progress=True, initializer=None): # pragma: no cover
-    """
-    Run a function in parallel with a optional single progress bar
-
-    The result is essentially equivalent to::
-
-        >>> list(map(fcn, inputs))
-
-    But with execution in parallel and with a single progress bar being shown.
-
-    Args:
-        fcn (function): Function object to call, accepting one argument, OR a function with zero arguments in which case inputs should be an integer
-        inputs (list): A collection of inputs that will each be passed to the function OR a number, if the fcn() has no input arguments
-        num_workers (int): Number of processes, defaults to the number of CPUs
-        show_progress (bool): Whether to show a progress bar
-        initializer (func): A function that each worker process will call when it starts
-
-    Returns:
-        A list of outputs
-
-    New in version 1.0.0.
-    """
-    try:
-        from tqdm import tqdm
-    except ModuleNotFoundError as E:
-        errormsg = 'Module tqdm not found; please install with "pip install tqdm"'
-        raise ModuleNotFoundError(errormsg) from E
-
-    pool = mp.pool.Pool(num_workers, initializer=initializer)
-
-    results = [None]
-    if scu.isnumber(inputs):
-        results *= inputs
-        pbar = tqdm(total=inputs) if show_progress else None
-    else:
-        results *= len(inputs)
-        pbar = tqdm(total=len(inputs)) if show_progress else None
-
-    def callback(result, idx):
-        results[idx] = result
-        if show_progress:
-            pbar.update(1)
-
-    if scu.isnumber(inputs):
-        for i in range(inputs):
-            pool.apply_async(fcn, callback=partial(callback, idx=i))
-    else:
-        for i, x in enumerate(inputs):
-            pool.apply_async(fcn, args=(x,), callback=partial(callback, idx=i))
-
-    pool.close()
-    pool.join()
-
-    if show_progress:
-        pbar.close()
-
-    return results
+    # Run it
+    P.run()
+    return P.results
 
 
 
@@ -457,10 +726,13 @@ class TaskArgs(scu.prettyobj):
         '''
         A class to hold the arguments for the parallel task -- not to be invoked by the user.
 
-        Arguments and ordering must match both ``sc.parallelize()`` and ``sc._parallel_task()`` '''
-        def __init__(self, func, index, iterval, iterdict, args, kwargs, maxcpu, maxmem, interval, embarrassing):
+        Arguments must match both ``sc.parallelize()`` and ``sc._task()``
+        '''
+        def __init__(self, func, index, njobs, iterval, iterdict, args, kwargs, maxcpu, 
+                     maxmem, interval, embarrassing, callback, progress, globaldict, die=True):
             self.func         = func         # The function being called
             self.index        = index        # The place in the queue
+            self.njobs        = njobs        # The total number of iterations
             self.iterval      = iterval      # The value being iterated (may be None if iterdict is not None)
             self.iterdict     = iterdict     # A dictionary of values being iterated (may be None if iterval is not None)
             self.args         = args         # Arguments passed directly to the function
@@ -469,12 +741,20 @@ class TaskArgs(scu.prettyobj):
             self.maxmem       = maxmem       # Maximum memory
             self.interval     = interval     # Interval to check load (only used with maxcpu/maxmem)
             self.embarrassing = embarrassing # Whether or not to pass the iterarg to the function (no if it's embarrassing)
+            self.callback     = callback     # A function to call after each task finishes
+            self.progress     = progress     # Whether to print progress after each job
+            self.globaldict   = globaldict   # A global dictionary for sharing progress on each task 
+            self.die          = die          # Whether to raise an exception if the child task encounters one
             return
 
 
-def _parallel_task(taskargs, outputqueue=None):
-    ''' Task called by parallelize() -- not to be called directly '''
-
+def _task(taskargs):
+    '''
+    Task called by parallelize() -- not to be called directly.
+    
+    New in version 2.2.0: renamed from "_parallel_task" to "_task"; return output dict with metadata
+    '''
+    
     # Handle inputs
     func   = taskargs.func
     index  = taskargs.index
@@ -495,46 +775,46 @@ def _parallel_task(taskargs, outputqueue=None):
     maxcpu = taskargs.maxcpu
     maxmem = taskargs.maxmem
     if maxcpu or maxmem:
-        scp.loadbalancer(maxcpu=maxcpu, maxmem=maxmem, index=index, interval=taskargs.interval)
+        scpro.loadbalancer(maxcpu=maxcpu, maxmem=maxmem, index=index, interval=taskargs.interval)
 
-    # Call the function
-    output = func(*args, **kwargs)
+    # Call the function!
+    globaldict = taskargs.globaldict
+    start      = scd.time()
+    result     = None
+    success    = False
+    exception  = None
+    globaldict[index] = 0
+    try:
+        result = func(*args, **kwargs) # Call the function!
+        success = True
+        globaldict[index] = 1
+    except Exception as E: # pragma: no cover
+        if taskargs.die: # Usual case, raise an exception and stop
+            errormsg = f'Task {index} failed: set die=False to keep going instead; see above for error details'
+            exc = type(E)
+            raise exc(errormsg) from E
+        else: # Alternatively, keep going and just let this trial fail
+            warnmsg = f'sc.parallelize(): Task {index} failed, but die=False so continuing.\n{scu.traceback()}'
+            warnings.warn(warnmsg, category=RuntimeWarning, stacklevel=2)
+            exception = E
+    end = scd.time()
+    elapsed = end - start
+    
+    if taskargs.progress:
+        _progressbar(globaldict, taskargs.njobs)
+    
+    # Handle callback, if present
+    if taskargs.callback: # pragma: no cover
+        data = dict(index=index, njobs=taskargs.njobs, args=args, kwargs=kwargs, result=result)
+        taskargs.callback(data)
+    
+    # Generate output
+    outdict = dict(
+        result = result,
+        success = success,
+        exception = exception,
+        elapsed = elapsed,
+    )
 
     # Handle output
-    if outputqueue:
-        outputqueue.put((index,output))
-        return
-    else:
-        return output
-
-
-def _parallelcmd_task(_cmd, _parfor, _returnval, _i, _outputqueue, _maxcpu, _maxmem, _interval, _kwargs): # pragma: no cover # No coverage since pickled
-    '''
-    The task to be executed by ``sc.parallelcmd()``. All internal variables start with
-    underscores to avoid possible collisions in the ``exec()`` statements. Not to be called
-    directly.
-    '''
-    if _maxcpu or _maxmem:
-        scp.loadbalancer(maxcpu=_maxcpu, maxmem=_maxmem, index=_i, interval=_interval)
-
-    # Set the loop variables
-    for _key in _parfor.keys():
-        _thisval = _parfor[_key][_i] # analysis:ignore
-        exec(f'{_key} = _thisval') # Set the value of this variable
-
-    # Set the keyword arguments
-    for _key in _kwargs.keys():
-        _thisval = _kwargs[_key] # analysis:ignore
-        exec(f'{_key} = _thisval') # Set the value of this variable
-
-    # Calculate the command
-    try:
-        exec(_cmd) # The meat of the matter!
-    except Exception as E:
-        print(f'WARNING, parallel task failed:\n{str(E)}')
-        exec(f'{_returnval} = None')
-
-    # Append results
-    _outputqueue.put((_i,eval(_returnval)))
-
-    return
+    return outdict

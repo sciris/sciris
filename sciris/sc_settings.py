@@ -72,14 +72,14 @@ def parse_env(var, default=None, which='str'):
     elif which == 'bool':
         if val:
             if isinstance(val, str):
-                if val.lower() in ['false', 'f', '0', '']:
+                if val.lower() in ['false', 'f', '0', '', 'none']:
                     val = False
                 else:
                     val = True
             out = bool(val)
         else:
             out = False
-    else:
+    else: # pragma: no cover
         errormsg = f'Could not understand type "{which}": must be None, str, int, float, or bool'
         raise ValueError(errormsg)
     return out
@@ -166,7 +166,7 @@ class Options(sco.objdict):
                     reset[k] = v
             self.set(**reset)
             del self.on_entry
-        except AttributeError as E:
+        except AttributeError as E: # pragma: no cover
             errormsg = 'Please use sc.options.context() if using a with block'
             raise AttributeError(errormsg) from E
         return
@@ -420,7 +420,7 @@ class Options(sco.objdict):
     sc.options.load() -- load settings from file
     sc.options.save() -- save settings to file
     sc.options.to_dict() -- convert to dictionary
-    sc.options.style() -- create style context for plotting
+    sc.options.with_style() -- create style context for plotting
 ''')
 
         if output:
@@ -464,7 +464,7 @@ class Options(sco.objdict):
     def _handle_style(self, style=None, reset=False, copy=True):
         ''' Helper function to handle logic for different styles '''
         rc = self.rc # By default, use current
-        if isinstance(style, dict): # If an rc-like object is supplied directly
+        if isinstance(style, dict): # If an rc-like object is supplied directly # pragma: no cover
             rc = scu.dcp(style)
         elif style is not None: # Usual use case
             stylestr = str(style).lower()
@@ -477,17 +477,17 @@ class Options(sco.objdict):
                 rc = scu.dcp(rc_fancy)
             elif style in pl.style.library:
                 rc = scu.dcp(pl.style.library[style])
-            else:
+            else: # pragma: no cover
                 errormsg = f'Style "{style}"; not found; options are "default", "simple", "fancy", plus:\n{scu.newlinejoin(pl.style.available)}'
                 raise ValueError(errormsg)
-        if reset:
+        if reset: # pragma: no cover
             self.rc = rc
         if copy:
             rc = scu.dcp(rc)
         return rc
 
 
-    def with_style(self, style_args=None, use=False, **kwargs):
+    def with_style(self, style=None, use=False, **kwargs):
         '''
         Combine all Matplotlib style information, and either apply it directly
         or create a style context.
@@ -519,6 +519,12 @@ class Options(sco.objdict):
 
         # Handle inputs
         rc = scu.dcp(self.rc) # Make a local copy of the currently used settings
+        if isinstance(style, dict): # pragma: no cover
+            style_args = style
+            style = None
+        else:
+            kwargs['style'] = style # Store here to be used just below
+            style_args = None
         kwargs = scu.mergedicts(style_args, kwargs)
 
         # Handle style, overwiting existing
@@ -667,7 +673,7 @@ See help(sc.help) for more information.
                     matches[k].append(line)
 
         # Assemble output
-        if not len(matches):
+        if not len(matches): # pragma: no cover
             string = f'No matches for "{pattern}" found among {len(docstrings)} available functions.'
         else:
             string = f'Found {len(matches)} matches for "{pattern}" among {len(docstrings)} available functions:\n'

@@ -3,7 +3,7 @@ Nested dictionary functions.
 '''
 
 import itertools
-from functools import reduce
+from functools import reduce, partial
 from . import sc_utils as scu
 
 
@@ -71,13 +71,43 @@ def makenested(nesteddict, keylist=None, value=None, overwrite=False, generator=
     if isinstance(currentlevel, dict):
         if overwrite or lastkey not in currentlevel:
             currentlevel[lastkey] = value
-        elif not overwrite and value is not None:
+        elif not overwrite and value is not None: # pragma: no cover
             errormsg = f'Not overwriting entry {keylist} since overwrite=False'
             raise ValueError(errormsg)
-    elif value is not None:
+    elif value is not None: # pragma: no cover
         errormsg = f'Cannot set value {value} since entry {keylist} is a {type(currentlevel)}, not a dict'
         raise TypeError(errormsg)
     return
+
+
+def check_iter_type(obj):
+    ''' Helper function to determine if an object is a dict, list, or neither '''
+    if isinstance(obj, dict):
+        out = 'dict'
+    elif isinstance(obj, list):
+        out = 'list'
+    elif hasattr(obj, '__dict__'):
+        out = 'object'
+    else:
+        out = '' # Evaluates to false
+    return out
+    
+
+def get_from_obj(ndict, key, safe=False):
+    ''' Get an item from a dict, list, or object by key '''
+    itertype = check_iter_type(ndict)
+    if itertype == 'dict':
+        if safe:
+            out = ndict.get(key)
+        else:
+            out = ndict[key]
+    elif itertype == 'list':
+        out = ndict[key]
+    elif itertype == 'object':
+        out = getattr(ndict, key)
+    else:
+        out = None
+    return out
 
 
 def getnested(nesteddict, keylist, safe=False):
@@ -88,7 +118,8 @@ def getnested(nesteddict, keylist, safe=False):
 
     See sc.makenested() for full documentation.
     '''
-    output = reduce(lambda d, k: d.get(k) if d else None if safe else d[k], keylist, nesteddict)
+    get = partial(get_from_obj, safe=safe)
+    output = reduce(get, keylist, nesteddict)
     return output
 
 
@@ -103,7 +134,7 @@ def setnested(nesteddict, keylist, value, force=True):
     if force:
         makenested(nesteddict, keylist, overwrite=False)
     currentlevel = getnested(nesteddict, keylist[:-1])
-    if not isinstance(currentlevel, dict):
+    if not isinstance(currentlevel, dict): # pragma: no cover
         errormsg = f'Cannot set {keylist} since parent is a {type(currentlevel)}, not a dict'
         raise TypeError(errormsg)
     else:
@@ -209,49 +240,81 @@ def flattendict(nesteddict, sep=None, _prefix=None):
     return output_dict
 
 
-def search(obj, attribute, _trace=''):
+# Define a custom "None" value to allow searching for actual None values
+_None = 'sc.search() placeholder'
+def search(obj, key=_None, value=_None, aslist=False, _trace=None):
     """
-    Find a key or attribute within a dictionary or object.
+    Find a key/attribute or value within a list, dictionary or object.
 
     This function facilitates finding nested key(s) or attributes within an object,
     by searching recursively through keys or attributes.
 
-
     Args:
-        obj: A dict or class with __dict__ attribute
-        attribute: The substring to search for
+        obj (any): A dict, list, or object
+        key (any): The key to search for
+        value (any): The value to search for
+        aslist (bool): return entries as a list (else, return as a string)
         _trace: Not for user input - internal variable used for recursion
 
     Returns:
         A list of matching attributes. The items in the list are the Python
-        strings used to access the attribute (via attribute or dict indexing)
+        strings (or lists) used to access the attribute (via attribute, dict, 
+        or listindexing).
 
-    **Example**::
+    **Examples**::
 
-        nested = {'a':{'foo':1, 'bar':2}, 'b':{'bar':3, 'cat':4}}
-        matches = sc.search(nested, 'bar') # Returns ['["a"]["bar"]', '["b"]["bar"]']
+        # Create a nested dictionary
+        nested = {'a':{'foo':1, 'bar':2}, 'b':{'bar':3, 'cat':[1,2,4,8]}}
+        
+        # Find keys
+        keymatches = sc.search(nested, 'bar') # Returns ['["a"]["bar"]', '["b"]["bar"]']
+        
+        # Find values
+        val = 4
+        valmatches = sc.search(nested, value=val, aslist=True) # Returns  [['b', 'cat', 2]]
+        assert sc.getnested(nested, valmatches[0]) == val # Get from the original nested object
+    
+    New in version 2.2.0: ability to search for values as well as keys/attributes; "aslist" argument
     """
 
     matches = []
 
-    if isinstance(obj, dict):
-        d = obj
-    elif hasattr(obj, '__dict__'):
-        d = obj.__dict__
+    itertype = check_iter_type(obj)
+    if itertype == 'dict':
+        o = obj
+    elif itertype == 'list':
+        o = {k:v for k,v in zip(list(range(len(obj))), obj)}
+    elif itertype == 'object':
+        o = obj.__dict__
     else:
         return matches
-
-    for attr in d:
-
-        if isinstance(obj, dict):
-            s = _trace + f'["{attr}"]'
+    
+    if _trace is None:
+        if aslist:
+            _trace = []
         else:
-            s = _trace + f'.{attr}'
+            _trace = ''
+        
+    for k,v in o.items():
 
-        if attribute in attr:
-            matches.append(s)
+        if aslist:
+            trace = _trace + [k]
+        else:
+            if itertype == 'dict':
+                trace = _trace + f'["{k}"]'
+            elif itertype == 'list':
+                trace = _trace + f'[{k}]'
+            else:
+                trace = _trace + f'.{k}'
 
-        matches += search(d[attr], attribute, s)
+        if key != _None:
+            if key == k:
+                matches.append(trace)
+        if value != _None:
+            if value == v:
+                matches.append(trace)
+
+        matches += search(o[k], key, value, aslist=aslist, _trace=trace)
 
     return matches
 

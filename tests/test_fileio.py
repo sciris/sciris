@@ -10,12 +10,12 @@ import openpyxl
 import sciris as sc
 
 # Define filenames
-filedir = 'files' + os.sep
+filedir = sc.path('files')
 files = sc.prettyobj()
-files.excel  = filedir + 'test.xlsx'
-files.binary = filedir + 'test.obj'
-files.text   = filedir + 'text.txt'
-files.zip    = filedir + 'test.zip'
+files.excel  = filedir / 'test.xlsx'
+files.binary = filedir / 'test.obj'
+files.text   = filedir / 'text.txt'
+files.zip    = filedir / 'test.zip'
 tidyup = True
 
 # Define the test data
@@ -48,7 +48,7 @@ def test_spreadsheets():
     data = sc.loadspreadsheet(files.excel)
     print(data)
 
-    excel_path = filedir+'exampledata.xlsx'
+    excel_path = filedir / 'exampledata.xlsx'
     if os.path.exists(excel_path):
         sc.heading('Reading cells')
         wb = sc.Spreadsheet(filename=excel_path) # Load a sample databook to try pulling cells from
@@ -114,13 +114,16 @@ def test_load_save():
     
     sc.heading('Savetext/loadtext')
     sc.savetext(files.text, testdata)
+    sc.savetext(files.text, testdata.tolist())
     o.obj2 = sc.loadtext(files.text)
+    sc.loadtext(files.text, splitlines=True)
     print(o.obj2)
     
     sc.heading('Save/load zip')
+    sc.savezip(files.zip, data={'fake_datafile.obj':testdata})
     sc.savezip(files.zip, [files.text, files.binary])
-    sc.savezip(files.zip, data=dict(data=testdata))
-    o.zip = sc.loadzip(files.zip, extract=False)
+    o.zip = sc.loadzip(files.zip) # Load into memory
+    sc.unzip(files.zip, outfolder=filedir) # Unpack onto disk
     
     # Tidy up
     if tidyup:
@@ -133,27 +136,9 @@ def test_load_save():
 
 def test_load_corrupted():
     '''
-    Test that loading a corrupted object still works
-    '''
-    
-    '''
-    Check that loading an object with a non-existent class works. The file
-    deadclass.obj was created with:
-
-    deadclass.py:
-    -------------------------------------------------
-    class DeadClass():
-        def __init__(self, x):
-            self.x = x
-    -------------------------------------------------
-
-    then:
-    -------------------------------------------------
-    import deadclass as dc
-    import sciris as sc
-    deadclass = dc.DeadClass(238473)
-    sc.saveobj('deadclass.obj', deadclass)
-    -------------------------------------------------
+    Test that loading a corrupted object still works -- specifically, one with
+    a no-longer-existant class. See the ``files`` folder for the scripts used
+    to create this file.
     '''
     
     o = sc.objdict()
@@ -162,7 +147,7 @@ def test_load_corrupted():
         def __init__(self, x):
             self.x = x
 
-    dead_path = filedir+'deadclass.obj'
+    dead_path = filedir / 'deadclass.obj'
     if os.path.exists(dead_path):
         sc.heading('Intentionally loading corrupted file')
         print('Loading with no remapping...')
@@ -172,6 +157,7 @@ def test_load_corrupted():
 
         print('Loading with remapping...')
         o.obj4 = sc.loadobj(dead_path, remapping={'deadclass.DeadClass':LiveClass})
+        assert isinstance(o.obj4, LiveClass)
         print(f'Loading remapped object succeeded, x={o.obj4.x}, object: {o.obj4}')
     else:
         print(f'{dead_path} not found, skipping...')
@@ -187,11 +173,12 @@ def test_fileio():
 
     # Test thisdir
     sc.heading('Testing thisdir')
-    a = sc.thisdir() # Just put this here for testing
-    b = sc.thispath() # Ditto
+    a = sc.thisdir()
+    b = sc.thispath()
     assert a == str(b)
     assert 'sciris' in a
     assert 'tests' in a
+    sc.thisdir(sc) # Test with a module
     o.thisdir = a
 
     sc.heading('Get files')
@@ -208,7 +195,15 @@ def test_fileio():
     bad = 'Nöt*a   file&name?!.doc'
     good = sc.sanitizefilename(bad)
     assert str(sc.sanitizepath(bad)) == good
+    sc.sanitizefilename(bad, strict=True, aspath=None)
     o.sanitized = good
+    
+    sc.heading('Testing other')
+    path1 = sc.path('/a/folder', 'a_file.txt')
+    path2 = sc.path('/a/folder', None, 'a_file.txt')
+    assert str(path1) == str(path2) == '/a/folder/a_file.txt' # NB: Test may fail on Windows
+    assert sc.ispath(path1)
+    o.thisfile = sc.thisfile(aspath=True)
 
     return o
 

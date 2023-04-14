@@ -4,10 +4,20 @@ built-in parallelization, and since functions-within-functions can't be pickled.
 '''
 
 import sciris as sc
+import numpy as np
 import pylab as pl
+import multiprocessing as mp
 import pytest
 
 if 'doplot' not in locals(): doplot = False
+
+
+def subheading(label):
+    return sc.printgreen('\n\n' + label)
+
+def f(i):
+    ''' Test function for parallelization -- here to avoid pickling errors '''
+    return i**2
 
 
 def test_simple():
@@ -92,32 +102,94 @@ def test_exceptions():
     return
 
 
-def test_parallelcmd():
-    sc.heading('Using a string-based command')
+def test_class():
+    sc.heading('Testing sc.Parallel class')
+    
+    def slowfunc(i):
+        np.random.seed(i)
+        sc.timedsleep(0.2*np.random.rand())
+        return i**2
+    
+    subheading('Creation and display')
+    P = sc.Parallel(slowfunc, iterarg=range(4), parallelizer='multiprocess-async', ncpus=2) # NB, multiprocessing-async fails with a pickle error
+    print(P)
+    P.disp()
+    
+    subheading('Running asynchronously and monitoring')
+    P.run_async()
+    print(P.running)
+    print(P.ready)
+    print(P.status)
+    P.monitor(interval=0.05)
+    P.finalize()
+    
+    
+    subheading('Checking parallelizers')
+    
+    iterarg = np.arange(4)
+    
+    print('Checking serial with copy and with progress')
+    r1 = sc.parallelize(f, iterarg, parallelizer='serial-copy', progress=True)
+    
+    print('Checking multiprocessing')
+    r2 = sc.parallelize(f, iterarg, parallelizer='multiprocessing')
+    
+    print('Checking fast (concurrent.futures)')
+    r3 = sc.parallelize(f, iterarg, parallelizer='fast')
+    
+    print('Checking thread')
+    r4 = sc.parallelize(f, iterarg, parallelizer='thread')
+    
+    print('Checking custom')
+    with mp.Pool(processes=2) as pool:
+        r5 = sc.parallelize(f, iterarg, parallelizer=pool.imap)
+    
+    assert r1 == r2 == r3 == r4 == r5
 
-    const = 4
-    parfor = {'val':[3,5,9]}
-    returnval = 'result'
-    cmd = """
-    newval = val+const
-    result = newval**2
-    """
-    results = sc.parallelcmd(cmd=cmd, parfor=parfor, returnval=returnval, const=const, maxcpu=0)
-    print(results)
-    return
+    
+    subheading('Other')
+    
+    print('Checking CPUs')
+    sc.Parallel(f, 10, ncpus=0.7)
+    
+    print('Validation: no jobs to run')
+    with pytest.raises(ValueError):
+        sc.Parallel(f, iterarg=[])
+        
+    print('Validation: no CPUs')
+    with pytest.raises(ValueError):
+        sc.Parallel(f, 10, ncpus=-3)
+    
+    print('Validation: invalid parallelizer')
+    with pytest.raises(sc.KeyNotFoundError):
+        sc.Parallel(f, 10, parallelizer='invalid-parallelizer')
+        
+    print('Validation: invalid async')
+    with pytest.raises(ValueError):
+        sc.Parallel(f, 10, parallelizer='serial-async')
+        
+    return P
+
 
 
 def test_components():
     sc.heading('Testing subcomponents directly')
 
-    args = [0]*10
+    print('Testing TaskArgs and _task')
+    args = [0]*15
     args[0] = lambda: None
-    args[3] = None # Set iterdict to None
-    args[4] = None # Set args to empty list
-    args[5] = None # Set kwargs to empty dict
-    args[9] = True # Set embarrassing
+    args[4] = None # Set iterdict to None
+    args[5] = None # Set args to empty list
+    args[6] = None # Set kwargs to empty dict
+    args[10] = True # Set embarrassing
+    args[13] = dict() # Set globaldict
     taskargs = sc.sc_parallel.TaskArgs(*args)
-    task = sc.sc_parallel._parallel_task(taskargs)
+    task = sc.sc_parallel._task(taskargs)
+    
+    print('Testing progress bar')
+    globaldict = {0:1, 1:1, 2:0, 3:0, 4:0}
+    njobs = 5
+    sc.sc_parallel._progressbar(globaldict, njobs)
     return task
 
 
@@ -128,13 +200,13 @@ if __name__ == '__main__':
 
     doplot = True
 
-    test_simple()
-    test_embarrassing()
-    test_multiargs()
-    test_noniterated(doplot)
-    test_exceptions()
-    test_parallelcmd()
-    test_components()
+    # test_simple()
+    # test_embarrassing()
+    # test_multiargs()
+    # test_noniterated(doplot)
+    # test_exceptions()
+    P = test_class()
+    # test_components()
 
     sc.toc()
     print('Done.')

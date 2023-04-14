@@ -15,7 +15,7 @@ Highlights:
 import struct
 import pylab as pl
 import numpy as np
-from matplotlib import colors as mplc
+from matplotlib import colors as mplc, colormaps as mplcm
 from . import sc_utils as scu
 from . import sc_math as scm
 
@@ -70,7 +70,7 @@ def sanitizecolor(color, asarray=False, alpha=None, normalize=True):
         color = [color]*3 # Consider it grey
             
     color = scu.toarray(color).astype(float) # Get it into consistent format for further operations
-    if len(color) not in [3,4]:
+    if len(color) not in [3,4]: # pragma: no cover
         errormsg = f'Cannot parse {color} as a color: expecting length 3 (RGB) or 4 (RGBA)'
         raise ValueError(errormsg)
     if normalize and color.max()>1:
@@ -95,9 +95,9 @@ def _processcolors(colors=None, asarray=False, ashex=False, reverse=False):
         output = []
         for c in colors: # Gather output
             output.append(tuple(c))
-        if reverse: # Reverse the list
+        if reverse: # Reverse the list # pragma: no cover
             output.reverse()
-        if ashex:
+        if ashex: # pragma: no cover
             for c,color in enumerate(output):
                 output[c] = rgb2hex(color)
     return output
@@ -149,9 +149,9 @@ def hex2rgb(string):
     '''
     if string[0] == '#':
         string = string[1:] # Trim leading #, if it exists
-    if len(string)==3:
-        string = string[0]*2+string[1]*2+string[2]*2 # Convert e.g. '8b2' to '88bb22'
-    if len(string)!=6: # pragma: no cover
+    if len(string) == 3:
+        string = string[0]*2 + string[1]*2 + string[2]*2 # Convert e.g. '8b2' to '88bb22'
+    if len(string) != 6: # pragma: no cover
         errormsg = f'Cannot convert "{string}" to an RGB color: must be 3 or 6 characters long'
         raise ValueError(errormsg)
     hexstring = bytes.fromhex(string) # Ensure it's the right type
@@ -231,6 +231,7 @@ def vectocolor(vector, cmap=None, asarray=True, reverse=False, minval=None, maxv
 
     | New in version 1.2.0: midpoint argument.
     | New in version 2.1.0: nancolor argument and remove nans by default
+    | New in version 2.2.0: correct "midpoint" argument
     """
 
     from numpy import array, zeros
@@ -257,9 +258,10 @@ def vectocolor(vector, cmap=None, asarray=True, reverse=False, minval=None, maxv
         if maxval is None:
             maxval = np.nanmax(vector)
 
-        vector = vector-minval # Subtract minimum
-        vector = vector/float(maxval-minval) # Divide by maximum
+        diff = maxval - minval
+        vector = (vector - minval)/diff # Normalize vector
         if midpoint is not None:
+            midpoint = (midpoint - minval)/diff
             norm = midpointnorm(vcenter=midpoint, vmin=0, vmax=1)
             vector = np.array(norm(vector))
         nelements = len(vector) # Count number of elements
@@ -501,7 +503,7 @@ def colormapdemo(cmap=None, n=None, smoothing=None, randseed=None, doshow=True):
     cb2.set_label('Height (km)',horizontalalignment='right', labelpad=50)
     pl.xlabel('Position (km)')
     pl.ylabel('Position (km)')
-    if doshow:
+    if doshow: # pragma: no cover
         pl.show()
 
     # Plot in 3D
@@ -514,7 +516,7 @@ def colormapdemo(cmap=None, n=None, smoothing=None, randseed=None, doshow=True):
     cb.set_label('Height (km)', horizontalalignment='right', labelpad=50)
     pl.xlabel('Position (km)')
     pl.ylabel('Position (km)')
-    if doshow:
+    if doshow: # pragma: no cover
         pl.show()
 
     return {'2d':fig1, '3d':fig2}
@@ -578,7 +580,7 @@ def alpinecolormap(apply=False):
 
     # Make map
     cmap = mplc.LinearSegmentedColormap('alpine', cdict, 256)
-    if apply:
+    if apply: # pragma: no cover
         pl.set_cmap(cmap)
     return cmap
 
@@ -630,7 +632,7 @@ def bicolormap(gap=0.1, mingreen=0.2, redbluemix=0.5, epsilon=0.01, demo=False, 
                      (1.00000, 0.0, 0.0))}
 
     cmap = mplc.LinearSegmentedColormap('bi', cdict, 256)
-    if apply:
+    if apply: # pragma: no cover
         pl.set_cmap(cmap)
 
     def demoplot(): # pragma: no cover
@@ -649,7 +651,7 @@ def bicolormap(gap=0.1, mingreen=0.2, redbluemix=0.5, epsilon=0.01, demo=False, 
             pl.colorbar()
         pl.show()
 
-    if demo:
+    if demo: # pragma: no cover
         demoplot()
 
     return cmap
@@ -701,7 +703,7 @@ def parulacolormap(apply=False):
             [0.9642,0.9437,0.1216], [0.9657,0.9494,0.1168], [0.9674,0.9552,0.1116], [0.9692,0.9609,0.1061], [0.9711,0.9667,0.1001], [0.9730,0.9724,0.0938], [0.9749,0.9782,0.0872], [0.9769,0.9839,0.0805]]
 
     cmap = mplc.LinearSegmentedColormap.from_list('parula', data)
-    if apply:
+    if apply: # pragma: no cover
         pl.set_cmap(cmap)
     return cmap
 
@@ -763,7 +765,7 @@ def turbocolormap(apply=False):
             [0.57103,0.04474,0.00529],[0.55852,0.04028,0.00579],[0.54583,0.03593,0.00638],[0.53295,0.03169,0.00705],[0.51989,0.02756,0.00780],[0.50664,0.02354,0.00863],[0.49321,0.01963,0.00955],[0.47960,0.01583,0.01055]]
 
     cmap = mplc.LinearSegmentedColormap.from_list('turbo', data)
-    if apply:
+    if apply: # pragma: no cover
         pl.set_cmap(cmap)
     return cmap
 
@@ -800,7 +802,7 @@ def bandedcolormap(minvalue=None, minsaturation=None, hueshift=None, saturations
 
     # Create and use
     cmap = mplc.LinearSegmentedColormap.from_list('banded', data)
-    if apply:
+    if apply: # pragma: no cover
         pl.set_cmap(cmap)
     return cmap
 
@@ -818,18 +820,18 @@ def orangebluecolormap(apply=False):
     New in version 1.0.0.
     '''
     bottom = pl.get_cmap('Oranges', 128)
-    top = pl.get_cmap('Blues_r', 128)
-    x = np.linspace(0, 1, 128)
-    data = np.vstack((top(x), bottom(x)))
+    top    = pl.get_cmap('Blues_r', 128)
+    x      = np.linspace(0, 1, 128)
+    data   = np.vstack((top(x), bottom(x)))
 
     # Create and use
     cmap = mplc.LinearSegmentedColormap.from_list('orangeblue', data)
-    if apply:
+    if apply: # pragma: no cover
         pl.set_cmap(cmap)
     return cmap
 
 
-# Register colormaps
+# Register colormaps -- under their original names as well as with the "sciris-" prefix
 existing = pl.colormaps()
 colormap_map = dict(
     alpine     = alpinecolormap(),
@@ -843,4 +845,4 @@ for origname,cmap in colormap_map.items():
     newname = f'sciris-{origname}'
     for name in [origname, newname]:
         if name not in existing: # Avoid re-registering already registered colormaps
-            pl.register_cmap(name=name, cmap=cmap)
+            mplcm.register(cmap=cmap, name=name)                

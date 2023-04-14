@@ -32,6 +32,7 @@ def test_main():
     bar[0:2] = ['the', 'power'] # Show assignment by slice -- NOTE, inclusive slice!!
     bar[[0,2]] = ['cat', 'trip'] # Show assignment by list
     bar.rename('cough','chill') # Show rename
+    bar.rename(2,'mill') # Show rename numerically
     printexamples([foo,bar])
     return
 
@@ -54,8 +55,10 @@ def test_add():
     dict1 = sc.odict(a=3, b=4)
     dict2 = sc.odict(c=5, d=7)
     dict3 = dict1 + dict2
+    dict4 = sum([dict1, dict2])
     assert dict3.keys() == dict1.keys() + dict2.keys()
     assert dict3.values() == dict1.values() + dict2.values()
+    assert dict3 == dict4
     printexamples(dict3)
     return
 
@@ -69,8 +72,10 @@ def test_make():
     e = sc.odict().make(keys=['a','b'], vals=[1,2]) # Make an odict with 'a':1 and 'b':2
     f = sc.odict().make(keys=['a','b'], vals=np.array([1,2])) # As above, since arrays are coerced into lists
     g = sc.odict({'a':34, 'b':58}).make(['c','d'],[99,45]) # Add extra keys to an exising odict
-    h = sc.odict().make(keys=['a','b','c'], keys2=['A','B','C'], keys3=['x','y','z'], vals=0) # Make a triply nested odict
-    printexamples([a,b,c,d,e,f,g,h])
+    h = sc.odict().make(keys=['a','b','c'], keys2=['A','B','C'], keys3=['x','y','z'], vals=7) # Make a triply nested odict
+    i = sc.odict().make(vals=['x', 'y', 'z'])
+    printexamples([a,b,c,d,e,f,g,h,i])
+    assert h['a']['A']['x'] == 7
 
     sc.heading('Make from:')
     a = 'cat'; b = 'dog'; o = sc.odict().makefrom(source=locals(), keys=['a','b']) # Make use of fact that variables are stored in a dictionary
@@ -92,7 +97,7 @@ def test_map():
 def test_each():
     sc.heading('From each:')
     z = sc.odict({'a':np.array([1,2,3,4]), 'b':np.array([5,6,7,8])})
-    f = z.fromeach(2) # Returns array([3,7])
+    f = z.fromeach(2, asdict=False) # Returns array([3,7])
     g = z.fromeach(ind=[1,3], asdict=True) # Returns sc.odict({'a':array([2,4]), 'b':array([6,8])})
     printexamples([f,g])
 
@@ -114,6 +119,7 @@ def test_find():
     print(yy.findkeys('cat'))
     print(yy.findbykey('ar'))
     print(yy.findbyval([5,6,7,8]))
+    print(yy.findbyval([5,6,7,8], first=False))
     a = yy.filter('a')
     b = yy.filter('a', exclude=True)
     c = yy.filter(['foo', 'bar'])
@@ -126,6 +132,7 @@ def test_repr():
     sc.heading('Testing repr')
     n_entries = 300
     qq = sc.odict()
+    print(qq)
     for i in range(n_entries):
         key = f'key{i:03d}'
         qq[key] = i**2
@@ -192,15 +199,17 @@ def test_other():
 
     print('Testing sort')
     v = sc.odict(dog=12, cat=8, hamster=244)
-    v.sort(sortby='values')
+    v.sort(sortby='values', reverse=True)
 
     print('Testing reverse')
     o.reverse()
     o.reversed()
 
     print('Testing promote')
-    od = sc.odict.promote(['There','are',4,'keys'])
-
+    od  = sc.odict.promote(['There','are',4,'keys'])
+    sc.odict.promote(od)
+    sc.odict.promote(dict(od))
+    
     print('Testing clear')
     od.clear()
 
@@ -246,14 +255,69 @@ def test_asobj():
     myobjdict.setattribute('x', 10)
     assert myobjdict.x == 10
     assert getattr(myobjdict, 'x') == myobjdict.getattribute('x') ==  10
+    myobjdict.setattribute('__test__', 'truly an attribute')
+    myobjdict.delattribute('__test__')
+    myobjobj.setattribute('my_attr', 5)
+    assert myobjobj.getattribute('my_attr') == 5
 
     with pytest.raises(ValueError):
         myobjdict.x = 'cannot change actual attribute'
     with pytest.raises(AttributeError):
         myobjdict.setattribute('keys', 4)
+        
+    print('Testing dictobj')
+    obj = sc.dictobj(x=4, y=6)
+    obj.a = 5 
+    obj['b'] = 10 
+    print(obj)
+    fk = sc.dictobj.fromkeys(['foo', 'bar'])
+    assert fk.foo is None
 
     return
 
+
+def test_aliases():
+    sc.heading('Testing aliases')
+    
+    o = sc.odict(foo=[1,2,3], bar=[4,5,6])
+    d = dict(o)
+
+    print('Testing dict_keys')
+    assert o.dict_keys() == d.keys()
+    
+    print('Testing dict_values')
+    odv = o.dict_values() # Not sure why direct comparison doesn't work
+    dv = d.values()
+    assert type(odv) == type(dv)
+    for iodv,idv in zip(odv, dv):
+        assert iodv == idv
+    
+    print('Testing dict_items')
+    assert o.dict_items() == d.items()
+    
+    print('Testing iteritems')
+    assert o.iteritems() == o.items()
+    
+    print('Testing makenested')
+    val = 7
+    n = sc.odict()
+    n.makenested(['a','b'], value=val)
+    
+    print('Testing getnested')
+    assert n.getnested(['a','b']) == val
+    
+    print('Testing setnested')
+    newval = 14
+    n.setnested(['a','b'], newval)
+    assert n.getnested(['a','b']) == newval
+    
+    print('Testing iternested')
+    count = 0
+    for twig in n.iternested():
+        count += 1
+    assert count == 1
+    
+    return
 
 
 #%% Run as a script
@@ -271,6 +335,7 @@ if __name__ == '__main__':
     test_default()
     test_other()
     test_asobj()
+    test_aliases()
 
     sc.toc()
     print('Done.')

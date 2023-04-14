@@ -21,28 +21,26 @@ Highlights:
 #%% Imports
 ##############################################################################
 
-import os
 import re
 import sys
 import copy
-import time
 import json
-import zlib
-import types
 import string
 import numbers
 import pprint
 import hashlib
+import getpass
 import warnings
+import importlib
 import subprocess
 import unicodedata
 import numpy as np
 import pandas as pd
 import random as rnd
 import uuid as py_uuid
-import packaging.version
 import contextlib as cl
 import traceback as py_traceback
+from pathlib import Path
 
 # Handle types
 _stringtypes = (str, bytes)
@@ -55,8 +53,8 @@ _booltypes   = (bool, np.bool_)
 ##############################################################################
 
 # Define the modules being loaded
-__all__ = ['fast_uuid', 'uuid', 'dcp', 'cp', 'pp', 'sha', 'freeze', 'require',
-           'traceback', 'getplatform', 'iswindows', 'islinux', 'ismac', 'asciify']
+__all__ = ['fast_uuid', 'uuid', 'dcp', 'cp', 'pp', 'sha', 'traceback', 
+           'getplatform', 'iswindows', 'islinux', 'ismac', 'asciify']
 
 
 def fast_uuid(which=None, length=None, n=1, secure=False, forcelist=False, safety=1000, recursion=0, recursion_limit=10, verbose=True):
@@ -117,7 +115,7 @@ def fast_uuid(which=None, length=None, n=1, secure=False, forcelist=False, safet
             raise ValueError(errormsg)
 
     # Secure uses system random which is secure, but >10x slower
-    if secure:
+    if secure: # pragma: no cover
         choices_func = rnd.SystemRandom().choices
     else:
         choices_func = rnd.choices
@@ -317,7 +315,7 @@ def pp(obj, jsonify=True, doprint=None, output=False, verbose=False, **kwargs):
         except Exception as E:
             if verbose: print(f'Could not jsonify object ("{str(E)}"), printing default...')
             toprint = obj # If problems are encountered, just return the object
-    else:
+    else: # pragma: no cover
         toprint = obj
 
     # Decide what to do with object
@@ -346,119 +344,15 @@ def sha(obj, encoding='utf-8', digest=False):
     '''
     if not isstring(obj): # Ensure it's actually a string
         string = repr(obj)
-    else:
+    else: # pragma: no cover
         string = obj
     needsencoding = isinstance(string, str)
     if needsencoding: # If it's unicode, encode it to bytes first
         string = string.encode(encoding)
     output = hashlib.sha224(string)
-    if digest:
+    if digest: # pragma: no cover
         output = output.hexdigest()
     return output
-
-
-def freeze(lower=False):
-    '''
-    Alias for pip freeze.
-
-    Args:
-        lower (bool): convert all keys to lowercase
-
-    **Example**::
-
-        assert 'numpy' in sc.freeze() # One way to check for versions
-
-    New in version 1.2.2.
-    '''
-    import pkg_resources as pkgr # Imported here since slow (>0.1 s)
-    raw = dict(tuple(str(ws).split()) for ws in pkgr.working_set)
-    keys = sorted(raw.keys())
-    if lower:
-        labels = {k:k.lower() for k in keys}
-    else:
-        labels = {k:k for k in keys}
-    data = {labels[k]:raw[k] for k in keys} # Sort alphabetically
-    return data
-
-
-def require(reqs=None, *args, exact=False, detailed=False, die=True, verbose=True, **kwargs):
-    '''
-    Check whether environment requirements are met. Alias to pkg_resources.require().
-
-    Args:
-        reqs (list/dict): a list of strings, or a dict of package names and versions
-        args (list): additional requirements
-        kwargs (dict): additional requirements
-        exact (bool): use '==' instead of '>=' as the default comparison operator if not specified
-        detailed (bool): return a dict of which requirements are/aren't met
-        die (bool): whether to raise an exception if requirements aren't met
-        verbose (bool): print out the exception if it's not being raised
-
-    **Examples**::
-
-        sc.require('numpy')
-        sc.require(numpy='')
-        sc.require(reqs={'numpy':'1.19.1', 'matplotlib':'3.2.2'})
-        sc.require('numpy>=1.19.1', 'matplotlib==3.2.2', die=False)
-        sc.require(numpy='1.19.1', matplotlib='==4.2.2', die=False, detailed=True)
-
-    New in version 1.2.2.
-    '''
-    import pkg_resources as pkgr # Imported here since slow (>0.1 s)
-
-    # Handle inputs
-    reqlist = list(args)
-    reqdict = kwargs
-    if isinstance(reqs, dict):
-        reqdict.update(reqs)
-    else:
-        reqlist = mergelists(reqs, reqlist)
-
-    # Turn into a list of strings
-    comparechars = '<>=!~'
-    for k,v in reqdict.items():
-        if not v:
-            entry = k # If no version is provided, entry is just the module name
-        else:
-            compare = '' if v.startswith(tuple(comparechars)) else ('==' if exact else '>=')
-            entry = k + compare + v
-        reqlist.append(entry)
-
-    # Check the requirements
-    data = dict()
-    errs = dict()
-    for entry in reqlist:
-        try:
-            pkgr.require(entry)
-            data[entry] = True
-        except Exception as E:
-            data[entry] = False
-            errs[entry] = E
-
-    # Figure out output
-    met = all([e==True for e in data.values()])
-
-    # Handle exceptions
-    if not met:
-        errkeys = list(errs.keys())
-        errormsg = '\nThe following requirement(s) were not met:'
-        count = 0
-        for k,v in data.items():
-            if not v:
-                count += 1
-                errormsg += f'\n• "{k}": {str(errs[k])}'
-        errormsg += f'''\n\nIf this is a valid module, you might want to try "pip install {strjoin(errkeys, sep=' ')} --upgrade".'''
-        if die:
-            err = errs[errkeys[-1]]
-            raise ModuleNotFoundError(errormsg) from err
-        elif verbose:
-            print(errormsg)
-
-    # Handle output
-    if detailed:
-        return data, errs
-    else:
-        return met
 
 
 def traceback(*args, **kwargs):
@@ -470,19 +364,37 @@ def traceback(*args, **kwargs):
     return py_traceback.format_exc(*args, **kwargs)
 
 
-def getplatform(expected=None, die=False):
+def getuser():
     '''
-    Return the name of the current platform: 'linux', 'windows', 'mac', or 'other'.
-    Alias (kind of) to sys.platform.
+    Get the current username 
+    
+    Alias to ``getpass.getuser()`` -- see https://docs.python.org/3/library/getpass.html#getpass.getuser
+    
+    New in version 2.2.0.
+    '''
+    return getpass.getuser()
+
+
+def getplatform(expected=None, platform=None, die=False):
+    '''
+    Return the name of the current "main" platform (e.g. 'mac')
+    
+    Alias to sys.platform, except maps entries onto one of 'linux', 'windows', 
+    'mac', or 'other'.
 
     Args:
         expected (str): if not None, check if the current platform is this
+        platform (str): if supplied, map this onto one of the "main" platforms, rather than determine it
         die (bool): if True and expected is defined, raise an exception
+    
+    Returns:
+        String, one of: 'linux', 'windows', 'mac', or 'other'
 
-    **Example**::
+    **Examples**::
 
         sc.getplatform() # Get current name of platform
         sc.getplatform('windows', die=True) # Raise an exception if not on Windows
+        sc.getplatform(platform='darwin') # Normalize to 'mac'
     '''
     # Define different aliases for each operating system
     mapping = dict(
@@ -492,7 +404,7 @@ def getplatform(expected=None, die=False):
     )
 
     # Check to see what system it is
-    sys_plat = sys.platform
+    sys_plat = sys.platform if platform is None else platform
     plat = 'other'
     for key,aliases in mapping.items():
         if sys_plat.lower() in aliases:
@@ -502,10 +414,10 @@ def getplatform(expected=None, die=False):
     # Handle output
     if expected is not None:
         output = (expected.lower() in mapping[plat]) # Check if it's as expecte
-        if not output and die:
+        if not output and die: # pragma: no cover
             errormsg = f'System is "{plat}", not "{expected}"'
             raise EnvironmentError(errormsg)
-    else:
+    else: # pragma: no cover
         output = plat
     return output
 
@@ -599,9 +511,9 @@ def urlopen(url, filename=None, save=False, headers=None, params=None, data=None
     if prefix is not None:
         if not full_url.startswith(prefix):
             full_url = prefix + '://' + full_url # Leaves https alone, but adds http:// otherwise
-    if params is not None:
+    if params is not None: # pragma: no cover
         full_url = full_url + '?' + up.urlencode(params)
-    if data is not None:
+    if data is not None: # pragma: no cover
         data = up.urlencode(data).encode(encoding='utf-8', errors='ignore')
 
     if verbose: print(f'Downloading {url}...')
@@ -620,7 +532,7 @@ def urlopen(url, filename=None, save=False, headers=None, params=None, data=None
                 print(errormsg)
 
     # Set filename -- from https://stackoverflow.com/questions/31804799/how-to-get-pdf-filename-with-python-requests
-    if filename is None and save:
+    if filename is None and save: # pragma: no cover
         headers = dict(response.getheaders())
         string = "Content-Disposition"
         if string in headers.keys():
@@ -630,9 +542,9 @@ def urlopen(url, filename=None, save=False, headers=None, params=None, data=None
 
     if filename is not None:
         if verbose: print(f'Saving to {filename}...')
-        filename = scf.makefilepath(filename)
+        filename = scf.makefilepath(filename, makedirs=True)
         if isinstance(output, bytes):
-            with open(filename, 'wb') as f:
+            with open(filename, 'wb') as f: # pragma: no cover
                 f.write(output)
         else:
             with open(filename, 'w') as f:
@@ -641,7 +553,7 @@ def urlopen(url, filename=None, save=False, headers=None, params=None, data=None
 
     if verbose:
         T.toc(f'Time to download {url}')
-    if return_response:
+    if return_response: # pragma: no cover
         output = response
 
     return output
@@ -650,7 +562,7 @@ def urlopen(url, filename=None, save=False, headers=None, params=None, data=None
 wget = urlopen
 
 
-def download(url, *args, filename=None, save=True, parallel=True, verbose=True, **kwargs):
+def download(url, *args, filename=None, save=True, parallel=True, die=True, verbose=True, **kwargs):
     '''
     Download one or more URLs in parallel and return output or save them to disk.
 
@@ -662,6 +574,7 @@ def download(url, *args, filename=None, save=True, parallel=True, verbose=True, 
         filename (str/list): either a string or a list of the same length as ``url`` (if not supplied, return output)
         save (bool): if supplied instead of ``filename``, then use the default filename
         parallel (bool): whether to download multiple URLs in parallel
+        die (bool): whether to raise an exception if a URL can't be retrieved (default true)
         verbose (bool): whether to print progress (if verbose=2, print extra detail on each downloaded URL)
         **kwargs (dict): passed to :func:`urlopen`
 
@@ -672,7 +585,8 @@ def download(url, *args, filename=None, save=True, parallel=True, verbose=True, 
         sc.download({'http://sciris.org':'sciris.html', 'http://covasim.org':'covasim.html'}) # Downlaod two and save to disk
         sc.download(['http://sciris.org', 'http://covasim.org'], filename=['sciris.html', 'covasim.html']) # Ditto
 
-    New in version 2.0.0.
+    | New in version 2.0.0.
+    | New in version 2.2.0: "die" argument
     '''
     from . import sc_parallel as scp # To avoid circular import
     from . import sc_datetime as scd
@@ -704,11 +618,20 @@ def download(url, *args, filename=None, save=True, parallel=True, verbose=True, 
     iterkwargs = dict(url=urls, filename=filenames)
     func_kwargs = mergedicts(dict(save=save, verbose=wget_verbose), kwargs)
     if n_urls > 1 and parallel:
-        outputs = scp.parallelize(urlopen, iterkwargs=iterkwargs, kwargs=func_kwargs, parallelizer='thread')
+        outputs = scp.parallelize(urlopen, iterkwargs=iterkwargs, kwargs=func_kwargs, parallelizer='thread', die=die)
     else:
         outputs = []
         for url,filename in zip(urls, filenames):
-            output = urlopen(url=url, filename=filename, **func_kwargs)
+            try:
+                output = urlopen(url=url, filename=filename, **func_kwargs)
+            except Exception as E: # pragma: no cover
+                if die:
+                    raise E
+                else:
+                    warnmsg = f'Could not download {url}: {E}'
+                    warnings.warn(warnmsg, category=RuntimeWarning, stacklevel=2)
+                    output = E
+                    
             outputs.append(output)
 
     if verbose:
@@ -736,7 +659,7 @@ def htmlify(string, reverse=False, tostring=False):
         output = html.escape(string).encode('ascii', 'xmlcharrefreplace') # Replace non-ASCII characters
         output = output.replace(b'\n', b'<br>') # Replace newlines with <br>
         output = output.replace(b'\t', b'&nbsp;&nbsp;&nbsp;&nbsp;') # Replace tabs with 4 spaces
-        if tostring: # Convert from bytestring to unicode
+        if tostring: # Convert from bytestring to unicode # pragma: no cover
             output = output.decode()
     else: # Convert from HTML
         output = html.unescape(string)
@@ -748,7 +671,7 @@ def htmlify(string, reverse=False, tostring=False):
 #%% Type functions
 ##############################################################################
 
-__all__ += ['flexstr', 'isiterable', 'checktype', 'isnumber', 'isstring', 'isarray',
+__all__ += ['flexstr', 'sanitizestr', 'isiterable', 'checktype', 'isnumber', 'isstring', 'isarray',
             'toarray', 'tolist', 'promotetoarray', 'promotetolist', 'transposelist',
             'swapdict', 'mergedicts', 'mergelists']
 
@@ -772,20 +695,121 @@ def flexstr(arg, force=True):
     return output
 
 
-def isiterable(obj):
+def sanitizestr(string=None, alphanumeric=False, nospaces=False, asciify=False, 
+                lower=False, validvariable=False, spacechar='_', symchar='?'):
     '''
-    Simply determine whether or not the input is iterable.
-
-    Works by trying to iterate via iter(), and if that raises an exception, it's
-    not iterable.
-
-    From http://stackoverflow.com/questions/1952464/in-python-how-do-i-determine-if-an-object-is-iterable
+    Remove all non-"standard" characters from a string
+    
+    Can be used to e.g. generate a valid variable name from arbitrary input, remove
+    non-ASCII characters (replacing with equivalent ASCII ones if possible), etc.
+    
+    Args:
+        string (str): the string to sanitize
+        alphanumeric (bool): allow only alphanumeric characters
+        nospaces (bool): remove spaces
+        asciify (bool): remove non-ASCII characters
+        lower (bool): convert uppercase characters to lowercase
+        validvariable (bool): convert to a valid Python variable name (similar to alphanumeric=True, nospaces=True; uses spacechar to substitute)
+        spacechar (str): if nospaces is True, character to replace spaces with (can be blank)
+        symchar (str): character to replace non-alphanumeric characters with (can be blank)
+    
+    **Examples**::
+        
+        string1 = 'This Is a String'
+        sc.sanitizestr(string1, lower=True) # Returns 'this is a string'
+        
+        string2 = 'Lukáš wanted €500‽'
+        sc.sanitizestr(string2, asciify=True, nospaces=True, symchar='*') # Returns 'Lukas_wanted_*500*'
+        
+        string3 = '"Ψ scattering", María said, "at ≤5 μm?"'
+        sc.sanitizestr(string3, asciify=True, alphanumeric=True, nospaces=True, spacechar='') # Returns '??scattering??Mariasaid??at?5?m??'
+    
+        string4 = '4 path/names/to variable!'
+        sc.sanitizestr(string4, validvariable=True, spacechar='') # Returns '_4pathnamestovariable'
+    
+    New in version 2.2.0.
     '''
-    try:
-        iter(obj)
-        return True
-    except:
-        return False
+    string = flexstr(string)
+    if asciify:
+        newstr = ''
+        for char in string:
+            newchar = unicodedata.normalize('NFKD', char).encode('ascii', 'ignore').decode()
+            if not len(newchar):
+                newchar = symchar
+            newstr += newchar
+        string = newstr
+    if nospaces:
+        string = string.replace(' ', spacechar)
+    if lower:
+        string = string.lower()
+    if alphanumeric:
+        space = spacechar if nospaces else ' '
+        string = re.sub(f'[^0-9a-zA-Z{space}]', symchar, string) # If not for the space string, could use /w
+    if validvariable:
+        string = re.sub(r'\W', spacechar, string) # /W matches an non-alphanumeric character; use a raw string to avoid warnings
+        if str.isdecimal(string[0]): # Don't allow leading decimals: here in case spacechar is None
+            string = '_' + string
+    return string
+
+
+def isiterable(obj, *args, exclude=None, minlen=None):
+    '''
+    Determine whether or not the input is iterable, with optional types to exclude.
+    
+    Args:
+        obj (any): object to check for iterability
+        args (any): additional objects to check for iterability
+        exclude (list): list of iterable objects to exclude (e.g., strings)
+        minlen (int): if not None, check that an object has a defined length as well
+    
+    **Examples**::
+        
+        obj1 = [1,2,3]
+        obj2 = 'abc'
+        obj3 = set()
+        
+        sc.isiterable(obj1) # Returns True
+        sc.isiterable(obj1, obj2, obj3, exclude=str, minlen=1) # returns [True, False, False]
+        
+    See also ``np.iterable()`` for a simpler version.
+    
+    New in version 2.2.0: "exclude" and "minlen" args; support multiple arguments
+    '''
+    
+    # Handle arguments
+    objlist = [obj]
+    n_args = len(args)
+    exclude = tuple(tolist(exclude))
+    if n_args: # pragma: no cover
+        objlist.extend(args)
+        
+    # Determine iterability
+    output = []
+    for obj in objlist:
+        
+        # Basic test of iterability
+        tf = np.iterable(obj)
+        
+        # Additional checks
+        if tf:
+            
+            # Explicitly exclude types
+            if exclude and checktype(obj, exclude): 
+                tf = False
+            
+            # Check length
+            if minlen is not None: # pragma: no cover
+                try:
+                    assert len(obj) >= minlen
+                except:
+                    tf = False
+                    
+        output.append(tf)
+    
+    if not n_args:
+        output = output[0]
+    
+    return output
 
 
 def checktype(obj=None, objtype=None, subtype=None, die=False):
@@ -799,6 +823,7 @@ def checktype(obj=None, objtype=None, subtype=None, die=False):
         - 'arr', 'array': a Numpy array (equivalent to np.ndarray)
         - 'listlike': a list, tuple, or array
         - 'arraylike': a list, tuple, or array with numeric entries
+        - 'none': a None object
 
     If subtype is not None, then checktype will iterate over the object and check
     recursively that each element matches the subtype.
@@ -816,18 +841,25 @@ def checktype(obj=None, objtype=None, subtype=None, die=False):
         sc.checktype(['a','b','c'], 'arraylike') # Returns False
         sc.checktype([{'a':3}], list, dict) # Returns True
     
-    New in version 2.0.1: ``pd.Series`` considered 'array-like'
+    | New in version 2.0.1: ``pd.Series`` considered 'array-like'
+    | New in version 2.2.0: allow list (in addition to tuple) of types; allow checking for NoneType
     '''
 
     # Handle "objtype" input
-    if   objtype in ['str','string']:          objinstance = _stringtypes
+    if isinstance(objtype, str): # Ensure it's lowercase (e.g. 'None' → 'none')
+        objtype = objtype.lower() 
+    if   objtype in ['none']:                  objinstance = type(None) # NoneType not available in Python <3.10
+    elif objtype in ['str','string']:          objinstance = _stringtypes
     elif objtype in ['num', 'number']:         objinstance = _numtype
     elif objtype in ['bool', 'boolean']:       objinstance = _booltypes
     elif objtype in ['arr', 'array']:          objinstance = np.ndarray
     elif objtype in ['listlike', 'arraylike']: objinstance = (list, tuple, np.ndarray, pd.Series) # Anything suitable as a numerical array
     elif type(objtype) == type:                objinstance = objtype # Don't need to do anything
     elif isinstance(objtype, tuple):           objinstance = objtype # Ditto
-    elif objtype is None:                      return # If not supplied, exit
+    elif isinstance(objtype, list):            objinstance = tuple(objtype) # Convert from a list to a tuple # pragma: no cover
+    elif objtype is None: # pragma: no cover
+        errormsg = "No object type was supplied; did you mean to use objtype='none' instead?"
+        raise ValueError(errormsg)
     else: # pragma: no cover
         errormsg = f'Could not understand what type you want to check: should be either a string or a type, not "{objtype}"'
         raise ValueError(errormsg)
@@ -866,7 +898,7 @@ def isnumber(obj, isnan=None):
     Almost identical to isinstance(obj, numbers.Number).
     '''
     output = checktype(obj, 'number')
-    if output and isnan is not None: # It is a number, so can check for nan
+    if output and isnan is not None: # It is a number, so can check for nan # pragma: no cover
         output = (np.isnan(obj) == isnan) # See if they match
     return output
 
@@ -896,7 +928,7 @@ def isarray(obj, dtype=None):
         if dtype is None:
             return True
         else:
-            if obj.dtype == dtype:
+            if obj.dtype == dtype: # pragma: no cover
                 return True
             else:
                 return False
@@ -992,12 +1024,12 @@ def tolist(obj=None, objtype=None, keepnone=False, coerce='default'):
             coerce = None
         elif coerce == 'default':
             coerce = default_coerce
-        elif coerce == 'tuple':
+        elif coerce == 'tuple': # pragma: no cover
             coerce = default_coerce + (tuple,)
         elif coerce == 'full':
             coerce = default_coerce + (tuple, np.ndarray)
-        else:
-            errormsg = f'Option "{coerce}"; not recognized; must be "none", "default", or "full"'
+        else: # pragma: no cover
+            errormsg = f'Option "{coerce}"; not recognized; must be "none", "default", "tuple", or "full"'
 
     if objtype is None: # Don't do type checking
         if isinstance(obj, list):
@@ -1114,7 +1146,7 @@ def mergedicts(*args, _strict=False, _overwrite=True, _copy=False, _sameclass=Tr
     '''
     # Warn about deprecated keys
     renamed = ['strict', 'overwrite', 'copy']
-    if any([k in kwargs for k in renamed]):
+    if any([k in kwargs for k in renamed]): # pragma: no cover
         warnmsg = f'sc.mergedicts() arguments "{strjoin(renamed)}" have been renamed with underscores as of v1.3.3; using these as keywords is undesirable'
         warnings.warn(warnmsg, category=FutureWarning, stacklevel=2)
 
@@ -1126,7 +1158,7 @@ def mergedicts(*args, _strict=False, _overwrite=True, _copy=False, _sameclass=Tr
                 try:
                     outputdict = arg.__class__() # This creates a new instance of the class
                     break
-                except Exception as E:
+                except Exception as E: # pragma: no cover
                     errormsg = f'Could not create new dict of {type(args[0])} from first argument ({str(E)}); set _sameclass=False if this is OK'
                     if _die: raise TypeError(errormsg) from E
                     else:    print(errormsg)
@@ -1147,7 +1179,7 @@ def mergedicts(*args, _strict=False, _overwrite=True, _copy=False, _sameclass=Tr
                     raise KeyError(errormsg)
             outputdict.update(arg)
         else:
-            if arg is not None and _die:
+            if arg is not None and _die: # pragma: no cover
                 errormsg = f'Could not handle argument {a} of {type(arg)}: expecting dict or None'
                 raise TypeError(errormsg)
 
@@ -1225,8 +1257,8 @@ def _sanitize_output(obj, is_list, is_array, dtype=None):
 #%% Misc. functions
 ##############################################################################
 
-__all__ += ['strjoin', 'newlinejoin', 'strsplit', 'runcommand', 'gitinfo', 'compareversions',
-            'uniquename', 'suggest', 'getcaller', 'importbyname']
+__all__ += ['strjoin', 'newlinejoin', 'strsplit', 'runcommand', 'uniquename', 
+            'suggest', 'importbyname', 'importbypath']
 
 
 def strjoin(*args, sep=', '):
@@ -1250,7 +1282,7 @@ def strjoin(*args, sep=', '):
             obj.append(arg)
         elif isiterable(arg):
             obj.extend([str(item) for item in arg])
-        else:
+        else: # pragma: no cover
             obj.append(str(arg))
     output = sep.join(obj)
     return output
@@ -1296,8 +1328,8 @@ def strsplit(string, sep=None, skipempty=True, lstrip=True, rstrip=True):
         sep = [' ', ',']
 
     # Generate a character sequence that isn't in the string
-    special = '∙' # Pick an obscure character
-    while special in string: # If it exists in the string nonetheless, keep going until it doesn't
+    special = '∙' # Pick an obscure Unicode character
+    while special in string: # If it exists in the string nonetheless, keep going until it doesn't # pragma: no cover
         special += special
 
     # Convert all separators to the special character
@@ -1338,7 +1370,7 @@ def runcommand(command, printinput=False, printoutput=False, wait=True):
             stderr = p.stdout.read().decode("utf-8") # Somewhat confusingly, send stderr to stdout
             stdout = p.communicate()[0].decode("utf-8") # ...and then stdout to the pipe
             output = stdout + '\n' + stderr if stderr else stdout # Only include the error if it was non-empty
-        else:
+        else: # pragma: no cover
             output = ''
     except Exception as E: # pragma: no cover
         output = f'runcommand(): shell command failed: {str(E)}' # This is for a Python error, not a shell error -- those get passed to output
@@ -1348,166 +1380,6 @@ def runcommand(command, printinput=False, printoutput=False, wait=True):
 
 
 
-def gitinfo(path=None, hashlen=7, die=False, verbose=True):
-    """
-    Retrieve git info
-
-    This function reads git branch and commit information from a .git directory.
-    Given a path, it will check for a ``.git`` directory. If the path doesn't contain
-    that directory, it will search parent directories for ``.git`` until it finds one.
-    Then, the current information will be parsed.
-
-    Note: if direct directory reading fails, it will attempt to use the gitpython
-    library.
-
-    Args:
-        path (str): A folder either containing a .git directory, or with a parent that contains a .git directory
-        hashlen (int): Length of hash to return (default: 7)
-        die (bool): whether to raise an exception if git information can't be retrieved (default: no)
-        verbose (bool): if not dying, whether to print information about the exception
-
-    Returns:
-        Dictionary containing the branch, hash, and commit date
-
-    **Examples**::
-
-        info = sc.gitinfo() # Get git info for current script repository
-        info = sc.gitinfo(my_package.__file__) # Get git info for a particular Python package
-    """
-
-    if path is None:
-        path = os.getcwd()
-
-    gitbranch = "Branch N/A"
-    githash   = "Hash N/A"
-    gitdate   = "Date N/A"
-
-    try:
-        # First, get the .git directory
-        curpath = os.path.dirname(os.path.abspath(path))
-        while curpath:
-            if os.path.exists(os.path.join(curpath, ".git")):
-                gitdir = os.path.join(curpath, ".git")
-                break
-            else: # pragma: no cover
-                parent, _ = os.path.split(curpath)
-                if parent == curpath:
-                    curpath = None
-                else:
-                    curpath = parent
-        else: # pragma: no cover
-            raise RuntimeError("Could not find .git directory")
-
-        # Then, get the branch and commit
-        with open(os.path.join(gitdir, "HEAD"), "r") as f1:
-            ref = f1.read()
-            if ref.startswith("ref:"):
-                refdir = ref.split(" ")[1].strip()  # The path to the file with the commit
-                gitbranch = refdir.replace("refs/heads/", "")  # / is always used (not os.sep)
-                with open(os.path.join(gitdir, refdir), "r") as f2:
-                    githash = f2.read().strip()  # The hash of the commit
-            else: # pragma: no cover
-                gitbranch = "Detached head (no branch)"
-                githash = ref.strip()
-
-        # Now read the time from the commit
-        with open(os.path.join(gitdir, "objects", githash[0:2], githash[2:]), "rb") as f3:
-            compressed_contents = f3.read()
-            decompressed_contents = zlib.decompress(compressed_contents).decode()
-            for line in decompressed_contents.split("\n"):
-                if line.startswith("author"):
-                    _re_actor_epoch = re.compile(r"^.+? (.*) (\d+) ([+-]\d+).*$")
-                    m = _re_actor_epoch.search(line)
-                    actor, epoch, offset = m.groups()
-                    t = time.gmtime(int(epoch))
-                    gitdate = time.strftime("%Y-%m-%d %H:%M:%S UTC", t)
-
-    except Exception as E: # pragma: no cover
-        try: # Second, try importing gitpython
-            import git
-            rootdir = os.path.abspath(path) # e.g. /user/username/my/folder
-            repo = git.Repo(path=rootdir, search_parent_directories=True)
-            try:
-                gitbranch = str(repo.active_branch.name)  # Just make sure it's a string
-            except TypeError:
-                gitbranch = 'Detached head (no branch)'
-            githash = str(repo.head.object.hexsha)
-            gitdate = str(repo.head.object.authored_datetime.isoformat())
-        except Exception as E2:
-            errormsg = f'''Could not extract git info; please check paths:
-  Method 1 (direct read) error: {str(E)}
-  Method 2 (gitpython) error:   {str(E2)}'''
-            if die:
-                raise RuntimeError(errormsg) from E
-            elif verbose:
-                print(errormsg + f'\nError: {str(E)}')
-
-    # Trim the hash, but not if loading failed
-    if len(githash)>hashlen and 'N/A' not in githash:
-        githash = githash[:hashlen]
-
-    # Assemble output
-    output = {"branch": gitbranch, "hash": githash, "date": gitdate}
-
-    return output
-
-
-def compareversions(version1, version2):
-    '''
-    Function to compare versions, expecting both arguments to be a string of the
-    format 1.2.3, but numeric works too. Returns 0 for equality, -1 for v1<v2, and
-    1 for v1>v2.
-
-    If ``version2`` starts with >, >=, <, <=, or ==, the function returns True or
-    False depending on the result of the comparison.
-
-    **Examples**::
-
-        sc.compareversions('1.2.3', '2.3.4') # returns -1
-        sc.compareversions(2, '2') # returns 0
-        sc.compareversions('3.1', '2.99') # returns 1
-        sc.compareversions('3.1', '>=2.99') # returns True
-        sc.compareversions(mymodule.__version__, '>=1.0') # common usage pattern
-        sc.compareversions(mymodule, '>=1.0') # alias to the above
-
-    New in version 1.2.1: relational operators
-    '''
-    # Handle inputs
-    if isinstance(version1, types.ModuleType):
-        try:
-            version1 = version1.__version__
-        except Exception as E:
-            errormsg = f'{version1} is a module, but does not have a __version__ attribute'
-            raise AttributeError(errormsg) from E
-    v1 = str(version1)
-    v2 = str(version2)
-
-    # Process version2
-    valid = None
-    if   v2.startswith('>'):  valid = [1]
-    elif v2.startswith('>='): valid = [0,1]
-    elif v2.startswith('='):  valid = [0]
-    elif v2.startswith('=='): valid = [0]
-    elif v2.startswith('~='): valid = [-1,1]
-    elif v2.startswith('!='): valid = [-1,1]
-    elif v2.startswith('<='): valid = [0,-1]
-    elif v2.startswith('<'):  valid = [-1]
-    v2 = v2.lstrip('<>=!~')
-
-    # Do comparison
-    if packaging.version.parse(v1) > packaging.version.parse(v2):
-        comparison =  1
-    elif packaging.version.parse(v1) < packaging.version.parse(v2):
-        comparison =  -1
-    else:
-        comparison =  0
-
-    # Return
-    if valid is None:
-        return comparison
-    else:
-        tf = (comparison in valid)
-        return tf
 
 
 def uniquename(name=None, namelist=None, style=None):
@@ -1600,7 +1472,7 @@ def suggest(user_input, valid_inputs, n=1, threshold=None, fulloutput=False, die
     # Handle threshold
     if threshold is None:
         threshold = np.ceil(len(user_input)*2/3)
-    if threshold < 0:
+    if threshold < 0: # pragma: no cover
         threshold = np.inf
 
     # Output
@@ -1624,62 +1496,7 @@ def suggest(user_input, valid_inputs, n=1, threshold=None, fulloutput=False, die
                 return suggestions[:n]
 
 
-def getcaller(frame=2, tostring=True, includelineno=False, includeline=False):
-    '''
-    Try to get information on the calling function, but fail gracefully. See also
-    :func:`thisfile`.
-
-    Frame 1 is the file calling this function, so not very useful. Frame 2 is
-    the default assuming it is being called directly. Frame 3 is used if
-    another function is calling this function internally.
-
-    Args:
-        frame (int): how many frames to descend (e.g. the caller of the caller of the...), default 2
-        tostring (bool): whether to return a string instead of a dict with filename and line number
-        includelineno (bool): if ``tostring``, whether to also include the line number
-        includeline (bool): if not ``tostring``, also store the line contents
-
-    Returns:
-        output (str/dict): the filename (and line number) of the calling function, either as a string or dict
-
-    **Examples**::
-
-        sc.getcaller()
-        sc.getcaller(tostring=False)['filename'] # Equivalent to sc.getcaller()
-        sc.getcaller(frame=3) # Descend one level deeper than usual
-        sc.getcaller(frame=1, tostring=False, includeline=True) # See the line that called sc.getcaller()
-
-    | New in version 1.0.0.
-    | New in version 1.3.3: do not include line by default
-    '''
-    try:
-        import inspect
-        result = inspect.getouterframes(inspect.currentframe(), 2)
-        fname = str(result[frame][1])
-        lineno = result[frame][2]
-        if tostring:
-            output = f'{fname}'
-            if includelineno:
-                output += f', line {lineno}'
-        else:
-            output = {'filename':fname, 'lineno':lineno}
-            if includeline:
-                try:
-                    with open(fname) as f:
-                        lines = f.read().splitlines()
-                        line = lines[lineno-1] # -1 since line numbers start at 1
-                    output['line'] = line
-                except: # Fail silently
-                    output['line'] = 'N/A'
-    except Exception as E: # pragma: no cover
-        if tostring:
-            output = f'Calling function information not available ({str(E)})'
-        else:
-            output = {'filename':'N/A', 'lineno':'N/A'}
-    return output
-
-
-def _assign_to_namespace(var, obj, namespace=None, overwrite=True):
+def _assign_to_namespace(var, obj, namespace=None, overwrite=True): # pragma: no cover
     ''' Helper function to assign an object to the global namespace '''
     if namespace is None:
         namespace = globals()
@@ -1690,7 +1507,7 @@ def _assign_to_namespace(var, obj, namespace=None, overwrite=True):
     return
 
 
-def importbyname(module=None, variable=None, namespace=None, lazy=False, overwrite=True, die=True, verbose=True, **kwargs):
+def importbyname(module=None, variable=None, path=None, namespace=None, lazy=False, overwrite=True, die=True, verbose=True, **kwargs):
     '''
     Import modules by name.
 
@@ -1700,6 +1517,7 @@ def importbyname(module=None, variable=None, namespace=None, lazy=False, overwri
     Args:
         module (str): name of the module to import
         variable (str): the name of the variable to assign the module to (by default, the module's name)
+        path (str/path): optionally load from path instead of by name
         namespace (dict): the namespace to load the modules into (by default, globals)
         lazy (bool): whether to create a LazyModule object instead of load the actual module
         overwrite (bool): whether to allow overwriting an existing variable (by default, yes)
@@ -1709,21 +1527,24 @@ def importbyname(module=None, variable=None, namespace=None, lazy=False, overwri
 
     **Examples**::
 
-        np = sc.importbyname('numpy')
-        sc.importbyname(pd='pandas', np='numpy')
-        pl = sc.importbyname(pl='matplotlib.pyplot', lazy=True) # Won't actually import until e.g. pl.figure() is called
+        np = sc.importbyname('numpy') # Standard usage
+        sc.importbyname(pd='pandas', np='numpy') # Use dictionary syntax to assign to namespace
+        plt = sc.importbyname(plt='matplotlib.pyplot', lazy=True) # Won't actually import until e.g. pl.figure() is called
+        mymod = sc.importbyname(path='/path/to/mymod') # Import by path rather than name
+    
+    See also :func:`importbypath()`.
 
-    New in version 2.1.0: "verbose" argument
+    | New in version 2.1.0: "verbose" argument
+    | New in version 2.2.0: "path" argument
     '''
     # Initialize
-    import importlib
     if variable is None:
         variable = module
 
     # Map modules to variables
     mapping = {}
-    if module is not None:
-        mapping[variable] = module
+    if module is not None or path is not None:
+        mapping[variable] = (path or module) # In this order so path takes precedence
     mapping.update(kwargs)
 
     # Load modules
@@ -1733,7 +1554,10 @@ def importbyname(module=None, variable=None, namespace=None, lazy=False, overwri
             lib = LazyModule(module=module, variable=variable, namespace=namespace)
         else:
             try:
-                lib = importlib.import_module(module)
+                if path is not None:
+                    lib = importbypath(path, variable)
+                else:
+                    lib = importlib.import_module(module)
             except Exception as E: # pragma: no cover
                 errormsg = f'Cannot import "{module}" since {module} is not installed. Please install {module} and try again.'
                 if verbose and not die:
@@ -1752,6 +1576,51 @@ def importbyname(module=None, variable=None, namespace=None, lazy=False, overwri
 
     return libs
 
+
+def importbypath(path, name=None):
+    '''
+    Import a module by path.
+    
+    Useful for importing multiple versions of the same module for comparison purposes.
+    
+    Args:
+        path (str/path): the path to load the module from (with or without __init__.py)
+        name (str): the name of the loaded module (by default, the file or folder name from the path)
+    
+    **Examples**::
+        
+        # Load a module that isn't importable otherwise
+        mymod = sc.importbypath('my file with spaces.py')
+        
+        # Load two versions of the same folder
+        old = sc.importbypath('/path/to/old/lib', name='oldlib')
+        new = sc.importbypath('/path/to/new/lib', name='newlib')
+    
+    See also :func:`importbyname()`.
+
+    New in version 2.2.0.
+    '''
+    # Sanitize the path and filename
+    default_file='__init__.py'
+    filepath = Path(path)
+    parts = list(filepath.parts)
+    if filepath.is_dir():
+        filepath = filepath / default_file # Append default filename
+    elif not filepath.is_file():
+        errormsg = f'Could not import {filepath}: is not a valid file or folder'
+        raise FileNotFoundError(errormsg)
+    
+    # Construct the name from either the filename or the folder name
+    if name is None:
+        basename = parts[-1].removesuffix('.py')
+        name = sanitizestr(basename, validvariable=True) # Convert directory name to a string
+    
+    # From https://docs.python.org/3/library/importlib.html#importing-a-source-file-directly
+    spec = importlib.util.spec_from_file_location(name, filepath)
+    module = importlib.util.module_from_spec(spec)
+    sys.modules[name] = module
+    spec.loader.exec_module(module)
+    return module
 
 
 ##############################################################################
@@ -1776,7 +1645,7 @@ class KeyNotFoundError(KeyError):
         return Exception.__str__(self)
 
 
-class LinkException(Exception):
+class LinkException(Exception): # pragma: no cover
     '''
     An exception to raise when links are broken, for exclusive use with the Link
     class.
@@ -1791,43 +1660,68 @@ class prettyobj(object):
     Use pretty repr for objects, instead of just showing the type and memory pointer
     (the Python default for objects). Can also be used as the base class for custom
     classes.
+    
+    Args:
+        args (dict): dictionaries which are used to assign attributes
+        kwargs (any): can also be used to assign attributes
 
-    **Examples**
+    **Example 1**::
 
-        >>> myobj = sc.prettyobj()
-        >>> myobj.a = 3
-        >>> myobj.b = {'a':6}
-        >>> print(myobj)
-        <sciris.sc_utils.prettyobj at 0x7ffa1e243910>
-        ————————————————————————————————————————————————————————————
-        a: 3
-        b: {'a': 6}
-        ————————————————————————————————————————————————————————————
+        myobj = sc.prettyobj(a=3)
+        print(myobj)
+        
+        # <sciris.sc_utils.prettyobj at 0x7fbba4a97f40>
+        # ————————————————————————————————————————————————————————————
+        # Methods:
+        #   Methods N/A         
+        # ————————————————————————————————————————————————————————————
+        # a: 3
+        # ————————————————————————————————————————————————————————————
 
-        >>> class MyObj(sc.prettyobj):
-        >>>
-        >>>     def __init__(self, a, b):
-        >>>         self.a = a
-        >>>         self.b = b
-        >>>
-        >>>     def mult(self):
-        >>>         return self.a * self.b
-        >>>
-        >>> myobj = MyObj(a=4, b=6)
-        >>> print(myobj)
-        <__main__.MyObj at 0x7fd9acd96c10>
-        ————————————————————————————————————————————————————————————
-        Methods:
-          mult()
-        ————————————————————————————————————————————————————————————
-        a: 4
-        b: 6
-        ————————————————————————————————————————————————————————————
+    **Example 2**::
+
+        myobj = sc.prettyobj(a=3)
+        myobj.b = {'a':6}
+        print(myobj)
+        
+        # <sciris.sc_utils.prettyobj at 0x7ffa1e243910>
+        # ————————————————————————————————————————————————————————————
+        # Methods:
+        #   Methods N/A         
+        # ————————————————————————————————————————————————————————————
+        # a: 3
+        # b: {'a': 6}
+        # ————————————————————————————————————————————————————————————
+
+
+    **Example 3**::
+        
+        class MyObj(sc.prettyobj):
+       
+            def __init__(self, a, b):
+                self.a = a
+                self.b = b
+       
+            def mult(self):
+                return self.a * self.b
+       
+        myobj = MyObj(a=4, b=6)
+        print(myobj)
+        
+        # <__main__.MyObj at 0x7fd9acd96c10>
+        # ————————————————————————————————————————————————————————————
+        # Methods:
+        #   mult()
+        # ————————————————————————————————————————————————————————————
+        # a: 4
+        # b: 6
+        # ————————————————————————————————————————————————————————————
 
     | New in version 2.0.0: allow positional arguments
     '''
 
     def __init__(self, *args, **kwargs):
+        ''' Simple initialization '''
         kwargs = mergedicts(*args, kwargs)
         for k,v in kwargs.items():
             self.__dict__[k] = v
@@ -1835,6 +1729,7 @@ class prettyobj(object):
 
 
     def __repr__(self):
+        ''' The point of this class: use a more detailed repr by default '''
         from . import sc_printing as scp # To avoid circular import
         output  = scp.prepr(self)
         return output
@@ -1861,7 +1756,7 @@ class autolist(list):
     def __add__(self, obj=None):
         ''' Allows non-lists to be concatenated '''
         obj = tolist(obj)
-        new = autolist(list.__add__(self, obj)) # Ensure it returns an autolist
+        new = self.__class__(list.__add__(self, obj)) # Ensure it returns an autolist
         return new
 
     def __iadd__(self, obj):
@@ -1954,7 +1849,7 @@ class LazyModule:
     def __getattr__(self, attr):
         ''' In most cases, when an attribute is retrieved we want to replace this module with the actual one '''
         _builtin_keys = ['_variable', '_module', '_namespace', '_overwrite', '_load']
-        if attr in _builtin_keys:
+        if attr in _builtin_keys: # pragma: no cover
             obj = object.__getattribute__(self, attr)
         else:
             obj = self._load(attr)
@@ -1963,21 +1858,22 @@ class LazyModule:
 
     def _load(self, attr=None):
         ''' Stop being lazy and load the module '''
-        import importlib
         var = self._variable
         lib = importlib.import_module(self._module)
         _assign_to_namespace(var, lib, namespace=self._namespace, overwrite=self._overwrite)
         if attr:
             obj = getattr(lib, attr)
-        else:
+        else: # pragma: no cover
             obj = lib
         return obj
     
 
 class tryexcept(cl.suppress):
     '''
-    Simple class to catch exceptions in a single line -- effectively an alias to
-    contextlib.suppress.
+    Simple class to catch exceptions in a single line
+    
+    Effectively an alias to ``contextlib.suppress()``, which itself is a programmatic
+    equivalent to using try-except blocks.
     
     By default, all errors are caught. If ``catch`` is not None, then by default 
     raise all other exceptions; if ``die`` is an exception (list of exceptions, 
@@ -2015,7 +1911,8 @@ class tryexcept(cl.suppress):
                 print(values[i])
         tryexc.print()
             
-    New in version 2.1.0.
+    | New in version 2.1.0.
+    | New in version 2.2.0: renamed "print" to "disp"
     '''
 
     def __init__(self, die=None, catch=None, verbose=1, history=None):
@@ -2025,7 +1922,7 @@ class tryexcept(cl.suppress):
         catchtypes = []
         if die is None and catch is None: # Default: do not die
             self.defaultdie = False
-        elif die in [True, False, 0, 1]: # It's truthy: use it directly
+        elif die in [True, False, 0, 1]: # It's truthy: use it directly # pragma: no cover
             self.defaultdie = die
         elif die is None and catch is not None: # We're asked to catch some things, so die otherwise
             self.defaultdie = True
@@ -2033,7 +1930,7 @@ class tryexcept(cl.suppress):
         elif die is not None and catch is None: # Vice versa
             self.defaultdie = False
             dietypes = tolist(die)
-        else:
+        else: # pragma: no cover
             errormsg = 'Unexpected input to "die" and "catch": typically only one or the other should be provided'
             raise ValueError(errormsg)
         
@@ -2043,11 +1940,11 @@ class tryexcept(cl.suppress):
         self.verbose    = verbose
         self.exceptions = []
         if history is not None:
-            if isinstance(history, (list, tuple)):
+            if isinstance(history, (list, tuple)): # pragma: no cover
                 self.exceptions.extend(list(history))
             elif isinstance(history, tryexcept):
                 self.exceptions.extend(history.exceptions)
-            else:
+            else: # pragma: no cover
                 errormsg = f'Could not understand supplied history: must be a list or a tryexcept object, not {type(history)}'
                 raise TypeError(errormsg)
         return
@@ -2071,18 +1968,18 @@ class tryexcept(cl.suppress):
             if die and not live:
                 return
             else:
-                if self.verbose > 1: # Print everything
+                if self.verbose > 1: # Print everything # pragma: no cover
                     self.print()
                 elif self.verbose: # Just print the exception type
                     print(exc_type, exc_val)
                 return True
 
     
-    def print(self, which=-1):
+    def disp(self, which=-1):
         ''' Print the exception (usually the last) '''
         if len(self.exceptions):
             py_traceback.print_exception(*self.exceptions[which])
-        else:
+        else: # pragma: no cover
             print('No exceptions were encountered; nothing to trace')
         return
     

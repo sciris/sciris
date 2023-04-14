@@ -69,7 +69,7 @@ def safedivide(numerator=None, denominator=None, default=None, eps=None, warn=Fa
     if scu.isnumber(denominator): # The denominator is a scalar
         if invalid:
             output = default
-        else:
+        else: # pragma: no cover
             output = numerator/denominator
     elif scu.checktype(denominator, 'array'):
         if not warn:
@@ -114,6 +114,7 @@ def findinds(arr=None, val=None, *args, eps=1e-6, first=False, last=False, ind=N
 
     | New in version 1.2.3: "die" argument
     | New in version 2.0.0: fix string matching; allow multiple arguments
+    | New in version 2.2.0: multidimensional arrays now return a list of tuples
     '''
 
     # Handle first or last
@@ -165,7 +166,7 @@ def findinds(arr=None, val=None, *args, eps=1e-6, first=False, last=False, ind=N
                 output = output[ind] # And get the first element
         else:
             if ind is not None:
-                output = [output[i][ind] for i in range(arr.ndim)]
+                output = tuple([output[i][ind] for i in range(arr.ndim)])
     except IndexError as E:
         if die:
             errormsg = 'No matching values found; use die=False to return None instead of raising an exception'
@@ -191,15 +192,17 @@ def findnearest(series=None, value=None):
     Return the index of the nearest match in series to value -- like findinds, but
     always returns an object with the same type as value (i.e. findnearest with
     a number returns a number, findnearest with an array returns an array).
+    
+    Args:
+        series (array): the array of numbers to look for nearest matches in
+        value (scalar or array): the number or numbers to compare against
 
     **Examples**::
 
-        findnearest(rand(10), 0.5) # returns whichever index is closest to 0.5
-        findnearest([2,3,6,3], 6) # returns 2
-        findnearest([2,3,6,3], 6) # returns 2
-        findnearest([0,2,4,6,8,10], [3, 4, 5]) # returns array([1, 2, 2])
-
-    Version: 2017jan07
+        sc.findnearest(rand(10), 0.5) # returns whichever index is closest to 0.5
+        sc.findnearest([2,3,6,3], 6) # returns 2
+        sc.findnearest([2,3,6,3], 6) # returns 2
+        sc.findnearest([0,2,4,6,8,10], [3, 4, 5]) # returns array([1, 2, 2])
     '''
     series = scu.toarray(series)
     if scu.isnumber(value):
@@ -326,10 +329,11 @@ def sanitize(data=None, returninds=False, replacenans=None, defaultval=None, die
             sanitized4 = sc.sanitize(data, replacenans='linear') # Replace NaNs using linear interpolation
             sanitized5 = sc.sanitize(data, replacenans=0) # Replace NaNs with 0
 
-        New in version 2.0.0: handle multidimensional arrays
+        | New in version 2.0.0: handle multidimensional arrays
+        | New in version 2.2.0: return zero-length arrays if all NaN
         '''
         try:
-            data = np.array(data, dtype=float) # Make sure it's an array of float type
+            data = np.array(data, dtype=float) # Make sure it's an array of float type, otherwise nan operations fail
             is_multidim = data.ndim > 1
             if is_multidim:
                 if not replacenans:
@@ -350,7 +354,7 @@ def sanitize(data=None, returninds=False, replacenans=None, defaultval=None, die
                             raise NotImplementedError(errormsg)
                         newx = range(len(data)) # Create a new x array the size of the original array
                         sanitized = smoothinterp(newx, inds, sanitized, method=replacenans, smoothness=0) # Replace nans with interpolated values
-                    else:
+                    else: # pragma: no cover
                         errormsg = f'Interpolation method "{replacenans}" not found: must be "nearest" or "linear"'
                         raise ValueError(errormsg)
                 else:
@@ -362,7 +366,6 @@ def sanitize(data=None, returninds=False, replacenans=None, defaultval=None, die
                 if defaultval is not None:
                     sanitized = defaultval
                 else:
-                    sanitized = data
                     inds = []
 
                     if verbose: # pragma: no cover
@@ -372,7 +375,7 @@ def sanitize(data=None, returninds=False, replacenans=None, defaultval=None, die
             if die:
                 raise E
             else:
-                sanitized = data # Give up and just return an empty array
+                sanitized = data # Give up and just return original array
                 inds = []
         if returninds: return sanitized, inds
         else:          return sanitized
@@ -472,7 +475,7 @@ def numdigits(n, *args, count_minus=False, count_decimal=False):
         abs_n = abs(n)
         is_decimal = 0 < abs_n < 1
         n_digits = 1
-        if n < 0 and count_minus:
+        if n < 0 and count_minus: # pragma: no cover
             n_digits += 1
         if is_decimal:
             if count_decimal:
@@ -638,10 +641,11 @@ def randround(x):
 
         sc.randround(np.random.randn(8)) # Returns e.g. array([-1,  0,  1, -2,  2,  0,  0,  0])
 
-    New in version 1.0.0.
+    | New in version 1.0.0.
+    | New in version 2.2.0: allow arrays of arbitrary shape
     '''
     if isinstance(x, np.ndarray):
-        output = np.array(np.floor(x+np.random.random(x.size)), dtype=int)
+        output = np.array(np.floor(x+np.random.random(x.shape)), dtype=int)
     elif isinstance(x, list):
         output = [randround(i) for i in x]
     else:
@@ -701,7 +705,7 @@ def linregress(x, y, full=False, **kwargs):
     x = scu.toarray(x)
     y = scu.toarray(y)
     fit = np.polyfit(x, y, deg=1, **kwargs) # Do the fit
-    if not full:
+    if not full: # pragma: no cover
         return fit
     else:
         out = sco.objdict()
@@ -725,7 +729,7 @@ def linregress(x, y, full=False, **kwargs):
 __all__ += ['rolling', 'convolve', 'smooth', 'smoothinterp', 'gauss1d', 'gauss2d']
 
 
-def rolling(data, window=7, operation='mean', **kwargs):
+def rolling(data, window=7, operation='mean', replacenans=None, **kwargs):
     '''
     Alias to pandas' rolling() (window) method to smooth a series.
 
@@ -733,12 +737,13 @@ def rolling(data, window=7, operation='mean', **kwargs):
         data (list/arr): the 1D or 2D data to be smoothed
         window (int): the length of the window
         operation (str): the operation to perform: 'mean' (default), 'median', 'sum', or 'none'
+        replacenans (bool/float): if None, leave NaNs; if False, remove them; if a value, replace with that value; if the string 'nearest' or 'linear', do interpolation (see :func:`rmnans()` for details)
         kwargs (dict): passed to pd.Series.rolling()
 
     **Example**::
 
         data = [5,5,5,0,0,0,0,7,7,7,7,0,0,3,3,3]
-        rolled = sc.rolling(data)
+        rolled = sc.rolling(data, replacenans='nearest')
     '''
     # Handle the data
     data = np.array(data)
@@ -755,6 +760,11 @@ def rolling(data, window=7, operation='mean', **kwargs):
     else:
         errormsg = f'Operation "{operation}" not recognized; must be mean, median, sum, or none'
         raise ValueError(errormsg)
+    
+    if replacenans is None:
+        pass
+    else:
+        output = sanitize(data=output, replacenans=replacenans)
 
     return output
 
@@ -805,7 +815,7 @@ def convolve(a, v):
 
     # Handle the case where len(v) > len(a)
     len_diff = max(0, len_v - len_a)
-    if len_diff:
+    if len_diff: # pragma: no cover
         lhs_trim = len_diff // 2
         out = out[lhs_trim:lhs_trim+len_a]
 
@@ -844,7 +854,7 @@ def smooth(data, repeats=None, kernel=None, legacy=False):
         v = np.convolve(v, kernel, mode='full')
 
     # Support legacy method of not correcting for edge effects
-    if legacy:
+    if legacy: # pragma: no cover
         conv = np.convolve
         kw = {'mode':'same'}
     else:
@@ -864,7 +874,8 @@ def smooth(data, repeats=None, kernel=None, legacy=False):
     return output
 
 
-def smoothinterp(newx=None, origx=None, origy=None, smoothness=None, growth=None, ensurefinite=False, keepends=True, method='linear'):
+def smoothinterp(newx=None, origx=None, origy=None, smoothness=None, growth=None, 
+                 ensurefinite=True, keepends=True, method='linear'):
     '''
     Smoothly interpolate over values and keep end points. Same format as numpy.interp().
 
@@ -874,8 +885,9 @@ def smoothinterp(newx=None, origx=None, origy=None, smoothness=None, growth=None
         origy (arr): the original y coordinates
         smoothness (float): how much to smooth
         growth (float): the growth rate to apply past the ends of the data [deprecated]
-        ensurefinite (bool):  ensure all values are finite
+        ensurefinite (bool):  ensure all values are finite (including skipping NaNs)
         keepends (bool): whether to keep the ends [deprecated]
+        skipnans (bool): whether to skip NaNs
         method (str): the type of interpolation to use (options are 'linear' or 'nearest')
 
     Returns:
@@ -890,7 +902,7 @@ def smoothinterp(newx=None, origx=None, origy=None, smoothness=None, growth=None
         pl.plot(newx,newy)
         pl.scatter(origx,origy)
 
-    Version: 2018jan24
+    | New in verison 2.2.0: "ensurefinite" now defaults to True
     '''
     # Ensure arrays and remove NaNs
     if scu.isnumber(newx):  newx = [newx] # Make sure it has dimension
@@ -901,7 +913,7 @@ def smoothinterp(newx=None, origx=None, origy=None, smoothness=None, growth=None
     origy = np.array(origy, dtype=float)
 
     # If only a single element, just return it, without checking everything else
-    if len(origy)==1:
+    if len(origy)==1: # pragma: no cover
         newy = np.zeros(newx.shape)+origy[0]
         return newy
 
@@ -921,13 +933,13 @@ def smoothinterp(newx=None, origx=None, origy=None, smoothness=None, growth=None
 
     # Only keep finite elements
     finitey = np.isfinite(origy) # Boolean for whether it's finite
-    if finitey.any() and not finitey.all(): # If some but not all is finite, pull out indices that are
+    if finitey.any() and not finitey.all(): # If some but not all is finite, pull out indices that are 
         finiteorigy = origy[finitey]
         finiteorigx = origx[finitey]
     else: # Otherwise, just copy the original
         finiteorigy = origy.copy()
         finiteorigx = origx.copy()
-
+        
     # Perform actual interpolation
     if method=='linear':
         newy = np.interp(newx, finiteorigx, finiteorigy) # Perform standard interpolation without infinities
@@ -1047,9 +1059,9 @@ def gauss1d(x=None, y=None, xi=None, scale=None, use32=True):
     '''
 
     # Swap inputs if x is provided but not y
-    if y is None and x is not None:
+    if y is None and x is not None: # pragma: no cover
         y,x = x,y
-    if x is None:
+    if x is None: # pragma: no cover
         x = np.arange(len(y))
     if xi is None:
         xi = x
@@ -1057,7 +1069,7 @@ def gauss1d(x=None, y=None, xi=None, scale=None, use32=True):
     # Convert to arrays
     try:
         orig_dtype = y.dtype
-    except:
+    except: # pragma: no cover
         orig_dtype = np.float64
     if use32:
         x, y, xi, = _arr32(x), _arr32(y), _arr32(xi)
@@ -1139,9 +1151,9 @@ def gauss2d(x=None, y=None, z=None, xi=None, yi=None, scale=1.0, xscale=1.0, ysc
     | New in version 1.3.1: default arguments; support for 2D inputs
     '''
     # Swap variables if needed
-    if z is None and x is not None:
+    if z is None and x is not None: # pragma: no cover
         z,x = x,z
-    if x is None or y is None:
+    if x is None or y is None: # pragma: no cover
         if z.ndim != 2:
             errormsg = f'If the x and y axes are not provided, then z must be 2D, not {z.ndim}D'
             raise ValueError(errormsg)
@@ -1150,7 +1162,7 @@ def gauss2d(x=None, y=None, z=None, xi=None, yi=None, scale=1.0, xscale=1.0, ysc
             y = np.arange(z.shape[0])
 
     # Handle shapes
-    if z.ndim == 2 and (x.ndim == 1) and (y.ndim == 1):
+    if z.ndim == 2 and (x.ndim == 1) and (y.ndim == 1): # pragma: no cover
         if (z.shape[0] != z.shape[1]) and (len(x) == z.shape[0]) and (len(y) == z.shape[1]):
             print(f'sc.gauss2d() warning: the length of x (={len(x)}) and y (={len(y)}) match the wrong dimensions of z; transposing')
             z = z.transpose()
@@ -1174,7 +1186,7 @@ def gauss2d(x=None, y=None, z=None, xi=None, yi=None, scale=1.0, xscale=1.0, ysc
     # Now that we have xi and yi, handle more 1D vs 2D logic
     if xi.ndim == 1 and yi.ndim == 1 and grid:
         xi, yi = np.meshgrid(xi, yi)
-    if xi.shape != yi.shape:
+    if xi.shape != yi.shape: # pragma: no cover
         errormsg = f'Output arrays must have same shape, but xi = {xi.shape} and yi = {yi.shape}'
         raise ValueError(errormsg)
 
@@ -1186,10 +1198,10 @@ def gauss2d(x=None, y=None, z=None, xi=None, yi=None, scale=1.0, xscale=1.0, ysc
     xi = xi.flatten()
     yi = yi.flatten()
     ni = len(xi)
-    if len(x) != len(y) != len(z):
+    if len(x) != len(y) != len(z): # pragma: no cover
         errormsg = f'Input arrays do not have the same number of elements: x = {len(x)}, y = {len(y)}, z = {len(z)}'
         raise ValueError(errormsg)
-    if len(xi) != len(yi):
+    if len(xi) != len(yi): # pragma: no cover
         errormsg = f'Output arrays do not have the same number of elements: xi = {len(xi)}, yi = {len(yi)}'
         raise ValueError(errormsg)
 

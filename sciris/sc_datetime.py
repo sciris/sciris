@@ -8,7 +8,7 @@ Highlights:
     - :func:`datedelta`: perform calculations on date strings
 '''
 
-import time
+import time as pytime
 import warnings
 import numpy as np
 import pandas as pd
@@ -24,8 +24,20 @@ from . import sc_printing as scp
 #%% Date functions
 ###############################################################################
 
-__all__ = ['now', 'getdate', 'readdate', 'date', 'day', 'daydiff', 'daterange', 'datedelta', 'datetoyear']
+__all__ = ['time', 'now', 'getdate', 'readdate', 'date', 'day', 'daydiff', 'daterange', 'datedelta', 'datetoyear']
 
+
+def time():
+    '''
+    Get current time in seconds -- alias to time.time()
+    
+    See also :func:`now()` to return a datetime object, and :func:`getdate()` to 
+    return a string.
+    
+    New in version 2.2.0.
+    '''
+    return pytime.time()
+    
 
 def now(astype='dateobj', timezone=None, utc=False, tostring=False, dateformat=None):
     '''
@@ -55,8 +67,8 @@ def now(astype='dateobj', timezone=None, utc=False, tostring=False, dateformat=N
     if timezone is not None: tzinfo = du.tz.gettz(timezone) # Timezone is a string
     elif utc:                tzinfo = du.tz.tzutc() # UTC has been specified
     else:                    tzinfo = None # Otherwise, do nothing
-    if tostring:
-        warnmsg = 'sc.now() argument "tostring" will be deprecated soon'
+    if tostring: # pragma: no cover
+        warnmsg = 'sc.now() argument "tostring" is deprecated; use astype="str" instead'
         warnings.warn(warnmsg, category=FutureWarning, stacklevel=2)
         astype='str'
     timenow = dt.datetime.now(tzinfo)
@@ -89,7 +101,7 @@ def getdate(obj=None, astype='str', dateformat=None):
             astype = 'str' # If dateformat is specified, assume type is a string
 
         try:
-            if scu.isstring(obj):
+            if scu.isstring(obj): # pragma: no cover
                 return obj # Return directly if it's a string
             obj.timetuple() # Try something that will only work if it's a date object
             dateobj = obj # Test passed: it's a date object
@@ -101,7 +113,7 @@ def getdate(obj=None, astype='str', dateformat=None):
         if   astype == 'str':     output = dateobj.strftime(dateformat)
         elif astype == 'int':     output = int(timestamp)
         elif astype == 'dateobj': output = dateobj
-        elif astype in  ['float', 'number', 'timestamp']:
+        elif astype in  ['float', 'number', 'timestamp']: # pragma: no cover
             output = timestamp
         else: # pragma: no cover
             errormsg = f'"astype={astype}" not understood; must be "str" or "int"'
@@ -202,7 +214,7 @@ def readdate(datestr=None, *args, dateformat=None, return_defaults=False, verbos
         exceptions = {}
         if isinstance(datestr, dt.datetime):
             dateobj = datestr # Nothing to do
-        elif scu.isnumber(datestr):
+        elif scu.isnumber(datestr): # pragma: no cover
             if 'posix' in format_list or None in format_list:
                 dateobj = dt.datetime.fromtimestamp(datestr)
             elif 'ordinal' in format_list or 'matplotlib' in format_list:
@@ -222,7 +234,7 @@ def readdate(datestr=None, *args, dateformat=None, return_defaults=False, verbos
                 errormsg = f'Was unable to convert "{datestr}" to a date using the formats:\n{formatstr}'
                 if dateformat not in ['dmy', 'mdy']:
                     errormsg += '\n\nNote: to read day-month-year or month-day-year dates, use dateformat="dmy" or "mdy" respectively.'
-                    if verbose:
+                    if verbose: # pragma: no cover
                         for key,val in exceptions.items():
                             errormsg += f'\n {key}: {val}'
                 raise ValueError(errormsg)
@@ -233,11 +245,11 @@ def readdate(datestr=None, *args, dateformat=None, return_defaults=False, verbos
     return output
 
 
-def date(obj, *args, start_date=None, readformat=None, outformat=None, as_date=True, **kwargs):
+def date(obj=None, *args, start_date=None, readformat=None, to='date', as_date=None, outformat=None, **kwargs):
     '''
     Convert any reasonable object -- a string, integer, or datetime object, or
-    list/array of any of those -- to a date object. To convert an integer to a
-    date, you must supply a start date.
+    list/array of any of those -- to a date object (or string, pandas, or numpy
+    date). To convert an integer to a date, you must supply a start date.
 
     Caution: while this function and ``sc.readdate()`` are similar, and indeed this function
     calls ``sc.readdate()`` if the input is a string, in this function an integer is treated
@@ -248,12 +260,14 @@ def date(obj, *args, start_date=None, readformat=None, outformat=None, as_date=T
     underscores (e.g. ``start_date`` or ``startdate``)
 
     Args:
-        obj (str/int/date/datetime/list/array): the object to convert
+        obj (str/int/date/datetime/list/array): the object to convert; if None, return current date
         args (str/int/date/datetime): additional objects to convert
         start_date (str/date/datetime): the starting date, if an integer is supplied
         readformat (str/list): the format to read the date in; passed to ``sc.readdate()``
+        to (str): the output format: 'date' (default), 'str' (or 'string'), 'pandas', or 'numpy'
+        as_date (bool): alternate method of choosing between  output format of 'date' (True) or 'str' (False); if None, use "to" instead
         outformat (str): the format to output the date in, if returning a string
-        as_date (bool): whether to return as a datetime date instead of a string
+        kwargs (dict): only used for deprecated argument aliases
 
     Returns:
         dates (date or list): either a single date object, or a list of them (matching input data type where possible)
@@ -261,12 +275,13 @@ def date(obj, *args, start_date=None, readformat=None, outformat=None, as_date=T
     **Examples**::
 
         sc.date('2020-04-05') # Returns datetime.date(2020, 4, 5)
-        sc.date([35,36,37], start_date='2020-01-01', as_date=False) # Returns ['2020-02-05', '2020-02-06', '2020-02-07']
+        sc.date([35,36,37], start_date='2020-01-01', to='str') # Returns ['2020-02-05', '2020-02-06', '2020-02-07']
         sc.date(1923288822, readformat='posix') # Interpret as a POSIX timestamp
 
     | New in version 1.0.0.
     | New in version 1.2.2: "readformat" argument; renamed "dateformat" to "outformat"
     | New in version 2.0.0: support for ``np.datetime64`` objects
+    | New in version 2.2.0: added "to" argument, and support for ``pd.Timestamp`` and ``np.datetime64`` output; allow None
     '''
 
     # Handle deprecation
@@ -277,23 +292,25 @@ def date(obj, *args, start_date=None, readformat=None, outformat=None, as_date=T
         outformat = dateformat
         warnmsg = 'sc.date() argument "dateformat" has been deprecated as of v1.2.2; use "outformat" instead'
         warnings.warn(warnmsg, category=FutureWarning, stacklevel=2)
+    if as_date is not None: # pragma: no cover
+        to = 'date' if as_date else 'str' # Legacy support for as_date boolean
 
     # Convert to list and handle other inputs
     if obj is None:
-        return
+        obj = dt.datetime.now().date()
     if outformat is None:
         outformat = '%Y-%m-%d'
     obj, is_list, is_array = scu._sanitize_iterables(obj, *args)
 
     dates = []
     for d in obj:
-        if d is None:
+        if d is None: # pragma: no cover
             dates.append(d)
             continue
         try:
             if type(d) == dt.date: # Do not use isinstance, since must be the exact type
                 pass
-            elif isinstance(d, dt.datetime):
+            elif isinstance(d, dt.datetime): # This includes pd.Timestamp
                 d = d.date()
             elif scu.isstring(d):
                 d = readdate(d, dateformat=readformat).date()
@@ -310,15 +327,25 @@ def date(obj, *args, start_date=None, readformat=None, outformat=None, as_date=T
             else: # pragma: no cover
                 errormsg = f'Cannot interpret {type(d)} as a date, must be date, datetime, or string'
                 raise TypeError(errormsg)
-            if as_date:
-                dates.append(d)
+            
+            # Handle output
+            if to == 'date':
+                out = d
+            elif to in ['str', 'string']:
+                out = d.strftime(outformat)
+            elif to == 'pandas':
+                out = pd.Timestamp(d)
+            elif to == 'numpy':
+                out = np.datetime64(d)
             else:
-                dates.append(d.strftime(outformat))
+                errormsg = f'Could not understand to="{to}": must be "date", "str", "pandas", or "numpy"'
+                raise ValueError(errormsg)
+            dates.append(out)
         except Exception as E:
             errormsg = f'Conversion of "{d}" to a date failed'
             raise ValueError(errormsg) from E
 
-    # Return an integer rather than a list if only one provided
+    # Return a scalar rather than a list if only one provided
     output = scu._sanitize_output(dates, is_list, is_array, dtype=object)
     return output
 
@@ -389,18 +416,21 @@ def day(obj, *args, start_date=None, **kwargs):
 def daydiff(*args):
     '''
     Convenience function to find the difference between two or more days. With
-    only one argument, calculate days since 2020-01-01.
+    only one argument, calculate days since Jan. 1st.
 
     **Examples**::
 
         diff  = sc.daydiff('2020-03-20', '2020-04-05') # Returns 16
         diffs = sc.daydiff('2020-03-20', '2020-04-05', '2020-05-01') # Returns [16, 26]
+        
+        doy = sc.daydiff('2022-03-20') # Returns 79, the number of days since 2022-01-01
 
-    New in version 1.0.0.
+    | New in version 1.0.0.
+    | New in version 2.2.0: Calculated relative days with one argument
     '''
     days = [date(day) for day in args]
     if len(days) == 1:
-        days.insert(0, date(f'{now().year}-01-01')) # With one date, return days since Jan. 1st
+        days.insert(0, date(f'{days[0].year}-01-01')) # With one date, return days since Jan. 1st
 
     output = []
     for i in range(len(days)-1):
@@ -413,7 +443,7 @@ def daydiff(*args):
     return output
 
 
-def daterange(start_date=None, end_date=None, interval=None, inclusive=True, as_date=False,
+def daterange(start_date=None, end_date=None, interval=None, inclusive=True, as_date=None,
               readformat=None, outformat=None, **kwargs):
     '''
     Return a list of dates from the start date to the end date. To convert a list
@@ -424,13 +454,13 @@ def daterange(start_date=None, end_date=None, interval=None, inclusive=True, as_
 
     Args:
         start_date (int/str/date) : the starting date, in any format
-        end_date   (int/str/date) : the end date, in any format
+        end_date   (int/str/date) : the end date, in any format (see also kwargs below)
         interval   (int/str/dict) : if an int, the number of days; if 'week', 'month', or 'year', one of those; if a dict, passed to ``dt.relativedelta()``
         inclusive  (bool)         : if True (default), return to end_date inclusive; otherwise, stop the day before
-        as_date    (bool)         : if True, return a list of datetime.date objects instead of strings (note: you can also use "asdate" instead of "as_date")
-        readformat (str)          : passed to date()
-        outformat  (str)          : passed to date()
-        days       (int)          : optional
+        as_date    (bool)         : if True, return a list of ``datetime.date`` objects; else, as input type (e.g. strings; note: you can also use "asdate" instead of "as_date")
+        readformat (str)          : passed to ``sc.date()``
+        outformat  (str)          : passed to ``sc.date()``
+        kwargs     (dict)         : optionally, use any valid argument to ``sc.datedelta()`` to create the end_date
 
     **Examples**::
 
@@ -441,12 +471,15 @@ def daterange(start_date=None, end_date=None, interval=None, inclusive=True, as_
     | New in version 1.0.0.
     | New in version 1.3.0: "interval" argument
     | New in version 2.0.0: ``sc.datedelta()`` arguments
+    | New in version 2.2.0: preserve input type
     '''
 
     # Handle inputs
     start_date = kwargs.pop('startdate', start_date) # Handle with or without underscore
     end_date   = kwargs.pop('enddate',   end_date) # Handle with or without underscore
     as_date    = kwargs.pop('asdate', as_date) # Handle with or without underscore
+    if as_date is None: # Typical case, return the same format as the input
+        as_date = False if isinstance(start_date, str) else True
     if len(kwargs):
         end_date = datedelta(start_date, **kwargs)
     start_date = date(start_date, readformat=readformat)
@@ -466,7 +499,7 @@ def daterange(start_date=None, end_date=None, interval=None, inclusive=True, as_
     while curr_date < end_date:
         dates.append(curr_date)
         curr_date += delta
-
+    
     # Convert to final format
     dates = date(dates, start_date=start_date, as_date=as_date, outformat=outformat)
     return dates
@@ -562,7 +595,7 @@ def tic():
     See also ``sc.timer()``.
     '''
     global _tictime  # The saved time is stored in this global
-    _tictime = time.time()  # Store the present time in the global
+    _tictime = pytime.time()  # Store the present time in the global
     return _tictime    # Return the same stored number
 
 
@@ -594,7 +627,7 @@ def toc(start=None, label=None, baselabel=None, sigfigs=None, reset=False, outpu
 
     New in version 1.3.0: new arguments.
     '''
-    now = time.time() # Get the time as quickly as possible
+    now = pytime.time() # Get the time as quickly as possible
 
     from . import sc_printing as scp # To avoid circular import
     global _tictime  # The saved time is stored in this global
@@ -603,7 +636,7 @@ def toc(start=None, label=None, baselabel=None, sigfigs=None, reset=False, outpu
     if sigfigs is None: sigfigs = 3
 
     # If no start value is passed in, try to grab the global _tictime
-    if isinstance(start, str): # Start and label are probably swapped
+    if isinstance(start, str): # Start and label are probably swapped # pragma: no cover
         start,label = label,start
     if start is None:
         try:    start = _tictime
@@ -617,13 +650,13 @@ def toc(start=None, label=None, baselabel=None, sigfigs=None, reset=False, outpu
     if label is None:
         if baselabel is None:
             base = 'Elapsed time: '
-        else:
+        else: # pragma: no cover
             base = baselabel
     else:
         if baselabel is None:
             if label:
                 base = f'{label}: '
-            else: # Handles case toc(label='')
+            else: # Handles case toc(label='') # pragma: no cover
                 base = ''
         else:
             base = f'{baselabel}{label}: '
@@ -635,10 +668,10 @@ def toc(start=None, label=None, baselabel=None, sigfigs=None, reset=False, outpu
 
     # Optionally reset the counter
     if reset:
-        _tictime = time.time()  # Store the present time in the global
+        _tictime = pytime.time()  # Store the present time in the global
 
     # Return elapsed if desired
-    if output:
+    if output: # pragma: no cover
         if output == 'message':
             return logmessage
         elif output == 'both':
@@ -686,6 +719,7 @@ class timer:
         label (str): label identifying this timer
         auto (bool): whether to automatically increment the label
         start (bool): whether to start timing from object creation (else, call ``timer.tic()`` explicitly)
+        verbose (bool): whether to print output on each timing
         kwargs (dict): passed to ``toc()`` when invoked
 
 
@@ -717,12 +751,14 @@ class timer:
     | New in version 1.3.2: ``toc()`` passes label correctly; ``tt()`` method; ``auto`` argument
     | New in version 2.0.0: ``plot()`` method; ``total()`` method; ``indivtimings`` and ``cumtimings`` properties
     | New in version 2.1.0: ``total`` as property instead of method; updated repr; added disp() method
+    | New in version 2.2.0: ``verbose`` argument; ``sum, min, max, mean, std`` methods; ``rawtimings`` property
     '''
-    def __init__(self, label=None, auto=False, start=True, **kwargs):
+    def __init__(self, label=None, auto=False, start=True, verbose=None, **kwargs):
         from . import sc_odict as sco # Here to avoid circular import
         self.kwargs = kwargs # Store kwargs to pass to toc() at the end of the block
         self.kwargs['label'] = label
         self.auto = auto
+        self.verbose = verbose
         self._start = None
         self._tics = []
         self._tocs = []
@@ -740,7 +776,6 @@ class timer:
         self.tic()
         return self
 
-
     def __exit__(self, *args):
         ''' Print elapsed time when leaving a with-as block '''
         self.toc()
@@ -753,6 +788,9 @@ class timer:
         string += f'\nTotal time: {self.total:n} s'
         return string
     
+    def __len__(self):
+        return len(self._tocs)
+    
     
     def disp(self):
         ''' Display the full representation of the object '''
@@ -761,7 +799,7 @@ class timer:
 
     def tic(self):
         ''' Set start time '''
-        now = time.time()  # Store the present time locally
+        now = pytime.time()  # Store the present time locally
         self._start = now
         self._tics.append(now) # Store when this tic was invoked
         return
@@ -772,7 +810,7 @@ class timer:
 
         # Get the time
         self.elapsed, self.message = toc(start=self._start, output='both', doprint=False) # Get time as quickly as possible
-        self._tocs.append(time.time()) # Store when this toc was invoked
+        self._tocs.append(pytime.time()) # Store when this toc was invoked
 
         # Update the kwargs, including the label
         if label is not None:
@@ -797,7 +835,8 @@ class timer:
             kwargs['label'] = countlabel
 
         # Call again to get the correct output
-        output = toc(elapsed=self.elapsed, **kwargs)
+        doprint = kwargs.pop('doprint', self.verbose)
+        output = toc(elapsed=self.elapsed, doprint=doprint, **kwargs)
 
         # If reset was used, apply it
         if kwargs.get('reset'):
@@ -811,14 +850,14 @@ class timer:
         ''' Calculate total time '''
 
         # If the timer hasn't been started, return 0
-        if not len(self._tics):
+        if not len(self._tics): # pragma: no cover
             return 0
         else:
             start = self._tics[0]
 
         # If the timer hasn't been finished, use the current time; else the latest
-        if not len(self._tocs):
-            end = time.time()
+        if not len(self._tocs): # pragma: no cover
+            end = pytime.time()
         else:
             end = self._tocs[-1]
 
@@ -852,9 +891,15 @@ class timer:
     def tto(self, *args, output=True, **kwargs):
         ''' Alias for ``toctic()`` with output=True '''
         return self.toctic(*args, output=output, **kwargs)
+    
+    @property
+    def rawtimings(self):
+        ''' Return an array of timings '''
+        return self.timings[:]
 
     @property
     def indivtimings(self):
+        ''' Compute the individual time between each timing '''
         from . import sc_odict as sco # Here to avoid circular import
         vals = np.diff(scm.cat(self._tics[0], self._tocs))
         output = sco.odict(zip(self.timings.keys(), vals))
@@ -862,11 +907,51 @@ class timer:
 
     @property
     def cumtimings(self):
+        ''' Compute the cumulative time for each timing '''
         from . import sc_odict as sco # Here to avoid circular import
         vals = np.array(self._tocs) - self._tics[0]
         output = sco.odict(zip(self.timings.keys(), vals))
         return output
 
+    def sum(self):
+        '''
+        Sum of timings; similar to ``timer.total``
+        
+        New in version 2.2.0.
+        '''
+        return self.rawtimings.sum()
+    
+    def min(self):
+        '''
+        Minimum of timings
+        
+        New in version 2.2.0.
+        '''
+        return self.rawtimings.min()
+    
+    def max(self):
+        ''' 
+        Maximum of timings
+        
+        New in version 2.2.0.
+        '''
+        return self.rawtimings.max()
+    
+    def mean(self):
+        ''' 
+        Mean of timings
+        
+        New in version 2.2.0.
+        '''
+        return self.rawtimings.mean()
+    
+    def std(self):
+        ''' 
+        Standard deviation of timings
+        
+        New in version 2.2.0.
+        '''
+        return self.rawtimings.std()
 
     def plot(self, fig=None, figkwargs=None, grid=True, **kwargs):
         """
@@ -910,7 +995,7 @@ class timer:
                 ax.grid(grid)
 
             scp.figlayout()
-        else:
+        else: # pragma: no cover
             errormsg = "Looks like nothing has been timed. Forgot to do T.start() and T.stop()??'"
             raise RuntimeWarning(errormsg)
 
@@ -958,13 +1043,13 @@ def elapsedtimestr(pasttime, maxdays=5, minseconds=10, shortmonths=True):
         # %b/%B are the tokens for abbreviated/full names of months to strftime()
         if shortmonths:
             month_token = '%b'
-        else:
+        else: # pragma: no cover
             month_token = '%B'
 
         # Get a string from strftime()
         if includeyear:
             date_str = date.strftime('%d ' + month_token + ' %Y')
-        else:
+        else: # pragma: no cover
             date_str = date.strftime('%d ' + month_token)
 
         # There will only ever be at most one leading zero, so check for this and
@@ -977,7 +1062,7 @@ def elapsedtimestr(pasttime, maxdays=5, minseconds=10, shortmonths=True):
     now_time = dt.datetime.now()
 
     # If the user passes in a string, try to turn it into a datetime object before continuing
-    if isinstance(pasttime, str):
+    if isinstance(pasttime, str): # pragma: no cover
         try:
             pasttime = readdate(pasttime)
         except ValueError as E: # pragma: no cover
@@ -995,7 +1080,7 @@ def elapsedtimestr(pasttime, maxdays=5, minseconds=10, shortmonths=True):
         time_str = print_date(pasttime, includeyear=includeyear, shortmonths=shortmonths)
 
     # Otherwise, start by getting the elapsed time as a datetime object
-    else:
+    else: # pragma: no cover
         elapsed_time = now_time - pasttime
 
         # Check if the time is within the last minute
@@ -1039,44 +1124,75 @@ def elapsedtimestr(pasttime, maxdays=5, minseconds=10, shortmonths=True):
 
     return time_str
 
+# Calculate how much overhead there is for a single call to pytime.sleep() on this machine
+_start = pytime.time()
+pytime.sleep(1e-12)
+_end = pytime.time()
+_sleep_overhead = (_end - _start)*3 # In a for loop context, *3 gives the most accurate results
+del _start, _end
 
-def timedsleep(delay=None, start=None, verbose=True):
+def timedsleep(delay=None, start=None, verbose=False):
     '''
-    Delay for a certain amount of time, to ensure accurate timing.
+    Pause for the specified amount of time, taking into account how long other
+    operations take.
+    
+    This function is usually used in a loop; it works like ``time.sleep()``, but 
+    subtracts time taken by the other operations in the loop so that each loop
+    iteration takes exactly ``delay`` amount of time. Note: since ``time.sleep()`` 
+    has a minimum overhead (about 2e-4 seconds), below this duration, no pause
+    will occur.
 
     Args:
         delay (float): time, in seconds, to wait for
         start (float): if provided, the start time
-        verbose (bool): whether to print activity
+        verbose (bool): whether to print details
 
-    **Example**::
+    **Examples**::
 
+        # Example for a long(ish) computation
+        import numpy as np
         for i in range(10):
             sc.timedsleep('start') # Initialize
-            for j in range(int(1e6)):
-                tmp = pl.rand()
-            sc.timedsleep(1) # Wait for one second including computation time
+            n = int(2*np.random.rand()*1e6) # Variable computation time
+            for j in range(n):
+                tmp = np.random.rand()
+            sc.timedsleep(1, verbose=True) # Wait for one second per iteration including computation time
+        
+        
+        # Example illustrating more accurate timing
+        import time
+        n = 1000
+
+        with sc.timer():
+            for i in range(n):
+                sc.timedsleep(1/n)
+        # Elapsed time: 1.01 s
+
+        with sc.timer():
+            for i in range(n):
+                time.sleep(1/n)
+        # Elapsed time: 1.21 s
+    
+    New in version 2.2.0: "verbose" False by default; more accurate overhead calculation
     '''
-    self_time = 0.00012 # Roughly how long this function itself takes to run -- slightly underestimate
     global _delaytime
     if delay is None or delay=='start':
-        _delaytime = time.time()  # Store the present time in the global.
+        _delaytime = pytime.time()  # Store the present time in the global.
         return _delaytime         # Return the same stored number.
     else:
         if start is None:
             try:    start = _delaytime
-            except: start = time.time()
-        elapsed = time.time() - start
-        remaining = delay - elapsed
-        if remaining>0:
-            if verbose:
-                print(f'Pausing for {remaining:0.1f} s')
-            time.sleep(remaining - self_time)
+            except: start = pytime.time()
+        elapsed = pytime.time() - start
+        remaining = delay - elapsed - _sleep_overhead
+        if remaining > 0:
+            if verbose: # pragma: no cover
+                print(f'Pausing for {remaining:n} s')
+            pytime.sleep(remaining)
             try:    del _delaytime # After it's been used, we can't use it again
             except: pass
-        else:
-            if verbose:
-                print(f'Warning, delay less than elapsed time ({delay:0.1f} vs. {elapsed:0.1f})')
+        elif verbose: # pragma: no cover
+            print(f'Warning, delay less than elapsed time ({delay:n} vs. {elapsed:n})')
     return
 
 
@@ -1106,6 +1222,6 @@ def randsleep(delay=1.0, var=1.0, low=None, high=None):
             low, high = delay[0], delay[1]
 
     dur = np.random.uniform(low, high)
-    time.sleep(dur)
+    pytime.sleep(dur)
 
     return dur
