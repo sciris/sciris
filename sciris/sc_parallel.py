@@ -1,11 +1,11 @@
 '''
 Functions to allow parallelization to be performed easily.
 
-NB: Uses ``multiprocess`` instead of ``multiprocessing`` under the hood for
+NB: Uses ``multiprocess`` instead of :mod:`multiprocessing` under the hood for
 broadest support  across platforms (e.g. Jupyter notebooks).
 
 Highlights:
-    - :func:`parallelize`: as-easy-as-possible parallelization
+    - :func:`sc.parallelize() <parallelize>`: as-easy-as-possible parallelization
 '''
 
 import warnings
@@ -53,7 +53,7 @@ class Parallel:
     '''
     Parallelization manager
     
-    For arguments and usage documentation, see :func:`parallelize()`. Briefly,
+    For arguments and usage documentation, see :func:`sc.parallelize() <parallelize>`. Briefly,
     this class validates input arguments, sets the number of CPUs, creates a
     process (or thread) pool, starts the jobs running, retrieves the results from
     each job, and processes them into outputs.
@@ -559,7 +559,7 @@ def parallelize(func, iterarg=None, iterkwargs=None, args=None, kwargs=None, ncp
     '''
     Execute a function in parallel.
 
-    Most simply, ``sc.parallelize()`` acts as an shortcut for using ``Pool.map()``.
+    Most simply, :func:`sc.parallelize() <parallelize>` acts as a shortcut for using :meth:`pool.map <multiprocessing.pool.Pool.map>`.
     However, it also provides flexibility in how arguments are passed to the function,
     load balancing, etc.
 
@@ -569,7 +569,7 @@ def parallelize(func, iterarg=None, iterkwargs=None, args=None, kwargs=None, ncp
     running "embarrassingly parallel" simulations). ``iterkwargs`` is a dict of
     iterables; each iterable must be the same length (and the same length of ``iterarg``,
     if it exists), and each dict key will be used as a kwarg to the called function.
-    Any other kwargs passed to ``sc.parallelize()`` will also be passed to the function.
+    Any other kwargs passed to :func:`sc.parallelize() <parallelize>` will also be passed to the function.
 
     This function can either use a fixed number of CPUs or allocate dynamically
     based on load. If ``ncpus`` is ``None``, then it will allocate the number of 
@@ -675,11 +675,11 @@ def parallelize(func, iterarg=None, iterkwargs=None, args=None, kwargs=None, ncp
     full list of options is:
         
         - ``None``, ``'default'``, ``'robust'``, ``'multiprocess'``: the slow but robust dill-based parallelizer ``multiprocess``
-        - ``'fast'``, ``'concurrent'``, ``'concurrent.futures'``: the faster but more fragile pickle-based Python-default parallelizer ``concurrent.futures``
-        - ``'multiprocessing'``: the previous pickle-based Python default parallelizer, ``multiprocessing``
+        - ``'fast'``, ``'concurrent'``, ``'concurrent.futures'``: the faster but more fragile pickle-based Python-default parallelizer :mod:`concurrent.futures`
+        - ``'multiprocessing'``: the previous pickle-based Python default parallelizer, :mod:`multiprocessing`
         - ``'serial'``, ``'serial-copy'``: no parallelization (single-threaded); with "-copy", force pickling
         - ``'thread'``', ``'threadpool'``', ``'thread-copy'``': thread- rather than process-based parallelization ("-copy" as above)
-        - User supplied: any ``map()``-like function that takes in a function and an argument list
+        - User supplied: any :func:`map`-like function that takes in a function and an argument list
 
 
     **Note 2**: If parallelizing figure generation, use a non-interactive backend,
@@ -726,7 +726,7 @@ class TaskArgs(scu.prettyobj):
         '''
         A class to hold the arguments for the parallel task -- not to be invoked by the user.
 
-        Arguments must match both ``sc.parallelize()`` and ``sc._task()``
+        Arguments must match both :func:`sc.parallelize() <parallelize>` and ``sc._task()``
         '''
         def __init__(self, func, index, njobs, iterval, iterdict, args, kwargs, maxcpu, 
                      maxmem, interval, embarrassing, callback, progress, globaldict, die=True):
