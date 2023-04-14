@@ -299,7 +299,7 @@ def stackedbar(x=None, values=None, colors=None, labels=None, transpose=False,
         sc.stackedbar(values, labels=['bottom','middle','top'])
         pl.legend()
     
-    New in version 2.0.4.
+    *New in version 2.0.4.*
     '''
     from . import sc_colors as scc # To avoid circular import
     
@@ -394,7 +394,7 @@ def boxoff(ax=None, which=None, removeticks=True):
         pl.scatter(np.arange(100), pl.rand(100))
         sc.boxoff('top, bottom')
 
-    New in version 1.3.3: ability to turn off multiple spines; removed "flipticks" arguments
+    *New in version 1.3.3:* ability to turn off multiple spines; removed "flipticks" arguments
     '''
     # Handle axes
     if isinstance(ax, (str, list)): # Swap input arguments # pragma: no cover
@@ -529,9 +529,9 @@ def commaticks(ax=None, axis='y', precision=2, cursor_precision=0):
 
     See http://stackoverflow.com/questions/25973581/how-to-format-axis-number-format-to-thousands-with-a-comma-in-matplotlib
 
-    | New in version 1.3.0: ability to use non-comma thousands separator
-    | New in version 1.3.1: added "precision" argument
-    | New in version 2.0.0: ability to set x and y axes simultaneously
+    | *New in version 1.3.0:* ability to use non-comma thousands separator
+    | *New in version 1.3.1:* added "precision" argument
+    | *New in version 2.0.0:* ability to set x and y axes simultaneously
     '''
     def commaformatter(x, pos=None): # pragma: no cover
         interval = thisaxis.get_view_interval()
@@ -630,9 +630,9 @@ def getrowscols(n, nrows=None, ncols=None, ratio=1, make=False, tight=True, remo
         nrows,ncols = sc.get_rows_cols(100, ratio=0.5) # Returns 8,13 since rows are prioritized
         fig,axs     = sc.getrowscols(37, make=True) # Create 7x6 subplots, using the alias
 
-    | New in version 1.0.0.
-    | New in version 1.2.0: "make", "tight", and "remove_extra" arguments
-    | New in version 1.3.0: alias without underscores
+    | *New in version 1.0.0.*
+    | *New in version 1.2.0:* "make", "tight", and "remove_extra" arguments
+    | *New in version 1.3.0:* alias without underscores
     '''
 
     # Simple cases -- calculate the one missing
@@ -677,7 +677,7 @@ def figlayout(fig=None, tight=True, keep=False, **kwargs):
         fig,axs = sc.get_rows_cols(37, make=True, tight=False) # Create 7x6 subplots, squished together
         sc.figlayout(bottom=0.3)
 
-    New in version 1.2.0.
+    *New in version 1.2.0.*
     '''
     if isinstance(fig, bool): # pragma: no cover
         fig = None
@@ -714,7 +714,7 @@ def maximize(fig=None, die=False):  # pragma: no cover
         pl.plot([2,3,5])
         sc.maximize()
 
-    New in version 1.0.0.
+    *New in version 1.0.0.*
     '''
     backend = pl.get_backend().lower()
     if fig is not None:
@@ -875,7 +875,7 @@ class ScirisDateFormatter(mpl.dates.ConciseDateFormatter):
 
     See :func:`dateformatter` for explanation of arguments.
 
-    New in version 1.3.0.
+    *New in version 1.3.0.*
     '''
 
     def __init__(self, locator, formats=None, zero_formats=None, show_offset=False, show_year=True, **kwargs):
@@ -975,11 +975,11 @@ def dateformatter(ax=None, style='sciris', dateformat=None, start=None, end=None
         pl.plot(sc.date(np.arange(365), start_date='2022-01-01'), pl.randn(365))
         sc.dateformatter(ax=ax, style='concise')
 
-    | New in version 1.2.0.
-    | New in version 1.2.2: "rotation" argument; renamed "start_day" to "start_date"
-    | New in version 1.3.0: refactored to use built-in Matplotlib date formatting
-    | New in version 1.3.2: "axis" argument
-    | New in version 1.3.3: split ``sc.dateformatter()`` from ``sc.datenumformatter()``
+    | *New in version 1.2.0.*
+    | *New in version 1.2.2:* "rotation" argument; renamed "start_day" to "start_date"
+    | *New in version 1.3.0:* refactored to use built-in Matplotlib date formatting
+    | *New in version 1.3.2:* "axis" argument
+    | *New in version 1.3.3:* split ``sc.dateformatter()`` from ``sc.datenumformatter()``
     '''
 
     # Handle deprecation
@@ -1071,9 +1071,9 @@ def datenumformatter(ax=None, start_date=None, dateformat=None, interval=None, s
         ax.plot(np.arange(60), np.random.random(60))
         formatter = sc.datenumformatter(start_date='2020-04-04', interval=7, start='2020-05-01', end=50, dateformat='%m-%d', ax=ax)
 
-    | New in version 1.2.0.
-    | New in version 1.2.2: "rotation" argument; renamed "start_day" to "start_date"
-    | New in version 1.3.3: renamed from ``sc.dateformatter()`` to  ``sc.datenumformatter()``
+    | *New in version 1.2.0.*
+    | *New in version 1.2.2:* "rotation" argument; renamed "start_day" to "start_date"
+    | *New in version 1.3.3:* renamed from ``sc.dateformatter()`` to  ``sc.datenumformatter()``
     '''
 
     # Handle axis
@@ -1169,8 +1169,8 @@ def savefig(filename, fig=None, dpi=None, comments=None, pipfreeze=False, relfra
         sc.savefig('example2.png', comments='My figure', freeze=True)
         sc.pp(sc.loadmetadata('example2.png'))
     
-    | New in version 1.3.3.
-    | New in version 2.2.0: "freeze" renamed "pipfreeze"; "frame" replaced with "relframe"; replaced metadata with ``sc.metadata()``
+    | *New in version 1.3.3.*
+    | *New in version 2.2.0:* "freeze" renamed "pipfreeze"; "frame" replaced with "relframe"; replaced metadata with ``sc.metadata()``
     '''
     # Handle deprecation
     orig_metadata = kwargs.pop('metadata', {}) # In case metadata is supplied, as it can be for fig.save()
@@ -1511,8 +1511,8 @@ class animation(scu.prettyobj):
 
         anim.save('dots.mp4')
 
-    | New in version 1.3.3.
-    | New in version 2.0.0: ``ffmpeg`` option.
+    | *New in version 1.3.3.*
+    | *New in version 2.0.0:* ``ffmpeg`` option.
     '''
     def __init__(self, fig=None, filename=None, dpi=200, fps=10, imageformat='png', basename='animation', nametemplate=None,
                  imagefolder=None, anim_args=None, save_args=None, frames=None, tidy=True, verbose=True, **kwargs):
