@@ -120,8 +120,6 @@ def test_dicts():
     
     return o
 
-    
-
 
 def test_search():
     sc.heading('Testing search')

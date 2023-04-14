@@ -16,10 +16,10 @@ import multiprocess as mp
 from io import BytesIO as IO
 from functools import partial
 from contextlib import closing
-from . import sc_utils as scu
-from . import sc_odict as sco
-from . import sc_fileio as scf
-from . import sc_profiling as scp
+from .. import sc_utils as scu
+from .. import sc_odict as sco
+from .. import sc_fileio as scf
+from .. import sc_profiling as scp
 
 
 ##############################################################################
@@ -249,7 +249,7 @@ class legacy_dataframe(object): # pragma: no cover
     **Example**::
 
         import sciris as sc
-        from sciris import sc_legacy as scl
+        from sciris.extras import legacy as scl
         remapping = {'sciris.sc_dataframe.dataframe':scl.legacy_dataframe}
         old = sc.load('my-old-file.obj', remapping=remapping)
 

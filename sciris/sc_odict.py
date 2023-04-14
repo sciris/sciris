@@ -1289,12 +1289,12 @@ class dictobj(dict):
 
 def asobj(obj, strict=True):
     '''
-    Convert any object for which you would normally do a['b'] to one where you
-    can do a.b.
+    Convert any object for which you would normally do ``a['b']`` to one where you
+    can do ``a.b``.
 
     Note: this may lead to unexpected behavior in some cases. Use at your own risk.
     At minimum, objects created using this function have an extremely odd type -- namely
-    "sciris.sc_odict.asobj.<locals>.objobj".
+    ``sciris.sc_odict.asobj.<locals>.objobj``.
 
     Args:
         obj (anything): the object you want to convert
@@ -1306,7 +1306,7 @@ def asobj(obj, strict=True):
         d_obj = sc.asobj(d)
         d_obj.foo = 10
 
-    New in version 1.0.0.
+    *New in version 1.0.0.*
     '''
 
     objtype = type(obj)

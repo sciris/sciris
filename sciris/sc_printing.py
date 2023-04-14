@@ -22,7 +22,7 @@ from textwrap import fill
 from collections import UserString
 from contextlib import redirect_stdout
 from . import sc_utils as scu
-from . import ansicolors as ac
+from .extras import ansicolors as ac
 
 
 # Add Windows support for colors (do this at the module level so that colorama.init() only gets called once)
@@ -1171,10 +1171,12 @@ class tqdm_pickle(tqdm.tqdm):
     '''
     
     def __getstate__(self):
+        ''' Overwrite default __getstate__ '''
         d = {k:v for k,v in self.__dict__.items() if k not in ['sp', 'fp']}
         return d
      
     def __setstate__(self, d): # pragma: no cover
+        ''' Overwrite default __getstate__ '''
         self.__dict__ = d
         self.__dict__['fp'] = tqdm.utils.DisableOnWriteError(sys.stderr, tqdm_instance=self)
         self.__dict__['sp'] = self.status_printer(self.fp)

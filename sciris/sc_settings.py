@@ -592,7 +592,7 @@ options = Options()
 
 #%% Module help
 
-def help(pattern=None, source=False, ignorecase=True, flags=None, context=False, output=False):
+def help(pattern=None, source=False, ignorecase=True, flags=None, context=False, output=False, debug=False):
     '''
     Get help on Sciris in general, or search for a word/expression.
 
@@ -643,7 +643,7 @@ See help(sc.help) for more information.
             excludes = [
                 f.startswith('_'),
                 f.startswith('sc_'),
-                f in ['help', 'options'],
+                f in ['help', 'options', 'extras'],
             ]
             ok = not(any(excludes))
             return ok
@@ -659,18 +659,25 @@ See help(sc.help) for more information.
                 if source: string = inspect.getsource(f)
                 else:      string = f.__doc__
                 docstrings[funcname] = string
-            except OSError: # Happens for built-ins, e.g. defaultdict
-                pass
+            except OSError as E: # Happens for built-ins, e.g. defaultdict
+                if debug:
+                    errormsg = f'sc.help(): Encountered an error on {funcname}: {E}'
+                    print(errormsg)
+                    
 
         # Find matches
         matches = co.defaultdict(list)
         linenos = co.defaultdict(list)
 
         for k,docstring in docstrings.items():
-            for l,line in enumerate(docstring.splitlines()):
-                if re.findall(pattern, line, *flags):
-                    linenos[k].append(str(l))
-                    matches[k].append(line)
+            if docstring:
+                for l,line in enumerate(docstring.splitlines()):
+                    if re.findall(pattern, line, *flags):
+                        linenos[k].append(str(l))
+                        matches[k].append(line)
+            elif debug:
+                errormsg = f'sc.help(): No docstring for {k}'
+                print(errormsg)
 
         # Assemble output
         if not len(matches): # pragma: no cover
