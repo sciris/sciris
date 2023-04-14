@@ -2,10 +2,10 @@
 Extensions to Numpy, including finding array elements and smoothing data.
 
 Highlights:
-    - :func:`findinds`: find indices of an array matching a condition
-    - :func:`findnearest`: find nearest matching value
-    - :func:`rolling`: calculate rolling average
-    - :func:`smooth`: simple smoothing of 1D or 2D arrays
+    - :func:`sc.findinds() <findinds>`: find indices of an array matching a condition
+    - :func:`sc.findnearest() <findnearest>`: find nearest matching value
+    - :func:`sc.rolling() <rolling>`: calculate rolling average
+    - :func:`sc.smooth() <smooth>`: simple smoothing of 1D or 2D arrays
 '''
 
 import numpy as np
@@ -90,18 +90,18 @@ def findinds(arr=None, val=None, *args, eps=1e-6, first=False, last=False, ind=N
     If one argument, find nonzero values. With two arguments, check for equality
     using eps (by default 1e-6, to handle single-precision floating point). Returns 
     a tuple of arrays if val1 is multidimensional, else returns an array. Similar 
-    to calling ``np.nonzero(np.isclose(arr, val))[0]``.
+    to calling :func:`np.nonzero(np.isclose(arr, val))[0] <numpy.nonzero>`.
 
     Args:
         arr    (array): the array to find values in
         val    (float): if provided, the value to match
         args   (list):  if provided, additional boolean arrays
-        eps    (float): the precision for matching (default 1e-6, equivalent to ``np.isclose()``'s atol)
+        eps    (float): the precision for matching (default 1e-6, equivalent to :func:`numpy.isclose`'s atol)
         first  (bool):  whether to return the first matching value (equivalent to ind=0)
         last   (bool):  whether to return the last matching value (equivalent to ind=-1)
         ind    (int):   index of match to retrieve
         die    (bool):  whether to raise an exception if first or last is true and no matches were found
-        kwargs (dict):  passed to ``np.isclose()``
+        kwargs (dict):  passed to :func:`numpy.isclose()`
 
     **Examples**::
 
@@ -218,19 +218,19 @@ def count(arr=None, val=None, eps=1e-6, **kwargs):
     '''
     Count the number of matching elements.
 
-    Similar to ``np.count_nonzero()``, but allows for slight mismatches (e.g.,
+    Similar to :func:`numpy.count_nonzero()`, but allows for slight mismatches (e.g.,
     floats vs. ints). Equivalent to ``len(sc.findinds())``.
 
     Args:
         arr (array): the array to find values in
         val (float): if provided, the value to match
-        eps (float): the precision for matching (default 1e-6, equivalent to np.isclose's atol)
-        kwargs (dict): passed to ``np.isclose()``
+        eps (float): the precision for matching (default 1e-6, equivalent to :func:`numpy.isclose`'s atol)
+        kwargs (dict): passed to :func:`numpy.isclose()` 
 
     **Examples**::
 
         sc.count(rand(10)<0.5) # returns e.g. 4
-        sc.count([2,3,6,3], 3) # returs 2
+        sc.count([2,3,6,3], 3) # returns 2
 
     *New in version 2.0.0.*
     '''
@@ -305,7 +305,7 @@ def getvaliddata(data=None, filterdata=None, defaultind=0): # pragma: no cover
 
 def sanitize(data=None, returninds=False, replacenans=None, defaultval=None, die=True, verbose=False, label=None):
         '''
-        Sanitize input to remove NaNs. (NB: ``sc.sanitize()`` and ``sc.rmnans()`` are aliases.)
+        Sanitize input to remove NaNs. (NB: :func:`sc.sanitize() <sanitize>` and :func:`sc.rmnans() <rmnans>` are aliases.)
 
         Returns an array with the sanitized data. If ``replacenans=True``, the sanitized
         array is of the same length/size as data. If ``replacenans=False``, the sanitized
@@ -386,7 +386,7 @@ rmnans = sanitize
 
 def fillnans(data=None, replacenans=True, **kwargs):
     """
-    Alias for :func:`sc.sanitize(..., replacenans=True) <sanitize>` with nearest interpolation 
+    Alias for :func:`sc.sanitize(..., replacenans=True) <sanitize>` with nearest interpolation
     (or a specified value).
 
     *New in version 2.0.0.*
@@ -531,7 +531,7 @@ def perturb(n=1, span=0.5, randseed=None, normal=False):
 def normsum(arr, total=None):
     '''
     Multiply a list or array by some normalizing factor so that its sum is equal
-    to the total. Formerly called ``sc.scaleratio()``.
+    to the total. Formerly called :func:`sc.scaleratio() <scaleratio>`.
 
     Args:
         arr (array): array (or list) to normalize
@@ -575,7 +575,7 @@ def normalize(arr, minval=0.0, maxval=1.0):
 
 def inclusiverange(*args, **kwargs):
     '''
-    Like ``np.arange()``/``np.linspace()``, but includes the start and stop points.
+    Like :func:`numpy.arange`/`numpy.linspace`, but includes the start and stop points.
     Accepts 0-3 args, or the kwargs start, stop, step.
 
     In most cases, equivalent to ``np.linspace(start, stop, int((stop-start)/step)+1)``.
@@ -584,7 +584,7 @@ def inclusiverange(*args, **kwargs):
         start (float): value to start at
         stop (float): value to stop at
         step (float): step size
-        kwargs (dict): passed to ``np.linspace()``
+        kwargs (dict): passed to :func:`numpy.linspace`
 
     **Examples**::
 
@@ -662,7 +662,7 @@ def cat(*args, copy=False, **kwargs):
 
     Args:
         args   (any):  items to concatenate into an array
-        kwargs (dict): passed to ``np.concatenate()``
+        kwargs (dict): passed to :func:`numpy.concatenate`
 
     **Examples**::
 
@@ -685,13 +685,13 @@ def cat(*args, copy=False, **kwargs):
 def linregress(x, y, full=False, **kwargs):
     '''
     Simple linear regression returning the line of best fit and R value. Similar
-    to ``scipy.stats.linregress`` but simpler.
+    to :func:`scipy.stats.linregress`` but simpler.
     
     Args:
         x (array): the x coordinates
         y (array): the y coordinates
         full (bool): whether to return a full data structure
-        kwargs (dict): passed to ``np.polyfit()``
+        kwargs (dict): passed to :func:`numpy.polyfit`
     
     **Examples**::
         
@@ -739,7 +739,7 @@ def rolling(data, window=7, operation='mean', replacenans=None, **kwargs):
         data (list/arr): the 1D or 2D data to be smoothed
         window (int): the length of the window
         operation (str): the operation to perform: 'mean' (default), 'median', 'sum', or 'none'
-        replacenans (bool/float): if None, leave NaNs; if False, remove them; if a value, replace with that value; if the string 'nearest' or 'linear', do interpolation (see :func:`rmnans()` for details)
+        replacenans (bool/float): if None, leave NaNs; if False, remove them; if a value, replace with that value; if the string 'nearest' or 'linear', do interpolation (see :func:`sc.rmnans() <rmnans>` for details)
         kwargs (dict): passed to pd.Series.rolling()
 
     **Example**::
@@ -773,8 +773,8 @@ def rolling(data, window=7, operation='mean', replacenans=None, **kwargs):
 
 def convolve(a, v):
     '''
-    Like ``np.convolve()``, but always returns an array the size of the first array
-    (equivalent to mode='same'), and solves the boundary problem present in ``np.convolve()``
+    Like :func:`numpy.convolve`, but always returns an array the size of the first array
+    (equivalent to mode='same'), and solves the boundary problem present in :func:`numpy.convolve`
     by adjusting the edges by the weight of the convolution kernel.
 
     Args:
@@ -828,7 +828,7 @@ def smooth(data, repeats=None, kernel=None, legacy=False):
     '''
     Very simple function to smooth a 1D or 2D array.
 
-    See also ``sc.gauss1d()`` for simple Gaussian smoothing.
+    See also :func:`sc.gauss1d() <gauss1d>` for simple Gaussian smoothing.
 
     Args:
         data (arr): 1D or 2D array to smooth
