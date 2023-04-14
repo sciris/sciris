@@ -243,7 +243,7 @@ def dcp(obj, die=True, verbose=True):
         die (bool): if False, fall back to copy()
         verbose (bool): if die is False, then print a warning if deepcopy() fails
 
-    New in version 2.0.0: default die=True instead of False
+    *New in version 2.0.0:* default die=True instead of False
     '''
     try:
         output = copy.deepcopy(obj)
@@ -261,7 +261,7 @@ def cp(obj, die=True, verbose=True):
 
     Almost identical to ``copy.copy()``, but optionally allow failures
 
-    New in version 2.0.0: default die=True instead of False
+    *New in version 2.0.0:* default die=True instead of False
     '''
     try:
         output = copy.copy(obj)
@@ -305,7 +305,7 @@ def pp(obj, jsonify=True, doprint=None, output=False, verbose=False, **kwargs):
         verbose (bool): whether to show warnings when jsonifying the object
         kwargs  (dict): passed to ``pprint.pprint()``
 
-    New in version 1.3.1: output argument
+    *New in version 1.3.1:* output argument
     '''
 
     # Get object
@@ -370,7 +370,7 @@ def getuser():
     
     Alias to ``getpass.getuser()`` -- see https://docs.python.org/3/library/getpass.html#getpass.getuser
     
-    New in version 2.2.0.
+    *New in version 2.2.0.*
     '''
     return getpass.getuser()
 
@@ -448,7 +448,7 @@ def asciify(string, form='NFKD', encoding='ascii', errors='ignore', **kwargs):
     **Example**:
         sc.asciify('föö→λ ∈ ℝ') # Returns 'foo  R'
     
-    New in version 2.0.1.
+    *New in version 2.0.1.*
     '''
     normalized = unicodedata.normalize(form, string) # First, normalize Unicode encoding
     encoded = normalized.encode(encoding, errors) # Then, convert to ASCII
@@ -488,9 +488,9 @@ def urlopen(url, filename=None, save=False, headers=None, params=None, data=None
         sc.urlopen('http://sciris.org', filename='sciris.html') # Save to file sciris.html
         sc.urlopen('http://sciris.org', save=True, headers={'User-Agent':'Custom agent'}) # Save to the default filename (here, sciris.org), with headers
 
-    | New in version 2.0.0: renamed from ``wget`` to ``urlopen``; new arguments
-    | New in version 2.0.1: creates folders by default if they do not exist
-    | New in version 2.0.4: "prefix" argument, e.g. prepend "http://" if not present
+    | *New in version 2.0.0:* renamed from ``wget`` to ``urlopen``; new arguments
+    | *New in version 2.0.1:* creates folders by default if they do not exist
+    | *New in version 2.0.4:* "prefix" argument, e.g. prepend "http://" if not present
     '''
     from urllib import request as ur # Need to import these directly, not via urllib
     from urllib import parse as up
@@ -585,8 +585,8 @@ def download(url, *args, filename=None, save=True, parallel=True, die=True, verb
         sc.download({'http://sciris.org':'sciris.html', 'http://covasim.org':'covasim.html'}) # Downlaod two and save to disk
         sc.download(['http://sciris.org', 'http://covasim.org'], filename=['sciris.html', 'covasim.html']) # Ditto
 
-    | New in version 2.0.0.
-    | New in version 2.2.0: "die" argument
+    | *New in version 2.0.0.*
+    | *New in version 2.2.0:* "die" argument
     '''
     from . import sc_parallel as scp # To avoid circular import
     from . import sc_datetime as scd
@@ -727,7 +727,7 @@ def sanitizestr(string=None, alphanumeric=False, nospaces=False, asciify=False,
         string4 = '4 path/names/to variable!'
         sc.sanitizestr(string4, validvariable=True, spacechar='') # Returns '_4pathnamestovariable'
     
-    New in version 2.2.0.
+    *New in version 2.2.0.*
     '''
     string = flexstr(string)
     if asciify:
@@ -773,7 +773,7 @@ def isiterable(obj, *args, exclude=None, minlen=None):
         
     See also ``np.iterable()`` for a simpler version.
     
-    New in version 2.2.0: "exclude" and "minlen" args; support multiple arguments
+    *New in version 2.2.0:* "exclude" and "minlen" args; support multiple arguments
     '''
     
     # Handle arguments
@@ -841,8 +841,8 @@ def checktype(obj=None, objtype=None, subtype=None, die=False):
         sc.checktype(['a','b','c'], 'arraylike') # Returns False
         sc.checktype([{'a':3}], list, dict) # Returns True
     
-    | New in version 2.0.1: ``pd.Series`` considered 'array-like'
-    | New in version 2.2.0: allow list (in addition to tuple) of types; allow checking for NoneType
+    | *New in version 2.0.1:* ``pd.Series`` considered 'array-like'
+    | *New in version 2.2.0:* allow list (in addition to tuple) of types; allow checking for NoneType
     '''
 
     # Handle "objtype" input
@@ -922,7 +922,7 @@ def isarray(obj, dtype=None):
 
         sc.isarray(np.array([1,2,3]), dtype=float) # False, dtype is int
 
-    New in version 1.0.0.
+    *New in version 1.0.0.*
     '''
     if isinstance(obj, np.ndarray):
         if dtype is None:
@@ -954,8 +954,8 @@ def toarray(x, keepnone=False, **kwargs):
         sc.toarray([3,5]) # Returns np.array([3,5])
         sc.toarray(None, skipnone=True) # Returns np.array([])
 
-    | New in version 1.1.0: replaced "skipnone" with "keepnone"; allowed passing kwargs to ``np.array()``.
-    | New in version 2.0.1: added support for pandas Series and DataFrame
+    | *New in version 1.1.0:* replaced "skipnone" with "keepnone"; allowed passing kwargs to ``np.array()``.
+    | *New in version 2.0.1:* added support for pandas Series and DataFrame
     '''
     skipnone = kwargs.pop('skipnone', None)
     if skipnone is not None: # pragma: no cover
@@ -1013,9 +1013,9 @@ def tolist(obj=None, objtype=None, keepnone=False, coerce='default'):
         myfunc(data, keys=['a', 'b']) # Works
         myfunc(data, keys='a') # Still works, equivalent to needing to supply keys=['a'] without tolist()
 
-    | New in version 1.1.0: "coerce" argument
-    | New in version 1.2.2: default coerce values
-    | New in version 2.0.2: tuple coersion
+    | *New in version 1.1.0:* "coerce" argument
+    | *New in version 1.2.2:* default coerce values
+    | *New in version 2.0.2:* tuple coersion
     '''
     # Handle coerce
     default_coerce = (range, map, type({}.keys()), type({}.values()), type({}.items()))
@@ -1077,7 +1077,7 @@ def transposelist(obj):
         itemlist = o.enumitems()
         inds, keys, vals = sc.transposelist(itemlist)
 
-    New in version 1.1.0.
+    *New in version 1.1.0.*
     '''
     return list(map(list, zip(*obj)))
 
@@ -1093,7 +1093,7 @@ def swapdict(d):
         d1 = {'a':'foo', 'b':'bar'}
         d2 = sc.swapdict(d1) # Returns {'foo':'a', 'bar':'b'}
 
-    New in version 1.3.0.
+    *New in version 1.3.0.*
     '''
     if not isinstance(d, dict):
         errormsg = f'Not a dictionary: {type(d)}'
@@ -1139,10 +1139,10 @@ def mergedicts(*args, _strict=False, _overwrite=True, _copy=False, _sameclass=Tr
         d3 = sc.mergedicts(sc.odict({'b':3, 'c':4}), {'a':1, 'b':2}) # Returns sc.odict({'b':2, 'c':4, 'a':1})
         d4 = sc.mergedicts({'b':3, 'c':4}, {'a':1, 'b':2}, _overwrite=False) # Raises exception
 
-    | New in version 1.1.0: "copy" argument
-    | New in version 1.3.3: keywords allowed
-    | New in version 2.0.0: keywords fully enabled; "_sameclass" argument
-    | New in version 2.0.1: fixed bug with "_copy" argument
+    | *New in version 1.1.0:* "copy" argument
+    | *New in version 1.3.3:* keywords allowed
+    | *New in version 2.0.0:* keywords fully enabled; "_sameclass" argument
+    | *New in version 2.0.1:* fixed bug with "_copy" argument
     '''
     # Warn about deprecated keys
     renamed = ['strict', 'overwrite', 'copy']
@@ -1206,7 +1206,7 @@ def mergelists(*args, copy=False, **kwargs):
         sc.mergelists((1,2), (3,4), (5,6)) # Returns [(1, 2), (3, 4), (5, 6)]
         sc.mergelists((1,2), (3,4), (5,6), coerce=tuple) # Returns [1, 2, 3, 4, 5, 6]
 
-    New in version 1.1.0.
+    *New in version 1.1.0.*
     '''
     obj = []
     for arg in args:
@@ -1274,7 +1274,7 @@ def strjoin(*args, sep=', '):
 
         sc.strjoin([1,2,3], 4, 'five')
 
-    New in version 1.1.0.
+    *New in version 1.1.0.*
     '''
     obj = []
     for arg in args:
@@ -1296,7 +1296,7 @@ def newlinejoin(*args):
 
         sc.newlinejoin([1,2,3], 4, 'five')
 
-    New in version 1.1.0.
+    *New in version 1.1.0.*
     '''
     return strjoin(*args, sep='\n')
 
@@ -1321,7 +1321,7 @@ def strsplit(string, sep=None, skipempty=True, lstrip=True, rstrip=True):
         sc.strsplit('a, b, c') # Returns ['a', 'b', 'c']
         sc.strsplit('  foo_bar  ', sep='_') # Returns ['foo', 'bar']
 
-    New in version 2.0.0.
+    *New in version 2.0.0.*
     '''
     strlist = []
     if sep is None:
@@ -1534,8 +1534,8 @@ def importbyname(module=None, variable=None, path=None, namespace=None, lazy=Fal
     
     See also :func:`importbypath()`.
 
-    | New in version 2.1.0: "verbose" argument
-    | New in version 2.2.0: "path" argument
+    | *New in version 2.1.0:* "verbose" argument
+    | *New in version 2.2.0:* "path" argument
     '''
     # Initialize
     if variable is None:
@@ -1598,7 +1598,7 @@ def importbypath(path, name=None):
     
     See also :func:`importbyname()`.
 
-    New in version 2.2.0.
+    *New in version 2.2.0.*
     '''
     # Sanitize the path and filename
     default_file='__init__.py'
@@ -1717,7 +1717,7 @@ class prettyobj(object):
         # b: 6
         # ————————————————————————————————————————————————————————————
 
-    | New in version 2.0.0: allow positional arguments
+    | *New in version 2.0.0:* allow positional arguments
     '''
 
     def __init__(self, *args, **kwargs):
@@ -1830,7 +1830,7 @@ class LazyModule:
         pd = sc.LazyModule('pandas', 'pd') # pd is a LazyModule, not actually pandas
         df = pd.DataFrame() # Not only does this work, but pd is now actually pandas
 
-    New in version 2.0.0.
+    *New in version 2.0.0.*
     '''
 
     def __init__(self, module, variable, namespace=None, overwrite=True):
@@ -1911,8 +1911,8 @@ class tryexcept(cl.suppress):
                 print(values[i])
         tryexc.print()
             
-    | New in version 2.1.0.
-    | New in version 2.2.0: renamed "print" to "disp"
+    | *New in version 2.1.0.*
+    | *New in version 2.2.0:* renamed "print" to "disp"
     '''
 
     def __init__(self, die=None, catch=None, verbose=1, history=None):
