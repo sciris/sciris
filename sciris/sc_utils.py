@@ -6,15 +6,15 @@ ignore a function that you don't need than write one from scratch that you
 do need.
 
 Highlights:
-    - :func:`dcp`: shortcut to ``copy.deepcopy()``
-    - :func:`pp`: shortcut to ``pprint.pprint()``
-    - :func:`isnumber`: checks if something is any number type
-    - :func:`tolist`: converts any object to a list, for easy iteration
-    - :func:`toarray`: tries to convert any object to an array, for easy use with numpy
-    - :func:`mergedicts`: merges any set of inputs into a dictionary
-    - :func:`mergelists`: merges any set of inputs into a list
-    - :func:`runcommand`: simple way of executing a shell command
-    - :func:`download`: download multiple URLs in parallel
+    - :func:`sc.dcp() <dcp>`: shortcut to :func:`copy.deepcopy()`
+    - :func:`sc.pp() <pp>`: shortcut to :func:`pprint.pprint()`
+    - :func:`sc.isnumber() <isnumber>`: checks if something is any number type
+    - :func:`sc.tolist() <tolist>`: converts any object to a list, for easy iteration
+    - :func:`sc.toarray() <toarray>`: tries to convert any object to an array, for easy use with numpy
+    - :func:`sc.mergedicts() <mergedicts>`: merges any set of inputs into a dictionary
+    - :func:`sc.mergelists() <mergelists>`: merges any set of inputs into a list
+    - :func:`sc.runcommand() <runcommand>`: simple way of executing a shell command
+    - :func:`sc.download() <download>`: download multiple URLs in parallel
 '''
 
 ##############################################################################
@@ -59,8 +59,8 @@ __all__ = ['fast_uuid', 'uuid', 'dcp', 'cp', 'pp', 'sha', 'traceback',
 
 def fast_uuid(which=None, length=None, n=1, secure=False, forcelist=False, safety=1000, recursion=0, recursion_limit=10, verbose=True):
     '''
-    Create a fast UID or set of UIDs. Note: for certain applications, :func:`uuid`
-    is faster than :func:`fast_uuid`!
+    Create a fast UID or set of UIDs. Note: for certain applications, :func:`sc.uuid() <uuid>`
+    is faster than :func:`sc.fast_uuid() <fast_uuid>`!
 
     Args:
         which (str): the set of characters to choose from (default ascii)
@@ -236,7 +236,7 @@ def dcp(obj, die=True, verbose=True):
     '''
     Shortcut to perform a deep copy operation
 
-    Almost identical to ``copy.deepcopy()``, but optionally fall back to copy()
+    Almost identical to :func:`copy.deepcopy()`, but optionally fall back to :func:`copy.copy()`
     if deepcopy fails.
 
     Args:
@@ -259,7 +259,7 @@ def cp(obj, die=True, verbose=True):
     '''
     Shortcut to perform a shallow copy operation
 
-    Almost identical to ``copy.copy()``, but optionally allow failures
+    Almost identical to :func:`copy.copy()`, but optionally allow failures
 
     *New in version 2.0.0:* default die=True instead of False
     '''
@@ -294,8 +294,8 @@ def pp(obj, jsonify=True, doprint=None, output=False, verbose=False, **kwargs):
     '''
     Shortcut for pretty-printing the object.
 
-    Almost identical to ``pprint.pprint()``, but can also be used as an alias for
-    ``pprint.pformat()``.
+    Almost identical to :func:`pprint.pprint()`, but can also be used as an alias for
+    :func:`pprint.pformat()`.
 
     Args:
         obj     (any):  object to print
@@ -303,7 +303,7 @@ def pp(obj, jsonify=True, doprint=None, output=False, verbose=False, **kwargs):
         doprint (bool): whether to show output (default true)
         output  (bool): whether to return output as a string (default false)
         verbose (bool): whether to show warnings when jsonifying the object
-        kwargs  (dict): passed to ``pprint.pprint()``
+        kwargs  (dict): passed to :func:`pprint.pprint()`
 
     *New in version 1.3.1:* output argument
     '''
@@ -327,7 +327,7 @@ def sha(obj, encoding='utf-8', digest=False):
     '''
     Shortcut for the standard hashing (SHA) method
 
-    Equivalent to ``hashlib.sha224()``.
+    Equivalent to :obj:`hashlib.sha224()`.
 
     Args:
         obj (any): the object to be hashed; if not a string, converted to one
@@ -359,7 +359,7 @@ def traceback(*args, **kwargs):
     '''
     Shortcut for accessing the traceback
 
-    Alias for ``traceback.format_exc()``.
+    Alias for :obj:`traceback.format_exc()`.
     '''
     return py_traceback.format_exc(*args, **kwargs)
 
@@ -368,7 +368,7 @@ def getuser():
     '''
     Get the current username 
     
-    Alias to ``getpass.getuser()`` -- see https://docs.python.org/3/library/getpass.html#getpass.getuser
+    Alias to :func:`getpass.getuser()` -- see https://docs.python.org/3/library/getpass.html#getpass.getuser
     
     *New in version 2.2.0.*
     '''
@@ -379,7 +379,7 @@ def getplatform(expected=None, platform=None, die=False):
     '''
     Return the name of the current "main" platform (e.g. 'mac')
     
-    Alias to sys.platform, except maps entries onto one of 'linux', 'windows', 
+    Alias to ``sys.platform``, except maps entries onto one of 'linux', 'windows', 
     'mac', or 'other'.
 
     Args:
@@ -423,15 +423,15 @@ def getplatform(expected=None, platform=None, die=False):
 
 
 def iswindows(die=False):
-    ''' Alias to ``sc.getplatform('windows')`` '''
+    ''' Alias to :func:`sc.getplatform('windows') <getplatform>` '''
     return getplatform('windows', die=die)
 
 def islinux(die=False):
-    ''' Alias to ``sc.getplatform('linux')`` '''
+    ''' Alias to :func:`sc.getplatform('linux') <getplatform>` '''
     return getplatform('linux', die=die)
 
 def ismac(die=False):
-    ''' Alias to ``sc.getplatform('mac')`` '''
+    ''' Alias to :func:`sc.getplatform('mac') <getplatform>` '''
     return getplatform('mac', die=die)
 
 
@@ -443,7 +443,7 @@ def asciify(string, form='NFKD', encoding='ascii', errors='ignore', **kwargs):
         form (str): the type of Unicode normalization to use
         encoding (str): the output string to encode to
         errors (str): how to handle errors
-        kwargs (dict): passed to ``string.decode()``
+        kwargs (dict): passed to :meth:`string.decode()`
     
     **Example**:
         sc.asciify('föö→λ ∈ ℝ') # Returns 'foo  R'
@@ -466,8 +466,8 @@ def urlopen(url, filename=None, save=False, headers=None, params=None, data=None
     '''
     Download a single URL.
 
-    Alias to ``urllib.request.urlopen(url).read()``. See also :func:`download`
-    for downloading multiple URLs. Note: ``sc.urlopen()``/``sc.wget()`` are aliases.
+    Alias to ``urllib.request.urlopen(url).read()``. See also :func:`sc.download() <download>`
+    for downloading multiple URLs. Note: :func:`sc.urlopen() <urlopen>`/:func:`sc.wget() <wget>` are aliases.
 
     Args:
         url (str): the URL to open, either as GET or POST
@@ -566,7 +566,7 @@ def download(url, *args, filename=None, save=True, parallel=True, die=True, verb
     '''
     Download one or more URLs in parallel and return output or save them to disk.
 
-    A wrapper for :func:`urlopen`, except with ``save=True`` by default.
+    A wrapper for :func:`sc.urlopen() <urlopen>`, except with ``save=True`` by default.
 
     Args:
         url (str/list/dict): either a single URL, a list of URLs, or a dict of URL:filename pairs
@@ -576,7 +576,7 @@ def download(url, *args, filename=None, save=True, parallel=True, die=True, verb
         parallel (bool): whether to download multiple URLs in parallel
         die (bool): whether to raise an exception if a URL can't be retrieved (default true)
         verbose (bool): whether to print progress (if verbose=2, print extra detail on each downloaded URL)
-        **kwargs (dict): passed to :func:`urlopen`
+        **kwargs (dict): passed to :func:`sc.urlopen() <urlopen>`
 
     **Examples**::
 
@@ -771,7 +771,7 @@ def isiterable(obj, *args, exclude=None, minlen=None):
         sc.isiterable(obj1) # Returns True
         sc.isiterable(obj1, obj2, obj3, exclude=str, minlen=1) # returns [True, False, False]
         
-    See also ``np.iterable()`` for a simpler version.
+    See also :func:`numpy.iterable()` for a simpler version.
     
     *New in version 2.2.0:* "exclude" and "minlen" args; support multiple arguments
     '''
@@ -937,16 +937,16 @@ def isarray(obj, dtype=None):
 def toarray(x, keepnone=False, **kwargs):
     '''
     Small function to ensure consistent format for things that should be arrays
-    (note: :func:`toarray()` and :func:`promotetoarray()` are identical).
+    (note: :func:`sc.toarray() <toarray>` and :func:`sc.promotetoarray() <promotetoarray>` are identical).
 
-    Very similar to ``np.array``, with the main difference being that ``sc.toarray(3)``
+    Very similar to :func:`numpy.array`, with the main difference being that :func:`sc.toarray(3) <toarray>`
     will return ``np.array([3])`` (i.e. a 1-d array that can be iterated over), while
     ``np.array(3)`` will return a 0-d array that can't be iterated over.
 
     Args:
         x (any): a number or list of numbers
         keepnone (bool): whether ``sc.toarray(None)`` should return ``np.array([])`` or ``np.array([None], dtype=object)``
-        kwargs (dict): passed to ``np.array()``
+        kwargs (dict): passed to :func:`numpy.array()`
 
     **Examples**::
 
@@ -974,7 +974,7 @@ def toarray(x, keepnone=False, **kwargs):
 
 def tolist(obj=None, objtype=None, keepnone=False, coerce='default'):
     '''
-    Make sure object is always a list (note: :func:`tolist`/:func:`promotetolist` are identical).
+    Make sure object is always a list (note: :func:`sc.tolist() <tolist>`/:func:`sc.promotetolist() <promotetolist>` are identical).
 
     Used so functions can handle inputs like ``'a'``  or ``['a', 'b']``. In other
     words, if an argument can either be a single thing (e.g., a single dict key)
@@ -991,7 +991,7 @@ def tolist(obj=None, objtype=None, keepnone=False, coerce='default'):
 
     Args:
         obj (anything): object to ensure is a list
-        objtype (anything): optional type to check for each element; see :func:`checktype` for details
+        objtype (anything): optional type to check for each element; see :func:`sc.checktype() <checktype>` for details
         keepnone (bool): if ``keepnone`` is false, then ``None`` is converted to ``[]``; else, it's converted to ``[None]``
         coerce (str/tuple):  tuple of additional types to coerce to a list (as opposed to wrapping in a list)
 
@@ -1117,7 +1117,7 @@ def mergedicts(*args, _strict=False, _overwrite=True, _copy=False, _sameclass=Tr
     first dictionary is an odict, an odict will be returned).
 
     Note that arguments start with underscores to avoid possible collisions with
-    keywords (e.g. ``sc.mergedicts(dict(loose=True, strict=True), strict=False, _strict=True)``).
+    keywords (e.g. :func:`sc.mergedicts(dict(loose=True, strict=True), strict=False, _strict=True) <mergedicts>`).
 
     This function is useful for cases, e.g. function arguments, where the default 
     option is ``None`` but you will need a dict later on.
@@ -1195,7 +1195,7 @@ def mergelists(*args, copy=False, **kwargs):
     Args:
         args (any): the lists, or items, to be joined together into a list
         copy (bool): whether to deepcopy the resultant object
-        kwargs (dict): passed to :func:`tolist`, which is called on each argument
+        kwargs (dict): passed to :func:`sc.tolist() <tolist>`, which is called on each argument
 
     **Examples**::
 
@@ -1305,7 +1305,7 @@ def strsplit(string, sep=None, skipempty=True, lstrip=True, rstrip=True):
     '''
     Convenience function to split common types of strings.
 
-    Note: to use regular expressions, use ``re.split()`` instead.
+    Note: to use regular expressions, use :func:`re.split()` instead.
 
     Args:
         string    (str):      the string to split
@@ -1352,7 +1352,7 @@ def runcommand(command, printinput=False, printoutput=False, wait=True):
     '''
     Make it easier to run shell commands.
 
-    Alias to ``subprocess.Popen()``.
+    Alias to :obj:`subprocess.Popen()`.
 
     **Examples**::
 
@@ -1532,7 +1532,7 @@ def importbyname(module=None, variable=None, path=None, namespace=None, lazy=Fal
         plt = sc.importbyname(plt='matplotlib.pyplot', lazy=True) # Won't actually import until e.g. pl.figure() is called
         mymod = sc.importbyname(path='/path/to/mymod') # Import by path rather than name
     
-    See also :func:`importbypath()`.
+    See also :func:`sc.importbypath() <importbypath>`.
 
     | *New in version 2.1.0:* "verbose" argument
     | *New in version 2.2.0:* "path" argument
@@ -1596,7 +1596,7 @@ def importbypath(path, name=None):
         old = sc.importbypath('/path/to/old/lib', name='oldlib')
         new = sc.importbypath('/path/to/new/lib', name='newlib')
     
-    See also :func:`importbyname()`.
+    See also :func:`sc.importbyname() <importbyname>`.
 
     *New in version 2.2.0.*
     '''
@@ -1817,7 +1817,7 @@ class LazyModule:
     '''
     Create a "lazy" module that is loaded if and only if an attribute is called.
 
-    Typically not for use by the user, but is used by :func:`importbyname`.
+    Typically not for use by the user, but is used by :func:`sc.importbyname() <importbyname>`.
 
     Args:
         module (str): name of the module to (not) load
@@ -1872,7 +1872,7 @@ class tryexcept(cl.suppress):
     '''
     Simple class to catch exceptions in a single line
     
-    Effectively an alias to ``contextlib.suppress()``, which itself is a programmatic
+    Effectively an alias to :obj:`contextlib.suppress()`, which itself is a programmatic
     equivalent to using try-except blocks.
     
     By default, all errors are caught. If ``catch`` is not None, then by default 
