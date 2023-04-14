@@ -229,9 +229,9 @@ def vectocolor(vector, cmap=None, asarray=True, reverse=False, minval=None, maxv
         c = sc.vectocolor(y);
         pl.scatter(x, y, c=c, s=50)
 
-    | New in version 1.2.0: midpoint argument.
-    | New in version 2.1.0: nancolor argument and remove nans by default
-    | New in version 2.2.0: correct "midpoint" argument
+    | *New in version 1.2.0:* midpoint argument.
+    | *New in version 2.1.0:* nancolor argument and remove nans by default
+    | *New in version 2.2.0:* correct "midpoint" argument
     """
 
     from numpy import array, zeros
@@ -454,7 +454,7 @@ def midpointnorm(vcenter=0, vmin=None, vmax=None):
         data = pl.rand(10,10) - 0.2
         pl.pcolor(data, cmap='bi', norm=sc.midpointnorm())
 
-    New in version 1.2.0.
+    *New in version 1.2.0.*
     '''
     from matplotlib.colors import TwoSlopeNorm
     norm = TwoSlopeNorm(vcenter=vcenter, vmin=vmin, vmax=vmax)
@@ -817,7 +817,7 @@ def orangebluecolormap(apply=False):
         cmap = sc.orangebluecolormap()
         sc.colormapdemo(cmap=cmap)
 
-    New in version 1.0.0.
+    *New in version 1.0.0.*
     '''
     bottom = pl.get_cmap('Oranges', 128)
     top    = pl.get_cmap('Blues_r', 128)
