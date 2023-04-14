@@ -37,6 +37,7 @@ napoleon_google_docstring = True
 
 # Configure autosummary
 autosummary_generate = True  # Turn on sphinx.ext.autosummary
+autosummary_ignore_module_all = False # Respect __all__
 autodoc_member_order = 'bysource' # Keep original ordering
 add_module_names = False  # NB, does not work
 # autoclass_content = "init"  # Add __init__ doc (ie. params) to class summaries

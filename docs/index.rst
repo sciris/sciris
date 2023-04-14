@@ -20,11 +20,7 @@ Contents
    contributing
    code_of_conduct
    style_guide
+   api_reference
 
-.. autosummary::
-   :toctree: _autosummary
-   :caption: API reference
-   :template: custom-module-template.rst
-   :recursive:
 
-   sciris
+   
