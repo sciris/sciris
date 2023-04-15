@@ -24,17 +24,8 @@ For more information, see the full `documentation <http://docs.sciris.org/overvi
 If you have questions, feature suggestions, or would like some help getting started, please reach out to us at info@sciris.org.
 
 
-.. grid::
-
-    .. grid-item-card:: A clickable card 1
-        :link: https://example.com
-
-    .. grid-item-card:: A clickable card 2
-        :link: https://example.com
-
-
 Installation
-~~~~~~~~~~~~
+------------
 
 Using pip: ``pip install sciris``
 
@@ -42,10 +33,6 @@ Using pip: ``pip install sciris``
 
 
 Tests
-~~~~~
+-----
 
 Sciris comes with an automated test suite covering all functions. You almost certainly don't need to run these, but if you want to, go to the ``tests`` folder and run ``pytest``. See the readme in that folder for more information.
-
-
-.. |Sciris showcase| image:: https://github.com/sciris/sciris/raw/main/docs/sciris-showcase-code.png
-.. |Sciris output| image:: https://github.com/sciris/sciris/raw/main/docs/sciris-showcase-output.png
