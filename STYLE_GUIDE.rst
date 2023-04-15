@@ -10,7 +10,7 @@ Design philosophy
 
 Sciris is intended to make life easier, and the code should reflect that. Assume that the average Sciris user dislikes coding and wants something that *just works*. Specifically:
 
-- Commands should be short, simple, and obvious.
+- Commands should be short, simple, and obvious. If you can't think of a name that isn't *all* of those things, that suggests the command might not have broad enough use to fit in Sciris. (But there are exceptions, of course.)
 - Be as flexible as possible with user inputs. If a user could only mean one thing, do that. If the user provides ``[0, 7, 14]`` but the function needs an array instead of a list, convert the list to an array automatically (``sc.toarray()`` exists for exactly this reason).
 - If there's a "sensible" default value for something, use it. Explicit is better than implicit, but implicit is better than wearyingly nitpicky.
 - Err on the side of more comments, including line comments. Logic that is clear to you now might not be clear to anyone else (or yourself 3 months from now).
@@ -55,21 +55,21 @@ Note that you *can* (and should) use type annotations in your docstrings. For ex
 
 .. code-block:: python
 
-    def count_days(self, start_day, end_day):
+    def countdays(self, startday, endday):
         """ Count days between start and end relative to "sim time"
 
         Args:
-            start_day (int/str/date): The day to start counting
-            end_day   (int/str/date): The day to stop counting
+            startday (int/str/date): The day to start counting
+            endday   (int/str/date): The day to stop counting
 
         Returns:
             Number of days elapsed
 
         **Example**::
         
-            sc.count_days(45, '2022-02-02')
+            sc.countdays(45, '2022-02-02')
         """
-        return self.day(end_day) - self.day(start_day)
+        return self.day(endday) - self.day(startday)
 
 
 
