@@ -180,7 +180,8 @@ Note also the use of ``import pylab as pl`` instead of the more common ``import 
 .. code-block:: python
 
     # Yes
-    if foo: bar(foo)
+    if foo:
+        bar(foo)
 
     # Yes
     if foo:
@@ -188,7 +189,10 @@ Note also the use of ``import pylab as pl`` instead of the more common ``import 
     else:
         baz(foo)
 
-    # Borderline
+    # Yes, sometimes
+    if foo: bar(foo)
+
+    # Yes, sometimes
     if foo: bar(foo)
     else:   baz(foo)
 
@@ -225,8 +229,8 @@ Note also the use of ``import pylab as pl`` instead of the more common ``import 
     except: pass
 
     # No: too much whitespace and logic too hidden
-    try:               bar(foo)
-    except ValueError: baz(foo)
+    try:                    bar(foo)
+    except ValueError as E: baz(foo)
 
 
 
