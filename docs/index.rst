@@ -1,14 +1,11 @@
 .. title:: Sciris
 
-Welcome to Sciris
-=================
-
 .. image:: sciris-logo-grey.png
     :scale: 20%
     :align: center
 
 .. include:: ../README.rst
-   :start-line: 1
+   :start-line: 15
 
 .. toctree::
    :maxdepth: 1
