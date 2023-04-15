@@ -87,24 +87,24 @@ Other
 
 Bugfixes
 ~~~~~~~~
-#. Fixed ``<=`` comparison in ``sc.compareversions()`` not handling equality.
-#. Fixed the implementation of the ``midpoint`` argument in ``sc.vectocolor()``.
-#. Fixed corner cases where some ``sc.dataframe`` methods returned ``pd.DataFrame`` objects instead.
-#. Fixed corner cases where some ``sc.objdict`` methods returned ``sc.odict`` objects instead.
-#. ``sc.findinds()`` now returns a tuple for multidimensional arrays, allowing it to be used directly for indexing.
-#. ``sc.rmnans()`` now returns a zero-length array if all input is NaNs.
-#. ``sc.options.with_style(style)`` now correctly applies the style.
-#. Fixed ``sc.daydiff()`` with one argument computing the number of days from Jan. 1st of the *current* year (instead of Jan. 1st of the provided year).
+#. Fixed ``<=`` comparison in :func:`sc.compareversions() <sc_versioning.compareversions>` not handling equality.
+#. Fixed the implementation of the ``midpoint`` argument in :func:`sc.vectocolor() <sc_colors.vectocolor>`.
+#. Fixed corner cases where some :class:`sc.dataframe <sc_dataframe.dataframe>` methods returned ``pd.DataFrame`` objects instead.
+#. Fixed corner cases where some :class:`sc.objdict <sc_odict.objdict>` methods returned :class:`sc.odict <sc_odict.odict>` objects instead.
+#. :func:`sc.findinds() <sc_math.findinds>` now returns a tuple for multidimensional arrays, allowing it to be used directly for indexing.
+#. :func:`sc.rmnans() <sc_math.rmnans>` now returns a zero-length array if all input is NaNs.
+#. :meth:`sc.options.with_style(style) <sc_settings.ScirisOptions.with_style>` now correctly applies the style.
+#. Fixed :func:`sc.daydiff() <sc_datetime.daydiff>` with one argument computing the number of days from Jan. 1st of the *current* year (instead of Jan. 1st of the provided year).
 
 Regression information
 ~~~~~~~~~~~~~~~~~~~~~~
 #. ``tqdm`` is now a required dependency.
-#. The ``returnpool`` argument of ``sc.parallelize()`` has been removed.
-#. Calls to ``sc.makepath()`` and ``sc.makefilepath()`` now need to specify ``makedirs=True``.
-#. For ``sc.savefig()``, ``freeze`` should be renamed ``pipfreeze``, and ``frame`` should be replaced with ``relframe`` with an offset of 2 (e.g. ``frame=2 → relframe=0``).
-#. ``sc.checkmem(..., alphabetical=True)`` has been replaced with ``sc.checkmem(..., order='alphabetical')``
-#. ``sc.parallel_progress()`` has been moved to ``sc.sc_legacy()``. Please use ``sc.parallelize(..., progress=True)`` instead.
-#. ``sc.parallelcmd()`` has been moved to ``sc.sc_legacy()``. Please do not use this function :)
+#. The ``returnpool`` argument of :func:`sc.parallelize() <sc_parallel.parallelize>` has been removed.
+#. Calls to :func:`sc.makepath() <sc_fileio.makepath>` and :func:`sc.makefilepath() <sc_fileio.makefilepath>` now need to specify ``makedirs=True``.
+#. For :func:`sc.savefig() <sc_plotting.savefig>`, ``freeze`` should be renamed ``pipfreeze``, and ``frame`` should be replaced with ``relframe`` with an offset of 2 (e.g. ``frame=2 → relframe=0``).
+#. :func:`sc.checkmem(..., alphabetical=True) <sc_profiling.checkmem>` has been replaced with :func:`sc.checkmem(..., order='alphabetical') <sc_profiling.checkmem>`
+#. ``sc.parallel_progress()`` has been moved to ``sc.sc_legacy``. Please use :func:`sc.parallelize(..., progress=True) <sc_parallel.parallelize>` instead.
+#. ``sc.parallelcmd()`` has been moved to ``sc.sc_legacy``. Please do not use this function :)
 
 
 
