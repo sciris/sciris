@@ -53,7 +53,7 @@ _booltypes   = (bool, np.bool_)
 ##############################################################################
 
 # Define the modules being loaded
-__all__ = ['fast_uuid', 'uuid', 'dcp', 'cp', 'pp', 'sha', 'traceback', 
+__all__ = ['fast_uuid', 'uuid', 'dcp', 'cp', 'pp', 'sha', 'traceback', 'getuser',
            'getplatform', 'iswindows', 'islinux', 'ismac', 'asciify']
 
 
