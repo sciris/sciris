@@ -1,8 +1,8 @@
 '''
-The 'odict' class, combining features from an OrderedDict and a list/array.
+The "odict" class, combining features from an OrderedDict and a list/array.
 
 Highlights:
-    - :class:`sc.odict() <odict>`: flexible container representing the best-of-all-worlds across lists, dicts, and arrays
+    - :class:`sc.odict() <odict>`: flexible container representing the best-of-all-worlds across dicts, lists, and arrays
     - :class:`objdict`: like an odict, but allows get/set via e.g. ``foo.bar`` instead of ``foo['bar']``
 '''
 

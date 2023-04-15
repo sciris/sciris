@@ -19,22 +19,26 @@ Learn more
     :gutter: 4
 
     .. grid-item-card:: Getting started
-        :link: https://example.com
+        :link: overview
+        :link-type: doc
 
         Find out more detail about the Sciris project, see some use cases, and learn about the most important features.
 
     .. grid-item-card:: Tutorials
-        :link: https://example.com
+        :link: tutorials/index
+        :link-type: doc
 
         An interactive tour of Sciris' key features, including containers, parallelization, file loading and saving, and more.
 
     .. grid-item-card:: API reference
-        :link: https://example.com
+        :link: api/index
+        :link-type: doc
 
         All the gory detail of every function and class.
 
     .. grid-item-card:: What's new
-        :link: https://example.com
+        :link: whatsnew
+        :link-type: doc
         
         See what's hot off the press.
 
@@ -44,8 +48,10 @@ Learn more
    :hidden:
 
    overview
+   tutorials/index
    whatsnew
    contributing
    code_of_conduct
    style_guide
-   api/index  
+   api/index
+   
