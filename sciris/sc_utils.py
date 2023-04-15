@@ -747,7 +747,7 @@ def sanitizestr(string=None, alphanumeric=False, nospaces=False, asciify=False,
         string = re.sub(f'[^0-9a-zA-Z{space}]', symchar, string) # If not for the space string, could use /w
     if validvariable:
         string = re.sub(r'\W', spacechar, string) # /W matches an non-alphanumeric character; use a raw string to avoid warnings
-        if str.isdecimal(string[0]): # Don't allow leading decimals: here in case spacechar is None
+        if not string or str.isdecimal(string[0]): # Don't allow leading decimals: here in case spacechar is None
             string = '_' + string
     return string
 
