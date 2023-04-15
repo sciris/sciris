@@ -332,6 +332,8 @@ def sigfig(x, sigfigs=4, SI=False, sep=False, keepints=False):
     '''
     Return a string representation of variable x with sigfigs number of significant figures
 
+    Note: :func:`sc.sigfig() <sigfig>` and :func:`sc.sigfigs() <sigfigs>` are aliases.
+
     Args:
         x (int/float/list/arr): the number(s) to round
         sigfigs (int): number of significant figures to round to
@@ -398,6 +400,8 @@ def sigfig(x, sigfigs=4, SI=False, sep=False, keepints=False):
     else:
         return output[0]
 
+# Alias to avoid confusion
+sigfigs = sigfig
 
 def printmean(data, stds=2, mean_sf=None, err_sf=None, doprint=True, **kwargs):
     '''
