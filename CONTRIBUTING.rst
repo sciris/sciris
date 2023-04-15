@@ -11,6 +11,6 @@ Welcome! We are thrilled you are interested in contributing to Sciris. (No, seri
 
 If you have any other questions, please reach out to us: info@sciris.org. Thank you!
 
-.. _code of conduct: https://sciris.readthedocs.io/en/latest/code_of_conduct.html
-.. _style guide: https://sciris.readthedocs.io/en/latest/style_guide.html
+.. _code of conduct: https://docs.sciris.org/code_of_conduct.html
+.. _style guide: https://docs.sciris.org/style_guide.html
 .. _open an issue: https://github.com/sciris/sciris/issues/new/choose
