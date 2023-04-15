@@ -45,8 +45,8 @@ Attempting to apply type annotations to the flexibility Sciris gives to the user
 
 .. code-block:: python
 
-    def count_days(self, start_day: typing.Union[None, str, int, dt.date, dt.datetime],
-                   end_day: typing.Union[None, str, int, dt.date, dt.datetime]) -> int:
+    def count_days(self, start_day: typing.Union[None, str, int, dt.date, dt.datetime, pd.Timestamp],
+                   end_day: typing.Union[None, str, int, dt.date, dt.datetime, pd.Timestamp]) -> int:
         return self.day(end_day) - self.day(start_day)
 
 If your function is written in such a way that type definitions would be helpful, consider if there is a way to rewrite it such that (a) it can accept a wider range of inputs, and/or (b) you can make it clearer what is allowed. For example, ``values`` should likely accept a list or array of any numeric type; ``label`` should be a single string; ``labels`` should be a list of strings.
