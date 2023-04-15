@@ -21,7 +21,7 @@ What is Sciris?
 
 Glad you asked! **Sciris** (http://sciris.org) is a library of tools that can help make writing scientific Python code easier and more pleasant. Built on top of `NumPy <https://numpy.org/>`__ and `Matplotlib <https://matplotlib.org/>`__, Sciris provides functions covering a wide range of common math, file I/O, and plotting operations. This means you can get more done with less code, and spend less time looking things up on StackOverflow. It was originally written to help epidemiologists and neuroscientists focus on doing science, rather than on writing coding, but Sciris is applicable across scientific domains.
 
-Sciris is available on `PyPi <https://pypi.org/project/sciris/>`__ (``pip install sciris``) and `GitHub <https://github.com/sciris/sciris>`__. Full documentation is available at http://docs.sciris.org. If you have questions, feature suggestions, or would like some help getting started, please reach out to us at info@sciris.org.
+Sciris is available on `PyPi <https://pypi.org/project/sciris/>`__ (``pip install sciris``) and `GitHub <https://github.com/sciris/sciris>`__. Full documentation is available at `here <http://docs.sciris.org>`_. The paper describing Sciris is available `here <http://paper.sciris.org>`_. If you have questions, feature suggestions, or would like some help getting started, please reach out to us at info@sciris.org.
 
 
 Highlights
@@ -122,11 +122,16 @@ Installation and run instructions
 3. Do science (left as an exercise to the reader).
 
 
-Tests
------
+Citation
+--------
 
-Sciris comes with an automated test suite covering all functions. You almost certainly don't need to run this, but if you want to, go to the ``tests`` folder and run ``pytest``. See the readme in that folder for more information.
+To cite Sciris, cite the `paper <http://paper.sciris.org>`_:
+
+  Kerr CC, Sanz-Leon P, Abeysuriya RG, Chadderdon GL, Harbuz VS, Saidi P, Quiroga M, Martin-Hughes R, Kelly SL, Cohen JA, Stuart RM, Nachesa AN. **Sciris: Simplifying scientific software in Python**. *Journal of Open Source Software* 2023 (under review).
+
+The citation is also available in `BibTeX format`_.
 
 
 .. |Sciris showcase| image:: https://github.com/sciris/sciris/raw/main/docs/sciris-showcase-code.png
 .. |Sciris output| image:: https://github.com/sciris/sciris/raw/main/docs/sciris-showcase-output.png
+.. _BibTeX format: https://github.com/sciris/sciris/raw/main/docs/sciris-citation.bib
