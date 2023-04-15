@@ -30,6 +30,7 @@ extensions = [
     "sphinx.ext.napoleon",
     "sphinx.ext.autosectionlabel",
     "sphinx_autodoc_typehints",  # Automatically document param types (less noise in class signature)
+    "sphinx_design", # Add e.g. grid layout
 ]
 
 # Use Google docstrings

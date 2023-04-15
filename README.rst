@@ -24,6 +24,15 @@ For more information, see the full `documentation <http://docs.sciris.org/overvi
 If you have questions, feature suggestions, or would like some help getting started, please reach out to us at info@sciris.org.
 
 
+.. grid::
+
+    .. grid-item-card:: A clickable card 1
+        :link: https://example.com
+
+    .. grid-item-card:: A clickable card 2
+        :link: https://example.com
+
+
 Installation
 ------------
 
