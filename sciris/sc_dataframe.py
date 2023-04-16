@@ -131,7 +131,7 @@ class dataframe(pd.DataFrame):
             
         *New in version 2.2.0:* renamed from "_sanitizecols"; multiple arguments
         '''
-        arglist = scu.mergelists(col, list(args))
+        arglist = scu.mergelists(col, list(args), keepnone=True)
         outputlist = []
         cols = self.cols
         for col in arglist:
@@ -183,7 +183,7 @@ class dataframe(pd.DataFrame):
         
         *New in version 2.2.0.*
         '''
-        arglist = scu.mergelists(col, list(args))
+        arglist = scu.mergelists(col, list(args), keepnone=True)
         outputlist = []
         cols = self.cols
         for col in arglist:
@@ -572,7 +572,7 @@ class dataframe(pd.DataFrame):
         return self.__setitem__(key, value)
 
 
-    def popcols(self, col, *args, die=True):
+    def popcols(self, col=None, *args, die=True):
         '''
         Remove a column or columns from the data frame.
         
@@ -589,7 +589,7 @@ class dataframe(pd.DataFrame):
             df = sc.dataframe(cols=['a','b','c','d'], data=np.random.rand(3,4))
             df.popcols('a','c')
         '''
-        cols = scu.mergelists(col, list(args))
+        cols = scu.mergelists(col, list(args), keepnone=True)
         for col in cols:
             if col not in self.columns: # pragma: no cover
                 errormsg = f'sc.dataframe(): cannot remove column {col}: columns are:\n{scu.newlinejoin(self.cols)}'
@@ -834,7 +834,7 @@ class dataframe(pd.DataFrame):
             df2 = df.filtercols('a','b') # Keeps columns 'a' and 'b'
             df3 = df.filtercols('a','c', keep=False) # Keeps columns 'b' and 'd'
         '''
-        cols = scu.mergelists(cols, list(args))
+        cols = scu.mergelists(cols, list(args), keepnone=True)
         order = []
         notfound = []
         for col in cols:

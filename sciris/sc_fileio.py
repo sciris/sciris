@@ -673,7 +673,7 @@ def thisdir(file=None, path=None, *args, frame=1, aspath=None, **kwargs):
         file = file.__file__
     if aspath is None: aspath = scs.options.aspath
     folder = os.path.abspath(os.path.dirname(file))
-    path = scu.mergelists(path, list(args))
+    path = scu.mergelists(path, *args)
     filepath = os.path.join(folder, *path)
     if aspath:
         filepath = Path(filepath, **kwargs)
@@ -969,7 +969,7 @@ def rmpath(path=None, *args, die=True, verbose=True, interactive=False, **kwargs
     *New version 2.0.0.*
     """
 
-    paths = scu.mergelists(path, list(args))
+    paths = scu.mergelists(path, *args)
     for path in paths:
         if not os.path.exists(path): # pragma: no cover
             errormsg = f'Path "{path}" does not exist'
