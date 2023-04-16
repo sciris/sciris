@@ -139,10 +139,10 @@ class Parallel:
         self.argslist     = None
         self.method       = None
         self.pool         = None
-        self.map_func     = None
-        self.is_async     = None
         self.manager      = None
         self.globaldict   = None
+        self.map_func     = None
+        self.is_async     = None
         self.jobs         = None
         self.results      = None
         self.success      = None
@@ -356,18 +356,22 @@ class Parallel:
             raise ValueError(errormsg)
             
         # Create a manager for sharing resources across jobs
-        if method == 'multiprocess': # Special case: can't share multiprocessing managers with multiprocess
-            manager = mp.Manager() 
+        if method in ['serial', 'thread']:
+            manager = None
+            globaldict = dict() # For serial and thread, don't need anything fancy to share global variables
         else:
-            manager = mpi.Manager()
-        globaldict = manager.dict() # Create a dict for sharing progress of each job
+            if method == 'multiprocess': # Special case: can't share multiprocessing managers with multiprocess
+                manager = mp.Manager()
+            else:
+                manager = mpi.Manager() # Note "mpi" instead of "mp"
+            globaldict = manager.dict() # Create a dict for sharing progress of each job
         
         # Reset
         self.pool       = pool
-        self.map_func   = map_func
-        self.is_async   = is_async
         self.manager    = manager
         self.globaldict = globaldict
+        self.map_func   = map_func
+        self.is_async   = is_async
         self.jobs       = None
         self.rawresults = None
         self.results    = None
@@ -812,7 +816,7 @@ def _task(taskargs):
     elapsed = end - start
     
     if taskargs.progress:
-        _progressbar(globaldict, taskargs.njobs)
+        _progressbar(globaldict, taskargs.njobs, flush=True)
     
     # Handle callback, if present
     if taskargs.callback: # pragma: no cover

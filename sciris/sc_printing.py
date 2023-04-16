@@ -1089,7 +1089,8 @@ def percentcomplete(step=None, maxsteps=None, stepsize=1, prefix=None):
     return
 
 
-def progressbar(i=None, maxiters=None, label='', every=1, length=30, empty='—', full='•', newline=False, **kwargs):
+def progressbar(i=None, maxiters=None, label='', every=1, length=30, empty='—', full='•', 
+                newline=False, flush=False, **kwargs):
     '''
     Show a progress bar for a for loop.
     
@@ -1105,7 +1106,8 @@ def progressbar(i=None, maxiters=None, label='', every=1, length=30, empty='—'
         length   (int): length of progress bar
         empty    (str): character for not-yet-completed steps
         full     (str): character for completed steps
-        newline  (str): character to print at the end of the line (default none)
+        newline  (bool): whether to print each iteration on a new line
+        flush    (bool): whether to force-flush the buffer
         kwargs   (dict): passed to ``tqdm.tqdm()``; see its documentation for full options
 
     **Examples**::
@@ -1157,7 +1159,7 @@ def progressbar(i=None, maxiters=None, label='', every=1, length=30, empty='—'
     # Print
     lastiter = (i == maxiters)
     if not(i%every) or lastiter:
-        print(f'\r{label} {bar} {percent}', end=ending)
+        print(f'\r{label} {bar} {percent}', end=ending, flush=flush)
         if lastiter:
             print() # Newline at the end
 
