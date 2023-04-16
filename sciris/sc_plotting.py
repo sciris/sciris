@@ -689,8 +689,8 @@ def figlayout(fig=None, tight=True, keep=False, **kwargs):
         fig.set_layout_engine(layout)
     except: # Earlier versions # pragma: no cover
         fig.set_tight_layout(tight)
-    if not keep:
-        pl.pause(0.01) # Force refresh -- may raise a warning with a noninteractive backend; this can be ignored
+    if (not keep) and (not pl.get_backend() == 'agg'):
+        pl.pause(0.01) # Force refresh if using an interactive backend
         try:
             fig.set_layout_engine('none')
         except: # pragma: no cover
