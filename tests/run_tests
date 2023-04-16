@@ -1,6 +1,9 @@
 #!/bin/bash
-# Run the integration tests Requires pytest-parallel:
-#   pip install pytest-parallel
+# Run the integration tests Requires pytest-parallel or pytest-xdist:
+#   pip install pytest-parallel pytest-xdist
 
-# pytest test_*.py --workers=auto --ignore=manual --durations=0 # pytest-parallel version (fast, fragile)
-pytest test_*.py -n auto --ignore=manual --durations=0 # pytest-xdist version (slow, robust)
+# To use pytest-xdist (more robust), use -n auto; to use pytest-parallel (faster), use --workers=auto
+# parallel=' -n auto'
+parallel='--workers=auto'
+
+pytest test_*.py $parallel --ignore=manual --durations=0
