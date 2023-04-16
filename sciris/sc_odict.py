@@ -13,7 +13,7 @@ Highlights:
 import re
 import json
 import numpy as np
-from collections import OrderedDict as OD, defaultdict as ddict
+import collections as co
 from . import sc_utils as scu
 from . import sc_printing as scp
 from . import sc_nested as scn
@@ -21,6 +21,8 @@ from . import sc_nested as scn
 # Restrict imports to user-facing modules
 __all__ = ['ddict', 'odict', 'objdict', 'dictobj', 'asobj']
 
+ddict = co.defaultdict # Define alias
+OD = dict # Base class; was OrderedDict before v2.2.0
 
 class odict(OD):
     '''
@@ -77,7 +79,7 @@ class odict(OD):
     | *New in version 1.1.0:* "defaultdict" argument
     | *New in version 1.3.1:* allow integer keys via ``makefrom()``; removed ``to_OD``; performance improvements
     | *New in version 2.0.1:* allow deletion by index
-    | *New in version 2.2.0:* allow numeric indices
+    | *New in version 2.2.0:* allow numeric indices; inherit from dict rather than OrderedDict
     '''
 
     def __init__(self, *args, defaultdict=None, **kwargs):
@@ -85,8 +87,7 @@ class odict(OD):
         
         # Standard init
         mapping = dict(*args, **kwargs)
-        for k,v in mapping.items():
-            OD.__setitem__(self, k, v) # Note: dict.__setitem__ does not work here
+        dict.update(self, mapping)
         
         # Handle defaultdict
         if defaultdict is not None:
