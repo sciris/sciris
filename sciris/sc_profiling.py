@@ -437,8 +437,9 @@ def loadbalancer(maxcpu=0.9, maxmem=0.9, index=None, interval=None, cpu_interval
             string = label+f'Memory load too high ({mem_str}); {process_str} queued {count} times'
             scd.randsleep(interval)
         else:
+            ok = 'OK' if scu.getplatform() == 'windows' else '✓' # Windows doesn't support unicode (!)
             toohigh = False
-            string = label+f'CPU OK ({cpu_str}), memory OK ({mem_str}): starting {process_str} after {count} tries'
+            string = label+f'CPU {ok} ({cpu_str}), memory {ok} ({mem_str}): starting {process_str} after {count} tries'
         if verbose:
             print(string)
     return string
