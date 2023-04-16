@@ -1,7 +1,7 @@
 build:
     image: latest
 python:
-    version: 3.8
+    version: 3.9
     setup_py_install: true
     use_system_site_packages: true
 requirements_file: docs/requirements.txt
