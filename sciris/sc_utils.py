@@ -1196,29 +1196,47 @@ def mergedicts(*args, _strict=False, _overwrite=True, _copy=False, _sameclass=Tr
     return outputdict
 
 
-def mergelists(*args, copy=False, **kwargs):
+def mergelists(*args, coerce='default', copy=False, **kwargs):
     '''
     Merge multiple lists together.
+    
+    Often used to flexible handle the input arguments to functions; see example
+    below.
 
     Args:
         args (any): the lists, or items, to be joined together into a list
+        coerce (str): what types of objects to treat as lists; see :func:`sc.tolist() <tolist>` for details
         copy (bool): whether to deepcopy the resultant object
         kwargs (dict): passed to :func:`sc.tolist() <tolist>`, which is called on each argument
 
     **Examples**::
 
-        sc.mergelists(None) # Returns []
-        sc.mergelists([1,2,3], [4,5,6]) # Returns [1, 2, 3, 4, 5, 6]
-        sc.mergelists([1,2,3], 4, 5, 6) # Returns [1, 2, 3, 4, 5, 6]
-        sc.mergelists([(1,2), (3,4)], (5,6)) # Returns [(1, 2), (3, 4), (5, 6)]
-        sc.mergelists((1,2), (3,4), (5,6)) # Returns [(1, 2), (3, 4), (5, 6)]
-        sc.mergelists((1,2), (3,4), (5,6), coerce=tuple) # Returns [1, 2, 3, 4, 5, 6]
+        # Simple usage
+        sc.mergelists(None)                                # Returns []
+        sc.mergelists([1,2,3], [4,5,6])                    # Returns [1, 2, 3, 4, 5, 6]
+        sc.mergelists([1,2,3], 4, 5, 6)                    # Returns [1, 2, 3, 4, 5, 6]
+        sc.mergelists([(1,2), (3,4)], (5,6))               # Returns [(1, 2), (3, 4), (5, 6)]
+        sc.mergelists((1,2), (3,4), (5,6))                 # Returns [(1, 2), (3, 4), (5, 6)]
+        sc.mergelists((1,2), (3,4), (5,6), coerce='tuple') # Returns [1, 2, 3, 4, 5, 6]
+        
+        # Usage for handling flexible input arguments
+        def my_func(arg=None, *args):
+            arglist = sc.mergelists(arg, list(args))
+            return arglist
+
+        a = my_func()           # Returns []
+        b = my_func([1,2,3])    # Returns [1,2,3]
+        c = my_func(1,2,3)      # Returns [1,2,3]
+        d = my_func([1,2], 3)   # Returns [1,2,3]
+        f = my_func(1, *[2,3])  # Returns [1,2,3]
+        e = my_func(1, [2,3])   # Returns [1,[2,3]] since second argument is ambiguous
+        g = my_func([[1,2]], 3) # Returns [[1,2],3] since first argument is nested
 
     *New in version 1.1.0.*
     '''
     obj = []
     for arg in args:
-        arg = tolist(arg, **kwargs)
+        arg = tolist(arg, coerce=coerce, **kwargs)
         obj.extend(arg)
     if copy:
         obj = dcp(obj)

@@ -111,36 +111,113 @@ class dataframe(pd.DataFrame):
         return
 
 
-    def col_index(self, col, die=True):
+    def col_index(self, col=None, *args, die=True):
         '''
-        Get the index of the specified column.
+        Get the index of the column named ``col``.
+        
+        Similar to ``df.columns.get_loc(col)``, and opposite of :meth:`df.col_name <dataframe.col_name>`.
         
         Args:
-            col (str): the column to get the index of (return 0 if None)
+            col (str/list): the column(s) to get the index of (return 0 if None)
+            args (list): additional column(s) to get the index of
             die (bool): whether to raise an exception if the column could not be found (else, return None)
         
-        *New in version 2.2.0:* renamed from "_sanitizecols"
+        **Examples**::
+            
+            df = sc.dataframe(dict(a=[1,2,3], b=[4,5,6], c=[7,8,9]))
+            df.col_index('b') # Returns 1
+            df.col_index(1) # Returns 1
+            df.col_index('a', 'c') # Returns [0, 2]
+            
+        *New in version 2.2.0:* renamed from "_sanitizecols"; multiple arguments
         '''
+        arglist = scu.mergelists(col, list(args))
+        outputlist = []
         cols = self.cols
-        if col is None:
-            output = 0 # If not supplied, assume first column is intended
-        elif col in cols:
-            output = cols.index(col) # Convert to index
-        elif scu.isnumber(col):
-            try:
-                cols[col]
-            except Exception as E: # pragma: no cover
-                errormsg = f'Column "{col}" is not a valid index'
-                raise IndexError(errormsg) from E
-            output = col
-        else: # pragma: no cover
-            errormsg = f'Unrecognized column/column type "{col}" {type(col)}'
-            if die:
-                raise TypeError(errormsg)
-            else:
-                print(errormsg)
-                output = None
-        return output
+        for col in arglist:
+            if col is None:
+                output = 0 # If not supplied, assume first column is intended
+            elif col in cols:
+                output = cols.index(col) # Convert to index
+            elif scu.isnumber(col):
+                try:
+                    cols[col]
+                except IndexError as E: # pragma: no cover
+                    errormsg = f'Column "{col}" is not a valid index; there are {len(cols)} columns'
+                    raise IndexError(errormsg) from E
+                output = col
+            else: # pragma: no cover
+                errormsg = f'Unrecognized column/column type "{col}" {type(col)}'
+                if die:
+                    raise TypeError(errormsg)
+                else:
+                    print(errormsg)
+                    output = None
+            outputlist.append(output)
+        if len(outputlist) == 1:
+            outputlist = outputlist[0]
+        return outputlist
+    
+    
+    def col_name(self, col=None, *args, die=True):
+        '''
+        Get the name of the column(s) with index ``col``.
+        
+        Similar to ``df.columns[col]``, and opposite of :meth:`df.col_index <dataframe.col_index>`.
+        
+        **Note**: This method always looks for named columns first. If ``col`` is 
+        name of a column, it will return ``col`` rather than ``columns[col]``. See
+        example below for more information.
+        
+        Args:
+            col (int/list): the column(s) to get the index of (return 0 if None)
+            args (list): additional column(s) to get the index of
+            die (bool): whether to raise an exception if the column could not be found (else, return None)
+        
+        **Examples**::
+            
+            df = sc.dataframe(dict(a=[1,2,3], b=[4,5,6], c=[7,8,9]))
+            df.col_name(1) # Returns 'b'
+            df.col_name('b') # Returns 'b'
+            df.col_name(0, 2) # Returns ['a', 'c']
+        
+        *New in version 2.2.0.*
+        '''
+        arglist = scu.mergelists(col, list(args))
+        outputlist = []
+        cols = self.cols
+        for col in arglist:
+            if col is None:
+                col = 0 # If not supplied, assume first column is intended
+            elif col in cols:
+                output = col # It's already a column
+            elif scu.isnumber(col):
+                try:
+                    output = cols[col]
+                except Exception as E: # pragma: no cover
+                    errormsg = f'Column "{col}" is not a valid index'
+                    raise IndexError(errormsg) from E
+            else: # pragma: no cover
+                errormsg = f'Unrecognized column/column type "{col}" {type(col)}'
+                if die:
+                    raise TypeError(errormsg)
+                else:
+                    print(errormsg)
+                    output = None
+            outputlist.append(output)
+        if len(outputlist) == 1:
+            outputlist = outputlist[0]
+        return outputlist
+
+
+    def get(self, key):
+        ''' Alias to pandas __getitem__ method; rarely used '''
+        return super().__getitem__(key)
+    
+    
+    def set(self, key, value=None):
+        ''' Alias to pandas __setitem__ method; rarely used '''
+        return super().__setitem__(key, value)
 
 
     def __getitem__(self, key=None, die=True, cast=True):
@@ -175,11 +252,6 @@ class dataframe(pd.DataFrame):
             output = self.iloc[rowindex,colindex]
 
         return output
-
-
-    def set(self, key, value=None):
-        ''' Alias to pandas __setitem__ method '''
-        return super().__setitem__(key, value)
 
 
     def __setitem__(self, key, value=None):
@@ -281,36 +353,6 @@ class dataframe(pd.DataFrame):
         with pd.option_context(*optslist):
             print(self)
         return
-
-
-    def poprow(self, row=-1, returnval=True):
-        '''
-        Remove a row from the data frame.
-        
-        Alias to :meth:`drop <pandas.DataFrame.drop>`, except drop by position
-        rather than label, and modify in-place.
-        
-        Args:
-            row (int): index of the row to pop
-            returnval (bool): whether to return the row that was popped
-        
-        To pop a column, see :meth:`df.pop() <pandas.DataFrame.pop>`
-        
-        *New in version 2.2.0:* "key" argument renamed "row"
-        '''
-        if isinstance(row, int):
-            rowindex = row
-            indexkey = self.index[row]
-        else: # It's a string (most likely): find the corresponding index
-            rowindex = self.index.get_indexer(row)
-            indexkey = row
-        if returnval:
-            thisrow = self.iloc[rowindex,:]
-        self.drop(indexkey, inplace=True)
-        if returnval:
-            return thisrow
-        else:
-            return
 
 
     def replacedata(self, newdata=None, newdf=None, reset_index=True, inplace=True):
@@ -547,7 +589,7 @@ class dataframe(pd.DataFrame):
             df = sc.dataframe(cols=['a','b','c','d'], data=np.random.rand(3,4))
             df.popcols('a','c')
         '''
-        cols = scu.mergelists(col, *args)
+        cols = scu.mergelists(col, list(args))
         for col in cols:
             if col not in self.columns: # pragma: no cover
                 errormsg = f'sc.dataframe(): cannot remove column {col}: columns are:\n{scu.newlinejoin(self.cols)}'
@@ -558,9 +600,9 @@ class dataframe(pd.DataFrame):
         return self
 
 
-    def row_index(self, value=None, col=None, closest=False, die=True):
+    def findind(self, value=None, col=None, closest=False, die=True):
         '''
-        Get the row index for a given value and column.
+        Find the row index for a given value and column.
         
         See :meth:`df.findrow() <dataframe.findrow>` for the equivalent to return the row itself
         rather than the index of the row. See :meth:`df.col_index() <dataframe.col_index>` for the column
@@ -577,9 +619,10 @@ class dataframe(pd.DataFrame):
         **Example**::
             
             df = sc.dataframe(data=[[2016,0.3],[2017,0.5]], columns=['year','val'])
-            df.row_index(2016) # returns 0
-            df.row_index(2013) # returns None, or exception if die is True
-            df.row_index(2013, closest=True) # returns 0
+            df.findind(2016) # returns 0
+            df.findind(0.5, 'val') # returns 1
+            df.findind(2013) # returns None, or exception if die is True
+            df.findind(2013, closest=True) # returns 0
         
         *New in version 2.2.0:* renamed from "_rowindex"
         '''
@@ -610,9 +653,42 @@ class dataframe(pd.DataFrame):
         return diff_set
 
 
+    def poprow(self, row=-1, returnval=True):
+        '''
+        Remove a row from the data frame.
+        
+        Alias to :meth:`drop <pandas.DataFrame.drop>`, except drop by position
+        rather than label, and modify in-place. To pop multiple rows, see
+        meth:`df.poprows() <dataframe.poprows>`.
+        
+        Args:
+            row (int): index of the row to pop
+            returnval (bool): whether to return the row that was popped
+        
+        To pop a column, see :meth:`df.pop() <pandas.DataFrame.pop>`.
+        
+        *New in version 2.2.0:* "key" argument renamed "row"
+        '''
+        if isinstance(row, int):
+            rowindex = row
+            indexkey = self.index[row]
+        else: # It's a string (most likely): find the corresponding index
+            rowindex = self.index.get_indexer(row)
+            indexkey = row
+        if returnval:
+            thisrow = self.iloc[rowindex,:]
+        self.drop(indexkey, inplace=True)
+        if returnval:
+            return thisrow
+        else:
+            return self
+
+
     def poprows(self, inds=-1, value=None, col=None, reset_index=True, inplace=True, **kwargs):
         '''
         Remove multiple rows by index or value
+        
+        To pop a single row, see meth:`df.poprow() <dataframe.poprow>`.
         
         Args:
             inds (list): the rows to remove
@@ -662,11 +738,11 @@ class dataframe(pd.DataFrame):
         return output
 
 
-    def findrow(self, value=None, col=None, default=None, closest=False, pop=False, asdict=False, die=False):
+    def findrow(self, value=None, col=None, default=None, closest=False, asdict=False, die=False):
         '''
         Return a row by searching for a matching value.
         
-        See :meth:`df.row_index() <dataframe.row_index>` for the equivalent to return the index of the row
+        See :meth:`df.findind() <dataframe.findind>` for the equivalent to return the index of the row
         rather than the row itself, and :meth:`df.findinds() <dataframe.findinds>`
         to find multiple row indices.
 
@@ -675,7 +751,6 @@ class dataframe(pd.DataFrame):
             col (str): the column to look for this value in
             default (any): the value to return if key is not found (overrides die)
             closest (bool): whether or not to return the closest row (overrides default and die)
-            pop (bool): if True, pop the matching row
             asdict (bool): whether to return results as dict rather than list
             die (bool): whether to raise an exception if the value is not found
 
@@ -687,7 +762,7 @@ class dataframe(pd.DataFrame):
             df.findrow(2013, closest=True) # returns array([2016, 0.3], dtype=object)
             df.findrow(2016, asdict=True) # returns {'year':2016, 'val':0.3}
         '''
-        index = self.row_index(value=value, col=col, die=(die and default is None), closest=closest)
+        index = self.findind(value=value, col=col, die=(die and default is None), closest=closest)
         if index is not None:
             thisrow = self.iloc[index,:].values
             if asdict:
@@ -759,7 +834,7 @@ class dataframe(pd.DataFrame):
             df2 = df.filtercols('a','b') # Keeps columns 'a' and 'b'
             df3 = df.filtercols('a','c', keep=False) # Keeps columns 'b' and 'd'
         '''
-        cols = scu.mergelists(cols, *args)
+        cols = scu.mergelists(cols, list(args))
         order = []
         notfound = []
         for col in cols:
