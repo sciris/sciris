@@ -84,9 +84,8 @@ class odict(OD):
         ''' Combine the init properties of both OrderedDict and defaultdict '''
         
         # Standard init
-        mapping = dict(*args, **kwargs) 
-        for k,v in mapping.items():
-            OD.__setitem__(self, k, v) # Note: dict.__setitem__ does not work here
+        mapping = dict(*args, **kwargs)
+        dict.update(self, mapping) # dict.update is fastest (faster than even standard OrderedDict init)
         
         # Handle defaultdict
         if defaultdict is not None:
@@ -94,6 +93,7 @@ class odict(OD):
                 errormsg = f'The defaultdict argument must be either "nested" or callable, not {type(defaultdict)}'
                 raise TypeError(errormsg)
             self._setattr('_defaultdict', defaultdict) # Use OD.__setattr__() since setattr() is overridden by sc.objdict()
+        
         self._cache_keys()
         return
 
