@@ -566,6 +566,8 @@ class dataframe(pd.DataFrame):
         rather than the index of the row. See :meth:`df.col_index() <dataframe.col_index>` for the column
         equivalent.
         
+        
+        
         Args:
             value (any): the value to look for (default: return last row index)
             col (str): the column to look in (default: first)
@@ -597,42 +599,39 @@ class dataframe(pd.DataFrame):
                 else:
                     return
         return index
-
-
-    def rmrow(self, value=None, col=None, returnval=False, die=True):
-        #TODO 
-        # rename to popbyvalue? or delete and replace with findrow(pop=True)?
-        '''
-        Like pop, but removes by matching the value in the given column instead of the index
-        '''
-        index = self.row_index(value=value, col=col, die=die)
-        if index is not None: self.poprow(index, returnval=returnval)
-        return self
-
+    
 
     def _diffinds(self, inds=None):
         ''' For a given set of indices, get the inverse, in set-speak '''
         if inds is None: inds = []
-        ind_set = set(np.array(inds))
+        ind_set = set(np.arange(len(self))[inds])
         all_set = set(np.arange(self.nrows))
         diff_set = np.array(list(all_set - ind_set))
         return diff_set
 
 
-    def poprows(self, inds=None, reset_index=True, inplace=True):
+    def poprows(self, inds=-1, value=None, col=None, reset_index=True, inplace=True, **kwargs):
         '''
-        Remove multiple rows by index
+        Remove multiple rows by index or value
         
         Args:
             inds (list): the rows to remove
+            values (list): alternatively, search for these values to remove; see :meth:`df.findinds <dataframe.findinds>` for details
+            col (str): if removing by value, use this column to find the values
             reset_index (bool): update the index
             inplace (bool): whether to modify in-place
+            kwargs (dict): passed to :meth:`df.findinds <dataframe.findinds>`
         
-        **Example**::
+        **Examples**::
             
             df = sc.dataframe(np.random.rand(10,3))
-            df.rmrows([3,4,5])
+            df.poprows([3,4,5])
+            
+            df = sc.dataframe(dict(x=[0,1,2,3,4], y=[2,3,2,7,8]))
+            df.poprows(value=2, col='y')
         '''
+        if value is not None:
+            inds = self.findinds(value=value, col=col, **kwargs)
         keep_set = self._diffinds(inds)
         keep_data = self.iloc[keep_set,:]
         newdf = self._constructor(data=keep_data, cols=self.cols)
@@ -663,25 +662,26 @@ class dataframe(pd.DataFrame):
         return output
 
 
-    def findrow(self, value=None, col=None, default=None, closest=False, asdict=False, die=False):
+    def findrow(self, value=None, col=None, default=None, closest=False, pop=False, asdict=False, die=False):
         '''
         Return a row by searching for a matching value.
         
         See :meth:`df.row_index() <dataframe.row_index>` for the equivalent to return the index of the row
-        rather than the row itself.
+        rather than the row itself, and :meth:`df.findinds() <dataframe.findinds>`
+        to find multiple row indices.
 
         Args:
             value (any): the value to look for
             col (str): the column to look for this value in
             default (any): the value to return if key is not found (overrides die)
             closest (bool): whether or not to return the closest row (overrides default and die)
-            returnind (bool): return the index of the row rather than the row itself
+            pop (bool): if True, pop the matching row
             asdict (bool): whether to return results as dict rather than list
             die (bool): whether to raise an exception if the value is not found
 
         **Examples**::
 
-            df = dataframe(cols=['year','val'],data=[[2016,0.3],[2017,0.5]])
+            df = sc.dataframe(cols=['year','val'],data=[[2016,0.3],[2017,0.5], [2018, 0.3]])
             df.findrow(2016) # returns array([2016, 0.3], dtype=object)
             df.findrow(2013) # returns None, or exception if die is True
             df.findrow(2013, closest=True) # returns array([2016, 0.3], dtype=object)
@@ -697,17 +697,29 @@ class dataframe(pd.DataFrame):
         return thisrow
 
 
-    def findinds(self, value=None, col=None):
-        ''' Return the indices of all rows matching the given key in a given column. '''
+    def findinds(self, value=None, col=None, **kwargs):
+        '''
+        Return the indices of all rows matching the given key in a given column.
+        
+        Args:
+            value (any): the value to look for
+            col (str): the column to look in
+            kwargs (dict): passed to :func:`sc.findinds() <sc_math.findinds>`
+        
+        **Example**::
+            
+            df = sc.dataframe(cols=['year','val'],data=[[2016,0.3],[2017,0.5], [2018, 0.3]])
+            df.findinds(0.3, 'val') # Returns array([0,2])
+        '''
         col = self.col_index(col)
         coldata = self.iloc[:,col].values # Get data for this column
-        inds = scm.findinds(arr=coldata, val=value)
+        inds = scm.findinds(arr=coldata, val=value, **kwargs)
         return inds
 
 
     def _filterrows(self, inds=None, value=None, col=None, keep=True, verbose=False, reset_index=True, inplace=False):
         ''' Filter rows and either keep the ones matching, or discard them '''
-        if inds is None:
+        if value is not None:
             inds = self.findinds(value=value, col=col)
         if keep: inds = self._diffinds(inds)
         if verbose: print(f'Dataframe filtering: {len(inds)} rows removed based on key="{inds}", column="{col}"')
@@ -717,33 +729,54 @@ class dataframe(pd.DataFrame):
 
     def filterin(self, inds=None, value=None, col=None, verbose=False, reset_index=True, inplace=False):
         '''
-        Keep only rows matching a criterion; see also :meth:`df.filterout() <dataframe.filterout>` '''
+        Keep only rows matching a criterion; see also :meth:`df.filterout() <dataframe.filterout>`
+        '''
         return self._filterrows(inds=inds, value=value, col=col, keep=True, verbose=verbose, reset_index=reset_index, inplace=inplace)
 
 
     def filterout(self, inds=None, value=None, col=None, verbose=False, reset_index=True, inplace=False):
-        '''Remove rows matching a criterion (in place); see also :meth:`df.filterin() <dataframe.filterin>` '''
+        '''
+        Remove rows matching a criterion (in place); see also :meth:`df.filterin() <dataframe.filterin>`
+        '''
         return self._filterrows(inds=inds, value=value, col=col, keep=False, verbose=verbose, reset_index=reset_index, inplace=inplace)
 
 
-    def filtercols(self, cols=None, die=True, reset_index=True, inplace=False):
-        ''' Filter columns keeping only those specified -- note, by default, do not perform in place '''
-        if cols is None: cols = scu.dcp(self.cols) # By default, do nothing
-        cols = scu.tolist(cols)
+    def filtercols(self, cols=None, *args, keep=True, die=True, reset_index=True, inplace=False):
+        '''
+        Filter columns keeping only those specified -- note, by default, do not perform in place
+        
+        Args:
+            cols (str/list): the columns to keep (or remove if keep=False)
+            args (list): additional columns
+            keep (bool): whether to keep the named columns (else, remove them)
+            die (bool): whether to raise an exception if a column is not found
+            reset_index (bool): update the index
+            inplace (bool): whether to modify in-place
+        
+        **Examples**::
+            
+            df = sc.dataframe(cols=['a','b','c','d'], data=np.random.rand(3,4))
+            df2 = df.filtercols('a','b') # Keeps columns 'a' and 'b'
+            df3 = df.filtercols('a','c', keep=False) # Keeps columns 'b' and 'd'
+        '''
+        cols = scu.mergelists(cols, *args)
         order = []
         notfound = []
         for col in cols:
-            if col in self.cols:
+            try:
                 order.append(self.cols.index(col))
-            else: # pragma: no cover
+            except ValueError: # pragma: no cover
                 cols.remove(col)
                 notfound.append(col)
         if len(notfound): # pragma: no cover
             errormsg = 'sc.dataframe(): could not find the following column(s): %s\nChoices are: %s' % (notfound, self.cols)
             if die: raise Exception(errormsg)
             else:   print(errormsg)
+        if not keep:
+            order = np.setdiff1d(np.arange(len(self.cols)), order)
+            cols = [self.cols[o] for o in order]
         ordered_data = self.iloc[:,order] # Resort and filter the data
-        newdf = dataframe(cols=cols, data=ordered_data)
+        newdf = self._constructor(cols=cols, data=ordered_data)
         return self.replacedata(newdf=newdf, reset_index=reset_index, inplace=inplace)
 
 
