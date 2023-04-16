@@ -146,7 +146,7 @@ def test_dates():
 def test_timer():
     sc.heading('Testing tic, toc, and timer')
 
-    t = 0.01
+    t = 0.05 # Slightly longer to avoid timing errors
     def nap(n=1):
         sc.timedsleep(t*n, verbose=False)
         return

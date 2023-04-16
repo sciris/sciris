@@ -553,7 +553,7 @@ def urlopen(url, filename=None, save=False, headers=None, params=None, data=None
             with open(filename, 'wb') as f: # pragma: no cover
                 f.write(output)
         else:
-            with open(filename, 'w') as f:
+            with open(filename, 'w', encoding='utf-8') as f: # Explicit encoding to avoid issues on Windows
                 f.write(output)
         output = filename
 
