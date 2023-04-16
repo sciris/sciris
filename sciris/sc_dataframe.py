@@ -191,7 +191,6 @@ class dataframe(pd.DataFrame):
     def __setitem__(self, key, value=None):
         try:
             # Don't create new non-text columns, only set existing ones; otherwise use regular pandas
-            assert isinstance(key, str) or key in self.columns
             super().__setitem__(key, value)
         except Exception as E:
             if scu.isnumber(key):
@@ -250,7 +249,7 @@ class dataframe(pd.DataFrame):
         elif asarray:
             output = np.array(output)
         else:
-            output = dataframe(data=output, columns=np.array(self.cols)[colindices].tolist())
+            output = self._constructor(data=output, columns=np.array(self.cols)[colindices].tolist())
 
         return output
 
@@ -314,7 +313,7 @@ class dataframe(pd.DataFrame):
         *New in version 2.2.0:* improved dtype handling
         '''
         if newdf is None:
-            newdf = dataframe(data=newdata, columns=self.columns)
+            newdf = self._constructor(data=newdata, columns=self.columns)
         if reset_index:
             newdf.reset_index(drop=True, inplace=True)
         if inplace:
@@ -394,7 +393,7 @@ class dataframe(pd.DataFrame):
         '''
         before = self.iloc[:index,:]
         after  = self.iloc[index:,:]
-        newdf = dataframe.cat(before, value, after, **kwargs)
+        newdf = self.cat(before, value, after, **kwargs)
         return self.replacedata(newdf=newdf, reset_index=reset_index, inplace=inplace)
 
 
@@ -409,7 +408,7 @@ class dataframe(pd.DataFrame):
             argarray = arg if isinstance(arg, np.ndarray) else np.array(arg) # Solely for checking the shape
             if argarray.shape == (self.ncols,): # If it's a single row with the right number of columns, make 2D
                 arg = [arg]
-            df = dataframe(data=arg, columns=columns, **kwargs)
+            df = self._constructor(data=arg, columns=columns, **kwargs)
         return df
 
 
@@ -427,7 +426,7 @@ class dataframe(pd.DataFrame):
             reset_index (bool): update the index
             inplace (bool): whether to append in place
             dfargs (dict): arguments passed to construct each dataframe
-            **kwargs (dict): passed to :func:`pd.concat() <pandas.concat`
+            **kwargs (dict): passed to :func:`pd.concat() <pandas.concat>`
         
         | *New in version 2.0.2:* "inplace" defaults to False
         | *New in version 2.2.0:* improved type handling
@@ -439,12 +438,12 @@ class dataframe(pd.DataFrame):
         for arg in [data] + list(args):
             df = self._sanitize_df(arg, columns=columns, **dfargs)
             dfs.append(df)
-        newdf = dataframe(pd.concat(dfs, **kwargs), **dfargs)
+        newdf = self._constructor(pd.concat(dfs, **kwargs), **dfargs)
         return self.replacedata(newdf=newdf, reset_index=reset_index, inplace=inplace)
 
 
-    @staticmethod
-    def cat(data, *args, dfargs=None, **kwargs):
+    @classmethod
+    def cat(cls, data, *args, dfargs=None, **kwargs):
         '''
         Convenience method for concatenating multiple dataframes. See :meth:`df.concat() <dataframe.concat>`
         for the equivalent instance method.
@@ -464,11 +463,32 @@ class dataframe(pd.DataFrame):
         *New in version 2.0.2.*
         '''
         dfargs = scu.mergedicts(dfargs)
-        df = dataframe(data, **dfargs)
+        df = cls(data, **dfargs)
         if len(args):
             df = df.concat(*args, dfargs=dfargs, **kwargs)
         return df
             
+
+    def merge(self, *args, reset_index=True, inplace=False, **kwargs):
+        '''
+        Alias to :func:`pd.merge <pandas.merge>`, except merge in place.
+        
+        Args:        
+            reset_index (bool): update the index
+            inplace (bool): whether to append in place
+            **kwargs (dict): passed to :func:`pd.concat() <pandas.concat>`
+            
+        *New in version 2.2.0.*
+        
+        **Example**::
+            
+            df = sc.dataframe(dict(x=[1,2,3], y=[4,5,6]))
+            df2 = sc.dataframe(dict(x=[1,2,3], z=[9,8,7]))
+            df.merge(df2, on='x', inplace=True)
+        '''
+        newdf = self._constructor(pd.merge(self, *args, **kwargs))
+        return self.replacedata(newdf=newdf, reset_index=reset_index, inplace=inplace)
+
 
     @property
     def ncols(self):
@@ -516,7 +536,7 @@ class dataframe(pd.DataFrame):
         
         **Example**::
             
-            df = dataframe(data=[[2016,0.3],[2017,0.5]], columns=['year','val'])
+            df = sc.dataframe(data=[[2016,0.3],[2017,0.5]], columns=['year','val'])
             df.row_index(2016) # returns 0
             df.row_index(2013) # returns None, or exception if die is True
             df.row_index(2013, closest=True) # returns 0
@@ -561,7 +581,7 @@ class dataframe(pd.DataFrame):
         ''' Remove multiple rows by index '''
         keep_set = self._diffinds(inds)
         keep_data = self.iloc[keep_set,:]
-        newdf = dataframe(data=keep_data, cols=self.cols)
+        newdf = self._constructor(data=keep_data, cols=self.cols)
         return self.replacedata(newdf=newdf, reset_index=reset_index, inplace=inplace)
 
 
@@ -732,6 +752,15 @@ class dataframe(pd.DataFrame):
         ''' Convert to a plain pandas dataframe '''
         return pd.DataFrame(self)
 
+    @classmethod
+    def read_csv(cls, *args, **kwargs):
+        ''' Alias to :func:`pd.read_csv <pandas.read_csv`, returning a Sciris dataframe '''
+        return cls(pd.read_csv(*args, **kwargs))
+
+    @classmethod
+    def read_excel(cls, *args, **kwargs):
+        ''' Alias to :func:`pd.read_excel <pandas.read_excel`, returning a Sciris dataframe '''
+        return cls(pd.read_excel(*args, **kwargs))
 
     @property
     def _constructor(self):
