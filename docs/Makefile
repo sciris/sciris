@@ -6,7 +6,7 @@ SPHINXOPTS    = -jauto  # Use -v to debug instead
 SPHINXBUILD   = sphinx-build
 SOURCEDIR     = .
 BUILDDIR      = _build
-AUTODIR       = _autosummary
+AUTODIR       = api/_autosummary
 
 # Put it first so that "make" without argument is like "make help".
 help:

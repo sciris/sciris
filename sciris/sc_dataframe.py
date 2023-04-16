@@ -28,32 +28,34 @@ class dataframe(pd.DataFrame):
         nrows (int): the number of arrows to preallocate (default 0)
         dtypes (list): optional list of data types to set each column to
         kwargs (dict): passed to :class:`pd.DataFrame() <pandas.DataFrame>`
+    
+    *Hint*: Run the example below line by line to get a sense of how the dataframe
+    changes.
 
-    **Examples**::
+    **Example**::
 
-        a = sc.dataframe(cols=['x','y'], data=[[1238,2],[384,5],[666,7]]) # Create data frame
-        a['x'] # Print out a column
-        a[0] # Print out a row
-        a['x',0] # Print out an element
-        a[0] = [123,6]; print(a) # Set values for a whole row
-        a['y'] = [8,5,0]; print(a) # Set values for a whole column
-        a['z'] = [14,14,14]; print(a) # Add new column
-        a.addcol('z', [14,14,14]); print(a) # Alternate way to add new column
-        a.rmcol('z'); print(a) # Remove a column
-        a.pop(1); print(a) # Remove a row
-        a.append([555,2,14]); print(a) # Append a new row
-        a.insert(1,[555,2,14]); print(a) # Insert a new row
-        a.sort(); print(a) # Sort by the first column
-        a.sort('y'); print(a) # Sort by the second column
-        a.addrow([555,2,14]); print(a) # Replace the previous row and sort
-        a.getrow(1) # Return the row starting with value '1'
-        a.rmrow(); print(a) # Remove last row
-        a.rmrow(1238); print(a) # Remove the row starting with element '3'
+        df = sc.dataframe(cols=['x','y'], data=[[1238,2],[384,5],[666,7]]) # Create data frame
+        df['x'] # Print out a column
+        df[0] # Print out a row
+        df['x',0] # Print out an element
+        df[0,:] = [123,6]; print(df) # Set values for a whole row
+        df['y'] = [8,5,0]; print(df) # Set values for a whole column
+        df['z'] = [14,14,14]; print(df) # Add new column
+        df.rmcol('z'); print(df) # Remove a column
+        df.addcol('z', [14,14,14]); print(df) # Alternate way to add new column
+        df.poprow(1); print(df) # Remove a row
+        df.append([555,2,14]); print(df) # Append a new row
+        df.insertrow(1,[556,2,14]); print(df) # Insert a new row
+        df.sort(); print(df) # Sort by the first column
+        df.sort('y'); print(df) # Sort by the second column
+        df.findrow(123) # Return the row starting with value 123
+        df.rmrow(); print(df) # Remove last row
+        df.rmrow(555); print(df) # Remove the row starting with element '555'
 
     The dataframe can be used for both numeric and non-numeric data.
 
     | *New in version 2.0.0:* subclass pandas DataFrame
-    | *New in version 2.2.0:* "dtypes" argument
+    | *New in version 2.2.0:* "dtypes" argument; handling of item setting
     '''
 
     def __init__(self, data=None, columns=None, nrows=None, dtypes=None, **kwargs):
@@ -122,16 +124,8 @@ class dataframe(pd.DataFrame):
         cols = self.cols
         if col is None:
             output = 0 # If not supplied, assume first column is intended
-        elif scu.isstring(col):
-            try:
-                output = cols.index(col) # Convert to index
-            except Exception as E: # pragma: no cover
-                errormsg = f'Could not get index of column "{col}"; columns are:\n{scu.newlinejoin(cols)}\n{E}'
-                if die:
-                    raise scu.KeyNotFoundError(errormsg) from E
-                else:
-                    print(errormsg)
-                    output = None
+        elif col in cols:
+            output = cols.index(col) # Convert to index
         elif scu.isnumber(col):
             try:
                 cols[col]
@@ -190,27 +184,30 @@ class dataframe(pd.DataFrame):
 
     def __setitem__(self, key, value=None):
         try:
-            # Don't create new non-text columns, only set existing ones; otherwise use regular pandas
+            # Use regular pandas for everything except keys that look like (0,'a'), ('a',0), (0,0), or (0,:)
+            if isinstance(key, tuple) and (key not in self.columns) and (len(key) == 2) and all([isinstance(k, (int, str, Ellipsis)) for k in key]):
+                raise NotImplementedError # Break out of the loop
             super().__setitem__(key, value)
-        except Exception as E:
-            if scu.isnumber(key):
-                try:
-                    self.iloc[key,:] = value # If it's already in the right format, use regular pandas
-                except: # pragma: no cover
-                    newdf = self._sanitize_df(value) # Otherwise, try to sanitize it
-                    self.iloc[key,:] = newdf
-            elif isinstance(key, tuple):
+        except Exception as E1:
+            cols = self.cols
+            try:
                 rowindex = key[0]
                 colindex = key[1]
-                if scu.isstring(rowindex) and not scu.isstring(colindex): # Swap order if one's a string and the other isn't
+                if rowindex in cols and colindex not in cols: # Swap order if one's a string and the other isn't
                     rowindex, colindex = colindex, rowindex
-                if scu.isstring(colindex): # e.g. df['a',0]
-                    colindex = self.cols.index(colindex)
-                self.iloc[rowindex,colindex] = value
-            else:
-                exc = type(E)
-                errormsg = f'Could not understand key {key}: {E}'
-                raise exc(errormsg) from E
+                if colindex in cols: # e.g. df['a',0]
+                    colindex = cols.index(colindex)
+                self.iloc[rowindex, colindex] = value
+            except Exception as E2:
+                if isinstance(E1, NotImplementedError): # We tried to raise it, so only care about the second one
+                    mainerr = E2
+                    errstr = f'\n{E2}'
+                else: # An actual pandas error, raise both
+                    mainerr = E1
+                    errstr = f'\n{E1}\n{E2}'
+                exc = type(mainerr)
+                errormsg = f'Could not understand key {key}:{errstr}'
+                raise exc(errormsg) from mainerr
         return
 
 
@@ -286,17 +283,34 @@ class dataframe(pd.DataFrame):
         return
 
 
-    def poprow(self, key, returnval=True):
+    def poprow(self, row=-1, returnval=True):
         '''
         Remove a row from the data frame.
         
+        Alias to :meth:`drop <pandas.DataFrame.drop>`, except drop by position
+        rather than label, and modify in-place.
+        
+        Args:
+            row (int): index of the row to pop
+            returnval (bool): whether to return the row that was popped
+        
         To pop a column, see :meth:`df.pop() <pandas.DataFrame.pop>`
+        
+        *New in version 2.2.0:* "key" argument renamed "row"
         '''
-        rowindex = int(key)
-        thisrow = self.iloc[rowindex,:]
-        self.drop(rowindex, inplace=True)
-        if returnval: return thisrow
-        else:         return
+        if isinstance(row, int):
+            rowindex = row
+            indexkey = self.index[row]
+        else: # It's a string (most likely): find the corresponding index
+            rowindex = self.index.get_indexer(row)
+            indexkey = row
+        if returnval:
+            thisrow = self.iloc[rowindex,:]
+        self.drop(indexkey, inplace=True)
+        if returnval:
+            return thisrow
+        else:
+            return
 
 
     def replacedata(self, newdata=None, newdf=None, reset_index=True, inplace=True):
@@ -356,6 +370,15 @@ class dataframe(pd.DataFrame):
             df.appendrow(dict(a='dog', b=4, c=0.7)) # Append a dict
             
         *New in version 2.2.0:* renamed "value" to "row"; improved performance
+        '''
+        return self.concat(row, reset_index=reset_index, inplace=inplace)
+    
+    
+    def append(self, row, reset_index=True, inplace=True):
+        '''
+        Alias to :meth:`appendrow() <dataframe.appendrow>`.
+        
+        *New in version 2.2.0.*
         '''
         return self.concat(row, reset_index=reset_index, inplace=inplace)
 
@@ -507,9 +530,24 @@ class dataframe(pd.DataFrame):
         return self.__setitem__(key, value)
 
 
-    def rmcol(self, key, die=True):
-        ''' Remove a column or columns from the data frame '''
-        cols = scu.tolist(key)
+    def popcols(self, col, *args, die=True):
+        '''
+        Remove a column or columns from the data frame.
+        
+        Alias to :meth:`pop() <pandas.DataFrame.pop>`, except allowing multiple
+        columns to be popped.
+        
+        Args:
+            col (str/list): the column(s) to be popped
+            args (list): additional columns to pop
+            die (bool): whether to raise an exception if a column is not found
+        
+        **Example**::
+            
+            df = sc.dataframe(cols=['a','b','c','d'], data=np.random.rand(3,4))
+            df.popcols('a','c')
+        '''
+        cols = scu.mergelists(col, *args)
         for col in cols:
             if col not in self.columns: # pragma: no cover
                 errormsg = f'sc.dataframe(): cannot remove column {col}: columns are:\n{scu.newlinejoin(self.cols)}'
@@ -562,7 +600,11 @@ class dataframe(pd.DataFrame):
 
 
     def rmrow(self, value=None, col=None, returnval=False, die=True):
-        ''' Like pop, but removes by matching the value in the given column instead of the index '''
+        #TODO 
+        # rename to popbyvalue? or delete and replace with findrow(pop=True)?
+        '''
+        Like pop, but removes by matching the value in the given column instead of the index
+        '''
         index = self.row_index(value=value, col=col, die=die)
         if index is not None: self.poprow(index, returnval=returnval)
         return self
@@ -577,8 +619,20 @@ class dataframe(pd.DataFrame):
         return diff_set
 
 
-    def rmrows(self, inds=None, reset_index=True, inplace=True):
-        ''' Remove multiple rows by index '''
+    def poprows(self, inds=None, reset_index=True, inplace=True):
+        '''
+        Remove multiple rows by index
+        
+        Args:
+            inds (list): the rows to remove
+            reset_index (bool): update the index
+            inplace (bool): whether to modify in-place
+        
+        **Example**::
+            
+            df = sc.dataframe(np.random.rand(10,3))
+            df.rmrows([3,4,5])
+        '''
         keep_set = self._diffinds(inds)
         keep_data = self.iloc[keep_set,:]
         newdf = self._constructor(data=keep_data, cols=self.cols)
@@ -615,7 +669,6 @@ class dataframe(pd.DataFrame):
         
         See :meth:`df.row_index() <dataframe.row_index>` for the equivalent to return the index of the row
         rather than the row itself.
-
 
         Args:
             value (any): the value to look for
@@ -694,7 +747,7 @@ class dataframe(pd.DataFrame):
         return self.replacedata(newdf=newdf, reset_index=reset_index, inplace=inplace)
 
 
-    def sortrows(self, by=None, reverse=False, returninds=False, inplace=True, **kwargs):
+    def sortrows(self, by=None, reverse=False, returninds=False, reset_index=True, inplace=True, **kwargs):
         '''
         Sort the dataframe rows in place by the specified column(s).
         
@@ -705,6 +758,7 @@ class dataframe(pd.DataFrame):
             col (str or int): column to sort by (default, first column)
             reverse (bool): whether to reverse the sort order (i.e., ascending=False)
             returninds (bool): whether to return the indices used to sort instead of the dataframe
+            reset_index (bool): update the index
             inplace (bool): whether to modify the dataframe in-place
             kwargs (dict): passed to :meth:`df.sort_values() <pandas.DataFrame.sort_values>`
         
@@ -719,6 +773,8 @@ class dataframe(pd.DataFrame):
         if returninds:
             sortorder = np.argsort(self[by].values, kind='mergesort') # To preserve order
         df = self.sort_values(by=by, ascending=ascending, inplace=inplace, **kwargs)
+        if reset_index:
+            self.reset_index(drop=True, inplace=True)
         if returninds:
             return sortorder
         else:
@@ -726,6 +782,15 @@ class dataframe(pd.DataFrame):
                 return self
             else:
                 return df
+    
+    
+    def sort(self, by=None, reverse=False, returninds=False, inplace=True, **kwargs):
+        '''
+        Alias to :meth:`sortrows() <dataframe.sortrows>`.
+        
+        *New in version 2.2.0.*
+        '''
+        return self.sortrows(by=by, reverse=reverse, returninds=returninds, inplace=True, **kwargs)
 
 
     def sortcols(self, sortorder=None, reverse=False, inplace=True):

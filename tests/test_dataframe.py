@@ -22,7 +22,7 @@ def test_dataframe():
     dfprint('Print out a column', a['x'])
     dfprint('Print out a row', a[0])
     dfprint('Print out an element', a['x',0])
-    a[0] = [123,6]; dfprint('Set values for a whole row', a)
+    a[0,:] = [123,6]; dfprint('Set values for a whole row', a)
     a['y'] = [8,5,0]; dfprint('Set values for a whole column', a)
     a['z'] = [14,14,14]; dfprint('Add new column', a)
     a.addcol('m', [14,15,16]); dfprint('Alternate way to add new column', a)
@@ -77,7 +77,7 @@ def test_methods():
 
     subheading('Set and flexget')
     df['c'] = np.random.randn(df.nrows); dfprint('Set column', df)
-    df[2] = [17,15,13]; dfprint('Insert row', df)
+    df[2,:] = [17,15,13]; dfprint('Insert row', df)
     df[0,'a'] = 300; dfprint('Tuple set 1', df)
     df[1,1]   = 400; dfprint('Tuple set 2', df)
     out = df.flexget(cols=['a','c'], rows=[0,2]); dfprint('Flexget', out)
