@@ -2,10 +2,11 @@
 API reference
 =============
 
-There's a lot here! Below is absolutely everything that's included in Sciris. You can use the links on the left for navigation.
+There's a lot here! Use the links on the left for navigation.
 
 .. toctree::
    :maxdepth: 3
+   :hidden:
 
    containers
    files
@@ -13,3 +14,4 @@ There's a lot here! Below is absolutely everything that's included in Sciris. Yo
    printing
    math
    utils
+   all
