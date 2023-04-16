@@ -85,7 +85,8 @@ class odict(OD):
         
         # Standard init
         mapping = dict(*args, **kwargs)
-        dict.update(self, mapping) # dict.update is fastest (faster than even standard OrderedDict init)
+        for k,v in mapping.items():
+            OD.__setitem__(self, k, v) # Note: dict.__setitem__ does not work here
         
         # Handle defaultdict
         if defaultdict is not None:
