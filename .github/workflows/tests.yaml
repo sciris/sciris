@@ -3,7 +3,7 @@ on: [pull_request]
 
 jobs:
   install_and_test:
-    timeout-minutes: 5
+    timeout-minutes: 8
     strategy:
       fail-fast: false
       max-parallel: 8
