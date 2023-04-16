@@ -1,13 +1,3 @@
-# build:
-#     image: latest
-# python:
-#     version: 3.9
-#     setup_py_install: true
-#     use_system_site_packages: true
-# requirements_file: docs/requirements.txt
-# # Cut down on build time by skipping PDF generation for now
-# formats: []
-
 # .readthedocs.yaml
 # Read the Docs configuration file
 # See https://docs.readthedocs.io/en/stable/config-file/v2.html for details
@@ -36,4 +26,6 @@ sphinx:
 # Optionally declare the Python requirements required to build your docs
 python:
    install:
+    - method: pip
+      path: .
    - requirements: docs/requirements.txt
