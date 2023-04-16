@@ -1125,12 +1125,9 @@ def elapsedtimestr(pasttime, maxdays=5, minseconds=10, shortmonths=True):
 
     return time_str
 
-# Calculate how much overhead there is for a single call to pytime.sleep() on this machine
-_start = pytime.time()
-pytime.sleep(1e-12)
-_end = pytime.time()
-_sleep_overhead = (_end - _start)*3 # In a for loop context, *3 gives the most accurate results
-del _start, _end
+
+# Most robust results just from hard-coding this, despite variability between machines
+_sleep_overhead = 5e-5 # Amount of time taken for a "zero" delay
 
 def timedsleep(delay=None, start=None, verbose=False):
     '''
@@ -1185,13 +1182,12 @@ def timedsleep(delay=None, start=None, verbose=False):
             try:    start = _delaytime
             except: start = pytime.time()
         elapsed = pytime.time() - start
-        remaining = delay - elapsed - _sleep_overhead
-        if remaining > 0:
-            if verbose: # pragma: no cover
-                print(f'Pausing for {remaining:n} s')
-            pytime.sleep(remaining)
-            try:    del _delaytime # After it's been used, we can't use it again
-            except: pass
+        remaining = max(1e-12, delay - elapsed - _sleep_overhead)
+        pytime.sleep(remaining)
+        try:    del _delaytime # After it's been used, we can't use it again
+        except: pass
+        if remaining > 0 and verbose:
+            print(f'Pausing for {remaining:n} s')
         elif verbose: # pragma: no cover
             print(f'Warning, delay less than elapsed time ({delay:n} vs. {elapsed:n})')
     return
