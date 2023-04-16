@@ -1013,7 +1013,7 @@ def rmpath(path=None, *args, die=True, verbose=True, interactive=False, **kwargs
 #%% JSON functions
 ##############################################################################
 
-__all__ += ['sanitizejson', 'jsonify', 'loadjson', 'savejson', 'loadyaml', 'saveyaml', 'jsonpickle', 'jsonunpickle']
+__all__ += ['sanitizejson', 'jsonify', 'readjson', 'loadjson', 'savejson', 'loadyaml', 'saveyaml', 'jsonpickle', 'jsonunpickle']
 
 
 def jsonify(obj, verbose=True, die=False, tostring=False, **kwargs):
@@ -1101,6 +1101,24 @@ def jsonify(obj, verbose=True, die=False, tostring=False, **kwargs):
 sanitizejson = jsonify
 
 
+def readjson(string, **kwargs):
+    '''
+    Read JSON from a string
+    
+    Alias to :func:`json.loads()`.
+
+    Args:
+        string (str): a string representation of the JSON
+        kwargs (dict): passed to :func:`json.loads()`
+    
+    See also :func:`sc.loadjson() <loadjson>` for loading a JSON from
+    a file.
+    
+    *New in version 2.2.0.*
+    '''
+    return json.loads(string, **kwargs)
+
+
 def loadjson(filename=None, folder=None, string=None, fromfile=True, **kwargs):
     '''
     Convenience function for reading a JSON file (or string).
@@ -1110,7 +1128,7 @@ def loadjson(filename=None, folder=None, string=None, fromfile=True, **kwargs):
         folder (str): folder if not part of the filename
         string (str): if not loading from a file, a string representation of the JSON
         fromfile (bool): whether or not to load from file
-        kwargs (dict): passed to json.load()
+        kwargs (dict): passed to :func:`json.load()`
 
     Returns:
         output (dict): the JSON object
@@ -1119,6 +1137,9 @@ def loadjson(filename=None, folder=None, string=None, fromfile=True, **kwargs):
 
         json = sc.loadjson('my-file.json')
         json = sc.loadjson(string='{"a":null, "b":[1,2,3]}')
+    
+    See also :func:`sc.readjson() <readjson>` for loading a JSON from
+    a string.
     '''
     if string is not None or not fromfile:
         if string is None and filename is not None: # pragma: no cover
