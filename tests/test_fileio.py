@@ -201,7 +201,7 @@ def test_fileio():
     sc.heading('Testing other')
     path1 = sc.path('/a/folder', 'a_file.txt')
     path2 = sc.path('/a/folder', None, 'a_file.txt')
-    assert str(path1) == str(path2) == '/a/folder/a_file.txt' # NB: Test may fail on Windows
+    assert str(path1) == str(path2) == os.sep.join(['', 'a', 'folder', 'a_file.txt'])
     assert sc.ispath(path1)
     o.thisfile = sc.thisfile(aspath=True)
 
