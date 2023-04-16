@@ -8,7 +8,7 @@ All major updates to Sciris are documented here.
 By import convention, components of the Sciris library are listed beginning with ``sc.``, e.g. ``sc.odict()``.
 
 
-Version 2.2.0 (2023-04-14)
+Version 3.0.0 (2023-04-16)
 --------------------------
 
 This version's major changes include:
