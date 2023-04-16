@@ -29,6 +29,11 @@ class odict(OD):
     An ordered dictionary, like the OrderedDict class, but supports list methods like integer
     indexing, key slicing, and item inserting. It can also replicate defaultdict behavior
     via the ``defaultdict`` argument.
+    
+    Args:
+        args (dict): convert an existing dict, e.g. ``sc.odict({'a':1})``
+        defaultdict (class): if provided, create as a defaultdict as well
+        kwargs (dict): additional keyword arguments, e.g. ``sc.odict(a=1)``
 
     **Examples**::
 
@@ -72,12 +77,18 @@ class odict(OD):
     | *New in version 1.1.0:* "defaultdict" argument
     | *New in version 1.3.1:* allow integer keys via ``makefrom()``; removed ``to_OD``; performance improvements
     | *New in version 2.0.1:* allow deletion by index
+    | *New in version 2.2.0:* allow numeric indices
     '''
 
     def __init__(self, *args, defaultdict=None, **kwargs):
         ''' Combine the init properties of both OrderedDict and defaultdict '''
-        if len(args)==1 and args[0] is None: args = [] # Remove a None argument
-        OD.__init__(self, *args, **kwargs) # Standard init
+        
+        # Standard init
+        mapping = dict(*args, **kwargs) 
+        for k,v in mapping.items():
+            OD.__setitem__(self, k, v) # Note: dict.__setitem__ does not work here
+        
+        # Handle defaultdict
         if defaultdict is not None:
             if defaultdict != 'nested' and not callable(defaultdict): # pragma: no cover
                 errormsg = f'The defaultdict argument must be either "nested" or callable, not {type(defaultdict)}'
@@ -456,7 +467,7 @@ class odict(OD):
 
 
     def _is_odict_iterable(self, key):
-        ''' Check to see whether the "key" is actually an iterable '''
+        ''' Check to see whether the "key" is actually an iterable: a list or array '''
         output = isinstance(key, (list, np.ndarray))
         return output
 
