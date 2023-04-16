@@ -1250,14 +1250,14 @@ class dictobj(dict):
 
     For a more powerful alternative, see :class:`sc.objdict() <objdict>`.
     
-    **Note**: because ``dictobj`` is an object, it can't be automatically converted
-    to a dict or JSON. Use :meth:`to_dict() <dictobj.to_dict>` and :meth:`to_json() <dictobj.to_json>`
-    methods, respectively.
+    **Note**: because ``dictobj`` is halfway between a dict and an object, it can't 
+    be automatically converted to a JSON (but will fail silently). Use :meth:`to_json() <dictobj.to_json>`
+    instead.
 
     | *New in version 1.3.0.*
     | *New in version 1.3.1:* inherit from dict
     | *New in version 2.0.0:* allow positional arguments
-    | *New in version 2.2.0:* "fromkeys" now a class method; to_dict() and to_json() methods
+    | *New in version 2.2.0:* "fromkeys" now a class method; ``to_json()`` method
     '''
 
     def __init__(self, *args, **kwargs):
@@ -1270,11 +1270,8 @@ class dictobj(dict):
         output = 'dictobj(' + self.__dict__.__repr__() + ')'
         return output
 
-    def to_dict(self):
-        return self.__dict__.copy()
-    
     def to_json(self):
-        return json.dumps(self.to_dict())
+        return json.dumps(self.__dict__)
 
     @classmethod
     def fromkeys(cls, *args, **kwargs):
@@ -1285,6 +1282,7 @@ class dictobj(dict):
     def __setitem__( self, *args, **kwargs): return self.__dict__.__setitem__( *args, **kwargs)
     def __contains__(self, *args, **kwargs): return self.__dict__.__contains__(*args, **kwargs)
     def __len__(     self, *args, **kwargs): return self.__dict__.__len__(     *args, **kwargs)
+    def __iter__(    self, *args, **kwargs): return self.__dict__.__iter__(    *args, **kwargs)
     def clear(       self, *args, **kwargs): return self.__dict__.clear(       *args, **kwargs)
     def copy(        self, *args, **kwargs): return self.__dict__.copy(        *args, **kwargs)
     def get(         self, *args, **kwargs): return self.__dict__.get(         *args, **kwargs)
