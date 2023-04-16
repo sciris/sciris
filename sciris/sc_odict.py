@@ -11,6 +11,7 @@ Highlights:
 ##############################################################################
 
 import re
+import json
 import numpy as np
 from collections import OrderedDict as OD, defaultdict as ddict
 from . import sc_utils as scu
@@ -1248,11 +1249,15 @@ class dictobj(dict):
         print(obj.items())
 
     For a more powerful alternative, see :class:`sc.objdict() <objdict>`.
+    
+    **Note**: because ``dictobj`` is an object, it can't be automatically converted
+    to a dict or JSON. Use :meth:`to_dict() <dictobj.to_dict>` and :meth:`to_json() <dictobj.to_json>`
+    methods, respectively.
 
     | *New in version 1.3.0.*
     | *New in version 1.3.1:* inherit from dict
     | *New in version 2.0.0:* allow positional arguments
-    | *New in version 2.2.0:* "fromkeys" now a static method
+    | *New in version 2.2.0:* "fromkeys" now a class method; to_dict() and to_json() methods
     '''
 
     def __init__(self, *args, **kwargs):
@@ -1265,9 +1270,15 @@ class dictobj(dict):
         output = 'dictobj(' + self.__dict__.__repr__() + ')'
         return output
 
-    @staticmethod
-    def fromkeys(*args, **kwargs):
-        return dictobj(dict.fromkeys(*args, **kwargs))
+    def to_dict(self):
+        return self.__dict__.copy()
+    
+    def to_json(self):
+        return json.dumps(self.to_dict())
+
+    @classmethod
+    def fromkeys(cls, *args, **kwargs):
+        return cls(dict.fromkeys(*args, **kwargs))
 
     # Copy default dictionary methods
     def __getitem__( self, *args, **kwargs): return self.__dict__.__getitem__( *args, **kwargs)

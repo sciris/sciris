@@ -290,7 +290,7 @@ def _printout(string=None, doprint=None, output=False):
     else:      return
 
 
-def pp(obj, jsonify=True, doprint=None, output=False, verbose=False, **kwargs):
+def pp(obj, jsonify=False, doprint=None, output=False, sort_dicts=False, **kwargs):
     '''
     Shortcut for pretty-printing the object.
 
@@ -302,24 +302,30 @@ def pp(obj, jsonify=True, doprint=None, output=False, verbose=False, **kwargs):
         jsonify (bool): whether to first convert the object to JSON, to handle things like ordered dicts nicely
         doprint (bool): whether to show output (default true)
         output  (bool): whether to return output as a string (default false)
-        verbose (bool): whether to show warnings when jsonifying the object
+        sort_dicts (bool): whether to sort dictionary keys (default false, unlike :func:`pprint.pprint()`)
         kwargs  (dict): passed to :func:`pprint.pprint()`
-
+    
+    **Example**::
+        
+        d = {'my very': {'large': 'and', 'unwieldy': {'nested': 'dictionary', 'cannot': 'be', 'easily': 'printed'}}}
+        sc.pp(d)
+        
     *New in version 1.3.1:* output argument
+    *New in version 2.2.0:* "jsonify" defaults to False; sort_dicts defaults to False; removed "verbose" argument
     '''
 
     # Get object
     if jsonify:
         try:
-            toprint = json.loads(json.dumps(obj)) # This is to handle things like OrderedDicts
+            toprint = json.loads(json.dumps(obj, default=lambda x: f'{x}')) # This is to handle things like OrderedDicts
         except Exception as E:
-            if verbose: print(f'Could not jsonify object ("{str(E)}"), printing default...')
+            print(f'Could not jsonify object ("{str(E)}"), printing default...')
             toprint = obj # If problems are encountered, just return the object
     else: # pragma: no cover
         toprint = obj
 
     # Decide what to do with object
-    string = pprint.pformat(toprint, **kwargs)
+    string = pprint.pformat(toprint, sort_dicts=sort_dicts, **kwargs)
     return _printout(string=string, doprint=doprint, output=output)
 
 
