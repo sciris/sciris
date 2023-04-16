@@ -1170,7 +1170,7 @@ def savefig(filename, fig=None, dpi=None, comments=None, pipfreeze=False, relfra
         sc.pp(sc.loadmetadata('example2.png'))
     
     | *New in version 1.3.3.*
-    | *New in version 2.2.0:* "freeze" renamed "pipfreeze"; "frame" replaced with "relframe"; replaced metadata with ``sc.metadata()``
+    | *New in version 3.0.0:* "freeze" renamed "pipfreeze"; "frame" replaced with "relframe"; replaced metadata with ``sc.metadata()``
     '''
     # Handle deprecation
     orig_metadata = kwargs.pop('metadata', {}) # In case metadata is supplied, as it can be for fig.save()

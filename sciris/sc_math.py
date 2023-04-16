@@ -114,7 +114,7 @@ def findinds(arr=None, val=None, *args, eps=1e-6, first=False, last=False, ind=N
 
     | *New in version 1.2.3:* "die" argument
     | *New in version 2.0.0:* fix string matching; allow multiple arguments
-    | *New in version 2.2.0:* multidimensional arrays now return a list of tuples
+    | *New in version 3.0.0:* multidimensional arrays now return a list of tuples
     '''
 
     # Handle first or last
@@ -330,7 +330,7 @@ def sanitize(data=None, returninds=False, replacenans=None, defaultval=None, die
             sanitized5 = sc.sanitize(data, replacenans=0) # Replace NaNs with 0
 
         | *New in version 2.0.0:* handle multidimensional arrays
-        | *New in version 2.2.0:* return zero-length arrays if all NaN
+        | *New in version 3.0.0:* return zero-length arrays if all NaN
         '''
         try:
             data = np.array(data, dtype=float) # Make sure it's an array of float type, otherwise nan operations fail
@@ -644,7 +644,7 @@ def randround(x):
         sc.randround(np.random.randn(8)) # Returns e.g. array([-1,  0,  1, -2,  2,  0,  0,  0])
 
     | *New in version 1.0.0.*
-    | *New in version 2.2.0:* allow arrays of arbitrary shape
+    | *New in version 3.0.0:* allow arrays of arbitrary shape
     '''
     if isinstance(x, np.ndarray):
         output = np.array(np.floor(x+np.random.random(x.shape)), dtype=int)
@@ -904,7 +904,7 @@ def smoothinterp(newx=None, origx=None, origy=None, smoothness=None, growth=None
         pl.plot(newx,newy)
         pl.scatter(origx,origy)
 
-    | *New in verison 2.2.0:* "ensurefinite" now defaults to True
+    | *New in verison 3.0.0:* "ensurefinite" now defaults to True
     '''
     # Ensure arrays and remove NaNs
     if scu.isnumber(newx):  newx = [newx] # Make sure it has dimension

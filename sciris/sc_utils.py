@@ -311,7 +311,7 @@ def pp(obj, jsonify=False, doprint=None, output=False, sort_dicts=False, **kwarg
         sc.pp(d)
         
     *New in version 1.3.1:* output argument
-    *New in version 2.2.0:* "jsonify" defaults to False; sort_dicts defaults to False; removed "verbose" argument
+    *New in version 3.0.0:* "jsonify" defaults to False; sort_dicts defaults to False; removed "verbose" argument
     '''
 
     # Get object
@@ -376,7 +376,7 @@ def getuser():
     
     Alias to :func:`getpass.getuser()` -- see https://docs.python.org/3/library/getpass.html#getpass.getuser
     
-    *New in version 2.2.0.*
+    *New in version 3.0.0.*
     '''
     return getpass.getuser()
 
@@ -592,7 +592,7 @@ def download(url, *args, filename=None, save=True, parallel=True, die=True, verb
         sc.download(['http://sciris.org', 'http://covasim.org'], filename=['sciris.html', 'covasim.html']) # Ditto
 
     | *New in version 2.0.0.*
-    | *New in version 2.2.0:* "die" argument
+    | *New in version 3.0.0:* "die" argument
     '''
     from . import sc_parallel as scp # To avoid circular import
     from . import sc_datetime as scd
@@ -733,7 +733,7 @@ def sanitizestr(string=None, alphanumeric=False, nospaces=False, asciify=False,
         string4 = '4 path/names/to variable!'
         sc.sanitizestr(string4, validvariable=True, spacechar='') # Returns '_4pathnamestovariable'
     
-    *New in version 2.2.0.*
+    *New in version 3.0.0.*
     '''
     string = flexstr(string)
     if asciify:
@@ -779,7 +779,7 @@ def isiterable(obj, *args, exclude=None, minlen=None):
         
     See also :func:`numpy.iterable()` for a simpler version.
     
-    *New in version 2.2.0:* "exclude" and "minlen" args; support multiple arguments
+    *New in version 3.0.0:* "exclude" and "minlen" args; support multiple arguments
     '''
     
     # Handle arguments
@@ -848,7 +848,7 @@ def checktype(obj=None, objtype=None, subtype=None, die=False):
         sc.checktype([{'a':3}], list, dict) # Returns True
     
     | *New in version 2.0.1:* ``pd.Series`` considered 'array-like'
-    | *New in version 2.2.0:* allow list (in addition to tuple) of types; allow checking for NoneType
+    | *New in version 3.0.0:* allow list (in addition to tuple) of types; allow checking for NoneType
     '''
 
     # Handle "objtype" input
@@ -1561,7 +1561,7 @@ def importbyname(module=None, variable=None, path=None, namespace=None, lazy=Fal
     See also :func:`sc.importbypath() <importbypath>`.
 
     | *New in version 2.1.0:* "verbose" argument
-    | *New in version 2.2.0:* "path" argument
+    | *New in version 3.0.0:* "path" argument
     '''
     # Initialize
     if variable is None:
@@ -1624,7 +1624,7 @@ def importbypath(path, name=None):
     
     See also :func:`sc.importbyname() <importbyname>`.
 
-    *New in version 2.2.0.*
+    *New in version 3.0.0.*
     '''
     # Sanitize the path and filename
     default_file='__init__.py'
@@ -1938,7 +1938,7 @@ class tryexcept(cl.suppress):
         tryexc.print()
             
     | *New in version 2.1.0.*
-    | *New in version 2.2.0:* renamed "print" to "disp"
+    | *New in version 3.0.0:* renamed "print" to "disp"
     '''
 
     def __init__(self, die=None, catch=None, verbose=1, history=None):

@@ -34,7 +34,7 @@ def time():
     See also :func:`sc.now() <now>` to return a datetime object, and :func:`sc.getdate() <getdate>` to
     return a string.
     
-    *New in version 2.2.0.*
+    *New in version 3.0.0.*
     '''
     return pytime.time()
     
@@ -281,7 +281,7 @@ def date(obj=None, *args, start_date=None, readformat=None, to='date', as_date=N
     | *New in version 1.0.0.*
     | *New in version 1.2.2:* "readformat" argument; renamed "dateformat" to "outformat"
     | *New in version 2.0.0:* support for :obj:`np.datetime64 <numpy.datetime64>` objects
-    | *New in version 2.2.0:* added "to" argument, and support for :obj:`pd.Timestamp <pandas.Timestamp>` and :obj:`np.datetime64 <numpy.datetime64>` output; allow None
+    | *New in version 3.0.0:* added "to" argument, and support for :obj:`pd.Timestamp <pandas.Timestamp>` and :obj:`np.datetime64 <numpy.datetime64>` output; allow None
     '''
 
     # Handle deprecation
@@ -426,7 +426,7 @@ def daydiff(*args):
         doy = sc.daydiff('2022-03-20') # Returns 79, the number of days since 2022-01-01
 
     | *New in version 1.0.0.*
-    | *New in version 2.2.0:* Calculated relative days with one argument
+    | *New in version 3.0.0:* Calculated relative days with one argument
     '''
     days = [date(day) for day in args]
     if len(days) == 1:
@@ -471,7 +471,7 @@ def daterange(start_date=None, end_date=None, interval=None, inclusive=True, as_
     | *New in version 1.0.0.*
     | *New in version 1.3.0:* "interval" argument
     | *New in version 2.0.0:* :func:`sc.datedelta() <datedelta>` arguments
-    | *New in version 2.2.0:* preserve input type
+    | *New in version 3.0.0:* preserve input type
     '''
 
     # Handle inputs
@@ -751,7 +751,7 @@ class timer:
     | *New in version 1.3.2:* ``toc()`` passes label correctly; ``tt()`` method; ``auto`` argument
     | *New in version 2.0.0:* ``plot()`` method; ``total()`` method; ``indivtimings`` and ``cumtimings`` properties
     | *New in version 2.1.0:* ``total`` as property instead of method; updated repr; added disp() method
-    | *New in version 2.2.0:* ``verbose`` argument; ``sum, min, max, mean, std`` methods; ``rawtimings`` property
+    | *New in version 3.0.0:* ``verbose`` argument; ``sum, min, max, mean, std`` methods; ``rawtimings`` property
     '''
     def __init__(self, label=None, auto=False, start=True, verbose=None, **kwargs):
         from . import sc_odict as sco # Here to avoid circular import
@@ -917,7 +917,7 @@ class timer:
         '''
         Sum of timings; similar to :obj:`timer.total <timer.total>`
         
-        *New in version 2.2.0.*
+        *New in version 3.0.0.*
         '''
         return self.rawtimings.sum()
     
@@ -925,7 +925,7 @@ class timer:
         '''
         Minimum of timings
         
-        *New in version 2.2.0.*
+        *New in version 3.0.0.*
         '''
         return self.rawtimings.min()
     
@@ -933,7 +933,7 @@ class timer:
         ''' 
         Maximum of timings
         
-        *New in version 2.2.0.*
+        *New in version 3.0.0.*
         '''
         return self.rawtimings.max()
     
@@ -941,7 +941,7 @@ class timer:
         ''' 
         Mean of timings
         
-        *New in version 2.2.0.*
+        *New in version 3.0.0.*
         '''
         return self.rawtimings.mean()
     
@@ -949,7 +949,7 @@ class timer:
         ''' 
         Standard deviation of timings
         
-        *New in version 2.2.0.*
+        *New in version 3.0.0.*
         '''
         return self.rawtimings.std()
 
@@ -1174,7 +1174,7 @@ def timedsleep(delay=None, start=None, verbose=False):
                 time.sleep(1/n)
         # Elapsed time: 1.21 s
     
-    *New in version 2.2.0:* "verbose" False by default; more accurate overhead calculation
+    *New in version 3.0.0:* "verbose" False by default; more accurate overhead calculation
     '''
     global _delaytime
     if delay is None or delay=='start':

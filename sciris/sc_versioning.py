@@ -334,7 +334,7 @@ def getcaller(frame=2, tostring=True, includelineno=False, includeline=False, re
 
     | *New in version 1.0.0.*
     | *New in version 1.3.3:* do not include line by default
-    | *New in version 2.2.0:* "relframe" argument; "die" argument
+    | *New in version 3.0.0:* "relframe" argument; "die" argument
     '''
     try:
         import inspect
@@ -397,7 +397,7 @@ def metadata(outfile=None, version=None, comments=None, pipfreeze=True, user=Tru
         
         sc.metadata('my-metadata.json')
     
-    *New in version 2.2.0.*
+    *New in version 3.0.0.*
     '''
     
     # Additional imports
@@ -608,7 +608,7 @@ def savewithmetadata(filename, obj, folder=None, user=True, caller=True, git=Tru
         # Much later...
         obj = sc.loadwithmetadata('my-class.zip')
     
-    *New in version 2.2.0.*
+    *New in version 3.0.0.*
     '''
     filename = scf.makepath(filename=filename, folder=folder, makedirs=True)
     
@@ -644,7 +644,7 @@ def known_deprecations(as_map=False):
     Args:
         as_map (bool): if True, return all known remappings without additional version data
     
-    *New in version 2.2.0.*
+    *New in version 3.0.0.*
     '''
     
     # List known remappings here
@@ -704,7 +704,7 @@ def loadwithmetadata(filename, folder=None, loadobj=True, loadmetadata=False,
     ``sc.sc_versioning._obj_filename``, respectively. However, you almost certainly
     should not do so!
     
-    *New in version 2.2.0.*
+    *New in version 3.0.0.*
     '''
     filename = scf.makefilepath(filename=filename, folder=folder, makedirs=False)
     

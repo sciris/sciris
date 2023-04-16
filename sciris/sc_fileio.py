@@ -253,7 +253,7 @@ def save(filename='default.obj', obj=None, folder=None, method='pickle', compres
     | *New in version 1.2.2:* automatic swapping of arguments if order is incorrect; correct passing of arguments
     | *New in version 2.0.4:* "die" argument for saving as dill
     | *New in version 2.1.0:* "zstandard" compression method
-    | *New in version 2.2.0:* "allow_empty" argument; removed "args"
+    | *New in version 3.0.0:* "allow_empty" argument; removed "args"
     '''
 
     def serialize(fileobj, obj, success, **kwargs):
@@ -380,7 +380,7 @@ def loadstr(string, **kwargs):
         obj2 = sc.loadstr(bytestring)
         assert obj == obj2
     
-    | *New in version 2.2.0:* uses :func:`sc.load() <load>` for more robustness
+    | *New in version 3.0.0:* uses :func:`sc.load() <load>` for more robustness
     '''
     with closing(io.BytesIO(string)) as bytestream: # Open a "fake file" with the Gzip string pickle in it
         obj = load(bytestream, **kwargs)
@@ -396,7 +396,7 @@ def dumpstr(obj=None, **kwargs):
         obj (any): the object to convert
         kwargs (dict): passed to :func:`sc.save() <save>`
     
-    *New in version 2.2.0:* uses :func:`sc.save() <save>` for more robustness
+    *New in version 3.0.0:* uses :func:`sc.save() <save>` for more robustness
     '''
     bytesobj = save(filename=None, obj=obj, **kwargs)
     result = bytesobj.read() # Read all of the content into result
@@ -475,7 +475,7 @@ def loadzip(filename=None, folder=None, **kwargs):
         data = sc.loadzip('my-files.zip')
 
     | *New in version 2.0.0.*
-    | *New in version 2.2.0:* load into memory instead of extracting to disk; see :func:`sc.unzip() <unzip>` for extracting
+    | *New in version 3.0.0:* load into memory instead of extracting to disk; see :func:`sc.unzip() <unzip>` for extracting
     '''
     filename = makefilepath(filename=filename, folder=folder)
     output = dict()
@@ -508,7 +508,7 @@ def unzip(filename=None, outfolder='.', folder=None, members=None):
 
         sc.unzip('my-files.zip', outfolder='my_data') # extracts all files 
 
-    | *New in version 2.2.0* (equivalent to sc.loadzip(..., extract=True) previously)
+    | *New in version 3.0.0* (equivalent to sc.loadzip(..., extract=True) previously)
     '''
     filename = makefilepath(filename=filename, folder=folder)
     with ZipFile(filename, 'r') as zf: # Load the zip file
@@ -543,7 +543,7 @@ def savezip(filename=None, filelist=None, data=None, folder=None, basename=True,
         sc.savezip('mydata.zip', data=dict(var1='test', var2=np.random.rand(3)))
 
     | *New in version 2.0.0:* saving data
-    | *New in version 2.2.0:* "tobytes" argument and kwargs
+    | *New in version 3.0.0:* "tobytes" argument and kwargs
     '''
 
     # Handle inputs
@@ -853,7 +853,7 @@ def makefilepath(filename=None, folder=None, ext=None, default=None, split=False
     doesn't exist, this will makes folder ./congee and returns e.g. ('/home/myname/congee', 'recipe.prj')
 
     | *New in version 1.1.0:* "aspath" argument
-    | *New in version 2.2.0:* "makedirs" defaults to False
+    | *New in version 3.0.0:* "makedirs" defaults to False
     '''
 
     # Initialize
@@ -1114,7 +1114,7 @@ def readjson(string, **kwargs):
     See also :func:`sc.loadjson() <loadjson>` for loading a JSON from
     a file.
     
-    *New in version 2.2.0.*
+    *New in version 3.0.0.*
     '''
     return json.loads(string, **kwargs)
 

@@ -274,7 +274,7 @@ def search(obj, key=_None, value=_None, aslist=False, _trace=None):
         valmatches = sc.search(nested, value=val, aslist=True) # Returns  [['b', 'cat', 2]]
         assert sc.getnested(nested, valmatches[0]) == val # Get from the original nested object
     
-    *New in version 2.2.0:* ability to search for values as well as keys/attributes; "aslist" argument
+    *New in version 3.0.0:* ability to search for values as well as keys/attributes; "aslist" argument
     """
 
     matches = []

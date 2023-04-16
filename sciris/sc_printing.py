@@ -146,7 +146,7 @@ def prepr(obj, maxlen=None, maxitems=None, skip=None, dividerchar='—', divider
         die (bool): whether to raise an exception if an error is encountered
         debug (bool): print out detail during string construction
     
-    *New in version 2.2.0:* "debug" argument
+    *New in version 3.0.0:* "debug" argument
     '''
 
     # Decide how to handle representation function -- repr is dangerous since can lead to recursion
@@ -350,7 +350,7 @@ def sigfig(x, sigfigs=4, SI=False, sep=False, keepints=False):
         vals = np.random.rand(5)
         sc.sigfig(vals, sigfigs=3)
     
-    *New in version 2.2.0:* changed default number of significant figures from 5 to 4; return list rather than tuple
+    *New in version 3.0.0:* changed default number of significant figures from 5 to 4; return list rather than tuple
     '''
     output = []
 
@@ -423,7 +423,7 @@ def printmean(data, stds=2, mean_sf=None, err_sf=None, doprint=True, **kwargs):
         data = [1210, 1072, 1722, 1229, 1902]
         sc.printmean(data) # Returns 1430 ± 320
     
-    *New in version 2.2.0.*
+    *New in version 3.0.0.*
     '''
     vsf = mean_sf # vsf = "value significant figures"
     esf = err_sf if err_sf is not None else 2
@@ -470,7 +470,7 @@ def printmedian(data, ci=95, sf=3, doprint=True, **kwargs):
         data = [1210, 1072, 1722, 1229, 1902]
         sc.printmedian(data, 80) # Returns '1230 (80.0% CI: 1130, 1830)'
     
-    *New in version 2.2.0.*
+    *New in version 3.0.0.*
     '''
     # Handle quantiles
     if ci is None: # pragma: no cover
@@ -538,7 +538,7 @@ def humanize_bytes(bytesize, decimals=3):
         
     See the humansize library for more flexibility.
     
-    *New in version 2.2.0.*
+    *New in version 3.0.0.*
     '''
     # Convert to string
     factor = 1
@@ -576,7 +576,7 @@ def printarr(arr, fmt=None, colsep='  ', vsep='—', decimals=2, doprint=True, d
         sc.printarr(mixed)
 
     *New in version 2.0.3:* "fmt", "colsep", "vsep", "decimals", and "dtype" arguments
-    *New in version 2.2.0:* "doprint" argument
+    *New in version 3.0.0:* "doprint" argument
     '''
     from . import sc_math as scm # To avoid circular import
     
@@ -950,7 +950,7 @@ def printv(string, thisverbose=1, verbose=2, indent=2, **kwargs):
         indent (int): amount by which to indent based on verbosity level
         kwargs (dict): passed to :func:`print()`
         
-    *New in version 2.2.0:* "kwargs" argument; removed "newline" argument
+    *New in version 3.0.0:* "kwargs" argument; removed "newline" argument
     '''
     if verbose >= thisverbose: # Only print if sufficiently verbose
         indents = ' '*thisverbose*indent # Create automatic indenting
@@ -1128,7 +1128,7 @@ def progressbar(i=None, maxiters=None, label='', every=1, length=30, empty='—'
     Adapted from example by Greenstick (https://stackoverflow.com/questions/3173320/text-progress-bar-in-the-console)
 
     | *New in version 1.3.3:* "every" argument
-    | *New in version 2.2.0:* wrapper for tqdm
+    | *New in version 3.0.0:* wrapper for tqdm
     '''
     if i is None or scu.isiterable(i):
         desc = kwargs.pop('desc', label)
@@ -1173,7 +1173,7 @@ class tqdm_pickle(tqdm.tqdm):
     
     Based on ``tqdm`` 4.65.0; may become deprecated in future ``tqdm`` releases.
     
-    *New in version 2.2.0.*
+    *New in version 3.0.0.*
     '''
     
     def __getstate__(self):
@@ -1236,7 +1236,7 @@ class progressbars(scu.prettyobj):
         # Sim 3:  44%|███████████████████████████████        | 160/365 [00:01<00:01, 151.22it/s]
         # Sim 4:  42%|████████████████████████████▏          | 145/365 [00:01<00:01, 136.75it/s]
 
-    *New in version 2.2.0.*
+    *New in version 3.0.0.*
     '''
     
     def __init__(self, n=1, total=1, label=None, leave=False, **kwargs):

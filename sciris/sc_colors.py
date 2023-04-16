@@ -231,7 +231,7 @@ def vectocolor(vector, cmap=None, asarray=True, reverse=False, minval=None, maxv
 
     | *New in version 1.2.0:* midpoint argument.
     | *New in version 2.1.0:* nancolor argument and remove nans by default
-    | *New in version 2.2.0:* correct "midpoint" argument
+    | *New in version 3.0.0:* correct "midpoint" argument
     """
 
     from numpy import array, zeros

@@ -126,7 +126,7 @@ class ScirisOptions(sco.objdict):
 
     | *New in version 1.3.0.*
     | *New in version 2.0.0:* revamped with additional options ``interactive`` and ``jupyter``, plus styles
-    | *New in version 2.2.0:* renamed from Options to ScirisOptions to avoid potential confusion with ``sc.options``
+    | *New in version 3.0.0:* renamed from Options to ScirisOptions to avoid potential confusion with ``sc.options``
     '''
 
     def __init__(self):

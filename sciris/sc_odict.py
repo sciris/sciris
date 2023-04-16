@@ -22,7 +22,7 @@ from . import sc_nested as scn
 __all__ = ['ddict', 'odict', 'objdict', 'dictobj', 'asobj']
 
 ddict = co.defaultdict # Define alias
-OD = dict # Base class; was OrderedDict before v2.2.0
+OD = dict # Base class; was OrderedDict before v3.0.0
 
 class odict(OD):
     '''
@@ -79,7 +79,7 @@ class odict(OD):
     | *New in version 1.1.0:* "defaultdict" argument
     | *New in version 1.3.1:* allow integer keys via ``makefrom()``; removed ``to_OD``; performance improvements
     | *New in version 2.0.1:* allow deletion by index
-    | *New in version 2.2.0:* allow numeric indices; inherit from dict rather than OrderedDict
+    | *New in version 3.0.0:* allow numeric indices; inherit from dict rather than OrderedDict
     '''
 
     def __init__(self, *args, defaultdict=None, **kwargs):
@@ -769,7 +769,7 @@ class odict(OD):
         
         For filtering by string matching on keys, see :meth:`filter() <odict.filter>`.
         
-        | *New in version 2.2.0:* removed "verbose" argument
+        | *New in version 3.0.0:* removed "verbose" argument
         '''
         origkeys = self.keys()
         if sortby is None or sortby == 'keys':
@@ -1270,7 +1270,7 @@ class dictobj(dict):
     | *New in version 1.3.0.*
     | *New in version 1.3.1:* inherit from dict
     | *New in version 2.0.0:* allow positional arguments
-    | *New in version 2.2.0:* "fromkeys" now a class method; ``to_json()`` method
+    | *New in version 3.0.0:* "fromkeys" now a class method; ``to_json()`` method
     '''
 
     def __init__(self, *args, **kwargs):
