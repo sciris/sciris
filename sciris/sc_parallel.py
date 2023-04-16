@@ -126,7 +126,6 @@ class Parallel:
         self.reset()
         self.set_defaults()
         self.validate_args()
-        self.make_argslist()
         self.set_ncpus()
         self.set_method()
         return
@@ -140,10 +139,10 @@ class Parallel:
         self.argslist     = None
         self.method       = None
         self.pool         = None
-        self.manager      = mpi.Manager() # Create a manager for sharing resources across jobs
-        self.globaldict   = self.manager.dict() # Create a dict for sharing progress of each job
         self.map_func     = None
         self.is_async     = None
+        self.manager      = None
+        self.globaldict   = None
         self.jobs         = None
         self.results      = None
         self.success      = None
@@ -247,46 +246,6 @@ class Parallel:
         else:
             self.njobs = njobs
             
-        return
-    
-    
-    def make_argslist(self):
-        ''' Construct argument list '''
-
-        # Initialize
-        iterarg    = self.iterarg
-        iterkwargs = self.iterkwargs
-        argslist   = []
-        
-        # Check for embarrassingly parallel run -- should already be validated
-        if self.embarrassing:
-            iterarg = np.arange(iterarg)
-        
-        # Construct the argument list for each job
-        for index in range(self.njobs):
-            if iterarg is None:
-                iterval = None
-            else:
-                iterval = iterarg[index]
-            if iterkwargs is None:
-                iterdict = None
-            else:
-                if isinstance(iterkwargs, dict): # Dict of lists
-                    iterdict = {}
-                    for key,val in iterkwargs.items():
-                        iterdict[key] = val[index]
-                elif isinstance(iterkwargs, list): # List of dicts
-                    iterdict = iterkwargs[index]
-                else:  # pragma: no cover # Should be caught by previous checking, so shouldn't happen
-                    errormsg = f'iterkwargs type not understood ({type(iterkwargs)})'
-                    raise TypeError(errormsg)
-            taskargs = TaskArgs(func=self.func, index=index, njobs=self.njobs, iterval=iterval, iterdict=iterdict,
-                                args=self.args, kwargs=self.kwargs, maxcpu=self.maxcpu, maxmem=self.maxmem,
-                                interval=self.interval, embarrassing=self.embarrassing, callback=self.callback, 
-                                progress=self.progress, globaldict=self.globaldict, die=self.die)
-            argslist.append(taskargs)
-        
-        self.argslist = argslist
         return
     
     
@@ -396,16 +355,100 @@ class Parallel:
             errormsg = f'Invalid parallelizer "{self.parallelizer}"'
             raise ValueError(errormsg)
             
+        # Create a manager for sharing resources across jobs
+        if method == 'multiprocess': # Special case: can't share multiprocessing managers with multiprocess
+            manager = mp.Manager() 
+        else:
+            manager = mpi.Manager()
+        globaldict = manager.dict() # Create a dict for sharing progress of each job
+        
         # Reset
         self.pool       = pool
         self.map_func   = map_func
         self.is_async   = is_async
+        self.manager    = manager
+        self.globaldict = globaldict
         self.jobs       = None
         self.rawresults = None
         self.results    = None
         
         return
 
+
+    def make_argslist(self):
+        ''' Construct argument list '''
+
+        # Initialize
+        iterarg    = self.iterarg
+        iterkwargs = self.iterkwargs
+        argslist   = []
+        
+        # Check for embarrassingly parallel run -- should already be validated
+        if self.embarrassing:
+            iterarg = np.arange(iterarg)
+        
+        # Construct the argument list for each job
+        for index in range(self.njobs):
+            if iterarg is None:
+                iterval = None
+            else:
+                iterval = iterarg[index]
+            if iterkwargs is None:
+                iterdict = None
+            else:
+                if isinstance(iterkwargs, dict): # Dict of lists
+                    iterdict = {}
+                    for key,val in iterkwargs.items():
+                        iterdict[key] = val[index]
+                elif isinstance(iterkwargs, list): # List of dicts
+                    iterdict = iterkwargs[index]
+                else:  # pragma: no cover # Should be caught by previous checking, so shouldn't happen
+                    errormsg = f'iterkwargs type not understood ({type(iterkwargs)})'
+                    raise TypeError(errormsg)
+            taskargs = TaskArgs(func=self.func, index=index, njobs=self.njobs, iterval=iterval, iterdict=iterdict,
+                                args=self.args, kwargs=self.kwargs, maxcpu=self.maxcpu, maxmem=self.maxmem,
+                                interval=self.interval, embarrassing=self.embarrassing, callback=self.callback, 
+                                progress=self.progress, globaldict=self.globaldict, die=self.die)
+            argslist.append(taskargs)
+        
+        self.argslist = argslist
+        return
+
+
+    def run_async(self):
+        ''' Choose how to run in parallel, and do it '''
+        
+        # Shorten variables
+        method = self.method
+        needs_copy = ['serial', 'thread', 'custom']
+        
+        # Make the pool
+        self.make_pool()
+        
+        # Construct the argument list (has to be after the pool is made)
+        self.make_argslist()
+        
+        # Handle optional deepcopy
+        if scu.isstring(self.parallelizer) and '-copy' in self.parallelizer and method in needs_copy: # Don't deepcopy if we're going to pickle anyway
+            argslist = scu.dcp(self.argslist, die=self.die)
+        else:
+            argslist = self.argslist
+        
+        # Run it!
+        self.times.started = scd.now()
+        output = self.map_func(_task, argslist)
+        
+        # Store the pool; do not store the output list here
+        if self.is_async:
+            self.jobs = output
+        else:
+            self.rawresults = list(output)
+            self._time_finished()
+            
+        self.already_run = True
+        
+        return
+    
     
     @property
     def running(self):
@@ -449,38 +492,6 @@ class Parallel:
         return
 
 
-    def run_async(self):
-        ''' Choose how to run in parallel, and do it '''
-        
-        # Shorten variables
-        method = self.method
-        needs_copy = ['serial', 'thread', 'custom']
-        
-        # Make the pool
-        self.make_pool()
-        
-        # Handle optional deepcopy
-        if scu.isstring(self.parallelizer) and '-copy' in self.parallelizer and method in needs_copy: # Don't deepcopy if we're going to pickle anyway
-            argslist = scu.dcp(self.argslist, die=self.die)
-        else:
-            argslist = self.argslist
-        
-        # Run it!
-        self.times.started = scd.now()
-        output = self.map_func(_task, argslist)
-        
-        # Store the pool; do not store the output list here
-        if self.is_async:
-            self.jobs = output
-        else:
-            self.rawresults = list(output)
-            self._time_finished()
-            
-        self.already_run = True
-        
-        return
-    
-    
     def monitor(self, interval=0.1, **kwargs):
         ''' Monitor progress -- only usable with async '''
         final_iter = True

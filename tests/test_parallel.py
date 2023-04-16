@@ -171,7 +171,6 @@ def test_class():
     return P
 
 
-
 def test_components():
     sc.heading('Testing subcomponents directly')
 
