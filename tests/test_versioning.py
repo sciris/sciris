@@ -79,8 +79,9 @@ def test_load_save():
     print('Testing loadwithmetadata')
     o.obj = sc.loadwithmetadata(f.wmd)
     data = sc.loadwithmetadata(f.wmd, loadmetadata=True) # To test a different conditional
-    assert o.obj.sum() == 10
-    assert data['obj'].sum() == 10
+    if sc.compareversions(o.md.versions.python, '<3.11'): # Due to new opcodes, old pickled methods can't be loaded
+        assert o.obj.sum() == 10
+        assert data['obj'].sum() == 10
     
     for file in [f.md, f.obj]:
         sc.rmpath(file)
