@@ -604,9 +604,9 @@ class dataframe(pd.DataFrame):
     def _diffinds(self, inds=None):
         ''' For a given set of indices, get the inverse, in set-speak '''
         if inds is None: inds = []
-        ind_set = set(np.arange(len(self))[inds])
-        all_set = set(np.arange(self.nrows))
-        diff_set = np.array(list(all_set - ind_set))
+        all_inds = np.arange(self.nrows)
+        these_inds = all_inds[inds]
+        diff_set = np.setdiff1d(all_inds, these_inds)
         return diff_set
 
 
@@ -723,7 +723,7 @@ class dataframe(pd.DataFrame):
             inds = self.findinds(value=value, col=col)
         if keep: inds = self._diffinds(inds)
         if verbose: print(f'Dataframe filtering: {len(inds)} rows removed based on key="{inds}", column="{col}"')
-        output = self.rmrows(inds=inds, reset_index=reset_index, inplace=inplace)
+        output = self.poprows(inds=inds, reset_index=reset_index, inplace=inplace)
         return output
 
 

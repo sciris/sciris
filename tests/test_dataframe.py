@@ -18,34 +18,34 @@ def subheading(label):
 def test_dataframe():
     sc.heading('Testing dataframe')
 
-    a = sc.dataframe(cols=['x','y'], data=[[1238,2],[384,5],[666,7]]); dfprint('Create dataframe', a)
-    dfprint('Print out a column', a['x'])
-    dfprint('Print out a row', a[0])
-    dfprint('Print out an element', a['x',0])
-    a[0,:] = [123,6]; dfprint('Set values for a whole row', a)
-    a['y'] = [8,5,0]; dfprint('Set values for a whole column', a)
-    a['z'] = [14,14,14]; dfprint('Add new column', a)
-    a.addcol('m', [14,15,16]); dfprint('Alternate way to add new column', a)
-    a.popcols('z'); dfprint('Remove a column', a)
-    a.poprows(1); dfprint('Remove a row', a)
-    a.appendrow([555,2,-1]); dfprint('Append a new row', a)
-    a.concat([[1,2,3],[4,5,6]], [9,9,9]); dfprint('Concatenate', a)
-    a.insertrow(0, [660,3,-2]); dfprint('Insert a new row', a)
-    a.sortrows(); dfprint('Sort by the first column', a)
-    a.sortrows('y'); dfprint('Sort by the second column', a)
-    dfprint('Return the row starting with value "555"', a.findrow(555))
-    a.poprows(); dfprint('Remove last row', a)
-    a.poprows(value=666); dfprint('Remove the row starting with element "666"', a)
-    p = a.to_pandas(); dfprint('Convert to pandas', p)
-    b = a.filtercols(['m','x']); dfprint('Filter to columns m and x', b)
+    df = sc.dataframe(cols=['x','y'], data=[[1238,2],[384,5],[666,7]]); dfprint('Create dataframe', df)
+    dfprint('Print out a column', df['x'])
+    dfprint('Print out a row', df[0])
+    dfprint('Print out an element', df['x',0])
+    df[0,:] = [123,6]; dfprint('Set values for a whole row', df)
+    df['y'] = [8,5,0]; dfprint('Set values for a whole column', df)
+    df['z'] = [14,14,14]; dfprint('Add new column', df)
+    df.addcol('m', [14,15,16]); dfprint('Alternate way to add new column', df)
+    df.popcols('z'); dfprint('Remove a column', df)
+    df.poprows(1); dfprint('Remove a row', df)
+    df.appendrow([555,2,-1]); dfprint('Append a new row', df)
+    df = df.concat([[1,2,3],[4,5,6]], [9,9,9]); dfprint('Concatenate', df)
+    df.insertrow(0, [660,3,-2]); dfprint('Insert a new row', df)
+    df.sortrows(); dfprint('Sort by the first column', df)
+    df.sortrows('y'); dfprint('Sort by the second column', df)
+    dfprint('Return the row starting with value "555"', df.findrow(555))
+    df.poprows(); dfprint('Remove last row', df)
+    df.poprows(value=666); dfprint('Remove the row starting with element "666"', df)
+    p = df.to_pandas(); dfprint('Convert to pandas', p)
+    df2 = df.filtercols(['m','x']); dfprint('Filter to columns m and x', df2)
     
     # Do tests on the final dataframe
-    assert a.x.sum() == 789
-    assert a.y.sum() == 8
-    assert a.m.sum() == 30
-    assert a.shape == (2,3)
+    assert df.x.sum() == 1343
+    assert df.y.sum() == 20
+    assert df.m.sum() == 20
+    assert df.shape == (5, 3)
     
-    return a
+    return df
 
 
 def test_methods():

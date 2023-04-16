@@ -1032,6 +1032,8 @@ def tolist(obj=None, objtype=None, keepnone=False, coerce='default'):
             coerce = default_coerce
         elif coerce == 'tuple': # pragma: no cover
             coerce = default_coerce + (tuple,)
+        elif coerce == 'array': # pragma: no cover
+            coerce = default_coerce + (np.ndarray,)
         elif coerce == 'full':
             coerce = default_coerce + (tuple, np.ndarray)
         else: # pragma: no cover
