@@ -18,7 +18,7 @@ build:
     - pip install -r ./docs/requirements.txt
     - cd docs; ./build_docs
     - mkdir -p _readthedocs/
-    - cp ./docs/_build/* _readthedocs/
+    - cp -r ./docs/_build/* _readthedocs/
 
 
 # Set the conda envrionment
