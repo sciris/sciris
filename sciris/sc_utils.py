@@ -21,49 +21,26 @@ Highlights:
 #%% Imports
 ##############################################################################
 
-import time as pytime
-D = dict(start=pytime.time())
-
 import re
-D['re'] = pytime.time()
 import sys
-D['sys'] = pytime.time()
 import copy
-D['copy'] = pytime.time()
-import json;
-D['json'] = pytime.time()
+import json
 import string
-D['string'] = pytime.time()
 import numbers
-D['numbers'] = pytime.time()
 import pprint
-D['pprint'] = pytime.time()
 import hashlib
-D['hashlib'] = pytime.time()
 import getpass
-D['getpass'] = pytime.time()
 import warnings
-D['warnings'] = pytime.time()
 import importlib
-D['importlib'] = pytime.time()
 import subprocess
-D['subprocess'] = pytime.time()
 import unicodedata
-D['unicodedata'] = pytime.time()
 import numpy as np
-D['numpy'] = pytime.time()
 import pandas as pd
-D['pandas'] = pytime.time()
 import random as rnd
-D['random'] = pytime.time()
 import uuid as py_uuid
-D['uuid'] = pytime.time()
 import contextlib as cl
-D['contextlib'] = pytime.time()
 import traceback as py_traceback
-D['traceback'] = pytime.time()
 from pathlib import Path
-D['pathlib'] = pytime.time()
 
 # Handle types
 _stringtypes = (str, bytes)

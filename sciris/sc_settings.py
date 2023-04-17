@@ -13,27 +13,15 @@ Note: "options" is used to refer to the choices available (e.g., DPI), while "se
 is used to refer to the choices made (e.g., ``dpi=150``).
 '''
 
-import time as pytime
-D = dict(start=pytime.time())
-
-import os;
-D['os'] = pytime.time()
+import os
 import re
-D['re'] = pytime.time()
 import inspect
-D['inspect'] = pytime.time()
 import warnings
-D['warnings'] = pytime.time()
 import collections as co
-D['co'] = pytime.time()
 import pylab as pl
-D['pl'] = pytime.time()
 from . import sc_utils as scu
-D['scu'] = pytime.time()
 from . import sc_odict as sco
-D['sco'] = pytime.time()
 from . import sc_printing as scp
-D['scp'] = pytime.time()
 
 
 __all__ = ['ScirisOptions', 'options', 'parse_env', 'help']
