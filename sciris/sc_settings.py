@@ -98,8 +98,8 @@ class ScirisOptions(sco.objdict):
     to reset one parameter to default. See :meth:`sc.options.help(detailed=True) <ScirisOptions.help>` for
     more information.
 
-    Options can also be saved and loaded using :meth:`sc.options.save() <ScirsOptions.save>` and :meth:`sc.options.load() <ScirsOptions.load>`.
-    See :meth:`sc.options.with_style() <ScirisOptionsptions.with_style>` to set options temporarily.
+    Options can also be saved and loaded using :meth:`sc.options.save() <ScirisOptions.save>` and :meth:`sc.options.load() <ScirisOptions.load>`.
+    See :meth:`sc.options.with_style() <ScirisOptions.with_style>` to set options temporarily.
 
     Common options are (see also :meth:`sc.options.help(detailed=True) <ScirisOptions.help>`):
 
