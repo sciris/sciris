@@ -117,19 +117,9 @@ intersphinx_mapping = {
     "psutil": ("https://psutil.readthedocs.io/en/latest/", None),
 }
 
-autosummary_mock_imports = [
-    'sciris.extras',
-]
-
-# # This is the expected signature of the handler for this event, cf doc
-# def autodoc_skip_member_handler(app, what, name, obj, skip, options):
-#     print('Test')
-#     return 'extras' not in name
-
 def setup(app):
     app.add_css_file("custom.css")
     app.add_js_file("copybutton.js")
-    # app.connect('autodoc-skip-member', autodoc_skip_member_handler)
 
 
 # Modify this to not rerun the Jupyter notebook cells -- usually set by build_docs
