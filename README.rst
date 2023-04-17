@@ -21,7 +21,7 @@ Sciris is a library of tools that can help make writing scientific Python code e
 
 For more information, see the full `documentation <http://docs.sciris.org/overview.html>`_, the `paper <http://paper.sciris.org>`_, or `GitHub <https://github.com/sciris/sciris>`_.
 
-If you have questions, feature suggestions, or would like some help getting started, please reach out to us at info@sciris.org.
+If you have questions, feature suggestions, or would like some help getting started, please reach out to us at info@sciris.org or `open an issue <https://github.com/sciris/sciris/issues/new/choose>`_.
 
 
 Installation
