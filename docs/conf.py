@@ -119,8 +119,6 @@ intersphinx_mapping = {
 
 def setup(app):
     app.add_css_file("theme_overrides.css")
-    app.add_css_file("collapse.css")
-    app.add_js_file("collapse.js")
 
 
 # Modify this to not rerun the Jupyter notebook cells -- usually set by build_docs
