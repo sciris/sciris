@@ -4,7 +4,8 @@ Tutorials
 
 These tutorials illustrate the main features of Sciris. They roughly make the most sense in the order listed, but can be done in any order. Each one should take a few minutes to skim through, or 15-30 minutes to go through in detail. Each tutorial contains a link to an interactive version running on `Binder <http://mybinder.org>`_.
 
-Questions? Reach out to us at info@sciris.org. 
+Questions? Did you complete all the tutorials and want to claim your free "I Am A Scirientist" t-shirt?† Reach out to us at info@sciris.org. 
+
 
 .. grid:: 2
     :gutter: 4
@@ -12,6 +13,7 @@ Questions? Reach out to us at info@sciris.org.
     .. grid-item-card:: 1 Whirlwind tour
         :link: tut_intro
         :link-type: doc
+        :img-top: img-intro.png
 
         A quick high-level overview of all of Sciris' most important features.
 
@@ -27,7 +29,7 @@ Questions? Reach out to us at info@sciris.org.
         :link: tut_dicts
         :link-type: doc
 
-        Data are only as good as the container they're stored in (?), so this tutorial goes through Sciris' main container types.
+        Data are only as good as the container they're stored in (?), so this tutorial goes through Sciris' two main containers (dictionaries and dataframes).
 
 
     .. grid-item-card:: 4 Files and versioning
@@ -48,35 +50,35 @@ Questions? Reach out to us at info@sciris.org.
         :link: tut_plotting
         :link-type: doc
 
-        Without a plot, did science even happen? This tutorial covers Sciris' plotting tools and shortcuts.
+        If you don't plot it, did it even happen? This tutorial covers Sciris' plotting tools and shortcuts that extend :mod:`Matplotlib <matplotlib>`.
 
 
     .. grid-item-card:: 7 Parallelization and profiling
         :link: tut_parallel
         :link-type: doc
 
-        When you need answers faster: this tutorial covers running your code in parallel, and profiling to figure out where to find performance improvements.
+        When you need answers faster: this tutorial covers running your code in parallel, as well as how to profile it to help find performance improvements.
 
 
     .. grid-item-card:: 8 Dates and times
         :link: tut_dates
         :link-type: doc
         
-        Compared to nice, simple numbers, dates are a pain to work with. This tutorial goes through some ways to work with them more easily.
+        Compared to nice simple numbers that behave in nice simple ways, dates can be a pain to work with. This tutorial goes through some ways to manipulate them more easily, as well as how to time parts of your code.
 
 
     .. grid-item-card:: 9 Miscellaneous utilities
         :link: tut_utils
         :link-type: doc
         
-        Sometimes, you just need to do some random task. There's a good chance it'll be covered by one of these tools.
+        Sometimes (probably often), you just need to do some random tedious task. Is there a shortcut for in Sciris? Find out here.
 
 
     .. grid-item-card:: 10 Advanced features
         :link: tut_advanced
         :link-type: doc
         
-        You probably won't often need these tools, but they're there waiting for you in case you do.
+        You probably won't often need these tools, but we think they're cool, and they're here waiting for you just in case.
 
 
 Full contents
@@ -96,3 +98,4 @@ Full contents
    tut_utils
    tut_advanced
 
+† There is no free t-shirt, sorry. But you made it to the end!
