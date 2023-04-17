@@ -21,7 +21,7 @@ import collections as co
 from textwrap import fill
 from collections import UserString
 from contextlib import redirect_stdout
-from sciris.extras import ansicolors as ac
+from ._extras import ansicolors as ac
 from . import sc_utils as scu
 
 
