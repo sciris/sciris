@@ -38,7 +38,7 @@ from . import sc_versioning as scv
 __all__ = ['fig3d', 'ax3d', 'plot3d', 'scatter3d', 'surf3d', 'bar3d']
 
 
-def fig3d(num=None, returnax=False, figkwargs=None, axkwargs=None, **kwargs):
+def fig3d(num=None, nrows=1, ncols=1, index=1, returnax=False, figkwargs=None, axkwargs=None, **kwargs):
     '''
     Shortcut for creating a figure with 3D axes.
 
@@ -47,31 +47,44 @@ def fig3d(num=None, returnax=False, figkwargs=None, axkwargs=None, **kwargs):
     figkwargs = scu.mergedicts(figkwargs, kwargs, num=num)
     axkwargs = scu.mergedicts(axkwargs)
 
-    fig,ax = ax3d(returnfig=True, figkwargs=figkwargs, **axkwargs)
+    fig,ax = ax3d(nrows=nrows, ncols=ncols, index=index, returnfig=True, figkwargs=figkwargs, **axkwargs)
     if returnax: # pragma: no cover
         return fig,ax
     else:
         return fig
 
 
-def ax3d(fig=None, ax=None, returnfig=False, silent=False, elev=None, azim=None, figkwargs=None, axkwargs=None, **kwargs):
+def ax3d(nrows=None, ncols=None, index=None, fig=None, ax=None, returnfig=False, silent=False, 
+         elev=None, azim=None, figkwargs=None, axkwargs=None, **kwargs):
     '''
     Create a 3D axis to plot in.
 
     Usually not invoked directly; kwags are passed to add_subplot()
+    
+    *New in version 3.0.0:* nrows, ncols, and index arguments first
     '''
     from mpl_toolkits.mplot3d import Axes3D # analysis:ignore
 
     figkwargs = scu.mergedicts(figkwargs)
-    axkwargs = scu.mergedicts(axkwargs, kwargs)
-    nrows = axkwargs.pop('nrows', 1) # Since fig.add_subplot() can't handle kwargs...
-    ncols = axkwargs.pop('ncols', 1)
-    index = axkwargs.pop('index', 1)
+    axkwargs = scu.mergedicts(axkwargs, kwargs, nrows=nrows, ncols=ncols, index=index)
+    nrows = axkwargs.pop('nrows', nrows) # Since fig.add_subplot() can't handle kwargs...
+    ncols = axkwargs.pop('ncols', ncols)
+    index = axkwargs.pop('index', index)
+    
+    # Handle the "111" format of subplots
+    try:
+        if ncols is None and index is None:
+            nrows, ncols, index = map(int, str(nrows))
+    except:
+        pass # This is fine, just a different format
 
     # Handle the figure
     if fig is None:
         if ax is None:
-            fig = pl.figure(**figkwargs) # It's necessary to have an open figure or else the commands won't work
+            if not pl.get_fignums():
+                fig = pl.figure(**figkwargs) # It's necessary to have an open figure or else the commands won't work
+            else:
+                fig = pl.gcf()
         else: # pragma: no cover
             fig = ax.figure
             silent = False
@@ -80,7 +93,17 @@ def ax3d(fig=None, ax=None, returnfig=False, silent=False, elev=None, azim=None,
 
     # Create and initialize the axis
     if ax is None:
-        ax = fig.add_subplot(nrows, ncols, index, projection='3d', **axkwargs)
+        if fig.axes and index is None:
+            ax = pl.gca()
+            if not isinstance(ax, Axes3D):
+                errormsg = f'''Cannot create 3D plot into axes {ax}: ensure "projection='3d'" was used when making it'''
+                raise ValueError(errormsg)
+        else:
+            if nrows is None: nrows = 1
+            if ncols is None: ncols = 1
+            if index is None: index = 1
+            ax = fig.add_subplot(nrows, ncols, index, projection='3d', **axkwargs)
+    
     if elev is not None or azim is not None: # pragma: no cover
         ax.view_init(elev=elev, azim=azim)
     if silent: # pragma: no cover
@@ -246,7 +269,7 @@ def surf3d(data, x=None, y=None, fig=None, ax=None, returnfig=False, colorbar=Tr
 
 
 
-def bar3d(data, fig=None, returnfig=False, cmap='viridis', figkwargs=None, axkwargs=None, plotkwargs=None, **kwargs):
+def bar3d(data, fig=None, ax=None, returnfig=False, cmap='viridis', figkwargs=None, axkwargs=None, plotkwargs=None, **kwargs):
     '''
     Plot 2D data as 3D bars
 
@@ -273,7 +296,7 @@ def bar3d(data, fig=None, returnfig=False, cmap='viridis', figkwargs=None, axkwa
     axkwargs = scu.mergedicts(axkwargs)
 
     # Create figure
-    fig,ax = ax3d(returnfig=True, fig=fig, figkwargs=figkwargs, **axkwargs)
+    fig,ax = ax3d(returnfig=True, fig=fig, ax=ax, figkwargs=figkwargs, **axkwargs)
 
     x, y, z = [], [], []
     dz = []

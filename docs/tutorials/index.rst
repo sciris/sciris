@@ -2,7 +2,7 @@
 Tutorials
 =========
 
-These tutorials illustrate the main features of Sciris. They roughly make the most sense in the order listed, but can be done in any order. Each one should take a few minutes to skim through, or 15-30 minutes to go through in detail. Each tutorial contains a link to an interactive version running on `Binder <http://mybinder.org>`_.
+These tutorials illustrate the main features of Sciris. They roughly make the most sense in the order listed, but can be done in any order. Each one should take about 5 minutes to skim through, or 20-30 minutes to go through in detail. Each tutorial contains a link to an interactive version running on `Binder <http://mybinder.org>`_.
 
 Questions? Did you complete all the tutorials and want to claim your free "I Am A Scirientist" t-shirt?† Reach out to us at info@sciris.org. 
 
