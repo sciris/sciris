@@ -47,7 +47,8 @@ def fig3d(num=None, nrows=1, ncols=1, index=1, returnax=False, figkwargs=None, a
     figkwargs = scu.mergedicts(figkwargs, kwargs, num=num)
     axkwargs = scu.mergedicts(axkwargs)
 
-    fig,ax = ax3d(nrows=nrows, ncols=ncols, index=index, returnfig=True, figkwargs=figkwargs, **axkwargs)
+    fig = pl.figure(**figkwargs)
+    ax = ax3d(nrows=nrows, ncols=ncols, index=index, returnfig=False, figkwargs=figkwargs, **axkwargs)
     if returnax: # pragma: no cover
         return fig,ax
     else:

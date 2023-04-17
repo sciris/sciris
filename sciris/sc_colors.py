@@ -427,6 +427,7 @@ def gridcolors(ncolors=10, limits=None, nsteps=20, asarray=False, ashex=False, r
     ## For plotting -- optional
     if demo:
         from . import sc_plotting as scp # To avoid circular import
+        pl.figure()
         ax = scp.scatter3d(colors[:,0], colors[:,1], colors[:,2], c=output, s=200, depthshade=False, lw=0, figkwargs={'facecolor':'w'})
         ax.set_xlabel('Red', fontweight='bold')
         ax.set_ylabel('Green', fontweight='bold')
@@ -507,7 +508,7 @@ def colormapdemo(cmap=None, n=None, smoothing=None, randseed=None, doshow=True):
         pl.show()
 
     # Plot in 3D
-    fig2,ax2 = scp.fig3d(returnax=True, figsize=(18,8))
+    fig2,ax2 = scp.fig3d(returnax=True, figsize=(12,8))
     ax2.view_init(elev=45, azim=30)
     X = np.linspace(0,horizontalsize,n)
     X, Y = np.meshgrid(X, X)
