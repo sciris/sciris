@@ -251,7 +251,7 @@ def vectocolor(vector, cmap=None, asarray=True, reverse=False, minval=None, maxv
 
     # Usual situation -- the vector has elements
     vector = scu.dcp(vector) # To avoid in-place modification
-    vector = np.array(vector) # Just to be sure
+    vector = np.array(vector, dtype=float) # Just to be sure
     if len(vector):
         if minval is None:
             minval = np.nanmin(vector)

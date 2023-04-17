@@ -325,7 +325,8 @@ def indent(prefix=None, text=None, suffix='\n', n=0, pretty=False, width=70, **k
 
 #%% Data representation functions
 
-__all__ += ['sigfig', 'printmean', 'printmedian', 'humanize_bytes', 'printarr', 'printdata', 'printvars']
+__all__ += ['sigfig', 'sigfigs', 'arraymean', 'arraymedian', 'printmean', 'printmedian', 
+            'humanize_bytes', 'printarr', 'printdata', 'printvars']
 
 
 def sigfig(x, sigfigs=4, SI=False, sep=False, keepints=False):
@@ -350,7 +351,7 @@ def sigfig(x, sigfigs=4, SI=False, sep=False, keepints=False):
         vals = np.random.rand(5)
         sc.sigfig(vals, sigfigs=3)
     
-    *New in version 3.0.0:* changed default number of significant figures from 5 to 4; return list rather than tuple
+    *New in version 3.0.0:* changed default number of significant figures from 5 to 4; return list rather than tuple; changed SI suffixes to uppercase
     '''
     output = []
 
@@ -359,7 +360,7 @@ def sigfig(x, sigfigs=4, SI=False, sep=False, keepints=False):
     xlist = x if islist else scu.tolist(x)
     for x in xlist:
         suffix = ''
-        formats = [(1e18,'e18'), (1e15,'e15'), (1e12,'t'), (1e9,'b'), (1e6,'m'), (1e3,'k')]
+        formats = [(1e18,'e18'), (1e15,'e15'), (1e12,'T'), (1e9,'B'), (1e6,'M'), (1e3,'K')]
         if SI:
             for val,suff in formats:
                 if abs(x) >= val:
@@ -403,9 +404,10 @@ def sigfig(x, sigfigs=4, SI=False, sep=False, keepints=False):
 # Alias to avoid confusion
 sigfigs = sigfig
 
-def printmean(data, stds=2, mean_sf=None, err_sf=None, doprint=True, **kwargs):
+
+def arraymean(data, stds=2, mean_sf=None, err_sf=None, doprint=False, **kwargs):
     '''
-    Quickly print the mean and standard deviation of an array.
+    Quickly calculate the mean and standard deviation of an array.
     
     By default, will calculate the correct number of significant figures based on
     the deviation.
@@ -447,9 +449,9 @@ def printmean(data, stds=2, mean_sf=None, err_sf=None, doprint=True, **kwargs):
         return string
 
 
-def printmedian(data, ci=95, sf=3, doprint=True, **kwargs):
+def arraymedian(data, ci=95, sf=3, doprint=False, **kwargs):
     '''
-    Quickly print the median and confidence interval of an array.
+    Quickly calculate the median and confidence interval of an array.
     
     The confidence interval defaults to 95%. If an integer is supplied, this is
     treated as a percentile (e.g. 95=95% CI). If a float is supplied, it's treated
@@ -522,6 +524,15 @@ def printmedian(data, ci=95, sf=3, doprint=True, **kwargs):
     else:
         return string
 
+
+def printmean(*args, doprint=True, **kwargs):
+    ''' Alias to :func:`sc.arraymean() <arraymean>` with doprint=True '''
+    return arraymean(*args, doprint=doprint, **kwargs)
+
+
+def printmedian(*args, doprint=True, **kwargs):
+    ''' Alias to :func:`sc.arraymedian() <arraymedian>` with doprint=True '''
+    return arraymedian(*args, doprint=doprint, **kwargs)
 
 
 def humanize_bytes(bytesize, decimals=3):
