@@ -14,9 +14,9 @@ of ``sc.sc_parallel.parallelize()``.
    :hidden:
 
    containers
-   files
-   parallel
-   printing
    math
+   files
+   printing
+   parallel
    utils
    all
