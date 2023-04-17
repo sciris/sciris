@@ -1,6 +1,6 @@
-name: sciris_v3.0.0_frozen
+name: sciris_docs_v3.0.0
 channels:
-  - conda-forge
+  - forge
   - defaults
 dependencies:
   - _libgcc_mutex=0.1=main
@@ -126,5 +126,5 @@ dependencies:
       - webencodings==0.5.1
       - xlsxwriter==3.1.0
       - zipp==3.15.0
-      - zstandard==0.20.0
-prefix: sciris_v3.0.0_frozen
+      - zstandard==0.21.0
+prefix: /software/anaconda3/envs/sciris_docs_v3.0.0
