@@ -12,9 +12,10 @@ build:
     python: "mambaforge-4.10"
   commands: 
     - pwd
+    - ls
     - pip install -e .
-    - cd docs
-    - ./build_docs
+    - pip install docs/requirements.txt
+    - cd docs; build_docs
 
 
 # Set the conda envrionment
