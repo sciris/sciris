@@ -31,6 +31,7 @@ extensions = [
     "sphinx.ext.autosectionlabel",
     "sphinx_autodoc_typehints",  # Automatically document param types (less noise in class signature)
     "sphinx_design", # Add e.g. grid layout
+    "nbsphinx",
 ]
 
 # Use Google docstrings
@@ -119,3 +120,11 @@ intersphinx_mapping = {
 def setup(app):
     app.add_css_file("custom.css")
     app.add_js_file("copybutton.js")
+
+
+# Modify this to not rerun the Jupyter notebook cells -- usually set by build_docs
+nb_ex_default = ['auto', 'never'][0]
+nb_ex = os.getenv('NBSPHINX_EXECUTE')
+if not nb_ex: nb_ex = nb_ex_default
+print(f'\n\nBuilding Jupyter notebooks with build option: {nb_ex}\n\n')
+nbsphinx_execute = nb_ex

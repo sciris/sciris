@@ -2,7 +2,12 @@
 #
 
 # You can set these variables from the command line.
-SPHINXOPTS    = -jauto  # Use -v to debug instead
+ifeq ($(BUILD_DEBUG), 1)
+	SPHINXOPTS = -v
+else
+	SPHINXOPTS = -jauto  # Use -v to debug instead
+endif
+
 SPHINXBUILD   = sphinx-build
 SOURCEDIR     = .
 BUILDDIR      = _build
