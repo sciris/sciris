@@ -7,6 +7,8 @@ make clean
 # Handle notebook build options
 if [[ "$*" == *"never"* ]]; then
     export NBSPHINX_EXECUTE=never
+elif [[ "$*" == *"always"* ]]; then
+    export NBSPHINX_EXECUTE=always
 else
     export NBSPHINX_EXECUTE=auto
 fi
