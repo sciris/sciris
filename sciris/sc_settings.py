@@ -95,7 +95,7 @@ class ScirisOptions(sco.objdict):
     which is the accessible via ``sc.options``.
 
     Use ``sc.options.set('defaults')`` to reset all values to default, or ``sc.options.set(dpi='default')``
-    to reset one parameter to default. See :meth:`sc.options.help(detailed=True) <ScirisOptions.help` for
+    to reset one parameter to default. See :meth:`sc.options.help(detailed=True) <ScirisOptions.help>` for
     more information.
 
     Options can also be saved and loaded using :meth:`sc.options.save() <ScirsOptions.save>` and :meth:`sc.options.load() <ScirsOptions.load>`.
