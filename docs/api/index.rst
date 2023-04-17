@@ -13,8 +13,8 @@ of ``sc.sc_parallel.parallelize()``.
 .. toctree::
    :hidden:
 
-   containers
    math
+   containers
    files
    printing
    parallel
