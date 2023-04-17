@@ -21,6 +21,7 @@ Questions? Did you complete all the tutorials and want to claim your free "I Am 
     .. grid-item-card:: 2 Array tools
         :link: tut_arrays
         :link-type: doc
+        :img-top: img-arrays.png
 
         Arrays are at the core of scientific computing, and this tutorial will go through some tools that will make it easier to work with them.
 
