@@ -118,11 +118,9 @@ intersphinx_mapping = {
 }
 
 def setup(app):
-    app.add_css_file("custom.css")
-    app.add_css_file("collapsible.css")
-    app.add_js_file("collapsible.js")
-    app.add_js_file("copybutton.js")
-    app.add_js_file("hi.js")
+    app.add_css_file("theme_overrides.css")
+    app.add_css_file("collapse.css")
+    app.add_js_file("collapse.js")
 
 
 # Modify this to not rerun the Jupyter notebook cells -- usually set by build_docs
