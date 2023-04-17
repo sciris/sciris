@@ -21,8 +21,8 @@ import collections as co
 from textwrap import fill
 from collections import UserString
 from contextlib import redirect_stdout
+from sciris.extras import ansicolors as ac
 from . import sc_utils as scu
-from .extras import ansicolors as ac
 
 
 # Add Windows support for colors (do this at the module level so that colorama.init() only gets called once)
