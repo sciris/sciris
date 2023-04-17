@@ -523,9 +523,9 @@ def perturb(n=1, span=0.5, randseed=None, normal=False):
     '''
     rng = np.random.default_rng(randseed)
     if normal:
-        output = 1.0 + span*rng.randn(n)
+        output = 1.0 + rng.normal(0, span, size=n)
     else:
-        output = 1.0 + 2*span*(rng.rand(n)-0.5)
+        output = 1.0 + rng.uniform(-span, span, size=n)
     return output
 
 

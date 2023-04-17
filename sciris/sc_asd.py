@@ -94,7 +94,7 @@ def asd(function, x, args=None, stepsize=0.1, sinc=2, sdec=2, pinc=2, pdec=2,
 
     *New in version 2.2.0:* Uses its own random number stream
     """
-    rng = np.random.default_rng(int(randseed))
+    rng = np.random.default_rng(randseed)
     if verbose >= 2: print(f'ASD: Launching with random seed is {randseed}')
 
     def consistentshape(userinput, origshape=False):
@@ -240,7 +240,7 @@ def asd(function, x, args=None, stepsize=0.1, sinc=2, sdec=2, pinc=2, pdec=2,
         if count >= maxiters: # Stop if the iteration limit is exceeded # pragma: no cover
             exitreason = 'Maximum iterations reached'
             break
-        if (time() - start) > maxtime: # pragma: no cover
+        if (time.time() - start) > maxtime: # pragma: no cover
             strtime, strmax = scp.sigfig([(time.time()-start), maxtime])
             exitreason = f'Time limit reached ({strtime} > {strmax})'
             break
