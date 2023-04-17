@@ -19,20 +19,22 @@ __all__ = ['dataframe']
 
 class dataframe(pd.DataFrame):
     '''
-    An extension of the pandas dataframe with additional convenience methods for
+    An extension of the pandas :class:`DataFrame <pandas.DataFrame>` with additional convenience methods for
     accessing rows and columns and performing other operations, such as adding rows.
     
     Args:
-        data (dict/array/dataframe): the data to use
+        data (dict/array/dataframe): the data to use; passed to :class:`pd.DataFrame() <pandas.DataFrame>`
+        index (array): the index to use; passed to :class:`pd.DataFrame() <pandas.DataFrame>`
         columns (list): column labels (if a dict is supplied, the value sets the dtype)
+        dtype (type): a dtype for the whole datafrmae; passed to :class:`pd.DataFrame() <pandas.DataFrame>`
+        dtypes (list/dict): alternatively, list of data types to set each column to
         nrows (int): the number of arrows to preallocate (default 0)
-        dtypes (list): optional list of data types to set each column to
-        kwargs (dict): passed to :class:`pd.DataFrame() <pandas.DataFrame>`
+        kwargs (dict): if provided, treat these as data columns
     
     *Hint*: Run the example below line by line to get a sense of how the dataframe
     changes.
 
-    **Example**::
+    **Examples**::
 
         df = sc.dataframe(cols=['x','y'], data=[[1238,2],[384,5],[666,7]]) # Create data frame
         df['x'] # Print out a column
@@ -51,6 +53,9 @@ class dataframe(pd.DataFrame):
         df.findrow(123) # Return the row starting with value 123
         df.rmrow(); print(df) # Remove last row
         df.rmrow(555); print(df) # Remove the row starting with element '555'
+        
+        # Direct setting of data
+        df = sc.dataframe(a=[1,2,3], b=[4,5,6])
 
     The dataframe can be used for both numeric and non-numeric data.
 
@@ -58,8 +63,9 @@ class dataframe(pd.DataFrame):
     | *New in version 3.0.0:* "dtypes" argument; handling of item setting
     '''
 
-    def __init__(self, data=None, columns=None, nrows=None, dtypes=None, **kwargs):
-
+    def __init__(self, data=None, index=None, columns=None, dtype=None, copy=None, 
+                 dtypes=None, nrows=None, **kwargs):
+        
         # Handle inputs
         if 'cols' in kwargs:
             columns = kwargs.pop('cols')
@@ -81,9 +87,19 @@ class dataframe(pd.DataFrame):
                 if colset != dataset:
                     errormsg = f'Incompatible column names provided:\nColumns: {colset}\n   Data: {dataset}'
                     raise ValueError(errormsg)
+        
+        # Handle data
+        if kwargs:
+            if data is None:
+                data = kwargs
+            elif isinstance(data, dict):
+                data.update(kwargs)
+            else:
+                errormsg = f'Cannot combine non-dict data {type(data)} with keyword arguments "{scu.strjoin(kwargs.keys())}"'
+                raise TypeError(errormsg)
 
         # Create the dataframe
-        super().__init__(data=data, columns=columns, **kwargs)
+        super().__init__(data=data, index=index, columns=columns, dtype=dtype, copy=copy)
         
         # Optionally set dtypes
         if dtypes is not None:

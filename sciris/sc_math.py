@@ -679,6 +679,8 @@ def cat(*args, copy=False, **kwargs):
     if not len(args):
         return np.array([])
     arrs = [scu.toarray(arg) for arg in args] # Key step: convert everything to an array
+    if arrs[0].ndim == 2: # Convert to 2D if first array is
+        arrs = [np.atleast_2d(arr) for arr in arrs]
     output = np.concatenate(arrs, **kwargs)
     return output
 
