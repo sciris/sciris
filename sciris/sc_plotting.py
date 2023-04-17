@@ -128,15 +128,20 @@ def plot3d(x, y, z, c=None, fig=None, ax=None, returnfig=False, figkwargs=None, 
         return ax
 
 
-def scatter3d(x, y, z, c=None, fig=None, returnfig=False, figkwargs=None, axkwargs=None, plotkwargs=None, **kwargs):
+def scatter3d(x, y=None, z=None, c='z', fig=None, returnfig=False, figkwargs=None, 
+              axkwargs=None, plotkwargs=None, **kwargs):
     '''
     Plot 3D data as a scatter
+    
+    Typically, ``x``, ``y``, and ``z``, are all vectors. However, if a single 2D
+    array is provided, then this will be treated as ``z`` values and ``x`` and ``y``
+    will be inferred on a grid.
 
     Args:
-        x (arr): x coordinate data
+        x (arr): x coordinate data (or z-coordinate data if 2D and ``z`` is ``None``)
         y (arr): y coordinate data
         z (arr): z coordinate data
-        c (arr): color data
+        c (arr): color data; defaults to match z, explicitly pass ``c=None`` to use default colors
         fig (fig): an existing figure to draw the plot in
         ax (axes): an existing axes to draw the plot in
         returnfig (bool): whether to return the figure, or just the axes
@@ -145,10 +150,17 @@ def scatter3d(x, y, z, c=None, fig=None, returnfig=False, figkwargs=None, axkwar
         plotkwargs (dict): passed to plot()
         kwargs (dict): also passed to plot()
 
-    **Example**::
+    **Examples**::
 
-        x,y,z = pl.rand(3,10)
-        sc.scatter3d(x, y, z, c=z)
+        # Explicit coordinates
+        x,y,z = np.random.rand(3,50)
+        sc.scatter3d(x, y, z)
+        
+        # Implicit coordinates
+        data = np.random.randn(10, 10)
+        sc.scatter3d(data)
+    
+    *New in version 3.0.0:* allow 2D input.
     '''
     # Set default arguments
     plotkwargs = scu.mergedicts({'s':200, 'depthshade':False, 'linewidth':0}, plotkwargs, kwargs)
@@ -156,7 +168,24 @@ def scatter3d(x, y, z, c=None, fig=None, returnfig=False, figkwargs=None, axkwar
 
     # Create figure
     fig,ax = ax3d(returnfig=True, fig=fig, figkwargs=figkwargs, **axkwargs)
+    
+    # Process data
+    if z is None and x is not None:
+        z,x = x,z # Swap variables so z always exists
+    z = np.array(z)
+    if z.ndim == 2:
+        ny,nx = z.shape
+        if x is None:
+            x = np.arange(nx)
+        if y is None:
+            y = np.arange(ny)
+        if x.ndim == 1 or y.ndim == 1:
+            X,Y = np.meshgrid(x, y)
+        x,y,z = X.flatten(), Y.flatten(), z.flatten() # Flatten everything to 1D
+    if c == 'z': # Handle automatic color scaling
+        c = z
 
+    # Actually plot
     ax.scatter(x, y, z, c=c, **plotkwargs)
 
     if returnfig: # pragma: no cover
