@@ -20,7 +20,8 @@ from . import sc_odict as sco
 ##############################################################################
 
 __all__ = ['approx', 'safedivide', 'findinds', 'findfirst', 'findlast', 'findnearest', 'count',
-           'dataindex', 'getvalidinds', 'sanitize', 'rmnans','fillnans', 'getvaliddata', 'isprime', 'numdigits']
+           'dataindex', 'getvalidinds', 'sanitize', 'rmnans','fillnans', 'findnans', 'getvaliddata',
+           'isprime', 'numdigits']
 
 
 def approx(val1=None, val2=None, eps=None, **kwargs):
@@ -394,6 +395,21 @@ def fillnans(data=None, replacenans=True, **kwargs):
     return sanitize(data=data, replacenans=replacenans, **kwargs)
 
 
+def findnans(data=None, **kwargs):
+    """
+    Alias for :func:`sc.findinds(np.isnan(data)) <findinds>`.
+    
+    **Examples**::
+        
+        data = [0, 1, 2, np.nan, 4, np.nan, 6, np.nan, np.nan, np.nan, 10]
+        sc.findnans(data) # Returns array([3, 5, 7, 8, 9])
+
+    *New in version 3.0.0.*
+    """
+    data  = np.array(data, dtype=float)
+    isnan = np.isnan(data)
+    inds  = findinds(arr=isnan, **kwargs)
+    return inds
 
 
 def isprime(n, verbose=False):

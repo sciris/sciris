@@ -16,6 +16,7 @@ is used to refer to the choices made (e.g., ``dpi=150``).
 import os
 import re
 import inspect
+import warnings
 import collections as co
 import pylab as pl
 from . import sc_utils as scu
@@ -264,31 +265,37 @@ class ScirisOptions(sco.objdict):
             try:
                 from IPython import get_ipython
                 import matplotlib_inline
-                magic = get_ipython().magic
+                magic = get_ipython().run_line_magic
             except Exception as E:
-                errormsg = f'Could not import IPython and matplotlib_inline; not attempting to set Jupyter ({str(E)})'
-                print(errormsg)
+                warnmsg = f'Could not import IPython and matplotlib_inline; not attempting to set Jupyter ({str(E)})'
+                warnings.warn(warnmsg, category=UserWarning, stacklevel=2)
 
             # Handle options
-            widget_opts  = [True, 'widget', 'matplotlib', 'interactive']
+            widget_opts  = ['widget', 'matplotlib', 'interactive']
+            retina_opts  = [True, 'retina']
             default_opts = [False, 'default']
             format_opts  = ['retina', 'pdf','png','png2x','svg','jpg']
 
             jupyter = kwargs['jupyter']
             if jupyter in widget_opts:
                 jupyter = 'widget'
+            elif jupyter in retina_opts:
+                jupyter = 'retina'
             elif jupyter in default_opts:
                 jupyter = 'png'
 
             if matplotlib_inline:
                 if jupyter == 'widget':
                     try: # First try interactive
-                        magic('%matplotlib widget')
+                        with scp.capture() as stderr: # Hack since this outputs text rather an actual warning
+                            magic('matplotlib', 'widget')
+                        assert 'Warning' not in stderr, stderr
                     except Exception as E:
-                        errormsg = 'Could not set backend to "widget"; try "pip install ipympl" or try "retina" instead'
-                        raise RuntimeError(errormsg) from E
-                elif jupyter in format_opts:
-                    magic('%matplotlib inline')
+                        warnmsg = f'Could not set backend to "widget" (error: "{E}"); try "pip install ipympl". Defaulting to "retina" instead'
+                        warnings.warn(warnmsg, category=UserWarning, stacklevel=2)
+                        jupyter = 'retina'
+                if jupyter in format_opts:
+                    magic('matplotlib', 'inline')
                     matplotlib_inline.backend_inline.set_matplotlib_formats(jupyter)
                 else:
                     errormsg = f'Could not understand Jupyter option "{jupyter}": options are widget, {scu.strjoin(format_opts)}'

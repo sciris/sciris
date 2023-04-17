@@ -128,7 +128,7 @@ def plot3d(x, y, z, c=None, fig=None, ax=None, returnfig=False, figkwargs=None, 
         return ax
 
 
-def scatter3d(x, y=None, z=None, c='z', fig=None, returnfig=False, figkwargs=None, 
+def scatter3d(x, y=None, z=None, c='z', fig=None, ax=None, returnfig=False, figkwargs=None, 
               axkwargs=None, plotkwargs=None, **kwargs):
     '''
     Plot 3D data as a scatter
@@ -167,7 +167,7 @@ def scatter3d(x, y=None, z=None, c='z', fig=None, returnfig=False, figkwargs=Non
     axkwargs = scu.mergedicts(axkwargs)
 
     # Create figure
-    fig,ax = ax3d(returnfig=True, fig=fig, figkwargs=figkwargs, **axkwargs)
+    fig,ax = ax3d(returnfig=True, fig=fig, ax=ax, figkwargs=figkwargs, **axkwargs)
     
     # Process data
     if z is None and x is not None:
@@ -194,7 +194,7 @@ def scatter3d(x, y=None, z=None, c='z', fig=None, returnfig=False, figkwargs=Non
         return ax
 
 
-def surf3d(data, x=None, y=None, fig=None, returnfig=False, colorbar=True, figkwargs=None, axkwargs=None, plotkwargs=None, **kwargs):
+def surf3d(data, x=None, y=None, fig=None, ax=None, returnfig=False, colorbar=True, figkwargs=None, axkwargs=None, plotkwargs=None, **kwargs):
     '''
     Plot 2D data as a 3D surface
 
@@ -222,7 +222,7 @@ def surf3d(data, x=None, y=None, fig=None, returnfig=False, colorbar=True, figkw
     axkwargs = scu.mergedicts(axkwargs)
 
     # Create figure
-    fig,ax = ax3d(returnfig=True, fig=fig, figkwargs=figkwargs, **axkwargs)
+    fig,ax = ax3d(returnfig=True, fig=fig, ax=ax, figkwargs=figkwargs, **axkwargs)
     ny,nx = np.array(data).shape
 
     if x is None:
