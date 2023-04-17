@@ -13,8 +13,9 @@ build:
   commands: 
     - pwd
     - ls
+    - ls docs
     - pip install -e .
-    - pip install docs/requirements.txt
+    - pip install ./docs/requirements.txt
     - cd docs; build_docs
 
 
