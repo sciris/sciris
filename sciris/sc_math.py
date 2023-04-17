@@ -518,13 +518,14 @@ def perturb(n=1, span=0.5, randseed=None, normal=False):
     **Example**::
 
         sc.perturb(5, 0.3) # Returns e.g. array([0.73852362, 0.7088094 , 0.93713658, 1.13150755, 0.87183371])
+    
+    *New in version 2.2.0:* Uses a separate random number stream
     '''
-    if randseed is not None:
-        np.random.seed(int(randseed)) # Optionally reset random seed
+    rng = np.random.default_rng(randseed)
     if normal:
-        output = 1.0 + span*np.random.randn(n)
+        output = 1.0 + span*rng.randn(n)
     else:
-        output = 1.0 + 2*span*(np.random.rand(n)-0.5)
+        output = 1.0 + 2*span*(rng.rand(n)-0.5)
     return output
 
 

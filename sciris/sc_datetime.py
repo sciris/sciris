@@ -2,7 +2,7 @@
 Time/date utilities.
 
 Highlights:
-    - :func:`:func:`sc.tic() <tic>`` / :func:`sc.toc() <toc>` / :class:`sc.timer() <timer>`: simple methods for timing durations
+    - :func:`:func:`sc.tic() <tic>` / :func:`sc.toc() <toc>` / :class:`sc.timer() <timer>`: simple methods for timing durations
     - :func:`sc.readdate() <readdate>`: convert strings to dates using common formats
     - :func:`sc.daterange() <daterange>`: create a list of dates
     - :func:`sc.datedelta() <datedelta>`: perform calculations on date strings
@@ -1193,7 +1193,7 @@ def timedsleep(delay=None, start=None, verbose=False):
     return
 
 
-def randsleep(delay=1.0, var=1.0, low=None, high=None):
+def randsleep(delay=1.0, var=1.0, low=None, high=None, seed=None):
     '''
     Sleep for a nondeterminate period of time (useful for desynchronizing tasks)
 
@@ -1202,6 +1202,7 @@ def randsleep(delay=1.0, var=1.0, low=None, high=None):
         var   (float):      how much variability to have (default, 1.0, i.e. from 0 to 2*interval)
         low   (float):      optionally define lower bound of sleep
         high  (float):      optionally define upper bound of sleep
+        seed  (int):        if provided, reset the random seed
 
     **Examples**::
         sc.randsleep(1) # Sleep for 0-2 s (average 1.0)
@@ -1210,6 +1211,7 @@ def randsleep(delay=1.0, var=1.0, low=None, high=None):
         sc.randsleeep(low=0.5, high=1.5) # Ditto
 
     *New in version 2.0.0.*
+    *New in version 2.2.0:* "seed" argument
     '''
     if low is None or high is None:
         if scu.isnumber(delay):
@@ -1218,7 +1220,8 @@ def randsleep(delay=1.0, var=1.0, low=None, high=None):
         else:
             low, high = delay[0], delay[1]
 
-    dur = np.random.uniform(low, high)
+    rng = np.random.default_rng(seed)
+    dur = rng.uniform(low, high)
     pytime.sleep(dur)
 
     return dur

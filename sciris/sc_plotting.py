@@ -1524,7 +1524,6 @@ class animation(scu.prettyobj):
         anim = sc.animation()
 
         pl.figure()
-        pl.seed(1)
         repeats = 21
         colors = sc.vectocolor(repeats, cmap='turbo')
         for i in range(repeats):

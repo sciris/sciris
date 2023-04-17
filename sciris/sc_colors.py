@@ -485,7 +485,7 @@ def colormapdemo(cmap=None, n=None, smoothing=None, randseed=None, doshow=True):
     if cmap is None: cmap = 'parula' # For no particular reason
     maxheight = 1
     horizontalsize = 4
-    pl.seed(randseed)
+    np.random.seed(randseed)
     kernel = np.array([0.25,0.5,0.25])
     data = pl.randn(n,n)
     for s in range(smoothing): # Quick-and-dirty-and-slow smoothing

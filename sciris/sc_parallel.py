@@ -81,8 +81,7 @@ class Parallel:
         import numpy as np
 
         def slowfunc(i):
-            np.random.seed(i)
-            sc.timedsleep(np.random.rand())
+            sc.randsleep(seed=i)
             return i**2
 
         P = sc.Parallel(slowfunc, iterarg=range(10), parallelizer='multiprocess-async')
