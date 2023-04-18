@@ -93,6 +93,11 @@ def test_other(doplot=doplot):
     sc.orderlegend(reverse=True) # Legend order C, B, A
     sc.orderlegend([1,0,2], frameon=False) # Legend order B, A, C with no frame
     sc.separatelegend()
+    
+    # Test styles
+    with pl.style.context('sciris.fancy'):
+        pl.figure('Custom style')
+        pl.plot(pl.rand(10))
 
     if not doplot:
         pl.close('all')

@@ -1,0 +1,6 @@
+include LICENSE
+global-include *.txt
+global-include *.rst
+recursive-include sciris *.py
+recursive-include sciris *.mplstyle
+global-exclude *.py[cod] __pycache__
