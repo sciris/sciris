@@ -1138,7 +1138,7 @@ def swapdict(d):
 def mergedicts(*args, _strict=False, _overwrite=True, _copy=False, _sameclass=True, _die=True, **kwargs):
     '''
     Small function to merge multiple dicts together.
-
+    
     By default, skips any input arguments that are ``None``, and allows keys to be set 
     multiple times. This function is similar to dict.update(), except it returns a value.
     The first dictionary supplied will be used for the output type (e.g. if the
@@ -1147,8 +1147,9 @@ def mergedicts(*args, _strict=False, _overwrite=True, _copy=False, _sameclass=Tr
     Note that arguments start with underscores to avoid possible collisions with
     keywords (e.g. :func:`sc.mergedicts(dict(loose=True, strict=True), strict=False, _strict=True) <mergedicts>`).
 
-    This function is useful for cases, e.g. function arguments, where the default 
-    option is ``None`` but you will need a dict later on.
+    **Note**: This function is similar to the "|" operator introduced in Python 3.9.
+    However, ``sc.mergedicts()`` is useful for cases such as function arguments, where 
+    the default option is ``None`` but you will need a dict later on.
 
     Args:
         _strict    (bool): if True, raise an exception if an argument isn't a dict
@@ -1188,8 +1189,10 @@ def mergedicts(*args, _strict=False, _overwrite=True, _copy=False, _sameclass=Tr
                     break
                 except Exception as E: # pragma: no cover
                     errormsg = f'Could not create new dict of {type(args[0])} from first argument ({str(E)}); set _sameclass=False if this is OK'
-                    if _die: raise TypeError(errormsg) from E
-                    else:    print(errormsg)
+                    if _die:
+                        raise TypeError(errormsg) from E
+                    else:
+                        warnings.warn(errormsg, category=UserWarning, stacklevel=2)
 
     # Merge over the dictionaries in order
     args = list(args)

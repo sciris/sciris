@@ -1101,12 +1101,16 @@ def jsonify(obj, verbose=True, die=False, tostring=False, **kwargs):
 
     else: # None of the above
         try:
-            output = jsonpickle(obj)
-        except Exception as E: # pragma: no cover
-            errormsg = f'Could not sanitize "{obj}" {type(obj)} ({str(E)}), converting to string instead'
-            if die:       raise TypeError(errormsg)
-            elif verbose: print(errormsg)
-            output = str(obj)
+            output = jsonify(obj.__dict__) # Try converting the contents to JSON
+            output = scu.mergedicts({'python_class': str(type(obj))}, output)
+        except:
+            try:
+                output = jsonpickle(obj)
+            except Exception as E: # pragma: no cover
+                errormsg = f'Could not sanitize "{obj}" {type(obj)} ({E}), converting to string instead'
+                if die:       raise TypeError(errormsg)
+                elif verbose: print(errormsg)
+                output = str(obj)
 
     # Convert to string if desired
     if tostring:
