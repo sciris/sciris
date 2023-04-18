@@ -58,7 +58,7 @@ def freeze(lower=False):
     return data
 
 
-def require(reqs=None, *args, exact=False, detailed=False, die=True, verbose=True, **kwargs):
+def require(reqs=None, *args, exact=False, detailed=False, die=True, warn=True, verbose=True, **kwargs):
     '''
     Check whether environment requirements are met. Alias to pkg_resources.require().
 
@@ -69,7 +69,8 @@ def require(reqs=None, *args, exact=False, detailed=False, die=True, verbose=Tru
         exact (bool): use '==' instead of '>=' as the default comparison operator if not specified
         detailed (bool): return a dict of which requirements are/aren't met
         die (bool): whether to raise an exception if requirements aren't met
-        verbose (bool): print out the exception if it's not being raised
+        warn (bool): if not die, raise a warning if requirements aren't met'
+        verbose (bool): print out the exception if it's not being raised or warned
 
     **Examples**::
 
@@ -80,6 +81,7 @@ def require(reqs=None, *args, exact=False, detailed=False, die=True, verbose=Tru
         sc.require(numpy='1.19.1', matplotlib='==4.2.2', die=False, detailed=True)
 
     *New in version 1.2.2.*
+    *New in version 3.0.0:* "warn" argument
     '''
     import pkg_resources as pkgr # Imported here since slow (>0.1 s)
 
@@ -123,13 +125,17 @@ def require(reqs=None, *args, exact=False, detailed=False, die=True, verbose=Tru
         for k,v in data.items():
             if not v:
                 count += 1
-                errormsg += f'\n• "{k}": {str(errs[k])}'
+                errormsg += f'\n• "{k}": {errs[k]}'
         errormsg += f'''\n\nIf this is a valid module, you might want to try "pip install {scu.strjoin(errkeys, sep=' ')} --upgrade".'''
         if die:
             err = errs[errkeys[-1]]
             raise ModuleNotFoundError(errormsg) from err
+        elif warn:
+            warnings.warn(errormsg, category=UserWarning, stacklevel=2)
         elif verbose:
             print(errormsg)
+        else:
+            pass
 
     # Handle output
     if detailed:
@@ -367,7 +373,7 @@ def getcaller(frame=2, tostring=True, includelineno=False, includeline=False, re
     return output
 
 
-def metadata(outfile=None, version=None, comments=None, pipfreeze=True, user=True, caller=True, 
+def metadata(outfile=None, version=None, comments=None, require=None, pipfreeze=True, user=True, caller=True, 
              git=True, asdict=False, tostring=False, relframe=0, **kwargs):
     '''
     Collect common metadata: useful for exactly recreating (or remembering) the environment
@@ -377,6 +383,7 @@ def metadata(outfile=None, version=None, comments=None, pipfreeze=True, user=Tru
         outfile (str): if not None, then save as JSON to this filename
         version (str): if supplied, the user-supplied version of the data being stored
         comments (str/dict): additional comments on the data to store
+        require (str/dict): if provided, an additional manual set of requirements
         pipfreeze (bool): store the current Python environment, equivalent to "pip freeze"
         user (bool): store the username
         caller (bool): store info on the calling file
@@ -395,7 +402,7 @@ def metadata(outfile=None, version=None, comments=None, pipfreeze=True, user=Tru
         metadata = sc.metadata()
         sc.compareversions(metadata.versions.pandas, '1.5.0')
         
-        sc.metadata('my-metadata.json')
+        sc.metadata('my-metadata.json') # Save to disk
     
     *New in version 3.0.0.*
     '''
@@ -570,8 +577,9 @@ def loadmetadata(filename, load_all=False, die=True):
 
 
 
-def savewithmetadata(filename, obj, folder=None, user=True, caller=True, git=True, pipfreeze=True, 
-                     comments=None, method='dill', allow_nonzip=False, dumpargs=None, **kwargs):
+def savewithmetadata(filename, obj, folder=None, comments=None, require=None, 
+                     user=True, caller=True, git=True, pipfreeze=True, method='dill', 
+                     allow_nonzip=False, dumpargs=None, **kwargs):
     '''
     Save any object as a pickled zip file, including metadata as a separate JSON file.
     
@@ -752,7 +760,10 @@ def loadwithmetadata(filename, folder=None, loadobj=True, loadmetadata=False,
             # Convert into Python objects -- the most likely step where this can go wrong
             try:
                 method = md.get('method', None)
-                obj = scf.loadstr(datastr, method=method, remapping=remapping, **kwargs) # Load with original remappings
+                reqs   = md.get('require', None)
+                obj    = scf.loadstr(datastr, method=method, remapping=remapping, **kwargs) # Load with original remappings
+                if reqs:
+                    require(reqs=reqs, die=False, warn=True) # Don't die, but print warnings
             except: # pragma: no cover
                 try:
                     remapping = scu.mergedicts(remapping, known_deprecations(as_map=True))
