@@ -241,31 +241,34 @@ class dataframe(pd.DataFrame):
         try: # Default to the pandas version
             output = super().__getitem__(key)
         except: # ...but handle a wider variety of keys
-            if scu.isstring(key): # e.g. df['a'] -- usually handled by pandas # pragma: no cover
-                rowindex = slice(None)
-                try:
-                    colindex = self.cols.index(key)
-                except ValueError:
-                    errormsg = f'Key "{key}" is not a valid column; choices are: {scu.strjoin(self.cols)}'
-                    raise scu.KeyNotFoundError(errormsg)
-            elif isinstance(key, (numbers.Number, list, np.ndarray, slice)): # e.g. df[0], df[[0,2]], df[:4]
-                rowindex = key
-                colindex = slice(None)
-            elif isinstance(key, tuple):
-                rowindex = key[0]
-                colindex = key[1]
-                if scu.isstring(rowindex) and not scu.isstring(colindex): # Swap order if one's a string and the other isn't
-                    rowindex, colindex = colindex, rowindex
-                if scu.isstring(colindex): # e.g. df['a',0]
-                    colindex = self.cols.index(colindex)
-            else: # pragma: no cover
-                errormsg = f'Unrecognized dataframe key of {type(key)}: must be str, numeric, or tuple'
-                if die:
-                    raise scu.KeyNotFoundError(errormsg)
-                else:
-                    print(errormsg)
-                    output = None
-            output = self.iloc[rowindex,colindex]
+            try:
+                output = super().iloc[key]
+            except:
+                if scu.isstring(key): # e.g. df['a'] -- usually handled by pandas # pragma: no cover
+                    rowindex = slice(None)
+                    try:
+                        colindex = self.cols.index(key)
+                    except ValueError:
+                        errormsg = f'Key "{key}" is not a valid column; choices are: {scu.strjoin(self.cols)}'
+                        raise scu.KeyNotFoundError(errormsg)
+                elif isinstance(key, (numbers.Number, list, np.ndarray, slice)): # e.g. df[0], df[[0,2]], df[:4]
+                    rowindex = key
+                    colindex = slice(None)
+                elif isinstance(key, tuple):
+                    rowindex = key[0]
+                    colindex = key[1]
+                    if scu.isstring(rowindex) and not scu.isstring(colindex): # Swap order if one's a string and the other isn't
+                        rowindex, colindex = colindex, rowindex
+                    if scu.isstring(colindex): # e.g. df['a',0]
+                        colindex = self.cols.index(colindex)
+                else: # pragma: no cover
+                    errormsg = f'Unrecognized dataframe key of {type(key)}: must be str, numeric, or tuple'
+                    if die:
+                        raise scu.KeyNotFoundError(errormsg)
+                    else:
+                        print(errormsg)
+                        output = None
+                output = self.iloc[rowindex,colindex]
 
         return output
 
@@ -339,7 +342,7 @@ class dataframe(pd.DataFrame):
         return output
 
 
-    def disp(self, nrows=None, ncols=None, width=999, precision=4, options=None):
+    def disp(self, nrows=None, ncols=None, width=999, precision=4, options=None, **kwargs):
         '''
         Flexible display of a dataframe, showing all rows/columns by default.
         
@@ -348,22 +351,31 @@ class dataframe(pd.DataFrame):
             ncols (int): maximum number of columns to show (default: all)
             width (int): maximum screen width (default: 999)
             precision (int): number of decimal places to show (default: 4)
-            kwargs (dict): passed to :class:`pd.option_context() <pandas.option_context>`
+            options (dict): an optional dictionary of additional options, passed to :class:`pd.option_context() <pandas.option_context>`
+            kwargs (dict): also passed to :class:`pd.option_context() <pandas.option_context>`, with 'display.' preprended if needed
         
         **Examples**::
             
             df = sc.dataframe(data=np.random.rand(100,10))
             df.disp()
-            df.disp(precision=1, ncols=5, options={'display.colheader_justify': 'left'})
+            df.disp(precision=1, ncols=5, colheader_justify='left')
         
         *New in version 2.0.1.*
         '''
+        kwdict = {}
+        for k,v in kwargs.items():
+            key = k
+            if k in dir(pd.options.display):
+                key = f'display.{k}'
+            kwdict[key] = v
         opts = scu.mergedicts({
             'display.max_rows': nrows,
             'display.max_columns': ncols,
             'display.width': width,
             'display.precision': precision,
-            }, options
+            },
+            options,
+            kwdict,
         )
         optslist = [item for pair in opts.items() for item in pair] # Convert from dict to list
         with pd.option_context(*optslist):
@@ -435,6 +447,11 @@ class dataframe(pd.DataFrame):
     def append(self, row, reset_index=True, inplace=True):
         '''
         Alias to :meth:`appendrow() <dataframe.appendrow>`.
+        
+        **Note**: `pd.DataFrame.append` was deprecated in pandas version 2.0; see
+        https://github.com/pandas-dev/pandas/issues/35407 for details. Since this
+        method is implemented using :func:`pd.concat() <pandas.concat>`, it does
+        not suffer from the performance problems that ``append`` did.
         
         *New in version 3.0.0.*
         '''
@@ -623,7 +640,6 @@ class dataframe(pd.DataFrame):
         See :meth:`df.findrow() <dataframe.findrow>` for the equivalent to return the row itself
         rather than the index of the row. See :meth:`df.col_index() <dataframe.col_index>` for the column
         equivalent.
-        
         
         
         Args:
