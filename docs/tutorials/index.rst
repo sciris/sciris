@@ -4,6 +4,8 @@ Tutorials
 
 These tutorials illustrate the main features of Sciris. They roughly make the most sense in the order listed, but can be done in any order. Each one should take about 5 minutes to skim through, or 20-30 minutes to go through in detail. Each tutorial contains a link to an interactive version running on `Binder <http://mybinder.org>`_.
 
+These tutorials assume you are already familiar with `Numpy <https://numpy.org/doc/stable/user/index.html>`__, `Matplotlib <https://matplotlib.org/stable/index.html>`__, and (recommended but not essential) `pandas <https://pandas.pydata.org/docs/>`__. If you aren't, you'll be much happier if you learn those first, since Sciris builds off them.
+
 Questions? Did you complete all the tutorials and want to claim your free "I Am A Scirientist" t-shirt?† Reach out to us at info@sciris.org. 
 
 
@@ -99,4 +101,4 @@ Full contents
    tut_utils
    tut_advanced
 
-† There is no free t-shirt, sorry. But you made it to the end!
+† There is no free t-shirt, sorry. But you made it to the end, yay!
