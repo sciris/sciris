@@ -14,7 +14,7 @@ Version 3.0.0 (2023-04-17)
 This version's major changes include:
 
 #. **New Parallel class**: A new :class:`sc.Parallel() <sc_parallel.Parallel>` class allows finer-grained managing of parallel processes, including automatic progress bars, better exception handling, and asynchronous running.
-#. **Better versioning**: New functions :func:`sc.metadata() <sc_versioning.metadata>`, :func:`sc.savewithmetadata() <sc_versioning.savewithmetadata>`, and :func:`sc.loadwithmetadata() <sc_versioning.loadwithmetadata>` make it easier to store and save metadata along with objects.
+#. **Better versioning**: New functions :func:`sc.metadata() <sc_versioning.metadata>`, :func:`sc.savearchive() <sc_versioning.savearchive>`, and :func:`sc.loadarchive() <sc_versioning.loadarchive>` make it easier to store and save metadata along with objects.
 #. **Easier imports**: :func:`sc.importbypath() <sc_utils.importbypath>` lets you load a module into Python by providing the folder or filename (useful for loading one-off scripts, or two versions of the same library).
 #. **Better documentation**: A comprehensive set of tutorials has been added to the documentation, and the documentation has been rewritten in a new style.
 
@@ -65,7 +65,7 @@ Versioning
 #. A new versioning module has been added.
 #. A new function :func:`sc.metadata() <sc_versioning.metadata>` gathers all relevant metadata and returns a dict that can be used for versioning.
 #. Known regressions from older library versions are now automatically handled by :func:`sc.load() <sc_fileio.load>` (e.g., ``pandas`` v2.0 dataframes cannot be loaded in v1.5, and vice versa).
-#. A pair of new functions :func:`sc.savewithmetadata() <sc_versioning.savewithmetadata>` and :func:`sc.loadwithmetadata() <sc_versioning.loadwithmetadata>`, provide a way to automatically save metadata along with an object for better versioning.
+#. A pair of new functions :func:`sc.savearchive() <sc_versioning.savearchive>` and :func:`sc.loadarchive() <sc_versioning.loadarchive>`, provide a way to automatically save metadata along with an object for better versioning.
 
 Math
 ^^^^

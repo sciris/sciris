@@ -8,7 +8,7 @@ Highlights:
     - :func:`sc.gitinfo() <gitinfo>`: gets the git information (if available) of a given file
     - :func:`sc.compareversions() <compareversions>`: easy way to compare version numbers
     - :func:`sc.metadata() <metadata>`: collects relevant metadata into a dictionary
-    - :func:`sc.savewithmetadata() <savewithmetadata>`: saves data as a zip file including versioning metadata
+    - :func:`sc.savearchive() <savearchive>`: saves data as a zip file including versioning metadata
 '''
 
 import os
@@ -25,7 +25,7 @@ from . import sc_odict as sco
 from . import sc_datetime as scd
 
 __all__ = ['freeze', 'require', 'gitinfo', 'compareversions', 'getcaller', 
-           'metadata', 'loadmetadata', 'savewithmetadata', 'loadwithmetadata']
+           'metadata', 'loadmetadata', 'savearchive', 'loadarchive']
 
 
 # Define shared variables
@@ -472,8 +472,8 @@ def loadmetadata(filename, load_all=False, die=True):
 
     Only for use with images saved with :func:`sc.savefig() <savefig>`. Metadata retrieval for PDF
     is not currently supported. To load metadata saved with :func:`sc.metadata() <metadata>`, 
-    you can also use :func:`sc.loadjson() <loadjson>` instead. To load metadata saved with :func:`sc.savewithmetadata() <savewithmetadata>`,
-    use :func:`sc.loadwithmetadata() <loadwithmetadata>` instead.
+    you can also use :func:`sc.loadjson() <loadjson>` instead. To load metadata saved with :func:`sc.savearchive() <savearchive>`,
+    use :func:`sc.loadarchive() <loadarchive>` instead.
 
     Args:
         filename (str): the name of the file to load the data from
@@ -564,9 +564,9 @@ def loadmetadata(filename, load_all=False, die=True):
     elif lcfn.endswith('json'):
         md = _metadata_to_objdict(scf.loadjson(filename))
     
-    # Load metadata saved with sc.savewithmetadata()
+    # Load metadata saved with sc.savearchive()
     elif lcfn.endswith('zip'):
-        md = loadwithmetadata(filename, loadobj=False, loadmetadata=True)
+        md = loadarchive(filename, loadobj=False, loadmetadata=True)
 
     # Other formats not supported
     else: # pragma: no cover
@@ -577,7 +577,7 @@ def loadmetadata(filename, load_all=False, die=True):
 
 
 
-def savewithmetadata(filename, obj, folder=None, comments=None, require=None, 
+def savearchive(filename, obj, folder=None, comments=None, require=None, 
                      user=True, caller=True, git=True, pipfreeze=True, method='dill', 
                      allow_nonzip=False, dumpargs=None, **kwargs):
     '''
@@ -611,10 +611,10 @@ def savewithmetadata(filename, obj, folder=None, comments=None, require=None,
     **Example**::
         
         obj = MyClass() # Create an arbitrary object
-        sc.savewithmetadata('my-class.zip', obj)
+        sc.savearchive('my-class.zip', obj)
         
         # Much later...
-        obj = sc.loadwithmetadata('my-class.zip')
+        obj = sc.loadarchive('my-class.zip')
     
     *New in version 3.0.0.*
     '''
@@ -674,10 +674,10 @@ def known_deprecations(as_map=False):
 
 
 
-def loadwithmetadata(filename, folder=None, loadobj=True, loadmetadata=False, 
+def loadarchive(filename, folder=None, loadobj=True, loadmetadata=False, 
                      remapping=None, die=True, **kwargs):
     '''
-    Load a zip file saved with :func:`sc.savewithmetadata() <savewithmetadata>`.
+    Load a zip file saved with :func:`sc.savearchive() <savearchive>`.
     
     **Note**: Since this function relies on pickle, it can potentially execute arbitrary
     code, so you should only use it with sources you trust. For more information, see:
@@ -700,10 +700,10 @@ def loadwithmetadata(filename, folder=None, loadobj=True, loadmetadata=False,
     **Example**::
         
         obj = MyClass() # Create an arbitrary object
-        sc.savewithmetadata('my-class.zip', obj)
+        sc.savearchive('my-class.zip', obj)
         
         # Much later...
-        data = sc.loadwithmetadata('my-class.zip', loadmetadata=True)
+        data = sc.loadarchive('my-class.zip', loadmetadata=True)
         metadata, obj = data['metadata'], data['obj']
     
     Note: This function expects the zip file to contain two files in it, one called 

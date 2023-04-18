@@ -139,7 +139,7 @@ def load(filename=None, folder=None, verbose=False, die=None, remapping=None,
     **Note 2**: When a pickle file is loaded, Python imports any modules that are referenced
     in it. This is a problem if module has been renamed. In this case, you can
     use the ``remapping`` argument to point to the new modules or classes. For
-    more robustness, use the :func:`sc.savewithmetadata() <savewithmetadata>`/:func:`sc.loadwithmetadata() <loadwithmetadata>`
+    more robustness, use the :func:`sc.savearchive() <savearchive>`/:func:`sc.loadarchive() <loadarchive>`
     functions.
 
 
@@ -207,7 +207,7 @@ def save(filename='default.obj', obj=None, folder=None, method='pickle', compres
     **Note 2**: When a pickle file is loaded, Python imports any modules that are referenced
     in it. This is a problem if module has been renamed (in which case the pickle
     usually can't be opened). For more robustness (e.g. to pickle custom classes), use 
-    ``method='dill'`` and/or the :func:`sc.savewithmetadata() <savewithmetadata>`/:func:`sc.loadwithmetadata() <loadwithmetadata>`
+    ``method='dill'`` and/or the :func:`sc.savearchive() <savearchive>`/:func:`sc.loadarchive() <loadarchive>`
     functions.
     
     If you do not need to save arbitrary Python and just need to save data, consider
