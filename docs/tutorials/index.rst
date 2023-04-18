@@ -30,7 +30,7 @@ Questions? Did you complete all the tutorials and want to claim your free "I Am 
         :link: tut_dicts
         :link-type: doc
 
-        Data are only as good as the container they're stored in (?), so this tutorial goes through Sciris' two main containers (dictionaries and dataframes).
+        Data are only as good as the container they're stored in, so this tutorial goes through Sciris' two main containers (ordered dictionaries and dataframes).
 
 
     .. grid-item-card:: 4 Files and versioning
