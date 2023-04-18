@@ -1030,7 +1030,8 @@ def rmpath(path=None, *args, die=True, verbose=True, interactive=False, **kwargs
 #%% JSON functions
 ##############################################################################
 
-__all__ += ['sanitizejson', 'jsonify', 'readjson', 'loadjson', 'savejson', 'loadyaml', 'saveyaml', 'jsonpickle', 'jsonunpickle']
+__all__ += ['sanitizejson', 'jsonify', 'readjson', 'loadjson', 'savejson', 
+            'readyaml', 'loadyaml', 'saveyaml', 'jsonpickle', 'jsonunpickle']
 
 
 def jsonify(obj, verbose=True, die=False, tostring=False, **kwargs):
@@ -1135,6 +1136,11 @@ def readjson(string, **kwargs):
     See also :func:`sc.loadjson() <loadjson>` for loading a JSON from
     a file.
     
+    **Example**::
+        
+        string = '{"this":1, "is":2, "a":3, "JSON":4}'
+        json = sc.readjson(string)
+        
     *New in version 3.0.0.*
     '''
     return json.loads(string, **kwargs)
@@ -1213,6 +1219,29 @@ def savejson(filename=None, obj=None, folder=None, die=True, indent=2, keepnone=
         json.dump(sanitizejson(obj), f, indent=indent, **kwargs)
 
     return filename
+
+
+def readyaml(string, **kwargs):
+    '''
+    Read YAML from a string
+    
+    Alias to :func:`sc.loadyaml(string=...) <loadyaml>`.
+
+    Args:
+        string (str): a string representation of the YAML
+        kwargs (dict): passed to :func:`sc.loadyaml() <loadyaml>`
+    
+    See also :func:`sc.loadyaml() <loadyaml>` for loading a YAML from
+    a file.
+    
+    **Example**::
+    
+        string = '{"this":1, "is":2, "a":3, "YAML":4} # YAML allows comments!'
+        yaml = sc.readyaml(string)
+    
+    *New in version 3.0.0.*
+    '''
+    return loadyaml(string=string, **kwargs)
 
 
 def loadyaml(filename=None, folder=None, string=None, fromfile=True, safe=False, loader=None):
