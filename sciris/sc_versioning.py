@@ -598,11 +598,13 @@ def savearchive(filename, obj, files=None, folder=None, comments=None, require=N
     Args:
         filename (str/path): the file to save to (must end in .zip)
         obj (any): the object to save
+        files (str/list): any additional files or folders to save
+        comments (str/dict): other comments/information to store in the metadata (must be JSON-compatible)
+        require (str/dict): if provided, an additional manual set of requirements
         caller (bool): store information on the current user in the metadata (see :func:`sc.metadata() <metadata>`)
         caller (bool): store information on the calling file in the metadata (see :func:`sc.metadata() <metadata>`)
         git (bool): store the git version in the metadata (see :func:`sc.metadata() <metadata>`)
         pipfreeze (bool): store the output of "pip freeze" in the metadata (see :func:`sc.metadata() <metadata>`)
-        comments (str/dict): other comments/information to store in the metadata (must be JSON-compatible)
         method (str): the method to use saving the data; default "dill" for more robustness, but "pickle" is faster
         allow_nonzip (bool): whether to permit extensions other than .zip (note, may cause problems!)
         dumpargs (dict): passed to :func:`sc.dumpstr() <dumpstr>`
@@ -626,12 +628,12 @@ def savearchive(filename, obj, files=None, folder=None, comments=None, require=N
             errormsg = f'Your filename ends with "{filename.suffix}" rather than ".zip". If you are sure you want to do this, set allow_nonzip=True.'
             raise ValueError(errormsg)
 
-    # Get the metadata
-    md = metadata(caller=caller, git=git, pipfreeze=pipfreeze, comments=comments, frame=3)
-    md['method'] = method # Store the method used to save the data (dill or pickle)
+    # Create the metadata, including storing the custom "method" attribute
+    md = metadata(caller=caller, git=git, pipfreeze=pipfreeze, comments=comments, 
+                  require=require, frame=3, method=method)
     
     # Convert both to strings
-    dumpargs = scu.mergedicts({'method':method}, dumpargs)
+    dumpargs    = scu.mergedicts({'method':method}, dumpargs)
     metadatastr = scf.jsonify(md, tostring=True, indent=2)
     datastr     = scf.dumpstr(obj, **dumpargs)
     
