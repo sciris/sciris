@@ -1075,19 +1075,39 @@ promotetoarray = toarray
 promotetolist = tolist
 
 
-def transposelist(obj):
+def transposelist(obj, fix_uneven=False):
     '''
     Convert e.g. a list of key-value tuples into a list of keys and a list of values.
+    
+    Args:
+        obj (list): the list-of-lists to be transposed
+        fix_uneven (bool): append None values where needed so all input lists have the same length
 
-    **Example**::
+    **Examples**::
 
         o = sc.odict(a=1, b=4, c=9, d=16)
         itemlist = o.enumitems()
         inds, keys, vals = sc.transposelist(itemlist)
+        
+        listoflists = [
+            ['a', 1, 3],
+            ['b', 4, 5],
+            ['c', 7, 8, 9, 10]
+        ]
+        trans = sc.transposelist(listoflists, fix_uneven=True)
 
     *New in version 1.1.0.*
     '''
+    if fix_uneven:
+        maxlen = max([len(ls) for ls in obj])
+        newobj = [] # Create a manual copy
+        for ls in obj:
+            row = [item for item in ls] + [None]*(maxlen - len(ls))
+            newobj.append(row)
+        obj = newobj
+        
     return list(map(list, zip(*obj)))
+        
 
 
 def swapdict(d):

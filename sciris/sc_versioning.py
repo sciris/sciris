@@ -30,8 +30,8 @@ __all__ = ['freeze', 'require', 'gitinfo', 'compareversions', 'getcaller',
 
 # Define shared variables
 _metadataflag      = 'sciris_metadata' # Key name used to identify metadata saved in a figure
-_metadata_filename = 'metadata.json' # Default filenames for metadata and data
-_obj_filename      = 'sciris_pickle.obj'
+_metadata_filename = 'sciris_metadata.json' # Default filenames for metadata and data
+_obj_filename      = 'sciris_data.obj'
 
 
 def freeze(lower=False):
@@ -577,7 +577,7 @@ def loadmetadata(filename, load_all=False, die=True):
 
 
 
-def savearchive(filename, obj, folder=None, comments=None, require=None, 
+def savearchive(filename, obj, files=None, folder=None, comments=None, require=None, 
                      user=True, caller=True, git=True, pipfreeze=True, method='dill', 
                      allow_nonzip=False, dumpargs=None, **kwargs):
     '''

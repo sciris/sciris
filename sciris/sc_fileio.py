@@ -519,18 +519,19 @@ def unzip(filename=None, outfolder='.', folder=None, members=None):
     return output
 
 
-def savezip(filename=None, filelist=None, data=None, folder=None, basename=True, 
-            sanitizepath=True, tobytes=True, verbose=True, **kwargs):
+def savezip(filename=None, files=None, data=None, folder=None, sanitizepath=True, 
+            basename=False, relpath=True, tobytes=True, verbose=True, **kwargs):
     '''
     Create a zip file from the supplied list of files (or less commonly, supplied data)
 
     Args:
         filename (str/path): the name of the zip file to write to
-        filelist (list): the list of files to compress
+        files (list): file(s) and/or folder(s) to compress
         data (dict): if supplied, instead of files, write this data instead (must be a dictionary of filename keys and data values)
         folder (str): optional additional folder for the filename
-        basename (bool): whether to use only the file's basename as the name inside the zip file (otherwise, store folder info)
         sanitizepath (bool): whether to sanitize the path prior to saving
+        basename (bool): whether to use only the file's basename as the name inside the zip file (otherwise, store folder info)
+        relpath (bool): keep only relative paths, i.e. remove any folders that are common to all input files
         tobytes (bool): if data is provided, convert it automatically to bytes (otherwise, up to the user)
         verbose (bool): whether to print progress
         kwargs (dict): passed to :func:`sc.save() <save>`
@@ -543,25 +544,73 @@ def savezip(filename=None, filelist=None, data=None, folder=None, basename=True,
         sc.savezip('mydata.zip', data=dict(var1='test', var2=np.random.rand(3)))
 
     | *New in version 2.0.0:* saving data
-    | *New in version 3.0.0:* "tobytes" argument and kwargs
+    | *New in version 3.0.0:* "tobytes" argument and kwargs; "filelist" renamed "files"
     '''
 
     # Handle inputs
     fullpath = makefilepath(filename=filename, folder=folder, sanitize=sanitizepath, makedirs=True)
-    filelist = scu.tolist(filelist)
+    origfilelist = [path(file) for file in scu.tolist(files)]
+    
+    # If data is provided, do simple validation
     if data is not None:
         if not isinstance(data, dict): # pragma: no cover
             errormsg = 'Data has invalid format: must be a dictionary of filename keys and data values'
             raise ValueError(errormsg)
-
+    
+    # Otherwise, typical use case: data is not provided, handle files
+    else:
+        
+        # Handle subfolders
+        extfilelist = scu.dcp(origfilelist) # Keep all the original
+        for ofile in origfilelist:
+            if ofile.is_dir():
+                contents = getfilelist(ofile, recursive=True, aspath=True)
+                extfilelist.extend(contents[1:]) # Skip the first entry since it's the folder that's already in the list
+                print('DEBUG adding', contents[1:])
+        
+        # Remove duplicates
+        filelist = []
+        for efile in extfilelist:
+            if efile not in filelist:
+                filelist.append(efile)
+            else:
+                print('DEBUG', efile)
+        
+        # Handle relative paths
+        filenames = scu.dcp(filelist)
+        if relpath:
+            print('DEBUG')
+            print(filenames)
+            pathparts = [f.parts for f in filelist]
+            print('pathparts')
+            print(pathparts)
+            transparts = scu.transposelist(pathparts, fix_uneven=True)
+            print('transparts')
+            print(transparts)
+            done = len(pathparts) <= 1 # Don't look for relative paths if only one file
+            while not done:
+                if len(set(transparts[0])) == 1: # They're all the same
+                    transparts = transparts[1:]
+                    print('trimmed ', set(transparts[0]))
+                    print(done, transparts)
+                else:
+                    print('did NOT trim', set(transparts[0]))
+                    done = True
+            pathparts = scu.transposelist(transparts) # Transpose back
+            print('pathparts')
+            print(pathparts)
+            filenames = [path(*row) for row in pathparts]
+            print('filelist')
+            print(filenames)
+            
     # Write zip file
     with ZipFile(fullpath, 'w') as zf: # Create the zip file
         if data is None: # Main use case, save files
-            for thisfile in filelist:
-                thispath = makefilepath(filename=thisfile, abspath=False, makedirs=True)
-                if basename: thisname = os.path.basename(thispath)
-                else:        thisname = thispath # pragma: no cover
-                zf.write(thispath, thisname)
+            for thisfile,thisname in zip(filelist, filenames):
+                thispath = makefilepath(filename=thisfile, abspath=False, makedirs=False)
+                if basename: # pragma: no cover
+                    thisname = os.path.basename(thisname)
+                zf.write(thispath, thisname) # Actually save
         else: # Alternatively, save data
             for key,val in data.items():
                 if tobytes:
