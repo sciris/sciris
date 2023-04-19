@@ -696,24 +696,49 @@ __all__ += ['flexstr', 'sanitizestr', 'isiterable', 'checktype', 'isnumber', 'is
             'toarray', 'tolist', 'promotetoarray', 'promotetolist', 'transposelist',
             'swapdict', 'mergedicts', 'mergelists']
 
-def flexstr(arg, force=True):
+def flexstr(arg, *args, force=True, join=''):
     '''
     Try converting any object to a "regular" string (i.e. ``str``), but proceed
     if it fails. Note: this function calls ``repr()`` rather than ``str()`` to
     ensure a more robust representation of objects.
+    
+    Args:
+        arg (any): the object to convert to a string
+        args (list): additional arguments
+        force (bool): whether to force it to be a string
+        join (str): if multiple arguments are provided, the character to use to join
+    
+    **Example**:
+        
+        sc.flexstr(b'foo', 'bar', [1,2]) # Returns 'foobar[1, 2]'
+    
+    *New in version 3.0.0:* handle multiple inputs
     '''
-    if isinstance(arg, str):
-        return arg
-    elif isinstance(arg, bytes):
-        try:
-            output = arg.decode() # If it's bytes, decode to unicode
-        except: # pragma: no cover
-            if force: output = repr(arg) # If that fails, just print its representation
-            else:     output = arg
-    else: # pragma: no cover
-        if force: output = repr(arg)
-        else:     output = arg # Optionally don't do anything for non-strings
-    return output
+    arglist = mergelists(arg, list(args))
+    outlist = []
+    for arg in arglist:
+        if isinstance(arg, str):
+            output = arg
+        elif isinstance(arg, bytes):
+            try:
+                output = arg.decode() # If it's bytes, decode to unicode
+            except: # pragma: no cover
+                if force: output = repr(arg) # If that fails, just print its representation
+                else:     output = arg
+        else: # pragma: no cover
+            if force: output = repr(arg)
+            else:     output = arg # Optionally don't do anything for non-strings
+        outlist.append(output)
+    
+    if len(outlist) == 1:
+        outstr = outlist[0]
+    else:
+        if force:
+            outstr = join.join(outlist)
+        else:
+            outstr = outlist
+    
+    return outstr
 
 
 def sanitizestr(string=None, alphanumeric=False, nospaces=False, asciify=False, 
