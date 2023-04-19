@@ -599,21 +599,74 @@ def tic():
     return _tictime    # Return the same stored number
 
 
+def _convert_time_unit(unit, elapsed=None):
+    ''' Convert between different units of time; not for the user '''
+    
+    # Shortcut for speed
+    if unit == 's':
+        return 1, 's'
 
-def toc(start=None, label=None, baselabel=None, sigfigs=None, reset=False, output=False, doprint=None, elapsed=None):
+    # Standard use case
+    else:
+    
+        # Define the mapping -- in order of expected usage frequency for speed
+        mapping = {
+            's'  : dict(factor=   1, aliases=[None, 'default', 's', 'sec', 'secs', 'second', 'seconds']),
+            'ms' : dict(factor=1e-3, aliases=['ms', 'milisecond', 'miliseconds']),
+            'μs' : dict(factor=1e-6, aliases=['us', 'μs', 'microsecond', 'microseconds']),
+            'ns' : dict(factor=1e-9, aliases=['ns', 'nanosecond', 'nanoseconds']),
+            'min': dict(factor=  60, aliases=['m', 'min', 'mins', 'minute', 'minutes']),
+            'hr' : dict(factor=3600, aliases=['h', 'hr', 'hrs', 'hour', 'hours']),
+        }
+        
+        # Handle 'auto'
+        if unit == 'auto':
+            if elapsed is None:  unit = 's'
+            elif elapsed < 1e-7: unit = 'ns'
+            elif elapsed < 1e-4: unit = 'μs'
+            elif elapsed < 1e-1: unit = 'ms'
+            else:                unit = 's'
+    
+        # Perform the mapping
+        factor = None
+        for label,entry in mapping.items():
+            if unit in [label, entry['factor']] + entry['aliases']:
+                factor = entry['factor']
+                break
+        if factor is None:
+            errormsg = f'Could not understand "{unit}"; all possible values are:\n{mapping}'
+            raise ValueError(errormsg)
+    
+    return factor, label
+
+
+def toc(start=None, label=None, baselabel=None, sigfigs=None, reset=False, unit='s',
+        output=False, doprint=None, elapsed=None):
     '''
     With :func:`sc.tic() <tic>`, a little pair of functions to calculate a time difference. See
     also :class:`sc.timer() <timer>`.
+    
+    By default, output is displayed in seconds. You can change this with the ``unit``
+    argument, which can be a string or a float:
+        
+        - 'hr' or 3600
+        - 'min' or 60
+        - 's' or 1 (default)
+        - 'ms' or 1e-3
+        - 'us' or 1e-6
+        - 'ns' or 1e-9
+        - 'auto' to choose an appropriate unit
 
     Args:
-        start     (float): the starting time, as returned by e.g. :func:`sc.tic() <tic>`
-        label     (str): optional label to add
-        baselabel (str): optional base label; default is "Elapsed time: "
-        sigfigs   (int): number of significant figures for time estimate
+        start    (float): the starting time, as returned by e.g. :func:`sc.tic() <tic>`
+        label      (str): optional label to add
+        baselabel  (str): optional base label; default is "Elapsed time: "
+        sigfigs    (int): number of significant figures for time estimate
         reset     (bool): reset the time; like calling :func:`sc.toctic() <toctic>` or :func:`sc.tic() <tic>` again
+        unit (str/float): the unit of time to display; see options above
         output    (bool): whether to return the output (otherwise print); if output='message', then return the message string; if output='both', then return both
         doprint   (bool): whether to print (true by default)
-        elapsed   (float): use a pre-calculated elapsed time instead of recalculating (not recommneded)
+        elapsed  (float): use a pre-calculated elapsed time instead of recalculating (not recommneded)
 
     **Examples**::
 
@@ -660,7 +713,8 @@ def toc(start=None, label=None, baselabel=None, sigfigs=None, reset=False, outpu
                 base = ''
         else:
             base = f'{baselabel}{label}: '
-    logmessage = f'{base}{scp.sigfig(elapsed, sigfigs=sigfigs)} s'
+    factor, unitlabel = _convert_time_unit(unit, elapsed=elapsed)
+    logmessage = f'{base}{scp.sigfig(elapsed/factor, sigfigs=sigfigs)} {unitlabel}'
 
     # Print if asked, or if no other output
     if doprint or ((doprint is None) and (not output)):
@@ -714,11 +768,23 @@ class timer:
 
     Use this in a ``with`` block to automatically print elapsed time when
     the block finishes.
+    
+    By default, output is displayed in seconds. You can change this with the ``unit``
+    argument, which can be a string or a float:
+        
+        - 'hr' or 3600
+        - 'min' or 60
+        - 's' or 1 (default)
+        - 'ms' or 1e-3
+        - 'us' or 1e-6
+        - 'ns' or 1e-9
+        - 'auto' to choose an appropriate unit
 
     Args:
         label (str): label identifying this timer
         auto (bool): whether to automatically increment the label
         start (bool): whether to start timing from object creation (else, call :meth:`timer.tic()` explicitly)
+        unit (str/float): the unit of time to display; see options above
         verbose (bool): whether to print output on each timing
         kwargs (dict): passed to :func:`sc.toc() <toc>` when invoked
 
@@ -751,13 +817,14 @@ class timer:
     | *New in version 1.3.2:* ``toc()`` passes label correctly; ``tt()`` method; ``auto`` argument
     | *New in version 2.0.0:* ``plot()`` method; ``total()`` method; ``indivtimings`` and ``cumtimings`` properties
     | *New in version 2.1.0:* ``total`` as property instead of method; updated repr; added disp() method
-    | *New in version 3.0.0:* ``verbose`` argument; ``sum, min, max, mean, std`` methods; ``rawtimings`` property
+    | *New in version 3.0.0:* ``units`` argument; ``verbose`` argument; ``sum, min, max, mean, std`` methods; ``rawtimings`` property
     '''
-    def __init__(self, label=None, auto=False, start=True, verbose=None, **kwargs):
+    def __init__(self, label=None, auto=False, start=True, unit='auto', verbose=None, **kwargs):
         from . import sc_odict as sco # Here to avoid circular import
         self.kwargs = kwargs # Store kwargs to pass to toc() at the end of the block
         self.kwargs['label'] = label
         self.auto = auto
+        self.unit = unit
         self.verbose = verbose
         self._start = None
         self._tics = []
@@ -836,7 +903,7 @@ class timer:
 
         # Call again to get the correct output
         doprint = kwargs.pop('doprint', self.verbose)
-        output = toc(elapsed=self.elapsed, doprint=doprint, **kwargs)
+        output = toc(elapsed=self.elapsed, unit=self.unit, doprint=doprint, **kwargs)
 
         # If reset was used, apply it
         if kwargs.get('reset'):
