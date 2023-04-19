@@ -227,8 +227,8 @@ class ScirisOptions(sco.objdict):
         optdesc.interactive = 'Convenience method to set figure backend'
         options.interactive = parse_env('SCIRIS_INTERACTIVE', True, 'bool')
 
-        optdesc.jupyter = 'Convenience method to set common settings for Jupyter notebooks: set to "retina" or "widget" (default) to set backend'
-        options.jupyter = parse_env('SCIRIS_JUPYTER', False, 'bool')
+        optdesc.jupyter = 'Convenience method to set common settings for Jupyter notebooks: set to "auto" (which detects if Jupyter is running), "retina", "default" (or empty, which use regular PNG output), or "widget" to set backend'
+        options.jupyter = parse_env('SCIRIS_JUPYTER', 'auto', 'str')
 
         optdesc.backend = 'Set the Matplotlib backend (use "agg" for non-interactive)'
         options.backend = parse_env('SCIRIS_BACKEND', pl.get_backend(), 'str')
@@ -263,48 +263,7 @@ class ScirisOptions(sco.objdict):
             kwargs.update({key:value})
 
         # Handle Jupyter
-        if 'jupyter' in kwargs.keys() and kwargs['jupyter']: # pragma: no cover
-
-            # Handle import
-            matplotlib_inline = None
-            try:
-                from IPython import get_ipython
-                import matplotlib_inline
-                magic = get_ipython().run_line_magic
-            except Exception as E:
-                warnmsg = f'Could not import IPython and matplotlib_inline; not attempting to set Jupyter ({str(E)})'
-                warnings.warn(warnmsg, category=UserWarning, stacklevel=2)
-
-            # Handle options
-            widget_opts  = ['widget', 'matplotlib', 'interactive']
-            retina_opts  = [True, 'retina']
-            default_opts = [False, 'default']
-            format_opts  = ['retina', 'pdf','png','png2x','svg','jpg']
-
-            jupyter = kwargs['jupyter']
-            if jupyter in widget_opts:
-                jupyter = 'widget'
-            elif jupyter in retina_opts:
-                jupyter = 'retina'
-            elif jupyter in default_opts:
-                jupyter = 'png'
-
-            if matplotlib_inline:
-                if jupyter == 'widget':
-                    try: # First try interactive
-                        with scp.capture() as stderr: # Hack since this outputs text rather an actual warning
-                            magic('matplotlib', 'widget')
-                        assert 'Warning' not in stderr, stderr
-                    except Exception as E:
-                        warnmsg = f'Could not set backend to "widget" (error: "{E}"); try "pip install ipympl". Defaulting to "retina" instead'
-                        warnings.warn(warnmsg, category=UserWarning, stacklevel=2)
-                        jupyter = 'retina'
-                if jupyter in format_opts:
-                    magic('matplotlib', 'inline')
-                    matplotlib_inline.backend_inline.set_matplotlib_formats(jupyter)
-                else:
-                    errormsg = f'Could not understand Jupyter option "{jupyter}": options are widget, {scu.strjoin(format_opts)}'
-                    raise ValueError(errormsg)
+        self.set_jupyter(kwargs)
 
         # Handle interactivity
         if 'interactive' in kwargs.keys():
@@ -368,6 +327,56 @@ class ScirisOptions(sco.objdict):
             elif key == 'dpi':      pl.rcParams['figure.dpi']  = value
             elif key == 'backend':  pl.switch_backend(value)
             else: raise KeyError(f'Key {key} not found')
+        return
+
+
+    def set_jupyter(self, kwargs):
+        ''' Handle Jupyter settings '''
+        if scu.isjupyter() and 'jupyter' in kwargs.keys(): # pragma: no cover
+        
+            # Handle import
+            try:
+                from IPython import get_ipython
+                import matplotlib_inline
+                magic = get_ipython().run_line_magic
+            except Exception as E:
+                warnmsg = f'Could not import IPython and matplotlib_inline; not attempting to set Jupyter ({str(E)})'
+                warnings.warn(warnmsg, category=UserWarning, stacklevel=2)
+                magic = None
+                
+            # Import succeeded
+            if magic:
+
+                # Handle options
+                widget_opts  = ['widget', 'matplotlib', 'interactive']
+                retina_opts  = [True, 'True', 'auto', 'retina']
+                default_opts = [None, False, '', 'False', 'default']
+                format_opts  = ['retina', 'pdf','png','png2x','svg','jpg']
+    
+                jupyter = kwargs['jupyter']
+                if jupyter in widget_opts:
+                    jupyter = 'widget'
+                elif jupyter in retina_opts:
+                    jupyter = 'retina'
+                elif jupyter in default_opts:
+                    jupyter = 'png'
+    
+                if jupyter == 'widget':
+                    try: # First try interactive
+                        with scp.capture() as stderr: # Hack since this outputs text rather an actual warning
+                            magic('matplotlib', 'widget')
+                        assert 'Warning' not in stderr, stderr
+                    except Exception as E:
+                        warnmsg = f'Could not set backend to "widget" (error: "{E}"); try "pip install ipympl". Defaulting to "retina" instead'
+                        warnings.warn(warnmsg, category=UserWarning, stacklevel=2)
+                        jupyter = 'retina'
+                if jupyter in format_opts:
+                    magic('matplotlib', 'inline')
+                    matplotlib_inline.backend_inline.set_matplotlib_formats(jupyter)
+                else:
+                    errormsg = f'Could not understand Jupyter option "{jupyter}": options are widget, {scu.strjoin(format_opts)}'
+                    raise ValueError(errormsg)
+        
         return
 
 

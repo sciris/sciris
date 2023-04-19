@@ -441,6 +441,21 @@ def ismac(die=False):
     return getplatform('mac', die=die)
 
 
+def isjupyter(verbose=False):
+    '''
+    Check if script is running inside a Jupyter notebook.
+    
+    *New in version 3.0.0.*
+    '''
+    try:
+        from IPython import get_ipython
+        assert get_ipython() is not None, 'IPython is installed but not running'
+        return True
+    except:
+        return False
+    
+
+
 def asciify(string, form='NFKD', encoding='ascii', errors='ignore', **kwargs):
     '''
     Convert an arbitrary Unicode string to ASCII.

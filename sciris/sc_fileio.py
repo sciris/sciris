@@ -685,7 +685,10 @@ def thisdir(file=None, path=None, *args, frame=1, aspath=None, **kwargs):
     | *New in version 2.1.0:* frame argument
     '''
     if file is None: # No file: use the current folder
-         file = thisfile(frame=frame+1) # Need +1 since want the calling script
+        if scu.isjupyter():
+            file = os.path.abspath(os.path.expanduser('file_placeholder')) # This is as best we can do on Jupyter
+        else:
+            file = thisfile(frame=frame+1) # Need +1 since want the calling script
     elif hasattr(file, '__file__'): # It's actually a module
         file = file.__file__
     if aspath is None: aspath = scs.options.aspath
