@@ -263,7 +263,7 @@ def date(obj=None, *args, start_date=None, readformat=None, to='date', as_date=N
         obj (str/int/date/datetime/list/array): the object to convert; if None, return current date
         args (str/int/date/datetime): additional objects to convert
         start_date (str/date/datetime): the starting date, if an integer is supplied
-        readformat (str/list): the format to read the date in; passed to :func:`sc.readdate() <readdate>`
+        readformat (str/list): the format to read the date in; passed to :func:`sc.readdate() <readdate>` (NB: can also use "format" instead of "readformat")
         to (str): the output format: 'date' (default), 'str' (or 'string'), 'pandas', or 'numpy'
         as_date (bool): alternate method of choosing between  output format of 'date' (True) or 'str' (False); if None, use "to" instead
         outformat (str): the format to output the date in, if returning a string
@@ -287,6 +287,7 @@ def date(obj=None, *args, start_date=None, readformat=None, to='date', as_date=N
     # Handle deprecation
     start_date = kwargs.pop('startdate', start_date) # Handle with or without underscore
     as_date    = kwargs.pop('asdate', as_date) # Handle with or without underscore
+    readformat = kwargs.pop('format', readformat) # Handle either name
     dateformat = kwargs.pop('dateformat', None)
     if dateformat is not None: # pragma: no cover
         outformat = dateformat
@@ -513,7 +514,7 @@ def datedelta(datestr=None, days=0, months=0, years=0, weeks=0, dt1=None, dt2=No
     If ``datestr`` is ``None``, then return the delta object rather than the new date.
 
     Args:
-        datestr (None/str/date): the starting date (typically a string); if None, return the relative delta
+        datestr (None/str/date/list): the starting date (typically a string); if None, return the relative delta
         days (int): the number of days (positive or negative) to increment
         months (int): as above
         years (int): as above
@@ -528,6 +529,8 @@ def datedelta(datestr=None, days=0, months=0, years=0, weeks=0, dt1=None, dt2=No
         sc.datedelta('2021-07-07', days=-4) # Subtract 4 days
         sc.datedelta('2021-07-07', weeks=4, months=-1, as_date=True) # Add 4 weeks but subtract a month, and return a dateobj
         sc.datedelta(days=3) # Alias to du.relativedelta.relativedelta(days=3)
+    
+    *New in version 3.0.0:* operate on list of dates
     '''
     as_date = kwargs.pop('asdate', as_date) # Handle with or without underscore
 
@@ -536,12 +539,18 @@ def datedelta(datestr=None, days=0, months=0, years=0, weeks=0, dt1=None, dt2=No
     if datestr is None:
         return delta
     else:
-        if as_date is None: # Typical case, return the same format as the input
-            as_date = False if isinstance(datestr, str) else True
-        dateobj = readdate(datestr, **kwargs)
-        newdate = dateobj + delta
-        newdate = date(newdate, as_date=as_date)
-        return newdate
+        datelist = scu.tolist(datestr)
+        newdates = []
+        for datestr in datelist:
+            if as_date is None: # Typical case, return the same format as the input
+                as_date = False if isinstance(datestr, str) else True
+            dateobj = readdate(datestr, **kwargs)
+            newdate = dateobj + delta
+            newdate = date(newdate, as_date=as_date)
+            newdates.append(newdate)
+        if not isinstance(datestr, list) and len(newdates) == 1: # Convert back to string/date
+            newdates = newdates[0]
+        return newdates
 
 
 def datetoyear(dateobj, dateformat=None):
