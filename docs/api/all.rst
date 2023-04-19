@@ -8,7 +8,7 @@ Below is absolutely everything that's included in Sciris.
    :toctree: _autosummary
    :template: custom-module-template.rst
    :recursive:
-   :hide-autosummary: Not an error! Intentionally raise an exception to prevent this section from being shown twice since the :hidden: directive is not available here
+   :hide-autosummary: **NOT AN ERROR!** Intentionally raise an exception to prevent this section from being shown twice, since the :hidden: directive is not available here
 
    sciris
 
