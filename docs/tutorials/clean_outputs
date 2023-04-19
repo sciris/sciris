@@ -1,6 +1,10 @@
 #!/usr/bin/env python
 
 import sciris as sc
+import sys
+
+clean_nb = False if 'fast' in sys.argv else True
+
 
 T = sc.timer()
 
@@ -27,7 +31,10 @@ def clear_notebook(file):
     cmd = f'jupyter nbconvert --clear-output --inplace {file}'
     sc.runcommand(cmd, printinput=True, printoutput=True)
 
-print('Clearing notebook output:')
-sc.parallelize(clear_notebook, iterarg=nbfiles)
+if clean_nb:
+    print('Clearing notebook output:')
+    sc.parallelize(clear_notebook, iterarg=nbfiles)
+else:
+    print('\nNot clearing notebook output\n')
 
-T.toc('Done!')
+T.toc('Done!\n\n')
