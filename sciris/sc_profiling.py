@@ -196,7 +196,7 @@ def checkram(unit='mb', fmt='0.2f', start=0, to_string=True):
         start = sc.checkram(to_string=False)
         a = np.random.random((1_000, 10_000))
         print(sc.checkram(start=start))
-
+    
     *New in version 1.0.0.*
     '''
     process = psutil.Process(os.getpid())
@@ -235,13 +235,13 @@ def benchmark(repeats=5, scale=1, verbose=False, python=True, numpy=True, return
         return_timers (bool): if True, return the timer objects instead of the "MOPS" results
         
     Returns:
-        An objdict with keys "python" and "numpy" for the number of MOPS for each
+        A dict with keys "python" and "numpy" for the number of MOPS for each
     
     **Examples**::
         
         sc.benchmark() # Returns e.g. {'python': 11.43, 'numpy': 236.595}
         
-        numpy_mops = sc.benchmark(python=False).numpy
+        numpy_mops = sc.benchmark(python=False)['numpy']
         if numpy_mops < 100:
             print('Your computer is slow')
         elif numpy_mops > 400: 
@@ -297,7 +297,7 @@ def benchmark(repeats=5, scale=1, verbose=False, python=True, numpy=True, return
     else:
         pymops = py_ops/P.mean() if len(P) else None # Handle if one or the other isn't run
         npmops = np_ops/N.mean() if len(N) else None
-        out = sco.objdict(python=pymops, numpy=npmops)
+        out = dict(python=pymops, numpy=npmops)
         
     return out
 
