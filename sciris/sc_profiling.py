@@ -429,7 +429,7 @@ def loadbalancer(maxcpu=0.9, maxmem=0.9, index=None, interval=None, cpu_interval
         mem_compare = ['<', '>'][mem_toohigh]
         cpu_str = f'{cpu_current:0.2f}{cpu_compare}{maxcpu:0.2f}'
         mem_str = f'{mem_current:0.2f}{mem_compare}{maxmem:0.2f}'
-        process_str = f'process {index}' if index else 'process'
+        process_str = f'process {index}' if index is not None else 'process'
         if cpu_toohigh: # pragma: no cover
             string = label+f'CPU load too high ({cpu_str}); {process_str} queued {count} times'
             scd.randsleep(interval)
