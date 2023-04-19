@@ -1,7 +1,33 @@
-#!/bin/bash
-# Remove auto-generated files; use -f in case they don't exist
-echo 'Deleting:'
-echo `ls -1 ./*.obj 2> /dev/null`
-echo '...in 2 seconds'
-sleep 2
-rm -vf ./*.obj
+#!/usr/bin/env python
+
+import sciris as sc
+
+T = sc.timer()
+
+# Get files
+here = sc.thispath()
+nbfiles = sc.getfilelist(here / '*.ipynb')
+files1 = sc.getfilelist(here / '*.obj')
+files2 = sc.getfilelist(here / 'my-*.*')
+files = sorted(set(files1 + files2))
+
+# Remove auto-generated files
+if len(files):
+    print(f'Deleting {len(files)} files:')
+    for i,f in enumerate(files):
+        print(f'{i}. {f}')
+    print('...in 2 seconds')
+    sc.timedsleep(2)
+    sc.rmpath(files)
+else:
+    print('No files to delete')
+
+# Clean notebook files
+def clear_notebook(file):
+    cmd = f'jupyter nbconvert --clear-output --inplace {file}'
+    sc.runcommand(cmd, printinput=True, printoutput=True)
+
+print('Clearing notebook output:')
+sc.parallelize(clear_notebook, iterarg=nbfiles)
+
+T.toc('Done!')
