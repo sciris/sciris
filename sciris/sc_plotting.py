@@ -206,7 +206,7 @@ def scatter3d(x, y=None, z=None, c='z', fig=None, ax=None, returnfig=False, figk
         if x.ndim == 1 or y.ndim == 1:
             X,Y = np.meshgrid(x, y)
         x,y,z = X.flatten(), Y.flatten(), z.flatten() # Flatten everything to 1D
-    if c == 'z': # Handle automatic color scaling
+    if isinstance(c, str) and c == 'z': # Handle automatic color scaling
         c = z
 
     # Actually plot

@@ -330,8 +330,11 @@ class ScirisOptions(sco.objdict):
         return
 
 
-    def set_jupyter(self, kwargs):
+    def set_jupyter(self, kwargs=None):
         ''' Handle Jupyter settings '''
+        if kwargs is None: # Default setting
+            kwargs = dict(jupyter=self['jupyter'])
+        
         if scu.isjupyter() and 'jupyter' in kwargs.keys(): # pragma: no cover
         
             # Handle import
@@ -615,6 +618,7 @@ class ScirisOptions(sco.objdict):
 
 # Create the options on module load
 options = ScirisOptions()
+options.set_jupyter() # Set this on import
 
 
 #%% Module help
