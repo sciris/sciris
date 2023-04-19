@@ -482,7 +482,7 @@ def asciify(string, form='NFKD', encoding='ascii', errors='ignore', **kwargs):
 
 __all__ += ['urlopen', 'wget', 'download', 'htmlify']
 
-def urlopen(url, filename=None, save=False, headers=None, params=None, data=None,
+def urlopen(url, filename=None, save=None, headers=None, params=None, data=None,
             prefix='http', convert=True, die=False, return_response=False, verbose=False):
     '''
     Download a single URL.
@@ -561,7 +561,7 @@ def urlopen(url, filename=None, save=False, headers=None, params=None, data=None
         else:
             filename = url.rstrip('/').split('/')[-1] # Remove trailing /, then pull out the last chunk
 
-    if filename is not None:
+    if filename is not None and save is not False:
         if verbose: print(f'Saving to {filename}...')
         filename = scf.makefilepath(filename, makedirs=True)
         if isinstance(output, bytes):
@@ -602,7 +602,7 @@ def download(url, *args, filename=None, save=True, parallel=True, die=True, verb
     **Examples**::
 
         html = sc.download('http://sciris.org') # Download a single URL
-        data = sc.download('http://sciris.org', 'http://covasim.org') # Download two in parallel
+        data = sc.download('http://sciris.org', 'http://covasim.org', save=False) # Download two in parallel
         sc.download({'http://sciris.org':'sciris.html', 'http://covasim.org':'covasim.html'}) # Downlaod two and save to disk
         sc.download(['http://sciris.org', 'http://covasim.org'], filename=['sciris.html', 'covasim.html']) # Ditto
 
@@ -611,6 +611,7 @@ def download(url, *args, filename=None, save=True, parallel=True, die=True, verb
     '''
     from . import sc_parallel as scp # To avoid circular import
     from . import sc_datetime as scd
+    from . import sc_odict as sco
 
     T = scd.timer()
 
@@ -654,6 +655,10 @@ def download(url, *args, filename=None, save=True, parallel=True, die=True, verb
                     output = E
                     
             outputs.append(output)
+    
+    # If we're returning the data rather than saving the files, convert to an odict
+    if save is False:
+        outputs = sco.odict({k:v for k,v in zip(urls, outputs)})
 
     if verbose:
         T.toc(f'Time to download {n_urls} URLs')
