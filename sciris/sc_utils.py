@@ -2006,7 +2006,7 @@ class tryexcept(cl.suppress):
         tryexc.print()
             
     | *New in version 2.1.0.*
-    | *New in version 3.0.0:* renamed "print" to "disp"
+    | *New in version 3.0.0:* renamed "print" to "traceback"; added "to_df" and "disp" options
     '''
 
     def __init__(self, die=None, catch=None, verbose=1, history=None):
@@ -2069,12 +2069,27 @@ class tryexcept(cl.suppress):
                 return True
 
     
-    def disp(self, which=-1):
+    def traceback(self, which=-1):
         ''' Print the exception (usually the last) '''
         if len(self.exceptions):
             py_traceback.print_exception(*self.exceptions[which])
         else: # pragma: no cover
             print('No exceptions were encountered; nothing to trace')
+        return
+    
+    
+    def to_df(self):
+        ''' Convert the exceptions to a dataframe '''
+        from . import sc_dataframe as scd # To avoid circular import
+        df = scd.dataframe(self.exceptions, columns=['type','value','traceback'])
+        self.df = df
+        return df
+    
+    
+    def disp(self):
+        ''' Display all exceptions as a table '''
+        df = self.to_df()
+        df.disp()
         return
     
     
