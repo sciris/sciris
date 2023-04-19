@@ -121,7 +121,7 @@ def test_load_save():
     
     sc.heading('Save/load zip')
     sc.savezip(files.zip, data={'fake_datafile.obj':testdata})
-    sc.savezip(files.zip, [files.text, files.binary])
+    sc.savezip(files.zip, [files.text, files.binary], basename=True)
     o.zip = sc.loadzip(files.zip) # Load into memory
     sc.unzip(files.zip, outfolder=filedir) # Unpack onto disk
     
