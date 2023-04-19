@@ -527,7 +527,7 @@ def savezip(filename=None, files=None, data=None, folder=None, sanitizepath=True
     Args:
         filename (str/path): the name of the zip file to write to
         files (list): file(s) and/or folder(s) to compress
-        data (dict): if supplied, instead of files, write this data instead (must be a dictionary of filename keys and data values)
+        data (dict): if supplied, write this data as well or instead (must be a dictionary of filename keys and data values)
         folder (str): optional additional folder for the filename
         sanitizepath (bool): whether to sanitize the path prior to saving
         basename (bool): whether to use only the file's basename as the name inside the zip file (otherwise, store folder info)
@@ -548,16 +548,19 @@ def savezip(filename=None, files=None, data=None, folder=None, sanitizepath=True
 
     # Handle inputs
     fullpath = makefilepath(filename=filename, folder=folder, sanitize=sanitizepath, makedirs=True)
-    origfilelist = [path(file) for file in scu.tolist(files)]
+    
     
     # If data is provided, do simple validation
     if data is not None:
         if not isinstance(data, dict): # pragma: no cover
             errormsg = 'Data has invalid format: must be a dictionary of filename keys and data values'
             raise ValueError(errormsg)
-    
-    # Otherwise, typical use case: data is not provided, handle files
     else:
+        data = {}
+    
+    # Typical use case: data is not provided, handle files
+    if files:
+        origfilelist = [path(file) for file in scu.tolist(files)]
         
         # Handle subfolders
         extfilelist = scu.dcp(origfilelist) # An extended file list, including recursion into subfolders
@@ -574,16 +577,19 @@ def savezip(filename=None, files=None, data=None, folder=None, sanitizepath=True
             
     # Write zip file
     with ZipFile(fullpath, 'w') as zf: # Create the zip file
-        if data is None: # Main use case, save files
-            for thisfile in filelist:
-                thispath = makefilepath(filename=thisfile, abspath=False, makedirs=False)
-                thisname = os.path.basename(thisfile) if basename else thisfile
-                zf.write(thispath, thisname) # Actually save
-        else: # Alternatively, save data
+        if data: # Optionally also save data
             for key,val in data.items():
                 if tobytes:
                     val = dumpstr(val, **kwargs)
                 zf.writestr(key, val)
+        if files: # Main use case, save files
+            for thisfile in filelist:
+                thispath = makefilepath(filename=thisfile, abspath=False, makedirs=False)
+                thisname = os.path.basename(thisfile) if basename else thisfile
+                zf.write(thispath, thisname) # Actually save
+        if not data and not files:
+            errormsg = 'No data and no files provided: nothing to save!'
+            raise FileNotFoundError(errormsg)
         
     if verbose: print(f'Zip file saved to "{fullpath}"')
     return fullpath

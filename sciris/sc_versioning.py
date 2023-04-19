@@ -640,7 +640,7 @@ def savearchive(filename, obj, files=None, folder=None, comments=None, require=N
     # Construct output
     datadict = {_metadata_filename:metadatastr, _obj_filename:datastr}
     
-    return scf.savezip(filename=filename, data=datadict, tobytes=False, **kwargs)
+    return scf.savezip(filename=filename, files=files, data=datadict, tobytes=False, **kwargs)
 
 
 def known_deprecations(as_map=False):
