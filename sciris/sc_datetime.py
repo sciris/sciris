@@ -678,7 +678,8 @@ def toc(start=None, label=None, baselabel=None, sigfigs=None, reset=False, unit=
         slow_func2()
         sc.toc(T, label='slow_func2')
 
-    *New in version 1.3.0:* new arguments.
+    *New in version 1.3.0:* new arguments
+    *New in version 3.0.0:* "unit" argument
     '''
     now = pytime.time() # Get the time as quickly as possible
 
@@ -817,7 +818,7 @@ class timer:
     | *New in version 1.3.2:* ``toc()`` passes label correctly; ``tt()`` method; ``auto`` argument
     | *New in version 2.0.0:* ``plot()`` method; ``total()`` method; ``indivtimings`` and ``cumtimings`` properties
     | *New in version 2.1.0:* ``total`` as property instead of method; updated repr; added disp() method
-    | *New in version 3.0.0:* ``units`` argument; ``verbose`` argument; ``sum, min, max, mean, std`` methods; ``rawtimings`` property
+    | *New in version 3.0.0:* ``unit`` argument; ``verbose`` argument; ``sum, min, max, mean, std`` methods; ``rawtimings`` property
     '''
     def __init__(self, label=None, auto=False, start=True, unit='auto', verbose=None, **kwargs):
         from . import sc_odict as sco # Here to avoid circular import
@@ -1042,21 +1043,23 @@ class timer:
         if fig is None:
             fig = pl.figure(**figkwargs)  # It's necessary to have an open figure or else the commands won't work
 
-        # plot times
+        # Plot times
         if len(self.timings) > 0:
             keys = self.timings.keys()
             vals = self.indivtimings[:]
+            
+            factor, label = _convert_time_unit(self.unit, elapsed=vals.sum())
+            vals /= factor
+            
             ax1 = pl.subplot(2,1,1)
             pl.barh(keys, vals, **kwargs)
             pl.title('Individual timings')
-            pl.ylabel('Label')
-            pl.xlabel('Elapsed time (s)')
+            pl.xlabel(f'Elapsed time ({label})')
 
             ax2 = pl.subplot(2,1,2)
             pl.barh(keys, np.cumsum(vals), **kwargs)
             pl.title('Cumulative timings')
-            pl.ylabel('Label')
-            pl.xlabel('Elapsed time (s)')
+            pl.xlabel(f'Elapsed time ({label})')
 
             for ax in [ax1, ax2]:
                 ax.invert_yaxis()
