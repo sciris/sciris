@@ -27,7 +27,7 @@ import pandas as pd
 import sciris as sc
 
 # If using pypi-timemachine, set the corresponding date here
-date = '2023-04-13'
+date = '2023-04-19'
 
 if len(sys.argv)>1:
     date = sys.argv[1]
@@ -47,4 +47,4 @@ class MyClass:
 
 myclass = MyClass()
 
-sc.savewithmetadata('withmetadata.zip', myclass)
+sc.savearchive('archive.zip', myclass)

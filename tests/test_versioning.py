@@ -62,11 +62,11 @@ def test_load_save():
     f = sc.objdict()
     f.md = 'md.json'
     f.obj = 'md_obj.zip'
-    f.wmd = filedir / 'withmetadata.zip'
+    f.wmd = filedir / 'archive.zip'
     
     print('Testing savewithmethadata')
     obj = sc.prettyobj(label='foo', a=np.random.rand(5), b='label')
-    sc.savewithmetadata(f.obj, obj)
+    sc.savearchive(f.obj, obj)
     
     print('Testing loadmetadata')
     o.md = sc.metadata(outfile=f.md)
@@ -76,9 +76,9 @@ def test_load_save():
     md3 = sc.loadmetadata(f.obj)
     assert o.md.system.platform == md2.system.platform == md3.system.platform
     
-    print('Testing loadwithmetadata')
-    o.obj = sc.loadwithmetadata(f.wmd)
-    data = sc.loadwithmetadata(f.wmd, loadmetadata=True) # To test a different conditional
+    print('Testing loadarchive')
+    o.obj = sc.loadarchive(f.wmd)
+    data = sc.loadarchive(f.wmd, loadmetadata=True) # To test a different conditional
     if sc.compareversions(o.md.versions.python, '<3.11'): # Due to new opcodes, old pickled methods can't be loaded
         assert o.obj.sum() == 10
         assert data['obj'].sum() == 10
