@@ -35,7 +35,7 @@ import zstandard as zstd
 from zipfile import ZipFile
 from contextlib import closing
 from pathlib import Path
-from glob import glob
+from glob import glob as pyglob
 import fnmatch as fnm
 from . import sc_settings as scs
 from . import sc_utils as scu
@@ -408,7 +408,7 @@ def dumpstr(obj=None, **kwargs):
 ##############################################################################
 
 __all__ += ['loadtext', 'savetext', 'loadzip', 'unzip', 'savezip', 'path', 'ispath', 
-            'thisfile', 'thisdir', 'thispath', 'getfilelist', 'getfilepaths', 
+            'thisfile', 'thisdir', 'thispath', 'getfilelist', 'glob', 'getfilepaths', 
             'sanitizefilename', 'sanitizepath', 'makefilepath', 'makepath', 'rmpath']
 
 
@@ -720,7 +720,10 @@ thispath.__doc__ += '\n\n' + thisdir.__doc__
 def getfilelist(folder=None, pattern=None, fnmatch=None, abspath=False, nopath=False, 
                 filesonly=False, foldersonly=False, recursive=True, aspath=None):
     '''
-    A shortcut for using glob.
+    A shortcut for using :func:`glob.glob()`.
+    
+    Note that :func:`sc.getfilelist() <getfilelist>` and :func:`sc.glob() <glob>` 
+    are aliases of each other.
 
     Args:
         folder      (str):  the folder to find files in (default, current)
@@ -730,7 +733,7 @@ def getfilelist(folder=None, pattern=None, fnmatch=None, abspath=False, nopath=F
         nopath      (bool): whether to return no path
         filesonly   (bool): whether to only return files (not folders)
         foldersonly (bool): whether to only return folders (not files)
-        recursive   (bool): passed to glob() (note: ** is required as the pattern to match all subfolders)
+        recursive   (bool): passed to :func:`glob.glob()` (note: ** is required as the pattern to match all subfolders)
         aspath      (bool): whether to return Path objects
         
     Returns:
@@ -756,7 +759,7 @@ def getfilelist(folder=None, pattern=None, fnmatch=None, abspath=False, nopath=F
     if aspath is None: 
         aspath = scs.options.aspath
     globstr = os.path.join(folder, pattern) if pattern else folder
-    filelist = sorted(glob(globstr, recursive=recursive))
+    filelist = sorted(pyglob(globstr, recursive=recursive))
     if filesonly:
         filelist = [f for f in filelist if os.path.isfile(f)]
     elif foldersonly:
@@ -768,6 +771,10 @@ def getfilelist(folder=None, pattern=None, fnmatch=None, abspath=False, nopath=F
     if aspath:
         filelist = [Path(f) for f in filelist]
     return filelist
+
+
+# Define as an alias
+glob = getfilelist
 
 
 def getfilepaths(*args, aspath=True, **kwargs):
