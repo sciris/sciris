@@ -129,6 +129,7 @@ def test_other():
     assert df5[0,0] != 17
     df.insert(0, 'f', np.random.rand(df.nrows)); dfprint('Inserting column', df)
     df.sortcols(reverse=True); dfprint('Sorting columns', df)
+    df.sort()
     assert df.cols[-1] == 'a'
     df.poprow(); dfprint('Removing one row', df)
     
