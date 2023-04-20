@@ -7,8 +7,8 @@ from functools import reduce, partial
 from . import sc_utils as scu
 
 
-__all__ = ['getnested', 'setnested', 'makenested', 'iternested', 'mergenested',
-           'flattendict', 'search', 'nestedloop']
+__all__ = ['getnested', 'setnested', 'makenested', 'iternested', 'iterobj',
+           'mergenested', 'flattendict', 'search', 'nestedloop']
 
 
 def makenested(nesteddict, keylist=None, value=None, overwrite=False, generator=None):
@@ -161,6 +161,102 @@ def iternested(nesteddict, previous=None):
     return output
 
 
+def iterobj(obj, func, inplace=False, twigs_only=False, verbose=False, _trace=None, _output=None, *args, **kwargs):
+    '''
+    Iterate over an object and apply a function to each twig.
+    
+    Can modify an object in-place, or return a value. See also :func:`sc.search() <search>`
+    for a function to search through complex objects.
+    
+    Args:
+        obj (any): the object to iterate over
+        func (function): the function to apply
+        inplace (bool): whether to modify the object in place (else, collate the output of the functions)
+        twigs_only (bool): whether to apply the function only to twigs of the object
+        verbose (bool): whether to print progress.
+        _trace (list): used internally for recursion
+        _output (list): used internally for recursion
+        *args (list): passed to func()
+        **kwargs (dict): passed to func()
+    
+    **Examples**::
+        
+        data = dict(a=dict(x=[1,2,3], y=[4,5,6]), b=dict(foo='string', bar='other_string'))
+        
+        # Search through an object
+        def check_type(obj, which):
+            return isinstance(obj, which)
+    
+        out = sc.iterobj(data, check_type, which=int)
+        print(out)
+        
+        
+        # Modify in place -- collapse mutliple short lines into one
+        def collapse(obj):
+            string = str(obj)
+            if len(string) < 10:
+                return string
+            else:
+                return obj
+
+        sc.printjson(data)
+        sc.iterobj(data, collapse, inplace=True)
+        sc.printjson(data)
+        
+    *New in version 3.0.0.*
+    '''
+    # Set the trace and output if needed
+    if _trace is None:
+        _trace = []
+    if _output is None:
+        _output = {}
+        if not inplace and not twigs_only:
+            _output['root'] = func(obj, *args, **kwargs)
+    
+    itertype = check_iter_type(obj)
+    
+    def iteritems(obj):
+        ''' Return an iterator over items in this object '''
+        if itertype == 'dict':
+            return obj.items()
+        elif itertype == 'list':
+            return enumerate(obj)
+        elif itertype == 'object':
+            return obj.__dict__.items()
+    
+    def getitem(obj, key):
+        ''' Get the value for the item '''
+        if itertype in ['dict', 'list']:
+            return obj[key]
+        elif itertype == 'object':
+            return obj.__dict__[key]
+    
+    def setitem(obj, key, value):
+        ''' Set the value for the item '''
+        if itertype in ['dict', 'list']:
+            obj[key] = value
+        elif itertype == 'object':
+            obj.__dict__[key] = value
+        return
+        
+    # Next, check if we need to iterate
+    if itertype:
+        for key,subobj in iteritems(obj):
+            trace = _trace + [key]
+            newobj = func(subobj, *args, **kwargs)
+            if inplace:
+                setitem(obj, key, newobj)
+            else:
+                _output[tuple(trace)] = newobj
+            iterobj(getitem(obj, key), func, inplace=inplace, twigs_only=twigs_only,  # Run recursively
+                    verbose=verbose, _trace=trace, _output=_output, *args, **kwargs)
+        
+    if inplace:
+        return
+    else:
+        return _output
+
+
 def mergenested(dict1, dict2, die=False, verbose=False, _path=None):
     '''
     Merge different nested dictionaries
@@ -242,7 +338,7 @@ def flattendict(nesteddict, sep=None, _prefix=None):
 
 # Define a custom "None" value to allow searching for actual None values
 _None = 'sc.search() placeholder'
-def search(obj, key=_None, value=_None, aslist=False, _trace=None):
+def search(obj, key=_None, value=_None, aslist=True, _trace=None):
     """
     Find a key/attribute or value within a list, dictionary or object.
 
@@ -251,7 +347,7 @@ def search(obj, key=_None, value=_None, aslist=False, _trace=None):
 
     Args:
         obj (any): A dict, list, or object
-        key (any): The key to search for
+        key (any): The key to search for (or a function)
         value (any): The value to search for
         aslist (bool): return entries as a list (else, return as a string)
         _trace: Not for user input - internal variable used for recursion
@@ -264,18 +360,36 @@ def search(obj, key=_None, value=_None, aslist=False, _trace=None):
     **Examples**::
 
         # Create a nested dictionary
-        nested = {'a':{'foo':1, 'bar':2}, 'b':{'bar':3, 'cat':[1,2,4,8]}}
+        nested = {'a':{'foo':1, 'bar':2}, 'b':{'car':3, 'cat':[1,2,4,8]}}
         
         # Find keys
-        keymatches = sc.search(nested, 'bar') # Returns ['["a"]["bar"]', '["b"]["bar"]']
+        keymatches = sc.search(nested, 'bar', aslist=False) # Returns ['["a"]["bar"]', '["b"]["bar"]']
         
         # Find values
         val = 4
         valmatches = sc.search(nested, value=val, aslist=True) # Returns  [['b', 'cat', 2]]
         assert sc.getnested(nested, valmatches[0]) == val # Get from the original nested object
+        
+        # Find values with a function
+        def find(v):
+            return True if isinstance(v, int) and v >= 3 else False
+            
+        found = sc.search(nested, value=find) # Returns  [['b', 'cat', 2]]
     
     *New in version 3.0.0:* ability to search for values as well as keys/attributes; "aslist" argument
     """
+    
+    def check_match(source, target):
+        ''' Check if there is a match between the "source" and "target" '''
+        if target != _None: # See above for definition
+            if callable(target):
+                match = target(source)
+            else:
+                match = target == source
+        else:
+            match = False
+        return match
+            
 
     matches = []
 
@@ -307,11 +421,8 @@ def search(obj, key=_None, value=_None, aslist=False, _trace=None):
             else:
                 trace = _trace + f'.{k}'
 
-        if key != _None:
-            if key == k:
-                matches.append(trace)
-        if value != _None:
-            if value == v:
+        for source,target in [[k, key], [v, value]]:
+            if check_match(source, target):
                 matches.append(trace)
 
         matches += search(o[k], key, value, aslist=aslist, _trace=trace)

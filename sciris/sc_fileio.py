@@ -1039,7 +1039,7 @@ def rmpath(path=None, *args, die=True, verbose=True, interactive=False, **kwargs
 #%% JSON functions
 ##############################################################################
 
-__all__ += ['sanitizejson', 'jsonify', 'readjson', 'loadjson', 'savejson', 
+__all__ += ['sanitizejson', 'jsonify', 'printjson', 'readjson', 'loadjson', 'savejson', 
             'readyaml', 'loadyaml', 'saveyaml', 'jsonpickle', 'jsonunpickle']
 
 
@@ -1130,6 +1130,29 @@ def jsonify(obj, verbose=True, die=False, tostring=False, **kwargs):
 
 # Define alias
 sanitizejson = jsonify
+
+
+def printjson(obj, indent=2, **kwargs):
+    '''
+    Print an object as a JSON
+    
+    Acts as an alias to :func:`print(sc.jsonify(..., tostring=True)) <jsonify>`.
+    
+    Args:
+        obj (any): the object to print
+        indent (int): the level of indent to use 
+        kwargs (dict): passed to :func:`sc.jsonify() <jsonify>`
+    
+    **Example**::
+        
+        data = dict(a=dict(x=[1,2,3], y=[4,5,6]), b=dict(foo='string', bar='other_string'))
+        sc.printjson(data)
+    
+    *New in version 3.0.0.*
+    '''
+    json = jsonify(obj, tostring=True, indent=indent, **kwargs)
+    print(json)
+    return
 
 
 def readjson(string, **kwargs):
