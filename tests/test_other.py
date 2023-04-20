@@ -125,7 +125,7 @@ def test_search():
     sc.heading('Testing search')
     o = sc.objdict()
     
-    # Define th enested object
+    # Define the nested object
     nested = {
         'a': {
              'foo':1,
@@ -139,7 +139,7 @@ def test_search():
     
     print('\nTesting search by key')
     key = 'bar'
-    keymatches = sc.search(nested, key) # Returns ['["a"]["bar"]', '["b"]["bar"]']
+    keymatches = sc.search(nested, key) # Returns ['["a"]["bar"]', '["b"]["bar"]'] as lists
     o.keymatches = keymatches
     print(keymatches)
     assert len(keymatches) == 2
@@ -153,13 +153,43 @@ def test_search():
     print(valmatches)
     assert len(valmatches) == 1
     assert sc.getnested(nested, valmatches[0]) == val # Get from the original nested object
-
+    
+    # Test aslist=False
+    valstrs = sc.search(nested, value=val, aslist=False)
+    assert isinstance(valstrs[0], str)
+    
     return o
+
+
+def test_iterobj():
+    sc.heading('Testing iterobj')
+    data = dict(a=dict(x=[1,2,3], y=[4,5,6]), b=dict(foo='string', bar='other_string'))
+    
+    # Search through an object
+    def check_type(obj, which):
+        return isinstance(obj, which)
+
+    out = sc.iterobj(data, check_type, which=int)
+    print(out)
+    
+    # Modify in place -- collapse mutliple short lines into one
+    def collapse(obj):
+        string = str(obj)
+        if len(string) < 10:
+            return string
+        else:
+            return obj
+
+    sc.printjson(data)
+    sc.iterobj(data, collapse, inplace=True)
+    sc.printjson(data)
+    
+    return out
 
 
 #%% Run as a script
 if __name__ == '__main__':
-    sc.tic()
+    T = sc.timer()
 
     # Options
     test_options()
@@ -168,6 +198,6 @@ if __name__ == '__main__':
     nested    = test_nested()
     dicts     = test_dicts()
     search    = test_search()
+    iterojb   = test_iterobj
 
-    sc.toc()
-    print('Done.')
+    T.toc('Done.')
