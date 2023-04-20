@@ -1,63 +1,10 @@
 '''
-Test Sciris miscellaneous utility/helper functions.
+Test nested dict functions
 '''
 
-import os
 import sciris as sc
 import pytest
 
-
-#%% Test options
-
-def test_options():
-    sc.heading('Test options')
-
-    print('Testing options')
-    sc.options.help()
-    sc.options.help(detailed=True)
-    sc.options.disp()
-    print(sc.options)
-    sc.options(dpi=150)
-    sc.options('default')
-    with sc.options.context(aspath=True):
-        pass
-    for style in ['default', 'simple', 'fancy', 'fivethirtyeight']:
-        with sc.options.with_style(style):
-            pass
-    with sc.options.with_style({'xtick.alignment':'left'}):
-        pass
-    with pytest.raises(KeyError):
-        with sc.options.with_style(invalid_key=100):
-            pass
-
-    fn = 'options.json'
-    sc.options.save(fn)
-    sc.options.load(fn)
-    sc.rmpath(fn)
-
-    print('Testing sc.parse_env()')
-    mapping = [
-        sc.objdict(to='str',   key='TMP_STR',   val='test',  expected='test', nullexpected=''),
-        sc.objdict(to='int',   key='TMP_INT',   val='4',     expected=4,      nullexpected=0),
-        sc.objdict(to='float', key='TMP_FLOAT', val='2.3',   expected=2.3,    nullexpected=0.0),
-        sc.objdict(to='bool',  key='TMP_BOOL',  val='False', expected=False,  nullexpected=False),
-    ]
-    for e in mapping:
-        os.environ[e.key] = e.val
-        assert sc.parse_env(e.key, which=e.to) == e.expected
-        del os.environ[e.key]
-        assert sc.parse_env(e.key, which=e.to) == e.nullexpected
-
-    print('Testing help')
-    sc.help()
-    sc.help('smooth')
-    sc.help('JSON', ignorecase=False, context=True)
-    sc.help('pickle', source=True, context=True)
-
-    return
-
-
-#%% Nested dictionary functions
 
 def test_nested():
     sc.heading('Testing nested dicts')
@@ -191,13 +138,10 @@ def test_iterobj():
 if __name__ == '__main__':
     T = sc.timer()
 
-    # Options
-    test_options()
-
     # Nested
-    nested    = test_nested()
-    dicts     = test_dicts()
-    search    = test_search()
-    iterojb   = test_iterobj
+    nested  = test_nested()
+    dicts   = test_dicts()
+    search  = test_search()
+    iterobj = test_iterobj()
 
     T.toc('Done.')
