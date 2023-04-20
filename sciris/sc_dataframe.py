@@ -289,7 +289,7 @@ class dataframe(pd.DataFrame):
                 if colindex in cols: # e.g. df['a',0]
                     colindex = cols.index(colindex)
                 self.iloc[rowindex, colindex] = value
-            except Exception as E2:
+            except Exception as E2: # pragma: no cover
                 if isinstance(E1, NotImplementedError): # We tried to raise it, so only care about the second one
                     mainerr = E2
                     errstr = f'\n{E2}'
@@ -340,6 +340,33 @@ class dataframe(pd.DataFrame):
             output = self._constructor(data=output, columns=np.array(self.cols)[colindices].tolist())
 
         return output
+
+
+    def __eq__(self, other):
+        '''
+        Allow for equality checks: same type, size, columns, and values
+        
+        *New in version 3.0.0.*
+        '''
+        
+        # Check type
+        if not isinstance(other, self.__class__):
+            return False
+        
+        # Check shape
+        if self.values.shape != other.values.shape:
+            return False
+
+        # Check columns
+        if not np.all(self.columns == other.columns):
+            return False
+        
+        # Check values
+        if not np.all(self.values == other.values):
+            return False
+        
+        # Passed all checks
+        return True
 
 
     def disp(self, nrows=None, ncols=None, width=999, precision=4, options=None, **kwargs):
@@ -396,7 +423,7 @@ class dataframe(pd.DataFrame):
         
         *New in version 3.0.0:* improved dtype handling
         '''
-        if newdf is None:
+        if newdf is None: # pragma: no cover
             newdf = self._constructor(data=newdata, columns=self.columns)
         if reset_index:
             newdf.reset_index(drop=True, inplace=True)
@@ -660,9 +687,9 @@ class dataframe(pd.DataFrame):
         '''
         col = self.col_index(col)
         coldata = self.iloc[:,col].values # Get data for this column
-        if value is None: 
+        if value is None: # pragma: no cover
             return len(coldata)-1 # If not supplied, pick the last element
-        if closest:
+        if closest: # pragma: no cover
             index = np.argmin(abs(coldata-value)) # Find the closest match to the key
         else:
             try:
@@ -879,7 +906,7 @@ class dataframe(pd.DataFrame):
             errormsg = 'sc.dataframe(): could not find the following column(s): %s\nChoices are: %s' % (notfound, self.cols)
             if die: raise Exception(errormsg)
             else:   print(errormsg)
-        if not keep:
+        if not keep: # pragma: no cover
             order = np.setdiff1d(np.arange(len(self.cols)), order)
             cols = [self.cols[o] for o in order]
         ordered_data = self.iloc[:,order] # Resort and filter the data

@@ -48,25 +48,44 @@ def test_dataframe():
     return df
 
 
-def test_methods():
-    sc.heading('Testing dataframe methods')
+def test_init():
+    sc.heading('Testing dataframe initialization')
     
     subheading('Initialization')
     df = sc.dataframe(cols=['a', 'b'], nrows=3)
     assert df.shape == (3,2)
     df += np.random.random(df.shape)
     dfprint('To start', df)
+    
+    # Merge
+    dfm  = sc.dataframe(dict(x=[1,2,3], y=[4,5,6])) 
+    dfm2 = sc.dataframe(dict(x=[1,2,3], z=[9,8,7])) 
+    dfm.merge(dfm2, on='x', inplace=True) 
+    
+    # Define with keywords
+    sc.dataframe(a=[1,2,3], b=[4,5,6])
+    sc.dataframe(dict(a=[1,2,3]), b=[4,5,6])
 
     subheading('Append row')
+    df.append([7,7]) # Alias
     df.appendrow(dict(a=4, b=4)); dfprint('Append row as dict', df)
     with pytest.raises(ValueError):
         df.appendrow([1,2,3])
+    
+    return df
+
+
+def test_get_set():
+    sc.heading('Testing dataframe get/set')
+    
+    df = sc.dataframe(cols=['a', 'b'], data=np.random.random((4,2)))
 
     subheading('Get')
     dfprint('Key get', df['a'])
     dfprint('Array get', df[[0,2]])
     dfprint('Tuple get 1', df[0,'a'])
     dfprint('Tuple get 2', df[0,1])
+    dfprint('Slice get 0', df[:2])
     dfprint('Slice get 1', df[0,:])
     dfprint('Slice get 2', df[:,'a'])
     dfprint('Slice get 3', df[:,:])
@@ -74,6 +93,7 @@ def test_methods():
         df['not_a_column']
     with pytest.raises(sc.KeyNotFoundError):
         df[sc.prettyobj({'wrong':'type'})]
+    df.get('a') # Test pandas method
 
     subheading('Set and flexget')
     df['c'] = np.random.randn(df.nrows); dfprint('Set column', df)
@@ -83,7 +103,19 @@ def test_methods():
     out = df.flexget(cols=['a','c'], rows=[0,2]); dfprint('Flexget', out)
     out2 = df.flexget('c', 2)
     assert isinstance(out2, float)
+    
+    return df
 
+
+def test_other():
+    sc.heading('Testing other dataframe methods')
+    
+    df = sc.dataframe(dict(
+        a = [0.3, 0.5, 0.66, 0.33, 300, 17], 
+        b = [0.6, 400, 0.66, 0.33, 0.3, 15], 
+        c = [0.7, 0.4, 0.66, 0.33, 0.5, 13])
+    )
+    
     subheading('Other')
     df.poprows([1,3]); dfprint('Removing rows', df)
     df.replacecol('a', 300, 333); dfprint('Replacing 300→333', df)
@@ -98,11 +130,18 @@ def test_methods():
     df.insert(0, 'f', np.random.rand(df.nrows)); dfprint('Inserting column', df)
     df.sortcols(reverse=True); dfprint('Sorting columns', df)
     assert df.cols[-1] == 'a'
+    df.poprow(); dfprint('Removing one row', df)
     
     dfnew = sc.dataframe(cols=['x','y'], data=[['a',2],['b',5],['c',7]])
     
     print('df.col_index()')
     assert dfnew.col_index('y') == dfnew.col_index(1)
+    
+    print('df.col_name()')
+    dfx = sc.dataframe(dict(a=[1,2,3], b=[4,5,6], c=[7,8,9])) 
+    assert dfx.col_name(1)    == 'b' 
+    assert dfx.col_name('b')  == 'b' 
+    assert dfx.col_name(0, 2) == ['a', 'c'] 
     
     print('df.set()')
     dfnew.set('x', ['d','e','f'])
@@ -111,8 +150,33 @@ def test_methods():
     subheading('Printing')
     dfprint('Custom display')
     df2 = sc.dataframe(data=np.random.rand(100,10))
-    df2.disp(precision=2, ncols=5, nrows=5, options={'display.colheader_justify': 'left'})
+    df2.disp(precision=2, ncols=5, nrows=5, colheader_justify='left')
 
+    return df
+
+
+def test_io():
+    sc.heading('Testing dataframe I/O')
+    
+    np.random.seed(1)
+    
+    f = sc.objdict(csv='my-df.csv', excel='my-df.xlsx')
+    df = sc.dataframe(
+        a = np.round(np.random.rand(3), decimals=6),  # Handle floats, but not to the limits of precision
+        b = [1,2,3], 
+        c = ['x','y','z'],
+    )
+    
+    df.to_csv(f.csv, index=False)
+    df.to_excel(f.excel, index=False)
+    
+    df2 = sc.dataframe.read_csv(f.csv)
+    df3 = sc.dataframe.read_excel(f.excel)
+    
+    assert df == df2 == df3
+    
+    sc.rmpath(f.values())
+    
     return df
 
 
@@ -140,6 +204,12 @@ def test_errors():
         data = {'str':['a','b'], 'int':[1,2]}
         columns = ['wrong', 'name']
         sc.dataframe(data=data, columns=columns)
+    
+    print('Incompatible data ✓')
+    with pytest.raises(TypeError):
+        data = [['a','b'], [1,2]]
+        columns = ['wrong', 'type']
+        sc.dataframe(data=data, columns=columns, error=['c',3])
         
     print('Invalid key ✓')
     with pytest.raises(TypeError):
@@ -154,8 +224,11 @@ if __name__ == '__main__':
     sc.tic()
 
     a  = test_dataframe()
-    df = test_methods()
-    e  = test_errors()
+    b = test_init()
+    c = test_get_set()
+    d = test_io()
+    e = test_other()
+    f = test_errors()
 
     print('\n\n')
     sc.toc()
