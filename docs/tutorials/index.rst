@@ -31,6 +31,7 @@ Questions? Did you complete all the tutorials and want to claim your free "I Am 
     .. grid-item-card:: 3 Dictionaries and dataframes
         :link: tut_dicts
         :link-type: doc
+        :img-top: img-dicts.png
 
         Data are only as good as the container they're stored in, so this tutorial goes through Sciris' two main containers (ordered dictionaries and dataframes).
 
@@ -38,6 +39,7 @@ Questions? Did you complete all the tutorials and want to claim your free "I Am 
     .. grid-item-card:: 4 Files and versioning
         :link: tut_files
         :link-type: doc
+        :img-top: img-files.png
         
         All that data has to come from and go somewhere: this tutorial covers saving and loading files, including with version metadata.
 
@@ -45,6 +47,7 @@ Questions? Did you complete all the tutorials and want to claim your free "I Am 
     .. grid-item-card:: 5 Printing
         :link: tut_printing
         :link-type: doc
+        :img-top: img-printing.png
 
         This tutorial covers tools for quickly printing out information about objects and data.
 
@@ -52,6 +55,7 @@ Questions? Did you complete all the tutorials and want to claim your free "I Am 
     .. grid-item-card:: 6 Plotting
         :link: tut_plotting
         :link-type: doc
+        :img-top: img-plotting.png
 
         If you don't plot it, did it even happen? This tutorial covers Sciris' plotting tools and shortcuts that extend :mod:`Matplotlib <matplotlib>`.
 
@@ -59,6 +63,7 @@ Questions? Did you complete all the tutorials and want to claim your free "I Am 
     .. grid-item-card:: 7 Parallelization and profiling
         :link: tut_parallel
         :link-type: doc
+        :img-top: img-parallel.png
 
         When you need answers faster: this tutorial covers running your code in parallel, as well as how to profile it to help find performance improvements.
 
@@ -66,6 +71,7 @@ Questions? Did you complete all the tutorials and want to claim your free "I Am 
     .. grid-item-card:: 8 Dates and times
         :link: tut_dates
         :link-type: doc
+        :img-top: img-dates.png
         
         Compared to nice simple numbers that behave in nice simple ways, dates can be a pain to work with. This tutorial goes through some ways to manipulate them more easily, as well as how to time parts of your code.
 
@@ -73,6 +79,7 @@ Questions? Did you complete all the tutorials and want to claim your free "I Am 
     .. grid-item-card:: 9 Miscellaneous utilities
         :link: tut_utils
         :link-type: doc
+        :img-top: img-utils.png
         
         Sometimes (probably often), you just need to do some random tedious task. Is there a shortcut for in Sciris? Find out here.
 
@@ -80,6 +87,7 @@ Questions? Did you complete all the tutorials and want to claim your free "I Am 
     .. grid-item-card:: 10 Advanced features
         :link: tut_advanced
         :link-type: doc
+        :img-top: img-advanced.gif
         
         You probably won't often need these tools, but we think they're cool, and they're here waiting for you just in case.
 
