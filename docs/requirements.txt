@@ -7,4 +7,5 @@ pydata-sphinx-theme
 sphinx-design
 ipykernel # For tutorials
 nbsphinx # For tutorials
+scipy # For optimization examples
 dask # For parallel examples
