@@ -433,7 +433,7 @@ class Parallel:
         
         # Handle optional deepcopy
         if scu.isstring(self.parallelizer) and '-copy' in self.parallelizer and method in needs_copy: # Don't deepcopy if we're going to pickle anyway
-            argslist = scu.dcp(self.argslist, die=self.die)
+            argslist = [scu.dcp(arg, die=self.die) for arg in self.argslist]
         else:
             argslist = self.argslist
         
@@ -463,6 +463,7 @@ class Parallel:
             else:
                 running = False
             return running
+    
     
     @property
     def ready(self):
