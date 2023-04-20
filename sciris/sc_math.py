@@ -898,17 +898,18 @@ def smooth(data, repeats=None, kernel=None, legacy=False):
 def smoothinterp(newx=None, origx=None, origy=None, smoothness=None, growth=None, 
                  ensurefinite=True, keepends=True, method='linear'):
     '''
-    Smoothly interpolate over values and keep end points. Same format as numpy.interp().
+    Smoothly interpolate over values
+    
+    Unlike :func:`np.interp() <numpy.interp>`, this function does exactly pass 
+    through each data point: 
 
     Args:
         newx (arr): the points at which to interpolate
         origx (arr): the original x coordinates
         origy (arr): the original y coordinates
         smoothness (float): how much to smooth
-        growth (float): the growth rate to apply past the ends of the data [deprecated]
+        growth (float): the growth rate to apply past the ends of the data
         ensurefinite (bool):  ensure all values are finite (including skipping NaNs)
-        keepends (bool): whether to keep the ends [deprecated]
-        skipnans (bool): whether to skip NaNs
         method (str): the type of interpolation to use (options are 'linear' or 'nearest')
 
     Returns:
@@ -916,14 +917,25 @@ def smoothinterp(newx=None, origx=None, origy=None, smoothness=None, growth=None
 
     **Example**::
 
-        origy = np.array([0,0.1,0.3,0.8,0.7,0.9,0.95,1])
+        import sciris as sc
+        import numpy as np
+        from scipy import interpolate
+        
+        origy = np.array([0,0.2,0.1,0.9,0.7,0.8,0.95,1])
         origx = np.linspace(0,1,len(origy))
         newx = np.linspace(0,1,5*len(origy))
-        newy = sc.smoothinterp(newx, origx, origy, smoothness=5)
-        pl.plot(newx,newy)
-        pl.scatter(origx,origy)
+        sc_y = sc.smoothinterp(newx, origx, origy, smoothness=5)
+        np_y = np.interp(newx, origx, origy)
+        si_y = interpolate.interp1d(origx, origy, 'cubic')(newx)
+        kw = dict(lw=3, alpha=0.7)
+        pl.plot(newx, np_y, '--', label='NumPy', **kw)
+        pl.plot(newx, si_y, ':',  label='SciPy', **kw)
+        pl.plot(newx, sc_y, '-',  label='Sciris', **kw)
+        pl.scatter(origx, origy, s=50, c='k', label='Data')
+        pl.legend()
+        pl.show()
 
-    | *New in verison 3.0.0:* "ensurefinite" now defaults to True
+    | *New in verison 3.0.0:* "ensurefinite" now defaults to True; removed "skipnans" argument
     '''
     # Ensure arrays and remove NaNs
     if scu.isnumber(newx):  newx = [newx] # Make sure it has dimension
