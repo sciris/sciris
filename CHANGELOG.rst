@@ -15,6 +15,7 @@ This version's major changes include:
 
 #. **New Parallel class**: A new :class:`sc.Parallel() <sc_parallel.Parallel>` class allows finer-grained managing of parallel processes, including automatic progress bars, better exception handling, and asynchronous running.
 #. **Better versioning**: New functions :func:`sc.metadata() <sc_versioning.metadata>`, :func:`sc.savearchive() <sc_versioning.savearchive>`, and :func:`sc.loadarchive() <sc_versioning.loadarchive>` make it easier to store and save metadata along with objects.
+#. **Faster data structures**: :class:`sc.odict() <sc_odict.odict>` and :class:`sc.dataframe() <sc_dataframe.dataframe>` have both been reimplemented for better performance and with additional methods.
 #. **Easier imports**: :func:`sc.importbypath() <sc_utils.importbypath>` lets you load a module into Python by providing the folder or filename (useful for loading one-off scripts, or two versions of the same library).
 #. **Better documentation**: A comprehensive set of tutorials has been added to the documentation, and the documentation has been rewritten in a new style.
 
@@ -131,7 +132,7 @@ Improvements and new features
 #. :func:`sc.isiterable() <sc_utils.isiterable>` now has optional ``exclude`` and ``minlen`` arguments.
 #. :func:`sc.flexstr() <sc_utils.flexstr>` now has more options for converting arbitrary or multiple objects to a string.
 #. :func:`sc.transposelist() <sc_utils.transposelist>` has a new ``fix_uneven`` argument (previously, elements longer than the shortest sublist were silently removed).
-#. :func:`sc.checkmem() <sc_profiling.checkmem>` now has ``to_df()`` and ``disp()`` methods.
+#. :func:`sc.tryexcept() <sc_utils.tryexcept>` now has ``to_df()`` and ``disp()`` methods.
 
 
 Bugfixes
