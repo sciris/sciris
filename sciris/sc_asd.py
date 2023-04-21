@@ -1,13 +1,15 @@
 '''
-Adaptive stochastic descent optimization algorithm, building on scipy.optimize.
+Adaptive stochastic descent optimization algorithm, building on :mod:`scipy.optimize`.
 
-This algorithm is published as "Optimization by adaptive stochastic descent" by
-Kerr et al. (2018) (DOI: https://doi.org/10.1371/journal.pone.0192944).
+This algorithm is published as:
+
+  Kerr CC, Dura-Bernal S, Smolinski TG, Chadderdon GL, Wilson DP (2018).
+  **Optimization by Adaptive Stochastic Descent**. *PLoS ONE* 13(3): e0192944. 
+  https://doi.org/10.1371/journal.pone.0192944
 '''
 
+import time
 import numpy as np
-import numpy.random as nr
-from time import time
 from . import sc_utils as scu
 from . import sc_printing as scp
 from . import sc_odict as sco
@@ -20,7 +22,7 @@ def asd(function, x, args=None, stepsize=0.1, sinc=2, sdec=2, pinc=2, pdec=2,
     label=None, verbose=1, **kwargs):
     """
     Optimization using adaptive stochastic descent (ASD). Can be used as a faster
-    and more powerful alternative to e.g. ``scipy.optimize.minimize()``.
+    and more powerful alternative to e.g. :func:`scipy.optimize.minimize()`.
 
     ASD starts at ``x0`` and attempts to find a local minimizer ``x`` of the function ``func()``.
     ``func()`` accepts input ``x`` and returns a scalar function value evaluated at ``x``.
@@ -90,11 +92,10 @@ def asd(function, x, args=None, stepsize=0.1, sinc=2, sdec=2, pinc=2, pdec=2,
         Optimization by adaptive stochastic descent.
         PLOS ONE 13 (3), e0192944.
 
-    Version: 2019jul08
+    *New in version 3.0.0:* Uses its own random number stream
     """
-    if randseed is not None:
-        nr.seed(int(randseed)) # Don't reset it if not supplied
-        if verbose >= 2: print(f'ASD: Launching with random seed is {randseed}; sample: {nr.random()}')
+    rng = np.random.default_rng(randseed)
+    if verbose >= 2: print(f'ASD: Launching with random seed {randseed}')
 
     def consistentshape(userinput, origshape=False):
         """
@@ -175,7 +176,7 @@ def asd(function, x, args=None, stepsize=0.1, sinc=2, sdec=2, pinc=2, pdec=2,
 
     # Loop
     count = 0 # Keep track of how many iterations have occurred
-    start = time() # Keep track of when we begin looping
+    start = time.time() # Keep track of when we begin looping
     offset = ' ' * 4 # Offset the print statements
     exitreason = 'Unknown exit reason' # Catch everything else
     while True:
@@ -187,7 +188,7 @@ def asd(function, x, args=None, stepsize=0.1, sinc=2, sdec=2, pinc=2, pdec=2,
         cumprobs = np.cumsum(probabilities) # Calculate the cumulative distribution
         inrange = False
         for r in range(maxrangeiters): # Try to find parameters within range
-            choice = np.flatnonzero(cumprobs > nr.random())[0] # Choose a parameter and upper/lower at random
+            choice = np.flatnonzero(cumprobs > rng.random())[0] # Choose a parameter and upper/lower at random
             par = np.mod(choice, nparams) # Which parameter was chosen
             pm = np.floor((choice) / nparams) # Plus or minus
             newval = x[par] + ((-1)**pm) * stepsizes[choice] # Calculate the new vector
@@ -229,7 +230,7 @@ def asd(function, x, args=None, stepsize=0.1, sinc=2, sdec=2, pinc=2, pdec=2,
                 if verbose >= 1: print('ASD: Warning, objective function returned NaN')
         if verbose > 0 and not (count % max(1, int(1.0/verbose))): # Print out every 1/verbose steps
             orig, best, new, diff = scp.sigfig([fvalorig, fvalold, fvalnew, fvalnew-fvalold])
-            print(offset + label + f' step {count} ({time()-start:0.1f} s) {flag} (orig:{orig} | best:{best} | new:{new} | diff:{diff})')
+            print(offset + label + f' step {count} ({time.time()-start:0.1f} s) {flag} (orig:{orig} | best:{best} | new:{new} | diff:{diff})')
 
         # Store output information
         fvals[count] = fval # Store objective function evaluations
@@ -239,8 +240,8 @@ def asd(function, x, args=None, stepsize=0.1, sinc=2, sdec=2, pinc=2, pdec=2,
         if count >= maxiters: # Stop if the iteration limit is exceeded # pragma: no cover
             exitreason = 'Maximum iterations reached'
             break
-        if (time() - start) > maxtime: # pragma: no cover
-            strtime, strmax = scp.sigfig([(time()-start), maxtime])
+        if (time.time() - start) > maxtime: # pragma: no cover
+            strtime, strmax = scp.sigfig([(time.time()-start), maxtime])
             exitreason = f'Time limit reached ({strtime} > {strmax})'
             break
         if (count > stalliters) and (abs(np.mean(abserrorhistory)) < abstol): # Stop if improvement is too small

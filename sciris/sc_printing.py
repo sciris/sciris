@@ -2,12 +2,12 @@
 Printing/notification functions.
 
 Highlights:
-    - :func:`heading`: print text as a 'large' heading
-    - :func:`colorize`: print text in a certain color
-    - :func:`pr`: print full representation of an object, including methods and each attribute
-    - :func:`sigfigs`: truncate a number to a certain number of significant figures
-    - :func:`progressbar`: show a (text-based) progress bar
-    - :func:`capture`: capture text output (e.g., stdout) as a variable
+    - :func:`sc.heading() <heading>`: print text as a 'large' heading
+    - :func:`sc.colorize() <colorize>`: print text in a certain color
+    - :func:`sc.pr() <pr>`: print full representation of an object, including methods and each attribute
+    - :func:`sc.sigfig() <sigfig>`: truncate a number to a certain number of significant figures
+    - :func:`sc.progressbar() <progressbar>`: show a (text-based) progress bar
+    - :func:`sc.capture() <capture>`: capture text output (e.g., stdout) as a variable
 '''
 
 import io
@@ -21,8 +21,8 @@ import collections as co
 from textwrap import fill
 from collections import UserString
 from contextlib import redirect_stdout
+from ._extras import ansicolors as ac
 from . import sc_utils as scu
-from . import ansicolors as ac
 
 
 # Add Windows support for colors (do this at the module level so that colorama.init() only gets called once)
@@ -131,7 +131,7 @@ def prepr(obj, maxlen=None, maxitems=None, skip=None, dividerchar='—', divider
     '''
     Akin to "pretty print", returns a pretty representation of an object --
     all attributes (except any that are skipped), plust methods and ID. Usually
-    used via the interactive sc.pr() (which prints), rather than this (which returns
+    used via the interactive :func:`sc.pr() <pr>` (which prints), rather than this (which returns
     a string).
 
     Args:
@@ -146,7 +146,7 @@ def prepr(obj, maxlen=None, maxitems=None, skip=None, dividerchar='—', divider
         die (bool): whether to raise an exception if an error is encountered
         debug (bool): print out detail during string construction
     
-    New in version 2.2.0: "debug" argument
+    *New in version 3.0.0:* "debug" argument
     '''
 
     # Decide how to handle representation function -- repr is dangerous since can lead to recursion
@@ -244,7 +244,9 @@ def prepr(obj, maxlen=None, maxitems=None, skip=None, dividerchar='—', divider
 
 def pr(obj, *args, **kwargs):
     '''
-    Shortcut for printing the pretty repr for an object -- similar to prettyprint
+    Pretty-print the detailed representation of an object.
+
+    See :func:`sc.prepr() <prepr>` for options.
 
     **Example**::
 
@@ -278,7 +280,7 @@ def indent(prefix=None, text=None, suffix='\n', n=0, pretty=False, width=70, **k
         n (int): if prefix is not specified, the size of the indent
         pretty (bool): whether to use pprint to format the text
         width (int): maximum width before wrapping (if None, don't wrap)
-        kwargs (dict): passed to ``textwrap.fill()``
+        kwargs (dict): passed to :func:`textwrap.fill()`
 
     **Examples**::
 
@@ -288,7 +290,7 @@ def indent(prefix=None, text=None, suffix='\n', n=0, pretty=False, width=70, **k
 
         print('my fave is: ' + sc.indent(text=rand(100), n=12))
 
-    New in version 1.3.1: more flexibility in arguments
+    *New in version 1.3.1:* more flexibility in arguments
     '''
     # If "prefix" is given but text isn't, swap them
     if text is None and prefix is not None: # pragma: no cover
@@ -323,12 +325,15 @@ def indent(prefix=None, text=None, suffix='\n', n=0, pretty=False, width=70, **k
 
 #%% Data representation functions
 
-__all__ += ['sigfig', 'printmean', 'printmedian', 'humanize_bytes', 'printarr', 'printdata', 'printvars']
+__all__ += ['sigfig', 'sigfigs', 'arraymean', 'arraymedian', 'printmean', 'printmedian', 
+            'humanize_bytes', 'printarr', 'printdata', 'printvars']
 
 
 def sigfig(x, sigfigs=4, SI=False, sep=False, keepints=False):
     '''
     Return a string representation of variable x with sigfigs number of significant figures
+
+    Note: :func:`sc.sigfig() <sigfig>` and :func:`sc.sigfigs() <sigfigs>` are aliases.
 
     Args:
         x (int/float/list/arr): the number(s) to round
@@ -346,7 +351,7 @@ def sigfig(x, sigfigs=4, SI=False, sep=False, keepints=False):
         vals = np.random.rand(5)
         sc.sigfig(vals, sigfigs=3)
     
-    New in version 2.2.0: changed default number of significant figures from 5 to 4; return list rather than tuple
+    *New in version 3.0.0:* changed default number of significant figures from 5 to 4; return list rather than tuple; changed SI suffixes to uppercase
     '''
     output = []
 
@@ -355,7 +360,7 @@ def sigfig(x, sigfigs=4, SI=False, sep=False, keepints=False):
     xlist = x if islist else scu.tolist(x)
     for x in xlist:
         suffix = ''
-        formats = [(1e18,'e18'), (1e15,'e15'), (1e12,'t'), (1e9,'b'), (1e6,'m'), (1e3,'k')]
+        formats = [(1e18,'e18'), (1e15,'e15'), (1e12,'T'), (1e9,'B'), (1e6,'M'), (1e3,'K')]
         if SI:
             for val,suff in formats:
                 if abs(x) >= val:
@@ -396,10 +401,13 @@ def sigfig(x, sigfigs=4, SI=False, sep=False, keepints=False):
     else:
         return output[0]
 
+# Alias to avoid confusion
+sigfigs = sigfig
 
-def printmean(data, stds=2, mean_sf=None, err_sf=None, doprint=True, **kwargs):
+
+def arraymean(data, stds=2, mean_sf=None, err_sf=None, doprint=False, **kwargs):
     '''
-    Quickly print the mean and standard deviation of an array.
+    Quickly calculate the mean and standard deviation of an array.
     
     By default, will calculate the correct number of significant figures based on
     the deviation.
@@ -410,14 +418,14 @@ def printmean(data, stds=2, mean_sf=None, err_sf=None, doprint=True, **kwargs):
         mean_sf (int): if provided, use this number of significant figures for the mean rather than the auto-calculated
         err_sf (int): ditto, but for the error (standard deviation)
         doprint (bool): whether to print (else, return the string)
-        kwargs (dict): passed to ``sc.sigfig()``
+        kwargs (dict): passed to :func:`sc.sigfig() <sigfig>`
     
     **Example**::
         
         data = [1210, 1072, 1722, 1229, 1902]
         sc.printmean(data) # Returns 1430 ± 320
     
-    New in version 2.2.0.
+    *New in version 3.0.0.*
     '''
     vsf = mean_sf # vsf = "value significant figures"
     esf = err_sf if err_sf is not None else 2
@@ -441,9 +449,9 @@ def printmean(data, stds=2, mean_sf=None, err_sf=None, doprint=True, **kwargs):
         return string
 
 
-def printmedian(data, ci=95, sf=3, doprint=True, **kwargs):
+def arraymedian(data, ci=95, sf=3, doprint=False, **kwargs):
     '''
-    Quickly print the median and confidence interval of an array.
+    Quickly calculate the median and confidence interval of an array.
     
     The confidence interval defaults to 95%. If an integer is supplied, this is
     treated as a percentile (e.g. 95=95% CI). If a float is supplied, it's treated
@@ -457,14 +465,14 @@ def printmedian(data, ci=95, sf=3, doprint=True, **kwargs):
         ci (int/float/list/str): the confidence interval to use to use (see above for details)
         sf (int): number of significant figures to use
         doprint (bool): whether to print (else, return the string)
-        kwargs (dict): passed to ``sc.sigfig()``
+        kwargs (dict): passed to :func:`sc.sigfig() <sigfig>`
     
     **Examples**::
         
         data = [1210, 1072, 1722, 1229, 1902]
         sc.printmedian(data, 80) # Returns '1230 (80.0% CI: 1130, 1830)'
     
-    New in version 2.2.0.
+    *New in version 3.0.0.*
     '''
     # Handle quantiles
     if ci is None: # pragma: no cover
@@ -517,6 +525,15 @@ def printmedian(data, ci=95, sf=3, doprint=True, **kwargs):
         return string
 
 
+def printmean(*args, doprint=True, **kwargs):
+    ''' Alias to :func:`sc.arraymean() <arraymean>` with doprint=True '''
+    return arraymean(*args, doprint=doprint, **kwargs)
+
+
+def printmedian(*args, doprint=True, **kwargs):
+    ''' Alias to :func:`sc.arraymedian() <arraymedian>` with doprint=True '''
+    return arraymedian(*args, doprint=doprint, **kwargs)
+
 
 def humanize_bytes(bytesize, decimals=3):
     '''
@@ -532,7 +549,7 @@ def humanize_bytes(bytesize, decimals=3):
         
     See the humansize library for more flexibility.
     
-    New in version 2.2.0.
+    *New in version 3.0.0.*
     '''
     # Convert to string
     factor = 1
@@ -569,8 +586,8 @@ def printarr(arr, fmt=None, colsep='  ', vsep='—', decimals=2, doprint=True, d
         sc.printarr(numeric)
         sc.printarr(mixed)
 
-    New in version 2.0.3: "fmt", "colsep", "vsep", "decimals", and "dtype" arguments
-    New in version 2.2.0: "doprint" argument
+    *New in version 2.0.3:* "fmt", "colsep", "vsep", "decimals", and "dtype" arguments
+    *New in version 3.0.0:* "doprint" argument
     '''
     from . import sc_math as scm # To avoid circular import
     
@@ -726,7 +743,7 @@ def colorize(color=None, string=None, doprint=None, output=False, enable=True, s
         string (str): the text to be colored
         doprint (bool): whether to print the string (default true unless output)
         output (bool): whether to return the modified version of the string (default false)
-        enable (bool): switch to allow ``sc.colorize()`` to be easily turned off without converting to a ``print()`` statement
+        enable (bool): switch to allow :func:`sc.colorize() <colorize>` to be easily turned off without converting to a :func:`print()` statement
         showhelp (bool): show help rather than changing colors
         fg (str): foreground colour
         bg (str): background colour
@@ -741,9 +758,9 @@ def colorize(color=None, string=None, doprint=None, output=False, enable=True, s
         sc.colorize() # Stop typing in magenta
         sc.colorize('cat in the hat', fg='#ffa044', bg='blue', style='italic+underline') # Alternate usage example
 
-    To get available colors, type ``sc.colorize(showhelp=True)``.
+    To get available colors, type :func:`sc.colorize(showhelp=True) <colorize>`.
 
-    | New in version 1.3.1: "doprint" argument; ansicolors shortcut
+    | *New in version 1.3.1:* "doprint" argument; ansicolors shortcut
     '''
 
     # Handle short-circuit case
@@ -852,7 +869,8 @@ def printmagenta(s, **kwargs):
     return print(ac.magenta(s, **kwargs))
 
 
-def heading(string=None, *args, color=None, divider=None, spaces=None, spacesafter=None, minlength=None, maxlength=None, sep=' ', doprint=None, output=False, **kwargs):
+def heading(string='', *args, color='cyan', divider='—', spaces=2, spacesafter=1, 
+            minlength=10, maxlength=200, sep=' ', doprint=None, output=False, **kwargs):
     '''
     Create a colorful heading. If just supplied with a string (or list of inputs like print()),
     create blue text with horizontal lines above and below and 3 spaces above. You
@@ -865,14 +883,14 @@ def heading(string=None, *args, color=None, divider=None, spaces=None, spacesaft
         args        (list): additional strings to print
         color       (str):  color to use for the heading (default cyan)
         divider     (str):  symbol to use for the divider (default '—')
-        spaces      (int):  number of spaces to put before the heading (default 3)
+        spaces      (int):  number of spaces to put before the heading (default 2)
         spacesafter (int):  number of spaces to put after the heading (default 1)
-        minlength   (int):  minimum length of the divider (default 30)
-        maxlength   (int):  maximum length of the divider (default 120)
+        minlength   (int):  minimum length of the divider (default 10)
+        maxlength   (int):  maximum length of the divider (default 200)
         sep         (str):  if multiple arguments are supplied, use this separator to join them
         doprint     (bool): whether to print the string (default true if no output)
         output      (bool): whether to return the string as output (else, print)
-        kwargs      (dict): passed to ``sc.colorize()``
+        kwargs      (dict): passed to :func:`sc.colorize() <colorize>`
 
     Returns:
         Formatted string if ``output=True``
@@ -881,15 +899,8 @@ def heading(string=None, *args, color=None, divider=None, spaces=None, spacesaft
         sc.heading('This is a heading')
         sc.heading(string='This is also a heading', color='red', divider='*', spaces=0, minlength=50)
 
-    | New in version 1.3.1.: "spacesafter"
+    | *New in version 1.3.1.*: "spacesafter"
     '''
-    if string      is None: string      = ''
-    if color       is None: color       = 'cyan' # Reasonable default for light and dark consoles
-    if divider     is None: divider     = '—' # Em dash for a continuous line
-    if spaces      is None: spaces      = 3
-    if spacesafter is None: spacesafter = 1
-    if minlength   is None: minlength   = 30
-    if maxlength   is None: maxlength   = 120
 
     # Convert to single string
     args = scu.mergelists(string, list(args))
@@ -942,9 +953,9 @@ def printv(string, thisverbose=1, verbose=2, indent=2, **kwargs):
         thisverbose (int): level of verbosity at which to print this message
         verbose (int): global verbose variable
         indent (int): amount by which to indent based on verbosity level
-        kwargs (dict): passed to ``print()``
+        kwargs (dict): passed to :func:`print()`
         
-    New in version 2.2.0: "kwargs" argument; removed "newline" argument
+    *New in version 3.0.0:* "kwargs" argument; removed "newline" argument
     '''
     if verbose >= thisverbose: # Only print if sufficiently verbose
         indents = ' '*thisverbose*indent # Create automatic indenting
@@ -1070,7 +1081,7 @@ def percentcomplete(step=None, maxsteps=None, stepsize=1, prefix=None):
         for i in range(maxiters):
             sc.percentcomplete(i, maxiters, prefix='Completeness: ') 
     
-    See also :func:`progressbar()` for a progress bar.
+    See also :func:`sc.progressbar() <progressbar>` for a progress bar.
     '''
     if prefix is None:
         prefix = ' '
@@ -1083,7 +1094,8 @@ def percentcomplete(step=None, maxsteps=None, stepsize=1, prefix=None):
     return
 
 
-def progressbar(i=None, maxiters=None, label='', every=1, length=30, empty='—', full='•', newline=False, **kwargs):
+def progressbar(i=None, maxiters=None, label='', every=1, length=30, empty='—', full='•', 
+                newline=False, flush=False, **kwargs):
     '''
     Show a progress bar for a for loop.
     
@@ -1099,7 +1111,8 @@ def progressbar(i=None, maxiters=None, label='', every=1, length=30, empty='—'
         length   (int): length of progress bar
         empty    (str): character for not-yet-completed steps
         full     (str): character for completed steps
-        newline  (str): character to print at the end of the line (default none)
+        newline  (bool): whether to print each iteration on a new line
+        flush    (bool): whether to force-flush the buffer
         kwargs   (dict): passed to ``tqdm.tqdm()``; see its documentation for full options
 
     **Examples**::
@@ -1121,8 +1134,8 @@ def progressbar(i=None, maxiters=None, label='', every=1, length=30, empty='—'
 
     Adapted from example by Greenstick (https://stackoverflow.com/questions/3173320/text-progress-bar-in-the-console)
 
-    | New in version 1.3.3: "every" argument
-    | New in version 2.2.0: wrapper for tqdm
+    | *New in version 1.3.3:* "every" argument
+    | *New in version 3.0.0:* wrapper for tqdm
     '''
     if i is None or scu.isiterable(i):
         desc = kwargs.pop('desc', label)
@@ -1151,7 +1164,7 @@ def progressbar(i=None, maxiters=None, label='', every=1, length=30, empty='—'
     # Print
     lastiter = (i == maxiters)
     if not(i%every) or lastiter:
-        print(f'\r{label} {bar} {percent}', end=ending)
+        print(f'\r{label} {bar} {percent}', end=ending, flush=flush)
         if lastiter:
             print() # Newline at the end
 
@@ -1162,19 +1175,21 @@ class tqdm_pickle(tqdm.tqdm):
     '''
     Simple subclass of tqdm that allows pickling
     
-    Usually not used directly by the user; used via :func:`progressbars()` instead.
+    Usually not used directly by the user; used via :func:`sc.progressbars() <progressbars>` instead.
     Pickling is required for passing ``tqdm`` instances between processes.
     
     Based on ``tqdm`` 4.65.0; may become deprecated in future ``tqdm`` releases.
     
-    New in version 2.2.0.    
+    *New in version 3.0.0.*
     '''
     
     def __getstate__(self):
+        ''' Overwrite default __getstate__ '''
         d = {k:v for k,v in self.__dict__.items() if k not in ['sp', 'fp']}
         return d
      
     def __setstate__(self, d): # pragma: no cover
+        ''' Overwrite default __getstate__ '''
         self.__dict__ = d
         self.__dict__['fp'] = tqdm.utils.DisableOnWriteError(sys.stderr, tqdm_instance=self)
         self.__dict__['sp'] = self.status_printer(self.fp)
@@ -1228,7 +1243,7 @@ class progressbars(scu.prettyobj):
         # Sim 3:  44%|███████████████████████████████        | 160/365 [00:01<00:01, 151.22it/s]
         # Sim 4:  42%|████████████████████████████▏          | 145/365 [00:01<00:01, 136.75it/s]
 
-    New in version 2.2.0.
+    *New in version 3.0.0.*
     '''
     
     def __init__(self, n=1, total=1, label=None, leave=False, **kwargs):
@@ -1273,9 +1288,9 @@ class progressbars(scu.prettyobj):
 
 class capture(UserString, str, redirect_stdout):
     '''
-    Captures stdout (e.g., from ``print()``) as a variable.
+    Captures stdout (e.g., from :func:`print()`) as a variable.
 
-    Based on ``contextlib.redirect_stdout``, but saves the user the trouble of
+    Based on :obj:`contextlib.redirect_stdout`, but saves the user the trouble of
     defining and reading from an IO stream. Useful for testing the output of functions
     that are supposed to print certain output.
 
@@ -1297,7 +1312,7 @@ class capture(UserString, str, redirect_stdout):
         print('txt2:')
         print(txt2)
 
-    New in version 1.3.3.
+    *New in version 1.3.3.*
     '''
 
     def __init__(self, seq='', *args, **kwargs):

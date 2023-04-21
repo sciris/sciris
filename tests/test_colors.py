@@ -55,6 +55,7 @@ def test_colormaps(doplot=doplot):
     nanpos = 5
     nancolor = 'sienna'
     x = np.random.rand(10)
+    x = sc.normalize(x) # To ensure the values span 0-1
     x[nanpos] = np.nan
     o.veccolors = sc.vectocolor(x, nancolor=nancolor, midpoint=0.3, cmap='turbo')
     assert (o.veccolors[nanpos,:] == sc.sanitizecolor(nancolor, asarray=True, alpha=1)).all()

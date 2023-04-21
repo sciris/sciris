@@ -1,9 +1,0 @@
-build:
-    image: latest
-python:
-    version: 3.8
-    setup_py_install: true
-    use_system_site_packages: true
-requirements_file: docs/requirements.txt
-# Cut down on build time by skipping PDF generation for now
-formats: []

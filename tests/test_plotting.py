@@ -19,7 +19,7 @@ def test_3d(doplot=doplot):
     sc.heading('Testing 3D')
     o = sc.objdict()
 
-    print('Testing surf3d')
+    print('Testing fig3d')
     o.fig = sc.fig3d(num='Blank 3D')
 
     print('Testing surf3d')
@@ -31,6 +31,9 @@ def test_3d(doplot=doplot):
     data = pl.rand(20,20)
     smoothdata = sc.smooth(data)
     sc.bar3d(smoothdata, figkwargs=dict(num='bar3d'))
+    
+    print('Testing scatter3d')
+    sc.scatter3d(smoothdata, figkwargs=dict(num='scatter3d'))
 
     if not doplot:
         pl.close('all')
@@ -93,6 +96,11 @@ def test_other(doplot=doplot):
     sc.orderlegend(reverse=True) # Legend order C, B, A
     sc.orderlegend([1,0,2], frameon=False) # Legend order B, A, C with no frame
     sc.separatelegend()
+    
+    # Test styles
+    with pl.style.context('sciris.fancy'):
+        pl.figure('Custom style')
+        pl.plot(pl.rand(10))
 
     if not doplot:
         pl.close('all')

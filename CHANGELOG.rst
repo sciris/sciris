@@ -1,109 +1,164 @@
 What's new
 ==========
 
+.. currentmodule:: sciris
+
 All major updates to Sciris are documented here.
 
 By import convention, components of the Sciris library are listed beginning with ``sc.``, e.g. ``sc.odict()``.
 
 
-Version 2.2.0 (2023-04-14)
+Version 3.0.0 (2023-04-20)
 --------------------------
 
 This version's major changes include:
 
-#. **New Parallel class**: A new ``sc.Parallel()`` class allows finer-grained managing of parallel processes, including automatic progress bars, better exception handling, and asynchronous running.
-#. **Better versioning**: New functions ``sc.metadata()``, ``sc.savewithmetadata()``, and ``sc.loadwithmetadata()`` make it easier to store and save metadata along with objects.
-#. **Easier imports**: ``sc.importbypath()`` lets you load a module into Python by providing the folder or filename (useful for loading one-off scripts, or two versions of the same library).
+#. **New Parallel class**: A new :class:`sc.Parallel() <sc_parallel.Parallel>` class allows finer-grained managing of parallel processes, including automatic progress bars, better exception handling, and asynchronous running.
+#. **Better versioning**: New functions :func:`sc.metadata() <sc_versioning.metadata>`, :func:`sc.savearchive() <sc_versioning.savearchive>`, and :func:`sc.loadarchive() <sc_versioning.loadarchive>` make it easier to store and save metadata along with objects.
+#. **Faster data structures**: :class:`sc.odict() <sc_odict.odict>` and :class:`sc.dataframe() <sc_dataframe.dataframe>` have both been reimplemented for better performance and with additional methods.
+#. **Easier imports**: :func:`sc.importbypath() <sc_utils.importbypath>` lets you load a module into Python by providing the folder or filename (useful for loading one-off scripts, or two versions of the same library).
 #. **Better documentation**: A comprehensive set of tutorials has been added to the documentation, and the documentation has been rewritten in a new style.
 
 
 Improvements and new features
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-Parallelization
-^^^^^^^^^^^^^^^
-#. There is a new ``sc.Parallel`` class, which is used to implement the (more or less unchanged) ``sc.parallelize()`` function.
-#. ``sc.parallelize()`` now has a ``progress`` argument that will show a progress bar; the ``returnpool`` argument has been removed (use ``sc.Parallel`` instead).
+1. Parallelization
+^^^^^^^^^^^^^^^^^^
+#. There is a new :class:`sc.Parallel() <sc_parallel.Parallel>` class, which is used to implement the (more or less unchanged) :func:`sc.parallelize() <sc_parallel.parallelize>` function.
+#. :func:`sc.parallelize() <sc_parallel.parallelize>` now has a ``progress`` argument that will show a progress bar; the ``returnpool`` argument has been removed (use :class:`sc.Parallel() <sc_parallel.Parallel>` instead).
 
 
-Dataframe
-^^^^^^^^^
-#. Better handling of (and preservation) of ``dtypes`` for dataframe columns, including a new ``df.set_dtypes()`` method.
+2. Dataframe
+^^^^^^^^^^^^
 #. Better implementation of underlying logic, leading to significant performance increases in some cases (e.g., iteratively appending rows).
+#. Numerous methods have been renamed, modified, or added, specifically: ``append``, ``col_index``, ``col_name``, ``findind``, ``findinds``, ``merge``, ``popcols``, ``poprow``, ``poprows``, and ``sort``.
+#. Keyword arguments are now interpreted as columns, e.g. ``df = sc.dataframe(a=[1,2], b=[3,4])``.
+#. Better handling of (and preservation) of ``dtypes`` for dataframe columns, including a new :meth:`df.set_dtypes() <sc_dataframe.dataframe.set_dtypes>` method.
+#. Dataframes now support equality checks.
 
-Time/date
-^^^^^^^^^
-#. New ``sc.time()`` alias for ``time.time()``.
+
+3. Time/date
+^^^^^^^^^^^^
 #. Support for ``pandas`` and ``Numpy`` datetime objects.
-#. New ``sc.timer`` attributes and methods: ``rawtimings``, ``sum()``, ``min()``, ``max()``, ``mean()``, ``std()``.
-#. More accurate computation of self-time in ``sc.timedsleep()``.
+#. New :class:`sc.timer <sc_datetime.timer>` attributes and methods: :obj:`sc.rawtimings <sc_datetime.timer.rawtimings>`, :meth:`sc.sum() <sc_datetime.timer.sum>`, :meth:`sc.min() <sc_datetime.timer.min>`, :meth:`sc.max() <sc_datetime.timer.max>`, :meth:`sc.mean() <sc_datetime.timer.mean>`, :meth:`sc.std() <sc_datetime.timer.std>`.
+#. :class:`sc.timer <sc_datetime.timer>` now displays time in human-appropriate units (e.g., 3.4 μs instead of 0.0000034 s) by default, or accepts a ``unit`` argument.
+#. New :func:`sc.time() <sc_datetime.time>` alias for :func:`time.time()`.
+#. :func:`sc.datedelta() <sc_datetime.datedelta>` can now operate on a list of dates.
+#. :func:`sc.randsleep() <sc_datetime.randsleep>` now accepts a ``seed`` argument.
+#. More accurate computation of self-time in :func:`sc.timedsleep() <sc_datetime.timedsleep>`.
 
-Files
-^^^^^
-#. A new function ``sc.unzip()`` extracts zip files to disk, while ``sc.loadzip()`` now defaults to loading the zip file contents to memory.
-#. If a saved file can't be unpickled, ``sc.load()`` now defaults to using ``dill``, and has more robust error handling (see also "versioning" updates below).
-#. ``sc.makefilepaths()`` now defaults to ``makedirs=False``.
-#. File save functions now make new subfolders by default.
-#. ``sc.save()`` now has an ``allow_empty`` argument (instead of ``die='never'``).
 
-Printing
+4. Files
 ^^^^^^^^
-#. ``sc.progressbar()`` can now be used to wrap an iterable, in which case it acts as an alias to ``tqdm.tqdm()``.
-#. The new ``sc.progressbars()`` class will create and manage multiple progress bars, which can be useful for monitoring multiple parallel long-running jobs.
-#. New functions ``sc.printmean()`` and ``sc.printmedian()`` can be used to quickly summarize an array.
-#. ``sc.humanize_bytes()`` will convert a number of bytes into a human-readable number (e.g. ``32975281`` to ``32.975 MB``).
-#. ``sc.printarr()`` now has configurable decimal places (``decimals`` argument) and can return a string instead of printing (``doprint=False``).
+#. A new function :func:`sc.unzip() <sc_fileio.unzip>` extracts zip files to disk, while :func:`sc.loadzip() <sc_fileio.loadzip>` now defaults to loading the zip file contents to memory. :func:`sc.savezip() <sc_fileio.savezip>` can now save both data and files, and its ``filelist`` argument has been renamed ``files``.
+#. If a saved file can't be unpickled, :func:`sc.load() <sc_fileio.load>` now defaults to using ``dill``, and has more robust error handling (see also "versioning" updates below).
+#. :func:`sc.makefilepath() <sc_fileio.makefilepath>` now defaults to ``makedirs=False``.
+#. File save functions now make new subfolders by default
+#. :func:`sc.save() <sc_fileio.save>` now has an ``allow_empty`` argument (instead of ``die='never'``).
+#. :func:`sc.glob() <sc_fileio.glob>` is a new alias for :func:`sc.getfilelist() <sc_fileio.getfilelist>`.
+#. :func:`sc.thisdir() <sc_fileio.thisdir>` now gives a correct answer when running in a Jupyter notebook.
 
-Profiling
-^^^^^^^^^
-#. The new ``sc.benchmark()`` function runs tests on both regular Python and Numpy operations and reports the performance of the current machine.
-#. ``sc.checkmem()`` now returns a dataframe, can descend multiple levels through an object, reports subtotals, and has an ``order`` argument instead of ``alphabetical``.
 
-Versioning
-~~~~~~~~~~
+5. Printing
+^^^^^^^^^^^
+#. :func:`sc.progressbar() <sc_printing.progressbar>` can now be used to wrap an iterable, in which case it acts as an alias to ``tqdm.tqdm()``.
+#. The new :func:`sc.progressbars() <sc_printing.progressbars>` class will create and manage multiple progress bars, which can be useful for monitoring multiple parallel long-running jobs.
+#. New functions :func:`sc.arraymean() <sc_printing.arraymean>` and :func:`sc.arraymedian() <sc_printing.arraymedian>` can be used to quickly summarize an array. To print rather than return a string, use :func:`sc.printmean() <sc_printing.printmean>` and :func:`sc.printmedian() <sc_printing.printmedian>`.
+#. The new function :func:`sc.humanize_bytes() <sc_printing.humanize_bytes>` will convert a number of bytes into a human-readable number (e.g. ``32975281`` to ``32.975 MB``).
+#. The new function :func:`sc.readjson() <sc_fileio.readjson>`  will read a JSON from a string (alias to :func:`sc.loadjson(string=...) <sc_fileio.loadjson>`); likewise :func:`sc.readyaml() <sc_fileio.readyaml>`. :func:`sc.printjson() <sc_fileio.printjson>` and print an object as if it was a JSON. 
+#. :func:`sc.printarr() <sc_printing.printarr>` now has configurable decimal places (``decimals`` argument) and can return a string instead of printing (``doprint=False``).
+#. :func:`sc.pp() <sc_utils.pp>` no longer casts objects to JSON first (see :func:`sc.printjson() <sc_fileio.printjson>` for that).
+#. :func:`sc.sigfigs() <sc_printing.sigfigs>` is a new alias of :func:`sc.sigfig() <sc_printing.sigfig>`.
+
+
+6. Profiling
+^^^^^^^^^^^^
+#. The new :func:`sc.benchmark() <sc_profiling.benchmark>` function runs tests on both regular Python and Numpy operations and reports the performance of the current machine.
+#. :func:`sc.checkmem() <sc_profiling.checkmem>` now returns a dataframe, can descend multiple levels through an object, reports subtotals, and has an ``order`` argument instead of ``alphabetical``.
+
+
+7. Versioning
+^^^^^^^^^^^^^
 #. A new versioning module has been added.
-#. A new function ``sc.metadata()`` gathers all relevant metadata and returns a dict that can be used for versioning.
-#. Known regressions from older library versions are now automatically handled by ``sc.load()`` (e.g., ``pandas`` v2.0 dataframes cannot be loaded in v1.5, and vice versa).
-#. A pair of new functions ``sc.savewithmetadata()`` and ``sc.loadwithmetadata()``, provide a way to automatically save metadata along with an object for better versioning.
+#. A new function :func:`sc.metadata() <sc_versioning.metadata>` gathers all relevant metadata and returns a dict that can be used for versioning.
+#. A pair of new functions :func:`sc.savearchive() <sc_versioning.savearchive>` and :func:`sc.loadarchive() <sc_versioning.loadarchive>`, provide a way to automatically save metadata along with an object for better versioning.
+#. Known regressions from older library versions are now automatically handled by :func:`sc.load() <sc_fileio.load>` (e.g., ``pandas`` v2.0 dataframes cannot be loaded in v1.5, and vice versa).
+#. :func:`sc.require() <sc_versioning.require>` now has the option to raise a warning instead of an error if a module is not found.
 
-Math
-^^^^
-#. ``sc.randround()`` now works with multidimensional arrays. (Thanks to `Jamie Cohen <https://github.com/jamiecohen>`_ for the suggestion.)
-#. ``sc.smoothinterp()`` now defaults to ``ensurefinite=True``.
 
-Other
-^^^^^
-#. The new function ``sc.importbypath()`` will import a module by path, as an alternative to standard ``import``. ``sc.importbyname()`` also now accepts a ``path`` argument.
-#. The new function ``sc.getuser()`` will return the current username (as an alias to ``getpass.getuser()``).
-#. The new function ``sc.sanitizestr()`` will sanitize an input string to e.g. ASCII-only or a valid variable name.
-#. ``sc.download()`` now handles exceptions gracefully with ``die=False``.
-#. ``sc.isiterable()`` now has optional ``exclude`` and ``minlen`` arguments.
-#. A new environment variable, ``SCIRIS_NUM_THREADS``, will set the number of threads Numpy uses (if Sciris is imported first). In some cases, more threads results in *slower* processing (and of course uses way more CPU time).
+8. Math
+^^^^^^^
+#. :func:`sc.findnans() <sc_math.findnans>` is a new alias for ``sc.findinds(np.isnan(data))``. :func:`sc.rmnans() <sc_math.rmnans>` is a new alias for :func:`sc.sanitize() <sc_math.sanitize>`.
+#. :func:`sc.randround() <sc_math.randround>` now works with multidimensional arrays. (Thanks to `Jamie Cohen <https://github.com/jamiecohen>`_ for the suggestion.)
+#. :func:`sc.smoothinterp() <sc_math.smoothinterp>` now defaults to ``ensurefinite=True``.
+#. :func:`sc.asd() <sc_asd.asd>` now uses its own random number stream.
+#. :func:`sc.cat() <sc_math.cat>` now works on 2D arrays.
+
+
+9. Dictionaries
+^^^^^^^^^^^^^^^
+#. :class:`sc.odict() <sc_odict.odict>` now inherits from :class:`dict` rather than :class:`OrderedDict <collections.OrderedDict>`. This makes initialization and some other operations nearly four times faster.
+#. :class:`sc.odict() <sc_odict.odict>` can now be initialized with integer keys.
+#. There is a new :meth:`sc.dictobj.to_json() <sc_odict.dictobj.to_json>` method. :meth:`sc.dictobj.fromkeys() <sc_odict.dictobj.fromkeys>` is now a static method.
+
+
+10. Nested objects
+^^^^^^^^^^^^^^^^^
 #. Nested "dictionary" operations can now act on other types of object, including lists and regular objects.
-#. The ``freeze`` argument of ``sc.savefig()`` has been renamed ``pipfreeze``, and ``frame`` has been replaced with ``relframe``.
-#. ``sc.search()`` now works on values as well as keys/attributes.
-#. ``sc.dictobj.fromkeys()`` is now a static method.
+#. :func:`sc.iterobj() <sc_nested.iterobj>` applies a function iteratively to an object.
+#. :func:`sc.search() <sc_nested.search>` now works on values as well as keys/attributes.
+
+
+11. System and platform
+^^^^^^^^^^^^^^^^^^^^^^^
+#. The new function :func:`sc.importbypath() <sc_utils.importbypath>` will import a module by path, as an alternative to standard ``import``. :func:`sc.importbyname() <sc_utils.importbyname>` also now accepts a ``path`` argument.
+#. The new function :func:`sc.getuser() <sc_utils.getuser>` will return the current username (as an alias to ``getpass.getuser()``).
+#. The new function :func:`sc.isjupyter() <sc_utils.isjupyter>` determines whether or not the code is running in a Jupyter notebook. Default Jupyter plotting has been updated from ``widget`` to ``retina``.
+
+
+12. Plotting
+^^^^^^^^^^^^
+#. The two Sciris plotting styles, ``sciris.simple`` and ``sciris.fancy``, are now available through standard Matplotlib (e.g. ``pl.style.use('sciris.simple')``.
+#. 3D plots (e.g. :func:`sc.plot3d() <sc_plotting.plot3d>`) will now render into existing figures and axes where possible, rather than always creating a new figure.
+#. The ``freeze`` argument of :func:`sc.savefig() <sc_plotting.savefig>` has been renamed ``pipfreeze``, and ``frame`` has been replaced with ``relframe``.
+
+
+13. Other
+^^^^^^^^^
+#. A new environment variable, ``SCIRIS_NUM_THREADS``, will set the number of threads Numpy uses (if Sciris is imported first). In some cases, more threads results in *slower* processing (and of course uses way more CPU time).
+#. The new function :func:`sc.sanitizestr() <sc_printing.sanitizestr>` will sanitize an input string to e.g. ASCII-only or a valid variable name.
+#. :func:`sc.download() <sc_utils.download>` now handles exceptions gracefully with ``die=False``.
+#. :func:`sc.isiterable() <sc_utils.isiterable>` now has optional ``exclude`` and ``minlen`` arguments.
+#. :func:`sc.flexstr() <sc_utils.flexstr>` now has more options for converting arbitrary or multiple objects to a string.
+#. :func:`sc.transposelist() <sc_utils.transposelist>` has a new ``fix_uneven`` argument (previously, elements longer than the shortest sublist were silently removed).
+#. :func:`sc.tryexcept() <sc_utils.tryexcept>` now has ``to_df()`` and ``disp()`` methods.
+
 
 Bugfixes
 ~~~~~~~~
-#. Fixed ``<=`` comparison in ``sc.compareversions()`` not handling equality.
-#. Fixed the implementation of the ``midpoint`` argument in ``sc.vectocolor()``.
-#. Fixed corner cases where some ``sc.dataframe`` methods returned ``pd.DataFrame`` objects instead.
-#. Fixed corner cases where some ``sc.objdict`` methods returned ``sc.odict`` objects instead.
-#. ``sc.findinds()`` now returns a tuple for multidimensional arrays, allowing it to be used directly for indexing.
-#. ``sc.rmnans()`` now returns a zero-length array if all input is NaNs.
-#. ``sc.options.with_style(style)`` now correctly applies the style.
-#. Fixed ``sc.daydiff()`` with one argument computing the number of days from Jan. 1st of the *current* year (instead of Jan. 1st of the provided year).
+#. Fixed ``<=`` comparison in :func:`sc.compareversions() <sc_versioning.compareversions>` not handling equality.
+#. Fixed the implementation of the ``midpoint`` argument in :func:`sc.vectocolor() <sc_colors.vectocolor>`.
+#. Fixed corner cases where some :class:`sc.dataframe <sc_dataframe.dataframe>` methods returned ``pd.DataFrame`` objects instead.
+#. Fixed corner cases where some :class:`sc.objdict <sc_odict.objdict>` methods returned :class:`sc.odict <sc_odict.odict>` objects instead.
+#. :func:`sc.findinds() <sc_math.findinds>` now returns a tuple for multidimensional arrays, allowing it to be used directly for indexing.
+#. :func:`sc.rmnans() <sc_math.rmnans>` now returns a zero-length array if all input is NaNs.
+#. :meth:`sc.options.with_style(style) <sc_settings.ScirisOptions.with_style>` now correctly applies the style.
+#. Fixed :func:`sc.daydiff() <sc_datetime.daydiff>` with one argument computing the number of days from Jan. 1st of the *current* year (instead of Jan. 1st of the provided year).
+#. ``keepends`` and ``skipnans`` arguments were removed from :func:`sc.smoothinterp() <sc_math.smoothinterp>`.
+
 
 Regression information
 ~~~~~~~~~~~~~~~~~~~~~~
 #. ``tqdm`` is now a required dependency.
-#. The ``returnpool`` argument of ``sc.parallelize()`` has been removed.
-#. Calls to ``sc.makepath()`` and ``sc.makefilepath()`` now need to specify ``makedirs=True``.
-#. For ``sc.savefig()``, ``freeze`` should be renamed ``pipfreeze``, and ``frame`` should be replaced with ``relframe`` with an offset of 2 (e.g. ``frame=2 → relframe=0``).
-#. ``sc.checkmem(..., alphabetical=True)`` has been replaced with ``sc.checkmem(..., order='alphabetical')``
-#. ``sc.parallel_progress()`` has been moved to ``sc.sc_legacy()``. Please use ``sc.parallelize(..., progress=True)`` instead.
-#. ``sc.parallelcmd()`` has been moved to ``sc.sc_legacy()``. Please do not use this function :)
+#. Calls to :func:`sc.makepath() <sc_fileio.makepath>` and :func:`sc.makefilepath() <sc_fileio.makefilepath>` now need to specify ``makedirs=True``.
+# :class:`sc.odict() <sc_odict.odict>` is no longer an instance of :class:`OrderedDict <collections.OrderedDict>`.
+#. The ``returnpool`` argument of :func:`sc.parallelize() <sc_parallel.parallelize>` has been removed.
+#. For :func:`sc.savefig() <sc_plotting.savefig>`, ``freeze`` should be renamed ``pipfreeze``, and ``frame`` should be replaced with ``relframe`` with an offset of 2 (e.g. ``frame=2 → relframe=0``).
+#. :func:`sc.checkmem(..., alphabetical=True) <sc_profiling.checkmem>` has been replaced with :func:`sc.checkmem(..., order='alphabetical') <sc_profiling.checkmem>`
+#. The ``Options`` class has been renamed class :class:`sc.ScirisOptions() <sc_settings.ScirisOptions>`.
+#. ``sc.parallel_progress()`` has been moved to ``sc.sc_legacy``. Please use :func:`sc.parallelize(..., progress=True) <sc_parallel.parallelize>` instead.
+#. ``sc.parallelcmd()`` has been moved to ``sc.sc_legacy``. Please do not use this function :)
 
 
 

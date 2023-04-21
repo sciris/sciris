@@ -50,7 +50,7 @@ def test_profile():
     print('Benchmarking:')
     bm = sc.benchmark()
     print(bm)
-    assert bm.numpy > bm.python
+    assert bm['numpy'] > bm['python']
     
     print('Profiling:')
 

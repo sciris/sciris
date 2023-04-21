@@ -1,8 +1,8 @@
 '''
-The 'odict' class, combining features from an OrderedDict and a list/array.
+The "odict" class, combining features from an OrderedDict and a list/array.
 
 Highlights:
-    - :class:`odict`: flexible container representing the best-of-all-worlds across lists, dicts, and arrays
+    - :class:`sc.odict() <odict>`: flexible container representing the best-of-all-worlds across dicts, lists, and arrays
     - :class:`objdict`: like an odict, but allows get/set via e.g. ``foo.bar`` instead of ``foo['bar']``
 '''
 
@@ -11,8 +11,9 @@ Highlights:
 ##############################################################################
 
 import re
+import json
 import numpy as np
-from collections import OrderedDict as OD, defaultdict as ddict
+import collections as co
 from . import sc_utils as scu
 from . import sc_printing as scp
 from . import sc_nested as scn
@@ -20,15 +21,21 @@ from . import sc_nested as scn
 # Restrict imports to user-facing modules
 __all__ = ['ddict', 'odict', 'objdict', 'dictobj', 'asobj']
 
+ddict = co.defaultdict # Define alias
+OD = dict # Base class; was OrderedDict before v3.0.0
 
 class odict(OD):
     '''
     Ordered dictionary with integer indexing
 
-
     An ordered dictionary, like the OrderedDict class, but supports list methods like integer
     indexing, key slicing, and item inserting. It can also replicate defaultdict behavior
     via the ``defaultdict`` argument.
+    
+    Args:
+        args (dict): convert an existing dict, e.g. ``sc.odict({'a':1})``
+        defaultdict (class): if provided, create as a defaultdict as well
+        kwargs (dict): additional keyword arguments, e.g. ``sc.odict(a=1)``
 
     **Examples**::
 
@@ -63,26 +70,32 @@ class odict(OD):
         nested['b']['c']['d'] = 2
 
     Note: by default, integers are used as an alias to string keys, so cannot be used
-    as keys directly. However, you can force regular-dict behavior using ``setitem()``,
-    and you can convert a dictionary with integer keys to an odict using ``sc.odict.makefrom()``.
+    as keys directly. However, you can force regular-dict behavior using :meth:`setitem() <odict.setitem>`,
+    and you can convert a dictionary with integer keys to an odict using :meth:`sc.odict.makefrom() <odict.makefrom>`.
     If an odict has integer keys and the keys do not match the key positions, then the
     key itself will take precedence (e.g., ``od[3]`` is equivalent to ``dict(od)[3]``,
     not ``dict(od)[od.keys()[3]]``). This usage is discouraged.
 
-    | New in version 1.1.0: "defaultdict" argument
-    | New in version 1.3.1: allow integer keys via ``makefrom()``; removed ``to_OD``; performance improvements
-    | New in version 2.0.1: allow deletion by index
+    | *New in version 1.1.0:* "defaultdict" argument
+    | *New in version 1.3.1:* allow integer keys via ``makefrom()``; removed ``to_OD``; performance improvements
+    | *New in version 2.0.1:* allow deletion by index
+    | *New in version 3.0.0:* allow numeric indices; inherit from dict rather than OrderedDict
     '''
 
     def __init__(self, *args, defaultdict=None, **kwargs):
         ''' Combine the init properties of both OrderedDict and defaultdict '''
-        if len(args)==1 and args[0] is None: args = [] # Remove a None argument
-        OD.__init__(self, *args, **kwargs) # Standard init
+        
+        # Standard init
+        mapping = dict(*args, **kwargs)
+        dict.update(self, mapping)
+        
+        # Handle defaultdict
         if defaultdict is not None:
             if defaultdict != 'nested' and not callable(defaultdict): # pragma: no cover
                 errormsg = f'The defaultdict argument must be either "nested" or callable, not {type(defaultdict)}'
                 raise TypeError(errormsg)
             self._setattr('_defaultdict', defaultdict) # Use OD.__setattr__() since setattr() is overridden by sc.objdict()
+        
         self._cache_keys()
         return
 
@@ -456,7 +469,7 @@ class odict(OD):
 
 
     def _is_odict_iterable(self, key):
-        ''' Check to see whether the "key" is actually an iterable '''
+        ''' Check to see whether the "key" is actually an iterable: a list or array '''
         output = isinstance(key, (list, np.ndarray))
         return output
 
@@ -614,15 +627,15 @@ class odict(OD):
         
         Filter the odict keys and return a new odict which is a subset. If keys is a list,
         then uses that for matching. If the first argument is a string, then treats as a pattern
-        for matching using ``findkeys()``.
+        for matching using :meth:`findkeys() <odict.findkeys`.
         
         Args:
             keys (list): the list of keys to keep (or exclude)
-            pattern (str): the pattern by which to match keys; see ``findkeys()`` for details
-            method (str): the method by which to match keys; see ``findkeys()`` for details
+            pattern (str): the pattern by which to match keys; see :meth:`findkeys() <odict.findkeys` for details
+            method (str): the method by which to match keys; see :meth:`findkeys() <odict.findkeys` for details
             exclude (bool): if exclude=True, then exclude rather than include matches
             
-        See also :method:`sort()`, which includes filtering by position.
+        See also :meth:`sort() <odict.sort>`, which includes filtering by position.
         '''
         if scu.isstring(keys) and pattern is None: # Assume first argument, transfer
             pattern = keys
@@ -752,11 +765,11 @@ class odict(OD):
         Args:
             sortby (str or list): what to sort by; see above for options
             reverse (bool): whether to return results in reverse order
-            copy (bool): whether to return a copy (same as ``sorted()``)
+            copy (bool): whether to return a copy (same as :meth:`sorted() <odict.sorted>`)
         
-        For filtering by string matching on keys, see :method:`filter()`.
+        For filtering by string matching on keys, see :meth:`filter() <odict.filter>`.
         
-        | New in version 2.2.0: removed "verbose" argument
+        | *New in version 3.0.0:* removed "verbose" argument
         '''
         origkeys = self.keys()
         if sortby is None or sortby == 'keys':
@@ -789,7 +802,7 @@ class odict(OD):
 
 
     def sorted(self, sortby=None, reverse=False):
-        ''' Shortcut for making a copy of the sorted odict -- see sort() for options '''
+        ''' Shortcut for making a copy of the sorted odict -- see :meth:`sort() <odict.sort>` for options '''
         return self.sort(sortby=sortby, copy=True, reverse=reverse)
 
 
@@ -828,7 +841,7 @@ class odict(OD):
             g = sc.odict({'a':34, 'b':58}).make(['c','d'],[99,45]) # Add extra keys to an exising odict
             h = sc.odict().make(keys=['a','b','c'], keys2=['A','B','C'], keys3=['x','y','z'], vals=0) # Make a triply nested odict
 
-        New in version 1.2.2: "coerce" argument
+        *New in version 1.2.2:* "coerce" argument
         '''
         # Handle keys
         keylist = []
@@ -1016,7 +1029,7 @@ class odict(OD):
 
 
     def enumvalues(self, transpose=False): # pragma: no cover
-        ''' Alias for enumvals(). New in version 1.2.0. '''
+        ''' Alias for enumvals(). *New in version 1.2.0.* '''
         return self.enumvals(transpose=transpose)
 
 
@@ -1088,19 +1101,19 @@ class odict(OD):
         return self.items(transpose=transpose)
 
     def makenested(self, *args, **kwargs):
-        ''' Alias to sc.makenested(odict); see sc.makenested() for full documentation. New in version 1.2.0. '''
+        ''' Alias to sc.makenested(odict); see sc.makenested() for full documentation. *New in version 1.2.0.* '''
         return scn.makenested(self, *args, **kwargs)
 
     def getnested(self, *args, **kwargs):
-        ''' Alias to sc.getnested(odict); see sc.makenested() for full documentation. New in version 1.2.0. '''
+        ''' Alias to sc.getnested(odict); see sc.makenested() for full documentation. *New in version 1.2.0.* '''
         return scn.getnested(self, *args, **kwargs)
 
     def setnested(self, *args, **kwargs):
-        ''' Alias to sc.setnested(odict); see sc.makenested() for full documentation. New in version 1.2.0. '''
+        ''' Alias to sc.setnested(odict); see sc.makenested() for full documentation. *New in version 1.2.0.* '''
         return scn.setnested(self, *args, **kwargs)
 
     def iternested(self, *args, **kwargs):
-        ''' Alias to sc.iternested(odict); see sc.makenested() for full documentation. New in version 1.2.0. '''
+        ''' Alias to sc.iternested(odict); see sc.makenested() for full documentation. *New in version 1.2.0.* '''
         return scn.iternested(self, *args, **kwargs)
 
 
@@ -1112,11 +1125,11 @@ class objdict(odict):
     In general, operations that would normally act on attributes (e.g. ``obj.x = 3``)
     instead act on dict keys (e.g. ``obj['x'] = 3``). If you want to actually get/set
     an attribute, use ``obj.getattribute()``/``obj.setattribute()``.
-
-    For a lighter-weight example (an object that acts like a dict), see ``sc.dictobj()``.
-
-   **Examples**::
-
+    
+    For a lighter-weight example (an object that acts like a dict), see :func:`sc.dictobj() <dictobj>`.
+    
+    **Examples**::
+        
         import sciris as sc
         
         obj = sc.objdict(foo=3, bar=2)
@@ -1128,11 +1141,11 @@ class objdict(odict):
         od.bmi = od.mass/od.height**2
         od['bmi'] = od['mass']/od['height']**2 # Vanilla syntax still works
         od.keys = 3 # This raises an exception (you can't overwrite the keys() method)
-        
+    
     Nested logic based in part on addict: https://github.com/mewwts/addict
-
-    For a lighter-weight equivalent (based on ``dict`` instead of ``odict``), see
-    ``sc.dictobj()``.
+    
+    For a lighter-weight equivalent (based on ``dict`` instead of :class:`odict`), see
+    :func:`sc.dictobj() <dictobj>`.
     '''
 
     def __init__(self, *args, **kwargs):
@@ -1248,12 +1261,16 @@ class dictobj(dict):
         obj['b'] = 10
         print(obj.items())
 
-    For a more powerful alternative, see ``sc.objdict()``.
+    For a more powerful alternative, see :class:`sc.objdict() <objdict>`.
+    
+    **Note**: because ``dictobj`` is halfway between a dict and an object, it can't 
+    be automatically converted to a JSON (but will fail silently). Use :meth:`to_json() <dictobj.to_json>`
+    instead.
 
-    | New in version 1.3.0.
-    | New in version 1.3.1: inherit from dict
-    | New in version 2.0.0: allow positional arguments
-    | New in version 2.2.0: "fromkeys" now a static method
+    | *New in version 1.3.0.*
+    | *New in version 1.3.1:* inherit from dict
+    | *New in version 2.0.0:* allow positional arguments
+    | *New in version 3.0.0:* "fromkeys" now a class method; ``to_json()`` method
     '''
 
     def __init__(self, *args, **kwargs):
@@ -1266,15 +1283,21 @@ class dictobj(dict):
         output = 'dictobj(' + self.__dict__.__repr__() + ')'
         return output
 
-    @staticmethod
-    def fromkeys(*args, **kwargs):
-        return dictobj(dict.fromkeys(*args, **kwargs))
+    def to_json(self):
+        ''' Export the dictobj to JSON (NB: regular :func:`json.dumps()` does not work) '''
+        return json.dumps(self.__dict__)
+
+    @classmethod
+    def fromkeys(cls, *args, **kwargs):
+        ''' Create a new dictobj from keys '''
+        return cls(dict.fromkeys(*args, **kwargs))
 
     # Copy default dictionary methods
     def __getitem__( self, *args, **kwargs): return self.__dict__.__getitem__( *args, **kwargs)
     def __setitem__( self, *args, **kwargs): return self.__dict__.__setitem__( *args, **kwargs)
     def __contains__(self, *args, **kwargs): return self.__dict__.__contains__(*args, **kwargs)
     def __len__(     self, *args, **kwargs): return self.__dict__.__len__(     *args, **kwargs)
+    def __iter__(    self, *args, **kwargs): return self.__dict__.__iter__(    *args, **kwargs)
     def clear(       self, *args, **kwargs): return self.__dict__.clear(       *args, **kwargs)
     def copy(        self, *args, **kwargs): return self.__dict__.copy(        *args, **kwargs)
     def get(         self, *args, **kwargs): return self.__dict__.get(         *args, **kwargs)
@@ -1289,12 +1312,12 @@ class dictobj(dict):
 
 def asobj(obj, strict=True):
     '''
-    Convert any object for which you would normally do a['b'] to one where you
-    can do a.b.
+    Convert any object for which you would normally do ``a['b']`` to one where you
+    can do ``a.b``.
 
     Note: this may lead to unexpected behavior in some cases. Use at your own risk.
     At minimum, objects created using this function have an extremely odd type -- namely
-    "sciris.sc_odict.asobj.<locals>.objobj".
+    ``sciris.sc_odict.asobj.<locals>.objobj``.
 
     Args:
         obj (anything): the object you want to convert
@@ -1306,7 +1329,7 @@ def asobj(obj, strict=True):
         d_obj = sc.asobj(d)
         d_obj.foo = 10
 
-    New in version 1.0.0.
+    *New in version 1.0.0.*
     '''
 
     objtype = type(obj)

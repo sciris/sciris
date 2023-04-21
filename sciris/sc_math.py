@@ -2,10 +2,10 @@
 Extensions to Numpy, including finding array elements and smoothing data.
 
 Highlights:
-    - :func:`findinds`: find indices of an array matching a condition
-    - :func:`findnearest`: find nearest matching value
-    - :func:`rolling`: calculate rolling average
-    - :func:`smooth`: simple smoothing of 1D or 2D arrays
+    - :func:`sc.findinds() <findinds>`: find indices of an array matching a condition
+    - :func:`sc.findnearest() <findnearest>`: find nearest matching value
+    - :func:`sc.rolling() <rolling>`: calculate rolling average
+    - :func:`sc.smooth() <smooth>`: simple smoothing of 1D or 2D arrays
 '''
 
 import numpy as np
@@ -20,7 +20,8 @@ from . import sc_odict as sco
 ##############################################################################
 
 __all__ = ['approx', 'safedivide', 'findinds', 'findfirst', 'findlast', 'findnearest', 'count',
-           'dataindex', 'getvalidinds', 'sanitize', 'rmnans','fillnans', 'getvaliddata', 'isprime', 'numdigits']
+           'dataindex', 'getvalidinds', 'sanitize', 'rmnans','fillnans', 'findnans', 'getvaliddata',
+           'isprime', 'numdigits']
 
 
 def approx(val1=None, val2=None, eps=None, **kwargs):
@@ -90,18 +91,18 @@ def findinds(arr=None, val=None, *args, eps=1e-6, first=False, last=False, ind=N
     If one argument, find nonzero values. With two arguments, check for equality
     using eps (by default 1e-6, to handle single-precision floating point). Returns 
     a tuple of arrays if val1 is multidimensional, else returns an array. Similar 
-    to calling ``np.nonzero(np.isclose(arr, val))[0]``.
+    to calling :func:`np.nonzero(np.isclose(arr, val))[0] <numpy.nonzero>`.
 
     Args:
         arr    (array): the array to find values in
         val    (float): if provided, the value to match
         args   (list):  if provided, additional boolean arrays
-        eps    (float): the precision for matching (default 1e-6, equivalent to ``np.isclose()``'s atol)
+        eps    (float): the precision for matching (default 1e-6, equivalent to :func:`numpy.isclose`'s atol)
         first  (bool):  whether to return the first matching value (equivalent to ind=0)
         last   (bool):  whether to return the last matching value (equivalent to ind=-1)
         ind    (int):   index of match to retrieve
         die    (bool):  whether to raise an exception if first or last is true and no matches were found
-        kwargs (dict):  passed to ``np.isclose()``
+        kwargs (dict):  passed to :func:`numpy.isclose()`
 
     **Examples**::
 
@@ -112,9 +113,9 @@ def findinds(arr=None, val=None, *args, eps=1e-6, first=False, last=False, ind=N
         sc.findinds([2,3,6,3], 3) # Returs array([1,3])
         sc.findinds([2,3,6,3], 3, first=True) # Returns 1
 
-    | New in version 1.2.3: "die" argument
-    | New in version 2.0.0: fix string matching; allow multiple arguments
-    | New in version 2.2.0: multidimensional arrays now return a list of tuples
+    | *New in version 1.2.3:* "die" argument
+    | *New in version 2.0.0:* fix string matching; allow multiple arguments
+    | *New in version 3.0.0:* multidimensional arrays now return a list of tuples
     '''
 
     # Handle first or last
@@ -178,12 +179,12 @@ def findinds(arr=None, val=None, *args, eps=1e-6, first=False, last=False, ind=N
 
 
 def findfirst(*args, **kwargs):
-    ''' Alias for findinds(..., first=True). New in version 1.0.0. '''
+    ''' Alias for findinds(..., first=True). *New in version 1.0.0.* '''
     return findinds(*args, **kwargs, first=True)
 
 
 def findlast(*args, **kwargs):
-    ''' Alias for findinds(..., last=True). New in version 1.0.0. '''
+    ''' Alias for findinds(..., last=True). *New in version 1.0.0.* '''
     return findinds(*args, **kwargs, last=True)
 
 
@@ -218,21 +219,21 @@ def count(arr=None, val=None, eps=1e-6, **kwargs):
     '''
     Count the number of matching elements.
 
-    Similar to ``np.count_nonzero()``, but allows for slight mismatches (e.g.,
+    Similar to :func:`numpy.count_nonzero()`, but allows for slight mismatches (e.g.,
     floats vs. ints). Equivalent to ``len(sc.findinds())``.
 
     Args:
         arr (array): the array to find values in
         val (float): if provided, the value to match
-        eps (float): the precision for matching (default 1e-6, equivalent to np.isclose's atol)
-        kwargs (dict): passed to ``np.isclose()``
+        eps (float): the precision for matching (default 1e-6, equivalent to :func:`numpy.isclose`'s atol)
+        kwargs (dict): passed to :func:`numpy.isclose()` 
 
     **Examples**::
 
         sc.count(rand(10)<0.5) # returns e.g. 4
-        sc.count([2,3,6,3], 3) # returs 2
+        sc.count([2,3,6,3], 3) # returns 2
 
-    New in version 2.0.0.
+    *New in version 2.0.0.*
     '''
     output = len(findinds(arr=arr, val=val, eps=eps, **kwargs))
     return output
@@ -305,7 +306,7 @@ def getvaliddata(data=None, filterdata=None, defaultind=0): # pragma: no cover
 
 def sanitize(data=None, returninds=False, replacenans=None, defaultval=None, die=True, verbose=False, label=None):
         '''
-        Sanitize input to remove NaNs. (NB: ``sc.sanitize()`` and ``sc.rmnans()`` are aliases.)
+        Sanitize input to remove NaNs. (NB: :func:`sc.sanitize() <sanitize>` and :func:`sc.rmnans() <rmnans>` are aliases.)
 
         Returns an array with the sanitized data. If ``replacenans=True``, the sanitized
         array is of the same length/size as data. If ``replacenans=False``, the sanitized
@@ -329,8 +330,8 @@ def sanitize(data=None, returninds=False, replacenans=None, defaultval=None, die
             sanitized4 = sc.sanitize(data, replacenans='linear') # Replace NaNs using linear interpolation
             sanitized5 = sc.sanitize(data, replacenans=0) # Replace NaNs with 0
 
-        | New in version 2.0.0: handle multidimensional arrays
-        | New in version 2.2.0: return zero-length arrays if all NaN
+        | *New in version 2.0.0:* handle multidimensional arrays
+        | *New in version 3.0.0:* return zero-length arrays if all NaN
         '''
         try:
             data = np.array(data, dtype=float) # Make sure it's an array of float type, otherwise nan operations fail
@@ -381,17 +382,34 @@ def sanitize(data=None, returninds=False, replacenans=None, defaultval=None, die
         else:          return sanitized
 
 
-def fillnans(data=None, replacenans=True, **kwargs):
-    """
-    Alias for ``sc.sanitize(..., replacenans=True)`` with nearest interpolation (or a specified value).
-
-    New in version 2.0.0.
-    """
-    return sanitize(data=data, replacenans=replacenans, **kwargs)
-fillnans.__doc__ += '\n\n' + sanitize.__doc__
-
 # Define as an alias
 rmnans = sanitize
+
+def fillnans(data=None, replacenans=True, **kwargs):
+    """
+    Alias for :func:`sc.sanitize(..., replacenans=True) <sanitize>` with nearest interpolation
+    (or a specified value).
+
+    *New in version 2.0.0.*
+    """
+    return sanitize(data=data, replacenans=replacenans, **kwargs)
+
+
+def findnans(data=None, **kwargs):
+    """
+    Alias for :func:`sc.findinds(np.isnan(data)) <findinds>`.
+    
+    **Examples**::
+        
+        data = [0, 1, 2, np.nan, 4, np.nan, 6, np.nan, np.nan, np.nan, 10]
+        sc.findnans(data) # Returns array([3, 5, 7, 8, 9])
+
+    *New in version 3.0.0.*
+    """
+    data  = np.array(data, dtype=float)
+    isnan = np.isnan(data)
+    inds  = findinds(arr=isnan, **kwargs)
+    return inds
 
 
 def isprime(n, verbose=False):
@@ -464,7 +482,7 @@ def numdigits(n, *args, count_minus=False, count_decimal=False):
         sc.numdigits(0.01) # Returns -2
         sc.numdigits(0.01, count_decimal=True) # Returns -4
 
-    New in version 2.0.0.
+    *New in version 2.0.0.*
     """
     is_scalar = True if scu.isnumber(n) and len(args) == 0 else False
 
@@ -516,20 +534,21 @@ def perturb(n=1, span=0.5, randseed=None, normal=False):
     **Example**::
 
         sc.perturb(5, 0.3) # Returns e.g. array([0.73852362, 0.7088094 , 0.93713658, 1.13150755, 0.87183371])
+    
+    *New in version 3.0.0:* Uses a separate random number stream
     '''
-    if randseed is not None:
-        np.random.seed(int(randseed)) # Optionally reset random seed
+    rng = np.random.default_rng(randseed)
     if normal:
-        output = 1.0 + span*np.random.randn(n)
+        output = 1.0 + rng.normal(0, span, size=n)
     else:
-        output = 1.0 + 2*span*(np.random.rand(n)-0.5)
+        output = 1.0 + rng.uniform(-span, span, size=n)
     return output
 
 
 def normsum(arr, total=None):
     '''
     Multiply a list or array by some normalizing factor so that its sum is equal
-    to the total. Formerly called ``sc.scaleratio()``.
+    to the total. Formerly called :func:`sc.scaleratio() <scaleratio>`.
 
     Args:
         arr (array): array (or list) to normalize
@@ -573,7 +592,7 @@ def normalize(arr, minval=0.0, maxval=1.0):
 
 def inclusiverange(*args, **kwargs):
     '''
-    Like ``np.arange()``/``np.linspace()``, but includes the start and stop points.
+    Like :func:`numpy.arange`/`numpy.linspace`, but includes the start and stop points.
     Accepts 0-3 args, or the kwargs start, stop, step.
 
     In most cases, equivalent to ``np.linspace(start, stop, int((stop-start)/step)+1)``.
@@ -582,7 +601,7 @@ def inclusiverange(*args, **kwargs):
         start (float): value to start at
         stop (float): value to stop at
         step (float): step size
-        kwargs (dict): passed to ``np.linspace()``
+        kwargs (dict): passed to :func:`numpy.linspace`
 
     **Examples**::
 
@@ -641,8 +660,8 @@ def randround(x):
 
         sc.randround(np.random.randn(8)) # Returns e.g. array([-1,  0,  1, -2,  2,  0,  0,  0])
 
-    | New in version 1.0.0.
-    | New in version 2.2.0: allow arrays of arbitrary shape
+    | *New in version 1.0.0.*
+    | *New in version 3.0.0:* allow arrays of arbitrary shape
     '''
     if isinstance(x, np.ndarray):
         output = np.array(np.floor(x+np.random.random(x.shape)), dtype=int)
@@ -660,7 +679,7 @@ def cat(*args, copy=False, **kwargs):
 
     Args:
         args   (any):  items to concatenate into an array
-        kwargs (dict): passed to ``np.concatenate()``
+        kwargs (dict): passed to :func:`numpy.concatenate`
 
     **Examples**::
 
@@ -668,14 +687,16 @@ def cat(*args, copy=False, **kwargs):
         arr = sc.cat(np.array([1,2,3]), [4,5], 6)
         arr = sc.cat(np.random.rand(2,4), np.random.rand(2,6), axis=1)
 
-    | New in version 1.0.0.
-    | New in version 1.1.0: "copy" and keyword arguments.
-    | New in version 2.0.2: removed "copy" argument; changed default axis of 0; arguments passed to ``np.concatenate()``
+    | *New in version 1.0.0.*
+    | *New in version 1.1.0:* "copy" and keyword arguments.
+    | *New in version 2.0.2:* removed "copy" argument; changed default axis of 0; arguments passed to ``np.concatenate()``
     '''
     
     if not len(args):
         return np.array([])
     arrs = [scu.toarray(arg) for arg in args] # Key step: convert everything to an array
+    if arrs[0].ndim == 2: # Convert to 2D if first array is
+        arrs = [np.atleast_2d(arr) for arr in arrs]
     output = np.concatenate(arrs, **kwargs)
     return output
 
@@ -683,13 +704,13 @@ def cat(*args, copy=False, **kwargs):
 def linregress(x, y, full=False, **kwargs):
     '''
     Simple linear regression returning the line of best fit and R value. Similar
-    to ``scipy.stats.linregress`` but simpler.
+    to :func:`scipy.stats.linregress`` but simpler.
     
     Args:
         x (array): the x coordinates
         y (array): the y coordinates
         full (bool): whether to return a full data structure
-        kwargs (dict): passed to ``np.polyfit()``
+        kwargs (dict): passed to :func:`numpy.polyfit`
     
     **Examples**::
         
@@ -737,7 +758,7 @@ def rolling(data, window=7, operation='mean', replacenans=None, **kwargs):
         data (list/arr): the 1D or 2D data to be smoothed
         window (int): the length of the window
         operation (str): the operation to perform: 'mean' (default), 'median', 'sum', or 'none'
-        replacenans (bool/float): if None, leave NaNs; if False, remove them; if a value, replace with that value; if the string 'nearest' or 'linear', do interpolation (see :func:`rmnans()` for details)
+        replacenans (bool/float): if None, leave NaNs; if False, remove them; if a value, replace with that value; if the string 'nearest' or 'linear', do interpolation (see :func:`sc.rmnans() <rmnans>` for details)
         kwargs (dict): passed to pd.Series.rolling()
 
     **Example**::
@@ -771,8 +792,8 @@ def rolling(data, window=7, operation='mean', replacenans=None, **kwargs):
 
 def convolve(a, v):
     '''
-    Like ``np.convolve()``, but always returns an array the size of the first array
-    (equivalent to mode='same'), and solves the boundary problem present in ``np.convolve()``
+    Like :func:`numpy.convolve`, but always returns an array the size of the first array
+    (equivalent to mode='same'), and solves the boundary problem present in :func:`numpy.convolve`
     by adjusting the edges by the weight of the convolution kernel.
 
     Args:
@@ -786,8 +807,8 @@ def convolve(a, v):
         c1 = np.convolve(a, v, mode='same') # Returns array([0.8, 1.  , 1.  , 1.  , 0.7])
         c2 = sc.convolve(a, v)              # Returns array([1., 1., 1., 1., 1.])
 
-    | New in version 1.3.0.
-    | New in version 1.3.1: handling the case where len(a) < len(v)
+    | *New in version 1.3.0.*
+    | *New in version 1.3.1:* handling the case where len(a) < len(v)
     '''
 
     # Handle types
@@ -826,7 +847,7 @@ def smooth(data, repeats=None, kernel=None, legacy=False):
     '''
     Very simple function to smooth a 1D or 2D array.
 
-    See also ``sc.gauss1d()`` for simple Gaussian smoothing.
+    See also :func:`sc.gauss1d() <gauss1d>` for simple Gaussian smoothing.
 
     Args:
         data (arr): 1D or 2D array to smooth
@@ -839,7 +860,7 @@ def smooth(data, repeats=None, kernel=None, legacy=False):
         data = pl.randn(5,5)
         smoothdata = sc.smooth(data)
 
-    New in version 1.3.0: Fix edge effects.
+    *New in version 1.3.0:* Fix edge effects.
     '''
     if repeats is None:
         repeats = int(np.floor(len(data)/5))
@@ -877,17 +898,18 @@ def smooth(data, repeats=None, kernel=None, legacy=False):
 def smoothinterp(newx=None, origx=None, origy=None, smoothness=None, growth=None, 
                  ensurefinite=True, keepends=True, method='linear'):
     '''
-    Smoothly interpolate over values and keep end points. Same format as numpy.interp().
+    Smoothly interpolate over values
+    
+    Unlike :func:`np.interp() <numpy.interp>`, this function does exactly pass 
+    through each data point: 
 
     Args:
         newx (arr): the points at which to interpolate
         origx (arr): the original x coordinates
         origy (arr): the original y coordinates
         smoothness (float): how much to smooth
-        growth (float): the growth rate to apply past the ends of the data [deprecated]
+        growth (float): the growth rate to apply past the ends of the data
         ensurefinite (bool):  ensure all values are finite (including skipping NaNs)
-        keepends (bool): whether to keep the ends [deprecated]
-        skipnans (bool): whether to skip NaNs
         method (str): the type of interpolation to use (options are 'linear' or 'nearest')
 
     Returns:
@@ -895,14 +917,25 @@ def smoothinterp(newx=None, origx=None, origy=None, smoothness=None, growth=None
 
     **Example**::
 
-        origy = np.array([0,0.1,0.3,0.8,0.7,0.9,0.95,1])
+        import sciris as sc
+        import numpy as np
+        from scipy import interpolate
+        
+        origy = np.array([0,0.2,0.1,0.9,0.7,0.8,0.95,1])
         origx = np.linspace(0,1,len(origy))
         newx = np.linspace(0,1,5*len(origy))
-        newy = sc.smoothinterp(newx, origx, origy, smoothness=5)
-        pl.plot(newx,newy)
-        pl.scatter(origx,origy)
+        sc_y = sc.smoothinterp(newx, origx, origy, smoothness=5)
+        np_y = np.interp(newx, origx, origy)
+        si_y = interpolate.interp1d(origx, origy, 'cubic')(newx)
+        kw = dict(lw=3, alpha=0.7)
+        pl.plot(newx, np_y, '--', label='NumPy', **kw)
+        pl.plot(newx, si_y, ':',  label='SciPy', **kw)
+        pl.plot(newx, sc_y, '-',  label='Sciris', **kw)
+        pl.scatter(origx, origy, s=50, c='k', label='Data')
+        pl.legend()
+        pl.show()
 
-    | New in verison 2.2.0: "ensurefinite" now defaults to True
+    | *New in verison 3.0.0:* "ensurefinite" now defaults to True; removed "skipnans" argument
     '''
     # Ensure arrays and remove NaNs
     if scu.isnumber(newx):  newx = [newx] # Make sure it has dimension
@@ -1055,7 +1088,7 @@ def gauss1d(x=None, y=None, xi=None, scale=None, use32=True):
         # Simple usage
         sc.gauss1d(y)
 
-    New in version 1.3.0.
+    *New in version 1.3.0.*
     '''
 
     # Swap inputs if x is provided but not y
@@ -1147,8 +1180,8 @@ def gauss2d(x=None, y=None, z=None, xi=None, yi=None, scale=1.0, xscale=1.0, ysc
         sc.scatter3d(xi2, yi2, zi2, c=zi2)
         pl.show()
 
-    | New in version 1.3.0.
-    | New in version 1.3.1: default arguments; support for 2D inputs
+    | *New in version 1.3.0.*
+    | *New in version 1.3.1:* default arguments; support for 2D inputs
     '''
     # Swap variables if needed
     if z is None and x is not None: # pragma: no cover

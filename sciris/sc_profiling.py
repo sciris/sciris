@@ -2,10 +2,10 @@
 Profiling and CPU/memory management functions.
 
 Highlights:
-    - :func:`cpuload`: alias to ``psutil.cpu_percent()``
-    - :func:`loadbalancer`: very basic load balancer
-    - :func:`profile`: a line profiler
-    - :func:`resourcemonitor`: a monitor to kill processes that exceed memory or other limits
+    - :func:`sc.profile() <profile>`: a line profiler
+    - :func:`sc.benchmark() <benchmark>`: quickly check your computer's performance
+    - :func:`sc.loadbalancer() <loadbalancer>`: very basic load balancer
+    - :func:`sc.resourcemonitor() <resourcemonitor>`: a monitor to kill processes that exceed memory or other limits
 """
 
 import os
@@ -45,9 +45,9 @@ def checkmem(var, descend=1, order='size', compresslevel=0, maxitems=1000,
 
     Note on the different functions:
 
-        - ``sc.memload()`` checks current total system memory consumption
-        - ``sc.checkram()`` checks RAM (virtual memory) used by the current Python process
-        - ``sc.checkmem()`` checks memory consumption by a given object
+        - :func:`sc.memload() <memload>` checks current total system memory consumption
+        - :func:`sc.checkram() <checkram>` checks RAM (virtual memory) used by the current Python process
+        - :func:`sc.checkmem() <checkmem>` checks memory consumption by a given object
 
     Args:
         var (any): the variable being checked
@@ -58,7 +58,7 @@ def checkmem(var, descend=1, order='size', compresslevel=0, maxitems=1000,
         subtotals (bool): whether to include subtotals for different levels of depth
         plot (bool): if descending, show the results as a pie chart
         verbose (bool or int): detail to print, if >1, print repr of objects along the way
-        **kwargs (dict): passed to :func:`load`
+        **kwargs (dict): passed to :func:`sc.load() <load>`
 
     **Examples**::
 
@@ -84,7 +84,7 @@ def checkmem(var, descend=1, order='size', compresslevel=0, maxitems=1000,
         )
         sc.checkmem(nested_dict)
     
-    New in version 2.2.0: descend multiple levels; dataframe output; "alphabetical" renamed "order"
+    *New in version 3.0.0:* descend multiple levels; dataframe output; "alphabetical" renamed "order"
     '''
     
     # Handle input arguments -- used for recursion
@@ -185,9 +185,9 @@ def checkram(unit='mb', fmt='0.2f', start=0, to_string=True):
 
     Note on the different functions:
 
-        - ``sc.memload()`` checks current total system memory consumption
-        - ``sc.checkram()`` checks RAM (virtual memory) used by the current Python process
-        - ``sc.checkmem()`` checks memory consumption by a given object
+        - :func:`sc.memload() <memload>` checks current total system memory consumption
+        - :func:`sc.checkram() <checkram>` checks RAM (virtual memory) used by the current Python process
+        - :func:`sc.checkmem() <checkmem>` checks memory consumption by a given object
 
     **Example**::
 
@@ -196,8 +196,8 @@ def checkram(unit='mb', fmt='0.2f', start=0, to_string=True):
         start = sc.checkram(to_string=False)
         a = np.random.random((1_000, 10_000))
         print(sc.checkram(start=start))
-
-    New in version 1.0.0.
+    
+    *New in version 1.0.0.*
     '''
     process = psutil.Process(os.getpid())
     mapping = {'b':1, 'kb':1e3, 'mb':1e6, 'gb':1e9}
@@ -235,13 +235,13 @@ def benchmark(repeats=5, scale=1, verbose=False, python=True, numpy=True, return
         return_timers (bool): if True, return the timer objects instead of the "MOPS" results
         
     Returns:
-        An objdict with keys "python" and "numpy" for the number of MOPS for each
+        A dict with keys "python" and "numpy" for the number of MOPS for each
     
-    **Examples**:
+    **Examples**::
         
         sc.benchmark() # Returns e.g. {'python': 11.43, 'numpy': 236.595}
         
-        numpy_mops = sc.benchmark(python=False).numpy
+        numpy_mops = sc.benchmark(python=False)['numpy']
         if numpy_mops < 100:
             print('Your computer is slow')
         elif numpy_mops > 400: 
@@ -249,7 +249,7 @@ def benchmark(repeats=5, scale=1, verbose=False, python=True, numpy=True, return
         else:
             print('Your computer is normal')
     
-    New in version 2.2.0.
+    *New in version 3.0.0.*
     '''
     
     P = scd.timer(verbose=verbose)
@@ -297,7 +297,7 @@ def benchmark(repeats=5, scale=1, verbose=False, python=True, numpy=True, return
     else:
         pymops = py_ops/P.mean() if len(P) else None # Handle if one or the other isn't run
         npmops = np_ops/N.mean() if len(N) else None
-        out = sco.objdict(python=pymops, numpy=npmops)
+        out = dict(python=pymops, numpy=npmops)
         
     return out
 
@@ -310,35 +310,35 @@ __all__ += ['cpu_count', 'cpuload', 'memload', 'loadbalancer']
 
 
 def cpu_count():
-    ''' Alias to ``mp.cpu_count()`` '''
+    ''' Alias to :func:`multiprocessing.cpu_count()` '''
     return mp.cpu_count()
 
 
 def cpuload(interval=0.1):
     """
-    Takes a snapshot of current CPU usage via ``psutil``
+    Takes a snapshot of current CPU usage via :mod:`psutil`
 
     Args:
         interval (float): number of seconds over which to estimate CPU load
 
     Returns:
-        a float between 0-1 representing the fraction of ``psutil.cpu_percent()`` currently used.
+        a float between 0-1 representing the fraction of :func:`psutil.cpu_percent()` currently used.
     """
     return psutil.cpu_percent(interval=interval)/100
 
 
 def memload():
     """
-    Takes a snapshot of current fraction of memory usage via ``psutil``
+    Takes a snapshot of current fraction of memory usage via :mod:`psutil`
 
     Note on the different functions:
 
-        - ``sc.memload()`` checks current total system memory consumption
-        - ``sc.checkram()`` checks RAM (virtual memory) used by the current Python process
-        - ``sc.checkmem()`` checks memory consumption by a given object
+        - :func:`sc.memload() <memload>` checks current total system memory consumption
+        - :func:`sc.checkram() <checkram>` checks RAM (virtual memory) used by the current Python process
+        - :func:`sc.checkmem() <checkmem>` checks memory consumption by a given object
 
     Returns:
-        a float between 0-1 representing the fraction of ``psutil.virtual_memory()`` currently used.
+        a float between 0-1 representing the fraction of :func:`psutil.virtual_memory()` currently used.
     """
     return psutil.virtual_memory().percent / 100
 
@@ -370,8 +370,8 @@ def loadbalancer(maxcpu=0.9, maxmem=0.9, index=None, interval=None, cpu_interval
         for nproc in processlist:
             sc.loadbalancer(maxload=0.5, maxmem=0.8, index=nproc)
 
-    | New in version 2.0.0: ``maxmem`` argument; ``maxload`` renamed ``maxcpu``
-    | New in version 2.2.0: ``maxcpu`` and ``maxmem`` set to 0.9 by default
+    | *New in version 2.0.0:* ``maxmem`` argument; ``maxload`` renamed ``maxcpu``
+    | *New in version 3.0.0:* ``maxcpu`` and ``maxmem`` set to 0.9 by default
     '''
 
     # Handle deprecation
@@ -429,7 +429,7 @@ def loadbalancer(maxcpu=0.9, maxmem=0.9, index=None, interval=None, cpu_interval
         mem_compare = ['<', '>'][mem_toohigh]
         cpu_str = f'{cpu_current:0.2f}{cpu_compare}{maxcpu:0.2f}'
         mem_str = f'{mem_current:0.2f}{mem_compare}{maxmem:0.2f}'
-        process_str = f'process {index}' if index else 'process'
+        process_str = f'process {index}' if index is not None else 'process'
         if cpu_toohigh: # pragma: no cover
             string = label+f'CPU load too high ({cpu_str}); {process_str} queued {count} times'
             scd.randsleep(interval)
@@ -437,8 +437,9 @@ def loadbalancer(maxcpu=0.9, maxmem=0.9, index=None, interval=None, cpu_interval
             string = label+f'Memory load too high ({mem_str}); {process_str} queued {count} times'
             scd.randsleep(interval)
         else:
+            ok = 'OK' if scu.getplatform() == 'windows' else '✓' # Windows doesn't support unicode (!)
             toohigh = False
-            string = label+f'CPU ✓ ({cpu_str}), memory ✓ ({mem_str}): starting {process_str} after {count} tries'
+            string = label+f'CPU {ok} ({cpu_str}), memory {ok} ({mem_str}): starting {process_str} after {count} tries'
         if verbose:
             print(string)
     return string
@@ -589,16 +590,16 @@ __all__ += ['LimitExceeded', 'resourcemonitor']
 
 class LimitExceeded(MemoryError, KeyboardInterrupt):
     '''
-    Custom exception for use with the ``sc.resourcemonitor()`` monitor.
+    Custom exception for use with the :func:`sc.resourcemonitor() <resourcemonitor>` monitor.
 
-    It inherits from ``MemoryError`` since this is the most similar built-in Python
-    except, and it inherits from ``KeyboardInterrupt`` since this is the means by
+    It inherits from :obj:`MemoryError` since this is the most similar built-in Python
+    except, and it inherits from :obj:`KeyboardInterrupt` since this is the means by
     which the monitor interrupts the main Python thread.
     '''
     pass
 
 
-class resourcemonitor(scu.prettyobj):
+class resourcemonitor(scu.prettyobj): # pragma: no cover # For some reason pycov doesn't catch this class
     """
     Asynchronously monitor resource (e.g. memory) usage and terminate the process
     if the specified threshold is exceeded.
@@ -609,7 +610,7 @@ class resourcemonitor(scu.prettyobj):
         time (float): maximum time limit in seconds
         interval (float): how frequently to check memory/CPU usage (in seconds)
         label (str): an optional label to use while printing out progress
-        start (bool): whether to start the resource monitor on initialization (else call ``start()``)
+        start (bool): whether to start the resource monitor on initialization (else call :meth:`start() <resourcemonitor.start>`)
         die (bool): whether to raise an exception if the resource limit is exceeded
         kill_children (bool): whether to kill child processes (if False, will not work with multiprocessing)
         kill_parent (bool): whether to also kill the parent process (will usually exit Python interpreter in the process)
@@ -824,4 +825,3 @@ class resourcemonitor(scu.prettyobj):
             entries.append(flat)
         self.df = pd.DataFrame(entries)
         return self.df
-

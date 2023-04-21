@@ -36,6 +36,10 @@ def test_adaptations():
     print('\nTesting platforms')
     sc.getplatform()
     assert sc.iswindows() + sc.ismac() + sc.islinux() == 1
+    assert not sc.isjupyter() # Assume this won't be called in Jupyter!
+    shell = sc.isjupyter(detailed=True)
+    print(shell)
+    assert isinstance(shell, str)
 
     return o
 
@@ -209,9 +213,22 @@ def test_promotetolist():
     assert inds[3] == 3
     assert vals[1] == 4
     
+    listoflists = [
+        ['a', 1, 3],
+        ['b', 4, 5],
+        ['c', 7, 8, 9, 10]
+    ]
+    trans = sc.transposelist(listoflists, fix_uneven=True)
+    assert all([len(l) == 5 for l in sc.transposelist(trans)])
+    
     d1 = {'a':'foo', 'b':'bar'} 
     d2 = sc.swapdict(d1)
     assert d2 == {'foo':'a', 'bar':'b'} 
+    with pytest.raises(TypeError):
+        sc.swapdict(1) # Not a dict
+    with pytest.raises(TypeError):
+        listdict = dict(a=[1,2,3])
+        sc.swapdict(listdict) # Unhashable type
 
     print('\nTesting mergelists')
     assert sc.mergelists(None, copy=True)                   == []
@@ -318,10 +335,10 @@ def test_misc():
     assert isinstance(lazynp, sc.LazyModule)
     lazynp.array(0)
     assert not isinstance(lazynp, sc.LazyModule)
-    test_other = sc.importbyname(path='./test_other.py', variable='test_other')
-    assert 'test_options' in dir(test_other)
-    test_other2 = sc.importbypath(path='./test_other.py')
-    assert 'test_options' in dir(test_other2)
+    test_set = sc.importbyname(path='./test_settings.py', variable='test_set')
+    assert 'test_options' in dir(test_set)
+    test_set2 = sc.importbypath(path='./test_settings.py')
+    assert 'test_options' in dir(test_set2)
 
     print('\nTesting get_caller()')
     o.caller = sc.getcaller(includeline=True)

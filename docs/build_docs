@@ -1,11 +1,27 @@
 #!/bin/bash
 
-start=$SECONDS
 echo 'Building docs...'
+start=$SECONDS
 make clean
-make html
-duration=$(( SECONDS - start ))
 
+# Handle notebook build options
+if [[ "$*" == *"never"* ]]; then
+    export NBSPHINX_EXECUTE=never
+elif [[ "$*" == *"always"* ]]; then
+    export NBSPHINX_EXECUTE=always
+else
+    export NBSPHINX_EXECUTE=auto
+fi
+
+# Handle notebook build options
+if [[ "$*" == *"debug"* ]]; then
+    export BUILD_DEBUG=1
+else
+    export BUILD_DEBUG=
+fi
+make html # Actually make
+
+duration=$(( SECONDS - start ))
 echo "Docs built after $duration seconds."
 echo "Index:"
 echo "`pwd`/_build/html/index.html"

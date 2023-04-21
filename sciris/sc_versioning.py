@@ -3,12 +3,12 @@ Functions for checking and saving versioning information, such as Python package
 versions, git versions, etc.
 
 Highlights:
-    - :func:`freeze`: programatically store "pip freeze" output
-    - :func:`require`: require a specific version of a package
-    - :func:`gitinfo`: gets the git information (if available) of a given file
-    - :func:`compareversions`: easy way to compare version numbers
-    - :func:`storemetadata`: collects relevant metadata into a dictionary
-    - :func:`savewithmetadata`: saves data as a zip file including versioning metadata
+    - :func:`sc.freeze() <freeze>`: programmatically store "pip freeze" output
+    - :func:`sc.require() <require>`: require a specific version of a package
+    - :func:`sc.gitinfo() <gitinfo>`: gets the git information (if available) of a given file
+    - :func:`sc.compareversions() <compareversions>`: easy way to compare version numbers
+    - :func:`sc.metadata() <metadata>`: collects relevant metadata into a dictionary
+    - :func:`sc.savearchive() <savearchive>`: saves data as a zip file including versioning metadata
 '''
 
 import os
@@ -25,13 +25,13 @@ from . import sc_odict as sco
 from . import sc_datetime as scd
 
 __all__ = ['freeze', 'require', 'gitinfo', 'compareversions', 'getcaller', 
-           'metadata', 'loadmetadata', 'savewithmetadata', 'loadwithmetadata']
+           'metadata', 'loadmetadata', 'savearchive', 'loadarchive']
 
 
 # Define shared variables
 _metadataflag      = 'sciris_metadata' # Key name used to identify metadata saved in a figure
-_metadata_filename = 'metadata.json' # Default filenames for metadata and data
-_obj_filename      = 'sciris_pickle.obj'
+_metadata_filename = 'sciris_metadata.json' # Default filenames for metadata and data
+_obj_filename      = 'sciris_data.obj'
 
 
 def freeze(lower=False):
@@ -45,7 +45,7 @@ def freeze(lower=False):
 
         assert 'numpy' in sc.freeze() # One way to check for versions
 
-    New in version 1.2.2.
+    *New in version 1.2.2.*
     '''
     import pkg_resources as pkgr # Imported here since slow (>0.1 s)
     raw = dict(tuple(str(ws).split()) for ws in pkgr.working_set)
@@ -58,7 +58,7 @@ def freeze(lower=False):
     return data
 
 
-def require(reqs=None, *args, exact=False, detailed=False, die=True, verbose=True, **kwargs):
+def require(reqs=None, *args, exact=False, detailed=False, die=True, warn=True, verbose=True, **kwargs):
     '''
     Check whether environment requirements are met. Alias to pkg_resources.require().
 
@@ -69,7 +69,8 @@ def require(reqs=None, *args, exact=False, detailed=False, die=True, verbose=Tru
         exact (bool): use '==' instead of '>=' as the default comparison operator if not specified
         detailed (bool): return a dict of which requirements are/aren't met
         die (bool): whether to raise an exception if requirements aren't met
-        verbose (bool): print out the exception if it's not being raised
+        warn (bool): if not die, raise a warning if requirements aren't met'
+        verbose (bool): print out the exception if it's not being raised or warned
 
     **Examples**::
 
@@ -79,7 +80,8 @@ def require(reqs=None, *args, exact=False, detailed=False, die=True, verbose=Tru
         sc.require('numpy>=1.19.1', 'matplotlib==3.2.2', die=False)
         sc.require(numpy='1.19.1', matplotlib='==4.2.2', die=False, detailed=True)
 
-    New in version 1.2.2.
+    *New in version 1.2.2.*
+    *New in version 3.0.0:* "warn" argument
     '''
     import pkg_resources as pkgr # Imported here since slow (>0.1 s)
 
@@ -123,13 +125,18 @@ def require(reqs=None, *args, exact=False, detailed=False, die=True, verbose=Tru
         for k,v in data.items():
             if not v:
                 count += 1
-                errormsg += f'\n• "{k}": {str(errs[k])}'
-        errormsg += f'''\n\nIf this is a valid module, you might want to try "pip install {scu.strjoin(errkeys, sep=' ')} --upgrade".'''
+                errormsg += f'\n• "{k}": {errs[k]}'
+        missing = scu.strjoin(errkeys, sep=' ')
+        errormsg += f'''\n\nIf this is a valid module, you might want to try 'pip install "{missing}" --upgrade'.'''
         if die:
             err = errs[errkeys[-1]]
             raise ModuleNotFoundError(errormsg) from err
+        elif warn:
+            warnings.warn(errormsg, category=UserWarning, stacklevel=2)
         elif verbose:
             print(errormsg)
+        else:
+            pass
 
     # Handle output
     if detailed:
@@ -260,7 +267,7 @@ def compareversions(version1, version2):
         sc.compareversions(mymodule.__version__, '>=1.0') # common usage pattern
         sc.compareversions(mymodule, '>=1.0') # alias to the above
 
-    New in version 1.2.1: relational operators
+    *New in version 1.2.1:* relational operators
     '''
     # Handle inputs
     if isinstance(version1, types.ModuleType):
@@ -308,7 +315,7 @@ def compareversions(version1, version2):
 def getcaller(frame=2, tostring=True, includelineno=False, includeline=False, relframe=0, die=False):
     '''
     Try to get information on the calling function, but fail gracefully. See also
-    :func:`thisfile`.
+    :func:`sc.thisfile() <thisfile>`.
 
     Frame 1 is the file calling this function, so not very useful. Frame 2 is
     the default assuming it is being called directly. Frame 3 is used if
@@ -332,9 +339,9 @@ def getcaller(frame=2, tostring=True, includelineno=False, includeline=False, re
         sc.getcaller(frame=3) # Descend one level deeper than usual
         sc.getcaller(frame=1, tostring=False, includeline=True) # See the line that called sc.getcaller()
 
-    | New in version 1.0.0.
-    | New in version 1.3.3: do not include line by default
-    | New in version 2.2.0: "relframe" argument; "die" argument
+    | *New in version 1.0.0.*
+    | *New in version 1.3.3:* do not include line by default
+    | *New in version 3.0.0:* "relframe" argument; "die" argument
     '''
     try:
         import inspect
@@ -367,7 +374,7 @@ def getcaller(frame=2, tostring=True, includelineno=False, includeline=False, re
     return output
 
 
-def metadata(outfile=None, version=None, comments=None, pipfreeze=True, user=True, caller=True, 
+def metadata(outfile=None, version=None, comments=None, require=None, pipfreeze=True, user=True, caller=True, 
              git=True, asdict=False, tostring=False, relframe=0, **kwargs):
     '''
     Collect common metadata: useful for exactly recreating (or remembering) the environment
@@ -377,6 +384,7 @@ def metadata(outfile=None, version=None, comments=None, pipfreeze=True, user=Tru
         outfile (str): if not None, then save as JSON to this filename
         version (str): if supplied, the user-supplied version of the data being stored
         comments (str/dict): additional comments on the data to store
+        require (str/dict): if provided, an additional manual set of requirements
         pipfreeze (bool): store the current Python environment, equivalent to "pip freeze"
         user (bool): store the username
         caller (bool): store info on the calling file
@@ -395,9 +403,9 @@ def metadata(outfile=None, version=None, comments=None, pipfreeze=True, user=Tru
         metadata = sc.metadata()
         sc.compareversions(metadata.versions.pandas, '1.5.0')
         
-        sc.metadata('my-metadata.json')
+        sc.metadata('my-metadata.json') # Save to disk
     
-    New in version 2.2.0.
+    *New in version 3.0.0.*
     '''
     
     # Additional imports
@@ -434,6 +442,7 @@ def metadata(outfile=None, version=None, comments=None, pipfreeze=True, user=Tru
         calling_info = calling_info if caller else None,
         git_info     = dict_fn(gitinfo(calling_info['filename'], die=False, verbose=False)) if git else None,
         pipfreeze    = freeze() if pipfreeze else None,
+        require      = require,
         comments     = comments,
     )
     
@@ -463,10 +472,10 @@ def loadmetadata(filename, load_all=False, die=True):
     '''
     Read metadata from a saved image; currently only PNG and SVG are supported.
 
-    Only for use with images saved with ``sc.savefig()``. Metadata retrieval for PDF
-    is not currently supported. To load metadata saved with ``sc.metadata()``, 
-    you can also use ``sc.loadjson()`` instead. To load metadata saved with ``sc.savewithmetadata()``,
-    use ``sc.loadwithmetadata()`` instead.
+    Only for use with images saved with :func:`sc.savefig() <savefig>`. Metadata retrieval for PDF
+    is not currently supported. To load metadata saved with :func:`sc.metadata() <metadata>`, 
+    you can also use :func:`sc.loadjson() <loadjson>` instead. To load metadata saved with :func:`sc.savearchive() <savearchive>`,
+    use :func:`sc.loadarchive() <loadarchive>` instead.
 
     Args:
         filename (str): the name of the file to load the data from
@@ -557,9 +566,9 @@ def loadmetadata(filename, load_all=False, die=True):
     elif lcfn.endswith('json'):
         md = _metadata_to_objdict(scf.loadjson(filename))
     
-    # Load metadata saved with sc.savewithmetadata()
+    # Load metadata saved with sc.savearchive()
     elif lcfn.endswith('zip'):
-        md = loadwithmetadata(filename, loadobj=False, loadmetadata=True)
+        md = loadarchive(filename, loadobj=False, loadmetadata=True)
 
     # Other formats not supported
     else: # pragma: no cover
@@ -570,8 +579,9 @@ def loadmetadata(filename, load_all=False, die=True):
 
 
 
-def savewithmetadata(filename, obj, folder=None, user=True, caller=True, git=True, pipfreeze=True, 
-                     comments=None, method='dill', allow_nonzip=False, dumpargs=None, **kwargs):
+def savearchive(filename, obj, files=None, folder=None, comments=None, require=None, 
+                     user=True, caller=True, git=True, pipfreeze=True, method='dill', 
+                     allow_nonzip=False, dumpargs=None, **kwargs):
     '''
     Save any object as a pickled zip file, including metadata as a separate JSON file.
     
@@ -585,30 +595,32 @@ def savewithmetadata(filename, obj, folder=None, user=True, caller=True, git=Tru
     
     Note: Since this function relies on pickle, it can potentially execute arbitrary
     code, so you should only use it with sources you trust. For more information, see:
-        https://docs.python.org/3/library/pickle.html
+    https://docs.python.org/3/library/pickle.html
     
     Args:
         filename (str/path): the file to save to (must end in .zip)
         obj (any): the object to save
-        caller (bool): store information on the current user in the metadata (see ``sc.metadata()``)
-        caller (bool): store information on the calling file in the metadata (see ``sc.metadata()``)
-        git (bool): store the git version in the metadata (see ``sc.metadata()``)
-        pipfreeze (bool): store the output of "pip freeze" in the metadata (see ``sc.metadata()``)
+        files (str/list): any additional files or folders to save
         comments (str/dict): other comments/information to store in the metadata (must be JSON-compatible)
+        require (str/dict): if provided, an additional manual set of requirements
+        caller (bool): store information on the current user in the metadata (see :func:`sc.metadata() <metadata>`)
+        caller (bool): store information on the calling file in the metadata (see :func:`sc.metadata() <metadata>`)
+        git (bool): store the git version in the metadata (see :func:`sc.metadata() <metadata>`)
+        pipfreeze (bool): store the output of "pip freeze" in the metadata (see :func:`sc.metadata() <metadata>`)
         method (str): the method to use saving the data; default "dill" for more robustness, but "pickle" is faster
         allow_nonzip (bool): whether to permit extensions other than .zip (note, may cause problems!)
-        dumpargs (dict): passed to :func:`dumpstr()`
-        kwargs (dict): passed to :func:`savezip()`
+        dumpargs (dict): passed to :func:`sc.dumpstr() <dumpstr>`
+        kwargs (dict): passed to :func:`sc.savezip() <savezip>`
     
     **Example**::
         
         obj = MyClass() # Create an arbitrary object
-        sc.savewithmetadata('my-class.zip', obj)
+        sc.savearchive('my-class.zip', obj)
         
         # Much later...
-        obj = sc.loadwithmetadata('my-class.zip')
+        obj = sc.loadarchive('my-class.zip')
     
-    New in version 2.2.0.
+    *New in version 3.0.0.*
     '''
     filename = scf.makepath(filename=filename, folder=folder, makedirs=True)
     
@@ -618,19 +630,19 @@ def savewithmetadata(filename, obj, folder=None, user=True, caller=True, git=Tru
             errormsg = f'Your filename ends with "{filename.suffix}" rather than ".zip". If you are sure you want to do this, set allow_nonzip=True.'
             raise ValueError(errormsg)
 
-    # Get the metadata
-    md = metadata(caller=caller, git=git, pipfreeze=pipfreeze, comments=comments, frame=3)
-    md['method'] = method # Store the method used to save the data (dill or pickle)
+    # Create the metadata, including storing the custom "method" attribute
+    md = metadata(caller=caller, git=git, pipfreeze=pipfreeze, comments=comments, 
+                  require=require, frame=3, method=method)
     
     # Convert both to strings
-    dumpargs = scu.mergedicts({'method':method}, dumpargs)
+    dumpargs    = scu.mergedicts({'method':method}, dumpargs)
     metadatastr = scf.jsonify(md, tostring=True, indent=2)
     datastr     = scf.dumpstr(obj, **dumpargs)
     
     # Construct output
     datadict = {_metadata_filename:metadatastr, _obj_filename:datastr}
     
-    return scf.savezip(filename=filename, data=datadict, tobytes=False, **kwargs)
+    return scf.savezip(filename=filename, files=files, data=datadict, tobytes=False, **kwargs)
 
 
 def known_deprecations(as_map=False):
@@ -639,12 +651,12 @@ def known_deprecations(as_map=False):
     
     New deprecations will be added as they arise.
     
-    Rarely used directly; invoked automatically by ``sc.load()`` if ``auto_remap=True``.
+    Rarely used directly; invoked automatically by :func:`sc.load() <load>` if ``auto_remap=True``.
     
     Args:
         as_map (bool): if True, return all known remappings without additional version data
     
-    New in version 2.2.0.
+    *New in version 3.0.0.*
     '''
     
     # List known remappings here
@@ -666,23 +678,23 @@ def known_deprecations(as_map=False):
 
 
 
-def loadwithmetadata(filename, folder=None, loadobj=True, loadmetadata=False, 
+def loadarchive(filename, folder=None, loadobj=True, loadmetadata=False, 
                      remapping=None, die=True, **kwargs):
     '''
-    Load a zip file saved with :func:`savewithmetadata()`.
+    Load a zip file saved with :func:`sc.savearchive() <savearchive>`.
     
     **Note**: Since this function relies on pickle, it can potentially execute arbitrary
     code, so you should only use it with sources you trust. For more information, see:
-        https://docs.python.org/3/library/pickle.html
+    https://docs.python.org/3/library/pickle.html
     
     Args:
         filename (str/path): the file load to (usually ends in .zip)
         folder (str): optional additional folder to load from
         loadobj (bool): whether to load the saved object
         loadmetadata (bool): whether to load the metadata as well
-        remapping (dict): any known module remappings between the saved pickle version and the current libraries (see ``sc.known_remappings()`` for examples)
+        remapping (dict): any known module remappings between the saved pickle version and the current libraries (see :func:`sc.known_remappings() <known_remappings>` for examples)
         die (bool): whether to fail if an exception is raised (else, just return the metadata)
-        kwargs (dict): passed to ``sc.load()``
+        kwargs (dict): passed to :func:`sc.load() <load>`
     
     Returns:
         If loadobj=True and loadmetadata=False, return the object;
@@ -692,10 +704,10 @@ def loadwithmetadata(filename, folder=None, loadobj=True, loadmetadata=False,
     **Example**::
         
         obj = MyClass() # Create an arbitrary object
-        sc.savewithmetadata('my-class.zip', obj)
+        sc.savearchive('my-class.zip', obj)
         
         # Much later...
-        data = sc.loadwithmetadata('my-class.zip', loadmetadata=True)
+        data = sc.loadarchive('my-class.zip', loadmetadata=True)
         metadata, obj = data['metadata'], data['obj']
     
     Note: This function expects the zip file to contain two files in it, one called 
@@ -704,7 +716,7 @@ def loadwithmetadata(filename, folder=None, loadobj=True, loadmetadata=False,
     ``sc.sc_versioning._obj_filename``, respectively. However, you almost certainly
     should not do so!
     
-    New in version 2.2.0.
+    *New in version 3.0.0.*
     '''
     filename = scf.makefilepath(filename=filename, folder=folder, makedirs=False)
     
@@ -752,7 +764,10 @@ def loadwithmetadata(filename, folder=None, loadobj=True, loadmetadata=False,
             # Convert into Python objects -- the most likely step where this can go wrong
             try:
                 method = md.get('method', None)
-                obj = scf.loadstr(datastr, method=method, remapping=remapping, **kwargs) # Load with original remappings
+                reqs   = md.get('require', None)
+                obj    = scf.loadstr(datastr, method=method, remapping=remapping, **kwargs) # Load with original remappings
+                if reqs:
+                    require(reqs=reqs, die=False, warn=True) # Don't die, but print warnings
             except: # pragma: no cover
                 try:
                     remapping = scu.mergedicts(remapping, known_deprecations(as_map=True))

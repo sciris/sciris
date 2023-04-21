@@ -171,7 +171,6 @@ def test_class():
     return P
 
 
-
 def test_components():
     sc.heading('Testing subcomponents directly')
 
@@ -200,13 +199,13 @@ if __name__ == '__main__':
 
     doplot = True
 
-    # test_simple()
-    # test_embarrassing()
-    # test_multiargs()
-    # test_noniterated(doplot)
-    # test_exceptions()
+    test_simple()
+    test_embarrassing()
+    test_multiargs()
+    test_noniterated(doplot)
+    test_exceptions()
     P = test_class()
-    # test_components()
+    test_components()
 
     sc.toc()
     print('Done.')

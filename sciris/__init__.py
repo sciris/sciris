@@ -1,9 +1,7 @@
 """
 Sciris root module
 
-Functions in Sciris are of course organized into submodules. However, standard
-usage is to call the functions directly, e.g. ``sc.parallelize()`` instead
-of ``sc.sc_parallel.parallelize()``.
+Typically just handles imports, but also sets number of threads for Numpy if SCIRIS_NUM_THREADS is set (see :class:`sc.options <sc_settings.ScirisOptions>`).
 """
 
 # Handle threadcount -- may require Sciris to be imported before Numpy; see https://stackoverflow.com/questions/17053671/how-do-you-stop-numpy-from-multithreading

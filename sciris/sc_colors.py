@@ -3,9 +3,9 @@ Handle colors and colormaps.
 
 Highlights:
     - Adds colormaps including ``'turbo'``, ``'parula'``, and ``'orangeblue'``
-    - :func:`hex2rgb`/:func:`rgb2hex`: convert between different color conventions
-    - :func:`vectocolor`: map a list of sequential values onto a list of colors
-    - :func:`gridcolors`: map a list of qualitative categories onto a list of colors
+    - :func:`sc.hex2rgb() <hex2rgb>`/:func:`sc.rgb2hex() <rgb2hex>`: convert between different color conventions
+    - :func:`sc.vectocolor() <vectocolor>`: map a list of sequential values onto a list of colors
+    - :func:`sc.gridcolors() <gridcolors>`: map a list of qualitative categories onto a list of colors
 '''
 
 ##############################################################################
@@ -44,7 +44,7 @@ def _listify_colors(colors, origndim=None):
 
 def sanitizecolor(color, asarray=False, alpha=None, normalize=True):
     '''
-    Alias to ``matplotlib.colors.to_rgb``, but also handles numeric inputs.
+    Alias to :func:`matplotlib.colors.to_rgb`, but also handles numeric inputs.
     
     Arg:
         color (str/list/etc): the input color to sanitize into an RGB tuple (or array)
@@ -229,9 +229,9 @@ def vectocolor(vector, cmap=None, asarray=True, reverse=False, minval=None, maxv
         c = sc.vectocolor(y);
         pl.scatter(x, y, c=c, s=50)
 
-    | New in version 1.2.0: midpoint argument.
-    | New in version 2.1.0: nancolor argument and remove nans by default
-    | New in version 2.2.0: correct "midpoint" argument
+    | *New in version 1.2.0:* midpoint argument.
+    | *New in version 2.1.0:* nancolor argument and remove nans by default
+    | *New in version 3.0.0:* correct "midpoint" argument
     """
 
     from numpy import array, zeros
@@ -251,7 +251,7 @@ def vectocolor(vector, cmap=None, asarray=True, reverse=False, minval=None, maxv
 
     # Usual situation -- the vector has elements
     vector = scu.dcp(vector) # To avoid in-place modification
-    vector = np.array(vector) # Just to be sure
+    vector = np.array(vector, dtype=float) # Just to be sure
     if len(vector):
         if minval is None:
             minval = np.nanmin(vector)
@@ -261,8 +261,9 @@ def vectocolor(vector, cmap=None, asarray=True, reverse=False, minval=None, maxv
         diff = maxval - minval
         vector = (vector - minval)/diff # Normalize vector
         if midpoint is not None:
-            midpoint = (midpoint - minval)/diff
-            norm = midpointnorm(vcenter=midpoint, vmin=0, vmax=1)
+            vcenter = (midpoint - minval)/diff
+            assert 0 <= vcenter <= 1, f'Values not in order: must be minval={minval:n} <= midpoint={midpoint:n} <= maxval={maxval:n}'
+            norm = midpointnorm(vcenter=vcenter, vmin=0, vmax=1)
             vector = np.array(norm(vector))
         nelements = len(vector) # Count number of elements
         colors = zeros((nelements,4))
@@ -293,7 +294,7 @@ def arraycolors(arr, **kwargs):
 
     Args:
         arr (array): a multidimensional array to be converted to an array of colors
-        kwargs(dict): passed to ``sc.vectocolor()``
+        kwargs(dict): passed to :func:`sc.vectocolor() <vectocolor>`
 
     **Example**::
 
@@ -427,7 +428,7 @@ def gridcolors(ncolors=10, limits=None, nsteps=20, asarray=False, ashex=False, r
     ## For plotting -- optional
     if demo:
         from . import sc_plotting as scp # To avoid circular import
-        ax = scp.scatter3d(colors[:,0], colors[:,1], colors[:,2], c=output, s=200, depthshade=False, lw=0, figkwargs={'facecolor':'w'})
+        ax = scp.scatter3d(colors[:,0], colors[:,1], colors[:,2], c=output, s=200, depthshade=False, lw=0, fig=True, figkwargs={'facecolor':'w'})
         ax.set_xlabel('Red', fontweight='bold')
         ax.set_ylabel('Green', fontweight='bold')
         ax.set_zlabel('Blue', fontweight='bold')
@@ -454,7 +455,7 @@ def midpointnorm(vcenter=0, vmin=None, vmax=None):
         data = pl.rand(10,10) - 0.2
         pl.pcolor(data, cmap='bi', norm=sc.midpointnorm())
 
-    New in version 1.2.0.
+    *New in version 1.2.0.*
     '''
     from matplotlib.colors import TwoSlopeNorm
     norm = TwoSlopeNorm(vcenter=vcenter, vmin=vmin, vmax=vmax)
@@ -485,7 +486,7 @@ def colormapdemo(cmap=None, n=None, smoothing=None, randseed=None, doshow=True):
     if cmap is None: cmap = 'parula' # For no particular reason
     maxheight = 1
     horizontalsize = 4
-    pl.seed(randseed)
+    np.random.seed(randseed)
     kernel = np.array([0.25,0.5,0.25])
     data = pl.randn(n,n)
     for s in range(smoothing): # Quick-and-dirty-and-slow smoothing
@@ -507,7 +508,7 @@ def colormapdemo(cmap=None, n=None, smoothing=None, randseed=None, doshow=True):
         pl.show()
 
     # Plot in 3D
-    fig2,ax2 = scp.fig3d(returnax=True, figsize=(18,8))
+    fig2,ax2 = scp.fig3d(returnax=True, figsize=(12,8))
     ax2.view_init(elev=45, azim=30)
     X = np.linspace(0,horizontalsize,n)
     X, Y = np.meshgrid(X, X)
@@ -817,7 +818,7 @@ def orangebluecolormap(apply=False):
         cmap = sc.orangebluecolormap()
         sc.colormapdemo(cmap=cmap)
 
-    New in version 1.0.0.
+    *New in version 1.0.0.*
     '''
     bottom = pl.get_cmap('Oranges', 128)
     top    = pl.get_cmap('Blues_r', 128)

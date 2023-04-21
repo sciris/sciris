@@ -2,13 +2,13 @@
 Functions for reading/writing to files, including pickles, JSONs, and Excel.
 
 Highlights:
-    - :func:`save` / :func:`load`: efficiently save/load any Python object (via pickling)
-    - :func:`savetext` / :func:`loadtext`: likewise, for text
-    - :func:`savejson` / :func:`loadjson`: likewise, for JSONs
-    - :func:`saveyaml` / :func:`saveyaml`: likewise, for YAML
-    - :func:`thisdir`: get current folder
-    - :func:`getfilelist`: easy way to access glob
-    - :func:`rmpath`: remove files and folders
+    - :func:`sc.save() <save>` / :func:`sc.load() <load>`: efficiently save/load any Python object (via pickling)
+    - :func:`sc.savetext() <savetext>` / :func:`sc.loadtext() <loadtext>`: likewise, for text
+    - :func:`sc.savejson() <savejson>` / :func:`sc.loadjson() <loadjson>`: likewise, for JSONs
+    - :func:`sc.saveyaml() <saveyaml>` / :func:`sc.saveyaml() <saveyaml>`: likewise, for YAML
+    - :func:`sc.thisdir() <thisdir>`: get current folder
+    - :func:`sc.getfilelist() <getfilelist>`: easy way to access glob
+    - :func:`sc.rmpath() <rmpath>`: remove files and folders
 """
 
 ##############################################################################
@@ -35,7 +35,7 @@ import zstandard as zstd
 from zipfile import ZipFile
 from contextlib import closing
 from pathlib import Path
-from glob import glob
+from glob import glob as pyglob
 import fnmatch as fnm
 from . import sc_settings as scs
 from . import sc_utils as scu
@@ -128,19 +128,20 @@ def _load_filestr(filename, folder):
 def load(filename=None, folder=None, verbose=False, die=None, remapping=None, 
          method='pickle', auto_remap=True, **kwargs):
     '''
-    Load a file that has been saved as a gzipped pickle file, e.g. by :func:`save`.
+    Load a file that has been saved as a gzipped pickle file, e.g. by :func:`sc.save() <save>`.
     Accepts either a filename (standard usage) or a file object as the first argument.
-    Note that `:func:`load`/:func:`loadobj` are aliases of each other.
+    Note that :func:`sc.load() <load>`/:func:`sc.loadobj() <loadobj>` are aliases of each other.
 
     **Note 1**: Since this function relies on pickle, it can potentially execute arbitrary
     code, so you should only use it with sources you trust. For more information, see:
-        https://docs.python.org/3/library/pickle.html
+    https://docs.python.org/3/library/pickle.html
 
     **Note 2**: When a pickle file is loaded, Python imports any modules that are referenced
     in it. This is a problem if module has been renamed. In this case, you can
     use the ``remapping`` argument to point to the new modules or classes. For
-    more robustness, use the :func:`savewithmetadata`/:func:`loadwithmetadata`
+    more robustness, use the :func:`sc.savearchive() <savearchive>`/:func:`sc.loadarchive() <loadarchive>`
     functions.
+
 
     Args:
         filename   (str/Path): the filename (or full path) to load
@@ -159,8 +160,8 @@ def load(filename=None, folder=None, verbose=False, die=None, remapping=None,
         old = sc.load('my-old-file.obj', remapping={'foo.Bar':cat.Mat}) # If loading a saved object containing a reference to foo.Bar that is now cat.Mat
         old = sc.load('my-old-file.obj', remapping={'foo.Bar':('cat', 'Mat')}) # Equivalent to the above
 
-    | New in version 1.1.0: "remapping" argument
-    | New in version 1.2.2: ability to load non-gzipped pickles; support for dill; arguments passed to loader
+    | *New in version 1.1.0:* "remapping" argument
+    | *New in version 1.2.2:* ability to load non-gzipped pickles; support for dill; arguments passed to loader
     '''
     # Load the file
     filestr = _load_filestr(filename, folder)
@@ -188,34 +189,35 @@ def save(filename='default.obj', obj=None, folder=None, method='pickle', compres
     '''
     Save any object to disk
     
-    This function is similar to ``pickle.dump()`` in that it serializes the object
+    This function is similar to :func:`pickle.dump()` in that it serializes the object
     to a file. Key differences include:
         
         - It takes care of opening/closing the file for writing
         - It compresses the data by default
         - It supports different serialization methods (e.g. pickle or dill)
     
-    Once an object is saved, it can be loaded with :func:`load`. Note that 
-    :func:`save()`/:func:`saveobj()` are identical.
+    Once an object is saved, it can be loaded with :func:`sc.load() <load>`. Note that 
+    :func:`sc.save() <save>`/:func:`sc.saveobj() <saveobj>` are identical.
+    
     
     **Note 1**: Since this function relies on pickle, it can potentially execute arbitrary
     code, so you should only use it with sources you trust. For more information, see:
-        https://docs.python.org/3/library/pickle.html
+    https://docs.python.org/3/library/pickle.html
         
     **Note 2**: When a pickle file is loaded, Python imports any modules that are referenced
     in it. This is a problem if module has been renamed (in which case the pickle
     usually can't be opened). For more robustness (e.g. to pickle custom classes), use 
-    ``method='dill'`` and/or the :func:`savewithmetadata()` / :func:`loadwithmetadata()` 
+    ``method='dill'`` and/or the :func:`sc.savearchive() <savearchive>`/:func:`sc.loadarchive() <loadarchive>`
     functions.
     
     If you do not need to save arbitrary Python and just need to save data, consider
-    saving the data in a standard format, e.g. JSON (``sc.savejson()``). For large
+    saving the data in a standard format, e.g. JSON (:func:`sc.savejson() <savejson>`). For large
     amounts of tabular data, also consider formats like HDF5 or PyArrow.
 
     Args:
         filename      (str/path) : the filename or path to save to; if None, return an io.BytesIO filestream instead of saving to disk
         obj           (anything) : the object to save
-        folder        (str)      : optional additional folder, passed to :func:`makepath`
+        folder        (str)      : optional additional folder, passed to :func:`sc.makepath() <makepath>`
         method        (str)      : whether to use 'pickle' (default) or 'dill'
         compression   (str)      : type of compression to use: 'gzip' (default), 'zstd' (zstandard), or 'none' (no compression)
         compresslevel (int)      : the level of gzip/zstd compression (1 to 9 for gzip, -7 to 22 for zstandard, default 5)
@@ -223,7 +225,7 @@ def save(filename='default.obj', obj=None, folder=None, method='pickle', compres
         sanitizepath  (bool)     : whether to sanitize the path prior to saving
         die           (bool)     : whether to fail if the object can't be pickled (else, try dill); if die is 'never'
         allow_empty   (bool)     : whether or not to allow "None" to be saved (usually treated as an error)
-        kwargs        (dict)     : passed to ``pickle.dumps()`` (or ``dill.dumps``)
+        kwargs        (dict)     : passed to :func:`pickle.dumps()` (or ``dill.dumps()``)
 
     **Examples**::
 
@@ -245,13 +247,13 @@ def save(filename='default.obj', obj=None, folder=None, method='pickle', compres
         loaded = sc.load('my_class.obj') # With dill, can be loaded anywhere, not just in the same script
         assert loaded.sum() == my_class.sum()
     
-    See also :func:`zsave()` (identical except defaults to zstandard compression).
+    See also :func:`sc.zsave() <zsave>` (identical except defaults to zstandard compression).
 
-    | New in version 1.1.1: removed Python 2 support.
-    | New in version 1.2.2: automatic swapping of arguments if order is incorrect; correct passing of arguments
-    | New in version 2.0.4: "die" argument for saving as dill
-    | New in version 2.1.0: "zstandard" compression method
-    | New in version 2.2.0: "allow_empty" argument; removed "args"
+    | *New in version 1.1.1:* removed Python 2 support.
+    | *New in version 1.2.2:* automatic swapping of arguments if order is incorrect; correct passing of arguments
+    | *New in version 2.0.4:* "die" argument for saving as dill
+    | *New in version 2.1.0:* "zstandard" compression method
+    | *New in version 3.0.0:* "allow_empty" argument; removed "args"
     '''
 
     def serialize(fileobj, obj, success, **kwargs):
@@ -353,23 +355,23 @@ saveobj = save
 def zsave(*args, compression='zstd', **kwargs):
     '''
     Save a file using zstandard (instead of gzip) compression. This is an alias
-    for ``sc.save(..., compression='zstd')``; see :func:`save()` for details.
+    for ``sc.save(..., compression='zstd')``; see :func:`sc.save() <save>` for details.
     
-    Note: there is no matching function ``sc.zload()`` since :func:`load()` will
+    Note: there is no matching function ``sc.zload()`` since :func:`sc.load() <load>` will
     automatically try loading zstandard.
     
-    New in version 2.1.0.    
+    *New in version 2.1.0.*
     '''
     return save(*args, compression=compression, **kwargs)
 
 
 def loadstr(string, **kwargs):
     '''
-    Like :func:`load()`, but for a bytes-like string (rarely used).
+    Like :func:`sc.load() <load>`, but for a bytes-like string (rarely used).
     
     Args:
         string (str): the bytes-like string to load
-        kwargs (dict): passed to :func:`load()`
+        kwargs (dict): passed to :func:`sc.load() <load>`
 
     **Example**::
 
@@ -378,7 +380,7 @@ def loadstr(string, **kwargs):
         obj2 = sc.loadstr(bytestring)
         assert obj == obj2
     
-    | New in version 2.2.0: uses ``sc.load()`` for more robustness
+    | *New in version 3.0.0:* uses :func:`sc.load() <load>` for more robustness
     '''
     with closing(io.BytesIO(string)) as bytestream: # Open a "fake file" with the Gzip string pickle in it
         obj = load(bytestream, **kwargs)
@@ -387,14 +389,14 @@ def loadstr(string, **kwargs):
 
 def dumpstr(obj=None, **kwargs):
     '''
-    Dump an object to a bytes-like string (rarely used by the user); see :func:`save()`
+    Dump an object to a bytes-like string (rarely used by the user); see :func:`sc.save() <save>`
     instead.
     
     Args:
         obj (any): the object to convert
-        kwargs (dict): passed to :func:`save()`
+        kwargs (dict): passed to :func:`sc.save() <save>`
     
-    New in version 2.2.0: uses ``sc.save()`` for more robustness
+    *New in version 3.0.0:* uses :func:`sc.save() <save>` for more robustness
     '''
     bytesobj = save(filename=None, obj=obj, **kwargs)
     result = bytesobj.read() # Read all of the content into result
@@ -406,7 +408,7 @@ def dumpstr(obj=None, **kwargs):
 ##############################################################################
 
 __all__ += ['loadtext', 'savetext', 'loadzip', 'unzip', 'savezip', 'path', 'ispath', 
-            'thisfile', 'thisdir', 'thispath', 'getfilelist', 'getfilepaths', 
+            'thisfile', 'thisdir', 'thispath', 'getfilelist', 'glob', 'getfilepaths', 
             'sanitizefilename', 'sanitizepath', 'makefilepath', 'makepath', 'rmpath']
 
 
@@ -434,7 +436,7 @@ def savetext(filename=None, string=None, **kwargs):
     Args:
         filename (str): the filename to save to
         string (str): the string (or object) to save
-        kwargs (dict): passed to ``np.savetxt()`` if saving an array
+        kwargs (dict): passed to :func:`np.savetxt() <numpy.savetxt>` if saving an array
 
     **Example**::
 
@@ -463,7 +465,7 @@ def loadzip(filename=None, folder=None, **kwargs):
     Args:
         filename (str/path): the name of the zip file to write to
         folder (str): optional additional folder for the filename
-        kwargs (dict): passed to :func:`load()`
+        kwargs (dict): passed to :func:`sc.load() <load>`
     
     Returns:
         dict with each file loaded as a key
@@ -472,8 +474,8 @@ def loadzip(filename=None, folder=None, **kwargs):
 
         data = sc.loadzip('my-files.zip')
 
-    | New in version 2.0.0.
-    | New in version 2.2.0: load into memory instead of extracting to disk; see :func:`unzip` for extracting
+    | *New in version 2.0.0.*
+    | *New in version 3.0.0:* load into memory instead of extracting to disk; see :func:`sc.unzip() <unzip>` for extracting
     '''
     filename = makefilepath(filename=filename, folder=folder)
     output = dict()
@@ -506,7 +508,7 @@ def unzip(filename=None, outfolder='.', folder=None, members=None):
 
         sc.unzip('my-files.zip', outfolder='my_data') # extracts all files 
 
-    | New in version 2.2.0 (equivalent to sc.loadzip(..., extract=True) previously)
+    | *New in version 3.0.0* (equivalent to sc.loadzip(..., extract=True) previously)
     '''
     filename = makefilepath(filename=filename, folder=folder)
     with ZipFile(filename, 'r') as zf: # Load the zip file
@@ -517,21 +519,21 @@ def unzip(filename=None, outfolder='.', folder=None, members=None):
     return output
 
 
-def savezip(filename=None, filelist=None, data=None, folder=None, basename=True, 
-            sanitizepath=True, tobytes=True, verbose=True, **kwargs):
+def savezip(filename=None, files=None, data=None, folder=None, sanitizepath=True, 
+            basename=False, tobytes=True, verbose=True, **kwargs):
     '''
     Create a zip file from the supplied list of files (or less commonly, supplied data)
 
     Args:
         filename (str/path): the name of the zip file to write to
-        filelist (list): the list of files to compress
-        data (dict): if supplied, instead of files, write this data instead (must be a dictionary of filename keys and data values)
+        files (list): file(s) and/or folder(s) to compress
+        data (dict): if supplied, write this data as well or instead (must be a dictionary of filename keys and data values)
         folder (str): optional additional folder for the filename
-        basename (bool): whether to use only the file's basename as the name inside the zip file (otherwise, store folder info)
         sanitizepath (bool): whether to sanitize the path prior to saving
+        basename (bool): whether to use only the file's basename as the name inside the zip file (otherwise, store folder info)
         tobytes (bool): if data is provided, convert it automatically to bytes (otherwise, up to the user)
         verbose (bool): whether to print progress
-        kwargs (dict): passed to ``sc.save()``
+        kwargs (dict): passed to :func:`sc.save() <save>`
 
     **Examples**::
 
@@ -540,31 +542,54 @@ def savezip(filename=None, filelist=None, data=None, folder=None, basename=True,
 
         sc.savezip('mydata.zip', data=dict(var1='test', var2=np.random.rand(3)))
 
-    New in version 2.0.0: saving data
-    New in version 2.2.0: "tobytes" argument and kwargs
+    | *New in version 2.0.0:* saving data
+    | *New in version 3.0.0:* "tobytes" argument and kwargs; "filelist" renamed "files"
     '''
 
     # Handle inputs
     fullpath = makefilepath(filename=filename, folder=folder, sanitize=sanitizepath, makedirs=True)
-    filelist = scu.tolist(filelist)
+    
+    
+    # If data is provided, do simple validation
     if data is not None:
         if not isinstance(data, dict): # pragma: no cover
             errormsg = 'Data has invalid format: must be a dictionary of filename keys and data values'
             raise ValueError(errormsg)
-
+    else:
+        data = {}
+    
+    # Typical use case: data is not provided, handle files
+    if files:
+        origfilelist = [path(file) for file in scu.tolist(files)]
+        
+        # Handle subfolders
+        extfilelist = scu.dcp(origfilelist) # An extended file list, including recursion into subfolders
+        for orig in origfilelist:
+            if orig.is_dir():
+                contents = getfilelist(orig, abspath=False, recursive=True, aspath=True)
+                extfilelist.extend(contents[1:]) # Skip the first entry since it's the folder that's already in the list
+        
+        # Remove duplicates to create the final file list
+        filelist = []
+        for efile in extfilelist:
+            if efile not in filelist:
+                filelist.append(efile)
+            
     # Write zip file
     with ZipFile(fullpath, 'w') as zf: # Create the zip file
-        if data is None: # Main use case, save files
-            for thisfile in filelist:
-                thispath = makefilepath(filename=thisfile, abspath=False, makedirs=True)
-                if basename: thisname = os.path.basename(thispath)
-                else:        thisname = thispath # pragma: no cover
-                zf.write(thispath, thisname)
-        else: # Alternatively, save data
+        if data: # Optionally also save data
             for key,val in data.items():
                 if tobytes:
                     val = dumpstr(val, **kwargs)
                 zf.writestr(key, val)
+        if files: # Main use case, save files
+            for thisfile in filelist:
+                thispath = makefilepath(filename=thisfile, abspath=False, makedirs=False)
+                thisname = os.path.basename(thisfile) if basename else thisfile
+                zf.write(thispath, thisname) # Actually save
+        if not data and not files:
+            errormsg = 'No data and no files provided: nothing to save!'
+            raise FileNotFoundError(errormsg)
         
     if verbose: print(f'Zip file saved to "{fullpath}"')
     return fullpath
@@ -583,8 +608,8 @@ def path(*args, **kwargs):
         
         sc.path('/a/folder', None, 'a_file.txt') # Returns PosixPath('/a/folder/a_file.txt')
 
-    | New in version 1.2.2.
-    | New in version 2.0.0: handle None or list arguments
+    | *New in version 1.2.2.*
+    | *New in version 2.0.0:* handle None or list arguments
     '''
 
     # Handle inputs
@@ -608,7 +633,7 @@ def ispath(obj):
     '''
     Alias to isinstance(obj, Path).
 
-    New in version 2.0.0.
+    *New in version 2.0.0.*
     '''
     return isinstance(obj, Path)
 
@@ -626,7 +651,7 @@ def thisfile(frame=1, aspath=None):
         my_script_name = sc.thisfile() # Get the name of the current file
         calling_script = sc.thisfile(frame=2) # Get the name of the script that called this script
 
-    New in verison 2.1.0.
+    *New in verison 2.1.0.*
     '''
     if aspath is None: aspath = scs.options.aspath
     file = inspect.stack()[frame][1] # Adopted from Atomica
@@ -660,13 +685,16 @@ def thisdir(file=None, path=None, *args, frame=1, aspath=None, **kwargs):
         file_in_sub_dir = sc.thisdir('..', 'tests', 'mytests.py') # Merge parent folder with sufolders and a file
         np_dir = sc.thisdir(np) # Get the folder that Numpy is loaded from (assuming "import numpy as np")
 
-    | New in version 1.1.0: "as_path" argument renamed "aspath"
-    | New in version 1.2.2: "path" argument
-    | New in version 1.3.0: allow modules
-    | New in version 2.1.0: frame argument
+    | *New in version 1.1.0:* "as_path" argument renamed "aspath"
+    | *New in version 1.2.2:* "path" argument
+    | *New in version 1.3.0:* allow modules
+    | *New in version 2.1.0:* frame argument
     '''
     if file is None: # No file: use the current folder
-         file = thisfile(frame=frame+1) # Need +1 since want the calling script
+        if scu.isjupyter():
+            file = os.path.abspath(os.path.expanduser('file_placeholder')) # This is as best we can do on Jupyter
+        else:
+            file = thisfile(frame=frame+1) # Need +1 since want the calling script
     elif hasattr(file, '__file__'): # It's actually a module
         file = file.__file__
     if aspath is None: aspath = scs.options.aspath
@@ -680,9 +708,9 @@ def thisdir(file=None, path=None, *args, frame=1, aspath=None, **kwargs):
 
 def thispath(*args, frame=1, aspath=True, **kwargs):
     '''
-    Alias for :func:`thisdir` that returns a path by default instead of a string.
+    Alias for :func:`sc.thisdir() <thisdir>` that returns a path by default instead of a string.
     
-    New in version 2.1.0.
+    *New in version 2.1.0.*
     '''
     return thisdir(*args, frame=frame+1, aspath=aspath, **kwargs)
 
@@ -692,7 +720,10 @@ thispath.__doc__ += '\n\n' + thisdir.__doc__
 def getfilelist(folder=None, pattern=None, fnmatch=None, abspath=False, nopath=False, 
                 filesonly=False, foldersonly=False, recursive=True, aspath=None):
     '''
-    A shortcut for using glob.
+    A shortcut for using :func:`glob.glob()`.
+    
+    Note that :func:`sc.getfilelist() <getfilelist>` and :func:`sc.glob() <glob>` 
+    are aliases of each other.
 
     Args:
         folder      (str):  the folder to find files in (default, current)
@@ -702,7 +733,7 @@ def getfilelist(folder=None, pattern=None, fnmatch=None, abspath=False, nopath=F
         nopath      (bool): whether to return no path
         filesonly   (bool): whether to only return files (not folders)
         foldersonly (bool): whether to only return folders (not files)
-        recursive   (bool): passed to glob() (note: ** is required as the pattern to match all subfolders)
+        recursive   (bool): passed to :func:`glob.glob()` (note: ** is required as the pattern to match all subfolders)
         aspath      (bool): whether to return Path objects
         
     Returns:
@@ -715,8 +746,8 @@ def getfilelist(folder=None, pattern=None, fnmatch=None, abspath=False, nopath=F
         sc.getfilelist('~/temp/*.py') # Like above
         sc.getfilelist(fnmatch='*.py') # Recursively find all files ending in .py
 
-    New in version 1.1.0: "aspath" argument
-    New in version 2.1.0: default pattern of "**"; "fnmatch" argument; default recursive=True
+    | *New in version 1.1.0:* "aspath" argument
+    | *New in version 2.1.0:* default pattern of "**"; "fnmatch" argument; default recursive=True
     '''
     if folder is None:
         folder = '.'
@@ -728,7 +759,7 @@ def getfilelist(folder=None, pattern=None, fnmatch=None, abspath=False, nopath=F
     if aspath is None: 
         aspath = scs.options.aspath
     globstr = os.path.join(folder, pattern) if pattern else folder
-    filelist = sorted(glob(globstr, recursive=recursive))
+    filelist = sorted(pyglob(globstr, recursive=recursive))
     if filesonly:
         filelist = [f for f in filelist if os.path.isfile(f)]
     elif foldersonly:
@@ -742,11 +773,15 @@ def getfilelist(folder=None, pattern=None, fnmatch=None, abspath=False, nopath=F
     return filelist
 
 
+# Define as an alias
+glob = getfilelist
+
+
 def getfilepaths(*args, aspath=True, **kwargs):
     '''
-    Alias for :func:`getfilelist` that returns paths by default instead of strings.
+    Alias for :func:`sc.getfilelist() <getfilelist>` that returns paths by default instead of strings.
     
-    New in version 2.1.0.
+    *New version 2.1.0.*
     '''
     return getfilelist(*args, aspath=True, **kwargs)
 
@@ -772,7 +807,7 @@ def sanitizefilename(filename, sub='_', allowspaces=False, asciify=True, strict=
         bad = 'Nöt*a   file&name?!.doc'
         good = sc.sanitizefilename(bad)
         
-    New in version 2.0.1: arguments "sub", "allowspaces", "asciify", "strict", and "disallowed"
+    *New version 2.0.1:* arguments "sub", "allowspaces", "asciify", "strict", and "disallowed"
     '''
     
     # Handle options
@@ -805,9 +840,9 @@ def sanitizefilename(filename, sub='_', allowspaces=False, asciify=True, strict=
 
 def sanitizepath(*args, aspath=True, **kwargs):
     '''
-    Alias for :func:`sanitizefilename` that returns a path by default instead of a string.
+    Alias for :func:`sc.sanitizefilename() <sanitizefilename>` that returns a path by default instead of a string.
     
-    New in version 2.1.0.
+    *New version 2.1.0.*
     '''
     return sanitizefilename(*args, aspath=True, **kwargs)
 
@@ -824,7 +859,7 @@ def makefilepath(filename=None, folder=None, ext=None, default=None, split=False
 
     Args:
         filename    (str or Path)   : the filename, or full file path, to save to -- in which case this utility does nothing
-        folder      (str/Path/list) : the name of the folder to be prepended to the filename; if a list, fed to ``os.path.join()``
+        folder      (str/Path/list) : the name of the folder to be prepended to the filename; if a list, fed to :func:`os.path.join()`
         ext         (str)           : the extension to ensure the file has
         default     (str or list)   : a name or list of names to use if filename is None
         split       (bool)          : whether to return the path and filename separately
@@ -832,7 +867,7 @@ def makefilepath(filename=None, folder=None, ext=None, default=None, split=False
         abspath     (bool)          : whether to conver to absolute path
         makedirs    (bool)          : whether or not to make the folders to save into if they don't exist
         checkexists (bool)          : if False/True, raises an exception if the path does/doesn't exist
-        sanitize    (bool)          : whether or not to remove special characters from the path; see :func:`sanitizepath` for details
+        sanitize    (bool)          : whether or not to remove special characters from the path; see :func:`sc.sanitizepath() <sanitizepath>` for details
         die         (bool)          : whether or not to raise an exception if cannot create directory failed (otherwise, return a string)
         verbose     (bool)          : how much detail to print
 
@@ -850,8 +885,8 @@ def makefilepath(filename=None, folder=None, ext=None, default=None, split=False
     Assuming project.filename is None and project.name is "recipe" and ./congee
     doesn't exist, this will makes folder ./congee and returns e.g. ('/home/myname/congee', 'recipe.prj')
 
-    New in version 1.1.0: "aspath" argument
-    New in version 2.2.0: "makedirs" defaults to False
+    | *New in version 1.1.0:* "aspath" argument
+    | *New in version 3.0.0:* "makedirs" defaults to False
     '''
 
     # Initialize
@@ -934,10 +969,10 @@ def makefilepath(filename=None, folder=None, ext=None, default=None, split=False
 
 def makepath(*args, aspath=True, **kwargs):
     '''
-    Alias for :func:`makefilepath` that returns a path by default instead of a string
+    Alias for :func:`sc.makefilepath() <makefilepath>` that returns a path by default instead of a string
     (with apologies for the confusing terminology, kept for backwards compatibility).
     
-    New in version 2.1.0.
+    *New version 2.1.0.*
     '''
     return makefilepath(*args, **kwargs, aspath=True)
 
@@ -946,7 +981,7 @@ makepath.__doc__ += '\n\n' + makefilepath.__doc__
 
 def rmpath(path=None, *args, die=True, verbose=True, interactive=False, **kwargs):
     """
-    Remove file(s) and folder(s). Alias to ``os.remove()`` (for files) and ``shutil.rmtree()``
+    Remove file(s) and folder(s). Alias to :func:`os.remove()` (for files) and :func:`shutil.rmtree()`
     (for folders).
 
     Arguments:
@@ -955,7 +990,7 @@ def rmpath(path=None, *args, die=True, verbose=True, interactive=False, **kwargs
         die (bool): whether or not to raise an exception if cannot remove
         verbose (bool): how much detail to print
         interactive (bool): whether to confirm prior to each deletion
-        kwargs (dict): passed to ``os.remove()``/``shutil.rmtree()``
+        kwargs (dict): passed to :func:`os.remove()`/:func:`shutil.rmtree()`
 
     **Examples**::
 
@@ -964,7 +999,7 @@ def rmpath(path=None, *args, die=True, verbose=True, interactive=False, **kwargs
         sc.rmpath(['myobj.obj', 'tests']) # Remove a file and a folder interactively
         sc.rmpath(sc.getfilelist('tests/*.obj')) # Example of removing multiple files
 
-    New in version 2.0.0.
+    *New version 2.0.0.*
     """
 
     paths = scu.mergelists(path, *args)
@@ -1011,16 +1046,17 @@ def rmpath(path=None, *args, die=True, verbose=True, interactive=False, **kwargs
 #%% JSON functions
 ##############################################################################
 
-__all__ += ['sanitizejson', 'jsonify', 'loadjson', 'savejson', 'loadyaml', 'saveyaml', 'jsonpickle', 'jsonunpickle']
+__all__ += ['sanitizejson', 'jsonify', 'printjson', 'readjson', 'loadjson', 'savejson', 
+            'readyaml', 'loadyaml', 'saveyaml', 'jsonpickle', 'jsonunpickle']
 
 
 def jsonify(obj, verbose=True, die=False, tostring=False, **kwargs):
     """
     This is the main conversion function for Python data-structures into JSON-compatible
-    data structures (note: :func:`sanitizejson`/:func:`jsonify` are identical).
+    data structures (note: :func:`sc.sanitizejson() <sanitizejson>`/:func:`sc.jsonify() <jsonify>` are identical).
 
     Args:
-        obj      (any):  almost any kind of data structure that is a combination of list, numpy.ndarray, odicts, etc.
+        obj      (any):  almost any kind of data structure that is a combination of list, :obj:`numpy.ndarray`, odicts, etc.
         verbose  (bool): level of detail to print
         die      (bool): whether or not to raise an exception if conversion failed (otherwise, return a string)
         tostring (bool): whether to return a string representation of the sanitized object instead of the object itself
@@ -1082,12 +1118,16 @@ def jsonify(obj, verbose=True, die=False, tostring=False, **kwargs):
 
     else: # None of the above
         try:
-            output = jsonpickle(obj)
-        except Exception as E: # pragma: no cover
-            errormsg = f'Could not sanitize "{obj}" {type(obj)} ({str(E)}), converting to string instead'
-            if die:       raise TypeError(errormsg)
-            elif verbose: print(errormsg)
-            output = str(obj)
+            output = jsonify(obj.__dict__) # Try converting the contents to JSON
+            output = scu.mergedicts({'python_class': str(type(obj))}, output)
+        except:
+            try:
+                output = jsonpickle(obj)
+            except Exception as E: # pragma: no cover
+                errormsg = f'Could not sanitize "{obj}" {type(obj)} ({E}), converting to string instead'
+                if die:       raise TypeError(errormsg)
+                elif verbose: print(errormsg)
+                output = str(obj)
 
     # Convert to string if desired
     if tostring:
@@ -1099,6 +1139,52 @@ def jsonify(obj, verbose=True, die=False, tostring=False, **kwargs):
 sanitizejson = jsonify
 
 
+def printjson(obj, indent=2, **kwargs):
+    '''
+    Print an object as a JSON
+    
+    Acts as an alias to :func:`print(sc.jsonify(..., tostring=True)) <jsonify>`.
+    
+    Args:
+        obj (any): the object to print
+        indent (int): the level of indent to use 
+        kwargs (dict): passed to :func:`sc.jsonify() <jsonify>`
+    
+    **Example**::
+        
+        data = dict(a=dict(x=[1,2,3], y=[4,5,6]), b=dict(foo='string', bar='other_string'))
+        sc.printjson(data)
+    
+    *New in version 3.0.0.*
+    '''
+    json = jsonify(obj, tostring=True, indent=indent, **kwargs)
+    print(json)
+    return
+
+
+def readjson(string, **kwargs):
+    '''
+    Read JSON from a string
+    
+    Alias to :func:`json.loads()`.
+
+    Args:
+        string (str): a string representation of the JSON
+        kwargs (dict): passed to :func:`json.loads()`
+    
+    See also :func:`sc.loadjson() <loadjson>` for loading a JSON from
+    a file.
+    
+    **Example**::
+        
+        string = '{"this":1, "is":2, "a":3, "JSON":4}'
+        json = sc.readjson(string)
+        
+    *New in version 3.0.0.*
+    '''
+    return json.loads(string, **kwargs)
+
+
 def loadjson(filename=None, folder=None, string=None, fromfile=True, **kwargs):
     '''
     Convenience function for reading a JSON file (or string).
@@ -1108,7 +1194,7 @@ def loadjson(filename=None, folder=None, string=None, fromfile=True, **kwargs):
         folder (str): folder if not part of the filename
         string (str): if not loading from a file, a string representation of the JSON
         fromfile (bool): whether or not to load from file
-        kwargs (dict): passed to json.load()
+        kwargs (dict): passed to :func:`json.load()`
 
     Returns:
         output (dict): the JSON object
@@ -1117,6 +1203,9 @@ def loadjson(filename=None, folder=None, string=None, fromfile=True, **kwargs):
 
         json = sc.loadjson('my-file.json')
         json = sc.loadjson(string='{"a":null, "b":[1,2,3]}')
+    
+    See also :func:`sc.readjson() <readjson>` for loading a JSON from
+    a string.
     '''
     if string is not None or not fromfile:
         if string is None and filename is not None: # pragma: no cover
@@ -1143,9 +1232,9 @@ def savejson(filename=None, obj=None, folder=None, die=True, indent=2, keepnone=
         folder (str): folder if not part of the filename
         die (bool): whether or not to raise an exception if saving an empty object
         indent (int): indentation to use for saved JSON
-        keepnone (bool): allow ``sc.savejson(None)`` to return 'null' rather than raising an exception
+        keepnone (bool): allow :func:`sc.savejson(None) <savejson(None>` to return 'null' rather than raising an exception
         sanitizepath (bool): whether to sanitize the path prior to saving
-        kwargs (dict): passed to ``json.dump()``
+        kwargs (dict): passed to :func:`json.dump()`
 
     Returns:
         The filename saved to
@@ -1155,7 +1244,7 @@ def savejson(filename=None, obj=None, folder=None, die=True, indent=2, keepnone=
         json = {'foo':'bar', 'data':[1,2,3]}
         sc.savejson('my-file.json', json)
     
-    See also :func:`jsonify()`.
+    See also :func:`sc.jsonify() <jsonify>`.
     '''
 
     filename = makefilepath(filename=filename, folder=folder, sanitize=sanitizepath, makedirs=True)
@@ -1169,6 +1258,29 @@ def savejson(filename=None, obj=None, folder=None, die=True, indent=2, keepnone=
         json.dump(sanitizejson(obj), f, indent=indent, **kwargs)
 
     return filename
+
+
+def readyaml(string, **kwargs):
+    '''
+    Read YAML from a string
+    
+    Alias to :func:`sc.loadyaml(string=...) <loadyaml>`.
+
+    Args:
+        string (str): a string representation of the YAML
+        kwargs (dict): passed to :func:`sc.loadyaml() <loadyaml>`
+    
+    See also :func:`sc.loadyaml() <loadyaml>` for loading a YAML from
+    a file.
+    
+    **Example**::
+    
+        string = '{"this":1, "is":2, "a":3, "YAML":4} # YAML allows comments!'
+        yaml = sc.readyaml(string)
+    
+    *New in version 3.0.0.*
+    '''
+    return loadyaml(string=string, **kwargs)
 
 
 def loadyaml(filename=None, folder=None, string=None, fromfile=True, safe=False, loader=None):
@@ -1229,7 +1341,7 @@ def saveyaml(filename=None, obj=None, folder=None, die=True, keepnone=False, dum
         folder (str): folder if not part of the filename
         die (bool): whether or not to raise an exception if saving an empty object
         indent (int): indentation to use for saved YAML
-        keepnone (bool): allow ``sc.saveyaml(None)`` to return 'null' rather than raising an exception
+        keepnone (bool): allow :func:`sc.saveyaml(None) <saveyaml>` to return 'null' rather than raising an exception
         dumpall (bool): if True, treat a list input as separate YAML pages
         sanitizepath (bool): whether to sanitize the path prior to saving
         kwargs (dict): passed to ``yaml.dump()``
@@ -1440,7 +1552,7 @@ class Spreadsheet(Blobject):
     A class for reading and writing Excel files in binary format. No disk IO needs
     to happen to manipulate the spreadsheets with openpyxl (or xlrd or pandas).
 
-    New in version 1.3.0: Changed default from xlrd to openpyxl and added self.wb
+    *New version 1.3.0:* Changed default from xlrd to openpyxl and added self.wb
     attribute to avoid the need to reload workbooks.
 
     **Examples**::
@@ -1680,7 +1792,7 @@ def loadspreadsheet(filename=None, folder=None, fileobj=None, sheet=0, header=1,
     '''
     Load a spreadsheet as a dataframe or a list of lists.
 
-    By default, an alias to ``pandas.read_excel()`` with a header, but also supports loading
+    By default, an alias to :func:`pandas.read_excel()` with a header, but also supports loading
     via openpyxl or xlrd. Read from either a filename or a file object.
 
     Args:
@@ -1699,7 +1811,7 @@ def loadspreadsheet(filename=None, folder=None, fileobj=None, sheet=0, header=1,
         wb = sc.loadspreadsheet('myfile.xlsx', method='openpyxl') # Returns workbook
         data = sc.loadspreadsheet('myfile.xlsx', method='xlrd', asdataframe=False) # Returns raw data; requires xlrd
 
-    New in version 1.3.0: change default from xlrd to pandas; renamed sheetname and sheetnum arguments to sheet.
+    *New version 1.3.0:* change default from xlrd to pandas; renamed sheetname and sheetnum arguments to sheet.
     '''
 
     # Handle path and sheet name/number
@@ -1851,7 +1963,7 @@ def savespreadsheet(filename=None, data=None, folder=None, sheetnames=None, clos
         formatdata[0,:] = 'header' # Format header
         sc.savespreadsheet(filename='test5.xlsx', data=testdata5, formats=formats, formatdata=formatdata)
 
-    New in version 2.0.0: allow arguments to be passed to the ``Workbook``.
+    *New version 2.0.0:* allow arguments to be passed to the ``Workbook``.
     '''
     workbook_args = scu.mergedicts({'nan_inf_to_errors': True}, workbook_args)
     try:

@@ -10,7 +10,7 @@ Design philosophy
 
 Sciris is intended to make life easier, and the code should reflect that. Assume that the average Sciris user dislikes coding and wants something that *just works*. Specifically:
 
-- Commands should be short, simple, and obvious.
+- Commands should be short, simple, and obvious. If you can't think of a name that isn't *all* of those things, that suggests the command might not have broad enough use to fit in Sciris. (But there are exceptions, of course.)
 - Be as flexible as possible with user inputs. If a user could only mean one thing, do that. If the user provides ``[0, 7, 14]`` but the function needs an array instead of a list, convert the list to an array automatically (``sc.toarray()`` exists for exactly this reason).
 - If there's a "sensible" default value for something, use it. Explicit is better than implicit, but implicit is better than wearyingly nitpicky.
 - Err on the side of more comments, including line comments. Logic that is clear to you now might not be clear to anyone else (or yourself 3 months from now).
@@ -45,8 +45,8 @@ Attempting to apply type annotations to the flexibility Sciris gives to the user
 
 .. code-block:: python
 
-    def count_days(self, start_day: typing.Union[None, str, int, dt.date, dt.datetime],
-                   end_day: typing.Union[None, str, int, dt.date, dt.datetime]) -> int:
+    def count_days(self, start_day: typing.Union[None, str, int, dt.date, dt.datetime, pd.Timestamp],
+                   end_day: typing.Union[None, str, int, dt.date, dt.datetime, pd.Timestamp]) -> int:
         return self.day(end_day) - self.day(start_day)
 
 If your function is written in such a way that type definitions would be helpful, consider if there is a way to rewrite it such that (a) it can accept a wider range of inputs, and/or (b) you can make it clearer what is allowed. For example, ``values`` should likely accept a list or array of any numeric type; ``label`` should be a single string; ``labels`` should be a list of strings.
@@ -55,21 +55,21 @@ Note that you *can* (and should) use type annotations in your docstrings. For ex
 
 .. code-block:: python
 
-    def count_days(self, start_day, end_day):
+    def countdays(self, startday, endday):
         """ Count days between start and end relative to "sim time"
 
         Args:
-            start_day (int/str/date): The day to start counting
-            end_day   (int/str/date): The day to stop counting
+            startday (int/str/date): The day to start counting
+            endday   (int/str/date): The day to stop counting
 
         Returns:
             Number of days elapsed
 
         **Example**::
         
-            sc.count_days(45, '2022-02-02')
+            sc.countdays(45, '2022-02-02')
         """
-        return self.day(end_day) - self.day(start_day)
+        return self.day(endday) - self.day(startday)
 
 
 
@@ -180,7 +180,8 @@ Note also the use of ``import pylab as pl`` instead of the more common ``import 
 .. code-block:: python
 
     # Yes
-    if foo: bar(foo)
+    if foo:
+        bar(foo)
 
     # Yes
     if foo:
@@ -188,7 +189,10 @@ Note also the use of ``import pylab as pl`` instead of the more common ``import 
     else:
         baz(foo)
 
-    # Borderline
+    # Yes, sometimes
+    if foo: bar(foo)
+
+    # Yes, sometimes
     if foo: bar(foo)
     else:   baz(foo)
 
@@ -225,8 +229,8 @@ Note also the use of ``import pylab as pl`` instead of the more common ``import 
     except: pass
 
     # No: too much whitespace and logic too hidden
-    try:               bar(foo)
-    except ValueError: baz(foo)
+    try:                    bar(foo)
+    except ValueError as E: baz(foo)
 
 
 

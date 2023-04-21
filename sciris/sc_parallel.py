@@ -1,11 +1,11 @@
 '''
 Functions to allow parallelization to be performed easily.
 
-NB: Uses ``multiprocess`` instead of ``multiprocessing`` under the hood for
+NB: Uses ``multiprocess`` instead of :mod:`multiprocessing` under the hood for
 broadest support  across platforms (e.g. Jupyter notebooks).
 
 Highlights:
-    - :func:`parallelize`: as-easy-as-possible parallelization
+    - :func:`sc.parallelize() <parallelize>`: as-easy-as-possible parallelization
 '''
 
 import warnings
@@ -53,7 +53,7 @@ class Parallel:
     '''
     Parallelization manager
     
-    For arguments and usage documentation, see :func:`parallelize()`. Briefly,
+    For arguments and usage documentation, see :func:`sc.parallelize() <parallelize>`. Briefly,
     this class validates input arguments, sets the number of CPUs, creates a
     process (or thread) pool, starts the jobs running, retrieves the results from
     each job, and processes them into outputs.
@@ -81,8 +81,7 @@ class Parallel:
         import numpy as np
 
         def slowfunc(i):
-            np.random.seed(i)
-            sc.timedsleep(np.random.rand())
+            sc.randsleep(seed=i)
             return i**2
 
         P = sc.Parallel(slowfunc, iterarg=range(10), parallelizer='multiprocess-async')
@@ -91,7 +90,7 @@ class Parallel:
         P.finalize()
         print(P.times)
         
-    New in version 2.2.0.    
+    *New in version 3.0.0.*
     '''
     def __init__(self, func, iterarg=None, iterkwargs=None, args=None, kwargs=None, ncpus=None, 
                  maxcpu=None, maxmem=None, interval=None, parallelizer=None, serial=False, 
@@ -126,7 +125,6 @@ class Parallel:
         self.reset()
         self.set_defaults()
         self.validate_args()
-        self.make_argslist()
         self.set_ncpus()
         self.set_method()
         return
@@ -140,8 +138,8 @@ class Parallel:
         self.argslist     = None
         self.method       = None
         self.pool         = None
-        self.manager      = mpi.Manager() # Create a manager for sharing resources across jobs
-        self.globaldict   = self.manager.dict() # Create a dict for sharing progress of each job
+        self.manager      = None
+        self.globaldict   = None
         self.map_func     = None
         self.is_async     = None
         self.jobs         = None
@@ -247,46 +245,6 @@ class Parallel:
         else:
             self.njobs = njobs
             
-        return
-    
-    
-    def make_argslist(self):
-        ''' Construct argument list '''
-
-        # Initialize
-        iterarg    = self.iterarg
-        iterkwargs = self.iterkwargs
-        argslist   = []
-        
-        # Check for embarrassingly parallel run -- should already be validated
-        if self.embarrassing:
-            iterarg = np.arange(iterarg)
-        
-        # Construct the argument list for each job
-        for index in range(self.njobs):
-            if iterarg is None:
-                iterval = None
-            else:
-                iterval = iterarg[index]
-            if iterkwargs is None:
-                iterdict = None
-            else:
-                if isinstance(iterkwargs, dict): # Dict of lists
-                    iterdict = {}
-                    for key,val in iterkwargs.items():
-                        iterdict[key] = val[index]
-                elif isinstance(iterkwargs, list): # List of dicts
-                    iterdict = iterkwargs[index]
-                else:  # pragma: no cover # Should be caught by previous checking, so shouldn't happen
-                    errormsg = f'iterkwargs type not understood ({type(iterkwargs)})'
-                    raise TypeError(errormsg)
-            taskargs = TaskArgs(func=self.func, index=index, njobs=self.njobs, iterval=iterval, iterdict=iterdict,
-                                args=self.args, kwargs=self.kwargs, maxcpu=self.maxcpu, maxmem=self.maxmem,
-                                interval=self.interval, embarrassing=self.embarrassing, callback=self.callback, 
-                                progress=self.progress, globaldict=self.globaldict, die=self.die)
-            argslist.append(taskargs)
-        
-        self.argslist = argslist
         return
     
     
@@ -396,8 +354,21 @@ class Parallel:
             errormsg = f'Invalid parallelizer "{self.parallelizer}"'
             raise ValueError(errormsg)
             
+        # Create a manager for sharing resources across jobs
+        if method in ['serial', 'thread']:
+            manager = None
+            globaldict = dict() # For serial and thread, don't need anything fancy to share global variables
+        else:
+            if method == 'multiprocess': # Special case: can't share multiprocessing managers with multiprocess
+                manager = mp.Manager()
+            else:
+                manager = mpi.Manager() # Note "mpi" instead of "mp"
+            globaldict = manager.dict() # Create a dict for sharing progress of each job
+        
         # Reset
         self.pool       = pool
+        self.manager    = manager
+        self.globaldict = globaldict
         self.map_func   = map_func
         self.is_async   = is_async
         self.jobs       = None
@@ -406,6 +377,81 @@ class Parallel:
         
         return
 
+
+    def make_argslist(self):
+        ''' Construct argument list '''
+
+        # Initialize
+        iterarg    = self.iterarg
+        iterkwargs = self.iterkwargs
+        argslist   = []
+        
+        # Check for embarrassingly parallel run -- should already be validated
+        if self.embarrassing:
+            iterarg = np.arange(iterarg)
+        
+        # Construct the argument list for each job
+        for index in range(self.njobs):
+            if iterarg is None:
+                iterval = None
+            else:
+                iterval = iterarg[index]
+            if iterkwargs is None:
+                iterdict = None
+            else:
+                if isinstance(iterkwargs, dict): # Dict of lists
+                    iterdict = {}
+                    for key,val in iterkwargs.items():
+                        iterdict[key] = val[index]
+                elif isinstance(iterkwargs, list): # List of dicts
+                    iterdict = iterkwargs[index]
+                else:  # pragma: no cover # Should be caught by previous checking, so shouldn't happen
+                    errormsg = f'iterkwargs type not understood ({type(iterkwargs)})'
+                    raise TypeError(errormsg)
+            taskargs = TaskArgs(func=self.func, index=index, njobs=self.njobs, iterval=iterval, iterdict=iterdict,
+                                args=self.args, kwargs=self.kwargs, maxcpu=self.maxcpu, maxmem=self.maxmem,
+                                interval=self.interval, embarrassing=self.embarrassing, callback=self.callback, 
+                                progress=self.progress, globaldict=self.globaldict, die=self.die)
+            argslist.append(taskargs)
+        
+        self.argslist = argslist
+        return
+
+
+    def run_async(self):
+        ''' Choose how to run in parallel, and do it '''
+        
+        # Shorten variables
+        method = self.method
+        needs_copy = ['serial', 'thread', 'custom']
+        
+        # Make the pool
+        self.make_pool()
+        
+        # Construct the argument list (has to be after the pool is made)
+        self.make_argslist()
+        
+        # Handle optional deepcopy
+        if scu.isstring(self.parallelizer) and '-copy' in self.parallelizer and method in needs_copy: # Don't deepcopy if we're going to pickle anyway
+            argslist = [scu.dcp(arg, die=self.die) for arg in self.argslist]
+        else:
+            argslist = self.argslist
+        
+        # Run it!
+        self.times.started = scd.now()
+        output = self.map_func(_task, argslist)
+        
+        # Store the pool; do not store the output list here
+        if self.is_async:
+            self.jobs = output
+        else:
+            self.rawresults = list(output)
+            self._time_finished()
+            
+        self.already_run = True
+        
+        return
+    
     
     @property
     def running(self):
@@ -417,6 +463,7 @@ class Parallel:
             else:
                 running = False
             return running
+    
     
     @property
     def ready(self):
@@ -449,38 +496,6 @@ class Parallel:
         return
 
 
-    def run_async(self):
-        ''' Choose how to run in parallel, and do it '''
-        
-        # Shorten variables
-        method = self.method
-        needs_copy = ['serial', 'thread', 'custom']
-        
-        # Make the pool
-        self.make_pool()
-        
-        # Handle optional deepcopy
-        if scu.isstring(self.parallelizer) and '-copy' in self.parallelizer and method in needs_copy: # Don't deepcopy if we're going to pickle anyway
-            argslist = scu.dcp(self.argslist, die=self.die)
-        else:
-            argslist = self.argslist
-        
-        # Run it!
-        self.times.started = scd.now()
-        output = self.map_func(_task, argslist)
-        
-        # Store the pool; do not store the output list here
-        if self.is_async:
-            self.jobs = output
-        else:
-            self.rawresults = list(output)
-            self._time_finished()
-            
-        self.already_run = True
-        
-        return
-    
-    
     def monitor(self, interval=0.1, **kwargs):
         ''' Monitor progress -- only usable with async '''
         final_iter = True
@@ -559,7 +574,7 @@ def parallelize(func, iterarg=None, iterkwargs=None, args=None, kwargs=None, ncp
     '''
     Execute a function in parallel.
 
-    Most simply, ``sc.parallelize()`` acts as an shortcut for using ``Pool.map()``.
+    Most simply, :func:`sc.parallelize() <parallelize>` acts as a shortcut for using :meth:`pool.map <multiprocessing.pool.Pool.map>`.
     However, it also provides flexibility in how arguments are passed to the function,
     load balancing, etc.
 
@@ -569,7 +584,7 @@ def parallelize(func, iterarg=None, iterkwargs=None, args=None, kwargs=None, ncp
     running "embarrassingly parallel" simulations). ``iterkwargs`` is a dict of
     iterables; each iterable must be the same length (and the same length of ``iterarg``,
     if it exists), and each dict key will be used as a kwarg to the called function.
-    Any other kwargs passed to ``sc.parallelize()`` will also be passed to the function.
+    Any other kwargs passed to :func:`sc.parallelize() <parallelize>` will also be passed to the function.
 
     This function can either use a fixed number of CPUs or allocate dynamically
     based on load. If ``ncpus`` is ``None``, then it will allocate the number of 
@@ -631,7 +646,7 @@ def parallelize(func, iterarg=None, iterkwargs=None, args=None, kwargs=None, ncp
             xy = [x+i*np.random.randn(100), y+i*np.random.randn(100)]
             return xy
 
-        xylist1 = sc.parallelize(myfunc, kwargs={'x':3, 'y':8}, iterarg=range(5), maxcpu=0.8, interval=0.2) # Use kwargs dict
+        xylist1 = sc.parallelize(myfunc, iterarg=range(5), kwargs={'x':3, 'y':8}, maxcpu=0.8, interval=0.2) # Use kwargs dict
         xylist2 = sc.parallelize(myfunc, x=5, y=10, iterarg=[0,1,2], parallelizer='multiprocessing') # Supply kwargs directly and use a different parallelizer
 
         for p,xylist in enumerate([xylist1, xylist2]):
@@ -675,11 +690,11 @@ def parallelize(func, iterarg=None, iterkwargs=None, args=None, kwargs=None, ncp
     full list of options is:
         
         - ``None``, ``'default'``, ``'robust'``, ``'multiprocess'``: the slow but robust dill-based parallelizer ``multiprocess``
-        - ``'fast'``, ``'concurrent'``, ``'concurrent.futures'``: the faster but more fragile pickle-based Python-default parallelizer ``concurrent.futures``
-        - ``'multiprocessing'``: the previous pickle-based Python default parallelizer, ``multiprocessing``
+        - ``'fast'``, ``'concurrent'``, ``'concurrent.futures'``: the faster but more fragile pickle-based Python-default parallelizer :mod:`concurrent.futures`
+        - ``'multiprocessing'``: the previous pickle-based Python default parallelizer, :mod:`multiprocessing`
         - ``'serial'``, ``'serial-copy'``: no parallelization (single-threaded); with "-copy", force pickling
         - ``'thread'``', ``'threadpool'``', ``'thread-copy'``': thread- rather than process-based parallelization ("-copy" as above)
-        - User supplied: any ``map()``-like function that takes in a function and an argument list
+        - User supplied: any :func:`map`-like function that takes in a function and an argument list
 
 
     **Note 2**: If parallelizing figure generation, use a non-interactive backend,
@@ -701,10 +716,10 @@ def parallelize(func, iterarg=None, iterkwargs=None, args=None, kwargs=None, ncp
             results = sc.parallelize(func=f, iterarg=[(1,2),(2,3),(3,4)])
             print(results)
 
-    | New in version 1.1.1: "serial" argument
-    | New in version 2.0.0: changed default parallelizer from ``multiprocess.Pool`` to ``concurrent.futures.ProcessPoolExecutor``; replaced ``maxload`` with ``maxcpu``/``maxmem``; added ``returnpool`` argument
-    | New in version 2.0.4: added "die" argument; changed exception handling
-    | New in version 2.2.0: new Parallel class; propagated "die" to jobs
+    | *New in version 1.1.1:* "serial" argument
+    | *New in version 2.0.0:* changed default parallelizer from ``multiprocess.Pool`` to ``concurrent.futures.ProcessPoolExecutor``; replaced ``maxload`` with ``maxcpu``/``maxmem``; added ``returnpool`` argument
+    | *New in version 2.0.4:* added "die" argument; changed exception handling
+    | *New in version 3.0.0:* new Parallel class; propagated "die" to jobs
     '''
     # Create the parallel instance
     P = Parallel(func, iterarg=iterarg, iterkwargs=iterkwargs, args=args, kwargs=kwargs, 
@@ -726,7 +741,7 @@ class TaskArgs(scu.prettyobj):
         '''
         A class to hold the arguments for the parallel task -- not to be invoked by the user.
 
-        Arguments must match both ``sc.parallelize()`` and ``sc._task()``
+        Arguments must match both :func:`sc.parallelize() <parallelize>` and ``sc._task()``
         '''
         def __init__(self, func, index, njobs, iterval, iterdict, args, kwargs, maxcpu, 
                      maxmem, interval, embarrassing, callback, progress, globaldict, die=True):
@@ -752,7 +767,7 @@ def _task(taskargs):
     '''
     Task called by parallelize() -- not to be called directly.
     
-    New in version 2.2.0: renamed from "_parallel_task" to "_task"; return output dict with metadata
+    *New in version 3.0.0:* renamed from "_parallel_task" to "_task"; return output dict with metadata
     '''
     
     # Handle inputs
@@ -801,7 +816,7 @@ def _task(taskargs):
     elapsed = end - start
     
     if taskargs.progress:
-        _progressbar(globaldict, taskargs.njobs)
+        _progressbar(globaldict, taskargs.njobs, flush=True)
     
     # Handle callback, if present
     if taskargs.callback: # pragma: no cover

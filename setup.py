@@ -7,35 +7,17 @@ functions and data structures that support the webapp features, as well as
 being generally useful for scientific computing.
 '''
 
-from setuptools import setup, find_packages
 import os
 import sys
 import runpy
+from setuptools import setup, find_packages
 
 # Get the current folder
 cwd = os.path.abspath(os.path.dirname(__file__))
 
-# Define the requirements for core functionality
-requirements = [
-        'matplotlib',   # Plotting
-        'numpy',        # Numerical functions
-        'pandas',       # Dataframes and spreadsheet input
-        'openpyxl',     # To read Excel files; removed as a dependency of pandas as of version 1.3
-        'xlsxwriter',   # Spreadsheet output
-        'psutil',       # Load monitoring
-        'dill',         # For pickling more complex object types
-        'zstandard',    # For a more efficient compression algorithm
-        'multiprocess', # More flexible version of multiprocessing
-        'jsonpickle',   # For converting arbitrary objects to JSON
-        'pyyaml',       # For loading/saving YAML
-        'packaging',    # For parsing versions
-        'gitpython',    # Git version information
-        'jellyfish',    # For fuzzy string matching
-        'tqdm',         # For flexible progress bars 
-        'line_profiler ;   platform_system == "Linux"',   # For the line profiler -- only install on Linux
-        'memory_profiler ; platform_system == "Linux"',   # For the memory profiler -- only install on Linux
-        'colorama ;        platform_system == "Windows"', # For colored text output -- only install on Windows
-        ]
+# Load requirements from txt file
+with open('requirements.txt') as f:
+    requirements = f.read().splitlines()
 
 # Get version
 versionpath = os.path.join(cwd, 'sciris', 'sc_version.py')
@@ -56,6 +38,7 @@ CLASSIFIERS = [
     'Programming Language :: Python :: 3.8',
     'Programming Language :: Python :: 3.9',
     'Programming Language :: Python :: 3.10',
+    'Programming Language :: Python :: 3.11',
     'Topic :: Software Development',
     'Topic :: Scientific/Engineering',
 ]

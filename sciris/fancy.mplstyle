@@ -1,0 +1,11 @@
+axes.axisbelow:    True
+axes.spines.right: False
+axes.spines.top:   False
+figure.facecolor:  white
+font.family:       sans-serif
+legend.frameon:    False
+axes.facecolor:    f2f2ff
+axes.grid:         True
+grid.color:        white
+grid.linewidth:    1
+lines.linewidth:   2

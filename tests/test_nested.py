@@ -1,63 +1,10 @@
 '''
-Test Sciris miscellaneous utility/helper functions.
+Test nested dict functions
 '''
 
-import os
 import sciris as sc
 import pytest
 
-
-#%% Test options
-
-def test_options():
-    sc.heading('Test options')
-
-    print('Testing options')
-    sc.options.help()
-    sc.options.help(detailed=True)
-    sc.options.disp()
-    print(sc.options)
-    sc.options(dpi=150)
-    sc.options('default')
-    with sc.options.context(aspath=True):
-        pass
-    for style in ['default', 'simple', 'fancy', 'fivethirtyeight']:
-        with sc.options.with_style(style):
-            pass
-    with sc.options.with_style({'xtick.alignment':'left'}):
-        pass
-    with pytest.raises(KeyError):
-        with sc.options.with_style(invalid_key=100):
-            pass
-
-    fn = 'options.json'
-    sc.options.save(fn)
-    sc.options.load(fn)
-    sc.rmpath(fn)
-
-    print('Testing sc.parse_env()')
-    mapping = [
-        sc.objdict(to='str',   key='TMP_STR',   val='test',  expected='test', nullexpected=''),
-        sc.objdict(to='int',   key='TMP_INT',   val='4',     expected=4,      nullexpected=0),
-        sc.objdict(to='float', key='TMP_FLOAT', val='2.3',   expected=2.3,    nullexpected=0.0),
-        sc.objdict(to='bool',  key='TMP_BOOL',  val='False', expected=False,  nullexpected=False),
-    ]
-    for e in mapping:
-        os.environ[e.key] = e.val
-        assert sc.parse_env(e.key, which=e.to) == e.expected
-        del os.environ[e.key]
-        assert sc.parse_env(e.key, which=e.to) == e.nullexpected
-
-    print('Testing help')
-    sc.help()
-    sc.help('smooth')
-    sc.help('JSON', ignorecase=False, context=True)
-    sc.help('pickle', source=True, context=True)
-
-    return
-
-
-#%% Nested dictionary functions
 
 def test_nested():
     sc.heading('Testing nested dicts')
@@ -120,14 +67,12 @@ def test_dicts():
     
     return o
 
-    
-
 
 def test_search():
     sc.heading('Testing search')
     o = sc.objdict()
     
-    # Define th enested object
+    # Define the nested object
     nested = {
         'a': {
              'foo':1,
@@ -141,7 +86,7 @@ def test_search():
     
     print('\nTesting search by key')
     key = 'bar'
-    keymatches = sc.search(nested, key) # Returns ['["a"]["bar"]', '["b"]["bar"]']
+    keymatches = sc.search(nested, key) # Returns ['["a"]["bar"]', '["b"]["bar"]'] as lists
     o.keymatches = keymatches
     print(keymatches)
     assert len(keymatches) == 2
@@ -155,21 +100,48 @@ def test_search():
     print(valmatches)
     assert len(valmatches) == 1
     assert sc.getnested(nested, valmatches[0]) == val # Get from the original nested object
-
+    
+    # Test aslist=False
+    valstrs = sc.search(nested, value=val, aslist=False)
+    assert isinstance(valstrs[0], str)
+    
     return o
+
+
+def test_iterobj():
+    sc.heading('Testing iterobj')
+    data = dict(a=dict(x=[1,2,3], y=[4,5,6]), b=dict(foo='string', bar='other_string'))
+    
+    # Search through an object
+    def check_type(obj, which):
+        return isinstance(obj, which)
+
+    out = sc.iterobj(data, check_type, which=int)
+    print(out)
+    
+    # Modify in place -- collapse mutliple short lines into one
+    def collapse(obj):
+        string = str(obj)
+        if len(string) < 10:
+            return string
+        else:
+            return obj
+
+    sc.printjson(data)
+    sc.iterobj(data, collapse, inplace=True)
+    sc.printjson(data)
+    
+    return out
 
 
 #%% Run as a script
 if __name__ == '__main__':
-    sc.tic()
-
-    # Options
-    test_options()
+    T = sc.timer()
 
     # Nested
-    nested    = test_nested()
-    dicts     = test_dicts()
-    search    = test_search()
+    nested  = test_nested()
+    dicts   = test_dicts()
+    search  = test_search()
+    iterobj = test_iterobj()
 
-    sc.toc()
-    print('Done.')
+    T.toc('Done.')

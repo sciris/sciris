@@ -1,30 +1,57 @@
 .. title:: Sciris
 
-.. image:: docs/sciris-logo.png
-    :scale: 40%
+.. image:: sciris-logo-grey.png
+    :scale: 20%
     :align: center
 
-`Sciris <http://sciris.org>`__ is library of functions for scientific computing that provide additional flexibility and ease-of-use on top of Numpy, Scipy, and Matplotlib.
 
-ScirisWeb, built on Sciris, is a toolbox that makes building webapps easy -- think of it as `Shiny <https://shiny.rstudio.com/>`__ for Python.
+Sciris: Simplifying Scientific Python
+=====================================
 
-========
-Contents
-========
+.. include:: ../README.rst
+   :start-line: 15
+
+
+Learn more
+----------
+
+.. grid:: 2
+    :gutter: 4
+
+    .. grid-item-card:: Getting started
+        :link: overview
+        :link-type: doc
+
+        Find out more detail about the Sciris project, see some use cases, and learn about the most important features.
+
+    .. grid-item-card:: Tutorials
+        :link: tutorials/index
+        :link-type: doc
+
+        An interactive tour of Sciris' key features, including containers, parallelization, file loading and saving, and more.
+
+    .. grid-item-card:: API reference
+        :link: api/index
+        :link-type: doc
+
+        All the gory detail of every function and class.
+
+    .. grid-item-card:: What's new
+        :link: whatsnew
+        :link-type: doc
+        
+        See what's hot off the press.
+
 
 .. toctree::
-   :maxdepth: 4
+   :maxdepth: 1
+   :hidden:
 
    overview
+   tutorials/index
    whatsnew
    contributing
    code_of_conduct
    style_guide
-
-.. autosummary::
-   :toctree: _autosummary
-   :caption: API reference
-   :template: custom-module-template.rst
-   :recursive:
-
-   sciris
+   api/index
+   
