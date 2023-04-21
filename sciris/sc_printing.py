@@ -869,7 +869,8 @@ def printmagenta(s, **kwargs):
     return print(ac.magenta(s, **kwargs))
 
 
-def heading(string=None, *args, color=None, divider=None, spaces=None, spacesafter=None, minlength=None, maxlength=None, sep=' ', doprint=None, output=False, **kwargs):
+def heading(string='', *args, color='cyan', divider='—', spaces=2, spacesafter=1, 
+            minlength=10, maxlength=200, sep=' ', doprint=None, output=False, **kwargs):
     '''
     Create a colorful heading. If just supplied with a string (or list of inputs like print()),
     create blue text with horizontal lines above and below and 3 spaces above. You
@@ -882,10 +883,10 @@ def heading(string=None, *args, color=None, divider=None, spaces=None, spacesaft
         args        (list): additional strings to print
         color       (str):  color to use for the heading (default cyan)
         divider     (str):  symbol to use for the divider (default '—')
-        spaces      (int):  number of spaces to put before the heading (default 3)
+        spaces      (int):  number of spaces to put before the heading (default 2)
         spacesafter (int):  number of spaces to put after the heading (default 1)
-        minlength   (int):  minimum length of the divider (default 30)
-        maxlength   (int):  maximum length of the divider (default 120)
+        minlength   (int):  minimum length of the divider (default 10)
+        maxlength   (int):  maximum length of the divider (default 200)
         sep         (str):  if multiple arguments are supplied, use this separator to join them
         doprint     (bool): whether to print the string (default true if no output)
         output      (bool): whether to return the string as output (else, print)
@@ -900,13 +901,6 @@ def heading(string=None, *args, color=None, divider=None, spaces=None, spacesaft
 
     | *New in version 1.3.1.*: "spacesafter"
     '''
-    if string      is None: string      = ''
-    if color       is None: color       = 'cyan' # Reasonable default for light and dark consoles
-    if divider     is None: divider     = '—' # Em dash for a continuous line
-    if spaces      is None: spaces      = 3
-    if spacesafter is None: spacesafter = 1
-    if minlength   is None: minlength   = 30
-    if maxlength   is None: maxlength   = 120
 
     # Convert to single string
     args = scu.mergelists(string, list(args))
