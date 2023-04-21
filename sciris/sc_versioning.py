@@ -441,6 +441,7 @@ def metadata(outfile=None, version=None, comments=None, require=None, pipfreeze=
         calling_info = calling_info if caller else None,
         git_info     = dict_fn(gitinfo(calling_info['filename'], die=False, verbose=False)) if git else None,
         pipfreeze    = freeze() if pipfreeze else None,
+        require      = require,
         comments     = comments,
     )
     

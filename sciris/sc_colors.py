@@ -428,8 +428,7 @@ def gridcolors(ncolors=10, limits=None, nsteps=20, asarray=False, ashex=False, r
     ## For plotting -- optional
     if demo:
         from . import sc_plotting as scp # To avoid circular import
-        pl.figure()
-        ax = scp.scatter3d(colors[:,0], colors[:,1], colors[:,2], c=output, s=200, depthshade=False, lw=0, figkwargs={'facecolor':'w'})
+        ax = scp.scatter3d(colors[:,0], colors[:,1], colors[:,2], c=output, s=200, depthshade=False, lw=0, fig=True, figkwargs={'facecolor':'w'})
         ax.set_xlabel('Red', fontweight='bold')
         ax.set_ylabel('Green', fontweight='bold')
         ax.set_zlabel('Blue', fontweight='bold')

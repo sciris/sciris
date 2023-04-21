@@ -535,7 +535,7 @@ def perturb(n=1, span=0.5, randseed=None, normal=False):
 
         sc.perturb(5, 0.3) # Returns e.g. array([0.73852362, 0.7088094 , 0.93713658, 1.13150755, 0.87183371])
     
-    *New in version 2.2.0:* Uses a separate random number stream
+    *New in version 3.0.0:* Uses a separate random number stream
     '''
     rng = np.random.default_rng(randseed)
     if normal:

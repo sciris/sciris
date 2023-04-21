@@ -1290,7 +1290,7 @@ def randsleep(delay=1.0, var=1.0, low=None, high=None, seed=None):
         sc.randsleeep(low=0.5, high=1.5) # Ditto
 
     *New in version 2.0.0.*
-    *New in version 2.2.0:* "seed" argument
+    *New in version 3.0.0:* "seed" argument
     '''
     if low is None or high is None:
         if scu.isnumber(delay):

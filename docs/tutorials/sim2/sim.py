@@ -1,5 +1,5 @@
 '''
-Example "old sim" for the "Other tools" tutorial
+Example "new sim" for the "Other tools" tutorial
 '''
 
 import sciris as sc
