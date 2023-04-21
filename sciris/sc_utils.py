@@ -30,6 +30,7 @@ import numbers
 import pprint
 import hashlib
 import getpass
+import inspect
 import warnings
 import importlib
 import subprocess
@@ -54,7 +55,7 @@ _booltypes   = (bool, np.bool_)
 
 # Define the modules being loaded
 __all__ = ['fast_uuid', 'uuid', 'dcp', 'cp', 'pp', 'sha', 'traceback', 'getuser',
-           'getplatform', 'iswindows', 'islinux', 'ismac', 'asciify']
+           'getplatform', 'iswindows', 'islinux', 'ismac', 'isjupyter', 'asciify']
 
 
 def fast_uuid(which=None, length=None, n=1, secure=False, forcelist=False, safety=1000, recursion=0, recursion_limit=10, verbose=True):
@@ -441,19 +442,72 @@ def ismac(die=False):
     return getplatform('mac', die=die)
 
 
-def isjupyter(verbose=False):
+def isjupyter(detailed=False):
     '''
-    Check if script is running inside a Jupyter notebook.
+    Check if a command is running inside a Jupyter notebook.
+    
+    Returns true/false if detailed=False, or a string for the exact type of notebook
+    (e.g., Google Colab) if detailed=True.
+    
+    Args:
+        detailed (bool): return a string of IPython/Jupyter type instead of true/false
+        verbose (bool): print out additional information if IPython can't be imported
+        
+    **Examples**::
+        
+        if sc.isjupyter():
+            sc.options(jupyter=True)
+        
+        if sc.isjupyter(detailed=True) == 'colab':
+            print('You are running on Google Colab')
     
     *New in version 3.0.0.*
     '''
+    # First check if we can import it
+    output = None
+    is_jupyter = False
     try:
         from IPython import get_ipython
-        assert get_ipython() is not None, 'IPython is installed but not running'
-        return True
-    except:
-        return False
+        ipython = get_ipython()
+    except Exception as E:
+        output = f'Python (Jupyter/IPython is not installed) ({E})'
+        return output if detailed else is_jupyter
+        
+    if ipython is None:
+        output = 'Python (Jupyter/IPython is installed but not running)'
+        return output if detailed else is_jupyter
     
+    # Get the modules and classes
+    classes = inspect.getmro(ipython.__class__)
+    names = [str(c).lower() for c in classes] # Names as a list
+    firstname = names[0]
+    allnames = ', '.join(names)
+
+    # Define strings to look for
+    mapping = dict(
+        jupyter = 'zmqinteractive',
+        ipython = 'terminalinteractive',
+        spyder  = 'spyder',
+        colab   = 'colab',
+    )
+    
+    # First check if it's Jupyter, and return if it is
+    if not detailed:
+        if mapping['jupyter'] in allnames and mapping['spyder'] not in allnames: # Spyder inherits from ZMQ, unlike e.g. Colab shell
+            is_jupyter = True
+        return is_jupyter
+    
+    # Otherwise, get the full name
+    else:
+        if   mapping['spyder']  in firstname: output = 'Spyder'
+        elif mapping['colab']   in firstname: output = 'Google Colab'
+        elif mapping['ipython'] in firstname: output = 'IPython'
+        elif mapping['jupyter'] in firstname: output = 'Jupyter'
+        else:
+            output = names[0]
+        
+        return output
+
 
 
 def asciify(string, form='NFKD', encoding='ascii', errors='ignore', **kwargs):

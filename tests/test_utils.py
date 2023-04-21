@@ -36,6 +36,10 @@ def test_adaptations():
     print('\nTesting platforms')
     sc.getplatform()
     assert sc.iswindows() + sc.ismac() + sc.islinux() == 1
+    assert not sc.isjupyter() # Assume this won't be called in Jupyter!
+    shell = sc.isjupyter(detailed=True)
+    print(shell)
+    assert isinstance(shell, str)
 
     return o
 

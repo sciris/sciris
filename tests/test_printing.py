@@ -41,6 +41,7 @@ def test_printing(test_slack=False):
 
     print('sc.pp():')
     sc.pp(example.data)
+    sc.pp(example.data, jsonify=True)
     string = sc.pp(example.data, doprint=False)
 
     print('sc.printdata():')
