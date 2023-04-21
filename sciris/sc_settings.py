@@ -219,7 +219,7 @@ class ScirisOptions(sco.objdict):
         options.dpi = parse_env('SCIRIS_DPI', pl.rcParams['figure.dpi'], 'int')
 
         optdesc.font = 'Set the default font family (e.g., sans-serif or Arial)'
-        options.font = parse_env('SCIRIS_FONT', pl.rcParams['font.family'], 'str')
+        options.font = parse_env('SCIRIS_FONT', pl.rcParams['font.family'], None) # Can be a string or list, so don't cast it to any object
 
         optdesc.fontsize = 'Set the default font size'
         options.fontsize = parse_env('SCIRIS_FONT_SIZE', pl.rcParams['font.size'], 'str')
