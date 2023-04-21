@@ -1177,7 +1177,7 @@ promotetoarray = toarray
 promotetolist = tolist
 
 
-def transposelist(obj, fix_uneven=False):
+def transposelist(obj, fix_uneven=True):
     '''
     Convert e.g. a list of key-value tuples into a list of keys and a list of values.
     
