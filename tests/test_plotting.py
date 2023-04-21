@@ -19,7 +19,7 @@ def test_3d(doplot=doplot):
     sc.heading('Testing 3D')
     o = sc.objdict()
 
-    print('Testing surf3d')
+    print('Testing fig3d')
     o.fig = sc.fig3d(num='Blank 3D')
 
     print('Testing surf3d')
@@ -31,6 +31,9 @@ def test_3d(doplot=doplot):
     data = pl.rand(20,20)
     smoothdata = sc.smooth(data)
     sc.bar3d(smoothdata, figkwargs=dict(num='bar3d'))
+    
+    print('Testing scatter3d')
+    sc.scatter3d(smoothdata, figkwargs=dict(num='scatter3d'))
 
     if not doplot:
         pl.close('all')

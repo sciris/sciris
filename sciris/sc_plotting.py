@@ -80,10 +80,12 @@ def ax3d(nrows=None, ncols=None, index=None, fig=None, ax=None, returnfig=False,
         pass # This is fine, just a different format
 
     # Handle the figure
-    if fig is None:
+    if fig in [True, False] or (fig is None and figkwargs): # Any of these things indicate that we want a new figure
+        fig = pl.figure(**figkwargs)
+    elif fig is None:
         if ax is None:
             if not pl.get_fignums():
-                fig = pl.figure(**figkwargs) # It's necessary to have an open figure or else the commands won't work
+                fig = pl.figure(**figkwargs)
             else:
                 fig = pl.gcf()
         else: # pragma: no cover
@@ -124,7 +126,7 @@ def plot3d(x, y, z, c=None, fig=None, ax=None, returnfig=False, figkwargs=None, 
         y (arr): y coordinate data
         z (arr): z coordinate data
         c (str/tuple): color, can be any of the types accepted by matplotlib's plot()
-        fig (fig): an existing figure to draw the plot in
+        fig (fig): an existing figure to draw the plot in (or set to True to create a new figure)
         ax (axes): an existing axes to draw the plot in
         returnfig (bool): whether to return the figure, or just the axes
         figkwargs (dict): passed to figure()
@@ -166,7 +168,7 @@ def scatter3d(x, y=None, z=None, c='z', fig=None, ax=None, returnfig=False, figk
         y (arr): y coordinate data
         z (arr): z coordinate data
         c (arr): color data; defaults to match z, explicitly pass ``c=None`` to use default colors
-        fig (fig): an existing figure to draw the plot in
+        fig (fig): an existing figure to draw the plot in (or set to True to create a new figure)
         ax (axes): an existing axes to draw the plot in
         returnfig (bool): whether to return the figure, or just the axes
         figkwargs (dict): passed to figure()
@@ -226,7 +228,7 @@ def surf3d(data, x=None, y=None, fig=None, ax=None, returnfig=False, colorbar=Tr
         data (arr): 2D data
         x (arr): 1D vector or 2D grid of x coordinates (optional)
         y (arr): 1D vector or 2D grid of y coordinates (optional)
-        fig (fig): an existing figure to draw the plot in
+        fig (fig): an existing figure to draw the plot in (or set to True to create a new figure)
         ax (axes): an existing axes to draw the plot in
         returnfig (bool): whether to return the figure, or just the axes
         colorbar (bool): whether to plot a colorbar
@@ -276,7 +278,7 @@ def bar3d(data, fig=None, ax=None, returnfig=False, cmap='viridis', figkwargs=No
 
     Args:
         data (arr): 2D data
-        fig (fig): an existing figure to draw the plot in
+        fig (fig): an existing figure to draw the plot in (or set to True to create a new figure)
         cmap (str): colormap name
         ax (axes): an existing axes to draw the plot in
         returnfig (bool): whether to return the figure, or just the axes
