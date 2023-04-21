@@ -1125,11 +1125,11 @@ class objdict(odict):
     In general, operations that would normally act on attributes (e.g. ``obj.x = 3``)
     instead act on dict keys (e.g. ``obj['x'] = 3``). If you want to actually get/set
     an attribute, use ``obj.getattribute()``/``obj.setattribute()``.
-
+    
     For a lighter-weight example (an object that acts like a dict), see :func:`sc.dictobj() <dictobj>`.
-
-   **Examples**::
-
+    
+    **Examples**::
+        
         import sciris as sc
         
         obj = sc.objdict(foo=3, bar=2)
@@ -1141,9 +1141,9 @@ class objdict(odict):
         od.bmi = od.mass/od.height**2
         od['bmi'] = od['mass']/od['height']**2 # Vanilla syntax still works
         od.keys = 3 # This raises an exception (you can't overwrite the keys() method)
-        
+    
     Nested logic based in part on addict: https://github.com/mewwts/addict
-
+    
     For a lighter-weight equivalent (based on ``dict`` instead of :class:`odict`), see
     :func:`sc.dictobj() <dictobj>`.
     '''
