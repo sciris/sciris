@@ -81,11 +81,13 @@ html_theme_options = {
     "header_links_before_dropdown": 7,
 }
 html_sidebars = {
-    "**": ["sidebar-nav-bs", "sidebar-ethical-ads"],
-    # "index": [],
-    # "install": [],
-    # "tutorial": [],
-    # "auto_examples/index": [],
+    "**": ["sidebar-nav-bs"],
+    "index": [],
+    "overview": [],
+    "whatsnew": [],
+    "contributing": [],
+    "code_of_conduct": [],
+    "style_guide": [],
 }
 html_logo = "sciris-logo-grey-small.png"
 html_favicon = "favicon.ico"
