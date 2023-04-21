@@ -49,7 +49,7 @@ Questions? Did you complete all the tutorials and want to claim your free "I Am 
         :link-type: doc
         :img-top: img-printing.png
 
-        This tutorial covers tools for quickly printing out information about objects and data.
+        This tutorial covers tools for quickly printing out information about objects and data. (As you can see, you won't have an opportunity to make any cool plots in this tutorial, but it's worth doing anyway, promise!)
 
 
     .. grid-item-card:: 6 Plotting
