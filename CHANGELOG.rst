@@ -93,7 +93,7 @@ Improvements and new features
 #. :func:`sc.randround() <sc_math.randround>` now works with multidimensional arrays. (Thanks to `Jamie Cohen <https://github.com/jamiecohen>`_ for the suggestion.)
 #. :func:`sc.smoothinterp() <sc_math.smoothinterp>` now defaults to ``ensurefinite=True``.
 #. :func:`sc.asd() <sc_asd.asd>` now uses its own random number stream.
-#. :func:`sc.cat() <sc_asd.cat>` now works on 2D arrays.
+#. :func:`sc.cat() <sc_math.cat>` now works on 2D arrays.
 
 
 9. Dictionaries
@@ -154,7 +154,6 @@ Regression information
 #. Calls to :func:`sc.makepath() <sc_fileio.makepath>` and :func:`sc.makefilepath() <sc_fileio.makefilepath>` now need to specify ``makedirs=True``.
 # :class:`sc.odict() <sc_odict.odict>` is no longer an instance of :class:`OrderedDict <collections.OrderedDict>`.
 #. The ``returnpool`` argument of :func:`sc.parallelize() <sc_parallel.parallelize>` has been removed.
-
 #. For :func:`sc.savefig() <sc_plotting.savefig>`, ``freeze`` should be renamed ``pipfreeze``, and ``frame`` should be replaced with ``relframe`` with an offset of 2 (e.g. ``frame=2 → relframe=0``).
 #. :func:`sc.checkmem(..., alphabetical=True) <sc_profiling.checkmem>` has been replaced with :func:`sc.checkmem(..., order='alphabetical') <sc_profiling.checkmem>`
 #. The ``Options`` class has been renamed class :class:`sc.ScirisOptions() <sc_settings.ScirisOptions>`.

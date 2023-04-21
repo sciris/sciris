@@ -1284,10 +1284,12 @@ class dictobj(dict):
         return output
 
     def to_json(self):
+        ''' Export the dictobj to JSON (NB: regular :func:`json.dumps()` does not work) '''
         return json.dumps(self.__dict__)
 
     @classmethod
     def fromkeys(cls, *args, **kwargs):
+        ''' Create a new dictobj from keys '''
         return cls(dict.fromkeys(*args, **kwargs))
 
     # Copy default dictionary methods
