@@ -261,8 +261,9 @@ def vectocolor(vector, cmap=None, asarray=True, reverse=False, minval=None, maxv
         diff = maxval - minval
         vector = (vector - minval)/diff # Normalize vector
         if midpoint is not None:
-            midpoint = (midpoint - minval)/diff
-            norm = midpointnorm(vcenter=midpoint, vmin=0, vmax=1)
+            vcenter = (midpoint - minval)/diff
+            assert 0 <= vcenter <= 1, f'Values not in order: must be minval={minval:n} <= midpoint={midpoint:n} <= maxval={maxval:n}'
+            norm = midpointnorm(vcenter=vcenter, vmin=0, vmax=1)
             vector = np.array(norm(vector))
         nelements = len(vector) # Count number of elements
         colors = zeros((nelements,4))
