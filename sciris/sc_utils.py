@@ -469,45 +469,48 @@ def isjupyter(detailed=False):
     try:
         from IPython import get_ipython
         ipython = get_ipython()
-    except Exception as E:
+    except Exception as E: # pragma: no cover
         output = f'Python (Jupyter/IPython is not installed) ({E})'
         return output if detailed else is_jupyter
-        
+    
+    # It's not IPython
     if ipython is None:
         output = 'Python (Jupyter/IPython is installed but not running)'
         return output if detailed else is_jupyter
-    
-    # Get the modules and classes
-    classes = inspect.getmro(ipython.__class__)
-    names = [str(c).lower() for c in classes] # Names as a list
-    firstname = names[0]
-    allnames = ', '.join(names)
 
-    # Define strings to look for
-    mapping = dict(
-        jupyter = 'zmqinteractive',
-        ipython = 'terminalinteractive',
-        spyder  = 'spyder',
-        colab   = 'colab',
-    )
+    # It is IPython, keep checking
+    else: # pragma: no cover
     
-    # First check if it's Jupyter, and return if it is
-    if not detailed:
-        if mapping['jupyter'] in allnames and mapping['spyder'] not in allnames: # Spyder inherits from ZMQ, unlike e.g. Colab shell
-            is_jupyter = True
-        return is_jupyter
+        # Get the modules and classes
+        classes = inspect.getmro(ipython.__class__)
+        names = [str(c).lower() for c in classes] # Names as a list
+        firstname = names[0]
+        allnames = ', '.join(names)
     
-    # Otherwise, get the full name
-    else:
-        if   mapping['spyder']  in firstname: output = 'Spyder'
-        elif mapping['colab']   in firstname: output = 'Google Colab'
-        elif mapping['ipython'] in firstname: output = 'IPython'
-        elif mapping['jupyter'] in firstname: output = 'Jupyter'
-        else:
-            output = names[0]
+        # Define strings to look for
+        mapping = dict(
+            jupyter = 'zmqinteractive',
+            ipython = 'terminalinteractive',
+            spyder  = 'spyder',
+            colab   = 'colab',
+        )
         
-        return output
-
+        # First check if it's Jupyter, and return if it is
+        if not detailed:
+            if mapping['jupyter'] in allnames and mapping['spyder'] not in allnames: # Spyder inherits from ZMQ, unlike e.g. Colab shell
+                is_jupyter = True
+            return is_jupyter
+        
+        # Otherwise, get the full name
+        else:
+            if   mapping['spyder']  in firstname: output = 'Spyder'
+            elif mapping['colab']   in firstname: output = 'Google Colab'
+            elif mapping['ipython'] in firstname: output = 'IPython'
+            elif mapping['jupyter'] in firstname: output = 'Jupyter'
+            else:
+                output = names[0]
+            
+            return output
 
 
 def asciify(string, form='NFKD', encoding='ascii', errors='ignore', **kwargs):

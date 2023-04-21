@@ -213,9 +213,22 @@ def test_promotetolist():
     assert inds[3] == 3
     assert vals[1] == 4
     
+    listoflists = [
+        ['a', 1, 3],
+        ['b', 4, 5],
+        ['c', 7, 8, 9, 10]
+    ]
+    trans = sc.transposelist(listoflists, fix_uneven=True)
+    assert all([len(l) == 5 for l in sc.transposelist(trans)])
+    
     d1 = {'a':'foo', 'b':'bar'} 
     d2 = sc.swapdict(d1)
     assert d2 == {'foo':'a', 'bar':'b'} 
+    with pytest.raises(TypeError):
+        sc.swapdict(1) # Not a dict
+    with pytest.raises(TypeError):
+        listdict = dict(a=[1,2,3])
+        sc.swapdict(listdict) # Unhashable type
 
     print('\nTesting mergelists')
     assert sc.mergelists(None, copy=True)                   == []

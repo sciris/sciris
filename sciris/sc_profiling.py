@@ -599,7 +599,7 @@ class LimitExceeded(MemoryError, KeyboardInterrupt):
     pass
 
 
-class resourcemonitor(scu.prettyobj):
+class resourcemonitor(scu.prettyobj): # pragma: no cover # For some reason pycov doesn't catch this class
     """
     Asynchronously monitor resource (e.g. memory) usage and terminate the process
     if the specified threshold is exceeded.
