@@ -104,7 +104,7 @@ Improvements and new features
 
 
 10. Nested objects
-^^^^^^^^^^^^^^^^^
+^^^^^^^^^^^^^^^^^^
 #. Nested "dictionary" operations can now act on other types of object, including lists and regular objects.
 #. :func:`sc.iterobj() <sc_nested.iterobj>` applies a function iteratively to an object.
 #. :func:`sc.search() <sc_nested.search>` now works on values as well as keys/attributes.

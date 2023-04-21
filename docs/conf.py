@@ -66,7 +66,7 @@ html_theme = "pydata_sphinx_theme"
 html_theme_options = {
     "collapse_navigation": False,
     "navigation_depth": 3,
-    "show_prev_next": False,
+    "show_prev_next": True,
     "icon_links": [
         {"name": "Web", "url": "https://sciris.org", "icon": "fas fa-home"},
         {
@@ -81,11 +81,11 @@ html_theme_options = {
     "header_links_before_dropdown": 7,
 }
 html_sidebars = {
-    # "**": ["sidebar-nav-bs", "sidebar-ethical-ads"],
-    "index": [],
-    "install": [],
-    "tutorial": [],
-    "auto_examples/index": [],
+    "**": ["sidebar-nav-bs", "sidebar-ethical-ads"],
+    # "index": [],
+    # "install": [],
+    # "tutorial": [],
+    # "auto_examples/index": [],
 }
 html_logo = "sciris-logo-grey-small.png"
 html_favicon = "favicon.ico"
