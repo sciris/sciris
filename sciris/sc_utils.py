@@ -1103,6 +1103,8 @@ def tolist(obj=None, objtype=None, keepnone=False, coerce='default'):
         keepnone (bool): if ``keepnone`` is false, then ``None`` is converted to ``[]``; else, it's converted to ``[None]``
         coerce (str/tuple):  tuple of additional types to coerce to a list (as opposed to wrapping in a list)
 
+    See also :func:`sc.mergelists() <mergelists>` to handle multiple input arguments.
+
     **Examples**::
 
         sc.tolist(5) # Returns [5]
