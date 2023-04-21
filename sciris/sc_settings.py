@@ -618,7 +618,6 @@ class ScirisOptions(sco.objdict):
 
 # Create the options on module load
 options = ScirisOptions()
-options.set_jupyter() # Set this on import
 
 
 #%% Module help
