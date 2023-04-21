@@ -126,7 +126,8 @@ def require(reqs=None, *args, exact=False, detailed=False, die=True, warn=True, 
             if not v:
                 count += 1
                 errormsg += f'\n• "{k}": {errs[k]}'
-        errormsg += f'''\n\nIf this is a valid module, you might want to try "pip install {scu.strjoin(errkeys, sep=' ')} --upgrade".'''
+        missing = scu.strjoin(errkeys, sep=' ')
+        errormsg += f'''\n\nIf this is a valid module, you might want to try 'pip install "{missing}" --upgrade'.'''
         if die:
             err = errs[errkeys[-1]]
             raise ModuleNotFoundError(errormsg) from err
