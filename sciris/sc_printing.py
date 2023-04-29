@@ -636,7 +636,7 @@ def printtable(*objs, maxwidth=120, doprint=True):
     Args:
       objs: (lists or tuples): Objects to be printed as columns
       maxwidth: (int): The maximum width of the table (default is 120)
-      doprint (bool): whether to print (else, return the string)
+      doprint (bool): Whether to print the table (True) or return it as a string (False).
 
     Returns:
        If doprint=True, the function does not return anything; it simply prints the lists as a table.
@@ -665,15 +665,18 @@ def printtable(*objs, maxwidth=120, doprint=True):
     col_widths = [max(len(str(row[i])) for row in objs if i < len(row)) for i in range(num_cols)]
 
     # Print table
+    table_str = ''
     for row in zip(*objs):
-        table_str = ''
+        row_str = ''
         for i in range(num_cols):
             cell_str = '' if i >= len(row) else str(row[i])
             cell_width = col_widths[i]
-            table_str += cell_str.ljust(cell_width) + ' '
+            row_str += cell_str.ljust(cell_width) + ' '
+        if len(row_str) > maxwidth:
+            row_str = row_str[:maxwidth]
+        row_str += '\n'
+        table_str += row_str
     if doprint:
-        if len(table_str) > maxwidth:
-            table_str = table_str[:maxwidth] + ' <etc> ' + table_str[-maxwidth:]
         print(table_str)
     else:
         return table_str
