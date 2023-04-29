@@ -41,7 +41,7 @@ else:
 
 #%% Object display functions
 
-__all__ = ['createcollist', 'objectid', 'objatt', 'objmeth', 'objprop', 'objrepr', 'prepr', 'pr']
+__all__ = ['createcollist', 'objectid', 'objatt', 'objmeth', 'objprop', 'objrepr', 'prepr', 'pr', 'printtable']
 
 
 def createcollist(items, title=None, strlen=18, ncol=3):
@@ -628,6 +628,56 @@ def printarr(arr, fmt=None, colsep='  ', vsep='—', decimals=2, doprint=True, d
     else:
         return string
 
+
+def printtable(*objs, maxwidth=120, doprint=True):
+    '''
+    Print elements of lists (of different lengths) in column format side-by-side.
+
+    Args:
+      objs: (lists or tuples): Objects to be printed as columns
+      maxwidth: (int): The maximum width of the table (default is 120)
+      doprint (bool): whether to print (else, return the string)
+
+    Returns:
+       If doprint=True, the function does not return anything; it simply prints the lists as a table.
+       If doprint=False, then it returns the table string
+
+    **Examples**::
+
+        >>> list1 = ['apple', 'banana', 'cherry', 'date']
+        >>> list2 = ['almond', 'cashew', 'walnut']
+        >>> list3 = ['red', 'green', 'blue', 'yellow', 'purple']
+        >>> printtable(list1, list2, list3)
+
+
+        >>> a = [1, 2, 3, 4]
+        >>> b = ['a', 'bb', 'ccc']
+        >>> c = ((10, 20), (30, 40), (50, 60))
+        >>> printtable(a, b, c)
+        >>> printtable([a, b, c])
+
+    NOTE: this function overlaps slighlty with printarr
+
+    '''
+
+    # Determine the number of columns
+    num_cols = len(objs)
+    col_widths = [max(len(str(row[i])) for row in objs if i < len(row)) for i in range(num_cols)]
+
+    # Print table
+    for row in zip(*objs):
+        table_str = ''
+        for i in range(num_cols):
+            cell_str = '' if i >= len(row) else str(row[i])
+            cell_width = col_widths[i]
+            table_str += cell_str.ljust(cell_width) + ' '
+    if doprint:
+        if len(table_str) > maxwidth:
+            table_str = table_str[:maxwidth] + ' <etc> ' + table_str[-maxwidth:]
+        print(table_str)
+    else:
+        return table_str
+    return
 
 
 def printdata(data, name='Variable', depth=1, maxlen=40, indent='', level=0, showcontents=False): # pragma: no cover
