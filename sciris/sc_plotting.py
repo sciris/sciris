@@ -1174,7 +1174,7 @@ def datenumformatter(ax=None, start_date=None, dateformat=None, interval=None, s
 #%% Figure saving
 ##############################################################################
 
-__all__ += ['savefig', 'savefigs', 'loadfig', 'emptyfig', 'separatelegend', 'orderlegend']
+__all__ += ['savefig', 'savefigs', 'loadfig', 'emptyfig', 'separatelegend', 'orderlegend', 'svg2mpl']
 
 
 
@@ -1506,6 +1506,54 @@ def orderlegend(order=None, ax=None, handles=None, labels=None, reverse=None, **
     ax.legend(handles, labels, **kwargs)
 
     return
+
+
+#%% Load an svg and returns a matplotlib path
+
+def svg2mpl(filename, flipy=True):
+    '''
+    Convert SVG path to Matplotlib path.
+
+    This function reads an SVG file, finds the "<path />" tag, and copies out the contents of the "d" variable.
+    The SVG path vertices may need to be inverted.
+
+    Args:
+        svgfile (str): the name or path of the SVG file to be read
+        flipy (bool, optional): whether to flip the y-axis of the SVG path vertices. Default is True.
+
+    Returns:
+        matplotlib.path.Path: the Matplotlib path object
+
+    **Example**::
+
+        from sciris import svg2mpl
+
+        # Read SVG file and convert to Matplotlib path
+        svg_path = svg2mpl('example.svg')
+
+        # Plot the Matplotlib path
+        import matplotlib.pyplot as plt
+        fig, ax = plt.subplots()
+        ax.add_patch(plt.PathPatch(svg_path, facecolor='none', edgecolor='blue'))
+        ax.autoscale()
+        plt.show()
+
+    Ref: https://stackoverflow.com/questions/59059991/svg-path-not-parsing-correctly-svgpathtools-inkscape
+    '''
+
+    from svgpath2mpl import parse_path
+    from matplotlib.path import Path
+    from xml.dom import minidom
+
+    path_tag = minidom.parse(filename).getElementsByTagName("path")
+    d_string = path_tag[0].attributes['d'].value
+
+    if flipy:
+        path_obj = parse_path(d_string)
+        path_obj.vertices -= path_obj.vertices.mean(axis=0)
+        path_obj.vertices[:, 1] *= -1
+
+    return Path(path_obj.vertices, path_obj.codes)
 
 
 #%% Animation
