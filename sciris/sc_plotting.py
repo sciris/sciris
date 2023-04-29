@@ -1529,12 +1529,16 @@ def svg2mpl(filename, flipy=True):
         from sciris import svg2mpl
 
         # Read SVG file and convert to Matplotlib path
-        svg_path = svg2mpl('example.svg')
+        svg_paths = svg2mpl('example.svg')
 
-        # Plot the Matplotlib path
+        # Plot the Matplotlib path(s)
         import matplotlib.pyplot as plt
         fig, ax = plt.subplots()
-        ax.add_patch(plt.PathPatch(svg_path, facecolor='none', edgecolor='blue'))
+        if isinstance(svg_paths, list):
+            for svg_path in svg_paths:
+                ax.add_patch(plt.PathPatch(svg_path, facecolor='none'))
+        else:
+            ax.add_patch(plt.PathPatch(svg_paths, facecolor='none', edgecolor='blue'))
         ax.autoscale()
         plt.show()
 
@@ -1545,15 +1549,31 @@ def svg2mpl(filename, flipy=True):
     from matplotlib.path import Path
     from xml.dom import minidom
 
-    path_tag = minidom.parse(filename).getElementsByTagName("path")
-    d_string = path_tag[0].attributes['d'].value
+    if not os.path.exists(filename):
+        raise FileNotFoundError(f"File '{filename}' not found.")
 
-    if flipy:
-        path_obj = parse_path(d_string)
-        path_obj.vertices -= path_obj.vertices.mean(axis=0)
-        path_obj.vertices[:, 1] *= -1
+    if not filename.endswith('.svg'):
+        raise ValueError(f"File '{filename}' is not an SVG file.")
 
-    return Path(path_obj.vertices, path_obj.codes)
+    def to_mpl(ptags, flipy):
+        mpl_paths = []
+        for ptag in ptags:
+            d_string = ptag.attributes['d'].value
+
+            if flipy:
+                path_obj = parse_path(d_string)
+                path_obj.vertices -= path_obj.vertices.mean(axis=0)
+                path_obj.vertices[:, 1] *= -1
+            mpl_paths.append(Path(path_obj.vertices, path_obj.codes))
+
+        return mpl_paths
+
+    ptags = minidom.parse(filename).getElementsByTagName("path")
+    mpl_paths = to_mpl(ptags, flipy)
+    if len(mpl_paths) == 1:
+        return mpl_paths[0]
+    else:
+        return mpl_paths
 
 
 #%% Animation
