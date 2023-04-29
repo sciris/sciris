@@ -131,8 +131,10 @@ class odict(OD):
             output = OD.__getitem__(self, key)
             return output
         except Exception as E:
-
-            if isinstance(key, scu._stringtypes) or isinstance(key, tuple): # Normal use case: just use a string key
+            if self.is_empty(): # First check if dictionary is empty
+                errormsg = f'Key {key} not found since odict is empty'
+                raise scu.KeyNotFoundError(errormsg)
+            elif isinstance(key, scu._stringtypes) or isinstance(key, tuple): # Normal use case: just use a string key
                 if isinstance(E, KeyError): # We already encountered an exception, usually a KeyError
                     try: # Handle defaultdict behavior by first checking if it exists
                         _defaultdict = OD.__getattribute__(self, '_defaultdict')
@@ -355,7 +357,8 @@ class odict(OD):
         return output
 
 
-    def _repr_pretty_(self, p, cycle, *args, **kwargs): # pragma: no cover
+    def _repr_pretty_(self, p, cycle, *args, **kwargs):
+ # pragma: no cover
         ''' Function to fix __repr__ in IPython'''
         print(self.__repr__(*args, **kwargs))
         return
@@ -406,6 +409,13 @@ class odict(OD):
         kwargs = scu.mergedicts(dict(maxlen=maxlen, showmultilines=showmultilines, divider=divider, dividerthresh=dividerthresh, numindents=numindents, recursionlevel=0, sigfigs=sigfigs, numformat=None, maxitems=maxitems), kwargs)
         print(self.__repr__(**kwargs))
         return
+
+
+    def is_empty(self):
+        '''
+        Check if the dictionary is empty
+        '''
+        return not bool(self)
 
 
     def _ikey(self, key):
