@@ -91,10 +91,11 @@ class Parallel:
         print(P.times)
         
     *New in version 3.0.0.*
+    *New in version 3.0.1:* "globaldict" argument
     '''
     def __init__(self, func, iterarg=None, iterkwargs=None, args=None, kwargs=None, ncpus=None, 
                  maxcpu=None, maxmem=None, interval=None, parallelizer=None, serial=False, 
-                 progress=True, callback=None, label=None, die=True, **func_kwargs):
+                 progress=True, callback=None, globaldict=None, label=None, die=True, **func_kwargs):
         
         # Store input arguments
         self.func         = func
@@ -110,6 +111,7 @@ class Parallel:
         self.serial       = serial
         self.progress     = progress
         self.callback     = callback
+        self.globaldict   = globaldict
         self.label        = label
         self.die          = die
         
@@ -355,15 +357,18 @@ class Parallel:
             raise ValueError(errormsg)
             
         # Create a manager for sharing resources across jobs
-        if method in ['serial', 'thread']:
+        if method in ['serial', 'thread'] or self.globaldict is False:
             manager = None
             globaldict = dict() # For serial and thread, don't need anything fancy to share global variables
         else:
-            if method == 'multiprocess': # Special case: can't share multiprocessing managers with multiprocess
+            if method in ['multiprocess', 'custom']: # Special case: can't share multiprocessing managers with multiprocess
                 manager = mp.Manager()
             else:
                 manager = mpi.Manager() # Note "mpi" instead of "mp"
             globaldict = manager.dict() # Create a dict for sharing progress of each job
+        
+        if self.globaldict:
+            globaldict.update(self.globaldict)
         
         # Reset
         self.pool       = pool
