@@ -111,7 +111,7 @@ class Parallel:
         self.serial       = serial
         self.progress     = progress
         self.callback     = callback
-        self.globaldict   = globaldict
+        self.inputdict    = scu.mergedicts(globaldict)
         self.label        = label
         self.die          = die
         
@@ -357,7 +357,7 @@ class Parallel:
             raise ValueError(errormsg)
             
         # Create a manager for sharing resources across jobs
-        if method in ['serial', 'thread'] or self.globaldict is False:
+        if method in ['serial', 'thread'] or self.inputdict is False:
             manager = None
             globaldict = dict() # For serial and thread, don't need anything fancy to share global variables
         else:
@@ -367,8 +367,8 @@ class Parallel:
                 manager = mpi.Manager() # Note "mpi" instead of "mp"
             globaldict = manager.dict() # Create a dict for sharing progress of each job
         
-        if self.globaldict:
-            globaldict.update(self.globaldict)
+        if isinstance(self.inputdict, dict):
+            globaldict.update(self.inputdict)
         
         # Reset
         self.pool       = pool
