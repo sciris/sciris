@@ -68,6 +68,8 @@ class dataframe(pd.DataFrame):
         
         # Handle inputs
         if 'cols' in kwargs:
+            if columns is not None:
+                raise ValueError('you supplied both *cols* and *columns*, you may only supply one of them')
             columns = kwargs.pop('cols')
         if nrows and data is None:
             ncols = len(columns)
