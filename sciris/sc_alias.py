@@ -18,6 +18,7 @@ D. Knuth. The Art of Computer Programming, Vol 2: Seminumerical Algorithms, sect
 
 import numpy.random as npr
 import numpy as np
+import functools
 from . import sc_utils as scu
 from . import sc_math as scm
 from . import sc_parallel as scp
@@ -25,16 +26,23 @@ from . import sc_parallel as scp
 __all__ = ['alias_sampler']
 
 
-def sample(r1, r2, probs_table=None, alias_table=None):
-    res = scu.toarray(0, dtype=np.int32)
+def sample_one(r1=None, r2=None, probs_table=None, alias_table=None):
     lj = len(alias_table)
-    kk = int(np.floor(r1 * lj))
+    kk = np.floor(r1 * lj).astype(np.int32)
     if r2 < probs_table[kk]:
-        res[0] = kk
+        res = kk
     else:
-        res[0] = alias_table[kk]
+        res = alias_table[kk]
     return res
 
+def sample_vec(r1=None, r2=None, probs_table=None, alias_table=None):
+    lj = len(alias_table)
+    kk = np.floor(r1 * lj).astype(np.int32)
+    if r2 < probs_table[kk]:
+        res = kk
+    else:
+        res = alias_table[kk]
+    return res
 
 class alias_sampler:
     """
@@ -55,7 +63,7 @@ class alias_sampler:
 
     """
 
-    def __init__(self, probs, vals=None, randseed=None, verbose=False, parallel=True):
+    def __init__(self, probs, vals=None, randseed=None, verbose=True, parallel=False):
         self.probs = scu.toarray(probs)
         self.vals = scu.toarray(vals)  # If vals is None, then self.vals is an empty array
         self.rng = np.random.default_rng(randseed)  # Construct a new Generator
@@ -88,10 +96,10 @@ class alias_sampler:
             # Find True indices
             uf = scm.findinds(underfull)
             of = scm.findinds(overfull)
-
+           #import ipdb; ipdb.set_trace()
             # Arbitrarily choose an overfull entry (i) and an underfull entry (j)
-            uf_j = uf(self.rng.choice(uf, 1))
-            of_i = of(self.rng.choice(of, 1))
+            uf_j = self.rng.choice(uf, 1)
+            of_i = self.rng.choice(of, 1)
 
             # Allocate the unused space in entry j to outcome i, by setting Kj = i.
             alias_table[uf_j] = of_i
@@ -119,6 +127,8 @@ class alias_sampler:
         # Create a generato
         self.rng = np.random.default_rng(randseed)
 
+        # TODO: check some potential rounding error problems
+
     def _check_probs(self, verbose):
         """
         Run some basic checks on the probs array
@@ -141,20 +151,18 @@ class alias_sampler:
             ValueError(errormsg)
         # Check it adds up to 1
         prob_sum = self.probs.sum()
-        if not prob_sum == 1.0:
+        if not (prob_sum == 1.0):
             self.probs /= prob_sum
             if verbose:
                 errormsg = f"Warning! Probabilities didn't add up to 1. Normalising by prob.sum(): {prob_sum}"
                 print(errormsg)
 
     def draw(self, n):
-        r1, r2 = self.rng.rand(n), self.rng.rand(n)
+        r1, r2 = self.rng.random(n), self.rng.random(n)
         if self.parallel:
-            res = scp.parallelize(sample, iterarg=[r1, r2],
-                                          kwargs={'probs_table': self.probs_table,
-                                                  'alias_table': self.alias_table})
+            sample_func = functools.partial(sample_one, probs_table=self.probs_table, alias_table=self.alias_table)
+            res = scp.parallelize(sample_func, iterkwargs={'r1': r1, 'r2': r2})
         else:
-            res = np.zeros(n)
-            for i in range(n):
-                res[i] = sample(r1[i], r2[i], probs_table=self.probs_table, alias_table=self.alias_table)
+            sample_func = functools.partial(sample_vec, probs_table=self.probs_table, alias_table=self.alias_table)
+            res = sample_func(r1=r1, r2=r2)
         return res
