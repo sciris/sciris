@@ -72,7 +72,7 @@ def test_sample_distribution():
     vals = np.arange(-10, 10)
 
     # Create an instance of alias_sampler
-    sampler = sc.alias_sampler(probs, vals)
+    sampler = sc.alias_sampler(probs, vals, randseed=21)
 
     # Generate a larg-ish number of samples
     n_samples = 2**16
