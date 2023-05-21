@@ -26,12 +26,12 @@ from . import sc_parallel as scp
 __all__ = ['alias_sampler']
 
 
-def alias_sample_one(r1=None, num_indices=None, probs_table=None, alias_table=None):
+def alias_sample_one(x=None, num_indices=None, probs_table=None, alias_table=None):
     """
     Singleton sampling
     """
-    ii = np.floor(r1 * num_indices).astype(np.int32)
-    yy = num_indices * r1 - ii
+    ii = np.floor(x * num_indices).astype(np.int32)
+    yy = num_indices * x - ii
     # If y < prob_i then return i.This is the biased coin flip.
     if yy < probs_table[ii]:
         res = ii
@@ -40,15 +40,15 @@ def alias_sample_one(r1=None, num_indices=None, probs_table=None, alias_table=No
     return res
 
 
-def alias_sample_vec(r1=None, num_indices=None, probs_table=None, alias_table=None):
+def alias_sample_vec(x=None, num_indices=None, probs_table=None, alias_table=None):
     """
     Vectorised sampling
     """
     # Allocate space for results
-    res = np.zeros_like(r1)
+    res = np.zeros_like(x)
     # Create indices into the probs table
-    ii = np.floor(r1 * num_indices).astype(np.int32)
-    yy = num_indices * r1 - ii
+    ii = np.floor(x * num_indices).astype(np.int32)
+    yy = num_indices * x - ii
     smaller = yy < probs_table[ii]
     res[smaller] = ii[smaller]
     res[~smaller] = alias_table[ii[~smaller]]
@@ -70,7 +70,7 @@ class alias_sampler:
     randseed                   : a seed to initialize the BitGenerator. Usually an int, though could be any type
                                  accepted by numpy.random.default_rng(). If None, then fresh, unpredictable entropy
                                  will be pulled from the OS.
-
+    parallel(bool)             : whether to parallelise samplping or not(default)
 
     """
 
@@ -172,15 +172,18 @@ class alias_sampler:
         An interface function to draw samples
         """
         # Generate a uniform random variate 0 ≤ x < 1,independently if we run in parallel or not
-        r1 = self.rng.random(n_samples)
+        uniform_x = self.rng.random(n_samples)
         n_buckets = self.num_buckets
         if self.parallel:
             # NOTE: not sure it makes a lot of sense to parallelise sampling for n_samples < 1e6 samples maybe?
+            # TODO: handle output of parallelise so it is consistent with the output of vectorised sampling
             sample_func = functools.partial(alias_sample_one, num_indices=n_buckets, probs_table=self.probs_table,
                                             alias_table=self.alias_table)
-            res = scp.parallelize(sample_func, iterkwargs={'r1': r1})
+            res = scp.parallelize(sample_func, iterkwargs={'x': uniform_x})
         else:
             sample_func = functools.partial(alias_sample_vec, num_indices=n_buckets, probs_table=self.probs_table,
                                             alias_table=self.alias_table)
-            res = sample_func(r1=r1)
+            res = sample_func(x=uniform_x)
+
+        # Check whether we need to return indices or values
         return res
