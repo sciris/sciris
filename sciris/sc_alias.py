@@ -1,13 +1,13 @@
 """
 Walker's alias method
 
-https://lips.cs.princeton.edu/the-alias-method-efficient-sampling-with-many-discrete-outcomes/
 Implementation references:
-    https://lips.cs.princeton.edu/the-alias-method-efficient-sampling-with-many-discrete-outcomes/
+    https://en.wikipedia.org/wiki/Alias_method (main reference)
+    https://lips.cs.princeton.edu/the-alias-method-efficient-sampling-with-many-discrete-outcomes/ (Python)
     https://twitter.com/jeremyphoward/status/955136770806444032
-    https://gist.github.com/jph00/30cfed589a8008325eae8f36e2c5b087
-    https://en.wikipedia.org/wiki/Alias_method
+    https://gist.github.com/jph00/30cfed589a8008325eae8f36e2c5b087 (Python)
     https://www.keithschwarz.com/darts-dice-coins/
+    https://lips.cs.princeton.edu/the-alias-method-efficient-sampling-with-many-discrete-outcomes/
 
 Bibliographic refs:
 R. A. Kronmal and A. V. Peterson. On the alias method for generating random variables from a discrete distribution.
@@ -45,7 +45,8 @@ def alias_sample_vec(x=None, num_indices=None, probs_table=None, alias_table=Non
     Vectorised sampling
     """
     # Allocate space for results
-    res = np.zeros_like(x)
+    # TODO: maybe initialise with inf or nan, to identify potentiall problems with the tables and/or sampling
+    res = np.zeros_like(x, dtype=np.int32)
     # Create indices into the probs table
     ii = np.floor(x * num_indices).astype(np.int32)
     yy = num_indices * x - ii
@@ -186,4 +187,5 @@ class alias_sampler:
             res = sample_func(x=uniform_x)
 
         # Check whether we need to return indices or values
+
         return res
