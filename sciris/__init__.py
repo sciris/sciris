@@ -35,6 +35,7 @@ if not _lazy:
     from .sc_profiling  import *
     from .sc_parallel   import *
     from .sc_asd        import *
+    from .sc_alias      import *
     from .sc_plotting   import *
     from .sc_colors     import *
 
