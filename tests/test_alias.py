@@ -75,7 +75,7 @@ def test_sample_distribution():
     sampler = sc.alias_sampler(probs, vals, randseed=21)
 
     # Generate a larg-ish number of samples
-    n_samples = 2**16
+    n_samples = 2 ** 16
     samples = sampler.draw(n_samples)
 
     # Perform a chi-square goodness-of-fit test
@@ -85,6 +85,7 @@ def test_sample_distribution():
 
     # Verify that the p-value is above a certain threshold (e.g., 0.05)
     assert p_value > 0.05
+
 
 # %% Run as a script
 if __name__ == '__main__':
