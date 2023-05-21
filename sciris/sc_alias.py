@@ -26,23 +26,32 @@ from . import sc_parallel as scp
 __all__ = ['alias_sampler']
 
 
-def sample_one(r1=None, r2=None, probs_table=None, alias_table=None):
-    lj = len(alias_table)
-    kk = np.floor(r1 * lj).astype(np.int32)
+def sample_one(r1=None, r2=None, num_indices=None, probs_table=None, alias_table=None):
+    """
+    Singleton sampling
+    """
+    kk = np.floor(r1 * num_indices).astype(np.int32)
     if r2 < probs_table[kk]:
         res = kk
     else:
         res = alias_table[kk]
     return res
 
-def sample_vec(r1=None, r2=None, probs_table=None, alias_table=None):
-    lj = len(alias_table)
-    kk = np.floor(r1 * lj).astype(np.int32)
-    if r2 < probs_table[kk]:
-        res = kk
-    else:
-        res = alias_table[kk]
+
+def sample_vec(r1=None, r2=None, num_indices=None, probs_table=None, alias_table=None):
+    """
+    Vectorised sampling
+    """
+    # Allocate space for results
+    res = np.zeros_like(r1)
+    # Create indices into the probs table
+    kk = np.floor(r1 * num_indices).astype(np.int32)
+    smaller = r2 < probs_table[kk]
+    larger_eq = r2 >= probs_table[kk]
+    res[smaller] = kk[smaller]
+    res[larger_eq] = alias_table[kk[larger_eq]]
     return res
+
 
 class alias_sampler:
     """
@@ -67,10 +76,10 @@ class alias_sampler:
         self.probs = scu.toarray(probs)
         self.vals = scu.toarray(vals)  # If vals is None, then self.vals is an empty array
         self.rng = np.random.default_rng(randseed)  # Construct a new Generator
-        self.n = n = len(probs)
+        self.num_buckets = n_buckets = len(probs)
         # Initialise tables
-        self.probs_table = probs_table = n * self.probs
-        self.alias_table = alias_table = np.empty((n,), dtype=np.int32)
+        self.probs_table = probs_table = n_buckets * self.probs
+        self.alias_table = alias_table = np.empty((n_buckets,), dtype=np.int32)
         self.parallel = parallel
 
         # Do some checks if both probs and vals are given
@@ -96,7 +105,6 @@ class alias_sampler:
             # Find True indices
             uf = scm.findinds(underfull)
             of = scm.findinds(overfull)
-           #import ipdb; ipdb.set_trace()
             # Arbitrarily choose an overfull entry (i) and an underfull entry (j)
             uf_j = self.rng.choice(uf, 1)
             of_i = self.rng.choice(of, 1)
@@ -157,12 +165,19 @@ class alias_sampler:
                 errormsg = f"Warning! Probabilities didn't add up to 1. Normalising by prob.sum(): {prob_sum}"
                 print(errormsg)
 
-    def draw(self, n):
-        r1, r2 = self.rng.random(n), self.rng.random(n)
+    def draw(self, n_samples):
+        """
+        An interface function to draw samples
+        """
+        # Draw from uniform random numbers
+        r1, r2 = self.rng.random(n_samples), self.rng.random(n_samples)
+        n_buckets = self.num_buckets
         if self.parallel:
-            sample_func = functools.partial(sample_one, probs_table=self.probs_table, alias_table=self.alias_table)
+            sample_func = functools.partial(sample_one, num_indices=n_buckets, probs_table=self.probs_table,
+                                            alias_table=self.alias_table)
             res = scp.parallelize(sample_func, iterkwargs={'r1': r1, 'r2': r2})
         else:
-            sample_func = functools.partial(sample_vec, probs_table=self.probs_table, alias_table=self.alias_table)
+            sample_func = functools.partial(sample_vec, num_indices=n_buckets, probs_table=self.probs_table,
+                                            alias_table=self.alias_table)
             res = sample_func(r1=r1, r2=r2)
         return res
