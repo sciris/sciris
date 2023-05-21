@@ -26,30 +26,33 @@ from . import sc_parallel as scp
 __all__ = ['alias_sampler']
 
 
-def sample_one(r1=None, r2=None, num_indices=None, probs_table=None, alias_table=None):
+def alias_sample_one(r1=None, num_indices=None, probs_table=None, alias_table=None):
     """
     Singleton sampling
     """
-    kk = np.floor(r1 * num_indices).astype(np.int32)
-    if r2 < probs_table[kk]:
-        res = kk
-    else:
-        res = alias_table[kk]
+    ii = np.floor(r1 * num_indices).astype(np.int32)
+    yy = num_indices * r1 - ii
+    # If y < prob_i then return i.This is the biased coin flip.
+    if yy < probs_table[ii]:
+        res = ii
+    else: # Otherwise, return Ki.
+        res = alias_table[ii]
     return res
 
 
-def sample_vec(r1=None, r2=None, num_indices=None, probs_table=None, alias_table=None):
+def alias_sample_vec(r1=None, num_indices=None, probs_table=None, alias_table=None):
     """
     Vectorised sampling
     """
     # Allocate space for results
     res = np.zeros_like(r1)
     # Create indices into the probs table
-    kk = np.floor(r1 * num_indices).astype(np.int32)
-    smaller = r2 < probs_table[kk]
-    larger_eq = r2 >= probs_table[kk]
-    res[smaller] = kk[smaller]
-    res[larger_eq] = alias_table[kk[larger_eq]]
+    ii = np.floor(r1 * num_indices).astype(np.int32)
+    yy = num_indices * r1 - ii
+    smaller = yy < probs_table[ii]
+    larger_eq = yy >= probs_table[ii]
+    res[smaller] = ii[smaller]
+    res[larger_eq] = alias_table[ii[larger_eq]]
     return res
 
 
@@ -169,15 +172,15 @@ class alias_sampler:
         """
         An interface function to draw samples
         """
-        # Draw from uniform random numbers
-        r1, r2 = self.rng.random(n_samples), self.rng.random(n_samples)
+        # Generate a uniform random variate 0 ≤ x < 1.
+        r1 = self.rng.random(n_samples)
         n_buckets = self.num_buckets
         if self.parallel:
-            sample_func = functools.partial(sample_one, num_indices=n_buckets, probs_table=self.probs_table,
+            sample_func = functools.partial(alias_sample_one, num_indices=n_buckets, probs_table=self.probs_table,
                                             alias_table=self.alias_table)
-            res = scp.parallelize(sample_func, iterkwargs={'r1': r1, 'r2': r2})
+            res = scp.parallelize(sample_func, iterkwargs={'r1': r1})
         else:
-            sample_func = functools.partial(sample_vec, num_indices=n_buckets, probs_table=self.probs_table,
+            sample_func = functools.partial(alias_sample_vec, num_indices=n_buckets, probs_table=self.probs_table,
                                             alias_table=self.alias_table)
-            res = sample_func(r1=r1, r2=r2)
+            res = sample_func(r1=r1)
         return res
