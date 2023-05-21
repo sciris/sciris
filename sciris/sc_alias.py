@@ -178,7 +178,7 @@ class alias_sampler:
         # Check for negative probabilities
         if any(self.probs < 0):
             errormsg = f"There are negative values in probs. "
-            ValueError(errormsg)
+            raise ValueError(errormsg)
         # Check it adds up to 1
         prob_sum = self.probs.sum()
         if not (prob_sum == 1.0):
