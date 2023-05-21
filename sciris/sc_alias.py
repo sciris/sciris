@@ -95,12 +95,9 @@ class alias_sampler:
 
     def __init__(self, probs, vals=None, randseed=None, verbose=True, parallel=False):
         self.probs = scu.toarray(probs)
-        self.vals = scu.toarray(vals)  # If vals is None, then self.vals is an empty array
+        self.vals = scu.toarray(vals)   # If vals is None, then self.vals is an empty array
         self.rng = np.random.default_rng(randseed)  # Construct a new Generator
         self.num_buckets = n_buckets = len(probs)
-        # Initialise tables
-        self.probs_table = probs_table = n_buckets * self.probs
-        self.alias_table = alias_table = np.empty((n_buckets,), dtype=np.int32)
         self.parallel = parallel
 
         # Do some checks if both probs and vals are given
@@ -112,6 +109,10 @@ class alias_sampler:
 
         # Run checks on probs
         self._check_probs(verbose)
+
+        # Initialise tables
+        self.probs_table = probs_table = n_buckets * self.probs
+        self.alias_table = alias_table = np.zeros((n_buckets,), dtype=np.int32)
 
         # Divide the table entries into three categories,
         overfull = probs_table > 1.0
