@@ -13,7 +13,7 @@ Bibliographic refs:
 R. A. Kronmal and A. V. Peterson. On the alias method for generating random variables from a discrete distribution.
 The American Statistician, 33(4):214-218, 1979.
 
-D. Knuth. The Art of Computer Programming, Vol 2: Seminumerical Algorithms, section 3.4.1.
+D. Knuth. The Art of Computer Programming, Vol 2: Seminumerical Algorithms, section 3.4.1. (p120-121,p127)
 """
 
 import numpy.random as npr
@@ -30,7 +30,7 @@ def alias_sample_one(x=None, num_indices=None, probs_table=None, alias_table=Non
     """
     Singleton sampling
     """
-    ii = np.floor(x * num_indices).astype(np.int32)
+    ii = np.floor(x * num_indices).astype(np.int32) # Get a random integer between 0 and num_indices-1
     yy = num_indices * x - ii
     # If y < prob_i then return i.This is the biased coin flip.
     if yy < probs_table[ii]:
