@@ -187,5 +187,6 @@ class alias_sampler:
             res = sample_func(x=uniform_x)
 
         # Check whether we need to return indices or values
-
+        if len(self.vals) > 1:
+            return self.vals[res]
         return res
