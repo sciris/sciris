@@ -2,13 +2,10 @@
 Test Sciris alias_sampler class
 '''
 
-import sciris as sc
 import pytest
 import sciris as sc
 import numpy as np
 import scipy.stats as stats
-import numpy.random as npr
-
 
 @pytest.fixture
 def alias_sampler_fixture():
