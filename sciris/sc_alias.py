@@ -28,7 +28,16 @@ __all__ = ['alias_sampler']
 
 def alias_sample_one(x=None, num_indices=None, probs_table=None, alias_table=None):
     """
-    Singleton sampling
+    Perform singleton sampling from a discrete probability distribution using the Alias method.
+
+    Args:
+        x (float)            : a uniform random variate between 0 and 1.
+        num_indices (int)    : the number of indices in the discrete distribution.
+        probs_table (ndarray): the probability table used for sampling.
+        alias_table (ndarray): the alias table used for sampling.
+
+    Returns:
+        res (int): A single sample drawn from the distribution.
     """
     ii = np.floor(x * num_indices).astype(np.int32) # Get a random integer between 0 and num_indices-1
     yy = num_indices * x - ii
@@ -42,7 +51,16 @@ def alias_sample_one(x=None, num_indices=None, probs_table=None, alias_table=Non
 
 def alias_sample_vec(x=None, num_indices=None, probs_table=None, alias_table=None):
     """
-    Vectorised sampling
+    Perform vectorised sampling from a discrete probability distribution using the alias method.
+
+    Args:
+        x (ndarray)          : an array of uniform random variates between 0 and 1.
+        num_indices (int)    : the number of indices in the distribution.
+        probs_table (ndarray): the probability table used for sampling.
+        alias_table (ndarray): the alias table used for sampling.
+
+    Returns:
+        ndarray: An array of samples drawn from the distribution.
     """
     # Allocate space for results
     # TODO: maybe initialise with inf or nan, to identify potentiall problems with the tables and/or sampling
@@ -66,12 +84,12 @@ class alias_sampler:
     the distribution.
 
     Args:
-    probs(int/array/list/tuple): a sequence of probabilities for each element in the discrete distribution.
-    vals(int/array/list/tuple) : a sequence with the values to which the probability entries correspond.
-    randseed                   : a seed to initialize the BitGenerator. Usually an int, though could be any type
+    probs (int/array/list/tuple): a sequence of probabilities for each element in the discrete distribution.
+    vals (int/array/list/tuple) : a sequence with the values to which the probability entries correspond.
+    randseed                    : a seed to initialize the BitGenerator. Usually an int, though could be any type
                                  accepted by numpy.random.default_rng(). If None, then fresh, unpredictable entropy
                                  will be pulled from the OS.
-    parallel(bool)             : whether to parallelise samplping or not(default)
+    parallel(bool)              : whether to parallelise samplping or not(default)
 
     """
 
