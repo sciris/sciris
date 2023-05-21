@@ -80,7 +80,7 @@ def test_sample_distribution():
 
     # Perform a chi-square goodness-of-fit test
     observed, _ = np.histogram(samples, bins=len(vals))
-    expected = n_samples * probs
+    expected = n_samples * sampler.probs
     _, p_value = stats.chisquare(observed, expected)
 
     # Verify that the p-value is above a certain threshold (e.g., 0.05)
@@ -89,7 +89,8 @@ def test_sample_distribution():
 # %% Run as a script
 if __name__ == '__main__':
     sc.tic()
-
+    test_negative_probs()
+    test_probs_not_add_up_to_one()
     test_sample_distribution()
 
     sc.toc()
