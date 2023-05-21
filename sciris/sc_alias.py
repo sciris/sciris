@@ -35,7 +35,7 @@ def alias_sample_one(r1=None, num_indices=None, probs_table=None, alias_table=No
     # If y < prob_i then return i.This is the biased coin flip.
     if yy < probs_table[ii]:
         res = ii
-    else: # Otherwise, return Ki.
+    else:  # Otherwise, return Ki.
         res = alias_table[ii]
     return res
 
@@ -50,9 +50,8 @@ def alias_sample_vec(r1=None, num_indices=None, probs_table=None, alias_table=No
     ii = np.floor(r1 * num_indices).astype(np.int32)
     yy = num_indices * r1 - ii
     smaller = yy < probs_table[ii]
-    larger_eq = yy >= probs_table[ii]
     res[smaller] = ii[smaller]
-    res[larger_eq] = alias_table[ii[larger_eq]]
+    res[~smaller] = alias_table[ii[~smaller]]
     return res
 
 
@@ -135,7 +134,7 @@ class alias_sampler:
         self.probs_table = probs_table
         self.alias_table = alias_table
 
-        # Create a generato
+        # Create a generator
         self.rng = np.random.default_rng(randseed)
 
         # TODO: check some potential rounding error problems
@@ -172,10 +171,11 @@ class alias_sampler:
         """
         An interface function to draw samples
         """
-        # Generate a uniform random variate 0 ≤ x < 1.
+        # Generate a uniform random variate 0 ≤ x < 1,independently if we run in parallel or not
         r1 = self.rng.random(n_samples)
         n_buckets = self.num_buckets
         if self.parallel:
+            # NOTE: not sure it makes a lot of sense to parallelise sampling for n_samples < 1e6 samples maybe?
             sample_func = functools.partial(alias_sample_one, num_indices=n_buckets, probs_table=self.probs_table,
                                             alias_table=self.alias_table)
             res = scp.parallelize(sample_func, iterkwargs={'r1': r1})
