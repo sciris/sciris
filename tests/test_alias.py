@@ -69,8 +69,7 @@ def test_sample_distribution():
                       0.1078, 0.1179, 0.1179, 0.1078, 0.0902, 0.069, 0.0483, 0.0309,
                       0.0181, 0.0097, 0.0047, 0.0021])
 
-    vals = ['lol', 'btw', 'omg', 'idk', 'wtf', 'btw', 'npo', 'omw', 'brb', 'gtg',
-            'tmi', 'fyi', 'imo', 'atm', 'bff', 'tbh', 'irl', 'smh', 'tyt', 'lmk']
+    vals = np.arange(-10, 10)
 
     # Create an instance of alias_sampler
     sampler = sc.alias_sampler(probs, vals)
