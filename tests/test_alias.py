@@ -62,23 +62,23 @@ def test_sample_distribution():
     class follow the desired distribution using a statistical test:
     """
     # Define a normal probability distribution -- will have to be normalised to add up to 1
-    probs = np.array([0.0021, 0.0047, 0.0097, 0.0181, 0.0309, 0.0483, 0.069, 0.0902,
+    probs_x = np.array([0.0021, 0.0047, 0.0097, 0.0181, 0.0309, 0.0483, 0.069, 0.0902,
                       0.1078, 0.1179, 0.1179, 0.1078, 0.0902, 0.069, 0.0483, 0.0309,
                       0.0181, 0.0097, 0.0047, 0.0021])
 
-    vals = np.arange(-10, 10)
+    vals_x = np.arange(-10, 10)
 
     # Create an instance of alias_sampler
-    sampler = sc.alias_sampler(probs, vals, randseed=21)
+    sampler = sc.alias_sampler(probs_x, vals_x, randseed=21)
 
     # Generate a larg-ish number of samples
     n_samples = 2 ** 16
     samples = sampler.draw(n_samples)
 
     # Perform a chi-square goodness-of-fit test
-    observed, _ = np.histogram(samples, bins=len(vals))
-    expected = n_samples * sampler.probs
-    _, p_value = stats.chisquare(observed, expected)
+    observed_x, _ = np.histogram(samples, bins=len(vals_x))
+    expected_x = n_samples * sampler.probs
+    _, p_value = stats.chisquare(observed_x, expected_x)
 
     # Verify that the p-value is above a certain threshold (e.g., 0.05)
     assert p_value > 0.05
