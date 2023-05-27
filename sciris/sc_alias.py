@@ -255,6 +255,6 @@ class AliasSample():
         else:
             return J[kk]
 
-    def draw_n(self, n):
+    def draw(self, n):
         r1, r2 = npr.rand(n), npr.rand(n)
         return sample(n, self.q, self.J, r1, r2)
