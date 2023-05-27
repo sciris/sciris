@@ -15,7 +15,7 @@ The American Statistician, 33(4):214-218, 1979.
 
 D. Knuth. The Art of Computer Programming, Vol 2: Seminumerical Algorithms, section 3.4.1. (p120-121,p127)
 """
-
+from numba import jit
 import numpy.random as npr
 import numpy as np
 import functools
@@ -23,7 +23,7 @@ from . import sc_utils as scu
 from . import sc_math as scm
 from . import sc_parallel as scp
 
-__all__ = ['alias_sampler']
+__all__ = ['alias_sampler', 'AliasSample']
 
 
 def alias_sample_one(x=None, num_indices=None, probs_table=None, alias_table=None):
@@ -63,7 +63,7 @@ def alias_sample_vec(x=None, num_indices=None, probs_table=None, alias_table=Non
         ndarray: An array of samples drawn from the distribution.
     """
     # Allocate space for results
-    # TODO: maybe initialise with inf or nan, to identify potentiall problems with the tables and/or sampling
+    # TODO: maybe initialise with inf or nan, to identify potential problems with the tables and/or sampling
     res = np.zeros_like(x, dtype=np.int32)
     # Create indices into the probs table
     ii = np.floor(x * num_indices).astype(np.int32)
@@ -209,3 +209,43 @@ class alias_sampler:
         if len(self.vals) > 1:
             return self.vals[res]
         return res
+
+
+@jit(nopython=True)
+def sample(n, q, J, r1, r2):
+    res = np.zeros(n, dtype=np.int32)
+    lj = len(J)
+    for i in range(n):
+        kk = int(np.floor(r1[i]*lj))
+        if r2[i] < q[kk]: res[i] = kk
+        else: res[i] = J[kk]
+    return res
+
+class AliasSample():
+    def __init__(self, probs):
+        self.K=K= len(probs)
+        self.q=q= np.zeros(K)
+        self.J=J= np.zeros(K, dtype=np.int)
+
+        smaller,larger  = [],[]
+        for kk, prob in enumerate(probs):
+            q[kk] = K*prob
+            if q[kk] < 1.0: smaller.append(kk)
+            else: larger.append(kk)
+
+        while len(smaller) > 0 and len(larger) > 0:
+            small,large = smaller.pop(),larger.pop()
+            J[small] = large
+            q[large] = q[large] - (1.0 - q[small])
+            if q[large] < 1.0: smaller.append(large)
+            else: larger.append(large)
+
+    def draw_one(self):
+        K,q,J = self.K,self.q,self.J
+        kk = int(np.floor(npr.rand()*len(J)))
+        if npr.rand() < q[kk]: return kk
+        else: return J[kk]
+
+    def draw_n(self, n):
+        r1,r2 = npr.rand(n),npr.rand(n)
+        return sample(n,self.q,self.J,r1,r2)
