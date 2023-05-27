@@ -39,7 +39,7 @@ def alias_sample_one(x=None, num_indices=None, probs_table=None, alias_table=Non
     Returns:
         res (int): A single sample drawn from the distribution.
     """
-    ii = np.floor(x * num_indices).astype(np.int32) # Get a random integer between 0 and num_indices-1
+    ii = np.floor(x * num_indices).astype(np.int32)  # Get a random integer between 0 and num_indices-1
     yy = num_indices * x - ii
     # If y < prob_i then return i.This is the biased coin flip.
     if yy < probs_table[ii]:
@@ -95,7 +95,7 @@ class alias_sampler:
 
     def __init__(self, probs, vals=None, randseed=None, verbose=True, parallel=False):
         self.probs = scu.toarray(probs)
-        self.vals = scu.toarray(vals)   # If vals is None, then self.vals is an empty array
+        self.vals = scu.toarray(vals)  # If vals is None, then self.vals is an empty array
         self.rng = np.random.default_rng(randseed)  # Construct a new Generator
         self.num_buckets = n_buckets = len(probs)
         self.parallel = parallel
@@ -216,36 +216,45 @@ def sample(n, q, J, r1, r2):
     res = np.zeros(n, dtype=np.int32)
     lj = len(J)
     for i in range(n):
-        kk = int(np.floor(r1[i]*lj))
-        if r2[i] < q[kk]: res[i] = kk
-        else: res[i] = J[kk]
+        kk = int(np.floor(r1[i] * lj))
+        if r2[i] < q[kk]:
+            res[i] = kk
+        else:
+            res[i] = J[kk]
     return res
+
 
 class AliasSample():
     def __init__(self, probs):
-        self.K=K= len(probs)
-        self.q=q= np.zeros(K)
-        self.J=J= np.zeros(K, dtype=np.int)
+        self.K = K = len(probs)
+        self.q = q = np.zeros(K)
+        self.J = J = np.zeros(K, dtype=np.int)
 
-        smaller,larger  = [],[]
+        smaller, larger = [], []
         for kk, prob in enumerate(probs):
-            q[kk] = K*prob
-            if q[kk] < 1.0: smaller.append(kk)
-            else: larger.append(kk)
+            q[kk] = K * prob
+            if q[kk] < 1.0:
+                smaller.append(kk)
+            else:
+                larger.append(kk)
 
         while len(smaller) > 0 and len(larger) > 0:
-            small,large = smaller.pop(),larger.pop()
+            small, large = smaller.pop(), larger.pop()
             J[small] = large
             q[large] = q[large] - (1.0 - q[small])
-            if q[large] < 1.0: smaller.append(large)
-            else: larger.append(large)
+            if q[large] < 1.0:
+                smaller.append(large)
+            else:
+                larger.append(large)
 
     def draw_one(self):
-        K,q,J = self.K,self.q,self.J
-        kk = int(np.floor(npr.rand()*len(J)))
-        if npr.rand() < q[kk]: return kk
-        else: return J[kk]
+        K, q, J = self.K, self.q, self.J
+        kk = int(np.floor(npr.rand() * len(J)))
+        if npr.rand() < q[kk]:
+            return kk
+        else:
+            return J[kk]
 
     def draw_n(self, n):
-        r1,r2 = npr.rand(n),npr.rand(n)
-        return sample(n,self.q,self.J,r1,r2)
+        r1, r2 = npr.rand(n), npr.rand(n)
+        return sample(n, self.q, self.J, r1, r2)
