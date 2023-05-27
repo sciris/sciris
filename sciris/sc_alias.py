@@ -224,11 +224,11 @@ def sample(n, q, J, r1, r2):
     return res
 
 
-class AliasSample():
+class AliasSample:
     def __init__(self, probs):
         self.K = K = len(probs)
         self.q = q = np.zeros(K)
-        self.J = J = np.zeros(K, dtype=np.int)
+        self.J = J = np.zeros(K, dtype=np.int32)
 
         smaller, larger = [], []
         for kk, prob in enumerate(probs):
