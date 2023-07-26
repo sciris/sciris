@@ -44,11 +44,11 @@ if __name__ == '__main__':
 
 def _progressbar(globaldict, njobs, **kwargs):
     ''' Define a progress bar, available to both '''
-    if isinstance(globaldict, dict):
+    try:
         done = sum(globaldict.values())
-        scp.progressbar(done, njobs, label=f'Job {done}/{njobs}', **kwargs)
-    else:
-        print(f'Global dictionary not available; progress on {njobs} unknown')
+    except:
+        done = '<unknown>'
+    scp.progressbar(done, njobs, label=f'Job {done}/{njobs}', **kwargs)
     return
 
 
