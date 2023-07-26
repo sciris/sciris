@@ -402,7 +402,7 @@ class Parallel:
             iterarg = np.arange(iterarg)
             
         # Check for additional global arguments
-        useglobal = True if self.inputdict else False
+        useglobal = True if self.inputdict is not None else False
             
         # Construct the argument list for each job
         for index in range(self.njobs):
@@ -816,17 +816,21 @@ def _task(taskargs):
     result     = None
     success    = False
     exception  = None
-    if isinstance(globaldict, dict):
+    try: # Try to update the globaldict, but don't worry if we can't
         globaldict[index] = 0
         if taskargs.useglobal:
             kwargs['globaldict'] = taskargs.globaldict
+    except:
+        pass
     
     # Call the function!
     try:
         result = func(*args, **kwargs) # Call the function!
         success = True
-        if isinstance(globaldict, dict):
+        try: # Likewise, try to update the task progress
             globaldict[index] = 1
+        except:
+            pass
     except Exception as E: # pragma: no cover
         if taskargs.die: # Usual case, raise an exception and stop
             errormsg = f'Task {index} failed: set die=False to keep going instead; see above for error details'
