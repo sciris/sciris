@@ -361,6 +361,7 @@ class Parallel:
             
         # Create a manager for sharing resources across jobs
         if method == 'custom':
+            manager = None
             globaldict = self.inputdict # For something custom, use the inputdict directly -- either a dict or None
         elif method in ['serial', 'thread']:
             manager = None
