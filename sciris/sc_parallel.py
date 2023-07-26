@@ -44,8 +44,11 @@ if __name__ == '__main__':
 
 def _progressbar(globaldict, njobs, **kwargs):
     ''' Define a progress bar, available to both '''
-    done = sum(globaldict.values())
-    scp.progressbar(done, njobs, label=f'Job {done}/{njobs}', **kwargs)
+    if isinstance(globaldict, dict):
+        done = sum(globaldict.values())
+        scp.progressbar(done, njobs, label=f'Job {done}/{njobs}', **kwargs)
+    else:
+        print(f'Global dictionary not available; progress on {njobs} unknown')
     return
 
 
@@ -357,11 +360,13 @@ class Parallel:
             raise ValueError(errormsg)
             
         # Create a manager for sharing resources across jobs
-        if method in ['serial', 'thread'] or self.inputdict is False:
+        if method == 'custom':
+            globaldict = self.inputdict # For something custom, use the inputdict directly -- either a dict or None
+        elif method in ['serial', 'thread']:
             manager = None
             globaldict = dict() # For serial and thread, don't need anything fancy to share global variables
         else:
-            if method in ['multiprocess', 'custom']: # Special case: can't share multiprocessing managers with multiprocess
+            if method == 'multiprocess': # Special case: can't share multiprocessing managers with multiprocess
                 manager = mp.Manager()
             else:
                 manager = mpi.Manager() # Note "mpi" instead of "mp"
@@ -810,15 +815,17 @@ def _task(taskargs):
     result     = None
     success    = False
     exception  = None
-    globaldict[index] = 0
-    if taskargs.useglobal:
-        kwargs['globaldict'] = taskargs.globaldict
+    if isinstance(globaldict, dict):
+        globaldict[index] = 0
+        if taskargs.useglobal:
+            kwargs['globaldict'] = taskargs.globaldict
     
     # Call the function!
     try:
         result = func(*args, **kwargs) # Call the function!
         success = True
-        globaldict[index] = 1
+        if isinstance(globaldict, dict):
+            globaldict[index] = 1
     except Exception as E: # pragma: no cover
         if taskargs.die: # Usual case, raise an exception and stop
             errormsg = f'Task {index} failed: set die=False to keep going instead; see above for error details'
