@@ -1,6 +1,5 @@
 '''
-Test parallelization. Not written as pytest tests because it conflicts with pytest's
-built-in parallelization, and since functions-within-functions can't be pickled.
+Test parallelization functions and classes
 '''
 
 import sciris as sc
