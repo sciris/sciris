@@ -47,13 +47,14 @@ def _jobkey(index):
     return f'_job{index}'
 
 
-def _progressbar(globaldict, njobs, **kwargs):
+def _progressbar(globaldict, njobs, started, **kwargs):
     ''' Define a progress bar based on the global dictionary '''
     try:
         done = sum([globaldict[k] for k in globaldict.keys() if str(k).startswith('_job')])
     except Exception as E:
         done = '<unknown>' + str(E)
-    scp.progressbar(done, njobs, label=f'Job {done}/{njobs}', **kwargs)
+    elapsed = (scd.now() - started).total_seconds()
+    scp.progressbar(done, njobs, label=f'Job {done}/{njobs} ({elapsed:.1f} s)', **kwargs)
     return
 
 
@@ -431,7 +432,8 @@ class Parallel:
             taskargs = TaskArgs(func=self.func, index=index, njobs=self.njobs, iterval=iterval, iterdict=iterdict,
                                 args=self.args, kwargs=self.kwargs, maxcpu=self.maxcpu, maxmem=self.maxmem,
                                 interval=self.interval, embarrassing=self.embarrassing, callback=self.callback, 
-                                progress=self.progress, globaldict=self.globaldict, useglobal=useglobal, die=self.die)
+                                progress=self.progress, globaldict=self.globaldict, useglobal=useglobal, 
+                                started=self.times.started, die=self.die)
             argslist.append(taskargs)
         
         self.argslist = argslist
@@ -449,6 +451,7 @@ class Parallel:
         self.make_pool()
         
         # Construct the argument list (has to be after the pool is made)
+        self.times.started = scd.now()
         self.make_argslist()
         
         # Handle optional deepcopy
@@ -458,7 +461,6 @@ class Parallel:
             argslist = self.argslist
         
         # Run it!
-        self.times.started = scd.now()
         output = self.map_func(_task, argslist)
         
         # Store the pool; do not store the output list here
@@ -522,7 +524,7 @@ class Parallel:
         while self.running or final_iter:
             if not self.running and final_iter:
                 final_iter = False
-            _progressbar(self.globaldict, self.njobs, **kwargs)
+            _progressbar(self.globaldict, njobs=self.njobs, started=self.times.started, **kwargs)
             scd.timedsleep(interval)
         return
     
@@ -766,7 +768,8 @@ class TaskArgs(scu.prettyobj):
         Arguments must match both :func:`sc.parallelize() <parallelize>` and ``sc._task()``
         '''
         def __init__(self, func, index, njobs, iterval, iterdict, args, kwargs, maxcpu, maxmem, 
-                     interval, embarrassing, callback, progress, globaldict, useglobal, die=True):
+                     interval, embarrassing, callback, progress, globaldict, useglobal, started,
+                     die=True):
             self.func         = func         # The function being called
             self.index        = index        # The place in the queue
             self.njobs        = njobs        # The total number of iterations
@@ -782,6 +785,7 @@ class TaskArgs(scu.prettyobj):
             self.progress     = progress     # Whether to print progress after each job
             self.globaldict   = globaldict   # A global dictionary for sharing progress on each task 
             self.useglobal    = useglobal    # Whether to pass the global dictionary to each task
+            self.started      = started      # The time when the parallelization was started
             self.die          = die          # Whether to raise an exception if the child task encounters one
             return
 
@@ -850,12 +854,7 @@ def _task(taskargs):
     elapsed = end - start
     
     if taskargs.progress:
-        _progressbar(globaldict, taskargs.njobs, flush=True)
-    
-    # Handle callback, if present
-    if taskargs.callback: # pragma: no cover
-        data = dict(index=index, njobs=taskargs.njobs, args=args, kwargs=kwargs, result=result)
-        taskargs.callback(data)
+        _progressbar(globaldict, njobs=taskargs.njobs, started=taskargs.started, flush=True)
     
     # Generate output
     outdict = dict(
@@ -864,6 +863,11 @@ def _task(taskargs):
         exception = exception,
         elapsed   = elapsed,
     )
+    
+    # Handle callback, if present
+    if taskargs.callback: # pragma: no cover
+        data = dict(index=index, njobs=taskargs.njobs, args=args, kwargs=kwargs, globaldict=globaldict, outdict=outdict)
+        taskargs.callback(data)
 
     # Handle output
     return outdict
