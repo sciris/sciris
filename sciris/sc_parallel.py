@@ -42,12 +42,17 @@ if __name__ == '__main__':
     sc.parallelize(my_func)
 '''
 
+def _jobkey(index):
+    ''' Convert a job index to a key '''
+    return f'_job{index}'
+
+
 def _progressbar(globaldict, njobs, **kwargs):
-    ''' Define a progress bar, available to both '''
+    ''' Define a progress bar based on the global dictionary '''
     try:
-        done = sum(globaldict.values())
-    except:
-        done = '<unknown>'
+        done = sum([globaldict[k] for k in globaldict.keys() if str(k).startswith('_job')])
+    except Exception as E:
+        done = '<unknown>' + str(E)
     scp.progressbar(done, njobs, label=f'Job {done}/{njobs}', **kwargs)
     return
 
@@ -81,12 +86,12 @@ class Parallel:
     **Example**::
         
         import sciris as sc
-        import numpy as np
 
         def slowfunc(i):
             sc.randsleep(seed=i)
             return i**2
 
+        # Standard usage
         P = sc.Parallel(slowfunc, iterarg=range(10), parallelizer='multiprocess-async')
         P.run_async()
         P.monitor()
@@ -285,14 +290,14 @@ class Parallel:
         
         # Handle defaults for the parallelizer
         parallelizer = self.parallelizer
-        if parallelizer is None:
+        if parallelizer is None or parallelizer == 'async':
             parallelizer = 'default'
         if self.serial: 
             parallelizer = 'serial'
         
         # Handle the choice of parallelizer
         if scu.isstring(parallelizer):
-            parallelizer = parallelizer.replace('-copy', '').replace('-async', '')
+            parallelizer = parallelizer.replace('copy', '').replace('async', '').replace('-', '')
             try:
                 self.method = self.defaults.mapping[parallelizer]
             except:
@@ -304,7 +309,7 @@ class Parallel:
         # Handle async
         is_async = False
         supports_async = ['multiprocess', 'multiprocessing']
-        if scu.isstring(self.parallelizer) and '-async' in self.parallelizer:
+        if scu.isstring(self.parallelizer) and 'async' in self.parallelizer:
             if self.method in supports_async:
                 is_async = True
             else:
@@ -360,10 +365,7 @@ class Parallel:
             raise ValueError(errormsg)
             
         # Create a manager for sharing resources across jobs
-        if method == 'custom':
-            manager = None
-            globaldict = self.inputdict # For something custom, use the inputdict directly -- either a dict or None
-        elif method in ['serial', 'thread']:
+        if method in ['serial', 'thread', 'custom']:
             manager = None
             globaldict = dict() # For serial and thread, don't need anything fancy to share global variables
         else:
@@ -373,8 +375,12 @@ class Parallel:
                 manager = mpi.Manager() # Note "mpi" instead of "mp"
             globaldict = manager.dict() # Create a dict for sharing progress of each job
         
-        if isinstance(self.inputdict, dict):
-            globaldict.update(self.inputdict)
+        # Handle any supplied input
+        if self.inputdict:
+            if method == 'custom': # For something custom, use the inputdict directly, in case it's something special
+                globaldict = self.inputdict
+            else:
+                globaldict.update(self.inputdict)
         
         # Reset
         self.pool       = pool
@@ -619,7 +625,7 @@ def parallelize(func, iterarg=None, iterkwargs=None, args=None, kwargs=None, ncp
         serial       (bool)      : whether to skip parallelization and run in serial (useful for debugging; equivalent to ``parallelizer='serial'``)
         progress     (bool)      : whether to show a progress bar
         callback     (func)      : an optional function to call from each worker
-        globaldict   (dict)      : an optional global dictionary to pass to each worker (note: may not update properly with low task latency)
+        globaldict   (dict)      : an optional global dictionary to pass to each worker via the kwarg "globaldict" (note: may not update properly with low task latency)
         die          (bool)      : whether to stop immediately if an exception is encountered (otherwise, store the exception as the result)
         func_kwargs  (dict)      : merged with kwargs (see above)
 
@@ -817,7 +823,7 @@ def _task(taskargs):
     success    = False
     exception  = None
     try: # Try to update the globaldict, but don't worry if we can't
-        globaldict[index] = 0
+        globaldict[_jobkey(index)] = 0
         if taskargs.useglobal:
             kwargs['globaldict'] = taskargs.globaldict
     except:
@@ -828,7 +834,7 @@ def _task(taskargs):
         result = func(*args, **kwargs) # Call the function!
         success = True
         try: # Likewise, try to update the task progress
-            globaldict[index] = 1
+            globaldict[_jobkey(index)] = 1
         except:
             pass
     except Exception as E: # pragma: no cover
