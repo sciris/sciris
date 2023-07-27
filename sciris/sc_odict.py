@@ -376,7 +376,7 @@ class odict(OD):
 
     def __radd__(self, dict2):
         ''' Allows sum() to work correctly '''
-        if not dict2: return self
+        if not dict2: return self # Skips if start=0, as default with sum()
         else:         return self.__add__(dict2)
 
 

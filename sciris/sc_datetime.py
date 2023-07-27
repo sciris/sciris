@@ -828,6 +828,7 @@ class timer:
     | *New in version 2.0.0:* ``plot()`` method; ``total()`` method; ``indivtimings`` and ``cumtimings`` properties
     | *New in version 2.1.0:* ``total`` as property instead of method; updated repr; added disp() method
     | *New in version 3.0.0:* ``unit`` argument; ``verbose`` argument; ``sum, min, max, mean, std`` methods; ``rawtimings`` property
+    | *New in version 3.0.1:* Timers can be combined by addition, including sum().
     '''
     def __init__(self, label=None, auto=False, start=True, unit='auto', verbose=None, **kwargs):
         from . import sc_odict as sco # Here to avoid circular import
@@ -859,15 +860,44 @@ class timer:
         return
     
     def __repr__(self):
+        ''' Display a brief representation of the object '''
         string = scp.objectid(self)
         string += 'Timings:\n'
         string += str(self.timings)
         string += f'\nTotal time: {self.total:n} s'
         return string
     
+    
     def __len__(self):
+        ''' Count the number of timings '''
         return len(self._tocs)
     
+    
+    def __iadd__(self, T2):
+        ''' Allow multiple timer objects to be combined '''
+        self._tics += T2._tics
+        self._tocs += T2._tocs
+        for k,v in T2.timings.items():
+            if k in self.timings.keys(): # Add the current position of the key if duplicates are found
+                key = f'({len(self.timings)}) ' + k
+            else:
+                key = k
+            self.timings[key] = v
+            self.count += 1
+        return self
+        
+    
+    def __add__(self, T2):
+        ''' Ditto '''
+        T1 = scu.dcp(self)
+        return T1.__iadd__(T2)
+
+
+    def __radd__(self, T2):
+        ''' For sum() '''
+        if not T2: return self # Skips the 0 in sum(..., start=0)
+        else:      return T2.__add__(self)
+        
     
     def disp(self):
         ''' Display the full representation of the object '''
