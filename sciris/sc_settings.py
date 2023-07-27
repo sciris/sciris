@@ -231,7 +231,7 @@ class ScirisOptions(sco.objdict):
         options.jupyter = parse_env('SCIRIS_JUPYTER', 'auto', 'str')
 
         optdesc.backend = 'Set the Matplotlib backend (use "agg" for non-interactive)'
-        options.backend = parse_env('SCIRIS_BACKEND', pl.get_backend(), 'str')
+        options.backend = parse_env('SCIRIS_BACKEND', dict.__getitem__(pl.rcParams, 'backend'), 'str') # This is needed to avoid creating the backend if it doesn't exist, which can be extremely slow
 
         optdesc.rc = 'Matplotlib rc (run control) style parameters used during plotting -- usually set automatically by "style" option'
         options.rc = {}
