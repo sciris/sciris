@@ -60,7 +60,7 @@ def ax3d(nrows=None, ncols=None, index=None, fig=None, ax=None, returnfig=False,
     '''
     Create a 3D axis to plot in.
 
-    Usually not invoked directly; kwags are passed to add_subplot()
+    Usually not invoked directly; kwargs are passed to ``fig.add_subplot()``
     
     *New in version 3.0.0:* nrows, ncols, and index arguments first
     '''
@@ -98,14 +98,15 @@ def ax3d(nrows=None, ncols=None, index=None, fig=None, ax=None, returnfig=False,
     if ax is None:
         if fig.axes and index is None:
             ax = pl.gca()
-            if not isinstance(ax, Axes3D):
-                errormsg = f'''Cannot create 3D plot into axes {ax}: ensure "projection='3d'" was used when making it'''
-                raise ValueError(errormsg)
         else:
             if nrows is None: nrows = 1
             if ncols is None: ncols = 1
             if index is None: index = 1
             ax = fig.add_subplot(nrows, ncols, index, projection='3d', **axkwargs)
+    
+    if not isinstance(ax, Axes3D):
+        errormsg = f'''Cannot create 3D plot into axes {ax}: ensure "projection='3d'" was used when making it'''
+        raise ValueError(errormsg)
     
     if elev is not None or azim is not None: # pragma: no cover
         ax.view_init(elev=elev, azim=azim)
@@ -117,7 +118,8 @@ def ax3d(nrows=None, ncols=None, index=None, fig=None, ax=None, returnfig=False,
         return ax
 
 
-def plot3d(x, y, z, c=None, fig=None, ax=None, returnfig=False, figkwargs=None, axkwargs=None, plotkwargs=None, **kwargs):
+def plot3d(x, y, z, c='index', fig=None, ax=None, returnfig=False, figkwargs=None, 
+           axkwargs=None, plotkwargs=None, **kwargs):
     '''
     Plot 3D data as a line
 
@@ -125,28 +127,52 @@ def plot3d(x, y, z, c=None, fig=None, ax=None, returnfig=False, figkwargs=None, 
         x (arr): x coordinate data
         y (arr): y coordinate data
         z (arr): z coordinate data
-        c (str/tuple): color, can be any of the types accepted by matplotlib's plot()
+        c (str/tuple): color, can be an array or any of the types accepted by :func:`pl.plot() <matplotlib.pyplot.plot>`; if "index", color by index
         fig (fig): an existing figure to draw the plot in (or set to True to create a new figure)
         ax (axes): an existing axes to draw the plot in
         returnfig (bool): whether to return the figure, or just the axes
-        figkwargs (dict): passed to figure()
-        axkwargs (dict): passed to axes()
-        plotkwargs (dict): passed to plot()
-        kwargs (dict): also passed to plot()
+        figkwargs (dict): :func:`pl.figure() <matplotlib.pyplot.figure>`
+        axkwargs (dict): :func:`pl.axes() <matplotlib.pyplot.axes>`
+        plotkwargs (dict): passed to :func:`pl.plot() <matplotlib.pyplot.plot>`
+        kwargs (dict): also passed to :func:`pl.plot() <matplotlib.pyplot.plot>`
 
-    **Example**::
+    **Examples**::
 
         x,y,z = pl.rand(3,10)
         sc.plot3d(x, y, z)
+        
+        fig = pl.figure()
+        n = 100
+        x = np.array(sorted(np.random.rand(n)))
+        y = x + np.random.randn(n)
+        z = np.random.randn(n)
+        c = np.arange(n)
+        sc.plot3d(x, y, z, c=c, fig=fig)
     '''
     # Set default arguments
-    plotkwargs = scu.mergedicts({'lw':2, 'c':c}, plotkwargs, kwargs)
+    plotkwargs = scu.mergedicts({'lw':2}, plotkwargs, kwargs)
     axkwargs = scu.mergedicts(axkwargs)
+    
+    # Do input checking
+    assert len(x) == len(y) == len(z), 'All inputs must have the same length'
+    n = len(x)
 
     # Create axis
     fig,ax = ax3d(returnfig=True, fig=fig, ax=ax, figkwargs=figkwargs, **axkwargs)
-
-    ax.plot(x, y, z, **plotkwargs)
+    
+    # Handle different-colored line segments
+    if c == 'index':
+        c = np.arange(n) # Assign automatically based on index
+    if scu.isarray(c) and len(c) in [n, n-1]: # Technically don't use the last color
+        if c.ndim == 1:
+            from . import sc_colors as scc # To avoid circular import
+            c = scc.vectocolor(c)
+        for i in range(n-1):
+            ax.plot(x[i:i+2], y[i:i+2], z[i:i+2], c=c[i], **plotkwargs)
+            
+    # Standard case: single color
+    else:
+        ax.plot(x, y, z, c=c, **plotkwargs)
 
     if returnfig: # pragma: no cover
         return fig,ax
@@ -154,7 +180,7 @@ def plot3d(x, y, z, c=None, fig=None, ax=None, returnfig=False, figkwargs=None, 
         return ax
 
 
-def scatter3d(x, y=None, z=None, c='z', fig=None, ax=None, returnfig=False, figkwargs=None, 
+def scatter3d(x=None, y=None, z=None, c='z', fig=None, ax=None, returnfig=False, figkwargs=None, 
               axkwargs=None, plotkwargs=None, **kwargs):
     '''
     Plot 3D data as a scatter
@@ -220,14 +246,18 @@ def scatter3d(x, y=None, z=None, c='z', fig=None, ax=None, returnfig=False, figk
         return ax
 
 
-def surf3d(data, x=None, y=None, fig=None, ax=None, returnfig=False, colorbar=True, figkwargs=None, axkwargs=None, plotkwargs=None, **kwargs):
+def surf3d(x=None, y=None, z=None, c='z', fig=None, ax=None, returnfig=False, colorbar=True, 
+           figkwargs=None, axkwargs=None, plotkwargs=None, **kwargs):
     '''
     Plot 2D data as a 3D surface
+    
+    #! UPDATE
 
     Args:
-        data (arr): 2D data
-        x (arr): 1D vector or 2D grid of x coordinates (optional)
+        x (arr): 1D vector or 2D grid of x coordinates (or z-coordinate data if 2D and ``z`` is ``None``)
         y (arr): 1D vector or 2D grid of y coordinates (optional)
+        z (arr): 2D grid of z coordinates
+        c (arr): color data; defaults to match z
         fig (fig): an existing figure to draw the plot in (or set to True to create a new figure)
         ax (axes): an existing axes to draw the plot in
         returnfig (bool): whether to return the figure, or just the axes
@@ -237,19 +267,23 @@ def surf3d(data, x=None, y=None, fig=None, ax=None, returnfig=False, colorbar=Tr
         plotkwargs (dict): passed to plot()
         kwargs (dict): also passed to plot()
 
-    **Example**::
+    **Examples**::
 
         data = sc.smooth(pl.rand(30,50))
         sc.surf3d(data)
+        
+        #! UPDATE
     '''
 
     # Set default arguments
     plotkwargs = scu.mergedicts({'cmap':'viridis'}, plotkwargs, kwargs)
     axkwargs = scu.mergedicts(axkwargs)
+    
+    print('!process data')
 
     # Create figure
     fig,ax = ax3d(returnfig=True, fig=fig, ax=ax, figkwargs=figkwargs, **axkwargs)
-    ny,nx = np.array(data).shape
+    ny,nx = np.array(z).shape
 
     if x is None:
         x = np.arange(nx)
@@ -261,7 +295,8 @@ def surf3d(data, x=None, y=None, fig=None, ax=None, returnfig=False, colorbar=Tr
     else: # pragma: no cover
         X,Y = x,y
 
-    surf = ax.plot_surface(X, Y, data, **plotkwargs)
+    print('!include colors')
+    surf = ax.plot_surface(X, Y, z, **plotkwargs)
     if colorbar:
         fig.colorbar(surf)
 
@@ -272,7 +307,8 @@ def surf3d(data, x=None, y=None, fig=None, ax=None, returnfig=False, colorbar=Tr
 
 
 
-def bar3d(data, fig=None, ax=None, returnfig=False, cmap='viridis', figkwargs=None, axkwargs=None, plotkwargs=None, **kwargs):
+def bar3d(x=None, y=None, z=None, c='z', dz=None, fig=None, ax=None, returnfig=False,
+          cmap='viridis', figkwargs=None, axkwargs=None, plotkwargs=None, **kwargs):
     '''
     Plot 2D data as 3D bars
 
@@ -300,6 +336,9 @@ def bar3d(data, fig=None, ax=None, returnfig=False, cmap='viridis', figkwargs=No
 
     # Create figure
     fig,ax = ax3d(returnfig=True, fig=fig, ax=ax, figkwargs=figkwargs, **axkwargs)
+    
+    print('TEMP')
+    data = z
 
     x, y, z = [], [], []
     dz = []

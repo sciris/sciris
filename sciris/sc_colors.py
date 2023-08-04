@@ -463,6 +463,24 @@ def midpointnorm(vcenter=0, vmin=None, vmax=None):
 
 
 
+def manualcolorbar():
+    '''
+    Add a colorbar to plot that does not support one by default.
+    
+    Args:
+        vcenter (float): the center of the colormap (0 by default)
+        vmin (float): the minimum of the colormap
+        vmax (float): the maximum of the colormap
+
+    **Example**::
+
+        data = pl.rand(10,10) - 0.2
+        pl.pcolor(data, cmap='bi', norm=sc.midpointnorm())
+
+    *New in version 3.0.1.*
+    '''
+
+
 def colormapdemo(cmap=None, n=None, smoothing=None, randseed=None, doshow=True):
     '''
     Demonstrate a color map using simulated elevation data, shown in both 2D and
