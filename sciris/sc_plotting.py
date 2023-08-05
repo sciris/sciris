@@ -133,7 +133,7 @@ def ax3d(nrows=None, ncols=None, index=None, fig=None, ax=None, returnfig=False,
 
 def _process_2d_data(x, y, z, c, flatten=False):
     ''' Helper function to handle data transformations -- not for the user '''
-
+    
     # Swap variables so z always exists
     if z is None and x is not None:
         z,x = x,z
@@ -148,13 +148,13 @@ def _process_2d_data(x, y, z, c, flatten=False):
             x,y = np.meshgrid(x, y)
         if flatten:
             x,y,z = x.flatten(), y.flatten(), z.flatten() # Flatten everything to 1D
+            if scu.isarray(c) and c.shape == (ny,nx): # Flatten colors, too, if 2D and the same size as Z
+                c = c.flatten()
     elif flatten == False:
         raise ValueError('Must provide z values as a 2D array')
     
     if x is None or y is None:
         raise ValueError('Must provide x and y values if z is 1D')
-        
-    print('hi2', z.shape)
         
     # Handle automatic color scaling
     if isinstance(c, str):
@@ -162,8 +162,6 @@ def _process_2d_data(x, y, z, c, flatten=False):
             c = z
         elif c == 'index':
             c = np.arange(len(z))
-            
-    print('hi3', c.shape)
     
     return x, y, z, c
 
@@ -401,8 +399,18 @@ def bar3d(x=None, y=None, z=None, c='z', dx=0.8, dy=0.8, dz=None, fig=None, ax=N
         # Simple example
         data = pl.rand(5,4)
         sc.bar3d(data)
+        
+        # Use non-default axes and colors (note: this one is pretty!)
+        nx = 5
+        ny = 6
+        x = 10*np.arange(nx)
+        y = np.arange(ny) + 10
+        z = -pl.rand(ny,nx)
+        dz = -2*z
+        c = z**2
+        sc.bar3d(x=x, y=y, z=z, dx=0.5, dy=0.5, dz=dz, c=c, cmap='orangeblue')
     
-    *New in 3.0.1: updated arguments from "data" to x, y, z, dz, c; removed "plotkwargs" argument
+    *New in 3.0.1: updated arguments from "data" to x, y, z, c; removed "plotkwargs" argument
     '''
 
     # Set default arguments
@@ -421,16 +429,14 @@ def bar3d(x=None, y=None, z=None, c='z', dx=0.8, dy=0.8, dz=None, fig=None, ax=N
     elif z is None and dz is not None: # Swap order if dz is provided instead of z
         z_height = dz
         
-    x, y, z_height, c = _process_2d_data(x, y, z_height, c, flatten=True)
-    
-    print('hi', c.shape, z_height.shape)
+    x, y, z_height, c = _process_2d_data(x=x, y=y, z=z_height, c=c, flatten=True)
     
     # Ensure the bottom of the bars is provided
     if z_base is None:
         z_base = np.zeros_like(z)
     
     # Process colors
-    c = _process_colors(c, z_height, to2d=True)
+    c = _process_colors(c, z_height, cmap=kwargs.get('cmap'), to2d=True)
     
     # Plot
     ax.bar3d(x=x, y=y, z=z_base, dx=dx, dy=dy, dz=z_height, color=c, **plotkwargs)
