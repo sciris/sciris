@@ -534,7 +534,7 @@ def manualcolorbar(data=None, vmin=0, vmax=1, vcenter=None, colors=None, values=
         pl.grid(True)
 
         ticklabels = ['' for i in range(n)]
-        for i in [2, 4, 8, 10]:
+        for i in [0, 2, 4, 10, 11]:
             ticklabels[i] = f'Color {i} is nice'
         cb = sc.manualcolorbar(
             colors=colors, 

@@ -46,20 +46,23 @@ __all__ = ['createcollist', 'objectid', 'objatt', 'objmeth', 'objprop', 'objrepr
 
 def createcollist(items, title=None, strlen=18, ncol=3):
     ''' Creates a string for a nice columnated list (e.g. to use in __repr__ method) '''
-    nrow = int(np.ceil(float(len(items))/ncol))
-    newkeys = []
-    for x in range(nrow):
-        newkeys += items[x::nrow]
-
-    attstring = title + ':' if title else ''
-    c = 0
-    for x in newkeys:
-        if c%ncol == 0: attstring += '\n  '
-        if len(x) > strlen: x = x[:strlen-3] + '...'
-        attstring += '%-*s  ' % (strlen,x)
-        c += 1
-    attstring += '\n'
-    return attstring
+    if len(items):
+        nrow = int(np.ceil(float(len(items))/ncol))
+        newkeys = []
+        for x in range(nrow):
+            newkeys += items[x::nrow]
+    
+        string = title + ':' if title else ''
+        c = 0
+        for x in newkeys:
+            if c%ncol == 0: string += '\n  '
+            if len(x) > strlen: x = x[:strlen-3] + '...'
+            string += '%-*s  ' % (strlen,x)
+            c += 1
+        string += '\n'
+    else:
+        string = ''
+    return string
 
 
 def objectid(obj):
@@ -69,68 +72,104 @@ def objectid(obj):
     return output
 
 
-def objatt(obj, strlen=18, ncol=3):
+def _get_obj_keys(obj, private=False, sort=True, use_dir=False):
+    ''' Helper method to get the keys of an object '''
+    if use_dir:
+        keys = obj.__dir__() # This is the unsorted version of dir()
+    else:
+        if   hasattr(obj, '__dict__'):  keys = sorted(obj.__dict__.keys())
+        elif hasattr(obj, '__slots__'): keys = sorted(obj.__slots__)
+        else:                           keys = [] # pragma: no cover
+    if not private:
+        keys = [k for k in keys if not k.startswith('__')]
+    if sort:
+        keys = sorted(keys)
+    return keys
+
+
+def _is_meth(obj, attr):
+    ''' Helper function to check if an attribute is a method; do not distinguish between bound and unbound '''
+    return callable(getattr(obj, attr))
+
+
+def _is_prop(obj, attr):
+    ''' Helper function to check if an attribute is a property '''
+    return isinstance(getattr(type(obj), attr, None), property)
+
+
+def objatt(obj, strlen=18, ncol=3, private=False, sort=True, _keys=None):
     ''' Return a sorted string of object attributes for the Python __repr__ method '''
-    if   hasattr(obj, '__dict__'):  oldkeys = sorted(obj.__dict__.keys())
-    elif hasattr(obj, '__slots__'): oldkeys = sorted(obj.__slots__)
-    else:                           oldkeys = [] # pragma: no cover
-    if len(oldkeys): output = createcollist(oldkeys, 'Attributes', strlen = 18, ncol = 3)
-    else:            output = '' # pragma: no cover
+    keys = _get_obj_keys(obj, private=private, sort=sort) if _keys is None else _keys
+    output = createcollist(keys, 'Attributes', strlen=strlen, ncol=ncol)
     return output
 
 
-def objmeth(obj, strlen=18, ncol=3):
+def classatt(obj, strlen=18, ncol=3, private=False, sort=True, _objkeys=None, _dirkeys=None):
+    ''' Return a sorted string of class attributes for the Python __repr__ method '''
+    objkeys = _get_obj_keys(obj, private=private, sort=sort, use_dir=False) if _objkeys is None else _objkeys
+    dirkeys = _get_obj_keys(obj, private=private, sort=sort, use_dir=True)  if _dirkeys is None else _dirkeys
+    keys = set(dirkeys) - set(objkeys) # Find attributes in dir() that are not in __dict__
+    keys = filter(keys.__contains__, dirkeys) # Maintain original ordering
+    keys = [k for k  in keys if not (_is_meth(obj, k) or _is_prop(obj, k))] # Exclude methods and properties; these are covered elsewhere
+    output = createcollist(keys, 'Class attributes', strlen=strlen, ncol=ncol)
+    return output
+
+
+def objmeth(obj, strlen=18, ncol=3, private=False, sort=True, _keys=None):
     ''' Return a sorted string of object methods for the Python __repr__ method '''
-    try:
-        oldkeys = sorted([method + '()' for method in dir(obj) if callable(getattr(obj, method)) and not method.startswith('__')])
-    except: # pragma: no cover
-        oldkeys = ['Methods N/A']
-    if len(oldkeys): output = createcollist(oldkeys, 'Methods', strlen=strlen, ncol=ncol)
-    else:            output = ''
+    try: # In very rare cases this fails, so put it in a try-except loop
+        _keys = _get_obj_keys(obj, private=private, sort=sort, use_dir=True) if _keys is None else _keys
+        keys = sorted([meth + '()' for meth in _keys if _is_meth(obj, meth)])
+    except Exception as E: # pragma: no cover
+        keys = [f'Methods N/A ({E})']
+    output = createcollist(keys, 'Methods', strlen=strlen, ncol=ncol)
     return output
 
 
-def objprop(obj, strlen=18, ncol=3):
+def objprop(obj, strlen=18, ncol=3, private=False, sort=True, _keys=None):
     ''' Return a sorted string of object properties for the Python __repr__ method '''
-    try:
-        oldkeys = sorted([prop for prop in dir(obj) if isinstance(getattr(type(obj), prop, None), property) and not prop.startswith('__')])
-    except: # pragma: no cover
-        oldkeys = ['Properties N/A']
-    if len(oldkeys): output = createcollist(oldkeys, 'Properties', strlen=strlen, ncol=ncol)
-    else:            output = ''
+    try: # In very rare cases this fails, so put it in a try-except loop
+        _keys = _get_obj_keys(obj, private=private, sort=sort, use_dir=True) if _keys is None else _keys
+        keys = [prop for prop in _keys if _is_prop(obj, prop)]
+    except Exception as E: # pragma: no cover
+        keys = [f'Properties N/A ({E})']
+    output = createcollist(keys, 'Properties', strlen=strlen, ncol=ncol)
     return output
 
 
-def objrepr(obj, showid=True, showmeth=True, showprop=True, showatt=True, dividerchar='—', dividerlen=60):
+def objrepr(obj, showid=True, showmeth=True, showprop=True, showatt=True, showclassatt=True, 
+            private=False, sort=True, dividerchar='—', dividerlen=60, strlen=18, ncol=3):
     ''' Return useful printout for the Python __repr__ method '''
+    
+    # Call the object twice to get the keys
+    objkeys = _get_obj_keys(obj, private=private, sort=sort, use_dir=False)
+    dirkeys = _get_obj_keys(obj, private=private, sort=sort, use_dir=True)
+    
     divider = dividerchar*dividerlen + '\n'
     output = ''
-    if showid:
-        output += objectid(obj)
-        output += divider
-    if showmeth:
-        meths = objmeth(obj)
-        if meths:
-            output += objmeth(obj)
-            output += divider
-    if showprop:
-        props = objprop(obj)
-        if props:
-            output += props
-            output += divider
-    if showatt:
-        attrs = objatt(obj)
-        if attrs:
-            output += attrs
-            output += divider
+    
+    def assemble(show, string):
+        ''' Helper function to construct the string '''
+        if show and string:
+            return string + divider
+        else:
+            return ''
+    
+    # Assemble the output string
+    output += assemble(showid,       objectid(obj))
+    output += assemble(showmeth,     objmeth(obj,  strlen=strlen, ncol=ncol, _keys=dirkeys))
+    output += assemble(showprop,     objprop(obj,  strlen=strlen, ncol=ncol, _keys=dirkeys))
+    output += assemble(showatt,      objatt(obj,   strlen=strlen, ncol=ncol, _keys=objkeys))
+    output += assemble(showclassatt, classatt(obj, strlen=strlen, ncol=ncol, _objkeys=objkeys, _dirkeys=dirkeys))
+    
     return output
 
 
 def prepr(obj, maxlen=None, maxitems=None, skip=None, dividerchar='—', dividerlen=60, 
-          use_repr=True, maxtime=3, die=False, debug=False):
+          use_repr=True, private=False, maxtime=3, die=False, debug=False):
     '''
     Akin to "pretty print", returns a pretty representation of an object --
-    all attributes (except any that are skipped), plust methods and ID. Usually
+    all attributes (except any that are skipped), plus methods and ID. Usually
     used via the interactive :func:`sc.pr() <pr>` (which prints), rather than this (which returns
     a string).
 
@@ -142,6 +181,7 @@ def prepr(obj, maxlen=None, maxitems=None, skip=None, dividerchar='—', divider
         dividerchar (str): divider for methods, attributes, etc.
         dividerlen (int): number of divider characters
         use_repr (bool): whether to use repr() or str() to parse the object
+        private (bool): whether to include private methods/attributes (those starting with "__")
         maxtime (float): maximum amount of time to spend on trying to print the object
         die (bool): whether to raise an exception if an error is encountered
         debug (bool): print out detail during string construction
