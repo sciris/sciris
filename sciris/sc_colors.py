@@ -480,7 +480,7 @@ def manualcolorbar(data=None, vmin=0, vmax=1, vcenter=None, colors=None, values=
     the function will the infer the lower and upper limits and construct the colorbar.
     - Alternatively, the lower and upper limits can be provided manually via ``vmin`` and ``vmax``.
     - Finally, the colors themselves can be provided via ``colors``, optionally mapped
-    to ``values``, and potentially also with custom ``ticklabels``.
+    to ``values``, and potentially also supplied with custom ``ticklabels``.
     
     Args:
         data (arr): if provided, compute the colorbar from these data
@@ -533,9 +533,9 @@ def manualcolorbar(data=None, vmin=0, vmax=1, vcenter=None, colors=None, values=
         pl.scatter(x, values, c=colors)
         pl.grid(True)
 
-        ticklabels = ['' for _ in range(n)]
-        for pos in [2, 4, 8, 10]:
-            ticklabels[pos] = f'Color {pos} is nice'
+        ticklabels = ['' for i in range(n)]
+        for i in [2, 4, 8, 10]:
+            ticklabels[i] = f'Color {i} is nice'
         cb = sc.manualcolorbar(
             colors=colors, 
             values=values, 
