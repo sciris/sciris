@@ -64,7 +64,7 @@ def test_complex():
         Z = alldata[:,2]
         O = alldata[:,3]
         fig = pl.figure(figsize=(16,12))
-        ax = sc.scatter3d(X, Y, Z, O, fig=fig, plotkwargs={'alpha':0.3})
+        ax = sc.scatter3d(X, Y, Z, O, fig=fig, alpha=0.3)
         ax.view_init(elev=50, azim=-45)
         pl.xlabel('x')
         pl.ylabel('y')
@@ -74,8 +74,8 @@ def test_complex():
         Y2 = result.details.xvals[:,1]
         Z2 = result.details.xvals[:,2]
         O2 = pl.log10(result.details.fvals)
-        ax = sc.scatter3d(X2, Y2, Z2, O2, fig=fig, plotkwargs={'alpha':1.0, 'marker':'d'})
-        ax = sc.plot3d(X2, Y2, Z2, fig=fig, plotkwargs={'c':(0,0,0), 'lw':3})
+        ax = sc.scatter3d(X2, Y2, Z2, O2, fig=fig, marker='d')
+        ax = sc.plot3d(X2, Y2, Z2, fig=fig, c='k', lw=3)
 
     return result
 

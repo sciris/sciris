@@ -174,20 +174,31 @@ def test_components():
     sc.heading('Testing subcomponents directly')
 
     print('Testing TaskArgs and _task')
-    args = [0]*15
-    args[0] = lambda: None
-    args[4] = None # Set iterdict to None
-    args[5] = None # Set args to empty list
-    args[6] = None # Set kwargs to empty dict
-    args[10] = True # Set embarrassing
-    args[13] = dict() # Set globaldict
-    taskargs = sc.sc_parallel.TaskArgs(*args)
+    a = sc.dictobj()
+    a.func         = lambda: None
+    a.index        = 0
+    a.njobs        = 0
+    a.iterval      = 0
+    a.iterdict     = None
+    a.args         = None
+    a.kwargs       = None
+    a.maxcpu       = 0
+    a.maxmem       = 0
+    a.interval     = 0
+    a.embarrassing = True
+    a.callback     = None
+    a.progress     = None
+    a.globaldict   = None
+    a.useglobal    = None
+    a.started      = None
+    a.die          = None
+    taskargs = sc.sc_parallel.TaskArgs(*a.values())
     task = sc.sc_parallel._task(taskargs)
     
     print('Testing progress bar')
     globaldict = {0:1, 1:1, 2:0, 3:0, 4:0}
     njobs = 5
-    sc.sc_parallel._progressbar(globaldict, njobs)
+    sc.sc_parallel._progressbar(globaldict, njobs, started=sc.now())
     return task
 
 
