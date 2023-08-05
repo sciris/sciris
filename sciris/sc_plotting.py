@@ -130,6 +130,65 @@ def ax3d(nrows=None, ncols=None, index=None, fig=None, ax=None, returnfig=False,
         return ax
 
 
+
+def _process_2d_data(x, y, z, c, flatten=False):
+    ''' Helper function to handle data transformations -- not for the user '''
+
+    # Swap variables so z always exists
+    if z is None and x is not None:
+        z,x = x,z
+    z = np.array(z)
+    
+    if z.ndim == 2:
+        ny,nx = z.shape
+        x = np.arange(nx) if x is None else np.array(x)
+        y = np.arange(ny) if y is None else np.array(y)
+        assert x.ndim == y.ndim, 'Cannot handle x and y axes with different array shapes'
+        if x.ndim == 1 or y.ndim == 1:
+            x,y = np.meshgrid(x, y)
+        if flatten:
+            x,y,z = x.flatten(), y.flatten(), z.flatten() # Flatten everything to 1D
+    elif flatten == False:
+        raise ValueError('Must provide z values as a 2D array')
+    
+    if x is None or y is None:
+        raise ValueError('Must provide x and y values if z is 1D')
+        
+    print('hi2', z.shape)
+        
+    # Handle automatic color scaling
+    if isinstance(c, str):
+        if c == 'z':
+            c = z
+        elif c == 'index':
+            c = np.arange(len(z))
+            
+    print('hi3', c.shape)
+    
+    return x, y, z, c
+
+
+def _process_colors(c, z=None, cmap=None, to2d=False):
+    ''' Helper function to get color data in the right format -- not for the user '''
+    
+    from . import sc_colors as scc # To avoid circular import
+    
+    # Handle colors
+    if c.ndim == 1: # Used by scatter3d and bar3d
+        assert len(c) == len(z), 'Number of colors does not match length of data'
+        c = scc.vectocolor(c, cmap=cmap)
+    elif c.ndim == 2: # Used by surf3d
+        assert c.shape == z.shape, 'Shape of colors does not match shape of data'
+        c = scc.arraycolors(c, cmap=cmap)
+    
+    # Used by bar3d -- flatten from 3D to 2D
+    if to2d and c.ndim == 3:
+        c = c.reshape((-1, c.shape[2]))
+    
+    return c
+    
+
+
 def plot3d(x, y, z, c='index', fig=None, ax=None, returnfig=False, figkwargs=None, 
            axkwargs=None, **kwargs):
     '''
@@ -174,12 +233,12 @@ def plot3d(x, y, z, c='index', fig=None, ax=None, returnfig=False, figkwargs=Non
     fig,ax = ax3d(returnfig=True, fig=fig, ax=ax, figkwargs=figkwargs, **axkwargs)
     
     # Handle different-colored line segments
+    
     if c == 'index':
         c = np.arange(n) # Assign automatically based on index
     if scu.isarray(c) and len(c) in [n, n-1]: # Technically don't use the last color
         if c.ndim == 1:
-            from . import sc_colors as scc # To avoid circular import
-            c = scc.vectocolor(c)
+            c = _process_colors(c, z=z)
         for i in range(n-1):
             ax.plot(x[i:i+2], y[i:i+2], z[i:i+2], c=c[i], **plotkwargs)
             
@@ -191,39 +250,6 @@ def plot3d(x, y, z, c='index', fig=None, ax=None, returnfig=False, figkwargs=Non
         return fig,ax
     else:
         return ax
-
-
-def _process_2d_data(x, y, z, c, flatten=False):
-    ''' Used internally to handle data transformations '''
-
-    # Swap variables so z always exists
-    if z is None and x is not None:
-        z,x = x,z
-    z = np.array(z)
-    
-    if z.ndim == 2:
-        ny,nx = z.shape
-        x = np.arange(nx) if x is None else np.array(x)
-        y = np.arange(ny) if y is None else np.array(y)
-        assert x.ndim == y.ndim, 'Cannot handle x and y axes with different array shapes'
-        if x.ndim == 1 or y.ndim == 1:
-            x,y = np.meshgrid(x, y)
-        if flatten:
-            x,y,z = x.flatten(), y.flatten(), z.flatten() # Flatten everything to 1D
-    elif flatten == False:
-        raise ValueError('Must provide z values as a 2D array')
-    
-    if x is None or y is None:
-        raise ValueError('Must provide x and y values if z is 1D')
-        
-    # Handle automatic color scaling
-    if isinstance(c, str):
-        if c == 'z':
-            c = z
-        elif c == 'index':
-            c = np.arange(len(z))
-    
-    return x, y, z, c
 
 
 def scatter3d(x=None, y=None, z=None, c='z', fig=None, ax=None, returnfig=False, figkwargs=None, 
@@ -334,12 +360,7 @@ def surf3d(x=None, y=None, z=None, c='z', fig=None, ax=None, returnfig=False, co
     
     # Handle colors
     if scu.isarray(c):
-        if c.ndim == 2:
-            if c.shape != z.shape:
-                raise ValueError('Shape of colors does not match shape of data')
-            else:
-                from . import sc_colors as scc # To avoid circular import
-                c = scc.arraycolors((z**2), cmap=plotkwargs.get('cmap'))
+        c = _process_colors(c, cmap=plotkwargs.get('cmap'))
         plotkwargs['facecolors'] = c
     
     # Actually plot
@@ -354,55 +375,65 @@ def surf3d(x=None, y=None, z=None, c='z', fig=None, ax=None, returnfig=False, co
 
 
 
-def bar3d(x=None, y=None, z=None, c='z', dz=None, fig=None, ax=None, returnfig=False,
-          cmap='viridis', figkwargs=None, axkwargs=None, plotkwargs=None, **kwargs):
+def bar3d(x=None, y=None, z=None, c='z', dx=0.8, dy=0.8, dz=None, fig=None, ax=None, 
+          returnfig=False, figkwargs=None, axkwargs=None, **kwargs):
     '''
     Plot 2D data as 3D bars
 
     Args:
-        data (arr): 2D data
+        x (arr): 1D or 2D array of x coordinates (or z-coordinate data if 2D and ``z`` is ``None``)
+        y (arr): 1D or 2D array of y coordinates (optional)
+        z (arr): 2D array of z coordinates; interpreted as the heights of the bars unless ``dz`` is also provided
+        c (arr): color data; defaults to match z
+        dx (float/arr): width of the bars
+        dy (float/arr): depth of the bars
+        dz (float/arr): height of the bars, in which case ``z`` is interpreted as the base of the bars
         fig (fig): an existing figure to draw the plot in (or set to True to create a new figure)
-        cmap (str): colormap name
         ax (axes): an existing axes to draw the plot in
         returnfig (bool): whether to return the figure, or just the axes
-        colorbar (bool): whether to plot a colorbar
+        colorbar (bool): whether to plot a colorbar (true by default unless color data is provided)
         figkwargs (dict): passed to :func:`pl.figure() <matplotlib.pyplot.figure>`
         axkwargs (dict): passed to :func:`pl.axes() <matplotlib.pyplot.axes>`
         kwargs (dict): passed to :func:`ax.bar3d() <mpl_toolkits.mplot3d.axes3d.Axes3D.bar3d>`
 
-    **Example**::
+    **Examples**::
 
+        # Simple example
         data = pl.rand(5,4)
         sc.bar3d(data)
     
-    *New in version 3.0.1:* removed "plotkwargs" argument
+    *New in 3.0.1: updated arguments from "data" to x, y, z, dz, c; removed "plotkwargs" argument
     '''
 
     # Set default arguments
-    plotkwargs = scu.mergedicts({'dx':0.8, 'dy':0.8, 'shade':True}, plotkwargs, kwargs)
+    plotkwargs = scu.mergedicts(dict(shade=True), kwargs)
     axkwargs = scu.mergedicts(axkwargs)
 
     # Create figure
     fig,ax = ax3d(returnfig=True, fig=fig, ax=ax, figkwargs=figkwargs, **axkwargs)
     
-    print('TEMP')
-    data = z
-
-    x, y, z = [], [], []
-    dz = []
-    if 'color' not in plotkwargs:
-        try:
-            from . import sc_colors as scc # To avoid circular import
-            plotkwargs['color'] = scc.vectocolor(data.flatten(), cmap=cmap)
-        except Exception as E: # pragma: no cover
-            print(f'bar3d(): Attempt to auto-generate colors failed: {str(E)}')
-    for i in range(data.shape[0]):
-        for j in range(data.shape[1]):
-            x.append(i)
-            y.append(j)
-            z.append(0)
-            dz.append(data[i,j])
-    ax.bar3d(x=x, y=y, z=z, dz=dz, **plotkwargs)
+    # Process data
+    z_base = None # Assume no base is provided, and ...
+    z_height = z # ... height was provided
+    if z is not None and dz is not None: # Handle dz and z separately if both provided
+        z_base = z.flatten() # In case z is provided as 2D
+        z_height = dz
+    elif z is None and dz is not None: # Swap order if dz is provided instead of z
+        z_height = dz
+        
+    x, y, z_height, c = _process_2d_data(x, y, z_height, c, flatten=True)
+    
+    print('hi', c.shape, z_height.shape)
+    
+    # Ensure the bottom of the bars is provided
+    if z_base is None:
+        z_base = np.zeros_like(z)
+    
+    # Process colors
+    c = _process_colors(c, z_height, to2d=True)
+    
+    # Plot
+    ax.bar3d(x=x, y=y, z=z_base, dx=dx, dy=dy, dz=z_height, color=c, **plotkwargs)
 
     if returnfig: # pragma: no cover
         return fig,ax
