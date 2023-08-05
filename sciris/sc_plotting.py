@@ -166,7 +166,7 @@ def _process_2d_data(x, y, z, c, flatten=False):
     return x, y, z, c
 
 
-def _process_colors(c, z=None, cmap=None, to2d=False):
+def _process_colors(c, z, cmap=None, to2d=False):
     ''' Helper function to get color data in the right format -- not for the user '''
     
     from . import sc_colors as scc # To avoid circular import
@@ -358,7 +358,7 @@ def surf3d(x=None, y=None, z=None, c='z', fig=None, ax=None, returnfig=False, co
     
     # Handle colors
     if scu.isarray(c):
-        c = _process_colors(c, cmap=plotkwargs.get('cmap'))
+        c = _process_colors(c, z=z, cmap=plotkwargs.get('cmap'))
         plotkwargs['facecolors'] = c
     
     # Actually plot
