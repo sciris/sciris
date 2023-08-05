@@ -55,19 +55,32 @@ def fig3d(num=None, nrows=1, ncols=1, index=1, returnax=False, figkwargs=None, a
         return fig
 
 
-def ax3d(nrows=None, ncols=None, index=None, fig=None, ax=None, returnfig=False, silent=False, 
-         elev=None, azim=None, figkwargs=None, axkwargs=None, **kwargs):
+def ax3d(nrows=None, ncols=None, index=None, fig=None, ax=None, returnfig=False,
+         elev=None, azim=None, figkwargs=None, **kwargs):
     '''
     Create a 3D axis to plot in.
 
     Usually not invoked directly; kwargs are passed to ``fig.add_subplot()``
     
-    *New in version 3.0.0:* nrows, ncols, and index arguments first
+    Args:
+        nrows (int): number of rows of axes in plot
+        ncols (int): number of columns of axes in plot
+        index (int): index of current plot
+        fig (Figure): if provided, use existing figure
+        ax (Axes): if provided, validate and use these axes
+        returnfig (bool): whether to return the figure (else just the axes)
+        elev (float): the elevation of the 3D viewpoint
+        azim (float): the azimuth of the 3D viewpoint
+        figkwargs (dict): passed to :func:`pl.figure() <matplotlib.pyplot.figure>`
+        kwargs (dict): passed to :func:`pl.axes() <matplotlib.pyplot.axes>`
+        
+    | *New in version 3.0.0:* nrows, ncols, and index arguments first
+    | *New in version 3.0.1:* improved validation; 'silent' and 'axkwargs' argument removed
     '''
-    from mpl_toolkits.mplot3d import Axes3D # analysis:ignore
+    from mpl_toolkits.mplot3d import Axes3D
 
     figkwargs = scu.mergedicts(figkwargs)
-    axkwargs = scu.mergedicts(axkwargs, kwargs, nrows=nrows, ncols=ncols, index=index)
+    axkwargs = scu.mergedicts(dict(nrows=nrows, ncols=ncols, index=index), kwargs)
     nrows = axkwargs.pop('nrows', nrows) # Since fig.add_subplot() can't handle kwargs...
     ncols = axkwargs.pop('ncols', ncols)
     index = axkwargs.pop('index', index)
@@ -80,7 +93,7 @@ def ax3d(nrows=None, ncols=None, index=None, fig=None, ax=None, returnfig=False,
         pass # This is fine, just a different format
 
     # Handle the figure
-    if fig in [True, False] or (fig is None and figkwargs): # Any of these things indicate that we want a new figure
+    if fig in [True, False] or (fig is None and figkwargs): # Confusingly, any of these things indicate that we want a new figure
         fig = pl.figure(**figkwargs)
     elif fig is None:
         if ax is None:
@@ -90,9 +103,6 @@ def ax3d(nrows=None, ncols=None, index=None, fig=None, ax=None, returnfig=False,
                 fig = pl.gcf()
         else: # pragma: no cover
             fig = ax.figure
-            silent = False
-    else:
-        silent = False # Never close an already open figure
 
     # Create and initialize the axis
     if ax is None:
@@ -104,14 +114,16 @@ def ax3d(nrows=None, ncols=None, index=None, fig=None, ax=None, returnfig=False,
             if index is None: index = 1
             ax = fig.add_subplot(nrows, ncols, index, projection='3d', **axkwargs)
     
+    # Validate the axes
     if not isinstance(ax, Axes3D):
         errormsg = f'''Cannot create 3D plot into axes {ax}: ensure "projection='3d'" was used when making it'''
         raise ValueError(errormsg)
     
+    # Change the view if requested
     if elev is not None or azim is not None: # pragma: no cover
         ax.view_init(elev=elev, azim=azim)
-    if silent: # pragma: no cover
-        pl.close(fig)
+        
+    # Tidy up
     if returnfig:
         return fig,ax
     else: # pragma: no cover
@@ -119,7 +131,7 @@ def ax3d(nrows=None, ncols=None, index=None, fig=None, ax=None, returnfig=False,
 
 
 def plot3d(x, y, z, c='index', fig=None, ax=None, returnfig=False, figkwargs=None, 
-           axkwargs=None, plotkwargs=None, **kwargs):
+           axkwargs=None, **kwargs):
     '''
     Plot 3D data as a line
 
@@ -127,14 +139,13 @@ def plot3d(x, y, z, c='index', fig=None, ax=None, returnfig=False, figkwargs=Non
         x (arr): x coordinate data
         y (arr): y coordinate data
         z (arr): z coordinate data
-        c (str/tuple): color, can be an array or any of the types accepted by :func:`pl.plot() <matplotlib.pyplot.plot>`; if "index", color by index
+        c (str/tuple): color, can be an array or any of the types accepted by :func:`pl.plot() <matplotlib.pyplot.plot>`; if 'index' (default), color by index
         fig (fig): an existing figure to draw the plot in (or set to True to create a new figure)
         ax (axes): an existing axes to draw the plot in
         returnfig (bool): whether to return the figure, or just the axes
         figkwargs (dict): :func:`pl.figure() <matplotlib.pyplot.figure>`
         axkwargs (dict): :func:`pl.axes() <matplotlib.pyplot.axes>`
-        plotkwargs (dict): passed to :func:`pl.plot() <matplotlib.pyplot.plot>`
-        kwargs (dict): also passed to :func:`pl.plot() <matplotlib.pyplot.plot>`
+        kwargs (dict): passed to :func:`pl.plot() <matplotlib.pyplot.plot>`
 
     **Examples**::
 
@@ -143,19 +154,21 @@ def plot3d(x, y, z, c='index', fig=None, ax=None, returnfig=False, figkwargs=Non
         
         fig = pl.figure()
         n = 100
-        x = np.array(sorted(np.random.rand(n)))
-        y = x + np.random.randn(n)
-        z = np.random.randn(n)
+        x = np.array(sorted(pl.rand(n)))
+        y = x + pl.randn(n)
+        z = pl.randn(n)
         c = np.arange(n)
         sc.plot3d(x, y, z, c=c, fig=fig)
+    
+    *New in version 3.0.1:* Allow multi-colored line; removed "plotkwargs" argument
     '''
     # Set default arguments
-    plotkwargs = scu.mergedicts({'lw':2}, plotkwargs, kwargs)
+    plotkwargs = scu.mergedicts({'lw':2}, kwargs)
     axkwargs = scu.mergedicts(axkwargs)
     
     # Do input checking
     assert len(x) == len(y) == len(z), 'All inputs must have the same length'
-    n = len(x)
+    n = len(z)
 
     # Create axis
     fig,ax = ax3d(returnfig=True, fig=fig, ax=ax, figkwargs=figkwargs, **axkwargs)
@@ -180,62 +193,82 @@ def plot3d(x, y, z, c='index', fig=None, ax=None, returnfig=False, figkwargs=Non
         return ax
 
 
+def _process_2d_data(x, y, z, c, flatten=False):
+    ''' Used internally to handle data transformations '''
+
+    # Swap variables so z always exists
+    if z is None and x is not None:
+        z,x = x,z
+    z = np.array(z)
+    
+    if z.ndim == 2:
+        ny,nx = z.shape
+        x = np.arange(nx) if x is None else np.array(x)
+        y = np.arange(ny) if y is None else np.array(y)
+        assert x.ndim == y.ndim, 'Cannot handle x and y axes with different array shapes'
+        if x.ndim == 1 or y.ndim == 1:
+            x,y = np.meshgrid(x, y)
+        if flatten:
+            x,y,z = x.flatten(), y.flatten(), z.flatten() # Flatten everything to 1D
+    elif flatten == False:
+        raise ValueError('Must provide z values as a 2D array')
+    
+    if x is None or y is None:
+        raise ValueError('Must provide x and y values if z is 1D')
+        
+    # Handle automatic color scaling
+    if isinstance(c, str):
+        if c == 'z':
+            c = z
+        elif c == 'index':
+            c = np.arange(len(z))
+    
+    return x, y, z, c
+
+
 def scatter3d(x=None, y=None, z=None, c='z', fig=None, ax=None, returnfig=False, figkwargs=None, 
-              axkwargs=None, plotkwargs=None, **kwargs):
+              axkwargs=None, **kwargs):
     '''
     Plot 3D data as a scatter
     
     Typically, ``x``, ``y``, and ``z``, are all vectors. However, if a single 2D
     array is provided, then this will be treated as ``z`` values and ``x`` and ``y``
-    will be inferred on a grid.
+    will be inferred on a grid (or they can be provided explicitly).
 
     Args:
-        x (arr): x coordinate data (or z-coordinate data if 2D and ``z`` is ``None``)
-        y (arr): y coordinate data
-        z (arr): z coordinate data
-        c (arr): color data; defaults to match z, explicitly pass ``c=None`` to use default colors
+        x (arr): 1D or 2D x coordinate data (or z-coordinate data if 2D and ``z`` is ``None``)
+        y (arr): 1D or 2D y coordinate data
+        z (arr): 1D or 2D z coordinate data
+        c (arr): color data; defaults to match z; to use default colors, explicitly pass ``c=None``; to use index, use c='index'
         fig (fig): an existing figure to draw the plot in (or set to True to create a new figure)
         ax (axes): an existing axes to draw the plot in
         returnfig (bool): whether to return the figure, or just the axes
-        figkwargs (dict): passed to figure()
-        axkwargs (dict): passed to axes()
-        plotkwargs (dict): passed to plot()
-        kwargs (dict): also passed to plot()
+        figkwargs (dict): passed to :func:`pl.figure() <matplotlib.pyplot.figure>`
+        axkwargs (dict): passed to :func:`pl.axes() <matplotlib.pyplot.axes>`
+        kwargs (dict): passed to :func:`pl.scatter() <matplotlib.pyplot.scatter>`
 
     **Examples**::
 
-        # Explicit coordinates
-        x,y,z = np.random.rand(3,50)
-        sc.scatter3d(x, y, z)
-        
-        # Implicit coordinates
-        data = np.random.randn(10, 10)
+        # Implicit coordinates, color by height (z-value)
+        data = pl.randn(10, 10)
         sc.scatter3d(data)
+        
+        # Explicit coordinates, color by index (i.e. ordering)
+        x,y,z = pl.rand(3,50)
+        sc.scatter3d(x, y, z, c='index')
     
-    *New in version 3.0.0:* allow 2D input.
+    | *New in version 3.0.0:* Allow 2D input
+    | *New in version 3.0.1:* Allow "index" color argument; removed "plotkwargs" argument
     '''
     # Set default arguments
-    plotkwargs = scu.mergedicts({'s':200, 'depthshade':False, 'linewidth':0}, plotkwargs, kwargs)
+    plotkwargs = scu.mergedicts({'s':200, 'depthshade':False, 'linewidth':0}, kwargs)
     axkwargs = scu.mergedicts(axkwargs)
 
     # Create figure
     fig,ax = ax3d(returnfig=True, fig=fig, ax=ax, figkwargs=figkwargs, **axkwargs)
     
     # Process data
-    if z is None and x is not None:
-        z,x = x,z # Swap variables so z always exists
-    z = np.array(z)
-    if z.ndim == 2:
-        ny,nx = z.shape
-        if x is None:
-            x = np.arange(nx)
-        if y is None:
-            y = np.arange(ny)
-        if x.ndim == 1 or y.ndim == 1:
-            X,Y = np.meshgrid(x, y)
-        x,y,z = X.flatten(), Y.flatten(), z.flatten() # Flatten everything to 1D
-    if isinstance(c, str) and c == 'z': # Handle automatic color scaling
-        c = z
+    x, y, z, c = _process_2d_data(x, y, z, c, flatten=True)
 
     # Actually plot
     ax.scatter(x, y, z, c=c, **plotkwargs)
@@ -246,57 +279,71 @@ def scatter3d(x=None, y=None, z=None, c='z', fig=None, ax=None, returnfig=False,
         return ax
 
 
-def surf3d(x=None, y=None, z=None, c='z', fig=None, ax=None, returnfig=False, colorbar=True, 
-           figkwargs=None, axkwargs=None, plotkwargs=None, **kwargs):
+def surf3d(x=None, y=None, z=None, c='z', fig=None, ax=None, returnfig=False, colorbar=None, 
+           figkwargs=None, axkwargs=None, **kwargs):
     '''
-    Plot 2D data as a 3D surface
+    Plot 2D or 3D data as a 3D surface
     
-    #! UPDATE
+    Typically, ``x``, ``y``, and ``z``, are all 2D arrays of the same size. However, 
+    if a single 2D array is provided, then this will be treated as ``z`` values and 
+    ``x`` and ``y`` will be inferred on a grid (or they can be provided explicitly,
+    either as vectors or 2D arrays).
 
     Args:
-        x (arr): 1D vector or 2D grid of x coordinates (or z-coordinate data if 2D and ``z`` is ``None``)
-        y (arr): 1D vector or 2D grid of y coordinates (optional)
-        z (arr): 2D grid of z coordinates
+        x (arr): 1D or 2D array of x coordinates (or z-coordinate data if 2D and ``z`` is ``None``)
+        y (arr): 1D or 2D array of y coordinates (optional)
+        z (arr): 2D array of z coordinates
         c (arr): color data; defaults to match z
         fig (fig): an existing figure to draw the plot in (or set to True to create a new figure)
         ax (axes): an existing axes to draw the plot in
         returnfig (bool): whether to return the figure, or just the axes
-        colorbar (bool): whether to plot a colorbar
-        figkwargs (dict): passed to figure()
-        axkwargs (dict): passed to axes()
-        plotkwargs (dict): passed to plot()
-        kwargs (dict): also passed to plot()
+        colorbar (bool): whether to plot a colorbar (true by default unless color data is provided)
+        figkwargs (dict): passed to :func:`pl.figure() <matplotlib.pyplot.figure>`
+        axkwargs (dict): passed to :func:`pl.axes() <matplotlib.pyplot.axes>`
+        kwargs (dict): passed to :func:`ax.plot_surface() <mpl_toolkits.mplot3d.axes3d.Axes3D.plot_surface>`
 
     **Examples**::
 
+        # Simple example
         data = sc.smooth(pl.rand(30,50))
         sc.surf3d(data)
         
-        #! UPDATE
+        # Use non-default axes and colors
+        nx = 20
+        ny = 50
+        x = 10*np.arange(nx)
+        y = np.arange(ny) + 100
+        z = sc.smooth(pl.randn(ny,nx))
+        c = z**2
+        sc.surf3d(x=x, y=y, z=z, c=c, cmap='orangeblue')
+    
+    *New in 3.0.1: updated arguments from "data" to x, y, z, c; removed "plotkwargs" argument
     '''
 
     # Set default arguments
-    plotkwargs = scu.mergedicts({'cmap':'viridis'}, plotkwargs, kwargs)
+    plotkwargs = scu.mergedicts({'cmap':pl.get_cmap()}, kwargs)
     axkwargs = scu.mergedicts(axkwargs)
+    if colorbar is None:
+        colorbar = False if scu.isarray(c) else True # Use a colorbar unless colors provided
     
-    print('!process data')
-
     # Create figure
     fig,ax = ax3d(returnfig=True, fig=fig, ax=ax, figkwargs=figkwargs, **axkwargs)
-    ny,nx = np.array(z).shape
-
-    if x is None:
-        x = np.arange(nx)
-    if y is None:
-        y = np.arange(ny)
-
-    if x.ndim == 1 or y.ndim == 1:
-        X,Y = np.meshgrid(x, y)
-    else: # pragma: no cover
-        X,Y = x,y
-
-    print('!include colors')
-    surf = ax.plot_surface(X, Y, z, **plotkwargs)
+    
+    # Process data
+    x, y, z, c = _process_2d_data(x, y, z, c, flatten=False)
+    
+    # Handle colors
+    if scu.isarray(c):
+        if c.ndim == 2:
+            if c.shape != z.shape:
+                raise ValueError('Shape of colors does not match shape of data')
+            else:
+                from . import sc_colors as scc # To avoid circular import
+                c = scc.arraycolors((z**2), cmap=plotkwargs.get('cmap'))
+        plotkwargs['facecolors'] = c
+    
+    # Actually plot
+    surf = ax.plot_surface(x, y, z, **plotkwargs)
     if colorbar:
         fig.colorbar(surf)
 
@@ -319,15 +366,16 @@ def bar3d(x=None, y=None, z=None, c='z', dz=None, fig=None, ax=None, returnfig=F
         ax (axes): an existing axes to draw the plot in
         returnfig (bool): whether to return the figure, or just the axes
         colorbar (bool): whether to plot a colorbar
-        figkwargs (dict): passed to figure()
-        axkwargs (dict): passed to axes()
-        plotkwargs (dict): passed to plot()
-        kwargs (dict): also passed to plot()
+        figkwargs (dict): passed to :func:`pl.figure() <matplotlib.pyplot.figure>`
+        axkwargs (dict): passed to :func:`pl.axes() <matplotlib.pyplot.axes>`
+        kwargs (dict): passed to :func:`ax.bar3d() <mpl_toolkits.mplot3d.axes3d.Axes3D.bar3d>`
 
     **Example**::
 
         data = pl.rand(5,4)
         sc.bar3d(data)
+    
+    *New in version 3.0.1:* removed "plotkwargs" argument
     '''
 
     # Set default arguments

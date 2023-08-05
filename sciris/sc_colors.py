@@ -311,12 +311,18 @@ def arraycolors(arr, **kwargs):
             pl.scatter(x+c, y, s=50, c=colors[:,c])
 
     Version: 2020mar07
+    
+    *New in version 3.0.1:* Handle non-array output
     """
     arr = scu.dcp(arr) # Avoid modifications
     new_shape = arr.shape + (4,) # RGBα
     colors = np.zeros(new_shape)
     colorvec = vectocolor(vector=arr.reshape(-1), **kwargs)
-    colors = colorvec.reshape(new_shape)
+    if scu.isarray(colorvec):
+        colors = colorvec.reshape(new_shape)
+    else:
+        errormsg = 'Creating array colors as a list does not make sense; use sc.vectocolor(arr.flatten()) if you mean to do this'
+        raise ValueError(errormsg)
     return colors
 
 
