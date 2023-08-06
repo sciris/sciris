@@ -174,6 +174,8 @@ def load(filename=None, folder=None, verbose=False, die=None, remapping=None,
     | *New in version 1.2.2:* ability to load non-gzipped pickles; support for dill; arguments passed to loader
     | *New in version 3.0.1:* improved handling of pickling failures
     '''
+    if verbose: T = scd.timer() # Start timing
+        
     # Load the file
     filestr = _load_filestr(filename, folder, verbose=verbose)
 
@@ -189,8 +191,8 @@ def load(filename=None, folder=None, verbose=False, die=None, remapping=None,
     # If it loaded but with errors, print them here
     if isinstance(obj, Failed):
         print(_unpicklingerror(filename))
-    elif verbose: # pragma: no cover
-        print(f'Object loaded from "{filename}"')
+    
+    if verbose: T.toc(f'Object loaded from "{filename}"')
 
     return obj
 

@@ -109,7 +109,7 @@ def test_load_save():
     sc.save(files.binary, testdata, compresslevel=9)
     sc.save(files.binary, testdata, compression='none')
     sc.zsave(files.binary, testdata)
-    zobj = sc.load(files.binary)
+    zobj = sc.load(files.binary, verbose=True)
     assert np.all(o.obj1 == zobj)
     
     sc.heading('Savetext/loadtext')
