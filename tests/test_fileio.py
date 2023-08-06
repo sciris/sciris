@@ -140,6 +140,7 @@ def test_load_corrupted():
     a no-longer-existant class. See the ``files`` folder for the scripts used
     to create this file.
     '''
+    sc.heading('Intentionally loading corrupted file')
     
     o = sc.objdict()
 
@@ -150,21 +151,18 @@ def test_load_corrupted():
             return f'x is {self.x}'
 
     dead_path = filedir / 'deadclass.obj'
-    if os.path.exists(dead_path):
-        sc.heading('Intentionally loading corrupted file')
-        print('Loading with no remapping...')
-        o.obj3 = sc.load(dead_path)
-        print(o.obj3)
-        print(f'Loading corrupted object succeeded, x={o.obj3.x}')
+    
+    print('Loading with no remapping...')
+    o.obj3 = sc.load(dead_path)
+    print(o.obj3)
+    print(f'Loading corrupted object succeeded, x={o.obj3.x}')
 
-        print('Loading with remapping...')
-        o.obj4 = sc.load(dead_path, remapping={'deadclass.DeadClass': LiveClass})
-        o.obj5 = sc.load(dead_path, remapping={('deadclass', 'DeadClass'): LiveClass})
-        for obj in [o.obj4, o.obj5]:
-            assert isinstance(obj, LiveClass)
-        print(f'Loading remapped object succeeded, {o.obj4.disp()}, object: {o.obj4}')
-    else:
-        print(f'{dead_path} not found, skipping...')
+    print('Loading with remapping...')
+    o.obj4 = sc.load(dead_path, remapping={'deadclass.DeadClass': LiveClass})
+    o.obj5 = sc.load(dead_path, remapping={('deadclass', 'DeadClass'): LiveClass})
+    for obj in [o.obj4, o.obj5]:
+        assert isinstance(obj, LiveClass)
+    print(f'Loading remapped object succeeded, {o.obj4.disp()}, object: {o.obj4}')
     
     return o
 

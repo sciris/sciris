@@ -362,21 +362,48 @@ def sha(obj, encoding='utf-8', digest=False):
     return output
 
 
-def traceback(*args, **kwargs):
+def traceback(exc=None, value=None, tb=None, *args, **kwargs):
     '''
     Shortcut for accessing the traceback
 
     Alias for :obj:`traceback.format_exc()`.
     
-    **Example**::
+    If no argument
+    
+    **Examples**::
         
+        # Use automatic exception info
         mylist = [0,1]
         try:
             mylist[2]
         except:
             print(f'Error: {sc.traceback()}')
+        
+        # Supply exception manually (also illustrating sc.tryexcept())
+        with sc.tryexcept() as te1:
+            dict(a=3)['b']
+
+        with sc.tryexcept() as te2:
+            [0,1][2]
+
+        tb1 = sc.traceback(te1.exception)
+        tb2 = sc.traceback(te2.exception)
+        print(f'Tracebacks were:\n\n{tb1}\n{tb2}')
     '''
-    return py_traceback.format_exc(*args, **kwargs)
+    if exc is not None:
+        if isinstance(exc, Exception): # Usual case: an exception is supplied
+            exc_info = (exc.__class__, exc, exc.__traceback__)
+        elif isinstance(exc, (tuple, list)): # Alternately, all three are supplied as a list
+            exc_info = exc
+        elif value is not None and tb is not None: # ... or separately
+            exc_info = (exc, value, tb)
+        else:
+            errormsg = f'Unexpected exception type "{type(exc)}": expecting Exception, or list/tuple of exc_info'
+            raise TypeError(errormsg)
+        out = ''.join(py_traceback.format_exception(*exc_info, **kwargs))
+    else:
+        out = py_traceback.format_exc(*args, **kwargs)
+    return out
 
 
 def getuser():
@@ -2074,7 +2101,7 @@ class tryexcept(cl.suppress):
         for i in range(5):
             with sc.tryexcept(history=tryexc) as tryexc:
                 print(values[i])
-        tryexc.print()
+        tryexc.traceback()
             
     | *New in version 2.1.0.*
     | *New in version 3.0.0:* renamed "print" to "traceback"; added "to_df" and "disp" options
@@ -2118,6 +2145,10 @@ class tryexcept(cl.suppress):
     def __repr__(self):
         from . import sc_printing as scp # To avoid circular import
         return scp.prepr(self)
+    
+    
+    def __len__(self):
+        return len(self.exceptions)
 
 
     def __enter__(self):
@@ -2140,13 +2171,31 @@ class tryexcept(cl.suppress):
                 return True
 
     
-    def traceback(self, which=-1):
-        ''' Print the exception (usually the last) '''
-        if len(self.exceptions):
-            py_traceback.print_exception(*self.exceptions[which])
+    def traceback(self, which=None, tostring=False):
+        '''
+        Print the exception (usually the last)
+        
+        Args:
+            which (int/list): which exception(s) to print; if None, print all
+            tostring (bool): whether to return as a string (otherwise print)
+        
+        *New in version 3.0.1:* optionally print multiple tracebacks
+        '''
+        string = ''
+        if self.died:
+            if which is None:
+                which = np.arange(len(self))
+            inds = toarray(which)
+            for ind in inds:
+                string += f'Traceback {ind+1} of {len(self)}:\n'
+                string += traceback(*self.exceptions[ind]) + '\n'
         else: # pragma: no cover
             print('No exceptions were encountered; nothing to trace')
-        return
+        if tostring:
+            return string
+        else:
+            print(string)
+            return
     
     
     def to_df(self):
@@ -2162,8 +2211,16 @@ class tryexcept(cl.suppress):
         df = self.to_df()
         df.disp()
         return
-    
+
+    @property
+    def exception(self):
+        ''' Retrieve the last exception, if any '''
+        if len(self.exceptions): # Exceptions were encountered
+            return self.exceptions[-1][1] # This is just the exception
+        else:
+            return None # Else, return None
     
     @property
     def died(self):
-        return len(self.exceptions) > 0
+        ''' Whether or not any exceptions were encountered '''
+        return len(self) > 0
