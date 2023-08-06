@@ -109,7 +109,7 @@ def test_load_save():
     sc.save(files.binary, testdata, compresslevel=9)
     sc.save(files.binary, testdata, compression='none')
     sc.zsave(files.binary, testdata)
-    zobj = sc.load(files.binary)
+    zobj = sc.load(files.binary, verbose=True)
     assert np.all(o.obj1 == zobj)
     
     sc.heading('Savetext/loadtext')
@@ -146,19 +146,23 @@ def test_load_corrupted():
     class LiveClass():
         def __init__(self, x):
             self.x = x
+        def disp(self):
+            return f'x is {self.x}'
 
     dead_path = filedir / 'deadclass.obj'
     if os.path.exists(dead_path):
         sc.heading('Intentionally loading corrupted file')
         print('Loading with no remapping...')
-        o.obj3 = sc.loadobj(dead_path)
+        o.obj3 = sc.load(dead_path)
         print(o.obj3)
         print(f'Loading corrupted object succeeded, x={o.obj3.x}')
 
         print('Loading with remapping...')
-        o.obj4 = sc.loadobj(dead_path, remapping={'deadclass.DeadClass':LiveClass})
-        assert isinstance(o.obj4, LiveClass)
-        print(f'Loading remapped object succeeded, x={o.obj4.x}, object: {o.obj4}')
+        o.obj4 = sc.load(dead_path, remapping={'deadclass.DeadClass': LiveClass})
+        o.obj5 = sc.load(dead_path, remapping={('deadclass', 'DeadClass'): LiveClass})
+        for obj in [o.obj4, o.obj5]:
+            assert isinstance(obj, LiveClass)
+        print(f'Loading remapped object succeeded, {o.obj4.disp()}, object: {o.obj4}')
     else:
         print(f'{dead_path} not found, skipping...')
     
@@ -182,10 +186,11 @@ def test_fileio():
     o.thisdir = a
 
     sc.heading('Get files')
-    print('Files in current folder:')
+    subfolder = 'files'
+    print(f'Files in "{subfolder}" folder:')
     TF = [True,False]
     for tf in TF:
-        sc.pp(sc.getfilepaths(abspath=tf, filesonly=tf, foldersonly=not(tf), nopath=tf, aspath=tf))
+        sc.pp(sc.getfilepaths(folder=subfolder, abspath=tf, filesonly=tf, foldersonly=not(tf), nopath=tf, aspath=tf))
     o.filelist = sc.getfilelist(fnmatch='*.py', nopath=True) # Test alias
     assert all(['py' in f for f in o.filelist])
     assert 'test_fileio.py' in o.filelist

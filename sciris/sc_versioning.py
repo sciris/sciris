@@ -645,39 +645,6 @@ def savearchive(filename, obj, files=None, folder=None, comments=None, require=N
     return scf.savezip(filename=filename, files=files, data=datadict, tobytes=False, **kwargs)
 
 
-def known_deprecations(as_map=False):
-    '''
-    Return a dictionary of known deprecations between module versions.
-    
-    New deprecations will be added as they arise.
-    
-    Rarely used directly; invoked automatically by :func:`sc.load() <load>` if ``auto_remap=True``.
-    
-    Args:
-        as_map (bool): if True, return all known remappings without additional version data
-    
-    *New in version 3.0.0.*
-    '''
-    
-    # List known remappings here
-    known = {
-        "No module named 'pandas.core.indexes.numeric'":
-            dict(module = 'pandas',
-                 pickled_version = '<2.0',
-                 current_version = '>=2.0',
-                 fix = {'pandas.core.indexes.numeric.Int64Index':'pandas.core.indexes.api.Index'},
-        ),
-    }
-    if as_map: # pragma: no cover
-        remap = dict()
-        for entry in known.values():
-            remap.update(entry['fix'])
-        return remap
-    else:
-        return known
-
-
-
 def loadarchive(filename, folder=None, loadobj=True, loadmetadata=False, 
                      remapping=None, die=True, **kwargs):
     '''

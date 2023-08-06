@@ -367,6 +367,14 @@ def traceback(*args, **kwargs):
     Shortcut for accessing the traceback
 
     Alias for :obj:`traceback.format_exc()`.
+    
+    **Example**::
+        
+        mylist = [0,1]
+        try:
+            mylist[2]
+        except:
+            print(f'Error: {sc.traceback()}')
     '''
     return py_traceback.format_exc(*args, **kwargs)
 
@@ -376,6 +384,10 @@ def getuser():
     Get the current username 
     
     Alias to :func:`getpass.getuser()` -- see https://docs.python.org/3/library/getpass.html#getpass.getuser
+    
+    **Example**::
+        
+        sc.getuser()
     
     *New in version 3.0.0.*
     '''
