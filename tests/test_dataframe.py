@@ -201,7 +201,7 @@ def test_errors():
         sc.dataframe(data=data, columns=columns, dtypes=dtypes) # duplicate dtypes
         
     print('Incompatible columns ✓')
-    with pytest.raises(ValueError):
+    with pytest.warns(RuntimeWarning):
         data = {'str':['a','b'], 'int':[1,2]}
         columns = ['wrong', 'name']
         sc.dataframe(data=data, columns=columns)

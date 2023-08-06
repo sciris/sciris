@@ -6,7 +6,7 @@ import sciris as sc
 import numpy as np
 import pytest
 
-filedir = sc.path('files')
+filedir = sc.thispath() / 'files'
 
 
 def test_functions():

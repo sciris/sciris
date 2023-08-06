@@ -178,7 +178,7 @@ def test_fonts(doplot=doplot):
 
     # Test setting fonts
     orig = pl.rcParams['font.family']
-    sc.fonts(add=sc.path('files/examplefont.ttf'), use=True, die=True, verbose=True)
+    sc.fonts(add=sc.path(sc.thispath() / 'files/examplefont.ttf'), use=True, die=True, verbose=True)
 
     pl.figure('Fonts')
     pl.plot([1,2,3], [4,5,6])

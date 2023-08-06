@@ -10,6 +10,7 @@ rows/columns and concatenating data.
 import numbers # For numeric type
 import numpy as np
 import pandas as pd
+import warnings
 from . import sc_utils as scu
 from . import sc_math as scm
 from . import sc_odict as sco
@@ -68,6 +69,8 @@ class dataframe(pd.DataFrame):
         
         # Handle inputs
         if 'cols' in kwargs:
+            if columns is not None:
+                raise ValueError('The argument "cols" is an alias for "columns", do not supply both')
             columns = kwargs.pop('cols')
         if nrows and data is None:
             ncols = len(columns)
@@ -80,13 +83,6 @@ class dataframe(pd.DataFrame):
                 raise ValueError(errormsg)
             dtypes = columns # Already in the right format
             columns = list(columns.keys())
-        if isinstance(data, dict):
-            if columns is not None:
-                colset = sorted(set(columns))
-                dataset = sorted(set(data.keys()))
-                if colset != dataset:
-                    errormsg = f'Incompatible column names provided:\nColumns: {colset}\n   Data: {dataset}'
-                    raise ValueError(errormsg)
         
         # Handle data
         if kwargs:
@@ -95,8 +91,18 @@ class dataframe(pd.DataFrame):
             elif isinstance(data, dict):
                 data.update(kwargs)
             else:
-                errormsg = f'Cannot combine non-dict data {type(data)} with keyword arguments "{scu.strjoin(kwargs.keys())}"'
+                errormsg = f'When providing data columns via keywords ("{scu.strjoin(kwargs.keys())}"), these can only be combined with a dict, not an object of {type(data)}. Pass the data as a dict instead.'
                 raise TypeError(errormsg)
+        
+        # Check data and column compatibility
+        if isinstance(data, dict) and columns is not None:
+            colset = set(columns)
+            dataset = set(data.keys())
+            match = colset & dataset
+            if not len(match):
+                warnmsg = 'No overlap between column names and data keys, are you sure you want to do this?'
+                warnmsg += f'\nColumns: {colset}\nData keys: {dataset}'
+                warnings.warn(warnmsg, category=RuntimeWarning, stacklevel=2)
 
         # Create the dataframe
         super().__init__(data=data, index=index, columns=columns, dtype=dtype, copy=copy)

@@ -161,7 +161,8 @@ def iternested(nesteddict, previous=None):
     return output
 
 
-def iterobj(obj, func, inplace=False, twigs_only=False, verbose=False, _trace=None, _output=None, *args, **kwargs):
+def iterobj(obj, func, inplace=False, copy=True, twigs_only=False, verbose=False, 
+            _trace=None, _output=None, *args, **kwargs):
     '''
     Iterate over an object and apply a function to each twig.
     
@@ -172,6 +173,7 @@ def iterobj(obj, func, inplace=False, twigs_only=False, verbose=False, _trace=No
         obj (any): the object to iterate over
         func (function): the function to apply
         inplace (bool): whether to modify the object in place (else, collate the output of the functions)
+        copy (bool): if modifying an object in place, whether to make a copy first
         twigs_only (bool): whether to apply the function only to twigs of the object
         verbose (bool): whether to print progress.
         _trace (list): used internally for recursion
@@ -200,7 +202,7 @@ def iterobj(obj, func, inplace=False, twigs_only=False, verbose=False, _trace=No
                 return obj
 
         sc.printjson(data)
-        sc.iterobj(data, collapse, inplace=True)
+        data = sc.iterobj(data, collapse, inplace=True)
         sc.printjson(data)
         
     *New in version 3.0.0.*
@@ -208,6 +210,8 @@ def iterobj(obj, func, inplace=False, twigs_only=False, verbose=False, _trace=No
     # Set the trace and output if needed
     if _trace is None:
         _trace = []
+        if inplace and copy: # Only need to copy once
+            obj = scu.dcp(obj)
     if _output is None:
         _output = {}
         if not inplace and not twigs_only:
@@ -243,6 +247,8 @@ def iterobj(obj, func, inplace=False, twigs_only=False, verbose=False, _trace=No
     if itertype:
         for key,subobj in iteritems(obj):
             trace = _trace + [key]
+            if verbose:
+                print(f'Working on {trace}')
             newobj = func(subobj, *args, **kwargs)
             if inplace:
                 setitem(obj, key, newobj)
@@ -252,7 +258,8 @@ def iterobj(obj, func, inplace=False, twigs_only=False, verbose=False, _trace=No
                     verbose=verbose, _trace=trace, _output=_output, *args, **kwargs)
         
     if inplace:
-        return
+        newobj = func(obj, *args, **kwargs) # Set at the root level
+        return newobj
     else:
         return _output
 

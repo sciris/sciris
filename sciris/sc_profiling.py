@@ -213,7 +213,7 @@ def checkram(unit='mb', fmt='0.2f', start=0, to_string=True):
     return output
 
 
-def benchmark(repeats=5, scale=1, verbose=False, python=True, numpy=True, return_timers=False):
+def benchmark(repeats=5, scale=1, verbose=False, python=True, numpy=True, parallel=False, return_timers=False):
     '''
     Benchmark Python performance
     
@@ -232,6 +232,7 @@ def benchmark(repeats=5, scale=1, verbose=False, python=True, numpy=True, return
         verbose (bool): print out the results after each repeat
         python (bool): whether to run the Python tests
         numpy (bool): whether to run the Numpy tests
+        parallel (bool/int): whether to run the tests across all cores
         return_timers (bool): if True, return the timer objects instead of the "MOPS" results
         
     Returns:
@@ -248,24 +249,26 @@ def benchmark(repeats=5, scale=1, verbose=False, python=True, numpy=True, return
             print('Your computer is fast')
         else:
             print('Your computer is normal')
+        
+        sc.benchmark(parallel=True) # Use all CPUs
     
-    *New in version 3.0.0.*
+    | *New in version 3.0.0.*
+    | *New in version 3.0.1:* "parallel" argument; increased default scale
     '''
     
-    P = scd.timer(verbose=verbose)
-    N = scd.timer(verbose=verbose)
-    
+    # Calculate the number of operations
     py_outer = 10
-    py_inner = scale*5e2
-    
     np_outer = 1
-    np_inner = scale*5e5
-    
+    py_inner = scale*1e3
+    np_inner = scale*1e6
     py_ops = (py_outer * py_inner * 18)/1e6
     np_ops = (np_outer * np_inner * 4)/1e6
     
-    # Benchmark plain Python
-    if python:
+    
+    # Define the benchmarking functions
+    
+    def bm_python(prefix=''):
+        P = scd.timer(verbose=verbose)
         for r in range(repeats):
             l = list()
             d = dict()
@@ -278,10 +281,11 @@ def benchmark(repeats=5, scale=1, verbose=False, python=True, numpy=True, return
                     v1 = l[-1][0] + l[-1][0] # Operations 4-8: list get (x4) and sum
                     v2 = d[str((i,j))][0] + d[str((i,j))][1] # Operations 9-16: convert to string (x2), list get (x2), dict get (x2), sum
                     result += v1 + v2 # Operations 17-18: sum (x2)
-            P.toc(f'Python, {py_ops}m operations')
-                 
-    # Benchmark Numpy
-    if numpy:
+            P.toc(f'{prefix}Python, {py_ops}m operations')
+        return P
+    
+    def bm_numpy(prefix=''):
+        N = scd.timer(verbose=verbose)
         for r in range(repeats):
             N.tic()
             for i in range(np_outer):
@@ -289,14 +293,52 @@ def benchmark(repeats=5, scale=1, verbose=False, python=True, numpy=True, return
                 b = np.random.randint(10, size=int(np_inner)) # Operation 2: random integers
                 a + b # Operation 3: addition
                 a*b # Operation 4: multiplication
-            N.toc(f'Numpy, {np_ops}m operations')
+            N.toc(f'{prefix}Numpy, {np_ops}m operations')
+        return N
+    
+    
+    # Do the benchmarking
+    
+    if not parallel:
+        
+        ncpus = 1
+    
+        # Benchmark plain Python
+        if python:
+            P = bm_python()
+                     
+        # Benchmark Numpy
+        if numpy:
+            N = bm_numpy()
+    
+    else:
+        
+        from . import sc_parallel as scpar
+        
+        if parallel == 1: # Probably "True"
+            ncpus = cpu_count()
+        else:
+            try:
+                ncpus = int(parallel)
+            except Exception as E:
+                errormsg = f'Could not interpret "{parallel}" as a number of cores'
+                raise ValueError(errormsg) from E
+        
+        arglist = [f'Run {i}: ' for i in range(ncpus)]
+        
+        if python:
+            Plist = scpar.parallelize(bm_python, arglist, ncpus=ncpus)
+            P = sum(Plist) 
+        if numpy:
+            Nlist = scpar.parallelize(bm_numpy, arglist, ncpus=ncpus)
+            N = sum(Nlist) 
     
     # Handle output
     if return_timers: # pragma: no cover
         out = sco.objdict(python=P, numpy=N)
     else:
-        pymops = py_ops/P.mean() if len(P) else None # Handle if one or the other isn't run
-        npmops = np_ops/N.mean() if len(N) else None
+        pymops = py_ops/P.mean()*ncpus if len(P) else None # Handle if one or the other isn't run
+        npmops = np_ops/N.mean()*ncpus if len(N) else None
         out = dict(python=pymops, numpy=npmops)
         
     return out

@@ -335,9 +335,10 @@ def test_misc():
     assert isinstance(lazynp, sc.LazyModule)
     lazynp.array(0)
     assert not isinstance(lazynp, sc.LazyModule)
-    test_set = sc.importbyname(path='./test_settings.py', variable='test_set')
+    module_path = sc.thispath() / 'test_settings.py'
+    test_set = sc.importbyname(path=module_path, variable='test_set')
     assert 'test_options' in dir(test_set)
-    test_set2 = sc.importbypath(path='./test_settings.py')
+    test_set2 = sc.importbypath(path=module_path)
     assert 'test_options' in dir(test_set2)
 
     print('\nTesting get_caller()')
