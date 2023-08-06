@@ -14,9 +14,9 @@ Instructions:
 
         conda activate tm2021
         pip install --index-url http://localhost:<PORT> sciris
-        python make_pickles.py 2021-01-01
+        python make_archive.py 2021-01-01
 
-Version: 2023-04-13
+Version: 2023-08-06
 '''
 
 import sys
@@ -28,9 +28,12 @@ import sciris as sc
 
 # If using pypi-timemachine, set the corresponding date here
 date = '2023-04-19'
+as_archive = True
 
-if len(sys.argv)>1:
+if len(sys.argv) > 1:
     date = sys.argv[1]
+if len(sys.argv) > 2:
+    as_archive = bool(sys.argv[2])
 
 class MyClass:
     ''' Store common data types for compatibility checks'''
@@ -47,4 +50,7 @@ class MyClass:
 
 myclass = MyClass()
 
-sc.savearchive('archive.zip', myclass)
+if as_archive:
+    sc.savearchive('archive.zip', myclass)
+else:
+    sc.saveobj(f'pickle_{date}.obj', myclass

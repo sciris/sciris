@@ -78,7 +78,7 @@ https://stackoverflow.com/questions/41554738/how-to-load-an-old-pickle-file
 '''
 
 
-def _load_filestr(filename, folder):
+def _load_filestr(filename, folder, verbose=False):
     ''' Try different options for loading a file on disk into a string -- not for external use '''
     
     # Handle loading of either filename or file object
@@ -94,7 +94,14 @@ def _load_filestr(filename, folder):
         raise TypeError(errormsg)
     fileargs = {'mode': 'rb', argtype: filename}
     
+    if verbose:
+        if argtype == 'filename':
+            print(f'Opening {filename} for reading...')
+        else:
+            print('Opening bytes for reading...')
+    
     try:
+        if verbose: print('  Reading as gzip file...')
         with gz.GzipFile(**fileargs) as fileobj:
             filestr = fileobj.read() # Convert it to a string
     except Exception as E: # pragma: no cover
@@ -103,16 +110,19 @@ def _load_filestr(filename, folder):
             raise E
         elif exc == gz.BadGzipFile:
             try: # If the gzip file failed, first try as a zstd compressed object
+                if verbose: print('  Reading as zstandard file...')
                 with open(filename, 'rb') as fh:
                     zdcompressor = zstd.ZstdDecompressor()
                     with zdcompressor.stream_reader(fh) as fileobj:
                         filestr = fileobj.read()
             except Exception as E2: # If that fails...
                 try: # Try as a regular binary object
+                    if verbose: print('  Reading as binary file...')
                     with open(filename, 'rb') as fileobj:
                         filestr = fileobj.read() # Convert it to a string
                 except Exception as E3:
                     try: # And finally as a regular object
+                        if verbose: print('  Reading as nonbinary file...')
                         with open(filename, 'r') as fileobj:
                             filestr = fileobj.read() # Convert it to a string
                     except Exception as E4:
@@ -165,7 +175,7 @@ def load(filename=None, folder=None, verbose=False, die=None, remapping=None,
     | *New in version 3.0.1:* improved handling of pickling failures
     '''
     # Load the file
-    filestr = _load_filestr(filename, folder)
+    filestr = _load_filestr(filename, folder, verbose=verbose)
 
     # Unpickle it
     try:
@@ -2230,6 +2240,7 @@ class _RenamingUnpickler(_RobustUnpickler, _LoadsInterface):
             warnings.warn(warnmsg, category=UserWarning, stacklevel=2)
             return self.find_class(module_name, name, E, verbose)
 
+
 class _UltraRobustUnpickler(dill.Unpickler, _LoadsInterface): # pragma: no cover
     ''' If all else fails, just make a default object '''
 
@@ -2260,34 +2271,38 @@ def _unpickler(string=None, die=False, verbose=False, remapping=None, method=Non
                 errormsg = f'Keyword "{k}" is not a valid keyword: {scu.strjoin(valid_kwargs)}'
                 raise ValueError(errormsg)
 
-    methods = {
-        'pickle': pkl.loads,
-        'Pandas': lambda string, **kwargs: pd.read_pickle(io.BytesIO(string), **kwargs),
-        'Dill': dill.loads,
-        'Encoded Pickle': lambda string, **kwargs: pkl.loads(string, encoding='latin1', **kwargs),
-        'Robust': lambda string, **kwargs: _RobustUnpickler.loads(string, remapping, **kwargs),
-        'Robust (renaming)': lambda string, **kwargs: _RenamingUnpickler.loads(string, remapping, **kwargs),
-        'Ultrarobust': lambda string, **kwargs: _UltraRobustUnpickler.loads(string, remapping, **kwargs),
-    }
+    methods = dict(
+        pickle          = pkl.loads,
+        pandas          = lambda string, **kwargs: pd.read_pickle(io.BytesIO(string), **kwargs),
+        dill            = dill.loads,
+        encoded_pickle  = lambda string, **kwargs: pkl.loads(string, encoding='latin1', **kwargs),
+        robust          = lambda string, **kwargs: _RobustUnpickler.loads(string, remapping, **kwargs),
+        robust_renaming = lambda string, **kwargs: _RenamingUnpickler.loads(string, remapping, **kwargs),
+        ultrarobust     = lambda string, **kwargs: _UltraRobustUnpickler.loads(string, remapping, **kwargs),
+    )
 
     # Methods that allow for loading an object without any failed instances (if die=True)
     if method == 'pickle':
-        unpicklers = ['Pickle','Pandas','Encoded Pickle']
+        unpicklers = ['pickle', 'pandas', 'encoded_pickle']
     elif method == 'dill':
-        unpicklers = ['Dill']
+        unpicklers = ['dill']
     else:
-        unpicklers = ['Pickle','Pandas','Dill','Encoded Pickle']
+        unpicklers = ['pickle', 'pandas', 'encoded_pickle', 'dill']
 
     # If permitted, return an object that encountered errors in the loading process and therefore may not be valid
     # Such an object might require further fixes to be made by the user
     if not die:
-        unpicklers += ['Robust (renaming)' if auto_remap else 'Robust', 'Ultrarobust']
+        unpicklers += ['robust_renaming' if auto_remap else 'robust']
+        unpicklers += ['ultrarobust']
 
     errors = {}
     obj = None
 
+    if verbose:
+        print(f'Loading data using these methods in sequence: {scu.strjoin(unpicklers)}')
     for unpickler in unpicklers:
         try:
+            if verbose: print(f'Loading file using method "{unpickler}"...')
             obj = methods[unpickler](string, **kwargs)
             break
         except Exception as E:
