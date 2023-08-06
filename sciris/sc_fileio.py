@@ -126,7 +126,7 @@ def _load_filestr(filename, folder):
 
 
 def load(filename=None, folder=None, verbose=False, die=None, remapping=None, 
-         method='pickle', auto_remap=True, **kwargs):
+         method=None, auto_remap=True, **kwargs):
     '''
     Load a file that has been saved as a gzipped pickle file, e.g. by :func:`sc.save() <save>`.
     Accepts either a filename (standard usage) or a file object as the first argument.
@@ -149,7 +149,7 @@ def load(filename=None, folder=None, verbose=False, die=None, remapping=None,
         verbose    (bool):     print details
         die        (bool):     whether to raise an exception if errors are encountered (otherwise, load as much as possible)
         remapping  (dict):     way of mapping old/unavailable module names to new
-        method     (str):      method for loading (usually pickle or dill)
+        method     (str):      method for loading ('pickle' or 'dill'; if None, try both)
         auto_remap (bool):     whether to use known deprecations to load failed pickles
         kwargs     (dict):     passed to ``pickle.loads()``/``dill.loads()``
 
@@ -157,11 +157,12 @@ def load(filename=None, folder=None, verbose=False, die=None, remapping=None,
 
         obj = sc.load('myfile.obj') # Standard usage
         old = sc.load('my-old-file.obj', method='dill', ignore=True) # Load classes from saved files
-        old = sc.load('my-old-file.obj', remapping={'foo.Bar':cat.Mat}) # If loading a saved object containing a reference to foo.Bar that is now cat.Mat
-        old = sc.load('my-old-file.obj', remapping={'foo.Bar':('cat', 'Mat')}) # Equivalent to the above
+        old = sc.load('my-old-file.obj', remapping={'foo.Bar': cat.Mat}) # If loading a saved object containing a reference to foo.Bar that is now cat.Mat
+        old = sc.load('my-old-file.obj', remapping={('foo', 'Bar'): ('cat', 'Mat')}) # Equivalent to the above
 
     | *New in version 1.1.0:* "remapping" argument
     | *New in version 1.2.2:* ability to load non-gzipped pickles; support for dill; arguments passed to loader
+    | *New in version 3.0.1:* improved handling of pickling failures
     '''
     # Load the file
     filestr = _load_filestr(filename, folder)
@@ -442,10 +443,12 @@ def savetext(filename=None, string=None, **kwargs):
 
         text = ['Here', 'is', 'a', 'poem']
         sc.savetext('my-poem.txt', text)
+    
+    *New in version 3.0.1:* fixed bug with saving a list of strings
     '''
     is_array = scu.isarray(string)
     if isinstance(string, list):
-        string = '\n'.join(str(string)) # Convert from list to string)
+        string = '\n'.join([str(s) for s in string]) # Convert from list to string
     elif not is_array and not scu.isstring(string):
         string = str(string)
     filename = makefilepath(filename=filename, makedirs=True)
@@ -2156,8 +2159,9 @@ def makefailed(module_name=None, name=None, error=None, exception=None, universa
 
 def _remap_module(remapping, module_name, name):
     ''' Use a remapping dictionary to try to load a module from a different location ''' 
-    key = f'{module_name}.{name}'
-    obj = remapping.get(key) # If the user has supplied the module directly
+    key1 = f'{module_name}.{name}' # Key provided as a single string
+    key2 = (module_name, name) # Key provided as a tuple
+    obj = remapping.get(key1) or remapping.get(key2) # If the user has supplied the module directly
     if isinstance(obj, str): # Split a string into a tuple, e.g. 'foo.bar.Cat' to ('foo.bar', 'Cat')
         obj = tuple(obj.rsplit('.', 1))
     if obj is None or (isinstance(obj, tuple) and len(obj)==2): # Either it's not in the remapping, or it's a tuple
@@ -2173,11 +2177,12 @@ def _remap_module(remapping, module_name, name):
 
 
 class _LoadsInterface():
-    # Add a .loads method to unpicklers, with support for Sciris remapping
+    ''' Add a .loads method to unpicklers, with support for Sciris remapping '''
     @classmethod
     def loads(cls, string, remapping, **kwargs):
         unpickler = cls(io.BytesIO(string), remapping=remapping, **kwargs)
         return unpickler.load()
+
 
 class _RobustUnpickler(dill.Unpickler, _LoadsInterface):
     ''' Try to import an object, and if that fails, return a Failed object rather than crashing '''
@@ -2195,10 +2200,16 @@ class _RobustUnpickler(dill.Unpickler, _LoadsInterface):
 class _RenamingUnpickler(_RobustUnpickler, _LoadsInterface):
     ''' Like RobustUnpickler but with automatic population of 'remapping' with known fixes '''
 
-    known_fixes = {
-        ('pandas.core.indexes.numeric', 'Int64Index'): {'pandas.core.indexes.numeric.Int64Index':'pandas.core.indexes.api.Index'},
-        ('pandas.core.indexes.numeric', 'Float64Index'): {'pandas.core.indexes.numeric.Float64Index':'pandas.core.indexes.api.Index'},
-    }
+    # Pandas provides a class compatibility map, so use that by default
+    try:
+        known_fixes = pd.compat.pickle_compat._class_locations_map
+    except (NameError or AttributeError):
+        warnmsg = 'Could not load full pandas compatibility dictionary; using manual subset'
+        warnings.warn(warnmsg, category=UserWarning, stacklevel=2)
+        known_fixes = {
+            ('pandas.core.indexes.numeric', 'Int64Index'): {'pandas.core.indexes.numeric.Int64Index':'pandas.core.indexes.api.Index'},
+            ('pandas.core.indexes.numeric', 'Float64Index'): {'pandas.core.indexes.numeric.Float64Index':'pandas.core.indexes.api.Index'},
+        }
 
     def find_class(self, module_name, name, last_error = None, verbose=True):
 
@@ -2238,7 +2249,7 @@ class _UltraRobustUnpickler(dill.Unpickler, _LoadsInterface): # pragma: no cover
         return obj
 
 
-def _unpickler(string=None, die=False, verbose=False, remapping=None, method='pickle', auto_remap=True, **kwargs):
+def _unpickler(string=None, die=False, verbose=False, remapping=None, method=None, auto_remap=True, **kwargs):
     ''' Not invoked directly; used as a helper function for saveobj/loadobj '''
 
     # Sanitize kwargs, since wrapped in try-except statements otherwise
@@ -2250,7 +2261,7 @@ def _unpickler(string=None, die=False, verbose=False, remapping=None, method='pi
                 raise ValueError(errormsg)
 
     methods = {
-        'Pickle': pkl.loads,
+        'pickle': pkl.loads,
         'Pandas': lambda string, **kwargs: pd.read_pickle(io.BytesIO(string), **kwargs),
         'Dill': dill.loads,
         'Encoded Pickle': lambda string, **kwargs: pkl.loads(string, encoding='latin1', **kwargs),
