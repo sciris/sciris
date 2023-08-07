@@ -2070,37 +2070,7 @@ def savespreadsheet(filename=None, data=None, folder=None, sheetnames=None, clos
 #%% Pickling support methods
 ##############################################################################
 
-__all__ += ['Failed', 'Empty']
-
-
-class Failed(object):
-    ''' An empty class to represent a failed object loading '''
-    failure_info = sco.odict()
-
-    def __init__(self, *args, **kwargs):
-        pass
-
-    def __repr__(self): # pragma: no cover
-        output = scp.objrepr(self) # This does not include failure_info since it's a class attribute
-        output += self.showfailures(verbose=False, tostring=True)
-        return output
-
-    def showfailures(self, verbose=True, tostring=False):
-        output = ''
-        for f,failure in self.failure_info.enumvals():
-            output += f'\nFailure {f+1} of {len(self.failure_info)}:\n'
-            output += f'Module: {failure["module"]}\n'
-            output += f'Class: {failure["class"]}\n'
-            output += f'Error: {failure["error"]}\n'
-            if verbose: # pragma: no cover
-                output += '\nTraceback:\n'
-                output += f"\n{failure['exception']}"
-                output += '\n\n'
-        if tostring: # pragma: no cover
-            return output
-        else:
-            print(output)
-            return
+__all__ += ['Empty', 'Failed']
 
 
 class Empty(object): # pragma: no cover
@@ -2113,8 +2083,9 @@ class Empty(object): # pragma: no cover
         pass
 
 
-class UniversalFailed(Failed): # pragma: no cover
-    ''' A universal failed object class, that preserves as much data as possible '''
+class Failed:
+    ''' An empty class to represent a failed object loading '''
+    failure_info = sco.objdict()
 
     def __init__(self, *args, **kwargs):
         if args:
@@ -2123,17 +2094,13 @@ class UniversalFailed(Failed): # pragma: no cover
             self.kwargs = kwargs
         self.__set_empty()
         return
-
+    
     def __set_empty(self):
         if not hasattr(self, 'state'):
             self.state = {}
         if not hasattr(self, 'dict'):
             self.dict = {}
         return
-
-    def __repr__(self):
-        output = scp.objrepr(self) # This does not include failure_info since it's a class attribute
-        return output
 
     def __setstate__(self, state):
         try:
@@ -2156,17 +2123,46 @@ class UniversalFailed(Failed): # pragma: no cover
     def disp(self, *args, **kwargs):
         return scp.pr(self, *args, **kwargs)
 
+    def __repr__(self): # pragma: no cover
+        output = scp.objrepr(self) # This does not include failure_info since it's a class attribute
+        output += self.showfailures(verbose=False, tostring=True)
+        return output
 
-def makefailed(module_name=None, name=None, error=None, exception=None, universal=False):
-    ''' Create a class -- not an object! -- that contains the failure info for a pickle that failed to load '''
-    base = UniversalFailed if universal else Failed
-    key = f'Failure {len(base.failure_info)+1}'
-    base.failure_info[key] = sco.odict()
-    base.failure_info[key]['module']    = module_name
-    base.failure_info[key]['class']     = name
-    base.failure_info[key]['error']     = error
-    base.failure_info[key]['exception'] = exception
-    return base
+    def showfailures(self, verbose=True, tostring=False):
+        output = ''
+        for f,failure in self.failure_info.enumvals():
+            output += f'\nFailure {f+1} of {len(self.failure_info)}:\n'
+            output += f'Failed module: {failure["module"]}\n'
+            output += f'Failed class: {failure["class"]}\n'
+            output += f'Error: {failure["error"]}\n'
+            if verbose: # pragma: no cover
+                output += f'Exception: {failure["exception"]}\n'
+                output += '\nTraceback:\n'
+                output += f"\n{failure['traceback']}"
+                output += '\n\n'
+        if tostring: # pragma: no cover
+            return output
+        else:
+            print(output)
+            return
+
+
+def makefailed(module_name=None, name=None, error=None, exception=None, tb=None):
+    '''
+    Update a class -- not an object! -- that contains the failure info for a pickle 
+    that failed to load. It needs to be a class rather than class instance due to
+    the way pickles are loaded via the ``find_class`` method.
+    
+    *New in version 3.0.1:* "tb" argument; removed "universal" argument
+    '''
+    key = f'Failure {len(Failed.failure_info)+1}'
+    Failed.failure_info[key] = sco.objdict()
+    Failed.failure_info[key]['module']    = module_name
+    Failed.failure_info[key]['class']     = name
+    Failed.failure_info[key]['error']     = error
+    Failed.failure_info[key]['exception'] = exception
+    Failed.failure_info[key]['traceback'] = tb
+    return Failed
 
 
 def _remap_module(remapping, module_name, name):
@@ -2258,7 +2254,8 @@ class _UltraRobustUnpickler(dill.Unpickler, _LoadsInterface): # pragma: no cover
         try:
             obj = _remap_module(self.remapping, module_name, name)
         except Exception as E:
-            obj = makefailed(module_name=module_name, name=name, error=str(E), exception=E, universal=True)
+            tb = scu.traceback(E)
+            obj = makefailed(module_name=module_name, name=name, error=type(E), exception=E, tb=tb)
         return obj
 
 
