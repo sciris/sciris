@@ -2072,6 +2072,17 @@ def savespreadsheet(filename=None, data=None, folder=None, sheetnames=None, clos
 
 __all__ += ['Empty', 'Failed']
 
+# Pandas provides a class compatibility map, so use that by default
+try:
+    known_fixes = pd.compat.pickle_compat._class_locations_map
+except (NameError or AttributeError):
+    warnmsg = 'Could not load full pandas compatibility dictionary; using manual subset'
+    warnings.warn(warnmsg, category=UserWarning, stacklevel=2)
+    known_fixes = {
+        ('pandas.core.indexes.numeric', 'Int64Index'): {'pandas.core.indexes.numeric.Int64Index':'pandas.core.indexes.api.Index'},
+        ('pandas.core.indexes.numeric', 'Float64Index'): {'pandas.core.indexes.numeric.Float64Index':'pandas.core.indexes.api.Index'},
+    }
+
 
 class Empty(object): # pragma: no cover
     ''' Another empty class to represent a failed object loading, but do not proceed with setstate '''
@@ -2208,17 +2219,6 @@ class _RobustUnpickler(dill.Unpickler, _LoadsInterface):
 class _RenamingUnpickler(_RobustUnpickler, _LoadsInterface):
     ''' Like RobustUnpickler but with automatic population of 'remapping' with known fixes '''
 
-    # Pandas provides a class compatibility map, so use that by default
-    try:
-        known_fixes = pd.compat.pickle_compat._class_locations_map
-    except (NameError or AttributeError):
-        warnmsg = 'Could not load full pandas compatibility dictionary; using manual subset'
-        warnings.warn(warnmsg, category=UserWarning, stacklevel=2)
-        known_fixes = {
-            ('pandas.core.indexes.numeric', 'Int64Index'): {'pandas.core.indexes.numeric.Int64Index':'pandas.core.indexes.api.Index'},
-            ('pandas.core.indexes.numeric', 'Float64Index'): {'pandas.core.indexes.numeric.Float64Index':'pandas.core.indexes.api.Index'},
-        }
-
     def find_class(self, module_name, name, last_error = None, verbose=True):
 
         try:
@@ -2227,10 +2227,12 @@ class _RenamingUnpickler(_RobustUnpickler, _LoadsInterface):
             if last_error == E:
                 raise E # We already tried to fix the error and it didn't work
 
-            if (module_name, name) in self.known_fixes:
-                self.remapping.update(self.known_fixes[(module_name, name)])
-            elif module_name in self.known_fixes:
-                self.remapping.update(self.known_fixes[module_name])
+            if (module_name, name) in known_fixes:
+                print('HI I AM FOUNDDDDDDDD')
+                self.remapping.update(known_fixes[(module_name, name)])
+            elif module_name in known_fixes:
+                print('HI I AM ALSO FOUNDDDDDDDD')
+                self.remapping.update(known_fixes[module_name])
             else:
                 raise E
 
@@ -2305,8 +2307,8 @@ def _unpickler(string=None, die=False, verbose=False, remapping=None, method=Non
             obj = methods[unpickler](string, **kwargs)
             break
         except Exception as E:
-            errors[unpickler] = str(E)
-            if verbose: print(f'{unpickler} failed ({str(E)})')
+            errors[unpickler] = scu.traceback(E) # TEMP E
+            if verbose: print(f'{unpickler} failed ({E})')
 
     if obj is None:
         errormsg = 'All available unpickling methods failed: ' + '\n'.join([f'{k}: {v}' for k,v in errors.items()])

@@ -737,8 +737,8 @@ def loadarchive(filename, folder=None, loadobj=True, loadmetadata=False,
                     require(reqs=reqs, die=False, warn=True) # Don't die, but print warnings
             except: # pragma: no cover
                 try:
-                    remapping = scu.mergedicts(remapping, known_deprecations(as_map=True))
-                    obj = scf.loadstr(datastr, remapping=remapping, **kwargs) # Load with all remappings
+                    remapping = scu.mergedicts(remapping, scf.known_fixes)
+                    obj = scf.loadstr(datastr, remapping=remapping, verbose=True, **kwargs) # Load with all remappings
                 except Exception as E:
                     exc = type(E)
                     errormsg = 'Could not unpickle the object: to debug using metadata, set die=False'
