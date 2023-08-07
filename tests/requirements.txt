@@ -1,6 +1,4 @@
-py
 pytest>=7.3
 pytest-cov
 pytest-env
 pytest-xdist
-pytest-parallel

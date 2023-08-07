@@ -675,9 +675,10 @@ See help(sc.help) for more information.
         def func_ok(f):
             ''' Skip certain functions '''
             excludes = [
-                f.startswith('_'),
-                f.startswith('sc_'),
-                f in ['help', 'options', 'extras'],
+                f.startswith('_'), # These are private
+                f.startswith('sc_'), # These are modules
+                f in ['help', 'options', 'extras'], # These are self-referential
+                f in ['style_simple', 'style_fancy'], # These are just dicts
             ]
             ok = not(any(excludes))
             return ok
