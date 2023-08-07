@@ -586,7 +586,7 @@ def manualcolorbar(data=None, vmin=0, vmax=1, vcenter=None, colors=None, values=
             norm = midpointnorm(vcenter=vcenter, vmin=vmin, vmax=vmax)
             
         # Create the scalar mappable
-        sm = mpl.pyplot.cm.ScalarMappable(norm=norm, cmap=cmap)
+        sm = mpl.cm.ScalarMappable(norm=norm, cmap=cmap)
         
     # Create the colorbar
     cb = pl.colorbar(sm, ax=ax, cax=cax, ticks=ticks, **kwargs)
@@ -972,6 +972,10 @@ def orangebluecolormap(apply=False):
 
 
 # Register colormaps -- under their original names as well as with the "sciris-" prefix
+try:
+    register_func = mpl.colormaps.register # Matplotlib >=3.5
+except AttributeError:
+    register_func = mpl.cm.register_cmap # Matplotlib <=3.4
 existing = pl.colormaps()
 colormap_map = dict(
     alpine     = alpinecolormap(),
@@ -981,8 +985,8 @@ colormap_map = dict(
     orangeblue = orangebluecolormap(),
     turbo      = turbocolormap(),
 )
-for origname,cmap in colormap_map.items():
-    newname = f'sciris-{origname}'
-    for name in [origname, newname]:
+for basename,cmap in colormap_map.items():
+    sc_name = f'sciris-{basename}'
+    for name in [basename, sc_name]:
         if name not in existing: # Avoid re-registering already registered colormaps
-            mpl.colormaps.register(cmap=cmap, name=name)                
+            register_func(cmap=cmap, name=name)                

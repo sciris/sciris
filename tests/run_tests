@@ -7,7 +7,7 @@ method=${1:-robust}
 if [ $method == "fast" ]; then
     parallel='--workers=auto'
 else
-    parallel=' -n auto'
+    parallel='-n auto'
 fi
 
 pytest test_*.py $parallel --ignore=manual --durations=0

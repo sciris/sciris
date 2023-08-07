@@ -1,0 +1,20 @@
+#!/bin/bash
+# Run the integration tests.
+# To use the fast but fragile test runner, use "./run_tests fast".
+
+# Enable all conda commands
+start=`date +%s`
+eval "$(conda shell.bash hook)"
+
+for year in 2021 2022 2023; do
+    echo "Working on $year..."
+    name=sciris$year
+    conda activate $name
+    echo `which python`
+    pytest ../test_*.py -n auto --ignore=manual
+done
+
+end=`date +%s`
+echo "Done after $((end-start)) seconds."
+
+
