@@ -10,7 +10,7 @@ import openpyxl
 import sciris as sc
 
 # Define filenames
-filedir = sc.path('files')
+filedir = sc.thispath() / 'files'
 files = sc.prettyobj()
 files.excel  = filedir / 'test.xlsx'
 files.binary = filedir / 'test.obj'
@@ -184,11 +184,10 @@ def test_fileio():
     o.thisdir = a
 
     sc.heading('Get files')
-    subfolder = 'files'
-    print(f'Files in "{subfolder}" folder:')
+    print(f'Files in "{filedir}":')
     TF = [True,False]
     for tf in TF:
-        sc.pp(sc.getfilepaths(folder=subfolder, abspath=tf, filesonly=tf, foldersonly=not(tf), nopath=tf, aspath=tf))
+        sc.pp(sc.getfilepaths(folder=filedir, abspath=tf, filesonly=tf, foldersonly=not(tf), nopath=tf, aspath=tf))
     o.filelist = sc.getfilelist(fnmatch='*.py', nopath=True) # Test alias
     assert all(['py' in f for f in o.filelist])
     assert 'test_fileio.py' in o.filelist

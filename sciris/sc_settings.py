@@ -23,6 +23,12 @@ from . import sc_utils as scu
 from . import sc_odict as sco
 from . import sc_printing as scp
 
+# Matplotlib regression support
+try:
+    get_backend = pl.rcParams._get_backend_or_none
+except:
+    get_backend = pl.get_backend
+
 
 __all__ = ['ScirisOptions', 'options', 'parse_env', 'help']
 
@@ -231,7 +237,7 @@ class ScirisOptions(sco.objdict):
         options.jupyter = parse_env('SCIRIS_JUPYTER', 'auto', 'str')
 
         optdesc.backend = 'Set the Matplotlib backend (use "agg" for non-interactive)'
-        options.backend = parse_env('SCIRIS_BACKEND', pl.rcParams._get_backend_or_none(), 'str') # This is needed to avoid creating the backend if it doesn't exist, which can be extremely slow
+        options.backend = parse_env('SCIRIS_BACKEND', get_backend(), 'str') # This is needed to avoid creating the backend if it doesn't exist, which can be extremely slow
 
         optdesc.rc = 'Matplotlib rc (run control) style parameters used during plotting -- usually set automatically by "style" option'
         options.rc = {}

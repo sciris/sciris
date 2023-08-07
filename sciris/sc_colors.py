@@ -972,7 +972,7 @@ def orangebluecolormap(apply=False):
 
 
 # Register colormaps -- under their original names as well as with the "sciris-" prefix
-try:
+try: # Regression support for Matplotlib
     register_func = mpl.colormaps.register # Matplotlib >=3.5
 except AttributeError:
     register_func = mpl.cm.register_cmap # Matplotlib <=3.4

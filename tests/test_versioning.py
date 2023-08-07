@@ -86,7 +86,7 @@ def test_regressions():
     o = sc.objdict()
     
     print('Testing loadarchive')
-    archives = sc.getfilelist(folder='files', pattern='archive*.zip')
+    archives = sc.getfilelist(folder=filedir, pattern='archive*.zip')
     for i,fn in enumerate(archives):
         print(f'  Testing {fn}...')
         key = f'archive{i}'
@@ -97,7 +97,7 @@ def test_regressions():
             assert data['obj'].sum() == 10
     
     print('Testing loadobj')
-    pickles = sc.getfilelist(folder='files', pattern='pickle*.obj')
+    pickles = sc.getfilelist(folder=filedir, pattern='pickle*.obj')
     for i,fn in enumerate(pickles):
         print(f'  Testing {fn}...')
         key = f'pickle{i}'
