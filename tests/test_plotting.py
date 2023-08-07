@@ -5,6 +5,7 @@ Test color and plotting functions -- warning, opens up many windows!
 import os
 import numpy as np
 import pylab as pl
+import matplotlib as mpl
 import sciris as sc
 import pytest
 
@@ -98,7 +99,8 @@ def test_other(doplot=doplot):
     sc.separatelegend()
     
     # Test styles
-    with pl.style.context('sciris.fancy'):
+    style = 'sciris.fancy' if sc.compareversions(mpl, '>=3.7') else sc.style_fancy # Matplotlib regression support
+    with pl.style.context(style):
         pl.figure('Custom style')
         pl.plot(pl.rand(10))
 

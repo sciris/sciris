@@ -1,5 +1,8 @@
 #!/bin/bash
 # Set up the conda environments for use with run_regression
+# Warning: if anything goes wrong, this script can seriously
+# mess up your Python environment! Use with caution.
+# Version: 2023aug06
 
 # Enable all conda commands
 start=`date +%s`
