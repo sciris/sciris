@@ -78,7 +78,7 @@ https://stackoverflow.com/questions/41554738/how-to-load-an-old-pickle-file
 '''
 
 
-def _load_filestr(filename, folder, verbose=False):
+def _load_filestr(filename, folder=None, verbose=False):
     ''' Try different options for loading a file on disk into a string -- not for external use '''
     
     # Handle loading of either filename or file object
@@ -108,7 +108,7 @@ def _load_filestr(filename, folder, verbose=False):
         exc = type(E) # Figure out what kind of error it is
         if exc == FileNotFoundError: # This is simple, just raise directly
             raise E
-        elif exc == gz.BadGzipFile:
+        elif exc in gz.BadGzipFile:
             try: # If the gzip file failed, first try as a zstd compressed object
                 if verbose: print('  Reading as zstandard file...')
                 with open(filename, 'rb') as fh:
@@ -2070,28 +2070,20 @@ def savespreadsheet(filename=None, data=None, folder=None, sheetnames=None, clos
 #%% Pickling support methods
 ##############################################################################
 
-__all__ += ['Empty', 'Failed']
+__all__ += ['Failed']
+
+unpickling_errors = sco.objdict()
 
 # Pandas provides a class compatibility map, so use that by default
 try:
     known_fixes = pd.compat.pickle_compat._class_locations_map
 except (NameError or AttributeError):
-    warnmsg = 'Could not load full pandas compatibility dictionary; using manual subset'
+    warnmsg = 'Could not load full pandas pickle compatibility map; using manual subset of known regressions'
     warnings.warn(warnmsg, category=UserWarning, stacklevel=2)
     known_fixes = {
         ('pandas.core.indexes.numeric', 'Int64Index'): {'pandas.core.indexes.numeric.Int64Index':'pandas.core.indexes.api.Index'},
         ('pandas.core.indexes.numeric', 'Float64Index'): {'pandas.core.indexes.numeric.Float64Index':'pandas.core.indexes.api.Index'},
     }
-
-
-class Empty(object): # pragma: no cover
-    ''' Another empty class to represent a failed object loading, but do not proceed with setstate '''
-
-    def __init__(self, *args, **kwargs):
-        pass
-
-    def __setstate__(self, state):
-        pass
 
 
 class Failed:
@@ -2130,6 +2122,9 @@ class Failed:
     def __setitem__(self, key, value):
         self.dict[key] = value
         return
+    
+    def __call__(self, *args, **kwargs):
+        return self
 
     def disp(self, *args, **kwargs):
         return scp.pr(self, *args, **kwargs)
@@ -2158,7 +2153,7 @@ class Failed:
             return
 
 
-def makefailed(module_name=None, name=None, error=None, exception=None, tb=None):
+def _makefailed(module_name=None, name=None, error=None, exception=None, tb=None):
     '''
     Update a class -- not an object! -- that contains the failure info for a pickle 
     that failed to load. It needs to be a class rather than class instance due to
@@ -2195,7 +2190,7 @@ def _remap_module(remapping, module_name, name):
     return obj
 
 
-class _LoadsInterface():
+class _LoadsInterface:
     ''' Add a .loads method to unpicklers, with support for Sciris remapping '''
     @classmethod
     def loads(cls, string, remapping, **kwargs):
@@ -2203,98 +2198,98 @@ class _LoadsInterface():
         return unpickler.load()
 
 
-class _RobustUnpickler(dill.Unpickler, _LoadsInterface):
+class _RobustUnpickler(dill.Unpickler):
     ''' Try to import an object, and if that fails, return a Failed object rather than crashing '''
 
-    def __init__(self, bytesio, fix_imports=True, encoding="latin1", errors="ignore", remapping=None):
+    def __init__(self, bytesio, fix_imports=True, encoding="latin1", errors="ignore", remapping=None, auto_remap=True):
         super().__init__(bytesio, fix_imports=fix_imports, encoding=encoding, errors=errors)
-        self.remapping = scu.mergedicts(remapping)
+        self.remapping = scu.mergedicts(known_fixes if auto_remap else {}, remapping)
         return
 
     def find_class(self, module_name, name, verbose=True):
-        obj = _remap_module(self.remapping, module_name, name)
+        try:
+            obj = super().find_class(module_name, name)
+        except Exception as E1:
+            try:
+                obj = _remap_module(self.remapping, module_name, name)
+                warnmsg = f'Fixing known unpickling deprecation "{str(E1)}"'
+                warnings.warn(warnmsg, category=UserWarning, stacklevel=2)
+            except Exception as E2:
+                warnmsg = f'Unpickling warning: could not import {module_name}.{name}:\n{str(E1)}\n{str(E2)}'
+                if verbose: print(warnmsg)
+                obj = _makefailed(module_name=module_name, name=name, error=str(E2), exception=E2, tb=scu.traceback(E2))
+            
+        return obj
+
+    def loads(self, *args, **kwargs):
+        try:
+            obj = super().loads(*args, **kwargs)
+        except Exception as E:
+            print('Encountered exception:', E)
+            return Failed()
         return obj
 
 
-class _RenamingUnpickler(_RobustUnpickler, _LoadsInterface):
-    ''' Like RobustUnpickler but with automatic population of 'remapping' with known fixes '''
-
-    def find_class(self, module_name, name, last_error = None, verbose=True):
-
-        try:
-            return super().find_class(module_name, name, verbose)
-        except ModuleNotFoundError as E:
-            if last_error == E:
-                raise E # We already tried to fix the error and it didn't work
-
-            if (module_name, name) in known_fixes:
-                print('HI I AM FOUNDDDDDDDD')
-                self.remapping.update(known_fixes[(module_name, name)])
-            elif module_name in known_fixes:
-                print('HI I AM ALSO FOUNDDDDDDDD')
-                self.remapping.update(known_fixes[module_name])
-            else:
-                raise E
-
-            warnmsg = f'Fixing known unpickling deprecation "{str(E)}"'
-            warnings.warn(warnmsg, category=UserWarning, stacklevel=2)
-            return self.find_class(module_name, name, E, verbose)
-
-
-class _UltraRobustUnpickler(dill.Unpickler, _LoadsInterface): # pragma: no cover
+class _FailedUnpickler(dill.Unpickler): # pragma: no cover
     ''' If all else fails, just make a default object '''
 
-    def __init__(self, bytesio, *args, fix_imports=True, encoding="latin1", errors="ignore", 
-                 remapping=None, unpicklingerrors=None):
-        super().__init__(bytesio, fix_imports=fix_imports, encoding=encoding, errors=errors)
-        self.remapping = scu.mergedicts(remapping)
+    def __init__(self, *args, unpicklingerrors=None, **kwargs):
+        super().__init__(self, *args, **kwargs)
         self.unpicklingerrors = unpicklingerrors if unpicklingerrors is not None else []
         return
 
     def find_class(self, module_name, name):
         ''' Ignore all attempts to use the actual class and always make a UniversalFailed class '''
-        try:
-            obj = _remap_module(self.remapping, module_name, name)
-        except Exception as E:
-            tb = scu.traceback(E)
-            obj = makefailed(module_name=module_name, name=name, error=type(E), exception=E, tb=tb)
+        error = scu.strjoin(self.unpicklingerrors)
+        exception = self.unpicklingerrors
+        obj = _makefailed(module_name=module_name, name=name, error=error, exception=exception)
         return obj
+    
+    def loads(self, *args, **kwargs):
+        try:
+            obj = super().loads(*args, **kwargs)
+        except Exception as E:
+            print('Encountered exception:', E)
+            return Failed()
+        return obj
+            
 
 
 def _unpickler(string=None, die=False, verbose=False, remapping=None, method=None, auto_remap=True, **kwargs):
-    ''' Not invoked directly; used as a helper function for saveobj/loadobj '''
+    ''' Not invoked directly; used as a helper function for load() '''
 
     # Sanitize kwargs, since wrapped in try-except statements otherwise
     if kwargs: # pragma: no cover
+        errormsg = ''
         valid_kwargs = ['fix_imports', 'encoding', 'errors', 'buffers', 'ignore']
         for k in kwargs:
             if k not in valid_kwargs:
-                errormsg = f'Keyword "{k}" is not a valid keyword: {scu.strjoin(valid_kwargs)}'
-                raise ValueError(errormsg)
+                errormsg += f'Keyword "{k}" is not a valid keyword: {scu.strjoin(valid_kwargs)}\n'
+        if errormsg:
+            raise ValueError(errormsg)
 
     methods = dict(
-        pickle          = pkl.loads,
-        pandas          = lambda string, **kwargs: pd.read_pickle(io.BytesIO(string), **kwargs),
-        dill            = dill.loads,
-        encoded_pickle  = lambda string, **kwargs: pkl.loads(string, encoding='latin1', **kwargs),
-        robust          = lambda string, **kwargs: _RobustUnpickler.loads(string, remapping, **kwargs),
-        robust_renaming = lambda string, **kwargs: _RenamingUnpickler.loads(string, remapping, **kwargs),
-        ultrarobust     = lambda string, **kwargs: _UltraRobustUnpickler.loads(string, remapping, **kwargs),
+        pickle = pkl.loads,
+        dill   = dill.loads,
+        pandas = lambda string, **kw: pd.read_pickle(io.BytesIO(string), **kw),
+        latin  = lambda string, **kw: pkl.loads(string, encoding=kw.pop('encoding', 'latin1'), **kw),
+        robust = lambda string, **kw: _RobustUnpickler(string, remapping, auto_remap=auto_remap, **kwargs).loads(),
     )
 
     # Methods that allow for loading an object without any failed instances (if die=True)
     if method == 'pickle':
-        unpicklers = ['pickle', 'pandas', 'encoded_pickle']
+        unpicklers = ['pickle', 'pandas', 'latin']
     elif method == 'dill':
         unpicklers = ['dill']
+    elif method in methods: # If specified directly
+        unpicklers = method
     else:
-        unpicklers = ['pickle', 'pandas', 'encoded_pickle', 'dill']
+        unpicklers = ['pickle', 'pandas', 'latin', 'dill']
 
     # If permitted, return an object that encountered errors in the loading process and therefore may not be valid
     # Such an object might require further fixes to be made by the user
     if not die:
-        unpicklers += ['robust_renaming' if auto_remap else 'robust']
-        unpicklers += ['ultrarobust']
+        unpicklers += ['robust']
 
     errors = {}
     obj = None
@@ -2307,7 +2302,7 @@ def _unpickler(string=None, die=False, verbose=False, remapping=None, method=Non
             obj = methods[unpickler](string, **kwargs)
             break
         except Exception as E:
-            errors[unpickler] = scu.traceback(E) # TEMP E
+            errors[unpickler] = scu.traceback(E)
             if verbose: print(f'{unpickler} failed ({E})')
 
     if obj is None:
