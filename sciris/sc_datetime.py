@@ -284,7 +284,7 @@ def date(obj=None, *args, start_date=None, readformat=None, to='date', as_date=N
     | *New in version 1.2.2:* "readformat" argument; renamed "dateformat" to "outformat"
     | *New in version 2.0.0:* support for :obj:`np.datetime64 <numpy.datetime64>` objects
     | *New in version 3.0.0:* added "to" argument, and support for :obj:`pd.Timestamp <pandas.Timestamp>` and :obj:`np.datetime64 <numpy.datetime64>` output; allow None
-    | *New in version 3.0.1:* allow "datetime" output
+    | *New in version 3.1.0:* allow "datetime" output
     '''
 
     # Handle deprecation
@@ -546,7 +546,7 @@ def datedelta(datestr=None, days=0, months=0, years=0, weeks=0, dt1=None, dt2=No
         sc.datedelta(days=3) # Alias to du.relativedelta.relativedelta(days=3)
     
     | *New in version 3.0.0:* operate on list of dates
-    | *New in version 3.0.1:* handle all date input formats
+    | *New in version 3.1.0:* handle all date input formats
     '''
     as_date = kwargs.pop('asdate', as_date) # Handle with or without underscore
 
@@ -844,7 +844,7 @@ class timer:
     | *New in version 2.0.0:* ``plot()`` method; ``total()`` method; ``indivtimings`` and ``cumtimings`` properties
     | *New in version 2.1.0:* ``total`` as property instead of method; updated repr; added disp() method
     | *New in version 3.0.0:* ``unit`` argument; ``verbose`` argument; ``sum, min, max, mean, std`` methods; ``rawtimings`` property
-    | *New in version 3.0.1:* Timers can be combined by addition, including sum().
+    | *New in version 3.1.0:* Timers can be combined by addition, including sum().
     '''
     def __init__(self, label=None, auto=False, start=True, unit='auto', verbose=None, **kwargs):
         from . import sc_odict as sco # Here to avoid circular import

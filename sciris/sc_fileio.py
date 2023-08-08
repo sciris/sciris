@@ -172,7 +172,7 @@ def load(filename=None, folder=None, verbose=False, die=None, remapping=None,
 
     | *New in version 1.1.0:* "remapping" argument
     | *New in version 1.2.2:* ability to load non-gzipped pickles; support for dill; arguments passed to loader
-    | *New in version 3.0.1:* improved handling of pickling failures
+    | *New in version 3.1.0:* improved handling of pickling failures
     '''
     if verbose: T = scd.timer() # Start timing
         
@@ -456,7 +456,7 @@ def savetext(filename=None, string=None, **kwargs):
         text = ['Here', 'is', 'a', 'poem']
         sc.savetext('my-poem.txt', text)
     
-    *New in version 3.0.1:* fixed bug with saving a list of strings
+    *New in version 3.1.0:* fixed bug with saving a list of strings
     '''
     is_array = scu.isarray(string)
     if isinstance(string, list):
@@ -2161,7 +2161,7 @@ def _makefailed(module_name=None, name=None, error=None, exception=None, tb=None
     that failed to load. It needs to be a class rather than class instance due to
     the way pickles are loaded via the ``find_class`` method.
     
-    *New in version 3.0.1:* "tb" argument; removed "universal" argument
+    *New in version 3.1.0:* "tb" argument; removed "universal" argument
     '''
     key = (module_name, name)
     fail = sco.objdict()

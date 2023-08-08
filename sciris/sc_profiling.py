@@ -253,7 +253,7 @@ def benchmark(repeats=5, scale=1, verbose=False, python=True, numpy=True, parall
         sc.benchmark(parallel=True) # Use all CPUs
     
     | *New in version 3.0.0.*
-    | *New in version 3.0.1:* "parallel" argument; increased default scale
+    | *New in version 3.1.0:* "parallel" argument; increased default scale
     '''
     
     # Calculate the number of operations

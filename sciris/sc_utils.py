@@ -2179,7 +2179,7 @@ class tryexcept(cl.suppress):
             which (int/list): which exception(s) to print; if None, print all
             tostring (bool): whether to return as a string (otherwise print)
         
-        *New in version 3.0.1:* optionally print multiple tracebacks
+        *New in version 3.1.0:* optionally print multiple tracebacks
         '''
         string = ''
         if self.died:

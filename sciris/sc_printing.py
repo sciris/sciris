@@ -70,7 +70,7 @@ def objectid(obj, showclasses=False):
     '''
     Return the object ID as per the default Python ``__repr__`` method
     
-    *New in version 3.0.1:* "showclasses" argument
+    *New in version 3.1.0:* "showclasses" argument
     '''
     c = obj.__class__
     output = f'<{c.__module__}.{c.__name__} at {hex(id(obj))}>\n'

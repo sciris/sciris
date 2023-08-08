@@ -100,7 +100,7 @@ class Parallel:
         print(P.times)
         
     *New in version 3.0.0.*
-    *New in version 3.0.1:* "globaldict" argument
+    *New in version 3.1.0:* "globaldict" argument
     '''
     def __init__(self, func, iterarg=None, iterkwargs=None, args=None, kwargs=None, ncpus=None, 
                  maxcpu=None, maxmem=None, interval=None, parallelizer=None, serial=False, 
@@ -743,7 +743,7 @@ def parallelize(func, iterarg=None, iterkwargs=None, args=None, kwargs=None, ncp
     | *New in version 2.0.0:* changed default parallelizer from ``multiprocess.Pool`` to ``concurrent.futures.ProcessPoolExecutor``; replaced ``maxload`` with ``maxcpu``/``maxmem``; added ``returnpool`` argument
     | *New in version 2.0.4:* added "die" argument; changed exception handling
     | *New in version 3.0.0:* new Parallel class; propagated "die" to jobs
-    | *New in version 3.0.1:* new "globaldict" argument
+    | *New in version 3.1.0:* new "globaldict" argument
     '''
     # Create the parallel instance
     P = Parallel(func, iterarg=iterarg, iterkwargs=iterkwargs, args=args, kwargs=kwargs, 

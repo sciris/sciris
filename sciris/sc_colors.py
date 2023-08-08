@@ -312,7 +312,7 @@ def arraycolors(arr, **kwargs):
 
     Version: 2020mar07
     
-    *New in version 3.0.1:* Handle non-array output
+    *New in version 3.1.0:* Handle non-array output
     """
     arr = scu.dcp(arr) # Avoid modifications
     new_shape = arr.shape + (4,) # RGBα

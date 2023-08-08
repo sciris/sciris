@@ -75,7 +75,7 @@ def ax3d(nrows=None, ncols=None, index=None, fig=None, ax=None, returnfig=False,
         kwargs (dict): passed to :func:`pl.axes() <matplotlib.pyplot.axes>`
         
     | *New in version 3.0.0:* nrows, ncols, and index arguments first
-    | *New in version 3.0.1:* improved validation; 'silent' and 'axkwargs' argument removed
+    | *New in version 3.1.0:* improved validation; 'silent' and 'axkwargs' argument removed
     '''
     from mpl_toolkits.mplot3d import Axes3D
 
@@ -217,7 +217,7 @@ def plot3d(x, y, z, c='index', fig=None, ax=None, returnfig=False, figkwargs=Non
         c = np.arange(n)
         sc.plot3d(x, y, z, c=c, fig=fig)
     
-    *New in version 3.0.1:* Allow multi-colored line; removed "plotkwargs" argument
+    *New in version 3.1.0:* Allow multi-colored line; removed "plotkwargs" argument
     '''
     # Set default arguments
     plotkwargs = scu.mergedicts({'lw':2}, kwargs)
@@ -282,7 +282,7 @@ def scatter3d(x=None, y=None, z=None, c='z', fig=None, ax=None, returnfig=False,
         sc.scatter3d(x, y, z, c='index')
     
     | *New in version 3.0.0:* Allow 2D input
-    | *New in version 3.0.1:* Allow "index" color argument; removed "plotkwargs" argument
+    | *New in version 3.1.0:* Allow "index" color argument; removed "plotkwargs" argument
     '''
     # Set default arguments
     plotkwargs = scu.mergedicts({'s':200, 'depthshade':False, 'linewidth':0}, kwargs)
@@ -341,7 +341,7 @@ def surf3d(x=None, y=None, z=None, c='z', fig=None, ax=None, returnfig=False, co
         c = z**2
         sc.surf3d(x=x, y=y, z=z, c=c, cmap='orangeblue')
     
-    *New in 3.0.1: updated arguments from "data" to x, y, z, c; removed "plotkwargs" argument
+    *New in 3.1.0: updated arguments from "data" to x, y, z, c; removed "plotkwargs" argument
     '''
 
     # Set default arguments
@@ -410,7 +410,7 @@ def bar3d(x=None, y=None, z=None, c='z', dx=0.8, dy=0.8, dz=None, fig=None, ax=N
         c = z**2
         sc.bar3d(x=x, y=y, z=z, dx=0.5, dy=0.5, dz=dz, c=c, cmap='orangeblue')
     
-    *New in 3.0.1: updated arguments from "data" to x, y, z, c; removed "plotkwargs" argument
+    *New in 3.1.0: updated arguments from "data" to x, y, z, c; removed "plotkwargs" argument
     '''
 
     # Set default arguments
