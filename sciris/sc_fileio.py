@@ -2095,6 +2095,8 @@ class Failed:
     _module  = None # These must be class variables since find_class returns a class, not an instance
     _name    = None
     _failure = None
+    _fixes   = None # Used when the top-level loads() method fails
+    _errors  = None
 
     def __init__(self, *args, **kwargs):
         if args:
@@ -2155,62 +2157,78 @@ class Failed:
             return
 
 
-def _makefailed(module_name=None, name=None, error=None, exception=None, tb=None):
+def _makefailed(module_name=None, name=None, exc=None, fixes=None, errors=None):
     '''
-    Update a class -- not an object! -- that contains the failure info for a pickle 
+    Handle unpickling failures -- for internal use only
+    
+    Create a class -- not an object! -- that contains the failure info for a pickle 
     that failed to load. It needs to be a class rather than class instance due to
     the way pickles are loaded via the ``find_class`` method.
     
-    *New in version 3.1.0:* "tb" argument; removed "universal" argument
+    *New in version 3.1.0:* arguments simplified
     '''
+    
+    # Process exception
     key = (module_name, name)
     fail = sco.objdict()
     fail.module    = module_name
     fail.name      = name
-    fail.error     = error
-    fail.exception = exception
-    fail.traceback = tb
+    fail.error     = str(exc)
+    fail.exception = exc
+    fail.traceback = scu.traceback(exc)
     
     # Add the failure to the global list
     unpickling_errors[key] = fail
     
+    # Attributes -- this is why this needs to be dynamically created!
+    attrs = dict( 
+         _module = module_name,
+         _name = name,
+         _failure = fail
+    )
+    
+    # If the top-level loads() fails, including additional information on the errors
+    if fixes is not None or errors is not None:
+        attrs.update(dict(_unpickling_fixes=fixes, _unpickling_errors=errors))
+    
     # Dynamically define a new class that can be used by find_class() to create an object
     F = type(
-        "FailedLoad", # Name of the class -- can all be the same
+        "NamedFailed", # Name of the class -- can all be the same, but distinct from Failed that it has populated names
         (Failed,), # Inheritance
-        dict( # Attributes
-             _module = module_name,
-             _name = name,
-             _failure = fail
-        )
+        attrs, # Attributes
     )
-    return F
+    return F # Return the newly created class (not class instance)
 
 
 def _remap_module(remapping, module_name, name):
-    ''' Use a remapping dictionary to try to load a module from a different location ''' 
+    ''' Use a remapping dictionary to try to load a module from a different location -- for internal use ''' 
     key1 = f'{module_name}.{name}' # Key provided as a single string
     key2 = (module_name, name) # Key provided as a tuple
-    key3 = module_name
+    key3 = module_name # Just the module, no class
     remapped = remapping.get(key1) or remapping.get(key2) or remapping.get(key3) # If the user has supplied the module directly
-    if remapped is None:
-        new_module = module_name
-        new_name = name
-    else:
+    if remapped is not None:
+        
+        # Check that we have a string or tuple
         if isinstance(remapped, str): # Split a string into a tuple, e.g. 'foo.bar.Cat' to ('foo.bar', 'Cat')
-            remapped = tuple(remapped.rsplit('.', 1))
-            len_remap = len(remapped)
-            if len_remap == 2: # Usual case
-                new_module = remapped[0]
-                new_name   = remapped[1]
-            elif len_remap == 1:
-                new_module = remapped[0]
-                new_name   = name
-            else:
-                errormsg = f'Was expecting 1 or 2 strings, got {len_remap}'
-                raise ValueError(errormsg)
-    module = importlib.import_module(new_module)
-    obj = getattr(module, new_name) # pragma: no cover
+            remapped = tuple(remapped.rsplit('.', 1)) # e.g. 'foo.bar.Cat' -> ('foo.bar',)
+        elif not isinstance(remapped, (tuple, list)):
+            errormsg = f'Expecting the remapping to be a string or tuple, not {type(remapped)}'
+            raise TypeError(errormsg)
+        
+        # Handle different types of input
+        len_remap = len(remapped)
+        if len_remap == 2: # Usual case, e.g. ('foo.bar', 'Cat')
+            module_name = remapped[0]
+            name        = remapped[1]
+        elif len_remap == 1: # If just a module
+            module_name = remapped[0]
+        else:
+            errormsg = f'Was expecting 1 or 2 strings, but got {len_remap} from "{remapped}"'
+            raise ValueError(errormsg)
+    
+    # Actually attempt the import
+    module = importlib.import_module(module_name)
+    obj = getattr(module, name)
     return obj
 
 
@@ -2220,59 +2238,37 @@ class _RobustUnpickler(dill.Unpickler):
     def __init__(self, bytesio, fix_imports=True, encoding="latin1", errors="ignore", remapping=None, auto_remap=True):
         super().__init__(bytesio, fix_imports=fix_imports, encoding=encoding, errors=errors)
         self.remapping = scu.mergedicts(known_fixes if auto_remap else {}, remapping)
-        self.remappings = sco.objdict() # Store any handled remappings
+        self.fixes = sco.objdict() # Store any handled remappings
         self.errors = sco.objdict() # Store any errors encountered
         return
 
     def find_class(self, module_name, name, verbose=True):
+        key = (module_name, name)
         try:
-            obj = super().find_class(module_name, name)
+            C = super().find_class(module_name, name) # "C" for "class"
         except Exception as E1:
             try:
-                obj = _remap_module(self.remapping, module_name, name)
-                self.remappings[(module_name, name)] = E1 # Store the remapping
+                C = _remap_module(self.remapping, module_name, name)
+                self.fixes[key] = E1 # Store the fixed remapping
                 warnmsg = f'Fixing known unpickling remapping "{str(E1)}"'
                 warnings.warn(warnmsg, category=UserWarning, stacklevel=2)
             except Exception as E2:
-                warnmsg = f'Unpickling warning: could not import {module_name}.{name}:\n{str(E1)}\n{str(E2)}'
-                if verbose: print(warnmsg)
-                obj = _makefailed(module_name=module_name, name=name, error=str(E2), exception=E2, tb=scu.traceback(E2))
-                self.errors[(module_name, name)] = E2 # Store the error
+                warnmsg = f'Unpickling error: could not import {module_name}.{name}:\n{str(E1)}\n{str(E2)}'
+                warnings.warn(warnmsg, category=UserWarning, stacklevel=2)
+                C = _makefailed(module_name=module_name, name=name, exc=E2)
+                self.errors[key] = E2 # Store the error
             
-        return obj
+        return C
 
     def loads(self, *args, **kwargs):
         try:
-            obj = super().loads(*args, **kwargs)
+            obj = super().loads(*args, **kwargs) # This will still use the custom find_class()
         except Exception as E:
-            print('Encountered exception:', E)
-            return Failed()
+            warnmsg = f'Top-level unpickling error: \n{str(E)}'
+            warnings.warn(warnmsg, category=UserWarning, stacklevel=2)
+            F = _makefailed(module_name='module_unknown', name='name_unknown', exc=E, fixes=self.fixes, errors=self.errors) # Create a failed object
+            obj = F() 
         return obj
-
-
-class _FailedUnpickler(dill.Unpickler): # pragma: no cover
-    ''' If all else fails, just make a default object '''
-
-    def __init__(self, *args, unpicklingerrors=None, **kwargs):
-        super().__init__(self, *args, **kwargs)
-        self.unpicklingerrors = unpicklingerrors if unpicklingerrors is not None else []
-        return
-
-    def find_class(self, module_name, name):
-        ''' Ignore all attempts to use the actual class and always make a UniversalFailed class '''
-        error = scu.strjoin(self.unpicklingerrors)
-        exception = self.unpicklingerrors
-        obj = _makefailed(module_name=module_name, name=name, error=error, exception=exception)
-        return obj
-    
-    def loads(self, *args, **kwargs):
-        try:
-            obj = super().loads(*args, **kwargs)
-        except Exception as E:
-            print('Encountered exception:', E)
-            return Failed()
-        return obj
-            
 
 
 def _unpickler(string=None, die=False, verbose=False, remapping=None, method=None, auto_remap=True, **kwargs):
