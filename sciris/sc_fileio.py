@@ -2083,10 +2083,18 @@ except (NameError or AttributeError):
         ('pandas.core.indexes.numeric', 'Float64Index'): {'pandas.core.indexes.numeric.Float64Index':'pandas.core.indexes.api.Index'},
     }
 
+# Keep a temporary global variable of unpickling errors, and a permanent one of failed classes
+unpickling_errors = sco.objdict()
 
 class Failed:
-    ''' An empty class to represent a failed object loading '''
-    failure_info = sco.objdict()
+    '''
+    An empty class to represent a failed object loading. Not for use by the user.
+    
+    *New in version 3.1.0:* combined Failed and UniversalFailed classes    
+    '''
+    _module  = None # These must be class variables since find_class returns a class, not an instance
+    _name    = None
+    _failure = None
 
     def __init__(self, *args, **kwargs):
         if args:
@@ -2132,18 +2140,14 @@ class Failed:
         output += self.showfailures(verbose=False, tostring=True)
         return output
 
-    def showfailures(self, verbose=True, tostring=False):
-        output = ''
-        for f,failure in self.unpickling_errors.enumvals():
-            output += f'\nFailure {f+1} of {len(self.failure_info)}:\n'
-            output += f'Failed module: {failure["module"]}\n'
-            output += f'Failed class: {failure["class"]}\n'
-            output += f'Error: {failure["error"]}\n'
-            if verbose: # pragma: no cover
-                output += f'Exception: {failure["exception"]}\n'
-                output += '\nTraceback:\n'
-                output += f"\n{failure['traceback']}"
-                output += '\n\n'
+    def showfailure(self, verbose=True, tostring=False):
+        output = f'Failed module: {self._module}\n'
+        output += f'Failed class: {self._name}\n'
+        output += f'Error: {self._failure.error}\n'
+        if verbose: # pragma: no cover
+            output += f'Exception: {self._failure.exception}\n'
+            output += f'{self._failure.traceback}\n'
+            output += '\n\n'
         if tostring: # pragma: no cover
             return output
         else:
@@ -2159,14 +2163,28 @@ def _makefailed(module_name=None, name=None, error=None, exception=None, tb=None
     
     *New in version 3.0.1:* "tb" argument; removed "universal" argument
     '''
-    key = f'Failure {len(Failed.failure_info)+1}'
-    Failed.failure_info[key] = sco.objdict()
-    Failed.failure_info[key]['module']    = module_name
-    Failed.failure_info[key]['class']     = name
-    Failed.failure_info[key]['error']     = error
-    Failed.failure_info[key]['exception'] = exception
-    Failed.failure_info[key]['traceback'] = tb
-    return Failed
+    key = (module_name, name)
+    fail = sco.objdict()
+    fail.module    = module_name
+    fail.name      = name
+    fail.error     = error
+    fail.exception = exception
+    fail.traceback = tb
+    
+    # Add the failure to the global list
+    unpickling_errors[key] = fail
+    
+    # Dynamically define a new class that can be used by find_class() to create an object
+    F = type(
+        "FailedLoad", # Name of the class -- can all be the same
+        (Failed,), # Inheritance
+        dict( # Attributes
+             _module = module_name,
+             _name = name,
+             _failure = fail
+        )
+    )
+    return F
 
 
 def _remap_module(remapping, module_name, name):
@@ -2194,14 +2212,6 @@ def _remap_module(remapping, module_name, name):
     module = importlib.import_module(new_module)
     obj = getattr(module, new_name) # pragma: no cover
     return obj
-
-
-class _LoadsInterface:
-    ''' Add a .loads method to unpicklers, with support for Sciris remapping '''
-    @classmethod
-    def loads(cls, string, remapping, **kwargs):
-        unpickler = cls(io.BytesIO(string), remapping=remapping, **kwargs)
-        return unpickler.load()
 
 
 class _RobustUnpickler(dill.Unpickler):
