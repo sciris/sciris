@@ -2072,8 +2072,6 @@ def savespreadsheet(filename=None, data=None, folder=None, sheetnames=None, clos
 
 __all__ += ['Failed']
 
-unpickling_errors = sco.objdict()
-
 # Pandas provides a class compatibility map, so use that by default
 try:
     known_fixes = pd.compat.pickle_compat._class_locations_map
@@ -2136,7 +2134,7 @@ class Failed:
 
     def showfailures(self, verbose=True, tostring=False):
         output = ''
-        for f,failure in self.failure_info.enumvals():
+        for f,failure in self.unpickling_errors.enumvals():
             output += f'\nFailure {f+1} of {len(self.failure_info)}:\n'
             output += f'Failed module: {failure["module"]}\n'
             output += f'Failed class: {failure["class"]}\n'
@@ -2175,18 +2173,26 @@ def _remap_module(remapping, module_name, name):
     ''' Use a remapping dictionary to try to load a module from a different location ''' 
     key1 = f'{module_name}.{name}' # Key provided as a single string
     key2 = (module_name, name) # Key provided as a tuple
-    obj = remapping.get(key1) or remapping.get(key2) # If the user has supplied the module directly
-    if isinstance(obj, str): # Split a string into a tuple, e.g. 'foo.bar.Cat' to ('foo.bar', 'Cat')
-        obj = tuple(obj.rsplit('.', 1))
-    if obj is None or (isinstance(obj, tuple) and len(obj)==2): # Either it's not in the remapping, or it's a tuple
-        if obj is None: # Key not in remapping, just use regular
-            load_module = module_name
-            load_name = name
-        else: # It's a tuple of names, process # pragma: no cover
-            load_module = obj[0]
-            load_name = obj[1]
-        module = importlib.import_module(load_module)
-        obj = getattr(module, load_name) # pragma: no cover
+    key3 = module_name
+    remapped = remapping.get(key1) or remapping.get(key2) or remapping.get(key3) # If the user has supplied the module directly
+    if remapped is None:
+        new_module = module_name
+        new_name = name
+    else:
+        if isinstance(remapped, str): # Split a string into a tuple, e.g. 'foo.bar.Cat' to ('foo.bar', 'Cat')
+            remapped = tuple(remapped.rsplit('.', 1))
+            len_remap = len(remapped)
+            if len_remap == 2: # Usual case
+                new_module = remapped[0]
+                new_name   = remapped[1]
+            elif len_remap == 1:
+                new_module = remapped[0]
+                new_name   = name
+            else:
+                errormsg = f'Was expecting 1 or 2 strings, got {len_remap}'
+                raise ValueError(errormsg)
+    module = importlib.import_module(new_module)
+    obj = getattr(module, new_name) # pragma: no cover
     return obj
 
 
@@ -2204,6 +2210,8 @@ class _RobustUnpickler(dill.Unpickler):
     def __init__(self, bytesio, fix_imports=True, encoding="latin1", errors="ignore", remapping=None, auto_remap=True):
         super().__init__(bytesio, fix_imports=fix_imports, encoding=encoding, errors=errors)
         self.remapping = scu.mergedicts(known_fixes if auto_remap else {}, remapping)
+        self.remappings = sco.objdict() # Store any handled remappings
+        self.errors = sco.objdict() # Store any errors encountered
         return
 
     def find_class(self, module_name, name, verbose=True):
@@ -2212,12 +2220,14 @@ class _RobustUnpickler(dill.Unpickler):
         except Exception as E1:
             try:
                 obj = _remap_module(self.remapping, module_name, name)
-                warnmsg = f'Fixing known unpickling deprecation "{str(E1)}"'
+                self.remappings[(module_name, name)] = E1 # Store the remapping
+                warnmsg = f'Fixing known unpickling remapping "{str(E1)}"'
                 warnings.warn(warnmsg, category=UserWarning, stacklevel=2)
             except Exception as E2:
                 warnmsg = f'Unpickling warning: could not import {module_name}.{name}:\n{str(E1)}\n{str(E2)}'
                 if verbose: print(warnmsg)
                 obj = _makefailed(module_name=module_name, name=name, error=str(E2), exception=E2, tb=scu.traceback(E2))
+                self.errors[(module_name, name)] = E2 # Store the error
             
         return obj
 
