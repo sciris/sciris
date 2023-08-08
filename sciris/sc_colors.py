@@ -544,7 +544,7 @@ def manualcolorbar(data=None, vmin=0, vmax=1, vcenter=None, colors=None, values=
             spacing='proportional'
         )
 
-    *New in version 3.0.1.*
+    *New in version 3.1.0.*
     '''
     labelkwargs = scu.mergedicts(labelkwargs)
     
