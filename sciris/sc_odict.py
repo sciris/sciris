@@ -1160,7 +1160,7 @@ class objdict(odict):
 
     def __repr__(self, *args, **kwargs):
         ''' Use odict repr, but with a custom class name and no quotes '''
-        return odict.__repr__(self, quote='', numsep='.', classname='objdict()', *args, **kwargs)
+        return odict.__repr__(self, quote='', numsep='.', classname='objdict', *args, **kwargs)
 
 
     def __getattribute__(self, attr):

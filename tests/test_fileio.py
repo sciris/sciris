@@ -8,10 +8,11 @@ import pandas as pd
 import pylab as pl
 import openpyxl
 import sciris as sc
+import pytest
 
 # Define filenames
-filedir = sc.thispath() / 'files'
 files = sc.prettyobj()
+filedir = sc.thispath() / 'files'
 files.excel  = filedir / 'test.xlsx'
 files.binary = filedir / 'test.obj'
 files.text   = filedir / 'text.txt'
@@ -153,7 +154,8 @@ def test_load_corrupted():
     dead_path = filedir / 'deadclass.obj'
     
     print('Loading with no remapping...')
-    o.obj3 = sc.load(dead_path)
+    with pytest.warns(sc.UnpicklingWarning):
+        o.obj3 = sc.load(dead_path)
     print(o.obj3)
     print(f'Loading corrupted object succeeded, x={o.obj3.x}')
 

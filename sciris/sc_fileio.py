@@ -135,7 +135,7 @@ def _load_filestr(filename, folder=None, verbose=False):
     return filestr
 
 
-def load(filename=None, folder=None, verbose=False, die=None, remapping=None, 
+def load(filename=None, folder=None, verbose=None, die=None, remapping=None, 
          method=None, auto_remap=True, **kwargs):
     '''
     Load a file that has been saved as a gzipped pickle file, e.g. by :func:`sc.save() <save>`.
@@ -155,11 +155,11 @@ def load(filename=None, folder=None, verbose=False, die=None, remapping=None,
 
     Args:
         filename   (str/Path): the filename (or full path) to load
-        folder     (str/Path): the folder
-        verbose    (bool):     print details
+        folder     (str/Path): the folder (not needed if the filename includes it)
+        verbose    (bool):     print nothing (False), critical warnings (None), or full detail (True)
         die        (bool):     whether to raise an exception if errors are encountered (otherwise, load as much as possible)
-        remapping  (dict):     way of mapping old/unavailable module names to new
-        method     (str):      method for loading ('pickle' or 'dill'; if None, try both)
+        remapping  (dict):     way of mapping old/unavailable module names to new (see below for example)
+        method     (str):      method for loading ('pickle', 'dill', 'pandas', or 'robust'; if None, try all)
         auto_remap (bool):     whether to use known deprecations to load failed pickles
         kwargs     (dict):     passed to ``pickle.loads()``/``dill.loads()``
 
@@ -168,7 +168,7 @@ def load(filename=None, folder=None, verbose=False, die=None, remapping=None,
         obj = sc.load('myfile.obj') # Standard usage
         old = sc.load('my-old-file.obj', method='dill', ignore=True) # Load classes from saved files
         old = sc.load('my-old-file.obj', remapping={'foo.Bar': cat.Mat}) # If loading a saved object containing a reference to foo.Bar that is now cat.Mat
-        old = sc.load('my-old-file.obj', remapping={('foo', 'Bar'): ('cat', 'Mat')}) # Equivalent to the above
+        old = sc.load('my-old-file.obj', remapping={('foo', 'Bar'): ('cat', 'Mat')}, die=False) # Equivalent to the above but don't fail
 
     | *New in version 1.1.0:* "remapping" argument
     | *New in version 1.2.2:* ability to load non-gzipped pickles; support for dill; arguments passed to loader
@@ -2070,7 +2070,8 @@ def savespreadsheet(filename=None, data=None, folder=None, sheetnames=None, clos
 #%% Pickling support methods
 ##############################################################################
 
-__all__ += ['Failed']
+__all__ += ['UnpicklingWarning', 'Failed']
+
 
 # Pandas provides a class compatibility map, so use that by default
 try:
@@ -2085,6 +2086,16 @@ except (NameError or AttributeError):
 
 # Keep a temporary global variable of unpickling errors, and a permanent one of failed classes
 unpickling_errors = sco.objdict()
+
+
+class UnpicklingWarning(UserWarning):
+    '''
+    A warning raised when unpickling an object fails
+    
+    *New in version 3.1.0.*    
+    '''
+    pass
+
 
 class Failed:
     '''
@@ -2208,18 +2219,16 @@ def _remap_module(remapping, module_name, name):
     key3 = module_name # Just the module, no class
     remapped = remapping.get(key1) or remapping.get(key2) or remapping.get(key3) # If the user has supplied the module directly
     
-    do type stuff here
-    if isinstance(remapped, type) # THIS WONT WORK
-    if remapped is not None:
+    # Remapping failed, just use original names
+    if remapped is None: 
+        remapped = (module_name, name)
         
-        # Check that we have a string or tuple
-        if isinstance(remapped, str): # Split a string into a tuple, e.g. 'foo.bar.Cat' to ('foo.bar', 'Cat')
-            remapped = tuple(remapped.rsplit('.', 1)) # e.g. 'foo.bar.Cat' -> ('foo.bar',)
-        elif not isinstance(remapped, (tuple, list)):
-            errormsg = f'Expecting the remapping to be a string or tuple, not {type(remapped)}'
-            raise TypeError(errormsg)
-        
-        # Handle different types of input
+    # Check if we have a string or tuple
+    if isinstance(remapped, str): # Split a string into a tuple, e.g. 'foo.bar.Cat' to ('foo.bar', 'Cat')
+        remapped = tuple(remapped.rsplit('.', 1)) # e.g. 'foo.bar.Cat' -> ('foo.bar',)
+    
+    # If it's a tuple, handle it as a new name
+    if isinstance(remapped, tuple):
         len_remap = len(remapped)
         if len_remap == 2: # Usual case, e.g. ('foo.bar', 'Cat')
             module_name = remapped[0]
@@ -2229,65 +2238,62 @@ def _remap_module(remapping, module_name, name):
         else:
             errormsg = f'Was expecting 1 or 2 strings, but got {len_remap} from "{remapped}"'
             raise ValueError(errormsg)
+
+        # Actually attempt the import
+        module = importlib.import_module(module_name)
+        obj = getattr(module, name)
     
-    # Actually attempt the import
-    module = importlib.import_module(module_name)
-    obj = getattr(module, name)
+    # Otherwise, assume the user supplied the object/class directly
+    else:
+        obj = remapped
+        
     return obj
 
 
 class _RobustUnpickler(dill.Unpickler):
     ''' Try to import an object, and if that fails, return a Failed object rather than crashing '''
 
-    def __init__(self, bytesio, fix_imports=True, encoding="latin1", errors="ignore", remapping=None, auto_remap=True):
-        print('hiiiii there', remapping)
+    def __init__(self, bytesio, fix_imports=True, encoding="latin1", errors="ignore", 
+                 remapping=None, auto_remap=True, verbose=None):
         super().__init__(bytesio, fix_imports=fix_imports, encoding=encoding, errors=errors)
         self.remapping = scu.mergedicts(known_fixes if auto_remap else {}, remapping)
         self.fixes = sco.objdict() # Store any handled remappings
         self.errors = sco.objdict() # Store any errors encountered
+        self.verbose = verbose
         return
 
-    def find_class(self, module_name, name, verbose=True):
+    def find_class(self, module_name, name):
         key = (module_name, name)
-        print('1 HIIII i am', key)
         try:
-            print('2 trying regular', key)
             C = super().find_class(module_name, name) # "C" for "class"
-            print('3 regular worked', key)
         except Exception as E1:
-            print('4 oh no!', str(E1))
             try:
-                print('5 trying remap', self.remapping)
                 C = _remap_module(self.remapping, module_name, name)
-                print('6 remap worked!', key)
                 self.fixes[key] = E1 # Store the fixed remapping
-                warnmsg = f'Fixing known unpickling remapping "{str(E1)}"'
-                warnings.warn(warnmsg, category=UserWarning, stacklevel=2)
+                if self.verbose:
+                    print(f'Applying known remapping: {module_name}.{name} → {C}')
             except Exception as E2:
-                print('7 oh no not again!', str(E2))
-                warnmsg = f'Unpickling error: could not import {module_name}.{name}:\n{str(E1)}\n{str(E2)}'
-                warnings.warn(warnmsg, category=UserWarning, stacklevel=2)
-                print('8 making failed', key)
+                if self.verbose is not None:
+                    warnmsg = f'Unpickling error: could not import {module_name}.{name}:\n{str(E1)}\n{str(E2)}'
+                    warnings.warn(warnmsg, category=UnpicklingWarning, stacklevel=2)
                 C = _makefailed(module_name=module_name, name=name, exc=E2)
                 self.errors[key] = E2 # Store the error
-                print('9 made failed', key)
         
-        print('10 returning', C)
-            
         return C
 
     def load(self, *args, **kwargs):
         try:
             obj = super().load(*args, **kwargs) # This will still use the custom find_class()
         except Exception as E:
-            warnmsg = f'Top-level unpickling error: \n{str(E)}'
-            warnings.warn(warnmsg, category=UserWarning, stacklevel=2)
+            if self.verbose is not False:
+                warnmsg = f'Top-level unpickling error: \n{str(E)}'
+                warnings.warn(warnmsg, category=UnpicklingWarning, stacklevel=2)
             F = _makefailed(module_name='module_unknown', name='name_unknown', exc=E, fixes=self.fixes, errors=self.errors) # Create a failed object
             obj = F() 
         return obj
 
 
-def _unpickler(string=None, die=False, verbose=False, remapping=None, method=None, auto_remap=True, **kwargs):
+def _unpickler(string=None, die=False, verbose=None, remapping=None, method=None, auto_remap=True, **kwargs):
     ''' Not invoked directly; used as a helper function for load() '''
 
     # Sanitize kwargs, since wrapped in try-except statements otherwise
@@ -2301,12 +2307,13 @@ def _unpickler(string=None, die=False, verbose=False, remapping=None, method=Non
             raise ValueError(errormsg)
 
     # Define the pickling methods
+    robust_kw = dict(remapping=remapping, auto_remap=auto_remap, verbose=verbose)
     methods = dict(
         pickle = pkl.loads,
         dill   = dill.loads,
         latin  = lambda s, **kw: pkl.loads(s, encoding=kw.pop('encoding', 'latin1'), **kw),
         pandas = lambda s, **kw: pd.read_pickle(io.BytesIO(s), **kw),
-        robust = lambda s, **kw: _RobustUnpickler(io.BytesIO(s), remapping=remapping, auto_remap=auto_remap, **kwargs).load(),
+        robust = lambda s, **kw: _RobustUnpickler(io.BytesIO(s), **robust_kw, **kw).load(),
     )
 
     # Methods that allow for loading an object without any failed instances (if die=True)
@@ -2341,9 +2348,17 @@ def _unpickler(string=None, die=False, verbose=False, remapping=None, method=Non
     if obj is None:
         errormsg = 'All available unpickling methods failed: ' + '\n'.join([f'{k}: {v}' for k,v in errors.items()])
         raise Exception(errormsg)
-    elif isinstance(obj, Failed):
-        print('Warning, the following errors were encountered during unpickling:')
-        obj.showfailure(verbose=False)
+    elif len(unpickling_errors):
+        if verbose is not False:
+            warnmsg = 'Warning, the following errors were encountered during unpickling:\n' + repr(unpickling_errors)
+            warnings.warn(warnmsg, category=UnpicklingWarning, stacklevel=2)
+        
+        # Try to store the errors in the object, but don't worry if it doesn't succeed
+        try:    setattr(obj, 'unpickling_errors', scu.dcp(unpickling_errors))
+        except: pass
+    
+    # Reset the unpickling errors
+    unpickling_errors.clear()
 
     return obj
 
