@@ -47,8 +47,9 @@ def freeze(lower=False):
 
     *New in version 1.2.2.*
     '''
-    import pkg_resources as pkgr # Imported here since slow (>0.1 s)
-    raw = dict(tuple(str(ws).split()) for ws in pkgr.working_set)
+    import importlib.metadata as imd # Import here since only used once and a bit slow (20 ms)
+    working_set = list(imd.distributions())
+    raw = {ws.name:ws.version for ws in working_set}
     keys = sorted(raw.keys())
     if lower: # pragma: no cover
         labels = {k:k.lower() for k in keys}
@@ -83,7 +84,7 @@ def require(reqs=None, *args, exact=False, detailed=False, die=True, warn=True, 
     *New in version 1.2.2.*
     *New in version 3.0.0:* "warn" argument
     '''
-    import pkg_resources as pkgr # Imported here since slow (>0.1 s)
+    import pkg_resources as pkgr # Imported here since slow (>0.1 s); deprecated, but no direct equivalent in importlib or packaging
 
     # Handle inputs
     reqlist = list(args)
