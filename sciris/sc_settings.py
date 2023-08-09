@@ -23,10 +23,6 @@ from . import sc_utils as scu
 from . import sc_odict as sco
 from . import sc_printing as scp
 
-# Matplotlib regression support
-try:    get_backend = pl.rcParams._get_backend_or_none # Matplotlib >= 3.7
-except: get_backend = lambda: '' # Matplotlib <= 3.6, don't try to get the backend because it's too slow
-
 
 __all__ = ['style_simple', 'style_fancy', 'ScirisOptions', 'options', 'parse_env', 'help']
 
@@ -235,7 +231,7 @@ class ScirisOptions(sco.objdict):
         options.jupyter = parse_env('SCIRIS_JUPYTER', 'auto', 'str')
 
         optdesc.backend = 'Set the Matplotlib backend (use "agg" for non-interactive)'
-        options.backend = parse_env('SCIRIS_BACKEND', get_backend(), 'str') # This is needed to avoid creating the backend if it doesn't exist, which can be extremely slow
+        options.backend = parse_env('SCIRIS_BACKEND', '', 'str') # Unfortunately pl.get_backend() creates the backend if it doesn't exist, which can be extremely slow
 
         optdesc.rc = 'Matplotlib rc (run control) style parameters used during plotting -- usually set automatically by "style" option'
         options.rc = {}
@@ -305,6 +301,15 @@ class ScirisOptions(sco.objdict):
             self.use_style()
 
         return
+    
+    
+    def reset(self):
+        '''
+        Alias to sc.options.set('defaults')
+        
+        *New in version 3.1.0.*
+        '''
+        self.set('defaults')
 
 
     def context(self, **kwargs):
@@ -329,7 +334,11 @@ class ScirisOptions(sco.objdict):
             if   key == 'fontsize': pl.rcParams['font.size']   = value
             elif key == 'font':     pl.rcParams['font.family'] = value
             elif key == 'dpi':      pl.rcParams['figure.dpi']  = value
-            elif key == 'backend':  pl.switch_backend(value)
+            elif key == 'backend': 
+                # Before switching the backend, ensure the default value has been populated -- located here since slow if called on import
+                if not self.orig_options['backend']:
+                    self.orig_options['backend'] = pl.get_backend()
+                pl.switch_backend(value)
             else: raise KeyError(f'Key {key} not found')
         return
 
