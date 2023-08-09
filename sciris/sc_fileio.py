@@ -2283,7 +2283,7 @@ class _RobustUnpickler(dill.Unpickler):
 
     def load(self, *args, **kwargs):
         try:
-            obj = super().load(*args, **kwargs) # This will still use the custom find_class()
+            obj = super().load(*args, **kwargs) # Actually load the object!
         except Exception as E:
             if self.verbose is not False:
                 warnmsg = f'Top-level unpickling error: \n{str(E)}'

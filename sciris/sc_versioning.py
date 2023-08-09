@@ -47,9 +47,8 @@ def freeze(lower=False):
 
     *New in version 1.2.2.*
     '''
-    import importlib.metadata as imd # Import here since only used once and a bit slow (20 ms)
-    working_set = list(imd.distributions())
-    raw = {ws.name:ws.version for ws in working_set}
+    import pkg_resources as pkgr # Imported here since slow (>0.1 s); deprecated, but importlib doesn't work on older Python versions
+    raw = dict(tuple(str(ws).split()) for ws in pkgr.working_set)
     keys = sorted(raw.keys())
     if lower: # pragma: no cover
         labels = {k:k.lower() for k in keys}
