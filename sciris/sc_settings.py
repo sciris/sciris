@@ -25,7 +25,7 @@ from . import sc_printing as scp
 
 # Matplotlib regression support
 try:    get_backend = pl.rcParams._get_backend_or_none # Matplotlib >= 3.7
-except: get_backend = pl.get_backend # Matplotlib <= 3.6
+except: get_backend = lambda: '' # Matplotlib <= 3.6, don't try to get the backend because it's too slow
 
 
 __all__ = ['style_simple', 'style_fancy', 'ScirisOptions', 'options', 'parse_env', 'help']
