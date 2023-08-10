@@ -1,4 +1,8 @@
 #!/bin/bash
+# Build docs. Example usage:
+#  ./build_docs # default
+#  ./build_docs never # don't rebuild notebooks
+# ./build_docs noclean # don't clean up tutorials
 
 echo 'Building docs...'
 start=$SECONDS
@@ -19,8 +23,17 @@ if [[ "$*" == *"debug"* ]]; then
 else
     export BUILD_DEBUG=
 fi
-make html # Actually make
 
+# Actually make
+make html 
+
+# Clean up tutorials
+if [[ "$*" != *"noclean"* ]]; then
+    cd tutorials
+    ./clean_outputs
+fi
+
+# Tidy up
 duration=$(( SECONDS - start ))
 echo "Docs built after $duration seconds."
 echo "Index:"

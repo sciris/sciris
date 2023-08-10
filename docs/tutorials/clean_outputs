@@ -37,4 +37,7 @@ if clean_nb:
 else:
     print('\nNot clearing notebook output\n')
 
+# Undo modifications to dancing_lines.gif
+sc.runcommand('git checkout -- dancing_lines.gif')
+
 T.toc('Done!\n\n')
