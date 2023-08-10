@@ -135,7 +135,7 @@ def _load_filestr(filename, folder=None, verbose=False):
     return filestr
 
 
-def load(filename=None, folder=None, verbose=None, die=None, remapping=None, 
+def load(filename=None, folder=None, verbose=None, die=False, remapping=None, 
          method=None, auto_remap=True, **kwargs):
     '''
     Load a file that has been saved as a gzipped pickle file, e.g. by :func:`sc.save() <save>`.
@@ -157,7 +157,7 @@ def load(filename=None, folder=None, verbose=None, die=None, remapping=None,
         filename   (str/Path): the filename (or full path) to load
         folder     (str/Path): the folder (not needed if the filename includes it)
         verbose    (bool):     print nothing (False), critical warnings (None), or full detail (True)
-        die        (bool):     whether to raise an exception if errors are encountered (otherwise, load as much as possible)
+        die        (bool):     whether to raise an exception if errors are encountered (otherwise, load as much as possible via the 'robust' method)
         remapping  (dict):     way of mapping old/unavailable module names to new (see below for example)
         method     (str):      method for loading ('pickle', 'dill', 'pandas', or 'robust'; if None, try all)
         auto_remap (bool):     whether to use known deprecations to load failed pickles
@@ -168,7 +168,7 @@ def load(filename=None, folder=None, verbose=None, die=None, remapping=None,
         obj = sc.load('myfile.obj') # Standard usage
         old = sc.load('my-old-file.obj', method='dill', ignore=True) # Load classes from saved files
         old = sc.load('my-old-file.obj', remapping={'foo.Bar': cat.Mat}) # If loading a saved object containing a reference to foo.Bar that is now cat.Mat
-        old = sc.load('my-old-file.obj', remapping={('foo', 'Bar'): ('cat', 'Mat')}, die=False) # Equivalent to the above but don't fail
+        old = sc.load('my-old-file.obj', remapping={('foo', 'Bar'): ('cat', 'Mat')}, method='robust') # Equivalent to the above but force remapping and don't fail
 
     | *New in version 1.1.0:* "remapping" argument
     | *New in version 1.2.2:* ability to load non-gzipped pickles; support for dill; arguments passed to loader
@@ -2076,7 +2076,7 @@ __all__ += ['UnpicklingWarning', 'Failed']
 # Pandas provides a class compatibility map, so use that by default
 try:
     known_fixes = pd.compat.pickle_compat._class_locations_map
-except (NameError or AttributeError):
+except (NameError or AttributeError): # pragma: no cover
     warnmsg = 'Could not load full pandas pickle compatibility map; using manual subset of known regressions'
     warnings.warn(warnmsg, category=UserWarning, stacklevel=2)
     known_fixes = {
@@ -2254,7 +2254,7 @@ class _RobustUnpickler(dill.Unpickler):
     ''' Try to import an object, and if that fails, return a Failed object rather than crashing '''
 
     def __init__(self, bytesio, fix_imports=True, encoding="latin1", errors="ignore", 
-                 remapping=None, auto_remap=True, verbose=None):
+                 remapping=None, auto_remap=True, die=False, verbose=None):
         super().__init__(bytesio, fix_imports=fix_imports, encoding=encoding, errors=errors)
         self.remapping = scu.mergedicts(known_fixes if auto_remap else {}, remapping)
         self.fixes = sco.objdict() # Store any handled remappings
@@ -2275,6 +2275,7 @@ class _RobustUnpickler(dill.Unpickler):
             except Exception as E2:
                 if self.verbose is not None:
                     warnmsg = f'Unpickling error: could not import {module_name}.{name}:\n{str(E1)}\n{str(E2)}'
+                    if die: raise 
                     warnings.warn(warnmsg, category=UnpicklingWarning, stacklevel=2)
                 C = _makefailed(module_name=module_name, name=name, exc=E2)
                 self.errors[key] = E2 # Store the error
@@ -2317,18 +2318,14 @@ def _unpickler(string=None, die=False, verbose=None, remapping=None, method=None
     )
 
     # Methods that allow for loading an object without any failed instances (if die=True)
-    if method == 'pickle':
-        unpicklers = ['pickle', 'pandas', 'latin']
-    elif method == 'dill':
-        unpicklers = ['dill']
-    elif method in methods: # If specified directly
-        unpicklers = method
-    else:
-        unpicklers = ['pickle', 'pandas', 'latin', 'dill']
+    if   method is None:      unpicklers = ['pickle', 'pandas', 'latin', 'dill']
+    elif method == 'pickle':  unpicklers = ['pickle', 'pandas', 'latin']
+    elif method == 'dill':    unpicklers = ['dill']
+    else:                     unpicklers = scu.tolist(method)
 
     # If permitted, return an object that encountered errors in the loading process and therefore may not be valid
     # Such an object might require further fixes to be made by the user
-    if not die:
+    if not die or remapping is not None:
         unpicklers += ['robust']
 
     errors = {}

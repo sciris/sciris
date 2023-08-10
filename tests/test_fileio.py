@@ -155,16 +155,42 @@ def test_load_corrupted():
     
     print('Loading with no remapping...')
     with pytest.warns(sc.UnpicklingWarning):
-        o.obj3 = sc.load(dead_path)
-    print(o.obj3)
-    print(f'Loading corrupted object succeeded, x={o.obj3.x}')
+        o.obj1 = sc.load(dead_path)
+    print(o.obj1)
+    print(f'Loading corrupted object succeeded, x={o.obj1.x}')
 
     print('Loading with remapping...')
-    o.obj4 = sc.load(dead_path, remapping={'deadclass.DeadClass': LiveClass})
-    o.obj5 = sc.load(dead_path, remapping={('deadclass', 'DeadClass'): LiveClass}, verbose=True)
-    for obj in [o.obj4, o.obj5]:
+    o.obj2 = sc.load(dead_path, remapping={'deadclass.DeadClass': LiveClass})
+    o.obj3 = sc.load(dead_path, remapping={('deadclass', 'DeadClass'): LiveClass}, verbose=True)
+    for obj in [o.obj2, o.obj3]:
         assert isinstance(obj, LiveClass)
-    print(f'Loading remapped object succeeded, {o.obj4.disp()}, object: {o.obj4}')
+    print(f'Loading remapped object succeeded, {o.obj2.disp()}, object: {o.obj2}')
+    
+    print('Loading with intentionally incorrect remapping')
+    
+    # F = type(
+    #     "TempClass", # Name of the class -- can all be the same, but distinct from Failed that it has populated names
+    #     (object,), # Inheritance
+    #     {'x':None, 
+    #      '__init__': lambda self, x: setattr(self, 'x', x),
+    #      'disp': lambda self: f'x is {self.x}'}, # Attributes
+    # )
+    class TempClass():
+        def __init__(self, x):
+            self.x = x
+        def disp(self):
+            return f'x is {self.x}'
+    
+    data = TempClass(np.arange(5))
+    sc.save(files.binary, data)
+    
+    # del F
+    # del globals()['TempClass']
+    del locals()['TempClass']
+    
+    o.obj4 = sc.load(files.binary, die=True)#method='robust')
+    
+    
     
     return o
 
