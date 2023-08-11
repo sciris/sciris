@@ -167,30 +167,14 @@ def test_load_corrupted():
     print(f'Loading remapped object succeeded, {o.obj2.disp()}, object: {o.obj2}')
     
     print('Loading with intentionally incorrect remapping')
+    o.obj4 = sc.load(dead_path, remapping={'deadclass': 'not_a_class'}, verbose=False)
     
-    # F = type(
-    #     "TempClass", # Name of the class -- can all be the same, but distinct from Failed that it has populated names
-    #     (object,), # Inheritance
-    #     {'x':None, 
-    #      '__init__': lambda self, x: setattr(self, 'x', x),
-    #      'disp': lambda self: f'x is {self.x}'}, # Attributes
-    # )
-    class TempClass():
-        def __init__(self, x):
-            self.x = x
-        def disp(self):
-            return f'x is {self.x}'
-    
-    data = TempClass(np.arange(5))
-    sc.save(files.binary, data)
-    
-    # del F
-    # del globals()['TempClass']
-    del locals()['TempClass']
-    
-    o.obj4 = sc.load(files.binary, die=True)#method='robust')
-    
-    
+    print('Loading with error on initialization')
+    class DyingClass():
+        def __new__(self):
+            raise Exception('Intentional exception')
+    with pytest.warns(sc.UnpicklingWarning):
+        o.obj5 = sc.load(dead_path, remapping={'deadclass.DeadClass': DyingClass}, method='robust', verbose=True)
     
     return o
 

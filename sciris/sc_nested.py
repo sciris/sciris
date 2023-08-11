@@ -2,6 +2,7 @@
 Nested dictionary functions.
 '''
 
+import re
 import itertools
 from functools import reduce, partial
 from . import sc_utils as scu
@@ -345,7 +346,7 @@ def flattendict(nesteddict, sep=None, _prefix=None):
 
 # Define a custom "None" value to allow searching for actual None values
 _None = 'sc.search() placeholder'
-def search(obj, key=_None, value=_None, aslist=True, _trace=None):
+def search(obj, query=_None, key=_None, value=_None, aslist=True, method='exact', verbose=False, _trace=None):
     """
     Find a key/attribute or value within a list, dictionary or object.
 
@@ -354,9 +355,12 @@ def search(obj, key=_None, value=_None, aslist=True, _trace=None):
 
     Args:
         obj (any): A dict, list, or object
-        key (any): The key to search for (or a function)
+        query (any): The key or value to search for (or a function); equivalent to setting both ``key`` and ``value``
+        key (any): The key to search for
         value (any): The value to search for
         aslist (bool): return entries as a list (else, return as a string)
+        method (str): choose how to check for matches: 'exact' (test equality), 'partial' (partial/lowercase string match), or 'regex' (treat as a regex expression)
+        verbose (bool): whether to print details of the search
         _trace: Not for user input - internal variable used for recursion
 
     Returns:
@@ -367,10 +371,10 @@ def search(obj, key=_None, value=_None, aslist=True, _trace=None):
     **Examples**::
 
         # Create a nested dictionary
-        nested = {'a':{'foo':1, 'bar':2}, 'b':{'car':3, 'cat':[1,2,4,8]}}
+        nested = {'a':{'foo':1, 'bar':['moat', 'goat']}, 'b':{'car':3, 'cat':[1,2,4,8]}}
         
         # Find keys
-        keymatches = sc.search(nested, 'bar', aslist=False) # Returns ['["a"]["bar"]', '["b"]["bar"]']
+        keymatches = sc.search(nested, 'bar', aslist=False)
         
         # Find values
         val = 4
@@ -381,25 +385,50 @@ def search(obj, key=_None, value=_None, aslist=True, _trace=None):
         def find(v):
             return True if isinstance(v, int) and v >= 3 else False
             
-        found = sc.search(nested, value=find) # Returns  [['b', 'cat', 2]]
+        found = sc.search(nested, value=find)
+        
+        # Find partial or regex matches
+        found = sc.search(nested, key='oat', method='partial') # Search keys only
+        found = sc.search(nested, '^.ar', method='regex', verbose=True)
     
     *New in version 3.0.0:* ability to search for values as well as keys/attributes; "aslist" argument
+    *New in version 3.1.0:* "query", "method", and "verbose" keywords; improved searching for lists
     """
     
-    def check_match(source, target):
+    # Collect keywords that won't change, for later use in the recursion
+    kw = dict(method=method, verbose=verbose, aslist=aslist)
+    
+    def check_match(source, target, method):
         ''' Check if there is a match between the "source" and "target" '''
-        if target != _None: # See above for definition
+        if target != _None: # See above for definition; a target was supplied
             if callable(target):
                 match = target(source)
-            else:
+            elif method == 'exact':
                 match = target == source
-        else:
+            elif method in [str, 'string', 'partial']:
+                match = str(target).lower() in str(source).lower()
+            elif method == 'regex':
+                match = bool(re.match(str(target), str(source)))
+            else:
+                errormsg = f'Could not understand method "{method}": must be "exact", "string", or "regex"'
+                raise ValueError(errormsg)
+        else: # No target was supplied, return no match
             match = False
+        
         return match
-            
+    
+    # Handle query
+    if query != _None:
+        if key != _None or value != _None:
+            errormsg = '"query" cannot be used with "key" or "value"; it is a shortcut to set both'
+            raise ValueError(errormsg)
+        key = query
+        value = query
 
+    # Look for matches
     matches = []
 
+    # Determine object type
     itertype = check_iter_type(obj)
     if itertype == 'dict':
         o = obj
@@ -408,14 +437,17 @@ def search(obj, key=_None, value=_None, aslist=True, _trace=None):
     elif itertype == 'object':
         o = obj.__dict__
     else:
+        if verbose > 1: print(f'  For trace="{_trace}", cannot descend into "{type(obj)}"')
         return matches
     
+    # Initialize the trace if it doesn't exist
     if _trace is None:
         if aslist:
             _trace = []
         else:
             _trace = ''
         
+    # Iterate over the items
     for k,v in o.items():
 
         if aslist:
@@ -428,12 +460,28 @@ def search(obj, key=_None, value=_None, aslist=True, _trace=None):
             else:
                 trace = _trace + f'.{k}'
 
-        for source,target in [[k, key], [v, value]]:
-            if check_match(source, target):
-                matches.append(trace)
+        # Actually check for matches
+        kk = v if itertype == 'list' else k # "Keys" don't make sense for lists, so just duplicate values
+        for source,target in [[kk, key], [v, value]]:
+            if check_match(source, target, method=method):
+                if trace not in matches:
+                    matches.append(trace)
+        
+        if verbose:
+            nmatches = len(matches)
+            msg = f'Checking trace="{trace}" for key="{key}", value="{value}" using "{method}": '
+            if nmatches:
+                msg += f'found {len(matches)} matches'
+            else:
+                msg += 'no matches'
+            print(msg)
 
-        matches += search(o[k], key, value, aslist=aslist, _trace=trace)
-
+        # Continue searching recursively, and avoid duplication
+        newmatches = search(o[k], key=key, value=value, _trace=trace, **kw)
+        for newmatch in newmatches:
+            if newmatch not in matches:
+                matches.append(newmatch)
+    
     return matches
 
 

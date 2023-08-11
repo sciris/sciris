@@ -2070,7 +2070,7 @@ def savespreadsheet(filename=None, data=None, folder=None, sheetnames=None, clos
 #%% Pickling support methods
 ##############################################################################
 
-__all__ += ['UnpicklingWarning', 'Failed']
+__all__ += ['UnpicklingWarning', 'UnpicklingError', 'Failed']
 
 
 # Pandas provides a class compatibility map, so use that by default
@@ -2096,6 +2096,14 @@ class UnpicklingWarning(UserWarning):
     '''
     pass
 
+class UnpicklingError(pkl.UnpicklingError):
+    '''
+    An error raised when unpickling an object fails
+    
+    *New in version 3.1.0.*    
+    '''
+    pass
+
 
 class Failed:
     '''
@@ -2110,9 +2118,9 @@ class Failed:
     _errors  = None
 
     def __init__(self, *args, **kwargs):
-        if args:
+        if args: # pragma: no cover
             self.args = args
-        if kwargs:
+        if kwargs: # pragma: no cover
             self.kwargs = kwargs
         self.__set_empty()
         return
@@ -2128,7 +2136,7 @@ class Failed:
         try:
             self.__dict__.update(state) # NB, does not support slots
         except Exception as E:
-            print('FOUND AN EXCEPTION', E)
+            print('Unable to set state, continuing:', E)
             self.__set_empty()
             self.state = state
         return
@@ -2275,8 +2283,8 @@ class _RobustUnpickler(dill.Unpickler):
             except Exception as E2:
                 if self.verbose is not None:
                     warnmsg = f'Unpickling error: could not import {module_name}.{name}:\n{str(E1)}\n{str(E2)}'
-                    if die: raise 
-                    warnings.warn(warnmsg, category=UnpicklingWarning, stacklevel=2)
+                    if die: raise warnmsg
+                    else:   warnings.warn(warnmsg, category=UnpicklingWarning, stacklevel=2)
                 C = _makefailed(module_name=module_name, name=name, exc=E2)
                 self.errors[key] = E2 # Store the error
         
