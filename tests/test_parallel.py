@@ -2,12 +2,12 @@
 Test parallelization functions and classes
 '''
 
-import inspect
 import sciris as sc
 import numpy as np
 import pylab as pl
 import multiprocessing as mp
 import pytest
+ut = sc.importbypath(sc.thispath() / 'sc_test_utils.py')
 
 if 'doplot' not in locals(): doplot = False
 
@@ -169,12 +169,8 @@ def test_class():
         sc.Parallel(f, 10, parallelizer='serial-async')
         
     print('Validation: checking call signatures')
-    sigs = sc.objdict()
-    for k,func in zip(['func', 'method'], [sc.parallelize, sc.Parallel.__init__]):
-        sigs[k] = set(list(inspect.signature(func).parameters.keys()))
-    sigs.func |= set(['self', 'label'])
-    assert sigs.func == sigs.method
-        
+    ut.check_signatures(sc.parallelize, sc.Parallel.__init__, extras=['self', 'label'], die=True)
+    
     return P
 
 

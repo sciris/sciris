@@ -31,64 +31,21 @@ Version history:
 '''
 
 import sys
-import datetime as dt
-import dateutil as du
-import numpy as np
-import pandas as pd
 import sciris as sc
+ut = sc.importbypath(sc.thispath() / '..' / 'sc_test_utils.py')
 
 # If using pypi-timemachine, set the corresponding date here
-date = '2023-04-19'
+date = '2023-08-11'
 as_archive = True
 
 if len(sys.argv) > 1:
     date = sys.argv[1]
 if len(sys.argv) > 2:
     as_archive = int(sys.argv[2])
-    
-    
-def create_pandas_data(alt=False):
-    """ Create the pandas pickle data -- adapted from pandas/tests/io/generate_legacy_storage_files.py """
-    data = sc.objdict(
-        a = [0.0, 1.0, 2.0, 3.0 + alt, np.nan],
-        b = [0, 1, 0, 1, 0 + alt],
-        c = ["foo1", "foo2", "foo3", "foo4", "foo5" + alt*'alt'],
-        d = pd.date_range("1/1/2009", periods=5),
-        e = [0.0, 1, pd.Timestamp("20100101"), "foo", 2.0+alt],
-    )
-    if alt:
-        data.f = ['Using', 'alternate', 'data', 'creation', 'method']
 
-    index = sc.objdict(
-        ind_int   = pd.Index(np.arange(10+alt)),
-        ind_date  = pd.date_range("20130101", periods=10+alt),
-        ind_float = pd.Index(np.arange(10+alt, dtype=np.float64)),
-        ind_range = pd.RangeIndex(10+alt),
-    )
-
-    frame = pd.DataFrame(data)
-    
-    out = sc.objdict(data=data, frame=frame, index=index)
-
-    return out
-
-
-class MyClass:
-    ''' Store common data types for compatibility checks'''
-    
-    def __init__(self):
-        self.date = date
-        self.strings = ['a', 'b', 'c', 'd', 'e']
-        self.nparray = np.arange(5)
-        self.datetime = dt.datetime.now(du.tz.tzutc())
-        self.pandas = create_pandas_data()
-
-    def sum(self):
-        return self.nparray.sum()
-
-myclass = MyClass()
+myclass = ut.MyClass(date=date)
 
 if as_archive:
-    sc.savearchive('archive_{date}.zip', myclass)
+    sc.savearchive(f'archive_{date}.zip', myclass)
 else:
     sc.saveobj(f'pickle_{date}.obj', myclass.__dict__)
