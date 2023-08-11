@@ -4,6 +4,7 @@ Nested dictionary functions.
 
 import re
 import itertools
+import pickle as pkl
 from functools import reduce, partial
 import numpy as np
 import pandas as pd
@@ -554,26 +555,128 @@ class Equality(scu.prettyobj):
     # Define known special cases for equality checking
     special_cases = [np.ndarray, pd.DataFrame]
     
-    def __init__(self, obj, obj2, *args, greedy=True, method='pickle', detailed=False, 
+    def __init__(self, obj, obj2, *args, method='json', detailed=False, 
                  verbose=False, die=True, _trace=None):
         '''
         Compare equality between two arbitrary objects -- see :func:`sc.equal() <equal>` for full documentation.
 
         *New in version 3.1.0.*
         '''
+        from . import sc_odict as sco # To avoid circular import
+        
+        # Validate
+        if method not in ['json', 'pickle', 'eq']:
+            errormsg = f'Method "{self.method}" not recognized: must be json, pickle, or eq'
+            raise ValueError(errormsg)
+        
+        # Set properties
         self.base = obj
-        self.others = scu.mergelists(obj2, *args)
-        self.greedy = greedy
+        self.others = [obj2] + list(args)
+        self.b = None # Base object after conversion
+        self.o = [] # Other objects after conversion
+        self.method = method
         self.detailed = detailed
         self.verbose = verbose
         self.die = die
+        self.eq = None # Final value to be populated
+        self.eqdict = sco.objdict() # Detailed output
+
+        # Perform the comparison
+        self.convert() # Convert the objects
+        self.compare() # Do the comparison
         return
     
-    # def compare(self):
+    @property
+    def n(self):
+        ''' Find out how many objects are being compared '''
+        return len(self.others)
+    
+    
+    def convert(self):
+        ''' Convert the objects into the right format '''
+        from . import sc_fileio as scf # To avoid circular import
+        
+        # Define the mapping
+        mapping = dict(
+            json   = scf.jsonpickle,
+            pickle = pkl.dumps,
+            eq     = lambda obj: obj,
+        )
+        func = mapping[self.method]
+        
+        # Do the mapping
+        self.b = func(self.base)
+        for other in self.others:
+            self.o.append(func(other))
+                
+        return
+            
+    
+    def compare(self):
+        ''' Perform the comparison '''
+        
+        for k,v in base.items():
+            eqs = []
+            for o,other in enumerate(others):
+                try:
+                    ov = getnested(other, k)
+                    eq = ov == v
+                except Exception as E:
+                    if die:
+                        raise E
+                    else:
+                        eq = False
+                if scu.isiterable(eq):
+                    try:
+                        eq = all(eq)
+                    except Exception as E:
+                        if die:
+                            raise E
+                        else:
+                            eq = False
+                eqs.append(eq)
+                if verbose:
+                    trace = scu.strjoin(k, sep='.')
+                    print(f'Trace "{trace}" for {o+1}: {eq}')
+            eqdict[k] = eqs
+            
+        eq = all([all(v) for v in eqdict.values()])
+        
+        
+        
+        
+        
+        if   self.method == 'json':   return self.compare_json()
+        elif self.method == 'pickle': return self.compare_pickle()
+        elif self.method == 'eq':     return self.compare_eq()
+        else: raise Exception(f'Invalid method {self.method}') # Should be unreachable
+    
+    
+    def compare_json(self):
+        ''' Convert the objects to JSON-pickles and then do the comparison '''
+        eq = True
+        bdict = iterobj(self.b, twigs_only=False) # Iterate over the entire object
+        
+        self.eq = eq
+        return eq
+    
+    
+    def compare_pickle(self):
+        ''' Convert the objects to binary pickles and then do the comparison '''
+        pass
+    
+    
+    def compare_eq(self):
+        ''' Compare the objects directly '''
+        pass
+    
+    
+    def to_df(self):
+        pass
         
 
 
-def equal(obj, obj2, *args, greedy=True, detailed=False, verbose=False, die=True, _trace=None):
+def equal(obj, obj2, *args, method='json', detailed=False, verbose=False, die=True):
     '''
     Compare equality between two arbitrary objects
     
@@ -581,6 +684,10 @@ def equal(obj, obj2, *args, greedy=True, detailed=False, verbose=False, die=True
         obj (any): the first object to compare
         obj2 (any): the second object to compare
         args (list): additional objects to compare
+        method (str): choose between 'json' (default; convert to JSON and then compare), 'pickle' (convert to binary pickle), or 'eq' (use ==)
+        detailed (bool): whether to return a detailec comparison of the objects (else just true/false)
+        verbose (bool): level of detail to print
+        die (bool): whether to raise an exception if an error is encountered (else return False)
         
     **Example**:
         
@@ -603,7 +710,7 @@ def equal(obj, obj2, *args, greedy=True, detailed=False, verbose=False, die=True
         
     *New in version 3.1.0.*
     '''
-    equality = Equality()
+    equality = Equality(obj, obj2, *args, method=method, detailed=detailed, verbose=verbose, die=die)
     return equality.compare()
     
     
