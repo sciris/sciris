@@ -2105,6 +2105,7 @@ class tryexcept(cl.suppress):
             
     | *New in version 2.1.0.*
     | *New in version 3.0.0:* renamed "print" to "traceback"; added "to_df" and "disp" options
+    | *New in version 3.1.0:* renamed "exceptions" to "data"; added "exceptions" property
     '''
 
     def __init__(self, die=None, catch=None, verbose=1, history=None):
@@ -2130,12 +2131,12 @@ class tryexcept(cl.suppress):
         self.dietypes   = tuple(dietypes)
         self.catchtypes = tuple(catchtypes)
         self.verbose    = verbose
-        self.exceptions = []
+        self.data = []
         if history is not None:
             if isinstance(history, (list, tuple)): # pragma: no cover
-                self.exceptions.extend(list(history))
+                self.data.extend(list(history))
             elif isinstance(history, tryexcept):
-                self.exceptions.extend(history.exceptions)
+                self.data.extend(history.data)
             else: # pragma: no cover
                 errormsg = f'Could not understand supplied history: must be a list or a tryexcept object, not {type(history)}'
                 raise TypeError(errormsg)
@@ -2148,7 +2149,7 @@ class tryexcept(cl.suppress):
     
     
     def __len__(self):
-        return len(self.exceptions)
+        return len(self.data)
 
 
     def __enter__(self):
@@ -2158,7 +2159,7 @@ class tryexcept(cl.suppress):
     def __exit__(self, exc_type, exc_val, traceback):
         ''' If a context manager returns True from exit, the exception is caught '''
         if exc_type is not None:
-            self.exceptions.append([exc_type, exc_val, traceback])
+            self.data.append([exc_type, exc_val, traceback])
             die = (self.defaultdie or issubclass(exc_type, self.dietypes))
             live = issubclass(exc_type, self.catchtypes)
             if die and not live:
@@ -2188,7 +2189,7 @@ class tryexcept(cl.suppress):
             inds = toarray(which)
             for ind in inds:
                 string += f'Traceback {ind+1} of {len(self)}:\n'
-                string += traceback(*self.exceptions[ind]) + '\n'
+                string += traceback(*self.data[ind]) + '\n'
         else: # pragma: no cover
             print('No exceptions were encountered; nothing to trace')
         if tostring:
@@ -2201,7 +2202,7 @@ class tryexcept(cl.suppress):
     def to_df(self):
         ''' Convert the exceptions to a dataframe '''
         from . import sc_dataframe as scd # To avoid circular import
-        df = scd.dataframe(self.exceptions, columns=['type','value','traceback'])
+        df = scd.dataframe(self.data, columns=['type','value','traceback'])
         self.df = df
         return df
     
@@ -2211,12 +2212,17 @@ class tryexcept(cl.suppress):
         df = self.to_df()
         df.disp()
         return
+    
+    @property
+    def exceptions(self):
+        ''' Retrieve the last exception, if any '''
+        return [entry[1] for entry in self.data]
 
     @property
     def exception(self):
         ''' Retrieve the last exception, if any '''
-        if len(self.exceptions): # Exceptions were encountered
-            return self.exceptions[-1][1] # This is just the exception
+        if len(self.data): # Exceptions were encountered
+            return self.data[-1][1] # This is just the exception
         else:
             return None # Else, return None
     

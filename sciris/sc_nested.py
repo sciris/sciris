@@ -389,7 +389,7 @@ def flattendict(nesteddict, sep=None, _prefix=None):
 
 
 # Define a custom "None" value to allow searching for actual None values
-_None = 'sc.search() placeholder'
+_None = '<sc_nested_custom_None>' # This should not be equal to any other value the user could supply
 def search(obj, query=_None, key=_None, value=_None, aslist=True, method='exact', 
            return_values=False, verbose=False, _trace=None):
     """
@@ -556,7 +556,7 @@ class Equality(scu.prettyobj):
     special_cases = [np.ndarray, pd.DataFrame]
     
     def __init__(self, obj, obj2, *args, method='json', detailed=False, 
-                 verbose=False, die=True, _trace=None):
+                 equal_nan=True, verbose=None, die=True):
         '''
         Compare equality between two arbitrary objects -- see :func:`sc.equal() <equal>` for full documentation.
 
@@ -574,16 +574,23 @@ class Equality(scu.prettyobj):
         self.others = [obj2] + list(args)
         self.b = None # Base object after conversion
         self.o = [] # Other objects after conversion
+        self.bd = None # Base dictionary
+        self.od = [] # Other dictionaries
         self.method = method
         self.detailed = detailed
+        self.equal_nan = equal_nan
         self.verbose = verbose
         self.die = die
         self.eq = None # Final value to be populated
-        self.eqdict = sco.objdict() # Detailed output
+        self.results = sco.objdict() # Detailed output, 1D dict
+        self.fullresults = sco.objdict() # Detailed output, 2D dict
+        self.exceptions = sco.objdict()
 
         # Perform the comparison
         self.convert() # Convert the objects
         self.compare() # Do the comparison
+        if self.verbose is not False:
+            self.check_exceptions() # Check if any exceptions were encountered
         return
     
     @property
@@ -606,73 +613,100 @@ class Equality(scu.prettyobj):
         
         # Do the mapping
         self.b = func(self.base)
+        self.bd = iterobj(self.b)
         for other in self.others:
-            self.o.append(func(other))
+            o = func(other)
+            self.o.append(o)
+            self.od.append(iterobj(o))
                 
         return
-            
+    
+
+    def compare_special(self, obj, obj2):
+        ''' Do special comparisons for known objects where == doesn't work '''
+        from . import sc_dataframe as scd # To avoid circular import
+        
+        # For numpy arrays, must use np.array_equals()
+        if isinstance(obj, np.ndarray):
+            eq = np.array_equal(obj, obj2, equal_nan=self.equal_nan)
+    
+        # For dataframes, convert to Sciris to leverage additional comparators
+        elif isinstance(obj, pd.DataFrame):
+            eq = scd.dataframe(obj) == scd.dataframe(obj2)
+        
+        else:
+            errormsg = f'Not able to handle object of {type(obj)}'
+            raise TypeError(errormsg)
+        
+        return eq
+    
+    
+    @staticmethod
+    def keytostr(k):
+        ''' Helper method to convert a key to a "trace" for printing '''
+        return scu.strjoin(k, sep='.')
+        
     
     def compare(self):
         ''' Perform the comparison '''
         
-        for k,v in base.items():
+        for i,k,v in self.b.enumitems():
+            if self.verbose:
+                print(f'Working on item {i+1}/{len(self.b)}: {k}')
             eqs = []
-            for o,other in enumerate(others):
-                try:
-                    ov = getnested(other, k)
-                    eq = ov == v
-                except Exception as E:
-                    if die:
-                        raise E
-                    else:
+            for j,od in enumerate(self.od):
+                
+                # If not present, false by default
+                if k not in od:
+                    eq = False
+                else:
+                    ov = od[k]
+                
+                # Check equality
+                eq = None
+                with scu.tryexcept(die=self.die) as te:
+                    if type(v) != type(ov):
                         eq = False
-                if scu.isiterable(eq):
-                    try:
-                        eq = all(eq)
-                    except Exception as E:
-                        if die:
-                            raise E
-                        else:
-                            eq = False
+                    elif isinstance(v, self.special_cases):
+                        eq == self.compare_special(v, ov)
+                    else:
+                        eq = (v == ov) # Main use case: do the comparison!
+                if te.died: # Store exceptions if encountered
+                    self.exceptions[k] = te.exceptions
+                
+                # Append the result
                 eqs.append(eq)
-                if verbose:
-                    trace = scu.strjoin(k, sep='.')
-                    print(f'Trace "{trace}" for {o+1}: {eq}')
-            eqdict[k] = eqs
+                if self.verbose:
+                    print(f'Working on item {i+1}/{len(self.b)} "{self.keytotrace(k)}" for {i+1}: {eq}')
             
-        eq = all([all(v) for v in eqdict.values()])
-        
-        
-        
-        
-        
-        if   self.method == 'json':   return self.compare_json()
-        elif self.method == 'pickle': return self.compare_pickle()
-        elif self.method == 'eq':     return self.compare_eq()
-        else: raise Exception(f'Invalid method {self.method}') # Should be unreachable
+            # Store the results, and break if any equalities are found unless we're doing detailed
+            all_true = all(eqs)
+            self.fullresults[k] = eqs
+            self.results[k] = all_true
+            if not self.detailed and not(all_true): # Don't keep going unless needed
+                break
+            
+        self.eq = all(self.results.values())
+        return self.eq
     
     
-    def compare_json(self):
-        ''' Convert the objects to JSON-pickles and then do the comparison '''
-        eq = True
-        bdict = iterobj(self.b, twigs_only=False) # Iterate over the entire object
-        
-        self.eq = eq
-        return eq
-    
-    
-    def compare_pickle(self):
-        ''' Convert the objects to binary pickles and then do the comparison '''
-        pass
-    
-    
-    def compare_eq(self):
-        ''' Compare the objects directly '''
-        pass
+    def check_exceptions(self):
+        ''' Check if any exceptions were encountered during comparison '''
+        if len(self.exceptions):
+            string = 'The following exceptions were encountered:\n'
+            for i,k,exc in self.exceptions.enumitems():
+                string += f'{i}. {self.keytotrace(k)}: {str(exc)}\n'
+        print(string)
+        return
     
     
     def to_df(self):
-        pass
+        ''' Convert the detailed results dictionary to a dataframe '''
+        from . import sc_dataframe as scd # To avoid circular import
+        columns = [f'eq_obj1_obj{i+2}' for i in range(self.n)]
+        self.df = scd.dataframe.from_dict(scu.dcp(self.fullresults), orient='index', columns=columns)
+        return self.df
+        
         
 
 
