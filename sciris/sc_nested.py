@@ -1,5 +1,10 @@
 '''
-Nested dictionary functions.
+Functions for working on nested (multi-level) dictionaries and objects.
+
+Highlights:
+    - :func:`sc.getnested() <getnested>`: get a value from a highly nested dictionary
+    - :func:`sc.search() <search>`: find a value in a nested object
+    - :func:`sc.equal() <equal>`: check complex objects for equality
 '''
 
 import re
@@ -11,8 +16,13 @@ import pandas as pd
 from . import sc_utils as scu
 
 
+##############################################################################
+#%% Nested dict and object functions
+##############################################################################
+
+
 __all__ = ['getnested', 'setnested', 'makenested', 'iternested', 'iterobj',
-           'mergenested', 'flattendict', 'search', 'equal', 'nestedloop']
+           'mergenested', 'flattendict', 'nestedloop']
 
 
 def makenested(nesteddict, keylist=None, value=None, overwrite=False, generator=None):
@@ -266,6 +276,8 @@ def iterobj(obj, func=None, inplace=False, copy=True, twigs_only=False, verbose=
     | *New in version 3.0.0.*
     | *New in version 3.1.0:* default ``func``, improved ``twigs_only``
     '''
+    from . import sc_odict as sco # To avoid circular import
+    
     if func is None:
         func = lambda obj: obj
         
@@ -275,7 +287,7 @@ def iterobj(obj, func=None, inplace=False, copy=True, twigs_only=False, verbose=
         if inplace and copy: # Only need to copy once
             obj = scu.dcp(obj)
     if _output is None:
-        _output = {}
+        _output = sco.objdict()
         if not inplace and not twigs_only:
             _output['root'] = func(obj, *args, **kwargs)
     
@@ -387,6 +399,59 @@ def flattendict(nesteddict, sep=None, _prefix=None):
 
     return output_dict
 
+
+
+def nestedloop(inputs, loop_order):
+    """
+    Zip list of lists in order
+
+    This function takes in a list of lists to iterate over, and their nesting order.
+    It then yields tuples of items in the given order. Only tested for two levels
+    but in theory supports an arbitrary number of items.
+
+    Args:
+        inputs (list): List of lists. All lists should have the same length
+        loop_order (list): Nesting order for the lists
+
+    Returns:
+        Generator yielding tuples of items, one for each list
+
+    Example usage:
+
+    >>> list(sc.nestedloop([['a','b'],[1,2]],[0,1]))
+    [['a', 1], ['a', 2], ['b', 1], ['b', 2]]
+
+    Notice how the first two items have the same value for the first list
+    while the items from the second list vary. If the `loop_order` is
+    reversed, then:
+
+    >>> list(sc.nestedloop([['a','b'],[1,2]],[1,0]))
+    [['a', 1], ['b', 1], ['a', 2], ['b', 2]]
+
+    Notice now how now the first two items have different values from the
+    first list but the same items from the second list.
+
+    From Atomica by Romesh Abeysuriya.
+
+    *New in version 1.0.0.*
+    """
+    loop_order = list(loop_order)  # Convert to list, in case loop order was passed in as a generator e.g. from map()
+    inputs = [inputs[i] for i in loop_order]
+    iterator = itertools.product(*inputs)  # This is in the loop order
+    for item in iterator:
+        out = [None] * len(loop_order)
+        for i in range(len(item)):
+            out[loop_order[i]] = item[i]
+        yield out
+
+
+
+##############################################################################
+#%% Search and equality operators
+##############################################################################
+
+
+__all__ += ['search', 'Equality', 'equal']
 
 # Define a custom "None" value to allow searching for actual None values
 _None = '<sc_nested_custom_None>' # This should not be equal to any other value the user could supply
@@ -553,10 +618,10 @@ def search(obj, query=_None, key=_None, value=_None, aslist=True, method='exact'
 class Equality(scu.prettyobj):
     
     # Define known special cases for equality checking
-    special_cases = (np.ndarray, pd.DataFrame)
+    special_cases = (np.ndarray, pd.Series, pd.DataFrame)
     
     def __init__(self, obj, obj2, *args, method='json', detailed=False, 
-                 equal_nan=True, verbose=None, die=True):
+                 equal_nan=True, verbose=None, die=False):
         '''
         Compare equality between two arbitrary objects -- see :func:`sc.equal() <equal>` for full documentation.
 
@@ -570,17 +635,20 @@ class Equality(scu.prettyobj):
             raise ValueError(errormsg)
         
         # Set properties
-        self.base = obj
-        self.others = [obj2] + list(args)
-        self.b = None # Base object after conversion
-        self.o = [] # Other objects after conversion
-        self.bd = None # Base dictionary
-        self.od = [] # Other dictionaries
+        self.orig_base = obj
+        self.orig_others = [obj2] + list(args)
         self.method = method
         self.detailed = detailed
         self.equal_nan = equal_nan
         self.verbose = verbose
         self.die = die
+        
+        # Derived results
+        self.conv_base = None # Base object after conversion
+        self.conv_others = [] # Other objects after conversion
+        self.dict_base = None # Base dictionary
+        self.dict_others = [] # Other dictionaries
+        self.checked = [] # Keys that have been checked already
         self.eq = None # Final value to be populated
         self.results = sco.objdict() # Detailed output, 1D dict
         self.fullresults = sco.objdict() # Detailed output, 2D dict
@@ -591,7 +659,7 @@ class Equality(scu.prettyobj):
     @property
     def n(self):
         ''' Find out how many objects are being compared '''
-        return len(self.others)
+        return len(self.orig_others)
     
     
     def convert(self):
@@ -604,15 +672,15 @@ class Equality(scu.prettyobj):
             pickle = pkl.dumps,
             eq     = lambda obj: obj,
         )
-        func = mapping[self.method]
+        conv_func = mapping[self.method]
         
         # Do the mapping
-        self.b = func(self.base)
-        self.bd = iterobj(self.b)
-        for other in self.others:
-            o = func(other)
-            self.o.append(o)
-            self.od.append(iterobj(o))
+        self.conv_base = conv_func(self.orig_base)
+        self.dict_base = iterobj(self.conv_base)
+        for other in self.orig_others:
+            conv_other = conv_func(other)
+            self.conv_others.append(conv_other)
+            self.dict_others.append(iterobj(conv_other))
         
         self.converted = True
                 
@@ -621,15 +689,17 @@ class Equality(scu.prettyobj):
 
     def compare_special(self, obj, obj2):
         ''' Do special comparisons for known objects where == doesn't work '''
-        from . import sc_dataframe as scd # To avoid circular import
+        from . import sc_dataframe as scd 
         
         # For numpy arrays, must use np.array_equals()
         if isinstance(obj, np.ndarray):
             eq = np.array_equal(obj, obj2, equal_nan=self.equal_nan)
     
-        # For dataframes, convert to Sciris to leverage additional comparators
+        # For series and dataframes, use equals()
+        elif isinstance(obj, pd.Series):
+            eq = obj.equals(obj2)
         elif isinstance(obj, pd.DataFrame):
-            eq = scd.dataframe(obj) == scd.dataframe(obj2)
+            eq = scd.dataframe(obj).equals(scd.dataframe(obj2))
         
         else:
             errormsg = f'Not able to handle object of {type(obj)}'
@@ -639,9 +709,18 @@ class Equality(scu.prettyobj):
     
     
     @staticmethod
-    def keytostr(k):
+    def keytostr(k, ind='', sep='.'):
         ''' Helper method to convert a key to a "trace" for printing '''
-        return scu.strjoin(k, sep='.')
+        out = f'<obj{str(ind)}>{sep}{scu.strjoin(k, sep=sep)}'
+        return out
+    
+    
+    @staticmethod
+    def is_subkey(ckey, key):
+        if len(key) <= len(ckey):
+            return False
+        else:
+            return key[:len(ckey)] == ckey
         
     
     def compare(self):
@@ -650,44 +729,69 @@ class Equality(scu.prettyobj):
         if not self.converted:
             self.convert()
         
-        for i,k,v in self.b.enumitems():
-            if self.verbose:
-                print(f'Working on item {i+1}/{len(self.b)}: {k}')
+        to_check = self.dict_base.enumitems()
+        while to_check:
+            i,k,v = to_check.pop(0)
             eqs = []
-            for j,od in enumerate(self.od):
+            for j,od in enumerate(self.dict_others):
                 
-                # If not present, false by default
-                if k not in od:
-                    eq = False
-                else:
-                    ov = od[k]
+                # If keys don't match, objects differ
+                eq = True
+                if k == 'root':
+                    bkeys = set(self.dict_base.keys())
+                    okeys = set(od.keys())
+                    eq = bkeys == okeys
+                    if eq is False and self.verbose:
+                        print(f'Objects have different structures: {bkeys ^ okeys}') # Use XOR operator
                 
-                # Actually check equality
-                eq = None
-                with scu.tryexcept(die=self.die) as te:
-                    if type(v) != type(ov):
-                        eq = False # Unlike types are always not equal
-                    elif isinstance(v, self.special_cases):
-                        eq == self.compare_special(v, ov) # Compare known exceptions
+                # It's not root or the keys match, proceed
+                if eq:
+                
+                    # If not present, false by default
+                    if k not in od:
+                        eq = False
                     else:
-                        eq = (v == ov) # Main use case: do the comparison!
-                if te.died: # Store exceptions if encountered
-                    self.exceptions[k] = te.exceptions
+                        ov = od[k]
+                    
+                        # Actually check equality -- can be True, False, or None
+                        with scu.tryexcept(die=self.die, verbose=False) as te:
+                            if type(v) != type(ov):
+                                eq = False # Unlike types are always not equal
+                            elif isinstance(v, self.special_cases):
+                                eq == self.compare_special(v, ov) # Compare known exceptions
+                            else:
+                                eq = (v == ov) # Main use case: do the comparison!
+                            eq = bool(eq) # Ensure it's true or false
+                        if te.died: # Store exceptions if encountered
+                            eq = None
+                            exc = te.exception
+                            self.exceptions[k] = exc
+                            if self.verbose:
+                                print(f'Exception encountered on "{self.keytostr(k, j+1)}" ({type(v)}): {exc}')
                 
                 # Append the result
                 eqs.append(eq)
                 if self.verbose:
-                    print(f'Working on item {i+1}/{len(self.b)} "{self.keytotrace(k)}" for {i+1}: {eq}')
-            
+                    print(f'Item {i+1}/{len(self.dict_base)} ({j+1}/{self.n}) "{self.keytostr(k, j+1)}": {eq}')
+                
             # Store the results, and break if any equalities are found unless we're doing detailed
-            all_true = all(eqs)
+            has_none = None in eqs
+            has_false = False in eqs
+            all_true = None if has_none else all(eqs)
             self.fullresults[k] = eqs
             self.results[k] = all_true
-            if not self.detailed and not(all_true): # Don't keep going unless needed
+            if not self.detailed and has_false: # Don't keep going unless needed
+                if self.verbose:
+                    print('Objects are not equal and detailed=False, breaking')
                 break
             
+            # Check for matches and avoid recursing further
+            if all_true:
+                self.checked.append(k)
+                to_check = [ikv for ikv in to_check if not self.is_subkey(k, ikv[1])]
+            
         # Tidy up
-        self.eq = all(self.results.values())
+        self.eq = all([v for v in self.results.values() if v is not None])
         if self.verbose is not False:
             self.check_exceptions() # Check if any exceptions were encountered
             
@@ -699,21 +803,23 @@ class Equality(scu.prettyobj):
         if len(self.exceptions):
             string = 'The following exceptions were encountered:\n'
             for i,k,exc in self.exceptions.enumitems():
-                string += f'{i}. {self.keytotrace(k)}: {str(exc)}\n'
-        print(string)
+                string += f'{i}. {self.keytostr(k)}: {str(exc)}\n'
+            print(string)
         return
     
     
     def to_df(self):
         ''' Convert the detailed results dictionary to a dataframe '''
         from . import sc_dataframe as scd # To avoid circular import
-        columns = [f'eq_obj1_obj{i+2}' for i in range(self.n)]
-        self.df = scd.dataframe.from_dict(scu.dcp(self.fullresults), orient='index', columns=columns)
-        return self.df
+        columns = [f'obj1_obj{i+2}' for i in range(self.n)]
+        df = scd.dataframe.from_dict(scu.dcp(self.fullresults), orient='index', columns=columns)
+        df['equal'] = df.all(axis=1)
+        self.df = df
+        return df
         
     
 
-def equal(obj, obj2, *args, method='json', detailed=False, equal_nan=True, verbose=None, die=True):
+def equal(obj, obj2, *args, method='json', detailed=False, equal_nan=True, verbose=None, die=False):
     '''
     Compare equality between two arbitrary objects
     
@@ -744,54 +850,10 @@ def equal(obj, obj2, *args, method='json', detailed=False, equal_nan=True, verbo
         
         sc.equal(o1, o2) # Returns True
         sc.equal(o1, o3) # Returns False
-        sc.equal(o1, o2, o3)
+        e = sc.Equality(o1, o2, o3, detailed=True) # Create an object
+        e.to_df() # Convert to a dataframe
         
     *New in version 3.1.0.*
     '''
     equality = Equality(obj, obj2, *args, method=method, detailed=detailed, equal_nan=equal_nan, verbose=verbose, die=die)
     return equality.compare()
-
-
-
-def nestedloop(inputs, loop_order):
-    """
-    Zip list of lists in order
-
-    This function takes in a list of lists to iterate over, and their nesting order.
-    It then yields tuples of items in the given order. Only tested for two levels
-    but in theory supports an arbitrary number of items.
-
-    Args:
-        inputs (list): List of lists. All lists should have the same length
-        loop_order (list): Nesting order for the lists
-
-    Returns:
-        Generator yielding tuples of items, one for each list
-
-    Example usage:
-
-    >>> list(sc.nestedloop([['a','b'],[1,2]],[0,1]))
-    [['a', 1], ['a', 2], ['b', 1], ['b', 2]]
-
-    Notice how the first two items have the same value for the first list
-    while the items from the second list vary. If the `loop_order` is
-    reversed, then:
-
-    >>> list(sc.nestedloop([['a','b'],[1,2]],[1,0]))
-    [['a', 1], ['b', 1], ['a', 2], ['b', 2]]
-
-    Notice now how now the first two items have different values from the
-    first list but the same items from the second list.
-
-    From Atomica by Romesh Abeysuriya.
-
-    *New in version 1.0.0.*
-    """
-    loop_order = list(loop_order)  # Convert to list, in case loop order was passed in as a generator e.g. from map()
-    inputs = [inputs[i] for i in loop_order]
-    iterator = itertools.product(*inputs)  # This is in the loop order
-    for item in iterator:
-        out = [None] * len(loop_order)
-        for i in range(len(item)):
-            out[loop_order[i]] = item[i]
-        yield out

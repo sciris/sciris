@@ -62,6 +62,7 @@ class dataframe(pd.DataFrame):
 
     | *New in version 2.0.0:* subclass pandas DataFrame
     | *New in version 3.0.0:* "dtypes" argument; handling of item setting
+    | *New in version 3.1.0:* use panda's equality operator by default (unless an exception is raised)
     '''
 
     def __init__(self, data=None, index=None, columns=None, dtype=None, copy=None, 
@@ -350,29 +351,43 @@ class dataframe(pd.DataFrame):
 
     def __eq__(self, other):
         '''
-        Allow for equality checks: same type, size, columns, and values
+        Allow for more robust equality checks: same type, size, columns, and values
         
         *New in version 3.0.0.*
         '''
+        try: # First try default comparison
+            return super().__eq__(other)
+        except: # Otherwise, use the custom check
+            return self.equals(other)
         
-        # Check type
-        if not isinstance(other, self.__class__):
-            return False
         
-        # Check shape
-        if self.values.shape != other.values.shape:
-            return False
-
-        # Check columns
-        if not np.all(self.columns == other.columns):
-            return False
+    def equals(self, other, **kwargs):
+        '''
+        Allow for more robust equality checks: same type, size, columns, and values
         
-        # Check values
-        if not np.all(self.values == other.values):
-            return False
-        
-        # Passed all checks
-        return True
+        *New in version 3.1.0.*
+        '''
+        try:
+            return super().equals(other)
+        except: # Otherwise, do manual check
+            # Check type
+            if not isinstance(other, self.__class__):
+                return False
+            
+            # Check shape
+            if self.values.shape != other.values.shape:
+                return False
+    
+            # Check columns
+            if not np.all(self.columns == other.columns):
+                return False
+            
+            # Check values
+            if not np.array_equal(self.values == other.values, **kwargs):
+                return False
+            
+            # Passed all checks
+            return True
 
 
     def disp(self, nrows=None, ncols=None, width=999, precision=4, options=None, **kwargs):
