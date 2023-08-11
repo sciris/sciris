@@ -127,7 +127,7 @@ def _load_filestr(filename, folder=None, verbose=False):
                             filestr = fileobj.read() # Convert it to a string
                     except Exception as E4:
                         gziperror = _gziperror(filename) + f'\nAdditional errors encountered:\n{str(E2)}\n{str(E3)}\n{str(E4)}'
-                        raise exc(gziperror) from E
+                        raise UnpicklingError(gziperror) from E
         else:
             exc = type(E)
             errormsg = 'sc.load(): Could not open the # pragma: no cover file string for an unknown reason; see error above for details'
@@ -184,9 +184,8 @@ def load(filename=None, folder=None, verbose=None, die=False, remapping=None,
         kw = dict(verbose=verbose, die=die, remapping=remapping, method=method, auto_remap=auto_remap)
         obj = _unpickler(filestr, **kw, **kwargs) # Unpickle the data
     except Exception as E: # pragma: no cover
-        exc = type(E) # Figure out what kind of error it is
         errormsg = _unpicklingerror(filename) + '\n\nSee the stack trace above for more information on this specific error.'
-        raise exc(errormsg) from E
+        raise UnpicklingError(errormsg) from E
 
     # If it loaded but with errors, print them here
     if isinstance(obj, Failed):
@@ -312,7 +311,7 @@ def save(filename='default.obj', obj=None, folder=None, method='pickle', compres
                 obj = real_obj
             else:
                 errormsg = f'Filename type {type(filename)} is not valid: must be one of {filetypes}'
-                raise Exception(errormsg)
+                raise TypeError(errormsg)
 
         filename = makefilepath(filename=filename, folder=folder, sanitize=sanitizepath, makedirs=True)
 
@@ -2096,6 +2095,7 @@ class UnpicklingWarning(UserWarning):
     '''
     pass
 
+
 class UnpicklingError(pkl.UnpicklingError):
     '''
     An error raised when unpickling an object fails
@@ -2265,9 +2265,10 @@ class _RobustUnpickler(dill.Unpickler):
                  remapping=None, auto_remap=True, die=False, verbose=None):
         super().__init__(bytesio, fix_imports=fix_imports, encoding=encoding, errors=errors)
         self.remapping = scu.mergedicts(known_fixes if auto_remap else {}, remapping)
-        self.fixes = sco.objdict() # Store any handled remappings
-        self.errors = sco.objdict() # Store any errors encountered
-        self.verbose = verbose
+        self.fixes     = sco.objdict() # Store any handled remappings
+        self.errors    = sco.objdict() # Store any errors encountered
+        self.verbose   = verbose
+        self.die       = die
         return
 
     def find_class(self, module_name, name):
@@ -2283,8 +2284,8 @@ class _RobustUnpickler(dill.Unpickler):
             except Exception as E2:
                 if self.verbose is not None:
                     warnmsg = f'Unpickling error: could not import {module_name}.{name}:\n{str(E1)}\n{str(E2)}'
-                    if die: raise warnmsg
-                    else:   warnings.warn(warnmsg, category=UnpicklingWarning, stacklevel=2)
+                    if self.die: raise UnpicklingError(warnmsg)
+                    else:        warnings.warn(warnmsg, category=UnpicklingWarning, stacklevel=2)
                 C = _makefailed(module_name=module_name, name=name, exc=E2)
                 self.errors[key] = E2 # Store the error
         
@@ -2316,7 +2317,7 @@ def _unpickler(string=None, die=False, verbose=None, remapping=None, method=None
             raise ValueError(errormsg)
 
     # Define the pickling methods
-    robust_kw = dict(remapping=remapping, auto_remap=auto_remap, verbose=verbose)
+    robust_kw = dict(remapping=remapping, auto_remap=auto_remap, die=die, verbose=verbose)
     methods = dict(
         pickle = pkl.loads,
         dill   = dill.loads,
@@ -2352,7 +2353,7 @@ def _unpickler(string=None, die=False, verbose=None, remapping=None, method=None
 
     if obj is None:
         errormsg = 'All available unpickling methods failed: ' + '\n'.join([f'{k}: {v}' for k,v in errors.items()])
-        raise Exception(errormsg)
+        raise UnpicklingError(errormsg)
     elif len(unpickling_errors):
         if verbose is not False:
             warnmsg = 'Warning, the following errors were encountered during unpickling:\n' + repr(unpickling_errors)

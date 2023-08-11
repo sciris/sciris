@@ -166,15 +166,14 @@ def test_load_corrupted():
         assert isinstance(obj, LiveClass)
     print(f'Loading remapped object succeeded, {o.obj2.disp()}, object: {o.obj2}')
     
-    print('Loading with intentionally incorrect remapping')
-    o.obj4 = sc.load(dead_path, remapping={'deadclass': 'not_a_class'}, verbose=False)
-    
     print('Loading with error on initialization')
     class DyingClass():
         def __new__(self):
             raise Exception('Intentional exception')
     with pytest.warns(sc.UnpicklingWarning):
-        o.obj5 = sc.load(dead_path, remapping={'deadclass.DeadClass': DyingClass}, method='robust', verbose=True)
+        o.obj4 = sc.load(dead_path, remapping={'deadclass.DeadClass': DyingClass}, method='robust', verbose=True)
+    with pytest.raises(sc.UnpicklingError):
+        sc.load(dead_path, die=True)
     
     return o
 
