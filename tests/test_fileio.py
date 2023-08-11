@@ -213,8 +213,9 @@ def test_fileio():
     
     sc.heading('Testing other')
     path1 = sc.path('/a/folder', 'a_file.txt')
-    path2 = sc.path('/a/folder', None, 'a_file.txt')
-    assert str(path1) == str(path2) == os.sep.join(['', 'a', 'folder', 'a_file.txt'])
+    path2 = sc.path(['/a', 'folder'], 'a_file.txt')
+    path3 = sc.path('/a/folder', None, 'a_file.txt')
+    assert str(path1) == str(path2) == str(path3) == os.sep.join(['', 'a', 'folder', 'a_file.txt'])
     assert sc.ispath(path1)
     o.thisfile = sc.thisfile(aspath=True)
 
@@ -233,6 +234,8 @@ def test_json():
     jsonifiable = sc.objdict().make(keys=['a','b'], vals=np.random.rand(10), coerce='none')
     json_obj = sc.jsonify(jsonifiable)
     json_str = sc.jsonify(jsonifiable, tostring=True, indent=2) # kwargs are passed to json.dumps()
+    json = sc.readjson(json_str)
+    assert jsonifiable == json
 
     print('Not-a-JSON as sanitized object:')
     print(notjson)

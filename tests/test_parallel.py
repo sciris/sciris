@@ -2,6 +2,7 @@
 Test parallelization functions and classes
 '''
 
+import inspect
 import sciris as sc
 import numpy as np
 import pylab as pl
@@ -166,6 +167,13 @@ def test_class():
     print('Validation: invalid async')
     with pytest.raises(ValueError):
         sc.Parallel(f, 10, parallelizer='serial-async')
+        
+    print('Validation: checking call signatures')
+    sigs = sc.objdict()
+    for k,func in zip(['func', 'method'], [sc.parallelize, sc.Parallel.__init__]):
+        sigs[k] = set(list(inspect.signature(func).parameters.keys()))
+    sigs.func |= set(['self', 'label'])
+    assert sigs.func == sigs.method
         
     return P
 

@@ -97,7 +97,7 @@ def _load_filestr(filename, folder=None, verbose=False):
     if verbose:
         if argtype == 'filename':
             print(f'Opening {filename} for reading...')
-        else:
+        else: # pragma: no cover
             print('Opening bytes for reading...')
     
     try:
@@ -327,7 +327,7 @@ def save(filename='default.obj', obj=None, folder=None, method='pickle', compres
     if compression in ['gz', 'gzip']:  # Main use case
         # File extension is .gz
         with gz.GzipFile(filename=filename, fileobj=bytestream, mode='wb', compresslevel=compresslevel) as fileobj:
-            serialize(fileobj, obj, success, **kwargs)
+            serialize(fileobj, obj, success, **kwargs) # Actually write the file to disk as gzip (99% of use cases)
     
     else:
         if tobytes: # pragma: no cover
@@ -340,11 +340,11 @@ def save(filename='default.obj', obj=None, folder=None, method='pickle', compres
             with filecontext as fh:
                 zcompressor = zstd.ZstdCompressor(level=compresslevel)
                 with zcompressor.stream_writer(fh) as fileobj:
-                    serialize(fileobj, obj, success, **kwargs)
+                    serialize(fileobj, obj, success, **kwargs) # Write the file to disk as zst
         elif compression in ['none']:
             # File extension can be anything
             with filecontext as fileobj:
-                serialize(fileobj, obj, success, **kwargs)
+                serialize(fileobj, obj, success, **kwargs) # Write as uncompressed data
         else: # pragma: no cover
             errormsg = f"Invalid compression format '{compression}': must be 'gzip', 'zstd', or 'none'"
             raise ValueError(errormsg)
@@ -460,7 +460,7 @@ def savetext(filename=None, string=None, **kwargs):
     is_array = scu.isarray(string)
     if isinstance(string, list):
         string = '\n'.join([str(s) for s in string]) # Convert from list to string
-    elif not is_array and not scu.isstring(string):
+    elif not is_array and not scu.isstring(string): # pragma: no cover
         string = str(string)
     filename = makefilepath(filename=filename, makedirs=True)
     if is_array: # Shortcut to Numpy for saving arrays -- basic CSV
@@ -579,7 +579,7 @@ def savezip(filename=None, files=None, data=None, folder=None, sanitizepath=True
         # Handle subfolders
         extfilelist = scu.dcp(origfilelist) # An extended file list, including recursion into subfolders
         for orig in origfilelist:
-            if orig.is_dir():
+            if orig.is_dir(): # pragma: no cover
                 contents = getfilelist(orig, abspath=False, recursive=True, aspath=True)
                 extfilelist.extend(contents[1:]) # Skip the first entry since it's the folder that's already in the list
         
@@ -601,7 +601,7 @@ def savezip(filename=None, files=None, data=None, folder=None, sanitizepath=True
                 thispath = makefilepath(filename=thisfile, abspath=False, makedirs=False)
                 thisname = os.path.basename(thisfile) if basename else thisfile
                 zf.write(thispath, thisname) # Actually save
-        if not data and not files:
+        if not data and not files: # pragma: no cover
             errormsg = 'No data and no files provided: nothing to save!'
             raise FileNotFoundError(errormsg)
         
@@ -705,7 +705,7 @@ def thisdir(file=None, path=None, *args, frame=1, aspath=None, **kwargs):
     | *New in version 2.1.0:* frame argument
     '''
     if file is None: # No file: use the current folder
-        if scu.isjupyter():
+        if scu.isjupyter(): # pragma: no cover
             file = os.path.abspath(os.path.expanduser('file_placeholder')) # This is as best we can do on Jupyter
         else:
             file = thisfile(frame=frame+1) # Need +1 since want the calling script
@@ -1102,7 +1102,7 @@ def jsonify(obj, verbose=True, die=False, tostring=False, **kwargs):
 
     elif scu.isstring(obj): # It's a string of some kind
         try:    string = str(obj) # Try to convert it to ascii
-        except: string = obj # Give up and use original
+        except: string = obj # Give up and use original # pragma: no cover
         output = string
 
     elif isinstance(obj, np.ndarray): # It's an array, iterate recursively
@@ -1134,10 +1134,10 @@ def jsonify(obj, verbose=True, die=False, tostring=False, **kwargs):
         try:
             output = jsonify(obj.__dict__) # Try converting the contents to JSON
             output = scu.mergedicts({'python_class': str(type(obj))}, output)
-        except:
+        except: # pragma: no cover
             try:
                 output = jsonpickle(obj)
-            except Exception as E: # pragma: no cover
+            except Exception as E:
                 errormsg = f'Could not sanitize "{obj}" {type(obj)} ({E}), converting to string instead'
                 if die:       raise TypeError(errormsg)
                 elif verbose: print(errormsg)

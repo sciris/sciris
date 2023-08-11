@@ -5,11 +5,13 @@ Nested dictionary functions.
 import re
 import itertools
 from functools import reduce, partial
+import numpy as np
+import pandas as pd
 from . import sc_utils as scu
 
 
 __all__ = ['getnested', 'setnested', 'makenested', 'iternested', 'iterobj',
-           'mergenested', 'flattendict', 'search', 'nestedloop']
+           'mergenested', 'flattendict', 'search', 'equal', 'nestedloop']
 
 
 def makenested(nesteddict, keylist=None, value=None, overwrite=False, generator=None):
@@ -81,7 +83,7 @@ def makenested(nesteddict, keylist=None, value=None, overwrite=False, generator=
     return
 
 
-def check_iter_type(obj):
+def check_iter_type(obj, check_array=False):
     ''' Helper function to determine if an object is a dict, list, or neither '''
     if isinstance(obj, dict):
         out = 'dict'
@@ -89,6 +91,8 @@ def check_iter_type(obj):
         out = 'list'
     elif hasattr(obj, '__dict__'):
         out = 'object'
+    elif check_array and isinstance(obj, np.ndarray):
+        out = 'array'
     else:
         out = '' # Evaluates to false
     return out
@@ -189,7 +193,32 @@ def iternested(nesteddict, _previous=None):
     return output
 
 
-def iterobj(obj, func, inplace=False, copy=True, twigs_only=False, verbose=False, 
+def iteritems(obj, itertype):
+    ''' Return an iterator over items in this object -- for internal use '''
+    if itertype == 'dict':
+        return obj.items()
+    elif itertype == 'list':
+        return enumerate(obj)
+    elif itertype == 'object':
+        return obj.__dict__.items()
+
+def getitem(obj, key, itertype):
+    ''' Get the value for the item -- for internal use '''
+    if itertype in ['dict', 'list']:
+        return obj[key]
+    elif itertype == 'object':
+        return obj.__dict__[key]
+
+def setitem(obj, key, value, itertype):
+    ''' Set the value for the item -- for internal use '''
+    if itertype in ['dict', 'list']:
+        obj[key] = value
+    elif itertype == 'object':
+        obj.__dict__[key] = value
+    return
+
+
+def iterobj(obj, func=None, inplace=False, copy=True, twigs_only=False, verbose=False, 
             _trace=None, _output=None, *args, **kwargs):
     '''
     Iterate over an object and apply a function to each twig.
@@ -199,7 +228,7 @@ def iterobj(obj, func, inplace=False, copy=True, twigs_only=False, verbose=False
     
     Args:
         obj (any): the object to iterate over
-        func (function): the function to apply
+        func (function): the function to apply; if None, return a dictionary of all twigs in the object
         inplace (bool): whether to modify the object in place (else, collate the output of the functions)
         copy (bool): if modifying an object in place, whether to make a copy first
         twigs_only (bool): whether to apply the function only to twigs of the object
@@ -233,8 +262,12 @@ def iterobj(obj, func, inplace=False, copy=True, twigs_only=False, verbose=False
         data = sc.iterobj(data, collapse, inplace=True)
         sc.printjson(data)
         
-    *New in version 3.0.0.*
+    | *New in version 3.0.0.*
+    | *New in version 3.1.0:* default ``func``, improved ``twigs_only``
     '''
+    if func is None:
+        func = lambda obj: obj
+        
     # Set the trace and output if needed
     if _trace is None:
         _trace = []
@@ -247,42 +280,21 @@ def iterobj(obj, func, inplace=False, copy=True, twigs_only=False, verbose=False
     
     itertype = check_iter_type(obj)
     
-    def iteritems(obj):
-        ''' Return an iterator over items in this object '''
-        if itertype == 'dict':
-            return obj.items()
-        elif itertype == 'list':
-            return enumerate(obj)
-        elif itertype == 'object':
-            return obj.__dict__.items()
-    
-    def getitem(obj, key):
-        ''' Get the value for the item '''
-        if itertype in ['dict', 'list']:
-            return obj[key]
-        elif itertype == 'object':
-            return obj.__dict__[key]
-    
-    def setitem(obj, key, value):
-        ''' Set the value for the item '''
-        if itertype in ['dict', 'list']:
-            obj[key] = value
-        elif itertype == 'object':
-            obj.__dict__[key] = value
-        return
-        
     # Next, check if we need to iterate
     if itertype:
-        for key,subobj in iteritems(obj):
+        for key,subobj in iteritems(obj, itertype):
             trace = _trace + [key]
+            newobj = subobj
+            subitertype = check_iter_type(subobj)
             if verbose:
-                print(f'Working on {trace}')
-            newobj = func(subobj, *args, **kwargs)
-            if inplace:
-                setitem(obj, key, newobj)
-            else:
-                _output[tuple(trace)] = newobj
-            iterobj(getitem(obj, key), func, inplace=inplace, twigs_only=twigs_only,  # Run recursively
+                print(f'Working on {trace}, {twigs_only}, {subitertype}')
+            if not (twigs_only and subitertype):
+                newobj = func(subobj, *args, **kwargs)
+                if inplace:
+                    setitem(obj, key, newobj, itertype)
+                else:
+                    _output[tuple(trace)] = newobj
+            iterobj(getitem(obj, key, itertype), func, inplace=inplace, twigs_only=twigs_only,  # Run recursively
                     verbose=verbose, _trace=trace, _output=_output, *args, **kwargs)
         
     if inplace:
@@ -535,6 +547,122 @@ def search(obj, query=_None, key=_None, value=_None, aslist=True, method='exact'
         return matches, values
     else:
         return matches
+
+
+class Equality(scu.prettyobj):
+    
+    # Define known special cases for equality checking
+    special_cases = [np.ndarray, pd.DataFrame]
+    
+    def __init__(self, obj, obj2, *args, greedy=True, method='pickle', detailed=False, 
+                 verbose=False, die=True, _trace=None):
+        '''
+        Compare equality between two arbitrary objects -- see :func:`sc.equal() <equal>` for full documentation.
+
+        *New in version 3.1.0.*
+        '''
+        self.base = obj
+        self.others = scu.mergelists(obj2, *args)
+        self.greedy = greedy
+        self.detailed = detailed
+        self.verbose = verbose
+        self.die = die
+        return
+    
+    # def compare(self):
+        
+
+
+def equal(obj, obj2, *args, greedy=True, detailed=False, verbose=False, die=True, _trace=None):
+    '''
+    Compare equality between two arbitrary objects
+    
+    Args:
+        obj (any): the first object to compare
+        obj2 (any): the second object to compare
+        args (list): additional objects to compare
+        
+    **Example**:
+        
+        o1 = dict(
+            a = [1,2,3],
+            b = np.array([4,5,6]),
+            c = dict(
+                df = pd.DataFrame(q=[sc.date('2022-02-02'), sc.date('2023-02-02')])
+            )
+        )
+        
+        o2 = sc.dcp(o1)
+        
+        o3 = sc.dcp(o1)
+        o3['b'][2] = 8
+        
+        sc.equal(o1, o2) # Returns True
+        sc.equal(o1, o3) # Returns False
+        sc.equal(o1, o2, o3)
+        
+    *New in version 3.1.0.*
+    '''
+    equality = Equality()
+    return equality.compare()
+    
+    
+    
+    eqdict = dict()
+    checked = []
+    # mismatches = dict()
+    
+    base  = iterobj(obj, twigs_only=False)
+    # twigs = iterobj(obj, twigs_only=True)
+    # tkeys = set(twigs.keys())
+    
+    def skip(checked, key):
+        for ckey in checked:
+            n = len(ckey)
+            if len(key) >= n:
+                if key[:n] == ckey:
+                    return True
+        return False
+    
+    # def eq(base, other):
+        
+            
+    
+    others = scu.mergelists(obj2, *args)
+    
+    
+    
+    for k,v in base.items():
+        eqs = []
+        for o,other in enumerate(others):
+            try:
+                ov = getnested(other, k)
+                eq = ov == v
+            except Exception as E:
+                if die:
+                    raise E
+                else:
+                    eq = False
+            if scu.isiterable(eq):
+                try:
+                    eq = all(eq)
+                except Exception as E:
+                    if die:
+                        raise E
+                    else:
+                        eq = False
+            eqs.append(eq)
+            if verbose:
+                trace = scu.strjoin(k, sep='.')
+                print(f'Trace "{trace}" for {o+1}: {eq}')
+        eqdict[k] = eqs
+        
+    eq = all([all(v) for v in eqdict.values()])
+    
+    if detailed:
+        return eqdict
+    else:
+        return eq
 
 
 def nestedloop(inputs, loop_order):

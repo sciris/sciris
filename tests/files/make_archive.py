@@ -47,21 +47,23 @@ if len(sys.argv) > 2:
     as_archive = int(sys.argv[2])
     
     
-def create_pandas_data():
+def create_pandas_data(alt=False):
     """ Create the pandas pickle data -- adapted from pandas/tests/io/generate_legacy_storage_files.py """
     data = sc.objdict(
-        a = [0.0, 1.0, 2.0, 3.0, np.nan],
-        b = [0, 1, 0, 1, 0],
-        c = ["foo1", "foo2", "foo3", "foo4", "foo5"],
+        a = [0.0, 1.0, 2.0, 3.0 + alt, np.nan],
+        b = [0, 1, 0, 1, 0 + alt],
+        c = ["foo1", "foo2", "foo3", "foo4", "foo5" + alt*'alt'],
         d = pd.date_range("1/1/2009", periods=5),
-        e = [0.0, 1, pd.Timestamp("20100101"), "foo", 2.0],
+        e = [0.0, 1, pd.Timestamp("20100101"), "foo", 2.0+alt],
     )
+    if alt:
+        data.f = ['Using', 'alternate', 'data', 'creation', 'method']
 
     index = sc.objdict(
-        ind_int   = pd.Index(np.arange(10)),
-        ind_date  = pd.date_range("20130101", periods=10),
-        ind_float = pd.Index(np.arange(10, dtype=np.float64)),
-        ind_range = pd.RangeIndex(10),
+        ind_int   = pd.Index(np.arange(10+alt)),
+        ind_date  = pd.date_range("20130101", periods=10+alt),
+        ind_float = pd.Index(np.arange(10+alt, dtype=np.float64)),
+        ind_range = pd.RangeIndex(10+alt),
     )
 
     frame = pd.DataFrame(data)
