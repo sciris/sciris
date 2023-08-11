@@ -95,7 +95,14 @@ def check_iter_type(obj):
     
 
 def get_from_obj(ndict, key, safe=False):
-    ''' Get an item from a dict, list, or object by key '''
+    '''
+    Get an item from a dict, list, or object by key
+    
+    Args:
+        ndict (dict/list/obj): the object to get from
+        key (any): the key to get
+        safe (bool): whether to return None if the key is not found (default False)
+    '''
     itertype = check_iter_type(ndict)
     if itertype == 'dict':
         if safe:
@@ -111,54 +118,74 @@ def get_from_obj(ndict, key, safe=False):
     return out
 
 
-def getnested(nesteddict, keylist, safe=False):
+def getnested(nested, keylist, safe=False):
     '''
     Get the value for the given list of keys
+    
+    Args:
+        nested (any): the nested object (dict, list, or object) to get from
+        keylist (list): the list of keys
+        safe (bool): whether to return None if the key is not found
+    
+    **Example**::
 
-    >>> sc.getnested(foo, ['a','b'])
+        sc.getnested(foo, ['a','b']) # Gets foo['a']['b']
 
-    See sc.makenested() for full documentation.
+    See :func:`sc.makenested() <makenested>` for full documentation.
     '''
     get = partial(get_from_obj, safe=safe)
-    output = reduce(get, keylist, nesteddict)
-    return output
+    nested = reduce(get, keylist, nested)
+    return nested
 
 
-def setnested(nesteddict, keylist, value, force=True):
+def setnested(nested, keylist, value, force=True):
     '''
     Set the value for the given list of keys
+    
+    Args:
+        nested (any): the nested object (dict, list, or object) to modify
+        keylist (list): the list of keys to use
+        value (any): the value to set
+        force (bool): whether to create the keys if they don't exist (NB: only works for dictionaries)
+    
+    **Example**::
 
-    >>> sc.setnested(foo, ['a','b'], 3)
+        sc.setnested(foo, ['a','b'], 3) # Sets foo['a']['b'] = 3
 
-    See sc.makenested() for full documentation.
+    See :func:`sc.makenested() <makenested>` for full documentation.
     '''
     if force:
-        makenested(nesteddict, keylist, overwrite=False)
-    currentlevel = getnested(nesteddict, keylist[:-1])
+        makenested(nested, keylist, overwrite=False)
+    currentlevel = getnested(nested, keylist[:-1])
     if not isinstance(currentlevel, dict): # pragma: no cover
         errormsg = f'Cannot set {keylist} since parent is a {type(currentlevel)}, not a dict'
         raise TypeError(errormsg)
     else:
         currentlevel[keylist[-1]] = value
-    return # Modify nesteddict in place
+    return nested # Return object, but note that it's modified in place
 
 
-def iternested(nesteddict, previous=None):
+def iternested(nesteddict, _previous=None):
     '''
     Return a list of all the twigs in the current dictionary
+    
+    Args:
+        nesteddict (dict): the dictionary
+    
+    **Example**::
 
-    >>> twigs = sc.iternested(foo)
+        twigs = sc.iternested(foo)
 
-    See sc.makenested() for full documentation.
+    See :func:`sc.makenested() <makenested>` for full documentation.
     '''
-    if previous is None:
-        previous = []
+    if _previous is None:
+        _previous = []
     output = []
     for k in nesteddict.items():
-        if isinstance(k[1],dict):
-            output += iternested(k[1], previous+[k[0]]) # Need to add these at the first level
+        if isinstance(k[1], dict):
+            output += iternested(k[1], _previous+[k[0]]) # Need to add these at the first level
         else:
-            output.append(previous+[k[0]])
+            output.append(_previous+[k[0]])
     return output
 
 
@@ -305,6 +332,10 @@ def mergenested(dict1, dict2, die=False, verbose=False, _path=None):
 def flattendict(nesteddict, sep=None, _prefix=None):
     """
     Flatten nested dictionary
+    
+    Args:
+        nesteddict (dict): the dictionary to flatten
+        sep (str): the separator used to separate keys
 
     **Example**::
 
@@ -346,7 +377,8 @@ def flattendict(nesteddict, sep=None, _prefix=None):
 
 # Define a custom "None" value to allow searching for actual None values
 _None = 'sc.search() placeholder'
-def search(obj, query=_None, key=_None, value=_None, aslist=True, method='exact', verbose=False, _trace=None):
+def search(obj, query=_None, key=_None, value=_None, aslist=True, method='exact', 
+           return_values=False, verbose=False, _trace=None):
     """
     Find a key/attribute or value within a list, dictionary or object.
 
@@ -360,6 +392,7 @@ def search(obj, query=_None, key=_None, value=_None, aslist=True, method='exact'
         value (any): The value to search for
         aslist (bool): return entries as a list (else, return as a string)
         method (str): choose how to check for matches: 'exact' (test equality), 'partial' (partial/lowercase string match), or 'regex' (treat as a regex expression)
+        return_values (bool): return matching values as well as keys
         verbose (bool): whether to print details of the search
         _trace: Not for user input - internal variable used for recursion
 
@@ -389,7 +422,7 @@ def search(obj, query=_None, key=_None, value=_None, aslist=True, method='exact'
         
         # Find partial or regex matches
         found = sc.search(nested, key='oat', method='partial') # Search keys only
-        found = sc.search(nested, '^.ar', method='regex', verbose=True)
+        keys,vals = sc.search(nested, '^.ar', method='regex', return_values=True, verbose=True)
     
     *New in version 3.0.0:* ability to search for values as well as keys/attributes; "aslist" argument
     *New in version 3.1.0:* "query", "method", and "verbose" keywords; improved searching for lists
@@ -400,7 +433,7 @@ def search(obj, query=_None, key=_None, value=_None, aslist=True, method='exact'
     
     def check_match(source, target, method):
         ''' Check if there is a match between the "source" and "target" '''
-        if target != _None: # See above for definition; a target was supplied
+        if source != _None and target != _None: # See above for definition; a source and target were supplied
             if callable(target):
                 match = target(source)
             elif method == 'exact':
@@ -459,10 +492,21 @@ def search(obj, query=_None, key=_None, value=_None, aslist=True, method='exact'
                 trace = _trace + f'[{k}]'
             else:
                 trace = _trace + f'.{k}'
+        
+        # Sanitize object value
+        if method in ['partial', 'regex'] and check_iter_type(v): # We want to exclude values that can be descended into if we're doing string matching
+            objvalue = _None
+        else:
+            objvalue = v
+        
+        # Sanitize object key
+        if key != _None and itertype == 'list': # "Keys" don't make sense for lists, so just duplicate values
+            objkey = objvalue
+        else:
+            objkey = k
 
         # Actually check for matches
-        kk = v if itertype == 'list' else k # "Keys" don't make sense for lists, so just duplicate values
-        for source,target in [[kk, key], [v, value]]:
+        for source,target in [[objkey, key], [objvalue, value]]:
             if check_match(source, target, method=method):
                 if trace not in matches:
                     matches.append(trace)
@@ -482,7 +526,15 @@ def search(obj, query=_None, key=_None, value=_None, aslist=True, method='exact'
             if newmatch not in matches:
                 matches.append(newmatch)
     
-    return matches
+    # Tidy up
+    if return_values:
+        values = []
+        for match in matches:
+            value = getnested(obj, match)
+            values.append(value)
+        return matches, values
+    else:
+        return matches
 
 
 def nestedloop(inputs, loop_order):
