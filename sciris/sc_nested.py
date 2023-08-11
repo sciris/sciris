@@ -553,7 +553,7 @@ def search(obj, query=_None, key=_None, value=_None, aslist=True, method='exact'
 class Equality(scu.prettyobj):
     
     # Define known special cases for equality checking
-    special_cases = [np.ndarray, pd.DataFrame]
+    special_cases = (np.ndarray, pd.DataFrame)
     
     def __init__(self, obj, obj2, *args, method='json', detailed=False, 
                  equal_nan=True, verbose=None, die=True):
@@ -584,13 +584,8 @@ class Equality(scu.prettyobj):
         self.eq = None # Final value to be populated
         self.results = sco.objdict() # Detailed output, 1D dict
         self.fullresults = sco.objdict() # Detailed output, 2D dict
-        self.exceptions = sco.objdict()
-
-        # Perform the comparison
-        self.convert() # Convert the objects
-        self.compare() # Do the comparison
-        if self.verbose is not False:
-            self.check_exceptions() # Check if any exceptions were encountered
+        self.exceptions = sco.objdict() # Store any exceptions encountered
+        self.converted = False # Whether the objects have already been converted
         return
     
     @property
@@ -618,6 +613,8 @@ class Equality(scu.prettyobj):
             o = func(other)
             self.o.append(o)
             self.od.append(iterobj(o))
+        
+        self.converted = True
                 
         return
     
@@ -650,6 +647,9 @@ class Equality(scu.prettyobj):
     def compare(self):
         ''' Perform the comparison '''
         
+        if not self.converted:
+            self.convert()
+        
         for i,k,v in self.b.enumitems():
             if self.verbose:
                 print(f'Working on item {i+1}/{len(self.b)}: {k}')
@@ -662,13 +662,13 @@ class Equality(scu.prettyobj):
                 else:
                     ov = od[k]
                 
-                # Check equality
+                # Actually check equality
                 eq = None
                 with scu.tryexcept(die=self.die) as te:
                     if type(v) != type(ov):
-                        eq = False
+                        eq = False # Unlike types are always not equal
                     elif isinstance(v, self.special_cases):
-                        eq == self.compare_special(v, ov)
+                        eq == self.compare_special(v, ov) # Compare known exceptions
                     else:
                         eq = (v == ov) # Main use case: do the comparison!
                 if te.died: # Store exceptions if encountered
@@ -686,7 +686,11 @@ class Equality(scu.prettyobj):
             if not self.detailed and not(all_true): # Don't keep going unless needed
                 break
             
+        # Tidy up
         self.eq = all(self.results.values())
+        if self.verbose is not False:
+            self.check_exceptions() # Check if any exceptions were encountered
+            
         return self.eq
     
     
@@ -707,10 +711,9 @@ class Equality(scu.prettyobj):
         self.df = scd.dataframe.from_dict(scu.dcp(self.fullresults), orient='index', columns=columns)
         return self.df
         
-        
+    
 
-
-def equal(obj, obj2, *args, method='json', detailed=False, verbose=False, die=True):
+def equal(obj, obj2, *args, method='json', detailed=False, equal_nan=True, verbose=None, die=True):
     '''
     Compare equality between two arbitrary objects
     
@@ -720,6 +723,7 @@ def equal(obj, obj2, *args, method='json', detailed=False, verbose=False, die=Tr
         args (list): additional objects to compare
         method (str): choose between 'json' (default; convert to JSON and then compare), 'pickle' (convert to binary pickle), or 'eq' (use ==)
         detailed (bool): whether to return a detailec comparison of the objects (else just true/false)
+        equal_nan (bool): whether matching ``np.nan`` should compare as true (default yes)
         verbose (bool): level of detail to print
         die (bool): whether to raise an exception if an error is encountered (else return False)
         
@@ -744,66 +748,9 @@ def equal(obj, obj2, *args, method='json', detailed=False, verbose=False, die=Tr
         
     *New in version 3.1.0.*
     '''
-    equality = Equality(obj, obj2, *args, method=method, detailed=detailed, verbose=verbose, die=die)
+    equality = Equality(obj, obj2, *args, method=method, detailed=detailed, equal_nan=equal_nan, verbose=verbose, die=die)
     return equality.compare()
-    
-    
-    
-    eqdict = dict()
-    checked = []
-    # mismatches = dict()
-    
-    base  = iterobj(obj, twigs_only=False)
-    # twigs = iterobj(obj, twigs_only=True)
-    # tkeys = set(twigs.keys())
-    
-    def skip(checked, key):
-        for ckey in checked:
-            n = len(ckey)
-            if len(key) >= n:
-                if key[:n] == ckey:
-                    return True
-        return False
-    
-    # def eq(base, other):
-        
-            
-    
-    others = scu.mergelists(obj2, *args)
-    
-    
-    
-    for k,v in base.items():
-        eqs = []
-        for o,other in enumerate(others):
-            try:
-                ov = getnested(other, k)
-                eq = ov == v
-            except Exception as E:
-                if die:
-                    raise E
-                else:
-                    eq = False
-            if scu.isiterable(eq):
-                try:
-                    eq = all(eq)
-                except Exception as E:
-                    if die:
-                        raise E
-                    else:
-                        eq = False
-            eqs.append(eq)
-            if verbose:
-                trace = scu.strjoin(k, sep='.')
-                print(f'Trace "{trace}" for {o+1}: {eq}')
-        eqdict[k] = eqs
-        
-    eq = all([all(v) for v in eqdict.values()])
-    
-    if detailed:
-        return eqdict
-    else:
-        return eq
+
 
 
 def nestedloop(inputs, loop_order):
