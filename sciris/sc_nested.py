@@ -618,7 +618,7 @@ def search(obj, query=_None, key=_None, value=_None, aslist=True, method='exact'
 class Equal(scu.prettyobj):
     
     # Define known special cases for equality checking
-    special_cases = (float, np.ndarray, pd.Series, pd.DataFrame)
+    special_cases = (float, np.ndarray, pd.Series, pd.DataFrame, pd.core.indexes.base.Index)
     
     def __init__(self, obj, obj2, *args, method='json', detailed=False, 
                  equal_nan=True, verbose=None, compare=True, die=False):
@@ -706,7 +706,7 @@ class Equal(scu.prettyobj):
                 eq = True
         
         # For numpy arrays, must use np.array_equals()
-        elif isinstance(obj, np.ndarray):
+        elif isinstance(obj, (np.ndarray, pd.core.indexes.base.Index)):
             eq = np.array_equal(obj, obj2, equal_nan=self.equal_nan)
     
         # For series, handle NaNs and use equals()

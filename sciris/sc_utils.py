@@ -1081,7 +1081,7 @@ def isarray(obj, dtype=None):
                 return False
 
 
-def toarray(x, keepnone=False, **kwargs):
+def toarray(x, keepnone=False, asobject=True, dtype=None, **kwargs):
     '''
     Small function to ensure consistent format for things that should be arrays
     (note: :func:`sc.toarray() <toarray>` and :func:`sc.promotetoarray() <promotetoarray>` are identical).
@@ -1093,6 +1093,7 @@ def toarray(x, keepnone=False, **kwargs):
     Args:
         x (any): a number or list of numbers
         keepnone (bool): whether ``sc.toarray(None)`` should return ``np.array([])`` or ``np.array([None], dtype=object)``
+        asobject (bool): whether to prefer to coerce arrays to object type rather than string
         kwargs (dict): passed to :func:`numpy.array()`
 
     **Examples**::
@@ -1100,22 +1101,32 @@ def toarray(x, keepnone=False, **kwargs):
         sc.toarray(5) # Returns np.array([5])
         sc.toarray([3,5]) # Returns np.array([3,5])
         sc.toarray(None, skipnone=True) # Returns np.array([])
+        sc.toarray([1, 'foo']) # Returns np.array([1, 'foo'], dtype=object)
 
     | *New in version 1.1.0:* replaced "skipnone" with "keepnone"; allowed passing kwargs to ``np.array()``.
     | *New in version 2.0.1:* added support for pandas Series and DataFrame
+    | *New in version 3.1.0:* "asobject" argument; cast mixed-type arrays to object rather than string by default 
     '''
+    # Handle None
     skipnone = kwargs.pop('skipnone', None)
     if skipnone is not None: # pragma: no cover
         keepnone = not(skipnone)
         warnmsg = 'sc.toarray() argument "skipnone" has been deprecated as of v1.1.0; use keepnone instead'
         warnings.warn(warnmsg, category=FutureWarning, stacklevel=2)
+    
+    # Handle different inputs
     if isnumber(x) or (isinstance(x, np.ndarray) and not np.shape(x)): # e.g. 3 or np.array(3)
         x = [x]
     elif isinstance(x, (pd.DataFrame, pd.Series)):
         x = x.values
     elif x is None and not keepnone:
         x = []
-    output = np.array(x, **kwargs)
+    
+    # Actually convert to an array
+    output = np.array(x, dtype=dtype, **kwargs)
+    if asobject and (dtype is None) and issubclass(output.dtype.type, np.str_):
+        output = np.array(x, dtype=object, **kwargs) # Cast to object instead of string
+    
     return output
 
 

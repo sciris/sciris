@@ -388,8 +388,7 @@ class dataframe(pd.DataFrame):
         
         # Handle NaNs
         if equal_nan:
-            randval = -528876923.87569493 # Define a random value that would never be encountered otherwise
-            base = base.fillna(randval)
+            base = base.fillna(scm._nan_fill)
         
         for other in others:
             
@@ -408,7 +407,7 @@ class dataframe(pd.DataFrame):
             # Finally, check values
             else:
                 if equal_nan:
-                    other = other.fillna(randval)
+                    other = other.fillna(scm._nan_fill)
                 eq = np.all(base.values == other.values)
             
             eqs.append(eq)

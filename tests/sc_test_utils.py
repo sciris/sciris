@@ -34,15 +34,16 @@ def check_signatures(func1, func2, extras=None, missing=None, die=True):
     return  eq
 
 
-def create_complex_data(alt=False):
-    """ Create complex pickle data -- adapted from pandas/tests/io/generate_legacy_storage_files.py """
+def create_complex_data(alt=False, mixed=True):
+    ''' Create complex pickle data -- adapted from pandas/tests/io/generate_legacy_storage_files.py '''
     data = sc.objdict(
         a = [0.0, 1.0, 2.0, 3.0 + alt, np.nan],
         b = [0, 1, 0, 1, 0 + alt],
         c = ["foo1", "foo2", "foo3", "foo4", "foo5" + alt*'alt'],
         d = pd.date_range("1/1/2009", periods=5),
-        e = [0.0, 1, pd.Timestamp("20100101"), "foo", 2.0+alt],
     )
+    if mixed:
+        data.e = [0.0, 1, pd.Timestamp("20100101"), "foo", 2.0+alt],
     if alt:
         data.f = ['Using', 'alternate', 'data', 'creation', 'method']
 
@@ -63,12 +64,12 @@ def create_complex_data(alt=False):
 class MyClass(sc.prettyobj):
     ''' Store common data types for compatibility checks'''
     
-    def __init__(self, date='2023-08-11', alt=False):
+    def __init__(self, date='2023-08-11', alt=False, mixed=True):
         self.date = date
         self.strings = ['a', 'b', 'c', 'd', 'e']
         self.nparray = np.arange(5)
         self.datetime = dt.datetime(2022, 4, 4, tzinfo=du.tz.tzutc())
-        self.pandas = create_complex_data(alt=alt)
+        self.pandas = create_complex_data(alt=alt, mixed=mixed)
 
     def sum(self):
         return self.nparray.sum()

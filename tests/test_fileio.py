@@ -4,7 +4,6 @@ Test Sciris file I/O functions.
 
 import os
 import numpy as np
-import pandas as pd
 import pylab as pl
 import openpyxl
 import sciris as sc
@@ -271,14 +270,20 @@ def test_jsonpickle():
 
     myobj = sc.prettyobj()
     myobj.a = 3
-    myobj.b = ut.MyClass()
+    myobj.b = ut.MyClass(mixed=False) # jsonpickle can't handle mixed data types
 
     jp = sc.jsonpickle(myobj)
     jps = sc.jsonpickle(myobj, tostring=True)
     myobj2 = sc.jsonunpickle(jp)
     myobj3 = sc.jsonunpickle(jps)
-
-    assert sc.equal(myobj, myobj2, myobj3)
+    
+    jpath = 'my-data.json'
+    sc.jsonpickle(myobj, jpath)
+    myobj4 = sc.jsonunpickle(jpath)
+    
+    # Tidy up
+    sc.rmpath(jpath)
+    assert sc.equal(myobj, myobj2, myobj3, myobj4)
 
     return jp
 
