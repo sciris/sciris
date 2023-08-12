@@ -3,7 +3,6 @@ Test nested dict functions
 '''
 
 import numpy as np
-import pandas as pd
 import sciris as sc
 import pytest
 ut = sc.importbypath(sc.thispath() / 'sc_test_utils.py')
@@ -113,7 +112,21 @@ def test_search():
 
 def test_iterobj():
     sc.heading('Testing iterobj')
-    data = dict(a=dict(x=[1,2,3], y=[4,5,6]), b=dict(foo='string', bar='other_string'))
+    
+    o = sc.prettyobj()
+    o.a = sc.prettyobj()
+    o.b = sc.prettyobj()
+    o.a.i1 = [1,2,3]
+    o.b.i2 = dict(cat=[4,5,6])
+    data = dict(
+        a=dict(
+            x=[1,2,3], 
+            y=[4,5,6]), 
+        b=dict(
+            foo='string', 
+            bar='other_string'),
+        c=o,
+    )
     
     # Search through an object
     def check_type(obj, which):

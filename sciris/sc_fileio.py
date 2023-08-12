@@ -1435,14 +1435,12 @@ def jsonpickle(obj, filename=None, tostring=False, **kwargs):
     jsonpickle_numpy.register_handlers()
     jsonpickle_pandas.register_handlers()
 
-    # Convert to JSON and optionally save
-    if not tostring or filename is not None:
+    # Optionally convert to a JSON object
+    if not tostring:
         pickler = jp.pickler.Pickler(**kwargs)
         output = pickler.flatten(obj)
-        # if filename is not None:
-        #     return savejson(filename, output)
 
-    # Optionally convert to string instead
+    # Optionally convert to string instead and save
     if tostring or filename is not None:
         output = jp.dumps(obj)
         if filename is not None:
@@ -1469,7 +1467,7 @@ def jsonunpickle(json=None, filename=None):
     jsonpickle_numpy.register_handlers()
     jsonpickle_pandas.register_handlers()
     
-    if json is not None and filename is not None:
+    if json is not None and filename is not None: # pragma: no cover
         errormsg = 'You can supply json or filename, but not both'
         raise ValueError(errormsg)
     
@@ -1480,7 +1478,7 @@ def jsonunpickle(json=None, filename=None):
             json = None
             
     if filename is not None:
-        if not os.path.exists(filename):
+        if not os.path.exists(filename): # pragma: no cover
             errormsg = f'Filename "{filename}" not found'
             raise FileNotFoundError(errormsg)
         else:
@@ -2087,7 +2085,7 @@ def savespreadsheet(filename=None, data=None, folder=None, sheetnames=None, clos
         workbook_formats = dict()
         for formatkey,formatval in formats.items():
             workbook_formats[formatkey] = workbook.add_format(formatval)
-    else:
+    else: # pragma: no cover
         thisformat = workbook.add_format({}) # Plain formatting
 
     # Actually write the data
@@ -2191,7 +2189,7 @@ class Failed:
     def __setstate__(self, state):
         try:
             self.__dict__.update(state) # NB, does not support slots
-        except Exception as E:
+        except Exception as E: # pragma: no cover
             print('Unable to set state, continuing:', E)
             self.__set_empty()
             self.state = state
@@ -2221,11 +2219,12 @@ class Failed:
     def showfailure(self, verbose=True, tostring=False):
         output = f'Failed module: {self._module}\n'
         output += f'Failed class: {self._name}\n'
-        output += f'Error: {self._failure.error}\n'
-        if verbose: # pragma: no cover
-            output += f'Exception: {self._failure.exception}\n'
-            output += f'{self._failure.traceback}\n'
-            output += '\n\n'
+        if self._failure:
+            output += f'Error: {self._failure.error}\n'
+            if verbose: # pragma: no cover
+                output += f'Exception: {self._failure.exception}\n'
+                output += f'{self._failure.traceback}\n'
+                output += '\n\n'
         if tostring: # pragma: no cover
             return output
         else:
@@ -2299,13 +2298,13 @@ def _remap_module(remapping, module_name, name):
             name        = remapped[1]
         elif len_remap == 1: # If just a module
             module_name = remapped[0]
-        else:
+        else: # pragma: no cover
             errormsg = f'Was expecting 1 or 2 strings, but got {len_remap} from "{remapped}"'
             raise ValueError(errormsg)
 
         # Actually attempt the import
         module = importlib.import_module(module_name)
-        obj = getattr(module, name)
+        obj = getattr(module, name) # pragma: no cover
     
     # Otherwise, assume the user supplied the object/class directly
     else:
@@ -2338,7 +2337,7 @@ class _RobustUnpickler(dill.Unpickler):
                 if self.verbose:
                     print(f'Applying known remapping: {module_name}.{name} → {C}')
             except Exception as E2:
-                if self.verbose is not None:
+                if self.verbose is not None: # pragma: no cover
                     warnmsg = f'Unpickling error: could not import {module_name}.{name}:\n{str(E1)}\n{str(E2)}'
                     if self.die: raise UnpicklingError(warnmsg)
                     else:        warnings.warn(warnmsg, category=UnpicklingWarning, stacklevel=2)
@@ -2417,7 +2416,7 @@ def _unpickler(string=None, die=False, verbose=None, remapping=None, method=None
         
         # Try to store the errors in the object, but don't worry if it doesn't succeed
         try:    setattr(obj, 'unpickling_errors', scu.dcp(unpickling_errors))
-        except: pass
+        except: pass # pragma: no cover
     
     # Reset the unpickling errors
     unpickling_errors.clear()

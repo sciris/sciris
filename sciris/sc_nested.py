@@ -299,7 +299,7 @@ def iterobj(obj, func=None, inplace=False, copy=True, twigs_only=False, verbose=
             trace = _trace + [key]
             newobj = subobj
             subitertype = check_iter_type(subobj)
-            if verbose:
+            if verbose: # pragma: no cover
                 print(f'Working on {trace}, {twigs_only}, {subitertype}')
             if not (twigs_only and subitertype):
                 newobj = func(subobj, *args, **kwargs)
@@ -340,10 +340,10 @@ def mergenested(dict1, dict2, die=False, verbose=False, _path=None):
             if isinstance(a[key], dict) and isinstance(b[key], dict):
                 mergenested(dict1=a[key], dict2=b[key], _path=_path+[str(key)], die=die, verbose=verbose)
             elif a[key] == b[key]:
-                pass # same leaf value
+                pass # same leaf value # pragma: no cover
             else:
                 errormsg = f'Warning! Conflict at {keypath}: {a[key]} vs. {b[key]}'
-                if die:
+                if die: # pragma: no cover
                     raise ValueError(errormsg)
                 else:
                     a[key] = b[key]

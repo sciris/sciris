@@ -174,6 +174,15 @@ def test_load_corrupted():
         o.obj4 = sc.load(dead_path, remapping={'deadclass.DeadClass': DyingClass}, method='robust', verbose=True)
     with pytest.raises(sc.UnpicklingError):
         sc.load(dead_path, die=True)
+        
+    print('Testing Failed directly')
+    f = sc.Failed()
+    len(f)
+    f['foo'] = 3
+    assert f['foo'] == 3
+    f()
+    f.disp()
+    f.showfailure()
     
     return o
 
@@ -257,7 +266,8 @@ def test_json():
     yamlfile = 'test.yaml'
     sc.saveyaml(yamlfile, testdata)
     testdata2 = sc.loadyaml(yamlfile)
-    assert testdata == testdata2
+    testdata3 = sc.readyaml(sc.loadtext(yamlfile))
+    assert testdata == testdata2 == testdata3
     
     # Tidy up
     sc.rmpath(jsonfile, yamlfile)
