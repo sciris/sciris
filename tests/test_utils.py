@@ -143,16 +143,17 @@ def test_tryexcept():
         values[2]
         
     # Storing the history of multiple exceptions
-    tryexc = None
+    te = None
     repeats = 5
     for i in range(repeats):
-        with sc.tryexcept(history=tryexc) as tryexc:
+        with sc.tryexcept(history=te) as te:
             values[i]
-    assert len(tryexc.exceptions) == repeats - len(values)
-    assert tryexc.died
-    tryexc.disp()
+    assert len(te.exceptions) == repeats - len(values)
+    assert te.died
+    te.disp()
+    te.traceback()
     
-    return tryexc
+    return te
 
 
 
@@ -340,6 +341,8 @@ def test_misc():
     assert 'test_options' in dir(test_set)
     test_set2 = sc.importbypath(path=module_path)
     assert 'test_options' in dir(test_set2)
+    with pytest.raises(FileNotFoundError):
+        sc.importbypath(path='/not/a/valid/path')
 
     print('\nTesting get_caller()')
     o.caller = sc.getcaller(includeline=True)

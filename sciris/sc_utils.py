@@ -319,7 +319,7 @@ def pp(obj, jsonify=False, doprint=None, output=False, sort_dicts=False, **kwarg
     if jsonify:
         try:
             toprint = json.loads(json.dumps(obj, default=lambda x: f'{x}')) # This is to handle things like OrderedDicts
-        except Exception as E:
+        except Exception as E: # pragma: no cover
             print(f'Could not jsonify object ("{str(E)}"), printing default...')
             toprint = obj # If problems are encountered, just return the object
     else: # pragma: no cover
@@ -393,11 +393,11 @@ def traceback(exc=None, value=None, tb=None, *args, **kwargs):
     if exc is not None:
         if isinstance(exc, Exception): # Usual case: an exception is supplied
             exc_info = (exc.__class__, exc, exc.__traceback__)
-        elif isinstance(exc, (tuple, list)): # Alternately, all three are supplied as a list
+        elif isinstance(exc, (tuple, list)): # Alternately, all three are supplied as a list # pragma: no cover
             exc_info = exc
-        elif value is not None and tb is not None: # ... or separately
+        elif value is not None and tb is not None: # ... or separately # pragma: no cover
             exc_info = (exc, value, tb)
-        else:
+        else: # pragma: no cover
             errormsg = f'Unexpected exception type "{type(exc)}": expecting Exception, or list/tuple of exc_info'
             raise TypeError(errormsg)
         out = ''.join(py_traceback.format_exception(*exc_info, **kwargs))
@@ -833,7 +833,7 @@ def flexstr(arg, *args, force=True, join=''):
     
     if len(outlist) == 1:
         outstr = outlist[0]
-    else:
+    else: # pragma: no cover
         if force:
             outstr = join.join(outlist)
         else:
