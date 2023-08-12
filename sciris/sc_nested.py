@@ -94,9 +94,11 @@ def makenested(nesteddict, keylist=None, value=None, overwrite=False, generator=
     return
 
 
-def check_iter_type(obj, check_array=False):
+def check_iter_type(obj, check_array=False, known=None, known_to_none=False):
     ''' Helper function to determine if an object is a dict, list, or neither '''
-    if isinstance(obj, dict):
+    if known is not None and isinstance(obj, known):
+        out = 'known' if not known_to_none else '' # Choose how known objects are handled
+    elif isinstance(obj, dict):
         out = 'dict'
     elif isinstance(obj, list):
         out = 'list'
@@ -109,7 +111,7 @@ def check_iter_type(obj, check_array=False):
     return out
     
 
-def get_from_obj(ndict, key, safe=False):
+def get_from_obj(ndict, key, safe=False, **kwargs):
     '''
     Get an item from a dict, list, or object by key
     
@@ -117,8 +119,9 @@ def get_from_obj(ndict, key, safe=False):
         ndict (dict/list/obj): the object to get from
         key (any): the key to get
         safe (bool): whether to return None if the key is not found (default False)
+        kwargs (dict): passed to ``check_iter_type()``
     '''
-    itertype = check_iter_type(ndict)
+    itertype = check_iter_type(ndict, **kwargs)
     if itertype == 'dict':
         if safe:
             out = ndict.get(key)
@@ -229,20 +232,22 @@ def setitem(obj, key, value, itertype):
     return
 
 
-def iterobj(obj, func=None, inplace=False, copy=True, twigs_only=False, verbose=False, 
+_atomic_classes = (np.ndarray, pd.Series, pd.DataFrame, pd.core.indexes.base.Index) # Define objects for which it doesn't make sense to descend further
+def iterobj(obj, func=None, inplace=False, copy=True, leaf=False, atomic='default', verbose=False, 
             _trace=None, _output=None, *args, **kwargs):
     '''
-    Iterate over an object and apply a function to each twig.
+    Iterate over an object and apply a function to each leaf node (item with no children).
     
     Can modify an object in-place, or return a value. See also :func:`sc.search() <search>`
     for a function to search through complex objects.
     
     Args:
         obj (any): the object to iterate over
-        func (function): the function to apply; if None, return a dictionary of all twigs in the object
+        func (function): the function to apply; if None, return a dictionary of all leaf nodes in the object
         inplace (bool): whether to modify the object in place (else, collate the output of the functions)
         copy (bool): if modifying an object in place, whether to make a copy first
-        twigs_only (bool): whether to apply the function only to twigs of the object
+        leaf (bool): whether to apply the function only to leaf nodes of the object
+        atomic (list): a list of known classes to treat as atomic (do not descend into); if 'default', use defaults (e.g. ``np.array``, ``pd.DataFrame``)
         verbose (bool): whether to print progress.
         _trace (list): used internally for recursion
         _output (list): used internally for recursion
@@ -274,9 +279,12 @@ def iterobj(obj, func=None, inplace=False, copy=True, twigs_only=False, verbose=
         sc.printjson(data)
         
     | *New in version 3.0.0.*
-    | *New in version 3.1.0:* default ``func``, improved ``twigs_only``
+    | *New in version 3.1.0:* default ``func``, renamed "twigs_only" to "leaf", "atomic" keyword
     '''
     from . import sc_odict as sco # To avoid circular import
+    
+    if atomic == 'default':
+        atomic = _atomic_classes
     
     if func is None:
         func = lambda obj: obj
@@ -288,26 +296,26 @@ def iterobj(obj, func=None, inplace=False, copy=True, twigs_only=False, verbose=
             obj = scu.dcp(obj)
     if _output is None:
         _output = sco.objdict()
-        if not inplace and not twigs_only:
+        if not inplace and not leaf:
             _output['root'] = func(obj, *args, **kwargs)
     
-    itertype = check_iter_type(obj)
+    itertype = check_iter_type(obj, known=atomic, known_to_none=True)
     
     # Next, check if we need to iterate
-    if itertype:
+    if itertype and not itertype == 'known':
         for key,subobj in iteritems(obj, itertype):
             trace = _trace + [key]
             newobj = subobj
-            subitertype = check_iter_type(subobj)
+            subitertype = check_iter_type(subobj, known_to_none=True)
             if verbose: # pragma: no cover
-                print(f'Working on {trace}, {twigs_only}, {subitertype}')
-            if not (twigs_only and subitertype):
+                print(f'Working on {trace}, {leaf}, {subitertype}')
+            if not (leaf and subitertype):
                 newobj = func(subobj, *args, **kwargs)
                 if inplace:
                     setitem(obj, key, newobj, itertype)
                 else:
                     _output[tuple(trace)] = newobj
-            iterobj(getitem(obj, key, itertype), func, inplace=inplace, twigs_only=twigs_only,  # Run recursively
+            iterobj(getitem(obj, key, itertype), func, inplace=inplace, leaf=leaf, atomic=atomic, # Run recursively
                     verbose=verbose, _trace=trace, _output=_output, *args, **kwargs)
         
     if inplace:
@@ -456,7 +464,7 @@ __all__ += ['search', 'Equal', 'equal']
 # Define a custom "None" value to allow searching for actual None values
 _None = '<sc_nested_custom_None>' # This should not be equal to any other value the user could supply
 def search(obj, query=_None, key=_None, value=_None, aslist=True, method='exact', 
-           return_values=False, verbose=False, _trace=None):
+           return_values=False, verbose=False, _trace=None, **kwargs):
     """
     Find a key/attribute or value within a list, dictionary or object.
 
@@ -473,6 +481,7 @@ def search(obj, query=_None, key=_None, value=_None, aslist=True, method='exact'
         return_values (bool): return matching values as well as keys
         verbose (bool): whether to print details of the search
         _trace: Not for user input - internal variable used for recursion
+        kwargs (dict): passed to :func:`sc.iterobj() <iterobj>`
 
     Returns:
         A list of matching attributes. The items in the list are the Python
@@ -540,7 +549,7 @@ def search(obj, query=_None, key=_None, value=_None, aslist=True, method='exact'
     matches = []
 
     # Determine object type
-    itertype = check_iter_type(obj)
+    itertype = check_iter_type(obj, **kwargs)
     if itertype == 'dict':
         o = obj
     elif itertype == 'list':
@@ -572,7 +581,7 @@ def search(obj, query=_None, key=_None, value=_None, aslist=True, method='exact'
                 trace = _trace + f'.{k}'
         
         # Sanitize object value
-        if method in ['partial', 'regex'] and check_iter_type(v): # We want to exclude values that can be descended into if we're doing string matching
+        if method in ['partial', 'regex'] and check_iter_type(v, known_to_none=kwargs.pop('known_to_none', True), **kwargs): # We want to exclude values that can be descended into if we're doing string matching
             objvalue = _None
         else:
             objvalue = v
@@ -618,12 +627,12 @@ def search(obj, query=_None, key=_None, value=_None, aslist=True, method='exact'
 class Equal(scu.prettyobj):
     
     # Define known special cases for equality checking
-    special_cases = (float, np.ndarray, pd.Series, pd.DataFrame, pd.core.indexes.base.Index)
+    special_cases = tuple([float] + _atomic_classes)
     valid_methods = [None, 'eq', 'pickle', 'json', 'str']
     
     
     def __init__(self, obj, obj2, *args, method=None, detailed=False, equal_nan=True, 
-                 twigs=False, verbose=None, compare=True, die=False):
+                 leaf=False, verbose=None, compare=True, die=False):
         '''
         Compare equality between two arbitrary objects -- see :func:`sc.equal() <equal>` for full documentation.
 
