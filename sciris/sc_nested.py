@@ -622,10 +622,15 @@ class Equal(scu.prettyobj):
     valid_methods = [None, 'eq', 'pickle', 'json', 'str']
     
     
-    def __init__(self, obj, obj2, *args, method='all', detailed=False, 
+    def __init__(self, obj, obj2, *args, method=None, detailed=False, 
                  equal_nan=True, verbose=None, compare=True, die=False):
         '''
         Compare equality between two arbitrary objects -- see :func:`sc.equal() <equal>` for full documentation.
+
+        Args:
+            obj, obj2, etc: see :func:`sc.equal() <equal>`
+            detailed (bool): whether to compute a detailed comparison of the objects (else stop comparing at the first False)
+            compare (bool): whether to perform the comparison on object creation
 
         *New in version 3.1.0.*
         '''
@@ -641,15 +646,15 @@ class Equal(scu.prettyobj):
         self.check_method() # Check that the method is valid
         
         # Derived results
+        self.walked = False # Whether the objects have already been walked
+        self.compared = False # Whether the objects have already been compared
         self.dicts = [] # Object dictionaries
-        self.eq = None # Final value to be populated
         self.results = sco.objdict() # Detailed output, 1D dict
         self.fullresults = sco.objdict() # Detailed output, 2D dict
         self.exceptions = sco.objdict() # Store any exceptions encountered
-        self.walked = False # Whether the objects have already been walked
-        self.compared = False # Whether the objects have already been compared
+        self.eq = None # Final value to be populated
         
-        # Run the comparison if needed
+        # Run the comparison if requested
         if compare:
             self.walk()
             self.compare()
@@ -760,7 +765,7 @@ class Equal(scu.prettyobj):
         else:
             errormsg = f'Not able to handle object of {type(obj)}'
             raise TypeError(errormsg)
-        
+
         return eq
     
     
@@ -818,20 +823,26 @@ class Equal(scu.prettyobj):
                         oconv = self.convert(otherobj, method)
                     
                         # Actually check equality -- can be True, False, or None
-                        try:
-                            if type(bconv) != type(oconv):
-                                eq = False # Unlike types are always not equal
-                            elif isinstance(bconv, self.special_cases):
-                                eq == self.compare_special(bconv, oconv) # Compare known exceptions
-                            else:
+                        if type(bconv) != type(oconv):
+                            eq = False # Unlike types are always not equal
+                            compared = True
+                        elif isinstance(bconv, self.special_cases):
+                            eq = self.compare_special(bconv, oconv) # Compare known exceptions
+                            compared = True
+                        else:
+                            try:
                                 eq = (bconv == oconv) # Main use case: do the comparison!
-                            eq = bool(eq) # Ensure it's true or false
-                            compared = True # Comparison succeeded, break the loop
-                        except Exception as E: # Store exceptions if encountered
-                            eq = None
-                            self.exceptions[key] = E
-                            if self.verbose:
-                                print(f'Exception encountered on "{self.keytostr(key, j+1)}" ({type(bconv)}): {E}')
+                                eq = bool(eq) # Ensure it's true or false
+                                compared = True # Comparison succeeded, break the loop
+                            except Exception as E: # Store exceptions if encountered
+                                eq = None
+                                self.exceptions[key] = E
+                                if self.verbose:
+                                    print(f'Exception encountered on "{self.keytostr(key, j+1)}" ({type(bconv)}) with method "{method}": {E}')
+                    
+                    # All methods failed, check that the equality isn't defined
+                    if not compared:
+                        assert eq is None
                 
                 # Append the result
                 eqs.append(eq)
@@ -841,25 +852,25 @@ class Equal(scu.prettyobj):
             # Store the results, and break if any equalities are found unless we're doing detailed
             has_none = None in eqs
             has_false = False in eqs
-            all_true = None if has_none else all(eqs)
+            result = None if has_none else all(eqs)
             self.fullresults[key] = eqs
-            self.results[key] = all_true
+            self.results[key] = result
             if not self.detailed and has_false: # Don't keep going unless needed
                 if self.verbose:
                     print('Objects are not equal and detailed=False, breaking')
                 break
-            
+        
             # Check for matches and avoid recursing further
-            if all_true:
-                orig_len = len(btree)
+            if result is True:
+                origlen = len(btree)
                 btree = [ikv for ikv in btree if not self.is_subkey(key, ikv[1])]
-                new_len = len(btree)
+                skipped = origlen - len(btree)
                 if self.verbose:
-                    print(f'Object {self.keytostr(key)} are equal, skipping {orig_len - new_len} sub-objects')
+                    print(f'Object {self.keytostr(key)} are equal, skipping {skipped} sub-objects')
             
         # Tidy up
         self.eq = all([v for v in self.results.values() if v is not None])
-        if self.verbose is not False:
+        if self.verbose:
             self.check_exceptions() # Check if any exceptions were encountered
         self.compared = True
             
@@ -885,7 +896,7 @@ class Equal(scu.prettyobj):
             self.compare()
             
         # Make dataframe
-        columns = [f'obj1_obj{i+2}' for i in range(self.n)]
+        columns = [f'obj1_obj{i+2}' for i in range(self.n-1)]
         df = scd.dataframe.from_dict(scu.dcp(self.fullresults), orient='index', columns=columns)
         df['equal'] = df.all(axis=1)
         self.df = df
@@ -893,7 +904,7 @@ class Equal(scu.prettyobj):
         
     
 
-def equal(obj, obj2, *args, method=None, detailed=False, equal_nan=True, verbose=None, die=False):
+def equal(obj, obj2, *args, method=None, equal_nan=True, verbose=None, die=False):
     '''
     Compare equality between two arbitrary objects
     
@@ -915,8 +926,7 @@ def equal(obj, obj2, *args, method=None, detailed=False, equal_nan=True, verbose
         obj2 (any): the second object to compare
         args (list): additional objects to compare
         method (str): see above
-        detailed (bool): whether to compute a detailed comparison of the objects (else stop comparing at the first False)
-        equal_nan (bool): whether matching ``np.nan`` should compare as true (default yes)
+        equal_nan (bool): whether matching ``np.nan`` should compare as true (default True; NB, False not guaranteed to work with ``method='pickle'``, which includes the default)
         verbose (bool): level of detail to print
         die (bool): whether to raise an exception if an error is encountered (else return False)
         
@@ -940,9 +950,9 @@ def equal(obj, obj2, *args, method=None, detailed=False, equal_nan=True, verbose
         sc.equal(o1, o2) # Returns True
         sc.equal(o1, o3) # Returns False
         e = sc.Equal(o1, o2, o3, detailed=True) # Create an object
-        e.to_df() # Convert to a dataframe
+        e.df.disp() # Show results as a dataframe
         
     *New in version 3.1.0.*
     '''
-    e = Equal(obj, obj2, *args, method=method, detailed=detailed, equal_nan=equal_nan, verbose=verbose, die=die, compare=True)
+    e = Equal(obj, obj2, *args, method=method, equal_nan=equal_nan, verbose=verbose, die=die)
     return e.eq
