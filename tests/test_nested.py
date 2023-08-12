@@ -184,7 +184,7 @@ def test_equal():
     out = sc.objdict()
     
     print('Validating signatures')
-    ut.check_signatures(sc.equal, sc.Equal.__init__, extras=['self', 'compare'], die=True)
+    ut.check_signatures(sc.equal, sc.Equal.__init__, extras=['self', 'detailed', 'compare'], die=True)
     
     
     print('Testing docstring examples')
@@ -203,7 +203,7 @@ def test_equal():
     o3 = sc.dcp(o1)
     o3['b'][2] = 8
     
-    # out.e1 = sc.equal(o1, o2) # Returns True
+    out.e1 = sc.equal(o1, o2) # Returns True
     out.e2 = sc.equal(o1, o3) # Returns False
     e = sc.Equal(o1, o2, o3, detailed=True) # Create an object
     e.to_df() # Convert to a dataframe
@@ -211,13 +211,13 @@ def test_equal():
     out.e3 = e
     
     # Do tests
-    # assert out.e1
+    assert out.e1
     assert not out.e2
     assert not e.eq
     
     print('Testing other features')
     for method in ['pickle', 'eq']:
-        # assert sc.equal(o1, o2, method=method)
+        assert sc.equal(o1, o2, method=method)
         assert not sc.equal(o1, o3, method=method)
     
     return out
