@@ -619,9 +619,10 @@ class Equal(scu.prettyobj):
     
     # Define known special cases for equality checking
     special_cases = (float, np.ndarray, pd.Series, pd.DataFrame, pd.core.indexes.base.Index)
-    valid_methods = ['all', 'pickle', 'json', 'string', 'eq']
+    valid_methods = [None, 'eq', 'pickle', 'json', 'str']
     
-    def __init__(self, obj, obj2, *args, method=None, detailed=False, 
+    
+    def __init__(self, obj, obj2, *args, method='all', detailed=False, 
                  equal_nan=True, verbose=None, compare=True, die=False):
         '''
         Compare equality between two arbitrary objects -- see :func:`sc.equal() <equal>` for full documentation.
@@ -630,14 +631,8 @@ class Equal(scu.prettyobj):
         '''
         from . import sc_odict as sco # To avoid circular import
         
-        # Validate
-        if method not in self.valid_methods: # pragma: no cover
-            errormsg = f'Method "{self.method}" not recognized: must be json, pickle, or eq'
-            raise ValueError(errormsg)
-        
         # Set properties
-        self.orig_base = obj
-        self.orig_others = [obj2] + list(args)
+        self.objs = [obj, obj2] + list(args) # All objects for comparison
         self.method = method
         self.detailed = detailed
         self.equal_nan = equal_nan
@@ -645,39 +640,76 @@ class Equal(scu.prettyobj):
         self.die = die
         
         # Derived results
-        self.conv_base = None # Base object after conversion
-        self.conv_others = [] # Other objects after conversion
-        self.dict_base = None # Base dictionary
-        self.dict_others = [] # Other dictionaries
-        self.checked = [] # Keys that have been checked already
+        self.dicts = [] # Object dictionaries
         self.eq = None # Final value to be populated
         self.results = sco.objdict() # Detailed output, 1D dict
         self.fullresults = sco.objdict() # Detailed output, 2D dict
         self.exceptions = sco.objdict() # Store any exceptions encountered
-        self.converted = False # Whether the objects have already been converted
+        self.walked = False # Whether the objects have already been walked
         self.compared = False # Whether the objects have already been compared
         
         # Run the comparison if needed
         if compare:
-            self.convert()
+            self.check_method()
+            self.walk()
             self.compare()
             self.to_df()
         return
     
+    
     @property
     def n(self):
         ''' Find out how many objects are being compared '''
-        return len(self.orig_others)
+        return len(self.objs)
+
+    @property
+    def base(self):
+        ''' Get the base object '''
+        return self.objs[0]
+
+    @property
+    def others(self):
+        ''' Get the other objects '''
+        return self.objs[1:]
+
+    @property
+    def bdict(self):
+        ''' Get the base dictionary '''
+        return self.dicts[0] if len(self.dicts) else None
+    
+    @property
+    def odicts(self):
+        ''' Get the other dictionaries '''
+        return self.dicts[1:]
     
     
-    def convert(self):
-        ''' Convert the objects into the right format '''
+    def check_method(self):
+        ''' Check that a valid method is supplied '''
+        if self.method not in self.valid_methods: # pragma: no cover
+            errormsg = f'Method "{self.method}" not recognized: must be one of {scu.strjoin(self.valid_methods)}'
+            raise ValueError(errormsg)
+    
+    
+    def walk(self, **kwargs):
+        ''' Use :func:`sc.iterobj() <iterobj>` to convert the objects into dictionaries '''
+        for obj in self.objs:
+            self.dicts.append(iterobj(obj, **kwargs))
+        self.walked = True
+        if self.verbose:
+            nkeystr = scu.strjoin([len(d) for d in self.dicts])
+            print(f'Walked {self.n} objects with {nkeystr} keys respectively')
+        return
+    
+    
+    def convert(self, obj, method=None):
+        ''' Convert an object to the right type prior to comparing '''
+        
         from . import sc_fileio as scf # To avoid circular import
         
         # Define the mapping
         mapping = dict(
-            json   = scf.jsonpickle,
             pickle = pkl.dumps,
+            json   = scf.jsonpickle,
             string = lambda obj: str(obj),
             eq     = lambda obj: obj,
         )
@@ -687,22 +719,13 @@ class Equal(scu.prettyobj):
             errormsg = f'Method "{self.method}" not found: must be "json", "pickle", "string", or "eq"'
             raise ValueError(errormsg)
         
-        # Do the mapping
-        self.conv_base = conv_func(self.orig_base)
-        self.dict_base = iterobj(self.conv_base)
-        for other in self.orig_others:
-            conv_other = conv_func(other)
-            self.conv_others.append(conv_other)
-            self.dict_others.append(iterobj(conv_other))
-        
-        self.converted = True
-                
-        return
+        # Actually convert
+        out = conv_func(obj)
+        return out
     
 
     def compare_special(self, obj, obj2):
         ''' Do special comparisons for known objects where == doesn't work '''
-        from . import sc_dataframe as scd 
         
         # For floats, check for NaN equality
         if isinstance(obj, float):
@@ -723,9 +746,10 @@ class Equal(scu.prettyobj):
             else:
                 eq = obj.equals(obj2)
                 
-        # For dataframes, use Sciris()
+        # For dataframes, use Sciris
         elif isinstance(obj, pd.DataFrame):
-            eq = scd.dataframe(obj).equals(scd.dataframe(obj2), equal_nan=self.equal_nan)
+            from . import sc_dataframe as scd # To avoid circular import
+            eq = scd.dataframe.equal(obj, obj2, equal_nan=self.equal_nan)
         
         else:
             errormsg = f'Not able to handle object of {type(obj)}'
@@ -752,8 +776,9 @@ class Equal(scu.prettyobj):
     def compare(self):
         ''' Perform the comparison '''
         
-        if not self.converted:
-            self.convert()
+        # Walk the objects if not already walked
+        if not self.walked:
+            self.walk()
         
         to_check = self.dict_base.enumitems()
         while to_check:
@@ -866,14 +891,19 @@ def equal(obj, obj2, *args, method=None, detailed=False, equal_nan=True, verbose
     For this reasons, different ways of checking equality may give different results
     in edge cases. The available methods are:
         
-        - ``'pickle'`` converts the object to a binary pickle 
+        - ``'eq'``: uses the objects' built-in ``__eq__()`` methods (most accurate, but most likely to fail)
+        - ``'pickle'``: converts the object to a binary pickle (most robust)
+        - ``'json'``: converts the object to a JSON via ``jsonpickle`` (gives most detailed object structure, but can be lossy)
+        - ``'str'``: converts the object to its string representation (least amount of detail)
+    
+    By default, 'eq' is tried first, and if that raises an exception, 'pickle' is tried.
     
     Args:
         obj (any): the first object to compare
         obj2 (any): the second object to compare
         args (list): additional objects to compare
-        method (str): choose between, 'pickle' (convert to binary pickle; default if detailed=False), 'json' (default; convert to JSON and then compare), or 'eq' (use ==)
-        detailed (bool): whether to return a detailec comparison of the objects (else just true/false)
+        method (str): see above
+        detailed (bool): whether to compute a detailed comparison of the objects (else stop comparing at the first False)
         equal_nan (bool): whether matching ``np.nan`` should compare as true (default yes)
         verbose (bool): level of detail to print
         die (bool): whether to raise an exception if an error is encountered (else return False)
