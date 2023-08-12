@@ -70,7 +70,7 @@ class dataframe(pd.DataFrame):
         
         # Handle inputs
         if 'cols' in kwargs:
-            if columns is not None:
+            if columns is not None: # pragma: no cover
                 raise ValueError('The argument "cols" is an alias for "columns", do not supply both')
             columns = kwargs.pop('cols')
         if nrows and data is None:
@@ -357,7 +357,7 @@ class dataframe(pd.DataFrame):
         '''
         try: # First try default comparison
             return super().__eq__(other)
-        except: # Otherwise, use the custom check
+        except: # Otherwise, use the custom check # pragma: no cover
             return self.equals(other)
     
     @classmethod
@@ -379,7 +379,7 @@ class dataframe(pd.DataFrame):
         
         *New in version 3.1.0.*
         '''
-        if len(args) < 2:
+        if len(args) < 2: # pragma: no cover
             errormsg = f'There must be ≥2 input arguments, not {len(args)}'
             raise ValueError(errormsg)
         base = args[0]

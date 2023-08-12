@@ -148,6 +148,20 @@ def test_other():
     dfnew.set('x', ['d','e','f'])
     assert dfnew.x[2] == 'f'
     
+    print('Equality')
+    df1 = sc.dataframe(a=[1, 2, np.nan])
+    df2 = sc.dataframe(a=[1, 2, 4])
+    df3 = sc.dataframe(a=[1, 2, 4], b=['a', 'b','c'])
+    df4 = sc.dataframe(a=[1, 'foo', np.nan])
+    
+    assert sc.dataframe.equal(df1, df1) # Returns True
+    assert not sc.dataframe.equal(df1, df1, equal_nan=False) # Returns False
+    assert not sc.dataframe.equal(df1, df2) # Returns False
+    assert not sc.dataframe.equal(df1, df1, df2) # Also returns False
+    assert sc.dataframe.equal(df4, df4, df4) # Returns True
+    assert df4.equals(df4)
+    assert not df4.equals(df4, equal_nan=False)
+    
     subheading('Printing')
     dfprint('Custom display')
     df2 = sc.dataframe(data=np.random.rand(100,10))
@@ -224,7 +238,7 @@ def test_errors():
 if __name__ == '__main__':
     sc.tic()
 
-    a  = test_dataframe()
+    a = test_dataframe()
     b = test_init()
     c = test_get_set()
     d = test_io()
