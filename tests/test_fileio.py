@@ -9,6 +9,7 @@ import pylab as pl
 import openpyxl
 import sciris as sc
 import pytest
+ut = sc.importbypath(sc.thispath() / 'sc_test_utils.py')
 
 # Define filenames
 files = sc.prettyobj()
@@ -235,7 +236,7 @@ def test_json():
     json_obj = sc.jsonify(jsonifiable)
     json_str = sc.jsonify(jsonifiable, tostring=True, indent=2) # kwargs are passed to json.dumps()
     json = sc.readjson(json_str)
-    assert jsonifiable == json
+    assert json_obj == json
 
     print('Not-a-JSON as sanitized object:')
     print(notjson)
@@ -270,15 +271,14 @@ def test_jsonpickle():
 
     myobj = sc.prettyobj()
     myobj.a = 3
-    myobj.b = pd.DataFrame.from_dict({'a':[3,5,23]})
+    myobj.b = ut.MyClass()
 
     jp = sc.jsonpickle(myobj)
     jps = sc.jsonpickle(myobj, tostring=True)
     myobj2 = sc.jsonunpickle(jp)
     myobj3 = sc.jsonunpickle(jps)
 
-    assert myobj.b.equals(myobj2.b)
-    assert myobj.b.equals(myobj3.b)
+    assert sc.equal(myobj, myobj2, myobj3)
 
     return jp
 

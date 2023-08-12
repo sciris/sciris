@@ -62,7 +62,7 @@ class dataframe(pd.DataFrame):
 
     | *New in version 2.0.0:* subclass pandas DataFrame
     | *New in version 3.0.0:* "dtypes" argument; handling of item setting
-    | *New in version 3.1.0:* use panda's equality operator by default (unless an exception is raised)
+    | *New in version 3.1.0:* use panda's equality operator by default (unless an exception is raised); new "equal" method; "cat" can be an instance method now
     '''
 
     def __init__(self, data=None, index=None, columns=None, dtype=None, copy=None, 
@@ -351,7 +351,7 @@ class dataframe(pd.DataFrame):
 
     def __eq__(self, other):
         '''
-        Allow for more robust equality checks: same type, size, columns, and values
+        Try the default ``__eq__()``, but fall back on the more robust ``equal()``
         
         *New in version 3.0.0.*
         '''
@@ -359,35 +359,79 @@ class dataframe(pd.DataFrame):
             return super().__eq__(other)
         except: # Otherwise, use the custom check
             return self.equals(other)
-        
-        
-    def equals(self, other, **kwargs):
+    
+    @classmethod
+    def equal(cls, *args, equal_nan=True):
         '''
-        Allow for more robust equality checks: same type, size, columns, and values
+        Class method returning boolean true/false equals that allows for more robust equality checks: 
+        same type, size, columns, and values. See :meth:`df.equals() <dataframe.equals>` for 
+        equivalent instance method.
+        
+        **Examples**::
+            
+            df1 = sc.dataframe(a=[1, 2, np.nan])
+            df2 = sc.dataframe(a=[1, 2, 4])
+            
+            sc.dataframe.equal(df1, df1) # Returns True
+            sc.dataframe.equal(df1, df1, equal_nan=False) # Returns False
+            sc.dataframe.equal(df1, df2) # Returns False
+            sc.dataframe.equal(df1, df1, df2) # Also returns False
+        
+        *New in version 3.1.0.*
+        '''
+        if len(args) < 2:
+            errormsg = f'There must be ≥2 input arguments, not {len(args)}'
+            raise ValueError(errormsg)
+        base = args[0]
+        others = args[1:]
+        eqs = []
+        
+        # Handle NaNs
+        if equal_nan:
+            randval = -528876923.87569493 # Define a random value that would never be encountered otherwise
+            base = base.fillna(randval)
+        
+        for other in others:
+            
+            # Check type
+            if not isinstance(other, base.__class__):
+                eq = False
+            
+            # Check shape
+            elif base.values.shape != other.values.shape:
+                eq = False
+    
+            # Check columns
+            elif not np.all(base.columns == other.columns):
+                eq = False
+            
+            # Finally, check values
+            else:
+                if equal_nan:
+                    other = other.fillna(randval)
+                eq = np.all(base.values == other.values)
+            
+            eqs.append(eq)
+    
+        all_eq = all(eqs)
+        
+        return all_eq
+        
+        
+    def equals(self, other, *args, equal_nan=True):
+        '''
+        Try the default :meth:`equals() <pandas.DataFrame.equals>`, but fall back 
+        on the more robust :meth:`sc.dataframe.equal() <dataframe.equal>` if that
+        fails.
         
         *New in version 3.1.0.*
         '''
         try:
+            assert equal_nan # Regular pandas equals can't handle non-equal NaNs
+            assert len(args) == 0 # Regular pandas can't handle multiple arguments
             return super().equals(other)
         except: # Otherwise, do manual check
-            # Check type
-            if not isinstance(other, self.__class__):
-                return False
-            
-            # Check shape
-            if self.values.shape != other.values.shape:
-                return False
-    
-            # Check columns
-            if not np.all(self.columns == other.columns):
-                return False
-            
-            # Check values
-            if not np.array_equal(self.values == other.values, **kwargs):
-                return False
-            
-            # Passed all checks
-            return True
+            return self.equal(self, other, *args, equal_nan=equal_nan)
 
 
     def disp(self, nrows=None, ncols=None, width=999, precision=4, options=None, **kwargs):
@@ -563,7 +607,7 @@ class dataframe(pd.DataFrame):
         Concatenate additional data onto the current dataframe. 
         
         Similar to :meth:`df.appendrow() <dataframe.appendrow>` and :meth:`df.insertrow() <dataframe.insertrow>`;
-        see also :meth:`df.cat() <dataframe.cat>` for the equivalent class method.
+        see also :meth:`sc.dataframe.cat() <dataframe.cat>` for the equivalent class method.
         
         Args:
             data (dataframe/array): the data to concatenate
@@ -573,6 +617,12 @@ class dataframe(pd.DataFrame):
             inplace (bool): whether to append in place
             dfargs (dict): arguments passed to construct each dataframe
             **kwargs (dict): passed to :func:`pd.concat() <pandas.concat>`
+        
+        **Example**::
+            
+            arr1 = np.random.rand(6,3)
+            df2 = sc.dataframe(np.random.rand(4,3))
+            df3 = df2.concat(arr1)
         
         | *New in version 2.0.2:* "inplace" defaults to False
         | *New in version 3.0.0:* improved type handling
@@ -586,12 +636,12 @@ class dataframe(pd.DataFrame):
             dfs.append(df)
         newdf = self._constructor(pd.concat(dfs, **kwargs), **dfargs)
         return self.replacedata(newdf=newdf, reset_index=reset_index, inplace=inplace)
-
-
+    
+    
     @classmethod
     def cat(cls, data, *args, dfargs=None, **kwargs):
         '''
-        Convenience method for concatenating multiple dataframes. See :meth:`df.concat() <dataframe.concat>`
+        Convenience class method for concatenating multiple dataframes. See :meth:`df.concat() <dataframe.concat>`
         for the equivalent instance method.
         
         Args:

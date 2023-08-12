@@ -2,8 +2,11 @@
 Test nested dict functions
 '''
 
+import numpy as np
+import pandas as pd
 import sciris as sc
 import pytest
+ut = sc.importbypath(sc.thispath() / 'sc_test_utils.py')
 
 
 def test_nested():
@@ -134,6 +137,47 @@ def test_iterobj():
     return out
 
 
+def test_equal():
+    sc.heading('Testing equal')
+    out = sc.objdict()
+    
+    print('Validating signatures')
+    ut.check_signatures(sc.equal, sc.Equal.__init__, extras=['self', 'compare'], die=True)
+    
+    
+    print('Testing docstring examples')
+    o1 = dict(
+        a = [1,2,3],
+        b = np.array([4,5,6]),
+        c = dict(
+            df = sc.dataframe(q=[sc.date('2022-02-02'), sc.date('2023-02-02')])
+        )
+    )
+    
+    # Identical object
+    o2 = sc.dcp(o1)
+    
+    # Non-identical object
+    o3 = sc.dcp(o1)
+    o3['b'][2] = 8
+    
+    out.e1 = sc.equal(o1, o2) # Returns True
+    out.e2 = sc.equal(o1, o3) # Returns False
+    e = sc.Equal(o1, o2, o3, detailed=True) # Create an object
+    e.to_df() # Convert to a dataframe
+    
+    out.e3 = e
+    
+    # Do tests
+    assert out.e1
+    assert not out.e2
+    assert not e.eq
+    
+    print('Testing other features')
+    
+    return out
+
+
 #%% Run as a script
 if __name__ == '__main__':
     T = sc.timer()
@@ -143,5 +187,6 @@ if __name__ == '__main__':
     dicts   = test_dicts()
     search  = test_search()
     iterobj = test_iterobj()
+    equal   = test_equal()
 
     T.toc('Done.')

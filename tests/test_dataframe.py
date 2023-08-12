@@ -174,8 +174,8 @@ def test_io():
     df2 = sc.dataframe.read_csv(f.csv)
     df3 = sc.dataframe.read_excel(f.excel)
     
-    assert df == df2 == df3
-    
+    assert sc.dataframe.equal(df, df2, df3)
+
     sc.rmpath(f.values())
     
     return df

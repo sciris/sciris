@@ -60,14 +60,14 @@ def create_complex_data(alt=False):
     return out
 
 
-class MyClass:
+class MyClass(sc.prettyobj):
     ''' Store common data types for compatibility checks'''
     
     def __init__(self, date='2023-08-11', alt=False):
         self.date = date
         self.strings = ['a', 'b', 'c', 'd', 'e']
         self.nparray = np.arange(5)
-        self.datetime = dt.datetime.now(du.tz.tzutc())
+        self.datetime = dt.datetime(2022, 4, 4, tzinfo=du.tz.tzutc())
         self.pandas = create_complex_data(alt=alt)
 
     def sum(self):

@@ -451,7 +451,7 @@ def nestedloop(inputs, loop_order):
 ##############################################################################
 
 
-__all__ += ['search', 'Equality', 'equal']
+__all__ += ['search', 'Equal', 'equal']
 
 # Define a custom "None" value to allow searching for actual None values
 _None = '<sc_nested_custom_None>' # This should not be equal to any other value the user could supply
@@ -615,13 +615,13 @@ def search(obj, query=_None, key=_None, value=_None, aslist=True, method='exact'
         return matches
 
 
-class Equality(scu.prettyobj):
+class Equal(scu.prettyobj):
     
     # Define known special cases for equality checking
-    special_cases = (np.ndarray, pd.Series, pd.DataFrame)
+    special_cases = (float, np.ndarray, pd.Series, pd.DataFrame)
     
     def __init__(self, obj, obj2, *args, method='json', detailed=False, 
-                 equal_nan=True, verbose=None, die=False):
+                 equal_nan=True, verbose=None, compare=True, die=False):
         '''
         Compare equality between two arbitrary objects -- see :func:`sc.equal() <equal>` for full documentation.
 
@@ -654,6 +654,13 @@ class Equality(scu.prettyobj):
         self.fullresults = sco.objdict() # Detailed output, 2D dict
         self.exceptions = sco.objdict() # Store any exceptions encountered
         self.converted = False # Whether the objects have already been converted
+        self.compared = False # Whether the objects have already been compared
+        
+        # Run the comparison if needed
+        if compare:
+            self.convert()
+            self.compare()
+            self.to_df()
         return
     
     @property
@@ -691,15 +698,28 @@ class Equality(scu.prettyobj):
         ''' Do special comparisons for known objects where == doesn't work '''
         from . import sc_dataframe as scd 
         
+        # For floats, check for NaN equality
+        if isinstance(obj, float):
+            if not np.isnan(obj) or not np.isnan(obj2) or not self.equal_nan: # Either they're not NaNs or we're not counting NaNs as equal
+                eq = obj == obj2 # Do normal comparison
+            else: # They are both NaNs and equal_nan is True
+                eq = True
+        
         # For numpy arrays, must use np.array_equals()
-        if isinstance(obj, np.ndarray):
+        elif isinstance(obj, np.ndarray):
             eq = np.array_equal(obj, obj2, equal_nan=self.equal_nan)
     
-        # For series and dataframes, use equals()
+        # For series, handle NaNs and use equals()
         elif isinstance(obj, pd.Series):
-            eq = obj.equals(obj2)
+            if self.equal_nan:
+                try:    eq = obj.compare(obj2).empty
+                except: eq = False
+            else:
+                eq = obj.equals(obj2)
+                
+        # For dataframes, use Sciris()
         elif isinstance(obj, pd.DataFrame):
-            eq = scd.dataframe(obj).equals(scd.dataframe(obj2))
+            eq = scd.dataframe(obj).equals(scd.dataframe(obj2), equal_nan=self.equal_nan)
         
         else:
             errormsg = f'Not able to handle object of {type(obj)}'
@@ -794,8 +814,9 @@ class Equality(scu.prettyobj):
         self.eq = all([v for v in self.results.values() if v is not None])
         if self.verbose is not False:
             self.check_exceptions() # Check if any exceptions were encountered
+        self.compared = True
             
-        return self.eq
+        return self
     
     
     def check_exceptions(self):
@@ -811,6 +832,12 @@ class Equality(scu.prettyobj):
     def to_df(self):
         ''' Convert the detailed results dictionary to a dataframe '''
         from . import sc_dataframe as scd # To avoid circular import
+        
+        # Ensure they've been compared
+        if not self.compared:
+            self.compare()
+            
+        # Make dataframe
         columns = [f'obj1_obj{i+2}' for i in range(self.n)]
         df = scd.dataframe.from_dict(scu.dcp(self.fullresults), orient='index', columns=columns)
         df['equal'] = df.all(axis=1)
@@ -833,27 +860,29 @@ def equal(obj, obj2, *args, method='json', detailed=False, equal_nan=True, verbo
         verbose (bool): level of detail to print
         die (bool): whether to raise an exception if an error is encountered (else return False)
         
-    **Example**:
+    **Examples**:
         
         o1 = dict(
             a = [1,2,3],
             b = np.array([4,5,6]),
             c = dict(
-                df = pd.DataFrame(q=[sc.date('2022-02-02'), sc.date('2023-02-02')])
+                df = sc.dataframe(q=[sc.date('2022-02-02'), sc.date('2023-02-02')])
             )
         )
         
+        # Identical object
         o2 = sc.dcp(o1)
         
+        # Non-identical object
         o3 = sc.dcp(o1)
         o3['b'][2] = 8
         
         sc.equal(o1, o2) # Returns True
         sc.equal(o1, o3) # Returns False
-        e = sc.Equality(o1, o2, o3, detailed=True) # Create an object
+        e = sc.Equal(o1, o2, o3, detailed=True) # Create an object
         e.to_df() # Convert to a dataframe
         
     *New in version 3.1.0.*
     '''
-    equality = Equality(obj, obj2, *args, method=method, detailed=detailed, equal_nan=equal_nan, verbose=verbose, die=die)
-    return equality.compare()
+    e = Equal(obj, obj2, *args, method=method, detailed=detailed, equal_nan=equal_nan, verbose=verbose, die=die, compare=True)
+    return e.eq
