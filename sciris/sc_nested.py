@@ -94,10 +94,10 @@ def makenested(nesteddict, keylist=None, value=None, overwrite=False, generator=
     return
 
 
-def check_iter_type(obj, check_array=False, known=None, known_to_none=False):
+def check_iter_type(obj, check_array=False, known=None, known_to_none=True):
     ''' Helper function to determine if an object is a dict, list, or neither '''
     if known is not None and isinstance(obj, known):
-        out = 'known' if not known_to_none else '' # Choose how known objects are handled
+        out = '' if known_to_none else 'known' # Choose how known objects are handled
     elif isinstance(obj, dict):
         out = 'dict'
     elif isinstance(obj, list):
@@ -299,14 +299,14 @@ def iterobj(obj, func=None, inplace=False, copy=True, leaf=False, atomic='defaul
         if not inplace and not leaf:
             _output['root'] = func(obj, *args, **kwargs)
     
-    itertype = check_iter_type(obj, known=atomic, known_to_none=True)
+    itertype = check_iter_type(obj, known=atomic)
     
     # Next, check if we need to iterate
-    if itertype and not itertype == 'known':
+    if itertype:
         for key,subobj in iteritems(obj, itertype):
             trace = _trace + [key]
             newobj = subobj
-            subitertype = check_iter_type(subobj, known_to_none=True)
+            subitertype = check_iter_type(subobj)
             if verbose: # pragma: no cover
                 print(f'Working on {trace}, {leaf}, {subitertype}')
             if not (leaf and subitertype):
@@ -581,7 +581,7 @@ def search(obj, query=_None, key=_None, value=_None, aslist=True, method='exact'
                 trace = _trace + f'.{k}'
         
         # Sanitize object value
-        if method in ['partial', 'regex'] and check_iter_type(v, known_to_none=kwargs.pop('known_to_none', True), **kwargs): # We want to exclude values that can be descended into if we're doing string matching
+        if method in ['partial', 'regex'] and check_iter_type(v, **kwargs): # We want to exclude values that can be descended into if we're doing string matching
             objvalue = _None
         else:
             objvalue = v
@@ -627,7 +627,7 @@ def search(obj, query=_None, key=_None, value=_None, aslist=True, method='exact'
 class Equal(scu.prettyobj):
     
     # Define known special cases for equality checking
-    special_cases = tuple([float] + _atomic_classes)
+    special_cases = (float,) + _atomic_classes
     valid_methods = [None, 'eq', 'pickle', 'json', 'str']
     
     
