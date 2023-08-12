@@ -293,7 +293,7 @@ def test_jsonpickle():
     
     # Tidy up
     sc.rmpath(jpath)
-    assert sc.equal(myobj, myobj2, myobj3, myobj4, method='eq')
+    assert sc.equal(myobj, myobj2, myobj3, myobj4, leaf=True)
 
     return jp
 

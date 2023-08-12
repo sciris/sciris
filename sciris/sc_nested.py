@@ -285,7 +285,7 @@ def iterobj(obj, func=None, inplace=False, copy=True, leaf=False, atomic='defaul
     
     if atomic == 'default':
         atomic = _atomic_classes
-    
+        
     if func is None:
         func = lambda obj: obj
         
@@ -632,7 +632,7 @@ class Equal(scu.prettyobj):
     
     
     def __init__(self, obj, obj2, *args, method=None, detailed=False, equal_nan=True, 
-                 leaf=False, verbose=None, compare=True, die=False):
+                 leaf=False, verbose=None, compare=True, die=False, **kwargs):
         '''
         Compare equality between two arbitrary objects -- see :func:`sc.equal() <equal>` for full documentation.
 
@@ -652,6 +652,7 @@ class Equal(scu.prettyobj):
         self.equal_nan = equal_nan
         self.verbose = verbose
         self.die = die
+        self.kwargs = scu.mergedicts(kwargs, dict(leaf=leaf))
         self.check_method() # Check that the method is valid
         
         # Derived results
@@ -708,10 +709,10 @@ class Equal(scu.prettyobj):
                 raise ValueError(errormsg)
     
     
-    def walk(self, **kwargs):
+    def walk(self):
         ''' Use :func:`sc.iterobj() <iterobj>` to convert the objects into dictionaries '''
         for obj in self.objs:
-            self.dicts.append(iterobj(obj, **kwargs))
+            self.dicts.append(iterobj(obj, **self.kwargs))
         self.walked = True
         if self.verbose:
             nkeystr = scu.strjoin([len(d) for d in self.dicts])
@@ -913,7 +914,7 @@ class Equal(scu.prettyobj):
         
     
 
-def equal(obj, obj2, *args, method=None, equal_nan=True, leaf=False, verbose=None, die=False):
+def equal(obj, obj2, *args, method=None, equal_nan=True, leaf=False, verbose=None, die=False, **kwargs):
     '''
     Compare equality between two arbitrary objects
     
@@ -939,6 +940,7 @@ def equal(obj, obj2, *args, method=None, equal_nan=True, leaf=False, verbose=Non
         leaf (bool): if True, only compare the object's leaf nodes (those with no children); otherwise, compare everything
         verbose (bool): level of detail to print
         die (bool): whether to raise an exception if an error is encountered (else return False)
+        kwargs (dict): passed to :func:`sc.iterobj() <iterobj>`
         
     **Examples**:
         
@@ -964,5 +966,5 @@ def equal(obj, obj2, *args, method=None, equal_nan=True, leaf=False, verbose=Non
         
     *New in version 3.1.0.*
     '''
-    e = Equal(obj, obj2, *args, method=method, equal_nan=equal_nan, verbose=verbose, die=die)
+    e = Equal(obj, obj2, *args, method=method, equal_nan=equal_nan, leaf=leaf, verbose=verbose, die=die, **kwargs)
     return e.eq
