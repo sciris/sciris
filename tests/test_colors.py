@@ -15,7 +15,7 @@ if 'doplot' not in locals():
     sc.options(interactive=doplot)
 
 
-def test_colors(doplot=doplot):
+def test_colors():
     sc.heading('Testing colors')
     o = sc.objdict()
 
@@ -47,7 +47,7 @@ def test_colors(doplot=doplot):
     return o
 
 
-def test_colormaps(doplot=doplot):
+def test_colormaps():
     sc.heading('Testing colormaps')
     o = sc.objdict()
 
@@ -82,11 +82,60 @@ def test_colormaps(doplot=doplot):
     print('Testing colormapdemo')
     sc.colormapdemo('parula', doshow=False)
 
-    if not doplot:
-        pl.close('all')
-
     return o
 
+
+def test_colorbars():
+    sc.heading('Testing colorbars')
+    o = sc.objdict()
+    
+    print('Create a default colorbar')
+    o.cb1 = sc.manualcolorbar()
+    
+    print('Add a colorbar to non-mappable data (e.g. a scatterplot)')
+    pl.figure()
+    n = 1000
+    x = pl.randn(n)
+    y = pl.randn(n)
+    c = x**2 + y**2
+    pl.scatter(x, y, c=c)
+    o.cb2 = sc.manualcolorbar(c)
+    
+    print('Create a custom colorbar with a custom label')
+    pl.figure()
+    sc.manualcolorbar(
+        vmin=-20,
+        vmax=40,
+        vcenter=0,
+        cmap='orangeblue',
+        label='Cold/hot',
+        orientation='horizontal',
+        labelkwargs=dict(rotation=10, fontweight='bold'),
+        axkwargs=[0.1,0.5,0.8,0.1],
+    )
+    
+    print('Create a completely custom colorbar')
+    pl.figure()
+    n = 12
+    x = np.arange(n)
+    values = np.sqrt(np.arange(n))
+    colors = sc.gridcolors(n)
+    pl.scatter(x, values, c=colors)
+    pl.grid(True)
+
+    ticklabels = ['' for i in range(n)]
+    for i in [0, 2, 4, 10, 11]:
+        ticklabels[i] = f'Color {i} is nice'
+    o.cb3 = sc.manualcolorbar(
+        colors=colors, 
+        values=values, 
+        ticks=values, 
+        ticklabels=ticklabels, 
+        spacing='proportional'
+    )
+    
+    return o
+    
 
 #%% Run as a script
 if __name__ == '__main__':
@@ -95,11 +144,14 @@ if __name__ == '__main__':
     doplot = True
     sc.options(interactive=True)
 
-    colors    = test_colors(doplot)
-    colormaps = test_colormaps(doplot)
+    c  = test_colors()
+    cm = test_colormaps()
+    cb = test_colorbars()
 
     if doplot:
         pl.show()
+    else:
+        pl.close('all')
 
     T.toc()
     print('Done.')
