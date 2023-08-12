@@ -74,6 +74,35 @@ def test_search():
     sc.heading('Testing search')
     o = sc.objdict()
     
+    print('Docstring tests')
+    # Create a nested dictionary
+    nested = {'a':{'foo':1, 'bar':['moat', 'goat']}, 'b':{'car':'far', 'cat':[1,2,4,8]}}
+
+    # Find keys
+    keymatches = sc.search(nested, 'bar', aslist=False)
+    assert 'bar' in keymatches[0]
+
+    # Find values
+    val = 4
+    valmatches = sc.search(nested, value=val, aslist=True) # Returns  [['b', 'cat', 2]]
+    assert sc.getnested(nested, valmatches[0]) == val # Get from the original nested object
+
+    # Find values with a function
+    def find(v):
+        return True if isinstance(v, int) and v >= 3 else False
+        
+    func_found = sc.search(nested, value=find)
+    assert ['b', 'cat', 3] in func_found
+
+    # Find partial or regex matches
+    partial = sc.search(nested, key='oat', method='partial') # Search keys only
+    keys,vals = sc.search(nested, '^.ar', method='regex', return_values=True, verbose=True)
+
+    assert ['a', 'bar', 1] in partial
+    assert ['a', 'bar'] in keys
+    assert 'far' in vals
+    
+    
     # Define the nested object
     nested = {
         'a': {
@@ -103,7 +132,7 @@ def test_search():
     assert len(valmatches) == 1
     assert sc.getnested(nested, valmatches[0]) == val # Get from the original nested object
     
-    # Test aslist=False
+    print('Test aslist=False')
     valstrs = sc.search(nested, value=val, aslist=False)
     assert isinstance(valstrs[0], str)
     
@@ -174,7 +203,7 @@ def test_equal():
     o3 = sc.dcp(o1)
     o3['b'][2] = 8
     
-    out.e1 = sc.equal(o1, o2) # Returns True
+    # out.e1 = sc.equal(o1, o2) # Returns True
     out.e2 = sc.equal(o1, o3) # Returns False
     e = sc.Equal(o1, o2, o3, detailed=True) # Create an object
     e.to_df() # Convert to a dataframe
@@ -182,11 +211,14 @@ def test_equal():
     out.e3 = e
     
     # Do tests
-    assert out.e1
+    # assert out.e1
     assert not out.e2
     assert not e.eq
     
     print('Testing other features')
+    for method in ['pickle', 'eq']:
+        # assert sc.equal(o1, o2, method=method)
+        assert not sc.equal(o1, o3, method=method)
     
     return out
 

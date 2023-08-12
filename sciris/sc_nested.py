@@ -520,7 +520,7 @@ def search(obj, query=_None, key=_None, value=_None, aslist=True, method='exact'
                 match = str(target).lower() in str(source).lower()
             elif method == 'regex':
                 match = bool(re.match(str(target), str(source)))
-            else:
+            else: # pragma: no cover
                 errormsg = f'Could not understand method "{method}": must be "exact", "string", or "regex"'
                 raise ValueError(errormsg)
         else: # No target was supplied, return no match
@@ -530,7 +530,7 @@ def search(obj, query=_None, key=_None, value=_None, aslist=True, method='exact'
     
     # Handle query
     if query != _None:
-        if key != _None or value != _None:
+        if key != _None or value != _None: # pragma: no cover
             errormsg = '"query" cannot be used with "key" or "value"; it is a shortcut to set both'
             raise ValueError(errormsg)
         key = query
@@ -619,8 +619,9 @@ class Equal(scu.prettyobj):
     
     # Define known special cases for equality checking
     special_cases = (float, np.ndarray, pd.Series, pd.DataFrame, pd.core.indexes.base.Index)
+    valid_methods = ['all', 'pickle', 'json', 'string', 'eq']
     
-    def __init__(self, obj, obj2, *args, method='json', detailed=False, 
+    def __init__(self, obj, obj2, *args, method=None, detailed=False, 
                  equal_nan=True, verbose=None, compare=True, die=False):
         '''
         Compare equality between two arbitrary objects -- see :func:`sc.equal() <equal>` for full documentation.
@@ -630,7 +631,7 @@ class Equal(scu.prettyobj):
         from . import sc_odict as sco # To avoid circular import
         
         # Validate
-        if method not in ['json', 'pickle', 'eq']:
+        if method not in self.valid_methods: # pragma: no cover
             errormsg = f'Method "{self.method}" not recognized: must be json, pickle, or eq'
             raise ValueError(errormsg)
         
@@ -677,9 +678,14 @@ class Equal(scu.prettyobj):
         mapping = dict(
             json   = scf.jsonpickle,
             pickle = pkl.dumps,
+            string = lambda obj: str(obj),
             eq     = lambda obj: obj,
         )
-        conv_func = mapping[self.method]
+        try:
+            conv_func = mapping[self.method]
+        except:
+            errormsg = f'Method "{self.method}" not found: must be "json", "pickle", "string", or "eq"'
+            raise ValueError(errormsg)
         
         # Do the mapping
         self.conv_base = conv_func(self.orig_base)
@@ -772,6 +778,10 @@ class Equal(scu.prettyobj):
                         eq = False
                     else:
                         ov = od[k]
+                        
+                        if isinstance(ov, np.ndarray):
+                            print('YDDIUFDIUFD', k)
+                            import traceback; traceback.print_exc(); import pdb; pdb.set_trace()
                     
                         # Actually check equality -- can be True, False, or None
                         with scu.tryexcept(die=self.die, verbose=False) as te:
@@ -846,15 +856,23 @@ class Equal(scu.prettyobj):
         
     
 
-def equal(obj, obj2, *args, method='json', detailed=False, equal_nan=True, verbose=None, die=False):
+def equal(obj, obj2, *args, method=None, detailed=False, equal_nan=True, verbose=None, die=False):
     '''
     Compare equality between two arbitrary objects
+    
+    There is no universal way to check equality between objects in Python. Some
+    objects define their own equals method which may not evaluate to true/false
+    (e.g., Numpy arrays and pandas dataframes). For others it may be undefined.
+    For this reasons, different ways of checking equality may give different results
+    in edge cases. The available methods are:
+        
+        - ``'pickle'`` converts the object to a binary pickle 
     
     Args:
         obj (any): the first object to compare
         obj2 (any): the second object to compare
         args (list): additional objects to compare
-        method (str): choose between 'json' (default; convert to JSON and then compare), 'pickle' (convert to binary pickle), or 'eq' (use ==)
+        method (str): choose between, 'pickle' (convert to binary pickle; default if detailed=False), 'json' (default; convert to JSON and then compare), or 'eq' (use ==)
         detailed (bool): whether to return a detailec comparison of the objects (else just true/false)
         equal_nan (bool): whether matching ``np.nan`` should compare as true (default yes)
         verbose (bool): level of detail to print
