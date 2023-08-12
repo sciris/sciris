@@ -40,8 +40,9 @@ def create_complex_data(alt=False, nan=True, mixed=True, pandas=True):
         a = [0.0, 1.0, 2.0, 3.0 + alt, [-1, np.nan][nan]],
         b = [0, 1, 0, 1, 0 + alt],
         c = ["foo1", "foo2", "foo3", "foo4", "foo5" + alt*'alt'],
-        d = pd.date_range("1/1/2009", periods=5),
     )
+    if pandas:
+        data.d = pd.date_range("1/1/2009", periods=5)
     if mixed:
         data.e = [0.0, 1, pd.Timestamp("20100101"), "foo", 2.0+alt],
     if alt:

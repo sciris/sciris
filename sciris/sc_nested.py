@@ -622,8 +622,8 @@ class Equal(scu.prettyobj):
     valid_methods = [None, 'eq', 'pickle', 'json', 'str']
     
     
-    def __init__(self, obj, obj2, *args, method=None, detailed=False, 
-                 equal_nan=True, verbose=None, compare=True, die=False):
+    def __init__(self, obj, obj2, *args, method=None, detailed=False, equal_nan=True, 
+                 twigs=False, verbose=None, compare=True, die=False):
         '''
         Compare equality between two arbitrary objects -- see :func:`sc.equal() <equal>` for full documentation.
 
@@ -896,7 +896,7 @@ class Equal(scu.prettyobj):
             self.compare()
             
         # Make dataframe
-        columns = [f'obj1_obj{i+2}' for i in range(self.n-1)]
+        columns = [f'obj0_obj{i+1}' for i in range(self.n-1)]
         df = scd.dataframe.from_dict(scu.dcp(self.fullresults), orient='index', columns=columns)
         df['equal'] = df.all(axis=1)
         self.df = df
@@ -904,7 +904,7 @@ class Equal(scu.prettyobj):
         
     
 
-def equal(obj, obj2, *args, method=None, equal_nan=True, verbose=None, die=False):
+def equal(obj, obj2, *args, method=None, equal_nan=True, leaf=False, verbose=None, die=False):
     '''
     Compare equality between two arbitrary objects
     
@@ -927,6 +927,7 @@ def equal(obj, obj2, *args, method=None, equal_nan=True, verbose=None, die=False
         args (list): additional objects to compare
         method (str): see above
         equal_nan (bool): whether matching ``np.nan`` should compare as true (default True; NB, False not guaranteed to work with ``method='pickle'``, which includes the default)
+        leaf (bool): if True, only compare the object's leaf nodes (those with no children); otherwise, compare everything
         verbose (bool): level of detail to print
         die (bool): whether to raise an exception if an error is encountered (else return False)
         
