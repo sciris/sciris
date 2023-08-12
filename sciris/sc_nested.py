@@ -638,6 +638,7 @@ class Equal(scu.prettyobj):
         self.equal_nan = equal_nan
         self.verbose = verbose
         self.die = die
+        self.check_method() # Check that the method is valid
         
         # Derived results
         self.dicts = [] # Object dictionaries
@@ -650,7 +651,6 @@ class Equal(scu.prettyobj):
         
         # Run the comparison if needed
         if compare:
-            self.check_method()
             self.walk()
             self.compare()
             self.to_df()
@@ -685,9 +685,13 @@ class Equal(scu.prettyobj):
     
     def check_method(self):
         ''' Check that a valid method is supplied '''
-        if self.method not in self.valid_methods: # pragma: no cover
-            errormsg = f'Method "{self.method}" not recognized: must be one of {scu.strjoin(self.valid_methods)}'
-            raise ValueError(errormsg)
+        if self.method is None:
+            self.method = ['eq', 'pickle'] # Define the default method sequence to try
+        self.method = scu.tolist(self.method)
+        for method in self.method:
+            if method not in self.valid_methods and not callable(method): # pragma: no cover
+                errormsg = f'Method "{method}" not recognized: must be one of {scu.strjoin(self.valid_methods)}'
+                raise ValueError(errormsg)
     
     
     def walk(self, **kwargs):
@@ -704,23 +708,25 @@ class Equal(scu.prettyobj):
     def convert(self, obj, method=None):
         ''' Convert an object to the right type prior to comparing '''
         
-        from . import sc_fileio as scf # To avoid circular import
+        if method is None:
+            method = self.method[0] # Use default method if none provided
         
-        # Define the mapping
-        mapping = dict(
-            pickle = pkl.dumps,
-            json   = scf.jsonpickle,
-            string = lambda obj: str(obj),
-            eq     = lambda obj: obj,
-        )
-        try:
-            conv_func = mapping[self.method]
-        except:
-            errormsg = f'Method "{self.method}" not found: must be "json", "pickle", "string", or "eq"'
+        # Do the conversion
+        if method == 'eq':
+            out = obj
+        elif method == 'pickle':
+            out = pkl.dumps(obj)
+        elif method == 'json':
+            from . import sc_fileio as scf # To avoid circular import
+            out = scf.jsonpickle(obj)
+        elif method == 'str':
+            out = str(obj)
+        elif callable(method):
+            out = method(obj)
+        else:
+            errormsg = f'Method {method} not recognized'
             raise ValueError(errormsg)
         
-        # Actually convert
-        out = conv_func(obj)
         return out
     
 
@@ -780,61 +786,64 @@ class Equal(scu.prettyobj):
         if not self.walked:
             self.walk()
         
-        to_check = self.dict_base.enumitems()
-        while to_check:
-            i,k,v = to_check.pop(0)
-            eqs = []
-            for j,od in enumerate(self.dict_others):
+        btree = self.bdict.enumitems() # Get the full object tree for the base object
+        bkeys = set(self.bdict.keys()) # Get the base keys (object structure)
+        while btree:
+            i,key,baseobj = btree.pop(0) # Get the index, key, and base object
+            eqs = [] # Store equality across all objects
+            for j,otree in enumerate(self.odicts): # Iterate over other object trees
                 
-                # If keys don't match, objects differ
+                # Check if the keys don't match, in which case objects differ
                 eq = True
-                if k == 'root':
-                    bkeys = set(self.dict_base.keys())
-                    okeys = set(od.keys())
+                if key == 'root':
+                    okeys = set(otree.keys())
                     eq = bkeys == okeys
                     if eq is False and self.verbose:
                         print(f'Objects have different structures: {bkeys ^ okeys}') # Use XOR operator
                 
-                # It's not root or the keys match, proceed
-                if eq:
+                # If key not present, false by default
+                if key not in otree:
+                    eq = False
                 
-                    # If not present, false by default
-                    if k not in od:
-                        eq = False
-                    else:
-                        ov = od[k]
-                        
-                        if isinstance(ov, np.ndarray):
-                            print('YDDIUFDIUFD', k)
-                            import traceback; traceback.print_exc(); import pdb; pdb.set_trace()
+                # If keys match, proceed
+                if eq:
+                    methods = scu.dcp(self.method) # Copy the methods to try one by one
+                    compared = False # Check if comparison succeeded
+                    otherobj = otree[key] # Get the other object
+                    
+                    # Convert the objects
+                    while len(methods) and not compared:
+                        method = methods.pop(0)
+                        bconv = self.convert(baseobj, method)
+                        oconv = self.convert(otherobj, method)
                     
                         # Actually check equality -- can be True, False, or None
-                        with scu.tryexcept(die=self.die, verbose=False) as te:
-                            if type(v) != type(ov):
+                        try:
+                            if type(bconv) != type(oconv):
                                 eq = False # Unlike types are always not equal
-                            elif isinstance(v, self.special_cases):
-                                eq == self.compare_special(v, ov) # Compare known exceptions
+                            elif isinstance(bconv, self.special_cases):
+                                eq == self.compare_special(bconv, oconv) # Compare known exceptions
                             else:
-                                eq = (v == ov) # Main use case: do the comparison!
+                                eq = (bconv == oconv) # Main use case: do the comparison!
                             eq = bool(eq) # Ensure it's true or false
-                        if te.died: # Store exceptions if encountered
+                            compared = True # Comparison succeeded, break the loop
+                        except Exception as E: # Store exceptions if encountered
                             eq = None
-                            exc = te.exception
-                            self.exceptions[k] = exc
+                            self.exceptions[key] = E
                             if self.verbose:
-                                print(f'Exception encountered on "{self.keytostr(k, j+1)}" ({type(v)}): {exc}')
+                                print(f'Exception encountered on "{self.keytostr(key, j+1)}" ({type(bconv)}): {E}')
                 
                 # Append the result
                 eqs.append(eq)
                 if self.verbose:
-                    print(f'Item {i+1}/{len(self.dict_base)} ({j+1}/{self.n}) "{self.keytostr(k, j+1)}": {eq}')
+                    print(f'Item {i+1}/{len(self.odicts)} ({j+2}/{self.n}) "{self.keytostr(key, j+1)}": {eq}')
                 
             # Store the results, and break if any equalities are found unless we're doing detailed
             has_none = None in eqs
             has_false = False in eqs
             all_true = None if has_none else all(eqs)
-            self.fullresults[k] = eqs
-            self.results[k] = all_true
+            self.fullresults[key] = eqs
+            self.results[key] = all_true
             if not self.detailed and has_false: # Don't keep going unless needed
                 if self.verbose:
                     print('Objects are not equal and detailed=False, breaking')
@@ -842,8 +851,11 @@ class Equal(scu.prettyobj):
             
             # Check for matches and avoid recursing further
             if all_true:
-                self.checked.append(k)
-                to_check = [ikv for ikv in to_check if not self.is_subkey(k, ikv[1])]
+                orig_len = len(btree)
+                btree = [ikv for ikv in btree if not self.is_subkey(key, ikv[1])]
+                new_len = len(btree)
+                if self.verbose:
+                    print(f'Object {self.keytostr(key)} are equal, skipping {orig_len - new_len} sub-objects')
             
         # Tidy up
         self.eq = all([v for v in self.results.values() if v is not None])
