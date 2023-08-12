@@ -1439,12 +1439,14 @@ def jsonpickle(obj, filename=None, tostring=False, **kwargs):
     if not tostring or filename is not None:
         pickler = jp.pickler.Pickler(**kwargs)
         output = pickler.flatten(obj)
-        if filename is not None:
-            return savejson(filename, output)
+        # if filename is not None:
+        #     return savejson(filename, output)
 
     # Optionally convert to string instead
-    if tostring:
+    if tostring or filename is not None:
         output = jp.dumps(obj)
+        if filename is not None:
+            savetext(filename, output)
 
     return output
 

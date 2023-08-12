@@ -34,10 +34,10 @@ def check_signatures(func1, func2, extras=None, missing=None, die=True):
     return  eq
 
 
-def create_complex_data(alt=False, mixed=True, index=True):
+def create_complex_data(alt=False, nan=True, mixed=True, pandas=True):
     ''' Create complex pickle data -- adapted from pandas/tests/io/generate_legacy_storage_files.py '''
     data = sc.objdict(
-        a = [0.0, 1.0, 2.0, 3.0 + alt, np.nan],
+        a = [0.0, 1.0, 2.0, 3.0 + alt, [-1, np.nan][nan]],
         b = [0, 1, 0, 1, 0 + alt],
         c = ["foo1", "foo2", "foo3", "foo4", "foo5" + alt*'alt'],
         d = pd.date_range("1/1/2009", periods=5),
@@ -47,7 +47,7 @@ def create_complex_data(alt=False, mixed=True, index=True):
     if alt:
         data.f = ['Using', 'alternate', 'data', 'creation', 'method']
 
-    index_data = sc.objdict(
+    index = sc.objdict(
         ind_int   = pd.Index(np.arange(10+alt)),
         ind_date  = pd.date_range("20130101", periods=10+alt),
         ind_float = pd.Index(np.arange(10+alt, dtype=np.float64)),
@@ -56,9 +56,10 @@ def create_complex_data(alt=False, mixed=True, index=True):
 
     frame = pd.DataFrame(data)
     
-    out = sc.objdict(data=data, frame=frame)
-    if index:
-        out.index = index_data
+    if pandas:
+        out = sc.objdict(data=data, frame=frame, index=index)
+    else:
+        out = data
 
     return out
 
@@ -66,12 +67,12 @@ def create_complex_data(alt=False, mixed=True, index=True):
 class MyClass(sc.prettyobj):
     ''' Store common data types for compatibility checks'''
     
-    def __init__(self, date='2023-08-11', alt=False, mixed=True, index=True):
+    def __init__(self, date='2023-08-11', alt=False, nan=True, mixed=True, pandas=True):
         self.date = date
         self.strings = ['a', 'b', 'c', 'd', 'e']
         self.nparray = np.arange(5)
         self.datetime = dt.datetime(2022, 4, 4, tzinfo=du.tz.tzutc())
-        self.pandas = create_complex_data(alt=alt, mixed=mixed, index=index)
+        self.pandas = create_complex_data(alt=alt, nan=nan, mixed=mixed, pandas=pandas)
 
     def sum(self):
         return self.nparray.sum()

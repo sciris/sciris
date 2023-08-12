@@ -270,7 +270,7 @@ def test_jsonpickle():
 
     myobj = sc.prettyobj()
     myobj.a = 3
-    myobj.b = ut.MyClass(mixed=False, index=False) # jsonpickle can't handle mixed data types
+    myobj.b = ut.MyClass(nan=False, mixed=False, pandas=False) # jsonpickle can't handle mixed data types
 
     jp = sc.jsonpickle(myobj)
     jps = sc.jsonpickle(myobj, tostring=True)
