@@ -1394,18 +1394,40 @@ def saveyaml(filename=None, obj=None, folder=None, die=True, keepnone=False, dum
     return output
 
 
-def jsonpickle(obj, tostring=False):
+def jsonpickle(obj, filename=None, tostring=False, **kwargs):
     '''
-    Save any Python object to a JSON file using jsonpickle.
+    Save any Python object to a JSON using jsonpickle.
+    
+    Wrapper for the jsonpickle library: https://jsonpickle.github.io/
+    
+    Note: unlike regular pickle, this is not guaranteed to exactly restore the
+    original object. For example, at the time of writing it does not support
+    pandas dataframes with mixed-dtype columns. If this sort of thing does not 
+    sound like it would be an issue for you, please proceed!
 
     Args:
         obj (any): the object to pickle as a JSON
+        filename = 
         tostring (bool): whether to return a string (rather than the JSONified Python object)
+        kwargs (dict): passed to ``jsonpickle.pickler.Pickler()``
 
     Returns:
-        Either a string or a Python object for the JSON
-
-    Wrapper for the jsonpickle library: https://jsonpickle.github.io/
+        Either a Python object for the JSON, a string, or save to file
+        
+    **Examples**::
+        
+        # Create data
+        df1  = sc.dataframe(a=[1,2,3], b=['a','b','c'])
+        
+        # Convert to JSON and read back
+        json = sc.jsonpickle(df1)
+        df2  = sc.jsonunpickle(json)
+        
+        # Save to JSON and load back
+        sc.jsonpickle(df1, 'my-data.json')
+        df3  = sc.jsonunpickle('my-data.json')
+        
+    *New in version 3.1.0:* "filename" argument        
     '''
     import jsonpickle as jp # Optional import
     import jsonpickle.ext.numpy as jsonpickle_numpy
@@ -1413,22 +1435,54 @@ def jsonpickle(obj, tostring=False):
     jsonpickle_numpy.register_handlers()
     jsonpickle_pandas.register_handlers()
 
+    # Convert to JSON and optionally save
+    if not tostring or filename is not None:
+        pickler = jp.pickler.Pickler(**kwargs)
+        output = pickler.flatten(obj)
+        if filename is not None:
+            return savejson(filename, output)
+
+    # Optionally convert to string instead
     if tostring:
         output = jp.dumps(obj)
-    else:
-        pickler = jp.pickler.Pickler()
-        output = pickler.flatten(obj)
 
     return output
 
 
-def jsonunpickle(json):
-    ''' Use jsonpickle to restore an object (see jsonpickle()) '''
+def jsonunpickle(json=None, filename=None):
+    '''
+    Open a saved JSON pickle
+    
+    See :func:`sc.jsonpickle() <jsonpickle>` for full documentation.
+    
+    Args:
+        json (str or object): if supplied, restore the data from a string or object 
+        filename (str/path): if supplied, restore data from file
+
+    *New in version 3.1.0:* "filename" argument
+    '''
     import jsonpickle as jp
     import jsonpickle.ext.numpy as jsonpickle_numpy
     import jsonpickle.ext.pandas as jsonpickle_pandas
     jsonpickle_numpy.register_handlers()
     jsonpickle_pandas.register_handlers()
+    
+    if json is not None and filename is not None:
+        errormsg = 'You can supply json or filename, but not both'
+        raise ValueError(errormsg)
+    
+    # Check if what's been supplied isn't a valid JSON
+    if isinstance(json, str):
+        if json[0] not in ['[', '{']:
+            filename = json
+            json = None
+            
+    if filename is not None:
+        if not os.path.exists(filename):
+            errormsg = f'Filename "{filename}" not found'
+            raise FileNotFoundError(errormsg)
+        else:
+            json = loadjson(filename)
 
     if isinstance(json, str):
         output = jp.loads(json)
