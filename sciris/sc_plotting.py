@@ -95,13 +95,13 @@ def ax3d(nrows=None, ncols=None, index=None, fig=None, ax=None, returnfig=False,
     # Handle the figure
     if fig in [True, False] or (fig is None and figkwargs): # Confusingly, any of these things indicate that we want a new figure
         fig = pl.figure(**figkwargs)
-    elif fig is None:
+    elif fig is None: # pragma: no cover
         if ax is None:
             if not pl.get_fignums():
                 fig = pl.figure(**figkwargs)
             else:
                 fig = pl.gcf()
-        else: # pragma: no cover
+        else:
             fig = ax.figure
 
     # Create and initialize the axis
@@ -115,7 +115,7 @@ def ax3d(nrows=None, ncols=None, index=None, fig=None, ax=None, returnfig=False,
             ax = fig.add_subplot(nrows, ncols, index, projection='3d', **axkwargs)
     
     # Validate the axes
-    if not isinstance(ax, Axes3D):
+    if not isinstance(ax, Axes3D): # pragma: no cover
         errormsg = f'''Cannot create 3D plot into axes {ax}: ensure "projection='3d'" was used when making it'''
         raise ValueError(errormsg)
     
@@ -150,10 +150,10 @@ def _process_2d_data(x, y, z, c, flatten=False):
             x,y,z = x.flatten(), y.flatten(), z.flatten() # Flatten everything to 1D
             if scu.isarray(c) and c.shape == (ny,nx): # Flatten colors, too, if 2D and the same size as Z
                 c = c.flatten()
-    elif flatten == False:
+    elif flatten == False: # pragma: no cover
         raise ValueError('Must provide z values as a 2D array')
     
-    if x is None or y is None:
+    if x is None or y is None: # pragma: no cover
         raise ValueError('Must provide x and y values if z is 1D')
         
     # Handle automatic color scaling
@@ -231,10 +231,9 @@ def plot3d(x, y, z, c='index', fig=None, ax=None, returnfig=False, figkwargs=Non
     fig,ax = ax3d(returnfig=True, fig=fig, ax=ax, figkwargs=figkwargs, **axkwargs)
     
     # Handle different-colored line segments
-    
     if c == 'index':
         c = np.arange(n) # Assign automatically based on index
-    if scu.isarray(c) and len(c) in [n, n-1]: # Technically don't use the last color
+    if scu.isarray(c) and len(c) in [n, n-1]: # Technically don't use the last color if the color has the same length as the data # pragma: no cover
         if c.ndim == 1:
             c = _process_colors(c, z=z)
         for i in range(n-1):
@@ -868,7 +867,7 @@ def figlayout(fig=None, tight=True, keep=False, **kwargs):
         fig.set_layout_engine(layout)
     except: # Earlier versions # pragma: no cover
         fig.set_tight_layout(tight)
-    if (not keep) and (not pl.get_backend() == 'agg'):
+    if (not keep) and (not pl.get_backend() == 'agg'): # pragma: no cover
         pl.pause(0.01) # Force refresh if using an interactive backend
         try:
             fig.set_layout_engine('none')
@@ -960,7 +959,7 @@ def fonts(add=None, use=False, output='name', dryrun=False, rebuild=False, verbo
                     f.paths += fontpath
                     f.objs  += fontobj
             except Exception as E:
-                if verbose:
+                if verbose: # pragma: no cover
                     print(f'Could not load {fontpath}: {str(E)}')
 
         # Handle output
@@ -2026,7 +2025,7 @@ def savemovie(frames, filename=None, fps=None, quality=None, dpi=None, writer=No
 
     # Try to get the figure from the frames, else use the current one
     try:    fig = frames[0][0].get_figure()
-    except: fig = pl.gcf()
+    except: fig = pl.gcf() # pragma: no cover
 
     # Set parameters
     if filename is None: # pragma: no cover
@@ -2049,7 +2048,7 @@ def savemovie(frames, filename=None, fps=None, quality=None, dpi=None, writer=No
     if isinstance(dpi, str): # pragma: no cover
         quality = dpi # Interpret dpi arg as a quality command
         dpi = None
-    if dpi is not None and quality is not None:
+    if dpi is not None and quality is not None: # pragma: no cover
         print(f'sc.savemovie() warning: quality is simply a shortcut for dpi; please specify one or the other, not both (dpi={dpi}, quality={quality})')
     if quality is not None:
         if   quality == 'low':    dpi =  50
