@@ -249,8 +249,8 @@ def plot3d(x, y, z, c='index', fig=True, ax=None, returnfig=False, figkwargs=Non
         return ax
 
 
-def scatter3d(x=None, y=None, z=None, c='z', fig=True, ax=None, returnfig=False, figkwargs=None, 
-              axkwargs=None, **kwargs):
+def scatter3d(x=None, y=None, z=None, c='z', fig=True, ax=None, returnfig=False, 
+              figkwargs=None, axkwargs=None, **kwargs):
     '''
     Plot 3D data as a scatter
     
