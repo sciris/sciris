@@ -323,7 +323,7 @@ def iterobj(obj, func=None, inplace=False, copy=True, leaf=False, atomic='defaul
         return newobj
     else:
         if (not _trace) and (len(_output)>1) and leaf: # We're at the top level, we have multiple entries, and only leaves are requested
-            _output.pop('root') # Only include "root" with leaf=True if it's the only node
+            _output.pop('root') # Remove "root" with leaf=True if it's not the only node
         return _output
 
 
@@ -722,13 +722,6 @@ class Equal(scu.prettyobj):
     def walk(self):
         ''' Use :func:`sc.iterobj() <iterobj>` to convert the objects into dictionaries '''
         
-        # For JSON, parse the object up front to get the tree right
-        if self.get_method() == 'json':
-            from . import sc_fileio as scf # To avoid circular import
-            self.raw_objs = self.objs
-            for o,obj in enumerate(self.objs):
-                self.objs[o] = scf.jsonpickle(obj)
-        
         for obj in self.objs:
             self.dicts.append(iterobj(obj, **self.kwargs))
         self.walked = True
@@ -744,12 +737,13 @@ class Equal(scu.prettyobj):
         method = self.get_method(method)
         
         # Do the conversion
-        if method in ['eq', 'json']:
+        if method == 'eq':
             out = obj
         elif method == 'pickle':
             out = pkl.dumps(obj)
-        # elif method == 'json':
-            
+        elif method == 'json':
+            from . import sc_fileio as scf # To avoid circular import
+            out = scf.jsonpickle(obj)
         elif method == 'str':
             out = str(obj)
         elif callable(method):
@@ -763,8 +757,7 @@ class Equal(scu.prettyobj):
 
     def compare_special(self, obj, obj2):
         ''' Do special comparisons for known objects where == doesn't work '''
-        
-        print('HIIIII', obj, obj2)
+        from . import sc_math as scm # To avoid circular import
         
         # For floats, check for NaN equality
         if isinstance(obj, float):
@@ -774,18 +767,9 @@ class Equal(scu.prettyobj):
                 eq = True
         
         # For numpy arrays, must use something to handle NaNs
-        elif isinstance(obj, (np.ndarray, pd.core.indexes.base.Index)):
-            from . import sc_math as scm # To avoid circular import
+        elif isinstance(obj, (np.ndarray, pd.Series, pd.core.indexes.base.Index)):
             eq = scm.nanequal(obj, obj2, scalar=True, equal_nan=self.equal_nan)
     
-        # For series, handle NaNs and use equals()
-        elif isinstance(obj, pd.Series):
-            if self.equal_nan:
-                try:    eq = obj.compare(obj2).empty
-                except: eq = False
-            else:
-                eq = obj.equals(obj2)
-                
         # For dataframes, use Sciris
         elif isinstance(obj, pd.DataFrame):
             from . import sc_dataframe as scd # To avoid circular import
@@ -850,9 +834,6 @@ class Equal(scu.prettyobj):
                         method = methods.pop(0)
                         bconv = self.convert(baseobj, method)
                         oconv = self.convert(otherobj, method)
-                        
-                        print('HIiiIiII', bconv, oconv)
-                        # import traceback; traceback.print_exc(); import pdb; pdb.set_trace()
                         
                         # Actually check equality -- can be True, False, or None
                         if type(bconv) != type(oconv):
@@ -958,7 +939,7 @@ def equal(obj, obj2, *args, method=None, equal_nan=True, leaf=False, verbose=Non
         obj2 (any): the second object to compare
         args (list): additional objects to compare
         method (str): see above
-        equal_nan (bool): whether matching ``np.nan`` should compare as true (default True; NB, False not guaranteed to work with ``method='pickle'``, which includes the default)
+        equal_nan (bool): whether matching ``np.nan`` should compare as true (default True; NB, False not guaranteed to work with ``method='pickle'`` or ``'str'``, which includes the default; True not guaranteed to work with ``method='json'``)
         leaf (bool): if True, only compare the object's leaf nodes (those with no children); otherwise, compare everything
         verbose (bool): level of detail to print
         die (bool): whether to raise an exception if an error is encountered (else return False)
