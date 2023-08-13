@@ -187,7 +187,7 @@ def _process_colors(c, z, cmap=None, to2d=False):
     
 
 
-def plot3d(x, y, z, c='index', fig=None, ax=None, returnfig=False, figkwargs=None, 
+def plot3d(x, y, z, c='index', fig=True, ax=None, returnfig=False, figkwargs=None, 
            axkwargs=None, **kwargs):
     '''
     Plot 3D data as a line
@@ -217,7 +217,7 @@ def plot3d(x, y, z, c='index', fig=None, ax=None, returnfig=False, figkwargs=Non
         c = np.arange(n)
         sc.plot3d(x, y, z, c=c, fig=fig)
     
-    *New in version 3.1.0:* Allow multi-colored line; removed "plotkwargs" argument
+    *New in version 3.1.0:* Allow multi-colored line; removed "plotkwargs" argument; "fig" defaults to True
     '''
     # Set default arguments
     plotkwargs = scu.mergedicts({'lw':2}, kwargs)
@@ -249,7 +249,7 @@ def plot3d(x, y, z, c='index', fig=None, ax=None, returnfig=False, figkwargs=Non
         return ax
 
 
-def scatter3d(x=None, y=None, z=None, c='z', fig=None, ax=None, returnfig=False, figkwargs=None, 
+def scatter3d(x=None, y=None, z=None, c='z', fig=True, ax=None, returnfig=False, figkwargs=None, 
               axkwargs=None, **kwargs):
     '''
     Plot 3D data as a scatter
@@ -281,7 +281,7 @@ def scatter3d(x=None, y=None, z=None, c='z', fig=None, ax=None, returnfig=False,
         sc.scatter3d(x, y, z, c='index')
     
     | *New in version 3.0.0:* Allow 2D input
-    | *New in version 3.1.0:* Allow "index" color argument; removed "plotkwargs" argument
+    | *New in version 3.1.0:* Allow "index" color argument; removed "plotkwargs" argument; "fig" defaults to True
     '''
     # Set default arguments
     plotkwargs = scu.mergedicts({'s':200, 'depthshade':False, 'linewidth':0}, kwargs)
@@ -302,7 +302,7 @@ def scatter3d(x=None, y=None, z=None, c='z', fig=None, ax=None, returnfig=False,
         return ax
 
 
-def surf3d(x=None, y=None, z=None, c='z', fig=None, ax=None, returnfig=False, colorbar=None, 
+def surf3d(x=None, y=None, z=None, c='z', fig=True, ax=None, returnfig=False, colorbar=None, 
            figkwargs=None, axkwargs=None, **kwargs):
     '''
     Plot 2D or 3D data as a 3D surface
@@ -340,7 +340,7 @@ def surf3d(x=None, y=None, z=None, c='z', fig=None, ax=None, returnfig=False, co
         c = z**2
         sc.surf3d(x=x, y=y, z=z, c=c, cmap='orangeblue')
     
-    *New in 3.1.0: updated arguments from "data" to x, y, z, c; removed "plotkwargs" argument
+    *New in 3.1.0: updated arguments from "data" to x, y, z, c; removed "plotkwargs" argument; "fig" defaults to True
     '''
 
     # Set default arguments
@@ -372,7 +372,7 @@ def surf3d(x=None, y=None, z=None, c='z', fig=None, ax=None, returnfig=False, co
 
 
 
-def bar3d(x=None, y=None, z=None, c='z', dx=0.8, dy=0.8, dz=None, fig=None, ax=None, 
+def bar3d(x=None, y=None, z=None, c='z', dx=0.8, dy=0.8, dz=None, fig=True, ax=None, 
           returnfig=False, figkwargs=None, axkwargs=None, **kwargs):
     '''
     Plot 2D data as 3D bars
@@ -409,7 +409,7 @@ def bar3d(x=None, y=None, z=None, c='z', dx=0.8, dy=0.8, dz=None, fig=None, ax=N
         c = z**2
         sc.bar3d(x=x, y=y, z=z, dx=0.5, dy=0.5, dz=dz, c=c, cmap='orangeblue')
     
-    *New in 3.1.0: updated arguments from "data" to x, y, z, c; removed "plotkwargs" argument
+    *New in 3.1.0: updated arguments from "data" to x, y, z, c; removed "plotkwargs" argument; "fig" defaults to True
     '''
 
     # Set default arguments

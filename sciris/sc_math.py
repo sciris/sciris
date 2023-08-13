@@ -437,7 +437,7 @@ def nanequal(arr, *args, scalar=False):
     *New in version 3.1.0.*
     '''
     
-    if not len(args):
+    if not len(args): # pragma: no cover
         errormsg = 'Only one array provided; requires 2 or more'
         raise ValueError(errormsg)
         
