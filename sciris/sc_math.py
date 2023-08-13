@@ -145,13 +145,13 @@ def findinds(arr=None, val=None, *args, eps=1e-6, first=False, last=False, ind=N
             elif scu.checktype(val, 'arraylike'): # It's not actually a value, it's another array
                 boolarr = arr
                 arglist.append(scu.toarray(val))
-            else:
+            else: # pragma: no cover
                 errormsg = f'Cannot understand input {type(val)}: must be number or array-like'
                 raise TypeError(errormsg)
 
     # Handle any additional inputs
     for arg in arglist:
-        if arg.shape != boolarr.shape:
+        if arg.shape != boolarr.shape: # pragma: no cover
             errormsg = f'Could not handle inputs with shapes {boolarr.shape} vs {arg.shape}'
             raise ValueError(errormsg)
         boolarr *= arg
