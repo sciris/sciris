@@ -231,7 +231,7 @@ def test_equal():
     
     # Test totally different objects
     assert not sc.equal(1, 'a')
-    assert not sc.equal(dict(a=1, b=2), dict(a=1), detailed=True)
+    assert not sc.equal(dict(a=dict(x=1,y=2), b=3), dict(a=dict(x=1,y=2)), detailed=True).all(axis=None) # Returns a dataframe
     
     return out
 

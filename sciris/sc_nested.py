@@ -873,7 +873,7 @@ class Equal(scu.prettyobj):
                 break
         
             # Check for matches and avoid recursing further
-            if result is True:
+            if not self.detailed and result is True:
                 origlen = len(btree)
                 btree = [ikv for ikv in btree if not self.is_subkey(key, ikv[1])]
                 skipped = origlen - len(btree)
