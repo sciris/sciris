@@ -99,8 +99,8 @@ class Parallel:
         P.finalize()
         print(P.times)
         
-    *New in version 3.0.0.*
-    *New in version 3.1.0:* "globaldict" argument
+    | *New in version 3.0.0.*
+    | *New in version 3.1.0:* "globaldict" argument
     '''
     def __init__(self, func, iterarg=None, iterkwargs=None, args=None, kwargs=None, ncpus=None, 
                  maxcpu=None, maxmem=None, interval=None, parallelizer=None, serial=False, 

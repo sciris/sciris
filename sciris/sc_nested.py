@@ -513,8 +513,8 @@ def search(obj, query=_None, key=_None, value=_None, aslist=True, method='exact'
         found = sc.search(nested, key='oat', method='partial') # Search keys only
         keys,vals = sc.search(nested, '^.ar', method='regex', return_values=True, verbose=True)
     
-    *New in version 3.0.0:* ability to search for values as well as keys/attributes; "aslist" argument
-    *New in version 3.1.0:* "query", "method", and "verbose" keywords; improved searching for lists
+    | *New in version 3.0.0:* ability to search for values as well as keys/attributes; "aslist" argument
+    | *New in version 3.1.0:* "query", "method", and "verbose" keywords; improved searching for lists
     """
     
     # Collect keywords that won't change, for later use in the recursion
