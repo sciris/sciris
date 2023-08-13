@@ -111,6 +111,7 @@ Other utilities
 -  :func:`sc.colorize() <sc_printing.colorize>`: print text in a certain color
 -  :func:`sc.sigfig() <sc_printing.sigfig>`: truncate a number to a certain number of significant figures
 -  :func:`sc.search() <sc_nested.search>`: search for a key, attribute, or value in a complex object
+-  :func:`sc.equal() <sc_nested.equal>`: check whether two or more complex objects are equal
 
 
 Installation and run instructions

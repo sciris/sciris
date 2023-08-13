@@ -185,7 +185,7 @@ def test_equal():
     out = sc.objdict()
     
     print('Validating signatures')
-    ut.check_signatures(sc.equal, sc.Equal.__init__, extras=['self', 'detailed', 'compare'], die=True)
+    ut.check_signatures(sc.equal, sc.Equal.__init__, extras=['self', 'compare'], die=True)
     
     
     print('Testing docstring examples')

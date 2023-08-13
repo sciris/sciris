@@ -8,6 +8,29 @@ All major updates to Sciris are documented here.
 By import convention, components of the Sciris library are listed beginning with ``sc.``, e.g. ``sc.odict()``.
 
 
+Version 2.1.0 (2022-12-23)
+--------------------------
+
+New features
+~~~~~~~~~~~~
+#. ``sc.nanequal()`` is an extension of ``np.array_equal()`` to handle a broader range of types (e.g., mixed-type ``object`` arrays that cannot be cast to float). Other ``NaN``-related methods have also been updated to be more robust.
+#. ``sc.manualcolorbar()`` allows highly customized colorbars to be added to plots, including to plots with no "mappable" data (e.g., scatterplots).
+
+
+Bugfixes
+~~~~~~~~
+#. Sciris is now compatible with a broader range of dependencies (e.g., Python, NumPy, pandas, and Matplotlib); in most cases, the latest version of Sciris is now backwards-compatible with all dependency versions since January 2021.
+#. ``sc.readdate()`` now returns ``datetime`` objects unchanged, rather than raising an exception.
+
+Other changes
+~~~~~~~~~~~~~
+#. ``sc.load()`` has been significantly refactored to be simpler and more robust. Pandas' ``pd.read_pickle()`` is now included as one of the default unpickling options. Unsuccessful unpickling now always produces a ``Failed`` object, with as much data retained as possible.
+#. ``sc.jsonpickle()`` and ``sc.jsonunpickle()`` can now save to/read from files directly.
+#. ``sc.dataframe`` has a new ``equal`` class method (e.g. ``sc.dataframe.equal(df1, df2)``), and revised ``equals()`` and ``==`` behavior to match pandas.
+#. ``sc.timer()`` objects can now be added, which will concatenate all the times.
+#. ``sc.iterobj()`` now provides more options for controlling how the object is iterated, and no longer (by default) descends into NumPy arrays, pandas DataFrames, etc. ``sc.search()`` also has additional options.
+
+
 Version 3.0.0 (2023-04-20)
 --------------------------
 

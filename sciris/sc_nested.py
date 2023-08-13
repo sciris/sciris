@@ -640,7 +640,6 @@ class Equal(scu.prettyobj):
 
         Args:
             obj, obj2, etc: see :func:`sc.equal() <equal>`
-            detailed (bool): whether to compute a detailed comparison of the objects (else stop comparing at the first False)
             compare (bool): whether to perform the comparison on object creation
 
         *New in version 3.1.0.*
@@ -917,7 +916,7 @@ class Equal(scu.prettyobj):
         
     
 
-def equal(obj, obj2, *args, method=None, equal_nan=True, leaf=False, verbose=None, die=False, **kwargs):
+def equal(obj, obj2, *args, method=None, detailed=False, equal_nan=True, leaf=False, verbose=None, die=False, **kwargs):
     '''
     Compare equality between two arbitrary objects
     
@@ -939,6 +938,7 @@ def equal(obj, obj2, *args, method=None, equal_nan=True, leaf=False, verbose=Non
         obj2 (any): the second object to compare
         args (list): additional objects to compare
         method (str): see above
+        detailed (bool): whether to compute a detailed comparison of the objects, and return a dataframe of the results
         equal_nan (bool): whether matching ``np.nan`` should compare as true (default True; NB, False not guaranteed to work with ``method='pickle'`` or ``'str'``, which includes the default; True not guaranteed to work with ``method='json'``)
         leaf (bool): if True, only compare the object's leaf nodes (those with no children); otherwise, compare everything
         verbose (bool): level of detail to print
@@ -969,5 +969,8 @@ def equal(obj, obj2, *args, method=None, equal_nan=True, leaf=False, verbose=Non
         
     *New in version 3.1.0.*
     '''
-    e = Equal(obj, obj2, *args, method=method, equal_nan=equal_nan, leaf=leaf, verbose=verbose, die=die, **kwargs)
-    return e.eq
+    e = Equal(obj, obj2, *args, method=method, detailed=detailed, equal_nan=equal_nan, leaf=leaf, verbose=verbose, die=die, **kwargs)
+    if detailed:
+        return e.df
+    else:
+        return e.eq

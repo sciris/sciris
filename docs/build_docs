@@ -2,7 +2,7 @@
 # Build docs. Example usage:
 #  ./build_docs # default
 #  ./build_docs never # don't rebuild notebooks
-# ./build_docs noclean # don't clean up tutorials
+#  ./build_docs noclean # don't clean up tutorials
 
 echo 'Building docs...'
 start=$SECONDS
