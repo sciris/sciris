@@ -8,7 +8,7 @@ All major updates to Sciris are documented here.
 By import convention, components of the Sciris library are listed beginning with ``sc.``, e.g. ``sc.odict()``.
 
 
-Version 2.1.0 (2022-12-23)
+Version 3.1.0 (2022-08-13)
 --------------------------
 
 New features
@@ -16,11 +16,13 @@ New features
 #. ``sc.equal()`` compares two (or more) arbitrarily complex objects. It can handle arrays, dataframes, custom objects with no ``__eq__`` method defined, etc. It can also print a detailed comparison of the objects 
 #. ``sc.nanequal()`` is an extension of ``np.array_equal()`` to handle a broader range of types (e.g., mixed-type ``object`` arrays that cannot be cast to float). Other ``NaN``-related methods have also been updated to be more robust.
 #. ``sc.manualcolorbar()`` allows highly customized colorbars to be added to plots, including to plots with no "mappable" data (e.g., scatterplots).
+#. Added ``sc.options.reset()`` as an alias to ``sc.options.set('defaults')``.
 
 
 Bugfixes
 ~~~~~~~~
 #. Sciris is now compatible with a broader range of dependencies (e.g., Python, NumPy, pandas, and Matplotlib); in most cases, the latest version of Sciris is now backwards-compatible with all dependency versions since January 2021.
+#. Updated ``sc.pr()`` to include class attributes (instead of instance attributes), and added a new function ``sc.classatt()`` to list them.
 #. ``sc.readdate()`` now returns ``datetime`` objects unchanged, rather than raising an exception.
 #. Fixed ``repr`` for empty ``sc.objdict()``.
 #. Fixed transposed ordering for ``sc.bar3d()``.
@@ -29,9 +31,11 @@ Other changes
 ~~~~~~~~~~~~~
 #. ``sc.load()`` has been significantly refactored to be simpler and more robust. Pandas' ``pd.read_pickle()`` is now included as one of the default unpickling options. Unsuccessful unpickling now always produces a ``Failed`` object, with as much data retained as possible.
 #. ``sc.jsonpickle()`` and ``sc.jsonunpickle()`` can now save to/read from files directly.
+#. Updated ``sc.toarray()`` to use ``dtype=object`` instead of ``dtype=str`` by default; otherwise, all elements in mixed-type arrays (e.g. ``[1,'a']``) are cast to string.
 #. ``sc.dataframe`` has a new ``equal`` class method (e.g. ``sc.dataframe.equal(df1, df2)``), and revised ``equals()`` and ``==`` behavior to match pandas.
 #. Improved robustness of ``sc.parallelize()``, especially when using custom parallelizers, including more options for customizing the global dictionary.
 #. ``sc.timer()`` objects can now be added, which will concatenate all the times.
+#. Added an option to run ``sc.benchmark()`` in parallel (to test the full capacity of the machine rather than a single core).
 #. ``sc.iterobj()`` now provides more options for controlling how the object is iterated, and no longer (by default) descends into NumPy arrays, pandas DataFrames, etc. ``sc.search()`` also has additional options.
 #. Updated 3D plotting functions (``sc.plot3d()``, ``sc.surf3d``, etc.) to have more flexibility of data input, consistency, and robustness.
 
