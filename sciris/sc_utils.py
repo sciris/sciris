@@ -562,7 +562,7 @@ def asciify(string, form='NFKD', encoding='ascii', errors='ignore', **kwargs):
         errors (str): how to handle errors
         kwargs (dict): passed to :meth:`string.decode()`
     
-    **Example**:
+    **Example**::
         sc.asciify('föö→λ ∈ ℝ') # Returns 'foo  R'
     
     *New in version 2.0.1.*
@@ -809,7 +809,7 @@ def flexstr(arg, *args, force=True, join=''):
         force (bool): whether to force it to be a string
         join (str): if multiple arguments are provided, the character to use to join
     
-    **Example**:
+    **Example**::
         
         sc.flexstr(b'foo', 'bar', [1,2]) # Returns 'foobar[1, 2]'
     

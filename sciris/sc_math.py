@@ -425,7 +425,7 @@ def nanequal(arr, *args, scalar=False, equal_nan=True):
         args (list): one or more arrays to compare to
         scalar (bool): whether to return a true/false value (else return the array)
     
-    **Examples**:
+    **Examples**::
         
         arr1 = np.array([1, 2, np.nan])
         arr2 = [1, 2, np.nan]

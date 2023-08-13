@@ -945,7 +945,7 @@ def equal(obj, obj2, *args, method=None, detailed=False, equal_nan=True, leaf=Fa
         die (bool): whether to raise an exception if an error is encountered (else return False)
         kwargs (dict): passed to :func:`sc.iterobj() <iterobj>`
         
-    **Examples**:
+    **Examples**::
         
         o1 = dict(
             a = [1,2,3],

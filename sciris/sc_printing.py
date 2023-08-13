@@ -413,7 +413,7 @@ def sigfig(x, sigfigs=4, SI=False, sep=False, keepints=False):
         sep (bool/str): if provided, use as thousands separator
         keepints (bool): never round ints
 
-    **Examples**:
+    **Examples**::
 
         x = 3432.3842
         sc.sigfig(x, SI=True) # Returns 3.432k
