@@ -413,7 +413,7 @@ def findnans(data=None, **kwargs):
 
 
 _nan_fill = -528876923.87569493 # Define a random value that would never be encountered otherwise
-def nanequal(arr, *args, scalar=False):
+def nanequal(arr, *args, scalar=False, equal_nan=True):
     '''
     Compare two or more arrays for equality element-wise, treating NaN values as equal.
     
@@ -444,22 +444,25 @@ def nanequal(arr, *args, scalar=False):
     others = [scu.toarray(arg) for arg in args] # Convert everything to an array
     
     # Remove Nans from base array
-    isnan = pd.isna(arr)
-    fillarr = scu.toarray(arr).copy()
-    fillarr[isnan] = _nan_fill # Fill in NaN values
+    if equal_nan:
+        isnan = pd.isna(arr)
+        arr = scu.toarray(arr).copy()
+        arr[isnan] = _nan_fill # Fill in NaN values
     
     eqarr = None
     
     for other in others:
-        if other.shape != fillarr.shape: # Two arrays with different shapes are always false
+        if other.shape != arr.shape: # Two arrays with different shapes are always false
             if scalar:
                 return False
             else:
                 return np.array([False])
         else:
-            fillother = other.copy()
-            fillother[isnan] = _nan_fill # Fill in NaN values
-            eq = (fillarr == fillother) # Do the comparison
+            if equal_nan:
+                isnan = pd.isna(other)
+                other = other.copy()
+                other[isnan] = _nan_fill # Fill in NaN values
+            eq = (arr == other) # Do the comparison
             if eqarr is None:
                 eqarr = eq
             else:

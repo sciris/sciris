@@ -296,7 +296,7 @@ def iterobj(obj, func=None, inplace=False, copy=True, leaf=False, atomic='defaul
             obj = scu.dcp(obj)
     if _output is None:
         _output = sco.objdict()
-        if not inplace and not leaf:
+        if not inplace:
             _output['root'] = func(obj, *args, **kwargs)
     
     itertype = check_iter_type(obj, known=atomic)
@@ -322,6 +322,8 @@ def iterobj(obj, func=None, inplace=False, copy=True, leaf=False, atomic='defaul
         newobj = func(obj, *args, **kwargs) # Set at the root level
         return newobj
     else:
+        if (not _trace) and (len(_output)>1) and leaf: # We're at the top level, we have multiple entries, and only leaves are requested
+            _output.pop('root') # Only include "root" with leaf=True if it's the only node
         return _output
 
 
@@ -703,14 +705,30 @@ class Equal(scu.prettyobj):
         if self.method is None:
             self.method = ['eq', 'pickle'] # Define the default method sequence to try
         self.method = scu.tolist(self.method)
+        assert len(self.method), 'No methods supplied'
         for method in self.method:
             if method not in self.valid_methods and not callable(method): # pragma: no cover
                 errormsg = f'Method "{method}" not recognized: must be one of {scu.strjoin(self.valid_methods)}'
                 raise ValueError(errormsg)
     
     
+    def get_method(self, method=None):
+        ''' Use the method if supplied, else use the default one '''
+        if method is None:
+            method = self.method[0] # Use default method if none provided
+        return method
+    
+    
     def walk(self):
         ''' Use :func:`sc.iterobj() <iterobj>` to convert the objects into dictionaries '''
+        
+        # For JSON, parse the object up front to get the tree right
+        if self.get_method() == 'json':
+            from . import sc_fileio as scf # To avoid circular import
+            self.raw_objs = self.objs
+            for o,obj in enumerate(self.objs):
+                self.objs[o] = scf.jsonpickle(obj)
+        
         for obj in self.objs:
             self.dicts.append(iterobj(obj, **self.kwargs))
         self.walked = True
@@ -723,22 +741,20 @@ class Equal(scu.prettyobj):
     def convert(self, obj, method=None):
         ''' Convert an object to the right type prior to comparing '''
         
-        if method is None:
-            method = self.method[0] # Use default method if none provided
+        method = self.get_method(method)
         
         # Do the conversion
-        if method == 'eq':
+        if method in ['eq', 'json']:
             out = obj
         elif method == 'pickle':
             out = pkl.dumps(obj)
-        elif method == 'json':
-            from . import sc_fileio as scf # To avoid circular import
-            out = scf.jsonpickle(obj)
+        # elif method == 'json':
+            
         elif method == 'str':
             out = str(obj)
         elif callable(method):
             out = method(obj)
-        else:
+        else: # pragma: no cover
             errormsg = f'Method {method} not recognized'
             raise ValueError(errormsg)
         
@@ -748,6 +764,8 @@ class Equal(scu.prettyobj):
     def compare_special(self, obj, obj2):
         ''' Do special comparisons for known objects where == doesn't work '''
         
+        print('HIIIII', obj, obj2)
+        
         # For floats, check for NaN equality
         if isinstance(obj, float):
             if not np.isnan(obj) or not np.isnan(obj2) or not self.equal_nan: # Either they're not NaNs or we're not counting NaNs as equal
@@ -755,9 +773,10 @@ class Equal(scu.prettyobj):
             else: # They are both NaNs and equal_nan is True
                 eq = True
         
-        # For numpy arrays, must use np.array_equals()
+        # For numpy arrays, must use something to handle NaNs
         elif isinstance(obj, (np.ndarray, pd.core.indexes.base.Index)):
-            eq = np.array_equal(obj, obj2, equal_nan=self.equal_nan)
+            from . import sc_math as scm # To avoid circular import
+            eq = scm.nanequal(obj, obj2, scalar=True, equal_nan=self.equal_nan)
     
         # For series, handle NaNs and use equals()
         elif isinstance(obj, pd.Series):
@@ -772,7 +791,7 @@ class Equal(scu.prettyobj):
             from . import sc_dataframe as scd # To avoid circular import
             eq = scd.dataframe.equal(obj, obj2, equal_nan=self.equal_nan)
         
-        else:
+        else: # pragma: no cover
             errormsg = f'Not able to handle object of {type(obj)}'
             raise TypeError(errormsg)
 
@@ -798,7 +817,7 @@ class Equal(scu.prettyobj):
         ''' Perform the comparison '''
         
         # Walk the objects if not already walked
-        if not self.walked:
+        if not self.walked: # pragma: no cover
             self.walk()
         
         btree = self.bdict.enumitems() # Get the full object tree for the base object
@@ -813,7 +832,7 @@ class Equal(scu.prettyobj):
                 if key == 'root':
                     okeys = set(otree.keys())
                     eq = bkeys == okeys
-                    if eq is False and self.verbose:
+                    if eq is False and self.verbose: # pragma: no cover
                         print(f'Objects have different structures: {bkeys ^ okeys}') # Use XOR operator
                 
                 # If key not present, false by default
@@ -831,7 +850,10 @@ class Equal(scu.prettyobj):
                         method = methods.pop(0)
                         bconv = self.convert(baseobj, method)
                         oconv = self.convert(otherobj, method)
-                    
+                        
+                        print('HIiiIiII', bconv, oconv)
+                        # import traceback; traceback.print_exc(); import pdb; pdb.set_trace()
+                        
                         # Actually check equality -- can be True, False, or None
                         if type(bconv) != type(oconv):
                             eq = False # Unlike types are always not equal
@@ -866,7 +888,7 @@ class Equal(scu.prettyobj):
             self.fullresults[key] = eqs
             self.results[key] = result
             if not self.detailed and has_false: # Don't keep going unless needed
-                if self.verbose:
+                if self.verbose: # pragma: no cover
                     print('Objects are not equal and detailed=False, breaking')
                 break
         
@@ -902,7 +924,7 @@ class Equal(scu.prettyobj):
         from . import sc_dataframe as scd # To avoid circular import
         
         # Ensure they've been compared
-        if not self.compared:
+        if not self.compared: # pragma: no cover
             self.compare()
             
         # Make dataframe

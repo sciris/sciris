@@ -3,6 +3,7 @@ Test nested dict functions
 '''
 
 import numpy as np
+import pandas as pd
 import sciris as sc
 import pytest
 ut = sc.importbypath(sc.thispath() / 'sc_test_utils.py')
@@ -193,7 +194,8 @@ def test_equal():
         b = np.array([4,5,6]),
         c = dict(
             df = sc.dataframe(q=[sc.date('2022-02-02'), sc.date('2023-02-02')])
-        )
+        ),
+        d = pd.Series([1,2,np.nan]),
     )
     
     # Identical object
@@ -203,22 +205,29 @@ def test_equal():
     o3 = sc.dcp(o1)
     o3['b'][2] = 8
     
+    # Different subtype
+    o4 = sc.dcp(o1)
+    o4['a'] = dict(a=3, b=5)
+    
     out.e1 = sc.equal(o1, o2) # Returns True
     out.e2 = sc.equal(o1, o3) # Returns False
-    e = sc.Equal(o1, o2, o3, detailed=True) # Create an object
-    e.to_df() # Convert to a dataframe
-    
-    out.e3 = e
+    out.e3 = sc.Equal(o1, o2, o3, detailed=True, equal_nan=True) # Create an object
+    out.e4 = sc.Equal(o1, o4, verbose=True)
     
     # Do tests
     assert out.e1
     assert not out.e2
-    assert not e.eq
+    assert not out.e3.eq
+    assert not out.e4.eq
     
     print('Testing other features')
-    for method in ['pickle', 'eq']:
-        assert sc.equal(o1, o2, method=method)
+    for method in ['pickle', 'eq', 'json', 'str']:
+        assert sc.equal(o1, o2, method=method, equal_nan=True)
         assert not sc.equal(o1, o3, method=method)
+        
+    e = sc.Equal(o1, o3, detailed=True, verbose=True)
+    e.check_exceptions()
+    print('↑↑↑ Should print some handled exceptions')
     
     return out
 
