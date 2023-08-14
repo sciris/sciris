@@ -13,7 +13,7 @@ Version 3.1.0 (2023-08-13)
 
 New features
 ~~~~~~~~~~~~
-#. :func:`sc.equal() <sc_nested.equal>` compares two (or more) arbitrarily complex objects. It can handle arrays, dataframes, custom objects with no ``__eq__`` method defined, etc. It can also print a detailed comparison of the objects 
+#. :func:`sc.equal() <sc_nested.equal>` compares two (or more) arbitrarily complex objects. It can handle arrays, dataframes, custom objects with no ``__eq__`` method defined, etc. It can also print a detailed comparison of the objects.
 #. :func:`sc.nanequal() <sc_math.nanequal>` is an extension of :func:`np.array_equal() <numpy.array_equal>` to handle a broader range of types (e.g., mixed-type ``object`` arrays that cannot be cast to float). Other ``NaN``-related methods have also been updated to be more robust.
 #. :func:`sc.manualcolorbar() <sc_colors.manualcolorbar>` allows highly customized colorbars to be added to plots, including to plots with no "mappable" data (e.g., scatterplots).
 #. Added :meth:`sc.options.reset() <sc_settings.ScirisOptions.reset>` as an alias to ``sc.options.set('defaults')``.
@@ -21,7 +21,7 @@ New features
 Bugfixes
 ~~~~~~~~
 #. Sciris is now compatible with a broader range of dependencies (e.g., Python, NumPy, pandas, and Matplotlib); in most cases, the latest version of Sciris is now backwards-compatible with all dependency versions since January 2021.
-#. Updated :func:`sc.pr() <sc_printing.pr>` to include class attributes (instead of instance attributes), and added a new function :func:`sc.classatt() <sc_printing.classatt>` to list them.
+#. Updated :func:`sc.pr() <sc_printing.pr>` to include class attributes (as well as instance attributes), and added a new function :func:`sc.classatt() <sc_printing.classatt>` to list them.
 #. :func:`sc.readdate() <sc_datetime.readdate>` now returns ``datetime`` objects unchanged, rather than raising an exception.
 #. Fixed ``repr`` for empty :class:`sc.objdict() <sc_odict.objdict>`.
 #. Fixed transposed ordering for :func:`sc.bar3d() <sc_plotting.bar3d>`.
