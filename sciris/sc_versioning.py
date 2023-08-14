@@ -315,7 +315,7 @@ def compareversions(version1, version2):
 def getcaller(frame=2, tostring=True, includelineno=False, includeline=False, relframe=0, die=False):
     '''
     Try to get information on the calling function, but fail gracefully. See also
-    :func:`sc.thisfile() <thisfile>`.
+    :func:`sc.thisfile() <sciris.sc_fileio.thisfile>`.
 
     Frame 1 is the file calling this function, so not very useful. Frame 2 is
     the default assuming it is being called directly. Frame 3 is used if
@@ -472,9 +472,9 @@ def loadmetadata(filename, load_all=False, die=True):
     '''
     Read metadata from a saved image; currently only PNG and SVG are supported.
 
-    Only for use with images saved with :func:`sc.savefig() <savefig>`. Metadata retrieval for PDF
+    Only for use with images saved with :func:`sc.savefig() <sciris.sc_plotting.savefig>`. Metadata retrieval for PDF
     is not currently supported. To load metadata saved with :func:`sc.metadata() <metadata>`, 
-    you can also use :func:`sc.loadjson() <loadjson>` instead. To load metadata saved with :func:`sc.savearchive() <savearchive>`,
+    you can also use :func:`sc.loadjson() <sciris.sc_fileio.loadjson>` instead. To load metadata saved with :func:`sc.savearchive() <savearchive>`,
     use :func:`sc.loadarchive() <loadarchive>` instead.
 
     Args:
@@ -659,9 +659,9 @@ def loadarchive(filename, folder=None, loadobj=True, loadmetadata=False,
         folder (str): optional additional folder to load from
         loadobj (bool): whether to load the saved object
         loadmetadata (bool): whether to load the metadata as well
-        remapping (dict): any known module remappings between the saved pickle version and the current libraries (see :func:`sc.known_remappings() <known_remappings>` for examples)
+        remapping (dict): any known module remappings between the saved pickle version and the current libraries
         die (bool): whether to fail if an exception is raised (else, just return the metadata)
-        kwargs (dict): passed to :func:`sc.load() <load>`
+        kwargs (dict): passed to :func:`sc.load() <sciris.sc_fileio.load>`
     
     Returns:
         If loadobj=True and loadmetadata=False, return the object;

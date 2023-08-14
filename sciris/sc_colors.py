@@ -476,11 +476,11 @@ def manualcolorbar(data=None, vmin=0, vmax=1, vcenter=None, colors=None, values=
     
     There are three main use cases, from least to most manual:
     
-    - The most common use case is to supply the data used for plotting directly via ``data``; 
-    the function will the infer the lower and upper limits and construct the colorbar.
-    - Alternatively, the lower and upper limits can be provided manually via ``vmin`` and ``vmax``.
-    - Finally, the colors themselves can be provided via ``colors``, optionally mapped
-    to ``values``, and potentially also supplied with custom ``ticklabels``.
+        - The most common use case is to supply the data used for plotting directly via ``data``; 
+          the function will the infer the lower and upper limits and construct the colorbar.
+        - Alternatively, the lower and upper limits can be provided manually via ``vmin`` and ``vmax``.
+        - Finally, the colors themselves can be provided via ``colors``, optionally mapped
+          to ``values``, and potentially also supplied with custom ``ticklabels``.
     
     Args:
         data (arr): if provided, compute the colorbar from these data

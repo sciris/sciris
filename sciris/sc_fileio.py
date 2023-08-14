@@ -219,7 +219,7 @@ def save(filename='default.obj', obj=None, folder=None, method='pickle', compres
     **Note 2**: When a pickle file is loaded, Python imports any modules that are referenced
     in it. This is a problem if module has been renamed (in which case the pickle
     usually can't be opened). For more robustness (e.g. to pickle custom classes), use 
-    ``method='dill'`` and/or the :func:`sc.savearchive() <sc_versioning.savearchive>`/:func:`sc.loadarchive() <sc_versioning.loadarchive>`
+    ``method='dill'`` and/or the :func:`sc.savearchive() <sciris.sc_versioning.savearchive>`/:func:`sc.loadarchive() <sc_versioning.loadarchive>`
     functions.
     
     If you do not need to save arbitrary Python and just need to save data, consider
@@ -369,7 +369,7 @@ def zsave(*args, compression='zstd', **kwargs):
     Save a file using zstandard (instead of gzip) compression. This is an alias
     for ``sc.save(..., compression='zstd')``; see :func:`sc.save() <save>` for details.
     
-    Note: there is no matching function ``sc.zload()`` since :func:`sc.load() <load>` will
+    Note: there is no matching function "``zload()``" since :func:`sc.load() <load>` will
     automatically try loading zstandard.
     
     *New in version 2.1.0.*

@@ -58,7 +58,7 @@ def checkmem(var, descend=1, order='size', compresslevel=0, maxitems=1000,
         subtotals (bool): whether to include subtotals for different levels of depth
         plot (bool): if descending, show the results as a pie chart
         verbose (bool or int): detail to print, if >1, print repr of objects along the way
-        **kwargs (dict): passed to :func:`sc.load() <load>`
+        **kwargs (dict): passed to :func:`sc.load() <sciris.sc_fileio.load>`
 
     **Examples**::
 
