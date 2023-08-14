@@ -42,7 +42,7 @@ else:
 
 #%% Object display functions
 
-__all__ = ['createcollist', 'objectid', 'objatt', 'objmeth', 'objprop', 'objrepr', 'prepr', 'pr']
+__all__ = ['createcollist', 'objectid', 'classatt', 'objatt', 'objmeth', 'objprop', 'objrepr', 'prepr', 'pr']
 
 
 def createcollist(items, title=None, strlen=18, ncol=3):
