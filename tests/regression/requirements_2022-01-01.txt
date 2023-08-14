@@ -1,5 +1,5 @@
 dill==0.3.4
-GitPython==3.1.24
+GitPython==3.1.32
 jellyfish==0.8.9
 jsonpickle==2.0.0
 line-profiler==3.4.0
