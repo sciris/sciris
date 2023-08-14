@@ -18,7 +18,6 @@ New features
 #. ``sc.manualcolorbar()`` allows highly customized colorbars to be added to plots, including to plots with no "mappable" data (e.g., scatterplots).
 #. Added ``sc.options.reset()`` as an alias to ``sc.options.set('defaults')``.
 
-
 Bugfixes
 ~~~~~~~~
 #. Sciris is now compatible with a broader range of dependencies (e.g., Python, NumPy, pandas, and Matplotlib); in most cases, the latest version of Sciris is now backwards-compatible with all dependency versions since January 2021.
