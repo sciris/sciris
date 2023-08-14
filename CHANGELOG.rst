@@ -13,30 +13,30 @@ Version 3.1.0 (2022-08-13)
 
 New features
 ~~~~~~~~~~~~
-#. ``sc.equal()`` compares two (or more) arbitrarily complex objects. It can handle arrays, dataframes, custom objects with no ``__eq__`` method defined, etc. It can also print a detailed comparison of the objects 
-#. ``sc.nanequal()`` is an extension of ``np.array_equal()`` to handle a broader range of types (e.g., mixed-type ``object`` arrays that cannot be cast to float). Other ``NaN``-related methods have also been updated to be more robust.
-#. ``sc.manualcolorbar()`` allows highly customized colorbars to be added to plots, including to plots with no "mappable" data (e.g., scatterplots).
-#. Added ``sc.options.reset()`` as an alias to ``sc.options.set('defaults')``.
+#. :func:`sc.equal() <sc_nested.equal>` compares two (or more) arbitrarily complex objects. It can handle arrays, dataframes, custom objects with no ``__eq__`` method defined, etc. It can also print a detailed comparison of the objects 
+#. :func:`sc.nanequal() <sc_math.nanequal>` is an extension of :func:`np.array_equal() <numpy.array_equal>` to handle a broader range of types (e.g., mixed-type ``object`` arrays that cannot be cast to float). Other ``NaN``-related methods have also been updated to be more robust.
+#. :func:`sc.manualcolorbar() <sc_colors.manualcolorbar>` allows highly customized colorbars to be added to plots, including to plots with no "mappable" data (e.g., scatterplots).
+#. Added :meth:`sc.options.reset() <sc_settings.ScirisOptions.reset>` as an alias to ``sc.options.set('defaults')``.
 
 Bugfixes
 ~~~~~~~~
 #. Sciris is now compatible with a broader range of dependencies (e.g., Python, NumPy, pandas, and Matplotlib); in most cases, the latest version of Sciris is now backwards-compatible with all dependency versions since January 2021.
-#. Updated ``sc.pr()`` to include class attributes (instead of instance attributes), and added a new function ``sc.classatt()`` to list them.
-#. ``sc.readdate()`` now returns ``datetime`` objects unchanged, rather than raising an exception.
-#. Fixed ``repr`` for empty ``sc.objdict()``.
-#. Fixed transposed ordering for ``sc.bar3d()``.
+#. Updated :func:`sc.pr() <sc_printing.pr>` to include class attributes (instead of instance attributes), and added a new function :func:`sc.classatt() <sc_printing.classatt>` to list them.
+#. :func:`sc.readdate() <sc_datetime.readdate>` now returns ``datetime`` objects unchanged, rather than raising an exception.
+#. Fixed ``repr`` for empty :class:`sc.objdict() <sc_odict.objdict>`.
+#. Fixed transposed ordering for :func:`sc.bar3d() <sc_plotting.bar3d>`.
 
 Other changes
 ~~~~~~~~~~~~~
-#. ``sc.load()`` has been significantly refactored to be simpler and more robust. Pandas' ``pd.read_pickle()`` is now included as one of the default unpickling options. Unsuccessful unpickling now always produces a ``Failed`` object, with as much data retained as possible.
-#. ``sc.jsonpickle()`` and ``sc.jsonunpickle()`` can now save to/read from files directly.
-#. Updated ``sc.toarray()`` to use ``dtype=object`` instead of ``dtype=str`` by default; otherwise, all elements in mixed-type arrays (e.g. ``[1,'a']``) are cast to string.
-#. ``sc.dataframe`` has a new ``equal`` class method (e.g. ``sc.dataframe.equal(df1, df2)``), and revised ``equals()`` and ``==`` behavior to match pandas.
-#. Improved robustness of ``sc.parallelize()``, especially when using custom parallelizers, including more options for customizing the global dictionary.
-#. ``sc.timer()`` objects can now be added, which will concatenate all the times.
-#. Added an option to run ``sc.benchmark()`` in parallel (to test the full capacity of the machine rather than a single core).
-#. ``sc.iterobj()`` now provides more options for controlling how the object is iterated, and no longer (by default) descends into NumPy arrays, pandas DataFrames, etc. ``sc.search()`` also has additional options.
-#. Updated 3D plotting functions (``sc.plot3d()``, ``sc.surf3d``, etc.) to have more flexibility of data input, consistency, and robustness.
+#. :func:`sc.load() <sc_fileio.load>` has been significantly refactored to be simpler and more robust. Pandas' :func:`pd.read_pickle() <pandas.read_pickle>` is now included as one of the default unpickling options. Unsuccessful unpickling now always produces a :class:`Failed <sc_fileio.Failed>` object, with as much data retained as possible.
+#. :func:`sc.jsonpickle() <sc_fileio.jsonpickle>` and :func:`sc.jsonunpickle() <sc_fileio.jsonunpickle>` can now save to/read from files directly.
+#. Updated :func:`sc.toarray() <sc_utils.toarray>` to use ``dtype=object`` instead of ``dtype=str`` by default; otherwise, all elements in mixed-type arrays (e.g. ``[1,'a']``) are cast to string.
+#. :class:`sc.dataframe <sc_dataframe.dataframe>` has a new ``equal`` class method (e.g. ``sc.dataframe.equal(df1, df2)``), and revised ``equals()`` and ``==`` behavior to match pandas.
+#. Improved robustness of :func:`sc.parallelize() <sc_parallel.parallelize>`, especially when using custom parallelizers, including more options for customizing the global dictionary.
+#. :class:`sc.timer() <sc_datetime.timer>` objects can now be added, which will concatenate all the times.
+#. Added an option to run :func:`sc.benchmark() <sc_profiling.benchmark>` in parallel (to test the full capacity of the machine rather than a single core).
+#. :func:`sc.iterobj() <sc_nested.iterobj>` now provides more options for controlling how the object is iterated, and no longer (by default) descends into NumPy arrays, pandas DataFrames, etc. :func:`sc.search() <sc_nested.search>` also has additional options.
+#. Updated 3D plotting functions (:func:`sc.plot3d() <sc_plotting.plot3d>`, :func:`sc.surf3d() <sc_plotting.surf3d>`, etc.) to have more flexibility of data input, consistency, and robustness.
 
 
 Version 3.0.0 (2023-04-20)
