@@ -612,7 +612,7 @@ def perturb(n=1, span=0.5, randseed=None, normal=False):
 def normsum(arr, total=None):
     '''
     Multiply a list or array by some normalizing factor so that its sum is equal
-    to the total. Formerly called :func:`sc.scaleratio() <scaleratio>`.
+    to the total. Formerly called "``scaleratio``".
 
     Args:
         arr (array): array (or list) to normalize

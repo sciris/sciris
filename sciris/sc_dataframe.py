@@ -908,7 +908,7 @@ class dataframe(pd.DataFrame):
         Args:
             value (any): the value to look for
             col (str): the column to look in
-            kwargs (dict): passed to :func:`sc.findinds() <sc_math.findinds>`
+            kwargs (dict): passed to :func:`sc.findinds() <sciris.sc_math.findinds>`
         
         **Example**::
             

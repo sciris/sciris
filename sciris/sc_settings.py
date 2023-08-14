@@ -7,7 +7,7 @@ All options should be set using ``set()`` or directly, e.g.::
 
 To reset default options, use::
 
-    sc.options('default')
+    sc.options.reset()
 
 Note: "options" is used to refer to the choices available (e.g., DPI), while "settings"
 is used to refer to the choices made (e.g., ``dpi=150``).
@@ -100,7 +100,7 @@ class ScirisOptions(sco.objdict):
     Note: this class should not be invoked directly. An instance is created automatically,
     which is the accessible via ``sc.options``.
 
-    Use ``sc.options.set('defaults')`` to reset all values to default, or ``sc.options.set(dpi='default')``
+    Use :meth:`sc.options.reset() <ScirisOptions.reset>` to reset all values to default, or :meth:`sc.options.set(dpi='default')  <ScirisOptions.set>`
     to reset one parameter to default. See :meth:`sc.options.help(detailed=True) <ScirisOptions.help>` for
     more information.
 
@@ -476,7 +476,7 @@ class ScirisOptions(sco.objdict):
 
         Args:
             filename (str): file to load
-            kwargs (dict): passed to :func:`sc.loadjson() <loadjson>`
+            kwargs (dict): passed to :func:`sc.loadjson() <sciris.sc_fileio.loadjson>`
         '''
         from . import sc_fileio as scf # To avoid circular import
         json = scf.loadjson(filename=filename, **kwargs)
@@ -493,7 +493,7 @@ class ScirisOptions(sco.objdict):
 
         Args:
             filename (str): file to save to
-            kwargs (dict): passed to :func:`sc.savejson() <savejson>`
+            kwargs (dict): passed to :func:`sc.savejson() <sciris.sc_fileio.savejson>`
         '''
         from . import sc_fileio as scf # To avoid circular import
         json = self.to_dict()

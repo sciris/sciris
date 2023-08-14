@@ -340,7 +340,7 @@ def surf3d(x=None, y=None, z=None, c='z', fig=True, ax=None, returnfig=False, co
         c = z**2
         sc.surf3d(x=x, y=y, z=z, c=c, cmap='orangeblue')
     
-    *New in 3.1.0: updated arguments from "data" to x, y, z, c; removed "plotkwargs" argument; "fig" defaults to True
+    *New in 3.1.0:* updated arguments from "data" to x, y, z, c; removed "plotkwargs" argument; "fig" defaults to True
     '''
 
     # Set default arguments
@@ -409,7 +409,7 @@ def bar3d(x=None, y=None, z=None, c='z', dx=0.8, dy=0.8, dz=None, fig=True, ax=N
         c = z**2
         sc.bar3d(x=x, y=y, z=z, dx=0.5, dy=0.5, dz=dz, c=c, cmap='orangeblue')
     
-    *New in 3.1.0: updated arguments from "data" to x, y, z, c; removed "plotkwargs" argument; "fig" defaults to True
+    *New in 3.1.0:* updated arguments from "data" to x, y, z, c; removed "plotkwargs" argument; "fig" defaults to True
     '''
 
     # Set default arguments
@@ -691,7 +691,7 @@ def commaticks(ax=None, axis='y', precision=2, cursor_precision=0):
     '''
     Use commas in formatting the y axis of a figure (e.g., 34,000 instead of 34000).
 
-    To use something other than a comma, set the default separator via e.g. :class:`sc.options(sep='.') <ScirisOptions>`.
+    To use something other than a comma, set the default separator via e.g. :class:`sc.options(sep='.') <sciris.sc_settings.ScirisOptions>`.
 
     Args:
         ax (any): axes to modify; if None, use current; else can be a single axes object, a figure, or a list of axes
@@ -1319,7 +1319,7 @@ def savefig(filename, fig=None, dpi=None, comments=None, pipfreeze=False, relfra
     Wrapper for Matplotlib's :func:`pl.savefig() <matplotlib.pyplot.savefig>` function which automatically stores
     metadata in the figure. By default, it saves (git) information from the calling
     function. Additional comments can be added to the saved file as well. These
-    can be retrieved via :func:`sc.loadmetadata() <loadmetadata>`.
+    can be retrieved via :func:`sc.loadmetadata() <sciris.sc_versioning.loadmetadata>`.
 
     Metadata can be stored and retrieved for PNG or SVG. Metadata
     can be stored for PDF, but cannot be automatically retrieved.

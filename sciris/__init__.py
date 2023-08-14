@@ -1,7 +1,7 @@
 """
 Sciris root module
 
-Typically just handles imports, but also sets number of threads for Numpy if SCIRIS_NUM_THREADS is set (see :class:`sc.options <sc_settings.ScirisOptions>`).
+Typically just handles imports, but also sets number of threads for Numpy if SCIRIS_NUM_THREADS is set (see :class:`sc.options <sciris.sc_settings.ScirisOptions>`).
 """
 
 # Handle threadcount -- may require Sciris to be imported before Numpy; see https://stackoverflow.com/questions/17053671/how-do-you-stop-numpy-from-multithreading
