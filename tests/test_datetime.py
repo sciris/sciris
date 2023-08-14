@@ -121,18 +121,6 @@ def test_dates():
     for key, date in dates.items():
         print(key, sc.elapsedtimestr(date))
 
-    print('\nTesting tictoc and timedsleep')
-    sc.tic()
-    sc.timedsleep(0.1)
-    sc.toctic()
-    sc.timedsleep('start')
-    with sc.Timer():
-        sc.timedsleep(0.05)
-    
-    sc.randsleep(0.1)
-    sc.randsleep([0.05, 0.15])
-    
-
     print('\nTesting datetoyear')
     o.year = sc.datetoyear('2010-07-01')
 
@@ -142,16 +130,28 @@ def test_dates():
 
     return o
 
+delay = 0.05 # Shorter creates timing errors
+def nap(n=1, t=delay):
+    ''' Little nap to test timers '''
+    return sc.timedsleep(t*n)
 
-def test_timer():
-    sc.heading('Testing tic, toc, and timer')
 
-    t = 0.05 # Slightly longer to avoid timing errors
-    def nap(n=1):
-        sc.timedsleep(t*n, verbose=False)
-        return
-
-    print('Testing tic/toc...')
+def test_timing():
+    sc.heading('Testing tic, toc, and timedsleep')
+    
+    print('\nTesting tictoc and timedsleep')
+    sc.tic()
+    sc.timedsleep(0.1)
+    sc.toctic()
+    sc.timedsleep('start')
+    with sc.Timer():
+        nap()
+    
+    print('Testing randsleep')
+    sc.randsleep(0.1)
+    sc.randsleep([0.05, 0.15])
+    
+    print('Testing tic/toc again...')
 
     # Test basic usage
     with sc.capture() as txt1:
@@ -166,10 +166,15 @@ def test_timer():
         sc.toc(T, label='slow_func2')
     print(txt2)
     assert 'slow_func2' in txt2
+    
+    return T
 
-    print('Testing timer...')
 
-    # Check label handling
+def test_timer():
+    sc.heading('Testing timer')
+    o = sc.objdict()
+
+    print('Check label handling')
     with sc.capture() as txt3:
         T = sc.timer(baselabel='mybase: ', label='mylabel')
         T.tic()
@@ -180,8 +185,9 @@ def test_timer():
     print(txt3)
     assert 'mybase' in txt3
     assert 'mylabel' in txt3
+    o.t1 = T
 
-    # Check timer labels
+    print('Check timer labels')
     with sc.capture() as txt4:
         T = sc.timer()
         T.start()
@@ -189,8 +195,9 @@ def test_timer():
         T.stop('newlabel')
     print(txt4)
     assert 'newlabel' in txt4
+    o.t2 = T
 
-    # Check relative timings
+    print('Check relative timings')
     T = sc.timer()
     T.start()
     nap(1)
@@ -199,8 +206,9 @@ def test_timer():
     T.tt()
     print(T.timings)
     assert T.timings[0] < T.timings[1]
+    o.t3 = T
 
-    # Check toc vs toctic
+    print('Check toc vs toctic')
     T = sc.timer()
     nap(3)
     T.toc('a') # ≈3
@@ -211,8 +219,9 @@ def test_timer():
     nap(2)
     T.tt('d') # ≈2
     assert T.timings['c'] < T.timings['d'] < T.timings['a'] < T.timings['b']
+    o.t4 = T
 
-    # Check auto naming
+    print('Check auto naming')
     T = sc.timer(auto=True, doprint=False)
     with sc.capture() as txt5:
         n = 5
@@ -220,13 +229,13 @@ def test_timer():
             nap()
             T.tt()
     assert txt5 == ''
-    lbound = n*t/2
-    ubound = n*t*2
+    lbound = n*delay/2
+    ubound = n*delay*2
     assert lbound < T.timings[:].sum() < ubound
     assert '(4)' in T.timings.keys()[4]
     assert T.cumtimings[-1] == T.total
     
-    # Check other things
+    print('Check other things')
     T.tocout()
     T.tto()
     T.sum()
@@ -236,10 +245,17 @@ def test_timer():
     T.max()
     print(T.indivtimings)
     
-    # Check plotting
+    print('Check plotting')
     T.plot()
+    o.t5 = T
+    
+    print('Check addition')
+    o.t6 = o.t1 + o.t2
+    o.t7 = o.t3
+    o.t7 += o.t4
+    o.t8 = sum([o.t5, o.t6])
 
-    return T
+    return o
 
 
 
@@ -250,6 +266,7 @@ if __name__ == '__main__':
     # Dates
     dateobj   = test_readdate()
     dates     = test_dates()
+    timing    = test_timing()
     times     = test_timer()
 
     sc.blank()

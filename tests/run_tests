@@ -1,13 +1,6 @@
 #!/bin/bash
 # Run the integration tests.
-# To use the fast but fragile test runner, use "./run_tests fast".
+# Be sure to install the test requirements first!
+#    pip install -r requirements.txt
 
-# To use pytest-xdist (more robust), use -n auto; to use pytest-parallel (faster), use --workers=auto
-method=${1:-robust}
-if [ $method == "fast" ]; then
-    parallel='--workers=auto'
-else
-    parallel=' -n auto'
-fi
-
-pytest test_*.py $parallel --ignore=manual --durations=0
+pytest test_*.py -n auto --ignore=manual --durations=0

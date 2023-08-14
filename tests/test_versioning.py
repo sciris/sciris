@@ -6,7 +6,7 @@ import sciris as sc
 import numpy as np
 import pytest
 
-filedir = sc.path('files')
+filedir = sc.thispath() / 'files'
 
 
 def test_functions():
@@ -17,15 +17,14 @@ def test_functions():
     o.freeze = sc.freeze()
     assert 'numpy' in o.freeze
     
-    print('Testing require; will print warning messages')
+    print('Testing require')
     sc.require('numpy')
     sc.require(numpy='')
     sc.require(reqs={'numpy':'1.19.1', 'matplotlib':'2.2.2'})
-    sc.require('numpy>=1.19.1', 'matplotlib==2.2.2', die=False)
-    data, _ = sc.require(numpy='1.19.1', matplotlib='==44.2.2', die=False, detailed=True)
+    with pytest.warns(UserWarning):           sc.require('numpy>=1.19.1', 'matplotlib==2.2.2', die=False)
+    with pytest.warns(UserWarning): data, _ = sc.require(numpy='1.19.1', matplotlib='==44.2.2', die=False, detailed=True)
     with pytest.raises(ModuleNotFoundError): sc.require('matplotlib==99.23')
     with pytest.raises(ModuleNotFoundError): sc.require('not_a_valid_module')
-    print('↑↑↑ Should be warning messages above')
     
     print('Testing gitinfo')
     o.gitinfo = sc.gitinfo() # Try getting gitinfo; will likely fail though
@@ -55,8 +54,8 @@ def test_functions():
     return o
 
 
-def test_load_save():
-    sc.heading('Test load/save with versioning')
+def test_metadata():
+    sc.heading('Test metadata')
     o = sc.objdict()
     
     f = sc.objdict()
@@ -76,15 +75,35 @@ def test_load_save():
     md3 = sc.loadmetadata(f.obj)
     assert o.md.system.platform == md2.system.platform == md3.system.platform
     
-    print('Testing loadarchive')
-    o.obj = sc.loadarchive(f.wmd)
-    data = sc.loadarchive(f.wmd, loadmetadata=True) # To test a different conditional
-    if sc.compareversions(o.md.versions.python, '<3.11'): # Due to new opcodes, old pickled methods can't be loaded
-        assert o.obj.sum() == 10
-        assert data['obj'].sum() == 10
-    
     for file in [f.md, f.obj]:
         sc.rmpath(file)
+    
+    return o
+
+
+def test_regressions():
+    sc.heading('Test load/save with versioning')
+    o = sc.objdict()
+    
+    print('Testing loadarchive')
+    archives = sc.getfilelist(folder=filedir, pattern='archive*.zip')
+    for i,fn in enumerate(archives):
+        print(f'  Testing {fn}...')
+        key = f'archive{i}'
+        o[key] = sc.loadarchive(fn)
+        data = sc.loadarchive(fn, loadmetadata=True) # To test a different conditional
+        if sc.compareversions(sc.metadata().versions.python, '<3.11'): # Due to new opcodes, old pickled methods can't be loaded
+            assert o[key].sum() == 10
+            assert data['obj'].sum() == 10
+    
+    print('Testing loadobj')
+    pickles = sc.getfilelist(folder=filedir, pattern='pickle*.obj')
+    for i,fn in enumerate(pickles):
+        print(f'  Testing {fn}...')
+        key = f'pickle{i}'
+        o[key] = sc.load(fn)
+        assert o[key]['nparray'].sum() == np.arange(5).sum()
+        assert o[key]['pandas'].frame.a.values[:4].sum() == np.arange(4).sum()
     
     return o
 
@@ -93,8 +112,9 @@ def test_load_save():
 if __name__ == '__main__':
     sc.tic()
 
-    o = test_functions()
-    test_load_save()
+    o1 = test_functions()
+    o2 = test_metadata()
+    o3 = test_regressions()
     
 
     sc.toc()

@@ -16,6 +16,7 @@ import sys
 import time
 import tqdm
 import pprint
+import warnings
 import numpy as np
 import collections as co
 from textwrap import fill
@@ -46,91 +47,137 @@ __all__ = ['createcollist', 'objectid', 'objatt', 'objmeth', 'objprop', 'objrepr
 
 def createcollist(items, title=None, strlen=18, ncol=3):
     ''' Creates a string for a nice columnated list (e.g. to use in __repr__ method) '''
-    nrow = int(np.ceil(float(len(items))/ncol))
-    newkeys = []
-    for x in range(nrow):
-        newkeys += items[x::nrow]
+    if len(items):
+        nrow = int(np.ceil(float(len(items))/ncol))
+        newkeys = []
+        for x in range(nrow):
+            newkeys += items[x::nrow]
+    
+        string = title + ':' if title else ''
+        c = 0
+        for x in newkeys:
+            if c%ncol == 0: string += '\n  '
+            if len(x) > strlen: x = x[:strlen-3] + '...'
+            string += '%-*s  ' % (strlen,x)
+            c += 1
+        string += '\n'
+    else:
+        string = ''
+    return string
 
-    attstring = title + ':' if title else ''
-    c = 0
-    for x in newkeys:
-        if c%ncol == 0: attstring += '\n  '
-        if len(x) > strlen: x = x[:strlen-3] + '...'
-        attstring += '%-*s  ' % (strlen,x)
-        c += 1
-    attstring += '\n'
-    return attstring
 
-
-def objectid(obj):
-    ''' Return the object ID as per the default Python __repr__ method '''
+def objectid(obj, showclasses=False):
+    '''
+    Return the object ID as per the default Python ``__repr__`` method
+    
+    *New in version 3.1.0:* "showclasses" argument
+    '''
     c = obj.__class__
     output = f'<{c.__module__}.{c.__name__} at {hex(id(obj))}>\n'
+    if showclasses:
+        output += f'{c.mro()}\n'
     return output
 
 
-def objatt(obj, strlen=18, ncol=3):
-    ''' Return a sorted string of object attributes for the Python __repr__ method '''
-    if   hasattr(obj, '__dict__'):  oldkeys = sorted(obj.__dict__.keys())
-    elif hasattr(obj, '__slots__'): oldkeys = sorted(obj.__slots__)
-    else:                           oldkeys = [] # pragma: no cover
-    if len(oldkeys): output = createcollist(oldkeys, 'Attributes', strlen = 18, ncol = 3)
-    else:            output = '' # pragma: no cover
+def _get_obj_keys(obj, private=False, sort=True, use_dir=False):
+    ''' Helper method to get the keys of an object '''
+    if use_dir:
+        keys = obj.__dir__() # This is the unsorted version of dir()
+    else:
+        if   hasattr(obj, '__dict__'):  keys = obj.__dict__.keys()
+        elif hasattr(obj, '__slots__'): keys = obj.__slots__
+        else:                           keys = [] # pragma: no cover
+    if not private:
+        keys = [k for k in keys if not k.startswith('__')]
+    if sort:
+        keys = sorted(keys)
+    return keys
+
+
+def _is_meth(obj, attr):
+    ''' Helper function to check if an attribute is a method; do not distinguish between bound and unbound '''
+    return callable(getattr(obj, attr))
+
+
+def _is_prop(obj, attr):
+    ''' Helper function to check if an attribute is a property '''
+    return isinstance(getattr(type(obj), attr, None), property)
+
+
+def objatt(obj, strlen=18, ncol=3, private=False, sort=True, _keys=None):
+    ''' Return a sorted string of object attributes for the Python __repr__ method; see :func:`sc.prepr() <prepr>` for options '''
+    keys = _get_obj_keys(obj, private=private, sort=sort) if _keys is None else _keys
+    output = createcollist(keys, 'Attributes', strlen=strlen, ncol=ncol)
     return output
 
 
-def objmeth(obj, strlen=18, ncol=3):
-    ''' Return a sorted string of object methods for the Python __repr__ method '''
-    try:
-        oldkeys = sorted([method + '()' for method in dir(obj) if callable(getattr(obj, method)) and not method.startswith('__')])
-    except: # pragma: no cover
-        oldkeys = ['Methods N/A']
-    if len(oldkeys): output = createcollist(oldkeys, 'Methods', strlen=strlen, ncol=ncol)
-    else:            output = ''
+def classatt(obj, strlen=18, ncol=3, private=False, sort=True, _objkeys=None, _dirkeys=None, return_keys=False):
+    ''' Return a sorted string of class attributes for the Python __repr__ method; see :func:`sc.prepr() <prepr>` for options '''
+    objkeys = _get_obj_keys(obj, private=private, sort=sort, use_dir=False) if _objkeys is None else _objkeys
+    dirkeys = _get_obj_keys(obj, private=private, sort=sort, use_dir=True)  if _dirkeys is None else _dirkeys
+    keys = set(dirkeys) - set(objkeys) # Find attributes in dir() that are not in __dict__
+    keys = filter(keys.__contains__, dirkeys) # Maintain original ordering
+    keys = [k for k  in keys if not (_is_meth(obj, k) or _is_prop(obj, k))] # Exclude methods and properties; these are covered elsewhere
+    if return_keys:
+        return keys
+    else:
+        output = createcollist(keys, 'Class attributes', strlen=strlen, ncol=ncol)
+        return output
+
+
+def objmeth(obj, strlen=18, ncol=3, private=False, sort=True, _keys=None):
+    ''' Return a sorted string of object methods for the Python __repr__ method; see :func:`sc.prepr() <prepr>` for options '''
+    try: # In very rare cases this fails, so put it in a try-except loop
+        _keys = _get_obj_keys(obj, private=private, sort=sort, use_dir=True) if _keys is None else _keys
+        keys = sorted([meth + '()' for meth in _keys if _is_meth(obj, meth)])
+    except Exception as E: # pragma: no cover
+        keys = [f'Methods N/A ({E})']
+    output = createcollist(keys, 'Methods', strlen=strlen, ncol=ncol)
     return output
 
 
-def objprop(obj, strlen=18, ncol=3):
-    ''' Return a sorted string of object properties for the Python __repr__ method '''
-    try:
-        oldkeys = sorted([prop for prop in dir(obj) if isinstance(getattr(type(obj), prop, None), property) and not prop.startswith('__')])
-    except: # pragma: no cover
-        oldkeys = ['Properties N/A']
-    if len(oldkeys): output = createcollist(oldkeys, 'Properties', strlen=strlen, ncol=ncol)
-    else:            output = ''
+def objprop(obj, strlen=18, ncol=3, private=False, sort=True, _keys=None):
+    ''' Return a sorted string of object properties for the Python __repr__ method; see :func:`sc.prepr() <prepr>` for options '''
+    try: # In very rare cases this fails, so put it in a try-except loop
+        _keys = _get_obj_keys(obj, private=private, sort=sort, use_dir=True) if _keys is None else _keys
+        keys = [prop for prop in _keys if _is_prop(obj, prop)]
+    except Exception as E: # pragma: no cover
+        keys = [f'Properties N/A ({E})']
+    output = createcollist(keys, 'Properties', strlen=strlen, ncol=ncol)
     return output
 
 
-def objrepr(obj, showid=True, showmeth=True, showprop=True, showatt=True, dividerchar='—', dividerlen=60):
-    ''' Return useful printout for the Python __repr__ method '''
+def objrepr(obj, showid=True, showmeth=True, showprop=True, showatt=True, showclassatt=True, 
+            private=False, sort=True, dividerchar='—', dividerlen=60, strlen=18, ncol=3, 
+            _objkeys=None, _dirkeys=None):
+    ''' Return useful printout for the Python __repr__ method; see :func:`sc.prepr() <prepr>` for options '''
+    
+    # Call the object twice to get the keys
+    objkeys = _get_obj_keys(obj, private=private, sort=sort, use_dir=False) if _objkeys is None else _objkeys
+    dirkeys = _get_obj_keys(obj, private=private, sort=sort, use_dir=True)  if _dirkeys is None else _dirkeys
+    
     divider = dividerchar*dividerlen + '\n'
     output = ''
-    if showid:
-        output += objectid(obj)
-        output += divider
-    if showmeth:
-        meths = objmeth(obj)
-        if meths:
-            output += objmeth(obj)
-            output += divider
-    if showprop:
-        props = objprop(obj)
-        if props:
-            output += props
-            output += divider
-    if showatt:
-        attrs = objatt(obj)
-        if attrs:
-            output += attrs
-            output += divider
+    
+    def assemble(show, string):
+        ''' Helper function to construct the string '''
+        return string + divider if (show and string) else ''
+    
+    # Assemble the output string
+    output += assemble(showid,       objectid(obj, showclasses=True))
+    output += assemble(showmeth,     objmeth(obj,  strlen=strlen, ncol=ncol, _keys=dirkeys))
+    output += assemble(showprop,     objprop(obj,  strlen=strlen, ncol=ncol, _keys=dirkeys))
+    output += assemble(showatt,      objatt(obj,   strlen=strlen, ncol=ncol, _keys=objkeys))
+    output += assemble(showclassatt, classatt(obj, strlen=strlen, ncol=ncol, _objkeys=objkeys, _dirkeys=dirkeys))
+    
     return output
 
 
 def prepr(obj, maxlen=None, maxitems=None, skip=None, dividerchar='—', dividerlen=60, 
-          use_repr=True, maxtime=3, die=False, debug=False):
+          use_repr=True, private=False, sort=True, strlen=18, ncol=3, maxtime=3, die=False, debug=False):
     '''
     Akin to "pretty print", returns a pretty representation of an object --
-    all attributes (except any that are skipped), plust methods and ID. Usually
+    all attributes (except any that are skipped), plus methods and ID. Usually
     used via the interactive :func:`sc.pr() <pr>` (which prints), rather than this (which returns
     a string).
 
@@ -142,6 +189,7 @@ def prepr(obj, maxlen=None, maxitems=None, skip=None, dividerchar='—', divider
         dividerchar (str): divider for methods, attributes, etc.
         dividerlen (int): number of divider characters
         use_repr (bool): whether to use repr() or str() to parse the object
+        private (bool): whether to include private methods/attributes (those starting with "__")
         maxtime (float): maximum amount of time to spend on trying to print the object
         die (bool): whether to raise an exception if an error is encountered
         debug (bool): print out detail during string construction
@@ -164,18 +212,25 @@ def prepr(obj, maxlen=None, maxitems=None, skip=None, dividerchar='—', divider
     # Initialize things to print out
     labels = []
     values = []
+    
+    # Call the object twice to get the keys
+    objkeys = _get_obj_keys(obj, private=private, sort=sort, use_dir=False)
+    dirkeys = _get_obj_keys(obj, private=private, sort=sort, use_dir=True)
 
-    # Wrap entire process in a try-except in case it fails
+    # Wrap entire process for getting attribute strings in a try-except in case it fails
+    E1, E2, E3 = None, None, None
+    kw = dict(private=private, sort=sort, dividerchar=dividerchar, dividerlen=dividerlen, strlen=strlen, ncol=ncol)
     try:
         if not (hasattr(obj, '__dict__') or hasattr(obj, '__slots__')): # pragma: no cover
             # It's a plain object
             labels = [f'{type(obj)}']
             values = [repr_fn(obj)]
         else:
-            if hasattr(obj, '__dict__'):
-                labels = sorted(set(obj.__dict__.keys()) - set(skip))  # Get the dict attribute keys
-            else:
-                labels = sorted(set(obj.__slots__) - set(skip))  # Get the slots attribute keys
+            labels = objkeys
+            labels += classatt(obj, private=private, sort=sort, return_keys=True, _objkeys=objkeys, _dirkeys=dirkeys)
+            if skip is not None:
+                diff = set(labels) - set(skip)
+                labels = list(filter(diff.__contains__, labels))
             if debug: # pragma: no cover
                 print(f'Working on {len(labels)} entries...')
 
@@ -188,8 +243,12 @@ def prepr(obj, maxlen=None, maxitems=None, skip=None, dividerchar='—', divider
                     if debug: # pragma: no cover
                         print(f'  Working on attribute {a}: {attr}...')
                     if (time.time() - T) < maxtime:
-                        try: value = repr_fn(getattr(obj, attr))
-                        except: value = 'N/A' # pragma: no cover
+                        try: # Be especially robust in getting individual attributes
+                            value = repr_fn(getattr(obj, attr))
+                        except Exception as E:
+                            value = 'N/A' # pragma: no cover
+                            if die:
+                                raise E
                         values.append(value)
                     else:
                         labels = labels[:a]
@@ -210,8 +269,10 @@ def prepr(obj, maxlen=None, maxitems=None, skip=None, dividerchar='—', divider
             maxkeylen = max([len(label) for label in labels]) # Find the maximum length of the attribute keys
         if maxkeylen<maxlen:
             maxlen = maxlen - maxkeylen # Shorten the amount of data shown if the keys are long
-        formatstr = '%'+ '%i'%maxkeylen + 's' # Assemble the format string for the keys, e.g. '%21s'
-        output  = objrepr(obj, showatt=False, dividerchar=dividerchar, dividerlen=dividerlen) # Get the methods
+        formatstr = f'%{maxkeylen}s' # Assemble the format string for the keys, e.g. '%21s'
+        
+        # Actually get the methods
+        output  = objrepr(obj, showatt=False, showclassatt=False, _objkeys=objkeys, _dirkeys=dirkeys, **kw) 
         for label,value in zip(labels,values): # Loop over each attribute
             if len(value)>maxlen: value = value[:maxlen] + ' [...]' # Shorten it
             prefix = formatstr%label + ': ' # The format key
@@ -226,18 +287,28 @@ def prepr(obj, maxlen=None, maxitems=None, skip=None, dividerchar='—', divider
 
     # If that failed, try progressively simpler approaches
     except Exception as E: # pragma: no cover
+        E1 = E
         if die:
             errormsg = 'Failed to create pretty representation of object'
             raise RuntimeError(errormsg) from E
         else:
             try: # Next try the objrepr, which is the same except doesn't print attribute values
-                output = objrepr(obj, dividerchar=dividerchar, dividerlen=dividerlen)
+                output = objrepr(obj, **kw)
                 output += f'\nWarning: showing simplified output since full repr failed {str(E)}'
-            except: # If that fails, try just the string representation
+            except Exception as E: # If that fails, try just the string representation
+                E2 = E
                 try:
                     output = str(obj)
-                except: # And if that fails, try the most basic object representation
+                except Exception as E: # And if that fails, try the most basic object representation
+                    E3 = E
                     output = object.__repr__(obj)
+    
+    if any([E is not None for E in [E1, E2, E3]]):
+        warnmsg = 'Exception(s) encountered displaying object:\n'
+        if E1 is not None: warnmsg += '{E1}\n'
+        if E2 is not None: warnmsg += '{E2}\n'
+        if E3 is not None: warnmsg += '{E3}\n'
+        warnings.warn(warnmsg, category=RuntimeWarning, stacklevel=2)
 
     return output
 
@@ -342,7 +413,7 @@ def sigfig(x, sigfigs=4, SI=False, sep=False, keepints=False):
         sep (bool/str): if provided, use as thousands separator
         keepints (bool): never round ints
 
-    **Examples**:
+    **Examples**::
 
         x = 3432.3842
         sc.sigfig(x, SI=True) # Returns 3.432k

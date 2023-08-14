@@ -319,7 +319,7 @@ def pp(obj, jsonify=False, doprint=None, output=False, sort_dicts=False, **kwarg
     if jsonify:
         try:
             toprint = json.loads(json.dumps(obj, default=lambda x: f'{x}')) # This is to handle things like OrderedDicts
-        except Exception as E:
+        except Exception as E: # pragma: no cover
             print(f'Could not jsonify object ("{str(E)}"), printing default...')
             toprint = obj # If problems are encountered, just return the object
     else: # pragma: no cover
@@ -362,13 +362,48 @@ def sha(obj, encoding='utf-8', digest=False):
     return output
 
 
-def traceback(*args, **kwargs):
+def traceback(exc=None, value=None, tb=None, *args, **kwargs):
     '''
     Shortcut for accessing the traceback
 
     Alias for :obj:`traceback.format_exc()`.
+    
+    If no argument
+    
+    **Examples**::
+        
+        # Use automatic exception info
+        mylist = [0,1]
+        try:
+            mylist[2]
+        except:
+            print(f'Error: {sc.traceback()}')
+        
+        # Supply exception manually (also illustrating sc.tryexcept())
+        with sc.tryexcept() as te1:
+            dict(a=3)['b']
+
+        with sc.tryexcept() as te2:
+            [0,1][2]
+
+        tb1 = sc.traceback(te1.exception)
+        tb2 = sc.traceback(te2.exception)
+        print(f'Tracebacks were:\n\n{tb1}\n{tb2}')
     '''
-    return py_traceback.format_exc(*args, **kwargs)
+    if exc is not None:
+        if isinstance(exc, Exception): # Usual case: an exception is supplied
+            exc_info = (exc.__class__, exc, exc.__traceback__)
+        elif isinstance(exc, (tuple, list)): # Alternately, all three are supplied as a list # pragma: no cover
+            exc_info = exc
+        elif value is not None and tb is not None: # ... or separately # pragma: no cover
+            exc_info = (exc, value, tb)
+        else: # pragma: no cover
+            errormsg = f'Unexpected exception type "{type(exc)}": expecting Exception, or list/tuple of exc_info'
+            raise TypeError(errormsg)
+        out = ''.join(py_traceback.format_exception(*exc_info, **kwargs))
+    else:
+        out = py_traceback.format_exc(*args, **kwargs)
+    return out
 
 
 def getuser():
@@ -376,6 +411,10 @@ def getuser():
     Get the current username 
     
     Alias to :func:`getpass.getuser()` -- see https://docs.python.org/3/library/getpass.html#getpass.getuser
+    
+    **Example**::
+        
+        sc.getuser()
     
     *New in version 3.0.0.*
     '''
@@ -523,7 +562,7 @@ def asciify(string, form='NFKD', encoding='ascii', errors='ignore', **kwargs):
         errors (str): how to handle errors
         kwargs (dict): passed to :meth:`string.decode()`
     
-    **Example**:
+    **Example**::
         sc.asciify('föö→λ ∈ ℝ') # Returns 'foo  R'
     
     *New in version 2.0.1.*
@@ -770,7 +809,7 @@ def flexstr(arg, *args, force=True, join=''):
         force (bool): whether to force it to be a string
         join (str): if multiple arguments are provided, the character to use to join
     
-    **Example**:
+    **Example**::
         
         sc.flexstr(b'foo', 'bar', [1,2]) # Returns 'foobar[1, 2]'
     
@@ -794,7 +833,7 @@ def flexstr(arg, *args, force=True, join=''):
     
     if len(outlist) == 1:
         outstr = outlist[0]
-    else:
+    else: # pragma: no cover
         if force:
             outstr = join.join(outlist)
         else:
@@ -1042,7 +1081,7 @@ def isarray(obj, dtype=None):
                 return False
 
 
-def toarray(x, keepnone=False, **kwargs):
+def toarray(x, keepnone=False, asobject=True, dtype=None, **kwargs):
     '''
     Small function to ensure consistent format for things that should be arrays
     (note: :func:`sc.toarray() <toarray>` and :func:`sc.promotetoarray() <promotetoarray>` are identical).
@@ -1054,6 +1093,7 @@ def toarray(x, keepnone=False, **kwargs):
     Args:
         x (any): a number or list of numbers
         keepnone (bool): whether ``sc.toarray(None)`` should return ``np.array([])`` or ``np.array([None], dtype=object)``
+        asobject (bool): whether to prefer to coerce arrays to object type rather than string
         kwargs (dict): passed to :func:`numpy.array()`
 
     **Examples**::
@@ -1061,22 +1101,32 @@ def toarray(x, keepnone=False, **kwargs):
         sc.toarray(5) # Returns np.array([5])
         sc.toarray([3,5]) # Returns np.array([3,5])
         sc.toarray(None, skipnone=True) # Returns np.array([])
+        sc.toarray([1, 'foo']) # Returns np.array([1, 'foo'], dtype=object)
 
     | *New in version 1.1.0:* replaced "skipnone" with "keepnone"; allowed passing kwargs to ``np.array()``.
     | *New in version 2.0.1:* added support for pandas Series and DataFrame
+    | *New in version 3.1.0:* "asobject" argument; cast mixed-type arrays to object rather than string by default 
     '''
+    # Handle None
     skipnone = kwargs.pop('skipnone', None)
     if skipnone is not None: # pragma: no cover
         keepnone = not(skipnone)
         warnmsg = 'sc.toarray() argument "skipnone" has been deprecated as of v1.1.0; use keepnone instead'
         warnings.warn(warnmsg, category=FutureWarning, stacklevel=2)
+    
+    # Handle different inputs
     if isnumber(x) or (isinstance(x, np.ndarray) and not np.shape(x)): # e.g. 3 or np.array(3)
         x = [x]
     elif isinstance(x, (pd.DataFrame, pd.Series)):
         x = x.values
     elif x is None and not keepnone:
         x = []
-    output = np.array(x, **kwargs)
+    
+    # Actually convert to an array
+    output = np.array(x, dtype=dtype, **kwargs)
+    if asobject and (dtype is None) and issubclass(output.dtype.type, np.str_):
+        output = np.array(x, dtype=object, **kwargs) # Cast to object instead of string
+    
     return output
 
 
@@ -2062,10 +2112,11 @@ class tryexcept(cl.suppress):
         for i in range(5):
             with sc.tryexcept(history=tryexc) as tryexc:
                 print(values[i])
-        tryexc.print()
+        tryexc.traceback()
             
     | *New in version 2.1.0.*
     | *New in version 3.0.0:* renamed "print" to "traceback"; added "to_df" and "disp" options
+    | *New in version 3.1.0:* renamed "exceptions" to "data"; added "exceptions" property
     '''
 
     def __init__(self, die=None, catch=None, verbose=1, history=None):
@@ -2091,12 +2142,12 @@ class tryexcept(cl.suppress):
         self.dietypes   = tuple(dietypes)
         self.catchtypes = tuple(catchtypes)
         self.verbose    = verbose
-        self.exceptions = []
+        self.data = []
         if history is not None:
             if isinstance(history, (list, tuple)): # pragma: no cover
-                self.exceptions.extend(list(history))
+                self.data.extend(list(history))
             elif isinstance(history, tryexcept):
-                self.exceptions.extend(history.exceptions)
+                self.data.extend(history.data)
             else: # pragma: no cover
                 errormsg = f'Could not understand supplied history: must be a list or a tryexcept object, not {type(history)}'
                 raise TypeError(errormsg)
@@ -2106,6 +2157,10 @@ class tryexcept(cl.suppress):
     def __repr__(self):
         from . import sc_printing as scp # To avoid circular import
         return scp.prepr(self)
+    
+    
+    def __len__(self):
+        return len(self.data)
 
 
     def __enter__(self):
@@ -2115,7 +2170,7 @@ class tryexcept(cl.suppress):
     def __exit__(self, exc_type, exc_val, traceback):
         ''' If a context manager returns True from exit, the exception is caught '''
         if exc_type is not None:
-            self.exceptions.append([exc_type, exc_val, traceback])
+            self.data.append([exc_type, exc_val, traceback])
             die = (self.defaultdie or issubclass(exc_type, self.dietypes))
             live = issubclass(exc_type, self.catchtypes)
             if die and not live:
@@ -2128,19 +2183,37 @@ class tryexcept(cl.suppress):
                 return True
 
     
-    def traceback(self, which=-1):
-        ''' Print the exception (usually the last) '''
-        if len(self.exceptions):
-            py_traceback.print_exception(*self.exceptions[which])
+    def traceback(self, which=None, tostring=False):
+        '''
+        Print the exception (usually the last)
+        
+        Args:
+            which (int/list): which exception(s) to print; if None, print all
+            tostring (bool): whether to return as a string (otherwise print)
+        
+        *New in version 3.1.0:* optionally print multiple tracebacks
+        '''
+        string = ''
+        if self.died:
+            if which is None:
+                which = np.arange(len(self))
+            inds = toarray(which)
+            for ind in inds:
+                string += f'Traceback {ind+1} of {len(self)}:\n'
+                string += traceback(*self.data[ind]) + '\n'
         else: # pragma: no cover
             print('No exceptions were encountered; nothing to trace')
-        return
+        if tostring:
+            return string
+        else:
+            print(string)
+            return
     
     
     def to_df(self):
         ''' Convert the exceptions to a dataframe '''
         from . import sc_dataframe as scd # To avoid circular import
-        df = scd.dataframe(self.exceptions, columns=['type','value','traceback'])
+        df = scd.dataframe(self.data, columns=['type','value','traceback'])
         self.df = df
         return df
     
@@ -2151,7 +2224,20 @@ class tryexcept(cl.suppress):
         df.disp()
         return
     
+    @property
+    def exceptions(self):
+        ''' Retrieve the last exception, if any '''
+        return [entry[1] for entry in self.data]
+
+    @property
+    def exception(self):
+        ''' Retrieve the last exception, if any '''
+        if len(self.data): # Exceptions were encountered
+            return self.data[-1][1] # This is just the exception
+        else:
+            return None # Else, return None
     
     @property
     def died(self):
-        return len(self.exceptions) > 0
+        ''' Whether or not any exceptions were encountered '''
+        return len(self) > 0

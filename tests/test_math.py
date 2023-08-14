@@ -113,12 +113,29 @@ def test_find():
     sc.findnearest([0,2,5,8], [3,6])
     assert found.nearest == 1
 
-    print('Testing sc.getvalidinds(), sc.getvaliddata()')
-    found.inds = sc.getvalidinds([3,5,8,13], [2000, np.nan, np.nan, 2004]) # Returns array([0,3])
-    found.data = sc.getvaliddata(np.array([3,5,8,13]), np.array([2000, np.nan, np.nan, 2004])) # Returns array([3,13])
-    assert found.inds[-1] == 3
-    assert found.data[-1] == 13
+    print('Testing sc.numdigits()')
+    found.numdigits = sc.numdigits(1234)
+    found.numdigits_max = max(sc.numdigits([10, 200, 30000]))
+    found.numdigits_dec = sc.numdigits(0.01)
+    assert found.numdigits == 4
+    assert found.numdigits_max == 5
+    assert found.numdigits_dec == -2
+    assert sc.numdigits(-1, count_minus=True) == 2
+    assert sc.numdigits(0.02, count_decimal=True) == -4
 
+    return found
+
+
+def test_nan():
+    sc.heading('Testing NaN functions')
+    o = sc.objdict()
+    
+    print('Testing sc.getvalidinds(), sc.getvaliddata()')
+    o.inds = sc.getvalidinds([3,5,8,13], [2000, np.nan, np.nan, 2004]) # Returns array([0,3])
+    o.data = sc.getvaliddata(np.array([3,5,8,13]), np.array([2000, np.nan, np.nan, 2004])) # Returns array([3,13])
+    assert o.inds[-1] == 3
+    assert o.data[-1] == 13
+    
     print('Testing sc.sanitize()')
     data = [3, 4, np.nan, 8, 2, np.nan, np.nan, 8]
     sanitized, inds = sc.sanitize(data, returninds=True) # Remove NaNs
@@ -138,6 +155,7 @@ def test_find():
     assert len(sc.sanitize(allnans)) == 0
     assert sc.sanitize(allnans, defaultval=7) == 7
     
+    print('Testing fillnan and rmnan')
     data2d = np.random.rand(3,3)
     data2d[1,1] = np.nan
     data2d[2,2] = np.nan
@@ -147,20 +165,29 @@ def test_find():
         sc.fillnans(data2d, replacenans='nearest')
     filled = sc.fillnans(data2d, 100)
     assert 200 < filled.sum() < 207
-    found.sanitized = sanitized
-    found.filled = filled
-
-    print('Testing sc.numdigits()')
-    found.numdigits = sc.numdigits(1234)
-    found.numdigits_max = max(sc.numdigits([10, 200, 30000]))
-    found.numdigits_dec = sc.numdigits(0.01)
-    assert found.numdigits == 4
-    assert found.numdigits_max == 5
-    assert found.numdigits_dec == -2
-    assert sc.numdigits(-1, count_minus=True) == 2
-    assert sc.numdigits(0.02, count_decimal=True) == -4
-
-    return found
+    o.sanitized = sanitized
+    o.filled = filled
+    
+    print('Testing findnan')
+    data = [0, 1, 2, np.nan, 4, np.nan, 6, np.nan, np.nan, np.nan, 10]
+    assert len(sc.findnans(data)) == 5
+    
+    print('Testing nanequal')
+    arr1 = np.array([1, 2, np.nan, np.nan]) 
+    arr2 = [1, 2, np.nan, np.nan] 
+    assert np.all(sc.nanequal(arr1, arr2)) # Returns array([ True,  True,  True, True]) 
+     
+    arr3 = [3, np.nan, 'foo'] 
+    assert sc.nanequal(arr3, arr3, arr3, scalar=True) # Returns True 
+    
+    arr4 = [np.nan, np.nan, 'foo']
+    assert not sc.nanequal(arr3, arr4, scalar=True)
+    
+    arr5 = [np.nan, np.nan, 'foo', 3]
+    assert not sc.nanequal(arr4, arr5, scalar=True)
+    
+    
+    return o
 
 
 def test_smooth(doplot=doplot):
@@ -268,9 +295,10 @@ if __name__ == '__main__':
 
     doplot = True
 
-    other = test_utils()
-    found = test_find()
-    smoothed = test_smooth(doplot)
+    other   = test_utils()
+    found   = test_find()
+    nan     = test_nan()
+    smooth  = test_smooth(doplot)
     gauss1d = test_gauss1d(doplot)
     gauss2d = test_gauss2d(doplot)
 

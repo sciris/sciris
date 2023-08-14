@@ -15,7 +15,7 @@ Highlights:
 import struct
 import pylab as pl
 import numpy as np
-from matplotlib import colors as mplc, colormaps as mplcm
+import matplotlib as mpl
 from . import sc_utils as scu
 from . import sc_math as scm
 
@@ -62,7 +62,7 @@ def sanitizecolor(color, asarray=False, alpha=None, normalize=True):
     '''
     if isinstance(color, str):
         try:
-            color = mplc.to_rgb(color)
+            color = mpl.colors.to_rgb(color)
         except ValueError as E:
             errormsg = f'Could not understand "{color}" as a valid color: must be a standard Matplotlib color string'
             raise ValueError(errormsg) from E
@@ -113,9 +113,9 @@ def shifthue(colors=None, hueshift=0.0):
     '''
     colors, origndim = _listify_colors(colors)
     for c,color in enumerate(colors):
-        hsvcolor = mplc.rgb_to_hsv(color)
+        hsvcolor = mpl.colors.rgb_to_hsv(color)
         hsvcolor[0] = (hsvcolor[0]+hueshift) % 1.0 # Calculate new hue and return the modulus
-        rgbcolor = mplc.hsv_to_rgb(hsvcolor)
+        rgbcolor = mpl.colors.hsv_to_rgb(hsvcolor)
         colors[c] = rgbcolor
     colors = _listify_colors(colors, origndim)
     return colors
@@ -169,7 +169,7 @@ def rgb2hsv(colors=None):
     '''
     colors, origndim = _listify_colors(colors)
     for c,color in enumerate(colors):
-        hsvcolor = mplc.rgb_to_hsv(color)
+        hsvcolor = mpl.colors.rgb_to_hsv(color)
         colors[c] = hsvcolor
     colors = _listify_colors(colors, origndim)
     return colors
@@ -186,7 +186,7 @@ def hsv2rgb(colors=None):
     '''
     colors, origndim = _listify_colors(colors)
     for c,color in enumerate(colors):
-        hsvcolor = mplc.hsv_to_rgb(color)
+        hsvcolor = mpl.colors.hsv_to_rgb(color)
         colors[c] = hsvcolor
     colors = _listify_colors(colors, origndim)
     return colors
@@ -197,7 +197,7 @@ def hsv2rgb(colors=None):
 #%% Colormap-related functions
 ##############################################################################
 
-__all__ += ['vectocolor', 'arraycolors', 'gridcolors', 'midpointnorm', 'colormapdemo']
+__all__ += ['vectocolor', 'arraycolors', 'gridcolors', 'midpointnorm', 'manualcolorbar', 'colormapdemo']
 
 
 def vectocolor(vector, cmap=None, asarray=True, reverse=False, minval=None, maxval=None, midpoint=None, nancolor=None):
@@ -311,12 +311,18 @@ def arraycolors(arr, **kwargs):
             pl.scatter(x+c, y, s=50, c=colors[:,c])
 
     Version: 2020mar07
+    
+    *New in version 3.1.0:* Handle non-array output
     """
     arr = scu.dcp(arr) # Avoid modifications
     new_shape = arr.shape + (4,) # RGBα
     colors = np.zeros(new_shape)
     colorvec = vectocolor(vector=arr.reshape(-1), **kwargs)
-    colors = colorvec.reshape(new_shape)
+    if scu.isarray(colorvec):
+        colors = colorvec.reshape(new_shape)
+    else:
+        errormsg = 'Creating array colors as a list does not make sense; use sc.vectocolor(arr.flatten()) if you mean to do this'
+        raise ValueError(errormsg)
     return colors
 
 
@@ -457,10 +463,143 @@ def midpointnorm(vcenter=0, vmin=None, vmax=None):
 
     *New in version 1.2.0.*
     '''
-    from matplotlib.colors import TwoSlopeNorm
-    norm = TwoSlopeNorm(vcenter=vcenter, vmin=vmin, vmax=vmax)
+    norm = mpl.colors.TwoSlopeNorm(vcenter=vcenter, vmin=vmin, vmax=vmax)
     return norm
 
+
+
+def manualcolorbar(data=None, vmin=0, vmax=1, vcenter=None, colors=None, values=None,
+                   cmap=None, norm=None, label=None, labelkwargs=None, ticks=None, 
+                   ticklabels=None, fig=None, ax=None, cax=None, axkwargs=None, **kwargs):
+    '''
+    Add a colorbar to a plot that does not support one by default.
+    
+    There are three main use cases, from least to most manual:
+    
+    - The most common use case is to supply the data used for plotting directly via ``data``; 
+    the function will the infer the lower and upper limits and construct the colorbar.
+    - Alternatively, the lower and upper limits can be provided manually via ``vmin`` and ``vmax``.
+    - Finally, the colors themselves can be provided via ``colors``, optionally mapped
+    to ``values``, and potentially also supplied with custom ``ticklabels``.
+    
+    Args:
+        data (arr): if provided, compute the colorbar from these data
+        vmin (float): the minimum of the colormap (optional if data are provided)
+        vmax (float): the maximum of the colormap (optional if data are provided)
+        vcenter (float): the center of the colormap (optional)
+        colors (arr): if provided, use these colors directly instead
+        values (arr): if provided, the values corresponding to the specific colors
+        cmap (str/arr): the colormap to use
+        norm (Norm): the Matplotlib norm to use (if not provided, use the midpoint norm with vmin, vmax, etc.)
+        label (str): the label for the colorbar
+        labelkwargs (dict): passed to the colorbar label
+        ticks (list): the tick locations to use for the colorbar
+        ticklabels (list): the tick labels to use
+        ax (Axes): the "parent" axes to associate the colorbar with
+        cax (Axes): the axes to draw the colorbar into
+        axkwargs (dict): if creating a new colorbar axes, the arguments for creating it
+        kwargs (dict): passed to :func:`matplotlib.colorbar.ColorbarBase`
+
+    **Examples**::
+        
+        # Create a default colorbar
+        sc.manualcolorbar()
+        
+        # Add a colorbar to non-mappable data (e.g. a scatterplot)
+        n = 1000
+        x = pl.randn(n)
+        y = pl.randn(n)
+        c = x**2 + y**2
+        pl.scatter(x, y, c=c)
+        sc.manualcolorbar(c)
+        
+        # Create a custom colorbar with a custom label
+        sc.manualcolorbar(
+            vmin=-20,
+            vmax=40,
+            vcenter=0,
+            cmap='orangeblue',
+            label='Cold/hot',
+            orientation='horizontal',
+            labelkwargs=dict(rotation=10, fontweight='bold'),
+            axkwargs=[0.1,0.5,0.8,0.1],
+        )
+        
+        # Create a completely custom colorbar
+        n = 12
+        x = np.arange(n)
+        values = np.sqrt(np.arange(n))
+        colors = sc.gridcolors(n)
+        pl.scatter(x, values, c=colors)
+        pl.grid(True)
+
+        ticklabels = ['' for i in range(n)]
+        for i in [0, 2, 4, 10, 11]:
+            ticklabels[i] = f'Color {i} is nice'
+        cb = sc.manualcolorbar(
+            colors=colors, 
+            values=values, 
+            ticks=values, 
+            ticklabels=ticklabels, 
+            spacing='proportional'
+        )
+
+    *New in version 3.1.0.*
+    '''
+    labelkwargs = scu.mergedicts(labelkwargs)
+    
+    # Get the colorbar axes
+    if scu.checktype(axkwargs, 'arraylike'):
+        axarg = axkwargs
+        axkwargs = {}
+    else:
+        axarg = None
+        axkwargs = scu.mergedicts(axkwargs)
+    if cax is None and (axarg or axkwargs):
+        cax = pl.axes(arg=axarg, **axkwargs)
+        
+    # Handle explicit colors
+    if colors is not None:
+        if values is None: # Generate the boundaries automatically
+            values = np.arange(len(colors)+1)
+        if len(values) == len(colors): # Add an upper bound if not provided
+            values = scm.cat(values, values[-1] + np.diff(values[-2:])) # Add the last diff on again
+        cmap = mpl.colors.ListedColormap(colors)
+        norm = mpl.colors.BoundaryNorm(values, cmap.N)
+        sm = mpl.cm.ScalarMappable(cmap=cmap, norm=norm)
+    
+    # Main use case: infer colors
+    else:
+    
+        # If data is provided, use that to get the minimum and maximum
+        if data is not None:
+            data = np.array(data)
+            vmin = data.min()
+            vmax = data.max()
+        
+        # Handle the center
+        if vcenter is None:
+            vcenter = (vmin + vmax) / 2
+        
+        # Handle a custom norm
+        if norm is None:
+            norm = midpointnorm(vcenter=vcenter, vmin=vmin, vmax=vmax)
+            
+        # Create the scalar mappable
+        sm = mpl.cm.ScalarMappable(norm=norm, cmap=cmap)
+        
+    # Create the colorbar
+    cb = pl.colorbar(sm, ax=ax, cax=cax, ticks=ticks, **kwargs)
+    if label:
+        cb.set_label(label, **labelkwargs)
+    if ticklabels:
+        if cb.orientation == 'vertical':
+            cb.ax.set_yticklabels(ticklabels)
+        else:
+            cb.ax.set_xticklabels(ticklabels)
+            
+    
+    return cb
 
 
 def colormapdemo(cmap=None, n=None, smoothing=None, randseed=None, doshow=True):
@@ -580,7 +719,7 @@ def alpinecolormap(apply=False):
                      (breaks[5], snow[2], snow[2]))}
 
     # Make map
-    cmap = mplc.LinearSegmentedColormap('alpine', cdict, 256)
+    cmap = mpl.colors.LinearSegmentedColormap('alpine', cdict, 256)
     if apply: # pragma: no cover
         pl.set_cmap(cmap)
     return cmap
@@ -632,7 +771,7 @@ def bicolormap(gap=0.1, mingreen=0.2, redbluemix=0.5, epsilon=0.01, demo=False, 
                      (0.5+eps, omg, mix),
                      (1.00000, 0.0, 0.0))}
 
-    cmap = mplc.LinearSegmentedColormap('bi', cdict, 256)
+    cmap = mpl.colors.LinearSegmentedColormap('bi', cdict, 256)
     if apply: # pragma: no cover
         pl.set_cmap(cmap)
 
@@ -703,7 +842,7 @@ def parulacolormap(apply=False):
             [0.9601,0.8963,0.1507], [0.9596,0.9023,0.1480], [0.9595,0.9084,0.1450], [0.9597,0.9143,0.1418], [0.9601,0.9203,0.1382], [0.9608,0.9262,0.1344], [0.9618,0.9320,0.1304], [0.9629,0.9379,0.1261],
             [0.9642,0.9437,0.1216], [0.9657,0.9494,0.1168], [0.9674,0.9552,0.1116], [0.9692,0.9609,0.1061], [0.9711,0.9667,0.1001], [0.9730,0.9724,0.0938], [0.9749,0.9782,0.0872], [0.9769,0.9839,0.0805]]
 
-    cmap = mplc.LinearSegmentedColormap.from_list('parula', data)
+    cmap = mpl.colors.LinearSegmentedColormap.from_list('parula', data)
     if apply: # pragma: no cover
         pl.set_cmap(cmap)
     return cmap
@@ -765,7 +904,7 @@ def turbocolormap(apply=False):
             [0.66449,0.08436,0.00424],[0.65345,0.07902,0.00408],[0.64223,0.07380,0.00401],[0.63082,0.06868,0.00401],[0.61923,0.06367,0.00410],[0.60746,0.05878,0.00427],[0.59550,0.05399,0.00453],[0.58336,0.04931,0.00486],
             [0.57103,0.04474,0.00529],[0.55852,0.04028,0.00579],[0.54583,0.03593,0.00638],[0.53295,0.03169,0.00705],[0.51989,0.02756,0.00780],[0.50664,0.02354,0.00863],[0.49321,0.01963,0.00955],[0.47960,0.01583,0.01055]]
 
-    cmap = mplc.LinearSegmentedColormap.from_list('turbo', data)
+    cmap = mpl.colors.LinearSegmentedColormap.from_list('turbo', data)
     if apply: # pragma: no cover
         pl.set_cmap(cmap)
     return cmap
@@ -802,7 +941,7 @@ def bandedcolormap(minvalue=None, minsaturation=None, hueshift=None, saturations
     data = hsv2rgb(hsv)
 
     # Create and use
-    cmap = mplc.LinearSegmentedColormap.from_list('banded', data)
+    cmap = mpl.colors.LinearSegmentedColormap.from_list('banded', data)
     if apply: # pragma: no cover
         pl.set_cmap(cmap)
     return cmap
@@ -826,13 +965,17 @@ def orangebluecolormap(apply=False):
     data   = np.vstack((top(x), bottom(x)))
 
     # Create and use
-    cmap = mplc.LinearSegmentedColormap.from_list('orangeblue', data)
+    cmap = mpl.colors.LinearSegmentedColormap.from_list('orangeblue', data)
     if apply: # pragma: no cover
         pl.set_cmap(cmap)
     return cmap
 
 
 # Register colormaps -- under their original names as well as with the "sciris-" prefix
+try: # Regression support for Matplotlib
+    register_func = mpl.colormaps.register # Matplotlib >=3.5
+except AttributeError:
+    register_func = mpl.cm.register_cmap # Matplotlib <=3.4
 existing = pl.colormaps()
 colormap_map = dict(
     alpine     = alpinecolormap(),
@@ -842,8 +985,8 @@ colormap_map = dict(
     orangeblue = orangebluecolormap(),
     turbo      = turbocolormap(),
 )
-for origname,cmap in colormap_map.items():
-    newname = f'sciris-{origname}'
-    for name in [origname, newname]:
+for basename,cmap in colormap_map.items():
+    sc_name = f'sciris-{basename}'
+    for name in [basename, sc_name]:
         if name not in existing: # Avoid re-registering already registered colormaps
-            mplcm.register(cmap=cmap, name=name)                
+            register_func(cmap=cmap, name=name)                

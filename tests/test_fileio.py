@@ -4,14 +4,15 @@ Test Sciris file I/O functions.
 
 import os
 import numpy as np
-import pandas as pd
 import pylab as pl
 import openpyxl
 import sciris as sc
+import pytest
+ut = sc.importbypath(sc.thispath() / 'sc_test_utils.py')
 
 # Define filenames
-filedir = sc.path('files')
 files = sc.prettyobj()
+filedir = sc.thispath() / 'files'
 files.excel  = filedir / 'test.xlsx'
 files.binary = filedir / 'test.obj'
 files.text   = filedir / 'text.txt'
@@ -109,7 +110,7 @@ def test_load_save():
     sc.save(files.binary, testdata, compresslevel=9)
     sc.save(files.binary, testdata, compression='none')
     sc.zsave(files.binary, testdata)
-    zobj = sc.load(files.binary)
+    zobj = sc.load(files.binary, verbose=True)
     assert np.all(o.obj1 == zobj)
     
     sc.heading('Savetext/loadtext')
@@ -140,27 +141,48 @@ def test_load_corrupted():
     a no-longer-existant class. See the ``files`` folder for the scripts used
     to create this file.
     '''
+    sc.heading('Intentionally loading corrupted file')
     
     o = sc.objdict()
 
     class LiveClass():
         def __init__(self, x):
             self.x = x
+        def disp(self):
+            return f'x is {self.x}'
 
     dead_path = filedir / 'deadclass.obj'
-    if os.path.exists(dead_path):
-        sc.heading('Intentionally loading corrupted file')
-        print('Loading with no remapping...')
-        o.obj3 = sc.loadobj(dead_path)
-        print(o.obj3)
-        print(f'Loading corrupted object succeeded, x={o.obj3.x}')
+    
+    print('Loading with no remapping...')
+    with pytest.warns(sc.UnpicklingWarning):
+        o.obj1 = sc.load(dead_path)
+    print(o.obj1)
+    print(f'Loading corrupted object succeeded, x={o.obj1.x}')
 
-        print('Loading with remapping...')
-        o.obj4 = sc.loadobj(dead_path, remapping={'deadclass.DeadClass':LiveClass})
-        assert isinstance(o.obj4, LiveClass)
-        print(f'Loading remapped object succeeded, x={o.obj4.x}, object: {o.obj4}')
-    else:
-        print(f'{dead_path} not found, skipping...')
+    print('Loading with remapping...')
+    o.obj2 = sc.load(dead_path, remapping={'deadclass.DeadClass': LiveClass})
+    o.obj3 = sc.load(dead_path, remapping={('deadclass', 'DeadClass'): LiveClass}, verbose=True)
+    for obj in [o.obj2, o.obj3]:
+        assert isinstance(obj, LiveClass)
+    print(f'Loading remapped object succeeded, {o.obj2.disp()}, object: {o.obj2}')
+    
+    print('Loading with error on initialization')
+    class DyingClass():
+        def __new__(self):
+            raise Exception('Intentional exception')
+    with pytest.warns(sc.UnpicklingWarning):
+        o.obj4 = sc.load(dead_path, remapping={'deadclass.DeadClass': DyingClass}, method='robust', verbose=True)
+    with pytest.raises(sc.UnpicklingError):
+        sc.load(dead_path, die=True)
+        
+    print('Testing Failed directly')
+    f = sc.Failed()
+    len(f)
+    f['foo'] = 3
+    assert f['foo'] == 3
+    f()
+    f.disp()
+    f.showfailure()
     
     return o
 
@@ -182,10 +204,10 @@ def test_fileio():
     o.thisdir = a
 
     sc.heading('Get files')
-    print('Files in current folder:')
+    print(f'Files in "{filedir}":')
     TF = [True,False]
     for tf in TF:
-        sc.pp(sc.getfilepaths(abspath=tf, filesonly=tf, foldersonly=not(tf), nopath=tf, aspath=tf))
+        sc.pp(sc.getfilepaths(folder=filedir, abspath=tf, filesonly=tf, foldersonly=not(tf), nopath=tf, aspath=tf))
     o.filelist = sc.getfilelist(fnmatch='*.py', nopath=True) # Test alias
     assert all(['py' in f for f in o.filelist])
     assert 'test_fileio.py' in o.filelist
@@ -200,8 +222,9 @@ def test_fileio():
     
     sc.heading('Testing other')
     path1 = sc.path('/a/folder', 'a_file.txt')
-    path2 = sc.path('/a/folder', None, 'a_file.txt')
-    assert str(path1) == str(path2) == os.sep.join(['', 'a', 'folder', 'a_file.txt'])
+    path2 = sc.path(['/a', 'folder'], 'a_file.txt')
+    path3 = sc.path('/a/folder', None, 'a_file.txt')
+    assert str(path1) == str(path2) == str(path3) == os.sep.join(['', 'a', 'folder', 'a_file.txt'])
     assert sc.ispath(path1)
     o.thisfile = sc.thisfile(aspath=True)
 
@@ -220,6 +243,8 @@ def test_json():
     jsonifiable = sc.objdict().make(keys=['a','b'], vals=np.random.rand(10), coerce='none')
     json_obj = sc.jsonify(jsonifiable)
     json_str = sc.jsonify(jsonifiable, tostring=True, indent=2) # kwargs are passed to json.dumps()
+    json = sc.readjson(json_str)
+    assert json_obj == json
 
     print('Not-a-JSON as sanitized object:')
     print(notjson)
@@ -241,7 +266,8 @@ def test_json():
     yamlfile = 'test.yaml'
     sc.saveyaml(yamlfile, testdata)
     testdata2 = sc.loadyaml(yamlfile)
-    assert testdata == testdata2
+    testdata3 = sc.readyaml(sc.loadtext(yamlfile))
+    assert testdata == testdata2 == testdata3
     
     # Tidy up
     sc.rmpath(jsonfile, yamlfile)
@@ -254,15 +280,20 @@ def test_jsonpickle():
 
     myobj = sc.prettyobj()
     myobj.a = 3
-    myobj.b = pd.DataFrame.from_dict({'a':[3,5,23]})
+    myobj.b = ut.MyClass(nan=False, mixed=False, pandas=False) # jsonpickle can't handle mixed data types
 
     jp = sc.jsonpickle(myobj)
     jps = sc.jsonpickle(myobj, tostring=True)
     myobj2 = sc.jsonunpickle(jp)
     myobj3 = sc.jsonunpickle(jps)
-
-    assert myobj.b.equals(myobj2.b)
-    assert myobj.b.equals(myobj3.b)
+    
+    jpath = 'my-data.json'
+    sc.jsonpickle(myobj, jpath)
+    myobj4 = sc.jsonunpickle(jpath)
+    
+    # Tidy up
+    sc.rmpath(jpath)
+    assert sc.equal(myobj, myobj2, myobj3, myobj4, leaf=True)
 
     return jp
 

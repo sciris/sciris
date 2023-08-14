@@ -10,6 +10,7 @@ rows/columns and concatenating data.
 import numbers # For numeric type
 import numpy as np
 import pandas as pd
+import warnings
 from . import sc_utils as scu
 from . import sc_math as scm
 from . import sc_odict as sco
@@ -61,6 +62,7 @@ class dataframe(pd.DataFrame):
 
     | *New in version 2.0.0:* subclass pandas DataFrame
     | *New in version 3.0.0:* "dtypes" argument; handling of item setting
+    | *New in version 3.1.0:* use panda's equality operator by default (unless an exception is raised); new "equal" method; "cat" can be an instance method now
     '''
 
     def __init__(self, data=None, index=None, columns=None, dtype=None, copy=None, 
@@ -68,6 +70,8 @@ class dataframe(pd.DataFrame):
         
         # Handle inputs
         if 'cols' in kwargs:
+            if columns is not None: # pragma: no cover
+                raise ValueError('The argument "cols" is an alias for "columns", do not supply both')
             columns = kwargs.pop('cols')
         if nrows and data is None:
             ncols = len(columns)
@@ -80,13 +84,6 @@ class dataframe(pd.DataFrame):
                 raise ValueError(errormsg)
             dtypes = columns # Already in the right format
             columns = list(columns.keys())
-        if isinstance(data, dict):
-            if columns is not None:
-                colset = sorted(set(columns))
-                dataset = sorted(set(data.keys()))
-                if colset != dataset:
-                    errormsg = f'Incompatible column names provided:\nColumns: {colset}\n   Data: {dataset}'
-                    raise ValueError(errormsg)
         
         # Handle data
         if kwargs:
@@ -95,8 +92,18 @@ class dataframe(pd.DataFrame):
             elif isinstance(data, dict):
                 data.update(kwargs)
             else:
-                errormsg = f'Cannot combine non-dict data {type(data)} with keyword arguments "{scu.strjoin(kwargs.keys())}"'
+                errormsg = f'When providing data columns via keywords ("{scu.strjoin(kwargs.keys())}"), these can only be combined with a dict, not an object of {type(data)}. Pass the data as a dict instead.'
                 raise TypeError(errormsg)
+        
+        # Check data and column compatibility
+        if isinstance(data, dict) and columns is not None:
+            colset = set(columns)
+            dataset = set(data.keys())
+            match = colset & dataset
+            if not len(match):
+                warnmsg = 'No overlap between column names and data keys, are you sure you want to do this?'
+                warnmsg += f'\nColumns: {colset}\nData keys: {dataset}'
+                warnings.warn(warnmsg, category=RuntimeWarning, stacklevel=2)
 
         # Create the dataframe
         super().__init__(data=data, index=index, columns=columns, dtype=dtype, copy=copy)
@@ -344,29 +351,86 @@ class dataframe(pd.DataFrame):
 
     def __eq__(self, other):
         '''
-        Allow for equality checks: same type, size, columns, and values
+        Try the default ``__eq__()``, but fall back on the more robust ``equal()``
         
         *New in version 3.0.0.*
         '''
+        try: # First try default comparison
+            return super().__eq__(other)
+        except: # Otherwise, use the custom check # pragma: no cover
+            return self.equals(other)
+    
+    @classmethod
+    def equal(cls, *args, equal_nan=True):
+        '''
+        Class method returning boolean true/false equals that allows for more robust equality checks: 
+        same type, size, columns, and values. See :meth:`df.equals() <dataframe.equals>` for 
+        equivalent instance method.
         
-        # Check type
-        if not isinstance(other, self.__class__):
-            return False
+        **Examples**::
+            
+            df1 = sc.dataframe(a=[1, 2, np.nan])
+            df2 = sc.dataframe(a=[1, 2, 4])
+            
+            sc.dataframe.equal(df1, df1) # Returns True
+            sc.dataframe.equal(df1, df1, equal_nan=False) # Returns False
+            sc.dataframe.equal(df1, df2) # Returns False
+            sc.dataframe.equal(df1, df1, df2) # Also returns False
         
-        # Check shape
-        if self.values.shape != other.values.shape:
-            return False
-
-        # Check columns
-        if not np.all(self.columns == other.columns):
-            return False
+        *New in version 3.1.0.*
+        '''
+        if len(args) < 2: # pragma: no cover
+            errormsg = f'There must be ≥2 input arguments, not {len(args)}'
+            raise ValueError(errormsg)
+        base = args[0]
+        others = args[1:]
+        eqs = []
         
-        # Check values
-        if not np.all(self.values == other.values):
-            return False
+        # Handle NaNs
+        if equal_nan:
+            base = base.fillna(scm._nan_fill)
         
-        # Passed all checks
-        return True
+        for other in others:
+            
+            # Check type
+            if not isinstance(other, base.__class__):
+                eq = False
+            
+            # Check shape
+            elif base.values.shape != other.values.shape:
+                eq = False
+    
+            # Check columns
+            elif not np.all(base.columns == other.columns):
+                eq = False
+            
+            # Finally, check values
+            else:
+                if equal_nan:
+                    other = other.fillna(scm._nan_fill)
+                eq = np.all(base.values == other.values)
+            
+            eqs.append(eq)
+    
+        all_eq = all(eqs)
+        
+        return all_eq
+        
+        
+    def equals(self, other, *args, equal_nan=True):
+        '''
+        Try the default :meth:`equals() <pandas.DataFrame.equals>`, but fall back 
+        on the more robust :meth:`sc.dataframe.equal() <dataframe.equal>` if that
+        fails.
+        
+        *New in version 3.1.0.*
+        '''
+        try:
+            assert equal_nan # Regular pandas equals can't handle non-equal NaNs
+            assert len(args) == 0 # Regular pandas can't handle multiple arguments
+            return super().equals(other)
+        except: # Otherwise, do manual check
+            return self.equal(self, other, *args, equal_nan=equal_nan)
 
 
     def disp(self, nrows=None, ncols=None, width=999, precision=4, options=None, **kwargs):
@@ -542,7 +606,7 @@ class dataframe(pd.DataFrame):
         Concatenate additional data onto the current dataframe. 
         
         Similar to :meth:`df.appendrow() <dataframe.appendrow>` and :meth:`df.insertrow() <dataframe.insertrow>`;
-        see also :meth:`df.cat() <dataframe.cat>` for the equivalent class method.
+        see also :meth:`sc.dataframe.cat() <dataframe.cat>` for the equivalent class method.
         
         Args:
             data (dataframe/array): the data to concatenate
@@ -552,6 +616,12 @@ class dataframe(pd.DataFrame):
             inplace (bool): whether to append in place
             dfargs (dict): arguments passed to construct each dataframe
             **kwargs (dict): passed to :func:`pd.concat() <pandas.concat>`
+        
+        **Example**::
+            
+            arr1 = np.random.rand(6,3)
+            df2 = sc.dataframe(np.random.rand(4,3))
+            df3 = df2.concat(arr1)
         
         | *New in version 2.0.2:* "inplace" defaults to False
         | *New in version 3.0.0:* improved type handling
@@ -565,12 +635,12 @@ class dataframe(pd.DataFrame):
             dfs.append(df)
         newdf = self._constructor(pd.concat(dfs, **kwargs), **dfargs)
         return self.replacedata(newdf=newdf, reset_index=reset_index, inplace=inplace)
-
-
+    
+    
     @classmethod
     def cat(cls, data, *args, dfargs=None, **kwargs):
         '''
-        Convenience method for concatenating multiple dataframes. See :meth:`df.concat() <dataframe.concat>`
+        Convenience class method for concatenating multiple dataframes. See :meth:`df.concat() <dataframe.concat>`
         for the equivalent instance method.
         
         Args:

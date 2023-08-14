@@ -47,7 +47,7 @@ def freeze(lower=False):
 
     *New in version 1.2.2.*
     '''
-    import pkg_resources as pkgr # Imported here since slow (>0.1 s)
+    import pkg_resources as pkgr # Imported here since slow (>0.1 s); deprecated, but importlib doesn't work on older Python versions
     raw = dict(tuple(str(ws).split()) for ws in pkgr.working_set)
     keys = sorted(raw.keys())
     if lower: # pragma: no cover
@@ -83,7 +83,7 @@ def require(reqs=None, *args, exact=False, detailed=False, die=True, warn=True, 
     *New in version 1.2.2.*
     *New in version 3.0.0:* "warn" argument
     '''
-    import pkg_resources as pkgr # Imported here since slow (>0.1 s)
+    import pkg_resources as pkgr # Imported here since slow (>0.1 s); deprecated, but no direct equivalent in importlib or packaging
 
     # Handle inputs
     reqlist = list(args)
@@ -645,39 +645,6 @@ def savearchive(filename, obj, files=None, folder=None, comments=None, require=N
     return scf.savezip(filename=filename, files=files, data=datadict, tobytes=False, **kwargs)
 
 
-def known_deprecations(as_map=False):
-    '''
-    Return a dictionary of known deprecations between module versions.
-    
-    New deprecations will be added as they arise.
-    
-    Rarely used directly; invoked automatically by :func:`sc.load() <load>` if ``auto_remap=True``.
-    
-    Args:
-        as_map (bool): if True, return all known remappings without additional version data
-    
-    *New in version 3.0.0.*
-    '''
-    
-    # List known remappings here
-    known = {
-        "No module named 'pandas.core.indexes.numeric'":
-            dict(module = 'pandas',
-                 pickled_version = '<2.0',
-                 current_version = '>=2.0',
-                 fix = {'pandas.core.indexes.numeric.Int64Index':'pandas.core.indexes.api.Index'},
-        ),
-    }
-    if as_map: # pragma: no cover
-        remap = dict()
-        for entry in known.values():
-            remap.update(entry['fix'])
-        return remap
-    else:
-        return known
-
-
-
 def loadarchive(filename, folder=None, loadobj=True, loadmetadata=False, 
                      remapping=None, die=True, **kwargs):
     '''
@@ -770,8 +737,8 @@ def loadarchive(filename, folder=None, loadobj=True, loadmetadata=False,
                     require(reqs=reqs, die=False, warn=True) # Don't die, but print warnings
             except: # pragma: no cover
                 try:
-                    remapping = scu.mergedicts(remapping, known_deprecations(as_map=True))
-                    obj = scf.loadstr(datastr, remapping=remapping, **kwargs) # Load with all remappings
+                    remapping = scu.mergedicts(remapping, scf.known_fixes)
+                    obj = scf.loadstr(datastr, remapping=remapping, verbose=True, **kwargs) # Load with all remappings
                 except Exception as E:
                     exc = type(E)
                     errormsg = 'Could not unpickle the object: to debug using metadata, set die=False'

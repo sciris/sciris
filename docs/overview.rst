@@ -110,12 +110,14 @@ Other utilities
 -  :func:`sc.heading() <sc_printing.heading>`: print text as a 'large' heading
 -  :func:`sc.colorize() <sc_printing.colorize>`: print text in a certain color
 -  :func:`sc.sigfig() <sc_printing.sigfig>`: truncate a number to a certain number of significant figures
+-  :func:`sc.search() <sc_nested.search>`: search for a key, attribute, or value in a complex object
+-  :func:`sc.equal() <sc_nested.equal>`: check whether two or more complex objects are equal
 
 
 Installation and run instructions
 ---------------------------------
 
-1. Install Sciris: ``pip install sciris``
+1. Install Sciris: ``pip install sciris`` (or ``conda install -c conda-forge sciris``)
 
 2. Use Sciris: ``import sciris as sc``
 
@@ -127,7 +129,7 @@ Citation
 
 To cite Sciris, cite the `paper <http://paper.sciris.org>`_:
 
-  Kerr CC, Sanz-Leon P, Abeysuriya RG, Chadderdon GL, Harbuz VS, Saidi P, Quiroga M, Martin-Hughes R, Kelly SL, Cohen JA, Stuart RM, Nachesa AN. **Sciris: Simplifying scientific software in Python**. *Journal of Open Source Software* 2023 (under review).
+  Kerr CC, Sanz-Leon P, Abeysuriya RG, Chadderdon GL, Harbuz VS, Saidi P, Quiroga M, Martin-Hughes R, Kelly SL, Cohen JA, Stuart RM, Nachesa AN. **Sciris: Simplifying scientific software in Python**. *Journal of Open Source Software* 2023 (in press).
 
 The citation is also available in `BibTeX format`_.
 

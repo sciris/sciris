@@ -3,48 +3,49 @@ Script to generate test data files for checking load compatibility.
 
 Instructions:
 
-    1. Create a new conda environment, install pypi-timemachine, and start a server:
+    1. Create a new conda environment, install pypi-timemachine, and start a server.
+    For example, for 2022:
 
-        conda create -n tm2021 python=3.9 -y 
-        conda activate tm2021
+        conda create -n tm python=3.9 -y 
+        conda activate tm
         pip install pypi-timemachine
-        pypi-timemachine 2021-01-01 # shows port being used
+        pypi-timemachine 2022-01-01 # shows port being used
 
     2. In a separate terminal, install Sciris and run this script:
 
-        conda activate tm2021
+        conda activate tm
         pip install --index-url http://localhost:<PORT> sciris
-        python make_pickles.py 2021-01-01
+        python make_archive.py 2022-01-01
 
-Version: 2023-04-13
+This has been run with the following arguments:
+    # For the archive
+    python make_archive.py 2023-04-19 1
+    
+    # For the pickles
+    python make_archive.py 2021-01-01 0
+    python make_archive.py 2022-01-01 0
+
+Version history:
+    2023-04-19: Original version
+    2023-08-06: Updated to save pickles and additional pandas data
 '''
 
 import sys
-import datetime as dt
-import dateutil as du
-import numpy as np
-import pandas as pd
 import sciris as sc
+ut = sc.importbypath(sc.thispath() / '..' / 'sc_test_utils.py')
 
 # If using pypi-timemachine, set the corresponding date here
-date = '2023-04-19'
+date = '2023-08-11'
+as_archive = True
 
-if len(sys.argv)>1:
+if len(sys.argv) > 1:
     date = sys.argv[1]
+if len(sys.argv) > 2:
+    as_archive = int(sys.argv[2])
 
-class MyClass:
-    ''' Store common data types for compatibility checks'''
-    
-    def __init__(self):
-        self.date = date
-        self.strings = ['a', 'b', 'c', 'd', 'e']
-        self.nparray = np.arange(5)
-        self.datetime = dt.datetime.now(du.tz.tzutc())
-        self.dataframe = pd.DataFrame(dict(labels=self.strings, vals=self.nparray))
+myclass = ut.MyClass(date=date)
 
-    def sum(self):
-        return self.nparray.sum()
-
-myclass = MyClass()
-
-sc.savearchive('archive.zip', myclass)
+if as_archive:
+    sc.savearchive(f'archive_{date}.zip', myclass)
+else:
+    sc.saveobj(f'pickle_{date}.obj', myclass.__dict__)

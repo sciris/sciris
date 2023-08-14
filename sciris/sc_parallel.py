@@ -42,10 +42,19 @@ if __name__ == '__main__':
     sc.parallelize(my_func)
 '''
 
-def _progressbar(globaldict, njobs, **kwargs):
-    ''' Define a progress bar, available to both '''
-    done = sum(globaldict.values())
-    scp.progressbar(done, njobs, label=f'Job {done}/{njobs}', **kwargs)
+def _jobkey(index):
+    ''' Convert a job index to a key '''
+    return f'_job{index}'
+
+
+def _progressbar(globaldict, njobs, started, **kwargs):
+    ''' Define a progress bar based on the global dictionary '''
+    try:
+        done = sum([globaldict[k] for k in globaldict.keys() if str(k).startswith('_job')])
+    except Exception as E:
+        done = '<unknown>' + str(E)
+    elapsed = (scd.now() - started).total_seconds()
+    scp.progressbar(done, njobs, label=f'Job {done}/{njobs} ({elapsed:.1f} s)', **kwargs)
     return
 
 
@@ -78,23 +87,24 @@ class Parallel:
     **Example**::
         
         import sciris as sc
-        import numpy as np
 
         def slowfunc(i):
             sc.randsleep(seed=i)
             return i**2
 
+        # Standard usage
         P = sc.Parallel(slowfunc, iterarg=range(10), parallelizer='multiprocess-async')
         P.run_async()
         P.monitor()
         P.finalize()
         print(P.times)
         
-    *New in version 3.0.0.*
+    | *New in version 3.0.0.*
+    | *New in version 3.1.0:* "globaldict" argument
     '''
     def __init__(self, func, iterarg=None, iterkwargs=None, args=None, kwargs=None, ncpus=None, 
                  maxcpu=None, maxmem=None, interval=None, parallelizer=None, serial=False, 
-                 progress=True, callback=None, label=None, die=True, **func_kwargs):
+                 progress=False, callback=None, globaldict=None, label=None, die=True, **func_kwargs):
         
         # Store input arguments
         self.func         = func
@@ -110,6 +120,7 @@ class Parallel:
         self.serial       = serial
         self.progress     = progress
         self.callback     = callback
+        self.inputdict    = globaldict
         self.label        = label
         self.die          = die
         
@@ -280,14 +291,14 @@ class Parallel:
         
         # Handle defaults for the parallelizer
         parallelizer = self.parallelizer
-        if parallelizer is None:
+        if parallelizer is None or parallelizer == 'async':
             parallelizer = 'default'
         if self.serial: 
             parallelizer = 'serial'
         
         # Handle the choice of parallelizer
         if scu.isstring(parallelizer):
-            parallelizer = parallelizer.replace('-copy', '').replace('-async', '')
+            parallelizer = parallelizer.replace('copy', '').replace('async', '').replace('-', '')
             try:
                 self.method = self.defaults.mapping[parallelizer]
             except:
@@ -299,7 +310,7 @@ class Parallel:
         # Handle async
         is_async = False
         supports_async = ['multiprocess', 'multiprocessing']
-        if scu.isstring(self.parallelizer) and '-async' in self.parallelizer:
+        if scu.isstring(self.parallelizer) and 'async' in self.parallelizer:
             if self.method in supports_async:
                 is_async = True
             else:
@@ -355,7 +366,7 @@ class Parallel:
             raise ValueError(errormsg)
             
         # Create a manager for sharing resources across jobs
-        if method in ['serial', 'thread']:
+        if method in ['serial', 'thread', 'custom']:
             manager = None
             globaldict = dict() # For serial and thread, don't need anything fancy to share global variables
         else:
@@ -364,6 +375,13 @@ class Parallel:
             else:
                 manager = mpi.Manager() # Note "mpi" instead of "mp"
             globaldict = manager.dict() # Create a dict for sharing progress of each job
+        
+        # Handle any supplied input
+        if self.inputdict:
+            if method == 'custom': # For something custom, use the inputdict directly, in case it's something special
+                globaldict = self.inputdict
+            else:
+                globaldict.update(self.inputdict)
         
         # Reset
         self.pool       = pool
@@ -389,7 +407,10 @@ class Parallel:
         # Check for embarrassingly parallel run -- should already be validated
         if self.embarrassing:
             iterarg = np.arange(iterarg)
-        
+            
+        # Check for additional global arguments
+        useglobal = True if self.inputdict is not None else False
+            
         # Construct the argument list for each job
         for index in range(self.njobs):
             if iterarg is None:
@@ -411,7 +432,8 @@ class Parallel:
             taskargs = TaskArgs(func=self.func, index=index, njobs=self.njobs, iterval=iterval, iterdict=iterdict,
                                 args=self.args, kwargs=self.kwargs, maxcpu=self.maxcpu, maxmem=self.maxmem,
                                 interval=self.interval, embarrassing=self.embarrassing, callback=self.callback, 
-                                progress=self.progress, globaldict=self.globaldict, die=self.die)
+                                progress=self.progress, globaldict=self.globaldict, useglobal=useglobal, 
+                                started=self.times.started, die=self.die)
             argslist.append(taskargs)
         
         self.argslist = argslist
@@ -429,6 +451,7 @@ class Parallel:
         self.make_pool()
         
         # Construct the argument list (has to be after the pool is made)
+        self.times.started = scd.now()
         self.make_argslist()
         
         # Handle optional deepcopy
@@ -438,7 +461,6 @@ class Parallel:
             argslist = self.argslist
         
         # Run it!
-        self.times.started = scd.now()
         output = self.map_func(_task, argslist)
         
         # Store the pool; do not store the output list here
@@ -502,7 +524,7 @@ class Parallel:
         while self.running or final_iter:
             if not self.running and final_iter:
                 final_iter = False
-            _progressbar(self.globaldict, self.njobs, **kwargs)
+            _progressbar(self.globaldict, njobs=self.njobs, started=self.times.started, **kwargs)
             scd.timedsleep(interval)
         return
     
@@ -570,7 +592,7 @@ class Parallel:
 
 def parallelize(func, iterarg=None, iterkwargs=None, args=None, kwargs=None, ncpus=None, 
                 maxcpu=None, maxmem=None, interval=None, parallelizer=None, serial=False, 
-                progress=False, callback=None, die=True, **func_kwargs):
+                progress=False, callback=None, globaldict=None, die=True, **func_kwargs):
     '''
     Execute a function in parallel.
 
@@ -605,6 +627,7 @@ def parallelize(func, iterarg=None, iterkwargs=None, args=None, kwargs=None, ncp
         serial       (bool)      : whether to skip parallelization and run in serial (useful for debugging; equivalent to ``parallelizer='serial'``)
         progress     (bool)      : whether to show a progress bar
         callback     (func)      : an optional function to call from each worker
+        globaldict   (dict)      : an optional global dictionary to pass to each worker via the kwarg "globaldict" (note: may not update properly with low task latency)
         die          (bool)      : whether to stop immediately if an exception is encountered (otherwise, store the exception as the result)
         func_kwargs  (dict)      : merged with kwargs (see above)
 
@@ -720,12 +743,13 @@ def parallelize(func, iterarg=None, iterkwargs=None, args=None, kwargs=None, ncp
     | *New in version 2.0.0:* changed default parallelizer from ``multiprocess.Pool`` to ``concurrent.futures.ProcessPoolExecutor``; replaced ``maxload`` with ``maxcpu``/``maxmem``; added ``returnpool`` argument
     | *New in version 2.0.4:* added "die" argument; changed exception handling
     | *New in version 3.0.0:* new Parallel class; propagated "die" to jobs
+    | *New in version 3.1.0:* new "globaldict" argument
     '''
     # Create the parallel instance
     P = Parallel(func, iterarg=iterarg, iterkwargs=iterkwargs, args=args, kwargs=kwargs, 
                  ncpus=ncpus, maxcpu=maxcpu, maxmem=maxmem, interval=interval, 
                  parallelizer=parallelizer, serial=serial, progress=progress, 
-                 callback=callback, die=die, **func_kwargs)
+                 callback=callback, globaldict=globaldict, die=die, **func_kwargs)
     
     # Run it
     P.run()
@@ -743,8 +767,9 @@ class TaskArgs(scu.prettyobj):
 
         Arguments must match both :func:`sc.parallelize() <parallelize>` and ``sc._task()``
         '''
-        def __init__(self, func, index, njobs, iterval, iterdict, args, kwargs, maxcpu, 
-                     maxmem, interval, embarrassing, callback, progress, globaldict, die=True):
+        def __init__(self, func, index, njobs, iterval, iterdict, args, kwargs, maxcpu, maxmem, 
+                     interval, embarrassing, callback, progress, globaldict, useglobal, started,
+                     die=True):
             self.func         = func         # The function being called
             self.index        = index        # The place in the queue
             self.njobs        = njobs        # The total number of iterations
@@ -759,6 +784,8 @@ class TaskArgs(scu.prettyobj):
             self.callback     = callback     # A function to call after each task finishes
             self.progress     = progress     # Whether to print progress after each job
             self.globaldict   = globaldict   # A global dictionary for sharing progress on each task 
+            self.useglobal    = useglobal    # Whether to pass the global dictionary to each task
+            self.started      = started      # The time when the parallelization was started
             self.die          = die          # Whether to raise an exception if the child task encounters one
             return
 
@@ -792,17 +819,28 @@ def _task(taskargs):
     if maxcpu or maxmem:
         scpro.loadbalancer(maxcpu=maxcpu, maxmem=maxmem, index=index, interval=taskargs.interval)
 
-    # Call the function!
+    
+    # Set up input and output arguments
     globaldict = taskargs.globaldict
     start      = scd.time()
     result     = None
     success    = False
     exception  = None
-    globaldict[index] = 0
+    try: # Try to update the globaldict, but don't worry if we can't
+        globaldict[_jobkey(index)] = 0
+        if taskargs.useglobal:
+            kwargs['globaldict'] = taskargs.globaldict
+    except:
+        pass
+    
+    # Call the function!
     try:
         result = func(*args, **kwargs) # Call the function!
         success = True
-        globaldict[index] = 1
+        try: # Likewise, try to update the task progress
+            globaldict[_jobkey(index)] = 1
+        except:
+            pass
     except Exception as E: # pragma: no cover
         if taskargs.die: # Usual case, raise an exception and stop
             errormsg = f'Task {index} failed: set die=False to keep going instead; see above for error details'
@@ -816,20 +854,20 @@ def _task(taskargs):
     elapsed = end - start
     
     if taskargs.progress:
-        _progressbar(globaldict, taskargs.njobs, flush=True)
-    
-    # Handle callback, if present
-    if taskargs.callback: # pragma: no cover
-        data = dict(index=index, njobs=taskargs.njobs, args=args, kwargs=kwargs, result=result)
-        taskargs.callback(data)
+        _progressbar(globaldict, njobs=taskargs.njobs, started=taskargs.started, flush=True)
     
     # Generate output
     outdict = dict(
-        result = result,
-        success = success,
+        result    = result,
+        success   = success,
         exception = exception,
-        elapsed = elapsed,
+        elapsed   = elapsed,
     )
+    
+    # Handle callback, if present
+    if taskargs.callback: # pragma: no cover
+        data = dict(index=index, njobs=taskargs.njobs, args=args, kwargs=kwargs, globaldict=globaldict, outdict=outdict)
+        taskargs.callback(data)
 
     # Handle output
     return outdict

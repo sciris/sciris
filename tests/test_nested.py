@@ -2,8 +2,11 @@
 Test nested dict functions
 '''
 
+import numpy as np
+import pandas as pd
 import sciris as sc
 import pytest
+ut = sc.importbypath(sc.thispath() / 'sc_test_utils.py')
 
 
 def test_nested():
@@ -72,6 +75,35 @@ def test_search():
     sc.heading('Testing search')
     o = sc.objdict()
     
+    print('Docstring tests')
+    # Create a nested dictionary
+    nested = {'a':{'foo':1, 'bar':['moat', 'goat']}, 'b':{'car':'far', 'cat':[1,2,4,8]}}
+
+    # Find keys
+    keymatches = sc.search(nested, 'bar', aslist=False)
+    assert 'bar' in keymatches[0]
+
+    # Find values
+    val = 4
+    valmatches = sc.search(nested, value=val, aslist=True) # Returns  [['b', 'cat', 2]]
+    assert sc.getnested(nested, valmatches[0]) == val # Get from the original nested object
+
+    # Find values with a function
+    def find(v):
+        return True if isinstance(v, int) and v >= 3 else False
+        
+    func_found = sc.search(nested, value=find)
+    assert ['b', 'cat', 3] in func_found
+
+    # Find partial or regex matches
+    partial = sc.search(nested, key='oat', method='partial') # Search keys only
+    keys,vals = sc.search(nested, '^.ar', method='regex', return_values=True, verbose=True)
+
+    assert ['a', 'bar', 1] in partial
+    assert ['a', 'bar'] in keys
+    assert 'far' in vals
+    
+    
     # Define the nested object
     nested = {
         'a': {
@@ -101,7 +133,7 @@ def test_search():
     assert len(valmatches) == 1
     assert sc.getnested(nested, valmatches[0]) == val # Get from the original nested object
     
-    # Test aslist=False
+    print('Test aslist=False')
     valstrs = sc.search(nested, value=val, aslist=False)
     assert isinstance(valstrs[0], str)
     
@@ -110,7 +142,21 @@ def test_search():
 
 def test_iterobj():
     sc.heading('Testing iterobj')
-    data = dict(a=dict(x=[1,2,3], y=[4,5,6]), b=dict(foo='string', bar='other_string'))
+    
+    o = sc.prettyobj()
+    o.a = sc.prettyobj()
+    o.b = sc.prettyobj()
+    o.a.i1 = [1,2,3]
+    o.b.i2 = dict(cat=[4,5,6])
+    data = dict(
+        a=dict(
+            x=[1,2,3], 
+            y=[4,5,6]), 
+        b=dict(
+            foo='string', 
+            bar='other_string'),
+        c=o,
+    )
     
     # Search through an object
     def check_type(obj, which):
@@ -134,6 +180,62 @@ def test_iterobj():
     return out
 
 
+def test_equal():
+    sc.heading('Testing equal')
+    out = sc.objdict()
+    
+    print('Validating signatures')
+    ut.check_signatures(sc.equal, sc.Equal.__init__, extras=['self', 'compare'], die=True)
+    
+    
+    print('Testing docstring examples')
+    o1 = dict(
+        a = [1,2,3],
+        b = np.array([4,5,6]),
+        c = dict(
+            df = sc.dataframe(q=[sc.date('2022-02-02'), sc.date('2023-02-02')])
+        ),
+        d = pd.Series([1,2,np.nan]),
+    )
+    
+    # Identical object
+    o2 = sc.dcp(o1)
+    
+    # Non-identical object
+    o3 = sc.dcp(o1)
+    o3['b'][2] = 8
+    
+    # Different subtype
+    o4 = sc.dcp(o1)
+    o4['a'] = dict(a=3, b=5)
+    
+    out.e1 = sc.equal(o1, o2) # Returns True
+    out.e2 = sc.equal(o1, o3) # Returns False
+    out.e3 = sc.Equal(o1, o2, o3, detailed=True, equal_nan=True) # Create an object
+    out.e4 = sc.Equal(o1, o4, verbose=True)
+    
+    # Do tests
+    assert out.e1
+    assert not out.e2
+    assert not out.e3.eq
+    assert not out.e4.eq
+    
+    print('Testing other features')
+    for method in ['pickle', 'eq', 'json', 'str']:
+        assert sc.equal(o1, o2, method=method, equal_nan=True) or method == 'json' # Known failure for JSON
+        assert not sc.equal(o1, o2, method=method, equal_nan=False) or method in ['pickle', 'str'] # Known failure for pickle and string
+        assert not sc.equal(o1, o3, method=method)
+        
+    out.e5 = sc.Equal(o1, o3, detailed=True, verbose=True)
+    print('↑↑↑ Should print some handled exceptions')
+    
+    # Test totally different objects
+    assert not sc.equal(1, 'a')
+    assert not sc.equal(dict(a=dict(x=1,y=2), b=3), dict(a=dict(x=1,y=2)), detailed=True).all(axis=None) # Returns a dataframe
+    
+    return out
+
+
 #%% Run as a script
 if __name__ == '__main__':
     T = sc.timer()
@@ -143,5 +245,6 @@ if __name__ == '__main__':
     dicts   = test_dicts()
     search  = test_search()
     iterobj = test_iterobj()
+    equal   = test_equal()
 
     T.toc('Done.')

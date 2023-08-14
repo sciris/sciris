@@ -20,8 +20,8 @@ from . import sc_odict as sco
 ##############################################################################
 
 __all__ = ['approx', 'safedivide', 'findinds', 'findfirst', 'findlast', 'findnearest', 'count',
-           'dataindex', 'getvalidinds', 'sanitize', 'rmnans','fillnans', 'findnans', 'getvaliddata',
-           'isprime', 'numdigits']
+           'dataindex', 'getvalidinds', 'getvaliddata', 'sanitize', 'rmnans','fillnans', 
+           'findnans', 'nanequal', 'isprime', 'numdigits']
 
 
 def approx(val1=None, val2=None, eps=None, **kwargs):
@@ -145,13 +145,13 @@ def findinds(arr=None, val=None, *args, eps=1e-6, first=False, last=False, ind=N
             elif scu.checktype(val, 'arraylike'): # It's not actually a value, it's another array
                 boolarr = arr
                 arglist.append(scu.toarray(val))
-            else:
+            else: # pragma: no cover
                 errormsg = f'Cannot understand input {type(val)}: must be number or array-like'
                 raise TypeError(errormsg)
 
     # Handle any additional inputs
     for arg in arglist:
-        if arg.shape != boolarr.shape:
+        if arg.shape != boolarr.shape: # pragma: no cover
             errormsg = f'Could not handle inputs with shapes {boolarr.shape} vs {arg.shape}'
             raise ValueError(errormsg)
         boolarr *= arg
@@ -334,13 +334,13 @@ def sanitize(data=None, returninds=False, replacenans=None, defaultval=None, die
         | *New in version 3.0.0:* return zero-length arrays if all NaN
         '''
         try:
-            data = np.array(data, dtype=float) # Make sure it's an array of float type, otherwise nan operations fail
+            data = scu.toarray(data) # Make sure it's an array
             is_multidim = data.ndim > 1
             if is_multidim:
                 if not replacenans:
                     errormsg = 'For multidimensional data, NaNs cannot be removed. Set replacenans=<value>, or flatten data before use.'
                     raise ValueError(errormsg)
-            inds = np.nonzero(~np.isnan(data))
+            inds = np.nonzero(~pd.isna(data))
             if not is_multidim:
                 inds = inds[0] # Since np.nonzero() returns a tuple
                 sanitized = data[inds] # Trim data
@@ -359,7 +359,7 @@ def sanitize(data=None, returninds=False, replacenans=None, defaultval=None, die
                         errormsg = f'Interpolation method "{replacenans}" not found: must be "nearest" or "linear"'
                         raise ValueError(errormsg)
                 else:
-                    naninds = np.nonzero(np.isnan(data))
+                    naninds = np.nonzero(pd.isna(data))
                     sanitized = data.copy() # To avoid overwriting original array
                     sanitized[naninds] = replacenans
 
@@ -404,12 +404,76 @@ def findnans(data=None, **kwargs):
         data = [0, 1, 2, np.nan, 4, np.nan, 6, np.nan, np.nan, np.nan, 10]
         sc.findnans(data) # Returns array([3, 5, 7, 8, 9])
 
-    *New in version 3.0.0.*
+    | *New in version 3.0.0.*
+    | *New in version 3.1.0:* replaced ``np.isnan`` with ``pd.isna`` for robustness
     """
-    data  = np.array(data, dtype=float)
-    isnan = np.isnan(data)
+    isnan = pd.isna(data)
     inds  = findinds(arr=isnan, **kwargs)
     return inds
+
+
+_nan_fill = -528876923.87569493 # Define a random value that would never be encountered otherwise
+def nanequal(arr, *args, scalar=False, equal_nan=True):
+    '''
+    Compare two or more arrays for equality element-wise, treating NaN values as equal.
+    
+    Unnlike :func:`numpy.array_equal`, this function works even if the arrays cannot
+    be cast to float.
+    
+    Args:
+        arr (array): the array to use as the base for the comparison
+        args (list): one or more arrays to compare to
+        scalar (bool): whether to return a true/false value (else return the array)
+    
+    **Examples**::
+        
+        arr1 = np.array([1, 2, np.nan])
+        arr2 = [1, 2, np.nan]
+        sc.nanequal(arr1, arr2) # Returns array([ True,  True,  True])
+        
+        arr3 = [3, np.nan, 'foo']
+        sc.nanequal(arr3, arr3, arr3, scalar=True) # Returns True
+    
+    *New in version 3.1.0.*
+    '''
+    
+    if not len(args): # pragma: no cover
+        errormsg = 'Only one array provided; requires 2 or more'
+        raise ValueError(errormsg)
+        
+    others = [scu.toarray(arg) for arg in args] # Convert everything to an array
+    
+    # Remove Nans from base array
+    if equal_nan:
+        isnan = pd.isna(arr)
+        arr = scu.toarray(arr).copy()
+        arr[isnan] = _nan_fill # Fill in NaN values
+    
+    eqarr = None
+    
+    for other in others:
+        if other.shape != arr.shape: # Two arrays with different shapes are always false
+            if scalar:
+                return False
+            else:
+                return np.array([False])
+        else:
+            if equal_nan:
+                isnan = pd.isna(other)
+                other = other.copy()
+                other[isnan] = _nan_fill # Fill in NaN values
+            eq = (arr == other) # Do the comparison
+            if eqarr is None:
+                eqarr = eq
+            else:
+                eqarr *= eq
+    
+    if scalar:
+        return np.all(eqarr)
+    else:
+        return eqarr
+    
+
 
 
 def isprime(n, verbose=False):

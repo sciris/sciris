@@ -171,8 +171,12 @@ def test_other():
     o = sc.odict(foo=[1,2,3,4], bar=[5,6,7,8])
 
     print('Testing enumerate')
-    for i,j,k in o.enumitems():
-        print(i, j, k)
+    for i,k in o.enumkeys():
+        print(i, k)
+    for i,v in o.enumvals():
+        print(i, v)
+    for i,k,v in o.enumitems():
+        print(i, k,v)
 
     print('Testing display')
     o.disp()
@@ -271,6 +275,8 @@ def test_asobj():
     obj['b'] = 10 
     print(obj)
     fk = sc.dictobj.fromkeys(['foo', 'bar'])
+    json = obj.to_json()
+    assert 'x' in json
     assert fk.foo is None
 
     return

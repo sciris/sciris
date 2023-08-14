@@ -78,7 +78,7 @@ https://stackoverflow.com/questions/41554738/how-to-load-an-old-pickle-file
 '''
 
 
-def _load_filestr(filename, folder):
+def _load_filestr(filename, folder=None, verbose=False):
     ''' Try different options for loading a file on disk into a string -- not for external use '''
     
     # Handle loading of either filename or file object
@@ -94,7 +94,14 @@ def _load_filestr(filename, folder):
         raise TypeError(errormsg)
     fileargs = {'mode': 'rb', argtype: filename}
     
+    if verbose:
+        if argtype == 'filename':
+            print(f'Opening {filename} for reading...')
+        else: # pragma: no cover
+            print('Opening bytes for reading...')
+    
     try:
+        if verbose: print('  Reading as gzip file...')
         with gz.GzipFile(**fileargs) as fileobj:
             filestr = fileobj.read() # Convert it to a string
     except Exception as E: # pragma: no cover
@@ -103,21 +110,24 @@ def _load_filestr(filename, folder):
             raise E
         elif exc == gz.BadGzipFile:
             try: # If the gzip file failed, first try as a zstd compressed object
+                if verbose: print('  Reading as zstandard file...')
                 with open(filename, 'rb') as fh:
                     zdcompressor = zstd.ZstdDecompressor()
                     with zdcompressor.stream_reader(fh) as fileobj:
                         filestr = fileobj.read()
             except Exception as E2: # If that fails...
                 try: # Try as a regular binary object
+                    if verbose: print('  Reading as binary file...')
                     with open(filename, 'rb') as fileobj:
                         filestr = fileobj.read() # Convert it to a string
                 except Exception as E3:
                     try: # And finally as a regular object
+                        if verbose: print('  Reading as nonbinary file...')
                         with open(filename, 'r') as fileobj:
                             filestr = fileobj.read() # Convert it to a string
                     except Exception as E4:
                         gziperror = _gziperror(filename) + f'\nAdditional errors encountered:\n{str(E2)}\n{str(E3)}\n{str(E4)}'
-                        raise exc(gziperror) from E
+                        raise UnpicklingError(gziperror) from E
         else:
             exc = type(E)
             errormsg = 'sc.load(): Could not open the # pragma: no cover file string for an unknown reason; see error above for details'
@@ -125,8 +135,8 @@ def _load_filestr(filename, folder):
     return filestr
 
 
-def load(filename=None, folder=None, verbose=False, die=None, remapping=None, 
-         method='pickle', auto_remap=True, **kwargs):
+def load(filename=None, folder=None, verbose=None, die=False, remapping=None, 
+         method=None, auto_remap=True, **kwargs):
     '''
     Load a file that has been saved as a gzipped pickle file, e.g. by :func:`sc.save() <save>`.
     Accepts either a filename (standard usage) or a file object as the first argument.
@@ -145,11 +155,11 @@ def load(filename=None, folder=None, verbose=False, die=None, remapping=None,
 
     Args:
         filename   (str/Path): the filename (or full path) to load
-        folder     (str/Path): the folder
-        verbose    (bool):     print details
-        die        (bool):     whether to raise an exception if errors are encountered (otherwise, load as much as possible)
-        remapping  (dict):     way of mapping old/unavailable module names to new
-        method     (str):      method for loading (usually pickle or dill)
+        folder     (str/Path): the folder (not needed if the filename includes it)
+        verbose    (bool):     print nothing (False), critical warnings (None), or full detail (True)
+        die        (bool):     whether to raise an exception if errors are encountered (otherwise, load as much as possible via the 'robust' method)
+        remapping  (dict):     way of mapping old/unavailable module names to new (see below for example)
+        method     (str):      method for loading ('pickle', 'dill', 'pandas', or 'robust'; if None, try all)
         auto_remap (bool):     whether to use known deprecations to load failed pickles
         kwargs     (dict):     passed to ``pickle.loads()``/``dill.loads()``
 
@@ -157,29 +167,31 @@ def load(filename=None, folder=None, verbose=False, die=None, remapping=None,
 
         obj = sc.load('myfile.obj') # Standard usage
         old = sc.load('my-old-file.obj', method='dill', ignore=True) # Load classes from saved files
-        old = sc.load('my-old-file.obj', remapping={'foo.Bar':cat.Mat}) # If loading a saved object containing a reference to foo.Bar that is now cat.Mat
-        old = sc.load('my-old-file.obj', remapping={'foo.Bar':('cat', 'Mat')}) # Equivalent to the above
+        old = sc.load('my-old-file.obj', remapping={'foo.Bar': cat.Mat}) # If loading a saved object containing a reference to foo.Bar that is now cat.Mat
+        old = sc.load('my-old-file.obj', remapping={('foo', 'Bar'): ('cat', 'Mat')}, method='robust') # Equivalent to the above but force remapping and don't fail
 
     | *New in version 1.1.0:* "remapping" argument
     | *New in version 1.2.2:* ability to load non-gzipped pickles; support for dill; arguments passed to loader
+    | *New in version 3.1.0:* improved handling of pickling failures
     '''
+    if verbose: T = scd.timer() # Start timing
+        
     # Load the file
-    filestr = _load_filestr(filename, folder)
+    filestr = _load_filestr(filename, folder, verbose=verbose)
 
     # Unpickle it
     try:
-        kw = dict(filename=filename, verbose=verbose, die=die, remapping=remapping, method=method, auto_remap=auto_remap)
+        kw = dict(verbose=verbose, die=die, remapping=remapping, method=method, auto_remap=auto_remap)
         obj = _unpickler(filestr, **kw, **kwargs) # Unpickle the data
     except Exception as E: # pragma: no cover
-        exc = type(E) # Figure out what kind of error it is
         errormsg = _unpicklingerror(filename) + '\n\nSee the stack trace above for more information on this specific error.'
-        raise exc(errormsg) from E
+        raise UnpicklingError(errormsg) from E
 
     # If it loaded but with errors, print them here
     if isinstance(obj, Failed):
         print(_unpicklingerror(filename))
-    elif verbose: # pragma: no cover
-        print(f'Object loaded from "{filename}"')
+    
+    if verbose: T.toc(f'Object loaded from "{filename}"')
 
     return obj
 
@@ -299,7 +311,7 @@ def save(filename='default.obj', obj=None, folder=None, method='pickle', compres
                 obj = real_obj
             else:
                 errormsg = f'Filename type {type(filename)} is not valid: must be one of {filetypes}'
-                raise Exception(errormsg)
+                raise TypeError(errormsg)
 
         filename = makefilepath(filename=filename, folder=folder, sanitize=sanitizepath, makedirs=True)
 
@@ -315,7 +327,7 @@ def save(filename='default.obj', obj=None, folder=None, method='pickle', compres
     if compression in ['gz', 'gzip']:  # Main use case
         # File extension is .gz
         with gz.GzipFile(filename=filename, fileobj=bytestream, mode='wb', compresslevel=compresslevel) as fileobj:
-            serialize(fileobj, obj, success, **kwargs)
+            serialize(fileobj, obj, success, **kwargs) # Actually write the file to disk as gzip (99% of use cases)
     
     else:
         if tobytes: # pragma: no cover
@@ -328,11 +340,11 @@ def save(filename='default.obj', obj=None, folder=None, method='pickle', compres
             with filecontext as fh:
                 zcompressor = zstd.ZstdCompressor(level=compresslevel)
                 with zcompressor.stream_writer(fh) as fileobj:
-                    serialize(fileobj, obj, success, **kwargs)
+                    serialize(fileobj, obj, success, **kwargs) # Write the file to disk as zst
         elif compression in ['none']:
             # File extension can be anything
             with filecontext as fileobj:
-                serialize(fileobj, obj, success, **kwargs)
+                serialize(fileobj, obj, success, **kwargs) # Write as uncompressed data
         else: # pragma: no cover
             errormsg = f"Invalid compression format '{compression}': must be 'gzip', 'zstd', or 'none'"
             raise ValueError(errormsg)
@@ -442,11 +454,13 @@ def savetext(filename=None, string=None, **kwargs):
 
         text = ['Here', 'is', 'a', 'poem']
         sc.savetext('my-poem.txt', text)
+    
+    *New in version 3.1.0:* fixed bug with saving a list of strings
     '''
     is_array = scu.isarray(string)
     if isinstance(string, list):
-        string = '\n'.join(str(string)) # Convert from list to string)
-    elif not is_array and not scu.isstring(string):
+        string = '\n'.join([str(s) for s in string]) # Convert from list to string
+    elif not is_array and not scu.isstring(string): # pragma: no cover
         string = str(string)
     filename = makefilepath(filename=filename, makedirs=True)
     if is_array: # Shortcut to Numpy for saving arrays -- basic CSV
@@ -565,7 +579,7 @@ def savezip(filename=None, files=None, data=None, folder=None, sanitizepath=True
         # Handle subfolders
         extfilelist = scu.dcp(origfilelist) # An extended file list, including recursion into subfolders
         for orig in origfilelist:
-            if orig.is_dir():
+            if orig.is_dir(): # pragma: no cover
                 contents = getfilelist(orig, abspath=False, recursive=True, aspath=True)
                 extfilelist.extend(contents[1:]) # Skip the first entry since it's the folder that's already in the list
         
@@ -587,7 +601,7 @@ def savezip(filename=None, files=None, data=None, folder=None, sanitizepath=True
                 thispath = makefilepath(filename=thisfile, abspath=False, makedirs=False)
                 thisname = os.path.basename(thisfile) if basename else thisfile
                 zf.write(thispath, thisname) # Actually save
-        if not data and not files:
+        if not data and not files: # pragma: no cover
             errormsg = 'No data and no files provided: nothing to save!'
             raise FileNotFoundError(errormsg)
         
@@ -691,7 +705,7 @@ def thisdir(file=None, path=None, *args, frame=1, aspath=None, **kwargs):
     | *New in version 2.1.0:* frame argument
     '''
     if file is None: # No file: use the current folder
-        if scu.isjupyter():
+        if scu.isjupyter(): # pragma: no cover
             file = os.path.abspath(os.path.expanduser('file_placeholder')) # This is as best we can do on Jupyter
         else:
             file = thisfile(frame=frame+1) # Need +1 since want the calling script
@@ -1088,7 +1102,7 @@ def jsonify(obj, verbose=True, die=False, tostring=False, **kwargs):
 
     elif scu.isstring(obj): # It's a string of some kind
         try:    string = str(obj) # Try to convert it to ascii
-        except: string = obj # Give up and use original
+        except: string = obj # Give up and use original # pragma: no cover
         output = string
 
     elif isinstance(obj, np.ndarray): # It's an array, iterate recursively
@@ -1120,10 +1134,10 @@ def jsonify(obj, verbose=True, die=False, tostring=False, **kwargs):
         try:
             output = jsonify(obj.__dict__) # Try converting the contents to JSON
             output = scu.mergedicts({'python_class': str(type(obj))}, output)
-        except:
+        except: # pragma: no cover
             try:
                 output = jsonpickle(obj)
-            except Exception as E: # pragma: no cover
+            except Exception as E:
                 errormsg = f'Could not sanitize "{obj}" {type(obj)} ({E}), converting to string instead'
                 if die:       raise TypeError(errormsg)
                 elif verbose: print(errormsg)
@@ -1380,18 +1394,40 @@ def saveyaml(filename=None, obj=None, folder=None, die=True, keepnone=False, dum
     return output
 
 
-def jsonpickle(obj, tostring=False):
+def jsonpickle(obj, filename=None, tostring=False, **kwargs):
     '''
-    Save any Python object to a JSON file using jsonpickle.
+    Save any Python object to a JSON using jsonpickle.
+    
+    Wrapper for the jsonpickle library: https://jsonpickle.github.io/
+    
+    Note: unlike regular pickle, this is not guaranteed to exactly restore the
+    original object. For example, at the time of writing it does not support
+    pandas dataframes with mixed-dtype columns. If this sort of thing does not 
+    sound like it would be an issue for you, please proceed!
 
     Args:
         obj (any): the object to pickle as a JSON
+        filename = 
         tostring (bool): whether to return a string (rather than the JSONified Python object)
+        kwargs (dict): passed to ``jsonpickle.pickler.Pickler()``
 
     Returns:
-        Either a string or a Python object for the JSON
-
-    Wrapper for the jsonpickle library: https://jsonpickle.github.io/
+        Either a Python object for the JSON, a string, or save to file
+        
+    **Examples**::
+        
+        # Create data
+        df1  = sc.dataframe(a=[1,2,3], b=['a','b','c'])
+        
+        # Convert to JSON and read back
+        json = sc.jsonpickle(df1)
+        df2  = sc.jsonunpickle(json)
+        
+        # Save to JSON and load back
+        sc.jsonpickle(df1, 'my-data.json')
+        df3  = sc.jsonunpickle('my-data.json')
+        
+    *New in version 3.1.0:* "filename" argument        
     '''
     import jsonpickle as jp # Optional import
     import jsonpickle.ext.numpy as jsonpickle_numpy
@@ -1399,22 +1435,54 @@ def jsonpickle(obj, tostring=False):
     jsonpickle_numpy.register_handlers()
     jsonpickle_pandas.register_handlers()
 
-    if tostring:
-        output = jp.dumps(obj)
-    else:
-        pickler = jp.pickler.Pickler()
+    # Optionally convert to a JSON object
+    if not tostring:
+        pickler = jp.pickler.Pickler(**kwargs)
         output = pickler.flatten(obj)
+
+    # Optionally convert to string instead and save
+    if tostring or filename is not None:
+        output = jp.dumps(obj)
+        if filename is not None:
+            savetext(filename, output)
 
     return output
 
 
-def jsonunpickle(json):
-    ''' Use jsonpickle to restore an object (see jsonpickle()) '''
+def jsonunpickle(json=None, filename=None):
+    '''
+    Open a saved JSON pickle
+    
+    See :func:`sc.jsonpickle() <jsonpickle>` for full documentation.
+    
+    Args:
+        json (str or object): if supplied, restore the data from a string or object 
+        filename (str/path): if supplied, restore data from file
+
+    *New in version 3.1.0:* "filename" argument
+    '''
     import jsonpickle as jp
     import jsonpickle.ext.numpy as jsonpickle_numpy
     import jsonpickle.ext.pandas as jsonpickle_pandas
     jsonpickle_numpy.register_handlers()
     jsonpickle_pandas.register_handlers()
+    
+    if json is not None and filename is not None: # pragma: no cover
+        errormsg = 'You can supply json or filename, but not both'
+        raise ValueError(errormsg)
+    
+    # Check if what's been supplied isn't a valid JSON
+    if isinstance(json, str):
+        if json[0] not in ['[', '{']:
+            filename = json
+            json = None
+            
+    if filename is not None:
+        if not os.path.exists(filename): # pragma: no cover
+            errormsg = f'Filename "{filename}" not found'
+            raise FileNotFoundError(errormsg)
+        else:
+            json = loadjson(filename)
 
     if isinstance(json, str):
         output = jp.loads(json)
@@ -2017,7 +2085,7 @@ def savespreadsheet(filename=None, data=None, folder=None, sheetnames=None, clos
         workbook_formats = dict()
         for formatkey,formatval in formats.items():
             workbook_formats[formatkey] = workbook.add_format(formatval)
-    else:
+    else: # pragma: no cover
         thisformat = workbook.add_format({}) # Plain formatting
 
     # Actually write the data
@@ -2055,31 +2123,107 @@ def savespreadsheet(filename=None, data=None, folder=None, sheetnames=None, clos
 #%% Pickling support methods
 ##############################################################################
 
-__all__ += ['Failed', 'Empty']
+__all__ += ['UnpicklingWarning', 'UnpicklingError', 'Failed']
 
 
-class Failed(object):
-    ''' An empty class to represent a failed object loading '''
-    failure_info = sco.odict()
+# Pandas provides a class compatibility map, so use that by default
+try:
+    known_fixes = pd.compat.pickle_compat._class_locations_map
+except (NameError or AttributeError): # pragma: no cover
+    warnmsg = 'Could not load full pandas pickle compatibility map; using manual subset of known regressions'
+    warnings.warn(warnmsg, category=UserWarning, stacklevel=2)
+    known_fixes = {
+        ('pandas.core.indexes.numeric', 'Int64Index'): {'pandas.core.indexes.numeric.Int64Index':'pandas.core.indexes.api.Index'},
+        ('pandas.core.indexes.numeric', 'Float64Index'): {'pandas.core.indexes.numeric.Float64Index':'pandas.core.indexes.api.Index'},
+    }
+
+# Keep a temporary global variable of unpickling errors, and a permanent one of failed classes
+unpickling_errors = sco.objdict()
+
+
+class UnpicklingWarning(UserWarning):
+    '''
+    A warning raised when unpickling an object fails
+    
+    *New in version 3.1.0.*    
+    '''
+    pass
+
+
+class UnpicklingError(pkl.UnpicklingError):
+    '''
+    An error raised when unpickling an object fails
+    
+    *New in version 3.1.0.*    
+    '''
+    pass
+
+
+class Failed:
+    '''
+    An empty class to represent a failed object loading. Not for use by the user.
+    
+    *New in version 3.1.0:* combined Failed and UniversalFailed classes    
+    '''
+    _module  = None # These must be class variables since find_class returns a class, not an instance
+    _name    = None
+    _failure = None
+    _fixes   = None # Used when the top-level loads() method fails
+    _errors  = None
 
     def __init__(self, *args, **kwargs):
-        pass
+        if args: # pragma: no cover
+            self.args = args
+        if kwargs: # pragma: no cover
+            self.kwargs = kwargs
+        self.__set_empty()
+        return
+    
+    def __set_empty(self):
+        if not hasattr(self, 'state'):
+            self.state = {}
+        if not hasattr(self, 'dict'):
+            self.dict = {}
+        return
+
+    def __setstate__(self, state):
+        try:
+            self.__dict__.update(state) # NB, does not support slots
+        except Exception as E: # pragma: no cover
+            print('Unable to set state, continuing:', E)
+            self.__set_empty()
+            self.state = state
+        return
+
+    def __len__(self):
+        return len(self.dict) if hasattr(self, 'dict') else 0
+
+    def __getitem__(self, key):
+        return self.dict[key]
+
+    def __setitem__(self, key, value):
+        self.dict[key] = value
+        return
+    
+    def __call__(self, *args, **kwargs):
+        return self
+
+    def disp(self, *args, **kwargs):
+        return scp.pr(self, *args, **kwargs)
 
     def __repr__(self): # pragma: no cover
         output = scp.objrepr(self) # This does not include failure_info since it's a class attribute
-        output += self.showfailures(verbose=False, tostring=True)
+        output += self.showfailure(verbose=False, tostring=True)
         return output
 
-    def showfailures(self, verbose=True, tostring=False):
-        output = ''
-        for f,failure in self.failure_info.enumvals():
-            output += f'\nFailure {f+1} of {len(self.failure_info)}:\n'
-            output += f'Module: {failure["module"]}\n'
-            output += f'Class: {failure["class"]}\n'
-            output += f'Error: {failure["error"]}\n'
+    def showfailure(self, verbose=True, tostring=False):
+        output = f'Failed module: {self._module}\n'
+        output += f'Failed class: {self._name}\n'
+        if self._failure:
+            output += f'Error: {self._failure.error}\n'
             if verbose: # pragma: no cover
-                output += '\nTraceback:\n'
-                output += f"\n{failure['exception']}"
+                output += f'Exception: {self._failure.exception}\n'
+                output += f'{self._failure.traceback}\n'
                 output += '\n\n'
         if tostring: # pragma: no cover
             return output
@@ -2088,192 +2232,194 @@ class Failed(object):
             return
 
 
-class Empty(object): # pragma: no cover
-    ''' Another empty class to represent a failed object loading, but do not proceed with setstate '''
-
-    def __init__(self, *args, **kwargs):
-        pass
-
-    def __setstate__(self, state):
-        pass
-
-
-class UniversalFailed(Failed): # pragma: no cover
-    ''' A universal failed object class, that preserves as much data as possible '''
-
-    def __init__(self, *args, **kwargs):
-        if args:
-            self.args = args
-        if kwargs:
-            self.kwargs = kwargs
-        self.__set_empty()
-        return
-
-    def __set_empty(self):
-        if not hasattr(self, 'state'):
-            self.state = {}
-        if not hasattr(self, 'dict'):
-            self.dict = {}
-        return
-
-    def __repr__(self):
-        output = scp.objrepr(self) # This does not include failure_info since it's a class attribute
-        return output
-
-    def __setstate__(self, state):
-        try:
-            self.__dict__.update(state) # NB, does not support slots
-        except:
-            self.__set_empty()
-            self.state = state
-        return
-
-    def __len__(self):
-        return len(self.dict)
-
-    def __getitem__(self, key):
-        return self.dict[key]
-
-    def __setitem__(self, key, value):
-        self.dict[key] = value
-        return
-
-    def disp(self, *args, **kwargs):
-        return scp.pr(self, *args, **kwargs)
-
-
-def makefailed(module_name=None, name=None, error=None, exception=None, universal=False):
-    ''' Create a class -- not an object! -- that contains the failure info for a pickle that failed to load '''
-    base = UniversalFailed if universal else Failed
-    key = f'Failure {len(base.failure_info)+1}'
-    base.failure_info[key] = sco.odict()
-    base.failure_info[key]['module']    = module_name
-    base.failure_info[key]['class']     = name
-    base.failure_info[key]['error']     = error
-    base.failure_info[key]['exception'] = exception
-    return base
+def _makefailed(module_name=None, name=None, exc=None, fixes=None, errors=None):
+    '''
+    Handle unpickling failures -- for internal use only
+    
+    Create a class -- not an object! -- that contains the failure info for a pickle 
+    that failed to load. It needs to be a class rather than class instance due to
+    the way pickles are loaded via the ``find_class`` method.
+    
+    *New in version 3.1.0:* arguments simplified
+    '''
+    
+    # Process exception
+    key = (module_name, name)
+    fail = sco.objdict()
+    fail.module    = module_name
+    fail.name      = name
+    fail.error     = str(exc)
+    fail.exception = exc
+    fail.traceback = scu.traceback(exc)
+    
+    # Add the failure to the global list
+    unpickling_errors[key] = fail
+    
+    # Attributes -- this is why this needs to be dynamically created!
+    attrs = dict( 
+         _module = module_name,
+         _name = name,
+         _failure = fail
+    )
+    
+    # If the top-level loads() fails, including additional information on the errors
+    if fixes is not None or errors is not None:
+        attrs.update(dict(_unpickling_fixes=fixes, _unpickling_errors=errors))
+    
+    # Dynamically define a new class that can be used by find_class() to create an object
+    F = type(
+        "NamedFailed", # Name of the class -- can all be the same, but distinct from Failed that it has populated names
+        (Failed,), # Inheritance
+        attrs, # Attributes
+    )
+    return F # Return the newly created class (not class instance)
 
 
 def _remap_module(remapping, module_name, name):
-    ''' Use a remapping dictionary to try to load a module from a different location ''' 
-    key = f'{module_name}.{name}'
-    obj = remapping.get(key) # If the user has supplied the module directly
-    if isinstance(obj, str): # Split a string into a tuple, e.g. 'foo.bar.Cat' to ('foo.bar', 'Cat')
-        obj = tuple(obj.rsplit('.', 1))
-    if obj is None or (isinstance(obj, tuple) and len(obj)==2): # Either it's not in the remapping, or it's a tuple
-        if obj is None: # Key not in remapping, just use regular
-            load_module = module_name
-            load_name = name
-        else: # It's a tuple of names, process # pragma: no cover
-            load_module = obj[0]
-            load_name = obj[1]
-        module = importlib.import_module(load_module)
-        obj = getattr(module, load_name) # pragma: no cover
+    ''' Use a remapping dictionary to try to load a module from a different location -- for internal use ''' 
+    key1 = f'{module_name}.{name}' # Key provided as a single string
+    key2 = (module_name, name) # Key provided as a tuple
+    key3 = module_name # Just the module, no class
+    remapped = remapping.get(key1) or remapping.get(key2) or remapping.get(key3) # If the user has supplied the module directly
+    
+    # Remapping failed, just use original names
+    if remapped is None: 
+        remapped = (module_name, name)
+        
+    # Check if we have a string or tuple
+    if isinstance(remapped, str): # Split a string into a tuple, e.g. 'foo.bar.Cat' to ('foo.bar', 'Cat')
+        remapped = tuple(remapped.rsplit('.', 1)) # e.g. 'foo.bar.Cat' -> ('foo.bar',)
+    
+    # If it's a tuple, handle it as a new name
+    if isinstance(remapped, tuple):
+        len_remap = len(remapped)
+        if len_remap == 2: # Usual case, e.g. ('foo.bar', 'Cat')
+            module_name = remapped[0]
+            name        = remapped[1]
+        elif len_remap == 1: # If just a module
+            module_name = remapped[0]
+        else: # pragma: no cover
+            errormsg = f'Was expecting 1 or 2 strings, but got {len_remap} from "{remapped}"'
+            raise ValueError(errormsg)
+
+        # Actually attempt the import
+        module = importlib.import_module(module_name)
+        obj = getattr(module, name) # pragma: no cover
+    
+    # Otherwise, assume the user supplied the object/class directly
+    else:
+        obj = remapped
+        
     return obj
 
 
 class _RobustUnpickler(dill.Unpickler):
     ''' Try to import an object, and if that fails, return a Failed object rather than crashing '''
 
-    def __init__(self, bytesio, fix_imports=True, encoding="latin1", errors="ignore", remapping=None):
+    def __init__(self, bytesio, fix_imports=True, encoding="latin1", errors="ignore", 
+                 remapping=None, auto_remap=True, die=False, verbose=None):
         super().__init__(bytesio, fix_imports=fix_imports, encoding=encoding, errors=errors)
-        self.remapping = scu.mergedicts(remapping)
-        return
-
-    def find_class(self, module_name, name, verbose=True):
-        obj = _remap_module(self.remapping, module_name, name)
-        return obj
-
-
-class _UltraRobustUnpickler(dill.Unpickler): # pragma: no cover
-    ''' If all else fails, just make a default object '''
-
-    def __init__(self, bytesio, *args, fix_imports=True, encoding="latin1", errors="ignore", 
-                 remapping=None, unpicklingerrors=None):
-        super().__init__(bytesio, fix_imports=fix_imports, encoding=encoding, errors=errors)
-        self.remapping = scu.mergedicts(remapping)
-        self.unpicklingerrors = unpicklingerrors if unpicklingerrors is not None else []
+        self.remapping = scu.mergedicts(known_fixes if auto_remap else {}, remapping)
+        self.fixes     = sco.objdict() # Store any handled remappings
+        self.errors    = sco.objdict() # Store any errors encountered
+        self.verbose   = verbose
+        self.die       = die
         return
 
     def find_class(self, module_name, name):
-        ''' Ignore all attempts to use the actual class and always make a UniversalFailed class '''
+        key = (module_name, name)
         try:
-            obj = _remap_module(self.remapping, module_name, name)
-        except:
-            error = scu.strjoin(self.unpicklingerrors)
-            exception = self.unpicklingerrors
-            obj = makefailed(module_name=module_name, name=name, error=error, exception=exception, universal=True)
+            C = super().find_class(module_name, name) # "C" for "class"
+        except Exception as E1:
+            try:
+                C = _remap_module(self.remapping, module_name, name)
+                self.fixes[key] = E1 # Store the fixed remapping
+                if self.verbose:
+                    print(f'Applying known remapping: {module_name}.{name} → {C}')
+            except Exception as E2:
+                if self.verbose is not None: # pragma: no cover
+                    warnmsg = f'Unpickling error: could not import {module_name}.{name}:\n{str(E1)}\n{str(E2)}'
+                    if self.die: raise UnpicklingError(warnmsg)
+                    else:        warnings.warn(warnmsg, category=UnpicklingWarning, stacklevel=2)
+                C = _makefailed(module_name=module_name, name=name, exc=E2)
+                self.errors[key] = E2 # Store the error
+        
+        return C
+
+    def load(self, *args, **kwargs):
+        try:
+            obj = super().load(*args, **kwargs) # Actually load the object!
+        except Exception as E:
+            if self.verbose is not False:
+                warnmsg = f'Top-level unpickling error: \n{str(E)}'
+                warnings.warn(warnmsg, category=UnpicklingWarning, stacklevel=2)
+            F = _makefailed(module_name='module_unknown', name='name_unknown', exc=E, fixes=self.fixes, errors=self.errors) # Create a failed object
+            obj = F() 
         return obj
 
 
-def _unpickler(string=None, filename=None, filestring=None, die=None, verbose=False, remapping=None, method='pickle', auto_remap=True, **kwargs):
-    ''' Not invoked directly; used as a helper function for saveobj/loadobj '''
-    
+def _unpickler(string=None, die=False, verbose=None, remapping=None, method=None, auto_remap=True, **kwargs):
+    ''' Not invoked directly; used as a helper function for load() '''
+
     # Sanitize kwargs, since wrapped in try-except statements otherwise
     if kwargs: # pragma: no cover
+        errormsg = ''
         valid_kwargs = ['fix_imports', 'encoding', 'errors', 'buffers', 'ignore']
         for k in kwargs:
             if k not in valid_kwargs:
-                errormsg = f'Keyword "{k}" is not a valid keyword: {scu.strjoin(valid_kwargs)}'
-                raise ValueError(errormsg)
-
-    if die is None: die = False
-    try: # Try pickle first
-        if method == 'pickle':
-            obj = pkl.loads(string, **kwargs) # Actually load it -- main usage case
-        elif method == 'dill':
-            obj = dill.loads(string, **kwargs) # Actually load it, with dill
-        else: # pragma: no cover
-            errormsg = f'Method "{method}" not recognized, must be pickle or dill'
+                errormsg += f'Keyword "{k}" is not a valid keyword: {scu.strjoin(valid_kwargs)}\n'
+        if errormsg:
             raise ValueError(errormsg)
-    except Exception as E1:
-        if die: # pragma: no cover
-            raise E1
-        else:
-            try:
-                if verbose: print(f'Standard unpickling failed ({str(E1)}), trying encoding...')
-                obj = pkl.loads(string, encoding='latin1', **kwargs) # Try loading it again with different encoding
-            except Exception as E2:
-                try:
-                    if verbose: print(f'Encoded unpickling failed ({str(E2)}), trying dill...')
-                    import dill # Optional Sciris dependency
-                    obj = dill.loads(string, **kwargs) # If that fails, try dill
-                except Exception as E3:
-                    try:
-                        if verbose: print(f'Dill failed ({str(E3)}), trying robust unpickler with remapping...')
-                        loaded = False
-                        while not loaded:
-                            try:
-                                obj = _RobustUnpickler(io.BytesIO(string), remapping=remapping).load() # And if that fails, throw everything at it
-                                loaded = True
-                            except Exception as E3b:
-                                from . import sc_versioning as scv # Here to avoid circular import
-                                remapping = scu.mergedicts(remapping)
-                                known = scv.known_deprecations()
-                                errstr = str(E3b)
-                                if errstr in known and auto_remap: # pragma: no cover
-                                    remapping.update(known[errstr]['fix'])
-                                    warnmsg = f'Fixing known unpickling deprecation "{errstr}"'
-                                    warnings.warn(warnmsg, category=UserWarning, stacklevel=2)
-                                else:
-                                    raise E3b
-                    except Exception as E4:
-                        try:
-                            if verbose: print(f'Robust failed ({str(E4)}), trying ultrarobust unpickler...')
-                            obj = _UltraRobustUnpickler(io.BytesIO(string), unpicklingerrors=[E1, E2, E3, E4]).load() # And if that fails, really throw everything at it
-                        except Exception as E5: # pragma: no cover
-                            errormsg = f'''
-All available unpickling methods failed:
-    Standard: {E1}
-     Encoded: {E2}
-        Dill: {E3}
-      Robust: {E4}
- Ultrarobust: {E5}'''
-                            raise Exception(errormsg)
 
-    if isinstance(obj, Failed):
-        print('Warning, the following errors were encountered during unpickling:')
-        obj.showfailures(verbose=False)
+    # Define the pickling methods
+    robust_kw = dict(remapping=remapping, auto_remap=auto_remap, die=die, verbose=verbose)
+    methods = dict(
+        pickle = pkl.loads,
+        dill   = dill.loads,
+        latin  = lambda s, **kw: pkl.loads(s, encoding=kw.pop('encoding', 'latin1'), **kw),
+        pandas = lambda s, **kw: pd.read_pickle(io.BytesIO(s), **kw),
+        robust = lambda s, **kw: _RobustUnpickler(io.BytesIO(s), **robust_kw, **kw).load(),
+    )
+
+    # Methods that allow for loading an object without any failed instances (if die=True)
+    if   method is None:      unpicklers = ['pickle', 'pandas', 'latin', 'dill']
+    elif method == 'pickle':  unpicklers = ['pickle', 'pandas', 'latin']
+    elif method == 'dill':    unpicklers = ['dill']
+    else:                     unpicklers = scu.tolist(method)
+
+    # If permitted, return an object that encountered errors in the loading process and therefore may not be valid
+    # Such an object might require further fixes to be made by the user
+    if not die or remapping is not None:
+        unpicklers += ['robust']
+
+    errors = {}
+    obj = None
+
+    if verbose:
+        print(f'Loading data using these methods in sequence: {scu.strjoin(unpicklers)}')
+    for unpickler in unpicklers:
+        try:
+            if verbose: print(f'Loading file using method "{unpickler}"...')
+            obj = methods[unpickler](string, **kwargs)
+            break
+        except Exception as E:
+            errors[unpickler] = scu.traceback(E)
+            if verbose: print(f'{unpickler} failed ({E})')
+
+    if obj is None:
+        errormsg = 'All available unpickling methods failed: ' + '\n'.join([f'{k}: {v}' for k,v in errors.items()])
+        raise UnpicklingError(errormsg)
+    elif len(unpickling_errors):
+        if verbose is not False:
+            warnmsg = 'Warning, the following errors were encountered during unpickling:\n' + repr(unpickling_errors)
+            warnings.warn(warnmsg, category=UnpicklingWarning, stacklevel=2)
+        
+        # Try to store the errors in the object, but don't worry if it doesn't succeed
+        try:    setattr(obj, 'unpickling_errors', scu.dcp(unpickling_errors))
+        except: pass # pragma: no cover
+    
+    # Reset the unpickling errors
+    unpickling_errors.clear()
 
     return obj
 

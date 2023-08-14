@@ -124,7 +124,8 @@ def getdate(obj=None, astype='str', dateformat=None):
 def readdate(datestr=None, *args, dateformat=None, return_defaults=False, verbose=False):
     '''
     Convenience function for loading a date from a string. If dateformat is None,
-    this function tries a list of standard date types.
+    this function tries a list of standard date types. Note: in most cases :func:`sc.date() <date>`
+    should be used instead.
 
     By default, a numeric date is treated as a POSIX (Unix) timestamp. This can be changed
     with the ``dateformat`` argument, specifically:
@@ -249,13 +250,14 @@ def date(obj=None, *args, start_date=None, readformat=None, to='date', as_date=N
     '''
     Convert any reasonable object -- a string, integer, or datetime object, or
     list/array of any of those -- to a date object (or string, pandas, or numpy
-    date). To convert an integer to a date, you must supply a start date.
-
-    Caution: while this function and :func:`sc.readdate() <readdate>` are similar, and indeed this function
-    calls :func:`sc.readdate() <readdate>` if the input is a string, in this function an integer is treated
-    as a number of days from start_date, while for :func:`sc.readdate() <readdate>` it is treated as a
-    timestamp in seconds.
-
+    date). 
+    
+    If the object is an integer, this is interpreted as follows:
+    
+    - With readformat='posix': treat as a POSIX timestamp, in seconds from 1970
+    - With readformat='ordinal'/'matplotlib': treat as an ordinal number of days from 1970 (Matplotlib default)
+    - With start_date provided: treat as a number of days from this date
+    
     Note: in this and other date functions, arguments work either with or without
     underscores (e.g. ``start_date`` or ``startdate``)
 
@@ -264,7 +266,7 @@ def date(obj=None, *args, start_date=None, readformat=None, to='date', as_date=N
         args (str/int/date/datetime): additional objects to convert
         start_date (str/date/datetime): the starting date, if an integer is supplied
         readformat (str/list): the format to read the date in; passed to :func:`sc.readdate() <readdate>` (NB: can also use "format" instead of "readformat")
-        to (str): the output format: 'date' (default), 'str' (or 'string'), 'pandas', or 'numpy'
+        to (str): the output format: 'date' (default), 'datetime', 'str' (or 'string'), 'pandas', or 'numpy'
         as_date (bool): alternate method of choosing between  output format of 'date' (True) or 'str' (False); if None, use "to" instead
         outformat (str): the format to output the date in, if returning a string
         kwargs (dict): only used for deprecated argument aliases
@@ -282,6 +284,7 @@ def date(obj=None, *args, start_date=None, readformat=None, to='date', as_date=N
     | *New in version 1.2.2:* "readformat" argument; renamed "dateformat" to "outformat"
     | *New in version 2.0.0:* support for :obj:`np.datetime64 <numpy.datetime64>` objects
     | *New in version 3.0.0:* added "to" argument, and support for :obj:`pd.Timestamp <pandas.Timestamp>` and :obj:`np.datetime64 <numpy.datetime64>` output; allow None
+    | *New in version 3.1.0:* allow "datetime" output
     '''
 
     # Handle deprecation
@@ -295,10 +298,17 @@ def date(obj=None, *args, start_date=None, readformat=None, to='date', as_date=N
         warnings.warn(warnmsg, category=FutureWarning, stacklevel=2)
     if as_date is not None: # pragma: no cover
         to = 'date' if as_date else 'str' # Legacy support for as_date boolean
+    
+    def dateify(obj):
+        ''' Handle dates vs datetimes '''
+        if to == 'date' and hasattr(obj, 'date'):
+            return obj.date()
+        else:
+            return obj
 
     # Convert to list and handle other inputs
     if obj is None:
-        obj = dt.datetime.now().date()
+        obj = dt.datetime.now()
     if outformat is None:
         outformat = '%Y-%m-%d'
     obj, is_list, is_array = scu._sanitize_iterables(obj, *args)
@@ -309,30 +319,35 @@ def date(obj=None, *args, start_date=None, readformat=None, to='date', as_date=N
             dates.append(d)
             continue
         try:
-            if type(d) == dt.date: # Do not use isinstance, since must be the exact type
-                pass
+            if type(d) == dt.date:
+                if to == 'datetime': # Do not use isinstance, since must be the exact type
+                    d = dt.datetime(d.year, d.month, d.day)
+                else:
+                    pass
             elif isinstance(d, dt.datetime): # This includes pd.Timestamp
-                d = d.date()
+                pass
             elif scu.isstring(d):
-                d = readdate(d, dateformat=readformat).date()
+                d = readdate(d, dateformat=readformat)
             elif isinstance(d, np.datetime64):
-                d = pd.Timestamp(d).date()
+                d = pd.Timestamp(d)
             elif scu.isnumber(d):
                 if readformat is not None:
-                    d = readdate(d, dateformat=readformat).date()
+                    d = readdate(d, dateformat=readformat)
                 else:
                     if start_date is None:
                         errormsg = f'To convert the number {d} to a date, you must either specify "posix" or "ordinal" read format, or supply start_date'
                         raise ValueError(errormsg)
                     d = date(start_date) + dt.timedelta(days=int(d))
+                    if to == 'datetime':
+                        d = dt.datetime(d.year, d.month, d.day)
             else: # pragma: no cover
                 errormsg = f'Cannot interpret {type(d)} as a date, must be date, datetime, or string'
                 raise TypeError(errormsg)
             
             # Handle output
-            if to == 'date':
-                out = d
-            elif to in ['str', 'string']:
+            if to == 'date': # Convert from datetime to a date
+                out = dateify(d)
+            elif to in [str, 'str', 'string']:
                 out = d.strftime(outformat)
             elif to == 'pandas':
                 out = pd.Timestamp(d)
@@ -521,7 +536,7 @@ def datedelta(datestr=None, days=0, months=0, years=0, weeks=0, dt1=None, dt2=No
         weeks (int): as above
         dt1, dt2 (dates): if both provided, compute the difference between them
         as_date (bool): if True, return a date object; otherwise, return as input type
-        kwargs (dict): passed to :func:`sc.readdate() <readdate>`
+        kwargs (dict): passed to :func:`sc.date() <readdate>`
 
     **Examples**::
 
@@ -530,7 +545,8 @@ def datedelta(datestr=None, days=0, months=0, years=0, weeks=0, dt1=None, dt2=No
         sc.datedelta('2021-07-07', weeks=4, months=-1, as_date=True) # Add 4 weeks but subtract a month, and return a dateobj
         sc.datedelta(days=3) # Alias to du.relativedelta.relativedelta(days=3)
     
-    *New in version 3.0.0:* operate on list of dates
+    | *New in version 3.0.0:* operate on list of dates
+    | *New in version 3.1.0:* handle all date input formats
     '''
     as_date = kwargs.pop('asdate', as_date) # Handle with or without underscore
 
@@ -544,7 +560,7 @@ def datedelta(datestr=None, days=0, months=0, years=0, weeks=0, dt1=None, dt2=No
         for datestr in datelist:
             if as_date is None: # Typical case, return the same format as the input
                 as_date = False if isinstance(datestr, str) else True
-            dateobj = readdate(datestr, **kwargs)
+            dateobj = date(datestr, **kwargs)
             newdate = dateobj + delta
             newdate = date(newdate, as_date=as_date)
             newdates.append(newdate)
@@ -828,6 +844,7 @@ class timer:
     | *New in version 2.0.0:* ``plot()`` method; ``total()`` method; ``indivtimings`` and ``cumtimings`` properties
     | *New in version 2.1.0:* ``total`` as property instead of method; updated repr; added disp() method
     | *New in version 3.0.0:* ``unit`` argument; ``verbose`` argument; ``sum, min, max, mean, std`` methods; ``rawtimings`` property
+    | *New in version 3.1.0:* Timers can be combined by addition, including sum().
     '''
     def __init__(self, label=None, auto=False, start=True, unit='auto', verbose=None, **kwargs):
         from . import sc_odict as sco # Here to avoid circular import
@@ -859,15 +876,44 @@ class timer:
         return
     
     def __repr__(self):
+        ''' Display a brief representation of the object '''
         string = scp.objectid(self)
         string += 'Timings:\n'
         string += str(self.timings)
         string += f'\nTotal time: {self.total:n} s'
         return string
     
+    
     def __len__(self):
+        ''' Count the number of timings '''
         return len(self._tocs)
     
+    
+    def __iadd__(self, T2):
+        ''' Allow multiple timer objects to be combined '''
+        self._tics += T2._tics
+        self._tocs += T2._tocs
+        for k,v in T2.timings.items():
+            if k in self.timings.keys(): # Add the current position of the key if duplicates are found
+                key = f'({len(self.timings)}) ' + k
+            else:
+                key = k
+            self.timings[key] = v
+            self.count += 1
+        return self
+        
+    
+    def __add__(self, T2):
+        ''' Ditto '''
+        T1 = scu.dcp(self)
+        return T1.__iadd__(T2)
+
+
+    def __radd__(self, T2):
+        ''' For sum() '''
+        if not T2: return self # Skips the 0 in sum(..., start=0)
+        else:      return T2.__add__(self)
+        
     
     def disp(self):
         ''' Display the full representation of the object '''
