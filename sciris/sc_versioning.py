@@ -609,8 +609,8 @@ def savearchive(filename, obj, files=None, folder=None, comments=None, require=N
         pipfreeze (bool): store the output of "pip freeze" in the metadata (see :func:`sc.metadata() <metadata>`)
         method (str): the method to use saving the data; default "dill" for more robustness, but "pickle" is faster
         allow_nonzip (bool): whether to permit extensions other than .zip (note, may cause problems!)
-        dumpargs (dict): passed to :func:`sc.dumpstr() <dumpstr>`
-        kwargs (dict): passed to :func:`sc.savezip() <savezip>`
+        dumpargs (dict): passed to :func:`sc.dumpstr() <sciris.sc_fileio.dumpstr>`
+        kwargs (dict): passed to :func:`sc.savezip() <sciris.sc_fileio.savezip>`
     
     **Example**::
         

@@ -149,8 +149,8 @@ def load(filename=None, folder=None, verbose=None, die=False, remapping=None,
     **Note 2**: When a pickle file is loaded, Python imports any modules that are referenced
     in it. This is a problem if module has been renamed. In this case, you can
     use the ``remapping`` argument to point to the new modules or classes. For
-    more robustness, use the :func:`sc.savearchive() <sc_versioning.savearchive>`/:func:`sc.loadarchive() <sc_versioning.loadarchive>`
-    functions.
+    more robustness, use the :func:`sc.savearchive() <sciris.sc_versioning.savearchive>`/
+    :func:`sc.loadarchive() <sciris.sc_versioning.loadarchive>` functions.
 
 
     Args:

@@ -691,7 +691,7 @@ def commaticks(ax=None, axis='y', precision=2, cursor_precision=0):
     '''
     Use commas in formatting the y axis of a figure (e.g., 34,000 instead of 34000).
 
-    To use something other than a comma, set the default separator via e.g. :class:`sc.options(sep='.') <ScirisOptions>`.
+    To use something other than a comma, set the default separator via e.g. :class:`sc.options(sep='.') <sciris.sc_settings.ScirisOptions>`.
 
     Args:
         ax (any): axes to modify; if None, use current; else can be a single axes object, a figure, or a list of axes
