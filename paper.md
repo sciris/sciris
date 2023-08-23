@@ -27,7 +27,9 @@ authors:
     affiliation: 5
   - name: Parham Saidi
     affiliation: 5
-  - name: Maria del Mar Quiroga
+  - name:
+      given-names: Maria del Mar
+      surname: Quiroga
     orcid: 0000-0002-8943-2808
     affiliation: "3, 6"
   - name: Rowan Martin-Hughes
