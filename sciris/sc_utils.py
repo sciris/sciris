@@ -1556,19 +1556,25 @@ def runcommand(command, printinput=False, printoutput=False, wait=True, **kwargs
     Make it easier to run shell commands.
 
     Alias to :obj:`subprocess.Popen()`.
+    
+    Args:
+        command (str): the command to run
+        printinput (bool): whether to print the input string
+        printoutput (bool): whether to print the output
+        wait (bool): whether to wait for the process to return (else, return immediately with no output)
 
     **Examples**::
 
         myfiles = sc.runcommand('ls').split('\\n') # Get a list of files in the current folder
         sc.runcommand('sshpass -f %s scp myfile.txt me@myserver:myfile.txt' % 'pa55w0rd', printinput=True, printoutput=True) # Copy a file remotely
         sc.runcommand('sleep 600; mkdir foo', wait=False) # Waits 10 min, then creates the folder "foo", but the function returns immediately
-
-    Date: 2019sep04
     '''
+    defaults = dict(shell=True, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
     if printinput:
         print(command)
     try:
-        p = subprocess.Popen(command, shell=True, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, **kwargs)
+        kwargs = mergedicts(defaults, kwargs)
+        p = subprocess.Popen(command, **kwargs)
         if wait: # Whether to run in the background
             stderr = p.stdout.read().decode("utf-8") # Somewhat confusingly, send stderr to stdout
             stdout = p.communicate()[0].decode("utf-8") # ...and then stdout to the pipe
@@ -1580,9 +1586,6 @@ def runcommand(command, printinput=False, printoutput=False, wait=True, **kwargs
     if printoutput:
         print(output)
     return output
-
-
-
 
 
 def uniquename(name=None, namelist=None, style=None):
