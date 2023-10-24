@@ -1551,7 +1551,7 @@ def strsplit(string, sep=None, skipempty=True, lstrip=True, rstrip=True):
     return strlist
 
 
-def runcommand(command, printinput=False, printoutput=False, wait=True):
+def runcommand(command, printinput=False, printoutput=False, wait=True, **kwargs):
     '''
     Make it easier to run shell commands.
 
@@ -1568,7 +1568,7 @@ def runcommand(command, printinput=False, printoutput=False, wait=True):
     if printinput:
         print(command)
     try:
-        p = subprocess.Popen(command, shell=True, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
+        p = subprocess.Popen(command, shell=True, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, **kwargs)
         if wait: # Whether to run in the background
             stderr = p.stdout.read().decode("utf-8") # Somewhat confusingly, send stderr to stdout
             stdout = p.communicate()[0].decode("utf-8") # ...and then stdout to the pipe
