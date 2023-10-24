@@ -1308,13 +1308,13 @@ def timedsleep(delay=None, start=None, verbose=False):
             except: start = pytime.time()
         elapsed = pytime.time() - start
         remaining = max(1e-12, delay - elapsed - _sleep_overhead)
-        pytime.sleep(remaining)
-        try:    del _delaytime # After it's been used, we can't use it again
-        except: pass
         if remaining > 0 and verbose:
             print(f'Pausing for {remaining:n} s')
         elif verbose: # pragma: no cover
             print(f'Warning, delay less than elapsed time ({delay:n} vs. {elapsed:n})')
+        pytime.sleep(remaining)
+        try:    del _delaytime # After it's been used, we can't use it again
+        except: pass
     return
 
 
