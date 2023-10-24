@@ -362,13 +362,19 @@ def sha(obj, encoding='utf-8', digest=False):
     return output
 
 
-def traceback(exc=None, value=None, tb=None, *args, **kwargs):
+def traceback(exc=None, value=None, tb=None, verbose=False, *args, **kwargs):
     '''
     Shortcut for accessing the traceback
 
     Alias for :obj:`traceback.format_exc()`.
     
-    If no argument
+    If no argument is provided, then use the last exception encountered.
+    
+    Args:
+        exc (Exception, tuple/list, or type): the exception to get the traceback from
+        value (Exception): the actual exception
+        tb (Traceback): the traceback
+        verbose (bool): whether to print the exception
     
     **Examples**::
         
@@ -403,6 +409,8 @@ def traceback(exc=None, value=None, tb=None, *args, **kwargs):
         out = ''.join(py_traceback.format_exception(*exc_info, **kwargs))
     else:
         out = py_traceback.format_exc(*args, **kwargs)
+    if verbose: # pragma: no cover
+        print(out)
     return out
 
 
