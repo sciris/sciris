@@ -413,35 +413,22 @@ class odict(OD):
     def _slicetokeys(self, raw):
         ''' Validate a key supplied as a slice object '''
         
-        sli = dict(start=raw.start, stop=raw.stop) # start, stop, step
+        startstop = dict(start=raw.start, stop=raw.stop) # start, stop, step
         
-        for which,val in sli.items():
+        # Handle possible string values for start and stop
+        for key,val in startstop.items():
+            if isinstance(val, str):
+                startstop[key] = self.index(val)
+                if key == 'stop':
+                    startstop[key] += 1  # +1 on stop since otherwise confusing with names
         
-            if which == 'start':
-                shift = 0
-                default = 0
-            else: # For stop, don't process step
-                shift = 1
-                default = len(self)
-    
-            if isinstance(val, scu._numtype):
-                if val < 0:
-                    val = len(self) + val
-                out = val
-            elif isinstance(val, str):
-                out = self.index(val) + shift # +1 on stop since otherwise confusing with names
-            elif val is None:
-                out = default
-            else: # pragma: no cover
-                errormsg = f'To use a slice, {which} must be either int or str ({val})'
-                raise TypeError(errormsg)
-            sli[which] = out
-            
-        if sli['stop'] < sli['start']: # pragma: no cover
-            errormsg = f"Stop index must be >= start index (start={sli['start']}, stop={sli['stop']})"
-            raise ValueError(errormsg)
-        
-        keys = [self._ikey(i) for i in range(sli['start'], sli['stop'], raw.step)]
+        # Turn from a slice into keys
+        sli = slice(startstop['start'], startstop['stop'], raw.step)
+        print('hiiii', sli)
+        inds = range(*sli.indices(len(self)))
+        print('mooosh', inds)
+        keys = [self._ikey(i) for i in inds]
+        print('shank', keys)
 
         return keys
 

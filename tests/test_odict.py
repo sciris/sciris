@@ -195,7 +195,8 @@ def test_other():
     o4.pop(slice(-1))
 
     print('Testing copy')
-    o.copy('bar', 'cat')
+    o.copy()
+    o.copy(deep=True)
 
     print('Testing append')
     o.append(239)
