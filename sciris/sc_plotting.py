@@ -840,15 +840,16 @@ def getrowscols(n, nrows=None, ncols=None, ratio=1, make=False, tight=True, remo
 get_rows_cols = getrowscols  # Alias
 
 
-def figlayout(fig=None, tight=True, keep=True, **kwargs):
+def figlayout(fig=None, tight=True, keep=None, **kwargs):
     '''
-    Alias to both fig.set_tight_layout() and fig.subplots_adjust().
+    Alias to both :meth:`fig.set_layout_engine() <matplotlib.figure.Figure.set_layout_engine>`
+    and :meth:`fig.subplots_adjust() <matplotlib.figure.Figure.subplots_adjust>`.
 
     Args:
         fig (Figure): the figure (by default, use current)
-        tight (bool, or dict): passed to fig.set_tight_layout(); default True
-        keep (bool): if True, then leave tight layout on; else, turn it back off
-        kwargs (dict): passed to fig.subplots_adjust()
+        tight (bool): passed to :meth:`fig.set_layout_engine() <matplotlib.figure.Figure.set_layout_engine>`; default True
+        keep (bool): if True, then leave tight layout on; else, turn it back off to allow additional layout updates (which requires a render, so can be slow)
+        kwargs (dict): passed to :meth:`fig.subplots_adjust() <matplotlib.figure.Figure.subplots_adjust>`
 
     **Example**::
 
@@ -863,13 +864,16 @@ def figlayout(fig=None, tight=True, keep=True, **kwargs):
         tight = fig # To allow e.g. sc.figlayout(False)
     if fig is None:
         fig = pl.gcf()
+    if keep is None:
+        keep = False if len(kwargs) else True
     layout = ['none', 'tight'][tight]
     try: # Matplotlib >=3.6
         fig.set_layout_engine(layout)
     except: # Earlier versions # pragma: no cover
         fig.set_tight_layout(tight)
-    if (not keep) and (not pl.get_backend() == 'agg'): # pragma: no cover
-        pl.pause(0.01) # Force refresh if using an interactive backend
+    if not keep: # pragma: no cover
+        if not pl.get_backend() == 'agg':
+            pl.pause(0.01) # Force refresh if using an interactive backend
         try:
             fig.set_layout_engine('none')
         except: # pragma: no cover
@@ -931,7 +935,7 @@ def fonts(add=None, use=False, output='name', dryrun=False, rebuild=False, verbo
         rebuild (bool): whether to rebuild Matplotlib's font cache (slow)
         verbose (bool): print out information on errors
         die (bool): whether to raise an exception if fonts can't be added
-        kwargs (dict): passed to matplotlib.font_manager.findSystemFonts()
+        kwargs (dict): passed to :func:`matplotlib.font_manager.findSystemFonts()`
 
     **Examples**::
 
