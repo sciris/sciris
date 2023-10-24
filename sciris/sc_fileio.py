@@ -831,7 +831,7 @@ def sanitizefilename(filename, sub='_', allowspaces=False, asciify=True, strict=
         if strict:
             disallowed = '''!"#$%&\'()*+,/:;<=>?@[\\]^`{|}~\t\n\r\x0b\x0c'''
         else:
-            disallowed = '''\\/:*?!"'<>|'''
+            disallowed = '''\\/:*?!"'<>|\t\n'''
     if not allowspaces:
         disallowed += ' '
     
