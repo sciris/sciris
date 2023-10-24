@@ -554,13 +554,6 @@ class odict(OD):
         return
 
 
-    def clear(self):
-        ''' Reset to an empty odict '''
-        for key in self.keys():
-            self.remove(key)
-        return
-
-
     def index(self, value):
         ''' Return the index of a given key '''
         return self.keys().index(value)
@@ -724,11 +717,27 @@ class odict(OD):
         return
 
 
-    def copy(self, oldkey, newkey):
-        ''' Make a copy of an item '''
-        newval = scu.dcp(self.__getitem__(oldkey))
-        self.__setitem__(newkey, newval)
-        return
+    def copy(self, deep=False):
+        '''
+        Make a (shallow) copy of the dict.
+        
+        Args:
+            deep (bool): if True, do a deep rather than shallow copy
+            
+        **Examples**::
+            
+            d1 = sc.odict(a=[1,2,3], b='foo')
+            d2 = d1.copy()
+            d3 = d1.copy(deep=True)
+            
+            d1.pop('b') # affects d1 but not d2 or d3
+            d1[0].append(4) # affects d1 and d2 but not d3
+        '''
+        if not deep:
+            new = self._new(super().copy())
+        else:
+            new = scu.dcp(self)
+        return new
 
 
     def rename(self, oldkey, newkey):

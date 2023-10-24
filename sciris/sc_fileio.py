@@ -1037,12 +1037,20 @@ def rmpath(path=None, *args, die=True, verbose=True, interactive=False, **kwargs
                     print(errormsg)
 
         if interactive: # pragma: no cover
-            ans = input(f'Remove "{path}"? (y/[n]) ')
-            if ans != 'y':
+            ans = input(f'Remove "{path}"? [n]o / (y)es / (a)ll / (q)uit: ')
+            if ans == 'q': # Quit
+                print('  Exiting')
+                break
+            if ans == 'a': # All
+                print('  Removing all')
+                ans = 'y'
+                interactive = False
+                verbose = True
+            if ans != 'y': # No
                 print(f'  Skipping "{path}"')
                 continue
 
-        try:
+        try: # Yes is default
             rm_func(path)
             if verbose or interactive:
                 print(f'Removed "{path}"')
