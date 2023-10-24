@@ -2019,7 +2019,7 @@ class Link(object):
         return self.__copy__(*args, **kwargs)
 
 
-class LazyModule:
+class LazyModule(object):
     '''
     Create a "lazy" module that is loaded if and only if an attribute is called.
 

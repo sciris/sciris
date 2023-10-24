@@ -2159,7 +2159,7 @@ class UnpicklingError(pkl.UnpicklingError):
     pass
 
 
-class Failed:
+class Failed(object):
     '''
     An empty class to represent a failed object loading. Not for use by the user.
     
