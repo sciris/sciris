@@ -840,7 +840,7 @@ def getrowscols(n, nrows=None, ncols=None, ratio=1, make=False, tight=True, remo
 get_rows_cols = getrowscols  # Alias
 
 
-def figlayout(fig=None, tight=True, keep=False, **kwargs):
+def figlayout(fig=None, tight=True, keep=True, **kwargs):
     '''
     Alias to both fig.set_tight_layout() and fig.subplots_adjust().
 
@@ -855,7 +855,8 @@ def figlayout(fig=None, tight=True, keep=False, **kwargs):
         fig,axs = sc.get_rows_cols(37, make=True, tight=False) # Create 7x6 subplots, squished together
         sc.figlayout(bottom=0.3)
 
-    *New in version 1.2.0.*
+    | *New in version 1.2.0.*
+    | *New in version 3.1.1:* ``keep`` defaults to ``True`` to avoid the need to refresh
     '''
     if isinstance(fig, bool): # pragma: no cover
         fig = None
