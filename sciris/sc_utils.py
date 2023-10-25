@@ -1638,11 +1638,11 @@ def suggest(user_input, valid_inputs, n=1, threshold=None, fulloutput=False, die
 
     **Examples**::
 
-        >>> sc.suggest('foo',['Foo','Bar'])
+        >>> sc.suggest('foo', ['Foo','Bar'])
         'Foo'
-        >>> sc.suggest('foo',['FOO','Foo'])
+        >>> sc.suggest('foo', ['FOO','Foo'])
         'Foo'
-        >>> sc.suggest('foo',['Foo ','boo'])
+        >>> sc.suggest('foo', ['Foo ','boo'])
         'Foo '
     """
     try:
@@ -1651,12 +1651,18 @@ def suggest(user_input, valid_inputs, n=1, threshold=None, fulloutput=False, die
         raise ModuleNotFoundError('The "jellyfish" Python package is not available; please install via "pip install jellyfish"') from e
 
     valid_inputs = tolist(valid_inputs, objtype='string')
+    
+    # Handle version incompatibility
+    try: # jellyfish >= 1.0
+        jaro = jellyfish.jaro_similarity
+    except:
+        jaro = jellyfish.jaro_distance
 
     mapping = {
         'damerau':     jellyfish.damerau_levenshtein_distance,
         'levenshtein': jellyfish.levenshtein_distance,
-        'jaro':        jellyfish.jaro_distance,
-        }
+        'jaro':        jaro,
+    }
 
     keys = list(mapping.keys())
     if which not in keys: # pragma: no cover
