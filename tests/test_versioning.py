@@ -84,6 +84,7 @@ def test_metadata():
 def test_regressions():
     sc.heading('Test load/save with versioning')
     o = sc.objdict()
+    md = sc.metadata() # Get current metadata information, since not all tests are expected to pass for all versions
     
     print('Testing loadarchive')
     archives = sc.getfilelist(folder=filedir, pattern='archive*.zip')
@@ -92,18 +93,21 @@ def test_regressions():
         key = f'archive{i}'
         o[key] = sc.loadarchive(fn)
         data = sc.loadarchive(fn, loadmetadata=True) # To test a different conditional
-        if sc.compareversions(sc.metadata().versions.python, '<3.11'): # Due to new opcodes, old pickled methods can't be loaded
+        if sc.compareversions(md.versions.python, '<3.11'): # Due to new opcodes, old pickled methods can't be loaded
             assert o[key].sum() == 10
             assert data['obj'].sum() == 10
     
     print('Testing loadobj')
     pickles = sc.getfilelist(folder=filedir, pattern='pickle*.obj')
     for i,fn in enumerate(pickles):
-        print(f'  Testing {fn}...')
-        key = f'pickle{i}'
-        o[key] = sc.load(fn)
-        assert o[key]['nparray'].sum() == np.arange(5).sum()
-        assert o[key]['pandas'].frame.a.values[:4].sum() == np.arange(4).sum()
+        print(f'  Testing {fn} ({i})...')
+        if i==0 or sc.compareversions(md.versions.pandas, '<2.1.0'): # Pandas broke backwards compatibility here
+            key = f'pickle{i}'
+            o[key] = sc.load(fn)
+            assert o[key]['nparray'].sum() == np.arange(5).sum()
+            assert o[key]['pandas'].frame.a.values[:4].sum() == np.arange(4).sum()
+        else:
+            print(f'    Warning, skipping {fn} since known failure with pandas versions >=2.1.0')
     
     return o
 
