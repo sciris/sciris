@@ -1,0 +1,19 @@
+#!/usr/bin/env python
+"""
+Run the test suites of key downstream packages that rely on Sciris.
+"""
+
+import sciris as sc
+
+T = sc.tic()
+
+# Define the packages to test
+names = ['covasim', 'hpvsim', 'fpsim', 'atomica']
+
+# Import the packages
+p = sc.objdict()
+for name in names:
+    p[name] = sc.importbyname(name)
+
+
+T.toc()

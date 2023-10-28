@@ -1,6 +1,5 @@
 #!/bin/bash
-# Run the integration tests.
-# To use the fast but fragile test runner, use "./run_tests fast".
+# Run the test suite on old Python package versions.
 
 # Enable all conda commands
 start=`date +%s`

@@ -2,7 +2,6 @@
 Test profiling functions.
 '''
 
-import platform
 import sciris as sc
 import numpy as np
 import pytest
@@ -95,11 +94,12 @@ def test_profile():
         print(f'Unable to re-profile memory function; this is usually not cause for concern ({E})')
         
     # Run profiling test, checking versions first
-    if sc.compareversions(platform.python_version(), '<3.12'):
+    valid_python = '<3.12'
+    if sc.compareversions(sc.metadata().versions.python, valid_python):
         sc.profile(run=foo.outer, follow=[foo.outer, foo.inner])
         lp = sc.profile(slow_fn)
     else:
-        print('Warning: skipping sc.profile() test since not compatible with Python 3.12')
+        print(f'Warning: skipping sc.profile() test Python must be {valid_python}')
         lp = None
     
     return lp
