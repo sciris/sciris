@@ -284,7 +284,7 @@ def scatter3d(x=None, y=None, z=None, c='z', fig=True, ax=None, returnfig=False,
     | *New in version 3.1.0:* Allow "index" color argument; removed "plotkwargs" argument; "fig" defaults to True
     '''
     # Set default arguments
-    plotkwargs = scu.mergedicts({'s':200, 'depthshade':False, 'linewidth':0}, kwargs)
+    plotkwargs = scu.mergedicts({'s':200, 'depthshade':False, 'lw':0}, kwargs)
     axkwargs = scu.mergedicts(axkwargs)
 
     # Create figure
