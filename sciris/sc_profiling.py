@@ -545,12 +545,7 @@ def profile(run, follow=None, print_stats=True, *args, **kwargs):
     try:
         from line_profiler import LineProfiler
     except ModuleNotFoundError as E: # pragma: no cover
-        if 'win' in sys.platform:
-            errormsg = 'The "line_profiler" package is not included by default on Windows;' \
-                        'please install using "pip install line_profiler" (note: you will need a ' \
-                        'C compiler installed, e.g. Microsoft Visual Studio)'
-        else:
-            errormsg = 'The "line_profiler" Python package is required to perform profiling'
+        errormsg = 'The "line_profiler" package is not installed; try "pip install line_profiler". (Note: it is not compatible with Python 3.12)'
         raise ModuleNotFoundError(errormsg) from E
 
     if follow is None: # pragma: no cover

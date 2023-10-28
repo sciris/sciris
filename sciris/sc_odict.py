@@ -1,4 +1,4 @@
-F'''
+'''
 The "odict" class, combining features from an OrderedDict and a list/array.
 
 Highlights:
@@ -424,11 +424,8 @@ class odict(OD):
         
         # Turn from a slice into keys
         sli = slice(startstop['start'], startstop['stop'], raw.step)
-        print('hiiii', sli)
         inds = range(*sli.indices(len(self)))
-        print('mooosh', inds)
         keys = [self._ikey(i) for i in inds]
-        print('shank', keys)
 
         return keys
 

@@ -2,6 +2,7 @@
 Test profiling functions.
 '''
 
+import platform
 import sciris as sc
 import numpy as np
 import pytest
@@ -92,8 +93,14 @@ def test_profile():
         sc.mprofile(big_fn) # NB, cannot re-profile the same function at the same time
     except TypeError as E: # This happens when re-running this script
         print(f'Unable to re-profile memory function; this is usually not cause for concern ({E})')
-    sc.profile(run=foo.outer, follow=[foo.outer, foo.inner])
-    lp = sc.profile(slow_fn)
+        
+    # Run profiling test, checking versions first
+    if sc.compareversions(platform.python_version(), '<3.12'):
+        sc.profile(run=foo.outer, follow=[foo.outer, foo.inner])
+        lp = sc.profile(slow_fn)
+    else:
+        print('Warning: skipping sc.profile() test since not compatible with Python 3.12')
+        lp = None
     
     return lp
 

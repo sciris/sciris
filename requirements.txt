@@ -14,6 +14,6 @@ gitpython       # Git version information
 jellyfish       # For fuzzy string matching
 tqdm            # For flexible progress bars 
 python-dateutil # For more date utilities
-line_profiler   # For the line profiler
 memory_profiler # For the memory profiler
+line_profiler; python_version < '3.12' # CPU profiler not currently compatible with Python 3.12
 colorama; platform_system == 'Windows' # For colored text output -- only install on Windows
