@@ -59,7 +59,7 @@ def test_download():
 def test_download_save(): # Split up to take advantage of parallelization
     print('\nTesting download and saving')
     fn = 'temp.html'
-    sc.download({url1:fn})
+    sc.download({fn:url1})
     sc.rmpath(fn)
     return fn
 
