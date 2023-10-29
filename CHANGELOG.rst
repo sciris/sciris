@@ -17,7 +17,7 @@ Version 3.1.1 (2023-10-29)
 #. ``sc.load()`` has improved support for loading old pickles, including a new ``NoneObj`` class that is used when the user explicitly remaps an old class/function to ``None``.
 #. ``sc.runcommand()`` now prints out terminal output in real time if ``wait=False``.
 #. ``sc.sanitizefilename()`` now excludes newlines and tabs even when ``strict=False``.
-#. Added support for Python 3.12. Note: ``line_profiler`` is not compatible with Python 3.12 at the time of writing, so ``sc.profile()`` is not available.
+#. Added support for Python 3.12. Note: ``line_profiler`` is not compatible with Python 3.12 at the time of writing, so ``sc.profile()`` is not available on Python 3.12.
 
 
 Version 3.1.0 (2023-08-13)
