@@ -1567,40 +1567,62 @@ def strsplit(string, sep=None, skipempty=True, lstrip=True, rstrip=True):
     return strlist
 
 
-def runcommand(command, printinput=False, printoutput=False, wait=True, **kwargs):
+def runcommand(command, printinput=False, printoutput=None, wait=True, **kwargs):
     '''
     Make it easier to run shell commands.
 
-    Alias to :obj:`subprocess.Popen()`.
+    Alias to :obj:`subprocess.Popen()`. Returns captured output if wait=True, else
+    returns the subprocess.
     
     Args:
         command (str): the command to run
         printinput (bool): whether to print the input string
-        printoutput (bool): whether to print the output
-        wait (bool): whether to wait for the process to return (else, return immediately with no output)
+        printoutput (bool): whether to print the output (default: False if wait=True, True if wait=False)
+        wait (bool): whether to wait for the process to return (else, return immediately with the subprocess)
 
     **Examples**::
 
         myfiles = sc.runcommand('ls').split('\\n') # Get a list of files in the current folder
         sc.runcommand('sshpass -f %s scp myfile.txt me@myserver:myfile.txt' % 'pa55w0rd', printinput=True, printoutput=True) # Copy a file remotely
         sc.runcommand('sleep 600; mkdir foo', wait=False) # Waits 10 min, then creates the folder "foo", but the function returns immediately
+        sc.runcommand('find', wait=False) # Equivalent to executing 'find' in a terminal
+    
+    *New in version 3.1.1:* If ``wait=False``, print real-time output
     '''
-    defaults = dict(shell=True, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
+    # Handle defaults and inputs
+    if wait:
+        defaults = dict(shell=True, stdout=subprocess.PIPE, stderr=subprocess.STDOUT) # Redirect both to the pipe
+    else:
+        defaults = dict(shell=True, bufsize=0)
+    if printoutput is None:
+        printoutput = False if wait else True
+    kwargs = mergedicts(defaults, kwargs)
     if printinput:
         print(command)
+    
+    # Actually run the command
     try:
-        kwargs = mergedicts(defaults, kwargs)
         p = subprocess.Popen(command, **kwargs)
-        if wait: # Whether to run in the background
-            stderr = p.stdout.read().decode("utf-8") # Somewhat confusingly, send stderr to stdout
-            stdout = p.communicate()[0].decode("utf-8") # ...and then stdout to the pipe
-            output = stdout + '\n' + stderr if stderr else stdout # Only include the error if it was non-empty
-        else: # pragma: no cover
-            output = ''
+        if wait: # Run in foreground, blocking
+            output, _ = p.communicate() # ...and then retrieve stdout from the pipe
+            try: # Try to decode
+                output = output.decode('utf-8')
+            except Exception as E: # If something goes wrong, just leave it
+                warnmsg = f'Could not decode bytestring: {E}'
+                warnings.warn(warnmsg, category=RuntimeWarning, stacklevel=2)
+        else: # Run in background
+            if printoutput: # ...but print output as it comes if asked
+                while p.returncode is None:
+                    stdout, stderr = p.communicate()
+                    if stdout: print(stdout) # Usually None, but just in case
+                    if stderr: print(stderr)
+            output = p # Return the subprocess instead of the output
     except Exception as E: # pragma: no cover
         output = f'runcommand(): shell command failed: {str(E)}' # This is for a Python error, not a shell error -- those get passed to output
-    if printoutput:
+    
+    if printoutput and wait:
         print(output)
+    
     return output
 
 
