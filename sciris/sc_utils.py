@@ -1607,7 +1607,7 @@ def runcommand(command, printinput=False, printoutput=None, wait=True, **kwargs)
             output, _ = p.communicate() # ...and then retrieve stdout from the pipe
             try: # Try to decode
                 output = output.decode('utf-8')
-            except Exception as E: # If something goes wrong, just leave it
+            except Exception as E: # If something goes wrong, just leave it # pragma: no cover
                 warnmsg = f'Could not decode bytestring: {E}'
                 warnings.warn(warnmsg, category=RuntimeWarning, stacklevel=2)
         else: # Run in background
