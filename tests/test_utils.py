@@ -315,6 +315,7 @@ def test_misc():
 
     print('\nTesting runcommand')
     sc.runcommand('command_probably_not_found', printinput=True, printoutput=True)
+    sc.runcommand('ls', wait=False, printoutput=True)
 
     print('\nTesting gitinfo functions')
     o.gitinfo = sc.gitinfo()
