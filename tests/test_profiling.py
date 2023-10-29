@@ -92,8 +92,15 @@ def test_profile():
         sc.mprofile(big_fn) # NB, cannot re-profile the same function at the same time
     except TypeError as E: # This happens when re-running this script
         print(f'Unable to re-profile memory function; this is usually not cause for concern ({E})')
-    sc.profile(run=foo.outer, follow=[foo.outer, foo.inner])
-    lp = sc.profile(slow_fn)
+        
+    # Run profiling test, checking versions first
+    valid_python = '<3.12'
+    if sc.compareversions(sc.metadata().versions.python, valid_python):
+        sc.profile(run=foo.outer, follow=[foo.outer, foo.inner])
+        lp = sc.profile(slow_fn)
+    else:
+        print(f'Warning: skipping sc.profile() test Python must be {valid_python}')
+        lp = None
     
     return lp
 

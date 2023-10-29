@@ -169,10 +169,13 @@ def load(filename=None, folder=None, verbose=None, die=False, remapping=None,
         old = sc.load('my-old-file.obj', method='dill', ignore=True) # Load classes from saved files
         old = sc.load('my-old-file.obj', remapping={'foo.Bar': cat.Mat}) # If loading a saved object containing a reference to foo.Bar that is now cat.Mat
         old = sc.load('my-old-file.obj', remapping={('foo', 'Bar'): ('cat', 'Mat')}, method='robust') # Equivalent to the above but force remapping and don't fail
+        old = sc.load('my-old-file.obj', remapping={'foo.Bar': None}) # Skip mapping foo.Bar and don't fail
+
 
     | *New in version 1.1.0:* "remapping" argument
     | *New in version 1.2.2:* ability to load non-gzipped pickles; support for dill; arguments passed to loader
     | *New in version 3.1.0:* improved handling of pickling failures
+    | *New in version 3.1.1:* allow remapping to ``None``
     '''
     if verbose: T = scd.timer() # Start timing
         
@@ -821,7 +824,8 @@ def sanitizefilename(filename, sub='_', allowspaces=False, asciify=True, strict=
         bad = 'Nöt*a   file&name?!.doc'
         good = sc.sanitizefilename(bad)
         
-    *New version 2.0.1:* arguments "sub", "allowspaces", "asciify", "strict", and "disallowed"
+    | *New version 2.0.1:* arguments "sub", "allowspaces", "asciify", "strict", and "disallowed"
+    | *New version 3.1.1:* disallow tabs and newlines even when ``strict=False``
     '''
     
     # Handle options
@@ -831,7 +835,7 @@ def sanitizefilename(filename, sub='_', allowspaces=False, asciify=True, strict=
         if strict:
             disallowed = '''!"#$%&\'()*+,/:;<=>?@[\\]^`{|}~\t\n\r\x0b\x0c'''
         else:
-            disallowed = '''\\/:*?!"'<>|'''
+            disallowed = '''\\/:*?!"'<>|\t\n'''
     if not allowspaces:
         disallowed += ' '
     
@@ -1037,12 +1041,20 @@ def rmpath(path=None, *args, die=True, verbose=True, interactive=False, **kwargs
                     print(errormsg)
 
         if interactive: # pragma: no cover
-            ans = input(f'Remove "{path}"? (y/[n]) ')
-            if ans != 'y':
+            ans = input(f'Remove "{path}"? [n]o / (y)es / (a)ll / (q)uit: ')
+            if ans == 'q': # Quit
+                print('  Exiting')
+                break
+            if ans == 'a': # All
+                print('  Removing all')
+                ans = 'y'
+                interactive = False
+                verbose = True
+            if ans != 'y': # No
                 print(f'  Skipping "{path}"')
                 continue
 
-        try:
+        try: # Yes is default
             rm_func(path)
             if verbose or interactive:
                 print(f'Removed "{path}"')
@@ -2159,7 +2171,17 @@ class UnpicklingError(pkl.UnpicklingError):
     pass
 
 
-class Failed:
+class NoneObj(object):
+    '''
+    An empty class to represent an object the user intentionally does not want to load.
+    Not for use by the user.
+    
+    *New in version 3.1.1.*
+    '''
+    def __init__(self, *args, **kwargs): pass
+
+
+class Failed(object):
     '''
     An empty class to represent a failed object loading. Not for use by the user.
     
@@ -2277,13 +2299,22 @@ def _makefailed(module_name=None, name=None, exc=None, fixes=None, errors=None):
 
 def _remap_module(remapping, module_name, name):
     ''' Use a remapping dictionary to try to load a module from a different location -- for internal use ''' 
+    
+    # Three different options are supported: 'foo.bar.Cat', ('foo.bar', 'Cat'), or 'foo.bar'
     key1 = f'{module_name}.{name}' # Key provided as a single string
     key2 = (module_name, name) # Key provided as a tuple
     key3 = module_name # Just the module, no class
-    remapped = remapping.get(key1) or remapping.get(key2) or remapping.get(key3) # If the user has supplied the module directly
-    
-    # Remapping failed, just use original names
-    if remapped is None: 
+    notfound = 'Key not found in remapping'
+    remapped = notfound
+    for key in [key1, key2, key3]:
+        if key in remapping:
+            remapped = remapping[key]
+            break
+        
+    # Handle different remapped options
+    if remapped is None: # Replace None with NoneObj
+        remapped = NoneObj
+    elif remapped == notfound:  # Remapping failed, just use original names
         remapped = (module_name, name)
         
     # Check if we have a string or tuple
@@ -2322,20 +2353,24 @@ class _RobustUnpickler(dill.Unpickler):
         self.remapping = scu.mergedicts(known_fixes if auto_remap else {}, remapping)
         self.fixes     = sco.objdict() # Store any handled remappings
         self.errors    = sco.objdict() # Store any errors encountered
-        self.verbose   = verbose
+        self.verbose   = verbose if verbose else False
         self.die       = die
         return
 
     def find_class(self, module_name, name):
         key = (module_name, name)
+        if self.verbose:
+            print(f'Loading {key}...')
         try:
             C = super().find_class(module_name, name) # "C" for "class"
         except Exception as E1:
+            if self.verbose:
+                print(f'Failed to load {key}: {str(E1)}...')
             try:
                 C = _remap_module(self.remapping, module_name, name)
-                self.fixes[key] = E1 # Store the fixed remapping
+                self.fixes[key] = E1 # Store the error as a known fixed remapping
                 if self.verbose:
-                    print(f'Applying known remapping: {module_name}.{name} → {C}')
+                    print(f'Applied known remapping: {module_name}.{name} → {C}')
             except Exception as E2:
                 if self.verbose is not None: # pragma: no cover
                     warnmsg = f'Unpickling error: could not import {module_name}.{name}:\n{str(E1)}\n{str(E2)}'
@@ -2389,7 +2424,9 @@ def _unpickler(string=None, die=False, verbose=None, remapping=None, method=None
 
     # If permitted, return an object that encountered errors in the loading process and therefore may not be valid
     # Such an object might require further fixes to be made by the user
-    if not die or remapping is not None:
+    if remapping is not None: # If this is included, let's try it first
+        unpicklers = ['robust'] + unpicklers
+    elif not die: # Otherwise, try it last
         unpicklers += ['robust']
 
     errors = {}

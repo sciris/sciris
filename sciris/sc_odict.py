@@ -80,6 +80,7 @@ class odict(OD):
     | *New in version 1.3.1:* allow integer keys via ``makefrom()``; removed ``to_OD``; performance improvements
     | *New in version 2.0.1:* allow deletion by index
     | *New in version 3.0.0:* allow numeric indices; inherit from dict rather than OrderedDict
+    | *New in version 3.1.1:* allow steps in slices; ``copy()`` now behaves as a standard dict
     '''
 
     def __init__(self, *args, defaultdict=None, **kwargs):
@@ -157,14 +158,10 @@ class odict(OD):
                 thiskey = self._ikey(key)
                 return OD.__getitem__(self, thiskey) # Note that defaultdict behavior isn't supported for non-string lookup
 
-            elif type(key)==slice: # Handle a slice -- complicated
+            elif isinstance(key, slice): # Handle a slice -- complicated
                 try:
-                    startind = self._slicekey(key.start, 'start')
-                    stopind = self._slicekey(key.stop, 'stop')
-                    if stopind<startind: # pragma: no cover
-                        errormsg = f'Stop index must be >= start index (start={startind}, stop={stopind})'
-                        raise ValueError(errormsg)
-                    slicevals = [self.__getitem__(i) for i in range(startind,stopind)]
+                    slicekeys = self._slicetokeys(key)
+                    slicevals = [OD.__getitem__(self, k) for k in slicekeys]
                     output = self._sanitize_items(slicevals)
                     return output
                 except Exception as E: # pragma: no cover
@@ -195,25 +192,20 @@ class odict(OD):
             thiskey = self._ikey(key)
             self._setitem(thiskey, value)
 
-        elif type(key)==slice:
-            startind = self._slicekey(key.start, 'start')
-            stopind = self._slicekey(key.stop, 'stop')
-            if stopind<startind: # pragma: no cover
-                errormsg = f'Stop index must be >= start index (start={startind}, stop={stopind})'
-                raise ValueError(errormsg)
-            slicerange = range(startind,stopind)
-            enumerator = enumerate(slicerange)
-            slicelen = len(slicerange)
+        elif isinstance(key, slice):
+            slicekeys = self._slicetokeys(key)
             if hasattr(value, '__len__'):
-                if len(value)==slicelen:
-                    for valind,index in enumerator:
-                        self.__setitem__(index, value[valind])  # e.g. odict[:] = arr[:]
+                valuelen = len(value)
+                slicelen = len(slicekeys)
+                if valuelen == slicelen:
+                    for valind,k in enumerate(slicekeys):
+                        OD.__setitem__(self, k, value[valind])  # e.g. odict[:] = arr[:]
                 else: # pragma: no cover
-                    errormsg = f'Slice "{slicerange}" and values "{value}" have different lengths! ({slicelen}, {len(value)})'
+                    errormsg = f'Slice "{key}" and values "{value}" have different lengths! ({slicelen}, {len(value)})'
                     raise ValueError(errormsg)
             else:
-                for valind,index in enumerator:
-                    self.__setitem__(index, value) # e.g. odict[:] = 4
+                for k in slicekeys:
+                    OD.__setitem__(self, k, value) # e.g. odict[:] = 4
 
         elif self._is_odict_iterable(key) and hasattr(value, '__len__'): # Iterate over items
             if len(key)==len(value):
@@ -419,28 +411,24 @@ class odict(OD):
             raise IndexError(errormsg) from None # Don't show the traceback
 
 
-    def _slicekey(self, key, slice_end):
+    def _slicetokeys(self, raw):
         ''' Validate a key supplied as a slice object '''
-        if slice_end == 'stop':
-            shift = 1
-            default = len(self)
-        else:
-            shift = 0
-            default = 0
+        
+        startstop = dict(start=raw.start, stop=raw.stop) # start, stop, step
+        
+        # Handle possible string values for start and stop
+        for key,val in startstop.items():
+            if isinstance(val, str):
+                startstop[key] = self.index(val)
+                if key == 'stop':
+                    startstop[key] += 1  # +1 on stop since otherwise confusing with names
+        
+        # Turn from a slice into keys
+        sli = slice(startstop['start'], startstop['stop'], raw.step)
+        inds = range(*sli.indices(len(self)))
+        keys = [self._ikey(i) for i in inds]
 
-        if isinstance(key, scu._numtype):
-            if key < 0:
-                key = len(self) + key
-            output = key
-        elif isinstance(key, str):
-            output = self.index(key) + shift # +1 since otherwise confusing with names (CK)
-        elif key is None:
-            output = default
-        else: # pragma: no cover
-            errormsg = f'To use a slice, {slice_end} must be either int or str ({key})'
-            raise TypeError(errormsg)
-
-        return output
+        return keys
 
 
     @staticmethod
@@ -515,18 +503,12 @@ class odict(OD):
         elif isinstance(key, scu._numtype): # Convert automatically from float...dangerous?
             thiskey = self._ikey(key)
             return OD.pop(self, thiskey, *args, **kwargs)
-        elif type(key)==slice: # Handle a slice -- complicated
+        elif isinstance(key, slice): # Handle a slice -- complicated
             try:
-                startind = self._slicekey(key.start, 'start')
-                stopind = self._slicekey(key.stop, 'stop')
-                if stopind<startind: # pragma: no cover
-                    errormsg = f'Stop index must be >= start index (start={startind}, stop={stopind})'
-                    raise ValueError(errormsg)
-                slicevals = [self.pop(i, *args, **kwargs) for i in range(startind,stopind)] # WARNING, not tested
-                try:
-                    return np.array(slicevals) # Try to convert to an array
-                except: # pragma: no cover
-                    return slicevals
+                slicekeys = self._slicetokeys(key)
+                slicevals = [OD.pop(self, k, *args, **kwargs) for k in slicekeys]
+                output = self._sanitize_items(slicevals)
+                return output
             except Exception as E: # pragma: no cover
                 errormsg = 'Invalid odict slice'
                 raise ValueError(errormsg) from E
@@ -551,13 +533,6 @@ class odict(OD):
     def remove(self, key, *args, **kwargs):
         ''' Remove an item by key and do not return it '''
         self.pop(key, *args, **kwargs)
-        return
-
-
-    def clear(self):
-        ''' Reset to an empty odict '''
-        for key in self.keys():
-            self.remove(key)
         return
 
 
@@ -724,11 +699,27 @@ class odict(OD):
         return
 
 
-    def copy(self, oldkey, newkey):
-        ''' Make a copy of an item '''
-        newval = scu.dcp(self.__getitem__(oldkey))
-        self.__setitem__(newkey, newval)
-        return
+    def copy(self, deep=False):
+        '''
+        Make a (shallow) copy of the dict.
+        
+        Args:
+            deep (bool): if True, do a deep rather than shallow copy
+            
+        **Examples**::
+            
+            d1 = sc.odict(a=[1,2,3], b='foo')
+            d2 = d1.copy()
+            d3 = d1.copy(deep=True)
+            
+            d1.pop('b') # affects d1 but not d2 or d3
+            d1[0].append(4) # affects d1 and d2 but not d3
+        '''
+        if not deep:
+            new = self._new(super().copy())
+        else:
+            new = scu.dcp(self)
+        return new
 
 
     def rename(self, oldkey, newkey):

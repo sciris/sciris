@@ -1,0 +1,59 @@
+#!/usr/bin/env python
+"""
+Run the test suites of key downstream packages that rely on Sciris.
+
+Note: requires all packages to be installed locally and available in the current
+Python environment.
+"""
+
+import os
+import sciris as sc
+
+# Define the test commands
+tests = dict(
+    covasim = 'test_*.py',
+    hpvsim  = 'test_*.py', 
+    fpsim   = 'test_*.py', 
+    atomica = 'test_tox_*.py',
+)
+
+# Define the test command
+basecmd = 'pytest -n auto'
+
+T = sc.timer()
+
+# Import the packages
+p = sc.objdict()
+names = tests.keys()
+for name in names:
+    p[name] = sc.importbyname(name)
+
+# Get the test folders
+folders = sc.objdict()
+for name in names:
+    folders[name] = sc.thispath(p[name]).parent / 'tests'
+    
+# Run the tests
+results = sc.objdict()
+for name in names:
+    folder = folders[name]
+    sc.heading(f'Running tests for {name}: {folder}/{tests[name]}')
+    os.chdir(folder)
+    cmd = f'{basecmd} {tests[name]}'
+    out = sc.runcommand(cmd)
+    lines = out.splitlines()
+    for line in lines:
+        if '===' in line and ('passed' in line or 'errors' in line): # Assume that at least one tests or errors per library!
+            results[name] = line
+            break
+    print(line)
+    T.toc(name)
+
+# Wrap up
+sc.heading('Summary')
+
+for i,key,res in results.enumitems():
+    print(f'{i+1}. {key:10s}', res)
+
+print()
+T.toc('Done')

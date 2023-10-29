@@ -59,7 +59,7 @@ def test_download():
 def test_download_save(): # Split up to take advantage of parallelization
     print('\nTesting download and saving')
     fn = 'temp.html'
-    sc.download({url1:fn})
+    sc.download({fn:url1})
     sc.rmpath(fn)
     return fn
 
@@ -315,6 +315,7 @@ def test_misc():
 
     print('\nTesting runcommand')
     sc.runcommand('command_probably_not_found', printinput=True, printoutput=True)
+    sc.runcommand('ls', wait=False)
 
     print('\nTesting gitinfo functions')
     o.gitinfo = sc.gitinfo()

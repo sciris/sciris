@@ -305,9 +305,9 @@ def prepr(obj, maxlen=None, maxitems=None, skip=None, dividerchar='—', divider
     
     if any([E is not None for E in [E1, E2, E3]]):
         warnmsg = 'Exception(s) encountered displaying object:\n'
-        if E1 is not None: warnmsg += '{E1}\n'
-        if E2 is not None: warnmsg += '{E2}\n'
-        if E3 is not None: warnmsg += '{E3}\n'
+        if E1 is not None: warnmsg += f'{E1}\n'
+        if E2 is not None: warnmsg += f'{E2}\n'
+        if E3 is not None: warnmsg += f'{E3}\n'
         warnings.warn(warnmsg, category=RuntimeWarning, stacklevel=2)
 
     return output

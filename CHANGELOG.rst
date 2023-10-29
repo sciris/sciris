@@ -8,6 +8,18 @@ All major updates to Sciris are documented here.
 By import convention, components of the Sciris library are listed beginning with ``sc.``, e.g. ``sc.odict()``.
 
 
+Version 3.1.1 (2023-10-29)
+--------------------------
+#. ``sc.odict`` now supports steps in slice-based indexing, e.g.: ``myodict['foo':'bar':5]`` will select every 5th item from ``'foo'`` to ``'bar'`` inclusive.
+#. ``sc.odict.copy()`` now behaves the same as ``dict.copy()``; the previous behavior (which copied an item) is deprecated. Instead of ``mydict.copy(oldkey, newkey)``, use ``mydict[newkey] = sc.dcp(mydict[oldkey])`` instead.
+#. ``sc.download()`` now defaults to expecting ``filename:URL`` pairs rather than ``URL:filename`` pairs (e.g. ``sc.download({'wikipedia.html':'http://wikipedia.org/index.html'})``, though it can accept either as long as ``http`` appears in one.
+#. ``sc.parallelize()`` has more robust error handling (previously, certain types of exceptions, such as HTTP errors, were not caught even if ``die=False``).
+#. ``sc.load()`` has improved support for loading old pickles, including a new ``NoneObj`` class that is used when the user explicitly remaps an old class/function to ``None``.
+#. ``sc.runcommand()`` now prints out terminal output in real time if ``wait=False``.
+#. ``sc.sanitizefilename()`` now excludes newlines and tabs even when ``strict=False``.
+#. Added support for Python 3.12. Note: ``line_profiler`` is not compatible with Python 3.12 at the time of writing, so ``sc.profile()`` is not available on Python 3.12.
+
+
 Version 3.1.0 (2023-08-13)
 --------------------------
 

@@ -25,6 +25,7 @@ def test_main():
     assert(bar[1] == 4) # Show get item by index
     assert((bar[0:2] == [3,4]).all()) # Show get item by slice
     assert((bar['cough':'dill'] == [6,8]).all()) # Show alternate slice notation
+    assert((bar['ah':'dill':2] == [3,6]).all()) # Show slice with step
     assert((bar[np.array([2,1])] == [6,4]).all()) # Show get item by list
     assert((bar[:] == [3,4,6,8]).all()) # Show slice with everything
     assert((bar[2:] == [6,8]).all()) # Show slice without end
@@ -195,7 +196,8 @@ def test_other():
     o4.pop(slice(-1))
 
     print('Testing copy')
-    o.copy('bar', 'cat')
+    o.copy()
+    o.copy(deep=True)
 
     print('Testing append')
     o.append(239)

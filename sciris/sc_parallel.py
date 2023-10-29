@@ -58,7 +58,7 @@ def _progressbar(globaldict, njobs, started, **kwargs):
     return
 
 
-class Parallel:
+class Parallel(object):
     '''
     Parallelization manager
     
@@ -844,8 +844,12 @@ def _task(taskargs):
     except Exception as E: # pragma: no cover
         if taskargs.die: # Usual case, raise an exception and stop
             errormsg = f'Task {index} failed: set die=False to keep going instead; see above for error details'
-            exc = type(E)
-            raise exc(errormsg) from E
+            try: # Try to preserve the original exception type ...
+                exctype = type(E)
+                exc = exctype(errormsg)
+            except: # ... but don't worry if it fails
+                exc = Exception(errormsg)
+            raise exc from E
         else: # Alternatively, keep going and just let this trial fail
             warnmsg = f'sc.parallelize(): Task {index} failed, but die=False so continuing.\n{scu.traceback()}'
             warnings.warn(warnmsg, category=RuntimeWarning, stacklevel=2)

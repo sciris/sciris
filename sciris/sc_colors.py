@@ -557,6 +557,8 @@ def manualcolorbar(data=None, vmin=0, vmax=1, vcenter=None, colors=None, values=
         axkwargs = scu.mergedicts(axkwargs)
     if cax is None and (axarg or axkwargs):
         cax = pl.axes(arg=axarg, **axkwargs)
+    if ax is None and cax is None:
+        ax = pl.gca() # We need an axis or colorbar axis
         
     # Handle explicit colors
     if colors is not None:
