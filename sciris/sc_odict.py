@@ -80,6 +80,7 @@ class odict(OD):
     | *New in version 1.3.1:* allow integer keys via ``makefrom()``; removed ``to_OD``; performance improvements
     | *New in version 2.0.1:* allow deletion by index
     | *New in version 3.0.0:* allow numeric indices; inherit from dict rather than OrderedDict
+    | *New in version 3.1.1:* allow steps in slices; ``copy()`` now behaves as a standard dict
     '''
 
     def __init__(self, *args, defaultdict=None, **kwargs):

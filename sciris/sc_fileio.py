@@ -169,10 +169,13 @@ def load(filename=None, folder=None, verbose=None, die=False, remapping=None,
         old = sc.load('my-old-file.obj', method='dill', ignore=True) # Load classes from saved files
         old = sc.load('my-old-file.obj', remapping={'foo.Bar': cat.Mat}) # If loading a saved object containing a reference to foo.Bar that is now cat.Mat
         old = sc.load('my-old-file.obj', remapping={('foo', 'Bar'): ('cat', 'Mat')}, method='robust') # Equivalent to the above but force remapping and don't fail
+        old = sc.load('my-old-file.obj', remapping={'foo.Bar': None}) # Skip mapping foo.Bar and don't fail
+
 
     | *New in version 1.1.0:* "remapping" argument
     | *New in version 1.2.2:* ability to load non-gzipped pickles; support for dill; arguments passed to loader
     | *New in version 3.1.0:* improved handling of pickling failures
+    | *New in version 3.1.1:* allow remapping to ``None``
     '''
     if verbose: T = scd.timer() # Start timing
         
@@ -821,7 +824,8 @@ def sanitizefilename(filename, sub='_', allowspaces=False, asciify=True, strict=
         bad = 'Nöt*a   file&name?!.doc'
         good = sc.sanitizefilename(bad)
         
-    *New version 2.0.1:* arguments "sub", "allowspaces", "asciify", "strict", and "disallowed"
+    | *New version 2.0.1:* arguments "sub", "allowspaces", "asciify", "strict", and "disallowed"
+    | *New version 3.1.1:* disallow tabs and newlines even when ``strict=False``
     '''
     
     # Handle options

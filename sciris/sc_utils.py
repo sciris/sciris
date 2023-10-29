@@ -1587,7 +1587,7 @@ def runcommand(command, printinput=False, printoutput=None, wait=True, **kwargs)
         sc.runcommand('sleep 600; mkdir foo', wait=False) # Waits 10 min, then creates the folder "foo", but the function returns immediately
         sc.runcommand('find', wait=False) # Equivalent to executing 'find' in a terminal
     
-    *New in version 3.1.1:* If ``wait=False``, print real-time output
+    *New in version 3.1.1:* print real-time output if ``wait=False``
     '''
     # Handle defaults and inputs
     if wait:
