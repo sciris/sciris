@@ -10,6 +10,7 @@ multiprocess    # More flexible version of multiprocessing
 jsonpickle      # For converting arbitrary objects to JSON
 pyyaml          # For loading/saving YAML
 packaging       # For parsing versions
+setuptools      # For versioning information not provided by importlib
 gitpython       # Git version information
 jellyfish       # For fuzzy string matching
 tqdm            # For flexible progress bars 

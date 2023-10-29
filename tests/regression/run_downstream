@@ -43,7 +43,7 @@ for name in names:
     out = sc.runcommand(cmd)
     lines = out.splitlines()
     for line in lines:
-        if '===' in line and 'passed' in line:
+        if '===' in line and ('passed' in line or 'errors' in line): # Assume that at least one tests or errors per library!
             results[name] = line
             break
     print(line)
