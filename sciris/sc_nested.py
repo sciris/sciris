@@ -312,7 +312,7 @@ class IterObj(object):
                 self._output['root'] = self.func(self.obj, *args, **kwargs)
                 
         # Check what type of object we have
-        self.itertype = check_iter_type(self.obj, known=self.atomic, custom=self.custom_type)
+        self.itertype = self.check_iter_type(self.obj)
         
         return
     
@@ -362,6 +362,10 @@ class IterObj(object):
             self.custom_set(self.obj, key, value)
         return
     
+    def check_iter_type(self, obj):
+        ''' Shortcut to check_iter_type() '''
+        return check_iter_type(obj, known=self.atomic, custom=self.custom_type)
+    
     def iterate(self):
         ''' Actually perform the iteration over the object '''
         
@@ -369,7 +373,7 @@ class IterObj(object):
         for key,subobj in self.iteritems():
             trace = self._trace + [key]
             newobj = subobj
-            subitertype = check_iter_type(subobj)
+            subitertype = self.check_iter_type(subobj)
             self.indent(f'Working on {trace}, leaf={self.leaf}, type={str(subitertype)}')
             if not (self.leaf and subitertype):
                 newobj = self.func(subobj, *self.func_args, **self.func_kw)
