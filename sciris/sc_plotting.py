@@ -93,16 +93,27 @@ def ax3d(nrows=None, ncols=None, index=None, fig=None, ax=None, returnfig=False,
         pass # This is fine, just a different format
 
     # Handle the figure
-    if fig in [True, False] or (fig is None and figkwargs): # Confusingly, any of these things indicate that we want a new figure
-        fig = pl.figure(**figkwargs)
-    elif fig is None: # pragma: no cover
-        if ax is None:
-            if not pl.get_fignums():
-                fig = pl.figure(**figkwargs)
-            else:
-                fig = pl.gcf()
+    if not isinstance(fig, pl.Figure):
+        if (fig in [True, False] or (fig is None and figkwargs)) and not ax: # Confusingly, any of these things indicate that we want a new figure
+            fig = pl.figure(**figkwargs)
         else:
-            fig = ax.figure
+            if ax is None:
+                if not pl.get_fignums():
+                    fig = pl.figure(**figkwargs)
+                else:
+                    fig = pl.gcf()
+            else:
+                fig = ax.figure
+
+    # Handle the figure
+    if isinstance(fig, pl.Figure):
+        pass
+    elif ax is not None:
+        fig = ax.figure
+    elif fig == False:
+        fig = pl.gcf()
+    else:
+        fig = pl.figure(**figkwargs)
 
     # Create and initialize the axis
     if ax is None:
