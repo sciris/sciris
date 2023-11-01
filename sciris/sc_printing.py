@@ -1,4 +1,4 @@
-'''
+"""
 Printing/notification functions.
 
 Highlights:
@@ -8,7 +8,7 @@ Highlights:
     - :func:`sc.sigfig() <sigfig>`: truncate a number to a certain number of significant figures
     - :func:`sc.progressbar() <progressbar>`: show a (text-based) progress bar
     - :func:`sc.capture() <capture>`: capture text output (e.g., stdout) as a variable
-'''
+"""
 
 import io
 import os
@@ -46,7 +46,7 @@ __all__ = ['createcollist', 'objectid', 'classatt', 'objatt', 'objmeth', 'objpro
 
 
 def createcollist(items, title=None, strlen=18, ncol=3):
-    ''' Creates a string for a nice columnated list (e.g. to use in __repr__ method) '''
+    """ Creates a string for a nice columnated list (e.g. to use in __repr__ method) """
     if len(items):
         nrow = int(np.ceil(float(len(items))/ncol))
         newkeys = []
@@ -67,11 +67,11 @@ def createcollist(items, title=None, strlen=18, ncol=3):
 
 
 def objectid(obj, showclasses=False):
-    '''
+    """
     Return the object ID as per the default Python ``__repr__`` method
     
     *New in version 3.1.0:* "showclasses" argument
-    '''
+    """
     c = obj.__class__
     output = f'<{c.__module__}.{c.__name__} at {hex(id(obj))}>\n'
     if showclasses:
@@ -80,7 +80,7 @@ def objectid(obj, showclasses=False):
 
 
 def _get_obj_keys(obj, private=False, sort=True, use_dir=False):
-    ''' Helper method to get the keys of an object '''
+    """ Helper method to get the keys of an object """
     if use_dir:
         keys = obj.__dir__() # This is the unsorted version of dir()
     else:
@@ -95,24 +95,24 @@ def _get_obj_keys(obj, private=False, sort=True, use_dir=False):
 
 
 def _is_meth(obj, attr):
-    ''' Helper function to check if an attribute is a method; do not distinguish between bound and unbound '''
+    """ Helper function to check if an attribute is a method; do not distinguish between bound and unbound """
     return callable(getattr(obj, attr))
 
 
 def _is_prop(obj, attr):
-    ''' Helper function to check if an attribute is a property '''
+    """ Helper function to check if an attribute is a property """
     return isinstance(getattr(type(obj), attr, None), property)
 
 
 def objatt(obj, strlen=18, ncol=3, private=False, sort=True, _keys=None):
-    ''' Return a sorted string of object attributes for the Python __repr__ method; see :func:`sc.prepr() <prepr>` for options '''
+    """ Return a sorted string of object attributes for the Python __repr__ method; see :func:`sc.prepr() <prepr>` for options """
     keys = _get_obj_keys(obj, private=private, sort=sort) if _keys is None else _keys
     output = createcollist(keys, 'Attributes', strlen=strlen, ncol=ncol)
     return output
 
 
 def classatt(obj, strlen=18, ncol=3, private=False, sort=True, _objkeys=None, _dirkeys=None, return_keys=False):
-    ''' Return a sorted string of class attributes for the Python __repr__ method; see :func:`sc.prepr() <prepr>` for options '''
+    """ Return a sorted string of class attributes for the Python __repr__ method; see :func:`sc.prepr() <prepr>` for options """
     objkeys = _get_obj_keys(obj, private=private, sort=sort, use_dir=False) if _objkeys is None else _objkeys
     dirkeys = _get_obj_keys(obj, private=private, sort=sort, use_dir=True)  if _dirkeys is None else _dirkeys
     keys = set(dirkeys) - set(objkeys) # Find attributes in dir() that are not in __dict__
@@ -126,7 +126,7 @@ def classatt(obj, strlen=18, ncol=3, private=False, sort=True, _objkeys=None, _d
 
 
 def objmeth(obj, strlen=18, ncol=3, private=False, sort=True, _keys=None):
-    ''' Return a sorted string of object methods for the Python __repr__ method; see :func:`sc.prepr() <prepr>` for options '''
+    """ Return a sorted string of object methods for the Python __repr__ method; see :func:`sc.prepr() <prepr>` for options """
     try: # In very rare cases this fails, so put it in a try-except loop
         _keys = _get_obj_keys(obj, private=private, sort=sort, use_dir=True) if _keys is None else _keys
         keys = sorted([meth + '()' for meth in _keys if _is_meth(obj, meth)])
@@ -137,7 +137,7 @@ def objmeth(obj, strlen=18, ncol=3, private=False, sort=True, _keys=None):
 
 
 def objprop(obj, strlen=18, ncol=3, private=False, sort=True, _keys=None):
-    ''' Return a sorted string of object properties for the Python __repr__ method; see :func:`sc.prepr() <prepr>` for options '''
+    """ Return a sorted string of object properties for the Python __repr__ method; see :func:`sc.prepr() <prepr>` for options """
     try: # In very rare cases this fails, so put it in a try-except loop
         _keys = _get_obj_keys(obj, private=private, sort=sort, use_dir=True) if _keys is None else _keys
         keys = [prop for prop in _keys if _is_prop(obj, prop)]
@@ -150,7 +150,7 @@ def objprop(obj, strlen=18, ncol=3, private=False, sort=True, _keys=None):
 def objrepr(obj, showid=True, showmeth=True, showprop=True, showatt=True, showclassatt=True, 
             private=False, sort=True, dividerchar='—', dividerlen=60, strlen=18, ncol=3, 
             _objkeys=None, _dirkeys=None):
-    ''' Return useful printout for the Python __repr__ method; see :func:`sc.prepr() <prepr>` for options '''
+    """ Return useful printout for the Python __repr__ method; see :func:`sc.prepr() <prepr>` for options """
     
     # Call the object twice to get the keys
     objkeys = _get_obj_keys(obj, private=private, sort=sort, use_dir=False) if _objkeys is None else _objkeys
@@ -160,7 +160,7 @@ def objrepr(obj, showid=True, showmeth=True, showprop=True, showatt=True, showcl
     output = ''
     
     def assemble(show, string):
-        ''' Helper function to construct the string '''
+        """ Helper function to construct the string """
         return string + divider if (show and string) else ''
     
     # Assemble the output string
@@ -175,7 +175,7 @@ def objrepr(obj, showid=True, showmeth=True, showprop=True, showatt=True, showcl
 
 def prepr(obj, maxlen=None, maxitems=None, skip=None, dividerchar='—', dividerlen=60, 
           use_repr=True, private=False, sort=True, strlen=18, ncol=3, maxtime=3, die=False, debug=False):
-    '''
+    """
     Akin to "pretty print", returns a pretty representation of an object --
     all attributes (except any that are skipped), plus methods and ID. Usually
     used via the interactive :func:`sc.pr() <pr>` (which prints), rather than this (which returns
@@ -195,7 +195,7 @@ def prepr(obj, maxlen=None, maxitems=None, skip=None, dividerchar='—', divider
         debug (bool): print out detail during string construction
     
     *New in version 3.0.0:* "debug" argument
-    '''
+    """
 
     # Decide how to handle representation function -- repr is dangerous since can lead to recursion
     repr_fn = repr if use_repr else str
@@ -314,7 +314,7 @@ def prepr(obj, maxlen=None, maxitems=None, skip=None, dividerchar='—', divider
 
 
 def pr(obj, *args, **kwargs):
-    '''
+    """
     Pretty-print the detailed representation of an object.
 
     See :func:`sc.prepr() <prepr>` for options.
@@ -325,7 +325,7 @@ def pr(obj, *args, **kwargs):
         df = pd.DataFrame({'a':[1,2,3], 'b':[4,5,6]})
         print(df) # See just the data
         sc.pr(df) # See all the methods too
-    '''
+    """
     print(prepr(obj, *args, **kwargs))
     return
 
@@ -336,12 +336,12 @@ __all__ += ['blank', 'indent']
 
 
 def blank(n=3):
-    ''' Tiny function to print n blank lines, 3 by default '''
+    """ Tiny function to print n blank lines, 3 by default """
     print('\n'*n)
 
 
 def indent(prefix=None, text=None, suffix='\n', n=0, pretty=False, width=70, **kwargs):
-    '''
+    """
     Small wrapper to make textwrap more user friendly.
 
     Args:
@@ -362,7 +362,7 @@ def indent(prefix=None, text=None, suffix='\n', n=0, pretty=False, width=70, **k
         print('my fave is: ' + sc.indent(text=rand(100), n=12))
 
     *New in version 1.3.1:* more flexibility in arguments
-    '''
+    """
     # If "prefix" is given but text isn't, swap them
     if text is None and prefix is not None: # pragma: no cover
         text, prefix = prefix, text
@@ -401,7 +401,7 @@ __all__ += ['sigfig', 'sigfigs', 'arraymean', 'arraymedian', 'printmean', 'print
 
 
 def sigfig(x, sigfigs=4, SI=False, sep=False, keepints=False):
-    '''
+    """
     Return a string representation of variable x with sigfigs number of significant figures
 
     Note: :func:`sc.sigfig() <sigfig>` and :func:`sc.sigfigs() <sigfigs>` are aliases.
@@ -423,7 +423,7 @@ def sigfig(x, sigfigs=4, SI=False, sep=False, keepints=False):
         sc.sigfig(vals, sigfigs=3)
     
     *New in version 3.0.0:* changed default number of significant figures from 5 to 4; return list rather than tuple; changed SI suffixes to uppercase
-    '''
+    """
     output = []
 
     islist = scu.isiterable(x)
@@ -477,7 +477,7 @@ sigfigs = sigfig
 
 
 def arraymean(data, stds=2, mean_sf=None, err_sf=None, doprint=False, **kwargs):
-    '''
+    """
     Quickly calculate the mean and standard deviation of an array.
     
     By default, will calculate the correct number of significant figures based on
@@ -497,7 +497,7 @@ def arraymean(data, stds=2, mean_sf=None, err_sf=None, doprint=False, **kwargs):
         sc.printmean(data) # Returns 1430 ± 320
     
     *New in version 3.0.0.*
-    '''
+    """
     vsf = mean_sf # vsf = "value significant figures"
     esf = err_sf if err_sf is not None else 2
     data = scu.toarray(data)
@@ -521,7 +521,7 @@ def arraymean(data, stds=2, mean_sf=None, err_sf=None, doprint=False, **kwargs):
 
 
 def arraymedian(data, ci=95, sf=3, doprint=False, **kwargs):
-    '''
+    """
     Quickly calculate the median and confidence interval of an array.
     
     The confidence interval defaults to 95%. If an integer is supplied, this is
@@ -544,7 +544,7 @@ def arraymedian(data, ci=95, sf=3, doprint=False, **kwargs):
         sc.printmedian(data, 80) # Returns '1230 (80.0% CI: 1130, 1830)'
     
     *New in version 3.0.0.*
-    '''
+    """
     # Handle quantiles
     if ci is None: # pragma: no cover
         ci = 95
@@ -597,17 +597,17 @@ def arraymedian(data, ci=95, sf=3, doprint=False, **kwargs):
 
 
 def printmean(*args, doprint=True, **kwargs):
-    ''' Alias to :func:`sc.arraymean() <arraymean>` with doprint=True '''
+    """ Alias to :func:`sc.arraymean() <arraymean>` with doprint=True """
     return arraymean(*args, doprint=doprint, **kwargs)
 
 
 def printmedian(*args, doprint=True, **kwargs):
-    ''' Alias to :func:`sc.arraymedian() <arraymedian>` with doprint=True '''
+    """ Alias to :func:`sc.arraymedian() <arraymedian>` with doprint=True """
     return arraymedian(*args, doprint=doprint, **kwargs)
 
 
 def humanize_bytes(bytesize, decimals=3):
-    '''
+    """
     Convert a number of bytes into a human-readable total.
     
     Args:
@@ -621,7 +621,7 @@ def humanize_bytes(bytesize, decimals=3):
     See the humansize library for more flexibility.
     
     *New in version 3.0.0.*
-    '''
+    """
     # Convert to string
     factor = 1
     label = 'B'
@@ -639,7 +639,7 @@ def humanize_bytes(bytesize, decimals=3):
 
 
 def printarr(arr, fmt=None, colsep='  ', vsep='—', decimals=2, doprint=True, dtype=None):
-    '''
+    """
     Print a numpy array nicely.
     
     Args:
@@ -659,7 +659,7 @@ def printarr(arr, fmt=None, colsep='  ', vsep='—', decimals=2, doprint=True, d
 
     *New in version 2.0.3:* "fmt", "colsep", "vsep", "decimals", and "dtype" arguments
     *New in version 3.0.0:* "doprint" argument
-    '''
+    """
     from . import sc_math as scm # To avoid circular import
     
     string = ''
@@ -702,7 +702,7 @@ def printarr(arr, fmt=None, colsep='  ', vsep='—', decimals=2, doprint=True, d
 
 
 def printdata(data, name='Variable', depth=1, maxlen=40, indent='', level=0, showcontents=False): # pragma: no cover
-    '''
+    """
     Nicely print a complicated data structure, a la Matlab.
 
     Note: this function is deprecated.
@@ -715,7 +715,7 @@ def printdata(data, name='Variable', depth=1, maxlen=40, indent='', level=0, sho
       indent: where to start the indent (used internally)
 
     Version: 2015aug21
-    '''
+    """
     datatype = type(data)
     def printentry(data):
         if   datatype==dict:              string = (f'dict with {len(data.keys())} keys')
@@ -757,7 +757,7 @@ def printdata(data, name='Variable', depth=1, maxlen=40, indent='', level=0, sho
 
 
 def printvars(localvars=None, varlist=None, label=None, divider=True, spaces=1, color=None):
-    '''
+    """
     Print out a list of variables. Note that the first argument must be locals().
 
     Args:
@@ -779,7 +779,7 @@ def printvars(localvars=None, varlist=None, label=None, divider=True, spaces=1, 
     >>> sc.printvars(locals(), kwargs.keys())
 
     Version: 2017oct28
-    '''
+    """
 
     varlist = scu.tolist(varlist) # Make sure it's actually a list
     dividerstr = '-'*40
@@ -806,7 +806,7 @@ __all__ += ['colorize', 'heading', 'printred', 'printyellow', 'printgreen',
 
 
 def colorize(color=None, string=None, doprint=None, output=False, enable=True, showhelp=False, fg=None, bg=None, style=None):
-    '''
+    """
     Colorize output text.
 
     Args:
@@ -832,7 +832,7 @@ def colorize(color=None, string=None, doprint=None, output=False, enable=True, s
     To get available colors, type :func:`sc.colorize(showhelp=True) <colorize>`.
 
     | *New in version 1.3.1:* "doprint" argument; ansicolors shortcut
-    '''
+    """
 
     # Handle short-circuit case
     if not enable: # pragma: no cover
@@ -916,33 +916,33 @@ def colorize(color=None, string=None, doprint=None, output=False, enable=True, s
 
 # Alias certain colors functions -- not including white and black since poor practice on light/dark terminals
 def printred(s, **kwargs):
-    ''' Alias to print(colors.red(s)) '''
+    """ Alias to print(colors.red(s)) """
     return print(ac.red(s, **kwargs))
 
 def printgreen(s, **kwargs):
-    ''' Alias to print(colors.green(s)) '''
+    """ Alias to print(colors.green(s)) """
     return print(ac.green(s, **kwargs))
 
 def printblue(s, **kwargs):
-    ''' Alias to print(colors.blue(s)) '''
+    """ Alias to print(colors.blue(s)) """
     return print(ac.blue(s, **kwargs))
 
 def printcyan(s, **kwargs):
-    ''' Alias to print(colors.cyan(s)) '''
+    """ Alias to print(colors.cyan(s)) """
     return print(ac.cyan(s, **kwargs))
 
 def printyellow(s, **kwargs):
-    ''' Alias to print(colors.yellow(s)) '''
+    """ Alias to print(colors.yellow(s)) """
     return print(ac.yellow(s, **kwargs))
 
 def printmagenta(s, **kwargs):
-    ''' Alias to print(colors.magenta(s)) '''
+    """ Alias to print(colors.magenta(s)) """
     return print(ac.magenta(s, **kwargs))
 
 
 def heading(string='', *args, color='cyan', divider='—', spaces=2, spacesafter=1, 
             minlength=10, maxlength=200, sep=' ', doprint=None, output=False, **kwargs):
-    '''
+    """
     Create a colorful heading. If just supplied with a string (or list of inputs like print()),
     create blue text with horizontal lines above and below and 3 spaces above. You
     can customize the color, the divider character, how many spaces appear before
@@ -971,7 +971,7 @@ def heading(string='', *args, color='cyan', divider='—', spaces=2, spacesafter
         sc.heading(string='This is also a heading', color='red', divider='*', spaces=0, minlength=50)
 
     | *New in version 1.3.1.*: "spacesafter"
-    '''
+    """
 
     # Convert to single string
     args = scu.mergelists(string, list(args))
@@ -998,7 +998,7 @@ __all__ += ['printv', 'slacknotification', 'printtologfile', 'percentcomplete',
 
 
 def printv(string, thisverbose=1, verbose=2, indent=2, **kwargs):
-    '''
+    """
     Optionally print a message and automatically indent. The idea is that
     a global or shared "verbose" variable is defined, which is passed to
     subfunctions, determining how much detail to print out.
@@ -1027,7 +1027,7 @@ def printv(string, thisverbose=1, verbose=2, indent=2, **kwargs):
         kwargs (dict): passed to :func:`print()`
         
     *New in version 3.0.0:* "kwargs" argument; removed "newline" argument
-    '''
+    """
     if verbose >= thisverbose: # Only print if sufficiently verbose
         indents = ' '*thisverbose*indent # Create automatic indenting
         print(indents+scu.flexstr(string), **kwargs) # Actually print
@@ -1035,7 +1035,7 @@ def printv(string, thisverbose=1, verbose=2, indent=2, **kwargs):
 
 
 def slacknotification(message=None, webhook=None, to=None, fromuser=None, verbose=2, die=False):  # pragma: no cover
-    '''
+    """
     Send a Slack notification when something is finished.
 
     The webhook is either a string containing the webhook itself, or a plain text file containing
@@ -1062,7 +1062,7 @@ def slacknotification(message=None, webhook=None, to=None, fromuser=None, verbos
     your loved ones that the script has finished.
 
     Version: 2018sep25
-    '''
+    """
     try:
         from requests import post # Simple way of posting data to a URL
         from json import dumps # For sanitizing the message
@@ -1107,12 +1107,12 @@ def slacknotification(message=None, webhook=None, to=None, fromuser=None, verbos
 
 
 def printtologfile(message=None, filename=None):
-    '''
+    """
     Append a message string to a file specified by a filename name/path.
 
     Note: in almost all cases, you are better off using Python's built-in logging
     system rather than this function.
-    '''
+    """
 
     # Set defaults
     if message is None: # pragma: no cover
@@ -1133,7 +1133,7 @@ def printtologfile(message=None, filename=None):
 
 
 def percentcomplete(step=None, maxsteps=None, stepsize=1, prefix=None):
-    '''
+    """
     Display progress as a percentage.
 
     **Examples**::
@@ -1153,7 +1153,7 @@ def percentcomplete(step=None, maxsteps=None, stepsize=1, prefix=None):
             sc.percentcomplete(i, maxiters, prefix='Completeness: ') 
     
     See also :func:`sc.progressbar() <progressbar>` for a progress bar.
-    '''
+    """
     if prefix is None:
         prefix = ' '
     elif scu.isnumber(prefix): # pragma: no cover
@@ -1167,7 +1167,7 @@ def percentcomplete(step=None, maxsteps=None, stepsize=1, prefix=None):
 
 def progressbar(i=None, maxiters=None, label='', every=1, length=30, empty='—', full='•', 
                 newline=False, flush=False, **kwargs):
-    '''
+    """
     Show a progress bar for a for loop.
     
     It can be called manually inside each iteration of the loop, or it can be used 
@@ -1207,7 +1207,7 @@ def progressbar(i=None, maxiters=None, label='', every=1, length=30, empty='—'
 
     | *New in version 1.3.3:* "every" argument
     | *New in version 3.0.0:* wrapper for tqdm
-    '''
+    """
     if i is None or scu.isiterable(i):
         desc = kwargs.pop('desc', label)
         return tqdm.tqdm(i, desc=desc, **kwargs)
@@ -1243,7 +1243,7 @@ def progressbar(i=None, maxiters=None, label='', every=1, length=30, empty='—'
 
 
 class tqdm_pickle(tqdm.tqdm):
-    '''
+    """
     Simple subclass of tqdm that allows pickling
     
     Usually not used directly by the user; used via :func:`sc.progressbars() <progressbars>` instead.
@@ -1252,15 +1252,15 @@ class tqdm_pickle(tqdm.tqdm):
     Based on ``tqdm`` 4.65.0; may become deprecated in future ``tqdm`` releases.
     
     *New in version 3.0.0.*
-    '''
+    """
     
     def __getstate__(self):
-        ''' Overwrite default __getstate__ '''
+        """ Overwrite default __getstate__ """
         d = {k:v for k,v in self.__dict__.items() if k not in ['sp', 'fp']}
         return d
      
     def __setstate__(self, d): # pragma: no cover
-        ''' Overwrite default __getstate__ '''
+        """ Overwrite default __getstate__ """
         self.__dict__ = d
         self.__dict__['fp'] = tqdm.utils.DisableOnWriteError(sys.stderr, tqdm_instance=self)
         self.__dict__['sp'] = self.status_printer(self.fp)
@@ -1268,7 +1268,7 @@ class tqdm_pickle(tqdm.tqdm):
 
 
 class progressbars(scu.prettyobj):
-    '''
+    """
     Create multiple progress bars
     
     Useful for tracking the progress of multiple long-running tasks. Unlike regular
@@ -1315,7 +1315,7 @@ class progressbars(scu.prettyobj):
         # Sim 4:  42%|████████████████████████████▏          | 145/365 [00:01<00:01, 136.75it/s]
 
     *New in version 3.0.0.*
-    '''
+    """
     
     def __init__(self, n=1, total=1, label=None, leave=False, **kwargs):
         self.n      = n
@@ -1358,7 +1358,7 @@ class progressbars(scu.prettyobj):
 
 
 class capture(UserString, str, redirect_stdout):
-    '''
+    """
     Captures stdout (e.g., from :func:`print()`) as a variable.
 
     Based on :obj:`contextlib.redirect_stdout`, but saves the user the trouble of
@@ -1384,7 +1384,7 @@ class capture(UserString, str, redirect_stdout):
         print(txt2)
 
     *New in version 1.3.3.*
-    '''
+    """
 
     def __init__(self, seq='', *args, **kwargs):
         self._io = io.StringIO()

@@ -1,4 +1,4 @@
-'''
+"""
 Adaptive stochastic descent optimization algorithm, building on :mod:`scipy.optimize`.
 
 This algorithm is published as:
@@ -6,7 +6,7 @@ This algorithm is published as:
   Kerr CC, Dura-Bernal S, Smolinski TG, Chadderdon GL, Wilson DP (2018).
   **Optimization by Adaptive Stochastic Descent**. *PLoS ONE* 13(3): e0192944. 
   https://doi.org/10.1371/journal.pone.0192944
-'''
+"""
 
 import time
 import numpy as np

@@ -1,5 +1,5 @@
-Getting started
-===============
+Overview
+========
 
 .. currentmodule:: sciris
 
@@ -129,7 +129,7 @@ Citation
 
 To cite Sciris, cite the `paper <http://paper.sciris.org>`_:
 
-  Kerr CC, Sanz-Leon P, Abeysuriya RG, Chadderdon GL, Harbuz VS, Saidi P, Quiroga M, Martin-Hughes R, Kelly SL, Cohen JA, Stuart RM, Nachesa AN. **Sciris: Simplifying scientific software in Python**. *Journal of Open Source Software* 2023 **8**(88):5076. DOI: https://doi.org/10.21105/joss.05076
+  Kerr CC, Sanz-Leon P, Abeysuriya RG, Chadderdon GL, Harbuz VS, Saidi P, Quiroga M, Martin-Hughes R, Kelly SL, Cohen JA, Stuart RM, Nachesa AN. **Sciris: Simplifying scientific software in Python.** *Journal of Open Source Software* 2023 **8** (88):5076. DOI: https://doi.org/10.21105/joss.05076
 
 The citation is also available in `BibTeX format`_.
 

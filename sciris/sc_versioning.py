@@ -1,4 +1,4 @@
-'''
+"""
 Functions for checking and saving versioning information, such as Python package
 versions, git versions, etc.
 
@@ -9,7 +9,7 @@ Highlights:
     - :func:`sc.compareversions() <compareversions>`: easy way to compare version numbers
     - :func:`sc.metadata() <metadata>`: collects relevant metadata into a dictionary
     - :func:`sc.savearchive() <savearchive>`: saves data as a zip file including versioning metadata
-'''
+"""
 
 import os
 import re
@@ -35,7 +35,7 @@ _obj_filename      = 'sciris_data.obj'
 
 
 def freeze(lower=False):
-    '''
+    """
     Alias for pip freeze.
 
     Args:
@@ -46,7 +46,7 @@ def freeze(lower=False):
         assert 'numpy' in sc.freeze() # One way to check for versions
 
     *New in version 1.2.2.*
-    '''
+    """
     import pkg_resources as pkgr # Imported here since slow (>0.1 s); deprecated, but importlib doesn't work on older Python versions
     raw = dict(tuple(str(ws).split()) for ws in pkgr.working_set)
     keys = sorted(raw.keys())
@@ -59,7 +59,7 @@ def freeze(lower=False):
 
 
 def require(reqs=None, *args, exact=False, detailed=False, die=True, warn=True, verbose=True, **kwargs):
-    '''
+    """
     Check whether environment requirements are met. Alias to pkg_resources.require().
 
     Args:
@@ -82,7 +82,7 @@ def require(reqs=None, *args, exact=False, detailed=False, die=True, warn=True, 
 
     *New in version 1.2.2.*
     *New in version 3.0.0:* "warn" argument
-    '''
+    """
     import pkg_resources as pkgr # Imported here since slow (>0.1 s); deprecated, but no direct equivalent in importlib or packaging
 
     # Handle inputs
@@ -250,7 +250,7 @@ def gitinfo(path=None, hashlen=7, die=False, verbose=True):
 
 
 def compareversions(version1, version2):
-    '''
+    """
     Function to compare versions, expecting both arguments to be a string of the
     format 1.2.3, but numeric works too. Returns 0 for equality, -1 for v1<v2, and
     1 for v1>v2.
@@ -268,7 +268,7 @@ def compareversions(version1, version2):
         sc.compareversions(mymodule, '>=1.0') # alias to the above
 
     *New in version 1.2.1:* relational operators
-    '''
+    """
     # Handle inputs
     if isinstance(version1, types.ModuleType):
         try:
@@ -313,7 +313,7 @@ def compareversions(version1, version2):
 
 
 def getcaller(frame=2, tostring=True, includelineno=False, includeline=False, relframe=0, die=False):
-    '''
+    """
     Try to get information on the calling function, but fail gracefully. See also
     :func:`sc.thisfile() <sciris.sc_fileio.thisfile>`.
 
@@ -342,7 +342,7 @@ def getcaller(frame=2, tostring=True, includelineno=False, includeline=False, re
     | *New in version 1.0.0.*
     | *New in version 1.3.3:* do not include line by default
     | *New in version 3.0.0:* "relframe" argument; "die" argument
-    '''
+    """
     try:
         import inspect
         frame = frame + relframe
@@ -376,7 +376,7 @@ def getcaller(frame=2, tostring=True, includelineno=False, includeline=False, re
 
 def metadata(outfile=None, version=None, comments=None, require=None, pipfreeze=True, user=True, caller=True, 
              git=True, asdict=False, tostring=False, relframe=0, **kwargs):
-    '''
+    """
     Collect common metadata: useful for exactly recreating (or remembering) the environment
     at a moment in time.
     
@@ -406,7 +406,7 @@ def metadata(outfile=None, version=None, comments=None, require=None, pipfreeze=
         sc.metadata('my-metadata.json') # Save to disk
     
     *New in version 3.0.0.*
-    '''
+    """
     
     # Additional imports
     import sys
@@ -460,7 +460,7 @@ def metadata(outfile=None, version=None, comments=None, require=None, pipfreeze=
 
 
 def _metadata_to_objdict(md):
-    ''' Convert a metadata dictionary into an objdict -- descend two levels but no deeper '''
+    """ Convert a metadata dictionary into an objdict -- descend two levels but no deeper """
     md = sco.objdict(md)
     for k,v in md.items():
         if isinstance(v, dict):
@@ -469,7 +469,7 @@ def _metadata_to_objdict(md):
         
 
 def loadmetadata(filename, load_all=False, die=True):
-    '''
+    """
     Read metadata from a saved image; currently only PNG and SVG are supported.
 
     Only for use with images saved with :func:`sc.savefig() <sciris.sc_plotting.savefig>`. Metadata retrieval for PDF
@@ -487,7 +487,7 @@ def loadmetadata(filename, load_all=False, die=True):
         pl.plot([1,2,3], [4,2,6])
         sc.savefig('example.png')
         sc.loadmetadata('example.png')
-    '''
+    """
     from . import sc_fileio as scf # To avoid circular import
 
     # Initialize
@@ -582,7 +582,7 @@ def loadmetadata(filename, load_all=False, die=True):
 def savearchive(filename, obj, files=None, folder=None, comments=None, require=None, 
                      user=True, caller=True, git=True, pipfreeze=True, method='dill', 
                      allow_nonzip=False, dumpargs=None, **kwargs):
-    '''
+    """
     Save any object as a pickled zip file, including metadata as a separate JSON file.
     
     Pickles are usually not good for long-term data storage, since they rely on
@@ -621,7 +621,7 @@ def savearchive(filename, obj, files=None, folder=None, comments=None, require=N
         obj = sc.loadarchive('my-class.zip')
     
     *New in version 3.0.0.*
-    '''
+    """
     filename = scf.makepath(filename=filename, folder=folder, makedirs=True)
     
     # Check filename
@@ -647,7 +647,7 @@ def savearchive(filename, obj, files=None, folder=None, comments=None, require=N
 
 def loadarchive(filename, folder=None, loadobj=True, loadmetadata=False, 
                      remapping=None, die=True, **kwargs):
-    '''
+    """
     Load a zip file saved with :func:`sc.savearchive() <savearchive>`.
     
     **Note**: Since this function relies on pickle, it can potentially execute arbitrary
@@ -684,7 +684,7 @@ def loadarchive(filename, folder=None, loadobj=True, loadmetadata=False,
     should not do so!
     
     *New in version 3.0.0.*
-    '''
+    """
     filename = scf.makefilepath(filename=filename, folder=folder, makedirs=False)
     
     # Open the zip file

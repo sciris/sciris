@@ -54,7 +54,7 @@ __all__ = ['load', 'save', 'loadobj', 'saveobj', 'zsave', 'loadstr', 'dumpstr']
 
 # Define common error messages
 def _gziperror(filename):
-    ''' Base error message when a file couldn't be opened '''
+    """ Base error message when a file couldn't be opened """
     return f'''
 Unable to load
     {filename}
@@ -62,7 +62,7 @@ as either a gzipped, zstandard or regular pickle file. Ensure that it is actuall
 '''
 
 def _unpicklingerror(filename):
-    ''' Base error message when a file couldn't be loaded '''
+    """ Base error message when a file couldn't be loaded """
     return f'''
 Unable to load file: "{filename}"
 as a gzipped pickle file. Loading pickles can fail if Python modules have changed
@@ -79,7 +79,7 @@ https://stackoverflow.com/questions/41554738/how-to-load-an-old-pickle-file
 
 
 def _load_filestr(filename, folder=None, verbose=False):
-    ''' Try different options for loading a file on disk into a string -- not for external use '''
+    """ Try different options for loading a file on disk into a string -- not for external use """
     
     # Handle loading of either filename or file object
     if isinstance(filename, Path):
@@ -137,7 +137,7 @@ def _load_filestr(filename, folder=None, verbose=False):
 
 def load(filename=None, folder=None, verbose=None, die=False, remapping=None, 
          method=None, auto_remap=True, **kwargs):
-    '''
+    """
     Load a file that has been saved as a gzipped pickle file, e.g. by :func:`sc.save() <save>`.
     Accepts either a filename (standard usage) or a file object as the first argument.
     Note that :func:`sc.load() <load>`/:func:`sc.loadobj() <loadobj>` are aliases of each other.
@@ -176,7 +176,7 @@ def load(filename=None, folder=None, verbose=None, die=False, remapping=None,
     | *New in version 1.2.2:* ability to load non-gzipped pickles; support for dill; arguments passed to loader
     | *New in version 3.1.0:* improved handling of pickling failures
     | *New in version 3.1.1:* allow remapping to ``None``
-    '''
+    """
     if verbose: T = scd.timer() # Start timing
         
     # Load the file
@@ -201,7 +201,7 @@ def load(filename=None, folder=None, verbose=None, die=False, remapping=None,
 
 def save(filename='default.obj', obj=None, folder=None, method='pickle', compression='gzip', 
          compresslevel=5, verbose=0, sanitizepath=True, die=False, allow_empty=False, **kwargs):
-    '''
+    """
     Save any object to disk
     
     This function is similar to :func:`pickle.dump()` in that it serializes the object
@@ -269,10 +269,10 @@ def save(filename='default.obj', obj=None, folder=None, method='pickle', compres
     | *New in version 2.0.4:* "die" argument for saving as dill
     | *New in version 2.1.0:* "zstandard" compression method
     | *New in version 3.0.0:* "allow_empty" argument; removed "args"
-    '''
+    """
 
     def serialize(fileobj, obj, success, **kwargs):
-        ''' Actually write a serial bytestream to disk '''
+        """ Actually write a serial bytestream to disk """
         # Try pickle first
         if method == 'pickle':
             try:
@@ -368,7 +368,7 @@ saveobj = save
 
 
 def zsave(*args, compression='zstd', **kwargs):
-    '''
+    """
     Save a file using zstandard (instead of gzip) compression. This is an alias
     for ``sc.save(..., compression='zstd')``; see :func:`sc.save() <save>` for details.
     
@@ -376,12 +376,12 @@ def zsave(*args, compression='zstd', **kwargs):
     automatically try loading zstandard.
     
     *New in version 2.1.0.*
-    '''
+    """
     return save(*args, compression=compression, **kwargs)
 
 
 def loadstr(string, **kwargs):
-    '''
+    """
     Like :func:`sc.load() <load>`, but for a bytes-like string (rarely used).
     
     Args:
@@ -396,14 +396,14 @@ def loadstr(string, **kwargs):
         assert obj == obj2
     
     | *New in version 3.0.0:* uses :func:`sc.load() <load>` for more robustness
-    '''
+    """
     with closing(io.BytesIO(string)) as bytestream: # Open a "fake file" with the Gzip string pickle in it
         obj = load(bytestream, **kwargs)
     return obj
 
 
 def dumpstr(obj=None, **kwargs):
-    '''
+    """
     Dump an object to a bytes-like string (rarely used by the user); see :func:`sc.save() <save>`
     instead.
     
@@ -412,7 +412,7 @@ def dumpstr(obj=None, **kwargs):
         kwargs (dict): passed to :func:`sc.save() <save>`
     
     *New in version 3.0.0:* uses :func:`sc.save() <save>` for more robustness
-    '''
+    """
     bytesobj = save(filename=None, obj=obj, **kwargs)
     result = bytesobj.read() # Read all of the content into result
     return result
@@ -428,13 +428,13 @@ __all__ += ['loadtext', 'savetext', 'loadzip', 'unzip', 'savezip', 'path', 'ispa
 
 
 def loadtext(filename=None, folder=None, splitlines=False):
-    '''
+    """
     Convenience function for reading a text file
 
     **Example**::
 
         mytext = sc.loadtext('my-document.txt')
-    '''
+    """
     filename = makefilepath(filename=filename, folder=folder)
     with open(filename) as f:
         output = f.read()
@@ -444,7 +444,7 @@ def loadtext(filename=None, folder=None, splitlines=False):
 
 
 def savetext(filename=None, string=None, **kwargs):
-    '''
+    """
     Convenience function for saving a text file -- accepts a string or list of strings;
     can also save an arbitrary object, in which case it will first convert to a string.
     
@@ -459,7 +459,7 @@ def savetext(filename=None, string=None, **kwargs):
         sc.savetext('my-poem.txt', text)
     
     *New in version 3.1.0:* fixed bug with saving a list of strings
-    '''
+    """
     is_array = scu.isarray(string)
     if isinstance(string, list):
         string = '\n'.join([str(s) for s in string]) # Convert from list to string
@@ -476,7 +476,7 @@ def savetext(filename=None, string=None, **kwargs):
 
 
 def loadzip(filename=None, folder=None, **kwargs):
-    '''
+    """
     Load the contents of a zip file into a variable
 
     Args:
@@ -493,7 +493,7 @@ def loadzip(filename=None, folder=None, **kwargs):
 
     | *New in version 2.0.0.*
     | *New in version 3.0.0:* load into memory instead of extracting to disk; see :func:`sc.unzip() <unzip>` for extracting
-    '''
+    """
     filename = makefilepath(filename=filename, folder=folder)
     output = dict()
     with ZipFile(filename, 'r') as zf: # Create the zip file
@@ -509,7 +509,7 @@ def loadzip(filename=None, folder=None, **kwargs):
 
 
 def unzip(filename=None, outfolder='.', folder=None, members=None):
-    '''
+    """
     Convenience function for reading a zip file
 
     Args:
@@ -526,7 +526,7 @@ def unzip(filename=None, outfolder='.', folder=None, members=None):
         sc.unzip('my-files.zip', outfolder='my_data') # extracts all files 
 
     | *New in version 3.0.0* (equivalent to sc.loadzip(..., extract=True) previously)
-    '''
+    """
     filename = makefilepath(filename=filename, folder=folder)
     with ZipFile(filename, 'r') as zf: # Load the zip file
         names = zf.namelist()
@@ -538,7 +538,7 @@ def unzip(filename=None, outfolder='.', folder=None, members=None):
 
 def savezip(filename=None, files=None, data=None, folder=None, sanitizepath=True, 
             basename=False, tobytes=True, verbose=True, **kwargs):
-    '''
+    """
     Create a zip file from the supplied list of files (or less commonly, supplied data)
 
     Args:
@@ -561,7 +561,7 @@ def savezip(filename=None, files=None, data=None, folder=None, sanitizepath=True
 
     | *New in version 2.0.0:* saving data
     | *New in version 3.0.0:* "tobytes" argument and kwargs; "filelist" renamed "files"
-    '''
+    """
 
     # Handle inputs
     fullpath = makefilepath(filename=filename, folder=folder, sanitize=sanitizepath, makedirs=True)
@@ -613,7 +613,7 @@ def savezip(filename=None, files=None, data=None, folder=None, sanitizepath=True
 
 
 def path(*args, **kwargs):
-    '''
+    """
     Alias to ``pathlib.Path()`` with some additional input sanitization:
 
         - ``None`` entries are removed
@@ -627,7 +627,7 @@ def path(*args, **kwargs):
 
     | *New in version 1.2.2.*
     | *New in version 2.0.0:* handle None or list arguments
-    '''
+    """
 
     # Handle inputs
     new_args = []
@@ -647,16 +647,16 @@ path.__doc__ += '\n\n' + Path.__doc__
 
 
 def ispath(obj):
-    '''
+    """
     Alias to isinstance(obj, Path).
 
     *New in version 2.0.0.*
-    '''
+    """
     return isinstance(obj, Path)
 
 
 def thisfile(frame=1, aspath=None):
-    '''
+    """
     Return the full path of the current file.
     
     Args:
@@ -669,7 +669,7 @@ def thisfile(frame=1, aspath=None):
         calling_script = sc.thisfile(frame=2) # Get the name of the script that called this script
 
     *New in verison 2.1.0.*
-    '''
+    """
     if aspath is None: aspath = scs.options.aspath
     file = inspect.stack()[frame][1] # Adopted from Atomica
     if aspath:
@@ -678,7 +678,7 @@ def thisfile(frame=1, aspath=None):
 
 
 def thisdir(file=None, path=None, *args, frame=1, aspath=None, **kwargs):
-    '''
+    """
     Tiny helper function to get the folder for a file, usually the current file.
     If not supplied, then use the current file.
 
@@ -706,7 +706,7 @@ def thisdir(file=None, path=None, *args, frame=1, aspath=None, **kwargs):
     | *New in version 1.2.2:* "path" argument
     | *New in version 1.3.0:* allow modules
     | *New in version 2.1.0:* frame argument
-    '''
+    """
     if file is None: # No file: use the current folder
         if scu.isjupyter(): # pragma: no cover
             file = os.path.abspath(os.path.expanduser('file_placeholder')) # This is as best we can do on Jupyter
@@ -724,11 +724,11 @@ def thisdir(file=None, path=None, *args, frame=1, aspath=None, **kwargs):
 
 
 def thispath(*args, frame=1, aspath=True, **kwargs):
-    '''
+    """
     Alias for :func:`sc.thisdir() <thisdir>` that returns a path by default instead of a string.
     
     *New in version 2.1.0.*
-    '''
+    """
     return thisdir(*args, frame=frame+1, aspath=aspath, **kwargs)
 
 thispath.__doc__ += '\n\n' + thisdir.__doc__
@@ -736,7 +736,7 @@ thispath.__doc__ += '\n\n' + thisdir.__doc__
 
 def getfilelist(folder=None, pattern=None, fnmatch=None, abspath=False, nopath=False, 
                 filesonly=False, foldersonly=False, recursive=True, aspath=None):
-    '''
+    """
     A shortcut for using :func:`glob.glob()`.
     
     Note that :func:`sc.getfilelist() <getfilelist>` and :func:`sc.glob() <glob>` 
@@ -765,7 +765,7 @@ def getfilelist(folder=None, pattern=None, fnmatch=None, abspath=False, nopath=F
 
     | *New in version 1.1.0:* "aspath" argument
     | *New in version 2.1.0:* default pattern of "**"; "fnmatch" argument; default recursive=True
-    '''
+    """
     if folder is None:
         folder = '.'
     folder = os.path.expanduser(folder)
@@ -795,18 +795,18 @@ glob = getfilelist
 
 
 def getfilepaths(*args, aspath=True, **kwargs):
-    '''
+    """
     Alias for :func:`sc.getfilelist() <getfilelist>` that returns paths by default instead of strings.
     
     *New version 2.1.0.*
-    '''
+    """
     return getfilelist(*args, aspath=True, **kwargs)
 
 getfilepaths.__doc__ += '\n\n' + getfilelist.__doc__
 
 
 def sanitizefilename(filename, sub='_', allowspaces=False, asciify=True, strict=False, disallowed=None, aspath=False):
-    '''
+    """
     Takes a potentially Linux- and Windows-unfriendly candidate file name, and
     returns a "sanitized" version that is more usable.
     
@@ -826,7 +826,7 @@ def sanitizefilename(filename, sub='_', allowspaces=False, asciify=True, strict=
         
     | *New version 2.0.1:* arguments "sub", "allowspaces", "asciify", "strict", and "disallowed"
     | *New version 3.1.1:* disallow tabs and newlines even when ``strict=False``
-    '''
+    """
     
     # Handle options
     if asciify:
@@ -857,11 +857,11 @@ def sanitizefilename(filename, sub='_', allowspaces=False, asciify=True, strict=
 
 
 def sanitizepath(*args, aspath=True, **kwargs):
-    '''
+    """
     Alias for :func:`sc.sanitizefilename() <sanitizefilename>` that returns a path by default instead of a string.
     
     *New version 2.1.0.*
-    '''
+    """
     return sanitizefilename(*args, aspath=True, **kwargs)
 
 sanitizepath.__doc__ += '\n\n' + sanitizefilename.__doc__
@@ -869,7 +869,7 @@ sanitizepath.__doc__ += '\n\n' + sanitizefilename.__doc__
 
 
 def makefilepath(filename=None, folder=None, ext=None, default=None, split=False, aspath=None, abspath=True, makedirs=False, checkexists=None, sanitize=False, die=True, verbose=False):
-    '''
+    """
     Utility for taking a filename and folder -- or not -- and generating a
     valid path from them. By default, this function will combine a filename and
     folder using os.path.join, create the folder(s) if needed with os.makedirs,
@@ -905,7 +905,7 @@ def makefilepath(filename=None, folder=None, ext=None, default=None, split=False
 
     | *New in version 1.1.0:* "aspath" argument
     | *New in version 3.0.0:* "makedirs" defaults to False
-    '''
+    """
 
     # Initialize
     filefolder = '' # The folder the file will be located in
@@ -986,12 +986,12 @@ def makefilepath(filename=None, folder=None, ext=None, default=None, split=False
 
 
 def makepath(*args, aspath=True, **kwargs):
-    '''
+    """
     Alias for :func:`sc.makefilepath() <makefilepath>` that returns a path by default instead of a string
     (with apologies for the confusing terminology, kept for backwards compatibility).
     
     *New version 2.1.0.*
-    '''
+    """
     return makefilepath(*args, **kwargs, aspath=True)
 
 makepath.__doc__ += '\n\n' + makefilepath.__doc__
@@ -1166,7 +1166,7 @@ sanitizejson = jsonify
 
 
 def printjson(obj, indent=2, **kwargs):
-    '''
+    """
     Print an object as a JSON
     
     Acts as an alias to :func:`print(sc.jsonify(..., tostring=True)) <jsonify>`.
@@ -1182,14 +1182,14 @@ def printjson(obj, indent=2, **kwargs):
         sc.printjson(data)
     
     *New in version 3.0.0.*
-    '''
+    """
     json = jsonify(obj, tostring=True, indent=indent, **kwargs)
     print(json)
     return
 
 
 def readjson(string, **kwargs):
-    '''
+    """
     Read JSON from a string
     
     Alias to :func:`json.loads()`.
@@ -1207,12 +1207,12 @@ def readjson(string, **kwargs):
         json = sc.readjson(string)
         
     *New in version 3.0.0.*
-    '''
+    """
     return json.loads(string, **kwargs)
 
 
 def loadjson(filename=None, folder=None, string=None, fromfile=True, **kwargs):
-    '''
+    """
     Convenience function for reading a JSON file (or string).
 
     Args:
@@ -1232,7 +1232,7 @@ def loadjson(filename=None, folder=None, string=None, fromfile=True, **kwargs):
     
     See also :func:`sc.readjson() <readjson>` for loading a JSON from
     a string.
-    '''
+    """
     if string is not None or not fromfile:
         if string is None and filename is not None: # pragma: no cover
             string = filename # Swap arguments
@@ -1249,7 +1249,7 @@ def loadjson(filename=None, folder=None, string=None, fromfile=True, **kwargs):
 
 
 def savejson(filename=None, obj=None, folder=None, die=True, indent=2, keepnone=False, sanitizepath=True, **kwargs):
-    '''
+    """
     Convenience function for saving to a JSON file.
 
     Args:
@@ -1271,7 +1271,7 @@ def savejson(filename=None, obj=None, folder=None, die=True, indent=2, keepnone=
         sc.savejson('my-file.json', json)
     
     See also :func:`sc.jsonify() <jsonify>`.
-    '''
+    """
 
     filename = makefilepath(filename=filename, folder=folder, sanitize=sanitizepath, makedirs=True)
 
@@ -1287,7 +1287,7 @@ def savejson(filename=None, obj=None, folder=None, die=True, indent=2, keepnone=
 
 
 def readyaml(string, **kwargs):
-    '''
+    """
     Read YAML from a string
     
     Alias to :func:`sc.loadyaml(string=...) <loadyaml>`.
@@ -1305,12 +1305,12 @@ def readyaml(string, **kwargs):
         yaml = sc.readyaml(string)
     
     *New in version 3.0.0.*
-    '''
+    """
     return loadyaml(string=string, **kwargs)
 
 
 def loadyaml(filename=None, folder=None, string=None, fromfile=True, safe=False, loader=None):
-    '''
+    """
     Convenience function for reading a YAML file (or string).
 
     Args:
@@ -1328,7 +1328,7 @@ def loadyaml(filename=None, folder=None, string=None, fromfile=True, safe=False,
 
         yaml = sc.loadyaml('my-file.yaml')
         yaml = sc.loadyaml(string='{"a":null, "b":[1,2,3]}')
-    '''
+    """
     import yaml # Optional import
 
     if loader is None:
@@ -1358,7 +1358,7 @@ def loadyaml(filename=None, folder=None, string=None, fromfile=True, safe=False,
 
 
 def saveyaml(filename=None, obj=None, folder=None, die=True, keepnone=False, dumpall=False, sanitizepath=True, **kwargs):
-    '''
+    """
     Convenience function for saving to a YAML file.
 
     Args:
@@ -1381,7 +1381,7 @@ def saveyaml(filename=None, obj=None, folder=None, die=True, keepnone=False, dum
         sc.saveyaml('my-file.yaml', yaml) # Save to file
 
         string = sc.saveyaml(obj=yaml) # Export to string
-    '''
+    """
     import yaml # Optional import
 
     if dumpall: dump_func = yaml.dump_all
@@ -1407,7 +1407,7 @@ def saveyaml(filename=None, obj=None, folder=None, die=True, keepnone=False, dum
 
 
 def jsonpickle(obj, filename=None, tostring=False, **kwargs):
-    '''
+    """
     Save any Python object to a JSON using jsonpickle.
     
     Wrapper for the jsonpickle library: https://jsonpickle.github.io/
@@ -1440,7 +1440,7 @@ def jsonpickle(obj, filename=None, tostring=False, **kwargs):
         df3  = sc.jsonunpickle('my-data.json')
         
     *New in version 3.1.0:* "filename" argument        
-    '''
+    """
     import jsonpickle as jp # Optional import
     import jsonpickle.ext.numpy as jsonpickle_numpy
     import jsonpickle.ext.pandas as jsonpickle_pandas
@@ -1462,7 +1462,7 @@ def jsonpickle(obj, filename=None, tostring=False, **kwargs):
 
 
 def jsonunpickle(json=None, filename=None):
-    '''
+    """
     Open a saved JSON pickle
     
     See :func:`sc.jsonpickle() <jsonpickle>` for full documentation.
@@ -1472,7 +1472,7 @@ def jsonunpickle(json=None, filename=None):
         filename (str/path): if supplied, restore data from file
 
     *New in version 3.1.0:* "filename" argument
-    '''
+    """
     import jsonpickle as jp
     import jsonpickle.ext.numpy as jsonpickle_numpy
     import jsonpickle.ext.pandas as jsonpickle_pandas
@@ -1513,7 +1513,7 @@ __all__ += ['Blobject', 'Spreadsheet', 'loadspreadsheet', 'savespreadsheet']
 
 
 class Blobject(object):
-    '''
+    """
     A wrapper for a binary file -- rarely used directly.
 
     So named because it's an object representing a blob.
@@ -1524,7 +1524,7 @@ class Blobject(object):
 
     Alternatively, can specify ``blob`` which is a binary string that gets stored directly
     in the ``blob`` attribute
-    '''
+    """
 
     def __init__(self, source=None, name=None, filename=None, blob=None):
         # Handle inputs
@@ -1549,19 +1549,19 @@ class Blobject(object):
 
 
     def load(self, source=None):
-        '''
+        """
         This function loads the spreadsheet from a file or object. If no input argument is supplied,
         then it will read self.bytes, assuming it exists.
-        '''
+        """
         def read_bin(source):
-            ''' Helper to read a binary stream '''
+            """ Helper to read a binary stream """
             source.flush()
             source.seek(0)
             output = source.read()
             return output
 
         def read_file(filename):
-            ''' Helper to read an actual file '''
+            """ Helper to read an actual file """
             filepath = makefilepath(filename=filename)
             self.filename = filename
             with open(filepath, mode='rb') as f:
@@ -1594,7 +1594,7 @@ class Blobject(object):
 
 
     def save(self, filename=None):
-        ''' This function writes the spreadsheet to a file on disk. '''
+        """ This function writes the spreadsheet to a file on disk. """
         filepath = makefilepath(filename=filename, makedirs=True)
         with open(filepath, mode='wb') as f:
             f.write(self.blob)
@@ -1604,14 +1604,14 @@ class Blobject(object):
 
 
     def tofile(self, output=True):
-        '''
+        """
         Return a file-like object with the contents of the file.
 
         This can then be used to open the workbook from memory without writing anything to disk e.g.
 
             - book = openpyxl.load_workbook(self.tofile())
             - book = xlrd.open_workbook(file_contents=self.tofile().read())
-        '''
+        """
         bytesblob = io.BytesIO(self.blob)
         if output:
             return bytesblob
@@ -1621,14 +1621,14 @@ class Blobject(object):
 
 
     def freshbytes(self):
-        ''' Refresh the bytes object to accept new data '''
+        """ Refresh the bytes object to accept new data """
         self.bytes = io.BytesIO()
         return self.bytes
 
 
 
 class Spreadsheet(Blobject):
-    '''
+    """
     A class for reading and writing Excel files in binary format. No disk IO needs
     to happen to manipulate the spreadsheets with openpyxl (or xlrd or pandas).
 
@@ -1638,7 +1638,7 @@ class Spreadsheet(Blobject):
     **Examples**::
 
 
-    '''
+    """
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -1653,20 +1653,20 @@ class Spreadsheet(Blobject):
 
 
     def _reload_wb(self, reload=None):
-        ''' Helper function to check if workbook is already loaded '''
+        """ Helper function to check if workbook is already loaded """
         output = (not hasattr(self, 'wb')) or (self.wb is None) or reload
         return output
 
 
     def new(self, **kwargs):
-        ''' Shortcut method to create a new openpyxl workbook '''
+        """ Shortcut method to create a new openpyxl workbook """
         import openpyxl # Optional import
         self.wb = openpyxl.Workbook(**kwargs)
         return self.wb
 
 
     def xlrd(self, reload=False, store=True, **kwargs): # pragma: no cover
-        ''' Legacy method to load from xlrd '''
+        """ Legacy method to load from xlrd """
         if self._reload_wb(reload=reload):
             try:
                 import xlrd # Optional import
@@ -1682,7 +1682,7 @@ class Spreadsheet(Blobject):
 
 
     def openpyxl(self, reload=False, store=True, **kwargs): # pragma: no cover
-        ''' Return a book as opened by openpyxl '''
+        """ Return a book as opened by openpyxl """
         if self._reload_wb(reload=reload):
             import openpyxl # Optional import
             if self.blob is not None:
@@ -1699,7 +1699,7 @@ class Spreadsheet(Blobject):
 
 
     def openpyexcel(self, *args, **kwargs): # pragma: no cover
-        ''' Legacy name for openpyxl() '''
+        """ Legacy name for openpyxl() """
         warnmsg = '''
 Spreadsheet() no longer supports openpyexcel as of v1.3.1. To load using it anyway, you can manually do:
 
@@ -1715,7 +1715,7 @@ Falling back to openpyxl, which is identical except for how cached cell values a
 
 
     def pandas(self, reload=False, store=True, **kwargs): # pragma: no cover
-        ''' Return a book as opened by pandas '''
+        """ Return a book as opened by pandas """
 
         if self._reload_wb(reload=reload):
             if self.blob is not None:
@@ -1734,7 +1734,7 @@ Falling back to openpyxl, which is identical except for how cached cell values a
 
 
     def update(self, book): # pragma: no cover
-        ''' Updated the stored spreadsheet with book instead '''
+        """ Updated the stored spreadsheet with book instead """
         self.tofile(output=False)
         book.save(self.freshbytes())
         self.load()
@@ -1749,7 +1749,7 @@ Falling back to openpyxl, which is identical except for how cached cell values a
 
 
     def readcells(self, wbargs=None, *args, **kwargs):
-        ''' Alias to loadspreadsheet() '''
+        """ Alias to loadspreadsheet() """
         method = kwargs.pop('method', 'openpyxl')
         wbargs = scu.mergedicts(wbargs)
         f = self.tofile()
@@ -1792,7 +1792,7 @@ Falling back to openpyxl, which is identical except for how cached cell values a
 
 
     def writecells(self, cells=None, startrow=None, startcol=None, vals=None, sheetname=None, sheetnum=None, verbose=False, wbargs=None):
-        '''
+        """
         Specify cells to write. Can supply either a list of cells of the same length
         as the values, or else specify a starting row and column and write the values
         from there.
@@ -1804,7 +1804,7 @@ Falling back to openpyxl, which is identical except for how cached cell values a
             S.writecells(cells=[np.array([2,3])+i for i in range(2)], vals=['Foo', 'Bar']) # Method 2
             S.writecells(startrow=14, startcol=1, vals=np.random.rand(3,3)) # Method 3
             S.save('myfile.xlsx')
-        '''
+        """
         # Load workbook
         if wbargs is None: wbargs = {}
         wb = self.openpyxl(**wbargs)
@@ -1869,7 +1869,7 @@ Falling back to openpyxl, which is identical except for how cached cell values a
 
 
 def loadspreadsheet(filename=None, folder=None, fileobj=None, sheet=0, header=1, asdataframe=None, method='pandas', **kwargs):
-    '''
+    """
     Load a spreadsheet as a dataframe or a list of lists.
 
     By default, an alias to :func:`pandas.read_excel()` with a header, but also supports loading
@@ -1892,7 +1892,7 @@ def loadspreadsheet(filename=None, folder=None, fileobj=None, sheet=0, header=1,
         data = sc.loadspreadsheet('myfile.xlsx', method='xlrd', asdataframe=False) # Returns raw data; requires xlrd
 
     *New version 1.3.0:* change default from xlrd to pandas; renamed sheetname and sheetnum arguments to sheet.
-    '''
+    """
 
     # Handle path and sheet name/number
     fullpath = makefilepath(filename=filename, folder=folder)
@@ -1988,7 +1988,7 @@ Then try again to load your Excel file.
 
 def savespreadsheet(filename=None, data=None, folder=None, sheetnames=None, close=True,
                     workbook_args=None, formats=None, formatdata=None, verbose=False):
-    '''
+    """
     Semi-simple function to save data nicely to Excel.
 
     Args:
@@ -2044,7 +2044,7 @@ def savespreadsheet(filename=None, data=None, folder=None, sheetnames=None, clos
         sc.savespreadsheet(filename='test5.xlsx', data=testdata5, formats=formats, formatdata=formatdata)
 
     *New version 2.0.0:* allow arguments to be passed to the ``Workbook``.
-    '''
+    """
     workbook_args = scu.mergedicts({'nan_inf_to_errors': True}, workbook_args)
     try:
         import xlsxwriter # Optional import
@@ -2154,39 +2154,39 @@ unpickling_errors = sco.objdict()
 
 
 class UnpicklingWarning(UserWarning):
-    '''
+    """
     A warning raised when unpickling an object fails
     
     *New in version 3.1.0.*    
-    '''
+    """
     pass
 
 
 class UnpicklingError(pkl.UnpicklingError):
-    '''
+    """
     An error raised when unpickling an object fails
     
     *New in version 3.1.0.*    
-    '''
+    """
     pass
 
 
 class NoneObj(object):
-    '''
+    """
     An empty class to represent an object the user intentionally does not want to load.
     Not for use by the user.
     
     *New in version 3.1.1.*
-    '''
+    """
     def __init__(self, *args, **kwargs): pass
 
 
 class Failed(object):
-    '''
+    """
     An empty class to represent a failed object loading. Not for use by the user.
     
     *New in version 3.1.0:* combined Failed and UniversalFailed classes    
-    '''
+    """
     _module  = None # These must be class variables since find_class returns a class, not an instance
     _name    = None
     _failure = None
@@ -2255,7 +2255,7 @@ class Failed(object):
 
 
 def _makefailed(module_name=None, name=None, exc=None, fixes=None, errors=None):
-    '''
+    """
     Handle unpickling failures -- for internal use only
     
     Create a class -- not an object! -- that contains the failure info for a pickle 
@@ -2263,7 +2263,7 @@ def _makefailed(module_name=None, name=None, exc=None, fixes=None, errors=None):
     the way pickles are loaded via the ``find_class`` method.
     
     *New in version 3.1.0:* arguments simplified
-    '''
+    """
     
     # Process exception
     key = (module_name, name)
@@ -2298,7 +2298,7 @@ def _makefailed(module_name=None, name=None, exc=None, fixes=None, errors=None):
 
 
 def _remap_module(remapping, module_name, name):
-    ''' Use a remapping dictionary to try to load a module from a different location -- for internal use ''' 
+    """ Use a remapping dictionary to try to load a module from a different location -- for internal use """ 
     
     # Three different options are supported: 'foo.bar.Cat', ('foo.bar', 'Cat'), or 'foo.bar'
     key1 = f'{module_name}.{name}' # Key provided as a single string
@@ -2345,7 +2345,7 @@ def _remap_module(remapping, module_name, name):
 
 
 class _RobustUnpickler(dill.Unpickler):
-    ''' Try to import an object, and if that fails, return a Failed object rather than crashing '''
+    """ Try to import an object, and if that fails, return a Failed object rather than crashing """
 
     def __init__(self, bytesio, fix_imports=True, encoding="latin1", errors="ignore", 
                  remapping=None, auto_remap=True, die=False, verbose=None):
@@ -2394,7 +2394,7 @@ class _RobustUnpickler(dill.Unpickler):
 
 
 def _unpickler(string=None, die=False, verbose=None, remapping=None, method=None, auto_remap=True, **kwargs):
-    ''' Not invoked directly; used as a helper function for load() '''
+    """ Not invoked directly; used as a helper function for load() """
 
     # Sanitize kwargs, since wrapped in try-except statements otherwise
     if kwargs: # pragma: no cover
@@ -2462,7 +2462,7 @@ def _unpickler(string=None, die=False, verbose=None, remapping=None, method=None
 
 
 def _savepickle(fileobj=None, obj=None, protocol=None, **kwargs):
-        ''' Use pickle to do the salty work. '''
+        """ Use pickle to do the salty work. """
         if protocol is None:
             protocol = 4 # Use protocol 4 for backwards compatibility
         fileobj.write(pkl.dumps(obj, protocol=protocol, **kwargs))
@@ -2470,6 +2470,6 @@ def _savepickle(fileobj=None, obj=None, protocol=None, **kwargs):
 
 
 def _savedill(fileobj=None, obj=None, **kwargs): # pragma: no cover
-    ''' Use dill to do the sour work (note: this function is not actively maintained) '''
+    """ Use dill to do the sour work (note: this function is not actively maintained) """
     fileobj.write(dill.dumps(obj, protocol=-1, **kwargs))
     return

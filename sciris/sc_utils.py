@@ -1,4 +1,4 @@
-'''
+"""
 Miscellaneous utilities for type checking, printing, dates and times, etc.
 
 Note: there are a lot! The design philosophy has been that it's easier to
@@ -15,7 +15,7 @@ Highlights:
     - :func:`sc.mergelists() <mergelists>`: merges any set of inputs into a list
     - :func:`sc.runcommand() <runcommand>`: simple way of executing a shell command
     - :func:`sc.download() <download>`: download multiple URLs in parallel
-'''
+"""
 
 ##############################################################################
 #%% Imports
@@ -59,7 +59,7 @@ __all__ = ['fast_uuid', 'uuid', 'dcp', 'cp', 'pp', 'sha', 'traceback', 'getuser'
 
 
 def fast_uuid(which=None, length=None, n=1, secure=False, forcelist=False, safety=1000, recursion=0, recursion_limit=10, verbose=True):
-    '''
+    """
     Create a fast UID or set of UIDs. Note: for certain applications, :func:`sc.uuid() <uuid>`
     is faster than :func:`sc.fast_uuid() <fast_uuid>`!
 
@@ -82,7 +82,7 @@ def fast_uuid(which=None, length=None, n=1, secure=False, forcelist=False, safet
         uuids = sc.fast_uuid(n=100) # Generate 100 UUIDs
 
     Inspired by https://stackoverflow.com/questions/2257441/random-string-generation-with-upper-case-letters-and-digits/30038250#30038250
-    '''
+    """
 
     # Set defaults
     if which  is None: which  = 'ascii'
@@ -158,7 +158,7 @@ def fast_uuid(which=None, length=None, n=1, secure=False, forcelist=False, safet
 
 
 def uuid(uid=None, which=None, die=False, tostring=False, length=None, n=1, **kwargs):
-    '''
+    """
     Shortcut for creating a UUID; default is to create a UUID4. Can also convert a UUID.
 
     Args:
@@ -177,7 +177,7 @@ def uuid(uid=None, which=None, die=False, tostring=False, length=None, n=1, **kw
         sc.uuid() # Alias to uuid.uuid4()
         sc.uuid(which='hex') # Creates a length-6 hex string
         sc.uuid(which='ascii', length=10, n=50) # Creates 50 UUIDs of length 10 each using the full ASCII character set
-    '''
+    """
 
     # Set default UUID type
     if which is None:
@@ -234,7 +234,7 @@ def uuid(uid=None, which=None, die=False, tostring=False, length=None, n=1, **kw
 
 
 def dcp(obj, die=True, verbose=True):
-    '''
+    """
     Shortcut to perform a deep copy operation
 
     Almost identical to :func:`copy.deepcopy()`, but optionally fall back to :func:`copy.copy()`
@@ -245,7 +245,7 @@ def dcp(obj, die=True, verbose=True):
         verbose (bool): if die is False, then print a warning if deepcopy() fails
 
     *New in version 2.0.0:* default die=True instead of False
-    '''
+    """
     try:
         output = copy.deepcopy(obj)
     except Exception as E: # pragma: no cover
@@ -257,13 +257,13 @@ def dcp(obj, die=True, verbose=True):
 
 
 def cp(obj, die=True, verbose=True):
-    '''
+    """
     Shortcut to perform a shallow copy operation
 
     Almost identical to :func:`copy.copy()`, but optionally allow failures
 
     *New in version 2.0.0:* default die=True instead of False
-    '''
+    """
     try:
         output = copy.copy(obj)
     except Exception as E:
@@ -275,13 +275,13 @@ def cp(obj, die=True, verbose=True):
 
 
 def _printout(string=None, doprint=None, output=False):
-    '''
+    """
     Short for "print or output string". Not for public use.
 
     Private helper function to handle the logic of two boolean flags: by default, print;
     but if output is requested, return the output and do not print; unless doprint
     is set to True.
-    '''
+    """
     # Default for doprint is opposite of output
     if doprint is None: doprint = not(output)
 
@@ -292,7 +292,7 @@ def _printout(string=None, doprint=None, output=False):
 
 
 def pp(obj, jsonify=False, doprint=None, output=False, sort_dicts=False, **kwargs):
-    '''
+    """
     Shortcut for pretty-printing the object.
 
     Almost identical to :func:`pprint.pprint()`, but can also be used as an alias for
@@ -313,7 +313,7 @@ def pp(obj, jsonify=False, doprint=None, output=False, sort_dicts=False, **kwarg
         
     *New in version 1.3.1:* output argument
     *New in version 3.0.0:* "jsonify" defaults to False; sort_dicts defaults to False; removed "verbose" argument
-    '''
+    """
 
     # Get object
     if jsonify:
@@ -331,7 +331,7 @@ def pp(obj, jsonify=False, doprint=None, output=False, sort_dicts=False, **kwarg
 
 
 def sha(obj, encoding='utf-8', digest=False):
-    '''
+    """
     Shortcut for the standard hashing (SHA) method
 
     Equivalent to :obj:`hashlib.sha224()`.
@@ -348,7 +348,7 @@ def sha(obj, encoding='utf-8', digest=False):
         sha3 = sc.sha(dict(foo=1, bar=3), digest=True)
         assert sha1 == sha2
         assert sha2 != sha3
-    '''
+    """
     if not isstring(obj): # Ensure it's actually a string
         string = repr(obj)
     else: # pragma: no cover
@@ -363,7 +363,7 @@ def sha(obj, encoding='utf-8', digest=False):
 
 
 def traceback(exc=None, value=None, tb=None, verbose=False, *args, **kwargs):
-    '''
+    """
     Shortcut for accessing the traceback
 
     Alias for :obj:`traceback.format_exc()`.
@@ -395,7 +395,7 @@ def traceback(exc=None, value=None, tb=None, verbose=False, *args, **kwargs):
         tb1 = sc.traceback(te1.exception)
         tb2 = sc.traceback(te2.exception)
         print(f'Tracebacks were:\n\n{tb1}\n{tb2}')
-    '''
+    """
     if exc is not None:
         if isinstance(exc, Exception): # Usual case: an exception is supplied
             exc_info = (exc.__class__, exc, exc.__traceback__)
@@ -415,7 +415,7 @@ def traceback(exc=None, value=None, tb=None, verbose=False, *args, **kwargs):
 
 
 def getuser():
-    '''
+    """
     Get the current username 
     
     Alias to :func:`getpass.getuser()` -- see https://docs.python.org/3/library/getpass.html#getpass.getuser
@@ -425,12 +425,12 @@ def getuser():
         sc.getuser()
     
     *New in version 3.0.0.*
-    '''
+    """
     return getpass.getuser()
 
 
 def getplatform(expected=None, platform=None, die=False):
-    '''
+    """
     Return the name of the current "main" platform (e.g. 'mac')
     
     Alias to ``sys.platform``, except maps entries onto one of 'linux', 'windows', 
@@ -449,7 +449,7 @@ def getplatform(expected=None, platform=None, die=False):
         sc.getplatform() # Get current name of platform
         sc.getplatform('windows', die=True) # Raise an exception if not on Windows
         sc.getplatform(platform='darwin') # Normalize to 'mac'
-    '''
+    """
     # Define different aliases for each operating system
     mapping = dict(
         linux   = ['linux', 'posix'],
@@ -477,20 +477,20 @@ def getplatform(expected=None, platform=None, die=False):
 
 
 def iswindows(die=False):
-    ''' Alias to :func:`sc.getplatform('windows') <getplatform>` '''
+    """ Alias to :func:`sc.getplatform('windows') <getplatform>` """
     return getplatform('windows', die=die)
 
 def islinux(die=False):
-    ''' Alias to :func:`sc.getplatform('linux') <getplatform>` '''
+    """ Alias to :func:`sc.getplatform('linux') <getplatform>` """
     return getplatform('linux', die=die)
 
 def ismac(die=False):
-    ''' Alias to :func:`sc.getplatform('mac') <getplatform>` '''
+    """ Alias to :func:`sc.getplatform('mac') <getplatform>` """
     return getplatform('mac', die=die)
 
 
 def isjupyter(detailed=False):
-    '''
+    """
     Check if a command is running inside a Jupyter notebook.
     
     Returns true/false if detailed=False, or a string for the exact type of notebook
@@ -509,7 +509,7 @@ def isjupyter(detailed=False):
             print('You are running on Google Colab')
     
     *New in version 3.0.0.*
-    '''
+    """
     # First check if we can import it
     output = None
     is_jupyter = False
@@ -561,7 +561,7 @@ def isjupyter(detailed=False):
 
 
 def asciify(string, form='NFKD', encoding='ascii', errors='ignore', **kwargs):
-    '''
+    """
     Convert an arbitrary Unicode string to ASCII.
     
     Args:
@@ -574,7 +574,7 @@ def asciify(string, form='NFKD', encoding='ascii', errors='ignore', **kwargs):
         sc.asciify('föö→λ ∈ ℝ') # Returns 'foo  R'
     
     *New in version 2.0.1.*
-    '''
+    """
     normalized = unicodedata.normalize(form, string) # First, normalize Unicode encoding
     encoded = normalized.encode(encoding, errors) # Then, convert to ASCII
     decoded = encoded.decode(**kwargs) # Finally, decode back to utf-8
@@ -588,7 +588,7 @@ __all__ += ['urlopen', 'wget', 'download', 'htmlify']
 
 def urlopen(url, filename=None, save=None, headers=None, params=None, data=None,
             prefix='http', convert=True, die=False, return_response=False, verbose=False):
-    '''
+    """
     Download a single URL.
 
     Alias to ``urllib.request.urlopen(url).read()``. See also :func:`sc.download() <download>`
@@ -616,7 +616,7 @@ def urlopen(url, filename=None, save=None, headers=None, params=None, data=None,
     | *New in version 2.0.0:* renamed from ``wget`` to ``urlopen``; new arguments
     | *New in version 2.0.1:* creates folders by default if they do not exist
     | *New in version 2.0.4:* "prefix" argument, e.g. prepend "http://" if not present
-    '''
+    """
     from urllib import request as ur # Need to import these directly, not via urllib
     from urllib import parse as up
     from . import sc_datetime as scd  # To avoid circular import
@@ -688,7 +688,7 @@ wget = urlopen
 
 
 def download(url, *args, filename=None, save=True, parallel=True, die=True, verbose=True, **kwargs):
-    '''
+    """
     Download one or more URLs in parallel and return output or save them to disk.
 
     A parallelized wrapper for :func:`sc.urlopen() <urlopen>`, except with ``save=True`` by default.
@@ -715,7 +715,7 @@ def download(url, *args, filename=None, save=True, parallel=True, die=True, verb
     | *New in version 2.0.0.*
     | *New in version 3.0.0:* "die" argument
     | *New in version 3.1.1:* default order switched from URL:filename to filename:URL pairs
-    '''
+    """
     from . import sc_parallel as scp # To avoid circular import
     from . import sc_datetime as scd
     from . import sc_odict as sco
@@ -781,7 +781,7 @@ def download(url, *args, filename=None, save=True, parallel=True, die=True, verb
 
 
 def htmlify(string, reverse=False, tostring=False):
-    '''
+    """
     Convert a string to its HTML representation by converting unicode characters,
     characters that need to be escaped, and newlines. If reverse=True, will convert
     HTML to string. If tostring=True, will convert the bytestring back to Unicode.
@@ -791,7 +791,7 @@ def htmlify(string, reverse=False, tostring=False):
         output = sc.htmlify('foo&\\nbar') # Returns b'foo&amp;<br>bar'
         output = sc.htmlify('föö&\\nbar', tostring=True) # Returns 'f&#246;&#246;&amp;&nbsp;&nbsp;&nbsp;&nbsp;bar'
         output = sc.htmlify('foo&amp;<br>bar', reverse=True) # Returns 'foo&\\nbar'
-    '''
+    """
     import html
     if not reverse: # Convert to HTML
         output = html.escape(string).encode('ascii', 'xmlcharrefreplace') # Replace non-ASCII characters
@@ -814,7 +814,7 @@ __all__ += ['flexstr', 'sanitizestr', 'isiterable', 'checktype', 'isnumber', 'is
             'swapdict', 'mergedicts', 'mergelists']
 
 def flexstr(arg, *args, force=True, join=''):
-    '''
+    """
     Try converting any object to a "regular" string (i.e. ``str``), but proceed
     if it fails. Note: this function calls ``repr()`` rather than ``str()`` to
     ensure a more robust representation of objects.
@@ -830,7 +830,7 @@ def flexstr(arg, *args, force=True, join=''):
         sc.flexstr(b'foo', 'bar', [1,2]) # Returns 'foobar[1, 2]'
     
     *New in version 3.0.0:* handle multiple inputs
-    '''
+    """
     arglist = mergelists(arg, list(args))
     outlist = []
     for arg in arglist:
@@ -860,7 +860,7 @@ def flexstr(arg, *args, force=True, join=''):
 
 def sanitizestr(string=None, alphanumeric=False, nospaces=False, asciify=False, 
                 lower=False, validvariable=False, spacechar='_', symchar='?'):
-    '''
+    """
     Remove all non-"standard" characters from a string
     
     Can be used to e.g. generate a valid variable name from arbitrary input, remove
@@ -891,7 +891,7 @@ def sanitizestr(string=None, alphanumeric=False, nospaces=False, asciify=False,
         sc.sanitizestr(string4, validvariable=True, spacechar='') # Returns '_4pathnamestovariable'
     
     *New in version 3.0.0.*
-    '''
+    """
     string = flexstr(string)
     if asciify:
         newstr = ''
@@ -916,7 +916,7 @@ def sanitizestr(string=None, alphanumeric=False, nospaces=False, asciify=False,
 
 
 def isiterable(obj, *args, exclude=None, minlen=None):
-    '''
+    """
     Determine whether or not the input is iterable, with optional types to exclude.
     
     Args:
@@ -937,7 +937,7 @@ def isiterable(obj, *args, exclude=None, minlen=None):
     See also :func:`numpy.iterable()` for a simpler version.
     
     *New in version 3.0.0:* "exclude" and "minlen" args; support multiple arguments
-    '''
+    """
     
     # Handle arguments
     objlist = [obj]
@@ -976,7 +976,7 @@ def isiterable(obj, *args, exclude=None, minlen=None):
 
 
 def checktype(obj=None, objtype=None, subtype=None, die=False):
-    '''
+    """
     A convenience function for checking instances. If objtype is a type,
     then this function works exactly like isinstance(). But, it can also
     be one of the following strings:
@@ -1006,7 +1006,7 @@ def checktype(obj=None, objtype=None, subtype=None, die=False):
     
     | *New in version 2.0.1:* ``pd.Series`` considered 'array-like'
     | *New in version 3.0.0:* allow list (in addition to tuple) of types; allow checking for NoneType
-    '''
+    """
 
     # Handle "objtype" input
     if isinstance(objtype, str): # Ensure it's lowercase (e.g. 'None' → 'none')
@@ -1051,7 +1051,7 @@ def checktype(obj=None, objtype=None, subtype=None, die=False):
 
 
 def isnumber(obj, isnan=None):
-    '''
+    """
     Determine whether or not the input is a number.
 
     Args:
@@ -1059,7 +1059,7 @@ def isnumber(obj, isnan=None):
         isnan (bool): an optional additional check to determine whether the number is/isn't NaN
 
     Almost identical to isinstance(obj, numbers.Number).
-    '''
+    """
     output = checktype(obj, 'number')
     if output and isnan is not None: # It is a number, so can check for nan # pragma: no cover
         output = (np.isnan(obj) == isnan) # See if they match
@@ -1067,16 +1067,16 @@ def isnumber(obj, isnan=None):
 
 
 def isstring(obj):
-    '''
+    """
     Determine whether or not the input is string-like (i.e., str or bytes).
 
     Equivalent to ``isinstance(obj, (str, bytes))``
-    '''
+    """
     return checktype(obj, 'string')
 
 
 def isarray(obj, dtype=None):
-    '''
+    """
     Check whether something is a Numpy array, and optionally check the dtype.
 
     Almost the same as ``isinstance(obj, np.ndarray)``.
@@ -1086,7 +1086,7 @@ def isarray(obj, dtype=None):
         sc.isarray(np.array([1,2,3]), dtype=float) # False, dtype is int
 
     *New in version 1.0.0.*
-    '''
+    """
     if isinstance(obj, np.ndarray):
         if dtype is None:
             return True
@@ -1098,7 +1098,7 @@ def isarray(obj, dtype=None):
 
 
 def toarray(x, keepnone=False, asobject=True, dtype=None, **kwargs):
-    '''
+    """
     Small function to ensure consistent format for things that should be arrays
     (note: :func:`sc.toarray() <toarray>` and :func:`sc.promotetoarray() <promotetoarray>` are identical).
 
@@ -1122,7 +1122,7 @@ def toarray(x, keepnone=False, asobject=True, dtype=None, **kwargs):
     | *New in version 1.1.0:* replaced "skipnone" with "keepnone"; allowed passing kwargs to ``np.array()``.
     | *New in version 2.0.1:* added support for pandas Series and DataFrame
     | *New in version 3.1.0:* "asobject" argument; cast mixed-type arrays to object rather than string by default 
-    '''
+    """
     # Handle None
     skipnone = kwargs.pop('skipnone', None)
     if skipnone is not None: # pragma: no cover
@@ -1147,7 +1147,7 @@ def toarray(x, keepnone=False, asobject=True, dtype=None, **kwargs):
 
 
 def tolist(obj=None, objtype=None, keepnone=False, coerce='default'):
-    '''
+    """
     Make sure object is always a list (note: :func:`sc.tolist() <tolist>`/:func:`sc.promotetolist() <promotetolist>` are identical).
 
     Used so functions can handle inputs like ``'a'``  or ``['a', 'b']``. In other
@@ -1192,7 +1192,7 @@ def tolist(obj=None, objtype=None, keepnone=False, coerce='default'):
     | *New in version 1.1.0:* "coerce" argument
     | *New in version 1.2.2:* default coerce values
     | *New in version 2.0.2:* tuple coersion
-    '''
+    """
     # Handle coerce
     default_coerce = (range, map, type({}.keys()), type({}.values()), type({}.items()))
     if isinstance(coerce, str):
@@ -1246,7 +1246,7 @@ promotetolist = tolist
 
 
 def transposelist(obj, fix_uneven=True):
-    '''
+    """
     Convert e.g. a list of key-value tuples into a list of keys and a list of values.
     
     Args:
@@ -1267,7 +1267,7 @@ def transposelist(obj, fix_uneven=True):
         trans = sc.transposelist(listoflists, fix_uneven=True)
 
     *New in version 1.1.0.*
-    '''
+    """
     if fix_uneven:
         maxlen = max([len(ls) for ls in obj])
         newobj = [] # Create a manual copy
@@ -1281,7 +1281,7 @@ def transposelist(obj, fix_uneven=True):
 
 
 def swapdict(d):
-    '''
+    """
     Swap the keys and values of a dictionary. Equivalent to {v:k for k,v in d.items()}
 
     Args:
@@ -1292,7 +1292,7 @@ def swapdict(d):
         d2 = sc.swapdict(d1) # Returns {'foo':'a', 'bar':'b'}
 
     *New in version 1.3.0.*
-    '''
+    """
     if not isinstance(d, dict):
         errormsg = f'Not a dictionary: {type(d)}'
         raise TypeError(errormsg)
@@ -1306,7 +1306,7 @@ def swapdict(d):
 
 
 def mergedicts(*args, _strict=False, _overwrite=True, _copy=False, _sameclass=True, _die=True, **kwargs):
-    '''
+    """
     Small function to merge multiple dicts together.
     
     By default, skips any input arguments that are ``None``, and allows keys to be set 
@@ -1342,7 +1342,7 @@ def mergedicts(*args, _strict=False, _overwrite=True, _copy=False, _sameclass=Tr
     | *New in version 1.3.3:* keywords allowed
     | *New in version 2.0.0:* keywords fully enabled; "_sameclass" argument
     | *New in version 2.0.1:* fixed bug with "_copy" argument
-    '''
+    """
     # Warn about deprecated keys
     renamed = ['strict', 'overwrite', 'copy']
     if any([k in kwargs for k in renamed]): # pragma: no cover
@@ -1390,7 +1390,7 @@ def mergedicts(*args, _strict=False, _overwrite=True, _copy=False, _sameclass=Tr
 
 
 def mergelists(*args, coerce='default', copy=False, **kwargs):
-    '''
+    """
     Merge multiple lists together.
     
     Often used to flexible handle the input arguments to functions; see example
@@ -1426,7 +1426,7 @@ def mergelists(*args, coerce='default', copy=False, **kwargs):
         g = my_func([[1,2]], 3) # Returns [[1,2],3] since first argument is nested
 
     *New in version 1.1.0.*
-    '''
+    """
     obj = []
     for arg in args:
         arg = tolist(arg, coerce=coerce, **kwargs)
@@ -1437,7 +1437,7 @@ def mergelists(*args, coerce='default', copy=False, **kwargs):
 
 
 def _sanitize_iterables(obj, *args):
-    '''
+    """
     Take input as a list, array, pandas Series, or non-iterable type, along with
     one or more arguments, and return a list, along with information on what the
     input types were.
@@ -1448,7 +1448,7 @@ def _sanitize_iterables(obj, *args):
         _sanitize_iterables([1, 2], 3)           # Returns [1,2,3], True, False
         _sanitize_iterables(np.array([1, 2]), 3) # Returns [1,2,3], True, True
         _sanitize_iterables(np.array([1, 2, 3])) # Returns [1,2,3], False, True
-    '''
+    """
     is_list   = isinstance(obj, list) or len(args)>0 # If we're given a list of args, treat it like a list
     is_array  = isinstance(obj, (np.ndarray, pd.Series)) # Check if it's an array
     if is_array: # If it is, convert it to a list
@@ -1459,10 +1459,10 @@ def _sanitize_iterables(obj, *args):
 
 
 def _sanitize_output(obj, is_list, is_array, dtype=None):
-    '''
+    """
     The companion to _sanitize_iterables, convert the object back to the original
     type supplied.
-    '''
+    """
     if is_array:
         output = np.array(obj, dtype=dtype)
     elif not is_list and len(obj) == 1:
@@ -1481,7 +1481,7 @@ __all__ += ['strjoin', 'newlinejoin', 'strsplit', 'runcommand', 'uniquename',
 
 
 def strjoin(*args, sep=', '):
-    '''
+    """
     Like string ``join()``, but handles more flexible inputs, converts items to
     strings. By default, join with commas.
 
@@ -1494,7 +1494,7 @@ def strjoin(*args, sep=', '):
         sc.strjoin([1,2,3], 4, 'five')
 
     *New in version 1.1.0.*
-    '''
+    """
     obj = []
     for arg in args:
         if isstring(arg):
@@ -1508,7 +1508,7 @@ def strjoin(*args, sep=', '):
 
 
 def newlinejoin(*args):
-    '''
+    """
     Alias to ``strjoin(*args, sep='\\n')``.
 
     **Example**::
@@ -1516,12 +1516,12 @@ def newlinejoin(*args):
         sc.newlinejoin([1,2,3], 4, 'five')
 
     *New in version 1.1.0.*
-    '''
+    """
     return strjoin(*args, sep='\n')
 
 
 def strsplit(string, sep=None, skipempty=True, lstrip=True, rstrip=True):
-    '''
+    """
     Convenience function to split common types of strings.
 
     Note: to use regular expressions, use :func:`re.split()` instead.
@@ -1541,7 +1541,7 @@ def strsplit(string, sep=None, skipempty=True, lstrip=True, rstrip=True):
         sc.strsplit('  foo_bar  ', sep='_') # Returns ['foo', 'bar']
 
     *New in version 2.0.0.*
-    '''
+    """
     strlist = []
     if sep is None:
         sep = [' ', ',']
@@ -1568,7 +1568,7 @@ def strsplit(string, sep=None, skipempty=True, lstrip=True, rstrip=True):
 
 
 def runcommand(command, printinput=False, printoutput=None, wait=True, **kwargs):
-    '''
+    """
     Make it easier to run shell commands.
 
     Alias to :obj:`subprocess.Popen()`. Returns captured output if wait=True, else
@@ -1588,7 +1588,7 @@ def runcommand(command, printinput=False, printoutput=None, wait=True, **kwargs)
         sc.runcommand('find', wait=False) # Equivalent to executing 'find' in a terminal
     
     *New in version 3.1.1:* print real-time output if ``wait=False``
-    '''
+    """
     # Handle defaults and inputs
     if wait:
         defaults = dict(shell=True, stdout=subprocess.PIPE, stderr=subprocess.STDOUT) # Redirect both to the pipe
@@ -1747,7 +1747,7 @@ def suggest(user_input, valid_inputs, n=1, threshold=None, fulloutput=False, die
 
 
 def _assign_to_namespace(var, obj, namespace=None, overwrite=True): # pragma: no cover
-    ''' Helper function to assign an object to the global namespace '''
+    """ Helper function to assign an object to the global namespace """
     if namespace is None:
         namespace = globals()
     if var in namespace and not overwrite:
@@ -1758,7 +1758,7 @@ def _assign_to_namespace(var, obj, namespace=None, overwrite=True): # pragma: no
 
 
 def importbyname(module=None, variable=None, path=None, namespace=None, lazy=False, overwrite=True, die=True, verbose=True, **kwargs):
-    '''
+    """
     Import modules by name.
 
     See https://peps.python.org/pep-0690/ for a proposal for incorporating something
@@ -1786,7 +1786,7 @@ def importbyname(module=None, variable=None, path=None, namespace=None, lazy=Fal
 
     | *New in version 2.1.0:* "verbose" argument
     | *New in version 3.0.0:* "path" argument
-    '''
+    """
     # Initialize
     if variable is None:
         variable = module
@@ -1828,7 +1828,7 @@ def importbyname(module=None, variable=None, path=None, namespace=None, lazy=Fal
 
 
 def importbypath(path, name=None):
-    '''
+    """
     Import a module by path.
     
     Useful for importing multiple versions of the same module for comparison purposes.
@@ -1849,7 +1849,7 @@ def importbypath(path, name=None):
     See also :func:`sc.importbyname() <importbyname>`.
 
     *New in version 3.0.0.*
-    '''
+    """
     # Sanitize the path and filename
     default_file='__init__.py'
     filepath = Path(path)
@@ -1881,7 +1881,7 @@ __all__ += ['KeyNotFoundError', 'LinkException', 'prettyobj', 'autolist', 'Link'
 
 
 class KeyNotFoundError(KeyError):
-    '''
+    """
     A tiny class to fix repr for KeyErrors. KeyError prints the repr of the error
     message, rather than the actual message, so e.g. newline characters print as
     the character rather than the actual newline.
@@ -1889,24 +1889,24 @@ class KeyNotFoundError(KeyError):
     **Example**::
 
         raise sc.KeyNotFoundError('The key "foo" is not available, but these are: "bar", "cat"')
-    '''
+    """
 
     def __str__(self): # pragma: no cover
         return Exception.__str__(self)
 
 
 class LinkException(Exception): # pragma: no cover
-    '''
+    """
     An exception to raise when links are broken, for exclusive use with the Link
     class.
-    '''
+    """
 
     def __init(self, *args, **kwargs):
         Exception.__init__(self, *args, **kwargs)
 
 
 class prettyobj(object):
-    '''
+    """
     Use pretty repr for objects, instead of just showing the type and memory pointer
     (the Python default for objects). Can also be used as the base class for custom
     classes.
@@ -1968,10 +1968,10 @@ class prettyobj(object):
         # ————————————————————————————————————————————————————————————
 
     | *New in version 2.0.0:* allow positional arguments
-    '''
+    """
 
     def __init__(self, *args, **kwargs):
-        ''' Simple initialization '''
+        """ Simple initialization """
         kwargs = mergedicts(*args, kwargs)
         for k,v in kwargs.items():
             self.__dict__[k] = v
@@ -1979,14 +1979,14 @@ class prettyobj(object):
 
 
     def __repr__(self):
-        ''' The point of this class: use a more detailed repr by default '''
+        """ The point of this class: use a more detailed repr by default """
         from . import sc_printing as scp # To avoid circular import
         output  = scp.prepr(self)
         return output
 
 
 class autolist(list):
-    '''
+    """
     A simple extension to a list that defines add methods to simplify appending
     and extension.
 
@@ -1997,20 +1997,20 @@ class autolist(list):
         ls = sc.autolist()
         for i in range(5):
             ls += i # No need for ls += [i]
-    '''
+    """
     def __init__(self, *args):
         arglist = mergelists(*args) # Convert non-iterables to iterables
         list.__init__(self, arglist)
         return 
 
     def __add__(self, obj=None):
-        ''' Allows non-lists to be concatenated '''
+        """ Allows non-lists to be concatenated """
         obj = tolist(obj)
         new = self.__class__(list.__add__(self, obj)) # Ensure it returns an autolist
         return new
 
     def __iadd__(self, obj):
-        ''' Allows += to work correctly -- key feature of autolist '''
+        """ Allows += to work correctly -- key feature of autolist """
         obj = tolist(obj)
         self.extend(obj)
         return self
@@ -2024,14 +2024,14 @@ class autolist(list):
 
 
 class Link(object):
-    '''
+    """
     A class to differentiate between an object and a link to an object. The idea
     is that this object is parsed differently from other objects -- most notably,
     a recursive method (such as a pickle) would skip over Link objects, and then
     would fix them up after the other objects had been reinstated.
 
     Version: 2017jan31
-    '''
+    """
 
     def __init__(self, obj=None):
         self.obj = obj # Store the object -- or rather a reference to it, if it's mutable
@@ -2039,13 +2039,13 @@ class Link(object):
         except: self.uid = None # If not, just use None
 
     def __repr__(self): # pragma: no cover
-        ''' Just use default '''
+        """ Just use default """
         from . import sc_printing as scp # To avoid circular import
         output  = scp.prepr(self)
         return output
 
     def __call__(self, obj=None):
-        ''' If called with no argument, return the stored object; if called with argument, update object '''
+        """ If called with no argument, return the stored object; if called with argument, update object """
         if obj is None:
             if type(self.obj)==LinkException: # If the link is broken, raise it now
                 raise self.obj
@@ -2055,16 +2055,16 @@ class Link(object):
             return
 
     def __copy__(self, *args, **kwargs):
-        ''' Do NOT automatically copy link objects!! '''
+        """ Do NOT automatically copy link objects!! """
         return Link(LinkException('Link object copied but not yet repaired'))
 
     def __deepcopy__(self, *args, **kwargs):
-        ''' Same as copy '''
+        """ Same as copy """
         return self.__copy__(*args, **kwargs)
 
 
 class LazyModule(object):
-    '''
+    """
     Create a "lazy" module that is loaded if and only if an attribute is called.
 
     Typically not for use by the user, but is used by :func:`sc.importbyname() <importbyname>`.
@@ -2081,7 +2081,7 @@ class LazyModule(object):
         df = pd.DataFrame() # Not only does this work, but pd is now actually pandas
 
     *New in version 2.0.0.*
-    '''
+    """
 
     def __init__(self, module, variable, namespace=None, overwrite=True):
         self._variable  = variable
@@ -2097,7 +2097,7 @@ class LazyModule(object):
 
 
     def __getattr__(self, attr):
-        ''' In most cases, when an attribute is retrieved we want to replace this module with the actual one '''
+        """ In most cases, when an attribute is retrieved we want to replace this module with the actual one """
         _builtin_keys = ['_variable', '_module', '_namespace', '_overwrite', '_load']
         if attr in _builtin_keys: # pragma: no cover
             obj = object.__getattribute__(self, attr)
@@ -2107,7 +2107,7 @@ class LazyModule(object):
 
 
     def _load(self, attr=None):
-        ''' Stop being lazy and load the module '''
+        """ Stop being lazy and load the module """
         var = self._variable
         lib = importlib.import_module(self._module)
         _assign_to_namespace(var, lib, namespace=self._namespace, overwrite=self._overwrite)
@@ -2119,7 +2119,7 @@ class LazyModule(object):
     
 
 class tryexcept(cl.suppress):
-    '''
+    """
     Simple class to catch exceptions in a single line
     
     Effectively an alias to :obj:`contextlib.suppress()`, which itself is a programmatic
@@ -2164,7 +2164,7 @@ class tryexcept(cl.suppress):
     | *New in version 2.1.0.*
     | *New in version 3.0.0:* renamed "print" to "traceback"; added "to_df" and "disp" options
     | *New in version 3.1.0:* renamed "exceptions" to "data"; added "exceptions" property
-    '''
+    """
 
     def __init__(self, die=None, catch=None, verbose=1, history=None):
         
@@ -2215,7 +2215,7 @@ class tryexcept(cl.suppress):
     
     
     def __exit__(self, exc_type, exc_val, traceback):
-        ''' If a context manager returns True from exit, the exception is caught '''
+        """ If a context manager returns True from exit, the exception is caught """
         if exc_type is not None:
             self.data.append([exc_type, exc_val, traceback])
             die = (self.defaultdie or issubclass(exc_type, self.dietypes))
@@ -2231,7 +2231,7 @@ class tryexcept(cl.suppress):
 
     
     def traceback(self, which=None, tostring=False):
-        '''
+        """
         Print the exception (usually the last)
         
         Args:
@@ -2239,7 +2239,7 @@ class tryexcept(cl.suppress):
             tostring (bool): whether to return as a string (otherwise print)
         
         *New in version 3.1.0:* optionally print multiple tracebacks
-        '''
+        """
         string = ''
         if self.died:
             if which is None:
@@ -2258,7 +2258,7 @@ class tryexcept(cl.suppress):
     
     
     def to_df(self):
-        ''' Convert the exceptions to a dataframe '''
+        """ Convert the exceptions to a dataframe """
         from . import sc_dataframe as scd # To avoid circular import
         df = scd.dataframe(self.data, columns=['type','value','traceback'])
         self.df = df
@@ -2266,19 +2266,19 @@ class tryexcept(cl.suppress):
     
     
     def disp(self):
-        ''' Display all exceptions as a table '''
+        """ Display all exceptions as a table """
         df = self.to_df()
         df.disp()
         return
     
     @property
     def exceptions(self):
-        ''' Retrieve the last exception, if any '''
+        """ Retrieve the last exception, if any """
         return [entry[1] for entry in self.data]
 
     @property
     def exception(self):
-        ''' Retrieve the last exception, if any '''
+        """ Retrieve the last exception, if any """
         if len(self.data): # Exceptions were encountered
             return self.data[-1][1] # This is just the exception
         else:
@@ -2286,5 +2286,5 @@ class tryexcept(cl.suppress):
     
     @property
     def died(self):
-        ''' Whether or not any exceptions were encountered '''
+        """ Whether or not any exceptions were encountered """
         return len(self) > 0

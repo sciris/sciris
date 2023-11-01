@@ -2,7 +2,7 @@
 Style guide 
 ===========
 
-In general, Sciris follows Google's `style guide <https://google.github.io/styleguide/pyguide.html>`_. If you simply follow that, you can't go too wrong. However, there are a few "house style" differences, which are described here.
+In general, Sciris follows Google's `style guide <https://google.github.io/styleguide/pyguide.html>`__. If you simply follow that, you can't go too wrong. However, there are a few "house style" differences, which are described here.
 
 
 Design philosophy

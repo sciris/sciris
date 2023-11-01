@@ -1,4 +1,4 @@
-'''
+"""
 Define options for Sciris, mostly plotting options.
 
 All options should be set using ``set()`` or directly, e.g.::
@@ -11,7 +11,7 @@ To reset default options, use::
 
 Note: "options" is used to refer to the choices available (e.g., DPI), while "settings"
 is used to refer to the choices made (e.g., ``dpi=150``).
-'''
+"""
 
 import os
 import re
@@ -53,7 +53,7 @@ style_fancy.update({
 
 
 def parse_env(var, default=None, which='str'):
-    '''
+    """
     Simple function to parse environment variables
 
     Args:
@@ -62,7 +62,7 @@ def parse_env(var, default=None, which='str'):
         which (str): what type to convert to (if None, don't convert)
 
     *New in version 2.0.0.*
-    '''
+    """
     val = os.getenv(var, default)
     if which is None:
         return val
@@ -94,7 +94,7 @@ def parse_env(var, default=None, which='str'):
 #%% Define the options class
 
 class ScirisOptions(sco.objdict):
-    '''
+    """
     Set options for Sciris.
 
     Note: this class should not be invoked directly. An instance is created automatically,
@@ -133,7 +133,7 @@ class ScirisOptions(sco.objdict):
     | *New in version 1.3.0.*
     | *New in version 2.0.0:* revamped with additional options ``interactive`` and ``jupyter``, plus styles
     | *New in version 3.0.0:* renamed from Options to ScirisOptions to avoid potential confusion with ``sc.options``
-    '''
+    """
 
     def __init__(self):
         super().__init__()
@@ -145,17 +145,17 @@ class ScirisOptions(sco.objdict):
 
 
     def __call__(self, *args, **kwargs):
-        '''Allow ``sc.options(dpi=150)`` instead of ``sc.options.set(dpi=150)`` '''
+        """Allow ``sc.options(dpi=150)`` instead of ``sc.options.set(dpi=150)`` """
         return self.set(*args, **kwargs)
 
 
     def to_dict(self):
-        ''' Pull out only the settings from the options object '''
+        """ Pull out only the settings from the options object """
         return {k:v for k,v in self.items()}
 
 
     def __repr__(self):
-        ''' Brief representation '''
+        """ Brief representation """
         output = scp.objectid(self)
         output += 'Sciris options (see also sc.options.disp()):\n'
         output += scu.pp(self.to_dict(), output=True)
@@ -163,12 +163,12 @@ class ScirisOptions(sco.objdict):
 
 
     def __enter__(self):
-        ''' Allow to be used in a with block '''
+        """ Allow to be used in a with block """
         return self
 
 
     def __exit__(self, *args, **kwargs):
-        ''' Allow to be used in a with block '''
+        """ Allow to be used in a with block """
         try:
             reset = {}
             for k,v in self.on_entry.items():
@@ -183,7 +183,7 @@ class ScirisOptions(sco.objdict):
 
 
     def disp(self):
-        ''' Detailed representation '''
+        """ Detailed representation """
         output = 'Sciris options (see also sc.options.help()):\n'
         keylen = 14 # Maximum key length  -- "numba_parallel"
         for k,v in self.items():
@@ -197,10 +197,10 @@ class ScirisOptions(sco.objdict):
 
     @staticmethod
     def get_orig_options():
-        '''
+        """
         Set the default options for Sciris -- not to be called by the user, use
         :meth:`sc.options.set('defaults') <ScirisOptions.set>` instead.
-        '''
+        """
 
         # Options acts like a class, but is actually an objdict for simplicity
         optdesc = sco.objdict() # Help for the options
@@ -240,7 +240,7 @@ class ScirisOptions(sco.objdict):
 
 
     def set(self, key=None, value=None, use=True, **kwargs):
-        '''
+        """
         Actually change the style. See :meth:`sc.options.help() <ScirisOptions.help>` for more information.
 
         Args:
@@ -252,7 +252,7 @@ class ScirisOptions(sco.objdict):
         **Example**::
 
             sc.options.set(dpi=50) # Equivalent to sc.options(dpi=50)
-        '''
+        """
 
         # Reset to defaults
         if key in ['default', 'defaults']:
@@ -304,22 +304,22 @@ class ScirisOptions(sco.objdict):
     
     
     def reset(self):
-        '''
+        """
         Alias to sc.options.set('defaults')
         
         *New in version 3.1.0.*
-        '''
+        """
         self.set('defaults')
 
 
     def context(self, **kwargs):
-        '''
+        """
         Alias to set() for non-plotting options, for use in a "with" block.
 
         Note: for plotting options, use :meth:`sc.options.with_style() <ScirisOptions.with_style>`, which is linked
         to Matplotlib's context manager. If you set plotting options with this,
         they won't have any effect.
-        '''
+        """
         # Store current settings
         self.on_entry = {k:self[k] for k in kwargs.keys()}
 
@@ -329,7 +329,7 @@ class ScirisOptions(sco.objdict):
 
 
     def set_matplotlib_global(self, key, value):
-        ''' Set a global option for Matplotlib -- not for users '''
+        """ Set a global option for Matplotlib -- not for users """
         if value: # Don't try to reset any of these to a None value
             if   key == 'fontsize': pl.rcParams['font.size']   = value
             elif key == 'font':     pl.rcParams['font.family'] = value
@@ -344,7 +344,7 @@ class ScirisOptions(sco.objdict):
 
 
     def set_jupyter(self, kwargs=None):
-        ''' Handle Jupyter settings '''
+        """ Handle Jupyter settings """
         if kwargs is None: # Default setting
             kwargs = dict(jupyter=self['jupyter'])
         
@@ -397,12 +397,12 @@ class ScirisOptions(sco.objdict):
 
 
     def get_default(self, key):
-        ''' Helper function to get the original default options '''
+        """ Helper function to get the original default options """
         return self.orig_options[key]
 
 
     def changed(self, key):
-        ''' Check if current setting has been changed from default '''
+        """ Check if current setting has been changed from default """
         if key in self.orig_options:
             return self[key] != self.orig_options[key]
         else:
@@ -410,7 +410,7 @@ class ScirisOptions(sco.objdict):
 
 
     def help(self, detailed=False, output=False):
-        '''
+        """
         Print information about options.
 
         Args:
@@ -420,7 +420,7 @@ class ScirisOptions(sco.objdict):
         **Example**::
 
             sc.options.help(detailed=True)
-        '''
+        """
 
         # If not detailed, just print the docstring for sc.options
         if not detailed:
@@ -453,7 +453,7 @@ class ScirisOptions(sco.objdict):
             print(f'  Description: {entry.desc}')
 
         scp.heading('Methods:', spacesafter=0)
-        print('''
+        print("""
     sc.options(key=value) -- set key to value
     sc.options[key] -- get or set key
     sc.options.set() -- set option(s)
@@ -462,7 +462,7 @@ class ScirisOptions(sco.objdict):
     sc.options.save() -- save settings to file
     sc.options.to_dict() -- convert to dictionary
     sc.options.with_style() -- create style context for plotting
-''')
+""")
 
         if output:
             return optdict
@@ -471,13 +471,13 @@ class ScirisOptions(sco.objdict):
 
 
     def load(self, filename, verbose=True, **kwargs):
-        '''
+        """
         Load current settings from a JSON file.
 
         Args:
             filename (str): file to load
             kwargs (dict): passed to :func:`sc.loadjson() <sciris.sc_fileio.loadjson>`
-        '''
+        """
         from . import sc_fileio as scf # To avoid circular import
         json = scf.loadjson(filename=filename, **kwargs)
         current = self.to_dict()
@@ -488,13 +488,13 @@ class ScirisOptions(sco.objdict):
 
 
     def save(self, filename, verbose=True, **kwargs):
-        '''
+        """
         Save current settings as a JSON file.
 
         Args:
             filename (str): file to save to
             kwargs (dict): passed to :func:`sc.savejson() <sciris.sc_fileio.savejson>`
-        '''
+        """
         from . import sc_fileio as scf # To avoid circular import
         json = self.to_dict()
         output = scf.savejson(filename=filename, obj=json, **kwargs)
@@ -503,7 +503,7 @@ class ScirisOptions(sco.objdict):
 
 
     def _handle_style(self, style=None, reset=False, copy=True):
-        ''' Helper function to handle logic for different styles '''
+        """ Helper function to handle logic for different styles """
         rc = self.rc # By default, use current
         if isinstance(style, dict): # If an rc-like object is supplied directly # pragma: no cover
             rc = scu.dcp(style)
@@ -529,7 +529,7 @@ class ScirisOptions(sco.objdict):
 
 
     def with_style(self, style=None, use=False, **kwargs):
-        '''
+        """
         Combine all Matplotlib style information, and either apply it directly
         or create a style context.
 
@@ -558,7 +558,7 @@ class ScirisOptions(sco.objdict):
 
             with sc.options.with_style(dpi=300): # Use default options, but higher DPI
                 pl.plot([1,3,6])
-        '''
+        """
 
         # Handle inputs
         rc = scu.dcp(self.rc) # Make a local copy of the currently used settings
@@ -575,7 +575,7 @@ class ScirisOptions(sco.objdict):
         rc = self._handle_style(style, reset=False)
 
         def pop_keywords(sourcekeys, rckey):
-            ''' Helper function to handle input arguments '''
+            """ Helper function to handle input arguments """
             sourcekeys = scu.tolist(sourcekeys)
             key = sourcekeys[0] # Main key
             value = None
@@ -613,7 +613,7 @@ class ScirisOptions(sco.objdict):
 
 
     def use_style(self, **kwargs):
-        '''
+        """
         Shortcut to set Sciris's current style as the global default.
 
         **Example**::
@@ -625,7 +625,7 @@ class ScirisOptions(sco.objdict):
             pl.style.use('seaborn-whitegrid') # to something else
             pl.figure()
             pl.plot([3,1,4])
-        '''
+        """
         return self.with_style(use=True, **kwargs)
 
 
@@ -636,7 +636,7 @@ options = ScirisOptions()
 #%% Module help
 
 def help(pattern=None, source=False, ignorecase=True, flags=None, context=False, output=False, debug=False):
-    '''
+    """
     Get help on Sciris in general, or search for a word/expression.
 
     Args:
@@ -656,7 +656,7 @@ def help(pattern=None, source=False, ignorecase=True, flags=None, context=False,
 
     | *New in version 1.3.0.*
     | *New in version 1.3.1:* "source" argument
-    '''
+    """
     defaultmsg = '''
 For general help using Sciris, the best place to start is the docs:
 
@@ -682,7 +682,7 @@ See help(sc.help) for more information.
             flags.append(re.I)
 
         def func_ok(f):
-            ''' Skip certain functions '''
+            """ Skip certain functions """
             excludes = [
                 f.startswith('_'), # These are private
                 f.startswith('sc_'), # These are modules

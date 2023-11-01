@@ -149,13 +149,13 @@ def test_iterobj():
     o.a.i1 = [1,2,3]
     o.b.i2 = dict(cat=[4,5,6])
     data = dict(
-        a=dict(
-            x=[1,2,3], 
-            y=[4,5,6]), 
-        b=dict(
-            foo='string', 
-            bar='other_string'),
-        c=o,
+        a = dict(
+            x = [1,2,3], 
+            y = [4,5,6]), 
+        b = dict(
+            foo = 'string', 
+            bar = 'other_string'),
+        c = o,
     )
     
     # Search through an object
@@ -166,19 +166,64 @@ def test_iterobj():
     print(out)
     
     # Modify in place -- collapse mutliple short lines into one
-    def collapse(obj):
+    def collapse(obj, maxlen):
         string = str(obj)
-        if len(string) < 10:
+        if len(string) < maxlen:
             return string
         else:
             return obj
-
+    
     sc.printjson(data)
-    sc.iterobj(data, collapse, inplace=True)
+    sc.iterobj(data, collapse, inplace=True, maxlen=10) # Note passing of keyword argument to function
+    sc.iterobj(data, collapse, inplace=True, maxlen=10) # Note passing of keyword argument to function
     sc.printjson(data)
+    assert data['a']['x'] == '[1, 2, 3]'
     
     return out
 
+
+def test_iterobj_class():
+    sc.heading('Testing iterobj class')
+
+    # Create a simple class for storing data
+    class DataObj(sc.prettyobj):
+        def __init__(self, **kwargs):
+            self.keys   = tuple(kwargs.keys())
+            self.values = tuple(kwargs.values())
+
+    # Create the data
+    obj1 = DataObj(a=[0,1,2], b=[3,4,5])
+    obj2 = DataObj(c=[6,7,8], d=[9])
+    obj = DataObj(obj1=obj1, obj2=obj2)
+
+    # Define custom methods for iterating over tuples and the DataObj
+    def custom_iter(obj):
+        if isinstance(obj, tuple):
+            return enumerate(obj)
+        if isinstance(obj, DataObj):
+            return [(k,v) for k,v in zip(obj.keys, obj.values)]
+
+    # Define custom method for getting data from each
+    def custom_get(obj, key):
+        if isinstance(obj, tuple):
+            return obj[key]
+        elif isinstance(obj, DataObj):
+            return obj.values[obj.keys.index(key)]
+
+    # Gather all data into one list
+    all_data = []
+    def gather_data(obj, all_data=all_data):
+        if isinstance(obj, list):
+            all_data += obj
+            
+    # Run the iteration
+    io = sc.IterObj(obj, func=gather_data, custom_type=(tuple, DataObj), custom_iter=custom_iter, custom_get=custom_get)
+    io.iterate()
+    print(all_data)
+    assert all_data == list(range(10))
+    
+    return io
+    
 
 def test_equal():
     sc.heading('Testing equal')
@@ -245,6 +290,7 @@ if __name__ == '__main__':
     dicts   = test_dicts()
     search  = test_search()
     iterobj = test_iterobj()
+    io_obj  = test_iterobj_class()
     equal   = test_equal()
 
     T.toc('Done.')

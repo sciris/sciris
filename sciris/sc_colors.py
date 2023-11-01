@@ -1,4 +1,4 @@
-'''
+"""
 Handle colors and colormaps.
 
 Highlights:
@@ -6,7 +6,7 @@ Highlights:
     - :func:`sc.hex2rgb() <hex2rgb>`/:func:`sc.rgb2hex() <rgb2hex>`: convert between different color conventions
     - :func:`sc.vectocolor() <vectocolor>`: map a list of sequential values onto a list of colors
     - :func:`sc.gridcolors() <gridcolors>`: map a list of qualitative categories onto a list of colors
-'''
+"""
 
 ##############################################################################
 #%% Imports
@@ -28,7 +28,7 @@ __all__ = ['sanitizecolor', 'shifthue', 'rgb2hex', 'hex2rgb', 'rgb2hsv', 'hsv2rg
 
 
 def _listify_colors(colors, origndim=None):
-    ''' Do standard transformation on colors -- internal helper function '''
+    """ Do standard transformation on colors -- internal helper function """
     if not origndim:
         colors = scu.dcp(colors) # So we don't overwrite the original
         origndim = np.ndim(colors) # Original dimensionality
@@ -43,7 +43,7 @@ def _listify_colors(colors, origndim=None):
 
 
 def sanitizecolor(color, asarray=False, alpha=None, normalize=True):
-    '''
+    """
     Alias to :func:`matplotlib.colors.to_rgb`, but also handles numeric inputs.
     
     Arg:
@@ -59,7 +59,7 @@ def sanitizecolor(color, asarray=False, alpha=None, normalize=True):
         crimson1 = sc.sanitizecolor('crimson')
         crimson2 = sc.sanitizecolor((220, 20, 60))
         midgrey = sc.sanitizecolor(0.5)
-    '''
+    """
     if isinstance(color, str):
         try:
             color = mpl.colors.to_rgb(color)
@@ -83,11 +83,11 @@ def sanitizecolor(color, asarray=False, alpha=None, normalize=True):
 
 
 def _processcolors(colors=None, asarray=False, ashex=False, reverse=False):
-    '''
+    """
     Small helper function to do common transformations on the colors, once generated.
     Expects colors to be an array. If asarray is True and reverse are False, returns
     that array. Otherwise, does the required permutations.
-    '''
+    """
     if asarray:
         output = colors
         if reverse: output = output[::-1] # Reverse the array
@@ -104,13 +104,13 @@ def _processcolors(colors=None, asarray=False, ashex=False, reverse=False):
 
 
 def shifthue(colors=None, hueshift=0.0):
-    '''
+    """
     Shift the hue of the colors being fed in.
 
     **Example**::
 
         colors = sc.shifthue(colors=[(1,0,0),(0,1,0)], hueshift=0.5)
-    '''
+    """
     colors, origndim = _listify_colors(colors)
     for c,color in enumerate(colors):
         hsvcolor = mpl.colors.rgb_to_hsv(color)
@@ -123,13 +123,13 @@ def shifthue(colors=None, hueshift=0.0):
 
 
 def rgb2hex(arr):
-    '''
+    """
     A little helper function to convert e.g. [0.53, 0.74, 0.15] to a pleasing shade of green.
 
     **Example**::
 
         hx = sc.rgb2hex([0.53, 0.74, 0.15]) # Returns '#87bc26'
-    '''
+    """
     arr = np.array(arr)
     if len(arr) != 3: # pragma: no cover
         errormsg = f'Cannot convert "{arr}" to hex: wrong length'
@@ -140,13 +140,13 @@ def rgb2hex(arr):
 
 
 def hex2rgb(string):
-    '''
+    """
     A little helper function to convert e.g. '87bc26' to a pleasing shade of green.
 
     **Example**::
 
         rgb = sc.hex2rgb('#87bc26') # Returns array([0.52941176, 0.7372549 , 0.14901961])
-    '''
+    """
     if string[0] == '#':
         string = string[1:] # Trim leading #, if it exists
     if len(string) == 3:
@@ -160,13 +160,13 @@ def hex2rgb(string):
 
 
 def rgb2hsv(colors=None):
-    '''
+    """
     Shortcut to Matplotlib's rgb_to_hsv method, accepts a color triplet or a list/array of color triplets.
 
     **Example**::
 
         hsv = sc.rgb2hsv([0.53, 0.74, 0.15]) # Returns array([0.2259887, 0.7972973, 0.74     ])
-    '''
+    """
     colors, origndim = _listify_colors(colors)
     for c,color in enumerate(colors):
         hsvcolor = mpl.colors.rgb_to_hsv(color)
@@ -177,13 +177,13 @@ def rgb2hsv(colors=None):
 
 
 def hsv2rgb(colors=None):
-    '''
+    """
     Shortcut to Matplotlib's hsv_to_rgb method, accepts a color triplet or a list/array of color triplets.
 
     **Example**::
 
         rgb = sc.hsv2rgb([0.23, 0.80, 0.74]) # Returns array([0.51504, 0.74   , 0.148  ])
-    '''
+    """
     colors, origndim = _listify_colors(colors)
     for c,color in enumerate(colors):
         hsvcolor = mpl.colors.hsv_to_rgb(color)
@@ -447,7 +447,7 @@ def gridcolors(ncolors=10, limits=None, nsteps=20, asarray=False, ashex=False, r
 
 
 def midpointnorm(vcenter=0, vmin=None, vmax=None):
-    '''
+    """
     Alias to Matplotlib's TwoSlopeNorm. Used to place the center of the colormap
     somewhere other than the center of the data.
 
@@ -462,7 +462,7 @@ def midpointnorm(vcenter=0, vmin=None, vmax=None):
         pl.pcolor(data, cmap='bi', norm=sc.midpointnorm())
 
     *New in version 1.2.0.*
-    '''
+    """
     norm = mpl.colors.TwoSlopeNorm(vcenter=vcenter, vmin=vmin, vmax=vmax)
     return norm
 
@@ -471,7 +471,7 @@ def midpointnorm(vcenter=0, vmin=None, vmax=None):
 def manualcolorbar(data=None, vmin=0, vmax=1, vcenter=None, colors=None, values=None,
                    cmap=None, norm=None, label=None, labelkwargs=None, ticks=None, 
                    ticklabels=None, fig=None, ax=None, cax=None, axkwargs=None, **kwargs):
-    '''
+    """
     Add a colorbar to a plot that does not support one by default.
     
     There are three main use cases, from least to most manual:
@@ -545,7 +545,7 @@ def manualcolorbar(data=None, vmin=0, vmax=1, vcenter=None, colors=None, values=
         )
 
     *New in version 3.1.0.*
-    '''
+    """
     labelkwargs = scu.mergedicts(labelkwargs)
     
     # Get the colorbar axes
@@ -605,7 +605,7 @@ def manualcolorbar(data=None, vmin=0, vmax=1, vcenter=None, colors=None, values=
 
 
 def colormapdemo(cmap=None, n=None, smoothing=None, randseed=None, doshow=True):
-    '''
+    """
     Demonstrate a color map using simulated elevation data, shown in both 2D and
     3D. The argument can be either a colormap itself or a string describing a
     colormap.
@@ -617,7 +617,7 @@ def colormapdemo(cmap=None, n=None, smoothing=None, randseed=None, doshow=True):
         sc.colormapdemo(sc.alpinecolormap(), n=200, smoothing=20, randseed=2942) # Use a colormap object
 
     Version: 2019aug22
-    '''
+    """
     from . import sc_plotting as scp # To avoid circular import
 
     # Set data
@@ -800,7 +800,7 @@ def bicolormap(gap=0.1, mingreen=0.2, redbluemix=0.5, epsilon=0.01, demo=False, 
 
 
 def parulacolormap(apply=False):
-    '''
+    """
     Create a map similar to Viridis, but brighter. Set apply=True to use
     immediately.
 
@@ -810,7 +810,7 @@ def parulacolormap(apply=False):
         sc.colormapdemo(cmap=cmap)
 
     Version: 2019aug22
-    '''
+    """
     data = [[0.2422,0.1504,0.6603], [0.2444,0.1534,0.6728], [0.2464,0.1569,0.6847], [0.2484,0.1607,0.6961], [0.2503,0.1648,0.7071], [0.2522,0.1689,0.7179], [0.2540,0.1732,0.7286], [0.2558,0.1773,0.7393],
             [0.2576,0.1814,0.7501], [0.2594,0.1854,0.7610], [0.2611,0.1893,0.7719], [0.2628,0.1932,0.7828], [0.2645,0.1972,0.7937], [0.2661,0.2011,0.8043], [0.2676,0.2052,0.8148], [0.2691,0.2094,0.8249],
             [0.2704,0.2138,0.8346], [0.2717,0.2184,0.8439], [0.2729,0.2231,0.8528], [0.2740,0.2280,0.8612], [0.2749,0.2330,0.8692], [0.2758,0.2382,0.8767], [0.2766,0.2435,0.8840], [0.2774,0.2489,0.8908],
@@ -851,7 +851,7 @@ def parulacolormap(apply=False):
 
 
 def turbocolormap(apply=False):
-    '''
+    """
     NOTE: as of Matplotlib 3.4.0, this colormap is included by default, and will
     soon be removed from Sciris.
 
@@ -872,7 +872,7 @@ def turbocolormap(apply=False):
         sc.colormapdemo(cmap=cmap)
 
     Version: 2020mar20
-    '''
+    """
     data = [[0.18995,0.07176,0.23217],[0.19483,0.08339,0.26149],[0.19956,0.09498,0.29024],[0.20415,0.10652,0.31844],[0.20860,0.11802,0.34607],[0.21291,0.12947,0.37314],[0.21708,0.14087,0.39964],[0.22111,0.15223,0.42558],
             [0.22500,0.16354,0.45096],[0.22875,0.17481,0.47578],[0.23236,0.18603,0.50004],[0.23582,0.19720,0.52373],[0.23915,0.20833,0.54686],[0.24234,0.21941,0.56942],[0.24539,0.23044,0.59142],[0.24830,0.24143,0.61286],
             [0.25107,0.25237,0.63374],[0.25369,0.26327,0.65406],[0.25618,0.27412,0.67381],[0.25853,0.28492,0.69300],[0.26074,0.29568,0.71162],[0.26280,0.30639,0.72968],[0.26473,0.31706,0.74718],[0.26652,0.32768,0.76412],
@@ -914,7 +914,7 @@ def turbocolormap(apply=False):
 
 
 def bandedcolormap(minvalue=None, minsaturation=None, hueshift=None, saturationscale=None, npts=None, apply=False):
-    '''
+    """
     Map colors onto bands of hue and saturation, with lightness mapped linearly.
     Unlike most colormaps, this colormap does not aim to be percentually uniform,
     but rather aims to make it easy to relate colors to as-exact-as-possible numbers
@@ -926,7 +926,7 @@ def bandedcolormap(minvalue=None, minsaturation=None, hueshift=None, saturations
         sc.colormapdemo(cmap=cmap)
 
     Version: 2019aug22
-    '''
+    """
     # Set parameters
     if minvalue        is None: minvalue        = 0.1
     if hueshift        is None: hueshift        = 0.8
@@ -950,7 +950,7 @@ def bandedcolormap(minvalue=None, minsaturation=None, hueshift=None, saturations
 
 
 def orangebluecolormap(apply=False):
-    '''
+    """
     Create an orange-blue colormap; most like RdYlBu but more pleasing. Created
     by Prashanth Selvaraj.
 
@@ -960,7 +960,7 @@ def orangebluecolormap(apply=False):
         sc.colormapdemo(cmap=cmap)
 
     *New in version 1.0.0.*
-    '''
+    """
     bottom = pl.get_cmap('Oranges', 128)
     top    = pl.get_cmap('Blues_r', 128)
     x      = np.linspace(0, 1, 128)
