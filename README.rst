@@ -27,9 +27,9 @@ If you have questions, feature suggestions, or would like some help getting star
 Installation
 ------------
 
-Using ``pip``: ``pip install sciris``
+Using pip: ``pip install sciris``
 
-Using ``conda``: ``conda install -c conda-forge sciris``
+Using conda: ``conda install -c conda-forge sciris``
 
 *Requires Python >= 3.7*.
 

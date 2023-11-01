@@ -27,7 +27,7 @@ __all__ = ['approx', 'safedivide', 'findinds', 'findfirst', 'findlast', 'findnea
 def approx(val1=None, val2=None, eps=None, **kwargs):
     """
     Determine whether two scalars (or an array and a scalar) approximately match.
-    Alias for np.isclose() and may be removed in future versions.
+    Alias for :func:`np.isclose() <numpy.isclose>` and may be removed in future versions.
 
     Args:
         val1 (number or array): the first value
@@ -179,18 +179,18 @@ def findinds(arr=None, val=None, *args, eps=1e-6, first=False, last=False, ind=N
 
 
 def findfirst(*args, **kwargs):
-    """ Alias for findinds(..., first=True). *New in version 1.0.0.* """
+    """ Alias for :func:`sc.findinds(..., first=True) <findinds>`. *New in version 1.0.0.* """
     return findinds(*args, **kwargs, first=True)
 
 
 def findlast(*args, **kwargs):
-    """ Alias for findinds(..., last=True). *New in version 1.0.0.* """
+    """ Alias for :func:`sc.findinds(..., last=True) <findinds>`. *New in version 1.0.0.* """
     return findinds(*args, **kwargs, last=True)
 
 
 def findnearest(series=None, value=None):
     """
-    Return the index of the nearest match in series to value -- like findinds, but
+    Return the index of the nearest match in series to value -- like :func:`sc.findinds() <findinds>`, but
     always returns an object with the same type as value (i.e. findnearest with
     a number returns a number, findnearest with an array returns an array).
     
@@ -239,14 +239,12 @@ def count(arr=None, val=None, eps=1e-6, **kwargs):
     return output
 
 
-
 def dataindex(dataarray, index): # pragma: no cover
     """
     Take an array of data and return either the first or last (or some other) non-NaN entry.
 
     This function is deprecated.
     """
-
     nrows = np.shape(dataarray)[0] # See how many rows need to be filled (either npops, nprogs, or 1).
     output = np.zeros(nrows)       # Create structure
     for r in range(nrows):
@@ -258,13 +256,13 @@ def dataindex(dataarray, index): # pragma: no cover
 def getvalidinds(data=None, filterdata=None): # pragma: no cover
     """
     Return the indices that are valid based on the validity of the input data from an arbitrary number
-    of 1-D vector inputs. Warning, closely related to getvaliddata().
+    of 1-D vector inputs. Note, closely related to :func:`sc.getvaliddata() <getvaliddata>`.
 
     This function is deprecated.
 
     **Example**::
 
-        getvalidinds([3,5,8,13], [2000, nan, nan, 2004]) # Returns array([0,3])
+        sc.getvalidinds([3,5,8,13], [2000, nan, nan, 2004]) # Returns array([0,3])
     """
     data = scu.toarray(data)
     if filterdata is None: filterdata = data # So it can work on a single input -- more or less replicates sanitize() then
@@ -280,11 +278,11 @@ def getvaliddata(data=None, filterdata=None, defaultind=0): # pragma: no cover
     """
     Return the data value indices that are valid based on the validity of the input data.
 
-    This function is deprecated.
+    This function is deprecated; see :func:`sc.sanitize() <sanitize>` instead.
 
     **Example**::
 
-        getvaliddata(array([3,5,8,13]), array([2000, nan, nan, 2004])) # Returns array([3,13])
+        sc.getvaliddata(array([3,5,8,13]), array([2000, nan, nan, 2004])) # Returns array([3,13])
     """
     data = np.array(data)
     if filterdata is None: filterdata = data # So it can work on a single input -- more or less replicates sanitize() then
@@ -738,7 +736,7 @@ def randround(x):
 
 def cat(*args, copy=False, **kwargs):
     """
-    Like np.concatenate(), but takes anything and returns an array. Useful for
+    Like :func:`numpy.concatenate`, but takes anything and returns an array. Useful for
     e.g. appending a single number onto the beginning or end of an array.
 
     Args:
@@ -816,14 +814,14 @@ __all__ += ['rolling', 'convolve', 'smooth', 'smoothinterp', 'gauss1d', 'gauss2d
 
 def rolling(data, window=7, operation='mean', replacenans=None, **kwargs):
     """
-    Alias to pandas' rolling() (window) method to smooth a series.
+    Alias to :meth:`pandas.Series.rolling()` (window) method to smooth a series.
 
     Args:
         data (list/arr): the 1D or 2D data to be smoothed
         window (int): the length of the window
         operation (str): the operation to perform: 'mean' (default), 'median', 'sum', or 'none'
         replacenans (bool/float): if None, leave NaNs; if False, remove them; if a value, replace with that value; if the string 'nearest' or 'linear', do interpolation (see :func:`sc.rmnans() <rmnans>` for details)
-        kwargs (dict): passed to pd.Series.rolling()
+        kwargs (dict): passed to :meth:`pandas.Series.rolling()`
 
     **Example**::
 
