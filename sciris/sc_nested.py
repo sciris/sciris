@@ -15,6 +15,9 @@ import numpy as np
 import pandas as pd
 from . import sc_utils as scu
 
+# Define objects for which it doesn't make sense to descend further -- used here and sc.equal()
+_atomic_classes = (np.ndarray, pd.Series, pd.DataFrame, pd.core.indexes.base.Index) 
+
 
 ##############################################################################
 #%% Nested dict and object functions
@@ -207,39 +210,129 @@ def iternested(nesteddict, _previous=None):
     return output
 
 
-def iteritems(obj, itertype):
-    ''' Return an iterator over items in this object -- for internal use '''
-    if itertype == 'dict':
-        return obj.items()
-    elif itertype == 'list':
-        return enumerate(obj)
-    elif itertype == 'object':
-        return obj.__dict__.items()
+class IterObj(object):
+    '''
+    Object iteration manager
+    
+    For arguments and usage documentation, see :func:`sc.iterobj() <iterobj>`.
+    Use this class if you want more control over how the object is iterated over.
+    
+    **Example**::
+        
+        import sciris as sc
 
-def getitem(obj, key, itertype):
-    ''' Get the value for the item -- for internal use '''
-    if itertype in ['dict', 'list']:
-        return obj[key]
-    elif itertype == 'object':
-        return obj.__dict__[key]
+        def slowfunc(i):
+            sc.randsleep(seed=i)
+            return i**2
 
-def setitem(obj, key, value, itertype):
-    ''' Set the value for the item -- for internal use '''
-    if itertype in ['dict', 'list']:
-        obj[key] = value
-    elif itertype == 'object':
-        obj.__dict__[key] = value
-    return
+        # Standard usage
+        P = sc.Parallel(slowfunc, iterarg=range(10), parallelizer='multiprocess-async')
+        P.run_async()
+        P.monitor()
+        P.finalize()
+        print(P.times)
+        
+    | *New in version 3.1.2.*
+    '''    
+    def __init__(self, obj, func=None, inplace=False, copy=False, leaf=False, atomic='default', verbose=False, 
+                _trace=None, _output=None, *args, **kwargs):
+        from . import sc_odict as sco # To avoid circular import
+        self.obj       = obj
+        self.func      = func
+        self.inplace   = inplace
+        self.copy      = copy
+        self.leaf      = leaf
+        self.atomic    = atomic
+        self.verbose   = verbose
+        self._trace    = _trace
+        self._output   = _output
+        self.func_args = args
+        self.func_kw   = kwargs
+        
+        # Handle inputs
+        if self.func is None: # Define the default function
+            self.func = lambda obj: obj 
+        if self.atomic == 'default': # Handle objects to not descend into
+            self.atomic = _atomic_classes 
+        if self._trace is None:
+            self._trace = [] # Handle where we are in the object
+            if inplace and copy: # Only need to copy once
+                self.obj = scu.dcp(obj)
+        if self._output is None: # Handle the output at the root level
+            self._output = sco.objdict()
+            if not inplace:
+                self._output['root'] = self.func(self.obj, *args, **kwargs)
+                
+        return
 
+    def iteritems(self, obj, itertype):
+        ''' Return an iterator over items in this object '''
+        if itertype == 'dict':
+            return obj.items()
+        elif itertype == 'list':
+            return enumerate(obj)
+        elif itertype == 'object':
+            return obj.__dict__.items()
+    
+    def getitem(self, obj, key, itertype):
+        ''' Get the value for the item '''
+        if itertype in ['dict', 'list']:
+            return obj[key]
+        elif itertype == 'object':
+            return obj.__dict__[key]
+    
+    def setitem(self, obj, key, value, itertype):
+        ''' Set the value for the item '''
+        if itertype in ['dict', 'list']:
+            obj[key] = value
+        elif itertype == 'object':
+            obj.__dict__[key] = value
+        return
+    
+    def iterate(self):
+        ''' Actually perform the iteration over the object '''
+        
+        itertype = check_iter_type(self.obj, known=self.atomic)
+        
+        # Next, check if we need to iterate
+        if itertype:
+            for key,subobj in self.iteritems(self.obj, itertype):
+                trace = self._trace + [key]
+                newobj = subobj
+                subitertype = check_iter_type(subobj)
+                if self.verbose: # pragma: no cover
+                    print(f'Working on {trace}, {self.leaf}, {subitertype}')
+                if not (self.leaf and subitertype):
+                    newobj = self.func(subobj, *self.func_args, **self.func_kw)
+                    if self.inplace:
+                        self.setitem(self.obj, key, newobj, itertype)
+                    else:
+                        self._output[tuple(trace)] = newobj
+                iterobj(self.getitem(self.obj, key, itertype), self.func, inplace=self.inplace, leaf=self.leaf, atomic=self.atomic, # Run recursively
+                        verbose=self.verbose, _trace=trace, _output=self._output, *self.func_args, **self.func_kw)
+            
+        if self.inplace:
+            newobj = self.func(self.obj, *self.func_args, **self.func_kw) # Set at the root level
+            return newobj
+        else:
+            if (not self._trace) and (len(self._output)>1) and self.leaf: # We're at the top level, we have multiple entries, and only leaves are requested
+                self._output.pop('root') # Remove "root" with leaf=True if it's not the only node
+            return self._output
+        
 
-_atomic_classes = (np.ndarray, pd.Series, pd.DataFrame, pd.core.indexes.base.Index) # Define objects for which it doesn't make sense to descend further
-def iterobj(obj, func=None, inplace=False, copy=True, leaf=False, atomic='default', verbose=False, 
+def iterobj(obj, func=None, inplace=False, copy=False, leaf=False, atomic='default', verbose=False, 
             _trace=None, _output=None, *args, **kwargs):
     '''
-    Iterate over an object and apply a function to each leaf node (item with no children).
+    Iterate over an object and apply a function to each node (item with or without children).
     
     Can modify an object in-place, or return a value. See also :func:`sc.search() <search>`
     for a function to search through complex objects.
+    
+    Note: there are three different output possibilities, depending on the keywords:
+        
+        - ``inplace=False``, ``copy=False`` (default): collate the output of the function into a flat dictionary, with keys corresponding to each node of the project
+        - ``inplace=True``, ``copy=False``: modify the actual object in-place, such that the original object is modified
+        - ``inplace=True``, ``copy=True``: make a deep copy of the object, modify that object, and return it (the original is unchanged)
     
     Args:
         obj (any): the object to iterate over
@@ -275,56 +368,17 @@ def iterobj(obj, func=None, inplace=False, copy=True, leaf=False, atomic='defaul
                 return obj
 
         sc.printjson(data)
-        data = sc.iterobj(data, collapse, inplace=True)
+        sc.iterobj(data, collapse, inplace=True)
         sc.printjson(data)
         
     | *New in version 3.0.0.*
     | *New in version 3.1.0:* default ``func``, renamed "twigs_only" to "leaf", "atomic" keyword
+    | *New in version 3.1.2:* ``copy`` defaults to ``False``
     '''
-    from . import sc_odict as sco # To avoid circular import
-    
-    if atomic == 'default':
-        atomic = _atomic_classes
-        
-    if func is None:
-        func = lambda obj: obj
-        
-    # Set the trace and output if needed
-    if _trace is None:
-        _trace = []
-        if inplace and copy: # Only need to copy once
-            obj = scu.dcp(obj)
-    if _output is None:
-        _output = sco.objdict()
-        if not inplace:
-            _output['root'] = func(obj, *args, **kwargs)
-    
-    itertype = check_iter_type(obj, known=atomic)
-    
-    # Next, check if we need to iterate
-    if itertype:
-        for key,subobj in iteritems(obj, itertype):
-            trace = _trace + [key]
-            newobj = subobj
-            subitertype = check_iter_type(subobj)
-            if verbose: # pragma: no cover
-                print(f'Working on {trace}, {leaf}, {subitertype}')
-            if not (leaf and subitertype):
-                newobj = func(subobj, *args, **kwargs)
-                if inplace:
-                    setitem(obj, key, newobj, itertype)
-                else:
-                    _output[tuple(trace)] = newobj
-            iterobj(getitem(obj, key, itertype), func, inplace=inplace, leaf=leaf, atomic=atomic, # Run recursively
-                    verbose=verbose, _trace=trace, _output=_output, *args, **kwargs)
-        
-    if inplace:
-        newobj = func(obj, *args, **kwargs) # Set at the root level
-        return newobj
-    else:
-        if (not _trace) and (len(_output)>1) and leaf: # We're at the top level, we have multiple entries, and only leaves are requested
-            _output.pop('root') # Remove "root" with leaf=True if it's not the only node
-        return _output
+    io = IterObj(obj=obj, func=func, inplace=inplace, copy=copy, leaf=leaf, atomic=atomic, verbose=verbose, 
+            _trace=_trace, _output=_output, *args, **kwargs) # Create the object
+    out = io.iterate() # Iterate
+    return out
 
 
 def mergenested(dict1, dict2, die=False, verbose=False, _path=None):
