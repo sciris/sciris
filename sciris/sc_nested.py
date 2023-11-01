@@ -97,8 +97,8 @@ def makenested(nesteddict, keylist=None, value=None, overwrite=False, generator=
     return
 
 
-def check_iter_type(obj, check_array=False, known=None, known_to_none=True):
-    ''' Helper function to determine if an object is a dict, list, or neither '''
+def check_iter_type(obj, check_array=False, known=None, known_to_none=True, custom=None):
+    ''' Helper function to determine if an object is a dict, list, or neither -- not for the user '''
     if known is not None and isinstance(obj, known):
         out = '' if known_to_none else 'known' # Choose how known objects are handled
     elif isinstance(obj, dict):
@@ -109,6 +109,8 @@ def check_iter_type(obj, check_array=False, known=None, known_to_none=True):
         out = 'object'
     elif check_array and isinstance(obj, np.ndarray):
         out = 'array'
+    elif custom is not None:
+        out = custom(obj)
     else:
         out = '' # Evaluates to false
     return out
@@ -217,6 +219,12 @@ class IterObj(object):
     For arguments and usage documentation, see :func:`sc.iterobj() <iterobj>`.
     Use this class if you want more control over how the object is iterated over.
     
+    Class-specific args:
+        custom_type (func): a custom function for returning a string for a specific object type (should return '' by default)
+        custom_iter (func): a custom function for iterating (returning a list of keys) over an object
+        custom_get  (func): a custom function for getting an item from an object
+        custom_set  (func): a custom function for setting an item in an object
+    
     **Example**::
         
         import sciris as sc
@@ -235,8 +243,11 @@ class IterObj(object):
     | *New in version 3.1.2.*
     '''    
     def __init__(self, obj, func=None, inplace=False, copy=False, leaf=False, atomic='default', verbose=False, 
-                _trace=None, _output=None, *args, **kwargs):
+                _trace=None, _output=None, custom_type=None, custom_iter=None, custom_get=None, custom_set=None,
+                *args, **kwargs):
         from . import sc_odict as sco # To avoid circular import
+        
+        # Default argument
         self.obj       = obj
         self.func      = func
         self.inplace   = inplace
@@ -248,6 +259,12 @@ class IterObj(object):
         self._output   = _output
         self.func_args = args
         self.func_kw   = kwargs
+        
+        # Custom arguments
+        self.custom_type = custom_type
+        self.custom_iter = custom_iter
+        self.custom_get  = custom_get
+        self.custom_set  = custom_set
         
         # Handle inputs
         if self.func is None: # Define the default function
@@ -263,53 +280,57 @@ class IterObj(object):
             if not inplace:
                 self._output['root'] = self.func(self.obj, *args, **kwargs)
                 
+        # Check what type of object we have
+        self.itertype = check_iter_type(self.obj, known=self.atomic, custom=self.custom_type)
+        
         return
 
-    def iteritems(self, obj, itertype):
+    def iteritems(self):
         ''' Return an iterator over items in this object '''
-        if itertype == 'dict':
-            return obj.items()
-        elif itertype == 'list':
-            return enumerate(obj)
-        elif itertype == 'object':
-            return obj.__dict__.items()
+        if self.itertype == 'dict':
+            return self.obj.items()
+        elif self.itertype == 'list':
+            return enumerate(self.obj)
+        elif self.itertype == 'object':
+            return self.obj.__dict__.items()
+        elif self.custom_iter:
+            return self.custom_iter(self.obj)
+        else:
+            return {}.items() # Return nothing if not recognized
     
-    def getitem(self, obj, key, itertype):
+    def getitem(self, key):
         ''' Get the value for the item '''
-        if itertype in ['dict', 'list']:
-            return obj[key]
-        elif itertype == 'object':
-            return obj.__dict__[key]
+        if self.itertype in ['dict', 'list']:
+            return self.obj[key]
+        elif self.itertype == 'object':
+            return self.obj.__dict__[key]
     
-    def setitem(self, obj, key, value, itertype):
+    def setitem(self, key, value):
         ''' Set the value for the item '''
-        if itertype in ['dict', 'list']:
-            obj[key] = value
-        elif itertype == 'object':
-            obj.__dict__[key] = value
+        if self.itertype in ['dict', 'list']:
+            self.obj[key] = value
+        elif self.itertype == 'object':
+            self.obj.__dict__[key] = value
         return
     
     def iterate(self):
         ''' Actually perform the iteration over the object '''
         
-        itertype = check_iter_type(self.obj, known=self.atomic)
-        
-        # Next, check if we need to iterate
-        if itertype:
-            for key,subobj in self.iteritems(self.obj, itertype):
-                trace = self._trace + [key]
-                newobj = subobj
-                subitertype = check_iter_type(subobj)
-                if self.verbose: # pragma: no cover
-                    print(f'Working on {trace}, {self.leaf}, {subitertype}')
-                if not (self.leaf and subitertype):
-                    newobj = self.func(subobj, *self.func_args, **self.func_kw)
-                    if self.inplace:
-                        self.setitem(self.obj, key, newobj, itertype)
-                    else:
-                        self._output[tuple(trace)] = newobj
-                iterobj(self.getitem(self.obj, key, itertype), self.func, inplace=self.inplace, leaf=self.leaf, atomic=self.atomic, # Run recursively
-                        verbose=self.verbose, _trace=trace, _output=self._output, *self.func_args, **self.func_kw)
+        # Iterate over the object
+        for key,subobj in self.iteritems():
+            trace = self._trace + [key]
+            newobj = subobj
+            subitertype = check_iter_type(subobj)
+            if self.verbose: # pragma: no cover
+                print(f'Working on {trace}, {self.leaf}, {subitertype}')
+            if not (self.leaf and subitertype):
+                newobj = self.func(subobj, *self.func_args, **self.func_kw)
+                if self.inplace:
+                    self.setitem(self.obj, key, newobj)
+                else:
+                    self._output[tuple(trace)] = newobj
+            iterobj(self.getitem(key), self.func, inplace=self.inplace, leaf=self.leaf, atomic=self.atomic, # Run recursively
+                    verbose=self.verbose, _trace=trace, _output=self._output, *self.func_args, **self.func_kw)
             
         if self.inplace:
             newobj = self.func(self.obj, *self.func_args, **self.func_kw) # Set at the root level
@@ -373,7 +394,7 @@ def iterobj(obj, func=None, inplace=False, copy=False, leaf=False, atomic='defau
         
     | *New in version 3.0.0.*
     | *New in version 3.1.0:* default ``func``, renamed "twigs_only" to "leaf", "atomic" keyword
-    | *New in version 3.1.2:* ``copy`` defaults to ``False``
+    | *New in version 3.1.2:* ``copy`` defaults to ``False``; refactored into class
     '''
     io = IterObj(obj=obj, func=func, inplace=inplace, copy=copy, leaf=leaf, atomic=atomic, verbose=verbose, 
             _trace=_trace, _output=_output, *args, **kwargs) # Create the object
