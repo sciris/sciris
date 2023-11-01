@@ -18,7 +18,7 @@ Learn more
 .. grid:: 2
     :gutter: 4
 
-    .. grid-item-card:: Getting started
+    .. grid-item-card:: Overview
         :link: overview
         :link-type: doc
 
@@ -51,7 +51,5 @@ Learn more
    tutorials/index
    whatsnew
    contributing
-   code_of_conduct
-   style_guide
    api/index
    
