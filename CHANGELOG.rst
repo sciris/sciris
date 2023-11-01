@@ -8,6 +8,12 @@ All major updates to Sciris are documented here.
 By import convention, components of the Sciris library are listed beginning with ``sc.``, e.g. ``sc.odict()``.
 
 
+Version 3.1.2 (2023-11-01)
+--------------------------
+#. Updated logic for ``sc.iterobj()`` and added a new ``sc.IterObj()`` class, allowing greater customization of how objects are iterated over.
+#. Fixed a bug in which 3D plotting functions (e.g. ``sc.bar3d()``) would create a new figure even if an existing axes instance was passed.
+
+
 Version 3.1.1 (2023-10-29)
 --------------------------
 #. ``sc.odict`` now supports steps in slice-based indexing, e.g.: ``myodict['foo':'bar':5]`` will select every 5th item from ``'foo'`` to ``'bar'`` inclusive.
