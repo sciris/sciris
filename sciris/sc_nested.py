@@ -1,11 +1,11 @@
-'''
+"""
 Functions for working on nested (multi-level) dictionaries and objects.
 
 Highlights:
     - :func:`sc.getnested() <getnested>`: get a value from a highly nested dictionary
     - :func:`sc.search() <search>`: find a value in a nested object
     - :func:`sc.equal() <equal>`: check complex objects for equality
-'''
+"""
 
 import re
 import itertools
@@ -29,7 +29,7 @@ __all__ = ['getnested', 'setnested', 'makenested', 'iternested', 'IterObj', 'ite
 
 
 def makenested(nesteddict, keylist=None, value=None, overwrite=False, generator=None):
-    '''
+    """
     Little functions to get and set data from nested dictionaries.
 
     The first two were adapted from: http://stackoverflow.com/questions/14692690/access-python-nested-dictionary-items-via-a-list-of-keys
@@ -76,7 +76,7 @@ def makenested(nesteddict, keylist=None, value=None, overwrite=False, generator=
             sc.setnested(foo, twig, count)   # {'a': {'y': 1, 'x': 2, 'z': 3}, 'b': {'a': {'y': 4, 'x': 5}}}
 
     Version: 2014nov29
-    '''
+    """
     if generator is None:
         generator = nesteddict.__class__ # By default, generate new dicts of the same class as the original one
     currentlevel = nesteddict
@@ -98,7 +98,7 @@ def makenested(nesteddict, keylist=None, value=None, overwrite=False, generator=
 
 
 def check_iter_type(obj, check_array=False, known=None, known_to_none=True, custom=None):
-    ''' Helper function to determine if an object is a dict, list, or neither -- not for the user '''
+    """ Helper function to determine if an object is a dict, list, or neither -- not for the user """
     out = None
     if custom is not None: # Handle custom first, to allow overrides
         if custom and not callable(custom): # Ensure custom_type is callable
@@ -123,7 +123,7 @@ def check_iter_type(obj, check_array=False, known=None, known_to_none=True, cust
     
 
 def get_from_obj(ndict, key, safe=False, **kwargs):
-    '''
+    """
     Get an item from a dict, list, or object by key
     
     Args:
@@ -131,7 +131,7 @@ def get_from_obj(ndict, key, safe=False, **kwargs):
         key (any): the key to get
         safe (bool): whether to return None if the key is not found (default False)
         kwargs (dict): passed to ``check_iter_type()``
-    '''
+    """
     itertype = check_iter_type(ndict, **kwargs)
     if itertype == 'dict':
         if safe:
@@ -148,7 +148,7 @@ def get_from_obj(ndict, key, safe=False, **kwargs):
 
 
 def getnested(nested, keylist, safe=False):
-    '''
+    """
     Get the value for the given list of keys
     
     Args:
@@ -161,14 +161,14 @@ def getnested(nested, keylist, safe=False):
         sc.getnested(foo, ['a','b']) # Gets foo['a']['b']
 
     See :func:`sc.makenested() <makenested>` for full documentation.
-    '''
+    """
     get = partial(get_from_obj, safe=safe)
     nested = reduce(get, keylist, nested)
     return nested
 
 
 def setnested(nested, keylist, value, force=True):
-    '''
+    """
     Set the value for the given list of keys
     
     Args:
@@ -182,7 +182,7 @@ def setnested(nested, keylist, value, force=True):
         sc.setnested(foo, ['a','b'], 3) # Sets foo['a']['b'] = 3
 
     See :func:`sc.makenested() <makenested>` for full documentation.
-    '''
+    """
     if force:
         makenested(nested, keylist, overwrite=False)
     currentlevel = getnested(nested, keylist[:-1])
@@ -195,7 +195,7 @@ def setnested(nested, keylist, value, force=True):
 
 
 def iternested(nesteddict, _previous=None):
-    '''
+    """
     Return a list of all the twigs in the current dictionary
     
     Args:
@@ -206,7 +206,7 @@ def iternested(nesteddict, _previous=None):
         twigs = sc.iternested(foo)
 
     See :func:`sc.makenested() <makenested>` for full documentation.
-    '''
+    """
     if _previous is None:
         _previous = []
     output = []
@@ -219,7 +219,7 @@ def iternested(nesteddict, _previous=None):
 
 
 class IterObj(object):
-    '''
+    """
     Object iteration manager
     
     For arguments and usage documentation, see :func:`sc.iterobj() <iterobj>`.
@@ -272,7 +272,7 @@ class IterObj(object):
         print(all_data)
         
     | *New in version 3.1.2.*
-    '''    
+    """    
     def __init__(self, obj, func=None, inplace=False, copy=False, leaf=False, atomic='default', verbose=False, 
                 _trace=None, _output=None, custom_type=None, custom_iter=None, custom_get=None, custom_set=None,
                 *args, **kwargs):
@@ -317,13 +317,13 @@ class IterObj(object):
         return
     
     def indent(self, string='', space='  '):
-        ''' Print, with output indented successively '''
+        """ Print, with output indented successively """
         if self.verbose:
             print(space*len(self._trace) + string)
         return
         
     def iteritems(self):
-        ''' Return an iterator over items in this object '''
+        """ Return an iterator over items in this object """
         self.indent(f'Iterating with type "{self.itertype}"')
         out = None
         if self.custom_iter:
@@ -340,7 +340,7 @@ class IterObj(object):
         return out
     
     def getitem(self, key):
-        ''' Get the value for the item '''
+        """ Get the value for the item """
         self.indent(f'Getting key "{key}"')
         if self.itertype in ['dict', 'list']:
             return self.obj[key]
@@ -352,7 +352,7 @@ class IterObj(object):
             return None
     
     def setitem(self, key, value):
-        ''' Set the value for the item '''
+        """ Set the value for the item """
         self.indent(f'Setting key "{key}"')
         if self.itertype in ['dict', 'list']:
             self.obj[key] = value
@@ -363,11 +363,11 @@ class IterObj(object):
         return
     
     def check_iter_type(self, obj):
-        ''' Shortcut to check_iter_type() '''
+        """ Shortcut to check_iter_type() """
         return check_iter_type(obj, known=self.atomic, custom=self.custom_type)
     
     def iterate(self):
-        ''' Actually perform the iteration over the object '''
+        """ Actually perform the iteration over the object """
         
         # Iterate over the object
         for key,subobj in self.iteritems():
@@ -398,7 +398,7 @@ class IterObj(object):
 
 def iterobj(obj, func=None, inplace=False, copy=False, leaf=False, atomic='default', verbose=False, 
             _trace=None, _output=None, *args, **kwargs):
-    '''
+    """
     Iterate over an object and apply a function to each node (item with or without children).
     
     Can modify an object in-place, or return a value. See also :func:`sc.search() <search>`
@@ -453,7 +453,7 @@ def iterobj(obj, func=None, inplace=False, copy=False, leaf=False, atomic='defau
     | *New in version 3.0.0.*
     | *New in version 3.1.0:* default ``func``, renamed "twigs_only" to "leaf", "atomic" keyword
     | *New in version 3.1.2:* ``copy`` defaults to ``False``; refactored into class
-    '''
+    """
     io = IterObj(obj=obj, func=func, inplace=inplace, copy=copy, leaf=leaf, atomic=atomic, verbose=verbose, 
             _trace=_trace, _output=_output, *args, **kwargs) # Create the object
     out = io.iterate() # Iterate
@@ -461,13 +461,13 @@ def iterobj(obj, func=None, inplace=False, copy=False, leaf=False, atomic='defau
 
 
 def mergenested(dict1, dict2, die=False, verbose=False, _path=None):
-    '''
+    """
     Merge different nested dictionaries
 
     See sc.makenested() for full documentation.
 
     Adapted from https://stackoverflow.com/questions/7204805/dictionaries-of-dictionaries-merge
-    '''
+    """
     if _path is None: _path = []
     if _path:
         a = dict1 # If we're being recursive, work in place
@@ -654,7 +654,7 @@ def search(obj, query=_None, key=_None, value=_None, aslist=True, method='exact'
     kw = dict(method=method, verbose=verbose, aslist=aslist)
     
     def check_match(source, target, method):
-        ''' Check if there is a match between the "source" and "target" '''
+        """ Check if there is a match between the "source" and "target" """
         if source != _None and target != _None: # See above for definition; a source and target were supplied
             if callable(target):
                 match = target(source)
@@ -768,7 +768,7 @@ class Equal(scu.prettyobj):
     
     def __init__(self, obj, obj2, *args, method=None, detailed=False, equal_nan=True, 
                  leaf=False, verbose=None, compare=True, die=False, **kwargs):
-        '''
+        """
         Compare equality between two arbitrary objects -- see :func:`sc.equal() <equal>` for full documentation.
 
         Args:
@@ -776,7 +776,7 @@ class Equal(scu.prettyobj):
             compare (bool): whether to perform the comparison on object creation
 
         *New in version 3.1.0.*
-        '''
+        """
         from . import sc_odict as sco # To avoid circular import
         
         # Set properties
@@ -808,32 +808,32 @@ class Equal(scu.prettyobj):
     
     @property
     def n(self):
-        ''' Find out how many objects are being compared '''
+        """ Find out how many objects are being compared """
         return len(self.objs)
 
     @property
     def base(self):
-        ''' Get the base object '''
+        """ Get the base object """
         return self.objs[0]
 
     @property
     def others(self):
-        ''' Get the other objects '''
+        """ Get the other objects """
         return self.objs[1:]
 
     @property
     def bdict(self):
-        ''' Get the base dictionary '''
+        """ Get the base dictionary """
         return self.dicts[0] if len(self.dicts) else None
     
     @property
     def odicts(self):
-        ''' Get the other dictionaries '''
+        """ Get the other dictionaries """
         return self.dicts[1:]
     
     
     def check_method(self):
-        ''' Check that a valid method is supplied '''
+        """ Check that a valid method is supplied """
         if self.method is None:
             self.method = ['eq', 'pickle'] # Define the default method sequence to try
         self.method = scu.tolist(self.method)
@@ -845,14 +845,14 @@ class Equal(scu.prettyobj):
     
     
     def get_method(self, method=None):
-        ''' Use the method if supplied, else use the default one '''
+        """ Use the method if supplied, else use the default one """
         if method is None:
             method = self.method[0] # Use default method if none provided
         return method
     
     
     def walk(self):
-        ''' Use :func:`sc.iterobj() <iterobj>` to convert the objects into dictionaries '''
+        """ Use :func:`sc.iterobj() <iterobj>` to convert the objects into dictionaries """
         
         for obj in self.objs:
             self.dicts.append(iterobj(obj, **self.kwargs))
@@ -864,7 +864,7 @@ class Equal(scu.prettyobj):
     
     
     def convert(self, obj, method=None):
-        ''' Convert an object to the right type prior to comparing '''
+        """ Convert an object to the right type prior to comparing """
         
         method = self.get_method(method)
         
@@ -888,7 +888,7 @@ class Equal(scu.prettyobj):
     
 
     def compare_special(self, obj, obj2):
-        ''' Do special comparisons for known objects where == doesn't work '''
+        """ Do special comparisons for known objects where == doesn't work """
         from . import sc_math as scm # To avoid circular import
         
         # For floats, check for NaN equality
@@ -916,7 +916,7 @@ class Equal(scu.prettyobj):
     
     @staticmethod
     def keytostr(k, ind='', sep='.'):
-        ''' Helper method to convert a key to a "trace" for printing '''
+        """ Helper method to convert a key to a "trace" for printing """
         out = f'<obj{str(ind)}>{sep}{scu.strjoin(k, sep=sep)}'
         return out
     
@@ -930,7 +930,7 @@ class Equal(scu.prettyobj):
         
     
     def compare(self):
-        ''' Perform the comparison '''
+        """ Perform the comparison """
         
         # Walk the objects if not already walked
         if not self.walked: # pragma: no cover
@@ -1023,7 +1023,7 @@ class Equal(scu.prettyobj):
     
     
     def check_exceptions(self):
-        ''' Check if any exceptions were encountered during comparison '''
+        """ Check if any exceptions were encountered during comparison """
         if len(self.exceptions):
             string = 'The following exceptions were encountered:\n'
             for i,k,exc in self.exceptions.enumitems():
@@ -1033,7 +1033,7 @@ class Equal(scu.prettyobj):
     
     
     def to_df(self):
-        ''' Convert the detailed results dictionary to a dataframe '''
+        """ Convert the detailed results dictionary to a dataframe """
         from . import sc_dataframe as scd # To avoid circular import
         
         # Ensure they've been compared
@@ -1050,7 +1050,7 @@ class Equal(scu.prettyobj):
     
 
 def equal(obj, obj2, *args, method=None, detailed=False, equal_nan=True, leaf=False, verbose=None, die=False, **kwargs):
-    '''
+    """
     Compare equality between two arbitrary objects
     
     There is no universal way to check equality between objects in Python. Some
@@ -1101,7 +1101,7 @@ def equal(obj, obj2, *args, method=None, detailed=False, equal_nan=True, leaf=Fa
         e.df.disp() # Show results as a dataframe
         
     *New in version 3.1.0.*
-    '''
+    """
     e = Equal(obj, obj2, *args, method=method, detailed=detailed, equal_nan=equal_nan, leaf=leaf, verbose=verbose, die=die, **kwargs)
     if detailed:
         return e.df

@@ -1,4 +1,4 @@
-'''
+"""
 Functions to allow parallelization to be performed easily.
 
 NB: Uses ``multiprocess`` instead of :mod:`multiprocessing` under the hood for
@@ -6,7 +6,7 @@ broadest support  across platforms (e.g. Jupyter notebooks).
 
 Highlights:
     - :func:`sc.parallelize() <parallelize>`: as-easy-as-possible parallelization
-'''
+"""
 
 import warnings
 import numpy as np
@@ -43,12 +43,12 @@ if __name__ == '__main__':
 '''
 
 def _jobkey(index):
-    ''' Convert a job index to a key '''
+    """ Convert a job index to a key """
     return f'_job{index}'
 
 
 def _progressbar(globaldict, njobs, started, **kwargs):
-    ''' Define a progress bar based on the global dictionary '''
+    """ Define a progress bar based on the global dictionary """
     try:
         done = sum([globaldict[k] for k in globaldict.keys() if str(k).startswith('_job')])
     except Exception as E:
@@ -59,7 +59,7 @@ def _progressbar(globaldict, njobs, started, **kwargs):
 
 
 class Parallel(object):
-    '''
+    """
     Parallelization manager
     
     For arguments and usage documentation, see :func:`sc.parallelize() <parallelize>`. Briefly,
@@ -101,7 +101,7 @@ class Parallel(object):
         
     | *New in version 3.0.0.*
     | *New in version 3.1.0:* "globaldict" argument
-    '''
+    """
     def __init__(self, func, iterarg=None, iterkwargs=None, args=None, kwargs=None, ncpus=None, 
                  maxcpu=None, maxmem=None, interval=None, parallelizer=None, serial=False, 
                  progress=False, callback=None, globaldict=None, label=None, die=True, **func_kwargs):
@@ -130,9 +130,9 @@ class Parallel(object):
     
     
     def init(self):
-        '''
+        """
         Perform all remaining initialization steps; this can safely be called after object creation
-        '''
+        """
         self.reset()
         self.set_defaults()
         self.validate_args()
@@ -142,7 +142,7 @@ class Parallel(object):
     
     
     def reset(self):
-        ''' Reset to the pre-run state '''
+        """ Reset to the pre-run state """
         self.ncpus        = None
         self.njobs        = None
         self.embarrassing = None
@@ -164,19 +164,19 @@ class Parallel(object):
     
     
     def __repr__(self):
-        ''' Brief representation of the object '''
+        """ Brief representation of the object """
         labelstr = f'"{self.label}; "' if self.label else ''
         string   = f'Parallel({labelstr}jobs={self.njobs}; cpus={self.ncpus}; method={self.method}; status={self.status})'
         return string
     
     
     def disp(self):
-        ''' Display the full representation of the object '''
+        """ Display the full representation of the object """
         return scp.pr(self)
     
     
     def set_defaults(self):
-        ''' Define defaults for parallelization '''
+        """ Define defaults for parallelization """
         self.defaults = sco.objdict()
         
         # Define default parallelizers
@@ -202,7 +202,7 @@ class Parallel(object):
     
     
     def validate_args(self):
-        ''' Validate iterarg and iterkwargs '''
+        """ Validate iterarg and iterkwargs """
         iterarg = self.iterarg
         iterkwargs = self.iterkwargs
         njobs = 0
@@ -260,7 +260,7 @@ class Parallel(object):
     
     
     def set_ncpus(self):
-        ''' Configure number of CPUs '''
+        """ Configure number of CPUs """
         
         # Handle maxload deprecation
         maxload = self.kwargs.pop('maxload', None)
@@ -287,7 +287,7 @@ class Parallel(object):
     
     
     def set_method(self):
-        ''' Choose which method to use for parallelization '''
+        """ Choose which method to use for parallelization """
         
         # Handle defaults for the parallelizer
         parallelizer = self.parallelizer
@@ -322,7 +322,7 @@ class Parallel(object):
     
     
     def make_pool(self):
-        ''' Make the pool and map function '''
+        """ Make the pool and map function """
         
         # Shorten variables
         ncpus    = self.ncpus
@@ -397,7 +397,7 @@ class Parallel(object):
 
 
     def make_argslist(self):
-        ''' Construct argument list '''
+        """ Construct argument list """
 
         # Initialize
         iterarg    = self.iterarg
@@ -441,7 +441,7 @@ class Parallel(object):
 
 
     def run_async(self):
-        ''' Choose how to run in parallel, and do it '''
+        """ Choose how to run in parallel, and do it """
         
         # Shorten variables
         method = self.method
@@ -519,7 +519,7 @@ class Parallel(object):
 
 
     def monitor(self, interval=0.1, **kwargs):
-        ''' Monitor progress -- only usable with async '''
+        """ Monitor progress -- only usable with async """
         final_iter = True
         while self.running or final_iter:
             if not self.running and final_iter:
@@ -530,7 +530,7 @@ class Parallel(object):
     
 
     def finalize(self, get_results=True, close_pool=True, process_results=True):
-        ''' Get results from the jobs and close the pool '''
+        """ Get results from the jobs and close the pool """
         if get_results and self.jobs:
             self.rawresults = list(self.jobs.get())
         if close_pool and self.pool:
@@ -545,7 +545,7 @@ class Parallel(object):
     
     
     def process_results(self):
-        ''' Parse the returned results dict into separate lists '''
+        """ Parse the returned results dict into separate lists """
         
         # Do not proceed if no results
         if self.rawresults is None: # pragma: no cover
@@ -572,7 +572,7 @@ class Parallel(object):
     
     
     def run(self):
-        ''' Actually run the parallelization '''
+        """ Actually run the parallelization """
         try:
             self.run_async()
             self.finalize()
@@ -593,7 +593,7 @@ class Parallel(object):
 def parallelize(func, iterarg=None, iterkwargs=None, args=None, kwargs=None, ncpus=None, 
                 maxcpu=None, maxmem=None, interval=None, parallelizer=None, serial=False, 
                 progress=False, callback=None, globaldict=None, die=True, **func_kwargs):
-    '''
+    """
     Execute a function in parallel.
 
     Most simply, :func:`sc.parallelize() <parallelize>` acts as a shortcut for using :meth:`pool.map <multiprocessing.pool.Pool.map>`.
@@ -744,7 +744,7 @@ def parallelize(func, iterarg=None, iterkwargs=None, args=None, kwargs=None, ncp
     | *New in version 2.0.4:* added "die" argument; changed exception handling
     | *New in version 3.0.0:* new Parallel class; propagated "die" to jobs
     | *New in version 3.1.0:* new "globaldict" argument
-    '''
+    """
     # Create the parallel instance
     P = Parallel(func, iterarg=iterarg, iterkwargs=iterkwargs, args=args, kwargs=kwargs, 
                  ncpus=ncpus, maxcpu=maxcpu, maxmem=maxmem, interval=interval, 
@@ -762,11 +762,11 @@ def parallelize(func, iterarg=None, iterkwargs=None, args=None, kwargs=None, ncp
 ##############################################################################
 
 class TaskArgs(scu.prettyobj):
-        '''
+        """
         A class to hold the arguments for the parallel task -- not to be invoked by the user.
 
         Arguments must match both :func:`sc.parallelize() <parallelize>` and ``sc._task()``
-        '''
+        """
         def __init__(self, func, index, njobs, iterval, iterdict, args, kwargs, maxcpu, maxmem, 
                      interval, embarrassing, callback, progress, globaldict, useglobal, started,
                      die=True):
@@ -791,11 +791,11 @@ class TaskArgs(scu.prettyobj):
 
 
 def _task(taskargs):
-    '''
+    """
     Task called by parallelize() -- not to be called directly.
     
     *New in version 3.0.0:* renamed from "_parallel_task" to "_task"; return output dict with metadata
-    '''
+    """
     
     # Handle inputs
     func   = taskargs.func

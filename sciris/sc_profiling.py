@@ -39,7 +39,7 @@ __all__ = ['checkmem', 'checkram', 'benchmark']
 
 def checkmem(var, descend=1, order='size', compresslevel=0, maxitems=1000, 
              subtotals=True, plot=False, verbose=False, **kwargs):
-    '''
+    """
     Checks how much memory the variable or variables in question use by dumping
     them to file.
 
@@ -85,7 +85,7 @@ def checkmem(var, descend=1, order='size', compresslevel=0, maxitems=1000,
         sc.checkmem(nested_dict)
     
     *New in version 3.0.0:* descend multiple levels; dataframe output; "alphabetical" renamed "order"
-    '''
+    """
     
     # Handle input arguments -- used for recursion
     _depth  = kwargs.pop('_depth', 0)
@@ -93,7 +93,7 @@ def checkmem(var, descend=1, order='size', compresslevel=0, maxitems=1000,
     _join   = kwargs.pop('_join', '→')
 
     def check_one_object(variable):
-        ''' Check the size of one variable '''
+        """ Check the size of one variable """
 
         if verbose>1: # pragma: no cover
             print(f'  Checking size of {variable}...')
@@ -180,7 +180,7 @@ def checkmem(var, descend=1, order='size', compresslevel=0, maxitems=1000,
 
 
 def checkram(unit='mb', fmt='0.2f', start=0, to_string=True):
-    '''
+    """
     Measure actual memory usage, typically at different points throughout execution.
 
     Note on the different functions:
@@ -198,7 +198,7 @@ def checkram(unit='mb', fmt='0.2f', start=0, to_string=True):
         print(sc.checkram(start=start))
     
     *New in version 1.0.0.*
-    '''
+    """
     process = psutil.Process(os.getpid())
     mapping = {'b':1, 'kb':1e3, 'mb':1e6, 'gb':1e9}
     try:
@@ -214,7 +214,7 @@ def checkram(unit='mb', fmt='0.2f', start=0, to_string=True):
 
 
 def benchmark(repeats=5, scale=1, verbose=False, python=True, numpy=True, parallel=False, return_timers=False):
-    '''
+    """
     Benchmark Python performance
     
     Performs a set of standard operations in both Python and Numpy and times how
@@ -254,7 +254,7 @@ def benchmark(repeats=5, scale=1, verbose=False, python=True, numpy=True, parall
     
     | *New in version 3.0.0.*
     | *New in version 3.1.0:* "parallel" argument; increased default scale
-    '''
+    """
     
     # Calculate the number of operations
     py_outer = 10
@@ -352,7 +352,7 @@ __all__ += ['cpu_count', 'cpuload', 'memload', 'loadbalancer']
 
 
 def cpu_count():
-    ''' Alias to :func:`multiprocessing.cpu_count()` '''
+    """ Alias to :func:`multiprocessing.cpu_count()` """
     return mp.cpu_count()
 
 
@@ -390,7 +390,7 @@ def memload():
 
 def loadbalancer(maxcpu=0.9, maxmem=0.9, index=None, interval=None, cpu_interval=0.1,
                  maxtime=36_000, label=None, verbose=True, **kwargs):
-    '''
+    """
     Delay execution while CPU load is too high -- a very simple load balancer.
 
     Arguments:
@@ -414,7 +414,7 @@ def loadbalancer(maxcpu=0.9, maxmem=0.9, index=None, interval=None, cpu_interval
 
     | *New in version 2.0.0:* ``maxmem`` argument; ``maxload`` renamed ``maxcpu``
     | *New in version 3.0.0:* ``maxcpu`` and ``maxmem`` set to 0.9 by default
-    '''
+    """
 
     # Handle deprecation
     maxload = kwargs.pop('maxload', None)
@@ -496,7 +496,7 @@ __all__ += ['profile', 'mprofile']
 
 
 def profile(run, follow=None, print_stats=True, *args, **kwargs):
-    '''
+    """
     Profile the line-by-line time required by a function.
 
     Args:
@@ -541,7 +541,7 @@ def profile(run, follow=None, print_stats=True, *args, **kwargs):
         # Profile the constructor for Foo
         f = lambda: Foo()
         sc.profile(run=f, follow=[foo.__init__])
-    '''
+    """
     try:
         from line_profiler import LineProfiler
     except ModuleNotFoundError as E: # pragma: no cover
@@ -570,7 +570,7 @@ def profile(run, follow=None, print_stats=True, *args, **kwargs):
 
 
 def mprofile(run, follow=None, show_results=True, *args, **kwargs):
-    '''
+    """
     Profile the line-by-line memory required by a function. See profile() for a
     usage example.
 
@@ -582,7 +582,7 @@ def mprofile(run, follow=None, show_results=True, *args, **kwargs):
 
     Returns:
         LineProfiler (by default, the profile output is also printed to stdout)
-    '''
+    """
 
     try:
         import memory_profiler as mp
@@ -626,13 +626,13 @@ __all__ += ['LimitExceeded', 'resourcemonitor']
 
 
 class LimitExceeded(MemoryError, KeyboardInterrupt):
-    '''
+    """
     Custom exception for use with the :func:`sc.resourcemonitor() <resourcemonitor>` monitor.
 
     It inherits from :obj:`MemoryError` since this is the most similar built-in Python
     except, and it inherits from :obj:`KeyboardInterrupt` since this is the means by
     which the monitor interrupts the main Python thread.
-    '''
+    """
     pass
 
 
@@ -694,15 +694,15 @@ class resourcemonitor(scu.prettyobj): # pragma: no cover # For some reason pycov
 
 
     def start(self, label=None):
-        '''
+        """
         Start the monitor running
 
         Args:
             label (str): optional label for printing progress
-        '''
+        """
 
         def handler(signum, frame): # pragma: no cover
-            ''' Custom exception handler '''
+            """ Custom exception handler """
             if self.exception is not None:
                 raise self.exception
             else:
@@ -727,7 +727,7 @@ class resourcemonitor(scu.prettyobj): # pragma: no cover # For some reason pycov
 
 
     def stop(self):
-        ''' Stop the monitor from running '''
+        """ Stop the monitor from running """
         if self.verbose:
             print(f'{self.label}: done')
         self.running = False
@@ -742,17 +742,17 @@ class resourcemonitor(scu.prettyobj): # pragma: no cover # For some reason pycov
 
 
     def __enter__(self, *args, **kwargs):
-        ''' For use in a context block '''
+        """ For use in a context block """
         return self.start()
 
 
     def __exit__(self, *args, **kwargs):
-        ''' For use in a context block '''
+        """ For use in a context block """
         return self.stop()
 
 
     def monitor(self, label=None, *args, **kwargs):
-        ''' Actually run the resource monitor '''
+        """ Actually run the resource monitor """
         while self.running:
             self.count += 1
             is_ok, checkdata, checkstr = self.check()
@@ -774,7 +774,7 @@ class resourcemonitor(scu.prettyobj): # pragma: no cover # For some reason pycov
 
 
     def check(self):
-        ''' Check if any limits have been exceeded '''
+        """ Check if any limits have been exceeded """
         time_now = time.time()
         self.elapsed = time_now - self.start_time
 
@@ -828,7 +828,7 @@ class resourcemonitor(scu.prettyobj): # pragma: no cover # For some reason pycov
 
 
     def kill(self): # pragma: no cover
-        ''' Kill all processes '''
+        """ Kill all processes """
         kill_verbose = self.verbose is not False # Print if self.verbose is True or None (just not False)
         if kill_verbose:
             print(self.exception)
@@ -855,7 +855,7 @@ class resourcemonitor(scu.prettyobj): # pragma: no cover # For some reason pycov
 
 
     def to_df(self):
-        ''' Convert the log into a pandas dataframe '''
+        """ Convert the log into a pandas dataframe """
         entries = []
         for entry in self.log:
             flat = scn.flattendict(entry, sep='_')
