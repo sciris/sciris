@@ -467,7 +467,7 @@ __all__ += ['stackedbar', 'boxoff', 'setaxislim', 'setxlim', 'setylim', 'commati
 
 
 def stackedbar(x=None, values=None, colors=None, labels=None, transpose=False, 
-               flipud=False, cum=False, barh=False, **kwargs):
+               flipud=False, is_cum=False, barh=False, **kwargs):
     """
     Create a stacked bar chart.
     
@@ -478,7 +478,7 @@ def stackedbar(x=None, values=None, colors=None, labels=None, transpose=False,
         labels    (list)     : the label for each set of bars
         transpose (bool)     : whether to transpose the array prior to plotting
         flipud    (bool)     : whether to flip the array upside down prior to plotting
-        cum       (bool)     : whether the array is already a cumulative sum
+        is_cum    (bool)     : whether the array is already a cumulative sum
         barh      (bool)     : whether to plot as a horizontal instead of vertical bar
         kwargs    (dict)     : passed to :func:`pl.bar() <matplotlib.pyplot.bar>`
     
@@ -517,9 +517,8 @@ def stackedbar(x=None, values=None, colors=None, labels=None, transpose=False,
     if x is None:
         x = np.arange(npts)
         
-    if not cum: # pragma: no cover
-        values = values.cumsum(axis=0)
-    values = np.concatenate([np.zeros((1,npts)), values])
+    if is_cum:
+        values = np.diff(values, prepend=0, axis=0)
 
     # Handle labels and colors
     if labels is not None: # pragma: no cover
@@ -544,12 +543,12 @@ def stackedbar(x=None, values=None, colors=None, labels=None, transpose=False,
         else: # pragma: no cover
             label = None
         
-        h = values[i+1,:]
-        b = values[i,:]
+        h = values[i,:]
+        b = values[:i,:].sum(axis=0)
         kw = dict(facecolor=colors[i], label=label, **kwargs)
         if not barh:
             artist = pl.bar(x=x, height=h, bottom=b, **kw)
-        else: # pragma: no cover
+        else:
             artist = pl.barh(y=x, width=h, left=b, **kw)
         artists.append(artist)
     

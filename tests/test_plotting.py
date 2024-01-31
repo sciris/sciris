@@ -46,8 +46,17 @@ def test_stackedbar(doplot=doplot):
     sc.heading('Testing stacked bar')
     
     pl.figure(num='Stacked bar')
-    values = pl.rand(3,5)
-    artists = sc.stackedbar(values, labels=['bottom','middle','top'])
+    
+    bmt = ['bottom','middle','top']
+    lmr = ['left','middle','right']
+    
+    pl.subplot(1,2,1)
+    values = pl.rand(3,4)
+    artists = sc.stackedbar(values, labels=bmt)
+    pl.legend()
+
+    pl.subplot(1,2,2)
+    artists = sc.stackedbar(np.cumsum(values, axis=0).T, labels=lmr, is_cum=True, transpose=True, barh=True)
     pl.legend()
     
     if not doplot:
