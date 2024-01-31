@@ -9,7 +9,7 @@ import sciris as sc
 # -- Project information -----------------------------------------------------
 
 project = 'Sciris'
-copyright = f'2014–2023 by the Sciris Development Team (version {sc.__version__})'
+copyright = f'2014–{sc.now().year} Sciris Development Team (version {sc.__version__})'
 author = 'Sciris Development Team'
 
 # The short X.Y version
