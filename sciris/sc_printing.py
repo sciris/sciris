@@ -75,7 +75,10 @@ def objectid(obj, showclasses=False):
     c = obj.__class__
     output = f'<{c.__module__}.{c.__name__} at {hex(id(obj))}>\n'
     if showclasses:
-        output += f'{c.mro()}\n'
+        mro = c.mro()
+        if len(mro) > 1: # Remove 'object' unless it's the only class
+            mro = mro[:-1]
+        output += f'{mro}\n'
     return output
 
 
