@@ -58,18 +58,19 @@ def freeze(lower=False):
     return data
 
 
-def require(reqs=None, *args, exact=False, detailed=False, die=True, warn=True, verbose=True, **kwargs):
+def require(reqs=None, *args, message=None, exact=False, detailed=False, die=True, warn=True, verbose=True, **kwargs):
     """
     Check whether environment requirements are met. Alias to pkg_resources.require().
 
     Args:
         reqs (list/dict): a list of strings, or a dict of package names and versions
         args (list): additional requirements
+        message (str): optionally provide a custom error message if requirements are not met; "<MISSING>" will be replaced with list of missing requirements
         kwargs (dict): additional requirements
         exact (bool): use '==' instead of '>=' as the default comparison operator if not specified
         detailed (bool): return a dict of which requirements are/aren't met
         die (bool): whether to raise an exception if requirements aren't met
-        warn (bool): if not die, raise a warning if requirements aren't met'
+        warn (bool): if not die, raise a warning if requirements aren't met
         verbose (bool): print out the exception if it's not being raised or warned
 
     **Examples**::
@@ -77,11 +78,12 @@ def require(reqs=None, *args, exact=False, detailed=False, die=True, warn=True, 
         sc.require('numpy')
         sc.require(numpy='')
         sc.require(reqs={'numpy':'1.19.1', 'matplotlib':'3.2.2'})
-        sc.require('numpy>=1.19.1', 'matplotlib==3.2.2', die=False)
+        sc.require('numpy>=1.19.1', 'matplotlib==3.2.2', die=False, message='Requirements <MISSING> not met, but continuing anyway')
         sc.require(numpy='1.19.1', matplotlib='==4.2.2', die=False, detailed=True)
 
-    *New in version 1.2.2.*
-    *New in version 3.0.0:* "warn" argument
+    | *New in version 1.2.2.*
+    | *New in version 3.0.0:* "warn" argument
+    | *New in version 3.1.3:* "message" argument
     """
     import pkg_resources as pkgr # Imported here since slow (>0.1 s); deprecated, but no direct equivalent in importlib or packaging
 
@@ -120,14 +122,19 @@ def require(reqs=None, *args, exact=False, detailed=False, die=True, warn=True, 
     # Handle exceptions
     if not met:
         errkeys = list(errs.keys())
-        errormsg = '\nThe following requirement(s) were not met:'
         count = 0
-        for k,v in data.items():
-            if not v:
+        errorstrings = ''
+        for key,valid in data.items():
+            if not valid:
                 count += 1
-                errormsg += f'\n• "{k}": {errs[k]}'
+                errorstrings += f'\n• "{key}": {errs[key]}'
         missing = scu.strjoin(errkeys, sep=' ')
-        errormsg += f'''\n\nIf this is a valid module, you might want to try 'pip install "{missing}" --upgrade'.'''
+        if message is not None:
+            errormsg = message.replace('<MISSING>', missing)
+        else:
+            errormsg = '\nThe following requirement(s) were not met:'
+            errormsg += errorstrings
+            errormsg += f'''\n\nIf this is a valid module, you might want to try 'pip install "{missing}" --upgrade'.'''
         if die:
             err = errs[errkeys[-1]]
             raise ModuleNotFoundError(errormsg) from err

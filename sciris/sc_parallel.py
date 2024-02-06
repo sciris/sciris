@@ -817,7 +817,6 @@ def _task(taskargs):
     if maxcpu or maxmem:
         scpro.loadbalancer(maxcpu=maxcpu, maxmem=maxmem, index=index, interval=taskargs.interval)
 
-    
     # Set up input and output arguments
     globaldict = taskargs.globaldict
     start      = scd.time()

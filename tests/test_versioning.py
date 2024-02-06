@@ -25,6 +25,9 @@ def test_functions():
     with pytest.warns(UserWarning): data, _ = sc.require(numpy='1.19.1', matplotlib='==44.2.2', die=False, detailed=True)
     with pytest.raises(ModuleNotFoundError): sc.require('matplotlib==99.23')
     with pytest.raises(ModuleNotFoundError): sc.require('not_a_valid_module')
+    with sc.capture() as txt:
+        sc.require('numpy>=1.19.1', 'matplotlib==2.2.2', die=False, warn=False, message='<MISSING> is gone!')
+    assert 'gone' in txt
     
     print('Testing gitinfo')
     o.gitinfo = sc.gitinfo() # Try getting gitinfo; will likely fail though
