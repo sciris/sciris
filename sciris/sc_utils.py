@@ -646,7 +646,7 @@ def urlopen(url, filename=None, save=None, headers=None, params=None, data=None,
     response = ur.urlopen(request)
     output = response.read()
     if convert:
-        if verbose: print('Converting from bytes to text...')
+        if verbose>1: print('Converting from bytes to text...')
         try:
             output = output.decode()
         except Exception as E: # pragma: no cover
@@ -715,6 +715,7 @@ def download(url, *args, filename=None, save=True, parallel=True, die=True, verb
     | *New in version 2.0.0.*
     | *New in version 3.0.0:* "die" argument
     | *New in version 3.1.1:* default order switched from URL:filename to filename:URL pairs
+    | *New in version 3.1.3:* output as objdict instead of odict
     """
     from . import sc_parallel as scp # To avoid circular import
     from . import sc_datetime as scd
@@ -744,8 +745,8 @@ def download(url, *args, filename=None, save=True, parallel=True, die=True, verb
         errormsg = f'Cannot process {n_urls} URLs and {n_keys} filenames'
         raise ValueError(errormsg)
 
-    if verbose:
-        print(f'Downloading {n_urls} URL(s)...')
+    if verbose and n_urls > 1:
+        print(f'Downloading {n_urls} URLs...')
 
     # Get results in parallel
     wget_verbose = (verbose>1) or (verbose and n_urls == 1) # By default, don't print progress on each download
@@ -770,9 +771,9 @@ def download(url, *args, filename=None, save=True, parallel=True, die=True, verb
     
     # If we're returning the data rather than saving the files, convert to an odict
     if not save:
-        outputs = sco.odict({k:v for k,v in zip(keys, outputs)})
+        outputs = sco.objdict({k:v for k,v in zip(keys, outputs)})
 
-    if verbose:
+    if verbose and n_urls > 1:
         T.toc(f'Time to download {n_urls} URLs')
     if n_urls == 1:
         outputs = outputs[0]
