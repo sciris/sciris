@@ -809,9 +809,7 @@ def _task(taskargs):
             taskargs.iterval = (taskargs.iterval,)
         if not taskargs.embarrassing:
             args = taskargs.iterval + args # If variable name is not supplied, prepend it to args
-    if taskargs.iterdict is not None:
-        for key,val in taskargs.iterdict.items():
-            kwargs[key] = val # Otherwise, include it in kwargs
+    kwargs = scu.mergedicts(kwargs, taskargs.iterdict) # Merge this iterdict, overwriting kwargs if there are conflicts
 
     # Handle load balancing
     maxcpu = taskargs.maxcpu
@@ -819,7 +817,6 @@ def _task(taskargs):
     if maxcpu or maxmem:
         scpro.loadbalancer(maxcpu=maxcpu, maxmem=maxmem, index=index, interval=taskargs.interval)
 
-    
     # Set up input and output arguments
     globaldict = taskargs.globaldict
     start      = scd.time()

@@ -258,7 +258,7 @@ def asd(function, x, args=None, stepsize=0.1, sinc=2, sdec=2, pinc=2, pdec=2,
 
     # Return
     if verbose > 0:
-        orig, best, ratio = scp.sigfig([fvals[0], fvals[-1], fvals[-1]/fvals[0]])
+        orig, best, ratio = scp.sigfig([fvals[0], fvals[count], fvals[count]/fvals[0]])
         print(f'=== {label} {exitreason} ({count} steps, orig: {orig} | best: {best} | ratio: {ratio}) ===')
     output = sco.objdict()
     output['x'] = np.reshape(x, origshape) # Parameters

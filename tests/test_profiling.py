@@ -55,7 +55,7 @@ def test_profile():
     print('Profiling:')
 
     def slow_fn():
-        n = 10000
+        n = 2000
         int_list = []
         int_dict = {}
         for i in range(n):
@@ -118,15 +118,15 @@ def test_resourcemonitor():
         return
 
     with pytest.raises(sc.LimitExceeded):
-        with sc.resourcemonitor(mem=0.001, interval=0.2, die=False) as resmon:
+        with sc.resourcemonitor(mem=0.001, interval=0.1, die=False) as resmon:
             print('Effectively zero memory limit')
-            sc.timedsleep(0.5)
+            sc.timedsleep(0.3)
         raise resmon.exception
     o.resmon_died = resmon
 
     # As a standalone (don't forget to call stop!)
-    resmon = sc.resourcemonitor(mem=0.95, cpu=0.99, time=0.2, interval=0.1, label='Load checker', die=False, callback=callback, verbose=True)
-    sc.timedsleep(0.3)
+    resmon = sc.resourcemonitor(mem=0.95, cpu=0.99, time=0.1, interval=0.1, label='Load checker', die=False, callback=callback, verbose=True)
+    sc.timedsleep(0.2)
     resmon.stop()
     print(resmon.to_df())
 

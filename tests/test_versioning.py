@@ -15,7 +15,10 @@ def test_functions():
     
     print('Testing freeze')
     o.freeze = sc.freeze()
-    assert 'numpy' in o.freeze
+    assert 'numpy' in o.freeze, 'NumPy not found, but should be'
+    v1 = o.freeze['numpy']
+    v2 = np.__version__
+    assert v1 == v2, f'Versions do not match ({v1} != {v2})'
     
     print('Testing require')
     sc.require('numpy')
@@ -25,6 +28,9 @@ def test_functions():
     with pytest.warns(UserWarning): data, _ = sc.require(numpy='1.19.1', matplotlib='==44.2.2', die=False, detailed=True)
     with pytest.raises(ModuleNotFoundError): sc.require('matplotlib==99.23')
     with pytest.raises(ModuleNotFoundError): sc.require('not_a_valid_module')
+    with sc.capture() as txt:
+        sc.require('numpy>=1.19.1', 'matplotlib==2.2.2', die=False, warn=False, message='<MISSING> is gone!')
+    assert 'gone' in txt
     
     print('Testing gitinfo')
     o.gitinfo = sc.gitinfo() # Try getting gitinfo; will likely fail though

@@ -254,10 +254,18 @@ def test_equal():
     o4 = sc.dcp(o1)
     o4['a'] = dict(a=3, b=5)
     
+    # Extra and missing keys
+    o5 =  dict(
+        b = np.array([4,5,6]),
+        d = pd.Series([1,2,np.nan]),
+        e = dict(this='is', a='test')
+    )
+    
     out.e1 = sc.equal(o1, o2) # Returns True
     out.e2 = sc.equal(o1, o3) # Returns False
     out.e3 = sc.Equal(o1, o2, o3, detailed=True, equal_nan=True) # Create an object
     out.e4 = sc.Equal(o1, o4, verbose=True)
+    out.e5 = sc.Equal(o1, o5, detailed=2)
     
     # Do tests
     assert out.e1
@@ -271,7 +279,7 @@ def test_equal():
         assert not sc.equal(o1, o2, method=method, equal_nan=False) or method in ['pickle', 'str'] # Known failure for pickle and string
         assert not sc.equal(o1, o3, method=method)
         
-    out.e5 = sc.Equal(o1, o3, detailed=True, verbose=True)
+    out.e6 = sc.Equal(o1, o3, detailed=True, verbose=True)
     print('↑↑↑ Should print some handled exceptions')
     
     # Test totally different objects

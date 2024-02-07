@@ -46,8 +46,17 @@ def test_stackedbar(doplot=doplot):
     sc.heading('Testing stacked bar')
     
     pl.figure(num='Stacked bar')
-    values = pl.rand(3,5)
-    artists = sc.stackedbar(values, labels=['bottom','middle','top'])
+    
+    bmt = ['bottom','middle','top']
+    lmr = ['left','middle','right']
+    
+    pl.subplot(1,2,1)
+    values = pl.rand(3,4)
+    artists = sc.stackedbar(values, labels=bmt)
+    pl.legend()
+
+    pl.subplot(1,2,2)
+    artists = sc.stackedbar(np.cumsum(values, axis=0).T, labels=lmr, is_cum=True, transpose=True, barh=True)
     pl.legend()
     
     if not doplot:
@@ -127,13 +136,13 @@ def test_saving(doplot=doplot):
     sc.loadfig(fn.fig)
 
     print('Testing save movie')
-    frames = [pl.plot(pl.cumsum(pl.randn(100))) for i in range(3)] # Create frames
+    frames = [pl.plot(pl.cumsum(pl.randn(100))) for i in range(2)] # Create frames
     sc.savemovie(frames, fn.movie) # Save movie as medium-quality gif
 
     print('Testing animation')
     anim = sc.animation(filename=fn.anim)
     pl.figure('Animation')
-    for i in range(3):
+    for i in range(2):
         pl.plot(pl.cumsum(pl.randn(100)))
         anim.addframe()
     anim.save()

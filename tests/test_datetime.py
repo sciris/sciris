@@ -130,7 +130,7 @@ def test_dates():
 
     return o
 
-delay = 0.05 # Shorter creates timing errors
+delay = 0.03 # Shorter creates timing errors
 def nap(n=1, t=delay):
     ''' Little nap to test timers '''
     return sc.timedsleep(t*n)

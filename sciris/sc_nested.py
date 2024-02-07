@@ -273,7 +273,7 @@ class IterObj(object):
         
     | *New in version 3.1.2.*
     """    
-    def __init__(self, obj, func=None, inplace=False, copy=False, leaf=False, atomic='default', verbose=False, 
+    def __init__(self, obj, func=None, inplace=False, copy=False, leaf=False, atomic='default', rootkey='root', verbose=False, 
                 _trace=None, _output=None, custom_type=None, custom_iter=None, custom_get=None, custom_set=None,
                 *args, **kwargs):
         from . import sc_odict as sco # To avoid circular import
@@ -285,6 +285,7 @@ class IterObj(object):
         self.copy      = copy
         self.leaf      = leaf
         self.atomic    = atomic
+        self.rootkey   = rootkey
         self.verbose   = verbose
         self._trace    = _trace
         self._output   = _output
@@ -309,7 +310,7 @@ class IterObj(object):
         if self._output is None: # Handle the output at the root level
             self._output = sco.objdict()
             if not inplace:
-                self._output['root'] = self.func(self.obj, *args, **kwargs)
+                self._output[self.rootkey] = self.func(self.obj, *args, **kwargs)
                 
         # Check what type of object we have
         self.itertype = self.check_iter_type(self.obj)
@@ -396,8 +397,8 @@ class IterObj(object):
             return self._output
         
 
-def iterobj(obj, func=None, inplace=False, copy=False, leaf=False, atomic='default', verbose=False, 
-            _trace=None, _output=None, *args, **kwargs):
+def iterobj(obj, func=None, inplace=False, copy=False, leaf=False, atomic='default', rootkey='root',
+            verbose=False, _trace=None, _output=None, *args, **kwargs):
     """
     Iterate over an object and apply a function to each node (item with or without children).
     
@@ -420,6 +421,7 @@ def iterobj(obj, func=None, inplace=False, copy=False, leaf=False, atomic='defau
         copy (bool): if modifying an object in place, whether to make a copy first
         leaf (bool): whether to apply the function only to leaf nodes of the object
         atomic (list): a list of known classes to treat as atomic (do not descend into); if 'default', use defaults (e.g. ``np.array``, ``pd.DataFrame``)
+        rootkey (str): the key to list as the root of the object (default ``'root'``)
         verbose (bool): whether to print progress.
         _trace (list): used internally for recursion
         _output (list): used internally for recursion
@@ -451,11 +453,12 @@ def iterobj(obj, func=None, inplace=False, copy=False, leaf=False, atomic='defau
         sc.printjson(data)
         
     | *New in version 3.0.0.*
-    | *New in version 3.1.0:* default ``func``, renamed "twigs_only" to "leaf", "atomic" keyword
+    | *New in version 3.1.0:* default ``func``, renamed "twigs_only" to "leaf", "atomic" argument
     | *New in version 3.1.2:* ``copy`` defaults to ``False``; refactored into class
+    | *New in version 3.1.3:* "rootkey" argument
     """
-    io = IterObj(obj=obj, func=func, inplace=inplace, copy=copy, leaf=leaf, atomic=atomic, verbose=verbose, 
-            _trace=_trace, _output=_output, *args, **kwargs) # Create the object
+    io = IterObj(obj=obj, func=func, inplace=inplace, copy=copy, leaf=leaf, atomic=atomic, rootkey=rootkey,
+                 verbose=verbose, _trace=_trace, _output=_output, *args, **kwargs) # Create the object
     out = io.iterate() # Iterate
     return out
 
@@ -766,8 +769,8 @@ class Equal(scu.prettyobj):
     valid_methods = [None, 'eq', 'pickle', 'json', 'str']
     
     
-    def __init__(self, obj, obj2, *args, method=None, detailed=False, equal_nan=True, 
-                 leaf=False, verbose=None, compare=True, die=False, **kwargs):
+    def __init__(self, obj, obj2, *args, method=None, detailed=False, equal_nan=True,
+                 leaf=False, union=True, verbose=None, compare=True, die=False, **kwargs):
         """
         Compare equality between two arbitrary objects -- see :func:`sc.equal() <equal>` for full documentation.
 
@@ -783,7 +786,9 @@ class Equal(scu.prettyobj):
         self.objs = [obj, obj2] + list(args) # All objects for comparison
         self.method = method
         self.detailed = detailed
+        self.missingstr = '<MISSING>'
         self.equal_nan = equal_nan
+        self.union = union
         self.verbose = verbose
         self.die = die
         self.kwargs = scu.mergedicts(kwargs, dict(leaf=leaf))
@@ -793,6 +798,7 @@ class Equal(scu.prettyobj):
         self.walked = False # Whether the objects have already been walked
         self.compared = False # Whether the objects have already been compared
         self.dicts = [] # Object dictionaries
+        self.treekeys = None # The object keys to walk over
         self.results = sco.objdict() # Detailed output, 1D dict
         self.fullresults = sco.objdict() # Detailed output, 2D dict
         self.exceptions = sco.objdict() # Store any exceptions encountered
@@ -854,12 +860,38 @@ class Equal(scu.prettyobj):
     def walk(self):
         """ Use :func:`sc.iterobj() <iterobj>` to convert the objects into dictionaries """
         
+        # Walk the objects
         for obj in self.objs:
             self.dicts.append(iterobj(obj, **self.kwargs))
         self.walked = True
         if self.verbose:
             nkeystr = scu.strjoin([len(d) for d in self.dicts])
             print(f'Walked {self.n} objects with {nkeystr} keys respectively')
+        
+        self.make_tree()
+        return
+    
+    
+    def make_tree(self):
+        """ Determine the keys to iterate over """
+        treekeys = list(self.bdict.keys()) # Start with the base keys
+            
+        if self.union:
+            fullset = set()
+            for odict in self.odicts:
+                fullset = fullset.union(odict.keys())
+            extras = fullset - set(treekeys)
+            pos = 0
+            if len(extras): # Shortcut if all the keys are the same
+                for odict in self.odicts:
+                    for key in odict.keys():
+                        try:
+                            pos = treekeys.index(key)
+                        except ValueError:
+                            treekeys.insert(pos+1, key)
+                            
+        self.treekeys = treekeys
+        
         return
     
     
@@ -932,20 +964,30 @@ class Equal(scu.prettyobj):
     def compare(self):
         """ Perform the comparison """
         
+        def appendval(vals, obj):
+            """ Append a value to the list of values for printing """
+            if self.detailed > 1:
+                try:    string = str(obj) # Convert to string since some objects can't be printed in a dataframe (e.g. another dataframe)
+                except: string = f'Error showing {type(obj)}'
+                vals += [string]
+            return
+        
         # Walk the objects if not already walked
         if not self.walked: # pragma: no cover
             self.walk()
         
-        btree = self.bdict.enumitems() # Get the full object tree for the base object
         bkeys = set(self.bdict.keys()) # Get the base keys (object structure)
-        while btree:
-            i,key,baseobj = btree.pop(0) # Get the index, key, and base object
+        for i,key in enumerate(self.treekeys):
+            baseobj = self.bdict.get(key, self.missingstr)
             eqs = [] # Store equality across all objects
+            vals = [] # Store values of each object
+            appendval(vals, baseobj)
             for j,otree in enumerate(self.odicts): # Iterate over other object trees
                 
                 # Check if the keys don't match, in which case objects differ
                 eq = True
                 if key == 'root':
+                    appendval(vals, otree['root'])
                     okeys = set(otree.keys())
                     eq = bkeys == okeys
                     if eq is False and self.verbose: # pragma: no cover
@@ -954,12 +996,14 @@ class Equal(scu.prettyobj):
                 # If key not present, false by default
                 if key not in otree:
                     eq = False
+                    appendval(vals, self.missingstr)
                 
                 # If keys match, proceed
                 if eq:
                     methods = scu.dcp(self.method) # Copy the methods to try one by one
                     compared = False # Check if comparison succeeded
                     otherobj = otree[key] # Get the other object
+                    if key != 'root': appendval(vals, otherobj)
                     
                     # Convert the objects
                     while len(methods) and not compared:
@@ -998,20 +1042,12 @@ class Equal(scu.prettyobj):
             has_none = None in eqs
             has_false = False in eqs
             result = None if has_none else all(eqs)
-            self.fullresults[key] = eqs
+            self.fullresults[key] = eqs + vals
             self.results[key] = result
             if not self.detailed and has_false: # Don't keep going unless needed
                 if self.verbose: # pragma: no cover
                     print('Objects are not equal and detailed=False, breaking')
                 break
-        
-            # Check for matches and avoid recursing further
-            if not self.detailed and result is True:
-                origlen = len(btree)
-                btree = [ikv for ikv in btree if not self.is_subkey(key, ikv[1])]
-                skipped = origlen - len(btree)
-                if self.verbose:
-                    print(f'Object {self.keytostr(key)} are equal, skipping {skipped} sub-objects')
             
         # Tidy up
         self.eq = all([v for v in self.results.values() if v is not None])
@@ -1041,17 +1077,29 @@ class Equal(scu.prettyobj):
             self.compare()
             
         # Make dataframe
-        columns = [f'obj0_obj{i+1}' for i in range(self.n-1)]
+        columns = [f'obj0==obj{i+1}' for i in range(self.n-1)]
+        if self.detailed>1: columns = columns + [f'val{i}' for i in range(self.n)]
         df = scd.dataframe.from_dict(scu.dcp(self.fullresults), orient='index', columns=columns)
-        df['equal'] = df.all(axis=1)
+        equal = df.iloc[:, :(self.n-1)].all(axis=1)
+        df.insert(0, 'equal', equal)
+        
         self.df = df
         return df
         
     
 
-def equal(obj, obj2, *args, method=None, detailed=False, equal_nan=True, leaf=False, verbose=None, die=False, **kwargs):
+def equal(obj, obj2, *args, method=None, detailed=False, equal_nan=True, leaf=False, 
+          union=True, verbose=None, die=False, **kwargs):
     """
     Compare equality between two arbitrary objects
+    
+    This method parses two (or more) objects of any type (lists, dictionaries, 
+    custom classes, etc.) and determines whether or not they are equal. By default 
+    it returns true/false for whether or not the objects match, but it can also 
+    return a detailed comparison of exactly which attributes (or keys, etc) match 
+    or don't match between the two objects. It works by first parsing the entire
+    object into "leaves" via :func:`sc.iterobj() <iterobj>`, and then comparing each 
+    "leaf" via one of the methods described below.
     
     There is no universal way to check equality between objects in Python. Some
     objects define their own equals method which may not evaluate to true/false
@@ -1071,9 +1119,10 @@ def equal(obj, obj2, *args, method=None, detailed=False, equal_nan=True, leaf=Fa
         obj2 (any): the second object to compare
         args (list): additional objects to compare
         method (str): see above
-        detailed (bool): whether to compute a detailed comparison of the objects, and return a dataframe of the results
+        detailed (int): whether to compute a detailed comparison of the objects, and return a dataframe of the results (if detailed=2, return the value of each object as well)
         equal_nan (bool): whether matching ``np.nan`` should compare as true (default True; NB, False not guaranteed to work with ``method='pickle'`` or ``'str'``, which includes the default; True not guaranteed to work with ``method='json'``)
         leaf (bool): if True, only compare the object's leaf nodes (those with no children); otherwise, compare everything
+        union (bool): if True, construct the comparison tree as the union of the trees of each object (i.e., an extra attribute in one object will show up as an additional row in the comparison; otherwise rows correspond to the attributes of the first object)
         verbose (bool): level of detail to print
         die (bool): whether to raise an exception if an error is encountered (else return False)
         kwargs (dict): passed to :func:`sc.iterobj() <iterobj>`
@@ -1100,7 +1149,8 @@ def equal(obj, obj2, *args, method=None, detailed=False, equal_nan=True, leaf=Fa
         e = sc.Equal(o1, o2, o3, detailed=True) # Create an object
         e.df.disp() # Show results as a dataframe
         
-    *New in version 3.1.0.*
+    | *New in version 3.1.0.*
+    | *New in version 3.1.3:* "union" argument; more detailed output
     """
     e = Equal(obj, obj2, *args, method=method, detailed=detailed, equal_nan=equal_nan, leaf=leaf, verbose=verbose, die=die, **kwargs)
     if detailed:

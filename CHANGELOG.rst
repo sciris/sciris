@@ -8,22 +8,34 @@ All major updates to Sciris are documented here.
 By import convention, components of the Sciris library are listed beginning with ``sc.``, e.g. ``sc.odict()``.
 
 
+Version 3.1.3 (2024-02-07)
+--------------------------
+#. :func:`sc.equal() <sc_nested.equal>` now parses the structure of all objects (not just the first), with missing keys/attributes listed in the output table. It also now allows for a ``detailed=2`` argument, which prints the value of each key/attribute in each object. (Thanks to `Kelvin Burke <https://github.com/kelvinburke>`_ for this and other features.)
+#. Fixed incorrect keyword arguments (``iterkwargs``) in :func:`sc.parallelize() <sc_parallel.parallelize>` when using ``thread`` or another non-copying parallelizer, when the ``iterkwargs`` are *not* consistent between iterations.
+#. Fixed incorrect printout on the final iteration of :func:`sc.asd() <sc_asd.asd>` in verbose mode.
+#. Fixed incorrect plotting of non-cumulative data in :func:`sc.stackedbar() <sc_plotting.stackedbar>`.
+#. :func:`sc.download(..., save=False) <sc_utils.download>` now returns an :class:`sc.objdict <sc_odict.objdict>` (instead of an :class:`sc.odict <sc_odict.odict>`).
+#. :func:`sc.checktype(obj, 'arraylike') <sc_utils.checktype>` is now more robust to handling non-array-like objects (e.g., a ragged list of lists now returns ``False`` instead of raising an exception).
+#. :func:`sc.require() <sc_versioning.require>` now takes an optional ``message`` argument, allowing for a custom message if the requirement(s) aren't met.
+#. Removed ``object`` from the list of classes shown by :func:`sc.prepr() <sc_printing.prepr>` (since all objects derive from ``object``).
+
+
 Version 3.1.2 (2023-11-01)
 --------------------------
-#. Updated logic for ``sc.iterobj()`` and added a new ``sc.IterObj()`` class, allowing greater customization of how objects are iterated over.
-#. Fixed a bug in which 3D plotting functions (e.g. ``sc.bar3d()``) would create a new figure even if an existing axes instance was passed.
+#. Updated logic for :func:`sc.iterobj() <sc_nested.iterobj>` and added a new :class:`sc.IterObj() <sc_nested.IterObj>` class, allowing greater customization of how objects are iterated over.
+#. Fixed a bug in which 3D plotting functions (e.g. :func:`sc.bar3d() <sc_plotting.bar3d>`) would create a new figure even if an existing axes instance was passed.
 
 
 Version 3.1.1 (2023-10-29)
 --------------------------
-#. ``sc.odict`` now supports steps in slice-based indexing, e.g.: ``myodict['foo':'bar':5]`` will select every 5th item from ``'foo'`` to ``'bar'`` inclusive.
-#. ``sc.odict.copy()`` now behaves the same as ``dict.copy()``; the previous behavior (which copied an item) is deprecated. Instead of ``mydict.copy(oldkey, newkey)``, use ``mydict[newkey] = sc.dcp(mydict[oldkey])`` instead.
-#. ``sc.download()`` now defaults to expecting ``filename:URL`` pairs rather than ``URL:filename`` pairs (e.g. ``sc.download({'wikipedia.html':'http://wikipedia.org/index.html'})``, though it can accept either as long as ``http`` appears in one.
-#. ``sc.parallelize()`` has more robust error handling (previously, certain types of exceptions, such as HTTP errors, were not caught even if ``die=False``).
-#. ``sc.load()`` has improved support for loading old pickles, including a new ``NoneObj`` class that is used when the user explicitly remaps an old class/function to ``None``.
-#. ``sc.runcommand()`` now prints out terminal output in real time if ``wait=False``.
-#. ``sc.sanitizefilename()`` now excludes newlines and tabs even when ``strict=False``.
-#. Added support for Python 3.12. Note: ``line_profiler`` is not compatible with Python 3.12 at the time of writing, so ``sc.profile()`` is not available on Python 3.12.
+#. :class:`sc.odict <sc_odict.odict>` now supports steps in slice-based indexing, e.g.: ``myodict['foo':'bar':5]`` will select every 5th item from ``'foo'`` to ``'bar'`` inclusive.
+#. :meth:`sc.odict.copy() <sc_odict.odict.copy>` now behaves the same as ``dict.copy()``; the previous behavior (which copied an item) is deprecated. Instead of ``mydict.copy(oldkey, newkey)``, use ``mydict[newkey] = sc.dcp(mydict[oldkey])`` instead.
+#. :func:`sc.download() <sc_utils.download>` now defaults to expecting ``filename:URL`` pairs rather than ``URL:filename`` pairs (e.g. ``sc.download({'wikipedia.html':'http://wikipedia.org/index.html'})``, though it can accept either as long as ``http`` appears in one.
+#. :func:`sc.parallelize() <sc_parallel.parallelize>` has more robust error handling (previously, certain types of exceptions, such as HTTP errors, were not caught even if ``die=False``).
+#. :func:`sc.load() <sc_fileio.load>` has improved support for loading old pickles, including a new ``NoneObj`` class that is used when the user explicitly remaps an old class/function to ``None``.
+#. :func:`sc.sanitizefilename() <sc_fileio.sanitizefilename>` now excludes newlines and tabs even when ``strict=False``.
+#. :func:`sc.runcommand() <sc_utils.runcommand>` now prints out terminal output in real time if ``wait=False``.
+#. Added support for Python 3.12. Note: ``line_profiler`` is not compatible with Python 3.12 at the time of writing, so :func:`sc.profile() <sc_profiling.profile>` is not available on Python 3.12.
 
 
 Version 3.1.0 (2023-08-13)

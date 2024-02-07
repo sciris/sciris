@@ -13,7 +13,6 @@ import multiprocessing as mp
 import pickle
 import gzip
 import matplotlib.pyplot as plt
-from mpl_toolkits.mplot3d import Axes3D # Unused but must be imported
 
 # Start timing
 start = time.time()
