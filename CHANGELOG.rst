@@ -8,6 +8,18 @@ All major updates to Sciris are documented here.
 By import convention, components of the Sciris library are listed beginning with ``sc.``, e.g. ``sc.odict()``.
 
 
+Version 3.1.3 (2024-02-07)
+--------------------------
+#. ``sc.equal()`` now parses the structure of all objects (not just the first), with missing keys/attributes listed in the output table. It also now allows for a ``detailed=2`` argument, which prints the value of each key/attribute in each object. (Thanks to `Kelvin Burke <https://github.com/kelvinburke>`_ for this and other features.)
+#. Fixed incorrect keyword arguments (``iterkwargs``) when running parallelization using ``thread`` or another non-copying parallelizer, when the ``iterkwargs`` are *not* consistent between iterations.
+#. Fixed incorrect printout on the final iteration of ``sc.asd()`` in verbose mode.
+#. Fixed incorrect plotting of non-cumulative data in ``sc.stackedbar()``.
+#. ``sc.download(..., save=False)`` now returns an ``objdict`` (instead of an ``odict``).
+#. ``sc.checktype(obj, 'arraylike')`` is now more robust to handling non-array-like objects (e.g., a ragged list of lists now returns ``False`` instead of raising an exception).
+#. ``sc.require()`` now takes an optional ``message`` argument, allowing for a custom message if the requirement(s) aren't met.
+#. Removed ``object`` from the list of classes shown by ``sc.prepr()`` (since all objects derive from ``object``).
+
+
 Version 3.1.2 (2023-11-01)
 --------------------------
 #. Updated logic for ``sc.iterobj()`` and added a new ``sc.IterObj()`` class, allowing greater customization of how objects are iterated over.
