@@ -766,8 +766,8 @@ class Equal(scu.prettyobj):
     valid_methods = [None, 'eq', 'pickle', 'json', 'str']
     
     
-    def __init__(self, obj, obj2, *args, method=None, detailed=False, output_vals=False, equal_nan=True,
-                 leaf=False, verbose=None, compare=True, die=False, missing_placeholder='MISSING', **kwargs):
+    def __init__(self, obj, obj2, *args, method=None, detailed=False, equal_nan=True,
+                 leaf=False, verbose=None, compare=True, die=False, **kwargs):
         """
         Compare equality between two arbitrary objects -- see :func:`sc.equal() <equal>` for full documentation.
 
@@ -784,8 +784,7 @@ class Equal(scu.prettyobj):
         self.objs = [obj, obj2] + list(args) # All objects for comparison
         self.method = method
         self.detailed = detailed
-        self.output_vals = output_vals
-        self.missing_placeholder = missing_placeholder
+        self.missingstr = 'MISSING'
         self.equal_nan = equal_nan
         self.verbose = verbose
         self.die = die
@@ -944,13 +943,13 @@ class Equal(scu.prettyobj):
         while btree:
             i,key,baseobj = btree.pop(0) # Get the index, key, and base object
             eqs = [] # Store equality across all objects
-            if self.output_vals: vals = [baseobj] + [self.missing_placeholder] * len(self.odicts)
+            if self.detailed>1: vals = [baseobj] + [self.missingstr] * len(self.odicts)
             for j,otree in enumerate(self.odicts): # Iterate over other object trees
                 
                 # Check if the keys don't match, in which case objects differ
                 eq = True
                 if key == 'root':
-                    if self.output_vals: vals[j+1] = otree['root']
+                    if self.detailed>1: vals[j+1] = otree['root']
                     okeys = set(otree.keys())
                     eq = bkeys == okeys
                     if eq is False and self.verbose: # pragma: no cover
@@ -965,7 +964,7 @@ class Equal(scu.prettyobj):
                     methods = scu.dcp(self.method) # Copy the methods to try one by one
                     compared = False # Check if comparison succeeded
                     otherobj = otree[key] # Get the other object
-                    if self.output_vals: vals[j+1] = otherobj
+                    if self.detailed>1: vals[j+1] = otherobj
                     
                     # Convert the objects
                     while len(methods) and not compared:
@@ -1004,7 +1003,7 @@ class Equal(scu.prettyobj):
             has_none = None in eqs
             has_false = False in eqs
             result = None if has_none else all(eqs)
-            if not self.output_vals: vals = []
+            if not self.detailed>1: vals = []
             self.fullresults[key] = eqs + vals
             self.results[key] = result
             if not self.detailed and has_false: # Don't keep going unless needed
@@ -1049,9 +1048,8 @@ class Equal(scu.prettyobj):
             
         # Make dataframe
         columns = [f'obj0==obj{i+1}' for i in range(self.n-1)]
-        if self.output_vals: columns = columns + [f'val{i}' for i in range(self.n)]
-        df = sc.dataframe.from_dict(sc.dcp(self.fullresults), orient='index', columns=columns)
-        
+        if self.detailed>1: columns = columns + [f'val{i}' for i in range(self.n)]
+        df = scd.dataframe.from_dict(scu.dcp(self.fullresults), orient='index', columns=columns)
         df['equal'] = df.iloc[:, :(self.n-1)].all(axis=1)
         
         self.df = df
