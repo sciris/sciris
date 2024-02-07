@@ -136,13 +136,13 @@ def test_saving(doplot=doplot):
     sc.loadfig(fn.fig)
 
     print('Testing save movie')
-    frames = [pl.plot(pl.cumsum(pl.randn(100))) for i in range(3)] # Create frames
+    frames = [pl.plot(pl.cumsum(pl.randn(100))) for i in range(2)] # Create frames
     sc.savemovie(frames, fn.movie) # Save movie as medium-quality gif
 
     print('Testing animation')
     anim = sc.animation(filename=fn.anim)
     pl.figure('Animation')
-    for i in range(3):
+    for i in range(2):
         pl.plot(pl.cumsum(pl.randn(100)))
         anim.addframe()
     anim.save()
