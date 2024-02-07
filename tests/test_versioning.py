@@ -15,7 +15,10 @@ def test_functions():
     
     print('Testing freeze')
     o.freeze = sc.freeze()
-    assert 'numpy' in o.freeze
+    assert 'numpy' in o.freeze, 'NumPy not found, but should be'
+    v1 = o.freeze['numpy']
+    v2 = np.__version__
+    assert v1 == v2, f'Versions do not match ({v1} != {v2})'
     
     print('Testing require')
     sc.require('numpy')

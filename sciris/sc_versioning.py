@@ -18,6 +18,7 @@ import zlib
 import types
 import warnings
 import packaging.version
+import importlib.metadata as imd
 from zipfile import ZipFile
 from . import sc_utils as scu
 from . import sc_fileio as scf
@@ -45,10 +46,10 @@ def freeze(lower=False):
 
         assert 'numpy' in sc.freeze() # One way to check for versions
 
-    *New in version 1.2.2.*
+    | *New in version 1.2.2.*
+    | *New in version 3.1.3:* use ``importlib`` instead of ``pkg_resources``
     """
-    import pkg_resources as pkgr # Imported here since slow (>0.1 s); deprecated, but importlib doesn't work on older Python versions
-    raw = dict(tuple(str(ws).split()) for ws in pkgr.working_set)
+    raw = {dist.metadata['Name']:dist.version for dist in imd.distributions()}
     keys = sorted(raw.keys())
     if lower: # pragma: no cover
         labels = {k:k.lower() for k in keys}
