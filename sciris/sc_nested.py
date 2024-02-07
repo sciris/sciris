@@ -767,7 +767,7 @@ class Equal(scu.prettyobj):
     
     
     def __init__(self, obj, obj2, *args, method=None, detailed=False, equal_nan=True,
-                 leaf=False, verbose=None, compare=True, die=False, **kwargs):
+                 leaf=False, union=True, verbose=None, compare=True, die=False, **kwargs):
         """
         Compare equality between two arbitrary objects -- see :func:`sc.equal() <equal>` for full documentation.
 
@@ -1050,16 +1050,26 @@ class Equal(scu.prettyobj):
         columns = [f'obj0==obj{i+1}' for i in range(self.n-1)]
         if self.detailed>1: columns = columns + [f'val{i}' for i in range(self.n)]
         df = scd.dataframe.from_dict(scu.dcp(self.fullresults), orient='index', columns=columns)
-        df['equal'] = df.iloc[:, :(self.n-1)].all(axis=1)
+        equal = df.iloc[:, :(self.n-1)].all(axis=1)
+        df.insert(0, 'equal', equal)
         
         self.df = df
         return df
         
     
 
-def equal(obj, obj2, *args, method=None, detailed=False, equal_nan=True, leaf=False, verbose=None, die=False, **kwargs):
+def equal(obj, obj2, *args, method=None, detailed=False, equal_nan=True, leaf=False, 
+          union=True, verbose=None, die=False, **kwargs):
     """
     Compare equality between two arbitrary objects
+    
+    This method parses two (or more) objects of any type (lists, dictionaries, 
+    custom classes, etc.) and determines whether or not they are equal. By default 
+    it returns true/false for whether or not the objects match, but it can also 
+    return a detailed comparison of exactly which attributes (or keys, etc) match 
+    or don't match between the two objects. It works by first parsing the entire
+    object into "leaves" via :func:`sc.iterobj() <iterobj>`, and then comparing each 
+    "leaf" via one of the methods described below.
     
     There is no universal way to check equality between objects in Python. Some
     objects define their own equals method which may not evaluate to true/false
@@ -1079,9 +1089,10 @@ def equal(obj, obj2, *args, method=None, detailed=False, equal_nan=True, leaf=Fa
         obj2 (any): the second object to compare
         args (list): additional objects to compare
         method (str): see above
-        detailed (bool): whether to compute a detailed comparison of the objects, and return a dataframe of the results
+        detailed (int): whether to compute a detailed comparison of the objects, and return a dataframe of the results (if detailed=2, return the value of each object as well)
         equal_nan (bool): whether matching ``np.nan`` should compare as true (default True; NB, False not guaranteed to work with ``method='pickle'`` or ``'str'``, which includes the default; True not guaranteed to work with ``method='json'``)
         leaf (bool): if True, only compare the object's leaf nodes (those with no children); otherwise, compare everything
+        union (bool): if True, construct the comparison tree as the union of the trees of each object (i.e., an extra attribute in one object will show up as an additional row in the comparison; otherwise rows correspond to the attributes of the first object)
         verbose (bool): level of detail to print
         die (bool): whether to raise an exception if an error is encountered (else return False)
         kwargs (dict): passed to :func:`sc.iterobj() <iterobj>`
@@ -1108,7 +1119,8 @@ def equal(obj, obj2, *args, method=None, detailed=False, equal_nan=True, leaf=Fa
         e = sc.Equal(o1, o2, o3, detailed=True) # Create an object
         e.df.disp() # Show results as a dataframe
         
-    *New in version 3.1.0.*
+    | *New in version 3.1.0.*
+    | *New in version 3.1.3:* "union" argument; more detailed output
     """
     e = Equal(obj, obj2, *args, method=method, detailed=detailed, equal_nan=equal_nan, leaf=leaf, verbose=verbose, die=die, **kwargs)
     if detailed:
