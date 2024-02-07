@@ -1007,6 +1007,7 @@ def checktype(obj=None, objtype=None, subtype=None, die=False):
     
     | *New in version 2.0.1:* ``pd.Series`` considered 'array-like'
     | *New in version 3.0.0:* allow list (in addition to tuple) of types; allow checking for NoneType
+    | *New in version 3.1.3:* handle exceptions when casting to "arraylike"
     """
 
     # Handle "objtype" input
@@ -1032,9 +1033,12 @@ def checktype(obj=None, objtype=None, subtype=None, die=False):
     result = isinstance(obj, objinstance)
 
     # Do second round checking
-    if result and objtype in ['listlike', 'arraylike']: # Special case for handling arrays which may be multi-dimensional
-        obj = toarray(obj).flatten() # Flatten all elements
-        if objtype == 'arraylike' and subtype is None: # Add additional check for numeric entries
+    if result and objtype == 'arraylike': # Special case for handling arrays which may be multi-dimensional
+        try:
+            obj = toarray(obj).flatten() # Flatten all elements
+        except: # If it can't be cast to an array, it's not array-like
+            result = False
+        if subtype is None: # Add additional check for numeric entries
             subtype = _numtype + _booltypes
     if isiterable(obj) and subtype is not None:
         for item in obj:
