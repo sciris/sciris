@@ -14,6 +14,7 @@ from functools import reduce, partial
 import numpy as np
 import pandas as pd
 from . import sc_utils as scu
+from . import sc_printing as scp
 
 # Define objects for which it doesn't make sense to descend further -- used here and sc.equal()
 _atomic_classes = (np.ndarray, pd.Series, pd.DataFrame, pd.core.indexes.base.Index) 
@@ -762,7 +763,7 @@ def search(obj, query=_None, key=_None, value=_None, aslist=True, method='exact'
         return matches
 
 
-class Equal(scu.prettyobj):
+class Equal(scp.prettyobj):
     
     # Define known special cases for equality checking
     special_cases = (float,) + _atomic_classes

@@ -25,7 +25,6 @@ from contextlib import redirect_stdout
 from ._extras import ansicolors as ac
 from . import sc_utils as scu
 
-
 # Add Windows support for colors (do this at the module level so that colorama.init() only gets called once)
 if scu.iswindows(): # pragma: no cover # NB: can't use startswith() because of 'cygwin'
     try:
@@ -39,10 +38,10 @@ else:
 
 
 
-
 #%% Object display functions
 
-__all__ = ['createcollist', 'objectid', 'classatt', 'objatt', 'objmeth', 'objprop', 'objrepr', 'prepr', 'pr']
+__all__ = ['createcollist', 'objectid', 'classatt', 'objatt', 'objmeth', 'objprop', 
+           'objrepr', 'prepr', 'pr', 'prettyobj']
 
 
 def createcollist(items, title=None, strlen=18, ncol=3):
@@ -346,6 +345,85 @@ def pr(obj, *args, **kwargs):
     """
     print(prepr(obj, *args, **kwargs))
     return
+
+
+class prettyobj(object):
+    """
+    Use pretty repr for objects, instead of just showing the type and memory pointer
+    (the Python default for objects). Can also be used as the base class for custom
+    classes.
+    
+    Args:
+        args (dict): dictionaries which are used to assign attributes
+        kwargs (any): can also be used to assign attributes
+
+    **Example 1**::
+
+        myobj = sc.prettyobj(a=3)
+        print(myobj)
+        
+        # <sciris.sc_utils.prettyobj at 0x7fbba4a97f40>
+        # ————————————————————————————————————————————————————————————
+        # Methods:
+        #   Methods N/A         
+        # ————————————————————————————————————————————————————————————
+        # a: 3
+        # ————————————————————————————————————————————————————————————
+
+    **Example 2**::
+
+        myobj = sc.prettyobj(a=3)
+        myobj.b = {'a':6}
+        print(myobj)
+        
+        # <sciris.sc_utils.prettyobj at 0x7ffa1e243910>
+        # ————————————————————————————————————————————————————————————
+        # Methods:
+        #   Methods N/A         
+        # ————————————————————————————————————————————————————————————
+        # a: 3
+        # b: {'a': 6}
+        # ————————————————————————————————————————————————————————————
+
+
+    **Example 3**::
+        
+        class MyObj(sc.prettyobj):
+       
+            def __init__(self, a, b):
+                self.a = a
+                self.b = b
+       
+            def mult(self):
+                return self.a * self.b
+       
+        myobj = MyObj(a=4, b=6)
+        print(myobj)
+        
+        # <__main__.MyObj at 0x7fd9acd96c10>
+        # ————————————————————————————————————————————————————————————
+        # Methods:
+        #   mult()
+        # ————————————————————————————————————————————————————————————
+        # a: 4
+        # b: 6
+        # ————————————————————————————————————————————————————————————
+
+    | *New in version 2.0.0:* allow positional arguments
+    | *New in version 3.1.4:* moved from sc_utils to sc_printing
+    """
+    def __init__(self, *args, **kwargs):
+        """ Simple initialization """
+        kwargs = scu.mergedicts(*args, kwargs)
+        for k,v in kwargs.items():
+            self.__dict__[k] = v
+        return
+
+    def __repr__(self):
+        """ The point of this class: use a more detailed repr by default """
+        output  = prepr(self)
+        return output
+
 
 
 #%% Spacing functions
@@ -1285,7 +1363,7 @@ class tqdm_pickle(tqdm.tqdm):
         return
 
 
-class progressbars(scu.prettyobj):
+class progressbars(prettyobj):
     """
     Create multiple progress bars
     

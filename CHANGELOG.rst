@@ -8,6 +8,12 @@ All major updates to Sciris are documented here.
 By import convention, components of the Sciris library are listed beginning with ``sc.``, e.g. ``sc.odict()``.
 
 
+Version 3.1.4 (2024-03-11)
+--------------------------
+#. Added additional flexibility for loading zip files (:func:`sc.loadzip() <sc_fileio.loadzip>`); saving zip files (:func:`sc.savezip() <sc_fileio.savezip>`) now saves text as plain text even with ``tobytes=True``.
+#. 
+
+
 Version 3.1.3 (2024-02-07)
 --------------------------
 #. :func:`sc.equal() <sc_nested.equal>` now parses the structure of all objects (not just the first), with missing keys/attributes listed in the output table. It also now allows for a ``detailed=2`` argument, which prints the value of each key/attribute in each object. (Thanks to `Kelvin Burke <https://github.com/kelvinburke>`_ for this and other features.)
