@@ -33,7 +33,7 @@ if scu.iswindows(): # pragma: no cover # NB: can't use startswith() because of '
         colorama.init()
         ansi_support = True
     except:
-        ansi_support = False  # print('Warning: you have called colorize() on Windows but do not have either the colorama or tendo modules.')
+        ansi_support = False
 else:
     ansi_support = True
 
@@ -97,14 +97,26 @@ def _get_obj_keys(obj, private=False, sort=True, use_dir=False):
     return keys
 
 
-def _is_meth(obj, attr):
+def _is_meth(obj, attr, die=False):
     """ Helper function to check if an attribute is a method; do not distinguish between bound and unbound """
-    return callable(getattr(obj, attr))
+    try:
+        return callable(getattr(obj, attr))
+    except Exception as E:
+        if die:
+            raise E
+        else:
+            return False
 
 
-def _is_prop(obj, attr):
+def _is_prop(obj, attr, die=False):
     """ Helper function to check if an attribute is a property """
-    return isinstance(getattr(type(obj), attr, None), property)
+    try:
+        return isinstance(getattr(type(obj), attr, None), property)
+    except Exception as E:
+        if die:
+            raise E
+        else:
+            return False
 
 
 def objatt(obj, strlen=18, ncol=3, private=False, sort=True, _keys=None):
@@ -119,8 +131,8 @@ def classatt(obj, strlen=18, ncol=3, private=False, sort=True, _objkeys=None, _d
     objkeys = _get_obj_keys(obj, private=private, sort=sort, use_dir=False) if _objkeys is None else _objkeys
     dirkeys = _get_obj_keys(obj, private=private, sort=sort, use_dir=True)  if _dirkeys is None else _dirkeys
     keys = set(dirkeys) - set(objkeys) # Find attributes in dir() that are not in __dict__
-    keys = filter(keys.__contains__, dirkeys) # Maintain original ordering
-    keys = [k for k  in keys if not (_is_meth(obj, k) or _is_prop(obj, k))] # Exclude methods and properties; these are covered elsewhere
+    keys = list(filter(keys.__contains__, dirkeys)) # Maintain original ordering
+    keys = [k for k in keys if not (_is_meth(obj, k) or _is_prop(obj, k))]
     if return_keys:
         return keys
     else:
@@ -198,6 +210,7 @@ def prepr(obj, maxlen=None, maxitems=None, skip=None, dividerchar='—', divider
         debug (bool): print out detail during string construction
     
     *New in version 3.0.0:* "debug" argument
+    *New in version 3.1.4:* more robust handling of invalid object properties
     """
 
     # Decide how to handle representation function -- repr is dangerous since can lead to recursion
@@ -247,11 +260,17 @@ def prepr(obj, maxlen=None, maxitems=None, skip=None, dividerchar='—', divider
                         print(f'  Working on attribute {a}: {attr}...')
                     if (time.time() - T) < maxtime:
                         try: # Be especially robust in getting individual attributes
-                            value = repr_fn(getattr(obj, attr))
+                            value = getattr(obj, attr)
                         except Exception as E:
                             value = 'N/A' # pragma: no cover
                             if die:
                                 raise E
+                        try: # Separately, be robust about getting their attributes
+                            value = repr_fn(value)
+                        except Exception as E:
+                            value = object.__repr__(value) # pragma: no cover
+                            if die:
+                                raise E          
                         values.append(value)
                     else:
                         labels = labels[:a]
@@ -298,13 +317,9 @@ def prepr(obj, maxlen=None, maxitems=None, skip=None, dividerchar='—', divider
             try: # Next try the objrepr, which is the same except doesn't print attribute values
                 output = objrepr(obj, **kw)
                 output += f'\nWarning: showing simplified output since full repr failed {str(E)}'
-            except Exception as E: # If that fails, try just the string representation
+            except Exception as E: # If that fails, try the most basic object representation
                 E2 = E
-                try:
-                    output = str(obj)
-                except Exception as E: # And if that fails, try the most basic object representation
-                    E3 = E
-                    output = object.__repr__(obj)
+                output = object.__repr__(obj)
     
     if any([E is not None for E in [E1, E2, E3]]):
         warnmsg = 'Exception(s) encountered displaying object:\n'
