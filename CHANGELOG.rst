@@ -8,6 +8,10 @@ All major updates to Sciris are documented here.
 By import convention, components of the Sciris library are listed beginning with ``sc.``, e.g. ``sc.odict()``.
 
 
+3.x versions
+************
+
+
 Version 3.1.4 (2024-03-11)
 --------------------------
 #. Fixed failures of pretty-repr (e.g. :func:`sc.pr() <sc_printing.pr>` and :class:`sc.prettyobj() <sc_printing.prettyobj>`) for objects with invalid properties (e.g., properties that rely on missing/invalid attributes). ``sc.prettyobj()`` was also moved from ``sc_utils`` to ``sc_printing``.
@@ -231,6 +235,10 @@ Regression information
 
 
 
+2.x versions
+************
+
+
 Version 2.1.0 (2022-12-23)
 --------------------------
 
@@ -415,6 +423,11 @@ Regression information
 #. The argument ``maxload`` (in ``sc.loadbalancer()``, ``sc.parallelize()``, etc.) has been renamed ``maxcpu`` (for consistency with the new ``maxmem`` argument).
 #. Previously ``sc.loadbalancer(maxload=None)`` was interpreted as a default load limit (0.8); ``None`` is now interpreted as no limit.
 #. Legacy load functions have been moved to a separate module and must be used from there, e.g. ``sc.sc_legacy.loadobj2or3()``.
+
+
+
+1.x versions
+************
 
 
 Version 1.3.3 (2022-01-16)
@@ -740,6 +753,11 @@ Other updates
 1. Module imports were moved to inside functions, improving Sciris loading time by roughly 30%.
 2. All tests were refactored to be in consistent format, increasing test coverage by roughly 50%.
 3. Continuous integration testing was updated to use GitHub Actions instead of Travis/Tox.
+
+
+
+0.x versions
+************
 
 
 Version 0.17.4 (2020-08-11)
