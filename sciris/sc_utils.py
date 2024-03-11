@@ -251,7 +251,7 @@ def dcp(obj, die=True):
     except Exception as E: # pragma: no cover
         errormsg = f'Warning: could not perform deep copy of {type(obj)}: {str(E)}'
         if die:
-            raise ValueError(errormsg)
+            raise ValueError(errormsg) from E
         else:
             output = cp(obj, die=False)
             warnmsg = errormsg + '\nPerforming shallow copy instead...'
