@@ -475,13 +475,15 @@ def savetext(filename=None, string=None, **kwargs):
     return
 
 
-def loadzip(filename=None, folder=None, **kwargs):
+def loadzip(filename=None, folder=None, load=True, convert=True, **kwargs):
     """
     Load the contents of a zip file into a variable
 
     Args:
         filename (str/path): the name of the zip file to write to
         folder (str): optional additional folder for the filename
+        load (bool): whether to load the contents of the zip file; else just return the ZipFile itself
+        convert (bool): whether to convert bytes objects to strings
         kwargs (dict): passed to :func:`sc.load() <load>`
     
     Returns:
@@ -493,19 +495,26 @@ def loadzip(filename=None, folder=None, **kwargs):
 
     | *New in version 2.0.0.*
     | *New in version 3.0.0:* load into memory instead of extracting to disk; see :func:`sc.unzip() <unzip>` for extracting
+    | *New in version 3.1.4:* optionally return just the zipfile object; convert bytes to string
     """
     filename = makefilepath(filename=filename, folder=folder)
-    output = dict()
-    with ZipFile(filename, 'r') as zf: # Create the zip file
-        names = zf.namelist()
-        for name in names:
-            val = zf.read(name)
-            try:
-                val = loadstr(val, **kwargs) # Try to load as a pickle or some kind of valid file
-            except:
-                pass # Otherwise, just return the raw value
-            output[name] = val
-    return output
+    if load:
+        output = dict()
+        with ZipFile(filename, 'r') as zf: # Create the zip file
+            names = zf.namelist()
+            for name in names:
+                val = zf.read(name)
+                if convert:
+                    if isinstance(val, (str, bytes)):
+                        try:    val = loadstr(val, **kwargs) # Try to load as a pickle or some kind of valid file
+                        except: pass # Otherwise, just return the raw value
+                    if isinstance(val, bytes): # If still bytes, try to convert
+                        try:    val = val.decode()
+                        except: pass
+                output[name] = val
+        return output
+    else:
+        return ZipFile(filename, 'r')
 
 
 def unzip(filename=None, outfolder='.', folder=None, members=None):
@@ -597,7 +606,8 @@ def savezip(filename=None, files=None, data=None, folder=None, sanitizepath=True
         if data: # Optionally also save data
             for key,val in data.items():
                 if tobytes:
-                    val = dumpstr(val, **kwargs)
+                    if not isinstance(val, str): # Only dump if not already a string
+                        val = dumpstr(val, **kwargs)
                 zf.writestr(key, val)
         if files: # Main use case, save files
             for thisfile in filelist:
