@@ -362,7 +362,7 @@ class prettyobj(object):
         myobj = sc.prettyobj(a=3)
         print(myobj)
         
-        # <sciris.sc_utils.prettyobj at 0x7fbba4a97f40>
+        # <sciris.sc_printing.prettyobj at 0x7fbba4a97f40>
         # ————————————————————————————————————————————————————————————
         # Methods:
         #   Methods N/A         
@@ -376,7 +376,7 @@ class prettyobj(object):
         myobj.b = {'a':6}
         print(myobj)
         
-        # <sciris.sc_utils.prettyobj at 0x7ffa1e243910>
+        # <sciris.sc_printing.prettyobj at 0x7ffa1e243910>
         # ————————————————————————————————————————————————————————————
         # Methods:
         #   Methods N/A         

@@ -10,8 +10,10 @@ By import convention, components of the Sciris library are listed beginning with
 
 Version 3.1.4 (2024-03-11)
 --------------------------
+#. Fixed failures of pretty-repr (e.g. :func:`sc.pr() <sc_printing.pr>` and :class:`sc.prettyobj() <sc_printing.prettyobj>`) for objects with invalid properties (e.g., properties that rely on missing/invalid attributes). ``sc.prettyobj()`` was also moved from ``sc_utils`` to ``sc_printing``.
 #. Added additional flexibility for loading zip files (:func:`sc.loadzip() <sc_fileio.loadzip>`); saving zip files (:func:`sc.savezip() <sc_fileio.savezip>`) now saves text as plain text even with ``tobytes=True``.
-#. 
+#. :func:`sc.dcp(die=False) <sc_utils.dcp>` now passes ``die=False`` to :func:`sc.cp() <sc_utils.cp>`, and will return the original object if it cannot be copied.
+#. :func:`sc.urlopen() <sc_utils.urlopen>` now has additional response options, including ``'json'`` and ``'full'``.
 
 
 Version 3.1.3 (2024-02-07)
