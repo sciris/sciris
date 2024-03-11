@@ -480,7 +480,7 @@ def loadzip(filename=None, folder=None, load=True, convert=True, **kwargs):
     Load the contents of a zip file into a variable
 
     Args:
-        filename (str/path): the name of the zip file to write to
+        filename (str/path): the name of the zip file to load from
         folder (str): optional additional folder for the filename
         load (bool): whether to load the contents of the zip file; else just return the ZipFile itself
         convert (bool): whether to convert bytes objects to strings
