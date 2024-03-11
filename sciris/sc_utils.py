@@ -652,27 +652,25 @@ def urlopen(url, filename=None, save=None, headers=None, params=None, data=None,
 
     if verbose: print(f'Downloading {url}...')
     request = ur.Request(full_url, headers=headers, data=data)
-    resp = ur.urlopen(request)
+    resp = ur.urlopen(request) # Actually open the URL
     if response in ['text', 'json']:
-        text = resp.read()
+        output = resp.read()
         if response == 'json':
             try:
-                output = scf.loadjson(string=text)
+                output = scf.loadjson(string=output)
             except Exception as E:
-                errormsg = f'Could not convert HTTP response beginning "{text[:20]}" to JSON'
+                errormsg = f'Could not convert HTTP response beginning "{output[:20]}" to JSON'
                 raise ValueError(errormsg) from E
         elif convert:
             if verbose>1: print('Converting from bytes to text...')
             try:
-                output = text.decode()
+                output = output.decode()
             except Exception as E: # pragma: no cover
                 if die:
                     raise E
                 elif verbose:
                     errormsg = f'Could not decode to text: {str(E)}'
                     print(errormsg)
-        else:
-            output = text
     elif response == 'status':
         output = resp.status
     elif response == 'full':

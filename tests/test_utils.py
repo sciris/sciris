@@ -47,7 +47,7 @@ def test_adaptations():
 def test_download():
     print('\nTesting download')
     o = sc.objdict()
-    o.download = sc.download(url1, url2, save=False)
+    o.download = sc.download(url1, url2, save=False, parallel=True) # Set parallel=False to debug
 
     print('\nTesting htmlify')
     o.html = sc.htmlify('foo&\nbar')
