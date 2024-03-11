@@ -1912,9 +1912,7 @@ class LinkException(Exception): # pragma: no cover
     An exception to raise when links are broken, for exclusive use with the Link
     class.
     """
-
-    def __init(self, *args, **kwargs):
-        Exception.__init__(self, *args, **kwargs)
+    pass
 
 
 class prettyobj(object):
