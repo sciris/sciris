@@ -233,7 +233,7 @@ def uuid(uid=None, which=None, die=False, tostring=False, length=None, n=1, **kw
     return output
 
 
-def dcp(obj, die=True, verbose=True):
+def dcp(obj, die=True):
     """
     Shortcut to perform a deep copy operation
 
@@ -241,36 +241,43 @@ def dcp(obj, die=True, verbose=True):
     if deepcopy fails.
 
     Args:
-        die (bool): if False, fall back to copy()
-        verbose (bool): if die is False, then print a warning if deepcopy() fails
+        die (bool): if False, fall back to :func:`copy.copy()`
 
-    *New in version 2.0.0:* default die=True instead of False
+    | *New in version 2.0.0:* default die=True instead of False
+    | *New in version 3.1.4:* die=False passed to sc.cp(); "verbose" argument removed; warning raised
     """
     try:
         output = copy.deepcopy(obj)
     except Exception as E: # pragma: no cover
-        output = cp(obj)
-        errormsg = f'Warning: could not perform deep copy: {str(E)}'
-        if die: raise RuntimeError(errormsg)
-        else:   print(errormsg + '\nPerforming shallow copy instead...')
+        errormsg = f'Warning: could not perform deep copy of {type(obj)}: {str(E)}'
+        if die:
+            raise ValueError(errormsg)
+        else:
+            output = cp(obj, die=False)
+            warnmsg = errormsg + '\nPerforming shallow copy instead...'
+            warnings.warn(warnmsg, category=RuntimeWarning, stacklevel=2)
     return output
 
 
-def cp(obj, die=True, verbose=True):
+def cp(obj, die=True):
     """
     Shortcut to perform a shallow copy operation
 
     Almost identical to :func:`copy.copy()`, but optionally allow failures
 
-    *New in version 2.0.0:* default die=True instead of False
+    | *New in version 2.0.0:* default die=True instead of False
+    | *New in version 3.1.4:* "verbose" argument removed; warning raised
     """
     try:
         output = copy.copy(obj)
     except Exception as E:
         output = obj
-        errormsg = 'Could not perform shallow copy'
-        if die: raise ValueError(errormsg) from E
-        else:   print(errormsg + '\nReturning original object...')
+        errormsg = f'Could not perform shallow copy of {type(obj)}'
+        if die:
+            raise ValueError(errormsg) from E
+        else:
+            warnmsg = errormsg + ', returning original object...'
+            warnings.warn(warnmsg, category=RuntimeWarning, stacklevel=2)
     return output
 
 
