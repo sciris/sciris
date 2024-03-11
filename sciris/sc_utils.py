@@ -594,7 +594,7 @@ def asciify(string, form='NFKD', encoding='ascii', errors='ignore', **kwargs):
 __all__ += ['urlopen', 'wget', 'download', 'htmlify']
 
 def urlopen(url, filename=None, save=None, headers=None, params=None, data=None,
-            prefix='http', convert=True, die=False, return_response=False, verbose=False):
+            prefix='http', convert=True, die=False, response='text', verbose=False):
     """
     Download a single URL.
 
@@ -611,18 +611,20 @@ def urlopen(url, filename=None, save=None, headers=None, params=None, data=None,
         prefix (str): the string to ensure the URL starts with (else, add it)
         convert (bool): whether to convert from bytes to string
         die (bool): whether to raise an exception if converting to text failed
-        return_response (bool): whether to return the response object instead of the output
+        response (str): what to return: 'text' (default), 'json' (dictionary version of the data), 'status' (the HTTP status), or 'full' (the full response object)
         verbose (bool): whether to print progress
 
     **Examples**::
 
-        html = sc.urlopen('sciris.org') # Retrieve into variable html
-        sc.urlopen('http://sciris.org', filename='sciris.html') # Save to file sciris.html
-        sc.urlopen('http://sciris.org', save=True, headers={'User-Agent':'Custom agent'}) # Save to the default filename (here, sciris.org), with headers
+        html = sc.urlopen('wikipedia.org') # Retrieve into variable html
+        sc.urlopen('http://wikipedia.org', filename='wikipedia.html') # Save to file wikipedia.html
+        sc.urlopen('https://wikipedia.org', save=True, headers={'User-Agent':'Custom agent'}) # Save to the default filename (here, wikipedia.org), with headers
+        sc.urlopen('wikipedia.org', response='status') # Only return the HTTP status of the site
 
     | *New in version 2.0.0:* renamed from ``wget`` to ``urlopen``; new arguments
     | *New in version 2.0.1:* creates folders by default if they do not exist
     | *New in version 2.0.4:* "prefix" argument, e.g. prepend "http://" if not present
+    | *New in version 3.1.4:* renamed "return_response" to "response"; additional options
     """
     from urllib import request as ur # Need to import these directly, not via urllib
     from urllib import parse as up
@@ -650,22 +652,38 @@ def urlopen(url, filename=None, save=None, headers=None, params=None, data=None,
 
     if verbose: print(f'Downloading {url}...')
     request = ur.Request(full_url, headers=headers, data=data)
-    response = ur.urlopen(request)
-    output = response.read()
-    if convert:
-        if verbose>1: print('Converting from bytes to text...')
-        try:
-            output = output.decode()
-        except Exception as E: # pragma: no cover
-            if die:
-                raise E
-            elif verbose:
-                errormsg = f'Could not decode to text: {str(E)}'
-                print(errormsg)
+    resp = ur.urlopen(request)
+    if response in ['text', 'json']:
+        text = resp.read()
+        if response == 'json':
+            try:
+                output = scf.loadjson(string=text)
+            except Exception as E:
+                errormsg = f'Could not convert HTTP response beginning "{text[:20]}" to JSON'
+                raise ValueError(errormsg) from E
+        elif convert:
+            if verbose>1: print('Converting from bytes to text...')
+            try:
+                output = text.decode()
+            except Exception as E: # pragma: no cover
+                if die:
+                    raise E
+                elif verbose:
+                    errormsg = f'Could not decode to text: {str(E)}'
+                    print(errormsg)
+        else:
+            output = text
+    elif response == 'status':
+        output = resp.status
+    elif response == 'full':
+        output = resp
+    else:
+        errormsg = f'Unrecognized option "{response}"; must be one of "text", "json", "status", or "full"'
+        raise ValueError(errormsg)
 
     # Set filename -- from https://stackoverflow.com/questions/31804799/how-to-get-pdf-filename-with-python-requests
     if filename is None and save: # pragma: no cover
-        headers = dict(response.getheaders())
+        headers = dict(resp.getheaders())
         string = "Content-Disposition"
         if string in headers.keys():
             filename = re.findall("filename=(.+)", headers[string])[0]
@@ -675,18 +693,18 @@ def urlopen(url, filename=None, save=None, headers=None, params=None, data=None,
     if filename is not None and save is not False:
         if verbose: print(f'Saving to {filename}...')
         filename = scf.makefilepath(filename, makedirs=True)
-        if isinstance(output, bytes):
+        if isinstance(output, bytes): # Raw HTML data
             with open(filename, 'wb') as f: # pragma: no cover
                 f.write(output)
-        else:
+        elif isinstance(output, dict): # If it's a JSON
+            scf.savejson(filename, output)
+        else: # Other text
             with open(filename, 'w', encoding='utf-8') as f: # Explicit encoding to avoid issues on Windows
                 f.write(output)
         output = filename
 
     if verbose:
         T.toc(f'Time to download {url}')
-    if return_response: # pragma: no cover
-        output = response
 
     return output
 
