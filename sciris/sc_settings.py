@@ -114,8 +114,8 @@ class ScirisOptions(sco.objdict):
         - fontsize:       the font size used for the plots
         - backend:        which Matplotlib backend to use
         - interactive:    convenience method to set backend
-        - jupyter:        defaults for Jupyter (change backend)
-        - style:          the plotting style to use
+        - jupyter:        True or False; set defaults for Jupyter (change backend)
+        - style:          the plotting style to use (choices are 'simple' or 'fancy')
 
     Each setting can also be set with an environment variable, e.g. SCIRIS_DPI.
     Note also the environment variable SCIRIS_LAZY, which imports Sciris lazily
@@ -557,7 +557,12 @@ class ScirisOptions(sco.objdict):
         **Examples**::
 
             with sc.options.with_style(dpi=300): # Use default options, but higher DPI
+                pl.figure()
                 pl.plot([1,3,6])
+            
+            with sc.options.with_style(style='fancy'): # Use the "fancy" style
+                pl.figure()
+                pl.plot([6,1,3])
         """
 
         # Handle inputs
