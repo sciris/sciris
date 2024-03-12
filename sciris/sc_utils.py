@@ -233,7 +233,7 @@ def uuid(uid=None, which=None, die=False, tostring=False, length=None, n=1, **kw
     return output
 
 
-def dcp(obj, die=True, verbose=True):
+def dcp(obj, die=True):
     """
     Shortcut to perform a deep copy operation
 
@@ -241,36 +241,43 @@ def dcp(obj, die=True, verbose=True):
     if deepcopy fails.
 
     Args:
-        die (bool): if False, fall back to copy()
-        verbose (bool): if die is False, then print a warning if deepcopy() fails
+        die (bool): if False, fall back to :func:`copy.copy()`
 
-    *New in version 2.0.0:* default die=True instead of False
+    | *New in version 2.0.0:* default die=True instead of False
+    | *New in version 3.1.4:* die=False passed to sc.cp(); "verbose" argument removed; warning raised
     """
     try:
         output = copy.deepcopy(obj)
     except Exception as E: # pragma: no cover
-        output = cp(obj)
-        errormsg = f'Warning: could not perform deep copy: {str(E)}'
-        if die: raise RuntimeError(errormsg)
-        else:   print(errormsg + '\nPerforming shallow copy instead...')
+        errormsg = f'Warning: could not perform deep copy of {type(obj)}: {str(E)}'
+        if die:
+            raise ValueError(errormsg) from E
+        else:
+            output = cp(obj, die=False)
+            warnmsg = errormsg + '\nPerforming shallow copy instead...'
+            warnings.warn(warnmsg, category=RuntimeWarning, stacklevel=2)
     return output
 
 
-def cp(obj, die=True, verbose=True):
+def cp(obj, die=True):
     """
     Shortcut to perform a shallow copy operation
 
     Almost identical to :func:`copy.copy()`, but optionally allow failures
 
-    *New in version 2.0.0:* default die=True instead of False
+    | *New in version 2.0.0:* default die=True instead of False
+    | *New in version 3.1.4:* "verbose" argument removed; warning raised
     """
     try:
         output = copy.copy(obj)
     except Exception as E:
         output = obj
-        errormsg = 'Could not perform shallow copy'
-        if die: raise ValueError(errormsg) from E
-        else:   print(errormsg + '\nReturning original object...')
+        errormsg = f'Could not perform shallow copy of {type(obj)}'
+        if die:
+            raise ValueError(errormsg) from E
+        else:
+            warnmsg = errormsg + ', returning original object...'
+            warnings.warn(warnmsg, category=RuntimeWarning, stacklevel=2)
     return output
 
 
@@ -587,7 +594,7 @@ def asciify(string, form='NFKD', encoding='ascii', errors='ignore', **kwargs):
 __all__ += ['urlopen', 'wget', 'download', 'htmlify']
 
 def urlopen(url, filename=None, save=None, headers=None, params=None, data=None,
-            prefix='http', convert=True, die=False, return_response=False, verbose=False):
+            prefix='http', convert=True, die=False, response='text', verbose=False):
     """
     Download a single URL.
 
@@ -604,18 +611,20 @@ def urlopen(url, filename=None, save=None, headers=None, params=None, data=None,
         prefix (str): the string to ensure the URL starts with (else, add it)
         convert (bool): whether to convert from bytes to string
         die (bool): whether to raise an exception if converting to text failed
-        return_response (bool): whether to return the response object instead of the output
+        response (str): what to return: 'text' (default), 'json' (dictionary version of the data), 'status' (the HTTP status), or 'full' (the full response object)
         verbose (bool): whether to print progress
 
     **Examples**::
 
-        html = sc.urlopen('sciris.org') # Retrieve into variable html
-        sc.urlopen('http://sciris.org', filename='sciris.html') # Save to file sciris.html
-        sc.urlopen('http://sciris.org', save=True, headers={'User-Agent':'Custom agent'}) # Save to the default filename (here, sciris.org), with headers
+        html = sc.urlopen('wikipedia.org') # Retrieve into variable html
+        sc.urlopen('http://wikipedia.org', filename='wikipedia.html') # Save to file wikipedia.html
+        sc.urlopen('https://wikipedia.org', save=True, headers={'User-Agent':'Custom agent'}) # Save to the default filename (here, wikipedia.org), with headers
+        sc.urlopen('wikipedia.org', response='status') # Only return the HTTP status of the site
 
     | *New in version 2.0.0:* renamed from ``wget`` to ``urlopen``; new arguments
     | *New in version 2.0.1:* creates folders by default if they do not exist
     | *New in version 2.0.4:* "prefix" argument, e.g. prepend "http://" if not present
+    | *New in version 3.1.4:* renamed "return_response" to "response"; additional options
     """
     from urllib import request as ur # Need to import these directly, not via urllib
     from urllib import parse as up
@@ -643,22 +652,36 @@ def urlopen(url, filename=None, save=None, headers=None, params=None, data=None,
 
     if verbose: print(f'Downloading {url}...')
     request = ur.Request(full_url, headers=headers, data=data)
-    response = ur.urlopen(request)
-    output = response.read()
-    if convert:
-        if verbose>1: print('Converting from bytes to text...')
-        try:
-            output = output.decode()
-        except Exception as E: # pragma: no cover
-            if die:
-                raise E
-            elif verbose:
-                errormsg = f'Could not decode to text: {str(E)}'
-                print(errormsg)
+    resp = ur.urlopen(request) # Actually open the URL
+    if response in ['text', 'json']:
+        output = resp.read()
+        if response == 'json':
+            try:
+                output = scf.loadjson(string=output)
+            except Exception as E:
+                errormsg = f'Could not convert HTTP response beginning "{output[:20]}" to JSON'
+                raise ValueError(errormsg) from E
+        elif convert:
+            if verbose>1: print('Converting from bytes to text...')
+            try:
+                output = output.decode()
+            except Exception as E: # pragma: no cover
+                if die:
+                    raise E
+                elif verbose:
+                    errormsg = f'Could not decode to text: {str(E)}'
+                    print(errormsg)
+    elif response == 'status':
+        output = resp.status
+    elif response == 'full':
+        output = resp
+    else:
+        errormsg = f'Unrecognized option "{response}"; must be one of "text", "json", "status", or "full"'
+        raise ValueError(errormsg)
 
     # Set filename -- from https://stackoverflow.com/questions/31804799/how-to-get-pdf-filename-with-python-requests
     if filename is None and save: # pragma: no cover
-        headers = dict(response.getheaders())
+        headers = dict(resp.getheaders())
         string = "Content-Disposition"
         if string in headers.keys():
             filename = re.findall("filename=(.+)", headers[string])[0]
@@ -668,18 +691,18 @@ def urlopen(url, filename=None, save=None, headers=None, params=None, data=None,
     if filename is not None and save is not False:
         if verbose: print(f'Saving to {filename}...')
         filename = scf.makefilepath(filename, makedirs=True)
-        if isinstance(output, bytes):
+        if isinstance(output, bytes): # Raw HTML data
             with open(filename, 'wb') as f: # pragma: no cover
                 f.write(output)
-        else:
+        elif isinstance(output, dict): # If it's a JSON
+            scf.savejson(filename, output)
+        else: # Other text
             with open(filename, 'w', encoding='utf-8') as f: # Explicit encoding to avoid issues on Windows
                 f.write(output)
         output = filename
 
     if verbose:
         T.toc(f'Time to download {url}')
-    if return_response: # pragma: no cover
-        output = response
 
     return output
 
@@ -1882,7 +1905,7 @@ def importbypath(path, name=None):
 #%% Classes
 ##############################################################################
 
-__all__ += ['KeyNotFoundError', 'LinkException', 'prettyobj', 'autolist', 'Link', 'LazyModule', 'tryexcept']
+__all__ += ['KeyNotFoundError', 'LinkException', 'autolist', 'Link', 'LazyModule', 'tryexcept']
 
 
 class KeyNotFoundError(KeyError):
@@ -1905,89 +1928,7 @@ class LinkException(Exception): # pragma: no cover
     An exception to raise when links are broken, for exclusive use with the Link
     class.
     """
-
-    def __init(self, *args, **kwargs):
-        Exception.__init__(self, *args, **kwargs)
-
-
-class prettyobj(object):
-    """
-    Use pretty repr for objects, instead of just showing the type and memory pointer
-    (the Python default for objects). Can also be used as the base class for custom
-    classes.
-    
-    Args:
-        args (dict): dictionaries which are used to assign attributes
-        kwargs (any): can also be used to assign attributes
-
-    **Example 1**::
-
-        myobj = sc.prettyobj(a=3)
-        print(myobj)
-        
-        # <sciris.sc_utils.prettyobj at 0x7fbba4a97f40>
-        # ————————————————————————————————————————————————————————————
-        # Methods:
-        #   Methods N/A         
-        # ————————————————————————————————————————————————————————————
-        # a: 3
-        # ————————————————————————————————————————————————————————————
-
-    **Example 2**::
-
-        myobj = sc.prettyobj(a=3)
-        myobj.b = {'a':6}
-        print(myobj)
-        
-        # <sciris.sc_utils.prettyobj at 0x7ffa1e243910>
-        # ————————————————————————————————————————————————————————————
-        # Methods:
-        #   Methods N/A         
-        # ————————————————————————————————————————————————————————————
-        # a: 3
-        # b: {'a': 6}
-        # ————————————————————————————————————————————————————————————
-
-
-    **Example 3**::
-        
-        class MyObj(sc.prettyobj):
-       
-            def __init__(self, a, b):
-                self.a = a
-                self.b = b
-       
-            def mult(self):
-                return self.a * self.b
-       
-        myobj = MyObj(a=4, b=6)
-        print(myobj)
-        
-        # <__main__.MyObj at 0x7fd9acd96c10>
-        # ————————————————————————————————————————————————————————————
-        # Methods:
-        #   mult()
-        # ————————————————————————————————————————————————————————————
-        # a: 4
-        # b: 6
-        # ————————————————————————————————————————————————————————————
-
-    | *New in version 2.0.0:* allow positional arguments
-    """
-
-    def __init__(self, *args, **kwargs):
-        """ Simple initialization """
-        kwargs = mergedicts(*args, kwargs)
-        for k,v in kwargs.items():
-            self.__dict__[k] = v
-        return
-
-
-    def __repr__(self):
-        """ The point of this class: use a more detailed repr by default """
-        from . import sc_printing as scp # To avoid circular import
-        output  = scp.prepr(self)
-        return output
+    pass
 
 
 class autolist(list):

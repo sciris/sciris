@@ -1651,7 +1651,7 @@ def orderlegend(order=None, ax=None, handles=None, labels=None, reverse=None, **
 __all__ += ['animation', 'savemovie']
 
 
-class animation(scu.prettyobj):
+class animation(scp.prettyobj):
     """
     A class for storing and saving a Matplotlib animation.
 

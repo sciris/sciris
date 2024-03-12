@@ -25,7 +25,6 @@ from contextlib import redirect_stdout
 from ._extras import ansicolors as ac
 from . import sc_utils as scu
 
-
 # Add Windows support for colors (do this at the module level so that colorama.init() only gets called once)
 if scu.iswindows(): # pragma: no cover # NB: can't use startswith() because of 'cygwin'
     try:
@@ -33,16 +32,16 @@ if scu.iswindows(): # pragma: no cover # NB: can't use startswith() because of '
         colorama.init()
         ansi_support = True
     except:
-        ansi_support = False  # print('Warning: you have called colorize() on Windows but do not have either the colorama or tendo modules.')
+        ansi_support = False
 else:
     ansi_support = True
 
 
 
-
 #%% Object display functions
 
-__all__ = ['createcollist', 'objectid', 'classatt', 'objatt', 'objmeth', 'objprop', 'objrepr', 'prepr', 'pr']
+__all__ = ['createcollist', 'objectid', 'classatt', 'objatt', 'objmeth', 'objprop', 
+           'objrepr', 'prepr', 'pr', 'prettyobj']
 
 
 def createcollist(items, title=None, strlen=18, ncol=3):
@@ -97,14 +96,26 @@ def _get_obj_keys(obj, private=False, sort=True, use_dir=False):
     return keys
 
 
-def _is_meth(obj, attr):
+def _is_meth(obj, attr, die=False):
     """ Helper function to check if an attribute is a method; do not distinguish between bound and unbound """
-    return callable(getattr(obj, attr))
+    try:
+        return callable(getattr(obj, attr))
+    except Exception as E:
+        if die:
+            raise E
+        else:
+            return False
 
 
-def _is_prop(obj, attr):
+def _is_prop(obj, attr, die=False):
     """ Helper function to check if an attribute is a property """
-    return isinstance(getattr(type(obj), attr, None), property)
+    try:
+        return isinstance(getattr(type(obj), attr, None), property)
+    except Exception as E:
+        if die:
+            raise E
+        else:
+            return False
 
 
 def objatt(obj, strlen=18, ncol=3, private=False, sort=True, _keys=None):
@@ -119,8 +130,8 @@ def classatt(obj, strlen=18, ncol=3, private=False, sort=True, _objkeys=None, _d
     objkeys = _get_obj_keys(obj, private=private, sort=sort, use_dir=False) if _objkeys is None else _objkeys
     dirkeys = _get_obj_keys(obj, private=private, sort=sort, use_dir=True)  if _dirkeys is None else _dirkeys
     keys = set(dirkeys) - set(objkeys) # Find attributes in dir() that are not in __dict__
-    keys = filter(keys.__contains__, dirkeys) # Maintain original ordering
-    keys = [k for k  in keys if not (_is_meth(obj, k) or _is_prop(obj, k))] # Exclude methods and properties; these are covered elsewhere
+    keys = list(filter(keys.__contains__, dirkeys)) # Maintain original ordering
+    keys = [k for k in keys if not (_is_meth(obj, k) or _is_prop(obj, k))]
     if return_keys:
         return keys
     else:
@@ -198,6 +209,7 @@ def prepr(obj, maxlen=None, maxitems=None, skip=None, dividerchar='—', divider
         debug (bool): print out detail during string construction
     
     *New in version 3.0.0:* "debug" argument
+    *New in version 3.1.4:* more robust handling of invalid object properties
     """
 
     # Decide how to handle representation function -- repr is dangerous since can lead to recursion
@@ -247,11 +259,17 @@ def prepr(obj, maxlen=None, maxitems=None, skip=None, dividerchar='—', divider
                         print(f'  Working on attribute {a}: {attr}...')
                     if (time.time() - T) < maxtime:
                         try: # Be especially robust in getting individual attributes
-                            value = repr_fn(getattr(obj, attr))
+                            value = getattr(obj, attr)
                         except Exception as E:
                             value = 'N/A' # pragma: no cover
                             if die:
                                 raise E
+                        try: # Separately, be robust about getting their attributes
+                            value = repr_fn(value)
+                        except Exception as E:
+                            value = object.__repr__(value) # pragma: no cover
+                            if die:
+                                raise E          
                         values.append(value)
                     else:
                         labels = labels[:a]
@@ -298,13 +316,9 @@ def prepr(obj, maxlen=None, maxitems=None, skip=None, dividerchar='—', divider
             try: # Next try the objrepr, which is the same except doesn't print attribute values
                 output = objrepr(obj, **kw)
                 output += f'\nWarning: showing simplified output since full repr failed {str(E)}'
-            except Exception as E: # If that fails, try just the string representation
+            except Exception as E: # If that fails, try the most basic object representation
                 E2 = E
-                try:
-                    output = str(obj)
-                except Exception as E: # And if that fails, try the most basic object representation
-                    E3 = E
-                    output = object.__repr__(obj)
+                output = object.__repr__(obj)
     
     if any([E is not None for E in [E1, E2, E3]]):
         warnmsg = 'Exception(s) encountered displaying object:\n'
@@ -331,6 +345,85 @@ def pr(obj, *args, **kwargs):
     """
     print(prepr(obj, *args, **kwargs))
     return
+
+
+class prettyobj(object):
+    """
+    Use pretty repr for objects, instead of just showing the type and memory pointer
+    (the Python default for objects). Can also be used as the base class for custom
+    classes.
+    
+    Args:
+        args (dict): dictionaries which are used to assign attributes
+        kwargs (any): can also be used to assign attributes
+
+    **Example 1**::
+
+        myobj = sc.prettyobj(a=3)
+        print(myobj)
+        
+        # <sciris.sc_printing.prettyobj at 0x7fbba4a97f40>
+        # ————————————————————————————————————————————————————————————
+        # Methods:
+        #   Methods N/A         
+        # ————————————————————————————————————————————————————————————
+        # a: 3
+        # ————————————————————————————————————————————————————————————
+
+    **Example 2**::
+
+        myobj = sc.prettyobj(a=3)
+        myobj.b = {'a':6}
+        print(myobj)
+        
+        # <sciris.sc_printing.prettyobj at 0x7ffa1e243910>
+        # ————————————————————————————————————————————————————————————
+        # Methods:
+        #   Methods N/A         
+        # ————————————————————————————————————————————————————————————
+        # a: 3
+        # b: {'a': 6}
+        # ————————————————————————————————————————————————————————————
+
+
+    **Example 3**::
+        
+        class MyObj(sc.prettyobj):
+       
+            def __init__(self, a, b):
+                self.a = a
+                self.b = b
+       
+            def mult(self):
+                return self.a * self.b
+       
+        myobj = MyObj(a=4, b=6)
+        print(myobj)
+        
+        # <__main__.MyObj at 0x7fd9acd96c10>
+        # ————————————————————————————————————————————————————————————
+        # Methods:
+        #   mult()
+        # ————————————————————————————————————————————————————————————
+        # a: 4
+        # b: 6
+        # ————————————————————————————————————————————————————————————
+
+    | *New in version 2.0.0:* allow positional arguments
+    | *New in version 3.1.4:* moved from sc_utils to sc_printing
+    """
+    def __init__(self, *args, **kwargs):
+        """ Simple initialization """
+        kwargs = scu.mergedicts(*args, kwargs)
+        for k,v in kwargs.items():
+            self.__dict__[k] = v
+        return
+
+    def __repr__(self):
+        """ The point of this class: use a more detailed repr by default """
+        output  = prepr(self)
+        return output
+
 
 
 #%% Spacing functions
@@ -1270,7 +1363,7 @@ class tqdm_pickle(tqdm.tqdm):
         return
 
 
-class progressbars(scu.prettyobj):
+class progressbars(prettyobj):
     """
     Create multiple progress bars
     

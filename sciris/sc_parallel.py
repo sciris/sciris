@@ -761,7 +761,7 @@ def parallelize(func, iterarg=None, iterkwargs=None, args=None, kwargs=None, ncp
 #%% Helper functions/classes
 ##############################################################################
 
-class TaskArgs(scu.prettyobj):
+class TaskArgs(scp.prettyobj):
         """
         A class to hold the arguments for the parallel task -- not to be invoked by the user.
 

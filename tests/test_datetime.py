@@ -114,12 +114,12 @@ def test_dates():
     print('\nTesting elapsedtimestr')
     now = sc.now()
     dates = sc.objdict()
-    dates.future = now.replace(year=now.year+1)
-    dates.year =   now.replace(year=now.year-1)
+    dates.future = now.replace(year=2023) # Avoid leap years
+    dates.year =   now.replace(year=2021)
     for key in ['days', 'hours', 'minutes']:
         dates[key] = now - dt.timedelta(**{key:1})
     for key, date in dates.items():
-        print(key, sc.elapsedtimestr(date))
+        print(f'For unit {key}: {sc.elapsedtimestr(date)}')
 
     print('\nTesting datetoyear')
     o.year = sc.datetoyear('2010-07-01')
