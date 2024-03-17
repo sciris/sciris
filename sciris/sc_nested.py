@@ -10,6 +10,7 @@ Highlights:
 import re
 import itertools
 import pickle as pkl
+import collections as co
 from functools import reduce, partial
 import numpy as np
 import pandas as pd
@@ -313,7 +314,7 @@ class IterObj(object):
         self.atomic = tuple(atomiclist)
             
         if self._memo is None:
-            self._memo = scu.ddict(int)
+            self._memo = co.defaultdict(int)
             self._memo[id(obj)] = 1 # Initialize the memo with a count of this object
             
         if self._trace is None:
@@ -786,7 +787,7 @@ def search(obj, query=_None, key=_None, value=_None, aslist=True, method='exact'
 class Equal(scp.prettyobj):
     
     # Define known special cases for equality checking
-    special_cases = [float] + atomic_classes
+    special_cases = tuple([float] + atomic_classes)
     valid_methods = [None, 'eq', 'pickle', 'json', 'str']
     
     
