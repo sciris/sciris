@@ -839,12 +839,13 @@ class timer(object):
 
     Implementation based on https://preshing.com/20110924/timing-your-code-using-pythons-with-statement/
 
-    | *New in version 1.3.0:* :class:`sc.timer() <timer>` alias, and allowing the label as first argument.
+    | *New in version 1.3.0:* :class:`sc.timer() <timer>` alias, and allowing the label as first argument
     | *New in version 1.3.2:* ``toc()`` passes label correctly; ``tt()`` method; ``auto`` argument
     | *New in version 2.0.0:* ``plot()`` method; ``total()`` method; ``indivtimings`` and ``cumtimings`` properties
     | *New in version 2.1.0:* ``total`` as property instead of method; updated repr; added disp() method
     | *New in version 3.0.0:* ``unit`` argument; ``verbose`` argument; ``sum, min, max, mean, std`` methods; ``rawtimings`` property
-    | *New in version 3.1.0:* Timers can be combined by addition, including sum().
+    | *New in version 3.1.0:* Timers can be combined by addition, including ``sum()``
+    | *New in version 3.1.5:* ``T.timings`` is now an :class:`sc.objdict() <sc_odict.objdict>` instead of an :class:`sc.odict() <sc_odict.odict>` 
     """
     def __init__(self, label=None, auto=False, start=True, unit='auto', verbose=None, **kwargs):
         from . import sc_odict as sco # Here to avoid circular import
@@ -859,7 +860,7 @@ class timer(object):
         self.elapsed = None
         self.message = None
         self.count = 0
-        self.timings = sco.odict()
+        self.timings = sco.objdict()
         if start:
             self.tic() # Start counting
         return

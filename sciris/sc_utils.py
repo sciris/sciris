@@ -22,6 +22,7 @@ Highlights:
 ##############################################################################
 
 import re
+import os
 import sys
 import copy
 import json
@@ -1893,11 +1894,22 @@ def importbypath(path, name=None):
         basename = parts[-1].removesuffix('.py')
         name = sanitizestr(basename, validvariable=True) # Convert directory name to a string
     
-    # From https://docs.python.org/3/library/importlib.html#importing-a-source-file-directly
+    # # Temporarily update the path and current folder to ensure the module is imported correctly
+    # parent = filepath.parent # Strip __init__.py as well as the name of the module folder itself
+    # current = os.getcwd()
+    # os.chdir(parent)
+    # sys.path.insert(0, parent)
+    
+    # Actually import the module -- from https://docs.python.org/3/library/importlib.html#importing-a-source-file-directly
     spec = importlib.util.spec_from_file_location(name, filepath)
     module = importlib.util.module_from_spec(spec)
     sys.modules[name] = module
     spec.loader.exec_module(module)
+    
+    # # Restore path and folder
+    # sys.path.pop(0)
+    # os.chdir(current)
+    
     return module
 
 
