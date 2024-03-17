@@ -17,7 +17,7 @@ from . import sc_utils as scu
 from . import sc_printing as scp
 
 # Define objects for which it doesn't make sense to descend further -- used here and sc.equal()
-_atomic_classes = (np.ndarray, pd.Series, pd.DataFrame, pd.core.indexes.base.Index) 
+atomic_classes = [np.ndarray, pd.Series, pd.DataFrame, pd.core.indexes.base.Index]
 
 
 ##############################################################################
@@ -305,11 +305,17 @@ class IterObj(object):
         # Handle inputs
         if self.func is None: # Define the default function
             self.func = lambda obj: obj 
-        if self.atomic == 'default': # Handle objects to not descend into
-            self.atomic = _atomic_classes 
+            
+        atomiclist = scu.tolist(self.atomic)
+        if 'default' in atomiclist: # Handle objects to not descend into
+            atomiclist.remove('default')
+            atomiclist = atomic_classes + atomiclist
+        self.atomic = tuple(atomiclist)
+            
         if self._memo is None:
             self._memo = scu.ddict(int)
             self._memo[id(obj)] = 1 # Initialize the memo with a count of this object
+            
         if self._trace is None:
             self._trace = [] # Handle where we are in the object
             if inplace and copy: # Only need to copy once
@@ -780,7 +786,7 @@ def search(obj, query=_None, key=_None, value=_None, aslist=True, method='exact'
 class Equal(scp.prettyobj):
     
     # Define known special cases for equality checking
-    special_cases = (float,) + _atomic_classes
+    special_cases = [float] + atomic_classes
     valid_methods = [None, 'eq', 'pickle', 'json', 'str']
     
     
@@ -1126,8 +1132,9 @@ def equal(obj, obj2, *args, method=None, detailed=False, equal_nan=True, leaf=Fa
         - ``'pickle'``: converts the object to a binary pickle (most robust)
         - ``'json'``: converts the object to a JSON via ``jsonpickle`` (gives most detailed object structure, but can be lossy)
         - ``'str'``: converts the object to its string representation (least amount of detail)
+        - In addition, any custom function can be provided
     
-    By default, 'eq' is tried first, and if that raises an exception, 'pickle' is tried.
+    By default, 'eq' is tried first, and if that raises an exception, 'pickle' is tried (equivalent to ``method=['eq', 'pickle']``).
     
     Args:
         obj (any): the first object to compare
