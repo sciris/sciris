@@ -273,10 +273,11 @@ class IterObj(object):
         print(all_data)
         
     | *New in version 3.1.2.*
+    | *New in version 3.1.5:* "norecurse" argument; better handling of atomic classes
     """    
-    def __init__(self, obj, func=None, inplace=False, copy=False, leaf=False, atomic='default', rootkey='root', verbose=False, 
-                _trace=None, _output=None, custom_type=None, custom_iter=None, custom_get=None, custom_set=None,
-                *args, **kwargs):
+    def __init__(self, obj, func=None, inplace=False, copy=False, leaf=False, recursion=0, 
+                 atomic='default', rootkey='root', verbose=False, _memo=None, _trace=None, _output=None, 
+                 custom_type=None, custom_iter=None, custom_get=None, custom_set=None, *args, **kwargs):
         from . import sc_odict as sco # To avoid circular import
         
         # Default argument
@@ -285,9 +286,11 @@ class IterObj(object):
         self.inplace   = inplace
         self.copy      = copy
         self.leaf      = leaf
+        self.recursion = recursion
         self.atomic    = atomic
         self.rootkey   = rootkey
         self.verbose   = verbose
+        self._memo     = _memo
         self._trace    = _trace
         self._output   = _output
         self.func_args = args
@@ -304,10 +307,14 @@ class IterObj(object):
             self.func = lambda obj: obj 
         if self.atomic == 'default': # Handle objects to not descend into
             self.atomic = _atomic_classes 
+        if self._memo is None:
+            self._memo = scu.ddict(int)
+            self._memo[id(obj)] = 1 # Initialize the memo with a count of this object
         if self._trace is None:
             self._trace = [] # Handle where we are in the object
             if inplace and copy: # Only need to copy once
                 self.obj = scu.dcp(obj)
+        
         if self._output is None: # Handle the output at the root level
             self._output = sco.objdict()
             if not inplace:
@@ -373,21 +380,26 @@ class IterObj(object):
         
         # Iterate over the object
         for key,subobj in self.iteritems():
-            trace = self._trace + [key]
-            newobj = subobj
-            subitertype = self.check_iter_type(subobj)
-            self.indent(f'Working on {trace}, leaf={self.leaf}, type={str(subitertype)}')
-            if not (self.leaf and subitertype):
-                newobj = self.func(subobj, *self.func_args, **self.func_kw)
-                if self.inplace:
-                    self.setitem(key, newobj)
-                else:
-                    self._output[tuple(trace)] = newobj
-            io = IterObj(self.getitem(key), self.func, inplace=self.inplace, leaf=self.leaf,  # Create a new instance
-                    atomic=self.atomic, verbose=self.verbose, _trace=trace, _output=self._output, 
-                    custom_type=self.custom_type, custom_iter=self.custom_iter, custom_get=self.custom_get, custom_set=self.custom_set,
-                    *self.func_args, **self.func_kw)
-            io.iterate() # Run recursively
+            newid = id(subobj)
+            if (newid in self._memo) and (self._memo[newid] > self.recursion): # If we've already parsed this object, don't parse it again
+                continue
+            else:
+                self._memo[newid] += 1
+                trace = self._trace + [key]
+                newobj = subobj
+                subitertype = self.check_iter_type(subobj)
+                self.indent(f'Working on {trace}, leaf={self.leaf}, type={str(subitertype)}')
+                if not (self.leaf and subitertype):
+                    newobj = self.func(subobj, *self.func_args, **self.func_kw)
+                    if self.inplace:
+                        self.setitem(key, newobj)
+                    else:
+                        self._output[tuple(trace)] = newobj
+                io = IterObj(self.getitem(key), self.func, inplace=self.inplace, leaf=self.leaf, recursion=self.recursion,  # Create a new instance
+                        atomic=self.atomic, verbose=self.verbose, _memo=self._memo, _trace=trace, _output=self._output, 
+                        custom_type=self.custom_type, custom_iter=self.custom_iter, custom_get=self.custom_get, custom_set=self.custom_set,
+                        *self.func_args, **self.func_kw)
+                io.iterate() # Run recursively
             
         if self.inplace:
             newobj = self.func(self.obj, *self.func_args, **self.func_kw) # Set at the root level
@@ -398,8 +410,8 @@ class IterObj(object):
             return self._output
         
 
-def iterobj(obj, func=None, inplace=False, copy=False, leaf=False, atomic='default', rootkey='root',
-            verbose=False, _trace=None, _output=None, *args, **kwargs):
+def iterobj(obj, func=None, inplace=False, copy=False, leaf=False, recursion=0, atomic='default', 
+            rootkey='root', verbose=False, _trace=None, _output=None, *args, **kwargs):
     """
     Iterate over an object and apply a function to each node (item with or without children).
     
@@ -421,6 +433,7 @@ def iterobj(obj, func=None, inplace=False, copy=False, leaf=False, atomic='defau
         inplace (bool): whether to modify the object in place (else, collate the output of the functions)
         copy (bool): if modifying an object in place, whether to make a copy first
         leaf (bool): whether to apply the function only to leaf nodes of the object
+        recursion (int): number of recursive steps to allow, i.e. parsing the same objects multiple times (default 0)
         atomic (list): a list of known classes to treat as atomic (do not descend into); if 'default', use defaults (e.g. ``np.array``, ``pd.DataFrame``)
         rootkey (str): the key to list as the root of the object (default ``'root'``)
         verbose (bool): whether to print progress.
@@ -457,9 +470,10 @@ def iterobj(obj, func=None, inplace=False, copy=False, leaf=False, atomic='defau
     | *New in version 3.1.0:* default ``func``, renamed "twigs_only" to "leaf", "atomic" argument
     | *New in version 3.1.2:* ``copy`` defaults to ``False``; refactored into class
     | *New in version 3.1.3:* "rootkey" argument
+    | *New in version 3.1.5:* "recursion" argument; better handling of atomic classes
     """
-    io = IterObj(obj=obj, func=func, inplace=inplace, copy=copy, leaf=leaf, atomic=atomic, rootkey=rootkey,
-                 verbose=verbose, _trace=_trace, _output=_output, *args, **kwargs) # Create the object
+    io = IterObj(obj=obj, func=func, inplace=inplace, copy=copy, leaf=leaf, recursion=recursion, atomic=atomic,
+                 rootkey=rootkey, verbose=verbose, _trace=_trace, _output=_output, *args, **kwargs) # Create the object
     out = io.iterate() # Iterate
     return out
 
