@@ -256,7 +256,8 @@ def prepr(obj, maxlen=None, maxitems=None, skip=None, dividerchar='—', divider
                 values = []
                 for a,attr in enumerate(labels):
                     if debug: # pragma: no cover
-                        print(f'  Working on attribute {a}: {attr}...')
+                        tdiff = time.time() - T
+                        print(f'  Working on attribute {a}: {attr}... ({tdiff:0.3f})')
                     if (time.time() - T) < maxtime:
                         try: # Be especially robust in getting individual attributes
                             value = getattr(obj, attr)
