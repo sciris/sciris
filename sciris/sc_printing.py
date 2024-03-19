@@ -41,10 +41,13 @@ else:
 #%% Object display functions
 
 __all__ = ['createcollist', 'objectid', 'classatt', 'objatt', 'objmeth', 'objprop', 
-           'objrepr', 'prepr', 'pr', 'prettyobj']
+           'objrepr', 'prepr', 'pr', 'prettyobj', 'quickobj']
 
+_ncol = 3 # Default number of columns to display
+_strlen = 22 # Default string length for a 3-column display
+_dividerlen = 72 # Length of the divider between printed sections
 
-def createcollist(items, title=None, strlen=18, ncol=3):
+def createcollist(items, title=None, strlen=_strlen, ncol=_ncol):
     """ Creates a string for a nice columnated list (e.g. to use in __repr__ method) """
     if len(items):
         nrow = int(np.ceil(float(len(items))/ncol))
@@ -93,7 +96,7 @@ def _get_obj_keys(obj, private=False, sort=True, use_dir=False):
         keys = [k for k in keys if not k.startswith('__')]
     if sort:
         keys = sorted(keys)
-    return keys
+    return list(keys) # Sometimes dict_keys
 
 
 def _is_meth(obj, attr, die=False):
@@ -118,14 +121,14 @@ def _is_prop(obj, attr, die=False):
             return False
 
 
-def objatt(obj, strlen=18, ncol=3, private=False, sort=True, _keys=None):
+def objatt(obj, strlen=_strlen, ncol=_ncol, private=False, sort=True, _keys=None):
     """ Return a sorted string of object attributes for the Python __repr__ method; see :func:`sc.prepr() <prepr>` for options """
     keys = _get_obj_keys(obj, private=private, sort=sort) if _keys is None else _keys
     output = createcollist(keys, 'Attributes', strlen=strlen, ncol=ncol)
     return output
 
 
-def classatt(obj, strlen=18, ncol=3, private=False, sort=True, _objkeys=None, _dirkeys=None, return_keys=False):
+def classatt(obj, strlen=_strlen, ncol=_ncol, private=False, sort=True, _objkeys=None, _dirkeys=None, return_keys=False):
     """ Return a sorted string of class attributes for the Python __repr__ method; see :func:`sc.prepr() <prepr>` for options """
     objkeys = _get_obj_keys(obj, private=private, sort=sort, use_dir=False) if _objkeys is None else _objkeys
     dirkeys = _get_obj_keys(obj, private=private, sort=sort, use_dir=True)  if _dirkeys is None else _dirkeys
@@ -139,7 +142,7 @@ def classatt(obj, strlen=18, ncol=3, private=False, sort=True, _objkeys=None, _d
         return output
 
 
-def objmeth(obj, strlen=18, ncol=3, private=False, sort=True, _keys=None):
+def objmeth(obj, strlen=_strlen, ncol=_ncol, private=False, sort=True, _keys=None):
     """ Return a sorted string of object methods for the Python __repr__ method; see :func:`sc.prepr() <prepr>` for options """
     try: # In very rare cases this fails, so put it in a try-except loop
         _keys = _get_obj_keys(obj, private=private, sort=sort, use_dir=True) if _keys is None else _keys
@@ -150,7 +153,7 @@ def objmeth(obj, strlen=18, ncol=3, private=False, sort=True, _keys=None):
     return output
 
 
-def objprop(obj, strlen=18, ncol=3, private=False, sort=True, _keys=None):
+def objprop(obj, strlen=_strlen, ncol=_ncol, private=False, sort=True, _keys=None):
     """ Return a sorted string of object properties for the Python __repr__ method; see :func:`sc.prepr() <prepr>` for options """
     try: # In very rare cases this fails, so put it in a try-except loop
         _keys = _get_obj_keys(obj, private=private, sort=sort, use_dir=True) if _keys is None else _keys
@@ -162,9 +165,15 @@ def objprop(obj, strlen=18, ncol=3, private=False, sort=True, _keys=None):
 
 
 def objrepr(obj, showid=True, showmeth=True, showprop=True, showatt=True, showclassatt=True, 
-            private=False, sort=True, dividerchar='—', dividerlen=60, strlen=18, ncol=3, 
+            private=False, sort=True, dividerchar='—', dividerlen=_dividerlen, strlen=_strlen, ncol=_ncol, 
             _objkeys=None, _dirkeys=None):
-    """ Return useful printout for the Python __repr__ method; see :func:`sc.prepr() <prepr>` for options """
+    """
+    Print out a detailed representation of an object: methods, properties, attributes, etc.
+    
+    Similar to ``sc.prepr(obj, vals=False)``.
+    
+    See :func:`sc.prepr() <prepr>` for an explanation of arguments.
+    """
     
     # Call the object twice to get the keys
     objkeys = _get_obj_keys(obj, private=private, sort=sort, use_dir=False) if _objkeys is None else _objkeys
@@ -187,19 +196,23 @@ def objrepr(obj, showid=True, showmeth=True, showprop=True, showatt=True, showcl
     return output
 
 
-def prepr(obj, maxlen=None, maxitems=None, skip=None, dividerchar='—', dividerlen=60, 
-          use_repr=True, private=False, sort=True, strlen=18, ncol=3, maxtime=3, die=False, debug=False):
+def prepr(obj, vals=True, maxlen=None, maxitems=None, skip=None, dividerchar='—', dividerlen=_dividerlen, 
+          use_repr=True, private=False, sort=True, strlen=_strlen, ncol=_ncol, maxtime=3, die=False, debug=False):
     """
-    Akin to "pretty print", returns a pretty representation of an object --
-    all attributes (except any that are skipped), plus methods and ID. Usually
-    used via the interactive :func:`sc.pr() <pr>` (which prints), rather than this (which returns
-    a string).
+    Pretty-print a detailed representation of an object.
+    
+    This function returns a pretty (and pretty detailed) representation of an object --
+    all attributes (except any that are skipped), plus methods and ID.
+    
+    This function is usually used via the interactive :func:`sc.pr() <pr>` (which prints), 
+    rather than this function (which returns a string).
 
     Args:
         obj (anything): the object to be represented
-        maxlen (int): maximum number of characters to show for each item
-        maxitems (int): maximum number of items to show in the object
-        skip (list): any properties to skip
+        vals (bool): whether to show attribute values (else, just list attributes; similar to :func:`sc.objrepr() <objrepr>`)
+        maxlen (int): maximum number of characters to show for each attribute
+        maxitems (int): maximum number of attribute to show in the object
+        skip (list): any attributes to skip
         dividerchar (str): divider for methods, attributes, etc.
         dividerlen (int): number of divider characters
         use_repr (bool): whether to use repr() or str() to parse the object
@@ -208,8 +221,21 @@ def prepr(obj, maxlen=None, maxitems=None, skip=None, dividerchar='—', divider
         die (bool): whether to raise an exception if an error is encountered
         debug (bool): print out detail during string construction
     
-    *New in version 3.0.0:* "debug" argument
-    *New in version 3.1.4:* more robust handling of invalid object properties
+    | *New in version 3.0.0:* "debug" argument
+    | *New in version 3.1.4:* more robust handling of invalid object properties
+    | *New in version 3.1.5:* "vals" argument to turn off printing attribute values
+    
+    **Examples**::
+
+        # Default options
+        df = sc.dataframe(a=[1,2,3], b=[4,5,6])
+        print(df) # See just the data
+        sc.pr(df) # See all the methods too
+        sc.pr(df, vals=False) # Only see methods, not the values
+        
+        # Demonstrate options
+        obj = sc.prettyobj({k:k for k in [l + str(n) for n in range(10) for l in 'abcde']}) # Big object
+        sc.pr(obj, maxitems=20, sort=False, dividerchar='•', dividerlen=43, private=True)
     """
 
     # Decide how to handle representation function -- repr is dangerous since can lead to recursion
@@ -249,36 +275,40 @@ def prepr(obj, maxlen=None, maxitems=None, skip=None, dividerchar='—', divider
             if debug: # pragma: no cover
                 print(f'Working on {len(labels)} entries...')
 
-            if len(labels):
+            if not len(labels):
+                extraitems = 0
+            else: # Usual case
                 extraitems = max(0, len(labels) - maxitems)
                 if extraitems > 0:
                     labels = labels[:maxitems]
+                
+                # Get the values of the attributes
                 values = []
-                for a,attr in enumerate(labels):
-                    if debug: # pragma: no cover
-                        print(f'  Working on attribute {a}: {attr}...')
-                    if (time.time() - T) < maxtime:
-                        try: # Be especially robust in getting individual attributes
-                            value = getattr(obj, attr)
-                        except Exception as E:
-                            value = 'N/A' # pragma: no cover
-                            if die:
-                                raise E
-                        try: # Separately, be robust about getting their attributes
-                            value = repr_fn(value)
-                        except Exception as E:
-                            value = object.__repr__(value) # pragma: no cover
-                            if die:
-                                raise E          
-                        values.append(value)
-                    else:
-                        labels = labels[:a]
-                        labels.append('etc. (time exceeded)')
-                        values.append(f'{len(labels)-a} entries not shown')
-                        time_exceeded = True
-                        break
-            else:
-                extraitems = 0
+                if vals:
+                    for a,attr in enumerate(labels):
+                        if debug: # pragma: no cover
+                            tdiff = time.time() - T
+                            print(f'  Working on attribute {a}: {attr}... ({tdiff:0.3f})')
+                        if (time.time() - T) < maxtime:
+                            try: # Be especially robust in getting individual attributes
+                                value = getattr(obj, attr)
+                            except Exception as E:
+                                value = 'N/A' # pragma: no cover
+                                if die:
+                                    raise E
+                            try: # Separately, be robust about getting their attributes
+                                value = repr_fn(value)
+                            except Exception as E:
+                                value = object.__repr__(value) # pragma: no cover
+                                if die:
+                                    raise E          
+                            values.append(value)
+                        else:
+                            labels = labels[:a]
+                            labels.append('etc. (time exceeded)')
+                            values.append(f'{len(labels)-a} entries not shown')
+                            time_exceeded = True
+                            break
                 
             if extraitems > 0:
                 labels.append('etc. (too many items)')
@@ -294,12 +324,16 @@ def prepr(obj, maxlen=None, maxitems=None, skip=None, dividerchar='—', divider
         
         # Actually get the methods
         output  = objrepr(obj, showatt=False, showclassatt=False, _objkeys=objkeys, _dirkeys=dirkeys, **kw) 
-        for label,value in zip(labels,values): # Loop over each attribute
-            if len(value)>maxlen: value = value[:maxlen] + ' [...]' # Shorten it
-            prefix = formatstr%label + ': ' # The format key
-            output += indent(prefix, value)
         if not len(labels):
             output += 'No attributes\n'
+        else:
+            if vals:
+                for label,value in zip(labels,values): # Loop over each attribute
+                    if len(value)>maxlen: value = value[:maxlen] + ' [...]' # Shorten it
+                    prefix = formatstr%label + ': ' # The format key
+                    output += indent(prefix, value)
+            else:
+                output += createcollist(labels, 'Attributes', strlen=strlen, ncol=ncol)
         output += divider
         if time_exceeded:
             timestr = f'\nNote: the object did not finish printing within maxtime={maxtime} s.\n'
@@ -321,7 +355,7 @@ def prepr(obj, maxlen=None, maxitems=None, skip=None, dividerchar='—', divider
                 output = object.__repr__(obj)
     
     if any([E is not None for E in [E1, E2, E3]]):
-        warnmsg = 'Exception(s) encountered displaying object:\n'
+        warnmsg = f'Exception(s) encountered displaying object {objectid(obj)}:\n'
         if E1 is not None: warnmsg += f'{E1}\n'
         if E2 is not None: warnmsg += f'{E2}\n'
         if E3 is not None: warnmsg += f'{E3}\n'
@@ -332,26 +366,25 @@ def prepr(obj, maxlen=None, maxitems=None, skip=None, dividerchar='—', divider
 
 def pr(obj, *args, **kwargs):
     """
-    Pretty-print the detailed representation of an object.
+    Pretty-print a detailed representation of an object ("pr" is short for "print repr").
+    
+    See :func:`sc.prepr() <prepr>` for arguments and examples.
 
-    See :func:`sc.prepr() <prepr>` for options.
-
-    **Example**::
-
-        import pandas as pd
-        df = pd.DataFrame({'a':[1,2,3], 'b':[4,5,6]})
-        print(df) # See just the data
-        sc.pr(df) # See all the methods too
+    Note: :func:`sc.prepr() <prepr>` creates a string, while ``sc.pr()`` prints
+    the output, i.e. ``sc.pr(obj)`` is an alias to ``print(sc.prepr(obj))``.
     """
     print(prepr(obj, *args, **kwargs))
     return
 
 
-class prettyobj(object):
+class prettyobj:
     """
     Use pretty repr for objects, instead of just showing the type and memory pointer
     (the Python default for objects). Can also be used as the base class for custom
     classes.
+    
+    See :class:`sc.quickobj() <quickobj>` for a similar class that does not print
+    attribute values (better for large objects that take a while to display).
     
     Args:
         args (dict): dictionaries which are used to assign attributes
@@ -421,9 +454,32 @@ class prettyobj(object):
 
     def __repr__(self):
         """ The point of this class: use a more detailed repr by default """
-        output  = prepr(self)
-        return output
+        return prepr(self)
 
+
+class quickobj(prettyobj):
+    """
+    Like :class:`sc.prettyobj() <prettyobj>`, but do not print attribute values.
+    
+    This class is better for large objects that take a while to display. It is
+    somewhat similar to calling dir() on an object.
+    
+    This class also defines a ``disp()`` method, which calls :func:`sc.pr() <pr>` on the object.
+    
+    **Example**::
+        
+        import numpy as np
+        myobj = sc.quickobj(big1=np.random.rand(100,100), big2=sc.dataframe(a=np.arange(1000)))
+        print(myobj)
+    """
+    def __repr__(self):
+        """ Use a more detailed repr than default, but less detailed that prettyobj """
+        return prepr(self, vals=False)
+    
+    def disp(self, *args, **kwargs):
+        """ Return full display of the object """
+        pr(self, *args, **kwargs)
+        return 
 
 
 #%% Spacing functions

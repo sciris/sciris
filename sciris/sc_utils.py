@@ -835,7 +835,7 @@ def htmlify(string, reverse=False, tostring=False):
 
 __all__ += ['flexstr', 'sanitizestr', 'isiterable', 'checktype', 'isnumber', 'isstring', 'isarray',
             'toarray', 'tolist', 'promotetoarray', 'promotetolist', 'transposelist',
-            'swapdict', 'mergedicts', 'mergelists']
+            'swapdict', 'mergedicts', 'mergelists', 'ifelse']
 
 def flexstr(arg, *args, force=True, join=''):
     """
@@ -1464,6 +1464,64 @@ def mergelists(*args, coerce='default', copy=False, **kwargs):
     return obj
 
 
+def ifelse(*args, default=None, check=None):
+    """
+    For a list of inputs, return the first one that meets the condition
+    
+    By default, returns the first non-None item, but can also check truth value
+    or an arbitrary function.
+    
+    Args:
+        args (any): the arguments to check (note: cannot supply a single list, use * to unpack)
+        default (any): the default value to use if no arguments meet the condition
+        check (func): must be None (check if arguments are not None), bool (check if arguments evaluate True), or a callable (which returns True/False)
+    
+    Equivalent to ``next((arg for arg in args if check(arg)), default)``
+    
+    **Examples**::
+        
+        # 1. Standard usage
+        a = None
+        b = 3
+        out = sc.ifelse(a, b) 
+        
+        ## Equivalent to:
+        out = a if a is not None else b
+        
+        # 2. Boolean usage
+        args = ['', False, {}, 'ok']
+        out = sc.ifelse(*args, check=bool)
+        
+        ## Equivalent to:
+        out = next((arg for arg in args if arg), None)
+        
+        # 3. Custom function
+        args = [1, 3, 5, 7]
+        out = sc.ifelse(*args, check=lambda x: x>5)
+        
+        ## Equivalent to:
+        out = None
+        for arg in args:
+          if arg > 5:
+            out = val
+            break
+    
+    | *New in version 3.1.5.*
+    """
+    # Handle check
+    if check is None:
+        check = lambda x: x is not None
+    elif check in [bool, True]:
+        check = bool
+    elif not callable(check): # pragma: no cover
+        errormsg = f'"check" must be None, bool, or callable, not "{check}"'
+        raise ValueError(errormsg)
+        
+    # Actually calculate it
+    out = next((arg for arg in args if check(arg)), default)
+    return out
+    
+
 def _sanitize_iterables(obj, *args):
     """
     Take input as a list, array, pandas Series, or non-iterable type, along with
@@ -1893,11 +1951,12 @@ def importbypath(path, name=None):
         basename = parts[-1].removesuffix('.py')
         name = sanitizestr(basename, validvariable=True) # Convert directory name to a string
     
-    # From https://docs.python.org/3/library/importlib.html#importing-a-source-file-directly
+    # Actually import the module -- from https://docs.python.org/3/library/importlib.html#importing-a-source-file-directly
     spec = importlib.util.spec_from_file_location(name, filepath)
     module = importlib.util.module_from_spec(spec)
     sys.modules[name] = module
     spec.loader.exec_module(module)
+    
     return module
 
 
@@ -1969,7 +2028,7 @@ class autolist(list):
             raise IndexError(errormsg) from None # Don't show the traceback
 
 
-class Link(object):
+class Link:
     """
     A class to differentiate between an object and a link to an object. The idea
     is that this object is parsed differently from other objects -- most notably,
@@ -2009,7 +2068,7 @@ class Link(object):
         return self.__copy__(*args, **kwargs)
 
 
-class LazyModule(object):
+class LazyModule:
     """
     Create a "lazy" module that is loaded if and only if an attribute is called.
 

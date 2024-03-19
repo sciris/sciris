@@ -1522,7 +1522,7 @@ def jsonunpickle(json=None, filename=None):
 __all__ += ['Blobject', 'Spreadsheet', 'loadspreadsheet', 'savespreadsheet']
 
 
-class Blobject(object):
+class Blobject:
     """
     A wrapper for a binary file -- rarely used directly.
 
@@ -2181,7 +2181,7 @@ class UnpicklingError(pkl.UnpicklingError):
     pass
 
 
-class NoneObj(object):
+class NoneObj:
     """
     An empty class to represent an object the user intentionally does not want to load.
     Not for use by the user.
@@ -2191,7 +2191,7 @@ class NoneObj(object):
     def __init__(self, *args, **kwargs): pass
 
 
-class Failed(object):
+class Failed:
     """
     An empty class to represent a failed object loading. Not for use by the user.
     

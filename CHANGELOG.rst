@@ -8,6 +8,14 @@ All major updates to Sciris are documented here.
 By import convention, components of the Sciris library are listed beginning with ``sc.``, e.g. ``sc.odict()``.
 
 
+Version 3.1.5 (2024-03-18)
+--------------------------
+#. Added a new :class:`sc.quickobj() <sc_printing.quickobj>` class, which is like :class:`sc.prettyobj() <sc_printing.prettyobj>` except it only prints attribute names, not values. This is useful for large objects that can be slow to print. 
+#. :func:`sc.pr() <sc_printing.pr>` has a new ``vals=False`` argument that skips printing attribute values. The default column width was also increased (from 18 to 22 chars).
+#. A new function :func:`sc.ifelse() <sc_utils.ifelse>` was added, which is a shortcut to finding the first non-``None`` (or non-``False``) value in a list.
+#. Updated :func:`sc.iterobj() <sc_nested.iterobj>` to prevent recursion, and to handle atomic classes (i.e. objects that are not descended into) more flexibly.
+
+
 Version 3.1.4 (2024-03-11)
 --------------------------
 #. Fixed failures of pretty-repr (e.g. :func:`sc.pr() <sc_printing.pr>` and :class:`sc.prettyobj() <sc_printing.prettyobj>`) for objects with invalid properties (e.g., properties that rely on missing/invalid attributes). ``sc.prettyobj()`` was also moved from ``sc_utils`` to ``sc_printing``.

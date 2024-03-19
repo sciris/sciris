@@ -159,7 +159,7 @@ def test_tryexcept():
 
 #%% Type functions
 
-def test_promotetolist():
+def test_tolist():
     sc.heading('test_promotetolist()')
     ex0 = 1
     ex1 = 'a'
@@ -205,8 +205,12 @@ def test_promotetolist():
 
     # Check that type checking works
     sc.tolist(ex2, objtype=str)
+    
+    return res3b
 
-    print('\nTesting transposelist and swapdict')
+
+def test_transpose_swap():
+    print('\nTesting sc.transposelist() and sc.swapdict()')
     o = sc.odict(a=1, b=4, c=9, d=16)
     itemlist = o.enumitems()
     inds, keys, vals = sc.transposelist(itemlist)
@@ -230,6 +234,12 @@ def test_promotetolist():
     with pytest.raises(TypeError):
         listdict = dict(a=[1,2,3])
         sc.swapdict(listdict) # Unhashable type
+    
+    return d1, d2
+
+
+def test_merge():
+    sc.heading('Testing merge functions')
 
     print('\nTesting mergelists')
     assert sc.mergelists(None, copy=True)                   == []
@@ -240,13 +250,33 @@ def test_promotetolist():
     assert sc.mergelists((1,2), (3,4), (5,6), coerce=tuple) == [1, 2, 3, 4, 5, 6]
     
     print('\nTesting mergedicts')
+    big = sc.mergedicts(sc.odict({'b':3, 'c':4}), {'a':1, 'b':2})
+    assert big == sc.odict({'b':2, 'c':4, 'a':1})
     assert sc.mergedicts(None) == {}
     assert sc.mergedicts({'a':1}, {'b':2}, _copy=True) == {'a':1, 'b':2}
     assert sc.mergedicts({'a':1, 'b':2}, {'b':3, 'c':4}, None) == {'a':1, 'b':3, 'c':4}
-    assert sc.mergedicts(sc.odict({'b':3, 'c':4}), {'a':1, 'b':2}) == sc.odict({'b':2, 'c':4, 'a':1})
     with pytest.raises(KeyError):
         assert sc.mergedicts({'b':3, 'c':4}, {'a':1, 'b':2}, _overwrite=False)
-    return res3b
+        
+    print('\nTesting ifelse')
+    
+    # Basic usage
+    a = None
+    b = 3
+    assert sc.ifelse(a, b) == a if a is not None else b
+    
+    # Boolean usage
+    args = ['', False, {}, 'ok']
+    assert sc.ifelse(*args, check=bool) == next((arg for arg in args if arg), None)
+    
+    # Custom function
+    args = [1, 3, 5, 7]
+    assert sc.ifelse(*args, check=lambda x: x>5) == 7
+    
+    # Default value
+    assert sc.ifelse(default=[4]) == [4]
+    
+    return big
 
 
 def test_types():
@@ -412,15 +442,17 @@ if __name__ == '__main__':
     tryexc    = test_tryexcept()
 
     # Type
-    plist     = test_promotetolist()
-    types     = test_types()
+    plist = test_tolist()
+    d1d2  = test_transpose_swap()
+    mdict = test_merge()
+    types = test_types()
 
     # Miscellaneous
-    dists     = test_suggest()
-    misc      = test_misc()
+    dists = test_suggest()
+    misc  = test_misc()
 
     # Classes
-    links   = test_links()
+    links = test_links()
 
     sc.toc()
     print('Done.')

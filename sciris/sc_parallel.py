@@ -58,7 +58,7 @@ def _progressbar(globaldict, njobs, started, **kwargs):
     return
 
 
-class Parallel(object):
+class Parallel:
     """
     Parallelization manager
     
