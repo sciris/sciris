@@ -36,9 +36,6 @@ def test_printing(test_slack=False):
     example = sc.prettyobj()
     example.data = sc.vectocolor(10)
 
-    print('sc.pr():')
-    sc.pr(example)
-
     print('sc.pp():')
     sc.pp(example.data)
     sc.pp(example.data, jsonify=True)
@@ -121,11 +118,18 @@ def test_prepr():
     sc.heading('Test pretty representation of an object')
 
     n_attrs = 500
-    myobj = sc.prettyobj()
+    pobj = sc.prettyobj()
+    qobj = sc.quickobj()
     for i in range(n_attrs):
         key = f'attr{i:03d}'
-        setattr(myobj, key, i**2)
-    print(myobj)
+        setattr(pobj, key, i**2)
+        setattr(qobj, key, i**2)
+    
+    print('sc.prettyobj:')
+    print(pobj)
+    
+    print('sc.quickobj:')
+    print(qobj)
 
     print('Testing pretty representation of an object using slots')
     class Foo:
@@ -144,8 +148,15 @@ def test_prepr():
 
     for tf in [True, False]:
         sc.objrepr(x, showid=tf, showmeth=tf, showprop=tf, showatt=tf)
+    
+    print('Testing sc.pr():')
+    class Obj: pass
+    obj = Obj()
+    obj.a = np.arange(10)
+    obj.b = dict(a=dict(b=np.random.rand(5)), c=['a', 'b'])
+    sc.pr(obj)
 
-    return myobj
+    return pobj
 
 
 def test_progress_bar():
