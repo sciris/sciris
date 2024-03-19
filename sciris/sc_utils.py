@@ -2038,7 +2038,7 @@ class autolist(list):
             raise IndexError(errormsg) from None # Don't show the traceback
 
 
-class Link(object):
+class Link:
     """
     A class to differentiate between an object and a link to an object. The idea
     is that this object is parsed differently from other objects -- most notably,
@@ -2078,7 +2078,7 @@ class Link(object):
         return self.__copy__(*args, **kwargs)
 
 
-class LazyModule(object):
+class LazyModule:
     """
     Create a "lazy" module that is loaded if and only if an attribute is called.
 

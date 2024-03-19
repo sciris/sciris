@@ -785,7 +785,7 @@ def toctic(returntic=False, returntoc=False, *args, **kwargs):
     else:           return
 
 
-class timer(object):
+class timer:
     """
     Simple timer class. Note: :class:`sc.timer() <timer>` and :class:`sc.Timer() <Timer>` are aliases.
 

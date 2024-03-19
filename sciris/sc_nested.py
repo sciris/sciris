@@ -220,7 +220,7 @@ def iternested(nesteddict, _previous=None):
     return output
 
 
-class IterObj(object):
+class IterObj:
     """
     Object iteration manager
     

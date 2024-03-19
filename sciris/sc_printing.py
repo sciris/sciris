@@ -187,7 +187,7 @@ def objrepr(obj, showid=True, showmeth=True, showprop=True, showatt=True, showcl
     return output
 
 
-def prepr(obj, maxlen=None, maxitems=None, skip=None, dividerchar='—', dividerlen=60, 
+def prepr(obj, vals=True, maxlen=None, maxitems=None, skip=None, dividerchar='—', dividerlen=60, 
           use_repr=True, private=False, sort=True, strlen=18, ncol=3, maxtime=3, die=False, debug=False):
     """
     Akin to "pretty print", returns a pretty representation of an object --
@@ -197,6 +197,7 @@ def prepr(obj, maxlen=None, maxitems=None, skip=None, dividerchar='—', divider
 
     Args:
         obj (anything): the object to be represented
+        vals (bool): whether to show item values
         maxlen (int): maximum number of characters to show for each item
         maxitems (int): maximum number of items to show in the object
         skip (list): any properties to skip
@@ -208,8 +209,16 @@ def prepr(obj, maxlen=None, maxitems=None, skip=None, dividerchar='—', divider
         die (bool): whether to raise an exception if an error is encountered
         debug (bool): print out detail during string construction
     
-    *New in version 3.0.0:* "debug" argument
-    *New in version 3.1.4:* more robust handling of invalid object properties
+    | *New in version 3.0.0:* "debug" argument
+    | *New in version 3.1.4:* more robust handling of invalid object properties
+    | *New in version 3.1.5:* "vals" argument to turn off printing attribute values
+    
+    
+    **Examples**::
+
+        df = sc.dataframe(a=[1,2,3], b=[4,5,6])
+        print(df) # See just the data
+        sc.pr(df) # See all the methods too
     """
 
     # Decide how to handle representation function -- repr is dangerous since can lead to recursion
@@ -335,20 +344,13 @@ def pr(obj, *args, **kwargs):
     """
     Pretty-print the detailed representation of an object.
 
-    See :func:`sc.prepr() <prepr>` for options.
-
-    **Example**::
-
-        import pandas as pd
-        df = pd.DataFrame({'a':[1,2,3], 'b':[4,5,6]})
-        print(df) # See just the data
-        sc.pr(df) # See all the methods too
+    See :func:`sc.prepr() <prepr>` for options and examples.
     """
     print(prepr(obj, *args, **kwargs))
     return
 
 
-class prettyobj(object):
+class prettyobj:
     """
     Use pretty repr for objects, instead of just showing the type and memory pointer
     (the Python default for objects). Can also be used as the base class for custom
