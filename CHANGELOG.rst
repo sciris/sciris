@@ -8,6 +8,11 @@ All major updates to Sciris are documented here.
 By import convention, components of the Sciris library are listed beginning with ``sc.``, e.g. ``sc.odict()``.
 
 
+Version 3.1.6 (2024-03-30)
+--------------------------
+#. Updated :func:`sc.iterobj() <sc_nested.iterobj>` to include two new arguments: ``skip`` will skip objects to avoid iterating over, and ``depthfirst`` switches between depth-first (default) and breadth-first (new) iteration options.
+
+
 Version 3.1.5 (2024-03-18)
 --------------------------
 #. Added a new :class:`sc.quickobj() <sc_printing.quickobj>` class, which is like :class:`sc.prettyobj() <sc_printing.prettyobj>` except it only prints attribute names, not values. This is useful for large objects that can be slow to print. 
