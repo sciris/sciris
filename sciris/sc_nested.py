@@ -20,6 +20,9 @@ from . import sc_printing as scp
 # Define objects for which it doesn't make sense to descend further -- used here and sc.equal()
 atomic_classes = [np.ndarray, pd.Series, pd.DataFrame, pd.core.indexes.base.Index]
 
+# Define a custom "None" value to allow searching for actual None values
+_None = '<sc_nested_custom_None>' # This should not be equal to any other value the user could supply
+
 
 ##############################################################################
 #%% Nested dict and object functions
@@ -276,26 +279,28 @@ class IterObj:
     | *New in version 3.1.2.*
     | *New in version 3.1.5:* "norecurse" argument; better handling of atomic classes
     """    
-    def __init__(self, obj, func=None, inplace=False, copy=False, leaf=False, recursion=0, 
-                 atomic='default', rootkey='root', verbose=False, _memo=None, _trace=None, _output=None, 
+    def __init__(self, obj, func=None, inplace=False, copy=False, leaf=False, recursion=0, depthfirst=True,
+                 atomic='default', skip=None, rootkey='root', verbose=False, _memo=None, _trace=None, _output=None, 
                  custom_type=None, custom_iter=None, custom_get=None, custom_set=None, *args, **kwargs):
         from . import sc_odict as sco # To avoid circular import
         
         # Default argument
-        self.obj       = obj
-        self.func      = func
-        self.inplace   = inplace
-        self.copy      = copy
-        self.leaf      = leaf
-        self.recursion = recursion
-        self.atomic    = atomic
-        self.rootkey   = rootkey
-        self.verbose   = verbose
-        self._memo     = _memo
-        self._trace    = _trace
-        self._output   = _output
-        self.func_args = args
-        self.func_kw   = kwargs
+        self.obj        = obj
+        self.func       = func
+        self.inplace    = inplace
+        self.copy       = copy
+        self.leaf       = leaf
+        self.recursion  = recursion
+        self.depthfirst = depthfirst
+        self.atomic     = atomic
+        self.skip       = skip
+        self.rootkey    = rootkey
+        self.verbose    = verbose
+        self._memo      = _memo
+        self._trace     = _trace
+        self._output    = _output
+        self.func_args  = args
+        self.func_kw    = kwargs
         
         # Custom arguments
         self.custom_type = custom_type
@@ -306,22 +311,49 @@ class IterObj:
         # Handle inputs
         if self.func is None: # Define the default function
             self.func = lambda obj: obj 
-            
+        
+        # Handle atomic classes
         atomiclist = scu.tolist(self.atomic)
         if 'default' in atomiclist: # Handle objects to not descend into
             atomiclist.remove('default')
             atomiclist = atomic_classes + atomiclist
         self.atomic = tuple(atomiclist)
+        
+        # Handle objects to skip
+        if isinstance(skip, dict):
+            skip_ids = scu.tolist(skip.get('ids'))
+            skip_instances = scu.tolist(skip.get('instances'))
+            skip_subclasses = scu.tolist(skip.get('subclasses'))
+        else:
+            skip = scu.tolist(self.skip)
+            skip_ids = []
             
+            skip_subclasses = []
+            for entry in skip:
+                if isinstance(entry, int):
+                    skip_ids.append(entry)
+                elif isinstance(entry, type):
+                    skip_subclasses.append(entry)
+                else:
+                    errormsg = f'Expecting skip entries to be classes or object IDs, not {entry}'
+                    raise TypeError(errormsg)
+            skip_instances = [] # This isn't populated in list form
+        self._skip_ids        = tuple(skip_ids)
+        self._skip_instances  = tuple(skip_instances)
+        self._skip_subclasses = tuple(skip_subclasses)
+        
+        # Initialize the memo: keep track of objects we've seen before
         if self._memo is None:
             self._memo = co.defaultdict(int)
             self._memo[id(obj)] = 1 # Initialize the memo with a count of this object
             
+        # Initialize the trace: this object's position in the whole
         if self._trace is None:
             self._trace = [] # Handle where we are in the object
             if inplace and copy: # Only need to copy once
                 self.obj = scu.dcp(obj)
         
+        # Initialize the output: what we return at the end
         if self._output is None: # Handle the output at the root level
             self._output = sco.objdict()
             if not inplace:
@@ -337,76 +369,126 @@ class IterObj:
         if self.verbose:
             print(space*len(self._trace) + string)
         return
+    
+    def get_obj_itertype(self, obj=_None):
+        """ Small helper function to get the object and itertype """
+        if obj is _None:
+            obj = self.obj
+            itertype = self.itertype
+        else:
+            obj = obj
+            itertype = self.check_iter_type(obj)
+        return obj, itertype
         
-    def iteritems(self):
+    def iteritems(self, obj=_None, trace=_None):
         """ Return an iterator over items in this object """
         self.indent(f'Iterating with type "{self.itertype}"')
+        obj, itertype = self.get_obj_itertype(obj)
         out = None
         if self.custom_iter:
-            out = self.custom_iter(self.obj)
+            out = self.custom_iter(obj)
         if out is None:
-            if self.itertype == 'dict':
-                out = self.obj.items()
-            elif self.itertype == 'list':
-                out = enumerate(self.obj)
-            elif self.itertype == 'object':
-                out = self.obj.__dict__.items()
+            if itertype == 'dict':
+                out = obj.items()
+            elif itertype == 'list':
+                out = enumerate(obj)
+            elif itertype == 'object':
+                out = obj.__dict__.items()
             else:
                 out = {}.items() # Return nothing if not recognized
+        if trace is not _None:
+            out = list(out)
+            for i in range(len(out)):
+                out[i] = [trace, *list(out[i])] # Prepend trace to the arguments
         return out
     
-    def getitem(self, key):
+    def getitem(self, key, obj=_None):
         """ Get the value for the item """
         self.indent(f'Getting key "{key}"')
-        if self.itertype in ['dict', 'list']:
-            return self.obj[key]
-        elif self.itertype == 'object':
-            return self.obj.__dict__[key]
+        obj, itertype = self.get_obj_itertype(obj)
+        if itertype in ['dict', 'list']:
+            return obj[key]
+        elif itertype == 'object':
+            return obj.__dict__[key]
         elif self.custom_get:
-            return self.custom_get(self.obj, key)
+            return self.custom_get(obj, key)
         else:
             return None
     
-    def setitem(self, key, value):
+    def setitem(self, key, value, obj=_None):
         """ Set the value for the item """
+        obj, itertype = self.get_obj_itertype(obj)
         self.indent(f'Setting key "{key}"')
-        if self.itertype in ['dict', 'list']:
-            self.obj[key] = value
-        elif self.itertype == 'object':
-            self.obj.__dict__[key] = value
+        if itertype in ['dict', 'list']:
+            obj[key] = value
+        elif itertype == 'object':
+            obj.__dict__[key] = value
         elif self.custom_set:
-            self.custom_set(self.obj, key, value)
+            self.custom_set(obj, key, value)
         return
     
     def check_iter_type(self, obj):
         """ Shortcut to check_iter_type() """
         return check_iter_type(obj, known=self.atomic, custom=self.custom_type)
     
+    def check_proceed(self, subobj, newid):
+        """ Check if we should continue or not """
+        
+        # If we've already parsed this object, don't parse it again
+        in_memo = (newid in self._memo) and (self._memo[newid] > self.recursion)
+        
+        # Skip this object if we've been asked to
+        is_skipped = (newid in self._skip_ids) or isinstance(subobj, self._skip_instances) or issubclass(type(subobj), self._skip_subclasses)
+        
+        # Finalize
+        proceed = False if (in_memo or is_skipped) else True 
+        return proceed
+    
+    def process_obj(self, key, subobj, newid, trace=_None):
+        """ Process a single object """
+        if trace is _None:
+            trace = self._trace
+        self._memo[newid] += 1
+        trace = trace + [key]
+        newobj = subobj
+        subitertype = self.check_iter_type(subobj)
+        self.indent(f'Working on {trace}, leaf={self.leaf}, type={str(subitertype)}')
+        if not (self.leaf and subitertype):
+            newobj = self.func(subobj, *self.func_args, **self.func_kw)
+            if self.inplace:
+                self.setitem(key, newobj)
+            else:
+                self._output[tuple(trace)] = newobj
+        return trace
+    
     def iterate(self):
         """ Actually perform the iteration over the object """
         
         # Iterate over the object
-        for key,subobj in self.iteritems():
-            newid = id(subobj)
-            if (newid in self._memo) and (self._memo[newid] > self.recursion): # If we've already parsed this object, don't parse it again
-                continue
-            else:
-                self._memo[newid] += 1
-                trace = self._trace + [key]
-                newobj = subobj
-                subitertype = self.check_iter_type(subobj)
-                self.indent(f'Working on {trace}, leaf={self.leaf}, type={str(subitertype)}')
-                if not (self.leaf and subitertype):
-                    newobj = self.func(subobj, *self.func_args, **self.func_kw)
-                    if self.inplace:
-                        self.setitem(key, newobj)
-                    else:
-                        self._output[tuple(trace)] = newobj
-                io = IterObj(self.getitem(key), self.func, inplace=self.inplace, leaf=self.leaf, recursion=self.recursion,  # Create a new instance
-                        atomic=self.atomic, verbose=self.verbose, _memo=self._memo, _trace=trace, _output=self._output, 
-                        custom_type=self.custom_type, custom_iter=self.custom_iter, custom_get=self.custom_get, custom_set=self.custom_set,
-                        *self.func_args, **self.func_kw)
-                io.iterate() # Run recursively
+        if self.depthfirst:
+            for key,subobj in self.iteritems():
+                newid = id(subobj)
+                proceed = self.check_proceed(subobj, newid)
+                if proceed: # Actually descend into the object
+                    trace = self.process_obj(key, subobj, newid) # Process the object
+                    
+                    # Run recursively
+                    io = IterObj(subobj, self.func, inplace=self.inplace, leaf=self.leaf, recursion=self.recursion, depthfirst=self.depthfirst,
+                            atomic=self.atomic, skip=self.skip, verbose=self.verbose, _memo=self._memo, _trace=trace, _output=self._output, 
+                            custom_type=self.custom_type, custom_iter=self.custom_iter, custom_get=self.custom_get, custom_set=self.custom_set,
+                            *self.func_args, **self.func_kw)
+                    io.iterate()
+            
+        else:
+            queue = co.deque(self.iteritems(trace=self._trace))
+            while queue:
+                trace,key,subobj = queue.popleft()
+                newid = id(subobj)
+                proceed = self.check_proceed(subobj, newid)
+                if proceed: # Actually descend into the object
+                    newtrace = self.process_obj(key, subobj, newid, trace) # Process the object
+                    new = self.iteritems(subobj, trace=newtrace)
+                    queue.extend(new)
             
         if self.inplace:
             newobj = self.func(self.obj, *self.func_args, **self.func_kw) # Set at the root level
@@ -417,8 +499,8 @@ class IterObj:
             return self._output
         
 
-def iterobj(obj, func=None, inplace=False, copy=False, leaf=False, recursion=0, atomic='default', 
-            rootkey='root', verbose=False, _trace=None, _output=None, *args, **kwargs):
+def iterobj(obj, func=None, inplace=False, copy=False, leaf=False, recursion=0, depthfirst=True,
+            atomic='default', skip=None, rootkey='root', verbose=False, _trace=None, _output=None, *args, **kwargs):
     """
     Iterate over an object and apply a function to each node (item with or without children).
     
@@ -442,6 +524,7 @@ def iterobj(obj, func=None, inplace=False, copy=False, leaf=False, recursion=0, 
         leaf (bool): whether to apply the function only to leaf nodes of the object
         recursion (int): number of recursive steps to allow, i.e. parsing the same objects multiple times (default 0)
         atomic (list): a list of known classes to treat as atomic (do not descend into); if 'default', use defaults (e.g. ``np.array``, ``pd.DataFrame``)
+        skip (list): a list of classes or object IDs to skip over entirely
         rootkey (str): the key to list as the root of the object (default ``'root'``)
         verbose (bool): whether to print progress.
         _trace (list): used internally for recursion
@@ -478,8 +561,9 @@ def iterobj(obj, func=None, inplace=False, copy=False, leaf=False, recursion=0, 
     | *New in version 3.1.2:* ``copy`` defaults to ``False``; refactored into class
     | *New in version 3.1.3:* "rootkey" argument
     | *New in version 3.1.5:* "recursion" argument; better handling of atomic classes
+    | *New in version 3.1.6:* "skip" and "depthfirst" arguments
     """
-    io = IterObj(obj=obj, func=func, inplace=inplace, copy=copy, leaf=leaf, recursion=recursion, atomic=atomic,
+    io = IterObj(obj=obj, func=func, inplace=inplace, copy=copy, leaf=leaf, recursion=recursion, depthfirst=depthfirst, atomic=atomic, skip=skip,
                  rootkey=rootkey, verbose=verbose, _trace=_trace, _output=_output, *args, **kwargs) # Create the object
     out = io.iterate() # Iterate
     return out
@@ -621,8 +705,7 @@ def nestedloop(inputs, loop_order):
 
 __all__ += ['search', 'Equal', 'equal']
 
-# Define a custom "None" value to allow searching for actual None values
-_None = '<sc_nested_custom_None>' # This should not be equal to any other value the user could supply
+
 def search(obj, query=_None, key=_None, value=_None, aslist=True, method='exact', 
            return_values=False, verbose=False, _trace=None, **kwargs):
     """
