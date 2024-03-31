@@ -453,6 +453,7 @@ class prettyobj:
 
     | *New in version 2.0.0:* allow positional arguments
     | *New in version 3.1.4:* moved from sc_utils to sc_printing
+    | *New in version 3.1.6:* linked back to sc_utils to prevent unpickling errors
     """
     def __init__(self, *args, **kwargs):
         """ Simple initialization """
@@ -464,6 +465,9 @@ class prettyobj:
     def __repr__(self):
         """ The point of this class: use a more detailed repr by default """
         return prepr(self)
+
+# Handle deprecation so loading old pickles still works
+scu.prettyobj = prettyobj
 
 
 class quickobj(prettyobj):
@@ -480,15 +484,21 @@ class quickobj(prettyobj):
         import numpy as np
         myobj = sc.quickobj(big1=np.random.rand(100,100), big2=sc.dataframe(a=np.arange(1000)))
         print(myobj)
+    
+    | *New in version 3.1.5.*
     """
     def __repr__(self):
         """ Use a more detailed repr than default, but less detailed that prettyobj """
         return prepr(self, vals=False)
     
-    def disp(self, *args, **kwargs):
+    def disp(self, output=False, *args, **kwargs):
         """ Return full display of the object """
-        pr(self, *args, **kwargs)
-        return 
+        string = prepr(self, *args, **kwargs)
+        if output:
+            return string
+        else:
+            print(string)
+            return 
 
 
 #%% Spacing functions
