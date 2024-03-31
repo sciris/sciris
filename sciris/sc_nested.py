@@ -399,7 +399,7 @@ class IterObj:
         if trace is not _None:
             out = list(out)
             for i in range(len(out)):
-                out[i] = [trace, *list(out[i])] # Prepend trace to the arguments
+                out[i] = [obj, trace, *list(out[i])] # Prepend obj and trace to the arguments
         return out
     
     def getitem(self, key, obj=_None):
@@ -444,19 +444,21 @@ class IterObj:
         proceed = False if (in_memo or is_skipped) else True 
         return proceed
     
-    def process_obj(self, key, subobj, newid, trace=_None):
+    def process_obj(self, key, subobj, newid, trace=_None, parent=_None):
         """ Process a single object """
         if trace is _None:
             trace = self._trace
+        if parent is _None:
+            parent = self.obj
         self._memo[newid] += 1
         trace = trace + [key]
-        newobj = subobj
+        # newobj = subobj
         subitertype = self.check_iter_type(subobj)
         self.indent(f'Working on {trace}, leaf={self.leaf}, type={str(subitertype)}')
         if not (self.leaf and subitertype):
             newobj = self.func(subobj, *self.func_args, **self.func_kw)
             if self.inplace:
-                self.setitem(key, newobj)
+                self.setitem(key, newobj, obj=parent)
             else:
                 self._output[tuple(trace)] = newobj
         return trace
@@ -482,16 +484,16 @@ class IterObj:
         # else:
         queue = co.deque(self.iteritems(trace=self._trace))
         while queue:
-            trace,key,subobj = queue.popleft()
+            parent,trace,key,subobj = queue.popleft()
             newid = id(subobj)
             proceed = self.check_proceed(subobj, newid)
             if proceed: # Actually descend into the object
-                newtrace = self.process_obj(key, subobj, newid, trace) # Process the object
-                new = self.iteritems(subobj, trace=newtrace)
+                newtrace = self.process_obj(key, subobj, newid, trace=trace, parent=parent) # Process the object
+                newitems = self.iteritems(subobj, trace=newtrace)
                 if self.depthfirst:
-                    queue.extendleft(new)
+                    queue.extendleft(newitems)
                 else:
-                    queue.extend(new)
+                    queue.extend(newitems)
             
         if self.inplace:
             newobj = self.func(self.obj, *self.func_args, **self.func_kw) # Set at the root level
