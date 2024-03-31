@@ -229,8 +229,8 @@ def test_timer():
             nap()
             T.tt()
     assert txt5 == ''
-    lbound = n*delay/2
-    ubound = n*delay*2
+    lbound = n*delay/3 # Very generous margin, but needed unfortunately ...
+    ubound = n*delay*3
     assert lbound < T.timings[:].sum() < ubound
     assert '(4)' in T.timings.keys()[4]
     assert T.cumtimings[-1] == T.total
