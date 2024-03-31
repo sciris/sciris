@@ -29,10 +29,6 @@ jobs:
       - name: Install Sciris
         run: pip install -e .
 
-      - name: Install tests
-        working-directory: ./tests
-        run: pip install -r requirements.txt
-      
       - name: Check out Covasim
         uses: actions/checkout@v2
         with:
@@ -56,3 +52,49 @@ jobs:
         with:
           name: test_results
           path: covasim/tests/covasim-test-results.xml
+
+  test_starsim:
+    name: Install/test Starsim
+    timeout-minutes: 10
+    strategy:
+      fail-fast: false
+      max-parallel: 8
+      matrix:
+        os: ['ubuntu-latest']
+        python-version: ['3.11']
+    runs-on: ${{ matrix.os }}
+    
+    steps:
+      - name: Checkout sources
+        uses: actions/checkout@v2
+      - uses: actions/setup-python@master
+        with:
+          python-version: ${{ matrix.python-version }}
+          architecture: x64
+
+      - name: Install Sciris
+        run: pip install -e .
+
+      - name: Check out Starsim
+        uses: actions/checkout@v2
+        with:
+          repository: 'starsimhub/starsim'
+          path: 'starsim'
+
+      - name: Install Starsim
+        working-directory: ./starsim
+        run: pip install -e .
+
+      - name: Install Starsim tests
+        working-directory: ./starsim/tests
+        run: pip install -r requirements.txt
+
+      - name: Run Starsim tests
+        working-directory: ./starsim/tests
+        run: pytest --durations=0 --junitxml=starsim-test-results.xml # Run actual tests
+      - name: Upload test results
+        uses: actions/upload-artifact@v1
+        if: failure()
+        with:
+          name: test_results
+          path: starsim/tests/starsim-test-results.xml
