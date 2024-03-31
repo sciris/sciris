@@ -39,8 +39,3 @@ if not _lazy:
     from .sc_colors     import *
 
 del _os, _lazy, _threads
-
-# Fix loading legacy objects
-import sciris
-sciris.sc_utils.prettyobj = sciris.sc_printing.prettyobj
-
