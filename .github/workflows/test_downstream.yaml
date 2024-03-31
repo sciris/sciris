@@ -1,4 +1,4 @@
-name: Covasim deprecation tests
+name: Downstream tests
 on:
   workflow_dispatch:
   pull_request:
@@ -8,7 +8,7 @@ on:
 
 jobs:
   test_covasim:
-    name: Install/test Covasim
+    name: Covasim
     timeout-minutes: 10
     strategy:
       fail-fast: false
@@ -54,7 +54,7 @@ jobs:
           path: covasim/tests/covasim-test-results.xml
 
   test_starsim:
-    name: Install/test Starsim
+    name: Starsim
     timeout-minutes: 10
     strategy:
       fail-fast: false
