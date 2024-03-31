@@ -231,6 +231,7 @@ class IterObj:
     Use this class only if you want more control over how the object is iterated over.
     
     Class-specific args:
+        iterate (bool): whether to do iteration upon object creation
         custom_type (func): a custom function for returning a string for a specific object type (should return '' by default)
         custom_iter (func): a custom function for iterating (returning a list of keys) over an object
         custom_get  (func): a custom function for getting an item from an object
@@ -273,15 +274,14 @@ class IterObj:
                 
         # Run the iteration
         io = sc.IterObj(obj, func=gather_data, custom_type=(tuple, DataObj), custom_iter=custom_iter, custom_get=custom_get)
-        io.iterate()
         print(all_data)
         
     | *New in version 3.1.2.*
     | *New in version 3.1.5:* "norecurse" argument; better handling of atomic classes
-    | *New in version 3.1.6:* "depthfirst" argument; replace recursion with a queue
+    | *New in version 3.1.6:* "depthfirst" argument; replace recursion with a queue; "to_df()" method
     """    
-    def __init__(self, obj, func=None, inplace=False, copy=False, leaf=False, recursion=0, 
-                 depthfirst=True, atomic='default', skip=None, rootkey='root', verbose=False, 
+    def __init__(self, obj, func=None, inplace=False, copy=False, leaf=False, recursion=0, depthfirst=True,
+                 atomic='default', skip=None, rootkey='root', verbose=False, iterate=True,
                  custom_type=None, custom_iter=None, custom_get=None, custom_set=None, *args, **kwargs):
         from . import sc_odict as sco # To avoid circular import
         
@@ -348,20 +348,27 @@ class IterObj:
         self._skip_subclasses = tuple(skip_subclasses)
         self._skip_instances  = tuple(skip_instances)
         
-        # Initialize the output for the root node
-        if not inplace:
-            self.output[self.rootkey] = self.func(self.obj, *args, **kwargs)
-        
         # Copy the object if needed
         if inplace and copy:
             self.obj = scu.dcp(obj)
         
-        # Initialize the memo with the current object
-        self._memo[id(self.obj)] = 1
-                
-        # Check what type of object we have
-        self.itertype = self.check_iter_type(self.obj)
+        # Actually do the iteration
+        if iterate:
+            self.iterate()
+            
         return
+    
+    def __repr__(self):
+        """ Show the object """
+        objstr = f'{type(self.obj)}'
+        lenstr = f'{len(self)}' if len(self) else '<not parsed>'
+        string = f'{self.__class__.__name__}(obj={objstr}, len={lenstr})'
+        return string
+    
+    def __len__(self):
+        """ Define the length as the length of the output dictionary """
+        try:    return len(self.output)
+        except: return None
     
     def indent(self, string='', space='  '):
         """ Print, with output indented successively """
@@ -371,8 +378,8 @@ class IterObj:
 
     def iteritems(self, parent, trace):
         """ Return an iterator over items in this object """
-        self.indent(f'Iterating with type "{self.itertype}"')
         itertype = self.check_iter_type(parent)
+        self.indent(f'Iterating with type "{itertype}"')
         out = None
         if self.custom_iter:
             out = self.custom_iter(parent)
@@ -451,6 +458,15 @@ class IterObj:
     
     def iterate(self):
         """ Actually perform the iteration over the object """
+        
+        # Initialize the output for the root node
+        if not self.inplace:
+            self.output[self.rootkey] = self.func(self.obj, *self.func_args, **self.func_kw)
+        
+        # Initialize the memo with the current object
+        self._memo[id(self.obj)] = 1
+        
+        # Iterate
         queue = co.deque(self.iteritems(self.obj, self._trace))
         while queue:
             parent,trace,key,subobj = queue.popleft()
@@ -463,7 +479,8 @@ class IterObj:
                     queue.extendleft(reversed(newitems)) # extendleft() swaps order, so swap back
                 else:
                     queue.extend(newitems)
-            
+        
+        # Finish up
         if self.inplace:
             newobj = self.func(self.obj, *self.func_args, **self.func_kw) # Set at the root level
             return newobj
@@ -472,9 +489,32 @@ class IterObj:
                 self.output.pop('root') # Remove "root" with leaf=True if it's not the only node
             return self.output
         
+    def flatten_traces(self, sep='_'):
+        """ Convert trace tuples to strings for easier reading """
+        from . import sc_odict as sco # To avoid circular import
+        newoutput = sco.objdict()
+        for key,val in self.output.items():
+            if isinstance(key, tuple):
+                key = sep.join([str(k) for k in key])
+            newoutput[key] = val
+        self.output = newoutput
+        return newoutput
+    
+    def to_df(self):
+        """ Convert the output dictionary to a dataframe """
+        from . import sc_dataframe as scd # To avoid circular import
+        if not len(self):
+            errormsg = 'No output to convert to a dataframe: length is zero'
+            raise ValueError(errormsg)
+        trace = self.output.keys()
+        depth = [(0 if tr==self.rootkey else len(tr)) for tr in trace] # The depth is the length of the tuple, except the special case of the root key
+        value = self.output.values()
+        self.df = scd.dataframe(trace=trace, depth=depth, value=value)
+        return self.df
+        
 
-def iterobj(obj, func=None, inplace=False, copy=False, leaf=False, recursion=0, depthfirst=True,
-            atomic='default', skip=None, rootkey='root', verbose=False, *args, **kwargs):
+def iterobj(obj, func=None, inplace=False, copy=False, leaf=False, recursion=0, depthfirst=True, atomic='default', 
+            skip=None, rootkey='root', verbose=False, flatten=False, to_df=False, *args, **kwargs):
     """
     Iterate over an object and apply a function to each node (item with or without children).
     
@@ -500,7 +540,9 @@ def iterobj(obj, func=None, inplace=False, copy=False, leaf=False, recursion=0, 
         atomic (list): a list of known classes to treat as atomic (do not descend into); if 'default', use defaults (e.g. ``np.array``, ``pd.DataFrame``)
         skip (list): a list of classes or object IDs to skip over entirely
         rootkey (str): the key to list as the root of the object (default ``'root'``)
-        verbose (bool): whether to print progress.
+        verbose (bool): whether to print progress
+        flatten (bool): whether to use flattened traces (single strings) rather than tuples
+        to_df (bool): whether to return a dataframe of the output instead of a dictionary (not valid with inplace=True)
         *args (list): passed to func()
         **kwargs (dict): passed to func()
     
@@ -512,7 +554,7 @@ def iterobj(obj, func=None, inplace=False, copy=False, leaf=False, recursion=0, 
         def check_int(obj):
             return isinstance(obj, int)
     
-        out = sc.iterobj(data, check_type)
+        out = sc.iterobj(data, check_int)
         print(out)
         
         
@@ -533,11 +575,16 @@ def iterobj(obj, func=None, inplace=False, copy=False, leaf=False, recursion=0, 
     | *New in version 3.1.2:* ``copy`` defaults to ``False``; refactored into class
     | *New in version 3.1.3:* "rootkey" argument
     | *New in version 3.1.5:* "recursion" argument; better handling of atomic classes
-    | *New in version 3.1.6:* "skip" and "depthfirst" arguments
+    | *New in version 3.1.6:* "skip", "depthfirst", "to_df", and "flatten" arguments
     """
-    io = IterObj(obj=obj, func=func, inplace=inplace, copy=copy, leaf=leaf, recursion=recursion,  # Create the object
-                 depthfirst=depthfirst, atomic=atomic, skip=skip, rootkey=rootkey, verbose=verbose, *args, **kwargs)
+    # Create the object
+    io = IterObj(obj=obj, func=func, inplace=inplace, copy=copy, leaf=leaf, recursion=recursion, depthfirst=depthfirst,
+                 atomic=atomic, skip=skip, rootkey=rootkey, verbose=verbose, iterate=False, *args, **kwargs)
     out = io.iterate() # Iterate
+    if flatten:
+        out = io.flatten_traces()
+    if to_df:
+        out = io.to_df()
     return out
 
 

@@ -226,7 +226,6 @@ def test_iterobj_class():
             
     # Run the iteration
     io = sc.IterObj(obj, func=gather_data, custom_type=(tuple, DataObj), custom_iter=custom_iter, custom_get=custom_get)
-    io.iterate()
     print(all_data)
     assert all_data == list(range(10))
     

@@ -20,7 +20,6 @@ import warnings
 import numpy as np
 import collections as co
 from textwrap import fill
-from collections import UserString
 from contextlib import redirect_stdout
 from ._extras import ansicolors as ac
 from . import sc_utils as scu
@@ -1508,8 +1507,7 @@ class progressbars(prettyobj):
         return
 
 
-
-class capture(UserString, str, redirect_stdout):
+class capture(co.UserString, str, redirect_stdout):
     """
     Captures stdout (e.g., from :func:`print()`) as a variable.
 
@@ -1541,7 +1539,7 @@ class capture(UserString, str, redirect_stdout):
     def __init__(self, seq='', *args, **kwargs):
         self._io = io.StringIO()
         self.stdout = sys.stdout
-        UserString.__init__(self, seq=seq, *args, **kwargs)
+        co.UserString.__init__(self, seq=seq, *args, **kwargs)
         redirect_stdout.__init__(self, self._io)
         return
 
