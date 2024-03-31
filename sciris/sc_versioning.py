@@ -128,14 +128,14 @@ def require(reqs=None, *args, message=None, exact=False, detailed=False, die=Tru
         for key,valid in data.items():
             if not valid:
                 count += 1
-                errorstrings += f'\n• "{key}": {errs[key]}'
+                errorstrings += f'\n• {key} (error: {errs[key]})'
         missing = scu.strjoin(errkeys, sep=' ')
         if message is not None:
             errormsg = message.replace('<MISSING>', missing)
         else:
             errormsg = '\nThe following requirement(s) were not met:'
             errormsg += errorstrings
-            errormsg += f'''\n\nIf this is a valid module, you might want to try 'pip install "{missing}" --upgrade'.'''
+            errormsg += f'\nTry "pip install {missing}".'
         if die:
             err = errs[errkeys[-1]]
             raise ModuleNotFoundError(errormsg) from err

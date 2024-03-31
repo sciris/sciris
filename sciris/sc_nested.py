@@ -465,29 +465,32 @@ class IterObj:
         """ Actually perform the iteration over the object """
         
         # Iterate over the object
-        if self.depthfirst:
-            for key,subobj in self.iteritems():
-                newid = id(subobj)
-                proceed = self.check_proceed(subobj, newid)
-                if proceed: # Actually descend into the object
-                    trace = self.process_obj(key, subobj, newid) # Process the object
+        # if self.depthfirst:
+        #     for key,subobj in self.iteritems():
+        #         newid = id(subobj)
+        #         proceed = self.check_proceed(subobj, newid)
+        #         if proceed: # Actually descend into the object
+        #             trace = self.process_obj(key, subobj, newid) # Process the object
                     
-                    # Run recursively
-                    io = IterObj(subobj, self.func, inplace=self.inplace, leaf=self.leaf, recursion=self.recursion, depthfirst=self.depthfirst,
-                            atomic=self.atomic, skip=self.skip, verbose=self.verbose, _memo=self._memo, _trace=trace, _output=self._output, 
-                            custom_type=self.custom_type, custom_iter=self.custom_iter, custom_get=self.custom_get, custom_set=self.custom_set,
-                            *self.func_args, **self.func_kw)
-                    io.iterate()
+        #             # Run recursively
+        #             io = IterObj(subobj, self.func, inplace=self.inplace, leaf=self.leaf, recursion=self.recursion, depthfirst=self.depthfirst,
+        #                     atomic=self.atomic, skip=self.skip, verbose=self.verbose, _memo=self._memo, _trace=trace, _output=self._output, 
+        #                     custom_type=self.custom_type, custom_iter=self.custom_iter, custom_get=self.custom_get, custom_set=self.custom_set,
+        #                     *self.func_args, **self.func_kw)
+        #             io.iterate()
             
-        else:
-            queue = co.deque(self.iteritems(trace=self._trace))
-            while queue:
-                trace,key,subobj = queue.popleft()
-                newid = id(subobj)
-                proceed = self.check_proceed(subobj, newid)
-                if proceed: # Actually descend into the object
-                    newtrace = self.process_obj(key, subobj, newid, trace) # Process the object
-                    new = self.iteritems(subobj, trace=newtrace)
+        # else:
+        queue = co.deque(self.iteritems(trace=self._trace))
+        while queue:
+            trace,key,subobj = queue.popleft()
+            newid = id(subobj)
+            proceed = self.check_proceed(subobj, newid)
+            if proceed: # Actually descend into the object
+                newtrace = self.process_obj(key, subobj, newid, trace) # Process the object
+                new = self.iteritems(subobj, trace=newtrace)
+                if self.depthfirst:
+                    queue.extendleft(new)
+                else:
                     queue.extend(new)
             
         if self.inplace:

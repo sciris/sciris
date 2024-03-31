@@ -179,9 +179,11 @@ def test_iterobj():
         else:
             return obj
     
+    print('Before collapse:')
     sc.printjson(data)
     sc.iterobj(data, collapse, inplace=True, maxlen=10) # Note passing of keyword argument to function
     # sc.iterobj(data, collapse, inplace=True, maxlen=10) # Note passing of keyword argument to function
+    print('After collapse:')
     sc.printjson(data)
     assert data['a']['x'] == '[1, 2, 3]'
     
