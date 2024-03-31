@@ -130,7 +130,7 @@ def test_dates():
 
     return o
 
-delay = 0.03 # Shorter creates timing errors
+delay = 0.05 # Shorter creates timing errors
 def nap(n=1, t=delay):
     ''' Little nap to test timers '''
     return sc.timedsleep(t*n)
@@ -210,10 +210,10 @@ def test_timer():
 
     print('Check toc vs toctic')
     T = sc.timer()
-    nap(3)
-    T.toc('a') # ≈3
+    nap(5)
+    T.toc('a') # ≈5
     nap()
-    T.toctic('b') # ≈4
+    T.toctic('b') # ≈6
     nap()
     T.toctic('c') # ≈1
     nap(2)
