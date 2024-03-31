@@ -40,7 +40,7 @@ jobs:
         run: pip install -r requirements.txt
       - name: Run API tests
         working-directory: ./tests
-        run: pytest -n auto --durations=0 --junitxml=test-results.xml # Run actual tests
+        run: pytest --durations=0 --junitxml=test-results.xml # Run actual tests
       - name: Upload test results
         uses: actions/upload-artifact@v1
         if: failure()
