@@ -17,7 +17,7 @@ import time
 import zlib
 import types
 import warnings
-import importlib_metadata as imd
+import importlib.metadata as imd
 import packaging.version as pkgv
 import packaging.specifiers as pkgs
 import packaging.requirements as pkgr
