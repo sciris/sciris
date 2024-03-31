@@ -45,14 +45,14 @@ jobs:
 
       - name: Install Covasim tests
         working-directory: ./covasim/tests
-        run: pip install -r requireements.txt
+        run: pip install -r requirements.txt
 
       - name: Run Covasim tests
         working-directory: ./covasim/tests
-        run: pytest --durations=0 --junitxml=test-results.xml # Run actual tests
+        run: pytest --durations=0 --junitxml=covasim-test-results.xml # Run actual tests
       - name: Upload test results
         uses: actions/upload-artifact@v1
         if: failure()
         with:
           name: test_results
-          path: tests/test-results.xml
+          path: covasim/tests/covasim-test-results.xml
