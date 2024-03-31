@@ -1,6 +1,7 @@
 name: Downstream CI tests for modules that depend on Sciris
 on:
   workflow_dispatch:
+  pull_request:
   push:
     branches:
       - main
@@ -42,8 +43,7 @@ jobs:
         working-directory: ./covasim
         run: pip install -e .
 
-
-      - name: Run API tests
+      - name: Run Covasim tests
         working-directory: ./covasim/tests
         run: pytest --durations=0 --junitxml=test-results.xml # Run actual tests
       - name: Upload test results
