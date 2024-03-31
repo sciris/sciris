@@ -1108,6 +1108,10 @@ class odict(OD):
         return scn.iternested(self, *args, **kwargs)
 
 
+##############################################################################
+#%% Other classes
+##############################################################################
+
 class objdict(odict):
     """
     An ``odict`` that acts like an object -- allow keys to be set/retrieved by object
@@ -1262,6 +1266,7 @@ class dictobj(dict):
     | *New in version 1.3.1:* inherit from dict
     | *New in version 2.0.0:* allow positional arguments
     | *New in version 3.0.0:* "fromkeys" now a class method; ``to_json()`` method
+    | *New in version 3.1.6:* "copy" returns another dictobj 
     """
 
     def __init__(self, *args, **kwargs):
@@ -1282,15 +1287,20 @@ class dictobj(dict):
     def fromkeys(cls, *args, **kwargs):
         """ Create a new dictobj from keys """
         return cls(dict.fromkeys(*args, **kwargs))
+    
+    def copy(self):
+        """ Create a shallow copy """
+        new = self.__class__()
+        new.update(self)
+        return new
 
-    # Copy default dictionary methods
+    # Copy other default dictionary methods
     def __getitem__( self, *args, **kwargs): return self.__dict__.__getitem__( *args, **kwargs)
     def __setitem__( self, *args, **kwargs): return self.__dict__.__setitem__( *args, **kwargs)
     def __contains__(self, *args, **kwargs): return self.__dict__.__contains__(*args, **kwargs)
     def __len__(     self, *args, **kwargs): return self.__dict__.__len__(     *args, **kwargs)
     def __iter__(    self, *args, **kwargs): return self.__dict__.__iter__(    *args, **kwargs)
     def clear(       self, *args, **kwargs): return self.__dict__.clear(       *args, **kwargs)
-    def copy(        self, *args, **kwargs): return self.__dict__.copy(        *args, **kwargs)
     def get(         self, *args, **kwargs): return self.__dict__.get(         *args, **kwargs)
     def items(       self, *args, **kwargs): return self.__dict__.items(       *args, **kwargs)
     def keys(        self, *args, **kwargs): return self.__dict__.keys(        *args, **kwargs)
