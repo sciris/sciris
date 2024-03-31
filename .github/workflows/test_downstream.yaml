@@ -45,7 +45,7 @@ jobs:
 
       - name: Run Covasim tests
         working-directory: ./covasim/tests
-        run: pytest --durations=0 --junitxml=covasim-test-results.xml # Run actual tests
+        run: pytest -n auto --durations=0 --junitxml=covasim-test-results.xml # Run actual tests
       - name: Upload test results
         uses: actions/upload-artifact@v1
         if: failure()
@@ -91,7 +91,7 @@ jobs:
 
       - name: Run Starsim tests
         working-directory: ./starsim/tests
-        run: pytest --durations=0 --junitxml=starsim-test-results.xml # Run actual tests
+        run: pytest -n auto --durations=0 --junitxml=starsim-test-results.xml # Run actual tests
       - name: Upload test results
         uses: actions/upload-artifact@v1
         if: failure()
@@ -136,7 +136,7 @@ jobs:
 
       - name: Run Atomica tox tests
         working-directory: ./atomica/tests
-        run: pytest test_tox_*.py --durations=0 --junitxml=starsim-test-results.xml # Run actual tests
+        run: pytest test_tox_*.py -n auto --durations=0 --junitxml=starsim-test-results.xml # Run actual tests
       - name: Upload test results
         uses: actions/upload-artifact@v1
         if: failure()
