@@ -8,9 +8,12 @@ All major updates to Sciris are documented here.
 By import convention, components of the Sciris library are listed beginning with ``sc.``, e.g. ``sc.odict()``.
 
 
-Version 3.1.6 (2024-03-30)
+Version 3.1.6 (2024-03-31)
 --------------------------
-#. Updated :func:`sc.iterobj() <sc_nested.iterobj>` to include two new arguments: ``skip`` will skip objects to avoid iterating over, and ``depthfirst`` switches between depth-first (default) and breadth-first (new) iteration options.
+#. Updated :func:`sc.iterobj() <sc_nested.iterobj>` to include several new arguments: ``skip`` will skip objects to avoid iterating over; ``depthfirst`` switches between depth-first (default) and breadth-first (new) iteration options; ``flatten`` returns object traces as strings rather than tuples; and ``to_df`` converts the output to a dataframe.
+#. Pretty-repr functions and classes (e.g. :func:`sc.pr() <sc_printing.pr>`, :class:`sc.prettyobj() <sc_printing.prettyobj>`) now include protections against infinite recursion. ``sc.prettyobj()`` was linked back to ``sc.sc_utils`` to prevent unpickling errors.
+#. :class:`sc.dictobj.copy() <sc_odict.dictobj>` now returns another ``dictobj`` (previously it returned a ``dict``).
+#. :func:`sc.require() <sc_versioning.require>` has been reimplemented to be faster and avoid ``pkg_resources`` deprecations.
 
 
 Version 3.1.5 (2024-03-18)
