@@ -278,6 +278,7 @@ class IterObj:
         
     | *New in version 3.1.2.*
     | *New in version 3.1.5:* "norecurse" argument; better handling of atomic classes
+    | *New in version 3.1.6:* "depthfirst" argument; replace recursion with a queue
     """    
     def __init__(self, obj, func=None, inplace=False, copy=False, leaf=False, recursion=0, 
                  depthfirst=True, atomic='default', skip=None, rootkey='root', verbose=False, 
@@ -323,14 +324,17 @@ class IterObj:
         
         # Handle objects to skip
         if isinstance(skip, dict):
-            skip_ids = scu.tolist(skip.get('ids'))
-            skip_instances = scu.tolist(skip.get('instances'))
-            skip_subclasses = scu.tolist(skip.get('subclasses'))
+            skip_ids        = scu.tolist(skip.pop('ids', None))
+            skip_subclasses = scu.tolist(skip.pop('subclasses', None))
+            skip_instances  = scu.tolist(skip.pop('instances', None))
+            if len(skip):
+                errormsg = f'Unrecognized skip keys {skip.keys()}: must be "ids", "subclasses", and/or "instances"'
+                raise KeyError(errormsg)
         else:
             skip = scu.tolist(self.skip)
-            skip_ids = []
-            
+            skip_ids        = []
             skip_subclasses = []
+            skip_instances  = [] # This isn't populated in list form
             for entry in skip:
                 if isinstance(entry, int):
                     skip_ids.append(entry)
@@ -339,10 +343,10 @@ class IterObj:
                 else:
                     errormsg = f'Expecting skip entries to be classes or object IDs, not {entry}'
                     raise TypeError(errormsg)
-            skip_instances = [] # This isn't populated in list form
+            
         self._skip_ids        = tuple(skip_ids)
-        self._skip_instances  = tuple(skip_instances)
         self._skip_subclasses = tuple(skip_subclasses)
+        self._skip_instances  = tuple(skip_instances)
         
         # Initialize the output for the root node
         if not inplace:
@@ -364,20 +368,11 @@ class IterObj:
         if self.verbose:
             print(space*len(self._trace) + string)
         return
-    
-    def get_parent_itertype(self, parent=_None):
-        """ Small helper function to get the parent object and itertype """
-        if parent is _None:
-            parent = self.obj
-            itertype = self.itertype
-        else:
-            itertype = self.check_iter_type(parent)
-        return parent, itertype
-        
-    def iteritems(self, parent=_None, trace=_None):
+
+    def iteritems(self, parent, trace):
         """ Return an iterator over items in this object """
         self.indent(f'Iterating with type "{self.itertype}"')
-        parent, itertype = self.get_parent_itertype(parent)
+        itertype = self.check_iter_type(parent)
         out = None
         if self.custom_iter:
             out = self.custom_iter(parent)
@@ -396,10 +391,10 @@ class IterObj:
                 out[i] = [parent, trace, *list(out[i])] # Prepend parent and trace to the arguments
         return out
     
-    def getitem(self, key, parent=_None):
+    def getitem(self, key, parent):
         """ Get the value for the item """
         self.indent(f'Getting key "{key}"')
-        parent, itertype = self.get_parent_itertype(parent)
+        itertype = self.check_iter_type(parent)
         if itertype in ['dict', 'list']:
             return parent[key]
         elif itertype == 'object':
@@ -409,9 +404,9 @@ class IterObj:
         else:
             return None
     
-    def setitem(self, key, value, parent=_None):
+    def setitem(self, key, value, parent):
         """ Set the value for the item """
-        parent, itertype = self.get_parent_itertype(parent)
+        itertype = self.check_iter_type(parent)
         self.indent(f'Setting key "{key}"')
         if itertype in ['dict', 'list']:
             parent[key] = value
@@ -429,13 +424,15 @@ class IterObj:
         """ Check if we should continue or not """
         
         # If we've already parsed this object, don't parse it again
-        in_memo = (newid in self._memo) and (self._memo[newid] > self.recursion)
+        in_memo = (newid in self._memo) and (self._memo[newid] > self.recursion) 
         
         # Skip this object if we've been asked to
-        is_skipped = (newid in self._skip_ids) or isinstance(subobj, self._skip_instances) or issubclass(type(subobj), self._skip_subclasses)
+        id_skip = (newid in self._skip_ids)
+        subclass_skip = issubclass(type(subobj), self._skip_subclasses)
+        instance_skip = isinstance(subobj, self._skip_instances)
         
         # Finalize
-        proceed = False if (in_memo or is_skipped) else True 
+        proceed = False if (in_memo or id_skip or subclass_skip or instance_skip) else True
         return proceed
     
     def process_obj(self, parent, trace, key, subobj, newid):
@@ -454,14 +451,14 @@ class IterObj:
     
     def iterate(self):
         """ Actually perform the iteration over the object """
-        queue = co.deque(self.iteritems(trace=self._trace))
+        queue = co.deque(self.iteritems(self.obj, self._trace))
         while queue:
             parent,trace,key,subobj = queue.popleft()
             newid = id(subobj)
             proceed = self.check_proceed(subobj, newid)
             if proceed: # Actually descend into the object
                 newtrace = self.process_obj(parent, trace, key, subobj, newid) # Process the object
-                newitems = self.iteritems(subobj, trace=newtrace)
+                newitems = self.iteritems(subobj, newtrace)
                 if self.depthfirst:
                     queue.extendleft(reversed(newitems)) # extendleft() swaps order, so swap back
                 else:
