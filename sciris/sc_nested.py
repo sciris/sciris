@@ -279,8 +279,8 @@ class IterObj:
     | *New in version 3.1.2.*
     | *New in version 3.1.5:* "norecurse" argument; better handling of atomic classes
     """    
-    def __init__(self, obj, func=None, inplace=False, copy=False, leaf=False, recursion=0, depthfirst=True,
-                 atomic='default', skip=None, rootkey='root', verbose=False, _memo=None, _trace=None, _output=None, 
+    def __init__(self, obj, func=None, inplace=False, copy=False, leaf=False, recursion=0, 
+                 depthfirst=True, atomic='default', skip=None, rootkey='root', verbose=False, 
                  custom_type=None, custom_iter=None, custom_get=None, custom_set=None, *args, **kwargs):
         from . import sc_odict as sco # To avoid circular import
         
@@ -296,11 +296,13 @@ class IterObj:
         self.skip       = skip
         self.rootkey    = rootkey
         self.verbose    = verbose
-        self._memo      = _memo
-        self._trace     = _trace
-        self._output    = _output
         self.func_args  = args
         self.func_kw    = kwargs
+        
+        # Populated later
+        self._trace     = []
+        self._memo      = co.defaultdict(int)
+        self.output     = sco.objdict()
         
         # Custom arguments
         self.custom_type = custom_type
@@ -342,26 +344,19 @@ class IterObj:
         self._skip_instances  = tuple(skip_instances)
         self._skip_subclasses = tuple(skip_subclasses)
         
-        # Initialize the memo: keep track of objects we've seen before
-        if self._memo is None:
-            self._memo = co.defaultdict(int)
-            self._memo[id(obj)] = 1 # Initialize the memo with a count of this object
-            
-        # Initialize the trace: this object's position in the whole
-        if self._trace is None:
-            self._trace = [] # Handle where we are in the object
-            if inplace and copy: # Only need to copy once
-                self.obj = scu.dcp(obj)
+        # Initialize the output for the root node
+        if not inplace:
+            self.output[self.rootkey] = self.func(self.obj, *args, **kwargs)
         
-        # Initialize the output: what we return at the end
-        if self._output is None: # Handle the output at the root level
-            self._output = sco.objdict()
-            if not inplace:
-                self._output[self.rootkey] = self.func(self.obj, *args, **kwargs)
+        # Copy the object if needed
+        if inplace and copy:
+            self.obj = scu.dcp(obj)
+        
+        # Initialize the memo with the current object
+        self._memo[id(self.obj)] = 1
                 
         # Check what type of object we have
         self.itertype = self.check_iter_type(self.obj)
-        
         return
     
     def indent(self, string='', space='  '):
@@ -454,7 +449,7 @@ class IterObj:
             if self.inplace:
                 self.setitem(key, newobj, parent=parent)
             else:
-                self._output[tuple(trace)] = newobj
+                self.output[tuple(trace)] = newobj
         return trace
     
     def iterate(self):
@@ -476,13 +471,13 @@ class IterObj:
             newobj = self.func(self.obj, *self.func_args, **self.func_kw) # Set at the root level
             return newobj
         else:
-            if (not self._trace) and (len(self._output)>1) and self.leaf: # We're at the top level, we have multiple entries, and only leaves are requested
-                self._output.pop('root') # Remove "root" with leaf=True if it's not the only node
-            return self._output
+            if (not self._trace) and (len(self.output)>1) and self.leaf: # We're at the top level, we have multiple entries, and only leaves are requested
+                self.output.pop('root') # Remove "root" with leaf=True if it's not the only node
+            return self.output
         
 
 def iterobj(obj, func=None, inplace=False, copy=False, leaf=False, recursion=0, depthfirst=True,
-            atomic='default', skip=None, rootkey='root', verbose=False, _trace=None, _output=None, *args, **kwargs):
+            atomic='default', skip=None, rootkey='root', verbose=False, *args, **kwargs):
     """
     Iterate over an object and apply a function to each node (item with or without children).
     
@@ -500,7 +495,7 @@ def iterobj(obj, func=None, inplace=False, copy=False, leaf=False, recursion=0, 
     
     Args:
         obj (any): the object to iterate over
-        func (function): the function to apply; if None, return a dictionary of all leaf nodes in the object
+        func (function): the function to apply; if None, return a flat dictionary of all nodes in the object
         inplace (bool): whether to modify the object in place (else, collate the output of the functions)
         copy (bool): if modifying an object in place, whether to make a copy first
         leaf (bool): whether to apply the function only to leaf nodes of the object
@@ -509,8 +504,6 @@ def iterobj(obj, func=None, inplace=False, copy=False, leaf=False, recursion=0, 
         skip (list): a list of classes or object IDs to skip over entirely
         rootkey (str): the key to list as the root of the object (default ``'root'``)
         verbose (bool): whether to print progress.
-        _trace (list): used internally for recursion
-        _output (list): used internally for recursion
         *args (list): passed to func()
         **kwargs (dict): passed to func()
     
@@ -545,8 +538,8 @@ def iterobj(obj, func=None, inplace=False, copy=False, leaf=False, recursion=0, 
     | *New in version 3.1.5:* "recursion" argument; better handling of atomic classes
     | *New in version 3.1.6:* "skip" and "depthfirst" arguments
     """
-    io = IterObj(obj=obj, func=func, inplace=inplace, copy=copy, leaf=leaf, recursion=recursion, depthfirst=depthfirst, atomic=atomic, skip=skip,
-                 rootkey=rootkey, verbose=verbose, _trace=_trace, _output=_output, *args, **kwargs) # Create the object
+    io = IterObj(obj=obj, func=func, inplace=inplace, copy=copy, leaf=leaf, recursion=recursion,  # Create the object
+                 depthfirst=depthfirst, atomic=atomic, skip=skip, rootkey=rootkey, verbose=verbose, *args, **kwargs)
     out = io.iterate() # Iterate
     return out
 
