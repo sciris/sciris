@@ -132,7 +132,7 @@ jobs:
         run: pip install -e .
 
       - name: Install Atomica tests
-        run: pip install pytest pytest-xdist
+        run: pip install pytest pytest-xdist pytest-cov pytest-env
 
       - name: Run Atomica tox tests
         working-directory: ./atomica/tests
