@@ -16,6 +16,7 @@ import sys
 import time
 import tqdm
 import pprint
+import inspect
 import warnings
 import numpy as np
 import collections as co
@@ -195,8 +196,8 @@ def objrepr(obj, showid=True, showmeth=True, showprop=True, showatt=True, showcl
     return output
 
 
-def prepr(obj, vals=True, maxlen=None, maxitems=None, skip=None, dividerchar='â€”', dividerlen=_dividerlen, 
-          use_repr=True, private=False, sort=True, strlen=_strlen, ncol=_ncol, maxtime=3, die=False, debug=False):
+def prepr(obj, vals=True, maxlen=None, maxitems=None, skip=None, dividerchar='â€”', dividerlen=_dividerlen, use_repr=True, 
+          private=False, sort=True, strlen=_strlen, ncol=_ncol, maxtime=3, maxrecurse=5, die=False, debug=False):
     """
     Pretty-print a detailed representation of an object.
     
@@ -216,13 +217,15 @@ def prepr(obj, vals=True, maxlen=None, maxitems=None, skip=None, dividerchar='â€
         dividerlen (int): number of divider characters
         use_repr (bool): whether to use repr() or str() to parse the object
         private (bool): whether to include private methods/attributes (those starting with "__")
-        maxtime (float): maximum amount of time to spend on trying to print the object
+        maxtime (float): maximum amount of time (in seconds) to spend on trying to print the object
+        maxrecurse (int): maximum number of levels to descend in the object (set to 0 to turn off the check)
         die (bool): whether to raise an exception if an error is encountered
         debug (bool): print out detail during string construction
     
     | *New in version 3.0.0:* "debug" argument
     | *New in version 3.1.4:* more robust handling of invalid object properties
     | *New in version 3.1.5:* "vals" argument to turn off printing attribute values
+    | *New in version 3.1.6:* "maxrecurse" argument, and checking for recursion
     
     **Examples**::
 
@@ -236,6 +239,13 @@ def prepr(obj, vals=True, maxlen=None, maxitems=None, skip=None, dividerchar='â€
         obj = sc.prettyobj({k:k for k in [l + str(n) for n in range(10) for l in 'abcde']}) # Big object
         sc.pr(obj, maxitems=20, sort=False, dividerchar='â€¢', dividerlen=43, private=True)
     """
+    # Check recursion before we proceed -- adds about 2-5 ms per call, but prevents infinite recursion
+    if maxrecurse:
+        frames = inspect.stack()[:maxrecurse*10] # Only get the most recent frames
+        matches = sum([frame.function in ('prepr', '__repr__', '__str__') for frame in frames])
+        if matches > maxrecurse:
+            string = f'[prepr() terminated, recursion {matches}>{maxrecurse}]' # This is unlikely to ever be seen since it's deep within the object
+            return string
 
     # Decide how to handle representation function -- repr is dangerous since can lead to recursion
     repr_fn = repr if use_repr else str
