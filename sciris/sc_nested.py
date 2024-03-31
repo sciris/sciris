@@ -370,61 +370,60 @@ class IterObj:
             print(space*len(self._trace) + string)
         return
     
-    def get_obj_itertype(self, obj=_None):
-        """ Small helper function to get the object and itertype """
-        if obj is _None:
-            obj = self.obj
+    def get_parent_itertype(self, parent=_None):
+        """ Small helper function to get the parent object and itertype """
+        if parent is _None:
+            parent = self.obj
             itertype = self.itertype
         else:
-            obj = obj
-            itertype = self.check_iter_type(obj)
-        return obj, itertype
+            itertype = self.check_iter_type(parent)
+        return parent, itertype
         
-    def iteritems(self, obj=_None, trace=_None):
+    def iteritems(self, parent=_None, trace=_None):
         """ Return an iterator over items in this object """
         self.indent(f'Iterating with type "{self.itertype}"')
-        obj, itertype = self.get_obj_itertype(obj)
+        parent, itertype = self.get_parent_itertype(parent)
         out = None
         if self.custom_iter:
-            out = self.custom_iter(obj)
+            out = self.custom_iter(parent)
         if out is None:
             if itertype == 'dict':
-                out = obj.items()
+                out = parent.items()
             elif itertype == 'list':
-                out = enumerate(obj)
+                out = enumerate(parent)
             elif itertype == 'object':
-                out = obj.__dict__.items()
+                out = parent.__dict__.items()
             else:
                 out = {}.items() # Return nothing if not recognized
         if trace is not _None:
             out = list(out)
             for i in range(len(out)):
-                out[i] = [obj, trace, *list(out[i])] # Prepend obj and trace to the arguments
+                out[i] = [parent, trace, *list(out[i])] # Prepend parent and trace to the arguments
         return out
     
-    def getitem(self, key, obj=_None):
+    def getitem(self, key, parent=_None):
         """ Get the value for the item """
         self.indent(f'Getting key "{key}"')
-        obj, itertype = self.get_obj_itertype(obj)
+        parent, itertype = self.get_parent_itertype(parent)
         if itertype in ['dict', 'list']:
-            return obj[key]
+            return parent[key]
         elif itertype == 'object':
-            return obj.__dict__[key]
+            return parent.__dict__[key]
         elif self.custom_get:
-            return self.custom_get(obj, key)
+            return self.custom_get(parent, key)
         else:
             return None
     
-    def setitem(self, key, value, obj=_None):
+    def setitem(self, key, value, parent=_None):
         """ Set the value for the item """
-        obj, itertype = self.get_obj_itertype(obj)
+        parent, itertype = self.get_parent_itertype(parent)
         self.indent(f'Setting key "{key}"')
         if itertype in ['dict', 'list']:
-            obj[key] = value
+            parent[key] = value
         elif itertype == 'object':
-            obj.__dict__[key] = value
+            parent.__dict__[key] = value
         elif self.custom_set:
-            self.custom_set(obj, key, value)
+            self.custom_set(parent, key, value)
         return
     
     def check_iter_type(self, obj):
@@ -444,12 +443,8 @@ class IterObj:
         proceed = False if (in_memo or is_skipped) else True 
         return proceed
     
-    def process_obj(self, key, subobj, newid, trace=_None, parent=_None):
+    def process_obj(self, parent, trace, key, subobj, newid):
         """ Process a single object """
-        if trace is _None:
-            trace = self._trace
-        if parent is _None:
-            parent = self.obj
         self._memo[newid] += 1
         trace = trace + [key]
         subitertype = self.check_iter_type(subobj)
@@ -457,7 +452,7 @@ class IterObj:
         if not (self.leaf and subitertype):
             newobj = self.func(subobj, *self.func_args, **self.func_kw)
             if self.inplace:
-                self.setitem(key, newobj, obj=parent)
+                self.setitem(key, newobj, parent=parent)
             else:
                 self._output[tuple(trace)] = newobj
         return trace
@@ -470,7 +465,7 @@ class IterObj:
             newid = id(subobj)
             proceed = self.check_proceed(subobj, newid)
             if proceed: # Actually descend into the object
-                newtrace = self.process_obj(key, subobj, newid, trace=trace, parent=parent) # Process the object
+                newtrace = self.process_obj(parent, trace, key, subobj, newid) # Process the object
                 newitems = self.iteritems(subobj, trace=newtrace)
                 if self.depthfirst:
                     queue.extendleft(reversed(newitems)) # extendleft() swaps order, so swap back
