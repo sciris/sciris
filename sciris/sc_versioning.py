@@ -480,7 +480,7 @@ def metadata(outfile=None, version=None, comments=None, require=None, pipfreeze=
     return md
 
 
-def _metadata_to_objdict(md):
+def _md_to_objdict(md):
     """ Convert a metadata dictionary into an objdict -- descend two levels but no deeper """
     md = sco.objdict(md)
     for k,v in md.items():
@@ -585,7 +585,7 @@ def loadmetadata(filename, load_all=False, die=True):
     
     # Load metadata saved with sc.metadata(), and convert it from dict to objdict
     elif lcfn.endswith('json'):
-        md = _metadata_to_objdict(scf.loadjson(filename))
+        md = _md_to_objdict(scf.loadjson(filename))
     
     # Load metadata saved with sc.savearchive()
     elif lcfn.endswith('zip'):
@@ -730,7 +730,7 @@ def loadarchive(filename, folder=None, loadobj=True, loadmetadata=False,
         
         # Load the metadata first
         try:
-            md = _metadata_to_objdict(scf.loadjson(string=metadatastr))
+            md = _md_to_objdict(scf.loadjson(string=metadatastr))
         except Exception as E: # pragma: no cover
             errormsg = 'Could not parse the metadata as a JSON file; see error above for details'
             raise ValueError(errormsg) from E
