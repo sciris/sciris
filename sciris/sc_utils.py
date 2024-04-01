@@ -1113,7 +1113,8 @@ def isarray(obj, dtype=None):
 
         sc.isarray(np.array([1,2,3]), dtype=float) # False, dtype is int
 
-    *New in version 1.0.0.*
+    | *New in version 1.0.0.*
+    | *New in version 3.1.6:* explicit False return
     """
     if isinstance(obj, np.ndarray):
         if dtype is None:
@@ -1123,6 +1124,7 @@ def isarray(obj, dtype=None):
                 return True
             else:
                 return False
+    return False
 
 
 def toarray(x, keepnone=False, asobject=True, dtype=None, **kwargs):

@@ -162,8 +162,14 @@ def test_iterobj():
     def check_type(obj, which):
         return isinstance(obj, which)
 
-    out = sc.iterobj(data, check_type, which=int)
-    print(out)
+    out1 = sc.iterobj(data, check_type, which=int)
+    out2 = sc.iterobj(data, check_type, which=int, depthfirst=False)
+    assert out1.keys().index(('a', 'x')) < out1.keys().index(('b',))
+    assert out2.keys().index(('a', 'x')) > out2.keys().index(('b',))
+    print('Depth first:')
+    print(out1)
+    print('Breadth first:')
+    print(out2)
     
     # Modify in place -- collapse mutliple short lines into one
     def collapse(obj, maxlen):
@@ -173,13 +179,15 @@ def test_iterobj():
         else:
             return obj
     
+    print('Before collapse:')
     sc.printjson(data)
     sc.iterobj(data, collapse, inplace=True, maxlen=10) # Note passing of keyword argument to function
-    sc.iterobj(data, collapse, inplace=True, maxlen=10) # Note passing of keyword argument to function
+    # sc.iterobj(data, collapse, inplace=True, maxlen=10) # Note passing of keyword argument to function
+    print('After collapse:')
     sc.printjson(data)
     assert data['a']['x'] == '[1, 2, 3]'
     
-    return out
+    return out1
 
 
 def test_iterobj_class():
@@ -218,7 +226,6 @@ def test_iterobj_class():
             
     # Run the iteration
     io = sc.IterObj(obj, func=gather_data, custom_type=(tuple, DataObj), custom_iter=custom_iter, custom_get=custom_get)
-    io.iterate()
     print(all_data)
     assert all_data == list(range(10))
     

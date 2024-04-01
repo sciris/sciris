@@ -8,6 +8,15 @@ All major updates to Sciris are documented here.
 By import convention, components of the Sciris library are listed beginning with ``sc.``, e.g. ``sc.odict()``.
 
 
+Version 3.1.6 (2024-03-31)
+--------------------------
+#. Added a new profiler, :class:`sc.cprofile() <sc_profiling.cprofile>`, as an interface to Python's built-in `cProfile <https://docs.python.org/3/library/profile.html>`_.
+#. Updated :func:`sc.iterobj() <sc_nested.iterobj>` to include several new arguments: ``skip`` will skip objects to avoid iterating over; ``depthfirst`` switches between depth-first (default) and breadth-first (new) iteration options; ``flatten`` returns object traces as strings rather than tuples; and ``to_df`` converts the output to a dataframe.
+#. Pretty-repr functions and classes (e.g. :func:`sc.pr() <sc_printing.pr>`, :class:`sc.prettyobj() <sc_printing.prettyobj>`) now include protections against infinite recursion. ``sc.prettyobj()`` was linked back to ``sc.sc_utils`` to prevent unpickling errors (partially reversing the change in version 3.1.4).
+#. :class:`sc.dictobj.copy() <sc_odict.dictobj>` now returns another ``dictobj`` (previously it returned a ``dict``).
+#. :func:`sc.require() <sc_versioning.require>` has been reimplemented to be faster and avoid ``pkg_resources`` deprecations.
+
+
 Version 3.1.5 (2024-03-18)
 --------------------------
 #. Added a new :class:`sc.quickobj() <sc_printing.quickobj>` class, which is like :class:`sc.prettyobj() <sc_printing.prettyobj>` except it only prints attribute names, not values. This is useful for large objects that can be slow to print. 

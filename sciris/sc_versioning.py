@@ -17,8 +17,10 @@ import time
 import zlib
 import types
 import warnings
-import packaging.version
 import importlib.metadata as imd
+import packaging.version as pkgv
+import packaging.specifiers as pkgs
+import packaging.requirements as pkgr
 from zipfile import ZipFile
 from . import sc_utils as scu
 from . import sc_fileio as scf
@@ -59,6 +61,17 @@ def freeze(lower=False):
     return data
 
 
+def pkg_require(req):
+    """ Replacement for pkg_resources.require(); used by sc.require(), not for external use """
+    r = pkgr.Requirement(req)
+    version = imd.version(r.name)
+    allowed = pkgs.SpecifierSet(str(r.specifier))
+    if version not in allowed:
+        string = f'{req} (available: {version})'
+        raise imd.PackageNotFoundError(string)
+    return
+
+
 def require(reqs=None, *args, message=None, exact=False, detailed=False, die=True, warn=True, verbose=True, **kwargs):
     """
     Check whether environment requirements are met. Alias to pkg_resources.require().
@@ -85,8 +98,8 @@ def require(reqs=None, *args, message=None, exact=False, detailed=False, die=Tru
     | *New in version 1.2.2.*
     | *New in version 3.0.0:* "warn" argument
     | *New in version 3.1.3:* "message" argument
+    | *New in version 3.1.6:* replace pkg_resources dependency with packaging
     """
-    import pkg_resources as pkgr # Imported here since slow (>0.1 s); deprecated, but no direct equivalent in importlib or packaging
 
     # Handle inputs
     reqlist = list(args)
@@ -111,7 +124,7 @@ def require(reqs=None, *args, message=None, exact=False, detailed=False, die=Tru
     errs = dict()
     for entry in reqlist:
         try:
-            pkgr.require(entry)
+            pkg_require(entry) # Drop-in replacement for pkg_resources.require()
             data[entry] = True
         except Exception as E:
             data[entry] = False
@@ -128,14 +141,14 @@ def require(reqs=None, *args, message=None, exact=False, detailed=False, die=Tru
         for key,valid in data.items():
             if not valid:
                 count += 1
-                errorstrings += f'\n• "{key}": {errs[key]}'
+                errorstrings += f'\n• {key} (error: {errs[key]})'
         missing = scu.strjoin(errkeys, sep=' ')
         if message is not None:
             errormsg = message.replace('<MISSING>', missing)
         else:
             errormsg = '\nThe following requirement(s) were not met:'
             errormsg += errorstrings
-            errormsg += f'''\n\nIf this is a valid module, you might want to try 'pip install "{missing}" --upgrade'.'''
+            errormsg += f'\nTry "pip install {missing}".'
         if die:
             err = errs[errkeys[-1]]
             raise ModuleNotFoundError(errormsg) from err
@@ -305,9 +318,9 @@ def compareversions(version1, version2):
     v2 = v2.lstrip('<>=!~')
 
     # Do comparison
-    if packaging.version.parse(v1) > packaging.version.parse(v2):
+    if pkgv.parse(v1) > pkgv.parse(v2):
         comparison =  1
-    elif packaging.version.parse(v1) < packaging.version.parse(v2):
+    elif pkgv.parse(v1) < pkgv.parse(v2):
         comparison =  -1
     else:
         comparison =  0
@@ -467,7 +480,7 @@ def metadata(outfile=None, version=None, comments=None, require=None, pipfreeze=
     return md
 
 
-def _metadata_to_objdict(md):
+def _md_to_objdict(md):
     """ Convert a metadata dictionary into an objdict -- descend two levels but no deeper """
     md = sco.objdict(md)
     for k,v in md.items():
@@ -572,7 +585,7 @@ def loadmetadata(filename, load_all=False, die=True):
     
     # Load metadata saved with sc.metadata(), and convert it from dict to objdict
     elif lcfn.endswith('json'):
-        md = _metadata_to_objdict(scf.loadjson(filename))
+        md = _md_to_objdict(scf.loadjson(filename))
     
     # Load metadata saved with sc.savearchive()
     elif lcfn.endswith('zip'):
@@ -717,7 +730,7 @@ def loadarchive(filename, folder=None, loadobj=True, loadmetadata=False,
         
         # Load the metadata first
         try:
-            md = _metadata_to_objdict(scf.loadjson(string=metadatastr))
+            md = _md_to_objdict(scf.loadjson(string=metadatastr))
         except Exception as E: # pragma: no cover
             errormsg = 'Could not parse the metadata as a JSON file; see error above for details'
             raise ValueError(errormsg) from E

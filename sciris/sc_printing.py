@@ -16,11 +16,11 @@ import sys
 import time
 import tqdm
 import pprint
+import inspect
 import warnings
 import numpy as np
 import collections as co
 from textwrap import fill
-from collections import UserString
 from contextlib import redirect_stdout
 from ._extras import ansicolors as ac
 from . import sc_utils as scu
@@ -196,8 +196,8 @@ def objrepr(obj, showid=True, showmeth=True, showprop=True, showatt=True, showcl
     return output
 
 
-def prepr(obj, vals=True, maxlen=None, maxitems=None, skip=None, dividerchar='â€”', dividerlen=_dividerlen, 
-          use_repr=True, private=False, sort=True, strlen=_strlen, ncol=_ncol, maxtime=3, die=False, debug=False):
+def prepr(obj, vals=True, maxlen=None, maxitems=None, skip=None, dividerchar='â€”', dividerlen=_dividerlen, use_repr=True, 
+          private=False, sort=True, strlen=_strlen, ncol=_ncol, maxtime=3, maxrecurse=5, die=False, debug=False):
     """
     Pretty-print a detailed representation of an object.
     
@@ -217,13 +217,15 @@ def prepr(obj, vals=True, maxlen=None, maxitems=None, skip=None, dividerchar='â€
         dividerlen (int): number of divider characters
         use_repr (bool): whether to use repr() or str() to parse the object
         private (bool): whether to include private methods/attributes (those starting with "__")
-        maxtime (float): maximum amount of time to spend on trying to print the object
+        maxtime (float): maximum amount of time (in seconds) to spend on trying to print the object
+        maxrecurse (int): maximum number of levels to descend in the object (set to 0 to turn off the check)
         die (bool): whether to raise an exception if an error is encountered
         debug (bool): print out detail during string construction
     
     | *New in version 3.0.0:* "debug" argument
     | *New in version 3.1.4:* more robust handling of invalid object properties
     | *New in version 3.1.5:* "vals" argument to turn off printing attribute values
+    | *New in version 3.1.6:* "maxrecurse" argument, and checking for recursion
     
     **Examples**::
 
@@ -237,6 +239,13 @@ def prepr(obj, vals=True, maxlen=None, maxitems=None, skip=None, dividerchar='â€
         obj = sc.prettyobj({k:k for k in [l + str(n) for n in range(10) for l in 'abcde']}) # Big object
         sc.pr(obj, maxitems=20, sort=False, dividerchar='â€¢', dividerlen=43, private=True)
     """
+    # Check recursion before we proceed -- adds about 2-5 ms per call, but prevents infinite recursion
+    if maxrecurse:
+        frames = inspect.stack()[:maxrecurse*10] # Only get the most recent frames
+        matches = sum([frame.function in ('prepr', '__repr__', '__str__') for frame in frames])
+        if matches > maxrecurse:
+            string = f'[sc.prepr(): not shown, recursion exceeded ({matches}>{maxrecurse})]' # This is unlikely to ever be seen since it's deep within the object
+            return string
 
     # Decide how to handle representation function -- repr is dangerous since can lead to recursion
     repr_fn = repr if use_repr else str
@@ -444,6 +453,7 @@ class prettyobj:
 
     | *New in version 2.0.0:* allow positional arguments
     | *New in version 3.1.4:* moved from sc_utils to sc_printing
+    | *New in version 3.1.6:* linked back to sc_utils to prevent unpickling errors
     """
     def __init__(self, *args, **kwargs):
         """ Simple initialization """
@@ -455,6 +465,9 @@ class prettyobj:
     def __repr__(self):
         """ The point of this class: use a more detailed repr by default """
         return prepr(self)
+
+# Handle deprecation so loading old pickles still works
+scu.prettyobj = prettyobj
 
 
 class quickobj(prettyobj):
@@ -471,15 +484,21 @@ class quickobj(prettyobj):
         import numpy as np
         myobj = sc.quickobj(big1=np.random.rand(100,100), big2=sc.dataframe(a=np.arange(1000)))
         print(myobj)
+    
+    | *New in version 3.1.5.*
     """
     def __repr__(self):
         """ Use a more detailed repr than default, but less detailed that prettyobj """
         return prepr(self, vals=False)
     
-    def disp(self, *args, **kwargs):
+    def disp(self, output=False, *args, **kwargs):
         """ Return full display of the object """
-        pr(self, *args, **kwargs)
-        return 
+        string = prepr(self, *args, **kwargs)
+        if output:
+            return string
+        else:
+            print(string)
+            return 
 
 
 #%% Spacing functions
@@ -1508,8 +1527,7 @@ class progressbars(prettyobj):
         return
 
 
-
-class capture(UserString, str, redirect_stdout):
+class capture(co.UserString, str, redirect_stdout):
     """
     Captures stdout (e.g., from :func:`print()`) as a variable.
 
@@ -1541,7 +1559,7 @@ class capture(UserString, str, redirect_stdout):
     def __init__(self, seq='', *args, **kwargs):
         self._io = io.StringIO()
         self.stdout = sys.stdout
-        UserString.__init__(self, seq=seq, *args, **kwargs)
+        co.UserString.__init__(self, seq=seq, *args, **kwargs)
         redirect_stdout.__init__(self, self._io)
         return
 

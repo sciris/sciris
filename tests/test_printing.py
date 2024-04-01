@@ -29,7 +29,6 @@ def test_colorize():
     return
 
 
-
 def test_printing(test_slack=False):
     sc.heading('Test printing functions')
 
@@ -159,6 +158,31 @@ def test_prepr():
     return pobj
 
 
+def test_recursion():
+    sc.heading('Test that prepr is safe against recursion')
+    
+    class BranchingRecursion:
+        """ Create a dastardly object that references itself twice """
+        def __init__(self, x):
+            self.x = x
+            self.obj1 = self
+            self.obj2 = self
+        
+        def __repr__(self):
+            return sc.prepr(self, maxlen=1000)
+            
+    recurse = BranchingRecursion(5)
+
+    with sc.timer() as T:
+        with sc.capture() as txt:
+            print(recurse)
+    
+    assert T.total < 0.1 # Should terminate quickly
+    assert 'recursion' in txt # Should show termination message
+    
+    return recurse
+
+
 def test_progress_bar():
     sc.heading('Progress bar and percent complete')
 
@@ -208,6 +232,7 @@ if __name__ == '__main__':
     bluearray = test_colorize()
     printing  = test_printing()
     myobj     = test_prepr()
+    recurse   = test_recursion()
     ind       = test_progress_bar()
     pbs       = test_progress_bars()
 

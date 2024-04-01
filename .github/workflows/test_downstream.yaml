@@ -1,0 +1,145 @@
+name: Downstream
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - main
+  pull_request:
+
+jobs:
+  test_covasim:
+    name: Covasim tests
+    timeout-minutes: 10
+    strategy:
+      fail-fast: false
+      max-parallel: 8
+      matrix:
+        os: ['ubuntu-latest']
+        python-version: ['3.11']
+    runs-on: ${{ matrix.os }}
+    
+    steps:
+      - name: Checkout sources
+        uses: actions/checkout@v2
+      - uses: actions/setup-python@master
+        with:
+          python-version: ${{ matrix.python-version }}
+          architecture: x64
+
+      - name: Install Sciris
+        run: pip install -e .
+
+      - name: Check out Covasim
+        uses: actions/checkout@v2
+        with:
+          repository: 'institutefordiseasemodeling/covasim'
+          path: 'covasim'
+
+      - name: Install Covasim
+        working-directory: ./covasim
+        run: pip install -e .
+
+      - name: Install Covasim tests
+        working-directory: ./covasim/tests
+        run: pip install -r requirements_test.txt
+
+      - name: Run Covasim tests
+        working-directory: ./covasim/tests
+        run: pytest --durations=0 --junitxml=covasim-test-results.xml # Run actual tests
+      - name: Upload test results
+        uses: actions/upload-artifact@v1
+        if: failure()
+        with:
+          name: test_results
+          path: covasim/tests/covasim-test-results.xml
+
+  test_starsim:
+    name: Starsim tests
+    timeout-minutes: 10
+    strategy:
+      fail-fast: false
+      max-parallel: 8
+      matrix:
+        os: ['ubuntu-latest']
+        python-version: ['3.11']
+    runs-on: ${{ matrix.os }}
+    
+    steps:
+      - name: Checkout sources
+        uses: actions/checkout@v2
+      - uses: actions/setup-python@master
+        with:
+          python-version: ${{ matrix.python-version }}
+          architecture: x64
+
+      - name: Install Sciris
+        run: pip install -e .
+
+      - name: Check out Starsim
+        uses: actions/checkout@v2
+        with:
+          repository: 'starsimhub/starsim'
+          path: 'starsim'
+
+      - name: Install Starsim
+        working-directory: ./starsim
+        run: pip install -e .
+
+      - name: Install Starsim tests
+        working-directory: ./starsim/tests
+        run: pip install -r requirements.txt
+
+      - name: Run Starsim tests
+        working-directory: ./starsim/tests
+        run: pytest --durations=0 --junitxml=starsim-test-results.xml # Run actual tests
+      - name: Upload test results
+        uses: actions/upload-artifact@v1
+        if: failure()
+        with:
+          name: test_results
+          path: starsim/tests/starsim-test-results.xml
+
+  test_atomica:
+    name: Atomica tests
+    timeout-minutes: 10
+    strategy:
+      fail-fast: false
+      max-parallel: 8
+      matrix:
+        os: ['ubuntu-latest']
+        python-version: ['3.11']
+    runs-on: ${{ matrix.os }}
+    
+    steps:
+      - name: Checkout sources
+        uses: actions/checkout@v2
+      - uses: actions/setup-python@master
+        with:
+          python-version: ${{ matrix.python-version }}
+          architecture: x64
+
+      - name: Install Sciris
+        run: pip install -e .
+
+      - name: Check out Atomica
+        uses: actions/checkout@v2
+        with:
+          repository: 'atomicateam/atomica'
+          path: 'atomica'
+
+      - name: Install Atomica
+        working-directory: ./atomica
+        run: pip install -e .
+
+      - name: Install Atomica tests
+        run: pip install pytest pytest-xdist pytest-cov pytest-env
+
+      - name: Run Atomica tox tests
+        working-directory: ./atomica/tests
+        run: pytest test_tox_*.py --durations=0 --junitxml=starsim-test-results.xml # Run actual tests
+      - name: Upload test results
+        uses: actions/upload-artifact@v1
+        if: failure()
+        with:
+          name: test_results
+          path: starsim/tests/starsim-test-results.xml

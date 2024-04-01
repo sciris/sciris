@@ -20,6 +20,9 @@ from . import sc_printing as scp
 # Define objects for which it doesn't make sense to descend further -- used here and sc.equal()
 atomic_classes = [np.ndarray, pd.Series, pd.DataFrame, pd.core.indexes.base.Index]
 
+# Define a custom "None" value to allow searching for actual None values
+_None = '<sc_nested_custom_None>' # This should not be equal to any other value the user could supply
+
 
 ##############################################################################
 #%% Nested dict and object functions
@@ -228,7 +231,8 @@ class IterObj:
     Use this class only if you want more control over how the object is iterated over.
     
     Class-specific args:
-        custom_type (func): a custom function for returning a string for a specific object type (should return '' by default)
+        iterate (bool): whether to do iteration upon object creation
+        custom_type (func): a custom function for returning a string for a specific object type (should return None by default)
         custom_iter (func): a custom function for iterating (returning a list of keys) over an object
         custom_get  (func): a custom function for getting an item from an object
         custom_set  (func): a custom function for setting an item in an object
@@ -270,155 +274,245 @@ class IterObj:
                 
         # Run the iteration
         io = sc.IterObj(obj, func=gather_data, custom_type=(tuple, DataObj), custom_iter=custom_iter, custom_get=custom_get)
-        io.iterate()
         print(all_data)
         
     | *New in version 3.1.2.*
     | *New in version 3.1.5:* "norecurse" argument; better handling of atomic classes
+    | *New in version 3.1.6:* "depthfirst" argument; replace recursion with a queue; "to_df()" method
     """    
-    def __init__(self, obj, func=None, inplace=False, copy=False, leaf=False, recursion=0, 
-                 atomic='default', rootkey='root', verbose=False, _memo=None, _trace=None, _output=None, 
+    def __init__(self, obj, func=None, inplace=False, copy=False, leaf=False, recursion=0, depthfirst=True,
+                 atomic='default', skip=None, rootkey='root', verbose=False, iterate=True,
                  custom_type=None, custom_iter=None, custom_get=None, custom_set=None, *args, **kwargs):
         from . import sc_odict as sco # To avoid circular import
         
-        # Default argument
-        self.obj       = obj
-        self.func      = func
-        self.inplace   = inplace
-        self.copy      = copy
-        self.leaf      = leaf
-        self.recursion = recursion
-        self.atomic    = atomic
-        self.rootkey   = rootkey
-        self.verbose   = verbose
-        self._memo     = _memo
-        self._trace    = _trace
-        self._output   = _output
-        self.func_args = args
-        self.func_kw   = kwargs
+        # Default arguments
+        self.obj        = obj
+        self.func       = func
+        self.inplace    = inplace
+        self.copy       = copy
+        self.leaf       = leaf
+        self.recursion  = recursion
+        self.depthfirst = depthfirst
+        self.atomic     = atomic
+        self.skip       = skip
+        self.rootkey    = rootkey
+        self.verbose    = verbose
+        self.func_args  = args
+        self.func_kw    = kwargs
         
         # Custom arguments
         self.custom_type = custom_type
         self.custom_iter = custom_iter
         self.custom_get  = custom_get
         self.custom_set  = custom_set
-        
-        # Handle inputs
-        if self.func is None: # Define the default function
+
+        # Attributes with initialization required
+        self._trace     = []
+        self._memo      = co.defaultdict(int)
+        self.output     = sco.objdict()
+        if self.func is None: # If no function provided, define a function that just returns the contents of the current node
             self.func = lambda obj: obj 
-            
+        
+        # Handle atomic classes
         atomiclist = scu.tolist(self.atomic)
         if 'default' in atomiclist: # Handle objects to not descend into
             atomiclist.remove('default')
             atomiclist = atomic_classes + atomiclist
         self.atomic = tuple(atomiclist)
-            
-        if self._memo is None:
-            self._memo = co.defaultdict(int)
-            self._memo[id(obj)] = 1 # Initialize the memo with a count of this object
-            
-        if self._trace is None:
-            self._trace = [] # Handle where we are in the object
-            if inplace and copy: # Only need to copy once
-                self.obj = scu.dcp(obj)
         
-        if self._output is None: # Handle the output at the root level
-            self._output = sco.objdict()
-            if not inplace:
-                self._output[self.rootkey] = self.func(self.obj, *args, **kwargs)
-                
-        # Check what type of object we have
-        self.itertype = self.check_iter_type(self.obj)
+        # Handle objects to skip
+        if isinstance(skip, dict):
+            skip_ids        = scu.tolist(skip.pop('ids', None))
+            skip_subclasses = scu.tolist(skip.pop('subclasses', None))
+            skip_instances  = scu.tolist(skip.pop('instances', None))
+            if len(skip):
+                errormsg = f'Unrecognized skip keys {skip.keys()}: must be "ids", "subclasses", and/or "instances"'
+                raise KeyError(errormsg)
+        else:
+            skip = scu.tolist(self.skip)
+            skip_ids        = []
+            skip_subclasses = []
+            skip_instances  = [] # This isn't populated in list form
+            for entry in skip:
+                if isinstance(entry, int):
+                    skip_ids.append(entry)
+                elif isinstance(entry, type):
+                    skip_subclasses.append(entry)
+                else:
+                    errormsg = f'Expecting skip entries to be classes or object IDs, not {entry}'
+                    raise TypeError(errormsg)
+            
+        self._skip_ids        = tuple(skip_ids)
+        self._skip_subclasses = tuple(skip_subclasses)
+        self._skip_instances  = tuple(skip_instances)
         
+        # Copy the object if needed
+        if inplace and copy:
+            self.obj = scu.dcp(obj)
+        
+        # Actually do the iteration
+        if iterate:
+            self.iterate()
+            
         return
+    
+    def __repr__(self):
+        """ Show the object """
+        objstr = f'{type(self.obj)}'
+        lenstr = f'{len(self)}' if len(self) else '<not parsed>'
+        string = f'{self.__class__.__name__}(obj={objstr}, len={lenstr})'
+        return string
+    
+    def __len__(self):
+        """ Define the length as the length of the output dictionary """
+        try:    return len(self.output)
+        except: return None
     
     def indent(self, string='', space='  '):
         """ Print, with output indented successively """
         if self.verbose:
             print(space*len(self._trace) + string)
         return
-        
-    def iteritems(self):
+
+    def iteritems(self, parent, trace):
         """ Return an iterator over items in this object """
-        self.indent(f'Iterating with type "{self.itertype}"')
+        itertype = self.check_iter_type(parent)
+        self.indent(f'Iterating with type "{itertype}"')
         out = None
         if self.custom_iter:
-            out = self.custom_iter(self.obj)
+            out = self.custom_iter(parent)
         if out is None:
-            if self.itertype == 'dict':
-                out = self.obj.items()
-            elif self.itertype == 'list':
-                out = enumerate(self.obj)
-            elif self.itertype == 'object':
-                out = self.obj.__dict__.items()
+            if itertype == 'dict':
+                out = parent.items()
+            elif itertype == 'list':
+                out = enumerate(parent)
+            elif itertype == 'object':
+                out = parent.__dict__.items()
             else:
                 out = {}.items() # Return nothing if not recognized
+        if trace is not _None:
+            out = list(out)
+            for i in range(len(out)):
+                out[i] = [parent, trace, *list(out[i])] # Prepend parent and trace to the arguments
         return out
     
-    def getitem(self, key):
+    def getitem(self, key, parent):
         """ Get the value for the item """
         self.indent(f'Getting key "{key}"')
-        if self.itertype in ['dict', 'list']:
-            return self.obj[key]
-        elif self.itertype == 'object':
-            return self.obj.__dict__[key]
+        itertype = self.check_iter_type(parent)
+        if itertype in ['dict', 'list']:
+            return parent[key]
+        elif itertype == 'object':
+            return parent.__dict__[key]
         elif self.custom_get:
-            return self.custom_get(self.obj, key)
+            return self.custom_get(parent, key)
         else:
             return None
     
-    def setitem(self, key, value):
+    def setitem(self, key, value, parent):
         """ Set the value for the item """
+        itertype = self.check_iter_type(parent)
         self.indent(f'Setting key "{key}"')
-        if self.itertype in ['dict', 'list']:
-            self.obj[key] = value
-        elif self.itertype == 'object':
-            self.obj.__dict__[key] = value
+        if itertype in ['dict', 'list']:
+            parent[key] = value
+        elif itertype == 'object':
+            parent.__dict__[key] = value
         elif self.custom_set:
-            self.custom_set(self.obj, key, value)
+            self.custom_set(parent, key, value)
         return
     
     def check_iter_type(self, obj):
         """ Shortcut to check_iter_type() """
         return check_iter_type(obj, known=self.atomic, custom=self.custom_type)
     
+    def check_proceed(self, subobj, newid):
+        """ Check if we should continue or not """
+        
+        # If we've already parsed this object, don't parse it again
+        in_memo = (newid in self._memo) and (self._memo[newid] > self.recursion) 
+        
+        # Skip this object if we've been asked to
+        id_skip = (newid in self._skip_ids)
+        subclass_skip = issubclass(type(subobj), self._skip_subclasses)
+        instance_skip = isinstance(subobj, self._skip_instances)
+        
+        # Finalize
+        proceed = False if (in_memo or id_skip or subclass_skip or instance_skip) else True
+        return proceed
+    
+    def process_obj(self, parent, trace, key, subobj, newid):
+        """ Process a single object """
+        self._memo[newid] += 1
+        trace = trace + [key]
+        subitertype = self.check_iter_type(subobj)
+        self.indent(f'Working on {trace}, leaf={self.leaf}, type={str(subitertype)}')
+        if not (self.leaf and subitertype):
+            newobj = self.func(subobj, *self.func_args, **self.func_kw)
+            if self.inplace:
+                self.setitem(key, newobj, parent=parent)
+            else:
+                self.output[tuple(trace)] = newobj
+        return trace
+    
     def iterate(self):
         """ Actually perform the iteration over the object """
         
-        # Iterate over the object
-        for key,subobj in self.iteritems():
+        # Initialize the output for the root node
+        if not self.inplace:
+            self.output[self.rootkey] = self.func(self.obj, *self.func_args, **self.func_kw)
+        
+        # Initialize the memo with the current object
+        self._memo[id(self.obj)] = 1
+        
+        # Iterate
+        queue = co.deque(self.iteritems(self.obj, self._trace))
+        while queue:
+            parent,trace,key,subobj = queue.popleft()
             newid = id(subobj)
-            if (newid in self._memo) and (self._memo[newid] > self.recursion): # If we've already parsed this object, don't parse it again
-                continue
-            else:
-                self._memo[newid] += 1
-                trace = self._trace + [key]
-                newobj = subobj
-                subitertype = self.check_iter_type(subobj)
-                self.indent(f'Working on {trace}, leaf={self.leaf}, type={str(subitertype)}')
-                if not (self.leaf and subitertype):
-                    newobj = self.func(subobj, *self.func_args, **self.func_kw)
-                    if self.inplace:
-                        self.setitem(key, newobj)
-                    else:
-                        self._output[tuple(trace)] = newobj
-                io = IterObj(self.getitem(key), self.func, inplace=self.inplace, leaf=self.leaf, recursion=self.recursion,  # Create a new instance
-                        atomic=self.atomic, verbose=self.verbose, _memo=self._memo, _trace=trace, _output=self._output, 
-                        custom_type=self.custom_type, custom_iter=self.custom_iter, custom_get=self.custom_get, custom_set=self.custom_set,
-                        *self.func_args, **self.func_kw)
-                io.iterate() # Run recursively
-            
+            proceed = self.check_proceed(subobj, newid)
+            if proceed: # Actually descend into the object
+                newtrace = self.process_obj(parent, trace, key, subobj, newid) # Process the object
+                newitems = self.iteritems(subobj, newtrace)
+                if self.depthfirst:
+                    queue.extendleft(reversed(newitems)) # extendleft() swaps order, so swap back
+                else:
+                    queue.extend(newitems)
+        
+        # Finish up
         if self.inplace:
             newobj = self.func(self.obj, *self.func_args, **self.func_kw) # Set at the root level
             return newobj
         else:
-            if (not self._trace) and (len(self._output)>1) and self.leaf: # We're at the top level, we have multiple entries, and only leaves are requested
-                self._output.pop('root') # Remove "root" with leaf=True if it's not the only node
-            return self._output
+            if (not self._trace) and (len(self.output)>1) and self.leaf: # We're at the top level, we have multiple entries, and only leaves are requested
+                self.output.pop('root') # Remove "root" with leaf=True if it's not the only node
+            return self.output
+        
+    def flatten_traces(self, sep='_'):
+        """ Convert trace tuples to strings for easier reading """
+        from . import sc_odict as sco # To avoid circular import
+        newoutput = sco.objdict()
+        for key,val in self.output.items():
+            if isinstance(key, tuple):
+                key = sep.join([str(k) for k in key])
+            newoutput[key] = val
+        self.output = newoutput
+        return newoutput
+    
+    def to_df(self):
+        """ Convert the output dictionary to a dataframe """
+        from . import sc_dataframe as scd # To avoid circular import
+        if not len(self):
+            errormsg = 'No output to convert to a dataframe: length is zero'
+            raise ValueError(errormsg)
+        trace = self.output.keys()
+        depth = [(0 if tr==self.rootkey else len(tr)) for tr in trace] # The depth is the length of the tuple, except the special case of the root key
+        value = self.output.values()
+        self.df = scd.dataframe(trace=trace, depth=depth, value=value)
+        return self.df
         
 
-def iterobj(obj, func=None, inplace=False, copy=False, leaf=False, recursion=0, atomic='default', 
-            rootkey='root', verbose=False, _trace=None, _output=None, *args, **kwargs):
+def iterobj(obj, func=None, inplace=False, copy=False, leaf=False, recursion=0, depthfirst=True, atomic='default', 
+            skip=None, rootkey='root', verbose=False, flatten=False, to_df=False, *args, **kwargs):
     """
     Iterate over an object and apply a function to each node (item with or without children).
     
@@ -436,16 +530,18 @@ def iterobj(obj, func=None, inplace=False, copy=False, leaf=False, recursion=0, 
     
     Args:
         obj (any): the object to iterate over
-        func (function): the function to apply; if None, return a dictionary of all leaf nodes in the object
+        func (function): the function to apply; if None, return a flat dictionary of all nodes in the object
         inplace (bool): whether to modify the object in place (else, collate the output of the functions)
         copy (bool): if modifying an object in place, whether to make a copy first
         leaf (bool): whether to apply the function only to leaf nodes of the object
         recursion (int): number of recursive steps to allow, i.e. parsing the same objects multiple times (default 0)
+        depthfirst (bool): whether to parse the object depth-first (default) or breadth-first
         atomic (list): a list of known classes to treat as atomic (do not descend into); if 'default', use defaults (e.g. ``np.array``, ``pd.DataFrame``)
+        skip (list): a list of classes or object IDs to skip over entirely
         rootkey (str): the key to list as the root of the object (default ``'root'``)
-        verbose (bool): whether to print progress.
-        _trace (list): used internally for recursion
-        _output (list): used internally for recursion
+        verbose (bool): whether to print progress
+        flatten (bool): whether to use flattened traces (single strings) rather than tuples
+        to_df (bool): whether to return a dataframe of the output instead of a dictionary (not valid with inplace=True)
         *args (list): passed to func()
         **kwargs (dict): passed to func()
     
@@ -457,7 +553,7 @@ def iterobj(obj, func=None, inplace=False, copy=False, leaf=False, recursion=0, 
         def check_int(obj):
             return isinstance(obj, int)
     
-        out = sc.iterobj(data, check_type)
+        out = sc.iterobj(data, check_int)
         print(out)
         
         
@@ -478,10 +574,16 @@ def iterobj(obj, func=None, inplace=False, copy=False, leaf=False, recursion=0, 
     | *New in version 3.1.2:* ``copy`` defaults to ``False``; refactored into class
     | *New in version 3.1.3:* "rootkey" argument
     | *New in version 3.1.5:* "recursion" argument; better handling of atomic classes
+    | *New in version 3.1.6:* "skip", "depthfirst", "to_df", and "flatten" arguments
     """
-    io = IterObj(obj=obj, func=func, inplace=inplace, copy=copy, leaf=leaf, recursion=recursion, atomic=atomic,
-                 rootkey=rootkey, verbose=verbose, _trace=_trace, _output=_output, *args, **kwargs) # Create the object
+    # Create the object
+    io = IterObj(obj=obj, func=func, inplace=inplace, copy=copy, leaf=leaf, recursion=recursion, depthfirst=depthfirst,
+                 atomic=atomic, skip=skip, rootkey=rootkey, verbose=verbose, iterate=False, *args, **kwargs)
     out = io.iterate() # Iterate
+    if flatten:
+        out = io.flatten_traces()
+    if to_df:
+        out = io.to_df()
     return out
 
 
@@ -621,8 +723,7 @@ def nestedloop(inputs, loop_order):
 
 __all__ += ['search', 'Equal', 'equal']
 
-# Define a custom "None" value to allow searching for actual None values
-_None = '<sc_nested_custom_None>' # This should not be equal to any other value the user could supply
+
 def search(obj, query=_None, key=_None, value=_None, aslist=True, method='exact', 
            return_values=False, verbose=False, _trace=None, **kwargs):
     """
