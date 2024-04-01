@@ -143,7 +143,7 @@ def test_cprofile():
     # Tests
     df = cpr.df
     assert len(df) >= 4 # Should be at least this many profiled functions
-    assert df[0].cumpct > 0.9 > df[-1].cumpct # Should be in descending order
+    assert df[0].cumpct > 80 > df[-1].cumpct # Should be in descending order
     
     return cpr
 
