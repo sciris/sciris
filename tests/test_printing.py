@@ -178,7 +178,7 @@ def test_recursion():
             print(recurse)
     
     assert T.total < 0.1 # Should terminate quickly
-    assert 'terminated' in txt # Should show termination message
+    assert 'recursion' in txt # Should show termination message
     
     return recurse
 

@@ -244,7 +244,7 @@ def prepr(obj, vals=True, maxlen=None, maxitems=None, skip=None, dividerchar='â€
         frames = inspect.stack()[:maxrecurse*10] # Only get the most recent frames
         matches = sum([frame.function in ('prepr', '__repr__', '__str__') for frame in frames])
         if matches > maxrecurse:
-            string = f'[prepr() terminated, recursion {matches}>{maxrecurse}]' # This is unlikely to ever be seen since it's deep within the object
+            string = f'[sc.prepr(): not shown, recursion exceeded ({matches}>{maxrecurse})]' # This is unlikely to ever be seen since it's deep within the object
             return string
 
     # Decide how to handle representation function -- repr is dangerous since can lead to recursion
