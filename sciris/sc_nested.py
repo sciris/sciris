@@ -232,7 +232,7 @@ class IterObj:
     
     Class-specific args:
         iterate (bool): whether to do iteration upon object creation
-        custom_type (func): a custom function for returning a string for a specific object type (should return '' by default)
+        custom_type (func): a custom function for returning a string for a specific object type (should return None by default)
         custom_iter (func): a custom function for iterating (returning a list of keys) over an object
         custom_get  (func): a custom function for getting an item from an object
         custom_set  (func): a custom function for setting an item in an object
@@ -285,7 +285,7 @@ class IterObj:
                  custom_type=None, custom_iter=None, custom_get=None, custom_set=None, *args, **kwargs):
         from . import sc_odict as sco # To avoid circular import
         
-        # Default argument
+        # Default arguments
         self.obj        = obj
         self.func       = func
         self.inplace    = inplace
@@ -300,19 +300,17 @@ class IterObj:
         self.func_args  = args
         self.func_kw    = kwargs
         
-        # Populated later
-        self._trace     = []
-        self._memo      = co.defaultdict(int)
-        self.output     = sco.objdict()
-        
         # Custom arguments
         self.custom_type = custom_type
         self.custom_iter = custom_iter
         self.custom_get  = custom_get
         self.custom_set  = custom_set
-        
-        # Handle inputs
-        if self.func is None: # Define the default function
+
+        # Attributes with initialization required
+        self._trace     = []
+        self._memo      = co.defaultdict(int)
+        self.output     = sco.objdict()
+        if self.func is None: # If no function provided, define a function that just returns the contents of the current node
             self.func = lambda obj: obj 
         
         # Handle atomic classes
@@ -537,6 +535,7 @@ def iterobj(obj, func=None, inplace=False, copy=False, leaf=False, recursion=0, 
         copy (bool): if modifying an object in place, whether to make a copy first
         leaf (bool): whether to apply the function only to leaf nodes of the object
         recursion (int): number of recursive steps to allow, i.e. parsing the same objects multiple times (default 0)
+        depthfirst (bool): whether to parse the object depth-first (default) or breadth-first
         atomic (list): a list of known classes to treat as atomic (do not descend into); if 'default', use defaults (e.g. ``np.array``, ``pd.DataFrame``)
         skip (list): a list of classes or object IDs to skip over entirely
         rootkey (str): the key to list as the root of the object (default ``'root'``)
