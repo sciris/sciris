@@ -3,6 +3,7 @@ Profiling and CPU/memory management functions.
 
 Highlights:
     - :func:`sc.profile() <profile>`: a line profiler
+    - :func:`sc.cprofile() <cprofile>`: a function profiler
     - :func:`sc.benchmark() <benchmark>`: quickly check your computer's performance
     - :func:`sc.loadbalancer() <loadbalancer>`: very basic load balancer
     - :func:`sc.resourcemonitor() <resourcemonitor>`: a monitor to kill processes that exceed memory or other limits
@@ -13,6 +14,8 @@ import sys
 import time
 import psutil
 import signal
+import pstats
+import cProfile
 import _thread
 import threading
 import tempfile
@@ -492,12 +495,18 @@ def loadbalancer(maxcpu=0.9, maxmem=0.9, index=None, interval=None, cpu_interval
 #%% Profiling functions
 ##############################################################################
 
-__all__ += ['profile', 'mprofile']
+__all__ += ['profile', 'mprofile', 'cprofile']
 
 
 def profile(run, follow=None, print_stats=True, *args, **kwargs):
     """
     Profile the line-by-line time required by a function.
+    
+    Interface to the line_profiler library.
+    
+    Note: :func:`sc.profile() <profile>` shows the time taken by each line of code, in the order
+    the code appears in. :class:`sc.cprofile() <cprofile>` shows the time taken by each function, 
+    regardless of where in the code it appears.
 
     Args:
         run (function): The function to be run
@@ -522,17 +531,14 @@ def profile(run, follow=None, print_stats=True, *args, **kwargs):
         class Foo:
             def __init__(self):
                 self.a = 0
-                return
 
             def outer(self):
                 for i in range(100):
                     self.inner()
-                return
 
             def inner(self):
                 for i in range(1000):
                     self.a += 1
-                return
 
         foo = Foo()
         sc.profile(run=foo.outer, follow=[foo.outer, foo.inner])
@@ -615,6 +621,181 @@ def mprofile(run, follow=None, show_results=True, *args, **kwargs):
         mp.show_results(lp)
         print('Done.')
     return lp
+
+
+class cprofile(scp.prettyobj):
+    """
+    Function profiler, built off Python's built-in cProfile
+    
+    Note: :func:`sc.profile() <profile>` shows the time taken by each line of code, in the order
+    the code appears in. :class:`sc.cprofile() <cprofile>` shows the time taken by each function, 
+    regardless of where in the code it appears.
+    
+    The profiler can be used either with the ``enable()`` and ``disable()`` commands,
+    or as a context block. See examples below for details.
+    
+    Default columns of output are:
+        
+        - 'func': the function being called
+        - 'cumpct': the cumulative percentage of time taken by this function (including subfunctions)
+        - 'selfpct': the percentage of time taken just by this function (excluding subfunctions)
+        - 'cumtime': the cumulative time taken by this function
+        - 'selftime': the time taken just by this function
+        - 'calls': the number of calls
+        - 'path': the file and line number
+        
+    Args:
+        sort (str): the column to sort by (default "cumpct")
+        columns (str): what columns to show; options are "default" (above), "brief" (just func, cumtime, selftime), and "full" (as default plus percall and separate line numbers)
+        mintime (float): exclude function times below this value
+        stripdirs(bool): whether to strip folder information from the file paths
+        show (bool): whether to show results of the profiling as soon as it's complete
+        
+    **Examples**::
+        
+        import sciris as sc
+        import numpy as np
+
+        class Slow:
+            
+            def math(self):
+                n = 1_000_000
+                self.a = np.arange(n)
+                self.b = sum(self.a)
+                
+            def plain(self):
+                n = 100_000
+                self.int_list = []
+                self.int_dict = {}
+                for i in range(n):
+                    self.int_list.append(i)
+                    for j in range(10):
+                        self.int_dict[i+j] = i+j
+            
+            def run(self):
+                self.math()
+                self.plain()
+
+        # Option 1: as a context block
+        with sc.cprofile() as cpr:
+            slow = Slow()
+            slow.run()
+            
+        # Option 2: with start and stop
+        cpr = sc.cprofile()
+        cpr.start()
+        slow = Slow()
+        slow.run()
+        cpr.stop()
+    
+    | *New in version 3.1.6.*    
+    """
+    def __init__(self, sort='cumtime', columns='default', mintime=1e-3, stripdirs=True, show=True):
+        self.sort = sort
+        self.columns = columns
+        self.mintime = mintime
+        self.show = show
+        self.stripdirs = stripdirs
+        self.parsed = None
+        self.df = None
+        self.profile = cProfile.Profile()
+        return
+    
+    def parse_stats(self, stripdirs=None, force=False):
+        """ Parse the raw data into a dictionary """
+        stripdirs = scu.ifelse(stripdirs, self.stripdirs)
+        if self.parsed is None or force:
+            self.parsed = pstats.Stats(self.profile)
+            if stripdirs:
+                self.parsed = self.parsed.strip_dirs()
+            self.n_functions = len(self.parsed.stats)
+            self.total = self.parsed.total_tt
+        return
+    
+    def to_df(self, sort=None, mintime=None, columns=None):
+        """
+        Parse data into a dataframe
+        
+        See class docstring for arguments
+        """
+        sort    = scu.ifelse(sort, self.sort)
+        mintime = scu.ifelse(mintime, self.mintime)
+        columns = scu.ifelse(columns, self.columns)
+        
+        # Settings
+        cols = dict(
+            brief = ['func', 'cumtime', 'selftime'],
+            default = ['func', 'cumpct', 'selfpct', 'cumtime', 'selftime', 'calls', 'path'],
+            full = ['calls', 'percall', 'selftime', 'cumtime', 'selfpct', 'cumpct', 'func', 'file', 'line'],
+        )
+        cols = cols[columns]
+        
+        # Parse the stats
+        self.parse_stats()
+        d = sco.dictobj()
+        for key in ['calls', 'selftime', 'cumtime', 'file', 'line', 'func']:
+            d[key] = []
+        for key,entry in self.parsed.stats.items():
+            _, ecall, eself, ecum, _ = entry
+            if ecum >= mintime:
+                efile,eline,efunc = key
+                d.calls.append(ecall)
+                d.selftime.append(eself)
+                d.cumtime.append(ecum)
+                d.file.append(efile)
+                d.line.append(eline)
+                d.func.append(efunc)
+                
+        # Convert to arrays
+        for key in ['calls', 'selftime', 'cumtime']:
+            d[key] = np.array(d[key])
+        
+        # Calculate additional columns
+        d.percall = d.cumtime/d.calls
+        d.cumpct  = d.cumtime/self.total*100
+        d.selfpct = d.selftime/self.total*100
+        d.path = []
+        for fi,ln in zip(d.file, d.line):
+            entry = fi if ln==0 else f'{fi}:{ln}'
+            d.path.append(entry)
+        
+        # Convert to a dataframe
+        data = {key:d[key] for key in cols}
+        self.df = scdf.dataframe(**data)
+        reverse = scu.isarray(d[sort]) # If numeric, assume we want the highest first
+        self.df = self.df.sortrows(sort, reverse=reverse)
+        return self.df  
+        
+    def disp(self, *args, **kwargs):
+        """ Display the results of the profiling; arguments are passed to ``to_df()`` """
+        if self.df is None or args or kwargs:
+            self.to_df(*args, **kwargs)
+        self.df.disp()
+        print(f'Total time: {self.total:n} s')
+        if len(self.df) < self.n_functions:
+            print(f'Note: {self.n_functions-len(self.df)} functions with time < {self.mintime} not shown.')
+        return
+    
+    def start(self):
+        """ Start profiling """
+        return self.profile.enable()
+    
+    def stop(self):
+        """ Stop profiling """
+        self.profile.disable()
+        if self.show:
+            self.disp()
+        return 
+    
+    def __enter__(self):
+        """ Start profiling in a context block """
+        self.start()
+        return self
+    
+    def __exit__(self, *exc_info):
+        """ Stop profiling in a context block """
+        self.stop()
+        return
 
 
 ##############################################################################
