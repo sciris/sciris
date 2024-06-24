@@ -19,7 +19,7 @@ __all__ = ['asd']
 def asd(function, x, args=None, stepsize=0.1, sinc=2, sdec=2, pinc=2, pdec=2,
     pinitial=None, sinitial=None, xmin=None, xmax=None, maxiters=None, maxtime=None,
     abstol=1e-6, reltol=1e-3, stalliters=None, stoppingfunc=None, randseed=None,
-    label=None, verbose=1, **kwargs):
+    label=None, verbose=1, minval= -np.inf, **kwargs):
     """
     Optimization using adaptive stochastic descent (ASD). Can be used as a faster
     and more powerful alternative to e.g. :func:`scipy.optimize.minimize()`.
@@ -49,8 +49,9 @@ def asd(function, x, args=None, stepsize=0.1, sinc=2, sdec=2, pinc=2, pdec=2,
         stalliters   (10*n):  Number of iterations over which to calculate TolFun (n = number of parameters)
         stoppingfunc (None):  External method that can be used to stop the calculation from the outside.
         randseed     (None):  The random seed to use
-        verbose      (1):     How much information to print during the run (max 3); less than one will print out once every 1/verbose steps
         label        (None):  A label to use to annotate the output
+        verbose      (1):     How much information to print during the run (max 3); less than one will print out once every 1/verbose steps
+        minval    (-np.inf):  Minimum value the objective function can take
 
     Returns:
         objdict (see below)
@@ -180,6 +181,10 @@ def asd(function, x, args=None, stepsize=0.1, sinc=2, sdec=2, pinc=2, pdec=2,
     offset = ' ' * 4 # Offset the print statements
     exitreason = 'Unknown exit reason' # Catch everything else
     while True:
+        if fvalorig == minval:
+            exitreason = f'Objective function already at minimum value ({fvalorig}), skipping optimisation'
+            break
+
         count += 1 # Increment the count
         if verbose >= 3: print(f'\n\n Count={count} \n x={x} \n probabilities={probabilities} \n stepsizes={stepsizes}')
 
@@ -255,10 +260,18 @@ def asd(function, x, args=None, stepsize=0.1, sinc=2, sdec=2, pinc=2, pdec=2,
         if stoppingfunc and stoppingfunc(): # pragma: no cover
             exitreason = 'Stopping function called'
             break
+        if fval == minval:
+            exitreason = f'Minimum objective function value reached ({fval})'
+            break
 
     # Return
     if verbose > 0:
-        orig, best, ratio = scp.sigfig([fvals[0], fvals[count], fvals[count]/fvals[0]])
+        orig, best = scp.sigfig([fvals[0], fvals[count]])
+        eps = 1e-12 # Small value to avoid divide-by-zero errors
+        if abs(fvals[count])<eps and abs(fvals[0])<eps: ratio = 1 # They're both zero: set the ratio to 1
+        elif abs(fvals[0])<eps:                 ratio = 1.0/eps # Only the denominator is zero: reset to the maximum ratio
+        else:                                  ratio = fvals[count]/float(fvals[0]) # The normal situation: calculate the real ratio
+
         print(f'=== {label} {exitreason} ({count} steps, orig: {orig} | best: {best} | ratio: {ratio}) ===')
     output = sco.objdict()
     output['x'] = np.reshape(x, origshape) # Parameters
