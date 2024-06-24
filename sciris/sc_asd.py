@@ -19,7 +19,7 @@ __all__ = ['asd']
 def asd(function, x, args=None, stepsize=0.1, sinc=2, sdec=2, pinc=2, pdec=2,
     pinitial=None, sinitial=None, xmin=None, xmax=None, maxiters=None, maxtime=None,
     abstol=1e-6, reltol=1e-3, stalliters=None, stoppingfunc=None, randseed=None,
-    label=None, verbose=1, minval= -np.inf, **kwargs):
+    label=None, verbose=1, minval= 0, **kwargs):
     """
     Optimization using adaptive stochastic descent (ASD). Can be used as a faster
     and more powerful alternative to e.g. :func:`scipy.optimize.minimize()`.
@@ -51,7 +51,7 @@ def asd(function, x, args=None, stepsize=0.1, sinc=2, sdec=2, pinc=2, pdec=2,
         randseed     (None):  The random seed to use
         label        (None):  A label to use to annotate the output
         verbose      (1):     How much information to print during the run (max 3); less than one will print out once every 1/verbose steps
-        minval    (-np.inf):  Minimum value the objective function can take
+        minval       (0):     Minimum value the objective function can take
 
     Returns:
         objdict (see below)
