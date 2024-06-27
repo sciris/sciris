@@ -184,6 +184,9 @@ def asd(function, x, args=None, stepsize=0.1, sinc=2, sdec=2, pinc=2, pdec=2,
         if fvalorig == minval:
             exitreason = f'Objective function already at minimum value ({fvalorig}), skipping optimisation'
             break
+        if fvalorig < 0:
+            print('ASD: Warning, negative objective function could lead to unexpected behaviour')
+
 
         count += 1 # Increment the count
         if verbose >= 3: print(f'\n\n Count={count} \n x={x} \n probabilities={probabilities} \n stepsizes={stepsizes}')
@@ -218,6 +221,8 @@ def asd(function, x, args=None, stepsize=0.1, sinc=2, sdec=2, pinc=2, pdec=2,
         abserrorhistory[np.mod(count, stalliters)] = max(0, fval-fvalnew) # Keep track of improvements in the error
         relerrorhistory[np.mod(count, stalliters)] = max(0, ratio-1.0) # Keep track of improvements in the error
         if verbose >= 2: print(offset + f'step={count} choice={choice}, par={par}, pm={pm}, origval={x[par]}, newval={xnew[par]}')
+        if newval < 0:
+            print('ASD: Warning, negative objective function could lead to unexpected behaviour')
 
         # Check if this step was an improvement
         fvalold = fval # Store old fval
