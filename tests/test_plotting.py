@@ -72,7 +72,10 @@ def test_other(doplot=doplot):
     data = np.random.rand(10)*1e4
 
     nrows,ncols = sc.get_rows_cols(100, ratio=0.5) # Returns 8,13 since rows are prioritized
-
+    nrows2,ncols2 = sc.getrowscols(1)
+    assert (nrows,ncols) == (8,13)
+    assert (nrows2,ncols2) == (1,1) # Check that it works with a single row
+    
     sc.emptyfig()
     o.fig = pl.figure('Limits')
 

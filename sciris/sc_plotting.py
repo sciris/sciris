@@ -834,12 +834,13 @@ def getrowscols(n, nrows=None, ncols=None, ratio=1, make=False, tight=True, remo
         guess = np.sqrt(n)
         nrows = int(np.ceil(guess*np.sqrt(ratio)))
         ncols = int(np.ceil(n/nrows)) # Could also call recursively!
-
+    
     # If asked, make subplots
     if make: # pragma: no cover
         fig, axs = pl.subplots(nrows=nrows, ncols=ncols, **kwargs)
         if remove_extra:
-            for ax in axs.flat[n:]:
+            flat = axs.flat[n:] if isinstance(axs, np.ndarray) else []
+            for ax in flat:
                 ax.set_visible(False) # to remove last plot
         if tight:
             figlayout(fig, tight=True)
