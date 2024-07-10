@@ -31,6 +31,21 @@ __all__ = ['style_simple', 'style_fancy', 'ScirisOptions', 'options', 'parse_env
 #   sc.saveyaml('simple.mplstyle', sc.sc_settings.style_simple)
 #   sc.saveyaml('fancy.mplstyle',  sc.sc_settings.style_fancy)
 
+# Matplotlib defaults (for resetting)
+style_default = {
+    'axes.axisbelow': 'line',
+    'axes.spines.right': True,
+    'axes.spines.top': True,
+    'figure.facecolor': 'white',
+    'font.family': ['sans-serif'],
+    'legend.frameon': True,
+    'axes.facecolor': 'white',
+    'axes.grid': False,
+    'grid.color': '#b0b0b0',
+    'grid.linewidth': 0.8,
+    'lines.linewidth': 1.5,
+}
+
 # Define simple plotting options -- similar to Matplotlib default
 style_simple = {
     'axes.axisbelow':    True, # So grids show up behind
@@ -298,7 +313,7 @@ class ScirisOptions(sco.objdict):
                     self.set_matplotlib_global(key, value)
 
         if use:
-            self.use_style()
+            self.use_style(style=kwargs.get('style'))
 
         return
     
@@ -506,18 +521,18 @@ class ScirisOptions(sco.objdict):
         """ Helper function to handle logic for different styles """
         rc = self.rc # By default, use current
         if isinstance(style, dict): # If an rc-like object is supplied directly # pragma: no cover
-            rc = scu.dcp(style)
-        elif style is not None: # Usual use case
+            rc.update(style)
+        elif style is not None: # Usual use case, a string is supplied
             stylestr = str(style).lower()
+            rc = scu.dcp(style_default)
             if stylestr in ['default', 'matplotlib', 'reset']:
-                pl.style.use('default') # Need special handling here since not in pl.style.library...ugh
-                rc = {}
+                pass
             elif stylestr in ['simple', 'sciris']:
-                rc = scu.dcp(style_simple)
+                rc.update(style_simple)
             elif stylestr in ['fancy', 'covasim']:
-                rc = scu.dcp(style_fancy)
+                rc.update(style_fancy)
             elif style in pl.style.library:
-                rc = scu.dcp(pl.style.library[style])
+                rc.update(pl.style.library[style])
             else: # pragma: no cover
                 errormsg = f'Style "{style}"; not found; options are "default", "simple", "fancy", plus:\n{scu.newlinejoin(pl.style.available)}'
                 raise ValueError(errormsg)
@@ -617,7 +632,7 @@ class ScirisOptions(sco.objdict):
             return pl.style.context(scu.dcp(rc))
 
 
-    def use_style(self, **kwargs):
+    def use_style(self, style=None, **kwargs):
         """
         Shortcut to set Sciris's current style as the global default.
 
@@ -627,11 +642,11 @@ class ScirisOptions(sco.objdict):
             pl.figure()
             pl.plot([1,3,7])
 
-            pl.style.use('seaborn-whitegrid') # to something else
+            pl.style.use('ggplot') # to something else
             pl.figure()
             pl.plot([3,1,4])
         """
-        return self.with_style(use=True, **kwargs)
+        return self.with_style(style=style, use=True, **kwargs)
 
 
 # Create the options on module load

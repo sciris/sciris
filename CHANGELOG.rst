@@ -8,6 +8,16 @@ All major updates to Sciris are documented here.
 By import convention, components of the Sciris library are listed beginning with ``sc.``, e.g. ``sc.odict()``.
 
 
+Version 3.1.7 (2024-07-10)
+--------------------------
+#. Updated :func:`sc.asd() <sc_asd.asd>` to handle negative values in the objective function. (Thanks to `Eloisa Perez-Bennetts <https://github.com/epbennetts>`_ for this feature.)
+#. Updated :class:`sc.cprofile() <sc_profiling.cprofile>` with new display options, including a ``maxitems`` argument.
+#. Improved :func:`sc.jsonify() <sc_fileio.jsonify>`, including custom and recursive object parsing.
+#. Fixed a bug preventing :class:`sc.odict.copy() <sc_odict.odict>` from being sorted by a specified order.
+#. Fixed a bug in :func:`sc.getrowscols() <sc_plotting.getrowscols>` that raised an exception when called with ``n=1``.
+#. :meth:`sc.options.use_style() <sc_settings.ScirisOptions.use_style>` now resets the style before applying a new one.
+
+
 Version 3.1.6 (2024-03-31)
 --------------------------
 #. Added a new profiler, :class:`sc.cprofile() <sc_profiling.cprofile>`, as an interface to Python's built-in `cProfile <https://docs.python.org/3/library/profile.html>`_.

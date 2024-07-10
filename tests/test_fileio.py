@@ -252,6 +252,18 @@ def test_json():
     print(json_obj)
     print('JSON as string:')
     print(json_str)
+    
+    # jsonify() docstring tests
+    data = dict(a=dict(b=np.arange(4)), c=dict(foo='cat', bar='dog'))
+    json = sc.jsonify(data)
+    jsonstr = sc.jsonify(data, tostring=True, indent=2)
+    assert json['a']['b'][-1] == 3
+    assert '"foo": "cat"' in jsonstr
+    
+    # Use a custom function for parsing the data
+    custom = {np.ndarray: lambda x: f'It was an array: {x}'}
+    j2 = sc.jsonify(data, custom=custom, tostring=True)
+    assert 'It was an array' in j2
 
     # Test JSON load/save
     print('Testing JSON load/save...')
