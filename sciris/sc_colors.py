@@ -113,7 +113,7 @@ def shifthue(colors=None, hueshift=0.0):
     """
     colors, origndim = _listify_colors(colors)
     for c,color in enumerate(colors):
-        color = scu.toarray(color, dtype=float)
+        color = scu.toarray(color, dtype=float) # Required for NumPy 2.0
         hsvcolor = mpl.colors.rgb_to_hsv(color)
         hsvcolor[0] = (hsvcolor[0]+hueshift) % 1.0 # Calculate new hue and return the modulus
         rgbcolor = mpl.colors.hsv_to_rgb(hsvcolor)
