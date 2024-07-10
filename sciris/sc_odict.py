@@ -763,14 +763,15 @@ class odict(OD):
         | *New in version 3.0.0:* removed "verbose" argument
         """
         origkeys = self.keys()
-        if sortby is None or sortby == 'keys':
+        if (sortby is None) or (isinstance(sortby, str) and sortby == 'keys'):
             allkeys = sorted(origkeys)
         else:
-            if sortby == 'values':
+            if isinstance(sortby, str) and sortby == 'values':
                 origvals = self.values()
                 sortby = sorted(range(len(origvals)), key=origvals.__getitem__) # Reset sortby based on https://stackoverflow.com/questions/3382352/equivalent-of-numpy-argsort-in-basic-python
             if not scu.isiterable(sortby): # pragma: no cover
                 raise Exception('Please provide a list to determine the sort order.')
+            
             if all([isinstance(x, scu._stringtypes) for x in sortby]): # Going to sort by keys
                 allkeys = sortby # Assume the user knows what s/he is doing
             elif all([isinstance(x,bool) for x in sortby]): # Using Boolean values to filter
@@ -780,6 +781,7 @@ class odict(OD):
             else: # pragma: no cover
                 errormsg = f'Cannot figure out how to sort by "{sortby}"'
                 raise TypeError(errormsg)
+        
         tmpdict = self._new()
         if reverse:
             allkeys.reverse() # If requested, reverse order

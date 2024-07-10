@@ -204,12 +204,20 @@ def test_other():
     o.valind(239)
 
     print('Testing sort')
-    v = sc.odict(dog=12, cat=8, hamster=244)
+    a = 12
+    b = 8
+    c = 244
+    v = sc.odict(a=12, b=8, c=244)
+    assert v[:].tolist() == [a,b,c]
     v.sort(sortby='values', reverse=True)
-
+    assert v[:].tolist() == [c,a,b]
+    v.sort(sortby=[1,0,2])
+    assert v[:].tolist() == [a,c,b]
+    
     print('Testing reverse')
-    o.reverse()
-    o.reversed()
+    w = v.reversed()
+    v.reverse()
+    assert v[:].tolist() == w[:].tolist() == [b,c,a]
 
     print('Testing promote')
     od  = sc.odict.promote(['There','are',4,'keys'])
