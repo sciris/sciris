@@ -19,7 +19,7 @@ __all__ = ['asd']
 def asd(function, x, args=None, stepsize=0.1, sinc=2, sdec=2, pinc=2, pdec=2,
     pinitial=None, sinitial=None, xmin=None, xmax=None, maxiters=None, maxtime=None,
     abstol=1e-6, reltol=1e-3, stalliters=None, stoppingfunc=None, randseed=None,
-    label=None, verbose=1, minval= 0, **kwargs):
+    label=None, verbose=1, minval=0, **kwargs):
     """
     Optimization using adaptive stochastic descent (ASD). Can be used as a faster
     and more powerful alternative to e.g. :func:`scipy.optimize.minimize()`.
@@ -175,19 +175,23 @@ def asd(function, x, args=None, stepsize=0.1, sinc=2, sdec=2, pinc=2, pdec=2,
     fvals[0] = fvalorig # Store initial function output
     allsteps[0, :] = xorig # Store initial input vector
 
-    # Loop
+    # Prepare for the loop
     count = 0 # Keep track of how many iterations have occurred
     start = time.time() # Keep track of when we begin looping
     offset = ' ' * 4 # Offset the print statements
     exitreason = 'Unknown exit reason' # Catch everything else
+    
+    # Loop
     while True:
+        
+        # Handle initialization cases
         if fvalorig == minval:
-            exitreason = f'Objective function already at minimum value ({fvalorig}), skipping optimisation'
+            exitreason = f'Objective function already at minimum value ({fvalorig}), skipping optimization'
             break
-        if fvalorig < 0:
-            print('ASD: Warning, negative objective function could lead to unexpected behaviour')
+        elif fvalorig < 0 and verbose:
+            print(f'ASD: Warning, negative objective function starting value ({fvalorig:n}) could lead to unexpected behavior')
 
-
+        # Begin the loop
         count += 1 # Increment the count
         if verbose >= 3: print(f'\n\n Count={count} \n x={x} \n probabilities={probabilities} \n stepsizes={stepsizes}')
 
@@ -221,8 +225,8 @@ def asd(function, x, args=None, stepsize=0.1, sinc=2, sdec=2, pinc=2, pdec=2,
         abserrorhistory[np.mod(count, stalliters)] = max(0, fval-fvalnew) # Keep track of improvements in the error
         relerrorhistory[np.mod(count, stalliters)] = max(0, ratio-1.0) # Keep track of improvements in the error
         if verbose >= 2: print(offset + f'step={count} choice={choice}, par={par}, pm={pm}, origval={x[par]}, newval={xnew[par]}')
-        if newval < 0:
-            print('ASD: Warning, negative objective function could lead to unexpected behaviour')
+        if newval < 0 and verbose:
+            print(f'ASD: Warning, negative objective function ({newval:n}) on step {count} could lead to unexpected behavior')
 
         # Check if this step was an improvement
         fvalold = fval # Store old fval
@@ -273,11 +277,15 @@ def asd(function, x, args=None, stepsize=0.1, sinc=2, sdec=2, pinc=2, pdec=2,
     if verbose > 0:
         orig, best = scp.sigfig([fvals[0], fvals[count]])
         eps = 1e-12 # Small value to avoid divide-by-zero errors
-        if abs(fvals[count])<eps and abs(fvals[0])<eps: ratio = 1 # They're both zero: set the ratio to 1
-        elif abs(fvals[0])<eps:                 ratio = 1.0/eps # Only the denominator is zero: reset to the maximum ratio
-        else:                                  ratio = fvals[count]/float(fvals[0]) # The normal situation: calculate the real ratio
+        if abs(fvals[count])<eps and abs(fvals[0])<eps:
+            ratio = 1 # They're both zero: set the ratio to 1
+        elif abs(fvals[0])<eps:
+            ratio = 1.0/eps # Only the denominator is zero: reset to the maximum ratio
+        else:
+            ratio = fvals[count]/float(fvals[0]) # The normal situation: calculate the real ratio
 
         print(f'=== {label} {exitreason} ({count} steps, orig: {orig} | best: {best} | ratio: {ratio}) ===')
+    
     output = sco.objdict()
     output['x'] = np.reshape(x, origshape) # Parameters
     output['fval'] = fvals[count]
@@ -287,4 +295,5 @@ def asd(function, x, args=None, stepsize=0.1, sinc=2, sdec=2, pinc=2, pdec=2,
     output['details']['xvals'] = allsteps[:count+1, :]
     output['details']['probabilities'] = probabilities
     output['details']['stepsizes'] = stepsizes
+    
     return output # Return parameter vector as well as details about run
