@@ -648,7 +648,10 @@ class cprofile(scp.prettyobj):
         sort (str): the column to sort by (default "cumpct")
         columns (str): what columns to show; options are "default" (above), "brief" (just func, cumtime, selftime), and "full" (as default plus percall and separate line numbers)
         mintime (float): exclude function times below this value
-        stripdirs(bool): whether to strip folder information from the file paths
+        maxitems (int): only include up to this many functions in the output
+        maxfunclen (int): maximum length of the function name to print
+        maxpathlen (int): maximum length of the function path to print
+        stripdirs (bool): whether to strip folder information from the file paths
         show (bool): whether to show results of the profiling as soon as it's complete
         
     **Examples**::
@@ -690,10 +693,14 @@ class cprofile(scp.prettyobj):
     
     | *New in version 3.1.6.*    
     """
-    def __init__(self, sort='cumtime', columns='default', mintime=1e-3, stripdirs=True, show=True):
+    def __init__(self, sort='cumtime', columns='default', mintime=1e-3, maxitems=100, 
+                 maxfunclen=40, maxpathlen=40, stripdirs=True, show=True):
         self.sort = sort
         self.columns = columns
         self.mintime = mintime
+        self.maxitems = maxitems
+        self.maxfunclen = maxfunclen
+        self.maxpathlen = maxpathlen
         self.show = show
         self.stripdirs = stripdirs
         self.parsed = None
@@ -712,15 +719,25 @@ class cprofile(scp.prettyobj):
             self.total = self.parsed.total_tt
         return
     
-    def to_df(self, sort=None, mintime=None, columns=None):
+    def to_df(self, sort=None, mintime=None, maxitems=None, maxfunclen=None,
+              maxpathlen=None, columns=None):
         """
         Parse data into a dataframe
         
         See class docstring for arguments
         """
-        sort    = scu.ifelse(sort, self.sort)
-        mintime = scu.ifelse(mintime, self.mintime)
-        columns = scu.ifelse(columns, self.columns)
+        sort       = scu.ifelse(sort, self.sort)
+        mintime    = scu.ifelse(mintime, self.mintime)
+        maxitems   = scu.ifelse(maxitems, self.maxitems)
+        maxfunclen = scu.ifelse(maxfunclen, self.maxfunclen)
+        maxpathlen = scu.ifelse(maxpathlen, self.maxpathlen)
+        columns    = scu.ifelse(columns, self.columns)
+        
+        def trim(name, maxlen):
+            if maxlen is None or len(name) <= maxlen:
+                return name
+            else:
+                return name[:maxlen//2-1] + '...' + name[-maxlen//2-1:]
         
         # Settings
         cols = dict(
@@ -744,7 +761,7 @@ class cprofile(scp.prettyobj):
                 d.cumtime.append(ecum)
                 d.file.append(efile)
                 d.line.append(eline)
-                d.func.append(efunc)
+                d.func.append(trim(efunc, maxfunclen))
                 
         # Convert to arrays
         for key in ['calls', 'selftime', 'cumtime']:
@@ -757,13 +774,14 @@ class cprofile(scp.prettyobj):
         d.path = []
         for fi,ln in zip(d.file, d.line):
             entry = fi if ln==0 else f'{fi}:{ln}'
-            d.path.append(entry)
+            d.path.append(trim(entry, maxpathlen))
         
         # Convert to a dataframe
         data = {key:d[key] for key in cols}
         self.df = scdf.dataframe(**data)
         reverse = scu.isarray(d[sort]) # If numeric, assume we want the highest first
         self.df = self.df.sortrows(sort, reverse=reverse)
+        self.df = self.df[:self.maxitems]
         return self.df  
         
     def disp(self, *args, **kwargs):
