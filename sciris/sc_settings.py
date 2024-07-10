@@ -524,10 +524,9 @@ class ScirisOptions(sco.objdict):
             rc.update(style)
         elif style is not None: # Usual use case, a string is supplied
             stylestr = str(style).lower()
-            rc.update(style_default) # Update using default values
+            rc = scu.dcp(style_default)
             if stylestr in ['default', 'matplotlib', 'reset']:
-                pl.style.use('default') # Need special handling here since not in pl.style.library...ugh
-                rc = {}
+                pass
             elif stylestr in ['simple', 'sciris']:
                 rc.update(style_simple)
             elif stylestr in ['fancy', 'covasim']:
