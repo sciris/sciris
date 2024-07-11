@@ -313,7 +313,7 @@ def scatter3d(x=None, y=None, z=None, c='z', fig=True, ax=None, returnfig=False,
         return ax
 
 
-def surf3d(x=None, y=None, z=None, c='z', fig=True, ax=None, returnfig=False, colorbar=None, 
+def surf3d(x=None, y=None, z=None, c=None, fig=True, ax=None, returnfig=False, colorbar=None, 
            figkwargs=None, axkwargs=None, **kwargs):
     """
     Plot 2D or 3D data as a 3D surface
