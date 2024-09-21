@@ -323,14 +323,16 @@ class IterObj:
         # Handle objects to skip
         if isinstance(skip, dict):
             skip = scu.dcp(skip)
+            skip_keys       = scu.tolist(skip.pop('keys', None))
             skip_ids        = scu.tolist(skip.pop('ids', None))
             skip_subclasses = scu.tolist(skip.pop('subclasses', None))
             skip_instances  = scu.tolist(skip.pop('instances', None))
             if len(skip):
-                errormsg = f'Unrecognized skip keys {skip.keys()}: must be "ids", "subclasses", and/or "instances"'
+                errormsg = f'Unrecognized skip keys {skip.keys()}: must be "keys", "ids", "subclasses", and/or "instances"'
                 raise KeyError(errormsg)
         else:
             skip = scu.tolist(self.skip)
+            skip_keys        = []
             skip_ids        = []
             skip_subclasses = []
             skip_instances  = [] # This isn't populated in list form
@@ -339,10 +341,13 @@ class IterObj:
                     skip_ids.append(entry)
                 elif isinstance(entry, type):
                     skip_subclasses.append(entry)
+                elif isinstance(entry, str):
+                    skip_keys.append(entry)
                 else:
-                    errormsg = f'Expecting skip entries to be classes or object IDs, not {entry}'
+                    errormsg = f'Expecting skip entries to be keys, classes or object IDs, not {entry}'
                     raise TypeError(errormsg)
-            
+
+        self._skip_keys       = tuple(skip_keys)
         self._skip_ids        = tuple(skip_ids)
         self._skip_subclasses = tuple(skip_subclasses)
         self._skip_instances  = tuple(skip_instances)
@@ -425,20 +430,21 @@ class IterObj:
     def check_iter_type(self, obj):
         """ Shortcut to check_iter_type() """
         return check_iter_type(obj, known=self.atomic, custom=self.custom_type)
-    
-    def check_proceed(self, subobj, newid):
+
+    def check_proceed(self, key, subobj, newid):
         """ Check if we should continue or not """
         
         # If we've already parsed this object, don't parse it again
         in_memo = (newid in self._memo) and (self._memo[newid] > self.recursion) 
         
         # Skip this object if we've been asked to
+        key_skip = key in self._skip_keys
         id_skip = (newid in self._skip_ids)
         subclass_skip = issubclass(type(subobj), self._skip_subclasses)
         instance_skip = isinstance(subobj, self._skip_instances)
         
         # Finalize
-        proceed = False if (in_memo or id_skip or subclass_skip or instance_skip) else True
+        proceed = False if (in_memo or key_skip or id_skip or subclass_skip or instance_skip) else True
         return proceed
     
     def process_obj(self, parent, trace, key, subobj, newid):
@@ -470,7 +476,7 @@ class IterObj:
         while queue:
             parent,trace,key,subobj = queue.popleft()
             newid = id(subobj)
-            proceed = self.check_proceed(subobj, newid)
+            proceed = self.check_proceed(key, subobj, newid)
             if proceed: # Actually descend into the object
                 newtrace = self.process_obj(parent, trace, key, subobj, newid) # Process the object
                 newitems = self.iteritems(subobj, newtrace)
