@@ -569,31 +569,56 @@ def datedelta(datestr=None, days=0, months=0, years=0, weeks=0, dt1=None, dt2=No
         return newdates
 
 
-def datetoyear(dateobj, dateformat=None):
+def datetoyear(dateobj, dateformat=None, reverse=None, as_date=True):
     """
     Convert a DateTime instance to decimal year.
 
     Args:
         dateobj (date, str):  The datetime instance to convert
         dateformat (str): If dateobj is a string, the optional date conversion format to use
+        reverse (bool): If True, convert a year to a date (assumed True if dateobj is a float)
 
     Returns:
-        Equivalent decimal year
+        Equivalent decimal year from date, or date from decial year
 
     **Example**::
 
         sc.datetoyear('2010-07-01') # Returns approximately 2010.5
+        sc.datetoyear(2010.5) # Returns datetime.date(2010, 7, 2)
 
     By Luke Davis from https://stackoverflow.com/a/42424261, adapted by Romesh Abeysuriya.
 
-    *New in version 1.0.0.*
+    | *New in version 1.0.0.*
+    | *New in version 3.1.8:* "reverse" argument
     """
+    
+    def get_year_length(year):
+        """ Get the length of the year: 365 or 366 days """
+        return dt.date(year=year+1, month=1, day=1) - dt.date(year=year, month=1, day=1)
+    
+    # Handle strings and numbers
     if scu.isstring(dateobj):
         dateobj = readdate(dateobj, dateformat=dateformat)
-    year_part = dateobj - dt.datetime(year=dateobj.year, month=1, day=1)
-    year_length = dt.datetime(year=dateobj.year + 1, month=1, day=1) - dt.datetime(year=dateobj.year, month=1, day=1)
-    output = dateobj.year + year_part / year_length
-    return output
+    elif scu.isnumber(dateobj):
+        reverse = True
+        
+    # If reverse
+    if reverse:
+        year = int(dateobj)
+        remainder = dateobj - year
+        year_days = get_year_length(year).days
+        days = int(np.round(remainder*year_days))
+        base = dt.datetime(year=year, month=1, day=1)
+        out = datedelta(base, days=days)
+        if not as_date:
+            out = str(out)
+    
+    # Main use case
+    else:
+        year_part = dateobj - dt.date(year=dateobj.year, month=1, day=1)
+        year_length = get_year_length(dateobj.year)
+        out = dateobj.year + year_part / year_length
+    return out
 
 
 ###############################################################################
@@ -703,8 +728,8 @@ def toc(start=None, label=None, baselabel=None, sigfigs=None, reset=False, unit=
         slow_func2()
         sc.toc(T, label='slow_func2')
 
-    *New in version 1.3.0:* new arguments
-    *New in version 3.0.0:* "unit" argument
+    | *New in version 1.3.0:* new arguments
+    | *New in version 3.0.0:* "unit" argument
     """
     now = pytime.time() # Get the time as quickly as possible
 
