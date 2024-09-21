@@ -697,9 +697,47 @@ class dataframe(pd.DataFrame):
         return len(self)
 
 
-    def addcol(self, key=None, value=None):
-        """ Add a new column to the data frame -- for consistency only """
-        return self.__setitem__(key, value)
+    def addcol(self, key=None, value=None, data=None, inplace=True, **kwargs):
+        """ 
+        Add new column(s) to the data frame
+        
+        See also :meth:`assign() <pandas.DataFrame.assign>`, which is similar, but
+        returns a new dataframe by default.
+        
+        Args:
+            key (str): the name of the column
+            value (array): the values for the column
+            data (dict): alternatively, specify a dictionary of columns to add
+            inplace (bool): whether to return a new dataframe
+            kwargs (dict): additional columns to add
+        
+        NB: a single argument is interpreted as "data"
+        
+        **Example**::
+            
+            df = sc.dataframe(dict(x=[1,2,3], y=[4,5,6]))
+            new_cols = dict(z=[1,2,3], a=[9,8,7])
+            df.addcol(new_cols)
+        """
+        # Parse into a data dict
+        if isinstance(key, dict):
+            data = key
+            if value is not None:
+                errormsg = 'If appending columns via dict, value cannot be specified'
+                raise ValueError(errormsg)
+        elif key is not None:
+            data = {key:value}
+        else:
+            data = {}
+        data.update(kwargs)
+        
+        # Do the update
+        if inplace:
+            for k,v in data.items():
+                self.__setitem__(k, v)
+            return
+        else:
+            return self.assign(**data)
 
 
     def popcols(self, col=None, *args, die=True):
@@ -841,6 +879,57 @@ class dataframe(pd.DataFrame):
         keep_data = self.iloc[keep_set,:]
         newdf = self._constructor(data=keep_data, cols=self.cols)
         return self.replacedata(newdf=newdf, reset_index=reset_index, inplace=inplace)
+    
+    
+    def enumrows(self, cols=None, type='objdict'):
+        """
+        Efficiently enumerate the rows of the dataframe
+        
+        Similar to :meth:`df.iterrows() <pandas.DataFrame.iterrows>`, but up to
+        30x faster since uses tuples instead of ``pd.Series``.
+        
+        Args:
+            cols (list): the list of columns to include in the enumeration (by default, all)
+            type (str/type): the output type for each row: options are 'objdict' (default), tuple (fastest), list (very fast), dict (pretty fast)
+
+        **Examples**::
+            
+            df = sc.dataframe(dict(x=[0,1,2,3,4], y=[2,3,2,7,8], z=[5,5,4,3,2]))
+            for i,row in df.enumrows(): print(i, row.x+row.y) # Typical use case
+            for i,row in df.enumrows(type=tuple): print(i, row[0]+row[1]) # Fastest
+            for i,row in df.enumrows(type=dict): print(i, row['x']+row['y']) # Still fast
+            for i,(x,y) in df.enumrows(cols=['x', 'y'], type=tuple): print(i, x+y) # Even faster
+        """
+        # Handle the columns
+        if cols is None: cols = self.columns
+        dftuple = (self[col] for col in cols)
+        
+        # Handle the output type
+        type_map = {
+            'tuple': tuple,
+            'list': list,
+            'dict': dict,
+            'objdict': sco.objdict,
+        }
+        if isinstance(type, str) and type in type_map:
+            func = type_map[type]
+        elif callable(type):
+            func = type
+            type = scu.swapdict(type_map)[func]
+        else:
+            errormsg = f'Invalid input {type}: must be tuple, list, dict, or objdict'
+            raise ValueError(errormsg)
+        dictlike = type in ['dict', 'objdict']
+        
+        # Iterate
+        if dictlike:
+            for i,row in enumerate(zip(*dftuple)):
+                row = func({k:v for k,v in zip(cols, row)})
+                yield (i, row)
+        else:
+            for i,row in enumerate(zip(*dftuple)):
+                row = func(row)
+                yield (i, row)
 
 
     def replacecol(self, col=None, old=None, new=None):
@@ -1010,15 +1099,13 @@ class dataframe(pd.DataFrame):
         if returninds:
             sortorder = np.argsort(self[by].values, kind='mergesort') # To preserve order
         df = self.sort_values(by=by, ascending=ascending, inplace=inplace, **kwargs)
+        out = self if inplace else df
         if reset_index:
-            self.reset_index(drop=True, inplace=True)
+            out.reset_index(drop=True, inplace=True)
         if returninds:
             return sortorder
         else:
-            if inplace:
-                return self
-            else:
-                return df
+            return out
     
     
     def sort(self, by=None, reverse=False, returninds=False, inplace=True, **kwargs):
