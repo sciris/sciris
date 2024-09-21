@@ -322,6 +322,7 @@ class IterObj:
         
         # Handle objects to skip
         if isinstance(skip, dict):
+            skip = scu.dcp(skip)
             skip_ids        = scu.tolist(skip.pop('ids', None))
             skip_subclasses = scu.tolist(skip.pop('subclasses', None))
             skip_instances  = scu.tolist(skip.pop('instances', None))
