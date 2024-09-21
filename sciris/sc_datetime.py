@@ -141,7 +141,7 @@ def readdate(datestr=None, *args, dateformat=None, return_defaults=False, verbos
         verbose (bool): return detailed error messages
 
     Returns:
-        dateobj (date): a datetime object
+        dateobj (datetime): a datetime object
 
     **Examples**::
 
@@ -598,7 +598,7 @@ def datetoyear(dateobj, dateformat=None, reverse=None, as_date=True):
     
     # Handle strings and numbers
     if scu.isstring(dateobj):
-        dateobj = readdate(dateobj, dateformat=dateformat)
+        dateobj = date(dateobj, dateformat=dateformat)
     elif scu.isnumber(dateobj):
         reverse = True
         
@@ -608,7 +608,7 @@ def datetoyear(dateobj, dateformat=None, reverse=None, as_date=True):
         remainder = dateobj - year
         year_days = get_year_length(year).days
         days = int(np.round(remainder*year_days))
-        base = dt.datetime(year=year, month=1, day=1)
+        base = dt.date(year=year, month=1, day=1)
         out = datedelta(base, days=days)
         if not as_date:
             out = str(out)
