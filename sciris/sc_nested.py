@@ -151,6 +151,15 @@ def get_from_obj(ndict, key, safe=False, **kwargs):
         out = None
     return out
 
+def set_to_obj(parent, key, value):
+    """ Set the value for the item """
+    itertype = check_iter_type(parent)
+    if itertype in ['dict', 'list']:
+        parent[key] = value
+    elif itertype == 'object':
+        parent.__dict__[key] = value
+    else: raise Exception(f'Cannot set value for type "{type(parent)}", itertype "{itertype}"')
+    return
 
 def getnested(nested, keylist, safe=False):
     """
@@ -172,7 +181,7 @@ def getnested(nested, keylist, safe=False):
     return nested
 
 
-def setnested(nested, keylist, value, force=True):
+def setnested(nested, keylist, value, force=None):
     """
     Set the value for the given list of keys
     
@@ -188,14 +197,11 @@ def setnested(nested, keylist, value, force=True):
 
     See :func:`sc.makenested() <makenested>` for full documentation.
     """
+    if force is None: force = isinstance(nested, dict)
     if force:
         makenested(nested, keylist, overwrite=False)
     currentlevel = getnested(nested, keylist[:-1])
-    if not isinstance(currentlevel, dict): # pragma: no cover
-        errormsg = f'Cannot set {keylist} since parent is a {type(currentlevel)}, not a dict'
-        raise TypeError(errormsg)
-    else:
-        currentlevel[keylist[-1]] = value
+    set_to_obj(currentlevel, keylist[-1], value)
     return nested # Return object, but note that it's modified in place
 
 
