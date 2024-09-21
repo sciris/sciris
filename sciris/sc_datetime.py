@@ -532,7 +532,7 @@ def datedelta(datestr=None, days=0, months=0, years=0, weeks=0, dt1=None, dt2=No
         datestr (None/str/date/list): the starting date (typically a string); if None, return the relative delta
         days (int): the number of days (positive or negative) to increment
         months (int): as above
-        years (int): as above
+        years (int/float): as above; if a float, converted to days (NB: fractional months and weeks are not supported)
         weeks (int): as above
         dt1, dt2 (dates): if both provided, compute the difference between them
         as_date (bool): if True, return a date object; otherwise, return as input type
@@ -544,16 +544,47 @@ def datedelta(datestr=None, days=0, months=0, years=0, weeks=0, dt1=None, dt2=No
         sc.datedelta('2021-07-07', days=-4) # Subtract 4 days
         sc.datedelta('2021-07-07', weeks=4, months=-1, as_date=True) # Add 4 weeks but subtract a month, and return a dateobj
         sc.datedelta(days=3) # Alias to du.relativedelta.relativedelta(days=3)
+        sc.datedelta(['2021-07-07', '2022-07-07'], months=1) # Increment multiple dates
+        sc.datedelta('2020-06-01', years=0.25) # Use a fractional number of years (to the nearest day)
     
     | *New in version 3.0.0:* operate on list of dates
     | *New in version 3.1.0:* handle all date input formats
+    | *New in version 3.1.8:* handle fractional years
     """
+    # Handle keywords
     as_date = kwargs.pop('asdate', as_date) # Handle with or without underscore
-
+    kw = dict(days=days, months=months, years=years, weeks=weeks, dt1=dt1, dt2=dt2)
+    
+    # Check if the year is fractional
+    fractional_year = not float(years).is_integer()
+    
+    def years_to_days(days, years, start_year=None):
+        """ Convert fractional years to days """
+        int_years = int(years)
+        frac_year = years - int_years
+        if start_year is None:
+            days_per_year = 365
+        else:
+            last_year = start_year + int_years
+            days_per_year = (dt.date(last_year+1,1,1) - dt.date(last_year,1,1)).days
+        days = int(round(frac_year*days_per_year))
+        
+        # Modify keywords in place; the function arguments remain the ground truth
+        kw['days'], kw['years'] = days, int_years
+        return
+    
+    # If we're not using a fractional year, we can precompute this
+    if not fractional_year:
+        delta = du.relativedelta.relativedelta(**kw)
+        
     # Calculate the time delta, and return immediately if no date is provided
-    delta = du.relativedelta.relativedelta(days=days, months=months, years=years, weeks=weeks, dt1=dt1, dt2=dt2)
     if datestr is None:
+        if fractional_year:
+            years_to_days(days, years) # Approximate since we don't know the start year, so may be a day off in leap years
+            delta = du.relativedelta.relativedelta(**kw)
         return delta
+    
+    # Otherwise, process each argument
     else:
         datelist = scu.tolist(datestr)
         newdates = []
@@ -561,6 +592,9 @@ def datedelta(datestr=None, days=0, months=0, years=0, weeks=0, dt1=None, dt2=No
             if as_date is None: # Typical case, return the same format as the input
                 as_date = False if isinstance(datestr, str) else True
             dateobj = date(datestr, **kwargs)
+            if fractional_year:
+                years_to_days(days, years, start_year=dateobj.year) # We do know the start year, so can calculate exactly
+                delta = du.relativedelta.relativedelta(**kw)
             newdate = dateobj + delta
             newdate = date(newdate, as_date=as_date)
             newdates.append(newdate)
