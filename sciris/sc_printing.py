@@ -567,7 +567,7 @@ def indent(prefix=None, text=None, suffix='\n', n=0, pretty=False, width=70, **k
 
 #%% Data representation functions
 
-__all__ += ['sigfig', 'sigfigs', 'arraymean', 'arraymedian', 'printmean', 'printmedian', 
+__all__ += ['sigfig', 'sigfigs', 'sigfiground', 'arraymean', 'arraymedian', 'printmean', 'printmedian', 
             'humanize_bytes', 'printarr', 'printdata', 'printvars']
 
 
@@ -587,8 +587,8 @@ def sigfig(x, sigfigs=4, SI=False, sep=False, keepints=False):
     **Examples**::
 
         x = 3432.3842
-        sc.sigfig(x, SI=True) # Returns 3.432k
-        sc.sigfig(x, sep=True) # Returns 3,432
+        sc.sigfig(x, SI=True) # Returns '3.432k'
+        sc.sigfig(x, sep=True) # Returns '3,432'
         
         vals = np.random.rand(5)
         sc.sigfig(vals, sigfigs=3)
@@ -647,16 +647,59 @@ def sigfig(x, sigfigs=4, SI=False, sep=False, keepints=False):
 sigfigs = sigfig
 
 
-def arraymean(data, stds=2, mean_sf=None, err_sf=None, doprint=False, **kwargs):
+def sigfiground(x, sigfigs=4):
+    """
+    Round number(s) to the specified number of significant figures.
+
+    Args:
+        x (int/float/list/arr): the number(s) to round
+        sigfigs (int): number of significant figures to round to
+
+    **Examples**::
+        
+        sc.sigfiground(3.28343) # Returns 3.283
+        sc.sigfiground(834_875, 5)  # Returns 834_880
+        sc.sigfiground([3.28343, 834_874, 0, -83_742], 2) # Returns [3.3, 830000, 0, -84000]
+    
+    | *New in version 3.1.8.*
+    """
+    
+    def round_arr(arr, sigfigs):
+        """ Function for rounding a single number """
+        out = arr.copy() # Preallocate output
+        inds = np.nonzero(arr) # Skip zero indices
+        nzarr = arr[inds] # Pull out those values
+        magnitude = np.floor(np.log10(np.abs(nzarr))) # Determine the order of magnitude of the number
+        exponent = sigfigs - magnitude - 1 # Convert to an exponent
+        factor = 10**exponent # Calculate the factor to scale the number
+        rndarr = np.round(nzarr*factor)/factor # Round the scaled number and scale it back
+        out[inds] = rndarr # Put the rounded numbers back in the array
+        if np.all(exponent <= 0): # They're all integers
+            out = out.astype(np.int64)
+        return out
+    
+    # Process inputs
+    arr = scu.toarray(x)
+    out = round_arr(arr, sigfigs) # Do the rounding
+    if scu.isnumber(x): out = out[0]
+    elif isinstance(x, list):
+        out = out.tolist()
+        out = [int(x) if x.is_integer() else x for x in out] # Allow mix of ints and floats
+    return out
+        
+
+def arraymean(data, stds=2, axis=None, mean_sf=None, err_sf=None, tostring=True, doprint=False, **kwargs):
     """
     Quickly calculate the mean and standard deviation of an array.
     
     By default, will calculate the correct number of significant figures based on
-    the deviation.
+    the deviation. The default is to multiply the standard deviation by 2, as an
+    approximation of the 95% confidence level (z=1.96).
     
     Args:
         data (array): the data to summarize
-        stds (int): the number of multiples of the standard deviation to show (default 2; can also use 1)
+        stds (int): the number of multiples of the standard deviation to show (default 2)
+        axis (int): the axis of the data to operate on (default None)
         mean_sf (int): if provided, use this number of significant figures for the mean rather than the auto-calculated
         err_sf (int): ditto, but for the error (standard deviation)
         doprint (bool): whether to print (else, return the string)
@@ -665,30 +708,36 @@ def arraymean(data, stds=2, mean_sf=None, err_sf=None, doprint=False, **kwargs):
     **Example**::
         
         data = [1210, 1072, 1722, 1229, 1902]
-        sc.printmean(data) # Returns 1430 ± 320
+        sc.arraymean(data) # Returns 1430 ± 320
     
-    *New in version 3.0.0.*
+    | *New in version 3.0.0.*
+    | *New in version 3.1.8:* "axis" argument, "tostring" argument (allow numerical output)
     """
     vsf = mean_sf # vsf = "value significant figures"
     esf = err_sf if err_sf is not None else 2
     data = scu.toarray(data)
-    val = data.mean()
-    err = data.std()*stds
+    val = data.mean(axis=axis)
+    err = data.std(axis=axis)*stds
     
     relsize = np.floor(np.log10(abs(val))) - np.floor(np.log10(abs(err)))
     if vsf is None:
         vsf = esf + relsize
     elif vsf is not None and err_sf is None:
         esf = min(vsf, vsf - relsize)
-        
-    valstr = sigfig(val, vsf, **kwargs)
-    errstr = sigfig(err, esf, **kwargs)
-    string = f'{valstr} ± {errstr}'
     
-    if doprint:
-        print(string)
+    if tostring:
+        valstr = sigfig(val, vsf, **kwargs)
+        errstr = sigfig(err, esf, **kwargs)
+        string = f'{valstr} ± {errstr}'
+        
+        if doprint:
+            print(string)
+        else:
+            return string
     else:
-        return string
+        valnum = sigfiground(val, vsf)
+        errnum = sigfiground(err, esf)
+        return valnum, errnum
 
 
 def arraymedian(data, ci=95, sf=3, doprint=False, **kwargs):

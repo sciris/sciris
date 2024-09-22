@@ -233,7 +233,7 @@ def uuid(uid=None, which=None, die=False, tostring=False, length=None, n=1, **kw
     return output
 
 
-def dcp(obj, die=True):
+def dcp(obj, die=True, memo=None):
     """
     Shortcut to perform a deep copy operation
 
@@ -245,9 +245,10 @@ def dcp(obj, die=True):
 
     | *New in version 2.0.0:* default die=True instead of False
     | *New in version 3.1.4:* die=False passed to sc.cp(); "verbose" argument removed; warning raised
+    | *New in version 3.1.8:* "memo" argument
     """
     try:
-        output = copy.deepcopy(obj)
+        output = copy.deepcopy(obj, memo=memo)
     except Exception as E: # pragma: no cover
         errormsg = f'Warning: could not perform deep copy of {type(obj)}: {str(E)}'
         if die:
@@ -1081,14 +1082,16 @@ def checktype(obj=None, objtype=None, subtype=None, die=False):
 def isnumber(obj, isnan=None):
     """
     Determine whether or not the input is a number.
+    
+    Identical to isinstance(obj, numbers.Number) unless isnan is specified.
 
     Args:
         obj (any): the object to check if it's a number
         isnan (bool): an optional additional check to determine whether the number is/isn't NaN
-
-    Almost identical to isinstance(obj, numbers.Number).
+    
+    | *New in version 3.1.8:* use ``isinstance()`` directly
     """
-    output = checktype(obj, 'number')
+    output = isinstance(obj, _numtype)
     if output and isnan is not None: # It is a number, so can check for nan # pragma: no cover
         output = (np.isnan(obj) == isnan) # See if they match
     return output

@@ -652,7 +652,7 @@ def normalize(arr, minval=0.0, maxval=1.0):
     return out
 
 
-def inclusiverange(*args, **kwargs):
+def inclusiverange(*args, stretch=False, **kwargs):
     """
     Like :func:`numpy.arange`/`numpy.linspace`, but includes the start and stop points.
     Accepts 0-3 args, or the kwargs start, stop, step.
@@ -663,6 +663,7 @@ def inclusiverange(*args, **kwargs):
         start (float): value to start at
         stop (float): value to stop at
         step (float): step size
+        stretch (bool): if True, adjust the step size to end exactly at stop if needed
         kwargs (dict): passed to :func:`numpy.linspace`
 
     **Examples**::
@@ -671,23 +672,28 @@ def inclusiverange(*args, **kwargs):
         x = sc.inclusiverange(3,5,0.2)   # Like np.linspace(3, 5, int((5-3)/0.2+1))
         x = sc.inclusiverange(stop=5)    # Like np.arange(6)
         x = sc.inclusiverange(6, step=2) # Like np.arange(0, 7, 2)
+        x = sc.inclusiverange(0, 10, 3) # Like np.arange(0, 10, 3)
+        x = sc.inclusiverange(0, 10, 3, stretch=True) # Like np.linspace(0,10,int(10/3)+1)
+        
+    | *New in version 3.1.8*: "stretch" argument
     """
     # Handle args
-    if len(args)==0:
+    if len(args) == 0:
         start, stop, step = None, None, None
-    elif len(args)==1:
+    elif len(args) == 1:
         stop = args[0]
         start, step = None, None
-    elif len(args)==2:
+    elif len(args) == 2:
         start = args[0]
         stop  = args[1]
         step =  None
-    elif len(args)==3:
+    elif len(args) == 3:
         start = args[0]
         stop  = args[1]
         step  = args[2]
     else: # pragma: no cover
-        raise ValueError('Too many arguments supplied: inclusiverange() accepts 0-3 arguments')
+        errormsg = f'Too many arguments supplied ({len(args)}): sc.inclusiverange() accepts 1-3 arguments'
+        raise ValueError(errormsg)
 
     # Handle kwargs
     start = kwargs.pop('start', start)
@@ -698,9 +704,16 @@ def inclusiverange(*args, **kwargs):
     if start is None: start = 0
     if stop  is None: stop  = 1
     if step  is None: step  = 1
+    
+    # Handle case with a non-integer number of steps
+    nsteps = (stop-start)/step
+    int_steps = int(nsteps)
+    if not nsteps.is_integer() and not stretch:
+        stop = start + step*int_steps # Create a new stop based on the step
 
-    # OK, actually generate -- can't use arange since handles floating point arithmetic badly, e.g. compare arange(2000, 2020, 0.2) with arange(2000, 2020.2, 0.2)
-    x = np.linspace(start, stop, int(round((stop-start)/float(step))+1), **kwargs)
+    # Actually generate -- can't use arange since handles floating point arithmetic badly, e.g. compare arange(2000, 2020, 0.2) with arange(2000, 2020.2, 0.2)
+    num = int_steps + 1 # +1 since include both endpoints
+    x = np.linspace(start, stop, num, **kwargs)
     return x
 
 

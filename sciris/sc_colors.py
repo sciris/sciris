@@ -359,8 +359,16 @@ def gridcolors(ncolors=10, limits=None, nsteps=20, asarray=False, ashex=False, r
         sc.gridcolors(ncolors, demo=True)
         pl.show()
 
-    Version: 2018oct30
+    | *New in version 2018oct30.*
+    | *New in version 3.1.8:* allow ncolors to be an iterable
     """
+    # Handle input arguments
+    if not scu.isnumber(ncolors):
+        if scu.isiterable(ncolors):
+            ncolors = len(ncolors)
+        else:
+            errormsg = f'Invalid input {ncolors}; must be an integer or an iterable'
+            raise TypeError(errormsg)
 
     # Choose default colors
     if basis == 'default':
