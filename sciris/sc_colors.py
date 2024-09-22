@@ -360,7 +360,7 @@ def gridcolors(ncolors=10, limits=None, nsteps=20, asarray=False, ashex=False, r
         pl.show()
 
     | *New in version 2018oct30.*
-    | *New in version 3.1.8:* allow ncolors to be an iterable
+    | *New in version 3.2.0:* allow ncolors to be an iterable
     """
     # Handle input arguments
     if not scu.isnumber(ncolors):

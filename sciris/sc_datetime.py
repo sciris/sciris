@@ -549,7 +549,7 @@ def datedelta(datestr=None, days=0, months=0, years=0, weeks=0, dt1=None, dt2=No
     
     | *New in version 3.0.0:* operate on list of dates
     | *New in version 3.1.0:* handle all date input formats
-    | *New in version 3.1.8:* handle fractional years
+    | *New in version 3.2.0:* handle fractional years
     """
     # Handle keywords
     as_date = kwargs.pop('asdate', as_date) # Handle with or without underscore
@@ -623,7 +623,7 @@ def datetoyear(dateobj, dateformat=None, reverse=None, as_date=True):
     By Luke Davis from https://stackoverflow.com/a/42424261, adapted by Romesh Abeysuriya.
 
     | *New in version 1.0.0.*
-    | *New in version 3.1.8:* "reverse" argument
+    | *New in version 3.2.0:* "reverse" argument
     """
     
     def get_year_length(year):

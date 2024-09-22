@@ -661,7 +661,7 @@ def sigfiground(x, sigfigs=4):
         sc.sigfiground(834_875, 5)  # Returns 834_880
         sc.sigfiground([3.28343, 834_874, 0, -83_742], 2) # Returns [3.3, 830000, 0, -84000]
     
-    | *New in version 3.1.8.*
+    | *New in version 3.2.0.*
     """
     
     def round_arr(arr, sigfigs):
@@ -711,7 +711,7 @@ def arraymean(data, stds=2, axis=None, mean_sf=None, err_sf=None, tostring=True,
         sc.arraymean(data) # Returns 1430 ± 320
     
     | *New in version 3.0.0.*
-    | *New in version 3.1.8:* "axis" argument, "tostring" argument (allow numerical output)
+    | *New in version 3.2.0:* "axis" argument, "tostring" argument (allow numerical output)
     """
     vsf = mean_sf # vsf = "value significant figures"
     esf = err_sf if err_sf is not None else 2

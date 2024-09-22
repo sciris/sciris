@@ -245,7 +245,7 @@ def dcp(obj, die=True, memo=None):
 
     | *New in version 2.0.0:* default die=True instead of False
     | *New in version 3.1.4:* die=False passed to sc.cp(); "verbose" argument removed; warning raised
-    | *New in version 3.1.8:* "memo" argument
+    | *New in version 3.2.0:* "memo" argument
     """
     try:
         output = copy.deepcopy(obj, memo=memo)
@@ -1089,7 +1089,7 @@ def isnumber(obj, isnan=None):
         obj (any): the object to check if it's a number
         isnan (bool): an optional additional check to determine whether the number is/isn't NaN
     
-    | *New in version 3.1.8:* use ``isinstance()`` directly
+    | *New in version 3.2.0:* use ``isinstance()`` directly
     """
     output = isinstance(obj, _numtype)
     if output and isnan is not None: # It is a number, so can check for nan # pragma: no cover

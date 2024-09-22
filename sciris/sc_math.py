@@ -675,7 +675,7 @@ def inclusiverange(*args, stretch=False, **kwargs):
         x = sc.inclusiverange(0, 10, 3) # Like np.arange(0, 10, 3)
         x = sc.inclusiverange(0, 10, 3, stretch=True) # Like np.linspace(0,10,int(10/3)+1)
         
-    | *New in version 3.1.8*: "stretch" argument
+    | *New in version 3.2.0*: "stretch" argument
     """
     # Handle args
     if len(args) == 0:
