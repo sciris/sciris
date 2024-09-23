@@ -39,14 +39,6 @@ from glob import glob as pyglob
 import fnmatch as fnm
 import sciris as sc
 
-# TODO: fix
-from . import sc_settings as scs
-from . import sc_utils as scu
-from . import sc_printing as scp
-from . import sc_datetime as scd
-from . import sc_odict as sco
-from . import sc_dataframe as scdf
-
 
 ##############################################################################
 #%% Pickling functions
@@ -87,7 +79,7 @@ def _load_filestr(filename, folder=None, verbose=False):
     # Handle loading of either filename or file object
     if isinstance(filename, Path):
         filename = str(filename)
-    if scu.isstring(filename):
+    if sc.isstring(filename):
         argtype = 'filename'
         filename = makefilepath(filename=filename, folder=folder, makedirs=False) # If it is a file, validate the folder (but don't create one if it's missing)
     elif isinstance(filename, io.BytesIO):
@@ -180,7 +172,7 @@ def load(filename=None, folder=None, verbose=None, die=False, remapping=None,
     | *New in version 3.1.0:* improved handling of pickling failures
     | *New in version 3.1.1:* allow remapping to ``None``
     """
-    if verbose: T = scd.timer() # Start timing
+    if verbose: T = sc.timer() # Start timing
         
     # Load the file
     filestr = _load_filestr(filename, folder, verbose=verbose)
@@ -464,14 +456,14 @@ def savetext(filename=None, string=None, **kwargs):
     
     *New in version 3.1.0:* fixed bug with saving a list of strings
     """
-    is_array = scu.isarray(string)
+    is_array = sc.isarray(string)
     if isinstance(string, list):
         string = '\n'.join([str(s) for s in string]) # Convert from list to string
-    elif not is_array and not scu.isstring(string): # pragma: no cover
+    elif not is_array and not sc.isstring(string): # pragma: no cover
         string = str(string)
     filename = makefilepath(filename=filename, makedirs=True)
     if is_array: # Shortcut to Numpy for saving arrays -- basic CSV
-        kw = scu.mergedicts(dict(fmt='%s', delimiter=', '), kwargs)
+        kw = sc.mergedicts(dict(fmt='%s', delimiter=', '), kwargs)
         np.savetxt(filename, string, **kw)
     else: # Main use case: save text
         with open(filename, 'w') as f:
@@ -590,10 +582,10 @@ def savezip(filename=None, files=None, data=None, folder=None, sanitizepath=True
     
     # Typical use case: data is not provided, handle files
     if files:
-        origfilelist = [path(file) for file in scu.tolist(files)]
+        origfilelist = [path(file) for file in sc.tolist(files)]
         
         # Handle subfolders
-        extfilelist = scu.dcp(origfilelist) # An extended file list, including recursion into subfolders
+        extfilelist = sc.dcp(origfilelist) # An extended file list, including recursion into subfolders
         for orig in origfilelist:
             if orig.is_dir(): # pragma: no cover
                 contents = getfilelist(orig, abspath=False, recursive=True, aspath=True)
@@ -684,7 +676,7 @@ def thisfile(frame=1, aspath=None):
 
     *New in verison 2.1.0.*
     """
-    if aspath is None: aspath = scs.options.aspath
+    if aspath is None: aspath = sc.options.aspath
     file = inspect.stack()[frame][1] # Adopted from Atomica
     if aspath:
         file = Path(file)
@@ -722,15 +714,15 @@ def thisdir(file=None, path=None, *args, frame=1, aspath=None, **kwargs):
     | *New in version 2.1.0:* frame argument
     """
     if file is None: # No file: use the current folder
-        if scu.isjupyter(): # pragma: no cover
+        if sc.isjupyter(): # pragma: no cover
             file = os.path.abspath(os.path.expanduser('file_placeholder')) # This is as best we can do on Jupyter
         else:
             file = thisfile(frame=frame+1) # Need +1 since want the calling script
     elif hasattr(file, '__file__'): # It's actually a module
         file = file.__file__
-    if aspath is None: aspath = scs.options.aspath
+    if aspath is None: aspath = sc.options.aspath
     folder = os.path.abspath(os.path.dirname(file))
-    path = scu.mergelists(path, *args)
+    path = sc.mergelists(path, *args)
     filepath = os.path.join(folder, *path)
     if aspath:
         filepath = Path(filepath, **kwargs)
@@ -788,7 +780,7 @@ def getfilelist(folder=None, pattern=None, fnmatch=None, abspath=False, nopath=F
     if os.path.isdir(folder) and pattern is None:
         pattern = '**'
     if aspath is None: 
-        aspath = scs.options.aspath
+        aspath = sc.options.aspath
     globstr = os.path.join(folder, pattern) if pattern else folder
     filelist = sorted(pyglob(globstr, recursive=recursive))
     if filesonly:
@@ -844,7 +836,7 @@ def sanitizefilename(filename, sub='_', allowspaces=False, asciify=True, strict=
     
     # Handle options
     if asciify:
-        filename = scu.asciify(filename) # Ensure it's ASCII compatible
+        filename = sc.asciify(filename) # Ensure it's ASCII compatible
     if disallowed is None:
         if strict:
             disallowed = '''!"#$%&\'()*+,/:;<=>?@[\\]^`{|}~\t\n\r\x0b\x0c'''
@@ -863,7 +855,7 @@ def sanitizefilename(filename, sub='_', allowspaces=False, asciify=True, strict=
                 sanitized += letter
     
     if aspath is None: 
-        aspath = scs.options.aspath
+        aspath = sc.options.aspath
     if aspath:
         sanitized = Path(sanitized)
 
@@ -926,7 +918,7 @@ def makefilepath(filename=None, folder=None, ext=None, default=None, split=False
     # Initialize
     filefolder = '' # The folder the file will be located in
     filebasename = '' # The filename
-    if aspath is None: aspath = scs.options.aspath
+    if aspath is None: aspath = sc.options.aspath
 
     if isinstance(filename, Path):
         filename = str(filename)
@@ -937,7 +929,7 @@ def makefilepath(filename=None, folder=None, ext=None, default=None, split=False
 
     # Process filename
     if filename is None: # pragma: no cover
-        defaultnames = scu.tolist(default) # Loop over list of default names
+        defaultnames = sc.tolist(default) # Loop over list of default names
         for defaultname in defaultnames:
             if not filename and defaultname: filename = defaultname # Replace empty name with default name
     if filename is not None: # If filename exists by now, use it
@@ -1036,7 +1028,7 @@ def rmpath(path=None, *args, die=True, verbose=True, interactive=False, **kwargs
     *New version 2.0.0.*
     """
 
-    paths = scu.mergelists(path, *args)
+    paths = sc.mergelists(path, *args)
     for path in paths:
         if not os.path.exists(path): # pragma: no cover
             errormsg = f'Path "{path}" does not exist'
@@ -1213,7 +1205,7 @@ def jsonify(obj, verbose=True, die=False, tostring=False, custom=None, **kwargs)
     kw = dict(verbose=verbose, die=die, custom=custom) # For passing during recursive calls
     
     # Handle custom classes
-    custom = scu.mergedicts(custom)
+    custom = sc.mergedicts(custom)
     if len(custom):
         custom_classes = tuple(custom.keys())
     else:
@@ -1239,7 +1231,7 @@ def jsonify(obj, verbose=True, die=False, tostring=False, custom=None, **kwargs)
     elif isinstance(obj, (bool, np.bool_)): # It's true/false
         output = bool(obj)
 
-    elif scu.isnumber(obj): # It's a number
+    elif sc.isnumber(obj): # It's a number
         if np.isnan(obj): # It's nan, so return None # pragma: no cover
             output = None
         else:
@@ -1248,7 +1240,7 @@ def jsonify(obj, verbose=True, die=False, tostring=False, custom=None, **kwargs)
             else:
                 output = float(obj)# It's something else, treat it as a float
 
-    elif scu.isstring(obj): # It's a string of some kind
+    elif sc.isstring(obj): # It's a string of some kind
         try:    string = str(obj) # Try to convert it to ascii
         except: string = obj # Give up and use original # pragma: no cover
         output = string
@@ -1278,7 +1270,7 @@ def jsonify(obj, verbose=True, die=False, tostring=False, custom=None, **kwargs)
     else: # None of the above
         try:
             output = jsonify(obj.__dict__, **kw) # Try converting the contents to JSON
-            output = scu.mergedicts({'python_class': str(type(obj))}, output)
+            output = sc.mergedicts({'python_class': str(type(obj))}, output)
         except: # pragma: no cover
             try:
                 output = jsonpickle(obj)
@@ -1662,15 +1654,15 @@ class Blobject:
     def __init__(self, source=None, name=None, filename=None, blob=None):
         # Handle inputs
         if source   is None and filename is not None: source   = filename # Reset the source to be the filename, e.g. Spreadsheet(filename='foo.xlsx')
-        if filename is None and scu.isstring(source):  filename = source   # Reset the filename to be the source, e.g. Spreadsheet('foo.xlsx')
+        if filename is None and sc.isstring(source):  filename = source   # Reset the filename to be the source, e.g. Spreadsheet('foo.xlsx')
         if name     is None and filename is not None: name     = os.path.basename(filename) # If not supplied, use the filename
         if blob is not None and source is not None: raise ValueError('Can initialize from either source or blob, but not both')
 
         # Define quantities
         self.name      = name # Name of the object
         self.filename  = filename # Filename (used as default for load/save)
-        self.created   = scd.now() # When the object was created
-        self.modified  = scd.now() # When it was last modified
+        self.created   = sc.now() # When the object was created
+        self.modified  = sc.now() # When it was last modified
         self.blob  = blob # The binary data
         self.bytes = None # The filestream representation of the binary data
         if source is not None: self.load(source)
@@ -1678,7 +1670,7 @@ class Blobject:
 
 
     def __repr__(self):
-        return scp.prepr(self, skip=['blob','bytes'])
+        return sc.prepr(self, skip=['blob','bytes'])
 
 
     def load(self, source=None):
@@ -1716,13 +1708,13 @@ class Blobject:
         else:
             if isinstance(source,io.BytesIO):
                 self.blob = read_bin(source)
-            elif scu.isstring(source):
+            elif sc.isstring(source):
                 self.blob = read_file(source)
             else: # pragma: no cover
                 errormsg = f'Input source must be type string (for a filename) or BytesIO, not {type(source)}'
                 raise TypeError(errormsg)
 
-        self.modified = scd.now()
+        self.modified = sc.now()
         return
 
 
@@ -1884,7 +1876,7 @@ Falling back to openpyxl, which is identical except for how cached cell values a
     def readcells(self, wbargs=None, *args, **kwargs):
         """ Alias to loadspreadsheet() """
         method = kwargs.pop('method', 'openpyxl')
-        wbargs = scu.mergedicts(wbargs)
+        wbargs = sc.mergedicts(wbargs)
         f = self.tofile()
         kwargs['fileobj'] = f
 
@@ -1892,7 +1884,7 @@ Falling back to openpyxl, which is identical except for how cached cell values a
         cells = kwargs.pop('cells', None)
 
         # Read in sheetoutput (sciris dataframe object for xlrd, 2D numpy array for openpyxl).
-        load_args = scu.mergedicts(dict(header=None), kwargs)
+        load_args = sc.mergedicts(dict(header=None), kwargs)
         if method == 'xlrd': # pragma: no cover
             sheetoutput = loadspreadsheet(*args, **load_args, method='xlrd')  # returns sciris dataframe object
         elif method == 'pandas':
@@ -1949,16 +1941,16 @@ Falling back to openpyxl, which is identical except for how cached cell values a
 
         # Determine the cells
         if cells is not None: # A list of cells is supplied
-            cells = scu.tolist(cells)
-            vals  = scu.tolist(vals)
+            cells = sc.tolist(cells)
+            vals  = sc.tolist(vals)
             if len(cells) != len(vals): # pragma: no cover
                 errormsg = f'If using cells, cells and vals must have the same length ({len(cells)} vs. {len(vals)})'
                 raise ValueError(errormsg)
             for cell,val in zip(cells,vals):
                 try:
-                    if scu.isstring(cell): # Handles e.g. cell='A1'
+                    if sc.isstring(cell): # Handles e.g. cell='A1'
                         cellobj = ws[cell]
-                    elif scu.checktype(cell, 'arraylike','number') and len(cell)==2: # Handles e.g. cell=(0,0)
+                    elif sc.checktype(cell, 'arraylike','number') and len(cell)==2: # Handles e.g. cell=(0,0)
                         cellobj = ws.cell(row=cell[0], column=cell[1])
                     else: # pragma: no cover
                         errormsg = f'Cell must be formatted as a label or row-column pair, e.g. "A1" or (3,5); not "{cell}"'
@@ -2057,7 +2049,7 @@ def loadspreadsheet(filename=None, folder=None, fileobj=None, sheet=0, header=1,
             else:
                 book = xlrd.open_workbook(file_contents=fileobj.read())
 
-            if scu.isnumber(sheet):
+            if sc.isnumber(sheet):
                 ws = book.sheet_by_index(sheet)
             else:
                 ws = book.sheet_by_name(sheet)
@@ -2065,11 +2057,11 @@ def loadspreadsheet(filename=None, folder=None, fileobj=None, sheet=0, header=1,
             # Load the raw data
             rawdata = []
             for rownum in range(ws.nrows-header):
-                rawdata.append(sco.odict())
+                rawdata.append(sc.odict())
                 for colnum in range(ws.ncols):
                     if header: attr = ws.cell_value(0,colnum)
                     else:      attr = f'Column {colnum}'
-                    attr = scu.uniquename(attr, namelist=rawdata[rownum].keys(), style='(%d)')
+                    attr = sc.uniquename(attr, namelist=rawdata[rownum].keys(), style='(%d)')
                     val = ws.cell_value(rownum+header,colnum)
                     try:
                         val = float(val) # Convert it to a number if possible
@@ -2085,7 +2077,7 @@ def loadspreadsheet(filename=None, folder=None, fileobj=None, sheet=0, header=1,
                 for oldrow in rawdata:
                     newrow = list(oldrow[:])
                     reformatted.append(newrow)
-                dfdata = scdf.dataframe(cols=cols, data=reformatted)
+                dfdata = sc.dataframe(cols=cols, data=reformatted)
                 return dfdata
 
             # Or leave in the original format
@@ -2178,29 +2170,29 @@ def savespreadsheet(filename=None, data=None, folder=None, sheetnames=None, clos
 
     *New version 2.0.0:* allow arguments to be passed to the ``Workbook``.
     """
-    workbook_args = scu.mergedicts({'nan_inf_to_errors': True}, workbook_args)
+    workbook_args = sc.mergedicts({'nan_inf_to_errors': True}, workbook_args)
     try:
         import xlsxwriter # Optional import
     except ModuleNotFoundError as e: # pragma: no cover
         raise ModuleNotFoundError('The "xlsxwriter" Python package is not available; please install manually') from e
     fullpath = makefilepath(filename=filename, folder=folder, default='default.xlsx', makedirs=True)
-    datadict   = sco.odict()
-    formatdict = sco.odict()
+    datadict   = sc.odict()
+    formatdict = sc.odict()
     hasformats = (formats is not None) and (formatdata is not None)
 
     # Handle input arguments
     if isinstance(data, dict) and sheetnames is None: # pragma: no cover
         if verbose: print('Data is a dict, taking sheetnames from keys')
         sheetnames = data.keys()
-        datadict   = sco.odict(data) # Use directly, converting to odict first
-        if hasformats: formatdict = sco.odict(formatdata) #  NB, might be None but should be ok
+        datadict   = sc.odict(data) # Use directly, converting to odict first
+        if hasformats: formatdict = sc.odict(formatdata) #  NB, might be None but should be ok
     elif isinstance(data, dict) and sheetnames is not None: # pragma: no cover
         if verbose: print('Data is a dict, taking sheetnames from input')
         if len(sheetnames) != len(data):
             errormsg = f'If supplying data as a dict as well as sheetnames, length must match ({len(data)} vs {len(sheetnames)})'
             raise ValueError(errormsg)
-        datadict   = sco.odict(data) # Use directly, but keep original sheet names
-        if hasformats: formatdict = sco.odict(formatdata)
+        datadict   = sc.odict(data) # Use directly, but keep original sheet names
+        if hasformats: formatdict = sc.odict(formatdata)
     elif not isinstance(data, dict):
         if sheetnames is None:
             if verbose: print('Data is a simple array')
@@ -2246,7 +2238,7 @@ def savespreadsheet(filename=None, data=None, folder=None, sheetnames=None, clos
                 if hasformats:
                     thisformat = workbook_formats[sheetformat[r][c]] # Get the actual format
                 try:
-                    if not scu.isnumber(cell_data):
+                    if not sc.isnumber(cell_data):
                         cell_data = str(cell_data) # Convert everything except numbers to strings -- use formatting to handle the rest
                     worksheet.write(r, c, cell_data, thisformat) # Write with or without formatting
                 except Exception as E: # pragma: no cover
@@ -2283,7 +2275,7 @@ except (NameError or AttributeError): # pragma: no cover
     }
 
 # Keep a temporary global variable of unpickling errors, and a permanent one of failed classes
-unpickling_errors = sco.objdict()
+unpickling_errors = sc.objdict()
 
 
 class UnpicklingWarning(UserWarning):
@@ -2365,10 +2357,10 @@ class Failed:
         return self
 
     def disp(self, *args, **kwargs):
-        return scp.pr(self, *args, **kwargs)
+        return sc.pr(self, *args, **kwargs)
 
     def __repr__(self): # pragma: no cover
-        output = scp.objrepr(self) # This does not include failure_info since it's a class attribute
+        output = sc.objrepr(self) # This does not include failure_info since it's a class attribute
         output += self.showfailure(verbose=False, tostring=True)
         return output
 
@@ -2407,12 +2399,12 @@ def _makefailed(module_name=None, name=None, exc=None, fixes=None, errors=None):
     
     # Process exception
     key = (module_name, name)
-    fail = sco.objdict()
+    fail = sc.objdict()
     fail.module    = module_name
     fail.name      = name
     fail.error     = str(exc)
     fail.exception = exc
-    fail.traceback = scu.traceback(exc)
+    fail.traceback = sc.traceback(exc)
     
     # Add the failure to the global list
     unpickling_errors[key] = fail
@@ -2490,9 +2482,9 @@ class _RobustUnpickler(dill.Unpickler):
     def __init__(self, bytesio, fix_imports=True, encoding="latin1", errors="ignore", 
                  remapping=None, auto_remap=True, die=False, verbose=None):
         super().__init__(bytesio, fix_imports=fix_imports, encoding=encoding, errors=errors)
-        self.remapping = scu.mergedicts(known_fixes if auto_remap else {}, remapping)
-        self.fixes     = sco.objdict() # Store any handled remappings
-        self.errors    = sco.objdict() # Store any errors encountered
+        self.remapping = sc.mergedicts(known_fixes if auto_remap else {}, remapping)
+        self.fixes     = sc.objdict() # Store any handled remappings
+        self.errors    = sc.objdict() # Store any errors encountered
         self.verbose   = verbose if verbose else False
         self.die       = die
         return
@@ -2542,7 +2534,7 @@ def _unpickler(string=None, die=False, verbose=None, remapping=None, method=None
         valid_kwargs = ['fix_imports', 'encoding', 'errors', 'buffers', 'ignore']
         for k in kwargs:
             if k not in valid_kwargs:
-                errormsg += f'Keyword "{k}" is not a valid keyword: {scu.strjoin(valid_kwargs)}\n'
+                errormsg += f'Keyword "{k}" is not a valid keyword: {sc.strjoin(valid_kwargs)}\n'
         if errormsg:
             raise ValueError(errormsg)
 
@@ -2560,7 +2552,7 @@ def _unpickler(string=None, die=False, verbose=None, remapping=None, method=None
     if   method is None:      unpicklers = ['pickle', 'pandas', 'latin', 'dill']
     elif method == 'pickle':  unpicklers = ['pickle', 'pandas', 'latin']
     elif method == 'dill':    unpicklers = ['dill']
-    else:                     unpicklers = scu.tolist(method)
+    else:                     unpicklers = sc.tolist(method)
 
     # If permitted, return an object that encountered errors in the loading process and therefore may not be valid
     # Such an object might require further fixes to be made by the user
@@ -2573,14 +2565,14 @@ def _unpickler(string=None, die=False, verbose=None, remapping=None, method=None
     obj = None
 
     if verbose:
-        print(f'Loading data using these methods in sequence: {scu.strjoin(unpicklers)}')
+        print(f'Loading data using these methods in sequence: {sc.strjoin(unpicklers)}')
     for unpickler in unpicklers:
         try:
             if verbose: print(f'Loading file using method "{unpickler}"...')
             obj = methods[unpickler](string, **kwargs)
             break
         except Exception as E:
-            errors[unpickler] = scu.traceback(E)
+            errors[unpickler] = sc.traceback(E)
             if verbose: print(f'{unpickler} failed ({E})')
 
     if obj is None:
@@ -2592,7 +2584,7 @@ def _unpickler(string=None, die=False, verbose=None, remapping=None, method=None
             warnings.warn(warnmsg, category=UnpicklingWarning, stacklevel=2)
         
         # Try to store the errors in the object, but don't worry if it doesn't succeed
-        try:    setattr(obj, 'unpickling_errors', scu.dcp(unpickling_errors))
+        try:    setattr(obj, 'unpickling_errors', sc.dcp(unpickling_errors))
         except: pass # pragma: no cover
     
     # Reset the unpickling errors

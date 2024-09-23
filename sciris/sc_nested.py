@@ -14,8 +14,7 @@ import collections as co
 from functools import reduce, partial
 import numpy as np
 import pandas as pd
-from . import sc_utils as scu
-from . import sc_printing as scp
+import sciris as sc
 
 # Define objects for which it doesn't make sense to descend further -- used here and sc.equal()
 atomic_classes = [np.ndarray, pd.Series, pd.DataFrame, pd.core.indexes.base.Index]
@@ -98,7 +97,7 @@ def makenested(obj, keylist=None, value=None, overwrite=True, generator=None, co
     | *New in version 3.2.0:* operate on arbitrary objects; "overwrite" defaults to True; returns object
     """
     if copy:
-        obj = scu.dcp(obj)
+        obj = sc.dcp(obj)
     currentlevel = obj
     for i,key in enumerate(keylist[:-1]):
         if not check_in_obj(currentlevel, key):
@@ -328,7 +327,6 @@ class IterObj:
     def __init__(self, obj, func=None, inplace=False, copy=False, leaf=False, recursion=0, depthfirst=True,
                  atomic='default', skip=None, rootkey='root', verbose=False, iterate=True,
                  custom_type=None, custom_iter=None, custom_get=None, custom_set=None, *args, **kwargs):
-        from . import sc_odict as sco # To avoid circular import
         
         # Default arguments
         self.obj        = obj
@@ -354,12 +352,12 @@ class IterObj:
         # Attributes with initialization required
         self._trace     = []
         self._memo      = co.defaultdict(int)
-        self.output     = sco.objdict()
+        self.output     = sc.objdict()
         if self.func is None: # If no function provided, define a function that just returns the contents of the current node
             self.func = lambda obj: obj 
         
         # Handle atomic classes
-        atomiclist = scu.tolist(self.atomic)
+        atomiclist = sc.tolist(self.atomic)
         if 'default' in atomiclist: # Handle objects to not descend into
             atomiclist.remove('default')
             atomiclist = atomic_classes + atomiclist
@@ -367,16 +365,16 @@ class IterObj:
         
         # Handle objects to skip
         if isinstance(skip, dict):
-            skip = scu.dcp(skip)
-            skip_keys       = scu.tolist(skip.pop('keys', None))
-            skip_ids        = scu.tolist(skip.pop('ids', None))
-            skip_subclasses = scu.tolist(skip.pop('subclasses', None))
-            skip_instances  = scu.tolist(skip.pop('instances', None))
+            skip = sc.dcp(skip)
+            skip_keys       = sc.tolist(skip.pop('keys', None))
+            skip_ids        = sc.tolist(skip.pop('ids', None))
+            skip_subclasses = sc.tolist(skip.pop('subclasses', None))
+            skip_instances  = sc.tolist(skip.pop('instances', None))
             if len(skip):
                 errormsg = f'Unrecognized skip keys {skip.keys()}: must be "keys", "ids", "subclasses", and/or "instances"'
                 raise KeyError(errormsg)
         else:
-            skip = scu.tolist(self.skip)
+            skip = sc.tolist(self.skip)
             skip_keys        = []
             skip_ids        = []
             skip_subclasses = []
@@ -399,7 +397,7 @@ class IterObj:
         
         # Copy the object if needed
         if inplace and copy:
-            self.obj = scu.dcp(obj)
+            self.obj = sc.dcp(obj)
         
         # Actually do the iteration
         if iterate:
@@ -541,8 +539,7 @@ class IterObj:
         
     def flatten_traces(self, sep='_'):
         """ Convert trace tuples to strings for easier reading """
-        from . import sc_odict as sco # To avoid circular import
-        newoutput = sco.objdict()
+        newoutput = sc.objdict()
         for key,val in self.output.items():
             if isinstance(key, tuple):
                 key = sep.join([str(k) for k in key])
@@ -552,14 +549,13 @@ class IterObj:
     
     def to_df(self):
         """ Convert the output dictionary to a dataframe """
-        from . import sc_dataframe as scd # To avoid circular import
         if not len(self):
             errormsg = 'No output to convert to a dataframe: length is zero'
             raise ValueError(errormsg)
         trace = self.output.keys()
         depth = [(0 if tr==self.rootkey else len(tr)) for tr in trace] # The depth is the length of the tuple, except the special case of the root key
         value = self.output.values()
-        self.df = scd.dataframe(trace=trace, depth=depth, value=value)
+        self.df = sc.dataframe(trace=trace, depth=depth, value=value)
         return self.df
         
 
@@ -651,7 +647,7 @@ def mergenested(dict1, dict2, die=False, verbose=False, _path=None):
     if _path:
         a = dict1 # If we're being recursive, work in place
     else:
-        a = scu.dcp(dict1) # Otherwise, make a copy
+        a = sc.dcp(dict1) # Otherwise, make a copy
     b = dict2 # Don't need to make a copy
 
     for key in b:
@@ -937,7 +933,7 @@ def search(obj, query=_None, key=_None, value=_None, aslist=True, method='exact'
         return matches
 
 
-class Equal(scp.prettyobj):
+class Equal(sc.prettyobj):
     
     # Define known special cases for equality checking
     special_cases = tuple([float] + atomic_classes)
@@ -955,7 +951,6 @@ class Equal(scp.prettyobj):
 
         *New in version 3.1.0.*
         """
-        from . import sc_odict as sco # To avoid circular import
         
         # Set properties
         self.objs = [obj, obj2] + list(args) # All objects for comparison
@@ -966,7 +961,7 @@ class Equal(scp.prettyobj):
         self.union = union
         self.verbose = verbose
         self.die = die
-        self.kwargs = scu.mergedicts(kwargs, dict(leaf=leaf))
+        self.kwargs = sc.mergedicts(kwargs, dict(leaf=leaf))
         self.check_method() # Check that the method is valid
         
         # Derived results
@@ -974,9 +969,9 @@ class Equal(scp.prettyobj):
         self.compared = False # Whether the objects have already been compared
         self.dicts = [] # Object dictionaries
         self.treekeys = None # The object keys to walk over
-        self.results = sco.objdict() # Detailed output, 1D dict
-        self.fullresults = sco.objdict() # Detailed output, 2D dict
-        self.exceptions = sco.objdict() # Store any exceptions encountered
+        self.results = sc.objdict() # Detailed output, 1D dict
+        self.fullresults = sc.objdict() # Detailed output, 2D dict
+        self.exceptions = sc.objdict() # Store any exceptions encountered
         self.eq = None # Final value to be populated
         
         # Run the comparison if requested
@@ -1017,11 +1012,11 @@ class Equal(scp.prettyobj):
         """ Check that a valid method is supplied """
         if self.method is None:
             self.method = ['eq', 'pickle'] # Define the default method sequence to try
-        self.method = scu.tolist(self.method)
+        self.method = sc.tolist(self.method)
         assert len(self.method), 'No methods supplied'
         for method in self.method:
             if method not in self.valid_methods and not callable(method): # pragma: no cover
-                errormsg = f'Method "{method}" not recognized: must be one of {scu.strjoin(self.valid_methods)}'
+                errormsg = f'Method "{method}" not recognized: must be one of {sc.strjoin(self.valid_methods)}'
                 raise ValueError(errormsg)
     
     
@@ -1040,7 +1035,7 @@ class Equal(scp.prettyobj):
             self.dicts.append(iterobj(obj, **self.kwargs))
         self.walked = True
         if self.verbose:
-            nkeystr = scu.strjoin([len(d) for d in self.dicts])
+            nkeystr = sc.strjoin([len(d) for d in self.dicts])
             print(f'Walked {self.n} objects with {nkeystr} keys respectively')
         
         self.make_tree()
@@ -1081,8 +1076,7 @@ class Equal(scp.prettyobj):
         elif method == 'pickle':
             out = pkl.dumps(obj)
         elif method == 'json':
-            from . import sc_fileio as scf # To avoid circular import
-            out = scf.jsonpickle(obj)
+            out = sc.jsonpickle(obj)
         elif method == 'str':
             out = str(obj)
         elif callable(method):
@@ -1107,12 +1101,11 @@ class Equal(scp.prettyobj):
         
         # For numpy arrays, must use something to handle NaNs
         elif isinstance(obj, (np.ndarray, pd.Series, pd.core.indexes.base.Index)):
-            eq = scm.nanequal(obj, obj2, scalar=True, equal_nan=self.equal_nan)
+            eq = sc.nanequal(obj, obj2, scalar=True, equal_nan=self.equal_nan)
     
         # For dataframes, use Sciris
         elif isinstance(obj, pd.DataFrame):
-            from . import sc_dataframe as scd # To avoid circular import
-            eq = scd.dataframe.equal(obj, obj2, equal_nan=self.equal_nan)
+            eq = sc.dataframe.equal(obj, obj2, equal_nan=self.equal_nan)
         
         else: # pragma: no cover
             errormsg = f'Not able to handle object of {type(obj)}'
@@ -1124,7 +1117,7 @@ class Equal(scp.prettyobj):
     @staticmethod
     def keytostr(k, ind='', sep='.'):
         """ Helper method to convert a key to a "trace" for printing """
-        out = f'<obj{str(ind)}>{sep}{scu.strjoin(k, sep=sep)}'
+        out = f'<obj{str(ind)}>{sep}{sc.strjoin(k, sep=sep)}'
         return out
     
     
@@ -1175,7 +1168,7 @@ class Equal(scp.prettyobj):
                 
                 # If keys match, proceed
                 if eq:
-                    methods = scu.dcp(self.method) # Copy the methods to try one by one
+                    methods = sc.dcp(self.method) # Copy the methods to try one by one
                     compared = False # Check if comparison succeeded
                     otherobj = otree[key] # Get the other object
                     if key != 'root': appendval(vals, otherobj)
@@ -1245,8 +1238,6 @@ class Equal(scp.prettyobj):
     
     def to_df(self):
         """ Convert the detailed results dictionary to a dataframe """
-        from . import sc_dataframe as scd # To avoid circular import
-        
         # Ensure they've been compared
         if not self.compared: # pragma: no cover
             self.compare()
@@ -1254,7 +1245,7 @@ class Equal(scp.prettyobj):
         # Make dataframe
         columns = [f'obj0==obj{i+1}' for i in range(self.n-1)]
         if self.detailed>1: columns = columns + [f'val{i}' for i in range(self.n)]
-        df = scd.dataframe.from_dict(scu.dcp(self.fullresults), orient='index', columns=columns)
+        df = sc.dataframe.from_dict(sc.dcp(self.fullresults), orient='index', columns=columns)
         equal = df.iloc[:, :(self.n-1)].all(axis=1)
         df.insert(0, 'equal', equal)
         

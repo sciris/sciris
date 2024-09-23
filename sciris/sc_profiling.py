@@ -24,13 +24,7 @@ import numpy as np
 import pandas as pd
 import pylab as pl
 import multiprocessing as mp
-from . import sc_utils as scu
-from . import sc_datetime as scd
-from . import sc_odict as sco
-from . import sc_fileio as scf
-from . import sc_nested as scn
-from . import sc_printing as scp
-from . import sc_dataframe as scdf
+import sciris as sc
 
 
 ##############################################################################
@@ -103,11 +97,11 @@ def checkmem(var, descend=1, order='size', compresslevel=0, maxitems=1000,
 
         # Create a temporary file, save the object, check the size, remove it
         filename = tempfile.mktemp()
-        scf.save(filename, variable, allow_empty=True, compresslevel=compresslevel)
+        sc.save(filename, variable, allow_empty=True, compresslevel=compresslevel)
         filesize = os.path.getsize(filename)
         os.remove(filename)
 
-        sizestr = scp.humanize_bytes(filesize)
+        sizestr = sc.humanize_bytes(filesize)
         return filesize, sizestr
 
     # Initialize
@@ -120,7 +114,7 @@ def checkmem(var, descend=1, order='size', compresslevel=0, maxitems=1000,
         depth     = int,
         is_total  = bool,
     )
-    df = scdf.dataframe(columns=columns)
+    df = sc.dataframe(columns=columns)
     
     if descend:
         if isinstance(var, dict): # Handle dicts
@@ -131,7 +125,7 @@ def checkmem(var, descend=1, order='size', compresslevel=0, maxitems=1000,
             if verbose>1: print('Iterating over class-like object')
             varnames = sorted(list(var.__dict__.keys()))
             variables = [getattr(var, attr) for attr in varnames]
-        elif scu.isiterable(var, exclude=str): # Handle lists, and be sure to skip strings
+        elif sc.isiterable(var, exclude=str): # Handle lists, and be sure to skip strings
             if verbose>1: print('Iterating over list-like object')
             varnames = [f'item {i}' for i in range(len(var))]
             variables = var
@@ -163,7 +157,7 @@ def checkmem(var, descend=1, order='size', compresslevel=0, maxitems=1000,
     if subtotals and len(df) > 1:
         total_label = _prefix + ' (total)' if _prefix else 'Total'
         total = df[np.logical_not(df.is_total)].bytesize.sum()
-        human_total = scp.humanize_bytes(total)
+        human_total = sc.humanize_bytes(total)
         df.appendrow(dict(variable=total_label, humansize=human_total, bytesize=total, depth=_depth, is_total=True))
     
     # Only sort if we're at the highest level
@@ -207,7 +201,7 @@ def checkram(unit='mb', fmt='0.2f', start=0, to_string=True):
     try:
         factor = mapping[unit.lower()]
     except KeyError: # pragma: no cover
-        raise scu.KeyNotFoundError(f'Unit {unit} not found among {scu.strjoin(mapping.keys())}')
+        raise sc.KeyNotFoundError(f'Unit {unit} not found among {sc.strjoin(mapping.keys())}')
     mem_use = process.memory_info().rss/factor - start
     if to_string:
         output = f'{mem_use:{fmt}} {unit.upper()}'
@@ -271,7 +265,7 @@ def benchmark(repeats=5, scale=1, verbose=False, python=True, numpy=True, parall
     # Define the benchmarking functions
     
     def bm_python(prefix=''):
-        P = scd.timer(verbose=verbose)
+        P = sc.timer(verbose=verbose)
         for r in range(repeats):
             l = list()
             d = dict()
@@ -288,7 +282,7 @@ def benchmark(repeats=5, scale=1, verbose=False, python=True, numpy=True, parall
         return P
     
     def bm_numpy(prefix=''):
-        N = scd.timer(verbose=verbose)
+        N = sc.timer(verbose=verbose)
         for r in range(repeats):
             N.tic()
             for i in range(np_outer):
@@ -338,7 +332,7 @@ def benchmark(repeats=5, scale=1, verbose=False, python=True, numpy=True, parall
     
     # Handle output
     if return_timers: # pragma: no cover
-        out = sco.objdict(python=P, numpy=N)
+        out = sc.objdict(python=P, numpy=N)
     else:
         pymops = py_ops/P.mean()*ncpus if len(P) else None # Handle if one or the other isn't run
         npmops = np_ops/N.mean()*ncpus if len(N) else None
@@ -477,12 +471,12 @@ def loadbalancer(maxcpu=0.9, maxmem=0.9, index=None, interval=None, cpu_interval
         process_str = f'process {index}' if index is not None else 'process'
         if cpu_toohigh: # pragma: no cover
             string = label+f'CPU load too high ({cpu_str}); {process_str} queued {count} times'
-            scd.randsleep(interval)
+            sc.randsleep(interval)
         elif mem_toohigh: # pragma: no cover
             string = label+f'Memory load too high ({mem_str}); {process_str} queued {count} times'
-            scd.randsleep(interval)
+            sc.randsleep(interval)
         else:
-            ok = 'OK' if scu.getplatform() == 'windows' else '✓' # Windows doesn't support unicode (!)
+            ok = 'OK' if sc.getplatform() == 'windows' else '✓' # Windows doesn't support unicode (!)
             toohigh = False
             string = label+f'CPU {ok} ({cpu_str}), memory {ok} ({mem_str}): starting {process_str} after {count} tries'
         if verbose:
@@ -559,7 +553,7 @@ def profile(run, follow=None, print_stats=True, *args, **kwargs):
     orig_func = run
 
     lp = LineProfiler()
-    follow = scu.tolist(follow)
+    follow = sc.tolist(follow)
     for f in follow:
         lp.add_function(f)
     lp.enable_by_count()
@@ -605,7 +599,7 @@ def mprofile(run, follow=None, show_results=True, *args, **kwargs):
         follow = run
 
     lp = mp.LineProfiler()
-    follow = scu.tolist(follow)
+    follow = sc.tolist(follow)
     for f in follow:
         lp.add_function(f)
     lp.enable_by_count()
@@ -623,7 +617,7 @@ def mprofile(run, follow=None, show_results=True, *args, **kwargs):
     return lp
 
 
-class cprofile(scp.prettyobj):
+class cprofile(sc.prettyobj):
     """
     Function profiler, built off Python's built-in cProfile
     
@@ -710,7 +704,7 @@ class cprofile(scp.prettyobj):
     
     def parse_stats(self, stripdirs=None, force=False):
         """ Parse the raw data into a dictionary """
-        stripdirs = scu.ifelse(stripdirs, self.stripdirs)
+        stripdirs = sc.ifelse(stripdirs, self.stripdirs)
         if self.parsed is None or force:
             self.parsed = pstats.Stats(self.profile)
             if stripdirs:
@@ -726,12 +720,12 @@ class cprofile(scp.prettyobj):
         
         See class docstring for arguments
         """
-        sort       = scu.ifelse(sort, self.sort)
-        mintime    = scu.ifelse(mintime, self.mintime)
-        maxitems   = scu.ifelse(maxitems, self.maxitems)
-        maxfunclen = scu.ifelse(maxfunclen, self.maxfunclen)
-        maxpathlen = scu.ifelse(maxpathlen, self.maxpathlen)
-        columns    = scu.ifelse(columns, self.columns)
+        sort       = sc.ifelse(sort, self.sort)
+        mintime    = sc.ifelse(mintime, self.mintime)
+        maxitems   = sc.ifelse(maxitems, self.maxitems)
+        maxfunclen = sc.ifelse(maxfunclen, self.maxfunclen)
+        maxpathlen = sc.ifelse(maxpathlen, self.maxpathlen)
+        columns    = sc.ifelse(columns, self.columns)
         
         def trim(name, maxlen):
             if maxlen is None or len(name) <= maxlen:
@@ -749,7 +743,7 @@ class cprofile(scp.prettyobj):
         
         # Parse the stats
         self.parse_stats()
-        d = sco.dictobj()
+        d = sc.dictobj()
         for key in ['calls', 'selftime', 'cumtime', 'file', 'line', 'func']:
             d[key] = []
         for key,entry in self.parsed.stats.items():
@@ -778,8 +772,8 @@ class cprofile(scp.prettyobj):
         
         # Convert to a dataframe
         data = {key:d[key] for key in cols}
-        self.df = scdf.dataframe(**data)
-        reverse = scu.isarray(d[sort]) # If numeric, assume we want the highest first
+        self.df = sc.dataframe(**data)
+        reverse = sc.isarray(d[sort]) # If numeric, assume we want the highest first
         self.df = self.df.sortrows(sort, reverse=reverse)
         self.df = self.df[:self.maxitems]
         return self.df  
@@ -835,7 +829,7 @@ class LimitExceeded(MemoryError, KeyboardInterrupt):
     pass
 
 
-class resourcemonitor(scp.prettyobj): # pragma: no cover # For some reason pycov doesn't catch this class
+class resourcemonitor(sc.prettyobj): # pragma: no cover # For some reason pycov doesn't catch this class
     """
     Asynchronously monitor resource (e.g. memory) usage and terminate the process
     if the specified threshold is exceeded.
@@ -978,29 +972,29 @@ class resourcemonitor(scp.prettyobj): # pragma: no cover # For some reason pycov
         self.elapsed = time_now - self.start_time
 
         # Define the limits
-        lim = sco.objdict(
+        lim = sc.objdict(
             cpu  = self.cpu,
             mem  = self.mem,
             time = self.time,
         )
 
         # Check current load
-        now = sco.objdict(
+        now = sc.objdict(
             cpu  = cpuload(),
             mem  = memload(),
             time = self.elapsed,
         )
 
         # Check if limits are OK, and the ratios
-        ok    = sco.objdict()
-        ratio = sco.objdict()
+        ok    = sc.objdict()
+        ratio = sc.objdict()
         for k in lim.keys():
             ok[k]    = now[k] <= lim[k]
             ratio[k] = now[k] / lim[k]
         is_ok = ok[:].all()
 
         # Gather into output form
-        checkdata = sco.objdict(
+        checkdata = sc.objdict(
             count    = self.count,
             elapsed  = self.elapsed,
             is_ok    = is_ok,
@@ -1013,7 +1007,7 @@ class resourcemonitor(scp.prettyobj): # pragma: no cover # For some reason pycov
 
         # Convert to string
         prefix = 'Limits OK' if is_ok else 'Limits exceeded'
-        datalist = scu.autolist()
+        datalist = sc.autolist()
         if self.cpu < 1:
             datalist += f'CPU: {now.cpu:0.2f} vs {lim.cpu:0.2f}'
         if self.mem < 1:
@@ -1057,7 +1051,7 @@ class resourcemonitor(scp.prettyobj): # pragma: no cover # For some reason pycov
         """ Convert the log into a pandas dataframe """
         entries = []
         for entry in self.log:
-            flat = scn.flattendict(entry, sep='_')
+            flat = sc.flattendict(entry, sep='_')
             entries.append(flat)
         self.df = pd.DataFrame(entries)
         return self.df

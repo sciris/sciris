@@ -16,8 +16,7 @@ import struct
 import pylab as pl
 import numpy as np
 import matplotlib as mpl
-from . import sc_utils as scu
-from . import sc_math as scm
+import sciris as sc
 
 
 ##############################################################################
@@ -30,7 +29,7 @@ __all__ = ['sanitizecolor', 'shifthue', 'rgb2hex', 'hex2rgb', 'rgb2hsv', 'hsv2rg
 def _listify_colors(colors, origndim=None):
     """ Do standard transformation on colors -- internal helper function """
     if not origndim:
-        colors = scu.dcp(colors) # So we don't overwrite the original
+        colors = sc.dcp(colors) # So we don't overwrite the original
         origndim = np.ndim(colors) # Original dimensionality
         if origndim==1:
             colors = [colors] # Wrap it in another list if needed
@@ -69,14 +68,14 @@ def sanitizecolor(color, asarray=False, alpha=None, normalize=True):
     elif isinstance(color, float):
         color = [color]*3 # Consider it grey
             
-    color = scu.toarray(color).astype(float) # Get it into consistent format for further operations
+    color = sc.toarray(color).astype(float) # Get it into consistent format for further operations
     if len(color) not in [3,4]: # pragma: no cover
         errormsg = f'Cannot parse {color} as a color: expecting length 3 (RGB) or 4 (RGBA)'
         raise ValueError(errormsg)
     if normalize and color.max()>1:
         color /= 255
     if alpha is not None and len(color) == 3:
-        color = scm.cat(color, float(alpha))
+        color = sc.cat(color, float(alpha))
     if not asarray:
         color = tuple(color) # Convert back to tuple if desired
     return color
@@ -113,7 +112,7 @@ def shifthue(colors=None, hueshift=0.0):
     """
     colors, origndim = _listify_colors(colors)
     for c,color in enumerate(colors):
-        color = scu.toarray(color, dtype=float) # Required for NumPy 2.0
+        color = sc.toarray(color, dtype=float) # Required for NumPy 2.0
         hsvcolor = mpl.colors.rgb_to_hsv(color)
         hsvcolor[0] = (hsvcolor[0]+hueshift) % 1.0 # Calculate new hue and return the modulus
         rgbcolor = mpl.colors.hsv_to_rgb(hsvcolor)
@@ -242,15 +241,15 @@ def vectocolor(vector, cmap=None, asarray=True, reverse=False, minval=None, maxv
         try:
             cmap = pl.get_cmap(cmap)
         except: # pragma: no cover
-            choices = scu.newlinejoin(pl.colormaps())
+            choices = sc.newlinejoin(pl.colormaps())
             raise ValueError(f'{cmap} is not a valid color map; choices are:\n{choices}')
 
     # If a scalar is supplied, convert it to a vector instead
-    if scu.isnumber(vector):
+    if sc.isnumber(vector):
         vector = np.linspace(0, 1, vector)
 
     # Usual situation -- the vector has elements
-    vector = scu.dcp(vector) # To avoid in-place modification
+    vector = sc.dcp(vector) # To avoid in-place modification
     vector = np.array(vector, dtype=float) # Just to be sure
     if len(vector):
         if minval is None:
@@ -314,11 +313,11 @@ def arraycolors(arr, **kwargs):
     
     *New in version 3.1.0:* Handle non-array output
     """
-    arr = scu.dcp(arr) # Avoid modifications
+    arr = sc.dcp(arr) # Avoid modifications
     new_shape = arr.shape + (4,) # RGBα
     colors = np.zeros(new_shape)
     colorvec = vectocolor(vector=arr.reshape(-1), **kwargs)
-    if scu.isarray(colorvec):
+    if sc.isarray(colorvec):
         colors = colorvec.reshape(new_shape)
     else:
         errormsg = 'Creating array colors as a list does not make sense; use sc.vectocolor(arr.flatten()) if you mean to do this'
@@ -363,8 +362,8 @@ def gridcolors(ncolors=10, limits=None, nsteps=20, asarray=False, ashex=False, r
     | *New in version 3.2.0:* allow ncolors to be an iterable
     """
     # Handle input arguments
-    if not scu.isnumber(ncolors):
-        if scu.isiterable(ncolors):
+    if not sc.isnumber(ncolors):
+        if sc.isiterable(ncolors):
             ncolors = len(ncolors)
         else:
             errormsg = f'Invalid input {ncolors}; must be an integer or an iterable'
@@ -441,8 +440,7 @@ def gridcolors(ncolors=10, limits=None, nsteps=20, asarray=False, ashex=False, r
 
     ## For plotting -- optional
     if demo:
-        from . import sc_plotting as scp # To avoid circular import
-        ax = scp.scatter3d(colors[:,0], colors[:,1], colors[:,2], c=output, s=200, depthshade=False, lw=0, fig=True, figkwargs={'facecolor':'w'})
+        ax = sc.scatter3d(colors[:,0], colors[:,1], colors[:,2], c=output, s=200, depthshade=False, lw=0, fig=True, figkwargs={'facecolor':'w'})
         ax.set_xlabel('Red', fontweight='bold')
         ax.set_ylabel('Green', fontweight='bold')
         ax.set_zlabel('Blue', fontweight='bold')
@@ -554,15 +552,15 @@ def manualcolorbar(data=None, vmin=0, vmax=1, vcenter=None, colors=None, values=
 
     *New in version 3.1.0.*
     """
-    labelkwargs = scu.mergedicts(labelkwargs)
+    labelkwargs = sc.mergedicts(labelkwargs)
     
     # Get the colorbar axes
-    if scu.checktype(axkwargs, 'arraylike'):
+    if sc.checktype(axkwargs, 'arraylike'):
         axarg = axkwargs
         axkwargs = {}
     else:
         axarg = None
-        axkwargs = scu.mergedicts(axkwargs)
+        axkwargs = sc.mergedicts(axkwargs)
     if cax is None and (axarg or axkwargs):
         cax = pl.axes(arg=axarg, **axkwargs)
     if ax is None and cax is None:
@@ -573,7 +571,7 @@ def manualcolorbar(data=None, vmin=0, vmax=1, vcenter=None, colors=None, values=
         if values is None: # Generate the boundaries automatically
             values = np.arange(len(colors)+1)
         if len(values) == len(colors): # Add an upper bound if not provided
-            values = scm.cat(values, values[-1] + np.diff(values[-2:])) # Add the last diff on again
+            values = sc.cat(values, values[-1] + np.diff(values[-2:])) # Add the last diff on again
         cmap = mpl.colors.ListedColormap(colors)
         norm = mpl.colors.BoundaryNorm(values, cmap.N)
         sm = mpl.cm.ScalarMappable(cmap=cmap, norm=norm)
@@ -626,7 +624,6 @@ def colormapdemo(cmap=None, n=None, smoothing=None, randseed=None, doshow=True):
 
     Version: 2019aug22
     """
-    from . import sc_plotting as scp # To avoid circular import
 
     # Set data
     if n         is None: n         = 100
@@ -657,7 +654,7 @@ def colormapdemo(cmap=None, n=None, smoothing=None, randseed=None, doshow=True):
         pl.show()
 
     # Plot in 3D
-    fig2,ax2 = scp.fig3d(returnax=True, figsize=(12,8))
+    fig2,ax2 = sc.fig3d(returnax=True, figsize=(12,8))
     ax2.view_init(elev=45, azim=30)
     X = np.linspace(0,horizontalsize,n)
     X, Y = np.meshgrid(X, X)

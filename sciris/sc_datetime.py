@@ -15,9 +15,8 @@ import pandas as pd
 import pylab as pl
 import datetime as dt
 import dateutil as du
-from . import sc_utils as scu
-from . import sc_math as scm
-from . import sc_printing as scp
+import sciris as sc
+import sciris.sc_utils as scu
 
 
 ###############################################################################
@@ -101,7 +100,7 @@ def getdate(obj=None, astype='str', dateformat=None):
             astype = 'str' # If dateformat is specified, assume type is a string
 
         try:
-            if scu.isstring(obj): # pragma: no cover
+            if sc.isstring(obj): # pragma: no cover
                 return obj # Return directly if it's a string
             obj.timetuple() # Try something that will only work if it's a date object
             dateobj = obj # Test passed: it's a date object
@@ -194,7 +193,7 @@ def readdate(datestr=None, *args, dateformat=None, return_defaults=False, verbos
         return formats_to_try
 
     # Handle date formats
-    format_list = scu.tolist(dateformat, keepnone=True) # Keep none which signifies default
+    format_list = sc.tolist(dateformat, keepnone=True) # Keep none which signifies default
     if dateformat is not None:
         if dateformat == 'dmy':
             formats_to_try = dmy_formats
@@ -215,13 +214,13 @@ def readdate(datestr=None, *args, dateformat=None, return_defaults=False, verbos
         exceptions = {}
         if isinstance(datestr, dt.datetime):
             dateobj = datestr # Nothing to do
-        elif scu.isnumber(datestr): # pragma: no cover
+        elif sc.isnumber(datestr): # pragma: no cover
             if 'posix' in format_list or None in format_list:
                 dateobj = dt.datetime.fromtimestamp(datestr)
             elif 'ordinal' in format_list or 'matplotlib' in format_list:
                 dateobj = pl.num2date(datestr)
             else:
-                errormsg = f'Could not convert numeric date {datestr} using available formats {scu.strjoin(format_list)}; must be "posix" or "ordinal"'
+                errormsg = f'Could not convert numeric date {datestr} using available formats {sc.strjoin(format_list)}; must be "posix" or "ordinal"'
                 raise ValueError(errormsg)
         else:
             for key,fmt in formats_to_try.items():
@@ -231,7 +230,7 @@ def readdate(datestr=None, *args, dateformat=None, return_defaults=False, verbos
                 except Exception as E:
                     exceptions[key] = str(E)
             if dateobj is None:
-                formatstr = scu.newlinejoin([f'{item[1]}' for item in formats_to_try.items()])
+                formatstr = sc.newlinejoin([f'{item[1]}' for item in formats_to_try.items()])
                 errormsg = f'Was unable to convert "{datestr}" to a date using the formats:\n{formatstr}'
                 if dateformat not in ['dmy', 'mdy']:
                     errormsg += '\n\nNote: to read day-month-year or month-day-year dates, use dateformat="dmy" or "mdy" respectively.'
@@ -326,11 +325,11 @@ def date(obj=None, *args, start_date=None, readformat=None, to='date', as_date=N
                     pass
             elif isinstance(d, dt.datetime): # This includes pd.Timestamp
                 pass
-            elif scu.isstring(d):
+            elif sc.isstring(d):
                 d = readdate(d, dateformat=readformat)
             elif isinstance(d, np.datetime64):
                 d = pd.Timestamp(d)
-            elif scu.isnumber(d):
+            elif sc.isnumber(d):
                 if readformat is not None:
                     d = readdate(d, dateformat=readformat)
                 else:
@@ -406,11 +405,11 @@ def day(obj, *args, start_date=None, **kwargs):
     for d in obj:
         if d is None:
             days.append(d)
-        elif scu.isnumber(d):
+        elif sc.isnumber(d):
             days.append(int(d)) # Just convert to an integer
         else:
             try:
-                if scu.isstring(d):
+                if sc.isstring(d):
                     d = readdate(d).date()
                 elif isinstance(d, dt.datetime):
                     d = d.date()
@@ -586,7 +585,7 @@ def datedelta(datestr=None, days=0, months=0, years=0, weeks=0, dt1=None, dt2=No
     
     # Otherwise, process each argument
     else:
-        datelist = scu.tolist(datestr)
+        datelist = sc.tolist(datestr)
         newdates = []
         for datestr in datelist:
             if as_date is None: # Typical case, return the same format as the input
@@ -631,9 +630,9 @@ def datetoyear(dateobj, dateformat=None, reverse=None, as_date=True):
         return dt.date(year=year+1, month=1, day=1) - dt.date(year=year, month=1, day=1)
     
     # Handle strings and numbers
-    if scu.isstring(dateobj):
+    if sc.isstring(dateobj):
         dateobj = date(dateobj, dateformat=dateformat)
-    elif scu.isnumber(dateobj):
+    elif sc.isnumber(dateobj):
         reverse = True
         
     # If reverse
@@ -766,8 +765,6 @@ def toc(start=None, label=None, baselabel=None, sigfigs=None, reset=False, unit=
     | *New in version 3.0.0:* "unit" argument
     """
     now = pytime.time() # Get the time as quickly as possible
-
-    from . import sc_printing as scp # To avoid circular import
     global _tictime  # The saved time is stored in this global
 
     # Set defaults
@@ -799,7 +796,7 @@ def toc(start=None, label=None, baselabel=None, sigfigs=None, reset=False, unit=
         else:
             base = f'{baselabel}{label}: '
     factor, unitlabel = _convert_time_unit(unit, elapsed=elapsed)
-    logmessage = f'{base}{scp.sigfig(elapsed/factor, sigfigs=sigfigs)} {unitlabel}'
+    logmessage = f'{base}{sc.sigfig(elapsed/factor, sigfigs=sigfigs)} {unitlabel}'
 
     # Print if asked, or if no other output
     if doprint or ((doprint is None) and (not output)):
@@ -907,7 +904,6 @@ class timer:
     | *New in version 3.1.5:* ``T.timings`` is now an :class:`sc.objdict() <sc_odict.objdict>` instead of an :class:`sc.odict() <sc_odict.odict>` 
     """
     def __init__(self, label=None, auto=False, start=True, unit='auto', verbose=None, **kwargs):
-        from . import sc_odict as sco # Here to avoid circular import
         self.kwargs = kwargs # Store kwargs to pass to toc() at the end of the block
         self.kwargs['label'] = label
         self.auto = auto
@@ -919,7 +915,7 @@ class timer:
         self.elapsed = None
         self.message = None
         self.count = 0
-        self.timings = sco.objdict()
+        self.timings = sc.objdict()
         if start:
             self.tic() # Start counting
         return
@@ -937,7 +933,7 @@ class timer:
     
     def __repr__(self):
         """ Display a brief representation of the object """
-        string = scp.objectid(self)
+        string = sc.objectid(self)
         string += 'Timings:\n'
         string += str(self.timings)
         string += f'\nTotal time: {self.total:n} s'
@@ -965,7 +961,7 @@ class timer:
     
     def __add__(self, T2):
         """ Ditto """
-        T1 = scu.dcp(self)
+        T1 = sc.dcp(self)
         return T1.__iadd__(T2)
 
 
@@ -977,7 +973,7 @@ class timer:
     
     def disp(self):
         """ Display the full representation of the object """
-        return scp.pr(self)
+        return sc.pr(self)
 
 
     def tic(self):
@@ -1083,17 +1079,15 @@ class timer:
     @property
     def indivtimings(self):
         """ Compute the individual time between each timing """
-        from . import sc_odict as sco # Here to avoid circular import
-        vals = np.diff(scm.cat(self._tics[0], self._tocs))
-        output = sco.odict(zip(self.timings.keys(), vals))
+        vals = np.diff(sc.cat(self._tics[0], self._tocs))
+        output = sc.odict(zip(self.timings.keys(), vals))
         return output
 
     @property
     def cumtimings(self):
         """ Compute the cumulative time for each timing """
-        from . import sc_odict as sco # Here to avoid circular import
         vals = np.array(self._tocs) - self._tics[0]
-        output = sco.odict(zip(self.timings.keys(), vals))
+        output = sc.odict(zip(self.timings.keys(), vals))
         return output
 
     def sum(self):
@@ -1150,9 +1144,7 @@ class timer:
 
         *New in version 2.0.0.*
         """
-        from . import sc_plotting as scp # Here to avoid circular import
-
-        figkwargs = scu.mergedicts(figkwargs)
+        figkwargs = sc.mergedicts(figkwargs)
 
         # Handle the figure
         if fig is None:
@@ -1180,7 +1172,7 @@ class timer:
                 ax.invert_yaxis()
                 ax.grid(grid)
 
-            scp.figlayout()
+            sc.figlayout()
         else: # pragma: no cover
             errormsg = "Looks like nothing has been timed. Forgot to do T.start() and T.stop()??'"
             raise RuntimeWarning(errormsg)
@@ -1399,7 +1391,7 @@ def randsleep(delay=1.0, var=1.0, low=None, high=None, seed=None):
     *New in version 3.0.0:* "seed" argument
     """
     if low is None or high is None:
-        if scu.isnumber(delay):
+        if sc.isnumber(delay):
             low  = delay*(1-var)
             high = delay*(1+var)
         else:

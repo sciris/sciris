@@ -42,11 +42,15 @@ import uuid as py_uuid
 import contextlib as cl
 import traceback as py_traceback
 from pathlib import Path
+import sciris as sc
 
 # Handle types
 _stringtypes = (str, bytes)
 _numtype     = (numbers.Number,)
 _booltypes   = (bool, np.bool_)
+
+# Store these for access by other modules
+__all__ = ['_stringtypes', '_numtype', '_booltypes']
 
 
 ##############################################################################
@@ -54,7 +58,7 @@ _booltypes   = (bool, np.bool_)
 ##############################################################################
 
 # Define the modules being loaded
-__all__ = ['fast_uuid', 'uuid', 'dcp', 'cp', 'pp', 'sha', 'traceback', 'getuser',
+__all__ += ['fast_uuid', 'uuid', 'dcp', 'cp', 'pp', 'sha', 'traceback', 'getuser',
            'getplatform', 'iswindows', 'islinux', 'ismac', 'isjupyter', 'asciify']
 
 
@@ -634,10 +638,8 @@ def urlopen(url, filename=None, save=None, headers=None, params=None, data=None,
     """
     from urllib import request as ur # Need to import these directly, not via urllib
     from urllib import parse as up
-    from . import sc_datetime as scd  # To avoid circular import
-    from . import sc_fileio as scf # To avoid circular import
 
-    T = scd.timer()
+    T = sc.timer()
 
     # Handle headers
     default_headers = {
@@ -663,7 +665,7 @@ def urlopen(url, filename=None, save=None, headers=None, params=None, data=None,
         output = resp.read()
         if response == 'json':
             try:
-                output = scf.loadjson(string=output)
+                output = sc.loadjson(string=output)
             except Exception as E:
                 errormsg = f'Could not convert HTTP response beginning "{output[:20]}" to JSON'
                 raise ValueError(errormsg) from E
@@ -696,12 +698,12 @@ def urlopen(url, filename=None, save=None, headers=None, params=None, data=None,
 
     if filename is not None and save is not False:
         if verbose: print(f'Saving to {filename}...')
-        filename = scf.makefilepath(filename, makedirs=True)
+        filename = sc.makefilepath(filename, makedirs=True)
         if isinstance(output, bytes): # Raw HTML data
             with open(filename, 'wb') as f: # pragma: no cover
                 f.write(output)
         elif isinstance(output, dict): # If it's a JSON
-            scf.savejson(filename, output)
+            sc.savejson(filename, output)
         else: # Other text
             with open(filename, 'w', encoding='utf-8') as f: # Explicit encoding to avoid issues on Windows
                 f.write(output)
@@ -746,11 +748,7 @@ def download(url, *args, filename=None, save=True, parallel=True, die=True, verb
     | *New in version 3.1.1:* default order switched from URL:filename to filename:URL pairs
     | *New in version 3.1.3:* output as objdict instead of odict
     """
-    from . import sc_parallel as scp # To avoid circular import
-    from . import sc_datetime as scd
-    from . import sc_odict as sco
-
-    T = scd.timer()
+    T = sc.timer()
 
     # Parse arguments
     if isinstance(url, dict):
@@ -782,7 +780,7 @@ def download(url, *args, filename=None, save=True, parallel=True, die=True, verb
     iterkwargs = dict(url=urls, filename=keys)
     func_kwargs = mergedicts(dict(save=save, verbose=wget_verbose), kwargs)
     if n_urls > 1 and parallel:
-        outputs = scp.parallelize(urlopen, iterkwargs=iterkwargs, kwargs=func_kwargs, parallelizer='thread', die=die)
+        outputs = sc.parallelize(urlopen, iterkwargs=iterkwargs, kwargs=func_kwargs, parallelizer='thread', die=die)
     else:
         outputs = []
         for key,url in zip(keys, urls):
@@ -800,7 +798,7 @@ def download(url, *args, filename=None, save=True, parallel=True, die=True, verb
     
     # If we're returning the data rather than saving the files, convert to an odict
     if not save:
-        outputs = sco.objdict({k:v for k,v in zip(keys, outputs)})
+        outputs = sc.objdict({k:v for k,v in zip(keys, outputs)})
 
     if verbose and n_urls > 1:
         T.toc(f'Time to download {n_urls} URLs')
@@ -1536,7 +1534,9 @@ def _sanitize_iterables(obj, *args):
     """
     Take input as a list, array, pandas Series, or non-iterable type, along with
     one or more arguments, and return a list, along with information on what the
-    input types were.
+    input types were (is_list and is_array).
+    
+    Not intended for the user, but used internally.
 
     **Examples**::
 
@@ -1557,7 +1557,7 @@ def _sanitize_iterables(obj, *args):
 def _sanitize_output(obj, is_list, is_array, dtype=None):
     """
     The companion to _sanitize_iterables, convert the object back to the original
-    type supplied.
+    type supplied. Not for the user.
     """
     if is_array:
         output = np.array(obj, dtype=dtype)
@@ -2115,7 +2115,7 @@ class Link:
     def __repr__(self): # pragma: no cover
         """ Just use default """
         from . import sc_printing as scp # To avoid circular import
-        output  = scp.prepr(self)
+        output  = sc.prepr(self)
         return output
 
     def __call__(self, obj=None):
@@ -2277,7 +2277,7 @@ class tryexcept(cl.suppress):
     
     def __repr__(self):
         from . import sc_printing as scp # To avoid circular import
-        return scp.prepr(self)
+        return sc.prepr(self)
     
     
     def __len__(self):
@@ -2333,8 +2333,7 @@ class tryexcept(cl.suppress):
     
     def to_df(self):
         """ Convert the exceptions to a dataframe """
-        from . import sc_dataframe as scd # To avoid circular import
-        df = scd.dataframe(self.data, columns=['type','value','traceback'])
+        df = sc.dataframe(self.data, columns=['type','value','traceback'])
         self.df = df
         return df
     

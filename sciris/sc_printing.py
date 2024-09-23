@@ -22,11 +22,11 @@ import numpy as np
 import collections as co
 from textwrap import fill
 from contextlib import redirect_stdout
+import sciris as sc
 from ._extras import ansicolors as ac
-from . import sc_utils as scu
 
 # Add Windows support for colors (do this at the module level so that colorama.init() only gets called once)
-if scu.iswindows(): # pragma: no cover # NB: can't use startswith() because of 'cygwin'
+if sc.iswindows(): # pragma: no cover # NB: can't use startswith() because of 'cygwin'
     try:
         import colorama
         colorama.init()
@@ -35,7 +35,6 @@ if scu.iswindows(): # pragma: no cover # NB: can't use startswith() because of '
         ansi_support = False
 else:
     ansi_support = True
-
 
 
 #%% Object display functions
@@ -257,7 +256,7 @@ def prepr(obj, vals=True, maxlen=None, maxitems=None, skip=None, dividerchar='�
     if maxlen   is None: maxlen   = 80
     if maxitems is None: maxitems = 100
     if skip     is None: skip = []
-    else:                skip = scu.tolist(skip)
+    else:                skip = sc.tolist(skip)
 
     # Initialize things to print out
     labels = []
@@ -457,7 +456,7 @@ class prettyobj:
     """
     def __init__(self, *args, **kwargs):
         """ Simple initialization """
-        kwargs = scu.mergedicts(*args, kwargs)
+        kwargs = sc.mergedicts(*args, kwargs)
         for k,v in kwargs.items():
             self.__dict__[k] = v
         return
@@ -467,7 +466,7 @@ class prettyobj:
         return prepr(self)
 
 # Handle deprecation so loading old pickles still works
-scu.prettyobj = prettyobj
+sc.prettyobj = prettyobj
 
 
 class quickobj(prettyobj):
@@ -544,7 +543,7 @@ def indent(prefix=None, text=None, suffix='\n', n=0, pretty=False, width=70, **k
 
     # Get text in the right format -- i.e. a string
     if pretty: text = pprint.pformat(text)
-    else:      text = scu.flexstr(text)
+    else:      text = sc.flexstr(text)
 
     # If there is no newline in the text, process the output normally.
     if text.find('\n') == -1:
@@ -597,9 +596,9 @@ def sigfig(x, sigfigs=4, SI=False, sep=False, keepints=False):
     """
     output = []
 
-    islist = scu.isiterable(x)
+    islist = sc.isiterable(x)
     istuple = isinstance(x, tuple)
-    xlist = x if islist else scu.tolist(x)
+    xlist = x if islist else sc.tolist(x)
     for x in xlist:
         suffix = ''
         formats = [(1e18,'e18'), (1e15,'e15'), (1e12,'T'), (1e9,'B'), (1e6,'M'), (1e3,'K')]
@@ -614,7 +613,7 @@ def sigfig(x, sigfigs=4, SI=False, sep=False, keepints=False):
             if x == 0:
                 output.append('0')
             elif sigfigs is None:
-                output.append(scu.flexstr(x)+suffix)
+                output.append(sc.flexstr(x)+suffix)
             elif x > (10**sigfigs) and not SI and keepints: # e.g. x = 23432.23, sigfigs=3, output is 23432
                 roundnumber = int(round(x))
                 if sep: string = format(roundnumber, ',')
@@ -635,7 +634,7 @@ def sigfig(x, sigfigs=4, SI=False, sep=False, keepints=False):
                 string += suffix
                 output.append(string)
         except: # pragma: no cover
-            output.append(scu.flexstr(x))
+            output.append(sc.flexstr(x))
     if islist:
         if istuple:
             output = tuple(output)
@@ -679,9 +678,9 @@ def sigfiground(x, sigfigs=4):
         return out
     
     # Process inputs
-    arr = scu.toarray(x)
+    arr = sc.toarray(x)
     out = round_arr(arr, sigfigs) # Do the rounding
-    if scu.isnumber(x): out = out[0]
+    if sc.isnumber(x): out = out[0]
     elif isinstance(x, list):
         out = out.tolist()
         out = [int(x) if x.is_integer() else x for x in out] # Allow mix of ints and floats
@@ -715,7 +714,7 @@ def arraymean(data, stds=2, axis=None, mean_sf=None, err_sf=None, tostring=True,
     """
     vsf = mean_sf # vsf = "value significant figures"
     esf = err_sf if err_sf is not None else 2
-    data = scu.toarray(data)
+    data = sc.toarray(data)
     val = data.mean(axis=axis)
     err = data.std(axis=axis)*stds
     
@@ -773,7 +772,7 @@ def arraymedian(data, ci=95, sf=3, doprint=False, **kwargs):
     elif str(ci).lower() in ['range', 'minmax']:
         ci = 100
         
-    if scu.isnumber(ci):
+    if sc.isnumber(ci):
         if isinstance(ci, int):
             x = ci/100/2
         elif isinstance(ci, float):
@@ -785,7 +784,7 @@ def arraymedian(data, ci=95, sf=3, doprint=False, **kwargs):
             cistr = 'min, max'
         else:
             cistr = f'{x*100*2:n}% CI'
-    elif scu.isiterable(ci):
+    elif sc.isiterable(ci):
         if len(ci) != 2: # pragma: no cover
             errormsg = f'If providing a list of quantiles, must provide 2, not {len(ci)}'
             raise ValueError(errormsg)
@@ -799,7 +798,7 @@ def arraymedian(data, ci=95, sf=3, doprint=False, **kwargs):
         raise ValueError(errormsg)
     
     # Do calculations
-    data    = scu.toarray(data)
+    data    = sc.toarray(data)
     median  = np.quantile(data, 0.5)
     bounds  = np.quantile(data, quantiles)
     relsize = np.floor(np.log10(abs(median))) - np.floor(np.log10(np.abs(bounds)))
@@ -883,13 +882,13 @@ def printarr(arr, fmt=None, colsep='  ', vsep='—', decimals=2, doprint=True, d
     from . import sc_math as scm # To avoid circular import
     
     string = ''
-    arr = scu.toarray(arr, dtype=dtype)
+    arr = sc.toarray(arr, dtype=dtype)
     if fmt is None:
         if arr.dtype == object: # pragma: no cover
             maxdigits = max([len(str(v)) for v in arr.flatten()])
             fmt = f'%{maxdigits}s'
         else:
-            maxdigits = scm.numdigits(arr.max())
+            maxdigits = sc.numdigits(arr.max())
             if arr.dtype == float:
                 fmt = f'%{maxdigits+decimals+1}.{decimals}f'
             else: # pragma: no cover
@@ -946,7 +945,7 @@ def printdata(data, name='Variable', depth=1, maxlen=40, indent='', level=0, sho
         elif datatype.__name__=='class':  string = (f'class with {len(dir(data))} components')
         else: string = datatype.__name__
         if showcontents and maxlen>0:
-            datastring = ' | '+scu.flexstr(data)
+            datastring = ' | '+sc.flexstr(data)
             if len(datastring)>maxlen: datastring = datastring[:maxlen] + ' <etc> ' + datastring[-maxlen:]
         else: datastring=''
         return string+datastring
@@ -1001,7 +1000,7 @@ def printvars(localvars=None, varlist=None, label=None, divider=True, spaces=1, 
     Version: 2017oct28
     """
 
-    varlist = scu.tolist(varlist) # Make sure it's actually a list
+    varlist = sc.tolist(varlist) # Make sure it's actually a list
     dividerstr = '-'*40
 
     if label:  print(f'Variables for {label}:')
@@ -1104,7 +1103,7 @@ def colorize(color=None, string=None, doprint=None, output=False, enable=True, s
             ansicolors[key] = '\033[' + val + 'm'
 
         # Determine what color to use
-        colorlist = scu.tolist(color)  # Make sure it's a list
+        colorlist = sc.tolist(color)  # Make sure it's a list
         for color in colorlist:
             if color not in ansicolors.keys(): # pragma: no cover
                 print(f'Color "{color}" is not available, use colorize(showhelp=True) to show options.')
@@ -1131,7 +1130,7 @@ def colorize(color=None, string=None, doprint=None, output=False, enable=True, s
                 helpcolor = key
             colorize(helpcolor, '  ' + key)
 
-    return scu._printout(string=ansistring, doprint=doprint, output=output)
+    return sc.sc_utils._printout(string=ansistring, doprint=doprint, output=output)
 
 
 # Alias certain colors functions -- not including white and black since poor practice on light/dark terminals
@@ -1194,7 +1193,7 @@ def heading(string='', *args, color='cyan', divider='—', spaces=2, spacesafter
     """
 
     # Convert to single string
-    args = scu.mergelists(string, list(args))
+    args = sc.mergelists(string, list(args))
     string = sep.join([str(item) for item in args])
 
     # Add header and footer
@@ -1203,7 +1202,7 @@ def heading(string='', *args, color='cyan', divider='—', spaces=2, spacesafter
     spaceafter  = '\n'*spacesafter
     fulldivider = divider*length
     if fulldivider:
-        string = scu.newlinejoin(fulldivider, string, fulldivider)
+        string = sc.newlinejoin(fulldivider, string, fulldivider)
     fullstring = space + string + spaceafter
 
     # Create output
@@ -1250,7 +1249,7 @@ def printv(string, thisverbose=1, verbose=2, indent=2, **kwargs):
     """
     if verbose >= thisverbose: # Only print if sufficiently verbose
         indents = ' '*thisverbose*indent # Create automatic indenting
-        print(indents+scu.flexstr(string), **kwargs) # Actually print
+        print(indents+sc.flexstr(string), **kwargs) # Actually print
     return
 
 
@@ -1376,7 +1375,7 @@ def percentcomplete(step=None, maxsteps=None, stepsize=1, prefix=None):
     """
     if prefix is None:
         prefix = ' '
-    elif scu.isnumber(prefix): # pragma: no cover
+    elif sc.isnumber(prefix): # pragma: no cover
         prefix = ' '*prefix
     onepercent = max(stepsize,round(maxsteps/100*stepsize)) # Calculate how big a single step is -- not smaller than 1
     if not step%onepercent: # Does this value lie on a percent
@@ -1428,7 +1427,7 @@ def progressbar(i=None, maxiters=None, label='', every=1, length=30, empty='—'
     | *New in version 1.3.3:* "every" argument
     | *New in version 3.0.0:* wrapper for tqdm
     """
-    if i is None or scu.isiterable(i):
+    if i is None or sc.isiterable(i):
         desc = kwargs.pop('desc', label)
         return tqdm.tqdm(i, desc=desc, **kwargs)
     
@@ -1550,10 +1549,10 @@ class progressbars(prettyobj):
     def make(self):
         for i in range(self.n):
             total = self.total
-            if scu.isiterable(total):
+            if sc.isiterable(total):
                 total = total[i]
             desc = self.desc
-            if scu.isiterable(desc, exclude=str):
+            if sc.isiterable(desc, exclude=str):
                 desc = desc[i]
             else:
                 if desc is None:

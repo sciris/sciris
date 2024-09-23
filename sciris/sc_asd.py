@@ -10,11 +10,10 @@ This algorithm is published as:
 
 import time
 import numpy as np
-from . import sc_utils as scu
-from . import sc_printing as scp
-from . import sc_odict as sco
+import sciris as sc
 
 __all__ = ['asd']
+
 
 def asd(function, x, args=None, stepsize=0.1, sinc=2, sdec=2, pinc=2, pdec=2,
     pinitial=None, sinitial=None, xmin=None, xmax=None, maxiters=None, maxtime=None,
@@ -161,7 +160,7 @@ def asd(function, x, args=None, stepsize=0.1, sinc=2, sdec=2, pinc=2, pdec=2,
     if args is None: # Reset if no function arguments supplied
         args = []
     elif isinstance(args, dict): # It's actually kwargs supplied
-        kwargs = scu.mergedicts(args, kwargs)
+        kwargs = sc.mergedicts(args, kwargs)
         args = []
     fval = function(x, *args, **kwargs) # Calculate initial value of the objective function
     fvalorig = fval # Store the original value of the objective function, since fval is overwritten on each step
@@ -243,7 +242,7 @@ def asd(function, x, args=None, stepsize=0.1, sinc=2, sdec=2, pinc=2, pdec=2,
             if np.isnan(fvalnew):
                 if verbose >= 1: print('ASD: Warning, objective function returned NaN')
         if verbose > 0 and not (count % max(1, int(1.0/verbose))): # Print out every 1/verbose steps
-            orig, best, new, diff = scp.sigfig([fvalorig, fvalold, fvalnew, fvalnew-fvalold])
+            orig, best, new, diff = sc.sigfig([fvalorig, fvalold, fvalnew, fvalnew-fvalold])
             print(offset + label + f' step {count} ({time.time()-start:0.1f} s) {flag} (orig:{orig} | best:{best} | new:{new} | diff:{diff})')
 
         # Store output information
@@ -255,15 +254,15 @@ def asd(function, x, args=None, stepsize=0.1, sinc=2, sdec=2, pinc=2, pdec=2,
             exitreason = 'Maximum iterations reached'
             break
         if (time.time() - start) > maxtime: # pragma: no cover
-            strtime, strmax = scp.sigfig([(time.time()-start), maxtime])
+            strtime, strmax = sc.sigfig([(time.time()-start), maxtime])
             exitreason = f'Time limit reached ({strtime} > {strmax})'
             break
         if (count > stalliters) and (abs(np.mean(abserrorhistory)) < abstol): # Stop if improvement is too small
-            strabs, strtol = scp.sigfig([np.mean(abserrorhistory), abstol])
+            strabs, strtol = sc.sigfig([np.mean(abserrorhistory), abstol])
             exitreason = f'Absolute improvement too small ({strabs} < {strtol})'
             break
         if (count > stalliters) and (sum(relerrorhistory) < reltol): # Stop if improvement is too small
-            strrel, strtol = scp.sigfig([np.mean(relerrorhistory), reltol])
+            strrel, strtol = sc.sigfig([np.mean(relerrorhistory), reltol])
             exitreason = f'Relative improvement too small ({strrel} < {strtol})'
             break
         if stoppingfunc and stoppingfunc(): # pragma: no cover
@@ -275,7 +274,7 @@ def asd(function, x, args=None, stepsize=0.1, sinc=2, sdec=2, pinc=2, pdec=2,
 
     # Return
     if verbose > 0:
-        orig, best = scp.sigfig([fvals[0], fvals[count]])
+        orig, best = sc.sigfig([fvals[0], fvals[count]])
         eps = 1e-12 # Small value to avoid divide-by-zero errors
         if abs(fvals[count])<eps and abs(fvals[0])<eps:
             ratio = 1 # They're both zero: set the ratio to 1
@@ -286,11 +285,11 @@ def asd(function, x, args=None, stepsize=0.1, sinc=2, sdec=2, pinc=2, pdec=2,
 
         print(f'=== {label} {exitreason} ({count} steps, orig: {orig} | best: {best} | ratio: {ratio}) ===')
     
-    output = sco.objdict()
+    output = sc.objdict()
     output['x'] = np.reshape(x, origshape) # Parameters
     output['fval'] = fvals[count]
     output['exitreason'] = exitreason
-    output['details'] = sco.objdict()
+    output['details'] = sc.objdict()
     output['details']['fvals'] = fvals[:count+1] # Function evaluations
     output['details']['xvals'] = allsteps[:count+1, :]
     output['details']['probabilities'] = probabilities

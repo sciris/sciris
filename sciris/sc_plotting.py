@@ -22,13 +22,7 @@ import datetime as dt
 import pylab as pl
 import numpy as np
 import matplotlib as mpl
-from . import sc_settings as scs
-from . import sc_odict as sco
-from . import sc_utils as scu
-from . import sc_fileio as scf
-from . import sc_printing as scp
-from . import sc_datetime as scd
-from . import sc_versioning as scv
+import sciris as sc
 
 
 ##############################################################################
@@ -44,8 +38,8 @@ def fig3d(num=None, nrows=1, ncols=1, index=1, returnax=False, figkwargs=None, a
 
     Usually not invoked directly; kwargs are passed to :func:`pl.figure() <matplotlib.pyplot.figure>`
     """
-    figkwargs = scu.mergedicts(figkwargs, kwargs, num=num)
-    axkwargs = scu.mergedicts(axkwargs)
+    figkwargs = sc.mergedicts(figkwargs, kwargs, num=num)
+    axkwargs = sc.mergedicts(axkwargs)
 
     fig = pl.figure(**figkwargs)
     ax = ax3d(nrows=nrows, ncols=ncols, index=index, returnfig=False, figkwargs=figkwargs, **axkwargs)
@@ -79,8 +73,8 @@ def ax3d(nrows=None, ncols=None, index=None, fig=None, ax=None, returnfig=False,
     """
     from mpl_toolkits.mplot3d import Axes3D
 
-    figkwargs = scu.mergedicts(figkwargs)
-    axkwargs = scu.mergedicts(dict(nrows=nrows, ncols=ncols, index=index), kwargs)
+    figkwargs = sc.mergedicts(figkwargs)
+    axkwargs = sc.mergedicts(dict(nrows=nrows, ncols=ncols, index=index), kwargs)
     nrows = axkwargs.pop('nrows', nrows) # Since fig.add_subplot() can't handle kwargs...
     ncols = axkwargs.pop('ncols', ncols)
     index = axkwargs.pop('index', index)
@@ -159,7 +153,7 @@ def _process_2d_data(x, y, z, c, flatten=False):
             x,y = np.meshgrid(x, y)
         if flatten:
             x,y,z = x.flatten(), y.flatten(), z.flatten() # Flatten everything to 1D
-            if scu.isarray(c) and c.shape == (ny,nx): # Flatten colors, too, if 2D and the same size as Z
+            if sc.isarray(c) and c.shape == (ny,nx): # Flatten colors, too, if 2D and the same size as Z
                 c = c.flatten()
     elif flatten == False: # pragma: no cover
         raise ValueError('Must provide z values as a 2D array')
@@ -231,8 +225,8 @@ def plot3d(x, y, z, c='index', fig=True, ax=None, returnfig=False, figkwargs=Non
     *New in version 3.1.0:* Allow multi-colored line; removed "plotkwargs" argument; "fig" defaults to True
     """
     # Set default arguments
-    plotkwargs = scu.mergedicts({'lw':2}, kwargs)
-    axkwargs = scu.mergedicts(axkwargs)
+    plotkwargs = sc.mergedicts({'lw':2}, kwargs)
+    axkwargs = sc.mergedicts(axkwargs)
     
     # Do input checking
     assert len(x) == len(y) == len(z), 'All inputs must have the same length'
@@ -244,7 +238,7 @@ def plot3d(x, y, z, c='index', fig=True, ax=None, returnfig=False, figkwargs=Non
     # Handle different-colored line segments
     if c == 'index':
         c = np.arange(n) # Assign automatically based on index
-    if scu.isarray(c) and len(c) in [n, n-1]: # Technically don't use the last color if the color has the same length as the data # pragma: no cover
+    if sc.isarray(c) and len(c) in [n, n-1]: # Technically don't use the last color if the color has the same length as the data # pragma: no cover
         if c.ndim == 1:
             c = _process_colors(c, z=z)
         for i in range(n-1):
@@ -295,8 +289,8 @@ def scatter3d(x=None, y=None, z=None, c='z', fig=True, ax=None, returnfig=False,
     | *New in version 3.1.0:* Allow "index" color argument; removed "plotkwargs" argument; "fig" defaults to True
     """
     # Set default arguments
-    plotkwargs = scu.mergedicts({'s':200, 'depthshade':False, 'lw':0}, kwargs)
-    axkwargs = scu.mergedicts(axkwargs)
+    plotkwargs = sc.mergedicts({'s':200, 'depthshade':False, 'lw':0}, kwargs)
+    axkwargs = sc.mergedicts(axkwargs)
 
     # Create figure
     fig,ax = ax3d(returnfig=True, fig=fig, ax=ax, figkwargs=figkwargs, **axkwargs)
@@ -355,10 +349,10 @@ def surf3d(x=None, y=None, z=None, c=None, fig=True, ax=None, returnfig=False, c
     """
 
     # Set default arguments
-    plotkwargs = scu.mergedicts({'cmap':pl.get_cmap()}, kwargs)
-    axkwargs = scu.mergedicts(axkwargs)
+    plotkwargs = sc.mergedicts({'cmap':pl.get_cmap()}, kwargs)
+    axkwargs = sc.mergedicts(axkwargs)
     if colorbar is None:
-        colorbar = False if scu.isarray(c) else True # Use a colorbar unless colors provided
+        colorbar = False if sc.isarray(c) else True # Use a colorbar unless colors provided
     
     # Create figure
     fig,ax = ax3d(returnfig=True, fig=fig, ax=ax, figkwargs=figkwargs, **axkwargs)
@@ -367,7 +361,7 @@ def surf3d(x=None, y=None, z=None, c=None, fig=True, ax=None, returnfig=False, c
     x, y, z, c = _process_2d_data(x, y, z, c, flatten=False)
     
     # Handle colors
-    if scu.isarray(c):
+    if sc.isarray(c):
         c = _process_colors(c, z=z, cmap=plotkwargs.get('cmap'))
         plotkwargs['facecolors'] = c
     
@@ -424,8 +418,8 @@ def bar3d(x=None, y=None, z=None, c='z', dx=0.8, dy=0.8, dz=None, fig=True, ax=N
     """
 
     # Set default arguments
-    plotkwargs = scu.mergedicts(dict(shade=True), kwargs)
-    axkwargs = scu.mergedicts(axkwargs)
+    plotkwargs = sc.mergedicts(dict(shade=True), kwargs)
+    axkwargs = sc.mergedicts(axkwargs)
 
     # Create figure
     fig,ax = ax3d(returnfig=True, fig=fig, ax=ax, figkwargs=figkwargs, **axkwargs)
@@ -501,7 +495,7 @@ def stackedbar(x=None, values=None, colors=None, labels=None, transpose=False,
         errormsg = 'Must supply values to plot, typically as a 2D array'
         raise ValueError(errormsg)
     
-    values = scu.toarray(values)
+    values = sc.toarray(values)
     if values.ndim == 1: # pragma: no cover
         values = values[None,:] # Convert to a 2D array
     
@@ -647,8 +641,8 @@ def setaxislim(which=None, ax=None, data=None):
     # Calculate the lower limit based on all the data
     lowerlim = 0
     upperlim = 0
-    if scu.checktype(data, 'arraylike'): # Ensure it's numeric data (probably just None) # pragma: no cover
-        flatdata = scu.toarray(data).flatten() # Make sure it's iterable
+    if sc.checktype(data, 'arraylike'): # Ensure it's numeric data (probably just None) # pragma: no cover
+        flatdata = sc.toarray(data).flatten() # Make sure it's iterable
         lowerlim = min(lowerlim, flatdata.min())
         upperlim = max(upperlim, flatdata.max())
 
@@ -734,9 +728,9 @@ def commaticks(ax=None, axis='y', precision=2, cursor_precision=0):
             string = string.replace(',', sep)
         return string
 
-    sep = scs.options.sep
+    sep = sc.options.sep
     axlist = _get_axlist(ax)
-    axislist = scu.tolist(axis)
+    axislist = sc.tolist(axis)
     for ax in axlist:
         for axis in axislist:
             if   axis=='x': thisaxis = ax.xaxis
@@ -765,7 +759,7 @@ def SIticks(ax=None, axis='y', fixed=False):
     """
     def SItickformatter(x, pos=None, sigfigs=2, SI=True, *args, **kwargs):  # formatter function takes tick label and tick position # pragma: no cover
         """ Formats axis ticks so that e.g. 34000 becomes 34k -- usually not invoked directly """
-        output = scp.sigfig(x, sigfigs=sigfigs, SI=SI) # Pretty simple since scp.sigfig() does all the work
+        output = sc.sigfig(x, sigfigs=sigfigs, SI=SI) # Pretty simple since sc.sigfig() does all the work
         return output
 
     axlist = _get_axlist(ax)
@@ -962,10 +956,10 @@ def fonts(add=None, use=False, output='name', dryrun=False, rebuild=False, verbo
     if add is None and not rebuild:
 
         # Find fonts
-        f = sco.objdict() # Create a dictionary for holding the results
+        f = sc.objdict() # Create a dictionary for holding the results
         keys = ['names', 'paths', 'objs']
         for key in keys:
-            f[key] = scu.autolist()
+            f[key] = sc.autolist()
         for fontpath in fm.findSystemFonts(**kwargs):
             try:
                 fontobj = fm.get_font(fontpath)
@@ -1000,14 +994,14 @@ def fonts(add=None, use=False, output='name', dryrun=False, rebuild=False, verbo
         try:
             fontname = None
             fontpaths = []
-            paths = scu.tolist(add)
+            paths = sc.tolist(add)
             for path in paths:
                 path = str(path)
                 if os.path.isdir(path): # pragma: no cover
                     fps = fm.findSystemFonts(path, **kwargs)
                     fontpaths.extend(fps)
                 else:
-                    fontpaths.append(scf.makefilepath(path))
+                    fontpaths.append(sc.makefilepath(path))
 
             if dryrun: # pragma: no cover
                 print(fontpaths)
@@ -1223,8 +1217,8 @@ def dateformatter(ax=None, style='sciris', dateformat=None, start=None, end=None
 
     # Handle limits
     xmin, xmax = ax.get_xlim()
-    if start: xmin = scd.date(start)
-    if end:   xmax = scd.date(end)
+    if start: xmin = sc.date(start)
+    if end:   xmax = sc.date(end)
     ax.set_xlim((xmin, xmax))
 
     # Set the rotation
@@ -1283,7 +1277,7 @@ def datenumformatter(ax=None, start_date=None, dateformat=None, interval=None, s
     # Convert to a date object
     if start_date is None: # pragma: no cover
         start_date = pl.num2date(ax.dataLim.x0)
-    start_date = scd.date(start_date)
+    start_date = sc.date(start_date)
 
     @mpl.ticker.FuncFormatter
     def formatter(x, pos): # pragma: no cover
@@ -1291,8 +1285,8 @@ def datenumformatter(ax=None, start_date=None, dateformat=None, interval=None, s
 
     # Handle limits
     xmin, xmax = ax.get_xlim()
-    if start: xmin = scd.day(start, start_date=start_date)
-    if end:   xmax = scd.day(end,   start_date=start_date)
+    if start: xmin = sc.day(start, start_date=start_date)
+    if end:   xmax = sc.day(end,   start_date=start_date)
     ax.set_xlim((xmin, xmax))
 
     # Set the x-axis intervals
@@ -1381,15 +1375,16 @@ def savefig(filename, fig=None, dpi=None, comments=None, pipfreeze=False, relfra
     dpi = _get_dpi(dpi)
 
     # Get caller and git info
-    jsonstr = scv.metadata(relframe=relframe+1, pipfreeze=pipfreeze, comments=comments, tostring=True, **orig_metadata)
+    jsonstr = sc.metadata(relframe=relframe+1, pipfreeze=pipfreeze, comments=comments, tostring=True, **orig_metadata)
 
     # Handle different formats
     filename = str(filename)
     lcfn = filename.lower() # Lowercase filename
+    metadataflag = sc.sc_versioning._metadataflag
     if lcfn.endswith('png'):
-        metadata = {scv._metadataflag:jsonstr}
+        metadata = {metadataflag:jsonstr}
     elif lcfn.endswith('svg') or lcfn.endswith('pdf'): # pragma: no cover
-        metadata = dict(Keywords=f'{scv._metadataflag}={jsonstr}')
+        metadata = dict(Keywords=f'{metadataflag}={jsonstr}')
     else:
         errormsg = f'Warning: filename "{filename}" has unsupported type for metadata: must be PNG, SVG, or PDF. For JPG, use the separate exif library. To silence this message, set die=False and verbose=False.'
         if die:
@@ -1404,7 +1399,7 @@ def savefig(filename, fig=None, dpi=None, comments=None, pipfreeze=False, relfra
         kwargs['metadata'] = metadata # To avoid warnings for unsupported filenames
 
     # Allow savefig to make directories
-    filepath = scf.makefilepath(filename=filename, folder=folder, makedirs=makedirs)
+    filepath = sc.makefilepath(filename=filename, folder=folder, makedirs=makedirs)
     fig.savefig(filepath, dpi=dpi, **kwargs)
     return filename
 
@@ -1444,7 +1439,7 @@ def savefigs(figs=None, filetype=None, filename=None, folder=None, savefigargs=N
     if filetype is None: filetype = 'singlepdf' # This ensures that only one file is created
 
     # Either take supplied plots, or generate them
-    figs = sco.odict.promote(figs)
+    figs = sc.odict.promote(figs)
     nfigs = len(figs)
 
     # Handle file types
@@ -1452,7 +1447,7 @@ def savefigs(figs=None, filetype=None, filename=None, folder=None, savefigargs=N
     if filetype=='singlepdf': # See http://matplotlib.org/examples/pylab_examples/multipage_pdf.html  # pragma: no cover
         from matplotlib.backends.backend_pdf import PdfPages
         defaultname = 'figures.pdf'
-        fullpath = scf.makefilepath(filename=filename, folder=folder, default=defaultname, ext='pdf', makedirs=True)
+        fullpath = sc.makefilepath(filename=filename, folder=folder, default=defaultname, ext='pdf', makedirs=True)
         pdf = PdfPages(fullpath)
         filenames.append(fullpath)
         if verbose: print(f'PDF saved to {fullpath}')
@@ -1460,18 +1455,18 @@ def savefigs(figs=None, filetype=None, filename=None, folder=None, savefigargs=N
         key,plt = item
         # Handle filename
         if filename and nfigs==1: # Single plot, filename supplied -- use it
-            fullpath = scf.makefilepath(filename=filename, folder=folder, default='Figure', ext=filetype, makedirs=True) # NB, this filename not used for singlepdf filetype, so it's OK
+            fullpath = sc.makefilepath(filename=filename, folder=folder, default='Figure', ext=filetype, makedirs=True) # NB, this filename not used for singlepdf filetype, so it's OK
         else: # Any other case, generate a filename # pragma: no cover
             keyforfilename = filter(str.isalnum, str(key)) # Strip out non-alphanumeric stuff for key
             defaultname = keyforfilename
-            fullpath = scf.makefilepath(filename=filename, folder=folder, default=defaultname, ext=filetype, makedirs=True)
+            fullpath = sc.makefilepath(filename=filename, folder=folder, default=defaultname, ext=filetype, makedirs=True)
 
         # Do the saving
         if savefigargs is None: savefigargs = {}
         defaultsavefigargs = {'dpi':200, 'bbox_inches':'tight'} # Specify a higher default DPI and save the figure tightly
         defaultsavefigargs.update(savefigargs) # Update the default arguments with the user-supplied arguments
         if filetype == 'fig':
-            scf.save(fullpath, plt)
+            sc.save(fullpath, plt)
             filenames.append(fullpath)
             if verbose: print(f'Figure object saved to {fullpath}')
         else: # pragma: no cover
@@ -1510,7 +1505,7 @@ def loadfig(filename=None):
     """
     pl.ion() # Without this, it doesn't show up
     try:
-        fig = scf.loadobj(filename)
+        fig = sc.loadobj(filename)
     except Exception as E: # pragma: no cover
         errormsg = f'Unable to open file "{filename}": are you sure it was saved as a .fig file (not an image)?'
         raise type(E)(errormsg) from E
@@ -1533,7 +1528,7 @@ def reanimateplots(plots=None):
     else: # pragma: no cover
         fignum = 1
         
-    plots = scu.mergelists(plots) # Convert to an odict
+    plots = sc.mergelists(plots) # Convert to an odict
     for plot in plots:
         nfmgf(fignum, plot) # Make sure each figure object is associated with the figure manager -- WARNING, is it correct to associate the plot with an existing figure?
     
@@ -1573,8 +1568,8 @@ def separatelegend(ax=None, handles=None, labels=None, reverse=False, figsetting
     """ Allows the legend of a figure to be rendered in a separate window instead """
 
     # Handle settings
-    f_settings = scu.mergedicts({'figsize':(4.0,4.8)}, figsettings) # (6.4,4.8) is the default, so make it a bit narrower
-    l_settings = scu.mergedicts({'loc': 'center', 'bbox_to_anchor': None, 'frameon': False}, legendsettings)
+    f_settings = sc.mergedicts({'figsize':(4.0,4.8)}, figsettings) # (6.4,4.8) is the default, so make it a bit narrower
+    l_settings = sc.mergedicts({'loc': 'center', 'bbox_to_anchor': None, 'frameon': False}, legendsettings)
 
     # Get handles and labels
     _, handles, labels = _get_legend_handles(ax, handles, labels)
@@ -1591,7 +1586,7 @@ def separatelegend(ax=None, handles=None, labels=None, reverse=False, figsetting
     # to copy the handles, and use the copies to render the legend
     handles2 = []
     for h in handles:
-        h2 = scu.cp(h)
+        h2 = sc.cp(h)
         h2.axes = None
         h2.figure = None
         handles2.append(h2)
@@ -1652,7 +1647,7 @@ def orderlegend(order=None, ax=None, handles=None, labels=None, reverse=None, **
 __all__ += ['animation', 'savemovie']
 
 
-class animation(scp.prettyobj):
+class animation(sc.prettyobj):
     """
     A class for storing and saving a Matplotlib animation.
 
@@ -1718,10 +1713,10 @@ class animation(scp.prettyobj):
         self.nametemplate = nametemplate
         self.imagefolder  = imagefolder
         self.anim_args    = anim_args
-        self.save_args    = scu.mergedicts(save_args, kwargs)
+        self.save_args    = sc.mergedicts(save_args, kwargs)
         self.tidy         = tidy
         self.verbose      = verbose
-        self.filenames    = scu.autolist()
+        self.filenames    = sc.autolist()
         self.frames       = frames if frames else []
         self.fig_size     = None
         self.fig_dpi      = None
@@ -1738,7 +1733,7 @@ class animation(scp.prettyobj):
             self.imagefolder = tempfile.gettempdir()
         if self.imagefolder is None:
             self.imagefolder = os.getcwd()
-        self.imagefolder = scf.path(self.imagefolder)
+        self.imagefolder = sc.path(self.imagefolder)
 
         # Handle name template
         if self.nametemplate is None:
@@ -1846,7 +1841,7 @@ class animation(scp.prettyobj):
             print('Preprocessing frames...')
         for f,filename in enumerate(self.filenames):
             if self.verbose:
-                scp.progressbar(f+1, self.filenames)
+                sc.progressbar(f+1, self.filenames)
             im = pl.imread(filename)
             self.frames.append(ax.imshow(im))
         pl.close(animfig)
@@ -1866,7 +1861,7 @@ class animation(scp.prettyobj):
     def rmfiles(self):
         """ Remove temporary image files """
         succeeded = 0
-        failed = scu.autolist()
+        failed = sc.autolist()
         for filename in self.filenames:
             if os.path.exists(filename):
                 try:
@@ -1878,7 +1873,7 @@ class animation(scp.prettyobj):
             if succeeded:
                 print(f'Removed {succeeded} temporary files')
         if failed: # pragma: no cover
-            print(f'Failed to remove the following temporary files:\n{scu.newlinejoin(failed)}')
+            print(f'Failed to remove the following temporary files:\n{sc.newlinejoin(failed)}')
 
 
     def save(self, filename=None, fps=None, dpi=None, engine='ffmpeg', anim_args=None,
@@ -1894,12 +1889,12 @@ class animation(scp.prettyobj):
                 engine = 'matplotlib'
         engines = ['ffmpeg', 'matplotlib']
         if engine not in engines: # pragma: no cover
-            errormsg = f'Could not understand engine "{engine}": must be one of {scu.strjoin(engines)}'
+            errormsg = f'Could not understand engine "{engine}": must be one of {sc.strjoin(engines)}'
             raise ValueError(errormsg)
 
         # Handle dictionary args
-        anim_args = scu.mergedicts(self.anim_args, anim_args)
-        save_args = scu.mergedicts(self.save_args, save_args)
+        anim_args = sc.mergedicts(self.anim_args, anim_args)
+        save_args = sc.mergedicts(self.save_args, save_args)
 
         # Handle filename
         if filename is None:
@@ -1913,10 +1908,10 @@ class animation(scp.prettyobj):
         if tidy is None: tidy = self.tidy
 
         # Start timing
-        T = scd.timer()
+        T = sc.timer()
 
         if engine == 'ffmpeg': # pragma: no cover
-            save_args = scu.mergedicts(dict(overwrite_output=True, quiet=True), save_args)
+            save_args = sc.mergedicts(dict(overwrite_output=True, quiet=True), save_args)
             stream = ffmpeg.input(self.nametemplate, framerate=fps, **anim_args)
             stream = stream.output(filename)
             stream.run(**save_args, **kwargs)
@@ -1934,7 +1929,7 @@ class animation(scp.prettyobj):
                 frames = self.frames
 
             for f in range(len(frames)):
-                if not scu.isiterable(frames[f]):
+                if not sc.isiterable(frames[f]):
                     frames[f] = (frames[f],) # This must be either a tuple or a list to work with ArtistAnimation
 
             # Try to get the figure from the frames, else use the current one
@@ -1943,7 +1938,7 @@ class animation(scp.prettyobj):
             # Optionally print progress
             if verbose:
                 print(f'Saving {len(frames)} frames at {fps} fps and {dpi} dpi to "{filename}"...')
-                callback = lambda i,n: scp.progressbar(i+1, len(frames)) # Default callback
+                callback = lambda i,n: sc.progressbar(i+1, len(frames)) # Default callback
                 callback = save_args.pop('progress_callback', callback) # if provided as an argument
             else:
                 callback = None
@@ -2036,7 +2031,7 @@ def savemovie(frames, filename=None, fps=None, quality=None, dpi=None, writer=No
         errormsg = f'sc.savemovie(): argument "frames" must be a list, not "{type(frames)}"'
         raise TypeError(errormsg)
     for f in range(len(frames)):
-        if not scu.isiterable(frames[f]): # pragma: no cover
+        if not sc.isiterable(frames[f]): # pragma: no cover
             frames[f] = (frames[f],) # This must be either a tuple or a list to work with ArtistAnimation
 
     # Try to get the figure from the frames, else use the current one
@@ -2076,7 +2071,7 @@ def savemovie(frames, filename=None, fps=None, quality=None, dpi=None, writer=No
 
     # Optionally print progress
     if verbose:
-        start = scd.tic()
+        start = sc.tic()
         print(f'Saving {len(frames)} frames at {fps} fps and {dpi} dpi to "{filename}" using {writer}...')
 
     # Actually create the animation -- warning, no way to not actually have it render!
@@ -2091,6 +2086,6 @@ def savemovie(frames, filename=None, fps=None, quality=None, dpi=None, writer=No
             else:            print(f'File size: {filesize/1e6:0.2f} MB') # pragma: no cover
         except: # pragma: no cover
             pass
-        scd.toc(start)
+        sc.toc(start)
 
     return anim
