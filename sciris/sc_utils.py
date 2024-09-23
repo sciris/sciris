@@ -1884,6 +1884,9 @@ def _assign_to_namespace(var, obj, namespace=None, overwrite=True): # pragma: no
 def importbyname(module=None, variable=None, path=None, namespace=None, lazy=False, overwrite=True, die=True, verbose=True, **kwargs):
     """
     Import modules by name.
+    
+    ``sc.importbyname(x='y')`` is equivalent to "import y as x", but allows module
+    importing to be done programmatically.
 
     See https://peps.python.org/pep-0690/ for a proposal for incorporating something
     similar into Python by default.
@@ -1966,13 +1969,15 @@ def importbypath(path, name=None):
         # Load a module that isn't importable otherwise
         mymod = sc.importbypath('my file with spaces.py')
         
-        # Load two versions of the same folder
-        old = sc.importbypath('/path/to/old/lib', name='oldlib')
-        new = sc.importbypath('/path/to/new/lib', name='newlib')
+        # Load two versions of the same module
+        old = sc.importbypath('/path/to/old/mylib')
+        new = sc.importbypath('/path/to/new/mylib')
+        assert new.__version__ > old.__version__ # Example version comparison (see also sc.compareverisons())
     
     See also :func:`sc.importbyname() <importbyname>`.
 
-    *New in version 3.0.0.*
+    | *New in version 3.0.0.*
+    | *New in version 3.2.0:* Allow importing two modules that have self imports (e.g. "import mylib" from within mylib)
     """
     # Sanitize the path and filename
     default_file='__init__.py'
@@ -1984,16 +1989,42 @@ def importbypath(path, name=None):
         errormsg = f'Could not import {filepath}: is not a valid file or folder'
         raise FileNotFoundError(errormsg)
     
-    # Construct the name from either the filename or the folder name
-    if name is None:
+    # Get the original name (what Python would know it as) from either the filename or the folder name
+    if parts[-1] == default_file:
+        basename = parts[-2] # If __init__.py was included, strip it now
+    else:
         basename = parts[-1].removesuffix('.py')
-        name = sanitizestr(basename, validvariable=True) # Convert directory name to a string
+    orig_name = sanitizestr(basename, validvariable=True) # Ensure it's a valid name
+    if name is None:
+        name = orig_name
+        if name in sys.modules: # If a name isn't provided, ensure it doesn't conflict with an existing module name
+            name = uniquename(name, sys.modules.keys())
+    renamed = name != orig_name # Flag to track if we've renamed the module
+    
+    # If the original name is already present, make a copy to restore later
+    if orig_name in sys.modules:
+        orig_module = sys.modules[orig_name]
+        restore = True
+    else:
+        restore = False
     
     # Actually import the module -- from https://docs.python.org/3/library/importlib.html#importing-a-source-file-directly
     spec = importlib.util.spec_from_file_location(name, filepath)
     module = importlib.util.module_from_spec(spec)
+    
+    # We need to call it by both orig_name and name to handle self-referential imports
     sys.modules[name] = module
+    if renamed:
+        sys.modules[orig_name] = module
+    
+    # Now actually "execute" the module, i.e. load it into memory
     spec.loader.exec_module(module)
+    
+    # Finally, clean up the original module name
+    if restore:
+        sys.modules[orig_name] = orig_module
+    elif renamed:
+        del sys.modules[orig_name]
     
     return module
 
