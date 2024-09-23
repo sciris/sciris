@@ -338,7 +338,7 @@ def pp(obj, jsonify=False, doprint=None, output=False, sort_dicts=False, **kwarg
     return _printout(string=string, doprint=doprint, output=output)
 
 
-def sha(obj, encoding='utf-8', digest=False):
+def sha(obj, digest=False, asint=False, encoding='utf-8'):
     """
     Shortcut for the standard hashing (SHA) method
 
@@ -346,28 +346,33 @@ def sha(obj, encoding='utf-8', digest=False):
 
     Args:
         obj (any): the object to be hashed; if not a string, converted to one
+        digest (bool): if True, return the hex digest instead of the hash object
+        asint (bool): if True, return the (very large) integer corresponding to the hex digest
         encoding (str): the encoding to use
-        digest (bool): whether to return the hex digest instead of the hash objet
 
     **Example**::
 
-        sha1 = sc.sha(dict(foo=1, bar=2), digest=True)
+        sha1 = sc.sha(dict(foo=1, bar=2), True)
         sha2 = sc.sha(dict(foo=1, bar=2), digest=True)
         sha3 = sc.sha(dict(foo=1, bar=3), digest=True)
         assert sha1 == sha2
         assert sha2 != sha3
+    
+    | *New in version 3.2.0:* "asint" argument; changed argument order
     """
-    if not isstring(obj): # Ensure it's actually a string
-        string = repr(obj)
-    else: # pragma: no cover
-        string = obj
-    needsencoding = isinstance(string, str)
-    if needsencoding: # If it's unicode, encode it to bytes first
-        string = string.encode(encoding)
-    output = hashlib.sha224(string)
-    if digest: # pragma: no cover
-        output = output.hexdigest()
-    return output
+    # Prepare argument
+    if not isinstance(obj, (str, bytes)): # Ensure it's actually a string
+        obj = repr(obj) # More robust than str()
+    if isinstance(obj, str): # If it's unicode, encode it to bytes first
+        obj = obj.encode(encoding)
+        
+    # Do the hashing and prepare the output
+    out = hashlib.sha224(obj)
+    if digest or asint:
+        out = out.hexdigest()
+        if asint:
+            out = int(out, 16) # Base-16 integer
+    return out
 
 
 def traceback(exc=None, value=None, tb=None, verbose=False, *args, **kwargs):
@@ -1717,22 +1722,50 @@ def runcommand(command, printinput=False, printoutput=None, wait=True, **kwargs)
     return output
 
 
-def uniquename(name=None, namelist=None, style=None):
+def uniquename(name=None, namelist=None, style=None, human=False, suffix=None):
     """
-    Given a name and a list of other names, find a replacement to the name
-    that doesn't conflict with the other names, and pass it back.
+    Given a name and a list of other names, add a counter to the name so that
+    it doesn't conflict with the other names.
+    
+    Useful for auto-incrementing filenames, etc.
+    
+    Args:
+        name (str): the string to ensure is unique
+        namelist (list): the list of strings that are taken
+        style (str): a custom style for appending the counter
+        human (bool): if True, use ' (%d)' as the style instead of '%d'
+        suffix (str): if provided, remove this suffix from each name and add it back to the unique name
 
-    **Example**::
+    **Examples**::
 
-        name = sc.uniquename(name='file', namelist=['file', 'file (1)', 'file (2)'])
+        sc.uniquename('out', ['out', 'out1']) # Returns 'out2'
+        sc.uniquename(name='file', namelist=['file', 'file (1)', 'file (2)', 'myfile'], human=True) # Returns 'file (3)'
+        sc.uniquename('results.csv', ['results.csv', 'results1.csv'], suffix='.csv') # Returns 'results2.csv'
+    
+    | *New in version 3.2.0:* "human" and "suffix" arguments, simpler default style
     """
-    if style is None: style = ' (%d)'
+    # Set the style if not specified
+    if style is None:
+        if human:
+            style = ' (%d)'
+        else:
+            style = '%d'
+    
+    # Prepare the inputs
+    name = str(name) # Ensure it's a string
     namelist = tolist(namelist)
-    unique_name = str(name) # Start with the passed in name.
-    i = 0 # Reset the counter
+    if suffix:
+        name = name.removesuffix(suffix)
+        namelist = [n.removesuffix(suffix) for n in namelist]
+        
+    # Do the loop
+    i = 0
+    unique_name = name # Start with the passed in name
     while unique_name in namelist: # Try adding an index (i) to the name until we find one that's unique
         i += 1
-        unique_name = str(name) + style%i
+        unique_name = name + style%i # Convert from  the original name
+    if suffix:
+        unique_name += suffix
     return unique_name # Return the found name.
 
 

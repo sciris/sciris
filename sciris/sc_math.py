@@ -580,7 +580,8 @@ def numdigits(n, *args, count_minus=False, count_decimal=False):
 #%% Other functions
 ##############################################################################
 
-__all__ += ['perturb', 'normsum', 'normalize', 'inclusiverange', 'randround', 'cat', 'linregress']
+__all__ += ['perturb', 'normsum', 'normalize', 'inclusiverange', 'randround', 
+            'cat', 'linregress', 'sem']
 
 
 def perturb(n=1, span=0.5, randseed=None, normal=False):
@@ -815,6 +816,27 @@ def linregress(x, y, full=False, **kwargs):
         out.residuals = y - out.y
         return out
 
+
+def sem(a, *args, **kwargs):
+    """
+    Calculate the standard error of the mean (SEM).
+    
+    Shortcut to ``array.mean()/np.sqrt(len(array))``.
+
+    Args:
+        a (arr): array to calculate the SEM of
+        kwargs (dict): passed to :func:`numpy.std`
+
+    **Example**::
+
+        data = np.random.randn(100)
+        sem = sc.sem(data) # Roughly 0.1
+        
+    | *New in version 3.2.0.*
+    """
+    a = scu.toarray(a)
+    out = a.std()/np.sqrt(len(a))
+    return out
 
 
 ##############################################################################

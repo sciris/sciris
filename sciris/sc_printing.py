@@ -658,7 +658,7 @@ def sigfiground(x, sigfigs=4):
     **Examples**::
         
         sc.sigfiground(3.28343) # Returns 3.283
-        sc.sigfiground(834_875, 5)  # Returns 834_880
+        sc.sigfiground(834_875, 5)  # Returns 834880
         sc.sigfiground([3.28343, 834_874, 0, -83_742], 2) # Returns [3.3, 830000, 0, -84000]
     
     | *New in version 3.2.0.*
