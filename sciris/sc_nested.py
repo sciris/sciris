@@ -33,25 +33,33 @@ __all__ = ['getnested', 'setnested', 'makenested', 'iternested', 'IterObj', 'ite
            'mergenested', 'flattendict', 'nestedloop']
 
 
-def makenested(nesteddict, keylist=None, value=None, overwrite=False, generator=None):
+def makenested(obj, keylist=None, value=None, overwrite=True, generator=None, copy=False):
     """
-    Little functions to get and set data from nested dictionaries.
+    Make a nested object (such as a dictionary).
+    
+    Args:
+        obj (any): the object to make the nested list in
+        keylist (list): a list of keys (strings) of the path to make
+        value (any): the value to set at the final key
+        overwrite (bool): if True, overwrite a value even if it exists
+        generator (class/func): the function used to create new levels of nesting (default: same as original object)
+        copy (bool): if True, copy the object before modifying it
+    
+    Functions to get and set data from nested dictionaries (including objects).
 
-    The first two were adapted from: http://stackoverflow.com/questions/14692690/access-python-nested-dictionary-items-via-a-list-of-keys
-
-    "getnested" will get the value for the given list of keys:
+    ``sc.getnested()`` will get the value for the given list of keys:
 
     >>> sc.getnested(foo, ['a','b'])
 
-    "setnested" will set the value for the given list of keys:
+    ``sc.setnested`` will set the value for the given list of keys:
 
     >>> sc.setnested(foo, ['a','b'], 3)
 
-    "makenested" will recursively update a dictionary with the given list of keys:
+    ``sc.makenested`` will recursively update a dictionary with the given list of keys:
 
     >>> sc.makenested(foo, ['a','b'])
 
-    "iternested" will return a list of all the twigs in the current dictionary:
+    ``sc.iternested`` will return a list of all the twigs in the current dictionary:
 
     >>> twigs = sc.iternested(foo)
 
@@ -80,26 +88,36 @@ def makenested(nesteddict, keylist=None, value=None, overwrite=False, generator=
             count += 1
             sc.setnested(foo, twig, count)   # {'a': {'y': 1, 'x': 2, 'z': 3}, 'b': {'a': {'y': 4, 'x': 5}}}
 
-    Version: 2014nov29
+    **Example 3**::
+        
+        foo = sc.makenested(sc.prettyobj(), ['level1', 'level2', 'level3'], 'done')
+        assert foo.level1.level2.level3 == 'done'
+        
+
+    | *New in version 2014nov29.*
+    | *New in version 3.2.0:* operate on arbitrary objects; "overwrite" defaults to True; returns object
     """
-    if generator is None:
-        generator = nesteddict.__class__ # By default, generate new dicts of the same class as the original one
-    currentlevel = nesteddict
+    if copy:
+        obj = scu.dcp(obj)
+    currentlevel = obj
     for i,key in enumerate(keylist[:-1]):
-        if not(key in currentlevel):
-            currentlevel[key] = generator() # Create a new dictionary
-        currentlevel = currentlevel[key]
+        if not check_in_obj(currentlevel, key):
+            if generator is not None:
+                gen_func = generator
+            else:
+                gen_func = currentlevel.__class__ # By default, generate new dicts of the same class as the most recent level
+            new = gen_func() # Create a new dictionary
+            set_in_obj(currentlevel, key, new)
+        currentlevel = get_from_obj(currentlevel, key)
+        
+    # Set the value
     lastkey = keylist[-1]
-    if isinstance(currentlevel, dict):
-        if overwrite or lastkey not in currentlevel:
-            currentlevel[lastkey] = value
-        elif not overwrite and value is not None: # pragma: no cover
-            errormsg = f'Not overwriting entry {keylist} since overwrite=False'
-            raise ValueError(errormsg)
-    elif value is not None: # pragma: no cover
-        errormsg = f'Cannot set value {value} since entry {keylist} is a {type(currentlevel)}, not a dict'
-        raise TypeError(errormsg)
-    return
+    if overwrite or lastkey not in currentlevel:
+        set_in_obj(currentlevel, lastkey, value)
+    elif not overwrite and value is not None: # pragma: no cover
+        errormsg = f'Not overwriting entry {keylist} since overwrite=False'
+        raise ValueError(errormsg)
+    return obj
 
 
 def check_iter_type(obj, check_array=False, known=None, known_to_none=True, custom=None):
@@ -127,6 +145,23 @@ def check_iter_type(obj, check_array=False, known=None, known_to_none=True, cust
     return out
     
 
+def check_in_obj(parent, key):
+    """
+    Check to see if a given key is present in an object
+    """
+    itertype = check_iter_type(parent)
+    if itertype == 'dict':
+        out = key in parent.keys()
+    elif itertype == 'list':
+        out = isinstance(key, int) and 0 <= key < len(parent)
+    elif itertype == 'object':
+        out = key in parent.__dict__.keys()
+    else:
+        errormsg = f'Cannot check for type "{type(parent)}", itertype "{itertype}"'
+        raise Exception(errormsg)
+    return out
+
+
 def get_from_obj(ndict, key, safe=False, **kwargs):
     """
     Get an item from a dict, list, or object by key
@@ -151,15 +186,19 @@ def get_from_obj(ndict, key, safe=False, **kwargs):
         out = None
     return out
 
-def set_to_obj(parent, key, value):
+
+def set_in_obj(parent, key, value):
     """ Set the value for the item """
     itertype = check_iter_type(parent)
     if itertype in ['dict', 'list']:
         parent[key] = value
     elif itertype == 'object':
         parent.__dict__[key] = value
-    else: raise Exception(f'Cannot set value for type "{type(parent)}", itertype "{itertype}"')
+    else:
+        errormsg = f'Cannot set value for type "{type(parent)}", itertype "{itertype}"'
+        raise Exception(errormsg)
     return
+
 
 def getnested(nested, keylist, safe=False):
     """
@@ -181,7 +220,7 @@ def getnested(nested, keylist, safe=False):
     return nested
 
 
-def setnested(nested, keylist, value, force=None):
+def setnested(nested, keylist, value, force=True):
     """
     Set the value for the given list of keys
     
@@ -189,7 +228,7 @@ def setnested(nested, keylist, value, force=None):
         nested (any): the nested object (dict, list, or object) to modify
         keylist (list): the list of keys to use
         value (any): the value to set
-        force (bool): whether to create the keys if they don't exist (NB: only works for dictionaries)
+        force (bool): whether to create the keys if they don't exist
     
     **Example**::
 
@@ -197,11 +236,11 @@ def setnested(nested, keylist, value, force=None):
 
     See :func:`sc.makenested() <makenested>` for full documentation.
     """
-    if force is None: force = isinstance(nested, dict)
+    parentkeys = keylist[:-1]
     if force:
-        makenested(nested, keylist, overwrite=False)
-    currentlevel = getnested(nested, keylist[:-1])
-    set_to_obj(currentlevel, keylist[-1], value)
+        makenested(nested, parentkeys, overwrite=False)
+    currentlevel = getnested(nested, parentkeys)
+    set_in_obj(currentlevel, keylist[-1], value)
     return nested # Return object, but note that it's modified in place
 
 

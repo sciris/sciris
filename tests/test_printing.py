@@ -177,7 +177,7 @@ def test_recursion():
         with sc.capture() as txt:
             print(recurse)
     
-    assert T.total < 0.1 # Should terminate quickly
+    assert T.total < 0.01 # Should terminate quickly
     assert 'recursion' in txt # Should show termination message
     
     return recurse
