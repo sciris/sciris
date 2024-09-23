@@ -37,6 +37,9 @@ from contextlib import closing
 from pathlib import Path
 from glob import glob as pyglob
 import fnmatch as fnm
+import sciris as sc
+
+# TODO: fix
 from . import sc_settings as scs
 from . import sc_utils as scu
 from . import sc_printing as scp
@@ -192,6 +195,13 @@ def load(filename=None, folder=None, verbose=None, die=False, remapping=None,
 
     # If it loaded but with errors, print them here
     if isinstance(obj, Failed):
+        
+        # Nothing at all loaded: raise an exception
+        if obj.isempty():
+            errormsg = _unpicklingerror(filename) + '\n\n' + obj.showfailure(tostring=True)
+            raise UnpicklingError(errormsg)
+            
+        # Otherwise, show the standard unpickling error
         print(_unpicklingerror(filename))
     
     if verbose: T.toc(f'Object loaded from "{filename}"')
@@ -424,7 +434,8 @@ def dumpstr(obj=None, **kwargs):
 
 __all__ += ['loadtext', 'savetext', 'loadzip', 'unzip', 'savezip', 'path', 'ispath', 
             'thisfile', 'thisdir', 'thispath', 'getfilelist', 'glob', 'getfilepaths', 
-            'sanitizefilename', 'sanitizepath', 'makefilepath', 'makepath', 'rmpath']
+            'sanitizefilename', 'sanitizepath', 'makefilepath', 'makepath', 'rmpath',
+            'loadany']
 
 
 def loadtext(filename=None, folder=None, splitlines=False):
@@ -884,6 +895,8 @@ def makefilepath(filename=None, folder=None, ext=None, default=None, split=False
     valid path from them. By default, this function will combine a filename and
     folder using os.path.join, create the folder(s) if needed with os.makedirs,
     and return the absolute path.
+    
+    Note: in most cases :func:`sc.makepath() <sanitizepath>` should be used instead.
 
     Args:
         filename    (str or Path)   : the filename, or full file path, to save to -- in which case this utility does nothing
@@ -1077,6 +1090,98 @@ def rmpath(path=None, *args, die=True, verbose=True, interactive=False, **kwargs
 
     return
 
+
+def loadany(filename, folder=None, verbose=False, **kwargs):
+    """
+    Try all known load functions until one works.
+    
+    Args:
+        filename (str/path): the name of the file to load
+        folder (str): optional additional folder for the filename
+        verbose (bool): print out the details of the process (verbose=2 to show errors)
+        kwargs (dict): passed to the load function
+        
+    **Example**::
+        
+        data = sc.odict()
+        datafiles = ['headers.json', 'some-data.csv', 'more-data.xlsx', 'final-data.obj']
+        for datafile in datafiles:
+            data[datafile] = sc.loadany(datafile)
+    
+    | *New in version 3.2.0.*
+    """
+    
+    # Define known functions and extentions
+    known_funcs = dict(
+        obj = load,
+        json = loadjson,
+        yaml = loadyaml, 
+        xlsx = sc.dataframe.read_excel,
+        csv = sc.dataframe.read_csv,
+        zip = loadzip,
+        text = loadtext,
+    )
+    
+    known_exts = dict(
+        obj = ['obj'],
+        json = ['json'],
+        yaml = ['yaml', 'yml'], 
+        xlsx = ['xls', 'xlsx'],
+        csv = ['csv'],
+        zip = ['zip'],
+        text = ['txt', 'html'],
+    )
+    
+    # Guess the function based on the extension
+    fpath = makepath(filename=filename, folder=folder)
+    suffix = fpath.suffix[1:].lower() # Skip the '.'
+    match = None
+    for key,exts in known_exts.items():
+        if suffix in exts:
+            match = key
+            break
+    
+    # Check the path actually exists
+    if not fpath.exists():
+        errormsg = f'Path {fpath} does not exist!'
+        raise FileNotFoundError(errormsg)
+    
+    def try_load(key):
+        if verbose: print(f'  Trying {key}...')
+        func = known_funcs[key]
+        kw = kwargs if key != 'obj' else kwargs | {'die':True} # Ensure load() dies rather than forging ahead loading junk
+        try:
+            obj = func(fpath, **kw)
+            success = True
+            if verbose: print('  Success!')
+        except Exception as E:
+            obj = None
+            success = False
+            if verbose > 1:
+                errormsg = f'  Method "{key}" failed: {E}'
+                print(errormsg)
+        return obj, success
+    
+    # Try loading it if found
+    if verbose: print(f'Loading {fpath}...')
+    success = False
+    if match:
+        obj, success = try_load(match)
+    
+    # If that doesn't work, try them all in order
+    if not success:
+        for key in known_funcs.keys():
+            if key != match: # Don't retry this one
+                obj, success = try_load(key)
+                if success:
+                    break
+            
+    # If it still didn't work, raise an exception
+    if not success:
+        errormsg = f'All known load methods failed: {sc.strjoin(known_funcs.keys())}'
+        raise ValueError(errormsg)
+    
+    return obj
 
 ##############################################################################
 #%% JSON functions
@@ -2220,7 +2325,8 @@ class Failed:
     """
     An empty class to represent a failed object loading. Not for use by the user.
     
-    *New in version 3.1.0:* combined Failed and UniversalFailed classes    
+    | *New in version 3.1.0:* combined Failed and UniversalFailed classes    
+    | *New in version 3.2.0:* added isempty() check
     """
     _module  = None # These must be class variables since find_class returns a class, not an instance
     _name    = None
@@ -2287,6 +2393,12 @@ class Failed:
         else:
             print(output)
             return
+        
+    def isempty(self):
+        """ Check wether anything at all loaded """
+        attr_check = set(self.__dict__.keys()) == {'state', 'dict', 'unpickling_errors'}
+        empty = attr_check and not len(self.dict) and not len(self.state)
+        return empty
 
 
 def _makefailed(module_name=None, name=None, exc=None, fixes=None, errors=None):
