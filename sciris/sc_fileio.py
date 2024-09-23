@@ -195,13 +195,6 @@ def load(filename=None, folder=None, verbose=None, die=False, remapping=None,
 
     # If it loaded but with errors, print them here
     if isinstance(obj, Failed):
-        
-        # Nothing at all loaded: raise an exception
-        if obj.isempty():
-            errormsg = _unpicklingerror(filename) + '\n\n' + obj.showfailure(tostring=True)
-            raise UnpicklingError(errormsg)
-            
-        # Otherwise, show the standard unpickling error
         print(_unpicklingerror(filename))
     
     if verbose: T.toc(f'Object loaded from "{filename}"')
