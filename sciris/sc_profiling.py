@@ -494,7 +494,7 @@ def loadbalancer(maxcpu=0.9, maxmem=0.9, index=None, interval=None, cpu_interval
 __all__ += ['profile', 'mprofile', 'cprofile', 'tracecalls']
 
 
-def profile(run, follow=None, private='__init__', print_stats=True, *args, **kwargs):
+def profile(run, follow=None, private='__init__', include=None, exclude=None, print_stats=True, verbose=True, *args, **kwargs):
     """
     Profile the line-by-line time required by a function.
     
@@ -508,7 +508,10 @@ def profile(run, follow=None, private='__init__', print_stats=True, *args, **kwa
         run (function): The function to be run
         follow (function): The function, list of functions, class, or module to be followed in the profiler; if None, defaults to the run function
         private (bool/str/list): if True and a class is supplied, follow private functions; if a string/list, follow only those private functions (default ``'__init__'``)
+        include (str): if a class/module is supplied, include only functions matching this string
+        exclude (str): if a class/module is supplied, exclude functions matching this string
         print_stats (bool): whether to print the statistics of the profile to stdout (default True)
+        verbose (bool): list the functions to be profiled
         args (list): Passed to the function to be run
         kwargs (dict): Passed to the function to be run
 
@@ -565,6 +568,8 @@ def profile(run, follow=None, private='__init__', print_stats=True, *args, **kwa
     m_list = [] # List of modules (to be turned into functions/classes)
     c_list = [] # List of classes (to be turned into functions)
     f_list = [] # List of functions (to be used)
+    include = sc.tolist(include)
+    exclude = sc.tolist(exclude)
     
     # First parse into the different categories
     for obj in orig_list:
@@ -580,6 +585,7 @@ def profile(run, follow=None, private='__init__', print_stats=True, *args, **kwa
     def get_attrs(parent):
         """ Safely get the attributes of a module/class """
         attrs = sc.objatt(parent, private=private, return_keys=True)
+        # import traceback; traceback.print_exc(); import pdb; pdb.set_trace()
         objs = []
         for attr in attrs:
             try:
@@ -604,8 +610,14 @@ def profile(run, follow=None, private='__init__', print_stats=True, *args, **kwa
         for obj in objs:
             if sc.isfunc(obj):
                 f_list.append(obj)
+                
+    # Finally, do any filtering
+    if include:
+        f_list = [f for f in f_list if any(inc in str(f) for inc in include)]
+    if exclude:
+        f_list = [f for f in f_list if not any(exc in str(f) for exc in exclude)]
     
-    if print_stats:
+    if verbose:
         print(f'Profiling {len(f_list)} function(s):\n', sc.newlinejoin(f_list), '\n')
     
     # Construct the wrapper
@@ -618,7 +630,8 @@ def profile(run, follow=None, private='__init__', print_stats=True, *args, **kwa
     wrapper(*args, **kwargs) # pragma: no cover
     if print_stats: # pragma: no cover
         lp.print_stats()
-        print('Done.')
+        if verbose:
+            print('Done.')
     return lp # pragma: no cover
 
 

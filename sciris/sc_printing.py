@@ -95,6 +95,9 @@ def _get_obj_keys(obj, private=False, sort=True, use_dir=False):
         if   hasattr(obj, '__dict__'):  keys = obj.__dict__.keys()
         elif hasattr(obj, '__slots__'): keys = obj.__slots__
         else:                           keys = [] # pragma: no cover
+    
+    if isinstance(private, str):
+        private = [private]
         
     # Sort by private keys
     if not private:
