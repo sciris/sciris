@@ -9,6 +9,7 @@ Highlights:
     - :func:`sc.resourcemonitor() <resourcemonitor>`: a monitor to kill processes that exceed memory or other limits
 """
 
+import re
 import os
 import sys
 import time
@@ -489,7 +490,7 @@ def loadbalancer(maxcpu=0.9, maxmem=0.9, index=None, interval=None, cpu_interval
 #%% Profiling functions
 ##############################################################################
 
-__all__ += ['profile', 'mprofile', 'cprofile']
+__all__ += ['profile', 'mprofile', 'cprofile', 'tracecalls']
 
 
 def profile(run, follow=None, print_stats=True, *args, **kwargs):
@@ -808,6 +809,135 @@ class cprofile(sc.prettyobj):
         """ Stop profiling in a context block """
         self.stop()
         return
+
+
+class tracecalls(sc.prettyobj):
+    """
+    Trace all function calls.
+    
+    Alias to ``sys.steprofile()``.
+    
+    Args:
+        trace (str/list/regex): the module(s)/file(s) to trace calls from ('' matches all, but this is inadvisable!)
+        exclude (str/list/regex): a list of modules/files to exclude (default '\<', which excludes builtins)
+        regex (bool): whether to interpret trace and exclude as regexes rather than simple string matching
+        repeats (bool): whether to record repeat calls of the same function (default False)
+        kwargs (dict): passed to ``sys.setprofile``
+    
+    **Examples**::
+        
+        import mymodule as mm
+        
+        with sc.tracecalls('mymodule'):
+            mm.big_operation()
+            
+        tc = sc.tracecalls('*mysubmodule*', exclude='^init*', regex=True, repeats=True)
+        mm.big_operation()
+        tc.stop()
+        tc.df.disp()
+        
+    | *New in version 3.2.0.*    
+    """
+    def __init__(self, trace, exclude=None, regex=False, repeats=False, **kwargs):
+        self.trace = set(sc.tolist(trace))
+        self.exclude = set(sc.tolist(exclude)) if exclude is not None else {'\<'}
+        self.regex = regex
+        self.repeats = repeats
+        self.parsed = set()
+        self.stack = 10
+        self.kwargs = kwargs
+        self.entries = []
+        return
+        
+    def start(self):
+        """ Start profiling """
+        sys.setprofile(self._call, **self.kwargs)
+        return
+    
+    def stop(self, disp=True):
+        """ Stop profiling """
+        sys.setprofile(None)
+        self.to_df()
+        if disp:
+            self.disp()
+        return
+    
+    def __enter__(self):
+        """ Start when entering with-as block; start profiling """
+        self.start()
+        return self
+    
+    def __exit__(self, *args):
+        """ Stop when leaving a with-as block; stop profiling """
+        self.stop()
+        return
+
+    def _call(self, frame, event, arg):
+        """ Used internally to track calls """
+        if event == 'call':
+            self.stack += 1
+            self.frame = frame
+            self.filename = frame.f_code.co_filename
+            self.co_name = frame.f_code.co_name
+            self.lineno = str(frame.f_lineno)
+            
+            # Check if it's already parsed
+            uid = self.filename + self.lineno
+            if uid in self.parsed and not self.repeats:
+                return
+
+            # Check if it's excluded, and if not, store it
+            if self._check():
+                self._store_name()
+                self.parsed.add(uid)
+
+        elif event == 'return':
+            self.stack -= 1
+        
+        return
+
+    def _check(self):
+        """ Used internally to check calls """
+        if self.regex:
+            allow = any(bool(re.match(token, self.filename)) for token in self.trace)
+            exclude = any(bool(re.match(token, self.filename)) for token in self.exclude)
+        else:
+            allow = any(token in self.filename for token in self.trace)
+            exclude = any(token in self.filename for token in self.exclude)
+        return allow and not exclude
+    
+    def _store_name(self):
+        """ Used internally to store the name """
+        f_locals = self.frame.f_locals
+        class_name = ''
+        if '__class__' in f_locals:
+            class_name = f_locals['__class__'].__name__
+        elif 'self' in f_locals:
+            class_name = f_locals['self'].__class__.__name__
+            
+        name = class_name + '.' + self.co_name if class_name else self.co_name
+        entry = sc.dictobj(name=name, filename=self.filename, lineno=self.lineno, stack=self.stack)
+        self.entries.append(entry)
+        return
+    
+    def disp(self, maxlen=60):
+        """ Display the results """
+        ddf = self.df.copy()
+        ddf['indent'] = ['.'*i for i in self.df['stack'].values]
+        ddf['label'] = ddf.indent + ddf.name
+        maxlen = min(maxlen, max([len(label) for label in ddf.label.values]))
+        out = ''
+        for i,(label,file,line) in ddf.enumrows(['label', 'filename', 'lineno'], tuple):
+            out += f'{i} {label:{maxlen}s} # {file}:L{line}\n' 
+        print(out)
+        return
+
+    def to_df(self):
+        """ Convert to a dataframe """
+        df = sc.dataframe(self.entries)
+        df['stack'] -= df['stack'].min()
+        self.df = df
+        return df
 
 
 ##############################################################################
