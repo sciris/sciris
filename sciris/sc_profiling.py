@@ -897,10 +897,13 @@ class tracecalls(sc.prettyobj):
         
         import mymodule as mm
         
+        # In context block
         with sc.tracecalls('mymodule'):
             mm.big_operation()
             
+        # Explicitly
         tc = sc.tracecalls('*mysubmodule*', exclude='^init*', regex=True, repeats=True)
+        tc.start()
         mm.big_operation()
         tc.stop()
         tc.df.disp()
