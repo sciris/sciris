@@ -199,6 +199,16 @@ def set_in_obj(parent, key, value):
     return
 
 
+def flatten_traces(tupledict, sep='_'):
+    """ Convert trace tuples to strings for easier reading """
+    strdict = type(tupledict)() # Create new dictionary of the same type
+    for key,val in tupledict.items():
+        if isinstance(key, tuple):
+            key = sep.join([str(k) for k in key])
+        strdict[key] = val
+    return strdict
+
+
 def getnested(nested, keylist, safe=False):
     """
     Get the value for the given list of keys
@@ -536,17 +546,14 @@ class IterObj:
             if (not self._trace) and (len(self.output)>1) and self.leaf: # We're at the top level, we have multiple entries, and only leaves are requested
                 self.output.pop('root') # Remove "root" with leaf=True if it's not the only node
             return self.output
-        
-    def flatten_traces(self, sep='_'):
-        """ Convert trace tuples to strings for easier reading """
-        newoutput = sc.objdict()
-        for key,val in self.output.items():
-            if isinstance(key, tuple):
-                key = sep.join([str(k) for k in key])
-            newoutput[key] = val
-        self.output = newoutput
-        return newoutput
     
+    def flatten_traces(self, sep='_', inplace=True):
+        """ Flatten the traces """
+        output = flatten_traces(self.output, sep=sep)
+        if inplace:
+            self.output = output
+        return output
+        
     def to_df(self):
         """ Convert the output dictionary to a dataframe """
         if not len(self):
@@ -628,6 +635,7 @@ def iterobj(obj, func=None, inplace=False, copy=False, leaf=False, recursion=0, 
     io = IterObj(obj=obj, func=func, inplace=inplace, copy=copy, leaf=leaf, recursion=recursion, depthfirst=depthfirst,
                  atomic=atomic, skip=skip, rootkey=rootkey, verbose=verbose, iterate=False, *args, **kwargs)
     out = io.iterate() # Iterate
+    
     if flatten:
         out = io.flatten_traces()
     if to_df:
@@ -772,8 +780,8 @@ def nestedloop(inputs, loop_order):
 __all__ += ['search', 'Equal', 'equal']
 
 
-def search(obj, query=_None, key=_None, value=_None, aslist=True, method='exact', 
-           return_values=False, verbose=False, _trace=None, **kwargs):
+def search(obj, query=_None, key=_None, value=_None, type=_None, method='exact', 
+           asdict=True, verbose=False, _trace=None, **kwargs):
     """
     Find a key/attribute or value within a list, dictionary or object.
 
@@ -782,20 +790,17 @@ def search(obj, query=_None, key=_None, value=_None, aslist=True, method='exact'
 
     Args:
         obj (any): A dict, list, or object
-        query (any): The key or value to search for (or a function); equivalent to setting both ``key`` and ``value``
+        query (any): The key or value to search for (or a function or a type); equivalent to setting both ``key`` and ``value``
         key (any): The key to search for
         value (any): The value to search for
-        aslist (bool): return entries as a list (else, return as a string)
-        method (str): choose how to check for matches: 'exact' (test equality), 'partial' (partial/lowercase string match), or 'regex' (treat as a regex expression)
-        return_values (bool): return matching values as well as keys
-        verbose (bool): whether to print details of the search
-        _trace: Not for user input - internal variable used for recursion
+        type (type): The type (or list of types) to match against (for values only)
+        method (str): if the query is a string, choose how to check for matches: 'exact' (test equality), 'partial' (partial/lowercase string match), or 'regex' (treat as a regex expression)
+        asdict (bool): return matching values as well as keys
         kwargs (dict): passed to :func:`sc.iterobj() <iterobj>`
 
     Returns:
-        A list of matching attributes. The items in the list are the Python
-        strings (or lists) used to access the attribute (via attribute, dict, 
-        or listindexing).
+        A dictionary of matching attributes; like :func:`sc.iterobj() <iterobj>`,
+        but filtered to only include matches.
 
     **Examples**::
 
@@ -803,11 +808,11 @@ def search(obj, query=_None, key=_None, value=_None, aslist=True, method='exact'
         nested = {'a':{'foo':1, 'bar':['moat', 'goat']}, 'b':{'car':3, 'cat':[1,2,4,8]}}
         
         # Find keys
-        keymatches = sc.search(nested, 'bar', aslist=False)
+        keymatches = sc.search(nested, 'bar', flatten=True)
         
         # Find values
         val = 4
-        valmatches = sc.search(nested, value=val, aslist=True) # Returns  [['b', 'cat', 2]]
+        valmatches = sc.search(nested, value=val) # Returns  [['b', 'cat', 2]]
         assert sc.getnested(nested, valmatches[0]) == val # Get from the original nested object
         
         # Find values with a function
@@ -818,16 +823,14 @@ def search(obj, query=_None, key=_None, value=_None, aslist=True, method='exact'
         
         # Find partial or regex matches
         found = sc.search(nested, key='oat', method='partial') # Search keys only
-        keys,vals = sc.search(nested, '^.ar', method='regex', return_values=True, verbose=True)
+        keys,vals = sc.search(nested, '^.ar', method='regex', verbose=True)
     
     | *New in version 3.0.0:* ability to search for values as well as keys/attributes; "aslist" argument
     | *New in version 3.1.0:* "query", "method", and "verbose" keywords; improved searching for lists
+    | *New in version 3.2.0:* allow type matching; renamed "return_values" to "asdict"; renamed "aslist" to "flatten" (reversed)
     """
     
-    # Collect keywords that won't change, for later use in the recursion
-    kw = dict(method=method, verbose=verbose, aslist=aslist)
-    
-    def check_match(source, target, method):
+    def check_match(source, target):
         """ Check if there is a match between the "source" and "target" """
         if source != _None and target != _None: # See above for definition; a source and target were supplied
             if callable(target):
@@ -853,84 +856,125 @@ def search(obj, query=_None, key=_None, value=_None, aslist=True, method='exact'
             raise ValueError(errormsg)
         key = query
         value = query
-
-    # Look for matches
+    
+    # Handle type
+    if type != _None:
+        if key != _None or value != _None: # pragma: no cover
+            errormsg = '"type" cannot be used with "key" or "value"; replaces "value"'
+            raise ValueError(errormsg)
+        typetuple = tuple(sc.tolist(type))
+        value = lambda source: isinstance(source, typetuple) # Define a lambda function for the matching
+        
+    
+    # Parse the object tree
+    flatten = kwargs.pop('flatten', False) # Don't flatten because that will disrupt the matching
+    tree = iterobj(obj, **kwargs) # For key matching
+    
+    # Do the matching
     matches = []
-
-    # Determine object type
-    itertype = check_iter_type(obj, **kwargs)
-    if itertype == 'dict':
-        o = obj
-    elif itertype == 'list':
-        o = {k:v for k,v in zip(list(range(len(obj))), obj)}
-    elif itertype == 'object':
-        o = obj.__dict__
-    else:
-        if verbose > 1: print(f'  For trace="{_trace}", cannot descend into "{type(obj)}"')
-        return matches
     
-    # Initialize the trace if it doesn't exist
-    if _trace is None:
-        if aslist:
-            _trace = []
-        else:
-            _trace = ''
-        
-    # Iterate over the items
-    for k,v in o.items():
-
-        if aslist:
-            trace = _trace + [k]
-        else:
-            if itertype == 'dict':
-                trace = _trace + f'["{k}"]'
-            elif itertype == 'list':
-                trace = _trace + f'[{k}]'
-            else:
-                trace = _trace + f'.{k}'
-        
-        # Sanitize object value
-        if method in ['partial', 'regex'] and check_iter_type(v, **kwargs): # We want to exclude values that can be descended into if we're doing string matching
-            objvalue = _None
-        else:
-            objvalue = v
-        
-        # Sanitize object key
-        if key != _None and itertype == 'list': # "Keys" don't make sense for lists, so just duplicate values
-            objkey = objvalue
-        else:
-            objkey = k
-
-        # Actually check for matches
-        for source,target in [[objkey, key], [objvalue, value]]:
-            if check_match(source, target, method=method):
-                if trace not in matches:
-                    matches.append(trace)
-        
-        if verbose:
-            nmatches = len(matches)
-            msg = f'Checking trace="{trace}" for key="{key}", value="{value}" using "{method}": '
-            if nmatches:
-                msg += f'found {len(matches)} matches'
-            else:
-                msg += 'no matches'
-            print(msg)
-
-        # Continue searching recursively, and avoid duplication
-        newmatches = search(o[k], key=key, value=value, _trace=trace, **kw)
-        for newmatch in newmatches:
-            if newmatch not in matches:
-                matches.append(newmatch)
+    # Match keys
+    if key != _None:
+        for k in tree.keys():
+            if check_match(k[-1], key): # Only want the last key of the trace
+                matches.append(k)
     
-    # Tidy up
-    if return_values:
-        values = []
-        for match in matches:
-            value = getnested(obj, match)
-            values.append(value)
-        return matches, values
-    else:
-        return matches
+    # Match values (including types)
+    if value != _None:
+        for k,v in tree.items():
+            if check_match(v, value):
+                matches.append(k)
+    
+    # Reassemble dict to maintain order
+    out = sc.objdict({k:v for k,v in tree.items() if k in matches})
+    
+    if flatten:
+        out = flatten_traces(out)
+        
+    # import traceback; traceback.print_exc(); import pdb; pdb.set_trace()
+        
+    return out
+
+
+        
+
+    # # Look for matches
+    # matches = []
+
+    # # Determine object type
+    # itertype = check_iter_type(obj, **kwargs)
+    # if itertype == 'dict':
+    #     o = obj
+    # elif itertype == 'list':
+    #     o = {k:v for k,v in zip(list(range(len(obj))), obj)}
+    # elif itertype == 'object':
+    #     o = obj.__dict__
+    # else:
+    #     if verbose > 1: print(f'  For trace="{_trace}", cannot descend into "{type(obj)}"')
+    #     return matches
+    
+    # # Initialize the trace if it doesn't exist
+    # if _trace is None:
+    #     if aslist:
+    #         _trace = []
+    #     else:
+    #         _trace = ''
+        
+    # # Iterate over the items
+    # for k,v in o.items():
+
+    #     if aslist:
+    #         trace = _trace + [k]
+    #     else:
+    #         if itertype == 'dict':
+    #             trace = _trace + f'["{k}"]'
+    #         elif itertype == 'list':
+    #             trace = _trace + f'[{k}]'
+    #         else:
+    #             trace = _trace + f'.{k}'
+        
+    #     # Sanitize object value
+    #     if method in ['partial', 'regex'] and check_iter_type(v, **kwargs): # We want to exclude values that can be descended into if we're doing string matching
+    #         objvalue = _None
+    #     else:
+    #         objvalue = v
+        
+    #     # Sanitize object key
+    #     if key != _None and itertype == 'list': # "Keys" don't make sense for lists, so just duplicate values
+    #         objkey = objvalue
+    #     else:
+    #         objkey = k
+
+    #     # Actually check for matches
+    #     for source,target in [[objkey, key], [objvalue, value]]:
+    #         if check_match(source, target, method=method):
+    #             if trace not in matches:
+    #                 matches.append(trace)
+        
+    #     if verbose:
+    #         nmatches = len(matches)
+    #         msg = f'Checking trace="{trace}" for key="{key}", value="{value}" using "{method}": '
+    #         if nmatches:
+    #             msg += f'found {len(matches)} matches'
+    #         else:
+    #             msg += 'no matches'
+    #         print(msg)
+
+    #     # Continue searching recursively, and avoid duplication
+    #     newmatches = search(o[k], key=key, value=value, _trace=trace, **kw)
+    #     for newmatch in newmatches:
+    #         if newmatch not in matches:
+    #             matches.append(newmatch)
+    
+    # # Tidy up
+    # if return_values:
+    #     values = []
+    #     for match in matches:
+    #         value = getnested(obj, match)
+    #         values.append(value)
+    #     return matches, values
+    # else:
+    #     return matches
 
 
 class Equal(sc.prettyobj):
@@ -1090,7 +1134,6 @@ class Equal(sc.prettyobj):
 
     def compare_special(self, obj, obj2):
         """ Do special comparisons for known objects where == doesn't work """
-        from . import sc_math as scm # To avoid circular import
         
         # For floats, check for NaN equality
         if isinstance(obj, float):
