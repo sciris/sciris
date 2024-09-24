@@ -816,14 +816,15 @@ def linregress(x, y, full=False, **kwargs):
         return out
 
 
-def sem(a, *args, **kwargs):
+def sem(a, axis=None, *args, **kwargs):
     """
     Calculate the standard error of the mean (SEM).
     
-    Shortcut to ``array.mean()/np.sqrt(len(array))``.
+    Shortcut (for a 1D array) to ``array.std()/np.sqrt(len(array))``.
 
     Args:
         a (arr): array to calculate the SEM of
+        axis (int): axis to calculate the SEM along
         kwargs (dict): passed to :func:`numpy.std`
 
     **Example**::
@@ -834,7 +835,14 @@ def sem(a, *args, **kwargs):
     | *New in version 3.2.0.*
     """
     a = sc.toarray(a)
-    out = a.std()/np.sqrt(len(a))
+    std = a.std(axis=axis)
+    if axis is None:
+        n = a.size
+    elif sc.isnumber(axis):
+        n = a.shape[axis]
+    else:
+        n = np.prod([a.shape[s] for s in axis])
+    out = std/np.sqrt(n)
     return out
 
 

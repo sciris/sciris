@@ -13,20 +13,22 @@ Version 3.2.0 (2024-09-24)
 
 New features
 ~~~~~~~~~~~~
-
-#. TBC :func:`sc.equal() <sc_nested.equal>` compares two (or more) arbitrarily complex objects. It can handle arrays, dataframes, custom objects with no ``__eq__`` method defined, etc. It can also print a detailed comparison of the objects.
-
-#. :class:`sc.dataframe() <sc_dataframe.dataframe>` v1
-#. :class:`sc.dataframe() <dataframe>` v2
+#. :func:`sc.loadany() <sc_fileio.loadany>` will try to load a file using any of the known formats (pickle, JSON, YAML, Excel, CSV, zip, or plain text).
+#. :func:`sc.sem() <sc_math.sem>` calculates the standard error of the mean.
+#. :class:`sc.dataframe() <sc_dataframe.dataframe>` now has an :func:`addcol() <sc_dataframe.dataframe.addcol>` method, which adds one or more columns to the dataframe.
+#. :class:`sc.dataframe() <sc_dataframe.dataframe>` now has an :func:`enumrows() <sc_dataframe.dataframe.enumrows>` method, which is similar to :func:`pd.iterrows() <pandas.iterrows>`, but up to 50x faster.
 
 
 Bugfixes
 ~~~~~~~~
-
+#. Previously, :func:`sc.inclusiverange() <sc_math.inclusiverange>` would stretch steps in order to exactly match ``start`` and ``stop`` (e.g., ``sc.inclusiverange(0,10,3)`` would stretch the step to ``3.333``). It now defaults to not stretching the step. Previous behavior can be restored via ``sc.inclusiverange(..., stretch=True)```.
 
 Other changes
 ~~~~~~~~~~~~~
-#. Imports have been changed: Sciris internall uses absolute rather than relative imports, and ``pylab`` has been replaced with ``matplotlib.pyplot``.
+#. :func:`sc.datedelta() <sc_datetime.datedelta>` can now handle fractional years.
+#. :func:`sc.datetoyear() <sc_datetime.datetoyear>` now has a ``reverse`` argument for converting years to dates.
+
+#. Imports have been changed: Sciris internally uses absolute rather than relative imports, and ``pylab`` has been replaced with ``matplotlib.pyplot``. These should not impact the user, but improves load time.
 
 
 Version 3.1.7 (2024-07-10)

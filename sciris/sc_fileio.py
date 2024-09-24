@@ -1078,7 +1078,9 @@ def rmpath(path=None, *args, die=True, verbose=True, interactive=False, **kwargs
 
 def loadany(filename, folder=None, verbose=False, **kwargs):
     """
-    Try all known load functions until one works.
+    Load data from a file using all known load functions until one works.
+
+    Known formats are: pickle, JSON, YAML, Excel, CSV, zip, or plain text.
     
     Args:
         filename (str/path): the name of the file to load
