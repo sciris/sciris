@@ -23,6 +23,7 @@ import collections as co
 from textwrap import fill
 from contextlib import redirect_stdout
 import sciris as sc
+import scirits.sc_utils as scu
 from ._extras import ansicolors as ac
 
 # Add Windows support for colors (do this at the module level so that colorama.init() only gets called once)
@@ -466,7 +467,7 @@ class prettyobj:
         return prepr(self)
 
 # Handle deprecation so loading old pickles still works
-sc.prettyobj = prettyobj
+scu.prettyobj = prettyobj
 
 
 class quickobj(prettyobj):
