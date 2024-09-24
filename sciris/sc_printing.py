@@ -13,6 +13,7 @@ Highlights:
 import io
 import os
 import sys
+import types
 import time
 import tqdm
 import pprint
@@ -86,23 +87,36 @@ def objectid(obj, showclasses=False):
 
 def _get_obj_keys(obj, private=False, sort=True, use_dir=False):
     """ Helper method to get the keys of an object """
-    if use_dir:
+    
+    # Get the list of keys
+    if use_dir: # This forces the use of dir(), as opposed to checking for dict or slots
         keys = obj.__dir__() # This is the unsorted version of dir()
     else:
         if   hasattr(obj, '__dict__'):  keys = obj.__dict__.keys()
         elif hasattr(obj, '__slots__'): keys = obj.__slots__
         else:                           keys = [] # pragma: no cover
+        
+    # Sort by private keys
     if not private:
         keys = [k for k in keys if not k.startswith('__')]
+    elif isinstance(private, list):
+        keys = [k for k in keys if (not k.startswith('__') or k in private)]
+        
+    # Optionally sort
     if sort:
         keys = sorted(keys)
     return list(keys) # Sometimes dict_keys
 
 
 def _is_meth(obj, attr, die=False):
-    """ Helper function to check if an attribute is a method; do not distinguish between bound and unbound """
+    """
+    Helper function to check if an attribute is a method; do not distinguish between bound and unbound
+    
+    | *New in version 3.2.0:* use method and function types instead of callable()    
+    """
     try:
-        return callable(getattr(obj, attr))
+        obj = getattr(obj, attr, None)
+        return isinstance(obj, (types.MethodType, types.FunctionType)) # Equivalent to sc.isfunc()
     except Exception as E:
         if die:
             raise E
@@ -113,7 +127,8 @@ def _is_meth(obj, attr, die=False):
 def _is_prop(obj, attr, die=False):
     """ Helper function to check if an attribute is a property """
     try:
-        return isinstance(getattr(type(obj), attr, None), property)
+        obj = getattr(type(obj), attr, None)
+        return isinstance(obj, property)
     except Exception as E:
         if die:
             raise E
@@ -121,11 +136,14 @@ def _is_prop(obj, attr, die=False):
             return False
 
 
-def objatt(obj, strlen=_strlen, ncol=_ncol, private=False, sort=True, _keys=None):
+def objatt(obj, strlen=_strlen, ncol=_ncol, private=False, sort=True, _keys=None, return_keys=False):
     """ Return a sorted string of object attributes for the Python __repr__ method; see :func:`sc.prepr() <prepr>` for options """
     keys = _get_obj_keys(obj, private=private, sort=sort) if _keys is None else _keys
-    output = createcollist(keys, 'Attributes', strlen=strlen, ncol=ncol)
-    return output
+    if return_keys:
+        return keys
+    else:
+        output = createcollist(keys, 'Attributes', strlen=strlen, ncol=ncol)
+        return output
 
 
 def classatt(obj, strlen=_strlen, ncol=_ncol, private=False, sort=True, _objkeys=None, _dirkeys=None, return_keys=False):
@@ -142,22 +160,26 @@ def classatt(obj, strlen=_strlen, ncol=_ncol, private=False, sort=True, _objkeys
         return output
 
 
-def objmeth(obj, strlen=_strlen, ncol=_ncol, private=False, sort=True, _keys=None):
+def objmeth(obj, strlen=_strlen, ncol=_ncol, private=False, sort=True, _keys=None, return_keys=False):
     """ Return a sorted string of object methods for the Python __repr__ method; see :func:`sc.prepr() <prepr>` for options """
     try: # In very rare cases this fails, so put it in a try-except loop
         _keys = _get_obj_keys(obj, private=private, sort=sort, use_dir=True) if _keys is None else _keys
         keys = sorted([meth + '()' for meth in _keys if _is_meth(obj, meth)])
+        if return_keys:
+            return _keys
     except Exception as E: # pragma: no cover
         keys = [f'Methods N/A ({E})']
     output = createcollist(keys, 'Methods', strlen=strlen, ncol=ncol)
     return output
 
 
-def objprop(obj, strlen=_strlen, ncol=_ncol, private=False, sort=True, _keys=None):
+def objprop(obj, strlen=_strlen, ncol=_ncol, private=False, sort=True, _keys=None, return_keys=False):
     """ Return a sorted string of object properties for the Python __repr__ method; see :func:`sc.prepr() <prepr>` for options """
     try: # In very rare cases this fails, so put it in a try-except loop
         _keys = _get_obj_keys(obj, private=private, sort=sort, use_dir=True) if _keys is None else _keys
         keys = [prop for prop in _keys if _is_prop(obj, prop)]
+        if return_keys:
+            return keys
     except Exception as E: # pragma: no cover
         keys = [f'Properties N/A ({E})']
     output = createcollist(keys, 'Properties', strlen=strlen, ncol=ncol)

@@ -13,6 +13,7 @@ import re
 import os
 import sys
 import time
+import types
 import psutil
 import signal
 import pstats
@@ -493,7 +494,7 @@ def loadbalancer(maxcpu=0.9, maxmem=0.9, index=None, interval=None, cpu_interval
 __all__ += ['profile', 'mprofile', 'cprofile', 'tracecalls']
 
 
-def profile(run, follow=None, print_stats=True, *args, **kwargs):
+def profile(run, follow=None, private='__init__', print_stats=True, *args, **kwargs):
     """
     Profile the line-by-line time required by a function.
     
@@ -506,8 +507,10 @@ def profile(run, follow=None, print_stats=True, *args, **kwargs):
     Args:
         run (function): The function to be run
         follow (function): The function, list of functions, class, or module to be followed in the profiler; if None, defaults to the run function
-        print_stats (bool): whether to print the statistics of the profile to stdout
-        args, kwargs: Passed to the function to be run
+        private (bool/str/list): if True and a class is supplied, follow private functions; if a string/list, follow only those private functions (default ``'__init__'``)
+        print_stats (bool): whether to print the statistics of the profile to stdout (default True)
+        args (list): Passed to the function to be run
+        kwargs (dict): Passed to the function to be run
 
     Returns:
         LineProfiler (by default, the profile output is also printed to stdout)
@@ -524,8 +527,8 @@ def profile(run, follow=None, print_stats=True, *args, **kwargs):
             return
 
         class Foo:
-            def __init__(self):
-                self.a = 0
+            def __init__(self, a=0):
+                self.a = a
 
             def outer(self):
                 for i in range(100):
@@ -543,29 +546,75 @@ def profile(run, follow=None, print_stats=True, *args, **kwargs):
         sc.profile(run=foo.outer, follow=foo) 
         
         # Profile the constructor for Foo
-        f = lambda: Foo()
-        sc.profile(run=f, follow=Foo.__init__)
+        f = lambda a: Foo(a)
+        sc.profile(run=f, follow=Foo.__init__, a=10) # "a" is passed to the function
     
-    | *New in version 3.2.0:* allow class and module arguments for "follow"
+    | *New in version 3.2.0:* allow class and module arguments for "follow"; "private" argument
     """
     try:
         from line_profiler import LineProfiler
     except ModuleNotFoundError as E: # pragma: no cover
         errormsg = 'The "line_profiler" package is not installed; try "pip install line_profiler". (Note: it is not compatible with Python 3.12)'
         raise ModuleNotFoundError(errormsg) from E
-
+        
+    # Figure out follow
     if follow is None: # pragma: no cover
         follow = run
-
+    orig_list = sc.tolist(follow)
+    
+    m_list = [] # List of modules (to be turned into functions/classes)
+    c_list = [] # List of classes (to be turned into functions)
+    f_list = [] # List of functions (to be used)
+    
+    # First parse into the different categories
+    for obj in orig_list:
+        if sc.isfunc(obj): # Simple: just a function
+            f_list.append(obj)
+        elif isinstance(obj, types.ModuleType):
+            m_list.append(obj)
+        elif isinstance(obj, type):
+            c_list.append(obj)
+        else:
+            c_list.append(obj.__class__) # Everything is a class
+            
+    def get_attrs(parent):
+        """ Safely get the attributes of a module/class """
+        attrs = sc.objatt(parent, private=private, return_keys=True)
+        objs = []
+        for attr in attrs:
+            try:
+                obj = getattr(parent, attr)
+                objs.append(obj)
+            except: # Don't worry too much if some fail
+                pass
+        return objs
+    
+    # First take a pass and convert any modules to functions and classes
+    for mod in m_list:
+        objs = get_attrs(mod)
+        for obj in objs:
+            if sc.isfunc(obj): # It's a function, use it directly
+                f_list.append(obj)
+            elif isinstance(obj, type): # It's a class, add it to the class list
+                c_list.append(obj)
+        
+    # Then convert any classes to functions/objects
+    for cla in c_list:
+        objs = get_attrs(cla)
+        for obj in objs:
+            if sc.isfunc(obj):
+                f_list.append(obj)
+    
+    if print_stats:
+        print(f'Profiling {len(f_list)} function(s):\n', sc.newlinejoin(f_list), '\n')
+    
+    # Construct the wrapper
     lp = LineProfiler()
-    follow = sc.tolist(follow)
-    for f in follow:
+    for f in f_list:
         lp.add_function(f)
     lp.enable_by_count()
     wrapper = lp(run) # pragma: no cover
 
-    if print_stats: # pragma: no cover
-        print('Profiling...')
     wrapper(*args, **kwargs) # pragma: no cover
     if print_stats: # pragma: no cover
         lp.print_stats()

@@ -23,6 +23,7 @@ Highlights:
 
 import re
 import sys
+import types
 import copy
 import json
 import string
@@ -837,7 +838,7 @@ def htmlify(string, reverse=False, tostring=False):
 #%% Type functions
 ##############################################################################
 
-__all__ += ['flexstr', 'sanitizestr', 'isiterable', 'checktype', 'isnumber', 'isstring', 'isarray',
+__all__ += ['flexstr', 'sanitizestr', 'isiterable', 'checktype', 'isnumber', 'isstring', 'isarray', 'isfunc',
             'toarray', 'tolist', 'promotetoarray', 'promotetolist', 'transposelist',
             'swapdict', 'mergedicts', 'mergelists', 'ifelse']
 
@@ -1131,6 +1132,15 @@ def isarray(obj, dtype=None):
             else:
                 return False
     return False
+
+
+def isfunc(obj):
+    """
+    Quickly check if something is a function.
+    
+    | *New in version 3.2.0.*    
+    """
+    return isinstance(obj, (types.MethodType, types.FunctionType))
 
 
 def toarray(x, keepnone=False, asobject=True, dtype=None, **kwargs):
