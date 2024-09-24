@@ -871,7 +871,7 @@ def printarr(arr, fmt=None, colsep='  ', vsep='—', decimals=2, doprint=True, d
 
     **Examples**::
 
-        numeric = pl.randn(3,7,4)**10
+        numeric = np.random.randn(3,7,4)**10
         mixed = np.array([['cat', 'nudibranch'], [23, 2423482]], dtype=object)
         sc.printarr(numeric)
         sc.printarr(mixed)

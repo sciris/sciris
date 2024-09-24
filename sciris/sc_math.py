@@ -953,7 +953,7 @@ def smooth(data, repeats=None, kernel=None, legacy=False):
 
     **Example**::
 
-        data = pl.randn(5,5)
+        data = np.random.randn(5,5)
         smoothdata = sc.smooth(data)
 
     *New in version 1.3.0:* Fix edge effects.
@@ -1164,9 +1164,12 @@ def gauss1d(x=None, y=None, xi=None, scale=None, use32=True):
     **Examples**::
 
         # Setup
-        import pylab as pl
-        x = pl.rand(40)
-        y = (x-0.3)**2 + 0.2*pl.rand(40)
+        import numpy as np
+        import matplotlib.pyplot as plt
+        import sciris as sc
+
+        x = np.random.rand(40)
+        y = (x-0.3)**2 + 0.2*np.random.rand(40)
 
         # Smooth
         yi = sc.gauss1d(x, y)
@@ -1174,7 +1177,7 @@ def gauss1d(x=None, y=None, xi=None, scale=None, use32=True):
         xi3 = pl.linspace(0,1)
         yi3 = sc.gauss1d(x, y, xi)
 
-        # Plot oiginal and interpolated versions
+        # Plot original and interpolated versions
         pl.scatter(x, y,     label='Original')
         pl.scatter(x, yi,    label='Default smoothing')
         pl.scatter(x, yi2,   label='More smoothing')
@@ -1251,13 +1254,15 @@ def gauss2d(x=None, y=None, z=None, xi=None, yi=None, scale=1.0, xscale=1.0, ysc
     **Examples**::
 
         # Setup
-        import pylab as pl
-        x = pl.rand(40)
-        y = pl.rand(40)
+        import numpy as np
+        import matplotlib.pyplot as plt
+        
+        x = np.random.rand(40)
+        y = np.random.rand(40)
         z = 1-(x-0.5)**2 + (y-0.5)**2 # Make a saddle
 
         # Simple usage -- only works if z is 2D
-        zi0 = sc.gauss2d(pl.rand(10,10))
+        zi0 = sc.gauss2d(np.random.rand(10,10))
         sc.surf3d(zi0)
 
         # Method 1 -- form grid
@@ -1266,8 +1271,8 @@ def gauss2d(x=None, y=None, z=None, xi=None, yi=None, scale=1.0, xscale=1.0, ysc
         zi = sc.gauss2d(x, y, z, xi, yi, scale=0.1, grid=True)
 
         # Method 2 -- use points directly
-        xi2 = pl.rand(400)
-        yi2 = pl.rand(400)
+        xi2 = np.random.rand(400)
+        yi2 = np.random.rand(400)
         zi2 = sc.gauss2d(x, y, z, xi2, yi2, scale=0.1)
 
         # Plot oiginal and interpolated versions

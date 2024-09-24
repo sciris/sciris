@@ -12,7 +12,7 @@ import time as pytime
 import warnings
 import numpy as np
 import pandas as pd
-import pylab as pl
+import matplotlib.pyplot as plt
 import datetime as dt
 import dateutil as du
 import sciris as sc
@@ -889,7 +889,7 @@ class timer:
 
         T = sc.timer(doprint=False)
         for key in 'abcde':
-            sc.timedsleep(pl.rand())
+            sc.timedsleep(np.random.rand())
             T.tt(key)
         print(T.timings)
 

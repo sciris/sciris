@@ -2129,8 +2129,9 @@ def savespreadsheet(filename=None, data=None, folder=None, sheetnames=None, clos
 
     **Examples**::
 
+        import numpy as np
         import sciris as sc
-        import pylab as pl
+        import matplotlib.pyplot as plt
 
         # Simple example
         testdata1 = np.random.rand(8,3)

@@ -13,9 +13,9 @@ Highlights:
 ##############################################################################
 
 import struct
-import pylab as pl
 import numpy as np
 import matplotlib as mpl
+import matplotlib.pyplot as plt
 import sciris as sc
 
 
@@ -223,8 +223,8 @@ def vectocolor(vector, cmap=None, asarray=True, reverse=False, minval=None, maxv
     **Example**::
 
         n = 1000
-        x = pl.randn(n,1);
-        y = pl.randn(n,1);
+        x = np.random.randn(n,1);
+        y = np.random.randn(n,1);
         c = sc.vectocolor(y);
         pl.scatter(x, y, c=c, s=50)
 
@@ -299,11 +299,11 @@ def arraycolors(arr, **kwargs):
 
         n = 1000
         ncols = 5
-        arr = pl.rand(n,ncols)
+        arr = np.random.rand(n,ncols)
         for c in range(ncols):
             arr[:,c] += c
-        x = pl.rand(n)
-        y = pl.rand(n)
+        x = np.random.rand(n)
+        y = np.random.rand(n)
         colors = sc.arraycolors(arr)
         pl.figure(figsize=(20,16))
         for c in range(ncols):
@@ -349,10 +349,12 @@ def gridcolors(ncolors=10, limits=None, nsteps=20, asarray=False, ashex=False, r
 
     **Example**::
 
-        import pylab as pl
+        import numpy as np
+        import matplotlib.pyplot as plt
         import sciris as sc
+
         ncolors = 10
-        piedata = pl.rand(ncolors)
+        piedata = np.random.rand(ncolors)
         colors = sc.gridcolors(ncolors)
         pl.pie(piedata, colors=colors)
         sc.gridcolors(ncolors, demo=True)
@@ -464,7 +466,7 @@ def midpointnorm(vcenter=0, vmin=None, vmax=None):
 
     **Example**::
 
-        data = pl.rand(10,10) - 0.2
+        data = np.random.rand(10,10) - 0.2
         pl.pcolor(data, cmap='bi', norm=sc.midpointnorm())
 
     *New in version 1.2.0.*
@@ -513,8 +515,8 @@ def manualcolorbar(data=None, vmin=0, vmax=1, vcenter=None, colors=None, values=
         
         # Add a colorbar to non-mappable data (e.g. a scatterplot)
         n = 1000
-        x = pl.randn(n)
-        y = pl.randn(n)
+        x = np.random.randn(n)
+        y = np.random.randn(n)
         c = x**2 + y**2
         pl.scatter(x, y, c=c)
         sc.manualcolorbar(c)
@@ -634,7 +636,7 @@ def colormapdemo(cmap=None, n=None, smoothing=None, randseed=None, doshow=True):
     horizontalsize = 4
     np.random.seed(randseed)
     kernel = np.array([0.25,0.5,0.25])
-    data = pl.randn(n,n)
+    data = np.random.randn(n,n)
     for s in range(smoothing): # Quick-and-dirty-and-slow smoothing
         for i in range(n): data[:,i] = np.convolve(data[:,i],kernel,mode='same')
         for i in range(n): data[i,:] = np.convolve(data[i,:],kernel,mode='same')
@@ -688,8 +690,8 @@ def alpinecolormap(apply=False):
     **Usage example**::
 
         import sciris as sc
-        import pylab as pl
-        pl.imshow(pl.randn(20,20), interpolation='none', cmap=sc.alpinecolormap())
+        import matplotlib.pyplot as plt
+        pl.imshow(np.random.randn(20,20), interpolation='none', cmap=sc.alpinecolormap())
 
     Version: 2014aug06
     """

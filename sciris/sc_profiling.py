@@ -22,7 +22,7 @@ import tempfile
 import warnings
 import numpy as np
 import pandas as pd
-import pylab as pl
+import matplotlib.pyplot as plt
 import multiprocessing as mp
 import sciris as sc
 

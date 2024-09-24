@@ -18,7 +18,7 @@ import re
 import inspect
 import warnings
 import collections as co
-import pylab as pl
+import matplotlib.pyplot as plt
 import sciris as sc
 
 __all__ = ['style_simple', 'style_fancy', 'ScirisOptions', 'options', 'parse_env', 'help']

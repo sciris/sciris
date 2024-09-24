@@ -19,7 +19,7 @@ Highlights:
 import os
 import tempfile
 import datetime as dt
-import pylab as pl
+import matplotlib.pyplot as plt
 import numpy as np
 import matplotlib as mpl
 import sciris as sc
@@ -211,14 +211,14 @@ def plot3d(x, y, z, c='index', fig=True, ax=None, returnfig=False, figkwargs=Non
 
     **Examples**::
 
-        x,y,z = pl.rand(3,10)
+        x,y,z = np.random.rand(3,10)
         sc.plot3d(x, y, z)
         
         fig = pl.figure()
         n = 100
-        x = np.array(sorted(pl.rand(n)))
-        y = x + pl.randn(n)
-        z = pl.randn(n)
+        x = np.array(sorted(np.random.rand(n)))
+        y = x + np.random.randn(n)
+        z = np.random.randn(n)
         c = np.arange(n)
         sc.plot3d(x, y, z, c=c, fig=fig)
     
@@ -278,11 +278,11 @@ def scatter3d(x=None, y=None, z=None, c='z', fig=True, ax=None, returnfig=False,
     **Examples**::
 
         # Implicit coordinates, color by height (z-value)
-        data = pl.randn(10, 10)
+        data = np.random.randn(10, 10)
         sc.scatter3d(data)
         
         # Explicit coordinates, color by index (i.e. ordering)
-        x,y,z = pl.rand(3,50)
+        x,y,z = np.random.rand(3,50)
         sc.scatter3d(x, y, z, c='index')
     
     | *New in version 3.0.0:* Allow 2D input
@@ -333,7 +333,7 @@ def surf3d(x=None, y=None, z=None, c=None, fig=True, ax=None, returnfig=False, c
     **Examples**::
 
         # Simple example
-        data = sc.smooth(pl.rand(30,50))
+        data = sc.smooth(np.random.rand(30,50))
         sc.surf3d(data)
         
         # Use non-default axes and colors
@@ -341,7 +341,7 @@ def surf3d(x=None, y=None, z=None, c=None, fig=True, ax=None, returnfig=False, c
         ny = 50
         x = 10*np.arange(nx)
         y = np.arange(ny) + 100
-        z = sc.smooth(pl.randn(ny,nx))
+        z = sc.smooth(np.random.randn(ny,nx))
         c = z**2
         sc.surf3d(x=x, y=y, z=z, c=c, cmap='orangeblue')
     
@@ -401,7 +401,7 @@ def bar3d(x=None, y=None, z=None, c='z', dx=0.8, dy=0.8, dz=None, fig=True, ax=N
     **Examples**::
 
         # Simple example
-        data = pl.rand(5,4)
+        data = np.random.rand(5,4)
         sc.bar3d(data)
         
         # Use non-default axes and colors (note: this one is pretty!)
@@ -409,7 +409,7 @@ def bar3d(x=None, y=None, z=None, c='z', dx=0.8, dy=0.8, dz=None, fig=True, ax=N
         ny = 6
         x = 10*np.arange(nx)
         y = np.arange(ny) + 10
-        z = -pl.rand(ny,nx)
+        z = -np.random.rand(ny,nx)
         dz = -2*z
         c = z**2
         sc.bar3d(x=x, y=y, z=z, dx=0.5, dy=0.5, dz=dz, c=c, cmap='orangeblue')
@@ -478,7 +478,7 @@ def stackedbar(x=None, values=None, colors=None, labels=None, transpose=False,
     
     **Example**::
         
-        values = pl.rand(3,5)
+        values = np.random.rand(3,5)
         sc.stackedbar(values, labels=['bottom','middle','top'])
         pl.legend()
     
@@ -573,7 +573,7 @@ def boxoff(ax=None, which=None, removeticks=True):
         sc.boxoff(ax=ax, which='all')
 
         fig = pl.figure()
-        pl.scatter(np.arange(100), pl.rand(100))
+        pl.scatter(np.arange(100), np.random.rand(100))
         sc.boxoff('top, bottom')
 
     *New in version 1.3.3:* ability to turn off multiple spines; removed "flipticks" arguments
@@ -705,7 +705,7 @@ def commaticks(ax=None, axis='y', precision=2, cursor_precision=0):
 
     **Example**::
 
-        data = pl.rand(10)*1e4
+        data = np.random.rand(10)*1e4
         pl.plot(data)
         sc.commaticks()
 
@@ -753,7 +753,7 @@ def SIticks(ax=None, axis='y', fixed=False):
 
     **Example**::
 
-        data = pl.rand(10)*1e4
+        data = np.random.rand(10)*1e4
         pl.plot(data)
         sc.SIticks()
     """
@@ -1154,13 +1154,13 @@ def dateformatter(ax=None, style='sciris', dateformat=None, start=None, end=None
         # Reformat date data
         pl.figure()
         x = sc.daterange('2021-04-04', '2022-05-05', asdate=True)
-        y = sc.smooth(pl.rand(len(x)))
+        y = sc.smooth(np.random.rand(len(x)))
         pl.plot(x, y)
         sc.dateformatter()
 
         # Configure with Matplotlib's Concise formatter
         fig,ax = pl.subplots()
-        pl.plot(sc.date(np.arange(365), start_date='2022-01-01'), pl.randn(365))
+        pl.plot(sc.date(np.arange(365), start_date='2022-01-01'), np.random.randn(365))
         sc.dateformatter(ax=ax, style='concise')
 
     | *New in version 1.2.0.*
@@ -1251,7 +1251,7 @@ def datenumformatter(ax=None, start_date=None, dateformat=None, interval=None, s
     **Examples**::
 
         # Automatically configure a non-date axis with default options
-        pl.plot(np.arange(365), pl.rand(365))
+        pl.plot(np.arange(365), np.random.rand(365))
         sc.datenumformatter(start_date='2021-01-01')
 
         # Manually configure
@@ -1419,10 +1419,10 @@ def savefigs(figs=None, filetype=None, filename=None, folder=None, savefigargs=N
 
     **Examples**::
 
-        import pylab as pl
+        import matplotlib.pyplot as plt
         import sciris as sc
-        fig1 = pl.figure(); pl.plot(pl.rand(10))
-        fig2 = pl.figure(); pl.plot(pl.rand(10))
+        fig1 = pl.figure(); pl.plot(np.random.rand(10))
+        fig2 = pl.figure(); pl.plot(np.random.rand(10))
         sc.savefigs([fig1, fig2]) # Save everything to one PDF file
         sc.savefigs(fig2, 'png', filename='myfig.png', savefigargs={'dpi':200})
         sc.savefigs([fig1, fig2], filepath='/home/me', filetype='svg')
@@ -1494,9 +1494,9 @@ def loadfig(filename=None):
 
     **Example usage**::
 
-        import pylab as pl
+        import matplotlib.pyplot as plt
         import sciris as sc
-        fig = pl.figure(); pl.plot(pl.rand(10))
+        fig = pl.figure(); pl.plot(np.random.rand(10))
         sc.savefigs(fig, filetype='fig', filename='example.fig')
 
     **Later**::
@@ -1688,8 +1688,8 @@ class animation(sc.prettyobj):
         colors = sc.vectocolor(repeats, cmap='turbo')
         for i in range(repeats):
             scale = 1/np.sqrt(i+1)
-            x = scale*pl.randn(10)
-            y = scale*pl.randn(10)
+            x = scale*np.random.randn(10)
+            y = scale*np.random.randn(10)
             label = str(i) if not(i%5) else None
             pl.scatter(x, y, c=[colors[i]], label=label)
             pl.title(f'Scale = 1/√{i}')
@@ -1990,12 +1990,12 @@ def savemovie(frames, filename=None, fps=None, quality=None, dpi=None, writer=No
 
     **Examples**::
 
-        import pylab as pl
+        import matplotlib.pyplot as plt
         import sciris as sc
 
         # Simple example (takes ~5 s)
         pl.figure()
-        frames = [pl.plot(pl.cumsum(pl.randn(100))) for i in range(20)] # Create frames
+        frames = [pl.plot(pl.cumsum(np.random.randn(100))) for i in range(20)] # Create frames
         sc.savemovie(frames, 'dancing_lines.gif') # Save movie as medium-quality gif
 
         # Complicated example (takes ~15 s)
@@ -2008,7 +2008,7 @@ def savemovie(frames, filename=None, fps=None, quality=None, dpi=None, writer=No
         old_dots = sc.dcp(dots) # Copy the dots we just made
         fig = pl.figure(figsize=(10,8)) # Create a new figure
         for i in range(nframes): # Loop over the frames
-            dots += pl.randn(ndots, 2) # Move the dots randomly
+            dots += np.random.randn(ndots, 2) # Move the dots randomly
             color = pl.norm(dots, axis=1) # Set the dot color
             old = pl.array(old_dots) # Turn into an array
             plot1 = pl.scatter(old[:,0], old[:,1], c='k') # Plot old dots in black
