@@ -80,27 +80,28 @@ def test_search():
     nested = {'a':{'foo':1, 'bar':['moat', 'goat']}, 'b':{'car':'far', 'cat':[1,2,4,8]}}
 
     # Find keys
-    keymatches = sc.search(nested, 'bar', aslist=False)
+    keymatches = sc.search(nested, 'bar').keys()
     assert 'bar' in keymatches[0]
 
     # Find values
     val = 4
-    valmatches = sc.search(nested, value=val, aslist=True) # Returns  [['b', 'cat', 2]]
+    valmatches = sc.search(nested, value=val).keys() # Returns  [('b', 'cat', 2)]
     assert sc.getnested(nested, valmatches[0]) == val # Get from the original nested object
 
     # Find values with a function
     def find(v):
         return True if isinstance(v, int) and v >= 3 else False
         
-    func_found = sc.search(nested, value=find)
-    assert ['b', 'cat', 3] in func_found
+    func_found = sc.search(nested, value=find).keys()
+    assert ('b', 'cat', 3) in func_found
 
     # Find partial or regex matches
-    partial = sc.search(nested, key='oat', method='partial') # Search keys only
-    keys,vals = sc.search(nested, '^.ar', method='regex', return_values=True, verbose=True)
+    partial = sc.search(nested, value='oat', method='partial') # Search keys only
+    d = sc.search(nested, '^.ar', method='regex', verbose=True)
+    keys,vals = d.keys(), d.values()
 
-    assert ['a', 'bar', 1] in partial
-    assert ['a', 'bar'] in keys
+    assert ('a', 'bar', 1) in partial
+    assert ('a', 'bar') in keys
     assert 'far' in vals
     
     
@@ -118,7 +119,7 @@ def test_search():
     
     print('\nTesting search by key')
     key = 'bar'
-    keymatches = sc.search(nested, key) # Returns ['["a"]["bar"]', '["b"]["bar"]'] as lists
+    keymatches = sc.search(nested, key, flatten=True).keys() # Returns ['a_bar', 'b_bar']
     o.keymatches = keymatches
     print(keymatches)
     assert len(keymatches) == 2
@@ -127,15 +128,11 @@ def test_search():
         
     print('\nTesting search by value')
     val = 8
-    valmatches = sc.search(nested, value=val, aslist=True) # Returns ['["a"]["bar"]', '["b"]["bar"]']
+    valmatches = sc.search(nested, value=val, flatten=False).keys() # Returns [('b', 'cat', 'hat', 3)]
     o.valmatches = valmatches
     print(valmatches)
     assert len(valmatches) == 1
     assert sc.getnested(nested, valmatches[0]) == val # Get from the original nested object
-    
-    print('Test aslist=False')
-    valstrs = sc.search(nested, value=val, aslist=False)
-    assert isinstance(valstrs[0], str)
     
     return o
 
