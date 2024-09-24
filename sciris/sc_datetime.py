@@ -1139,9 +1139,9 @@ class timer:
         Arguments:
             cumulative (bool): how the timings will be presented, individual or cumulative
             fig (fig): an existing figure to draw the plot in
-            figkwargs (dict): passed to :func:`pl.figure() <matplotlib.pyplot.figure>`
+            figkwargs (dict): passed to :func:`plt.figure() <matplotlib.pyplot.figure>`
             grid (bool): whether to show a grid
-            kwargs (dict): passed to :func:`pl.bar() <matplotlib.pyplot.bar>`
+            kwargs (dict): passed to :func:`plt.bar() <matplotlib.pyplot.bar>`
 
         *New in version 2.0.0.*
         """

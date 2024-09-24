@@ -549,7 +549,7 @@ class ScirisOptions(sc.objdict):
         this function outsde of a with block and with ``use=False`` has no effect, so
         don't do that!).
         
-        Note: you can also just use :func:`pl.style.context() <matplotlib.style.context>`.
+        Note: you can also just use :func:`plt.style.context() <matplotlib.style.context>`.
 
         Args:
             style_args (dict): a dictionary of style arguments

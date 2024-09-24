@@ -36,7 +36,7 @@ def fig3d(num=None, nrows=1, ncols=1, index=1, returnax=False, figkwargs=None, a
     """
     Shortcut for creating a figure with 3D axes.
 
-    Usually not invoked directly; kwargs are passed to :func:`pl.figure() <matplotlib.pyplot.figure>`
+    Usually not invoked directly; kwargs are passed to :func:`plt.figure() <matplotlib.pyplot.figure>`
     """
     figkwargs = sc.mergedicts(figkwargs, kwargs, num=num)
     axkwargs = sc.mergedicts(axkwargs)
@@ -65,8 +65,8 @@ def ax3d(nrows=None, ncols=None, index=None, fig=None, ax=None, returnfig=False,
         returnfig (bool): whether to return the figure (else just the axes)
         elev (float): the elevation of the 3D viewpoint
         azim (float): the azimuth of the 3D viewpoint
-        figkwargs (dict): passed to :func:`pl.figure() <matplotlib.pyplot.figure>`
-        kwargs (dict): passed to :func:`pl.axes() <matplotlib.pyplot.axes>`
+        figkwargs (dict): passed to :func:`plt.figure() <matplotlib.pyplot.figure>`
+        kwargs (dict): passed to :func:`plt.axes() <matplotlib.pyplot.axes>`
         
     | *New in version 3.0.0:* nrows, ncols, and index arguments first
     | *New in version 3.1.0:* improved validation; 'silent' and 'axkwargs' argument removed
@@ -201,13 +201,13 @@ def plot3d(x, y, z, c='index', fig=True, ax=None, returnfig=False, figkwargs=Non
         x (arr): x coordinate data
         y (arr): y coordinate data
         z (arr): z coordinate data
-        c (str/tuple): color, can be an array or any of the types accepted by :func:`pl.plot() <matplotlib.pyplot.plot>`; if 'index' (default), color by index
+        c (str/tuple): color, can be an array or any of the types accepted by :func:`plt.plot() <matplotlib.pyplot.plot>`; if 'index' (default), color by index
         fig (fig): an existing figure to draw the plot in (or set to True to create a new figure)
         ax (axes): an existing axes to draw the plot in
         returnfig (bool): whether to return the figure, or just the axes
-        figkwargs (dict): :func:`pl.figure() <matplotlib.pyplot.figure>`
-        axkwargs (dict): :func:`pl.axes() <matplotlib.pyplot.axes>`
-        kwargs (dict): passed to :func:`pl.plot() <matplotlib.pyplot.plot>`
+        figkwargs (dict): :func:`plt.figure() <matplotlib.pyplot.figure>`
+        axkwargs (dict): :func:`plt.axes() <matplotlib.pyplot.axes>`
+        kwargs (dict): passed to :func:`plt.plot() <matplotlib.pyplot.plot>`
 
     **Examples**::
 
@@ -271,9 +271,9 @@ def scatter3d(x=None, y=None, z=None, c='z', fig=True, ax=None, returnfig=False,
         fig (fig): an existing figure to draw the plot in (or set to True to create a new figure)
         ax (axes): an existing axes to draw the plot in
         returnfig (bool): whether to return the figure, or just the axes
-        figkwargs (dict): passed to :func:`pl.figure() <matplotlib.pyplot.figure>`
-        axkwargs (dict): passed to :func:`pl.axes() <matplotlib.pyplot.axes>`
-        kwargs (dict): passed to :func:`pl.scatter() <matplotlib.pyplot.scatter>`
+        figkwargs (dict): passed to :func:`plt.figure() <matplotlib.pyplot.figure>`
+        axkwargs (dict): passed to :func:`plt.axes() <matplotlib.pyplot.axes>`
+        kwargs (dict): passed to :func:`plt.scatter() <matplotlib.pyplot.scatter>`
 
     **Examples**::
 
@@ -326,8 +326,8 @@ def surf3d(x=None, y=None, z=None, c=None, fig=True, ax=None, returnfig=False, c
         ax (axes): an existing axes to draw the plot in
         returnfig (bool): whether to return the figure, or just the axes
         colorbar (bool): whether to plot a colorbar (true by default unless color data is provided)
-        figkwargs (dict): passed to :func:`pl.figure() <matplotlib.pyplot.figure>`
-        axkwargs (dict): passed to :func:`pl.axes() <matplotlib.pyplot.axes>`
+        figkwargs (dict): passed to :func:`plt.figure() <matplotlib.pyplot.figure>`
+        axkwargs (dict): passed to :func:`plt.axes() <matplotlib.pyplot.axes>`
         kwargs (dict): passed to :func:`ax.plot_surface() <mpl_toolkits.mplot3d.axes3d.Axes3D.plot_surface>`
 
     **Examples**::
@@ -394,8 +394,8 @@ def bar3d(x=None, y=None, z=None, c='z', dx=0.8, dy=0.8, dz=None, fig=True, ax=N
         ax (axes): an existing axes to draw the plot in
         returnfig (bool): whether to return the figure, or just the axes
         colorbar (bool): whether to plot a colorbar (true by default unless color data is provided)
-        figkwargs (dict): passed to :func:`pl.figure() <matplotlib.pyplot.figure>`
-        axkwargs (dict): passed to :func:`pl.axes() <matplotlib.pyplot.axes>`
+        figkwargs (dict): passed to :func:`plt.figure() <matplotlib.pyplot.figure>`
+        axkwargs (dict): passed to :func:`plt.axes() <matplotlib.pyplot.axes>`
         kwargs (dict): passed to :func:`ax.bar3d() <mpl_toolkits.mplot3d.axes3d.Axes3D.bar3d>`
 
     **Examples**::
@@ -474,7 +474,7 @@ def stackedbar(x=None, values=None, colors=None, labels=None, transpose=False,
         flipud    (bool)     : whether to flip the array upside down prior to plotting
         is_cum    (bool)     : whether the array is already a cumulative sum
         barh      (bool)     : whether to plot as a horizontal instead of vertical bar
-        kwargs    (dict)     : passed to :func:`pl.bar() <matplotlib.pyplot.bar>`
+        kwargs    (dict)     : passed to :func:`plt.bar() <matplotlib.pyplot.bar>`
     
     **Example**::
         
@@ -1326,7 +1326,7 @@ def savefig(filename, fig=None, dpi=None, comments=None, pipfreeze=False, relfra
     """
     Save a figure, including metadata
 
-    Wrapper for Matplotlib's :func:`pl.savefig() <matplotlib.pyplot.savefig>` function which automatically stores
+    Wrapper for Matplotlib's :func:`plt.savefig() <matplotlib.pyplot.savefig>` function which automatically stores
     metadata in the figure. By default, it saves (git) information from the calling
     function. Additional comments can be added to the saved file as well. These
     can be retrieved via :func:`sc.loadmetadata() <sciris.sc_versioning.loadmetadata>`.
