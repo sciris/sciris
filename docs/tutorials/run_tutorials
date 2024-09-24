@@ -36,7 +36,7 @@ def execute(path):
 def main():
     """ Executes the notebooks in parallel and prints the results """
     notebooks = sc.getfilepaths(folder=folder, pattern='*.ipynb')
-    results = sc.parallelize(execute, notebooks, interval=1) # Wait one second before starting each one
+    results = sc.parallelize(execute, notebooks, interval=0.3) # Wait before starting each one to allow the server port to assign
     string = sc.newlinejoin(results)
     
     sc.heading('Results')

@@ -810,8 +810,9 @@ def _task(taskargs):
     # Handle load balancing
     maxcpu = taskargs.maxcpu
     maxmem = taskargs.maxmem
-    if maxcpu or maxmem:
-        sc.loadbalancer(maxcpu=maxcpu, maxmem=maxmem, index=index, interval=taskargs.interval)
+    interval = taskargs.interval
+    if maxcpu or maxmem or interval:
+        sc.loadbalancer(maxcpu=maxcpu, maxmem=maxmem, index=index, interval=interval)
 
     # Set up input and output arguments
     globaldict = taskargs.globaldict

@@ -8,6 +8,27 @@ All major updates to Sciris are documented here.
 By import convention, components of the Sciris library are listed beginning with ``sc.``, e.g. ``sc.odict()``.
 
 
+Version 3.2.0 (2024-09-24)
+--------------------------
+
+New features
+~~~~~~~~~~~~
+
+#. TBC :func:`sc.equal() <sc_nested.equal>` compares two (or more) arbitrarily complex objects. It can handle arrays, dataframes, custom objects with no ``__eq__`` method defined, etc. It can also print a detailed comparison of the objects.
+
+#. :class:`sc.dataframe() <sc_dataframe.dataframe>` v1
+#. :class:`sc.dataframe() <dataframe>` v2
+
+
+Bugfixes
+~~~~~~~~
+
+
+Other changes
+~~~~~~~~~~~~~
+#. Imports have been changed: Sciris internall uses absolute rather than relative imports, and ``pylab`` has been replaced with ``matplotlib.pyplot``.
+
+
 Version 3.1.7 (2024-07-10)
 --------------------------
 #. Updated :func:`sc.asd() <sc_asd.asd>` to handle negative values in the objective function. (Thanks to `Eloisa Perez-Bennetts <https://github.com/epbennetts>`_ for this feature.)

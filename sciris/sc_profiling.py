@@ -432,6 +432,7 @@ def loadbalancer(maxcpu=0.9, maxmem=0.9, index=None, interval=None, cpu_interval
     min_interval = 1e-3 # Don't allow intervals of less than 1 ms
     if interval is None: # pragma: no cover
         interval = default_interval
+        default_interval = None # Used as a flag below
     if interval < min_interval: # pragma: no cover
         interval = min_interval
         warnmsg = f'sc.loadbalancer() "interval" should not be less than {min_interval} s'
@@ -450,7 +451,7 @@ def loadbalancer(maxcpu=0.9, maxmem=0.9, index=None, interval=None, cpu_interval
 
     if maxcpu>1: maxcpu = maxcpu/100 # If it's >1, assume it was given as a percent
     if maxmem>1: maxmem = maxmem/100
-    if (not 0 < maxcpu < 1) and (not 0 < maxmem < 1): # pragma: no cover
+    if (not 0 < maxcpu < 1) and (not 0 < maxmem < 1) and (default_interval is None): # pragma: no cover
         return # Return immediately if no max load
     else:
         time.sleep(pause) # Give it time to asynchronize, with a predefined delay
@@ -494,7 +495,8 @@ def loadbalancer(maxcpu=0.9, maxmem=0.9, index=None, interval=None, cpu_interval
 __all__ += ['profile', 'mprofile', 'cprofile', 'tracecalls']
 
 
-def profile(run, follow=None, private='__init__', include=None, exclude=None, print_stats=True, verbose=True, *args, **kwargs):
+def profile(run, follow=None, private='__init__', include=None, exclude=None, 
+            print_stats=True, verbose=True, *args, **kwargs):
     """
     Profile the line-by-line time required by a function.
     
@@ -621,6 +623,7 @@ def profile(run, follow=None, private='__init__', include=None, exclude=None, pr
         print(f'Profiling {len(f_list)} function(s):\n', sc.newlinejoin(f_list), '\n')
     
     # Construct the wrapper
+    orig_func = run # Needed for argument passing
     lp = LineProfiler()
     for f in f_list:
         lp.add_function(f)
@@ -628,6 +631,7 @@ def profile(run, follow=None, private='__init__', include=None, exclude=None, pr
     wrapper = lp(run) # pragma: no cover
 
     wrapper(*args, **kwargs) # pragma: no cover
+    run = orig_func # Restore run for argument passing
     if print_stats: # pragma: no cover
         lp.print_stats()
         if verbose:

@@ -5,7 +5,7 @@
 ifeq ($(BUILD_DEBUG), 1)
 	SPHINXOPTS = -v
 else
-	SPHINXOPTS = -jauto  # Use -v to debug instead
+	SPHINXOPTS = -v#-jauto  # Use -v to debug instead
 endif
 
 SPHINXBUILD   = sphinx-build
