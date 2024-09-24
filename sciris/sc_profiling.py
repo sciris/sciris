@@ -505,7 +505,7 @@ def profile(run, follow=None, print_stats=True, *args, **kwargs):
 
     Args:
         run (function): The function to be run
-        follow (function): The function or list of functions to be followed in the profiler; if None, defaults to the run function
+        follow (function): The function, list of functions, class, or module to be followed in the profiler; if None, defaults to the run function
         print_stats (bool): whether to print the statistics of the profile to stdout
         args, kwargs: Passed to the function to be run
 
@@ -534,14 +534,19 @@ def profile(run, follow=None, print_stats=True, *args, **kwargs):
             def inner(self):
                 for i in range(1000):
                     self.a += 1
-
-        foo = Foo()
-        sc.profile(run=foo.outer, follow=[foo.outer, foo.inner])
+        
+        # Profile a function
         sc.profile(slow_fn)
 
+        # Profile a class or class instance
+        foo = Foo()
+        sc.profile(run=foo.outer, follow=foo) 
+        
         # Profile the constructor for Foo
         f = lambda: Foo()
-        sc.profile(run=f, follow=[foo.__init__])
+        sc.profile(run=f, follow=Foo.__init__)
+    
+    | *New in version 3.2.0:* allow class and module arguments for "follow"
     """
     try:
         from line_profiler import LineProfiler
@@ -551,7 +556,6 @@ def profile(run, follow=None, print_stats=True, *args, **kwargs):
 
     if follow is None: # pragma: no cover
         follow = run
-    orig_func = run
 
     lp = LineProfiler()
     follow = sc.tolist(follow)
@@ -563,7 +567,6 @@ def profile(run, follow=None, print_stats=True, *args, **kwargs):
     if print_stats: # pragma: no cover
         print('Profiling...')
     wrapper(*args, **kwargs) # pragma: no cover
-    run = orig_func # pragma: no cover
     if print_stats: # pragma: no cover
         lp.print_stats()
         print('Done.')

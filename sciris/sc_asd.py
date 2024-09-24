@@ -92,7 +92,7 @@ def asd(function, x, args=None, stepsize=0.1, sinc=2, sdec=2, pinc=2, pdec=2,
         Optimization by adaptive stochastic descent.
         PLOS ONE 13 (3), e0192944.
 
-    *New in version 3.0.0:* Uses its own random number stream
+    | *New in version 3.0.0:* Uses its own random number stream
     """
     rng = np.random.default_rng(randseed)
     if verbose >= 2: print(f'ASD: Launching with random seed {randseed}')

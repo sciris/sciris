@@ -311,7 +311,7 @@ def arraycolors(arr, **kwargs):
 
     Version: 2020mar07
     
-    *New in version 3.1.0:* Handle non-array output
+    | *New in version 3.1.0:* Handle non-array output
     """
     arr = sc.dcp(arr) # Avoid modifications
     new_shape = arr.shape + (4,) # RGBα
@@ -469,7 +469,7 @@ def midpointnorm(vcenter=0, vmin=None, vmax=None):
         data = np.random.rand(10,10) - 0.2
         plt.pcolor(data, cmap='bi', norm=sc.midpointnorm())
 
-    *New in version 1.2.0.*
+    | *New in version 1.2.0.*
     """
     norm = mpl.colors.TwoSlopeNorm(vcenter=vcenter, vmin=vmin, vmax=vmax)
     return norm
@@ -552,7 +552,7 @@ def manualcolorbar(data=None, vmin=0, vmax=1, vcenter=None, colors=None, values=
             spacing='proportional'
         )
 
-    *New in version 3.1.0.*
+    | *New in version 3.1.0.*
     """
     labelkwargs = sc.mergedicts(labelkwargs)
     
@@ -966,7 +966,7 @@ def orangebluecolormap(apply=False):
         cmap = sc.orangebluecolormap()
         sc.colormapdemo(cmap=cmap)
 
-    *New in version 1.0.0.*
+    | *New in version 1.0.0.*
     """
     bottom = plt.get_cmap('Oranges', 128)
     top    = plt.get_cmap('Blues_r', 128)
