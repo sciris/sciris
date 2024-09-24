@@ -1,0 +1,11 @@
+name: Sciris cron tests
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: "0 0 * * 0" # Run every Sunday at midnight
+
+jobs:
+  ci-tests:
+    uses: ./.github/workflows/test_sciris.yaml
+  downstream-tests:
+    uses: ./.github/workflows/test_downstream.yaml

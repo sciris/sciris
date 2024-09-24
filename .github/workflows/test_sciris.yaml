@@ -1,9 +1,7 @@
-name: Sciris
+name: Sciris CI tests
 on:
   workflow_dispatch:
   pull_request:
-  schedule:
-    - cron: "0 0 * * *"
 
 jobs:
   install_and_test:
