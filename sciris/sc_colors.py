@@ -241,7 +241,7 @@ def vectocolor(vector, cmap=None, asarray=True, reverse=False, minval=None, maxv
         try:
             cmap = plt.get_cmap(cmap)
         except: # pragma: no cover
-            choices = sc.newlinejoin(pl.colormaps())
+            choices = sc.newlinejoin(plt.colormaps())
             raise ValueError(f'{cmap} is not a valid color map; choices are:\n{choices}')
 
     # If a scalar is supplied, convert it to a vector instead
@@ -942,11 +942,11 @@ def bandedcolormap(minvalue=None, minsaturation=None, hueshift=None, saturations
     if npts            is None: npts            = 256
 
     # Calculate
-    x = np.linspace(0, plt.pi, npts)
+    x = np.linspace(0, np.pi, npts)
     hsv = np.zeros((npts, 3))
-    hsv[:,2] = np.sqrt(pl.linspace(minvalue,1,npts)) # Value: map linearly
+    hsv[:,2] = np.sqrt(np.linspace(minvalue,1,npts)) # Value: map linearly
     hsv[:,0] = np.sin(x+hueshift)**2 # Hue: a big sine wave
-    hsv[:,1] = minsaturation+(1-minsaturation)*pl.sin(saturationscale*x)**2 # Saturation: a small sine wave
+    hsv[:,1] = minsaturation+(1-minsaturation)*np.sin(saturationscale*x)**2 # Saturation: a small sine wave
     data = hsv2rgb(hsv)
 
     # Create and use

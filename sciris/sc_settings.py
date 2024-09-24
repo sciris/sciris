@@ -528,9 +528,9 @@ class ScirisOptions(sc.objdict):
             elif stylestr in ['fancy', 'covasim']:
                 rc.update(style_fancy)
             elif style in plt.style.library:
-                rc.update(pl.style.library[style])
+                rc.update(plt.style.library[style])
             else: # pragma: no cover
-                errormsg = f'Style "{style}"; not found; options are "default", "simple", "fancy", plus:\n{sc.newlinejoin(pl.style.available)}'
+                errormsg = f'Style "{style}"; not found; options are "default", "simple", "fancy", plus:\n{sc.newlinejoin(plt.style.available)}'
                 raise ValueError(errormsg)
         if reset: # pragma: no cover
             self.rc = rc
@@ -563,7 +563,7 @@ class ScirisOptions(sc.objdict):
             - ``fontsize``:  font size
             - ``grid``:      whether or not to plot gridlines
             - ``facecolor``: color of the axes behind the plot
-            - any of the entries in :class:`pl.rcParams <matplotlib.RcParams>`
+            - any of the entries in :class:`plt.rcParams <matplotlib.RcParams>`
 
         **Examples**::
 

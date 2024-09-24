@@ -554,7 +554,7 @@ def boxoff(ax=None, which=None, removeticks=True):
     Removes the top and right borders ("spines") of a plot.
 
     Also optionally removes the tick marks, and flips the remaining ones outside.
-    Can be used as an alias to ``pl.axis('off')`` if ``which='all'``.
+    Can be used as an alias to ``plt.axis('off')`` if ``which='all'``.
 
     Args:
         ax (Axes): the axes to remove the spines from (if None, use current)
@@ -1523,7 +1523,7 @@ def reanimateplots(plots=None):
         errormsg = f'To reanimate plots requires the "agg" backend, which could not be imported: {repr(E)}'
         raise ImportError(errormsg) from E
     
-    if len(pl.get_fignums()):
+    if len(plt.get_fignums()):
         fignum = plt.gcf().number # This is the number of the current active figure, if it exists
     else: # pragma: no cover
         fignum = 1
@@ -1995,7 +1995,7 @@ def savemovie(frames, filename=None, fps=None, quality=None, dpi=None, writer=No
 
         # Simple example (takes ~5 s)
         plt.figure()
-        frames = [pl.plot(pl.cumsum(np.random.randn(100))) for i in range(20)] # Create frames
+        frames = [pl.plot(np.cumsum(np.random.randn(100))) for i in range(20)] # Create frames
         sc.savemovie(frames, 'dancing_lines.gif') # Save movie as medium-quality gif
 
         # Complicated example (takes ~15 s)
