@@ -13,11 +13,10 @@ Highlights:
 ##############################################################################
 
 import struct
-import pylab as pl
 import numpy as np
 import matplotlib as mpl
-from . import sc_utils as scu
-from . import sc_math as scm
+import matplotlib.pyplot as plt
+import sciris as sc
 
 
 ##############################################################################
@@ -30,7 +29,7 @@ __all__ = ['sanitizecolor', 'shifthue', 'rgb2hex', 'hex2rgb', 'rgb2hsv', 'hsv2rg
 def _listify_colors(colors, origndim=None):
     """ Do standard transformation on colors -- internal helper function """
     if not origndim:
-        colors = scu.dcp(colors) # So we don't overwrite the original
+        colors = sc.dcp(colors) # So we don't overwrite the original
         origndim = np.ndim(colors) # Original dimensionality
         if origndim==1:
             colors = [colors] # Wrap it in another list if needed
@@ -69,14 +68,14 @@ def sanitizecolor(color, asarray=False, alpha=None, normalize=True):
     elif isinstance(color, float):
         color = [color]*3 # Consider it grey
             
-    color = scu.toarray(color).astype(float) # Get it into consistent format for further operations
+    color = sc.toarray(color).astype(float) # Get it into consistent format for further operations
     if len(color) not in [3,4]: # pragma: no cover
         errormsg = f'Cannot parse {color} as a color: expecting length 3 (RGB) or 4 (RGBA)'
         raise ValueError(errormsg)
     if normalize and color.max()>1:
         color /= 255
     if alpha is not None and len(color) == 3:
-        color = scm.cat(color, float(alpha))
+        color = sc.cat(color, float(alpha))
     if not asarray:
         color = tuple(color) # Convert back to tuple if desired
     return color
@@ -113,7 +112,7 @@ def shifthue(colors=None, hueshift=0.0):
     """
     colors, origndim = _listify_colors(colors)
     for c,color in enumerate(colors):
-        color = scu.toarray(color, dtype=float) # Required for NumPy 2.0
+        color = sc.toarray(color, dtype=float) # Required for NumPy 2.0
         hsvcolor = mpl.colors.rgb_to_hsv(color)
         hsvcolor[0] = (hsvcolor[0]+hueshift) % 1.0 # Calculate new hue and return the modulus
         rgbcolor = mpl.colors.hsv_to_rgb(hsvcolor)
@@ -224,10 +223,10 @@ def vectocolor(vector, cmap=None, asarray=True, reverse=False, minval=None, maxv
     **Example**::
 
         n = 1000
-        x = pl.randn(n,1);
-        y = pl.randn(n,1);
+        x = np.random.randn(n,1);
+        y = np.random.randn(n,1);
         c = sc.vectocolor(y);
-        pl.scatter(x, y, c=c, s=50)
+        plt.scatter(x, y, c=c, s=50)
 
     | *New in version 1.2.0:* midpoint argument.
     | *New in version 2.1.0:* nancolor argument and remove nans by default
@@ -237,20 +236,20 @@ def vectocolor(vector, cmap=None, asarray=True, reverse=False, minval=None, maxv
     from numpy import array, zeros
 
     if cmap is None:
-        cmap = pl.get_cmap() # Get current colormap
+        cmap = plt.get_cmap() # Get current colormap
     elif isinstance(cmap, str):
         try:
-            cmap = pl.get_cmap(cmap)
+            cmap = plt.get_cmap(cmap)
         except: # pragma: no cover
-            choices = scu.newlinejoin(pl.colormaps())
+            choices = sc.newlinejoin(plt.colormaps())
             raise ValueError(f'{cmap} is not a valid color map; choices are:\n{choices}')
 
     # If a scalar is supplied, convert it to a vector instead
-    if scu.isnumber(vector):
+    if sc.isnumber(vector):
         vector = np.linspace(0, 1, vector)
 
     # Usual situation -- the vector has elements
-    vector = scu.dcp(vector) # To avoid in-place modification
+    vector = sc.dcp(vector) # To avoid in-place modification
     vector = np.array(vector, dtype=float) # Just to be sure
     if len(vector):
         if minval is None:
@@ -300,25 +299,25 @@ def arraycolors(arr, **kwargs):
 
         n = 1000
         ncols = 5
-        arr = pl.rand(n,ncols)
+        arr = np.random.rand(n,ncols)
         for c in range(ncols):
             arr[:,c] += c
-        x = pl.rand(n)
-        y = pl.rand(n)
+        x = np.random.rand(n)
+        y = np.random.rand(n)
         colors = sc.arraycolors(arr)
-        pl.figure(figsize=(20,16))
+        plt.figure(figsize=(20,16))
         for c in range(ncols):
-            pl.scatter(x+c, y, s=50, c=colors[:,c])
+            plt.scatter(x+c, y, s=50, c=colors[:,c])
 
     Version: 2020mar07
     
-    *New in version 3.1.0:* Handle non-array output
+    | *New in version 3.1.0:* Handle non-array output
     """
-    arr = scu.dcp(arr) # Avoid modifications
+    arr = sc.dcp(arr) # Avoid modifications
     new_shape = arr.shape + (4,) # RGBα
     colors = np.zeros(new_shape)
     colorvec = vectocolor(vector=arr.reshape(-1), **kwargs)
-    if scu.isarray(colorvec):
+    if sc.isarray(colorvec):
         colors = colorvec.reshape(new_shape)
     else:
         errormsg = 'Creating array colors as a list does not make sense; use sc.vectocolor(arr.flatten()) if you mean to do this'
@@ -350,17 +349,27 @@ def gridcolors(ncolors=10, limits=None, nsteps=20, asarray=False, ashex=False, r
 
     **Example**::
 
-        import pylab as pl
+        import numpy as np
+        import matplotlib.pyplot as plt
         import sciris as sc
-        ncolors = 10
-        piedata = pl.rand(ncolors)
-        colors = sc.gridcolors(ncolors)
-        pl.pie(piedata, colors=colors)
-        sc.gridcolors(ncolors, demo=True)
-        pl.show()
 
-    Version: 2018oct30
+        ncolors = 10
+        piedata = np.random.rand(ncolors)
+        colors = sc.gridcolors(ncolors)
+        plt.pie(piedata, colors=colors)
+        sc.gridcolors(ncolors, demo=True)
+        plt.show()
+
+    | *New in version 2018oct30.*
+    | *New in version 3.2.0:* allow ncolors to be an iterable
     """
+    # Handle input arguments
+    if not sc.isnumber(ncolors):
+        if sc.isiterable(ncolors):
+            ncolors = len(ncolors)
+        else:
+            errormsg = f'Invalid input {ncolors}; must be an integer or an iterable'
+            raise TypeError(errormsg)
 
     # Choose default colors
     if basis == 'default':
@@ -433,8 +442,7 @@ def gridcolors(ncolors=10, limits=None, nsteps=20, asarray=False, ashex=False, r
 
     ## For plotting -- optional
     if demo:
-        from . import sc_plotting as scp # To avoid circular import
-        ax = scp.scatter3d(colors[:,0], colors[:,1], colors[:,2], c=output, s=200, depthshade=False, lw=0, fig=True, figkwargs={'facecolor':'w'})
+        ax = sc.scatter3d(colors[:,0], colors[:,1], colors[:,2], c=output, s=200, depthshade=False, lw=0, fig=True, figkwargs={'facecolor':'w'})
         ax.set_xlabel('Red', fontweight='bold')
         ax.set_ylabel('Green', fontweight='bold')
         ax.set_zlabel('Blue', fontweight='bold')
@@ -458,10 +466,10 @@ def midpointnorm(vcenter=0, vmin=None, vmax=None):
 
     **Example**::
 
-        data = pl.rand(10,10) - 0.2
-        pl.pcolor(data, cmap='bi', norm=sc.midpointnorm())
+        data = np.random.rand(10,10) - 0.2
+        plt.pcolor(data, cmap='bi', norm=sc.midpointnorm())
 
-    *New in version 1.2.0.*
+    | *New in version 1.2.0.*
     """
     norm = mpl.colors.TwoSlopeNorm(vcenter=vcenter, vmin=vmin, vmax=vmax)
     return norm
@@ -507,10 +515,10 @@ def manualcolorbar(data=None, vmin=0, vmax=1, vcenter=None, colors=None, values=
         
         # Add a colorbar to non-mappable data (e.g. a scatterplot)
         n = 1000
-        x = pl.randn(n)
-        y = pl.randn(n)
+        x = np.random.randn(n)
+        y = np.random.randn(n)
         c = x**2 + y**2
-        pl.scatter(x, y, c=c)
+        plt.scatter(x, y, c=c)
         sc.manualcolorbar(c)
         
         # Create a custom colorbar with a custom label
@@ -530,8 +538,8 @@ def manualcolorbar(data=None, vmin=0, vmax=1, vcenter=None, colors=None, values=
         x = np.arange(n)
         values = np.sqrt(np.arange(n))
         colors = sc.gridcolors(n)
-        pl.scatter(x, values, c=colors)
-        pl.grid(True)
+        plt.scatter(x, values, c=colors)
+        plt.grid(True)
 
         ticklabels = ['' for i in range(n)]
         for i in [0, 2, 4, 10, 11]:
@@ -544,28 +552,28 @@ def manualcolorbar(data=None, vmin=0, vmax=1, vcenter=None, colors=None, values=
             spacing='proportional'
         )
 
-    *New in version 3.1.0.*
+    | *New in version 3.1.0.*
     """
-    labelkwargs = scu.mergedicts(labelkwargs)
+    labelkwargs = sc.mergedicts(labelkwargs)
     
     # Get the colorbar axes
-    if scu.checktype(axkwargs, 'arraylike'):
+    if sc.checktype(axkwargs, 'arraylike'):
         axarg = axkwargs
         axkwargs = {}
     else:
         axarg = None
-        axkwargs = scu.mergedicts(axkwargs)
+        axkwargs = sc.mergedicts(axkwargs)
     if cax is None and (axarg or axkwargs):
-        cax = pl.axes(arg=axarg, **axkwargs)
+        cax = plt.axes(arg=axarg, **axkwargs)
     if ax is None and cax is None:
-        ax = pl.gca() # We need an axis or colorbar axis
+        ax = plt.gca() # We need an axis or colorbar axis
         
     # Handle explicit colors
     if colors is not None:
         if values is None: # Generate the boundaries automatically
             values = np.arange(len(colors)+1)
         if len(values) == len(colors): # Add an upper bound if not provided
-            values = scm.cat(values, values[-1] + np.diff(values[-2:])) # Add the last diff on again
+            values = sc.cat(values, values[-1] + np.diff(values[-2:])) # Add the last diff on again
         cmap = mpl.colors.ListedColormap(colors)
         norm = mpl.colors.BoundaryNorm(values, cmap.N)
         sm = mpl.cm.ScalarMappable(cmap=cmap, norm=norm)
@@ -591,7 +599,7 @@ def manualcolorbar(data=None, vmin=0, vmax=1, vcenter=None, colors=None, values=
         sm = mpl.cm.ScalarMappable(norm=norm, cmap=cmap)
         
     # Create the colorbar
-    cb = pl.colorbar(sm, ax=ax, cax=cax, ticks=ticks, **kwargs)
+    cb = plt.colorbar(sm, ax=ax, cax=cax, ticks=ticks, **kwargs)
     if label:
         cb.set_label(label, **labelkwargs)
     if ticklabels:
@@ -618,7 +626,6 @@ def colormapdemo(cmap=None, n=None, smoothing=None, randseed=None, doshow=True):
 
     Version: 2019aug22
     """
-    from . import sc_plotting as scp # To avoid circular import
 
     # Set data
     if n         is None: n         = 100
@@ -629,7 +636,7 @@ def colormapdemo(cmap=None, n=None, smoothing=None, randseed=None, doshow=True):
     horizontalsize = 4
     np.random.seed(randseed)
     kernel = np.array([0.25,0.5,0.25])
-    data = pl.randn(n,n)
+    data = np.random.randn(n,n)
     for s in range(smoothing): # Quick-and-dirty-and-slow smoothing
         for i in range(n): data[:,i] = np.convolve(data[:,i],kernel,mode='same')
         for i in range(n): data[i,:] = np.convolve(data[i,:],kernel,mode='same')
@@ -638,28 +645,28 @@ def colormapdemo(cmap=None, n=None, smoothing=None, randseed=None, doshow=True):
     data *= maxheight
 
     # Plot in 2D
-    fig1 = pl.figure(figsize=(10,8))
+    fig1 = plt.figure(figsize=(10,8))
     X = np.linspace(0,horizontalsize,n)
-    pcl = pl.pcolor(X, X, data, cmap=cmap, linewidth=0, antialiased=False, shading='auto')
+    pcl = plt.pcolor(X, X, data, cmap=cmap, linewidth=0, antialiased=False, shading='auto')
     cb2 = fig1.colorbar(pcl)
     cb2.set_label('Height (km)',horizontalalignment='right', labelpad=50)
-    pl.xlabel('Position (km)')
-    pl.ylabel('Position (km)')
+    plt.xlabel('Position (km)')
+    plt.ylabel('Position (km)')
     if doshow: # pragma: no cover
-        pl.show()
+        plt.show()
 
     # Plot in 3D
-    fig2,ax2 = scp.fig3d(returnax=True, figsize=(12,8))
+    fig2,ax2 = sc.fig3d(returnax=True, figsize=(12,8))
     ax2.view_init(elev=45, azim=30)
     X = np.linspace(0,horizontalsize,n)
     X, Y = np.meshgrid(X, X)
     surf = ax2.plot_surface(X, Y, data, rstride=1, cstride=1, cmap=cmap, linewidth=0, antialiased=False)
     cb = fig2.colorbar(surf)
     cb.set_label('Height (km)', horizontalalignment='right', labelpad=50)
-    pl.xlabel('Position (km)')
-    pl.ylabel('Position (km)')
+    plt.xlabel('Position (km)')
+    plt.ylabel('Position (km)')
     if doshow: # pragma: no cover
-        pl.show()
+        plt.show()
 
     return {'2d':fig1, '3d':fig2}
 
@@ -683,8 +690,8 @@ def alpinecolormap(apply=False):
     **Usage example**::
 
         import sciris as sc
-        import pylab as pl
-        pl.imshow(pl.randn(20,20), interpolation='none', cmap=sc.alpinecolormap())
+        import matplotlib.pyplot as plt
+        plt.imshow(np.random.randn(20,20), interpolation='none', cmap=sc.alpinecolormap())
 
     Version: 2014aug06
     """
@@ -723,7 +730,7 @@ def alpinecolormap(apply=False):
     # Make map
     cmap = mpl.colors.LinearSegmentedColormap('alpine', cdict, 256)
     if apply: # pragma: no cover
-        pl.set_cmap(cmap)
+        plt.set_cmap(cmap)
     return cmap
 
 
@@ -775,7 +782,7 @@ def bicolormap(gap=0.1, mingreen=0.2, redbluemix=0.5, epsilon=0.01, demo=False, 
 
     cmap = mpl.colors.LinearSegmentedColormap('bi', cdict, 256)
     if apply: # pragma: no cover
-        pl.set_cmap(cmap)
+        plt.set_cmap(cmap)
 
     def demoplot(): # pragma: no cover
 
@@ -786,12 +793,12 @@ def bicolormap(gap=0.1, mingreen=0.2, redbluemix=0.5, epsilon=0.01, demo=False, 
         maps.append(bicolormap(gap=0.3,mingreen=0.2,redbluemix=0,epsilon=0.01)) # Red and blue with a sharp distinction between
         nexamples=len(maps)
 
-        pl.figure(figsize=(5*nexamples, 4))
+        plt.figure(figsize=(5*nexamples, 4))
         for m in range(nexamples):
-            pl.subplot(1, nexamples, m+1)
-            pl.imshow(np.random.rand(20,20), cmap=maps[m], interpolation='none')
-            pl.colorbar()
-        pl.show()
+            plt.subplot(1, nexamples, m+1)
+            plt.imshow(np.random.rand(20,20), cmap=maps[m], interpolation='none')
+            plt.colorbar()
+        plt.show()
 
     if demo: # pragma: no cover
         demoplot()
@@ -846,7 +853,7 @@ def parulacolormap(apply=False):
 
     cmap = mpl.colors.LinearSegmentedColormap.from_list('parula', data)
     if apply: # pragma: no cover
-        pl.set_cmap(cmap)
+        plt.set_cmap(cmap)
     return cmap
 
 
@@ -908,7 +915,7 @@ def turbocolormap(apply=False):
 
     cmap = mpl.colors.LinearSegmentedColormap.from_list('turbo', data)
     if apply: # pragma: no cover
-        pl.set_cmap(cmap)
+        plt.set_cmap(cmap)
     return cmap
 
 
@@ -935,17 +942,17 @@ def bandedcolormap(minvalue=None, minsaturation=None, hueshift=None, saturations
     if npts            is None: npts            = 256
 
     # Calculate
-    x = pl.linspace(0, pl.pi, npts)
-    hsv = pl.zeros((npts, 3))
-    hsv[:,2] = pl.sqrt(pl.linspace(minvalue,1,npts)) # Value: map linearly
-    hsv[:,0] = pl.sin(x+hueshift)**2 # Hue: a big sine wave
-    hsv[:,1] = minsaturation+(1-minsaturation)*pl.sin(saturationscale*x)**2 # Saturation: a small sine wave
+    x = np.linspace(0, np.pi, npts)
+    hsv = np.zeros((npts, 3))
+    hsv[:,2] = np.sqrt(np.linspace(minvalue,1,npts)) # Value: map linearly
+    hsv[:,0] = np.sin(x+hueshift)**2 # Hue: a big sine wave
+    hsv[:,1] = minsaturation+(1-minsaturation)*np.sin(saturationscale*x)**2 # Saturation: a small sine wave
     data = hsv2rgb(hsv)
 
     # Create and use
     cmap = mpl.colors.LinearSegmentedColormap.from_list('banded', data)
     if apply: # pragma: no cover
-        pl.set_cmap(cmap)
+        plt.set_cmap(cmap)
     return cmap
 
 
@@ -959,17 +966,17 @@ def orangebluecolormap(apply=False):
         cmap = sc.orangebluecolormap()
         sc.colormapdemo(cmap=cmap)
 
-    *New in version 1.0.0.*
+    | *New in version 1.0.0.*
     """
-    bottom = pl.get_cmap('Oranges', 128)
-    top    = pl.get_cmap('Blues_r', 128)
+    bottom = plt.get_cmap('Oranges', 128)
+    top    = plt.get_cmap('Blues_r', 128)
     x      = np.linspace(0, 1, 128)
     data   = np.vstack((top(x), bottom(x)))
 
     # Create and use
     cmap = mpl.colors.LinearSegmentedColormap.from_list('orangeblue', data)
     if apply: # pragma: no cover
-        pl.set_cmap(cmap)
+        plt.set_cmap(cmap)
     return cmap
 
 
@@ -978,7 +985,7 @@ try: # Regression support for Matplotlib
     register_func = mpl.colormaps.register # Matplotlib >=3.5
 except AttributeError:
     register_func = mpl.cm.register_cmap # Matplotlib <=3.4
-existing = pl.colormaps()
+existing = plt.colormaps()
 colormap_map = dict(
     alpine     = alpinecolormap(),
     parula     = parulacolormap(),

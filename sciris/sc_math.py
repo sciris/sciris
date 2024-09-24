@@ -11,8 +11,7 @@ Highlights:
 import numpy as np
 import pandas as pd
 import warnings
-from . import sc_utils as scu
-from . import sc_odict as sco
+import sciris as sc
 
 
 ##############################################################################
@@ -67,12 +66,12 @@ def safedivide(numerator=None, denominator=None, default=None, eps=None, warn=Fa
 
     # Handle the logic
     invalid = approx(denominator, 0.0, eps=eps)
-    if scu.isnumber(denominator): # The denominator is a scalar
+    if sc.isnumber(denominator): # The denominator is a scalar
         if invalid:
             output = default
         else: # pragma: no cover
             output = numerator/denominator
-    elif scu.checktype(denominator, 'array'):
+    elif sc.checktype(denominator, 'array'):
         if not warn:
             denominator[invalid] = 1.0 # Replace invalid values with 1
         output = numerator/denominator
@@ -132,19 +131,19 @@ def findinds(arr=None, val=None, *args, eps=1e-6, first=False, last=False, ind=N
         warnings.warn(warnmsg, category=FutureWarning, stacklevel=2)
 
     # Calculate matches
-    arr = scu.toarray(arr)
+    arr = sc.toarray(arr)
     arglist = list(args)
     if val is None: # Check for equality
         boolarr = arr # If not, just check the truth condition
     else:
-        if scu.isstring(val): # A string only matches itself
+        if sc.isstring(val): # A string only matches itself
             boolarr = (arr == val)
         else:
-            if scu.isnumber(val): # Standard usage, use nonzero
+            if sc.isnumber(val): # Standard usage, use nonzero
                 boolarr = np.isclose(a=arr, b=val, atol=atol, **kwargs) # If absolute difference between the two values is less than a certain amount
-            elif scu.checktype(val, 'arraylike'): # It's not actually a value, it's another array
+            elif sc.checktype(val, 'arraylike'): # It's not actually a value, it's another array
                 boolarr = arr
-                arglist.append(scu.toarray(val))
+                arglist.append(sc.toarray(val))
             else: # pragma: no cover
                 errormsg = f'Cannot understand input {type(val)}: must be number or array-like'
                 raise TypeError(errormsg)
@@ -205,13 +204,13 @@ def findnearest(series=None, value=None):
         sc.findnearest([2,3,6,3], 6) # returns 2
         sc.findnearest([0,2,4,6,8,10], [3, 4, 5]) # returns array([1, 2, 2])
     """
-    series = scu.toarray(series)
-    if scu.isnumber(value):
+    series = sc.toarray(series)
+    if sc.isnumber(value):
         output = np.argmin(abs(series-value))
     else:
         output = []
         for val in value: output.append(findnearest(series, val))
-        output = scu.toarray(output)
+        output = sc.toarray(output)
     return output
 
 
@@ -264,9 +263,9 @@ def getvalidinds(data=None, filterdata=None): # pragma: no cover
 
         sc.getvalidinds([3,5,8,13], [2000, nan, nan, 2004]) # Returns array([0,3])
     """
-    data = scu.toarray(data)
+    data = sc.toarray(data)
     if filterdata is None: filterdata = data # So it can work on a single input -- more or less replicates sanitize() then
-    filterdata = scu.toarray(filterdata)
+    filterdata = sc.toarray(filterdata)
     if filterdata.dtype=='bool': filterindices = filterdata # It's already boolean, so leave it as is
     else:                        filterindices = findinds(~np.isnan(filterdata)) # Else, assume it's nans that need to be removed
     dataindices = findinds(~np.isnan(data)) # Also check validity of data
@@ -332,7 +331,7 @@ def sanitize(data=None, returninds=False, replacenans=None, defaultval=None, die
         | *New in version 3.0.0:* return zero-length arrays if all NaN
         """
         try:
-            data = scu.toarray(data) # Make sure it's an array
+            data = sc.toarray(data) # Make sure it's an array
             is_multidim = data.ndim > 1
             if is_multidim:
                 if not replacenans:
@@ -346,7 +345,7 @@ def sanitize(data=None, returninds=False, replacenans=None, defaultval=None, die
             if replacenans is not None:
                 if replacenans is True:
                     replacenans = 'nearest'
-                if scu.isstring(replacenans):
+                if sc.isstring(replacenans):
                     if replacenans in ['nearest','linear']:
                         if is_multidim:
                             errormsg = 'Cannot perform interpolation on multidimensional data; use replacenans=<value> instead'
@@ -439,12 +438,12 @@ def nanequal(arr, *args, scalar=False, equal_nan=True):
         errormsg = 'Only one array provided; requires 2 or more'
         raise ValueError(errormsg)
         
-    others = [scu.toarray(arg) for arg in args] # Convert everything to an array
+    others = [sc.toarray(arg) for arg in args] # Convert everything to an array
     
     # Remove Nans from base array
     if equal_nan:
         isnan = pd.isna(arr)
-        arr = scu.toarray(arr).copy()
+        arr = sc.toarray(arr).copy()
         arr[isnan] = _nan_fill # Fill in NaN values
     
     eqarr = None
@@ -546,7 +545,7 @@ def numdigits(n, *args, count_minus=False, count_decimal=False):
 
     *New in version 2.0.0.*
     """
-    is_scalar = True if scu.isnumber(n) and len(args) == 0 else False
+    is_scalar = True if sc.isnumber(n) and len(args) == 0 else False
 
     vals = cat(n, *args)
 
@@ -580,7 +579,8 @@ def numdigits(n, *args, count_minus=False, count_decimal=False):
 #%% Other functions
 ##############################################################################
 
-__all__ += ['perturb', 'normsum', 'normalize', 'inclusiverange', 'randround', 'cat', 'linregress']
+__all__ += ['perturb', 'normsum', 'normalize', 'inclusiverange', 'randround', 
+            'cat', 'linregress', 'sem']
 
 
 def perturb(n=1, span=0.5, randseed=None, normal=False):
@@ -652,7 +652,7 @@ def normalize(arr, minval=0.0, maxval=1.0):
     return out
 
 
-def inclusiverange(*args, **kwargs):
+def inclusiverange(*args, stretch=False, **kwargs):
     """
     Like :func:`numpy.arange`/`numpy.linspace`, but includes the start and stop points.
     Accepts 0-3 args, or the kwargs start, stop, step.
@@ -663,6 +663,7 @@ def inclusiverange(*args, **kwargs):
         start (float): value to start at
         stop (float): value to stop at
         step (float): step size
+        stretch (bool): if True, adjust the step size to end exactly at stop if needed
         kwargs (dict): passed to :func:`numpy.linspace`
 
     **Examples**::
@@ -671,23 +672,28 @@ def inclusiverange(*args, **kwargs):
         x = sc.inclusiverange(3,5,0.2)   # Like np.linspace(3, 5, int((5-3)/0.2+1))
         x = sc.inclusiverange(stop=5)    # Like np.arange(6)
         x = sc.inclusiverange(6, step=2) # Like np.arange(0, 7, 2)
+        x = sc.inclusiverange(0, 10, 3) # Like np.arange(0, 10, 3)
+        x = sc.inclusiverange(0, 10, 3, stretch=True) # Like np.linspace(0,10,int(10/3)+1)
+        
+    | *New in version 3.2.0*: "stretch" argument
     """
     # Handle args
-    if len(args)==0:
+    if len(args) == 0:
         start, stop, step = None, None, None
-    elif len(args)==1:
+    elif len(args) == 1:
         stop = args[0]
         start, step = None, None
-    elif len(args)==2:
+    elif len(args) == 2:
         start = args[0]
         stop  = args[1]
         step =  None
-    elif len(args)==3:
+    elif len(args) == 3:
         start = args[0]
         stop  = args[1]
         step  = args[2]
     else: # pragma: no cover
-        raise ValueError('Too many arguments supplied: inclusiverange() accepts 0-3 arguments')
+        errormsg = f'Too many arguments supplied ({len(args)}): sc.inclusiverange() accepts 1-3 arguments'
+        raise ValueError(errormsg)
 
     # Handle kwargs
     start = kwargs.pop('start', start)
@@ -698,9 +704,16 @@ def inclusiverange(*args, **kwargs):
     if start is None: start = 0
     if stop  is None: stop  = 1
     if step  is None: step  = 1
+    
+    # Handle case with a non-integer number of steps
+    nsteps = (stop-start)/step
+    int_steps = int(nsteps)
+    if not nsteps.is_integer() and not stretch:
+        stop = start + step*int_steps # Create a new stop based on the step
 
-    # OK, actually generate -- can't use arange since handles floating point arithmetic badly, e.g. compare arange(2000, 2020, 0.2) with arange(2000, 2020.2, 0.2)
-    x = np.linspace(start, stop, int(round((stop-start)/float(step))+1), **kwargs)
+    # Actually generate -- can't use arange since handles floating point arithmetic badly, e.g. compare arange(2000, 2020, 0.2) with arange(2000, 2020.2, 0.2)
+    num = int_steps + 1 # +1 since include both endpoints
+    x = np.linspace(start, stop, num, **kwargs)
     return x
 
 
@@ -756,7 +769,7 @@ def cat(*args, copy=False, **kwargs):
     
     if not len(args):
         return np.array([])
-    arrs = [scu.toarray(arg) for arg in args] # Key step: convert everything to an array
+    arrs = [sc.toarray(arg) for arg in args] # Key step: convert everything to an array
     if arrs[0].ndim == 2: # Convert to 2D if first array is
         arrs = [np.atleast_2d(arr) for arr in arrs]
     output = np.concatenate(arrs, **kwargs)
@@ -780,18 +793,18 @@ def linregress(x, y, full=False, **kwargs):
         y = sorted(2*np.random.rand(10) + 1)
         m,b = sc.linregress(x, y) # Simple usage
         out = sc.linregress(x, y, full=True) # Has out.m, out.b, out.x, out.y, out.corr, etc.
-        pl.scatter(x, y)
-        pl.plot(x, m*x+b)
-        pl.bar(x, out.residuals)
-        pl.title(f'R² = {out.r2}')
+        plt.scatter(x, y)
+        plt.plot(x, m*x+b)
+        plt.bar(x, out.residuals)
+        plt.title(f'R² = {out.r2}')
     """
-    x = scu.toarray(x)
-    y = scu.toarray(y)
+    x = sc.toarray(x)
+    y = sc.toarray(y)
     fit = np.polyfit(x, y, deg=1, **kwargs) # Do the fit
     if not full: # pragma: no cover
         return fit
     else:
-        out = sco.objdict()
+        out = sc.objdict()
         out.m = fit[0] # Slope
         out.b = fit[-1] # Intercept
         out.coeffs = fit
@@ -802,6 +815,35 @@ def linregress(x, y, full=False, **kwargs):
         out.residuals = y - out.y
         return out
 
+
+def sem(a, axis=None, *args, **kwargs):
+    """
+    Calculate the standard error of the mean (SEM).
+    
+    Shortcut (for a 1D array) to ``array.std()/np.sqrt(len(array))``.
+
+    Args:
+        a (arr): array to calculate the SEM of
+        axis (int): axis to calculate the SEM along
+        kwargs (dict): passed to :func:`numpy.std`
+
+    **Example**::
+
+        data = np.random.randn(100)
+        sem = sc.sem(data) # Roughly 0.1
+        
+    | *New in version 3.2.0.*
+    """
+    a = sc.toarray(a)
+    std = a.std(axis=axis)
+    if axis is None:
+        n = a.size
+    elif sc.isnumber(axis):
+        n = a.shape[axis]
+    else:
+        n = np.prod([a.shape[s] for s in axis])
+    out = std/np.sqrt(n)
+    return out
 
 
 ##############################################################################
@@ -919,7 +961,7 @@ def smooth(data, repeats=None, kernel=None, legacy=False):
 
     **Example**::
 
-        data = pl.randn(5,5)
+        data = np.random.randn(5,5)
         smoothdata = sc.smooth(data)
 
     *New in version 1.3.0:* Fix edge effects.
@@ -990,19 +1032,19 @@ def smoothinterp(newx=None, origx=None, origy=None, smoothness=None, growth=None
         np_y = np.interp(newx, origx, origy)
         si_y = interpolate.interp1d(origx, origy, 'cubic')(newx)
         kw = dict(lw=3, alpha=0.7)
-        pl.plot(newx, np_y, '--', label='NumPy', **kw)
-        pl.plot(newx, si_y, ':',  label='SciPy', **kw)
-        pl.plot(newx, sc_y, '-',  label='Sciris', **kw)
-        pl.scatter(origx, origy, s=50, c='k', label='Data')
-        pl.legend()
-        pl.show()
+        plt.plot(newx, np_y, '--', label='NumPy', **kw)
+        plt.plot(newx, si_y, ':',  label='SciPy', **kw)
+        plt.plot(newx, sc_y, '-',  label='Sciris', **kw)
+        plt.scatter(origx, origy, s=50, c='k', label='Data')
+        plt.legend()
+        plt.show()
 
     | *New in verison 3.0.0:* "ensurefinite" now defaults to True; removed "skipnans" argument
     """
     # Ensure arrays and remove NaNs
-    if scu.isnumber(newx):  newx = [newx] # Make sure it has dimension
-    if scu.isnumber(origx): origx = [origx] # Make sure it has dimension
-    if scu.isnumber(origy): origy = [origy] # Make sure it has dimension
+    if sc.isnumber(newx):  newx = [newx] # Make sure it has dimension
+    if sc.isnumber(origx): origx = [origx] # Make sure it has dimension
+    if sc.isnumber(origy): origy = [origy] # Make sure it has dimension
     newx  = np.array(newx, dtype=float)
     origx = np.array(origx, dtype=float)
     origy = np.array(origy, dtype=float)
@@ -1130,22 +1172,25 @@ def gauss1d(x=None, y=None, xi=None, scale=None, use32=True):
     **Examples**::
 
         # Setup
-        import pylab as pl
-        x = pl.rand(40)
-        y = (x-0.3)**2 + 0.2*pl.rand(40)
+        import numpy as np
+        import matplotlib.pyplot as plt
+        import sciris as sc
+
+        x = np.random.rand(40)
+        y = (x-0.3)**2 + 0.2*np.random.rand(40)
 
         # Smooth
         yi = sc.gauss1d(x, y)
         yi2 = sc.gauss1d(x, y, scale=0.3)
-        xi3 = pl.linspace(0,1)
+        xi3 = np.linspace(0,1)
         yi3 = sc.gauss1d(x, y, xi)
 
-        # Plot oiginal and interpolated versions
-        pl.scatter(x, y,     label='Original')
-        pl.scatter(x, yi,    label='Default smoothing')
-        pl.scatter(x, yi2,   label='More smoothing')
-        pl.scatter(xi3, yi3, label='Uniform spacing')
-        pl.show()
+        # Plot original and interpolated versions
+        plt.scatter(x, y,     label='Original')
+        plt.scatter(x, yi,    label='Default smoothing')
+        plt.scatter(x, yi2,   label='More smoothing')
+        plt.scatter(xi3, yi3, label='Uniform spacing')
+        plt.show()
 
         # Simple usage
         sc.gauss1d(y)
@@ -1217,30 +1262,32 @@ def gauss2d(x=None, y=None, z=None, xi=None, yi=None, scale=1.0, xscale=1.0, ysc
     **Examples**::
 
         # Setup
-        import pylab as pl
-        x = pl.rand(40)
-        y = pl.rand(40)
+        import numpy as np
+        import matplotlib.pyplot as plt
+        
+        x = np.random.rand(40)
+        y = np.random.rand(40)
         z = 1-(x-0.5)**2 + (y-0.5)**2 # Make a saddle
 
         # Simple usage -- only works if z is 2D
-        zi0 = sc.gauss2d(pl.rand(10,10))
+        zi0 = sc.gauss2d(np.random.rand(10,10))
         sc.surf3d(zi0)
 
         # Method 1 -- form grid
-        xi = pl.linspace(0,1,20)
-        yi = pl.linspace(0,1,20)
+        xi = np.linspace(0,1,20)
+        yi = np.linspace(0,1,20)
         zi = sc.gauss2d(x, y, z, xi, yi, scale=0.1, grid=True)
 
         # Method 2 -- use points directly
-        xi2 = pl.rand(400)
-        yi2 = pl.rand(400)
+        xi2 = np.random.rand(400)
+        yi2 = np.random.rand(400)
         zi2 = sc.gauss2d(x, y, z, xi2, yi2, scale=0.1)
 
         # Plot oiginal and interpolated versions
         sc.scatter3d(x, y, z, c=z)
         sc.surf3d(zi)
         sc.scatter3d(xi2, yi2, zi2, c=zi2)
-        pl.show()
+        plt.show()
 
     | *New in version 1.3.0.*
     | *New in version 1.3.1:* default arguments; support for 2D inputs
@@ -1270,8 +1317,8 @@ def gauss2d(x=None, y=None, z=None, xi=None, yi=None, scale=1.0, xscale=1.0, ysc
 
     # Handle data types
     orig_dtype = z.dtype
-    if xi is None: xi = scu.dcp(x)
-    if yi is None: yi = scu.dcp(y)
+    if xi is None: xi = sc.dcp(x)
+    if yi is None: yi = sc.dcp(y)
     if use32:
         x, y, z, xi, yi = _arr32(x), _arr32(y), _arr32(z), _arr32(xi), _arr32(yi)
         scale, xscale, yscale = _f32(scale), _f32(xscale), _f32(yscale)

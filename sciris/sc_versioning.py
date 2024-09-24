@@ -22,10 +22,7 @@ import packaging.version as pkgv
 import packaging.specifiers as pkgs
 import packaging.requirements as pkgr
 from zipfile import ZipFile
-from . import sc_utils as scu
-from . import sc_fileio as scf
-from . import sc_odict as sco
-from . import sc_datetime as scd
+import sciris as sc
 
 __all__ = ['freeze', 'require', 'gitinfo', 'compareversions', 'getcaller', 
            'metadata', 'loadmetadata', 'savearchive', 'loadarchive']
@@ -107,7 +104,7 @@ def require(reqs=None, *args, message=None, exact=False, detailed=False, die=Tru
     if isinstance(reqs, dict):
         reqdict.update(reqs)
     else:
-        reqlist = scu.mergelists(reqs, reqlist)
+        reqlist = sc.mergelists(reqs, reqlist)
 
     # Turn into a list of strings
     comparechars = '<>=!~'
@@ -142,7 +139,7 @@ def require(reqs=None, *args, message=None, exact=False, detailed=False, die=Tru
             if not valid:
                 count += 1
                 errorstrings += f'\n• {key} (error: {errs[key]})'
-        missing = scu.strjoin(errkeys, sep=' ')
+        missing = sc.strjoin(errkeys, sep=' ')
         if message is not None:
             errormsg = message.replace('<MISSING>', missing)
         else:
@@ -438,7 +435,7 @@ def metadata(outfile=None, version=None, comments=None, require=None, pipfreeze=
     from .sc_version import __version__
     
     # Handle type
-    dict_fn = dict if asdict else sco.objdict
+    dict_fn = dict if asdict else sc.objdict
     
     # Get calling info
     calling_info = dict_fn(getcaller(relframe=relframe+1, tostring=False))
@@ -446,8 +443,8 @@ def metadata(outfile=None, version=None, comments=None, require=None, pipfreeze=
     # Store metadata
     md = dict_fn(
         version   = version,
-        timestamp = scd.getdate(),
-        user      = scu.getuser() if user else None,
+        timestamp = sc.getdate(),
+        user      = sc.getuser() if user else None,
         system = dict_fn(
             platform   = platform.platform(),
             executable = sys.executable,
@@ -471,21 +468,21 @@ def metadata(outfile=None, version=None, comments=None, require=None, pipfreeze=
     md.update(kwargs)
     
     if outfile is not None:
-        outfile = scf.makepath(outfile, makedirs=True)
-        scf.savejson(outfile, md)
+        outfile = sc.makepath(outfile, makedirs=True)
+        sc.savejson(outfile, md)
     
     if tostring:
-        md = scf.jsonify(md, tostring=True, indent=2)
+        md = sc.jsonify(md, tostring=True, indent=2)
     
     return md
 
 
 def _md_to_objdict(md):
     """ Convert a metadata dictionary into an objdict -- descend two levels but no deeper """
-    md = sco.objdict(md)
+    md = sc.objdict(md)
     for k,v in md.items():
         if isinstance(v, dict):
-            md[k] = sco.objdict(v)
+            md[k] = sc.objdict(v)
     return md
         
 
@@ -505,11 +502,10 @@ def loadmetadata(filename, load_all=False, die=True):
 
     **Example**::
 
-        pl.plot([1,2,3], [4,2,6])
+        plt.plot([1,2,3], [4,2,6])
         sc.savefig('example.png')
         sc.loadmetadata('example.png')
     """
-    from . import sc_fileio as scf # To avoid circular import
 
     # Initialize
     md = {}
@@ -533,7 +529,7 @@ def loadmetadata(filename, load_all=False, die=True):
                 md = im.info
             else:
                 jsonstr = im.info[_metadataflag]
-                md = scf.loadjson(string=jsonstr)
+                md = sc.loadjson(string=jsonstr)
 
         # JPG -- from https://www.thepythoncode.com/article/extracting-image-metadata-in-python
         elif is_jpg: # pragma: no cover
@@ -548,7 +544,7 @@ def loadmetadata(filename, load_all=False, die=True):
 
         # Can't find metadata
         else: # pragma: no cover
-            errormsg = f'Could not find "{_metadataflag}": metadata can only be extracted from figures saved with sc.savefig().\nAvailable keys are: {scu.strjoin(keys)}'
+            errormsg = f'Could not find "{_metadataflag}": metadata can only be extracted from figures saved with sc.savefig().\nAvailable keys are: {sc.strjoin(keys)}'
             if die:
                 raise ValueError(errormsg)
             else:
@@ -560,7 +556,7 @@ def loadmetadata(filename, load_all=False, die=True):
     elif lcfn.endswith('svg'): # pragma: no cover
 
         # Load SVG as text and parse it
-        svg = scf.loadtext(filename).splitlines()
+        svg = sc.loadtext(filename).splitlines()
         flag = _metadataflag + '=' # Start of the line
         end = '</'
 
@@ -573,7 +569,7 @@ def loadmetadata(filename, load_all=False, die=True):
         # Usual case, can find metadata
         if found:
             jsonstr = line[line.find(flag)+len(flag):line.find(end)]
-            md = scf.loadjson(string=jsonstr)
+            md = sc.loadjson(string=jsonstr)
 
         # Can't find metadata
         else:
@@ -585,7 +581,7 @@ def loadmetadata(filename, load_all=False, die=True):
     
     # Load metadata saved with sc.metadata(), and convert it from dict to objdict
     elif lcfn.endswith('json'):
-        md = _md_to_objdict(scf.loadjson(filename))
+        md = _md_to_objdict(sc.loadjson(filename))
     
     # Load metadata saved with sc.savearchive()
     elif lcfn.endswith('zip'):
@@ -643,7 +639,7 @@ def savearchive(filename, obj, files=None, folder=None, comments=None, require=N
     
     *New in version 3.0.0.*
     """
-    filename = scf.makepath(filename=filename, folder=folder, makedirs=True)
+    filename = sc.makepath(filename=filename, folder=folder, makedirs=True)
     
     # Check filename
     if not allow_nonzip: # pragma: no cover
@@ -656,14 +652,14 @@ def savearchive(filename, obj, files=None, folder=None, comments=None, require=N
                   require=require, frame=3, method=method)
     
     # Convert both to strings
-    dumpargs    = scu.mergedicts({'method':method}, dumpargs)
-    metadatastr = scf.jsonify(md, tostring=True, indent=2)
-    datastr     = scf.dumpstr(obj, **dumpargs)
+    dumpargs    = sc.mergedicts({'method':method}, dumpargs)
+    metadatastr = sc.jsonify(md, tostring=True, indent=2)
+    datastr     = sc.dumpstr(obj, **dumpargs)
     
     # Construct output
     datadict = {_metadata_filename:metadatastr, _obj_filename:datastr}
     
-    return scf.savezip(filename=filename, files=files, data=datadict, tobytes=False, **kwargs)
+    return sc.savezip(filename=filename, files=files, data=datadict, tobytes=False, **kwargs)
 
 
 def loadarchive(filename, folder=None, loadobj=True, loadmetadata=False, 
@@ -706,7 +702,7 @@ def loadarchive(filename, folder=None, loadobj=True, loadmetadata=False,
     
     *New in version 3.0.0.*
     """
-    filename = scf.makefilepath(filename=filename, folder=folder, makedirs=False)
+    filename = sc.makefilepath(filename=filename, folder=folder, makedirs=False)
     
     # Open the zip file
     try:
@@ -730,7 +726,7 @@ def loadarchive(filename, folder=None, loadobj=True, loadmetadata=False,
         
         # Load the metadata first
         try:
-            md = _md_to_objdict(scf.loadjson(string=metadatastr))
+            md = _md_to_objdict(sc.loadjson(string=metadatastr))
         except Exception as E: # pragma: no cover
             errormsg = 'Could not parse the metadata as a JSON file; see error above for details'
             raise ValueError(errormsg) from E
@@ -753,13 +749,13 @@ def loadarchive(filename, folder=None, loadobj=True, loadmetadata=False,
             try:
                 method = md.get('method', None)
                 reqs   = md.get('require', None)
-                obj    = scf.loadstr(datastr, method=method, remapping=remapping, **kwargs) # Load with original remappings
+                obj    = sc.loadstr(datastr, method=method, remapping=remapping, **kwargs) # Load with original remappings
                 if reqs:
                     require(reqs=reqs, die=False, warn=True) # Don't die, but print warnings
             except: # pragma: no cover
                 try:
-                    remapping = scu.mergedicts(remapping, scf.known_fixes)
-                    obj = scf.loadstr(datastr, remapping=remapping, verbose=True, **kwargs) # Load with all remappings
+                    remapping = sc.mergedicts(remapping, sc.known_fixes)
+                    obj = sc.loadstr(datastr, remapping=remapping, verbose=True, **kwargs) # Load with all remappings
                 except Exception as E:
                     exc = type(E)
                     errormsg = 'Could not unpickle the object: to debug using metadata, set die=False'

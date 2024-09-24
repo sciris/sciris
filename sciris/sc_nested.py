@@ -14,14 +14,17 @@ import collections as co
 from functools import reduce, partial
 import numpy as np
 import pandas as pd
-from . import sc_utils as scu
-from . import sc_printing as scp
+import sciris as sc
 
 # Define objects for which it doesn't make sense to descend further -- used here and sc.equal()
 atomic_classes = [np.ndarray, pd.Series, pd.DataFrame, pd.core.indexes.base.Index]
 
 # Define a custom "None" value to allow searching for actual None values
 _None = '<sc_nested_custom_None>' # This should not be equal to any other value the user could supply
+
+def not_none(obj):
+    """ Check if an object does not match "_None" (the special None value to allow None input) """
+    return not isinstance(obj, str) or obj != _None
 
 
 ##############################################################################
@@ -33,25 +36,33 @@ __all__ = ['getnested', 'setnested', 'makenested', 'iternested', 'IterObj', 'ite
            'mergenested', 'flattendict', 'nestedloop']
 
 
-def makenested(nesteddict, keylist=None, value=None, overwrite=False, generator=None):
+def makenested(obj, keylist=None, value=None, overwrite=True, generator=None, copy=False):
     """
-    Little functions to get and set data from nested dictionaries.
+    Make a nested object (such as a dictionary).
+    
+    Args:
+        obj (any): the object to make the nested list in
+        keylist (list): a list of keys (strings) of the path to make
+        value (any): the value to set at the final key
+        overwrite (bool): if True, overwrite a value even if it exists
+        generator (class/func): the function used to create new levels of nesting (default: same as original object)
+        copy (bool): if True, copy the object before modifying it
+    
+    Functions to get and set data from nested dictionaries (including objects).
 
-    The first two were adapted from: http://stackoverflow.com/questions/14692690/access-python-nested-dictionary-items-via-a-list-of-keys
-
-    "getnested" will get the value for the given list of keys:
+    ``sc.getnested()`` will get the value for the given list of keys:
 
     >>> sc.getnested(foo, ['a','b'])
 
-    "setnested" will set the value for the given list of keys:
+    ``sc.setnested`` will set the value for the given list of keys:
 
     >>> sc.setnested(foo, ['a','b'], 3)
 
-    "makenested" will recursively update a dictionary with the given list of keys:
+    ``sc.makenested`` will recursively update a dictionary with the given list of keys:
 
     >>> sc.makenested(foo, ['a','b'])
 
-    "iternested" will return a list of all the twigs in the current dictionary:
+    ``sc.iternested`` will return a list of all the twigs in the current dictionary:
 
     >>> twigs = sc.iternested(foo)
 
@@ -80,26 +91,36 @@ def makenested(nesteddict, keylist=None, value=None, overwrite=False, generator=
             count += 1
             sc.setnested(foo, twig, count)   # {'a': {'y': 1, 'x': 2, 'z': 3}, 'b': {'a': {'y': 4, 'x': 5}}}
 
-    Version: 2014nov29
+    **Example 3**::
+        
+        foo = sc.makenested(sc.prettyobj(), ['level1', 'level2', 'level3'], 'done')
+        assert foo.level1.level2.level3 == 'done'
+        
+
+    | *New in version 2014nov29.*
+    | *New in version 3.2.0:* operate on arbitrary objects; "overwrite" defaults to True; returns object
     """
-    if generator is None:
-        generator = nesteddict.__class__ # By default, generate new dicts of the same class as the original one
-    currentlevel = nesteddict
+    if copy:
+        obj = sc.dcp(obj)
+    currentlevel = obj
     for i,key in enumerate(keylist[:-1]):
-        if not(key in currentlevel):
-            currentlevel[key] = generator() # Create a new dictionary
-        currentlevel = currentlevel[key]
+        if not check_in_obj(currentlevel, key):
+            if generator is not None:
+                gen_func = generator
+            else:
+                gen_func = currentlevel.__class__ # By default, generate new dicts of the same class as the most recent level
+            new = gen_func() # Create a new dictionary
+            set_in_obj(currentlevel, key, new)
+        currentlevel = get_from_obj(currentlevel, key)
+        
+    # Set the value
     lastkey = keylist[-1]
-    if isinstance(currentlevel, dict):
-        if overwrite or lastkey not in currentlevel:
-            currentlevel[lastkey] = value
-        elif not overwrite and value is not None: # pragma: no cover
-            errormsg = f'Not overwriting entry {keylist} since overwrite=False'
-            raise ValueError(errormsg)
-    elif value is not None: # pragma: no cover
-        errormsg = f'Cannot set value {value} since entry {keylist} is a {type(currentlevel)}, not a dict'
-        raise TypeError(errormsg)
-    return
+    if overwrite or lastkey not in currentlevel:
+        set_in_obj(currentlevel, lastkey, value)
+    elif not overwrite and value is not None: # pragma: no cover
+        errormsg = f'Not overwriting entry {keylist} since overwrite=False'
+        raise ValueError(errormsg)
+    return obj
 
 
 def check_iter_type(obj, check_array=False, known=None, known_to_none=True, custom=None):
@@ -127,6 +148,23 @@ def check_iter_type(obj, check_array=False, known=None, known_to_none=True, cust
     return out
     
 
+def check_in_obj(parent, key):
+    """
+    Check to see if a given key is present in an object
+    """
+    itertype = check_iter_type(parent)
+    if itertype == 'dict':
+        out = key in parent.keys()
+    elif itertype == 'list':
+        out = isinstance(key, int) and 0 <= key < len(parent)
+    elif itertype == 'object':
+        out = key in parent.__dict__.keys()
+    else:
+        errormsg = f'Cannot check for type "{type(parent)}", itertype "{itertype}"'
+        raise Exception(errormsg)
+    return out
+
+
 def get_from_obj(ndict, key, safe=False, **kwargs):
     """
     Get an item from a dict, list, or object by key
@@ -150,6 +188,29 @@ def get_from_obj(ndict, key, safe=False, **kwargs):
     else:
         out = None
     return out
+
+
+def set_in_obj(parent, key, value):
+    """ Set the value for the item """
+    itertype = check_iter_type(parent)
+    if itertype in ['dict', 'list']:
+        parent[key] = value
+    elif itertype == 'object':
+        parent.__dict__[key] = value
+    else:
+        errormsg = f'Cannot set value for type "{type(parent)}", itertype "{itertype}"'
+        raise Exception(errormsg)
+    return
+
+
+def flatten_traces(tupledict, sep='_'):
+    """ Convert trace tuples to strings for easier reading """
+    strdict = type(tupledict)() # Create new dictionary of the same type
+    for key,val in tupledict.items():
+        if isinstance(key, tuple):
+            key = sep.join([str(k) for k in key])
+        strdict[key] = val
+    return strdict
 
 
 def getnested(nested, keylist, safe=False):
@@ -180,7 +241,7 @@ def setnested(nested, keylist, value, force=True):
         nested (any): the nested object (dict, list, or object) to modify
         keylist (list): the list of keys to use
         value (any): the value to set
-        force (bool): whether to create the keys if they don't exist (NB: only works for dictionaries)
+        force (bool): whether to create the keys if they don't exist
     
     **Example**::
 
@@ -188,14 +249,11 @@ def setnested(nested, keylist, value, force=True):
 
     See :func:`sc.makenested() <makenested>` for full documentation.
     """
+    parentkeys = keylist[:-1]
     if force:
-        makenested(nested, keylist, overwrite=False)
-    currentlevel = getnested(nested, keylist[:-1])
-    if not isinstance(currentlevel, dict): # pragma: no cover
-        errormsg = f'Cannot set {keylist} since parent is a {type(currentlevel)}, not a dict'
-        raise TypeError(errormsg)
-    else:
-        currentlevel[keylist[-1]] = value
+        makenested(nested, parentkeys, overwrite=False)
+    currentlevel = getnested(nested, parentkeys)
+    set_in_obj(currentlevel, keylist[-1], value)
     return nested # Return object, but note that it's modified in place
 
 
@@ -283,7 +341,6 @@ class IterObj:
     def __init__(self, obj, func=None, inplace=False, copy=False, leaf=False, recursion=0, depthfirst=True,
                  atomic='default', skip=None, rootkey='root', verbose=False, iterate=True,
                  custom_type=None, custom_iter=None, custom_get=None, custom_set=None, *args, **kwargs):
-        from . import sc_odict as sco # To avoid circular import
         
         # Default arguments
         self.obj        = obj
@@ -309,12 +366,12 @@ class IterObj:
         # Attributes with initialization required
         self._trace     = []
         self._memo      = co.defaultdict(int)
-        self.output     = sco.objdict()
+        self.output     = sc.objdict()
         if self.func is None: # If no function provided, define a function that just returns the contents of the current node
             self.func = lambda obj: obj 
         
         # Handle atomic classes
-        atomiclist = scu.tolist(self.atomic)
+        atomiclist = sc.tolist(self.atomic)
         if 'default' in atomiclist: # Handle objects to not descend into
             atomiclist.remove('default')
             atomiclist = atomic_classes + atomiclist
@@ -322,14 +379,17 @@ class IterObj:
         
         # Handle objects to skip
         if isinstance(skip, dict):
-            skip_ids        = scu.tolist(skip.pop('ids', None))
-            skip_subclasses = scu.tolist(skip.pop('subclasses', None))
-            skip_instances  = scu.tolist(skip.pop('instances', None))
+            skip = sc.dcp(skip)
+            skip_keys       = sc.tolist(skip.pop('keys', None))
+            skip_ids        = sc.tolist(skip.pop('ids', None))
+            skip_subclasses = sc.tolist(skip.pop('subclasses', None))
+            skip_instances  = sc.tolist(skip.pop('instances', None))
             if len(skip):
-                errormsg = f'Unrecognized skip keys {skip.keys()}: must be "ids", "subclasses", and/or "instances"'
+                errormsg = f'Unrecognized skip keys {skip.keys()}: must be "keys", "ids", "subclasses", and/or "instances"'
                 raise KeyError(errormsg)
         else:
-            skip = scu.tolist(self.skip)
+            skip = sc.tolist(self.skip)
+            skip_keys        = []
             skip_ids        = []
             skip_subclasses = []
             skip_instances  = [] # This isn't populated in list form
@@ -338,17 +398,20 @@ class IterObj:
                     skip_ids.append(entry)
                 elif isinstance(entry, type):
                     skip_subclasses.append(entry)
+                elif isinstance(entry, str):
+                    skip_keys.append(entry)
                 else:
-                    errormsg = f'Expecting skip entries to be classes or object IDs, not {entry}'
+                    errormsg = f'Expecting skip entries to be keys, classes or object IDs, not {entry}'
                     raise TypeError(errormsg)
-            
+
+        self._skip_keys       = tuple(skip_keys)
         self._skip_ids        = tuple(skip_ids)
         self._skip_subclasses = tuple(skip_subclasses)
         self._skip_instances  = tuple(skip_instances)
         
         # Copy the object if needed
         if inplace and copy:
-            self.obj = scu.dcp(obj)
+            self.obj = sc.dcp(obj)
         
         # Actually do the iteration
         if iterate:
@@ -424,20 +487,21 @@ class IterObj:
     def check_iter_type(self, obj):
         """ Shortcut to check_iter_type() """
         return check_iter_type(obj, known=self.atomic, custom=self.custom_type)
-    
-    def check_proceed(self, subobj, newid):
+
+    def check_proceed(self, key, subobj, newid):
         """ Check if we should continue or not """
         
         # If we've already parsed this object, don't parse it again
         in_memo = (newid in self._memo) and (self._memo[newid] > self.recursion) 
         
         # Skip this object if we've been asked to
+        key_skip = key in self._skip_keys
         id_skip = (newid in self._skip_ids)
         subclass_skip = issubclass(type(subobj), self._skip_subclasses)
         instance_skip = isinstance(subobj, self._skip_instances)
         
         # Finalize
-        proceed = False if (in_memo or id_skip or subclass_skip or instance_skip) else True
+        proceed = False if (in_memo or key_skip or id_skip or subclass_skip or instance_skip) else True
         return proceed
     
     def process_obj(self, parent, trace, key, subobj, newid):
@@ -469,7 +533,7 @@ class IterObj:
         while queue:
             parent,trace,key,subobj = queue.popleft()
             newid = id(subobj)
-            proceed = self.check_proceed(subobj, newid)
+            proceed = self.check_proceed(key, subobj, newid)
             if proceed: # Actually descend into the object
                 newtrace = self.process_obj(parent, trace, key, subobj, newid) # Process the object
                 newitems = self.iteritems(subobj, newtrace)
@@ -486,28 +550,23 @@ class IterObj:
             if (not self._trace) and (len(self.output)>1) and self.leaf: # We're at the top level, we have multiple entries, and only leaves are requested
                 self.output.pop('root') # Remove "root" with leaf=True if it's not the only node
             return self.output
-        
-    def flatten_traces(self, sep='_'):
-        """ Convert trace tuples to strings for easier reading """
-        from . import sc_odict as sco # To avoid circular import
-        newoutput = sco.objdict()
-        for key,val in self.output.items():
-            if isinstance(key, tuple):
-                key = sep.join([str(k) for k in key])
-            newoutput[key] = val
-        self.output = newoutput
-        return newoutput
     
+    def flatten_traces(self, sep='_', inplace=True):
+        """ Flatten the traces """
+        output = flatten_traces(self.output, sep=sep)
+        if inplace:
+            self.output = output
+        return output
+        
     def to_df(self):
         """ Convert the output dictionary to a dataframe """
-        from . import sc_dataframe as scd # To avoid circular import
         if not len(self):
             errormsg = 'No output to convert to a dataframe: length is zero'
             raise ValueError(errormsg)
         trace = self.output.keys()
         depth = [(0 if tr==self.rootkey else len(tr)) for tr in trace] # The depth is the length of the tuple, except the special case of the root key
         value = self.output.values()
-        self.df = scd.dataframe(trace=trace, depth=depth, value=value)
+        self.df = sc.dataframe(trace=trace, depth=depth, value=value)
         return self.df
         
 
@@ -580,6 +639,7 @@ def iterobj(obj, func=None, inplace=False, copy=False, leaf=False, recursion=0, 
     io = IterObj(obj=obj, func=func, inplace=inplace, copy=copy, leaf=leaf, recursion=recursion, depthfirst=depthfirst,
                  atomic=atomic, skip=skip, rootkey=rootkey, verbose=verbose, iterate=False, *args, **kwargs)
     out = io.iterate() # Iterate
+    
     if flatten:
         out = io.flatten_traces()
     if to_df:
@@ -599,7 +659,7 @@ def mergenested(dict1, dict2, die=False, verbose=False, _path=None):
     if _path:
         a = dict1 # If we're being recursive, work in place
     else:
-        a = scu.dcp(dict1) # Otherwise, make a copy
+        a = sc.dcp(dict1) # Otherwise, make a copy
     b = dict2 # Don't need to make a copy
 
     for key in b:
@@ -720,12 +780,10 @@ def nestedloop(inputs, loop_order):
 #%% Search and equality operators
 ##############################################################################
 
-
 __all__ += ['search', 'Equal', 'equal']
 
 
-def search(obj, query=_None, key=_None, value=_None, aslist=True, method='exact', 
-           return_values=False, verbose=False, _trace=None, **kwargs):
+def search(obj, query=_None, key=_None, value=_None, type=_None, method='exact', **kwargs):
     """
     Find a key/attribute or value within a list, dictionary or object.
 
@@ -734,20 +792,16 @@ def search(obj, query=_None, key=_None, value=_None, aslist=True, method='exact'
 
     Args:
         obj (any): A dict, list, or object
-        query (any): The key or value to search for (or a function); equivalent to setting both ``key`` and ``value``
+        query (any): The key or value to search for (or a function or a type); equivalent to setting both ``key`` and ``value``
         key (any): The key to search for
         value (any): The value to search for
-        aslist (bool): return entries as a list (else, return as a string)
-        method (str): choose how to check for matches: 'exact' (test equality), 'partial' (partial/lowercase string match), or 'regex' (treat as a regex expression)
-        return_values (bool): return matching values as well as keys
-        verbose (bool): whether to print details of the search
-        _trace: Not for user input - internal variable used for recursion
+        type (type): The type (or list of types) to match against (for values only)
+        method (str): if the query is a string, choose how to check for matches: 'exact' (test equality), 'partial' (partial/lowercase string match), or 'regex' (treat as a regex expression)
         kwargs (dict): passed to :func:`sc.iterobj() <iterobj>`
 
     Returns:
-        A list of matching attributes. The items in the list are the Python
-        strings (or lists) used to access the attribute (via attribute, dict, 
-        or listindexing).
+        A dictionary of matching attributes; like :func:`sc.iterobj() <iterobj>`,
+        but filtered to only include matches.
 
     **Examples**::
 
@@ -755,12 +809,12 @@ def search(obj, query=_None, key=_None, value=_None, aslist=True, method='exact'
         nested = {'a':{'foo':1, 'bar':['moat', 'goat']}, 'b':{'car':3, 'cat':[1,2,4,8]}}
         
         # Find keys
-        keymatches = sc.search(nested, 'bar', aslist=False)
+        keymatches = sc.search(nested, 'bar', flatten=True)
         
         # Find values
         val = 4
-        valmatches = sc.search(nested, value=val, aslist=True) # Returns  [['b', 'cat', 2]]
-        assert sc.getnested(nested, valmatches[0]) == val # Get from the original nested object
+        valmatches = sc.search(nested, value=val).keys()[0] # Returns  ('b', 'cat', 2)
+        assert sc.getnested(nested, valmatches) == val # Get from the original nested object
         
         # Find values with a function
         def find(v):
@@ -769,19 +823,17 @@ def search(obj, query=_None, key=_None, value=_None, aslist=True, method='exact'
         found = sc.search(nested, value=find)
         
         # Find partial or regex matches
-        found = sc.search(nested, key='oat', method='partial') # Search keys only
-        keys,vals = sc.search(nested, '^.ar', method='regex', return_values=True, verbose=True)
+        found = sc.search(nested, value='oat', method='partial', leaf=True) # Search keys only
+        keys,vals = sc.search(nested, '^.ar', method='regex', verbose=True)
     
     | *New in version 3.0.0:* ability to search for values as well as keys/attributes; "aslist" argument
     | *New in version 3.1.0:* "query", "method", and "verbose" keywords; improved searching for lists
+    | *New in version 3.2.0:* allow type matching; removed "return_values"; renamed "aslist" to "flatten" (reversed)
     """
     
-    # Collect keywords that won't change, for later use in the recursion
-    kw = dict(method=method, verbose=verbose, aslist=aslist)
-    
-    def check_match(source, target, method):
+    def check_match(source, target):
         """ Check if there is a match between the "source" and "target" """
-        if source != _None and target != _None: # See above for definition; a source and target were supplied
+        if not_none(source) and not_none(target): # See above for definition of _None; a source and target were supplied
             if callable(target):
                 match = target(source)
             elif method == 'exact':
@@ -799,93 +851,52 @@ def search(obj, query=_None, key=_None, value=_None, aslist=True, method='exact'
         return match
     
     # Handle query
-    if query != _None:
-        if key != _None or value != _None: # pragma: no cover
+    if not_none(query):
+        if not_none(key) or not_none(value): # pragma: no cover
             errormsg = '"query" cannot be used with "key" or "value"; it is a shortcut to set both'
             raise ValueError(errormsg)
         key = query
         value = query
-
-    # Look for matches
+    
+    # Handle type
+    if not_none(type):
+        if not_none(key) or not_none(value): # pragma: no cover
+            errormsg = '"type" cannot be used with "key" or "value"; replaces "value"'
+            raise ValueError(errormsg)
+        typetuple = tuple(sc.tolist(type))
+        value = lambda source: isinstance(source, typetuple) # Define a lambda function for the matching
+        
+    
+    # Parse the object tree
+    flatten = kwargs.pop('flatten', False) # Don't flatten because that will disrupt the matching
+    tree = iterobj(obj, **kwargs) # For key matching
+    
+    # Do the matching
     matches = []
-
-    # Determine object type
-    itertype = check_iter_type(obj, **kwargs)
-    if itertype == 'dict':
-        o = obj
-    elif itertype == 'list':
-        o = {k:v for k,v in zip(list(range(len(obj))), obj)}
-    elif itertype == 'object':
-        o = obj.__dict__
-    else:
-        if verbose > 1: print(f'  For trace="{_trace}", cannot descend into "{type(obj)}"')
-        return matches
     
-    # Initialize the trace if it doesn't exist
-    if _trace is None:
-        if aslist:
-            _trace = []
-        else:
-            _trace = ''
-        
-    # Iterate over the items
-    for k,v in o.items():
-
-        if aslist:
-            trace = _trace + [k]
-        else:
-            if itertype == 'dict':
-                trace = _trace + f'["{k}"]'
-            elif itertype == 'list':
-                trace = _trace + f'[{k}]'
-            else:
-                trace = _trace + f'.{k}'
-        
-        # Sanitize object value
-        if method in ['partial', 'regex'] and check_iter_type(v, **kwargs): # We want to exclude values that can be descended into if we're doing string matching
-            objvalue = _None
-        else:
-            objvalue = v
-        
-        # Sanitize object key
-        if key != _None and itertype == 'list': # "Keys" don't make sense for lists, so just duplicate values
-            objkey = objvalue
-        else:
-            objkey = k
-
-        # Actually check for matches
-        for source,target in [[objkey, key], [objvalue, value]]:
-            if check_match(source, target, method=method):
-                if trace not in matches:
-                    matches.append(trace)
-        
-        if verbose:
-            nmatches = len(matches)
-            msg = f'Checking trace="{trace}" for key="{key}", value="{value}" using "{method}": '
-            if nmatches:
-                msg += f'found {len(matches)} matches'
-            else:
-                msg += 'no matches'
-            print(msg)
-
-        # Continue searching recursively, and avoid duplication
-        newmatches = search(o[k], key=key, value=value, _trace=trace, **kw)
-        for newmatch in newmatches:
-            if newmatch not in matches:
-                matches.append(newmatch)
+    # Match keys
+    if not_none(key):
+        for k in tree.keys():
+            if check_match(k[-1], key): # Only want the last key of the trace
+                matches.append(k)
     
-    # Tidy up
-    if return_values:
-        values = []
-        for match in matches:
-            value = getnested(obj, match)
-            values.append(value)
-        return matches, values
-    else:
-        return matches
+    # Match values (including types)
+    if not_none(value):
+        for k,v in tree.items():
+            if check_match(v, value):
+                matches.append(k)
+    
+    # Reassemble dict to maintain order
+    out = sc.objdict({k:v for k,v in tree.items() if k in matches})
+    
+    if flatten:
+        out = flatten_traces(out)
+        
+    return out
 
 
-class Equal(scp.prettyobj):
+
+class Equal(sc.prettyobj):
     
     # Define known special cases for equality checking
     special_cases = tuple([float] + atomic_classes)
@@ -903,7 +914,6 @@ class Equal(scp.prettyobj):
 
         *New in version 3.1.0.*
         """
-        from . import sc_odict as sco # To avoid circular import
         
         # Set properties
         self.objs = [obj, obj2] + list(args) # All objects for comparison
@@ -914,7 +924,7 @@ class Equal(scp.prettyobj):
         self.union = union
         self.verbose = verbose
         self.die = die
-        self.kwargs = scu.mergedicts(kwargs, dict(leaf=leaf))
+        self.kwargs = sc.mergedicts(kwargs, dict(leaf=leaf))
         self.check_method() # Check that the method is valid
         
         # Derived results
@@ -922,9 +932,9 @@ class Equal(scp.prettyobj):
         self.compared = False # Whether the objects have already been compared
         self.dicts = [] # Object dictionaries
         self.treekeys = None # The object keys to walk over
-        self.results = sco.objdict() # Detailed output, 1D dict
-        self.fullresults = sco.objdict() # Detailed output, 2D dict
-        self.exceptions = sco.objdict() # Store any exceptions encountered
+        self.results = sc.objdict() # Detailed output, 1D dict
+        self.fullresults = sc.objdict() # Detailed output, 2D dict
+        self.exceptions = sc.objdict() # Store any exceptions encountered
         self.eq = None # Final value to be populated
         
         # Run the comparison if requested
@@ -965,11 +975,11 @@ class Equal(scp.prettyobj):
         """ Check that a valid method is supplied """
         if self.method is None:
             self.method = ['eq', 'pickle'] # Define the default method sequence to try
-        self.method = scu.tolist(self.method)
+        self.method = sc.tolist(self.method)
         assert len(self.method), 'No methods supplied'
         for method in self.method:
             if method not in self.valid_methods and not callable(method): # pragma: no cover
-                errormsg = f'Method "{method}" not recognized: must be one of {scu.strjoin(self.valid_methods)}'
+                errormsg = f'Method "{method}" not recognized: must be one of {sc.strjoin(self.valid_methods)}'
                 raise ValueError(errormsg)
     
     
@@ -988,7 +998,7 @@ class Equal(scp.prettyobj):
             self.dicts.append(iterobj(obj, **self.kwargs))
         self.walked = True
         if self.verbose:
-            nkeystr = scu.strjoin([len(d) for d in self.dicts])
+            nkeystr = sc.strjoin([len(d) for d in self.dicts])
             print(f'Walked {self.n} objects with {nkeystr} keys respectively')
         
         self.make_tree()
@@ -1029,8 +1039,7 @@ class Equal(scp.prettyobj):
         elif method == 'pickle':
             out = pkl.dumps(obj)
         elif method == 'json':
-            from . import sc_fileio as scf # To avoid circular import
-            out = scf.jsonpickle(obj)
+            out = sc.jsonpickle(obj)
         elif method == 'str':
             out = str(obj)
         elif callable(method):
@@ -1044,7 +1053,6 @@ class Equal(scp.prettyobj):
 
     def compare_special(self, obj, obj2):
         """ Do special comparisons for known objects where == doesn't work """
-        from . import sc_math as scm # To avoid circular import
         
         # For floats, check for NaN equality
         if isinstance(obj, float):
@@ -1055,12 +1063,11 @@ class Equal(scp.prettyobj):
         
         # For numpy arrays, must use something to handle NaNs
         elif isinstance(obj, (np.ndarray, pd.Series, pd.core.indexes.base.Index)):
-            eq = scm.nanequal(obj, obj2, scalar=True, equal_nan=self.equal_nan)
+            eq = sc.nanequal(obj, obj2, scalar=True, equal_nan=self.equal_nan)
     
         # For dataframes, use Sciris
         elif isinstance(obj, pd.DataFrame):
-            from . import sc_dataframe as scd # To avoid circular import
-            eq = scd.dataframe.equal(obj, obj2, equal_nan=self.equal_nan)
+            eq = sc.dataframe.equal(obj, obj2, equal_nan=self.equal_nan)
         
         else: # pragma: no cover
             errormsg = f'Not able to handle object of {type(obj)}'
@@ -1072,7 +1079,7 @@ class Equal(scp.prettyobj):
     @staticmethod
     def keytostr(k, ind='', sep='.'):
         """ Helper method to convert a key to a "trace" for printing """
-        out = f'<obj{str(ind)}>{sep}{scu.strjoin(k, sep=sep)}'
+        out = f'<obj{str(ind)}>{sep}{sc.strjoin(k, sep=sep)}'
         return out
     
     
@@ -1123,7 +1130,7 @@ class Equal(scp.prettyobj):
                 
                 # If keys match, proceed
                 if eq:
-                    methods = scu.dcp(self.method) # Copy the methods to try one by one
+                    methods = sc.dcp(self.method) # Copy the methods to try one by one
                     compared = False # Check if comparison succeeded
                     otherobj = otree[key] # Get the other object
                     if key != 'root': appendval(vals, otherobj)
@@ -1193,8 +1200,6 @@ class Equal(scp.prettyobj):
     
     def to_df(self):
         """ Convert the detailed results dictionary to a dataframe """
-        from . import sc_dataframe as scd # To avoid circular import
-        
         # Ensure they've been compared
         if not self.compared: # pragma: no cover
             self.compare()
@@ -1202,7 +1207,7 @@ class Equal(scp.prettyobj):
         # Make dataframe
         columns = [f'obj0==obj{i+1}' for i in range(self.n-1)]
         if self.detailed>1: columns = columns + [f'val{i}' for i in range(self.n)]
-        df = scd.dataframe.from_dict(scu.dcp(self.fullresults), orient='index', columns=columns)
+        df = sc.dataframe.from_dict(sc.dcp(self.fullresults), orient='index', columns=columns)
         equal = df.iloc[:, :(self.n-1)].all(axis=1)
         df.insert(0, 'equal', equal)
         

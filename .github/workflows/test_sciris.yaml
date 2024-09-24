@@ -1,9 +1,7 @@
-name: Sciris
+name: Sciris CI tests
 on:
   workflow_dispatch:
   pull_request:
-  schedule:
-    - cron: "0 0 * * *"
 
 jobs:
   install_and_test:
@@ -43,7 +41,7 @@ jobs:
         working-directory: ./tests
         run: pytest --durations=0 --junitxml=test-results.xml # Run actual tests
       - name: Upload test results
-        uses: actions/upload-artifact@v1
+        uses: actions/upload-artifact@v4
         if: failure()
         with:
           name: test_results

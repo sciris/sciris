@@ -1,4 +1,4 @@
-name: Downstream
+name: Sciris downstream tests
 on:
   workflow_dispatch:
   push:
@@ -47,7 +47,7 @@ jobs:
         working-directory: ./covasim/tests
         run: pytest --durations=0 --junitxml=covasim-test-results.xml # Run actual tests
       - name: Upload test results
-        uses: actions/upload-artifact@v1
+        uses: actions/upload-artifact@v4
         if: failure()
         with:
           name: test_results
@@ -93,7 +93,7 @@ jobs:
         working-directory: ./starsim/tests
         run: pytest --durations=0 --junitxml=starsim-test-results.xml # Run actual tests
       - name: Upload test results
-        uses: actions/upload-artifact@v1
+        uses: actions/upload-artifact@v4
         if: failure()
         with:
           name: test_results
@@ -138,7 +138,7 @@ jobs:
         working-directory: ./atomica/tests
         run: pytest test_tox_*.py --durations=0 --junitxml=starsim-test-results.xml # Run actual tests
       - name: Upload test results
-        uses: actions/upload-artifact@v1
+        uses: actions/upload-artifact@v4
         if: failure()
         with:
           name: test_results

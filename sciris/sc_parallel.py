@@ -14,11 +14,7 @@ import multiprocess as mp
 import multiprocessing as mpi
 import concurrent.futures as cf
 from functools import partial
-from . import sc_utils as scu
-from . import sc_odict as sco
-from . import sc_printing as scp
-from . import sc_datetime as scd
-from . import sc_profiling as scpro
+import sciris as sc
 
 
 ##############################################################################
@@ -53,8 +49,8 @@ def _progressbar(globaldict, njobs, started, **kwargs):
         done = sum([globaldict[k] for k in globaldict.keys() if str(k).startswith('_job')])
     except Exception as E:
         done = '<unknown>' + str(E)
-    elapsed = (scd.now() - started).total_seconds()
-    scp.progressbar(done, njobs, label=f'Job {done}/{njobs} ({elapsed:.1f} s)', **kwargs)
+    elapsed = (sc.now() - started).total_seconds()
+    sc.progressbar(done, njobs, label=f'Job {done}/{njobs} ({elapsed:.1f} s)', **kwargs)
     return
 
 
@@ -111,7 +107,7 @@ class Parallel:
         self.iterarg      = iterarg
         self.iterkwargs   = iterkwargs
         self.args         = args
-        self.kwargs       = scu.mergedicts(kwargs, func_kwargs)
+        self.kwargs       = sc.mergedicts(kwargs, func_kwargs)
         self._ncpus       = ncpus # With a prefix since dynamically calculated later
         self.maxcpu       = maxcpu
         self.maxmem       = maxmem
@@ -157,7 +153,7 @@ class Parallel:
         self.results      = None
         self.success      = None
         self.exceptions   = None
-        self.times        = sco.objdict(started=None, finished=None, elapsed=None, jobs=None)
+        self.times        = sc.objdict(started=None, finished=None, elapsed=None, jobs=None)
         self._running     = False # Used interally; see self.running for the dynamically updated property
         self.already_run  = False
         return
@@ -172,12 +168,12 @@ class Parallel:
     
     def disp(self):
         """ Display the full representation of the object """
-        return scp.pr(self)
+        return sc.pr(self)
     
     
     def set_defaults(self):
         """ Define defaults for parallelization """
-        self.defaults = sco.objdict()
+        self.defaults = sc.objdict()
         
         # Define default parallelizers
         self.defaults.fast   = 'concurrent.futures'
@@ -214,7 +210,7 @@ class Parallel:
         
         # Validate iterarg
         if iterarg is not None:
-            if not(scu.isiterable(iterarg)):
+            if not(sc.isiterable(iterarg)):
                 try:
                     iterarg = np.arange(iterarg) # This is duplicated in make_argslist, but kept here so as to not modify user inputs
                     self.embarrassing = True
@@ -228,7 +224,7 @@ class Parallel:
             
             if isinstance(iterkwargs, dict): # It's a dict of lists, e.g. {'x':[1,2,3], 'y':[2,3,4]}
                 for key,val in iterkwargs.items():
-                    if not scu.isiterable(val): # pragma: no cover
+                    if not sc.isiterable(val): # pragma: no cover
                         errormsg = f'iterkwargs entries must be iterable, not {type(val)}'
                         raise TypeError(errormsg)
                     if not njobs:
@@ -271,7 +267,7 @@ class Parallel:
         
         # Handle number of CPUs
         ncpus = self._ncpus # Copy, then process
-        sys_cpus = scpro.cpu_count()
+        sys_cpus = sc.cpu_count()
         if not ncpus: # Nothing is supplied (None or 0), calculate dynamically
             ncpus = sys_cpus
         elif 0 < ncpus < 1: # Less than one, treat as a fraction of total
@@ -297,24 +293,24 @@ class Parallel:
             parallelizer = 'serial'
         
         # Handle the choice of parallelizer
-        if scu.isstring(parallelizer):
+        if sc.isstring(parallelizer):
             parallelizer = parallelizer.replace('copy', '').replace('async', '').replace('-', '')
             try:
                 self.method = self.defaults.mapping[parallelizer]
             except:
-                errormsg = f'Parallelizer "{parallelizer}" not found: must be one of {scu.strjoin(self.defaults.mapping.keys())}'
-                raise scu.KeyNotFoundError(errormsg)
+                errormsg = f'Parallelizer "{parallelizer}" not found: must be one of {sc.strjoin(self.defaults.mapping.keys())}'
+                raise sc.KeyNotFoundError(errormsg)
         else: # pragma: no cover
             self.method = 'custom' # If a custom parallelizer is provided
         
         # Handle async
         is_async = False
         supports_async = ['multiprocess', 'multiprocessing']
-        if scu.isstring(self.parallelizer) and 'async' in self.parallelizer:
+        if sc.isstring(self.parallelizer) and 'async' in self.parallelizer:
             if self.method in supports_async:
                 is_async = True
             else:
-                errormsg = f'You have specified to use async with "{self.method}", but async is only supported for: {scu.strjoin(supports_async)}.'
+                errormsg = f'You have specified to use async with "{self.method}", but async is only supported for: {sc.strjoin(supports_async)}.'
                 raise ValueError(errormsg)
         self.is_async = is_async
         
@@ -451,12 +447,12 @@ class Parallel:
         self.make_pool()
         
         # Construct the argument list (has to be after the pool is made)
-        self.times.started = scd.now()
+        self.times.started = sc.now()
         self.make_argslist()
         
         # Handle optional deepcopy
-        if scu.isstring(self.parallelizer) and '-copy' in self.parallelizer and method in needs_copy: # Don't deepcopy if we're going to pickle anyway
-            argslist = [scu.dcp(arg, die=self.die) for arg in self.argslist]
+        if sc.isstring(self.parallelizer) and '-copy' in self.parallelizer and method in needs_copy: # Don't deepcopy if we're going to pickle anyway
+            argslist = [sc.dcp(arg, die=self.die) for arg in self.argslist]
         else:
             argslist = self.argslist
         
@@ -513,7 +509,7 @@ class Parallel:
     
     
     def _time_finished(self, *args, **kwargs):
-        self.times.finished = scd.now()
+        self.times.finished = sc.now()
         self.times.elapsed = (self.times.finished - self.times.started).total_seconds()
         return
 
@@ -525,7 +521,7 @@ class Parallel:
             if not self.running and final_iter:
                 final_iter = False
             _progressbar(self.globaldict, njobs=self.njobs, started=self.times.started, **kwargs)
-            scd.timedsleep(interval)
+            sc.timedsleep(interval)
         return
     
 
@@ -673,10 +669,10 @@ def parallelize(func, iterarg=None, iterkwargs=None, args=None, kwargs=None, ncp
         xylist2 = sc.parallelize(myfunc, x=5, y=10, iterarg=[0,1,2], parallelizer='multiprocessing') # Supply kwargs directly and use a different parallelizer
 
         for p,xylist in enumerate([xylist1, xylist2]):
-            pl.subplot(2,1,p+1)
+            plt.subplot(2,1,p+1)
             for i,xy in enumerate(reversed(xylist)):
-                pl.scatter(xy[0], xy[1], label='Run %i'%i)
-            pl.legend()
+                plt.scatter(xy[0], xy[1], label='Run %i'%i)
+            plt.legend()
 
     **Example 5 -- using a custom parallelization function**::
 
@@ -761,7 +757,7 @@ def parallelize(func, iterarg=None, iterkwargs=None, args=None, kwargs=None, ncp
 #%% Helper functions/classes
 ##############################################################################
 
-class TaskArgs(scp.prettyobj):
+class TaskArgs(sc.prettyobj):
         """
         A class to hold the arguments for the parallel task -- not to be invoked by the user.
 
@@ -809,17 +805,18 @@ def _task(taskargs):
             taskargs.iterval = (taskargs.iterval,)
         if not taskargs.embarrassing:
             args = taskargs.iterval + args # If variable name is not supplied, prepend it to args
-    kwargs = scu.mergedicts(kwargs, taskargs.iterdict) # Merge this iterdict, overwriting kwargs if there are conflicts
+    kwargs = sc.mergedicts(kwargs, taskargs.iterdict) # Merge this iterdict, overwriting kwargs if there are conflicts
 
     # Handle load balancing
     maxcpu = taskargs.maxcpu
     maxmem = taskargs.maxmem
-    if maxcpu or maxmem:
-        scpro.loadbalancer(maxcpu=maxcpu, maxmem=maxmem, index=index, interval=taskargs.interval)
+    interval = taskargs.interval
+    if maxcpu or maxmem or interval:
+        sc.loadbalancer(maxcpu=maxcpu, maxmem=maxmem, index=index, interval=interval)
 
     # Set up input and output arguments
     globaldict = taskargs.globaldict
-    start      = scd.time()
+    start      = sc.time()
     result     = None
     success    = False
     exception  = None
@@ -848,10 +845,10 @@ def _task(taskargs):
                 exc = Exception(errormsg)
             raise exc from E
         else: # Alternatively, keep going and just let this trial fail
-            warnmsg = f'sc.parallelize(): Task {index} failed, but die=False so continuing.\n{scu.traceback()}'
+            warnmsg = f'sc.parallelize(): Task {index} failed, but die=False so continuing.\n{sc.traceback()}'
             warnings.warn(warnmsg, category=RuntimeWarning, stacklevel=2)
             exception = E
-    end = scd.time()
+    end = sc.time()
     elapsed = end - start
     
     if taskargs.progress:

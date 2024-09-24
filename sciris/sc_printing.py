@@ -13,6 +13,7 @@ Highlights:
 import io
 import os
 import sys
+import types
 import time
 import tqdm
 import pprint
@@ -22,11 +23,12 @@ import numpy as np
 import collections as co
 from textwrap import fill
 from contextlib import redirect_stdout
+import sciris as sc
+import sciris.sc_utils as scu
 from ._extras import ansicolors as ac
-from . import sc_utils as scu
 
 # Add Windows support for colors (do this at the module level so that colorama.init() only gets called once)
-if scu.iswindows(): # pragma: no cover # NB: can't use startswith() because of 'cygwin'
+if sc.iswindows(): # pragma: no cover # NB: can't use startswith() because of 'cygwin'
     try:
         import colorama
         colorama.init()
@@ -35,7 +37,6 @@ if scu.iswindows(): # pragma: no cover # NB: can't use startswith() because of '
         ansi_support = False
 else:
     ansi_support = True
-
 
 
 #%% Object display functions
@@ -86,23 +87,39 @@ def objectid(obj, showclasses=False):
 
 def _get_obj_keys(obj, private=False, sort=True, use_dir=False):
     """ Helper method to get the keys of an object """
-    if use_dir:
+    
+    # Get the list of keys
+    if use_dir: # This forces the use of dir(), as opposed to checking for dict or slots
         keys = obj.__dir__() # This is the unsorted version of dir()
     else:
         if   hasattr(obj, '__dict__'):  keys = obj.__dict__.keys()
         elif hasattr(obj, '__slots__'): keys = obj.__slots__
         else:                           keys = [] # pragma: no cover
+    
+    if isinstance(private, str):
+        private = [private]
+        
+    # Sort by private keys
     if not private:
         keys = [k for k in keys if not k.startswith('__')]
+    elif isinstance(private, list):
+        keys = [k for k in keys if (not k.startswith('__') or k in private)]
+        
+    # Optionally sort
     if sort:
         keys = sorted(keys)
     return list(keys) # Sometimes dict_keys
 
 
 def _is_meth(obj, attr, die=False):
-    """ Helper function to check if an attribute is a method; do not distinguish between bound and unbound """
+    """
+    Helper function to check if an attribute is a method; do not distinguish between bound and unbound
+    
+    | *New in version 3.2.0:* use method and function types instead of callable()    
+    """
     try:
-        return callable(getattr(obj, attr))
+        obj = getattr(obj, attr, None)
+        return isinstance(obj, (types.MethodType, types.FunctionType)) # Equivalent to sc.isfunc()
     except Exception as E:
         if die:
             raise E
@@ -113,7 +130,8 @@ def _is_meth(obj, attr, die=False):
 def _is_prop(obj, attr, die=False):
     """ Helper function to check if an attribute is a property """
     try:
-        return isinstance(getattr(type(obj), attr, None), property)
+        obj = getattr(type(obj), attr, None)
+        return isinstance(obj, property)
     except Exception as E:
         if die:
             raise E
@@ -121,11 +139,14 @@ def _is_prop(obj, attr, die=False):
             return False
 
 
-def objatt(obj, strlen=_strlen, ncol=_ncol, private=False, sort=True, _keys=None):
+def objatt(obj, strlen=_strlen, ncol=_ncol, private=False, sort=True, _keys=None, return_keys=False):
     """ Return a sorted string of object attributes for the Python __repr__ method; see :func:`sc.prepr() <prepr>` for options """
     keys = _get_obj_keys(obj, private=private, sort=sort) if _keys is None else _keys
-    output = createcollist(keys, 'Attributes', strlen=strlen, ncol=ncol)
-    return output
+    if return_keys:
+        return keys
+    else:
+        output = createcollist(keys, 'Attributes', strlen=strlen, ncol=ncol)
+        return output
 
 
 def classatt(obj, strlen=_strlen, ncol=_ncol, private=False, sort=True, _objkeys=None, _dirkeys=None, return_keys=False):
@@ -142,22 +163,26 @@ def classatt(obj, strlen=_strlen, ncol=_ncol, private=False, sort=True, _objkeys
         return output
 
 
-def objmeth(obj, strlen=_strlen, ncol=_ncol, private=False, sort=True, _keys=None):
+def objmeth(obj, strlen=_strlen, ncol=_ncol, private=False, sort=True, _keys=None, return_keys=False):
     """ Return a sorted string of object methods for the Python __repr__ method; see :func:`sc.prepr() <prepr>` for options """
     try: # In very rare cases this fails, so put it in a try-except loop
         _keys = _get_obj_keys(obj, private=private, sort=sort, use_dir=True) if _keys is None else _keys
         keys = sorted([meth + '()' for meth in _keys if _is_meth(obj, meth)])
+        if return_keys:
+            return _keys
     except Exception as E: # pragma: no cover
         keys = [f'Methods N/A ({E})']
     output = createcollist(keys, 'Methods', strlen=strlen, ncol=ncol)
     return output
 
 
-def objprop(obj, strlen=_strlen, ncol=_ncol, private=False, sort=True, _keys=None):
+def objprop(obj, strlen=_strlen, ncol=_ncol, private=False, sort=True, _keys=None, return_keys=False):
     """ Return a sorted string of object properties for the Python __repr__ method; see :func:`sc.prepr() <prepr>` for options """
     try: # In very rare cases this fails, so put it in a try-except loop
         _keys = _get_obj_keys(obj, private=private, sort=sort, use_dir=True) if _keys is None else _keys
         keys = [prop for prop in _keys if _is_prop(obj, prop)]
+        if return_keys:
+            return keys
     except Exception as E: # pragma: no cover
         keys = [f'Properties N/A ({E})']
     output = createcollist(keys, 'Properties', strlen=strlen, ncol=ncol)
@@ -257,7 +282,7 @@ def prepr(obj, vals=True, maxlen=None, maxitems=None, skip=None, dividerchar='�
     if maxlen   is None: maxlen   = 80
     if maxitems is None: maxitems = 100
     if skip     is None: skip = []
-    else:                skip = scu.tolist(skip)
+    else:                skip = sc.tolist(skip)
 
     # Initialize things to print out
     labels = []
@@ -457,7 +482,7 @@ class prettyobj:
     """
     def __init__(self, *args, **kwargs):
         """ Simple initialization """
-        kwargs = scu.mergedicts(*args, kwargs)
+        kwargs = sc.mergedicts(*args, kwargs)
         for k,v in kwargs.items():
             self.__dict__[k] = v
         return
@@ -544,7 +569,7 @@ def indent(prefix=None, text=None, suffix='\n', n=0, pretty=False, width=70, **k
 
     # Get text in the right format -- i.e. a string
     if pretty: text = pprint.pformat(text)
-    else:      text = scu.flexstr(text)
+    else:      text = sc.flexstr(text)
 
     # If there is no newline in the text, process the output normally.
     if text.find('\n') == -1:
@@ -567,7 +592,7 @@ def indent(prefix=None, text=None, suffix='\n', n=0, pretty=False, width=70, **k
 
 #%% Data representation functions
 
-__all__ += ['sigfig', 'sigfigs', 'arraymean', 'arraymedian', 'printmean', 'printmedian', 
+__all__ += ['sigfig', 'sigfigs', 'sigfiground', 'arraymean', 'arraymedian', 'printmean', 'printmedian', 
             'humanize_bytes', 'printarr', 'printdata', 'printvars']
 
 
@@ -587,8 +612,8 @@ def sigfig(x, sigfigs=4, SI=False, sep=False, keepints=False):
     **Examples**::
 
         x = 3432.3842
-        sc.sigfig(x, SI=True) # Returns 3.432k
-        sc.sigfig(x, sep=True) # Returns 3,432
+        sc.sigfig(x, SI=True) # Returns '3.432k'
+        sc.sigfig(x, sep=True) # Returns '3,432'
         
         vals = np.random.rand(5)
         sc.sigfig(vals, sigfigs=3)
@@ -597,9 +622,9 @@ def sigfig(x, sigfigs=4, SI=False, sep=False, keepints=False):
     """
     output = []
 
-    islist = scu.isiterable(x)
+    islist = sc.isiterable(x)
     istuple = isinstance(x, tuple)
-    xlist = x if islist else scu.tolist(x)
+    xlist = x if islist else sc.tolist(x)
     for x in xlist:
         suffix = ''
         formats = [(1e18,'e18'), (1e15,'e15'), (1e12,'T'), (1e9,'B'), (1e6,'M'), (1e3,'K')]
@@ -614,7 +639,7 @@ def sigfig(x, sigfigs=4, SI=False, sep=False, keepints=False):
             if x == 0:
                 output.append('0')
             elif sigfigs is None:
-                output.append(scu.flexstr(x)+suffix)
+                output.append(sc.flexstr(x)+suffix)
             elif x > (10**sigfigs) and not SI and keepints: # e.g. x = 23432.23, sigfigs=3, output is 23432
                 roundnumber = int(round(x))
                 if sep: string = format(roundnumber, ',')
@@ -635,7 +660,7 @@ def sigfig(x, sigfigs=4, SI=False, sep=False, keepints=False):
                 string += suffix
                 output.append(string)
         except: # pragma: no cover
-            output.append(scu.flexstr(x))
+            output.append(sc.flexstr(x))
     if islist:
         if istuple:
             output = tuple(output)
@@ -647,16 +672,59 @@ def sigfig(x, sigfigs=4, SI=False, sep=False, keepints=False):
 sigfigs = sigfig
 
 
-def arraymean(data, stds=2, mean_sf=None, err_sf=None, doprint=False, **kwargs):
+def sigfiground(x, sigfigs=4):
+    """
+    Round number(s) to the specified number of significant figures.
+
+    Args:
+        x (int/float/list/arr): the number(s) to round
+        sigfigs (int): number of significant figures to round to
+
+    **Examples**::
+        
+        sc.sigfiground(3.28343) # Returns 3.283
+        sc.sigfiground(834_875, 5)  # Returns 834880
+        sc.sigfiground([3.28343, 834_874, 0, -83_742], 2) # Returns [3.3, 830000, 0, -84000]
+    
+    | *New in version 3.2.0.*
+    """
+    
+    def round_arr(arr, sigfigs):
+        """ Function for rounding a single number """
+        out = arr.copy() # Preallocate output
+        inds = np.nonzero(arr) # Skip zero indices
+        nzarr = arr[inds] # Pull out those values
+        magnitude = np.floor(np.log10(np.abs(nzarr))) # Determine the order of magnitude of the number
+        exponent = sigfigs - magnitude - 1 # Convert to an exponent
+        factor = 10**exponent # Calculate the factor to scale the number
+        rndarr = np.round(nzarr*factor)/factor # Round the scaled number and scale it back
+        out[inds] = rndarr # Put the rounded numbers back in the array
+        if np.all(exponent <= 0): # They're all integers
+            out = out.astype(np.int64)
+        return out
+    
+    # Process inputs
+    arr = sc.toarray(x)
+    out = round_arr(arr, sigfigs) # Do the rounding
+    if sc.isnumber(x): out = out[0]
+    elif isinstance(x, list):
+        out = out.tolist()
+        out = [int(x) if x.is_integer() else x for x in out] # Allow mix of ints and floats
+    return out
+        
+
+def arraymean(data, stds=2, axis=None, mean_sf=None, err_sf=None, tostring=True, doprint=False, **kwargs):
     """
     Quickly calculate the mean and standard deviation of an array.
     
     By default, will calculate the correct number of significant figures based on
-    the deviation.
+    the deviation. The default is to multiply the standard deviation by 2, as an
+    approximation of the 95% confidence level (z=1.96).
     
     Args:
         data (array): the data to summarize
-        stds (int): the number of multiples of the standard deviation to show (default 2; can also use 1)
+        stds (int): the number of multiples of the standard deviation to show (default 2)
+        axis (int): the axis of the data to operate on (default None)
         mean_sf (int): if provided, use this number of significant figures for the mean rather than the auto-calculated
         err_sf (int): ditto, but for the error (standard deviation)
         doprint (bool): whether to print (else, return the string)
@@ -665,30 +733,36 @@ def arraymean(data, stds=2, mean_sf=None, err_sf=None, doprint=False, **kwargs):
     **Example**::
         
         data = [1210, 1072, 1722, 1229, 1902]
-        sc.printmean(data) # Returns 1430 ± 320
+        sc.arraymean(data) # Returns 1430 ± 320
     
-    *New in version 3.0.0.*
+    | *New in version 3.0.0.*
+    | *New in version 3.2.0:* "axis" argument, "tostring" argument (allow numerical output)
     """
     vsf = mean_sf # vsf = "value significant figures"
     esf = err_sf if err_sf is not None else 2
-    data = scu.toarray(data)
-    val = data.mean()
-    err = data.std()*stds
+    data = sc.toarray(data)
+    val = data.mean(axis=axis)
+    err = data.std(axis=axis)*stds
     
     relsize = np.floor(np.log10(abs(val))) - np.floor(np.log10(abs(err)))
     if vsf is None:
         vsf = esf + relsize
     elif vsf is not None and err_sf is None:
         esf = min(vsf, vsf - relsize)
-        
-    valstr = sigfig(val, vsf, **kwargs)
-    errstr = sigfig(err, esf, **kwargs)
-    string = f'{valstr} ± {errstr}'
     
-    if doprint:
-        print(string)
+    if tostring:
+        valstr = sigfig(val, vsf, **kwargs)
+        errstr = sigfig(err, esf, **kwargs)
+        string = f'{valstr} ± {errstr}'
+        
+        if doprint:
+            print(string)
+        else:
+            return string
     else:
-        return string
+        valnum = sigfiground(val, vsf)
+        errnum = sigfiground(err, esf)
+        return valnum, errnum
 
 
 def arraymedian(data, ci=95, sf=3, doprint=False, **kwargs):
@@ -724,7 +798,7 @@ def arraymedian(data, ci=95, sf=3, doprint=False, **kwargs):
     elif str(ci).lower() in ['range', 'minmax']:
         ci = 100
         
-    if scu.isnumber(ci):
+    if sc.isnumber(ci):
         if isinstance(ci, int):
             x = ci/100/2
         elif isinstance(ci, float):
@@ -736,7 +810,7 @@ def arraymedian(data, ci=95, sf=3, doprint=False, **kwargs):
             cistr = 'min, max'
         else:
             cistr = f'{x*100*2:n}% CI'
-    elif scu.isiterable(ci):
+    elif sc.isiterable(ci):
         if len(ci) != 2: # pragma: no cover
             errormsg = f'If providing a list of quantiles, must provide 2, not {len(ci)}'
             raise ValueError(errormsg)
@@ -750,7 +824,7 @@ def arraymedian(data, ci=95, sf=3, doprint=False, **kwargs):
         raise ValueError(errormsg)
     
     # Do calculations
-    data    = scu.toarray(data)
+    data    = sc.toarray(data)
     median  = np.quantile(data, 0.5)
     bounds  = np.quantile(data, quantiles)
     relsize = np.floor(np.log10(abs(median))) - np.floor(np.log10(np.abs(bounds)))
@@ -823,7 +897,7 @@ def printarr(arr, fmt=None, colsep='  ', vsep='—', decimals=2, doprint=True, d
 
     **Examples**::
 
-        numeric = pl.randn(3,7,4)**10
+        numeric = np.random.randn(3,7,4)**10
         mixed = np.array([['cat', 'nudibranch'], [23, 2423482]], dtype=object)
         sc.printarr(numeric)
         sc.printarr(mixed)
@@ -834,13 +908,13 @@ def printarr(arr, fmt=None, colsep='  ', vsep='—', decimals=2, doprint=True, d
     from . import sc_math as scm # To avoid circular import
     
     string = ''
-    arr = scu.toarray(arr, dtype=dtype)
+    arr = sc.toarray(arr, dtype=dtype)
     if fmt is None:
         if arr.dtype == object: # pragma: no cover
             maxdigits = max([len(str(v)) for v in arr.flatten()])
             fmt = f'%{maxdigits}s'
         else:
-            maxdigits = scm.numdigits(arr.max())
+            maxdigits = sc.numdigits(arr.max())
             if arr.dtype == float:
                 fmt = f'%{maxdigits+decimals+1}.{decimals}f'
             else: # pragma: no cover
@@ -897,7 +971,7 @@ def printdata(data, name='Variable', depth=1, maxlen=40, indent='', level=0, sho
         elif datatype.__name__=='class':  string = (f'class with {len(dir(data))} components')
         else: string = datatype.__name__
         if showcontents and maxlen>0:
-            datastring = ' | '+scu.flexstr(data)
+            datastring = ' | '+sc.flexstr(data)
             if len(datastring)>maxlen: datastring = datastring[:maxlen] + ' <etc> ' + datastring[-maxlen:]
         else: datastring=''
         return string+datastring
@@ -952,7 +1026,7 @@ def printvars(localvars=None, varlist=None, label=None, divider=True, spaces=1, 
     Version: 2017oct28
     """
 
-    varlist = scu.tolist(varlist) # Make sure it's actually a list
+    varlist = sc.tolist(varlist) # Make sure it's actually a list
     dividerstr = '-'*40
 
     if label:  print(f'Variables for {label}:')
@@ -1055,7 +1129,7 @@ def colorize(color=None, string=None, doprint=None, output=False, enable=True, s
             ansicolors[key] = '\033[' + val + 'm'
 
         # Determine what color to use
-        colorlist = scu.tolist(color)  # Make sure it's a list
+        colorlist = sc.tolist(color)  # Make sure it's a list
         for color in colorlist:
             if color not in ansicolors.keys(): # pragma: no cover
                 print(f'Color "{color}" is not available, use colorize(showhelp=True) to show options.')
@@ -1082,7 +1156,7 @@ def colorize(color=None, string=None, doprint=None, output=False, enable=True, s
                 helpcolor = key
             colorize(helpcolor, '  ' + key)
 
-    return scu._printout(string=ansistring, doprint=doprint, output=output)
+    return sc.sc_utils._printout(string=ansistring, doprint=doprint, output=output)
 
 
 # Alias certain colors functions -- not including white and black since poor practice on light/dark terminals
@@ -1145,7 +1219,7 @@ def heading(string='', *args, color='cyan', divider='—', spaces=2, spacesafter
     """
 
     # Convert to single string
-    args = scu.mergelists(string, list(args))
+    args = sc.mergelists(string, list(args))
     string = sep.join([str(item) for item in args])
 
     # Add header and footer
@@ -1154,7 +1228,7 @@ def heading(string='', *args, color='cyan', divider='—', spaces=2, spacesafter
     spaceafter  = '\n'*spacesafter
     fulldivider = divider*length
     if fulldivider:
-        string = scu.newlinejoin(fulldivider, string, fulldivider)
+        string = sc.newlinejoin(fulldivider, string, fulldivider)
     fullstring = space + string + spaceafter
 
     # Create output
@@ -1201,7 +1275,7 @@ def printv(string, thisverbose=1, verbose=2, indent=2, **kwargs):
     """
     if verbose >= thisverbose: # Only print if sufficiently verbose
         indents = ' '*thisverbose*indent # Create automatic indenting
-        print(indents+scu.flexstr(string), **kwargs) # Actually print
+        print(indents+sc.flexstr(string), **kwargs) # Actually print
     return
 
 
@@ -1327,7 +1401,7 @@ def percentcomplete(step=None, maxsteps=None, stepsize=1, prefix=None):
     """
     if prefix is None:
         prefix = ' '
-    elif scu.isnumber(prefix): # pragma: no cover
+    elif sc.isnumber(prefix): # pragma: no cover
         prefix = ' '*prefix
     onepercent = max(stepsize,round(maxsteps/100*stepsize)) # Calculate how big a single step is -- not smaller than 1
     if not step%onepercent: # Does this value lie on a percent
@@ -1372,14 +1446,14 @@ def progressbar(i=None, maxiters=None, label='', every=1, length=30, empty='—'
         # Used to wrap an iterable, using tqdm
         x = np.arange(100)
         for i in sc.progressbar(x):
-            pl.pause(0.01)
+            plt.pause(0.01)
 
     Adapted from example by Greenstick (https://stackoverflow.com/questions/3173320/text-progress-bar-in-the-console)
 
     | *New in version 1.3.3:* "every" argument
     | *New in version 3.0.0:* wrapper for tqdm
     """
-    if i is None or scu.isiterable(i):
+    if i is None or sc.isiterable(i):
         desc = kwargs.pop('desc', label)
         return tqdm.tqdm(i, desc=desc, **kwargs)
     
@@ -1501,10 +1575,10 @@ class progressbars(prettyobj):
     def make(self):
         for i in range(self.n):
             total = self.total
-            if scu.isiterable(total):
+            if sc.isiterable(total):
                 total = total[i]
             desc = self.desc
-            if scu.isiterable(desc, exclude=str):
+            if sc.isiterable(desc, exclude=str):
                 desc = desc[i]
             else:
                 if desc is None:

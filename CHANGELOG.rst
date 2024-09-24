@@ -8,6 +8,38 @@ All major updates to Sciris are documented here.
 By import convention, components of the Sciris library are listed beginning with ``sc.``, e.g. ``sc.odict()``.
 
 
+Version 3.2.0 (2024-09-24)
+--------------------------
+
+New features
+~~~~~~~~~~~~
+#. :func:`sc.loadany() <sc_fileio.loadany>` will try to load a file using any of the known formats (pickle, JSON, YAML, Excel, CSV, zip, or plain text).
+#. :func:`sc.sem() <sc_math.sem>` calculates the standard error of the mean.
+#. :func:`sc.sigfiground() <sc_printing.sigfiground>` rounds an array to a specified number of significant figures.
+#. :class:`sc.tracecalls() <sc_profiling.tracecalls>` traces every function call within a context block (alias to ``sys.setprofile``).
+#. :func:`sc.isfunc() <sc_utils.isfunc>` checks whether something is a function (or a class method).
+#. :class:`sc.dataframe() <sc_dataframe.dataframe>` now has an :func:`addcol() <sc_dataframe.dataframe.addcol>` method, which adds one or more columns to the dataframe.
+#. :class:`sc.dataframe() <sc_dataframe.dataframe>` now has an :func:`enumrows() <sc_dataframe.dataframe.enumrows>` method, which is similar to :func:`pd.iterrows() <pandas.iterrows>`, but up to 50x faster.
+
+Bugfixes
+~~~~~~~~
+#. Previously, :func:`sc.importbypath() <sc_utils.importbypath>` would sometimes fail to import a module correctly if a module with the same name was already imported. This has been fixed.
+#. Previously, :func:`sc.inclusiverange() <sc_math.inclusiverange>` would stretch steps in order to exactly match ``start`` and ``stop`` (e.g., ``sc.inclusiverange(0,10,3)`` would stretch the step to ``3.333``). It now defaults to not stretching the step. Previous behavior can be restored via ``sc.inclusiverange(..., stretch=True)```.
+#. Previously, in:func:`sc.parallel() <sc_parallel.parallel>`, specifying ``interval`` without also specifying ``maxcpu`` had no effect. Now it will still schedule the jobs on intervals, but with ``maxcpu=1.0`` by default.
+
+Other changes
+~~~~~~~~~~~~~
+#. :func:`sc.makenested() <sc_nested.makenested>` and :func:`sc.setnested() <sc_nested.setnested>` are now more flexible and can operate on objects. (Thanks to `Kelvin Burke <https://github.com/kelvinburke>`_ for this feature.)
+#. :func:`sc.search() <sc_nested.search>` has been completely rewritten, and can now be used to e.g. find objects of a certain type in another object.
+#. :func:`sc.datedelta() <sc_datetime.datedelta>` can now handle fractional years.
+#. :func:`sc.datetoyear() <sc_datetime.datetoyear>` now has a ``reverse`` argument for converting years to dates.
+#. :func:`sc.profile() <sc_profiling.profile>` now allows modules and classes to be followed, not just functions.
+#. :func:`sc.uniquename() <sc_utils.uniquename>` now has ``human`` (more verbose) and ``suffix`` (positioned after the counter) arguments.
+#. :func:`sc.objatt() <sc_printing.objatt>`, :func:`sc.objmeth() <sc_printing.objmeth>`, and :func:`sc.objprop() <sc_printing.objprop>` all now have a ``return_keys`` argument.
+#. :func:`sc.sha() <sc_utils.sha>` now has an ``asint`` argument for converting the digest to an integer.
+#. Imports have been changed: Sciris internally uses absolute rather than relative imports, and ``pylab`` has been replaced with ``matplotlib.pyplot``. These should not impact the user, but improves load time.
+
+
 Version 3.1.7 (2024-07-10)
 --------------------------
 #. Updated :func:`sc.asd() <sc_asd.asd>` to handle negative values in the objective function. (Thanks to `Eloisa Perez-Bennetts <https://github.com/epbennetts>`_ for this feature.)

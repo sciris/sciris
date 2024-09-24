@@ -11,12 +11,10 @@ import numbers # For numeric type
 import numpy as np
 import pandas as pd
 import warnings
-from . import sc_utils as scu
-from . import sc_math as scm
-from . import sc_odict as sco
-
+import sciris as sc
 
 __all__ = ['dataframe']
+
 
 class dataframe(pd.DataFrame):
     """
@@ -92,7 +90,7 @@ class dataframe(pd.DataFrame):
             elif isinstance(data, dict):
                 data.update(kwargs)
             else:
-                errormsg = f'When providing data columns via keywords ("{scu.strjoin(kwargs.keys())}"), these can only be combined with a dict, not an object of {type(data)}. Pass the data as a dict instead.'
+                errormsg = f'When providing data columns via keywords ("{sc.strjoin(kwargs.keys())}"), these can only be combined with a dict, not an object of {type(data)}. Pass the data as a dict instead.'
                 raise TypeError(errormsg)
         
         # Check data and column compatibility
@@ -154,7 +152,7 @@ class dataframe(pd.DataFrame):
             
         *New in version 3.0.0:* renamed from "_sanitizecols"; multiple arguments
         """
-        arglist = scu.mergelists(col, list(args), keepnone=True)
+        arglist = sc.mergelists(col, list(args), keepnone=True)
         outputlist = []
         cols = self.cols
         for col in arglist:
@@ -162,7 +160,7 @@ class dataframe(pd.DataFrame):
                 output = 0 # If not supplied, assume first column is intended
             elif col in cols:
                 output = cols.index(col) # Convert to index
-            elif scu.isnumber(col):
+            elif sc.isnumber(col):
                 try:
                     cols[col]
                 except IndexError as E: # pragma: no cover
@@ -206,7 +204,7 @@ class dataframe(pd.DataFrame):
         
         *New in version 3.0.0.*
         """
-        arglist = scu.mergelists(col, list(args), keepnone=True)
+        arglist = sc.mergelists(col, list(args), keepnone=True)
         outputlist = []
         cols = self.cols
         for col in arglist:
@@ -214,7 +212,7 @@ class dataframe(pd.DataFrame):
                 col = 0 # If not supplied, assume first column is intended
             elif col in cols:
                 output = col # It's already a column
-            elif scu.isnumber(col):
+            elif sc.isnumber(col):
                 try:
                     output = cols[col]
                 except Exception as E: # pragma: no cover
@@ -251,27 +249,27 @@ class dataframe(pd.DataFrame):
             try:
                 output = super().iloc[key]
             except:
-                if scu.isstring(key): # e.g. df['a'] -- usually handled by pandas # pragma: no cover
+                if sc.isstring(key): # e.g. df['a'] -- usually handled by pandas # pragma: no cover
                     rowindex = slice(None)
                     try:
                         colindex = self.cols.index(key)
                     except ValueError:
-                        errormsg = f'Key "{key}" is not a valid column; choices are: {scu.strjoin(self.cols)}'
-                        raise scu.KeyNotFoundError(errormsg)
+                        errormsg = f'Key "{key}" is not a valid column; choices are: {sc.strjoin(self.cols)}'
+                        raise sc.KeyNotFoundError(errormsg)
                 elif isinstance(key, (numbers.Number, list, np.ndarray, slice)): # e.g. df[0], df[[0,2]], df[:4]
                     rowindex = key
                     colindex = slice(None)
                 elif isinstance(key, tuple):
                     rowindex = key[0]
                     colindex = key[1]
-                    if scu.isstring(rowindex) and not scu.isstring(colindex): # Swap order if one's a string and the other isn't
+                    if sc.isstring(rowindex) and not sc.isstring(colindex): # Swap order if one's a string and the other isn't
                         rowindex, colindex = colindex, rowindex
-                    if scu.isstring(colindex): # e.g. df['a',0]
+                    if sc.isstring(colindex): # e.g. df['a',0]
                         colindex = self.cols.index(colindex)
                 else: # pragma: no cover
                     errormsg = f'Unrecognized dataframe key of {type(key)}: must be str, numeric, or tuple'
                     if die:
-                        raise scu.KeyNotFoundError(errormsg)
+                        raise sc.KeyNotFoundError(errormsg)
                     else:
                         print(errormsg)
                         output = None
@@ -331,7 +329,7 @@ class dataframe(pd.DataFrame):
             colindices = Ellipsis
         else:
             colindices = []
-            for col in scu.tolist(cols):
+            for col in sc.tolist(cols):
                 colindices.append(self.col_index(col))
         if rows is None: # pragma: no cover
             rowindices = Ellipsis
@@ -388,7 +386,7 @@ class dataframe(pd.DataFrame):
         
         # Handle NaNs
         if equal_nan:
-            base = base.fillna(scm._nan_fill)
+            base = base.fillna(sc.sc_math._nan_fill)
         
         for other in others:
             
@@ -407,7 +405,7 @@ class dataframe(pd.DataFrame):
             # Finally, check values
             else:
                 if equal_nan:
-                    other = other.fillna(scm._nan_fill)
+                    other = other.fillna(sc.sc_math._nan_fill)
                 eq = np.all(base.values == other.values)
             
             eqs.append(eq)
@@ -459,7 +457,7 @@ class dataframe(pd.DataFrame):
             if k in dir(pd.options.display):
                 key = f'display.{k}'
             kwdict[key] = v
-        opts = scu.mergedicts({
+        opts = sc.mergedicts({
             'display.max_rows': nrows,
             'display.max_columns': ncols,
             'display.width': width,
@@ -626,7 +624,7 @@ class dataframe(pd.DataFrame):
         | *New in version 2.0.2:* "inplace" defaults to False
         | *New in version 3.0.0:* improved type handling
         """
-        dfargs = scu.mergedicts(dfargs)
+        dfargs = sc.mergedicts(dfargs)
         dfs = [self]
         if columns is None:
             columns = self.columns
@@ -657,7 +655,7 @@ class dataframe(pd.DataFrame):
         
         *New in version 2.0.2.*
         """
-        dfargs = scu.mergedicts(dfargs)
+        dfargs = sc.mergedicts(dfargs)
         df = cls(data, **dfargs)
         if len(args):
             df = df.concat(*args, dfargs=dfargs, **kwargs)
@@ -697,9 +695,47 @@ class dataframe(pd.DataFrame):
         return len(self)
 
 
-    def addcol(self, key=None, value=None):
-        """ Add a new column to the data frame -- for consistency only """
-        return self.__setitem__(key, value)
+    def addcol(self, key=None, value=None, data=None, inplace=True, **kwargs):
+        """ 
+        Add new column(s) to the data frame
+        
+        See also :meth:`assign() <pandas.DataFrame.assign>`, which is similar, but
+        returns a new dataframe by default.
+        
+        Args:
+            key (str): the name of the column
+            value (array): the values for the column
+            data (dict): alternatively, specify a dictionary of columns to add
+            inplace (bool): whether to return a new dataframe
+            kwargs (dict): additional columns to add
+        
+        NB: a single argument is interpreted as "data"
+        
+        **Example**::
+            
+            df = sc.dataframe(dict(x=[1,2,3], y=[4,5,6]))
+            new_cols = dict(z=[1,2,3], a=[9,8,7])
+            df.addcol(new_cols)
+        """
+        # Parse into a data dict
+        if isinstance(key, dict):
+            data = key
+            if value is not None:
+                errormsg = 'If appending columns via dict, value cannot be specified'
+                raise ValueError(errormsg)
+        elif key is not None:
+            data = {key:value}
+        else:
+            data = {}
+        data.update(kwargs)
+        
+        # Do the update
+        if inplace:
+            for k,v in data.items():
+                self.__setitem__(k, v)
+            return
+        else:
+            return self.assign(**data)
 
 
     def popcols(self, col=None, *args, die=True):
@@ -719,10 +755,10 @@ class dataframe(pd.DataFrame):
             df = sc.dataframe(cols=['a','b','c','d'], data=np.random.rand(3,4))
             df.popcols('a','c')
         """
-        cols = scu.mergelists(col, list(args), keepnone=True)
+        cols = sc.mergelists(col, list(args), keepnone=True)
         for col in cols:
             if col not in self.columns: # pragma: no cover
-                errormsg = f'sc.dataframe(): cannot remove column {col}: columns are:\n{scu.newlinejoin(self.cols)}'
+                errormsg = f'sc.dataframe(): cannot remove column {col}: columns are:\n{sc.newlinejoin(self.cols)}'
                 if die: raise Exception(errormsg)
                 else:   print(errormsg)
             else:
@@ -841,13 +877,64 @@ class dataframe(pd.DataFrame):
         keep_data = self.iloc[keep_set,:]
         newdf = self._constructor(data=keep_data, cols=self.cols)
         return self.replacedata(newdf=newdf, reset_index=reset_index, inplace=inplace)
+    
+    
+    def enumrows(self, cols=None, type='objdict'):
+        """
+        Efficiently enumerate the rows of the dataframe
+        
+        Similar to :meth:`df.iterrows() <pandas.DataFrame.iterrows>`, but up to
+        30x faster since uses tuples instead of ``pd.Series``.
+        
+        Args:
+            cols (list): the list of columns to include in the enumeration (by default, all)
+            type (str/type): the output type for each row: options are 'objdict' (default), tuple (fastest), list (very fast), dict (pretty fast)
+
+        **Examples**::
+            
+            df = sc.dataframe(dict(x=[0,1,2,3,4], y=[2,3,2,7,8], z=[5,5,4,3,2]))
+            for i,row in df.enumrows(): print(i, row.x+row.y) # Typical use case
+            for i,row in df.enumrows(type=tuple): print(i, row[0]+row[1]) # Fastest
+            for i,row in df.enumrows(type=dict): print(i, row['x']+row['y']) # Still fast
+            for i,(x,y) in df.enumrows(cols=['x', 'y'], type=tuple): print(i, x+y) # Even faster
+        """
+        # Handle the columns
+        if cols is None: cols = self.columns
+        dftuple = (self[col] for col in cols)
+        
+        # Handle the output type
+        type_map = {
+            'tuple': tuple,
+            'list': list,
+            'dict': dict,
+            'objdict': sc.objdict,
+        }
+        if isinstance(type, str) and type in type_map:
+            func = type_map[type]
+        elif callable(type):
+            func = type
+            type = sc.swapdict(type_map)[func]
+        else:
+            errormsg = f'Invalid input {type}: must be tuple, list, dict, or objdict'
+            raise ValueError(errormsg)
+        dictlike = type in ['dict', 'objdict']
+        
+        # Iterate
+        if dictlike:
+            for i,row in enumerate(zip(*dftuple)):
+                row = func({k:v for k,v in zip(cols, row)})
+                yield (i, row)
+        else:
+            for i,row in enumerate(zip(*dftuple)):
+                row = func(row)
+                yield (i, row)
 
 
     def replacecol(self, col=None, old=None, new=None):
         """ Replace all of one value in a column with a new value """
         col = self.col_index(col)
         coldata = self.iloc[:,col] # Get data for this column
-        inds = scm.findinds(arr=coldata, val=old)
+        inds = sc.findinds(arr=coldata, val=old)
         self.iloc[inds,col] = new
         return self
 
@@ -863,7 +950,7 @@ class dataframe(pd.DataFrame):
             row = slice(None)
         data = self.iloc[row,:].values
         datadict = {col:data[:,c] for c,col in enumerate(self.cols)}
-        output = sco.odict(datadict)
+        output = sc.odict(datadict)
         return output
 
 
@@ -917,7 +1004,7 @@ class dataframe(pd.DataFrame):
         """
         col = self.col_index(col)
         coldata = self.iloc[:,col].values # Get data for this column
-        inds = scm.findinds(arr=coldata, val=value, **kwargs)
+        inds = sc.findinds(arr=coldata, val=value, **kwargs)
         return inds
 
 
@@ -963,7 +1050,7 @@ class dataframe(pd.DataFrame):
             df2 = df.filtercols('a','b') # Keeps columns 'a' and 'b'
             df3 = df.filtercols('a','c', keep=False) # Keeps columns 'b' and 'd'
         """
-        cols = scu.mergelists(cols, list(args), keepnone=True)
+        cols = sc.mergelists(cols, list(args), keepnone=True)
         order = []
         notfound = []
         for col in cols:
@@ -1010,15 +1097,13 @@ class dataframe(pd.DataFrame):
         if returninds:
             sortorder = np.argsort(self[by].values, kind='mergesort') # To preserve order
         df = self.sort_values(by=by, ascending=ascending, inplace=inplace, **kwargs)
+        out = self if inplace else df
         if reset_index:
-            self.reset_index(drop=True, inplace=True)
+            out.reset_index(drop=True, inplace=True)
         if returninds:
             return sortorder
         else:
-            if inplace:
-                return self
-            else:
-                return df
+            return out
     
     
     def sort(self, by=None, reverse=False, returninds=False, inplace=True, **kwargs):

@@ -23,6 +23,7 @@ Highlights:
 
 import re
 import sys
+import types
 import copy
 import json
 import string
@@ -42,11 +43,15 @@ import uuid as py_uuid
 import contextlib as cl
 import traceback as py_traceback
 from pathlib import Path
+import sciris as sc
 
 # Handle types
 _stringtypes = (str, bytes)
 _numtype     = (numbers.Number,)
 _booltypes   = (bool, np.bool_)
+
+# Store these for access by other modules
+__all__ = ['_stringtypes', '_numtype', '_booltypes']
 
 
 ##############################################################################
@@ -54,7 +59,7 @@ _booltypes   = (bool, np.bool_)
 ##############################################################################
 
 # Define the modules being loaded
-__all__ = ['fast_uuid', 'uuid', 'dcp', 'cp', 'pp', 'sha', 'traceback', 'getuser',
+__all__ += ['fast_uuid', 'uuid', 'dcp', 'cp', 'pp', 'sha', 'traceback', 'getuser',
            'getplatform', 'iswindows', 'islinux', 'ismac', 'isjupyter', 'asciify']
 
 
@@ -233,7 +238,7 @@ def uuid(uid=None, which=None, die=False, tostring=False, length=None, n=1, **kw
     return output
 
 
-def dcp(obj, die=True):
+def dcp(obj, die=True, memo=None):
     """
     Shortcut to perform a deep copy operation
 
@@ -245,9 +250,10 @@ def dcp(obj, die=True):
 
     | *New in version 2.0.0:* default die=True instead of False
     | *New in version 3.1.4:* die=False passed to sc.cp(); "verbose" argument removed; warning raised
+    | *New in version 3.2.0:* "memo" argument
     """
     try:
-        output = copy.deepcopy(obj)
+        output = copy.deepcopy(obj, memo=memo)
     except Exception as E: # pragma: no cover
         errormsg = f'Warning: could not perform deep copy of {type(obj)}: {str(E)}'
         if die:
@@ -337,7 +343,7 @@ def pp(obj, jsonify=False, doprint=None, output=False, sort_dicts=False, **kwarg
     return _printout(string=string, doprint=doprint, output=output)
 
 
-def sha(obj, encoding='utf-8', digest=False):
+def sha(obj, digest=False, asint=False, encoding='utf-8'):
     """
     Shortcut for the standard hashing (SHA) method
 
@@ -345,28 +351,33 @@ def sha(obj, encoding='utf-8', digest=False):
 
     Args:
         obj (any): the object to be hashed; if not a string, converted to one
+        digest (bool): if True, return the hex digest instead of the hash object
+        asint (bool): if True, return the (very large) integer corresponding to the hex digest
         encoding (str): the encoding to use
-        digest (bool): whether to return the hex digest instead of the hash objet
 
     **Example**::
 
-        sha1 = sc.sha(dict(foo=1, bar=2), digest=True)
+        sha1 = sc.sha(dict(foo=1, bar=2), True)
         sha2 = sc.sha(dict(foo=1, bar=2), digest=True)
         sha3 = sc.sha(dict(foo=1, bar=3), digest=True)
         assert sha1 == sha2
         assert sha2 != sha3
+    
+    | *New in version 3.2.0:* "asint" argument; changed argument order
     """
-    if not isstring(obj): # Ensure it's actually a string
-        string = repr(obj)
-    else: # pragma: no cover
-        string = obj
-    needsencoding = isinstance(string, str)
-    if needsencoding: # If it's unicode, encode it to bytes first
-        string = string.encode(encoding)
-    output = hashlib.sha224(string)
-    if digest: # pragma: no cover
-        output = output.hexdigest()
-    return output
+    # Prepare argument
+    if not isinstance(obj, (str, bytes)): # Ensure it's actually a string
+        obj = repr(obj) # More robust than str()
+    if isinstance(obj, str): # If it's unicode, encode it to bytes first
+        obj = obj.encode(encoding)
+        
+    # Do the hashing and prepare the output
+    out = hashlib.sha224(obj)
+    if digest or asint:
+        out = out.hexdigest()
+        if asint:
+            out = int(out, 16) # Base-16 integer
+    return out
 
 
 def traceback(exc=None, value=None, tb=None, verbose=False, *args, **kwargs):
@@ -628,10 +639,8 @@ def urlopen(url, filename=None, save=None, headers=None, params=None, data=None,
     """
     from urllib import request as ur # Need to import these directly, not via urllib
     from urllib import parse as up
-    from . import sc_datetime as scd  # To avoid circular import
-    from . import sc_fileio as scf # To avoid circular import
 
-    T = scd.timer()
+    T = sc.timer()
 
     # Handle headers
     default_headers = {
@@ -657,7 +666,7 @@ def urlopen(url, filename=None, save=None, headers=None, params=None, data=None,
         output = resp.read()
         if response == 'json':
             try:
-                output = scf.loadjson(string=output)
+                output = sc.loadjson(string=output)
             except Exception as E:
                 errormsg = f'Could not convert HTTP response beginning "{output[:20]}" to JSON'
                 raise ValueError(errormsg) from E
@@ -690,12 +699,12 @@ def urlopen(url, filename=None, save=None, headers=None, params=None, data=None,
 
     if filename is not None and save is not False:
         if verbose: print(f'Saving to {filename}...')
-        filename = scf.makefilepath(filename, makedirs=True)
+        filename = sc.makefilepath(filename, makedirs=True)
         if isinstance(output, bytes): # Raw HTML data
             with open(filename, 'wb') as f: # pragma: no cover
                 f.write(output)
         elif isinstance(output, dict): # If it's a JSON
-            scf.savejson(filename, output)
+            sc.savejson(filename, output)
         else: # Other text
             with open(filename, 'w', encoding='utf-8') as f: # Explicit encoding to avoid issues on Windows
                 f.write(output)
@@ -740,11 +749,7 @@ def download(url, *args, filename=None, save=True, parallel=True, die=True, verb
     | *New in version 3.1.1:* default order switched from URL:filename to filename:URL pairs
     | *New in version 3.1.3:* output as objdict instead of odict
     """
-    from . import sc_parallel as scp # To avoid circular import
-    from . import sc_datetime as scd
-    from . import sc_odict as sco
-
-    T = scd.timer()
+    T = sc.timer()
 
     # Parse arguments
     if isinstance(url, dict):
@@ -776,7 +781,7 @@ def download(url, *args, filename=None, save=True, parallel=True, die=True, verb
     iterkwargs = dict(url=urls, filename=keys)
     func_kwargs = mergedicts(dict(save=save, verbose=wget_verbose), kwargs)
     if n_urls > 1 and parallel:
-        outputs = scp.parallelize(urlopen, iterkwargs=iterkwargs, kwargs=func_kwargs, parallelizer='thread', die=die)
+        outputs = sc.parallelize(urlopen, iterkwargs=iterkwargs, kwargs=func_kwargs, parallelizer='thread', die=die)
     else:
         outputs = []
         for key,url in zip(keys, urls):
@@ -794,7 +799,7 @@ def download(url, *args, filename=None, save=True, parallel=True, die=True, verb
     
     # If we're returning the data rather than saving the files, convert to an odict
     if not save:
-        outputs = sco.objdict({k:v for k,v in zip(keys, outputs)})
+        outputs = sc.objdict({k:v for k,v in zip(keys, outputs)})
 
     if verbose and n_urls > 1:
         T.toc(f'Time to download {n_urls} URLs')
@@ -833,7 +838,7 @@ def htmlify(string, reverse=False, tostring=False):
 #%% Type functions
 ##############################################################################
 
-__all__ += ['flexstr', 'sanitizestr', 'isiterable', 'checktype', 'isnumber', 'isstring', 'isarray',
+__all__ += ['flexstr', 'sanitizestr', 'isiterable', 'checktype', 'isnumber', 'isstring', 'isarray', 'isfunc',
             'toarray', 'tolist', 'promotetoarray', 'promotetolist', 'transposelist',
             'swapdict', 'mergedicts', 'mergelists', 'ifelse']
 
@@ -1081,14 +1086,16 @@ def checktype(obj=None, objtype=None, subtype=None, die=False):
 def isnumber(obj, isnan=None):
     """
     Determine whether or not the input is a number.
+    
+    Identical to isinstance(obj, numbers.Number) unless isnan is specified.
 
     Args:
         obj (any): the object to check if it's a number
         isnan (bool): an optional additional check to determine whether the number is/isn't NaN
-
-    Almost identical to isinstance(obj, numbers.Number).
+    
+    | *New in version 3.2.0:* use ``isinstance()`` directly
     """
-    output = checktype(obj, 'number')
+    output = isinstance(obj, _numtype)
     if output and isnan is not None: # It is a number, so can check for nan # pragma: no cover
         output = (np.isnan(obj) == isnan) # See if they match
     return output
@@ -1125,6 +1132,15 @@ def isarray(obj, dtype=None):
             else:
                 return False
     return False
+
+
+def isfunc(obj):
+    """
+    Quickly check if something is a function.
+    
+    | *New in version 3.2.0.*    
+    """
+    return isinstance(obj, (types.MethodType, types.FunctionType))
 
 
 def toarray(x, keepnone=False, asobject=True, dtype=None, **kwargs):
@@ -1528,7 +1544,9 @@ def _sanitize_iterables(obj, *args):
     """
     Take input as a list, array, pandas Series, or non-iterable type, along with
     one or more arguments, and return a list, along with information on what the
-    input types were.
+    input types were (is_list and is_array).
+    
+    Not intended for the user, but used internally.
 
     **Examples**::
 
@@ -1549,7 +1567,7 @@ def _sanitize_iterables(obj, *args):
 def _sanitize_output(obj, is_list, is_array, dtype=None):
     """
     The companion to _sanitize_iterables, convert the object back to the original
-    type supplied.
+    type supplied. Not for the user.
     """
     if is_array:
         output = np.array(obj, dtype=dtype)
@@ -1714,22 +1732,50 @@ def runcommand(command, printinput=False, printoutput=None, wait=True, **kwargs)
     return output
 
 
-def uniquename(name=None, namelist=None, style=None):
+def uniquename(name=None, namelist=None, style=None, human=False, suffix=None):
     """
-    Given a name and a list of other names, find a replacement to the name
-    that doesn't conflict with the other names, and pass it back.
+    Given a name and a list of other names, add a counter to the name so that
+    it doesn't conflict with the other names.
+    
+    Useful for auto-incrementing filenames, etc.
+    
+    Args:
+        name (str): the string to ensure is unique
+        namelist (list): the list of strings that are taken
+        style (str): a custom style for appending the counter
+        human (bool): if True, use ' (%d)' as the style instead of '%d'
+        suffix (str): if provided, remove this suffix from each name and add it back to the unique name
 
-    **Example**::
+    **Examples**::
 
-        name = sc.uniquename(name='file', namelist=['file', 'file (1)', 'file (2)'])
+        sc.uniquename('out', ['out', 'out1']) # Returns 'out2'
+        sc.uniquename(name='file', namelist=['file', 'file (1)', 'file (2)', 'myfile'], human=True) # Returns 'file (3)'
+        sc.uniquename('results.csv', ['results.csv', 'results1.csv'], suffix='.csv') # Returns 'results2.csv'
+    
+    | *New in version 3.2.0:* "human" and "suffix" arguments, simpler default style
     """
-    if style is None: style = ' (%d)'
+    # Set the style if not specified
+    if style is None:
+        if human:
+            style = ' (%d)'
+        else:
+            style = '%d'
+    
+    # Prepare the inputs
+    name = str(name) # Ensure it's a string
     namelist = tolist(namelist)
-    unique_name = str(name) # Start with the passed in name.
-    i = 0 # Reset the counter
+    if suffix:
+        name = name.removesuffix(suffix)
+        namelist = [n.removesuffix(suffix) for n in namelist]
+        
+    # Do the loop
+    i = 0
+    unique_name = name # Start with the passed in name
     while unique_name in namelist: # Try adding an index (i) to the name until we find one that's unique
         i += 1
-        unique_name = str(name) + style%i
+        unique_name = name + style%i # Convert from  the original name
+    if suffix:
+        unique_name += suffix
     return unique_name # Return the found name.
 
 
@@ -1848,6 +1894,9 @@ def _assign_to_namespace(var, obj, namespace=None, overwrite=True): # pragma: no
 def importbyname(module=None, variable=None, path=None, namespace=None, lazy=False, overwrite=True, die=True, verbose=True, **kwargs):
     """
     Import modules by name.
+    
+    ``sc.importbyname(x='y')`` is equivalent to "import y as x", but allows module
+    importing to be done programmatically.
 
     See https://peps.python.org/pep-0690/ for a proposal for incorporating something
     similar into Python by default.
@@ -1867,7 +1916,7 @@ def importbyname(module=None, variable=None, path=None, namespace=None, lazy=Fal
 
         np = sc.importbyname('numpy') # Standard usage
         sc.importbyname(pd='pandas', np='numpy') # Use dictionary syntax to assign to namespace
-        plt = sc.importbyname(plt='matplotlib.pyplot', lazy=True) # Won't actually import until e.g. pl.figure() is called
+        plt = sc.importbyname(plt='matplotlib.pyplot', lazy=True) # Won't actually import until e.g. plt.figure() is called
         mymod = sc.importbyname(path='/path/to/mymod') # Import by path rather than name
     
     See also :func:`sc.importbypath() <importbypath>`.
@@ -1930,13 +1979,15 @@ def importbypath(path, name=None):
         # Load a module that isn't importable otherwise
         mymod = sc.importbypath('my file with spaces.py')
         
-        # Load two versions of the same folder
-        old = sc.importbypath('/path/to/old/lib', name='oldlib')
-        new = sc.importbypath('/path/to/new/lib', name='newlib')
+        # Load two versions of the same module
+        old = sc.importbypath('/path/to/old/mylib')
+        new = sc.importbypath('/path/to/new/mylib')
+        assert new.__version__ > old.__version__ # Example version comparison (see also sc.compareverisons())
     
     See also :func:`sc.importbyname() <importbyname>`.
 
-    *New in version 3.0.0.*
+    | *New in version 3.0.0.*
+    | *New in version 3.2.0:* Allow importing two modules that have self imports (e.g. "import mylib" from within mylib)
     """
     # Sanitize the path and filename
     default_file='__init__.py'
@@ -1948,16 +1999,42 @@ def importbypath(path, name=None):
         errormsg = f'Could not import {filepath}: is not a valid file or folder'
         raise FileNotFoundError(errormsg)
     
-    # Construct the name from either the filename or the folder name
-    if name is None:
+    # Get the original name (what Python would know it as) from either the filename or the folder name
+    if parts[-1] == default_file:
+        basename = parts[-2] # If __init__.py was included, strip it now
+    else:
         basename = parts[-1].removesuffix('.py')
-        name = sanitizestr(basename, validvariable=True) # Convert directory name to a string
+    orig_name = sanitizestr(basename, validvariable=True) # Ensure it's a valid name
+    if name is None:
+        name = orig_name
+        if name in sys.modules: # If a name isn't provided, ensure it doesn't conflict with an existing module name
+            name = uniquename(name, sys.modules.keys())
+    renamed = name != orig_name # Flag to track if we've renamed the module
+    
+    # If the original name is already present, make a copy to restore later
+    if orig_name in sys.modules:
+        orig_module = sys.modules[orig_name]
+        restore = True
+    else:
+        restore = False
     
     # Actually import the module -- from https://docs.python.org/3/library/importlib.html#importing-a-source-file-directly
     spec = importlib.util.spec_from_file_location(name, filepath)
     module = importlib.util.module_from_spec(spec)
+    
+    # We need to call it by both orig_name and name to handle self-referential imports
     sys.modules[name] = module
+    if renamed:
+        sys.modules[orig_name] = module
+    
+    # Now actually "execute" the module, i.e. load it into memory
     spec.loader.exec_module(module)
+    
+    # Finally, clean up the original module name
+    if restore:
+        sys.modules[orig_name] = orig_module
+    elif renamed:
+        del sys.modules[orig_name]
     
     return module
 
@@ -2048,7 +2125,7 @@ class Link:
     def __repr__(self): # pragma: no cover
         """ Just use default """
         from . import sc_printing as scp # To avoid circular import
-        output  = scp.prepr(self)
+        output  = sc.prepr(self)
         return output
 
     def __call__(self, obj=None):
@@ -2210,7 +2287,7 @@ class tryexcept(cl.suppress):
     
     def __repr__(self):
         from . import sc_printing as scp # To avoid circular import
-        return scp.prepr(self)
+        return sc.prepr(self)
     
     
     def __len__(self):
@@ -2266,8 +2343,7 @@ class tryexcept(cl.suppress):
     
     def to_df(self):
         """ Convert the exceptions to a dataframe """
-        from . import sc_dataframe as scd # To avoid circular import
-        df = scd.dataframe(self.data, columns=['type','value','traceback'])
+        df = sc.dataframe(self.data, columns=['type','value','traceback'])
         self.df = df
         return df
     

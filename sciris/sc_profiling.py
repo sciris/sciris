@@ -9,9 +9,11 @@ Highlights:
     - :func:`sc.resourcemonitor() <resourcemonitor>`: a monitor to kill processes that exceed memory or other limits
 """
 
+import re
 import os
 import sys
 import time
+import types
 import psutil
 import signal
 import pstats
@@ -22,15 +24,9 @@ import tempfile
 import warnings
 import numpy as np
 import pandas as pd
-import pylab as pl
+import matplotlib.pyplot as plt
 import multiprocessing as mp
-from . import sc_utils as scu
-from . import sc_datetime as scd
-from . import sc_odict as sco
-from . import sc_fileio as scf
-from . import sc_nested as scn
-from . import sc_printing as scp
-from . import sc_dataframe as scdf
+import sciris as sc
 
 
 ##############################################################################
@@ -103,11 +99,11 @@ def checkmem(var, descend=1, order='size', compresslevel=0, maxitems=1000,
 
         # Create a temporary file, save the object, check the size, remove it
         filename = tempfile.mktemp()
-        scf.save(filename, variable, allow_empty=True, compresslevel=compresslevel)
+        sc.save(filename, variable, allow_empty=True, compresslevel=compresslevel)
         filesize = os.path.getsize(filename)
         os.remove(filename)
 
-        sizestr = scp.humanize_bytes(filesize)
+        sizestr = sc.humanize_bytes(filesize)
         return filesize, sizestr
 
     # Initialize
@@ -120,7 +116,7 @@ def checkmem(var, descend=1, order='size', compresslevel=0, maxitems=1000,
         depth     = int,
         is_total  = bool,
     )
-    df = scdf.dataframe(columns=columns)
+    df = sc.dataframe(columns=columns)
     
     if descend:
         if isinstance(var, dict): # Handle dicts
@@ -131,7 +127,7 @@ def checkmem(var, descend=1, order='size', compresslevel=0, maxitems=1000,
             if verbose>1: print('Iterating over class-like object')
             varnames = sorted(list(var.__dict__.keys()))
             variables = [getattr(var, attr) for attr in varnames]
-        elif scu.isiterable(var, exclude=str): # Handle lists, and be sure to skip strings
+        elif sc.isiterable(var, exclude=str): # Handle lists, and be sure to skip strings
             if verbose>1: print('Iterating over list-like object')
             varnames = [f'item {i}' for i in range(len(var))]
             variables = var
@@ -163,7 +159,7 @@ def checkmem(var, descend=1, order='size', compresslevel=0, maxitems=1000,
     if subtotals and len(df) > 1:
         total_label = _prefix + ' (total)' if _prefix else 'Total'
         total = df[np.logical_not(df.is_total)].bytesize.sum()
-        human_total = scp.humanize_bytes(total)
+        human_total = sc.humanize_bytes(total)
         df.appendrow(dict(variable=total_label, humansize=human_total, bytesize=total, depth=_depth, is_total=True))
     
     # Only sort if we're at the highest level
@@ -176,8 +172,8 @@ def checkmem(var, descend=1, order='size', compresslevel=0, maxitems=1000,
             df.sortrows(col='bytesize', reverse=True)
 
     if plot: # pragma: no cover
-        pl.axes(aspect=1)
-        pl.pie(df.bytesize, labels=df.variable, autopct='%0.2f')
+        plt.axes(aspect=1)
+        plt.pie(df.bytesize, labels=df.variable, autopct='%0.2f')
 
     return df
 
@@ -207,7 +203,7 @@ def checkram(unit='mb', fmt='0.2f', start=0, to_string=True):
     try:
         factor = mapping[unit.lower()]
     except KeyError: # pragma: no cover
-        raise scu.KeyNotFoundError(f'Unit {unit} not found among {scu.strjoin(mapping.keys())}')
+        raise sc.KeyNotFoundError(f'Unit {unit} not found among {sc.strjoin(mapping.keys())}')
     mem_use = process.memory_info().rss/factor - start
     if to_string:
         output = f'{mem_use:{fmt}} {unit.upper()}'
@@ -271,7 +267,7 @@ def benchmark(repeats=5, scale=1, verbose=False, python=True, numpy=True, parall
     # Define the benchmarking functions
     
     def bm_python(prefix=''):
-        P = scd.timer(verbose=verbose)
+        P = sc.timer(verbose=verbose)
         for r in range(repeats):
             l = list()
             d = dict()
@@ -288,7 +284,7 @@ def benchmark(repeats=5, scale=1, verbose=False, python=True, numpy=True, parall
         return P
     
     def bm_numpy(prefix=''):
-        N = scd.timer(verbose=verbose)
+        N = sc.timer(verbose=verbose)
         for r in range(repeats):
             N.tic()
             for i in range(np_outer):
@@ -338,7 +334,7 @@ def benchmark(repeats=5, scale=1, verbose=False, python=True, numpy=True, parall
     
     # Handle output
     if return_timers: # pragma: no cover
-        out = sco.objdict(python=P, numpy=N)
+        out = sc.objdict(python=P, numpy=N)
     else:
         pymops = py_ops/P.mean()*ncpus if len(P) else None # Handle if one or the other isn't run
         npmops = np_ops/N.mean()*ncpus if len(N) else None
@@ -436,6 +432,7 @@ def loadbalancer(maxcpu=0.9, maxmem=0.9, index=None, interval=None, cpu_interval
     min_interval = 1e-3 # Don't allow intervals of less than 1 ms
     if interval is None: # pragma: no cover
         interval = default_interval
+        default_interval = None # Used as a flag below
     if interval < min_interval: # pragma: no cover
         interval = min_interval
         warnmsg = f'sc.loadbalancer() "interval" should not be less than {min_interval} s'
@@ -454,7 +451,7 @@ def loadbalancer(maxcpu=0.9, maxmem=0.9, index=None, interval=None, cpu_interval
 
     if maxcpu>1: maxcpu = maxcpu/100 # If it's >1, assume it was given as a percent
     if maxmem>1: maxmem = maxmem/100
-    if (not 0 < maxcpu < 1) and (not 0 < maxmem < 1): # pragma: no cover
+    if (not 0 < maxcpu < 1) and (not 0 < maxmem < 1) and (default_interval is None): # pragma: no cover
         return # Return immediately if no max load
     else:
         time.sleep(pause) # Give it time to asynchronize, with a predefined delay
@@ -477,12 +474,12 @@ def loadbalancer(maxcpu=0.9, maxmem=0.9, index=None, interval=None, cpu_interval
         process_str = f'process {index}' if index is not None else 'process'
         if cpu_toohigh: # pragma: no cover
             string = label+f'CPU load too high ({cpu_str}); {process_str} queued {count} times'
-            scd.randsleep(interval)
+            sc.randsleep(interval)
         elif mem_toohigh: # pragma: no cover
             string = label+f'Memory load too high ({mem_str}); {process_str} queued {count} times'
-            scd.randsleep(interval)
+            sc.randsleep(interval)
         else:
-            ok = 'OK' if scu.getplatform() == 'windows' else '✓' # Windows doesn't support unicode (!)
+            ok = 'OK' if sc.getplatform() == 'windows' else '✓' # Windows doesn't support unicode (!)
             toohigh = False
             string = label+f'CPU {ok} ({cpu_str}), memory {ok} ({mem_str}): starting {process_str} after {count} tries'
         if verbose:
@@ -495,10 +492,11 @@ def loadbalancer(maxcpu=0.9, maxmem=0.9, index=None, interval=None, cpu_interval
 #%% Profiling functions
 ##############################################################################
 
-__all__ += ['profile', 'mprofile', 'cprofile']
+__all__ += ['profile', 'mprofile', 'cprofile', 'tracecalls']
 
 
-def profile(run, follow=None, print_stats=True, *args, **kwargs):
+def profile(run, follow=None, private='__init__', include=None, exclude=None, 
+            print_stats=True, verbose=True, *args, **kwargs):
     """
     Profile the line-by-line time required by a function.
     
@@ -510,9 +508,14 @@ def profile(run, follow=None, print_stats=True, *args, **kwargs):
 
     Args:
         run (function): The function to be run
-        follow (function): The function or list of functions to be followed in the profiler; if None, defaults to the run function
-        print_stats (bool): whether to print the statistics of the profile to stdout
-        args, kwargs: Passed to the function to be run
+        follow (function): The function, list of functions, class, or module to be followed in the profiler; if None, defaults to the run function
+        private (bool/str/list): if True and a class is supplied, follow private functions; if a string/list, follow only those private functions (default ``'__init__'``)
+        include (str): if a class/module is supplied, include only functions matching this string
+        exclude (str): if a class/module is supplied, exclude functions matching this string
+        print_stats (bool): whether to print the statistics of the profile to stdout (default True)
+        verbose (bool): list the functions to be profiled
+        args (list): Passed to the function to be run
+        kwargs (dict): Passed to the function to be run
 
     Returns:
         LineProfiler (by default, the profile output is also printed to stdout)
@@ -529,8 +532,8 @@ def profile(run, follow=None, print_stats=True, *args, **kwargs):
             return
 
         class Foo:
-            def __init__(self):
-                self.a = 0
+            def __init__(self, a=0):
+                self.a = a
 
             def outer(self):
                 for i in range(100):
@@ -539,39 +542,100 @@ def profile(run, follow=None, print_stats=True, *args, **kwargs):
             def inner(self):
                 for i in range(1000):
                     self.a += 1
-
-        foo = Foo()
-        sc.profile(run=foo.outer, follow=[foo.outer, foo.inner])
+        
+        # Profile a function
         sc.profile(slow_fn)
 
+        # Profile a class or class instance
+        foo = Foo()
+        sc.profile(run=foo.outer, follow=foo) 
+        
         # Profile the constructor for Foo
-        f = lambda: Foo()
-        sc.profile(run=f, follow=[foo.__init__])
+        f = lambda a: Foo(a)
+        sc.profile(run=f, follow=Foo.__init__, a=10) # "a" is passed to the function
+    
+    | *New in version 3.2.0:* allow class and module arguments for "follow"; "private" argument
     """
     try:
         from line_profiler import LineProfiler
     except ModuleNotFoundError as E: # pragma: no cover
         errormsg = 'The "line_profiler" package is not installed; try "pip install line_profiler". (Note: it is not compatible with Python 3.12)'
         raise ModuleNotFoundError(errormsg) from E
-
+        
+    # Figure out follow
     if follow is None: # pragma: no cover
         follow = run
-    orig_func = run
-
+    orig_list = sc.tolist(follow)
+    
+    m_list = [] # List of modules (to be turned into functions/classes)
+    c_list = [] # List of classes (to be turned into functions)
+    f_list = [] # List of functions (to be used)
+    include = sc.tolist(include)
+    exclude = sc.tolist(exclude)
+    
+    # First parse into the different categories
+    for obj in orig_list:
+        if sc.isfunc(obj): # Simple: just a function
+            f_list.append(obj)
+        elif isinstance(obj, types.ModuleType):
+            m_list.append(obj)
+        elif isinstance(obj, type):
+            c_list.append(obj)
+        else:
+            c_list.append(obj.__class__) # Everything is a class
+            
+    def get_attrs(parent):
+        """ Safely get the attributes of a module/class """
+        attrs = sc.objatt(parent, private=private, return_keys=True)
+        # import traceback; traceback.print_exc(); import pdb; pdb.set_trace()
+        objs = []
+        for attr in attrs:
+            try:
+                obj = getattr(parent, attr)
+                objs.append(obj)
+            except: # Don't worry too much if some fail
+                pass
+        return objs
+    
+    # First take a pass and convert any modules to functions and classes
+    for mod in m_list:
+        objs = get_attrs(mod)
+        for obj in objs:
+            if sc.isfunc(obj): # It's a function, use it directly
+                f_list.append(obj)
+            elif isinstance(obj, type): # It's a class, add it to the class list
+                c_list.append(obj)
+        
+    # Then convert any classes to functions/objects
+    for cla in c_list:
+        objs = get_attrs(cla)
+        for obj in objs:
+            if sc.isfunc(obj):
+                f_list.append(obj)
+                
+    # Finally, do any filtering
+    if include:
+        f_list = [f for f in f_list if any(inc in str(f) for inc in include)]
+    if exclude:
+        f_list = [f for f in f_list if not any(exc in str(f) for exc in exclude)]
+    
+    if verbose:
+        print(f'Profiling {len(f_list)} function(s):\n', sc.newlinejoin(f_list), '\n')
+    
+    # Construct the wrapper
+    orig_func = run # Needed for argument passing
     lp = LineProfiler()
-    follow = scu.tolist(follow)
-    for f in follow:
+    for f in f_list:
         lp.add_function(f)
     lp.enable_by_count()
     wrapper = lp(run) # pragma: no cover
 
-    if print_stats: # pragma: no cover
-        print('Profiling...')
     wrapper(*args, **kwargs) # pragma: no cover
-    run = orig_func # pragma: no cover
+    run = orig_func # Restore run for argument passing
     if print_stats: # pragma: no cover
         lp.print_stats()
-        print('Done.')
+        if verbose:
+            print('Done.')
     return lp # pragma: no cover
 
 
@@ -605,7 +669,7 @@ def mprofile(run, follow=None, show_results=True, *args, **kwargs):
         follow = run
 
     lp = mp.LineProfiler()
-    follow = scu.tolist(follow)
+    follow = sc.tolist(follow)
     for f in follow:
         lp.add_function(f)
     lp.enable_by_count()
@@ -623,7 +687,7 @@ def mprofile(run, follow=None, show_results=True, *args, **kwargs):
     return lp
 
 
-class cprofile(scp.prettyobj):
+class cprofile(sc.prettyobj):
     """
     Function profiler, built off Python's built-in cProfile
     
@@ -710,7 +774,7 @@ class cprofile(scp.prettyobj):
     
     def parse_stats(self, stripdirs=None, force=False):
         """ Parse the raw data into a dictionary """
-        stripdirs = scu.ifelse(stripdirs, self.stripdirs)
+        stripdirs = sc.ifelse(stripdirs, self.stripdirs)
         if self.parsed is None or force:
             self.parsed = pstats.Stats(self.profile)
             if stripdirs:
@@ -726,12 +790,12 @@ class cprofile(scp.prettyobj):
         
         See class docstring for arguments
         """
-        sort       = scu.ifelse(sort, self.sort)
-        mintime    = scu.ifelse(mintime, self.mintime)
-        maxitems   = scu.ifelse(maxitems, self.maxitems)
-        maxfunclen = scu.ifelse(maxfunclen, self.maxfunclen)
-        maxpathlen = scu.ifelse(maxpathlen, self.maxpathlen)
-        columns    = scu.ifelse(columns, self.columns)
+        sort       = sc.ifelse(sort, self.sort)
+        mintime    = sc.ifelse(mintime, self.mintime)
+        maxitems   = sc.ifelse(maxitems, self.maxitems)
+        maxfunclen = sc.ifelse(maxfunclen, self.maxfunclen)
+        maxpathlen = sc.ifelse(maxpathlen, self.maxpathlen)
+        columns    = sc.ifelse(columns, self.columns)
         
         def trim(name, maxlen):
             if maxlen is None or len(name) <= maxlen:
@@ -749,7 +813,7 @@ class cprofile(scp.prettyobj):
         
         # Parse the stats
         self.parse_stats()
-        d = sco.dictobj()
+        d = sc.dictobj()
         for key in ['calls', 'selftime', 'cumtime', 'file', 'line', 'func']:
             d[key] = []
         for key,entry in self.parsed.stats.items():
@@ -778,8 +842,8 @@ class cprofile(scp.prettyobj):
         
         # Convert to a dataframe
         data = {key:d[key] for key in cols}
-        self.df = scdf.dataframe(**data)
-        reverse = scu.isarray(d[sort]) # If numeric, assume we want the highest first
+        self.df = sc.dataframe(**data)
+        reverse = sc.isarray(d[sort]) # If numeric, assume we want the highest first
         self.df = self.df.sortrows(sort, reverse=reverse)
         self.df = self.df[:self.maxitems]
         return self.df  
@@ -816,6 +880,135 @@ class cprofile(scp.prettyobj):
         return
 
 
+class tracecalls(sc.prettyobj):
+    """
+    Trace all function calls.
+    
+    Alias to ``sys.steprofile()``.
+    
+    Args:
+        trace (str/list/regex): the module(s)/file(s) to trace calls from ('' matches all, but this is inadvisable!)
+        exclude (str/list/regex): a list of modules/files to exclude (default '\<', which excludes builtins)
+        regex (bool): whether to interpret trace and exclude as regexes rather than simple string matching
+        repeats (bool): whether to record repeat calls of the same function (default False)
+        kwargs (dict): passed to ``sys.setprofile``
+    
+    **Examples**::
+        
+        import mymodule as mm
+        
+        with sc.tracecalls('mymodule'):
+            mm.big_operation()
+            
+        tc = sc.tracecalls('*mysubmodule*', exclude='^init*', regex=True, repeats=True)
+        mm.big_operation()
+        tc.stop()
+        tc.df.disp()
+        
+    | *New in version 3.2.0.*    
+    """
+    def __init__(self, trace, exclude=None, regex=False, repeats=False, **kwargs):
+        self.trace = set(sc.tolist(trace))
+        self.exclude = set(sc.tolist(exclude)) if exclude is not None else {'\<'}
+        self.regex = regex
+        self.repeats = repeats
+        self.parsed = set()
+        self.stack = 10
+        self.kwargs = kwargs
+        self.entries = []
+        return
+        
+    def start(self):
+        """ Start profiling """
+        sys.setprofile(self._call, **self.kwargs)
+        return
+    
+    def stop(self, disp=True):
+        """ Stop profiling """
+        sys.setprofile(None)
+        self.to_df()
+        if disp:
+            self.disp()
+        return
+    
+    def __enter__(self):
+        """ Start when entering with-as block; start profiling """
+        self.start()
+        return self
+    
+    def __exit__(self, *args):
+        """ Stop when leaving a with-as block; stop profiling """
+        self.stop()
+        return
+
+    def _call(self, frame, event, arg):
+        """ Used internally to track calls """
+        if event == 'call':
+            self.stack += 1
+            self.frame = frame
+            self.filename = frame.f_code.co_filename
+            self.co_name = frame.f_code.co_name
+            self.lineno = str(frame.f_lineno)
+            
+            # Check if it's already parsed
+            uid = self.filename + self.lineno
+            if uid in self.parsed and not self.repeats:
+                return
+
+            # Check if it's excluded, and if not, store it
+            if self._check():
+                self._store_name()
+                self.parsed.add(uid)
+
+        elif event == 'return':
+            self.stack -= 1
+        
+        return
+
+    def _check(self):
+        """ Used internally to check calls """
+        if self.regex:
+            allow = any(bool(re.match(token, self.filename)) for token in self.trace)
+            exclude = any(bool(re.match(token, self.filename)) for token in self.exclude)
+        else:
+            allow = any(token in self.filename for token in self.trace)
+            exclude = any(token in self.filename for token in self.exclude)
+        return allow and not exclude
+    
+    def _store_name(self):
+        """ Used internally to store the name """
+        f_locals = self.frame.f_locals
+        class_name = ''
+        if '__class__' in f_locals:
+            class_name = f_locals['__class__'].__name__
+        elif 'self' in f_locals:
+            class_name = f_locals['self'].__class__.__name__
+            
+        name = class_name + '.' + self.co_name if class_name else self.co_name
+        entry = sc.dictobj(name=name, filename=self.filename, lineno=self.lineno, stack=self.stack)
+        self.entries.append(entry)
+        return
+    
+    def disp(self, maxlen=60):
+        """ Display the results """
+        ddf = self.df.copy()
+        ddf['indent'] = ['.'*i for i in self.df['stack'].values]
+        ddf['label'] = ddf.indent + ddf.name
+        maxlen = min(maxlen, max([len(label) for label in ddf.label.values]))
+        out = ''
+        for i,(label,file,line) in ddf.enumrows(['label', 'filename', 'lineno'], tuple):
+            out += f'{i} {label:{maxlen}s} # {file}:L{line}\n' 
+        print(out)
+        return
+
+    def to_df(self):
+        """ Convert to a dataframe """
+        df = sc.dataframe(self.entries)
+        df['stack'] -= df['stack'].min()
+        self.df = df
+        return df
+
+
 ##############################################################################
 #%% Resource monitor
 ##############################################################################
@@ -835,7 +1028,7 @@ class LimitExceeded(MemoryError, KeyboardInterrupt):
     pass
 
 
-class resourcemonitor(scp.prettyobj): # pragma: no cover # For some reason pycov doesn't catch this class
+class resourcemonitor(sc.prettyobj): # pragma: no cover # For some reason pycov doesn't catch this class
     """
     Asynchronously monitor resource (e.g. memory) usage and terminate the process
     if the specified threshold is exceeded.
@@ -978,29 +1171,29 @@ class resourcemonitor(scp.prettyobj): # pragma: no cover # For some reason pycov
         self.elapsed = time_now - self.start_time
 
         # Define the limits
-        lim = sco.objdict(
+        lim = sc.objdict(
             cpu  = self.cpu,
             mem  = self.mem,
             time = self.time,
         )
 
         # Check current load
-        now = sco.objdict(
+        now = sc.objdict(
             cpu  = cpuload(),
             mem  = memload(),
             time = self.elapsed,
         )
 
         # Check if limits are OK, and the ratios
-        ok    = sco.objdict()
-        ratio = sco.objdict()
+        ok    = sc.objdict()
+        ratio = sc.objdict()
         for k in lim.keys():
             ok[k]    = now[k] <= lim[k]
             ratio[k] = now[k] / lim[k]
         is_ok = ok[:].all()
 
         # Gather into output form
-        checkdata = sco.objdict(
+        checkdata = sc.objdict(
             count    = self.count,
             elapsed  = self.elapsed,
             is_ok    = is_ok,
@@ -1013,7 +1206,7 @@ class resourcemonitor(scp.prettyobj): # pragma: no cover # For some reason pycov
 
         # Convert to string
         prefix = 'Limits OK' if is_ok else 'Limits exceeded'
-        datalist = scu.autolist()
+        datalist = sc.autolist()
         if self.cpu < 1:
             datalist += f'CPU: {now.cpu:0.2f} vs {lim.cpu:0.2f}'
         if self.mem < 1:
@@ -1057,7 +1250,7 @@ class resourcemonitor(scp.prettyobj): # pragma: no cover # For some reason pycov
         """ Convert the log into a pandas dataframe """
         entries = []
         for entry in self.log:
-            flat = scn.flattendict(entry, sep='_')
+            flat = sc.flattendict(entry, sep='_')
             entries.append(flat)
         self.df = pd.DataFrame(entries)
         return self.df
