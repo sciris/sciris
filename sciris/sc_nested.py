@@ -22,6 +22,10 @@ atomic_classes = [np.ndarray, pd.Series, pd.DataFrame, pd.core.indexes.base.Inde
 # Define a custom "None" value to allow searching for actual None values
 _None = '<sc_nested_custom_None>' # This should not be equal to any other value the user could supply
 
+def not_none(obj):
+    """ Check if an object does not match "_None" (the special None value to allow None input) """
+    return not isinstance(obj, str) or obj != _None
+
 
 ##############################################################################
 #%% Nested dict and object functions
@@ -829,7 +833,7 @@ def search(obj, query=_None, key=_None, value=_None, type=_None, method='exact',
     
     def check_match(source, target):
         """ Check if there is a match between the "source" and "target" """
-        if source != _None and target != _None: # See above for definition; a source and target were supplied
+        if not_none(source) and not_none(target): # See above for definition of _None; a source and target were supplied
             if callable(target):
                 match = target(source)
             elif method == 'exact':
@@ -847,16 +851,16 @@ def search(obj, query=_None, key=_None, value=_None, type=_None, method='exact',
         return match
     
     # Handle query
-    if query != _None:
-        if key != _None or value != _None: # pragma: no cover
+    if not_none(query):
+        if not_none(key) or not_none(value): # pragma: no cover
             errormsg = '"query" cannot be used with "key" or "value"; it is a shortcut to set both'
             raise ValueError(errormsg)
         key = query
         value = query
     
     # Handle type
-    if type != _None:
-        if key != _None or value != _None: # pragma: no cover
+    if not_none(type):
+        if not_none(key) or not_none(value): # pragma: no cover
             errormsg = '"type" cannot be used with "key" or "value"; replaces "value"'
             raise ValueError(errormsg)
         typetuple = tuple(sc.tolist(type))
@@ -871,13 +875,13 @@ def search(obj, query=_None, key=_None, value=_None, type=_None, method='exact',
     matches = []
     
     # Match keys
-    if key != _None:
+    if not_none(key):
         for k in tree.keys():
             if check_match(k[-1], key): # Only want the last key of the trace
                 matches.append(k)
     
     # Match values (including types)
-    if value != _None:
+    if not_none(value):
         for k,v in tree.items():
             if check_match(v, value):
                 matches.append(k)
