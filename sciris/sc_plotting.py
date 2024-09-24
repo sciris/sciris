@@ -41,7 +41,7 @@ def fig3d(num=None, nrows=1, ncols=1, index=1, returnax=False, figkwargs=None, a
     figkwargs = sc.mergedicts(figkwargs, kwargs, num=num)
     axkwargs = sc.mergedicts(axkwargs)
 
-    fig = pl.figure(**figkwargs)
+    fig = plt.figure(**figkwargs)
     ax = ax3d(nrows=nrows, ncols=ncols, index=index, returnfig=False, figkwargs=figkwargs, **axkwargs)
     if returnax: # pragma: no cover
         return fig,ax
@@ -87,32 +87,32 @@ def ax3d(nrows=None, ncols=None, index=None, fig=None, ax=None, returnfig=False,
         pass # This is fine, just a different format
 
     # Handle the figure
-    if not isinstance(fig, pl.Figure):
+    if not isinstance(fig, plt.Figure):
         if (fig in [True, False] or (fig is None and figkwargs)) and not ax: # Confusingly, any of these things indicate that we want a new figure
-            fig = pl.figure(**figkwargs)
+            fig = plt.figure(**figkwargs)
         else:
             if ax is None:
-                if not pl.get_fignums():
-                    fig = pl.figure(**figkwargs)
+                if not plt.get_fignums():
+                    fig = plt.figure(**figkwargs)
                 else:
-                    fig = pl.gcf()
+                    fig = plt.gcf()
             else:
                 fig = ax.figure
 
     # Handle the figure
-    if isinstance(fig, pl.Figure):
+    if isinstance(fig, plt.Figure):
         pass
     elif ax is not None:
         fig = ax.figure
     elif fig == False:
-        fig = pl.gcf()
+        fig = plt.gcf()
     else:
-        fig = pl.figure(**figkwargs)
+        fig = plt.figure(**figkwargs)
 
     # Create and initialize the axis
     if ax is None:
         if fig.axes and index is None:
-            ax = pl.gca()
+            ax = plt.gca()
         else:
             if nrows is None: nrows = 1
             if ncols is None: ncols = 1
@@ -214,7 +214,7 @@ def plot3d(x, y, z, c='index', fig=True, ax=None, returnfig=False, figkwargs=Non
         x,y,z = np.random.rand(3,10)
         sc.plot3d(x, y, z)
         
-        fig = pl.figure()
+        fig = plt.figure()
         n = 100
         x = np.array(sorted(np.random.rand(n)))
         y = x + np.random.randn(n)
@@ -349,7 +349,7 @@ def surf3d(x=None, y=None, z=None, c=None, fig=True, ax=None, returnfig=False, c
     """
 
     # Set default arguments
-    plotkwargs = sc.mergedicts({'cmap':pl.get_cmap()}, kwargs)
+    plotkwargs = sc.mergedicts({'cmap':plt.get_cmap()}, kwargs)
     axkwargs = sc.mergedicts(axkwargs)
     if colorbar is None:
         colorbar = False if sc.isarray(c) else True # Use a colorbar unless colors provided
@@ -480,7 +480,7 @@ def stackedbar(x=None, values=None, colors=None, labels=None, transpose=False,
         
         values = np.random.rand(3,5)
         sc.stackedbar(values, labels=['bottom','middle','top'])
-        pl.legend()
+        plt.legend()
     
     *New in version 2.0.4.*
     """
@@ -541,9 +541,9 @@ def stackedbar(x=None, values=None, colors=None, labels=None, transpose=False,
         b = values[:i,:].sum(axis=0)
         kw = dict(facecolor=colors[i], label=label, **kwargs)
         if not barh:
-            artist = pl.bar(x=x, height=h, bottom=b, **kw)
+            artist = plt.bar(x=x, height=h, bottom=b, **kw)
         else:
-            artist = pl.barh(y=x, width=h, left=b, **kw)
+            artist = plt.barh(y=x, width=h, left=b, **kw)
         artists.append(artist)
     
     return artists
@@ -564,16 +564,16 @@ def boxoff(ax=None, which=None, removeticks=True):
 
     **Examples**::
 
-        pl.figure()
-        pl.plot([2,5,3])
+        plt.figure()
+        plt.plot([2,5,3])
         sc.boxoff()
 
-        fig, ax = pl.subplots()
-        pl.plot([1,4,1,4])
+        fig, ax = plt.subplots()
+        plt.plot([1,4,1,4])
         sc.boxoff(ax=ax, which='all')
 
-        fig = pl.figure()
-        pl.scatter(np.arange(100), np.random.rand(100))
+        fig = plt.figure()
+        plt.scatter(np.arange(100), np.random.rand(100))
         sc.boxoff('top, bottom')
 
     *New in version 1.3.3:* ability to turn off multiple spines; removed "flipticks" arguments
@@ -581,7 +581,7 @@ def boxoff(ax=None, which=None, removeticks=True):
     # Handle axes
     if isinstance(ax, (str, list)): # Swap input arguments # pragma: no cover
         ax,which = which,ax
-    if ax is None: ax = pl.gca()
+    if ax is None: ax = plt.gca()
 
     # Handle which
     if not isinstance(which, list):
@@ -632,7 +632,7 @@ def setaxislim(which=None, ax=None, data=None):
 
     # Ensure axis exists
     if ax is None:
-        ax = pl.gca()
+        ax = plt.gca()
 
     # Get current limits
     if   which == 'x': currlower, currupper = ax.get_xlim()
@@ -667,8 +667,8 @@ def setylim(data=None, ax=None):
 
     **Example**::
 
-        pl.plot([124,146,127])
-        sc.setylim() # Equivalent to pl.ylim(bottom=0)
+        plt.plot([124,146,127])
+        sc.setylim() # Equivalent to plt.ylim(bottom=0)
     """
     return setaxislim(data=data, ax=ax, which='y')
 
@@ -677,10 +677,10 @@ def _get_axlist(ax): # pragma: no cover
     """ Helper function to turn either a figure, an axes, or a list of axes into a list of axes """
 
     if ax is None: # If not supplied, get current axes
-        axlist = [pl.gca()]
-    elif isinstance(ax, pl.Axes): # If it's an axes, turn to a list
+        axlist = [plt.gca()]
+    elif isinstance(ax, plt.Axes): # If it's an axes, turn to a list
         axlist = [ax]
-    elif isinstance(ax, pl.Figure): # If it's a figure, pull all axes
+    elif isinstance(ax, plt.Figure): # If it's a figure, pull all axes
         axlist = ax.axes
     elif isinstance(ax, list): # If it's a list, use directly
         axlist = ax
@@ -706,7 +706,7 @@ def commaticks(ax=None, axis='y', precision=2, cursor_precision=0):
     **Example**::
 
         data = np.random.rand(10)*1e4
-        pl.plot(data)
+        plt.plot(data)
         sc.commaticks()
 
     See http://stackoverflow.com/questions/25973581/how-to-format-axis-number-format-to-thousands-with-a-comma-in-matplotlib
@@ -754,7 +754,7 @@ def SIticks(ax=None, axis='y', fixed=False):
     **Example**::
 
         data = np.random.rand(10)*1e4
-        pl.plot(data)
+        plt.plot(data)
         sc.SIticks()
     """
     def SItickformatter(x, pos=None, sigfigs=2, SI=True, *args, **kwargs):  # formatter function takes tick label and tick position # pragma: no cover
@@ -799,7 +799,7 @@ def getrowscols(n, nrows=None, ncols=None, ratio=1, make=False, tight=True, remo
         make (bool): if True, generate subplots
         tight (bool): if True and make is True, then apply tight layout
         remove_extra (bool): if True and make is True, then remove extra subplots
-        kwargs (dict): passed to pl.subplots()
+        kwargs (dict): passed to plt.subplots()
 
     Returns:
         A tuple of ints for the number of rows and the number of columns (which, of course, you can reverse)
@@ -831,7 +831,7 @@ def getrowscols(n, nrows=None, ncols=None, ratio=1, make=False, tight=True, remo
     
     # If asked, make subplots
     if make: # pragma: no cover
-        fig, axs = pl.subplots(nrows=nrows, ncols=ncols, **kwargs)
+        fig, axs = plt.subplots(nrows=nrows, ncols=ncols, **kwargs)
         if remove_extra:
             flat = axs.flat[n:] if isinstance(axs, np.ndarray) else []
             for ax in flat:
@@ -868,7 +868,7 @@ def figlayout(fig=None, tight=True, keep=None, **kwargs):
         fig = None
         tight = fig # To allow e.g. sc.figlayout(False)
     if fig is None:
-        fig = pl.gcf()
+        fig = plt.gcf()
     if keep is None:
         keep = False if len(kwargs) else True
     layout = ['none', 'tight'][tight]
@@ -877,8 +877,8 @@ def figlayout(fig=None, tight=True, keep=None, **kwargs):
     except: # Earlier versions # pragma: no cover
         fig.set_tight_layout(tight)
     if not keep: # pragma: no cover
-        if not pl.get_backend() == 'agg':
-            pl.pause(0.01) # Force refresh if using an interactive backend
+        if not plt.get_backend() == 'agg':
+            plt.pause(0.01) # Force refresh if using an interactive backend
         try:
             fig.set_layout_engine('none')
         except: # pragma: no cover
@@ -899,16 +899,16 @@ def maximize(fig=None, die=False):  # pragma: no cover
 
     **Example**::
 
-        pl.plot([2,3,5])
+        plt.plot([2,3,5])
         sc.maximize()
 
     *New in version 1.0.0.*
     """
-    backend = pl.get_backend().lower()
+    backend = plt.get_backend().lower()
     if fig is not None:
-        pl.figure(fig.number) # Set the current figure
+        plt.figure(fig.number) # Set the current figure
     try:
-        mgr = pl.get_current_fig_manager()
+        mgr = plt.get_current_fig_manager()
         if   'qt'  in backend: mgr.window.showMaximized()
         elif 'gtk' in backend: mgr.window.maximize()
         elif 'wx'  in backend: mgr.frame.Maximize(True)
@@ -1014,7 +1014,7 @@ def fonts(add=None, use=False, output='name', dryrun=False, rebuild=False, verbo
                 if verbose and fontname is None: # pragma: no cover
                     print('Warning: no fonts were added')
                 if use and fontname: # Set as default font
-                    pl.rc('font', family=fontname)
+                    plt.rc('font', family=fontname)
 
             if rebuild: # pragma: no cover
                 print('Rebuilding font cache, please be patient...')
@@ -1098,7 +1098,7 @@ class ScirisDateFormatter(mpl.dates.ConciseDateFormatter):
         """
         Show year-month-day, not with hours and seconds
         """
-        return pl.num2date(value, tz=self._tz).strftime('%Y-%b-%d')
+        return mpl.dates.num2date(value, tz=self._tz).strftime('%Y-%b-%d')
 
     def format_ticks(self, values): # pragma: no cover
         """
@@ -1115,7 +1115,7 @@ class ScirisDateFormatter(mpl.dates.ConciseDateFormatter):
 
         # Get the default labels and years
         labels = super().format_ticks(values)
-        years = [pl.num2date(v).year for v in values]
+        years = [mpl.dates.num2date(v).year for v in values]
 
         # Add year information to any labels that require it
         if self.show_year:
@@ -1152,15 +1152,15 @@ def dateformatter(ax=None, style='sciris', dateformat=None, start=None, end=None
     **Examples**::
 
         # Reformat date data
-        pl.figure()
+        plt.figure()
         x = sc.daterange('2021-04-04', '2022-05-05', asdate=True)
         y = sc.smooth(np.random.rand(len(x)))
-        pl.plot(x, y)
+        plt.plot(x, y)
         sc.dateformatter()
 
         # Configure with Matplotlib's Concise formatter
-        fig,ax = pl.subplots()
-        pl.plot(sc.date(np.arange(365), start_date='2022-01-01'), np.random.randn(365))
+        fig,ax = plt.subplots()
+        plt.plot(sc.date(np.arange(365), start_date='2022-01-01'), np.random.randn(365))
         sc.dateformatter(ax=ax, style='concise')
 
     | *New in version 1.2.0.*
@@ -1178,7 +1178,7 @@ def dateformatter(ax=None, style='sciris', dateformat=None, start=None, end=None
         style = ax
         ax = None
     if ax is None:
-        ax = pl.gca()
+        ax = plt.gca()
 
     # Handle dateformat, if provided
     if dateformat is not None: # pragma: no cover
@@ -1251,11 +1251,11 @@ def datenumformatter(ax=None, start_date=None, dateformat=None, interval=None, s
     **Examples**::
 
         # Automatically configure a non-date axis with default options
-        pl.plot(np.arange(365), np.random.rand(365))
+        plt.plot(np.arange(365), np.random.rand(365))
         sc.datenumformatter(start_date='2021-01-01')
 
         # Manually configure
-        fig,ax = pl.subplots()
+        fig,ax = plt.subplots()
         ax.plot(np.arange(60), np.random.random(60))
         formatter = sc.datenumformatter(start_date='2020-04-04', interval=7, start='2020-05-01', end=50, dateformat='%m-%d', ax=ax)
 
@@ -1268,7 +1268,7 @@ def datenumformatter(ax=None, start_date=None, dateformat=None, interval=None, s
     if isinstance(ax, str): # Swap inputs # pragma: no cover
         ax, start_date = start_date, ax
     if ax is None:
-        ax = pl.gca()
+        ax = plt.gca()
 
     # Set the default format -- "2021-01-01"
     if dateformat is None:
@@ -1276,7 +1276,7 @@ def datenumformatter(ax=None, start_date=None, dateformat=None, interval=None, s
 
     # Convert to a date object
     if start_date is None: # pragma: no cover
-        start_date = pl.num2date(ax.dataLim.x0)
+        start_date = plt.num2date(ax.dataLim.x0)
     start_date = sc.date(start_date)
 
     @mpl.ticker.FuncFormatter
@@ -1314,9 +1314,9 @@ __all__ += ['savefig', 'savefigs', 'loadfig', 'emptyfig', 'separatelegend', 'ord
 def _get_dpi(dpi=None, min_dpi=200):
     """ Helper function to choose DPI for saving figures """
     if dpi is None:
-        mpl_dpi = pl.rcParams['savefig.dpi']
+        mpl_dpi = plt.rcParams['savefig.dpi']
         if mpl_dpi == 'figure':
-            mpl_dpi = pl.rcParams['figure.dpi']
+            mpl_dpi = plt.rcParams['figure.dpi']
         dpi = max(mpl_dpi, min_dpi) # Don't downgrade DPI
     return dpi
 
@@ -1349,7 +1349,7 @@ def savefig(filename, fig=None, dpi=None, comments=None, pipfreeze=False, relfra
 
     **Examples**::
 
-        pl.plot([1,3,7])
+        plt.plot([1,3,7])
 
         sc.savefig('example1.png')
         print(sc.loadmetadata('example1.png'))
@@ -1369,7 +1369,7 @@ def savefig(filename, fig=None, dpi=None, comments=None, pipfreeze=False, relfra
     
     # Handle figure
     if fig is None:
-        fig = pl.gcf()
+        fig = plt.gcf()
 
     # Handle DPI
     dpi = _get_dpi(dpi)
@@ -1421,8 +1421,8 @@ def savefigs(figs=None, filetype=None, filename=None, folder=None, savefigargs=N
 
         import matplotlib.pyplot as plt
         import sciris as sc
-        fig1 = pl.figure(); pl.plot(np.random.rand(10))
-        fig2 = pl.figure(); pl.plot(np.random.rand(10))
+        fig1 = plt.figure(); plt.plot(np.random.rand(10))
+        fig2 = plt.figure(); plt.plot(np.random.rand(10))
         sc.savefigs([fig1, fig2]) # Save everything to one PDF file
         sc.savefigs(fig2, 'png', filename='myfig.png', savefigargs={'dpi':200})
         sc.savefigs([fig1, fig2], filepath='/home/me', filetype='svg')
@@ -1434,8 +1434,8 @@ def savefigs(figs=None, filetype=None, filename=None, folder=None, savefigargs=N
     """
 
     # Preliminaries
-    wasinteractive = pl.isinteractive() # You might think you can get rid of this...you can't!
-    if wasinteractive: pl.ioff()
+    wasinteractive = plt.isinteractive() # You might think you can get rid of this...you can't!
+    if wasinteractive: plt.ioff()
     if filetype is None: filetype = 'singlepdf' # This ensures that only one file is created
 
     # Either take supplied plots, or generate them
@@ -1452,7 +1452,7 @@ def savefigs(figs=None, filetype=None, filename=None, folder=None, savefigargs=N
         filenames.append(fullpath)
         if verbose: print(f'PDF saved to {fullpath}')
     for p,item in enumerate(figs.items()):
-        key,plt = item
+        key,plot = item
         # Handle filename
         if filename and nfigs==1: # Single plot, filename supplied -- use it
             fullpath = sc.makefilepath(filename=filename, folder=folder, default='Figure', ext=filetype, makedirs=True) # NB, this filename not used for singlepdf filetype, so it's OK
@@ -1466,22 +1466,22 @@ def savefigs(figs=None, filetype=None, filename=None, folder=None, savefigargs=N
         defaultsavefigargs = {'dpi':200, 'bbox_inches':'tight'} # Specify a higher default DPI and save the figure tightly
         defaultsavefigargs.update(savefigargs) # Update the default arguments with the user-supplied arguments
         if filetype == 'fig':
-            sc.save(fullpath, plt)
+            sc.save(fullpath, plot)
             filenames.append(fullpath)
             if verbose: print(f'Figure object saved to {fullpath}')
         else: # pragma: no cover
-            reanimateplots(plt)
+            reanimateplots(plot)
             if filetype=='singlepdf':
-                pdf.savefig(figure=plt, **defaultsavefigargs) # It's confusing, but defaultsavefigargs is correct, since we updated it from the user version
+                pdf.savefig(figure=plot, **defaultsavefigargs) # It's confusing, but defaultsavefigargs is correct, since we updated it from the user version
             else:
                 plt.savefig(fullpath, **defaultsavefigargs)
                 filenames.append(fullpath)
                 if verbose: print(f'{filetype.upper()} plot saved to {fullpath}')
-            pl.close(plt)
+            plt.close(plot)
 
     # Do final tidying
     if filetype=='singlepdf': pdf.close()
-    if wasinteractive: pl.ion()
+    if wasinteractive: plt.ion()
     if aslist or len(filenames)>1: # pragma: no cover
         return filenames
     else:
@@ -1496,14 +1496,14 @@ def loadfig(filename=None):
 
         import matplotlib.pyplot as plt
         import sciris as sc
-        fig = pl.figure(); pl.plot(np.random.rand(10))
+        fig = plt.figure(); plt.plot(np.random.rand(10))
         sc.savefigs(fig, filetype='fig', filename='example.fig')
 
     **Later**::
 
         example = sc.loadfig('example.fig')
     """
-    pl.ion() # Without this, it doesn't show up
+    plt.ion() # Without this, it doesn't show up
     try:
         fig = sc.loadobj(filename)
     except Exception as E: # pragma: no cover
@@ -1524,7 +1524,7 @@ def reanimateplots(plots=None):
         raise ImportError(errormsg) from E
     
     if len(pl.get_fignums()):
-        fignum = pl.gcf().number # This is the number of the current active figure, if it exists
+        fignum = plt.gcf().number # This is the number of the current active figure, if it exists
     else: # pragma: no cover
         fignum = 1
         
@@ -1537,7 +1537,7 @@ def reanimateplots(plots=None):
 
 def emptyfig(*args, **kwargs):
     """ The emptiest figure possible """
-    fig = pl.Figure(facecolor='None', *args, **kwargs)
+    fig = plt.Figure(facecolor='None', *args, **kwargs)
     return fig
 
 
@@ -1552,8 +1552,8 @@ def _get_legend_handles(ax, handles, labels):
     """
     if handles is None:
         if ax is None:
-            ax = pl.gca()
-        elif isinstance(ax, pl.Figure): # Allows an argument of a figure instead of an axes # pragma: no cover
+            ax = plt.gca()
+        elif isinstance(ax, plt.Figure): # Allows an argument of a figure instead of an axes # pragma: no cover
             ax = ax.axes[-1]
         handles, labels = ax.get_legend_handles_labels()
     else: # pragma: no cover
@@ -1575,7 +1575,7 @@ def separatelegend(ax=None, handles=None, labels=None, reverse=False, figsetting
     _, handles, labels = _get_legend_handles(ax, handles, labels)
 
     # Set up new plot
-    fig = pl.figure(**f_settings)
+    fig = plt.figure(**f_settings)
     ax = fig.add_subplot(111)
     ax.set_position([-0.05,-0.05,1.1,1.1]) # This cuts off the axis labels, ha-ha
     ax.set_axis_off()  # Hide axis lines
@@ -1620,12 +1620,12 @@ def orderlegend(order=None, ax=None, handles=None, labels=None, reverse=None, **
 
     **Examples**::
 
-        pl.plot([1,4,3], label='A')
-        pl.plot([5,7,8], label='B')
-        pl.plot([2,5,2], label='C')
+        plt.plot([1,4,3], label='A')
+        plt.plot([5,7,8], label='B')
+        plt.plot([2,5,2], label='C')
         sc.orderlegend(reverse=True) # Legend order C, B, A
         sc.orderlegend([1,0,2], frameon=False) # Legend order B, A, C with no frame
-        pl.legend() # Restore original legend order A, B, C
+        plt.legend() # Restore original legend order A, B, C
     """
 
     # Get handles and labels
@@ -1683,7 +1683,7 @@ class animation(sc.prettyobj):
 
         anim = sc.animation()
 
-        pl.figure()
+        plt.figure()
         repeats = 21
         colors = sc.vectocolor(repeats, cmap='turbo')
         for i in range(repeats):
@@ -1691,9 +1691,9 @@ class animation(sc.prettyobj):
             x = scale*np.random.randn(10)
             y = scale*np.random.randn(10)
             label = str(i) if not(i%5) else None
-            pl.scatter(x, y, c=[colors[i]], label=label)
-            pl.title(f'Scale = 1/√{i}')
-            pl.legend()
+            plt.scatter(x, y, c=[colors[i]], label=label)
+            plt.title(f'Scale = 1/√{i}')
+            plt.legend()
             sc.boxoff('all')
             anim.addframe()
 
@@ -1752,7 +1752,7 @@ class animation(sc.prettyobj):
                 fig = self.fig
             else:
                 try:    fig = self.frames[0][0].get_figure()
-                except: fig = pl.gcf()
+                except: fig = plt.gcf()
         return fig
 
 
@@ -1835,16 +1835,16 @@ class animation(sc.prettyobj):
 
     def loadframes(self): # pragma: no cover
         """ Load saved images as artists """
-        animfig = pl.figure(figsize=self.fig_size, dpi=self.dpi)
+        animfig = plt.figure(figsize=self.fig_size, dpi=self.dpi)
         ax = animfig.add_axes([0,0,1,1])
         if self.verbose:
             print('Preprocessing frames...')
         for f,filename in enumerate(self.filenames):
             if self.verbose:
                 sc.progressbar(f+1, self.filenames)
-            im = pl.imread(filename)
+            im = plt.imread(filename)
             self.frames.append(ax.imshow(im))
-        pl.close(animfig)
+        plt.close(animfig)
         return
 
 
@@ -1994,33 +1994,33 @@ def savemovie(frames, filename=None, fps=None, quality=None, dpi=None, writer=No
         import sciris as sc
 
         # Simple example (takes ~5 s)
-        pl.figure()
+        plt.figure()
         frames = [pl.plot(pl.cumsum(np.random.randn(100))) for i in range(20)] # Create frames
         sc.savemovie(frames, 'dancing_lines.gif') # Save movie as medium-quality gif
 
         # Complicated example (takes ~15 s)
-        pl.figure()
+        plt.figure()
         nframes = 100 # Set the number of frames
         ndots = 100 # Set the number of dots
         axislim = 5*pl.sqrt(nframes) # Pick axis limits
-        dots = pl.zeros((ndots, 2)) # Initialize the dots
+        dots = plt.zeros((ndots, 2)) # Initialize the dots
         frames = [] # Initialize the frames
         old_dots = sc.dcp(dots) # Copy the dots we just made
-        fig = pl.figure(figsize=(10,8)) # Create a new figure
+        fig = plt.figure(figsize=(10,8)) # Create a new figure
         for i in range(nframes): # Loop over the frames
             dots += np.random.randn(ndots, 2) # Move the dots randomly
-            color = pl.norm(dots, axis=1) # Set the dot color
-            old = pl.array(old_dots) # Turn into an array
-            plot1 = pl.scatter(old[:,0], old[:,1], c='k') # Plot old dots in black
-            plot2 = pl.scatter(dots[:,0], dots[:,1], c=color) # Note: Frames will be separate in the animation
-            pl.xlim((-axislim, axislim)) # Set x-axis limits
-            pl.ylim((-axislim, axislim)) # Set y-axis limits
+            color = plt.norm(dots, axis=1) # Set the dot color
+            old = plt.array(old_dots) # Turn into an array
+            plot1 = plt.scatter(old[:,0], old[:,1], c='k') # Plot old dots in black
+            plot2 = plt.scatter(dots[:,0], dots[:,1], c=color) # Note: Frames will be separate in the animation
+            plt.xlim((-axislim, axislim)) # Set x-axis limits
+            plt.ylim((-axislim, axislim)) # Set y-axis limits
             kwargs = {'transform':pl.gca().transAxes, 'horizontalalignment':'center'} # Set the "title" properties
-            title = pl.text(0.5, 1.05, f'Iteration {i+1}/{nframes}', **kwargs) # Unfortunately pl.title() can't be dynamically updated
-            pl.xlabel('Latitude') # But static labels are fine
-            pl.ylabel('Longitude') # Ditto
+            title = plt.text(0.5, 1.05, f'Iteration {i+1}/{nframes}', **kwargs) # Unfortunately plt.title() can't be dynamically updated
+            plt.xlabel('Latitude') # But static labels are fine
+            plt.ylabel('Longitude') # Ditto
             frames.append((plot1, plot2, title)) # Store updated artists
-            old_dots = pl.vstack([old_dots, dots]) # Store the new dots as old dots
+            old_dots = plt.vstack([old_dots, dots]) # Store the new dots as old dots
         sc.savemovie(frames, 'fleeing_dots.mp4', fps=20, quality='high') # Save movie as a high-quality mp4
 
     Version: 2019aug21
@@ -2036,7 +2036,7 @@ def savemovie(frames, filename=None, fps=None, quality=None, dpi=None, writer=No
 
     # Try to get the figure from the frames, else use the current one
     try:    fig = frames[0][0].get_figure()
-    except: fig = pl.gcf() # pragma: no cover
+    except: fig = plt.gcf() # pragma: no cover
 
     # Set parameters
     if filename is None: # pragma: no cover

@@ -12,9 +12,10 @@ import time as pytime
 import warnings
 import numpy as np
 import pandas as pd
-import matplotlib.pyplot as plt
 import datetime as dt
 import dateutil as du
+import matplotlib as mpl
+import matplotlib.pyplot as plt
 import sciris as sc
 import sciris.sc_utils as scu
 
@@ -218,7 +219,7 @@ def readdate(datestr=None, *args, dateformat=None, return_defaults=False, verbos
             if 'posix' in format_list or None in format_list:
                 dateobj = dt.datetime.fromtimestamp(datestr)
             elif 'ordinal' in format_list or 'matplotlib' in format_list:
-                dateobj = pl.num2date(datestr)
+                dateobj = mpl.dates.num2date(datestr)
             else:
                 errormsg = f'Could not convert numeric date {datestr} using available formats {sc.strjoin(format_list)}; must be "posix" or "ordinal"'
                 raise ValueError(errormsg)
@@ -1148,7 +1149,7 @@ class timer:
 
         # Handle the figure
         if fig is None:
-            fig = pl.figure(**figkwargs)  # It's necessary to have an open figure or else the commands won't work
+            fig = plt.figure(**figkwargs)  # It's necessary to have an open figure or else the commands won't work
 
         # Plot times
         if len(self.timings) > 0:
@@ -1158,15 +1159,15 @@ class timer:
             factor, label = _convert_time_unit(self.unit, elapsed=vals.sum())
             vals /= factor
             
-            ax1 = pl.subplot(2,1,1)
-            pl.barh(keys, vals, **kwargs)
-            pl.title('Individual timings')
-            pl.xlabel(f'Elapsed time ({label})')
+            ax1 = plt.subplot(2,1,1)
+            plt.barh(keys, vals, **kwargs)
+            plt.title('Individual timings')
+            plt.xlabel(f'Elapsed time ({label})')
 
-            ax2 = pl.subplot(2,1,2)
-            pl.barh(keys, np.cumsum(vals), **kwargs)
-            pl.title('Cumulative timings')
-            pl.xlabel(f'Elapsed time ({label})')
+            ax2 = plt.subplot(2,1,2)
+            plt.barh(keys, np.cumsum(vals), **kwargs)
+            plt.title('Cumulative timings')
+            plt.xlabel(f'Elapsed time ({label})')
 
             for ax in [ax1, ax2]:
                 ax.invert_yaxis()

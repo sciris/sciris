@@ -225,17 +225,17 @@ class ScirisOptions(sc.objdict):
         optdesc.aspath = 'Set whether to return Path objects instead of strings by default'
         options.aspath = parse_env('SCIRIS_ASPATH', False, 'bool')
 
-        optdesc.style = 'Set the default plotting style -- options are "default", "simple", and "fancy", plus those in pl.style.available; see also options.rc'
+        optdesc.style = 'Set the default plotting style -- options are "default", "simple", and "fancy", plus those in plt.style.available; see also options.rc'
         options.style = parse_env('SCIRIS_STYLE', 'default', 'str')
 
         optdesc.dpi = 'Set the default DPI -- the larger this is, the larger the figures will be'
-        options.dpi = parse_env('SCIRIS_DPI', pl.rcParams['figure.dpi'], 'int')
+        options.dpi = parse_env('SCIRIS_DPI', plt.rcParams['figure.dpi'], 'int')
 
         optdesc.font = 'Set the default font family (e.g., sans-serif or Arial)'
-        options.font = parse_env('SCIRIS_FONT', pl.rcParams['font.family'], None) # Can be a string or list, so don't cast it to any object
+        options.font = parse_env('SCIRIS_FONT', plt.rcParams['font.family'], None) # Can be a string or list, so don't cast it to any object
 
         optdesc.fontsize = 'Set the default font size'
-        options.fontsize = parse_env('SCIRIS_FONT_SIZE', pl.rcParams['font.size'], 'str')
+        options.fontsize = parse_env('SCIRIS_FONT_SIZE', plt.rcParams['font.size'], 'str')
 
         optdesc.interactive = 'Convenience method to set figure backend'
         options.interactive = parse_env('SCIRIS_INTERACTIVE', True, 'bool')
@@ -244,7 +244,7 @@ class ScirisOptions(sc.objdict):
         options.jupyter = parse_env('SCIRIS_JUPYTER', 'auto', 'str')
 
         optdesc.backend = 'Set the Matplotlib backend (use "agg" for non-interactive)'
-        options.backend = parse_env('SCIRIS_BACKEND', '', 'str') # Unfortunately pl.get_backend() creates the backend if it doesn't exist, which can be extremely slow
+        options.backend = parse_env('SCIRIS_BACKEND', '', 'str') # Unfortunately plt.get_backend() creates the backend if it doesn't exist, which can be extremely slow
 
         optdesc.rc = 'Matplotlib rc (run control) style parameters used during plotting -- usually set automatically by "style" option'
         options.rc = {}
@@ -344,14 +344,14 @@ class ScirisOptions(sc.objdict):
     def set_matplotlib_global(self, key, value):
         """ Set a global option for Matplotlib -- not for users """
         if value: # Don't try to reset any of these to a None value
-            if   key == 'fontsize': pl.rcParams['font.size']   = value
-            elif key == 'font':     pl.rcParams['font.family'] = value
-            elif key == 'dpi':      pl.rcParams['figure.dpi']  = value
+            if   key == 'fontsize': plt.rcParams['font.size']   = value
+            elif key == 'font':     plt.rcParams['font.family'] = value
+            elif key == 'dpi':      plt.rcParams['figure.dpi']  = value
             elif key == 'backend': 
                 # Before switching the backend, ensure the default value has been populated -- located here since slow if called on import
                 if not self.orig_options['backend']:
-                    self.orig_options['backend'] = pl.get_backend()
-                pl.switch_backend(value)
+                    self.orig_options['backend'] = plt.get_backend()
+                plt.switch_backend(value)
             else: raise KeyError(f'Key {key} not found')
         return
 
@@ -527,7 +527,7 @@ class ScirisOptions(sc.objdict):
                 rc.update(style_simple)
             elif stylestr in ['fancy', 'covasim']:
                 rc.update(style_fancy)
-            elif style in pl.style.library:
+            elif style in plt.style.library:
                 rc.update(pl.style.library[style])
             else: # pragma: no cover
                 errormsg = f'Style "{style}"; not found; options are "default", "simple", "fancy", plus:\n{sc.newlinejoin(pl.style.available)}'
@@ -568,12 +568,12 @@ class ScirisOptions(sc.objdict):
         **Examples**::
 
             with sc.options.with_style(dpi=300): # Use default options, but higher DPI
-                pl.figure()
-                pl.plot([1,3,6])
+                plt.figure()
+                plt.plot([1,3,6])
             
             with sc.options.with_style(style='fancy'): # Use the "fancy" style
-                pl.figure()
-                pl.plot([6,1,3])
+                plt.figure()
+                plt.plot([6,1,3])
         """
 
         # Handle inputs
@@ -615,17 +615,17 @@ class ScirisOptions(sc.objdict):
 
         # Handle other keywords
         for key,value in kwargs.items():
-            if key not in pl.rcParams:
-                errormsg = f'Key "{key}" does not match any value in Sciris options or pl.rcParams'
+            if key not in plt.rcParams:
+                errormsg = f'Key "{key}" does not match any value in Sciris options or plt.rcParams'
                 raise KeyError(errormsg)
             elif value is not None:
                 rc[key] = value
 
         # Tidy up
         if use:
-            return pl.style.use(sc.dcp(rc))
+            return plt.style.use(sc.dcp(rc))
         else:
-            return pl.style.context(sc.dcp(rc))
+            return plt.style.context(sc.dcp(rc))
 
 
     def use_style(self, style=None, **kwargs):
@@ -635,12 +635,12 @@ class ScirisOptions(sc.objdict):
         **Example**::
 
             sc.options.use_style() # Set Sciris options as default
-            pl.figure()
-            pl.plot([1,3,7])
+            plt.figure()
+            plt.plot([1,3,7])
 
-            pl.style.use('ggplot') # to something else
-            pl.figure()
-            pl.plot([3,1,4])
+            plt.style.use('ggplot') # to something else
+            plt.figure()
+            plt.plot([3,1,4])
         """
         return self.with_style(style=style, use=True, **kwargs)
 

@@ -170,8 +170,8 @@ def checkmem(var, descend=1, order='size', compresslevel=0, maxitems=1000,
             df.sortrows(col='bytesize', reverse=True)
 
     if plot: # pragma: no cover
-        pl.axes(aspect=1)
-        pl.pie(df.bytesize, labels=df.variable, autopct='%0.2f')
+        plt.axes(aspect=1)
+        plt.pie(df.bytesize, labels=df.variable, autopct='%0.2f')
 
     return df
 

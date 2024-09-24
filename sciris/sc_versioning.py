@@ -502,7 +502,7 @@ def loadmetadata(filename, load_all=False, die=True):
 
     **Example**::
 
-        pl.plot([1,2,3], [4,2,6])
+        plt.plot([1,2,3], [4,2,6])
         sc.savefig('example.png')
         sc.loadmetadata('example.png')
     """

@@ -1906,7 +1906,7 @@ def importbyname(module=None, variable=None, path=None, namespace=None, lazy=Fal
 
         np = sc.importbyname('numpy') # Standard usage
         sc.importbyname(pd='pandas', np='numpy') # Use dictionary syntax to assign to namespace
-        plt = sc.importbyname(plt='matplotlib.pyplot', lazy=True) # Won't actually import until e.g. pl.figure() is called
+        plt = sc.importbyname(plt='matplotlib.pyplot', lazy=True) # Won't actually import until e.g. plt.figure() is called
         mymod = sc.importbyname(path='/path/to/mymod') # Import by path rather than name
     
     See also :func:`sc.importbypath() <importbypath>`.

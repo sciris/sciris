@@ -669,10 +669,10 @@ def parallelize(func, iterarg=None, iterkwargs=None, args=None, kwargs=None, ncp
         xylist2 = sc.parallelize(myfunc, x=5, y=10, iterarg=[0,1,2], parallelizer='multiprocessing') # Supply kwargs directly and use a different parallelizer
 
         for p,xylist in enumerate([xylist1, xylist2]):
-            pl.subplot(2,1,p+1)
+            plt.subplot(2,1,p+1)
             for i,xy in enumerate(reversed(xylist)):
-                pl.scatter(xy[0], xy[1], label='Run %i'%i)
-            pl.legend()
+                plt.scatter(xy[0], xy[1], label='Run %i'%i)
+            plt.legend()
 
     **Example 5 -- using a custom parallelization function**::
 

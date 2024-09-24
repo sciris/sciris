@@ -793,10 +793,10 @@ def linregress(x, y, full=False, **kwargs):
         y = sorted(2*np.random.rand(10) + 1)
         m,b = sc.linregress(x, y) # Simple usage
         out = sc.linregress(x, y, full=True) # Has out.m, out.b, out.x, out.y, out.corr, etc.
-        pl.scatter(x, y)
-        pl.plot(x, m*x+b)
-        pl.bar(x, out.residuals)
-        pl.title(f'R² = {out.r2}')
+        plt.scatter(x, y)
+        plt.plot(x, m*x+b)
+        plt.bar(x, out.residuals)
+        plt.title(f'R² = {out.r2}')
     """
     x = sc.toarray(x)
     y = sc.toarray(y)
@@ -1024,12 +1024,12 @@ def smoothinterp(newx=None, origx=None, origy=None, smoothness=None, growth=None
         np_y = np.interp(newx, origx, origy)
         si_y = interpolate.interp1d(origx, origy, 'cubic')(newx)
         kw = dict(lw=3, alpha=0.7)
-        pl.plot(newx, np_y, '--', label='NumPy', **kw)
-        pl.plot(newx, si_y, ':',  label='SciPy', **kw)
-        pl.plot(newx, sc_y, '-',  label='Sciris', **kw)
-        pl.scatter(origx, origy, s=50, c='k', label='Data')
-        pl.legend()
-        pl.show()
+        plt.plot(newx, np_y, '--', label='NumPy', **kw)
+        plt.plot(newx, si_y, ':',  label='SciPy', **kw)
+        plt.plot(newx, sc_y, '-',  label='Sciris', **kw)
+        plt.scatter(origx, origy, s=50, c='k', label='Data')
+        plt.legend()
+        plt.show()
 
     | *New in verison 3.0.0:* "ensurefinite" now defaults to True; removed "skipnans" argument
     """
@@ -1174,15 +1174,15 @@ def gauss1d(x=None, y=None, xi=None, scale=None, use32=True):
         # Smooth
         yi = sc.gauss1d(x, y)
         yi2 = sc.gauss1d(x, y, scale=0.3)
-        xi3 = pl.linspace(0,1)
+        xi3 = np.linspace(0,1)
         yi3 = sc.gauss1d(x, y, xi)
 
         # Plot original and interpolated versions
-        pl.scatter(x, y,     label='Original')
-        pl.scatter(x, yi,    label='Default smoothing')
-        pl.scatter(x, yi2,   label='More smoothing')
-        pl.scatter(xi3, yi3, label='Uniform spacing')
-        pl.show()
+        plt.scatter(x, y,     label='Original')
+        plt.scatter(x, yi,    label='Default smoothing')
+        plt.scatter(x, yi2,   label='More smoothing')
+        plt.scatter(xi3, yi3, label='Uniform spacing')
+        plt.show()
 
         # Simple usage
         sc.gauss1d(y)
@@ -1266,8 +1266,8 @@ def gauss2d(x=None, y=None, z=None, xi=None, yi=None, scale=1.0, xscale=1.0, ysc
         sc.surf3d(zi0)
 
         # Method 1 -- form grid
-        xi = pl.linspace(0,1,20)
-        yi = pl.linspace(0,1,20)
+        xi = np.linspace(0,1,20)
+        yi = np.linspace(0,1,20)
         zi = sc.gauss2d(x, y, z, xi, yi, scale=0.1, grid=True)
 
         # Method 2 -- use points directly
@@ -1279,7 +1279,7 @@ def gauss2d(x=None, y=None, z=None, xi=None, yi=None, scale=1.0, xscale=1.0, ysc
         sc.scatter3d(x, y, z, c=z)
         sc.surf3d(zi)
         sc.scatter3d(xi2, yi2, zi2, c=zi2)
-        pl.show()
+        plt.show()
 
     | *New in version 1.3.0.*
     | *New in version 1.3.1:* default arguments; support for 2D inputs

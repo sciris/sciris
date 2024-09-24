@@ -1420,7 +1420,7 @@ def progressbar(i=None, maxiters=None, label='', every=1, length=30, empty='—'
         # Used to wrap an iterable, using tqdm
         x = np.arange(100)
         for i in sc.progressbar(x):
-            pl.pause(0.01)
+            plt.pause(0.01)
 
     Adapted from example by Greenstick (https://stackoverflow.com/questions/3173320/text-progress-bar-in-the-console)
 
