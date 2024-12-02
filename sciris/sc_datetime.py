@@ -626,7 +626,7 @@ def yeartodate(year, as_date=True):
     remainder = year - full_years
     year_days = _get_year_length(full_years).days
     days = int(np.round(remainder*year_days))
-    base = dt.date(year=year, month=1, day=1)
+    base = dt.date(year=full_years, month=1, day=1)
     out = datedelta(base, days=days)
     if not as_date:
         out = str(out)
