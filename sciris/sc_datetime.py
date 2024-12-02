@@ -24,7 +24,7 @@ import sciris.sc_utils as scu
 #%% Date functions
 ###############################################################################
 
-__all__ = ['time', 'now', 'getdate', 'readdate', 'date', 'day', 'daydiff', 'daterange', 'datedelta', 'datetoyear']
+__all__ = ['time', 'now', 'getdate', 'readdate', 'date', 'day', 'daydiff', 'daterange', 'datedelta', 'datetoyear','yeartodate']
 
 
 def time():
