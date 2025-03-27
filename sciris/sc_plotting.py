@@ -55,7 +55,7 @@ def ax3d(nrows=None, ncols=None, index=None, fig=None, ax=None, returnfig=False,
     Create a 3D axis to plot in.
 
     Usually not invoked directly; kwargs are passed to ``fig.add_subplot()``
-    
+
     Args:
         nrows (int): number of rows of axes in plot
         ncols (int): number of columns of axes in plot
@@ -67,7 +67,7 @@ def ax3d(nrows=None, ncols=None, index=None, fig=None, ax=None, returnfig=False,
         azim (float): the azimuth of the 3D viewpoint
         figkwargs (dict): passed to :func:`plt.figure() <matplotlib.pyplot.figure>`
         kwargs (dict): passed to :func:`plt.axes() <matplotlib.pyplot.axes>`
-        
+
     | *New in version 3.0.0:* nrows, ncols, and index arguments first
     | *New in version 3.1.0:* improved validation; 'silent' and 'axkwargs' argument removed
     """
@@ -78,7 +78,7 @@ def ax3d(nrows=None, ncols=None, index=None, fig=None, ax=None, returnfig=False,
     nrows = axkwargs.pop('nrows', nrows) # Since fig.add_subplot() can't handle kwargs...
     ncols = axkwargs.pop('ncols', ncols)
     index = axkwargs.pop('index', index)
-    
+
     # Handle the "111" format of subplots
     try:
         if ncols is None and index is None:
@@ -118,16 +118,16 @@ def ax3d(nrows=None, ncols=None, index=None, fig=None, ax=None, returnfig=False,
             if ncols is None: ncols = 1
             if index is None: index = 1
             ax = fig.add_subplot(nrows, ncols, index, projection='3d', **axkwargs)
-    
+
     # Validate the axes
     if not isinstance(ax, Axes3D): # pragma: no cover
         errormsg = f'''Cannot create 3D plot into axes {ax}: ensure "projection='3d'" was used when making it'''
         raise ValueError(errormsg)
-    
+
     # Change the view if requested
     if elev is not None or azim is not None: # pragma: no cover
         ax.view_init(elev=elev, azim=azim)
-        
+
     # Tidy up
     if returnfig:
         return fig,ax
@@ -138,12 +138,12 @@ def ax3d(nrows=None, ncols=None, index=None, fig=None, ax=None, returnfig=False,
 
 def _process_2d_data(x, y, z, c, flatten=False):
     """ Helper function to handle data transformations -- not for the user """
-    
+
     # Swap variables so z always exists
     if z is None and x is not None:
         z,x = x,z
     z = np.array(z)
-    
+
     if z.ndim == 2:
         ny,nx = z.shape
         x = np.arange(nx) if x is None else np.array(x)
@@ -157,25 +157,25 @@ def _process_2d_data(x, y, z, c, flatten=False):
                 c = c.flatten()
     elif flatten == False: # pragma: no cover
         raise ValueError('Must provide z values as a 2D array')
-    
+
     if x is None or y is None: # pragma: no cover
         raise ValueError('Must provide x and y values if z is 1D')
-        
+
     # Handle automatic color scaling
     if isinstance(c, str):
         if c == 'z':
             c = z
         elif c == 'index':
             c = np.arange(len(z))
-    
+
     return x, y, z, c
 
 
 def _process_colors(c, z, cmap=None, to2d=False):
     """ Helper function to get color data in the right format -- not for the user """
-    
+
     from . import sc_colors as scc # To avoid circular import
-    
+
     # Handle colors
     if c.ndim == 1: # Used by scatter3d and bar3d
         assert len(c) == len(z), 'Number of colors does not match length of data'
@@ -183,16 +183,16 @@ def _process_colors(c, z, cmap=None, to2d=False):
     elif c.ndim == 2: # Used by surf3d
         assert c.shape == z.shape, 'Shape of colors does not match shape of data'
         c = scc.arraycolors(c, cmap=cmap)
-    
+
     # Used by bar3d -- flatten from 3D to 2D
     if to2d and c.ndim == 3:
         c = c.reshape((-1, c.shape[2]))
-    
+
     return c
-    
 
 
-def plot3d(x, y, z, c='index', fig=True, ax=None, returnfig=False, figkwargs=None, 
+
+def plot3d(x, y, z, c='index', fig=True, ax=None, returnfig=False, figkwargs=None,
            axkwargs=None, **kwargs):
     """
     Plot 3D data as a line
@@ -213,7 +213,7 @@ def plot3d(x, y, z, c='index', fig=True, ax=None, returnfig=False, figkwargs=Non
 
         x,y,z = np.random.rand(3,10)
         sc.plot3d(x, y, z)
-        
+
         fig = plt.figure()
         n = 100
         x = np.array(sorted(np.random.rand(n)))
@@ -221,20 +221,20 @@ def plot3d(x, y, z, c='index', fig=True, ax=None, returnfig=False, figkwargs=Non
         z = np.random.randn(n)
         c = np.arange(n)
         sc.plot3d(x, y, z, c=c, fig=fig)
-    
+
     *New in version 3.1.0:* Allow multi-colored line; removed "plotkwargs" argument; "fig" defaults to True
     """
     # Set default arguments
     plotkwargs = sc.mergedicts({'lw':2}, kwargs)
     axkwargs = sc.mergedicts(axkwargs)
-    
+
     # Do input checking
     assert len(x) == len(y) == len(z), 'All inputs must have the same length'
     n = len(z)
 
     # Create axis
     fig,ax = ax3d(returnfig=True, fig=fig, ax=ax, figkwargs=figkwargs, **axkwargs)
-    
+
     # Handle different-colored line segments
     if c == 'index':
         c = np.arange(n) # Assign automatically based on index
@@ -243,7 +243,7 @@ def plot3d(x, y, z, c='index', fig=True, ax=None, returnfig=False, figkwargs=Non
             c = _process_colors(c, z=z)
         for i in range(n-1):
             ax.plot(x[i:i+2], y[i:i+2], z[i:i+2], c=c[i], **plotkwargs)
-            
+
     # Standard case: single color
     else:
         ax.plot(x, y, z, c=c, **plotkwargs)
@@ -254,11 +254,11 @@ def plot3d(x, y, z, c='index', fig=True, ax=None, returnfig=False, figkwargs=Non
         return ax
 
 
-def scatter3d(x=None, y=None, z=None, c='z', fig=True, ax=None, returnfig=False, 
+def scatter3d(x=None, y=None, z=None, c='z', fig=True, ax=None, returnfig=False,
               figkwargs=None, axkwargs=None, **kwargs):
     """
     Plot 3D data as a scatter
-    
+
     Typically, ``x``, ``y``, and ``z``, are all vectors. However, if a single 2D
     array is provided, then this will be treated as ``z`` values and ``x`` and ``y``
     will be inferred on a grid (or they can be provided explicitly).
@@ -280,11 +280,11 @@ def scatter3d(x=None, y=None, z=None, c='z', fig=True, ax=None, returnfig=False,
         # Implicit coordinates, color by height (z-value)
         data = np.random.randn(10, 10)
         sc.scatter3d(data)
-        
+
         # Explicit coordinates, color by index (i.e. ordering)
         x,y,z = np.random.rand(3,50)
         sc.scatter3d(x, y, z, c='index')
-    
+
     | *New in version 3.0.0:* Allow 2D input
     | *New in version 3.1.0:* Allow "index" color argument; removed "plotkwargs" argument; "fig" defaults to True
     """
@@ -294,7 +294,7 @@ def scatter3d(x=None, y=None, z=None, c='z', fig=True, ax=None, returnfig=False,
 
     # Create figure
     fig,ax = ax3d(returnfig=True, fig=fig, ax=ax, figkwargs=figkwargs, **axkwargs)
-    
+
     # Process data
     x, y, z, c = _process_2d_data(x, y, z, c, flatten=True)
 
@@ -307,13 +307,13 @@ def scatter3d(x=None, y=None, z=None, c='z', fig=True, ax=None, returnfig=False,
         return ax
 
 
-def surf3d(x=None, y=None, z=None, c=None, fig=True, ax=None, returnfig=False, colorbar=None, 
+def surf3d(x=None, y=None, z=None, c=None, fig=True, ax=None, returnfig=False, colorbar=None,
            figkwargs=None, axkwargs=None, **kwargs):
     """
     Plot 2D or 3D data as a 3D surface
-    
-    Typically, ``x``, ``y``, and ``z``, are all 2D arrays of the same size. However, 
-    if a single 2D array is provided, then this will be treated as ``z`` values and 
+
+    Typically, ``x``, ``y``, and ``z``, are all 2D arrays of the same size. However,
+    if a single 2D array is provided, then this will be treated as ``z`` values and
     ``x`` and ``y`` will be inferred on a grid (or they can be provided explicitly,
     either as vectors or 2D arrays).
 
@@ -335,7 +335,7 @@ def surf3d(x=None, y=None, z=None, c=None, fig=True, ax=None, returnfig=False, c
         # Simple example
         data = sc.smooth(np.random.rand(30,50))
         sc.surf3d(data)
-        
+
         # Use non-default axes and colors
         nx = 20
         ny = 50
@@ -344,7 +344,7 @@ def surf3d(x=None, y=None, z=None, c=None, fig=True, ax=None, returnfig=False, c
         z = sc.smooth(np.random.randn(ny,nx))
         c = z**2
         sc.surf3d(x=x, y=y, z=z, c=c, cmap='orangeblue')
-    
+
     *New in 3.1.0:* updated arguments from "data" to x, y, z, c; removed "plotkwargs" argument; "fig" defaults to True
     """
 
@@ -353,18 +353,18 @@ def surf3d(x=None, y=None, z=None, c=None, fig=True, ax=None, returnfig=False, c
     axkwargs = sc.mergedicts(axkwargs)
     if colorbar is None:
         colorbar = False if sc.isarray(c) else True # Use a colorbar unless colors provided
-    
+
     # Create figure
     fig,ax = ax3d(returnfig=True, fig=fig, ax=ax, figkwargs=figkwargs, **axkwargs)
-    
+
     # Process data
     x, y, z, c = _process_2d_data(x, y, z, c, flatten=False)
-    
+
     # Handle colors
     if sc.isarray(c):
         c = _process_colors(c, z=z, cmap=plotkwargs.get('cmap'))
         plotkwargs['facecolors'] = c
-    
+
     # Actually plot
     surf = ax.plot_surface(x, y, z, **plotkwargs)
     if colorbar:
@@ -377,7 +377,7 @@ def surf3d(x=None, y=None, z=None, c=None, fig=True, ax=None, returnfig=False, c
 
 
 
-def bar3d(x=None, y=None, z=None, c='z', dx=0.8, dy=0.8, dz=None, fig=True, ax=None, 
+def bar3d(x=None, y=None, z=None, c='z', dx=0.8, dy=0.8, dz=None, fig=True, ax=None,
           returnfig=False, figkwargs=None, axkwargs=None, **kwargs):
     """
     Plot 2D data as 3D bars
@@ -403,7 +403,7 @@ def bar3d(x=None, y=None, z=None, c='z', dx=0.8, dy=0.8, dz=None, fig=True, ax=N
         # Simple example
         data = np.random.rand(5,4)
         sc.bar3d(data)
-        
+
         # Use non-default axes and colors (note: this one is pretty!)
         nx = 5
         ny = 6
@@ -413,7 +413,7 @@ def bar3d(x=None, y=None, z=None, c='z', dx=0.8, dy=0.8, dz=None, fig=True, ax=N
         dz = -2*z
         c = z**2
         sc.bar3d(x=x, y=y, z=z, dx=0.5, dy=0.5, dz=dz, c=c, cmap='orangeblue')
-    
+
     *New in 3.1.0:* updated arguments from "data" to x, y, z, c; removed "plotkwargs" argument; "fig" defaults to True
     """
 
@@ -423,7 +423,7 @@ def bar3d(x=None, y=None, z=None, c='z', dx=0.8, dy=0.8, dz=None, fig=True, ax=N
 
     # Create figure
     fig,ax = ax3d(returnfig=True, fig=fig, ax=ax, figkwargs=figkwargs, **axkwargs)
-    
+
     # Process data
     z_base = None # Assume no base is provided, and ...
     z_height = z # ... height was provided
@@ -432,16 +432,16 @@ def bar3d(x=None, y=None, z=None, c='z', dx=0.8, dy=0.8, dz=None, fig=True, ax=N
         z_height = dz
     elif z is None and dz is not None: # Swap order if dz is provided instead of z
         z_height = dz
-        
+
     x, y, z_height, c = _process_2d_data(x=x, y=y, z=z_height, c=c, flatten=True)
-    
+
     # Ensure the bottom of the bars is provided
     if z_base is None:
         z_base = np.zeros_like(z)
-    
+
     # Process colors
     c = _process_colors(c, z_height, cmap=kwargs.get('cmap'), to2d=True)
-    
+
     # Plot
     ax.bar3d(x=x, y=y, z=z_base, dx=dx, dy=dy, dz=z_height, color=c, **plotkwargs)
 
@@ -460,11 +460,11 @@ __all__ += ['stackedbar', 'boxoff', 'setaxislim', 'setxlim', 'setylim', 'commati
             'getrowscols', 'get_rows_cols', 'figlayout', 'maximize', 'fonts']
 
 
-def stackedbar(x=None, values=None, colors=None, labels=None, transpose=False, 
+def stackedbar(x=None, values=None, colors=None, labels=None, transpose=False,
                flipud=False, is_cum=False, barh=False, **kwargs):
     """
     Create a stacked bar chart.
-    
+
     Args:
         x         (array)    : the x coordinates of the values
         values    (array)    : the 2D array of values to plot as stacked bars
@@ -475,42 +475,42 @@ def stackedbar(x=None, values=None, colors=None, labels=None, transpose=False,
         is_cum    (bool)     : whether the array is already a cumulative sum
         barh      (bool)     : whether to plot as a horizontal instead of vertical bar
         kwargs    (dict)     : passed to :func:`plt.bar() <matplotlib.pyplot.bar>`
-    
+
     **Example**::
-        
+
         values = np.random.rand(3,5)
         sc.stackedbar(values, labels=['bottom','middle','top'])
         plt.legend()
-    
+
     *New in version 2.0.4.*
     """
     from . import sc_colors as scc # To avoid circular import
-    
+
     # Handle inputs
     if x is not None and values is None:
         values = x
         x = None
-    
+
     if values is None: # pragma: no cover
         errormsg = 'Must supply values to plot, typically as a 2D array'
         raise ValueError(errormsg)
-    
+
     values = sc.toarray(values)
     if values.ndim == 1: # pragma: no cover
         values = values[None,:] # Convert to a 2D array
-    
+
     if transpose: # pragma: no cover
         values = values.T
-    
+
     if flipud: # pragma: no cover
         values = values[::-1,:]
-    
+
     nstack = values.shape[0]
     npts = values.shape[1]
-    
+
     if x is None:
         x = np.arange(npts)
-        
+
     if is_cum:
         values = np.diff(values, prepend=0, axis=0)
 
@@ -520,7 +520,7 @@ def stackedbar(x=None, values=None, colors=None, labels=None, transpose=False,
         if nlabels != nstack:
             errormsg = f'Expected {nstack} labels, got {nlabels}'
             raise ValueError(errormsg)
-    
+
     if colors is not None: # pragma: no cover
         ncolors = len(colors)
         if ncolors != nstack:
@@ -528,7 +528,7 @@ def stackedbar(x=None, values=None, colors=None, labels=None, transpose=False,
             raise ValueError(errormsg)
     else:
         colors = scc.gridcolors(nstack)
-        
+
     # Actually plot
     artists = []
     for i in range(nstack):
@@ -536,7 +536,7 @@ def stackedbar(x=None, values=None, colors=None, labels=None, transpose=False,
             label = labels[i]
         else: # pragma: no cover
             label = None
-        
+
         h = values[i,:]
         b = values[:i,:].sum(axis=0)
         kw = dict(facecolor=colors[i], label=label, **kwargs)
@@ -545,7 +545,7 @@ def stackedbar(x=None, values=None, colors=None, labels=None, transpose=False,
         else:
             artist = plt.barh(y=x, width=h, left=b, **kw)
         artists.append(artist)
-    
+
     return artists
 
 
@@ -828,7 +828,7 @@ def getrowscols(n, nrows=None, ncols=None, ratio=1, make=False, tight=True, remo
         guess = np.sqrt(n)
         nrows = int(np.ceil(guess*np.sqrt(ratio)))
         ncols = int(np.ceil(n/nrows)) # Could also call recursively!
-    
+
     # If asked, make subplots
     if make: # pragma: no cover
         fig, axs = plt.subplots(nrows=nrows, ncols=ncols, **kwargs)
@@ -1321,7 +1321,7 @@ def _get_dpi(dpi=None, min_dpi=200):
     return dpi
 
 
-def savefig(filename, fig=None, dpi=None, comments=None, pipfreeze=False, relframe=0, 
+def savefig(filename, fig=None, dpi=None, comments=None, pipfreeze=False, relframe=0,
             folder=None, makedirs=True, die=True, verbose=True, **kwargs):
     """
     Save a figure, including metadata
@@ -1356,17 +1356,17 @@ def savefig(filename, fig=None, dpi=None, comments=None, pipfreeze=False, relfra
 
         sc.savefig('example2.png', comments='My figure', freeze=True)
         sc.pp(sc.loadmetadata('example2.png'))
-    
+
     | *New in version 1.3.3.*
     | *New in version 3.0.0:* "freeze" renamed "pipfreeze"; "frame" replaced with "relframe"; replaced metadata with ``sc.metadata()``
     """
     # Handle deprecation
     orig_metadata = kwargs.pop('metadata', {}) # In case metadata is supplied, as it can be for fig.save()
-    pipfreeze     = kwargs.pop('freeze', pipfreeze) 
+    pipfreeze     = kwargs.pop('freeze', pipfreeze)
     frame         = kwargs.pop('frame', None)
     if frame is not None: # pragma: no cover
         relframe = frame - 2
-    
+
     # Handle figure
     if fig is None:
         fig = plt.gcf()
@@ -1509,9 +1509,9 @@ def loadfig(filename=None):
     except Exception as E: # pragma: no cover
         errormsg = f'Unable to open file "{filename}": are you sure it was saved as a .fig file (not an image)?'
         raise type(E)(errormsg) from E
-    
+
     reanimateplots(fig)
-    
+
     return fig
 
 
@@ -1522,16 +1522,16 @@ def reanimateplots(plots=None):
     except Exception as E: # pragma: no cover
         errormsg = f'To reanimate plots requires the "agg" backend, which could not be imported: {repr(E)}'
         raise ImportError(errormsg) from E
-    
+
     if len(plt.get_fignums()):
         fignum = plt.gcf().number # This is the number of the current active figure, if it exists
     else: # pragma: no cover
         fignum = 1
-        
+
     plots = sc.mergelists(plots) # Convert to an odict
     for plot in plots:
         nfmgf(fignum, plot) # Make sure each figure object is associated with the figure manager -- WARNING, is it correct to associate the plot with an existing figure?
-    
+
     return
 
 
