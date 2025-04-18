@@ -888,7 +888,7 @@ class tracecalls(sc.prettyobj):
 
     Args:
         trace (str/list/regex): the module(s)/file(s) to trace calls from ('' matches all, but this is usually undesirable)
-        exclude (str/list/regex): a list of modules/files to exclude (default '\<', which excludes builtins; set to None to not exclude anything)
+        exclude (str/list/regex): a list of modules/files to exclude (default excludes builtins; set to None to not exclude anything)
         regex (bool): whether to interpret trace and exclude as regexes rather than simple string matching
         repeats (bool): whether to record repeat calls of the same function (default False)
         custom (func): if provided, use this rather than the built in logic for checking for matches
@@ -912,10 +912,13 @@ class tracecalls(sc.prettyobj):
     | *New in version 3.2.0.*
     | *New in version 3.2.1:* "custom" argument added; "kwargs" removed
     """
-    def __init__(self, trace='', exclude=None, regex=False, repeats=False, custom=None, verbose=None):
-        default_exclude = {'<', 'tracecalls'} # Skip system functions with "<", and this function
-        self.trace = set(sc.tolist(trace))
-        self.exclude = set(sc.tolist(exclude)) if exclude is not None else default_exclude
+    def __init__(self, trace='<default>', exclude='<default>', regex=False, repeats=False, custom=None, verbose=None):
+        default_trace   = '.*' if regex else ''
+        default_exclude = {'.*<', '.*tracecalls'} if regex else {'<', 'tracecalls'}
+        trace   = default_trace   if trace   == '<default>' else trace
+        exclude = default_exclude if exclude == '<default>' else exclude
+        self.trace   = trace   if isinstance(trace, set)   else set(sc.tolist(trace))
+        self.exclude = exclude if isinstance(exclude, set) else set(sc.tolist(exclude))
         self.regex = regex
         self.repeats = repeats
         self.custom = custom
