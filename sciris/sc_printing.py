@@ -25,10 +25,10 @@ from textwrap import fill
 from contextlib import redirect_stdout
 import sciris as sc
 import sciris.sc_utils as scu
-from ._extras import ansicolors as ac
+from ._extras import ansicolors as ansi
 
 # Add Windows support for colors (do this at the module level so that colorama.init() only gets called once)
-if sc.iswindows(): # pragma: no cover # NB: can't use startswith() because of 'cygwin'
+if sc.iswindows(): # pragma: no cover
     try:
         import colorama
         colorama.init()
@@ -41,7 +41,7 @@ else:
 
 #%% Object display functions
 
-__all__ = ['createcollist', 'objectid', 'classatt', 'objatt', 'objmeth', 'objprop', 
+__all__ = ['ansi', 'createcollist', 'objectid', 'classatt', 'objatt', 'objmeth', 'objprop',
            'objrepr', 'prepr', 'pr', 'prettyobj', 'quickobj']
 
 _ncol = 3 # Default number of columns to display
@@ -55,7 +55,7 @@ def createcollist(items, title=None, strlen=_strlen, ncol=_ncol):
         newkeys = []
         for x in range(nrow):
             newkeys += items[x::nrow]
-    
+
         string = title + ':' if title else ''
         c = 0
         for x in newkeys:
@@ -72,7 +72,7 @@ def createcollist(items, title=None, strlen=_strlen, ncol=_ncol):
 def objectid(obj, showclasses=False):
     """
     Return the object ID as per the default Python ``__repr__`` method
-    
+
     *New in version 3.1.0:* "showclasses" argument
     """
     c = obj.__class__
@@ -87,7 +87,7 @@ def objectid(obj, showclasses=False):
 
 def _get_obj_keys(obj, private=False, sort=True, use_dir=False):
     """ Helper method to get the keys of an object """
-    
+
     # Get the list of keys
     if use_dir: # This forces the use of dir(), as opposed to checking for dict or slots
         keys = obj.__dir__() # This is the unsorted version of dir()
@@ -95,16 +95,16 @@ def _get_obj_keys(obj, private=False, sort=True, use_dir=False):
         if   hasattr(obj, '__dict__'):  keys = obj.__dict__.keys()
         elif hasattr(obj, '__slots__'): keys = obj.__slots__
         else:                           keys = [] # pragma: no cover
-    
+
     if isinstance(private, str):
         private = [private]
-        
+
     # Sort by private keys
     if not private:
         keys = [k for k in keys if not k.startswith('__')]
     elif isinstance(private, list):
         keys = [k for k in keys if (not k.startswith('__') or k in private)]
-        
+
     # Optionally sort
     if sort:
         keys = sorted(keys)
@@ -114,8 +114,8 @@ def _get_obj_keys(obj, private=False, sort=True, use_dir=False):
 def _is_meth(obj, attr, die=False):
     """
     Helper function to check if an attribute is a method; do not distinguish between bound and unbound
-    
-    | *New in version 3.2.0:* use method and function types instead of callable()    
+
+    | *New in version 3.2.0:* use method and function types instead of callable()
     """
     try:
         obj = getattr(obj, attr, None)
@@ -189,47 +189,47 @@ def objprop(obj, strlen=_strlen, ncol=_ncol, private=False, sort=True, _keys=Non
     return output
 
 
-def objrepr(obj, showid=True, showmeth=True, showprop=True, showatt=True, showclassatt=True, 
-            private=False, sort=True, dividerchar='—', dividerlen=_dividerlen, strlen=_strlen, ncol=_ncol, 
+def objrepr(obj, showid=True, showmeth=True, showprop=True, showatt=True, showclassatt=True,
+            private=False, sort=True, dividerchar='—', dividerlen=_dividerlen, strlen=_strlen, ncol=_ncol,
             _objkeys=None, _dirkeys=None):
     """
     Print out a detailed representation of an object: methods, properties, attributes, etc.
-    
+
     Similar to ``sc.prepr(obj, vals=False)``.
-    
+
     See :func:`sc.prepr() <prepr>` for an explanation of arguments.
     """
-    
+
     # Call the object twice to get the keys
     objkeys = _get_obj_keys(obj, private=private, sort=sort, use_dir=False) if _objkeys is None else _objkeys
     dirkeys = _get_obj_keys(obj, private=private, sort=sort, use_dir=True)  if _dirkeys is None else _dirkeys
-    
+
     divider = dividerchar*dividerlen + '\n'
     output = ''
-    
+
     def assemble(show, string):
         """ Helper function to construct the string """
         return string + divider if (show and string) else ''
-    
+
     # Assemble the output string
     output += assemble(showid,       objectid(obj, showclasses=True))
     output += assemble(showmeth,     objmeth(obj,  strlen=strlen, ncol=ncol, _keys=dirkeys))
     output += assemble(showprop,     objprop(obj,  strlen=strlen, ncol=ncol, _keys=dirkeys))
     output += assemble(showatt,      objatt(obj,   strlen=strlen, ncol=ncol, _keys=objkeys))
     output += assemble(showclassatt, classatt(obj, strlen=strlen, ncol=ncol, _objkeys=objkeys, _dirkeys=dirkeys))
-    
+
     return output
 
 
-def prepr(obj, vals=True, maxlen=None, maxitems=None, skip=None, dividerchar='—', dividerlen=_dividerlen, use_repr=True, 
+def prepr(obj, vals=True, maxlen=None, maxitems=None, skip=None, dividerchar='—', dividerlen=_dividerlen, use_repr=True,
           private=False, sort=True, strlen=_strlen, ncol=_ncol, maxtime=3, maxrecurse=5, die=False, debug=False):
     """
     Pretty-print a detailed representation of an object.
-    
+
     This function returns a pretty (and pretty detailed) representation of an object --
     all attributes (except any that are skipped), plus methods and ID.
-    
-    This function is usually used via the interactive :func:`sc.pr() <pr>` (which prints), 
+
+    This function is usually used via the interactive :func:`sc.pr() <pr>` (which prints),
     rather than this function (which returns a string).
 
     Args:
@@ -246,12 +246,12 @@ def prepr(obj, vals=True, maxlen=None, maxitems=None, skip=None, dividerchar='�
         maxrecurse (int): maximum number of levels to descend in the object (set to 0 to turn off the check)
         die (bool): whether to raise an exception if an error is encountered
         debug (bool): print out detail during string construction
-    
+
     | *New in version 3.0.0:* "debug" argument
     | *New in version 3.1.4:* more robust handling of invalid object properties
     | *New in version 3.1.5:* "vals" argument to turn off printing attribute values
     | *New in version 3.1.6:* "maxrecurse" argument, and checking for recursion
-    
+
     **Examples**::
 
         # Default options
@@ -259,7 +259,7 @@ def prepr(obj, vals=True, maxlen=None, maxitems=None, skip=None, dividerchar='�
         print(df) # See just the data
         sc.pr(df) # See all the methods too
         sc.pr(df, vals=False) # Only see methods, not the values
-        
+
         # Demonstrate options
         obj = sc.prettyobj({k:k for k in [l + str(n) for n in range(10) for l in 'abcde']}) # Big object
         sc.pr(obj, maxitems=20, sort=False, dividerchar='•', dividerlen=43, private=True)
@@ -287,7 +287,7 @@ def prepr(obj, vals=True, maxlen=None, maxitems=None, skip=None, dividerchar='�
     # Initialize things to print out
     labels = []
     values = []
-    
+
     # Call the object twice to get the keys
     objkeys = _get_obj_keys(obj, private=private, sort=sort, use_dir=False)
     dirkeys = _get_obj_keys(obj, private=private, sort=sort, use_dir=True)
@@ -315,7 +315,7 @@ def prepr(obj, vals=True, maxlen=None, maxitems=None, skip=None, dividerchar='�
                 extraitems = max(0, len(labels) - maxitems)
                 if extraitems > 0:
                     labels = labels[:maxitems]
-                
+
                 # Get the values of the attributes
                 values = []
                 if vals:
@@ -335,7 +335,7 @@ def prepr(obj, vals=True, maxlen=None, maxitems=None, skip=None, dividerchar='�
                             except Exception as E:
                                 value = object.__repr__(value) # pragma: no cover
                                 if die:
-                                    raise E          
+                                    raise E
                             values.append(value)
                         else:
                             labels = labels[:a]
@@ -343,7 +343,7 @@ def prepr(obj, vals=True, maxlen=None, maxitems=None, skip=None, dividerchar='�
                             values.append(f'{len(labels)-a} entries not shown')
                             time_exceeded = True
                             break
-                
+
             if extraitems > 0:
                 labels.append('etc. (too many items)')
                 values.append(f'{extraitems} entries not shown')
@@ -355,9 +355,9 @@ def prepr(obj, vals=True, maxlen=None, maxitems=None, skip=None, dividerchar='�
         if maxkeylen<maxlen:
             maxlen = maxlen - maxkeylen # Shorten the amount of data shown if the keys are long
         formatstr = f'%{maxkeylen}s' # Assemble the format string for the keys, e.g. '%21s'
-        
+
         # Actually get the methods
-        output  = objrepr(obj, showatt=False, showclassatt=False, _objkeys=objkeys, _dirkeys=dirkeys, **kw) 
+        output  = objrepr(obj, showatt=False, showclassatt=False, _objkeys=objkeys, _dirkeys=dirkeys, **kw)
         if not len(labels):
             output += 'No attributes\n'
         else:
@@ -387,7 +387,7 @@ def prepr(obj, vals=True, maxlen=None, maxitems=None, skip=None, dividerchar='�
             except Exception as E: # If that fails, try the most basic object representation
                 E2 = E
                 output = object.__repr__(obj)
-    
+
     if any([E is not None for E in [E1, E2, E3]]):
         warnmsg = f'Exception(s) encountered displaying object {objectid(obj)}:\n'
         if E1 is not None: warnmsg += f'{E1}\n'
@@ -401,7 +401,7 @@ def prepr(obj, vals=True, maxlen=None, maxitems=None, skip=None, dividerchar='�
 def pr(obj, *args, **kwargs):
     """
     Pretty-print a detailed representation of an object ("pr" is short for "print repr").
-    
+
     See :func:`sc.prepr() <prepr>` for arguments and examples.
 
     Note: :func:`sc.prepr() <prepr>` creates a string, while ``sc.pr()`` prints
@@ -416,10 +416,10 @@ class prettyobj:
     Use pretty repr for objects, instead of just showing the type and memory pointer
     (the Python default for objects). Can also be used as the base class for custom
     classes.
-    
+
     See :class:`sc.quickobj() <quickobj>` for a similar class that does not print
     attribute values (better for large objects that take a while to display).
-    
+
     Args:
         args (dict): dictionaries which are used to assign attributes
         kwargs (any): can also be used to assign attributes
@@ -428,11 +428,11 @@ class prettyobj:
 
         myobj = sc.prettyobj(a=3)
         print(myobj)
-        
+
         # <sciris.sc_printing.prettyobj at 0x7fbba4a97f40>
         # ————————————————————————————————————————————————————————————
         # Methods:
-        #   Methods N/A         
+        #   Methods N/A
         # ————————————————————————————————————————————————————————————
         # a: 3
         # ————————————————————————————————————————————————————————————
@@ -442,11 +442,11 @@ class prettyobj:
         myobj = sc.prettyobj(a=3)
         myobj.b = {'a':6}
         print(myobj)
-        
+
         # <sciris.sc_printing.prettyobj at 0x7ffa1e243910>
         # ————————————————————————————————————————————————————————————
         # Methods:
-        #   Methods N/A         
+        #   Methods N/A
         # ————————————————————————————————————————————————————————————
         # a: 3
         # b: {'a': 6}
@@ -454,19 +454,19 @@ class prettyobj:
 
 
     **Example 3**::
-        
+
         class MyObj(sc.prettyobj):
-       
+
             def __init__(self, a, b):
                 self.a = a
                 self.b = b
-       
+
             def mult(self):
                 return self.a * self.b
-       
+
         myobj = MyObj(a=4, b=6)
         print(myobj)
-        
+
         # <__main__.MyObj at 0x7fd9acd96c10>
         # ————————————————————————————————————————————————————————————
         # Methods:
@@ -498,24 +498,24 @@ scu.prettyobj = prettyobj
 class quickobj(prettyobj):
     """
     Like :class:`sc.prettyobj() <prettyobj>`, but do not print attribute values.
-    
+
     This class is better for large objects that take a while to display. It is
     somewhat similar to calling dir() on an object.
-    
+
     This class also defines a ``disp()`` method, which calls :func:`sc.pr() <pr>` on the object.
-    
+
     **Example**::
-        
+
         import numpy as np
         myobj = sc.quickobj(big1=np.random.rand(100,100), big2=sc.dataframe(a=np.arange(1000)))
         print(myobj)
-    
+
     | *New in version 3.1.5.*
     """
     def __repr__(self):
         """ Use a more detailed repr than default, but less detailed that prettyobj """
         return prepr(self, vals=False)
-    
+
     def disp(self, output=False, *args, **kwargs):
         """ Return full display of the object """
         string = prepr(self, *args, **kwargs)
@@ -523,7 +523,7 @@ class quickobj(prettyobj):
             return string
         else:
             print(string)
-            return 
+            return
 
 
 #%% Spacing functions
@@ -592,7 +592,7 @@ def indent(prefix=None, text=None, suffix='\n', n=0, pretty=False, width=70, **k
 
 #%% Data representation functions
 
-__all__ += ['sigfig', 'sigfigs', 'sigfiground', 'arraymean', 'arraymedian', 'printmean', 'printmedian', 
+__all__ += ['sigfig', 'sigfigs', 'sigfiground', 'arraymean', 'arraymedian', 'printmean', 'printmedian',
             'humanize_bytes', 'printarr', 'printdata', 'printvars']
 
 
@@ -614,10 +614,10 @@ def sigfig(x, sigfigs=4, SI=False, sep=False, keepints=False):
         x = 3432.3842
         sc.sigfig(x, SI=True) # Returns '3.432k'
         sc.sigfig(x, sep=True) # Returns '3,432'
-        
+
         vals = np.random.rand(5)
         sc.sigfig(vals, sigfigs=3)
-    
+
     *New in version 3.0.0:* changed default number of significant figures from 5 to 4; return list rather than tuple; changed SI suffixes to uppercase
     """
     output = []
@@ -681,14 +681,14 @@ def sigfiground(x, sigfigs=4):
         sigfigs (int): number of significant figures to round to
 
     **Examples**::
-        
+
         sc.sigfiground(3.28343) # Returns 3.283
         sc.sigfiground(834_875, 5)  # Returns 834880
         sc.sigfiground([3.28343, 834_874, 0, -83_742], 2) # Returns [3.3, 830000, 0, -84000]
-    
+
     | *New in version 3.2.0.*
     """
-    
+
     def round_arr(arr, sigfigs):
         """ Function for rounding a single number """
         out = arr.copy() # Preallocate output
@@ -702,7 +702,7 @@ def sigfiground(x, sigfigs=4):
         if np.all(exponent <= 0): # They're all integers
             out = out.astype(np.int64)
         return out
-    
+
     # Process inputs
     arr = sc.toarray(x)
     out = round_arr(arr, sigfigs) # Do the rounding
@@ -711,16 +711,16 @@ def sigfiground(x, sigfigs=4):
         out = out.tolist()
         out = [int(x) if x.is_integer() else x for x in out] # Allow mix of ints and floats
     return out
-        
+
 
 def arraymean(data, stds=2, axis=None, mean_sf=None, err_sf=None, tostring=True, doprint=False, **kwargs):
     """
     Quickly calculate the mean and standard deviation of an array.
-    
+
     By default, will calculate the correct number of significant figures based on
     the deviation. The default is to multiply the standard deviation by 2, as an
     approximation of the 95% confidence level (z=1.96).
-    
+
     Args:
         data (array): the data to summarize
         stds (int): the number of multiples of the standard deviation to show (default 2)
@@ -729,12 +729,12 @@ def arraymean(data, stds=2, axis=None, mean_sf=None, err_sf=None, tostring=True,
         err_sf (int): ditto, but for the error (standard deviation)
         doprint (bool): whether to print (else, return the string)
         kwargs (dict): passed to :func:`sc.sigfig() <sigfig>`
-    
+
     **Example**::
-        
+
         data = [1210, 1072, 1722, 1229, 1902]
         sc.arraymean(data) # Returns 1430 ± 320
-    
+
     | *New in version 3.0.0.*
     | *New in version 3.2.0:* "axis" argument, "tostring" argument (allow numerical output)
     """
@@ -743,18 +743,18 @@ def arraymean(data, stds=2, axis=None, mean_sf=None, err_sf=None, tostring=True,
     data = sc.toarray(data)
     val = data.mean(axis=axis)
     err = data.std(axis=axis)*stds
-    
+
     relsize = np.floor(np.log10(abs(val))) - np.floor(np.log10(abs(err)))
     if vsf is None:
         vsf = esf + relsize
     elif vsf is not None and err_sf is None:
         esf = min(vsf, vsf - relsize)
-    
+
     if tostring:
         valstr = sigfig(val, vsf, **kwargs)
         errstr = sigfig(err, esf, **kwargs)
         string = f'{valstr} ± {errstr}'
-        
+
         if doprint:
             print(string)
         else:
@@ -768,26 +768,26 @@ def arraymean(data, stds=2, axis=None, mean_sf=None, err_sf=None, tostring=True,
 def arraymedian(data, ci=95, sf=3, doprint=False, **kwargs):
     """
     Quickly calculate the median and confidence interval of an array.
-    
+
     The confidence interval defaults to 95%. If an integer is supplied, this is
     treated as a percentile (e.g. 95=95% CI). If a float is supplied, it's treated
     as a quantile (e.g. 0.95=95% CI). If a pair of ints or floats is provided, these are
     treated as upper and lower percentiles/quantiles. If 'iqr' is provided, then
     print the interquartile range (equivalent to 50% CI). If 'range' is provided
     then print the full range (equivalent to 100% CI).
-    
+
     Args:
         data (array): the data to summarize
         ci (int/float/list/str): the confidence interval to use to use (see above for details)
         sf (int): number of significant figures to use
         doprint (bool): whether to print (else, return the string)
         kwargs (dict): passed to :func:`sc.sigfig() <sigfig>`
-    
+
     **Examples**::
-        
+
         data = [1210, 1072, 1722, 1229, 1902]
         sc.printmedian(data, 80) # Returns '1230 (80.0% CI: 1130, 1830)'
-    
+
     *New in version 3.0.0.*
     """
     # Handle quantiles
@@ -797,7 +797,7 @@ def arraymedian(data, ci=95, sf=3, doprint=False, **kwargs):
         ci = 50
     elif str(ci).lower() in ['range', 'minmax']:
         ci = 100
-        
+
     if sc.isnumber(ci):
         if isinstance(ci, int):
             x = ci/100/2
@@ -822,19 +822,19 @@ def arraymedian(data, ci=95, sf=3, doprint=False, **kwargs):
     else: # pragma: no cover
         errormsg = f'Could not understand confidence interval "{ci}"'
         raise ValueError(errormsg)
-    
+
     # Do calculations
     data    = sc.toarray(data)
     median  = np.quantile(data, 0.5)
     bounds  = np.quantile(data, quantiles)
     relsize = np.floor(np.log10(abs(median))) - np.floor(np.log10(np.abs(bounds)))
-        
+
     # Assemble string
     valstr  = sigfig(median, sf, **kwargs)
     lowstr  = sigfig(bounds[0], sf-relsize[0], **kwargs)
     highstr = sigfig(bounds[1], sf-relsize[1], **kwargs)
     string = f'{valstr} ({cistr}: {lowstr}, {highstr})'
-    
+
     if doprint:
         print(string)
     else:
@@ -854,17 +854,17 @@ def printmedian(*args, doprint=True, **kwargs):
 def humanize_bytes(bytesize, decimals=3):
     """
     Convert a number of bytes into a human-readable total.
-    
+
     Args:
         bytesize (int): the number of bytes
         decimals (int): the number of decimal places to show
-    
+
     **Example**::
-        
+
         sc.humansize(2.3423887e6, decimals=2) # Returns '2.34 MB'
-        
+
     See the humansize library for more flexibility.
-    
+
     *New in version 3.0.0.*
     """
     # Convert to string
@@ -886,7 +886,7 @@ def humanize_bytes(bytesize, decimals=3):
 def printarr(arr, fmt=None, colsep='  ', vsep='—', decimals=2, doprint=True, dtype=None):
     """
     Print a numpy array nicely.
-    
+
     Args:
         arr (array): the array to print
         fmt (str): the formatting string to use
@@ -906,7 +906,7 @@ def printarr(arr, fmt=None, colsep='  ', vsep='—', decimals=2, doprint=True, d
     *New in version 3.0.0:* "doprint" argument
     """
     from . import sc_math as scm # To avoid circular import
-    
+
     string = ''
     arr = sc.toarray(arr, dtype=dtype)
     if fmt is None:
@@ -938,7 +938,7 @@ def printarr(arr, fmt=None, colsep='  ', vsep='—', decimals=2, doprint=True, d
     else: # pragma: no cover
         print('Dimensions higher than 3 are not supported')
         string = str(arr) # Give up
-    
+
     if doprint:
         print(string)
     else:
@@ -1099,7 +1099,7 @@ def colorize(color=None, string=None, doprint=None, output=False, enable=True, s
             errormsg = 'You can supply either color or fg, but not both'
             raise ValueError(errormsg)
 
-        if ansi_support: ansistring = ac.color(s=string, fg=fg, bg=bg, style=style) # Actually apply color
+        if ansi_support: ansistring = ansi.color(s=string, fg=fg, bg=bg, style=style) # Actually apply color
         else:            ansistring = str(string) # Otherwise, just return the string # pragma: no cover
 
     # Original use case
@@ -1162,30 +1162,30 @@ def colorize(color=None, string=None, doprint=None, output=False, enable=True, s
 # Alias certain colors functions -- not including white and black since poor practice on light/dark terminals
 def printred(s, **kwargs):
     """ Alias to print(colors.red(s)) """
-    return print(ac.red(s, **kwargs))
+    return print(ansi.red(s, **kwargs))
 
 def printgreen(s, **kwargs):
     """ Alias to print(colors.green(s)) """
-    return print(ac.green(s, **kwargs))
+    return print(ansi.green(s, **kwargs))
 
 def printblue(s, **kwargs):
     """ Alias to print(colors.blue(s)) """
-    return print(ac.blue(s, **kwargs))
+    return print(ansi.blue(s, **kwargs))
 
 def printcyan(s, **kwargs):
     """ Alias to print(colors.cyan(s)) """
-    return print(ac.cyan(s, **kwargs))
+    return print(ansi.cyan(s, **kwargs))
 
 def printyellow(s, **kwargs):
     """ Alias to print(colors.yellow(s)) """
-    return print(ac.yellow(s, **kwargs))
+    return print(ansi.yellow(s, **kwargs))
 
 def printmagenta(s, **kwargs):
     """ Alias to print(colors.magenta(s)) """
-    return print(ac.magenta(s, **kwargs))
+    return print(ansi.magenta(s, **kwargs))
 
 
-def heading(string='', *args, color='cyan', divider='—', spaces=2, spacesafter=1, 
+def heading(string='', *args, color='cyan', divider='—', spaces=2, spacesafter=1,
             minlength=10, maxlength=200, sep=' ', doprint=None, output=False, **kwargs):
     """
     Create a colorful heading. If just supplied with a string (or list of inputs like print()),
@@ -1238,7 +1238,7 @@ def heading(string='', *args, color='cyan', divider='—', spaces=2, spacesafter
 
 #%% Other
 
-__all__ += ['printv', 'slacknotification', 'printtologfile', 'percentcomplete', 
+__all__ += ['printv', 'slacknotification', 'printtologfile', 'percentcomplete',
             'progressbar', 'progressbars', 'capture']
 
 
@@ -1263,14 +1263,14 @@ def printv(string, thisverbose=1, verbose=2, indent=2, **kwargs):
     whereas a much less important message might be
 
     >>> sc.printv(f'This is timestep {i}', 4, verbose)
-    
+
     Args:
         string (str): string to print
         thisverbose (int): level of verbosity at which to print this message
         verbose (int): global verbose variable
         indent (int): amount by which to indent based on verbosity level
         kwargs (dict): passed to :func:`print()`
-        
+
     *New in version 3.0.0:* "kwargs" argument; removed "newline" argument
     """
     if verbose >= thisverbose: # Only print if sufficiently verbose
@@ -1384,19 +1384,19 @@ def percentcomplete(step=None, maxsteps=None, stepsize=1, prefix=None):
     **Examples**::
 
         maxiters = 500
-        
+
         # Will print on every 5th iteration
         for i in range(maxiters):
-            sc.percentcomplete(i, maxiters) 
-        
+            sc.percentcomplete(i, maxiters)
+
         # Will print on every 50th iteration
         for i in range(maxiters):
             sc.percentcomplete(i, maxiters, stepsize=10)
-        
+
         # Will print e.g. 'Completeness: 1%'
         for i in range(maxiters):
-            sc.percentcomplete(i, maxiters, prefix='Completeness: ') 
-    
+            sc.percentcomplete(i, maxiters, prefix='Completeness: ')
+
     See also :func:`sc.progressbar() <progressbar>` for a progress bar.
     """
     if prefix is None:
@@ -1410,13 +1410,13 @@ def percentcomplete(step=None, maxsteps=None, stepsize=1, prefix=None):
     return
 
 
-def progressbar(i=None, maxiters=None, label='', every=1, length=30, empty='—', full='•', 
+def progressbar(i=None, maxiters=None, label='', every=1, length=30, empty='—', full='•',
                 newline=False, flush=False, **kwargs):
     """
     Show a progress bar for a for loop.
-    
-    It can be called manually inside each iteration of the loop, or it can be used 
-    to wrap the object being iterated. In the latter case, it acts as an alias 
+
+    It can be called manually inside each iteration of the loop, or it can be used
+    to wrap the object being iterated. In the latter case, it acts as an alias
     for the ``tqdm.tqdm()`` progress bar.
 
     Args:
@@ -1437,7 +1437,7 @@ def progressbar(i=None, maxiters=None, label='', every=1, length=30, empty='—'
         for i in range(20):
             sc.progressbar(i+1, 20)
             sc.timedsleep(0.05)
-        
+
         # Direct usage inside a loop with custom formatting
         for i in range(1000):
             sc.progressbar(i+1, 1000, every=100, length=10, empty=' ', full='✓', newline=True)
@@ -1456,7 +1456,7 @@ def progressbar(i=None, maxiters=None, label='', every=1, length=30, empty='—'
     if i is None or sc.isiterable(i):
         desc = kwargs.pop('desc', label)
         return tqdm.tqdm(i, desc=desc, **kwargs)
-    
+
     # Handle inputs
     if hasattr(maxiters, '__len__'):
         maxiters = len(maxiters)
@@ -1490,20 +1490,20 @@ def progressbar(i=None, maxiters=None, label='', every=1, length=30, empty='—'
 class tqdm_pickle(tqdm.tqdm):
     """
     Simple subclass of tqdm that allows pickling
-    
+
     Usually not used directly by the user; used via :func:`sc.progressbars() <progressbars>` instead.
     Pickling is required for passing ``tqdm`` instances between processes.
-    
+
     Based on ``tqdm`` 4.65.0; may become deprecated in future ``tqdm`` releases.
-    
+
     *New in version 3.0.0.*
     """
-    
+
     def __getstate__(self):
         """ Overwrite default __getstate__ """
         d = {k:v for k,v in self.__dict__.items() if k not in ['sp', 'fp']}
         return d
-     
+
     def __setstate__(self, d): # pragma: no cover
         """ Overwrite default __getstate__ """
         self.__dict__ = d
@@ -1515,24 +1515,24 @@ class tqdm_pickle(tqdm.tqdm):
 class progressbars(prettyobj):
     """
     Create multiple progress bars
-    
+
     Useful for tracking the progress of multiple long-running tasks. Unlike regular
     ``tqdm`` instances, this uses a pickable version so it can be used directly
     in multiprocessing instances.
-    
+
     Args:
         n (int): number of progress bars to create
         total (float): length of the progress bars
         label (str/list): an optional prefix for the progress bar, or list of all labels
         leave (bool): whether to remove the progress bars when they're done
         kwargs (dict): passed to ``tqdm.tqdm()``
-    
+
     **Note**: bars are supposed to update in-place, but may appear on separate lines
-    instead if not run in the terminal (e.g. if run in IPython environments like 
+    instead if not run in the terminal (e.g. if run in IPython environments like
     Spyder or Jupyter).
-    
+
     **Example**::
-        
+
         import sciris as sc
         import random
 
@@ -1551,7 +1551,7 @@ class progressbars(prettyobj):
 
         # Run tasks
         sc.parallelize(run_sim, iterarg=range(nsims), ndays=ndays, pbs=pbs)
-        
+
         # Produces output like:
         # Sim 0:  39%|███████████████████████████▊           | 143/365 [00:01<00:01, 137.17it/s]
         # Sim 1:  42%|████████████████████████████▉          | 154/365 [00:01<00:01, 148.70it/s]
@@ -1561,7 +1561,7 @@ class progressbars(prettyobj):
 
     *New in version 3.0.0.*
     """
-    
+
     def __init__(self, n=1, total=1, label=None, leave=False, **kwargs):
         self.n      = n
         self.total  = total
@@ -1588,14 +1588,14 @@ class progressbars(prettyobj):
             bar = tqdm_pickle(total=total, position=i, desc=desc, leave=self.leave, **self.kwargs)
             self.bars.append(bar)
         return
-    
+
     def __getitem__(self, key): # pragma: no cover
         return self.bars[key]
-    
+
     def __setitem__(self, key, value): # pragma: no cover
         self.bars[key] = value
         return
-    
+
     def update(self, index=0, amount=1): # pragma: no cover
         self.bars[index].update(amount)
         return
