@@ -24,7 +24,7 @@ import sciris.sc_utils as scu
 #%% Date functions
 ###############################################################################
 
-__all__ = ['time', 'now', 'getdate', 'readdate', 'date', 'day', 'daydiff', 'daterange', 'datedelta', 'datetoyear']
+__all__ = ['time', 'now', 'getdate', 'readdate', 'date', 'day', 'daydiff', 'daterange', 'datedelta', 'datetoyear','yeartodate']
 
 
 def time():
@@ -520,6 +520,9 @@ def daterange(start_date=None, end_date=None, interval=None, inclusive=True, as_
     dates = date(dates, start_date=start_date, as_date=as_date, outformat=outformat)
     return dates
 
+def _get_year_length(year):
+        """ Get the length of the year: 365 or 366 days """
+        return dt.date(year=year+1, month=1, day=1) - dt.date(year=year, month=1, day=1)
 
 def datedelta(datestr=None, days=0, months=0, years=0, weeks=0, dt1=None, dt2=None, as_date=None, **kwargs):
     """
@@ -565,8 +568,7 @@ def datedelta(datestr=None, days=0, months=0, years=0, weeks=0, dt1=None, dt2=No
         if start_year is None:
             days_per_year = 365
         else:
-            last_year = start_year + int_years
-            days_per_year = (dt.date(last_year+1,1,1) - dt.date(last_year,1,1)).days
+            days_per_year = _get_year_length(start_year + int_years).days
         days = int(round(frac_year*days_per_year))
 
         # Modify keywords in place; the function arguments remain the ground truth
@@ -603,14 +605,42 @@ def datedelta(datestr=None, days=0, months=0, years=0, weeks=0, dt1=None, dt2=No
         return newdates
 
 
-def datetoyear(dateobj, dateformat=None, reverse=None, as_date=True):
+def yeartodate(year, as_date=True, **kwargs):
     """
-    Convert a DateTime instance to decimal year.
+    Convert a decimal year to a date
 
     Args:
-        dateobj (date, str):  The datetime instance to convert
+        year (int, float):  The numerical year to convert to a DateTime
+        as_date (bool): If True (default), return an ``sc.date`` object, otherwise return a string
+
+    Returns:
+        An ``sc.date`` object (default) or string, depending on the ``as_date`` argument
+
+    **Example**::
+
+        sc.yeartodate('2010-07-01') # Returns approximately 2010.5
+
+    | *New in version 3.2.1.*
+    """
+    as_date = kwargs.pop('asdate', as_date) # Handle with or without underscore
+    full_years = int(year)
+    remainder = year - full_years
+    year_days = _get_year_length(full_years).days
+    days = int(np.round(remainder*year_days))
+    base = dt.date(year=full_years, month=1, day=1)
+    out = datedelta(base, days=days)
+    if not as_date:
+        out = str(out)
+    return out
+
+
+def datetoyear(dateobj, dateformat=None, **kwargs):
+    """
+    Convert a date to decimal year.
+
+    Args:
+        dateobj (date, str, pd.TimeStamp):  The datetime instance to convert
         dateformat (str): If dateobj is a string, the optional date conversion format to use
-        reverse (bool): If True, convert a year to a date (assumed True if dateobj is a float)
 
     Returns:
         Equivalent decimal year from date, or date from decial year
@@ -624,35 +654,20 @@ def datetoyear(dateobj, dateformat=None, reverse=None, as_date=True):
 
     | *New in version 1.0.0.*
     | *New in version 3.2.0:* "reverse" argument
+    | *New in version 3.2.1:* "reverse" argument replaced by sc.yeartodate()
     """
-
-    def get_year_length(year):
-        """ Get the length of the year: 365 or 366 days """
-        return dt.date(year=year+1, month=1, day=1) - dt.date(year=year, month=1, day=1)
+    # Handle deprecation
+    if kwargs.pop('reverse', None): # pragma: no cover
+        warnmsg = 'sc.datetoyear() argument "reverse" has been deprecated as of v3.2.1; use sc.yeartodate() instead'
+        warnings.warn(warnmsg, category=FutureWarning, stacklevel=2)
+        return yeartodate(dateobj, **kwargs)
 
     # Handle strings and numbers
-    if sc.isstring(dateobj):
+    if sc.isstring(dateobj) or isinstance(dateobj, pd.Timestamp):
         dateobj = date(dateobj, dateformat=dateformat)
-    elif sc.isnumber(dateobj):
-        reverse = True
-
-    # If reverse
-    if reverse:
-        year = int(dateobj)
-        remainder = dateobj - year
-        year_days = get_year_length(year).days
-        days = int(np.round(remainder*year_days))
-        base = dt.date(year=year, month=1, day=1)
-        out = datedelta(base, days=days)
-        if not as_date:
-            out = str(out)
-
-    # Main use case
-    else:
-        year_part = dateobj - dt.date(year=dateobj.year, month=1, day=1)
-        year_length = get_year_length(dateobj.year)
-        out = dateobj.year + year_part / year_length
-    return out
+    year_part = dateobj - dt.date(year=dateobj.year, month=1, day=1)
+    year_length = _get_year_length(dateobj.year)
+    return dateobj.year + year_part / year_length
 
 
 ###############################################################################
