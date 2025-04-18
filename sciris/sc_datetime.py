@@ -605,7 +605,7 @@ def datedelta(datestr=None, days=0, months=0, years=0, weeks=0, dt1=None, dt2=No
         return newdates
 
 
-def yeartodate(year, as_date=True):
+def yeartodate(year, as_date=True, **kwargs):
     """
     Convert a decimal year to a date
 
@@ -620,9 +620,9 @@ def yeartodate(year, as_date=True):
 
         sc.yeartodate('2010-07-01') # Returns approximately 2010.5
 
-    | *New in version 3.3.0*
+    | *New in version 3.2.1.*
     """
-
+    as_date = kwargs.pop('asdate', as_date) # Handle with or without underscore
     full_years = int(year)
     remainder = year - full_years
     year_days = _get_year_length(full_years).days
@@ -634,14 +634,13 @@ def yeartodate(year, as_date=True):
     return out
 
 
-def datetoyear(dateobj, dateformat=None):
+def datetoyear(dateobj, dateformat=None, **kwargs):
     """
     Convert a date to decimal year.
 
     Args:
         dateobj (date, str, pd.TimeStamp):  The datetime instance to convert
         dateformat (str): If dateobj is a string, the optional date conversion format to use
-        reverse (bool): If True, convert a year to a date (assumed True if dateobj is a float)
 
     Returns:
         Equivalent decimal year from date, or date from decial year
@@ -655,7 +654,13 @@ def datetoyear(dateobj, dateformat=None):
 
     | *New in version 1.0.0.*
     | *New in version 3.2.0:* "reverse" argument
+    | *New in version 3.2.1:* "reverse" argument replaced by sc.yeartodate()
     """
+    # Handle deprecation
+    if kwargs.pop('reverse', None): # pragma: no cover
+        warnmsg = 'sc.datetoyear() argument "reverse" has been deprecated as of v3.2.1; use sc.yeartodate() instead'
+        warnings.warn(warnmsg, category=FutureWarning, stacklevel=2)
+        return yeartodate(dateobj, **kwargs)
 
     # Handle strings and numbers
     if sc.isstring(dateobj) or isinstance(dateobj, pd.Timestamp):
