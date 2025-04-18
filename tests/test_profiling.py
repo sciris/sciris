@@ -25,7 +25,7 @@ def test_memchecks():
     sc.heading('Testing memory checks')
 
     o = sc.objdict()
-    
+
     complexobj = sc.prettyobj(
         a = sc.objdict(
             a_dict = {'foo':'bar'},
@@ -46,12 +46,12 @@ def test_memchecks():
 
 def test_profile():
     sc.heading('Test profiling functions (profile/mprofile)')
-    
+
     print('Benchmarking:')
     bm = sc.benchmark()
     print(bm)
     assert bm['numpy'] > bm['python']
-    
+
     print('Profiling:')
 
     def slow_fn():
@@ -92,7 +92,7 @@ def test_profile():
         sc.mprofile(big_fn) # NB, cannot re-profile the same function at the same time
     except TypeError as E: # This happens when re-running this script
         print(f'Unable to re-profile memory function; this is usually not cause for concern ({E})')
-        
+
     # Run profiling test, checking versions first
     valid_python = '<3.12'
     if sc.compareversions(sc.metadata().versions.python, valid_python):
@@ -101,20 +101,20 @@ def test_profile():
     else:
         print(f'Warning: skipping sc.profile() test Python must be {valid_python}')
         lp = None
-    
+
     return lp
 
 
 def test_cprofile():
     sc.heading('Testing function profiler (cprofile)')
-    
+
     class Slow:
-        
+
         def math(self):
             n = 1_000_000
             self.a = np.arange(n)
             self.b = sum(self.a)
-            
+
         def plain(self):
             n = 100_000
             self.int_list = []
@@ -123,29 +123,77 @@ def test_cprofile():
                 self.int_list.append(i)
                 for j in range(10):
                     self.int_dict[i+j] = i+j
-        
+
         def run(self):
             self.math()
             self.plain()
-    
+
     # Option 1: as a context block
     with sc.cprofile() as cpr:
         slow = Slow()
         slow.run()
-        
+
     # Option 2: with start and stop
     cpr = sc.cprofile()
     cpr.start()
     slow = Slow()
     slow.run()
     cpr.stop()
-    
+
     # Tests
     df = cpr.df
     assert len(df) >= 4 # Should be at least this many profiled functions
     assert df[0].cumpct > df[-1].cumpct # Should be in descending order
-    
+
     return cpr
+
+
+def test_tracecalls():
+    sc.heading('Testing tracecalls()')
+
+    class ComplexCalls:
+        """ Class with complex call structure """
+
+        def __init__(self):
+            self.count = 0
+            self.call1()
+            self.call2()
+
+        def call1(self):
+            self.call3()
+
+        def call2(self):
+            self.call3()
+            self.call4()
+            self.call5()
+
+        def call3(self):
+            self.call6()
+
+        def call4(self):
+            self.count += 1
+
+        def call5(self):
+            self.count += 10
+
+        def call6(self):
+            self.count += 100
+
+        def call_extra(self):
+            self.count += 1000
+
+
+    with sc.tracecalls() as tc:
+        ComplexCalls()
+
+    with sc.capture() as text:
+        tc.disp()
+
+    for i in range(6):
+        assert f'call{i+1}' in text # Check that calls are captured
+    assert 'call_extra' not in text # Check that uncalled functions are not
+
+    return tc
 
 
 def test_resourcemonitor():
@@ -186,6 +234,7 @@ if __name__ == '__main__':
     mc  = test_memchecks()
     lp  = test_profile()
     cpr = test_cprofile()
+    tc  = test_tracecalls()
     rm  = test_resourcemonitor()
 
     sc.toc()

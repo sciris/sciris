@@ -36,7 +36,7 @@ import sciris as sc
 __all__ = ['checkmem', 'checkram', 'benchmark']
 
 
-def checkmem(var, descend=1, order='size', compresslevel=0, maxitems=1000, 
+def checkmem(var, descend=1, order='size', compresslevel=0, maxitems=1000,
              subtotals=True, plot=False, verbose=False, **kwargs):
     """
     Checks how much memory the variable or variables in question use by dumping
@@ -63,11 +63,11 @@ def checkmem(var, descend=1, order='size', compresslevel=0, maxitems=1000,
 
         import numpy as np
         import sciris as sc
-        
+
         list_obj = ['label', np.random.rand(2483,589)])
         sc.checkmem(list_obj)
-        
-        
+
+
         nested_dict = dict(
             foo = dict(
                 a = np.random.rand(5,10),
@@ -82,10 +82,10 @@ def checkmem(var, descend=1, order='size', compresslevel=0, maxitems=1000,
             cat = np.random.rand(5,10),
         )
         sc.checkmem(nested_dict)
-    
+
     *New in version 3.0.0:* descend multiple levels; dataframe output; "alphabetical" renamed "order"
     """
-    
+
     # Handle input arguments -- used for recursion
     _depth  = kwargs.pop('_depth', 0)
     _prefix = kwargs.pop('_prefix', '')
@@ -117,7 +117,7 @@ def checkmem(var, descend=1, order='size', compresslevel=0, maxitems=1000,
         is_total  = bool,
     )
     df = sc.dataframe(columns=columns)
-    
+
     if descend:
         if isinstance(var, dict): # Handle dicts
             if verbose>1: print('Iterating over dict')
@@ -139,14 +139,14 @@ def checkmem(var, descend=1, order='size', compresslevel=0, maxitems=1000,
         varname = _prefix if _prefix else 'Variable'
         bytesize, sizestr = check_one_object(var)
         df.appendrow(dict(variable=varname, humansize=sizestr, bytesize=bytesize, depth=_depth, is_total=False))
-    
+
     else:
         # Error checking
         n_variables = len(variables)
         if n_variables > maxitems: # pragma: no cover
             errormsg = f'Cannot compute the sizes of {n_variables} items since maxitems is set to {maxitems}'
             raise RuntimeError(errormsg)
-    
+
         # Compute the sizes recursively
         for v,(varname,variable) in enumerate(zip(varnames, variables)):
             if verbose: # pragma: no cover
@@ -154,18 +154,18 @@ def checkmem(var, descend=1, order='size', compresslevel=0, maxitems=1000,
             label = _join.join([_prefix, varname]) if _prefix else varname
             this_df = checkmem(variable, descend=descend-1, compresslevel=compresslevel, maxitems=maxitems, plot=False, verbose=False, _prefix=label, _depth=_depth+1)
             df.concat(this_df, inplace=True)
-    
+
     # Handle subtotals
     if subtotals and len(df) > 1:
         total_label = _prefix + ' (total)' if _prefix else 'Total'
         total = df[np.logical_not(df.is_total)].bytesize.sum()
         human_total = sc.humanize_bytes(total)
         df.appendrow(dict(variable=total_label, humansize=human_total, bytesize=total, depth=_depth, is_total=True))
-    
+
     # Only sort if we're at the highest level
     if _depth == 0 and len(df) > 1:
         # if subtotals:
-            
+
         if order == 'alphabetical': # pragma: no cover
             df.sortrows(col='variable')
         elif order == 'size':
@@ -195,7 +195,7 @@ def checkram(unit='mb', fmt='0.2f', start=0, to_string=True):
         start = sc.checkram(to_string=False)
         a = np.random.random((1_000, 10_000))
         print(sc.checkram(start=start))
-    
+
     *New in version 1.0.0.*
     """
     process = psutil.Process(os.getpid())
@@ -215,16 +215,16 @@ def checkram(unit='mb', fmt='0.2f', start=0, to_string=True):
 def benchmark(repeats=5, scale=1, verbose=False, python=True, numpy=True, parallel=False, return_timers=False):
     """
     Benchmark Python performance
-    
+
     Performs a set of standard operations in both Python and Numpy and times how
     long they take. Results are returned in terms of millions of operations per second (MOPS).
-    With default settings, this function should take very approximately 0.1 s to 
+    With default settings, this function should take very approximately 0.1 s to
     run (depending on the machine, of course!).
-    
+
     For Python, these operations are: for loops, list append/indexing, dict set/get,
     and arithmetic. For Numpy, these operations are: random floats, random ints,
     addition, and multiplication.
-    
+
     Args:
         repeats (int): the number of times to repeat each test
         scale (float): the scale factor to use for the size of the loops/arrays
@@ -233,28 +233,28 @@ def benchmark(repeats=5, scale=1, verbose=False, python=True, numpy=True, parall
         numpy (bool): whether to run the Numpy tests
         parallel (bool/int): whether to run the tests across all cores
         return_timers (bool): if True, return the timer objects instead of the "MOPS" results
-        
+
     Returns:
         A dict with keys "python" and "numpy" for the number of MOPS for each
-    
+
     **Examples**::
-        
+
         sc.benchmark() # Returns e.g. {'python': 11.43, 'numpy': 236.595}
-        
+
         numpy_mops = sc.benchmark(python=False)['numpy']
         if numpy_mops < 100:
             print('Your computer is slow')
-        elif numpy_mops > 400: 
+        elif numpy_mops > 400:
             print('Your computer is fast')
         else:
             print('Your computer is normal')
-        
+
         sc.benchmark(parallel=True) # Use all CPUs
-    
+
     | *New in version 3.0.0.*
     | *New in version 3.1.0:* "parallel" argument; increased default scale
     """
-    
+
     # Calculate the number of operations
     py_outer = 10
     np_outer = 1
@@ -262,10 +262,10 @@ def benchmark(repeats=5, scale=1, verbose=False, python=True, numpy=True, parall
     np_inner = scale*1e6
     py_ops = (py_outer * py_inner * 18)/1e6
     np_ops = (np_outer * np_inner * 4)/1e6
-    
-    
+
+
     # Define the benchmarking functions
-    
+
     def bm_python(prefix=''):
         P = sc.timer(verbose=verbose)
         for r in range(repeats):
@@ -282,7 +282,7 @@ def benchmark(repeats=5, scale=1, verbose=False, python=True, numpy=True, parall
                     result += v1 + v2 # Operations 17-18: sum (x2)
             P.toc(f'{prefix}Python, {py_ops}m operations')
         return P
-    
+
     def bm_numpy(prefix=''):
         N = sc.timer(verbose=verbose)
         for r in range(repeats):
@@ -294,26 +294,26 @@ def benchmark(repeats=5, scale=1, verbose=False, python=True, numpy=True, parall
                 a*b # Operation 4: multiplication
             N.toc(f'{prefix}Numpy, {np_ops}m operations')
         return N
-    
-    
+
+
     # Do the benchmarking
-    
+
     if not parallel:
-        
+
         ncpus = 1
-    
+
         # Benchmark plain Python
         if python:
             P = bm_python()
-                     
+
         # Benchmark Numpy
         if numpy:
             N = bm_numpy()
-    
+
     else:
-        
+
         from . import sc_parallel as scpar
-        
+
         if parallel == 1: # Probably "True"
             ncpus = cpu_count()
         else:
@@ -322,16 +322,16 @@ def benchmark(repeats=5, scale=1, verbose=False, python=True, numpy=True, parall
             except Exception as E:
                 errormsg = f'Could not interpret "{parallel}" as a number of cores'
                 raise ValueError(errormsg) from E
-        
+
         arglist = [f'Run {i}: ' for i in range(ncpus)]
-        
+
         if python:
             Plist = scpar.parallelize(bm_python, arglist, ncpus=ncpus)
-            P = sum(Plist) 
+            P = sum(Plist)
         if numpy:
             Nlist = scpar.parallelize(bm_numpy, arglist, ncpus=ncpus)
-            N = sum(Nlist) 
-    
+            N = sum(Nlist)
+
     # Handle output
     if return_timers: # pragma: no cover
         out = sc.objdict(python=P, numpy=N)
@@ -339,7 +339,7 @@ def benchmark(repeats=5, scale=1, verbose=False, python=True, numpy=True, parall
         pymops = py_ops/P.mean()*ncpus if len(P) else None # Handle if one or the other isn't run
         npmops = np_ops/N.mean()*ncpus if len(N) else None
         out = dict(python=pymops, numpy=npmops)
-        
+
     return out
 
 
@@ -426,7 +426,7 @@ def loadbalancer(maxcpu=0.9, maxmem=0.9, index=None, interval=None, cpu_interval
     if maxcpu   is None or maxcpu  is False: maxcpu  = 1.0
     if maxmem   is None or maxmem  is False: maxmem  = 1.0
     if maxtime  is None or maxtime is False: maxtime = 36000
-    
+
     # Handle the interval
     default_interval = 0.5
     min_interval = 1e-3 # Don't allow intervals of less than 1 ms
@@ -495,15 +495,15 @@ def loadbalancer(maxcpu=0.9, maxmem=0.9, index=None, interval=None, cpu_interval
 __all__ += ['profile', 'mprofile', 'cprofile', 'tracecalls']
 
 
-def profile(run, follow=None, private='__init__', include=None, exclude=None, 
+def profile(run, follow=None, private='__init__', include=None, exclude=None,
             print_stats=True, verbose=True, *args, **kwargs):
     """
     Profile the line-by-line time required by a function.
-    
+
     Interface to the line_profiler library.
-    
+
     Note: :func:`sc.profile() <profile>` shows the time taken by each line of code, in the order
-    the code appears in. :class:`sc.cprofile() <cprofile>` shows the time taken by each function, 
+    the code appears in. :class:`sc.cprofile() <cprofile>` shows the time taken by each function,
     regardless of where in the code it appears.
 
     Args:
@@ -542,18 +542,18 @@ def profile(run, follow=None, private='__init__', include=None, exclude=None,
             def inner(self):
                 for i in range(1000):
                     self.a += 1
-        
+
         # Profile a function
         sc.profile(slow_fn)
 
         # Profile a class or class instance
         foo = Foo()
-        sc.profile(run=foo.outer, follow=foo) 
-        
+        sc.profile(run=foo.outer, follow=foo)
+
         # Profile the constructor for Foo
         f = lambda a: Foo(a)
         sc.profile(run=f, follow=Foo.__init__, a=10) # "a" is passed to the function
-    
+
     | *New in version 3.2.0:* allow class and module arguments for "follow"; "private" argument
     """
     try:
@@ -561,18 +561,18 @@ def profile(run, follow=None, private='__init__', include=None, exclude=None,
     except ModuleNotFoundError as E: # pragma: no cover
         errormsg = 'The "line_profiler" package is not installed; try "pip install line_profiler". (Note: it is not compatible with Python 3.12)'
         raise ModuleNotFoundError(errormsg) from E
-        
+
     # Figure out follow
     if follow is None: # pragma: no cover
         follow = run
     orig_list = sc.tolist(follow)
-    
+
     m_list = [] # List of modules (to be turned into functions/classes)
     c_list = [] # List of classes (to be turned into functions)
     f_list = [] # List of functions (to be used)
     include = sc.tolist(include)
     exclude = sc.tolist(exclude)
-    
+
     # First parse into the different categories
     for obj in orig_list:
         if sc.isfunc(obj): # Simple: just a function
@@ -583,7 +583,7 @@ def profile(run, follow=None, private='__init__', include=None, exclude=None,
             c_list.append(obj)
         else:
             c_list.append(obj.__class__) # Everything is a class
-            
+
     def get_attrs(parent):
         """ Safely get the attributes of a module/class """
         attrs = sc.objatt(parent, private=private, return_keys=True)
@@ -596,7 +596,7 @@ def profile(run, follow=None, private='__init__', include=None, exclude=None,
             except: # Don't worry too much if some fail
                 pass
         return objs
-    
+
     # First take a pass and convert any modules to functions and classes
     for mod in m_list:
         objs = get_attrs(mod)
@@ -605,23 +605,23 @@ def profile(run, follow=None, private='__init__', include=None, exclude=None,
                 f_list.append(obj)
             elif isinstance(obj, type): # It's a class, add it to the class list
                 c_list.append(obj)
-        
+
     # Then convert any classes to functions/objects
     for cla in c_list:
         objs = get_attrs(cla)
         for obj in objs:
             if sc.isfunc(obj):
                 f_list.append(obj)
-                
+
     # Finally, do any filtering
     if include:
         f_list = [f for f in f_list if any(inc in str(f) for inc in include)]
     if exclude:
         f_list = [f for f in f_list if not any(exc in str(f) for exc in exclude)]
-    
+
     if verbose:
         print(f'Profiling {len(f_list)} function(s):\n', sc.newlinejoin(f_list), '\n')
-    
+
     # Construct the wrapper
     orig_func = run # Needed for argument passing
     lp = LineProfiler()
@@ -690,16 +690,16 @@ def mprofile(run, follow=None, show_results=True, *args, **kwargs):
 class cprofile(sc.prettyobj):
     """
     Function profiler, built off Python's built-in cProfile
-    
+
     Note: :func:`sc.profile() <profile>` shows the time taken by each line of code, in the order
-    the code appears in. :class:`sc.cprofile() <cprofile>` shows the time taken by each function, 
+    the code appears in. :class:`sc.cprofile() <cprofile>` shows the time taken by each function,
     regardless of where in the code it appears.
-    
+
     The profiler can be used either with the ``enable()`` and ``disable()`` commands,
     or as a context block. See examples below for details.
-    
+
     Default columns of output are:
-        
+
         - 'func': the function being called
         - 'cumpct': the cumulative percentage of time taken by this function (including subfunctions)
         - 'selfpct': the percentage of time taken just by this function (excluding subfunctions)
@@ -707,7 +707,7 @@ class cprofile(sc.prettyobj):
         - 'selftime': the time taken just by this function
         - 'calls': the number of calls
         - 'path': the file and line number
-        
+
     Args:
         sort (str): the column to sort by (default "cumpct")
         columns (str): what columns to show; options are "default" (above), "brief" (just func, cumtime, selftime), and "full" (as default plus percall and separate line numbers)
@@ -717,19 +717,19 @@ class cprofile(sc.prettyobj):
         maxpathlen (int): maximum length of the function path to print
         stripdirs (bool): whether to strip folder information from the file paths
         show (bool): whether to show results of the profiling as soon as it's complete
-        
+
     **Examples**::
-        
+
         import sciris as sc
         import numpy as np
 
         class Slow:
-            
+
             def math(self):
                 n = 1_000_000
                 self.a = np.arange(n)
                 self.b = sum(self.a)
-                
+
             def plain(self):
                 n = 100_000
                 self.int_list = []
@@ -738,7 +738,7 @@ class cprofile(sc.prettyobj):
                     self.int_list.append(i)
                     for j in range(10):
                         self.int_dict[i+j] = i+j
-            
+
             def run(self):
                 self.math()
                 self.plain()
@@ -747,17 +747,17 @@ class cprofile(sc.prettyobj):
         with sc.cprofile() as cpr:
             slow = Slow()
             slow.run()
-            
+
         # Option 2: with start and stop
         cpr = sc.cprofile()
         cpr.start()
         slow = Slow()
         slow.run()
         cpr.stop()
-    
-    | *New in version 3.1.6.*    
+
+    | *New in version 3.1.6.*
     """
-    def __init__(self, sort='cumtime', columns='default', mintime=1e-3, maxitems=100, 
+    def __init__(self, sort='cumtime', columns='default', mintime=1e-3, maxitems=100,
                  maxfunclen=40, maxpathlen=40, stripdirs=True, show=True):
         self.sort = sort
         self.columns = columns
@@ -771,7 +771,7 @@ class cprofile(sc.prettyobj):
         self.df = None
         self.profile = cProfile.Profile()
         return
-    
+
     def parse_stats(self, stripdirs=None, force=False):
         """ Parse the raw data into a dictionary """
         stripdirs = sc.ifelse(stripdirs, self.stripdirs)
@@ -782,12 +782,12 @@ class cprofile(sc.prettyobj):
             self.n_functions = len(self.parsed.stats)
             self.total = self.parsed.total_tt
         return
-    
+
     def to_df(self, sort=None, mintime=None, maxitems=None, maxfunclen=None,
               maxpathlen=None, columns=None):
         """
         Parse data into a dataframe
-        
+
         See class docstring for arguments
         """
         sort       = sc.ifelse(sort, self.sort)
@@ -796,13 +796,13 @@ class cprofile(sc.prettyobj):
         maxfunclen = sc.ifelse(maxfunclen, self.maxfunclen)
         maxpathlen = sc.ifelse(maxpathlen, self.maxpathlen)
         columns    = sc.ifelse(columns, self.columns)
-        
+
         def trim(name, maxlen):
             if maxlen is None or len(name) <= maxlen:
                 return name
             else:
                 return name[:maxlen//2-1] + '...' + name[-maxlen//2-1:]
-        
+
         # Settings
         cols = dict(
             brief = ['func', 'cumtime', 'selftime'],
@@ -810,7 +810,7 @@ class cprofile(sc.prettyobj):
             full = ['calls', 'percall', 'selftime', 'cumtime', 'selfpct', 'cumpct', 'func', 'file', 'line'],
         )
         cols = cols[columns]
-        
+
         # Parse the stats
         self.parse_stats()
         d = sc.dictobj()
@@ -826,11 +826,11 @@ class cprofile(sc.prettyobj):
                 d.file.append(efile)
                 d.line.append(eline)
                 d.func.append(trim(efunc, maxfunclen))
-                
+
         # Convert to arrays
         for key in ['calls', 'selftime', 'cumtime']:
             d[key] = np.array(d[key])
-        
+
         # Calculate additional columns
         d.percall = d.cumtime/d.calls
         d.cumpct  = d.cumtime/self.total*100
@@ -839,15 +839,15 @@ class cprofile(sc.prettyobj):
         for fi,ln in zip(d.file, d.line):
             entry = fi if ln==0 else f'{fi}:{ln}'
             d.path.append(trim(entry, maxpathlen))
-        
+
         # Convert to a dataframe
         data = {key:d[key] for key in cols}
         self.df = sc.dataframe(**data)
         reverse = sc.isarray(d[sort]) # If numeric, assume we want the highest first
         self.df = self.df.sortrows(sort, reverse=reverse)
         self.df = self.df[:self.maxitems]
-        return self.df  
-        
+        return self.df
+
     def disp(self, *args, **kwargs):
         """ Display the results of the profiling; arguments are passed to ``to_df()`` """
         if self.df is None or args or kwargs:
@@ -857,23 +857,23 @@ class cprofile(sc.prettyobj):
         if len(self.df) < self.n_functions:
             print(f'Note: {self.n_functions-len(self.df)} functions with time < {self.mintime} not shown.')
         return
-    
+
     def start(self):
         """ Start profiling """
         return self.profile.enable()
-    
+
     def stop(self):
         """ Stop profiling """
         self.profile.disable()
         if self.show:
             self.disp()
-        return 
-    
+        return
+
     def __enter__(self):
         """ Start profiling in a context block """
         self.start()
         return self
-    
+
     def __exit__(self, *exc_info):
         """ Stop profiling in a context block """
         self.stop()
@@ -883,78 +883,97 @@ class cprofile(sc.prettyobj):
 class tracecalls(sc.prettyobj):
     """
     Trace all function calls.
-    
+
     Alias to ``sys.steprofile()``.
-    
+
     Args:
-        trace (str/list/regex): the module(s)/file(s) to trace calls from ('' matches all, but this is inadvisable!)
-        exclude (str/list/regex): a list of modules/files to exclude (default '\<', which excludes builtins)
+        trace (str/list/regex): the module(s)/file(s) to trace calls from ('' matches all, but this is usually undesirable)
+        exclude (str/list/regex): a list of modules/files to exclude (default '\<', which excludes builtins; set to None to not exclude anything)
         regex (bool): whether to interpret trace and exclude as regexes rather than simple string matching
         repeats (bool): whether to record repeat calls of the same function (default False)
-        kwargs (dict): passed to ``sys.setprofile``
-    
+        custom (func): if provided, use this rather than the built in logic for checking for matches
+        verbose (bool): how much information to print (False=silent, None=default, True=debug)
+
     **Examples**::
-        
+
         import mymodule as mm
-        
+
         # In context block
         with sc.tracecalls('mymodule'):
             mm.big_operation()
-            
+
         # Explicitly
         tc = sc.tracecalls('*mysubmodule*', exclude='^init*', regex=True, repeats=True)
         tc.start()
         mm.big_operation()
         tc.stop()
         tc.df.disp()
-        
-    | *New in version 3.2.0.*    
+
+    | *New in version 3.2.0.*
+    | *New in version 3.2.1:* "custom" argument added; "kwargs" removed
     """
-    def __init__(self, trace, exclude=None, regex=False, repeats=False, **kwargs):
+    def __init__(self, trace='', exclude=None, regex=False, repeats=False, custom=None, verbose=None):
+        default_exclude = {'<', 'tracecalls'} # Skip system functions with "<", and this function
         self.trace = set(sc.tolist(trace))
-        self.exclude = set(sc.tolist(exclude)) if exclude is not None else {'\<'}
+        self.exclude = set(sc.tolist(exclude)) if exclude is not None else default_exclude
         self.regex = regex
         self.repeats = repeats
+        self.custom = custom
+        self.verbose = verbose
         self.parsed = set()
-        self.stack = 10
-        self.kwargs = kwargs
         self.entries = []
+        self.entry = sc.dictobj()
+        self.entry.stack = 10 # Default stack
+        self.n_calls = 0
         return
-        
+
     def start(self):
         """ Start profiling """
-        sys.setprofile(self._call, **self.kwargs)
+        sys.setprofile(self._call)
         return
-    
-    def stop(self, disp=True):
+
+    def stop(self, disp=None):
         """ Stop profiling """
         sys.setprofile(None)
+        if disp is None:
+            disp = self.verbose != False
         self.to_df()
         if disp:
             self.disp()
         return
-    
+
     def __enter__(self):
         """ Start when entering with-as block; start profiling """
         self.start()
         return self
-    
+
     def __exit__(self, *args):
         """ Stop when leaving a with-as block; stop profiling """
         self.stop()
         return
 
+    def __len__(self):
+        return len(self.entries)
+
     def _call(self, frame, event, arg):
         """ Used internally to track calls """
+        self.n_calls += 1
+        e = self.entry # Shorten
         if event == 'call':
-            self.stack += 1
-            self.frame = frame
-            self.filename = frame.f_code.co_filename
-            self.co_name = frame.f_code.co_name
-            self.lineno = str(frame.f_lineno)
-            
+            e.stack += 1
+            e.frame = frame
+            e.filename = frame.f_code.co_filename
+            e.co_name = frame.f_code.co_name
+            e.lineno = str(frame.f_lineno)
+            e.name = self._get_name()
+            e.full_name = '_'.join([e.filename, e.name])
+            if self.verbose:
+                sc.printgreen(f'Processing call {self.n_calls}:')
+                sc.pp(dict(e))
+                print()
+
             # Check if it's already parsed
-            uid = self.filename + self.lineno
+            uid = e.filename + e.lineno
             if uid in self.parsed and not self.repeats:
                 return
 
@@ -964,34 +983,49 @@ class tracecalls(sc.prettyobj):
                 self.parsed.add(uid)
 
         elif event == 'return':
-            self.stack -= 1
-        
+            if self.verbose:
+                sc.printgreen(f'  (Returning call {self.n_calls}: {event})')
+            e.stack -= 1
+
+        elif self.verbose:
+            sc.printgreen(f'  (Skipping call {self.n_calls}: {event})')
+
         return
 
     def _check(self):
         """ Used internally to check calls """
-        if self.regex:
-            allow = any(bool(re.match(token, self.filename)) for token in self.trace)
-            exclude = any(bool(re.match(token, self.filename)) for token in self.exclude)
+        e = self.entry
+        if self.custom is not None:
+            return self.custom(e)
+        elif self.regex:
+            allow = any(bool(re.match(token, e.full_name)) for token in self.trace)
+            exclude = any(bool(re.match(token, e.full_name)) for token in self.exclude)
         else:
-            allow = any(token in self.filename for token in self.trace)
-            exclude = any(token in self.filename for token in self.exclude)
-        return allow and not exclude
-    
-    def _store_name(self):
-        """ Used internally to store the name """
-        f_locals = self.frame.f_locals
+            allow = any(token in e.full_name for token in self.trace)
+            exclude = any(token in e.full_name for token in self.exclude)
+        result = allow and not exclude
+        return result
+
+    def _get_name(self):
+        """ Get the name of the class, if available """
+        e = self.entry
+        f_locals = e.frame.f_locals
         class_name = ''
         if '__class__' in f_locals:
             class_name = f_locals['__class__'].__name__
         elif 'self' in f_locals:
             class_name = f_locals['self'].__class__.__name__
-            
-        name = class_name + '.' + self.co_name if class_name else self.co_name
-        entry = sc.dictobj(name=name, filename=self.filename, lineno=self.lineno, stack=self.stack)
+
+        name = class_name + '.' + e.co_name if class_name else e.co_name
+        return name
+
+    def _store_name(self):
+        """ Used internally to store the name """
+        e = self.entry
+        entry = sc.dictobj(name=e.name, filename=e.filename, lineno=e.lineno, stack=e.stack)
         self.entries.append(entry)
         return
-    
+
     def disp(self, maxlen=60):
         """ Display the results """
         ddf = self.df.copy()
@@ -1000,7 +1034,7 @@ class tracecalls(sc.prettyobj):
         maxlen = min(maxlen, max([len(label) for label in ddf.label.values]))
         out = ''
         for i,(label,file,line) in ddf.enumrows(['label', 'filename', 'lineno'], tuple):
-            out += f'{i} {label:{maxlen}s} # {file}:L{line}\n' 
+            out += f'{i} {label:{maxlen}s} # {file}:L{line}\n'
         print(out)
         return
 
