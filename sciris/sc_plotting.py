@@ -1588,6 +1588,7 @@ def separatelegend(ax=None, handles=None, labels=None, reverse=False, figsetting
     for h in handles:
         h2 = sc.cp(h)
         h2.axes = None
+        h2._parent_figure = None
         h2.figure = None
         handles2.append(h2)
 

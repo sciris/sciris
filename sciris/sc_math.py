@@ -205,7 +205,7 @@ def findnearest(series=None, value=None):
         sc.findnearest([0,2,4,6,8,10], [3, 4, 5]) # returns array([1, 2, 2])
     """
     series = sc.toarray(series)
-    if sc.isnumber(value):
+    if not sc.isiterable(value):
         output = np.argmin(abs(series-value))
     else:
         output = []
