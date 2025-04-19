@@ -1064,17 +1064,18 @@ class tracecalls(sc.prettyobj):
         Check function calls against a list of expected function calls.
 
         Args:
-            expected (set/list/any): if a set or list, check these matches; if an object, extract callable methods automatically
+            expected (set/list/any): if a list of set of strings, check those function names; if object(s) or classes are supplied, check each method
             die (bool): raise an exception if any expected function calls were not called
 
         **Example**::
 
-            # Check if every method of a class is called
+            # Check which methods of a class are called
             with sc.tracecalls() as tc:
                 my_obj = MyObj()
                 my_obj.run()
 
-            tc.check_expected(MyObj) # Equivalent to [f'MyObj.{f}' for f in dir(MyObj) if sc.isfunc(f)]
+            expected = tc.check_expected(MyObj) # Equivalent to tc.check_expected(my_obj)
+            print(expected)
         """
         # Handle input
         if not isinstance(expected, set):
