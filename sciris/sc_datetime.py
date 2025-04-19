@@ -763,7 +763,7 @@ def _convert_time_unit(unit, elapsed=None):
 
 
 def toc(start=None, label=None, baselabel=None, sigfigs=None, reset=False, unit='s',
-        output=False, doprint=None, elapsed=None):
+        output=False, verbose=None, elapsed=None, **kwargs):
     """
     With :func:`sc.tic() <tic>`, a little pair of functions to calculate a time difference. See
     also :class:`sc.timer() <timer>`.
@@ -787,8 +787,9 @@ def toc(start=None, label=None, baselabel=None, sigfigs=None, reset=False, unit=
         reset     (bool): reset the time; like calling :func:`sc.toctic() <toctic>` or :func:`sc.tic() <tic>` again
         unit (str/float): the unit of time to display; see options above
         output    (bool): whether to return the output (otherwise print); if output='message', then return the message string; if output='both', then return both
-        doprint   (bool): whether to print (true by default)
+        verbose   (bool): whether to print (true by default)
         elapsed  (float): use a pre-calculated elapsed time instead of recalculating (not recommneded)
+        kwargs    (dict): not used; only for handling deprecations
 
     **Examples**::
 
@@ -802,9 +803,19 @@ def toc(start=None, label=None, baselabel=None, sigfigs=None, reset=False, unit=
 
     | *New in version 1.3.0:* new arguments
     | *New in version 3.0.0:* "unit" argument
+    | *New in version 3.2.1:* renamed "doprint" to "verbose"
     """
     now = pytime.time() # Get the time as quickly as possible
     global _tictime  # The saved time is stored in this global
+
+    # Handle deprecation
+    if len(kwargs):
+        warnmsg = 'sc.toc() argument "doprint" is deprecated; use "verbose" instead'
+        warnings.warn(warnmsg, category=FutureWarning, stacklevel=2)
+        verbose = kwargs.pop('doprint', verbose)
+        if len(kwargs):
+            errormsg = f'Unrecognized sc.toc() arguments:\n{kwargs}'
+            raise TypeError(errormsg)
 
     # Set defaults
     if sigfigs is None: sigfigs = 3
@@ -838,7 +849,7 @@ def toc(start=None, label=None, baselabel=None, sigfigs=None, reset=False, unit=
     logmessage = f'{base}{sc.sigfig(elapsed/factor, sigfigs=sigfigs)} {unitlabel}'
 
     # Print if asked, or if no other output
-    if doprint or ((doprint is None) and (not output)):
+    if verbose or ((verbose is None) and (not output)):
         print(logmessage)
 
     # Optionally reset the counter
