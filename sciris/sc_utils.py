@@ -1983,7 +1983,7 @@ def importbyname(module=None, variable=None, path=None, namespace=None, lazy=Fal
     return libs
 
 
-def importbypath(path, name=None):
+def importbypath(path, name=None, overwrite=False):
     """
     Import a module by path.
 
@@ -1992,6 +1992,7 @@ def importbypath(path, name=None):
     Args:
         path (str/path): the path to load the module from (with or without __init__.py)
         name (str): the name of the loaded module (by default, the file or folder name from the path)
+        overwrite (bool): if True, load the module by the original name even if it exists (otherwise, generate a unique name, e.g. module1)
 
     **Examples**::
 
@@ -2007,6 +2008,7 @@ def importbypath(path, name=None):
 
     | *New in version 3.0.0.*
     | *New in version 3.2.0:* Allow importing two modules that have self imports (e.g. "import mylib" from within mylib)
+    | *New in version 3.2.1:* "overwrite" argument
     """
     # Sanitize the path and filename
     default_file='__init__.py'
@@ -2026,7 +2028,7 @@ def importbypath(path, name=None):
     orig_name = sanitizestr(basename, validvariable=True) # Ensure it's a valid name
     if name is None:
         name = orig_name
-        if name in sys.modules: # If a name isn't provided, ensure it doesn't conflict with an existing module name
+        if name in sys.modules and not overwrite: # If a name isn't provided, ensure it doesn't conflict with an existing module name
             name = uniquename(name, sys.modules.keys())
     renamed = name != orig_name # Flag to track if we've renamed the module
 
@@ -2050,7 +2052,7 @@ def importbypath(path, name=None):
     spec.loader.exec_module(module)
 
     # Finally, clean up the original module name
-    if restore:
+    if restore and not overwrite:
         sys.modules[orig_name] = orig_module
     elif renamed:
         del sys.modules[orig_name]
