@@ -21,7 +21,7 @@ jobs:
     steps:
       - name: Checkout sources
         uses: actions/checkout@v2
-      - uses: actions/setup-python@master
+      - uses: actions/setup-python@v5
         with:
           python-version: ${{ matrix.python-version }}
           architecture: x64
@@ -53,7 +53,7 @@ jobs:
           name: test_results
           path: covasim/tests/covasim-test-results.xml
 
-  test_covasim:
+  test_hpvsim:
     name: HPVsim tests
     timeout-minutes: 10
     strategy:
@@ -67,7 +67,7 @@ jobs:
     steps:
       - name: Checkout sources
         uses: actions/checkout@v2
-      - uses: actions/setup-python@master
+      - uses: actions/setup-python@v5
         with:
           python-version: ${{ matrix.python-version }}
           architecture: x64
@@ -87,7 +87,7 @@ jobs:
 
       - name: Install HPVsim tests
         working-directory: ./hpvsim/tests
-        run: pip install -r requirementst.txt
+        run: pip install -r requirements.txt
 
       - name: Run HPVsim tests
         working-directory: ./hpvsim/tests
@@ -113,7 +113,7 @@ jobs:
     steps:
       - name: Checkout sources
         uses: actions/checkout@v2
-      - uses: actions/setup-python@master
+      - uses: actions/setup-python@v5
         with:
           python-version: ${{ matrix.python-version }}
           architecture: x64
@@ -159,7 +159,7 @@ jobs:
     steps:
       - name: Checkout sources
         uses: actions/checkout@v2
-      - uses: actions/setup-python@master
+      - uses: actions/setup-python@v5
         with:
           python-version: ${{ matrix.python-version }}
           architecture: x64
@@ -182,10 +182,10 @@ jobs:
 
       - name: Run Atomica tox tests
         working-directory: ./atomica/tests
-        run: pytest test_tox_*.py --durations=0 --junitxml=starsim-test-results.xml # Run actual tests
+        run: pytest test_tox_*.py --durations=0 --junitxml=atomica-test-results.xml # Run actual tests
       - name: Upload test results
         uses: actions/upload-artifact@v4
         if: failure()
         with:
           name: test_results
-          path: starsim/tests/starsim-test-results.xml
+          path: atomica/tests/atomica-test-results.xml
