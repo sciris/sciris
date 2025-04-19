@@ -18,6 +18,7 @@ import sciris as sc
 
 # Define objects for which it doesn't make sense to descend further -- used here and sc.equal()
 atomic_classes = [np.ndarray, pd.Series, pd.DataFrame, pd.core.indexes.base.Index]
+atomic_with_tuple = atomic_classes + [tuple]
 
 # Define a custom "None" value to allow searching for actual None values
 _None = '<sc_nested_custom_None>' # This should not be equal to any other value the user could supply
@@ -139,6 +140,8 @@ def check_iter_type(obj, check_array=False, known=None, known_to_none=True, cust
             out = 'dict'
         elif isinstance(obj, list):
             out = 'list'
+        elif isinstance(obj, tuple):
+            out = 'tuple'
         elif hasattr(obj, '__dict__'):
             out = 'object'
         elif check_array and isinstance(obj, np.ndarray):
@@ -155,7 +158,7 @@ def check_in_obj(parent, key):
     itertype = check_iter_type(parent)
     if itertype == 'dict':
         out = key in parent.keys()
-    elif itertype == 'list':
+    elif itertype in ['list', 'tuple']:
         out = isinstance(key, int) and 0 <= key < len(parent)
     elif itertype == 'object':
         out = key in parent.__dict__.keys()
@@ -181,7 +184,7 @@ def get_from_obj(ndict, key, safe=False, **kwargs):
             out = ndict.get(key)
         else:
             out = ndict[key]
-    elif itertype == 'list':
+    elif itertype in ['list', 'tuple']:
         out = ndict[key]
     elif itertype == 'object':
         out = getattr(ndict, key)
@@ -343,19 +346,19 @@ class IterObj:
                  custom_type=None, custom_iter=None, custom_get=None, custom_set=None, *args, **kwargs):
 
         # Default arguments
-        self.obj        = obj
-        self.func       = func
-        self.inplace    = inplace
-        self.copy       = copy
-        self.leaf       = leaf
-        self.recursion  = recursion
-        self.depthfirst = depthfirst
-        self.atomic     = atomic
-        self.skip       = skip
-        self.rootkey    = rootkey
-        self.verbose    = verbose
-        self.func_args  = args
-        self.func_kw    = kwargs
+        self.obj          = obj
+        self.func         = func
+        self.inplace      = inplace
+        self.copy         = copy
+        self.leaf         = leaf
+        self.recursion    = recursion
+        self.depthfirst   = depthfirst
+        self.atomic       = atomic
+        self.skip         = skip
+        self.rootkey      = rootkey
+        self.verbose      = verbose
+        self.func_args    = args
+        self.func_kw      = kwargs
 
         # Custom arguments
         self.custom_type = custom_type
@@ -371,11 +374,15 @@ class IterObj:
             self.func = lambda obj: obj
 
         # Handle atomic classes
-        atomiclist = sc.tolist(self.atomic)
-        if 'default' in atomiclist: # Handle objects to not descend into
-            atomiclist.remove('default')
-            atomiclist = atomic_classes + atomiclist
-        self.atomic = tuple(atomiclist)
+        base_atomic = []
+        atomic_list = sc.tolist(self.atomic)
+        if 'default' in atomic_list: # Handle objects to not descend into
+            atomic_list.remove('default')
+            base_atomic = atomic_with_tuple
+        if 'default-tuple' in atomic_list:
+            atomic_list.remove('default-tuple')
+            base_atomic = atomic_classes
+        self.atomic = tuple(base_atomic + atomic_list)
 
         # Handle objects to skip
         if isinstance(skip, dict):
@@ -447,7 +454,7 @@ class IterObj:
         if out is None:
             if itertype == 'dict':
                 out = parent.items()
-            elif itertype == 'list':
+            elif itertype in ['list', 'tuple']:
                 out = enumerate(parent)
             elif itertype == 'object':
                 out = parent.__dict__.items()
@@ -463,7 +470,7 @@ class IterObj:
         """ Get the value for the item """
         self.indent(f'Getting key "{key}"')
         itertype = self.check_iter_type(parent)
-        if itertype in ['dict', 'list']:
+        if itertype in ['dict', 'list', 'tuple']:
             return parent[key]
         elif itertype == 'object':
             return parent.__dict__[key]
@@ -482,6 +489,9 @@ class IterObj:
             parent.__dict__[key] = value
         elif self.custom_set:
             self.custom_set(parent, key, value)
+        elif itertype == 'tuple':
+            errormsg = f'Trying to set key={key} to {value} in a tuple; not possible since tuples are immutable'
+            raise TypeError(errormsg)
         return
 
     def check_iter_type(self, obj):
@@ -595,7 +605,7 @@ def iterobj(obj, func=None, inplace=False, copy=False, leaf=False, recursion=0, 
         leaf (bool): whether to apply the function only to leaf nodes of the object
         recursion (int): number of recursive steps to allow, i.e. parsing the same objects multiple times (default 0)
         depthfirst (bool): whether to parse the object depth-first (default) or breadth-first
-        atomic (list): a list of known classes to treat as atomic (do not descend into); if 'default', use defaults (e.g. ``np.array``, ``pd.DataFrame``)
+        atomic (list): a list of known classes to treat as atomic (do not descend into); if 'default', use defaults (e.g. tuple, ``np.array``, ``pd.DataFrame``); if 'default-tuple', use defaults except for tuples
         skip (list/dict): a list of objects to skip over entirely; can also be a dict with "keys", "ids", "subclasses", and/or "instances", which skip each of those
         rootkey (str): the key to list as the root of the object (default ``'root'``)
         verbose (bool): whether to print progress
