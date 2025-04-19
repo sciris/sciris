@@ -22,6 +22,7 @@ def test_nested():
     sc.makenested(foo, ['bar','cat'])
     sc.setnested(foo, ['bar','cat'], 'in the hat')
     print(foo['bar'])  # {'cat': 'in the hat'}
+    sc.setnested(foo, 'soliton', 999) # Works with a single key
     o.foo1 = foo
 
     foo = {}
@@ -67,14 +68,14 @@ def test_dicts():
     print(f'Dict3: {dict3}')
     assert dict3 == {'key1': {'a': 'A*'}, 'key2': {'b': 'B', 'b+': 'B+'}, 'key3': {'c': 'C'}}
     o.dict3 = dict3
-    
+
     return o
 
 
 def test_search():
     sc.heading('Testing search')
     o = sc.objdict()
-    
+
     print('Docstring tests')
     # Create a nested dictionary
     nested = {'a':{'foo':1, 'bar':['moat', 'goat']}, 'b':{'car':'far', 'cat':[1,2,4,8]}}
@@ -91,7 +92,7 @@ def test_search():
     # Find values with a function
     def find(v):
         return True if isinstance(v, int) and v >= 3 else False
-        
+
     func_found = sc.search(nested, value=find).keys()
     assert ('b', 'cat', 3) in func_found
 
@@ -103,8 +104,8 @@ def test_search():
     assert ('a', 'bar', 1) in partial
     assert ('a', 'bar') in keys
     assert 'far' in vals
-    
-    
+
+
     # Define the nested object
     nested = {
         'a': {
@@ -116,7 +117,7 @@ def test_search():
             'cat':sc.prettyobj(hat=[1,2,4,8]),
         }
     }
-    
+
     print('\nTesting search by key')
     key = 'bar'
     keymatches = sc.search(nested, key, flatten=True).keys() # Returns ['a_bar', 'b_bar']
@@ -125,7 +126,7 @@ def test_search():
     assert len(keymatches) == 2
     for keymatch in keymatches:
         assert key in keymatch
-        
+
     print('\nTesting search by value')
     val = 8
     valmatches = sc.search(nested, value=val, flatten=False).keys() # Returns [('b', 'cat', 'hat', 3)]
@@ -133,13 +134,13 @@ def test_search():
     print(valmatches)
     assert len(valmatches) == 1
     assert sc.getnested(nested, valmatches[0]) == val # Get from the original nested object
-    
+
     return o
 
 
 def test_iterobj():
     sc.heading('Testing iterobj')
-    
+
     o = sc.prettyobj()
     o.a = sc.prettyobj()
     o.b = sc.prettyobj()
@@ -147,14 +148,14 @@ def test_iterobj():
     o.b.i2 = dict(cat=[4,5,6])
     data = dict(
         a = dict(
-            x = [1,2,3], 
-            y = [4,5,6]), 
+            x = [1,2,3],
+            y = [4,5,6]),
         b = dict(
-            foo = 'string', 
+            foo = 'string',
             bar = 'other_string'),
         c = o,
     )
-    
+
     # Search through an object
     def check_type(obj, which):
         return isinstance(obj, which)
@@ -167,7 +168,7 @@ def test_iterobj():
     print(out1)
     print('Breadth first:')
     print(out2)
-    
+
     # Modify in place -- collapse mutliple short lines into one
     def collapse(obj, maxlen):
         string = str(obj)
@@ -175,7 +176,7 @@ def test_iterobj():
             return string
         else:
             return obj
-    
+
     print('Before collapse:')
     sc.printjson(data)
     sc.iterobj(data, collapse, inplace=True, maxlen=10) # Note passing of keyword argument to function
@@ -183,7 +184,7 @@ def test_iterobj():
     print('After collapse:')
     sc.printjson(data)
     assert data['a']['x'] == '[1, 2, 3]'
-    
+
     return out1
 
 
@@ -220,23 +221,23 @@ def test_iterobj_class():
     def gather_data(obj, all_data=all_data):
         if isinstance(obj, list):
             all_data += obj
-            
+
     # Run the iteration
     io = sc.IterObj(obj, func=gather_data, custom_type=(tuple, DataObj), custom_iter=custom_iter, custom_get=custom_get)
     print(all_data)
     assert all_data == list(range(10))
-    
+
     return io
-    
+
 
 def test_equal():
     sc.heading('Testing equal')
     out = sc.objdict()
-    
+
     print('Validating signatures')
     ut.check_signatures(sc.equal, sc.Equal.__init__, extras=['self', 'compare'], die=True)
-    
-    
+
+
     print('Testing docstring examples')
     o1 = dict(
         a = [1,2,3],
@@ -246,50 +247,50 @@ def test_equal():
         ),
         d = pd.Series([1,2,np.nan]),
     )
-    
+
     # Identical object
     o2 = sc.dcp(o1)
-    
+
     # Non-identical object
     o3 = sc.dcp(o1)
     o3['b'][2] = 8
-    
+
     # Different subtype
     o4 = sc.dcp(o1)
     o4['a'] = dict(a=3, b=5)
-    
+
     # Extra and missing keys
     o5 =  dict(
         b = np.array([4,5,6]),
         d = pd.Series([1,2,np.nan]),
         e = dict(this='is', a='test')
     )
-    
+
     out.e1 = sc.equal(o1, o2) # Returns True
     out.e2 = sc.equal(o1, o3) # Returns False
     out.e3 = sc.Equal(o1, o2, o3, detailed=True, equal_nan=True) # Create an object
     out.e4 = sc.Equal(o1, o4, verbose=True)
     out.e5 = sc.Equal(o1, o5, detailed=2)
-    
+
     # Do tests
     assert out.e1
     assert not out.e2
     assert not out.e3.eq
     assert not out.e4.eq
-    
+
     print('Testing other features')
     for method in ['pickle', 'eq', 'json', 'str']:
         assert sc.equal(o1, o2, method=method, equal_nan=True) or method == 'json' # Known failure for JSON
         assert not sc.equal(o1, o2, method=method, equal_nan=False) or method in ['pickle', 'str'] # Known failure for pickle and string
         assert not sc.equal(o1, o3, method=method)
-        
+
     out.e6 = sc.Equal(o1, o3, detailed=True, verbose=True)
     print('↑↑↑ Should print some handled exceptions')
-    
+
     # Test totally different objects
     assert not sc.equal(1, 'a')
     assert not sc.equal(dict(a=dict(x=1,y=2), b=3), dict(a=dict(x=1,y=2)), detailed=True).all(axis=None) # Returns a dataframe
-    
+
     return out
 
 

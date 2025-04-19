@@ -252,8 +252,9 @@ def setnested(nested, keylist, value, force=True):
 
     See :func:`sc.makenested() <makenested>` for full documentation.
     """
+    keylist = sc.tolist(keylist)
     parentkeys = keylist[:-1]
-    if force:
+    if force and parentkeys:
         makenested(nested, parentkeys, overwrite=False)
     currentlevel = getnested(nested, parentkeys)
     set_in_obj(currentlevel, keylist[-1], value)
