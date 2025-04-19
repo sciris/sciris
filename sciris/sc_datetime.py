@@ -287,17 +287,40 @@ def date(obj=None, *args, start_date=None, readformat=None, to='date', as_date=N
     | *New in version 3.1.0:* allow "datetime" output
     """
 
-    # Handle deprecation
-    start_date = kwargs.pop('startdate', start_date) # Handle with or without underscore
-    as_date    = kwargs.pop('asdate', as_date) # Handle with or without underscore
-    readformat = kwargs.pop('format', readformat) # Handle either name
-    dateformat = kwargs.pop('dateformat', None)
-    if dateformat is not None: # pragma: no cover
-        outformat = dateformat
-        warnmsg = 'sc.date() argument "dateformat" has been deprecated as of v1.2.2; use "outformat" instead'
-        warnings.warn(warnmsg, category=FutureWarning, stacklevel=2)
+    # Handle deprecation and nonstandard usage
+    if len(kwargs):
+        start_date = kwargs.pop('startdate', start_date) # Handle with or without underscore
+        as_date    = kwargs.pop('asdate', as_date) # Handle with or without underscore
+        readformat = kwargs.pop('format', readformat) # Handle either name
+        dateformat = kwargs.pop('dateformat', None)
+        if dateformat is not None: # pragma: no cover
+            outformat = dateformat
+            warnmsg = 'sc.date() argument "dateformat" has been deprecated as of v1.2.2; use "outformat" instead'
+            warnings.warn(warnmsg, category=FutureWarning, stacklevel=2)
+
+        # Handle dt.date()-like behavior with keywords
+        year  = kwargs.pop('year', None)
+        month = kwargs.pop('month', None)
+        day   = kwargs.pop('day', None)
+        ymd = [year, month, day]
+        valid = sum([v is not None for v in ymd])
+        if valid == 3:
+            obj = dt.date(year, month, day)
+        elif valid > 0:
+            errormsg = f'Cannot construct a date with year={year}, month={month}, day={day}; please ensure all arguments are supplied'
+            raise ValueError(errormsg)
+        if len(kwargs):
+            errormsg = f'Unrecognized arguments to sc.date():\n{kwargs}'
+            raise TypeError(errormsg)
+
+    # More initialization
     if as_date is not None: # pragma: no cover
         to = 'date' if as_date else 'str' # Legacy support for as_date boolean
+
+    # Handle e.g. sc.date(1986, 4, 4)
+    if len(args) == 2 and isinstance(obj, int):
+        obj = dt.date(obj, args[0], args[1])
+        args = []
 
     def dateify(obj):
         """ Handle dates vs datetimes """
