@@ -587,7 +587,6 @@ def profile(run, follow=None, private='__init__', include=None, exclude=None,
     def get_attrs(parent):
         """ Safely get the attributes of a module/class """
         attrs = sc.objatt(parent, private=private, return_keys=True)
-        # import traceback; traceback.print_exc(); import pdb; pdb.set_trace()
         objs = []
         for attr in attrs:
             try:
