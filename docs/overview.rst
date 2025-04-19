@@ -12,8 +12,8 @@ Overview
 .. image:: https://img.shields.io/pypi/l/sciris.svg
  :target: https://github.com/sciris/sciris/blob/main/LICENSE
 
-.. image:: https://github.com/sciris/sciris/actions/workflows/tests.yaml/badge.svg
- :target: https://github.com/sciris/sciris/actions/workflows/tests.yaml?query=workflow
+.. image:: https://github.com/sciris/sciris/actions/workflows/test_sciris.yaml/badge.svg
+ :target: https://github.com/sciris/sciris/actions/workflows/test_sciris.yaml?query=workflow
 
 
 What is Sciris?
