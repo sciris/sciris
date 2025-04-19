@@ -75,7 +75,7 @@ https://stackoverflow.com/questions/41554738/how-to-load-an-old-pickle-file
 
 def _load_filestr(filename, folder=None, verbose=False):
     """ Try different options for loading a file on disk into a string -- not for external use """
-    
+
     # Handle loading of either filename or file object
     if isinstance(filename, Path):
         filename = str(filename)
@@ -88,13 +88,13 @@ def _load_filestr(filename, folder=None, verbose=False):
         errormsg = f'First argument to sc.load() must be a string or file object, not {type(filename)}; see also sc.loadstr()'
         raise TypeError(errormsg)
     fileargs = {'mode': 'rb', argtype: filename}
-    
+
     if verbose:
         if argtype == 'filename':
             print(f'Opening {filename} for reading...')
         else: # pragma: no cover
             print('Opening bytes for reading...')
-    
+
     try:
         if verbose: print('  Reading as gzip file...')
         with gz.GzipFile(**fileargs) as fileobj:
@@ -130,7 +130,7 @@ def _load_filestr(filename, folder=None, verbose=False):
     return filestr
 
 
-def load(filename=None, folder=None, verbose=None, die=False, remapping=None, 
+def load(filename=None, folder=None, verbose=None, die=False, remapping=None,
          method=None, auto_remap=True, **kwargs):
     """
     Load a file that has been saved as a gzipped pickle file, e.g. by :func:`sc.save() <save>`.
@@ -173,7 +173,7 @@ def load(filename=None, folder=None, verbose=None, die=False, remapping=None,
     | *New in version 3.1.1:* allow remapping to ``None``
     """
     if verbose: T = sc.timer() # Start timing
-        
+
     # Load the file
     filestr = _load_filestr(filename, folder, verbose=verbose)
 
@@ -188,38 +188,38 @@ def load(filename=None, folder=None, verbose=None, die=False, remapping=None,
     # If it loaded but with errors, print them here
     if isinstance(obj, Failed):
         print(_unpicklingerror(filename))
-    
+
     if verbose: T.toc(f'Object loaded from "{filename}"')
 
     return obj
 
 
-def save(filename='default.obj', obj=None, folder=None, method='pickle', compression='gzip', 
+def save(filename='default.obj', obj=None, folder=None, method='pickle', compression='gzip',
          compresslevel=5, verbose=0, sanitizepath=True, die=False, allow_empty=False, **kwargs):
     """
     Save any object to disk
-    
+
     This function is similar to :func:`pickle.dump()` in that it serializes the object
     to a file. Key differences include:
-        
+
         - It takes care of opening/closing the file for writing
         - It compresses the data by default
         - It supports different serialization methods (e.g. pickle or dill)
-    
-    Once an object is saved, it can be loaded with :func:`sc.load() <load>`. Note that 
+
+    Once an object is saved, it can be loaded with :func:`sc.load() <load>`. Note that
     :func:`sc.save() <save>`/:func:`sc.saveobj() <saveobj>` are identical.
-    
-    
+
+
     **Note 1**: Since this function relies on pickle, it can potentially execute arbitrary
     code, so you should only use it with sources you trust. For more information, see:
     https://docs.python.org/3/library/pickle.html
-        
+
     **Note 2**: When a pickle file is loaded, Python imports any modules that are referenced
     in it. This is a problem if module has been renamed (in which case the pickle
-    usually can't be opened). For more robustness (e.g. to pickle custom classes), use 
+    usually can't be opened). For more robustness (e.g. to pickle custom classes), use
     ``method='dill'`` and/or the :func:`sc.savearchive() <sciris.sc_versioning.savearchive>`/:func:`sc.loadarchive() <sc_versioning.loadarchive>`
     functions.
-    
+
     If you do not need to save arbitrary Python and just need to save data, consider
     saving the data in a standard format, e.g. JSON (:func:`sc.savejson() <savejson>`). For large
     amounts of tabular data, also consider formats like HDF5 or PyArrow.
@@ -244,7 +244,7 @@ def save(filename='default.obj', obj=None, folder=None, method='pickle', compres
         sc.save('myfile.obj', my_obj)
         loaded = sc.load('myfile.obj')
         assert loaded == my_obj
-        
+
         # Use dill instead, to save custom classes as well
         class MyClass:
             def __init__(self, x):
@@ -252,11 +252,11 @@ def save(filename='default.obj', obj=None, folder=None, method='pickle', compres
             def sum(self):
                 return self.data.sum()
         my_class = MyClass(10)
-        
+
         sc.save('my_class.obj', my_class, method='dill', compression='zstd')
         loaded = sc.load('my_class.obj') # With dill, can be loaded anywhere, not just in the same script
         assert loaded.sum() == my_class.sum()
-    
+
     See also :func:`sc.zsave() <zsave>` (identical except defaults to zstandard compression).
 
     | *New in version 1.1.1:* removed Python 2 support.
@@ -284,9 +284,9 @@ def save(filename='default.obj', obj=None, folder=None, method='pickle', compres
         if not success: # pragma: no cover
             if verbose>=2: print('Saving as dill...')
             _savedill(fileobj, obj, **kwargs)
-        
+
         return
-    
+
     # Handle path
     if filename is None: # If the user explicitly specifies None as the file, create a byte stream instead
         tobytes = True
@@ -321,18 +321,18 @@ def save(filename='default.obj', obj=None, folder=None, method='pickle', compres
 
     # Compress and actually save
     success = False
-    
+
     if compression in ['gz', 'gzip']:  # Main use case
         # File extension is .gz
         with gz.GzipFile(filename=filename, fileobj=bytestream, mode='wb', compresslevel=compresslevel) as fileobj:
             serialize(fileobj, obj, success, **kwargs) # Actually write the file to disk as gzip (99% of use cases)
-    
+
     else:
         if tobytes: # pragma: no cover
             filecontext = closing(bytestream)
         else:
             filecontext = open(filename, 'wb')
-        
+
         if compression in ['zst', 'zstd', 'zstandard']:
             # File extension is .zst
             with filecontext as fh:
@@ -366,10 +366,10 @@ def zsave(*args, compression='zstd', **kwargs):
     """
     Save a file using zstandard (instead of gzip) compression. This is an alias
     for ``sc.save(..., compression='zstd')``; see :func:`sc.save() <save>` for details.
-    
+
     Note: there is no matching function "``zload()``" since :func:`sc.load() <load>` will
     automatically try loading zstandard.
-    
+
     *New in version 2.1.0.*
     """
     return save(*args, compression=compression, **kwargs)
@@ -378,7 +378,7 @@ def zsave(*args, compression='zstd', **kwargs):
 def loadstr(string, **kwargs):
     """
     Like :func:`sc.load() <load>`, but for a bytes-like string (rarely used).
-    
+
     Args:
         string (str): the bytes-like string to load
         kwargs (dict): passed to :func:`sc.load() <load>`
@@ -389,7 +389,7 @@ def loadstr(string, **kwargs):
         bytestring = sc.dumpstr(obj)
         obj2 = sc.loadstr(bytestring)
         assert obj == obj2
-    
+
     | *New in version 3.0.0:* uses :func:`sc.load() <load>` for more robustness
     """
     with closing(io.BytesIO(string)) as bytestream: # Open a "fake file" with the Gzip string pickle in it
@@ -401,11 +401,11 @@ def dumpstr(obj=None, **kwargs):
     """
     Dump an object to a bytes-like string (rarely used by the user); see :func:`sc.save() <save>`
     instead.
-    
+
     Args:
         obj (any): the object to convert
         kwargs (dict): passed to :func:`sc.save() <save>`
-    
+
     *New in version 3.0.0:* uses :func:`sc.save() <save>` for more robustness
     """
     bytesobj = save(filename=None, obj=obj, **kwargs)
@@ -417,8 +417,8 @@ def dumpstr(obj=None, **kwargs):
 #%% Other file functions
 ##############################################################################
 
-__all__ += ['loadtext', 'savetext', 'loadzip', 'unzip', 'savezip', 'path', 'ispath', 
-            'thisfile', 'thisdir', 'thispath', 'getfilelist', 'glob', 'getfilepaths', 
+__all__ += ['loadtext', 'savetext', 'loadzip', 'unzip', 'savezip', 'path', 'ispath',
+            'thisfile', 'thisdir', 'thispath', 'getfilelist', 'glob', 'getfilepaths',
             'sanitizefilename', 'sanitizepath', 'makefilepath', 'makepath', 'rmpath',
             'loadany']
 
@@ -443,7 +443,7 @@ def savetext(filename=None, string=None, **kwargs):
     """
     Convenience function for saving a text file -- accepts a string or list of strings;
     can also save an arbitrary object, in which case it will first convert to a string.
-    
+
     Args:
         filename (str): the filename to save to
         string (str): the string (or object) to save
@@ -453,7 +453,7 @@ def savetext(filename=None, string=None, **kwargs):
 
         text = ['Here', 'is', 'a', 'poem']
         sc.savetext('my-poem.txt', text)
-    
+
     *New in version 3.1.0:* fixed bug with saving a list of strings
     """
     is_array = sc.isarray(string)
@@ -481,7 +481,7 @@ def loadzip(filename=None, folder=None, load=True, convert=True, **kwargs):
         load (bool): whether to load the contents of the zip file; else just return the ZipFile itself
         convert (bool): whether to convert bytes objects to strings
         kwargs (dict): passed to :func:`sc.load() <load>`
-    
+
     Returns:
         dict with each file loaded as a key
 
@@ -522,13 +522,13 @@ def unzip(filename=None, outfolder='.', folder=None, members=None):
         outfolder (str/path): the path location to extract the files to (default: current folder)
         folder (str): optional additional folder for the filename
         members (list): optional list of members
-    
+
     Returns:
         list of the names of the unzipped files
 
     **Example**::
 
-        sc.unzip('my-files.zip', outfolder='my_data') # extracts all files 
+        sc.unzip('my-files.zip', outfolder='my_data') # extracts all files
 
     | *New in version 3.0.0* (equivalent to sc.loadzip(..., extract=True) previously)
     """
@@ -536,12 +536,12 @@ def unzip(filename=None, outfolder='.', folder=None, members=None):
     with ZipFile(filename, 'r') as zf: # Load the zip file
         names = zf.namelist()
         zf.extractall(outfolder, members=members)
-    
+
     output = [makefilepath(filename=name, folder=outfolder, makedirs=True) for name in names]
     return output
 
 
-def savezip(filename=None, files=None, data=None, folder=None, sanitizepath=True, 
+def savezip(filename=None, files=None, data=None, folder=None, sanitizepath=True,
             basename=False, tobytes=True, verbose=True, **kwargs):
     """
     Create a zip file from the supplied list of files (or less commonly, supplied data)
@@ -570,8 +570,8 @@ def savezip(filename=None, files=None, data=None, folder=None, sanitizepath=True
 
     # Handle inputs
     fullpath = makefilepath(filename=filename, folder=folder, sanitize=sanitizepath, makedirs=True)
-    
-    
+
+
     # If data is provided, do simple validation
     if data is not None:
         if not isinstance(data, dict): # pragma: no cover
@@ -579,24 +579,24 @@ def savezip(filename=None, files=None, data=None, folder=None, sanitizepath=True
             raise ValueError(errormsg)
     else:
         data = {}
-    
+
     # Typical use case: data is not provided, handle files
     if files:
         origfilelist = [path(file) for file in sc.tolist(files)]
-        
+
         # Handle subfolders
         extfilelist = sc.dcp(origfilelist) # An extended file list, including recursion into subfolders
         for orig in origfilelist:
             if orig.is_dir(): # pragma: no cover
                 contents = getfilelist(orig, abspath=False, recursive=True, aspath=True)
                 extfilelist.extend(contents[1:]) # Skip the first entry since it's the folder that's already in the list
-        
+
         # Remove duplicates to create the final file list
         filelist = []
         for efile in extfilelist:
             if efile not in filelist:
                 filelist.append(efile)
-            
+
     # Write zip file
     with ZipFile(fullpath, 'w') as zf: # Create the zip file
         if data: # Optionally also save data
@@ -613,7 +613,7 @@ def savezip(filename=None, files=None, data=None, folder=None, sanitizepath=True
         if not data and not files: # pragma: no cover
             errormsg = 'No data and no files provided: nothing to save!'
             raise FileNotFoundError(errormsg)
-        
+
     if verbose: print(f'Zip file saved to "{fullpath}"')
     return fullpath
 
@@ -624,11 +624,11 @@ def path(*args, **kwargs):
 
         - ``None`` entries are removed
         - a list of arguments is converted to separate arguments
-        
+
     **Examples**::
-        
+
         sc.path('thisfile.py') # Returns PosixPath('thisfile.py')
-        
+
         sc.path('/a/folder', None, 'a_file.txt') # Returns PosixPath('/a/folder/a_file.txt')
 
     | *New in version 1.2.2.*
@@ -664,13 +664,13 @@ def ispath(obj):
 def thisfile(frame=1, aspath=None):
     """
     Return the full path of the current file.
-    
+
     Args:
         frame (int): which frame to pull the filename from (default 1, the file that calls this function)
         aspath (bool): whether to return a Path object
-    
+
     **Examples**::
-        
+
         my_script_name = sc.thisfile() # Get the name of the current file
         calling_script = sc.thisfile(frame=2) # Get the name of the script that called this script
 
@@ -732,7 +732,7 @@ def thisdir(file=None, path=None, *args, frame=1, aspath=None, **kwargs):
 def thispath(*args, frame=1, aspath=True, **kwargs):
     """
     Alias for :func:`sc.thisdir() <thisdir>` that returns a path by default instead of a string.
-    
+
     *New in version 2.1.0.*
     """
     return thisdir(*args, frame=frame+1, aspath=aspath, **kwargs)
@@ -740,12 +740,12 @@ def thispath(*args, frame=1, aspath=True, **kwargs):
 thispath.__doc__ += '\n\n' + thisdir.__doc__
 
 
-def getfilelist(folder=None, pattern=None, fnmatch=None, abspath=False, nopath=False, 
+def getfilelist(folder=None, pattern=None, fnmatch=None, abspath=False, nopath=False,
                 filesonly=False, foldersonly=False, recursive=True, aspath=None):
     """
     A shortcut for using :func:`glob.glob()`.
-    
-    Note that :func:`sc.getfilelist() <getfilelist>` and :func:`sc.glob() <glob>` 
+
+    Note that :func:`sc.getfilelist() <getfilelist>` and :func:`sc.glob() <glob>`
     are aliases of each other.
 
     Args:
@@ -758,7 +758,7 @@ def getfilelist(folder=None, pattern=None, fnmatch=None, abspath=False, nopath=F
         foldersonly (bool): whether to only return folders (not files)
         recursive   (bool): passed to :func:`glob.glob()` (note: ** is required as the pattern to match all subfolders)
         aspath      (bool): whether to return Path objects
-        
+
     Returns:
         List of files/folders
 
@@ -771,6 +771,7 @@ def getfilelist(folder=None, pattern=None, fnmatch=None, abspath=False, nopath=F
 
     | *New in version 1.1.0:* "aspath" argument
     | *New in version 2.1.0:* default pattern of "**"; "fnmatch" argument; default recursive=True
+    | *New in version 3.2.1:* avoid blank entries
     """
     if folder is None:
         folder = '.'
@@ -779,7 +780,7 @@ def getfilelist(folder=None, pattern=None, fnmatch=None, abspath=False, nopath=F
         folder = os.path.abspath(folder)
     if os.path.isdir(folder) and pattern is None:
         pattern = '**'
-    if aspath is None: 
+    if aspath is None:
         aspath = sc.options.aspath
     globstr = os.path.join(folder, pattern) if pattern else folder
     filelist = sorted(pyglob(globstr, recursive=recursive))
@@ -791,6 +792,7 @@ def getfilelist(folder=None, pattern=None, fnmatch=None, abspath=False, nopath=F
         filelist = [os.path.basename(f) for f in filelist]
     if fnmatch:
         filelist = [f for f in filelist if fnm.fnmatch(f, fnmatch)]
+    filelist = [f for f in filelist if f] # Removes '', i.e. current folder if nopath=True
     if aspath:
         filelist = [Path(f) for f in filelist]
     return filelist
@@ -803,7 +805,7 @@ glob = getfilelist
 def getfilepaths(*args, aspath=True, **kwargs):
     """
     Alias for :func:`sc.getfilelist() <getfilelist>` that returns paths by default instead of strings.
-    
+
     *New version 2.1.0.*
     """
     return getfilelist(*args, aspath=True, **kwargs)
@@ -815,7 +817,7 @@ def sanitizefilename(filename, sub='_', allowspaces=False, asciify=True, strict=
     """
     Takes a potentially Linux- and Windows-unfriendly candidate file name, and
     returns a "sanitized" version that is more usable.
-    
+
     Args:
         filename (str): the filename to sanitize
         sub (str): the character to substitute unsafe input characters with
@@ -829,11 +831,11 @@ def sanitizefilename(filename, sub='_', allowspaces=False, asciify=True, strict=
 
         bad = 'Nöt*a   file&name?!.doc'
         good = sc.sanitizefilename(bad)
-        
+
     | *New version 2.0.1:* arguments "sub", "allowspaces", "asciify", "strict", and "disallowed"
     | *New version 3.1.1:* disallow tabs and newlines even when ``strict=False``
     """
-    
+
     # Handle options
     if asciify:
         filename = sc.asciify(filename) # Ensure it's ASCII compatible
@@ -844,7 +846,7 @@ def sanitizefilename(filename, sub='_', allowspaces=False, asciify=True, strict=
             disallowed = '''\\/:*?!"'<>|\t\n'''
     if not allowspaces:
         disallowed += ' '
-    
+
     # Create the filename
     sanitized = ''
     for letter in filename:
@@ -853,8 +855,8 @@ def sanitizefilename(filename, sub='_', allowspaces=False, asciify=True, strict=
                 sanitized += sub
             else:
                 sanitized += letter
-    
-    if aspath is None: 
+
+    if aspath is None:
         aspath = sc.options.aspath
     if aspath:
         sanitized = Path(sanitized)
@@ -865,7 +867,7 @@ def sanitizefilename(filename, sub='_', allowspaces=False, asciify=True, strict=
 def sanitizepath(*args, aspath=True, **kwargs):
     """
     Alias for :func:`sc.sanitizefilename() <sanitizefilename>` that returns a path by default instead of a string.
-    
+
     *New version 2.1.0.*
     """
     return sanitizefilename(*args, aspath=True, **kwargs)
@@ -880,7 +882,7 @@ def makefilepath(filename=None, folder=None, ext=None, default=None, split=False
     valid path from them. By default, this function will combine a filename and
     folder using os.path.join, create the folder(s) if needed with os.makedirs,
     and return the absolute path.
-    
+
     Note: in most cases :func:`sc.makepath() <sanitizepath>` should be used instead.
 
     Args:
@@ -997,7 +999,7 @@ def makepath(*args, aspath=True, **kwargs):
     """
     Alias for :func:`sc.makefilepath() <makefilepath>` that returns a path by default instead of a string
     (with apologies for the confusing terminology, kept for backwards compatibility).
-    
+
     *New version 2.1.0.*
     """
     return makefilepath(*args, **kwargs, aspath=True)
@@ -1081,44 +1083,44 @@ def loadany(filename, folder=None, verbose=False, **kwargs):
     Load data from a file using all known load functions until one works.
 
     Known formats are: pickle, JSON, YAML, Excel, CSV, zip, or plain text.
-    
+
     Args:
         filename (str/path): the name of the file to load
         folder (str): optional additional folder for the filename
         verbose (bool): print out the details of the process (verbose=2 to show errors)
         kwargs (dict): passed to the load function
-        
+
     **Example**::
-        
+
         data = sc.odict()
         datafiles = ['headers.json', 'some-data.csv', 'more-data.xlsx', 'final-data.obj']
         for datafile in datafiles:
             data[datafile] = sc.loadany(datafile)
-    
+
     | *New in version 3.2.0.*
     """
-    
+
     # Define known functions and extentions
     known_funcs = dict(
         obj = load,
         json = loadjson,
-        yaml = loadyaml, 
+        yaml = loadyaml,
         xlsx = sc.dataframe.read_excel,
         csv = sc.dataframe.read_csv,
         zip = loadzip,
         text = loadtext,
     )
-    
+
     known_exts = dict(
         obj = ['obj'],
         json = ['json'],
-        yaml = ['yaml', 'yml'], 
+        yaml = ['yaml', 'yml'],
         xlsx = ['xls', 'xlsx'],
         csv = ['csv'],
         zip = ['zip'],
         text = ['txt', 'html'],
     )
-    
+
     # Guess the function based on the extension
     fpath = makepath(filename=filename, folder=folder)
     suffix = fpath.suffix[1:].lower() # Skip the '.'
@@ -1127,12 +1129,12 @@ def loadany(filename, folder=None, verbose=False, **kwargs):
         if suffix in exts:
             match = key
             break
-    
+
     # Check the path actually exists
     if not fpath.exists():
         errormsg = f'Path {fpath} does not exist!'
         raise FileNotFoundError(errormsg)
-    
+
     def try_load(key):
         if verbose: print(f'  Trying {key}...')
         func = known_funcs[key]
@@ -1148,13 +1150,13 @@ def loadany(filename, folder=None, verbose=False, **kwargs):
                 errormsg = f'  Method "{key}" failed: {E}'
                 print(errormsg)
         return obj, success
-    
+
     # Try loading it if found
     if verbose: print(f'Loading {fpath}...')
     success = False
     if match:
         obj, success = try_load(match)
-    
+
     # If that doesn't work, try them all in order
     if not success:
         for key in known_funcs.keys():
@@ -1162,19 +1164,19 @@ def loadany(filename, folder=None, verbose=False, **kwargs):
                 obj, success = try_load(key)
                 if success:
                     break
-            
+
     # If it still didn't work, raise an exception
     if not success:
         errormsg = f'All known load methods failed: {sc.strjoin(known_funcs.keys())}'
         raise ValueError(errormsg)
-    
+
     return obj
 
 ##############################################################################
 #%% JSON functions
 ##############################################################################
 
-__all__ += ['sanitizejson', 'jsonify', 'printjson', 'readjson', 'loadjson', 'savejson', 
+__all__ += ['sanitizejson', 'jsonify', 'printjson', 'readjson', 'loadjson', 'savejson',
             'readyaml', 'loadyaml', 'saveyaml', 'jsonpickle', 'jsonunpickle']
 
 
@@ -1195,37 +1197,37 @@ def jsonify(obj, verbose=True, die=False, tostring=False, custom=None, **kwargs)
         object (any or str): the converted object that should be JSON compatible, or its representation as a string if tostring=True
 
     **Examples**::
-        
+
         data = dict(a=np.random.rand(3), b=dict(foo='cat', bar='dog'))
         json = sc.jsonify(data)
         jsonstr = sc.jsonify(data, tostring=True, indent=2)
-        
+
         # Use a custom function for parsing the data
         custom = {np.ndarray: lambda x: f'It was an array: {x}'}
         j2 = sc.jsonify(data, custom=custom)
     """
     kw = dict(verbose=verbose, die=die, custom=custom) # For passing during recursive calls
-    
+
     # Handle custom classes
     custom = sc.mergedicts(custom)
     if len(custom):
         custom_classes = tuple(custom.keys())
     else:
         custom_classes = tuple()
-    
+
     if isinstance(obj, custom_classes): # It matches one of the custom classes
         output = custom[obj.__class__](obj)
-    
+
     # Try defined JSON methods first
     elif callable(getattr(obj, 'to_json', None)): # pragma: no cover
         output = obj.to_json()
-    
+
     elif callable(getattr(obj, 'tojson', None)): # pragma: no cover
         output = obj.tojson()
 
     elif callable(getattr(obj, 'toJSON', None)): # pragma: no cover
         output = obj.toJSON()
-        
+
     # Try other recognized types
     elif obj is None: # Return None unchanged
         output = None
@@ -1262,10 +1264,10 @@ def jsonify(obj, verbose=True, die=False, tostring=False, custom=None, **kwargs)
 
     elif isinstance(obj, uuid.UUID): # pragma: no cover
         output = str(obj)
-        
+
     elif callable(getattr(obj, 'to_dict', None)): # Handle e.g. pandas, where we want to return the object, not the string # pragma: no cover
         output = obj.to_dict()
-    
+
     elif callable(getattr(obj, 'todict', None)): # Handle e.g. pandas, where we want to return the object, not the string # pragma: no cover
         output = obj.todict()
 
@@ -1295,19 +1297,19 @@ sanitizejson = jsonify
 def printjson(obj, indent=2, **kwargs):
     """
     Print an object as a JSON
-    
+
     Acts as an alias to :func:`print(sc.jsonify(..., tostring=True)) <jsonify>`.
-    
+
     Args:
         obj (any): the object to print
-        indent (int): the level of indent to use 
+        indent (int): the level of indent to use
         kwargs (dict): passed to :func:`sc.jsonify() <jsonify>`
-    
+
     **Example**::
-        
+
         data = dict(a=dict(x=[1,2,3], y=[4,5,6]), b=dict(foo='string', bar='other_string'))
         sc.printjson(data)
-    
+
     *New in version 3.0.0.*
     """
     json = jsonify(obj, tostring=True, indent=indent, **kwargs)
@@ -1318,21 +1320,21 @@ def printjson(obj, indent=2, **kwargs):
 def readjson(string, **kwargs):
     """
     Read JSON from a string
-    
+
     Alias to :func:`json.loads()`.
 
     Args:
         string (str): a string representation of the JSON
         kwargs (dict): passed to :func:`json.loads()`
-    
+
     See also :func:`sc.loadjson() <loadjson>` for loading a JSON from
     a file.
-    
+
     **Example**::
-        
+
         string = '{"this":1, "is":2, "a":3, "JSON":4}'
         json = sc.readjson(string)
-        
+
     *New in version 3.0.0.*
     """
     return json.loads(string, **kwargs)
@@ -1356,7 +1358,7 @@ def loadjson(filename=None, folder=None, string=None, fromfile=True, **kwargs):
 
         json = sc.loadjson('my-file.json')
         json = sc.loadjson(string='{"a":null, "b":[1,2,3]}')
-    
+
     See also :func:`sc.readjson() <readjson>` for loading a JSON from
     a string.
     """
@@ -1396,7 +1398,7 @@ def savejson(filename=None, obj=None, folder=None, die=True, indent=2, keepnone=
 
         json = {'foo':'bar', 'data':[1,2,3]}
         sc.savejson('my-file.json', json)
-    
+
     See also :func:`sc.jsonify() <jsonify>`.
     """
 
@@ -1416,21 +1418,21 @@ def savejson(filename=None, obj=None, folder=None, die=True, indent=2, keepnone=
 def readyaml(string, **kwargs):
     """
     Read YAML from a string
-    
+
     Alias to :func:`sc.loadyaml(string=...) <loadyaml>`.
 
     Args:
         string (str): a string representation of the YAML
         kwargs (dict): passed to :func:`sc.loadyaml() <loadyaml>`
-    
+
     See also :func:`sc.loadyaml() <loadyaml>` for loading a YAML from
     a file.
-    
+
     **Example**::
-    
+
         string = '{"this":1, "is":2, "a":3, "YAML":4} # YAML allows comments!'
         yaml = sc.readyaml(string)
-    
+
     *New in version 3.0.0.*
     """
     return loadyaml(string=string, **kwargs)
@@ -1536,37 +1538,37 @@ def saveyaml(filename=None, obj=None, folder=None, die=True, keepnone=False, dum
 def jsonpickle(obj, filename=None, tostring=False, **kwargs):
     """
     Save any Python object to a JSON using jsonpickle.
-    
+
     Wrapper for the jsonpickle library: https://jsonpickle.github.io/
-    
+
     Note: unlike regular pickle, this is not guaranteed to exactly restore the
     original object. For example, at the time of writing it does not support
-    pandas dataframes with mixed-dtype columns. If this sort of thing does not 
+    pandas dataframes with mixed-dtype columns. If this sort of thing does not
     sound like it would be an issue for you, please proceed!
 
     Args:
         obj (any): the object to pickle as a JSON
-        filename = 
+        filename =
         tostring (bool): whether to return a string (rather than the JSONified Python object)
         kwargs (dict): passed to ``jsonpickle.pickler.Pickler()``
 
     Returns:
         Either a Python object for the JSON, a string, or save to file
-        
+
     **Examples**::
-        
+
         # Create data
         df1  = sc.dataframe(a=[1,2,3], b=['a','b','c'])
-        
+
         # Convert to JSON and read back
         json = sc.jsonpickle(df1)
         df2  = sc.jsonunpickle(json)
-        
+
         # Save to JSON and load back
         sc.jsonpickle(df1, 'my-data.json')
         df3  = sc.jsonunpickle('my-data.json')
-        
-    *New in version 3.1.0:* "filename" argument        
+
+    *New in version 3.1.0:* "filename" argument
     """
     import jsonpickle as jp # Optional import
     import jsonpickle.ext.numpy as jsonpickle_numpy
@@ -1591,11 +1593,11 @@ def jsonpickle(obj, filename=None, tostring=False, **kwargs):
 def jsonunpickle(json=None, filename=None):
     """
     Open a saved JSON pickle
-    
+
     See :func:`sc.jsonpickle() <jsonpickle>` for full documentation.
-    
+
     Args:
-        json (str or object): if supplied, restore the data from a string or object 
+        json (str or object): if supplied, restore the data from a string or object
         filename (str/path): if supplied, restore data from file
 
     *New in version 3.1.0:* "filename" argument
@@ -1605,17 +1607,17 @@ def jsonunpickle(json=None, filename=None):
     import jsonpickle.ext.pandas as jsonpickle_pandas
     jsonpickle_numpy.register_handlers()
     jsonpickle_pandas.register_handlers()
-    
+
     if json is not None and filename is not None: # pragma: no cover
         errormsg = 'You can supply json or filename, but not both'
         raise ValueError(errormsg)
-    
+
     # Check if what's been supplied isn't a valid JSON
     if isinstance(json, str):
         if json[0] not in ['[', '{']:
             filename = json
             json = None
-            
+
     if filename is not None:
         if not os.path.exists(filename): # pragma: no cover
             errormsg = f'Filename "{filename}" not found'
@@ -2284,8 +2286,8 @@ unpickling_errors = sc.objdict()
 class UnpicklingWarning(UserWarning):
     """
     A warning raised when unpickling an object fails
-    
-    *New in version 3.1.0.*    
+
+    *New in version 3.1.0.*
     """
     pass
 
@@ -2293,8 +2295,8 @@ class UnpicklingWarning(UserWarning):
 class UnpicklingError(pkl.UnpicklingError):
     """
     An error raised when unpickling an object fails
-    
-    *New in version 3.1.0.*    
+
+    *New in version 3.1.0.*
     """
     pass
 
@@ -2303,7 +2305,7 @@ class NoneObj:
     """
     An empty class to represent an object the user intentionally does not want to load.
     Not for use by the user.
-    
+
     *New in version 3.1.1.*
     """
     def __init__(self, *args, **kwargs): pass
@@ -2312,8 +2314,8 @@ class NoneObj:
 class Failed:
     """
     An empty class to represent a failed object loading. Not for use by the user.
-    
-    | *New in version 3.1.0:* combined Failed and UniversalFailed classes    
+
+    | *New in version 3.1.0:* combined Failed and UniversalFailed classes
     | *New in version 3.2.0:* added isempty() check
     """
     _module  = None # These must be class variables since find_class returns a class, not an instance
@@ -2329,7 +2331,7 @@ class Failed:
             self.kwargs = kwargs
         self.__set_empty()
         return
-    
+
     def __set_empty(self):
         if not hasattr(self, 'state'):
             self.state = {}
@@ -2355,7 +2357,7 @@ class Failed:
     def __setitem__(self, key, value):
         self.dict[key] = value
         return
-    
+
     def __call__(self, *args, **kwargs):
         return self
 
@@ -2381,7 +2383,7 @@ class Failed:
         else:
             print(output)
             return
-        
+
     def isempty(self):
         """ Check wether anything at all loaded """
         attr_check = set(self.__dict__.keys()) == {'state', 'dict', 'unpickling_errors'}
@@ -2392,14 +2394,14 @@ class Failed:
 def _makefailed(module_name=None, name=None, exc=None, fixes=None, errors=None):
     """
     Handle unpickling failures -- for internal use only
-    
-    Create a class -- not an object! -- that contains the failure info for a pickle 
+
+    Create a class -- not an object! -- that contains the failure info for a pickle
     that failed to load. It needs to be a class rather than class instance due to
     the way pickles are loaded via the ``find_class`` method.
-    
+
     *New in version 3.1.0:* arguments simplified
     """
-    
+
     # Process exception
     key = (module_name, name)
     fail = sc.objdict()
@@ -2408,21 +2410,21 @@ def _makefailed(module_name=None, name=None, exc=None, fixes=None, errors=None):
     fail.error     = str(exc)
     fail.exception = exc
     fail.traceback = sc.traceback(exc)
-    
+
     # Add the failure to the global list
     unpickling_errors[key] = fail
-    
+
     # Attributes -- this is why this needs to be dynamically created!
-    attrs = dict( 
+    attrs = dict(
          _module = module_name,
          _name = name,
          _failure = fail
     )
-    
+
     # If the top-level loads() fails, including additional information on the errors
     if fixes is not None or errors is not None:
         attrs.update(dict(_unpickling_fixes=fixes, _unpickling_errors=errors))
-    
+
     # Dynamically define a new class that can be used by find_class() to create an object
     F = type(
         "NamedFailed", # Name of the class -- can all be the same, but distinct from Failed that it has populated names
@@ -2433,8 +2435,8 @@ def _makefailed(module_name=None, name=None, exc=None, fixes=None, errors=None):
 
 
 def _remap_module(remapping, module_name, name):
-    """ Use a remapping dictionary to try to load a module from a different location -- for internal use """ 
-    
+    """ Use a remapping dictionary to try to load a module from a different location -- for internal use """
+
     # Three different options are supported: 'foo.bar.Cat', ('foo.bar', 'Cat'), or 'foo.bar'
     key1 = f'{module_name}.{name}' # Key provided as a single string
     key2 = (module_name, name) # Key provided as a tuple
@@ -2445,17 +2447,17 @@ def _remap_module(remapping, module_name, name):
         if key in remapping:
             remapped = remapping[key]
             break
-        
+
     # Handle different remapped options
     if remapped is None: # Replace None with NoneObj
         remapped = NoneObj
     elif remapped == notfound:  # Remapping failed, just use original names
         remapped = (module_name, name)
-        
+
     # Check if we have a string or tuple
     if isinstance(remapped, str): # Split a string into a tuple, e.g. 'foo.bar.Cat' to ('foo.bar', 'Cat')
         remapped = tuple(remapped.rsplit('.', 1)) # e.g. 'foo.bar.Cat' -> ('foo.bar',)
-    
+
     # If it's a tuple, handle it as a new name
     if isinstance(remapped, tuple):
         len_remap = len(remapped)
@@ -2471,18 +2473,18 @@ def _remap_module(remapping, module_name, name):
         # Actually attempt the import
         module = importlib.import_module(module_name)
         obj = getattr(module, name) # pragma: no cover
-    
+
     # Otherwise, assume the user supplied the object/class directly
     else:
         obj = remapped
-        
+
     return obj
 
 
 class _RobustUnpickler(dill.Unpickler):
     """ Try to import an object, and if that fails, return a Failed object rather than crashing """
 
-    def __init__(self, bytesio, fix_imports=True, encoding="latin1", errors="ignore", 
+    def __init__(self, bytesio, fix_imports=True, encoding="latin1", errors="ignore",
                  remapping=None, auto_remap=True, die=False, verbose=None):
         super().__init__(bytesio, fix_imports=fix_imports, encoding=encoding, errors=errors)
         self.remapping = sc.mergedicts(known_fixes if auto_remap else {}, remapping)
@@ -2513,7 +2515,7 @@ class _RobustUnpickler(dill.Unpickler):
                     else:        warnings.warn(warnmsg, category=UnpicklingWarning, stacklevel=2)
                 C = _makefailed(module_name=module_name, name=name, exc=E2)
                 self.errors[key] = E2 # Store the error
-        
+
         return C
 
     def load(self, *args, **kwargs):
@@ -2524,7 +2526,7 @@ class _RobustUnpickler(dill.Unpickler):
                 warnmsg = f'Top-level unpickling error: \n{str(E)}'
                 warnings.warn(warnmsg, category=UnpicklingWarning, stacklevel=2)
             F = _makefailed(module_name='module_unknown', name='name_unknown', exc=E, fixes=self.fixes, errors=self.errors) # Create a failed object
-            obj = F() 
+            obj = F()
         return obj
 
 
@@ -2585,11 +2587,11 @@ def _unpickler(string=None, die=False, verbose=None, remapping=None, method=None
         if verbose is not False:
             warnmsg = 'Warning, the following errors were encountered during unpickling:\n' + repr(unpickling_errors)
             warnings.warn(warnmsg, category=UnpicklingWarning, stacklevel=2)
-        
+
         # Try to store the errors in the object, but don't worry if it doesn't succeed
         try:    setattr(obj, 'unpickling_errors', sc.dcp(unpickling_errors))
         except: pass # pragma: no cover
-    
+
     # Reset the unpickling errors
     unpickling_errors.clear()
 
