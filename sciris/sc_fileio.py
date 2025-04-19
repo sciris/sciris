@@ -24,6 +24,7 @@ import dill
 import shutil
 import string
 import inspect
+import threading
 import importlib
 import warnings
 import numpy as np
@@ -1179,6 +1180,9 @@ def loadany(filename, folder=None, verbose=False, **kwargs):
 __all__ += ['sanitizejson', 'jsonify', 'printjson', 'readjson', 'loadjson', 'savejson',
             'readyaml', 'loadyaml', 'saveyaml', 'jsonpickle', 'jsonunpickle']
 
+# Prevent recursive calls by storing a list of seen objects
+jsonify_memo = threading.local()
+jsonify_memo.ids = set()
 
 def jsonify(obj, verbose=True, die=False, tostring=False, custom=None, **kwargs):
     """
@@ -1207,6 +1211,7 @@ def jsonify(obj, verbose=True, die=False, tostring=False, custom=None, **kwargs)
         j2 = sc.jsonify(data, custom=custom)
     """
     kw = dict(verbose=verbose, die=die, custom=custom) # For passing during recursive calls
+    obj_id = id(obj) # For avoiding recursion
 
     # Handle custom classes
     custom = sc.mergedicts(custom)
@@ -1215,74 +1220,75 @@ def jsonify(obj, verbose=True, die=False, tostring=False, custom=None, **kwargs)
     else:
         custom_classes = tuple()
 
-    if isinstance(obj, custom_classes): # It matches one of the custom classes
-        output = custom[obj.__class__](obj)
+    def get_output(obj):
+        """ Do the conversion """
+        if isinstance(obj, custom_classes): # It matches one of the custom classes
+            return custom[obj.__class__](obj)
 
-    # Try defined JSON methods first
-    elif callable(getattr(obj, 'to_json', None)): # pragma: no cover
-        output = obj.to_json()
+        # Try recognized types first
+        if obj is None: # Return None unchanged
+            return None
 
-    elif callable(getattr(obj, 'tojson', None)): # pragma: no cover
-        output = obj.tojson()
+        if isinstance(obj, (bool, np.bool_)): # It's true/false
+            return bool(obj)
 
-    elif callable(getattr(obj, 'toJSON', None)): # pragma: no cover
-        output = obj.toJSON()
-
-    # Try other recognized types
-    elif obj is None: # Return None unchanged
-        output = None
-
-    elif isinstance(obj, (bool, np.bool_)): # It's true/false
-        output = bool(obj)
-
-    elif sc.isnumber(obj): # It's a number
-        if np.isnan(obj): # It's nan, so return None # pragma: no cover
-            output = None
-        else:
-            if isinstance(obj, (int, np.int64)):
-                output = int(obj) # It's an integer
+        if sc.isnumber(obj): # It's a number
+            if np.isnan(obj): # It's nan, so return None # pragma: no cover
+                return None
             else:
-                output = float(obj)# It's something else, treat it as a float
+                if isinstance(obj, (int, np.integer)):
+                    return int(obj) # It's an integer
+                else:
+                    return float(obj)# It's something else, treat it as a float
 
-    elif sc.isstring(obj): # It's a string of some kind
-        try:    string = str(obj) # Try to convert it to ascii
-        except: string = obj # Give up and use original # pragma: no cover
-        output = string
+        if sc.isstring(obj): # It's a string of some kind
+            try:    string = str(obj) # Try to convert it to ascii
+            except: string = obj # Give up and use original # pragma: no cover
+            return string
 
-    elif isinstance(obj, np.ndarray): # It's an array, iterate recursively
-        if obj.shape: output = [jsonify(p, **kw) for p in list(obj)] # Handle most cases, incluing e.g. array([5])
-        else:         output = [jsonify(p, **kw) for p in list(np.array([obj]))] # Handle the special case of e.g. array(5) # pragma: no cover
+        if isinstance(obj, np.ndarray): # It's an array, iterate recursively
+            if obj.shape:
+                return [jsonify(p, **kw) for p in list(obj)] # Handle most cases, incluing e.g. array([5])
+            else:
+                return [jsonify(p, **kw) for p in list(np.array([obj]))] # Handle the special case of e.g. array(5) # pragma: no cover
 
-    elif isinstance(obj, (list, set, tuple)): # It's another kind of interable, so iterate recurisevly
-        output = [jsonify(p, **kw) for p in list(obj)]
+        if isinstance(obj, (list, set, tuple)): # It's another kind of interable, so iterate recurisevly
+            return [jsonify(p, **kw) for p in list(obj)]
 
-    elif isinstance(obj, dict): # It's a dictionary, so iterate over the items
-        output = {str(key):jsonify(val, **kw) for key,val in obj.items()}
+        if isinstance(obj, dict): # It's a dictionary, so iterate over the items
+            return {str(key):jsonify(val, **kw) for key,val in obj.items()}
 
-    elif isinstance(obj, (dt.time, dt.date, dt.datetime)): # pragma: no cover
-        output = str(obj)
+        if isinstance(obj, (dt.time, dt.date, dt.datetime, uuid.UUID)): # pragma: no cover
+            return str(obj)
 
-    elif isinstance(obj, uuid.UUID): # pragma: no cover
-        output = str(obj)
+        # Then try defined JSON methods
+        methods = ['to_json', 'tojson', 'toJSON', 'to_dict', 'todict']
+        if not obj_id in jsonify_memo.ids: # pragma: no cover
+            for method in methods:
+                obj_meth = getattr(obj, method, None)
+                if callable(obj_meth):
+                    try:
+                        jsonify_memo.ids.add(obj_id)
+                        return obj_meth()
+                    finally:
+                        jsonify_memo.ids.remove(obj_id)
 
-    elif callable(getattr(obj, 'to_dict', None)): # Handle e.g. pandas, where we want to return the object, not the string # pragma: no cover
-        output = obj.to_dict()
-
-    elif callable(getattr(obj, 'todict', None)): # Handle e.g. pandas, where we want to return the object, not the string # pragma: no cover
-        output = obj.todict()
-
-    else: # None of the above
+        # None of the above
         try:
             output = jsonify(obj.__dict__, **kw) # Try converting the contents to JSON
-            output = sc.mergedicts({'python_class': str(type(obj))}, output)
+            output = sc.mergedicts({'python_class': str(obj.__class__)}, output)
+            return output
         except: # pragma: no cover
             try:
-                output = jsonpickle(obj)
+                return jsonpickle(obj)
             except Exception as E:
                 errormsg = f'Could not sanitize "{obj}" {type(obj)} ({E}), converting to string instead'
                 if die:       raise TypeError(errormsg)
                 elif verbose: print(errormsg)
-                output = str(obj)
+                return str(obj)
+
+    # Compute the output -- the heavy lifting!
+    output = get_output(obj)
 
     # Convert to string if desired
     if tostring:
