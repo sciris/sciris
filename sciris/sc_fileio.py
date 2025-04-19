@@ -474,7 +474,9 @@ def savetext(filename=None, string=None, **kwargs):
 
 def loadzip(filename=None, folder=None, load=True, convert=True, **kwargs):
     """
-    Load the contents of a zip file into a variable
+    Load the contents of a zip file into a variable.
+
+    See also :func:`sc.load() <load>` for loading a gzipped file.
 
     Args:
         filename (str/path): the name of the zip file to load from
@@ -493,8 +495,10 @@ def loadzip(filename=None, folder=None, load=True, convert=True, **kwargs):
     | *New in version 2.0.0.*
     | *New in version 3.0.0:* load into memory instead of extracting to disk; see :func:`sc.unzip() <unzip>` for extracting
     | *New in version 3.1.4:* optionally return just the zipfile object; convert bytes to string
+    | *New in version 3.2.1:* load gzip as well as zip files
     """
     filename = makefilepath(filename=filename, folder=folder)
+
     if load:
         output = dict()
         with ZipFile(filename, 'r') as zf: # Create the zip file
@@ -2552,15 +2556,17 @@ def _unpickler(string=None, die=False, verbose=None, remapping=None, method=None
     # Define the pickling methods
     robust_kw = dict(remapping=remapping, auto_remap=auto_remap, die=die, verbose=verbose)
     methods = dict(
-        pickle = pkl.loads,
-        dill   = dill.loads,
-        latin  = lambda s, **kw: pkl.loads(s, encoding=kw.pop('encoding', 'latin1'), **kw),
-        pandas = lambda s, **kw: pd.read_pickle(io.BytesIO(s), **kw),
-        robust = lambda s, **kw: _RobustUnpickler(io.BytesIO(s), **robust_kw, **kw).load(),
+        string  = lambda s, **kw: s,
+        bytestr = lambda s, **kw: s.decode(),
+        pickle  = pkl.loads,
+        dill    = dill.loads,
+        latin   = lambda s, **kw: pkl.loads(s, encoding=kw.pop('encoding', 'latin1'), **kw),
+        pandas  = lambda s, **kw: pd.read_pickle(io.BytesIO(s), **kw),
+        robust  = lambda s, **kw: _RobustUnpickler(io.BytesIO(s), **robust_kw, **kw).load(),
     )
 
     # Methods that allow for loading an object without any failed instances (if die=True)
-    if   method is None:      unpicklers = ['pickle', 'pandas', 'latin', 'dill']
+    if   method is None:      unpicklers = ['pickle', 'pandas', 'latin', 'dill', 'bytestr']
     elif method == 'pickle':  unpicklers = ['pickle', 'pandas', 'latin']
     elif method == 'dill':    unpicklers = ['dill']
     else:                     unpicklers = sc.tolist(method)
