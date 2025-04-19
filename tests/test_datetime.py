@@ -224,13 +224,14 @@ def test_timer():
     print('Check auto naming')
     T = sc.timer(auto=True, doprint=False)
     with sc.capture() as txt5:
-        n = 5
-        for i in range(n):
-            nap()
+        n1 = 5
+        n2 = 2
+        for i in range(n1):
+            nap(n2)
             T.tt()
     assert txt5 == ''
-    lbound = n*delay/3 # Very generous margin, but needed unfortunately ...
-    ubound = n*delay*3
+    lbound = n1*n2*delay/2 # Very generous margins, but needed unfortunately ...
+    ubound = n1*n2*delay*4
     assert lbound < T.timings[:].sum() < ubound, 'Should be lower < sum() < upper'
     assert '(4)' in T.timings.keys()[4], 'Should contain "4"'
     assert T.cumtimings[-1] == T.total
