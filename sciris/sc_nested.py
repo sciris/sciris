@@ -389,7 +389,7 @@ class IterObj:
                 raise KeyError(errormsg)
         else:
             skip = sc.tolist(self.skip)
-            skip_keys        = []
+            skip_keys       = []
             skip_ids        = []
             skip_subclasses = []
             skip_instances  = [] # This isn't populated in list form
@@ -596,7 +596,7 @@ def iterobj(obj, func=None, inplace=False, copy=False, leaf=False, recursion=0, 
         recursion (int): number of recursive steps to allow, i.e. parsing the same objects multiple times (default 0)
         depthfirst (bool): whether to parse the object depth-first (default) or breadth-first
         atomic (list): a list of known classes to treat as atomic (do not descend into); if 'default', use defaults (e.g. ``np.array``, ``pd.DataFrame``)
-        skip (list): a list of classes or object IDs to skip over entirely
+        skip (list/dict): a list of objects to skip over entirely; can also be a dict with "keys", "ids", "subclasses", and/or "instances", which skip each of those
         rootkey (str): the key to list as the root of the object (default ``'root'``)
         verbose (bool): whether to print progress
         flatten (bool): whether to use flattened traces (single strings) rather than tuples
@@ -788,7 +788,8 @@ def search(obj, query=_None, key=_None, value=_None, type=_None, method='exact',
     Find a key/attribute or value within a list, dictionary or object.
 
     This function facilitates finding nested key(s) or attributes within an object,
-    by searching recursively through keys or attributes.
+    by searching recursively through keys or attributes. See :func:`sc.iterobj() <iterobj>`
+    for more detail.
 
     Args:
         obj (any): A dict, list, or object
