@@ -8,6 +8,28 @@ All major updates to Sciris are documented here.
 By import convention, components of the Sciris library are listed beginning with ``sc.``, e.g. ``sc.odict()``.
 
 
+Version 3.2.1 (2025-04-19)
+--------------------------
+#. Replaced :func:`sc.datetoyear(reverse=True) <sc_datetime.datetoyear>` with :func:`sc.yeartodate() <sc_datetime.yeartodate>`.
+#. Added positional and keyword arguments to :func:`sc.date() <sc_datetime.date>`, e.g. ``sc.date(year=2002, month=4, day=4)`` or ``sc.date(2002, 04, 04)``.
+#. Renamed ``doprint`` to ``verbose`` in :func:`sc.toc() <sc_datetime.toc>`, for consistency with other functions.
+#. :func:`sc.load() <sc_fileio.load>` can now load gzipped plain text files (rather than just pickles); use ``sc.load(filename, method='string')`` or ``sc.load(filename, method='bytestr')`` to avoid trying to load as a pickle first.
+#. :func:`sc.getfilelist() <sc_fileio.getfilelist>` now skips blank entries.
+#. :func:`sc.jsonify() <sc_fileio.jsonify>` avoids recursion in cases where an object has a ``to_json()`` method that itself calls ``sc.jsonify()``.
+#. :func:`sc.findnearest() <sc_math.findnearest>` now works for arbitrary scalar objects, not just numbers.
+#. :func:`sc.perturb() <sc_math.perturb>` now works with 0 or 1 arguments, and can modify an input array.
+#. :func:`sc.iterobj() <sc_nested.iterobj>` can now optionally descend into tuples; use ``sc.iterobj(atomic='default-tuple')`` to use this behavior. :class:`sc.IterObj() <sc_nested.IterObj>` now has a ``disp()`` method, and a bug regarding unintentional skipping of Python built-ins was fixed. ``sc.IterObj.to_df()`` also now skips the object root by default, listing only the subcomponents of the object.
+#. :func:`sc.setnested() <sc_nested.setnested>` can now be used to set a single key, e.g. ``sc.setnested(mydict, 'a', 4)``.
+#. The `ansicolors <https://pypi.org/project/ansicolors/>`_ module is now available as ``sc.ansi``, e.g. ``print(sc.ansi.green('this is green'))``.
+#. :class:`sc.tracecalls() <sc_profiling.tracecalls>` now works with a default trace, provides more control of what gets traced, and has a ``check_expected()`` method that compares actual calls vs. expected calls.
+#. :func:`sc.parse_env() <sc_settings.parse_env>` now accepts type inputs (e.g. ``sc.parse_env('MY_VAR', default=3.5, which=float)``.
+#. NumPy 2.0 changed the default repr to show types, e.g. ``np.float64(3.5)`` instead of ``3.5``. By default, Sciris now reverses this behavior; use ``sc.options(show_type=True)`` or set ``SCIRIS_SHOW_TYPE=1`` to revert to NumPy's default behavior.
+#. :func:`sc.ismodule() <sc_utils.ismodule>` has been added as a shortcut for checking whether an object is a module.
+#. :func:`sc.isfunc() <sc_utils.isfunc>` now correctly catches built-in functions and methods.
+#. :func:`sc.importbypath() <sc_utils.importbypath>` now has an ``overwrite`` argument to specify whether to overwrite an existing module of the same name.
+#. Switched build from ``setup.py`` to ``pyproject.toml``.
+
+
 Version 3.2.0 (2024-09-24)
 --------------------------
 
