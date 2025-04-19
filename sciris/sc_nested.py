@@ -252,7 +252,8 @@ def setnested(nested, keylist, value, force=True):
 
     See :func:`sc.makenested() <makenested>` for full documentation.
     """
-    keylist = sc.tolist(keylist)
+    if not isinstance(keylist, (list, tuple)): # Be careful not to wrap tuples in lists
+        keylist = sc.tolist(keylist)
     parentkeys = keylist[:-1]
     if force and parentkeys:
         makenested(nested, parentkeys, overwrite=False)

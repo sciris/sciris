@@ -23,6 +23,9 @@ def test_nested():
     sc.setnested(foo, ['bar','cat'], 'in the hat')
     print(foo['bar'])  # {'cat': 'in the hat'}
     sc.setnested(foo, 'soliton', 999) # Works with a single key
+    key_tuple = ('a', 'b')
+    sc.setnested(foo, key_tuple, 45)
+    assert sc.getnested(foo, key_tuple) == 45, "Did not correctly set/get from dict"
     o.foo1 = foo
 
     foo = {}
@@ -35,6 +38,7 @@ def test_nested():
     for twig in sc.iternested(foo):
         count += 1
         sc.setnested(foo, twig, count) # Yields {'a': {'y': 1, 'x': 2, 'z': 3}, 'b': {'a': {'y': 4, 'x': 5}}}
+    assert sc.getnested(foo, ['b','a','y']) == foo['b']['a']['y'] == 5, 'Incorrect value/keys'
     o.foo2 = foo
 
     return o
