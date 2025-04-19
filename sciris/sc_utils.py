@@ -838,7 +838,7 @@ def htmlify(string, reverse=False, tostring=False):
 #%% Type functions
 ##############################################################################
 
-__all__ += ['flexstr', 'sanitizestr', 'isiterable', 'checktype', 'isnumber', 'isstring', 'isarray', 'isfunc',
+__all__ += ['flexstr', 'sanitizestr', 'isiterable', 'checktype', 'isnumber', 'isstring', 'isarray', 'isfunc', 'ismodule',
             'toarray', 'tolist', 'promotetoarray', 'promotetolist', 'transposelist',
             'swapdict', 'mergedicts', 'mergelists', 'ifelse']
 
@@ -1107,7 +1107,7 @@ def isstring(obj):
 
     Equivalent to ``isinstance(obj, (str, bytes))``
     """
-    return checktype(obj, 'string')
+    return isinstance(obj, _stringtypes)
 
 
 def isarray(obj, dtype=None):
@@ -1151,6 +1151,15 @@ def isfunc(obj):
     | *New in version 3.2.0.*
     """
     return isinstance(obj, (types.FunctionType, types.MethodType, types.BuiltinFunctionType, types.BuiltinMethodType))
+
+
+def ismodule(obj):
+    """
+    Determine whether or not the input is a module.
+
+    Equivalent to ``isinstance(obj, (types.ModuleType))``
+    """
+    return isinstance(obj, (types.ModuleType))
 
 
 def toarray(x, keepnone=False, asobject=True, dtype=None, **kwargs):
@@ -2134,7 +2143,6 @@ class Link:
 
     def __repr__(self): # pragma: no cover
         """ Just use default """
-        from . import sc_printing as scp # To avoid circular import
         output  = sc.prepr(self)
         return output
 
@@ -2259,7 +2267,6 @@ class tryexcept(cl.suppress):
     | *New in version 3.0.0:* renamed "print" to "traceback"; added "to_df" and "disp" options
     | *New in version 3.1.0:* renamed "exceptions" to "data"; added "exceptions" property
     """
-
     def __init__(self, die=None, catch=None, verbose=1, history=None):
 
         # Handle defaults
@@ -2294,19 +2301,14 @@ class tryexcept(cl.suppress):
                 raise TypeError(errormsg)
         return
 
-
     def __repr__(self):
-        from . import sc_printing as scp # To avoid circular import
         return sc.prepr(self)
-
 
     def __len__(self):
         return len(self.data)
 
-
     def __enter__(self):
         return self
-
 
     def __exit__(self, exc_type, exc_val, traceback):
         """ If a context manager returns True from exit, the exception is caught """
@@ -2322,7 +2324,6 @@ class tryexcept(cl.suppress):
                 elif self.verbose: # Just print the exception type
                     print(exc_type, exc_val)
                 return True
-
 
     def traceback(self, which=None, tostring=False):
         """
@@ -2350,13 +2351,11 @@ class tryexcept(cl.suppress):
             print(string)
             return
 
-
     def to_df(self):
         """ Convert the exceptions to a dataframe """
         df = sc.dataframe(self.data, columns=['type','value','traceback'])
         self.df = df
         return df
-
 
     def disp(self):
         """ Display all exceptions as a table """
