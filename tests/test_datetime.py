@@ -37,7 +37,7 @@ def test_readdate():
     assert len(fromlist) == len(fromarr) == len(strlist) + 1 == len(strarr) + 1
     assert isinstance(fromlist, list)
     assert isinstance(fromarr, np.ndarray)
-    
+
     # And more format testing
     dmy = '18-09-2020'
     mdy = '09-18-2020'
@@ -105,7 +105,7 @@ def test_dates():
     ndays = 40
     r2 = sc.daterange('2020-03-01', days=ndays)
     assert len(r2) == ndays + 1 # Since inclusive
-    
+
     dr = sc.objdict()
     for interval in ['day', 'week', 'month', 'year']:
         dr[interval] = sc.daterange('2020-01-01', '2023-01-01', interval=interval)
@@ -138,7 +138,7 @@ def nap(n=1, t=delay):
 
 def test_timing():
     sc.heading('Testing tic, toc, and timedsleep')
-    
+
     print('\nTesting tictoc and timedsleep')
     sc.tic()
     sc.timedsleep(0.1)
@@ -146,11 +146,11 @@ def test_timing():
     sc.timedsleep('start')
     with sc.Timer():
         nap()
-    
+
     print('Testing randsleep')
     sc.randsleep(0.1)
     sc.randsleep([0.05, 0.15])
-    
+
     print('Testing tic/toc again...')
 
     # Test basic usage
@@ -166,7 +166,7 @@ def test_timing():
         sc.toc(T, label='slow_func2')
     print(txt2)
     assert 'slow_func2' in txt2
-    
+
     return T
 
 
@@ -190,9 +190,9 @@ def test_timer():
     print('Check timer labels')
     with sc.capture() as txt4:
         T = sc.timer()
-        T.start()
+        T.tic()
         nap()
-        T.stop('newlabel')
+        T.toc('newlabel')
     print(txt4)
     assert 'newlabel' in txt4, 'Should contain "newlabel"'
     o.t2 = T
@@ -234,7 +234,7 @@ def test_timer():
     assert lbound < T.timings[:].sum() < ubound, 'Should be lower < sum() < upper'
     assert '(4)' in T.timings.keys()[4], 'Should contain "4"'
     assert T.cumtimings[-1] == T.total
-    
+
     print('Check other things')
     T.tocout()
     T.tto()
@@ -244,11 +244,11 @@ def test_timer():
     T.min()
     T.max()
     print(T.indivtimings)
-    
+
     print('Check plotting')
     T.plot()
     o.t5 = T
-    
+
     print('Check addition')
     o.t6 = o.t1 + o.t2
     o.t7 = o.t3
