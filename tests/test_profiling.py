@@ -93,14 +93,9 @@ def test_profile():
     except TypeError as E: # This happens when re-running this script
         print(f'Unable to re-profile memory function; this is usually not cause for concern ({E})')
 
-    # Run profiling test, checking versions first
-    valid_python = '<3.12'
-    if sc.compareversions(sc.metadata().versions.python, valid_python):
-        sc.profile(run=foo.outer, follow=[foo.outer, foo.inner])
-        lp = sc.profile(slow_fn)
-    else:
-        print(f'Warning: skipping sc.profile() test Python must be {valid_python}')
-        lp = None
+    # Run profiling test
+    sc.profile(run=foo.outer, follow=[foo.outer, foo.inner])
+    lp = sc.profile(slow_fn)
 
     return lp
 
@@ -184,14 +179,21 @@ def test_tracecalls():
 
 
     with sc.tracecalls() as tc:
-        ComplexCalls()
+        cc = ComplexCalls()
 
     with sc.capture() as text:
         tc.disp()
 
     for i in range(6):
-        assert f'call{i+1}' in text # Check that calls are captured
-    assert 'call_extra' not in text # Check that uncalled functions are not
+        assert f'call{i+1}' in text, 'Call not captured' # Check that calls are captured
+    assert 'call_extra' not in text, 'Unexpected call' # Check that uncalled functions are not
+    sc.printgreen('✓ Calls logged as expected')
+
+    # Check expected
+    out = tc.check_expected(cc)
+    assert 'ComplexCalls.call1'      in out.called, 'Call not caught'
+    assert 'ComplexCalls.call_extra' in out.not_called, 'Call missed'
+    sc.printgreen('✓ Call checking working as expected')
 
     return tc
 

@@ -167,7 +167,8 @@ def objmeth(obj, strlen=_strlen, ncol=_ncol, private=False, sort=True, _keys=Non
     """ Return a sorted string of object methods for the Python __repr__ method; see :func:`sc.prepr() <prepr>` for options """
     try: # In very rare cases this fails, so put it in a try-except loop
         _keys = _get_obj_keys(obj, private=private, sort=sort, use_dir=True) if _keys is None else _keys
-        keys = sorted([meth + '()' for meth in _keys if _is_meth(obj, meth)])
+        _keys = [meth for meth in _keys if _is_meth(obj, meth)]
+        keys = sorted([meth + '()' for meth in _keys])
         if return_keys:
             return _keys
     except Exception as E: # pragma: no cover

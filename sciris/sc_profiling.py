@@ -912,7 +912,8 @@ class tracecalls(sc.prettyobj):
     | *New in version 3.2.0.*
     | *New in version 3.2.1:* "custom" argument added; "kwargs" removed
     """
-    def __init__(self, trace='<default>', exclude='<default>', regex=False, repeats=False, custom=None, verbose=None):
+    def __init__(self, trace='<default>', exclude='<default>', regex=False, repeats=False,
+                 custom=None, verbose=None):
         default_trace   = '.*' if regex else ''
         default_exclude = {'.*<', '.*tracecalls'} if regex else {'<', 'tracecalls'}
         trace   = default_trace   if trace   == '<default>' else trace
@@ -940,6 +941,7 @@ class tracecalls(sc.prettyobj):
         sys.setprofile(None)
         if disp is None:
             disp = self.verbose != False
+        self.func_names = set([e['name'] for e in self.entries])
         self.to_df()
         if disp:
             self.disp()
@@ -964,21 +966,23 @@ class tracecalls(sc.prettyobj):
         e = self.entry # Shorten
         if event == 'call':
             e.stack += 1
-            e.frame = frame
             e.filename = frame.f_code.co_filename
-            e.co_name = frame.f_code.co_name
             e.lineno = str(frame.f_lineno)
+
+            # Check if it's already parsed
+            uid = e.filename + e.lineno
+            if uid in self.parsed and not self.repeats:
+                return
+
+            # If not, keep processing
+            e.frame = frame
+            e.co_name = frame.f_code.co_name
             e.name = self._get_name()
             e.full_name = '_'.join([e.filename, e.name])
             if self.verbose:
                 sc.printgreen(f'Processing call {self.n_calls}:')
                 sc.pp(dict(e))
                 print()
-
-            # Check if it's already parsed
-            uid = e.filename + e.lineno
-            if uid in self.parsed and not self.repeats:
-                return
 
             # Check if it's excluded, and if not, store it
             if self._check():
@@ -1042,11 +1046,64 @@ class tracecalls(sc.prettyobj):
         return
 
     def to_df(self):
-        """ Convert to a dataframe """
+        """ Convert to a dataframe; if repeats=True, also count repeats """
         df = sc.dataframe(self.entries)
         df['stack'] -= df['stack'].min()
         self.df = df
+
+        # Count duplicates
+        if self.repeats:
+            cols = ['name', 'filename', 'lineno']
+            df_counts = sc.dataframe(self.df.groupby(cols).size().reset_index(name='count'))
+            self.df_counts = df_counts
+
         return df
+
+    def check_expected(self, expected, die=False):
+        """
+        Check function calls against a list of expected function calls.
+
+        Args:
+            expected (set/list/any): if a set or list, check these matches; if an object, extract callable methods automatically
+            die (bool): raise an exception if any expected function calls were not called
+
+        **Example**::
+
+            # Check if every method of a class is called
+            with sc.tracecalls() as tc:
+                my_obj = MyObj()
+                my_obj.run()
+
+            tc.check_expected(MyObj) # Equivalent to [f'MyObj.{f}' for f in dir(MyObj) if sc.isfunc(f)]
+        """
+        # Handle input
+        if not isinstance(expected, set):
+            raw = sc.tolist(expected)
+            expected = []
+            for item in raw:
+                if isinstance(item, str): # Handle a string
+                    expected.append(str)
+                    continue
+                else: # Handle an object
+                    if not isinstance(item, type): # Handle an object instance
+                        item = item.__class__
+                    cls_name = item.__name__
+                    items = item.__dict__.items()
+                    methods = [f'{cls_name}.{f_name}' for f_name,obj in items if sc.isfunc(obj)]
+                    expected.extend(methods)
+            expected = set(expected)
+
+        # Do processing
+        out = sc.objdict()
+        out.called = expected & self.func_names
+        out.not_called = expected - self.func_names
+        if die and len(out.not_called):
+            errormsg = f'The following {len(out.not_called)} functions were not called:\n{out.not_called}'
+            raise RuntimeError(errormsg)
+
+        self.expected = out
+        return out
+
 
 
 ##############################################################################
