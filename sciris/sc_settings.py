@@ -80,7 +80,7 @@ def parse_env(var, default=None, which='str'):
         sc.parse_env('MY_FACTOR', default=3.5, which=float)
 
     | *New in version 2.0.0.*
-    | *New in vesion 3.2.1:* allow actual types
+    | *New in version 3.2.1:* allow actual types
     """
     val = os.getenv(var, default)
     if which is None:
