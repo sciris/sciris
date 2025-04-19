@@ -1101,9 +1101,9 @@ class timer:
         """ Alias for :func:`sc.tic() <tic>` """
         return self.tic()
 
-    def stop(self, *args, **kwargs):
+    def stop(self, *args, verbose=False, **kwargs):
         """ Alias for :func:`sc.toc() <toc>` """
-        return self.toc(*args, **kwargs)
+        return self.toc(*args, verbose=verbose, **kwargs)
 
     def tocout(self, label=None, output=True, **kwargs):
         """ Alias for :func:`sc.toc() <toc>` with output=True """
