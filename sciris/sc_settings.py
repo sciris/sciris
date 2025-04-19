@@ -74,24 +74,29 @@ def parse_env(var, default=None, which='str'):
         default (any): default value
         which (str): what type to convert to (if None, don't convert)
 
-    *New in version 2.0.0.*
+    **Example**::
+
+        sc.parse_env('MY_FACTOR', default=3.5, which=float)
+
+    | *New in version 2.0.0.*
+    | *New in vesion 3.2.1:* allow actual types
     """
     val = os.getenv(var, default)
     if which is None:
         return val
-    elif which in ['str', 'string']:
+    elif which in [str, 'str', 'string']:
         if val: out = str(val)
         else:   out = ''
-    elif which == 'int':
+    elif which in [int, 'int']:
         if val: out = int(val)
         else:   out = 0
-    elif which == 'float':
+    elif which in [float, 'float']:
         if val: out = float(val)
         else:   out = 0.0
-    elif which == 'bool':
+    elif which in [bool, 'bool']:
         if val:
             if isinstance(val, str):
-                if val.lower() in ['false', 'f', '0', '', 'none']:
+                if val.lower() in ['false', 'f', '0', '0.0', '', 'none']:
                     val = False
                 else:
                     val = True
@@ -314,12 +319,12 @@ class ScirisOptions(sc.objdict):
             self.use_style(style=kwargs.get('style'))
 
         return
-    
-    
+
+
     def reset(self):
         """
         Alias to sc.options.set('defaults')
-        
+
         *New in version 3.1.0.*
         """
         self.set('defaults')
@@ -347,7 +352,7 @@ class ScirisOptions(sc.objdict):
             if   key == 'fontsize': plt.rcParams['font.size']   = value
             elif key == 'font':     plt.rcParams['font.family'] = value
             elif key == 'dpi':      plt.rcParams['figure.dpi']  = value
-            elif key == 'backend': 
+            elif key == 'backend':
                 # Before switching the backend, ensure the default value has been populated -- located here since slow if called on import
                 if not self.orig_options['backend']:
                     self.orig_options['backend'] = plt.get_backend()
@@ -360,9 +365,9 @@ class ScirisOptions(sc.objdict):
         """ Handle Jupyter settings """
         if kwargs is None: # Default setting
             kwargs = dict(jupyter=self['jupyter'])
-        
+
         if sc.isjupyter() and 'jupyter' in kwargs.keys(): # pragma: no cover
-        
+
             # Handle import
             try:
                 from IPython import get_ipython
@@ -372,7 +377,7 @@ class ScirisOptions(sc.objdict):
                 warnmsg = f'Could not import IPython and matplotlib_inline; not attempting to set Jupyter ({str(E)})'
                 warnings.warn(warnmsg, category=UserWarning, stacklevel=2)
                 magic = None
-                
+
             # Import succeeded
             if magic:
 
@@ -381,7 +386,7 @@ class ScirisOptions(sc.objdict):
                 retina_opts  = [True, 'True', 'auto', 'retina']
                 default_opts = [None, False, '', 'False', 'default']
                 format_opts  = ['retina', 'pdf','png','png2x','svg','jpg']
-    
+
                 jupyter = kwargs['jupyter']
                 if jupyter in widget_opts:
                     jupyter = 'widget'
@@ -389,7 +394,7 @@ class ScirisOptions(sc.objdict):
                     jupyter = 'retina'
                 elif jupyter in default_opts:
                     jupyter = 'png'
-    
+
                 if jupyter == 'widget':
                     try: # First try interactive
                         with sc.capture() as stderr: # Hack since this outputs text rather an actual warning
@@ -405,7 +410,7 @@ class ScirisOptions(sc.objdict):
                 else:
                     errormsg = f'Could not understand Jupyter option "{jupyter}": options are widget, {sc.strjoin(format_opts)}'
                     raise ValueError(errormsg)
-        
+
         return
 
 
@@ -548,7 +553,7 @@ class ScirisOptions(sc.objdict):
         as part of a ``with`` block to set the style just for that block (using
         this function outsde of a with block and with ``use=False`` has no effect, so
         don't do that!).
-        
+
         Note: you can also just use :func:`plt.style.context() <matplotlib.style.context>`.
 
         Args:
@@ -570,7 +575,7 @@ class ScirisOptions(sc.objdict):
             with sc.options.with_style(dpi=300): # Use default options, but higher DPI
                 plt.figure()
                 plt.plot([1,3,6])
-            
+
             with sc.options.with_style(style='fancy'): # Use the "fancy" style
                 plt.figure()
                 plt.plot([6,1,3])
@@ -723,7 +728,7 @@ See help(sc.help) for more information.
                 if debug:
                     errormsg = f'sc.help(): Encountered an error on {funcname}: {E}'
                     print(errormsg)
-                    
+
 
         # Find matches
         matches = co.defaultdict(list)
