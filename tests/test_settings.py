@@ -3,6 +3,7 @@ Test Sciris settings/options.
 '''
 
 import os
+import numpy as np
 import sciris as sc
 import pytest
 
@@ -35,7 +36,21 @@ def test_options():
     sc.options.save(fn)
     sc.options.load(fn)
     sc.rmpath(fn)
-    
+
+    print('Printing NumPy types')
+    np_print = lambda: print([np.float64(3)])
+    with sc.capture() as txt:
+        np_print()
+    assert 'float64' not in txt, 'NumPy types not successfully disabled'
+
+    sc.options(showtype=True)
+    with sc.capture() as txt:
+        np_print()
+    assert 'float64' in txt, 'NumPy types not successfully re-enabled'
+
+    # Return to default
+    sc.options(showtype='default')
+
     return
 
 
@@ -58,13 +73,13 @@ def test_parse_env():
 
 def test_help():
     sc.heading('Testing help')
-    
+
     sc.help()
     sc.help('smooth')
     sc.help('JSON', ignorecase=False, context=True)
     with sc.capture() as text:
         sc.help('pickle', source=True, context=True)
-    
+
     assert text.count('pickle') > 10
 
     return

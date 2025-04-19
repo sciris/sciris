@@ -18,6 +18,7 @@ import re
 import inspect
 import warnings
 import collections as co
+import numpy as np
 import matplotlib.pyplot as plt
 import sciris as sc
 
@@ -74,24 +75,29 @@ def parse_env(var, default=None, which='str'):
         default (any): default value
         which (str): what type to convert to (if None, don't convert)
 
-    *New in version 2.0.0.*
+    **Example**::
+
+        sc.parse_env('MY_FACTOR', default=3.5, which=float)
+
+    | *New in version 2.0.0.*
+    | *New in version 3.2.1:* allow actual types
     """
     val = os.getenv(var, default)
     if which is None:
         return val
-    elif which in ['str', 'string']:
+    elif which in [str, 'str', 'string']:
         if val: out = str(val)
         else:   out = ''
-    elif which == 'int':
+    elif which in [int, 'int']:
         if val: out = int(val)
         else:   out = 0
-    elif which == 'float':
+    elif which in [float, 'float']:
         if val: out = float(val)
         else:   out = 0.0
-    elif which == 'bool':
+    elif which in [bool, 'bool']:
         if val:
             if isinstance(val, str):
-                if val.lower() in ['false', 'f', '0', '', 'none']:
+                if val.lower() in ['false', 'f', '0', '0.0', '', 'none']:
                     val = False
                 else:
                     val = True
@@ -220,31 +226,34 @@ class ScirisOptions(sc.objdict):
         options = sc.objdict() # The options
 
         optdesc.sep = 'Set thousands seperator'
-        options.sep = parse_env('SCIRIS_SEP', ',', 'str')
+        options.sep = parse_env('SCIRIS_SEP', ',', str)
+
+        optdesc.showtype = 'Show NumPy type with printing (e.g. np.float(0.343) instead of 0.343)'
+        options.showtype = parse_env('SCIRIS_SHOW_TYPE', False, bool)
 
         optdesc.aspath = 'Set whether to return Path objects instead of strings by default'
-        options.aspath = parse_env('SCIRIS_ASPATH', False, 'bool')
+        options.aspath = parse_env('SCIRIS_ASPATH', False, bool)
 
         optdesc.style = 'Set the default plotting style -- options are "default", "simple", and "fancy", plus those in plt.style.available; see also options.rc'
-        options.style = parse_env('SCIRIS_STYLE', 'default', 'str')
+        options.style = parse_env('SCIRIS_STYLE', 'default', str)
 
         optdesc.dpi = 'Set the default DPI -- the larger this is, the larger the figures will be'
-        options.dpi = parse_env('SCIRIS_DPI', plt.rcParams['figure.dpi'], 'int')
+        options.dpi = parse_env('SCIRIS_DPI', plt.rcParams['figure.dpi'], int)
 
         optdesc.font = 'Set the default font family (e.g., sans-serif or Arial)'
         options.font = parse_env('SCIRIS_FONT', plt.rcParams['font.family'], None) # Can be a string or list, so don't cast it to any object
 
         optdesc.fontsize = 'Set the default font size'
-        options.fontsize = parse_env('SCIRIS_FONT_SIZE', plt.rcParams['font.size'], 'str')
+        options.fontsize = parse_env('SCIRIS_FONT_SIZE', plt.rcParams['font.size'], str)
 
         optdesc.interactive = 'Convenience method to set figure backend'
-        options.interactive = parse_env('SCIRIS_INTERACTIVE', True, 'bool')
+        options.interactive = parse_env('SCIRIS_INTERACTIVE', True, bool)
 
         optdesc.jupyter = 'Convenience method to set common settings for Jupyter notebooks: set to "auto" (which detects if Jupyter is running), "retina", "default" (or empty, which use regular PNG output), or "widget" to set backend'
-        options.jupyter = parse_env('SCIRIS_JUPYTER', 'auto', 'str')
+        options.jupyter = parse_env('SCIRIS_JUPYTER', 'auto', str)
 
         optdesc.backend = 'Set the Matplotlib backend (use "agg" for non-interactive)'
-        options.backend = parse_env('SCIRIS_BACKEND', '', 'str') # Unfortunately plt.get_backend() creates the backend if it doesn't exist, which can be extremely slow
+        options.backend = parse_env('SCIRIS_BACKEND', '', str) # Unfortunately plt.get_backend() creates the backend if it doesn't exist, which can be extremely slow
 
         optdesc.rc = 'Matplotlib rc (run control) style parameters used during plotting -- usually set automatically by "style" option'
         options.rc = {}
@@ -292,7 +301,7 @@ class ScirisOptions(sc.objdict):
         for key,value in kwargs.items():
 
             # Handle deprecations
-            rename = {'font_size': 'fontsize', 'font_family':'font'}
+            rename = {'font_size': 'fontsize', 'font_family':'font', 'show_type':'showtype'}
             if key in rename.keys(): # pragma: no cover
                 oldkey = key
                 key = rename[oldkey]
@@ -309,17 +318,19 @@ class ScirisOptions(sc.objdict):
                 matplotlib_keys = ['fontsize', 'font', 'dpi', 'backend']
                 if key in matplotlib_keys:
                     self.set_matplotlib_global(key, value)
+                elif key == 'showtype':
+                    self.set_show_type()
 
         if use:
             self.use_style(style=kwargs.get('style'))
 
         return
-    
-    
+
+
     def reset(self):
         """
         Alias to sc.options.set('defaults')
-        
+
         *New in version 3.1.0.*
         """
         self.set('defaults')
@@ -340,6 +351,19 @@ class ScirisOptions(sc.objdict):
         self.set(**kwargs)
         return self
 
+    def set_show_type(self):
+        """ Set NumPy to show numbers as just e.g. 1.3 (Sciris default) or np.float64(1.3) (NumPy default) """
+        if self.showtype:
+            np.set_printoptions(legacy=False)
+        else:
+            try:
+                if int(np.__version__[0]) >= 2: # Basic version checking; earlier versions of NumPy do not have this option
+                    np.set_printoptions(legacy='1.25')
+            except Exception as E:
+                warnmsg = f'Could not change NumPy show options: {E}'
+                warnings.warn(warnmsg, category=RuntimeWarning, stacklevel=2)
+        return
+
 
     def set_matplotlib_global(self, key, value):
         """ Set a global option for Matplotlib -- not for users """
@@ -347,7 +371,7 @@ class ScirisOptions(sc.objdict):
             if   key == 'fontsize': plt.rcParams['font.size']   = value
             elif key == 'font':     plt.rcParams['font.family'] = value
             elif key == 'dpi':      plt.rcParams['figure.dpi']  = value
-            elif key == 'backend': 
+            elif key == 'backend':
                 # Before switching the backend, ensure the default value has been populated -- located here since slow if called on import
                 if not self.orig_options['backend']:
                     self.orig_options['backend'] = plt.get_backend()
@@ -360,9 +384,9 @@ class ScirisOptions(sc.objdict):
         """ Handle Jupyter settings """
         if kwargs is None: # Default setting
             kwargs = dict(jupyter=self['jupyter'])
-        
+
         if sc.isjupyter() and 'jupyter' in kwargs.keys(): # pragma: no cover
-        
+
             # Handle import
             try:
                 from IPython import get_ipython
@@ -372,7 +396,7 @@ class ScirisOptions(sc.objdict):
                 warnmsg = f'Could not import IPython and matplotlib_inline; not attempting to set Jupyter ({str(E)})'
                 warnings.warn(warnmsg, category=UserWarning, stacklevel=2)
                 magic = None
-                
+
             # Import succeeded
             if magic:
 
@@ -381,7 +405,7 @@ class ScirisOptions(sc.objdict):
                 retina_opts  = [True, 'True', 'auto', 'retina']
                 default_opts = [None, False, '', 'False', 'default']
                 format_opts  = ['retina', 'pdf','png','png2x','svg','jpg']
-    
+
                 jupyter = kwargs['jupyter']
                 if jupyter in widget_opts:
                     jupyter = 'widget'
@@ -389,7 +413,7 @@ class ScirisOptions(sc.objdict):
                     jupyter = 'retina'
                 elif jupyter in default_opts:
                     jupyter = 'png'
-    
+
                 if jupyter == 'widget':
                     try: # First try interactive
                         with sc.capture() as stderr: # Hack since this outputs text rather an actual warning
@@ -405,7 +429,7 @@ class ScirisOptions(sc.objdict):
                 else:
                     errormsg = f'Could not understand Jupyter option "{jupyter}": options are widget, {sc.strjoin(format_opts)}'
                     raise ValueError(errormsg)
-        
+
         return
 
 
@@ -548,7 +572,7 @@ class ScirisOptions(sc.objdict):
         as part of a ``with`` block to set the style just for that block (using
         this function outsde of a with block and with ``use=False`` has no effect, so
         don't do that!).
-        
+
         Note: you can also just use :func:`plt.style.context() <matplotlib.style.context>`.
 
         Args:
@@ -570,7 +594,7 @@ class ScirisOptions(sc.objdict):
             with sc.options.with_style(dpi=300): # Use default options, but higher DPI
                 plt.figure()
                 plt.plot([1,3,6])
-            
+
             with sc.options.with_style(style='fancy'): # Use the "fancy" style
                 plt.figure()
                 plt.plot([6,1,3])
@@ -647,6 +671,7 @@ class ScirisOptions(sc.objdict):
 
 # Create the options on module load
 options = ScirisOptions()
+options.set_show_type() # Add this here since non-default behavior
 
 
 #%% Module help
@@ -723,7 +748,7 @@ See help(sc.help) for more information.
                 if debug:
                     errormsg = f'sc.help(): Encountered an error on {funcname}: {E}'
                     print(errormsg)
-                    
+
 
         # Find matches
         matches = co.defaultdict(list)

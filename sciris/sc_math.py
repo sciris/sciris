@@ -19,7 +19,7 @@ import sciris as sc
 ##############################################################################
 
 __all__ = ['approx', 'safedivide', 'findinds', 'findfirst', 'findlast', 'findnearest', 'count',
-           'dataindex', 'getvalidinds', 'getvaliddata', 'sanitize', 'rmnans','fillnans', 
+           'dataindex', 'getvalidinds', 'getvaliddata', 'sanitize', 'rmnans','fillnans',
            'findnans', 'nanequal', 'isprime', 'numdigits']
 
 
@@ -88,8 +88,8 @@ def findinds(arr=None, val=None, *args, eps=1e-6, first=False, last=False, ind=N
     Find matches even if two things aren't eactly equal (e.g. floats vs. ints).
 
     If one argument, find nonzero values. With two arguments, check for equality
-    using eps (by default 1e-6, to handle single-precision floating point). Returns 
-    a tuple of arrays if val1 is multidimensional, else returns an array. Similar 
+    using eps (by default 1e-6, to handle single-precision floating point). Returns
+    a tuple of arrays if val1 is multidimensional, else returns an array. Similar
     to calling :func:`np.nonzero(np.isclose(arr, val))[0] <numpy.nonzero>`.
 
     Args:
@@ -192,7 +192,7 @@ def findnearest(series=None, value=None):
     Return the index of the nearest match in series to value -- like :func:`sc.findinds() <findinds>`, but
     always returns an object with the same type as value (i.e. findnearest with
     a number returns a number, findnearest with an array returns an array).
-    
+
     Args:
         series (array): the array of numbers to look for nearest matches in
         value (scalar or array): the number or numbers to compare against
@@ -205,7 +205,7 @@ def findnearest(series=None, value=None):
         sc.findnearest([0,2,4,6,8,10], [3, 4, 5]) # returns array([1, 2, 2])
     """
     series = sc.toarray(series)
-    if sc.isnumber(value):
+    if not sc.isiterable(value):
         output = np.argmin(abs(series-value))
     else:
         output = []
@@ -225,7 +225,7 @@ def count(arr=None, val=None, eps=1e-6, **kwargs):
         arr (array): the array to find values in
         val (float): if provided, the value to match
         eps (float): the precision for matching (default 1e-6, equivalent to :func:`numpy.isclose`'s atol)
-        kwargs (dict): passed to :func:`numpy.isclose()` 
+        kwargs (dict): passed to :func:`numpy.isclose()`
 
     **Examples**::
 
@@ -395,9 +395,9 @@ def fillnans(data=None, replacenans=True, **kwargs):
 def findnans(data=None, **kwargs):
     """
     Alias for :func:`sc.findinds(np.isnan(data)) <findinds>`.
-    
+
     **Examples**::
-        
+
         data = [0, 1, 2, np.nan, 4, np.nan, 6, np.nan, np.nan, np.nan, 10]
         sc.findnans(data) # Returns array([3, 5, 7, 8, 9])
 
@@ -413,41 +413,41 @@ _nan_fill = -528876923.87569493 # Define a random value that would never be enco
 def nanequal(arr, *args, scalar=False, equal_nan=True):
     """
     Compare two or more arrays for equality element-wise, treating NaN values as equal.
-    
+
     Unnlike :func:`numpy.array_equal`, this function works even if the arrays cannot
     be cast to float.
-    
+
     Args:
         arr (array): the array to use as the base for the comparison
         args (list): one or more arrays to compare to
         scalar (bool): whether to return a true/false value (else return the array)
-    
+
     **Examples**::
-        
+
         arr1 = np.array([1, 2, np.nan])
         arr2 = [1, 2, np.nan]
         sc.nanequal(arr1, arr2) # Returns array([ True,  True,  True])
-        
+
         arr3 = [3, np.nan, 'foo']
         sc.nanequal(arr3, arr3, arr3, scalar=True) # Returns True
-    
+
     *New in version 3.1.0.*
     """
-    
+
     if not len(args): # pragma: no cover
         errormsg = 'Only one array provided; requires 2 or more'
         raise ValueError(errormsg)
-        
+
     others = [sc.toarray(arg) for arg in args] # Convert everything to an array
-    
+
     # Remove Nans from base array
     if equal_nan:
         isnan = pd.isna(arr)
         arr = sc.toarray(arr).copy()
         arr[isnan] = _nan_fill # Fill in NaN values
-    
+
     eqarr = None
-    
+
     for other in others:
         if other.shape != arr.shape: # Two arrays with different shapes are always false
             if scalar:
@@ -464,12 +464,12 @@ def nanequal(arr, *args, scalar=False, equal_nan=True):
                 eqarr = eq
             else:
                 eqarr *= eq
-    
+
     if scalar:
         return np.all(eqarr)
     else:
         return eqarr
-    
+
 
 
 
@@ -579,31 +579,58 @@ def numdigits(n, *args, count_minus=False, count_decimal=False):
 #%% Other functions
 ##############################################################################
 
-__all__ += ['perturb', 'normsum', 'normalize', 'inclusiverange', 'randround', 
+__all__ += ['perturb', 'normsum', 'normalize', 'inclusiverange', 'randround',
             'cat', 'linregress', 'sem']
 
 
-def perturb(n=1, span=0.5, randseed=None, normal=False):
+def perturb(*args, n=1, span=0.5, randseed=None, normal=False):
     """
     Define an array of numbers uniformly perturbed with a mean of 1.
 
+    Note: if called with a single argument, this is intepreted as "span", not "n".
+
     Args:
-        n (int): number of points
-        span (float): width of distribution on either side of 1
-        randseed (int): seed passed to the reseed numpy's legacy MT19937 BitGenerator
+        n (int): number of points; or an array to perturb
+        span (float): width of distribution on either side of 1 (or standard deviation if normal=True)
+        randseed (int): seed passed to the reseed Numpy's random number generator
         normal (bool):  whether to use a normal distribution instead of uniform
 
     **Example**::
 
+        sc.perturb() # Returns a random number on (0.5, 1.5)
+        sc.perturb(0.1) # Returns a random number on (0.9, 1.1)
         sc.perturb(5, 0.3) # Returns e.g. array([0.73852362, 0.7088094 , 0.93713658, 1.13150755, 0.87183371])
-    
-    *New in version 3.0.0:* Uses a separate random number stream
+        sc.perturb([1,2,3], 0.1, normal=True) # Returns e.g. array([1.03574377, 2.00286363, 3.53437126])
+
+    | *New in version 3.0.0:* Uses a separate random number stream
+    | *New in version 3.2.1:* Allows use with a single argument; allows "n" to be an array
     """
+    if len(args) == 1:
+        arg = args[0]
+        if isinstance(arg, float): # Assume a float is a span and an int is an n
+            span = arg
+        else:
+            n = arg
+    elif len(args) == 2:
+        n, span = args[0], args[1]
+    elif len(args) > 2:
+        errormsg = 'For more than two arguments, call sc.perturb() with keyword arguments rather than positional arguments'
+        raise TypeError(errormsg)
     rng = np.random.default_rng(randseed)
+
+    is_array = sc.isiterable(n)
+    if is_array:
+        array = sc.toarray(n)
+        n = array.shape
+
     if normal:
         output = 1.0 + rng.normal(0, span, size=n)
     else:
         output = 1.0 + rng.uniform(-span, span, size=n)
+
+    if is_array:
+        output = array*output
+
     return output
 
 
@@ -674,7 +701,7 @@ def inclusiverange(*args, stretch=False, **kwargs):
         x = sc.inclusiverange(6, step=2) # Like np.arange(0, 7, 2)
         x = sc.inclusiverange(0, 10, 3) # Like np.arange(0, 10, 3)
         x = sc.inclusiverange(0, 10, 3, stretch=True) # Like np.linspace(0,10,int(10/3)+1)
-        
+
     | *New in version 3.2.0*: "stretch" argument
     """
     # Handle args
@@ -704,7 +731,7 @@ def inclusiverange(*args, stretch=False, **kwargs):
     if start is None: start = 0
     if stop  is None: stop  = 1
     if step  is None: step  = 1
-    
+
     # Handle case with a non-integer number of steps
     nsteps = (stop-start)/step
     int_steps = int(nsteps)
@@ -766,7 +793,7 @@ def cat(*args, copy=False, **kwargs):
     | *New in version 1.1.0:* "copy" and keyword arguments.
     | *New in version 2.0.2:* removed "copy" argument; changed default axis of 0; arguments passed to ``np.concatenate()``
     """
-    
+
     if not len(args):
         return np.array([])
     arrs = [sc.toarray(arg) for arg in args] # Key step: convert everything to an array
@@ -780,15 +807,15 @@ def linregress(x, y, full=False, **kwargs):
     """
     Simple linear regression returning the line of best fit and R value. Similar
     to :func:`scipy.stats.linregress`` but simpler.
-    
+
     Args:
         x (array): the x coordinates
         y (array): the y coordinates
         full (bool): whether to return a full data structure
         kwargs (dict): passed to :func:`numpy.polyfit`
-    
+
     **Examples**::
-        
+
         x = range(10)
         y = sorted(2*np.random.rand(10) + 1)
         m,b = sc.linregress(x, y) # Simple usage
@@ -819,7 +846,7 @@ def linregress(x, y, full=False, **kwargs):
 def sem(a, axis=None, *args, **kwargs):
     """
     Calculate the standard error of the mean (SEM).
-    
+
     Shortcut (for a 1D array) to ``array.std()/np.sqrt(len(array))``.
 
     Args:
@@ -831,7 +858,7 @@ def sem(a, axis=None, *args, **kwargs):
 
         data = np.random.randn(100)
         sem = sc.sem(data) # Roughly 0.1
-        
+
     | *New in version 3.2.0.*
     """
     a = sc.toarray(a)
@@ -885,7 +912,7 @@ def rolling(data, window=7, operation='mean', replacenans=None, **kwargs):
     else:
         errormsg = f'Operation "{operation}" not recognized; must be mean, median, sum, or none'
         raise ValueError(errormsg)
-    
+
     if replacenans is None:
         pass
     else:
@@ -999,13 +1026,13 @@ def smooth(data, repeats=None, kernel=None, legacy=False):
     return output
 
 
-def smoothinterp(newx=None, origx=None, origy=None, smoothness=None, growth=None, 
+def smoothinterp(newx=None, origx=None, origy=None, smoothness=None, growth=None,
                  ensurefinite=True, keepends=True, method='linear'):
     """
     Smoothly interpolate over values
-    
-    Unlike :func:`np.interp() <numpy.interp>`, this function does exactly pass 
-    through each data point: 
+
+    Unlike :func:`np.interp() <numpy.interp>`, this function does exactly pass
+    through each data point:
 
     Args:
         newx (arr): the points at which to interpolate
@@ -1024,7 +1051,7 @@ def smoothinterp(newx=None, origx=None, origy=None, smoothness=None, growth=None
         import sciris as sc
         import numpy as np
         from scipy import interpolate
-        
+
         origy = np.array([0,0.2,0.1,0.9,0.7,0.8,0.95,1])
         origx = np.linspace(0,1,len(origy))
         newx = np.linspace(0,1,5*len(origy))
@@ -1070,13 +1097,13 @@ def smoothinterp(newx=None, origx=None, origy=None, smoothness=None, growth=None
 
     # Only keep finite elements
     finitey = np.isfinite(origy) # Boolean for whether it's finite
-    if finitey.any() and not finitey.all(): # If some but not all is finite, pull out indices that are 
+    if finitey.any() and not finitey.all(): # If some but not all is finite, pull out indices that are
         finiteorigy = origy[finitey]
         finiteorigx = origx[finitey]
     else: # Otherwise, just copy the original
         finiteorigy = origy.copy()
         finiteorigx = origx.copy()
-        
+
     # Perform actual interpolation
     if method=='linear':
         newy = np.interp(newx, finiteorigx, finiteorigy) # Perform standard interpolation without infinities
@@ -1264,7 +1291,7 @@ def gauss2d(x=None, y=None, z=None, xi=None, yi=None, scale=1.0, xscale=1.0, ysc
         # Setup
         import numpy as np
         import matplotlib.pyplot as plt
-        
+
         x = np.random.rand(40)
         y = np.random.rand(40)
         z = 1-(x-0.5)**2 + (y-0.5)**2 # Make a saddle

@@ -78,6 +78,10 @@ html_theme_options = {
     "navbar_end": ["theme-switcher", "navbar-icon-links"],
     "secondary_sidebar_items": ["page-toc", "edit-this-page"],
     "header_links_before_dropdown": 7,
+    "logo": {
+        "text": "Sciris",
+        "image_dark": "sciris-logo-white-small.png",
+    },
 }
 html_sidebars = {
     "**": ["sidebar-nav-bs"],

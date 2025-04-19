@@ -15,13 +15,13 @@ jobs:
       max-parallel: 8
       matrix:
         os: ['ubuntu-latest']
-        python-version: ['3.11']
+        python-version: ['3.12']
     runs-on: ${{ matrix.os }}
     
     steps:
       - name: Checkout sources
         uses: actions/checkout@v2
-      - uses: actions/setup-python@master
+      - uses: actions/setup-python@v5
         with:
           python-version: ${{ matrix.python-version }}
           architecture: x64
@@ -45,13 +45,59 @@ jobs:
 
       - name: Run Covasim tests
         working-directory: ./covasim/tests
-        run: pytest --durations=0 --junitxml=covasim-test-results.xml # Run actual tests
+        run: pytest test_*.py --durations=0 --junitxml=covasim-test-results.xml # Run actual tests
       - name: Upload test results
         uses: actions/upload-artifact@v4
         if: failure()
         with:
           name: test_results
           path: covasim/tests/covasim-test-results.xml
+
+  test_hpvsim:
+    name: HPVsim tests
+    timeout-minutes: 10
+    strategy:
+      fail-fast: false
+      max-parallel: 8
+      matrix:
+        os: ['ubuntu-latest']
+        python-version: ['3.12']
+    runs-on: ${{ matrix.os }}
+    
+    steps:
+      - name: Checkout sources
+        uses: actions/checkout@v2
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+          architecture: x64
+
+      - name: Install Sciris
+        run: pip install -e .
+
+      - name: Check out HPVsim
+        uses: actions/checkout@v2
+        with:
+          repository: 'institutefordiseasemodeling/hpvsim'
+          path: 'hpvsim'
+
+      - name: Install HPVsim
+        working-directory: ./hpvsim
+        run: pip install -e .
+
+      - name: Install HPVsim tests
+        working-directory: ./hpvsim/tests
+        run: pip install -r requirements.txt
+
+      - name: Run HPVsim tests
+        working-directory: ./hpvsim/tests
+        run: pytest test_*.py --durations=0 --junitxml=hpvsim-test-results.xml # Run actual tests
+      - name: Upload test results
+        uses: actions/upload-artifact@v4
+        if: failure()
+        with:
+          name: test_results
+          path: hpvsim/tests/hpvsim-test-results.xml
 
   test_starsim:
     name: Starsim tests
@@ -61,13 +107,13 @@ jobs:
       max-parallel: 8
       matrix:
         os: ['ubuntu-latest']
-        python-version: ['3.11']
+        python-version: ['3.12']
     runs-on: ${{ matrix.os }}
     
     steps:
       - name: Checkout sources
         uses: actions/checkout@v2
-      - uses: actions/setup-python@master
+      - uses: actions/setup-python@v5
         with:
           python-version: ${{ matrix.python-version }}
           architecture: x64
@@ -91,7 +137,7 @@ jobs:
 
       - name: Run Starsim tests
         working-directory: ./starsim/tests
-        run: pytest --durations=0 --junitxml=starsim-test-results.xml # Run actual tests
+        run: pytest test_*.py --durations=0 --junitxml=starsim-test-results.xml # Run actual tests
       - name: Upload test results
         uses: actions/upload-artifact@v4
         if: failure()
@@ -107,13 +153,13 @@ jobs:
       max-parallel: 8
       matrix:
         os: ['ubuntu-latest']
-        python-version: ['3.11']
+        python-version: ['3.12']
     runs-on: ${{ matrix.os }}
     
     steps:
       - name: Checkout sources
         uses: actions/checkout@v2
-      - uses: actions/setup-python@master
+      - uses: actions/setup-python@v5
         with:
           python-version: ${{ matrix.python-version }}
           architecture: x64
@@ -136,10 +182,10 @@ jobs:
 
       - name: Run Atomica tox tests
         working-directory: ./atomica/tests
-        run: pytest test_tox_*.py --durations=0 --junitxml=starsim-test-results.xml # Run actual tests
+        run: pytest test_tox_*.py --durations=0 --junitxml=atomica-test-results.xml # Run actual tests
       - name: Upload test results
         uses: actions/upload-artifact@v4
         if: failure()
         with:
           name: test_results
-          path: starsim/tests/starsim-test-results.xml
+          path: atomica/tests/atomica-test-results.xml

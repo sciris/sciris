@@ -318,12 +318,12 @@ def pp(obj, jsonify=False, doprint=None, output=False, sort_dicts=False, **kwarg
         output  (bool): whether to return output as a string (default false)
         sort_dicts (bool): whether to sort dictionary keys (default false, unlike :func:`pprint.pprint()`)
         kwargs  (dict): passed to :func:`pprint.pprint()`
-    
+
     **Example**::
-        
+
         d = {'my very': {'large': 'and', 'unwieldy': {'nested': 'dictionary', 'cannot': 'be', 'easily': 'printed'}}}
         sc.pp(d)
-        
+
     *New in version 1.3.1:* output argument
     *New in version 3.0.0:* "jsonify" defaults to False; sort_dicts defaults to False; removed "verbose" argument
     """
@@ -362,7 +362,7 @@ def sha(obj, digest=False, asint=False, encoding='utf-8'):
         sha3 = sc.sha(dict(foo=1, bar=3), digest=True)
         assert sha1 == sha2
         assert sha2 != sha3
-    
+
     | *New in version 3.2.0:* "asint" argument; changed argument order
     """
     # Prepare argument
@@ -370,7 +370,7 @@ def sha(obj, digest=False, asint=False, encoding='utf-8'):
         obj = repr(obj) # More robust than str()
     if isinstance(obj, str): # If it's unicode, encode it to bytes first
         obj = obj.encode(encoding)
-        
+
     # Do the hashing and prepare the output
     out = hashlib.sha224(obj)
     if digest or asint:
@@ -385,24 +385,24 @@ def traceback(exc=None, value=None, tb=None, verbose=False, *args, **kwargs):
     Shortcut for accessing the traceback
 
     Alias for :obj:`traceback.format_exc()`.
-    
+
     If no argument is provided, then use the last exception encountered.
-    
+
     Args:
         exc (Exception, tuple/list, or type): the exception to get the traceback from
         value (Exception): the actual exception
         tb (Traceback): the traceback
         verbose (bool): whether to print the exception
-    
+
     **Examples**::
-        
+
         # Use automatic exception info
         mylist = [0,1]
         try:
             mylist[2]
         except:
             print(f'Error: {sc.traceback()}')
-        
+
         # Supply exception manually (also illustrating sc.tryexcept())
         with sc.tryexcept() as te1:
             dict(a=3)['b']
@@ -434,14 +434,14 @@ def traceback(exc=None, value=None, tb=None, verbose=False, *args, **kwargs):
 
 def getuser():
     """
-    Get the current username 
-    
+    Get the current username
+
     Alias to :func:`getpass.getuser()` -- see https://docs.python.org/3/library/getpass.html#getpass.getuser
-    
+
     **Example**::
-        
+
         sc.getuser()
-    
+
     *New in version 3.0.0.*
     """
     return getpass.getuser()
@@ -450,15 +450,15 @@ def getuser():
 def getplatform(expected=None, platform=None, die=False):
     """
     Return the name of the current "main" platform (e.g. 'mac')
-    
-    Alias to ``sys.platform``, except maps entries onto one of 'linux', 'windows', 
+
+    Alias to ``sys.platform``, except maps entries onto one of 'linux', 'windows',
     'mac', or 'other'.
 
     Args:
         expected (str): if not None, check if the current platform is this
         platform (str): if supplied, map this onto one of the "main" platforms, rather than determine it
         die (bool): if True and expected is defined, raise an exception
-    
+
     Returns:
         String, one of: 'linux', 'windows', 'mac', or 'other'
 
@@ -510,22 +510,22 @@ def ismac(die=False):
 def isjupyter(detailed=False):
     """
     Check if a command is running inside a Jupyter notebook.
-    
+
     Returns true/false if detailed=False, or a string for the exact type of notebook
     (e.g., Google Colab) if detailed=True.
-    
+
     Args:
         detailed (bool): return a string of IPython/Jupyter type instead of true/false
         verbose (bool): print out additional information if IPython can't be imported
-        
+
     **Examples**::
-        
+
         if sc.isjupyter():
             sc.options(jupyter=True)
-        
+
         if sc.isjupyter(detailed=True) == 'colab':
             print('You are running on Google Colab')
-    
+
     *New in version 3.0.0.*
     """
     # First check if we can import it
@@ -537,7 +537,7 @@ def isjupyter(detailed=False):
     except Exception as E: # pragma: no cover
         output = f'Python (Jupyter/IPython is not installed) ({E})'
         return output if detailed else is_jupyter
-    
+
     # It's not IPython
     if ipython is None:
         output = 'Python (Jupyter/IPython is installed but not running)'
@@ -545,13 +545,13 @@ def isjupyter(detailed=False):
 
     # It is IPython, keep checking
     else: # pragma: no cover
-    
+
         # Get the modules and classes
         classes = inspect.getmro(ipython.__class__)
         names = [str(c).lower() for c in classes] # Names as a list
         firstname = names[0]
         allnames = ', '.join(names)
-    
+
         # Define strings to look for
         mapping = dict(
             jupyter = 'zmqinteractive',
@@ -559,13 +559,13 @@ def isjupyter(detailed=False):
             spyder  = 'spyder',
             colab   = 'colab',
         )
-        
+
         # First check if it's Jupyter, and return if it is
         if not detailed:
             if mapping['jupyter'] in allnames and mapping['spyder'] not in allnames: # Spyder inherits from ZMQ, unlike e.g. Colab shell
                 is_jupyter = True
             return is_jupyter
-        
+
         # Otherwise, get the full name
         else:
             if   mapping['spyder']  in firstname: output = 'Spyder'
@@ -574,23 +574,23 @@ def isjupyter(detailed=False):
             elif mapping['jupyter'] in firstname: output = 'Jupyter'
             else:
                 output = names[0]
-            
+
             return output
 
 
 def asciify(string, form='NFKD', encoding='ascii', errors='ignore', **kwargs):
     """
     Convert an arbitrary Unicode string to ASCII.
-    
+
     Args:
         form (str): the type of Unicode normalization to use
         encoding (str): the output string to encode to
         errors (str): how to handle errors
         kwargs (dict): passed to :meth:`string.decode()`
-    
+
     **Example**::
         sc.asciify('föö→λ ∈ ℝ') # Returns 'foo  R'
-    
+
     *New in version 2.0.1.*
     """
     normalized = unicodedata.normalize(form, string) # First, normalize Unicode encoding
@@ -760,7 +760,7 @@ def download(url, *args, filename=None, save=True, parallel=True, die=True, verb
     else:
         keys = mergelists(filename)
         urls = mergelists(url, *args)
-        
+
     # Ensure consistency
     n_urls = len(urls)
     n_keys = len(keys)
@@ -794,9 +794,9 @@ def download(url, *args, filename=None, save=True, parallel=True, die=True, verb
                     warnmsg = f'Could not download {url}: {E}'
                     warnings.warn(warnmsg, category=RuntimeWarning, stacklevel=2)
                     output = E
-                    
+
             outputs.append(output)
-    
+
     # If we're returning the data rather than saving the files, convert to an odict
     if not save:
         outputs = sc.objdict({k:v for k,v in zip(keys, outputs)})
@@ -838,7 +838,7 @@ def htmlify(string, reverse=False, tostring=False):
 #%% Type functions
 ##############################################################################
 
-__all__ += ['flexstr', 'sanitizestr', 'isiterable', 'checktype', 'isnumber', 'isstring', 'isarray', 'isfunc',
+__all__ += ['flexstr', 'sanitizestr', 'isiterable', 'checktype', 'isnumber', 'isstring', 'isarray', 'isfunc', 'ismodule',
             'toarray', 'tolist', 'promotetoarray', 'promotetolist', 'transposelist',
             'swapdict', 'mergedicts', 'mergelists', 'ifelse']
 
@@ -847,17 +847,17 @@ def flexstr(arg, *args, force=True, join=''):
     Try converting any object to a "regular" string (i.e. ``str``), but proceed
     if it fails. Note: this function calls ``repr()`` rather than ``str()`` to
     ensure a more robust representation of objects.
-    
+
     Args:
         arg (any): the object to convert to a string
         args (list): additional arguments
         force (bool): whether to force it to be a string
         join (str): if multiple arguments are provided, the character to use to join
-    
+
     **Example**::
-        
+
         sc.flexstr(b'foo', 'bar', [1,2]) # Returns 'foobar[1, 2]'
-    
+
     *New in version 3.0.0:* handle multiple inputs
     """
     arglist = mergelists(arg, list(args))
@@ -875,7 +875,7 @@ def flexstr(arg, *args, force=True, join=''):
             if force: output = repr(arg)
             else:     output = arg # Optionally don't do anything for non-strings
         outlist.append(output)
-    
+
     if len(outlist) == 1:
         outstr = outlist[0]
     else: # pragma: no cover
@@ -883,18 +883,18 @@ def flexstr(arg, *args, force=True, join=''):
             outstr = join.join(outlist)
         else:
             outstr = outlist
-    
+
     return outstr
 
 
-def sanitizestr(string=None, alphanumeric=False, nospaces=False, asciify=False, 
+def sanitizestr(string=None, alphanumeric=False, nospaces=False, asciify=False,
                 lower=False, validvariable=False, spacechar='_', symchar='?'):
     """
     Remove all non-"standard" characters from a string
-    
+
     Can be used to e.g. generate a valid variable name from arbitrary input, remove
     non-ASCII characters (replacing with equivalent ASCII ones if possible), etc.
-    
+
     Args:
         string (str): the string to sanitize
         alphanumeric (bool): allow only alphanumeric characters
@@ -904,21 +904,21 @@ def sanitizestr(string=None, alphanumeric=False, nospaces=False, asciify=False,
         validvariable (bool): convert to a valid Python variable name (similar to alphanumeric=True, nospaces=True; uses spacechar to substitute)
         spacechar (str): if nospaces is True, character to replace spaces with (can be blank)
         symchar (str): character to replace non-alphanumeric characters with (can be blank)
-    
+
     **Examples**::
-        
+
         string1 = 'This Is a String'
         sc.sanitizestr(string1, lower=True) # Returns 'this is a string'
-        
+
         string2 = 'Lukáš wanted €500‽'
         sc.sanitizestr(string2, asciify=True, nospaces=True, symchar='*') # Returns 'Lukas_wanted_*500*'
-        
+
         string3 = '"Ψ scattering", María said, "at ≤5 μm?"'
         sc.sanitizestr(string3, asciify=True, alphanumeric=True, nospaces=True, spacechar='') # Returns '??scattering??Mariasaid??at?5?m??'
-    
+
         string4 = '4 path/names/to variable!'
         sc.sanitizestr(string4, validvariable=True, spacechar='') # Returns '_4pathnamestovariable'
-    
+
     *New in version 3.0.0.*
     """
     string = flexstr(string)
@@ -947,60 +947,60 @@ def sanitizestr(string=None, alphanumeric=False, nospaces=False, asciify=False,
 def isiterable(obj, *args, exclude=None, minlen=None):
     """
     Determine whether or not the input is iterable, with optional types to exclude.
-    
+
     Args:
         obj (any): object to check for iterability
         args (any): additional objects to check for iterability
         exclude (list): list of iterable objects to exclude (e.g., strings)
         minlen (int): if not None, check that an object has a defined length as well
-    
+
     **Examples**::
-        
+
         obj1 = [1,2,3]
         obj2 = 'abc'
         obj3 = set()
-        
+
         sc.isiterable(obj1) # Returns True
         sc.isiterable(obj1, obj2, obj3, exclude=str, minlen=1) # returns [True, False, False]
-        
+
     See also :func:`numpy.iterable()` for a simpler version.
-    
+
     *New in version 3.0.0:* "exclude" and "minlen" args; support multiple arguments
     """
-    
+
     # Handle arguments
     objlist = [obj]
     n_args = len(args)
     exclude = tuple(tolist(exclude))
     if n_args: # pragma: no cover
         objlist.extend(args)
-        
+
     # Determine iterability
     output = []
     for obj in objlist:
-        
+
         # Basic test of iterability
         tf = np.iterable(obj)
-        
+
         # Additional checks
         if tf:
-            
+
             # Explicitly exclude types
-            if exclude and checktype(obj, exclude): 
+            if exclude and checktype(obj, exclude):
                 tf = False
-            
+
             # Check length
             if minlen is not None: # pragma: no cover
                 try:
                     assert len(obj) >= minlen
                 except:
                     tf = False
-                    
+
         output.append(tf)
-    
+
     if not n_args:
         output = output[0]
-    
+
     return output
 
 
@@ -1032,7 +1032,7 @@ def checktype(obj=None, objtype=None, subtype=None, die=False):
         sc.checktype(['a','b','c'], 'listlike') # Returns True
         sc.checktype(['a','b','c'], 'arraylike') # Returns False
         sc.checktype([{'a':3}], list, dict) # Returns True
-    
+
     | *New in version 2.0.1:* ``pd.Series`` considered 'array-like'
     | *New in version 3.0.0:* allow list (in addition to tuple) of types; allow checking for NoneType
     | *New in version 3.1.3:* handle exceptions when casting to "arraylike"
@@ -1040,7 +1040,7 @@ def checktype(obj=None, objtype=None, subtype=None, die=False):
 
     # Handle "objtype" input
     if isinstance(objtype, str): # Ensure it's lowercase (e.g. 'None' → 'none')
-        objtype = objtype.lower() 
+        objtype = objtype.lower()
     if   objtype in ['none']:                  objinstance = type(None) # NoneType not available in Python <3.10
     elif objtype in ['str','string']:          objinstance = _stringtypes
     elif objtype in ['num', 'number']:         objinstance = _numtype
@@ -1086,13 +1086,13 @@ def checktype(obj=None, objtype=None, subtype=None, die=False):
 def isnumber(obj, isnan=None):
     """
     Determine whether or not the input is a number.
-    
+
     Identical to isinstance(obj, numbers.Number) unless isnan is specified.
 
     Args:
         obj (any): the object to check if it's a number
         isnan (bool): an optional additional check to determine whether the number is/isn't NaN
-    
+
     | *New in version 3.2.0:* use ``isinstance()`` directly
     """
     output = isinstance(obj, _numtype)
@@ -1107,7 +1107,7 @@ def isstring(obj):
 
     Equivalent to ``isinstance(obj, (str, bytes))``
     """
-    return checktype(obj, 'string')
+    return isinstance(obj, _stringtypes)
 
 
 def isarray(obj, dtype=None):
@@ -1137,10 +1137,29 @@ def isarray(obj, dtype=None):
 def isfunc(obj):
     """
     Quickly check if something is a function.
-    
-    | *New in version 3.2.0.*    
+
+    Note: this checks whether or not something is a method (``types.MethodType``)
+    or a function (``types.MethodType``), which is different to whether or not
+    it is callable (e.g., classes are callable).
+
+    **Example**::
+
+        sc.isfunc(list) # Returns False
+        callable(list) # Returns True
+
+
+    | *New in version 3.2.0.*
     """
-    return isinstance(obj, (types.MethodType, types.FunctionType))
+    return isinstance(obj, (types.FunctionType, types.MethodType, types.BuiltinFunctionType, types.BuiltinMethodType))
+
+
+def ismodule(obj):
+    """
+    Determine whether or not the input is a module.
+
+    Equivalent to ``isinstance(obj, (types.ModuleType))``
+    """
+    return isinstance(obj, (types.ModuleType))
 
 
 def toarray(x, keepnone=False, asobject=True, dtype=None, **kwargs):
@@ -1167,7 +1186,7 @@ def toarray(x, keepnone=False, asobject=True, dtype=None, **kwargs):
 
     | *New in version 1.1.0:* replaced "skipnone" with "keepnone"; allowed passing kwargs to ``np.array()``.
     | *New in version 2.0.1:* added support for pandas Series and DataFrame
-    | *New in version 3.1.0:* "asobject" argument; cast mixed-type arrays to object rather than string by default 
+    | *New in version 3.1.0:* "asobject" argument; cast mixed-type arrays to object rather than string by default
     """
     # Handle None
     skipnone = kwargs.pop('skipnone', None)
@@ -1175,7 +1194,7 @@ def toarray(x, keepnone=False, asobject=True, dtype=None, **kwargs):
         keepnone = not(skipnone)
         warnmsg = 'sc.toarray() argument "skipnone" has been deprecated as of v1.1.0; use keepnone instead'
         warnings.warn(warnmsg, category=FutureWarning, stacklevel=2)
-    
+
     # Handle different inputs
     if isnumber(x) or (isinstance(x, np.ndarray) and not np.shape(x)): # e.g. 3 or np.array(3)
         x = [x]
@@ -1183,12 +1202,12 @@ def toarray(x, keepnone=False, asobject=True, dtype=None, **kwargs):
         x = x.values
     elif x is None and not keepnone:
         x = []
-    
+
     # Actually convert to an array
     output = np.array(x, dtype=dtype, **kwargs)
     if asobject and (dtype is None) and issubclass(output.dtype.type, np.str_):
         output = np.array(x, dtype=object, **kwargs) # Cast to object instead of string
-    
+
     return output
 
 
@@ -1294,7 +1313,7 @@ promotetolist = tolist
 def transposelist(obj, fix_uneven=True):
     """
     Convert e.g. a list of key-value tuples into a list of keys and a list of values.
-    
+
     Args:
         obj (list): the list-of-lists to be transposed
         fix_uneven (bool): append None values where needed so all input lists have the same length
@@ -1304,7 +1323,7 @@ def transposelist(obj, fix_uneven=True):
         o = sc.odict(a=1, b=4, c=9, d=16)
         itemlist = o.enumitems()
         inds, keys, vals = sc.transposelist(itemlist)
-        
+
         listoflists = [
             ['a', 1, 3],
             ['b', 4, 5],
@@ -1321,9 +1340,9 @@ def transposelist(obj, fix_uneven=True):
             row = [item for item in ls] + [None]*(maxlen - len(ls))
             newobj.append(row)
         obj = newobj
-        
+
     return list(map(list, zip(*obj)))
-        
+
 
 
 def swapdict(d):
@@ -1354,8 +1373,8 @@ def swapdict(d):
 def mergedicts(*args, _strict=False, _overwrite=True, _copy=False, _sameclass=True, _die=True, **kwargs):
     """
     Small function to merge multiple dicts together.
-    
-    By default, skips any input arguments that are ``None``, and allows keys to be set 
+
+    By default, skips any input arguments that are ``None``, and allows keys to be set
     multiple times. This function is similar to dict.update(), except it returns a value.
     The first dictionary supplied will be used for the output type (e.g. if the
     first dictionary is an odict, an odict will be returned).
@@ -1364,7 +1383,7 @@ def mergedicts(*args, _strict=False, _overwrite=True, _copy=False, _sameclass=Tr
     keywords (e.g. :func:`sc.mergedicts(dict(loose=True, strict=True), strict=False, _strict=True) <mergedicts>`).
 
     **Note**: This function is similar to the "|" operator introduced in Python 3.9.
-    However, ``sc.mergedicts()`` is useful for cases such as function arguments, where 
+    However, ``sc.mergedicts()`` is useful for cases such as function arguments, where
     the default option is ``None`` but you will need a dict later on.
 
     Args:
@@ -1438,7 +1457,7 @@ def mergedicts(*args, _strict=False, _overwrite=True, _copy=False, _sameclass=Tr
 def mergelists(*args, coerce='default', copy=False, **kwargs):
     """
     Merge multiple lists together.
-    
+
     Often used to flexible handle the input arguments to functions; see example
     below.
 
@@ -1457,7 +1476,7 @@ def mergelists(*args, coerce='default', copy=False, **kwargs):
         sc.mergelists([(1,2), (3,4)], (5,6))               # Returns [(1, 2), (3, 4), (5, 6)]
         sc.mergelists((1,2), (3,4), (5,6))                 # Returns [(1, 2), (3, 4), (5, 6)]
         sc.mergelists((1,2), (3,4), (5,6), coerce='tuple') # Returns [1, 2, 3, 4, 5, 6]
-        
+
         # Usage for handling flexible input arguments
         def my_func(arg=None, *args):
             arglist = sc.mergelists(arg, list(args))
@@ -1485,45 +1504,45 @@ def mergelists(*args, coerce='default', copy=False, **kwargs):
 def ifelse(*args, default=None, check=None):
     """
     For a list of inputs, return the first one that meets the condition
-    
+
     By default, returns the first non-None item, but can also check truth value
     or an arbitrary function.
-    
+
     Args:
         args (any): the arguments to check (note: cannot supply a single list, use * to unpack)
         default (any): the default value to use if no arguments meet the condition
         check (func): must be None (check if arguments are not None), bool (check if arguments evaluate True), or a callable (which returns True/False)
-    
+
     Equivalent to ``next((arg for arg in args if check(arg)), default)``
-    
+
     **Examples**::
-        
+
         # 1. Standard usage
         a = None
         b = 3
-        out = sc.ifelse(a, b) 
-        
+        out = sc.ifelse(a, b)
+
         ## Equivalent to:
         out = a if a is not None else b
-        
+
         # 2. Boolean usage
         args = ['', False, {}, 'ok']
         out = sc.ifelse(*args, check=bool)
-        
+
         ## Equivalent to:
         out = next((arg for arg in args if arg), None)
-        
+
         # 3. Custom function
         args = [1, 3, 5, 7]
         out = sc.ifelse(*args, check=lambda x: x>5)
-        
+
         ## Equivalent to:
         out = None
         for arg in args:
           if arg > 5:
             out = val
             break
-    
+
     | *New in version 3.1.5.*
     """
     # Handle check
@@ -1534,18 +1553,18 @@ def ifelse(*args, default=None, check=None):
     elif not callable(check): # pragma: no cover
         errormsg = f'"check" must be None, bool, or callable, not "{check}"'
         raise ValueError(errormsg)
-        
+
     # Actually calculate it
     out = next((arg for arg in args if check(arg)), default)
     return out
-    
+
 
 def _sanitize_iterables(obj, *args):
     """
     Take input as a list, array, pandas Series, or non-iterable type, along with
     one or more arguments, and return a list, along with information on what the
     input types were (is_list and is_array).
-    
+
     Not intended for the user, but used internally.
 
     **Examples**::
@@ -1582,7 +1601,7 @@ def _sanitize_output(obj, is_list, is_array, dtype=None):
 #%% Misc. functions
 ##############################################################################
 
-__all__ += ['strjoin', 'newlinejoin', 'strsplit', 'runcommand', 'uniquename', 
+__all__ += ['strjoin', 'newlinejoin', 'strsplit', 'runcommand', 'uniquename',
             'suggest', 'importbyname', 'importbypath']
 
 
@@ -1679,7 +1698,7 @@ def runcommand(command, printinput=False, printoutput=None, wait=True, **kwargs)
 
     Alias to :obj:`subprocess.Popen()`. Returns captured output if wait=True, else
     returns the subprocess.
-    
+
     Args:
         command (str): the command to run
         printinput (bool): whether to print the input string
@@ -1692,7 +1711,7 @@ def runcommand(command, printinput=False, printoutput=None, wait=True, **kwargs)
         sc.runcommand('sshpass -f %s scp myfile.txt me@myserver:myfile.txt' % 'pa55w0rd', printinput=True, printoutput=True) # Copy a file remotely
         sc.runcommand('sleep 600; mkdir foo', wait=False) # Waits 10 min, then creates the folder "foo", but the function returns immediately
         sc.runcommand('find', wait=False) # Equivalent to executing 'find' in a terminal
-    
+
     *New in version 3.1.1:* print real-time output if ``wait=False``
     """
     # Handle defaults and inputs
@@ -1705,7 +1724,7 @@ def runcommand(command, printinput=False, printoutput=None, wait=True, **kwargs)
     kwargs = mergedicts(defaults, kwargs)
     if printinput:
         print(command)
-    
+
     # Actually run the command
     try:
         p = subprocess.Popen(command, **kwargs)
@@ -1725,10 +1744,10 @@ def runcommand(command, printinput=False, printoutput=None, wait=True, **kwargs)
             output = p # Return the subprocess instead of the output
     except Exception as E: # pragma: no cover
         output = f'runcommand(): shell command failed: {str(E)}' # This is for a Python error, not a shell error -- those get passed to output
-    
+
     if printoutput and wait:
         print(output)
-    
+
     return output
 
 
@@ -1736,9 +1755,9 @@ def uniquename(name=None, namelist=None, style=None, human=False, suffix=None):
     """
     Given a name and a list of other names, add a counter to the name so that
     it doesn't conflict with the other names.
-    
+
     Useful for auto-incrementing filenames, etc.
-    
+
     Args:
         name (str): the string to ensure is unique
         namelist (list): the list of strings that are taken
@@ -1751,7 +1770,7 @@ def uniquename(name=None, namelist=None, style=None, human=False, suffix=None):
         sc.uniquename('out', ['out', 'out1']) # Returns 'out2'
         sc.uniquename(name='file', namelist=['file', 'file (1)', 'file (2)', 'myfile'], human=True) # Returns 'file (3)'
         sc.uniquename('results.csv', ['results.csv', 'results1.csv'], suffix='.csv') # Returns 'results2.csv'
-    
+
     | *New in version 3.2.0:* "human" and "suffix" arguments, simpler default style
     """
     # Set the style if not specified
@@ -1760,14 +1779,14 @@ def uniquename(name=None, namelist=None, style=None, human=False, suffix=None):
             style = ' (%d)'
         else:
             style = '%d'
-    
+
     # Prepare the inputs
     name = str(name) # Ensure it's a string
     namelist = tolist(namelist)
     if suffix:
         name = name.removesuffix(suffix)
         namelist = [n.removesuffix(suffix) for n in namelist]
-        
+
     # Do the loop
     i = 0
     unique_name = name # Start with the passed in name
@@ -1815,7 +1834,7 @@ def suggest(user_input, valid_inputs, n=1, threshold=None, fulloutput=False, die
         raise ModuleNotFoundError('The "jellyfish" Python package is not available; please install via "pip install jellyfish"') from e
 
     valid_inputs = tolist(valid_inputs, objtype='string')
-    
+
     # Handle version incompatibility
     try: # jellyfish >= 1.0
         jaro = jellyfish.jaro_similarity
@@ -1894,7 +1913,7 @@ def _assign_to_namespace(var, obj, namespace=None, overwrite=True): # pragma: no
 def importbyname(module=None, variable=None, path=None, namespace=None, lazy=False, overwrite=True, die=True, verbose=True, **kwargs):
     """
     Import modules by name.
-    
+
     ``sc.importbyname(x='y')`` is equivalent to "import y as x", but allows module
     importing to be done programmatically.
 
@@ -1918,7 +1937,7 @@ def importbyname(module=None, variable=None, path=None, namespace=None, lazy=Fal
         sc.importbyname(pd='pandas', np='numpy') # Use dictionary syntax to assign to namespace
         plt = sc.importbyname(plt='matplotlib.pyplot', lazy=True) # Won't actually import until e.g. plt.figure() is called
         mymod = sc.importbyname(path='/path/to/mymod') # Import by path rather than name
-    
+
     See also :func:`sc.importbypath() <importbypath>`.
 
     | *New in version 2.1.0:* "verbose" argument
@@ -1964,30 +1983,32 @@ def importbyname(module=None, variable=None, path=None, namespace=None, lazy=Fal
     return libs
 
 
-def importbypath(path, name=None):
+def importbypath(path, name=None, overwrite=False):
     """
     Import a module by path.
-    
+
     Useful for importing multiple versions of the same module for comparison purposes.
-    
+
     Args:
         path (str/path): the path to load the module from (with or without __init__.py)
         name (str): the name of the loaded module (by default, the file or folder name from the path)
-    
+        overwrite (bool): if True, load the module by the original name even if it exists (otherwise, generate a unique name, e.g. module1)
+
     **Examples**::
-        
+
         # Load a module that isn't importable otherwise
         mymod = sc.importbypath('my file with spaces.py')
-        
+
         # Load two versions of the same module
         old = sc.importbypath('/path/to/old/mylib')
         new = sc.importbypath('/path/to/new/mylib')
         assert new.__version__ > old.__version__ # Example version comparison (see also sc.compareverisons())
-    
+
     See also :func:`sc.importbyname() <importbyname>`.
 
     | *New in version 3.0.0.*
     | *New in version 3.2.0:* Allow importing two modules that have self imports (e.g. "import mylib" from within mylib)
+    | *New in version 3.2.1:* "overwrite" argument
     """
     # Sanitize the path and filename
     default_file='__init__.py'
@@ -1998,7 +2019,7 @@ def importbypath(path, name=None):
     elif not filepath.is_file():
         errormsg = f'Could not import {filepath}: is not a valid file or folder'
         raise FileNotFoundError(errormsg)
-    
+
     # Get the original name (what Python would know it as) from either the filename or the folder name
     if parts[-1] == default_file:
         basename = parts[-2] # If __init__.py was included, strip it now
@@ -2007,35 +2028,35 @@ def importbypath(path, name=None):
     orig_name = sanitizestr(basename, validvariable=True) # Ensure it's a valid name
     if name is None:
         name = orig_name
-        if name in sys.modules: # If a name isn't provided, ensure it doesn't conflict with an existing module name
+        if name in sys.modules and not overwrite: # If a name isn't provided, ensure it doesn't conflict with an existing module name
             name = uniquename(name, sys.modules.keys())
     renamed = name != orig_name # Flag to track if we've renamed the module
-    
+
     # If the original name is already present, make a copy to restore later
     if orig_name in sys.modules:
         orig_module = sys.modules[orig_name]
         restore = True
     else:
         restore = False
-    
+
     # Actually import the module -- from https://docs.python.org/3/library/importlib.html#importing-a-source-file-directly
     spec = importlib.util.spec_from_file_location(name, filepath)
     module = importlib.util.module_from_spec(spec)
-    
+
     # We need to call it by both orig_name and name to handle self-referential imports
     sys.modules[name] = module
     if renamed:
         sys.modules[orig_name] = module
-    
+
     # Now actually "execute" the module, i.e. load it into memory
     spec.loader.exec_module(module)
-    
+
     # Finally, clean up the original module name
-    if restore:
+    if restore and not overwrite:
         sys.modules[orig_name] = orig_module
     elif renamed:
         del sys.modules[orig_name]
-    
+
     return module
 
 
@@ -2085,7 +2106,7 @@ class autolist(list):
     def __init__(self, *args):
         arglist = mergelists(*args) # Convert non-iterables to iterables
         list.__init__(self, arglist)
-        return 
+        return
 
     def __add__(self, obj=None):
         """ Allows non-lists to be concatenated """
@@ -2124,7 +2145,6 @@ class Link:
 
     def __repr__(self): # pragma: no cover
         """ Just use default """
-        from . import sc_printing as scp # To avoid circular import
         output  = sc.prepr(self)
         return output
 
@@ -2200,36 +2220,36 @@ class LazyModule:
         else: # pragma: no cover
             obj = lib
         return obj
-    
+
 
 class tryexcept(cl.suppress):
     """
     Simple class to catch exceptions in a single line
-    
+
     Effectively an alias to :obj:`contextlib.suppress()`, which itself is a programmatic
     equivalent to using try-except blocks.
-    
-    By default, all errors are caught. If ``catch`` is not None, then by default 
-    raise all other exceptions; if ``die`` is an exception (list of exceptions, 
+
+    By default, all errors are caught. If ``catch`` is not None, then by default
+    raise all other exceptions; if ``die`` is an exception (list of exceptions,
     then by default suppress all other exceptions.
-    
+
     Due to Python's fundamental architecture, exceptions can only be caught inside
     a with statement, and the with block will exit immediately as soon as the first
     exception is encountered.
-    
+
     Args:
         die (bool/exception): default behavior of whether to raise caught exceptions
         catch (exception): one or more exceptions to catch regardless of "die"
         verbose (bool): whether to print caught exceptions (0 = silent, 1 = error type, 2 = full error information)
         history (list/tryexcept): a ``tryexcept`` object, or a list of exceptions, to keep the history (see example below)
-    
+
     **Examples**::
 
         # Basic usage
         values = [0,1]
         with sc.tryexcept(): # Equivalent to contextlib.suppress(Exception)
             values[2]
-            
+
         # Raise only certain errors
         with sc.tryexcept(die=IndexError): # Catch everything except IndexError
             values[2]
@@ -2237,21 +2257,20 @@ class tryexcept(cl.suppress):
         # Catch (do not raise) only certain errors, and print full error information
         with sc.tryexcept(catch=IndexError, verbose=2): # Raise everything except IndexError
             values[2]
-            
+
         # Storing the history of multiple exceptions
         tryexc = None
         for i in range(5):
             with sc.tryexcept(history=tryexc) as tryexc:
                 print(values[i])
         tryexc.traceback()
-            
+
     | *New in version 2.1.0.*
     | *New in version 3.0.0:* renamed "print" to "traceback"; added "to_df" and "disp" options
     | *New in version 3.1.0:* renamed "exceptions" to "data"; added "exceptions" property
     """
-
     def __init__(self, die=None, catch=None, verbose=1, history=None):
-        
+
         # Handle defaults
         dietypes   = []
         catchtypes = []
@@ -2268,7 +2287,7 @@ class tryexcept(cl.suppress):
         else: # pragma: no cover
             errormsg = 'Unexpected input to "die" and "catch": typically only one or the other should be provided'
             raise ValueError(errormsg)
-        
+
         # Finish initialization
         self.dietypes   = tuple(dietypes)
         self.catchtypes = tuple(catchtypes)
@@ -2283,21 +2302,16 @@ class tryexcept(cl.suppress):
                 errormsg = f'Could not understand supplied history: must be a list or a tryexcept object, not {type(history)}'
                 raise TypeError(errormsg)
         return
-    
-    
+
     def __repr__(self):
-        from . import sc_printing as scp # To avoid circular import
         return sc.prepr(self)
-    
-    
+
     def __len__(self):
         return len(self.data)
 
-
     def __enter__(self):
         return self
-    
-    
+
     def __exit__(self, exc_type, exc_val, traceback):
         """ If a context manager returns True from exit, the exception is caught """
         if exc_type is not None:
@@ -2313,15 +2327,14 @@ class tryexcept(cl.suppress):
                     print(exc_type, exc_val)
                 return True
 
-    
     def traceback(self, which=None, tostring=False):
         """
         Print the exception (usually the last)
-        
+
         Args:
             which (int/list): which exception(s) to print; if None, print all
             tostring (bool): whether to return as a string (otherwise print)
-        
+
         *New in version 3.1.0:* optionally print multiple tracebacks
         """
         string = ''
@@ -2339,21 +2352,19 @@ class tryexcept(cl.suppress):
         else:
             print(string)
             return
-    
-    
+
     def to_df(self):
         """ Convert the exceptions to a dataframe """
         df = sc.dataframe(self.data, columns=['type','value','traceback'])
         self.df = df
         return df
-    
-    
+
     def disp(self):
         """ Display all exceptions as a table """
         df = self.to_df()
         df.disp()
         return
-    
+
     @property
     def exceptions(self):
         """ Retrieve the last exception, if any """
@@ -2366,7 +2377,7 @@ class tryexcept(cl.suppress):
             return self.data[-1][1] # This is just the exception
         else:
             return None # Else, return None
-    
+
     @property
     def died(self):
         """ Whether or not any exceptions were encountered """
