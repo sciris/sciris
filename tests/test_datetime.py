@@ -183,8 +183,8 @@ def test_timer():
         print(T)
         T.disp()
     print(txt3)
-    assert 'mybase' in txt3
-    assert 'mylabel' in txt3
+    assert 'mybase' in txt3, 'Should contain "mybase"'
+    assert 'mylabel' in txt3, 'Should contain "mylabel"'
     o.t1 = T
 
     print('Check timer labels')
@@ -194,7 +194,7 @@ def test_timer():
         nap()
         T.stop('newlabel')
     print(txt4)
-    assert 'newlabel' in txt4
+    assert 'newlabel' in txt4, 'Should contain "newlabel"'
     o.t2 = T
 
     print('Check relative timings')
@@ -205,7 +205,7 @@ def test_timer():
     nap(5)
     T.tt()
     print(T.timings)
-    assert T.timings[0] < T.timings[1]
+    assert T.timings[0] < T.timings[1], 'Should be 5 > 1'
     o.t3 = T
 
     print('Check toc vs toctic')
@@ -218,7 +218,7 @@ def test_timer():
     T.toctic('c') # ≈1
     nap(2)
     T.tt('d') # ≈2
-    assert T.timings['c'] < T.timings['b'] # Should be c < d < a < b, but too stringent
+    assert T.timings['c'] < T.timings['b'], 'Should be c (1) < b (6)' # Should be c < d < a < b, but too stringent
     o.t4 = T
 
     print('Check auto naming')
@@ -231,8 +231,8 @@ def test_timer():
     assert txt5 == ''
     lbound = n*delay/3 # Very generous margin, but needed unfortunately ...
     ubound = n*delay*3
-    assert lbound < T.timings[:].sum() < ubound
-    assert '(4)' in T.timings.keys()[4]
+    assert lbound < T.timings[:].sum() < ubound, 'Should be lower < sum() < upper'
+    assert '(4)' in T.timings.keys()[4], 'Should contain "4"'
     assert T.cumtimings[-1] == T.total
     
     print('Check other things')
