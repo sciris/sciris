@@ -342,6 +342,7 @@ class IterObj:
     | *New in version 3.1.2.*
     | *New in version 3.1.5:* "norecurse" argument; better handling of atomic classes
     | *New in version 3.1.6:* "depthfirst" argument; replace recursion with a queue; "to_df()" method
+    | *New in version 3.2.1:* improved recursion handling; "disp()" method
     """
     def __init__(self, obj, func=None, inplace=False, copy=False, leaf=False, recursion=0, depthfirst=True,
                  atomic='default', skip=None, rootkey='root', verbose=False, iterate=True,
@@ -440,6 +441,10 @@ class IterObj:
         try:    return len(self.output)
         except: return None
 
+    def disp(self):
+        """ Display the full object """
+        return sc.pr(self)
+
     def indent(self, string='', space='  '):
         """ Print, with output indented successively """
         if self.verbose:
@@ -449,7 +454,6 @@ class IterObj:
     def iteritems(self, parent, trace):
         """ Return an iterator over items in this object """
         itertype = self.check_iter_type(parent)
-        self.indent(f'Iterating with type "{itertype}"')
         out = None
         if self.custom_iter:
             out = self.custom_iter(parent)
@@ -503,8 +507,12 @@ class IterObj:
     def check_proceed(self, key, subobj, newid):
         """ Check if we should continue or not """
 
-        # If we've already parsed this object, don't parse it again
+        # If we've already parsed this object, don't parse it again if it's iterable
+        memo_skip = False
         in_memo = (newid in self._memo) and (self._memo[newid] > self.recursion)
+        if in_memo: # We only skip processing if we've both seen an object before and it's iterable
+            if check_iter_type(subobj, known=self.atomic, custom=self.custom_type):
+                memo_skip = True
 
         # Skip this object if we've been asked to
         key_skip = key in self._skip_keys
@@ -513,7 +521,14 @@ class IterObj:
         instance_skip = isinstance(subobj, self._skip_instances)
 
         # Finalize
-        proceed = False if (in_memo or key_skip or id_skip or subclass_skip or instance_skip) else True
+        skips = [memo_skip, key_skip, id_skip, subclass_skip, instance_skip]
+        proceed = not any(skips)
+
+        if not proceed and self.verbose: # Just for debugging
+            labels = ['memo', 'key', 'id', 'subclass', 'instance']
+            pairs = [f'{label}_skip=True' for label,skip in zip(labels, skips) if skip]
+            self.indent(f'Skipping "{key}" because {sc.strjoin(pairs)}')
+
         return proceed
 
     def process_obj(self, parent, trace, key, subobj, newid):
@@ -521,7 +536,7 @@ class IterObj:
         self._memo[newid] += 1
         trace = trace + [key]
         subitertype = self.check_iter_type(subobj)
-        self.indent(f'Working on {trace}, leaf={self.leaf}, type={str(subitertype)}')
+        self.indent(f'{len(self)} Trace {trace} | Type "{str(subitertype)}" | {type(subobj)}')
         if not (self.leaf and subitertype):
             newobj = self.func(subobj, *self.func_args, **self.func_kw)
             if self.inplace:
@@ -570,14 +585,23 @@ class IterObj:
             self.output = output
         return output
 
-    def to_df(self):
-        """ Convert the output dictionary to a dataframe """
+    def to_df(self, skip_root=True):
+        """
+        Convert the output dictionary to a dataframe.
+
+        Args:
+            skip_root (bool): if True (default), only include the object's subcomponents
+        """
         if not len(self):
             errormsg = 'No output to convert to a dataframe: length is zero'
             raise ValueError(errormsg)
         trace = self.output.keys()
         depth = [(0 if tr==self.rootkey else len(tr)) for tr in trace] # The depth is the length of the tuple, except the special case of the root key
         value = self.output.values()
+        if skip_root:
+            trace = trace[1:]
+            depth = depth[1:]
+            value = value[1:]
         self.df = sc.dataframe(trace=trace, depth=depth, value=value)
         return self.df
 
@@ -1179,7 +1203,7 @@ class Equal(sc.prettyobj):
                 # Append the result
                 eqs.append(eq)
                 if self.verbose:
-                    print(f'Item {i+1}/{len(self.odicts)} ({j+2}/{self.n}) "{self.keytostr(key, j+1)}": {eq}')
+                    print(f'Item {i+1}/{len(self.treekeys)} of object {j+1}/{self.n-1}: "{self.keytostr(key, j+1)}": {eq}')
 
             # Store the results, and break if any equalities are found unless we're doing detailed
             has_none = None in eqs
