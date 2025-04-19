@@ -937,7 +937,7 @@ class timer:
     Example using a timer to collect data, using :meth:`timer.tt() <timer.tt>` as an alias for :func:`sc.toctic() <toctic>`
     to reset the time::
 
-        T = sc.timer(doprint=False)
+        T = sc.timer(verbose=False)
         for key in 'abcde':
             sc.timedsleep(np.random.rand())
             T.tt(key)
@@ -1038,7 +1038,7 @@ class timer:
         """ Print elapsed time; see :func:`sc.toc() <toc>` for keyword arguments """
 
         # Get the time
-        self.elapsed, self.message = toc(start=self._start, output='both', doprint=False) # Get time as quickly as possible
+        self.elapsed, self.message = toc(start=self._start, output='both', verbose=False) # Get time as quickly as possible
         self._tocs.append(pytime.time()) # Store when this toc was invoked
 
         # Update the kwargs, including the label
@@ -1064,8 +1064,8 @@ class timer:
             kwargs['label'] = countlabel
 
         # Call again to get the correct output
-        doprint = kwargs.pop('doprint', self.verbose)
-        output = toc(elapsed=self.elapsed, unit=self.unit, doprint=doprint, **kwargs)
+        verbose = kwargs.pop('verbose', self.verbose)
+        output = toc(elapsed=self.elapsed, unit=self.unit, verbose=verbose, **kwargs)
 
         # If reset was used, apply it
         if kwargs.get('reset'):
