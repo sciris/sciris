@@ -17,7 +17,7 @@ Welcome to Sciris
 What is Sciris?
 ---------------
 
-Sciris is a library of tools that can help make writing scientific Python code easier and more pleasant. Built on top of `NumPy <https://numpy.org/>`_ and `Matplotlib <https://matplotlib.org/>`_, Sciris provides functions covering a wide range of common math, file I/O, and plotting operations. This means you can get more done with less code, and spend less time looking things up on Stack Overflow. It was originally written to help epidemiologists and neuroscientists focus on doing science, rather than on writing code, but Sciris is applicable across scientific domains (and some nonscientific ones too).
+Sciris is a library of tools that can help make writing scientific Python code easier and more pleasant. Built on top of `NumPy <https://numpy.org/>`_ and `Matplotlib <https://matplotlib.org/>`_, Sciris provides functions covering a wide range of common math, file I/O, and plotting operations. This means you can get more done with less code, so you can spend less time looking up answers on Stack Overflow or copy-pasting dubious solutions from ChatGPT. It was originally written to help epidemiologists and neuroscientists focus on doing science, rather than on writing code, but Sciris is applicable across scientific domains (and some nonscientific ones too).
 
 For more information, see the full `documentation <https://docs.sciris.org/en/latest/overview.html>`_, the `paper <http://paper.sciris.org>`_, or `GitHub <https://github.com/sciris/sciris>`_.
 

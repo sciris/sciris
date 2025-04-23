@@ -47,7 +47,7 @@ Bugfixes
 ~~~~~~~~
 #. Previously, :func:`sc.importbypath() <sc_utils.importbypath>` would sometimes fail to import a module correctly if a module with the same name was already imported. This has been fixed.
 #. Previously, :func:`sc.inclusiverange() <sc_math.inclusiverange>` would stretch steps in order to exactly match ``start`` and ``stop`` (e.g., ``sc.inclusiverange(0,10,3)`` would stretch the step to ``3.333``). It now defaults to not stretching the step. Previous behavior can be restored via ``sc.inclusiverange(..., stretch=True)```.
-#. Previously, in:func:`sc.parallel() <sc_parallel.parallel>`, specifying ``interval`` without also specifying ``maxcpu`` had no effect. Now it will still schedule the jobs on intervals, but with ``maxcpu=1.0`` by default.
+#. Previously, in :func:`sc.parallel() <sc_parallel.parallel>`, specifying ``interval`` without also specifying ``maxcpu`` had no effect. Now it will still schedule the jobs on intervals, but with ``maxcpu=1.0`` by default.
 
 Other changes
 ~~~~~~~~~~~~~
