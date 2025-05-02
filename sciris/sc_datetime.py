@@ -2,7 +2,7 @@
 Time/date utilities.
 
 Highlights:
-    - :func:`:func:`sc.tic() <tic>` / :func:`sc.toc() <toc>` / :class:`sc.timer() <timer>`: simple methods for timing durations
+    - :func:`sc.tic() <tic>` / :func:`sc.toc() <toc>` / :class:`sc.timer() <timer>`: simple methods for timing durations
     - :func:`sc.readdate() <readdate>`: convert strings to dates using common formats
     - :func:`sc.daterange() <daterange>`: create a list of dates
     - :func:`sc.datedelta() <datedelta>`: perform calculations on date strings
