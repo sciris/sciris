@@ -10,6 +10,7 @@ Highlights:
 
 import time as pytime
 import warnings
+import functools
 import numpy as np
 import pandas as pd
 import datetime as dt
@@ -952,10 +953,11 @@ class timer:
     | *New in version 3.0.0:* ``unit`` argument; ``verbose`` argument; ``sum, min, max, mean, std`` methods; ``rawtimings`` property
     | *New in version 3.1.0:* Timers can be combined by addition, including ``sum()``
     | *New in version 3.1.5:* ``T.timings`` is now an :class:`sc.objdict() <sc_odict.objdict>` instead of an :class:`sc.odict() <sc_odict.odict>`
+    | *New in version 3.2.2:* ``sc.timer()`` can be used as a function decorator
     """
     def __init__(self, label=None, auto=False, start=True, unit='auto', verbose=None, **kwargs):
         self.kwargs = kwargs # Store kwargs to pass to toc() at the end of the block
-        self.kwargs['label'] = label
+        self.kwargs['label'] = str(label) if label is not None else None
         self.auto = auto
         self.unit = unit
         self.verbose = verbose
@@ -976,10 +978,21 @@ class timer:
         self.tic()
         return self
 
+
     def __exit__(self, *args):
         """ Print elapsed time when leaving a with-as block """
         self.toc()
         return
+
+
+    def __call__(self, func):
+        """ Allow being used as a decorator """
+        @functools.wraps(func)
+        def wrapper(*args, **kwargs):
+            with self: # Use as a context block
+                return func(*args, **kwargs)
+        return wrapper
+
 
     def __repr__(self):
         """ Display a brief representation of the object """
@@ -1036,7 +1049,6 @@ class timer:
 
     def toc(self, label=None, **kwargs):
         """ Print elapsed time; see :func:`sc.toc() <toc>` for keyword arguments """
-
         # Get the time
         self.elapsed, self.message = toc(start=self._start, output='both', verbose=False) # Get time as quickly as possible
         self._tocs.append(pytime.time()) # Store when this toc was invoked
@@ -1077,7 +1089,6 @@ class timer:
     @property
     def total(self):
         """ Calculate total time """
-
         # If the timer hasn't been started, return 0
         if not len(self._tics): # pragma: no cover
             return 0
