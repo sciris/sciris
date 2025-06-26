@@ -618,10 +618,13 @@ def perturb(*args, n=1, span=0.5, randseed=None, normal=False):
         raise TypeError(errormsg)
     rng = np.random.default_rng(randseed)
 
+    is_scalar = False
     is_array = sc.isiterable(n)
     if is_array:
         array = sc.toarray(n)
         n = array.shape
+    elif n == 1:
+        is_scalar = True
 
     if normal:
         output = 1.0 + rng.normal(0, span, size=n)
@@ -630,6 +633,8 @@ def perturb(*args, n=1, span=0.5, randseed=None, normal=False):
 
     if is_array:
         output = array*output
+    elif is_scalar: # Returns 0.97 instead of array([0.97])
+        output = output[0]
 
     return output
 
