@@ -495,8 +495,7 @@ def loadbalancer(maxcpu=0.9, maxmem=0.9, index=None, interval=None, cpu_interval
 __all__ += ['profile', 'mprofile', 'cprofile', 'tracecalls']
 
 
-def profile(run, follow=None, private='__init__', include=None, exclude=None,
-            print_stats=True, verbose=True, *args, **kwargs):
+class profile(sc.prettyobj):
     """
     Profile the line-by-line time required by a function.
 
@@ -556,86 +555,195 @@ def profile(run, follow=None, private='__init__', include=None, exclude=None,
 
     | *New in version 3.2.0:* allow class and module arguments for "follow"; "private" argument
     """
-    try:
-        from line_profiler import LineProfiler
-    except ModuleNotFoundError as E: # pragma: no cover
-        errormsg = 'The "line_profiler" package is not installed; try "pip install line_profiler". (Note: it is not compatible with Python 3.12)'
-        raise ModuleNotFoundError(errormsg) from E
+    def __init__(self, run, follow=None, private='__init__', include=None, exclude=None,
+                print_stats=True, verbose=True, *args, **kwargs):
+        try:
+            from line_profiler import LineProfiler
+        except ModuleNotFoundError as E: # pragma: no cover
+            errormsg = 'The "line_profiler" package is not installed; try "pip install line_profiler". (Note: it is not compatible with Python 3.12)'
+            raise ModuleNotFoundError(errormsg) from E
 
-    # Figure out follow
-    if follow is None: # pragma: no cover
-        follow = run
-    orig_list = sc.tolist(follow)
+        # Figure out follow
+        if follow is None: # pragma: no cover
+            follow = run
+        orig_list = sc.tolist(follow)
 
-    m_list = [] # List of modules (to be turned into functions/classes)
-    c_list = [] # List of classes (to be turned into functions)
-    f_list = [] # List of functions (to be used)
-    include = sc.tolist(include)
-    exclude = sc.tolist(exclude)
+        m_list = [] # List of modules (to be turned into functions/classes)
+        c_list = [] # List of classes (to be turned into functions)
+        f_list = [] # List of functions (to be used)
+        include = sc.tolist(include)
+        exclude = sc.tolist(exclude)
 
-    # First parse into the different categories
-    for obj in orig_list:
-        if sc.isfunc(obj): # Simple: just a function
-            f_list.append(obj)
-        elif isinstance(obj, types.ModuleType):
-            m_list.append(obj)
-        elif isinstance(obj, type):
-            c_list.append(obj)
-        else:
-            c_list.append(obj.__class__) # Everything is a class
-
-    def get_attrs(parent):
-        """ Safely get the attributes of a module/class """
-        attrs = sc.objatt(parent, private=private, return_keys=True)
-        objs = []
-        for attr in attrs:
-            try:
-                obj = getattr(parent, attr)
-                objs.append(obj)
-            except: # Don't worry too much if some fail
-                pass
-        return objs
-
-    # First take a pass and convert any modules to functions and classes
-    for mod in m_list:
-        objs = get_attrs(mod)
-        for obj in objs:
-            if sc.isfunc(obj): # It's a function, use it directly
+        # First parse into the different categories
+        for obj in orig_list:
+            if sc.isfunc(obj): # Simple: just a function
                 f_list.append(obj)
-            elif isinstance(obj, type): # It's a class, add it to the class list
+            elif isinstance(obj, types.ModuleType):
+                m_list.append(obj)
+            elif isinstance(obj, type):
                 c_list.append(obj)
+            else:
+                c_list.append(obj.__class__) # Everything is a class
 
-    # Then convert any classes to functions/objects
-    for cla in c_list:
-        objs = get_attrs(cla)
-        for obj in objs:
-            if sc.isfunc(obj):
-                f_list.append(obj)
+        def get_attrs(parent):
+            """ Safely get the attributes of a module/class """
+            attrs = sc.objatt(parent, private=private, return_keys=True)
+            objs = []
+            for attr in attrs:
+                try:
+                    obj = getattr(parent, attr)
+                    objs.append(obj)
+                except: # Don't worry too much if some fail
+                    pass
+            return objs
 
-    # Finally, do any filtering
-    if include:
-        f_list = [f for f in f_list if any(inc in str(f) for inc in include)]
-    if exclude:
-        f_list = [f for f in f_list if not any(exc in str(f) for exc in exclude)]
+        # First take a pass and convert any modules to functions and classes
+        for mod in m_list:
+            objs = get_attrs(mod)
+            for obj in objs:
+                if sc.isfunc(obj): # It's a function, use it directly
+                    f_list.append(obj)
+                elif isinstance(obj, type): # It's a class, add it to the class list
+                    c_list.append(obj)
 
-    if verbose:
-        print(f'Profiling {len(f_list)} function(s):\n', sc.newlinejoin(f_list), '\n')
+        # Then convert any classes to functions/objects
+        for cla in c_list:
+            objs = get_attrs(cla)
+            for obj in objs:
+                if sc.isfunc(obj):
+                    f_list.append(obj)
 
-    # Construct the wrapper
-    orig_func = run # Needed for argument passing
-    lp = LineProfiler()
-    for f in f_list:
-        lp.add_function(f)
-    lp.enable_by_count()
-    wrapper = lp(run) # pragma: no cover
+        # Finally, do any filtering
+        if include:
+            f_list = [f for f in f_list if any(inc in str(f) for inc in include)]
+        if exclude:
+            f_list = [f for f in f_list if not any(exc in str(f) for exc in exclude)]
 
-    wrapper(*args, **kwargs) # pragma: no cover
-    run = orig_func # Restore run for argument passing
-    if print_stats: # pragma: no cover
-        lp.print_stats()
         if verbose:
-            print('Done.')
-    return lp # pragma: no cover
+            print(f'Profiling {len(f_list)} function(s):\n', sc.newlinejoin(f_list), '\n')
+
+        # Construct the wrapper
+        orig_func = run # Needed for argument passing
+        prof = LineProfiler()
+        for f in f_list:
+            prof.add_function(f)
+        prof.enable_by_count()
+        wrapper = prof(run) # pragma: no cover
+
+        # Run the profiling
+        wrapper(*args, **kwargs) # pragma: no cover
+        run = orig_func # Restore run for argument passing
+
+        # Store outputs
+        self.follow = follow
+        self.include = include
+        self.exclude = exclude
+        self.follow_funcs = f_list
+        self.prof = prof
+        self._parse()
+        if print_stats:
+            self.disp()
+        return
+
+    @staticmethod
+    def _path_to_name(filepath, lineno):
+        """ Helper function to convert a file/line number to a qualified path (via ChatGPT) """
+        import ast # Not used elsewhere
+
+        with open(filepath, 'r') as f:
+            source = f.read()
+
+        tree = ast.parse(source, filename=filepath)
+        context_stack = []
+        name = None
+
+        class ContextVisitor(ast.NodeVisitor):
+            def visit_ClassDef(self, node):
+                context_stack.append(node.name)
+                self.generic_visit(node)
+                context_stack.pop()
+
+            def visit_FunctionDef(self, node):
+                if node.lineno == lineno:
+                    context_stack.append(node.name)
+                    nonlocal name
+                    name = '.'.join(context_stack)
+                    context_stack.pop()
+                else:
+                    context_stack.append(node.name)
+                    self.generic_visit(node)
+                    context_stack.pop()
+
+        # Do the mapping
+        ContextVisitor().visit(tree)
+        module_name = os.path.splitext(os.path.basename(filepath))[0]
+        if name:
+            return f'{module_name}.{name}'
+        else:
+            return f'{module_name}.py:{lineno}'
+
+    def _parse(self):
+        """ Parse text output into a dictionary (with ChatGPT) """
+        with sc.capture() as txt:
+            self.prof.print_stats()
+
+        token = 'Total time:' # Define the token used to signify the start of a chunk
+        chunks = txt.strip().split(f'\n{token}')
+        self.output = sc.objdict()
+
+        for i,chunk in enumerate(chunks[1:]):  # Skip the first split part (before the first "Total time")
+            section = 'Total time:' + chunk  # Re-add the delimiter for consistency
+
+            # Extract time
+            time_match = re.search(r'Total time:\s*([0-9.]+)', section)
+            time = float(time_match.group(1)) if time_match else None
+
+            # Extract file
+            file_match = re.search(r'File:\s*(\S+)', section)
+            file = file_match.group(1) if file_match else None
+
+            # Extract function name and line number
+            func_match = re.search(r'Function:\s*(\w+)\s+at line\s+(\d+)', section)
+            function = func_match.group(1) if func_match else None
+            lineno = int(func_match.group(2)) if func_match else None
+
+            # Get the qualified name if available
+            func_name = self._path_to_name(file, lineno)
+
+            # Store
+            entry = sc.objdict(
+                order = i,
+                time = time,
+                file = file,
+                function = function,
+                lineno = lineno,
+                data = section,
+            )
+            self.output[func_name] = entry
+
+        self.sort()
+        return
+
+    def sort(self, bytime=True):
+        """ Sort or unsort by time """
+        if bytime:
+            times = [entry.time for entry in self.output.values()]
+            order = np.argsort(times)[::-1] # Flip to be descending order
+        else:
+            order = [entry.order for entry in self.output.values()]
+        self.output.sort(order)
+        return self
+
+    def disp(self, bytime=True, maxentries=10):
+        """ Display the results of the profiling """
+        if not bytime:
+            self.sort(False)
+        for i,key,entry in self.output.enumitems():
+            if i>=maxentries:
+                break
+            sc.heading(f'Profile of {key}: {entry.time:n}')
+            print(entry.data)
+        return
 
 
 def mprofile(run, follow=None, show_results=True, *args, **kwargs):
