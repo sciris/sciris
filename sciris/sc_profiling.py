@@ -561,6 +561,7 @@ class profile(sc.prettyobj):
                 do_run=True, verbose=True, *args, **kwargs):
         self.run_func = run
         self.follow = follow
+        self.private = private
         self.include = include
         self.exclude = exclude
         self.verbose = verbose
@@ -595,7 +596,7 @@ class profile(sc.prettyobj):
         for f in follow_funcs:
             prof.add_function(f)
         prof.enable_by_count()
-        wrapper = prof(self.run) # pragma: no cover
+        wrapper = prof(self.run_func) # pragma: no cover
 
         # Run the profiling
         with sc.timer() as T:
