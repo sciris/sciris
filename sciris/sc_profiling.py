@@ -492,7 +492,7 @@ def loadbalancer(maxcpu=0.9, maxmem=0.9, index=None, interval=None, cpu_interval
 #%% Profiling functions
 ##############################################################################
 
-__all__ += ['profile', 'mprofile', 'cprofile', 'tracecalls']
+__all__ += ['profile', 'mprofile', 'cprofile', 'listfuncs', 'tracecalls']
 
 
 class profile(sc.prettyobj):
@@ -554,6 +554,7 @@ class profile(sc.prettyobj):
         sc.profile(run=f, follow=Foo.__init__, a=10) # "a" is passed to the function
 
     | *New in version 3.2.0:* allow class and module arguments for "follow"; "private" argument
+    | *New in version 3.2.2:* converted to a class
     """
     def __init__(self, run, follow=None, private='__init__', include=None, exclude=None,
                 print_stats=True, verbose=True, *args, **kwargs):
@@ -565,60 +566,9 @@ class profile(sc.prettyobj):
 
         # Figure out follow
         if follow is None: # pragma: no cover
-            follow = run
-        orig_list = sc.tolist(follow)
-
-        m_list = [] # List of modules (to be turned into functions/classes)
-        c_list = [] # List of classes (to be turned into functions)
-        f_list = [] # List of functions (to be used)
-        include = sc.tolist(include)
-        exclude = sc.tolist(exclude)
-
-        # First parse into the different categories
-        for obj in orig_list:
-            if sc.isfunc(obj): # Simple: just a function
-                f_list.append(obj)
-            elif isinstance(obj, types.ModuleType):
-                m_list.append(obj)
-            elif isinstance(obj, type):
-                c_list.append(obj)
-            else:
-                c_list.append(obj.__class__) # Everything is a class
-
-        def get_attrs(parent):
-            """ Safely get the attributes of a module/class """
-            attrs = sc.objatt(parent, private=private, return_keys=True)
-            objs = []
-            for attr in attrs:
-                try:
-                    obj = getattr(parent, attr)
-                    objs.append(obj)
-                except: # Don't worry too much if some fail
-                    pass
-            return objs
-
-        # First take a pass and convert any modules to functions and classes
-        for mod in m_list:
-            objs = get_attrs(mod)
-            for obj in objs:
-                if sc.isfunc(obj): # It's a function, use it directly
-                    f_list.append(obj)
-                elif isinstance(obj, type): # It's a class, add it to the class list
-                    c_list.append(obj)
-
-        # Then convert any classes to functions/objects
-        for cla in c_list:
-            objs = get_attrs(cla)
-            for obj in objs:
-                if sc.isfunc(obj):
-                    f_list.append(obj)
-
-        # Finally, do any filtering
-        if include:
-            f_list = [f for f in f_list if any(inc in str(f) for inc in include)]
-        if exclude:
-            f_list = [f for f in f_list if not any(exc in str(f) for exc in exclude)]
-
+            f_list = [run]
+        else:
+            f_list = listfuncs(follow, private=private, include=include, exclude=exclude)
         if verbose:
             print(f'Profiling {len(f_list)} function(s):\n', sc.newlinejoin(f_list), '\n')
 
@@ -631,56 +581,100 @@ class profile(sc.prettyobj):
         wrapper = prof(run) # pragma: no cover
 
         # Run the profiling
-        wrapper(*args, **kwargs) # pragma: no cover
+        with sc.timer() as T:
+            wrapper(*args, **kwargs) # pragma: no cover
         run = orig_func # Restore run for argument passing
 
         # Store outputs
+        self.run = run
         self.follow = follow
         self.include = include
         self.exclude = exclude
         self.follow_funcs = f_list
         self.prof = prof
+        self.total = T.total
         self._parse()
         if print_stats:
             self.disp()
         return
+
+    def __add__(self, other):
+        """ Allow multiple instances to be combined """
+        if not isinstance(other, profile):
+            errormsg = f'Can only add two sc.profile() instances, not {type(other)}'
+            raise TypeError(errormsg)
+
+        # Merge simple lists and timings
+        out = self.__class__.__new__(self.__class__) # New empty class
+        out.run = sc.mergelists(self.run, other.run)
+        out.follow = sc.mergelists(self.follow, other.follow)
+        out.follow_funcs = sc.mergelists(self.follow_funcs, other.follow_funcs)
+        out.prof = sc.mergelists(self.prof, other.prof)
+        out.total = self.total + other.total
+
+        # Merge outputs
+        out.output = self.output.copy(deep=True)
+        orig_len = len(self.output)
+        for key,entry in other.output.copy(deep=True).items():
+            entry.order += orig_len # Update ordering
+            out.output[key] = entry
+
+        # Recalculate percentages
+        for entry in out.output.values():
+            entry.percent = entry.time / out.total * 100
+
+        # Regenerate dataframe
+        out.to_df()
+        return out
+
 
     @staticmethod
     def _path_to_name(filepath, lineno):
         """ Helper function to convert a file/line number to a qualified path (via ChatGPT) """
         import ast # Not used elsewhere
 
-        with open(filepath, 'r') as f:
-            source = f.read()
+        try:
+            with open(filepath, 'r') as f:
+                source = f.read()
 
-        tree = ast.parse(source, filename=filepath)
-        context_stack = []
-        name = None
+            tree = ast.parse(source, filename=filepath)
+            context_stack = []
+            name = None
 
-        class ContextVisitor(ast.NodeVisitor):
-            def visit_ClassDef(self, node):
-                context_stack.append(node.name)
-                self.generic_visit(node)
-                context_stack.pop()
-
-            def visit_FunctionDef(self, node):
-                if node.lineno == lineno:
-                    context_stack.append(node.name)
-                    nonlocal name
-                    name = '.'.join(context_stack)
-                    context_stack.pop()
-                else:
+            class ContextVisitor(ast.NodeVisitor):
+                def visit_ClassDef(self, node):
                     context_stack.append(node.name)
                     self.generic_visit(node)
                     context_stack.pop()
 
-        # Do the mapping
-        ContextVisitor().visit(tree)
-        module_name = os.path.splitext(os.path.basename(filepath))[0]
-        if name:
-            return f'{module_name}.{name}'
+                def visit_FunctionDef(self, node):
+                    if node.lineno == lineno:
+                        context_stack.append(node.name)
+                        nonlocal name
+                        name = '.'.join(context_stack)
+                        context_stack.pop()
+                    else:
+                        context_stack.append(node.name)
+                        self.generic_visit(node)
+                        context_stack.pop()
+
+            # Do the mapping
+            ContextVisitor().visit(tree)
+        except:
+            name = None
+
+        try:
+            module_name = os.path.splitext(os.path.basename(filepath))[0]
+        except:
+            module_name = None
+
+        if module_name:
+            if name:
+                return f'{module_name}.{name}'
+            else:
+                return f'{module_name}.py:{lineno}'
         else:
-            return f'{module_name}.py:{lineno}'
+            return f'{filepath}:{lineno}'
 
     def _parse(self):
         """ Parse text output into a dictionary (with ChatGPT) """
@@ -695,12 +689,13 @@ class profile(sc.prettyobj):
             section = 'Total time:' + chunk  # Re-add the delimiter for consistency
 
             # Extract time
-            time_match = re.search(r'Total time:\s*([0-9.]+)', section)
+            time_match = re.search(r'Total time:\s*([0-9.+-eE]+)', section)
             time = float(time_match.group(1)) if time_match else None
+            percent = time/self.total*100
 
             # Extract file
-            file_match = re.search(r'File:\s*(\S+)', section)
-            file = file_match.group(1) if file_match else None
+            file_match = re.search(r'File:\s*(.+)', section)
+            file = file_match.group(1).strip() if file_match else None
 
             # Extract function name and line number
             func_match = re.search(r'Function:\s*(\w+)\s+at line\s+(\d+)', section)
@@ -709,41 +704,123 @@ class profile(sc.prettyobj):
 
             # Get the qualified name if available
             func_name = self._path_to_name(file, lineno)
+            name = sc.uniquename(func_name, self.output.keys(), style='_%d')
 
             # Store
             entry = sc.objdict(
+                name = name,
                 order = i,
                 time = time,
+                percent = percent,
                 file = file,
                 function = function,
                 lineno = lineno,
                 data = section,
             )
-            self.output[func_name] = entry
+            self.output[name] = entry
 
         self.sort()
+        self.to_df()
         return
 
-    def sort(self, bytime=True):
-        """ Sort or unsort by time """
+    def sort(self, bytime=1, copy=False):
+        """
+        Sort or unsort by time.
+
+        Args:
+            bytime (int): if 1, sort by increasing time (default); if -1, sort by decreasing; if 0, do not sort by time
+        """
+        entries = self.output.values()
         if bytime:
-            times = [entry.time for entry in self.output.values()]
-            order = np.argsort(times)[::-1] # Flip to be descending order
+            times = bytime*np.array([e.time for e in entries]) # Multiply by bytime to flip the order if needed
+            order = np.argsort(times)
         else:
-            order = [entry.order for entry in self.output.values()]
-        self.output.sort(order)
-        return self
+            order = np.argsort([e.order for e in entries])
+        out = self.output.sort(order, copy=copy)
+        if copy:
+            return out
+        else:
+            return self
 
-    def disp(self, bytime=True, maxentries=10):
+    def _get_entries(self, bytime, maxentries):
+        """ Helper function to return correct number of entries in correct order """
+        entries = self.sort(bytime=bytime, copy=True)
+        entries = entries.values()
+        if maxentries:
+            if bytime == 1: # Skip the first entries
+                entries = entries[-maxentries:]
+            elif bytime == -1: # Skip the last entries
+                entries = entries[:maxentries]
+        return entries
+
+    def disp(self, bytime=1, maxentries=10):
         """ Display the results of the profiling """
-        if not bytime:
-            self.sort(False)
-        for i,key,entry in self.output.enumitems():
-            if i>=maxentries:
-                break
-            sc.heading(f'Profile of {key}: {entry.time:n}')
-            print(entry.data)
+        entries = self._get_entries(bytime, maxentries)
+        for e in entries:
+            sc.heading(f'Profile of {e.name}: {e.time:n} s ({e.percent:n}%)')
+            print(e.data)
         return
+
+    def to_df(self, bytime=1, maxentries=None):
+        data = []
+        entries = self._get_entries(bytime, maxentries)
+        for e in entries:
+            cols = ['name', 'time', 'percent', 'function', 'file', 'lineno', 'order']
+            row = {col:e[col] for col in cols}
+            data.append(row)
+        df = sc.dataframe(data)
+        self.df = df
+        return df
+
+    def plot(self, bytime=1, maxentries=10, figkwargs=None, barkwargs=None):
+        """
+        Plot the time spent on each function.
+
+        Args:
+            bytime (bool): if True, order events by total time rather than actual order
+            figkwargs (dict): passed to ``plt.figure()``
+            barkwargs (dict): passed to ``plt.bar()``
+        """
+        # Assemble data
+        df = self.to_df(bytime, maxentries)
+        ylabels = df.name
+        if bytime:
+            y = np.arange(len(ylabels))
+        else:
+            y = df.order.values
+
+        x = df.time.values
+        pcts = df.percent.values
+
+        if x.max() < 1:
+            x *= 1e3
+            unit = 'ms'
+        else:
+            unit = 's'
+
+        # Assemble labels
+        for i in range(len(df)):
+            timestr = sc.sigfig(x[i], 3) + f' {unit}'
+            pctstr = sc.sigfig(pcts[i], 3) + '%'
+            ylabels[i] += f'()\n{timestr}, {pctstr}'
+
+        # Trim if needed
+        if maxentries:
+            x = x[:maxentries]
+            y = y[:maxentries]
+            ylabels = ylabels[:maxentries]
+
+        # Do the plotting
+        barkwargs = sc.mergedicts(barkwargs)
+        fig = plt.figure(**sc.mergedicts(figkwargs))
+        plt.barh(y, width=x, **barkwargs)
+        plt.yticks(y, ylabels)
+        plt.xlabel(f'Time ({unit})')
+        plt.ylabel('Function')
+        plt.grid(True)
+        sc.figlayout()
+        sc.boxoff()
+        return fig
 
 
 def mprofile(run, follow=None, show_results=True, *args, **kwargs):
@@ -985,6 +1062,78 @@ class cprofile(sc.prettyobj):
         """ Stop profiling in a context block """
         self.stop()
         return
+
+
+def listfuncs(*args, private='__init__', include=None, exclude=None):
+    """
+    Enumerate all functions in the supplied arguments; used in sc.profile().
+
+    If module(s) are supplied, recursively search themfor functions and classes.
+    If class(es) are supplied, search them for methods. Otherwise, search input(s) for
+    functions.
+
+    Args:
+        args (list): the arguments to parse for functions; can be modules, classes, or functions.
+        private (bool/str/list): if True and a class is supplied, follow private functions; if a string/list, follow only those private functions (default ``'__init__'``)
+        include (str): if a class/module is supplied, include only functions matching this string
+        exclude (str): if a class/module is supplied, exclude functions matching this string
+
+    *New in version 3.2.2.*
+    """
+    orig_list = sc.mergelists(*args)
+
+    m_list = [] # List of modules (to be turned into functions/classes)
+    c_list = [] # List of classes (to be turned into functions)
+    f_list = [] # List of functions (to be used)
+    include = sc.tolist(include)
+    exclude = sc.tolist(exclude)
+
+    # First parse into the different categories
+    for obj in orig_list:
+        if sc.isfunc(obj): # Simple: just a function
+            f_list.append(obj)
+        elif isinstance(obj, types.ModuleType):
+            m_list.append(obj)
+        elif isinstance(obj, type):
+            c_list.append(obj)
+        else:
+            c_list.append(obj.__class__) # Everything is a class
+
+    def get_attrs(parent):
+        """ Safely get the attributes of a module/class """
+        attrs = sc.objatt(parent, private=private, return_keys=True)
+        objs = []
+        for attr in attrs:
+            try:
+                obj = getattr(parent, attr)
+                objs.append(obj)
+            except: # Don't worry too much if some fail
+                pass
+        return objs
+
+    # First take a pass and convert any modules to functions and classes
+    for mod in m_list:
+        objs = get_attrs(mod)
+        for obj in objs:
+            if sc.isfunc(obj): # It's a function, use it directly
+                f_list.append(obj)
+            elif isinstance(obj, type): # It's a class, add it to the class list
+                c_list.append(obj)
+
+    # Then convert any classes to functions/objects
+    for cla in c_list:
+        objs = get_attrs(cla)
+        for obj in objs:
+            if sc.isfunc(obj):
+                f_list.append(obj)
+
+    # Finally, do any filtering
+    if include:
+        f_list = [f for f in f_list if any(inc in str(f) for inc in include)]
+    if exclude:
+        f_list = [f for f in f_list if not any(exc in str(f) for exc in exclude)]
+
+    return f_list
 
 
 class tracecalls(sc.prettyobj):
