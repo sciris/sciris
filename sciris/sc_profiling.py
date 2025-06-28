@@ -511,6 +511,7 @@ class profile(sc.prettyobj):
         private (bool/str/list): if True and a class is supplied, follow private functions; if a string/list, follow only those private functions (default ``'__init__'``)
         include (str): if a class/module is supplied, include only functions matching this string
         exclude (str): if a class/module is supplied, exclude functions matching this string
+        do_run (bool): whether to run immediately (default: true)
         print_stats (bool): whether to print the statistics of the profile to stdout (default True)
         verbose (bool): list the functions to be profiled
         args (list): Passed to the function to be run
@@ -557,7 +558,22 @@ class profile(sc.prettyobj):
     | *New in version 3.2.2:* converted to a class
     """
     def __init__(self, run, follow=None, private='__init__', include=None, exclude=None,
-                print_stats=True, verbose=True, *args, **kwargs):
+                do_run=True, verbose=True, *args, **kwargs):
+        self.run_func = run
+        self.follow = follow
+        self.include = include
+        self.exclude = exclude
+        self.verbose = verbose
+        self.args = args
+        self.kwargs = kwargs
+        if do_run:
+            self.run()
+            if verbose:
+                self.disp()
+        return
+
+    def run(self):
+        """ Run profiling """
         try:
             from line_profiler import LineProfiler
         except ModuleNotFoundError as E: # pragma: no cover
@@ -565,48 +581,48 @@ class profile(sc.prettyobj):
             raise ModuleNotFoundError(errormsg) from E
 
         # Figure out follow
-        if follow is None: # pragma: no cover
-            f_list = [run]
+        if self.follow is None: # pragma: no cover
+            follow_funcs = [self.run_func]
         else:
-            f_list = listfuncs(follow, private=private, include=include, exclude=exclude)
-        if verbose:
-            print(f'Profiling {len(f_list)} function(s):\n', sc.newlinejoin(f_list), '\n')
+            follow_funcs = listfuncs(self.follow, private=self.private, include=self.include, exclude=self.exclude)
+
+        if self.verbose:
+            print(f'Profiling {len(follow_funcs)} function(s):\n', sc.newlinejoin(follow_funcs), '\n')
 
         # Construct the wrapper
-        orig_func = run # Needed for argument passing
+        orig_func = self.run_func # Needed for argument passing
         prof = LineProfiler()
-        for f in f_list:
+        for f in follow_funcs:
             prof.add_function(f)
         prof.enable_by_count()
-        wrapper = prof(run) # pragma: no cover
+        wrapper = prof(self.run) # pragma: no cover
 
         # Run the profiling
         with sc.timer() as T:
-            wrapper(*args, **kwargs) # pragma: no cover
-        run = orig_func # Restore run for argument passing
+            wrapper(*self.args, **self.kwargs) # pragma: no cover
+        self.run_func = orig_func # Restore run for argument passing
 
-        # Store outputs
-        self.run = run
-        self.follow = follow
-        self.include = include
-        self.exclude = exclude
-        self.follow_funcs = f_list
+        self.follow_funcs = follow_funcs
         self.prof = prof
         self.total = T.total
         self._parse()
-        if print_stats:
+        if self.verbose:
             self.disp()
+
         return
 
-    def __add__(self, other):
+    def __add__(self, other, copy=True):
         """ Allow multiple instances to be combined """
         if not isinstance(other, profile):
             errormsg = f'Can only add two sc.profile() instances, not {type(other)}'
             raise TypeError(errormsg)
 
         # Merge simple lists and timings
-        out = self.__class__.__new__(self.__class__) # New empty class
-        out.run = sc.mergelists(self.run, other.run)
+        if copy:
+            out = self.__class__.__new__(self.__class__) # New empty class
+        else:
+            out = self
+        out.run_func = sc.mergelists(self.run_func, other.run_func)
         out.follow = sc.mergelists(self.follow, other.follow)
         out.follow_funcs = sc.mergelists(self.follow_funcs, other.follow_funcs)
         out.prof = sc.mergelists(self.prof, other.prof)
@@ -627,6 +643,8 @@ class profile(sc.prettyobj):
         out.to_df()
         return out
 
+    def __iadd__(self, other):
+        return self.__add__(other, copy=False)
 
     @staticmethod
     def _path_to_name(filepath, lineno):
@@ -783,7 +801,7 @@ class profile(sc.prettyobj):
         """
         # Assemble data
         df = self.to_df(bytime, maxentries)
-        ylabels = df.name
+        ylabels = df.name.values
         if bytime:
             y = np.arange(len(ylabels))
         else:
