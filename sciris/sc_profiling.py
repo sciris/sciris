@@ -738,6 +738,10 @@ class profile(sc.prettyobj):
             )
             self.output[name] = entry
 
+        # The last name extracted is the name of the function that was run
+        self.run_func_name = name
+
+        # Sort and convert to dataframe
         self.sort()
         self.to_df()
         return
@@ -761,10 +765,12 @@ class profile(sc.prettyobj):
         else:
             return self
 
-    def _get_entries(self, bytime, maxentries):
+    def _get_entries(self, bytime, maxentries, skiprun):
         """ Helper function to return correct number of entries in correct order """
         entries = self.sort(bytime=bytime, copy=True)
         entries = entries.values()
+        if skiprun:
+            entries = [e for e in entries if e.name != self.run_func_name]
         if maxentries:
             if bytime == 1: # Skip the first entries
                 entries = entries[-maxentries:]
@@ -772,9 +778,9 @@ class profile(sc.prettyobj):
                 entries = entries[:maxentries]
         return entries
 
-    def disp(self, bytime=1, maxentries=10):
+    def disp(self, bytime=1, maxentries=10, skiprun=False):
         """ Display the results of the profiling """
-        entries = self._get_entries(bytime, maxentries)
+        entries = self._get_entries(bytime, maxentries, skiprun)
         for e in entries:
             sc.heading(f'Profile of {e.name}: {e.time:n} s ({e.percent:n}%)')
             print(e.data)
@@ -782,7 +788,7 @@ class profile(sc.prettyobj):
 
     def to_df(self, bytime=1, maxentries=None):
         data = []
-        entries = self._get_entries(bytime, maxentries)
+        entries = self._get_entries(bytime, maxentries, skiprun=False)
         for e in entries:
             cols = ['name', 'time', 'percent', 'function', 'file', 'lineno', 'order']
             row = {col:e[col] for col in cols}
@@ -797,6 +803,7 @@ class profile(sc.prettyobj):
 
         Args:
             bytime (bool): if True, order events by total time rather than actual order
+            maxentries (int): how many entries to show
             figkwargs (dict): passed to ``plt.figure()``
             barkwargs (dict): passed to ``plt.bar()``
         """
