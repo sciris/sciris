@@ -815,6 +815,7 @@ def getrowscols(n, nrows=None, ncols=None, ratio=1, make=False, tight=True, remo
     | *New in version 1.0.0.*
     | *New in version 1.2.0:* "make", "tight", and "remove_extra" arguments
     | *New in version 1.3.0:* alias without underscores
+    | *New in version 3.2.2:* extra axes deleted rather than set to invisible
     """
 
     # Simple cases -- calculate the one missing
@@ -832,10 +833,13 @@ def getrowscols(n, nrows=None, ncols=None, ratio=1, make=False, tight=True, remo
     # If asked, make subplots
     if make: # pragma: no cover
         fig, axs = plt.subplots(nrows=nrows, ncols=ncols, **kwargs)
+        fig._subplots_shape = (nrows, ncols) # Store this information for modifying later
+        fig._n_subplots = nrows*ncols
         if remove_extra:
+            fig._n_subplots = n
             flat = axs.flat[n:] if isinstance(axs, np.ndarray) else []
             for ax in flat:
-                ax.set_visible(False) # to remove last plot
+                fig.delaxes(ax)
         if tight:
             figlayout(fig, tight=True)
         return fig,axs
@@ -1307,7 +1311,7 @@ def datenumformatter(ax=None, start_date=None, dateformat=None, interval=None, s
 #%% Figure saving
 ##############################################################################
 
-__all__ += ['savefig', 'savefigs', 'loadfig', 'emptyfig', 'separatelegend', 'orderlegend']
+__all__ += ['savefig', 'savefigs', 'loadfig', 'emptyfig', 'separatelegend', 'orderlegend', 'movelegend']
 
 
 
@@ -1641,6 +1645,121 @@ def orderlegend(order=None, ax=None, handles=None, labels=None, reverse=None, **
     ax.legend(handles, labels, **kwargs)
 
     return
+
+
+def movelegend(ax1, ax2=None, invisible=True, **kwargs):
+    """
+    Move the legend from one axes to another, preserving properties.
+
+    Note 1: does not require the first legend to actually exist, just that handles
+    exist (e.g. by plotting with the "label" argument); see example below.
+
+    Note 2: see ``seaborn.move_legend()`` for a similar function.
+
+    Args:
+        ax1 (plt.Axes): the axes to move the legend from
+        ax2 (plt.Axes): the axes to move the legend to (if None, use current axes)
+        invisible (bool): if True, set the axis to be invisible (just showing the legend) if no artists are in the destination axes
+        kwargs (dict): passed to ``plt.legend()``
+
+    **Example**::
+
+        import numpy as np
+        import sciris as sc
+
+        fig, axs = sc.getrowscols(3, make=True)
+
+        for i,ax in enumerate(fig.axes):
+            for j in range(4):
+                ax.plot(np.random.rand(50)*(1+j), 'o', label=f'Scale = {j}')
+
+        ax4 = fig.add_subplot(2,2,4)
+        sc.movelegend(ax, ax4) # Can be any of the axes since they have the same legend
+
+    | *New in version 3.2.2.*
+    """
+    def get_legend_props(leg):
+        """ Helper function to copy legend properties over """
+        props = dict()
+        simple_attrs = [
+            'shadow',
+            'numpoints',
+            'scatterpoints',
+            'markerscale',
+            'markerfirst',
+            'columnspacing',
+            'handlelength',
+            'handletextpad',
+            'borderpad',
+        ]
+        mapped_attrs = {'_ncol':'ncol', '_loc':'loc', 'get_frame_on':'frameon'}
+        frame_attrs = {'get_alpha':'framealpha', 'get_facecolor':'facecolor', 'get_edgecolor':'edgecolor'}
+
+        # Handle simple attributes
+        for attr in simple_attrs:
+            value = getattr(leg, attr, None)
+            props[attr] = value
+
+        # Handle mapped attributes
+        for attr,key in mapped_attrs.items():
+            if attr.startswith('get_'): # It's a method
+                try:
+                    method = getattr(leg, attr, None)
+                    value = method() if method else None
+                except:
+                    value = None
+            else: # It's an attribute
+                value = getattr(leg, attr, None)
+            props[key] = value
+
+        # Handle frame attributes
+        frame = leg.get_frame()
+        if frame:
+            for attr,key in frame_attrs.items():
+                try:
+                    method = getattr(frame, attr, None)
+                    value = method() if method else None
+                except:
+                    value = None
+                props[key] = value
+
+        # Handle font size and title
+        if leg.get_texts():
+            props['fontsize'] = leg.get_texts()[0].get_fontsize()
+        if leg.get_title():
+            props['title'] = leg.get_title().get_text()
+
+        # Remove any None entries
+        props = {k:v for k,v in props.items() if v is not None}
+        return props
+
+    if ax2 is None:
+        ax2 = plt.gca()
+
+    # Get the legend elements from ax1
+    handles, labels = ax1.get_legend_handles_labels()
+    if not handles:
+        errormsg = f'No legend handles found in {ax1}'
+        raise ValueError(errormsg)
+
+    # Get the actual legend, if available, and extract properties
+    orig = ax1.get_legend()
+    if orig is not None:
+        props = get_legend_props(orig)
+        orig.remove() # Remove original
+    else:
+        props = {}
+    props.update(kwargs)
+
+    # Create the legend in ax2
+    new = ax2.legend(handles, labels, **props)
+
+    # Set axes visibility
+    if not ax2.artists:
+        ax2.axis('off')
+
+    return new
+
 
 
 #%% Animation
