@@ -1,0 +1,101 @@
+# CLAUDE.md
+
+This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
+
+## Development Commands
+
+### Testing
+- **Run all tests:** `cd tests && ./run_tests` (uses pytest with parallel execution)
+- **Run specific test:** `cd tests && pytest test_<module>.py -v`
+- **Check test coverage:** `cd tests && ./check_coverage` (generates HTML report at tests/htmlcov/index.html)
+- **Environment:** Tests run with `SCIRIS_BACKEND=agg` to prevent matplotlib windows
+
+### Documentation
+- **Build docs:** `cd docs && ./build_docs` (builds Sphinx documentation)
+- **Build docs without notebooks:** `cd docs && ./build_docs never`
+- **Debug mode (serial):** `cd docs && ./build_docs debug`
+- **Output:** Documentation built to docs/_build/html/index.html
+
+### Development Setup
+- **Install package:** `pip install -e .` (editable install from pyproject.toml)
+- **Test requirements:** `pip install -r tests/requirements.txt`
+- **Python version:** Requires Python >=3.9
+
+## Architecture Overview
+
+Sciris is a scientific Python utilities library with a modular design organized around functional domains:
+
+### Core Module Structure
+- **sc_utils.py** - Fundamental utilities, type checking, convenience functions
+- **sc_odict.py** - Enhanced dictionary class (OrderedDict + list features)
+- **sc_nested.py** - Nested dictionary and complex object operations
+- **sc_math.py** - Mathematical operations and array manipulations
+- **sc_dataframe.py** - DataFrame utilities and extensions
+- **sc_datetime.py** - Date and time handling
+- **sc_fileio.py** - File I/O, pickling, JSON, YAML, Excel operations
+- **sc_plotting.py** - Matplotlib extensions and 3D plotting
+- **sc_colors.py** - Color management and utilities
+- **sc_printing.py** - Enhanced printing, formatting, progress display
+- **sc_parallel.py** - Parallelization using multiprocess
+- **sc_profiling.py** - Performance profiling and timing
+- **sc_settings.py** - Global configuration management
+- **sc_versioning.py** - Object versioning and compatibility
+
+### Key Design Patterns
+
+**Unified Namespace:**
+- All functions accessible via `import sciris as sc`
+- Flat namespace design (e.g., `sc.odict()`, `sc.save()`, `sc.parallel()`)
+- Common import pattern: `import sciris as sc` used internally
+
+**Core Data Structure:**
+- `odict` class is central - combines dict, list, and array features
+- Supports integer indexing, slicing, and key-based access
+- Used throughout library as flexible container
+
+**API Consistency:**
+- Save/load function pairs (e.g., `save()`/`load()`, `savejson()`/`loadjson()`)
+- Common parameters: `verbose`, `copy`, `die` (error handling)
+- Type-agnostic inputs with automatic conversion
+
+**Environment Awareness:**
+- Platform detection utilities (`iswindows()`, `islinux()`, `ismac()`)
+- Thread control via `SCIRIS_NUM_THREADS` environment variable
+- Optional lazy loading with `SCIRIS_LAZY`
+
+### File Organization Principles
+
+**Main Package:** All core functionality in `sciris/` directory with `sc_` prefix
+**Optional Components:** `sciris/_extras/` for optional dependencies
+**No Circular Imports:** Strategic use of delayed imports and `import sciris as sc`
+
+## Common Development Patterns
+
+### Adding New Functions
+1. Choose appropriate module based on functional domain
+2. Follow naming conventions (snake_case, descriptive names)
+3. Use consistent parameter patterns (`verbose=None`, error handling)
+4. Add comprehensive docstrings with examples
+5. Import in module's `__all__` list for namespace inclusion
+
+### Testing New Features
+1. Add test in corresponding `tests/test_<module>.py`
+2. Test both success and failure cases
+3. Use `sc_test_utils.py` helper functions where applicable
+4. Run coverage check to ensure adequate testing
+
+### Performance Considerations
+- Library designed for scientific computing efficiency
+- Use NumPy operations where possible
+- Consider parallel execution for expensive operations
+- Respect thread limits set by `SCIRIS_NUM_THREADS`
+
+## File I/O Patterns
+
+Sciris provides unified I/O through `sc_fileio.py`:
+- `save()`/`load()` - Universal pickling with compression
+- `savejson()`/`loadjson()` - JSON with jsonpickle for complex objects
+- `saveobj()`/`loadobj()` - Alternative object serialization
+- Excel support through `loadspreadsheet()` and `Blobject.export()`
+
+All I/O functions handle both file paths and file objects, with automatic compression detection.
