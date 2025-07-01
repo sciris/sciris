@@ -31,6 +31,8 @@ Using pip: ``pip install sciris``
 
 Using conda: ``conda install -c conda-forge sciris``
 
+Using uv: ``uv add sciris``
+
 *Requires Python >= 3.7*.
 
 
