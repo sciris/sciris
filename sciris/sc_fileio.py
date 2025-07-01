@@ -1043,6 +1043,7 @@ def rmpath(path=None, *args, die=True, verbose=True, interactive=False, **kwargs
                 raise FileNotFoundError(errormsg)
             elif verbose:
                 print(errormsg)
+            continue # Nothing else to do for this file
         else:
             if os.path.isfile(path):
                 rm_func = os.remove

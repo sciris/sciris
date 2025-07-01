@@ -1761,7 +1761,7 @@ def uniquename(name=None, namelist=None, style=None, human=False, suffix=None):
     Args:
         name (str): the string to ensure is unique
         namelist (list): the list of strings that are taken
-        style (str): a custom style for appending the counter
+        style (str): a custom style for appending the counter that takes a single argument for the integer repeat; default '%d'
         human (bool): if True, use ' (%d)' as the style instead of '%d'
         suffix (str): if provided, remove this suffix from each name and add it back to the unique name
 
