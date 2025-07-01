@@ -10,7 +10,11 @@ By import convention, components of the Sciris library are listed beginning with
 
 Version 3.2.2 (2025-07-01)
 --------------------------
+#. :class:`sc.profile() <sc_profiling.profile>` has been converted from a function to a class, with many new features, including improved display, exporting to dataframe, plotting, etc.
+#. :class:`sc.listfuncs() <sc_profiling.listfuncs>` will list all functions across supplied modules, classes, and (of course) functions.
 #. :class:`sc.timer() <sc_datetime.timer>` can now be used as a function decorator.
+#. :func:`sc.movelegend() <sc_plotting.movelegend>` will move a legend from one axes to another.
+#. :func:`sc.getrowscols() <sc_plotting.getrowscols>` now deletes rather than hides extra axes.
 
 
 Version 3.2.1 (2025-04-19)
