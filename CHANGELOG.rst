@@ -15,7 +15,7 @@ Version 3.2.2 (2025-07-01)
 #. :class:`sc.timer() <sc_datetime.timer>` can now be used as a function decorator.
 #. :func:`sc.movelegend() <sc_plotting.movelegend>` will move a legend from one axes to another.
 #. :func:`sc.getrowscols() <sc_plotting.getrowscols>` now deletes rather than hides extra axes.
-
+#. Added ``llms.txt`` since our robot overlords told us to.
 
 Version 3.2.1 (2025-04-19)
 --------------------------
