@@ -8,6 +8,11 @@ All major updates to Sciris are documented here.
 By import convention, components of the Sciris library are listed beginning with ``sc.``, e.g. ``sc.odict()``.
 
 
+Version 3.2.2 (2025-07-01)
+--------------------------
+#. :class:`sc.timer() <sc_datetime.timer>` can now be used as a function decorator.
+
+
 Version 3.2.1 (2025-04-19)
 --------------------------
 #. Replaced :func:`sc.datetoyear(reverse=True) <sc_datetime.datetoyear>` with :func:`sc.yeartodate() <sc_datetime.yeartodate>`.
