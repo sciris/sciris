@@ -613,9 +613,6 @@ def perturb(*args, n=1, span=0.5, randseed=None, normal=False):
             n = arg
     elif len(args) == 2:
         n, span = args[0], args[1]
-        if not (np.iterable(n) or isinstance(n, int)):
-            errormsg = 'First argument must be an integer or array'
-            raise TypeError(errormsg)
     elif len(args) > 2:
         errormsg = 'For more than two arguments, call sc.perturb() with keyword arguments rather than positional arguments'
         raise TypeError(errormsg)
