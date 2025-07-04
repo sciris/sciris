@@ -209,6 +209,9 @@ def plot3d(x, y, z, c='index', fig=True, ax=None, returnfig=False, figkwargs=Non
         axkwargs (dict): :func:`plt.axes() <matplotlib.pyplot.axes>`
         kwargs (dict): passed to :func:`plt.plot() <matplotlib.pyplot.plot>`
 
+    Returns:
+        `ax` if returnfig=False; `(fig,ax)` if returnfig=True
+
     **Examples**::
 
         x,y,z = np.random.rand(3,10)
