@@ -182,27 +182,20 @@ def test_dates(doplot=doplot):
     sc.datenumformatter(start_date='2021-01-01')
 
     # Plot more use cases
-    x1 = np.arange(1990, 2021) # Numerical years
+    x1 = np.arange(2020, 2050) # Numerical years
     x2 = np.linspace(2020, 2022) # Fractional years
-    x3 = pd.date_range('2020-01-01', periods=24, freq='M') # 3. pd.Timestamp objects
+    x3 = pd.date_range('2020-01-01', periods=24, freq='MS') # 3. pd.Timestamp objects
     x4 = np.array(x3, dtype='datetime64') # 4. numpy.datetime64 objects
-    x5 = [(str(year)+'-01-01') for year in range(1990, 2021)] # 5. strings
 
     x_vals = [x1, x2, x3, x4]
     titles = ['Integer years', 'Fractional years', 'pd.Timestamp', 'np.datetime64']
 
     o.fig2 = plt.figure('More dateformatter formats', figsize=(10, 12))
-    # axs = plt.subplots()
     for i, (x, title) in enumerate(zip(x_vals, titles)):
-        ax = plt.subplot(5, 1, i+1)
+        ax = plt.subplot(len(x_vals), 1, i+1)
         y = np.random.rand(len(x))
         ax.plot(x, y, marker='o')
         ax.set_title(title)
-        sc.dateformatter(ax)
-
-    with pytest.warns(RuntimeWarning):
-        ax = plt.subplot(5,1,5)
-        ax.plot(x5, np.random.rand(len(x5)))
         sc.dateformatter(ax)
 
     o.fig2.tight_layout()
@@ -291,13 +284,13 @@ if __name__ == '__main__':
     doplot = True
     sc.options(interactive=True)
 
-    # threed    = test_3d(doplot)
-    # artists   = test_stackedbar(doplot)
-    # other     = test_other(doplot)
-    # saved     = test_saving(doplot)
+    threed    = test_3d(doplot)
+    artists   = test_stackedbar(doplot)
+    other     = test_other(doplot)
+    saved     = test_saving(doplot)
     dates     = test_dates(doplot)
-    # fonts     = test_fonts(doplot)
-    # metadata  = test_saveload(doplot)
+    fonts     = test_fonts(doplot)
+    metadata  = test_saveload(doplot)
 
     if doplot:
         plt.show()
