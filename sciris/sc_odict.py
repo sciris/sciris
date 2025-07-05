@@ -17,10 +17,48 @@ import collections as co
 import sciris as sc
 
 # Restrict imports to user-facing modules
-__all__ = ['ddict', 'odict', 'objdict', 'dictobj', 'asobj']
+__all__ = ['ddict', 'counter', 'odict', 'objdict', 'dictobj', 'asobj']
 
 ddict = co.defaultdict # Define alias
-OD = dict # Base class; was OrderedDict before v3.0.0
+
+
+class counter(co.Counter):
+    """
+    Like ``collections.Counter``, but with additional supported mathematical operations.
+
+    ``sc.counter`` has an "array" property, which converts the values to a NumPy array;
+    methods not available to a ``Counter`` object are performed on the array instead.
+
+    **Examples**::
+
+        vals = [1,1,12,3,4,2,4,2,53,5,5,6,2,3,5]
+        counts = sc.counter(vals)
+        counts.max() # returns 3
+
+    | *New in version 3.2.3.*
+    """
+    @property
+    def array(self):
+        """ NumPy array of values """
+        return np.array(list(self.values()))
+
+    def disp(self):
+        return sc.pr(self)
+
+    def __getitem__(self, key):
+        if isinstance(key, slice):
+            return self.array[key]
+        else:
+            return super().__getitem__(key)
+
+    def __getattr__(self, attr):
+        """ For all other operations, try to perform them on the array """
+        try:
+            return getattr(self.array, attr)
+        except Exception as e:
+            errormsg = f'"{attr}" is not a recognized method of Counter or array objects'
+            raise AttributeError(errormsg) from e
+
 
 class odict(OD):
     """
@@ -93,7 +131,7 @@ class odict(OD):
             if defaultdict != 'nested' and not callable(defaultdict): # pragma: no cover
                 errormsg = f'The defaultdict argument must be either "nested" or callable, not {type(defaultdict)}'
                 raise TypeError(errormsg)
-            self._setattr('_defaultdict', defaultdict) # Use OD.__setattr__() since setattr() is overridden by sc.objdict()
+            self._setattr('_defaultdict', defaultdict) # Use dict.__setattr__() since setattr() is overridden by sc.objdict()
 
         self._cache_keys()
         return
@@ -114,12 +152,12 @@ class odict(OD):
 
     def _setattr(self, key, value):
         """ Shortcut to OrderedDict method """
-        return OD.__setattr__(self, key, value)
+        return dict.__setattr__(self, key, value)
 
 
     def _setitem(self, key, value):
         """ Shortcut to OrderedDict method """
-        return OD.__setitem__(self, key, value)
+        return dict.__setitem__(self, key, value)
 
 
     def __getitem__(self, key, allow_default=True):
@@ -127,14 +165,14 @@ class odict(OD):
 
         # First, try just getting the item
         try:
-            output = OD.__getitem__(self, key)
+            output = dict.__getitem__(self, key)
             return output
         except Exception as E:
 
             if isinstance(key, sc._stringtypes) or isinstance(key, tuple): # Normal use case: just use a string key
                 if isinstance(E, KeyError): # We already encountered an exception, usually a KeyError
                     try: # Handle defaultdict behavior by first checking if it exists
-                        _defaultdict = OD.__getattribute__(self, '_defaultdict')
+                        _defaultdict = dict.__getattribute__(self, '_defaultdict')
                     except:
                         _defaultdict = None
                     if _defaultdict is not None and allow_default: # If it does, use it, then get the key again
@@ -154,12 +192,12 @@ class odict(OD):
 
             elif isinstance(key, sc._numtype): # Convert automatically from float
                 thiskey = self._ikey(key)
-                return OD.__getitem__(self, thiskey) # Note that defaultdict behavior isn't supported for non-string lookup
+                return dict.__getitem__(self, thiskey) # Note that defaultdict behavior isn't supported for non-string lookup
 
             elif isinstance(key, slice): # Handle a slice -- complicated
                 try:
                     slicekeys = self._slicetokeys(key)
-                    slicevals = [OD.__getitem__(self, k) for k in slicekeys]
+                    slicevals = [dict.__getitem__(self, k) for k in slicekeys]
                     output = self._sanitize_items(slicevals)
                     return output
                 except Exception as E: # pragma: no cover
@@ -175,7 +213,7 @@ class odict(OD):
                 return output
 
             else: # pragma: no cover # Handle everything else (rare)
-                return OD.__getitem__(self, key)
+                return dict.__getitem__(self, key)
 
 
     def __setitem__(self, key, value):
@@ -197,13 +235,13 @@ class odict(OD):
                 slicelen = len(slicekeys)
                 if valuelen == slicelen:
                     for valind,k in enumerate(slicekeys):
-                        OD.__setitem__(self, k, value[valind])  # e.g. odict[:] = arr[:]
+                        dict.__setitem__(self, k, value[valind])  # e.g. odict[:] = arr[:]
                 else: # pragma: no cover
                     errormsg = f'Slice "{key}" and values "{value}" have different lengths! ({slicelen}, {len(value)})'
                     raise ValueError(errormsg)
             else:
                 for k in slicekeys:
-                    OD.__setitem__(self, k, value) # e.g. odict[:] = 4
+                    dict.__setitem__(self, k, value) # e.g. odict[:] = 4
 
         elif self._is_odict_iterable(key) and hasattr(value, '__len__'): # Iterate over items
             if len(key)==len(value):
@@ -374,11 +412,11 @@ class odict(OD):
         """ Default delitem, except set stale to true and allow numeric values; slices etc are not supported """
         self._setattr('_stale', True) # Flag to refresh the cached keys
         try:
-            return OD.__delitem__(self, key)
+            return dict.__delitem__(self, key)
         except Exception as E: # pragma: no cover
             if isinstance(key, sc._numtype): # If it's a number, use that
                 thiskey = self._ikey(key)
-                return OD.__delitem__(self, thiskey) # Note that defaultdict behavior isn't supported for non-string lookup
+                return dict.__delitem__(self, thiskey) # Note that defaultdict behavior isn't supported for non-string lookup
             else:
                 raise E
 
@@ -497,14 +535,14 @@ class odict(OD):
         """ Allows pop to support strings, integers, slices, lists, or arrays """
         self._setattr('_stale', True) # Flag to refresh the cached keys
         if isinstance(key, sc._stringtypes):
-            return OD.pop(self, key, *args, **kwargs)
+            return dict.pop(self, key, *args, **kwargs)
         elif isinstance(key, sc._numtype): # Convert automatically from float...dangerous?
             thiskey = self._ikey(key)
-            return OD.pop(self, thiskey, *args, **kwargs)
+            return dict.pop(self, thiskey, *args, **kwargs)
         elif isinstance(key, slice): # Handle a slice -- complicated
             try:
                 slicekeys = self._slicetokeys(key)
-                slicevals = [OD.pop(self, k, *args, **kwargs) for k in slicekeys]
+                slicevals = [dict.pop(self, k, *args, **kwargs) for k in slicekeys]
                 output = self._sanitize_items(slicevals)
                 return output
             except Exception as E: # pragma: no cover
@@ -520,7 +558,7 @@ class odict(OD):
                 return listvals
         else: # pragma: no cover # Handle string but also everything else
             try:
-                return OD.pop(self, key, *args, **kwargs)
+                return dict.pop(self, key, *args, **kwargs)
             except: # Duplicated from __getitem__
                 keys = self.keys()
                 if len(keys): errormsg = f'odict key "{key}" not found; available keys are:\n{sc.newlinejoin(keys)}'
@@ -1072,15 +1110,15 @@ class odict(OD):
 
     def keys(self):
         """ Return a list of keys (as in Python 2), not a dict_keys object. """
-        return list(OD.keys(self))
+        return list(dict.keys(self))
 
     def values(self):
         """ Return a list of values (as in Python 2). """
-        return list(OD.values(self))
+        return list(dict.values(self))
 
     def items(self, transpose=False):
         """ Return a list of items (as in Python 2). """
-        iterator = list(OD.items(self))
+        iterator = list(dict.items(self))
         if transpose: iterator = tuple(sc.transposelist(iterator))
         return iterator
 
