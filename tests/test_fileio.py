@@ -4,7 +4,7 @@ Test Sciris file I/O functions.
 
 import os
 import numpy as np
-import pylab as pl
+import matplotlib.pyplot as plt
 import openpyxl
 import sciris as sc
 import pytest
@@ -38,7 +38,7 @@ def test_spreadsheets():
         'header':{'bold':True, 'bg_color':'#3c7d3e', 'color':'#ffffff'},
         'plain': {},
         'big':   {'bg_color':'#ffcccc'}}
-    formatdata = pl.zeros((nrows+1, ncols), dtype=object) # Format data needs to be the same size
+    formatdata = np.zeros((nrows+1, ncols), dtype=object) # Format data needs to be the same size
     formatdata[1:,:] = 'plain' # Format data
     formatdata[1:,:][testdata[1:,:]>0.7] = 'big' # Find "big" numbers and format them differently
     formatdata[0,:] = 'header' # Format header
@@ -80,7 +80,7 @@ def test_spreadsheets():
     wb = sc.Spreadsheet().new()
     S = sc.Spreadsheet(files.excel)
     S.writecells(cells=['A6','B7','C8','D9'], vals=['This','is','a','test']) # Method 1
-    S.writecells(cells=[pl.array([7,1])+i for i in range(4)], vals=['And','so','is','this']) # Method 2
+    S.writecells(cells=[np.array([7,1])+i for i in range(4)], vals=['And','so','is','this']) # Method 2
     newdata = (np.random.rand(3,3)*100).round()
     S.writecells(startrow=14, startcol=1, vals=newdata, verbose=True) # Method 3
     S.save()

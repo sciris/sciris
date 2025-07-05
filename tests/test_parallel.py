@@ -4,7 +4,7 @@ Test parallelization functions and classes
 
 import sciris as sc
 import numpy as np
-import pylab as pl
+import matplotlib.pyplot as plt
 import multiprocessing as mp
 import pytest
 ut = sc.importbypath(sc.thispath() / 'sc_test_utils.py')
@@ -35,8 +35,8 @@ def test_embarrassing():
     sc.heading('Example 2 -- simple usage for "embarrassingly parallel" processing')
 
     def rnd():
-        import pylab as pl
-        return pl.rand()
+        import numpy as np
+        return np.random.rand()
 
     results = sc.parallelize(rnd, 10)
     print(results)
@@ -61,7 +61,7 @@ def test_noniterated(doplot=doplot):
     sc.heading('Example 4 -- using non-iterated arguments and dynamic load balancing')
 
     def myfunc(i, x, y):
-        xy = [x+i*pl.randn(100), y+i*pl.randn(100)]
+        xy = [x+i*np.random.randn(100), y+i*np.random.randn(100)]
         return xy
 
     xylist1 = sc.parallelize(myfunc, kwargs={'x':3, 'y':8}, iterarg=range(5), maxcpu=0.8, interval=0.1) # Use kwargs dict
@@ -69,10 +69,10 @@ def test_noniterated(doplot=doplot):
 
     if doplot:
         for p,xylist in enumerate([xylist1, xylist2]):
-            pl.subplot(2,1,p+1)
+            plt.subplot(2,1,p+1)
             for i,xy in enumerate(reversed(xylist)):
-                pl.scatter(xy[0], xy[1], label='Run %i'%i)
-            pl.legend()
+                plt.scatter(xy[0], xy[1], label='Run %i'%i)
+            plt.legend()
     return
 
 
@@ -93,7 +93,7 @@ def test_exceptions():
 
     # Test serial (debug) mode
     n = 10
-    iterkwargs = dict(x=pl.arange(n), y=pl.linspace(0,1,n))
+    iterkwargs = dict(x=np.arange(n), y=np.linspace(0,1,n))
     res1 = sc.parallelize(good_func, iterkwargs=iterkwargs)
     res2 = sc.parallelize(good_func, iterkwargs=iterkwargs, serial=True)
     assert res1 == res2

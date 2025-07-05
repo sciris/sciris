@@ -3,7 +3,7 @@ Test Sciris math functions.
 '''
 
 import numpy as np
-import pylab as pl
+import matplotlib.pyplot as plt
 import sciris as sc
 import pytest
 
@@ -102,8 +102,8 @@ def test_find():
     assert found.count == 2
 
     print('Testing sc.findfirst(), sc.findlast()')
-    found.first = sc.findfirst(pl.rand(10))
-    found.last = sc.findlast(pl.rand(10))
+    found.first = sc.findfirst(np.random.rand(10))
+    found.last = sc.findlast(np.random.rand(10))
     sc.findlast([1,2,3], 4, die=False)
     with pytest.raises(IndexError):
         sc.findlast([1,2,3], 4)
@@ -197,15 +197,15 @@ def test_smooth(doplot=doplot):
     o = sc.objdict()
 
     print('Testing sc.smooth()')
-    data = pl.randn(200,100)
+    data = np.random.randn(200,100)
     o.smoothdata = sc.smooth(data,10)
 
     print('Testing sc.smoothinterp()')
     n = 50
-    x1 = pl.arange(n)
-    y1 = pl.randn(n)
+    x1 = np.arange(n)
+    y1 = np.random.randn(n)
     y1[10] = np.nan
-    x2 = pl.linspace(-5,n+5,100)
+    x2 = np.linspace(-5,n+5,100)
     o.smoothinterp = sc.smoothinterp(x2, x1, y1)
     assert np.isnan(o.smoothinterp).sum() == 0
     assert np.nanmin(y1) < o.smoothinterp.min()
@@ -215,21 +215,21 @@ def test_smooth(doplot=doplot):
     assert np.isnan(si).sum() > 0
     
     print('Testing sc.rolling()')
-    d = pl.randn(365)
+    d = np.random.randn(365)
     o.r = sc.rolling(d, replacenans=False)
     assert sum(abs(np.diff(d))) > sum(abs(np.diff(o.r))) # Rolling should make the diffs smaller
     for op in ['none', 'median', 'sum']:
         sc.rolling(d, operation=op)
     
     if doplot:
-        pl.subplot(3,1,1)
-        pl.pcolor(data)
-        pl.subplot(3,1,2)
-        pl.pcolor(o.smoothdata)
-        pl.subplot(3,1,3)
-        pl.scatter(x1, y1)
-        pl.plot(x2, o.smoothinterp)
-        pl.show()
+        plt.subplot(3,1,1)
+        plt.pcolor(data)
+        plt.subplot(3,1,2)
+        plt.pcolor(o.smoothdata)
+        plt.subplot(3,1,3)
+        plt.scatter(x1, y1)
+        plt.plot(x2, o.smoothinterp)
+        plt.show()
 
     return o
 
@@ -239,25 +239,25 @@ def test_gauss1d(doplot=doplot):
 
     # Setup
     n = 20
-    x = np.sort(pl.rand(n))
-    y = (x-0.3)**2 + 0.2*pl.rand(n)
+    x = np.sort(np.random.rand(n))
+    y = (x-0.3)**2 + 0.2*np.random.rand(n)
 
     # Smooth
     yi = sc.gauss1d(x, y)
     yi2 = sc.gauss1d(x, y, scale=0.3)
-    xi3 = pl.linspace(0, 1, n)
+    xi3 = np.linspace(0, 1, n)
     yi3 = sc.gauss1d(x, y, xi3)
 
     # Plot oiginal and interpolated versions
     if doplot:
         kw = dict(alpha=0.5, lw=2, marker='o')
-        pl.figure()
-        pl.scatter(x, y,  label='Original')
-        pl.plot(x, yi,    label='Default smoothing', **kw)
-        pl.plot(x, yi2,   label='More smoothing', **kw)
-        pl.plot(xi3, yi3, label='Uniform spacing', **kw)
-        pl.legend()
-        pl.show()
+        plt.figure()
+        plt.scatter(x, y,  label='Original')
+        plt.plot(x, yi,    label='Default smoothing', **kw)
+        plt.plot(x, yi2,   label='More smoothing', **kw)
+        plt.plot(xi3, yi3, label='Uniform spacing', **kw)
+        plt.legend()
+        plt.show()
 
     return yi3
 
@@ -284,7 +284,7 @@ def test_gauss2d(doplot=doplot):
         sc.scatter3d(x, y, z, c=z)
         sc.surf3d(zi)
         sc.scatter3d(xi2, yi2, zi2, c=zi2)
-        pl.show()
+        plt.show()
 
     return zi
 
