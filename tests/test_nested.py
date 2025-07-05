@@ -94,7 +94,7 @@ def test_nested_detailed(): # With Claude
     # Test 7: getnested with default value
     test7 = {'a': {'b': 'exists'}}
     result7a = sc.getnested(test7, ['a', 'b'])
-    result7b = sc.getnested(test7, ['a', 'missing'], default='default_val')
+    result7b = sc.getnested(test7, ['a', 'missing', 'multiple'], default='default_val')
     o.test7 = {'exists': result7a, 'default': result7b}
     assert result7a == 'exists'
     assert result7b == 'default_val'

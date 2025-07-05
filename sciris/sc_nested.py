@@ -181,7 +181,7 @@ def get_from_obj(ndict, key, safe=False, default=None, **kwargs):
         kwargs (dict): passed to ``check_iter_type()``
     """
     if default is not None:
-        safe= True
+        safe = True
     itertype = check_iter_type(ndict, **kwargs)
     if itertype == 'dict':
         if safe:
@@ -202,7 +202,11 @@ def get_from_obj(ndict, key, safe=False, default=None, **kwargs):
         else:
             out = getattr(ndict, key, default)
     else:
-        out = None
+        if safe:
+            out = default
+        else:
+            errormsg = f'Cannot iterate over object of type {type(ndict)} with inferred iteration type "{itertype}"'
+            raise TypeError(errormsg)
     return out
 
 
@@ -235,7 +239,7 @@ def getnested(nested, keylist, safe=False, default=None):
 
     Args:
         nested (any): the nested object (dict, list, or object) to get from
-        keylist (list): the list of keys
+        keylist (str/list/tuple): the keys to get (typically a list)
         safe (bool): whether to return the "default" value if the key is not found
         default (any): the value to return if the key is not found (sets safe=True if provided)
 
@@ -245,10 +249,19 @@ def getnested(nested, keylist, safe=False, default=None):
 
     See :func:`sc.makenested() <makenested>` for full documentation.
     """
+    if default is not None:
+        safe = True
     keylist = sc.tolist(keylist, coerce='tuple')
     get = ft.partial(get_from_obj, safe=safe, default=default)
-    nested = ft.reduce(get, keylist, nested)
-    return nested
+    out = ft.reduce(get, keylist, nested)
+    # try:
+    #     out = ft.reduce(get, keylist, nested)
+    # except (IndexError, AttributeError) as e:
+    #     if safe:
+    #         out = default
+    #     else:
+    #         raise e
+    return out
 
 
 def setnested(nested, keylist, value, force=True, generator=None):
