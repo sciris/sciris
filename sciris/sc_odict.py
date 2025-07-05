@@ -721,7 +721,11 @@ class odict(OD):
 
 
     def dcp(self):
-        """ Shortcut to odict.copy(deep=True) """
+        """
+        Shortcut to odict.copy(deep=True).
+
+        | *New in version 3.2.3.*
+        """
         return self.copy(deep=True)
 
 
