@@ -720,6 +720,11 @@ class odict(OD):
         return new
 
 
+    def dcp(self):
+        """ Shortcut to odict.copy(deep=True) """
+        return self.copy(deep=True)
+
+
     def rename(self, oldkey, newkey):
         """ Change a key name (note: not optimized for speed) """
         nkeys = len(self)
