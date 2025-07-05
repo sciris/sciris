@@ -4,6 +4,7 @@ Test Sciris utility/helper functions.
 
 import numpy as np
 import sciris as sc
+import functools
 import pytest
 
 
@@ -309,7 +310,7 @@ def test_types():
 def test_is_x():
     sc.heading('Testing type and other checkers')
 
-    print('Testing is<os>')
+    print('Testing is[os]')
     system = [sc.iswindows(), sc.ismac(), sc.islinux()]
     assert sum(system) == 1, 'Cannot have more than one operating system'
 
@@ -331,18 +332,45 @@ def test_is_x():
         assert not sc.isnumber(val)
 
     print('Testing isstring')
-    for val in ['a', b'b', r'c']:
-        assert sc.isstring(val)
-    for val in
+    for val in ['a', r'c']:
+        assert isinstance(val, str) and sc.isstring(val)
+    for val in [b'b', bytes([1]), bytearray([1])]:
+        assert not isinstance(val, str) and sc.isstring(val)
 
+    print('Testing isfunc')
 
-    assert not isinstance(b'b', str) and sc.isstring(b'b')
+    class Foo:
+        def m1(self): pass
 
-    # isstring(obj):
-    # isarray(obj, dtype=None):
-    # isfunc(obj):
-    # ismodule(obj):
+        @staticmethod
+        def m2(): pass
 
+        @classmethod
+        def m3(cls): pass
+
+    def bar(a,b):
+        return a+1
+
+    foo = Foo()
+    babar = functools.partial(bar, b=1)
+    lam = lambda x: x
+
+    for func in [Foo.m1, Foo.m2, Foo.m3, foo.m1, foo.m2, foo.m3, bar, babar, lam]:
+        assert sc.isfunc(func)
+
+    class NotFunc:
+        def __call__(self): print("Still not a function")
+
+    for notfunc in [1, 'a', list, NotFunc, NotFunc()]:
+        assert not sc.isfunc(notfunc)
+
+    print('Testing ismodule')
+    for val in [sc, np, pytest]:
+        assert sc.ismodule(val)
+    for val in [1, 'a', foo]:
+        assert not sc.ismodule(val)
+
+    return system
 
 
 #%% Misc. functions

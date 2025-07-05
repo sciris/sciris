@@ -47,7 +47,7 @@ from pathlib import Path
 import sciris as sc
 
 # Handle types
-_stringtypes = (str, bytes)
+_stringtypes = (str, bytes, bytearray)
 _numtype     = (numbers.Number,)
 _booltypes   = (bool, np.bool_)
 
