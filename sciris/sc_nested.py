@@ -37,9 +37,9 @@ __all__ = ['getnested', 'setnested', 'makenested', 'iternested', 'IterObj', 'ite
            'mergenested', 'flattendict', 'nestedloop']
 
 
-def makenested(obj, keylist=None, value=None, overwrite=True, generator=None, copy=False):
+def makenested(obj=None, keylist=None, value=None, overwrite=True, generator=None, copy=False):
     """
-    Make a nested object (such as a dictionary).
+    Make or set a nested object (such as a dictionary).
 
     Args:
         obj (any): the object to make the nested list in
@@ -72,11 +72,10 @@ def makenested(obj, keylist=None, value=None, overwrite=True, generator=None, co
         foo = {}
         sc.makenested(foo, ['a','b'])
         foo['a']['b'] = 3
-        print(sc.getnested(foo, ['a','b']))    # 3
+        print(sc.getnested(foo, ['a','b'])) # 3
         sc.setnested(foo, ['a','b'], 7)
-        print(sc.getnested(foo, ['a','b']))    # 7
-        sc.makenested(foo, ['bar','cat'])
-        sc.setnested(foo, ['bar','cat'], 'in the hat')
+        print(sc.getnested(foo, ['a','b'])) # 7
+        sc.makenested(foo, ['bar','cat'], value='in the hat')
         print(foo['bar'])  # {'cat': 'in the hat'}
 
     **Example 2**::
@@ -100,12 +99,19 @@ def makenested(obj, keylist=None, value=None, overwrite=True, generator=None, co
 
     | *New in version 2014nov29.*
     | *New in version 3.2.0:* operate on arbitrary objects; "overwrite" defaults to True; returns object
+    | *New in version 3.2.3:* explicitly replace setnested functionality
     """
+    if obj is None:
+        obj = {}
     if copy:
         obj = sc.dcp(obj)
     currentlevel = obj
     keylist = sc.tolist(keylist, coerce='tuple')
-    for i,key in enumerate(keylist[:-1]):
+    if not len(keylist):
+        errormsg = f'At least one key must be supplied, not {keylist}'
+        raise ValueError(keylist)
+    parentkeys = keylist[:-1]
+    for i,key in enumerate(parentkeys):
         if not check_in_obj(currentlevel, key):
             if generator is not None:
                 gen_func = generator
@@ -264,18 +270,16 @@ def getnested(nested, keylist, safe=False, default=None):
     return out
 
 
-def setnested(nested, keylist, value, force=True, generator=None):
+# def setnested(obj, keylist, value, force=True, generator=None):
+def setnested(obj=None, keylist=None, value=None, **kwargs):
     """
-    Set the value for the given list of keys
-
-    If
+    Set the value for the given list of keys; alias for :func:`sc.makenested() <makenested>`.
 
     Args:
-        nested (any): the nested object (dict, list, or object) to modify
+        obj (any): the nested object (dict, list, or object) to modify
         keylist (list): the list of keys to use
         value (any): the value to set
-        force (bool): whether to create the keys if they don't exist
-        generator (class): if force is true
+        **kwargs (dict): passed to :func:`sc.makenested() <makenested>`
 
     **Example**::
 
@@ -283,18 +287,20 @@ def setnested(nested, keylist, value, force=True, generator=None):
 
     See :func:`sc.makenested() <makenested>` for full documentation.
     """
-    keylist = sc.tolist(keylist, coerce='tuple')
-    parentkeys = keylist[:-1]
-    try:
-        currentlevel = getnested(nested, parentkeys)
-    except KeyError as e:
-        if force:
-            currentlevel = nested.__class__()
-            makenested(nested, parentkeys, value=currentlevel, overwrite=False)
-        else:
-            raise e
-    set_in_obj(currentlevel, keylist[-1], value)
-    return nested # Return object, but note that it's modified in place
+    return makenested(obj=obj, keylist=keylist, value=value, **kwargs)
+
+    # keylist = sc.tolist(keylist, coerce='tuple')
+    # parentkeys = keylist[:-1]
+    # try:
+    #     currentlevel = getnested(nested, parentkeys)
+    # except KeyError as e:
+    #     if force:
+    #         currentlevel = nested.__class__()
+    #         makenested(nested, parentkeys, value=currentlevel, overwrite=False)
+    #     else:
+    #         raise e
+    # set_in_obj(currentlevel, keylist[-1], value)
+    # return nested # Return object, but note that it's modified in place
 
 
 def iternested(nesteddict, _previous=None):

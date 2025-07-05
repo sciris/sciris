@@ -49,168 +49,95 @@ def test_nested():
     return o
 
 
-def test_nested_detailed(): # With Claude
-    sc.heading('Testing nested functions detailed')
+def test_nested_detailed():
+    sc.heading('Testing nested functions in detail')
     o = sc.objdict()
 
     # Test 1: Basic makenested with simple list
-    test1 = {}
-    sc.makenested(test1, ['a', 'b', 'c'])
-    o.test1 = test1
-    assert test1 == {'a': {'b': {'c': None}}}
+    o.d1 = sc.makenested({}, ['a', 'b', 'c'])
+    assert o.d1 == {'a': {'b': {'c': None}}}
 
     # Test 2: makenested with single key
-    test2 = {}
-    sc.makenested(test2, 'single')
-    o.test2 = test2
-    assert test2 == {'single': None}
+    o.d2 = sc.makenested({}, 'single')
+    assert o.d2 == {'single': None}
 
     # Test 3: makenested with tuple keys
-    test3 = {}
-    sc.makenested(test3, ('x', 'y', 'z'))
-    o.test3 = test3
-    assert test3 == {'x': {'y': {'z': None}}}
+    o.d3 = sc.makenested({}, ('x', 'y', 'z'))
+    assert o.d3 == {'x': {'y': {'z': None}}}
 
     # Test 4: setnested with list keys
-    test4 = {}
-    sc.makenested(test4, ['level1', 'level2', 'level3'])
-    assert sc.getnested(test4, ['level1', 'level2', 'level3']) is None
-    sc.setnested(test4, ['level1', 'level2', 'level3'], 'deep_value')
-    o.test4 = test4
-    assert sc.getnested(test4, ['level1', 'level2', 'level3']) == 'deep_value'
+    o.d4 = sc.makenested({}, ['level1', 'level2', 'level3'])
+    assert sc.getnested(o.d4, ['level1', 'level2', 'level3']) is None
+    sc.setnested(o.d4, ['level1', 'level2', 'level3'], 'deep_value')
+    assert sc.getnested(o.d4, ['level1', 'level2', 'level3']) == 'deep_value'
 
     # Test 5: setnested with single key
-    test5 = {}
-    sc.setnested(test5, 'root', {'nested': 'dict'})
-    o.test5 = test5
-    assert sc.getnested(test5, 'root') == {'nested': 'dict'}
+    o.d5 = sc.setnested({}, 'root', {'nested': 'dict'})
+    assert sc.getnested(o.d5, 'root') == {'nested': 'dict'}
 
-    # Test 6: setnested creating nested structure automatically
-    test6 = {}
-    sc.setnested(test6, ['auto', 'create', 'path'], 42)
-    o.test6 = test6
-    assert sc.getnested(test6, ['auto', 'create', 'path']) == 42
+    # Test 6: getnested with default value
+    d6 = {'a': {'b': 'exists'}}
+    result6a = sc.getnested(d6, ['a', 'b'])
+    result6b = sc.getnested(d6, ['a', 'missing', 'multiple', 'levels'], default='default_val')
+    o.d6 = {'exists': result6a, 'default': result6b}
+    assert result6a == 'exists'
+    assert result6b == 'default_val'
 
-    # Test 7: getnested with default value
-    test7 = {'a': {'b': 'exists'}}
-    result7a = sc.getnested(test7, ['a', 'b'])
-    result7b = sc.getnested(test7, ['a', 'missing', 'multiple'], default='default_val')
-    o.test7 = {'exists': result7a, 'default': result7b}
-    assert result7a == 'exists'
-    assert result7b == 'default_val'
+    # Test 7a: Overwriting existing values
+    o.d7 = {'a': {'b': 'old_value'}}
+    sc.setnested(o.d7, ['a', 'b'], 'new_value')
+    assert sc.getnested(o.d7, ['a', 'b']) == 'new_value'
 
-    # Test 8: Mixed key types (string and int)
-    test8 = {}
-    sc.makenested(test8, ['items', 0, 'name'])
-    sc.setnested(test8, ['items', 0, 'name'], 'first_item')
-    o.test8 = test8
-    assert sc.getnested(test8, ['items', 0, 'name']) == 'first_item'
+    # Test 7b: Not overwriting existing values
+    with pytest.raises(ValueError):
+        sc.setnested(o.d7, ['a', 'b'], 'newer_value', overwrite=False)
+    with pytest.raises(ValueError):
+        sc.setnested(o.d7, ['a', 'b', 'new_value'], 'nested_value', overwrite=False)
 
-    # Test 9: Deep nesting (5 levels)
-    test9 = {}
-    keys9 = ['very', 'deep', 'nested', 'structure', 'end']
-    sc.makenested(test9, keys9)
-    assert sc.getnested(test9, keys9) is None
-    sc.setnested(test9, keys9, 'deep_end')
-    o.test9 = test9
-    assert sc.getnested(test9, keys9) == 'deep_end'
+    # Test 8: Setting complex objects (lists, dicts)
+    o.d8 = sc.setnested(sc.prettyobj(), ['data', 'numbers'], [1, 2, 3, 4])
+    assert sc.getnested(o.d8, ['data', 'numbers', 0]) == o.d8.data.numbers[0] == 1
+    assert isinstance(o.d8.data, sc.prettyobj)
+    assert isinstance(o.d8.data.numbers, list)
 
-    # Test 10: Overwriting existing values
-    test10 = {'a': {'b': 'old_value'}}
-    sc.setnested(test10, ['a', 'b'], 'new_value')
-    o.test10 = test10
-    assert sc.getnested(test10, ['a', 'b']) == 'new_value'
+    # Test 9: Empty key list behavior
+    o.d9 = {'root': 'value'}
+    assert sc.getnested(o.d9, []) == o.d9
+    with pytest.raises(ValueError):
+        sc.setnested(o.d9, None)
+    with pytest.raises(ValueError):
+        sc.makenested(o.d9, [])
 
-    # Test 11: Setting complex objects (lists, dicts)
-    test11 = {}
-    sc.setnested(test11, ['data', 'numbers'], [1, 2, 3, 4])
-    sc.setnested(test11, ['data', 'metadata'], {'type': 'test', 'version': 1.0})
-    o.test11 = test11
-    assert sc.getnested(test11, ['data', 'numbers']) == [1, 2, 3, 4]
-    assert sc.getnested(test11, ['data', 'metadata', 'type']) == 'test'
+    # Test 10: Key as string vs list equivalence
+    o.d10 = sc.setnested({}, 'simple', 'value1')
+    sc.setnested(o.d10, ['simple2'], 'value2')
+    assert sc.getnested(o.d10, ['simple']) == 'value1'
+    assert sc.getnested(o.d10, 'simple2') == 'value2'
 
-    # Test 12: Empty key list behavior
-    test12 = {'root': 'value'}
-    result12 = sc.getnested(test12, [])
-    o.test12 = result12
-    assert result12 == test12
+    # Test 11: generator tests
+    o.d11 = sc.makenested(sc.objdict(), ['a','b'], value={}, generator=dict) # Sets two levels of dicts
+    sc.setnested(o.d11.a['b'], ['c','d'], value='val', generator=sc.prettyobj) # Sets one level of prettyobj
+    assert isinstance(o.d11, sc.objdict)
+    assert isinstance(o.d11.a, dict)
+    assert isinstance(o.d11.a['b'], dict)
+    assert isinstance(o.d11.a['b']['c'], sc.prettyobj)
+    assert o.d11.a['b']['c'].d == 'val'
 
-    # Test 13: makenested on existing structure
-    test13 = {'a': {'existing': 'data'}}
-    sc.makenested(test13, ['a', 'new_branch'])
-    o.test13 = test13
-    assert 'existing' in test13['a']
-    assert 'new_branch' in test13['a']
-    assert test13['a']['new_branch'] is None
+    # Test 12: safe
+    o.d12 = {}
+    with pytest.raises(KeyError):
+        sc.getnested(o.d12, ['a','b'])
+    assert sc.getnested(o.d12, ['a','b'], safe=True) == None
+    assert sc.getnested(o.d12, ['a','b'], default='default') == 'default'
 
-    # Test 14: Numeric values and operations
-    test14 = {}
-    sc.setnested(test14, ['math', 'pi'], 3.14159)
-    sc.setnested(test14, ['math', 'e'], 2.71828)
-    o.test14 = test14
-    assert abs(sc.getnested(test14, ['math', 'pi']) - 3.14159) < 0.00001
+    # Test 13: copy
+    d13 = sc.objdict(original='dict')
+    o.d13 = sc.setnested(d13, 'original', 'new_dict', copy=True)
+    assert d13.original == 'dict'
+    assert o.d13.original == 'new_dict'
 
-    # Test 15: Boolean and None values
-    test15 = {}
-    sc.setnested(test15, ['flags', 'enabled'], True)
-    sc.setnested(test15, ['flags', 'disabled'], False)
-    sc.setnested(test15, ['empty'], None)
-    o.test15 = test15
-    assert sc.getnested(test15, ['flags', 'enabled']) is True
-    assert sc.getnested(test15, ['flags', 'disabled']) is False
-    assert sc.getnested(test15, ['empty']) is None
-
-    # Test 16: Key as string vs list equivalence
-    test16 = {}
-    sc.setnested(test16, 'simple', 'value1')
-    sc.setnested(test16, ['simple2'], 'value2')
-    o.test16 = test16
-    assert sc.getnested(test16, 'simple') == 'value1'
-    assert sc.getnested(test16, ['simple2']) == 'value2'
-
-    # Test 17: Nested list access
-    test17 = {}
-    sc.makenested(test17, ['data', 'items'])
-    assert sc.getnested(test17, ['data', 'items']) is None
-    test17['data']['items'] = [{'id': 1}, {'id': 2}, {'id': 3}]
-    result17 = sc.getnested(test17, ['data', 'items'])
-    o.test17 = result17
-    assert len(result17) == 3
-    assert result17[0]['id'] == 1
-
-    # Test 18: Complex key paths with mixed types
-    test18 = {}
-    complex_path = ['root', 'sub', 0, 'item', 'value']
-    sc.makenested(test18, complex_path)
-    assert sc.getnested(test18, complex_path) is None
-    sc.setnested(test18, complex_path, 'complex_value')
-    o.test18 = test18
-    assert sc.getnested(test18, complex_path) == 'complex_value'
-
-    # Test 19: Multiple parallel branches
-    test19 = {}
-    branches = [
-        (['branch1', 'leaf'], 'value1'),
-        (['branch2', 'leaf'], 'value2'),
-        (['branch3', 'subbranch', 'leaf'], 'value3')
-    ]
-    for path, value in branches:
-        sc.makenested(test19, path)
-        assert sc.getnested(test19, path) is None
-        sc.setnested(test19, path, value)
-    o.test19 = test19
-    assert sc.getnested(test19, ['branch1', 'leaf']) == 'value1'
-    assert sc.getnested(test19, ['branch2', 'leaf']) == 'value2'
-    assert sc.getnested(test19, ['branch3', 'subbranch', 'leaf']) == 'value3'
-
-    # Test 20: Error handling with invalid paths
-    test20 = {'a': {'b': 'value'}}
-    try:
-        result20 = sc.getnested(test20, ['a', 'nonexistent'], default='fallback')
-        o.test20_success = result20
-        assert result20 == 'fallback'
-    except:
-        o.test20_error = 'Error occurred'
+    sc.setnested(d13, 'original', 'new_dict', copy=False)
+    d13.original == 'new_dict'
 
     return o
 
