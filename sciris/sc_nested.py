@@ -263,7 +263,6 @@ def getnested(nested, keylist, safe=False, default=None):
     return out
 
 
-# def setnested(obj, keylist, value, force=True, generator=None):
 def setnested(obj=None, keylist=None, value=None, **kwargs):
     """
     Set the value for the given list of keys; alias for :func:`sc.makenested() <makenested>`.
@@ -281,19 +280,6 @@ def setnested(obj=None, keylist=None, value=None, **kwargs):
     See :func:`sc.makenested() <makenested>` for full documentation.
     """
     return makenested(obj=obj, keylist=keylist, value=value, **kwargs)
-
-    # keylist = sc.tolist(keylist, coerce='tuple')
-    # parentkeys = keylist[:-1]
-    # try:
-    #     currentlevel = getnested(nested, parentkeys)
-    # except KeyError as e:
-    #     if force:
-    #         currentlevel = nested.__class__()
-    #         makenested(nested, parentkeys, value=currentlevel, overwrite=False)
-    #     else:
-    #         raise e
-    # set_in_obj(currentlevel, keylist[-1], value)
-    # return nested # Return object, but note that it's modified in place
 
 
 def iternested(nesteddict, _previous=None):
