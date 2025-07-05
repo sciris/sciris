@@ -6,7 +6,7 @@ Instructions:
     1. Create a new conda environment, install pypi-timemachine, and start a server.
     For example, for 2022:
 
-        conda create -n tm python=3.9 -y 
+        conda create -n tm python=3.9 -y
         conda activate tm
         pip install pypi-timemachine
         pypi-timemachine 2022-01-01 # shows port being used
@@ -20,7 +20,7 @@ Instructions:
 This has been run with the following arguments:
     # For the archive
     python make_archive.py 2023-04-19 1
-    
+
     # For the pickles
     python make_archive.py 2021-01-01 0
     python make_archive.py 2022-01-01 0

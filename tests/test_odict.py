@@ -213,7 +213,7 @@ def test_other():
     assert v[:].tolist() == [c,a,b]
     v.sort(sortby=[1,0,2])
     assert v[:].tolist() == [a,c,b]
-    
+
     print('Testing reverse')
     w = v.reversed()
     v.reverse()
@@ -223,7 +223,7 @@ def test_other():
     od  = sc.odict.promote(['There','are',4,'keys'])
     sc.odict.promote(od)
     sc.odict.promote(dict(od))
-    
+
     print('Testing clear')
     od.clear()
 
@@ -278,11 +278,11 @@ def test_asobj():
         myobjdict.x = 'cannot change actual attribute'
     with pytest.raises(AttributeError):
         myobjdict.setattribute('keys', 4)
-        
+
     print('Testing dictobj')
     obj = sc.dictobj(x=4, y=6)
-    obj.a = 5 
-    obj['b'] = 10 
+    obj.a = 5
+    obj['b'] = 10
     print(obj)
     fk = sc.dictobj.fromkeys(['foo', 'bar'])
     json = obj.to_json()
@@ -294,45 +294,45 @@ def test_asobj():
 
 def test_aliases():
     sc.heading('Testing aliases')
-    
+
     o = sc.odict(foo=[1,2,3], bar=[4,5,6])
     d = dict(o)
 
     print('Testing dict_keys')
     assert o.dict_keys() == d.keys()
-    
+
     print('Testing dict_values')
     odv = o.dict_values() # Not sure why direct comparison doesn't work
     dv = d.values()
     assert type(odv) == type(dv)
     for iodv,idv in zip(odv, dv):
         assert iodv == idv
-    
+
     print('Testing dict_items')
     assert o.dict_items() == d.items()
-    
+
     print('Testing iteritems')
     assert o.iteritems() == o.items()
-    
+
     print('Testing makenested')
     val = 7
     n = sc.odict()
     n.makenested(['a','b'], value=val)
-    
+
     print('Testing getnested')
     assert n.getnested(['a','b']) == val
-    
+
     print('Testing setnested')
     newval = 14
     n.setnested(['a','b'], newval)
     assert n.getnested(['a','b']) == newval
-    
+
     print('Testing iternested')
     count = 0
     for twig in n.iternested():
         count += 1
     assert count == 1
-    
+
     return
 
 

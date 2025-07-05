@@ -222,7 +222,7 @@ def test_timer():
     o.t4 = T
 
     print('Check auto naming')
-    T = sc.timer(auto=True, doprint=False)
+    T = sc.timer(auto=True, verbose=False)
     with sc.capture() as txt5:
         n1 = 5
         n2 = 2

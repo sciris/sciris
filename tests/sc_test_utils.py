@@ -26,11 +26,11 @@ def check_signatures(func1, func2, extras=None, missing=None, die=True):
         sigs.f2 = sigs.f2 - extras
     if missing:
         sigs.f1 = sigs.f1 - missing
-    
+
     eq = sigs.f1 == sigs.f2
     if die:
         assert eq, 'Signatures do not match'
-        
+
     return  eq
 
 
@@ -56,7 +56,7 @@ def create_complex_data(alt=False, nan=True, mixed=True, pandas=True):
     )
 
     frame = pd.DataFrame(data)
-    
+
     if pandas:
         out = sc.objdict(data=data, frame=frame, index=index)
     else:
@@ -67,7 +67,7 @@ def create_complex_data(alt=False, nan=True, mixed=True, pandas=True):
 
 class MyClass(sc.prettyobj):
     ''' Store common data types for compatibility checks'''
-    
+
     def __init__(self, date='2023-08-11', alt=False, nan=True, mixed=True, pandas=True):
         self.date = date
         self.strings = ['a', 'b', 'c', 'd', 'e']

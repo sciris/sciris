@@ -710,7 +710,7 @@ class profile(sc.prettyobj):
             # Extract time
             time_match = re.search(r'Total time:\s*([0-9.+-eE]+)', section)
             time = float(time_match.group(1)) if time_match else None
-            percent = time/self.total*100
+            percent = sc.safedivide(time, self.total, np.nan)*100
 
             # Extract file
             file_match = re.search(r'File:\s*(.+)', section)

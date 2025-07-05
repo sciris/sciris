@@ -467,7 +467,14 @@ def daydiff(*args):
 
     | *New in version 1.0.0.*
     | *New in version 3.0.0:* Calculated relative days with one argument
+    | *New in version 3.2.2:* handle list as first argument
     """
+    if sc.checktype(args[0], 'listlike'):
+        if len(args) == 1:
+            args = args[0]
+        else:
+            errormsg = f'You can supply either a list of dates or multiple arguments, but not both:\n{args}'
+            raise ValueError(errormsg)
     days = [date(day) for day in args]
     if len(days) == 1:
         days.insert(0, date(f'{days[0].year}-01-01')) # With one date, return days since Jan. 1st

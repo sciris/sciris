@@ -57,12 +57,12 @@ def _progressbar(globaldict, njobs, started, **kwargs):
 class Parallel:
     """
     Parallelization manager
-    
+
     For arguments and usage documentation, see :func:`sc.parallelize() <parallelize>`. Briefly,
     this class validates input arguments, sets the number of CPUs, creates a
     process (or thread) pool, starts the jobs running, retrieves the results from
     each job, and processes them into outputs.
-    
+
     Useful methods:
         reset(): reset the Parallel object to its initial pre-run state
         run_async(): the method that actually executes the parallelization (NB, used with every method, not only async ones)
@@ -79,9 +79,9 @@ class Parallel:
         success (list): whether each job completed successfully (true/false)
         exceptions (list): if not, store the exceptions that were raised
         times (dict): timing information on when the jobs were started, when they finished, and how long each job took
-    
+
     **Example**::
-        
+
         import sciris as sc
 
         def slowfunc(i):
@@ -94,14 +94,14 @@ class Parallel:
         P.monitor()
         P.finalize()
         print(P.times)
-        
+
     | *New in version 3.0.0.*
     | *New in version 3.1.0:* "globaldict" argument
     """
-    def __init__(self, func, iterarg=None, iterkwargs=None, args=None, kwargs=None, ncpus=None, 
-                 maxcpu=None, maxmem=None, interval=None, parallelizer=None, serial=False, 
+    def __init__(self, func, iterarg=None, iterkwargs=None, args=None, kwargs=None, ncpus=None,
+                 maxcpu=None, maxmem=None, interval=None, parallelizer=None, serial=False,
                  progress=False, callback=None, globaldict=None, label=None, die=True, **func_kwargs):
-        
+
         # Store input arguments
         self.func         = func
         self.iterarg      = iterarg
@@ -119,12 +119,12 @@ class Parallel:
         self.inputdict    = globaldict
         self.label        = label
         self.die          = die
-        
+
         # Additional initialization
         self.init()
         return
-    
-    
+
+
     def init(self):
         """
         Perform all remaining initialization steps; this can safely be called after object creation
@@ -135,8 +135,8 @@ class Parallel:
         self.set_ncpus()
         self.set_method()
         return
-    
-    
+
+
     def reset(self):
         """ Reset to the pre-run state """
         self.ncpus        = None
@@ -157,28 +157,28 @@ class Parallel:
         self._running     = False # Used interally; see self.running for the dynamically updated property
         self.already_run  = False
         return
-    
-    
+
+
     def __repr__(self):
         """ Brief representation of the object """
         labelstr = f'"{self.label}; "' if self.label else ''
         string   = f'Parallel({labelstr}jobs={self.njobs}; cpus={self.ncpus}; method={self.method}; status={self.status})'
         return string
-    
-    
+
+
     def disp(self):
         """ Display the full representation of the object """
         return sc.pr(self)
-    
-    
+
+
     def set_defaults(self):
         """ Define defaults for parallelization """
         self.defaults = sc.objdict()
-        
+
         # Define default parallelizers
         self.defaults.fast   = 'concurrent.futures'
         self.defaults.robust = 'multiprocess'
-        
+
         # Map parallelizer to consistent choices
         self.defaults.mapping = {
             'default'            : self.defaults.robust,
@@ -193,21 +193,21 @@ class Parallel:
             'thread'             : 'thread',
             'threadpool'         : 'thread',
         }
-        
+
         return
-    
-    
+
+
     def validate_args(self):
         """ Validate iterarg and iterkwargs """
         iterarg = self.iterarg
         iterkwargs = self.iterkwargs
         njobs = 0
-        
+
         # Check that only one was provided
         if iterarg is not None and iterkwargs is not None: # pragma: no cover
             errormsg = 'You can only use one of iterarg or iterkwargs as your iterable, not both'
             raise ValueError(errormsg)
-        
+
         # Validate iterarg
         if iterarg is not None:
             if not(sc.isiterable(iterarg)):
@@ -218,10 +218,10 @@ class Parallel:
                     errormsg = f'Could not understand iterarg "{iterarg}": not iterable and not an integer: {str(E)}'
                     raise TypeError(errormsg)
             njobs = len(iterarg)
-            
+
         # Validate iterkwargs
-        if iterkwargs is not None: 
-            
+        if iterkwargs is not None:
+
             if isinstance(iterkwargs, dict): # It's a dict of lists, e.g. {'x':[1,2,3], 'y':[2,3,4]}
                 for key,val in iterkwargs.items():
                     if not sc.isiterable(val): # pragma: no cover
@@ -233,38 +233,38 @@ class Parallel:
                         if len(val) != njobs: # pragma: no cover
                             errormsg = f'All iterkwargs iterables must be the same length, not {njobs} vs. {len(val)}'
                             raise ValueError(errormsg)
-            
+
             elif isinstance(iterkwargs, list): # It's a list of dicts, e.g. [{'x':1, 'y':2}, {'x':2, 'y':3}, {'x':3, 'y':4}]
                 njobs = len(iterkwargs)
                 for item in iterkwargs:
                     if not isinstance(item, dict): # pragma: no cover
                         errormsg = f'If iterkwargs is a list, each entry must be a dict, not {type(item)}'
                         raise TypeError(errormsg)
-            
+
             else: # pragma: no cover
                 errormsg = f'iterkwargs must be a dict of lists, a list of dicts, or None, not {type(iterkwargs)}'
                 raise TypeError(errormsg)
-    
+
         # Final error checking
         if njobs == 0:
             errormsg = 'Nothing found to parallelize: please supply an iterarg, iterkwargs, or both'
             raise ValueError(errormsg)
         else:
             self.njobs = njobs
-            
+
         return
-    
-    
+
+
     def set_ncpus(self):
         """ Configure number of CPUs """
-        
+
         # Handle maxload deprecation
         maxload = self.kwargs.pop('maxload', None)
         if maxload is not None: # pragma: no cover
             self.maxcpu = maxload
             warnmsg = 'sc.loadbalancer() argument "maxload" has been renamed "maxcpu" as of v2.0.0'
             warnings.warn(warnmsg, category=FutureWarning, stacklevel=2)
-        
+
         # Handle number of CPUs
         ncpus = self._ncpus # Copy, then process
         sys_cpus = sc.cpu_count()
@@ -273,25 +273,25 @@ class Parallel:
         elif 0 < ncpus < 1: # Less than one, treat as a fraction of total
             ncpus = int(np.ceil(sys_cpus*ncpus))
         ncpus = min(ncpus, self.njobs) # Don't use more CPUs than there are things to process
-        
+
         # Check and set CPUs
         if not ncpus > 0: # pragma: no cover
             errormsg = f'No CPUs to run on with inputs ncpus={ncpus}, system CPUs={sys_cpus}, and/or number of jobs={self.njobs}'
             raise ValueError(errormsg)
         self.ncpus = ncpus
         return
-    
-    
+
+
     def set_method(self):
         """ Choose which method to use for parallelization """
-        
+
         # Handle defaults for the parallelizer
         parallelizer = self.parallelizer
         if parallelizer is None or parallelizer == 'async':
             parallelizer = 'default'
-        if self.serial: 
+        if self.serial:
             parallelizer = 'serial'
-        
+
         # Handle the choice of parallelizer
         if sc.isstring(parallelizer):
             parallelizer = parallelizer.replace('copy', '').replace('async', '').replace('-', '')
@@ -302,7 +302,7 @@ class Parallel:
                 raise sc.KeyNotFoundError(errormsg)
         else: # pragma: no cover
             self.method = 'custom' # If a custom parallelizer is provided
-        
+
         # Handle async
         is_async = False
         supports_async = ['multiprocess', 'multiprocessing']
@@ -313,54 +313,54 @@ class Parallel:
                 errormsg = f'You have specified to use async with "{self.method}", but async is only supported for: {sc.strjoin(supports_async)}.'
                 raise ValueError(errormsg)
         self.is_async = is_async
-        
+
         return
-    
-    
+
+
     def make_pool(self):
         """ Make the pool and map function """
-        
+
         # Shorten variables
         ncpus    = self.ncpus
         method   = self.method
         is_async = self.is_async
-        
+
         def make_async_func(pool):
             if is_async:
                 map_func = partial(pool.map_async, callback=self._time_finished)
             else:
                 map_func = pool.map
             return map_func
-        
+
         # Choose parallelizer and map function
         if method == 'serial':
             pool = None
             map_func = lambda task,argslist: list(map(task, argslist))
-        
+
         elif method == 'multiprocess': # Main use case
             pool = mp.Pool(processes=ncpus)
             map_func = make_async_func(pool)
-        
+
         elif method == 'multiprocessing':
             pool = mpi.Pool(processes=ncpus)
             map_func = make_async_func(pool)
-        
+
         elif method == 'concurrent.futures':
             pool = cf.ProcessPoolExecutor(max_workers=ncpus)
             map_func = pool.map
-        
+
         elif method == 'thread':
             pool = cf.ThreadPoolExecutor(max_workers=ncpus)
             map_func = pool.map
-        
+
         elif method == 'custom':
             pool = None
             map_func = self.parallelizer
-        
+
         else: # Should be unreachable; exception should have already been caught # pragma: no cover
             errormsg = f'Invalid parallelizer "{self.parallelizer}"'
             raise ValueError(errormsg)
-            
+
         # Create a manager for sharing resources across jobs
         if method in ['serial', 'thread', 'custom']:
             manager = None
@@ -371,14 +371,14 @@ class Parallel:
             else:
                 manager = mpi.Manager() # Note "mpi" instead of "mp"
             globaldict = manager.dict() # Create a dict for sharing progress of each job
-        
+
         # Handle any supplied input
         if self.inputdict:
             if method == 'custom': # For something custom, use the inputdict directly, in case it's something special
                 globaldict = self.inputdict
             else:
                 globaldict.update(self.inputdict)
-        
+
         # Reset
         self.pool       = pool
         self.manager    = manager
@@ -388,7 +388,7 @@ class Parallel:
         self.jobs       = None
         self.rawresults = None
         self.results    = None
-        
+
         return
 
 
@@ -399,14 +399,14 @@ class Parallel:
         iterarg    = self.iterarg
         iterkwargs = self.iterkwargs
         argslist   = []
-        
+
         # Check for embarrassingly parallel run -- should already be validated
         if self.embarrassing:
             iterarg = np.arange(iterarg)
-            
+
         # Check for additional global arguments
         useglobal = True if self.inputdict is not None else False
-            
+
         # Construct the argument list for each job
         for index in range(self.njobs):
             if iterarg is None:
@@ -427,50 +427,50 @@ class Parallel:
                     raise TypeError(errormsg)
             taskargs = TaskArgs(func=self.func, index=index, njobs=self.njobs, iterval=iterval, iterdict=iterdict,
                                 args=self.args, kwargs=self.kwargs, maxcpu=self.maxcpu, maxmem=self.maxmem,
-                                interval=self.interval, embarrassing=self.embarrassing, callback=self.callback, 
-                                progress=self.progress, globaldict=self.globaldict, useglobal=useglobal, 
+                                interval=self.interval, embarrassing=self.embarrassing, callback=self.callback,
+                                progress=self.progress, globaldict=self.globaldict, useglobal=useglobal,
                                 started=self.times.started, die=self.die)
             argslist.append(taskargs)
-        
+
         self.argslist = argslist
         return
 
 
     def run_async(self):
         """ Choose how to run in parallel, and do it """
-        
+
         # Shorten variables
         method = self.method
         needs_copy = ['serial', 'thread', 'custom']
-        
+
         # Make the pool
         self.make_pool()
-        
+
         # Construct the argument list (has to be after the pool is made)
         self.times.started = sc.now()
         self.make_argslist()
-        
+
         # Handle optional deepcopy
         if sc.isstring(self.parallelizer) and '-copy' in self.parallelizer and method in needs_copy: # Don't deepcopy if we're going to pickle anyway
             argslist = [sc.dcp(arg, die=self.die) for arg in self.argslist]
         else:
             argslist = self.argslist
-        
+
         # Run it!
         output = self.map_func(_task, argslist)
-        
+
         # Store the pool; do not store the output list here
         if self.is_async:
             self.jobs = output
         else:
             self.rawresults = list(output)
             self._time_finished()
-            
+
         self.already_run = True
-        
+
         return
-    
-    
+
+
     @property
     def running(self):
         if not self.is_async:
@@ -481,8 +481,8 @@ class Parallel:
             else:
                 running = False
             return running
-    
-    
+
+
     @property
     def ready(self):
         if not self.is_async:
@@ -496,8 +496,8 @@ class Parallel:
                 else:
                     ready = False
         return ready
-    
-    
+
+
     @property
     def status(self):
         output = 'not run'
@@ -506,8 +506,8 @@ class Parallel:
         elif self.already_run:
             output = 'done'
         return output
-    
-    
+
+
     def _time_finished(self, *args, **kwargs):
         self.times.finished = sc.now()
         self.times.elapsed = (self.times.finished - self.times.started).total_seconds()
@@ -523,7 +523,7 @@ class Parallel:
             _progressbar(self.globaldict, njobs=self.njobs, started=self.times.started, **kwargs)
             sc.timedsleep(interval)
         return
-    
+
 
     def finalize(self, get_results=True, close_pool=True, process_results=True):
         """ Get results from the jobs and close the pool """
@@ -538,56 +538,56 @@ class Parallel:
         if process_results:
             self.process_results()
         return
-    
-    
+
+
     def process_results(self):
         """ Parse the returned results dict into separate lists """
-        
+
         # Do not proceed if no results
         if self.rawresults is None: # pragma: no cover
             errormsg = 'Cannot process results: results not ready yet'
             raise ValueError(errormsg)
-        
+
         # Otherwise, process results
         else:
             self.results    = list()
             self.success    = list()
             self.exceptions = list()
             self.times.jobs = list()
-            
+
             for raw in self.rawresults:
                 self.results.append(raw['result'])
                 self.success.append(raw['success'])
                 self.exceptions.append(raw['exception'])
                 self.times.jobs.append(raw['elapsed'])
-            
+
             if not all(self.success): # pragma: no cover
                 warnmsg = f'Only {sum(self.success)} of {len(self.success)} jobs succeeded; see exceptions attribute for details'
                 warnings.warn(warnmsg, category=RuntimeWarning, stacklevel=2)
         return
-    
-    
+
+
     def run(self):
         """ Actually run the parallelization """
         try:
             self.run_async()
             self.finalize()
-            
+
         # Handle if run outside of __main__ on Windows
         except RuntimeError as E: # pragma: no cover
             if 'freeze_support' in E.args[0]: # For this error, add additional information
                 raise RuntimeError(freeze_support_error) from E
             else: # For all other runtime errors, raise the original exception
                 raise E
-    
+
         # Tidy up
         return self
-    
-    
 
 
-def parallelize(func, iterarg=None, iterkwargs=None, args=None, kwargs=None, ncpus=None, 
-                maxcpu=None, maxmem=None, interval=None, parallelizer=None, serial=False, 
+
+
+def parallelize(func, iterarg=None, iterkwargs=None, args=None, kwargs=None, ncpus=None,
+                maxcpu=None, maxmem=None, interval=None, parallelizer=None, serial=False,
                 progress=False, callback=None, globaldict=None, die=True, **func_kwargs):
     """
     Execute a function in parallel.
@@ -605,7 +605,7 @@ def parallelize(func, iterarg=None, iterkwargs=None, args=None, kwargs=None, ncp
     Any other kwargs passed to :func:`sc.parallelize() <parallelize>` will also be passed to the function.
 
     This function can either use a fixed number of CPUs or allocate dynamically
-    based on load. If ``ncpus`` is ``None``, then it will allocate the number of 
+    based on load. If ``ncpus`` is ``None``, then it will allocate the number of
     CPUs dynamically. Memory (``maxmem``) and CPU load (``maxcpu``) limits can also
     be specified.
 
@@ -685,15 +685,15 @@ def parallelize(func, iterarg=None, iterkwargs=None, args=None, kwargs=None, ncp
 
 
     **Example 6 -- using Sciris as an interface to Dask**::
-    
+
         def f(x,y):
             return [x]*y
-    
+
         def dask_map(task, argslist):
             import dask
             queued = [dask.delayed(task)(args) for args in argslist]
             return list(dask.compute(*queued))
-    
+
         results = sc.parallelize(f, iterkwargs=dict(x=[1,2,3], y=[4,5,6]), parallelizer=dask_map)
 
 
@@ -707,7 +707,7 @@ def parallelize(func, iterarg=None, iterkwargs=None, args=None, kwargs=None, ncp
     (including different aliases for each), and also supports user-supplied ones.
     Note that in most cases, the default parallelizer will suffice. However, the
     full list of options is:
-        
+
         - ``None``, ``'default'``, ``'robust'``, ``'multiprocess'``: the slow but robust dill-based parallelizer ``multiprocess``
         - ``'fast'``, ``'concurrent'``, ``'concurrent.futures'``: the faster but more fragile pickle-based Python-default parallelizer :mod:`concurrent.futures`
         - ``'multiprocessing'``: the previous pickle-based Python default parallelizer, :mod:`multiprocessing`
@@ -721,7 +721,7 @@ def parallelize(func, iterarg=None, iterkwargs=None, args=None, kwargs=None, ncp
     object is not returned. Otherwise, parallelization won't increase speed (and
     might even be slower than serial!).
 
-    
+
     **Note 3**: to use on Windows, parallel calls must contained with an ``if __name__ == '__main__'`` block.
 
     For example::
@@ -742,11 +742,11 @@ def parallelize(func, iterarg=None, iterkwargs=None, args=None, kwargs=None, ncp
     | *New in version 3.1.0:* new "globaldict" argument
     """
     # Create the parallel instance
-    P = Parallel(func, iterarg=iterarg, iterkwargs=iterkwargs, args=args, kwargs=kwargs, 
-                 ncpus=ncpus, maxcpu=maxcpu, maxmem=maxmem, interval=interval, 
-                 parallelizer=parallelizer, serial=serial, progress=progress, 
+    P = Parallel(func, iterarg=iterarg, iterkwargs=iterkwargs, args=args, kwargs=kwargs,
+                 ncpus=ncpus, maxcpu=maxcpu, maxmem=maxmem, interval=interval,
+                 parallelizer=parallelizer, serial=serial, progress=progress,
                  callback=callback, globaldict=globaldict, die=die, **func_kwargs)
-    
+
     # Run it
     P.run()
     return P.results
@@ -763,7 +763,7 @@ class TaskArgs(sc.prettyobj):
 
         Arguments must match both :func:`sc.parallelize() <parallelize>` and ``sc._task()``
         """
-        def __init__(self, func, index, njobs, iterval, iterdict, args, kwargs, maxcpu, maxmem, 
+        def __init__(self, func, index, njobs, iterval, iterdict, args, kwargs, maxcpu, maxmem,
                      interval, embarrassing, callback, progress, globaldict, useglobal, started,
                      die=True):
             self.func         = func         # The function being called
@@ -779,7 +779,7 @@ class TaskArgs(sc.prettyobj):
             self.embarrassing = embarrassing # Whether or not to pass the iterarg to the function (no if it's embarrassing)
             self.callback     = callback     # A function to call after each task finishes
             self.progress     = progress     # Whether to print progress after each job
-            self.globaldict   = globaldict   # A global dictionary for sharing progress on each task 
+            self.globaldict   = globaldict   # A global dictionary for sharing progress on each task
             self.useglobal    = useglobal    # Whether to pass the global dictionary to each task
             self.started      = started      # The time when the parallelization was started
             self.die          = die          # Whether to raise an exception if the child task encounters one
@@ -789,10 +789,10 @@ class TaskArgs(sc.prettyobj):
 def _task(taskargs):
     """
     Task called by parallelize() -- not to be called directly.
-    
+
     *New in version 3.0.0:* renamed from "_parallel_task" to "_task"; return output dict with metadata
     """
-    
+
     # Handle inputs
     func   = taskargs.func
     index  = taskargs.index
@@ -826,7 +826,7 @@ def _task(taskargs):
             kwargs['globaldict'] = taskargs.globaldict
     except:
         pass
-    
+
     # Call the function!
     try:
         result = func(*args, **kwargs) # Call the function!
@@ -850,10 +850,10 @@ def _task(taskargs):
             exception = E
     end = sc.time()
     elapsed = end - start
-    
+
     if taskargs.progress:
         _progressbar(globaldict, njobs=taskargs.njobs, started=taskargs.started, flush=True)
-    
+
     # Generate output
     outdict = dict(
         result    = result,
@@ -861,7 +861,7 @@ def _task(taskargs):
         exception = exception,
         elapsed   = elapsed,
     )
-    
+
     # Handle callback, if present
     if taskargs.callback: # pragma: no cover
         data = dict(index=index, njobs=taskargs.njobs, args=args, kwargs=kwargs, globaldict=globaldict, outdict=outdict)

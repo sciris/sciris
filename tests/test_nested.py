@@ -13,6 +13,11 @@ def test_nested():
     sc.heading('Testing nested dicts')
     o = sc.objdict()
 
+    # Simple test
+    d = {}
+    sc.setnested(d, ['a','b'], 'c')
+    assert d['a']['b'] == 'c'
+
     foo = {}
     sc.makenested(foo, ['a','b'])
     foo['a']['b'] = 3
@@ -40,6 +45,99 @@ def test_nested():
         sc.setnested(foo, twig, count) # Yields {'a': {'y': 1, 'x': 2, 'z': 3}, 'b': {'a': {'y': 4, 'x': 5}}}
     assert sc.getnested(foo, ['b','a','y']) == foo['b']['a']['y'] == 5, 'Incorrect value/keys'
     o.foo2 = foo
+
+    return o
+
+
+def test_nested_detailed():
+    sc.heading('Testing nested functions in detail')
+    o = sc.objdict()
+
+    # Test 1: Basic makenested with simple list
+    o.d1 = sc.makenested({}, ['a', 'b', 'c'])
+    assert o.d1 == {'a': {'b': {'c': None}}}
+
+    # Test 2: makenested with single key
+    o.d2 = sc.makenested({}, 'single')
+    assert o.d2 == {'single': None}
+
+    # Test 3: makenested with tuple keys
+    o.d3 = sc.makenested({}, ('x', 'y', 'z'))
+    assert o.d3 == {'x': {'y': {'z': None}}}
+
+    # Test 4: setnested with list keys
+    o.d4 = sc.makenested({}, ['level1', 'level2', 'level3'])
+    assert sc.getnested(o.d4, ['level1', 'level2', 'level3']) is None
+    sc.setnested(o.d4, ['level1', 'level2', 'level3'], 'deep_value')
+    assert sc.getnested(o.d4, ['level1', 'level2', 'level3']) == 'deep_value'
+
+    # Test 5: setnested with single key
+    o.d5 = sc.setnested({}, 'root', {'nested': 'dict'})
+    assert sc.getnested(o.d5, 'root') == {'nested': 'dict'}
+
+    # Test 6: getnested with default value
+    d6 = {'a': {'b': 'exists'}}
+    result6a = sc.getnested(d6, ['a', 'b'])
+    result6b = sc.getnested(d6, ['a', 'missing', 'multiple', 'levels'], default='default_val')
+    o.d6 = {'exists': result6a, 'default': result6b}
+    assert result6a == 'exists'
+    assert result6b == 'default_val'
+
+    # Test 7a: Overwriting existing values
+    o.d7 = {'a': {'b': 'old_value'}}
+    sc.setnested(o.d7, ['a', 'b'], 'new_value')
+    assert sc.getnested(o.d7, ['a', 'b']) == 'new_value'
+
+    # Test 7b: Not overwriting existing values
+    with pytest.raises(ValueError):
+        sc.setnested(o.d7, ['a', 'b'], 'newer_value', overwrite=False)
+    with pytest.raises(ValueError):
+        sc.setnested(o.d7, ['a', 'b', 'new_value'], 'nested_value', overwrite=False)
+
+    # Test 8: Setting complex objects (lists, dicts)
+    o.d8 = sc.setnested(sc.prettyobj(), ['data', 'numbers'], [1, 2, 3, 4])
+    assert sc.getnested(o.d8, ['data', 'numbers', 0]) == o.d8.data.numbers[0] == 1
+    assert isinstance(o.d8.data, sc.prettyobj)
+    assert isinstance(o.d8.data.numbers, list)
+
+    # Test 9: Empty key list behavior
+    o.d9 = {'root': 'value'}
+    assert sc.getnested(o.d9, []) == o.d9
+    with pytest.raises(ValueError):
+        sc.setnested(o.d9, None)
+    with pytest.raises(ValueError):
+        sc.makenested(o.d9, [])
+
+    # Test 10: Key as string vs list equivalence
+    o.d10 = sc.setnested({}, 'simple', 'value1')
+    sc.setnested(o.d10, ['simple2'], 'value2')
+    assert sc.getnested(o.d10, ['simple']) == 'value1'
+    assert sc.getnested(o.d10, 'simple2') == 'value2'
+
+    # Test 11: generator tests
+    o.d11 = sc.makenested(sc.objdict(), ['a','b'], value={}, generator=dict) # Sets two levels of dicts
+    sc.setnested(o.d11.a['b'], ['c','d'], value='val', generator=sc.prettyobj) # Sets one level of prettyobj
+    assert isinstance(o.d11, sc.objdict)
+    assert isinstance(o.d11.a, dict)
+    assert isinstance(o.d11.a['b'], dict)
+    assert isinstance(o.d11.a['b']['c'], sc.prettyobj)
+    assert o.d11.a['b']['c'].d == 'val'
+
+    # Test 12: safe
+    o.d12 = {}
+    with pytest.raises(KeyError):
+        sc.getnested(o.d12, ['a','b'])
+    assert sc.getnested(o.d12, ['a','b'], safe=True) == None
+    assert sc.getnested(o.d12, ['a','b'], default='default') == 'default'
+
+    # Test 13: copy
+    d13 = sc.objdict(original='dict')
+    o.d13 = sc.setnested(d13, 'original', 'new_dict', copy=True)
+    assert d13.original == 'dict'
+    assert o.d13.original == 'new_dict'
+
+    sc.setnested(d13, 'original', 'new_dict', copy=False)
+    d13.original == 'new_dict'
 
     return o
 
@@ -303,11 +401,12 @@ if __name__ == '__main__':
     T = sc.timer()
 
     # Nested
-    nested  = test_nested()
-    dicts   = test_dicts()
-    search  = test_search()
-    iterobj = test_iterobj()
-    io_obj  = test_iterobj_class()
-    equal   = test_equal()
+    nested   = test_nested()
+    detailed = test_nested_detailed()
+    dicts    = test_dicts()
+    search   = test_search()
+    iterobj  = test_iterobj()
+    io_obj   = test_iterobj_class()
+    equal    = test_equal()
 
     T.toc('Done.')

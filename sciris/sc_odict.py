@@ -17,19 +17,57 @@ import collections as co
 import sciris as sc
 
 # Restrict imports to user-facing modules
-__all__ = ['ddict', 'odict', 'objdict', 'dictobj', 'asobj']
+__all__ = ['ddict', 'counter', 'odict', 'objdict', 'dictobj', 'asobj']
 
 ddict = co.defaultdict # Define alias
-OD = dict # Base class; was OrderedDict before v3.0.0
 
-class odict(OD):
+
+class counter(co.Counter):
+    """
+    Like ``collections.Counter``, but with additional supported mathematical operations.
+
+    ``sc.counter`` has an "array" property, which converts the values to a NumPy array;
+    methods not available to a ``Counter`` object are performed on the array instead.
+
+    **Examples**::
+
+        vals = [1,1,12,3,4,2,4,2,53,5,5,6,2,3,5]
+        counts = sc.counter(vals)
+        counts.max() # returns 3
+
+    | *New in version 3.2.3.*
+    """
+    @property
+    def array(self):
+        """ NumPy array of values """
+        return np.array(list(self.values()))
+
+    def disp(self):
+        return sc.pr(self)
+
+    def __getitem__(self, key):
+        if isinstance(key, slice):
+            return self.array[key]
+        else:
+            return super().__getitem__(key)
+
+    def __getattr__(self, attr):
+        """ For all other operations, try to perform them on the array """
+        try:
+            return getattr(self.array, attr)
+        except Exception as e:
+            errormsg = f'"{attr}" is not a recognized method of Counter or array objects'
+            raise AttributeError(errormsg) from e
+
+
+class odict(dict):
     """
     Ordered dictionary with integer indexing
 
     An ordered dictionary, like the OrderedDict class, but supports list methods like integer
     indexing, key slicing, and item inserting. It can also replicate defaultdict behavior
     via the ``defaultdict`` argument.
-    
+
     Args:
         args (dict): convert an existing dict, e.g. ``sc.odict({'a':1})``
         defaultdict (class): if provided, create as a defaultdict as well
@@ -83,18 +121,18 @@ class odict(OD):
 
     def __init__(self, *args, defaultdict=None, **kwargs):
         """ Combine the init properties of both OrderedDict and defaultdict """
-        
+
         # Standard init
         mapping = dict(*args, **kwargs)
         dict.update(self, mapping)
-        
+
         # Handle defaultdict
         if defaultdict is not None:
             if defaultdict != 'nested' and not callable(defaultdict): # pragma: no cover
                 errormsg = f'The defaultdict argument must be either "nested" or callable, not {type(defaultdict)}'
                 raise TypeError(errormsg)
-            self._setattr('_defaultdict', defaultdict) # Use OD.__setattr__() since setattr() is overridden by sc.objdict()
-        
+            self._setattr('_defaultdict', defaultdict) # Use dict.__setattr__() since setattr() is overridden by sc.objdict()
+
         self._cache_keys()
         return
 
@@ -114,12 +152,12 @@ class odict(OD):
 
     def _setattr(self, key, value):
         """ Shortcut to OrderedDict method """
-        return OD.__setattr__(self, key, value)
+        return dict.__setattr__(self, key, value)
 
 
     def _setitem(self, key, value):
         """ Shortcut to OrderedDict method """
-        return OD.__setitem__(self, key, value)
+        return dict.__setitem__(self, key, value)
 
 
     def __getitem__(self, key, allow_default=True):
@@ -127,14 +165,14 @@ class odict(OD):
 
         # First, try just getting the item
         try:
-            output = OD.__getitem__(self, key)
+            output = dict.__getitem__(self, key)
             return output
         except Exception as E:
 
             if isinstance(key, sc._stringtypes) or isinstance(key, tuple): # Normal use case: just use a string key
                 if isinstance(E, KeyError): # We already encountered an exception, usually a KeyError
                     try: # Handle defaultdict behavior by first checking if it exists
-                        _defaultdict = OD.__getattribute__(self, '_defaultdict')
+                        _defaultdict = dict.__getattribute__(self, '_defaultdict')
                     except:
                         _defaultdict = None
                     if _defaultdict is not None and allow_default: # If it does, use it, then get the key again
@@ -154,12 +192,12 @@ class odict(OD):
 
             elif isinstance(key, sc._numtype): # Convert automatically from float
                 thiskey = self._ikey(key)
-                return OD.__getitem__(self, thiskey) # Note that defaultdict behavior isn't supported for non-string lookup
+                return dict.__getitem__(self, thiskey) # Note that defaultdict behavior isn't supported for non-string lookup
 
             elif isinstance(key, slice): # Handle a slice -- complicated
                 try:
                     slicekeys = self._slicetokeys(key)
-                    slicevals = [OD.__getitem__(self, k) for k in slicekeys]
+                    slicevals = [dict.__getitem__(self, k) for k in slicekeys]
                     output = self._sanitize_items(slicevals)
                     return output
                 except Exception as E: # pragma: no cover
@@ -175,7 +213,7 @@ class odict(OD):
                 return output
 
             else: # pragma: no cover # Handle everything else (rare)
-                return OD.__getitem__(self, key)
+                return dict.__getitem__(self, key)
 
 
     def __setitem__(self, key, value):
@@ -197,13 +235,13 @@ class odict(OD):
                 slicelen = len(slicekeys)
                 if valuelen == slicelen:
                     for valind,k in enumerate(slicekeys):
-                        OD.__setitem__(self, k, value[valind])  # e.g. odict[:] = arr[:]
+                        dict.__setitem__(self, k, value[valind])  # e.g. odict[:] = arr[:]
                 else: # pragma: no cover
                     errormsg = f'Slice "{key}" and values "{value}" have different lengths! ({slicelen}, {len(value)})'
                     raise ValueError(errormsg)
             else:
                 for k in slicekeys:
-                    OD.__setitem__(self, k, value) # e.g. odict[:] = 4
+                    dict.__setitem__(self, k, value) # e.g. odict[:] = 4
 
         elif self._is_odict_iterable(key) and hasattr(value, '__len__'): # Iterate over items
             if len(key)==len(value):
@@ -226,8 +264,8 @@ class odict(OD):
         return
 
 
-    def __repr__(self, maxlen=None, showmultilines=True, divider=False, dividerthresh=10, 
-                 numindents=0, recursionlevel=0, sigfigs=None, numformat=None, maxitems=200, 
+    def __repr__(self, maxlen=None, showmultilines=True, divider=False, dividerthresh=10,
+                 numindents=0, recursionlevel=0, sigfigs=None, numformat=None, maxitems=200,
                  classname='odict', quote='', numleft='#', numsep=':', keysep=':', dividerchar='—'):
         """ Print a meaningful representation of the odict """
 
@@ -374,11 +412,11 @@ class odict(OD):
         """ Default delitem, except set stale to true and allow numeric values; slices etc are not supported """
         self._setattr('_stale', True) # Flag to refresh the cached keys
         try:
-            return OD.__delitem__(self, key)
+            return dict.__delitem__(self, key)
         except Exception as E: # pragma: no cover
             if isinstance(key, sc._numtype): # If it's a number, use that
                 thiskey = self._ikey(key)
-                return OD.__delitem__(self, thiskey) # Note that defaultdict behavior isn't supported for non-string lookup
+                return dict.__delitem__(self, thiskey) # Note that defaultdict behavior isn't supported for non-string lookup
             else:
                 raise E
 
@@ -411,16 +449,16 @@ class odict(OD):
 
     def _slicetokeys(self, raw):
         """ Validate a key supplied as a slice object """
-        
+
         startstop = dict(start=raw.start, stop=raw.stop) # start, stop, step
-        
+
         # Handle possible string values for start and stop
         for key,val in startstop.items():
             if isinstance(val, str):
                 startstop[key] = self.index(val)
                 if key == 'stop':
                     startstop[key] += 1  # +1 on stop since otherwise confusing with names
-        
+
         # Turn from a slice into keys
         sli = slice(startstop['start'], startstop['stop'], raw.step)
         inds = range(*sli.indices(len(self)))
@@ -497,14 +535,14 @@ class odict(OD):
         """ Allows pop to support strings, integers, slices, lists, or arrays """
         self._setattr('_stale', True) # Flag to refresh the cached keys
         if isinstance(key, sc._stringtypes):
-            return OD.pop(self, key, *args, **kwargs)
+            return dict.pop(self, key, *args, **kwargs)
         elif isinstance(key, sc._numtype): # Convert automatically from float...dangerous?
             thiskey = self._ikey(key)
-            return OD.pop(self, thiskey, *args, **kwargs)
+            return dict.pop(self, thiskey, *args, **kwargs)
         elif isinstance(key, slice): # Handle a slice -- complicated
             try:
                 slicekeys = self._slicetokeys(key)
-                slicevals = [OD.pop(self, k, *args, **kwargs) for k in slicekeys]
+                slicevals = [dict.pop(self, k, *args, **kwargs) for k in slicekeys]
                 output = self._sanitize_items(slicevals)
                 return output
             except Exception as E: # pragma: no cover
@@ -520,7 +558,7 @@ class odict(OD):
                 return listvals
         else: # pragma: no cover # Handle string but also everything else
             try:
-                return OD.pop(self, key, *args, **kwargs)
+                return dict.pop(self, key, *args, **kwargs)
             except: # Duplicated from __getitem__
                 keys = self.keys()
                 if len(keys): errormsg = f'odict key "{key}" not found; available keys are:\n{sc.newlinejoin(keys)}'
@@ -597,17 +635,17 @@ class odict(OD):
     def filter(self, keys=None, pattern=None, method=None, exclude=False):
         """
         Find matching keys in the odict, and return a new odict
-        
+
         Filter the odict keys and return a new odict which is a subset. If keys is a list,
         then uses that for matching. If the first argument is a string, then treats as a pattern
         for matching using :meth:`findkeys() <odict.findkeys`.
-        
+
         Args:
             keys (list): the list of keys to keep (or exclude)
             pattern (str): the pattern by which to match keys; see :meth:`findkeys() <odict.findkeys` for details
             method (str): the method by which to match keys; see :meth:`findkeys() <odict.findkeys` for details
             exclude (bool): if exclude=True, then exclude rather than include matches
-            
+
         See also :meth:`sort() <odict.sort>`, which includes filtering by position.
         """
         if sc.isstring(keys) and pattern is None: # Assume first argument, transfer
@@ -700,16 +738,16 @@ class odict(OD):
     def copy(self, deep=False):
         """
         Make a (shallow) copy of the dict.
-        
+
         Args:
             deep (bool): if True, do a deep rather than shallow copy
-            
+
         **Examples**::
-            
+
             d1 = sc.odict(a=[1,2,3], b='foo')
             d2 = d1.copy()
             d3 = d1.copy(deep=True)
-            
+
             d1.pop('b') # affects d1 but not d2 or d3
             d1[0].append(4) # affects d1 and d2 but not d3
         """
@@ -718,6 +756,15 @@ class odict(OD):
         else:
             new = sc.dcp(self)
         return new
+
+
+    def dcp(self):
+        """
+        Shortcut to odict.copy(deep=True).
+
+        | *New in version 3.2.3.*
+        """
+        return self.copy(deep=True)
 
 
     def rename(self, oldkey, newkey):
@@ -740,24 +787,24 @@ class odict(OD):
 
     def sort(self, sortby=None, reverse=False, copy=False):
         """
-        Create a sorted version of the odict. 
-        
-        By default, this method sorts alphabetically by key, but many other options 
+        Create a sorted version of the odict.
+
+        By default, this method sorts alphabetically by key, but many other options
         are possible:
-            
+
             - 'keys' sorts alphabetically by key
             - 'values' sorts in ascending order by value
             - if a list of keys is provided, sort by that order (any keys not provided will be omitted from the sorted dict!)
             - if a list of numbers is provided, treat these as indices and sort by that order
             - if a list of boolean values is provided, then omit False entries
-        
+
         Args:
             sortby (str or list): what to sort by; see above for options
             reverse (bool): whether to return results in reverse order
             copy (bool): whether to return a copy (same as :meth:`sorted() <odict.sorted>`)
-        
+
         For filtering by string matching on keys, see :meth:`filter() <odict.filter>`.
-        
+
         | *New in version 3.0.0:* removed "verbose" argument
         """
         origkeys = self.keys()
@@ -769,7 +816,7 @@ class odict(OD):
                 sortby = sorted(range(len(origvals)), key=origvals.__getitem__) # Reset sortby based on https://stackoverflow.com/questions/3382352/equivalent-of-numpy-argsort-in-basic-python
             if not sc.isiterable(sortby): # pragma: no cover
                 raise Exception('Please provide a list to determine the sort order.')
-            
+
             if all([isinstance(x, sc._stringtypes) for x in sortby]): # Going to sort by keys
                 allkeys = sortby # Assume the user knows what s/he is doing
             elif all([isinstance(x,bool) for x in sortby]): # Using Boolean values to filter
@@ -779,7 +826,7 @@ class odict(OD):
             else: # pragma: no cover
                 errormsg = f'Cannot figure out how to sort by "{sortby}"'
                 raise TypeError(errormsg)
-        
+
         tmpdict = self._new()
         if reverse:
             allkeys.reverse() # If requested, reverse order
@@ -1063,15 +1110,15 @@ class odict(OD):
 
     def keys(self):
         """ Return a list of keys (as in Python 2), not a dict_keys object. """
-        return list(OD.keys(self))
+        return list(dict.keys(self))
 
     def values(self):
         """ Return a list of values (as in Python 2). """
-        return list(OD.values(self))
+        return list(dict.values(self))
 
     def items(self, transpose=False):
         """ Return a list of items (as in Python 2). """
-        iterator = list(OD.items(self))
+        iterator = list(dict.items(self))
         if transpose: iterator = tuple(sc.transposelist(iterator))
         return iterator
 
@@ -1116,29 +1163,29 @@ class objdict(odict):
     """
     An ``odict`` that acts like an object -- allow keys to be set/retrieved by object
     notation.
-    
+
     In general, operations that would normally act on attributes (e.g. ``obj.x = 3``)
     instead act on dict keys (e.g. ``obj['x'] = 3``). If you want to actually get/set
     an attribute, use ``obj.getattribute()``/``obj.setattribute()``.
-    
+
     For a lighter-weight example (an object that acts like a dict), see :func:`sc.dictobj() <dictobj>`.
-    
+
     **Examples**::
-        
+
         import sciris as sc
-        
+
         obj = sc.objdict(foo=3, bar=2)
         obj.foo + obj.bar # Gives 5
         for key in obj.keys(): # It's still a dict
             obj[key] = 10
-        
+
         od = sc.objdict({'height':1.65, 'mass':59})
         od.bmi = od.mass/od.height**2
         od['bmi'] = od['mass']/od['height']**2 # Vanilla syntax still works
         od.keys = 3 # This raises an exception (you can't overwrite the keys() method)
-    
+
     Nested logic based in part on addict: https://github.com/mewwts/addict
-    
+
     For a lighter-weight equivalent (based on ``dict`` instead of :class:`odict`), see
     :func:`sc.dictobj() <dictobj>`.
     """
@@ -1257,8 +1304,8 @@ class dictobj(dict):
         print(obj.items())
 
     For a more powerful alternative, see :class:`sc.objdict() <objdict>`.
-    
-    **Note**: because ``dictobj`` is halfway between a dict and an object, it can't 
+
+    **Note**: because ``dictobj`` is halfway between a dict and an object, it can't
     be automatically converted to a JSON (but will fail silently). Use :meth:`to_json() <dictobj.to_json>`
     instead.
 
@@ -1266,7 +1313,7 @@ class dictobj(dict):
     | *New in version 1.3.1:* inherit from dict
     | *New in version 2.0.0:* allow positional arguments
     | *New in version 3.0.0:* "fromkeys" now a class method; ``to_json()`` method
-    | *New in version 3.1.6:* "copy" returns another dictobj 
+    | *New in version 3.1.6:* "copy" returns another dictobj
     """
 
     def __init__(self, *args, **kwargs):
@@ -1287,7 +1334,7 @@ class dictobj(dict):
     def fromkeys(cls, *args, **kwargs):
         """ Create a new dictobj from keys """
         return cls(dict.fromkeys(*args, **kwargs))
-    
+
     def copy(self):
         """ Create a shallow copy """
         new = self.__class__()

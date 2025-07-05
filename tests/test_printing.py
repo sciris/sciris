@@ -77,16 +77,16 @@ def test_printing(test_slack=False):
     sc.sigfig(np.random.rand(), sigfigs=None) # Testing no sigfigs
     assert sc.sigfig([4.958, 23432.23], sigfigs=3, keepints=True) == ['4.96', '23432'] # Testing keepints
     assert sc.sigfig((0.23456, 28847.9), sep=',') == ('0.2346', '28,850') # Testing tuple and separator
-    
+
 
     print('\nTesting printmean and printmedian')
-    data = [1210, 1072, 1722, 1229, 1902, 1753, 1223, 1024, 1884, 1525, 1449] 
-    sc.printmean(data) # Returns 1430 ± 320 
+    data = [1210, 1072, 1722, 1229, 1902, 1753, 1223, 1024, 1884, 1525, 1449]
+    sc.printmean(data) # Returns 1430 ± 320
     o.printmean = sc.printmean(data, doprint=False)
     assert o.printmean == '1450 ± 620'
     assert sc.printmean(data, mean_sf=2, doprint=False) == '1500 ± 600'
     assert sc.printmean(data, err_sf=1, doprint=False) == '1500 ± 600'
-    
+
     sc.printmedian(data)
     assert sc.printmedian(data, doprint=False, ci='iqr')      == '1450 (IQR: 1220, 1740)'      # Test IQR
     assert sc.printmedian(data, doprint=False, ci='range')    == '1450 (min, max: 1020, 1900)' # Test range
@@ -94,7 +94,7 @@ def test_printing(test_slack=False):
     assert sc.printmedian(data, doprint=False, ci=0.8)        == '1450 (80% CI: 1070, 1880)'   # Test float
     assert sc.printmedian(data, doprint=False, ci=[0, 10])    == '1450 (0%, 10%: 1020, 1070)'  # Test pair of ints
     assert sc.printmedian(data, doprint=False, ci=[0.0, 0.1]) == '1450 (0%, 10%: 1020, 1070)'  # Test pair of floats
-    
+
 
     print('\nTesting capture')
     str1 = 'I am string 1'
@@ -123,10 +123,10 @@ def test_prepr():
         key = f'attr{i:03d}'
         setattr(pobj, key, i**2)
         setattr(qobj, key, i**2)
-    
+
     print('sc.prettyobj:')
     print(pobj)
-    
+
     print('sc.quickobj:')
     print(qobj)
 
@@ -147,7 +147,7 @@ def test_prepr():
 
     for tf in [True, False]:
         sc.objrepr(x, showid=tf, showmeth=tf, showprop=tf, showatt=tf)
-    
+
     print('Testing sc.pr():')
     class Obj: pass
     obj = Obj()
@@ -160,26 +160,26 @@ def test_prepr():
 
 def test_recursion():
     sc.heading('Test that prepr is safe against recursion')
-    
+
     class BranchingRecursion:
         """ Create a dastardly object that references itself twice """
         def __init__(self, x):
             self.x = x
             self.obj1 = self
             self.obj2 = self
-        
+
         def __repr__(self):
             return sc.prepr(self, maxlen=1000)
-            
+
     recurse = BranchingRecursion(5)
 
     with sc.timer() as T:
         with sc.capture() as txt:
             print(recurse)
-    
+
     assert T.total < 0.3 # Should terminate relatively quickly
     assert 'recursion' in txt # Should show termination message
-    
+
     return recurse
 
 
@@ -188,7 +188,7 @@ def test_progress_bar():
 
     totalsleep = 0.3
     n = 50
-    
+
     for i in sc.progressbar(range(n)):
         sc.timedsleep(0.3/n)
 
@@ -221,7 +221,7 @@ def test_progress_bars():
 
     # Run tasks
     sc.parallelize(run_sim, iterarg=range(nsims), ndays=ndays, pbs=pbs)
-    
+
     return pbs
 
 

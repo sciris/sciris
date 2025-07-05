@@ -24,7 +24,7 @@ import packaging.requirements as pkgr
 from zipfile import ZipFile
 import sciris as sc
 
-__all__ = ['freeze', 'require', 'gitinfo', 'compareversions', 'getcaller', 
+__all__ = ['freeze', 'require', 'gitinfo', 'compareversions', 'getcaller',
            'metadata', 'loadmetadata', 'savearchive', 'loadarchive']
 
 
@@ -311,7 +311,7 @@ def compareversions(version1, version2):
     elif v2.startswith('~'): # pragma: no cover
         errormsg = 'Loose version pinning is not supported; for not, use "~="'
         raise ValueError(errormsg)
-    
+
     v2 = v2.lstrip('<>=!~')
 
     # Do comparison
@@ -392,12 +392,12 @@ def getcaller(frame=2, tostring=True, includelineno=False, includeline=False, re
     return output
 
 
-def metadata(outfile=None, version=None, comments=None, require=None, pipfreeze=True, user=True, caller=True, 
+def metadata(outfile=None, version=None, comments=None, require=None, pipfreeze=True, user=True, caller=True,
              git=True, asdict=False, tostring=False, relframe=0, **kwargs):
     """
     Collect common metadata: useful for exactly recreating (or remembering) the environment
     at a moment in time.
-    
+
     Args:
         outfile (str): if not None, then save as JSON to this filename
         version (str): if supplied, the user-supplied version of the data being stored
@@ -411,21 +411,21 @@ def metadata(outfile=None, version=None, comments=None, require=None, pipfreeze=
         tostring (bool): return a string rather than a dict
         relframe (int): how far to descend into the calling stack (if used directly, use 0; if called by another function, use 1; etc)
         kwargs (dict): any additional data to store (can be anything JSON-compatible)
-        
+
     Returns:
         A dictionary with information on the date, plateform, executable, versions
         of key libraries (Sciris, Numpy, pandas, and Matplotlib), and the Python environment
-        
+
     **Examples**::
-        
+
         metadata = sc.metadata()
         sc.compareversions(metadata.versions.pandas, '1.5.0')
-        
+
         sc.metadata('my-metadata.json') # Save to disk
-    
+
     *New in version 3.0.0.*
     """
-    
+
     # Additional imports
     import sys
     import platform
@@ -433,13 +433,13 @@ def metadata(outfile=None, version=None, comments=None, require=None, pipfreeze=
     import pandas as pd
     import matplotlib as mpl
     from .sc_version import __version__
-    
+
     # Handle type
     dict_fn = dict if asdict else sc.objdict
-    
+
     # Get calling info
     calling_info = dict_fn(getcaller(relframe=relframe+1, tostring=False))
-    
+
     # Store metadata
     md = dict_fn(
         version   = version,
@@ -463,17 +463,17 @@ def metadata(outfile=None, version=None, comments=None, require=None, pipfreeze=
         require      = require,
         comments     = comments,
     )
-    
+
     # Store any additional data
     md.update(kwargs)
-    
+
     if outfile is not None:
         outfile = sc.makepath(outfile, makedirs=True)
         sc.savejson(outfile, md)
-    
+
     if tostring:
         md = sc.jsonify(md, tostring=True, indent=2)
-    
+
     return md
 
 
@@ -484,14 +484,14 @@ def _md_to_objdict(md):
         if isinstance(v, dict):
             md[k] = sc.objdict(v)
     return md
-        
+
 
 def loadmetadata(filename, load_all=False, die=True):
     """
     Read metadata from a saved image; currently only PNG and SVG are supported.
 
     Only for use with images saved with :func:`sc.savefig() <sciris.sc_plotting.savefig>`. Metadata retrieval for PDF
-    is not currently supported. To load metadata saved with :func:`sc.metadata() <metadata>`, 
+    is not currently supported. To load metadata saved with :func:`sc.metadata() <metadata>`,
     you can also use :func:`sc.loadjson() <sciris.sc_fileio.loadjson>` instead. To load metadata saved with :func:`sc.savearchive() <savearchive>`,
     use :func:`sc.loadarchive() <loadarchive>` instead.
 
@@ -578,11 +578,11 @@ def loadmetadata(filename, load_all=False, die=True):
                 raise ValueError(errormsg)
             else:
                 print(errormsg)
-    
+
     # Load metadata saved with sc.metadata(), and convert it from dict to objdict
     elif lcfn.endswith('json'):
         md = _md_to_objdict(sc.loadjson(filename))
-    
+
     # Load metadata saved with sc.savearchive()
     elif lcfn.endswith('zip'):
         md = loadarchive(filename, loadobj=False, loadmetadata=True)
@@ -596,24 +596,24 @@ def loadmetadata(filename, load_all=False, die=True):
 
 
 
-def savearchive(filename, obj, files=None, folder=None, comments=None, require=None, 
-                     user=True, caller=True, git=True, pipfreeze=True, method='dill', 
+def savearchive(filename, obj, files=None, folder=None, comments=None, require=None,
+                     user=True, caller=True, git=True, pipfreeze=True, method='dill',
                      allow_nonzip=False, dumpargs=None, **kwargs):
     """
     Save any object as a pickled zip file, including metadata as a separate JSON file.
-    
+
     Pickles are usually not good for long-term data storage, since they rely on
     importing the libraries that were used to create the pickled object. This function
     partly addresses that by storing metadata along with the saved pickle. While
     there may still be issues opening the pickle, the metadata (which is stored separately)
-    should give enough information to figure out how to reconstruct the original 
-    environment (allowing the pickle to be loaded, and then re-saved in a more persistent 
+    should give enough information to figure out how to reconstruct the original
+    environment (allowing the pickle to be loaded, and then re-saved in a more persistent
     format if desired).
-    
+
     Note: Since this function relies on pickle, it can potentially execute arbitrary
     code, so you should only use it with sources you trust. For more information, see:
     https://docs.python.org/3/library/pickle.html
-    
+
     Args:
         filename (str/path): the file to save to (must end in .zip)
         obj (any): the object to save
@@ -628,19 +628,19 @@ def savearchive(filename, obj, files=None, folder=None, comments=None, require=N
         allow_nonzip (bool): whether to permit extensions other than .zip (note, may cause problems!)
         dumpargs (dict): passed to :func:`sc.dumpstr() <sciris.sc_fileio.dumpstr>`
         kwargs (dict): passed to :func:`sc.savezip() <sciris.sc_fileio.savezip>`
-    
+
     **Example**::
-        
+
         obj = MyClass() # Create an arbitrary object
         sc.savearchive('my-class.zip', obj)
-        
+
         # Much later...
         obj = sc.loadarchive('my-class.zip')
-    
+
     *New in version 3.0.0.*
     """
     filename = sc.makepath(filename=filename, folder=folder, makedirs=True)
-    
+
     # Check filename
     if not allow_nonzip: # pragma: no cover
         if filename.suffix != '.zip':
@@ -648,29 +648,29 @@ def savearchive(filename, obj, files=None, folder=None, comments=None, require=N
             raise ValueError(errormsg)
 
     # Create the metadata, including storing the custom "method" attribute
-    md = metadata(caller=caller, git=git, pipfreeze=pipfreeze, comments=comments, 
+    md = metadata(caller=caller, git=git, pipfreeze=pipfreeze, comments=comments,
                   require=require, frame=3, method=method)
-    
+
     # Convert both to strings
     dumpargs    = sc.mergedicts({'method':method}, dumpargs)
     metadatastr = sc.jsonify(md, tostring=True, indent=2)
     datastr     = sc.dumpstr(obj, **dumpargs)
-    
+
     # Construct output
     datadict = {_metadata_filename:metadatastr, _obj_filename:datastr}
-    
+
     return sc.savezip(filename=filename, files=files, data=datadict, tobytes=False, **kwargs)
 
 
-def loadarchive(filename, folder=None, loadobj=True, loadmetadata=False, 
+def loadarchive(filename, folder=None, loadobj=True, loadmetadata=False,
                      remapping=None, die=True, **kwargs):
     """
     Load a zip file saved with :func:`sc.savearchive() <savearchive>`.
-    
+
     **Note**: Since this function relies on pickle, it can potentially execute arbitrary
     code, so you should only use it with sources you trust. For more information, see:
     https://docs.python.org/3/library/pickle.html
-    
+
     Args:
         filename (str/path): the file load to (usually ends in .zip)
         folder (str): optional additional folder to load from
@@ -679,31 +679,31 @@ def loadarchive(filename, folder=None, loadobj=True, loadmetadata=False,
         remapping (dict): any known module remappings between the saved pickle version and the current libraries
         die (bool): whether to fail if an exception is raised (else, just return the metadata)
         kwargs (dict): passed to :func:`sc.load() <sciris.sc_fileio.load>`
-    
+
     Returns:
         If loadobj=True and loadmetadata=False, return the object;
         If loadobj=False and loadmetadata=True, return the metadata
         If loadobj=True and loadmetadata=True, return a dictionary of both
-    
+
     **Example**::
-        
+
         obj = MyClass() # Create an arbitrary object
         sc.savearchive('my-class.zip', obj)
-        
+
         # Much later...
         data = sc.loadarchive('my-class.zip', loadmetadata=True)
         metadata, obj = data['metadata'], data['obj']
-    
-    Note: This function expects the zip file to contain two files in it, one called 
+
+    Note: This function expects the zip file to contain two files in it, one called
     "metadata.json" and one called "sciris_pickle.obj". If you need to change these,
-    you can manually modify ``sc.sc_versioning._metadata_filename`` and 
+    you can manually modify ``sc.sc_versioning._metadata_filename`` and
     ``sc.sc_versioning._obj_filename``, respectively. However, you almost certainly
     should not do so!
-    
+
     *New in version 3.0.0.*
     """
     filename = sc.makefilepath(filename=filename, folder=folder, makedirs=False)
-    
+
     # Open the zip file
     try:
         zf = ZipFile(filename, 'r')  # Create the zip file
@@ -711,11 +711,11 @@ def loadarchive(filename, folder=None, loadobj=True, loadmetadata=False,
         exc = type(E)
         errormsg = 'Could not open zip file: ensure the filename is correct and of the right type; see error above for details'
         raise exc(errormsg) from E
-   
+
     # Read the zip file
     obj = None
     with zf:
-    
+
         # Read in the strings
         try:
             metadatastr = zf.read(_metadata_filename)
@@ -723,14 +723,14 @@ def loadarchive(filename, folder=None, loadobj=True, loadmetadata=False,
             exc = type(E)
             errormsg = f'Could not load metadata file "{_metadata_filename}": are you sure this is a Sciris-versioned data zipfile?'
             raise exc(errormsg) from E
-        
+
         # Load the metadata first
         try:
             md = _md_to_objdict(sc.loadjson(string=metadatastr))
         except Exception as E: # pragma: no cover
             errormsg = 'Could not parse the metadata as a JSON file; see error above for details'
             raise ValueError(errormsg) from E
-            
+
         # Now try loading the actual data
         if loadobj:
             try:
@@ -744,7 +744,7 @@ def loadarchive(filename, folder=None, loadobj=True, loadmetadata=False,
                     warnmsg = 'Exception encountered opening the object, returning metadata only'
                     warnings.warn(warnmsg, category=UserWarning, stacklevel=2)
                     return md
-                
+
             # Convert into Python objects -- the most likely step where this can go wrong
             try:
                 method = md.get('method', None)

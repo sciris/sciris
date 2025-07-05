@@ -397,7 +397,7 @@ class legacy_dataframe(object): # pragma: no cover
         self.cols = list(cols)
         self.data = data
         return
-    
+
 
 
 ##############################################################################
@@ -532,7 +532,7 @@ def _parallelcmd_task(_cmd, _parfor, _returnval, _i, _outputqueue, _maxcpu, _max
     The task to be executed by ``sc.parallelcmd()``. All internal variables start with
     underscores to avoid possible collisions in the ``exec()`` statements. Not to be called
     directly.
-    
+
     Migrated to ``sc_legacy`` in version 2.2.0.
     '''
     if _maxcpu or _maxmem:

@@ -33,6 +33,7 @@ import hashlib
 import getpass
 import inspect
 import warnings
+import functools
 import importlib
 import subprocess
 import unicodedata
@@ -46,7 +47,7 @@ from pathlib import Path
 import sciris as sc
 
 # Handle types
-_stringtypes = (str, bytes)
+_stringtypes = (str, bytes, bytearray)
 _numtype     = (numbers.Number,)
 _booltypes   = (bool, np.bool_)
 
@@ -1138,9 +1139,24 @@ def isfunc(obj):
     """
     Quickly check if something is a function.
 
-    Note: this checks whether or not something is a method (``types.MethodType``)
-    or a function (``types.MethodType``), which is different to whether or not
+    This checks whether or not something is a method (``types.MethodType``)
+    or a function (``types.FunctionType``), which is different to whether or not
     it is callable (e.g., classes are callable).
+
+    Note: Python doesn't have a crystal-clear distinction between things that are
+    and aren't functions, so there may be some edge cases with this function. For
+    example, ``dict.fromkeys`` is a ``builtin_function_or_method``, which returns
+    True. So is ``list().pop`` and ``list().remove``. But ``list.pop`` and ``list.remove``
+    are different types, and return ``False``. The full list of types it checks against is:
+
+        - types.FunctionType
+        - types.MethodType
+        - types.BuiltinFunctionType
+        - types.BuiltinMethodType
+        - types.LambdaType
+        - functools.partial
+        - staticmethod
+        - classmethod
 
     **Example**::
 
@@ -1149,8 +1165,19 @@ def isfunc(obj):
 
 
     | *New in version 3.2.0.*
+    | *New in version 3.2.3:* also checks for partial and lambda functions
     """
-    return isinstance(obj, (types.FunctionType, types.MethodType, types.BuiltinFunctionType, types.BuiltinMethodType))
+    typelist = (
+        types.FunctionType,
+        types.MethodType,
+        types.BuiltinFunctionType,
+        types.BuiltinMethodType,
+        types.LambdaType,
+        functools.partial,
+        staticmethod,
+        classmethod,
+    )
+    return isinstance(obj, typelist)
 
 
 def ismodule(obj):
@@ -2230,7 +2257,7 @@ class tryexcept(cl.suppress):
     equivalent to using try-except blocks.
 
     By default, all errors are caught. If ``catch`` is not None, then by default
-    raise all other exceptions; if ``die`` is an exception (list of exceptions,
+    raise all other exceptions; if ``die`` is an exception (list of exceptions),
     then by default suppress all other exceptions.
 
     Due to Python's fundamental architecture, exceptions can only be caught inside
@@ -2238,7 +2265,8 @@ class tryexcept(cl.suppress):
     exception is encountered.
 
     Args:
-        die (bool/exception): default behavior of whether to raise caught exceptions
+        message (str): a custom message to print; "<EXCEPTION>" will be replaced in the message with the text of the exception
+        die (bool/exception): default behavior of whether to raise caught exceptions; or, exceptions to die on (others to catch)
         catch (exception): one or more exceptions to catch regardless of "die"
         verbose (bool): whether to print caught exceptions (0 = silent, 1 = error type, 2 = full error information)
         history (list/tryexcept): a ``tryexcept`` object, or a list of exceptions, to keep the history (see example below)
@@ -2265,11 +2293,26 @@ class tryexcept(cl.suppress):
                 print(values[i])
         tryexc.traceback()
 
+        # With a custom message
+        with sc.tryexcept('Caught exception: <EXCEPTION>'):
+            values[2]
+
     | *New in version 2.1.0.*
     | *New in version 3.0.0:* renamed "print" to "traceback"; added "to_df" and "disp" options
     | *New in version 3.1.0:* renamed "exceptions" to "data"; added "exceptions" property
+    | *New in version 3.2.3:* "message" argument
     """
-    def __init__(self, die=None, catch=None, verbose=1, history=None):
+    def __init__(self, message=None, die=None, catch=None, verbose=1, history=None):
+        # Check die and message
+        if message is not None and not isinstance(message, str):
+            if die is not None:
+                if isinstance(die, str): # Swap order, e.g. sc.tryexcept(KeyError, 'not a key error')
+                    message,die = die,message
+                else:
+                    errormsg = f'Could not understand types for {message =} and {die =}, are you sure the order is correct?'
+                    raise TypeError(errormsg)
+            else: # Just treat it as die, e.g. sc.tryexcept(KeyError)
+                die = message
 
         # Handle defaults
         dietypes   = []
@@ -2291,7 +2334,9 @@ class tryexcept(cl.suppress):
         # Finish initialization
         self.dietypes   = tuple(dietypes)
         self.catchtypes = tuple(catchtypes)
-        self.verbose    = verbose
+        self.verbose    = int(verbose)
+        self.message    = sc.ifelse(message, '')
+        self.outputstr  = ''
         self.data = []
         if history is not None:
             if isinstance(history, (list, tuple)): # pragma: no cover
@@ -2306,6 +2351,9 @@ class tryexcept(cl.suppress):
     def __repr__(self):
         return sc.prepr(self)
 
+    def disp(self):
+        return sc.pr(self)
+
     def __len__(self):
         return len(self.data)
 
@@ -2314,17 +2362,31 @@ class tryexcept(cl.suppress):
 
     def __exit__(self, exc_type, exc_val, traceback):
         """ If a context manager returns True from exit, the exception is caught """
+
         if exc_type is not None:
             self.data.append([exc_type, exc_val, traceback])
             die = (self.defaultdie or issubclass(exc_type, self.dietypes))
             live = issubclass(exc_type, self.catchtypes)
+
+            if self.verbose > 1:
+                exceptstr = '\n' + self.traceback(tostring=True) + '\n'
+            elif self.verbose:
+                exceptstr = f'{exc_type} {exc_val}'
+
+            # Construct exit string
+            if self.message:
+                placeholder = '<EXCEPTION>'
+                self.outputstr = self.message
+                if placeholder in self.outputstr:
+                    self.outputstr = self.outputstr.replace(placeholder, exceptstr)
+            else:
+                self.outputstr = exceptstr
+
             if die and not live:
                 return
             else:
-                if self.verbose > 1: # Print everything # pragma: no cover
-                    self.print()
-                elif self.verbose: # Just print the exception type
-                    print(exc_type, exc_val)
+                if self.verbose: # Print everything # pragma: no cover
+                    print(self.outputstr)
                 return True
 
     def traceback(self, which=None, tostring=False):
@@ -2343,7 +2405,7 @@ class tryexcept(cl.suppress):
                 which = np.arange(len(self))
             inds = toarray(which)
             for ind in inds:
-                string += f'Traceback {ind+1} of {len(self)}:\n'
+                string += sc.ansi.green('—'*60 + '\n' + f'Traceback {ind+1} of {len(self)}:\n')
                 string += traceback(*self.data[ind]) + '\n'
         else: # pragma: no cover
             print('No exceptions were encountered; nothing to trace')
@@ -2354,16 +2416,10 @@ class tryexcept(cl.suppress):
             return
 
     def to_df(self):
-        """ Convert the exceptions to a dataframe """
+        """ Convert the exceptions to a dataframe; most useful with multiple exceptions """
         df = sc.dataframe(self.data, columns=['type','value','traceback'])
         self.df = df
         return df
-
-    def disp(self):
-        """ Display all exceptions as a table """
-        df = self.to_df()
-        df.disp()
-        return
 
     @property
     def exceptions(self):
