@@ -260,13 +260,6 @@ def getnested(nested, keylist, safe=False, default=None):
     keylist = sc.tolist(keylist, coerce='tuple')
     get = ft.partial(get_from_obj, safe=safe, default=default)
     out = ft.reduce(get, keylist, nested)
-    # try:
-    #     out = ft.reduce(get, keylist, nested)
-    # except (IndexError, AttributeError) as e:
-    #     if safe:
-    #         out = default
-    #     else:
-    #         raise e
     return out
 
 

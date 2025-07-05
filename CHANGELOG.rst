@@ -7,9 +7,13 @@ All major updates to Sciris are documented here.
 
 By import convention, components of the Sciris library are listed beginning with ``sc.``, e.g. ``sc.odict()``.
 
-Version 3.2.3 (2025-07-XX)
+Version 3.2.3 (2025-07-05)
 --------------------------
-#. Fixed a bug with :func:`sc.setnested() <sc_nested.setnested>` when attempting to write values with missing intermediate keys.
+#. Fixed a bug with :func:`sc.setnested() <sc_nested.setnested>` when attempting to write values with missing intermediate keys; ``sc.setnested()`` is now an alias of :func:`sc.makenested() <sc_nested.makenested>`, which can also set values.
+#. :func:`sc.getnested() <sc_nested.getnested>` now has a ``default`` argument, which will return if the key is not found.
+#. Added additional validation to :func:`sc.dataframe.insertrow() <sc_dataframe.dataframe>`.
+#. :func:`sc.dataframe.read_excel() <sc_dataframe.dataframe>` can now load multiple sheets.
+#. :func:`sc.daydiff() <sc_datetime.daydiff>` can now take a single list of dates as input.
 
 Version 3.2.2 (2025-07-01)
 --------------------------
