@@ -306,6 +306,45 @@ def test_types():
     return o
 
 
+def test_is_x():
+    sc.heading('Testing type and other checkers')
+
+    print('Testing is<os>')
+    system = [sc.iswindows(), sc.ismac(), sc.islinux()]
+    assert sum(system) == 1, 'Cannot have more than one operating system'
+
+    print('Testing isiterable')
+    for val in [[1,2], (1,2), np.array([1,2]), dict(a='b'), 'ab']: # Iterable
+        assert sc.isiterable(val)
+
+    for val in [1, None]: # Not iterable
+        assert not sc.isiterable(val)
+
+    assert not sc.isiterable('string', exclude=str) # Test exclude
+    assert not sc.isiterable([1,2,3], minlen=5) # Test minlen
+    assert sc.isiterable([1,2], 3, '4, 5') == [True, False, True] # Test multiple arguments
+
+    print('Testing isnumber')
+    for val in [1, 1.0, 1j, np.random.rand(), np.random.rand(10).astype('uint32')[0]]:
+        assert sc.isnumber(val)
+    for val in ['1', np.random.rand(2), (1,)]:
+        assert not sc.isnumber(val)
+
+    print('Testing isstring')
+    for val in ['a', b'b', r'c']:
+        assert sc.isstring(val)
+    for val in
+
+
+    assert not isinstance(b'b', str) and sc.isstring(b'b')
+
+    # isstring(obj):
+    # isarray(obj, dtype=None):
+    # isfunc(obj):
+    # ismodule(obj):
+
+
+
 #%% Misc. functions
 
 def test_suggest():
@@ -446,6 +485,7 @@ if __name__ == '__main__':
     d1d2  = test_transpose_swap()
     mdict = test_merge()
     types = test_types()
+    isx   = test_is_x()
 
     # Miscellaneous
     dists = test_suggest()

@@ -33,6 +33,7 @@ import hashlib
 import getpass
 import inspect
 import warnings
+import functools
 import importlib
 import subprocess
 import unicodedata
@@ -1138,9 +1139,24 @@ def isfunc(obj):
     """
     Quickly check if something is a function.
 
-    Note: this checks whether or not something is a method (``types.MethodType``)
-    or a function (``types.MethodType``), which is different to whether or not
+    This checks whether or not something is a method (``types.MethodType``)
+    or a function (``types.FunctionType``), which is different to whether or not
     it is callable (e.g., classes are callable).
+
+    Note: Python doesn't have a crystal-clear distinction between things that are
+    and aren't functions, so there may be some edge cases with this function. For
+    example, ``dict.fromkeys`` is a ``builtin_function_or_method``, which returns
+    True. So is ``list().pop`` and ``list().remove``. But ``list.pop`` and ``list.remove``
+    are different types, and return ``False``. The full list of types it checks against is:
+
+        - types.FunctionType
+        - types.MethodType
+        - types.BuiltinFunctionType
+        - types.BuiltinMethodType
+        - types.LambdaType
+        - functools.partial
+        - staticmethod
+        - classmethod
 
     **Example**::
 
@@ -1149,8 +1165,19 @@ def isfunc(obj):
 
 
     | *New in version 3.2.0.*
+    | *New in version 3.2.3:* also checks for partial and lambda functions
     """
-    return isinstance(obj, (types.FunctionType, types.MethodType, types.BuiltinFunctionType, types.BuiltinMethodType))
+    typelist = (
+        types.FunctionType,
+        types.MethodType,
+        types.BuiltinFunctionType,
+        types.BuiltinMethodType,
+        types.LambdaType,
+        functools.partial,
+        staticmethod,
+        classmethod,
+    )
+    return isinstance(obj, typelist)
 
 
 def ismodule(obj):
