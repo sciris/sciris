@@ -13,6 +13,11 @@ def test_nested():
     sc.heading('Testing nested dicts')
     o = sc.objdict()
 
+    # Simple test
+    d = {}
+    sc.setnested(d, ['a','b'], 'c')
+    assert d['a']['b'] == 'c'
+
     foo = {}
     sc.makenested(foo, ['a','b'])
     foo['a']['b'] = 3
@@ -463,10 +468,6 @@ def test_equal():
 
     return out
 
-def test_setnested():
-    d = {}
-    sc.setnested(d,['a','b'],'c')
-    assert d['a']['b'] == 'c'
 
 #%% Run as a script
 if __name__ == '__main__':

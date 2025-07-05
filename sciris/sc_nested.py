@@ -169,7 +169,7 @@ def check_in_obj(parent, key):
     return out
 
 
-def get_from_obj(ndict, key, safe=False, **kwargs):
+def get_from_obj(ndict, key, safe=False, default=None, **kwargs):
     """
     Get an item from a dict, list, or object by key
 
@@ -177,18 +177,30 @@ def get_from_obj(ndict, key, safe=False, **kwargs):
         ndict (dict/list/obj): the object to get from
         key (any): the key to get
         safe (bool): whether to return None if the key is not found (default False)
+        default (any): the value to return if the key is not found and safe=True
         kwargs (dict): passed to ``check_iter_type()``
     """
+    if default is not None:
+        safe= True
     itertype = check_iter_type(ndict, **kwargs)
     if itertype == 'dict':
         if safe:
-            out = ndict.get(key)
+            out = ndict.get(key, default)
         else:
             out = ndict[key]
     elif itertype in ['list', 'tuple']:
-        out = ndict[key]
+        try:
+            out = ndict[key]
+        except IndexError as e:
+            if safe:
+                out = default
+            else:
+                raise e
     elif itertype == 'object':
-        out = getattr(ndict, key)
+        if safe:
+            out = getattr(ndict, key)
+        else:
+            out = getattr(ndict, key, default)
     else:
         out = None
     return out
@@ -217,14 +229,15 @@ def flatten_traces(tupledict, sep='_'):
     return strdict
 
 
-def getnested(nested, keylist, safe=False):
+def getnested(nested, keylist, safe=False, default=None):
     """
     Get the value for the given list of keys
 
     Args:
         nested (any): the nested object (dict, list, or object) to get from
         keylist (list): the list of keys
-        safe (bool): whether to return None if the key is not found
+        safe (bool): whether to return the "default" value if the key is not found
+        default (any): the value to return if the key is not found (sets safe=True if provided)
 
     **Example**::
 
@@ -233,20 +246,23 @@ def getnested(nested, keylist, safe=False):
     See :func:`sc.makenested() <makenested>` for full documentation.
     """
     keylist = sc.tolist(keylist, coerce='tuple')
-    get = ft.partial(get_from_obj, safe=safe)
+    get = ft.partial(get_from_obj, safe=safe, default=default)
     nested = ft.reduce(get, keylist, nested)
     return nested
 
 
-def setnested(nested, keylist, value, force=True):
+def setnested(nested, keylist, value, force=True, generator=None):
     """
     Set the value for the given list of keys
+
+    If
 
     Args:
         nested (any): the nested object (dict, list, or object) to modify
         keylist (list): the list of keys to use
         value (any): the value to set
         force (bool): whether to create the keys if they don't exist
+        generator (class): if force is true
 
     **Example**::
 
@@ -254,8 +270,7 @@ def setnested(nested, keylist, value, force=True):
 
     See :func:`sc.makenested() <makenested>` for full documentation.
     """
-    if not isinstance(keylist, (list, tuple)): # Be careful not to wrap tuples in lists
-        keylist = sc.tolist(keylist)
+    keylist = sc.tolist(keylist, coerce='tuple')
     parentkeys = keylist[:-1]
     try:
         currentlevel = getnested(nested, parentkeys)
