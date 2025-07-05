@@ -60,7 +60,7 @@ class counter(co.Counter):
             raise AttributeError(errormsg) from e
 
 
-class odict(OD):
+class odict(dict):
     """
     Ordered dictionary with integer indexing
 
