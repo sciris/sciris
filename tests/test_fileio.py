@@ -100,38 +100,38 @@ def test_load_save():
     Test file loading and saving
     '''
     o = sc.objdict()
-    
+
     sc.heading('Save/load')
     sc.save(files.binary, testdata)
     o.obj1 = sc.load(files.binary)
     print(o.obj1)
-    
+
     sc.heading('Testing other load/save options')
     sc.save(files.binary, testdata, compresslevel=9)
     sc.save(files.binary, testdata, compression='none')
     sc.zsave(files.binary, testdata)
     zobj = sc.load(files.binary, verbose=True)
     assert np.all(o.obj1 == zobj)
-    
+
     sc.heading('Savetext/loadtext')
     sc.savetext(files.text, testdata)
     sc.savetext(files.text, testdata.tolist())
     o.obj2 = sc.loadtext(files.text)
     sc.loadtext(files.text, splitlines=True)
     print(o.obj2)
-    
+
     sc.heading('Save/load zip')
     sc.savezip(files.zip, data={'fake_datafile.obj':testdata})
     sc.savezip(files.zip, [files.text, files.binary], basename=True)
     o.zip = sc.loadzip(files.zip) # Load into memory
     sc.unzip(files.zip, outfolder=filedir) # Unpack onto disk
-    
+
     # Tidy up
     if tidyup:
         sc.blank()
         sc.heading('Tidying up')
         sc.rmpath([files.binary, files.text, files.zip], die=False)
-    
+
     return o
 
 
@@ -142,7 +142,7 @@ def test_load_corrupted():
     to create this file.
     '''
     sc.heading('Intentionally loading corrupted file')
-    
+
     o = sc.objdict()
 
     class LiveClass():
@@ -152,7 +152,7 @@ def test_load_corrupted():
             return f'x is {self.x}'
 
     dead_path = filedir / 'deadclass.obj'
-    
+
     print('Loading with no remapping...')
     with pytest.warns(sc.UnpicklingWarning):
         o.obj1 = sc.load(dead_path)
@@ -165,7 +165,7 @@ def test_load_corrupted():
     for obj in [o.obj2, o.obj3]:
         assert isinstance(obj, LiveClass)
     print(f'Loading remapped object succeeded, {o.obj2.disp()}, object: {o.obj2}')
-    
+
     print('Loading with error on initialization')
     class DyingClass():
         def __new__(self):
@@ -174,7 +174,7 @@ def test_load_corrupted():
         o.obj4 = sc.load(dead_path, remapping={'deadclass.DeadClass': DyingClass}, method='robust', verbose=True)
     with pytest.raises(sc.UnpicklingError):
         sc.load(dead_path, die=True)
-        
+
     print('Testing Failed directly')
     f = sc.Failed()
     len(f)
@@ -183,7 +183,7 @@ def test_load_corrupted():
     f()
     f.disp()
     f.showfailure()
-    
+
     return o
 
 
@@ -211,15 +211,15 @@ def test_fileio():
     o.filelist = sc.getfilelist(fnmatch='*.py', nopath=True) # Test alias
     assert all(['py' in f for f in o.filelist])
     assert 'test_fileio.py' in o.filelist
-    
-    
+
+
     sc.heading('Sanitizing filenames')
     bad = 'Nöt*a   file&name?!.doc'
     good = sc.sanitizefilename(bad)
     assert str(sc.sanitizepath(bad)) == good
     sc.sanitizefilename(bad, strict=True, aspath=None)
     o.sanitized = good
-    
+
     sc.heading('Testing other')
     path1 = sc.path('/a/folder', 'a_file.txt')
     path2 = sc.path(['/a', 'folder'], 'a_file.txt')
@@ -252,14 +252,14 @@ def test_json():
     print(json_obj)
     print('JSON as string:')
     print(json_str)
-    
+
     # jsonify() docstring tests
     data = dict(a=dict(b=np.arange(4)), c=dict(foo='cat', bar='dog'))
     json = sc.jsonify(data)
     jsonstr = sc.jsonify(data, tostring=True, indent=2)
     assert json['a']['b'][-1] == 3
     assert '"foo": "cat"' in jsonstr
-    
+
     # Use a custom function for parsing the data
     custom = {np.ndarray: lambda x: f'It was an array: {x}'}
     j2 = sc.jsonify(data, custom=custom, tostring=True)
@@ -272,7 +272,7 @@ def test_json():
     sc.savejson(jsonfile, testdata)
     testdata2 = sc.loadjson(jsonfile)
     assert testdata == testdata2
-    
+
     # Test YAML load/save
     print('Testing YAML load/save...')
     yamlfile = 'test.yaml'
@@ -280,7 +280,7 @@ def test_json():
     testdata2 = sc.loadyaml(yamlfile)
     testdata3 = sc.readyaml(sc.loadtext(yamlfile))
     assert testdata == testdata2 == testdata3
-    
+
     # Tidy up
     sc.rmpath(jsonfile, yamlfile)
 
@@ -298,11 +298,11 @@ def test_jsonpickle():
     jps = sc.jsonpickle(myobj, tostring=True)
     myobj2 = sc.jsonunpickle(jp)
     myobj3 = sc.jsonunpickle(jps)
-    
+
     jpath = 'my-data.json'
     sc.jsonpickle(myobj, jpath)
     myobj4 = sc.jsonunpickle(jpath)
-    
+
     # Tidy up
     sc.rmpath(jpath)
     assert sc.equal(myobj, myobj2, myobj3, myobj4, leaf=True)

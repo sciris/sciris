@@ -104,17 +104,17 @@ def test_exceptions():
 
 def test_class():
     sc.heading('Testing sc.Parallel class')
-    
+
     def slowfunc(i):
         np.random.seed(i)
         sc.timedsleep(0.2*np.random.rand())
         return i**2
-    
+
     subheading('Creation and display')
     P = sc.Parallel(slowfunc, iterarg=range(4), parallelizer='multiprocess-async', ncpus=2) # NB, multiprocessing-async fails with a pickle error
     print(P)
     P.disp()
-    
+
     subheading('Running asynchronously and monitoring')
     P.run_async()
     print(P.running)
@@ -122,55 +122,55 @@ def test_class():
     print(P.status)
     P.monitor(interval=0.05)
     P.finalize()
-    
-    
+
+
     subheading('Checking parallelizers')
-    
+
     iterarg = np.arange(4)
-    
+
     print('Checking serial with copy and with progress')
     r1 = sc.parallelize(f, iterarg, parallelizer='serial-copy', progress=True)
-    
+
     print('Checking multiprocessing')
     r2 = sc.parallelize(f, iterarg, parallelizer='multiprocessing')
-    
+
     print('Checking fast (concurrent.futures)')
     r3 = sc.parallelize(f, iterarg, parallelizer='fast')
-    
+
     print('Checking thread')
     r4 = sc.parallelize(f, iterarg, parallelizer='thread')
-    
+
     print('Checking custom')
     with mp.Pool(processes=2) as pool:
         r5 = sc.parallelize(f, iterarg, parallelizer=pool.imap)
-    
+
     assert r1 == r2 == r3 == r4 == r5
 
-    
+
     subheading('Other')
-    
+
     print('Checking CPUs')
     sc.Parallel(f, 10, ncpus=0.7)
-    
+
     print('Validation: no jobs to run')
     with pytest.raises(ValueError):
         sc.Parallel(f, iterarg=[])
-        
+
     print('Validation: no CPUs')
     with pytest.raises(ValueError):
         sc.Parallel(f, 10, ncpus=-3)
-    
+
     print('Validation: invalid parallelizer')
     with pytest.raises(sc.KeyNotFoundError):
         sc.Parallel(f, 10, parallelizer='invalid-parallelizer')
-        
+
     print('Validation: invalid async')
     with pytest.raises(ValueError):
         sc.Parallel(f, 10, parallelizer='serial-async')
-        
+
     print('Validation: checking call signatures')
     ut.check_signatures(sc.parallelize, sc.Parallel.__init__, extras=['self', 'label'], die=True)
-    
+
     return P
 
 
@@ -198,7 +198,7 @@ def test_components():
     a.die          = None
     taskargs = sc.sc_parallel.TaskArgs(*a.values())
     task = sc.sc_parallel._task(taskargs)
-    
+
     print('Testing progress bar')
     globaldict = {0:1, 1:1, 2:0, 3:0, 4:0}
     njobs = 5

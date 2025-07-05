@@ -33,7 +33,7 @@ def test_colors():
     o.hsv = sc.rgb2hsv(rgb)
     o.rgb2 = sc.hsv2rgb(o.hsv)
     assert np.all(np.isclose(rgb, o.rgb2))
-    
+
     print('Testing sanitizecolors')
     o.green1 = sc.sanitizecolor('g')
     o.green2 = sc.sanitizecolor('tab:green')
@@ -88,10 +88,10 @@ def test_colormaps():
 def test_colorbars():
     sc.heading('Testing colorbars')
     o = sc.objdict()
-    
+
     print('Create a default colorbar')
     o.cb1 = sc.manualcolorbar()
-    
+
     print('Add a colorbar to non-mappable data (e.g. a scatterplot)')
     plt.figure()
     n = 1000
@@ -100,7 +100,7 @@ def test_colorbars():
     c = x**2 + y**2
     plt.scatter(x, y, c=c)
     o.cb2 = sc.manualcolorbar(c)
-    
+
     print('Create a custom colorbar with a custom label')
     plt.figure()
     sc.manualcolorbar(
@@ -113,7 +113,7 @@ def test_colorbars():
         labelkwargs=dict(rotation=10, fontweight='bold'),
         axkwargs=[0.1,0.5,0.8,0.1],
     )
-    
+
     print('Create a completely custom colorbar')
     plt.figure()
     n = 12
@@ -127,15 +127,15 @@ def test_colorbars():
     for i in [0, 2, 4, 10, 11]:
         ticklabels[i] = f'Color {i} is nice'
     o.cb3 = sc.manualcolorbar(
-        colors=colors, 
-        values=values, 
-        ticks=values, 
-        ticklabels=ticklabels, 
+        colors=colors,
+        values=values,
+        ticks=values,
+        ticklabels=ticklabels,
         spacing='proportional'
     )
-    
+
     return o
-    
+
 
 #%% Run as a script
 if __name__ == '__main__':
