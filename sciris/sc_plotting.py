@@ -1119,7 +1119,8 @@ class ScirisDateFormatter(mpl.dates.ConciseDateFormatter):
               dates = [sc.yeartodate(year) for year in values]
               values = mpl.dates.date2num(dates)
         elif values.min() == 0:
-            warnmsg = f'Axes data not recognizable as dates: Matplotlib converted them to days starting in 1970, which seems wrong. Please convert to actual dates first, using e.g. sc.date().\nRaw values: {values}'
+            mpl_values = mpl.dates.date2num(values)
+            warnmsg = f'Axes data not recognizable as dates: Matplotlib converted them to days starting in 1970, which seems wrong. Please convert to actual dates first, using e.g. sc.date().\nRaw values: {mpl_values}'
             warnings.warn(warnmsg, category=RuntimeWarning, stacklevel=2)
             as_dates = False
 
