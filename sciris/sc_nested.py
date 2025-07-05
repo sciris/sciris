@@ -104,6 +104,7 @@ def makenested(obj, keylist=None, value=None, overwrite=True, generator=None, co
     if copy:
         obj = sc.dcp(obj)
     currentlevel = obj
+    keylist = sc.tolist(keylist, coerce='tuple')
     for i,key in enumerate(keylist[:-1]):
         if not check_in_obj(currentlevel, key):
             if generator is not None:
@@ -231,6 +232,7 @@ def getnested(nested, keylist, safe=False):
 
     See :func:`sc.makenested() <makenested>` for full documentation.
     """
+    keylist = sc.tolist(keylist, coerce='tuple')
     get = ft.partial(get_from_obj, safe=safe)
     nested = ft.reduce(get, keylist, nested)
     return nested

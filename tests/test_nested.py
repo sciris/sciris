@@ -58,17 +58,18 @@ def test_nested_detailed(): # With Claude
     test2 = {}
     sc.makenested(test2, 'single')
     o.test2 = test2
-    assert test2 == {'single': {}}
+    assert test2 == {'single': None}
 
     # Test 3: makenested with tuple keys
     test3 = {}
     sc.makenested(test3, ('x', 'y', 'z'))
     o.test3 = test3
-    assert test3 == {'x': {'y': {'z': {}}}}
+    assert test3 == {'x': {'y': {'z': None}}}
 
     # Test 4: setnested with list keys
     test4 = {}
     sc.makenested(test4, ['level1', 'level2', 'level3'])
+    assert sc.getnested(test4, ['level1', 'level2', 'level3']) is None
     sc.setnested(test4, ['level1', 'level2', 'level3'], 'deep_value')
     o.test4 = test4
     assert sc.getnested(test4, ['level1', 'level2', 'level3']) == 'deep_value'
@@ -104,6 +105,7 @@ def test_nested_detailed(): # With Claude
     test9 = {}
     keys9 = ['very', 'deep', 'nested', 'structure', 'end']
     sc.makenested(test9, keys9)
+    assert sc.getnested(test9, keys9) is None
     sc.setnested(test9, keys9, 'deep_end')
     o.test9 = test9
     assert sc.getnested(test9, keys9) == 'deep_end'
@@ -134,6 +136,7 @@ def test_nested_detailed(): # With Claude
     o.test13 = test13
     assert 'existing' in test13['a']
     assert 'new_branch' in test13['a']
+    assert test13['a']['new_branch'] is None
 
     # Test 14: Numeric values and operations
     test14 = {}
@@ -163,6 +166,7 @@ def test_nested_detailed(): # With Claude
     # Test 17: Nested list access
     test17 = {}
     sc.makenested(test17, ['data', 'items'])
+    assert sc.getnested(test17, ['data', 'items']) is None
     test17['data']['items'] = [{'id': 1}, {'id': 2}, {'id': 3}]
     result17 = sc.getnested(test17, ['data', 'items'])
     o.test17 = result17
@@ -173,6 +177,7 @@ def test_nested_detailed(): # With Claude
     test18 = {}
     complex_path = ['root', 'sub', 0, 'item', 'value']
     sc.makenested(test18, complex_path)
+    assert sc.getnested(test18, complex_path) is None
     sc.setnested(test18, complex_path, 'complex_value')
     o.test18 = test18
     assert sc.getnested(test18, complex_path) == 'complex_value'
@@ -186,6 +191,7 @@ def test_nested_detailed(): # With Claude
     ]
     for path, value in branches:
         sc.makenested(test19, path)
+        assert sc.getnested(test19, path) is None
         sc.setnested(test19, path, value)
     o.test19 = test19
     assert sc.getnested(test19, ['branch1', 'leaf']) == 'value1'
