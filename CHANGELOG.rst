@@ -7,6 +7,9 @@ All major updates to Sciris are documented here.
 
 By import convention, components of the Sciris library are listed beginning with ``sc.``, e.g. ``sc.odict()``.
 
+Version 3.2.3 (2025-07-XX)
+--------------------------
+#. Fixed a bug with :func:`sc.setnested() <sc_nested.setnested>` when attempting to write values with missing intermediate keys.
 
 Version 3.2.2 (2025-07-01)
 --------------------------

@@ -257,9 +257,14 @@ def setnested(nested, keylist, value, force=True):
     if not isinstance(keylist, (list, tuple)): # Be careful not to wrap tuples in lists
         keylist = sc.tolist(keylist)
     parentkeys = keylist[:-1]
-    if force and parentkeys:
-        makenested(nested, parentkeys, overwrite=False)
-    currentlevel = getnested(nested, parentkeys)
+    try:
+        currentlevel = getnested(nested, parentkeys)
+    except KeyError as e:
+        if force:
+            currentlevel = nested.__class__()
+            makenested(nested, parentkeys, value=currentlevel, overwrite=False)
+        else:
+            raise e
     set_in_obj(currentlevel, keylist[-1], value)
     return nested # Return object, but note that it's modified in place
 

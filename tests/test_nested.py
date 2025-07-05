@@ -463,6 +463,10 @@ def test_equal():
 
     return out
 
+def test_setnested():
+    d = {}
+    sc.setnested(d,['a','b'],'c')
+    assert d['a']['b'] == 'c'
 
 #%% Run as a script
 if __name__ == '__main__':
