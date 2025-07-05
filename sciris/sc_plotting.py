@@ -17,6 +17,7 @@ Highlights:
 ##############################################################################
 
 import os
+import warnings
 import tempfile
 import datetime as dt
 import matplotlib.pyplot as plt
@@ -208,6 +209,9 @@ def plot3d(x, y, z, c='index', fig=True, ax=None, returnfig=False, figkwargs=Non
         figkwargs (dict): :func:`plt.figure() <matplotlib.pyplot.figure>`
         axkwargs (dict): :func:`plt.axes() <matplotlib.pyplot.axes>`
         kwargs (dict): passed to :func:`plt.plot() <matplotlib.pyplot.plot>`
+
+    Returns:
+        `ax` if returnfig=False; `(fig,ax)` if returnfig=True
 
     **Examples**::
 
@@ -1104,11 +1108,20 @@ class ScirisDateFormatter(mpl.dates.ConciseDateFormatter):
         """
         return mpl.dates.num2date(value, tz=self._tz).strftime('%Y-%b-%d')
 
-    def format_ticks(self, values): # pragma: no cover
+    def format_ticks(self, values, min_year=1700, max_year=2300): # pragma: no cover
         """
         Append the year to the tick label for the first label, or if the year changes.
         This avoids the need to use offset_text, which is difficult to control.
         """
+        # Validate values
+        as_dates = True
+        if values.min() >= min_year and values.max() <= max_year: # It looks like a year, convert
+              dates = [sc.yeartodate(year) for year in values]
+              values = mpl.dates.date2num(dates)
+        elif values.min() == 0:
+            warnmsg = f'Axes data not recognizable as dates: Matplotlib converted them to days starting in 1970, which seems wrong. Please convert to actual dates first, using e.g. sc.date().\nRaw values: {values}'
+            warnings.warn(warnmsg, category=RuntimeWarning, stacklevel=2)
+            as_dates = False
 
         def addyear(label, year):
             """ Add the year to the label if it's not already present """
@@ -1118,15 +1131,18 @@ class ScirisDateFormatter(mpl.dates.ConciseDateFormatter):
             return label
 
         # Get the default labels and years
-        labels = super().format_ticks(values)
-        years = [mpl.dates.num2date(v).year for v in values]
+        if as_dates: # Default use case: it is dates or something date-like
+            labels = super().format_ticks(values)
+            years = [mpl.dates.num2date(v).year for v in values]
 
-        # Add year information to any labels that require it
-        if self.show_year:
-            for i,label in enumerate(labels):
-                year = years[i]
-                if i == 0 or (year != years[i-1]):
-                    labels[i] = addyear(label, year)
+            # Add year information to any labels that require it
+            if self.show_year:
+                for i,label in enumerate(labels):
+                    year = years[i]
+                    if i == 0 or (year != years[i-1]):
+                        labels[i] = addyear(label, year)
+        else: # Give up, just plot the raw input
+            labels = [str(v) for v in values]
 
         return labels
 
@@ -1240,8 +1256,9 @@ def datenumformatter(ax=None, start_date=None, dateformat=None, interval=None, s
     """
     Format a numeric x-axis to use dates.
 
-    See also :func:`sc.dateformatter() <dateformatter>`, which is intended for use when the axis already
-    has date data.
+    Note: in most cases, :func:`sc.dateformatter() <dateformatter>` should be used instead;
+    use this function only if you want to explicitly specify start and end values,
+    i.e., specify the date data rather than simply plot it.
 
     Args:
         ax         (axes)     : if supplied, use these axes instead of the current one
@@ -1280,7 +1297,7 @@ def datenumformatter(ax=None, start_date=None, dateformat=None, interval=None, s
 
     # Convert to a date object
     if start_date is None: # pragma: no cover
-        start_date = plt.num2date(ax.dataLim.x0)
+        start_date = mpl.dates.num2date(ax.dataLim.x0)
     start_date = sc.date(start_date)
 
     @mpl.ticker.FuncFormatter

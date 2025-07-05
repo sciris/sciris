@@ -4,7 +4,7 @@ Adaptive stochastic descent optimization algorithm, building on :mod:`scipy.opti
 This algorithm is published as:
 
   Kerr CC, Dura-Bernal S, Smolinski TG, Chadderdon GL, Wilson DP (2018).
-  **Optimization by Adaptive Stochastic Descent**. *PLoS ONE* 13(3): e0192944. 
+  **Optimization by Adaptive Stochastic Descent**. *PLoS ONE* 13(3): e0192944.
   https://doi.org/10.1371/journal.pone.0192944
 """
 
@@ -179,10 +179,10 @@ def asd(function, x, args=None, stepsize=0.1, sinc=2, sdec=2, pinc=2, pdec=2,
     start = time.time() # Keep track of when we begin looping
     offset = ' ' * 4 # Offset the print statements
     exitreason = 'Unknown exit reason' # Catch everything else
-    
+
     # Loop
     while True:
-        
+
         # Handle initialization cases
         if fvalorig == minval:
             exitreason = f'Objective function already at minimum value ({fvalorig}), skipping optimization'
@@ -284,7 +284,7 @@ def asd(function, x, args=None, stepsize=0.1, sinc=2, sdec=2, pinc=2, pdec=2,
             ratio = fvals[count]/float(fvals[0]) # The normal situation: calculate the real ratio
 
         print(f'=== {label} {exitreason} ({count} steps, orig: {orig} | best: {best} | ratio: {ratio}) ===')
-    
+
     output = sc.objdict()
     output['x'] = np.reshape(x, origshape) # Parameters
     output['fval'] = fvals[count]
@@ -294,5 +294,5 @@ def asd(function, x, args=None, stepsize=0.1, sinc=2, sdec=2, pinc=2, pdec=2,
     output['details']['xvals'] = allsteps[:count+1, :]
     output['details']['probabilities'] = probabilities
     output['details']['stepsizes'] = stepsizes
-    
+
     return output # Return parameter vector as well as details about run
