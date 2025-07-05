@@ -1170,7 +1170,14 @@ class dataframe(pd.DataFrame):
     @classmethod
     def read_excel(cls, *args, **kwargs):
         """ Alias to :func:`pd.read_excel <pandas.read_excel`, returning a Sciris dataframe """
-        return cls(pd.read_excel(*args, **kwargs))
+        out = pd.read_excel(*args, **kwargs)
+        if isinstance(out, pd.DataFrame):
+            out = cls(out)
+        elif isinstance(out, dict):
+            out = sc.objdict(out)
+            for key,val in out.items():
+                out[key] = cls(val)
+        return out
 
     @property
     def _constructor(self):
