@@ -9,11 +9,16 @@ By import convention, components of the Sciris library are listed beginning with
 
 Version 3.2.3 (2025-07-05)
 --------------------------
+#. Added :class:`sc.counter() <sc_odict.counter>`, which is a subclass of ``collections.Counter`` with NumPy interoperability (e.g. ``counter.max()``).
 #. Fixed a bug with :func:`sc.setnested() <sc_nested.setnested>` when attempting to write values with missing intermediate keys; ``sc.setnested()`` is now an alias of :func:`sc.makenested() <sc_nested.makenested>`, which can also set values.
 #. :func:`sc.getnested() <sc_nested.getnested>` now has a ``default`` argument, which will return if the key is not found.
-#. Added additional validation to :func:`sc.dataframe.insertrow() <sc_dataframe.dataframe>`.
-#. :func:`sc.dataframe.read_excel() <sc_dataframe.dataframe>` can now load multiple sheets.
+#. Added :func:`sc.odict.dcp() <sc_odict.odict.dcp>` as an alias to ``sc.odict.copy(deep=True)``.
+#. Added additional validation to :func:`sc.dataframe.insertrow() <sc_dataframe.dataframe.insertrow>`.
+#. :func:`sc.dataframe.read_excel() <sc_dataframe.dataframe.read_excel>` can now load multiple sheets.
 #. :func:`sc.daydiff() <sc_datetime.daydiff>` can now take a single list of dates as input.
+#. :func:`sc.dateformatter <sc_plotting.dateformatter>` now correctly interprets integer year x-axes (with values between 1700 and 2300) as dates.
+#. :func:`sc.isfunc <sc_utils.isfunc>` now returns ``True`` for lambda and partial functions.
+#. :class:`sc.tryexcept() <sc_utils.tryexcept>` now has a ``message`` argument.
 
 Version 3.2.2 (2025-07-01)
 --------------------------
