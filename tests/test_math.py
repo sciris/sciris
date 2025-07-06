@@ -3,7 +3,7 @@ Test Sciris math functions.
 '''
 
 import numpy as np
-import pylab as pl
+import matplotlib.pyplot as plt
 import sciris as sc
 import pytest
 
@@ -43,7 +43,7 @@ def test_utils():
     y = sc.perturb(1000, δ, normal=True)
     assert y.min() < x.min()
     assert y.max() > x.max()
-    
+
     print('Testing sc.normsum() and sc.normalize()')
     o.normsum   = sc.normsum([2,5,3,6,2,6,7,2,3,4], 100) # Scale so sum equals 100
     o.normalize = sc.normalize([2,3,7,27])
@@ -67,7 +67,7 @@ def test_utils():
     o.cat = sc.cat(np.array([1,2,3]), [4,5], 6, copy=True)
     assert o.cat[3] == 4
     assert len(sc.cat()) == 0
-    
+
     print('Testing sc.linregress()')
     x = range(10)
     y = sorted(2*np.random.rand(10) + 1)
@@ -86,12 +86,12 @@ def test_find():
     print('Testing sc.findinds()')
     found.vals = sc.findinds([2,3,6,3], 6)
     assert found.vals[0] == 2
-    
-    data = np.random.rand(1000) 
-    f1 = sc.findinds(data<0.5) # Standard usage; returns e.g. array([2, 4, 5, 9]) 
-    f2 = sc.findinds(data>0.3, data<0.5) # Multiple arguments 
+
+    data = np.random.rand(1000)
+    f1 = sc.findinds(data<0.5) # Standard usage; returns e.g. array([2, 4, 5, 9])
+    f2 = sc.findinds(data>0.3, data<0.5) # Multiple arguments
     assert len(f2) < len(f1)
-    
+
     maxval = 0.1
     tabdata = np.random.rand(20,20)
     loc = sc.findinds(tabdata<maxval, ind=3)
@@ -102,8 +102,8 @@ def test_find():
     assert found.count == 2
 
     print('Testing sc.findfirst(), sc.findlast()')
-    found.first = sc.findfirst(pl.rand(10))
-    found.last = sc.findlast(pl.rand(10))
+    found.first = sc.findfirst(np.random.rand(10))
+    found.last = sc.findlast(np.random.rand(10))
     sc.findlast([1,2,3], 4, die=False)
     with pytest.raises(IndexError):
         sc.findlast([1,2,3], 4)
@@ -129,19 +129,19 @@ def test_find():
 def test_nan():
     sc.heading('Testing NaN functions')
     o = sc.objdict()
-    
+
     print('Testing sc.getvalidinds(), sc.getvaliddata()')
     o.inds = sc.getvalidinds([3,5,8,13], [2000, np.nan, np.nan, 2004]) # Returns array([0,3])
     o.data = sc.getvaliddata(np.array([3,5,8,13]), np.array([2000, np.nan, np.nan, 2004])) # Returns array([3,13])
     assert o.inds[-1] == 3
     assert o.data[-1] == 13
-    
+
     print('Testing sc.sanitize()')
     data = [3, 4, np.nan, 8, 2, np.nan, np.nan, 8]
     sanitized, inds = sc.sanitize(data, returninds=True) # Remove NaNs
     assert len(sanitized) == 5
     assert 1 in inds
-    
+
     s2 = sc.sanitize(data, replacenans=True) # Replace NaNs using nearest neighbor interpolation
     s3 = sc.sanitize(data, replacenans='nearest') # Eequivalent to replacenans=True
     s4 = sc.sanitize(data, replacenans='linear') # Replace NaNs using linear interpolation
@@ -150,11 +150,11 @@ def test_nan():
     assert s3[2] == 4
     assert s4[2] == 6
     assert s5[2] == 0
-    
+
     allnans = np.full(5, np.nan)
     assert len(sc.sanitize(allnans)) == 0
     assert sc.sanitize(allnans, defaultval=7) == 7
-    
+
     print('Testing fillnan and rmnan')
     data2d = np.random.rand(3,3)
     data2d[1,1] = np.nan
@@ -167,69 +167,69 @@ def test_nan():
     assert 200 < filled.sum() < 207
     o.sanitized = sanitized
     o.filled = filled
-    
+
     print('Testing findnan')
     data = [0, 1, 2, np.nan, 4, np.nan, 6, np.nan, np.nan, np.nan, 10]
     assert len(sc.findnans(data)) == 5
-    
+
     print('Testing nanequal')
-    arr1 = np.array([1, 2, np.nan, np.nan]) 
-    arr2 = [1, 2, np.nan, np.nan] 
-    assert np.all(sc.nanequal(arr1, arr2)) # Returns array([ True,  True,  True, True]) 
-     
-    arr3 = [3, np.nan, 'foo'] 
-    assert sc.nanequal(arr3, arr3, arr3, scalar=True) # Returns True 
-    
+    arr1 = np.array([1, 2, np.nan, np.nan])
+    arr2 = [1, 2, np.nan, np.nan]
+    assert np.all(sc.nanequal(arr1, arr2)) # Returns array([ True,  True,  True, True])
+
+    arr3 = [3, np.nan, 'foo']
+    assert sc.nanequal(arr3, arr3, arr3, scalar=True) # Returns True
+
     arr4 = [np.nan, np.nan, 'foo']
     assert not sc.nanequal(arr3, arr4, scalar=True)
-    
+
     arr5 = [np.nan, np.nan, 'foo', 3]
     assert not sc.nanequal(arr4, arr5, scalar=True)
-    
-    
+
+
     return o
 
 
 def test_smooth(doplot=doplot):
     sc.heading('Testing smoothing')
     np.random.seed(1) # Ensure reproducibility
-    
+
     o = sc.objdict()
 
     print('Testing sc.smooth()')
-    data = pl.randn(200,100)
+    data = np.random.randn(200,100)
     o.smoothdata = sc.smooth(data,10)
 
     print('Testing sc.smoothinterp()')
     n = 50
-    x1 = pl.arange(n)
-    y1 = pl.randn(n)
+    x1 = np.arange(n)
+    y1 = np.random.randn(n)
     y1[10] = np.nan
-    x2 = pl.linspace(-5,n+5,100)
+    x2 = np.linspace(-5,n+5,100)
     o.smoothinterp = sc.smoothinterp(x2, x1, y1)
     assert np.isnan(o.smoothinterp).sum() == 0
     assert np.nanmin(y1) < o.smoothinterp.min()
     assert np.nanmax(y1) > o.smoothinterp.max()
-    
+
     si = sc.smoothinterp(x2, x1, y1, ensurefinite=False)
     assert np.isnan(si).sum() > 0
-    
+
     print('Testing sc.rolling()')
-    d = pl.randn(365)
+    d = np.random.randn(365)
     o.r = sc.rolling(d, replacenans=False)
     assert sum(abs(np.diff(d))) > sum(abs(np.diff(o.r))) # Rolling should make the diffs smaller
     for op in ['none', 'median', 'sum']:
         sc.rolling(d, operation=op)
-    
+
     if doplot:
-        pl.subplot(3,1,1)
-        pl.pcolor(data)
-        pl.subplot(3,1,2)
-        pl.pcolor(o.smoothdata)
-        pl.subplot(3,1,3)
-        pl.scatter(x1, y1)
-        pl.plot(x2, o.smoothinterp)
-        pl.show()
+        plt.subplot(3,1,1)
+        plt.pcolor(data)
+        plt.subplot(3,1,2)
+        plt.pcolor(o.smoothdata)
+        plt.subplot(3,1,3)
+        plt.scatter(x1, y1)
+        plt.plot(x2, o.smoothinterp)
+        plt.show()
 
     return o
 
@@ -239,25 +239,25 @@ def test_gauss1d(doplot=doplot):
 
     # Setup
     n = 20
-    x = np.sort(pl.rand(n))
-    y = (x-0.3)**2 + 0.2*pl.rand(n)
+    x = np.sort(np.random.rand(n))
+    y = (x-0.3)**2 + 0.2*np.random.rand(n)
 
     # Smooth
     yi = sc.gauss1d(x, y)
     yi2 = sc.gauss1d(x, y, scale=0.3)
-    xi3 = pl.linspace(0, 1, n)
+    xi3 = np.linspace(0, 1, n)
     yi3 = sc.gauss1d(x, y, xi3)
 
     # Plot oiginal and interpolated versions
     if doplot:
         kw = dict(alpha=0.5, lw=2, marker='o')
-        pl.figure()
-        pl.scatter(x, y,  label='Original')
-        pl.plot(x, yi,    label='Default smoothing', **kw)
-        pl.plot(x, yi2,   label='More smoothing', **kw)
-        pl.plot(xi3, yi3, label='Uniform spacing', **kw)
-        pl.legend()
-        pl.show()
+        plt.figure()
+        plt.scatter(x, y,  label='Original')
+        plt.plot(x, yi,    label='Default smoothing', **kw)
+        plt.plot(x, yi2,   label='More smoothing', **kw)
+        plt.plot(xi3, yi3, label='Uniform spacing', **kw)
+        plt.legend()
+        plt.show()
 
     return yi3
 
@@ -284,7 +284,7 @@ def test_gauss2d(doplot=doplot):
         sc.scatter3d(x, y, z, c=z)
         sc.surf3d(zi)
         sc.scatter3d(xi2, yi2, zi2, c=zi2)
-        pl.show()
+        plt.show()
 
     return zi
 

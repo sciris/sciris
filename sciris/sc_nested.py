@@ -37,9 +37,9 @@ __all__ = ['getnested', 'setnested', 'makenested', 'iternested', 'IterObj', 'ite
            'mergenested', 'flattendict', 'nestedloop']
 
 
-def makenested(obj, keylist=None, value=None, overwrite=True, generator=None, copy=False):
+def makenested(obj=None, keylist=None, value=None, overwrite=True, generator=None, copy=False):
     """
-    Make a nested object (such as a dictionary).
+    Make or set a nested object (such as a dictionary).
 
     Args:
         obj (any): the object to make the nested list in
@@ -72,11 +72,10 @@ def makenested(obj, keylist=None, value=None, overwrite=True, generator=None, co
         foo = {}
         sc.makenested(foo, ['a','b'])
         foo['a']['b'] = 3
-        print(sc.getnested(foo, ['a','b']))    # 3
+        print(sc.getnested(foo, ['a','b'])) # 3
         sc.setnested(foo, ['a','b'], 7)
-        print(sc.getnested(foo, ['a','b']))    # 7
-        sc.makenested(foo, ['bar','cat'])
-        sc.setnested(foo, ['bar','cat'], 'in the hat')
+        print(sc.getnested(foo, ['a','b'])) # 7
+        sc.makenested(foo, ['bar','cat'], value='in the hat')
         print(foo['bar'])  # {'cat': 'in the hat'}
 
     **Example 2**::
@@ -100,11 +99,19 @@ def makenested(obj, keylist=None, value=None, overwrite=True, generator=None, co
 
     | *New in version 2014nov29.*
     | *New in version 3.2.0:* operate on arbitrary objects; "overwrite" defaults to True; returns object
+    | *New in version 3.2.3:* explicitly replace setnested functionality
     """
+    if obj is None:
+        obj = {}
     if copy:
         obj = sc.dcp(obj)
     currentlevel = obj
-    for i,key in enumerate(keylist[:-1]):
+    keylist = sc.tolist(keylist, coerce='tuple')
+    if not len(keylist):
+        errormsg = f'At least one key must be supplied, not {keylist}'
+        raise ValueError(keylist)
+    parentkeys = keylist[:-1]
+    for i,key in enumerate(parentkeys):
         if not check_in_obj(currentlevel, key):
             if generator is not None:
                 gen_func = generator
@@ -168,7 +175,7 @@ def check_in_obj(parent, key):
     return out
 
 
-def get_from_obj(ndict, key, safe=False, **kwargs):
+def get_from_obj(ndict, key, safe=False, default=None, **kwargs):
     """
     Get an item from a dict, list, or object by key
 
@@ -176,20 +183,36 @@ def get_from_obj(ndict, key, safe=False, **kwargs):
         ndict (dict/list/obj): the object to get from
         key (any): the key to get
         safe (bool): whether to return None if the key is not found (default False)
+        default (any): the value to return if the key is not found and safe=True
         kwargs (dict): passed to ``check_iter_type()``
     """
+    if default is not None:
+        safe = True
     itertype = check_iter_type(ndict, **kwargs)
     if itertype == 'dict':
         if safe:
-            out = ndict.get(key)
+            out = ndict.get(key, default)
         else:
             out = ndict[key]
     elif itertype in ['list', 'tuple']:
-        out = ndict[key]
+        try:
+            out = ndict[key]
+        except IndexError as e:
+            if safe:
+                out = default
+            else:
+                raise e
     elif itertype == 'object':
-        out = getattr(ndict, key)
+        if safe:
+            out = getattr(ndict, key)
+        else:
+            out = getattr(ndict, key, default)
     else:
-        out = None
+        if safe:
+            out = default
+        else:
+            errormsg = f'Cannot iterate over object of type {type(ndict)} with inferred iteration type "{itertype}"'
+            raise TypeError(errormsg)
     return out
 
 
@@ -216,14 +239,15 @@ def flatten_traces(tupledict, sep='_'):
     return strdict
 
 
-def getnested(nested, keylist, safe=False):
+def getnested(nested, keylist, safe=False, default=None):
     """
     Get the value for the given list of keys
 
     Args:
         nested (any): the nested object (dict, list, or object) to get from
-        keylist (list): the list of keys
-        safe (bool): whether to return None if the key is not found
+        keylist (str/list/tuple): the keys to get (typically a list)
+        safe (bool): whether to return the "default" value if the key is not found
+        default (any): the value to return if the key is not found (sets safe=True if provided)
 
     **Example**::
 
@@ -231,20 +255,23 @@ def getnested(nested, keylist, safe=False):
 
     See :func:`sc.makenested() <makenested>` for full documentation.
     """
-    get = ft.partial(get_from_obj, safe=safe)
-    nested = ft.reduce(get, keylist, nested)
-    return nested
+    if default is not None:
+        safe = True
+    keylist = sc.tolist(keylist, coerce='tuple')
+    get = ft.partial(get_from_obj, safe=safe, default=default)
+    out = ft.reduce(get, keylist, nested)
+    return out
 
 
-def setnested(nested, keylist, value, force=True):
+def setnested(obj=None, keylist=None, value=None, **kwargs):
     """
-    Set the value for the given list of keys
+    Set the value for the given list of keys; alias for :func:`sc.makenested() <makenested>`.
 
     Args:
-        nested (any): the nested object (dict, list, or object) to modify
+        obj (any): the nested object (dict, list, or object) to modify
         keylist (list): the list of keys to use
         value (any): the value to set
-        force (bool): whether to create the keys if they don't exist
+        **kwargs (dict): passed to :func:`sc.makenested() <makenested>`
 
     **Example**::
 
@@ -252,14 +279,7 @@ def setnested(nested, keylist, value, force=True):
 
     See :func:`sc.makenested() <makenested>` for full documentation.
     """
-    if not isinstance(keylist, (list, tuple)): # Be careful not to wrap tuples in lists
-        keylist = sc.tolist(keylist)
-    parentkeys = keylist[:-1]
-    if force and parentkeys:
-        makenested(nested, parentkeys, overwrite=False)
-    currentlevel = getnested(nested, parentkeys)
-    set_in_obj(currentlevel, keylist[-1], value)
-    return nested # Return object, but note that it's modified in place
+    return makenested(obj=obj, keylist=keylist, value=value, **kwargs)
 
 
 def iternested(nesteddict, _previous=None):

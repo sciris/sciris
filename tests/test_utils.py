@@ -4,6 +4,7 @@ Test Sciris utility/helper functions.
 
 import numpy as np
 import sciris as sc
+import functools
 import pytest
 
 
@@ -32,7 +33,7 @@ def test_adaptations():
 
     print('\nTesting traceback')
     o.traceback = sc.traceback()
-    
+
     print('\nTesting platforms')
     sc.getplatform()
     assert sc.iswindows() + sc.ismac() + sc.islinux() == 1
@@ -124,15 +125,15 @@ def test_traceback():
     return text
 
 
-def test_tryexcept():    
+def test_tryexcept():
     sc.heading('Testing tryexcept')
-    
+
     print('NOTE: This will print some exception text; this is expected\n')
-    
+
     values = [0,1]
     with sc.tryexcept(): # Equivalent to contextlib.suppress(Exception)
         values[2]
-        
+
     # Raise only certain errors
     with pytest.raises(IndexError):
         with sc.tryexcept(die=IndexError): # Catch everything except IndexError
@@ -141,7 +142,7 @@ def test_tryexcept():
     # Catch (do not raise) only certain errors
     with sc.tryexcept(catch=IndexError): # Raise everything except IndexError
         values[2]
-        
+
     # Storing the history of multiple exceptions
     te = None
     repeats = 5
@@ -152,7 +153,7 @@ def test_tryexcept():
     assert te.died
     te.disp()
     te.traceback()
-    
+
     return te
 
 
@@ -205,7 +206,7 @@ def test_tolist():
 
     # Check that type checking works
     sc.tolist(ex2, objtype=str)
-    
+
     return res3b
 
 
@@ -217,7 +218,7 @@ def test_transpose_swap():
     assert keys[2] == 'c'
     assert inds[3] == 3
     assert vals[1] == 4
-    
+
     listoflists = [
         ['a', 1, 3],
         ['b', 4, 5],
@@ -225,16 +226,16 @@ def test_transpose_swap():
     ]
     trans = sc.transposelist(listoflists, fix_uneven=True)
     assert all([len(l) == 5 for l in sc.transposelist(trans)])
-    
-    d1 = {'a':'foo', 'b':'bar'} 
+
+    d1 = {'a':'foo', 'b':'bar'}
     d2 = sc.swapdict(d1)
-    assert d2 == {'foo':'a', 'bar':'b'} 
+    assert d2 == {'foo':'a', 'bar':'b'}
     with pytest.raises(TypeError):
         sc.swapdict(1) # Not a dict
     with pytest.raises(TypeError):
         listdict = dict(a=[1,2,3])
         sc.swapdict(listdict) # Unhashable type
-    
+
     return d1, d2
 
 
@@ -248,7 +249,7 @@ def test_merge():
     assert sc.mergelists([(1,2), (3,4)], (5,6))             == [(1, 2), (3, 4), (5, 6)]
     assert sc.mergelists((1,2), (3,4), (5,6))               == [(1, 2), (3, 4), (5, 6)]
     assert sc.mergelists((1,2), (3,4), (5,6), coerce=tuple) == [1, 2, 3, 4, 5, 6]
-    
+
     print('\nTesting mergedicts')
     big = sc.mergedicts(sc.odict({'b':3, 'c':4}), {'a':1, 'b':2})
     assert big == sc.odict({'b':2, 'c':4, 'a':1})
@@ -257,25 +258,25 @@ def test_merge():
     assert sc.mergedicts({'a':1, 'b':2}, {'b':3, 'c':4}, None) == {'a':1, 'b':3, 'c':4}
     with pytest.raises(KeyError):
         assert sc.mergedicts({'b':3, 'c':4}, {'a':1, 'b':2}, _overwrite=False)
-        
+
     print('\nTesting ifelse')
-    
+
     # Basic usage
     a = None
     b = 3
     assert sc.ifelse(a, b) == a if a is not None else b
-    
+
     # Boolean usage
     args = ['', False, {}, 'ok']
     assert sc.ifelse(*args, check=bool) == next((arg for arg in args if arg), None)
-    
+
     # Custom function
     args = [1, 3, 5, 7]
     assert sc.ifelse(*args, check=lambda x: x>5) == 7
-    
+
     # Default value
     assert sc.ifelse(default=[4]) == [4]
-    
+
     return big
 
 
@@ -290,7 +291,7 @@ def test_types():
 
     print('\nTesting flexstr')
     o.flexstr = sc.flexstr(b'bytestring')
-    
+
     print('\nTesting sanitizestr')
     assert sc.sanitizestr('This Is a String', lower=True) == 'this is a string'
     assert sc.sanitizestr('Lukáš wanted €500‽', asciify=True, nospaces=True, symchar='*') == 'Lukas_wanted_*500*'
@@ -304,6 +305,72 @@ def test_types():
         sc.toarray('not convertible', dtype=float)
 
     return o
+
+
+def test_is_x():
+    sc.heading('Testing type and other checkers')
+
+    print('Testing is[os]')
+    system = [sc.iswindows(), sc.ismac(), sc.islinux()]
+    assert sum(system) == 1, 'Cannot have more than one operating system'
+
+    print('Testing isiterable')
+    for val in [[1,2], (1,2), np.array([1,2]), dict(a='b'), 'ab']: # Iterable
+        assert sc.isiterable(val)
+
+    for val in [1, None]: # Not iterable
+        assert not sc.isiterable(val)
+
+    assert not sc.isiterable('string', exclude=str) # Test exclude
+    assert not sc.isiterable([1,2,3], minlen=5) # Test minlen
+    assert sc.isiterable([1,2], 3, '4, 5') == [True, False, True] # Test multiple arguments
+
+    print('Testing isnumber')
+    for val in [1, 1.0, 1j, np.random.rand(), np.random.rand(10).astype('uint32')[0]]:
+        assert sc.isnumber(val)
+    for val in ['1', np.random.rand(2), (1,)]:
+        assert not sc.isnumber(val)
+
+    print('Testing isstring')
+    for val in ['a', r'c']:
+        assert isinstance(val, str) and sc.isstring(val)
+    for val in [b'b', bytes([1]), bytearray([1])]:
+        assert not isinstance(val, str) and sc.isstring(val)
+
+    print('Testing isfunc')
+
+    class Foo:
+        def m1(self): pass
+
+        @staticmethod
+        def m2(): pass
+
+        @classmethod
+        def m3(cls): pass
+
+    def bar(a,b):
+        return a+1
+
+    foo = Foo()
+    babar = functools.partial(bar, b=1)
+    lam = lambda x: x
+
+    for func in [Foo.m1, Foo.m2, Foo.m3, foo.m1, foo.m2, foo.m3, bar, babar, lam]:
+        assert sc.isfunc(func)
+
+    class NotFunc:
+        def __call__(self): print("Still not a function")
+
+    for notfunc in [1, 'a', list, NotFunc, NotFunc()]:
+        assert not sc.isfunc(notfunc)
+
+    print('Testing ismodule')
+    for val in [sc, np, pytest]:
+        assert sc.ismodule(val)
+    for val in [1, 'a', foo]:
+        assert not sc.ismodule(val)
+
+    return system
 
 
 #%% Misc. functions
@@ -446,6 +513,7 @@ if __name__ == '__main__':
     d1d2  = test_transpose_swap()
     mdict = test_merge()
     types = test_types()
+    isx   = test_is_x()
 
     # Miscellaneous
     dists = test_suggest()

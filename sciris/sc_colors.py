@@ -44,15 +44,15 @@ def _listify_colors(colors, origndim=None):
 def sanitizecolor(color, asarray=False, alpha=None, normalize=True):
     """
     Alias to :func:`matplotlib.colors.to_rgb`, but also handles numeric inputs.
-    
+
     Arg:
         color (str/list/etc): the input color to sanitize into an RGB tuple (or array)
         asarray (bool): whether to return an array instead of a tuple
         alpha (float): if not None, include the alpha channel with this value
         normalize (bool): whether to divide by 255 if any values are greater than 1
-    
+
     **Examples**::
-        
+
         green1 = sc.sanitizecolor('g')
         green2 = sc.sanitizecolor('tab:green')
         crimson1 = sc.sanitizecolor('crimson')
@@ -67,7 +67,7 @@ def sanitizecolor(color, asarray=False, alpha=None, normalize=True):
             raise ValueError(errormsg) from E
     elif isinstance(color, float):
         color = [color]*3 # Consider it grey
-            
+
     color = sc.toarray(color).astype(float) # Get it into consistent format for further operations
     if len(color) not in [3,4]: # pragma: no cover
         errormsg = f'Cannot parse {color} as a color: expecting length 3 (RGB) or 4 (RGBA)'
@@ -310,7 +310,7 @@ def arraycolors(arr, **kwargs):
             plt.scatter(x+c, y, s=50, c=colors[:,c])
 
     Version: 2020mar07
-    
+
     | *New in version 3.1.0:* Handle non-array output
     """
     arr = sc.dcp(arr) # Avoid modifications
@@ -477,19 +477,19 @@ def midpointnorm(vcenter=0, vmin=None, vmax=None):
 
 
 def manualcolorbar(data=None, vmin=0, vmax=1, vcenter=None, colors=None, values=None,
-                   cmap=None, norm=None, label=None, labelkwargs=None, ticks=None, 
+                   cmap=None, norm=None, label=None, labelkwargs=None, ticks=None,
                    ticklabels=None, fig=None, ax=None, cax=None, axkwargs=None, **kwargs):
     """
     Add a colorbar to a plot that does not support one by default.
-    
+
     There are three main use cases, from least to most manual:
-    
-        - The most common use case is to supply the data used for plotting directly via ``data``; 
+
+        - The most common use case is to supply the data used for plotting directly via ``data``;
           the function will the infer the lower and upper limits and construct the colorbar.
         - Alternatively, the lower and upper limits can be provided manually via ``vmin`` and ``vmax``.
         - Finally, the colors themselves can be provided via ``colors``, optionally mapped
           to ``values``, and potentially also supplied with custom ``ticklabels``.
-    
+
     Args:
         data (arr): if provided, compute the colorbar from these data
         vmin (float): the minimum of the colormap (optional if data are provided)
@@ -509,10 +509,10 @@ def manualcolorbar(data=None, vmin=0, vmax=1, vcenter=None, colors=None, values=
         kwargs (dict): passed to :func:`matplotlib.colorbar.ColorbarBase`
 
     **Examples**::
-        
+
         # Create a default colorbar
         sc.manualcolorbar()
-        
+
         # Add a colorbar to non-mappable data (e.g. a scatterplot)
         n = 1000
         x = np.random.randn(n)
@@ -520,7 +520,7 @@ def manualcolorbar(data=None, vmin=0, vmax=1, vcenter=None, colors=None, values=
         c = x**2 + y**2
         plt.scatter(x, y, c=c)
         sc.manualcolorbar(c)
-        
+
         # Create a custom colorbar with a custom label
         sc.manualcolorbar(
             vmin=-20,
@@ -532,7 +532,7 @@ def manualcolorbar(data=None, vmin=0, vmax=1, vcenter=None, colors=None, values=
             labelkwargs=dict(rotation=10, fontweight='bold'),
             axkwargs=[0.1,0.5,0.8,0.1],
         )
-        
+
         # Create a completely custom colorbar
         n = 12
         x = np.arange(n)
@@ -545,17 +545,17 @@ def manualcolorbar(data=None, vmin=0, vmax=1, vcenter=None, colors=None, values=
         for i in [0, 2, 4, 10, 11]:
             ticklabels[i] = f'Color {i} is nice'
         cb = sc.manualcolorbar(
-            colors=colors, 
-            values=values, 
-            ticks=values, 
-            ticklabels=ticklabels, 
+            colors=colors,
+            values=values,
+            ticks=values,
+            ticklabels=ticklabels,
             spacing='proportional'
         )
 
     | *New in version 3.1.0.*
     """
     labelkwargs = sc.mergedicts(labelkwargs)
-    
+
     # Get the colorbar axes
     if sc.checktype(axkwargs, 'arraylike'):
         axarg = axkwargs
@@ -567,7 +567,7 @@ def manualcolorbar(data=None, vmin=0, vmax=1, vcenter=None, colors=None, values=
         cax = plt.axes(arg=axarg, **axkwargs)
     if ax is None and cax is None:
         ax = plt.gca() # We need an axis or colorbar axis
-        
+
     # Handle explicit colors
     if colors is not None:
         if values is None: # Generate the boundaries automatically
@@ -577,27 +577,27 @@ def manualcolorbar(data=None, vmin=0, vmax=1, vcenter=None, colors=None, values=
         cmap = mpl.colors.ListedColormap(colors)
         norm = mpl.colors.BoundaryNorm(values, cmap.N)
         sm = mpl.cm.ScalarMappable(cmap=cmap, norm=norm)
-    
+
     # Main use case: infer colors
     else:
-    
+
         # If data is provided, use that to get the minimum and maximum
         if data is not None:
             data = np.array(data)
             vmin = data.min()
             vmax = data.max()
-        
+
         # Handle the center
         if vcenter is None:
             vcenter = (vmin + vmax) / 2
-        
+
         # Handle a custom norm
         if norm is None:
             norm = midpointnorm(vcenter=vcenter, vmin=vmin, vmax=vmax)
-            
+
         # Create the scalar mappable
         sm = mpl.cm.ScalarMappable(norm=norm, cmap=cmap)
-        
+
     # Create the colorbar
     cb = plt.colorbar(sm, ax=ax, cax=cax, ticks=ticks, **kwargs)
     if label:
@@ -607,8 +607,8 @@ def manualcolorbar(data=None, vmin=0, vmax=1, vcenter=None, colors=None, values=
             cb.ax.set_yticklabels(ticklabels)
         else:
             cb.ax.set_xticklabels(ticklabels)
-            
-    
+
+
     return cb
 
 
@@ -998,4 +998,4 @@ for basename,cmap in colormap_map.items():
     sc_name = f'sciris-{basename}'
     for name in [basename, sc_name]:
         if name not in existing: # Avoid re-registering already registered colormaps
-            register_func(cmap=cmap, name=name)                
+            register_func(cmap=cmap, name=name)

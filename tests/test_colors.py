@@ -3,7 +3,7 @@ Test color and plotting functions -- warning, opens up many windows!
 """
 
 import numpy as np
-import pylab as pl
+import matplotlib.pyplot as plt
 import sciris as sc
 import pytest
 
@@ -33,7 +33,7 @@ def test_colors():
     o.hsv = sc.rgb2hsv(rgb)
     o.rgb2 = sc.hsv2rgb(o.hsv)
     assert np.all(np.isclose(rgb, o.rgb2))
-    
+
     print('Testing sanitizecolors')
     o.green1 = sc.sanitizecolor('g')
     o.green2 = sc.sanitizecolor('tab:green')
@@ -63,15 +63,15 @@ def test_colormaps():
     print('Testing arraycolors')
     n = 1000
     ncols = 5
-    arr = pl.rand(n,ncols)
+    arr = np.random.rand(n,ncols)
     for c in range(ncols):
         arr[:,c] += c
-    x = pl.rand(n)
-    y = pl.rand(n)
+    x = np.random.rand(n)
+    y = np.random.rand(n)
     colors = sc.arraycolors(arr)
-    pl.figure('Array colors', figsize=(20,16))
+    plt.figure('Array colors', figsize=(20,16))
     for c in range(ncols):
-        pl.scatter(x+c, y, s=50, c=colors[:,c])
+        plt.scatter(x+c, y, s=50, c=colors[:,c])
     o.arraycolors = colors
 
     print('Testing gridcolors')
@@ -88,21 +88,21 @@ def test_colormaps():
 def test_colorbars():
     sc.heading('Testing colorbars')
     o = sc.objdict()
-    
+
     print('Create a default colorbar')
     o.cb1 = sc.manualcolorbar()
-    
+
     print('Add a colorbar to non-mappable data (e.g. a scatterplot)')
-    pl.figure()
+    plt.figure()
     n = 1000
-    x = pl.randn(n)
-    y = pl.randn(n)
+    x = np.random.randn(n)
+    y = np.random.randn(n)
     c = x**2 + y**2
-    pl.scatter(x, y, c=c)
+    plt.scatter(x, y, c=c)
     o.cb2 = sc.manualcolorbar(c)
-    
+
     print('Create a custom colorbar with a custom label')
-    pl.figure()
+    plt.figure()
     sc.manualcolorbar(
         vmin=-20,
         vmax=40,
@@ -113,29 +113,29 @@ def test_colorbars():
         labelkwargs=dict(rotation=10, fontweight='bold'),
         axkwargs=[0.1,0.5,0.8,0.1],
     )
-    
+
     print('Create a completely custom colorbar')
-    pl.figure()
+    plt.figure()
     n = 12
     x = np.arange(n)
     values = np.sqrt(np.arange(n))
     colors = sc.gridcolors(n)
-    pl.scatter(x, values, c=colors)
-    pl.grid(True)
+    plt.scatter(x, values, c=colors)
+    plt.grid(True)
 
     ticklabels = ['' for i in range(n)]
     for i in [0, 2, 4, 10, 11]:
         ticklabels[i] = f'Color {i} is nice'
     o.cb3 = sc.manualcolorbar(
-        colors=colors, 
-        values=values, 
-        ticks=values, 
-        ticklabels=ticklabels, 
+        colors=colors,
+        values=values,
+        ticks=values,
+        ticklabels=ticklabels,
         spacing='proportional'
     )
-    
+
     return o
-    
+
 
 #%% Run as a script
 if __name__ == '__main__':
@@ -149,9 +149,9 @@ if __name__ == '__main__':
     cb = test_colorbars()
 
     if doplot:
-        pl.show()
+        plt.show()
     else:
-        pl.close('all')
+        plt.close('all')
 
     T.toc()
     print('Done.')
