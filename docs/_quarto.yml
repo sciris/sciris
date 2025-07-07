@@ -68,12 +68,16 @@ website:
           text: "**API reference**"
         - section: "**Tutorials**"
           contents:
-            - tutorials/t1_intro.ipynb
-            - tutorials/t2_model.ipynb
-            - tutorials/t3_demographics.ipynb
-            - tutorials/t4_diseases.ipynb
-            - tutorials/t5_networks.ipynb
-            - tutorials/t6_interventions.ipynb
+            - tutorials/tut_intro.ipynb
+            - tutorials/tut_arrays.ipynb
+            - tutorials/tut_dicts.ipynb
+            - tutorials/tut_files.ipynb
+            - tutorials/tut_printing.ipynb
+            - tutorials/tut_plotting.ipynb
+            - tutorials/tut_parallel.ipynb
+            - tutorials/tut_dates.ipynb
+            - tutorials/tut_utils.ipynb
+            - tutorials/tut_advanced.ipynb
         - href: conduct.qmd
           text: "**Code of conduct**"
         - href: contributing.qmd
@@ -87,31 +91,21 @@ website:
           text: "**API reference**"
         - section: "**Basics**"
           contents:
-            - api/sim.qmd
-            - api/loop.qmd
-            - api/people.qmd
-            - api/parameters.qmd
-        - section: "**Modules**"
-          contents:
-            - api/modules.qmd
-            - api/disease.qmd
-            - api/networks.qmd
-            - api/demographics.qmd
-            - api/interventions.qmd
-            - api/products.qmd
-        - section: "**Workflows**"
-          contents:
-            - api/run.qmd
-            - api/calibration.qmd
-        - section: "**Utilities**"
-          contents:
-            - api/arrays.qmd
-            - api/time.qmd
-            - api/distributions.qmd
-            - api/results.qmd
-            - api/samples.qmd
-            - api/settings.qmd
-            - api/utils.qmd
+            - api/sc_asd.qmd
+            - api/sc_colors.qmd
+            - api/sc_dataframe.qmd
+            - api/sc_datetime.qmd
+            - api/sc_fileio.qmd
+            - api/sc_math.qmd
+            - api/sc_nested.qmd
+            - api/sc_odict.qmd
+            - api/sc_parallel.qmd
+            - api/sc_plotting.qmd
+            - api/sc_printing.qmd
+            - api/sc_profiling.qmd
+            - api/sc_settings.qmd
+            - api/sc_utils.qmd
+            - api/sc_versioning.qmd
 
 format:
   html:
@@ -141,7 +135,7 @@ interlinks:
       url: https://matplotlib.org/stable/
 
 quartodoc:
-  package: starsim
+  package: sciris
   title: API reference
   style: pkgdown
   dir: api
@@ -149,27 +143,23 @@ quartodoc:
   render_interlinks: true
   sections:
     - title: API reference
-      desc: Full details on all Starsim classes and functions.
+      desc: Full details on all Sciris classes and functions.
       contents:
-        - arrays
-        - calibration
-        - demographics
-        - disease
-        - distributions
-        - interventions
-        - loop
-        - modules
-        - networks
-        - parameters
-        - people
-        - products
-        - results
-        - run
-        - samples
-        - settings
-        - sim
-        - time
-        - utils
+        - sc_asd
+        - sc_colors
+        - sc_dataframe
+        - sc_datetime
+        - sc_fileio
+        - sc_math
+        - sc_nested
+        - sc_odict
+        - sc_parallel
+        - sc_plotting
+        - sc_printing
+        - sc_profiling
+        - sc_settings
+        - sc_utils
+        - sc_versioning
 
 jupyter: python3
 execute:
