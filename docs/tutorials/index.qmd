@@ -9,7 +9,7 @@ Questions? Did you complete all the tutorials and want to claim your free "I Am 
 ::: {.grid .grid-cols-2 .gap-4}
 
 ::: {.card}
-[![](img-intro.png)](tut_intro.qmd)
+[![](img-intro.png)](tut_intro.ipynb)
 
 **1 Whirlwind tour**
 
@@ -17,7 +17,7 @@ A quick high-level overview of all of Sciris' most important features.
 :::
 
 ::: {.card}
-[![](img-arrays.png)](tut_arrays.qmd)
+[![](img-arrays.png)](tut_arrays.ipynb)
 
 **2 Array tools**
 
@@ -25,7 +25,7 @@ Arrays are at the core of scientific computing, and this tutorial will go throug
 :::
 
 ::: {.card}
-[![](img-dicts.png)](tut_dicts.qmd)
+[![](img-dicts.png)](tut_dicts.ipynb)
 
 **3 Dictionaries and dataframes**
 
@@ -33,7 +33,7 @@ Data are only as good as the container they're stored in, so this tutorial goes 
 :::
 
 ::: {.card}
-[![](img-files.png)](tut_files.qmd)
+[![](img-files.png)](tut_files.ipynb)
 
 **4 Files and versioning**
 
@@ -41,7 +41,7 @@ All that data has to come from and go somewhere: this tutorial covers saving and
 :::
 
 ::: {.card}
-[![](img-printing.png)](tut_printing.qmd)
+[![](img-printing.png)](tut_printing.ipynb)
 
 **5 Printing**
 
@@ -49,7 +49,7 @@ This tutorial covers tools for quickly printing out information about objects an
 :::
 
 ::: {.card}
-[![](img-plotting.png)](tut_plotting.qmd)
+[![](img-plotting.png)](tut_plotting.ipynb)
 
 **6 Plotting**
 
@@ -57,7 +57,7 @@ If you don't plot it, did it even happen? This tutorial covers Sciris' plotting 
 :::
 
 ::: {.card}
-[![](img-parallel.png)](tut_parallel.qmd)
+[![](img-parallel.png)](tut_parallel.ipynb)
 
 **7 Parallelization and profiling**
 
@@ -65,7 +65,7 @@ When you need answers faster: this tutorial covers running your code in parallel
 :::
 
 ::: {.card}
-[![](img-dates.png)](tut_dates.qmd)
+[![](img-dates.png)](tut_dates.ipynb)
 
 **8 Dates and times**
 
@@ -73,7 +73,7 @@ Compared to nice simple numbers that behave in nice simple ways, dates can be a 
 :::
 
 ::: {.card}
-[![](img-utils.png)](tut_utils.qmd)
+[![](img-utils.png)](tut_utils.ipynb)
 
 **9 Miscellaneous utilities**
 
@@ -81,7 +81,7 @@ Sometimes (probably often), you just need to do some random tedious task. Is the
 :::
 
 ::: {.card}
-[![](img-advanced.gif)](tut_advanced.qmd)
+[![](img-advanced.gif)](tut_advanced.ipynb)
 
 **10 Advanced features**
 
@@ -92,15 +92,15 @@ You probably won't often need these tools, but we think they're cool, and they'r
 
 ## Full contents
 
-- [1 Whirlwind tour](tut_intro.qmd)
-- [2 Array tools](tut_arrays.qmd)
-- [3 Dictionaries and dataframes](tut_dicts.qmd)
-- [4 Files and versioning](tut_files.qmd)
-- [5 Printing](tut_printing.qmd)
-- [6 Plotting](tut_plotting.qmd)
-- [7 Parallelization and profiling](tut_parallel.qmd)
-- [8 Dates and times](tut_dates.qmd)
-- [9 Miscellaneous utilities](tut_utils.qmd)
-- [10 Advanced features](tut_advanced.qmd)
+- [1 Whirlwind tour](tut_intro.ipynb)
+- [2 Array tools](tut_arrays.ipynb)
+- [3 Dictionaries and dataframes](tut_dicts.ipynb)
+- [4 Files and versioning](tut_files.ipynb)
+- [5 Printing](tut_printing.ipynb)
+- [6 Plotting](tut_plotting.ipynb)
+- [7 Parallelization and profiling](tut_parallel.ipynb)
+- [8 Dates and times](tut_dates.ipynb)
+- [9 Miscellaneous utilities](tut_utils.ipynb)
+- [10 Advanced features](tut_advanced.ipynb)
 
 † There is no free t-shirt, sorry. But you made it to the end, yay!

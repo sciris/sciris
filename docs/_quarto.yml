@@ -45,10 +45,8 @@ website:
         text: Home
       - href: whatsnew.qmd
         text: What's new
-      - href: tutorials.qmd
+      - href: tutorials/index.qmd
         text: Tutorials
-      - href: user_guide.qmd
-        text: User guide
       - href: conduct.qmd
         text: Code of conduct
       - href: contributing.qmd
