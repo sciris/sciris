@@ -19,32 +19,32 @@ By import convention, components of the Sciris library are listed beginning with
 
 ## Version 3.2.2 (2025-07-01)
 
-1. `sc.profile()` has been converted from a function to a class, with many new features, including improved display, exporting to dataframe, plotting, etc.
-2. `sc.listfuncs()` will list all functions across supplied modules, classes, and (of course) functions.
-3. `sc.timer()` can now be used as a function decorator.
-4. `sc.movelegend()` will move a legend from one axes to another.
-5. `sc.getrowscols()` now deletes rather than hides extra axes.
+1. [`sc.profile()`](`sciris.sc_profiling.profile`) has been converted from a function to a class, with many new features, including improved display, exporting to dataframe, plotting, etc.
+2. [`sc.listfuncs()`](`sciris.sc_profiling.listfuncs`) will list all functions across supplied modules, classes, and (of course) functions.
+3. [`sc.timer()`](`sciris.sc_datetime.timer`) can now be used as a function decorator.
+4. [`sc.movelegend()`](`sciris.sc_plotting.movelegend`) will move a legend from one axes to another.
+5. [`sc.getrowscols()`](`sciris.sc_plotting.getrowscols`) now deletes rather than hides extra axes.
 6. Added `llms.txt` since our robot overlords told us to.
 
 ## Version 3.2.1 (2025-04-19)
 
-1. Replaced `sc.datetoyear(reverse=True)` with `sc.yeartodate()`.
-2. Added positional and keyword arguments to `sc.date()`, e.g. `sc.date(year=2002, month=4, day=4)` or `sc.date(2002, 04, 04)`.
-3. Renamed `doprint` to `verbose` in `sc.toc()`, for consistency with other functions.
-4. `sc.load()` can now load gzipped plain text files (rather than just pickles); use `sc.load(filename, method='string')` or `sc.load(filename, method='bytestr')` to avoid trying to load as a pickle first.
-5. `sc.getfilelist()` now skips blank entries.
-6. `sc.jsonify()` avoids recursion in cases where an object has a `to_json()` method that itself calls `sc.jsonify()`.
-7. `sc.findnearest()` now works for arbitrary scalar objects, not just numbers.
-8. `sc.perturb()` now works with 0 or 1 arguments, and can modify an input array.
-9. `sc.iterobj()` can now optionally descend into tuples; use `sc.iterobj(atomic='default-tuple')` to use this behavior. `sc.IterObj()` now has a `disp()` method, and a bug regarding unintentional skipping of Python built-ins was fixed. `sc.IterObj.to_df()` also now skips the object root by default, listing only the subcomponents of the object.
-10. `sc.setnested()` can now be used to set a single key, e.g. `sc.setnested(mydict, 'a', 4)`.
+1. Replaced [`sc.datetoyear(reverse=True)`](`sciris.sc_datetime.datetoyear`) with [`sc.yeartodate()`](`sciris.sc_datetime.yeartodate`).
+2. Added positional and keyword arguments to [`sc.date()`](`sciris.sc_datetime.date`), e.g. `sc.date(year=2002, month=4, day=4)` or `sc.date(2002, 04, 04)`.
+3. Renamed `doprint` to `verbose` in [`sc.toc()`](`sciris.sc_datetime.toc`), for consistency with other functions.
+4. [`sc.load()`](`sciris.sc_fileio.load`) can now load gzipped plain text files (rather than just pickles); use `sc.load(filename, method='string')` or `sc.load(filename, method='bytestr')` to avoid trying to load as a pickle first.
+5. [`sc.getfilelist()`](`sciris.sc_fileio.getfilelist`) now skips blank entries.
+6. [`sc.jsonify()`](`sciris.sc_fileio.jsonify`) avoids recursion in cases where an object has a `to_json()` method that itself calls `sc.jsonify()`.
+7. [`sc.findnearest()`](`sciris.sc_math.findnearest`) now works for arbitrary scalar objects, not just numbers.
+8. [`sc.perturb()`](`sciris.sc_math.perturb`) now works with 0 or 1 arguments, and can modify an input array.
+9. [`sc.iterobj()`](`sciris.sc_nested.iterobj`) can now optionally descend into tuples; use `sc.iterobj(atomic='default-tuple')` to use this behavior. [`sc.IterObj()`](`sciris.sc_nested.IterObj`) now has a `disp()` method, and a bug regarding unintentional skipping of Python built-ins was fixed. `sc.IterObj.to_df()` also now skips the object root by default, listing only the subcomponents of the object.
+10. [`sc.setnested()`](`sciris.sc_nested.setnested`) can now be used to set a single key, e.g. `sc.setnested(mydict, 'a', 4)`.
 11. The [ansicolors](https://pypi.org/project/ansicolors/) module is now available as `sc.ansi`, e.g. `print(sc.ansi.green('this is green'))`.
-12. `sc.tracecalls()` now works with a default trace, provides more control of what gets traced, and has a `check_expected()` method that compares actual calls vs. expected calls.
-13. `sc.parse_env()` now accepts type inputs (e.g. `sc.parse_env('MY_VAR', default=3.5, which=float)`).
+12. [`sc.tracecalls()`](`sciris.sc_profiling.tracecalls`) now works with a default trace, provides more control of what gets traced, and has a `check_expected()` method that compares actual calls vs. expected calls.
+13. [`sc.parse_env()`](`sciris.sc_settings.parse_env`) now accepts type inputs (e.g. `sc.parse_env('MY_VAR', default=3.5, which=float)`).
 14. NumPy 2.0 changed the default repr to show types, e.g. `np.float64(3.5)` instead of `3.5`. By default, Sciris now reverses this behavior; use `sc.options(show_type=True)` or set `SCIRIS_SHOW_TYPE=1` to revert to NumPy's default behavior.
-15. `sc.ismodule()` has been added as a shortcut for checking whether an object is a module.
-16. `sc.isfunc()` now correctly catches built-in functions and methods.
-17. `sc.importbypath()` now has an `overwrite` argument to specify whether to overwrite an existing module of the same name.
+15. [`sc.ismodule()`](`sciris.sc_utils.ismodule`) has been added as a shortcut for checking whether an object is a module.
+16. [`sc.isfunc()`](`sciris.sc_utils.isfunc`) now correctly catches built-in functions and methods.
+17. [`sc.importbypath()`](`sciris.sc_utils.importbypath`) now has an `overwrite` argument to specify whether to overwrite an existing module of the same name.
 18. Switched build from `setup.py` to `pyproject.toml`.
 
 ## Version 3.2.0 (2024-09-24)
