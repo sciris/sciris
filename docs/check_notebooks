@@ -12,7 +12,7 @@ import sciris as sc
 import nbformat
 import nbconvert.preprocessors as nbp
 
-folders = ['tutorials', 'user_guide']
+folders = ['tutorials']
 timeout = 600
 yay = '✓'
 boo = '😢'
