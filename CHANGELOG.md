@@ -6,16 +6,16 @@ By import convention, components of the Sciris library are listed beginning with
 
 ## Version 3.2.3 (2025-07-05)
 
-1. Added `sc.counter()`, which is a subclass of `collections.Counter` with NumPy interoperability (e.g. `counter.max()`).
-2. Fixed a bug with `sc.setnested()` when attempting to write values with missing intermediate keys; `sc.setnested()` is now an alias of `sc.makenested()`, which can also set values.
-3. `sc.getnested()` now has a `default` argument, which will return if the key is not found.
-4. Added `sc.odict.dcp()` as an alias to `sc.odict.copy(deep=True)`.
-5. Added additional validation to `sc.dataframe.insertrow()`.
-6. `sc.dataframe.read_excel()` can now load multiple sheets.
-7. `sc.daydiff()` can now take a single list of dates as input.
-8. `sc.dateformatter` now correctly interprets integer year x-axes (with values between 1700 and 2300) as dates.
-9. `sc.isfunc` now returns `True` for lambda and partial functions.
-10. `sc.tryexcept()` now has a `message` argument.
+1. Added [`sc.counter()`](`sciris.sc_odict.counter`), which is a subclass of `collections.Counter` with NumPy interoperability (e.g. `counter.max()`).
+2. Fixed a bug with [`sc.setnested()`](`sciris.sc_nested.setnested`) when attempting to write values with missing intermediate keys; `sc.setnested()` is now an alias of [`sc.makenested()`](`sciris.sc_nested.makenested`), which can also set values.
+3. [`sc.getnested()`](`sciris.sc_nested.getnested`) now has a `default` argument, which will return if the key is not found.
+4. Added [`sc.odict.dcp()`](`sciris.sc_odict.odict.dcp`) as an alias to `sc.odict.copy(deep=True)`.
+5. Added additional validation to [`sc.dataframe.insertrow()`](`sciris.sc_dataframe.dataframe.insertrow`).
+6. [`sc.dataframe.read_excel()`](`sciris.sc_dataframe.dataframe.read_excel`) can now load multiple sheets.
+7. [`sc.daydiff()`](`sciris.sc_datetime.daydiff`) can now take a single list of dates as input.
+8. [`sc.dateformatter`](`sciris.sc_plotting.dateformatter`) now correctly interprets integer year x-axes (with values between 1700 and 2300) as dates.
+9. [`sc.isfunc`](`sciris.sc_utils.isfunc`) now returns `True` for lambda and partial functions.
+10. [`sc.tryexcept()`](`sciris.sc_utils.tryexcept`) now has a `message` argument.
 
 ## Version 3.2.2 (2025-07-01)
 
