@@ -1,46 +1,44 @@
 project:
   type: website
   output-dir: _build
-  title: "Starsim"
+  title: "Sciris"
   execute-dir: file
 
 website:
-  title: "Starsim"
-  image: /assets/starsim-logo.png
+  title: "Sciris"
+  image: /assets/sciris-logo-grey-small.png
   favicon: /assets/favicon.ico
-  google-analytics: "GTM-NK4K647"
+  # google-analytics: "GTM-NK4K647"
 
-  repo-url: https://github.com/starsimhub/starsim
+  repo-url: https://github.com/sciris/sciris
   repo-actions: [issue]
   page-navigation: true
   search:
     type: overlay
 
   page-footer:
-    center: "The docs were built for Starsim v{{< var version >}} ({{< var versiondate >}}).<br>© 2023–2025, Gates Foundation. All rights reserved. [Privacy and Cookies Notice](https://www.gatesfoundation.org/Privacy-and-Cookies-Notice) | [Terms of Use](https://www.gatesfoundation.org/Terms-of-Use)"
+    center: "The docs were built for Sciris v{{< var version >}} ({{< var versiondate >}}).<br>© 2014–2025, Sciris Development Team."
     right:
       - icon: github
-        href: https://github.com/starsimhub/starsim
+        href: https://github.com/sciris/sciris
         aria-label: GitHub
       - icon: envelope-at-fill
-        href: mailto:info@starsim.org
+        href: mailto:info@sciris.org
       - icon: globe
-        href: https://starsim.org/
+        href: https://sciris.org/
 
   navbar:
-    logo: /assets/starsim-logo.png
+    logo: /assets/sciris-logo-grey-small.png
     title: false
     collapse-below: lg
 
     tools:
       - icon: github
-        href: https://github.com/starsimhub/starsim
+        href: https://github.com/sciris/sciris
       - icon: envelope-at-fill
-        href: mailto:info@starsim.org
-      - icon: slack
-        href: https://starsim-idm.slack.com
+        href: mailto:info@sciris.org
       - icon: globe
-        href: https://starsim.org
+        href: https://sciris.org
 
     left:
       - href: index.qmd
@@ -76,40 +74,6 @@ website:
             - tutorials/t4_diseases.ipynb
             - tutorials/t5_networks.ipynb
             - tutorials/t6_interventions.ipynb
-        - section: "**User guide**"
-          contents:
-          - section: "Introduction"
-            contents:
-            - user_guide/intro_starsim.ipynb
-            - user_guide/intro_spokes.ipynb
-          - section: "Basic concepts"
-            contents:
-            - user_guide/basics_model.ipynb
-            - user_guide/basics_sim.ipynb
-            - user_guide/basics_people.ipynb
-            - user_guide/basics_parameters.ipynb
-          - section: "Modules"
-            contents:
-            - user_guide/modules_diseases.ipynb
-            - user_guide/modules_networks.ipynb
-            - user_guide/modules_demographics.ipynb
-            - user_guide/modules_interventions.ipynb
-            - user_guide/modules_analyzers.ipynb
-            - user_guide/modules_connectors.ipynb
-          - section: "Workflows"
-            contents:
-            - user_guide/workflows_run.ipynb
-            - user_guide/workflows_calibration.ipynb
-            - user_guide/workflows_deploy.ipynb
-            - user_guide/workflows_samples.ipynb
-          - section: "Advanced topics"
-            contents:
-            - user_guide/advanced_time.ipynb
-            - user_guide/advanced_indexing.ipynb
-            - user_guide/advanced_distributions.ipynb
-            - user_guide/advanced_random.ipynb
-            - user_guide/advanced_profiling.ipynb
-            - user_guide/advanced_nonstandard.ipynb
         - href: conduct.qmd
           text: "**Code of conduct**"
         - href: contributing.qmd
