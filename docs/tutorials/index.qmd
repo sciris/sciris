@@ -1,0 +1,106 @@
+# Tutorials
+
+These tutorials illustrate the main features of Sciris. They roughly make the most sense in the order listed, but can be done in any order. Each one should take about 5 minutes to skim through, or 20-30 minutes to go through in detail. Each tutorial contains a link to an interactive version running on [Binder](http://mybinder.org).
+
+These tutorials assume you are already familiar with [Numpy](https://numpy.org/doc/stable/user/index.html), [Matplotlib](https://matplotlib.org/stable/index.html), and (recommended but not essential) [pandas](https://pandas.pydata.org/docs/). If you aren't, you'll be much happier if you learn those first, since Sciris builds off them.
+
+Questions? Did you complete all the tutorials and want to claim your free "I Am A Scirientist" t-shirt?† Reach out to us at info@sciris.org.
+
+::: {.grid .grid-cols-2 .gap-4}
+
+::: {.card}
+[![](img-intro.png)](tut_intro.qmd)
+
+**1 Whirlwind tour**
+
+A quick high-level overview of all of Sciris' most important features.
+:::
+
+::: {.card}
+[![](img-arrays.png)](tut_arrays.qmd)
+
+**2 Array tools**
+
+Arrays are at the core of scientific computing, and this tutorial will go through some tools that will make it easier to work with them.
+:::
+
+::: {.card}
+[![](img-dicts.png)](tut_dicts.qmd)
+
+**3 Dictionaries and dataframes**
+
+Data are only as good as the container they're stored in, so this tutorial goes through Sciris' two main containers (ordered dictionaries and dataframes).
+:::
+
+::: {.card}
+[![](img-files.png)](tut_files.qmd)
+
+**4 Files and versioning**
+
+All that data has to come from and go somewhere: this tutorial covers saving and loading files, including with version metadata.
+:::
+
+::: {.card}
+[![](img-printing.png)](tut_printing.qmd)
+
+**5 Printing**
+
+This tutorial covers tools for quickly printing out information about objects and data. (As you can see, you won't have an opportunity to make any cool plots in this tutorial, but it's worth doing anyway, promise!)
+:::
+
+::: {.card}
+[![](img-plotting.png)](tut_plotting.qmd)
+
+**6 Plotting**
+
+If you don't plot it, did it even happen? This tutorial covers Sciris' plotting tools and shortcuts that extend [Matplotlib](https://matplotlib.org/).
+:::
+
+::: {.card}
+[![](img-parallel.png)](tut_parallel.qmd)
+
+**7 Parallelization and profiling**
+
+When you need answers faster: this tutorial covers running your code in parallel, as well as how to profile it to help find performance improvements.
+:::
+
+::: {.card}
+[![](img-dates.png)](tut_dates.qmd)
+
+**8 Dates and times**
+
+Compared to nice simple numbers that behave in nice simple ways, dates can be a pain to work with. This tutorial goes through some ways to manipulate them more easily, as well as how to time parts of your code.
+:::
+
+::: {.card}
+[![](img-utils.png)](tut_utils.qmd)
+
+**9 Miscellaneous utilities**
+
+Sometimes (probably often), you just need to do some random tedious task. Is there a shortcut for in Sciris? Find out here.
+:::
+
+::: {.card}
+[![](img-advanced.gif)](tut_advanced.qmd)
+
+**10 Advanced features**
+
+You probably won't often need these tools, but we think they're cool, and they're here waiting for you just in case.
+:::
+
+:::
+
+## Full contents
+
+- [1 Whirlwind tour](tut_intro.qmd)
+- [2 Array tools](tut_arrays.qmd)
+- [3 Dictionaries and dataframes](tut_dicts.qmd)
+- [4 Files and versioning](tut_files.qmd)
+- [5 Printing](tut_printing.qmd)
+- [6 Plotting](tut_plotting.qmd)
+- [7 Parallelization and profiling](tut_parallel.qmd)
+- [8 Dates and times](tut_dates.qmd)
+- [9 Miscellaneous utilities](tut_utils.qmd)
+- [10 Advanced features](tut_advanced.qmd)
+
+† There is no free t-shirt, sorry. But you made it to the end, yay!
