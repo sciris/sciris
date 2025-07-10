@@ -13,6 +13,7 @@ Highlights:
 
 import os
 import re
+import sys
 import time
 import zlib
 import types
@@ -362,11 +363,12 @@ def getcaller(frame=2, tostring=True, includelineno=False, includeline=False, re
     | *New in version 3.0.0:* "relframe" argument; "die" argument
     """
     try:
-        import inspect
         frame = frame + relframe
-        result = inspect.getouterframes(inspect.currentframe(), 2)
-        fname = str(result[frame][1])
-        lineno = result[frame][2]
+        f = sys._getframe(frame)          # depth=1 → immediate caller
+        fname = f.f_code.co_filename
+        lineno = f.f_lineno
+
+
         if tostring:
             output = f'{fname}'
             if includelineno: # pragma: no cover
