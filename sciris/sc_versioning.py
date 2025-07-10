@@ -368,7 +368,6 @@ def getcaller(frame=2, tostring=True, includelineno=False, includeline=False, re
         fname = f.f_code.co_filename
         lineno = f.f_lineno
 
-
         if tostring:
             output = f'{fname}'
             if includelineno: # pragma: no cover
