@@ -1190,7 +1190,7 @@ __all__ += ['sanitizejson', 'jsonify', 'printjson', 'readjson', 'loadjson', 'sav
 jsonify_memo = threading.local()
 jsonify_memo.ids = set()
 
-def jsonify(obj, verbose=True, die=False, tostring=False, custom=None, strkeys=False, **kwargs):
+def jsonify(obj, verbose=True, die=False, tostring=False, custom=None, strkeys=True, **kwargs):
     """
     This is the main conversion function for Python data-structures into JSON-compatible
     data structures (note: :func:`sc.sanitizejson() <sanitizejson>`/:func:`sc.jsonify() <jsonify>` are identical).
@@ -1513,7 +1513,8 @@ def loadyaml(filename=None, folder=None, string=None, fromfile=True, safe=False,
     return output
 
 
-def saveyaml(filename=None, obj=None, folder=None, die=True, keepnone=False, dumpall=False, sanitizepath=True, **kwargs):
+def saveyaml(filename=None, obj=None, folder=None, jsonify=True, die=True,
+             keepnone=False, dumpall=False, sanitizepath=True, **kwargs):
     """
     Convenience function for saving to a YAML file.
 
@@ -1521,6 +1522,7 @@ def saveyaml(filename=None, obj=None, folder=None, die=True, keepnone=False, dum
         filename (str): the file to save (if empty, return string representation of the YAML instead)
         obj (anything): the object to save
         folder (str): folder if not part of the filename
+        jsonify (bool): whether to convert the object to a JSON prior to saving to YAML (typically preserves more of the object structure)
         die (bool): whether or not to raise an exception if saving an empty object
         indent (int): indentation to use for saved YAML
         keepnone (bool): allow :func:`sc.saveyaml(None) <saveyaml>` to return 'null' rather than raising an exception
@@ -1548,6 +1550,10 @@ def saveyaml(filename=None, obj=None, folder=None, die=True, keepnone=False, dum
         if die: raise ValueError(errormsg)
         else:   print(errormsg)
 
+    # Convert to a JSON if needed
+    if jsonify:
+        obj = jsonify(obj, strkeys=False) # YAML is less strict about keys needing to be strings
+
     # Standard usage: dump to file
     if filename is not None:
         filename = makefilepath(filename=filename, folder=folder, sanitize=sanitizepath, makedirs=True)
@@ -1555,7 +1561,7 @@ def saveyaml(filename=None, obj=None, folder=None, die=True, keepnone=False, dum
         with open(filename, 'w') as f:
             dump_func(obj, f, **kwargs)
 
-    # Alternate usage:
+    # Alternate usage: return a string
     else: # pragma: no cover
         output = dump_func(obj, **kwargs)
 
