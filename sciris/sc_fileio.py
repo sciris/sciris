@@ -23,6 +23,7 @@ import uuid
 import dill
 import shutil
 import string
+import numbers
 import inspect
 import threading
 import importlib
@@ -1189,7 +1190,7 @@ __all__ += ['sanitizejson', 'jsonify', 'printjson', 'readjson', 'loadjson', 'sav
 jsonify_memo = threading.local()
 jsonify_memo.ids = set()
 
-def jsonify(obj, verbose=True, die=False, tostring=False, custom=None, **kwargs):
+def jsonify(obj, verbose=True, die=False, tostring=False, custom=None, strkeys=False, **kwargs):
     """
     This is the main conversion function for Python data-structures into JSON-compatible
     data structures (note: :func:`sc.sanitizejson() <sanitizejson>`/:func:`sc.jsonify() <jsonify>` are identical).
@@ -1200,6 +1201,7 @@ def jsonify(obj, verbose=True, die=False, tostring=False, custom=None, **kwargs)
         die      (bool): whether or not to raise an exception if conversion failed (otherwise, return a string)
         tostring (bool): whether to return a string representation of the sanitized object instead of the object itself
         custom   (dict): custom functions for dealing with particular object types
+        strkeys  (bool): whether to coerce all dictionary keys to strings (otherwise, leave numbers, bools, and other valid YAML types)
         kwargs   (dict): passed to json.dumps() if tostring=True
 
     Returns:
@@ -1214,6 +1216,8 @@ def jsonify(obj, verbose=True, die=False, tostring=False, custom=None, **kwargs)
         # Use a custom function for parsing the data
         custom = {np.ndarray: lambda x: f'It was an array: {x}'}
         j2 = sc.jsonify(data, custom=custom)
+
+    | *New in version 3.2.4:* "strkeys" argument; don't coerce dict keys to strings by default
     """
     kw = dict(verbose=verbose, die=die, custom=custom) # For passing during recursive calls
     obj_id = id(obj) # For avoiding recursion
@@ -1224,6 +1228,19 @@ def jsonify(obj, verbose=True, die=False, tostring=False, custom=None, **kwargs)
         custom_classes = tuple(custom.keys())
     else:
         custom_classes = tuple()
+
+    def jsonkey(key):
+        """
+        Convert a dict key to a JSON-compatible format
+
+        Technically, only strings are allowed. But numbers, bools, etc can be used
+        in YAML, so we won't forcibly convert them here.
+        """
+        valid = (str, numbers.Number, bool, type(None))
+        if isinstance(key, valid) and not strkeys:
+            return key
+        else:
+            return str(key)
 
     def get_output(obj):
         """ Do the conversion """
@@ -1261,7 +1278,7 @@ def jsonify(obj, verbose=True, die=False, tostring=False, custom=None, **kwargs)
             return [jsonify(p, **kw) for p in list(obj)]
 
         if isinstance(obj, dict): # It's a dictionary, so iterate over the items
-            return {str(key):jsonify(val, **kw) for key,val in obj.items()}
+            return {jsonkey(key):jsonify(val, **kw) for key,val in obj.items()}
 
         if isinstance(obj, (dt.time, dt.date, dt.datetime, uuid.UUID)): # pragma: no cover
             return str(obj)
