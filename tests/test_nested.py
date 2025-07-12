@@ -329,6 +329,17 @@ def test_iterobj_class():
     print(all_data)
     assert all_data == list(range(10))
 
+    # Test slots
+    class SlotClass:
+        __slots__ = ['a', 'b']
+        def __init__(self):
+            self.a = 42
+            self.b = 63
+
+    slots = SlotClass()
+    slot_io = sc.iterobj(slots)
+    assert slot_io[1] == 42
+
     return io
 
 
