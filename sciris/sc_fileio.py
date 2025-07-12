@@ -1219,7 +1219,7 @@ def jsonify(obj, verbose=True, die=False, tostring=False, custom=None, strkeys=F
 
     | *New in version 3.2.4:* "strkeys" argument; don't coerce dict keys to strings by default
     """
-    kw = dict(verbose=verbose, die=die, custom=custom) # For passing during recursive calls
+    kw = dict(verbose=verbose, die=die, custom=custom, strkeys=strkeys) # For passing during recursive calls
     obj_id = id(obj) # For avoiding recursion
 
     # Handle custom classes
@@ -1429,7 +1429,6 @@ def savejson(filename=None, obj=None, folder=None, die=True, indent=2, keepnone=
 
     See also :func:`sc.jsonify() <jsonify>`.
     """
-
     filename = makefilepath(filename=filename, folder=folder, sanitize=sanitizepath, makedirs=True)
 
     if obj is None and not keepnone: # pragma: no cover
@@ -1438,7 +1437,7 @@ def savejson(filename=None, obj=None, folder=None, die=True, indent=2, keepnone=
         else:   print(errormsg)
 
     with open(filename, 'w') as f:
-        json.dump(sanitizejson(obj), f, indent=indent, **kwargs)
+        json.dump(jsonify(obj), f, indent=indent, **kwargs)
 
     return filename
 
