@@ -612,17 +612,30 @@ class profile(sc.prettyobj):
 
         return
 
-    def __add__(self, other, copy=True):
-        """ Allow multiple instances to be combined """
+    def merge(self, other, inplace=False, swap=False):
+        """
+        Allow multiple profilers to be combined (to be able to do combined stats)
+
+        Args:
+            other (`sc.profile`): the other `sc.profile` instance to merge
+            inplace (bool): if True, modify this instance in place
+            swap (bool): if True, put "other" first
+
+        | *New in version 3.2.4.*
+        """
         if not isinstance(other, profile):
             errormsg = f'Can only add two sc.profile() instances, not {type(other)}'
             raise TypeError(errormsg)
 
+        # Swap order if desired
+        if swap:
+            other,self = self,other
+
         # Merge simple lists and timings
-        if copy:
-            out = self.__class__.__new__(self.__class__) # New empty class
-        else:
+        if inplace:
             out = self
+        else:
+            out = self.__class__.__new__(self.__class__) # New empty class
         out.run_func = sc.mergelists(self.run_func, other.run_func)
         out.follow = sc.mergelists(self.follow, other.follow)
         out.follow_funcs = sc.mergelists(self.follow_funcs, other.follow_funcs)
@@ -644,8 +657,11 @@ class profile(sc.prettyobj):
         out.to_df()
         return out
 
+    def __add__(self, other):
+        return self.merge(other)
+
     def __iadd__(self, other):
-        return self.__add__(other, copy=False)
+        return self.merge(other, inplace=True)
 
     @staticmethod
     def _path_to_name(filepath, lineno):
