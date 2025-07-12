@@ -487,14 +487,15 @@ class IterObj:
                 try:
                     out = parent.__dict__.items() # 99% of the time: object has a __dict__
                 except:
-                    slots = getattr(parent.__class__, '__slots__', None)
-                    if slots:
-                        slots = sc.tolist(slots) # Since may be a single string
+                    try:
+                        slots = getattr(parent.__class__, '__slots__')
+                        if isinstance(slots, str):
+                            slots = [slots]
                         out = [(slot, getattr(parent, slot)) for slot in slots]
-                    else:
-                        out = {}.items() # Return nothing if doesn't have __dict__.items(), e.g. a weird wrapped function
+                    except:
+                        out = [] # Return nothing if doesn't have __dict__.items() or __slots__, e.g. a weird wrapped function
             else:
-                out = {}.items() # Return nothing if not recognized
+                out = [] # Return nothing if not recognized
         if trace is not _None:
             out = list(out)
             for i in range(len(out)):
