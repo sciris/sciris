@@ -1550,9 +1550,9 @@ def saveyaml(filename=None, obj=None, folder=None, jsonify=True, die=True,
         if die: raise ValueError(errormsg)
         else:   print(errormsg)
 
-    # Convert to a JSON if needed
+    # Convert to a JSON if needed -- use alias since jsonify re-used as flag
     if jsonify:
-        obj = jsonify(obj, strkeys=False) # YAML is less strict about keys needing to be strings
+        obj = sanitizejson(obj, strkeys=False) # YAML is less strict about keys needing to be strings
 
     # Standard usage: dump to file
     if filename is not None:
