@@ -261,7 +261,7 @@ def cp(obj, die=True):
     return output
 
 
-def dcp(obj, die=True, verbose=True, memo=None):
+def dcp(obj, memo=None, die=True, verbose=True):
     """
     Shortcut to perform a deep copy operation
 
@@ -282,7 +282,7 @@ def dcp(obj, die=True, verbose=True, memo=None):
         errormsg = f'Could not perform deep copy of {type(obj)}:\n{E}'
         if die:
             errormsg += '\n\nUse sc.dcp(obj, die=False) to perform a robust copy instead.'
-            raise RuntimeError(errormsg) from E
+            raise ValueError(errormsg) from E
         else:
             output = robust_dcp(obj, verbose=verbose, _memo=memo)
             if verbose:
@@ -291,7 +291,7 @@ def dcp(obj, die=True, verbose=True, memo=None):
     return output
 
 
-def robust_dcp(obj, verbose=False, _memo=None):
+def robust_dcp(obj, _memo=None, verbose=False):
     """
     Ultra-robust deepcopying
 
@@ -305,6 +305,16 @@ def robust_dcp(obj, verbose=False, _memo=None):
     # Immutable primitives that never need copying
     primitives = (int, float, complex, bool, str, bytes, tuple, frozenset, types.NoneType)
     exceptions = [] # Print exceptions if verbose=True
+
+    def print_exc(exceptions, obj):
+        msg = f'Encountered {len(exceptions)} exceptions while copying:\n{obj}\n'
+        line = '—'*60 + '\n'
+        for i,exc in enumerate(exceptions):
+            msg += line
+            msg += f'Exception {i+1}\n'
+            msg += line
+            msg += f'{exc}\n\n'
+        print(msg)
 
     if _memo is None:
         _memo = {}
@@ -325,10 +335,11 @@ def robust_dcp(obj, verbose=False, _memo=None):
         if verbose: exceptions.append(e)
 
     # Containers
+    kw = dict(verbose=verbose, _memo=_memo)
     if isinstance(obj, abc.Mapping):
-        dup = obj.__class__((robust_dcp(k, _memo), robust_dcp(v, _memo)) for k, v in obj.items())
+        dup = obj.__class__((robust_dcp(k, **kw), robust_dcp(v, **kw)) for k, v in obj.items())
     elif isinstance(obj, (abc.Sequence, abc.Set)) and not isinstance(obj, (str, bytes, bytearray)):
-        dup = obj.__class__(robust_dcp(x, _memo) for x in obj)
+        dup = obj.__class__(robust_dcp(x, verbose=verbose, _memo=_memo) for x in obj)
     else: # Plain custom object: allocate blank instance, then copy attributes
         dup = object.__new__(obj.__class__)
         _memo[obj_id] = dup  # stash early to handle self-refs
@@ -340,7 +351,7 @@ def robust_dcp(obj, verbose=False, _memo=None):
 
         for name, value in attrs.items():
             try:
-                copied_val = robust_dcp(value, _memo)
+                copied_val = robust_dcp(value, **kw)
             except Exception as e:
                 if verbose: exceptions.append(e)
                 try: # Shallow fallback on *this* attribute
@@ -353,17 +364,10 @@ def robust_dcp(obj, verbose=False, _memo=None):
             except AttributeError as e: # read-only attribute: leave original reference
                 if verbose: exceptions.append(e)
 
+        if verbose: print_exc(exceptions, obj)
         return dup
 
-    if verbose:
-        msg = f'The following {len(exceptions)} exceptions were encountered:\n'
-        line = '—'*60 + '\n'
-        for i,exc in enumerate(exceptions):
-            msg += line
-            msg += 'Exception {i}+1\n'
-            msg += line
-            msg += f'\n{exc}\n\n'
-
+    if verbose: print_exc(exceptions, obj)
     _memo[obj_id] = dup
     return dup
 
