@@ -212,7 +212,7 @@ def checkram(unit='mb', fmt='0.2f', start=0, to_string=True):
     return output
 
 
-def benchmark(repeats=5, scale=1, verbose=False, python=True, numpy=True, parallel=False, return_timers=False):
+def benchmark(repeats=5, scale=1, verbose=False, which='python, numpy', parallel=False, return_timers=False):
     """
     Benchmark Python performance
 
@@ -227,10 +227,9 @@ def benchmark(repeats=5, scale=1, verbose=False, python=True, numpy=True, parall
 
     Args:
         repeats (int): the number of times to repeat each test
-        scale (float): the scale factor to use for the size of the loops/arrays
+        scale (float): the scale factor to use for the size of the loops/arrays (default 1e3 for Python and 1e6 for NumPy)
         verbose (bool): print out the results after each repeat
-        python (bool): whether to run the Python tests
-        numpy (bool): whether to run the Numpy tests
+        which (str): whether to run Python tests, Numpy tests, or both (default)
         parallel (bool/int): whether to run the tests across all cores
         return_timers (bool): if True, return the timer objects instead of the "MOPS" results
 
@@ -241,7 +240,7 @@ def benchmark(repeats=5, scale=1, verbose=False, python=True, numpy=True, parall
 
         sc.benchmark() # Returns e.g. {'python': 11.43, 'numpy': 236.595}
 
-        numpy_mops = sc.benchmark(python=False)['numpy']
+        numpy_mops = sc.benchmark(which='numpy')
         if numpy_mops < 100:
             print('Your computer is slow')
         elif numpy_mops > 400:
@@ -253,7 +252,15 @@ def benchmark(repeats=5, scale=1, verbose=False, python=True, numpy=True, parall
 
     | *New in version 3.0.0.*
     | *New in version 3.1.0:* "parallel" argument; increased default scale
+    | *New in version 3.2.4:* replaced "python" and "numpy" arguments with "which"
     """
+    # Handle which
+    python = True if 'python' in which else False
+    numpy  = True if 'numpy' in which else False
+    both = python and numpy
+    if python + numpy == 0:
+        errormsg = f'Valid benchmarking options are "python" and/or "numpy", not "{which}"'
+        raise ValueError(errormsg)
 
     # Calculate the number of operations
     py_outer = 10
@@ -263,10 +270,8 @@ def benchmark(repeats=5, scale=1, verbose=False, python=True, numpy=True, parall
     py_ops = (py_outer * py_inner * 18)/1e6
     np_ops = (np_outer * np_inner * 4)/1e6
 
-
     # Define the benchmarking functions
-
-    def bm_python(prefix=''):
+    def bm_python(prefix=''): # Prefix used in parallel runs
         P = sc.timer(verbose=verbose)
         for r in range(repeats):
             l = list()
@@ -295,25 +300,14 @@ def benchmark(repeats=5, scale=1, verbose=False, python=True, numpy=True, parall
             N.toc(f'{prefix}Numpy, {np_ops}m operations')
         return N
 
-
     # Do the benchmarking
-
+    P = None
+    N = None
     if not parallel:
-
         ncpus = 1
-
-        # Benchmark plain Python
-        if python:
-            P = bm_python()
-
-        # Benchmark Numpy
-        if numpy:
-            N = bm_numpy()
-
+        if python: P = bm_python() # Benchmark plain Python
+        if numpy: N = bm_numpy() # Benchmark Numpy
     else:
-
-        from . import sc_parallel as scpar
-
         if parallel == 1: # Probably "True"
             ncpus = cpu_count()
         else:
@@ -324,21 +318,23 @@ def benchmark(repeats=5, scale=1, verbose=False, python=True, numpy=True, parall
                 raise ValueError(errormsg) from E
 
         arglist = [f'Run {i}: ' for i in range(ncpus)]
-
         if python:
-            Plist = scpar.parallelize(bm_python, arglist, ncpus=ncpus)
+            Plist = sc.parallelize(bm_python, arglist, ncpus=ncpus)
             P = sum(Plist)
         if numpy:
-            Nlist = scpar.parallelize(bm_numpy, arglist, ncpus=ncpus)
+            Nlist = sc.parallelize(bm_numpy, arglist, ncpus=ncpus)
             N = sum(Nlist)
 
     # Handle output
     if return_timers: # pragma: no cover
         out = sc.objdict(python=P, numpy=N)
     else:
-        pymops = py_ops/P.mean()*ncpus if len(P) else None # Handle if one or the other isn't run
-        npmops = np_ops/N.mean()*ncpus if len(N) else None
+        pymops = py_ops/P.mean()*ncpus if P is not None else None # Handle if one or the other isn't run
+        npmops = np_ops/N.mean()*ncpus if N is not None else None
         out = dict(python=pymops, numpy=npmops)
+
+    if not both:
+        out = out[which]
 
     return out
 

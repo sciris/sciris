@@ -763,7 +763,7 @@ def getfilelist(folder=None, pattern=None, fnmatch=None, abspath=False, nopath=F
         filesonly   (bool): whether to only return files (not folders)
         foldersonly (bool): whether to only return folders (not files)
         recursive   (bool): passed to :func:`glob.glob()` (note: ** is required as the pattern to match all subfolders)
-        aspath      (bool): whether to return Path objects
+        aspath      (bool): whether to return Path objects (if None, use `sc.options.aspath`)
 
     Returns:
         List of files/folders
@@ -1513,8 +1513,8 @@ def loadyaml(filename=None, folder=None, string=None, fromfile=True, safe=False,
     return output
 
 
-def saveyaml(filename=None, obj=None, folder=None, jsonify=True, die=True,
-             keepnone=False, dumpall=False, sanitizepath=True, **kwargs):
+def saveyaml(filename=None, obj=None, folder=None, jsonify=True, sort_keys=True,
+             die=True, keepnone=False, dumpall=False, sanitizepath=True, **kwargs):
     """
     Convenience function for saving to a YAML file.
 
@@ -1523,6 +1523,7 @@ def saveyaml(filename=None, obj=None, folder=None, jsonify=True, die=True,
         obj (anything): the object to save
         folder (str): folder if not part of the filename
         jsonify (bool): whether to convert the object to a JSON prior to saving to YAML (typically preserves more of the object structure)
+        sort_keys (bool): whether to sort the keys
         die (bool): whether or not to raise an exception if saving an empty object
         indent (int): indentation to use for saved YAML
         keepnone (bool): allow :func:`sc.saveyaml(None) <saveyaml>` to return 'null' rather than raising an exception
@@ -1536,7 +1537,7 @@ def saveyaml(filename=None, obj=None, folder=None, jsonify=True, die=True,
     **Examples**::
 
         yaml = {'foo':'bar', 'data':[1,2,3]}
-        sc.saveyaml('my-file.yaml', yaml) # Save to file
+        sc.saveyaml('my-file.yaml', yaml, sort_keys=False) # Save to file and do not sort the keys
 
         string = sc.saveyaml(obj=yaml) # Export to string
     """
@@ -1555,15 +1556,16 @@ def saveyaml(filename=None, obj=None, folder=None, jsonify=True, die=True,
         obj = sanitizejson(obj, strkeys=False) # YAML is less strict about keys needing to be strings
 
     # Standard usage: dump to file
+    kw = sc.mergedicts(kwargs, sort_keys=sort_keys)
     if filename is not None:
         filename = makefilepath(filename=filename, folder=folder, sanitize=sanitizepath, makedirs=True)
         output = filename
         with open(filename, 'w') as f:
-            dump_func(obj, f, **kwargs)
+            dump_func(obj, f, **kw)
 
     # Alternate usage: return a string
     else: # pragma: no cover
-        output = dump_func(obj, **kwargs)
+        output = dump_func(obj, **kw)
 
     return output
 
