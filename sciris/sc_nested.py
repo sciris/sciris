@@ -149,7 +149,7 @@ def check_iter_type(obj, check_array=False, known=None, known_to_none=True, cust
             out = 'list'
         elif isinstance(obj, tuple):
             out = 'tuple'
-        elif hasattr(obj, '__dict__'):
+        elif hasattr(obj, '__dict__') or hasattr(obj.__class__, '__slots__'):
             out = 'object'
         elif check_array and isinstance(obj, np.ndarray):
             out = 'array'
@@ -363,6 +363,7 @@ class IterObj:
     | *New in version 3.1.5:* "norecurse" argument; better handling of atomic classes
     | *New in version 3.1.6:* "depthfirst" argument; replace recursion with a queue; "to_df()" method
     | *New in version 3.2.1:* improved recursion handling; "disp()" method
+    | *New in version 3.2.4:* gracefully handle objects that do not have a `__dict__` attribute; handle slots
     """
     def __init__(self, obj, func=None, inplace=False, copy=False, leaf=False, recursion=0, depthfirst=True,
                  atomic='default', skip=None, rootkey='root', verbose=False, iterate=True,
@@ -483,9 +484,18 @@ class IterObj:
             elif itertype in ['list', 'tuple']:
                 out = enumerate(parent)
             elif itertype == 'object':
-                out = parent.__dict__.items()
+                try:
+                    out = parent.__dict__.items() # 99% of the time: object has a __dict__
+                except:
+                    try:
+                        slots = getattr(parent.__class__, '__slots__')
+                        if isinstance(slots, str):
+                            slots = [slots]
+                        out = [(slot, getattr(parent, slot)) for slot in slots]
+                    except:
+                        out = [] # Return nothing if doesn't have __dict__.items() or __slots__, e.g. a weird wrapped function
             else:
-                out = {}.items() # Return nothing if not recognized
+                out = [] # Return nothing if not recognized
         if trace is not _None:
             out = list(out)
             for i in range(len(out)):

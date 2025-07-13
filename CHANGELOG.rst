@@ -7,6 +7,16 @@ All major updates to Sciris are documented here.
 
 By import convention, components of the Sciris library are listed beginning with ``sc.``, e.g. ``sc.odict()``.
 
+Version 3.2.4 (2025-07-12)
+--------------------------
+#. Added :func:`sc.robust_dcp() <sc_fileio.robust_dcp>`, which is an (almost) infallible deep-copier. This is now the fallback for :func:`sc.dcp(die=False) <sc_fileio.dcp>` (rather than doing a shallow copy which was the previous behavior).
+#. :class:`sc.profile() <sc_profiling.profile>` has several new options, including a ``merge()`` method, ``unwrap`` and ``skipzero`` options.
+#. Added :func:`sc.similarity() <sc_math.similarity>`, which computes the similarity between two (or more) sets.
+#. :func:`sc.iterobj() <sc_nested.iterobj>` is now more robust, including handling objects with slots or that can't be descended into. (Thanks to `Kelvin Burke <https://github.com/kelvinburke>`_ for this feature.)
+#. :func:`sc.benchmark() <sc_profiling.benchmark>` now has an argument ``which`` instead of arguments ``python`` and ``numpy``, and now returns a scalar instead of a dict if only benchmarking one or the other.
+#. By default, :func:`sc.jsonify() <sc_fileio.jsonify>` converts dictionary keys to strings (to be JSON-compliant), but this can now be disabled via ``strkeys=False`` (e.g. for YAML).
+#. :func:`sc.saveyaml() <sc_fileio.saveyaml>` now converts an object to JSON prior to saving to YAML.
+
 Version 3.2.3 (2025-07-05)
 --------------------------
 #. Added :class:`sc.counter() <sc_odict.counter>`, which is a subclass of ``collections.Counter`` with NumPy interoperability (e.g. ``counter.max()``).

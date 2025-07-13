@@ -212,7 +212,7 @@ def checkram(unit='mb', fmt='0.2f', start=0, to_string=True):
     return output
 
 
-def benchmark(repeats=5, scale=1, verbose=False, python=True, numpy=True, parallel=False, return_timers=False):
+def benchmark(repeats=5, scale=1, verbose=False, which='python, numpy', parallel=False, return_timers=False):
     """
     Benchmark Python performance
 
@@ -227,10 +227,9 @@ def benchmark(repeats=5, scale=1, verbose=False, python=True, numpy=True, parall
 
     Args:
         repeats (int): the number of times to repeat each test
-        scale (float): the scale factor to use for the size of the loops/arrays
+        scale (float): the scale factor to use for the size of the loops/arrays (default 1e3 for Python and 1e6 for NumPy)
         verbose (bool): print out the results after each repeat
-        python (bool): whether to run the Python tests
-        numpy (bool): whether to run the Numpy tests
+        which (str): whether to run Python tests, Numpy tests, or both (default)
         parallel (bool/int): whether to run the tests across all cores
         return_timers (bool): if True, return the timer objects instead of the "MOPS" results
 
@@ -241,7 +240,7 @@ def benchmark(repeats=5, scale=1, verbose=False, python=True, numpy=True, parall
 
         sc.benchmark() # Returns e.g. {'python': 11.43, 'numpy': 236.595}
 
-        numpy_mops = sc.benchmark(python=False)['numpy']
+        numpy_mops = sc.benchmark(which='numpy')
         if numpy_mops < 100:
             print('Your computer is slow')
         elif numpy_mops > 400:
@@ -253,7 +252,15 @@ def benchmark(repeats=5, scale=1, verbose=False, python=True, numpy=True, parall
 
     | *New in version 3.0.0.*
     | *New in version 3.1.0:* "parallel" argument; increased default scale
+    | *New in version 3.2.4:* replaced "python" and "numpy" arguments with "which"
     """
+    # Handle which
+    python = True if 'python' in which else False
+    numpy  = True if 'numpy' in which else False
+    both = python and numpy
+    if python + numpy == 0:
+        errormsg = f'Valid benchmarking options are "python" and/or "numpy", not "{which}"'
+        raise ValueError(errormsg)
 
     # Calculate the number of operations
     py_outer = 10
@@ -263,10 +270,8 @@ def benchmark(repeats=5, scale=1, verbose=False, python=True, numpy=True, parall
     py_ops = (py_outer * py_inner * 18)/1e6
     np_ops = (np_outer * np_inner * 4)/1e6
 
-
     # Define the benchmarking functions
-
-    def bm_python(prefix=''):
+    def bm_python(prefix=''): # Prefix used in parallel runs
         P = sc.timer(verbose=verbose)
         for r in range(repeats):
             l = list()
@@ -295,25 +300,14 @@ def benchmark(repeats=5, scale=1, verbose=False, python=True, numpy=True, parall
             N.toc(f'{prefix}Numpy, {np_ops}m operations')
         return N
 
-
     # Do the benchmarking
-
+    P = None
+    N = None
     if not parallel:
-
         ncpus = 1
-
-        # Benchmark plain Python
-        if python:
-            P = bm_python()
-
-        # Benchmark Numpy
-        if numpy:
-            N = bm_numpy()
-
+        if python: P = bm_python() # Benchmark plain Python
+        if numpy: N = bm_numpy() # Benchmark Numpy
     else:
-
-        from . import sc_parallel as scpar
-
         if parallel == 1: # Probably "True"
             ncpus = cpu_count()
         else:
@@ -324,21 +318,23 @@ def benchmark(repeats=5, scale=1, verbose=False, python=True, numpy=True, parall
                 raise ValueError(errormsg) from E
 
         arglist = [f'Run {i}: ' for i in range(ncpus)]
-
         if python:
-            Plist = scpar.parallelize(bm_python, arglist, ncpus=ncpus)
+            Plist = sc.parallelize(bm_python, arglist, ncpus=ncpus)
             P = sum(Plist)
         if numpy:
-            Nlist = scpar.parallelize(bm_numpy, arglist, ncpus=ncpus)
+            Nlist = sc.parallelize(bm_numpy, arglist, ncpus=ncpus)
             N = sum(Nlist)
 
     # Handle output
     if return_timers: # pragma: no cover
         out = sc.objdict(python=P, numpy=N)
     else:
-        pymops = py_ops/P.mean()*ncpus if len(P) else None # Handle if one or the other isn't run
-        npmops = np_ops/N.mean()*ncpus if len(N) else None
+        pymops = py_ops/P.mean()*ncpus if P is not None else None # Handle if one or the other isn't run
+        npmops = np_ops/N.mean()*ncpus if N is not None else None
         out = dict(python=pymops, numpy=npmops)
+
+    if not both:
+        out = out[which]
 
     return out
 
@@ -511,6 +507,8 @@ class profile(sc.prettyobj):
         private (bool/str/list): if True and a class is supplied, follow private functions; if a string/list, follow only those private functions (default ``'__init__'``)
         include (str): if a class/module is supplied, include only functions matching this string
         exclude (str): if a class/module is supplied, exclude functions matching this string
+        unwrap (bool): if true (default), then unwrap functions wrapped by decorators (otherwise, the decorator is profiled)
+        skipzero (bool): skip functions with 0 time (i.e. that were not run); default false (i.e. do include them)
         do_run (bool): whether to run immediately (default: true)
         print_stats (bool): whether to print the statistics of the profile to stdout (default True)
         verbose (bool): list the functions to be profiled
@@ -556,39 +554,76 @@ class profile(sc.prettyobj):
 
     | *New in version 3.2.0:* allow class and module arguments for "follow"; "private" argument
     | *New in version 3.2.2:* converted to a class
+    | *New in version 3.2.4:* "merge" method, "unwrap" argument
     """
     def __init__(self, run, follow=None, private='__init__', include=None, exclude=None,
-                do_run=True, verbose=True, *args, **kwargs):
+                unwrap=True, skipzero=False, do_run=True, verbose=True, *args, **kwargs):
+        # Inputs
         self.run_func = run
         self.follow = follow
         self.private = private
         self.include = include
         self.exclude = exclude
+        self.unwrap = unwrap
+        self.skipzero = skipzero
         self.verbose = verbose
         self.args = args
         self.kwargs = kwargs
+
+        # Outputs
+        self.follow_funcs = None
+        self.prof = None
+        self.total = None
+
+        # By default, run on creation
         if do_run:
             self.run()
-            if verbose:
-                self.disp()
         return
 
-    def run(self):
-        """ Run profiling """
+    def parse_follow(self, strict=False):
+        """ Do processing on the functions """
+        # Figure out follow
+        if self.follow is None: # pragma: no cover
+            follow_funcs = [self.run_func]
+        else:
+            follow_funcs = listfuncs(self.follow, private=self.private, include=self.include, exclude=self.exclude, strict=strict)
+
+        # Remove decorators
+        if self.unwrap:
+            follow_funcs = [f.__wrapped__ if hasattr(f, '__wrapped__') else f for f in follow_funcs]
+
+        self.follow_funcs = follow_funcs
+        return follow_funcs
+
+    def run(self, disp=None):
+        """
+        Run profiling
+
+        Args:
+            disp (bool): whether to display results (`self.disp()`) after run; if None, use `self.verbose` value
+        """
+        # Check that we can import the profiler
         try:
             from line_profiler import LineProfiler
         except ModuleNotFoundError as E: # pragma: no cover
             errormsg = 'The "line_profiler" package is not installed; try "pip install line_profiler". (Note: it is not compatible with Python 3.12)'
             raise ModuleNotFoundError(errormsg) from E
 
-        # Figure out follow
-        if self.follow is None: # pragma: no cover
-            follow_funcs = [self.run_func]
-        else:
-            follow_funcs = listfuncs(self.follow, private=self.private, include=self.include, exclude=self.exclude)
+        # Turn the user-provided functions into the actual functions, including listing modules etc.
+        if self.follow_funcs is None:
+            self.parse_follow() # If you want to set strict, call parse_follow() directly
+        follow_funcs = self.follow_funcs
 
+        # Print functions to profile
         if self.verbose:
-            print(f'Profiling {len(follow_funcs)} function(s):\n', sc.newlinejoin(follow_funcs), '\n')
+            maxlen = 100 # Do not allow function names longer than this (happens with e.g. bound methods)
+            funcstrs = []
+            for ff in follow_funcs:
+                funcstr = str(ff)
+                if len(funcstr) > maxlen:
+                    funcstr = funcstr[:maxlen] + ' [...]'
+                funcstrs.append(funcstr)
+            print(f'Profiling {len(follow_funcs)} function(s):\n', sc.newlinejoin(funcstrs), '\n')
 
         # Construct the wrapper
         orig_func = self.run_func # Needed for argument passing
@@ -599,30 +634,43 @@ class profile(sc.prettyobj):
         wrapper = prof(self.run_func) # pragma: no cover
 
         # Run the profiling
-        with sc.timer() as T:
+        with sc.timer(verbose=self.verbose) as T:
             wrapper(*self.args, **self.kwargs) # pragma: no cover
         self.run_func = orig_func # Restore run for argument passing
 
-        self.follow_funcs = follow_funcs
+        # Tidy up
         self.prof = prof
         self.total = T.total
         self._parse()
-        if self.verbose:
+        if sc.ifelse(disp, self.verbose):
             self.disp()
-
         return
 
-    def __add__(self, other, copy=True):
-        """ Allow multiple instances to be combined """
+    def merge(self, other, inplace=False, swap=False, overwrite=True):
+        """
+        Allow multiple profilers to be combined (to be able to do combined stats)
+
+        Args:
+            other (`sc.profile`): the other `sc.profile` instance to merge
+            inplace (bool): if True, modify this instance in place
+            swap (bool): if True, put "other" first
+            overwrite (bool): if True, overwrite duplicates (with the one that took more time)
+
+        | *New in version 3.2.4.*
+        """
         if not isinstance(other, profile):
             errormsg = f'Can only add two sc.profile() instances, not {type(other)}'
             raise TypeError(errormsg)
 
+        # Swap order if desired
+        if swap:
+            other,self = self,other
+
         # Merge simple lists and timings
-        if copy:
-            out = self.__class__.__new__(self.__class__) # New empty class
-        else:
+        if inplace:
             out = self
+        else:
+            out = self.__class__.__new__(self.__class__) # New empty class
         out.run_func = sc.mergelists(self.run_func, other.run_func)
         out.follow = sc.mergelists(self.follow, other.follow)
         out.follow_funcs = sc.mergelists(self.follow_funcs, other.follow_funcs)
@@ -634,7 +682,15 @@ class profile(sc.prettyobj):
         orig_len = len(self.output)
         for key,entry in other.output.copy(deep=True).items():
             entry.order += orig_len # Update ordering
-            out.output[key] = entry
+            if key in out.output:
+                self_time = out.output[key].time
+                other_time = entry.time
+                if other_time == 0: # Don't overwrite with a zero entry
+                    continue
+                elif self_time > 0 and not overwrite:
+                    errormsg = f'Key "{key}" already present and overwrite=False:\n{sc.strjoin(out.output.keys())}'
+                    raise ValueError(errormsg)
+            out.output[key] = entry # Store the new entry
 
         # Recalculate percentages
         for entry in out.output.values():
@@ -644,8 +700,11 @@ class profile(sc.prettyobj):
         out.to_df()
         return out
 
+    def __add__(self, other):
+        return self.merge(other)
+
     def __iadd__(self, other):
-        return self.__add__(other, copy=False)
+        return self.merge(other, inplace=True)
 
     @staticmethod
     def _path_to_name(filepath, lineno):
@@ -711,6 +770,9 @@ class profile(sc.prettyobj):
             time_match = re.search(r'Total time:\s*([0-9.+-eE]+)', section)
             time = float(time_match.group(1)) if time_match else None
             percent = sc.safedivide(time, self.total, np.nan)*100
+
+            if time == 0 and self.skipzero: # Don't story the entry
+                continue
 
             # Extract file
             file_match = re.search(r'File:\s*(.+)', section)
@@ -925,6 +987,7 @@ class cprofile(sc.prettyobj):
         maxitems (int): only include up to this many functions in the output
         maxfunclen (int): maximum length of the function name to print
         maxpathlen (int): maximum length of the function path to print
+        use_ms (bool): if True, convert to milliseconds; if None, scale if and only if all durations are <1 second
         stripdirs (bool): whether to strip folder information from the file paths
         show (bool): whether to show results of the profiling as soon as it's complete
 
@@ -966,15 +1029,17 @@ class cprofile(sc.prettyobj):
         cpr.stop()
 
     | *New in version 3.1.6.*
+    | *New in version 3.2.4:* "use_ms" argument
     """
     def __init__(self, sort='cumtime', columns='default', mintime=1e-3, maxitems=100,
-                 maxfunclen=40, maxpathlen=40, stripdirs=True, show=True):
+                 maxfunclen=40, maxpathlen=40, use_ms=None, stripdirs=True, show=True):
         self.sort = sort
         self.columns = columns
         self.mintime = mintime
         self.maxitems = maxitems
         self.maxfunclen = maxfunclen
         self.maxpathlen = maxpathlen
+        self.use_ms = use_ms
         self.show = show
         self.stripdirs = stripdirs
         self.parsed = None
@@ -1056,6 +1121,13 @@ class cprofile(sc.prettyobj):
         reverse = sc.isarray(d[sort]) # If numeric, assume we want the highest first
         self.df = self.df.sortrows(sort, reverse=reverse)
         self.df = self.df[:self.maxitems]
+
+        # Conver to ms if desired
+        use_ms = sc.ifelse(self.use_ms, self.df.cumtime.max() < 1.0)
+        if use_ms:
+            for col in ['cumtime', 'selftime']:
+                self.df[col] *= 1000
+
         return self.df
 
     def disp(self, *args, **kwargs):
@@ -1090,11 +1162,11 @@ class cprofile(sc.prettyobj):
         return
 
 
-def listfuncs(*args, private='__init__', include=None, exclude=None):
+def listfuncs(*args, private='__init__', include=None, exclude=None, strict=False):
     """
-    Enumerate all functions in the supplied arguments; used in sc.profile().
+    Enumerate all functions in the supplied arguments; used in `sc.profile()`.
 
-    If module(s) are supplied, recursively search themfor functions and classes.
+    If module(s) are supplied, recursively search them for functions and classes.
     If class(es) are supplied, search them for methods. Otherwise, search input(s) for
     functions.
 
@@ -1103,8 +1175,10 @@ def listfuncs(*args, private='__init__', include=None, exclude=None):
         private (bool/str/list): if True and a class is supplied, follow private functions; if a string/list, follow only those private functions (default ``'__init__'``)
         include (str): if a class/module is supplied, include only functions matching this string
         exclude (str): if a class/module is supplied, exclude functions matching this string
+        strict (bool): if True, raise an exception if something is not a function, rather than recurse into it
 
-    *New in version 3.2.2.*
+    | *New in version 3.2.2.*
+    | *New in version 3.2.4:* "strict" argument
     """
     orig_list = sc.mergelists(*args)
 
@@ -1118,12 +1192,17 @@ def listfuncs(*args, private='__init__', include=None, exclude=None):
     for obj in orig_list:
         if sc.isfunc(obj): # Simple: just a function
             f_list.append(obj)
-        elif isinstance(obj, types.ModuleType):
-            m_list.append(obj)
-        elif isinstance(obj, type):
-            c_list.append(obj)
         else:
-            c_list.append(obj.__class__) # Everything is a class
+            if strict:
+                errormsg = f'Object "{obj}" {type(obj)} is not a function and strict=True'
+                raise TypeError(errormsg)
+            else:
+                if isinstance(obj, types.ModuleType):
+                    m_list.append(obj)
+                elif isinstance(obj, type):
+                    c_list.append(obj)
+                else:
+                    c_list.append(obj.__class__) # Everything is a class
 
     def get_attrs(parent):
         """ Safely get the attributes of a module/class """

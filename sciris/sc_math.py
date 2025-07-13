@@ -580,7 +580,7 @@ def numdigits(n, *args, count_minus=False, count_decimal=False):
 ##############################################################################
 
 __all__ += ['perturb', 'normsum', 'normalize', 'inclusiverange', 'randround',
-            'cat', 'linregress', 'sem']
+            'cat', 'linregress', 'sem', 'similarity']
 
 
 def perturb(*args, n=1, span=0.5, randseed=None, normal=False):
@@ -876,6 +876,60 @@ def sem(a, axis=None, *args, **kwargs):
         n = np.prod([a.shape[s] for s in axis])
     out = std/np.sqrt(n)
     return out
+
+
+def similarity(*args, method='jaccard'):
+    """
+    Compute pair-wise similarity for two or more sets
+
+    If two arguments, returns a scalar similarity between 0 and 1. If three or
+    more, compute the matrix of similarities. Similarity is computed by default
+    via the Jaccard index, which is the length of the intersection of the sets
+    divided by the length of their union.
+
+    Args:
+        *args (set/list/arr): Two or more iterables to compute the
+        method (str): Similarity metric: 'jaccard' (default) or 'dice'
+
+    | *New in version 3.2.4.*
+    """
+    # Validation
+    if len(args) < 2:
+        errormsg = 'Provide at least two sets to compare.'
+        raise ValueError(errormsg)
+    if method not in ('jaccard', 'dice'):
+        errormsg = 'Method must be "jaccard" or "dice", not "{method}"'
+        raise ValueError(errormsg)
+
+    sets = [set(c) for c in args]
+    n = len(sets)
+
+    # Early exit for exactly two sets
+    if n == 2:
+        inter = len(sets[0] & sets[1])
+        if method == 'jaccard':
+            union = len(sets[0] | sets[1])
+            score = inter / union if union else 1.0
+        else:  # dice
+            total = len(sets[0]) + len(sets[1])
+            score = 2 * inter / total if total else 1.0
+        return score
+
+    # Otherwise build an N×N matrix
+    sizes = np.array([len(s) for s in sets])
+    mat = np.ones((n, n), dtype=float)
+    for i in range(n):
+        for j in range(i + 1, n):
+            inter = len(sets[i] & sets[j])
+            if method == 'jaccard':
+                denom = len(sets[i] | sets[j])
+                score = inter / denom if denom else 1.0
+            else:  # dice
+                denom = sizes[i] + sizes[j]
+                score = (2 * inter) / denom if denom else 1.0
+            mat[i, j] = mat[j, i] = score
+
+    return mat
 
 
 ##############################################################################

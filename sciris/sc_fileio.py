@@ -23,6 +23,7 @@ import uuid
 import dill
 import shutil
 import string
+import numbers
 import inspect
 import threading
 import importlib
@@ -762,7 +763,7 @@ def getfilelist(folder=None, pattern=None, fnmatch=None, abspath=False, nopath=F
         filesonly   (bool): whether to only return files (not folders)
         foldersonly (bool): whether to only return folders (not files)
         recursive   (bool): passed to :func:`glob.glob()` (note: ** is required as the pattern to match all subfolders)
-        aspath      (bool): whether to return Path objects
+        aspath      (bool): whether to return Path objects (if None, use `sc.options.aspath`)
 
     Returns:
         List of files/folders
@@ -1189,7 +1190,7 @@ __all__ += ['sanitizejson', 'jsonify', 'printjson', 'readjson', 'loadjson', 'sav
 jsonify_memo = threading.local()
 jsonify_memo.ids = set()
 
-def jsonify(obj, verbose=True, die=False, tostring=False, custom=None, **kwargs):
+def jsonify(obj, verbose=True, die=False, tostring=False, custom=None, strkeys=True, **kwargs):
     """
     This is the main conversion function for Python data-structures into JSON-compatible
     data structures (note: :func:`sc.sanitizejson() <sanitizejson>`/:func:`sc.jsonify() <jsonify>` are identical).
@@ -1200,6 +1201,7 @@ def jsonify(obj, verbose=True, die=False, tostring=False, custom=None, **kwargs)
         die      (bool): whether or not to raise an exception if conversion failed (otherwise, return a string)
         tostring (bool): whether to return a string representation of the sanitized object instead of the object itself
         custom   (dict): custom functions for dealing with particular object types
+        strkeys  (bool): whether to coerce all dictionary keys to strings (otherwise, leave numbers, bools, and other valid YAML types)
         kwargs   (dict): passed to json.dumps() if tostring=True
 
     Returns:
@@ -1214,8 +1216,10 @@ def jsonify(obj, verbose=True, die=False, tostring=False, custom=None, **kwargs)
         # Use a custom function for parsing the data
         custom = {np.ndarray: lambda x: f'It was an array: {x}'}
         j2 = sc.jsonify(data, custom=custom)
+
+    | *New in version 3.2.4:* "strkeys" argument; don't coerce dict keys to strings by default
     """
-    kw = dict(verbose=verbose, die=die, custom=custom) # For passing during recursive calls
+    kw = dict(verbose=verbose, die=die, custom=custom, strkeys=strkeys) # For passing during recursive calls
     obj_id = id(obj) # For avoiding recursion
 
     # Handle custom classes
@@ -1224,6 +1228,19 @@ def jsonify(obj, verbose=True, die=False, tostring=False, custom=None, **kwargs)
         custom_classes = tuple(custom.keys())
     else:
         custom_classes = tuple()
+
+    def jsonkey(key):
+        """
+        Convert a dict key to a JSON-compatible format
+
+        Technically, only strings are allowed. But numbers, bools, etc can be used
+        in YAML, so we won't forcibly convert them here.
+        """
+        valid = (str, numbers.Number, bool, type(None))
+        if isinstance(key, valid) and not strkeys:
+            return key
+        else:
+            return str(key)
 
     def get_output(obj):
         """ Do the conversion """
@@ -1261,7 +1278,7 @@ def jsonify(obj, verbose=True, die=False, tostring=False, custom=None, **kwargs)
             return [jsonify(p, **kw) for p in list(obj)]
 
         if isinstance(obj, dict): # It's a dictionary, so iterate over the items
-            return {str(key):jsonify(val, **kw) for key,val in obj.items()}
+            return {jsonkey(key):jsonify(val, **kw) for key,val in obj.items()}
 
         if isinstance(obj, (dt.time, dt.date, dt.datetime, uuid.UUID)): # pragma: no cover
             return str(obj)
@@ -1412,7 +1429,6 @@ def savejson(filename=None, obj=None, folder=None, die=True, indent=2, keepnone=
 
     See also :func:`sc.jsonify() <jsonify>`.
     """
-
     filename = makefilepath(filename=filename, folder=folder, sanitize=sanitizepath, makedirs=True)
 
     if obj is None and not keepnone: # pragma: no cover
@@ -1421,7 +1437,7 @@ def savejson(filename=None, obj=None, folder=None, die=True, indent=2, keepnone=
         else:   print(errormsg)
 
     with open(filename, 'w') as f:
-        json.dump(sanitizejson(obj), f, indent=indent, **kwargs)
+        json.dump(jsonify(obj), f, indent=indent, **kwargs)
 
     return filename
 
@@ -1497,7 +1513,8 @@ def loadyaml(filename=None, folder=None, string=None, fromfile=True, safe=False,
     return output
 
 
-def saveyaml(filename=None, obj=None, folder=None, die=True, keepnone=False, dumpall=False, sanitizepath=True, **kwargs):
+def saveyaml(filename=None, obj=None, folder=None, jsonify=True, sort_keys=True,
+             die=True, keepnone=False, dumpall=False, sanitizepath=True, **kwargs):
     """
     Convenience function for saving to a YAML file.
 
@@ -1505,6 +1522,8 @@ def saveyaml(filename=None, obj=None, folder=None, die=True, keepnone=False, dum
         filename (str): the file to save (if empty, return string representation of the YAML instead)
         obj (anything): the object to save
         folder (str): folder if not part of the filename
+        jsonify (bool): whether to convert the object to a JSON prior to saving to YAML (typically preserves more of the object structure)
+        sort_keys (bool): whether to sort the keys
         die (bool): whether or not to raise an exception if saving an empty object
         indent (int): indentation to use for saved YAML
         keepnone (bool): allow :func:`sc.saveyaml(None) <saveyaml>` to return 'null' rather than raising an exception
@@ -1518,7 +1537,7 @@ def saveyaml(filename=None, obj=None, folder=None, die=True, keepnone=False, dum
     **Examples**::
 
         yaml = {'foo':'bar', 'data':[1,2,3]}
-        sc.saveyaml('my-file.yaml', yaml) # Save to file
+        sc.saveyaml('my-file.yaml', yaml, sort_keys=False) # Save to file and do not sort the keys
 
         string = sc.saveyaml(obj=yaml) # Export to string
     """
@@ -1532,16 +1551,21 @@ def saveyaml(filename=None, obj=None, folder=None, die=True, keepnone=False, dum
         if die: raise ValueError(errormsg)
         else:   print(errormsg)
 
+    # Convert to a JSON if needed -- use alias since jsonify re-used as flag
+    if jsonify:
+        obj = sanitizejson(obj, strkeys=False) # YAML is less strict about keys needing to be strings
+
     # Standard usage: dump to file
+    kw = sc.mergedicts(kwargs, sort_keys=sort_keys)
     if filename is not None:
         filename = makefilepath(filename=filename, folder=folder, sanitize=sanitizepath, makedirs=True)
         output = filename
         with open(filename, 'w') as f:
-            dump_func(obj, f, **kwargs)
+            dump_func(obj, f, **kw)
 
-    # Alternate usage:
+    # Alternate usage: return a string
     else: # pragma: no cover
-        output = dump_func(obj, **kwargs)
+        output = dump_func(obj, **kw)
 
     return output
 
