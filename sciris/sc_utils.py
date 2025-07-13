@@ -6,7 +6,7 @@ ignore a function that you don't need than write one from scratch that you
 do need.
 
 Highlights:
-    - :func:`sc.dcp() <dcp>`: shortcut to :func:`copy.deepcopy()`
+    - :func:`sc.dcp() <dcp>`: shortcut to :func:`copy.deepcopy()`, plus optional robust copying
     - :func:`sc.pp() <pp>`: shortcut to :func:`pprint.pprint()`
     - :func:`sc.isnumber() <isnumber>`: checks if something is any number type
     - :func:`sc.tolist() <tolist>`: converts any object to a list, for easy iteration
@@ -20,7 +20,6 @@ Highlights:
 ##############################################################################
 #%% Imports
 ##############################################################################
-
 import re
 import sys
 import types
@@ -43,6 +42,7 @@ import random as rnd
 import uuid as py_uuid
 import contextlib as cl
 import traceback as py_traceback
+from collections import abc
 from pathlib import Path
 import sciris as sc
 
@@ -60,7 +60,7 @@ __all__ = ['_stringtypes', '_numtype', '_booltypes']
 ##############################################################################
 
 # Define the modules being loaded
-__all__ += ['fast_uuid', 'uuid', 'dcp', 'cp', 'pp', 'sha', 'traceback', 'getuser',
+__all__ += ['fast_uuid', 'uuid', 'cp', 'dcp', 'robust_dcp', 'pp', 'sha', 'traceback', 'getuser',
            'getplatform', 'iswindows', 'islinux', 'ismac', 'isjupyter', 'asciify']
 
 
@@ -239,33 +239,6 @@ def uuid(uid=None, which=None, die=False, tostring=False, length=None, n=1, **kw
     return output
 
 
-def dcp(obj, die=True, memo=None):
-    """
-    Shortcut to perform a deep copy operation
-
-    Almost identical to :func:`copy.deepcopy()`, but optionally fall back to :func:`copy.copy()`
-    if deepcopy fails.
-
-    Args:
-        die (bool): if False, fall back to :func:`copy.copy()`
-
-    | *New in version 2.0.0:* default die=True instead of False
-    | *New in version 3.1.4:* die=False passed to sc.cp(); "verbose" argument removed; warning raised
-    | *New in version 3.2.0:* "memo" argument
-    """
-    try:
-        output = copy.deepcopy(obj, memo=memo)
-    except Exception as E: # pragma: no cover
-        errormsg = f'Warning: could not perform deep copy of {type(obj)}: {str(E)}'
-        if die:
-            raise ValueError(errormsg) from E
-        else:
-            output = cp(obj, die=False)
-            warnmsg = errormsg + '\nPerforming shallow copy instead...'
-            warnings.warn(warnmsg, category=RuntimeWarning, stacklevel=2)
-    return output
-
-
 def cp(obj, die=True):
     """
     Shortcut to perform a shallow copy operation
@@ -286,6 +259,113 @@ def cp(obj, die=True):
             warnmsg = errormsg + ', returning original object...'
             warnings.warn(warnmsg, category=RuntimeWarning, stacklevel=2)
     return output
+
+
+def dcp(obj, die=True, verbose=True, memo=None):
+    """
+    Shortcut to perform a deep copy operation
+
+    Almost identical to :func:`copy.deepcopy()`, but optionally fall back to :func:`copy.copy()`
+    if deepcopy fails.
+
+    Args:
+        die (bool): if False, fall back to :func:`copy.copy()`
+
+    | *New in version 2.0.0:* default die=True instead of False
+    | *New in version 3.1.4:* die=False passed to `sc.cp()`; "verbose" argument removed; warning raised
+    | *New in version 3.2.0:* "memo" argument
+    | *New in verison 3.2.4:* fall back to `sc.robust_dcp()` instead of `sc.cp()`; "verbose" argument added
+    """
+    try:
+        output = copy.deepcopy(obj, memo=memo)
+    except Exception as E: # pragma: no cover
+        errormsg = f'Could not perform deep copy of {type(obj)}:\n{E}'
+        if die:
+            errormsg += '\n\nUse sc.dcp(obj, die=False) to perform a robust copy instead.'
+            raise RuntimeError(errormsg) from E
+        else:
+            output = robust_dcp(obj, verbose=verbose, _memo=memo)
+            if verbose:
+                warnmsg = errormsg + '\nPerforming robust copy instead...'
+                warnings.warn(warnmsg, category=RuntimeWarning, stacklevel=2)
+    return output
+
+
+def robust_dcp(obj, verbose=False, _memo=None):
+    """
+    Ultra-robust deepcopying
+
+    Deep-copy anything that can be deep-copied, then try a shallow copy of that
+    attribute, and otherwise return the original object.
+
+    Co-authored with ChatGPT.
+
+    | *New in version 3.2.4.*
+    """
+    # Immutable primitives that never need copying
+    primitives = (int, float, complex, bool, str, bytes, tuple, frozenset, types.NoneType)
+    exceptions = [] # Print exceptions if verbose=True
+
+    if _memo is None:
+        _memo = {}
+    obj_id = id(obj)
+    if obj_id in _memo: # preserve reference cycles
+        return _memo[obj_id]
+
+    # Fast-path primitives (immutable, safe to reuse)
+    if isinstance(obj, primitives):
+        return obj
+
+    # First, try vanilla deepcopy
+    try:
+        dup = copy.deepcopy(obj, memo=_memo)
+        _memo[obj_id] = dup
+        return dup
+    except Exception as e: # fall through and attempt element-wise copy
+        if verbose: exceptions.append(e)
+
+    # Containers
+    if isinstance(obj, abc.Mapping):
+        dup = obj.__class__((robust_dcp(k, _memo), robust_dcp(v, _memo)) for k, v in obj.items())
+    elif isinstance(obj, (abc.Sequence, abc.Set)) and not isinstance(obj, (str, bytes, bytearray)):
+        dup = obj.__class__(robust_dcp(x, _memo) for x in obj)
+    else: # Plain custom object: allocate blank instance, then copy attributes
+        dup = object.__new__(obj.__class__)
+        _memo[obj_id] = dup  # stash early to handle self-refs
+        try:
+            attrs = vars(obj)  # works for classes with __dict__
+        except TypeError as e:      # maybe it's using __slots__ only
+            attrs = {slot: getattr(obj, slot) for slot in getattr(obj, "__slots__", [])}
+            if verbose: exceptions.append(e)
+
+        for name, value in attrs.items():
+            try:
+                copied_val = robust_dcp(value, _memo)
+            except Exception as e:
+                if verbose: exceptions.append(e)
+                try: # Shallow fallback on *this* attribute
+                    copied_val = copy.copy(value)
+                except Exception as e:
+                    copied_val = value
+                    if verbose: exceptions.append(e)
+            try:
+                setattr(dup, name, copied_val)
+            except AttributeError as e: # read-only attribute: leave original reference
+                if verbose: exceptions.append(e)
+
+        return dup
+
+    if verbose:
+        msg = f'The following {len(exceptions)} exceptions were encountered:\n'
+        line = '—'*60 + '\n'
+        for i,exc in enumerate(exceptions):
+            msg += line
+            msg += 'Exception {i}+1\n'
+            msg += line
+            msg += f'\n{exc}\n\n'
+
+    _memo[obj_id] = dup
+    return dup
 
 
 def _printout(string=None, doprint=None, output=False):
