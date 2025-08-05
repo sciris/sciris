@@ -152,20 +152,40 @@ class ScirisOptions(sc.objdict):
     | *New in version 1.3.0.*
     | *New in version 2.0.0:* revamped with additional options ``interactive`` and ``jupyter``, plus styles
     | *New in version 3.0.0:* renamed from Options to ScirisOptions to avoid potential confusion with ``sc.options``
+    | *New in version 3.2.5:* locked attributes to prevent accidental modification
     """
 
     def __init__(self):
         super().__init__()
         optdesc, options = self.get_orig_options() # Get the options
         self.update(options) # Update this object with them
-        self.optdesc = optdesc # Set the description as an attribute, not a dict entry
-        self.orig_options = sc.dcp(options) # Copy the default options
+        self.setattribute('optdesc', optdesc)  # Set the description as an attribute, not a dict entry
+        self.setattribute('orig_options', sc.dcp(options))  # Copy the default options
+        self.setattribute('_locked', True) # Prevent further modifications
         return
 
 
     def __call__(self, *args, **kwargs):
         """Allow ``sc.options(dpi=150)`` instead of ``sc.options.set(dpi=150)`` """
         return self.set(*args, **kwargs)
+
+
+    def __setitem__(self, key, value):
+        """ Do not allow accidental modifications """
+        try:
+            assert self.getattribute('_locked') # This handles False, not present, etc.
+            locked = True
+        except:
+            locked = False
+
+        if locked:
+            if key in self:
+                self.set(key=key, value=value)
+            else:
+                errormsg = f'Cannot set option "{key}"; valid options are:\n{sc.newlinejoin(sorted(self.keys()))}\n\nSee sc.options.disp() for details.'
+                raise sc.KeyNotFoundError(errormsg)
+        else:
+            return super().__setitem__(key, value)
 
 
     def to_dict(self):
@@ -194,7 +214,7 @@ class ScirisOptions(sc.objdict):
                 if self[k] != v: # Only reset settings that have changed
                     reset[k] = v
             self.set(**reset)
-            del self.on_entry
+            self.delattribute('on_entry')
         except AttributeError as E: # pragma: no cover
             errormsg = 'Please use sc.options.context() if using a with block'
             raise AttributeError(errormsg) from E
@@ -314,7 +334,8 @@ class ScirisOptions(sc.objdict):
             else:
                 if value in [None, 'default']:
                     value = self.orig_options[key]
-                self[key] = value
+                super().__setitem__(key, value) # Needed since we overwrite __setitem__ to call this
+
                 matplotlib_keys = ['fontsize', 'font', 'dpi', 'backend']
                 if key in matplotlib_keys:
                     self.set_matplotlib_global(key, value)
