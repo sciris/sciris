@@ -366,7 +366,7 @@ class ScirisOptions(sc.objdict):
         they won't have any effect.
         """
         # Store current settings
-        self.on_entry = {k:self[k] for k in kwargs.keys()}
+        self.setattribute('on_entry', {k:self[k] for k in kwargs.keys()}) # Since not a valid key
 
         # Make changes
         self.set(**kwargs)

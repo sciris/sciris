@@ -103,25 +103,25 @@ class Parallel:
     """
     def __init__(self, func, iterarg=None, iterkwargs=None, args=None, kwargs=None, ncpus=None,
                  maxcpu=None, maxmem=None, interval=None, parallelizer=None, serial=False,
-                 progress=False, callback=None, globaldict=None, label=None, die=True, **func_kwargs):
+                 progress=False, callback=None, globaldict=None, label=None, capture=False, die=True,
+                 lbkwargs=None, **func_kwargs):
 
         # Store input arguments
-        self.func         = func
-        self.iterarg      = iterarg
-        self.iterkwargs   = iterkwargs
-        self.args         = args
-        self.kwargs       = sc.mergedicts(kwargs, func_kwargs)
+        self.func         = func # The function to call
+        self.iterarg      = iterarg # List of arguments iteratively supplied to the function
+        self.iterkwargs   = iterkwargs # Dict-of-lists or list-of-dicts iteratively supplied to the function
+        self.args         = args # Arguments passed non-iteratively to the function
+        self.kwargs       = sc.mergedicts(kwargs, func_kwargs) # Kwargs passed non-iteratively to the function
+        self.lbkwargs     = sc.objdict(sc.mergedicts(lbkwargs, maxcpu=maxcpu, maxmem=maxmem, interval=interval)) # Load balancer kwargs
         self._ncpus       = ncpus # With a prefix since dynamically calculated later
-        self.maxcpu       = maxcpu
-        self.maxmem       = maxmem
-        self.interval     = interval
-        self.parallelizer = parallelizer
-        self.serial       = serial
-        self.progress     = progress
-        self.callback     = callback
-        self.inputdict    = globaldict
-        self.label        = label
-        self.die          = die
+        self.parallelizer = parallelizer # Which method to use for parallelization
+        self.serial       = serial # Whether to run in parallel
+        self.progress     = progress # Whether to show progress
+        self.callback     = callback # A function to call during the run
+        self.inputdict    = globaldict # A dictionary shared between processes
+        self.label        = label # The label for this Parallel instance
+        self.capture      = capture # Whether to capture output from the function as text
+        self.die          = die # Whether to raise exceptions
 
         # Additional initialization
         self.init()
@@ -156,6 +156,7 @@ class Parallel:
         self.results      = None
         self.success      = None
         self.exceptions   = None
+        self.stdout       = None
         self.times        = sc.objdict(started=None, finished=None, elapsed=None, jobs=None)
         self._running     = False # Used interally; see self.running for the dynamically updated property
         self.already_run  = False
@@ -428,11 +429,13 @@ class Parallel:
                 else:  # pragma: no cover # Should be caught by previous checking, so shouldn't happen
                     errormsg = f'iterkwargs type not understood ({type(iterkwargs)})'
                     raise TypeError(errormsg)
-            taskargs = TaskArgs(func=self.func, index=index, njobs=self.njobs, iterval=iterval, iterdict=iterdict,
-                                args=self.args, kwargs=self.kwargs, maxcpu=self.maxcpu, maxmem=self.maxmem,
-                                interval=self.interval, embarrassing=self.embarrassing, callback=self.callback,
-                                progress=self.progress, globaldict=self.globaldict, useglobal=useglobal,
-                                started=self.times.started, die=self.die)
+            taskargs = TaskArgs(
+                func=self.func, index=index, njobs=self.njobs, iterval=iterval, iterdict=iterdict, args=self.args,
+                kwargs=self.kwargs, lbkwargs=self.lbkwargs, embarrassing=self.embarrassing, callback=self.callback,
+                progress=self.progress, globaldict=self.globaldict, useglobal=useglobal, started=self.times.started,
+                capture=self.capture, die=self.die
+            )
+
             argslist.append(taskargs)
 
         self.argslist = argslist
@@ -556,12 +559,14 @@ class Parallel:
             self.results    = list()
             self.success    = list()
             self.exceptions = list()
+            self.stdout     = list()
             self.times.jobs = list()
 
             for raw in self.rawresults:
                 self.results.append(raw['result'])
                 self.success.append(raw['success'])
                 self.exceptions.append(raw['exception'])
+                self.stdout.append(raw['stdout'])
                 self.times.jobs.append(raw['elapsed'])
 
             if not all(self.success): # pragma: no cover
@@ -591,7 +596,8 @@ class Parallel:
 
 def parallelize(func, iterarg=None, iterkwargs=None, args=None, kwargs=None, ncpus=None,
                 maxcpu=None, maxmem=None, interval=None, parallelizer=None, serial=False,
-                progress=False, callback=None, globaldict=None, die=True, **func_kwargs):
+                progress=False, callback=None, globaldict=None, capture=False, die=True,
+                lbkwargs=None, **func_kwargs):
     """
     Execute a function in parallel.
 
@@ -627,7 +633,9 @@ def parallelize(func, iterarg=None, iterkwargs=None, args=None, kwargs=None, ncp
         progress     (bool)      : whether to show a progress bar
         callback     (func)      : an optional function to call from each worker
         globaldict   (dict)      : an optional global dictionary to pass to each worker via the kwarg "globaldict" (note: may not update properly with low task latency)
+        capture      (bool)      : if True, capture the output of the task rather than printing it
         die          (bool)      : whether to stop immediately if an exception is encountered (otherwise, store the exception as the result)
+        lbkwargs     (dict)      : if provided, passed to :class:`sc.loadbalancer() <loadbalancer>`
         func_kwargs  (dict)      : merged with kwargs (see above)
 
     Returns:
@@ -743,12 +751,14 @@ def parallelize(func, iterarg=None, iterkwargs=None, args=None, kwargs=None, ncp
     | *New in version 2.0.4:* added "die" argument; changed exception handling
     | *New in version 3.0.0:* new Parallel class; propagated "die" to jobs
     | *New in version 3.1.0:* new "globaldict" argument
+    | *New in version 3.2.5:* "capture" and "lbkwargs" arguments
     """
     # Create the parallel instance
     P = Parallel(func, iterarg=iterarg, iterkwargs=iterkwargs, args=args, kwargs=kwargs,
                  ncpus=ncpus, maxcpu=maxcpu, maxmem=maxmem, interval=interval,
                  parallelizer=parallelizer, serial=serial, progress=progress,
-                 callback=callback, globaldict=globaldict, die=die, **func_kwargs)
+                 callback=callback, globaldict=globaldict, capture=capture, die=die,
+                 lbkwargs=lbkwargs, **func_kwargs)
 
     # Run it
     P.run()
@@ -766,9 +776,9 @@ class TaskArgs(sc.prettyobj):
 
         Arguments must match both :func:`sc.parallelize() <parallelize>` and ``sc._task()``
         """
-        def __init__(self, func, index, njobs, iterval, iterdict, args, kwargs, maxcpu, maxmem,
-                     interval, embarrassing, callback, progress, globaldict, useglobal, started,
-                     die=True):
+        def __init__(self, func, index, njobs, iterval, iterdict, args, kwargs, lbkwargs,
+                     embarrassing, callback, progress, globaldict, useglobal, started,
+                     capture=False, die=True):
             self.func         = func         # The function being called
             self.index        = index        # The place in the queue
             self.njobs        = njobs        # The total number of iterations
@@ -776,15 +786,14 @@ class TaskArgs(sc.prettyobj):
             self.iterdict     = iterdict     # A dictionary of values being iterated (may be None if iterval is not None)
             self.args         = args         # Arguments passed directly to the function
             self.kwargs       = kwargs       # Keyword arguments passed directly to the function
-            self.maxcpu       = maxcpu       # Maximum CPU load (ignored if ncpus is not None in sc.parallelize())
-            self.maxmem       = maxmem       # Maximum memory
-            self.interval     = interval     # Interval to check load (only used with maxcpu/maxmem)
+            self.lbkwargs     = lbkwargs     # Keyword arguments for the load balancer, including maximum CPU load, memory, and interval
             self.embarrassing = embarrassing # Whether or not to pass the iterarg to the function (no if it's embarrassing)
             self.callback     = callback     # A function to call after each task finishes
             self.progress     = progress     # Whether to print progress after each job
             self.globaldict   = globaldict   # A global dictionary for sharing progress on each task
             self.useglobal    = useglobal    # Whether to pass the global dictionary to each task
             self.started      = started      # The time when the parallelization was started
+            self.capture      = capture      # Whether to capture output as text
             self.die          = die          # Whether to raise an exception if the child task encounters one
             return
 
@@ -811,11 +820,9 @@ def _task(taskargs):
     kwargs = sc.mergedicts(kwargs, taskargs.iterdict) # Merge this iterdict, overwriting kwargs if there are conflicts
 
     # Handle load balancing
-    maxcpu = taskargs.maxcpu
-    maxmem = taskargs.maxmem
-    interval = taskargs.interval
-    if maxcpu or maxmem or interval:
-        sc.loadbalancer(maxcpu=maxcpu, maxmem=maxmem, index=index, interval=interval)
+    lbkw = taskargs.lbkwargs
+    if lbkw.maxcpu or lbkw.maxmem:
+        sc.loadbalancer(**lbkw)
 
     # Set up input and output arguments
     globaldict = taskargs.globaldict
@@ -832,7 +839,13 @@ def _task(taskargs):
 
     # Call the function!
     try:
-        result = func(*args, **kwargs) # Call the function!
+        if taskargs.capture:
+            with sc.capture() as stdout:
+                result = func(*args, **kwargs) # Call the function and capture the output
+            stdout = str(stdout) # Convert just to the plain text
+        else:
+            result = func(*args, **kwargs) # Call the function!
+            stdout = ''
         success = True
         try: # Likewise, try to update the task progress
             globaldict[_jobkey(index)] = 1
@@ -862,6 +875,7 @@ def _task(taskargs):
         result    = result,
         success   = success,
         exception = exception,
+        stdout    = stdout,
         elapsed   = elapsed,
     )
 
