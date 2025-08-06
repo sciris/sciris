@@ -1,7 +1,6 @@
 '''
 Test profiling functions.
 '''
-import sys
 import warnings
 import numpy as np
 import sciris as sc
