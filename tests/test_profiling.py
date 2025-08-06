@@ -1,9 +1,10 @@
 '''
 Test profiling functions.
 '''
-
-import sciris as sc
+import sys
+import warnings
 import numpy as np
+import sciris as sc
 import pytest
 
 
@@ -102,6 +103,12 @@ def test_profile():
 
 def test_cprofile():
     sc.heading('Testing function profiler (cprofile)')
+
+    # This causes an error on GitHub Actions for some reason, so return
+    if sys.getprofile() is not None:
+        warnmsg = 'Warning: skipping test_cprofile() since another profiler is already active'
+        warnings.warn(warnmsg, category=RuntimeWarning, stacklevel=2)
+        return
 
     class Slow:
 
