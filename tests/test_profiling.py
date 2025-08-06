@@ -148,6 +148,7 @@ def test_cprofile():
         if string in str(e):
             warnmsg = f'Skipping test_cprofile(): {string}'
             warnings.warn(warnmsg, category=RuntimeWarning, stacklevel=2)
+            cpr = None
         else: # Don't catch anything else
             raise e
 
