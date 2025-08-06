@@ -753,7 +753,6 @@ def SIticks(ax=None, axis='y', fixed=False):
     Args:
         ax (any): axes to modify; if None, use current; else can be a single axes object, a figure, or a list of axes
         axis (str): which axes to change (default 'y')
-        fixed (bool): use fixed-location tick labels (by default, update them dynamically)
 
     **Example**::
 
@@ -761,24 +760,19 @@ def SIticks(ax=None, axis='y', fixed=False):
         plt.plot(data)
         sc.SIticks()
     """
-    def SItickformatter(x, pos=None, sigfigs=2, SI=True, *args, **kwargs):  # formatter function takes tick label and tick position # pragma: no cover
+    def SItickformatter(x, pos=None, *args, **kwargs):  # formatter function takes tick label and tick position # pragma: no cover
         """ Formats axis ticks so that e.g. 34000 becomes 34k -- usually not invoked directly """
-        output = sc.sigfig(x, sigfigs=sigfigs, SI=SI) # Pretty simple since sc.sigfig() does all the work
+        output = sc.sigfig(x, sigfigs=None, SI=True) # Pretty simple since sc.sigfig() does all the work
         return output
 
     axlist = _get_axlist(ax)
+    axislist = sc.tolist(axis)
     for ax in axlist:
-        if   axis=='x': thisaxis = ax.xaxis
-        elif axis=='y': thisaxis = ax.yaxis
-        elif axis=='z': thisaxis = ax.zaxis # pragma: no cover
-        else: raise ValueError('Axis must be x, y, or z') # pragma: no cover
-        if fixed: # pragma: no cover
-            ticklocs = thisaxis.get_ticklocs()
-            ticklabels = []
-            for tickloc in ticklocs:
-                ticklabels.append(SItickformatter(tickloc))
-            thisaxis.set_major_formatter(mpl.ticker.FixedFormatter(ticklabels))
-        else:
+        for axis in axislist:
+            if   axis=='x': thisaxis = ax.xaxis
+            elif axis=='y': thisaxis = ax.yaxis
+            elif axis=='z': thisaxis = ax.zaxis # pragma: no cover
+            else: raise ValueError('Axis must be x, y, or z') # pragma: no cover
             thisaxis.set_major_formatter(mpl.ticker.FuncFormatter(SItickformatter))
     return
 

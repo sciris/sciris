@@ -1,9 +1,9 @@
 '''
 Test profiling functions.
 '''
-
-import sciris as sc
+import warnings
 import numpy as np
+import sciris as sc
 import pytest
 
 
@@ -123,22 +123,33 @@ def test_cprofile():
             self.math()
             self.plain()
 
-    # Option 1: as a context block
-    with sc.cprofile() as cpr:
+    # This sometimes fails on GitHub Actions, so raise a warning rather than exception
+    try:
+        # Option 1: as a context block
+        with sc.cprofile() as cpr:
+            slow = Slow()
+            slow.run()
+
+        # Option 2: with start and stop
+        cpr = sc.cprofile()
+        cpr.start()
         slow = Slow()
         slow.run()
+        cpr.stop()
 
-    # Option 2: with start and stop
-    cpr = sc.cprofile()
-    cpr.start()
-    slow = Slow()
-    slow.run()
-    cpr.stop()
+        # Tests
+        df = cpr.df
+        assert len(df) >= 4 # Should be at least this many profiled functions
+        assert df[0].cumpct > df[-1].cumpct # Should be in descending order
 
-    # Tests
-    df = cpr.df
-    assert len(df) >= 4 # Should be at least this many profiled functions
-    assert df[0].cumpct > df[-1].cumpct # Should be in descending order
+    except ValueError as e:
+        string = 'Another profiling tool is already active'
+        if string in str(e):
+            warnmsg = f'Skipping test_cprofile(): {string}'
+            warnings.warn(warnmsg, category=RuntimeWarning, stacklevel=2)
+            cpr = None
+        else: # Don't catch anything else
+            raise e
 
     return cpr
 

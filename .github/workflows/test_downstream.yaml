@@ -129,11 +129,7 @@ jobs:
 
       - name: Install Starsim
         working-directory: ./starsim
-        run: pip install -e .
-
-      - name: Install Starsim tests
-        working-directory: ./starsim/tests
-        run: pip install -r requirements.txt
+        run: pip install -e .[dev]
 
       - name: Run Starsim tests
         working-directory: ./starsim/tests

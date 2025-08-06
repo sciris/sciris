@@ -6,8 +6,11 @@ broadest support  across platforms (e.g. Jupyter notebooks).
 
 Highlights:
     - :func:`sc.parallelize() <parallelize>`: as-easy-as-possible parallelization
+    - :func:`sc.loadbalancer() <loadbalancer>`: very simple load balancer
 """
 
+import time
+import psutil
 import warnings
 import numpy as np
 import multiprocess as mp
@@ -21,7 +24,7 @@ import sciris as sc
 #%% Parallelization class
 ##############################################################################
 
-__all__ = ['Parallel', 'parallelize']
+__all__ = ['Parallel', 'parallelize', 'loadbalancer']
 
 # Define a common error message
 freeze_support_error = '''
@@ -100,25 +103,25 @@ class Parallel:
     """
     def __init__(self, func, iterarg=None, iterkwargs=None, args=None, kwargs=None, ncpus=None,
                  maxcpu=None, maxmem=None, interval=None, parallelizer=None, serial=False,
-                 progress=False, callback=None, globaldict=None, label=None, die=True, **func_kwargs):
+                 progress=False, callback=None, globaldict=None, label=None, capture=False, die=True,
+                 lbkwargs=None, **func_kwargs):
 
         # Store input arguments
-        self.func         = func
-        self.iterarg      = iterarg
-        self.iterkwargs   = iterkwargs
-        self.args         = args
-        self.kwargs       = sc.mergedicts(kwargs, func_kwargs)
+        self.func         = func # The function to call
+        self.iterarg      = iterarg # List of arguments iteratively supplied to the function
+        self.iterkwargs   = iterkwargs # Dict-of-lists or list-of-dicts iteratively supplied to the function
+        self.args         = args # Arguments passed non-iteratively to the function
+        self.kwargs       = sc.mergedicts(kwargs, func_kwargs) # Kwargs passed non-iteratively to the function
+        self.lbkwargs     = sc.objdict(sc.mergedicts(lbkwargs, maxcpu=maxcpu, maxmem=maxmem, interval=interval)) # Load balancer kwargs
         self._ncpus       = ncpus # With a prefix since dynamically calculated later
-        self.maxcpu       = maxcpu
-        self.maxmem       = maxmem
-        self.interval     = interval
-        self.parallelizer = parallelizer
-        self.serial       = serial
-        self.progress     = progress
-        self.callback     = callback
-        self.inputdict    = globaldict
-        self.label        = label
-        self.die          = die
+        self.parallelizer = parallelizer # Which method to use for parallelization
+        self.serial       = serial # Whether to run in parallel
+        self.progress     = progress # Whether to show progress
+        self.callback     = callback # A function to call during the run
+        self.inputdict    = globaldict # A dictionary shared between processes
+        self.label        = label # The label for this Parallel instance
+        self.capture      = capture # Whether to capture output from the function as text
+        self.die          = die # Whether to raise exceptions
 
         # Additional initialization
         self.init()
@@ -153,6 +156,7 @@ class Parallel:
         self.results      = None
         self.success      = None
         self.exceptions   = None
+        self.stdout       = None
         self.times        = sc.objdict(started=None, finished=None, elapsed=None, jobs=None)
         self._running     = False # Used interally; see self.running for the dynamically updated property
         self.already_run  = False
@@ -425,11 +429,13 @@ class Parallel:
                 else:  # pragma: no cover # Should be caught by previous checking, so shouldn't happen
                     errormsg = f'iterkwargs type not understood ({type(iterkwargs)})'
                     raise TypeError(errormsg)
-            taskargs = TaskArgs(func=self.func, index=index, njobs=self.njobs, iterval=iterval, iterdict=iterdict,
-                                args=self.args, kwargs=self.kwargs, maxcpu=self.maxcpu, maxmem=self.maxmem,
-                                interval=self.interval, embarrassing=self.embarrassing, callback=self.callback,
-                                progress=self.progress, globaldict=self.globaldict, useglobal=useglobal,
-                                started=self.times.started, die=self.die)
+            taskargs = TaskArgs(
+                func=self.func, index=index, njobs=self.njobs, iterval=iterval, iterdict=iterdict, args=self.args,
+                kwargs=self.kwargs, lbkwargs=self.lbkwargs, embarrassing=self.embarrassing, callback=self.callback,
+                progress=self.progress, globaldict=self.globaldict, useglobal=useglobal, started=self.times.started,
+                capture=self.capture, die=self.die
+            )
+
             argslist.append(taskargs)
 
         self.argslist = argslist
@@ -553,12 +559,14 @@ class Parallel:
             self.results    = list()
             self.success    = list()
             self.exceptions = list()
+            self.stdout     = list()
             self.times.jobs = list()
 
             for raw in self.rawresults:
                 self.results.append(raw['result'])
                 self.success.append(raw['success'])
                 self.exceptions.append(raw['exception'])
+                self.stdout.append(raw['stdout'])
                 self.times.jobs.append(raw['elapsed'])
 
             if not all(self.success): # pragma: no cover
@@ -588,7 +596,8 @@ class Parallel:
 
 def parallelize(func, iterarg=None, iterkwargs=None, args=None, kwargs=None, ncpus=None,
                 maxcpu=None, maxmem=None, interval=None, parallelizer=None, serial=False,
-                progress=False, callback=None, globaldict=None, die=True, **func_kwargs):
+                progress=False, callback=None, globaldict=None, capture=False, die=True,
+                lbkwargs=None, **func_kwargs):
     """
     Execute a function in parallel.
 
@@ -624,7 +633,9 @@ def parallelize(func, iterarg=None, iterkwargs=None, args=None, kwargs=None, ncp
         progress     (bool)      : whether to show a progress bar
         callback     (func)      : an optional function to call from each worker
         globaldict   (dict)      : an optional global dictionary to pass to each worker via the kwarg "globaldict" (note: may not update properly with low task latency)
+        capture      (bool)      : if True, capture the output of the task rather than printing it
         die          (bool)      : whether to stop immediately if an exception is encountered (otherwise, store the exception as the result)
+        lbkwargs     (dict)      : if provided, passed to :class:`sc.loadbalancer() <loadbalancer>`
         func_kwargs  (dict)      : merged with kwargs (see above)
 
     Returns:
@@ -740,12 +751,14 @@ def parallelize(func, iterarg=None, iterkwargs=None, args=None, kwargs=None, ncp
     | *New in version 2.0.4:* added "die" argument; changed exception handling
     | *New in version 3.0.0:* new Parallel class; propagated "die" to jobs
     | *New in version 3.1.0:* new "globaldict" argument
+    | *New in version 3.2.5:* "capture" and "lbkwargs" arguments
     """
     # Create the parallel instance
     P = Parallel(func, iterarg=iterarg, iterkwargs=iterkwargs, args=args, kwargs=kwargs,
                  ncpus=ncpus, maxcpu=maxcpu, maxmem=maxmem, interval=interval,
                  parallelizer=parallelizer, serial=serial, progress=progress,
-                 callback=callback, globaldict=globaldict, die=die, **func_kwargs)
+                 callback=callback, globaldict=globaldict, capture=capture, die=die,
+                 lbkwargs=lbkwargs, **func_kwargs)
 
     # Run it
     P.run()
@@ -763,9 +776,9 @@ class TaskArgs(sc.prettyobj):
 
         Arguments must match both :func:`sc.parallelize() <parallelize>` and ``sc._task()``
         """
-        def __init__(self, func, index, njobs, iterval, iterdict, args, kwargs, maxcpu, maxmem,
-                     interval, embarrassing, callback, progress, globaldict, useglobal, started,
-                     die=True):
+        def __init__(self, func, index, njobs, iterval, iterdict, args, kwargs, lbkwargs,
+                     embarrassing, callback, progress, globaldict, useglobal, started,
+                     capture=False, die=True):
             self.func         = func         # The function being called
             self.index        = index        # The place in the queue
             self.njobs        = njobs        # The total number of iterations
@@ -773,15 +786,14 @@ class TaskArgs(sc.prettyobj):
             self.iterdict     = iterdict     # A dictionary of values being iterated (may be None if iterval is not None)
             self.args         = args         # Arguments passed directly to the function
             self.kwargs       = kwargs       # Keyword arguments passed directly to the function
-            self.maxcpu       = maxcpu       # Maximum CPU load (ignored if ncpus is not None in sc.parallelize())
-            self.maxmem       = maxmem       # Maximum memory
-            self.interval     = interval     # Interval to check load (only used with maxcpu/maxmem)
+            self.lbkwargs     = lbkwargs     # Keyword arguments for the load balancer, including maximum CPU load, memory, and interval
             self.embarrassing = embarrassing # Whether or not to pass the iterarg to the function (no if it's embarrassing)
             self.callback     = callback     # A function to call after each task finishes
             self.progress     = progress     # Whether to print progress after each job
             self.globaldict   = globaldict   # A global dictionary for sharing progress on each task
             self.useglobal    = useglobal    # Whether to pass the global dictionary to each task
             self.started      = started      # The time when the parallelization was started
+            self.capture      = capture      # Whether to capture output as text
             self.die          = die          # Whether to raise an exception if the child task encounters one
             return
 
@@ -808,11 +820,9 @@ def _task(taskargs):
     kwargs = sc.mergedicts(kwargs, taskargs.iterdict) # Merge this iterdict, overwriting kwargs if there are conflicts
 
     # Handle load balancing
-    maxcpu = taskargs.maxcpu
-    maxmem = taskargs.maxmem
-    interval = taskargs.interval
-    if maxcpu or maxmem or interval:
-        sc.loadbalancer(maxcpu=maxcpu, maxmem=maxmem, index=index, interval=interval)
+    lbkw = taskargs.lbkwargs
+    if lbkw.maxcpu or lbkw.maxmem:
+        sc.loadbalancer(**lbkw)
 
     # Set up input and output arguments
     globaldict = taskargs.globaldict
@@ -829,7 +839,13 @@ def _task(taskargs):
 
     # Call the function!
     try:
-        result = func(*args, **kwargs) # Call the function!
+        if taskargs.capture:
+            with sc.capture() as stdout:
+                result = func(*args, **kwargs) # Call the function and capture the output
+            stdout = str(stdout) # Convert just to the plain text
+        else:
+            result = func(*args, **kwargs) # Call the function!
+            stdout = ''
         success = True
         try: # Likewise, try to update the task progress
             globaldict[_jobkey(index)] = 1
@@ -859,6 +875,7 @@ def _task(taskargs):
         result    = result,
         success   = success,
         exception = exception,
+        stdout    = stdout,
         elapsed   = elapsed,
     )
 
@@ -869,3 +886,146 @@ def _task(taskargs):
 
     # Handle output
     return outdict
+
+
+##############################################################################
+#%% Load balancing functions
+##############################################################################
+
+__all__ += ['cpu_count', 'cpuload', 'memload', 'loadbalancer']
+
+
+def cpu_count():
+    """ Alias to :func:`multiprocessing.cpu_count()` """
+    return mp.cpu_count()
+
+
+def cpuload(interval=0.1):
+    """
+    Takes a snapshot of current CPU usage via :mod:`psutil`
+
+    Args:
+        interval (float): number of seconds over which to estimate CPU load
+
+    Returns:
+        a float between 0-1 representing the fraction of :func:`psutil.cpu_percent()` currently used.
+    """
+    return psutil.cpu_percent(interval=interval)/100
+
+
+def memload():
+    """
+    Takes a snapshot of current fraction of memory usage via :mod:`psutil`
+
+    Note on the different functions:
+
+        - :func:`sc.memload() <memload>` checks current total system memory consumption
+        - :func:`sc.checkram() <checkram>` checks RAM (virtual memory) used by the current Python process
+        - :func:`sc.checkmem() <checkmem>` checks memory consumption by a given object
+
+    Returns:
+        a float between 0-1 representing the fraction of :func:`psutil.virtual_memory()` currently used.
+    """
+    return psutil.virtual_memory().percent / 100
+
+
+def loadbalancer(maxcpu=0.9, maxmem=0.9, index=None, interval=None, cpu_interval=0.1,
+                 maxtime=36_000, label=None, verbose=None, **kwargs):
+    """
+    Delay execution while CPU load is too high -- a very simple load balancer.
+
+    Arguments:
+        maxcpu       (float) : the maximum CPU load to allow for the task to still start
+        maxmem       (float) : the maximum memory usage to allow for the task to still start
+        index        (int)   : the index of the task -- used to start processes asynchronously (default None)
+        interval     (float) : the time delay to poll to see if CPU load is OK (default 0.5 seconds)
+        cpu_interval (float) : number of seconds over which to estimate CPU load (default 0.1; too small gives inaccurate readings)
+        maxtime      (float) : maximum amount of time to wait to start the task (default 36000 seconds (10 hours))
+        label        (str)   : the label to print out when outputting information about task delay or start (default None)
+        verbose      (bool)  : whether or not to print information about task delay or start (default None, which shows if a task is delayed)
+
+    **Examples**::
+
+        # Simplest usage -- delay if CPU or memory load is >80%
+        sc.loadbalancer()
+
+        # Use a maximum CPU load of 50%, maximum memory of 90%, and stagger the start by process number
+        for nproc in processlist:
+            sc.loadbalancer(maxload=0.5, maxmem=0.8, index=nproc)
+
+    | *New in version 2.0.0:* ``maxmem`` argument; ``maxload`` renamed ``maxcpu``
+    | *New in version 3.0.0:* ``maxcpu`` and ``maxmem`` set to 0.9 by default
+    | *New in version 3.2.5:* moved from sc_profiling to sc_parallel
+    """
+
+    # Handle deprecation
+    maxload = kwargs.pop('maxload', None)
+    if maxload is not None: # pragma: no cover
+        maxcpu = maxload
+        warnmsg = 'sc.loadbalancer() argument "maxload" has been renamed "maxcpu" as of v2.0.0'
+        warnings.warn(warnmsg, category=FutureWarning, stacklevel=2)
+
+    # Set up processes to start asynchronously
+    if maxcpu   is None or maxcpu  is False: maxcpu  = 1.0
+    if maxmem   is None or maxmem  is False: maxmem  = 1.0
+    if maxtime  is None or maxtime is False: maxtime = 36000
+
+    # Handle the interval
+    default_interval = 0.5
+    min_interval = 1e-3 # Don't allow intervals of less than 1 ms
+    if interval is None: # pragma: no cover
+        interval = default_interval
+        default_interval = None # Used as a flag below
+    if interval < min_interval: # pragma: no cover
+        interval = min_interval
+        warnmsg = f'sc.loadbalancer() "interval" should not be less than {min_interval} s'
+        warnings.warn(warnmsg, category=UserWarning, stacklevel=2)
+
+    if label is None:
+        label = ''
+    else: # pragma: no cover
+        label += ': '
+
+    if index is None:
+        pause = interval*2*np.random.rand()
+        index = ''
+    else: # pragma: no cover
+        pause = index*interval
+
+    if maxcpu > 1: maxcpu = maxcpu/100 # If it's >1, assume it was given as a percent
+    if maxmem > 1: maxmem = maxmem/100
+    if (not 0 < maxcpu < 1) and (not 0 < maxmem < 1) and (default_interval is None): # pragma: no cover
+        return # Return immediately if no max load
+    else:
+        time.sleep(pause) # Give it time to asynchronize, with a predefined delay
+
+    # Loop until load is OK
+    toohigh = True # Assume too high
+    count = 0
+    maxcount = maxtime/float(interval)
+    string = ''
+    while toohigh and count<maxcount:
+        count += 1
+        cpu_current = cpuload(interval=cpu_interval) # If interval is too small, can give very inaccurate readings
+        mem_current = memload()
+        cpu_toohigh = cpu_current > maxcpu
+        mem_toohigh = mem_current > maxmem
+        cpu_compare = ['<', '>'][cpu_toohigh]
+        mem_compare = ['<', '>'][mem_toohigh]
+        cpu_str = f'{cpu_current:0.2f}{cpu_compare}{maxcpu:0.2f}'
+        mem_str = f'{mem_current:0.2f}{mem_compare}{maxmem:0.2f}'
+        process_str = f'process {index}' if index is not None else 'process'
+        if cpu_toohigh: # pragma: no cover
+            string = label+f'CPU load too high ({cpu_str}); {process_str} queued {count} times'
+            sc.randsleep(interval)
+        elif mem_toohigh: # pragma: no cover
+            string = label+f'Memory load too high ({mem_str}); {process_str} queued {count} times'
+            sc.randsleep(interval)
+        else:
+            ok = 'OK' if sc.getplatform() == 'windows' else '✓' # Windows doesn't support unicode (!)
+            toohigh = False
+            string = label+f'CPU {ok} ({cpu_str}), memory {ok} ({mem_str}): starting {process_str} after {count} tries'
+        if verbose is not False:
+            if toohigh or verbose:
+                print(string)
+    return string
