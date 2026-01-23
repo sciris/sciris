@@ -911,7 +911,8 @@ def printarr(arr, fmt=None, colsep='  ', vsep='—', decimals=2, doprint=True, d
     string = ''
     arr = sc.toarray(arr, dtype=dtype)
     if fmt is None:
-        if arr.dtype == object: # pragma: no cover
+        # Check for object or string dtypes (pandas 3.0.0 infers strings as 'str' instead of 'object')
+        if arr.dtype == object or arr.dtype.kind in ['U', 'S', 'O']: # pragma: no cover
             maxdigits = max([len(str(v)) for v in arr.flatten()])
             fmt = f'%{maxdigits}s'
         else:
