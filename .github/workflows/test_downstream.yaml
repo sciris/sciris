@@ -15,7 +15,7 @@ jobs:
       max-parallel: 8
       matrix:
         os: ['ubuntu-latest']
-        python-version: ['3.12']
+        python-version: ['3.13']
     runs-on: ${{ matrix.os }}
     
     steps:
@@ -47,8 +47,8 @@ jobs:
         working-directory: ./covasim/tests
         run: pytest test_*.py --durations=0 --junitxml=covasim-test-results.xml # Run actual tests
       - name: Upload test results
-        uses: actions/upload-artifact@v4
-        if: failure()
+        uses: mikepenz/action-junit-report@v6
+        if: always()
         with:
           name: test_results
           path: covasim/tests/covasim-test-results.xml
@@ -61,7 +61,7 @@ jobs:
       max-parallel: 8
       matrix:
         os: ['ubuntu-latest']
-        python-version: ['3.12']
+        python-version: ['3.13']
     runs-on: ${{ matrix.os }}
     
     steps:
@@ -93,8 +93,8 @@ jobs:
         working-directory: ./hpvsim/tests
         run: pytest test_*.py --durations=0 --junitxml=hpvsim-test-results.xml # Run actual tests
       - name: Upload test results
-        uses: actions/upload-artifact@v4
-        if: failure()
+        uses: mikepenz/action-junit-report@v6
+        if: always()
         with:
           name: test_results
           path: hpvsim/tests/hpvsim-test-results.xml
@@ -107,7 +107,7 @@ jobs:
       max-parallel: 8
       matrix:
         os: ['ubuntu-latest']
-        python-version: ['3.12']
+        python-version: ['3.13']
     runs-on: ${{ matrix.os }}
     
     steps:
@@ -135,8 +135,8 @@ jobs:
         working-directory: ./starsim/tests
         run: pytest test_*.py --durations=0 --junitxml=starsim-test-results.xml # Run actual tests
       - name: Upload test results
-        uses: actions/upload-artifact@v4
-        if: failure()
+        uses: mikepenz/action-junit-report@v6
+        if: always()
         with:
           name: test_results
           path: starsim/tests/starsim-test-results.xml
@@ -149,7 +149,7 @@ jobs:
       max-parallel: 8
       matrix:
         os: ['ubuntu-latest']
-        python-version: ['3.12']
+        python-version: ['3.13']
     runs-on: ${{ matrix.os }}
     
     steps:
@@ -180,8 +180,8 @@ jobs:
         working-directory: ./atomica/tests
         run: pytest test_tox_*.py --durations=0 --junitxml=atomica-test-results.xml # Run actual tests
       - name: Upload test results
-        uses: actions/upload-artifact@v4
-        if: failure()
+        uses: mikepenz/action-junit-report@v6
+        if: always()
         with:
           name: test_results
           path: atomica/tests/atomica-test-results.xml

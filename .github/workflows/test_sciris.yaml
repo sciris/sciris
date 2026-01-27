@@ -14,13 +14,13 @@ jobs:
           - os: ubuntu-latest
             python-version: '3.9'
           - os: ubuntu-latest
-            python-version: '3.12'
-          - os: ubuntu-latest
             python-version: '3.13'
+          - os: ubuntu-latest
+            python-version: '3.14'
           - os: windows-latest
-            python-version: '3.12'
+            python-version: '3.13'
           - os: macos-latest
-            python-version: '3.12'
+            python-version: '3.13'
     runs-on: ${{ matrix.os }}
     name: CI tests
     steps:
@@ -39,8 +39,8 @@ jobs:
         working-directory: ./tests
         run: pytest --durations=0 --junitxml=test-results.xml # Run actual tests
       - name: Upload test results
-        uses: actions/upload-artifact@v4
-        if: failure()
+        uses: mikepenz/action-junit-report@v6
+        if: always()
         with:
-          name: test_results-${{ github.run_id }}
-          path: tests/test-results.xml
+          report_paths: './tests/test-results.xml'
+          check_name: 'Test Report (${{ matrix.os }} ${{ matrix.python-version }})'
