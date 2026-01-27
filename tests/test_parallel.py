@@ -186,17 +186,17 @@ def test_components():
     a.iterdict     = None
     a.args         = None
     a.kwargs       = None
-    a.maxcpu       = 0
-    a.maxmem       = 0
-    a.interval     = 0
+    a.lbkwargs     = sc.objdict(maxcpu=None, maxmem=None)
     a.embarrassing = True
     a.callback     = None
     a.progress     = None
     a.globaldict   = None
     a.useglobal    = None
     a.started      = None
+    a.capture      = None
     a.die          = None
-    taskargs = sc.sc_parallel.TaskArgs(*a.values())
+    taskargs = sc.sc_parallel.TaskArgs(*a.values()) # Check arg form
+    taskargs = sc.sc_parallel.TaskArgs(**a) # Check kwarg form
     task = sc.sc_parallel._task(taskargs)
 
     print('Testing progress bar')

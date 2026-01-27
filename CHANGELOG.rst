@@ -7,6 +7,10 @@ All major updates to Sciris are documented here.
 
 By import convention, components of the Sciris library are listed beginning with ``sc.``, e.g. ``sc.odict()``.
 
+Version 3.2.5 (2026-01-27)
+--------------------------
+#. Updated :func`sc.dataframe.replacedata()` <sc_dataframe.dataframe.replacedata> with support for Pandas 3.0
+
 Version 3.2.4 (2025-07-12)
 --------------------------
 #. Added :func:`sc.robust_dcp() <sc_fileio.robust_dcp>`, which is an (almost) infallible deep-copier. This is now the fallback for :func:`sc.dcp(die=False) <sc_fileio.dcp>` (rather than doing a shallow copy which was the previous behavior).

@@ -5,7 +5,6 @@ Highlights:
     - :func:`sc.profile() <profile>`: a line profiler
     - :func:`sc.cprofile() <cprofile>`: a function profiler
     - :func:`sc.benchmark() <benchmark>`: quickly check your computer's performance
-    - :func:`sc.loadbalancer() <loadbalancer>`: very basic load balancer
     - :func:`sc.resourcemonitor() <resourcemonitor>`: a monitor to kill processes that exceed memory or other limits
 """
 
@@ -21,11 +20,9 @@ import cProfile
 import _thread
 import threading
 import tempfile
-import warnings
 import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
-import multiprocessing as mp
 import sciris as sc
 
 
@@ -309,7 +306,7 @@ def benchmark(repeats=5, scale=1, verbose=False, which='python, numpy', parallel
         if numpy: N = bm_numpy() # Benchmark Numpy
     else:
         if parallel == 1: # Probably "True"
-            ncpus = cpu_count()
+            ncpus = sc.cpu_count()
         else:
             try:
                 ncpus = int(parallel)
@@ -337,150 +334,6 @@ def benchmark(repeats=5, scale=1, verbose=False, which='python, numpy', parallel
         out = out[which]
 
     return out
-
-
-##############################################################################
-#%% Load balancing functions
-##############################################################################
-
-__all__ += ['cpu_count', 'cpuload', 'memload', 'loadbalancer']
-
-
-def cpu_count():
-    """ Alias to :func:`multiprocessing.cpu_count()` """
-    return mp.cpu_count()
-
-
-def cpuload(interval=0.1):
-    """
-    Takes a snapshot of current CPU usage via :mod:`psutil`
-
-    Args:
-        interval (float): number of seconds over which to estimate CPU load
-
-    Returns:
-        a float between 0-1 representing the fraction of :func:`psutil.cpu_percent()` currently used.
-    """
-    return psutil.cpu_percent(interval=interval)/100
-
-
-def memload():
-    """
-    Takes a snapshot of current fraction of memory usage via :mod:`psutil`
-
-    Note on the different functions:
-
-        - :func:`sc.memload() <memload>` checks current total system memory consumption
-        - :func:`sc.checkram() <checkram>` checks RAM (virtual memory) used by the current Python process
-        - :func:`sc.checkmem() <checkmem>` checks memory consumption by a given object
-
-    Returns:
-        a float between 0-1 representing the fraction of :func:`psutil.virtual_memory()` currently used.
-    """
-    return psutil.virtual_memory().percent / 100
-
-
-
-
-
-def loadbalancer(maxcpu=0.9, maxmem=0.9, index=None, interval=None, cpu_interval=0.1,
-                 maxtime=36_000, label=None, verbose=True, **kwargs):
-    """
-    Delay execution while CPU load is too high -- a very simple load balancer.
-
-    Arguments:
-        maxcpu       (float) : the maximum CPU load to allow for the task to still start
-        maxmem       (float) : the maximum memory usage to allow for the task to still start
-        index        (int)   : the index of the task -- used to start processes asynchronously (default None)
-        interval     (float) : the time delay to poll to see if CPU load is OK (default 0.5 seconds)
-        cpu_interval (float) : number of seconds over which to estimate CPU load (default 0.1; too small gives inaccurate readings)
-        maxtime      (float) : maximum amount of time to wait to start the task (default 36000 seconds (10 hours))
-        label        (str)   : the label to print out when outputting information about task delay or start (default None)
-        verbose      (bool)  : whether or not to print information about task delay or start (default True)
-
-    **Examples**::
-
-        # Simplest usage -- delay if CPU or memory load is >80%
-        sc.loadbalancer()
-
-        # Use a maximum CPU load of 50%, maximum memory of 90%, and stagger the start by process number
-        for nproc in processlist:
-            sc.loadbalancer(maxload=0.5, maxmem=0.8, index=nproc)
-
-    | *New in version 2.0.0:* ``maxmem`` argument; ``maxload`` renamed ``maxcpu``
-    | *New in version 3.0.0:* ``maxcpu`` and ``maxmem`` set to 0.9 by default
-    """
-
-    # Handle deprecation
-    maxload = kwargs.pop('maxload', None)
-    if maxload is not None: # pragma: no cover
-        maxcpu = maxload
-        warnmsg = 'sc.loadbalancer() argument "maxload" has been renamed "maxcpu" as of v2.0.0'
-        warnings.warn(warnmsg, category=FutureWarning, stacklevel=2)
-
-    # Set up processes to start asynchronously
-    if maxcpu   is None or maxcpu  is False: maxcpu  = 1.0
-    if maxmem   is None or maxmem  is False: maxmem  = 1.0
-    if maxtime  is None or maxtime is False: maxtime = 36000
-
-    # Handle the interval
-    default_interval = 0.5
-    min_interval = 1e-3 # Don't allow intervals of less than 1 ms
-    if interval is None: # pragma: no cover
-        interval = default_interval
-        default_interval = None # Used as a flag below
-    if interval < min_interval: # pragma: no cover
-        interval = min_interval
-        warnmsg = f'sc.loadbalancer() "interval" should not be less than {min_interval} s'
-        warnings.warn(warnmsg, category=UserWarning, stacklevel=2)
-
-    if label is None:
-        label = ''
-    else: # pragma: no cover
-        label += ': '
-
-    if index is None:
-        pause = interval*2*np.random.rand()
-        index = ''
-    else: # pragma: no cover
-        pause = index*interval
-
-    if maxcpu>1: maxcpu = maxcpu/100 # If it's >1, assume it was given as a percent
-    if maxmem>1: maxmem = maxmem/100
-    if (not 0 < maxcpu < 1) and (not 0 < maxmem < 1) and (default_interval is None): # pragma: no cover
-        return # Return immediately if no max load
-    else:
-        time.sleep(pause) # Give it time to asynchronize, with a predefined delay
-
-    # Loop until load is OK
-    toohigh = True # Assume too high
-    count = 0
-    maxcount = maxtime/float(interval)
-    string = ''
-    while toohigh and count<maxcount:
-        count += 1
-        cpu_current = cpuload(interval=cpu_interval) # If interval is too small, can give very inaccurate readings
-        mem_current = memload()
-        cpu_toohigh = cpu_current > maxcpu
-        mem_toohigh = mem_current > maxmem
-        cpu_compare = ['<', '>'][cpu_toohigh]
-        mem_compare = ['<', '>'][mem_toohigh]
-        cpu_str = f'{cpu_current:0.2f}{cpu_compare}{maxcpu:0.2f}'
-        mem_str = f'{mem_current:0.2f}{mem_compare}{maxmem:0.2f}'
-        process_str = f'process {index}' if index is not None else 'process'
-        if cpu_toohigh: # pragma: no cover
-            string = label+f'CPU load too high ({cpu_str}); {process_str} queued {count} times'
-            sc.randsleep(interval)
-        elif mem_toohigh: # pragma: no cover
-            string = label+f'Memory load too high ({mem_str}); {process_str} queued {count} times'
-            sc.randsleep(interval)
-        else:
-            ok = 'OK' if sc.getplatform() == 'windows' else '✓' # Windows doesn't support unicode (!)
-            toohigh = False
-            string = label+f'CPU {ok} ({cpu_str}), memory {ok} ({mem_str}): starting {process_str} after {count} tries'
-        if verbose:
-            print(string)
-    return string
 
 
 
@@ -927,7 +780,7 @@ def mprofile(run, follow=None, show_results=True, *args, **kwargs):
     """
 
     try:
-        import memory_profiler as mp
+        import memory_profiler as memp
     except ModuleNotFoundError as E: # pragma: no cover
         if 'win' in sys.platform:
             errormsg = 'The "memory_profiler" package is not included by default on Windows;' \
@@ -940,7 +793,7 @@ def mprofile(run, follow=None, show_results=True, *args, **kwargs):
     if follow is None: # pragma: no cover
         follow = run
 
-    lp = mp.LineProfiler()
+    lp = memp.LineProfiler()
     follow = sc.tolist(follow)
     for f in follow:
         lp.add_function(f)
@@ -954,7 +807,7 @@ def mprofile(run, follow=None, show_results=True, *args, **kwargs):
         print('Profiling...')
     wrapper(*args, **kwargs)
     if show_results:
-        mp.show_results(lp)
+        memp.show_results(lp)
         print('Done.')
     return lp
 
@@ -1638,8 +1491,8 @@ class resourcemonitor(sc.prettyobj): # pragma: no cover # For some reason pycov 
 
         # Check current load
         now = sc.objdict(
-            cpu  = cpuload(),
-            mem  = memload(),
+            cpu  = sc.cpuload(),
+            mem  = sc.memload(),
             time = self.elapsed,
         )
 

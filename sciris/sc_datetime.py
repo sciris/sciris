@@ -854,7 +854,8 @@ def toc(start=None, label=None, baselabel=None, sigfigs=None, reset=False, unit=
         else:
             base = f'{baselabel}{label}: '
     factor, unitlabel = _convert_time_unit(unit, elapsed=elapsed)
-    logmessage = f'{base}{sc.sigfig(elapsed/factor, sigfigs=sigfigs)} {unitlabel}'
+    timestr = f'{sc.sigfig(elapsed/factor, sigfigs=sigfigs)} {unitlabel}'
+    logmessage = f'{base}{timestr}'
 
     # Print if asked, or if no other output
     if verbose or ((verbose is None) and (not output)):
@@ -870,6 +871,8 @@ def toc(start=None, label=None, baselabel=None, sigfigs=None, reset=False, unit=
             return logmessage
         elif output == 'both':
             return (elapsed, logmessage)
+        elif output == 'all': # Undocumented feature, used internally by sc.timer()
+            return (elapsed, timestr, logmessage)
         else:
             return elapsed
     else:
@@ -961,6 +964,7 @@ class timer:
     | *New in version 3.1.0:* Timers can be combined by addition, including ``sum()``
     | *New in version 3.1.5:* ``T.timings`` is now an :class:`sc.objdict() <sc_odict.objdict>` instead of an :class:`sc.odict() <sc_odict.odict>`
     | *New in version 3.2.2:* ``sc.timer()`` can be used as a function decorator
+    | *New in version 3.2.5:* ``.string`` attribute (e.g. '3.25 s')
     """
     def __init__(self, label=None, auto=False, start=True, unit='auto', verbose=None, **kwargs):
         self.kwargs = kwargs # Store kwargs to pass to toc() at the end of the block
@@ -972,6 +976,7 @@ class timer:
         self._tics = []
         self._tocs = []
         self.elapsed = None
+        self.string  = None
         self.message = None
         self.count = 0
         self.timings = sc.objdict()
@@ -1057,7 +1062,7 @@ class timer:
     def toc(self, label=None, **kwargs):
         """ Print elapsed time; see :func:`sc.toc() <toc>` for keyword arguments """
         # Get the time
-        self.elapsed, self.message = toc(start=self._start, output='both', verbose=False) # Get time as quickly as possible
+        self.elapsed, self.string, self.message = toc(start=self._start, output='all', verbose=False) # Get time as quickly as possible
         self._tocs.append(pytime.time()) # Store when this toc was invoked
 
         # Update the kwargs, including the label
