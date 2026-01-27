@@ -15,6 +15,9 @@ import sciris as sc
 
 __all__ = ['dataframe']
 
+# Cache pandas major-version check for hot paths
+_PANDAS_V3 = sc.compareversions(pd, '>=3.0')
+
 
 class dataframe(pd.DataFrame):
     """
@@ -25,7 +28,7 @@ class dataframe(pd.DataFrame):
         data (dict/array/dataframe): the data to use; passed to :class:`pd.DataFrame() <pandas.DataFrame>`
         index (array): the index to use; passed to :class:`pd.DataFrame() <pandas.DataFrame>`
         columns (list): column labels (if a dict is supplied, the value sets the dtype)
-        dtype (type): a dtype for the whole datafrmae; passed to :class:`pd.DataFrame() <pandas.DataFrame>`
+        dtype (type): a dtype for the whole dataframe; passed to :class:`pd.DataFrame() <pandas.DataFrame>`
         dtypes (list/dict): alternatively, list of data types to set each column to
         nrows (int): the number of arrows to preallocate (default 0)
         kwargs (dict): if provided, treat these as data columns
@@ -484,13 +487,18 @@ class dataframe(pd.DataFrame):
             inplace (bool): whether to modify in-place
 
         *New in version 3.0.0:* improved dtype handling
+        *New in version 3.2.5:* support deprecation of the verify_is_copy argument in Pandas 3.0
         """
         if newdf is None: # pragma: no cover
             newdf = self._constructor(data=newdata, columns=self.columns)
         if reset_index:
             newdf.reset_index(drop=True, inplace=True)
         if inplace:
-            self._update_inplace(newdf, verify_is_copy=False)
+            if _PANDAS_V3:
+                # The verify_is_copy argument was removed in pandas v3.0
+                self._update_inplace(newdf)
+            else:
+                self._update_inplace(newdf, verify_is_copy=False)
             return self
         else:
             return newdf
