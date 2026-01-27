@@ -13,6 +13,10 @@ import pandas as pd
 import warnings
 import sciris as sc
 
+# Pandas version detection for compatibility
+_pandas_version = tuple(int(x) for x in pd.__version__.split('.')[:2])
+_pandas_ge_3 = _pandas_version >= (3, 0)
+
 __all__ = ['dataframe']
 
 
@@ -26,6 +30,7 @@ class dataframe(pd.DataFrame):
         index (array): the index to use; passed to :class:`pd.DataFrame() <pandas.DataFrame>`
         columns (list): column labels (if a dict is supplied, the value sets the dtype)
         dtype (type): a dtype for the whole datafrmae; passed to :class:`pd.DataFrame() <pandas.DataFrame>`
+        copy (bool): whether to copy the data (ignored in pandas ≥ 3.0.0 due to Copy-on-Write behavior)
         dtypes (list/dict): alternatively, list of data types to set each column to
         nrows (int): the number of arrows to preallocate (default 0)
         kwargs (dict): if provided, treat these as data columns
@@ -61,6 +66,7 @@ class dataframe(pd.DataFrame):
     | *New in version 2.0.0:* subclass pandas DataFrame
     | *New in version 3.0.0:* "dtypes" argument; handling of item setting
     | *New in version 3.1.0:* use panda's equality operator by default (unless an exception is raised); new "equal" method; "cat" can be an instance method now
+    | *New in version 3.2.4:* pandas 3.0.0 compatibility
     """
 
     def __init__(self, data=None, index=None, columns=None, dtype=None, copy=None,
@@ -104,7 +110,11 @@ class dataframe(pd.DataFrame):
                 warnings.warn(warnmsg, category=RuntimeWarning, stacklevel=2)
 
         # Create the dataframe
-        super().__init__(data=data, index=index, columns=columns, dtype=dtype, copy=copy)
+        # Note: In pandas ≥ 3.0.0, the 'copy' parameter is deprecated due to Copy-on-Write behavior
+        if _pandas_ge_3:
+            super().__init__(data=data, index=index, columns=columns, dtype=dtype)
+        else:
+            super().__init__(data=data, index=index, columns=columns, dtype=dtype, copy=copy)
 
         # Optionally set dtypes
         if dtypes is not None:
@@ -127,7 +137,7 @@ class dataframe(pd.DataFrame):
         """
         if not isinstance(dtypes, dict):
             dtypes = {col:dtype for col,dtype in zip(self.columns, dtypes)}
-        for col,dtype in dtypes.items(): # NB: "self.astype(dtypes, copy=False)" does not modify in place
+        for col,dtype in dtypes.items(): # NB: "self.astype(dtypes)" does not modify in place (Copy-on-Write in pandas ≥ 3.0.0)
             self[col] = self[col].astype(dtype)
         return
 
@@ -490,7 +500,11 @@ class dataframe(pd.DataFrame):
         if reset_index:
             newdf.reset_index(drop=True, inplace=True)
         if inplace:
-            self._update_inplace(newdf, verify_is_copy=False)
+            # Note: verify_is_copy parameter removed in pandas 3.0.0
+            if _pandas_ge_3:
+                self._update_inplace(newdf)
+            else:
+                self._update_inplace(newdf, verify_is_copy=False)
             return self
         else:
             return newdf
