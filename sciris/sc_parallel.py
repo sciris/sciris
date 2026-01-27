@@ -746,6 +746,15 @@ def parallelize(func, iterarg=None, iterkwargs=None, args=None, kwargs=None, ncp
             results = sc.parallelize(func=f, iterarg=[(1,2),(2,3),(3,4)])
             print(results)
 
+    **Note 4**: In Python 3.14, the default process start method on Linux was changed from "fork" to "forkserver".
+    This does not use copy-on-write to share memory with worker processes but rather behaves more like "spawn" on
+    Mac/Windows. It can also result in an `EOFError` when using WSL on Windows. To restore the previous behaviour,
+    after importing `sciris`, set the start method to "fork" as follows::
+
+        import multiprocessing
+        multiprocessing.set_start_method("fork", force=True)
+
+
     | *New in version 1.1.1:* "serial" argument
     | *New in version 2.0.0:* changed default parallelizer from ``multiprocess.Pool`` to ``concurrent.futures.ProcessPoolExecutor``; replaced ``maxload`` with ``maxcpu``/``maxmem``; added ``returnpool`` argument
     | *New in version 2.0.4:* added "die" argument; changed exception handling

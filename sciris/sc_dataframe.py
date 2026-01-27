@@ -29,7 +29,7 @@ class dataframe(pd.DataFrame):
         data (dict/array/dataframe): the data to use; passed to :class:`pd.DataFrame() <pandas.DataFrame>`
         index (array): the index to use; passed to :class:`pd.DataFrame() <pandas.DataFrame>`
         columns (list): column labels (if a dict is supplied, the value sets the dtype)
-        dtype (type): a dtype for the whole datafrmae; passed to :class:`pd.DataFrame() <pandas.DataFrame>`
+        dtype (type): a dtype for the whole dataframe; passed to :class:`pd.DataFrame() <pandas.DataFrame>`
         copy (bool): whether to copy the data (ignored in pandas ≥ 3.0.0 due to Copy-on-Write behavior)
         dtypes (list/dict): alternatively, list of data types to set each column to
         nrows (int): the number of arrows to preallocate (default 0)
@@ -66,7 +66,7 @@ class dataframe(pd.DataFrame):
     | *New in version 2.0.0:* subclass pandas DataFrame
     | *New in version 3.0.0:* "dtypes" argument; handling of item setting
     | *New in version 3.1.0:* use panda's equality operator by default (unless an exception is raised); new "equal" method; "cat" can be an instance method now
-    | *New in version 3.2.4:* pandas 3.0.0 compatibility
+    | *New in version 3.2.5:* pandas 3.0.0 compatibility
     """
 
     def __init__(self, data=None, index=None, columns=None, dtype=None, copy=None,
@@ -494,6 +494,7 @@ class dataframe(pd.DataFrame):
             inplace (bool): whether to modify in-place
 
         *New in version 3.0.0:* improved dtype handling
+        *New in version 3.2.5:* support deprecation of the verify_is_copy argument in Pandas 3.0
         """
         if newdf is None: # pragma: no cover
             newdf = self._constructor(data=newdata, columns=self.columns)
