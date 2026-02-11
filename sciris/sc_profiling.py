@@ -490,6 +490,7 @@ class profile(sc.prettyobj):
         with sc.timer(verbose=self.verbose) as T:
             wrapper(*self.args, **self.kwargs) # pragma: no cover
         self.run_func = orig_func # Restore run for argument passing
+        prof.disable() # Turn off profiling
 
         # Tidy up
         self.prof = prof
@@ -591,7 +592,7 @@ class profile(sc.prettyobj):
 
             # Do the mapping
             ContextVisitor().visit(tree)
-        except:
+        except: # OK to fail silently here since just the level of detail in the name
             name = None
 
         try:
@@ -602,8 +603,10 @@ class profile(sc.prettyobj):
         if module_name:
             if name:
                 return f'{module_name}.{name}'
-            else:
+            elif lineno:
                 return f'{module_name}.py:{lineno}'
+            else:
+                return f'{module_name}.py'
         else:
             return f'{filepath}:{lineno}'
 
@@ -632,7 +635,7 @@ class profile(sc.prettyobj):
             file = file_match.group(1).strip() if file_match else None
 
             # Extract function name and line number
-            func_match = re.search(r'Function:\s*(\w+)\s+at line\s+(\d+)', section)
+            func_match = re.search(r'Function:\s*(.+?)\s+at line\s+(\d+)', section)
             function = func_match.group(1) if func_match else None
             lineno = int(func_match.group(2)) if func_match else None
 
