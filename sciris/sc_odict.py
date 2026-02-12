@@ -22,6 +22,9 @@ __all__ = ['ddict', 'counter', 'odict', 'objdict', 'dictobj', 'asobj']
 
 ddict = co.defaultdict # Define alias
 
+# Critical attributes that should be resolved immediately, not via any special handling
+_fundamental_attrs = ['__class__', '__reduce__', '__reduce_ex__', '__getstate__', '__setstate__', '__copy__','__deepcopy__']
+
 
 class counter(co.Counter):
     """
@@ -54,7 +57,7 @@ class counter(co.Counter):
 
     def __getattr__(self, attr):
         """ For all other operations, try to perform them on the array """
-        if attr in ['__deepcopy__', '__getstate__', '__setstate__']:
+        if attr in _fundamental_attrs:
             return self.__getattribute__(attr)
         else:
             try:
@@ -1218,7 +1221,8 @@ class objdict(odict):
 
     def __getattribute__(self, attr):
         """ Handle as attributes first, then as dict keys """
-        if attr in ['__deepcopy__', '__getstate__', '__setstate__', '__reduce__']:
+        # Pickle/copy protocol: must resolve from class, not as dict keys
+        if attr in _fundamental_attrs:
             return object.__getattribute__(self, attr)
         else:
             try: # First, try to get the attribute as an attribute
