@@ -54,11 +54,14 @@ class counter(co.Counter):
 
     def __getattr__(self, attr):
         """ For all other operations, try to perform them on the array """
-        try:
-            return getattr(self.array, attr)
-        except Exception as e:
-            errormsg = f'"{attr}" is not a recognized method of Counter or array objects'
-            raise AttributeError(errormsg) from e
+        if attr in ['__deepcopy__', '__getstate__', '__setstate__']:
+            return self.__getattribute__(attr)
+        else:
+            try:
+                return getattr(self.array, attr)
+            except Exception as e:
+                errormsg = f'"{attr}" is not a recognized method of Counter or array objects'
+                raise AttributeError(errormsg) from e
 
 
 class odict(dict):
@@ -152,12 +155,12 @@ class odict(dict):
 
 
     def _setattr(self, key, value):
-        """ Shortcut to OrderedDict method """
+        """ Shortcut to dict method """
         return dict.__setattr__(self, key, value)
 
 
     def _setitem(self, key, value):
-        """ Shortcut to OrderedDict method """
+        """ Shortcut to dict method """
         return dict.__setitem__(self, key, value)
 
 
@@ -1215,10 +1218,13 @@ class objdict(odict):
 
     def __getattribute__(self, attr):
         """ Handle as attributes first, then as dict keys """
-        try: # First, try to get the attribute as an attribute
-            return odict.__getattribute__(self, attr)
-        except Exception as E: # If that fails, try to get it as a dict item, but pass along the original exception
-            return self.__getitem__(attr, exception=E)
+        if attr in ['__deepcopy__', '__getstate__', '__setstate__', '__reduce__']:
+            return object.__getattribute__(self, attr)
+        else:
+            try: # First, try to get the attribute as an attribute
+                return odict.__getattribute__(self, attr)
+            except Exception as E: # If that fails, try to get it as a dict item, but pass along the original exception
+                return self.__getitem__(attr, exception=E)
 
 
     def __setattr__(self, name, value):
@@ -1298,59 +1304,6 @@ class objdict(odict):
     def delattribute(self, name):
         """ Delete attribute if truly desired """
         return odict.__delattr__(self, name)
-
-
-    def __reduce__(self):
-        """ Custom pickle support to avoid BufferError with stdlib multiprocessing.
-
-        The default pickle for dict subclasses can trigger
-        ``BufferError: Existing exports of data: object cannot be re-sized``
-        when used with :mod:`multiprocessing` (but not with :mod:`multiprocess`).
-        Using a simple dict-based representation avoids this incompatibility.
-
-        *New in version 3.2.6.* (Written by Cursor)
-        """
-        state = dict(self)
-        try:
-            dd = object.__getattribute__(self, '_defaultdict')
-            return (sc.objdict, (state,), {'_defaultdict': dd})
-        except AttributeError:
-            return (sc.objdict, (state,))
-
-
-    def __setstate__(self, state):
-        """ Restore _defaultdict when unpickling.
-        
-        *New in version 3.2.6.* (Written by Cursor)
-        """
-        if '_defaultdict' in state:
-            odict.__setattr__(self, '_defaultdict', state['_defaultdict'])
-        return
-
-
-    def __deepcopy__(self, memo):
-        """ Explicit deep copy: create new objdict and deep copy each value
-        
-        *New in version 3.2.6.* (Written by Cursor)
-        """
-        
-        # Check memo to avoid infinite recursion on circular references
-        if id(self) in memo:
-            return memo[id(self)]
-        
-        # Create empty result and register before copying (so circular refs resolve correctly)
-        result = self.__class__()
-        memo[id(self)] = result
-        
-        # Deep copy each dict item
-        for k, v in self.items():
-            result[k] = copy.deepcopy(v, memo)
-        
-        # Preserve defaultdict behavior if present
-        if hasattr(self, '_defaultdict'):
-            odict.__setattr__(result, '_defaultdict', object.__getattribute__(self, '_defaultdict'))
-        
-        return result
 
 
 class dictobj(dict):
