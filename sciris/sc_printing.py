@@ -623,7 +623,7 @@ def sigfig(x, sigfigs=4, SI=False, sep=False, keepints=False, formats=None):
         sc.sigfig(vals, sigfigs=3)
 
     | *New in version 3.0.0:* changed default number of significant figures from 5 to 4; return list rather than tuple; changed SI suffixes to uppercase
-    | *New in version 3.2.5:* "formats" argument; use 'g' format when sigfigs=None
+    | *New in version 3.2.6:* "formats" argument; use 'g' format when sigfigs=None
     """
     output = []
 
