@@ -9,11 +9,21 @@ By import convention, components of the Sciris library are listed beginning with
 
 Version 3.2.6 (2026-02-12)
 --------------------------
-#. TBC
+#. Added :class:`sc.argparse() <sc_odict.argparse>`, a simple argument parser based on ``sc.objdict``.
+#. :class:`sc.objdict() <sc_odict.objdict>` now has an ``update()`` method, as well as improved pickling support via ``__reduce__()`` and ``__setstate__()``.
+#. :func:`sc.sigfig() <sc_printing.sigfig>` now has a ``formats`` argument for customizing SI unit formatting, and uses ``'g'`` format when ``sigfigs=None``.
+#. :func:`sc.parallelize() <sc_parallel.parallelize>` now has improved exception handling, providing clearer error messages when tasks fail.
+#. :class:`sc.profile() <sc_profiling.profile>` now properly disables the profiler after running, and has improved function name parsing.
 
 Version 3.2.5 (2026-01-27)
 --------------------------
-#. Updated :func:`sc.dataframe.replacedata()` <sc_dataframe.dataframe.replacedata> with support for Pandas 3.0.
+#. Updated :func:`sc.dataframe.replacedata() <sc_dataframe.dataframe.replacedata>` with support for Pandas 3.0.
+#. :class:`sc.timer() <sc_datetime.timer>` now has a ``string`` attribute for returning formatted time strings.
+#. :func:`sc.parallelize() <sc_parallel.parallelize>` now has ``capture`` and ``lbkwargs`` arguments for capturing task output and passing load balancer options.
+#. :func:`sc.loadbalancer() <sc_parallel.loadbalancer>` has been moved from ``sc_profiling`` to ``sc_parallel`` for better organization.
+#. Fixed a bug in :func:`sc.SIticks() <sc_plotting.SIticks>` that caused incorrect tick formatting.
+#. :class:`sc.profile() <sc_profiling.profile>` now handles cases when another profiler is already running.
+#. :func:`sc.options() <sc_settings.options>` now prevents accidental modification by raising an error when attempting to set invalid options.
 
 Version 3.2.4 (2025-07-12)
 --------------------------
