@@ -637,11 +637,7 @@ def sigfig(x, sigfigs=4, SI=False, sep=False, keepints=False, formats=None):
         if formats is None:
             format_map = [(1e18,'e18'), (1e15,'e15'), (1e12,'T'), (1e9,'B'), (1e6,'M'), (1e3,'K')]
         else:
-            # Convert formats to list if string
-            if isinstance(formats, str):
-                formats_list = list(formats)
-            else:
-                formats_list = list(formats)
+            formats_list = sc.tolist(formats)
 
             # Map formats to magnitudes (thousand, million, billion, trillion, etc.)
             magnitudes = [1e3, 1e6, 1e9, 1e12, 1e15, 1e18]
