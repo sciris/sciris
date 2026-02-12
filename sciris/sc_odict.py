@@ -1292,6 +1292,30 @@ class objdict(odict):
         return odict.__delattr__(self, name)
 
 
+    def __reduce__(self):
+        """ Custom pickle support to avoid BufferError with stdlib multiprocessing.
+
+        The default pickle for dict subclasses can trigger
+        ``BufferError: Existing exports of data: object cannot be re-sized``
+        when used with :mod:`multiprocessing` (but not with :mod:`multiprocess`).
+        Using a simple dict-based representation avoids this incompatibility.
+
+        (Written by Cursor)
+        """
+        state = dict(self)
+        try:
+            dd = object.__getattribute__(self, '_defaultdict')
+            return (sc.objdict, (state,), {'_defaultdict': dd})
+        except AttributeError:
+            return (sc.objdict, (state,))
+
+    def __setstate__(self, state):
+        """ Restore _defaultdict when unpickling """
+        if '_defaultdict' in state:
+            odict.__setattr__(self, '_defaultdict', state['_defaultdict'])
+        return
+
+
 class dictobj(dict):
     """
     Lightweight class to create an object that can also act like a dictionary.
