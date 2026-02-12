@@ -839,6 +839,7 @@ def _task(taskargs):
     result     = None
     success    = False
     exception  = None
+    stdout     = ''
     try: # Try to update the globaldict, but don't worry if we can't
         globaldict[_jobkey(index)] = 0
         if taskargs.useglobal:
@@ -854,7 +855,6 @@ def _task(taskargs):
             stdout = str(stdout) # Convert just to the plain text
         else:
             result = func(*args, **kwargs) # Call the function!
-            stdout = ''
         success = True
         try: # Likewise, try to update the task progress
             globaldict[_jobkey(index)] = 1
@@ -862,13 +862,11 @@ def _task(taskargs):
             pass
     except Exception as E: # pragma: no cover
         if taskargs.die: # Usual case, raise an exception and stop
-            errormsg = f'Task {index} failed: set die=False to keep going instead; see above for error details'
-            try: # Try to preserve the original exception type ...
-                exctype = type(E)
-                exc = exctype(errormsg)
-            except: # ... but don't worry if it fails
-                exc = Exception(errormsg)
-            raise exc from E
+            try:
+                E.add_note(f'\nTask {index} failed: set die=False to keep going instead.\n\n{sc.traceback()}')
+            except AttributeError:
+                pass
+            raise E
         else: # Alternatively, keep going and just let this trial fail
             warnmsg = f'sc.parallelize(): Task {index} failed, but die=False so continuing.\n{sc.traceback()}'
             warnings.warn(warnmsg, category=RuntimeWarning, stacklevel=2)

@@ -597,7 +597,7 @@ __all__ += ['sigfig', 'sigfigs', 'sigfiground', 'arraymean', 'arraymedian', 'pri
             'humanize_bytes', 'printarr', 'printdata', 'printvars']
 
 
-def sigfig(x, sigfigs=4, SI=False, sep=False, keepints=False):
+def sigfig(x, sigfigs=4, SI=False, sep=False, keepints=False, formats=None):
     """
     Return a string representation of variable x with sigfigs number of significant figures
 
@@ -605,21 +605,25 @@ def sigfig(x, sigfigs=4, SI=False, sep=False, keepints=False):
 
     Args:
         x (int/float/list/arr): the number(s) to round
-        sigfigs (int): number of significant figures to round to
+        sigfigs (int): number of significant figures to round to (if None, use 'g' format)
         SI (bool): whether to use SI notation (only for numbers >1)
         sep (bool/str): if provided, use as thousands separator
         keepints (bool): never round ints
+        formats (str/list): custom format suffixes; if str (e.g. 'kmb'), split into chars; if list (e.g. ['k','m','bn']), use as-is for 1e3, 1e6, etc.
 
     **Examples**::
 
         x = 3432.3842
-        sc.sigfig(x, SI=True) # Returns '3.432k'
+        sc.sigfig(x, SI=True) # Returns '3.432K'
         sc.sigfig(x, sep=True) # Returns '3,432'
+        sc.sigfig(x, SI=True, formats='kmb') # Returns '3.432k' (lowercase)
+        sc.sigfig(x, sigfigs=None) # Returns '3432.38' (uses 'g' format)
 
         vals = np.random.rand(5)
         sc.sigfig(vals, sigfigs=3)
 
-    *New in version 3.0.0:* changed default number of significant figures from 5 to 4; return list rather than tuple; changed SI suffixes to uppercase
+    | *New in version 3.0.0:* changed default number of significant figures from 5 to 4; return list rather than tuple; changed SI suffixes to uppercase
+    | *New in version 3.2.6:* "formats" argument; use 'g' format when sigfigs=None
     """
     output = []
 
@@ -628,9 +632,23 @@ def sigfig(x, sigfigs=4, SI=False, sep=False, keepints=False):
     xlist = x if islist else sc.tolist(x)
     for x in xlist:
         suffix = ''
-        formats = [(1e18,'e18'), (1e15,'e15'), (1e12,'T'), (1e9,'B'), (1e6,'M'), (1e3,'K')]
+
+        # Handle custom formats
+        if formats is None:
+            format_map = [(1e18,'e18'), (1e15,'e15'), (1e12,'T'), (1e9,'B'), (1e6,'M'), (1e3,'K')]
+        else:
+            formats_list = sc.tolist(formats)
+
+            # Map formats to magnitudes (thousand, million, billion, trillion, etc.)
+            magnitudes = [1e3, 1e6, 1e9, 1e12, 1e15, 1e18]
+            format_map = []
+            for i, fmt in enumerate(formats_list):
+                if i < len(magnitudes):
+                    format_map.append((magnitudes[i], fmt))
+            format_map.reverse()  # Process from largest to smallest
+
         if SI:
-            for val,suff in formats:
+            for val,suff in format_map:
                 if abs(x) >= val:
                     x = x/val
                     suffix = suff
@@ -640,7 +658,7 @@ def sigfig(x, sigfigs=4, SI=False, sep=False, keepints=False):
             if x == 0:
                 output.append('0')
             elif sigfigs is None:
-                output.append(sc.flexstr(x)+suffix)
+                output.append(f'{x:g}'+suffix)
             elif x > (10**sigfigs) and not SI and keepints: # e.g. x = 23432.23, sigfigs=3, output is 23432
                 roundnumber = int(round(x))
                 if sep: string = format(roundnumber, ',')

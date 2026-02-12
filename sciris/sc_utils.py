@@ -2171,6 +2171,7 @@ def importbypath(path, name=None, overwrite=False):
     return module
 
 
+
 ##############################################################################
 #%% Classes
 ##############################################################################
@@ -2454,7 +2455,7 @@ class tryexcept(cl.suppress):
 
             if self.verbose > 1:
                 exceptstr = '\n' + self.traceback(tostring=True) + '\n'
-            elif self.verbose:
+            else:
                 exceptstr = f'{exc_type} {exc_val}'
 
             # Construct exit string

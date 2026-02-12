@@ -11,15 +11,19 @@ Highlights:
 ##############################################################################
 
 import re
+import sys
 import json
 import numpy as np
 import collections as co
 import sciris as sc
 
 # Restrict imports to user-facing modules
-__all__ = ['ddict', 'counter', 'odict', 'objdict', 'dictobj', 'asobj']
+__all__ = ['ddict', 'counter', 'odict', 'objdict', 'dictobj', 'asobj', 'argparse']
 
 ddict = co.defaultdict # Define alias
+
+# Critical attributes that should be resolved immediately, not via any special handling
+_fundamental_attrs = ['__class__', '__reduce__', '__reduce_ex__', '__getstate__', '__setstate__', '__copy__','__deepcopy__']
 
 
 class counter(co.Counter):
@@ -53,11 +57,14 @@ class counter(co.Counter):
 
     def __getattr__(self, attr):
         """ For all other operations, try to perform them on the array """
-        try:
-            return getattr(self.array, attr)
-        except Exception as e:
-            errormsg = f'"{attr}" is not a recognized method of Counter or array objects'
-            raise AttributeError(errormsg) from e
+        if attr in _fundamental_attrs:
+            return self.__getattribute__(attr)
+        else:
+            try:
+                return getattr(self.array, attr)
+            except Exception as e:
+                errormsg = f'"{attr}" is not a recognized method of Counter or array objects'
+                raise AttributeError(errormsg) from e
 
 
 class odict(dict):
@@ -151,12 +158,12 @@ class odict(dict):
 
 
     def _setattr(self, key, value):
-        """ Shortcut to OrderedDict method """
+        """ Shortcut to dict method """
         return dict.__setattr__(self, key, value)
 
 
     def _setitem(self, key, value):
-        """ Shortcut to OrderedDict method """
+        """ Shortcut to dict method """
         return dict.__setitem__(self, key, value)
 
 
@@ -261,6 +268,13 @@ class odict(dict):
         """ Use regular dictionary ``setitem``, rather than odict's """
         self._setattr('_stale', True) # Flag to refresh the cached keys
         self._setitem(key, value)
+        return
+
+
+    def update(self, *args, **kwargs):
+        """ Update dict contents; set _stale so _cached_keys is refreshed on next use """
+        self._setattr('_stale', True) # Flag to refresh the cached keys
+        super().update(*args, **kwargs)
         return
 
 
@@ -1207,10 +1221,14 @@ class objdict(odict):
 
     def __getattribute__(self, attr):
         """ Handle as attributes first, then as dict keys """
-        try: # First, try to get the attribute as an attribute
-            return odict.__getattribute__(self, attr)
-        except Exception as E: # If that fails, try to get it as a dict item, but pass along the original exception
-            return self.__getitem__(attr, exception=E)
+        # Pickle/copy protocol: must resolve from class, not as dict keys
+        if attr in _fundamental_attrs:
+            return object.__getattribute__(self, attr)
+        else:
+            try: # First, try to get the attribute as an attribute
+                return odict.__getattribute__(self, attr)
+            except Exception as E: # If that fails, try to get it as a dict item, but pass along the original exception
+                return self.__getitem__(attr, exception=E)
 
 
     def __setattr__(self, name, value):
@@ -1419,3 +1437,100 @@ def asobj(obj, strict=True):
 
 
     return objobj(obj)
+
+
+class argparse(objdict):
+    """ Ultra-simple argument parser
+
+    Accepts positional or keyword arguments, and converts them to the correct type.
+    While Python's built in argparse has more features (such as help for each argument),
+    this allows single-line parsing of arguments.
+
+    Args:
+        parse (bool): whether to parse the arguments immediately (default True)
+        **kwargs (dict): keyword arguments to add to the parser
+
+    Returns:
+        args (objdict): a dictionary-like object with the arguments
+
+    **Examples**::
+
+        # Option 1: Supply arguments directly
+        args = sc.argparse(iterations=10, output_file='results.csv')
+
+        # Option 2: Add arguments one by one
+        args = sc.argparse()
+        args.add(iterations=10)
+        args.add(output_file='results.csv')
+        args.parse()
+
+        # Command-line usage
+        python argparse_example.py 100 'data.csv'
+        python argparse_example.py 100 output_file='data.csv'
+        python argparse_example.py iterations=100 --output_file='data.csv'
+
+        # Result
+        args.iterations == 10
+        args.output_file == 'data.csv'
+
+    *New in version 3.2.6.*
+    """
+    def __init__(self, parse=True, **kwargs):
+        self.update(kwargs)
+        if parse and len(kwargs): # If supplied, parse immediately
+            self.parse()
+        self.setattribute('_parsed', False)
+        return
+
+    def add(self, **kwargs):
+        """ Add an argument """
+        if self._parsed:
+            errormsg = 'Cannot and an argument to an already parsed object'
+            raise ValueError(errormsg)
+        self.update(kwargs)
+        return
+
+    def parse(self):
+        """ Parse the arguments into the dictionary """
+        args = []
+        kw = {}
+        kw_supplied = False
+        for item in sys.argv[1:]:
+            if "=" in item:
+                key, val = item.split("=", 1)
+                key = key.lstrip('-').lstrip().rstrip()
+                val = val.lstrip().rstrip()
+                kw[key] = val
+                kw_supplied = True
+            else:
+                if kw_supplied:
+                    errormsg = 'Cannot supply a positional argument after a keyword argument'
+                    raise ValueError(errormsg)
+                else:
+                    args.append(item)
+
+        def keep_type(key, arg):
+            out = arg
+            if self[key] is not None:
+                default_type = self[key].__class__
+                try:
+                    out = default_type(arg)
+                except Exception as e:
+                    errormsg = f'Could not convert "{arg}" to {default_type}, leaving as string.\n{e}'
+                    print(errormsg) # TODO: convert to warning
+                    out = arg
+            return out
+
+        keys = self.keys()
+        for i,arg in enumerate(args):
+            key = keys[i]
+            self[key] = keep_type(key, arg)
+
+        for key,val in kw.items():
+            if key not in self:
+                errormsg = f'Unrecognized key {key}; valid arguments are:\n{sc.strjoin(self.keys())}'
+                raise sc.KeyNotFoundError(errormsg)
+            self[key] = keep_type(key, val)
+        self.setattribute('_parsed', True)
+
+        return self
