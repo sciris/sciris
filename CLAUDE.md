@@ -6,7 +6,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 **Citation**: Kerr CC, Sanz-Leon P, Abeysuriya RG, et al. Sciris: Simplifying scientific software in Python. *Journal of Open Source Software*. 2023;8(88):5076. doi:10.21105/joss.05076
 
-**Key Applications**: Used by Covasim (COVID-19 modeling), Optima HIV, Optima Nutrition, Atomica, and other scientific software tools adopted in 30+ countries.
+**Key Applications**: Used by Starsim (general-purpose disease modeling), Covasim, Optima HIV, Optima Nutrition, Atomica, and other scientific software tools adopted in 30+ countries.
 
 ## Quick Reference
 
@@ -49,7 +49,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 - **Build docs:** `cd docs && ./build_docs` (builds Sphinx documentation)
 - **Build docs without notebooks:** `cd docs && ./build_docs never`
 - **Debug mode (serial):** `cd docs && ./build_docs debug`
-- **Output:** Documentation built to docs/_build/html/index.html
+- **Output:** Documentation built to `docs/_build/html/index.html`
 
 ### Development Setup
 - **Install package:** `pip install -e .` (editable install from pyproject.toml)
