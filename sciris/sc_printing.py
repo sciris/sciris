@@ -609,7 +609,7 @@ def sigfig(x, sigfigs=4, SI=False, sep=False, keepints=False, formats=None):
         SI (bool): whether to use SI notation (only for numbers >1)
         sep (bool/str): if provided, use as thousands separator
         keepints (bool): never round ints
-        formats (str/list): custom format suffixes; if str (e.g. 'kmb'), split into chars; if list (e.g. ['k','m','bn']), use as-is
+        formats (str/list): custom format suffixes; if str (e.g. 'kmb'), split into chars; if list (e.g. ['k','m','bn']), use as-is for 1e3, 1e6, etc.
 
     **Examples**::
 
