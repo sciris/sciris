@@ -11,6 +11,7 @@ Highlights:
 ##############################################################################
 
 import re
+import copy
 import json
 import numpy as np
 import collections as co
@@ -1300,7 +1301,7 @@ class objdict(odict):
         when used with :mod:`multiprocessing` (but not with :mod:`multiprocess`).
         Using a simple dict-based representation avoids this incompatibility.
 
-        (Written by Cursor)
+        *New in version 3.2.6.* (Written by Cursor)
         """
         state = dict(self)
         try:
@@ -1309,11 +1310,40 @@ class objdict(odict):
         except AttributeError:
             return (sc.objdict, (state,))
 
+
     def __setstate__(self, state):
-        """ Restore _defaultdict when unpickling """
+        """ Restore _defaultdict when unpickling.
+        
+        *New in version 3.2.6.* (Written by Cursor)
+        """
         if '_defaultdict' in state:
             odict.__setattr__(self, '_defaultdict', state['_defaultdict'])
         return
+
+
+    def __deepcopy__(self, memo):
+        """ Explicit deep copy: create new objdict and deep copy each value
+        
+        *New in version 3.2.6.* (Written by Cursor)
+        """
+        
+        # Check memo to avoid infinite recursion on circular references
+        if id(self) in memo:
+            return memo[id(self)]
+        
+        # Create empty result and register before copying (so circular refs resolve correctly)
+        result = self.__class__()
+        memo[id(self)] = result
+        
+        # Deep copy each dict item
+        for k, v in self.items():
+            result[k] = copy.deepcopy(v, memo)
+        
+        # Preserve defaultdict behavior if present
+        if hasattr(self, '_defaultdict'):
+            odict.__setattr__(result, '_defaultdict', object.__getattribute__(self, '_defaultdict'))
+        
+        return result
 
 
 class dictobj(dict):
