@@ -1469,6 +1469,10 @@ class argparse(objdict):
         python argparse_example.py 100 output_file='data.csv'
         python argparse_example.py iterations=100 --output_file='data.csv'
 
+        # Result
+        args.iterations == 10
+        args.output_file == 'data.csv'
+
     *New in version 3.2.6.*
     """
     def __init__(self, parse=True, **kwargs):
@@ -1506,13 +1510,15 @@ class argparse(objdict):
                     args.append(item)
 
         def keep_type(key, arg):
-            default_type = self[key].__class__
-            try:
-                out = default_type(arg)
-            except Exception as e:
-                errormsg = f'Could not convert "{arg}" to {default_type}, leaving as string.\n{e}'
-                print(errormsg) # TODO: warning
-                out = arg
+            out = arg
+            if self[key] is not None:
+                default_type = self[key].__class__
+                try:
+                    out = default_type(arg)
+                except Exception as e:
+                    errormsg = f'Could not convert "{arg}" to {default_type}, leaving as string.\n{e}'
+                    print(errormsg) # TODO: convert to warning
+                    out = arg
             return out
 
         keys = self.keys()
@@ -1526,4 +1532,5 @@ class argparse(objdict):
                 raise sc.KeyNotFoundError(errormsg)
             self[key] = keep_type(key, val)
         self.setattribute('_parsed', True)
-        return
+
+        return self
