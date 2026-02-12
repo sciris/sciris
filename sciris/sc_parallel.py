@@ -9,7 +9,6 @@ Highlights:
     - :func:`sc.loadbalancer() <loadbalancer>`: very simple load balancer
 """
 
-import sys
 import time
 import psutil
 import warnings
@@ -45,94 +44,6 @@ if __name__ == '__main__':
 def _jobkey(index):
     """ Convert a job index to a key """
     return f'_job{index}'
-
-
-def _find_original_exception(exc):
-    """Walk exception chain and return the one with .original attribute, or None."""
-    seen = set()
-    to_check = [exc]
-    while to_check:
-        e = to_check.pop()
-        if e is None or id(e) in seen:
-            continue
-        seen.add(id(e))
-        if hasattr(e, 'original') and e.original:
-            return e
-        to_check.extend([getattr(e, '__cause__', None), getattr(e, '__context__', None)])
-    return None
-
-
-def _reraise_with_clean_traceback(exc):
-    """
-    Re-raise an exception from a worker process: show only the remote traceback
-    (original exception at bottom), hide internal multiprocessing pipeline.
-    """
-    exc = _find_original_exception(exc) or exc
-    cause = getattr(exc, '__cause__', None)
-    if cause is not None and type(cause).__name__ == 'RemoteTraceback':
-        # Extract traceback string; multiprocess wraps as '\n"""\n{tb}"""'
-        tb_str = getattr(cause, 'tb', str(cause))
-        if isinstance(tb_str, str):
-            tb_str = tb_str.strip()
-            if tb_str.startswith('"""') and tb_str.endswith('"""'):
-                tb_str = tb_str[3:-3].strip()
-        # Apply colored formatting (Pygments when available, else sc.colorize)
-        try:
-            from pygments import highlight
-            from pygments.lexers import get_lexer_by_name
-            from pygments.formatters import get_formatter_by_name
-            lexer = get_lexer_by_name('pytb', stripall=True)
-            formatter = get_formatter_by_name('terminal256')
-            tb_str = highlight(tb_str, lexer, formatter)
-        except ImportError:
-            # Fallback: basic ANSI colors for traceback structure
-            lines = tb_str.split('\n')
-            colored = []
-            for line in lines:
-                if line.strip().startswith('Traceback'):
-                    colored.append(sc.colorize('cyan', line, output=True))
-                elif line.strip().startswith('File ') or (line.startswith('  ') and 'File ' in line):
-                    colored.append(sc.colorize('blue', line, output=True))
-                elif 'Error:' in line or 'Exception:' in line or 'Error ' in line:
-                    colored.append(sc.colorize('red', line, output=True))
-                else:
-                    colored.append(line)
-            tb_str = '\n'.join(colored)
-        sys.stderr.write(tb_str)
-        if not tb_str.endswith('\n'):
-            sys.stderr.write('\n')
-        sys.stderr.flush()
-        exc.__cause__ = None
-        exc.__context__ = None
-        exc._sciris_clean_raise = True
-        # Python: use excepthook to hide internal traceback
-        _original_excepthook = sys.excepthook
-
-        def _sciris_excepthook(exc_type, exc_value, exc_tb):
-            if getattr(exc_value, '_sciris_clean_raise', False):
-                sys.exit(1)
-            _original_excepthook(exc_type, exc_value, exc_tb)
-
-        # IPython/Jupyter/Spyder: use their showtraceback
-        try:
-            ip = get_ipython()  # noqa: F821
-            if ip is not None:
-                _orig = ip.showtraceback
-
-                def _sciris_showtraceback(exc_tuple=None, filename=None, tb_offset=None,
-                                          exception_only=False, running_compiled_code=False):
-                    exc_value = (sys.exc_info() if exc_tuple is None else exc_tuple)[1]
-                    if getattr(exc_value, '_sciris_clean_raise', False):
-                        return
-                    return _orig(exc_tuple, filename, tb_offset, exception_only,
-                                 running_compiled_code=running_compiled_code)
-
-                ip.showtraceback = _sciris_showtraceback
-            else:
-                sys.excepthook = _sciris_excepthook
-        except NameError:
-            sys.excepthook = _sciris_excepthook
-    raise exc
 
 
 def _progressbar(globaldict, njobs, started, **kwargs):
@@ -552,24 +463,10 @@ class Parallel:
             argslist = self.argslist
 
         # Run it!
-        output = self.map_func(_task, argslist)
-        # try:
-
-        # except Exception as E:
-        #     # Walk the exception chain to find the root cause, but stop before
-        #     # hitting RemoteTraceback (which is just a string wrapper from multiprocess)
-        #     original = E
-        #     while hasattr(original, '__cause__') and original.__cause__ is not None:
-        #         # Check if the next item in the chain is RemoteTraceback
-        #         if type(original.__cause__).__name__ == 'RemoteTraceback':
-        #             break  # Stop here, don't go into the string wrapper
-        #         original = original.__cause__
-
-        #     # Clear both __cause__ and __context__ to completely remove the chain
-        #     # This prevents RemoteTraceback from being displayed as plain text
-        #     original.__cause__ = None
-        #     original.__context__ = None
-        #     raise original
+        try:
+            output = self.map_func(_task, argslist)
+        except TaskError as E:
+            raise E.original_exception from E
 
         # Store the pool; do not store the output list here
         if self.is_async:
@@ -693,10 +590,6 @@ class Parallel:
                 raise RuntimeError(freeze_support_error) from E
             else: # For all other runtime errors, raise the original exception
                 raise E
-
-        # Format: show remote traceback only, original at bottom, hide internal pipeline
-        except BaseException as E:
-            _reraise_with_clean_traceback(E)
 
         # Tidy up
         return self
@@ -916,6 +809,9 @@ class TaskArgs(sc.prettyobj):
             self.die          = die          # Whether to raise an exception if the child task encounters one
             return
 
+class TaskError(RuntimeError):
+    """ Catch exceptions from running the task """
+    pass
 
 def _task(taskargs):
     """
@@ -973,12 +869,9 @@ def _task(taskargs):
     except Exception as E: # pragma: no cover
         exc = E
         if taskargs.die: # Usual case, raise an exception and stop
-            exc.original = True  # Mark so main process can find and re-raise this one
-            try:
-                exc.add_note(sc.ansi.magenta(f'\nTask {index} failed: set die=False to keep going instead'))
-            except AttributeError:
-                pass  # add_note not available in Python < 3.11
-            raise exc
+            task_err = TaskError(f'Task {index} failed: set die=False to keep going instead.')
+            task_err.original_exception = exc
+            raise task_err
         else: # Alternatively, keep going and just let this trial fail
             warnmsg = f'sc.parallelize(): Task {index} failed, but die=False so continuing.\n{sc.traceback()}'
             warnings.warn(warnmsg, category=RuntimeWarning, stacklevel=2)
