@@ -47,53 +47,85 @@ def _jobkey(index):
     return f'_job{index}'
 
 
+def _find_original_exception(exc):
+    """Walk exception chain and return the one with .original attribute, or None."""
+    seen = set()
+    to_check = [exc]
+    while to_check:
+        e = to_check.pop()
+        if e is None or id(e) in seen:
+            continue
+        seen.add(id(e))
+        if hasattr(e, 'original') and e.original:
+            return e
+        to_check.extend([getattr(e, '__cause__', None), getattr(e, '__context__', None)])
+    return None
+
+
 def _reraise_with_clean_traceback(exc):
     """
-    Re-raise an exception from a worker process, showing only the remote traceback
-    and hiding the internal multiprocessing pipeline (Pool.map, ApplyResult.get, etc.).
-    Also strips the triple-quote wrapper that RemoteTraceback adds for proper formatting.
+    Re-raise an exception from a worker process: show only the remote traceback
+    (original exception at bottom), hide internal multiprocessing pipeline.
     """
+    exc = _find_original_exception(exc) or exc
     cause = getattr(exc, '__cause__', None)
     if cause is not None and type(cause).__name__ == 'RemoteTraceback':
-        # Extract the traceback string; multiprocess wraps it as '\n"""\n{tb}"""'
+        # Extract traceback string; multiprocess wraps as '\n"""\n{tb}"""'
         tb_str = getattr(cause, 'tb', str(cause))
         if isinstance(tb_str, str):
             tb_str = tb_str.strip()
-            # Strip the triple-quote wrapper added by ExceptionWithTraceback
             if tb_str.startswith('"""') and tb_str.endswith('"""'):
                 tb_str = tb_str[3:-3].strip()
+        # Apply colored formatting (Pygments when available, else sc.colorize)
+        try:
+            from pygments import highlight
+            from pygments.lexers import get_lexer_by_name
+            from pygments.formatters import get_formatter_by_name
+            lexer = get_lexer_by_name('pytb', stripall=True)
+            formatter = get_formatter_by_name('terminal256')
+            tb_str = highlight(tb_str, lexer, formatter)
+        except ImportError:
+            # Fallback: basic ANSI colors for traceback structure
+            lines = tb_str.split('\n')
+            colored = []
+            for line in lines:
+                if line.strip().startswith('Traceback'):
+                    colored.append(sc.colorize('cyan', line, output=True))
+                elif line.strip().startswith('File ') or (line.startswith('  ') and 'File ' in line):
+                    colored.append(sc.colorize('blue', line, output=True))
+                elif 'Error:' in line or 'Exception:' in line or 'Error ' in line:
+                    colored.append(sc.colorize('red', line, output=True))
+                else:
+                    colored.append(line)
+            tb_str = '\n'.join(colored)
         sys.stderr.write(tb_str)
         if not tb_str.endswith('\n'):
             sys.stderr.write('\n')
         sys.stderr.flush()
-        # Clear chain so Python doesn't show "direct cause" / RemoteTraceback
         exc.__cause__ = None
         exc.__context__ = None
-        # Use custom excepthook to hide main-process traceback when uncaught
+        exc._sciris_clean_raise = True
+        # Python: use excepthook to hide internal traceback
         _original_excepthook = sys.excepthook
 
         def _sciris_excepthook(exc_type, exc_value, exc_tb):
             if getattr(exc_value, '_sciris_clean_raise', False):
-                # Remote traceback already printed above; exit without duplicate
                 sys.exit(1)
             _original_excepthook(exc_type, exc_value, exc_tb)
 
-        exc._sciris_clean_raise = True
-        # IPython/Jupyter/Spyder use their own exception display, not sys.excepthook
+        # IPython/Jupyter/Spyder: use their showtraceback
         try:
             ip = get_ipython()  # noqa: F821
             if ip is not None:
-                _original_showtraceback = ip.showtraceback
+                _orig = ip.showtraceback
 
                 def _sciris_showtraceback(exc_tuple=None, filename=None, tb_offset=None,
                                           exception_only=False, running_compiled_code=False):
                     exc_value = (sys.exc_info() if exc_tuple is None else exc_tuple)[1]
                     if getattr(exc_value, '_sciris_clean_raise', False):
-                        # Remote traceback already printed; skip internal traceback display
                         return
-                    return _original_showtraceback(
-                        exc_tuple, filename, tb_offset, exception_only,
-                        running_compiled_code=running_compiled_code)
+                    return _orig(exc_tuple, filename, tb_offset, exception_only,
+                                 running_compiled_code=running_compiled_code)
 
                 ip.showtraceback = _sciris_showtraceback
             else:
@@ -662,7 +694,7 @@ class Parallel:
             else: # For all other runtime errors, raise the original exception
                 raise E
 
-        # Format remote traceback cleanly: show worker traceback, hide internal pipeline
+        # Format: show remote traceback only, original at bottom, hide internal pipeline
         except BaseException as E:
             _reraise_with_clean_traceback(E)
 
@@ -941,10 +973,9 @@ def _task(taskargs):
     except Exception as E: # pragma: no cover
         exc = E
         if taskargs.die: # Usual case, raise an exception and stop
-            # Add context to the exception (Python 3.11+ uses add_note to append text)
+            exc.original = True  # Mark so main process can find and re-raise this one
             try:
                 exc.add_note(sc.ansi.magenta(f'\nTask {index} failed: set die=False to keep going instead'))
-                exc.original = True
             except AttributeError:
                 pass  # add_note not available in Python < 3.11
             raise exc
