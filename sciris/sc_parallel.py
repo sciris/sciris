@@ -839,6 +839,7 @@ def _task(taskargs):
     result     = None
     success    = False
     exception  = None
+    stdout     = ''
     try: # Try to update the globaldict, but don't worry if we can't
         globaldict[_jobkey(index)] = 0
         if taskargs.useglobal:
@@ -854,7 +855,6 @@ def _task(taskargs):
             stdout = str(stdout) # Convert just to the plain text
         else:
             result = func(*args, **kwargs) # Call the function!
-            stdout = ''
         success = True
         try: # Likewise, try to update the task progress
             globaldict[_jobkey(index)] = 1
