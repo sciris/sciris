@@ -463,10 +463,7 @@ class Parallel:
             argslist = self.argslist
 
         # Run it!
-        try:
-            output = self.map_func(_task, argslist)
-        except TaskError as E:
-            raise E.original_exception from E
+        output = self.map_func(_task, argslist)
 
         # Store the pool; do not store the output list here
         if self.is_async:
@@ -867,15 +864,16 @@ def _task(taskargs):
         except:
             pass
     except Exception as E: # pragma: no cover
-        exc = E
         if taskargs.die: # Usual case, raise an exception and stop
-            task_err = TaskError(f'Task {index} failed: set die=False to keep going instead.')
-            task_err.original_exception = exc
-            raise task_err
+            try:
+                E.add_note(f'\nTask {index} failed: set die=False to keep going instead.\n\n{sc.traceback()}')
+            except AttributeError:
+                pass
+            raise E
         else: # Alternatively, keep going and just let this trial fail
             warnmsg = f'sc.parallelize(): Task {index} failed, but die=False so continuing.\n{sc.traceback()}'
             warnings.warn(warnmsg, category=RuntimeWarning, stacklevel=2)
-            exception = exc
+            exception = E
     end = sc.time()
     elapsed = end - start
 
