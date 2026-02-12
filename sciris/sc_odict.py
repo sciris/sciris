@@ -265,6 +265,13 @@ class odict(dict):
         return
 
 
+    def update(self, *args, **kwargs):
+        """ Update dict contents; set _stale so _cached_keys is refreshed on next use """
+        self._setattr('_stale', True) # Flag to refresh the cached keys
+        super().update(*args, **kwargs)
+        return
+
+
     def __repr__(self, maxlen=None, showmultilines=True, divider=False, dividerthresh=10,
                  numindents=0, recursionlevel=0, sigfigs=None, numformat=None, maxitems=200,
                  classname='odict', quote='', numleft='#', numsep=':', keysep=':', dividerchar='—'):
