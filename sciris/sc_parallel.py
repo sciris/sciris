@@ -806,9 +806,6 @@ class TaskArgs(sc.prettyobj):
             self.die          = die          # Whether to raise an exception if the child task encounters one
             return
 
-class TaskError(RuntimeError):
-    """ Catch exceptions from running the task """
-    pass
 
 def _task(taskargs):
     """
