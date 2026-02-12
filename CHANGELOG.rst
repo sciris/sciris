@@ -7,9 +7,13 @@ All major updates to Sciris are documented here.
 
 By import convention, components of the Sciris library are listed beginning with ``sc.``, e.g. ``sc.odict()``.
 
+Version 3.2.6 (2026-02-12)
+--------------------------
+#. TBC
+
 Version 3.2.5 (2026-01-27)
 --------------------------
-#. Updated :func`sc.dataframe.replacedata()` <sc_dataframe.dataframe.replacedata> with support for Pandas 3.0
+#. Updated :func:`sc.dataframe.replacedata()` <sc_dataframe.dataframe.replacedata> with support for Pandas 3.0.
 
 Version 3.2.4 (2025-07-12)
 --------------------------

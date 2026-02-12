@@ -11,14 +11,14 @@ Highlights:
 ##############################################################################
 
 import re
-import copy
+import sys
 import json
 import numpy as np
 import collections as co
 import sciris as sc
 
 # Restrict imports to user-facing modules
-__all__ = ['ddict', 'counter', 'odict', 'objdict', 'dictobj', 'asobj']
+__all__ = ['ddict', 'counter', 'odict', 'objdict', 'dictobj', 'asobj', 'argparse']
 
 ddict = co.defaultdict # Define alias
 
@@ -1437,3 +1437,93 @@ def asobj(obj, strict=True):
 
 
     return objobj(obj)
+
+
+class argparse(objdict):
+    """ Ultra-simple argument parser
+
+    Accepts positional or keyword arguments, and converts them to the correct type.
+    While Python's built in argparse has more features (such as help for each argument),
+    this allows single-line parsing of arguments.
+
+    Args:
+        parse (bool): whether to parse the arguments immediately (default True)
+        **kwargs (dict): keyword arguments to add to the parser
+
+    Returns:
+        args (objdict): a dictionary-like object with the arguments
+
+    **Examples**::
+
+        # Option 1: Supply arguments directly
+        args = sc.argparse(iterations=10, output_file='results.csv')
+
+        # Option 2: Add arguments one by one
+        args = sc.argparse()
+        args.add(iterations=10)
+        args.add(output_file='results.csv')
+        args.parse()
+
+        # Command-line usage
+        python argparse_example.py 100 'data.csv'
+        python argparse_example.py 100 output_file='data.csv'
+        python argparse_example.py iterations=100 --output_file='data.csv'
+
+    *New in version 3.2.6.*
+    """
+    def __init__(self, parse=True, **kwargs):
+        self.update(kwargs)
+        if parse and len(kwargs): # If supplied, parse immediately
+            self.parse()
+        self.setattribute('_parsed', False)
+        return
+
+    def add(self, **kwargs):
+        """ Add an argument """
+        if self._parsed:
+            errormsg = 'Cannot and an argument to an already parsed object'
+            raise ValueError(errormsg)
+        self.update(kwargs)
+        return
+
+    def parse(self):
+        """ Parse the arguments into the dictionary """
+        args = []
+        kw = {}
+        kw_supplied = False
+        for item in sys.argv[1:]:
+            if "=" in item:
+                key, val = item.split("=", 1)
+                key = key.lstrip('-').lstrip().rstrip()
+                val = val.lstrip().rstrip()
+                kw[key] = val
+                kw_supplied = True
+            else:
+                if kw_supplied:
+                    errormsg = 'Cannot supply a positional argument after a keyword argument'
+                    raise ValueError(errormsg)
+                else:
+                    args.append(item)
+
+        def keep_type(key, arg):
+            default_type = self[key].__class__
+            try:
+                out = default_type(arg)
+            except Exception as e:
+                errormsg = f'Could not convert "{arg}" to {default_type}, leaving as string.\n{e}'
+                print(errormsg) # TODO: warning
+                out = arg
+            return out
+
+        keys = self.keys()
+        for i,arg in enumerate(args):
+            key = keys[i]
+            self[key] = keep_type(key, arg)
+
+        for key,val in kw.items():
+            if key not in self:
+                errormsg = f'Unrecognized key {key}; valid arguments are:\n{sc.strjoin(self.keys())}'
+                raise sc.KeyNotFoundError(errormsg)
+            self[key] = keep_type(key, val)
+        self.setattribute('_parsed', True)
+        return
