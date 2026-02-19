@@ -7,6 +7,10 @@ All major updates to Sciris are documented here.
 
 By import convention, components of the Sciris library are listed beginning with ``sc.``, e.g. ``sc.odict()``.
 
+Version 3.2.7 (2026-02-18)
+--------------------------
+#. Refactored :class:`sc.asd() <sc_asd.asd>` to be more robust to different parameter inputs and different objective function return values.
+
 Version 3.2.6 (2026-02-12)
 --------------------------
 #. Added :class:`sc.argparse() <sc_odict.argparse>`, a simple argument parser based on ``sc.objdict``.
