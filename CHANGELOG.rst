@@ -7,6 +7,11 @@ All major updates to Sciris are documented here.
 
 By import convention, components of the Sciris library are listed beginning with ``sc.``, e.g. ``sc.odict()``.
 
+Version 3.2.8 (2026-02-28)
+--------------------------
+#. Changed resolution order in :class:`sc.objdict() <sc_odict.objdict>` so that dunder attributes (e.g. ``__await__``) are never accidentally set as dict keys.
+#. Fixed a bug in :class:`sc.profile() <sc_profiling.profile>` that prevented profiling information from being printed for certain combinations of filenames.
+
 Version 3.2.7 (2026-02-18)
 --------------------------
 #. Refactored :class:`sc.asd() <sc_asd.asd>` to be more robust to different parameter inputs and different objective function return values.
