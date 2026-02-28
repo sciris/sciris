@@ -656,8 +656,17 @@ class profile(sc.prettyobj):
             )
             self.output[name] = entry
 
-        # The last name extracted is the name of the function that was run
-        self.run_func_name = name
+        # Determine the name of the run function from the actual function object
+        # (can't assume the last chunk since line_profiler may sort by filename)
+        run_func = self.run_func
+        if hasattr(run_func, '__func__'):
+            run_func = run_func.__func__
+        if hasattr(run_func, '__code__'):
+            run_file = run_func.__code__.co_filename
+            run_lineno = run_func.__code__.co_firstlineno
+            self.run_func_name = self._path_to_name(run_file, run_lineno)
+        else:
+            self.run_func_name = name # Fallback to last chunk
 
         # Sort and convert to dataframe
         self.sort()
