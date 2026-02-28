@@ -9,7 +9,7 @@ By import convention, components of the Sciris library are listed beginning with
 
 Version 3.2.8 (2026-02-28)
 --------------------------
-#. Changed resolution order in :class:`sc.objdict() <sc_odict.objdict>` so that dunder attributes (e.g. ``__await__``) are never accidentally set as dict keys.
+#. Changed resolution order in :class:`sc.objdict() <sc_odict.objdict>` so that dunder attributes (e.g. ``__await__``) are never accidentally set as dict keys. Attempting to set an existing attribute as a key now raises ``KeyError`` instead of ``ValueError``.
 #. Fixed a bug in :class:`sc.profile() <sc_profiling.profile>` that prevented profiling information from being printed for certain combinations of filenames.
 
 Version 3.2.7 (2026-02-18)

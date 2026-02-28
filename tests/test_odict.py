@@ -274,7 +274,7 @@ def test_asobj():
     myobjobj.setattribute('my_attr', 5)
     assert myobjobj.getattribute('my_attr') == 5
 
-    with pytest.raises(ValueError):
+    with pytest.raises(KeyError):
         myobjdict.x = 'cannot change actual attribute'
     with pytest.raises(AttributeError):
         myobjdict.setattribute('keys', 4)
