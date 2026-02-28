@@ -138,7 +138,7 @@ class odict(dict):
             if defaultdict != 'nested' and not callable(defaultdict): # pragma: no cover
                 errormsg = f'The defaultdict argument must be either "nested" or callable, not {type(defaultdict)}'
                 raise TypeError(errormsg)
-            self._setattr('_defaultdict', defaultdict) # Use dict.__setattr__() since setattr() is overridden by sc.objdict()
+            self._setattr('_defaultdict', defaultdict) # Use object.__setattr__() since setattr() is overridden by sc.objdict()
 
         self._cache_keys()
         return
@@ -158,8 +158,8 @@ class odict(dict):
 
 
     def _setattr(self, key, value):
-        """ Shortcut to dict method """
-        return dict.__setattr__(self, key, value)
+        """ Shortcut to object method """
+        return object.__setattr__(self, key, value)
 
 
     def _setitem(self, key, value):
@@ -179,7 +179,7 @@ class odict(dict):
             if isinstance(key, sc._stringtypes) or isinstance(key, tuple): # Normal use case: just use a string key
                 if isinstance(E, KeyError): # We already encountered an exception, usually a KeyError
                     try: # Handle defaultdict behavior by first checking if it exists
-                        _defaultdict = dict.__getattribute__(self, '_defaultdict')
+                        _defaultdict = object.__getattribute__(self, '_defaultdict')
                     except:
                         _defaultdict = None
                     if _defaultdict is not None and allow_default: # If it does, use it, then get the key again
@@ -1208,8 +1208,8 @@ class objdict(odict):
         nested_parent = kwargs.pop('_nested_parent', None)
         nested_attr  = kwargs.pop('_nested_attr', None)
         if nested_parent is not None:
-            dict.__setattr__(self, '_nested_parent', nested_parent)
-            dict.__setattr__(self, '_nested_attr', nested_attr)
+            object.__setattr__(self, '_nested_parent', nested_parent)
+            object.__setattr__(self, '_nested_attr', nested_attr)
         odict.__init__(self, *args, **kwargs) # Standard init
         return
 
@@ -1226,7 +1226,7 @@ class objdict(odict):
             return object.__getattribute__(self, attr)
         else:
             try: # First, try to get the attribute as an attribute
-                return odict.__getattribute__(self, attr)
+                return object.__getattribute__(self, attr)
             except Exception as E: # If that fails, try to get it as a dict item, but pass along the original exception
                 return self.__getitem__(attr, exception=E)
 
@@ -1234,10 +1234,10 @@ class objdict(odict):
     def __setattr__(self, name, value):
         """ Set key in dict, not attribute! """
         if name[:2] == '__': # If it starts with a double underscore, it's almost certainly an attribute, not a key
-            return dict.__setattr__(self, name, value)
+            return object.__setattr__(self, name, value)
         else:
             try:
-                odict.__getattribute__(self, name) # Try retrieving this as an attribute, expect AttributeError...
+                object.__getattribute__(self, name) # Try retrieving this as an attribute, expect AttributeError...
                 errormsg = f'"{name}" exists as an attribute, so cannot be set as key; use setattribute() instead'
                 raise KeyError(errormsg)
             except AttributeError:
@@ -1250,7 +1250,7 @@ class objdict(odict):
             return odict.__getitem__(self, attr, allow_default=False) # Do not allow odict to handle default
         except Exception as E2: # If that fails, raise the original exception
             try: # Handle defaultdict behavior by first checking if it exists
-                _defaultdict = odict.__getattribute__(self, '_defaultdict')
+                _defaultdict = object.__getattribute__(self, '_defaultdict')
             except:
                 _defaultdict = None
             if _defaultdict is not None: # If it does, use it, then get the key again
@@ -1288,13 +1288,13 @@ class objdict(odict):
         try:
             del self[name]
         except: # pragma: no cover
-            odict.__delattr__(self, name)
+            object.__delattr__(self, name)
         return
 
 
     def getattribute(self, name):
         """ Get attribute if truly desired """
-        return odict.__getattribute__(self, name)
+        return object.__getattribute__(self, name)
 
 
     def setattribute(self, name, value, force=False):
@@ -1302,12 +1302,12 @@ class objdict(odict):
         if hasattr(self.__class__, name) and not force:
             errormsg = f'objdict attribute "{name}" is read-only'
             raise AttributeError(errormsg)
-        return dict.__setattr__(self, name, value)
+        return object.__setattr__(self, name, value)
 
 
     def delattribute(self, name):
         """ Delete attribute if truly desired """
-        return dict.__delattr__(self, name)
+        return object.__delattr__(self, name)
 
 
 class dictobj(dict):
