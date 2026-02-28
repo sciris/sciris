@@ -5,11 +5,6 @@ Highlights:
     - :class:`sc.odict() <odict>`: flexible container representing the best-of-all-worlds across dicts, lists, and arrays
     - :class:`objdict`: like an odict, but allows get/set via e.g. ``foo.bar`` instead of ``foo['bar']``
 """
-
-##############################################################################
-#%% odict class
-##############################################################################
-
 import re
 import sys
 import json
@@ -65,6 +60,11 @@ class counter(co.Counter):
             except Exception as e:
                 errormsg = f'"{attr}" is not a recognized method of Counter or array objects'
                 raise AttributeError(errormsg) from e
+
+
+##############################################################################
+#%% odict class
+##############################################################################
 
 
 class odict(dict):
@@ -1208,8 +1208,8 @@ class objdict(odict):
         nested_parent = kwargs.pop('_nested_parent', None)
         nested_attr  = kwargs.pop('_nested_attr', None)
         if nested_parent is not None:
-            odict.__setattr__(self, '_nested_parent', nested_parent)
-            odict.__setattr__(self, '_nested_attr', nested_attr)
+            dict.__setattr__(self, '_nested_parent', nested_parent)
+            dict.__setattr__(self, '_nested_attr', nested_attr)
         odict.__init__(self, *args, **kwargs) # Standard init
         return
 
@@ -1233,15 +1233,15 @@ class objdict(odict):
 
     def __setattr__(self, name, value):
         """ Set key in dict, not attribute! """
-        try:
-            odict.__getattribute__(self, name) # Try retrieving this as an attribute, expect AttributeError...
-            if name[:2] == '__': # If it starts with a double underscore, it's almost certainly an attribute, not a key
-                odict.__setattr__(self, name, value)
-            else:
+        if name[:2] == '__': # If it starts with a double underscore, it's almost certainly an attribute, not a key
+            return dict.__setattr__(self, name, value)
+        else:
+            try:
+                odict.__getattribute__(self, name) # Try retrieving this as an attribute, expect AttributeError...
                 errormsg = f'"{name}" exists as an attribute, so cannot be set as key; use setattribute() instead'
-                raise ValueError(errormsg)
-        except AttributeError:
-            return self.__setitem__(name, value) # If so, simply return
+                raise KeyError(errormsg)
+            except AttributeError:
+                return self.__setitem__(name, value) # If so, simply return
 
 
     def __getitem__(self, attr, exception=None):
@@ -1302,12 +1302,12 @@ class objdict(odict):
         if hasattr(self.__class__, name) and not force:
             errormsg = f'objdict attribute "{name}" is read-only'
             raise AttributeError(errormsg)
-        return odict.__setattr__(self, name, value)
+        return dict.__setattr__(self, name, value)
 
 
     def delattribute(self, name):
         """ Delete attribute if truly desired """
-        return odict.__delattr__(self, name)
+        return dict.__delattr__(self, name)
 
 
 class dictobj(dict):
