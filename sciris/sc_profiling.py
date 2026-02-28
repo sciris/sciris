@@ -580,7 +580,10 @@ class profile(sc.prettyobj):
                     context_stack.pop()
 
                 def visit_FunctionDef(self, node):
-                    if node.lineno == lineno:
+                    # Check def line and decorator lines; in Python 3.11+,
+                    # co_firstlineno points to the first decorator, not the def
+                    match_lines = {node.lineno} | {d.lineno for d in node.decorator_list}
+                    if lineno in match_lines:
                         context_stack.append(node.name)
                         nonlocal name
                         name = '.'.join(context_stack)
