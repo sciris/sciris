@@ -1,6 +1,7 @@
 name: Sciris downstream tests
 on:
   workflow_dispatch:
+  workflow_call:
   push:
     branches:
       - main

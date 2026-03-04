@@ -1,6 +1,7 @@
 name: Sciris CI tests
 on:
   workflow_dispatch:
+  workflow_call:
   pull_request:
 
 jobs:
