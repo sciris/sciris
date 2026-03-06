@@ -1002,7 +1002,7 @@ def loadbalancer(maxcpu=0.9, maxmem=0.9, index=None, interval=None, cpu_interval
     if maxcpu > 1: maxcpu = maxcpu/100 # If it's >1, assume it was given as a percent
     if maxmem > 1: maxmem = maxmem/100
     if (not 0 < maxcpu < 1) and (not 0 < maxmem < 1) and (default_interval is None): # pragma: no cover
-        return # Return immediately if no max load
+        return None # Return immediately if no max load
     else:
         time.sleep(pause) # Give it time to asynchronize, with a predefined delay
 
@@ -1011,7 +1011,7 @@ def loadbalancer(maxcpu=0.9, maxmem=0.9, index=None, interval=None, cpu_interval
     count = 0
     maxcount = maxtime/float(interval)
     string = ''
-    while toohigh and count<maxcount:
+    while toohigh and count < maxcount:
         count += 1
         cpu_current = cpuload(interval=cpu_interval) # If interval is too small, can give very inaccurate readings
         mem_current = memload()
