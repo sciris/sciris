@@ -33,7 +33,13 @@ Using conda: ``conda install -c conda-forge sciris``
 
 Using uv: ``uv add sciris``
 
-*Requires Python >= 3.7*.
+*Requires Python >= 3.9*.
+
+
+AI integration
+--------------
+
+Sciris has MCP servers available on `Context 7 <https://context7.com/sciris/sciris>`_ and `GitMCP <https://gitmcp.io/sciris/sciris>`_; these improve the ability of AI agents to understand and write Sciris code. Sciris also has a built-in Claude Code plugin, which can be installed by adding the repository (https://github.com/sciris/sciris) to the Claude Code marketplace. The plugin provides skills covering all Sciris features, including arrays, dicts, file I/O, plotting, parallelization, dates, printing, utilities, and advanced features.
 
 
 Tests

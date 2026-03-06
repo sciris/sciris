@@ -4,15 +4,15 @@
     "name": "Sciris"
   },
   "metadata": {
-    "description": "Sciris tutorial skills for Claude Code"
+    "description": "Sciris skills for Claude Code"
   },
   "plugins": [
     {
-      "name": "sciris-tutorials",
+      "name": "sciris",
       "source": "./claude_plugin",
-      "description": "Skills covering all Sciris tutorials: arrays, dicts, files, plotting, parallelization, dates, printing, utilities, and advanced features",
+      "description": "Skills covering all Sciris features: arrays, dicts, files, plotting, parallelization, dates, printing, utilities, and advanced features",
       "version": "0.1.0",
-      "keywords": ["sciris", "tutorials", "scientific-python"]
+      "keywords": ["sciris", "scientific-python"]
     }
   ]
 }

@@ -1,13 +1,13 @@
 {
-  "name": "sciris-tutorials",
+  "name": "sciris",
   "version": "0.1.0",
-  "description": "Claude skills for Sciris tutorials covering arrays, containers, file I/O, plotting, parallelization, dates, printing, utilities, and advanced features",
+  "description": "Claude skills for Sciris features covering arrays, containers, file I/O, plotting, parallelization, dates, printing, utilities, and advanced features",
   "author": {
     "name": "Sciris"
   },
   "repository": "https://github.com/sciris/sciris",
   "license": "MIT",
-  "keywords": ["sciris", "tutorials", "scientific-python"],
+  "keywords": ["sciris", "scientific-python"],
   "mcpServers": {
     "context7": {
       "type": "http",
