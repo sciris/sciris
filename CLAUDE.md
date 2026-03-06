@@ -66,6 +66,38 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 - **Downstream tests:** `.github/workflows/test_downstream.yaml` (tests dependent packages)
 - **Release workflow:** `.github/workflows/pypi_release.yaml` (automated PyPI publishing)
 
+## Claude Code Plugin
+
+Sciris includes a Claude Code skills plugin in `claude_plugin/` that provides domain-specific skills for working with Sciris. The plugin is registered via `.claude-plugin/marketplace.json`.
+
+### Installation
+Users can install the plugin by adding `https://github.com/sciris/sciris` as a Claude Code marketplace (see `/install-plugin`).
+
+### Available Skills
+The plugin provides 10 skills covering all major Sciris domains:
+- **sciris-intro** - Basic Sciris features and quick reference
+- **sciris-arrays** - Array operations (`sc.findinds()`, `sc.findnearest()`, `sc.toarray()`, etc.)
+- **sciris-dicts** - Containers (`sc.odict()`, `sc.objdict()`, `sc.counter()`, etc.)
+- **sciris-files** - File I/O (`sc.save()`, `sc.load()`, `sc.savejson()`, etc.)
+- **sciris-plotting** - Matplotlib extensions (`sc.boxoff()`, `sc.dateformatter()`, etc.)
+- **sciris-parallel** - Parallelization (`sc.parallelize()`, `sc.loadbalancer()`)
+- **sciris-dates** - Date/time handling (`sc.date()`, `sc.daterange()`, `sc.timer()`)
+- **sciris-printing** - Printing and formatting (`sc.heading()`, `sc.sigfig()`, `sc.progressbar()`)
+- **sciris-utils** - Utilities (`sc.mergedicts()`, `sc.tryexcept()`, `sc.checkmem()`, etc.)
+- **sciris-advanced** - Advanced features (`sc.odict` subclassing, nested operations, versioning)
+
+### MCP Servers
+The plugin also configures Context7 and GitMCP servers for accessing up-to-date Sciris documentation.
+
+### Plugin Structure
+```
+claude_plugin/
+  .claude-plugin/plugin.json    # Plugin manifest
+  skills/                       # Skill definitions (one SKILL.md per skill)
+.claude-plugin/
+  marketplace.json              # Marketplace registration
+```
+
 ## Architecture Overview
 
 Sciris is a scientific Python utilities library with a modular design organized around functional domains. Published in the Journal of Open Source Software (JOSS), Sciris aims to streamline the development of scientific software by making it easier to perform common tasks through "simplifying interfaces" that reduce boilerplate code and focus on scientific clarity.

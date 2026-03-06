@@ -1,0 +1,18 @@
+{
+  "name": "sciris-marketplace",
+  "owner": {
+    "name": "Sciris"
+  },
+  "metadata": {
+    "description": "Sciris skills for Claude Code"
+  },
+  "plugins": [
+    {
+      "name": "sciris",
+      "source": "./claude_plugin",
+      "description": "Skills covering all Sciris features: arrays, dicts, files, plotting, parallelization, dates, printing, utilities, and advanced features",
+      "version": "0.1.0",
+      "keywords": ["sciris", "scientific-python"]
+    }
+  ]
+}

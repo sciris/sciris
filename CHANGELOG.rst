@@ -7,6 +7,12 @@ All major updates to Sciris are documented here.
 
 By import convention, components of the Sciris library are listed beginning with ``sc.``, e.g. ``sc.odict()``.
 
+Version 3.2.9 (2026-03-06)
+--------------------------
+#. Allowed ``verbose=0`` in :func:`sc.loadbalancer() <sc_parallel.loadbalancer>`.
+#. Allowed :func:`sc.makefilepath() <sc_fileio.makefilepath>` to create folders when no filename is specified.
+#. Added a Claude Code plugin: install by adding https://github.com/sciris/sciris as a marketplace.
+
 Version 3.2.8 (2026-02-28)
 --------------------------
 #. Changed resolution order in :class:`sc.objdict() <sc_odict.objdict>` so that dunder attributes (e.g. ``__await__``) are never accidentally set as dict keys. Attempting to set an existing attribute as a key now raises ``KeyError`` instead of ``ValueError``.
