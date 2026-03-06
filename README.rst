@@ -39,7 +39,7 @@ Using uv: ``uv add sciris``
 AI integration
 --------------
 
-Sciris has MCP servers available on `Context 7 <https://context7.com/sciris/sciris>`_ and `GitMCP <https://gitmcp.io/sciris/sciris>`_; these improve the ability of AI agents to understand and write Sciris code. Sciris also has a built-in Claude Code plugin, which can be installed by adding the repository (https://github.com/sciris/sciris) to the Claude Code marketplace. The plugin provides skills covering all Sciris features, including arrays, dicts, file I/O, plotting, parallelization, dates, printing, utilities, and advanced features.
+Sciris has MCP servers on `Context 7 <https://context7.com/sciris/sciris>`_ and `GitMCP <https://gitmcp.io/sciris/sciris>`_. It also has a Claude Code plugin: to install, add this repository (https://github.com/sciris/sciris) to the Claude Code marketplace and from there install the plugin.
 
 
 Tests

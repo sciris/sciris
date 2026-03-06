@@ -124,6 +124,13 @@ Installation and run instructions
 3. Do science (left as an exercise to the reader).
 
 
+
+AI integration
+--------------
+
+Sciris has `MCP servers <https://modelcontextprotocol.io/>`_ available on `Context 7 <https://context7.com/sciris/sciris>`_ and `GitMCP <https://gitmcp.io/sciris/sciris>`_; these improve the ability of AI agents to understand and write Sciris code. Sciris also has a built-in `Claude Code <https://code.claude.com/docs/en/overview>`_ plugin (which can be used with other LLMs via `OpenSkills <https://github.com/numman-ali/openskills>`_). To use, first add the Sciris repository (https://github.com/sciris/sciris) to the Claude Code marketplace, and then installing the plugin from there. The plugin provides skills covering all Sciris features, including arrays, dicts, file I/O, plotting, parallelization, dates, printing, utilities, and advanced features.
+
+
 Citation
 --------
 
