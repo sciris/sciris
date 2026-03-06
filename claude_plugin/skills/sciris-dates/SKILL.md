@@ -7,6 +7,8 @@ description: Use when working with dates, times, or timing in Sciris — sc.time
 
 Reference for timing and date utilities. See full tutorial: `docs/tutorials/tut_dates.ipynb`.
 
+If you need more detail, use your MCP tools (Context7 or GitMCP) to look up current Sciris documentation, or consult the other Sciris skills.
+
 ## Timing Code
 
 ### Timer object

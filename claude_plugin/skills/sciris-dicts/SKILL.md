@@ -7,6 +7,8 @@ description: Use when working with Sciris dictionaries or dataframes — sc.odic
 
 Reference for Sciris container types. See full tutorial: `docs/tutorials/tut_dicts.ipynb`.
 
+If you need more detail, use your MCP tools (Context7 or GitMCP) to look up current Sciris documentation, or consult the other Sciris skills.
+
 ## odict — Ordered Dict with Index Access
 
 ```python

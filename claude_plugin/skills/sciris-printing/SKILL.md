@@ -7,6 +7,8 @@ description: Use when printing or formatting output with Sciris — sc.heading, 
 
 Reference for output formatting and progress display. See full tutorial: `docs/tutorials/tut_printing.ipynb`.
 
+If you need more detail, use your MCP tools (Context7 or GitMCP) to look up current Sciris documentation, or consult the other Sciris skills.
+
 ## Headings and Colors
 
 ```python

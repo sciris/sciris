@@ -7,6 +7,8 @@ description: Use when working with advanced Sciris features — nested dictionar
 
 Reference for nested dicts, context blocks, interpolation, optimization, and animation. See full tutorial: `docs/tutorials/tut_advanced.ipynb`.
 
+If you need more detail, use your MCP tools (Context7 or GitMCP) to look up current Sciris documentation, or consult the other Sciris skills.
+
 ## Nested Dictionaries
 
 ```python

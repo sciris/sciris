@@ -7,6 +7,8 @@ description: Use when working with Sciris miscellaneous utilities — sc.mergedi
 
 Reference for type handling, downloading, and other tools. See full tutorial: `docs/tutorials/tut_utils.ipynb`.
 
+If you need more detail, use your MCP tools (Context7 or GitMCP) to look up current Sciris documentation, or consult the other Sciris skills.
+
 ## Type Conversion
 
 ### Merge dicts (handles None)

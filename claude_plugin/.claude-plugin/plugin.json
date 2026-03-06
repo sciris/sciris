@@ -7,5 +7,15 @@
   },
   "repository": "https://github.com/sciris/sciris",
   "license": "MIT",
-  "keywords": ["sciris", "tutorials", "scientific-python"]
+  "keywords": ["sciris", "tutorials", "scientific-python"],
+  "mcpServers": {
+    "context7": {
+      "type": "http",
+      "url": "https://mcp.context7.com/mcp"
+    },
+    "gitmcp": {
+      "type": "http",
+      "url": "https://gitmcp.io/sciris/sciris"
+    }
+  }
 }

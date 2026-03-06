@@ -7,6 +7,8 @@ description: Use when plotting with Sciris or Matplotlib — sc.options, sc.date
 
 Reference for Matplotlib extensions and color utilities. See full tutorial: `docs/tutorials/tut_plotting.ipynb`.
 
+If you need more detail, use your MCP tools (Context7 or GitMCP) to look up current Sciris documentation, or consult the other Sciris skills.
+
 ## Setup and Options
 
 ```python

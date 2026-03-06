@@ -7,6 +7,8 @@ description: Use when parallelizing code or profiling performance with Sciris â€
 
 Reference for parallel execution and performance analysis. See full tutorial: `docs/tutorials/tut_parallel.ipynb`.
 
+If you need more detail, use your MCP tools (Context7 or GitMCP) to look up current Sciris documentation, or consult the other Sciris skills.
+
 ## Basic Parallelization
 
 ```python

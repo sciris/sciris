@@ -1,11 +1,13 @@
 ---
 name: sciris-intro
-description: Use when the user needs a quick overview of Sciris core features — finding array values, plotting with date formatting, objdict containers, saving/loading objects, parallelization, or the wave generator showcase example.
+description: Use when the user needs to implement a basic Sciris features — finding array values, plotting with date formatting, objdict containers, saving/loading objects, or parallelization.
 ---
 
-# Sciris Whirlwind Tour
+# Sciris introduction
 
 Quick reference for Sciris' most commonly used features. See the full tutorial: `docs/tutorials/tut_intro.ipynb`.
+
+If you need more detail, use your MCP tools (Context7 or GitMCP) to look up current Sciris documentation, or consult the other Sciris skills.
 
 ## Core Patterns
 
@@ -56,12 +58,4 @@ results = sc.parallelize(func, iterkwargs=dict(scale=[40,30,20,10]), x_offset=5,
 ```python
 sc.options(dpi=120, jupyter=True)        # Set DPI and backend
 sc.boxoff()                              # Remove top/right spines
-```
-
-### Wave generator showcase
-```python
-waves = sc.parallelize(randwave, np.linspace(0, 1, 11))
-filenames = [sc.save(f'wave{i}.obj', wave) for i, wave in enumerate(waves)]
-data = sc.odict({fname: sc.load(fname) for fname in filenames})
-sc.surf3d(data[:], cmap='orangeblue')
 ```

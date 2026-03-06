@@ -7,6 +7,8 @@ description: Use when working with NumPy arrays in Sciris — finding indices, n
 
 Reference for array utilities that simplify NumPy workflows. See full tutorial: `docs/tutorials/tut_arrays.ipynb`.
 
+If you need more detail, use your MCP tools (Context7 or GitMCP) to look up current Sciris documentation, or consult the other Sciris skills.
+
 ## Array Indexing
 
 ```python
