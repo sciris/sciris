@@ -1032,7 +1032,6 @@ def loadbalancer(maxcpu=0.9, maxmem=0.9, index=None, interval=None, cpu_interval
             ok = 'OK' if sc.getplatform() == 'windows' else '✓' # Windows doesn't support unicode (!)
             toohigh = False
             string = label+f'CPU {ok} ({cpu_str}), memory {ok} ({mem_str}): starting {process_str} after {count} tries'
-        if verbose is not False:
-            if toohigh or verbose:
-                print(string)
+        if verbose or (toohigh and verbose is None):
+            print(string)
     return string
