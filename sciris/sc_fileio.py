@@ -917,102 +917,90 @@ def makefilepath(filename=None, folder=None, ext=None, default=None, split=False
         filepath = makefilepath(filename=None, folder='./congee', ext='prj', default=[project.filename, project.name], split=True, abspath=True, makedirs=True)
 
     Assuming project.filename is None and project.name is "recipe" and ./congee
-    doesn't exist, this will makes folder ./congee and returns e.g. ('/home/myname/congee', 'recipe.prj')
+    doesn't exist, this will make folder ./congee and returns e.g. ('/home/myname/congee', 'recipe.prj')
 
     | *New in version 1.1.0:* "aspath" argument
     | *New in version 3.0.0:* "makedirs" defaults to False
     """
 
-    # Initialize
-    filefolder = '' # The folder the file will be located in
-    filebasename = '' # The filename
     if aspath is None: aspath = sc.options.aspath
 
-    if isinstance(filename, Path):
-        filename = str(filename)
-    if isinstance(folder, Path): # If it's a path object, convert to string
-        folder = str(folder)
-    if isinstance(folder, list): # It's a list, join together # pragma: no cover
-        folder = os.path.join(*folder)
+    # Normalize inputs to strings
+    if isinstance(filename, Path): filename = str(filename)
+    if isinstance(folder, Path):   folder = str(folder)
+    if isinstance(folder, list):   folder = os.path.join(*folder) # pragma: no cover
 
-    # Check if filename is actually a folder (trailing slash or separator)
-    is_dirpath = False
+    # Handle trailing-slash filename as a directory path
     if filename is not None and str(filename).endswith(('/', os.sep)):
-        is_dirpath = True
-        filefolder = str(filename).rstrip('/' + os.sep)
+        folder = folder or str(filename).rstrip('/' + os.sep)
         filename = None
 
-    # Check if only folder is provided with no filename
-    if filename is None and folder is not None and default is None:
-        is_dirpath = True
+    # Directory-only mode: no file component needed
+    is_dirpath = (filename is None and default is None and folder is not None)
 
-    # Process filename
+    # Resolve filename from defaults if needed
     if filename is None: # pragma: no cover
-        defaultnames = sc.tolist(default) # Loop over list of default names
-        for defaultname in defaultnames:
-            if not filename and defaultname: filename = defaultname # Replace empty name with default name
-    if filename is not None: # If filename exists by now, use it
-        filebasename = os.path.basename(filename)
-        filefolder = os.path.dirname(filename)
-    if not filebasename and not is_dirpath: filebasename = 'default' # If all else fails
+        for d in sc.tolist(default):
+            if d:
+                filename = d
+                break
 
-    # Add extension if it's defined but missing from the filebasename
-    if ext and not filebasename.endswith(ext): # pragma: no cover
-        filebasename += '.'+ext
-    if verbose: # pragma: no cover
-        print(f'From filename="{filename}", default="{default}", extension="{ext}", made basename "{filebasename}"')
+    # Extract basename; fall back to 'default' unless directory-only
+    if filename is not None:
+        basename = os.path.basename(filename)
+        if folder is None:
+            folder = os.path.dirname(filename)
+    else:
+        basename = '' if is_dirpath else 'default'
+
+    # Add extension if defined but missing
+    if ext and basename and not basename.endswith(ext): # pragma: no cover
+        basename += '.' + ext
 
     # Sanitize base filename
-    if sanitize: filebasename = sanitizefilename(filebasename)
+    if sanitize and basename:
+        basename = sanitizefilename(basename)
 
-    # Process folder
-    if folder is not None: # Replace with specified folder, if defined
-        filefolder = folder
-    if abspath: # Convert to absolute path
-        filefolder = os.path.abspath(os.path.expanduser(filefolder))
+    # Resolve folder to absolute path
+    if folder is None:
+        folder = ''
+    if abspath:
+        folder = os.path.abspath(os.path.expanduser(folder))
 
-    # Make sure folder exists
+    # Create directories if needed
     if makedirs:
         try:
-            os.makedirs(filefolder, exist_ok=True)
+            os.makedirs(folder, exist_ok=True)
         except Exception as E: # pragma: no cover
             if die:
                 raise E
             else:
                 print(f'Could not create folders: {str(E)}')
 
-    # Create the full path
-    if is_dirpath:
-        filepath = filefolder
-    else:
-        filepath = os.path.join(filefolder, filebasename)
+    # Build the full path
+    filepath = folder if is_dirpath else os.path.join(folder, basename)
 
-    # Optionally check if it exists
+    # Optionally check existence
     if checkexists is not None: # pragma: no cover
         exists = os.path.exists(filepath)
-        errormsg = ''
         if exists and not checkexists:
             errormsg = f'File {filepath} should not exist, but it does'
-            if die:
-                raise FileExistsError(errormsg)
-        if not exists and checkexists:
+            if die: raise FileExistsError(errormsg)
+            print(errormsg)
+        elif not exists and checkexists:
             errormsg = f'File {filepath} should exist, but it does not'
-            if die:
-                raise FileNotFoundError(errormsg)
-        if errormsg:
+            if die: raise FileNotFoundError(errormsg)
             print(errormsg)
 
-    # Decide on output
+    # Return output
     if verbose: # pragma: no cover
-        print(f'From filename="{filename}", folder="{folder}", made path name "{filepath}"')
+        print(f'makefilepath(filename="{filename}", folder="{folder}") → "{filepath}"')
     if split: # pragma: no cover
-        output = filefolder, filebasename
+        return folder, basename
     elif aspath:
-        output = Path(filepath)
+        return Path(filepath)
     else:
-        output = filepath
-
-    return output
+        return filepath
 
 
 def makepath(*args, aspath=True, **kwargs):
