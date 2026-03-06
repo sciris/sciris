@@ -12,6 +12,7 @@ If you need more detail, use your MCP tools (Context7 or GitMCP) to look up curr
 ## Core Patterns
 
 ### Array operations
+Use the `sciris-arrays` skill for more details.
 ```python
 import numpy as np
 import sciris as sc
@@ -23,6 +24,7 @@ joined = sc.strjoin(inds)               # Join values into comma-separated strin
 ```
 
 ### Quick plotting with dates
+Use the `sciris-dates` skill for more details.
 ```python
 dates = sc.daterange('2022-01-01', '2022-02-28', as_date=True)
 values = 1e6 * np.random.randn(59)**2
@@ -34,6 +36,7 @@ sc.SIticks()                             # SI notation on y-axis
 ```
 
 ### Flexible containers
+Use the `sciris-dicts` skill for more details.
 ```python
 data = sc.objdict(a=[1,2,3], b=[4,5,6])
 assert data.a == data['a'] == data[0]    # Three ways to access
@@ -43,6 +46,7 @@ for i, key, value in data.enumitems():   # Enumerate with keys
 ```
 
 ### Save/load any object
+Use the `sciris-files` skill for more details.
 ```python
 sc.save('my-sim.obj', sim)               # Save (gzipped pickle)
 new_sim = sc.load('my-sim.obj')          # Load — methods still work!
@@ -50,11 +54,13 @@ new_sim.plot()
 ```
 
 ### Parallelization
+Use the `sciris-parallel` skill for more details.
 ```python
 results = sc.parallelize(func, iterkwargs=dict(scale=[40,30,20,10]), x_offset=5, y_offset=10)
 ```
 
 ### Plot configuration
+Use the `sciris-plotting` skill for more details.
 ```python
 sc.options(dpi=120, jupyter=True)        # Set DPI and backend
 sc.boxoff()                              # Remove top/right spines

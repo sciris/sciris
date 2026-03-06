@@ -30,6 +30,7 @@ sc.tolist('single')       # ['single'] — safe to iterate
 sc.tolist(['already'])    # ['already'] — unchanged
 sc.toarray(2)             # array([2]) — handles scalars (np.array doesn't)
 sc.toarray([1, 2, 3])    # array([1, 2, 3])
+sc.cat(1, [2, 3], np.array([4, 5]))  # array([1, 2, 3, 4, 5]) — concatenates
 ```
 
 ### Auto-incrementing list
@@ -60,10 +61,10 @@ data = sc.download(urls, save=False)     # Download to memory (parallel)
 sc.download(urls, save=True)             # Download to disk
 ```
 
-## Running Commands
+## Running Shell Commands
 
 ```python
-out = sc.runcommand('ls *.py', printoutput=True)
+out = sc.runcommand('ls *.py', printoutput=True) # Use instead of Popen()
 ```
 
 ## Import by Path

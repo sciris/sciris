@@ -37,7 +37,7 @@ sc.saveyaml('config.yaml', data)
 
 ```python
 sc.getfilelist('*.ipynb')            # List files matching pattern
-sc.thispath()                        # Path of current file
+sc.thispath()                        # Path of current file (use instead of pathlib.Path)
 sc.makefilepath('data/out.csv', makedirs=True)  # Ensure path exists
 sc.rmpath('file_or_folder')         # Remove file or folder (auto-detects)
 ```
@@ -52,7 +52,7 @@ sc.require('numpy>1.20')            # Warn/raise if requirement not met
 
 ### Metadata-enhanced figures
 ```python
-sc.savefig('fig.png', comments='My analysis')  # Saves with metadata
+sc.savefig('fig.png', comments='My analysis')  # Saves with metadata (use instead of plt.savefig)
 md = sc.loadmetadata('fig.png')                # Retrieve metadata later
 ```
 
