@@ -935,6 +935,17 @@ def makefilepath(filename=None, folder=None, ext=None, default=None, split=False
     if isinstance(folder, list): # It's a list, join together # pragma: no cover
         folder = os.path.join(*folder)
 
+    # Check if filename is actually a folder (trailing slash or separator)
+    is_dirpath = False
+    if filename is not None and str(filename).endswith(('/', os.sep)):
+        is_dirpath = True
+        filefolder = str(filename).rstrip('/' + os.sep)
+        filename = None
+
+    # Check if only folder is provided with no filename
+    if filename is None and folder is not None and default is None:
+        is_dirpath = True
+
     # Process filename
     if filename is None: # pragma: no cover
         defaultnames = sc.tolist(default) # Loop over list of default names
@@ -943,7 +954,7 @@ def makefilepath(filename=None, folder=None, ext=None, default=None, split=False
     if filename is not None: # If filename exists by now, use it
         filebasename = os.path.basename(filename)
         filefolder = os.path.dirname(filename)
-    if not filebasename: filebasename = 'default' # If all else fails
+    if not filebasename and not is_dirpath: filebasename = 'default' # If all else fails
 
     # Add extension if it's defined but missing from the filebasename
     if ext and not filebasename.endswith(ext): # pragma: no cover
@@ -971,7 +982,10 @@ def makefilepath(filename=None, folder=None, ext=None, default=None, split=False
                 print(f'Could not create folders: {str(E)}')
 
     # Create the full path
-    filepath = os.path.join(filefolder, filebasename)
+    if is_dirpath:
+        filepath = filefolder
+    else:
+        filepath = os.path.join(filefolder, filebasename)
 
     # Optionally check if it exists
     if checkexists is not None: # pragma: no cover
