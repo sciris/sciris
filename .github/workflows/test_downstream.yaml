@@ -1,4 +1,4 @@
-name: Sciris downstream tests
+name: Downstream
 on:
   workflow_dispatch:
   workflow_call:
@@ -79,12 +79,16 @@ jobs:
       - name: Check out HPVsim
         uses: actions/checkout@v2
         with:
-          repository: 'institutefordiseasemodeling/hpvsim'
+          repository: 'starsimhub/hpvsim'
           path: 'hpvsim'
 
       - name: Install HPVsim
         working-directory: ./hpvsim
         run: pip install -e .
+
+      - name: Download HPVsim data
+        working-directory: ./hpvsim
+        run: hpvsim-download-data
 
       - name: Install HPVsim tests
         working-directory: ./hpvsim/tests

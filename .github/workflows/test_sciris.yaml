@@ -1,4 +1,4 @@
-name: Sciris CI tests
+name: Sciris CI
 on:
   workflow_dispatch:
   workflow_call:
@@ -23,7 +23,8 @@ jobs:
           - os: macos-latest
             python-version: '3.13'
     runs-on: ${{ matrix.os }}
-    name: CI tests
+
+    name: Tests
     steps:
       - name: Checkout sources
         uses: actions/checkout@v2
