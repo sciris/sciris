@@ -86,9 +86,9 @@ jobs:
         working-directory: ./hpvsim
         run: pip install -e .
 
-      - name: Import HPVsim and download data on first load
+      - name: Download HPVsim data
         working-directory: ./hpvsim
-        run: python -c "import hpvsim"
+        run: hpvsim-download-data
 
       - name: Install HPVsim tests
         working-directory: ./hpvsim/tests
