@@ -1,4 +1,4 @@
-name: Sciris downstream tests
+name: Downstream
 on:
   workflow_dispatch:
   workflow_call:
