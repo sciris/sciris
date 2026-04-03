@@ -1431,7 +1431,7 @@ def percentcomplete(step=None, maxsteps=None, stepsize=1, prefix=None):
 
 
 def progressbar(i=None, maxiters=None, label='', every=1, length=30, empty='—', full='•',
-                newline=False, flush=False, **kwargs):
+                newline=False, flush=False, output=False, **kwargs):
     """
     Show a progress bar for a for loop.
 
@@ -1447,8 +1447,9 @@ def progressbar(i=None, maxiters=None, label='', every=1, length=30, empty='—'
         length   (int): length of progress bar
         empty    (str): character for not-yet-completed steps
         full     (str): character for completed steps
-        newline  (bool): whether to print each iteration on a new line
+        newline  (bool): whether to print each iteration on a new line (else overwrite it; only works in terminals)
         flush    (bool): whether to force-flush the buffer
+        output   (bool): whether to return the string (else print)
         kwargs   (dict): passed to ``tqdm.tqdm()``; see its documentation for full options
 
     **Examples**::
@@ -1472,6 +1473,7 @@ def progressbar(i=None, maxiters=None, label='', every=1, length=30, empty='—'
 
     | *New in version 1.3.3:* "every" argument
     | *New in version 3.0.0:* wrapper for tqdm
+    | *New in version 3.3.0:* "output" argument
     """
     if i is None or sc.isiterable(i):
         desc = kwargs.pop('desc', label)
@@ -1480,7 +1482,8 @@ def progressbar(i=None, maxiters=None, label='', every=1, length=30, empty='—'
     # Handle inputs
     if hasattr(maxiters, '__len__'):
         maxiters = len(maxiters)
-    ending = None if newline else '\r'
+    ending = '\n' if newline else '\r'
+    prefix = ''   if newline else '\r'
     if every < 1: # pragma: no cover
         every = max(1, int(every*maxiters)) # Don't let it go below 1
 
@@ -1497,14 +1500,16 @@ def progressbar(i=None, maxiters=None, label='', every=1, length=30, empty='—'
     filled = int(length*i//maxiters)
     bar = full*filled + empty*(length-filled)
 
-    # Print
+    # Print or return
+    string = ''
     lastiter = (i == maxiters)
     if not(i%every) or lastiter:
-        print(f'\r{label} {bar} {percent}', end=ending, flush=flush)
-        if lastiter:
-            print() # Newline at the end
-
-    return
+        string = f'{prefix}{label} {bar} {percent}'
+        if not output:
+            print(string, end=ending, flush=flush)
+            if lastiter:
+                print() # Newline at the end
+    return string
 
 
 class tqdm_pickle(tqdm.tqdm):
