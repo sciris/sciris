@@ -63,7 +63,7 @@ def pkg_require(req):
     r = pkgr.Requirement(req)
     version = imd.version(r.name)
     allowed = pkgs.SpecifierSet(str(r.specifier))
-    if version not in allowed:
+    if allowed and (version not in allowed):
         string = f'{req} (available: {version})'
         raise imd.PackageNotFoundError(string)
     return
