@@ -33,16 +33,12 @@ jobs:
       - name: Check out Covasim
         uses: actions/checkout@v2
         with:
-          repository: 'institutefordiseasemodeling/covasim'
+          repository: 'starsimhub/covasim'
           path: 'covasim'
 
       - name: Install Covasim
         working-directory: ./covasim
-        run: pip install -e .
-
-      - name: Install Covasim tests
-        working-directory: ./covasim/tests
-        run: pip install -r requirements_test.txt
+        run: pip install -e .[test]
 
       - name: Run Covasim tests
         working-directory: ./covasim/tests

@@ -3,7 +3,7 @@ on:
   workflow_call:
   workflow_dispatch:
   schedule:
-    - cron: "0 0 * * *" # Run every day at midnight
+    - cron: "0 12 * * *" # Run every day at noon
 
 jobs:
   ci-tests:
