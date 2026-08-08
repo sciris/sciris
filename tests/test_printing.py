@@ -26,6 +26,15 @@ def test_colorize():
     sc.printcyan(   'This should be cyan')
     sc.printblue(   'This should be blue')
     sc.printmagenta('This should be magenta')
+    sc.printbold(   'This should be bold')
+
+    print('Testing ANSI stripping')
+    assert sc.strip_ansi(bluearray) == str(range(5))
+
+    print('Testing tight headings')
+    normal = sc.heading('Normal heading', output=True)
+    tight = sc.heading('Tight heading', tight=True, output=True)
+    assert normal.count('\n') == tight.count('\n') + 2 # 1 fewer newline before, and 1 fewer after
     return
 
 

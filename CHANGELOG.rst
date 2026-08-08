@@ -7,6 +7,18 @@ All major updates to Sciris are documented here.
 
 By import convention, components of the Sciris library are listed beginning with ``sc.``, e.g. ``sc.odict()``.
 
+Version 3.3.0 (2026-08-08)
+--------------------------
+#. Fixed a bug in :func:`sc.parallelize() <sc_parallel.parallelize>` in which ``progress=True`` scaled quadratically with the number of jobs (and could stall or error for large numbers of jobs); progress is now tracked with a shared counter rather than by summing the shared dictionary.
+#. Added :func:`sc.printbold() <sc_printing.printbold>` and :func:`sc.strip_ansi() <sc_printing.strip_ansi>` (which removes ANSI codes, e.g. colors, from a string).
+#. Added a ``tight`` argument to :func:`sc.heading() <sc_printing.heading>`, which uses one space before the heading and none after.
+#. Added :meth:`sc.timer.toctotal() <sc_datetime.timer.toctotal>`, which prints the time since the timer started rather than since the last tic.
+#. Added :meth:`sc.dataframe.read_csv_string() <sc_dataframe.dataframe.read_csv_string>`, for reading a dataframe from a CSV string rather than a file.
+#. :func:`sc.readdate() <sc_datetime.readdate>` now reads additional ISO 8601 formats, including time zones (e.g. ``'2023-10-12T00:05:12Z'``).
+#. :func:`sc.progressbar() <sc_printing.progressbar>` now has an ``output`` argument for returning the progress bar as a string.
+#. Added ``sc.cpucount()``, ``sc.cpu_load()``, and ``sc.mem_load()`` as aliases of :func:`sc.cpu_count() <sc_parallel.cpu_count>`, :func:`sc.cpuload() <sc_parallel.cpuload>`, and :func:`sc.memload() <sc_parallel.memload>`.
+#. :func:`sc.require() <sc_versioning.require>` now allows prerelease versions, so e.g. ``sc.require('starsim>3.0.0')`` is met by an editable install of version ``3.2.3.dev0``.
+
 Version 3.2.9 (2026-03-06)
 --------------------------
 #. Allowed ``verbose=0`` in :func:`sc.loadbalancer() <sc_parallel.loadbalancer>`.

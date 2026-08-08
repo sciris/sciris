@@ -1066,8 +1066,8 @@ def printvars(localvars=None, varlist=None, label=None, divider=True, spaces=1, 
 
 #%% Color functions
 
-__all__ += ['colorize', 'heading', 'printred', 'printyellow', 'printgreen',
-            'printcyan', 'printblue', 'printmagenta']
+__all__ += ['colorize', 'strip_ansi', 'heading', 'printred', 'printyellow', 'printgreen',
+            'printcyan', 'printblue', 'printmagenta', 'printbold']
 
 
 def colorize(color=None, string=None, doprint=None, output=False, enable=True, showhelp=False, fg=None, bg=None, style=None):
@@ -1179,6 +1179,23 @@ def colorize(color=None, string=None, doprint=None, output=False, enable=True, s
     return sc.sc_utils._printout(string=ansistring, doprint=doprint, output=output)
 
 
+def strip_ansi(string):
+    """
+    Remove ANSI codes (e.g. colors) from a string
+
+    Args:
+        string (str): the string to remove the ANSI codes from
+
+    **Example**::
+
+        colored = sc.colorize('red', 'hello', output=True)
+        plain = sc.strip_ansi(colored) # Returns 'hello'
+
+    *New in version 3.3.0.*
+    """
+    return ansi.strip_color(str(string))
+
+
 # Alias certain colors functions -- not including white and black since poor practice on light/dark terminals
 def printred(s, **kwargs):
     """ Alias to print(colors.red(s)) """
@@ -1204,9 +1221,17 @@ def printmagenta(s, **kwargs):
     """ Alias to print(colors.magenta(s)) """
     return print(ansi.magenta(s, **kwargs))
 
+def printbold(s, **kwargs):
+    """
+    Alias to print(colors.bold(s))
+
+    *New in version 3.3.0.*
+    """
+    return print(ansi.bold(s, **kwargs))
+
 
 def heading(string='', *args, color='cyan', divider='—', spaces=2, spacesafter=1,
-            minlength=10, maxlength=200, sep=' ', doprint=None, output=False, **kwargs):
+            minlength=10, maxlength=200, sep=' ', tight=False, doprint=None, output=False, **kwargs):
     """
     Create a colorful heading. If just supplied with a string (or list of inputs like print()),
     create blue text with horizontal lines above and below and 3 spaces above. You
@@ -1224,6 +1249,7 @@ def heading(string='', *args, color='cyan', divider='—', spaces=2, spacesafter
         minlength   (int):  minimum length of the divider (default 10)
         maxlength   (int):  maximum length of the divider (default 200)
         sep         (str):  if multiple arguments are supplied, use this separator to join them
+        tight       (bool): if True, use 1 space before the heading and none after (i.e. ``spaces=1, spacesafter=0``)
         doprint     (bool): whether to print the string (default true if no output)
         output      (bool): whether to return the string as output (else, print)
         kwargs      (dict): passed to :func:`sc.colorize() <colorize>`
@@ -1234,9 +1260,15 @@ def heading(string='', *args, color='cyan', divider='—', spaces=2, spacesafter
     **Examples**::
         sc.heading('This is a heading')
         sc.heading(string='This is also a heading', color='red', divider='*', spaces=0, minlength=50)
+        sc.heading('This is a compact heading', tight=True)
 
     | *New in version 1.3.1.*: "spacesafter"
+    | *New in version 3.3.0.*: "tight"
     """
+    # Handle tight spacing
+    if tight:
+        spaces = 1
+        spacesafter = 0
 
     # Convert to single string
     args = sc.mergelists(string, list(args))

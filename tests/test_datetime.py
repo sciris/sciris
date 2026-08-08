@@ -51,7 +51,8 @@ def test_readdate():
     # Format tests
     formats_to_try = sc.readdate(return_defaults=True)
     for key,fmt in formats_to_try.items():
-        datestr = sc.getdate(dateformat=fmt)
+        obj = sc.now(utc=True) if '%z' in fmt else None # Timezone formats need a timezone-aware date
+        datestr = sc.getdate(obj, dateformat=fmt)
         dateobj = sc.readdate(datestr, dateformat=fmt)
         print(f'{key:15s} {fmt:22s}: {dateobj}')
 
@@ -235,6 +236,14 @@ def test_timer():
     assert lbound < T.timings[:].sum() < ubound, 'Should be lower < sum() < upper'
     assert '(4)' in T.timings.keys()[4], 'Should contain "4"'
     assert T.cumtimings[-1] == T.total
+
+    print('Check total time')
+    T2 = sc.timer(verbose=False)
+    nap()
+    T2.toctic()
+    nap()
+    T2.toctic()
+    assert T2.toctotal(output=True) > T2.timings[-1] # Total should be more than the last timing
 
     print('Check other things')
     T.tocout()

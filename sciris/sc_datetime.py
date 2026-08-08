@@ -171,6 +171,11 @@ def readdate(datestr=None, *args, dateformat=None, return_defaults=False, verbos
         'datetime-alpha': '%Y-%b-%d %H:%M:%S',    # 2020-Mar-21 14:35:21
         'default':        '%Y-%m-%d %H:%M:%S.%f', # 2020-03-21 14:35:21.23483
         'default2':       '%Y-%m-%dT%H:%M:%S.%f', # 2020-03-21T14:35:21.23483
+        'iso':            '%Y-%m-%dT%H:%M:%S',    # 2020-03-21T14:35:21
+        'iso-min':        '%Y-%m-%dT%H:%M',       # 2020-03-21T14:35
+        'iso-tz':         '%Y-%m-%dT%H:%M:%S%z',    # 2020-03-21T14:35:21Z or 2020-03-21T14:35:21+01:00
+        'iso-tz-frac':    '%Y-%m-%dT%H:%M:%S.%f%z', # 2020-03-21T14:35:21.23483Z
+        'datetime-tz':    '%Y-%m-%d %H:%M:%S%z',    # 2020-03-21 14:35:21+01:00
         'ctime':          '%a %b %d %H:%M:%S %Y', # Sat Mar 21 23:09:29 2020
         }
 
@@ -965,6 +970,7 @@ class timer:
     | *New in version 3.1.5:* ``T.timings`` is now an :class:`sc.objdict() <sc_odict.objdict>` instead of an :class:`sc.odict() <sc_odict.odict>`
     | *New in version 3.2.2:* ``sc.timer()`` can be used as a function decorator
     | *New in version 3.2.5:* ``.string`` attribute (e.g. '3.25 s')
+    | *New in version 3.3.0:* ``toctotal()`` method
     """
     def __init__(self, label=None, auto=False, start=True, unit='auto', verbose=None, **kwargs):
         self.kwargs = kwargs # Store kwargs to pass to toc() at the end of the block
@@ -1135,6 +1141,26 @@ class timer:
     def toctic(self, *args, reset=True, **kwargs):
         """ Like toc, but reset time between timings """
         return self.toc(*args, reset=reset, **kwargs)
+
+    def toctotal(self, label='Total', **kwargs):
+        """
+        Like toc, but time from the first tic rather than the most recent one
+
+        **Example**::
+
+            T = sc.timer()
+            sc.timedsleep(0.1)
+            T.toctic()
+            sc.timedsleep(0.1)
+            T.toctic()
+            T.toctotal() # Time since the timer was created, not since the last tic
+
+        *New in version 3.3.0.*
+        """
+        kwargs.setdefault('unit', self.unit)
+        kwargs.setdefault('verbose', self.verbose)
+        start = self._tics[0] if len(self._tics) else None # Use the very first tic
+        return toc(start=start, label=label, **kwargs)
 
     def tt(self, *args, **kwargs):
         """ Alias for :func:`sc.toctic() <toctic>` """

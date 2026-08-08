@@ -7,6 +7,7 @@ rows/columns and concatenating data.
 #%% Dataframe
 ##############################################################################
 
+import io # For reading CSV strings
 import numbers # For numeric type
 import numpy as np
 import pandas as pd
@@ -1181,6 +1182,32 @@ class dataframe(pd.DataFrame):
     def read_csv(cls, *args, **kwargs):
         """ Alias to :func:`pd.read_csv <pandas.read_csv`, returning a Sciris dataframe """
         return cls(pd.read_csv(*args, **kwargs))
+
+    @classmethod
+    def read_csv_string(cls, string, strip=True, **kwargs):
+        """
+        Read a CSV from a string rather than a file
+
+        Shortcut to ``sc.dataframe.read_csv(io.StringIO(string))``.
+
+        Args:
+            string (str): the string to parse as CSV data
+            strip (bool): whether to strip leading/trailing whitespace from the string first
+            kwargs (dict): passed to :func:`pd.read_csv <pandas.read_csv>`
+
+        **Example**::
+
+            df = sc.dataframe.read_csv_string('''
+            a,b
+            1,2
+            3,4
+            ''')
+
+        *New in version 3.3.0.*
+        """
+        if strip:
+            string = string.strip()
+        return cls.read_csv(io.StringIO(string), **kwargs)
 
     @classmethod
     def read_excel(cls, *args, **kwargs):
