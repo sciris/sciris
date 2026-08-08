@@ -1,0 +1,51 @@
+/* Global font settings */
+body, p {
+  font-family: "Raleway", "Montserrat", "Lato", "Open Sans", sans-serif;
+  font-size: 1.0em;
+}
+
+/* Prevent excessive spacing in terminal output -- need a better solution for when ansi codes are present */
+pre {
+  line-height: 1.2;
+}
+
+/* Do not insert a space between a paragraph and a list */
+p:has(+ ul) {
+  margin-bottom: 0.0em;
+}
+
+/* Quarto-specific */
+.navbar-logo {
+    height: 2em !important;
+    max-height: none !important;
+    min-height: 40px !important;
+}
+
+.navbar-nav {
+  display: flex;
+  justify-content: center;
+  width: 100%;
+}
+
+#quarto-document-content {
+  margin-top: 0;
+  padding-top: 0 !important;
+}
+
+/* Prevent API doc table name columns from wrapping */
+table td:first-child a {
+  white-space: nowrap;
+}
+/* Cards, e.g. on the tutorials page */
+.card-body h4 {
+  margin-top: 0;
+  font-size: 1.15rem;
+}
+
+.card a {
+  text-decoration: none;
+}
+
+.card:hover {
+  box-shadow: 0 0.25rem 0.75rem rgba(0, 0, 0, 0.1);
+}

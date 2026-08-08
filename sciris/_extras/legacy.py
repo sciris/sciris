@@ -246,15 +246,17 @@ class legacy_dataframe(object): # pragma: no cover
     '''
     This legacy dataframe is maintained solely to allow loading old files.
 
-    **Example**::
+    **Example**:
 
-        import sciris as sc
-        from sciris.extras import legacy as scl
-        remapping = {'sciris.sc_dataframe.dataframe':scl.legacy_dataframe}
-        old = sc.load('my-old-file.obj', remapping=remapping)
+    ```python
+    import sciris as sc
+    from sciris.extras import legacy as scl
+    remapping = {'sciris.sc_dataframe.dataframe':scl.legacy_dataframe}
+    old = sc.load('my-old-file.obj', remapping=remapping)
+    ```
 
-    | Version: 2020nov29
-    | Migrated to ``sc_legacy`` in version 2.0.0.
+    - Version: 2020nov29
+    - Migrated to `sc_legacy` in version 2.0.0.
     '''
 
     def __init__(self, cols=None, data=None, nrows=None):
@@ -331,14 +333,16 @@ class legacy_dataframe(object): # pragma: no cover
         '''
         Creates a dataframe from the supplied input data.
 
-        **Usage examples**::
+        **Usage examples**:
 
-            df = sc.dataframe()
-            df = sc.dataframe(['a','b','c'])
-            df = sc.dataframe(['a','b','c'], nrows=2)
-            df = sc.dataframe([['a','b','c'],[1,2,3],[4,5,6]])
-            df = sc.dataframe(['a','b','c'], [[1,2,3],[4,5,6]])
-            df = sc.dataframe(cols=['a','b','c'], data=[[1,2,3],[4,5,6]])
+        ```python
+        df = sc.dataframe()
+        df = sc.dataframe(['a','b','c'])
+        df = sc.dataframe(['a','b','c'], nrows=2)
+        df = sc.dataframe([['a','b','c'],[1,2,3],[4,5,6]])
+        df = sc.dataframe(['a','b','c'], [[1,2,3],[4,5,6]])
+        df = sc.dataframe(cols=['a','b','c'], data=[[1,2,3],[4,5,6]])
+        ```
         '''
         import pandas as pd # Optional import
 
@@ -415,25 +419,27 @@ def parallelcmd(cmd=None, parfor=None, returnval=None, maxcpu=None, maxmem=None,
         cmd       (str):   a string representation of the code to be run in parallel
         parfor    (dict):  a dictionary of lists of the variables to loop over
         returnval (str):   the name of the output variable
-        maxcpu    (float): maximum CPU load; used by ``sc.loadbalancer()``
-        maxmem    (float): maximum fraction of virtual memory (RAM); used by ``sc.loadbalancer()``
-        interval  (float): the time delay to poll to see if load is OK,  used in ``sc.loadbalancer()``
+        maxcpu    (float): maximum CPU load; used by `sc.loadbalancer()`
+        maxmem    (float): maximum fraction of virtual memory (RAM); used by `sc.loadbalancer()`
+        interval  (float): the time delay to poll to see if load is OK,  used in `sc.loadbalancer()`
         die       (bool):  whether to stop immediately if an exception is encountered (otherwise, store the exception as the result)
         kwargs    (dict):  variables to pass into the code
 
-    **Example**::
+    **Example**:
 
-        const = 4
-        parfor = {'val':[3,5,9]}
-        returnval = 'result'
-        cmd = """
-        newval = val+const
-        result = newval**2
-        """
-        results = sc.parallelcmd(cmd=cmd, parfor=parfor, returnval=returnval, const=const)
+    ```python
+    const = 4
+    parfor = {'val':[3,5,9]}
+    returnval = 'result'
+    cmd = """
+    newval = val+const
+    result = newval**2
+    """
+    results = sc.parallelcmd(cmd=cmd, parfor=parfor, returnval=returnval, const=const)
+    ```
 
-    | New in version 2.0.0: replaced ``maxload`` with ``maxcpu``/``maxmem``; automatically de-indent the command
-    | Migrated to ``sc_legacy`` in version 2.2.0.
+    - New in version 2.0.0: replaced `maxload` with `maxcpu`/`maxmem`; automatically de-indent the command
+    - Migrated to `sc_legacy` in version 2.2.0.
     '''
 
     # Handle maxload
@@ -471,10 +477,11 @@ def parallel_progress(fcn, inputs, num_workers=None, show_progress=True, initial
     """
     Run a function in parallel with a optional single progress bar
 
-    The result is essentially equivalent to::
+    The result is essentially equivalent to:
 
-        >>> list(map(fcn, inputs))
-
+    ```python
+    >>> list(map(fcn, inputs))
+    ```
     But with execution in parallel and with a single progress bar being shown.
 
     Args:
@@ -487,8 +494,8 @@ def parallel_progress(fcn, inputs, num_workers=None, show_progress=True, initial
     Returns:
         A list of outputs
 
-    | New in version 1.0.0.
-    | Migrated to ``sc_legacy`` in version 2.2.0.
+    - New in version 1.0.0.
+    - Migrated to `sc_legacy` in version 2.2.0.
     """
     try:
         from tqdm import tqdm
@@ -529,11 +536,11 @@ def parallel_progress(fcn, inputs, num_workers=None, show_progress=True, initial
 
 def _parallelcmd_task(_cmd, _parfor, _returnval, _i, _outputqueue, _maxcpu, _maxmem, _interval, _die, _kwargs): # pragma: no cover # No coverage since pickled
     '''
-    The task to be executed by ``sc.parallelcmd()``. All internal variables start with
-    underscores to avoid possible collisions in the ``exec()`` statements. Not to be called
+    The task to be executed by `sc.parallelcmd()`. All internal variables start with
+    underscores to avoid possible collisions in the `exec()` statements. Not to be called
     directly.
 
-    Migrated to ``sc_legacy`` in version 2.2.0.
+    Migrated to `sc_legacy` in version 2.2.0.
     '''
     if _maxcpu or _maxmem:
         scp.loadbalancer(maxcpu=_maxcpu, maxmem=_maxmem, index=_i, interval=_interval)

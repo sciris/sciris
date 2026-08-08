@@ -1,0 +1,212 @@
+project:
+  type: website
+  pre-render: python quarto_utils.py pre
+  post-render: python quarto_utils.py post
+  output-dir: _site
+  title: "Sciris"
+  execute-dir: file
+  resources:
+    - objects.json
+    - objects.inv
+    - CNAME
+
+website:
+  title: "Sciris"
+  image: /assets/sciris-logo.png
+  favicon: /assets/favicon.ico
+
+  repo-url: https://github.com/sciris/sciris
+  repo-actions: [issue]
+  page-navigation: true
+  search:
+    type: overlay
+
+  page-footer:
+    center: "Docs built for Sciris v{{< var version >}} ({{< var versiondate >}}).<br>© 2014–2026 by the Sciris Development Team."
+    right:
+      - icon: github
+        href: https://github.com/sciris/sciris
+        aria-label: GitHub
+      - icon: envelope-at-fill
+        href: mailto:info@sciris.org
+      - icon: globe
+        href: https://sciris.org/
+
+  navbar:
+    logo: /assets/sciris-logo.png
+    title: false
+    collapse-below: lg
+
+    tools:
+      - icon: github
+        href: https://github.com/sciris/sciris
+      - icon: envelope-at-fill
+        href: mailto:info@sciris.org
+      - icon: globe
+        href: https://sciris.org
+
+    left:
+      - href: index.qmd
+        text: Home
+      - href: overview.qmd
+        text: Overview
+      - href: tutorials.qmd
+        text: Tutorials
+      - href: whatsnew.qmd
+        text: What's new
+      - href: contributing.qmd
+        text: Contributing
+      - href: api/index.qmd
+        text: API reference
+
+  sidebar:
+    - id: main
+      collapse-level: 3
+      contents:
+        - href: index.qmd
+          text: "**Home**"
+        - href: overview.qmd
+          text: "**Overview**"
+        - section: "**Tutorials**"
+          contents:
+            - href: tutorials.qmd
+              text: All tutorials
+            - tutorials/tut_intro.qmd
+            - tutorials/tut_arrays.qmd
+            - tutorials/tut_dicts.qmd
+            - tutorials/tut_files.qmd
+            - tutorials/tut_printing.qmd
+            - tutorials/tut_plotting.qmd
+            - tutorials/tut_parallel.qmd
+            - tutorials/tut_dates.qmd
+            - tutorials/tut_utils.qmd
+            - tutorials/tut_advanced.qmd
+        - href: whatsnew.qmd
+          text: "**What's new**"
+        - href: api/index.qmd
+          text: "**API reference**"
+        - section: "**Contributing**"
+          contents:
+            - href: contributing.qmd
+              text: How to contribute
+            - href: conduct.qmd
+              text: Code of conduct
+            - href: style_guide.qmd
+              text: Style guide
+    - id: api
+      collapse-level: 2
+      contents:
+        - href: index.qmd
+          text: "**Home**"
+        - href: api/index.qmd
+          text: "**API reference**"
+        - section: "**Math and arrays**"
+          contents:
+            - api/sc_math.qmd
+            - api/sc_asd.qmd
+        - section: "**Containers**"
+          contents:
+            - api/sc_odict.qmd
+            - api/sc_dataframe.qmd
+        - section: "**Files and versioning**"
+          contents:
+            - api/sc_fileio.qmd
+            - api/sc_versioning.qmd
+        - section: "**Printing and plotting**"
+          contents:
+            - api/sc_printing.qmd
+            - api/sc_plotting.qmd
+            - api/sc_colors.qmd
+        - section: "**Parallelization and profiling**"
+          contents:
+            - api/sc_parallel.qmd
+            - api/sc_profiling.qmd
+        - section: "**Utilities**"
+          contents:
+            - api/sc_utils.qmd
+            - api/sc_datetime.qmd
+            - api/sc_nested.qmd
+            - api/sc_settings.qmd
+
+quartodoc:
+  package: sciris
+  title: API reference
+  style: pkgdown
+  dir: api
+  parser: google
+  render_interlinks: true
+  sections:
+    - title: Math and array tools
+      desc: "Quiz: how do you return the indices of a vector `v = np.random.rand(100)` that are greater than 0.4 but less than 0.6? If you answered `((v>0.4)*(v<0.6)).nonzero()[0]`, you're right! But with Sciris, you can also just do `sc.findinds(v>0.4, v<0.6)`, which is a little easier."
+      contents:
+        - sc_math
+        - sc_asd
+    - title: Containers
+      desc: "Dictionaries are great, right? `sc.odict()` is a drop-in replacement for a dictionary that has lots of extra features (such as retrieving items by index). Pandas DataFrames are great, right? `sc.dataframe()` is a drop-in replacement for a DataFrame that has some additional features for ease of use (such as being able to concatenate in place)."
+      contents:
+        - sc_odict
+        - sc_dataframe
+    - title: Files and versioning
+      desc: "Saving and loading data can be a pain. Sciris tries to make it easier with the should-just-work functions `sc.save()` and `sc.load()`. But Sciris also makes it easier if you have a particular format in mind, such as `sc.savejson()`, or if you want to store metadata along with your results to improve reproducibility (`sc.savewithmetadata()`)."
+      contents:
+        - sc_fileio
+        - sc_versioning
+    - title: Printing and plotting
+      desc: "Do you ever do `print(obj)` and get some unhelpful result like `<object at 0x7f4d0b1ea190>`? `sc.pr(obj)` will tell you exactly what's in the object, including attributes (including their values), properties, and methods. Have you ever wanted to plot something in 3D but given up because it seems like it would take too long? With Sciris, it will work out of the box: try `sc.surf3d(np.random.randn(10,10))`. We'll wait."
+      contents:
+        - sc_printing
+        - sc_plotting
+        - sc_colors
+    - title: Parallelization and profiling
+      desc: "Scientific computing workflows are often [embarrassingly parallel](https://en.wikipedia.org/wiki/Embarrassingly_parallel), and yet it can be hard to do in practice. With Sciris, you can do `sc.parallelize(my_func, 10)` to run your function 10 times. It's also often hard to know where your code is being slow: you can use `sc.profile(my_func)` for a quick glance, which is often all you need."
+      contents:
+        - sc_parallel
+        - sc_profiling
+    - title: Utilities
+      desc: "The string `d = '2022-02-02'` looks like a date, right? Without googling, do you know how to convert it to an *actual* date object? With Sciris, it's `sc.date(d)`. Without Sciris, it's `datetime.datetime.strptime(d, '%Y-%m-%d').date()`. Also, if you need help with anything in Sciris, you can do `sc.help()`: it doesn't use ChatGPT, but will do a full text search through the source code."
+      contents:
+        - sc_utils
+        - sc_datetime
+        - sc_nested
+        - sc_settings
+
+format:
+  html:
+    theme:
+      light: [cosmo, ./assets/styles-light.scss]
+      dark: [cosmo, ./assets/styles-dark.scss]
+    css: ./assets/styles.css
+    toc: true
+    toc-expand: true
+    toc-depth: 5
+    highlight-style: github
+
+filters:
+  - interlinks
+
+interlinks:
+  fast: false
+  sources:
+    python:
+      url: https://docs.python.org/3/
+    numpy:
+      url: https://numpy.org/doc/stable/
+    pandas:
+      url: https://pandas.pydata.org/pandas-docs/stable/
+    scipy:
+      url: https://docs.scipy.org/doc/scipy/
+    matplotlib:
+      url: https://matplotlib.org/stable/
+  autolink: true
+  aliases:
+    numpy: [np]
+    pandas: [pd]
+    matplotlib: [plt]
+    sciris: [null, sc]
+
+execute:
+  freeze: auto # Only re-execute notebooks that have changed
+  cache: true
+  error: false # Do not continue if an error is encountered
+  echo: true
+  warning: true

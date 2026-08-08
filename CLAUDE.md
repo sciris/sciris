@@ -13,7 +13,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 ### Essential Commands
 - **Run tests:** `cd tests && ./run_tests`
 - **Install dev:** `pip install -e .`
-- **Build docs:** `cd docs && ./build_docs`
+- **Build docs:** `cd docs && ./render`
 - **Standard import:** `import sciris as sc`
 
 ### Core Functions
@@ -42,14 +42,18 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 ### Code Quality
 - **Linting:** Uses pylint with custom .pylintrc; `cd tests && ./check_style` (generates text report at tests/pylint_report.txt)
 - **Type checking:** Do not use type hints (Sciris prioritizes flexibility over strict typing)
+- **Docstrings:** Google-style, formatted with Markdown (not RST); cross-reference other functions with inline code, e.g. `` `sc.parallelize()` ``
 - **Pre-commit hooks:** Not configured
 - **Style guide:** See https://github.com/starsimhub/styleguide/blob/main/README.rst
 
 ### Documentation
-- **Build docs:** `cd docs && ./build_docs` (builds Sphinx documentation)
-- **Build docs without notebooks:** `cd docs && ./build_docs never`
-- **Debug mode (serial):** `cd docs && ./build_docs debug`
-- **Output:** Documentation built to `docs/_build/html/index.html`
+- **Build docs:** `cd docs && ./render` (builds the Quarto documentation; tutorials are only re-executed if they have changed)
+- **Preview docs with live reload:** `cd docs && ./preview`
+- **Force tutorials to re-execute:** `cd docs && ./render --cache-refresh`
+- **Check that the tutorials run:** `cd docs && ./check_notebooks.py`
+- **Output:** Documentation built to `docs/_site/index.html`
+- **Requirements:** [Quarto](https://quarto.org/docs/get-started/) plus `pip install -r docs/requirements.txt`, then `quarto add machow/quartodoc`
+- **Publishing:** GitHub Pages, via the `publish_docs.yaml` workflow (or `cd docs && ./publish`)
 
 ### Development Setup
 - **Install package:** `pip install -e .` (editable install from pyproject.toml)

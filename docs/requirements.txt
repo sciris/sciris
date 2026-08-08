@@ -1,12 +1,10 @@
-# Dependencies for documentation
-pandoc
-pypandoc
-sphinx>=1.8
-sphinx-autodoc-typehints
-pydata-sphinx-theme
-sphinx-design
-ipykernel # For tutorials
-nbconvert # For tutorials
-nbsphinx # For tutorials
+# Dependencies for building the documentation (in addition to Quarto itself,
+# which must be installed separately: https://quarto.org/docs/get-started/)
+quartodoc
+sphobjinv # For generating objects.inv, so other projects can link to Sciris
+jupyter
+jupyter-cache
+jupytext # For running the tutorials as Jupyter notebooks
+ipykernel # For the tutorials
 scipy # For optimization examples
 dask # For parallel examples

@@ -2,10 +2,10 @@
 Handle colors and colormaps.
 
 Highlights:
-    - Adds colormaps including ``'turbo'``, ``'parula'``, and ``'orangeblue'``
-    - :func:`sc.hex2rgb() <hex2rgb>`/:func:`sc.rgb2hex() <rgb2hex>`: convert between different color conventions
-    - :func:`sc.vectocolor() <vectocolor>`: map a list of sequential values onto a list of colors
-    - :func:`sc.gridcolors() <gridcolors>`: map a list of qualitative categories onto a list of colors
+    - Adds colormaps including `'turbo'`, `'parula'`, and `'orangeblue'`
+    - `sc.hex2rgb()`/`sc.rgb2hex()`: convert between different color conventions
+    - `sc.vectocolor()`: map a list of sequential values onto a list of colors
+    - `sc.gridcolors()`: map a list of qualitative categories onto a list of colors
 """
 
 ##############################################################################
@@ -43,7 +43,7 @@ def _listify_colors(colors, origndim=None):
 
 def sanitizecolor(color, asarray=False, alpha=None, normalize=True):
     """
-    Alias to :func:`matplotlib.colors.to_rgb`, but also handles numeric inputs.
+    Alias to `matplotlib.colors.to_rgb`, but also handles numeric inputs.
 
     Arg:
         color (str/list/etc): the input color to sanitize into an RGB tuple (or array)
@@ -51,13 +51,15 @@ def sanitizecolor(color, asarray=False, alpha=None, normalize=True):
         alpha (float): if not None, include the alpha channel with this value
         normalize (bool): whether to divide by 255 if any values are greater than 1
 
-    **Examples**::
+    **Examples**:
 
-        green1 = sc.sanitizecolor('g')
-        green2 = sc.sanitizecolor('tab:green')
-        crimson1 = sc.sanitizecolor('crimson')
-        crimson2 = sc.sanitizecolor((220, 20, 60))
-        midgrey = sc.sanitizecolor(0.5)
+    ```python
+    green1 = sc.sanitizecolor('g')
+    green2 = sc.sanitizecolor('tab:green')
+    crimson1 = sc.sanitizecolor('crimson')
+    crimson2 = sc.sanitizecolor((220, 20, 60))
+    midgrey = sc.sanitizecolor(0.5)
+    ```
     """
     if isinstance(color, str):
         try:
@@ -106,9 +108,11 @@ def shifthue(colors=None, hueshift=0.0):
     """
     Shift the hue of the colors being fed in.
 
-    **Example**::
+    **Example**:
 
-        colors = sc.shifthue(colors=[(1,0,0),(0,1,0)], hueshift=0.5)
+    ```python
+    colors = sc.shifthue(colors=[(1,0,0),(0,1,0)], hueshift=0.5)
+    ```
     """
     colors, origndim = _listify_colors(colors)
     for c,color in enumerate(colors):
@@ -125,9 +129,11 @@ def rgb2hex(arr):
     """
     A little helper function to convert e.g. [0.53, 0.74, 0.15] to a pleasing shade of green.
 
-    **Example**::
+    **Example**:
 
-        hx = sc.rgb2hex([0.53, 0.74, 0.15]) # Returns '#87bc26'
+    ```python
+    hx = sc.rgb2hex([0.53, 0.74, 0.15]) # Returns '#87bc26'
+    ```
     """
     arr = np.array(arr)
     if len(arr) != 3: # pragma: no cover
@@ -142,9 +148,11 @@ def hex2rgb(string):
     """
     A little helper function to convert e.g. '87bc26' to a pleasing shade of green.
 
-    **Example**::
+    **Example**:
 
-        rgb = sc.hex2rgb('#87bc26') # Returns array([0.52941176, 0.7372549 , 0.14901961])
+    ```python
+    rgb = sc.hex2rgb('#87bc26') # Returns array([0.52941176, 0.7372549 , 0.14901961])
+    ```
     """
     if string[0] == '#':
         string = string[1:] # Trim leading #, if it exists
@@ -162,9 +170,11 @@ def rgb2hsv(colors=None):
     """
     Shortcut to Matplotlib's rgb_to_hsv method, accepts a color triplet or a list/array of color triplets.
 
-    **Example**::
+    **Example**:
 
-        hsv = sc.rgb2hsv([0.53, 0.74, 0.15]) # Returns array([0.2259887, 0.7972973, 0.74     ])
+    ```python
+    hsv = sc.rgb2hsv([0.53, 0.74, 0.15]) # Returns array([0.2259887, 0.7972973, 0.74     ])
+    ```
     """
     colors, origndim = _listify_colors(colors)
     for c,color in enumerate(colors):
@@ -179,9 +189,11 @@ def hsv2rgb(colors=None):
     """
     Shortcut to Matplotlib's hsv_to_rgb method, accepts a color triplet or a list/array of color triplets.
 
-    **Example**::
+    **Example**:
 
-        rgb = sc.hsv2rgb([0.23, 0.80, 0.74]) # Returns array([0.51504, 0.74   , 0.148  ])
+    ```python
+    rgb = sc.hsv2rgb([0.23, 0.80, 0.74]) # Returns array([0.51504, 0.74   , 0.148  ])
+    ```
     """
     colors, origndim = _listify_colors(colors)
     for c,color in enumerate(colors):
@@ -220,17 +232,19 @@ def vectocolor(vector, cmap=None, asarray=True, reverse=False, minval=None, maxv
     Returns:
         colors (array): Nx4 array of RGB-alpha color values
 
-    **Example**::
+    **Example**:
 
-        n = 1000
-        x = np.random.randn(n,1);
-        y = np.random.randn(n,1);
-        c = sc.vectocolor(y);
-        plt.scatter(x, y, c=c, s=50)
+    ```python
+    n = 1000
+    x = np.random.randn(n,1);
+    y = np.random.randn(n,1);
+    c = sc.vectocolor(y);
+    plt.scatter(x, y, c=c, s=50)
+    ```
 
-    | *New in version 1.2.0:* midpoint argument.
-    | *New in version 2.1.0:* nancolor argument and remove nans by default
-    | *New in version 3.0.0:* correct "midpoint" argument
+    - *New in version 1.2.0:* midpoint argument.
+    - *New in version 2.1.0:* nancolor argument and remove nans by default
+    - *New in version 3.0.0:* correct "midpoint" argument
     """
 
     from numpy import array, zeros
@@ -293,25 +307,26 @@ def arraycolors(arr, **kwargs):
 
     Args:
         arr (array): a multidimensional array to be converted to an array of colors
-        kwargs(dict): passed to :func:`sc.vectocolor() <vectocolor>`
+        kwargs(dict): passed to `sc.vectocolor()`
 
-    **Example**::
+    **Example**:
 
-        n = 1000
-        ncols = 5
-        arr = np.random.rand(n,ncols)
-        for c in range(ncols):
-            arr[:,c] += c
-        x = np.random.rand(n)
-        y = np.random.rand(n)
-        colors = sc.arraycolors(arr)
-        plt.figure(figsize=(20,16))
-        for c in range(ncols):
-            plt.scatter(x+c, y, s=50, c=colors[:,c])
-
+    ```python
+    n = 1000
+    ncols = 5
+    arr = np.random.rand(n,ncols)
+    for c in range(ncols):
+        arr[:,c] += c
+    x = np.random.rand(n)
+    y = np.random.rand(n)
+    colors = sc.arraycolors(arr)
+    plt.figure(figsize=(20,16))
+    for c in range(ncols):
+        plt.scatter(x+c, y, s=50, c=colors[:,c])
+    ```
     Version: 2020mar07
 
-    | *New in version 3.1.0:* Handle non-array output
+    - *New in version 3.1.0:* Handle non-array output
     """
     arr = sc.dcp(arr) # Avoid modifications
     new_shape = arr.shape + (4,) # RGBα
@@ -347,21 +362,23 @@ def gridcolors(ncolors=10, limits=None, nsteps=20, asarray=False, ashex=False, r
         demo     (bool)  : whether or not to plot the color cube itself
         basis    (str)   : what basis to use -- options are 'colorbrewer', 'kelly', 'default', or 'none'
 
-    **Example**::
+    **Example**:
 
-        import numpy as np
-        import matplotlib.pyplot as plt
-        import sciris as sc
+    ```python
+    import numpy as np
+    import matplotlib.pyplot as plt
+    import sciris as sc
 
-        ncolors = 10
-        piedata = np.random.rand(ncolors)
-        colors = sc.gridcolors(ncolors)
-        plt.pie(piedata, colors=colors)
-        sc.gridcolors(ncolors, demo=True)
-        plt.show()
+    ncolors = 10
+    piedata = np.random.rand(ncolors)
+    colors = sc.gridcolors(ncolors)
+    plt.pie(piedata, colors=colors)
+    sc.gridcolors(ncolors, demo=True)
+    plt.show()
+    ```
 
-    | *New in version 2018oct30.*
-    | *New in version 3.2.0:* allow ncolors to be an iterable
+    - *New in version 2018oct30.*
+    - *New in version 3.2.0:* allow ncolors to be an iterable
     """
     # Handle input arguments
     if not sc.isnumber(ncolors):
@@ -464,12 +481,14 @@ def midpointnorm(vcenter=0, vmin=None, vmax=None):
         vmin (float): the minimum of the colormap
         vmax (float): the maximum of the colormap
 
-    **Example**::
+    **Example**:
 
-        data = np.random.rand(10,10) - 0.2
-        plt.pcolor(data, cmap='bi', norm=sc.midpointnorm())
+    ```python
+    data = np.random.rand(10,10) - 0.2
+    plt.pcolor(data, cmap='bi', norm=sc.midpointnorm())
+    ```
 
-    | *New in version 1.2.0.*
+    - *New in version 1.2.0.*
     """
     norm = mpl.colors.TwoSlopeNorm(vcenter=vcenter, vmin=vmin, vmax=vmax)
     return norm
@@ -484,11 +503,11 @@ def manualcolorbar(data=None, vmin=0, vmax=1, vcenter=None, colors=None, values=
 
     There are three main use cases, from least to most manual:
 
-        - The most common use case is to supply the data used for plotting directly via ``data``;
+        - The most common use case is to supply the data used for plotting directly via `data`;
           the function will the infer the lower and upper limits and construct the colorbar.
-        - Alternatively, the lower and upper limits can be provided manually via ``vmin`` and ``vmax``.
-        - Finally, the colors themselves can be provided via ``colors``, optionally mapped
-          to ``values``, and potentially also supplied with custom ``ticklabels``.
+        - Alternatively, the lower and upper limits can be provided manually via `vmin` and `vmax`.
+        - Finally, the colors themselves can be provided via `colors`, optionally mapped
+          to `values`, and potentially also supplied with custom `ticklabels`.
 
     Args:
         data (arr): if provided, compute the colorbar from these data
@@ -506,53 +525,55 @@ def manualcolorbar(data=None, vmin=0, vmax=1, vcenter=None, colors=None, values=
         ax (Axes): the "parent" axes to associate the colorbar with
         cax (Axes): the axes to draw the colorbar into
         axkwargs (dict): if creating a new colorbar axes, the arguments for creating it
-        kwargs (dict): passed to :func:`matplotlib.colorbar.ColorbarBase`
+        kwargs (dict): passed to `matplotlib.colorbar.ColorbarBase`
 
-    **Examples**::
+    **Examples**:
 
-        # Create a default colorbar
-        sc.manualcolorbar()
+    ```python
+    # Create a default colorbar
+    sc.manualcolorbar()
 
-        # Add a colorbar to non-mappable data (e.g. a scatterplot)
-        n = 1000
-        x = np.random.randn(n)
-        y = np.random.randn(n)
-        c = x**2 + y**2
-        plt.scatter(x, y, c=c)
-        sc.manualcolorbar(c)
+    # Add a colorbar to non-mappable data (e.g. a scatterplot)
+    n = 1000
+    x = np.random.randn(n)
+    y = np.random.randn(n)
+    c = x**2 + y**2
+    plt.scatter(x, y, c=c)
+    sc.manualcolorbar(c)
 
-        # Create a custom colorbar with a custom label
-        sc.manualcolorbar(
-            vmin=-20,
-            vmax=40,
-            vcenter=0,
-            cmap='orangeblue',
-            label='Cold/hot',
-            orientation='horizontal',
-            labelkwargs=dict(rotation=10, fontweight='bold'),
-            axkwargs=[0.1,0.5,0.8,0.1],
-        )
+    # Create a custom colorbar with a custom label
+    sc.manualcolorbar(
+        vmin=-20,
+        vmax=40,
+        vcenter=0,
+        cmap='orangeblue',
+        label='Cold/hot',
+        orientation='horizontal',
+        labelkwargs=dict(rotation=10, fontweight='bold'),
+        axkwargs=[0.1,0.5,0.8,0.1],
+    )
 
-        # Create a completely custom colorbar
-        n = 12
-        x = np.arange(n)
-        values = np.sqrt(np.arange(n))
-        colors = sc.gridcolors(n)
-        plt.scatter(x, values, c=colors)
-        plt.grid(True)
+    # Create a completely custom colorbar
+    n = 12
+    x = np.arange(n)
+    values = np.sqrt(np.arange(n))
+    colors = sc.gridcolors(n)
+    plt.scatter(x, values, c=colors)
+    plt.grid(True)
 
-        ticklabels = ['' for i in range(n)]
-        for i in [0, 2, 4, 10, 11]:
-            ticklabels[i] = f'Color {i} is nice'
-        cb = sc.manualcolorbar(
-            colors=colors,
-            values=values,
-            ticks=values,
-            ticklabels=ticklabels,
-            spacing='proportional'
-        )
+    ticklabels = ['' for i in range(n)]
+    for i in [0, 2, 4, 10, 11]:
+        ticklabels[i] = f'Color {i} is nice'
+    cb = sc.manualcolorbar(
+        colors=colors,
+        values=values,
+        ticks=values,
+        ticklabels=ticklabels,
+        spacing='proportional'
+    )
+    ```
 
-    | *New in version 3.1.0.*
+    - *New in version 3.1.0.*
     """
     labelkwargs = sc.mergedicts(labelkwargs)
 
@@ -618,12 +639,13 @@ def colormapdemo(cmap=None, n=None, smoothing=None, randseed=None, doshow=True):
     3D. The argument can be either a colormap itself or a string describing a
     colormap.
 
-    **Examples**::
+    **Examples**:
 
-        sc.colormapdemo('inferno') # Use a registered Matplotlib colormap
-        sc.colormapdemo('parula') # Use a registered Sciris colormap
-        sc.colormapdemo(sc.alpinecolormap(), n=200, smoothing=20, randseed=2942) # Use a colormap object
-
+    ```python
+    sc.colormapdemo('inferno') # Use a registered Matplotlib colormap
+    sc.colormapdemo('parula') # Use a registered Sciris colormap
+    sc.colormapdemo(sc.alpinecolormap(), n=200, smoothing=20, randseed=2942) # Use a colormap object
+    ```
     Version: 2019aug22
     """
 
@@ -683,16 +705,18 @@ def alpinecolormap(apply=False):
     This function generates a map based on ascending height. Based on data from
     Kazakhstan.
 
-    **Test case**::
+    **Test case**:
 
-        sc.colormapdemo('alpine')
+    ```python
+    sc.colormapdemo('alpine')
+    ```
+    **Usage example**:
 
-    **Usage example**::
-
-        import sciris as sc
-        import matplotlib.pyplot as plt
-        plt.imshow(np.random.randn(20,20), interpolation='none', cmap=sc.alpinecolormap())
-
+    ```python
+    import sciris as sc
+    import matplotlib.pyplot as plt
+    plt.imshow(np.random.randn(20,20), interpolation='none', cmap=sc.alpinecolormap())
+    ```
     Version: 2014aug06
     """
 
@@ -749,12 +773,13 @@ def bicolormap(gap=0.1, mingreen=0.2, redbluemix=0.5, epsilon=0.01, demo=False, 
       demo       (bool):  whether to plot a demo bicolormap or not
       apply      (bool):  whether to apply this colormap to the current figure
 
-    **Examples**::
+    **Examples**:
 
-        sc.bicolormap(gap=0, mingreen=0, redbluemix=1, epsilon=0) # From pure red to pure blue with white in the middle
-        sc.bicolormap(gap=0, mingreen=0, redbluemix=0, epsilon=0.1) # Red -> yellow -> gray -> turquoise -> blue
-        sc.bicolormap(gap=0.3, mingreen=0.2, redbluemix=0, epsilon=0.01) # Red and blue with a sharp distinction between
-
+    ```python
+    sc.bicolormap(gap=0, mingreen=0, redbluemix=1, epsilon=0) # From pure red to pure blue with white in the middle
+    sc.bicolormap(gap=0, mingreen=0, redbluemix=0, epsilon=0.1) # Red -> yellow -> gray -> turquoise -> blue
+    sc.bicolormap(gap=0.3, mingreen=0.2, redbluemix=0, epsilon=0.01) # Red and blue with a sharp distinction between
+    ```
     Version: 2013sep13
     """
     mng = mingreen   # Minimum amount of green to add into the colors
@@ -811,11 +836,12 @@ def parulacolormap(apply=False):
     Create a map similar to Viridis, but brighter. Set apply=True to use
     immediately.
 
-    **Demo and example**::
+    **Demo and example**:
 
-        cmap = sc.parulacolormap()
-        sc.colormapdemo(cmap=cmap)
-
+    ```python
+    cmap = sc.parulacolormap()
+    sc.colormapdemo(cmap=cmap)
+    ```
     Version: 2019aug22
     """
     data = [[0.2422,0.1504,0.6603], [0.2444,0.1534,0.6728], [0.2464,0.1569,0.6847], [0.2484,0.1607,0.6961], [0.2503,0.1648,0.7071], [0.2522,0.1689,0.7179], [0.2540,0.1732,0.7286], [0.2558,0.1773,0.7393],
@@ -873,11 +899,12 @@ def turbocolormap(apply=False):
     Create a map similar to Jet, but better. Set apply=True to use
     immediately.
 
-    **Demo and example**::
+    **Demo and example**:
 
-        cmap = sc.turbocolormap()
-        sc.colormapdemo(cmap=cmap)
-
+    ```python
+    cmap = sc.turbocolormap()
+    sc.colormapdemo(cmap=cmap)
+    ```
     Version: 2020mar20
     """
     data = [[0.18995,0.07176,0.23217],[0.19483,0.08339,0.26149],[0.19956,0.09498,0.29024],[0.20415,0.10652,0.31844],[0.20860,0.11802,0.34607],[0.21291,0.12947,0.37314],[0.21708,0.14087,0.39964],[0.22111,0.15223,0.42558],
@@ -927,11 +954,12 @@ def bandedcolormap(minvalue=None, minsaturation=None, hueshift=None, saturations
     but rather aims to make it easy to relate colors to as-exact-as-possible numbers
     (while still maintaining a semblance of overall trend from low to high).
 
-    **Demo and example**::
+    **Demo and example**:
 
-        cmap = sc.bandedcolormap(minvalue=0, minsaturation=0)
-        sc.colormapdemo(cmap=cmap)
-
+    ```python
+    cmap = sc.bandedcolormap(minvalue=0, minsaturation=0)
+    sc.colormapdemo(cmap=cmap)
+    ```
     Version: 2019aug22
     """
     # Set parameters
@@ -961,12 +989,14 @@ def orangebluecolormap(apply=False):
     Create an orange-blue colormap; most like RdYlBu but more pleasing. Created
     by Prashanth Selvaraj.
 
-    **Demo and example**::
+    **Demo and example**:
 
-        cmap = sc.orangebluecolormap()
-        sc.colormapdemo(cmap=cmap)
+    ```python
+    cmap = sc.orangebluecolormap()
+    sc.colormapdemo(cmap=cmap)
+    ```
 
-    | *New in version 1.0.0.*
+    - *New in version 1.0.0.*
     """
     bottom = plt.get_cmap('Oranges', 128)
     top    = plt.get_cmap('Blues_r', 128)

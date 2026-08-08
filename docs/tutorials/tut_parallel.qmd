@@ -1,0 +1,213 @@
+---
+title: Parallelization and profiling
+jupyter: python3
+---
+
+If you're one of those people whose scripts always run in a second or less, you can probably skip this tutorial. But if you have time to make yourself a cup of tea while your code is running, you might want to read on. This tutorial covers how to run code in parallel, and how to check its performance to look for improvements.
+
+## Parallelization
+
+### Parallelization in Python
+
+Scary stories of Python's ["global interpreter lock"](https://granulate.io/blog/introduction-to-the-infamous-python-gil/) aside, parallelization is actually fairly simple in Python. However, it's not particularly intuitive or flexible. We can do vanilla parallelization in Python via something like this:
+
+```{python}
+import multiprocessing as mp
+
+# Define a function
+def my_func(x):
+    return x**2
+
+# Run it in parallel
+with mp.Pool() as pool:
+    results = pool.map(my_func, [1,2,3])
+    
+print(results)
+```
+
+So far so good. But what if we have something more complicated? What if we want to run our function with a different keyword argument, for example? It starts getting kind of crazy:
+
+```{python}
+from functools import partial
+
+# Define a (slightly) more complex function
+def complex_func(x, arg1=2, arg2=4):
+    return x**2 + (arg1 * arg2)
+
+# Make a new function with a different default argument 😱
+new_func = partial(complex_func, arg2=10)
+
+# Run it in parallel
+with mp.Pool() as pool:
+    results = pool.map(new_func, [1,2,3])
+
+print(results)
+```
+
+This works, but that sure was a lot of work just to set a single keyword argument! 
+
+### Parallelization in Sciris
+
+With Sciris, you can do it all with one line:
+
+```{python}
+import sciris as sc
+
+results = sc.parallelize(complex_func, [1,2,3], arg2=10)
+
+print(results)
+```
+
+What's happening here? `sc.parallelize()` lets you pass keyword arguments directly to the function you're calling. You can also iterate over multiple arguments rather than just one:
+
+```{python}
+args = dict(x=[1,2,3], arg2=[10,20,30])
+
+results = sc.parallelize(complex_func, iterkwargs=args)
+
+print(results)
+```
+
+(Of course you can do this with vanilla Python too, but you'll need to define a list of tuples, and you can only assign by position, not by keyword.)
+
+Depending on what you might want to run, your inputs might be in one of several different forms. You can supply a list of values, a list of dicts, or a dict of lists. An example will probably help:
+
+```{python}
+def mult(x,y):
+    return x*y
+
+r1 = sc.parallelize(mult, iterarg=[(1,2),(2,3),(3,4)])
+r2 = sc.parallelize(mult, iterkwargs={'x':[1,2,3], 'y':[2,3,4]})
+r3 = sc.parallelize(mult, iterkwargs=[{'x':1, 'y':2}, {'x':2, 'y':3}, {'x':3, 'y':4}])
+print(f'{r1 = }')
+print(f'{r2 = }')
+print(f'{r3 = }')
+```
+
+All of these are equivalent: choose whichever makes you happy.
+
+### Advanced usage
+
+There are lots and lots of options with parallelization, but we'll only cover a couple here. For example, if you want to start 200 jobs on your laptop with 8 cores, you probably don't want them to eat up all your CPU or memory and make your computer unusable. You can set `maxcpu` and `maxmem` limits to handle that:
+
+```{python}
+import numpy as np
+import matplotlib.pyplot as plt
+
+# Define the function
+def rand2d(i, x, y):
+    np.random.seed()
+    xy = [x+i*np.random.randn(100), y+i*np.random.randn(100)]
+    return (i,xy)
+
+# Run in parallel
+xy = sc.parallelize(
+    func     = rand2d,   # The function to parallelize
+    iterarg  = range(5), # Values for first argument
+    maxcpu   = 0.8,      # CPU limit (1 = no limit)
+    maxmem   = 0.9,      # Memory limit (1 = no limit)
+    interval = 0.2,      # How often to re-check the limits (in seconds)
+    x = 3, y = 8,        # Keyword arguments for the function
+)
+
+# Plot
+plt.figure()
+colors = sc.gridcolors(len(xy))
+for i,(x,y) in reversed(xy): # Reverse order to plot the most widely spaced dots first
+    plt.scatter(x, y, c=[colors[i]], alpha=0.7, label=f'Scale={i}')
+plt.legend();
+```
+
+So far, we've used `sc.parallelize()` as a function. But you can also use it as a class, which gives you more flexibility and control over which jobs are run, and will give you more information if any of them failed:
+
+```{python}
+def slow_func(i=1):
+    sc.randsleep(seed=i)
+    if i == 4:
+        raise Exception("I don't like seed 4")
+    return i**2
+
+# Create the parallelizer object
+P = sc.Parallel(
+    func = slow_func,
+    iterarg = range(10),
+    parallelizer = 'multiprocess-async', # Run asynchronously
+    die = False, # Keep going if a job crashes
+)
+
+# Actually run
+P.run_async()
+
+# Monitor progress
+P.monitor()
+
+# Get results
+P.finalize()
+
+# See how long things took
+print(P.times)
+```
+
+You can see it raised some warnings. These are stored in the `Parallel` object so we can check back and see what happened:
+
+```{python}
+print(f'{P.success = }')
+print(f'{P.exceptions = }')
+print(f'{P.results = }')
+```
+
+Hopefully, you will never need to run a function as poorly written as `slow_func()`!
+
+## Profiling
+
+Even parallelization can't save you if your code is just really slow. Sciris provides a variety of tools to help with this.
+
+### Benchmarking
+
+First off, we can check if our computer is performing as we expect, or if we want to compare across computers:
+
+```{python}
+bm = sc.benchmark() # Check CPU performance, in units of MOPS (million operations per second)
+ml = sc.memload() # Check total memory load
+ram = sc.checkram() # Check RAM used by this Python instance
+
+print('CPU performance: ', dict(bm))
+print('System memory load', ml)
+print('Python RAM usage', ram)
+```
+
+We can see that NumPy performance is much higher than Python – hundreds of MOPS† instead of single-digits. This makes sense, this is why we use it for array operations!
+
+*† The determination of a single "operation" is a little loose, so these "MOPS" can be used for relative purposes, but aren't directly relatable to, say, published processor speeds.*
+
+### Line profiling
+
+If you want to do a serious profiling of your code, take a look at [Austin](https://github.com/P403n1x87/austin). But if you just want to get a quick sense of where things might be slow, you can use `sc.profile()`. Applying it to our lousy `slow_func()` from before:
+
+```{python}
+sc.profile(slow_func)
+```
+
+We can see that 100% (well, 99.9997%) of the time was taken by the sleep function. This is not surprising, but seems correct!
+
+For a slightly more realistic example:
+
+```{python}
+def func():
+    n = 1000
+    
+    # Do some NumPy
+    v1 = np.random.rand(n,n)
+    v2 = np.random.rand(n,n)
+    v3 = v1*v2
+    
+    # Do some Python
+    means = []
+    for i in range(n):
+        means.append(sum(v3[i])/n)
+
+sc.profile(func)
+```
+
+We can see (from the "`% Time`" column) that, again not surprisingly, the Python math operation is much slower than the NumPy operations.
+

@@ -1,0 +1,232 @@
+---
+title: Dictionaries and dataframes
+jupyter: python3
+---
+
+Needing a better way of ordering dictionaries was one of the original inspirations for Sciris back in 2014. In those dark days of Python <=3.6, dictionaries were unordered, which meant that `dict.keys()` could give you anything. (And you still can't do `dict.keys()[0]`, much less `dict[0]`). This tutorial describes Sciris' ordered dict, the `odict`, its close cousin the `objdict`, and its pandas-powered pseudorelative, the `dataframe`.
+
+## The `odict`
+
+In basically every situation except one, an `odict` can be used like a `dict`. (Since this is a tutorial, see if you can intuit what that one situation is!) For example, creating an `odict`works just like creating a regular dict:
+
+```{python}
+import sciris as sc
+
+od = sc.odict(a=['some', 'strings'], b=[1,2,3])
+print(od)
+```
+
+Okay, it doesn't exactly _look_ like a dict, but it is one:
+
+```{python}
+print(f'Keys:   {od.keys()}')
+print(f'Values: {od.values()}')
+print(f'Items:  {od.items()}')
+```
+
+Looks pretty much the same as a regular dict, except that `od.keys()` returns a regular list (so, yes, you can do `od.keys()[0]`). But, you can do things you can't do with a regular dict, such as:
+
+```{python}
+for i,k,v in od.enumitems():
+    print(f'Item {i} is called {k} and has value {v}')
+```
+
+We can, as you probably guessed, also retrieve items by _index_ as well:
+
+```{python}
+print(od['a'])
+print(od[0])
+```
+
+Remember the question about the situation where you wouldn't use an odict? The answer is if your dict has integer keys, then although you still _could_ use an `odict`, it's probably best to use a regular `dict`. But even float keys are fine to use (if somewhat strange).
+
+You might've noticed that the `odict` has more verbose output than a regular dict. This is because its primary purpose is as a high-level container for storing large(ish) objects. 
+
+For example, let's say we want to store a number of named simulation results. Look at how we're able to leverage the `odict` in the loop that creates the plots
+
+```{python}
+import numpy as np
+import matplotlib.pyplot as plt
+
+class Sim:
+    def __init__(self, n=20, n_factors=6):
+        self.results = sc.odict()
+        self.n = n
+        self.n_factors = n_factors
+    
+    def run(self):
+        for i in range(self.n_factors):
+            label = f'y = N^{i+1}'
+            result = np.random.randn(self.n)**(i+1)
+            self.results[label] = result
+    
+    def plot(self):
+        with sc.options.context(jupyter=True): # Jupyter-optimized plotting
+            plt.figure()
+            rows,cols = sc.getrowscols(len(self.results))
+            for i,label,result in self.results.enumitems(): # odict magic!
+                plt.subplot(rows, cols, i+1)
+                plt.scatter(np.arange(self.n), result, c=result, cmap='parula')
+                plt.title(label)
+            sc.figlayout() # Trim whitespace from the figure
+
+sim = Sim()
+sim.run()
+sim.plot()
+```
+
+We can quickly access these results for exploratory data analysis without having to remember and type the labels explicitly:
+
+```{python}
+print('Sim results are')
+print(sim.results)
+
+print('The first set of results is')
+print(sim.results[0])
+
+print('The first set of results has median')
+sc.printmedian(sim.results[0])
+```
+
+This is a have-your-cake-and-eat-it-too situation: the first set of results is correctly labeled (`sim.results['y = N^1']`), but you can easily access it without having to type all that (`sim.results[0]`). 
+
+## The `objdict`
+
+When you're just writing throwaway analysis code, it can be a pain to type `mydict['key1']['key2']` over and over. (Right-pinky overuse is a [real medical issue](https://www.math.ucdavis.edu/~greg/pinky-rsi.html).) Wouldn't it be nice if you could just type `mydict.key1.key2`, but otherwise have everything work exactly like a dict? This is where the `objdict` comes in: it's identical to an `odict` (and hence like a regular `dict`), except you can use "object syntax" (`a.b`) instead of "dict syntax" (`a['b']`). This is especially handy for using f-strings, since you don't have to worry about nested quotes:
+
+```{python}
+ob = sc.objdict(key1=['some', 'strings'], key2=[1,2,3])
+print(f'Checking {ob[0] = }')
+print(f'Checking {ob.key1 = }')
+print(f'Checking {ob["key1"] = }') # We need to use double-quotes inside since single quotes are taken!
+```
+
+In most cases, you probably want to use `objdict`s rather than `odict`s just to have the extra flexibility. Why would you ever use an `odict` over an `objdict`? Mostly just because there's small but nonzero overhead in doing the extra attribute checking: `odict` is faster (faster than even `collections.OrderedDict`, though slower than a plain `dict`). The differences are tiny (literally nanoseconds) so won't matter unless you're doing millions of operations. But if you're reading this, chances are high that you _do_ sometimes need to do millions of dict operations.
+
+## Dataframes
+
+The Sciris `sc.dataframe()` works exactly like pandas `pd.DataFrame()`, with a couple extra features, mostly to do with creation, indexing, and manipulation.
+
+### Dataframe creation
+
+Any valid `pandas` dataframe initialization works exactly the same in Sciris. However, Sciris is a bit more flexible about how you can create the dataframe, again optimized for letting you make them quickly with minimal code. For example:
+
+```{python}
+import pandas as pd
+
+x = ['a','b','c']
+y = [1, 2, 3]
+z = [1, 0, 1]
+
+df = pd.DataFrame(dict(x=x, y=y, z=z)) # Pandas
+df = sc.dataframe(x=x, y=y, z=z) # Sciris
+```
+
+It's not a huge difference, but the Sciris one is shorter. Sciris also makes it easier to define types on dataframe creation:
+
+```{python}
+df = sc.dataframe(x=x, y=y, z=z, dtypes=[str, float, bool])
+print(df)
+```
+
+You can also define data types along with the columns:
+
+```{python}
+columns = dict(x=str, y=float, z=bool)
+data = [
+    ['a', 1, 1],
+    ['b', 2, 0],
+    ['c', 3, 1],
+]
+df = sc.dataframe(columns=columns, data=data)
+df.disp()
+```
+
+The `df.disp()` command will do its best to show the full dataframe. By default, Sciris dataframes (just like pandas) are shown in abbreviated form:
+
+```{python}
+df = sc.dataframe(data=np.random.rand(70,10))
+print(df)
+```
+
+But sometimes you just want to see the whole thing. The official way to do it in pandas is with `pd.options_context`, but this is a lot of effort if you're just poking around in a script or terminal (which, if you're printing a dataframe, you probably are). By default, `df.disp()` shows the whole damn thing:
+
+```{python}
+df.disp()
+```
+
+You can also pass other options if you want to customize it further:
+
+```{python}
+df.disp(precision=1, ncols=5, nrows=10, colheader_justify='left')
+```
+
+### Dataframe indexing
+
+All the regular `pandas` methods (`df['mycol']`, `df.mycol`, `df.loc`, `df.iloc`, etc.) work exactly the same. But Sciris gives additional options for indexing. Specifically, `getitem` commands (what happens under the hood when you call `df[thing]`) will first try the standard pandas `getitem`, but then fall back to `iloc` if that fails. For example:
+
+```{python}
+df = sc.dataframe(
+    x      = [1,   2,  3], 
+    values = [45, 23, 37], 
+    valid  = [1,   0,  1]
+)
+
+sc.heading('Regular pandas indexing')
+print(df['values',1])
+
+sc.heading('Pandas-like iloc indexing')
+print(df.iloc[1])
+
+sc.heading('Automatic iloc indexing')
+print(df[1]) # Would be a KeyError in regular pandas
+```
+
+### Dataframe manipulation
+
+One quirk of `pandas` dataframes is that almost every operation creates a copy rather than modifies the original dataframe in-place (leading to the infamous [SettingWithCopyWarning](https://stackoverflow.com/questions/20625582/how-to-deal-with-settingwithcopywarning-in-pandas).) This is extremely helpful, and yet, sometimes you _do_ want to modify a dataframe in place. For example, to append a row:
+
+```{python}
+# Create the dataframe
+df = sc.dataframe(
+    x = ['a','b','c'],
+    y = [1, 2, 3],
+    z = [1, 0, 1],
+)
+
+# Define the new row
+newrow = ['d', 4, 0]
+
+# Append it in-place
+df.appendrow(newrow)
+
+# Show the result
+print(df)
+```
+
+That was easy! For reference, here's the `pandas` equivalent (since `append` was [deprecated](https://github.com/pandas-dev/pandas/issues/35407)):
+
+```{python}
+# Convert to a vanilla dataframe
+pdf = df.to_pandas() 
+
+# Define the new row
+newrow = ['e', 5, 1]
+
+# Append it
+pdf = pd.concat([pdf, pd.DataFrame([newrow], columns=pdf.columns)])
+```
+
+That's rather a pain to type, and if you mess up (e.g. type `newrow` instead of `[newrow]`), in some cases it won't even fail, just give you the wrong result! Crikey.
+
+Just like how `sc.cat()` will take anything vaguely arrayish and turn it into an actual array, `sc.dataframe.cat()` will do the same thing:
+
+```{python}
+df = sc.dataframe.cat(
+    sc.dataframe(x=['a','b'], y=[1,2]), # Actual dataframe
+    dict(x=['c','d'], y=[3,4]),         # Dict of data
+    [['e',5], ['f', 6]],                # Or just the data!
+)
+print(df)
+```
+
