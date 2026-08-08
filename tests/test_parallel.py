@@ -200,9 +200,12 @@ def test_components():
     task = sc.sc_parallel._task(taskargs)
 
     print('Testing progress bar')
-    globaldict = {0:1, 1:1, 2:0, 3:0, 4:0}
+    counter = sc.sc_parallel._Counter()
     njobs = 5
-    sc.sc_parallel._progressbar(globaldict, njobs, started=sc.now())
+    for i in range(2):
+        counter.increment()
+    assert counter.value == 2
+    sc.sc_parallel._progressbar(counter, njobs, started=sc.now())
     return task
 
 

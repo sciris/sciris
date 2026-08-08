@@ -62,7 +62,7 @@ def pkg_require(req):
     """ Replacement for pkg_resources.require(); used by sc.require(), not for external use """
     r = pkgr.Requirement(req)
     version = imd.version(r.name)
-    allowed = pkgs.SpecifierSet(str(r.specifier))
+    allowed = pkgs.SpecifierSet(str(r.specifier), prereleases=True) # Allow prereleases, e.g. an editable install of 3.2.3.dev0 satisfies ">3.0.0"
     if allowed and (version not in allowed):
         string = f'{req} (available: {version})'
         raise imd.PackageNotFoundError(string)

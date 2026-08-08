@@ -46,12 +46,47 @@ def _jobkey(index):
     return f'_job{index}'
 
 
-def _progressbar(globaldict, njobs, started, **kwargs):
-    """ Define a progress bar based on the global dictionary """
-    try:
-        done = sum([globaldict[k] for k in globaldict.keys() if str(k).startswith('_job')])
-    except Exception as E:
-        done = '<unknown>' + str(E)
+class _Counter:
+    """
+    A counter of the number of completed jobs, shared between processes; not for the user.
+
+    Used instead of summing the global dictionary, which requires one round-trip to
+    the manager process per job, and hence scales as O(n^2) with the number of jobs.
+
+    The count is stored as the length of a list rather than as an integer since appending
+    to a list is atomic, while incrementing an integer is not (it is a separate read and
+    write, so no lock is needed here).
+    """
+    def __init__(self, manager=None):
+        self.jobs = manager.list() if manager else [] # A manager list is shared between processes; for serial/thread, an ordinary list is fine
+        return
+
+    def __deepcopy__(self, memo):
+        """ Never copy the counter (it can't be, and shouldn't be: it's shared between jobs) """
+        return self
+
+    __copy__ = __deepcopy__
+
+    def increment(self):
+        """ Increase the count by one; safe to call from multiple processes """
+        try:
+            self.jobs.append(1)
+        except Exception: # pragma: no cover # Don't let a progress-tracking failure break the run
+            pass
+        return
+
+    @property
+    def value(self):
+        """ The number of jobs completed so far """
+        try:
+            return len(self.jobs)
+        except Exception: # pragma: no cover
+            return 0
+
+
+def _progressbar(counter, njobs, started, **kwargs):
+    """ Define a progress bar based on the number of jobs completed """
+    done = counter.value if counter is not None else 0
     elapsed = (sc.now() - started).total_seconds()
     sc.progressbar(done, njobs, label=f'Job {done}/{njobs} ({elapsed:.1f} s)', **kwargs)
     return
@@ -150,6 +185,7 @@ class Parallel:
         self.pool         = None
         self.manager      = None
         self.globaldict   = None
+        self.counter      = None
         self.map_func     = None
         self.is_async     = None
         self.jobs         = None
@@ -387,6 +423,7 @@ class Parallel:
         self.pool       = pool
         self.manager    = manager
         self.globaldict = globaldict
+        self.counter    = _Counter(manager) # Count completed jobs, for the progress bar
         self.map_func   = map_func
         self.is_async   = is_async
         self.jobs       = None
@@ -433,7 +470,7 @@ class Parallel:
                 func=self.func, index=index, njobs=self.njobs, iterval=iterval, iterdict=iterdict, args=self.args,
                 kwargs=self.kwargs, lbkwargs=self.lbkwargs, embarrassing=self.embarrassing, callback=self.callback,
                 progress=self.progress, globaldict=self.globaldict, useglobal=useglobal, started=self.times.started,
-                capture=self.capture, die=self.die
+                capture=self.capture, die=self.die, counter=self.counter
             )
 
             argslist.append(taskargs)
@@ -526,7 +563,7 @@ class Parallel:
         while self.running or final_iter:
             if not self.running and final_iter:
                 final_iter = False
-            _progressbar(self.globaldict, njobs=self.njobs, started=self.times.started, **kwargs)
+            _progressbar(self.counter, njobs=self.njobs, started=self.times.started, **kwargs)
             sc.timedsleep(interval)
         return
 
@@ -787,7 +824,7 @@ class TaskArgs(sc.prettyobj):
         """
         def __init__(self, func, index, njobs, iterval, iterdict, args, kwargs, lbkwargs,
                      embarrassing, callback, progress, globaldict, useglobal, started,
-                     capture=False, die=True):
+                     capture=False, die=True, counter=None):
             self.func         = func         # The function being called
             self.index        = index        # The place in the queue
             self.njobs        = njobs        # The total number of iterations
@@ -804,6 +841,7 @@ class TaskArgs(sc.prettyobj):
             self.started      = started      # The time when the parallelization was started
             self.capture      = capture      # Whether to capture output as text
             self.die          = die          # Whether to raise an exception if the child task encounters one
+            self.counter      = counter      # A shared counter of how many jobs have finished, used for the progress bar
             return
 
 
@@ -874,8 +912,12 @@ def _task(taskargs):
     end = sc.time()
     elapsed = end - start
 
+    # Update the count of finished jobs, and show progress if requested
+    counter = taskargs.counter
+    if counter is not None:
+        counter.increment()
     if taskargs.progress:
-        _progressbar(globaldict, njobs=taskargs.njobs, started=taskargs.started, flush=True)
+        _progressbar(counter, njobs=taskargs.njobs, started=taskargs.started, flush=True)
 
     # Generate output
     outdict = dict(
@@ -899,7 +941,7 @@ def _task(taskargs):
 #%% Load balancing functions
 ##############################################################################
 
-__all__ += ['cpu_count', 'cpuload', 'memload', 'loadbalancer']
+__all__ += ['cpu_count', 'cpucount', 'cpuload', 'cpu_load', 'memload', 'mem_load', 'loadbalancer']
 
 
 def cpu_count():
@@ -934,6 +976,12 @@ def memload():
         a float between 0-1 representing the fraction of :func:`psutil.virtual_memory()` currently used.
     """
     return psutil.virtual_memory().percent / 100
+
+
+# Aliases so that either naming convention works (*New in version 3.3.0*)
+cpucount = cpu_count
+cpu_load = cpuload
+mem_load = memload
 
 
 def loadbalancer(maxcpu=0.9, maxmem=0.9, index=None, interval=None, cpu_interval=0.1,
