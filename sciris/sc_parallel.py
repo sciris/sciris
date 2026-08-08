@@ -10,10 +10,8 @@ Highlights:
 """
 
 import time
-import types
 import psutil
 import warnings
-import threading
 import numpy as np
 import multiprocess as mp
 import multiprocessing as mpi
@@ -54,15 +52,13 @@ class _Counter:
 
     Used instead of summing the global dictionary, which requires one round-trip to
     the manager process per job, and hence scales as O(n^2) with the number of jobs.
+
+    The count is stored as the length of a list rather than as an integer since appending
+    to a list is atomic, while incrementing an integer is not (it is a separate read and
+    write, so no lock is needed here).
     """
     def __init__(self, manager=None):
-        self.local = manager is None
-        if self.local: # Serial, thread, or custom: no need for a manager
-            self._value = types.SimpleNamespace(value=0)
-            self._lock  = threading.Lock()
-        else: # Processes: use manager proxies, which can be shared between them
-            self._value = manager.Value('l', 0)
-            self._lock  = manager.Lock()
+        self.jobs = manager.list() if manager else [] # A manager list is shared between processes; for serial/thread, an ordinary list is fine
         return
 
     def __deepcopy__(self, memo):
@@ -71,24 +67,10 @@ class _Counter:
 
     __copy__ = __deepcopy__
 
-    def __getstate__(self):
-        """ Thread locks can't be pickled; note that a local counter is not shared between processes """
-        state = self.__dict__.copy()
-        if self.local:
-            state['_lock'] = None
-        return state
-
-    def __setstate__(self, state):
-        self.__dict__.update(state)
-        if self._lock is None:
-            self._lock = threading.Lock()
-        return
-
     def increment(self):
         """ Increase the count by one; safe to call from multiple processes """
         try:
-            with self._lock:
-                self._value.value += 1
+            self.jobs.append(1)
         except Exception: # pragma: no cover # Don't let a progress-tracking failure break the run
             pass
         return
@@ -97,7 +79,7 @@ class _Counter:
     def value(self):
         """ The number of jobs completed so far """
         try:
-            return self._value.value
+            return len(self.jobs)
         except Exception: # pragma: no cover
             return 0
 
