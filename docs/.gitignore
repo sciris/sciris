@@ -1,2 +1,16 @@
-_build
-_autosummary
+.quarto/
+_freeze/
+_inv/
+_site/
+_extensions/
+tutorials/.jupyter_cache/
+objects.json
+objects.inv
+
+# Ignore auto-generated API .qmd files
+/api/*.qmd
+# But keep the index.qmd file
+!/api/index.qmd
+/.quarto/
+
+**/*.quarto_ipynb
