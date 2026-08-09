@@ -17,7 +17,7 @@ To build the docs, follow these steps:
 
 2.  Install the Quarto extensions (only needed once):
     ```
-    quarto add machow/quartodoc
+    quarto add sciris/quartopydoc
     ```
 
 3.  Build the docs with `./render` (or `quarto render`). To preview them with live reloading, use `./preview` instead. Note that the tutorials are only re-executed if they have changed (`freeze: auto`); to force a rebuild, use `./render --cache-refresh`.

@@ -1,6 +1,6 @@
 # Dependencies for building the documentation (in addition to Quarto itself,
 # which must be installed separately: https://quarto.org/docs/get-started/)
-quartodoc
+quartopydoc # For generating API documentation
 sphobjinv # For generating objects.inv, so other projects can link to Sciris
 jupyter
 jupyter-cache
